@@ -16,14 +16,14 @@
         "./revenue": "../vibe-revenue/index.ts"
     },
     "dependencies": {
-        "@agencyos/shared": "workspace:*",
-        "@agencyos/vibe-ui": "workspace:*",
-        "@agencyos/vibe-analytics": "workspace:*",
-        "@agencyos/vibe-agents": "workspace:*",
-        "@agencyos/vibe-crm": "workspace:*",
-        "@agencyos/vibe-ops": "workspace:*",
-        "@agencyos/vibe-dev": "workspace:*",
-        "@agencyos/vibe-marketing": "workspace:*",
-        "@agencyos/vibe-revenue": "workspace:*"
+        "@agencyos/shared": "*",
+        "@agencyos/vibe-ui": "*",
+        "@agencyos/vibe-analytics": "*",
+        "@agencyos/vibe-agents": "*",
+        "@agencyos/vibe-crm": "*",
+        "@agencyos/vibe-ops": "*",
+        "@agencyos/vibe-dev": "*",
+        "@agencyos/vibe-marketing": "*",
+        "@agencyos/vibe-revenue": "*"
     }
 }
