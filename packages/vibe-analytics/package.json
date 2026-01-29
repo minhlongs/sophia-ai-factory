@@ -1,0 +1,19 @@
+{
+    "name": "@agencyos/vibe-analytics",
+    "version": "1.0.0",
+    "description": "VIBE Analytics - Growth Telemetry Engine",
+    "main": "index.ts",
+    "types": "index.ts",
+    "scripts": {
+        "build": "tsc",
+        "test": "vitest"
+    },
+    "dependencies": {
+        "web-vitals": "^4.0.0"
+    },
+    "devDependencies": {
+        "jsdom": "^27.4.0",
+        "typescript": "^5.9.3",
+        "vitest": "^4.0.17"
+    }
+}
