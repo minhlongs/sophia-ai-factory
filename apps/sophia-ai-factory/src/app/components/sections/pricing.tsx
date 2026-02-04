@@ -7,7 +7,8 @@ import { Button } from "@/app/components/ui/button";
 import { SectionHeading } from "@/app/components/ui/section-heading";
 import { TIER_CONFIGS } from "@/config/tiers";
 import { motion } from "framer-motion";
-import { Check } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
+import { useState } from "react";
 
 const tierFeatures = {
   BASIC: [
@@ -38,6 +39,43 @@ const tierFeatures = {
 
 export function Pricing() {
   const tiers = ["BASIC", "PREMIUM", "ENTERPRISE"] as const;
+  const [loadingTier, setLoadingTier] = useState<string | null>(null);
+
+  const handlePurchase = async (tierKey: string) => {
+    const tier = TIER_CONFIGS[tierKey as keyof typeof TIER_CONFIGS];
+
+    if (!tier.polarProductId) {
+      console.error("Product ID not configured for", tier.name);
+      alert("Checkout configuration missing for this plan. Please contact support.");
+      return;
+    }
+
+    setLoadingTier(tierKey);
+
+    try {
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: tier.polarProductId })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Checkout failed');
+      }
+
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error("No checkout URL returned");
+      }
+    } catch (error) {
+      console.error("Checkout error:", error);
+      alert("Failed to start checkout. Please try again.");
+      setLoadingTier(null);
+    }
+  };
 
   return (
     <section className="py-20 md:py-32 relative">
@@ -101,8 +139,17 @@ export function Pricing() {
                     <Button
                       variant={isRecommended ? "glow" : "secondary"}
                       className="w-full mb-6"
+                      onClick={() => handlePurchase(tierKey)}
+                      disabled={loadingTier !== null}
                     >
-                      Get Started
+                      {loadingTier === tierKey ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        "Get Started"
+                      )}
                     </Button>
                   </CardHeader>
 
