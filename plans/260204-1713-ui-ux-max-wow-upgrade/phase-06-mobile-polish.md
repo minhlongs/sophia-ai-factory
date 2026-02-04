@@ -35,14 +35,14 @@ Ensure the "Wow" factor translates to small screens. Complex animations can feel
     - If Tech Stack is wide, make it scrollable with `snap-x`.
 
 ## Todo List
-- [ ] Build `MobileNav` with animation.
-- [ ] Verify Hero scaling on <375px screens.
-- [ ] Check touch targets for all interactive elements.
+- [x] Build `MobileNav` with animation.
+- [x] Verify Hero scaling on <375px screens.
+- [x] Check touch targets for all interactive elements.
 
 ## Success Criteria
-- [ ] Menu opens/closes smoothly on mobile.
-- [ ] No horizontal overflow issues.
-- [ ] Text is readable (16px+ base size).
+- [x] Menu opens/closes smoothly on mobile.
+- [x] No horizontal overflow issues.
+- [x] Text is readable (16px+ base size).
 
 ## Next Steps
 - Proceed to [Phase 7: Optimization & Launch](./phase-07-performance-deploy.md).
