@@ -1,36 +1,86 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI Video Factory Proposal
 
-## Getting Started
+A high-conversion proposal website for the "AI Video Factory" solution, built for client Sophia. This site demonstrates the value proposition, workflow, and pricing of an automated AI video production system.
 
-First, run the development server:
+![Project Preview](public/preview.png)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 🚀 Live Demo
+
+**Production URL:** [https://sophia-proposal.vercel.app](https://sophia-proposal.vercel.app)
+
+## ✨ Features
+
+- **Dark Cyberpunk Theme:** Modern, high-tech aesthetic with glassmorphism and gradients.
+- **Interactive ROI Calculator:** Real-time revenue estimation based on configurable inputs (views, CTR, conversion).
+- **Pricing Tiers:** Detailed breakdown of Minimal, Standard, and Scale packages.
+- **Visual Workflow:** Step-by-step diagram of the OpenClaw + n8n automation process.
+- **Responsive Design:** Optimized for mobile and desktop viewing.
+- **Framer Motion:** Smooth entrance animations and interactions.
+
+## 🛠️ Tech Stack
+
+- **Framework:** [Next.js 14](https://nextjs.org/) (App Router)
+- **Styling:** [Tailwind CSS v4](https://tailwindcss.com/)
+- **Animations:** [Framer Motion](https://www.framer.com/motion/)
+- **Icons:** [Lucide React](https://lucide.dev/)
+- **Deployment:** [Vercel](https://vercel.com/)
+
+## 🏃‍♂️ Getting Started
+
+1. **Clone the repository:**
+   ```bash
+   git clone <repo-url>
+   cd apps/sophia-proposal
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+3. **Run development server:**
+   ```bash
+   npm run dev
+   ```
+   Open [http://localhost:3000](http://localhost:3000) to view locally.
+
+4. **Build for production:**
+   ```bash
+   npm run build
+   ```
+
+## 📂 Project Structure
+
+```
+apps/sophia-proposal/
+├── app/
+│   ├── components/
+│   │   ├── sections/    # Page sections (Hero, Pricing, etc.)
+│   │   └── ui/          # Reusable UI atoms (Button, Card, etc.)
+│   ├── lib/             # Utilities
+│   ├── layout.tsx       # Root layout & Metadata
+│   └── page.tsx         # Main landing page composition
+├── public/              # Static assets
+└── ...config files
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🎨 Design System
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Fonts:** Inter (Body), Orbitron (Headings)
+- **Colors:**
+  - Background: `#050505`
+  - Primary: `#3b82f6` (Blue)
+  - Secondary: `#8b5cf6` (Purple)
+  - Accent: `#f472b6` (Pink)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🚀 Deployment
 
-## Learn More
+The project is configured for seamless deployment on Vercel.
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+vercel --prod
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+© 2026 AgencyOS. All rights reserved.

@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
@@ -15,12 +16,12 @@ export const Button: React.FC<ButtonProps> = ({
   className = '',
   ...props
 }) => {
-  const baseStyles = 'font-heading font-semibold rounded-lg transition-all duration-300 inline-flex items-center justify-center';
+  const baseStyles = 'font-heading font-semibold rounded-lg transition-colors duration-300 inline-flex items-center justify-center relative overflow-hidden';
 
   const variants = {
-    primary: 'bg-gradient-to-r from-primary to-secondary text-white hover:opacity-90',
-    secondary: 'bg-secondary text-white hover:opacity-90',
-    outline: 'border-2 border-primary text-primary hover:bg-primary hover:text-background',
+    primary: 'bg-gradient-to-r from-primary to-secondary text-white',
+    secondary: 'bg-secondary text-white',
+    outline: 'border-2 border-primary text-primary hover:bg-primary hover:text-white',
     ghost: 'text-primary hover:bg-primary/10',
   };
 
@@ -33,11 +34,14 @@ export const Button: React.FC<ButtonProps> = ({
   const glowClass = glow ? 'glow-primary' : '';
 
   return (
-    <button
+    <motion.button
       className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${glowClass} ${className}`}
-      {...props}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      {...(props as any)}
     >
+      {/* Glossy sheen effect on hover could be added here if needed, but keeping it simple for now */}
       {children}
-    </button>
+    </motion.button>
   );
 };

@@ -3,6 +3,7 @@ import { Container } from '../ui/Container';
 import { GradientText } from '../ui/GradientText';
 import { Check, X } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { FadeIn } from '../animations/FadeIn';
 
 export const Features = () => {
   const features = [
@@ -31,26 +32,14 @@ export const Features = () => {
   return (
     <section id="features" className="py-20">
       <Container>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="text-center mb-16"
-        >
+        <FadeIn className="text-center mb-16">
           <h2 className="text-3xl md:text-5xl font-bold font-heading mb-4">
             So Sánh <GradientText>Tính Năng</GradientText>
           </h2>
           <p className="text-gray-400">Chọn gói phù hợp với mục tiêu tăng trưởng của bạn</p>
-        </motion.div>
+        </FadeIn>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="overflow-x-auto"
-        >
+        <FadeIn delay={0.2} className="overflow-x-auto">
           <div className="min-w-[700px]">
             <table className="w-full border-collapse">
               <thead>
@@ -85,7 +74,7 @@ export const Features = () => {
               </tbody>
             </table>
           </div>
-        </motion.div>
+        </FadeIn>
       </Container>
     </section>
   );
