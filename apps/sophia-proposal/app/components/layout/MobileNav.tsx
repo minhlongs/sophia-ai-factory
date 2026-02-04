@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { Menu, X, ArrowRight } from 'lucide-react';
 import { Button } from '../ui/Button';
-import { cn } from '@/app/lib/utils';
 
 const navLinks = [
   { name: 'Tính Năng', href: '#features' },
