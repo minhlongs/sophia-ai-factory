@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+:root {
+  /* Deep Space Theme - Dark Backgrounds */
+  --background: #020817;
+  --background-secondary: #0f172a;
+  --foreground: #f8fafc;
+
+  /* Neon Accents */
+  --neon-cyan: #00f0ff;
+  --neon-purple: #7000ff;
+  --neon-pink: #ff00ff;
+
+  /* Glassmorphism */
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-blur: blur(20px);
+
+  /* Gradients */
+  --gradient-space: linear-gradient(135deg, #020817 0%, #0f172a 100%);
+  --gradient-neon: linear-gradient(135deg, var(--neon-cyan) 0%, var(--neon-purple) 100%);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  /* Custom colors for Tailwind */
+  --color-neon-cyan: var(--neon-cyan);
+  --color-neon-purple: var(--neon-purple);
+  --color-neon-pink: var(--neon-pink);
+}
+
+body {
+  background: var(--gradient-space);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+}

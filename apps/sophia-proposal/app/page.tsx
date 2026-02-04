@@ -4,6 +4,7 @@ import React from 'react';
 import { Hero } from './components/sections/Hero';
 import { Workflow } from './components/sections/Workflow';
 import { Features } from './components/sections/Features';
+import { AffiliateDiscovery } from './components/sections/AffiliateDiscovery';
 import { Pricing } from './components/sections/Pricing';
 import { TechStack } from './components/sections/TechStack';
 import { ROICalculator } from './components/sections/ROICalculator';
@@ -20,6 +21,7 @@ export default function Home() {
       <Workflow />
       <TechStack />
       <Features />
+      <AffiliateDiscovery />
       <Pricing />
       <ROICalculator />
       <Affiliates />
