@@ -1,97 +1,55 @@
 # 🦞 TÔM HÙM (OpenClaw) - Global Rules
 
-> **MANDATORY** - All agents (Gemini, CC CLI, OpenClaw) must follow
-> **VERIFIED:** OpenClaw supports Antigravity Proxy ✅
+> **MANDATORY** - All agents must follow
 
 ---
 
-## File Format Standards
+## Usage Split
 
-### ✅ CORRECT Format
+| User                | LLM Provider      | Config      |
+| ------------------- | ----------------- | ----------- |
+| **Anh (Admin)**     | Antigravity Proxy | Local proxy |
+| **Sophia (Client)** | OpenRouter        | API key     |
+
+---
+
+## File Format
 
 ```
-skills/
-├── affiliate-scout/
-│   └── SKILL.md
-├── content-producer/
-│   └── SKILL.md
-└── auto-publisher/
-    └── SKILL.md
-
+skills/{name}/SKILL.md
 HEARTBEAT.md
 openclaw.json
 ```
 
-### SKILL.md Template
-
-```markdown
----
-name: skill-name
-description: "What this skill does"
-metadata:
-  openclaw:
-    emoji: 🔍
 ---
 
-# Skill Instructions...
-```
-
----
-
-## ✅ Antigravity Proxy Integration (VERIFIED)
-
-### Method 1: Environment Variables
-
-```bash
-export ANTHROPIC_API_KEY="proxy-key"
-export ANTHROPIC_BASE_URL="http://localhost:PORT/v1"
-```
-
-### Method 2: openclaw.json
+## Sophia's OpenClaw Config
 
 ```json
 {
   "providers": {
-    "anthropic": {
-      "apiKey": "proxy-key",
-      "baseUrl": "http://localhost:PORT/v1"
+    "openrouter": {
+      "apiKey": "sk-or-xxx",
+      "model": "anthropic/claude-sonnet-4-20250514"
     }
   }
 }
 ```
 
-### Method 3: UI Config
-
-`Config → Models → Providers → Add → Base URL`
-
----
-
-## Triple Agent Collaboration
-
-```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│  Gemini     │ ←── │ Antigravity │ ──→ │  OpenClaw   │
-│ (Antigrav)  │     │   Proxy     │     │  (TÔM HÙM)  │
-└─────────────┘     └─────────────┘     └─────────────┘
-       ↕                   ↓                   ↕
-       └───────────────────┬───────────────────┘
-                           ↓
-                    ┌─────────────┐
-                    │   CC CLI    │
-                    └─────────────┘
+```bash
+export OPENROUTER_API_KEY="sk-or-xxx"
 ```
 
 ---
 
-## Go-Live Checklist
+## Anh's Setup (Triple Agent)
 
-1. [ ] CC CLI completes sophia-ai-factory
-2. [ ] Build GREEN ✅
-3. [ ] Deploy to Vercel
-4. [ ] Setup OpenClaw on VPS
-5. [ ] Configure Antigravity Proxy
-6. [ ] Test Triple Agent System
+```
+Gemini ←→ Antigravity Proxy ←→ CC CLI
+              ↓
+         OpenClaw (local dev)
+```
 
 ---
 
-_v1.1 | 2026-02-04 | Antigravity Integration: VERIFIED_
+_v1.2 | 2026-02-04 | Sophia=OpenRouter, Anh=Antigravity_

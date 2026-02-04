@@ -1,0 +1,31 @@
+{
+  "tables": [
+    {
+      "name": "Scripts",
+      "fields": [
+        { "name": "Title", "type": "singleLineText" },
+        { "name": "Content", "type": "multilineText" },
+        { "name": "Status", "type": "singleSelect", "options": ["Draft", "Approved", "Generated"] },
+        { "name": "VoiceID", "type": "singleLineText" }
+      ]
+    },
+    {
+      "name": "Videos",
+      "fields": [
+        { "name": "Script", "type": "multipleRecordLinks", "linkedTable": "Scripts" },
+        { "name": "VideoURL", "type": "url" },
+        { "name": "Status", "type": "singleSelect", "options": ["Processing", "Ready", "Failed"] },
+        { "name": "D-ID_ID", "type": "singleLineText" }
+      ]
+    },
+    {
+      "name": "SocialPosts",
+      "fields": [
+        { "name": "Video", "type": "multipleRecordLinks", "linkedTable": "Videos" },
+        { "name": "Platform", "type": "singleSelect", "options": ["Twitter", "LinkedIn", "Instagram"] },
+        { "name": "PostedDate", "type": "dateTime" },
+        { "name": "Caption", "type": "multilineText" }
+      ]
+    }
+  ]
+}

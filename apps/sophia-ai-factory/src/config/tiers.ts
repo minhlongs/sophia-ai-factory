@@ -3,16 +3,16 @@ import { Tier, TierConfig, FeatureFlag } from "@/types";
 /**
  * Tier configurations for Sophia AI Video Factory
  * Pricing for KOL Content Factory service:
- * - Starter: 30 triệu VND (setup only)
- * - Growth: 50 triệu VND (setup + automation) ⭐ RECOMMENDED
- * - Premium: 75 triệu VND (full package)
+ * - Starter: $1,200 (setup only)
+ * - Growth: $2,000 (setup + automation) ⭐ RECOMMENDED
+ * - Premium: $3,000 (full package)
  */
 
 export const TIER_CONFIGS: Record<Tier, TierConfig> = {
   BASIC: {
     name: "Starter",
-    price: 30000000, // 30 triệu VND
-    priceDisplay: "30 triệu",
+    price: 1200, // $1,200 USD
+    priceDisplay: "$1,200",
     features: [
       // Starter tier - basic setup
     ],
@@ -26,8 +26,8 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
 
   PREMIUM: {
     name: "Growth",
-    price: 50000000, // 50 triệu VND
-    priceDisplay: "50 triệu",
+    price: 2000, // $2,000 USD
+    priceDisplay: "$2,000",
     recommended: true,
     features: [
       "enable_affiliate_engine",
@@ -45,8 +45,8 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
 
   ENTERPRISE: {
     name: "Premium",
-    price: 75000000, // 75 triệu VND
-    priceDisplay: "75 triệu",
+    price: 3000, // $3,000 USD
+    priceDisplay: "$3,000",
     features: [
       "enable_affiliate_engine",
       "enable_admin_dashboard",
