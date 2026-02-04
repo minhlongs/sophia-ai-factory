@@ -70,15 +70,15 @@ export function GlassCard({ children, className }: { children: React.ReactNode; 
 ```
 
 ## Todo List
-- [ ] Create `GlassCard.tsx`.
-- [ ] Add SVG noise texture to `public/assets` or inline SVG.
-- [ ] Test glass effect against the new Deep Space background (Phase 1).
-- [ ] Apply `GlassCard` to at least one section (e.g., Features) to verify look.
+- [x] Create `GlassCard.tsx`.
+- [x] Add SVG noise texture to `public/assets` or inline SVG.
+- [x] Test glass effect against the new Deep Space background (Phase 1).
+- [x] Apply `GlassCard` to at least one section (e.g., Features) to verify look.
 
 ## Success Criteria
-- [ ] Cards look "glassy" but readable.
-- [ ] Hover states are smooth and subtle.
-- [ ] Inner glow provides 3D depth.
+- [x] Cards look "glassy" but readable.
+- [x] Hover states are smooth and subtle.
+- [x] Inner glow provides 3D depth.
 
 ## Risk Assessment
 - **Risk:** Blur filters can be performance-heavy on low-end devices.

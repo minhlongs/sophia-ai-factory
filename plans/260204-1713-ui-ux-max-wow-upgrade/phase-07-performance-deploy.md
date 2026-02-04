@@ -36,15 +36,15 @@ Final polish before launch. Heavy visuals (glass, animations) can kill performan
     - Ensure screen reader navigation works (headings hierarchy).
 
 ## Todo List
-- [ ] Run Lighthouse audit.
-- [ ] Optimize images.
-- [ ] Verify metadata title/description.
-- [ ] Final production build test.
+- [x] Run Lighthouse audit.
+- [x] Optimize images.
+- [x] Verify metadata title/description.
+- [x] Final production build test.
 
 ## Success Criteria
-- [ ] Build passes with no errors.
-- [ ] Site loads fast (LCP < 2.5s).
-- [ ] Visuals remain "Wow" without lagging.
+- [x] Build passes with no errors.
+- [x] Site loads fast (LCP < 2.5s).
+- [x] Visuals remain "Wow" without lagging.
 
 ## Next Steps
 - **LAUNCH** 🚀

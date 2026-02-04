@@ -52,14 +52,14 @@ Upgrade the high-conversion components: Pricing Cards and ROI Calculator. These 
 ```
 
 ## Todo List
-- [ ] Rebuild Pricing Section with new `GlassCard` variants.
-- [ ] Implement Holographic border for "Best Value" plan.
-- [ ] Build interactive ROI Calculator with sliders and animated result.
+- [x] Rebuild Pricing Section with new `GlassCard` variants.
+- [x] Implement Holographic border for "Best Value" plan.
+- [x] Build interactive ROI Calculator with sliders and animated result.
 
 ## Success Criteria
-- [ ] Pricing cards clearly differentiate tiers.
-- [ ] ROI Calculator is fun to use and updates instantly.
-- [ ] "Estimated Revenue" number animates (counts up/down).
+- [x] Pricing cards clearly differentiate tiers.
+- [x] ROI Calculator is fun to use and updates instantly.
+- [x] "Estimated Revenue" number animates (counts up/down).
 
 ## Next Steps
 - Proceed to [Phase 6: Mobile Polish](./phase-06-mobile-polish.md).

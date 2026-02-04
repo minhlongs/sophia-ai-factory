@@ -81,15 +81,15 @@ export function Hero() {
 ```
 
 ## Todo List
-- [ ] Implement animated gradient background.
-- [ ] Build `Hero` component with Framer Motion text reveals.
-- [ ] Add floating 3D icons for n8n/OpenClaw.
-- [ ] Ensure mobile responsiveness (stack elements, reduce animation complexity).
+- [x] Implement animated gradient background.
+- [x] Build `Hero` component with Framer Motion text reveals.
+- [x] Add floating 3D icons for n8n/OpenClaw.
+- [x] Ensure mobile responsiveness (stack elements, reduce animation complexity).
 
 ## Success Criteria
-- [ ] Headline animates in smoothly.
-- [ ] Background feels "alive" but not distracting.
-- [ ] Zero layout shift during animation load.
+- [x] Headline animates in smoothly.
+- [x] Background feels "alive" but not distracting.
+- [x] Zero layout shift during animation load.
 
 ## Risk Assessment
 - **Risk:** Text readability over complex background.

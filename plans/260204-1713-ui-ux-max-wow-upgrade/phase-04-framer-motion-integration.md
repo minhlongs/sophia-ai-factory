@@ -60,15 +60,15 @@ export function FadeIn({ children, delay = 0, className }: { children: React.Rea
 ```
 
 ## Todo List
-- [ ] Create `FadeIn` animation wrapper.
-- [ ] Apply `FadeIn` to `Workflow`, `Features`, and `About` sections.
-- [ ] Update `Button` component with hover/tap scales.
-- [ ] Add `StaggerContainer` for grid items.
+- [x] Create `FadeIn` animation wrapper.
+- [x] Apply `FadeIn` to `Workflow`, `Features`, and `About` sections.
+- [x] Update `Button` component with hover/tap scales.
+- [x] Add `StaggerContainer` for grid items.
 
 ## Success Criteria
-- [ ] Scrolling feels fluid and dynamic.
-- [ ] No "flash of unstyled content" (FOUC).
-- [ ] Animations trigger at the correct viewport position.
+- [x] Scrolling feels fluid and dynamic.
+- [x] No "flash of unstyled content" (FOUC).
+- [x] Animations trigger at the correct viewport position.
 
 ## Next Steps
 - Proceed to [Phase 5: Premium Components](./phase-05-premium-components.md).

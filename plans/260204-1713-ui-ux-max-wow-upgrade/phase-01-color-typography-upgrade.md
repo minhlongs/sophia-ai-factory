@@ -72,16 +72,16 @@ Establish the visual foundation for the "Max WOW" upgrade. We will replace the b
 ```
 
 ## Todo List
-- [ ] Update `app/layout.tsx` with Space Grotesk & Inter.
-- [ ] Update `app/globals.css` with Deep Space palette using `@theme`.
-- [ ] Verify Tailwind v4 compilation matches new variables.
-- [ ] Check contrast ratios for body text (`#A1A1AA` on `#030014`).
+- [x] Update `app/layout.tsx` with Space Grotesk & Inter.
+- [x] Update `app/globals.css` with Deep Space palette using `@theme`.
+- [x] Verify Tailwind v4 compilation matches new variables.
+- [x] Check contrast ratios for body text (`#A1A1AA` on `#030014`).
 
 ## Success Criteria
-- [ ] "Orbitron" font completely removed.
-- [ ] Headings render in Space Grotesk.
-- [ ] Background is `#030014` (Deep Space).
-- [ ] Neon accents visible in buttons/links.
+- [x] "Orbitron" font completely removed.
+- [x] Headings render in Space Grotesk.
+- [x] Background is `#030014` (Deep Space).
+- [x] Neon accents visible in buttons/links.
 
 ## Risk Assessment
 - **Risk:** Tailwind v4 syntax errors if `postcss` plugin not configured correctly.
