@@ -1,11 +1,13 @@
 import React from 'react';
 import { Container } from '../ui/Container';
-import { Card } from '../ui/Card';
+import { GlassCard } from '../ui/GlassCard';
 import { Button } from '../ui/Button';
 import { GradientText } from '../ui/GradientText';
 import { Check, Star } from 'lucide-react';
 import { formatCurrency } from '@/app/lib/utils';
 import { motion } from 'framer-motion';
+import { FadeIn } from '../animations/FadeIn';
+import { StaggerContainer, staggerItem } from '../animations/StaggerContainer';
 
 export const Pricing = () => {
   const tiers = [
@@ -65,38 +67,33 @@ export const Pricing = () => {
       </div>
 
       <Container>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="text-center mb-16 relative z-10"
-        >
+        <FadeIn className="text-center mb-16 relative z-10">
           <h2 className="text-3xl md:text-5xl font-bold font-heading mb-4">
             Bảng Giá <GradientText>Dịch Vụ</GradientText>
           </h2>
           <p className="text-gray-400 max-w-2xl mx-auto">
             Chi phí đầu tư một lần, sở hữu hệ thống vĩnh viễn. Chỉ trả tiền API hàng tháng khi sử dụng.
           </p>
-        </motion.div>
+        </FadeIn>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
+        <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10" staggerChildren={0.1}>
           {tiers.map((tier, index) => (
             <motion.div
               key={index}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
+              variants={staggerItem}
               className={`relative ${tier.highlight ? 'md:-mt-8 md:mb-8' : ''}`}
             >
               {tier.highlight && (
-                <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gradient-to-r from-primary to-secondary text-white px-4 py-1 rounded-full text-sm font-bold flex items-center gap-1 shadow-lg shadow-primary/20 z-20 whitespace-nowrap">
-                  <Star className="w-3 h-3 fill-current" /> RECOMMENDED
-                </div>
+                <>
+                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gradient-to-r from-primary to-secondary text-white px-4 py-1 rounded-full text-sm font-bold flex items-center gap-1 shadow-lg shadow-primary/20 z-20 whitespace-nowrap">
+                    <Star className="w-3 h-3 fill-current" /> RECOMMENDED
+                  </div>
+                  {/* Holographic Border Effect */}
+                  <div className="absolute -inset-[2px] rounded-[18px] bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 opacity-75 blur-sm animate-pulse" />
+                </>
               )}
 
-              <Card className={`h-full flex flex-col p-8 ${tier.highlight ? 'border-primary/50 bg-primary/[0.03] relative overflow-hidden' : 'bg-surface/50'}`}>
+              <GlassCard className={`h-full flex flex-col p-8 ${tier.highlight ? 'bg-primary/[0.03] relative overflow-hidden shadow-neon-cyan/20 border-0' : 'bg-surface/50'}`}>
                 {tier.highlight && (
                   <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-secondary" />
                 )}
@@ -133,10 +130,10 @@ export const Pricing = () => {
                 >
                   Liên Hệ Tư Vấn
                 </Button>
-              </Card>
+              </GlassCard>
             </motion.div>
           ))}
-        </div>
+        </StaggerContainer>
       </Container>
     </section>
   );

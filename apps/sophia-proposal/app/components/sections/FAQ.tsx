@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Container } from '../ui/Container';
 import { GradientText } from '../ui/GradientText';
-import { Card } from '../ui/Card';
+import { GlassCard } from '../ui/GlassCard';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { FadeIn } from '../animations/FadeIn';
 
 export const FAQ = () => {
   const faqs = [
@@ -28,15 +29,17 @@ export const FAQ = () => {
   return (
     <section className="py-20">
       <Container>
-        <div className="text-center mb-16">
+        <FadeIn className="text-center mb-16">
           <h2 className="text-3xl md:text-5xl font-bold font-heading mb-4">
             Câu Hỏi <GradientText>Thường Gặp</GradientText>
           </h2>
-        </div>
+        </FadeIn>
 
         <div className="max-w-3xl mx-auto space-y-4">
           {faqs.map((faq, index) => (
-            <FAQItem key={index} question={faq.question} answer={faq.answer} />
+            <FadeIn key={index} delay={index * 0.1}>
+              <FAQItem question={faq.question} answer={faq.answer} />
+            </FadeIn>
           ))}
         </div>
       </Container>
@@ -48,7 +51,7 @@ const FAQItem = ({ question, answer }: { question: string, answer: string }) => 
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <Card className="overflow-hidden border-white/5 bg-white/[0.02]">
+    <GlassCard className="overflow-hidden border-white/5 bg-white/[0.02]" hoverEffect={false}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-full p-6 text-left flex justify-between items-center focus:outline-none"
@@ -71,6 +74,6 @@ const FAQItem = ({ question, answer }: { question: string, answer: string }) => 
           </motion.div>
         )}
       </AnimatePresence>
-    </Card>
+    </GlassCard>
   );
 };

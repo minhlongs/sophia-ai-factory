@@ -10,10 +10,12 @@ import { ROICalculator } from './components/sections/ROICalculator';
 import { Affiliates } from './components/sections/Affiliates';
 import { FAQ } from './components/sections/FAQ';
 import { Footer } from './components/sections/Footer';
+import { MobileNav } from './components/layout/MobileNav';
 
 export default function Home() {
   return (
     <main className="min-h-screen bg-background text-foreground overflow-x-hidden selection:bg-primary/30">
+      <MobileNav />
       <Hero />
       <Workflow />
       <TechStack />

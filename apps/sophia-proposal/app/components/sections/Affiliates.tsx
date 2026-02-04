@@ -1,7 +1,7 @@
 import React from 'react';
 import { Container } from '../ui/Container';
 import { GradientText } from '../ui/GradientText';
-import { Card } from '../ui/Card';
+import { GlassCard } from '../ui/GlassCard';
 import { ExternalLink } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -52,14 +52,14 @@ export const Affiliates = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.3, delay: index * 0.05 }}
             >
-              <Card className="p-4 hover:border-primary/40 transition-all group cursor-default h-full">
+              <GlassCard className="p-4 hover:border-primary/40 transition-all group cursor-default h-full">
                 <div className="flex justify-between items-start mb-2">
                   <span className="text-xs font-mono text-gray-500 uppercase">{prog.category}</span>
                   <ExternalLink className="w-3 h-3 text-gray-600 group-hover:text-primary transition-colors" />
                 </div>
                 <h3 className="font-bold text-white text-lg mb-1">{prog.name}</h3>
                 <p className="text-sm text-secondary font-medium">{prog.commission}</p>
-              </Card>
+              </GlassCard>
             </motion.div>
           ))}
         </div>

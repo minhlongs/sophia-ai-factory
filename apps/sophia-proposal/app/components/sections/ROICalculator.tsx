@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Container } from '../ui/Container';
 import { GradientText } from '../ui/GradientText';
-import { Card } from '../ui/Card';
+import { GlassCard } from '../ui/GlassCard';
 import { formatNumber } from '@/app/lib/utils';
 import { motion } from 'framer-motion';
+import { FadeIn } from '../animations/FadeIn';
 
 export const ROICalculator = () => {
   // Inputs
@@ -40,18 +41,19 @@ export const ROICalculator = () => {
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[100px] -z-10" />
 
       <Container>
-        <div className="text-center mb-16">
+        <FadeIn className="text-center mb-16">
           <h2 className="text-3xl md:text-5xl font-bold font-heading mb-4">
             Tính Toán <GradientText>Lợi Nhuận (ROI)</GradientText>
           </h2>
           <p className="text-gray-400">
             Ước tính tiềm năng thu nhập từ hệ thống Video Affiliate Automation
           </p>
-        </div>
+        </FadeIn>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Inputs */}
-          <Card className="p-8">
+          <FadeIn delay={0.2} direction="right">
+          <GlassCard className="p-8">
             <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
               <span className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary text-sm">1</span>
               Thông số đầu vào
@@ -118,11 +120,12 @@ export const ROICalculator = () => {
                 />
               </div>
             </div>
-          </Card>
+          </GlassCard>
+          </FadeIn>
 
           {/* Results */}
-          <div className="flex flex-col gap-6">
-             <Card className="p-8 flex-1 flex flex-col justify-center bg-gradient-to-br from-surface to-primary/5 border-primary/20">
+          <FadeIn delay={0.4} direction="left" className="flex flex-col gap-6">
+             <GlassCard className="p-8 flex-1 flex flex-col justify-center bg-gradient-to-br from-surface to-primary/5 border-primary/20 shadow-neon-cyan/10">
                 <h3 className="text-xl font-bold mb-8 flex items-center gap-2">
                   <span className="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center text-secondary text-sm">2</span>
                   Dự báo doanh thu
@@ -161,8 +164,8 @@ export const ROICalculator = () => {
                     </span>
                   </div>
                 </div>
-             </Card>
-          </div>
+             </GlassCard>
+          </FadeIn>
         </div>
       </Container>
     </section>

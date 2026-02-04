@@ -1,7 +1,7 @@
 import React from 'react';
 import { Container } from '../ui/Container';
 import { GradientText } from '../ui/GradientText';
-import { Card } from '../ui/Card';
+import { GlassCard } from '../ui/GlassCard';
 import { Bot, Cpu, Database, Cloud, Mic, Video, Zap, Layers } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -50,13 +50,13 @@ export const TechStack = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.3, delay: index * 0.05 }}
             >
-              <Card className="p-6 flex flex-col items-center justify-center text-center hover:border-primary/30 transition-colors group h-full">
+              <GlassCard className="p-6 flex flex-col items-center justify-center text-center h-full">
                 <div className="mb-4 p-3 rounded-xl bg-white/5 group-hover:bg-white/10 transition-colors">
                   {tool.icon}
                 </div>
                 <h3 className="font-bold text-lg mb-1">{tool.name}</h3>
                 <p className="text-xs text-gray-500">{tool.role}</p>
-              </Card>
+              </GlassCard>
             </motion.div>
           ))}
         </div>
