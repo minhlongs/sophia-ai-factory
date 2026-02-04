@@ -10,12 +10,14 @@ A high-conversion proposal website for the "AI Video Factory" solution, built fo
 
 ## ✨ Features
 
-- **Dark Cyberpunk Theme:** Modern, high-tech aesthetic with glassmorphism and gradients.
+- **Dark Cyberpunk Theme:** Deep Space aesthetic (`#030014`) with neon accents, noise textures, and floating orbs.
+- **Glassmorphism 2.0:** Premium frosted glass cards with micro-borders and inner glow effects.
+- **Motion System:** Global scroll reveals, staggered animations, and parallax effects using Framer Motion.
 - **Interactive ROI Calculator:** Real-time revenue estimation based on configurable inputs (views, CTR, conversion).
-- **Pricing Tiers:** Detailed breakdown of Minimal, Standard, and Scale packages.
+- **Pricing Tiers:** Detailed breakdown of Minimal, Standard, and Scale packages with holographic highlights.
 - **Visual Workflow:** Step-by-step diagram of the OpenClaw + n8n automation process.
-- **Responsive Design:** Optimized for mobile and desktop viewing.
-- **Framer Motion:** Smooth entrance animations and interactions.
+- **Responsive Design:** Mobile-first approach with full-screen glass navigation overlay.
+- **Performance:** Optimized with `LazyMotion` to reduce initial bundle size.
 
 ## 🛠️ Tech Stack
 
@@ -66,12 +68,13 @@ apps/sophia-proposal/
 
 ## 🎨 Design System
 
-- **Fonts:** Inter (Body), Orbitron (Headings)
+- **Fonts:** Space Grotesk (Headings), Inter (Body)
 - **Colors:**
-  - Background: `#050505`
-  - Primary: `#3b82f6` (Blue)
-  - Secondary: `#8b5cf6` (Purple)
-  - Accent: `#f472b6` (Pink)
+  - Background: `#030014` (Deep Space)
+  - Primary: `#00F5FF` (Neon Cyan)
+  - Secondary: `#8B5CF6` (Electric Purple)
+  - Accent: `#EC4899` (Hot Pink)
+  - Glass: `backdrop-blur-xl` with `white/10` borders
 
 ## 🚀 Deployment
 
