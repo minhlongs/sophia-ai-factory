@@ -16,6 +16,20 @@ export function Navbar() {
     { label: "FAQ", href: "/#faq" },
   ];
 
+  // Handle smooth scroll with offset for fixed navbar
+  const handleScrollClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    if (href.startsWith("/#")) {
+      e.preventDefault();
+      const id = href.slice(2);
+      const element = document.getElementById(id);
+      if (element) {
+        const offset = 80; // navbar height + padding
+        const y = element.getBoundingClientRect().top + window.pageYOffset - offset;
+        window.scrollTo({ top: y, behavior: "smooth" });
+      }
+    }
+  };
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-[var(--background)]/80 backdrop-blur-lg border-b border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -33,6 +47,7 @@ export function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
+                onClick={(e) => handleScrollClick(e, link.href)}
                 className="text-gray-300 hover:text-[var(--neon-cyan)] transition-colors text-sm font-medium"
               >
                 {link.label}
@@ -70,7 +85,10 @@ export function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  onClick={() => setIsMobileMenuOpen(false)}
+                  onClick={(e) => {
+                    handleScrollClick(e, link.href);
+                    setIsMobileMenuOpen(false);
+                  }}
                   className="block px-4 py-2 text-gray-300 hover:text-[var(--neon-cyan)] hover:bg-white/5 rounded-lg transition-colors"
                 >
                   {link.label}

@@ -1,104 +1,120 @@
-# Sophia AI Video Factory - Deployment Guide
+# Deployment Guide
 
-This guide covers the deployment of the Sophia AI Video Factory, including the frontend application, backend services (Airtable, n8n), and required environment configuration.
+This guide covers the deployment of the Sophia AI Video Factory. The application is designed to be "Turnkey", meaning most of the complex configuration is handled by the **Setup Wizard** after installation.
 
-## 1. Prerequisites
+## 1. Quick Start (Local Development)
 
-- **Node.js**: v18 or higher (for local development/build)
-- **Airtable Account**: For database
-- **n8n Instance**: Self-hosted or Cloud
-- **Vercel Account**: For frontend hosting
-- **OpenRouter/ElevenLabs/D-ID Accounts**: For AI APIs
+The fastest way to run Sophia AI Factory is locally.
 
-## 2. Environment Variables
+### Prerequisites
+- **Node.js**: v18 or higher
+- **Git**
 
-Configure these variables in your deployment environment (Vercel Project Settings) and locally in `.env.local`.
+### Installation Steps
 
-### Core Configuration
+1. **Clone & Install**
+   ```bash
+   git clone <repo-url>
+   cd sophia-ai-factory
+   npm install
+   ```
+
+2. **Launch Application**
+   ```bash
+   npm run dev
+   ```
+
+3. **Run the Setup Wizard**
+   - Open [http://localhost:3000](http://localhost:3000) in your browser.
+   - You will be automatically redirected to the Setup Wizard.
+   - Follow the 4-step on-screen instructions to connect your API keys and Database.
+
+   **What you'll need:**
+   - **OpenRouter API Key** (for LLM/Scripting)
+   - **ElevenLabs API Key** (for Voice)
+   - **D-ID API Key** (for Avatar Video)
+   - **Airtable Personal Access Token** (for Database)
+
+   *The Wizard provides direct links to get these keys.*
+
+## 2. Production Deployment (Vercel)
+
+Deploying to the cloud allows you to access your factory from anywhere.
+
+### Step 1: Push to GitHub
+Ensure your code is committed and pushed to a GitHub repository.
+
+### Step 2: Import to Vercel
+1. Log in to Vercel.
+2. Click **"Add New..."** -> **"Project"**.
+3. Import your `sophia-ai-factory` repository.
+
+### Step 3: Deployment Configuration
+- **Framework Preset**: Next.js (Automatic)
+- **Root Directory**: `apps/sophia-ai-factory` (if in a monorepo) or root.
+- **Build Command**: `npm run build`
+
+**Environment Variables**:
+For the initial deployment, **you do NOT need to set variables**. Deploying with empty variables will trigger the Setup Wizard in production, allowing you to configure it via the UI (note: in production, the Wizard will give you a list of variables to paste into Vercel settings manually for security).
+
+### Step 4: Post-Deployment Setup
+1. Visit your deployed URL (e.g., `https://sophia-factory.vercel.app`).
+2. Complete the Setup Wizard.
+3. Since Vercel is read-only, the Wizard cannot write the `.env` file for you.
+   - It will generate a **Configuration Snippet**.
+   - Copy this snippet.
+   - Go to Vercel Dashboard -> Settings -> Environment Variables.
+   - Paste the variables and Save.
+   - **Redeploy** your project for changes to take effect.
+
+## 3. Automation Setup (n8n)
+
+The "Brain" of the factory runs on n8n. You need to connect your local/deployed app to an n8n instance.
+
+### Option A: n8n Cloud (Recommended)
+1. Sign up for n8n Cloud.
+2. Import the workflows from the `workflows/` directory in this project.
+3. Activate the workflows.
+4. Copy the **Production Webhook URLs**.
+5. Add these URLs to your Sophia Factory configuration (via Wizard or .env).
+
+### Option B: Self-Hosted n8n
+1. Run n8n using Docker:
+   ```bash
+   docker run -it --rm --name n8n -p 5678:5678 -v ~/.n8n:/home/node/.n8n n8nio/n8n
+   ```
+2. Make sure n8n is accessible via a public URL (use a tunnel like `ngrok` if developing locally).
+3. Import workflows and configure webhooks.
+
+## 4. Advanced / Manual Configuration
+
+If you prefer to configure manually (skipping the Wizard), create a `.env.local` file with the following:
+
 ```bash
-# Admin Dashboard Authentication (Basic Auth)
-ADMIN_USER=admin
-ADMIN_PASS=your_secure_password
-
-# Feature Flags (Optional - defaults in src/config/flags.ts)
+# Feature Flags
+NEXT_PUBLIC_SETUP_WIZARD=true       # Set to false to disable wizard check
 NEXT_PUBLIC_FEATURE_AFFILIATE_ENGINE=true
-NEXT_PUBLIC_FEATURE_ADMIN_DASHBOARD=true
-```
 
-### Backend Integration
-```bash
-# Airtable Configuration
-# Get API Key: https://airtable.com/create/tokens (Scopes: data.records:read, data.records:write)
-# Get Base ID: From Airtable URL (starts with app...)
-AIRTABLE_API_KEY=pat_...
+# Admin Access (Optional)
+ADMIN_USER=admin
+ADMIN_PASS=changeme
+
+# Core Integrations
+OPENROUTER_API_KEY=sk-or-v1-...
+ELEVENLABS_API_KEY=...
+DID_API_KEY=...
+
+# Database (Airtable)
+AIRTABLE_API_KEY=pat...
 AIRTABLE_BASE_ID=app...
 
-# n8n Webhook URLs
-# These are the endpoints provided by your n8n workflow triggers
-N8N_WEBHOOK_GENERATE_SCRIPT=https://n8n.yourdomain.com/webhook/generate-script
-N8N_WEBHOOK_PUBLISH_VIDEO=https://n8n.yourdomain.com/webhook/publish-video
+# Automation Webhooks (n8n)
+N8N_WEBHOOK_GENERATE_SCRIPT=https://...
+N8N_WEBHOOK_PUBLISH_VIDEO=https://...
 ```
 
-## 3. Database Setup (Airtable)
+## 5. Troubleshooting
 
-1. Create a new Airtable Base.
-2. Create the following tables with specific columns:
-
-**Table: Scripts**
-- `Topic` (Single line text)
-- `Content` (Long text)
-- `Status` (Single select: draft, generated, voice_ready, video_ready, published)
-- `Tier` (Single select: BASIC, PREMIUM, ENTERPRISE)
-- `UserId` (Single line text)
-- `AudioUrl` (URL)
-- `VideoUrl` (URL)
-- `CreatedAt` (Date)
-- `UpdatedAt` (Date)
-
-**Table: Videos**
-- `ScriptId` (Link to Scripts)
-- `VideoUrl` (URL)
-- `Platform` (Single select: youtube, tiktok)
-- `Status` (Single select: processing, completed, failed)
-- `StatsViews` (Number)
-
-**Table: Affiliates**
-- `Name` (Single line text)
-- `Category` (Single select)
-- `Commission` (Single line text)
-- `Link` (URL)
-- `Tier` (Single select)
-
-## 4. Automation Setup (n8n)
-
-1. Import the workflow JSON files from `workflows/` directory into your n8n instance.
-2. Configure credentials in n8n for:
-   - OpenRouter (OpenAI compatible)
-   - ElevenLabs
-   - D-ID
-   - YouTube/Google
-3. Update the Webhook nodes to "Production" URL mode.
-4. Copy the production webhook URLs to your Vercel environment variables (`N8N_WEBHOOK_...`).
-
-## 5. Frontend Deployment (Vercel)
-
-1. Push code to GitHub.
-2. Import project into Vercel.
-3. Configure **Build Settings**:
-   - Framework Preset: Next.js
-   - Build Command: `npm run build`
-4. Add Environment Variables from Section 2.
-5. Deploy.
-
-## 6. Verification
-
-After deployment, run the `verify-env.js` script (if configured) or manually check:
-1. **Public Pages**: Visit `/` and `/affiliate-discovery`.
-2. **Admin Access**: Visit `/admin`, login, and check if stats load (verifies server actions).
-3. **Automation**: Go to `/dashboard`, submit a new project, and check Airtable for the new record.
-
-## 7. Troubleshooting
-
-- **Airtable Error**: Check API Key scopes and Base ID. Ensure table names match exactly.
-- **n8n Error**: Verify webhook URLs are reachable and method is POST.
-- **Build Error**: Check `npm run lint` locally.
+- **Wizard Loops**: If you keep seeing the wizard after setup, check if `NEXT_PUBLIC_SETUP_COMPLETE=true` (or equivalent check in code) is persisting. In Vercel, ensure you Redeployed after setting env vars.
+- **API Errors**: Check the `Airtable` connection first. It is the most common point of failure. Ensure the `Base ID` is correct and the Token has `data.records:read` and `data.records:write` scopes.
+- **Build Failures**: Run `npm run lint` locally to catch TypeScript errors before pushing.

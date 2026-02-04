@@ -86,7 +86,7 @@ export function Pricing() {
                       <CardTitle className="text-2xl mb-2">{tier.name}</CardTitle>
                       <div className="flex items-baseline gap-2">
                         <span className="text-4xl font-bold text-white">
-                          ${tier.price.toLocaleString()}
+                          {tier.priceDisplay}
                         </span>
                         <span className="text-gray-500">one-time</span>
                       </div>
