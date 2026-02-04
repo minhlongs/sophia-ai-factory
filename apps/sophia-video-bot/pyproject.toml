@@ -1,0 +1,15 @@
+[project]
+name = "sophia-video-bot"
+version = "0.1.0"
+description = "AI Video Factory with tier-based feature unlocking"
+requires-python = ">=3.11"
+dependencies = [
+    "python-telegram-bot>=20.0",
+    "openai>=1.0",
+    "supabase>=2.0",
+    "python-dotenv>=1.0",
+    "httpx>=0.25",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "ruff", "mypy"]
