@@ -30,7 +30,12 @@ graph TD
         GenVideo[Render Video Flow]
     end
 
+    subgraph Mobile [Telegram]
+        Bot[Telegram Bot]
+    end
+
     User --> Middleware
+    Mobile --> API
     Middleware -- Unconfigured --> Wizard
     Middleware -- Configured --> Dash
 
@@ -98,6 +103,19 @@ graph TD
   - Webhook signatures verified using `standard-webhooks`.
   - No payment data stored in application database.
   - Product IDs and Secrets managed via environment variables.
+
+### 6. Mobile Command Center (Telegram)
+- **Role**: Remote interface for campaign management.
+- **Components**:
+  - **Bot**: Registers webhooks with Telegram API.
+  - **Webhook Handler**: Validates secrets and routes commands (`/campaign`, `/status`).
+  - **User Mapping**: Links `chat_id` to Supabase `user_id` via `/email` verification.
+- **Flow**:
+  1. **Command**: User sends `/campaign New Topic`.
+  2. **Validation**: Bot checks if `chat_id` exists in `user_profiles`.
+  3. **Trigger**: Bot inserts record into `campaigns` and sends `campaign.created` event to Inngest.
+  4. **Feedback**: Bot replies with "Campaign Started".
+  5. **Notification**: (Future) System sends push notification back to Telegram on completion.
 
 ## Security Architecture
 

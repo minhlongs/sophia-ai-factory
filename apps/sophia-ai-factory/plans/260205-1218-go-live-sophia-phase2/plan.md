@@ -64,7 +64,7 @@ created: 2026-02-05
 ## Detailed Phases
 
 - [Phase 1: Infrastructure](./phase-01-infrastructure.md)
-- [Phase 2: Telegram Bot](./phase-02-telegram-bot.md)
+- [x] [Phase 2: Telegram Bot](./phase-02-telegram-bot.md)
 - [Phase 3: Customer Onboarding](./phase-03-onboarding.md)
 - [Phase 4: Testing](./phase-04-testing.md)
 
