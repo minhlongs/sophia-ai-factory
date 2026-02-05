@@ -23,7 +23,6 @@ import {
   UserProfileFormValues,
 } from '@/lib/schemas/settings';
 import { updateUserProfile } from '@/app/actions/settings';
-import { ThemeSwitcher } from '@/components/settings/theme-switcher';
 
 interface SettingsFormProps {
   defaultValues: UserProfileFormValues;
@@ -74,11 +73,6 @@ export function SettingsForm({ defaultValues }: SettingsFormProps) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">Settings</h2>
-        <ThemeSwitcher />
-      </div>
-
       <div className="grid gap-6">
         {/* Profile Section */}
         <Card>
@@ -102,6 +96,86 @@ export function SettingsForm({ defaultValues }: SettingsFormProps) {
                   {errors.fullName.message}
                 </p>
               )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                {...register('email')}
+                disabled={true}
+                className="bg-muted text-muted-foreground"
+              />
+              <p className="text-xs text-muted-foreground">
+                Email address is managed via your authentication provider and cannot be changed here.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Appearance Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Appearance</CardTitle>
+            <CardDescription>
+              Customize the look and feel of the dashboard.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <Label>Theme Preference</Label>
+              <div className="grid grid-cols-3 gap-4">
+                <div
+                  className={`cursor-pointer items-center justify-between rounded-md border-2 p-4 hover:bg-accent hover:text-accent-foreground ${
+                    watch('settings.theme') === 'light'
+                      ? 'border-primary'
+                      : 'border-muted'
+                  }`}
+                  onClick={() =>
+                    setValue('settings.theme', 'light', { shouldDirty: true })
+                  }
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="h-4 w-4 rounded-full border border-primary bg-[#ffffff]" />
+                    <span className="font-medium">Light</span>
+                  </div>
+                </div>
+                <div
+                  className={`cursor-pointer items-center justify-between rounded-md border-2 p-4 hover:bg-accent hover:text-accent-foreground ${
+                    watch('settings.theme') === 'dark'
+                      ? 'border-primary'
+                      : 'border-muted'
+                  }`}
+                  onClick={() =>
+                    setValue('settings.theme', 'dark', { shouldDirty: true })
+                  }
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="h-4 w-4 rounded-full border border-primary bg-[#09090b]" />
+                    <span className="font-medium">Dark</span>
+                  </div>
+                </div>
+                <div
+                  className={`cursor-pointer items-center justify-between rounded-md border-2 p-4 hover:bg-accent hover:text-accent-foreground ${
+                    watch('settings.theme') === 'system'
+                      ? 'border-primary'
+                      : 'border-muted'
+                  }`}
+                  onClick={() =>
+                    setValue('settings.theme', 'system', { shouldDirty: true })
+                  }
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-4 w-4 items-center justify-center rounded-full border border-primary bg-transparent">
+                      <span className="text-[10px] font-bold">A</span>
+                    </div>
+                    <span className="font-medium">System</span>
+                  </div>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Select your preferred theme for the dashboard.
+              </p>
             </div>
           </CardContent>
         </Card>

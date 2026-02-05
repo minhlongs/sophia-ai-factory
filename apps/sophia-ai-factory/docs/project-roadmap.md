@@ -1,7 +1,7 @@
 # Project Roadmap
 
 **Project Name:** Sophia AI Video Factory
-**Current Version:** 1.0.2 (Bootstrap Review Complete)
+**Current Version:** 1.1.0 (User Settings & Health Monitoring)
 **Last Updated:** 2026-02-05
 
 ## 📅 Roadmap Overview
@@ -29,7 +29,7 @@
   - [x] Create Project form (Topic & Audience).
   - [x] Real-time status polling.
 - [x] **User Settings & Security**:
-  - [x] User Profile Management (`/settings`).
+  - [x] User Profile Management (`/dashboard/settings`).
   - [x] Secure Encrypted API Key Storage (AES-256-GCM).
   - [x] Theme Management (Dark/Light Mode).
   - [x] Notification Preferences (Email/Telegram).
@@ -58,6 +58,12 @@
 - [ ] **Analytics**: Deep dive into video performance metrics.
 
 ## Changelog
+
+### v1.1.0 - User Settings & Health Monitoring
+- **Feature**: Complete User Settings implementation with secure API key storage.
+- **Feature**: System Health Dashboard for real-time monitoring.
+- **Security**: AES-256-GCM encryption for API keys.
+- **UX**: Theme management and Notification preferences.
 
 ### v1.0.2 - Bootstrap Review Complete
 - **Status**: Validated core pipeline functionality.
