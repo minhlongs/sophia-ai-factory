@@ -83,7 +83,7 @@ describe('Checkout API Route', () => {
 
   it('should create checkout session with valid tier mapping', async () => {
     // Setup env vars for test BEFORE importing route
-    process.env.POLAR_PRODUCT_BASIC_ID = 'basic_123';
+    process.env.NEXT_PUBLIC_POLAR_PRODUCT_STARTER_ID = 'basic_123';
 
     const { POST } = await import('./route');
 
