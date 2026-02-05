@@ -51,7 +51,7 @@ export function FranchiseForm() {
                  <span className="material-symbols-rounded text-3xl text-on-secondary-container">chat</span>
                </div>
                <Typography variant="body-small" className="italic text-on-primary">
-                 "Thành công của bạn là sứ mệnh của chúng tôi."
+                 &quot;Thành công của bạn là sứ mệnh của chúng tôi.&quot;
                </Typography>
             </div>
           </div>
