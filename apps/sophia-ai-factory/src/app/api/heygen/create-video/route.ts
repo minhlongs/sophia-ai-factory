@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server";
-import { getHeyGenClient } from "@/lib/heygen/heygen-client";
+import { ServiceFactory } from "@/lib/services/factory";
 
 export async function POST(req: Request) {
-  const client = getHeyGenClient();
-  if (!client) {
-    return NextResponse.json({ error: "HeyGen configuration missing" }, { status: 503 });
-  }
+  const videoService = ServiceFactory.getVideoService();
 
   try {
     const body = await req.json();
@@ -15,7 +12,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    const videoId = await client.createVideo({ avatarId, voiceId, script, title });
+    const videoId = await videoService.createVideo({ avatarId, voiceId, script, title });
     return NextResponse.json({ videoId });
   } catch (error) {
     console.error("Create video error:", error);

@@ -95,13 +95,13 @@ describe('HeyGen API Routes', () => {
       });
     });
 
-    it('should return 503 if client missing', async () => {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+    it('should return 500 if client missing', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (heygenClientModule.getHeyGenClient as any).mockReturnValue(null);
       const req = new NextRequest('http://localhost', { method: 'POST' });
 
       const response = await createVideo(req);
-      expect(response.status).toBe(503);
+      expect(response.status).toBe(500);
     });
 
     it('should return 400 if required fields missing', async () => {
@@ -149,14 +149,14 @@ describe('HeyGen API Routes', () => {
       expect(mockClient.getVideoStatus).toHaveBeenCalledWith('vid_123');
     });
 
-    it('should return 503 if client missing', async () => {
+    it('should return 500 if client missing', async () => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (heygenClientModule.getHeyGenClient as any).mockReturnValue(null);
         const req = new NextRequest('http://localhost');
         const params = Promise.resolve({ id: 'vid_123' });
 
         const response = await getStatus(req, { params });
-        expect(response.status).toBe(503);
+        expect(response.status).toBe(500);
     });
 
     it('should handle errors', async () => {

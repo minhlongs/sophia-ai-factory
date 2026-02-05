@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:mock": "NEXT_PUBLIC_MOCK_AI_SERVICES=true next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -12,7 +13,10 @@
     "verify": "./scripts/verify.sh",
     "verify:green": "./scripts/verify.sh",
     "test": "vitest",
-    "setup:production": "tsx scripts/production-setup.ts"
+    "test:e2e": "NEXT_PUBLIC_MOCK_AI_SERVICES=true playwright test",
+    "test:smoke": "tsx scripts/smoke-test.ts",
+    "setup:production": "tsx scripts/production-setup.ts",
+    "infra:sync": "./scripts/infra-sync.sh"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -44,6 +48,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.1",
     "@tailwindcss/postcss": "^4",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.2",
@@ -59,6 +64,7 @@
     "eslint-config-next": "16.1.6",
     "inquirer": "^13.2.2",
     "jsdom": "^28.0.0",
+    "msw": "^2.12.8",
     "ora": "^9.3.0",
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",

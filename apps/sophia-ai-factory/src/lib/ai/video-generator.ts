@@ -1,5 +1,6 @@
 import { Tier } from "@/types";
-import { getHeyGenClient } from "@/lib/heygen/heygen-client";
+import { ServiceFactory } from "@/lib/services/factory";
+import { VideoStatus } from "@/lib/services/types";
 
 interface GenerateVideoInput {
   script: unknown; // typed as ScriptOutput in practice
@@ -16,104 +17,57 @@ interface VideoOutput {
  * Returns a job ID (for HeyGen) or a mock ID.
  */
 export async function startVideoGeneration(input: GenerateVideoInput): Promise<string> {
-  const { tier } = input;
-  const heygenClient = getHeyGenClient();
+  const { tier, script: rawScript } = input;
+  const videoService = ServiceFactory.getVideoService();
 
-  if (heygenClient) {
-    try {
-      // Extract narration from script
-      const script = input.script as { scenes: Array<{ narration: string }> };
-      const fullNarration = script.scenes.map(s => s.narration).join(' ');
+  // Extract narration from script
+  const script = rawScript as { scenes: Array<{ narration: string }> };
+  const fullNarration = script.scenes.map(s => s.narration).join(' ');
 
-      const avatarId = 'default_avatar_001'; // Replace with a valid default ID
-      const voiceId = 'en-US-1'; // Replace with a valid default Voice ID
+  const avatarId = 'default_avatar_001'; // Replace with a valid default ID
+  const voiceId = 'en-US-1'; // Replace with a valid default Voice ID
 
-      console.log('Starting HeyGen video generation job...');
-      const videoId = await heygenClient.createVideo({
-        avatarId,
-        voiceId,
-        script: fullNarration,
-        title: `Sophia Campaign - ${new Date().toISOString()}`
-      });
-      return videoId;
-    } catch (error) {
-      console.error('HeyGen API error:', error);
-      console.warn('Falling back to mock video generation');
-    }
-  } else {
-    console.warn('HEYGEN_API_KEY not set, using mock video generation');
-  }
+  console.log('Starting video generation job via ServiceFactory...', { tier });
 
-  // Return a mock ID that starts with "mock_"
-  return `mock_${tier}_${Date.now()}`;
+  return await videoService.createVideo({
+    avatarId,
+    voiceId,
+    script: fullNarration,
+    title: `Sophia Campaign - ${new Date().toISOString()}`
+  });
 }
 
 /**
  * Checks the status of a video generation job.
  */
-export async function checkVideoGenerationStatus(jobId: string, tier: Tier): Promise<{ status: 'processing' | 'completed' | 'failed'; output?: VideoOutput; error?: string }> {
-  const heygenClient = getHeyGenClient();
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function checkVideoGenerationStatus(jobId: string, _tier: Tier): Promise<{ status: 'processing' | 'completed' | 'failed'; output?: VideoOutput; error?: string }> {
+  const videoService = ServiceFactory.getVideoService();
 
-  // Handle mock jobs
-  if (jobId.startsWith("mock_")) {
-    // Simulate processing time check based on timestamp in mock ID
-    const timestamp = parseInt(jobId.split('_')[2]);
-    const elapsed = Date.now() - timestamp;
+  try {
+    const status: VideoStatus = await videoService.getVideoStatus(jobId);
 
-    if (elapsed < 5000) {
-      return { status: 'processing' };
+    if (status.status === 'completed') {
+      if (!status.video_url) return { status: 'failed', error: 'Completed but no URL' };
+      return {
+        status: 'completed',
+        output: {
+          video_url: status.video_url,
+          thumbnail_url: status.thumbnail_url || status.video_url.replace('.mp4', '.jpg')
+        }
+      };
     }
 
-    const videoSamples = tier === 'ENTERPRISE'
-      ? [
-          {
-            video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-            thumbnail_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerBlazes.jpg"
-          }
-        ]
-      : [
-          {
-            video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-            thumbnail_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg"
-          }
-        ];
-
-    const sample = videoSamples[0];
-    return {
-      status: 'completed',
-      output: sample
-    };
-  }
-
-  // Handle real HeyGen jobs
-  if (heygenClient) {
-    try {
-      const status = await heygenClient.getVideoStatus(jobId);
-
-      if (status.status === 'completed') {
-        if (!status.video_url) return { status: 'failed', error: 'Completed but no URL' };
-        return {
-          status: 'completed',
-          output: {
-            video_url: status.video_url,
-            thumbnail_url: status.thumbnail_url || status.video_url.replace('.mp4', '.jpg')
-          }
-        };
-      }
-
-      if (status.status === 'failed') {
-        return { status: 'failed', error: status.error || 'HeyGen generation failed' };
-      }
-
-      return { status: 'processing' };
-    } catch (error) {
-      console.error(`Error checking HeyGen status for ${jobId}:`, error);
-      // Return processing on transient errors so we retry
-      return { status: 'processing' };
+    if (status.status === 'failed') {
+      return { status: 'failed', error: status.error || 'Video generation failed' };
     }
-  }
 
-  return { status: 'failed', error: 'HeyGen client unavailable for non-mock ID' };
+    return { status: 'processing' };
+  } catch (error) {
+    console.error(`Error checking video status for ${jobId}:`, error);
+    // Return processing on transient errors so we retry
+    return { status: 'processing' };
+  }
 }
 
 /**

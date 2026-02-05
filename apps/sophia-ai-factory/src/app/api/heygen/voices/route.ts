@@ -1,14 +1,11 @@
 import { NextResponse } from "next/server";
-import { getHeyGenClient } from "@/lib/heygen/heygen-client";
+import { ServiceFactory } from "@/lib/services/factory";
 
 export async function GET() {
-  const client = getHeyGenClient();
-  if (!client) {
-    return NextResponse.json({ voices: [] });
-  }
+  const videoService = ServiceFactory.getVideoService();
 
   try {
-    const voices = await client.listVoices();
+    const voices = await videoService.listVoices();
     return NextResponse.json({ voices });
   } catch (error) {
     console.error("Voice API error:", error);
