@@ -19,7 +19,13 @@ The fastest way to run Sophia AI Factory is locally.
    npm install
    ```
 
-2. **Launch Application**
+2. **Run Tests (Optional but Recommended)**
+   Ensure the application logic is stable before running.
+   ```bash
+   npm test
+   ```
+
+3. **Launch Application**
    ```bash
    npm run dev
    ```

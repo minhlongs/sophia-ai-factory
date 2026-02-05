@@ -73,7 +73,7 @@ export interface AccessCheck {
 
 // --- Persistence Types (Airtable) ---
 
-export type ScriptStatus = "draft" | "generated" | "approved" | "voice_generating" | "voice_ready" | "video_generating" | "video_ready" | "published";
+export type ScriptStatus = "draft" | "generated" | "approved" | "voice_generating" | "voice_ready" | "video_queued" | "video_generating" | "video_ready" | "published";
 
 export interface ScriptRecord {
   id?: string;

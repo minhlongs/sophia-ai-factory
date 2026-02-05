@@ -1,8 +1,8 @@
 # Project Roadmap
 
 **Project Name:** Sophia AI Video Factory
-**Current Version:** 1.0.0 (Turnkey Release)
-**Last Updated:** 2026-02-04
+**Current Version:** 1.0.2 (Bootstrap Review Complete)
+**Last Updated:** 2026-02-05
 
 ## 📅 Roadmap Overview
 
@@ -22,19 +22,24 @@
 - [x] **CLI Tools**: `setup.sh` and `verify.sh` for easy installation.
 - [x] **Affiliate Engine**: Product discovery UI with JSON data source.
 
-### 🚧 Phase 3: Core Pipeline (In Progress)
+### ✅ Phase 3: Core Pipeline (Completed)
 **Goal:** Wire up the "Brain" to the "Body" (Frontend to n8n Automation).
-- [ ] **Script Generation**:
-  - [ ] Connect `Generate Script` button to `/api/generate-script`.
-  - [ ] Poll Airtable for script status updates.
-  - [ ] Display generated scripts in Dashboard.
-- [ ] **Video Rendering**:
-  - [ ] Connect `Render Video` button to `/api/render-video`.
-  - [ ] Handle async status (Processing -> Completed).
-  - [ ] Video player integration in Dashboard.
-- [ ] **Workflow Polishing**:
-  - [ ] Refine n8n prompts for better script quality.
-  - [ ] Add error handling for automation failures.
+- [x] **Dashboard UI**:
+  - [x] Project list view with status badges.
+  - [x] Create Project form (Topic & Audience).
+  - [x] Real-time status polling.
+- [x] **Script Generation**:
+  - [x] Connect `Generate Script` button to `/api/generate-script` (via Server Action).
+  - [x] Poll Airtable for script status updates (Implemented in UI).
+  - [x] Display generated scripts in Dashboard.
+- [x] **Video Rendering**:
+  - [x] Connect `Render Video` button to `/api/render-video` (via Server Action).
+  - [x] Handle async status (Processing -> Completed) (Implemented in UI).
+  - [x] Video player integration in Dashboard.
+- [x] **Workflow Polishing**:
+  - [x] Configure n8n workflows (External).
+  - [x] Refine n8n prompts for better script quality.
+  - [x] Add error handling for automation failures.
 
 ### 🔮 Phase 4: Scaling & SaaS (Future)
 **Goal:** Multi-user support and advanced features.
@@ -45,6 +50,16 @@
 - [ ] **Analytics**: Deep dive into video performance metrics.
 
 ## Changelog
+
+### v1.0.2 - Bootstrap Review Complete
+- **Status**: Validated core pipeline functionality.
+- **Docs**: Finalized roadmap and architecture documentation.
+- **Testing**: Confirmed test suite coverage for validation and webhooks.
+
+### v1.0.1 - Post-Bootstrap Refinement
+- **Refactor**: Modularized Setup Wizard into step components for better maintainability.
+- **Security**: Added production guard for `.env.local` writing in API routes.
+- **Testing**: Added unit tests for validation services and integration tests for Polar webhooks.
 
 ### v1.0.0 - Turnkey Release
 - **Feature**: Added `/setup-wizard` for automated onboarding.

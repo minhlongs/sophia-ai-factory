@@ -1,7 +1,7 @@
 # Codebase Summary
 
-**Last Updated:** 2026-02-04
-**Version:** 1.0.0 (Turnkey Release)
+**Last Updated:** 2026-02-05
+**Version:** 1.0.2 (Bootstrap Review Complete)
 
 ## Project Structure Overview
 
@@ -54,8 +54,10 @@ Sophia AI Video Factory is a Next.js 16 application structured around the App Ro
 
 ### `/workflows` (Automation)
 - Contains JSON exports of the n8n workflows required to run the "Brain" of the factory.
-- **`generate_script.json`**: LLM pipeline.
-- **`render_video.json`**: Voice + Avatar pipeline.
+- **`script-generator.json`**: LLM pipeline for generating scripts from topics.
+- **`video-generator.json`**: Orchestrates video creation (avatar + background).
+- **`voice-generator.json`**: ElevenLabs TTS generation pipeline.
+- **`publish-workflow.json`**: Final video publishing logic.
 
 ## Configuration Management
 - **Environment Variables**:
@@ -70,6 +72,7 @@ Sophia AI Video Factory is a Next.js 16 application structured around the App Ro
 - **Turnkey Setup Wizard**: Implemented a comprehensive 4-step wizard to eliminate manual `.env` editing for end-users.
 - **Middleware Redirection**: Automatic routing to wizard for fresh installs.
 - **Affiliate Engine**: Added `src/data/affiliate-programs.json` and discovery UI.
+- **Testing Infrastructure**: Added Vitest configuration with unit and integration tests for core logic.
 
 ## Tech Stack Details
 - **Framework**: Next.js 16.1.6
@@ -78,3 +81,4 @@ Sophia AI Video Factory is a Next.js 16 application structured around the App Ro
 - **State Management**: React Server Actions + URL State
 - **Database**: Airtable (via REST API)
 - **AI Integration**: OpenRouter (LLM), ElevenLabs (TTS), D-ID (Video)
+- **Testing**: Vitest, React Testing Library
