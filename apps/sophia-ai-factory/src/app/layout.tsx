@@ -4,6 +4,9 @@ import "./globals.css";
 import { Navbar } from "./components/layout/navbar";
 import { QueryProvider } from "@/components/providers/query-provider";
 
+import { ThemeProvider } from "@/components/providers/theme-provider";
+import { Toaster } from "sonner";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -62,10 +65,18 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <QueryProvider>
-          <Navbar />
-          {children}
-        </QueryProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <QueryProvider>
+            <Navbar />
+            {children}
+            <Toaster />
+          </QueryProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
