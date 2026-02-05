@@ -77,7 +77,7 @@ export abstract class BaseAdapter implements IngestionAdapter {
     return result
   }
 
-  protected async mapCategory(_networkCategory: string): Promise<number | null> {
+  protected async mapCategory(_networkCategory: string): Promise<number | null> { // eslint-disable-line @typescript-eslint/no-unused-vars
     return null
   }
 }

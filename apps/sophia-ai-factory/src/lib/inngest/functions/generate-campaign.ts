@@ -144,6 +144,9 @@ export const generateCampaign = inngest.createFunction(
       return voiceoverResult.audio_url;
     });
 
+    // Prevent unused variable warning
+    console.log(`Audio generated/retrieved: ${audioUrl ? 'Yes' : 'No'}`);
+
     // Step 3: Generate Video (skip if resuming from finalize)
     const videoAssets = await step.run("generate-video", async () => {
       if (resume && resumeFrom === "finalize") {

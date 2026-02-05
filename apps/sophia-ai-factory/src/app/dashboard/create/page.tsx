@@ -1,7 +1,14 @@
 import React from "react";
 import { CreateProjectFormWithTemplates } from "../components/campaign-creation-form-with-template-selector";
+import { templateService } from "@/lib/services/template-service";
+import { createServerClient } from "@/lib/supabase/server";
 
-export default function CreateProjectPage() {
+export default async function CreateProjectPage() {
+  const supabase = await createServerClient();
+  const { data: { session } } = await supabase.auth.getSession();
+
+  const templates = await templateService.getTemplates(session?.user?.id);
+
   return (
     <div className="max-w-6xl mx-auto space-y-8">
       <div>
@@ -9,7 +16,7 @@ export default function CreateProjectPage() {
         <p className="text-gray-500">Choose a template and customize your campaign</p>
       </div>
 
-      <CreateProjectFormWithTemplates />
+      <CreateProjectFormWithTemplates templates={templates} />
     </div>
   );
 }
