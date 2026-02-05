@@ -74,6 +74,22 @@ For the initial deployment, **you do NOT need to set variables**. Deploying with
    - Paste the variables and Save.
    - **Redeploy** your project for changes to take effect.
 
+### Step 5: Production Setup Wizard (CLI)
+
+After deploying, run the interactive production setup wizard to verify connections and configure third-party services (Polar, Telegram, Supabase).
+
+```bash
+# Run locally against your production environment credentials
+npm run setup:production
+```
+
+This wizard will:
+1. **Verify Environment Variables**: Checks for missing keys.
+2. **Supabase**: Tests connection and verifies required tables exist.
+3. **Polar.sh**: Connects to Polar, syncs products (Starter, Growth, Premium), and helps setup webhooks.
+4. **Telegram**: Verifies Bot Token and configures the Webhook URL.
+5. **Report**: Generates a `production-setup-report.md` with the status of your system.
+
 ## 3. Automation Setup (n8n)
 
 The "Brain" of the factory runs on n8n. You need to connect your local/deployed app to an n8n instance.

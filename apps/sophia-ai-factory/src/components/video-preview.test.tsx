@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { VideoPreview } from './video-preview';
 
@@ -48,17 +48,15 @@ describe('VideoPreview Component', () => {
 
     // Initial state shows thumbnail and play button
     const thumb = screen.getByAltText('Video thumbnail');
-    expect(thumb.getAttribute('src')).toBe(thumbUrl);
+    // Next.js Image component modifies the src, so we check if it contains the original URL
+    expect(thumb.getAttribute('src')).toContain('test.com%2Fthumb.jpg');
 
     // Play button should be present
-    // Note: Lucide icons might not have accessible names by default unless aria-label is added to Button
-    // Looking at component code: Button has just Icon.
-    // Let's find button by role 'button' inside the container
-    const playButton = screen.getAllByRole('button')[0];
+    const playButton = screen.getByRole('button', { name: /play video/i });
     expect(playButton).toBeDefined();
 
-    // Download button should be present
-    expect(screen.getByText('Download Video')).toBeDefined();
+    // Download button should be present as a link
+    expect(screen.getByRole('link', { name: /download video/i })).toBeDefined();
   });
 
   it('switches to video player on play click', () => {
@@ -72,8 +70,7 @@ describe('VideoPreview Component', () => {
     );
 
     // Click play
-    // The button is inside the overlay
-    const playButton = screen.getAllByRole('button')[0];
+    const playButton = screen.getByRole('button', { name: /play video/i });
     fireEvent.click(playButton);
 
     // Now video element should be present

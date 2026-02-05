@@ -49,6 +49,7 @@ describe('HeyGenClient', () => {
         { avatar_id: 'av1', name: 'Avatar 1', preview_image_url: 'http://test.com/1.jpg', gender: 'female' }
       ];
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
       (global.fetch as any).mockResolvedValue({
         ok: true,
         json: async () => ({ data: { avatars: mockAvatars } })
@@ -67,6 +68,7 @@ describe('HeyGenClient', () => {
     });
 
     it('should handle API errors gracefully', async () => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
       (global.fetch as any).mockResolvedValue({
         ok: false,
         status: 500,
@@ -86,6 +88,7 @@ describe('HeyGenClient', () => {
   describe('createVideo', () => {
     it('should create video and return video_id', async () => {
       const mockVideoId = 'vid_123';
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
       (global.fetch as any).mockResolvedValue({
         ok: true,
         json: async () => ({ data: { video_id: mockVideoId } })
@@ -122,6 +125,7 @@ describe('HeyGenClient', () => {
         error: undefined
       };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
       (global.fetch as any).mockResolvedValue({
         ok: true,
         json: async () => ({
@@ -142,6 +146,7 @@ describe('HeyGenClient', () => {
     });
 
     it('should throw error on failure', async () => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
       (global.fetch as any).mockResolvedValue({
         ok: false,
         status: 404,

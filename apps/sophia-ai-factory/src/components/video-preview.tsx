@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, Play, Download, AlertCircle } from "lucide-react";
@@ -23,9 +24,6 @@ export function VideoPreview({
   campaignId,
 }: VideoPreviewProps) {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [pollingStatus, setPollingStatus] = useState(status);
-  const [videoSrc, setVideoSrc] = useState(videoUrl);
-  const [thumbSrc, setThumbSrc] = useState(thumbnailUrl);
 
   // Poll for status if processing
   useEffect(() => {
@@ -36,13 +34,6 @@ export function VideoPreview({
     // const intervalId = setInterval(checkStatus, 5000);
     // return () => clearInterval(intervalId);
   }, [status, campaignId]);
-
-  // Update local state when props change
-  useEffect(() => {
-    setPollingStatus(status);
-    if (videoUrl) setVideoSrc(videoUrl);
-    if (thumbnailUrl) setThumbSrc(thumbnailUrl);
-  }, [status, videoUrl, thumbnailUrl]);
 
   const isLoading = status === "processing_video" || status === "queued" || status === "processing_script";
   const isFailed = status === "failed";
@@ -101,22 +92,23 @@ export function VideoPreview({
           </div>
         ) : null}
 
-        {videoSrc ? (
+        {videoUrl ? (
           isPlaying ? (
             <video
-              src={videoSrc}
+              src={videoUrl}
               controls
               autoPlay
               className="w-full h-full object-cover"
-              poster={thumbSrc || undefined}
+              poster={thumbnailUrl || undefined}
             />
           ) : (
             <div className="relative w-full h-full">
-              {thumbSrc && (
-                <img
-                  src={thumbSrc}
+              {thumbnailUrl && (
+                <Image
+                  src={thumbnailUrl}
                   alt="Video thumbnail"
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
                 />
               )}
               <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition-colors">
@@ -124,6 +116,7 @@ export function VideoPreview({
                   size="icon"
                   className="w-16 h-16 rounded-full pl-1"
                   onClick={handlePlay}
+                  aria-label="Play video"
                 >
                   <Play className="w-8 h-8" />
                 </Button>
@@ -138,10 +131,10 @@ export function VideoPreview({
           )
         )}
       </CardContent>
-      {isCompleted && videoSrc && (
+      {isCompleted && videoUrl && (
         <div className="p-4 flex justify-end border-t bg-muted/10">
           <Button variant="outline" size="sm" asChild>
-            <a href={videoSrc} download target="_blank" rel="noopener noreferrer">
+            <a href={videoUrl} download target="_blank" rel="noopener noreferrer">
               <Download className="w-4 h-4 mr-2" />
               Download Video
             </a>

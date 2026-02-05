@@ -1,7 +1,6 @@
-import { Tier, TierConfig } from "@/types";
-import { TIER_CONFIGS, getTierConfig } from "@/config/tiers";
+import { Tier } from "@/types";
+import { getTierConfig } from "@/config/tiers";
 import { getUserTier } from "@/lib/subscription";
-import { campaignService } from "@/lib/services/campaign-service";
 import { templateService } from "@/lib/services/template-service";
 
 export type LimitType =

@@ -27,7 +27,7 @@ const mocks = vi.hoisted(() => {
         data: { subscription_tier: 'basic' }
     });
 
-    const eqMock = vi.fn().mockImplementation((field, value) => {
+    const eqMock = vi.fn().mockImplementation((field) => {
         if (field === 'user_id') return { single: singleProfileMock };
         return { single: singleMock };
     });

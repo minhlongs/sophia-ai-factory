@@ -1,6 +1,5 @@
 import { polar } from '@/lib/polar';
 import { NextResponse } from 'next/server';
-import { Tier } from '@/types';
 import { createClient } from '@/lib/supabase/server';
 
 const TIER_PRODUCT_MAP: Record<string, string> = {

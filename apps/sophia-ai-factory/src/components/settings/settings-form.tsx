@@ -47,6 +47,8 @@ export function SettingsForm({ defaultValues }: SettingsFormProps) {
   } = form;
 
   // Use watched values for switches
+  // Note: react-compiler may skip optimization here due to useForm/watch hook usage
+  // eslint-disable-next-line react-hooks/incompatible-library
   const marketingEmail = watch('settings.notifications.email.marketing');
   const securityEmail = watch('settings.notifications.email.security');
   const telegramEnabled = watch('settings.notifications.telegram.enabled');

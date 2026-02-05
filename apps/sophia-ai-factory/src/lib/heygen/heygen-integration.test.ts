@@ -21,6 +21,7 @@ describe('HeyGen Integration Flow', () => {
   it('should complete a full video creation and status check lifecycle', async () => {
     // 1. List Avatars
     const mockAvatars = [{ avatar_id: 'av1', name: 'Avatar 1', preview_image_url: 'url', gender: 'female' }];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     (global.fetch as any).mockResolvedValueOnce({
       ok: true,
       json: async () => ({ data: { avatars: mockAvatars } })
@@ -32,6 +33,7 @@ describe('HeyGen Integration Flow', () => {
 
     // 2. Create Video
     const mockVideoId = 'vid_123';
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     (global.fetch as any).mockResolvedValueOnce({
       ok: true,
       json: async () => ({ data: { video_id: mockVideoId } })
@@ -45,6 +47,7 @@ describe('HeyGen Integration Flow', () => {
     expect(videoId).toBe(mockVideoId);
 
     // 3. Check Status (Pending)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     (global.fetch as any).mockResolvedValueOnce({
       ok: true,
       json: async () => ({ data: { status: 'pending', video_url: null, thumbnail_url: null } })
@@ -55,6 +58,7 @@ describe('HeyGen Integration Flow', () => {
 
     // 4. Check Status (Completed)
     const finalVideoUrl = 'https://heygen.com/video.mp4';
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     (global.fetch as any).mockResolvedValueOnce({
       ok: true,
       json: async () => ({
