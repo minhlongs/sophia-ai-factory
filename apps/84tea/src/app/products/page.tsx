@@ -3,13 +3,24 @@
 import { useState, useMemo, useEffect } from "react";
 import { Typography } from "@/components/ui/typography";
 import { Button } from "@/components/ui/button";
-import { HeaderNavigation, FooterSection } from "@/components/layout";
+import { FilterChips } from "@/components/ui/chips";
+import { MainLayout, FooterSection } from "@/components/layout";
 import { ProductCard } from "@/components/products/product-card";
 import { ProductFilter } from "@/components/products/product-filter";
 import { PRODUCTS } from "@/lib/data/products";
 
+// MD3 Filter Categories (as per requirements)
+const CATEGORIES = [
+  "Tất cả",
+  "Trà truyền thống",
+  "Trà sữa",
+  "Trà trái cây",
+  "Specialty",
+  "Toppings"
+];
+
 export default function ProductsPage() {
-  const [activeCategory, setActiveCategory] = useState("all");
+  const [activeCategory, setActiveCategory] = useState("Tất cả");
   const [activeType, setActiveType] = useState<string | null>(null);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
   const [sortBy, setSortBy] = useState("featured");
@@ -19,7 +30,7 @@ export default function ProductsPage() {
   const filteredProducts = useMemo(() => {
     return PRODUCTS.filter((product) => {
       // 1. Filter by Category
-      if (activeCategory !== "all" && product.category !== activeCategory) {
+      if (activeCategory !== "Tất cả" && product.category !== activeCategory) {
         return false;
       }
 
@@ -51,9 +62,7 @@ export default function ProductsPage() {
 
   return (
     <div className="min-h-screen bg-surface flex flex-col">
-      <HeaderNavigation />
-
-      <main className="flex-1 pb-24 pt-20">
+      <MainLayout>
         {/* Header */}
         <div className="bg-surface-container-low py-16 md:py-24 relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('/patterns/pattern-1.svg')] opacity-[0.03]"></div>
@@ -70,6 +79,15 @@ export default function ProductsPage() {
         </div>
       </div>
 
+      {/* MD3 Filter Chips */}
+      <div className="container mx-auto px-6 mt-8">
+        <FilterChips
+          categories={CATEGORIES}
+          selected={activeCategory}
+          onSelect={setActiveCategory}
+        />
+      </div>
+
       <div className="container mx-auto px-6 mt-12">
         <div className="flex flex-col lg:flex-row gap-12">
           {/* Sidebar Filter - Desktop */}
@@ -82,7 +100,7 @@ export default function ProductsPage() {
               onTypeChange={setActiveType}
               onPriceChange={setPriceRange}
               onClear={() => {
-                setActiveCategory("all");
+                setActiveCategory("Tất cả");
                 setActiveType(null);
                 setPriceRange([0, 10000000]);
               }}
@@ -97,7 +115,7 @@ export default function ProductsPage() {
               className="flex items-center gap-2"
             >
               <span className="material-symbols-rounded">filter_list</span>
-              Bộ lọc ({activeCategory !== 'all' ? 1 : 0})
+              Bộ lọc ({activeCategory !== 'Tất cả' ? 1 : 0})
             </Button>
 
             <select
@@ -187,9 +205,8 @@ export default function ProductsPage() {
           </div>
           </div>
         </div>
-      </main>
-
-      <FooterSection />
+        <FooterSection />
+      </MainLayout>
     </div>
   );
 }

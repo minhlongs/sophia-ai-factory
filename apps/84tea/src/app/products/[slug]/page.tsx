@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Typography } from "@/components/ui/typography";
 import { Button } from "@/components/ui/button";
-import { HeaderNavigation, FooterSection } from "@/components/layout";
+import { MainLayout, FooterSection } from "@/components/layout";
 import { ProductGallery } from "@/components/products/product-gallery";
 import { ProductActions } from "@/components/products/product-actions";
 import { ProductCard } from "@/components/products/product-card";
@@ -34,9 +34,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   return (
     <div className="min-h-screen bg-surface flex flex-col">
-      <HeaderNavigation />
-
-      <main className="flex-1">
+      <MainLayout>
         {/* Breadcrumb */}
         <div className="bg-surface-container-low border-b border-outline-variant">
           <div className="container mx-auto px-6 py-4">
@@ -199,9 +197,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
             </div>
           )}
         </div>
-      </main>
-
-      <FooterSection />
+        <FooterSection />
+      </MainLayout>
     </div>
   );
 }

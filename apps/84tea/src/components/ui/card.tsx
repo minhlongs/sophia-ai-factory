@@ -3,13 +3,18 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const cardVariants = cva(
-  "rounded-[16px] overflow-hidden transition-all duration-200",
+  "rounded-xl overflow-hidden transition-all duration-200 border-none",
   {
     variants: {
       variant: {
-        elevated: "bg-surface-variant shadow-md text-on-surface hover:shadow-lg",
-        filled: "bg-surface-variant text-on-surface-variant",
-        outlined: "bg-surface border border-outline-variant text-on-surface",
+        elevated:
+          "bg-surface-container-low text-on-surface shadow-elevation-1 hover:shadow-elevation-2",
+        filled:
+          "bg-surface-container-high text-on-surface transition-colors hover:bg-surface-container-high/80",
+        outlined:
+          "bg-surface border border-outline-variant text-on-surface hover:bg-surface-variant/20",
+        interactive:
+          "bg-surface-container-low text-on-surface shadow-elevation-1 hover:shadow-elevation-2 cursor-pointer active:shadow-elevation-1",
       },
       padding: {
         none: "p-0",

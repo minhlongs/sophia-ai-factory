@@ -1,20 +1,15 @@
-import type { Metadata } from "next";
-import { Playfair_Display, Inter } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { ThemeProvider } from "next-themes";
+import { playfairDisplay, inter } from "@/lib/fonts";
 import { CartProvider } from "@/lib/cart-context";
 import { CartDrawer } from "@/components/cart/cart-drawer";
 import "./globals.css";
 
-const playfair = Playfair_Display({
-  variable: "--font-display",
-  subsets: ["latin", "vietnamese"],
-  weight: ["400", "500", "600", "700"],
-});
-
-const inter = Inter({
-  variable: "--font-body",
-  subsets: ["latin", "vietnamese"],
-  weight: ["300", "400", "500", "600", "700"],
-});
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+};
 
 export const metadata: Metadata = {
   title: "84tea | Trà Năng Lượng Việt - Trà Cổ Thụ Lên Men",
@@ -50,6 +45,9 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  verification: {
+    google: "",
+  },
 };
 
 export default function RootLayout({
@@ -58,8 +56,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi">
+    <html lang="vi" suppressHydrationWarning>
       <head>
+        {/* Material Symbols - Optimized loading */}
+        <link
+          rel="preconnect"
+          href="https://fonts.googleapis.com"
+        />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link
           rel="stylesheet"
@@ -67,12 +75,14 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${playfair.variable} ${inter.variable} antialiased bg-surface text-on-surface`}
+        className={`${playfairDisplay.variable} ${inter.variable} antialiased bg-surface text-on-surface`}
       >
-        <CartProvider>
-          {children}
-          <CartDrawer />
-        </CartProvider>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <CartProvider>
+            {children}
+            <CartDrawer />
+          </CartProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

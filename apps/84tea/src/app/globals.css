@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@plugin "tailwindcss-animate";
+
 :root {
   /* Material Design 3 Color Tokens */
 
@@ -40,26 +42,6 @@
   --md-sys-color-outline: #79747e;
   --md-sys-color-outline-variant: #cac4d0;
 
-  /* Typography Scale */
-  --md-sys-typescale-display-large-size: 57px;
-  --md-sys-typescale-display-large-line-height: 64px;
-  --md-sys-typescale-display-medium-size: 45px;
-  --md-sys-typescale-display-medium-line-height: 52px;
-  --md-sys-typescale-display-small-size: 36px;
-  --md-sys-typescale-display-small-line-height: 44px;
-
-  --md-sys-typescale-headline-large-size: 32px;
-  --md-sys-typescale-headline-large-line-height: 40px;
-  --md-sys-typescale-headline-medium-size: 28px;
-  --md-sys-typescale-headline-medium-line-height: 36px;
-  --md-sys-typescale-headline-small-size: 24px;
-  --md-sys-typescale-headline-small-line-height: 32px;
-
-  --md-sys-typescale-body-large-size: 16px;
-  --md-sys-typescale-body-large-line-height: 24px;
-  --md-sys-typescale-body-medium-size: 14px;
-  --md-sys-typescale-body-medium-line-height: 20px;
-
   /* Inverse Colors */
   --md-sys-color-inverse-surface: #313033;
   --md-sys-color-inverse-on-surface: #f4f0f4;
@@ -68,7 +50,53 @@
   --md-sys-color-scrim: #000000;
 }
 
+/* Dark Mode Theme */
+.dark {
+  /* Primary - Lighter for dark mode */
+  --md-sys-color-primary: #a5d6a7;
+  --md-sys-color-on-primary: #00390f;
+  --md-sys-color-primary-container: #1b5e20;
+  --md-sys-color-on-primary-container: #c1eac5;
+
+  /* Secondary - Desaturated gold */
+  --md-sys-color-secondary: #d4b87a;
+  --md-sys-color-on-secondary: #3a2e00;
+  --md-sys-color-secondary-container: #56461f;
+  --md-sys-color-on-secondary-container: #f1deb1;
+
+  /* Tertiary */
+  --md-sys-color-tertiary: #d7ccc8;
+  --md-sys-color-on-tertiary: #3e2723;
+  --md-sys-color-tertiary-container: #4e342e;
+  --md-sys-color-on-tertiary-container: #efebe9;
+
+  /* Error */
+  --md-sys-color-error: #f2b8b5;
+  --md-sys-color-on-error: #601410;
+  --md-sys-color-error-container: #8c1d18;
+  --md-sys-color-on-error-container: #f9dedc;
+
+  /* Surface - Dark backgrounds */
+  --md-sys-color-surface: #1a1c1a;
+  --md-sys-color-on-surface: #e2e3de;
+  --md-sys-color-surface-variant: #44483e;
+  --md-sys-color-on-surface-variant: #c5c8bc;
+  --md-sys-color-surface-container-low: #1f2220;
+  --md-sys-color-surface-container: #242724;
+  --md-sys-color-surface-container-high: #2f312e;
+
+  /* Outline */
+  --md-sys-color-outline: #8f9286;
+  --md-sys-color-outline-variant: #44483e;
+
+  /* Inverse Colors */
+  --md-sys-color-inverse-surface: #e2e3de;
+  --md-sys-color-inverse-on-surface: #2f312e;
+  --md-sys-color-inverse-primary: #1b5e20;
+}
+
 @theme inline {
+  /* MD3 Color Palette */
   --color-primary: var(--md-sys-color-primary);
   --color-on-primary: var(--md-sys-color-on-primary);
   --color-primary-container: var(--md-sys-color-primary-container);
@@ -106,8 +134,69 @@
   --color-outline: var(--md-sys-color-outline);
   --color-outline-variant: var(--md-sys-color-outline-variant);
 
-  --font-display: "Playfair Display", serif;
-  --font-body: "Inter", sans-serif;
+  /* Fonts */
+  --font-display: var(--font-display), "Playfair Display", serif;
+  --font-body: var(--font-body), "Inter", sans-serif;
+
+  /* Typography Scale */
+  --text-display-large: 57px;
+  --text-display-large--line-height: 64px;
+  --text-display-medium: 45px;
+  --text-display-medium--line-height: 52px;
+  --text-display-small: 36px;
+  --text-display-small--line-height: 44px;
+
+  --text-headline-large: 32px;
+  --text-headline-large--line-height: 40px;
+  --text-headline-medium: 28px;
+  --text-headline-medium--line-height: 36px;
+  --text-headline-small: 24px;
+  --text-headline-small--line-height: 32px;
+
+  --text-title-large: 22px;
+  --text-title-large--line-height: 28px;
+  --text-title-medium: 16px;
+  --text-title-medium--line-height: 24px;
+  --text-title-small: 14px;
+  --text-title-small--line-height: 20px;
+
+  --text-body-large: 16px;
+  --text-body-large--line-height: 24px;
+  --text-body-medium: 14px;
+  --text-body-medium--line-height: 20px;
+  --text-body-small: 12px;
+  --text-body-small--line-height: 16px;
+
+  --text-label-large: 14px;
+  --text-label-large--line-height: 20px;
+  --text-label-medium: 12px;
+  --text-label-medium--line-height: 16px;
+  --text-label-small: 11px;
+  --text-label-small--line-height: 16px;
+
+  /* Breakpoints */
+  --breakpoint-compact: 0px;
+  --breakpoint-medium: 600px;
+  --breakpoint-expanded: 840px;
+  --breakpoint-large: 1200px;
+  --breakpoint-xl: 1400px;
+
+  /* Border Radius */
+  --radius-none: 0px;
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 28px;
+  --radius-full: 9999px;
+
+  /* Shadows / Elevation */
+  --shadow-elevation-0: 0 0 0 0 rgba(0, 0, 0, 0);
+  --shadow-elevation-1: 0 1px 2px 0 rgba(0, 0, 0, 0.3), 0 1px 3px 1px rgba(0, 0, 0, 0.15);
+  --shadow-elevation-2: 0 1px 2px 0 rgba(0, 0, 0, 0.3), 0 2px 6px 2px rgba(0, 0, 0, 0.15);
+  --shadow-elevation-3: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 4px 8px 3px rgba(0, 0, 0, 0.15);
+  --shadow-elevation-4: 0 2px 3px 0 rgba(0, 0, 0, 0.3), 0 6px 10px 4px rgba(0, 0, 0, 0.15);
+  --shadow-elevation-5: 0 4px 4px 0 rgba(0, 0, 0, 0.3), 0 8px 12px 6px rgba(0, 0, 0, 0.15);
 }
 
 /* Base Styles */
@@ -142,4 +231,23 @@ h1, h2, h3, h4, h5, h6 {
 ::selection {
   background: var(--md-sys-color-secondary);
   color: var(--md-sys-color-on-secondary);
+}
+
+/* Accessibility - Focus Visible */
+*:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
