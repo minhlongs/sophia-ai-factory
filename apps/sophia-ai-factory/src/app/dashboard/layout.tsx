@@ -8,6 +8,7 @@ import {
   LogOut,
   BarChart2
 } from "lucide-react";
+import { HealthIndicator } from "@/components/dashboard/health-indicator";
 
 export default function DashboardLayout({
   children,
@@ -71,7 +72,8 @@ export default function DashboardLayout({
           </Link>
         </nav>
 
-        <div className="p-4 border-t border-gray-100">
+        <div className="p-4 border-t border-gray-100 space-y-2">
+          <HealthIndicator />
           <button className="flex items-center gap-3 px-4 py-3 text-red-600 rounded-lg hover:bg-red-50 transition-colors w-full">
             <LogOut className="w-5 h-5" />
             <span className="font-medium">Sign Out</span>
