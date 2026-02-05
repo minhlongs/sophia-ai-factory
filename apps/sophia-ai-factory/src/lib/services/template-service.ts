@@ -42,8 +42,7 @@ export const templateService = {
     }
 
     // Transform DB records to CampaignTemplate type
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return data.map((record: any) => ({
+    return data.map((record) => ({
       id: record.id,
       name: record.name,
       description: record.description,
@@ -71,8 +70,7 @@ export const templateService = {
       return CAMPAIGN_TEMPLATES.find(t => t.id === id) || null;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const record = data as any;
+    const record = data;
 
     return {
       id: record.id,
