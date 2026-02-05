@@ -1,7 +1,7 @@
 # Project Roadmap
 
 **Project Name:** Sophia AI Video Factory
-**Current Version:** 1.1.0 (User Settings & Health Monitoring)
+**Current Version:** 1.7.0 (Binh Pháp Full Automation)
 **Last Updated:** 2026-02-05
 
 ## 📅 Roadmap Overview
@@ -110,7 +110,24 @@
 - [x] **E2E Verification**:
   - [x] Final system health check report generation.
 
-### 🔮 Phase 8: Scaling & SaaS (Future)
+### ✅ Phase 8: Binh Pháp Automation (Completed)
+**Goal:** Achieve "Click-to-Ship" maturity with zero-touch CI/CD and Mock Mode.
+- [x] **Mock Infrastructure (Zero-Cost Dev)**:
+  - [x] Service Factory Pattern (`src/lib/services`) for DI.
+  - [x] `MockHeyGenClient` & `MockPaymentService` implementation.
+  - [x] `npm run dev:mock` for offline development.
+- [x] **CI/CD Pipeline**:
+  - [x] GitHub Actions with Quality, Test, and Security gates.
+  - [x] Playwright E2E tests running against Mock Services.
+  - [x] Vercel Preview Deployments on PRs.
+- [x] **Deployment Automation**:
+  - [x] Idempotent infrastructure sync (`scripts/sync-polar.ts`).
+  - [x] Automated Vercel project setup (`setup-vercel.sh`).
+- [x] **Green Gate Verification**:
+  - [x] Post-deploy smoke tests (`scripts/smoke-test.ts`).
+  - [x] Automated rollback triggers.
+
+### 🔮 Phase 9: Scaling & SaaS (Future)
 **Goal:** Multi-user support and advanced features.
 - [ ] **Authentication**: Move from Basic Auth to NextAuth/Clerk.
 - [ ] **Multi-Tenancy**: Support multiple user accounts per deployment.
@@ -119,6 +136,17 @@
 - [ ] **Analytics**: Deep dive into video performance metrics.
 
 ## Changelog
+
+### v1.7.0 - Binh Pháp Full Automation
+- **Architecture**: Implemented Service Factory Pattern (`src/lib/services`) decoupling business logic from external APIs.
+- **DevEx**: Added **Mock Mode** (`NEXT_PUBLIC_MOCK_AI_SERVICES=true`) for zero-cost, offline development.
+- **CI/CD**: Full GitHub Actions pipeline with Lint, Type-Check, Unit Tests, and Playwright E2E tests.
+- **Production**: Added `infra-sync.sh` for idempotent infrastructure setup and `smoke-test.ts` for live verification.
+
+### v1.6.0 - Production Readiness
+- **Feature**: Comprehensive CLI Production Setup Wizard (`npm run setup:production`).
+- **Automation**: Polar.sh, Supabase, and Telegram automated configuration.
+- **Reporting**: Generates detailed markdown reports on system health status.
 
 ### v1.5.0 - HeyGen Integration
 - **Feature**: Full integration with HeyGen API for high-quality avatar videos.

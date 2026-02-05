@@ -83,7 +83,9 @@ The core differentiator is the **"Turnkey" experience**: a 4-step Setup Wizard t
 - [x] **Phase 4: Monetization** - Payments and Tiering.
 - [x] **Phase 5: Mobile Command Center** - Telegram integration.
 - [x] **Phase 6: Enterprise Video Engine** - HeyGen integration.
-- [ ] **Phase 7: Scaling** - Multi-user support and SaaS features.
+- [x] **Phase 7: Production Readiness** - Production Setup Wizard & Verification.
+- [x] **Phase 8: Binh Pháp Automation** - CI/CD, Mock Mode, Infra Sync.
+- [ ] **Phase 9: Scaling** - Multi-user support and SaaS features.
 
 ## Success Metrics
 - **Time-to-First-Video**: < 15 minutes (including setup).

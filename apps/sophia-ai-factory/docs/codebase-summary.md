@@ -44,10 +44,10 @@ Sophia AI Video Factory is a Next.js 16 application structured around the App Ro
 
 ### `/src/lib` (Core Logic)
 - **`services/`**: Service Factory Architecture.
-  - **`factory.ts`**: Dependency injection container.
-  - **`types.ts`**: Service interfaces (IVideoService, etc.).
-  - **`real/`**: Concrete implementations (HeyGen, ElevenLabs, etc.).
-  - **`mock/`**: Zero-cost mock implementations for dev/test.
+  - **`factory.ts`**: Central dependency injection container ensuring singleton instances.
+  - **`types.ts`**: Core interfaces (`IVideoService`, `IVoiceService`, `IScriptService`) decoupling logic from implementation.
+  - **`real/`**: Production implementations (HeyGen, ElevenLabs, OpenRouter).
+  - **`mock/`**: Zero-cost, offline-capable mock implementations for development, testing, and CI/CD.
 - **`heygen/`**: Legacy HeyGen client (deprecated in favor of services).
 - **`airtable.ts`**: Typed client for Airtable operations.
 - **`n8n.ts`**: Client for triggering n8n webhooks.
@@ -57,6 +57,8 @@ Sophia AI Video Factory is a Next.js 16 application structured around the App Ro
 - **`smoke-test.ts`**: Production health verification script.
 - **`setup.sh`**: Interactive shell script for verifying environment prerequisites.
 - **`verify.sh`**: Comprehensive QA script (Lint, Type, Test, Audit).
+- **`setup-vercel.sh`**: Automates Vercel project configuration and environment variable syncing.
+- **`health-check.js`**: Standalone node script for checking API health.
 
 ### `/tests` (Testing)
 - **`e2e/`**: Playwright end-to-end tests.

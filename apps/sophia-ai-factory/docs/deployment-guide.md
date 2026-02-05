@@ -117,6 +117,7 @@ If you prefer to configure manually (skipping the Wizard), create a `.env.local`
 # Feature Flags
 NEXT_PUBLIC_SETUP_WIZARD=true       # Set to false to disable wizard check
 NEXT_PUBLIC_FEATURE_AFFILIATE_ENGINE=true
+NEXT_PUBLIC_MOCK_AI_SERVICES=false  # Set to true to use mock services (free, no API keys needed)
 
 # Admin Access (Optional)
 ADMIN_USER=admin
@@ -148,7 +149,36 @@ NEXT_PUBLIC_POLAR_PRODUCT_GROWTH=...
 NEXT_PUBLIC_POLAR_PRODUCT_PREMIUM=...
 ```
 
-## 5. Troubleshooting
+## 6. Automated Deployment & Verification
+
+For enterprise and robust deployments, we rely on scripted automation following the Binh Pháp strategy.
+
+### Infrastructure Sync
+The `scripts/infra-sync.sh` script is the master controller for ensuring your environment is correctly set up. It handles:
+- Dependency installation
+- Environment variable validation
+- Database schema verification
+- Build artifacts generation
+
+```bash
+./scripts/infra-sync.sh
+```
+
+### Verification Suite
+Before going live, run the full verification suite to ensure system integrity. This runs linting, type checking, unit tests, and security audits.
+
+```bash
+./scripts/verify.sh
+```
+
+### Mock Mode for Testing
+To test the application flow without incurring API costs or requiring external keys, enable Mock Mode. This is used by CI/CD pipelines.
+
+```bash
+NEXT_PUBLIC_MOCK_AI_SERVICES=true npm run dev
+```
+
+## 7. Troubleshooting
 
 - **Wizard Loops**: If you keep seeing the wizard after setup, check if `NEXT_PUBLIC_SETUP_COMPLETE=true` (or equivalent check in code) is persisting. In Vercel, ensure you Redeployed after setting env vars.
 - **API Errors**: Check the `Airtable` connection first. It is the most common point of failure. Ensure the `Base ID` is correct and the Token has `data.records:read` and `data.records:write` scopes.
