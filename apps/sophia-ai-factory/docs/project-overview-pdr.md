@@ -48,7 +48,8 @@ The core differentiator is the **"Turnkey" experience**: a 4-step Setup Wizard t
 - **Voiceover**:
   - ElevenLabs integration for high-quality TTS.
 - **Video Rendering**:
-  - D-ID or HeyGen integration for talking head avatars.
+  - HeyGen integration for high-fidelity premium avatars.
+  - D-ID integration for standard avatars.
   - Background stock footage integration (Pexels/Pixabay).
 
 ### 2. Non-Functional Requirements
@@ -73,13 +74,16 @@ The core differentiator is the **"Turnkey" experience**: a 4-step Setup Wizard t
 - **Styling**: Tailwind CSS 4
 - **Database**: Airtable (User-friendly CMS)
 - **Automation Backend**: n8n (Workflow orchestration)
-- **AI Providers**: OpenRouter (LLM), ElevenLabs (Voice), D-ID (Avatar)
+- **AI Providers**: OpenRouter (LLM), ElevenLabs (Voice), HeyGen/D-ID (Avatar)
 
 ## Roadmap Status
 - [x] **Phase 1: Foundation** - Next.js setup, UI components.
 - [x] **Phase 2: Turnkey Wizard** - Interactive setup flow.
 - [x] **Phase 3: Core Pipeline** - Script-to-Video generation wiring.
-- [ ] **Phase 4: Scaling** - Multi-user support and SaaS features.
+- [x] **Phase 4: Monetization** - Payments and Tiering.
+- [x] **Phase 5: Mobile Command Center** - Telegram integration.
+- [x] **Phase 6: Enterprise Video Engine** - HeyGen integration.
+- [ ] **Phase 7: Scaling** - Multi-user support and SaaS features.
 
 ## Success Metrics
 - **Time-to-First-Video**: < 15 minutes (including setup).
