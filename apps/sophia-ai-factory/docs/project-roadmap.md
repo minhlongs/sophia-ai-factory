@@ -49,7 +49,23 @@
     - [x] System Health Dashboard (`/dashboard/system-health`).
     - [x] Health Check API (`/api/health`).
 
-### 🔮 Phase 4: Scaling & SaaS (Future)
+### ✅ Phase 4: Monetization (Completed)
+**Goal:** Implement payment processing and tier-based access control.
+- [x] **Polar Integration**:
+  - [x] SDK setup and configuration.
+  - [x] Product provisioning script (`scripts/setup-polar-products.ts`).
+  - [x] Checkout session API (`/api/checkout`).
+- [x] **Tiered Pricing**:
+  - [x] 3-Tier Model: Starter ($1,200), Growth ($2,000), Premium ($3,000).
+  - [x] Feature gating logic in `src/config/tiers.ts`.
+- [x] **Webhooks**:
+  - [x] Secure webhook handler with signature verification.
+  - [x] Automatic subscription status updates in Supabase.
+- [x] **UI Integration**:
+  - [x] Pricing page with "Buy Now" integration.
+  - [x] Loading states and error handling during checkout.
+
+### 🔮 Phase 5: Scaling & SaaS (Future)
 **Goal:** Multi-user support and advanced features.
 - [ ] **Authentication**: Move from Basic Auth to NextAuth/Clerk.
 - [ ] **Multi-Tenancy**: Support multiple user accounts per deployment.

@@ -4,6 +4,7 @@ import { headers } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
 import { inngest } from '@/lib/inngest/client';
 import { Tier } from '@/types';
+import { TIER_DB_MAPPING } from '@/lib/subscription';
 
 // Initialize Supabase Admin client for database updates
 // We use the Service Role Key to bypass RLS since this is a system webhook
@@ -19,11 +20,11 @@ interface WebhookEvent {
     id?: string;
     customerEmail?: string;
     customer?: {
-        email?: string;
+      email?: string;
     };
     email?: string;
     product?: {
-        name?: string;
+      name?: string;
     };
     [key: string]: unknown;
   };
@@ -60,8 +61,8 @@ export async function POST(request: Request) {
     const email = data.customer?.email || data.email;
 
     if (!email) {
-        console.warn(`No email found in webhook event ${type}`);
-        return new NextResponse('Webhook processed but no email found', { status: 200 });
+      console.warn(`No email found in webhook event ${type}`);
+      return new NextResponse('Webhook processed but no email found', { status: 200 });
     }
 
     switch (type) {
@@ -73,10 +74,14 @@ export async function POST(request: Request) {
         // Determine tier
         const productName = data.product?.name?.toString().toLowerCase() || '';
         let tier: Tier = 'BASIC';
-        if (productName.includes('pro')) tier = 'PREMIUM';
+        if (productName.includes('premium') || productName.includes('pro')) tier = 'PREMIUM';
         if (productName.includes('enterprise')) tier = 'ENTERPRISE';
 
         // Find user by email
+        // Note: In production with many users, this should be optimized to use a dedicated lookup or mapping table if possible
+        // But for Supabase Auth, admin.listUsers is the standard way if we don't store email in user_profiles visibly
+        // Alternatively, if user_profiles is linked to auth.users, we might query user_profiles if email is there.
+        // Assuming email is in Auth.
         const { data: { users }, error: userError } = await supabaseAdmin.auth.admin.listUsers();
         if (userError || !users) {
             console.error('Failed to list users to find match', userError);
@@ -87,11 +92,13 @@ export async function POST(request: Request) {
 
         if (user) {
             // Update profile
+            const dbTier = TIER_DB_MAPPING[tier];
+
             const { error: updateError } = await supabaseAdmin
                 .from('user_profiles')
                 .upsert({
                     user_id: user.id,
-                    subscription_tier: tier === 'PREMIUM' ? 'pro' : tier === 'ENTERPRISE' ? 'enterprise' : 'free',
+                    subscription_tier: dbTier,
                     subscription_status: 'active',
                     updated_at: new Date().toISOString()
                 });
@@ -99,10 +106,10 @@ export async function POST(request: Request) {
             if (updateError) {
                 console.error('Failed to update user profile tier', updateError);
             } else {
-                console.log(`Updated user ${user.id} to tier ${tier}`);
+                console.log(`Updated user ${user.id} to tier ${tier} (${dbTier})`);
 
                 // TRIGGER CAMPAIGN AUTOMATION
-                // For 'subscription.created', we trigger a welcome campaign
+                // For 'subscription.created' or 'checkout.session.completed', we trigger a welcome campaign
                 if (type === 'subscription.created' || type === 'checkout.session.completed') {
                     // Create a draft campaign record first
                     const { data: campaign, error: campaignError } = await supabaseAdmin
