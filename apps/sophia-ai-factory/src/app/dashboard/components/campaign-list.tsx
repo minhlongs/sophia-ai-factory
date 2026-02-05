@@ -173,6 +173,12 @@ export function CampaignList({ initialCampaigns }: CampaignListProps) {
           <div className="flex items-center gap-4">
             {getStatusBadge(campaign.status)}
 
+            <Link href={`/dashboard/campaigns/${campaign.id}`}>
+              <Button variant="ghost" size="sm">
+                View Details
+              </Button>
+            </Link>
+
             {campaign.status === 'failed' && (
               <div className="flex items-center gap-2">
                 <Button

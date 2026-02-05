@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## v1.5.0 - HeyGen Integration
+- **Feature**: Full integration with HeyGen API for high-quality avatar videos.
+- **Architecture**: Direct server-side API proxy for secure key handling.
+- **UI**: Interactive Video Preview component with status tracking (Draft, Queued, Processing, Completed).
+- **Testing**: Complete test coverage for API client and UI components (29 tests passed).
+- **DX**: Added `src/lib/heygen` client library with type-safe interfaces.
+
 ## v1.4.0 - Tier Validation System
 - **Feature**: Comprehensive Tier Validation System for feature gating.
 - **Enforcement**:

@@ -37,11 +37,15 @@ Sophia AI Video Factory is a Next.js 16 application structured around the App Ro
   - `/api/generate-script`: Triggers n8n script workflow.
   - `/api/render-video`: Triggers n8n video workflow.
   - `/api/setup`: Endpoint for wizard configuration validation.
+  - `/api/heygen/*`: Direct proxy endpoints for HeyGen API.
 - **`middleware.ts`**: Handles redirection logic.
   - Redirects unconfigured instances (missing `SETUP_COMPLETE` cookie/env) to `/setup-wizard`.
   - Protects `/admin` routes if configured.
 
 ### `/src/lib` (Core Logic)
+- **`heygen/`**: HeyGen AI integration.
+  - `heygen-client.ts`: Typed client for HeyGen V2 API.
+  - `types.ts`: TypeScript interfaces for HeyGen resources.
 - **`airtable.ts`**: Typed client for Airtable operations.
   - Handles reading/writing Scripts, Videos, and Affiliates.
 - **`n8n.ts`**: Client for triggering n8n webhooks.
@@ -69,6 +73,7 @@ Sophia AI Video Factory is a Next.js 16 application structured around the App Ro
   - `NEXT_PUBLIC_FEATURE_AFFILIATE_ENGINE`: Toggles affiliate tools.
 
 ## Recent Major Changes
+- **HeyGen Integration**: Added direct API integration for high-fidelity avatar video generation (`v1.5.0`).
 - **Turnkey Setup Wizard**: Implemented a comprehensive 4-step wizard to eliminate manual `.env` editing for end-users.
 - **Middleware Redirection**: Automatic routing to wizard for fresh installs.
 - **Affiliate Engine**: Added `src/data/affiliate-programs.json` and discovery UI.
@@ -80,5 +85,5 @@ Sophia AI Video Factory is a Next.js 16 application structured around the App Ro
 - **Styling**: Tailwind CSS 4
 - **State Management**: React Server Actions + URL State
 - **Database**: Airtable (via REST API)
-- **AI Integration**: OpenRouter (LLM), ElevenLabs (TTS), D-ID (Video)
+- **AI Integration**: OpenRouter (LLM), ElevenLabs (TTS), D-ID / HeyGen (Video)
 - **Testing**: Vitest, React Testing Library

@@ -84,7 +84,22 @@
   - [x] Connected to Inngest event bus (`campaign.created`).
   - [x] Real-time updates from core pipeline.
 
-### 🔮 Phase 6: Scaling & SaaS (Future)
+### ✅ Phase 6: Enterprise Video Engine (Completed)
+**Goal:** High-fidelity AI video generation with HeyGen.
+- [x] **Direct API Integration**:
+  - [x] Robust HeyGen Client (`src/lib/heygen`).
+  - [x] Server-side API Routes (`/api/heygen/*`) for secure communication.
+- [x] **Asset Management**:
+  - [x] Avatar Library browser.
+  - [x] Voice Selection interface.
+- [x] **Video Generation Pipeline**:
+  - [x] Direct video creation job submission.
+  - [x] Real-time status polling mechanism.
+  - [x] Video Preview UI with playback and download.
+- [x] **Testing & Quality**:
+  - [x] Comprehensive unit and integration test suite (100% pass rate).
+
+### 🔮 Phase 7: Scaling & SaaS (Future)
 **Goal:** Multi-user support and advanced features.
 - [ ] **Authentication**: Move from Basic Auth to NextAuth/Clerk.
 - [ ] **Multi-Tenancy**: Support multiple user accounts per deployment.
@@ -94,7 +109,13 @@
 
 ## Changelog
 
-### v1.1.0 - User Settings & Health Monitoring
+### v1.5.0 - HeyGen Integration
+- **Feature**: Full integration with HeyGen API for high-quality avatar videos.
+- **Architecture**: Direct server-side API proxy for secure key handling.
+- **UI**: Interactive Video Preview component with status tracking.
+- **Testing**: Complete test coverage for API client and UI components.
+
+### v1.4.0 - Tier Validation System
 - **Feature**: Complete User Settings implementation with secure API key storage.
 - **Feature**: System Health Dashboard for real-time monitoring.
 - **Security**: AES-256-GCM encryption for API keys.

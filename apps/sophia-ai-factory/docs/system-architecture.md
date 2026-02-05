@@ -18,6 +18,7 @@ graph TD
         OpenRouter[OpenRouter (LLM)]
         Eleven[ElevenLabs (Voice)]
         DID[D-ID (Avatar)]
+        HeyGen[HeyGen (Premium Avatar)]
     end
 
     subgraph Data_Layer [Persistence]
@@ -51,6 +52,7 @@ graph TD
     Automation --> OpenRouter
     Automation --> Eleven
     Automation --> DID
+    API -- Direct --> HeyGen
     Automation -- Update Status --> Airtable
 ```
 
@@ -62,6 +64,7 @@ graph TD
   - `/setup-wizard`: A strictly guided flow to initialize the app.
   - `/dashboard`: Main operational view.
   - `/api/*`: Serverless functions acting as proxy to external services and n8n webhooks.
+  - `/api/heygen/*`: Direct proxy endpoints for HeyGen API (Avatars, Voices, Video Generation).
 
 ### 2. The Configuration Layer
 - **Mechanism**: File-based `.env.local` generation.
@@ -145,6 +148,7 @@ graph TD
 
 ## Data Flow: "New Project" Lifecycle
 
+### Standard Flow (n8n Orchestration)
 1. **Initiation**: User clicks "New Project" in Dashboard.
 2. **Input**: User provides Topic or Product URL.
 3. **Storage**: App creates a "Draft" record in Airtable `Scripts` table.
@@ -159,6 +163,20 @@ graph TD
    - App calls n8n `render-video` webhook.
    - Audio generated, then Video.
    - Final URL updated in Airtable.
+
+### Enterprise Flow (Direct HeyGen Integration)
+1. **Initiation**: User selects "Premium Avatar" in Campaign Wizard.
+2. **Input**: Script Text, Avatar ID, Voice ID.
+3. **Submission**: App calls `POST /api/heygen/create-video` directly.
+4. **Processing (Async)**:
+   - HeyGen API accepts job, returns `video_id`.
+   - App stores `video_id` in Supabase/Airtable.
+5. **Polling**:
+   - Client polls `GET /api/heygen/status/[id]`.
+   - UI shows real-time progress bar (Queued -> Processing -> Completed).
+6. **Completion**:
+   - Status becomes `completed`.
+   - Video URL is displayed for playback/download.
 
 ## Scalability Considerations
 - **Frontend**: Stateless, deployable to Vercel Edge/Serverless.

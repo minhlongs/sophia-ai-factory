@@ -1,4 +1,5 @@
 import { Tier } from "@/types";
+import { getHeyGenClient } from "@/lib/heygen/heygen-client";
 
 interface GenerateVideoInput {
   script: unknown; // typed as ScriptOutput in practice
@@ -11,31 +12,31 @@ interface VideoOutput {
 }
 
 /**
- * Generates a video from a script.
- *
- * CURRENTLY MOCKED: This uses sample video URLs while HeyGen integration is pending.
- *
- * To integrate real video generation:
- * 1. Sign up for HeyGen API: https://heygen.com/api
- * 2. Add HEYGEN_API_KEY to .env
- * 3. Use HeyGen's /v2/video/generate endpoint
- * 4. Poll /v2/video/{video_id} until status='completed'
- * 5. Return the permanent video URL
- *
- * Alternative services:
- * - D-ID: https://studio.d-id.com/
- * - Synthesia: https://synthesia.io/
- * - Replicate (open source models): https://replicate.com/
+ * Starts a video generation job.
+ * Returns a job ID (for HeyGen) or a mock ID.
  */
-export async function generateVideo(input: GenerateVideoInput): Promise<VideoOutput> {
+export async function startVideoGeneration(input: GenerateVideoInput): Promise<string> {
   const { tier } = input;
+  const heygenClient = getHeyGenClient();
 
-  // Check for HeyGen API key
-  const heygenKey = process.env.HEYGEN_API_KEY;
-
-  if (heygenKey) {
+  if (heygenClient) {
     try {
-      return await generateHeyGenVideo(input, heygenKey);
+      // Extract narration from script
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const script = input.script as { scenes: Array<{ narration: string }> };
+      const fullNarration = script.scenes.map(s => s.narration).join(' ');
+
+      const avatarId = 'default_avatar_001'; // Replace with a valid default ID
+      const voiceId = 'en-US-1'; // Replace with a valid default Voice ID
+
+      console.log('Starting HeyGen video generation job...');
+      const videoId = await heygenClient.createVideo({
+        avatarId,
+        voiceId,
+        script: fullNarration,
+        title: `Sophia Campaign - ${new Date().toISOString()}`
+      });
+      return videoId;
     } catch (error) {
       console.error('HeyGen API error:', error);
       console.warn('Falling back to mock video generation');
@@ -44,115 +45,101 @@ export async function generateVideo(input: GenerateVideoInput): Promise<VideoOut
     console.warn('HEYGEN_API_KEY not set, using mock video generation');
   }
 
-  // Mock implementation with realistic timing
-  await new Promise(resolve => setTimeout(resolve, 5000));
-
-  // Return tier-appropriate sample videos
-  const videoSamples = tier === 'ENTERPRISE'
-    ? [
-        // HD enterprise samples
-        {
-          video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-          thumbnail_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerBlazes.jpg"
-        },
-        {
-          video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
-          thumbnail_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerEscapes.jpg"
-        }
-      ]
-    : [
-        // Standard tier samples
-        {
-          video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-          thumbnail_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg"
-        },
-        {
-          video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-          thumbnail_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/ElephantsDream.jpg"
-        }
-      ];
-
-  // Rotate through samples for variety
-  const sample = videoSamples[Math.floor(Math.random() * videoSamples.length)];
-  return sample;
+  // Return a mock ID that starts with "mock_"
+  return `mock_${tier}_${Date.now()}`;
 }
 
 /**
- * Real HeyGen API integration (when key is available)
+ * Checks the status of a video generation job.
  */
-async function generateHeyGenVideo(
-  input: GenerateVideoInput,
-  apiKey: string
-): Promise<VideoOutput> {
-  // Extract narration from script
-  const script = input.script as { scenes: Array<{ narration: string }> };
-  const fullNarration = script.scenes.map(s => s.narration).join(' ');
+export async function checkVideoGenerationStatus(jobId: string, tier: Tier): Promise<{ status: 'processing' | 'completed' | 'failed'; output?: VideoOutput; error?: string }> {
+  const heygenClient = getHeyGenClient();
 
-  // Step 1: Create video generation job
-  const createResponse = await fetch('https://api.heygen.com/v2/video/generate', {
-    method: 'POST',
-    headers: {
-      'X-Api-Key': apiKey,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      video_inputs: [{
-        character: {
-          type: 'avatar',
-          avatar_id: 'default_avatar_001', // Use HeyGen avatar ID
-          avatar_style: 'normal'
-        },
-        voice: {
-          type: 'text',
-          input_text: fullNarration,
-          voice_id: 'en-US-1' // Default English voice
-        }
-      }],
-      dimension: {
-        width: 1920,
-        height: 1080
+  // Handle mock jobs
+  if (jobId.startsWith("mock_")) {
+    // Simulate processing time check based on timestamp in mock ID
+    const timestamp = parseInt(jobId.split('_')[2]);
+    const elapsed = Date.now() - timestamp;
+
+    if (elapsed < 5000) {
+      return { status: 'processing' };
+    }
+
+    const videoSamples = tier === 'ENTERPRISE'
+      ? [
+          {
+            video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+            thumbnail_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerBlazes.jpg"
+          }
+        ]
+      : [
+          {
+            video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+            thumbnail_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg"
+          }
+        ];
+
+    const sample = videoSamples[0];
+    return {
+      status: 'completed',
+      output: sample
+    };
+  }
+
+  // Handle real HeyGen jobs
+  if (heygenClient) {
+    try {
+      const status = await heygenClient.getVideoStatus(jobId);
+
+      if (status.status === 'completed') {
+        if (!status.video_url) return { status: 'failed', error: 'Completed but no URL' };
+        return {
+          status: 'completed',
+          output: {
+            video_url: status.video_url,
+            thumbnail_url: status.thumbnail_url || status.video_url.replace('.mp4', '.jpg')
+          }
+        };
       }
-    })
-  });
 
-  if (!createResponse.ok) {
-    throw new Error(`HeyGen API failed: ${createResponse.status}`);
+      if (status.status === 'failed') {
+        return { status: 'failed', error: status.error || 'HeyGen generation failed' };
+      }
+
+      return { status: 'processing' };
+    } catch (error) {
+      console.error(`Error checking HeyGen status for ${jobId}:`, error);
+      // Return processing on transient errors so we retry
+      return { status: 'processing' };
+    }
   }
 
-  const createData = await createResponse.json();
-  const videoId = createData.data?.video_id;
+  return { status: 'failed', error: 'HeyGen client unavailable for non-mock ID' };
+}
 
-  if (!videoId) {
-    throw new Error('No video_id in HeyGen response');
-  }
+/**
+ * Legacy wrapper for backward compatibility if needed,
+ * but Inngest function should use start/check pattern.
+ */
+export async function generateVideo(input: GenerateVideoInput): Promise<VideoOutput> {
+  const jobId = await startVideoGeneration(input);
 
-  // Step 2: Poll for completion (max 2 minutes)
-  const maxAttempts = 24; // 24 * 5s = 2 minutes
+  // Poll until done
+  const maxAttempts = 60;
   for (let i = 0; i < maxAttempts; i++) {
     await new Promise(resolve => setTimeout(resolve, 5000));
+    const result = await checkVideoGenerationStatus(jobId, input.tier);
 
-    const statusResponse = await fetch(`https://api.heygen.com/v2/video/${videoId}`, {
-      headers: { 'X-Api-Key': apiKey }
-    });
-
-    if (!statusResponse.ok) {
-      throw new Error(`HeyGen status check failed: ${statusResponse.status}`);
+    if (result.status === 'completed' && result.output) {
+      return result.output;
     }
 
-    const statusData = await statusResponse.json();
-    const status = statusData.data?.status;
-
-    if (status === 'completed') {
-      return {
-        video_url: statusData.data.video_url,
-        thumbnail_url: statusData.data.thumbnail_url || statusData.data.video_url.replace('.mp4', '.jpg')
-      };
-    }
-
-    if (status === 'failed') {
-      throw new Error('HeyGen video generation failed');
+    if (result.status === 'failed') {
+      throw new Error(result.error || 'Video generation failed');
     }
   }
 
-  throw new Error('HeyGen video generation timed out');
+  throw new Error('Video generation timed out');
 }
+
+

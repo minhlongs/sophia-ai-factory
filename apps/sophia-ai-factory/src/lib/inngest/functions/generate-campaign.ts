@@ -1,6 +1,6 @@
 import { inngest } from "@/lib/inngest/client";
 import { generateScript } from "@/lib/ai/script-generator";
-import { generateVideo } from "@/lib/ai/video-generator";
+import { startVideoGeneration, checkVideoGenerationStatus } from "@/lib/ai/video-generator";
 import { generateVoiceover } from "@/lib/ai/text-to-speech-generator-elevenlabs";
 import { sendTelegramMessage } from "@/lib/telegram/telegram-client";
 import { createClient } from "@supabase/supabase-js";
@@ -157,40 +157,80 @@ export const generateCampaign = inngest.createFunction(
     // Prevent unused variable warning
     console.log(`Audio generated/retrieved: ${audioUrl ? 'Yes' : 'No'}`);
 
-    // Step 3: Generate Video (skip if resuming from finalize)
-    const videoAssets = await step.run("generate-video", async () => {
+    // Step 3: Start Video Generation
+    const videoJobId = await step.run("start-video-generation", async () => {
       if (resume && resumeFrom === "finalize") {
-        // Fetch existing video from database
-        const { data: campaign } = await supabase
-          .from("campaigns")
-          .select("video_url, thumbnail_url")
-          .eq("id", campaignId)
-          .single();
-
-        // Type assertion for campaign data
-        type CampaignWithVideo = { video_url: string | null; thumbnail_url: string | null };
-        const typedCampaign = campaign as CampaignWithVideo | null;
-
-        if (!typedCampaign?.video_url) {
-          throw new Error("Cannot resume: video URL not found");
-        }
-
-        return {
-          video_url: typedCampaign.video_url,
-          thumbnail_url: typedCampaign.thumbnail_url || ""
-        };
+        return null; // Skip if already finalized
       }
 
-      // Generate new video
       await updateStatus("processing_video", 70);
       if (!resume) {
-        await notifyUser(`🎤 Voiceover ready! Now rendering video... (This may take a moment)`);
+        await notifyUser(`🎤 Voiceover ready! Now rendering video... (This may take a few minutes)`);
       }
-      const result = await generateVideo({ script, tier });
-      return result;
+
+      return await startVideoGeneration({ script, tier });
     });
 
-    // Step 3: Finalize
+    // Step 4: Poll Video Status
+    const videoAssets = await step.run("poll-video-status", async () => {
+      if (resume && resumeFrom === "finalize") {
+         // Fetch existing video from database
+         const { data: campaign } = await supabase
+           .from("campaigns")
+           .select("video_url, thumbnail_url")
+           .eq("id", campaignId)
+           .single();
+
+         type CampaignWithVideo = { video_url: string | null; thumbnail_url: string | null };
+         const typedCampaign = campaign as CampaignWithVideo | null;
+
+         if (!typedCampaign?.video_url) {
+           throw new Error("Cannot resume: video URL not found");
+         }
+
+         return {
+           video_url: typedCampaign.video_url,
+           thumbnail_url: typedCampaign.thumbnail_url || ""
+         };
+      }
+
+      if (!videoJobId) throw new Error("Video Job ID missing");
+
+      // Polling loop with sleep
+      let attempts = 0;
+      const maxAttempts = 60; // 5 mins total with 5s intervals
+
+      while (attempts < maxAttempts) {
+        const status = await checkVideoGenerationStatus(videoJobId, tier);
+
+        if (status.status === 'completed' && status.output) {
+           return status.output;
+        }
+
+        if (status.status === 'failed') {
+          throw new Error(status.error || 'Video generation failed');
+        }
+
+        // Wait 5 seconds before next check
+        // Note: we can't use step.sleep inside the run callback directly in the same way
+        // to suspend the function. In Inngest v3, we should split this.
+        // But since we are inside a step.run, we have to use standard sleep.
+        // For true suspension, we should loop steps.
+        // However, standard sleep is fine if the function timeout is high enough (5 mins might be tight on Vercel)
+        // Better pattern for Inngest:
+        // Use step.waitForEvent if we had webhooks.
+        // OR loop using multiple steps.
+
+        // Since we are refactoring existing code, and simplicity is key for now:
+        // We will simple sleep here. If cost is an issue, we'd restructure to recursive steps.
+        await new Promise(r => setTimeout(r, 5000));
+        attempts++;
+      }
+
+      throw new Error("Video generation timed out");
+    });
+
+    // Step 5: Finalize
     await step.run("finalize-campaign", async () => {
       await updateStatus("completed", 100, {
         video_url: videoAssets.video_url,
