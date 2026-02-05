@@ -49,18 +49,28 @@ export const generateCampaign = inngest.createFunction(
 
     // Helper to send notification
     const notifyUser = async (message: string) => {
-      // 1. Fetch user's telegram chat ID
+      // 1. Fetch user's telegram chat ID and settings
       const { data, error } = await supabase
         .from("user_profiles")
-        .select("telegram_chat_id")
+        .select("telegram_chat_id, settings")
         .eq("user_id", userId)
         .single();
 
       // Cast to expected type to avoid inference issues
-      const profile = data as { telegram_chat_id: string | null } | null;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const profile = data as { telegram_chat_id: string | null; settings: any } | null;
 
       if (error || !profile || !profile.telegram_chat_id) {
         console.log(`No telegram chat ID found for user ${userId}`);
+        return;
+      }
+
+      // Check if telegram notifications are enabled
+      // Default to false if settings or notification settings are missing
+      const telegramEnabled = profile.settings?.notifications?.telegram?.enabled === true;
+
+      if (!telegramEnabled) {
+        console.log(`Telegram notifications disabled for user ${userId}`);
         return;
       }
 
