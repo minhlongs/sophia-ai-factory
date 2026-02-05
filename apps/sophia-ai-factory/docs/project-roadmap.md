@@ -65,7 +65,22 @@
   - [x] Pricing page with "Buy Now" integration.
   - [x] Loading states and error handling during checkout.
 
-### 🔮 Phase 5: Scaling & SaaS (Future)
+### ✅ Phase 5: Mobile Command Center (Completed)
+**Goal:** Enable remote campaign management via Telegram.
+- [x] **Bot Infrastructure**:
+  - [x] Webhook handler with security validation (`X-Telegram-Bot-Api-Secret-Token`).
+  - [x] Bi-directional messaging service.
+- [x] **User Linking**:
+  - [x] `/email` command to link Telegram ID to Supabase User securely.
+- [x] **Campaign Management**:
+  - [x] `/campaign <topic>` to trigger new video generation.
+  - [x] `/status` to poll active job progress.
+  - [x] `/results` to retrieve completed video links.
+- [x] **Integration**:
+  - [x] Connected to Inngest event bus (`campaign.created`).
+  - [x] Real-time updates from core pipeline.
+
+### 🔮 Phase 6: Scaling & SaaS (Future)
 **Goal:** Multi-user support and advanced features.
 - [ ] **Authentication**: Move from Basic Auth to NextAuth/Clerk.
 - [ ] **Multi-Tenancy**: Support multiple user accounts per deployment.

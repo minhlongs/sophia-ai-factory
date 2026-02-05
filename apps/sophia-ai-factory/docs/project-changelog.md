@@ -21,6 +21,17 @@
   - Added System Health page (`/dashboard/system-health`) for detailed service status monitoring.
   - Implemented checks for Supabase, Inngest, and external API configurations (OpenRouter, ElevenLabs, HeyGen, Telegram).
 
+## v1.3.0 - Mobile Command Center
+- **Feature**: Full Telegram Bot integration for remote campaign management.
+- **Commands**:
+  - `/start`: Bot initialization and welcome.
+  - `/email`: Secure account linking via email verification.
+  - `/campaign`: Instant campaign creation from mobile.
+  - `/status`: Real-time progress monitoring.
+  - `/results`: Access to completed video assets.
+- **Security**: Webhook secret validation and role-based access control.
+- **Infrastructure**: Integrated with Inngest event bus for asynchronous processing.
+
 ## v1.2.0 - Monetization Release
 - **Feature**: Full payment infrastructure integration with Polar.
 - **Feature**: Automated provisioning of pricing tiers.

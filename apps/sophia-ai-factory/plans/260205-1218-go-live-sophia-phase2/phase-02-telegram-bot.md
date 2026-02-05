@@ -3,24 +3,24 @@
 **Goal**: Bi-directional communication channel for discovery.
 
 ## 1. Bot Setup
-- [ ] Create Bot via @BotFather
-- [ ] Get Token
-- [ ] Set Webhook URL: `https://sophia-ai.com/api/webhooks/telegram`
+- [x] Create Bot via @BotFather
+- [x] Get Token
+- [x] Set Webhook URL: `https://sophia-ai.com/api/webhooks/telegram`
 
 ## 2. Webhook Handler (`src/app/api/webhooks/telegram/route.ts`)
 Implement command parser:
-- `/start`: Check if user exists (link via unique code or email match if possible, for MVP simple ID match or "Enter your Sophia Email" flow).
-- `/discover [niche]`:
+- [x] `/start`: Check if user exists (link via unique code or email match if possible, for MVP simple ID match or "Enter your Sophia Email" flow).
+- [x] `/discover [niche]`:
   - Call `sophiaIndex.getTop50({ category: niche })`
   - Format Top 3 results as buttons/text.
-- `/script [product_id]`:
+- [x] `/script [product_id]`:
   - Call `intelligence.generateScript(product_id)`
   - Return script text.
 
 ## 3. Linking Logic (`src/lib/telegram.ts`)
-- Need a way to map Telegram Chat ID <-> Supabase User ID.
-- **Migration**: Add `telegram_chat_id` to `auth.users` metadata OR create `user_profiles` table.
-- **Preferred**: `user_profiles` table in Supabase.
+- [x] Need a way to map Telegram Chat ID <-> Supabase User ID.
+- [x] **Migration**: Add `telegram_chat_id` to `auth.users` metadata OR create `user_profiles` table.
+- [x] **Preferred**: `user_profiles` table in Supabase.
 
 **Task**: Create `supabase/migrations/004_user_profiles.sql`
 ```sql
@@ -34,5 +34,5 @@ ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
 ```
 
 ## 4. Dependencies
-- `telegraf` or just `fetch` for sending messages.
-- Since it's a webhook, we just parse JSON body and use `fetch` to send replies to Telegram API.
+- [x] `telegraf` or just `fetch` for sending messages.
+- [x] Since it's a webhook, we just parse JSON body and use `fetch` to send replies to Telegram API.
