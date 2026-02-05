@@ -40,3 +40,24 @@ Bước 2: Gửi Enter riêng (\n)
 - Khi CC CLI hoặc bất kỳ agent nào báo cáo "hoàn thành", PHẢI tự verify bằng browser/tools
 - Kiểm tra production site trực tiếp trước khi báo cáo "giao khách được"
 - Đừng bao giờ chỉ tin output text - phải xác thực visual/functional
+
+---
+
+## /insights COMMAND (Added 2026-02-05)
+
+**CC CLI có command `/insights` - tổng hợp workflow để improve!**
+
+- `/insights` → Xem summary mọi thứ đã làm
+- Dùng để phân tích patterns, improve workflow
+- Ánh xạ với Antigravity artifacts để sync context
+
+---
+
+## BINH-PHÁP STRATEGIC FLEXIBILITY (Added 2026-02-05)
+
+**始計 (Strategic Assessment) - ĐỪNG AUTO-BYPASS!**
+
+- Mỗi task đều cần đánh giá riêng biệt
+- KHÔNG dùng auto-bypass rule khi khởi động CC CLI
+- Let CC CLI ask questions để chọn approach phù hợp
+- Example: Architecture Fork detection → let CC CLI present options
