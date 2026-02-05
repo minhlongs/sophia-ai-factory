@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 import { Campaign } from "@/types";
+import { CampaignExportControl } from "../components/campaign-export-control";
 
 export default async function CampaignsPage() {
   const supabase = await createServerClient();
@@ -41,12 +42,15 @@ export default async function CampaignsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Campaigns</h1>
           <p className="text-gray-500">Monitor and manage your video generation campaigns</p>
         </div>
-        <Link href="/dashboard/create">
-          <Button className="flex items-center gap-2">
-            <Plus className="w-4 h-4" />
-            New Campaign
-          </Button>
-        </Link>
+        <div className="flex items-center gap-3">
+          <CampaignExportControl />
+          <Link href="/dashboard/create">
+            <Button className="flex items-center gap-2">
+              <Plus className="w-4 h-4" />
+              New Campaign
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <CampaignList initialCampaigns={campaigns} />
