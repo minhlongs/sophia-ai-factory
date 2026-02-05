@@ -13,6 +13,7 @@ export function Navbar() {
     { label: "Features", href: "/#features" },
     { label: "Pricing", href: "/#pricing" },
     { label: "Affiliate Programs", href: "/affiliate-discovery" },
+    { label: "Settings", href: "/settings" },
     { label: "FAQ", href: "/#faq" },
   ];
 
