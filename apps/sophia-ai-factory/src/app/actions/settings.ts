@@ -31,6 +31,7 @@ export async function getUserProfile(): Promise<UserProfileFormValues> {
     // If profile doesn't exist yet (race condition with trigger), return default
     return {
       fullName: user.user_metadata?.full_name || '',
+      email: user.email || '',
       settings: {
         theme: 'system',
         notifications: {
@@ -61,6 +62,7 @@ export async function getUserProfile(): Promise<UserProfileFormValues> {
 
   return {
     fullName: user.user_metadata?.full_name || '',
+    email: user.email || '',
     settings: {
       theme: theme,
       notifications: {

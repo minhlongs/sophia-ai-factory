@@ -67,13 +67,17 @@ graph TD
   4. Wizard collects keys, validates them against real APIs.
   5. Wizard writes `.env.local` via `fs` (in dev) or instructions (in prod).
 
-### 3. The Data Layer (Airtable)
-- **Role**: Lightweight CMS and Database.
-- **Why Airtable?**: Visual debugging for users, easy to edit data manually without admin UI.
+### 3. The Data Layer (Hybrid)
+- **Primary DB (Supabase)**: User profiles, authentication, application settings, and encrypted API keys.
+- **Content DB (Airtable)**: Lightweight CMS for Scripts, Videos, and Affiliate data.
+- **Why Hybrid?**: Supabase handles secure user data and auth; Airtable remains for visual content management and n8n integration.
 - **Schema**:
-  - `Scripts`: Stores generated text, status, and metadata.
-  - `Videos`: Stores final video URLs and performance metrics.
-  - `Affiliates`: Stores product research data.
+  - **Supabase**:
+    - `user_profiles`: Stores `settings` (JSONB) and `api_keys` (Encrypted JSONB).
+  - **Airtable**:
+    - `Scripts`: Stores generated text, status, and metadata.
+    - `Videos`: Stores final video URLs and performance metrics.
+    - `Affiliates`: Stores product research data.
 
 ### 4. The Automation Engine (n8n)
 - **Role**: Heavy lifting and orchestration.
@@ -87,9 +91,11 @@ graph TD
 ## Security Architecture
 
 ### API Key Management
-- **Client-Side**: No sensitive keys are exposed to the browser.
-- **Server-Side**: All API requests (validation, generation) are proxied through Next.js API Routes.
-- **Storage**: Keys are stored in `.env.local` (local) or Vercel Environment Variables (production).
+- **Client-Side**: No sensitive keys are exposed to the browser. Keys are masked (e.g., `sk-****`).
+- **Server-Side**: All API requests are proxied through Next.js API Routes / Server Actions.
+- **Storage**:
+  - **System Keys**: stored in `.env.local` (local) or Vercel Environment Variables.
+  - **User Keys**: stored in Supabase `user_profiles` table, encrypted at rest using AES-256-GCM.
 
 ### Access Control
 - **Turnkey Mode**: Single-user (Personal) deployment. No login required by default (assumes local/protected network or Vercel Basic Auth).

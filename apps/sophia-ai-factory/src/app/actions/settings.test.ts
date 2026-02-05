@@ -52,7 +52,7 @@ describe('Settings Server Actions', () => {
 
     it('should return default profile if no profile exists', async () => {
       mockSupabase.auth.getUser.mockResolvedValue({
-        data: { user: { id: 'user-123', user_metadata: { full_name: 'Test User' } } },
+        data: { user: { id: 'user-123', email: 'test@example.com', user_metadata: { full_name: 'Test User' } } },
         error: null
       });
       // Profile fetch returns error/null
@@ -62,6 +62,7 @@ describe('Settings Server Actions', () => {
 
       expect(result).toEqual({
         fullName: 'Test User',
+        email: 'test@example.com',
         settings: {
           theme: 'system',
           notifications: {
@@ -81,7 +82,7 @@ describe('Settings Server Actions', () => {
 
     it('should return profile with masked keys', async () => {
       mockSupabase.auth.getUser.mockResolvedValue({
-        data: { user: { id: 'user-123', user_metadata: { full_name: 'Test User' } } },
+        data: { user: { id: 'user-123', email: 'test@example.com', user_metadata: { full_name: 'Test User' } } },
         error: null
       });
 
@@ -106,8 +107,9 @@ describe('Settings Server Actions', () => {
       const result = await getUserProfile();
 
       expect(result.fullName).toBe('Test User');
+      expect(result.email).toBe('test@example.com');
       expect(result.settings.theme).toBe('dark');
-      expect(result.settings.notifications.telegram.enabled).toBe(true);
+      expect(result.settings.notifications?.telegram?.enabled).toBe(true);
       expect(result.apiKeys.openai).toBe('********');
       expect(result.apiKeys.anthropic).toBe('********');
       expect(result.apiKeys.elevenlabs).toBe('');

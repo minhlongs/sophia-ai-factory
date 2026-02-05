@@ -27,6 +27,7 @@ export const apiKeysSchema = z.object({
 // Combined Form Schema
 export const userProfileFormSchema = z.object({
   fullName: z.string().min(2, 'Name must be at least 2 characters').optional(),
+  email: z.string().email().optional().readonly(),
   settings: settingsSchema,
   apiKeys: apiKeysSchema,
 });

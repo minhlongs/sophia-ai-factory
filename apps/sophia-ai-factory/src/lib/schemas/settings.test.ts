@@ -5,6 +5,7 @@ describe('Settings Schema Validation', () => {
   it('should validate a valid profile', () => {
     const validData = {
       fullName: 'John Doe',
+      email: 'john@example.com',
       settings: {
         theme: 'dark',
         notifications: {
@@ -42,6 +43,16 @@ describe('Settings Schema Validation', () => {
     if (result.success) {
       expect(result.data.settings.theme).toBe('system');
     }
+  });
+
+  it('should validate email format if provided', () => {
+    const invalidEmailData = {
+      email: 'not-an-email',
+      settings: { theme: 'system' },
+      apiKeys: {}
+    };
+    const result = userProfileFormSchema.safeParse(invalidEmailData);
+    expect(result.success).toBe(false);
   });
 
   it('should allow optional API keys to be empty strings', () => {
