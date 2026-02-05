@@ -12,6 +12,7 @@ export interface CampaignTemplate {
   description: string;
   category: CampaignCategory;
   icon: string; // Emoji or icon identifier
+  is_predefined?: boolean;
   defaults: {
     title: string;
     audience: string;
@@ -31,6 +32,7 @@ export const CAMPAIGN_TEMPLATES: CampaignTemplate[] = [
     description: "Onboard new subscribers with a warm introduction to your brand",
     category: "welcome",
     icon: "👋",
+    is_predefined: true,
     defaults: {
       title: "Welcome to [Your Brand]",
       audience: "New subscribers and customers",
@@ -45,6 +47,7 @@ export const CAMPAIGN_TEMPLATES: CampaignTemplate[] = [
     description: "Announce and showcase your new product with excitement",
     category: "product",
     icon: "🚀",
+    is_predefined: true,
     defaults: {
       title: "Introducing [Product Name]",
       audience: "Existing customers and product enthusiasts",
@@ -59,6 +62,7 @@ export const CAMPAIGN_TEMPLATES: CampaignTemplate[] = [
     description: "Leverage seasonal events and holidays for timely content",
     category: "seasonal",
     icon: "🎉",
+    is_predefined: true,
     defaults: {
       title: "Special [Season/Holiday] Offer",
       audience: "All customers",
@@ -73,6 +77,7 @@ export const CAMPAIGN_TEMPLATES: CampaignTemplate[] = [
     description: "Create urgency with time-sensitive promotional offers",
     category: "promotion",
     icon: "⚡",
+    is_predefined: true,
     defaults: {
       title: "Flash Sale: [Discount]% Off!",
       audience: "Active customers and deal seekers",
@@ -87,6 +92,7 @@ export const CAMPAIGN_TEMPLATES: CampaignTemplate[] = [
     description: "Craft shareable content designed for maximum engagement",
     category: "viral",
     icon: "🔥",
+    is_predefined: true,
     defaults: {
       title: "You Won't Believe This!",
       audience: "Social media followers and viral content consumers",

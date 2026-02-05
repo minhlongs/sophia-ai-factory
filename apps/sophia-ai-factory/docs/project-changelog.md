@@ -2,24 +2,16 @@
 
 ## [Unreleased]
 
-### Added
-- **Payment Integration (Polar)**:
-  - Integrated `@polar-sh/sdk` for processing payments.
-  - Implemented 3-tier pricing model: Starter ($1,200), Growth ($2,000), Premium ($3,000).
-  - Added automated product provisioning script (`scripts/setup-polar-products.ts`).
-  - Created secure Webhook handler for processing payment success events.
-  - Updated Pricing UI to connect directly to Polar Checkout.
-- **User Settings & Profile Management**:
-  - Added `/dashboard/settings` page for managing user profile, preferences, and API keys (migrated from `/settings`).
-  - Implemented secure API key storage using AES-256-GCM encryption (OpenAI, Anthropic, ElevenLabs).
-  - Added Theme Switcher (Light/Dark/System) using `next-themes`.
-  - Added Notification Preferences (Email & Telegram).
-  - Added Read-only Email display.
-- **Production Verification Dashboard**:
-  - Added `/api/health` endpoint for system health checks.
-  - Added `HealthIndicator` component to the dashboard sidebar.
-  - Added System Health page (`/dashboard/system-health`) for detailed service status monitoring.
-  - Implemented checks for Supabase, Inngest, and external API configurations (OpenRouter, ElevenLabs, HeyGen, Telegram).
+## v1.4.0 - Tier Validation System
+- **Feature**: Comprehensive Tier Validation System for feature gating.
+- **Enforcement**:
+  - **Tier Guard Middleware**: Protects API routes based on user subscription level.
+  - **Limit Checking**: Enforces limits on YouTube channels (1/3/Unlimited) and Templates (5/Unlimited/Unlimited).
+  - **API Gating**: Restricts access to advanced endpoints for lower tiers.
+- **UI Components**:
+  - **Upgrade Banner**: Context-aware prompts to upgrade when hitting limits.
+  - **Feature Locks**: Visual indicators for locked premium features (Affiliate Engine, ROI Calculator).
+- **Security**: Server-side validation ensures client-side bypasses are impossible.
 
 ## v1.3.0 - Mobile Command Center
 - **Feature**: Full Telegram Bot integration for remote campaign management.

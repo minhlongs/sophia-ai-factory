@@ -37,7 +37,7 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
     ],
     limits: {
       youtubeChannels: 3,
-      videoTemplates: 10,
+      videoTemplates: 999, // Unlimited
       trainingSessions: 4,
       supportMonths: 3,
       automationScripts: true,
@@ -58,8 +58,8 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
       "enable_auto_update",
     ],
     limits: {
-      youtubeChannels: 5,
-      videoTemplates: 20,
+      youtubeChannels: 999, // Unlimited
+      videoTemplates: 999,  // Unlimited custom templates
       trainingSessions: 8,
       supportMonths: 6,
       automationScripts: true,

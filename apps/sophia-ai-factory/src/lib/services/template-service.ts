@@ -49,6 +49,7 @@ export const templateService = {
       description: record.description,
       category: record.category as CampaignCategory,
       icon: record.icon || "📝",
+      is_predefined: record.is_predefined,
       defaults: record.defaults as CampaignTemplate['defaults']
     }));
   },
@@ -79,6 +80,7 @@ export const templateService = {
       description: record.description,
       category: record.category as CampaignCategory,
       icon: record.icon || "📝",
+      is_predefined: record.is_predefined,
       defaults: record.defaults as CampaignTemplate['defaults']
     };
   }

@@ -58,6 +58,10 @@
 - [x] **Tiered Pricing**:
   - [x] 3-Tier Model: Starter ($1,200), Growth ($2,000), Premium ($3,000).
   - [x] Feature gating logic in `src/config/tiers.ts`.
+- [x] **Tier Enforcement System**:
+  - [x] **Tier Guard Middleware**: Server-side checks for API routes.
+  - [x] **UI Gating**: Upgrade banners and disabled states for locked features.
+  - [x] **Limit Validation**: Enforcement of channel and template limits.
 - [x] **Webhooks**:
   - [x] Secure webhook handler with signature verification.
   - [x] Automatic subscription status updates in Supabase.

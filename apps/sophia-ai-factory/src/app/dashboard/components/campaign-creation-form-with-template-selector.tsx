@@ -6,6 +6,8 @@ import { createCampaign } from "@/app/actions/campaigns";
 import { Button } from "@/app/components/ui/button";
 import { Loader2, Sparkles, Check } from "lucide-react";
 import { CampaignTemplate, applyTemplateDefaults } from "@/lib/templates/campaign-templates";
+import { UpgradeBanner } from "@/components/UpgradeBanner";
+import { Tier } from "@/types";
 
 interface CreateProjectFormProps {
   templates: CampaignTemplate[];
@@ -16,6 +18,7 @@ export function CreateProjectFormWithTemplates({ templates }: CreateProjectFormP
   const [selectedTemplate, setSelectedTemplate] = useState<CampaignTemplate | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [upgradeRequired, setUpgradeRequired] = useState<{ required: boolean; tier: Tier }>({ required: false, tier: "BASIC" });
 
   // Pre-fill form with template defaults when template selected
   const [formData, setFormData] = useState({
@@ -23,6 +26,7 @@ export function CreateProjectFormWithTemplates({ templates }: CreateProjectFormP
     audience: "",
     title: ""
   });
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(["youtube"]);
 
   const handleTemplateSelect = (template: CampaignTemplate) => {
     setSelectedTemplate(template);
@@ -34,10 +38,19 @@ export function CreateProjectFormWithTemplates({ templates }: CreateProjectFormP
     });
   };
 
+  const handlePlatformToggle = (platform: string) => {
+    setSelectedPlatforms(prev =>
+      prev.includes(platform)
+        ? prev.filter(p => p !== platform)
+        : [...prev, platform]
+    );
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setUpgradeRequired({ required: false, tier: "BASIC" });
 
     const formDataObj = new FormData(e.currentTarget);
 
@@ -45,6 +58,9 @@ export function CreateProjectFormWithTemplates({ templates }: CreateProjectFormP
     if (selectedTemplate) {
       formDataObj.append("template_id", selectedTemplate.id);
     }
+
+    // Add selected platforms
+    selectedPlatforms.forEach(p => formDataObj.append("platforms", p));
 
     try {
       const result = await createCampaign(formDataObj);
@@ -54,6 +70,11 @@ export function CreateProjectFormWithTemplates({ templates }: CreateProjectFormP
         router.refresh();
       } else {
         setError(result.message || "Something went wrong");
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if ((result as any).requiresUpgrade) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          setUpgradeRequired({ required: true, tier: (result as any).requiredTier });
+        }
       }
     } catch (err) {
       console.error(err);
@@ -162,6 +183,28 @@ export function CreateProjectFormWithTemplates({ templates }: CreateProjectFormP
             <p className="text-xs text-gray-500">Who is this video for?</p>
           </div>
 
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              Target Platforms
+            </label>
+            <div className="flex gap-4">
+              {['youtube', 'tiktok', 'instagram'].map((platform) => (
+                <label key={platform} className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectedPlatforms.includes(platform)}
+                    onChange={() => handlePlatformToggle(platform)}
+                    className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                  />
+                  <span className="capitalize">{platform}</span>
+                </label>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500">
+              Select platforms to publish to. Multiple platforms require Premium plan.
+            </p>
+          </div>
+
           {/* Template Info Display */}
           <div className="bg-gray-50 p-4 rounded-lg">
             <h4 className="text-sm font-medium text-gray-700 mb-2">Template Settings</h4>
@@ -178,8 +221,18 @@ export function CreateProjectFormWithTemplates({ templates }: CreateProjectFormP
           </div>
 
           {error && (
-            <div className="p-3 bg-red-50 text-red-700 text-sm rounded-lg">
-              {error}
+            <div className="space-y-4">
+              <div className="p-3 bg-red-50 text-red-700 text-sm rounded-lg">
+                {error}
+              </div>
+
+              {upgradeRequired.required && (
+                <UpgradeBanner
+                  currentTier="BASIC" // Default assumption, or pass via props
+                  requiredTier={upgradeRequired.tier}
+                  featureName="this feature"
+                />
+              )}
             </div>
           )}
 

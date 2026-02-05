@@ -4,6 +4,7 @@ export const createCampaignSchema = z.object({
   title: z.string().min(1, "Title is required").max(100),
   topic: z.string().min(1, "Topic is required").max(500).optional(),
   audience: z.string().max(200).optional(),
+  platforms: z.array(z.string()).optional(),
 });
 
 export type CreateCampaignInput = z.infer<typeof createCampaignSchema>;
