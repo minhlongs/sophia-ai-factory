@@ -63,8 +63,11 @@ graph TD
 - **Key Modules**:
   - `/setup-wizard`: A strictly guided flow to initialize the app.
   - `/dashboard`: Main operational view.
-  - `/api/*`: Serverless functions acting as proxy to external services and n8n webhooks.
-  - `/api/heygen/*`: Direct proxy endpoints for HeyGen API (Avatars, Voices, Video Generation).
+  - `/api/*`: Serverless functions acting as proxy to external services.
+- **Service Layer (New)**:
+  - **Service Factory**: Centralized dependency injection pattern (`src/lib/services/factory.ts`).
+  - **Abstraction**: Interfaces (`IVideoService`, `IVoiceService`, etc.) decouple logic from providers.
+  - **Mock Mode**: Zero-cost development implementations (`src/lib/services/mock/`).
 
 ### 2. The Configuration Layer
 - **Mechanism**: File-based `.env.local` generation.
@@ -145,6 +148,16 @@ graph TD
   2.  **UI Layer**: Components check `useTier()` hook to show/hide features or display "Upgrade" banners.
   3.  **Database**: Row Level Security (RLS) can be used for hard limits (future optimization).
 - **Limits Config**: Defined in `src/config/tiers.ts` as the single source of truth.
+
+### 8. CI/CD & Automation (Binh Pháp Strategy)
+- **Pipeline**: GitHub Actions (`.github/workflows/ci-cd.yml`).
+  - **Lint & Type Check**: Static analysis.
+  - **Unit Tests**: Vitest for logic verification.
+  - **E2E Tests**: Playwright running against **Mock Mode** for deterministic UI testing.
+- **Deployment**:
+  - **Vercel**: Automated preview deployments for PRs.
+  - **Infrastructure**: Idempotent scripts (`scripts/infra-sync.sh`) for setup.
+  - **Verification**: Post-deploy smoke tests (`scripts/smoke-test.ts`) using deep health checks.
 
 ## Data Flow: "New Project" Lifecycle
 

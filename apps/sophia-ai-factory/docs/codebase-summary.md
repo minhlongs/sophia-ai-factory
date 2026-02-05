@@ -43,18 +43,25 @@ Sophia AI Video Factory is a Next.js 16 application structured around the App Ro
   - Protects `/admin` routes if configured.
 
 ### `/src/lib` (Core Logic)
-- **`heygen/`**: HeyGen AI integration.
-  - `heygen-client.ts`: Typed client for HeyGen V2 API.
-  - `types.ts`: TypeScript interfaces for HeyGen resources.
+- **`services/`**: Service Factory Architecture.
+  - **`factory.ts`**: Dependency injection container.
+  - **`types.ts`**: Service interfaces (IVideoService, etc.).
+  - **`real/`**: Concrete implementations (HeyGen, ElevenLabs, etc.).
+  - **`mock/`**: Zero-cost mock implementations for dev/test.
+- **`heygen/`**: Legacy HeyGen client (deprecated in favor of services).
 - **`airtable.ts`**: Typed client for Airtable operations.
-  - Handles reading/writing Scripts, Videos, and Affiliates.
 - **`n8n.ts`**: Client for triggering n8n webhooks.
-- **`utils.ts`**: General helper functions (class merging, formatting).
 
 ### `/scripts` (DevOps & Setup)
-- **`setup.sh`**: Interactive shell script for verifying environment prerequisites (Node, Git).
-- **`verify.sh`**: Post-deployment verification script to check API keys and connections.
-- **`cli-setup.js`**: Node.js script used by the shell scripts for logic.
+- **`infra-sync.sh`**: Master infrastructure synchronization script.
+- **`smoke-test.ts`**: Production health verification script.
+- **`setup.sh`**: Interactive shell script for verifying environment prerequisites.
+- **`verify.sh`**: Comprehensive QA script (Lint, Type, Test, Audit).
+
+### `/tests` (Testing)
+- **`e2e/`**: Playwright end-to-end tests.
+  - **`sanity.spec.ts`**: Core user flow verification in Mock Mode.
+- **`mocks/`**: MSW handlers and test data.
 
 ### `/workflows` (Automation)
 - Contains JSON exports of the n8n workflows required to run the "Brain" of the factory.
