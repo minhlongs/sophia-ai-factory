@@ -130,6 +130,19 @@ graph TD
 - **Turnkey Mode**: Single-user (Personal) deployment. No login required by default (assumes local/protected network or Vercel Basic Auth).
 - **Admin Mode**: Optional Basic Auth middleware for public deployments.
 
+### 7. Feature Gating & Tier Enforcement
+- **Philosophy**: "Secure by Design" - Enforcement happens at the API level, UI is just a reflection.
+- **Tiers**:
+  - **BASIC (Starter)**: Entry level, 1 channel, manual workflow.
+  - **PREMIUM (Growth)**: Automation enabled, 3 channels, affiliate engine.
+  - **ENTERPRISE (Premium)**: Unlimited scale, API access, white-glove features.
+- **Enforcement Layers**:
+  1.  **Middleware / API Routes**: `TierGuard` function checks `user_profiles.subscription_tier` before processing requests.
+      - *Example*: POST `/api/campaigns` checks if `campaign_count < tier_limit`.
+  2.  **UI Layer**: Components check `useTier()` hook to show/hide features or display "Upgrade" banners.
+  3.  **Database**: Row Level Security (RLS) can be used for hard limits (future optimization).
+- **Limits Config**: Defined in `src/config/tiers.ts` as the single source of truth.
+
 ## Data Flow: "New Project" Lifecycle
 
 1. **Initiation**: User clicks "New Project" in Dashboard.

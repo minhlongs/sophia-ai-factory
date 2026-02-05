@@ -6,6 +6,7 @@ import { inngest } from "@/lib/inngest/client";
 import { createCampaignSchema } from "@/lib/campaigns/validation";
 import { revalidatePath } from "next/cache";
 import { Tier } from "@/types";
+import { tierGuard } from "@/lib/tier-guard";
 
 // Initialize Admin client for operations that might need bypass (like if auth is not fully hooked up in UI yet)
 // But ideally we use createServerClient to respect RLS
@@ -19,6 +20,8 @@ export async function createCampaign(formData: FormData) {
     title: formData.get("title") || formData.get("topic"), // Fallback for now
     topic: formData.get("topic"),
     audience: formData.get("audience"),
+    // Add platforms support if passed (simulated for now as it's not in schema yet)
+    platforms: formData.getAll("platforms"),
   };
 
   // Get template_id if provided
@@ -31,6 +34,9 @@ export async function createCampaign(formData: FormData) {
   }
 
   const { title, topic, audience } = validation.data;
+  // Explicitly cast platforms since it's not in the schema yet but we want to use it for tier check
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const platforms = (rawData as any).platforms as string[];
 
   // Get current user
   const supabase = await createServerClient();
@@ -53,6 +59,20 @@ export async function createCampaign(formData: FormData) {
         }
     } else {
         return { success: false, message: "Unauthorized" };
+    }
+  }
+
+  // TIER CHECK: Multi-channel access
+  // Requirement: "Update campaign creation to check PREMIUM tier for multi-channel"
+  if (platforms && platforms.length > 1) {
+    const multiChannelAccess = await tierGuard.checkMultiChannelAccess(userId);
+    if (!multiChannelAccess) {
+        return {
+            success: false,
+            message: "Multi-channel distribution requires a PREMIUM subscription.",
+            requiresUpgrade: true,
+            requiredTier: "PREMIUM"
+        };
     }
   }
 
