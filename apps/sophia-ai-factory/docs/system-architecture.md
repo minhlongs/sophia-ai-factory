@@ -150,14 +150,15 @@ graph TD
 - **Limits Config**: Defined in `src/config/tiers.ts` as the single source of truth.
 
 ### 8. CI/CD & Automation (Binh Pháp Strategy)
-- **Pipeline**: GitHub Actions (`.github/workflows/ci-cd.yml`).
-  - **Lint & Type Check**: Static analysis.
+- **Pipeline**: GitHub Actions (`.github/workflows/ci-cd.yml`) implementing Binh Pháp methodology.
+  - **Lint & Type Check**: Static analysis to ensure code quality (Front 2).
   - **Unit Tests**: Vitest for logic verification.
-  - **E2E Tests**: Playwright running against **Mock Mode** for deterministic UI testing.
+  - **E2E Tests**: Playwright running against **Mock Mode** (`NEXT_PUBLIC_MOCK_AI_SERVICES=true`) for deterministic UI testing without API costs.
+  - **Build Verification**: Ensures the application builds successfully (Front 3).
 - **Deployment**:
-  - **Vercel**: Automated preview deployments for PRs.
-  - **Infrastructure**: Idempotent scripts (`scripts/infra-sync.sh`) for setup.
-  - **Verification**: Post-deploy smoke tests (`scripts/smoke-test.ts`) using deep health checks.
+  - **Vercel**: Automated preview deployments for PRs and production deployment for main.
+  - **Infrastructure**: Idempotent scripts (`scripts/infra-sync.sh`) for setup and verification.
+  - **Verification**: Post-deploy smoke tests (`scripts/smoke-test.ts`) using deep health checks (`/api/health/`).
 
 ## Data Flow: "New Project" Lifecycle
 

@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-## v1.7.0 - Binh Pháp Full Automation
+## v1.7.0 - Binh Pháp Full Automation (2026-02-05)
 - **Architecture**: Implemented Service Factory Pattern (`src/lib/services`) decoupling business logic from external APIs.
 - **DevEx**: Added **Mock Mode** (`NEXT_PUBLIC_MOCK_AI_SERVICES=true`) for zero-cost, offline development.
 - **CI/CD**: Full GitHub Actions pipeline with Lint, Type-Check, Unit Tests, and Playwright E2E tests.

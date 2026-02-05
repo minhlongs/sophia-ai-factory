@@ -45,6 +45,32 @@ Tests are co-located with the source code they test, typically named `{filename}
     *   Tests integration with payment providers (Polar).
     *   Verifies signature verification and event handling logic.
 
+5.  **End-to-End (E2E) Tests** (`tests/e2e/`)
+    *   **Playwright** based tests simulating real user user flows.
+    *   Run against **Mock Mode** (`NEXT_PUBLIC_MOCK_AI_SERVICES=true`) for deterministic, zero-cost verification.
+    *   Tests the critical path: Setup Wizard -> Dashboard -> Script Gen -> Video Render.
+
+## Running E2E Tests
+
+E2E tests require the application to be running in Mock Mode.
+
+```bash
+# 1. Start App in Mock Mode (Terminal 1)
+npm run dev:mock
+
+# 2. Run Playwright Tests (Terminal 2)
+npx playwright test
+```
+
+## Mock Mode Testing
+
+We use a "Mock Mode" strategy to test the full application flow without external dependencies.
+
+- **Enable**: Set `NEXT_PUBLIC_MOCK_AI_SERVICES=true` in `.env.local` or environment.
+- **Mechanism**: The `ServiceFactory` injects `MockHeyGenService` instead of `RealHeyGenService`.
+- **Behavior**: Mock services return instant, successful responses with fake data (e.g., a placeholder video URL).
+- **Benefit**: Allows CI/CD to run full E2E tests on every PR without API costs or flakiness.
+
 ## Writing New Tests
 
 ### Unit Tests

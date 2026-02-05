@@ -106,6 +106,35 @@ export function Button({ className, ...props }: ButtonProps) {
 - **Branches**: `feature/{name}`, `fix/{issue}`.
 - **PRs**: Require CI checks (Lint, Build, Test) to pass.
 
+## Service Factory Pattern
+
+We use a Service Factory pattern to decouple business logic from external service providers. This allows for easy swapping of providers (e.g., swapping D-ID for HeyGen) and robust testing via Mock Mode.
+
+### 1. Define the Interface
+All services must implement a strict interface defined in `src/lib/services/types.ts`.
+
+```typescript
+export interface IMyService {
+  doSomething(params: Params): Promise<Result>;
+}
+```
+
+### 2. Implement Real & Mock Versions
+Create two implementations: one calling the real API, and one returning static/fake data.
+
+- `src/lib/services/real/my-service.ts`: Real API calls.
+- `src/lib/services/mock/my-service.ts`: Fake data (delays, sample responses).
+
+### 3. Register in Factory
+Update `src/lib/services/factory.ts` to instantiate the correct version based on `NEXT_PUBLIC_MOCK_AI_SERVICES`.
+
+```typescript
+export function getMyService(): IMyService {
+  const useMock = process.env.NEXT_PUBLIC_MOCK_AI_SERVICES === 'true';
+  return useMock ? new MockMyService() : new RealMyService();
+}
+```
+
 ## Testing Standards
 - **Framework**: Vitest + React Testing Library.
 - **Requirement**: Core business logic and server actions must have unit tests.
