@@ -3,7 +3,8 @@ import { FranchiseBenefits } from "@/components/franchise/franchise-benefits";
 import { FranchiseModels } from "@/components/franchise/franchise-models";
 import { FranchiseProcess } from "@/components/franchise/franchise-process";
 import { FranchiseForm } from "@/components/franchise/franchise-form";
-import { HeaderNavigation, FooterSection } from "@/components/layout";
+import { MainLayout } from "@/components/layout/main-layout";
+import { FooterSection } from "@/components/layout/footer-section";
 
 export const metadata = {
   title: "Nhượng quyền | 84tea - Di sản trà Việt",
@@ -12,18 +13,15 @@ export const metadata = {
 
 export default function FranchisePage() {
   return (
-    <div className="min-h-screen bg-surface flex flex-col">
-      <HeaderNavigation />
-
-      <main className="flex-1">
+    <MainLayout>
+      <div className="bg-surface">
         <FranchiseHero />
         <FranchiseBenefits />
         <FranchiseModels />
         <FranchiseProcess />
         <FranchiseForm />
-      </main>
-
-      <FooterSection />
-    </div>
+        <FooterSection />
+      </div>
+    </MainLayout>
   );
 }

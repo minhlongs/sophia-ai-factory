@@ -1,9 +1,12 @@
 # Project Roadmap
 
-## Phase 1: Foundation (Completed)
-- [x] **Project Scaffolding:** Next.js 15, TypeScript, Tailwind setup.
-- [x] **Design System:** MD3 Theme implementation (Colors, Typography, Icons).
-- [x] **Core Components:** Buttons, Cards, Inputs, Layouts.
+## Phase 1: Foundation & MD3 Redesign (Completed)
+- [x] **Project Scaffolding:** Next.js 16, TypeScript, Tailwind setup.
+- [x] **Design System:** Full MD3 Implementation (Colors, Typography, Elevation, States).
+- [x] **Core Components:** Buttons, Cards, Inputs, Dialogs, Snackbars.
+- [x] **Navigation:** Top App Bar, Drawer, Bottom Nav, Tabs.
+- [x] **Accessibility:** WCAG 2.1 AA Compliance (Focus, ARIA, Contrast).
+- [x] **Performance:** SEO, Sitemap, Image Optimization, Dark Mode.
 
 ## Phase 2: MVP Features (Completed)
 - [x] **Landing Page:** Hero, Story, Featured Products.

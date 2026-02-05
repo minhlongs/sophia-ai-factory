@@ -1,5 +1,22 @@
 # Project Changelog
 
+## [1.0.0] - 2026-02-06
+
+### Added
+- **MD3 Redesign**: Complete overhaul of the design system to fully adhere to Material Design 3 standards (100% compliance).
+- **Navigation System**: Implemented Top App Bar with scroll behavior, Navigation Drawer for mobile, Bottom Navigation, and Tabs.
+- **Dark Mode**: Added full dark mode support with `next-themes` and MD3 dark color tokens.
+- **Accessibility**: Achieved WCAG 2.1 AA compliance with focus rings, skip links, ARIA labels, and reduced motion support.
+- **Performance**: Optimized images (AVIF/WebP), fonts (preconnect), and metadata for <3s load times.
+- **SEO**: Added comprehensive SEO metadata, sitemap.xml, robots.txt, and OpenGraph tags.
+- **Components**: Added `FilterChips`, `Snackbar`, `Dialog`, `Progress` indicators, and `ThemeToggle`.
+
+### Changed
+- **Typography**: Refined type scale to strictly match MD3 specs (Display/Headline/Title/Body/Label).
+- **Colors**: Updated color palette to use CSS variables for dynamic Imperial Green & Gold Leaf theme switching.
+- **Layout**: Migrated all pages to use the new `MainLayout` with responsive navigation patterns.
+- **Build**: Upgraded to Next.js 16.1.6 with Turbopack for faster builds (4.1s).
+
 ## [0.1.0] - 2026-02-05
 
 ### Added
