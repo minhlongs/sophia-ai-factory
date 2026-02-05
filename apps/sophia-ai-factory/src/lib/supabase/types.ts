@@ -71,6 +71,7 @@ export interface Database {
           user_id: string
           telegram_chat_id: string | null
           settings: Json | null
+          api_keys: Json | null
           subscription_tier: 'free' | 'pro' | 'enterprise' | null
           subscription_status: string | null
           polar_subscription_id: string | null
@@ -81,6 +82,7 @@ export interface Database {
           user_id: string
           telegram_chat_id?: string | null
           settings?: Json | null
+          api_keys?: Json | null
           subscription_tier?: 'free' | 'pro' | 'enterprise' | null
           subscription_status?: string | null
           polar_subscription_id?: string | null
