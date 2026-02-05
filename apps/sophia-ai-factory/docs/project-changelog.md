@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## v1.7.0 - Binh Pháp Full Automation
+- **Architecture**: Implemented Service Factory Pattern (`src/lib/services`) decoupling business logic from external APIs.
+- **DevEx**: Added **Mock Mode** (`NEXT_PUBLIC_MOCK_AI_SERVICES=true`) for zero-cost, offline development.
+- **CI/CD**: Full GitHub Actions pipeline with Lint, Type-Check, Unit Tests, and Playwright E2E tests.
+- **Quality**: Enhanced `verify.sh` with security audit and build verification.
+- **Production**: Added `infra-sync.sh` for idempotent infrastructure setup and `smoke-test.ts` for live verification.
+
 ## v1.6.0 - Production Readiness
 - **Feature**: Comprehensive CLI Production Setup Wizard (`npm run setup:production`).
 - **Automation**:

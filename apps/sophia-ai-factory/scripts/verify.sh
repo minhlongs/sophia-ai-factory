@@ -56,4 +56,10 @@ echo_step "5. Production Build Verification..."
 npm run build
 echo_success "Build passed"
 
+# 6. Mock Mode Verification
+echo_step "6. Mock Mode Build Verification..."
+# Ensure the app builds successfully even when forced into Mock Mode
+NEXT_PUBLIC_MOCK_AI_SERVICES=true npm run build
+echo_success "Mock Mode Build passed"
+
 echo -e "${GREEN}\n✨ ALL SYSTEMS GREEN - READY FOR DEPLOYMENT ✨${NC}\n"
