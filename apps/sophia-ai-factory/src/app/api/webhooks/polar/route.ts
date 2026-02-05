@@ -5,7 +5,12 @@ import { headers } from 'next/headers';
 // Define minimal event interface since SDK export is tricky
 interface WebhookEvent {
   type: string;
-  data: any;
+  data: {
+    id?: string;
+    customerEmail?: string;
+    productId?: string;
+    [key: string]: unknown;
+  };
   id?: string;
 }
 

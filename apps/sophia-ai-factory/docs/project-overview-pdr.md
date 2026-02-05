@@ -78,7 +78,7 @@ The core differentiator is the **"Turnkey" experience**: a 4-step Setup Wizard t
 ## Roadmap Status
 - [x] **Phase 1: Foundation** - Next.js setup, UI components.
 - [x] **Phase 2: Turnkey Wizard** - Interactive setup flow.
-- [ ] **Phase 3: Core Pipeline** - Script-to-Video generation wiring.
+- [x] **Phase 3: Core Pipeline** - Script-to-Video generation wiring.
 - [ ] **Phase 4: Scaling** - Multi-user support and SaaS features.
 
 ## Success Metrics

@@ -79,8 +79,10 @@ graph TD
 - **Role**: Heavy lifting and orchestration.
 - **Why n8n?**: Visual workflow builder allows users to customize logic (e.g., change prompts) without coding.
 - **Workflows**:
-  - `Generate Script`: Webhook -> OpenRouter -> JSON Parse -> Airtable Update.
-  - `Render Video`: Webhook -> ElevenLabs -> D-ID -> Airtable Update.
+  - `script-generator.json`: Webhook -> OpenRouter -> JSON Parse -> Airtable Update.
+  - `video-generator.json`: Webhook -> ElevenLabs -> D-ID -> Airtable Update.
+  - `voice-generator.json`: Text-to-Speech generation.
+  - `publish-workflow.json`: Final publishing steps.
 
 ## Security Architecture
 

@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "setup": "./scripts/setup.sh",
-    "verify": "./scripts/verify.sh"
+    "verify": "./scripts/verify.sh",
+    "test": "vitest"
   },
   "dependencies": {
     "@polar-sh/sdk": "^0.42.5",
@@ -24,15 +25,21 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.2",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^5.1.3",
+    "@vitest/coverage-v8": "^4.0.18",
     "babel-plugin-react-compiler": "1.0.0",
     "dotenv": "^17.2.3",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "jsdom": "^28.0.0",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.0.18"
   }
 }

@@ -2,7 +2,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "ghost" | "glow";
+  variant?: "primary" | "secondary" | "ghost" | "glow" | "outline";
   size?: "sm" | "md" | "lg";
 }
 
@@ -40,6 +40,10 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             // Glow - Neon with glow effect
             "bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] text-white shadow-[0_0_30px_rgba(0,240,255,0.5)] hover:shadow-[0_0_50px_rgba(112,0,255,0.7)] hover:scale-105":
               variant === "glow",
+
+            // Outline - Transparent with border
+            "bg-transparent border border-gray-300 text-gray-700 hover:bg-gray-50":
+              variant === "outline",
           },
 
           className

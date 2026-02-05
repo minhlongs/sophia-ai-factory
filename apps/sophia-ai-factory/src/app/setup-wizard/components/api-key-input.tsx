@@ -9,7 +9,7 @@ interface ApiKeyInputProps {
   label: string;
   value: string;
   onChange: (value: string) => void;
-  onVerify: () => Promise<void>;
+  onVerify: () => Promise<unknown>;
   placeholder?: string;
   helpText?: string;
   status: 'idle' | 'validating' | 'valid' | 'invalid';

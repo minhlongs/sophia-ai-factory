@@ -47,7 +47,7 @@ export async function POST(request: Request) {
 
       envContent = updatedLines.join('\n');
 
-    } catch (_error) {
+    } catch {
       // File doesn't exist, create new
       Object.keys(config).forEach(key => {
         envContent += `${key}="${config[key]}"\n`;
@@ -56,7 +56,16 @@ export async function POST(request: Request) {
 
     // Write to .env.local
     // Note: This only works in local development or environments with write access.
-    // In Vercel, this will fail. We should catch that.
+
+    // Check for Vercel environment
+    if (process.env.VERCEL) {
+      return NextResponse.json({
+        success: false,
+        message: "Serverless environment detected (Vercel). Please download the .env file manually.",
+        envContent: envContent
+      }, { status: 200 }); // Return 200 so we can handle the logic in UI without treating it as a crash
+    }
+
     try {
       await fs.writeFile(envPath, envContent);
 

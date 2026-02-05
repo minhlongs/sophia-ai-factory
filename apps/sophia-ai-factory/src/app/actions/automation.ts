@@ -63,6 +63,42 @@ export async function generateScript(formData: FormData) {
 }
 
 /**
+ * Trigger Video Rendering Workflow
+ */
+export async function renderVideo(scriptId: string) {
+  if (!scriptId) return { success: false, message: "Script ID required" };
+
+  try {
+    // 1. Update status to video_queued
+    await airtable.scripts.updateStatus(scriptId, "video_queued");
+
+    // 2. Call n8n Webhook for Video
+    const webhookUrl = process.env.N8N_WEBHOOK_RENDER_VIDEO;
+
+    if (webhookUrl) {
+      // Fire and forget
+      fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scriptId,
+          userId: MOCK_USER_ID,
+        }),
+      }).catch(err => console.error("Webhook fetch error:", err));
+      // We catch fetch error here to not block UI if fire-and-forget fails immediately
+    } else {
+      console.warn("N8N_WEBHOOK_RENDER_VIDEO not set");
+    }
+
+    revalidatePath("/dashboard");
+    return { success: true, message: "Video rendering started" };
+  } catch (error) {
+    console.error("Error rendering video:", error);
+    return { success: false, message: "Failed to start rendering" };
+  }
+}
+
+/**
  * Fetch user's projects (scripts/videos)
  */
 export async function getUserProjects() {

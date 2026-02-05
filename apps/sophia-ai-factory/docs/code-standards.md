@@ -104,4 +104,10 @@ export function Button({ className, ...props }: ButtonProps) {
 ## Git Workflow
 - **Commit Messages**: Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`).
 - **Branches**: `feature/{name}`, `fix/{issue}`.
-- **PRs**: Require CI checks (Lint, Build) to pass.
+- **PRs**: Require CI checks (Lint, Build, Test) to pass.
+
+## Testing Standards
+- **Framework**: Vitest + React Testing Library.
+- **Requirement**: Core business logic and server actions must have unit tests.
+- **Coverage**: Aim for high coverage on `src/lib` validation and utility functions.
+- **Reference**: See `docs/testing-guide.md` for detailed instructions.
