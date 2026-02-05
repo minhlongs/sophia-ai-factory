@@ -47,6 +47,24 @@ async function check() {
   console.log(cyan('\n🏥 Sophia AI Factory - Health Check'));
   console.log('===================================\n');
 
+  // Allow checking a specific URL (Smoke Test)
+  const targetUrl = process.argv[2];
+  if (targetUrl) {
+    console.log(`Target: ${targetUrl}`);
+    if (!targetUrl.startsWith('http')) {
+       console.log(red('Error: URL must start with http/https'));
+       process.exit(1);
+    }
+    const res = await fetchJson(targetUrl);
+    if (res.status >= 200 && res.status < 300) {
+      console.log(green(`✔ Smoke Test Passed: ${targetUrl} (Status: ${res.status})`));
+      process.exit(0);
+    } else {
+      console.log(red(`✘ Smoke Test Failed: ${targetUrl} (Status: ${res.status})`));
+      process.exit(1);
+    }
+  }
+
   const envPath = path.join(process.cwd(), '.env.local');
   if (!fs.existsSync(envPath)) {
     console.log(red('✘ .env.local not found. Run `npm run setup` first.'));
