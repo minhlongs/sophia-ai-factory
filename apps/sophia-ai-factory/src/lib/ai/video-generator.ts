@@ -22,7 +22,6 @@ export async function startVideoGeneration(input: GenerateVideoInput): Promise<s
   if (heygenClient) {
     try {
       // Extract narration from script
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const script = input.script as { scenes: Array<{ narration: string }> };
       const fullNarration = script.scenes.map(s => s.narration).join(' ');
 

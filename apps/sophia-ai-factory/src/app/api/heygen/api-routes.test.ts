@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 import { GET as getAvatars } from './avatars/route';
 import { POST as createVideo } from './create-video/route';
 import { GET as getStatus } from './status/[id]/route';
-import { GET as getVoices } from './voices/route';
+// import { GET as getVoices } from './voices/route';
 import * as heygenClientModule from '@/lib/heygen/heygen-client';
 
 // Mock the heygen client module
@@ -12,6 +12,7 @@ vi.mock('@/lib/heygen/heygen-client', () => ({
 }));
 
 describe('HeyGen API Routes', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockClient: any;
 
   beforeEach(() => {
@@ -21,6 +22,7 @@ describe('HeyGen API Routes', () => {
       createVideo: vi.fn(),
       getVideoStatus: vi.fn(),
     };
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     (heygenClientModule.getHeyGenClient as any).mockReturnValue(mockClient);
   });
 
@@ -41,6 +43,7 @@ describe('HeyGen API Routes', () => {
     });
 
     it('should return empty list when client is missing', async () => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
       (heygenClientModule.getHeyGenClient as any).mockReturnValue(null);
 
       const response = await getAvatars();
@@ -93,6 +96,7 @@ describe('HeyGen API Routes', () => {
     });
 
     it('should return 503 if client missing', async () => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
       (heygenClientModule.getHeyGenClient as any).mockReturnValue(null);
       const req = new NextRequest('http://localhost', { method: 'POST' });
 
@@ -146,6 +150,7 @@ describe('HeyGen API Routes', () => {
     });
 
     it('should return 503 if client missing', async () => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
         (heygenClientModule.getHeyGenClient as any).mockReturnValue(null);
         const req = new NextRequest('http://localhost');
         const params = Promise.resolve({ id: 'vid_123' });

@@ -34,22 +34,30 @@ describe('tierGuard', () => {
   });
 
   describe('checkLimit - videoTemplates', () => {
-    it('should deny BASIC users (limit 0 custom templates)', async () => {
+    it('should allow BASIC users within limit (limit 5)', async () => {
       vi.mocked(subscriptionLib.getUserTier).mockResolvedValue('BASIC');
-      vi.mocked(templateService.getTemplates).mockResolvedValue([]);
+      vi.mocked(templateService.getTemplates).mockResolvedValue([]); // Usage 0
+
+      const result = await tierGuard.checkLimit(userId, 'videoTemplates');
+      expect(result.allowed).toBe(true);
+    });
+
+    it('should deny BASIC users exceeding limit', async () => {
+      vi.mocked(subscriptionLib.getUserTier).mockResolvedValue('BASIC');
+      // Simulate 6 templates (limit 5)
+      vi.mocked(templateService.getTemplates).mockResolvedValue(Array(6).fill({ is_predefined: false }));
 
       const result = await tierGuard.checkLimit(userId, 'videoTemplates');
       expect(result.allowed).toBe(false);
-      expect(result.requiredTier).toBe('ENTERPRISE');
+      expect(result.requiredTier).toBe('PREMIUM');
     });
 
-    it('should deny PREMIUM users (limit 0 custom templates)', async () => {
+    it('should allow PREMIUM users (limit 999)', async () => {
         vi.mocked(subscriptionLib.getUserTier).mockResolvedValue('PREMIUM');
-        vi.mocked(templateService.getTemplates).mockResolvedValue([]);
+        vi.mocked(templateService.getTemplates).mockResolvedValue(Array(10).fill({ is_predefined: false }));
 
         const result = await tierGuard.checkLimit(userId, 'videoTemplates');
-        expect(result.allowed).toBe(false);
-        expect(result.requiredTier).toBe('ENTERPRISE');
+        expect(result.allowed).toBe(true);
     });
 
     it('should allow ENTERPRISE users (limit 999)', async () => {

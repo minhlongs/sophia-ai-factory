@@ -22,6 +22,7 @@ describe('Telegram Webhook Route', () => {
     process.env.TELEGRAM_WEBHOOK_SECRET = secret
   })
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   const createRequest = (body: any, headers: Record<string, string> = {}) => {
     return new NextRequest('http://localhost/api/webhooks/telegram', {
       method: 'POST',

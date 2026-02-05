@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Sparkles, ArrowRight, Lock } from "lucide-react";
+import { ArrowRight, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tier } from "@/types";
@@ -41,7 +41,7 @@ export function UpgradeBanner({
               </span>
             </h3>
             <p className="text-sm text-gray-600 mt-1">
-              Your current {currentTier} plan doesn't support this feature.
+              Your current {currentTier} plan doesn&apos;t support this feature.
               Upgrade to access {featureName} and more.
             </p>
           </div>

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getUserTier, checkTierAccess, isTierHigherOrEqual, TIER_CONFIG } from './subscription';
+import { getUserTier, checkTierAccess, isTierHigherOrEqual } from './subscription';
 import { createClient } from '@supabase/supabase-js';
 
 // Mock Supabase
@@ -22,6 +22,7 @@ describe('Subscription Library', () => {
     mockSelect.mockReturnValue({ eq: mockEq });
     mockFrom.mockReturnValue({ select: mockSelect });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (createClient as any).mockReturnValue({
       from: mockFrom,
     });

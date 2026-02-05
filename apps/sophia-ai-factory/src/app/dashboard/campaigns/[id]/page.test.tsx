@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import Page from './page';
 
@@ -62,7 +62,7 @@ describe('CampaignDetailPage', () => {
     // In a server component test, we call the function directly
     try {
         await Page({ params: Promise.resolve({ id: '123' }) });
-    } catch (e) {
+    } catch {
         // redirect throws an error in Next.js, we catch it here or expect it
     }
 
@@ -76,7 +76,7 @@ describe('CampaignDetailPage', () => {
 
     try {
         await Page({ params: Promise.resolve({ id: '123' }) });
-    } catch (e) {
+    } catch {
         // notFound throws
     }
 

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { polar } from '@/lib/polar';
 import { NextResponse } from 'next/server';
 
@@ -31,6 +31,7 @@ describe('Checkout API Route', () => {
     vi.clearAllMocks();
 
     // Mock Supabase Auth
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     (createClient as any).mockResolvedValue({
       auth: {
         getUser: mockAuthGetUser,
@@ -49,6 +50,7 @@ describe('Checkout API Route', () => {
     const { POST } = await import('./route');
     const req = {
       json: vi.fn().mockResolvedValue({}),
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any;
 
     const response = await POST(req);
@@ -64,8 +66,10 @@ describe('Checkout API Route', () => {
     const req = {
       json: vi.fn().mockResolvedValue({ productId: 'prod_123' }),
       headers: new Map(),
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     (polar.checkouts.create as any).mockResolvedValue({ url: 'https://checkout.url' });
 
     const response = await POST(req);
@@ -86,8 +90,10 @@ describe('Checkout API Route', () => {
     const req = {
       json: vi.fn().mockResolvedValue({ tier: 'BASIC' }),
       headers: new Map(),
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     (polar.checkouts.create as any).mockResolvedValue({ url: 'https://checkout.url' });
 
     await POST(req);
@@ -105,8 +111,10 @@ describe('Checkout API Route', () => {
     const req = {
       json: vi.fn().mockResolvedValue({ productId: 'prod_123' }),
       headers: new Map(),
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     (polar.checkouts.create as any).mockResolvedValue({ url: 'https://checkout.url' });
 
     await POST(req);
@@ -121,8 +129,10 @@ describe('Checkout API Route', () => {
     const req = {
       json: vi.fn().mockResolvedValue({ productId: 'prod_123' }),
       headers: new Map(),
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     (polar.checkouts.create as any).mockRejectedValue(new Error('Polar error'));
 
     const response = await POST(req);

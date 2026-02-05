@@ -1,4 +1,3 @@
-import { Tier } from "@/types";
 
 const HEYGEN_API_URL = "https://api.heygen.com/v2";
 

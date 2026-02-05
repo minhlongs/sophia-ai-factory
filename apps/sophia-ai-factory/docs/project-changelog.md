@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+## v1.6.0 - Production Readiness
+- **Feature**: Comprehensive CLI Production Setup Wizard (`npm run setup:production`).
+- **Automation**:
+  - **Polar.sh**: Automated product provisioning and webhook setup.
+  - **Supabase**: Connection verification and table existence checks.
+  - **Telegram**: Bot token validation and automated webhook configuration.
+- **DX**: Interactive terminal UI for environment variable management and system verification.
+- **Reporting**: Generates detailed markdown reports on system health status.
+
 ## v1.5.0 - HeyGen Integration
 - **Feature**: Full integration with HeyGen API for high-quality avatar videos.
 - **Architecture**: Direct server-side API proxy for secure key handling.
