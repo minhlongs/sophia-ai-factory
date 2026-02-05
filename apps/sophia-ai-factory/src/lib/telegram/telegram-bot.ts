@@ -73,8 +73,8 @@ export async function handleEmail(chatId: string, email: string) {
 
     // 2. Update user profile with chat_id
     // First check if profile exists
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: profile } = await (supabase.from('user_profiles') as any)
+    const { data: profile } = await supabase
+        .from('user_profiles')
         .select('user_id, settings')
         .eq('user_id', user.id)
         .single()
@@ -86,12 +86,10 @@ export async function handleEmail(chatId: string, email: string) {
             telegram_chat_id: chatId,
             settings: { notifications: { telegram: { enabled: true } } } as Json
         }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (supabase.from('user_profiles') as any).insert(newProfile)
+        await supabase.from('user_profiles').insert(newProfile)
     } else {
         // Update existing profile
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const currentSettings = (profile.settings as Record<string, any>) || {}
+        const currentSettings = (profile.settings as Record<string, unknown>) || {}
         const newSettings = {
             ...currentSettings,
             notifications: {
@@ -105,8 +103,7 @@ export async function handleEmail(chatId: string, email: string) {
             }
         } as Json
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (supabase.from('user_profiles') as any)
+        await supabase.from('user_profiles')
             .update({
                 telegram_chat_id: chatId,
                 settings: newSettings
@@ -130,8 +127,8 @@ export async function handleCampaign(chatId: string, topic: string) {
 
   try {
     // 1. Identify user from chatId
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: profile, error } = await (supabase.from('user_profiles') as any)
+    const { data: profile, error } = await supabase
+      .from('user_profiles')
       .select('user_id, subscription_tier')
       .eq('telegram_chat_id', chatId)
       .single()
@@ -142,8 +139,8 @@ export async function handleCampaign(chatId: string, topic: string) {
     }
 
     // 2. Create Campaign in DB
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: campaign, error: createError } = await (supabase.from('campaigns') as any)
+    const { data: campaign, error: createError } = await supabase
+      .from('campaigns')
       .insert({
         user_id: profile.user_id,
         title: topic,
@@ -161,8 +158,7 @@ export async function handleCampaign(chatId: string, topic: string) {
     }
 
     // 3. Trigger Inngest Event
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const tier = mapSubscriptionToTier(profile.subscription_tier as any)
+    const tier = mapSubscriptionToTier(profile.subscription_tier)
 
     await inngest.send({
       name: "campaign.created",
@@ -186,8 +182,8 @@ export async function handleCampaign(chatId: string, topic: string) {
 export async function handleStatus(chatId: string) {
   try {
     // 1. Identify user
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: profile } = await (supabase.from('user_profiles') as any)
+    const { data: profile } = await supabase
+      .from('user_profiles')
       .select('user_id')
       .eq('telegram_chat_id', chatId)
       .single()
@@ -198,8 +194,8 @@ export async function handleStatus(chatId: string) {
     }
 
     // 2. Fetch active campaigns
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: campaigns } = await (supabase.from('campaigns') as any)
+    const { data: campaigns } = await supabase
+      .from('campaigns')
       .select('*')
       .eq('user_id', profile.user_id)
       .in('status', ['queued', 'processing_script', 'processing_video'])
@@ -212,8 +208,7 @@ export async function handleStatus(chatId: string) {
     }
 
     let message = '📊 *Active Campaigns:*\n\n'
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    campaigns.forEach((c: any) => {
+    campaigns.forEach((c) => {
       const statusEmoji = c.status === 'queued' ? '⏳' : '⚙️'
       message += `${statusEmoji} *${c.title}*\n`
       message += `Status: ${c.status?.replace('_', ' ')}\n`
@@ -231,8 +226,8 @@ export async function handleStatus(chatId: string) {
 export async function handleResults(chatId: string) {
   try {
     // 1. Identify user
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: profile } = await (supabase.from('user_profiles') as any)
+    const { data: profile } = await supabase
+      .from('user_profiles')
       .select('user_id')
       .eq('telegram_chat_id', chatId)
       .single()
@@ -243,8 +238,8 @@ export async function handleResults(chatId: string) {
     }
 
     // 2. Fetch completed campaigns
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: campaigns } = await (supabase.from('campaigns') as any)
+    const { data: campaigns } = await supabase
+      .from('campaigns')
       .select('*')
       .eq('user_id', profile.user_id)
       .eq('status', 'completed')
@@ -257,8 +252,7 @@ export async function handleResults(chatId: string) {
     }
 
     let message = '✅ *Recent Results:*\n\n'
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    campaigns.forEach((c: any) => {
+    campaigns.forEach((c) => {
       message += `🎬 *${c.title}*\n`
       if (c.video_url) {
         message += `[Watch Video](${c.video_url})\n`

@@ -133,16 +133,19 @@ export default async function CampaignDetailPage({ params }: PageProps) {
                 <FileText className="w-5 h-5 mr-2 text-blue-600" />
                 Generated Script
               </h3>
+import { ScriptOutput } from "@/lib/services/types";
+
+// ... (other imports)
+
+// Inside the component return JSX
               <div className="prose prose-sm max-w-none bg-gray-50 p-4 rounded-lg">
                 {/*
                    We assume script_content structure here.
                    Adjust based on actual JSON structure stored.
                 */}
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                {(campaign.script_content as any).scenes ? (
+                {(campaign.script_content as unknown as ScriptOutput)?.scenes ? (
                    <div className="space-y-4">
-                     {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                     {(campaign.script_content as any).scenes.map((scene: any, idx: number) => (
+                     {(campaign.script_content as unknown as ScriptOutput).scenes.map((scene, idx: number) => (
                        <div key={idx} className="border-l-2 border-blue-200 pl-4">
                          <p className="font-medium text-gray-900 text-xs uppercase mb-1">Scene {idx + 1}</p>
                          <p className="text-gray-700 mb-2">{scene.narration}</p>
