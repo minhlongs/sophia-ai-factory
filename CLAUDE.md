@@ -35,17 +35,26 @@ When a tool call is blocked by the privacy-block hook, the output contains a JSO
    - **"No, skip this file"** → Continue without accessing the file
 
 **Example AskUserQuestion call:**
+
 ```json
 {
-  "questions": [{
-    "question": "I need to read \".env\" which may contain sensitive data. Do you approve?",
-    "header": "File Access",
-    "options": [
-      { "label": "Yes, approve access", "description": "Allow reading .env this time" },
-      { "label": "No, skip this file", "description": "Continue without accessing this file" }
-    ],
-    "multiSelect": false
-  }]
+  "questions": [
+    {
+      "question": "I need to read \".env\" which may contain sensitive data. Do you approve?",
+      "header": "File Access",
+      "options": [
+        {
+          "label": "Yes, approve access",
+          "description": "Allow reading .env this time"
+        },
+        {
+          "label": "No, skip this file",
+          "description": "Continue without accessing this file"
+        }
+      ],
+      "multiSelect": false
+    }
+  ]
 }
 ```
 
@@ -54,6 +63,7 @@ When a tool call is blocked by the privacy-block hook, the output contains a JSO
 ## Python Scripts (Skills)
 
 When running Python scripts from `.claude/skills/`, use the venv Python interpreter:
+
 - **Linux/macOS:** `.claude/skills/.venv/bin/python3 scripts/xxx.py`
 - **Windows:** `.claude\skills\.venv\Scripts\python.exe scripts\xxx.py`
 
@@ -62,6 +72,7 @@ This ensures packages installed by `install.sh` (google-genai, pypdf, etc.) are 
 **IMPORTANT:** When scripts of skills failed, don't stop, try to fix them directly.
 
 ## [IMPORTANT] Consider Modularization
+
 - If a code file exceeds 200 lines of code, consider modularizing it
 - Check existing modules before creating new
 - Analyze logical separation boundaries (functions, classes, concerns)
@@ -85,4 +96,12 @@ We keep all important docs in `./docs` folder and keep updating them, structure 
 └── project-roadmap.md
 ```
 
-**IMPORTANT:** *MUST READ* and *MUST COMPLY* all *INSTRUCTIONS* in project `./CLAUDE.md`, especially *WORKFLOWS* section is *CRITICALLY IMPORTANT*, this rule is *MANDATORY. NON-NEGOTIABLE. NO EXCEPTIONS. MUST REMEMBER AT ALL TIMES!!!*
+**IMPORTANT:** _MUST READ_ and _MUST COMPLY_ all _INSTRUCTIONS_ in project `./CLAUDE.md`, especially _WORKFLOWS_ section is _CRITICALLY IMPORTANT_, this rule is _MANDATORY. NON-NEGOTIABLE. NO EXCEPTIONS. MUST REMEMBER AT ALL TIMES!!!_
+
+## /insights Command (Added 2026-02-05)
+
+Use `/insights` to summarize and review all work done in this session for workflow improvement.
+
+## Binh-Pháp Strategic Flexibility
+
+**始計 (Strategic Assessment)** - Assess each task individually, don't auto-bypass. Let strategic questions surface appropriate choices based on situation.
