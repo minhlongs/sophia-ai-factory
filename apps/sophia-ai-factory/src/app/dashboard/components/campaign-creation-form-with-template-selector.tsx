@@ -5,9 +5,13 @@ import { useRouter } from "next/navigation";
 import { createCampaign } from "@/app/actions/campaigns";
 import { Button } from "@/app/components/ui/button";
 import { Loader2, Sparkles, Check } from "lucide-react";
-import { CAMPAIGN_TEMPLATES, CampaignTemplate, applyTemplateDefaults } from "@/lib/templates/campaign-templates";
+import { CampaignTemplate, applyTemplateDefaults } from "@/lib/templates/campaign-templates";
 
-export function CreateProjectFormWithTemplates() {
+interface CreateProjectFormProps {
+  templates: CampaignTemplate[];
+}
+
+export function CreateProjectFormWithTemplates({ templates }: CreateProjectFormProps) {
   const router = useRouter();
   const [selectedTemplate, setSelectedTemplate] = useState<CampaignTemplate | null>(null);
   const [loading, setLoading] = useState(false);
@@ -69,7 +73,7 @@ export function CreateProjectFormWithTemplates() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {CAMPAIGN_TEMPLATES.map((template) => (
+          {templates.map((template) => (
             <button
               key={template.id}
               type="button"

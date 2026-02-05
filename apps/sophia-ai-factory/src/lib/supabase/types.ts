@@ -102,6 +102,8 @@ export interface Database {
           script_content: Json | null
           video_url: string | null
           thumbnail_url: string | null
+          template_id: string | null
+          audio_url: string | null
           created_at: string
           updated_at: string
         }
@@ -110,6 +112,33 @@ export interface Database {
             progress?: number
         }
         Update: Partial<Database['public']['Tables']['campaigns']['Row']>
+      }
+      campaign_templates: {
+        Row: {
+          id: string
+          name: string
+          description: string
+          category: string
+          icon: string
+          defaults: Json
+          is_predefined: boolean
+          user_id: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          name: string
+          description: string
+          category: string
+          icon?: string
+          defaults: Json
+          is_predefined?: boolean
+          user_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['campaign_templates']['Insert']>
       }
     }
   }

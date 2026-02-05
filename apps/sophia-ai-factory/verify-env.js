@@ -3,15 +3,17 @@ const fs = require('fs');
 const path = require('path');
 
 const requiredEnvVars = [
-  'AIRTABLE_API_KEY',
-  'AIRTABLE_BASE_ID',
+  'NEXT_PUBLIC_SUPABASE_URL',
+  'NEXT_PUBLIC_SUPABASE_ANON_KEY',
+  'SUPABASE_SERVICE_ROLE_KEY',
 ];
 
 const optionalEnvVars = [
-  'N8N_WEBHOOK_GENERATE_SCRIPT',
-  'N8N_WEBHOOK_PUBLISH_VIDEO',
-  'NEXT_PUBLIC_FEATURE_AFFILIATE_ENGINE',
-  'NEXT_PUBLIC_FEATURE_ADMIN_DASHBOARD'
+  'OPENROUTER_API_KEY',
+  'ELEVENLABS_API_KEY',
+  'HEYGEN_API_KEY',
+  'TELEGRAM_BOT_TOKEN',
+  'NEXT_PUBLIC_APP_URL'
 ];
 
 function verifyEnv() {
@@ -23,7 +25,7 @@ function verifyEnv() {
     console.warn('⚠️  Warning: The following required environment variables are missing:');
     missingVars.forEach(v => console.warn(`   - ${v}`));
     console.warn('   The application may not function correctly without these.');
-    console.warn('   Copy .env.local.example to .env.local and fill in the values.');
+    console.warn('   Copy .env.example to .env.local and fill in the values.');
   } else {
     console.log('✅ Required environment variables present.');
   }
@@ -31,7 +33,7 @@ function verifyEnv() {
   // Check optional vars
   const missingOptional = optionalEnvVars.filter(envVar => !process.env[envVar]);
   if (missingOptional.length > 0) {
-    console.log('ℹ️  Optional environment variables missing (using defaults):');
+    console.log('ℹ️  Optional environment variables missing (using mocks/defaults):');
     missingOptional.forEach(v => console.log(`   - ${v}`));
   }
 }
