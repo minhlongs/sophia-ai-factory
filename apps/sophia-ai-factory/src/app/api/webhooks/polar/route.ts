@@ -1,14 +1,30 @@
 import { verifyWebhookSignature } from '@/lib/polar';
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
+import { createClient } from '@supabase/supabase-js';
+import { inngest } from '@/lib/inngest/client';
+import { Tier } from '@/types';
 
-// Define minimal event interface since SDK export is tricky
+// Initialize Supabase Admin client for database updates
+// We use the Service Role Key to bypass RLS since this is a system webhook
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+);
+
+// Define minimal event interface
 interface WebhookEvent {
   type: string;
   data: {
     id?: string;
     customerEmail?: string;
-    productId?: string;
+    customer?: {
+        email?: string;
+    };
+    email?: string;
+    product?: {
+        name?: string;
+    };
     [key: string]: unknown;
   };
   id?: string;
@@ -32,43 +48,101 @@ export async function POST(request: Request) {
   let event: WebhookEvent;
 
   try {
-    // Verify the signature and get the typed event
-    // verifyWebhookSignature wraps the standardwebhooks verify method
     const payload = verifyWebhookSignature(body, headersList, secret);
-
-    // Parse the payload JSON to get the event object
-    // standardwebhooks returns the payload object directly if using verify(payload, headers)
-    // BUT verifyWebhookSignature in lib/polar.ts uses verify(payload, headers) which returns the *payload object* (decoded)
-    // OR it returns the verified content.
-    // Let's check standardwebhooks docs or types if possible.
-    // Usually it returns the object.
-    // If verifyWebhookSignature returns the object, we cast it.
-
-    // Correction: standardwebhooks `verify` returns the parsed object in recent versions?
-    // Let's assume verifyWebhookSignature returns the result of wh.verify(body, headers).
-
     event = payload as unknown as WebhookEvent;
-
   } catch (error) {
     console.error('Webhook verification failed:', error);
     return new NextResponse('Invalid signature', { status: 400 });
   }
 
-  // Handle specific events
   try {
-    switch (event.type) {
-      case 'checkout.session.completed':
-        console.log('✅ Checkout completed:', event.data.id);
-        // TODO: Fulfill order (e.g., update database, send email)
-        // const { customerEmail, productId } = event.data;
-        break;
+    const { type, data } = event;
+    const email = data.customer?.email || data.email;
 
+    if (!email) {
+        console.warn(`No email found in webhook event ${type}`);
+        return new NextResponse('Webhook processed but no email found', { status: 200 });
+    }
+
+    switch (type) {
+      case 'checkout.session.completed':
       case 'order.created':
-        console.log('📦 Order created:', event.data.id);
+      case 'subscription.created':
+        console.log(`✅ Processing ${type} for ${email}`);
+
+        // Determine tier
+        const productName = data.product?.name?.toString().toLowerCase() || '';
+        let tier: Tier = 'BASIC';
+        if (productName.includes('pro')) tier = 'PREMIUM';
+        if (productName.includes('enterprise')) tier = 'ENTERPRISE';
+
+        // Find user by email
+        const { data: { users }, error: userError } = await supabaseAdmin.auth.admin.listUsers();
+        if (userError || !users) {
+            console.error('Failed to list users to find match', userError);
+            break;
+        }
+
+        const user = users.find(u => u.email?.toLowerCase() === email.toLowerCase());
+
+        if (user) {
+            // Update profile
+            const { error: updateError } = await supabaseAdmin
+                .from('user_profiles')
+                .upsert({
+                    user_id: user.id,
+                    subscription_tier: tier === 'PREMIUM' ? 'pro' : tier === 'ENTERPRISE' ? 'enterprise' : 'free',
+                    subscription_status: 'active',
+                    updated_at: new Date().toISOString()
+                });
+
+            if (updateError) {
+                console.error('Failed to update user profile tier', updateError);
+            } else {
+                console.log(`Updated user ${user.id} to tier ${tier}`);
+
+                // TRIGGER CAMPAIGN AUTOMATION
+                // For 'subscription.created', we trigger a welcome campaign
+                if (type === 'subscription.created' || type === 'checkout.session.completed') {
+                    // Create a draft campaign record first
+                    const { data: campaign, error: campaignError } = await supabaseAdmin
+                        .from('campaigns')
+                        .insert({
+                            user_id: user.id,
+                            title: `Welcome to Sophia AI (${tier})`,
+                            topic: "Welcome to the future of video automation",
+                            audience: "New Subscribers",
+                            status: 'queued',
+                            progress: 0
+                        })
+                        .select()
+                        .single();
+
+                    if (campaign && !campaignError) {
+                        // Trigger Inngest
+                        await inngest.send({
+                            name: "campaign.created",
+                            data: {
+                                campaignId: campaign.id,
+                                userId: user.id,
+                                topic: campaign.topic || "Welcome",
+                                audience: campaign.audience || "Subscribers",
+                                tier: tier
+                            }
+                        });
+                        console.log(`🚀 Triggered welcome campaign for ${user.id}`);
+                    } else {
+                        console.error('Failed to create welcome campaign', campaignError);
+                    }
+                }
+            }
+        } else {
+            console.warn(`No user found for email ${email}`);
+        }
         break;
 
       default:
-        console.log(`ℹ️ Unhandled event type: ${event.type}`);
+        console.log(`ℹ️ Unhandled event type: ${type}`);
     }
 
     return new NextResponse('Webhook received', { status: 200 });

@@ -102,3 +102,25 @@ export interface VideoRecord {
   };
   createdAt: string;
 }
+
+// --- Campaign Automation Types (Supabase) ---
+
+export type CampaignStatus = 'draft' | 'queued' | 'processing_script' | 'processing_video' | 'completed' | 'failed';
+
+export interface Campaign {
+  id: string;
+  user_id: string;
+  title: string;
+  topic?: string | null;
+  audience?: string | null;
+  status: CampaignStatus;
+  progress: number;
+  error_message?: string | null;
+  script_content?: Record<string, unknown> | null;
+  audio_url?: string | null;
+  video_url?: string | null;
+  thumbnail_url?: string | null;
+  template_id?: string | null;
+  created_at: string;
+  updated_at: string;
+}

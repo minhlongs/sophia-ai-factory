@@ -1,0 +1,23 @@
+name: Sophia Index Ingestion
+
+on:
+  schedule:
+    # Run at 2 AM UTC every day
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      networks:
+        description: 'Networks to ingest (comma separated)'
+        required: false
+        default: 'clickbank,shareasale'
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Ingestion API
+        run: |
+          curl -X POST ${{ secrets.APP_URL }}/api/ingestion/trigger \
+          -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+          -H "Content-Type: application/json" \
+          -d '{"networks": ["clickbank", "shareasale"]}'

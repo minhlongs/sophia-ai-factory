@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { generateScript } from "@/app/actions/automation";
+import { createCampaign } from "@/app/actions/campaigns";
 import { Button } from "@/app/components/ui/button";
 import { Loader2, Sparkles } from "lucide-react";
 
@@ -19,17 +19,17 @@ export function CreateProjectForm() {
     const formData = new FormData(e.currentTarget);
 
     try {
-      const result = await generateScript(formData);
+      const result = await createCampaign(formData);
 
       if (result.success) {
-        router.push("/dashboard");
+        router.push("/dashboard/campaigns");
         router.refresh();
       } else {
         setError(result.message || "Something went wrong");
       }
     } catch (err) {
       console.error(err);
-      setError("Failed to create project");
+      setError("Failed to create campaign");
     } finally {
       setLoading(false);
     }
