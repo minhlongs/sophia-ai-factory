@@ -28,6 +28,11 @@
   - [x] Project list view with status badges.
   - [x] Create Project form (Topic & Audience).
   - [x] Real-time status polling.
+- [x] **User Settings & Security**:
+  - [x] User Profile Management (`/settings`).
+  - [x] Secure Encrypted API Key Storage (AES-256-GCM).
+  - [x] Theme Management (Dark/Light Mode).
+  - [x] Notification Preferences (Email/Telegram).
 - [x] **Script Generation**:
   - [x] Connect `Generate Script` button to `/api/generate-script` (via Server Action).
   - [x] Poll Airtable for script status updates (Implemented in UI).
