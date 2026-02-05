@@ -41,6 +41,13 @@ export default function DashboardLayout({
             <span className="font-medium">New Project</span>
           </Link>
           <Link
+            href="/dashboard/campaigns"
+            className="flex items-center gap-3 px-4 py-3 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <LayoutDashboard className="w-5 h-5" />
+            <span className="font-medium">Campaigns</span>
+          </Link>
+          <Link
             href="/dashboard/videos"
             className="flex items-center gap-3 px-4 py-3 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
           >

@@ -35,6 +35,21 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
+      {/* Integrations Link */}
+      <Card glass className="mb-6 hover:bg-white/5 transition-colors cursor-pointer" onClick={() => window.location.href = '/admin/settings/integrations'}>
+        <CardHeader>
+          <CardTitle className="flex justify-between items-center">
+            <span>Affiliate Integrations</span>
+            <span className="text-sm text-blue-400">Manage Keys →</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-gray-400 text-sm">
+            Connect ClickBank, ShareASale, and Amazon Associates to sync your sales data.
+          </p>
+        </CardContent>
+      </Card>
+
       {/* API Keys (Mock) */}
       <Card glass className="mb-6">
         <CardHeader>
