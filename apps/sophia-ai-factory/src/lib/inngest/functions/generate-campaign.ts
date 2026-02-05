@@ -1,7 +1,6 @@
 import { inngest } from "@/lib/inngest/client";
-import { generateScript } from "@/lib/ai/script-generator";
+import { ServiceFactory } from "@/lib/services/factory";
 import { startVideoGeneration, checkVideoGenerationStatus } from "@/lib/ai/video-generator";
-import { generateVoiceover } from "@/lib/ai/text-to-speech-generator-elevenlabs";
 import { sendTelegramMessage } from "@/lib/telegram/telegram-client";
 import { createClient } from "@supabase/supabase-js";
 import { CampaignStatus } from "@/types";
@@ -110,13 +109,14 @@ export const generateCampaign = inngest.createFunction(
 
       // Generate new script
       await updateStatus("processing_script", 10);
-      const result = await generateScript({ topic, audience, tier });
+      const scriptService = ServiceFactory.getScriptService();
+      const result = await scriptService.generateScript({ topic, audience, tier });
       await updateStatus("processing_script", 35, { script_content: result });
       return result;
     });
 
     // Step 2: Generate Voiceover/TTS (skip if resuming from video or finalize)
-    const audioUrl = await step.run("generate-voiceover", async () => {
+    await step.run("generate-voiceover", async () => {
       if (resume && (resumeFrom === "video" || resumeFrom === "finalize")) {
         // Fetch existing audio from database
         const { data: campaign } = await supabase
@@ -145,7 +145,8 @@ export const generateCampaign = inngest.createFunction(
         await notifyUser(`📝 Script ready! Now generating voiceover...`);
       }
 
-      const voiceoverResult = await generateVoiceover({
+      const voiceService = ServiceFactory.getVoiceService();
+      const voiceoverResult = await voiceService.generateVoiceover({
         text: fullNarration,
         tier
       });
@@ -153,9 +154,6 @@ export const generateCampaign = inngest.createFunction(
       await updateStatus("processing_script", 60, { audio_url: voiceoverResult.audio_url });
       return voiceoverResult.audio_url;
     });
-
-    // Prevent unused variable warning
-    console.log(`Audio generated/retrieved: ${audioUrl ? 'Yes' : 'No'}`);
 
     // Step 3: Start Video Generation
     const videoJobId = await step.run("start-video-generation", async () => {
@@ -212,17 +210,6 @@ export const generateCampaign = inngest.createFunction(
         }
 
         // Wait 5 seconds before next check
-        // Note: we can't use step.sleep inside the run callback directly in the same way
-        // to suspend the function. In Inngest v3, we should split this.
-        // But since we are inside a step.run, we have to use standard sleep.
-        // For true suspension, we should loop steps.
-        // However, standard sleep is fine if the function timeout is high enough (5 mins might be tight on Vercel)
-        // Better pattern for Inngest:
-        // Use step.waitForEvent if we had webhooks.
-        // OR loop using multiple steps.
-
-        // Since we are refactoring existing code, and simplicity is key for now:
-        // We will simple sleep here. If cost is an issue, we'd restructure to recursive steps.
         await new Promise(r => setTimeout(r, 5000));
         attempts++;
       }

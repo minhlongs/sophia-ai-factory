@@ -1,19 +1,15 @@
 import { NextResponse } from "next/server";
-import { getHeyGenClient } from "@/lib/heygen/heygen-client";
+import { ServiceFactory } from "@/lib/services/factory";
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const client = getHeyGenClient();
-  if (!client) {
-    return NextResponse.json({ error: "HeyGen configuration missing" }, { status: 503 });
-  }
-
+  const videoService = ServiceFactory.getVideoService();
   const { id } = await params;
 
   try {
-    const status = await client.getVideoStatus(id);
+    const status = await videoService.getVideoStatus(id);
     return NextResponse.json(status);
   } catch (error) {
     console.error("Status API error:", error);

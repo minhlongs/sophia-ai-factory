@@ -32,7 +32,7 @@ export async function GET() {
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    healthStatus.status = 'degraded';
+    healthStatus.status = 'unhealthy';
     healthStatus.services.supabase = {
       status: 'down',
       error: errorMessage,

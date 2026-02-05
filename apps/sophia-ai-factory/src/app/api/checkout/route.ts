@@ -1,6 +1,6 @@
-import { polar } from '@/lib/polar';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { ServiceFactory } from '@/lib/services/factory';
 
 const TIER_PRODUCT_MAP: Record<string, string> = {
   BASIC: process.env.POLAR_PRODUCT_BASIC_ID || '',
@@ -33,11 +33,13 @@ export async function POST(request: Request) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    // Create a checkout session
-    const checkout = await polar.checkouts.create({
-      products: [finalProductId],
+    // Create a checkout session via PaymentService (supports Mock Mode)
+    const paymentService = ServiceFactory.getPaymentService();
+
+    const checkout = await paymentService.createCheckoutSession({
+      productId: finalProductId,
       successUrl: `${origin}/dashboard?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
-      ...(user?.email ? { customerEmail: user.email } : {}),
+      customerEmail: user?.email,
       metadata: {
         tier: tier || 'BASIC',
         userId: user?.id || '',

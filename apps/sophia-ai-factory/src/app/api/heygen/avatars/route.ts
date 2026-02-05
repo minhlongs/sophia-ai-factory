@@ -1,16 +1,11 @@
 import { NextResponse } from "next/server";
-import { getHeyGenClient } from "@/lib/heygen/heygen-client";
+import { ServiceFactory } from "@/lib/services/factory";
 
 export async function GET() {
-  const client = getHeyGenClient();
-  if (!client) {
-    // Return empty list if not configured, or error.
-    // Since this might be called by UI, returning empty with warning is often safer for dev.
-    return NextResponse.json({ avatars: [] });
-  }
+  const videoService = ServiceFactory.getVideoService();
 
   try {
-    const avatars = await client.listAvatars();
+    const avatars = await videoService.listAvatars();
     return NextResponse.json({ avatars });
   } catch (error) {
     console.error("Avatar API error:", error);

@@ -1,0 +1,116 @@
+name: Sophia AI Factory Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  quality:
+    name: Quality Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type Check
+        run: npm run type-check
+
+      - name: Unit Tests
+        run: npm run test -- --run
+
+  e2e:
+    name: E2E Verification (Mock Mode)
+    runs-on: ubuntu-latest
+    needs: quality
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Build (Mock Mode)
+        run: npm run build
+        env:
+          NEXT_PUBLIC_MOCK_AI_SERVICES: "true"
+          NEXT_PUBLIC_SUPABASE_URL: "https://placeholder.supabase.co"
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: "placeholder"
+          SUPABASE_SERVICE_ROLE_KEY: "placeholder"
+
+      - name: Run Playwright Tests
+        run: npx playwright test
+        env:
+          NEXT_PUBLIC_MOCK_AI_SERVICES: "true"
+          NEXT_PUBLIC_SUPABASE_URL: "https://placeholder.supabase.co"
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: "placeholder"
+          SUPABASE_SERVICE_ROLE_KEY: "placeholder"
+          CI: "true"
+
+      - name: Upload Test Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+
+  deploy-preview:
+    name: Deploy Preview (Vercel)
+    needs: quality
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Vercel deployment would go here
+      # For now, we rely on Vercel's automatic GitHub integration for Previews
+      # But we could enforce it here with vercel cli if needed
+      - name: Placeholder Deploy Step
+        run: echo "Vercel GitHub Integration handles this automatically"
+
+  deploy-production:
+    name: Deploy Production
+    needs: [quality, e2e]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Actual deployment step would require VERCEL_TOKEN and project linking
+      # For Binh Phap automation, we would use the CLI
+      # - name: Install Vercel CLI
+      #   run: npm install --global vercel@latest
+      # - name: Pull Vercel Env
+      #   run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+      # - name: Build Project Artifacts
+      #   run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+      # - name: Deploy Project Artifacts to Vercel
+      #   run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy Placeholder
+        run: echo "Production deployment would happen here via Vercel CLI or Git Integration"
