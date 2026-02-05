@@ -88,6 +88,17 @@ graph TD
   - `voice-generator.json`: Text-to-Speech generation.
   - `publish-workflow.json`: Final publishing steps.
 
+### 5. Payment Infrastructure (Polar)
+- **Role**: Payment processing for one-time product purchases (Starter, Growth, Premium).
+- **Flow**:
+  1. **Checkout**: User clicks "Buy Now" -> `/api/checkout` -> Redirects to Polar Checkout.
+  2. **Processing**: Polar handles card processing and fraud detection.
+  3. **Fulfillment**: Polar sends webhook -> `/api/webhooks/polar` -> App updates User Profile (sets `subscription_tier`).
+- **Security**:
+  - Webhook signatures verified using `standard-webhooks`.
+  - No payment data stored in application database.
+  - Product IDs and Secrets managed via environment variables.
+
 ## Security Architecture
 
 ### API Key Management

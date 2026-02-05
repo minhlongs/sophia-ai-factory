@@ -3,6 +3,12 @@
 ## [Unreleased]
 
 ### Added
+- **Payment Integration (Polar)**:
+  - Integrated `@polar-sh/sdk` for processing payments.
+  - Implemented 3-tier pricing model: Starter ($1,200), Growth ($2,000), Premium ($3,000).
+  - Added automated product provisioning script (`scripts/setup-polar-products.ts`).
+  - Created secure Webhook handler for processing payment success events.
+  - Updated Pricing UI to connect directly to Polar Checkout.
 - **User Settings & Profile Management**:
   - Added `/dashboard/settings` page for managing user profile, preferences, and API keys (migrated from `/settings`).
   - Implemented secure API key storage using AES-256-GCM encryption (OpenAI, Anthropic, ElevenLabs).
@@ -14,6 +20,12 @@
   - Added `HealthIndicator` component to the dashboard sidebar.
   - Added System Health page (`/dashboard/system-health`) for detailed service status monitoring.
   - Implemented checks for Supabase, Inngest, and external API configurations (OpenRouter, ElevenLabs, HeyGen, Telegram).
+
+## v1.2.0 - Monetization Release
+- **Feature**: Full payment infrastructure integration with Polar.
+- **Feature**: Automated provisioning of pricing tiers.
+- **Security**: Webhook signature verification for payment events.
+- **UX**: Seamless checkout flow from pricing page.
 
 ## v1.1.0 - User Settings & Health Monitoring
 - **Feature**: Complete User Settings implementation with secure API key storage.
