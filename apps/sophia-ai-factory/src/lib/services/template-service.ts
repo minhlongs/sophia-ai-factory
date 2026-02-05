@@ -21,14 +21,20 @@ export const templateService = {
         .from("campaign_templates")
         .select("*")
         .or(`is_predefined.eq.true,user_id.eq.${userId}`);
-      data = result.data;
+
+      if (result.data) {
+        data = result.data as Database['public']['Tables']['campaign_templates']['Row'][];
+      }
       error = result.error;
     } else {
       const result = await supabase
         .from("campaign_templates")
         .select("*")
         .eq("is_predefined", true);
-      data = result.data;
+
+      if (result.data) {
+        data = result.data as Database['public']['Tables']['campaign_templates']['Row'][];
+      }
       error = result.error;
     }
 
@@ -70,7 +76,7 @@ export const templateService = {
       return CAMPAIGN_TEMPLATES.find(t => t.id === id) || null;
     }
 
-    const record = data;
+    const record = data as Database['public']['Tables']['campaign_templates']['Row'];
 
     return {
       id: record.id,

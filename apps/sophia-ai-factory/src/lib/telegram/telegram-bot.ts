@@ -79,31 +79,38 @@ export async function handleEmail(chatId: string, email: string) {
         .eq('user_id', user.id)
         .single()
 
-    if (!profile) {
+    // Explicitly cast or check profile
+    const existingProfile = profile as { user_id: string; settings: Json } | null;
+
+    if (!existingProfile) {
         // Create profile if it doesn't exist
-        const newProfile = {
+        const newProfile: Database['public']['Tables']['user_profiles']['Insert'] = {
             user_id: user.id,
             telegram_chat_id: chatId,
             settings: { notifications: { telegram: { enabled: true } } } as Json
         }
-        await supabase.from('user_profiles').insert(newProfile)
+        // Cast to any to avoid "never" inference issues with strict typing
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabase.from('user_profiles') as any).insert(newProfile)
     } else {
         // Update existing profile
-        const currentSettings = (profile.settings as Record<string, unknown>) || {}
+        const currentSettings = (existingProfile.settings as Record<string, unknown>) || {}
+        const currentNotifications = (currentSettings['notifications'] as Record<string, unknown>) || {}
+        const currentTelegram = (currentNotifications['telegram'] as Record<string, unknown>) || {}
+
         const newSettings = {
             ...currentSettings,
             notifications: {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                ...(currentSettings.notifications as any || {}),
+                ...currentNotifications,
                 telegram: {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    ...(currentSettings.notifications?.telegram as any || {}),
+                    ...currentTelegram,
                     enabled: true
                 }
             }
         } as Json
 
-        await supabase.from('user_profiles')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabase.from('user_profiles') as any)
             .update({
                 telegram_chat_id: chatId,
                 settings: newSettings
@@ -127,11 +134,13 @@ export async function handleCampaign(chatId: string, topic: string) {
 
   try {
     // 1. Identify user from chatId
-    const { data: profile, error } = await supabase
+    const { data: profileData, error } = await supabase
       .from('user_profiles')
       .select('user_id, subscription_tier')
       .eq('telegram_chat_id', chatId)
       .single()
+
+    const profile = profileData as { user_id: string; subscription_tier: 'free' | 'pro' | 'enterprise' | null } | null;
 
     if (error || !profile) {
       await sendTelegramMessage(chatId, '❌ Account not linked. Please use `/email your@email.com` to link your account first.')
@@ -139,17 +148,28 @@ export async function handleCampaign(chatId: string, topic: string) {
     }
 
     // 2. Create Campaign in DB
-    const { data: campaign, error: createError } = await supabase
-      .from('campaigns')
-      .insert({
+    const campaignInsert: Database['public']['Tables']['campaigns']['Insert'] = {
         user_id: profile.user_id,
         title: topic,
         topic: topic,
         status: 'queued',
-        progress: 0
-      })
+        progress: 0,
+        audience: null,
+        error_message: null,
+        script_content: null,
+        video_url: null,
+        thumbnail_url: null,
+        template_id: null,
+        audio_url: null
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: campaignData, error: createError } = await (supabase.from('campaigns') as any)
+      .insert(campaignInsert)
       .select()
       .single()
+
+    const campaign = campaignData as { id: string } | null;
 
     if (createError || !campaign) {
       console.error('Error creating campaign:', createError)
@@ -182,11 +202,13 @@ export async function handleCampaign(chatId: string, topic: string) {
 export async function handleStatus(chatId: string) {
   try {
     // 1. Identify user
-    const { data: profile } = await supabase
+    const { data: profileData } = await supabase
       .from('user_profiles')
       .select('user_id')
       .eq('telegram_chat_id', chatId)
       .single()
+
+    const profile = profileData as unknown as { user_id: string } | null;
 
     if (!profile) {
       await sendTelegramMessage(chatId, '❌ Account not linked. Please use /email to setup.')
@@ -194,13 +216,15 @@ export async function handleStatus(chatId: string) {
     }
 
     // 2. Fetch active campaigns
-    const { data: campaigns } = await supabase
-      .from('campaigns')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: campaignsData } = await (supabase.from('campaigns') as any)
       .select('*')
       .eq('user_id', profile.user_id)
       .in('status', ['queued', 'processing_script', 'processing_video'])
       .order('created_at', { ascending: false })
       .limit(5)
+
+    const campaigns = campaignsData as Database['public']['Tables']['campaigns']['Row'][] | null;
 
     if (!campaigns || campaigns.length === 0) {
       await sendTelegramMessage(chatId, 'ℹ️ No active campaigns running right now.')
@@ -226,11 +250,13 @@ export async function handleStatus(chatId: string) {
 export async function handleResults(chatId: string) {
   try {
     // 1. Identify user
-    const { data: profile } = await supabase
+    const { data: profileData } = await supabase
       .from('user_profiles')
       .select('user_id')
       .eq('telegram_chat_id', chatId)
       .single()
+
+    const profile = profileData as unknown as { user_id: string } | null;
 
     if (!profile) {
       await sendTelegramMessage(chatId, '❌ Account not linked.')
@@ -238,13 +264,15 @@ export async function handleResults(chatId: string) {
     }
 
     // 2. Fetch completed campaigns
-    const { data: campaigns } = await supabase
-      .from('campaigns')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: campaignsData } = await (supabase.from('campaigns') as any)
       .select('*')
       .eq('user_id', profile.user_id)
       .eq('status', 'completed')
       .order('updated_at', { ascending: false })
       .limit(5)
+
+    const campaigns = campaignsData as Database['public']['Tables']['campaigns']['Row'][] | null;
 
     if (!campaigns || campaigns.length === 0) {
       await sendTelegramMessage(chatId, 'ℹ️ No completed campaigns found.')

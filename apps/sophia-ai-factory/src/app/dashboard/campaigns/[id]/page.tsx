@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, Users, FileText, CheckCircle2, Clock, AlertCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Campaign } from "@/types";
+import { ScriptOutput } from "@/lib/services/types";
 import { createClient } from "@supabase/supabase-js";
 
 interface PageProps {
@@ -133,11 +134,6 @@ export default async function CampaignDetailPage({ params }: PageProps) {
                 <FileText className="w-5 h-5 mr-2 text-blue-600" />
                 Generated Script
               </h3>
-import { ScriptOutput } from "@/lib/services/types";
-
-// ... (other imports)
-
-// Inside the component return JSX
               <div className="prose prose-sm max-w-none bg-gray-50 p-4 rounded-lg">
                 {/*
                    We assume script_content structure here.
