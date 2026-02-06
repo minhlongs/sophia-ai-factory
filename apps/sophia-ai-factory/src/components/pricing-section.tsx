@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { POLAR_PRODUCTS } from "@/lib/polar-config";
+import { LEMONSQUEEZY_PRODUCTS } from "@/lib/lemonsqueezy-config";
 
 interface PricingCardProps {
   name: string;
@@ -72,7 +72,7 @@ function PricingCard({
           popular
             ? "bg-violet-500 text-white hover:bg-violet-600"
             : "bg-white/10 text-white hover:bg-white/20"
-        } disabled:cursor-not-allowed disabled:opacity-50`}
+          } disabled:cursor-not-allowed disabled:opacity-50`}
       >
         {loading ? "Processing..." : "Get Started"}
       </button>
@@ -144,7 +144,7 @@ export function PricingSection() {
           </p>
         </div>
         <div className="mt-12 grid gap-8 md:grid-cols-3">
-          {POLAR_PRODUCTS.map((product, index) => (
+          {LEMONSQUEEZY_PRODUCTS.map((product, index) => (
             <PricingCard
               key={product.tier}
               name={product.name.replace("Sophia AI Factory - ", "")}
