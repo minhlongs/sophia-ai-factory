@@ -140,3 +140,12 @@ Always run `npm run lint` before committing.
 ### TypeScript
 
 All TypeScript errors must be resolved before building. The build will fail on type errors due to `strict: true` in tsconfig.json.
+
+
+---
+
+## 🚀 AGENT TEAMS + BMAD (Feb 2026)
+
+**Enabled:** `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`
+
+**Workflow:** `/plan:hard` → `"Gọi team thực hiện plan này"`

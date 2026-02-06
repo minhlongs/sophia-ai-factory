@@ -40,12 +40,19 @@ export default async function DashboardPage() {
           <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
           <p className="text-gray-500">Manage your automated video campaigns</p>
         </div>
-        <Link href="/dashboard/create">
-          <Button className="flex items-center gap-2">
-            <Plus className="w-4 h-4" />
-            New Campaign
-          </Button>
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link href="/pricing">
+            <Button variant="outline" className="flex items-center gap-2">
+              ⚡ Upgrade
+            </Button>
+          </Link>
+          <Link href="/dashboard/create">
+            <Button className="flex items-center gap-2">
+              <Plus className="w-4 h-4" />
+              New Campaign
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <CampaignList initialCampaigns={campaigns} />
