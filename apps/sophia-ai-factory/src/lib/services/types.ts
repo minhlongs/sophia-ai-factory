@@ -84,7 +84,7 @@ export interface IVideoService {
 // --- Payment Service Types ---
 
 export interface CreateCheckoutParams {
-  productId: string;
+  productIds: string[]; // Array of product IDs (supports multi-product checkout)
   successUrl: string;
   customerEmail?: string;
   metadata?: Record<string, string>;

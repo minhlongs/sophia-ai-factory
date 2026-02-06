@@ -6,38 +6,47 @@ import { getProductIdByTier } from '@/lib/polar-config';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { tier, productId } = body;
+    const { tier } = body;
 
-    // Determine Product ID either from direct ID or Tier mapping
-    let finalProductId = productId;
-    if (!finalProductId && tier) {
-      finalProductId = getProductIdByTier(tier as string);
+    if (!tier) {
+      return NextResponse.json(
+        { error: 'Missing tier' },
+        { status: 400 }
+      );
     }
 
-    if (!finalProductId) {
+    // Get BOTH product IDs: one-time setup + monthly subscription
+    const onetimeProductId = getProductIdByTier(tier as string, 'one-time');
+    const monthlyProductId = getProductIdByTier(tier as string, 'monthly');
+
+    if (!onetimeProductId || !monthlyProductId) {
+      console.error(`Missing product IDs for tier ${tier}:`, { onetimeProductId, monthlyProductId });
       return NextResponse.json(
-        { error: 'Missing productId or valid tier' },
+        { error: `Missing product configuration for tier: ${tier}` },
         { status: 400 }
       );
     }
 
     const headersList = request.headers;
-    const origin = headersList.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const origin = headersList.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network';
 
     // Get user from Supabase auth to pre-fill email if logged in
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
+    // Generate guest ID if user not logged in (Polar requires non-empty userId)
+    const userId = user?.id || `guest-${Date.now()}`;
+
     // Create a checkout session via PaymentService (supports Mock Mode)
     const paymentService = ServiceFactory.getPaymentService();
 
     const checkout = await paymentService.createCheckoutSession({
-      productId: finalProductId,
-      successUrl: `${origin}/dashboard?checkout=success`, // Lemon Squeezy doesn't support session_id injection in success URL simply like Stripe/Polar sometimes do, but we get order details in webhook
+      productIds: [onetimeProductId, monthlyProductId], // Bundle: one-time + monthly
+      successUrl: `${origin}/dashboard?checkout=success`,
       customerEmail: user?.email,
       metadata: {
-        tier: tier || 'BASIC',
-        userId: user?.id || '',
+        tier: tier,
+        userId: userId,
       }
     });
 
