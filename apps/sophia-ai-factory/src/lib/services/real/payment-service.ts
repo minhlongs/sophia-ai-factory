@@ -1,6 +1,5 @@
 import { IPaymentService, CreateCheckoutParams, CheckoutSession } from "../types";
 import { polar } from "@/lib/polar";
-import { getProductIdByTier } from "@/lib/polar-config";
 
 export class RealPaymentService implements IPaymentService {
   constructor() {
@@ -10,17 +9,15 @@ export class RealPaymentService implements IPaymentService {
   async createCheckoutSession(params: CreateCheckoutParams): Promise<CheckoutSession> {
     const { productId, successUrl, customerEmail, metadata } = params;
 
-    // productId in this context will be the Tier from the frontend (BASIC, PREMIUM, ENTERPRISE)
-    // We need to map it to the actual Polar Product ID
-    const polarProductId = getProductIdByTier(productId);
-
-    if (!polarProductId) {
-      throw new Error(`Polar Product ID not found for tier: ${productId}`);
+    // productId is ALREADY the Polar Product ID (mapped in route.ts via getProductIdByTier)
+    // Do NOT call getProductIdByTier again here - that causes double-lookup bug
+    if (!productId) {
+      throw new Error(`Missing Polar Product ID`);
     }
 
     try {
       const checkout = await polar.checkouts.create({
-        products: [polarProductId],
+        products: [productId],
         successUrl: successUrl,
         customerEmail: customerEmail,
         metadata: metadata as Record<string, any>,
