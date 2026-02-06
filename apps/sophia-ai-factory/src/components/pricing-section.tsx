@@ -82,20 +82,19 @@ function PricingCard({
 
 const TIER_FEATURES: Record<string, string[]> = {
   BASIC: [
-    "1 YouTube Channel",
     "5 Video Templates",
+    "Auto-Discovery Engine",
     "Basic Analytics",
     "Email Support",
   ],
   PREMIUM: [
-    "3 YouTube Channels",
     "Unlimited Templates",
     "Advanced Analytics",
+    "ROI Calculator",
     "Priority Support",
     "Custom Branding",
   ],
   ENTERPRISE: [
-    "Unlimited Channels",
     "Custom Templates",
     "White-labeling",
     "Dedicated Account Manager",
