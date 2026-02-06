@@ -7,17 +7,23 @@ export class RealPaymentService implements IPaymentService {
   }
 
   async createCheckoutSession(params: CreateCheckoutParams): Promise<CheckoutSession> {
-    const { productId, successUrl, customerEmail, metadata } = params;
+    const { productIds, successUrl, customerEmail, metadata } = params;
 
-    // productId is ALREADY the Polar Product ID (mapped in route.ts via getProductIdByTier)
-    // Do NOT call getProductIdByTier again here - that causes double-lookup bug
-    if (!productId) {
-      throw new Error(`Missing Polar Product ID`);
+    // Validate product IDs
+    if (!productIds || productIds.length === 0) {
+      throw new Error(`Missing Polar Product IDs`);
+    }
+
+    // Trim all product IDs to remove any trailing whitespace/newlines
+    const cleanProductIds = productIds.map(id => id.trim()).filter(id => id.length > 0);
+
+    if (cleanProductIds.length === 0) {
+      throw new Error(`All Product IDs are empty after cleanup`);
     }
 
     try {
       const checkout = await polar.checkouts.create({
-        products: [productId],
+        products: cleanProductIds,
         successUrl: successUrl,
         customerEmail: customerEmail,
         metadata: metadata as Record<string, any>,
