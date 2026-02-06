@@ -1,49 +1,37 @@
 import { IPaymentService, CreateCheckoutParams, CheckoutSession } from "../types";
-import { configureLemonSqueezy } from "@/lib/lemonsqueezy";
-import { createCheckout } from "@lemonsqueezy/lemonsqueezy.js";
+import { polar } from "@/lib/polar";
+import { getProductIdByTier } from "@/lib/polar-config";
 
 export class RealPaymentService implements IPaymentService {
   constructor() {
-    configureLemonSqueezy();
+    // Polar is initialized in lib/polar.ts
   }
 
   async createCheckoutSession(params: CreateCheckoutParams): Promise<CheckoutSession> {
     const { productId, successUrl, customerEmail, metadata } = params;
 
-    // productId in this context will be the Variant ID from Lemon Squeezy
-    const storeId = process.env.LEMONSQUEEZY_STORE_ID;
+    // productId in this context will be the Tier from the frontend (BASIC, PREMIUM, ENTERPRISE)
+    // We need to map it to the actual Polar Product ID
+    const polarProductId = getProductIdByTier(productId);
 
-    if (!storeId) {
-      throw new Error("LEMONSQUEEZY_STORE_ID is not configured");
+    if (!polarProductId) {
+      throw new Error(`Polar Product ID not found for tier: ${productId}`);
     }
 
-    const checkoutOptions = {
-      productOptions: {
-        redirectUrl: successUrl,
-      },
-      checkoutData: {
-        email: customerEmail,
-        custom: metadata,
-      },
-    };
+    try {
+      const checkout = await polar.checkouts.create({
+        products: [polarProductId],
+        successUrl: successUrl,
+        customerEmail: customerEmail,
+        metadata: metadata as Record<string, any>,
+      });
 
-    const { data, error } = await createCheckout(
-      parseInt(storeId),
-      parseInt(productId),
-      checkoutOptions
-    );
-
-    if (error) {
+      return {
+        url: checkout.url,
+        id: checkout.id,
+      };
+    } catch (error: any) {
       throw new Error(`Failed to create checkout: ${error.message}`);
     }
-
-    if (!data?.data?.attributes?.url) {
-      throw new Error("Failed to retrieve checkout URL");
-    }
-
-    return {
-      url: data.data.attributes.url,
-      id: data.data.id,
-    };
   }
 }

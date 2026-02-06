@@ -1,25 +1,25 @@
 import { Tier } from '@/types';
 
-export interface LemonSqueezyPrice {
+export interface PolarPrice {
   amountType: 'fixed';
   priceAmount: number;
   priceCurrency: string;
 }
 
-export interface LemonSqueezyProductDefinition {
+export interface PolarProductDefinition {
   name: string;
   description: string;
   tier: Tier;
-  variantId: string;
-  prices: LemonSqueezyPrice[];
+  productId: string;
+  prices: PolarPrice[];
 }
 
-export const LEMONSQUEEZY_PRODUCTS: LemonSqueezyProductDefinition[] = [
+export const POLAR_PRODUCTS: PolarProductDefinition[] = [
   {
     name: 'Sophia AI Factory - Starter',
     description: 'Perfect for getting started with AI video automation.',
     tier: 'BASIC',
-    variantId: process.env.LEMONSQUEEZY_VARIANT_ID_BASIC || '',
+    productId: process.env.POLAR_PRODUCT_ID_STARTER || '',
     prices: [
       {
         amountType: 'fixed',
@@ -32,7 +32,7 @@ export const LEMONSQUEEZY_PRODUCTS: LemonSqueezyProductDefinition[] = [
     name: 'Sophia AI Factory - Growth',
     description: 'Scale your content production with advanced features.',
     tier: 'PREMIUM',
-    variantId: process.env.LEMONSQUEEZY_VARIANT_ID_PREMIUM || '',
+    productId: process.env.POLAR_PRODUCT_ID_GROWTH || '',
     prices: [
       {
         amountType: 'fixed',
@@ -45,7 +45,7 @@ export const LEMONSQUEEZY_PRODUCTS: LemonSqueezyProductDefinition[] = [
     name: 'Sophia AI Factory - Premium',
     description: 'Maximum power and support for enterprise needs.',
     tier: 'ENTERPRISE',
-    variantId: process.env.LEMONSQUEEZY_VARIANT_ID_ENTERPRISE || '',
+    productId: process.env.POLAR_PRODUCT_ID_PREMIUM || '',
     prices: [
       {
         amountType: 'fixed',
@@ -58,7 +58,7 @@ export const LEMONSQUEEZY_PRODUCTS: LemonSqueezyProductDefinition[] = [
 
 export const getTierFromProductName = (name: string): Tier => {
   const normalizedName = name.toLowerCase();
-  const product = LEMONSQUEEZY_PRODUCTS.find(p => p.name.toLowerCase() === normalizedName);
+  const product = POLAR_PRODUCTS.find(p => p.name.toLowerCase() === normalizedName);
 
   if (product) {
     return product.tier;
@@ -71,7 +71,7 @@ export const getTierFromProductName = (name: string): Tier => {
   return 'BASIC';
 };
 
-export const getVariantIdByTier = (tier: string): string | undefined => {
-  const product = LEMONSQUEEZY_PRODUCTS.find(p => p.tier === tier);
-  return product?.variantId;
+export const getProductIdByTier = (tier: string): string | undefined => {
+  const product = POLAR_PRODUCTS.find(p => p.tier === tier);
+  return product?.productId;
 };

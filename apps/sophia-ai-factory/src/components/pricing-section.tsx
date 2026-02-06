@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { LEMONSQUEEZY_PRODUCTS } from "@/lib/lemonsqueezy-config";
+import { POLAR_PRODUCTS } from "@/lib/polar-config";
 
 interface PricingCardProps {
   name: string;
@@ -142,7 +142,7 @@ export function PricingSection() {
           </p>
         </div>
         <div className="mt-12 grid gap-8 md:grid-cols-3">
-          {LEMONSQUEEZY_PRODUCTS.map((product, index) => (
+          {POLAR_PRODUCTS.map((product, index) => (
             <PricingCard
               key={product.tier}
               name={product.name.replace("Sophia AI Factory - ", "")}

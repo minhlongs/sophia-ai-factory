@@ -1,17 +1,17 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { ServiceFactory } from '@/lib/services/factory';
-import { getVariantIdByTier } from '@/lib/lemonsqueezy-config';
+import { getProductIdByTier } from '@/lib/polar-config';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { tier, productId } = body;
 
-    // Determine Product ID (Variant ID) either from direct ID or Tier mapping
+    // Determine Product ID either from direct ID or Tier mapping
     let finalProductId = productId;
     if (!finalProductId && tier) {
-      finalProductId = getVariantIdByTier(tier as string);
+      finalProductId = getProductIdByTier(tier as string);
     }
 
     if (!finalProductId) {
