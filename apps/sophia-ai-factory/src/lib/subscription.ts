@@ -35,6 +35,12 @@ export const TIER_DB_MAPPING: Record<Tier, string> = {
   ENTERPRISE: 'enterprise'
 };
 
+/**
+ * Get user's current active tier
+ * Returns BASIC if:
+ * - No subscription found
+ * - Subscription expired (subscription_expires_at < now)
+ */
 export async function getUserTier(userId: string): Promise<Tier> {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -43,17 +49,33 @@ export async function getUserTier(userId: string): Promise<Tier> {
 
   const { data, error } = await supabase
     .from('user_profiles')
-    .select('subscription_tier')
+    .select('subscription_tier, subscription_expires_at')
     .eq('user_id', userId)
     .single();
 
   if (error || !data?.subscription_tier) {
-    return 'BASIC'; // Default to Basic (or Free if we had it, but Basic is lowest tier in types)
+    return 'BASIC'; // Default to Basic
+  }
+
+  // Check if subscription has expired
+  if (data.subscription_expires_at) {
+    const expiresAt = new Date(data.subscription_expires_at);
+    const now = new Date();
+    
+    if (expiresAt < now) {
+      // Subscription expired - downgrade to BASIC
+      // Optionally: update DB here to reflect expiration
+      console.log(`[Subscription] User ${userId} subscription expired at ${expiresAt}`);
+      return 'BASIC';
+    }
   }
 
   return DB_TIER_MAPPING[data.subscription_tier] || 'BASIC';
 }
 
+/**
+ * Check if user has access to a specific tier level
+ */
 export async function checkTierAccess(userId: string, requiredTier: Tier): Promise<boolean> {
   const currentTier = await getUserTier(userId);
   
@@ -63,6 +85,45 @@ export async function checkTierAccess(userId: string, requiredTier: Tier): Promi
   return currentRank >= requiredRank;
 }
 
+/**
+ * Compare tiers without async (for client-side use)
+ */
 export function isTierHigherOrEqual(currentTier: Tier, requiredTier: Tier): boolean {
   return TIER_CONFIG[currentTier].rank >= TIER_CONFIG[requiredTier].rank;
+}
+
+/**
+ * Get subscription status for display
+ */
+export async function getSubscriptionStatus(userId: string): Promise<{
+  tier: Tier;
+  isActive: boolean;
+  expiresAt: Date | null;
+  daysRemaining: number | null;
+}> {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
+  const { data } = await supabase
+    .from('user_profiles')
+    .select('subscription_tier, subscription_expires_at')
+    .eq('user_id', userId)
+    .single();
+
+  if (!data) {
+    return { tier: 'BASIC', isActive: false, expiresAt: null, daysRemaining: null };
+  }
+
+  const tier = DB_TIER_MAPPING[data.subscription_tier] || 'BASIC';
+  const expiresAt = data.subscription_expires_at ? new Date(data.subscription_expires_at) : null;
+  const now = new Date();
+  
+  const isActive = !expiresAt || expiresAt > now;
+  const daysRemaining = expiresAt 
+    ? Math.max(0, Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
+    : null;
+
+  return { tier, isActive, expiresAt, daysRemaining };
 }
