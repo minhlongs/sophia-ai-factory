@@ -1,22 +1,17 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { ServiceFactory } from '@/lib/services/factory';
-
-const TIER_PRODUCT_MAP: Record<string, string> = {
-  BASIC: process.env.NEXT_PUBLIC_POLAR_PRODUCT_STARTER || '',
-  PREMIUM: process.env.NEXT_PUBLIC_POLAR_PRODUCT_GROWTH || '',
-  ENTERPRISE: process.env.NEXT_PUBLIC_POLAR_PRODUCT_PREMIUM || '',
-};
+import { getVariantIdByTier } from '@/lib/lemonsqueezy-config';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { tier, productId } = body;
 
-    // Determine Product ID either from direct ID or Tier mapping
+    // Determine Product ID (Variant ID) either from direct ID or Tier mapping
     let finalProductId = productId;
-    if (!finalProductId && tier && TIER_PRODUCT_MAP[tier as string]) {
-      finalProductId = TIER_PRODUCT_MAP[tier as string];
+    if (!finalProductId && tier) {
+      finalProductId = getVariantIdByTier(tier as string);
     }
 
     if (!finalProductId) {
@@ -38,7 +33,7 @@ export async function POST(request: Request) {
 
     const checkout = await paymentService.createCheckoutSession({
       productId: finalProductId,
-      successUrl: `${origin}/dashboard?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+      successUrl: `${origin}/dashboard?checkout=success`, // Lemon Squeezy doesn't support session_id injection in success URL simply like Stripe/Polar sometimes do, but we get order details in webhook
       customerEmail: user?.email,
       metadata: {
         tier: tier || 'BASIC',

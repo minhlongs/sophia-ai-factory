@@ -1,7 +1,7 @@
 import { Hero } from "./components/sections/hero";
 import { Workflow } from "./components/sections/workflow";
 import { Features } from "./components/sections/features";
-import { Pricing } from "./components/sections/pricing";
+import { PricingSection } from "@/components/pricing-section";
 import { ROICalculator } from "./components/sections/roi-calculator";
 import { AffiliateDiscovery } from "./components/sections/affiliate-discovery";
 import { FAQ } from "./components/sections/faq";
@@ -13,7 +13,7 @@ export default function Home() {
       <Hero />
       <Workflow />
       <Features />
-      <Pricing />
+      <PricingSection />
       <AffiliateDiscovery />
       <ROICalculator />
       <FAQ />

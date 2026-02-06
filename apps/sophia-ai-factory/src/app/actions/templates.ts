@@ -82,7 +82,7 @@ export async function createTemplate(data: z.infer<typeof createTemplateSchema>)
   // Given the context of "Factory", it likely means creation.
 
   try {
-    const { error } = await supabaseAdmin
+    const { error } = await getSupabaseAdmin()
       .from("campaign_templates")
       .insert({
         user_id: userId,

@@ -74,6 +74,9 @@ export interface Database {
           api_keys: Json | null
           subscription_tier: 'free' | 'pro' | 'enterprise' | null
           subscription_status: string | null
+          lemonsqueezy_customer_id: string | null
+          lemonsqueezy_subscription_id: string | null
+          lemonsqueezy_order_id: string | null
           polar_subscription_id: string | null
           created_at: string
           updated_at: string
@@ -85,6 +88,9 @@ export interface Database {
           api_keys?: Json | null
           subscription_tier?: 'free' | 'pro' | 'enterprise' | null
           subscription_status?: string | null
+          lemonsqueezy_customer_id?: string | null
+          lemonsqueezy_subscription_id?: string | null
+          lemonsqueezy_order_id?: string | null
           polar_subscription_id?: string | null
           created_at?: string
           updated_at?: string

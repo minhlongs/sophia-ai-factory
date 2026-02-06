@@ -13,7 +13,7 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
     name: "Starter",
     price: 1200, // $1,200 USD
     priceDisplay: "$1,200",
-    polarProductId: process.env.NEXT_PUBLIC_POLAR_PRODUCT_STARTER,
+    variantId: process.env.LEMONSQUEEZY_VARIANT_ID_BASIC,
     features: [
       // Starter tier - basic setup
     ],
@@ -29,7 +29,7 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
     name: "Growth",
     price: 2000, // $2,000 USD
     priceDisplay: "$2,000",
-    polarProductId: process.env.NEXT_PUBLIC_POLAR_PRODUCT_GROWTH,
+    variantId: process.env.LEMONSQUEEZY_VARIANT_ID_PREMIUM,
     recommended: true,
     features: [
       "enable_affiliate_engine",
@@ -49,7 +49,7 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
     name: "Premium",
     price: 3000, // $3,000 USD
     priceDisplay: "$3,000",
-    polarProductId: process.env.NEXT_PUBLIC_POLAR_PRODUCT_PREMIUM,
+    variantId: process.env.LEMONSQUEEZY_VARIANT_ID_ENTERPRISE,
     features: [
       "enable_affiliate_engine",
       "enable_admin_dashboard",

@@ -22,18 +22,6 @@ if [ "$IS_CI" = false ]; then
     fi
 fi
 
-# 2. Polar Product Sync
-if [ -n "$POLAR_ACCESS_TOKEN" ]; then
-    echo "🔄 Syncing Polar Products..."
-    if command -v tsx &> /dev/null; then
-        tsx scripts/sync-polar.ts
-    else
-        npx tsx scripts/sync-polar.ts
-    fi
-else
-    echo "⚠️ POLAR_ACCESS_TOKEN not set. Skipping Polar sync."
-fi
-
 # 3. Supabase Schema Sync
 # Checks if we have access to Supabase CLI and project config
 if [ -f "supabase/config.toml" ] || [ -n "$SUPABASE_ACCESS_TOKEN" ]; then
