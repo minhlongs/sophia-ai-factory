@@ -2,14 +2,13 @@
 
 import { useState } from "react";
 
-// Pricing data - customers pay BOTH one-time setup AND monthly maintenance
+// Option D: Single monthly subscription with 12-month commitment
 const PRICING_TIERS = [
   {
     name: "Starter",
-    description: "Perfect for getting started with AI video automation.",
+    description: "Complete AI video automation. 12-month commitment.",
     tier: "BASIC",
-    setupPrice: 120000,     // $1,200 one-time
-    maintenancePrice: 9900, // $99/month
+    monthlyPrice: 19900, // $199/mo
     features: [
       "5 Video Templates",
       "Auto-Discovery Engine",
@@ -19,10 +18,9 @@ const PRICING_TIERS = [
   },
   {
     name: "Growth",
-    description: "Scale your content production with advanced features.",
+    description: "Scale your content production. 12-month commitment.",
     tier: "PREMIUM",
-    setupPrice: 200000,      // $2,000 one-time
-    maintenancePrice: 19900, // $199/month
+    monthlyPrice: 39900, // $399/mo
     features: [
       "Unlimited Templates",
       "Advanced Analytics",
@@ -34,10 +32,9 @@ const PRICING_TIERS = [
   },
   {
     name: "Premium",
-    description: "Maximum power and support for enterprise needs.",
+    description: "Enterprise power and support. 12-month commitment.",
     tier: "ENTERPRISE",
-    setupPrice: 300000,      // $3,000 one-time
-    maintenancePrice: 49900, // $499/month
+    monthlyPrice: 79900, // $799/mo
     features: [
       "Custom Templates",
       "White-labeling",
@@ -52,8 +49,7 @@ interface PricingCardProps {
   name: string;
   description: string;
   tier: string;
-  setupPrice: number;
-  maintenancePrice: number;
+  monthlyPrice: number;
   features: string[];
   popular?: boolean;
   onSelect: (tier: string) => void;
@@ -64,8 +60,7 @@ function PricingCard({
   name,
   description,
   tier,
-  setupPrice,
-  maintenancePrice,
+  monthlyPrice,
   features,
   popular,
   onSelect,
@@ -87,20 +82,17 @@ function PricingCard({
       <h3 className="text-xl font-bold text-white">{name}</h3>
       <p className="mt-2 text-sm text-white/60">{description}</p>
 
-      {/* Pricing - Both one-time AND monthly */}
-      <div className="mt-6 space-y-2">
+      {/* Option D: Single monthly price */}
+      <div className="mt-6">
         <div className="flex items-baseline gap-2">
           <span className="text-3xl font-bold text-white">
-            ${(setupPrice / 100).toLocaleString()}
+            ${(monthlyPrice / 100).toLocaleString()}
           </span>
-          <span className="text-white/60">one-time setup</span>
+          <span className="text-white/60">/month</span>
         </div>
-        <div className="flex items-baseline gap-2">
-          <span className="text-xl font-semibold text-violet-400">
-            + ${(maintenancePrice / 100).toLocaleString()}
-          </span>
-          <span className="text-white/60">/month maintenance</span>
-        </div>
+        <span className="mt-1 inline-block rounded bg-violet-500/20 px-2 py-0.5 text-xs text-violet-300">
+          12-month commitment
+        </span>
       </div>
 
       <ul className="mt-6 flex-1 space-y-3">
@@ -174,7 +166,7 @@ export function PricingSection() {
             Choose Your Plan
           </h2>
           <p className="mt-4 text-lg text-white/60">
-            One-time setup + monthly maintenance for ongoing support
+            Simple monthly pricing with everything included
           </p>
         </div>
         <div className="mt-12 grid gap-8 md:grid-cols-3">
@@ -184,8 +176,7 @@ export function PricingSection() {
               name={pricing.name}
               description={pricing.description}
               tier={pricing.tier}
-              setupPrice={pricing.setupPrice}
-              maintenancePrice={pricing.maintenancePrice}
+              monthlyPrice={pricing.monthlyPrice}
               features={pricing.features}
               popular={pricing.popular}
               onSelect={handleSelectTier}
