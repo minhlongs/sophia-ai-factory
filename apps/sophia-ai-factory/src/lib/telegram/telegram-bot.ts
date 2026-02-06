@@ -1,14 +1,24 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { inngest } from '@/lib/inngest/client'
 import { sendTelegramMessage } from './telegram-client'
 import { Database, Json } from '@/lib/supabase/types'
 import { Tier } from '@/types'
 
-// Initialize Supabase Admin client
-const supabase = createClient<Database>(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+// Lazy initialization to avoid build errors when env vars missing
+let _supabase: SupabaseClient<Database> | null = null
+
+function getSupabase(): SupabaseClient<Database> {
+  if (!_supabase) {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error('Supabase environment variables not configured')
+    }
+    _supabase = createClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    )
+  }
+  return _supabase
+}
 
 // Helper to map Supabase subscription tier to App Tier
 function mapSubscriptionToTier(subTier: 'free' | 'pro' | 'enterprise' | null): Tier {
@@ -56,7 +66,7 @@ export async function handleHelp(chatId: string) {
 export async function handleEmail(chatId: string, email: string) {
   try {
     // 1. Find user by email (using Admin API)
-    const { data: { users }, error: userError } = await supabase.auth.admin.listUsers()
+    const { data: { users }, error: userError } = await getSupabase().auth.admin.listUsers()
 
     if (userError) {
       console.error('Error listing users:', userError)
@@ -73,7 +83,7 @@ export async function handleEmail(chatId: string, email: string) {
 
     // 2. Update user profile with chat_id
     // First check if profile exists
-    const { data: profile } = await supabase
+    const { data: profile } = await getSupabase()
         .from('user_profiles')
         .select('user_id, settings')
         .eq('user_id', user.id)
@@ -91,7 +101,7 @@ export async function handleEmail(chatId: string, email: string) {
         }
         // Cast to any to avoid "never" inference issues with strict typing
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (supabase.from('user_profiles') as any).insert(newProfile)
+        await (getSupabase().from('user_profiles') as any).insert(newProfile)
     } else {
         // Update existing profile
         const currentSettings = (existingProfile.settings as Record<string, unknown>) || {}
@@ -110,7 +120,7 @@ export async function handleEmail(chatId: string, email: string) {
         } as Json
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (supabase.from('user_profiles') as any)
+        await (getSupabase().from('user_profiles') as any)
             .update({
                 telegram_chat_id: chatId,
                 settings: newSettings
@@ -134,7 +144,7 @@ export async function handleCampaign(chatId: string, topic: string) {
 
   try {
     // 1. Identify user from chatId
-    const { data: profileData, error } = await supabase
+    const { data: profileData, error } = await getSupabase()
       .from('user_profiles')
       .select('user_id, subscription_tier')
       .eq('telegram_chat_id', chatId)
@@ -164,7 +174,7 @@ export async function handleCampaign(chatId: string, topic: string) {
     };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: campaignData, error: createError } = await (supabase.from('campaigns') as any)
+    const { data: campaignData, error: createError } = await (getSupabase().from('campaigns') as any)
       .insert(campaignInsert)
       .select()
       .single()
@@ -202,7 +212,7 @@ export async function handleCampaign(chatId: string, topic: string) {
 export async function handleStatus(chatId: string) {
   try {
     // 1. Identify user
-    const { data: profileData } = await supabase
+    const { data: profileData } = await getSupabase()
       .from('user_profiles')
       .select('user_id')
       .eq('telegram_chat_id', chatId)
@@ -217,7 +227,7 @@ export async function handleStatus(chatId: string) {
 
     // 2. Fetch active campaigns
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: campaignsData } = await (supabase.from('campaigns') as any)
+    const { data: campaignsData } = await (getSupabase().from('campaigns') as any)
       .select('*')
       .eq('user_id', profile.user_id)
       .in('status', ['queued', 'processing_script', 'processing_video'])
@@ -250,7 +260,7 @@ export async function handleStatus(chatId: string) {
 export async function handleResults(chatId: string) {
   try {
     // 1. Identify user
-    const { data: profileData } = await supabase
+    const { data: profileData } = await getSupabase()
       .from('user_profiles')
       .select('user_id')
       .eq('telegram_chat_id', chatId)
@@ -265,7 +275,7 @@ export async function handleResults(chatId: string) {
 
     // 2. Fetch completed campaigns
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: campaignsData } = await (supabase.from('campaigns') as any)
+    const { data: campaignsData } = await (getSupabase().from('campaigns') as any)
       .select('*')
       .eq('user_id', profile.user_id)
       .eq('status', 'completed')

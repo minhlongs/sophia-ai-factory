@@ -2,15 +2,25 @@ import { inngest } from "@/lib/inngest/client";
 import { ServiceFactory } from "@/lib/services/factory";
 import { startVideoGeneration, checkVideoGenerationStatus } from "@/lib/ai/video-generator";
 import { sendTelegramMessage } from "@/lib/telegram/telegram-client";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { CampaignStatus } from "@/types";
 import { Database } from "@/lib/supabase/types";
 
-// Initialize Supabase Admin client
-const supabase = createClient<Database>(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Lazy init Supabase Admin client for build compatibility
+let _supabase: SupabaseClient<Database> | null = null;
+
+function getSupabase(): SupabaseClient<Database> {
+  if (!_supabase) {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error('Supabase environment variables not configured');
+    }
+    _supabase = createClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    );
+  }
+  return _supabase;
+}
 
 export const generateCampaign = inngest.createFunction(
   {
@@ -37,7 +47,7 @@ export const generateCampaign = inngest.createFunction(
       if (data?.thumbnail_url) updatePayload.thumbnail_url = data.thumbnail_url as string;
       if (data?.error_message) updatePayload.error_message = data.error_message as string;
 
-      const { error } = await (supabase
+      const { error } = await (getSupabase()
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .from("campaigns") as any)
         .update(updatePayload)
@@ -49,7 +59,7 @@ export const generateCampaign = inngest.createFunction(
     // Helper to send notification
     const notifyUser = async (message: string) => {
       // 1. Fetch user's telegram chat ID and settings
-      const { data, error } = await supabase
+      const { data, error } = await getSupabase()
         .from("user_profiles")
         .select("telegram_chat_id, settings")
         .eq("user_id", userId)
@@ -90,7 +100,7 @@ export const generateCampaign = inngest.createFunction(
     const script = await step.run("generate-script", async () => {
       if (resume && (resumeFrom === "tts" || resumeFrom === "video" || resumeFrom === "finalize")) {
         // Fetch existing script from database
-        const { data: campaign } = await supabase
+        const { data: campaign } = await getSupabase()
           .from("campaigns")
           .select("script_content")
           .eq("id", campaignId)
@@ -119,7 +129,7 @@ export const generateCampaign = inngest.createFunction(
     await step.run("generate-voiceover", async () => {
       if (resume && (resumeFrom === "video" || resumeFrom === "finalize")) {
         // Fetch existing audio from database
-        const { data: campaign } = await supabase
+        const { data: campaign } = await getSupabase()
           .from("campaigns")
           .select("audio_url")
           .eq("id", campaignId)
@@ -173,7 +183,7 @@ export const generateCampaign = inngest.createFunction(
     const videoAssets = await step.run("poll-video-status", async () => {
       if (resume && resumeFrom === "finalize") {
          // Fetch existing video from database
-         const { data: campaign } = await supabase
+         const { data: campaign } = await getSupabase()
            .from("campaigns")
            .select("video_url, thumbnail_url")
            .eq("id", campaignId)

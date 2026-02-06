@@ -1,19 +1,28 @@
 "use server";
 
 import { createServerClient } from "@/lib/supabase/server";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { inngest } from "@/lib/inngest/client";
 import { createCampaignSchema } from "@/lib/campaigns/validation";
 import { revalidatePath } from "next/cache";
 import { Tier } from "@/types";
 import { tierGuard } from "@/lib/tier-guard";
 
-// Initialize Admin client for operations that might need bypass (like if auth is not fully hooked up in UI yet)
-// But ideally we use createServerClient to respect RLS
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Lazy init Admin client for build compatibility
+let _supabaseAdmin: SupabaseClient | null = null;
+
+function getSupabaseAdmin(): SupabaseClient {
+  if (!_supabaseAdmin) {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error('Supabase environment variables not configured');
+    }
+    _supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    );
+  }
+  return _supabaseAdmin;
+}
 
 export async function createCampaign(formData: FormData) {
   const rawData = {
@@ -50,7 +59,7 @@ export async function createCampaign(formData: FormData) {
     // For this MVP phase, if we are strictly testing the flow, we might need a real user.
     // Let's try to get the first user from admin if dev
     if (process.env.NODE_ENV === 'development') {
-        const { data: users } = await supabaseAdmin.auth.admin.listUsers();
+        const { data: users } = await getSupabaseAdmin().auth.admin.listUsers();
         if (users?.users?.length > 0) {
             userId = users.users[0].id;
             console.warn(`[DEV] Using first found user: ${userId}`);
@@ -77,7 +86,7 @@ export async function createCampaign(formData: FormData) {
   }
 
   // Fetch user profile for Tier
-  const { data: profile } = await supabaseAdmin
+  const { data: profile } = await getSupabaseAdmin()
     .from("user_profiles")
     .select("subscription_tier")
     .eq("user_id", userId!)
@@ -90,7 +99,7 @@ export async function createCampaign(formData: FormData) {
 
   try {
     // 1. Create Campaign Record
-    const { data: campaign, error } = await supabaseAdmin
+    const { data: campaign, error } = await getSupabaseAdmin()
       .from("campaigns")
       .insert({
         user_id: userId!,
@@ -136,7 +145,7 @@ export async function createCampaign(formData: FormData) {
 export async function retryCampaign(campaignId: string) {
   try {
     // 1. Fetch campaign to validate it's failed
-    const { data: campaign, error: fetchError } = await supabaseAdmin
+    const { data: campaign, error: fetchError } = await getSupabaseAdmin()
       .from("campaigns")
       .select("*")
       .eq("id", campaignId)
@@ -151,7 +160,7 @@ export async function retryCampaign(campaignId: string) {
     }
 
     // 2. Get user tier
-    const { data: profile } = await supabaseAdmin
+    const { data: profile } = await getSupabaseAdmin()
       .from("user_profiles")
       .select("subscription_tier")
       .eq("user_id", campaign.user_id)
@@ -162,7 +171,7 @@ export async function retryCampaign(campaignId: string) {
     if (profile?.subscription_tier === 'enterprise') tier = "ENTERPRISE";
 
     // 3. Reset campaign state
-    const { error: updateError } = await supabaseAdmin
+    const { error: updateError } = await getSupabaseAdmin()
       .from("campaigns")
       .update({
         status: "queued",
@@ -206,7 +215,7 @@ export async function retryCampaign(campaignId: string) {
 export async function resumeCampaign(campaignId: string) {
   try {
     // 1. Fetch campaign to validate it's failed
-    const { data: campaign, error: fetchError } = await supabaseAdmin
+    const { data: campaign, error: fetchError } = await getSupabaseAdmin()
       .from("campaigns")
       .select("*")
       .eq("id", campaignId)
@@ -221,7 +230,7 @@ export async function resumeCampaign(campaignId: string) {
     }
 
     // 2. Get user tier
-    const { data: profile } = await supabaseAdmin
+    const { data: profile } = await getSupabaseAdmin()
       .from("user_profiles")
       .select("subscription_tier")
       .eq("user_id", campaign.user_id)
@@ -264,7 +273,7 @@ export async function resumeCampaign(campaignId: string) {
     }
 
     // 4. Update campaign state to resume point
-    const { error: updateError } = await supabaseAdmin
+    const { error: updateError } = await getSupabaseAdmin()
       .from("campaigns")
       .update({
         status: resumeStatus,

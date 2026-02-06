@@ -249,3 +249,12 @@ src/
 **Last Updated**: 2026-02-05
 **Version**: 1.0.0
 **Maintainer**: 84tea Brand Team
+
+
+---
+
+## 🚀 AGENT TEAMS + BMAD (Feb 2026)
+
+**Enabled:** `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`
+
+**Workflow:** `/plan:hard` → `"Gọi team thực hiện plan này"`

@@ -2,17 +2,26 @@ import { verifyWebhookSignature } from '@/lib/polar';
 import { getTierFromProductName } from '@/lib/polar-config';
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { inngest } from '@/lib/inngest/client';
 import { Tier } from '@/types';
 import { TIER_DB_MAPPING } from '@/lib/subscription';
 
-// Initialize Supabase Admin client for database updates
-// We use the Service Role Key to bypass RLS since this is a system webhook
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-);
+// Lazy init Supabase Admin client for build compatibility
+let _supabaseAdmin: SupabaseClient | null = null;
+
+function getSupabaseAdmin(): SupabaseClient {
+  if (!_supabaseAdmin) {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error('Supabase environment variables not configured');
+    }
+    _supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    );
+  }
+  return _supabaseAdmin;
+}
 
 // Define minimal event interface
 interface WebhookEvent {
@@ -81,7 +90,7 @@ export async function POST(request: Request) {
         // But for Supabase Auth, admin.listUsers is the standard way if we don't store email in user_profiles visibly
         // Alternatively, if user_profiles is linked to auth.users, we might query user_profiles if email is there.
         // Assuming email is in Auth.
-        const { data: { users }, error: userError } = await supabaseAdmin.auth.admin.listUsers();
+        const { data: { users }, error: userError } = await getSupabaseAdmin().auth.admin.listUsers();
         if (userError || !users) {
             console.error('Failed to list users to find match', userError);
             break;
@@ -93,7 +102,7 @@ export async function POST(request: Request) {
             // Update profile
             const dbTier = TIER_DB_MAPPING[tier];
 
-            const { error: updateError } = await supabaseAdmin
+            const { error: updateError } = await getSupabaseAdmin()
                 .from('user_profiles')
                 .upsert({
                     user_id: user.id,
@@ -111,7 +120,7 @@ export async function POST(request: Request) {
                 // For 'subscription.created' or 'checkout.session.completed', we trigger a welcome campaign
                 if (type === 'subscription.created' || type === 'checkout.session.completed') {
                     // Create a draft campaign record first
-                    const { data: campaign, error: campaignError } = await supabaseAdmin
+                    const { data: campaign, error: campaignError } = await getSupabaseAdmin()
                         .from('campaigns')
                         .insert({
                             user_id: user.id,

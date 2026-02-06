@@ -3,9 +3,9 @@ import { createClient } from '@/lib/supabase/server';
 import { ServiceFactory } from '@/lib/services/factory';
 
 const TIER_PRODUCT_MAP: Record<string, string> = {
-  BASIC: process.env.POLAR_PRODUCT_BASIC_ID || '',
-  PREMIUM: process.env.POLAR_PRODUCT_PREMIUM_ID || '',
-  ENTERPRISE: process.env.POLAR_PRODUCT_ENTERPRISE_ID || '',
+  BASIC: process.env.NEXT_PUBLIC_POLAR_PRODUCT_STARTER || '',
+  PREMIUM: process.env.NEXT_PUBLIC_POLAR_PRODUCT_GROWTH || '',
+  ENTERPRISE: process.env.NEXT_PUBLIC_POLAR_PRODUCT_PREMIUM || '',
 };
 
 export async function POST(request: Request) {
