@@ -34,7 +34,6 @@ export class RealPaymentService implements IPaymentService {
     );
 
     if (error) {
-      console.error("Lemon Squeezy Checkout Error:", error);
       throw new Error(`Failed to create checkout: ${error.message}`);
     }
 

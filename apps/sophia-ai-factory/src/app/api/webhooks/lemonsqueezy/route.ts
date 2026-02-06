@@ -54,8 +54,6 @@ export async function POST(request: Request) {
     const { attributes } = data;
     const customData = meta.custom_data || {};
 
-    console.log(`Received Lemon Squeezy event: ${eventName}`, { id: data.id });
-
     // Handle Order Created
     if (eventName === 'order_created') {
       const userId = customData.userId;
@@ -68,8 +66,6 @@ export async function POST(request: Request) {
       // If it's a subscription, we might not get the sub ID immediately in order_created unless we check relationships
       // But usually we can rely on subscription_created event for the sub ID.
       // However, sometimes it is nice to link immediately if possible.
-
-      console.log(`Processing order for ${email}, tier: ${tier}, userId: ${userId}`);
 
       let user;
       if (userId) {
@@ -98,7 +94,6 @@ export async function POST(request: Request) {
         if (updateError) {
           console.error('Failed to update user profile tier', updateError);
         } else {
-          console.log(`Updated user ${user.id} to tier ${tier} (${dbTier})`);
           await triggerWelcomeCampaign(user.id, tier, dbTier);
         }
       } else {
@@ -123,8 +118,6 @@ export async function POST(request: Request) {
       // If active, it expires at renews_at (next billing)
       // If cancelled, it expires at ends_at
       const expiresAt = endsAt || renewsAt;
-
-      console.log(`Processing subscription ${subscriptionId} (${status}) for ${email}`);
 
       // We need to find the user.
       // If custom_data.userId is present, great.
@@ -171,8 +164,6 @@ export async function POST(request: Request) {
 
          if (updateError) {
              console.error('Failed to update subscription status', updateError);
-         } else {
-             console.log(`Updated subscription for user ${user.id}: ${status}`);
          }
       } else {
           console.warn(`Could not find user for subscription event ${eventName} (sub: ${subscriptionId})`);
@@ -183,8 +174,6 @@ export async function POST(request: Request) {
     if (eventName === 'subscription_cancelled' || eventName === 'subscription_expired') {
        const subscriptionId = data.id.toString();
        const status = attributes.status; // cancelled, expired
-
-       console.log(`Processing subscription cancellation/expiry: ${subscriptionId}`);
 
        const { error } = await getSupabaseAdmin()
          .from('user_profiles')
@@ -234,7 +223,6 @@ async function triggerWelcomeCampaign(userId: string, tier: Tier, dbTier: string
             tier: tier
             }
         });
-        console.log(`🚀 Triggered welcome campaign for ${userId}`);
     } else {
         console.error('Failed to create welcome campaign', campaignError);
     }
