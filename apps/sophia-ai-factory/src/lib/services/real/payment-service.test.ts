@@ -1,49 +1,42 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { RealPaymentService } from './payment-service';
-import { createCheckout } from '@lemonsqueezy/lemonsqueezy.js';
-import { configureLemonSqueezy } from '@/lib/lemonsqueezy';
+import { polar } from '@/lib/polar';
+import { getProductIdByTier } from '@/lib/polar-config';
 
 // Mock dependencies
-vi.mock('@lemonsqueezy/lemonsqueezy.js', () => ({
-  createCheckout: vi.fn()
+vi.mock('@/lib/polar', () => ({
+  polar: {
+    checkouts: {
+      create: vi.fn()
+    }
+  }
 }));
 
-vi.mock('@/lib/lemonsqueezy', () => ({
-  configureLemonSqueezy: vi.fn()
+vi.mock('@/lib/polar-config', () => ({
+  getProductIdByTier: vi.fn()
 }));
 
 describe('RealPaymentService', () => {
   let service: RealPaymentService;
-  const mockStoreId = '12345';
-  const mockVariantId = '999';
+  const mockProductId = 'polar_prod_123';
+  const mockTier = 'BASIC';
 
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.LEMONSQUEEZY_STORE_ID = mockStoreId;
     service = new RealPaymentService();
   });
 
-  it('should configure Lemon Squeezy on initialization', () => {
-    expect(configureLemonSqueezy).toHaveBeenCalled();
-  });
-
   it('should create a checkout session successfully', async () => {
-    const mockResponse = {
-      data: {
-        data: {
-          id: 'checkout-123',
-          attributes: {
-            url: 'https://checkout.lemonsqueezy.com/checkout-123'
-          }
-        }
-      },
-      error: null
+    const mockCheckout = {
+      id: 'checkout_123',
+      url: 'https://sandbox.polar.sh/checkout/checkout_123'
     };
 
-    vi.mocked(createCheckout).mockResolvedValue(mockResponse as any);
+    vi.mocked(getProductIdByTier).mockReturnValue(mockProductId);
+    vi.mocked(polar.checkouts.create).mockResolvedValue(mockCheckout as any);
 
     const params = {
-      productId: mockVariantId,
+      productId: mockTier,
       successUrl: 'https://example.com/success',
       customerEmail: 'test@example.com',
       metadata: { userId: 'user-1' }
@@ -51,85 +44,46 @@ describe('RealPaymentService', () => {
 
     const result = await service.createCheckoutSession(params);
 
-    expect(createCheckout).toHaveBeenCalledWith(
-      parseInt(mockStoreId),
-      parseInt(mockVariantId),
-      {
-        productOptions: {
-          redirectUrl: params.successUrl
-        },
-        checkoutData: {
-          email: params.customerEmail,
-          custom: params.metadata
-        }
-      }
-    );
+    expect(getProductIdByTier).toHaveBeenCalledWith(mockTier);
+    expect(polar.checkouts.create).toHaveBeenCalledWith({
+      products: [mockProductId],
+      successUrl: params.successUrl,
+      customerEmail: params.customerEmail,
+      metadata: params.metadata
+    });
 
     expect(result).toEqual({
-      id: 'checkout-123',
-      url: 'https://checkout.lemonsqueezy.com/checkout-123'
+      id: mockCheckout.id,
+      url: mockCheckout.url
     });
   });
 
-  it('should throw error if LEMONSQUEEZY_STORE_ID is missing', async () => {
-    delete process.env.LEMONSQUEEZY_STORE_ID;
+  it('should throw error if Polar Product ID is not found for tier', async () => {
+    vi.mocked(getProductIdByTier).mockReturnValue(undefined);
 
     const params = {
-      productId: mockVariantId,
+      productId: 'INVALID_TIER',
       successUrl: 'https://example.com/success',
       customerEmail: 'test@example.com'
     };
 
     await expect(service.createCheckoutSession(params)).rejects.toThrow(
-      'LEMONSQUEEZY_STORE_ID is not configured'
+      'Polar Product ID not found for tier: INVALID_TIER'
     );
   });
 
-  it('should throw error if createCheckout returns an error', async () => {
-    const mockError = {
-      error: {
-        message: 'API Error',
-        cause: null,
-        status: 400
-      }
-    };
-
-    vi.mocked(createCheckout).mockResolvedValue(mockError as any);
+  it('should throw error if Polar API fails', async () => {
+    vi.mocked(getProductIdByTier).mockReturnValue(mockProductId);
+    vi.mocked(polar.checkouts.create).mockRejectedValue(new Error('API Error'));
 
     const params = {
-      productId: mockVariantId,
+      productId: mockTier,
       successUrl: 'https://example.com/success',
       customerEmail: 'test@example.com'
     };
 
     await expect(service.createCheckoutSession(params)).rejects.toThrow(
       'Failed to create checkout: API Error'
-    );
-  });
-
-  it('should throw error if checkout URL is missing from response', async () => {
-    const mockResponse = {
-      data: {
-        data: {
-          id: 'checkout-123',
-          attributes: {
-            // url missing
-          }
-        }
-      },
-      error: null
-    };
-
-    vi.mocked(createCheckout).mockResolvedValue(mockResponse as any);
-
-    const params = {
-      productId: mockVariantId,
-      successUrl: 'https://example.com/success',
-      customerEmail: 'test@example.com'
-    };
-
-    await expect(service.createCheckoutSession(params)).rejects.toThrow(
-      'Failed to retrieve checkout URL'
     );
   });
 });

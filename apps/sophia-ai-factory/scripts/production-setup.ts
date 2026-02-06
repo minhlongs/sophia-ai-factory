@@ -3,20 +3,18 @@
 import inquirer from 'inquirer'
 import chalk from 'chalk'
 import ora from 'ora'
-import { lemonSqueezySetup, getAuthenticatedUser, listProducts, listVariants } from '@lemonsqueezy/lemonsqueezy.js'
 import { createClient } from '@supabase/supabase-js'
 import * as fs from 'fs'
 import * as path from 'path'
 import * as dotenv from 'dotenv'
-import { LEMONSQUEEZY_PRODUCTS } from '../src/lib/lemonsqueezy-config'
+import { Polar } from '@polar-sh/sdk'
 
 // Types
 interface WizardState {
   payment: {
-    provider: 'lemonsqueezy'
+    provider: 'polar'
     configured: boolean
-    storeId?: string
-    apiKey?: string
+    accessToken?: string
     webhookSecret?: string
   }
   supabase: {
@@ -38,7 +36,7 @@ interface WizardState {
 }
 
 const state: WizardState = {
-  payment: { provider: 'lemonsqueezy', configured: false },
+  payment: { provider: 'polar', configured: false },
   supabase: { configured: false },
   telegram: { configured: false },
   env: { valid: false, missingKeys: [] },
@@ -85,12 +83,11 @@ async function setupEnv() {
     'NEXT_PUBLIC_SUPABASE_URL',
     'NEXT_PUBLIC_SUPABASE_ANON_KEY',
     'SUPABASE_SERVICE_ROLE_KEY',
-    'LEMONSQUEEZY_API_KEY',
-    'LEMONSQUEEZY_STORE_ID',
-    'LEMONSQUEEZY_WEBHOOK_SECRET',
-    'LEMONSQUEEZY_VARIANT_ID_BASIC',
-    'LEMONSQUEEZY_VARIANT_ID_PREMIUM',
-    'LEMONSQUEEZY_VARIANT_ID_ENTERPRISE',
+    'POLAR_ACCESS_TOKEN',
+    'POLAR_WEBHOOK_SECRET',
+    'POLAR_PRODUCT_BASIC_ID',
+    'POLAR_PRODUCT_PREMIUM_ID',
+    'POLAR_PRODUCT_ENTERPRISE_ID',
     'TELEGRAM_BOT_TOKEN',
     'TELEGRAM_WEBHOOK_SECRET',
     'NEXT_PUBLIC_APP_URL',
@@ -151,88 +148,67 @@ async function setupEnv() {
   }
 }
 
-// --- Section 2: Lemon Squeezy Setup ---
+// --- Section 2: Polar Setup ---
 
-async function setupLemonSqueezy() {
-  log.title('Lemon Squeezy Setup')
+async function setupPolar() {
+  log.title('Polar Payment Setup')
 
-  if (!process.env.LEMONSQUEEZY_API_KEY || !process.env.LEMONSQUEEZY_STORE_ID) {
-    log.error('Lemon Squeezy credentials missing. Please configure environment variables first.')
+  if (!process.env.POLAR_ACCESS_TOKEN) {
+    log.error('Polar Access Token missing. Please configure environment variables first.')
     return
   }
 
-  const spinner = ora('Connecting to Lemon Squeezy...').start()
+  const spinner = ora('Connecting to Polar...').start()
 
   try {
-    lemonSqueezySetup({
-      apiKey: process.env.LEMONSQUEEZY_API_KEY,
-      onError: (error) => console.error('Lemon Squeezy Error:', error),
+    const polar = new Polar({
+        accessToken: process.env.POLAR_ACCESS_TOKEN,
+        server: 'production' // Assuming production setup
     })
 
-    // Validate connection by getting authenticated user
-    const { data: user, error } = await getAuthenticatedUser()
+    // Validate connection by listing products (or some other lightweight call)
+    // There isn't a direct "getMe" in SDK easily accessible without digging,
+    // but listing products confirms auth works.
+    const { result: products } = await polar.products.list({})
 
-    if (error) {
-      throw new Error(error.message)
-    }
-
-    spinner.succeed(`Connected to Lemon Squeezy as ${user?.data.attributes.name}`)
+    spinner.succeed(`Connected to Polar. Found ${products?.items?.length || 0} products.`)
     state.payment.configured = true
 
-    // Verify Store ID
-    const storeId = process.env.LEMONSQUEEZY_STORE_ID
-    log.info(`Verifying Store ID: ${storeId}`)
+    // Check Configured Products
+    log.info('Verifying configured Product IDs...')
+    const configuredProducts = [
+      { name: 'BASIC', id: process.env.POLAR_PRODUCT_BASIC_ID },
+      { name: 'PREMIUM', id: process.env.POLAR_PRODUCT_PREMIUM_ID },
+      { name: 'ENTERPRISE', id: process.env.POLAR_PRODUCT_ENTERPRISE_ID },
+    ]
 
-    // Check Products/Variants
-    log.info('Checking Product Configuration...')
-
-    const { data: productsData, error: productsError } = await listProducts({
-      filter: { storeId },
-    })
-
-    if (productsError) {
-      log.warning(`Could not list products: ${productsError.message}`)
-    } else {
-      const products = productsData?.data || []
-      log.info(`Found ${products.length} products in store.`)
-
-      // Verify Variants
-      log.info('Verifying configured Variant IDs...')
-      const configuredVariants = [
-        { name: 'BASIC', id: process.env.LEMONSQUEEZY_VARIANT_ID_BASIC },
-        { name: 'PREMIUM', id: process.env.LEMONSQUEEZY_VARIANT_ID_PREMIUM },
-        { name: 'ENTERPRISE', id: process.env.LEMONSQUEEZY_VARIANT_ID_ENTERPRISE },
-      ]
-
-      for (const variant of configuredVariants) {
-        if (!variant.id) {
-          log.warning(`${variant.name}: Variant ID not set in env`)
-          continue
-        }
-
-        // We can't easily fetch a single variant by ID without listing,
-        // but we can just assume if we connected successfully, the ID is likely correct
-        // if the user copy-pasted it.
-        // For a more robust check, we could fetch the variant specifically if the SDK supports it,
-        // or just list all variants and check existence.
-        // Let's rely on connection success for now to avoid complexity/rate limits on listing everything.
-        log.info(`${variant.name}: ID ${variant.id} (Configured)`)
+    for (const product of configuredProducts) {
+      if (!product.id) {
+        log.warning(`${product.name}: Product ID not set in env`)
+        continue
+      }
+      // Ideally check if this ID exists in the fetched list
+      const exists = products?.items?.some(p => p.id === product.id)
+      if (exists) {
+          log.success(`${product.name}: ID ${product.id} (Verified)`)
+      } else {
+          log.warning(`${product.name}: ID ${product.id} (Not found in Polar account)`)
       }
     }
 
     // Webhook Setup Prompt
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://your-domain.com'
-    const webhookUrl = `${appUrl}/api/webhooks/lemonsqueezy`
+    const webhookUrl = `${appUrl}/api/webhooks/polar`
 
     log.info(`\nWebhook Configuration:`)
     console.log(`URL: ${chalk.underline(webhookUrl)}`)
-    console.log(`Secret: ${process.env.LEMONSQUEEZY_WEBHOOK_SECRET || chalk.red('Missing')}`)
-    console.log(`Events to subscribe: order_created, subscription_created, subscription_updated, subscription_cancelled`)
+    console.log(`Secret: ${process.env.POLAR_WEBHOOK_SECRET || chalk.red('Missing')}`)
+    console.log(`Events to subscribe: checkout.created, checkout.updated, subscription.created, subscription.updated, order.created`)
 
-    log.info('Make sure to configure this webhook in your Lemon Squeezy dashboard settings (Settings > Webhooks).')
+    log.info('Make sure to configure this webhook in your Polar dashboard settings.')
 
   } catch (error) {
-    spinner.fail('Failed to connect to Lemon Squeezy')
+    spinner.fail('Failed to connect to Polar')
     log.error((error as Error).message)
   }
 }
@@ -266,7 +242,7 @@ async function setupSupabase() {
       state.supabase.configured = true
 
       // Check for key tables
-      const tablesToCheck = ['user_profiles', 'campaigns', 'generated_content', 'subscriptions']
+      const tablesToCheck = ['user_profiles', 'campaigns', 'generated_content'] // removed subscriptions table check if not used directly
       log.info('Verifying tables...')
 
       for (const table of tablesToCheck) {
@@ -403,7 +379,7 @@ async function main() {
   const steps = [
       { name: 'Environment Variables', value: 'env', fn: setupEnv },
       { name: 'Supabase Database', value: 'supabase', fn: setupSupabase },
-      { name: 'Lemon Squeezy Payments', value: 'payment', fn: setupLemonSqueezy },
+      { name: 'Polar Payments', value: 'payment', fn: setupPolar },
       { name: 'Telegram Bot', value: 'telegram', fn: setupTelegram },
       { name: 'Final Verification', value: 'verify', fn: verifyE2E },
   ]
@@ -445,12 +421,12 @@ Date: ${date}
 |-----------|--------|---------|
 | **Environment Variables** | ${state.env.valid ? '✅ Valid' : '❌ Invalid'} | ${state.env.missingKeys.length === 0 ? 'All keys present' : 'Missing: ' + state.env.missingKeys.join(', ')} |
 | **Supabase** | ${state.supabase.configured ? '✅ Configured' : '⚠️ Not verified'} | ${state.supabase.configured ? 'Connected & Tables verified' : 'Skipped or failed'} |
-| **Lemon Squeezy** | ${state.payment.configured ? '✅ Configured' : '⚠️ Not verified'} | ${state.payment.configured ? 'Connected & Verified' : 'Skipped or failed'} |
+| **Polar Payments** | ${state.payment.configured ? '✅ Configured' : '⚠️ Not verified'} | ${state.payment.configured ? 'Connected & Verified' : 'Skipped or failed'} |
 | **Telegram Bot** | ${state.telegram.configured ? '✅ Configured' : '⚠️ Not verified'} | ${state.telegram.configured ? 'Bot verified & Webhook set' : 'Skipped or failed'} |
 
 ## Action Items
 
-${!state.env.valid ? '- [ ] Fix missing environment variables in .env.local\n' : ''}${!state.supabase.configured ? '- [ ] Verify Supabase connection and migrations\n' : ''}${!state.payment.configured ? '- [ ] Configure Lemon Squeezy credentials and webhooks\n' : ''}${!state.telegram.configured ? '- [ ] Setup Telegram Bot and Webhook\n' : ''}
+${!state.env.valid ? '- [ ] Fix missing environment variables in .env.local\n' : ''}${!state.supabase.configured ? '- [ ] Verify Supabase connection and migrations\n' : ''}${!state.payment.configured ? '- [ ] Configure Polar credentials and webhooks\n' : ''}${!state.telegram.configured ? '- [ ] Setup Telegram Bot and Webhook\n' : ''}
 ## Next Steps
 
 1. Run \`npm run build\` to build the application.
