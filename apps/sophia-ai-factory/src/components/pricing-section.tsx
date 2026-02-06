@@ -121,11 +121,9 @@ export function PricingSection() {
       if (data.url) {
         window.location.href = data.url;
       } else {
-        console.error("Checkout error:", data.error);
         alert("Failed to start checkout. Please try again.");
       }
     } catch (error) {
-      console.error("Checkout request failed:", error);
       alert("Network error. Please try again.");
     } finally {
       setLoading(null);

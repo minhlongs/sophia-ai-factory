@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
   handleStart,
   handleHelp,
@@ -39,9 +39,19 @@ vi.mock('./telegram-client', () => ({
 
 describe('Telegram Bot Handlers', () => {
   const chatId = '12345'
+  const originalEnv = process.env
 
   beforeEach(() => {
     vi.resetAllMocks()
+    process.env = {
+      ...originalEnv,
+      NEXT_PUBLIC_SUPABASE_URL: 'https://example.supabase.co',
+      SUPABASE_SERVICE_ROLE_KEY: 'test-key'
+    }
+  })
+
+  afterEach(() => {
+    process.env = originalEnv
   })
 
   describe('handleStart', () => {
