@@ -15,12 +15,11 @@ export async function POST(request: Request) {
       );
     }
 
-    // Get BOTH product IDs: one-time setup + monthly subscription
-    const onetimeProductId = getProductIdByTier(tier as string, 'one-time');
-    const monthlyProductId = getProductIdByTier(tier as string, 'monthly');
+    // Option D: Single subscription product per tier
+    const productId = getProductIdByTier(tier as string);
 
-    if (!onetimeProductId || !monthlyProductId) {
-      console.error(`Missing product IDs for tier ${tier}:`, { onetimeProductId, monthlyProductId });
+    if (!productId) {
+      console.error(`Missing product ID for tier ${tier}`);
       return NextResponse.json(
         { error: `Missing product configuration for tier: ${tier}` },
         { status: 400 }
@@ -41,7 +40,7 @@ export async function POST(request: Request) {
     const paymentService = ServiceFactory.getPaymentService();
 
     const checkout = await paymentService.createCheckoutSession({
-      productIds: [onetimeProductId, monthlyProductId], // Bundle: one-time + monthly
+      productIds: [productId], // Single subscription product
       successUrl: `${origin}/dashboard?checkout=success`,
       customerEmail: user?.email,
       metadata: {
