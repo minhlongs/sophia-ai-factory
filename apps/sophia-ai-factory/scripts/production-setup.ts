@@ -8,6 +8,7 @@ import { createClient } from '@supabase/supabase-js'
 import * as fs from 'fs'
 import * as path from 'path'
 import * as dotenv from 'dotenv'
+import { POLAR_PRODUCTS } from '../src/lib/polar-config'
 
 // Types
 interface WizardState {
@@ -147,24 +148,6 @@ async function setupEnv() {
 }
 
 // --- Section 2: Polar.sh Setup ---
-
-const POLAR_PRODUCTS = [
-  {
-    name: 'Sophia AI Factory - Starter',
-    description: 'Perfect for getting started with AI video automation.',
-    prices: [{ amountType: 'fixed', priceAmount: 120000, priceCurrency: 'usd' }],
-  },
-  {
-    name: 'Sophia AI Factory - Growth',
-    description: 'Scale your content production with advanced features.',
-    prices: [{ amountType: 'fixed', priceAmount: 200000, priceCurrency: 'usd' }],
-  },
-  {
-    name: 'Sophia AI Factory - Premium',
-    description: 'Maximum power and support for enterprise needs.',
-    prices: [{ amountType: 'fixed', priceAmount: 300000, priceCurrency: 'usd' }],
-  },
-] as const
 
 async function setupPolar() {
   log.title('Polar.sh Setup')

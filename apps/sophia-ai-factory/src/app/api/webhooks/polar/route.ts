@@ -1,4 +1,5 @@
 import { verifyWebhookSignature } from '@/lib/polar';
+import { getTierFromProductName } from '@/lib/polar-config';
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
@@ -72,10 +73,8 @@ export async function POST(request: Request) {
         console.log(`✅ Processing ${type} for ${email}`);
 
         // Determine tier
-        const productName = data.product?.name?.toString().toLowerCase() || '';
-        let tier: Tier = 'BASIC';
-        if (productName.includes('premium') || productName.includes('pro')) tier = 'PREMIUM';
-        if (productName.includes('enterprise')) tier = 'ENTERPRISE';
+        const productName = data.product?.name?.toString() || '';
+        const tier = getTierFromProductName(productName);
 
         // Find user by email
         // Note: In production with many users, this should be optimized to use a dedicated lookup or mapping table if possible

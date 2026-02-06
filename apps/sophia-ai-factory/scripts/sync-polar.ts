@@ -1,6 +1,7 @@
 import { Polar } from '@polar-sh/sdk'
 import * as dotenv from 'dotenv'
 import path from 'path'
+import { POLAR_PRODUCTS } from '../src/lib/polar-config'
 
 // Load environment variables from .env.local
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') })
@@ -23,42 +24,6 @@ const polar = new Polar({
   server: process.env.NODE_ENV === 'production' ? 'production' : 'sandbox',
 })
 
-const PRODUCTS = [
-  {
-    name: 'Sophia AI Factory - Starter',
-    description: 'Perfect for getting started with AI video automation.',
-    prices: [
-      {
-        amountType: 'fixed',
-        priceAmount: 120000, // $1,200.00
-        priceCurrency: 'usd',
-      },
-    ],
-  },
-  {
-    name: 'Sophia AI Factory - Growth',
-    description: 'Scale your content production with advanced features.',
-    prices: [
-      {
-        amountType: 'fixed',
-        priceAmount: 200000, // $2,000.00
-        priceCurrency: 'usd',
-      },
-    ],
-  },
-  {
-    name: 'Sophia AI Factory - Premium',
-    description: 'Maximum power and support for enterprise needs.',
-    prices: [
-      {
-        amountType: 'fixed',
-        priceAmount: 300000, // $3,000.00
-        priceCurrency: 'usd',
-      },
-    ],
-  },
-] as const
-
 async function main() {
   console.log(`🔌 Connecting to Polar (${process.env.NODE_ENV === 'production' ? 'production' : 'sandbox'})...`)
   console.log(`🏢 Organization ID: ${POLAR_ORGANIZATION_ID}`)
@@ -74,7 +39,7 @@ async function main() {
     const existingNames = new Set(existingProducts.result.items.map((p) => p.name))
 
     // 2. Create missing products
-    for (const productDef of PRODUCTS) {
+    for (const productDef of POLAR_PRODUCTS) {
       if (existingNames.has(productDef.name)) {
         console.log(`✅ Product already exists: "${productDef.name}"`)
         const product = existingProducts.result.items.find(p => p.name === productDef.name)
