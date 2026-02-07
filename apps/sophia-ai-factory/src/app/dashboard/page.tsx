@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { Plus } from "lucide-react";
-import { Button } from "@/app/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { createServerClient } from "@/lib/supabase/server";
 import { CampaignList } from "./components/campaign-list";
 import { DashboardStats } from "./components/dashboard-stats";

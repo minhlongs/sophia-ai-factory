@@ -1,7 +1,7 @@
 "use client";
 
-import { Card, CardHeader, CardTitle, CardContent } from "@/app/components/ui/card";
-import { Button } from "@/app/components/ui/button";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 export default function SettingsPage() {
   return (

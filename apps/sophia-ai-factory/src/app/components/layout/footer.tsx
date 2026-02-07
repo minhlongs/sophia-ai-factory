@@ -1,4 +1,4 @@
-import { Container } from "@/app/components/ui/container";
+import { Container } from "@/components/ui/container";
 import Link from "next/link";
 
 export function Footer() {

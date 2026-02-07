@@ -18,12 +18,17 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+        primary: "bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] text-white hover:opacity-90 border-0",
+        glow: "bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] text-white shadow-[0_0_30px_rgba(0,240,255,0.5)] hover:shadow-[0_0_50px_rgba(112,0,255,0.7)] hover:scale-105 border-0",
+        glass: "bg-[var(--glass-bg)] border border-[var(--glass-border)] backdrop-blur-lg text-white hover:bg-white/10",
       },
       size: {
         default: "h-9 px-4 py-2",
         sm: "h-8 rounded-md px-3 text-xs",
         lg: "h-10 rounded-md px-8",
         icon: "h-9 w-9",
+        md: "h-11 px-6 text-base",
+        xl: "h-14 px-8 text-lg",
       },
     },
     defaultVariants: {

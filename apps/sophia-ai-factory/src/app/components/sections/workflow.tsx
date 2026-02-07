@@ -1,8 +1,8 @@
 "use client";
 
-import { Container } from "@/app/components/ui/container";
-import { Card, CardHeader, CardTitle, CardDescription } from "@/app/components/ui/card";
-import { SectionHeading } from "@/app/components/ui/section-heading";
+import { Container } from "@/components/ui/container";
+import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { SectionHeading } from "@/components/ui/section-heading";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 

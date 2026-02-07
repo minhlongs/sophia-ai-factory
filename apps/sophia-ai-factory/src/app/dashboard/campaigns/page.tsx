@@ -1,6 +1,6 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { CampaignList } from "../components/campaign-list";
-import { Button } from "@/app/components/ui/button";
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";

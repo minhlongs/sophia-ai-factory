@@ -1,8 +1,8 @@
 "use client";
 
-import { Container } from "@/app/components/ui/container";
-import { Card } from "@/app/components/ui/card";
-import { SectionHeading } from "@/app/components/ui/section-heading";
+import { Container } from "@/components/ui/container";
+import { Card } from "@/components/ui/card";
+import { SectionHeading } from "@/components/ui/section-heading";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown } from "lucide-react";

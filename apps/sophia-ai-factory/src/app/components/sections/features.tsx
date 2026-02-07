@@ -1,9 +1,9 @@
 "use client";
 
-import { Container } from "@/app/components/ui/container";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/app/components/ui/card";
-import { SectionHeading } from "@/app/components/ui/section-heading";
-import { Badge } from "@/app/components/ui/badge";
+import { Container } from "@/components/ui/container";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { SectionHeading } from "@/components/ui/section-heading";
+import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import { Zap, Users, Mic, TrendingUp, Bot, Globe } from "lucide-react";
 

@@ -6,8 +6,8 @@ import { getAllPrograms } from "@/lib/affiliates";
 import { Tier } from "@/types";
 import { Lock, ExternalLink, Star } from "lucide-react";
 
-import { Badge } from "@/app/components/ui/badge";
-import { Button } from "@/app/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 export function AffiliateDiscovery() {
   const [currentTier, setCurrentTier] = useState<Tier>("BASIC");

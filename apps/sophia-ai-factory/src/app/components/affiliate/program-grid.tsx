@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { AffiliateProgram } from "@/types";
 import { ProgramCard } from "./program-card";
-import { Button } from "@/app/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Search, SlidersHorizontal } from "lucide-react";
 
 interface ProgramGridProps {
