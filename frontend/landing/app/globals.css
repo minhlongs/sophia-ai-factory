@@ -31,30 +31,36 @@
 }
 
 .dark {
-  --background: #030711;
-  --foreground: #fafafa;
-  --card: #030711;
-  --card-foreground: #fafafa;
-  --popover: #030711;
-  --popover-foreground: #fafafa;
-  --primary: #3b82f6; /* Antigravity Blue */
-  --primary-foreground: #fafafa;
-  --secondary: #1e293b;
-  --secondary-foreground: #fafafa;
-  --muted: #1e293b;
-  --muted-foreground: #94a3b8;
-  --accent: #1e293b;
-  --accent-foreground: #fafafa;
-  --destructive: #7f1d1d;
-  --destructive-foreground: #fafafa;
-  --border: #1e293b;
-  --input: #1e293b;
-  --ring: #3b82f6;
-  --chart-1: #3b82f6;
-  --chart-2: #2a9d90;
-  --chart-3: #274754;
-  --chart-4: #e8c468;
-  --chart-5: #f4a462;
+  /* Deep Space Cyberpunk Theme */
+  --background: #030014; /* Deep Space */
+  --foreground: #F1F5F9;
+  --card: rgba(15, 23, 42, 0.6); /* Dark with transparency */
+  --card-foreground: #F1F5F9;
+  --popover: #0F172A;
+  --popover-foreground: #F1F5F9;
+  --primary: #00F5FF; /* Cyan */
+  --primary-foreground: #030014;
+  --secondary: #8B5CF6; /* Violet */
+  --secondary-foreground: #F1F5F9;
+  --muted: #1E293B;
+  --muted-foreground: #94A3B8;
+  --accent: #00F5FF; /* Cyan */
+  --accent-foreground: #030014;
+  --destructive: #FF006E; /* Hot Pink for errors */
+  --destructive-foreground: #F1F5F9;
+  --border: rgba(0, 245, 255, 0.2); /* Cyan border */
+  --input: rgba(30, 41, 59, 0.8);
+  --ring: #00F5FF;
+  --chart-1: #00F5FF;
+  --chart-2: #8B5CF6;
+  --chart-3: #FF006E;
+  --chart-4: #0080FF;
+  --chart-5: #5D34D0;
+
+  /* Cyberpunk effects */
+  --neon-glow-cyan: 0 0 10px rgba(0, 245, 255, 0.5), 0 0 20px rgba(0, 245, 255, 0.3);
+  --neon-glow-violet: 0 0 10px rgba(139, 92, 246, 0.5), 0 0 20px rgba(139, 92, 246, 0.3);
+  --glass-border: rgba(255, 255, 255, 0.2);
 }
 
 @theme inline {
@@ -86,10 +92,14 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans, Arial, Helvetica, sans-serif);
+  font-family: 'Inter', var(--font-sans, Arial, Helvetica, sans-serif);
 }
 
-/* Custom Scrollbar for candy feel */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Outfit', 'Inter', sans-serif;
+}
+
+/* Cyberpunk Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -97,9 +107,67 @@ body {
   background: var(--background);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--muted);
+  background: var(--primary);
   border-radius: 4px;
+  box-shadow: var(--neon-glow-cyan);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--muted-foreground);
+  background: var(--secondary);
+  box-shadow: var(--neon-glow-violet);
+}
+
+/* Glassmorphism utilities */
+.glass-card {
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.glass-card-light {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Neon glow effects */
+.neon-cyan {
+  text-shadow: var(--neon-glow-cyan);
+}
+
+.neon-violet {
+  text-shadow: var(--neon-glow-violet);
+}
+
+.neon-border-cyan {
+  border-color: var(--primary);
+  box-shadow: var(--neon-glow-cyan);
+}
+
+/* Cyberpunk grid background */
+.cyber-grid {
+  background-image:
+    linear-gradient(rgba(0, 245, 255, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 245, 255, 0.1) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+/* Floating orbs animation */
+@keyframes float-orb {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.3;
+  }
+  33% {
+    transform: translate(30px, -30px) scale(1.1);
+    opacity: 0.5;
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+    opacity: 0.4;
+  }
+}
+
+.floating-orb {
+  animation: float-orb 8s ease-in-out infinite;
 }

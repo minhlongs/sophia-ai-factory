@@ -2,8 +2,8 @@
 
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/landing/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/landing/components/ui/tabs";
 import { Users, Eye, Activity, ArrowUpRight, MousePointer } from 'lucide-react';
 
 const CONVERSION_DATA = [{ name: 'Variant A', views: 4000, conversions: 240, rate: 6 }, { name: 'Variant B', views: 3000, conversions: 139, rate: 4.6 }];

@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
-import { BuilderAction, BuilderState, COMPONENT_DEFINITIONS, LandingComponent, ComponentPropValue } from './types';
+import { BuilderAction, BuilderState, COMPONENT_DEFINITIONS, LandingComponent, ComponentPropValue, ComponentType } from './types';
 
-const createComponent = (type: BuilderAction['payload']['type']): LandingComponent => {
+const createComponent = (type: ComponentType): LandingComponent => {
   const def = COMPONENT_DEFINITIONS[type];
   return {
     id: uuidv4(),
