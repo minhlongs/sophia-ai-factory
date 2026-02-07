@@ -235,11 +235,12 @@ export function CreateProjectFormWithTemplates({ templates }: CreateProjectFormP
             </div>
           )}
 
-          <div className="flex justify-between items-center pt-4">
+          <div className="flex flex-col sm:flex-row justify-between items-center pt-4 gap-4">
             <Button
               type="button"
               variant="outline"
               onClick={() => setSelectedTemplate(null)}
+              className="w-full sm:w-auto"
             >
               Change Template
             </Button>
@@ -247,7 +248,7 @@ export function CreateProjectFormWithTemplates({ templates }: CreateProjectFormP
             <Button
               type="submit"
               disabled={loading}
-              className="min-w-[150px]"
+              className="w-full sm:w-auto min-w-[150px]"
             >
               {loading ? (
                 <>
