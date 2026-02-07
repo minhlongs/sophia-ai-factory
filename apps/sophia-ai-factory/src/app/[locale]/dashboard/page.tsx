@@ -7,8 +7,10 @@ import { CampaignList } from "./components/campaign-list";
 import { DashboardStats } from "./components/dashboard-stats";
 import { createClient } from "@supabase/supabase-js";
 import { Campaign } from "@/types";
+import { getTranslations } from 'next-intl/server';
 
 export default async function DashboardPage() {
+  const t = await getTranslations('dashboard');
   const supabase = await createServerClient();
   const { data: { session } } = await supabase.auth.getSession();
 
@@ -45,19 +47,19 @@ export default async function DashboardPage() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-muted-foreground">Manage your automated video campaigns</p>
+          <h1 className="text-2xl font-bold text-foreground">{t('title')}</h1>
+          <p className="text-muted-foreground">{t('subtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
           <Link href="/pricing">
             <Button variant="outline" className="flex items-center gap-2">
-              ⚡ Upgrade
+              ⚡ {t('buttons.upgrade')}
             </Button>
           </Link>
           <Link href="/dashboard/create">
             <Button className="flex items-center gap-2">
               <Plus className="w-4 h-4" />
-              New Campaign
+              {t('buttons.new_campaign')}
             </Button>
           </Link>
         </div>

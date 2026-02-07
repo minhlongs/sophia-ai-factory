@@ -11,6 +11,7 @@ import { retryCampaign, resumeCampaign } from "@/app/actions/campaigns";
 import { useToast } from "@/hooks/use-toast";
 import { CampaignItem } from "./campaign-list/campaign-item";
 import { CampaignActions } from "./campaign-list/campaign-actions";
+import { useTranslations } from 'next-intl';
 
 interface CampaignListProps {
   initialCampaigns: Campaign[];
@@ -20,6 +21,7 @@ export function CampaignList({ initialCampaigns }: CampaignListProps) {
   const [campaigns, setCampaigns] = useState<Campaign[]>(initialCampaigns);
   const [retryingCampaigns, setRetryingCampaigns] = useState<Set<string>>(new Set());
   const { toast } = useToast();
+  const t = useTranslations('dashboard');
   const supabase = createBrowserClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -61,12 +63,12 @@ export function CampaignList({ initialCampaigns }: CampaignListProps) {
 
     if (result.success) {
       toast({
-        title: "Campaign Retry Started",
-        description: "The campaign will restart from the beginning.",
+        title: t('toasts.retry_started'),
+        description: t('toasts.retry_started_desc'),
       });
     } else {
       toast({
-        title: "Retry Failed",
+        title: t('toasts.retry_failed'),
         description: result.message,
         variant: "destructive",
       });
@@ -85,12 +87,12 @@ export function CampaignList({ initialCampaigns }: CampaignListProps) {
 
     if (result.success) {
       toast({
-        title: "Campaign Resumed",
+        title: t('toasts.resume_success'),
         description: result.message,
       });
     } else {
       toast({
-        title: "Resume Failed",
+        title: t('toasts.resume_failed'),
         description: result.message,
         variant: "destructive",
       });
@@ -105,10 +107,10 @@ export function CampaignList({ initialCampaigns }: CampaignListProps) {
   if (campaigns.length === 0) {
     return (
       <div className="text-center py-12 bg-card rounded-lg border border-dashed border-border">
-        <h3 className="text-lg font-medium text-foreground">No campaigns yet</h3>
-        <p className="text-muted-foreground mt-1 mb-6">Create your first automated video campaign.</p>
+        <h3 className="text-lg font-medium text-foreground">{t('empty_state.title')}</h3>
+        <p className="text-muted-foreground mt-1 mb-6">{t('empty_state.description')}</p>
         <Link href="/dashboard/create">
-          <Button>Create Campaign</Button>
+          <Button>{t('empty_state.action')}</Button>
         </Link>
       </div>
     );

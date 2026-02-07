@@ -8,6 +8,7 @@ import Link from "next/link";
 import { Campaign } from "@/types";
 import { ScriptOutput } from "@/lib/services/types";
 import { createClient } from "@supabase/supabase-js";
+import { getTranslations, getFormatter } from 'next-intl/server';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -15,6 +16,9 @@ interface PageProps {
 
 export default async function CampaignDetailPage({ params }: PageProps) {
   const { id } = await params;
+  const t = await getTranslations('campaign.detail');
+  const tStatus = await getTranslations('campaign.status');
+  const format = await getFormatter();
   const supabase = await createServerClient();
   const { data: { session } } = await supabase.auth.getSession();
 
@@ -67,6 +71,16 @@ export default async function CampaignDetailPage({ params }: PageProps) {
     }
   };
 
+  // Helper to translate status
+  const getStatusLabel = (status: string) => {
+    const validStatuses = ['draft', 'queued', 'processing_script', 'processing_video', 'completed', 'failed'] as const;
+    type StatusKey = typeof validStatuses[number];
+    if (validStatuses.includes(status as StatusKey)) {
+        return tStatus(status as StatusKey);
+    }
+    return status.replace(/_/g, " ");
+  };
+
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
       {/* Header */}
@@ -76,22 +90,22 @@ export default async function CampaignDetailPage({ params }: PageProps) {
           className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="w-4 h-4 mr-1" />
-          Back to Campaigns
+          {t('back')}
         </Link>
 
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-3xl font-bold text-foreground">{campaign.title || "Untitled Campaign"}</h1>
+              <h1 className="text-3xl font-bold text-foreground">{campaign.title || t('untitled')}</h1>
               <Badge variant="outline" className={`${getStatusColor(campaign.status)} capitalize flex items-center`}>
                 {getStatusIcon(campaign.status)}
-                {campaign.status.replace(/_/g, " ")}
+                {getStatusLabel(campaign.status)}
               </Badge>
             </div>
             <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
               <div className="flex items-center">
                 <Calendar className="w-4 h-4 mr-1.5" />
-                Created {new Date(campaign.created_at).toLocaleDateString()}
+                {t('created')} {format.dateTime(new Date(campaign.created_at), { dateStyle: 'medium' })}
               </div>
               {campaign.audience && (
                 <div className="flex items-center">
@@ -105,7 +119,7 @@ export default async function CampaignDetailPage({ params }: PageProps) {
           <div className="flex items-center gap-2">
             {campaign.status === 'failed' && (
                <Button variant="outline" className="border-destructive/20 text-destructive hover:bg-destructive/10">
-                 Retry Generation
+                 {t('retry')}
                </Button>
             )}
             {/* Additional actions like Edit, Delete could go here */}
@@ -132,7 +146,7 @@ export default async function CampaignDetailPage({ params }: PageProps) {
             <div className="bg-card rounded-xl border border-border shadow-sm p-6">
               <h3 className="text-lg font-semibold mb-4 flex items-center text-foreground">
                 <FileText className="w-5 h-5 mr-2 text-primary" />
-                Generated Script
+                {t('script')}
               </h3>
               <div className="prose prose-sm max-w-none bg-muted p-4 rounded-lg dark:prose-invert">
                 {/*
@@ -143,9 +157,9 @@ export default async function CampaignDetailPage({ params }: PageProps) {
                    <div className="space-y-4">
                      {(campaign.script_content as unknown as ScriptOutput).scenes.map((scene, idx: number) => (
                        <div key={idx} className="border-l-2 border-primary/50 pl-4">
-                         <p className="font-medium text-foreground text-xs uppercase mb-1">Scene {idx + 1}</p>
+                         <p className="font-medium text-foreground text-xs uppercase mb-1">{t('scene')} {idx + 1}</p>
                          <p className="text-muted-foreground mb-2">{scene.narration}</p>
-                         <p className="text-xs text-muted-foreground italic">Visual: {scene.visual_description}</p>
+                         <p className="text-xs text-muted-foreground italic">{t('visual')}: {scene.visual_description}</p>
                        </div>
                      ))}
                    </div>
@@ -162,22 +176,22 @@ export default async function CampaignDetailPage({ params }: PageProps) {
         {/* Sidebar: Details */}
         <div className="space-y-6">
           <div className="bg-card rounded-xl border border-border shadow-sm p-6">
-            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">Campaign Details</h3>
+            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">{t('title')}</h3>
 
             <div className="space-y-4">
               <div>
-                <label className="text-xs font-medium text-muted-foreground block mb-1">Topic</label>
-                <p className="text-sm text-foreground font-medium">{campaign.topic || "N/A"}</p>
+                <label className="text-xs font-medium text-muted-foreground block mb-1">{t('topic')}</label>
+                <p className="text-sm text-foreground font-medium">{campaign.topic || t('na')}</p>
               </div>
 
               <div>
-                <label className="text-xs font-medium text-muted-foreground block mb-1">Target Audience</label>
-                <p className="text-sm text-foreground">{campaign.audience || "General"}</p>
+                <label className="text-xs font-medium text-muted-foreground block mb-1">{t('audience')}</label>
+                <p className="text-sm text-foreground">{campaign.audience || t('general')}</p>
               </div>
 
               {campaign.template_id && (
                 <div>
-                   <label className="text-xs font-medium text-muted-foreground block mb-1">Template</label>
+                   <label className="text-xs font-medium text-muted-foreground block mb-1">{t('template')}</label>
                    <Badge variant="secondary" className="font-normal">
                      {campaign.template_id}
                    </Badge>
@@ -186,13 +200,13 @@ export default async function CampaignDetailPage({ params }: PageProps) {
 
               <div className="pt-4 border-t border-border">
                 <div className="flex justify-between text-sm mb-2">
-                  <span className="text-muted-foreground">Status</span>
-                  <span className="font-medium capitalize text-foreground">{campaign.status.replace(/_/g, " ")}</span>
+                  <span className="text-muted-foreground">{t('status')}</span>
+                  <span className="font-medium capitalize text-foreground">{getStatusLabel(campaign.status)}</span>
                 </div>
                 {campaign.progress !== null && campaign.progress < 100 && (
                   <div className="space-y-1">
                     <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>Progress</span>
+                      <span>{t('progress')}</span>
                       <span>{campaign.progress}%</span>
                     </div>
                     <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
@@ -209,15 +223,15 @@ export default async function CampaignDetailPage({ params }: PageProps) {
 
           {/* Tech/Debug Info (Only visible in dev or for admins) */}
           <div className="bg-muted/50 rounded-xl border border-border p-4">
-             <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-2">System Info</h4>
+             <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-2">{t('system_info')}</h4>
              <div className="space-y-2 text-xs text-muted-foreground font-mono">
                <div className="flex justify-between">
-                 <span>ID:</span>
+                 <span>{t('id')}:</span>
                  <span className="truncate ml-2" title={campaign.id}>{campaign.id.substring(0, 8)}...</span>
                </div>
                <div className="flex justify-between">
-                 <span>Updated:</span>
-                 <span>{new Date(campaign.updated_at).toLocaleTimeString()}</span>
+                 <span>{t('updated')}:</span>
+                 <span>{format.dateTime(new Date(campaign.updated_at), { dateStyle: 'short', timeStyle: 'short' })}</span>
                </div>
              </div>
           </div>

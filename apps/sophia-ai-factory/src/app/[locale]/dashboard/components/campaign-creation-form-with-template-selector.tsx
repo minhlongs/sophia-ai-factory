@@ -7,6 +7,7 @@ import { CampaignTemplate, applyTemplateDefaults } from "@/lib/templates/campaig
 import { Tier } from "@/types";
 import { TemplateSelector } from "./create-campaign/template-selector";
 import { CampaignForm } from "./create-campaign/campaign-form";
+import { useTranslations } from 'next-intl';
 
 interface CreateProjectFormProps {
   templates: CampaignTemplate[];
@@ -14,6 +15,7 @@ interface CreateProjectFormProps {
 
 export function CreateProjectFormWithTemplates({ templates }: CreateProjectFormProps) {
   const router = useRouter();
+  const t = useTranslations('campaign.errors');
   const [selectedTemplate, setSelectedTemplate] = useState<CampaignTemplate | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,14 +62,14 @@ export function CreateProjectFormWithTemplates({ templates }: CreateProjectFormP
         router.push("/dashboard/campaigns");
         router.refresh();
       } else {
-        setError(result.message || "Something went wrong");
+        setError(result.message || t('something_wrong'));
         if ('requiresUpgrade' in result && result.requiresUpgrade) {
           setUpgradeRequired({ required: true, tier: ('requiredTier' in result ? result.requiredTier : "BASIC") as Tier });
         }
       }
     } catch (err) {
       console.error(err);
-      setError("Failed to create campaign");
+      setError(t('create_failed'));
     } finally {
       setLoading(false);
     }

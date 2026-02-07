@@ -1,5 +1,6 @@
 import { CampaignTemplate } from "@/lib/templates/campaign-templates";
 import { Check } from "lucide-react";
+import { useTranslations } from 'next-intl';
 
 interface TemplateSelectorProps {
   templates: CampaignTemplate[];
@@ -8,11 +9,13 @@ interface TemplateSelectorProps {
 }
 
 export function TemplateSelector({ templates, selectedTemplateId, onSelect }: TemplateSelectorProps) {
+  const t = useTranslations('campaign.template_selection');
+
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-lg font-semibold text-foreground">Choose a Template</h3>
-        <p className="text-sm text-muted-foreground">Start with a pre-configured template or create from scratch</p>
+        <h3 className="text-lg font-semibold text-foreground">{t('title')}</h3>
+        <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

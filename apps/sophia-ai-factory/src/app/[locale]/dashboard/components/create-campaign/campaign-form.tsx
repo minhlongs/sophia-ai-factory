@@ -4,6 +4,7 @@ import { CampaignTemplate } from "@/lib/templates/campaign-templates";
 import { UpgradeBanner } from "@/components/UpgradeBanner";
 import { Tier } from "@/types";
 import { FormEvent } from "react";
+import { useTranslations } from 'next-intl';
 
 interface CampaignFormProps {
   selectedTemplate: CampaignTemplate;
@@ -34,6 +35,8 @@ export function CampaignForm({
   upgradeRequired,
   onChangeTemplate
 }: CampaignFormProps) {
+  const t = useTranslations('campaign.customization');
+  const tActions = useTranslations('campaign.actions');
 
   const handlePlatformToggle = (platform: string) => {
     setSelectedPlatforms(prev =>
@@ -46,12 +49,12 @@ export function CampaignForm({
   return (
     <form onSubmit={onSubmit} className="space-y-6 bg-card p-6 rounded-xl border border-border">
       <div>
-        <h3 className="text-lg font-semibold text-foreground mb-4">Customize Your Campaign</h3>
+        <h3 className="text-lg font-semibold text-foreground mb-4">{t('title')}</h3>
       </div>
 
       <div className="space-y-2">
         <label htmlFor="title" className="block text-sm font-medium text-foreground">
-          Campaign Title
+          {t('campaign_title')}
         </label>
         <input
           id="title"
@@ -67,7 +70,7 @@ export function CampaignForm({
 
       <div className="space-y-2">
         <label htmlFor="topic" className="block text-sm font-medium text-foreground">
-          Video Topic
+          {t('video_topic')}
         </label>
         <input
           id="topic"
@@ -79,12 +82,12 @@ export function CampaignForm({
           placeholder={selectedTemplate.defaults.title}
           className="w-full px-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:outline-none bg-background text-foreground"
         />
-        <p className="text-xs text-muted-foreground">What should this video be about?</p>
+        <p className="text-xs text-muted-foreground">{t('video_topic_hint')}</p>
       </div>
 
       <div className="space-y-2">
         <label htmlFor="audience" className="block text-sm font-medium text-foreground">
-          Target Audience
+          {t('target_audience')}
         </label>
         <input
           id="audience"
@@ -96,12 +99,12 @@ export function CampaignForm({
           placeholder={selectedTemplate.defaults.audience}
           className="w-full px-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:outline-none bg-background text-foreground"
         />
-        <p className="text-xs text-muted-foreground">Who is this video for?</p>
+        <p className="text-xs text-muted-foreground">{t('target_audience_hint')}</p>
       </div>
 
       <div className="space-y-2">
         <label className="block text-sm font-medium text-foreground">
-          Target Platforms
+          {t('target_platforms')}
         </label>
         <div className="flex gap-4">
           {['youtube', 'tiktok', 'instagram'].map((platform) => (
@@ -117,20 +120,20 @@ export function CampaignForm({
           ))}
         </div>
         <p className="text-xs text-muted-foreground">
-          Select platforms to publish to. Multiple platforms require Premium plan.
+          {t('platforms_hint')}
         </p>
       </div>
 
       {/* Template Info Display */}
       <div className="bg-muted p-4 rounded-lg">
-        <h4 className="text-sm font-medium text-foreground mb-2">Template Settings</h4>
+        <h4 className="text-sm font-medium text-foreground mb-2">{t('template_settings')}</h4>
         <div className="grid grid-cols-2 gap-2 text-sm">
           <div>
-            <span className="text-muted-foreground">Tone:</span>
+            <span className="text-muted-foreground">{t('tone')}:</span>
             <span className="ml-2 font-medium text-foreground">{selectedTemplate.defaults.tone}</span>
           </div>
           <div>
-            <span className="text-muted-foreground">Duration:</span>
+            <span className="text-muted-foreground">{t('duration')}:</span>
             <span className="ml-2 font-medium text-foreground">{selectedTemplate.defaults.suggestedDuration}s</span>
           </div>
         </div>
@@ -159,7 +162,7 @@ export function CampaignForm({
           onClick={onChangeTemplate}
           className="w-full sm:w-auto"
         >
-          Change Template
+          {tActions('change_template')}
         </Button>
 
         <Button
@@ -170,12 +173,12 @@ export function CampaignForm({
           {loading ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Creating...
+              {tActions('creating')}
             </>
           ) : (
             <>
               <Sparkles className="w-4 h-4 mr-2" />
-              Create Campaign
+              {tActions('create_campaign')}
             </>
           )}
         </Button>

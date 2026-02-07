@@ -6,8 +6,10 @@ import { Plus } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 import { Campaign } from "@/types";
 import { CampaignExportControl } from "../components/campaign-export-control";
+import { getTranslations } from 'next-intl/server';
 
 export default async function CampaignsPage() {
+  const t = await getTranslations('dashboard');
   const supabase = await createServerClient();
   const { data: { session } } = await supabase.auth.getSession();
 
@@ -39,15 +41,15 @@ export default async function CampaignsPage() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Campaigns</h1>
-          <p className="text-muted-foreground">Monitor and manage your video generation campaigns</p>
+          <h1 className="text-2xl font-bold text-foreground">{t('sidebar.campaigns')}</h1>
+          <p className="text-muted-foreground">{t('subtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
           <CampaignExportControl />
           <Link href="/dashboard/create">
             <Button className="flex items-center gap-2">
               <Plus className="w-4 h-4" />
-              New Campaign
+              {t('buttons.new_campaign')}
             </Button>
           </Link>
         </div>

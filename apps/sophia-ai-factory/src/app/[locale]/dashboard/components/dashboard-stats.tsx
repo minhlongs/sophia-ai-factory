@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { TrendingUp, Activity, CheckCircle2 } from "lucide-react";
+import { useTranslations } from 'next-intl';
 
 const AnimatedCounter = dynamic(
   () => import("@/components/ui/animated-counter-with-framer-motion").then(mod => ({ default: mod.AnimatedCounter })),
@@ -19,13 +20,15 @@ export function DashboardStats({
   activeCampaigns,
   completedCampaigns,
 }: DashboardStatsProps) {
+  const t = useTranslations('dashboard.stats');
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {/* Total Campaigns */}
       <div className="bg-card p-6 rounded-xl border border-border shadow-sm">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-muted-foreground mb-1">Total Campaigns</p>
+            <p className="text-sm text-muted-foreground mb-1">{t('total_campaigns')}</p>
             <div className="text-3xl font-bold text-foreground">
               <AnimatedCounter value={totalCampaigns} duration={1.5} />
             </div>
@@ -40,7 +43,7 @@ export function DashboardStats({
       <div className="bg-card p-6 rounded-xl border border-border shadow-sm">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-muted-foreground mb-1">Active Campaigns</p>
+            <p className="text-sm text-muted-foreground mb-1">{t('active_campaigns')}</p>
             <div className="text-3xl font-bold text-foreground">
               <AnimatedCounter value={activeCampaigns} duration={1.5} />
             </div>
@@ -55,7 +58,7 @@ export function DashboardStats({
       <div className="bg-card p-6 rounded-xl border border-border shadow-sm">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-muted-foreground mb-1">Completed</p>
+            <p className="text-sm text-muted-foreground mb-1">{t('completed_campaigns')}</p>
             <div className="text-3xl font-bold text-foreground">
               <AnimatedCounter value={completedCampaigns} duration={1.5} />
             </div>

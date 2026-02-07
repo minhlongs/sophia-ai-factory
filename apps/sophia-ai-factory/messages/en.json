@@ -2,6 +2,19 @@
   "dashboard": {
     "title": "Dashboard",
     "subtitle": "Manage your automated video campaigns",
+    "sidebar": {
+      "overview": "Overview",
+      "new_project": "New Project",
+      "campaigns": "Campaigns",
+      "analytics": "Analytics",
+      "my_videos": "My Videos",
+      "settings": "Settings",
+      "sign_out": "Sign Out"
+    },
+    "header": {
+      "title": "Sophia Dashboard",
+      "brand": "Sophia AI"
+    },
     "stats": {
       "total_campaigns": "Total Campaigns",
       "active_campaigns": "Active Campaigns",
@@ -12,12 +25,53 @@
       "new_campaign": "New Campaign",
       "view_details": "View Details",
       "retry": "Retry",
-      "resume": "Resume"
+      "resume": "Resume",
+      "watch_video": "Watch Video"
+    },
+    "general_audience": "General Audience",
+    "toasts": {
+      "retry_started": "Campaign Retry Started",
+      "retry_started_desc": "The campaign will restart from the beginning.",
+      "retry_failed": "Retry Failed",
+      "resume_success": "Campaign Resumed",
+      "resume_failed": "Resume Failed"
     },
     "empty_state": {
       "title": "No campaigns yet",
       "description": "Create your first automated video campaign.",
       "action": "Create Campaign"
+    },
+    "error": {
+      "title": "Dashboard Error",
+      "description": "We encountered an issue while loading your dashboard data.",
+      "reload": "Reload Dashboard"
+    },
+    "export": {
+      "button": "Export",
+      "title": "Export Options",
+      "success": "Export Successful",
+      "success_desc": "Campaigns exported as {format}",
+      "failed": "Export Failed",
+      "status_label": "Status",
+      "all_statuses": "All Statuses",
+      "start_date": "Start Date",
+      "end_date": "End Date"
+    },
+    "analytics": {
+      "title": "Analytics Dashboard",
+      "subtitle": "Track performance and statistics of your automated campaigns",
+      "total_campaigns": "Total Campaigns",
+      "all_time": "All time campaigns",
+      "success_rate": "Success Rate",
+      "completed_campaigns": "Completed campaigns",
+      "avg_completion_time": "Avg Completion Time",
+      "per_completed": "Per completed campaign",
+      "status_distribution": "Campaign Status Distribution",
+      "recent_performance": "Recent Performance (Duration)",
+      "no_completed_data": "No completed campaigns data",
+      "template_usage": "Template Usage",
+      "duration_min": "Duration (min)",
+      "no_data": "No data available"
     }
   },
   "campaign": {
@@ -50,6 +104,30 @@
       "processing_video": "Processing Video",
       "completed": "Completed",
       "failed": "Failed"
+    },
+    "errors": {
+      "something_wrong": "Something went wrong",
+      "create_failed": "Failed to create campaign"
+    },
+    "detail": {
+      "back": "Back to Campaigns",
+      "untitled": "Untitled Campaign",
+      "created": "Created",
+      "retry": "Retry Generation",
+      "script": "Generated Script",
+      "scene": "Scene",
+      "visual": "Visual",
+      "title": "Campaign Details",
+      "topic": "Topic",
+      "audience": "Target Audience",
+      "template": "Template",
+      "status": "Status",
+      "progress": "Progress",
+      "system_info": "System Info",
+      "id": "ID",
+      "updated": "Updated",
+      "na": "N/A",
+      "general": "General"
     }
   },
   "common": {

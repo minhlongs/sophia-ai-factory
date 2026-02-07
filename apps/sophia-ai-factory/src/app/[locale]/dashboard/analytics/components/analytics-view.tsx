@@ -5,6 +5,7 @@ import { Campaign } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart3, CheckCircle2, Clock, Loader2 } from "lucide-react";
 import dynamic from 'next/dynamic';
+import { useTranslations } from 'next-intl';
 
 // Lazy load chart components
 const StatusDistributionChart = dynamic(
@@ -27,6 +28,8 @@ interface AnalyticsViewProps {
 }
 
 export function AnalyticsView({ campaigns }: AnalyticsViewProps) {
+  const t = useTranslations('dashboard.analytics');
+
   // Calculate stats
   const stats = useMemo(() => {
     const total = campaigns.length;
@@ -111,32 +114,32 @@ export function AnalyticsView({ campaigns }: AnalyticsViewProps) {
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="bg-card border-border">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-foreground">Total Campaigns</CardTitle>
+            <CardTitle className="text-sm font-medium text-foreground">{t('total_campaigns')}</CardTitle>
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-foreground">{stats.total}</div>
-            <p className="text-xs text-muted-foreground">All time campaigns</p>
+            <p className="text-xs text-muted-foreground">{t('all_time')}</p>
           </CardContent>
         </Card>
         <Card className="bg-card border-border">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-foreground">Success Rate</CardTitle>
+            <CardTitle className="text-sm font-medium text-foreground">{t('success_rate')}</CardTitle>
             <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-foreground">{stats.successRate}%</div>
-            <p className="text-xs text-muted-foreground">Completed campaigns</p>
+            <p className="text-xs text-muted-foreground">{t('completed_campaigns')}</p>
           </CardContent>
         </Card>
         <Card className="bg-card border-border">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-foreground">Avg Completion Time</CardTitle>
+            <CardTitle className="text-sm font-medium text-foreground">{t('avg_completion_time')}</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-foreground">{stats.avgTime}m</div>
-            <p className="text-xs text-muted-foreground">Per completed campaign</p>
+            <p className="text-xs text-muted-foreground">{t('per_completed')}</p>
           </CardContent>
         </Card>
       </div>
@@ -145,7 +148,7 @@ export function AnalyticsView({ campaigns }: AnalyticsViewProps) {
       <div className="grid gap-6 md:grid-cols-2">
         <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle className="text-lg text-foreground">Campaign Status Distribution</CardTitle>
+            <CardTitle className="text-lg text-foreground">{t('status_distribution')}</CardTitle>
           </CardHeader>
           <CardContent>
             <StatusDistributionChart data={statusData} />
@@ -154,14 +157,14 @@ export function AnalyticsView({ campaigns }: AnalyticsViewProps) {
 
         <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle className="text-lg text-foreground">Recent Performance (Duration)</CardTitle>
+            <CardTitle className="text-lg text-foreground">{t('recent_performance')}</CardTitle>
           </CardHeader>
           <CardContent>
             {recentPerformanceData.length > 0 ? (
                 <CompletionTimeChart data={recentPerformanceData} />
             ) : (
                 <div className="h-[300px] w-full flex items-center justify-center text-muted-foreground border-2 border-dashed border-border rounded-lg">
-                    No completed campaigns data
+                    {t('no_completed_data')}
                 </div>
             )}
           </CardContent>
@@ -170,7 +173,7 @@ export function AnalyticsView({ campaigns }: AnalyticsViewProps) {
         {typeData.length > 0 && (
              <Card className="bg-card border-border">
              <CardHeader>
-               <CardTitle className="text-lg text-foreground">Template Usage</CardTitle>
+               <CardTitle className="text-lg text-foreground">{t('template_usage')}</CardTitle>
              </CardHeader>
              <CardContent>
                <CampaignsByTypeChart data={typeData} />
