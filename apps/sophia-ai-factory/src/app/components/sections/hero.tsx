@@ -1,7 +1,7 @@
 "use client";
 
-import { Button } from "@/app/components/ui/button";
-import { Container } from "@/app/components/ui/container";
+import { Button } from "@/components/ui/button";
+import { Container } from "@/components/ui/container";
 import { motion } from "framer-motion";
 
 export function Hero() {

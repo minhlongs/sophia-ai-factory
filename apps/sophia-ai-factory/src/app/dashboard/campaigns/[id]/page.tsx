@@ -1,7 +1,7 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
 import { VideoPreview } from "@/components/video-preview";
-import { Badge } from "@/app/components/ui/badge";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, Users, FileText, CheckCircle2, Clock, AlertCircle, Loader2 } from "lucide-react";
 import Link from "next/link";

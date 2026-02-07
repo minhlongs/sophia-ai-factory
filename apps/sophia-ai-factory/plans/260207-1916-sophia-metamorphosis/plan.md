@@ -25,9 +25,16 @@
 - [x] Fix Footer dead links
 
 ### Phase 3: Polish (In Progress)
-- [ ] UI refinement (spacing, typography, colors)
-- [ ] Consistency checks across pages
-- [ ] Visual improvements (animations, transitions)
+- [x] UI Consistency Scan
+- [ ] Consolidate `Button` component (merge `app/components/ui` variants into `components/ui`)
+- [ ] Consolidate `Card` component
+- [ ] Consolidate `Badge` component
+- [ ] Move `Container` and `SectionHeading` to `components/ui` or `components/layout`
+- [ ] Refactor imports in `src/app/dashboard`
+- [ ] Refactor imports in `src/app/components/sections`
+- [ ] Delete `src/app/components/ui`
+- [ ] Verify build passes
+- [ ] Visual regression check
 
 ### Phase 4: i18n (TODO)
 - [ ] Verify/Implement Internationalization support
