@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import PageTransition from "../components/page-transition";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Mekong Marketing - Nhượng quyền Marketing Hub tự động",
-  description: "Mở Agency Marketing tại tỉnh lẻ Việt Nam chỉ trong 15 phút. AI Video tự động, chi phí tối ưu.",
+  description:
+    "Mở Agency Marketing tại tỉnh lẻ Việt Nam chỉ trong 15 phút. AI Video tự động, chi phí tối ưu.",
 };
 
 export default function RootLayout({
@@ -14,7 +16,7 @@ export default function RootLayout({
   return (
     <html lang="vi">
       <body className="antialiased">
-        {children}
+        <PageTransition>{children}</PageTransition>
       </body>
     </html>
   );
