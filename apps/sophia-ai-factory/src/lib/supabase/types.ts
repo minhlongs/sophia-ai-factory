@@ -6,128 +6,146 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
+export interface AffiliateProductRow {
+  id: string
+  external_id: string
+  network_id: 'clickbank' | 'shareasale' | 'amazon'
+  title: string
+  description: string | null
+  affiliate_link: string
+  thumbnail_url: string | null
+  price_usd: number | null
+  commission_rate: number | null
+  avg_earnings_usd: number | null
+  raw_metrics: Json
+  sps_score: number | null
+  is_hidden_gem: boolean
+  category_id: number | null
+  created_at: string
+  updated_at: string
+}
+
+export interface AffiliateMetricHistoryRow {
+  id: string
+  product_id: string
+  recorded_at: string
+  metric_type: string
+  value: number
+}
+
+export interface AffiliateCategoryRow {
+  id: number
+  name: string
+  slug: string
+  parent_id: number | null
+}
+
+export interface UserIntegrationRow {
+  id: string
+  user_id: string
+  network_id: 'clickbank' | 'shareasale' | 'amazon'
+  api_key: string
+  api_secret: string | null
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface UserProfileRow {
+  user_id: string
+  telegram_chat_id: string | null
+  settings: Json | null
+  api_keys: Json | null
+  subscription_tier: 'free' | 'pro' | 'enterprise' | 'basic' | 'premium' | null
+  subscription_status: string | null
+  polar_subscription_id: string | null
+  subscription_expires_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface UserProfileInsert {
+  user_id: string
+  telegram_chat_id?: string | null
+  settings?: Json | null
+  api_keys?: Json | null
+  subscription_tier?: 'free' | 'pro' | 'enterprise' | 'basic' | 'premium' | null
+  subscription_status?: string | null
+  polar_subscription_id?: string | null
+  subscription_expires_at?: string | null
+  created_at?: string
+  updated_at?: string
+}
+
+export interface CampaignRow {
+  id: string
+  user_id: string
+  title: string
+  topic: string | null
+  audience: string | null
+  status: 'draft' | 'queued' | 'processing_script' | 'processing_video' | 'completed' | 'failed'
+  progress: number | null
+  error_message: string | null
+  script_content: Json | null
+  video_url: string | null
+  thumbnail_url: string | null
+  template_id: string | null
+  audio_url: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface CampaignTemplateRow {
+  id: string
+  name: string
+  description: string
+  category: string
+  icon: string
+  defaults: Json
+  is_predefined: boolean
+  user_id: string | null
+  created_at: string
+  updated_at: string
+}
+
 export interface Database {
   public: {
     Tables: {
       affiliate_products: {
-        Row: {
-          id: string
-          external_id: string
-          network_id: 'clickbank' | 'shareasale' | 'amazon'
-          title: string
-          description: string | null
-          affiliate_link: string
-          thumbnail_url: string | null
-          price_usd: number | null
-          commission_rate: number | null
-          avg_earnings_usd: number | null
-          raw_metrics: Json
-          sps_score: number | null
-          is_hidden_gem: boolean
-          category_id: number | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: Omit<Database['public']['Tables']['affiliate_products']['Row'], 'id' | 'created_at' | 'updated_at'>
-        Update: Partial<Database['public']['Tables']['affiliate_products']['Insert']>
+        Row: AffiliateProductRow
+        Insert: Omit<AffiliateProductRow, 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<AffiliateProductRow>
       }
       affiliate_metric_history: {
-        Row: {
-          id: string
-          product_id: string
-          recorded_at: string
-          metric_type: string
-          value: number
-        }
-        Insert: Omit<Database['public']['Tables']['affiliate_metric_history']['Row'], 'id' | 'recorded_at'>
-        Update: Partial<Database['public']['Tables']['affiliate_metric_history']['Insert']>
+        Row: AffiliateMetricHistoryRow
+        Insert: Omit<AffiliateMetricHistoryRow, 'id' | 'recorded_at'>
+        Update: Partial<AffiliateMetricHistoryRow>
       }
       affiliate_categories: {
-        Row: {
-          id: number
-          name: string
-          slug: string
-          parent_id: number | null
-        }
-        Insert: Omit<Database['public']['Tables']['affiliate_categories']['Row'], 'id'>
-        Update: Partial<Database['public']['Tables']['affiliate_categories']['Insert']>
+        Row: AffiliateCategoryRow
+        Insert: Omit<AffiliateCategoryRow, 'id'>
+        Update: Partial<AffiliateCategoryRow>
       }
       user_integrations: {
-        Row: {
-          id: string
-          user_id: string
-          network_id: 'clickbank' | 'shareasale' | 'amazon'
-          api_key: string
-          api_secret: string | null
-          is_active: boolean
-          created_at: string
-          updated_at: string
-        }
-        Insert: Omit<Database['public']['Tables']['user_integrations']['Row'], 'id' | 'created_at' | 'updated_at' | 'is_active'> & { is_active?: boolean, created_at?: string, updated_at?: string }
-        Update: Partial<Database['public']['Tables']['user_integrations']['Insert']>
+        Row: UserIntegrationRow
+        Insert: Omit<UserIntegrationRow, 'id' | 'created_at' | 'updated_at' | 'is_active'> & { is_active?: boolean, created_at?: string, updated_at?: string }
+        Update: Partial<UserIntegrationRow>
       }
       user_profiles: {
-        Row: {
-          user_id: string
-          telegram_chat_id: string | null
-          settings: Json | null
-          api_keys: Json | null
-          subscription_tier: 'free' | 'pro' | 'enterprise' | null
-          subscription_status: string | null
-          polar_subscription_id: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          user_id: string
-          telegram_chat_id?: string | null
-          settings?: Json | null
-          api_keys?: Json | null
-          subscription_tier?: 'free' | 'pro' | 'enterprise' | null
-          subscription_status?: string | null
-          polar_subscription_id?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: Partial<Database['public']['Tables']['user_profiles']['Insert']>
+        Row: UserProfileRow
+        Insert: UserProfileInsert
+        Update: Partial<UserProfileRow>
       }
       campaigns: {
-        Row: {
-          id: string
-          user_id: string
-          title: string
-          topic: string | null
-          audience: string | null
-          status: 'draft' | 'queued' | 'processing_script' | 'processing_video' | 'completed' | 'failed'
-          progress: number | null
-          error_message: string | null
-          script_content: Json | null
-          video_url: string | null
-          thumbnail_url: string | null
-          template_id: string | null
-          audio_url: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: Omit<Database['public']['Tables']['campaigns']['Row'], 'id' | 'created_at' | 'updated_at' | 'status' | 'progress'> & {
+        Row: CampaignRow
+        Insert: Omit<CampaignRow, 'id' | 'created_at' | 'updated_at' | 'status' | 'progress'> & {
             status?: 'draft' | 'queued' | 'processing_script' | 'processing_video' | 'completed' | 'failed'
             progress?: number
         }
-        Update: Partial<Database['public']['Tables']['campaigns']['Row']>
+        Update: Partial<CampaignRow>
       }
       campaign_templates: {
-        Row: {
-          id: string
-          name: string
-          description: string
-          category: string
-          icon: string
-          defaults: Json
-          is_predefined: boolean
-          user_id: string | null
-          created_at: string
-          updated_at: string
-        }
+        Row: CampaignTemplateRow
         Insert: {
           id: string
           name: string
@@ -140,8 +158,20 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
-        Update: Partial<Database['public']['Tables']['campaign_templates']['Insert']>
+        Update: Partial<CampaignTemplateRow>
       }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      [_ in never]: never
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
     }
   }
 }

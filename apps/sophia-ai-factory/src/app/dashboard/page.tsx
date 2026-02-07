@@ -4,6 +4,7 @@ import { Plus } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { createServerClient } from "@/lib/supabase/server";
 import { CampaignList } from "./components/campaign-list";
+import { DashboardStats } from "./components/dashboard-stats";
 import { createClient } from "@supabase/supabase-js";
 import { Campaign } from "@/types";
 
@@ -33,6 +34,13 @@ export default async function DashboardPage() {
     campaigns = data as Campaign[] || [];
   }
 
+  // Calculate stats
+  const totalCampaigns = campaigns.length;
+  const activeCampaigns = campaigns.filter(c =>
+    c.status === 'processing_script' || c.status === 'processing_video' || c.status === 'queued'
+  ).length;
+  const completedCampaigns = campaigns.filter(c => c.status === 'completed').length;
+
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
@@ -54,6 +62,12 @@ export default async function DashboardPage() {
           </Link>
         </div>
       </div>
+
+      <DashboardStats
+        totalCampaigns={totalCampaigns}
+        activeCampaigns={activeCampaigns}
+        completedCampaigns={completedCampaigns}
+      />
 
       <CampaignList initialCampaigns={campaigns} />
     </div>

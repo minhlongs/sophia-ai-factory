@@ -8,6 +8,7 @@ import { Loader2, Sparkles, Check } from "lucide-react";
 import { CampaignTemplate, applyTemplateDefaults } from "@/lib/templates/campaign-templates";
 import { UpgradeBanner } from "@/components/UpgradeBanner";
 import { Tier } from "@/types";
+import { TypewriterEffect } from "@/components/ui/typewriter-effect-animation";
 
 interface CreateProjectFormProps {
   templates: CampaignTemplate[];
@@ -70,10 +71,8 @@ export function CreateProjectFormWithTemplates({ templates }: CreateProjectFormP
         router.refresh();
       } else {
         setError(result.message || "Something went wrong");
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if ((result as any).requiresUpgrade) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          setUpgradeRequired({ required: true, tier: (result as any).requiredTier });
+        if ('requiresUpgrade' in result && result.requiresUpgrade) {
+          setUpgradeRequired({ required: true, tier: ('requiredTier' in result ? result.requiredTier : "BASIC") as Tier });
         }
       }
     } catch (err) {

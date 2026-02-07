@@ -1,0 +1,60 @@
+{
+  "dashboard": {
+    "title": "Bảng Điều Khiển",
+    "subtitle": "Quản lý các chiến dịch video tự động của bạn",
+    "stats": {
+      "total_campaigns": "Tổng Chiến Dịch",
+      "active_campaigns": "Chiến Dịch Đang Chạy",
+      "completed_campaigns": "Đã Hoàn Thành"
+    },
+    "buttons": {
+      "upgrade": "Nâng Cấp",
+      "new_campaign": "Chiến Dịch Mới",
+      "view_details": "Xem Chi Tiết",
+      "retry": "Thử Lại",
+      "resume": "Tiếp Tục"
+    },
+    "empty_state": {
+      "title": "Chưa có chiến dịch nào",
+      "description": "Tạo chiến dịch video tự động đầu tiên của bạn.",
+      "action": "Tạo Chiến Dịch"
+    }
+  },
+  "campaign": {
+    "template_selection": {
+      "title": "Chọn Mẫu",
+      "subtitle": "Bắt đầu với mẫu có sẵn hoặc tạo từ đầu"
+    },
+    "customization": {
+      "title": "Tùy Chỉnh Chiến Dịch",
+      "campaign_title": "Tiêu Đề Chiến Dịch",
+      "video_topic": "Chủ Đề Video",
+      "video_topic_hint": "Video này nên nói về gì?",
+      "target_audience": "Đối Tượng Mục Tiêu",
+      "target_audience_hint": "Video này dành cho ai?",
+      "target_platforms": "Nền Tảng Mục Tiêu",
+      "platforms_hint": "Chọn nền tảng để xuất bản. Nhiều nền tảng yêu cầu gói Premium.",
+      "template_settings": "Cài Đặt Mẫu",
+      "tone": "Giọng Điệu",
+      "duration": "Thời Lượng"
+    },
+    "actions": {
+      "change_template": "Đổi Mẫu",
+      "create_campaign": "Tạo Chiến Dịch",
+      "creating": "Đang Tạo..."
+    },
+    "status": {
+      "draft": "Bản Nháp",
+      "queued": "Đang Chờ",
+      "processing_script": "Đang Xử Lý Kịch Bản",
+      "processing_video": "Đang Xử Lý Video",
+      "completed": "Đã Hoàn Thành",
+      "failed": "Thất Bại"
+    }
+  },
+  "common": {
+    "loading": "Đang Tải...",
+    "error": "Lỗi",
+    "success": "Thành Công"
+  }
+}

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { redisHelpers } from '@/lib/clients/upstash-redis-client';
 import type { HealthResponse } from '@/types/health';
 
 export async function GET(req: NextRequest) {
@@ -48,7 +49,37 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // 2. Check Inngest (Configuration check)
+  // 2. Check Redis (Critical)
+  const redisStartTime = Date.now();
+  try {
+    const isRedisUp = await redisHelpers.ping();
+
+    if (isAuthorized) {
+      healthStatus.services.redis = {
+        status: isRedisUp ? 'up' : 'down',
+        latency: Date.now() - redisStartTime,
+      };
+    }
+
+    if (!isRedisUp) {
+      healthStatus.status = 'degraded';
+    }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    healthStatus.status = 'degraded';
+
+    if (isAuthorized) {
+      healthStatus.services.redis = {
+        status: 'down',
+        error: errorMessage,
+        latency: Date.now() - redisStartTime,
+      };
+    } else {
+      healthStatus.services.redis = { status: 'down' };
+    }
+  }
+
+  // 3. Check Inngest (Configuration check)
   const inngestConfigured = !!process.env.INNGEST_EVENT_KEY && !!process.env.INNGEST_SIGNING_KEY;
   if (isAuthorized) {
       healthStatus.services.inngest = {
