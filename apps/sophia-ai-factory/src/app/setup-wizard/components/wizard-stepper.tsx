@@ -17,9 +17,9 @@ export function WizardStepper({ currentStep, steps }: WizardStepperProps) {
     <div className="w-full py-6">
       <div className="flex items-center justify-between relative">
         {/* Connecting Line */}
-        <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-full h-1 bg-gray-200 -z-10 rounded-full" />
+        <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-full h-1 bg-muted -z-10 rounded-full" />
         <div
-          className="absolute left-0 top-1/2 transform -translate-y-1/2 h-1 bg-blue-600 -z-10 rounded-full transition-all duration-300 ease-in-out"
+          className="absolute left-0 top-1/2 transform -translate-y-1/2 h-1 bg-primary -z-10 rounded-full transition-all duration-300 ease-in-out"
           style={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
         />
 
@@ -29,13 +29,13 @@ export function WizardStepper({ currentStep, steps }: WizardStepperProps) {
           const isCurrent = stepNum === currentStep;
 
           return (
-            <div key={index} className="flex flex-col items-center gap-2 bg-white px-2">
+            <div key={index} className="flex flex-col items-center gap-2 bg-card px-2">
               <div
                 className={cn(
                   "w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-200",
-                  isCompleted ? "bg-blue-600 border-blue-600 text-white" :
-                  isCurrent ? "bg-white border-blue-600 text-blue-600 ring-4 ring-blue-100" :
-                  "bg-white border-gray-300 text-gray-400"
+                  isCompleted ? "bg-primary border-primary text-primary-foreground" :
+                  isCurrent ? "bg-card border-primary text-primary ring-4 ring-primary/20" :
+                  "bg-card border-muted text-muted-foreground"
                 )}
               >
                 {isCompleted ? (
@@ -46,7 +46,7 @@ export function WizardStepper({ currentStep, steps }: WizardStepperProps) {
               </div>
               <span className={cn(
                 "text-xs font-medium uppercase tracking-wide absolute top-12 whitespace-nowrap",
-                isCurrent ? "text-blue-600" : "text-gray-500"
+                isCurrent ? "text-primary" : "text-muted-foreground"
               )}>
                 {step}
               </span>

@@ -15,7 +15,7 @@ async function main() {
   console.log('🔧 Checking subscription columns...\n');
 
   // Check if columns exist by trying to select them
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from('user_profiles')
     .select('subscription_expires_at, polar_customer_id')
     .limit(1);
@@ -52,7 +52,7 @@ WHERE subscription_expires_at IS NOT NULL;
     console.log('\n🎉 Migration 007 already applied!');
     
     // Show current data
-    const { data: profiles, error: err2 } = await supabase
+    const { data: profiles } = await supabase
       .from('user_profiles')
       .select('user_id, subscription_tier, subscription_expires_at')
       .limit(5);

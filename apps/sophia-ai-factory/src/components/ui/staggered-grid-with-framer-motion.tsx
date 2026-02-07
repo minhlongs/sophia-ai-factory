@@ -11,15 +11,8 @@ interface StaggeredGridProps {
   columns?: number;
 }
 
-const container = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-};
+// container variants defined below in component to use props if needed
+// or just keep static if not using dynamic delays in variants directly
 
 const item = {
   hidden: { opacity: 0, y: 20 },

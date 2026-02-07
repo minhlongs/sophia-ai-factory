@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { POST } from './route'
 import { NextRequest } from 'next/server'
-import * as telegramBot from '@/lib/telegram/telegram-bot'
+import * as telegramHandlers from '@/lib/telegram/telegram-command-handlers'
 
 // Mock the telegram bot handlers
-vi.mock('@/lib/telegram/telegram-bot', () => ({
+vi.mock('@/lib/telegram/telegram-command-handlers', () => ({
   handleStart: vi.fn(),
   handleHelp: vi.fn(),
   handleEmail: vi.fn(),
@@ -12,6 +12,7 @@ vi.mock('@/lib/telegram/telegram-bot', () => ({
   handleStatus: vi.fn(),
   handleResults: vi.fn(),
   handleUnknown: vi.fn(),
+  handleTextMessage: vi.fn(),
 }))
 
 describe('Telegram Webhook Route', () => {
@@ -57,7 +58,7 @@ describe('Telegram Webhook Route', () => {
       }
     })
     await POST(req)
-    expect(telegramBot.handleStart).toHaveBeenCalledWith('123')
+    expect(telegramHandlers.handleStart).toHaveBeenCalledWith('123')
   })
 
   it('should route /help to handleHelp', async () => {
@@ -68,7 +69,7 @@ describe('Telegram Webhook Route', () => {
       }
     })
     await POST(req)
-    expect(telegramBot.handleHelp).toHaveBeenCalledWith('123')
+    expect(telegramHandlers.handleHelp).toHaveBeenCalledWith('123')
   })
 
   it('should route /email to handleEmail', async () => {
@@ -79,7 +80,7 @@ describe('Telegram Webhook Route', () => {
       }
     })
     await POST(req)
-    expect(telegramBot.handleEmail).toHaveBeenCalledWith('123', 'test@example.com')
+    expect(telegramHandlers.handleEmail).toHaveBeenCalledWith('123', 'test@example.com')
   })
 
   it('should route /campaign to handleCampaign', async () => {
@@ -90,7 +91,7 @@ describe('Telegram Webhook Route', () => {
       }
     })
     await POST(req)
-    expect(telegramBot.handleCampaign).toHaveBeenCalledWith('123', 'my topic')
+    expect(telegramHandlers.handleCampaign).toHaveBeenCalledWith('123', 'my topic')
   })
 
   it('should route /status to handleStatus', async () => {
@@ -101,7 +102,7 @@ describe('Telegram Webhook Route', () => {
       }
     })
     await POST(req)
-    expect(telegramBot.handleStatus).toHaveBeenCalledWith('123')
+    expect(telegramHandlers.handleStatus).toHaveBeenCalledWith('123')
   })
 
   it('should route /results to handleResults', async () => {
@@ -112,7 +113,7 @@ describe('Telegram Webhook Route', () => {
       }
     })
     await POST(req)
-    expect(telegramBot.handleResults).toHaveBeenCalledWith('123')
+    expect(telegramHandlers.handleResults).toHaveBeenCalledWith('123')
   })
 
   it('should route unknown commands to handleUnknown', async () => {
@@ -123,6 +124,6 @@ describe('Telegram Webhook Route', () => {
       }
     })
     await POST(req)
-    expect(telegramBot.handleUnknown).toHaveBeenCalledWith('123')
+    expect(telegramHandlers.handleUnknown).toHaveBeenCalledWith('123')
   })
 })

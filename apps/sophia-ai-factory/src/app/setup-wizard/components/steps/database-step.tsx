@@ -17,12 +17,12 @@ interface DatabaseStepProps {
 export function DatabaseStep({ config, updateConfig, verifyKey, status, errors }: DatabaseStepProps) {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-      <h2 className="text-xl font-semibold text-gray-800">Database Connection</h2>
-      <p className="text-gray-500 text-sm">Connect to your Airtable content base.</p>
+      <h2 className="text-xl font-semibold text-foreground">Database Connection</h2>
+      <p className="text-muted-foreground text-sm">Connect to your Airtable content base.</p>
 
-      <div className="bg-amber-50 p-4 rounded-lg border border-amber-200 text-sm text-amber-900 mb-4">
+      <div className="bg-amber-50 dark:bg-amber-900/10 p-4 rounded-lg border border-amber-200 dark:border-amber-800 text-sm text-amber-900 dark:text-amber-200 mb-4">
         <p className="font-semibold mb-1">Don&apos;t have a Base yet?</p>
-        <p>1. <a href={DEFAULTS.AIRTABLE_TEMPLATE_URL} target="_blank" rel="noopener noreferrer" className="underline font-medium hover:text-amber-700 inline-flex items-center">Copy this Template Base <ExternalLink className="w-3 h-3 ml-1" /></a></p>
+        <p>1. <a href={DEFAULTS.AIRTABLE_TEMPLATE_URL} target="_blank" rel="noopener noreferrer" className="underline font-medium hover:text-amber-700 dark:hover:text-amber-100 inline-flex items-center">Copy this Template Base <ExternalLink className="w-3 h-3 ml-1" /></a></p>
         <p>2. Find your Base ID in the URL (appXXXXXXXXXXXXXX)</p>
       </div>
 
@@ -39,16 +39,16 @@ export function DatabaseStep({ config, updateConfig, verifyKey, status, errors }
       />
 
       <div className="w-full space-y-2">
-        <label htmlFor="base_id" className="block text-sm font-medium text-gray-700">Base ID *</label>
+        <label htmlFor="base_id" className="block text-sm font-medium text-foreground">Base ID *</label>
         <input
           id="base_id"
           type="text"
           value={config.AIRTABLE_BASE_ID}
           onChange={(e) => updateConfig('AIRTABLE_BASE_ID', e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          className="w-full px-4 py-2 border border-input bg-background rounded-lg focus:ring-2 focus:ring-primary focus:outline-none text-foreground"
           placeholder="app..."
         />
-        <p className="text-xs text-gray-400">Found in your browser URL when viewing the base.</p>
+        <p className="text-xs text-muted-foreground">Found in your browser URL when viewing the base.</p>
       </div>
     </div>
   );

@@ -16,8 +16,8 @@ interface ApiKeysStepProps {
 export function ApiKeysStep({ config, updateConfig, verifyKey, status, errors }: ApiKeysStepProps) {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-      <h2 className="text-xl font-semibold text-gray-800">AI Service Configuration</h2>
-      <p className="text-gray-500 text-sm">Enter keys for the AI brains.</p>
+      <h2 className="text-xl font-semibold text-foreground">AI Service Configuration</h2>
+      <p className="text-muted-foreground text-sm">Enter keys for the AI brains.</p>
 
       <ApiKeyInput
         id="openrouter"

@@ -24,7 +24,7 @@ const SectionHeading = React.forwardRef<HTMLDivElement, SectionHeadingProps>(
           {title}
         </h2>
         {subtitle && (
-          <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto">
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
             {subtitle}
           </p>
         )}

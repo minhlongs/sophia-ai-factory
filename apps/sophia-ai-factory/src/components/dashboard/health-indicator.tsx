@@ -24,11 +24,11 @@ export function HealthIndicator() {
   let statusText = 'System Operational';
 
   if (isError || !health) {
-    statusColor = 'text-gray-400';
+    statusColor = 'text-muted-foreground';
     StatusIcon = AlertCircle;
     statusText = 'Status Unknown';
   } else if (health.status === 'unhealthy') {
-    statusColor = 'text-red-500';
+    statusColor = 'text-destructive';
     StatusIcon = AlertCircle;
     statusText = 'System Issues Detected';
   } else if (health.status === 'degraded') {
@@ -42,17 +42,17 @@ export function HealthIndicator() {
   return (
     <Link
       href="/dashboard/system-health"
-      className="flex items-center gap-2 px-4 py-2 mt-auto text-sm hover:bg-gray-50 transition-colors rounded-lg group"
+      className="flex items-center gap-2 px-4 py-2 mt-auto text-sm hover:bg-muted transition-colors rounded-lg group"
       title={`${statusText} (Last checked: ${lastChecked})`}
     >
       <StatusIcon className={`w-4 h-4 ${statusColor}`} />
-      <span className="text-gray-600 font-medium group-hover:text-gray-900">
+      <span className="text-muted-foreground font-medium group-hover:text-foreground">
         System Status
       </span>
       <span className={`w-2 h-2 rounded-full ml-auto ${
         health?.status === 'healthy' ? 'bg-green-500' :
         health?.status === 'degraded' ? 'bg-yellow-500' :
-        health?.status === 'unhealthy' ? 'bg-red-500' : 'bg-gray-400'
+        health?.status === 'unhealthy' ? 'bg-destructive' : 'bg-muted-foreground'
       } animate-pulse`} />
     </Link>
   );

@@ -70,12 +70,12 @@ export function FAQ() {
               viewport={{ once: true }}
               transition={{ duration: 0.3, delay: index * 0.05 }}
             >
-              <Card glass className="overflow-hidden">
+              <Card glass className="overflow-hidden bg-card border-border">
                 <button
                   onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                  className="w-full text-left p-6 flex items-center justify-between hover:bg-white/5 transition-colors"
+                  className="w-full text-left p-6 flex items-center justify-between hover:bg-muted/50 transition-colors"
                 >
-                  <span className="font-semibold text-lg pr-8">{faq.question}</span>
+                  <span className="font-semibold text-lg pr-8 text-foreground">{faq.question}</span>
                   <motion.div
                     animate={{ rotate: openIndex === index ? 180 : 0 }}
                     transition={{ duration: 0.3 }}
@@ -92,7 +92,7 @@ export function FAQ() {
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.3 }}
                     >
-                      <div className="px-6 pb-6 text-gray-400 leading-relaxed">
+                      <div className="px-6 pb-6 text-muted-foreground leading-relaxed">
                         {faq.answer}
                       </div>
                     </motion.div>

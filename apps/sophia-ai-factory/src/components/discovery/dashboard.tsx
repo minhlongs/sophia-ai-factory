@@ -76,11 +76,11 @@ export function DiscoveryDashboard() {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : error ? (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
+          <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-destructive">
             Error loading data. Please try again.
           </div>
         ) : products.length === 0 ? (
-          <div className="flex h-64 w-full flex-col items-center justify-center rounded-lg border border-dashed text-muted-foreground">
+          <div className="flex h-64 w-full flex-col items-center justify-center rounded-lg border border-dashed border-border text-muted-foreground">
             <p>No products found matching your criteria.</p>
             <button
               onClick={() => setFilters({})}

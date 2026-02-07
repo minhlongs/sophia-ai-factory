@@ -38,7 +38,7 @@ export function ROICalculator() {
             {/* Input: Channels */}
             <div>
               <div className="flex justify-between mb-3">
-                <label className="text-gray-300">Number of Channels</label>
+                <label className="text-foreground/80">Number of Channels</label>
                 <span className="text-[var(--neon-cyan)] font-bold">{channels}</span>
               </div>
               <input
@@ -47,9 +47,9 @@ export function ROICalculator() {
                 max="10"
                 value={channels}
                 onChange={(e) => setChannels(Number(e.target.value))}
-                className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer slider"
+                className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer slider"
               />
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <div className="flex justify-between text-xs text-muted-foreground mt-1">
                 <span>1</span>
                 <span>10</span>
               </div>
@@ -58,7 +58,7 @@ export function ROICalculator() {
             {/* Input: Videos per Week */}
             <div>
               <div className="flex justify-between mb-3">
-                <label className="text-gray-300">Videos per Week (per channel)</label>
+                <label className="text-foreground/80">Videos per Week (per channel)</label>
                 <span className="text-[var(--neon-cyan)] font-bold">{videosPerWeek}</span>
               </div>
               <input
@@ -67,9 +67,9 @@ export function ROICalculator() {
                 max="30"
                 value={videosPerWeek}
                 onChange={(e) => setVideosPerWeek(Number(e.target.value))}
-                className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer slider"
+                className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer slider"
               />
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <div className="flex justify-between text-xs text-muted-foreground mt-1">
                 <span>1</span>
                 <span>30</span>
               </div>
@@ -78,7 +78,7 @@ export function ROICalculator() {
             {/* Input: Average Views */}
             <div>
               <div className="flex justify-between mb-3">
-                <label className="text-gray-300">Average Views per Video</label>
+                <label className="text-foreground/80">Average Views per Video</label>
                 <span className="text-[var(--neon-cyan)] font-bold">
                   {avgViews.toLocaleString()}
                 </span>
@@ -90,18 +90,18 @@ export function ROICalculator() {
                 step="100"
                 value={avgViews}
                 onChange={(e) => setAvgViews(Number(e.target.value))}
-                className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer slider"
+                className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer slider"
               />
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <div className="flex justify-between text-xs text-muted-foreground mt-1">
                 <span>100</span>
                 <span>10,000</span>
               </div>
             </div>
 
             {/* Output: Monthly Revenue */}
-            <div className="pt-8 border-t border-white/10">
+            <div className="pt-8 border-t border-border">
               <div className="text-center">
-                <p className="text-gray-400 mb-2">Projected Monthly Revenue</p>
+                <p className="text-muted-foreground mb-2">Projected Monthly Revenue</p>
                 <motion.div
                   key={monthlyRevenue}
                   initial={{ scale: 1.2, opacity: 0 }}
@@ -110,7 +110,7 @@ export function ROICalculator() {
                 >
                   ${monthlyRevenue.toLocaleString()}
                 </motion.div>
-                <p className="text-xs text-gray-500 mt-4">
+                <p className="text-xs text-muted-foreground mt-4">
                   * Estimates based on $2 CPM + affiliate commissions
                 </p>
               </div>
@@ -118,15 +118,15 @@ export function ROICalculator() {
 
             {/* Breakdown */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
-              <div className="text-center p-4 bg-white/5 rounded-lg">
-                <p className="text-gray-400 text-sm">Total Videos/Month</p>
-                <p className="text-xl font-bold text-white mt-1">
+              <div className="text-center p-4 bg-muted/50 rounded-lg">
+                <p className="text-muted-foreground text-sm">Total Videos/Month</p>
+                <p className="text-xl font-bold text-foreground mt-1">
                   {channels * videosPerWeek * 4}
                 </p>
               </div>
-              <div className="text-center p-4 bg-white/5 rounded-lg">
-                <p className="text-gray-400 text-sm">Total Views/Month</p>
-                <p className="text-xl font-bold text-white mt-1">
+              <div className="text-center p-4 bg-muted/50 rounded-lg">
+                <p className="text-muted-foreground text-sm">Total Views/Month</p>
+                <p className="text-xl font-bold text-foreground mt-1">
                   {(channels * videosPerWeek * 4 * avgViews).toLocaleString()}
                 </p>
               </div>
@@ -135,7 +135,7 @@ export function ROICalculator() {
         </Card>
 
         {/* Disclaimer */}
-        <p className="text-center text-gray-500 text-sm mt-8 max-w-2xl mx-auto">
+        <p className="text-center text-muted-foreground text-sm mt-8 max-w-2xl mx-auto">
           Results are estimates only and may vary based on niche, content quality, SEO optimization,
           and audience engagement. Actual revenue depends on many factors.
         </p>

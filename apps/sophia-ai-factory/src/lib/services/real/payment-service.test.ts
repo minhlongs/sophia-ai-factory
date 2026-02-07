@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { RealPaymentService } from './payment-service';
 import { polar } from '@/lib/polar';
-import { getProductIdByTier } from '@/lib/polar-config';
 
 // Mock dependencies
 vi.mock('@/lib/polar', () => ({
@@ -19,7 +18,6 @@ vi.mock('@/lib/polar-config', () => ({
 describe('RealPaymentService', () => {
   let service: RealPaymentService;
   const mockProductId = 'polar_prod_123';
-  const mockTier = 'BASIC';
 
   beforeEach(() => {
     vi.clearAllMocks();
