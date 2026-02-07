@@ -32,11 +32,13 @@ describe('RealPaymentService', () => {
       url: 'https://sandbox.polar.sh/checkout/checkout_123'
     };
 
-    vi.mocked(getProductIdByTier).mockReturnValue(mockProductId);
+    // getProductIdByTier is no longer used in the service, but we keep the mock if needed for other tests
+    // or remove it if not used. The service now expects productIds directly.
+
     vi.mocked(polar.checkouts.create).mockResolvedValue(mockCheckout as any); // eslint-disable-line @typescript-eslint/no-explicit-any
 
     const params = {
-      productId: mockTier,
+      productIds: [mockProductId],
       successUrl: 'https://example.com/success',
       customerEmail: 'test@example.com',
       metadata: { userId: 'user-1' }
@@ -44,7 +46,6 @@ describe('RealPaymentService', () => {
 
     const result = await service.createCheckoutSession(params);
 
-    expect(getProductIdByTier).toHaveBeenCalledWith(mockTier);
     expect(polar.checkouts.create).toHaveBeenCalledWith({
       products: [mockProductId],
       successUrl: params.successUrl,
@@ -58,26 +59,26 @@ describe('RealPaymentService', () => {
     });
   });
 
-  it('should throw error if Polar Product ID is not found for tier', async () => {
-    vi.mocked(getProductIdByTier).mockReturnValue(undefined);
+  // This test case is no longer relevant as the service doesn't do tier lookup
+  // it('should throw error if Polar Product ID is not found for tier', async () => { ... });
 
-    const params = {
-      productId: 'INVALID_TIER',
+  it('should throw error if Product IDs are missing', async () => {
+     const params = {
+      productIds: [],
       successUrl: 'https://example.com/success',
       customerEmail: 'test@example.com'
     };
 
     await expect(service.createCheckoutSession(params)).rejects.toThrow(
-      'Polar Product ID not found for tier: INVALID_TIER'
+      'Missing Polar Product IDs'
     );
   });
 
   it('should throw error if Polar API fails', async () => {
-    vi.mocked(getProductIdByTier).mockReturnValue(mockProductId);
     vi.mocked(polar.checkouts.create).mockRejectedValue(new Error('API Error'));
 
     const params = {
-      productId: mockTier,
+      productIds: [mockProductId],
       successUrl: 'https://example.com/success',
       customerEmail: 'test@example.com'
     };

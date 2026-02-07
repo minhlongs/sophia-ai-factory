@@ -99,22 +99,24 @@ export function Navbar() {
                     setIsMobileMenuOpen(false);
                   }}
                   className={cn(
-                    "block px-4 py-2 rounded-lg transition-colors hover:text-[var(--neon-cyan)] hover:bg-white/5",
+                    "block px-4 py-3 rounded-lg transition-colors hover:text-[var(--neon-cyan)] hover:bg-white/5 text-base font-medium",
                     pathname === link.href ? "text-[var(--neon-cyan)] bg-white/5" : "text-gray-300"
                   )}
                 >
                   {link.label}
                 </Link>
               ))}
-              <Link
-                href="/admin"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="block"
-              >
-                <Button variant="primary" className="w-full">
-                  Admin
-                </Button>
-              </Link>
+              <div className="pt-2">
+                <Link
+                  href="/admin"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block"
+                >
+                  <Button variant="primary" className="w-full h-12 text-base">
+                    Admin
+                  </Button>
+                </Link>
+              </div>
             </div>
           </motion.div>
         )}

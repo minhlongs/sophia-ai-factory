@@ -9,11 +9,11 @@ export default function NotFound() {
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] p-6 text-center space-y-8">
       {/* 404 Glitch Effect */}
       <div className="relative">
-        <h1 className="text-9xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] animate-pulse">
+        <h1 className="text-6xl sm:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] animate-pulse">
           404
         </h1>
         <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center pointer-events-none opacity-50 blur-xl">
-          <span className="text-9xl font-black text-[var(--neon-pink)]">
+          <span className="text-6xl sm:text-9xl font-black text-[var(--neon-pink)]">
             404
           </span>
         </div>
