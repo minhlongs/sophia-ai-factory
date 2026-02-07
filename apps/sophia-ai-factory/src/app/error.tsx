@@ -17,25 +17,25 @@ export default function Error({
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4 space-y-6 text-center">
-      <div className="space-y-2">
+      <div className="space-y-2 w-full max-w-md">
         <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl text-[var(--neon-pink)]">
           Something went wrong!
         </h1>
-        <p className="text-gray-400 max-w-[600px]">
+        <p className="text-gray-400 w-full">
           We apologize for the inconvenience. An unexpected error has occurred.
         </p>
       </div>
-      <div className="flex gap-4">
+      <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
         <Button
           onClick={() => reset()}
           variant="outline"
-          className="border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10"
+          className="border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10 w-full sm:w-auto"
         >
           Try again
         </Button>
         <Button
           onClick={() => (window.location.href = "/")}
-          className="bg-[var(--neon-purple)] hover:bg-[var(--neon-purple)]/80 text-white"
+          className="bg-[var(--neon-purple)] hover:bg-[var(--neon-purple)]/80 text-white w-full sm:w-auto"
         >
           Go Home
         </Button>

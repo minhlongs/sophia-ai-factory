@@ -117,7 +117,7 @@ export function ROICalculator() {
             </div>
 
             {/* Breakdown */}
-            <div className="grid grid-cols-2 gap-4 pt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
               <div className="text-center p-4 bg-white/5 rounded-lg">
                 <p className="text-gray-400 text-sm">Total Videos/Month</p>
                 <p className="text-xl font-bold text-white mt-1">
