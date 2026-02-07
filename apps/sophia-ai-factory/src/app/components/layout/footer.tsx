@@ -42,11 +42,11 @@ export function Footer() {
                   FAQ
                 </Link>
               </li>
-              <li>
+              {/* <li>
                 <Link href="#" className="text-gray-400 hover:text-[var(--neon-cyan)] transition-colors text-sm">
                   Documentation
                 </Link>
-              </li>
+              </li> */}
             </ul>
           </div>
 
@@ -54,7 +54,7 @@ export function Footer() {
           <div>
             <h4 className="font-semibold text-white mb-4">Company</h4>
             <ul className="space-y-2">
-              <li>
+              {/* <li>
                 <Link href="#" className="text-gray-400 hover:text-[var(--neon-cyan)] transition-colors text-sm">
                   About
                 </Link>
@@ -73,7 +73,7 @@ export function Footer() {
                 <Link href="#" className="text-gray-400 hover:text-[var(--neon-cyan)] transition-colors text-sm">
                   Support
                 </Link>
-              </li>
+              </li> */}
             </ul>
           </div>
         </div>
