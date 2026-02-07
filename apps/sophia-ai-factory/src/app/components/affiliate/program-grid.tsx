@@ -56,23 +56,23 @@ export function ProgramGrid({ programs, showAll = true }: ProgramGridProps) {
       <div className="mb-8 flex flex-col md:flex-row gap-4">
         {/* Search */}
         <div className="flex-1 relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <input
             type="text"
             placeholder="Search programs..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-gray-500 focus:outline-none focus:border-[var(--neon-cyan)] transition-colors"
+            className="w-full pl-12 pr-4 py-3 bg-card border border-input rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
           />
         </div>
 
         {/* Sort */}
         <div className="relative">
-          <SlidersHorizontal className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <SlidersHorizontal className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortOption)}
-            className="w-full md:w-auto pl-12 pr-8 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[var(--neon-cyan)] transition-colors appearance-none cursor-pointer md:min-w-[200px]"
+            className="w-full md:w-auto pl-12 pr-8 py-3 bg-card border border-input rounded-lg text-foreground focus:outline-none focus:border-primary transition-colors appearance-none cursor-pointer md:min-w-[200px]"
           >
             <option value="epc-high">EPC: High to Low</option>
             <option value="epc-low">EPC: Low to High</option>
@@ -84,8 +84,8 @@ export function ProgramGrid({ programs, showAll = true }: ProgramGridProps) {
 
       {/* Results count */}
       <div className="mb-6">
-        <p className="text-gray-400">
-          Showing <span className="text-white font-semibold">{filteredPrograms.length}</span> programs
+        <p className="text-muted-foreground">
+          Showing <span className="text-foreground font-semibold">{filteredPrograms.length}</span> programs
         </p>
       </div>
 
@@ -101,8 +101,8 @@ export function ProgramGrid({ programs, showAll = true }: ProgramGridProps) {
           ))}
         </div>
       ) : (
-        <div className="text-center py-16">
-          <p className="text-gray-400 mb-4">No programs found matching your criteria</p>
+        <div className="text-center py-16 bg-card rounded-xl border border-border">
+          <p className="text-muted-foreground mb-4">No programs found matching your criteria</p>
           <Button
             variant="secondary"
             onClick={() => {

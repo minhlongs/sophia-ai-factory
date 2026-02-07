@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { bot } from '@/lib/telegram/telegram-bot-instance'
 import {
   handleStart,
   handleHelp,

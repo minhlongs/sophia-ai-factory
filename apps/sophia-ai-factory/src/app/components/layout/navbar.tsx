@@ -35,7 +35,7 @@ export function Navbar() {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-[var(--background)]/80 backdrop-blur-lg border-b border-white/10">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -56,7 +56,7 @@ export function Navbar() {
                   "text-sm font-medium transition-colors hover:text-[var(--neon-cyan)]",
                   pathname === link.href || (link.href.startsWith("/#") && pathname === "/" && typeof window !== "undefined" && !window.location.hash)
                     ? "text-[var(--neon-cyan)]"
-                    : "text-gray-300"
+                    : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 {link.label}
@@ -72,7 +72,7 @@ export function Navbar() {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden p-2 text-gray-300 hover:text-white transition-colors"
+            className="md:hidden p-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -87,7 +87,7 @@ export function Navbar() {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
-            className="md:hidden border-t border-white/10 bg-[var(--background)]/95 backdrop-blur-lg"
+            className="md:hidden border-t border-border bg-background/95 backdrop-blur-lg"
           >
             <div className="px-4 py-4 space-y-3">
               {navLinks.map((link) => (
@@ -99,8 +99,8 @@ export function Navbar() {
                     setIsMobileMenuOpen(false);
                   }}
                   className={cn(
-                    "block px-4 py-3 rounded-lg transition-colors hover:text-[var(--neon-cyan)] hover:bg-white/5 text-base font-medium",
-                    pathname === link.href ? "text-[var(--neon-cyan)] bg-white/5" : "text-gray-300"
+                    "block px-4 py-3 rounded-lg transition-colors hover:text-[var(--neon-cyan)] hover:bg-muted text-base font-medium",
+                    pathname === link.href ? "text-[var(--neon-cyan)] bg-muted" : "text-muted-foreground"
                   )}
                 >
                   {link.label}

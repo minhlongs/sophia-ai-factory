@@ -20,10 +20,10 @@ export function GlassCard({
     <div
       className={cn(
         "relative rounded-2xl p-6",
-        "bg-white/5 backdrop-blur-xl",
-        bordered && "border border-white/10",
-        "shadow-lg shadow-black/20",
-        hover && "transition-all duration-300 hover:bg-white/10 hover:border-white/20 hover:shadow-xl hover:shadow-neon-cyan/10",
+        "bg-[var(--glass-bg)] backdrop-blur-xl",
+        bordered && "border border-[var(--glass-border)]",
+        "shadow-lg shadow-black/5 dark:shadow-black/20",
+        hover && "transition-all duration-300 hover:bg-background/20 hover:border-border/50 hover:shadow-xl hover:shadow-neon-cyan/10",
         className
       )}
     >

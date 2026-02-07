@@ -27,27 +27,27 @@ export function UpgradeBanner({
   const upgradeLink = isEnterprise ? "/contact" : "/pricing"; // or a billing portal link
 
   return (
-    <Card className={`bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 ${className}`}>
+    <Card className={`bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800 ${className}`}>
       <CardContent className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-start gap-4">
-          <div className="p-3 bg-white rounded-full shadow-sm">
-            <Lock className="w-6 h-6 text-blue-600" />
+          <div className="p-3 bg-background rounded-full shadow-sm">
+            <Lock className="w-6 h-6 text-blue-600 dark:text-blue-400" />
           </div>
           <div>
-            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+            <h3 className="font-semibold text-foreground flex items-center gap-2">
               Unlock {featureName}
-              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
+              <span className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 px-2 py-0.5 rounded-full font-medium">
                 {requiredTier}
               </span>
             </h3>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               Your current {currentTier} plan doesn&apos;t support this feature.
               Upgrade to access {featureName} and more.
             </p>
           </div>
         </div>
 
-        <Button asChild className="whitespace-nowrap bg-blue-600 hover:bg-blue-700">
+        <Button asChild className="whitespace-nowrap bg-blue-600 hover:bg-blue-700 text-white">
           <Link href={upgradeLink}>
             {upgradeLabel} <ArrowRight className="w-4 h-4 ml-2" />
           </Link>

@@ -63,7 +63,7 @@ export function Hero() {
 
           {/* Stats */}
           <motion.div
-            className="mt-20 grid grid-cols-3 gap-8 max-w-2xl mx-auto"
+            className="mt-20 grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-2xl mx-auto px-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.6 }}
@@ -96,8 +96,8 @@ export function Hero() {
         animate={{ y: [0, 10, 0] }}
         transition={{ duration: 2, repeat: Infinity }}
       >
-        <div className="w-6 h-10 border-2 border-white/20 rounded-full flex items-start justify-center p-2">
-          <div className="w-1 h-3 bg-white/40 rounded-full" />
+        <div className="w-6 h-10 border-2 border-primary/20 rounded-full flex items-start justify-center p-2">
+          <div className="w-1 h-3 bg-primary/40 rounded-full" />
         </div>
       </motion.div>
     </section>

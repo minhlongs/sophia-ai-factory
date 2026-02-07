@@ -14,8 +14,8 @@ async function main() {
   console.log('🔧 Creating tables via Supabase SDK...\n');
 
   // Test connection by listing tables
-  const { data, error } = await supabase.rpc('get_schemas');
-  
+  const { error } = await supabase.rpc('get_schemas');
+
   if (error) {
     console.log('Note: RPC not available, checking table access...');
   }

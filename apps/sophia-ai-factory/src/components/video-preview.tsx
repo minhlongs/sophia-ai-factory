@@ -114,7 +114,7 @@ export function VideoPreview({
               <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition-colors">
                 <Button
                   size="icon"
-                  className="w-16 h-16 rounded-full pl-1"
+                  className="w-16 h-16 rounded-full pl-1 bg-primary text-primary-foreground hover:bg-primary/90 border-0"
                   onClick={handlePlay}
                   aria-label="Play video"
                 >
@@ -125,14 +125,14 @@ export function VideoPreview({
           )
         ) : (
           !isLoading && (
-             <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+             <div className="flex flex-col items-center justify-center h-full text-muted-foreground bg-muted/50">
                <p>No video available</p>
              </div>
           )
         )}
       </CardContent>
       {isCompleted && videoUrl && (
-        <div className="p-4 flex justify-end border-t bg-muted/10">
+        <div className="p-4 flex justify-end border-t border-border bg-muted/10">
           <Button variant="outline" size="sm" asChild>
             <a href={videoUrl} download target="_blank" rel="noopener noreferrer">
               <Download className="w-4 h-4 mr-2" />

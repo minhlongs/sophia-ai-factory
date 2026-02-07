@@ -68,38 +68,38 @@ function PricingCard({
 }: PricingCardProps) {
   return (
     <div
-      className={`relative flex flex-col rounded-2xl border p-8 ${
+      className={`relative flex flex-col rounded-2xl border p-8 transition-colors ${
         popular
-          ? "border-violet-500 bg-violet-500/5 shadow-lg shadow-violet-500/20"
-          : "border-white/10 bg-white/5"
+          ? "border-primary bg-primary/5 shadow-lg shadow-primary/20"
+          : "border-border bg-card"
       }`}
     >
       {popular && (
-        <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-violet-500 px-4 py-1 text-sm font-semibold text-white">
+        <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-4 py-1 text-sm font-semibold text-primary-foreground">
           Most Popular
         </span>
       )}
-      <h3 className="text-xl font-bold text-white">{name}</h3>
-      <p className="mt-2 text-sm text-white/60">{description}</p>
+      <h3 className="text-xl font-bold text-foreground">{name}</h3>
+      <p className="mt-2 text-sm text-muted-foreground">{description}</p>
 
       {/* Option D: Single monthly price */}
       <div className="mt-6">
         <div className="flex items-baseline gap-2">
-          <span className="text-3xl font-bold text-white">
+          <span className="text-3xl font-bold text-foreground">
             ${(monthlyPrice / 100).toLocaleString()}
           </span>
-          <span className="text-white/60">/month</span>
+          <span className="text-muted-foreground">/month</span>
         </div>
-        <span className="mt-1 inline-block rounded bg-violet-500/20 px-2 py-0.5 text-xs text-violet-300">
+        <span className="mt-1 inline-block rounded bg-primary/10 px-2 py-0.5 text-xs text-primary">
           12-month commitment
         </span>
       </div>
 
       <ul className="mt-6 flex-1 space-y-3">
         {features.map((feature) => (
-          <li key={feature} className="flex items-center gap-2 text-white/80">
+          <li key={feature} className="flex items-center gap-2 text-muted-foreground">
             <svg
-              className="h-5 w-5 text-violet-500"
+              className="h-5 w-5 text-primary"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -121,8 +121,8 @@ function PricingCard({
         disabled={loading}
         className={`mt-8 w-full rounded-lg py-3 font-semibold transition ${
           popular
-            ? "bg-violet-500 text-white hover:bg-violet-600"
-            : "bg-white/10 text-white hover:bg-white/20"
+            ? "bg-primary text-primary-foreground hover:bg-primary/90"
+            : "bg-muted text-foreground hover:bg-muted/80"
         } disabled:cursor-not-allowed disabled:opacity-50`}
       >
         {loading ? "Processing..." : "Get Started"}
@@ -151,7 +151,7 @@ export function PricingSection() {
       } else {
         alert("Failed to start checkout. Please try again.");
       }
-    } catch (error) {
+    } catch {
       alert("Network error. Please try again.");
     } finally {
       setLoading(null);
@@ -159,13 +159,13 @@ export function PricingSection() {
   };
 
   return (
-    <section className="py-20" id="pricing">
+    <section className="py-20 bg-background" id="pricing">
       <div className="mx-auto max-w-7xl px-4">
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-white sm:text-4xl">
+          <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
             Choose Your Plan
           </h2>
-          <p className="mt-4 text-lg text-white/60">
+          <p className="mt-4 text-lg text-muted-foreground">
             Simple monthly pricing with everything included
           </p>
         </div>

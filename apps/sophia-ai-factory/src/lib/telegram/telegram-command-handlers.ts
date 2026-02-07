@@ -55,7 +55,8 @@ export async function handleHelp(chatId: string): Promise<void> {
  * Handle /email command or email input based on state
  */
 export async function handleEmail(chatId: string, email: string): Promise<void> {
-  const context = await TelegramFSM.getContext(chatId)
+  // Check context to verify flow
+  // const context = await TelegramFSM.getContext(chatId)
 
   if (!email) {
     await TelegramFSM.setState(chatId, BotState.AWAITING_EMAIL)

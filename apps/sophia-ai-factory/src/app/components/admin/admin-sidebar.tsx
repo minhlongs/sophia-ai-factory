@@ -22,13 +22,13 @@ export function AdminSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 bg-white/5 border-r border-white/10 flex flex-col">
+    <aside className="w-64 bg-card border-r border-border flex flex-col">
       {/* Header */}
-      <div className="p-6 border-b border-white/10">
+      <div className="p-6 border-b border-border">
         <h1 className="text-xl font-bold bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] bg-clip-text text-transparent">
           Sophia Admin
         </h1>
-        <p className="text-xs text-gray-400 mt-1">Internal Dashboard</p>
+        <p className="text-xs text-muted-foreground mt-1">Internal Dashboard</p>
       </div>
 
       {/* Navigation */}
@@ -44,7 +44,7 @@ export function AdminSidebar() {
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-all",
                     isActive
                       ? "bg-[var(--neon-cyan)]/10 text-[var(--neon-cyan)] border border-[var(--neon-cyan)]/30"
-                      : "text-gray-400 hover:bg-white/5 hover:text-white"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
                 >
                   <item.icon className="w-5 h-5" />
@@ -57,13 +57,13 @@ export function AdminSidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-white/10">
+      <div className="p-4 border-t border-border">
         <button
           onClick={() => {
             // Clear auth and reload
             window.location.href = "/";
           }}
-          className="flex items-center gap-3 px-4 py-3 w-full text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+          className="flex items-center gap-3 px-4 py-3 w-full text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-all"
         >
           <LogOut className="w-5 h-5" />
           <span className="font-medium">Logout</span>

@@ -36,7 +36,8 @@ export const polarHelpers = {
   /**
    * Verify webhook signature
    */
-  verifyWebhook: async (payload: string, signature: string): Promise<boolean> => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  verifyWebhook: async (_payload: string, _signature: string): Promise<boolean> => {
     const secret = process.env.POLAR_WEBHOOK_SECRET;
     if (!secret) {
       logger.error('POLAR_WEBHOOK_SECRET not configured');

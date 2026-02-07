@@ -27,17 +27,17 @@ export function FilterSidebar({
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <Card glass className="p-6 sticky top-24">
+      <Card glass className="p-6 sticky top-24 bg-card border-border">
         {/* Categories */}
         <div className="mb-8">
-          <h3 className="text-lg font-semibold text-white mb-4">Category</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-4">Category</h3>
           <div className="space-y-2">
             <button
               onClick={() => onCategoryChange(null)}
               className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
                 selectedCategory === null
-                  ? "bg-white/10 text-white"
-                  : "text-gray-400 hover:bg-white/5 hover:text-white"
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
               }`}
             >
               All Categories
@@ -48,8 +48,8 @@ export function FilterSidebar({
                 onClick={() => onCategoryChange(category)}
                 className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
                   selectedCategory === category
-                    ? "bg-white/10 text-white"
-                    : "text-gray-400 hover:bg-white/5 hover:text-white"
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
                 {category}
@@ -60,14 +60,14 @@ export function FilterSidebar({
 
         {/* Commission Range */}
         <div>
-          <h3 className="text-lg font-semibold text-white mb-4">Commission</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-4">Commission</h3>
           <div className="space-y-2">
             <button
               onClick={() => onRangeChange(null)}
               className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
                 selectedRange === null
-                  ? "bg-white/10 text-white"
-                  : "text-gray-400 hover:bg-white/5 hover:text-white"
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
               }`}
             >
               All Ranges
@@ -78,8 +78,8 @@ export function FilterSidebar({
                 onClick={() => onRangeChange({ min: range.min, max: range.max })}
                 className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
                   selectedRange?.min === range.min && selectedRange?.max === range.max
-                    ? "bg-white/10 text-white"
-                    : "text-gray-400 hover:bg-white/5 hover:text-white"
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
                 {range.label}
@@ -90,9 +90,9 @@ export function FilterSidebar({
 
         {/* Active Filters */}
         {(selectedCategory || selectedRange) && (
-          <div className="mt-6 pt-6 border-t border-white/10">
+          <div className="mt-6 pt-6 border-t border-border">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-gray-400">Active Filters</span>
+              <span className="text-sm text-muted-foreground">Active Filters</span>
               <button
                 onClick={() => {
                   onCategoryChange(null);
@@ -105,10 +105,10 @@ export function FilterSidebar({
             </div>
             <div className="flex flex-wrap gap-2">
               {selectedCategory && (
-                <Badge variant="default">{selectedCategory}</Badge>
+                <Badge variant="secondary">{selectedCategory}</Badge>
               )}
               {selectedRange && (
-                <Badge variant="default">
+                <Badge variant="secondary">
                   {commissionRanges.find(
                     (r) => r.min === selectedRange.min && r.max === selectedRange.max
                   )?.label}

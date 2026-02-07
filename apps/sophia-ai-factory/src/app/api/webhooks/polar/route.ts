@@ -62,7 +62,7 @@ export async function POST(request: Request) {
                 "webhook-timestamp": timestamp,
                 "webhook-signature": signature
              });
-         } catch (err2) {
+         } catch {
              console.error("Webhook verification failed with both raw and base64 secret");
              throw err; // Re-throw original error or the new one
          }
@@ -76,7 +76,7 @@ export async function POST(request: Request) {
   let event: { type: string; data: Record<string, unknown> };
   try {
     event = JSON.parse(body);
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 

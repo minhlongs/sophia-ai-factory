@@ -11,7 +11,7 @@ export default function SetupLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-muted/50">
       {/* No Navbar here - specialized layout for setup */}
       {children}
     </div>

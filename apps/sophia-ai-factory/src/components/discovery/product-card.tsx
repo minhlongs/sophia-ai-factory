@@ -63,12 +63,12 @@ export function ProductCard({ product }: ProductCardProps) {
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-3 gap-4 border-t border-border/50 pt-4">
-          <div>
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4 border-t border-border/50 pt-4">
+          <div className="flex flex-row sm:flex-col justify-between sm:justify-start items-center sm:items-start">
             <p className="text-[10px] font-medium uppercase text-muted-foreground">Commission</p>
             <p className="mt-0.5 text-sm font-semibold">{formattedPrice}</p>
           </div>
-          <div>
+          <div className="flex flex-row sm:flex-col justify-between sm:justify-start items-center sm:items-start">
             <p className="text-[10px] font-medium uppercase text-muted-foreground">Metrics</p>
             <div className="mt-0.5 flex items-center gap-1 text-sm font-medium">
                {/* Placeholder for gravity/rank */}
@@ -77,8 +77,8 @@ export function ProductCard({ product }: ProductCardProps) {
                <span>{(product.raw_metrics as any)?.gravity?.toFixed(0) || '-'} Grav</span>
             </div>
           </div>
-          <div className="flex flex-col justify-center">
-             <div className="flex items-center gap-1 text-xs text-green-600 font-medium">
+          <div className="flex flex-col justify-center items-center sm:items-start pt-2 sm:pt-0">
+             <div className="flex items-center gap-1 text-xs text-green-600 font-medium bg-green-50 px-2 py-1 rounded-full sm:bg-transparent sm:px-0 sm:py-0">
                <TrendingUp className="h-3 w-3" />
                <span>High Velocity</span>
              </div>

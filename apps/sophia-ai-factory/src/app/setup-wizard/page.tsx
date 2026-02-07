@@ -133,12 +133,12 @@ export default function SetupWizardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl w-full bg-white rounded-2xl shadow-xl overflow-hidden">
+    <div className="min-h-screen bg-muted/50 flex flex-col items-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-2xl w-full bg-card rounded-2xl shadow-xl overflow-hidden border border-border">
         {/* Header */}
-        <div className="bg-blue-600 px-8 py-6 text-white text-center">
+        <div className="bg-primary px-8 py-6 text-primary-foreground text-center">
             <h1 className="text-3xl font-bold">Sophia Setup Wizard</h1>
-            <p className="mt-2 text-blue-100">Configure your AI Factory in minutes.</p>
+            <p className="mt-2 text-primary-foreground/80">Configure your AI Factory in minutes.</p>
         </div>
 
         {/* Stepper */}
@@ -177,11 +177,11 @@ export default function SetupWizardPage() {
         </div>
 
         {/* Footer Actions */}
-        <div className="bg-gray-50 px-8 py-6 flex justify-between items-center border-t border-gray-100">
+        <div className="bg-muted/50 px-8 py-6 flex justify-between items-center border-t border-border">
             {step > 1 && step < 4 && (
                 <button
                     onClick={() => setStep(prev => prev - 1)}
-                    className="text-gray-500 hover:text-gray-800 font-medium px-4 py-2"
+                    className="text-muted-foreground hover:text-foreground font-medium px-4 py-2"
                 >
                     Back
                 </button>
@@ -192,7 +192,7 @@ export default function SetupWizardPage() {
             {step < 4 ? (
                 <button
                     onClick={handleNext}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors ml-auto"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors ml-auto"
                 >
                     Next Step <ArrowRight className="w-4 h-4" />
                 </button>
@@ -212,7 +212,7 @@ export default function SetupWizardPage() {
         </div>
       </div>
 
-      <p className="mt-8 text-gray-400 text-sm">Sophia AI Factory v1.0 • Powered by Mekong CLI</p>
+      <p className="mt-8 text-muted-foreground text-sm">Sophia AI Factory v1.0 • Powered by Mekong CLI</p>
     </div>
   );
 }
