@@ -1,6 +1,6 @@
 import { Tier } from '@/types';
 
-export type BillingType = 'one-time' | 'monthly';
+export type BillingType = 'subscription';
 
 export interface PolarPrice {
   amountType: 'fixed';
@@ -20,72 +20,39 @@ export interface PolarProductDefinition {
 // Helper to get env var at RUNTIME (not build time) - TRIM to remove trailing newlines
 const getEnv = (key: string): string => (process.env[key] || '').trim();
 
-// One-time products (Lifetime Deal) - use getter functions for runtime access
-export const getPolarProductsOnetime = (): PolarProductDefinition[] => [
+// Subscription products (All-in monthly with 12-month commitment)
+export const getPolarProductsSubscription = (): PolarProductDefinition[] => [
   {
-    name: 'Sophia AI Factory - Starter',
-    description: 'Perfect for getting started with AI video automation.',
+    name: 'Sophia AI Factory - Starter Sub',
+    description: 'Complete AI video automation. 12-month commitment.',
     tier: 'BASIC',
-    billingType: 'one-time',
-    productId: getEnv('POLAR_PRODUCT_ID_STARTER'),
-    prices: [{ amountType: 'fixed', priceAmount: 120000, priceCurrency: 'usd' }],
-  },
-  {
-    name: 'Sophia AI Factory - Growth',
-    description: 'Scale your content production with advanced features.',
-    tier: 'PREMIUM',
-    billingType: 'one-time',
-    productId: getEnv('POLAR_PRODUCT_ID_GROWTH'),
-    prices: [{ amountType: 'fixed', priceAmount: 200000, priceCurrency: 'usd' }],
-  },
-  {
-    name: 'Sophia AI Factory - Premium',
-    description: 'Maximum power and support for enterprise needs.',
-    tier: 'ENTERPRISE',
-    billingType: 'one-time',
-    productId: getEnv('POLAR_PRODUCT_ID_PREMIUM'),
-    prices: [{ amountType: 'fixed', priceAmount: 300000, priceCurrency: 'usd' }],
-  },
-];
-
-// Monthly subscription products (Maintenance Packages)
-export const getPolarProductsMonthly = (): PolarProductDefinition[] => [
-  {
-    name: 'Sophia AI Factory - Starter Monthly',
-    description: 'Monthly maintenance for Starter tier.',
-    tier: 'BASIC',
-    billingType: 'monthly',
-    productId: getEnv('POLAR_PRODUCT_ID_STARTER_MONTHLY'),
-    prices: [{ amountType: 'fixed', priceAmount: 9900, priceCurrency: 'usd' }],
-  },
-  {
-    name: 'Sophia AI Factory - Growth Monthly',
-    description: 'Monthly maintenance for Growth tier.',
-    tier: 'PREMIUM',
-    billingType: 'monthly',
-    productId: getEnv('POLAR_PRODUCT_ID_GROWTH_MONTHLY'),
+    billingType: 'subscription',
+    productId: getEnv('POLAR_PRODUCT_ID_STARTER_SUB'),
     prices: [{ amountType: 'fixed', priceAmount: 19900, priceCurrency: 'usd' }],
   },
   {
-    name: 'Sophia AI Factory - Premium Monthly',
-    description: 'Monthly maintenance for Premium tier.',
+    name: 'Sophia AI Factory - Growth Sub',
+    description: 'Scale your content production. 12-month commitment.',
+    tier: 'PREMIUM',
+    billingType: 'subscription',
+    productId: getEnv('POLAR_PRODUCT_ID_GROWTH_SUB'),
+    prices: [{ amountType: 'fixed', priceAmount: 39900, priceCurrency: 'usd' }],
+  },
+  {
+    name: 'Sophia AI Factory - Premium Sub',
+    description: 'Enterprise power and support. 12-month commitment.',
     tier: 'ENTERPRISE',
-    billingType: 'monthly',
-    productId: getEnv('POLAR_PRODUCT_ID_PREMIUM_MONTHLY'),
-    prices: [{ amountType: 'fixed', priceAmount: 49900, priceCurrency: 'usd' }],
+    billingType: 'subscription',
+    productId: getEnv('POLAR_PRODUCT_ID_PREMIUM_SUB'),
+    prices: [{ amountType: 'fixed', priceAmount: 79900, priceCurrency: 'usd' }],
   },
 ];
 
 // Combined getter for all products
-export const getPolarProducts = (): PolarProductDefinition[] => [
-  ...getPolarProductsOnetime(),
-  ...getPolarProductsMonthly(),
-];
+export const getPolarProducts = (): PolarProductDefinition[] => getPolarProductsSubscription();
 
-// Backwards compatibility exports (used by pricing-section.tsx)
-export const POLAR_PRODUCTS = getPolarProductsOnetime();
-export const POLAR_PRODUCTS_ONETIME = getPolarProductsOnetime();
-export const POLAR_PRODUCTS_MONTHLY = getPolarProductsMonthly();
+// Backwards compatibility exports
+export const POLAR_PRODUCTS = getPolarProductsSubscription();
 
 export const getTierFromProductName = (name: string): Tier => {
   const normalizedName = name.toLowerCase();
@@ -97,20 +64,15 @@ export const getTierFromProductName = (name: string): Tier => {
   }
 
   // Fallback heuristic
-  if (normalizedName.includes('premium') || normalizedName.includes('growth')) return 'PREMIUM';
-  if (normalizedName.includes('enterprise')) return 'ENTERPRISE';
+  if (normalizedName.includes('premium')) return 'ENTERPRISE';
+  if (normalizedName.includes('growth')) return 'PREMIUM';
 
   return 'BASIC';
 };
 
-// Get product ID by tier - reads env at RUNTIME
-export const getProductIdByTier = (tier: string, billingType: BillingType = 'one-time'): string | undefined => {
-  const products = billingType === 'monthly' ? getPolarProductsMonthly() : getPolarProductsOnetime();
+// Get product ID by tier - simplified for subscription-only model
+export const getProductIdByTier = (tier: string): string | undefined => {
+  const products = getPolarProductsSubscription();
   const product = products.find(p => p.tier === tier);
   return product?.productId || undefined;
-};
-
-// Get all products for a specific billing type
-export const getProductsByBillingType = (billingType: BillingType): PolarProductDefinition[] => {
-  return billingType === 'monthly' ? getPolarProductsMonthly() : getPolarProductsOnetime();
 };
