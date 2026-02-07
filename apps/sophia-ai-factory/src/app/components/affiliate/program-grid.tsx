@@ -72,7 +72,7 @@ export function ProgramGrid({ programs, showAll = true }: ProgramGridProps) {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortOption)}
-            className="pl-12 pr-8 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[var(--neon-cyan)] transition-colors appearance-none cursor-pointer min-w-[200px]"
+            className="w-full md:w-auto pl-12 pr-8 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[var(--neon-cyan)] transition-colors appearance-none cursor-pointer md:min-w-[200px]"
           >
             <option value="epc-high">EPC: High to Low</option>
             <option value="epc-low">EPC: Low to High</option>
