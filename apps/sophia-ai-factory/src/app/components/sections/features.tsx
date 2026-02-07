@@ -118,9 +118,9 @@ export function Features() {
           viewport={{ once: true }}
           transition={{ delay: 0.8 }}
         >
-          <Card glass className="max-w-2xl mx-auto">
+          <Card glass className="max-w-2xl mx-auto bg-card border-border">
             <CardContent className="pt-6">
-              <p className="text-gray-400">
+              <p className="text-muted-foreground">
                 <span className="text-[var(--neon-cyan)] font-semibold">
                   Enterprise tier
                 </span>{" "}

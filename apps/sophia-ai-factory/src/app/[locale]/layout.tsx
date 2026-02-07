@@ -1,12 +1,14 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
-import { Navbar } from "./components/layout/navbar";
+import "../globals.css";
+import { Navbar } from "@/app/components/layout/navbar";
 import { QueryProvider } from "@/components/providers/query-provider";
 
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "sonner";
 import { MockModeIndicator } from "@/components/dev/mock-mode-indicator";
+import { NextIntlClientProvider } from 'next-intl';
+import { getMessages } from 'next-intl/server';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -56,29 +58,36 @@ export const viewport: Viewport = {
   maximumScale: 5,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
+  params
 }: Readonly<{
   children: React.ReactNode;
+  params: Promise<{ locale: string }>;
 }>) {
+  const { locale } = await params;
+  const messages = await getMessages();
+
   return (
-    <html lang="en">
+    <html lang={locale}>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <QueryProvider>
-            <Navbar />
-            {children}
-            <MockModeIndicator />
-            <Toaster />
-          </QueryProvider>
-        </ThemeProvider>
+        <NextIntlClientProvider messages={messages}>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <QueryProvider>
+              <Navbar />
+              {children}
+              <MockModeIndicator />
+              <Toaster />
+            </QueryProvider>
+          </ThemeProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

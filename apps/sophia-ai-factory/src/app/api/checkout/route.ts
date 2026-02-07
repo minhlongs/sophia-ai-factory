@@ -2,21 +2,25 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { ServiceFactory } from '@/lib/services/factory';
 import { getProductIdByTier } from '@/lib/polar-config';
+import { checkoutSchema } from '@/lib/schemas';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { tier } = body;
 
-    if (!tier) {
+    // Validate body with Zod
+    const validation = checkoutSchema.safeParse(body);
+    if (!validation.success) {
       return NextResponse.json(
-        { error: 'Missing tier' },
+        { error: 'Invalid request', details: validation.error.flatten() },
         { status: 400 }
       );
     }
 
+    const { tier } = validation.data;
+
     // Option D: Single subscription product per tier
-    const productId = getProductIdByTier(tier as string);
+    const productId = getProductIdByTier(tier);
 
     if (!productId) {
       console.error(`Missing product ID for tier ${tier}`);
