@@ -1,17 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase/client'
 import type { Database } from '@/lib/supabase/types'
+import { integrationSchema } from '@/lib/schemas'
 
 export async function POST(request: NextRequest) {
   try {
-    const { network, api_key, api_secret } = await request.json()
+    const body = await request.json()
 
-    // Validate network
-    if (network !== 'clickbank' && network !== 'shareasale' && network !== 'amazon') {
-      return NextResponse.json({ error: 'Invalid network' }, { status: 400 })
+    // Validate with Zod
+    const validation = integrationSchema.safeParse(body)
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: 'Invalid request', details: validation.error.flatten() },
+        { status: 400 }
+      )
     }
 
-    const networkId = network as 'clickbank' | 'shareasale' | 'amazon'
+    const { network, api_key, api_secret } = validation.data
 
     // Get authenticated user
     const { data: { user } } = await supabase.auth.getUser()
@@ -21,7 +26,7 @@ export async function POST(request: NextRequest) {
 
     const integrationData: Database['public']['Tables']['user_integrations']['Insert'] = {
       user_id: user.id,
-      network_id: networkId,
+      network_id: network,
       api_key,
       api_secret: api_secret || null,
       updated_at: new Date().toISOString()

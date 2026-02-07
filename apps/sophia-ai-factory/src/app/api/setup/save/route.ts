@@ -1,15 +1,24 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
+import { setupConfigSchema } from '@/lib/schemas';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { config } = body;
 
-    if (!config) {
-      return NextResponse.json({ success: false, message: "No config provided" }, { status: 400 });
+    // Validate with Zod
+    const validation = setupConfigSchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json(
+        { success: false, message: "Invalid configuration", details: validation.error.flatten() },
+        { status: 400 }
+      );
     }
+
+    const { config } = validation.data;
+    // Type assertion because validation guarantees config is Record<string, string>
+    const typedConfig = config as Record<string, string>;
 
     // Construct env content
     let envContent = '';
@@ -24,7 +33,7 @@ export async function POST(request: Request) {
       // Let's verify if lines exist and replace them, or append if new.
 
       const lines = existingEnv.split('\n');
-      const newKeys = Object.keys(config);
+      const newKeys = Object.keys(typedConfig);
 
       const updatedLines = lines.map(line => {
         const match = line.match(/^([^=]+)=(.*)$/);
@@ -32,8 +41,8 @@ export async function POST(request: Request) {
           const key = match[1].trim();
           if (newKeys.includes(key)) {
             // Replace this line
-            const val = config[key];
-            delete config[key]; // Mark as handled
+            const val = typedConfig[key];
+            delete typedConfig[key]; // Mark as handled
             return `${key}="${val}"`;
           }
         }
@@ -41,16 +50,16 @@ export async function POST(request: Request) {
       });
 
       // Append remaining new keys
-      Object.keys(config).forEach(key => {
-        updatedLines.push(`${key}="${config[key]}"`);
+      Object.keys(typedConfig).forEach(key => {
+        updatedLines.push(`${key}="${typedConfig[key]}"`);
       });
 
       envContent = updatedLines.join('\n');
 
     } catch {
       // File doesn't exist, create new
-      Object.keys(config).forEach(key => {
-        envContent += `${key}="${config[key]}"\n`;
+      Object.keys(typedConfig).forEach(key => {
+        envContent += `${key}="${typedConfig[key]}"\n`;
       });
     }
 

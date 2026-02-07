@@ -2,9 +2,25 @@
 
 import React, { useMemo } from "react";
 import { Campaign } from "@/types";
-import { StatusDistributionChart, CompletionTimeChart, CampaignsByTypeChart } from "./charts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart3, CheckCircle2, Clock } from "lucide-react";
+import { BarChart3, CheckCircle2, Clock, Loader2 } from "lucide-react";
+import dynamic from 'next/dynamic';
+
+// Lazy load chart components
+const StatusDistributionChart = dynamic(
+  () => import('./charts').then(mod => mod.StatusDistributionChart),
+  { loading: () => <div className="h-[300px] w-full flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>, ssr: false }
+);
+
+const CompletionTimeChart = dynamic(
+  () => import('./charts').then(mod => mod.CompletionTimeChart),
+  { loading: () => <div className="h-[300px] w-full flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>, ssr: false }
+);
+
+const CampaignsByTypeChart = dynamic(
+  () => import('./charts').then(mod => mod.CampaignsByTypeChart),
+  { loading: () => <div className="h-[300px] w-full flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>, ssr: false }
+);
 
 interface AnalyticsViewProps {
   campaigns: Campaign[];
