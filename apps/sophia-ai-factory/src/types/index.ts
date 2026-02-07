@@ -26,7 +26,7 @@ export interface TierConfig {
   name: string;
   price: number;
   priceDisplay: string;
-  variantId?: string;
+  polarProductId?: string;
   recommended?: boolean;
   features: FeatureFlag[];
   limits: {
