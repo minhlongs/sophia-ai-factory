@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { bot } from '@/lib/telegram/telegram-bot-instance'
 import {
   handleStart,
   handleHelp,
@@ -6,30 +7,38 @@ import {
   handleCampaign,
   handleStatus,
   handleResults,
-  handleUnknown
-} from '@/lib/telegram/telegram-bot'
+  handleTextMessage,
+  handleUnknown,
+} from '@/lib/telegram/telegram-command-handlers'
 
+/**
+ * Telegram Webhook Handler
+ * Processes incoming updates from Telegram Bot API
+ */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
-    // Verify webhook secret
+    // Verify webhook secret token
     const token = request.headers.get('X-Telegram-Bot-Api-Secret-Token')
     if (token !== process.env.TELEGRAM_WEBHOOK_SECRET) {
+      console.error('Unauthorized webhook attempt')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Extract message from update
     const message = body.message
     if (!message?.text) {
+      // No text message, return OK to acknowledge
       return NextResponse.json({ ok: true })
     }
 
-    const chatId = message.chat.id.toString() // Ensure string for DB consistency
+    const chatId = message.chat.id.toString()
     const text = message.text.trim()
 
-    console.log(`Telegram update: ${text} from ${chatId}`)
+    console.log(`[Telegram] Update from ${chatId}: ${text}`)
 
-    // Command Routing
+    // Route commands
     if (text === '/start') {
       await handleStart(chatId)
     } else if (text === '/help') {
@@ -44,16 +53,31 @@ export async function POST(request: NextRequest) {
       await handleStatus(chatId)
     } else if (text === '/results') {
       await handleResults(chatId)
-    } else {
+    } else if (text.startsWith('/')) {
+      // Unknown command
       await handleUnknown(chatId)
+    } else {
+      // Regular text message - handle based on FSM state
+      await handleTextMessage(chatId, text)
     }
 
     return NextResponse.json({ ok: true })
   } catch (error) {
-    console.error('Telegram webhook error:', error)
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 })
+    console.error('[Telegram] Webhook error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
   }
 }
 
-// Helper to send messages is now in src/lib/telegram/telegram-client.ts and telegram-bot.ts handles logic
-
+/**
+ * Health check endpoint
+ */
+export async function GET() {
+  return NextResponse.json({
+    status: 'ok',
+    service: 'telegram-webhook',
+    timestamp: new Date().toISOString(),
+  })
+}

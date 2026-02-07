@@ -33,7 +33,7 @@ describe('RealPaymentService', () => {
     };
 
     vi.mocked(getProductIdByTier).mockReturnValue(mockProductId);
-    vi.mocked(polar.checkouts.create).mockResolvedValue(mockCheckout as any);
+    vi.mocked(polar.checkouts.create).mockResolvedValue(mockCheckout as any); // eslint-disable-line @typescript-eslint/no-explicit-any
 
     const params = {
       productId: mockTier,

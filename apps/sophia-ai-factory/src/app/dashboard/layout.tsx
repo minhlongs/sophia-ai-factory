@@ -9,6 +9,8 @@ import {
   BarChart2
 } from "lucide-react";
 import { HealthIndicator } from "@/components/dashboard/health-indicator";
+import { MobileNav } from "@/components/ui/mobile-nav";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function DashboardLayout({
   children,
@@ -84,14 +86,18 @@ export default function DashboardLayout({
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Mobile Header (visible only on small screens) */}
-        <header className="h-16 bg-white border-b border-gray-200 md:hidden flex items-center px-4">
+        <header className="h-16 bg-white border-b border-gray-200 md:hidden flex items-center justify-between px-4">
           <span className="font-bold text-lg">Sophia Dashboard</span>
+          <ThemeToggle />
         </header>
 
-        <main className="flex-1 p-6 md:p-8 overflow-y-auto">
+        <main className="flex-1 p-6 md:p-8 overflow-y-auto pb-20 md:pb-8">
           {children}
         </main>
       </div>
+
+      {/* Mobile Navigation */}
+      <MobileNav />
     </div>
   );
 }

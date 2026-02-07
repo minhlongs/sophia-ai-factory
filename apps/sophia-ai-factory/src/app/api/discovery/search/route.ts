@@ -17,8 +17,7 @@ export async function GET(request: Request) {
     // Filter sensitive fields for public API (if RLS doesn't already)
     // For now, we return what sophiaIndex returns, which is currently `*`.
     // In a real app, we might map this to a DTO to exclude affiliate_link.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const safeData = data?.map((item: any) => ({
+    const safeData = data?.map((item: Record<string, unknown>) => ({
       ...item,
       affiliate_link: undefined, // Hide link in search results
       raw_metrics: undefined // Hide raw metrics

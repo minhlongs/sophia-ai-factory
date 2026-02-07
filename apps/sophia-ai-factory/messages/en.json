@@ -1,0 +1,60 @@
+{
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Manage your automated video campaigns",
+    "stats": {
+      "total_campaigns": "Total Campaigns",
+      "active_campaigns": "Active Campaigns",
+      "completed_campaigns": "Completed"
+    },
+    "buttons": {
+      "upgrade": "Upgrade",
+      "new_campaign": "New Campaign",
+      "view_details": "View Details",
+      "retry": "Retry",
+      "resume": "Resume"
+    },
+    "empty_state": {
+      "title": "No campaigns yet",
+      "description": "Create your first automated video campaign.",
+      "action": "Create Campaign"
+    }
+  },
+  "campaign": {
+    "template_selection": {
+      "title": "Choose a Template",
+      "subtitle": "Start with a pre-configured template or create from scratch"
+    },
+    "customization": {
+      "title": "Customize Your Campaign",
+      "campaign_title": "Campaign Title",
+      "video_topic": "Video Topic",
+      "video_topic_hint": "What should this video be about?",
+      "target_audience": "Target Audience",
+      "target_audience_hint": "Who is this video for?",
+      "target_platforms": "Target Platforms",
+      "platforms_hint": "Select platforms to publish to. Multiple platforms require Premium plan.",
+      "template_settings": "Template Settings",
+      "tone": "Tone",
+      "duration": "Duration"
+    },
+    "actions": {
+      "change_template": "Change Template",
+      "create_campaign": "Create Campaign",
+      "creating": "Creating..."
+    },
+    "status": {
+      "draft": "Draft",
+      "queued": "Queued",
+      "processing_script": "Processing Script",
+      "processing_video": "Processing Video",
+      "completed": "Completed",
+      "failed": "Failed"
+    }
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success"
+  }
+}
