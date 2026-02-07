@@ -170,11 +170,11 @@ export function CampaignList({ initialCampaigns }: CampaignListProps) {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4 mt-4 md:mt-0">
             {getStatusBadge(campaign.status)}
 
             <Link href={`/dashboard/campaigns/${campaign.id}`}>
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" className="h-8 text-xs sm:text-sm">
                 View Details
               </Button>
             </Link>
@@ -186,12 +186,12 @@ export function CampaignList({ initialCampaigns }: CampaignListProps) {
                   size="sm"
                   onClick={() => handleResume(campaign.id)}
                   disabled={retryingCampaigns.has(campaign.id)}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 h-8 text-xs sm:text-sm"
                 >
                   {retryingCampaigns.has(campaign.id) ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
                   ) : (
-                    <Play className="w-4 h-4" />
+                    <Play className="w-3 h-3 sm:w-4 sm:h-4" />
                   )}
                   Resume
                 </Button>
@@ -200,12 +200,12 @@ export function CampaignList({ initialCampaigns }: CampaignListProps) {
                   size="sm"
                   onClick={() => handleRetry(campaign.id)}
                   disabled={retryingCampaigns.has(campaign.id)}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 h-8 text-xs sm:text-sm"
                 >
                   {retryingCampaigns.has(campaign.id) ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
                   ) : (
-                    <RotateCw className="w-4 h-4" />
+                    <RotateCw className="w-3 h-3 sm:w-4 sm:h-4" />
                   )}
                   Retry
                 </Button>
@@ -217,7 +217,7 @@ export function CampaignList({ initialCampaigns }: CampaignListProps) {
                 href={campaign.video_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium"
+                className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium text-xs sm:text-sm"
               >
                 <PlayCircle className="w-4 h-4" />
                 Watch Video
