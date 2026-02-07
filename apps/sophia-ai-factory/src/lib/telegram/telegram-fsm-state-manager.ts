@@ -8,6 +8,10 @@ export enum BotState {
   AWAITING_EMAIL = 'awaiting_email',
   AWAITING_CAMPAIGN_TOPIC = 'awaiting_campaign_topic',
   AWAITING_CONFIRMATION = 'awaiting_confirmation',
+  AWAITING_SUBSCRIPTION = 'awaiting_subscription',
+  DISCOVERING_TRENDS = 'discovering_trends',
+  CREATING_CAMPAIGN = 'creating_campaign',
+  EXPORTING_CAMPAIGN = 'exporting_campaign',
 }
 
 /**
@@ -17,6 +21,11 @@ export interface UserContext {
   state: BotState
   email?: string
   campaignTopic?: string
+  telegramUserId?: string
+  subscriptionTier?: string
+  filters?: string[]
+  templateId?: string
+  exportFormat?: 'pdf' | 'csv' | 'json'
   lastUpdated: number
 }
 

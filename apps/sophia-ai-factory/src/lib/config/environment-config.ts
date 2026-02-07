@@ -34,6 +34,7 @@ const environmentSchema = z.object({
   AIRTABLE_BASE_ID: z.string().min(1).optional(),
   HEYGEN_API_KEY: z.string().min(1).optional(),
   TELEGRAM_BOT_TOKEN: z.string().min(1).optional(),
+  TELEGRAM_WEBHOOK_SECRET: z.string().min(1).optional(),
 
   // Feature Flags
   NEXT_PUBLIC_MOCK_AI_SERVICES: z.string().optional(),
