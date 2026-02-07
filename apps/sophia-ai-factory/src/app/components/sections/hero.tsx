@@ -25,7 +25,7 @@ export function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold mb-6 leading-tight">
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-tight">
               <span className="bg-gradient-to-r from-[var(--neon-cyan)] via-white to-[var(--neon-purple)] bg-clip-text text-transparent">
                 AI Video Factory
               </span>
@@ -38,7 +38,7 @@ export function Hero() {
 
           {/* Subtitle */}
           <motion.p
-            className="text-xl md:text-2xl text-gray-400 mb-12 max-w-2xl mx-auto"
+            className="text-lg md:text-2xl text-gray-400 mb-12 max-w-2xl mx-auto px-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
@@ -48,15 +48,15 @@ export function Hero() {
 
           {/* CTA Buttons */}
           <motion.div
-            className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+            className="flex flex-col sm:flex-row gap-4 justify-center items-center px-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
           >
-            <Button variant="glow" size="lg" className="min-w-[200px]">
+            <Button variant="glow" size="lg" className="w-full sm:w-auto min-w-[200px]">
               Start Free
             </Button>
-            <Button variant="secondary" size="lg" className="min-w-[200px]">
+            <Button variant="secondary" size="lg" className="w-full sm:w-auto min-w-[200px]">
               Watch Demo
             </Button>
           </motion.div>
