@@ -2,7 +2,12 @@
 
 import { useEffect, useCallback } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { AnalyticsEventType } from '@/lib/builder/types';
+
+enum AnalyticsEventType {
+  PAGE_VIEW = 'page_view',
+  CLICK = 'click',
+  SCROLL = 'scroll'
+}
 
 interface TrackerProps {
   landingPageId: string;

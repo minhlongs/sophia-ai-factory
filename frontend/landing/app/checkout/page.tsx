@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState, Suspense } from "react";
-import PayPalSmartButton from "../components/PayPalSmartButton";
+// import PayPalSmartButton from "../components/PayPalSmartButton";
 
 function CheckoutForm() {
   const searchParams = useSearchParams();
@@ -88,7 +88,11 @@ function CheckoutForm() {
       </div>
 
       {/* Payment Forms */}
-      <PayPalSmartButton
+      <div className="text-center p-4 bg-slate-700 rounded-lg">
+        <p className="text-emerald-400 font-medium">Checkout is being migrated to Polar.sh</p>
+        <p className="text-sm text-slate-400 mt-1">Please check back later.</p>
+      </div>
+      {/* <PayPalSmartButton
         amount={selectedPrice.amount}
         currency="USD"
         planId={selectedPrice.planId}
@@ -99,14 +103,14 @@ function CheckoutForm() {
         onSuccess={handlePaymentSuccess}
         onError={handlePaymentError}
         apiBaseUrl="/api/v1" // Proxy or direct backend URL
-      />
+      /> */}
     </div>
   );
 }
 
 export default function CheckoutPage() {
   return (
-    <div className="min-h-screen bg-linear-to-b from-slate-900 to-slate-800 text-white py-20">
+    <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 text-white py-20">
       <div className="container mx-auto px-6 max-w-2xl">
         <h1 className="text-4xl font-bold mb-8 text-center">Thanh Toán</h1>
 
