@@ -2,6 +2,19 @@
   "dashboard": {
     "title": "Bảng Điều Khiển",
     "subtitle": "Quản lý các chiến dịch video tự động của bạn",
+    "sidebar": {
+      "overview": "Tổng Quan",
+      "new_project": "Dự Án Mới",
+      "campaigns": "Chiến Dịch",
+      "analytics": "Phân Tích",
+      "my_videos": "Video Của Tôi",
+      "settings": "Cài Đặt",
+      "sign_out": "Đăng Xuất"
+    },
+    "header": {
+      "title": "Bảng Điều Khiển Sophia",
+      "brand": "Sophia AI"
+    },
     "stats": {
       "total_campaigns": "Tổng Chiến Dịch",
       "active_campaigns": "Chiến Dịch Đang Chạy",
@@ -12,12 +25,53 @@
       "new_campaign": "Chiến Dịch Mới",
       "view_details": "Xem Chi Tiết",
       "retry": "Thử Lại",
-      "resume": "Tiếp Tục"
+      "resume": "Tiếp Tục",
+      "watch_video": "Xem Video"
+    },
+    "general_audience": "Khán Giả Chung",
+    "toasts": {
+      "retry_started": "Đã Bắt Đầu Thử Lại",
+      "retry_started_desc": "Chiến dịch sẽ bắt đầu lại từ đầu.",
+      "retry_failed": "Thử Lại Thất Bại",
+      "resume_success": "Đã Tiếp Tục Chiến Dịch",
+      "resume_failed": "Tiếp Tục Thất Bại"
     },
     "empty_state": {
       "title": "Chưa có chiến dịch nào",
       "description": "Tạo chiến dịch video tự động đầu tiên của bạn.",
       "action": "Tạo Chiến Dịch"
+    },
+    "error": {
+      "title": "Lỗi Bảng Điều Khiển",
+      "description": "Đã xảy ra sự cố khi tải dữ liệu bảng điều khiển.",
+      "reload": "Tải Lại Bảng Điều Khiển"
+    },
+    "export": {
+      "button": "Xuất",
+      "title": "Tùy Chọn Xuất",
+      "success": "Xuất Thành Công",
+      "success_desc": "Chiến dịch đã xuất dạng {format}",
+      "failed": "Xuất Thất Bại",
+      "status_label": "Trạng Thái",
+      "all_statuses": "Tất Cả Trạng Thái",
+      "start_date": "Ngày Bắt Đầu",
+      "end_date": "Ngày Kết Thúc"
+    },
+    "analytics": {
+      "title": "Bảng Phân Tích",
+      "subtitle": "Theo dõi hiệu suất và thống kê chiến dịch tự động",
+      "total_campaigns": "Tổng Chiến Dịch",
+      "all_time": "Tất cả chiến dịch",
+      "success_rate": "Tỷ Lệ Thành Công",
+      "completed_campaigns": "Chiến dịch hoàn thành",
+      "avg_completion_time": "Thời Gian Hoàn Thành TB",
+      "per_completed": "Mỗi chiến dịch hoàn thành",
+      "status_distribution": "Phân Bố Trạng Thái Chiến Dịch",
+      "recent_performance": "Hiệu Suất Gần Đây (Thời Lượng)",
+      "no_completed_data": "Chưa có dữ liệu chiến dịch hoàn thành",
+      "template_usage": "Sử Dụng Mẫu",
+      "duration_min": "Thời lượng (phút)",
+      "no_data": "Không có dữ liệu"
     }
   },
   "campaign": {
@@ -50,6 +104,30 @@
       "processing_video": "Đang Xử Lý Video",
       "completed": "Đã Hoàn Thành",
       "failed": "Thất Bại"
+    },
+    "errors": {
+      "something_wrong": "Đã xảy ra lỗi",
+      "create_failed": "Tạo chiến dịch thất bại"
+    },
+    "detail": {
+      "back": "Quay Lại Chiến Dịch",
+      "untitled": "Chiến Dịch Không Tên",
+      "created": "Đã Tạo",
+      "retry": "Thử Tạo Lại",
+      "script": "Kịch Bản Đã Tạo",
+      "scene": "Cảnh",
+      "visual": "Hình Ảnh",
+      "title": "Chi Tiết Chiến Dịch",
+      "topic": "Chủ Đề",
+      "audience": "Khán Giả Mục Tiêu",
+      "template": "Mẫu",
+      "status": "Trạng Thái",
+      "progress": "Tiến Độ",
+      "system_info": "Thông Tin Hệ Thống",
+      "id": "ID",
+      "updated": "Đã Cập Nhật",
+      "na": "N/A",
+      "general": "Chung"
     }
   },
   "common": {

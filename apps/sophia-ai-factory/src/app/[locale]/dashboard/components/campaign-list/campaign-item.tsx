@@ -1,11 +1,16 @@
 import { Campaign } from "@/types";
 import { getStatusIcon } from "./campaign-status";
+import { useTranslations } from 'next-intl';
+import { useFormatter } from 'next-intl';
 
 interface CampaignItemProps {
   campaign: Campaign;
 }
 
 export function CampaignItem({ campaign }: CampaignItemProps) {
+  const t = useTranslations('dashboard');
+  const format = useFormatter();
+
   return (
     <div className="flex items-start gap-4">
       <div className="mt-1">
@@ -14,9 +19,13 @@ export function CampaignItem({ campaign }: CampaignItemProps) {
       <div>
         <h3 className="font-semibold text-foreground">{campaign.title || campaign.topic}</h3>
         <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-          <span>{new Date(campaign.created_at).toLocaleDateString()}</span>
+          <span>{format.dateTime(new Date(campaign.created_at), {
+            year: 'numeric',
+            month: 'numeric',
+            day: 'numeric'
+          })}</span>
           <span>•</span>
-          <span>{campaign.audience || "General Audience"}</span>
+          <span>{campaign.audience || t('general_audience')}</span>
         </div>
         <div className="mt-3">
           {/* Progress Bar */}

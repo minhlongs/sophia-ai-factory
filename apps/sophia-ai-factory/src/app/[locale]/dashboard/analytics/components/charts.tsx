@@ -14,6 +14,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { useTranslations } from 'next-intl';
 
 // Colors for charts - using CSS variables if possible, but Recharts needs hex strings
 // We can define a palette that looks good in both or adapt based on theme context if we had access to it.
@@ -61,6 +62,8 @@ export function StatusDistributionChart({ data }: ChartProps) {
 }
 
 export function CompletionTimeChart({ data }: ChartProps) {
+  const t = useTranslations('dashboard.analytics');
+
   return (
     <div className="h-[300px] w-full">
       <ResponsiveContainer width="100%" height="100%">
@@ -83,7 +86,7 @@ export function CompletionTimeChart({ data }: ChartProps) {
             itemStyle={{ color: 'var(--foreground)' }}
           />
           <Legend wrapperStyle={{ color: 'var(--foreground)' }} />
-          <Bar dataKey="duration" name="Duration (min)" fill="#8b5cf6" radius={[0, 4, 4, 0]} />
+          <Bar dataKey="duration" name={t('duration_min')} fill="#8b5cf6" radius={[0, 4, 4, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>
@@ -91,10 +94,12 @@ export function CompletionTimeChart({ data }: ChartProps) {
 }
 
 export function CampaignsByTypeChart({ data }: ChartProps) {
+    const t = useTranslations('dashboard.analytics');
+
     if (!data || data.length === 0) {
         return (
             <div className="h-[300px] w-full flex items-center justify-center text-muted-foreground">
-                No data available
+                {t('no_data')}
             </div>
         )
     }

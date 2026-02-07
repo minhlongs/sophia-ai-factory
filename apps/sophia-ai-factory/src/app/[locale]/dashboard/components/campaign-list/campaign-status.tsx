@@ -11,7 +11,7 @@ export function getStatusIcon(status: string) {
   }
 }
 
-export function getStatusBadge(status: string) {
+export function getStatusBadge(status: string, label?: string) {
   const styles: Record<string, string> = {
     draft: "bg-muted text-muted-foreground",
     queued: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
@@ -20,5 +20,5 @@ export function getStatusBadge(status: string) {
     completed: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
     failed: "bg-destructive/10 text-destructive"
   };
-  return <Badge className={styles[status] || "bg-muted"}>{status.replace('_', ' ')}</Badge>;
+  return <Badge className={styles[status] || "bg-muted"}>{label || status.replace(/_/g, ' ')}</Badge>;
 }

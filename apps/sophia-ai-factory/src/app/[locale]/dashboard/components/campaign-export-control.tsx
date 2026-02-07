@@ -5,6 +5,7 @@ import { Download, FileJson, FileSpreadsheet, Filter, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { exportCampaigns, ExportFormat } from "@/app/actions/campaign-export-actions";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslations } from 'next-intl';
 
 export function CampaignExportControl() {
   const [isOpen, setIsOpen] = useState(false);
@@ -13,6 +14,8 @@ export function CampaignExportControl() {
   const [status, setStatus] = useState("all");
   const [isExporting, setIsExporting] = useState(false);
   const { toast } = useToast();
+  const t = useTranslations('dashboard.export');
+  const tStatus = useTranslations('campaign.status');
 
   const handleExport = async (format: ExportFormat) => {
     try {
@@ -40,15 +43,15 @@ export function CampaignExportControl() {
       document.body.removeChild(a);
 
       toast({
-        title: "Export Successful",
-        description: `Campaigns exported as ${format.toUpperCase()}`,
+        title: t('success'),
+        description: t('success_desc', { format: format.toUpperCase() }),
       });
 
       setIsOpen(false); // Close panel after success
     } catch (error) {
       console.error("Export error:", error);
       toast({
-        title: "Export Failed",
+        title: t('failed'),
         description: error instanceof Error ? error.message : "Unknown error",
         variant: "destructive",
       });
@@ -65,7 +68,7 @@ export function CampaignExportControl() {
         onClick={() => setIsOpen(!isOpen)}
       >
         <Download className="w-4 h-4" />
-        Export
+        {t('button')}
       </Button>
 
       {isOpen && (
@@ -73,7 +76,7 @@ export function CampaignExportControl() {
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-medium text-popover-foreground flex items-center gap-2">
               <Filter className="w-4 h-4" />
-              Export Options
+              {t('title')}
             </h3>
             <button
               onClick={() => setIsOpen(false)}
@@ -86,25 +89,25 @@ export function CampaignExportControl() {
           <div className="space-y-4">
             {/* Status Filter */}
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-popover-foreground">Status</label>
+              <label className="text-sm font-medium text-popover-foreground">{t('status_label')}</label>
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
               >
-                <option value="all">All Statuses</option>
-                <option value="queued">Queued</option>
-                <option value="processing_script">Processing Script</option>
-                <option value="processing_video">Processing Video</option>
-                <option value="completed">Completed</option>
-                <option value="failed">Failed</option>
+                <option value="all">{t('all_statuses')}</option>
+                <option value="queued">{tStatus('queued')}</option>
+                <option value="processing_script">{tStatus('processing_script')}</option>
+                <option value="processing_video">{tStatus('processing_video')}</option>
+                <option value="completed">{tStatus('completed')}</option>
+                <option value="failed">{tStatus('failed')}</option>
               </select>
             </div>
 
             {/* Date Range */}
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-popover-foreground">Start Date</label>
+                <label className="text-sm font-medium text-popover-foreground">{t('start_date')}</label>
                 <input
                   type="date"
                   value={startDate}
@@ -113,7 +116,7 @@ export function CampaignExportControl() {
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-popover-foreground">End Date</label>
+                <label className="text-sm font-medium text-popover-foreground">{t('end_date')}</label>
                 <input
                   type="date"
                   value={endDate}

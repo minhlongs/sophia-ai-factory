@@ -3,6 +3,7 @@ import { Loader2, Play, RotateCw, PlayCircle } from "lucide-react";
 import Link from "next/link";
 import { Campaign } from "@/types";
 import { getStatusBadge } from "./campaign-status";
+import { useTranslations } from 'next-intl';
 
 interface CampaignActionsProps {
   campaign: Campaign;
@@ -12,13 +13,23 @@ interface CampaignActionsProps {
 }
 
 export function CampaignActions({ campaign, isRetrying, onRetry, onResume }: CampaignActionsProps) {
+  const t = useTranslations('dashboard.buttons');
+  const tStatus = useTranslations('campaign.status');
+
+  // Translate status for badge
+  const statusKeys = ['draft', 'queued', 'processing_script', 'processing_video', 'completed', 'failed'] as const;
+  type StatusKey = typeof statusKeys[number];
+  const statusLabel = statusKeys.includes(campaign.status as StatusKey)
+    ? tStatus(campaign.status as StatusKey)
+    : campaign.status.replace(/_/g, ' ');
+
   return (
     <div className="flex flex-wrap items-center gap-3 sm:gap-4 mt-4 md:mt-0">
-      {getStatusBadge(campaign.status)}
+      {getStatusBadge(campaign.status, statusLabel)}
 
       <Link href={`/dashboard/campaigns/${campaign.id}`}>
         <Button variant="ghost" size="sm" className="h-8 text-xs sm:text-sm">
-          View Details
+          {t('view_details')}
         </Button>
       </Link>
 
@@ -36,7 +47,7 @@ export function CampaignActions({ campaign, isRetrying, onRetry, onResume }: Cam
             ) : (
               <Play className="w-3 h-3 sm:w-4 sm:h-4" />
             )}
-            Resume
+            {t('resume')}
           </Button>
           <Button
             variant="outline"
@@ -50,7 +61,7 @@ export function CampaignActions({ campaign, isRetrying, onRetry, onResume }: Cam
             ) : (
               <RotateCw className="w-3 h-3 sm:w-4 sm:h-4" />
             )}
-            Retry
+            {t('retry')}
           </Button>
         </div>
       )}
@@ -63,7 +74,7 @@ export function CampaignActions({ campaign, isRetrying, onRetry, onResume }: Cam
           className="flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium text-xs sm:text-sm"
         >
           <PlayCircle className="w-4 h-4" />
-          Watch Video
+          {t('watch_video')}
         </a>
       )}
     </div>

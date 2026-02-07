@@ -3,6 +3,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { createClient } from "@supabase/supabase-js";
 import { Campaign } from "@/types";
 import { AnalyticsView } from "./components/analytics-view";
+import { getTranslations } from 'next-intl/server';
 
 export const metadata = {
   title: "Analytics | Sophia AI",
@@ -10,6 +11,7 @@ export const metadata = {
 };
 
 export default async function AnalyticsPage() {
+  const t = await getTranslations('dashboard.analytics');
   const supabase = await createServerClient();
   const {
     data: { session },
@@ -45,9 +47,9 @@ export default async function AnalyticsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Analytics Dashboard</h1>
+        <h1 className="text-2xl font-bold text-foreground">{t('title')}</h1>
         <p className="text-muted-foreground">
-          Track performance and statistics of your automated campaigns
+          {t('subtitle')}
         </p>
       </div>
 

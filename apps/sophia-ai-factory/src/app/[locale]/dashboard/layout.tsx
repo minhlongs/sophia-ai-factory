@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import { useTranslations } from 'next-intl';
 import {
   LayoutDashboard,
   PlusCircle,
@@ -17,6 +18,8 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const t = useTranslations('dashboard');
+
   return (
     <div className="min-h-screen bg-background flex">
       {/* Sidebar */}
@@ -24,7 +27,7 @@ export default function DashboardLayout({
         <div className="p-6 border-b border-border">
           <Link href="/" className="flex items-center gap-2">
             <span className="text-xl font-bold bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] bg-clip-text text-transparent">
-              Sophia AI
+              {t('header.brand')}
             </span>
           </Link>
         </div>
@@ -35,42 +38,42 @@ export default function DashboardLayout({
             className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
           >
             <LayoutDashboard className="w-5 h-5" />
-            <span className="font-medium">Overview</span>
+            <span className="font-medium">{t('sidebar.overview')}</span>
           </Link>
           <Link
             href="/dashboard/create"
             className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
           >
             <PlusCircle className="w-5 h-5" />
-            <span className="font-medium">New Project</span>
+            <span className="font-medium">{t('sidebar.new_project')}</span>
           </Link>
           <Link
             href="/dashboard/campaigns"
             className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
           >
             <LayoutDashboard className="w-5 h-5" />
-            <span className="font-medium">Campaigns</span>
+            <span className="font-medium">{t('sidebar.campaigns')}</span>
           </Link>
           <Link
             href="/dashboard/analytics"
             className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
           >
             <BarChart2 className="w-5 h-5" />
-            <span className="font-medium">Analytics</span>
+            <span className="font-medium">{t('sidebar.analytics')}</span>
           </Link>
           <Link
             href="/dashboard/videos"
             className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
           >
             <Video className="w-5 h-5" />
-            <span className="font-medium">My Videos</span>
+            <span className="font-medium">{t('sidebar.my_videos')}</span>
           </Link>
           <Link
             href="/dashboard/settings"
             className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
           >
             <Settings className="w-5 h-5" />
-            <span className="font-medium">Settings</span>
+            <span className="font-medium">{t('sidebar.settings')}</span>
           </Link>
         </nav>
 
@@ -78,7 +81,7 @@ export default function DashboardLayout({
           <HealthIndicator />
           <button className="flex items-center gap-3 px-4 py-3 text-destructive rounded-lg hover:bg-destructive/10 transition-colors w-full">
             <LogOut className="w-5 h-5" />
-            <span className="font-medium">Sign Out</span>
+            <span className="font-medium">{t('sidebar.sign_out')}</span>
           </button>
         </div>
       </aside>
@@ -87,7 +90,7 @@ export default function DashboardLayout({
       <div className="flex-1 flex flex-col">
         {/* Mobile Header (visible only on small screens) */}
         <header className="h-16 bg-card border-b border-border md:hidden flex items-center justify-between px-4">
-          <span className="font-bold text-lg text-foreground">Sophia Dashboard</span>
+          <span className="font-bold text-lg text-foreground">{t('header.title')}</span>
           <ThemeToggle />
         </header>
 
