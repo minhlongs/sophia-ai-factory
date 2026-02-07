@@ -1,8 +1,25 @@
 import { bot } from './telegram-bot-instance'
 import { TelegramFSM, BotState } from './telegram-fsm-state-manager'
+import { checkSubscriptionAuth } from './telegram-auth-middleware'
+import { checkRateLimit } from './telegram-rate-limit-middleware'
+import {
+  buildMainMenuKeyboard,
+  buildSubscribeKeyboard,
+  buildPricingKeyboard,
+  buildDiscoveryFilterKeyboard,
+  toReplyMarkup,
+} from './telegram-keyboard-builder'
+import {
+  formatWelcomeMessage,
+  formatRateLimitMessage,
+  formatPremiumGateMessage,
+  formatErrorMessage,
+} from './telegram-message-formatter'
+import { backupSessionState } from './telegram-state-backup-service'
+import { getSubscriptionStatus } from '@/lib/subscription'
 
 /**
- * Send a message to a chat
+ * Send a plain text message
  */
 async function sendMessage(chatId: string, text: string): Promise<void> {
   try {
@@ -14,22 +31,54 @@ async function sendMessage(chatId: string, text: string): Promise<void> {
 }
 
 /**
+ * Send a message with inline keyboard
+ */
+async function sendMessageWithKeyboard(
+  chatId: string,
+  text: string,
+  keyboard: ReturnType<typeof toReplyMarkup>
+): Promise<void> {
+  try {
+    await bot.telegram.sendMessage(chatId, text, {
+      parse_mode: 'Markdown',
+      reply_markup: keyboard,
+    })
+  } catch (error) {
+    console.error('Error sending message with keyboard:', error)
+    throw error
+  }
+}
+
+/**
+ * Middleware wrapper - checks rate limit before executing handler
+ */
+export async function withMiddleware(
+  chatId: string,
+  handler: () => Promise<void>
+): Promise<void> {
+  // Rate limit check
+  const rateLimit = await checkRateLimit(chatId)
+  if (!rateLimit.allowed) {
+    await sendMessage(chatId, formatRateLimitMessage(rateLimit.resetInSeconds))
+    return
+  }
+  await handler()
+}
+
+/**
  * Handle /start command
  */
 export async function handleStart(chatId: string): Promise<void> {
   await TelegramFSM.clearContext(chatId)
-  await sendMessage(
-    chatId,
-    `🚀 *Welcome to Sophia AI Factory!*
 
-I'm your AI-powered campaign assistant. Here's what I can do:
+  const auth = await checkSubscriptionAuth(chatId)
+  const message = formatWelcomeMessage(auth.tier !== 'BASIC', auth.tier)
 
-• Help you set up email campaigns
-• Analyze campaign performance
-• Provide AI-driven insights
-
-Type /help to see available commands.`
-  )
+  if (auth.tier !== 'BASIC') {
+    await sendMessageWithKeyboard(chatId, message, toReplyMarkup(buildMainMenuKeyboard()))
+  } else {
+    await sendMessage(chatId, message)
+  }
 }
 
 /**
@@ -42,6 +91,8 @@ export async function handleHelp(chatId: string): Promise<void> {
 
 /start - Start fresh conversation
 /help - Show this help message
+/subscribe - Subscribe to premium plan
+/discover - Find trending products
 /email <your@email.com> - Set your email
 /campaign <topic> - Create new campaign
 /status - Check campaign status
@@ -52,35 +103,90 @@ export async function handleHelp(chatId: string): Promise<void> {
 }
 
 /**
+ * Handle /subscribe command - generates Polar.sh checkout link
+ */
+export async function handleSubscribe(chatId: string): Promise<void> {
+  await TelegramFSM.setState(chatId, BotState.AWAITING_SUBSCRIPTION)
+
+  // Check if already subscribed
+  const auth = await checkSubscriptionAuth(chatId)
+  if (auth.tier !== 'BASIC') {
+    const status = auth.tier === 'PREMIUM' ? 'Growth' : 'Premium'
+    await sendMessage(
+      chatId,
+      `✅ You already have an active *${status}* subscription!\n\nUse /status to check details.`
+    )
+    return
+  }
+
+  await sendMessageWithKeyboard(
+    chatId,
+    `💎 *Choose Your Plan*
+
+Unlock the full power of Sophia AI Factory:
+
+🌱 *Starter* - $19/mo
+  Basic trend discovery
+
+🚀 *Growth* - $29/mo
+  Full discovery + campaigns
+
+💎 *Premium* - $49/mo
+  Everything + priority support + exports`,
+    toReplyMarkup(buildPricingKeyboard())
+  )
+}
+
+/**
+ * Handle /discover command (premium) - shows trend discovery filters
+ */
+export async function handleDiscover(chatId: string): Promise<void> {
+  const auth = await checkSubscriptionAuth(chatId, 'PREMIUM')
+
+  if (!auth.authorized) {
+    await sendMessage(chatId, formatPremiumGateMessage('Growth'))
+    return
+  }
+
+  await TelegramFSM.setState(chatId, BotState.DISCOVERING_TRENDS)
+
+  await sendMessageWithKeyboard(
+    chatId,
+    `🔍 *Trend Discovery*
+
+Select a niche to explore trending products:`,
+    toReplyMarkup(buildDiscoveryFilterKeyboard())
+  )
+}
+
+/**
  * Handle /email command or email input based on state
  */
 export async function handleEmail(chatId: string, email: string): Promise<void> {
-  // Check context to verify flow
-  // const context = await TelegramFSM.getContext(chatId)
-
   if (!email) {
     await TelegramFSM.setState(chatId, BotState.AWAITING_EMAIL)
     await sendMessage(chatId, '📧 Please send me your email address:')
     return
   }
 
-  // Basic email validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   if (!emailRegex.test(email)) {
     await sendMessage(chatId, '❌ Invalid email format. Please try again.')
     return
   }
 
-  await TelegramFSM.setContext(chatId, {
-    email,
-    state: BotState.IDLE,
-  })
+  const context = { email, state: BotState.IDLE }
+  await TelegramFSM.setContext(chatId, context)
+
+  // Backup to Postgres on email set
+  const fullContext = await TelegramFSM.getContext(chatId)
+  if (fullContext) {
+    await backupSessionState(chatId, fullContext, 'email_set')
+  }
 
   await sendMessage(
     chatId,
-    `✅ Email saved: ${email}
-
-You can now create campaigns with /campaign <topic>`
+    `✅ Email saved: ${email}\n\nYou can now create campaigns with /campaign <topic>`
   )
 }
 
@@ -150,7 +256,6 @@ export async function handleResults(chatId: string): Promise<void> {
     return
   }
 
-  // TODO: Integrate with actual campaign results from database
   await sendMessage(
     chatId,
     `📈 *Campaign Results*
@@ -162,6 +267,75 @@ Clicks: --
 
 _Results will be updated as your campaign runs._`
   )
+}
+
+/**
+ * Handle inline keyboard callback queries
+ */
+export async function handleCallbackQuery(
+  chatId: string,
+  callbackData: string
+): Promise<void> {
+  const [action, value] = callbackData.split(':')
+
+  switch (action) {
+    case 'cmd':
+      // Route to command handlers
+      switch (value) {
+        case 'discover': await handleDiscover(chatId); break
+        case 'campaign': await handleCampaign(chatId, ''); break
+        case 'status': await handleStatus(chatId); break
+        case 'results': await handleResults(chatId); break
+        case 'help': await handleHelp(chatId); break
+        case 'menu': await handleStart(chatId); break
+        case 'plans': await handleSubscribe(chatId); break
+      }
+      break
+
+    case 'subscribe': {
+      // Generate Polar.sh checkout link for selected tier
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.ai'
+      const checkoutUrl = `${appUrl}/api/checkout?tier=${value}&telegram_chat_id=${chatId}`
+      await sendMessageWithKeyboard(
+        chatId,
+        `💳 Click below to complete your *${value}* subscription:`,
+        toReplyMarkup(buildSubscribeKeyboard(checkoutUrl))
+      )
+      break
+    }
+
+    case 'discover':
+      await TelegramFSM.setContext(chatId, {
+        filters: value === 'all' ? [] : [value],
+        state: BotState.DISCOVERING_TRENDS,
+      })
+      // Stub: Phase 4 will implement actual discovery
+      await sendMessage(
+        chatId,
+        `🔍 Searching for *${value === 'all' ? 'all niches' : value}* trends...\n\n_Discovery engine coming in Phase 4._`
+      )
+      break
+
+    case 'export':
+      await TelegramFSM.setContext(chatId, {
+        exportFormat: value as 'pdf' | 'csv' | 'json',
+        state: BotState.EXPORTING_CAMPAIGN,
+      })
+      await sendMessage(chatId, `📤 Exporting as ${value.toUpperCase()}...\n\n_Export feature coming in Phase 5._`)
+      break
+
+    case 'confirm':
+    case 'cancel':
+      if (action === 'confirm') {
+        const ctx = await TelegramFSM.getContext(chatId)
+        await sendMessage(chatId, `✅ Action confirmed!`)
+        if (ctx) await backupSessionState(chatId, ctx, 'campaign_created')
+      } else {
+        await sendMessage(chatId, '❌ Action cancelled.')
+      }
+      await TelegramFSM.setState(chatId, BotState.IDLE)
+      break
+  }
 }
 
 /**
@@ -183,11 +357,9 @@ export async function handleTextMessage(chatId: string, text: string): Promise<v
       if (text.toLowerCase() === 'confirm') {
         await sendMessage(
           chatId,
-          `✅ Campaign created successfully!
-
-Your campaign "${context.campaignTopic}" is now processing.
-Check /status for updates.`
+          `✅ Campaign created successfully!\n\nYour campaign "${context.campaignTopic}" is now processing.\nCheck /status for updates.`
         )
+        await backupSessionState(chatId, context, 'campaign_created')
         await TelegramFSM.setState(chatId, BotState.IDLE)
       } else if (text.toLowerCase() === '/cancel') {
         await TelegramFSM.setState(chatId, BotState.IDLE)
@@ -208,8 +380,6 @@ Check /status for updates.`
 export async function handleUnknown(chatId: string): Promise<void> {
   await sendMessage(
     chatId,
-    `❓ I didn't understand that command.
-
-Type /help to see available commands.`
+    `❓ I didn't understand that command.\n\nType /help to see available commands.`
   )
 }

@@ -6,13 +6,18 @@ import {
   handleCampaign,
   handleStatus,
   handleResults,
+  handleSubscribe,
+  handleDiscover,
   handleTextMessage,
   handleUnknown,
+  handleCallbackQuery,
+  withMiddleware,
 } from '@/lib/telegram/telegram-command-handlers'
 
 /**
  * Telegram Webhook Handler
  * Processes incoming updates from Telegram Bot API
+ * Supports: text commands, callback queries (inline keyboards)
  */
 export async function POST(request: NextRequest) {
   try {
@@ -25,40 +30,52 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Handle callback queries (inline keyboard button clicks)
+    if (body.callback_query) {
+      const chatId = body.callback_query.message?.chat?.id?.toString()
+      const callbackData = body.callback_query.data
+
+      if (chatId && callbackData) {
+        await withMiddleware(chatId, () => handleCallbackQuery(chatId, callbackData))
+      }
+      return NextResponse.json({ ok: true })
+    }
+
     // Extract message from update
     const message = body.message
     if (!message?.text) {
-      // No text message, return OK to acknowledge
       return NextResponse.json({ ok: true })
     }
 
     const chatId = message.chat.id.toString()
     const text = message.text.trim()
 
-    console.log(`[Telegram] Update from ${chatId}: ${text}`)
-
-    // Route commands
-    if (text === '/start') {
-      await handleStart(chatId)
-    } else if (text === '/help') {
-      await handleHelp(chatId)
-    } else if (text.startsWith('/email')) {
-      const email = text.replace('/email', '').trim()
-      await handleEmail(chatId, email)
-    } else if (text.startsWith('/campaign')) {
-      const topic = text.replace('/campaign', '').trim()
-      await handleCampaign(chatId, topic)
-    } else if (text === '/status') {
-      await handleStatus(chatId)
-    } else if (text === '/results') {
-      await handleResults(chatId)
-    } else if (text.startsWith('/')) {
-      // Unknown command
-      await handleUnknown(chatId)
-    } else {
-      // Regular text message - handle based on FSM state
-      await handleTextMessage(chatId, text)
-    }
+    // Route commands through middleware (rate limiting)
+    await withMiddleware(chatId, async () => {
+      if (text === '/start') {
+        await handleStart(chatId)
+      } else if (text === '/help') {
+        await handleHelp(chatId)
+      } else if (text === '/subscribe') {
+        await handleSubscribe(chatId)
+      } else if (text === '/discover') {
+        await handleDiscover(chatId)
+      } else if (text.startsWith('/email')) {
+        const email = text.replace('/email', '').trim()
+        await handleEmail(chatId, email)
+      } else if (text.startsWith('/campaign')) {
+        const topic = text.replace('/campaign', '').trim()
+        await handleCampaign(chatId, topic)
+      } else if (text === '/status') {
+        await handleStatus(chatId)
+      } else if (text === '/results') {
+        await handleResults(chatId)
+      } else if (text.startsWith('/')) {
+        await handleUnknown(chatId)
+      } else {
+        await handleTextMessage(chatId, text)
+      }
+    })
 
     return NextResponse.json({ ok: true })
   } catch (error) {
