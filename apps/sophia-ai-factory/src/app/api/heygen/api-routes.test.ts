@@ -3,32 +3,42 @@ import { NextRequest } from 'next/server';
 import { GET as getAvatars } from './avatars/route';
 import { POST as createVideo } from './create-video/route';
 import { GET as getStatus } from './status/[id]/route';
-// import { GET as getVoices } from './voices/route';
-import * as heygenClientModule from '@/lib/heygen/heygen-client';
 
-// Mock the heygen client module
-vi.mock('@/lib/heygen/heygen-client', () => ({
-  getHeyGenClient: vi.fn()
+// Mock Supabase server client (used by create-video route for auth)
+vi.mock('@/lib/supabase/server', () => ({
+  createClient: vi.fn(),
 }));
 
-describe('HeyGen API Routes', () => {
-  interface MockHeyGenClient {
-    listAvatars: ReturnType<typeof vi.fn>;
-    listVoices: ReturnType<typeof vi.fn>;
-    createVideo: ReturnType<typeof vi.fn>;
-    getVideoStatus: ReturnType<typeof vi.fn>;
-  }
+// Mock ServiceFactory (used by all heygen routes)
+vi.mock('@/lib/services/factory', () => ({
+  ServiceFactory: {
+    getVideoService: vi.fn(),
+  },
+}));
 
-  let mockClient: MockHeyGenClient;
+import { createClient } from '@/lib/supabase/server';
+import { ServiceFactory } from '@/lib/services/factory';
+
+describe('HeyGen API Routes', () => {
+  const mockVideoService = {
+    listAvatars: vi.fn(),
+    listVoices: vi.fn(),
+    createVideo: vi.fn(),
+    getVideoStatus: vi.fn(),
+  };
 
   beforeEach(() => {
-    mockClient = {
-      listAvatars: vi.fn(),
-      listVoices: vi.fn(),
-      createVideo: vi.fn(),
-      getVideoStatus: vi.fn(),
-    };
-    vi.mocked(heygenClientModule.getHeyGenClient).mockReturnValue(mockClient as unknown as ReturnType<typeof heygenClientModule.getHeyGenClient>);
+    vi.mocked(ServiceFactory.getVideoService).mockReturnValue(mockVideoService as never);
+
+    // Default: authenticated user for create-video tests
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'user-1', email: 'test@test.com' } },
+          error: null,
+        }),
+      },
+    } as never);
   });
 
   afterEach(() => {
@@ -38,7 +48,7 @@ describe('HeyGen API Routes', () => {
   describe('GET /api/heygen/avatars', () => {
     it('should return avatars when client is configured', async () => {
       const mockAvatars = [{ avatar_id: '1', name: 'Test Avatar' }];
-      mockClient.listAvatars.mockResolvedValue(mockAvatars);
+      mockVideoService.listAvatars.mockResolvedValue(mockAvatars);
 
       const response = await getAvatars();
       const data = await response.json();
@@ -47,8 +57,8 @@ describe('HeyGen API Routes', () => {
       expect(data).toEqual({ avatars: mockAvatars });
     });
 
-    it('should return empty list when client is missing', async () => {
-      vi.mocked(heygenClientModule.getHeyGenClient).mockReturnValue(null);
+    it('should return empty list when service returns empty', async () => {
+      mockVideoService.listAvatars.mockResolvedValue([]);
 
       const response = await getAvatars();
       const data = await response.json();
@@ -58,7 +68,7 @@ describe('HeyGen API Routes', () => {
     });
 
     it('should handle errors gracefully', async () => {
-      mockClient.listAvatars.mockRejectedValue(new Error('API Error'));
+      mockVideoService.listAvatars.mockRejectedValue(new Error('API Error'));
 
       // Suppress console.error
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -75,7 +85,7 @@ describe('HeyGen API Routes', () => {
 
   describe('POST /api/heygen/create-video', () => {
     it('should create video when valid data provided', async () => {
-      mockClient.createVideo.mockResolvedValue('vid_123');
+      mockVideoService.createVideo.mockResolvedValue('vid_123');
 
       const req = new NextRequest('http://localhost/api/heygen/create-video', {
         method: 'POST',
@@ -91,20 +101,28 @@ describe('HeyGen API Routes', () => {
 
       expect(response.status).toBe(200);
       expect(data).toEqual({ videoId: 'vid_123' });
-      expect(mockClient.createVideo).toHaveBeenCalledWith({
+      expect(mockVideoService.createVideo).toHaveBeenCalledWith({
         avatarId: 'av1',
         voiceId: 'v1',
         script: 'test script',
-        title: undefined
+        title: 'Video for test@test.com'
       });
     });
 
-    it('should return 500 if client missing', async () => {
-      vi.mocked(heygenClientModule.getHeyGenClient).mockReturnValue(null);
-      const req = new NextRequest('http://localhost', { method: 'POST' });
+    it('should return 500 if service unavailable', async () => {
+      vi.mocked(ServiceFactory.getVideoService).mockImplementation(() => {
+        throw new Error('No video service');
+      });
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      const req = new NextRequest('http://localhost', {
+        method: 'POST',
+        body: JSON.stringify({ avatarId: 'av1', voiceId: 'v1', script: 'test' })
+      });
 
       const response = await createVideo(req);
       expect(response.status).toBe(500);
+      consoleSpy.mockRestore();
     });
 
     it('should return 400 if required fields missing', async () => {
@@ -118,28 +136,28 @@ describe('HeyGen API Routes', () => {
     });
 
     it('should handle errors', async () => {
-        mockClient.createVideo.mockRejectedValue(new Error('Failed'));
-        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      mockVideoService.createVideo.mockRejectedValue(new Error('Failed'));
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-        const req = new NextRequest('http://localhost', {
-            method: 'POST',
-            body: JSON.stringify({
-              avatarId: 'av1',
-              voiceId: 'v1',
-              script: 'test'
-            })
-          });
+      const req = new NextRequest('http://localhost', {
+        method: 'POST',
+        body: JSON.stringify({
+          avatarId: 'av1',
+          voiceId: 'v1',
+          script: 'test'
+        })
+      });
 
-          const response = await createVideo(req);
-          expect(response.status).toBe(500);
-          consoleSpy.mockRestore();
+      const response = await createVideo(req);
+      expect(response.status).toBe(500);
+      consoleSpy.mockRestore();
     });
   });
 
   describe('GET /api/heygen/status/[id]', () => {
     it('should return status', async () => {
       const mockStatus = { status: 'completed', video_url: 'http://url' };
-      mockClient.getVideoStatus.mockResolvedValue(mockStatus);
+      mockVideoService.getVideoStatus.mockResolvedValue(mockStatus);
 
       const req = new NextRequest('http://localhost');
       const params = Promise.resolve({ id: 'vid_123' });
@@ -149,28 +167,33 @@ describe('HeyGen API Routes', () => {
 
       expect(response.status).toBe(200);
       expect(data).toEqual(mockStatus);
-      expect(mockClient.getVideoStatus).toHaveBeenCalledWith('vid_123');
+      expect(mockVideoService.getVideoStatus).toHaveBeenCalledWith('vid_123');
     });
 
-    it('should return 500 if client missing', async () => {
-        vi.mocked(heygenClientModule.getHeyGenClient).mockReturnValue(null);
-        const req = new NextRequest('http://localhost');
-        const params = Promise.resolve({ id: 'vid_123' });
+    it('should return 500 if service unavailable', async () => {
+      vi.mocked(ServiceFactory.getVideoService).mockImplementation(() => {
+        throw new Error('No video service');
+      });
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-        const response = await getStatus(req, { params });
-        expect(response.status).toBe(500);
+      const req = new NextRequest('http://localhost');
+      const params = Promise.resolve({ id: 'vid_123' });
+
+      const response = await getStatus(req, { params });
+      expect(response.status).toBe(500);
+      consoleSpy.mockRestore();
     });
 
     it('should handle errors', async () => {
-        mockClient.getVideoStatus.mockRejectedValue(new Error('Failed'));
-        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      mockVideoService.getVideoStatus.mockRejectedValue(new Error('Failed'));
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-        const req = new NextRequest('http://localhost');
-        const params = Promise.resolve({ id: 'vid_123' });
+      const req = new NextRequest('http://localhost');
+      const params = Promise.resolve({ id: 'vid_123' });
 
-        const response = await getStatus(req, { params });
-        expect(response.status).toBe(500);
-        consoleSpy.mockRestore();
+      const response = await getStatus(req, { params });
+      expect(response.status).toBe(500);
+      consoleSpy.mockRestore();
     });
   });
 });

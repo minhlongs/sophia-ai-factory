@@ -11,8 +11,12 @@ vi.mock('@/lib/telegram/telegram-command-handlers', () => ({
   handleCampaign: vi.fn(),
   handleStatus: vi.fn(),
   handleResults: vi.fn(),
+  handleSubscribe: vi.fn(),
+  handleDiscover: vi.fn(),
   handleUnknown: vi.fn(),
   handleTextMessage: vi.fn(),
+  handleCallbackQuery: vi.fn(),
+  withMiddleware: vi.fn(async (_chatId: string, handler: () => Promise<void>) => handler()),
 }))
 
 describe('Telegram Webhook Route', () => {
