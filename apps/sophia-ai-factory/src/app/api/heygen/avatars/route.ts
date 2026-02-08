@@ -2,9 +2,8 @@ import { NextResponse } from "next/server";
 import { ServiceFactory } from "@/lib/services/factory";
 
 export async function GET() {
-  const videoService = ServiceFactory.getVideoService();
-
   try {
+    const videoService = ServiceFactory.getVideoService();
     const avatars = await videoService.listAvatars();
     return NextResponse.json({ avatars });
   } catch (error) {

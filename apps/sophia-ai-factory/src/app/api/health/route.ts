@@ -4,6 +4,7 @@ import { redisHelpers } from '@/lib/clients/upstash-redis-client';
 import type { HealthResponse } from '@/types/health';
 
 export async function GET(req: NextRequest) {
+  try {
   const searchParams = req.nextUrl.searchParams;
   const token = searchParams.get('token');
   const authHeader = req.headers.get('authorization');
@@ -120,4 +121,11 @@ export async function GET(req: NextRequest) {
   return NextResponse.json(healthStatus, {
     status: healthStatus.status === 'unhealthy' ? 503 : 200,
   });
+  } catch (error) {
+    console.error("Health check error:", error);
+    return NextResponse.json(
+      { status: 'unhealthy', error: 'Health check failed' },
+      { status: 500 }
+    );
+  }
 }
