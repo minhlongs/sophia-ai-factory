@@ -19,6 +19,7 @@ interface CampaignFormProps {
   onSubmit: (e: FormEvent<HTMLFormElement>) => Promise<void>;
   loading: boolean;
   error: string | null;
+  fieldErrors?: Record<string, string>;
   upgradeRequired: { required: boolean; tier: Tier };
   onChangeTemplate: () => void;
 }
@@ -32,6 +33,7 @@ export function CampaignForm({
   onSubmit,
   loading,
   error,
+  fieldErrors = {},
   upgradeRequired,
   onChangeTemplate
 }: CampaignFormProps) {
@@ -64,8 +66,13 @@ export function CampaignForm({
           value={formData.title}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
           placeholder={selectedTemplate.defaults.title}
-          className="w-full px-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:outline-none bg-background text-foreground"
+          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:outline-none bg-background text-foreground ${
+            fieldErrors.title ? "border-destructive" : "border-input"
+          }`}
         />
+        {fieldErrors.title && (
+          <p className="text-xs text-destructive">{fieldErrors.title}</p>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -80,9 +87,15 @@ export function CampaignForm({
           value={formData.topic}
           onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
           placeholder={selectedTemplate.defaults.title}
-          className="w-full px-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:outline-none bg-background text-foreground"
+          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:outline-none bg-background text-foreground ${
+            fieldErrors.topic ? "border-destructive" : "border-input"
+          }`}
         />
-        <p className="text-xs text-muted-foreground">{t('video_topic_hint')}</p>
+        {fieldErrors.topic ? (
+          <p className="text-xs text-destructive">{fieldErrors.topic}</p>
+        ) : (
+          <p className="text-xs text-muted-foreground">{t('video_topic_hint')}</p>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -97,9 +110,15 @@ export function CampaignForm({
           value={formData.audience}
           onChange={(e) => setFormData({ ...formData, audience: e.target.value })}
           placeholder={selectedTemplate.defaults.audience}
-          className="w-full px-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:outline-none bg-background text-foreground"
+          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:outline-none bg-background text-foreground ${
+            fieldErrors.audience ? "border-destructive" : "border-input"
+          }`}
         />
-        <p className="text-xs text-muted-foreground">{t('target_audience_hint')}</p>
+        {fieldErrors.audience ? (
+          <p className="text-xs text-destructive">{fieldErrors.audience}</p>
+        ) : (
+          <p className="text-xs text-muted-foreground">{t('target_audience_hint')}</p>
+        )}
       </div>
 
       <div className="space-y-2">

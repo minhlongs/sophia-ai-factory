@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createCampaign } from "@/app/actions/campaigns";
+import { createCampaignSchema } from "@/lib/campaigns/validation";
 import { CampaignTemplate, applyTemplateDefaults } from "@/lib/templates/campaign-templates";
 import { Tier } from "@/types";
 import { TemplateSelector } from "./create-campaign/template-selector";
@@ -19,6 +20,7 @@ export function CreateProjectFormWithTemplates({ templates }: CreateProjectFormP
   const [selectedTemplate, setSelectedTemplate] = useState<CampaignTemplate | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [upgradeRequired, setUpgradeRequired] = useState<{ required: boolean; tier: Tier }>({ required: false, tier: "BASIC" });
 
   // Pre-fill form with template defaults when template selected
@@ -37,15 +39,37 @@ export function CreateProjectFormWithTemplates({ templates }: CreateProjectFormP
       audience: defaults.audience,
       title: defaults.title
     });
+    setFieldErrors({});
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setFieldErrors({});
     setUpgradeRequired({ required: false, tier: "BASIC" });
 
     const formDataObj = new FormData(e.currentTarget);
+
+    // Client-side Zod validation
+    const rawData = {
+      title: formDataObj.get("title") as string,
+      topic: formDataObj.get("topic") as string,
+      audience: formDataObj.get("audience") as string,
+      platforms: selectedPlatforms,
+    };
+
+    const validation = createCampaignSchema.safeParse(rawData);
+    if (!validation.success) {
+      const errors: Record<string, string> = {};
+      for (const issue of validation.error.issues) {
+        const field = issue.path[0] as string;
+        errors[field] = issue.message;
+      }
+      setFieldErrors(errors);
+      setLoading(false);
+      return;
+    }
 
     // Add template_id if template selected
     if (selectedTemplate) {
@@ -95,6 +119,7 @@ export function CreateProjectFormWithTemplates({ templates }: CreateProjectFormP
           onSubmit={handleSubmit}
           loading={loading}
           error={error}
+          fieldErrors={fieldErrors}
           upgradeRequired={upgradeRequired}
           onChangeTemplate={() => setSelectedTemplate(null)}
         />

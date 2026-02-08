@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createCampaign } from "@/app/actions/campaigns";
+import { createCampaignSchema } from "@/lib/campaigns/validation";
 import { Button } from "@/components/ui/button";
 import { Loader2, Sparkles } from "lucide-react";
 
@@ -10,13 +11,34 @@ export function CreateProjectForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setFieldErrors({});
 
     const formData = new FormData(e.currentTarget);
+
+    // Client-side Zod validation
+    const rawData = {
+      title: formData.get("topic") as string,
+      topic: formData.get("topic") as string,
+      audience: formData.get("audience") as string,
+    };
+
+    const validation = createCampaignSchema.safeParse(rawData);
+    if (!validation.success) {
+      const errors: Record<string, string> = {};
+      for (const issue of validation.error.issues) {
+        const field = issue.path[0] as string;
+        errors[field] = issue.message;
+      }
+      setFieldErrors(errors);
+      setLoading(false);
+      return;
+    }
 
     try {
       const result = await createCampaign(formData);
@@ -47,9 +69,15 @@ export function CreateProjectForm() {
           type="text"
           required
           placeholder="e.g. 5 ways to save money"
-          className="w-full px-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:outline-none bg-background text-foreground"
+          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:outline-none bg-background text-foreground ${
+            fieldErrors.topic ? "border-destructive" : "border-input"
+          }`}
         />
-        <p className="text-xs text-muted-foreground">What should this video be about?</p>
+        {fieldErrors.topic ? (
+          <p className="text-xs text-destructive">{fieldErrors.topic}</p>
+        ) : (
+          <p className="text-xs text-muted-foreground">What should this video be about?</p>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -60,7 +88,9 @@ export function CreateProjectForm() {
           id="audience"
           name="audience"
           required
-          className="w-full px-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:outline-none bg-background text-foreground"
+          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:outline-none bg-background text-foreground ${
+            fieldErrors.audience ? "border-destructive" : "border-input"
+          }`}
         >
           <option value="">Select an audience...</option>
           <option value="entrepreneurs">Entrepreneurs</option>
@@ -69,6 +99,9 @@ export function CreateProjectForm() {
           <option value="tech-enthusiasts">Tech Enthusiasts</option>
           <option value="general">General Audience</option>
         </select>
+        {fieldErrors.audience && (
+          <p className="text-xs text-destructive">{fieldErrors.audience}</p>
+        )}
       </div>
 
       {error && (
