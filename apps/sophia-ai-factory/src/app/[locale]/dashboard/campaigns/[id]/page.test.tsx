@@ -42,6 +42,15 @@ vi.mock('@/lib/supabase/server', () => ({
   createServerClient: vi.fn(() => Promise.resolve(mockSupabase)),
 }));
 
+vi.mock('next-intl/server', () => ({
+  getTranslations: vi.fn().mockResolvedValue((key: string) => key),
+  getFormatter: vi.fn().mockResolvedValue({
+    dateTime: (d: Date) => d.toISOString(),
+    number: (n: number) => String(n),
+    relativeTime: (d: Date) => d.toISOString(),
+  }),
+}));
+
 // Mock environment variables just in case
 const originalEnv = process.env;
 
@@ -133,7 +142,7 @@ describe('CampaignDetailPage', () => {
     render(Component);
 
     expect(screen.getByText('Failed Campaign')).toBeDefined();
-    expect(screen.getByText('Retry Generation')).toBeDefined();
+    expect(screen.getByText('retry')).toBeDefined();
     expect(screen.getByTestId('video-preview').textContent).toBe('failed');
   });
 });

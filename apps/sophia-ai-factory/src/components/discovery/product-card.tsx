@@ -1,5 +1,3 @@
-'use client'
-
 import { Product } from './types'
 import { GemBadge } from './gem-badge'
 import { TrendingUp } from 'lucide-react'

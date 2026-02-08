@@ -1,5 +1,3 @@
-"use client";
-
 export function MockModeIndicator() {
   const isMock = process.env.NEXT_PUBLIC_MOCK_AI_SERVICES === "true";
 
