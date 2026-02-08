@@ -1,3 +1,4 @@
+import { createClient } from '@supabase/supabase-js';
 import { Tier } from "@/types";
 
 interface GenerateVoiceoverInput {
@@ -102,21 +103,17 @@ async function generateElevenLabsVoiceover(
     throw new Error(`ElevenLabs API failed: ${response.status} - ${errorText}`);
   }
 
-  // Get audio as blob
-  const audioBlob = await response.blob();
+  // Get audio as ArrayBuffer for Supabase Storage upload
+  const audioBuffer = await response.arrayBuffer();
 
-  // In production, you'd upload this to your storage (S3, Supabase Storage, etc.)
-  // For now, we'll use a temporary URL approach
-  // TODO: Implement proper file upload to permanent storage
-
-  // Convert blob to base64 data URL (temporary solution)
-  const audioBase64 = await blobToBase64(audioBlob);
+  // Upload to Supabase Storage for permanent storage
+  const audioUrl = await uploadAudioToStorage(new Uint8Array(audioBuffer));
 
   // Estimate duration (ElevenLabs doesn't return duration in API response)
   const estimatedDuration = Math.floor(text.length / 15);
 
   return {
-    audio_url: audioBase64, // TODO: Replace with permanent storage URL
+    audio_url: audioUrl,
     duration: estimatedDuration
   };
 }
@@ -136,13 +133,34 @@ function getDefaultVoiceId(tier: Tier): string {
 }
 
 /**
- * Convert blob to base64 data URL
+ * Upload audio buffer to Supabase Storage and return the public URL.
+ * Uses service role key for server-side uploads.
  */
-async function blobToBase64(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
+async function uploadAudioToStorage(audioData: Uint8Array): Promise<string> {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
+  const fileName = `voiceover-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.mp3`;
+  const filePath = `voiceovers/${fileName}`;
+
+  const { error: uploadError } = await supabase
+    .storage
+    .from('audio')
+    .upload(filePath, audioData, {
+      contentType: 'audio/mpeg',
+      upsert: false
+    });
+
+  if (uploadError) {
+    throw new Error(`Supabase Storage upload failed: ${uploadError.message}`);
+  }
+
+  const { data: urlData } = supabase
+    .storage
+    .from('audio')
+    .getPublicUrl(filePath);
+
+  return urlData.publicUrl;
 }

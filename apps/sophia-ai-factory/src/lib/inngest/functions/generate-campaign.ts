@@ -4,7 +4,7 @@ import { startVideoGeneration, checkVideoGenerationStatus } from "@/lib/ai/video
 import { sendTelegramMessage } from "@/lib/telegram/telegram-client";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { CampaignStatus } from "@/types";
-import { Database } from "@/lib/supabase/types";
+import { Database, Json } from "@/lib/supabase/types";
 
 // Lazy init Supabase Admin client for build compatibility
 let _supabase: SupabaseClient<Database> | null = null;
@@ -39,17 +39,15 @@ export const generateCampaign = inngest.createFunction(
         updated_at: new Date().toISOString(),
       };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if (data?.script_content) updatePayload.script_content = data.script_content as any;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if (data?.audio_url) (updatePayload as any).audio_url = data.audio_url as string;
+      if (data?.script_content) updatePayload.script_content = data.script_content as Json;
+      if (data?.audio_url) updatePayload.audio_url = data.audio_url as string;
       if (data?.video_url) updatePayload.video_url = data.video_url as string;
       if (data?.thumbnail_url) updatePayload.thumbnail_url = data.thumbnail_url as string;
       if (data?.error_message) updatePayload.error_message = data.error_message as string;
 
-      const { error } = await (getSupabase()
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .from("campaigns") as any)
+      const { error } = await getSupabase()
+        .from("campaigns")
+        // @ts-expect-error Database type missing Relationships for Supabase generic inference
         .update(updatePayload)
         .eq("id", campaignId);
 
@@ -66,8 +64,14 @@ export const generateCampaign = inngest.createFunction(
         .single();
 
       // Cast to expected type to avoid inference issues
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const profile = data as { telegram_chat_id: string | null; settings: any } | null;
+      const profile = data as {
+        telegram_chat_id: string | null;
+        settings: {
+          notifications?: {
+            telegram?: { enabled?: boolean };
+          };
+        } | null;
+      } | null;
 
       if (error || !profile || !profile.telegram_chat_id) {
         console.log(`No telegram chat ID found for user ${userId}`);

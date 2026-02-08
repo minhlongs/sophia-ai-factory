@@ -12,8 +12,14 @@ vi.mock('@/lib/heygen/heygen-client', () => ({
 }));
 
 describe('HeyGen API Routes', () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let mockClient: any;
+  interface MockHeyGenClient {
+    listAvatars: ReturnType<typeof vi.fn>;
+    listVoices: ReturnType<typeof vi.fn>;
+    createVideo: ReturnType<typeof vi.fn>;
+    getVideoStatus: ReturnType<typeof vi.fn>;
+  }
+
+  let mockClient: MockHeyGenClient;
 
   beforeEach(() => {
     mockClient = {
@@ -22,8 +28,7 @@ describe('HeyGen API Routes', () => {
       createVideo: vi.fn(),
       getVideoStatus: vi.fn(),
     };
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (heygenClientModule.getHeyGenClient as any).mockReturnValue(mockClient);
+    vi.mocked(heygenClientModule.getHeyGenClient).mockReturnValue(mockClient as unknown as ReturnType<typeof heygenClientModule.getHeyGenClient>);
   });
 
   afterEach(() => {
@@ -43,8 +48,7 @@ describe('HeyGen API Routes', () => {
     });
 
     it('should return empty list when client is missing', async () => {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (heygenClientModule.getHeyGenClient as any).mockReturnValue(null);
+      vi.mocked(heygenClientModule.getHeyGenClient).mockReturnValue(null);
 
       const response = await getAvatars();
       const data = await response.json();
@@ -96,8 +100,7 @@ describe('HeyGen API Routes', () => {
     });
 
     it('should return 500 if client missing', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (heygenClientModule.getHeyGenClient as any).mockReturnValue(null);
+      vi.mocked(heygenClientModule.getHeyGenClient).mockReturnValue(null);
       const req = new NextRequest('http://localhost', { method: 'POST' });
 
       const response = await createVideo(req);
@@ -150,8 +153,7 @@ describe('HeyGen API Routes', () => {
     });
 
     it('should return 500 if client missing', async () => {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (heygenClientModule.getHeyGenClient as any).mockReturnValue(null);
+        vi.mocked(heygenClientModule.getHeyGenClient).mockReturnValue(null);
         const req = new NextRequest('http://localhost');
         const params = Promise.resolve({ id: 'vid_123' });
 

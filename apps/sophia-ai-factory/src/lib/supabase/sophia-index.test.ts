@@ -15,10 +15,22 @@ describe('sophiaIndex', () => {
   })
 
   // Helper to create a chainable mock builder
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const createMockBuilder = (result: any = { data: [], error: null }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const builder: any = {
+  interface MockQueryResult {
+    data: unknown;
+    error: null | { message: string };
+  }
+  interface MockBuilder {
+    select: ReturnType<typeof vi.fn>;
+    order: ReturnType<typeof vi.fn>;
+    limit: ReturnType<typeof vi.fn>;
+    eq: ReturnType<typeof vi.fn>;
+    gte: ReturnType<typeof vi.fn>;
+    textSearch: ReturnType<typeof vi.fn>;
+    single: ReturnType<typeof vi.fn>;
+    then: (resolve: (value: unknown) => unknown) => Promise<unknown>;
+  }
+  const createMockBuilder = (result: MockQueryResult = { data: [], error: null }): MockBuilder => {
+    const builder: MockBuilder = {
       select: vi.fn().mockReturnThis(),
       order: vi.fn().mockReturnThis(),
       limit: vi.fn().mockReturnThis(),
@@ -26,8 +38,7 @@ describe('sophiaIndex', () => {
       gte: vi.fn().mockReturnThis(),
       textSearch: vi.fn().mockReturnThis(),
       single: vi.fn().mockReturnThis(),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      then: (resolve: any) => Promise.resolve(result).then(resolve)
+      then: (resolve: (value: unknown) => unknown) => Promise.resolve(result).then(resolve)
     }
     return builder
   }
