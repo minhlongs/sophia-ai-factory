@@ -18,8 +18,19 @@ vi.mock('next/cache', () => ({
 }));
 
 describe('Settings Server Actions', () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const mockSupabase: any = {
+  interface MockSupabaseClient {
+    auth: {
+      getUser: ReturnType<typeof vi.fn>;
+      updateUser: ReturnType<typeof vi.fn>;
+    };
+    from: ReturnType<typeof vi.fn>;
+    select: ReturnType<typeof vi.fn>;
+    eq: ReturnType<typeof vi.fn>;
+    single: ReturnType<typeof vi.fn>;
+    update: ReturnType<typeof vi.fn>;
+  }
+
+  const mockSupabase: MockSupabaseClient = {
     auth: {
       getUser: vi.fn(),
       updateUser: vi.fn(),
@@ -33,8 +44,7 @@ describe('Settings Server Actions', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (createClient as any).mockResolvedValue(mockSupabase);
+    vi.mocked(createClient).mockResolvedValue(mockSupabase as unknown as Awaited<ReturnType<typeof createClient>>);
 
     // Reset chainable mocks
     mockSupabase.from.mockReturnThis();

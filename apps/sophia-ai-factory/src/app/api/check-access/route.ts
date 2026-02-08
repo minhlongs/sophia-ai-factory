@@ -2,18 +2,37 @@ import { NextRequest, NextResponse } from "next/server";
 import { FeatureFlag, Tier } from "@/types";
 import { checkTierAccess } from "@/lib/features";
 import { tierGuard, LimitType } from "@/lib/tier-guard";
+import { createClient } from "@/lib/supabase/server";
+import { getUserTier } from "@/lib/subscription";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const feature = searchParams.get("feature") as FeatureFlag | null;
   const limitType = searchParams.get("limit") as LimitType | null;
 
-  // TODO: In a real implementation, we would get the user's tier from the session/auth
-  // For now, we'll check the 'tier' query param for testing, or default to BASIC
-  const tierParam = searchParams.get("tier") as Tier | null;
-  const userTier: Tier = tierParam || "BASIC";
-  // Mock userId for limit checks if passed, or default to mock-user
-  const userId = searchParams.get("userId") || "mock-user-id";
+  // Get user tier from auth session, fall back to query param for dev/testing
+  let userTier: Tier = "BASIC";
+  let userId = "mock-user-id";
+
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (user) {
+      userId = user.id;
+      userTier = await getUserTier(user.id);
+    } else {
+      // Fallback to query params for development/testing only
+      const tierParam = searchParams.get("tier") as Tier | null;
+      userTier = tierParam || "BASIC";
+      userId = searchParams.get("userId") || "mock-user-id";
+    }
+  } catch {
+    // Auth check failed - fall back to query params
+    const tierParam = searchParams.get("tier") as Tier | null;
+    userTier = tierParam || "BASIC";
+    userId = searchParams.get("userId") || "mock-user-id";
+  }
 
   if (limitType) {
     const limitCheck = await tierGuard.checkLimit(userId, limitType);
