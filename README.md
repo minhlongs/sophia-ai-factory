@@ -1,30 +1,36 @@
-# Mekong CLI - Lean Revenue Architecture
+# Sophia AI Factory
 
-> **M Bootstrap Plan** - Payment-first, revenue-generating architecture
+> AI Video Factory — SaaS platform for automated AI video creation
 > Binh Pháp Venture Studio 2026
 
 ## Quick Start
 
 ```bash
-# Install dependencies
-poetry install
-cd frontend && npm install
-
-# Start development servers
-npm run dev  # Runs API + Frontend concurrently
+cd apps/sophia-ai-factory
+npm install
+npm run dev
 ```
 
 ## Structure
 
-- `api/` - FastAPI payment backend
-- `frontend/` - Next.js landing page
-- `products/` - Sellable product ZIPs
-- `automation/` - Revenue automation scripts
-- `packages/` - Monorepo shared packages
+- `apps/sophia-ai-factory/` - Next.js 16 App Router (main application)
+- `docs/` - Project documentation
+- `plans/` - Implementation plans & reports
+
+## Tech Stack
+
+- **Framework**: Next.js 16 (App Router, React 19, TypeScript)
+- **Database**: Supabase (Postgres + Auth + Storage)
+- **Payments**: Polar.sh (subscriptions, webhooks)
+- **Bot**: Telegram (Telegraf + webhook mode)
+- **AI Services**: HeyGen, ElevenLabs, OpenRouter
+- **Background Jobs**: Inngest
+- **i18n**: next-intl
+- **Styling**: Tailwind CSS 4
 
 ## Revenue Stack
 
-- PayPal + Stripe + Gumroad integrations
-- License generation system
-- Automated fulfillment
-- Revenue tracking & analytics
+- Polar.sh subscription management (Starter / Growth / Premium)
+- PPP (Purchasing Power Parity) pricing
+- Telegram bot for user onboarding & commands
+- Automated subscription lifecycle notifications

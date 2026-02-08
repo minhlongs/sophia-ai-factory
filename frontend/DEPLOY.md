@@ -25,9 +25,10 @@ Create `vercel.json` (optional):
 Add these in Vercel project settings:
 
 ```
-# Stripe (for checkout)
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_xxxxx
-STRIPE_SECRET_KEY=sk_live_xxxxx
+# Polar.sh (payments)
+POLAR_ACCESS_TOKEN=polar_at_xxxxx
+POLAR_ORGANIZATION_ID=xxxxx
+POLAR_WEBHOOK_SECRET=whsec_xxxxx
 
 # Analytics (optional)
 NEXT_PUBLIC_GA_TRACKING_ID=G-XXXXXXXXXX
@@ -36,13 +37,13 @@ NEXT_PUBLIC_GA_TRACKING_ID=G-XXXXXXXXXX
 ## Custom Domain Setup
 
 1. Go to Vercel Dashboard → Project → Settings → Domains
-2. Add custom domain: `mekong-marketing.cc`
+2. Add custom domain
 3. Update DNS records (provided by Vercel):
    ```
    Type: A
    Name: @
    Value: 76.76.21.21
-   
+
    Type: CNAME
    Name: www
    Value: cname.vercel-dns.com
@@ -50,12 +51,12 @@ NEXT_PUBLIC_GA_TRACKING_ID=G-XXXXXXXXXX
 
 ## Post-Deployment Checklist
 
-- [ ] Test all pages (/, /checkout, /docs)
+- [ ] Test all pages (/, /dashboard, /settings)
 - [ ] Verify mobile responsiveness
 - [ ] Check Lighthouse scores
 - [ ] Set up Google Analytics
 - [ ] Enable HTTPS (auto by Vercel)
-- [ ] Test Stripe checkout flow
+- [ ] Test Polar.sh checkout flow
 
 ## Rollback (if needed)
 
