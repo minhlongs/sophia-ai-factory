@@ -4,16 +4,14 @@ import { createClient } from "@/lib/supabase/server";
 import { createVideoSchema } from "@/lib/schemas";
 
 export async function POST(req: Request) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const videoService = ServiceFactory.getVideoService();
-
   try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await req.json();
 
     // Validate with Zod
@@ -27,6 +25,7 @@ export async function POST(req: Request) {
 
     const { avatarId, voiceId, script, title } = validation.data;
 
+    const videoService = ServiceFactory.getVideoService();
     const videoId = await videoService.createVideo({
       avatarId,
       voiceId,
