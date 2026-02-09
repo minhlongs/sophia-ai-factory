@@ -130,6 +130,24 @@
       "general": "Chung"
     }
   },
+  "login": {
+    "title": "Đăng Nhập",
+    "emailLabel": "Địa chỉ Email",
+    "sendLink": "Gửi liên kết đăng nhập",
+    "checkEmail": "Kiểm tra email để lấy liên kết đăng nhập",
+    "error": "Có lỗi xảy ra"
+  },
+  "admin": {
+    "users": {
+      "title": "Quản lý người dùng",
+      "invite": "Mời khách hàng mới",
+      "email": "Email",
+      "tier": "Gói",
+      "status": "Trạng thái",
+      "invited": "Đã mời",
+      "active": "Đang hoạt động"
+    }
+  },
   "common": {
     "loading": "Đang Tải...",
     "error": "Lỗi",

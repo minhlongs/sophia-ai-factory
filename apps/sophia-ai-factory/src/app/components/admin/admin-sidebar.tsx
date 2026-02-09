@@ -8,11 +8,13 @@ import {
   Flag,
   ExternalLink,
   Settings,
+  Users,
   LogOut
 } from "lucide-react";
 
 const navigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
+  { name: "Users", href: "/admin/users", icon: Users },
   { name: "Feature Flags", href: "/admin/features", icon: Flag },
   { name: "Affiliates", href: "/admin/affiliates", icon: ExternalLink },
   { name: "Settings", href: "/admin/settings", icon: Settings },
