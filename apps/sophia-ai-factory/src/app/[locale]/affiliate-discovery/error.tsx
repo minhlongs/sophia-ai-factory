@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 
@@ -29,7 +30,7 @@ export default function AffiliateDiscoveryError({
             Try Again
           </Button>
           <Button asChild>
-            <a href="/dashboard">Go to Dashboard</a>
+            <Link href="/dashboard">Go to Dashboard</Link>
           </Button>
         </div>
       </div>
