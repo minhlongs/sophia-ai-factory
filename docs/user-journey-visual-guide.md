@@ -81,6 +81,8 @@ Sophia AI Video Factory is software that **automatically creates videos** using 
 
 **URL:** `https://sophia.agency`
 
+![Landing Page](screenshots/03-landing-page-hero.png)
+
 Khi mo website, ban se thay / When you open the website, you will see:
 
 | Phan / Section | Mo ta / Description |
@@ -158,6 +160,8 @@ Confirms everything is set up. Click **"Go to Dashboard"** to start.
 Day la man hinh chinh. Moi thu bat dau tu day.
 This is your main screen. Everything starts here.
 
+![Dashboard](screenshots/05-dashboard-main.png)
+
 | Thanh phan / Element | Mo ta / Description |
 |---|---|
 | **The thong ke / Stats cards** (3 o tren / at top) | Tong / Active / Hoan thanh — Total / Active / Completed |
@@ -173,6 +177,8 @@ This is your main screen. Everything starts here.
 
 **URL:** `https://sophia.agency/dashboard/create`
 
+![Campaign Creation](screenshots/06-campaign-creation.png)
+
 1. **Chon Mau Video / Choose Template** — Nhan vao mau thich / Click a template you like
 2. **Dien thong tin / Fill details:**
    - Ten chien dich / Campaign name (vd: "Video thang 3" / e.g., "March video")
@@ -186,6 +192,8 @@ This is your main screen. Everything starts here.
 ### Man Hinh 5: Danh Sach Chien Dich / Campaigns List
 
 **URL:** `https://sophia.agency/dashboard/campaigns`
+
+![Campaigns List](screenshots/07-campaigns-list.png)
 
 Hien tat ca chien dich / Shows all your campaigns:
 - Ten chien dich / Campaign name
@@ -211,6 +219,8 @@ Khi nhan vao chien dich / When you click a campaign:
 
 **URL:** `https://sophia.agency/dashboard/analytics`
 
+![Analytics](screenshots/08-analytics.png)
+
 Bieu do va so lieu hieu suat / Charts and performance metrics:
 - So video theo thoi gian / Videos over time
 - Ty le hoan thanh / Completion rate
@@ -222,6 +232,8 @@ Bieu do va so lieu hieu suat / Charts and performance metrics:
 
 **URL:** `https://sophia.agency/dashboard/settings`
 
+![Settings](screenshots/09-settings.png)
+
 - Cap nhat tai khoan / Update account info
 - Thay doi API Keys / Change API Keys
 - Quan ly goi dich vu / Manage subscription
@@ -232,6 +244,8 @@ Bieu do va so lieu hieu suat / Charts and performance metrics:
 ### Man Hinh 9: Bang Gia / Pricing
 
 **URL:** `https://sophia.agency/pricing`
+
+![Pricing](screenshots/04-pricing-page.png)
 
 | Goi / Plan | Gia / Price | Phu hop / Best for |
 |---|---|---|
