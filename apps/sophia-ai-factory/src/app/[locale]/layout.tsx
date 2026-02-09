@@ -34,7 +34,13 @@ export const metadata: Metadata = {
     "no-code tools",
     "ROI calculator",
   ],
+  manifest: "/manifest.json",
   authors: [{ name: "Sophia AI Factory" }],
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Sophia AI Factory",
+  },
   openGraph: {
     title: "Sophia AI Video Factory - Automate Your Content Empire",
     description: "The ultimate AI video creation workflow. Build, scale, and monetize your YouTube channels with automation.",
@@ -57,6 +63,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
+  themeColor: "#000000",
 };
 
 export default async function RootLayout({
