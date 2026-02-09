@@ -7,7 +7,9 @@ import {
   Settings,
   Video,
   LogOut,
-  BarChart2
+  BarChart2,
+  HelpCircle,
+  Code
 } from "lucide-react";
 import { HealthIndicator } from "@/components/dashboard/health-indicator";
 import { MobileNav } from "@/components/ui/mobile-nav";
@@ -67,6 +69,20 @@ export default function DashboardLayout({
           >
             <Video className="w-5 h-5" />
             <span className="font-medium">{t('sidebar.my_videos')}</span>
+          </Link>
+          <Link
+            href="/dashboard/support"
+            className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
+          >
+            <HelpCircle className="w-5 h-5" />
+            <span className="font-medium">{t('sidebar.support')}</span>
+          </Link>
+          <Link
+            href="/dashboard/api-docs"
+            className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
+          >
+            <Code className="w-5 h-5" />
+            <span className="font-medium">{t('sidebar.api_docs')}</span>
           </Link>
           <Link
             href="/dashboard/settings"
