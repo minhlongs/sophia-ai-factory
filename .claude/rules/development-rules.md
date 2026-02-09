@@ -40,3 +40,11 @@
 - Implement features according to specifications
 - Handle edge cases and error scenarios
 - **DO NOT** create new enhanced files, update to the existing files directly.
+
+## Sophia-Specific Standards
+- Zero `:any` types — use proper TypeScript interfaces
+- Zod validation on all API inputs
+- Server Actions for data mutations (not API routes)
+- Supabase RLS policies required for all tables
+- Test before every commit — `npm test` must pass
+- Tier enum: BASIC | PREMIUM | ENTERPRISE (uppercase only)
