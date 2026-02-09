@@ -33,12 +33,20 @@ export const tierGuard = {
     let currentUsage = 0;
     let requiredTier: Tier = "PREMIUM"; // Default upgrade target
 
+    // MASTER tier always has maximum access — skip limit checks
+    if (userTier === "MASTER") {
+      return {
+        allowed: true,
+        limit: Infinity,
+        currentusage: 0,
+        requiredTier: "MASTER",
+      };
+    }
+
     switch (limitType) {
       case "youtubeChannels":
         limit = config.limits.youtubeChannels;
         // In a real app, we would count actual connected channels
-        // For now, we'll assume usage is 0 or fetch from a service if available
-        // currentUsage = await channelService.count(userId);
         currentUsage = 0; // Placeholder
         if (userTier === "BASIC") requiredTier = "PREMIUM";
         else if (userTier === "PREMIUM") requiredTier = "ENTERPRISE";
@@ -109,6 +117,6 @@ export const tierGuard = {
    */
   async checkCustomTemplateAccess(userId: string): Promise<boolean> {
     const userTier = await getUserTier(userId);
-    return userTier === "ENTERPRISE";
+    return userTier === "ENTERPRISE" || userTier === "MASTER";
   }
 };
