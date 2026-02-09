@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { Campaign } from "@/types";
+import { Campaign, Tier } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart3, CheckCircle2, Clock, Loader2 } from "lucide-react";
+import { BarChart3, CheckCircle2, Clock, Loader2, Lock } from "lucide-react";
 import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 
@@ -25,10 +25,12 @@ const CampaignsByTypeChart = dynamic(
 
 interface AnalyticsViewProps {
   campaigns: Campaign[];
+  userTier: Tier;
 }
 
-export function AnalyticsView({ campaigns }: AnalyticsViewProps) {
+export function AnalyticsView({ campaigns, userTier }: AnalyticsViewProps) {
   const t = useTranslations('dashboard.analytics');
+  const isAdvanced = userTier !== "BASIC";
 
   // Calculate stats
   const stats = useMemo(() => {
@@ -160,7 +162,13 @@ export function AnalyticsView({ campaigns }: AnalyticsViewProps) {
             <CardTitle className="text-lg text-foreground">{t('recent_performance')}</CardTitle>
           </CardHeader>
           <CardContent>
-            {recentPerformanceData.length > 0 ? (
+            {!isAdvanced ? (
+                <div className="h-[300px] w-full flex flex-col items-center justify-center text-muted-foreground border-2 border-dashed border-border rounded-lg gap-2">
+                    <Lock className="h-6 w-6" />
+                    <p className="text-sm font-medium">Advanced Analytics</p>
+                    <p className="text-xs">Upgrade to Growth or higher to unlock detailed performance charts</p>
+                </div>
+            ) : recentPerformanceData.length > 0 ? (
                 <CompletionTimeChart data={recentPerformanceData} />
             ) : (
                 <div className="h-[300px] w-full flex items-center justify-center text-muted-foreground border-2 border-dashed border-border rounded-lg">
@@ -170,7 +178,7 @@ export function AnalyticsView({ campaigns }: AnalyticsViewProps) {
           </CardContent>
         </Card>
 
-        {typeData.length > 0 && (
+        {isAdvanced && typeData.length > 0 && (
              <Card className="bg-card border-border">
              <CardHeader>
                <CardTitle className="text-lg text-foreground">{t('template_usage')}</CardTitle>

@@ -11,7 +11,8 @@ export type FeatureFlag =
   | "enable_admin_dashboard"
   | "enable_roi_calculator"
   | "enable_api_integrations"
-  | "enable_auto_update";
+  | "enable_auto_update"
+  | "enable_early_access";
 
 // User representation (mock for now, will integrate with auth later)
 export interface User {
