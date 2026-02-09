@@ -12,8 +12,8 @@ const PRICING_TIERS = [
     features: [
       "5 Video Templates",
       "Auto-Discovery Engine",
-      "Basic Analytics",
-      "Email Support",
+      "Basic Analytics Dashboard",
+      "Email Support (48h response)",
     ],
   },
   {
@@ -23,10 +23,10 @@ const PRICING_TIERS = [
     monthlyPrice: 39900, // $399/mo
     features: [
       "Unlimited Templates",
-      "Advanced Analytics",
+      "Advanced Analytics & Reports",
       "ROI Calculator",
-      "Priority Support",
-      "Custom Branding",
+      "Priority Support (24h response)",
+      "Custom Brand Setup",
     ],
     popular: true,
   },
@@ -37,10 +37,10 @@ const PRICING_TIERS = [
     monthlyPrice: 79900, // $799/mo
     features: [
       "Custom Templates",
-      "White-labeling",
-      "Dedicated Account Manager",
+      "White-label Setup",
+      "Direct Founder Access",
       "API Access",
-      "SLA Guarantee",
+      "99.9% Uptime SLA",
     ],
   },
 ];
@@ -54,12 +54,12 @@ const MASTER_TIER = {
   features: [
     "Everything in Premium",
     "Lifetime Access & Updates",
-    "Unlimited Training Sessions",
+    "1-on-1 Onboarding & Training",
     "VIP Priority Support Forever",
     "Custom Automation Scripts",
-    "Monthly Strategy Calls",
-    "White-label License",
-    "Early Access to New Features",
+    "Monthly Strategy Review",
+    "Full White-label License",
+    "Early Access to Beta Features",
   ],
 };
 

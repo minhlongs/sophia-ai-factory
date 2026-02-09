@@ -60,9 +60,9 @@ export default function NotFound() {
         <Link href="/dashboard" className="hover:text-[var(--neon-cyan)]">
           Dashboard
         </Link>
-        <Link href="/contact" className="hover:text-[var(--neon-cyan)]">
+        <a href="mailto:support@sophia.agencyos.network" className="hover:text-[var(--neon-cyan)]">
           Contact Support
-        </Link>
+        </a>
       </div>
     </div>
   );

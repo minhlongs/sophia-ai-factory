@@ -54,7 +54,7 @@ const features = [
 
 export function Features() {
   return (
-    <section className="py-20 md:py-32 relative overflow-hidden">
+    <section id="features" className="py-20 md:py-32 relative overflow-hidden">
       {/* Background glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[var(--neon-purple)] opacity-10 blur-[150px] rounded-full -z-10" />
 

@@ -62,7 +62,7 @@ export default function DashboardLayout({
             <span className="font-medium">{t('sidebar.analytics')}</span>
           </Link>
           <Link
-            href="/dashboard/videos"
+            href="/dashboard/campaigns"
             className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
           >
             <Video className="w-5 h-5" />

@@ -86,6 +86,12 @@ export const tierGuard = {
         currentUsage = 0;
         requiredTier = "ENTERPRISE";
         break;
+
+      case "trainingSessions":
+        limit = config.limits.trainingSessions ?? 0;
+        currentUsage = 0; // Would count actual training sessions in production
+        requiredTier = "ENTERPRISE";
+        break;
     }
 
     const allowed = currentUsage < limit;

@@ -41,7 +41,7 @@ const faqs = [
   {
     question: "What's the difference between the pricing tiers?",
     answer:
-      "Basic ($500) gives you the landing page and tools overview. Premium ($1,200) unlocks the affiliate engine with 50 programs and the ROI calculator. Enterprise ($3,500) adds the admin dashboard, unlimited programs, API integrations, and auto-updates.",
+      "Starter ($199/mo) gives you 5 templates, auto-discovery engine, analytics, and email support. Growth ($399/mo) unlocks unlimited templates, advanced analytics, ROI calculator, and priority support. Premium ($799/mo) adds custom templates, white-label setup, direct founder access, and API integrations. Master ($4,999 one-time) includes everything forever with 1-on-1 onboarding and VIP support.",
   },
   {
     question: "Is there a refund policy?",
@@ -54,7 +54,7 @@ export function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
-    <section className="py-20 md:py-32">
+    <section id="faq" className="py-20 md:py-32">
       <Container>
         <SectionHeading
           title="Frequently Asked Questions"
