@@ -167,7 +167,7 @@ export function PricingSection() {
       if (data.url) {
         window.location.href = data.url;
       } else {
-        alert("Failed to start checkout. Please try again.");
+        alert(data.error || "Failed to start checkout. Please try again.");
       }
     } catch {
       alert("Network error. Please try again.");

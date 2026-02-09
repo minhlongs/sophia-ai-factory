@@ -24,6 +24,12 @@ export async function POST(request: Request) {
 
     if (!productId) {
       console.error(`Missing product ID for tier ${tier}`);
+      if (tier === 'MASTER') {
+        return NextResponse.json(
+          { error: 'Master tier is coming soon. Please contact support@sophia.agencyos.network for early access.' },
+          { status: 400 }
+        );
+      }
       return NextResponse.json(
         { error: `Missing product configuration for tier: ${tier}` },
         { status: 400 }
