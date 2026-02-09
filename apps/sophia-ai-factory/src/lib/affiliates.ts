@@ -25,7 +25,7 @@ export function getProgramsByTier(
   const allPrograms = getAllPrograms();
 
   // Define tier hierarchy
-  const tierOrder: Tier[] = ["BASIC", "PREMIUM", "ENTERPRISE"];
+  const tierOrder: Tier[] = ["BASIC", "PREMIUM", "ENTERPRISE", "MASTER"];
   const userTierIndex = tierOrder.indexOf(userTier);
 
   // Filter programs user can access

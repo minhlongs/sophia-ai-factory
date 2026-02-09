@@ -45,6 +45,24 @@ const PRICING_TIERS = [
   },
 ];
 
+// Binh Pháp upsell: Master one-time package
+const MASTER_TIER = {
+  name: "Master",
+  description: "Lifetime access. One payment. Everything included forever.",
+  tier: "MASTER",
+  price: 499900, // $4,999 one-time
+  features: [
+    "Everything in Premium",
+    "Lifetime Access & Updates",
+    "Unlimited Training Sessions",
+    "VIP Priority Support Forever",
+    "Custom Automation Scripts",
+    "Monthly Strategy Calls",
+    "White-label License",
+    "Early Access to New Features",
+  ],
+};
+
 interface PricingCardProps {
   name: string;
   description: string;
@@ -184,7 +202,68 @@ export function PricingSection() {
             />
           ))}
         </div>
+
+        {/* Binh Pháp Master Upsell */}
+        <div className="mt-16 relative">
+          <div className="rounded-2xl border-2 border-primary bg-gradient-to-br from-primary/10 via-background to-primary/5 p-8 md:p-12 shadow-xl shadow-primary/10">
+            <span className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-primary to-purple-600 px-6 py-1.5 text-sm font-bold text-white shadow-lg">
+              ⚡ Best Value — Save 48%
+            </span>
+            <div className="grid md:grid-cols-2 gap-8 items-center">
+              <div>
+                <h3 className="text-2xl font-bold text-foreground md:text-3xl">
+                  {MASTER_TIER.name}
+                </h3>
+                <p className="mt-2 text-muted-foreground">
+                  {MASTER_TIER.description}
+                </p>
+                <div className="mt-6">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-bold text-foreground">
+                      ${(MASTER_TIER.price / 100).toLocaleString()}
+                    </span>
+                    <span className="text-muted-foreground">one-time</span>
+                  </div>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    <span className="line-through">$9,588</span>{" "}
+                    <span className="text-primary font-semibold">
+                      vs $799/mo × 12 months
+                    </span>
+                  </p>
+                </div>
+                <button
+                  onClick={() => handleSelectTier(MASTER_TIER.tier)}
+                  disabled={loading === MASTER_TIER.tier}
+                  className="mt-8 w-full md:w-auto rounded-lg bg-gradient-to-r from-primary to-purple-600 px-10 py-4 font-bold text-white text-lg shadow-lg hover:opacity-90 transition disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {loading === MASTER_TIER.tier ? "Processing..." : "Get Lifetime Access"}
+                </button>
+              </div>
+              <ul className="space-y-3">
+                {MASTER_TIER.features.map((feature) => (
+                  <li key={feature} className="flex items-center gap-3 text-foreground">
+                    <svg
+                      className="h-5 w-5 text-primary flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    <span className="font-medium">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   );
 }
+

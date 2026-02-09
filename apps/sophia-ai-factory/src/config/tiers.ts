@@ -68,6 +68,30 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
       monthlyStrategyCalls: true,
     },
   },
+
+  MASTER: {
+    name: "Master",
+    price: 4999, // $4,999 USD one-time
+    priceDisplay: "$4,999",
+    polarProductId: process.env.POLAR_PRODUCT_ID_MASTER,
+    features: [
+      "enable_affiliate_engine",
+      "enable_admin_dashboard",
+      "enable_roi_calculator",
+      "enable_api_integrations",
+      "enable_auto_update",
+    ],
+    limits: {
+      youtubeChannels: 999, // Unlimited
+      videoTemplates: 999,  // Unlimited custom templates
+      trainingSessions: 999, // Unlimited lifetime
+      supportMonths: 999,   // Lifetime VIP support
+      automationScripts: true,
+      affiliateDashboard: true,
+      seoOptimization: true,
+      monthlyStrategyCalls: true,
+    },
+  },
 };
 
 /**

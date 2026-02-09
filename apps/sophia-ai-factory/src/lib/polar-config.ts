@@ -1,6 +1,6 @@
 import { Tier } from '@/types';
 
-export type BillingType = 'subscription';
+export type BillingType = 'subscription' | 'one-time';
 
 export interface PolarPrice {
   amountType: 'fixed';
@@ -48,11 +48,26 @@ export const getPolarProductsSubscription = (): PolarProductDefinition[] => [
   },
 ];
 
+// One-time Master package (Binh Pháp upsell)
+export const getPolarProductsMaster = (): PolarProductDefinition[] => [
+  {
+    name: 'Sophia AI Factory - Master',
+    description: 'Lifetime access. One-time payment. Best value.',
+    tier: 'MASTER',
+    billingType: 'one-time',
+    productId: getEnv('POLAR_PRODUCT_ID_MASTER'),
+    prices: [{ amountType: 'fixed', priceAmount: 499900, priceCurrency: 'usd' }],
+  },
+];
+
 // Combined getter for all products
-export const getPolarProducts = (): PolarProductDefinition[] => getPolarProductsSubscription();
+export const getPolarProducts = (): PolarProductDefinition[] => [
+  ...getPolarProductsSubscription(),
+  ...getPolarProductsMaster(),
+];
 
 // Backwards compatibility exports
-export const POLAR_PRODUCTS = getPolarProductsSubscription();
+export const POLAR_PRODUCTS = getPolarProducts();
 
 export const getTierFromProductName = (name: string): Tier => {
   const normalizedName = name.toLowerCase();
@@ -70,9 +85,9 @@ export const getTierFromProductName = (name: string): Tier => {
   return 'BASIC';
 };
 
-// Get product ID by tier - simplified for subscription-only model
+// Get product ID by tier - searches all products (subscription + one-time)
 export const getProductIdByTier = (tier: string): string | undefined => {
-  const products = getPolarProductsSubscription();
+  const products = getPolarProducts();
   const product = products.find(p => p.tier === tier);
   return product?.productId || undefined;
 };

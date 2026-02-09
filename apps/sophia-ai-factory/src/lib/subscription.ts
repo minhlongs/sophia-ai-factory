@@ -17,6 +17,11 @@ export const TIER_CONFIG: Record<Tier, { rank: number; label: string; features: 
     rank: 3,
     label: 'Enterprise',
     features: ['Unlimited Channels', 'Custom Templates', 'White-labeling', 'Dedicated Account Manager', 'API Access']
+  },
+  MASTER: {
+    rank: 4,
+    label: 'Master',
+    features: ['Everything in Enterprise', 'Lifetime Access', 'VIP Support Forever', 'Monthly Strategy Calls', 'Early Access']
   }
 };
 
@@ -26,13 +31,15 @@ export const DB_TIER_MAPPING: Record<string, Tier> = {
   'premium': 'PREMIUM',
   'pro': 'PREMIUM', // Backward compatibility
   'enterprise': 'ENTERPRISE',
+  'master': 'MASTER',
   'free': 'BASIC' // Default fallback if needed
 };
 
 export const TIER_DB_MAPPING: Record<Tier, string> = {
   BASIC: 'basic',
   PREMIUM: 'premium',
-  ENTERPRISE: 'enterprise'
+  ENTERPRISE: 'enterprise',
+  MASTER: 'master'
 };
 
 /**

@@ -123,7 +123,8 @@ async function generateElevenLabsVoiceover(
  * These are ElevenLabs pre-made voice IDs
  */
 function getDefaultVoiceId(tier: Tier): string {
-  const voices = {
+  const voices: Record<Tier, string> = {
+    MASTER: '21m00Tcm4TlvDq8ikWAM',     // Rachel - Professional (same as Enterprise)
     ENTERPRISE: '21m00Tcm4TlvDq8ikWAM', // Rachel - Professional
     PREMIUM: 'EXAVITQu4vr4xnSDxMaL',    // Bella - Friendly
     BASIC: 'pNInz6obpgDQGcFmaJgB'       // Adam - Neutral

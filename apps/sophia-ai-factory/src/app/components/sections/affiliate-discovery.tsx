@@ -19,7 +19,7 @@ export function AffiliateDiscovery() {
   const filteredPrograms = allPrograms.filter(p => filter === "All" || p.category === filter);
 
   // Tier logic
-  const tierLevels: Record<Tier, number> = { BASIC: 0, PREMIUM: 1, ENTERPRISE: 2 };
+  const tierLevels: Record<Tier, number> = { BASIC: 0, PREMIUM: 1, ENTERPRISE: 2, MASTER: 3 };
 
   const isLocked = (programTier?: Tier) => {
     if (!programTier) return false;
