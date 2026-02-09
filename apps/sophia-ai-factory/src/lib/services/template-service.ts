@@ -39,7 +39,6 @@ export const templateService = {
     }
 
     if (error) {
-      console.error("Error fetching templates:", error);
       return CAMPAIGN_TEMPLATES;
     }
 

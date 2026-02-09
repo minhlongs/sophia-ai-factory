@@ -68,7 +68,6 @@ export abstract class BaseAdapter implements IngestionAdapter {
       if (error) {
         result.failed += chunk.length
         result.errors.push(`Batch upsert failed: ${error.message}`)
-        console.error('Batch upsert error:', error)
       } else {
         result.processed += chunk.length
       }

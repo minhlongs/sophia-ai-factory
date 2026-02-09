@@ -2,7 +2,6 @@ import { IVoiceService, GenerateVoiceoverInput, VoiceoverOutput } from "../types
 
 export class MockVoiceService implements IVoiceService {
   async generateVoiceover(input: GenerateVoiceoverInput): Promise<VoiceoverOutput> {
-    console.log("[MockVoiceService] Generating voiceover for:", input.text.substring(0, 50) + "...");
 
     // Simulate latency
     await new Promise(resolve => setTimeout(resolve, 1000));

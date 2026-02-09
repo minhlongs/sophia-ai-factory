@@ -15,7 +15,6 @@ export async function GET(
     const status = await videoService.getVideoStatus(id);
     return NextResponse.json(status);
   } catch (error) {
-    console.error("Status API error:", error);
     return NextResponse.json({ error: "Failed to fetch video status" }, { status: 500 });
   }
 }

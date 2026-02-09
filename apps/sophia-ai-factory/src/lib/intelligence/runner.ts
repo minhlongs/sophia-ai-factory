@@ -6,7 +6,6 @@ import type { Database } from '@/lib/supabase/types'
 type AffiliateProduct = Database['public']['Tables']['affiliate_products']['Row']
 
 export async function runScoringBatch(limit: number = 1000, offset: number = 0) {
-  console.log(`Starting scoring batch: Limit ${limit}, Offset ${offset}`)
 
   // 1. Fetch products
   const { data, error } = await supabase
@@ -24,7 +23,6 @@ export async function runScoringBatch(limit: number = 1000, offset: number = 0) 
     return { processed: 0, updated: 0 }
   }
 
-  console.log(`Fetched ${products.length} products. Calculating scores...`)
 
   const updates = []
 
@@ -63,7 +61,6 @@ export async function runScoringBatch(limit: number = 1000, offset: number = 0) 
     .upsert(updates as unknown as Database['public']['Tables']['affiliate_products']['Update'][], { onConflict: 'id', ignoreDuplicates: false })
 
   if (updateError) {
-    console.error('Bulk update failed:', updateError)
     // Fallback: update sequentially if bulk fails (slow but safe)
     // Or throw
     throw new Error(`Bulk update failed: ${updateError.message}`)

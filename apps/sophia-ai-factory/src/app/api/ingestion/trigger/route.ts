@@ -24,7 +24,6 @@ export async function POST(request: Request) {
       results
     })
   } catch (error) {
-    console.error('Ingestion API Error:', error)
     return NextResponse.json(
       { success: false, error: (error as Error).message },
       { status: 500 }

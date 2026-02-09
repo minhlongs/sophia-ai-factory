@@ -20,7 +20,6 @@ export async function POST(request: Request) {
       result
     })
   } catch (error) {
-    console.error('Scoring API Error:', error)
     return NextResponse.json(
       { success: false, error: (error as Error).message },
       { status: 500 }

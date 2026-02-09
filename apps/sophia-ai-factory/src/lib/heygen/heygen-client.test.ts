@@ -73,7 +73,6 @@ describe('HeyGenClient', () => {
         text: async () => 'Internal Server Error'
       } as Response);
 
-      // console.error is called in the catch block
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       const result = await client.listAvatars();

@@ -26,7 +26,6 @@ export async function POST(request: NextRequest) {
     // Verify webhook secret token
     const token = request.headers.get('X-Telegram-Bot-Api-Secret-Token')
     if (token !== process.env.TELEGRAM_WEBHOOK_SECRET) {
-      console.error('Unauthorized webhook attempt')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -79,7 +78,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ok: true })
   } catch (error) {
-    console.error('[Telegram] Webhook error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

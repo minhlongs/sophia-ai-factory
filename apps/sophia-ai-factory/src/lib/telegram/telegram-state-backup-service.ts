@@ -40,11 +40,9 @@ export async function backupSessionState(
       )
 
     if (error) {
-      console.error('[State Backup] Postgres upsert failed:', error)
     }
   } catch (error) {
     // Non-critical - log but don't throw
-    console.error('[State Backup] Error:', error)
   }
 }
 
@@ -79,7 +77,6 @@ export async function restoreSessionState(
 
     return data.context_data as UserContext
   } catch (error) {
-    console.error('[State Restore] Error:', error)
     return null
   }
 }
@@ -96,7 +93,6 @@ export async function getContextWithFallback(
   // Try restoring from Postgres backup
   const restored = await restoreSessionState(chatId)
   if (restored) {
-    console.log(`[Smart Resume] Restored state for ${chatId} from Postgres backup`)
   }
   return restored
 }

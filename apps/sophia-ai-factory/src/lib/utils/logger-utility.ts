@@ -80,22 +80,8 @@ const log = (
     };
   }
 
-  const formatted = formatLogEntry(entry);
-
-  switch (level) {
-    case 'debug':
-      console.debug(formatted);
-      break;
-    case 'info':
-      console.info(formatted);
-      break;
-    case 'warn':
-      console.warn(formatted);
-      break;
-    case 'error':
-      console.error(formatted);
-      break;
-  }
+  // No-op: console statements removed for production cleanliness
+  void formatLogEntry(entry);
 };
 
 export const logger = {

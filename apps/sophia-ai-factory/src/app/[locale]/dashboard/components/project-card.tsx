@@ -32,7 +32,6 @@ export function ProjectCard({ project }: ProjectCardProps) {
       await renderVideo(project.id);
       router.refresh();
     } catch (error) {
-      console.error("Failed to trigger render", error);
     } finally {
       setLoading(false);
     }

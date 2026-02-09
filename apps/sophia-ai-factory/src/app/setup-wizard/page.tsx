@@ -62,7 +62,6 @@ export default function SetupWizardPage() {
       }
       return data.valid;
     } catch (error) {
-      console.error("Verification error", error);
       setStatus(prev => ({ ...prev, [keyName]: 'invalid' }));
       setErrors(prev => ({ ...prev, [keyName]: 'Verification failed' }));
       return false;
@@ -126,7 +125,6 @@ export default function SetupWizardPage() {
       }
     } catch (error) {
       setSaveError("Failed to save configuration.");
-      console.error(error);
     } finally {
       setLoading(false);
     }

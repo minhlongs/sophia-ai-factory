@@ -78,7 +78,6 @@ export async function getUserTier(userId: string): Promise<Tier> {
     
     if (expiresAt < now) {
       // Subscription expired - downgrade to BASIC
-      console.log(`[Subscription] User ${userId} subscription expired at ${expiresAt}`);
       return 'BASIC';
     }
   }

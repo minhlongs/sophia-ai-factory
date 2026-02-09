@@ -61,7 +61,6 @@ export async function createCampaign(formData: FormData) {
         const { data: users } = await getSupabaseAdmin().auth.admin.listUsers();
         if (users?.users?.length > 0) {
             userId = users.users[0].id;
-            console.warn(`[DEV] Using first found user: ${userId}`);
         } else {
              return { success: false, message: "No authenticated user found. Please sign up/in." };
         }
@@ -115,7 +114,6 @@ export async function createCampaign(formData: FormData) {
       .single();
 
     if (error) {
-      console.error("DB Insert Error:", error);
       return { success: false, message: "Failed to create campaign record" };
     }
 
@@ -135,7 +133,6 @@ export async function createCampaign(formData: FormData) {
     return { success: true, message: "Campaign created", campaignId: campaign.id };
 
   } catch (err) {
-    console.error("Create Campaign Error:", err);
     return { success: false, message: "Internal server error" };
   }
 }
@@ -185,7 +182,6 @@ export async function retryCampaign(campaignId: string) {
       .eq("id", campaignId);
 
     if (updateError) {
-      console.error("Failed to reset campaign:", updateError);
       return { success: false, message: "Failed to reset campaign" };
     }
 
@@ -204,7 +200,6 @@ export async function retryCampaign(campaignId: string) {
     revalidatePath("/dashboard/campaigns");
     return { success: true, message: "Campaign retry initiated" };
   } catch (error) {
-    console.error("Error retrying campaign:", error);
     return {
       success: false,
       message: error instanceof Error ? error.message : "Unknown error"
@@ -289,7 +284,6 @@ export async function resumeCampaign(campaignId: string) {
       .eq("id", campaignId);
 
     if (updateError) {
-      console.error("Failed to update campaign:", updateError);
       return { success: false, message: "Failed to update campaign" };
     }
 
@@ -310,7 +304,6 @@ export async function resumeCampaign(campaignId: string) {
     revalidatePath("/dashboard/campaigns");
     return { success: true, message: `Campaign resumed from ${resumeFrom} step` };
   } catch (error) {
-    console.error("Error resuming campaign:", error);
     return {
       success: false,
       message: error instanceof Error ? error.message : "Unknown error"

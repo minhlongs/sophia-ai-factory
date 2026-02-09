@@ -45,7 +45,6 @@ export class TelegramFSM {
       const data = await redis.get<UserContext>(this.getKey(chatId))
       return data
     } catch (error) {
-      console.error('Error getting context:', error)
       return null
     }
   }
@@ -68,7 +67,6 @@ export class TelegramFSM {
       // Set with 24 hour expiry
       await redis.set(this.getKey(chatId), updated, { ex: 86400 })
     } catch (error) {
-      console.error('Error setting context:', error)
       throw error
     }
   }
@@ -80,7 +78,6 @@ export class TelegramFSM {
     try {
       await redis.del(this.getKey(chatId))
     } catch (error) {
-      console.error('Error clearing context:', error)
       throw error
     }
   }

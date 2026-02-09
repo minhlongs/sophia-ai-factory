@@ -62,7 +62,6 @@ export async function exportCampaigns(
   const { data, error } = await query;
 
   if (error) {
-    console.error("Export error:", error);
     return { success: false, message: "Failed to fetch campaigns" };
   }
 

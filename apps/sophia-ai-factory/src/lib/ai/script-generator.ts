@@ -27,7 +27,6 @@ export async function generateScript(input: GenerateScriptInput): Promise<Script
 
   // Fallback to mock if no API key
   if (!apiKey) {
-    console.warn('OPENROUTER_API_KEY not set, using mock script generation');
     return generateMockScript(topic, audience);
   }
 
@@ -79,7 +78,6 @@ Return ONLY valid JSON in this exact format:
 
     if (!response.ok) {
       const error = await response.text();
-      console.error('OpenRouter API error:', error);
       throw new Error(`OpenRouter API failed: ${response.status}`);
     }
 
@@ -100,8 +98,6 @@ Return ONLY valid JSON in this exact format:
     return parsed;
 
   } catch (error) {
-    console.error('Script generation error:', error);
-    console.warn('Falling back to mock script generation');
     return generateMockScript(topic, audience);
   }
 }

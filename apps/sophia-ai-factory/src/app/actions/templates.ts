@@ -95,14 +95,12 @@ export async function createTemplate(data: z.infer<typeof createTemplateSchema>)
       });
 
     if (error) {
-      console.error("Template Create Error:", error);
       return { success: false, message: "Failed to create template" };
     }
 
     revalidatePath("/dashboard/templates");
     return { success: true, message: "Template created successfully" };
   } catch (err) {
-    console.error("Template Action Error:", err);
     return { success: false, message: "Internal server error" };
   }
 }

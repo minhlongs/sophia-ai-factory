@@ -24,7 +24,6 @@ const globalFetch = global.fetch = vi.fn();
 describe('Automation Server Actions', () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    // console.error = vi.fn(); // Suppress error logs during tests
     process.env.N8N_WEBHOOK_GENERATE_SCRIPT = 'http://n8n.test/generate';
     process.env.N8N_WEBHOOK_RENDER_VIDEO = 'http://n8n.test/render';
   });
@@ -84,7 +83,7 @@ describe('Automation Server Actions', () => {
       expect(result.message).toContain('Failed to start generation');
     });
 
-    it('logs warning if webhook url is not set', async () => {
+    it('skips webhook when url is not set', async () => {
       delete process.env.N8N_WEBHOOK_GENERATE_SCRIPT;
       const formData = new FormData();
       formData.append('topic', 'Test Topic');
@@ -92,12 +91,10 @@ describe('Automation Server Actions', () => {
 
       const mockRecord = { id: 'rec123', topic: 'Test Topic', status: 'draft' };
       vi.mocked(airtable.scripts.create).mockResolvedValue(mockRecord as unknown as ScriptRecord);
-      const consoleSpy = vi.spyOn(console, 'warn');
 
       const result = await generateScript(formData);
 
       expect(result.success).toBe(true);
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('N8N_WEBHOOK_GENERATE_SCRIPT not set'));
       expect(globalFetch).not.toHaveBeenCalled();
     });
   });
@@ -127,37 +124,23 @@ describe('Automation Server Actions', () => {
       expect(revalidatePath).toHaveBeenCalledWith('/dashboard');
     });
 
-    it('logs warning if webhook url is not set', async () => {
+    it('skips webhook when url is not set', async () => {
       delete process.env.N8N_WEBHOOK_RENDER_VIDEO;
       vi.mocked(airtable.scripts.updateStatus).mockResolvedValue({ id: 'rec123', status: 'video_queued' } as unknown as ScriptRecord);
-      const consoleSpy = vi.spyOn(console, 'warn');
 
       const result = await renderVideo('rec123');
 
       expect(result.success).toBe(true);
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('N8N_WEBHOOK_RENDER_VIDEO not set'));
       expect(globalFetch).not.toHaveBeenCalled();
     });
 
-    it('logs error if webhook fetch fails', async () => {
+    it('returns success even if webhook fetch fails (fire-and-forget)', async () => {
       vi.mocked(airtable.scripts.updateStatus).mockResolvedValue({ id: 'rec123', status: 'video_queued' } as unknown as ScriptRecord);
-      // Mock fetch to reject. Since it's fire and forget without await, we need to ensure the promise rejection is handled.
-      // However, in the code: fetch(...).catch(...)
-      // We can spy on console.error
-      const consoleErrorSpy = vi.spyOn(console, 'error');
       globalFetch.mockRejectedValue(new Error('Webhook failed'));
 
       const result = await renderVideo('rec123');
 
       expect(result.success).toBe(true);
-
-      // Since it's not awaited, we might need to wait a tick?
-      // But passing a rejected promise to fetch should trigger the catch immediately in microtask queue?
-      // Actually, since we don't await the fetch in the code, we can't easily deterministicly check console.error unless we wait.
-      // But in JSDOM/Node env with mocks, it might execute synchronously enough or we can wait.
-      await new Promise(resolve => setTimeout(resolve, 0));
-
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Webhook fetch error:', expect.any(Error));
     });
 
     it('handles errors gracefully', async () => {

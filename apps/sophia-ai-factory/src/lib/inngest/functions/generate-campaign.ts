@@ -108,7 +108,6 @@ export const generateCampaign = inngest.createFunction(
       } | null;
 
       if (error || !profile || !profile.telegram_chat_id) {
-        console.log(`No telegram chat ID found for user ${userId}`);
         return;
       }
 
@@ -117,7 +116,6 @@ export const generateCampaign = inngest.createFunction(
       const telegramEnabled = profile.settings?.notifications?.telegram?.enabled === true;
 
       if (!telegramEnabled) {
-        console.log(`Telegram notifications disabled for user ${userId}`);
         return;
       }
 

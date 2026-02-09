@@ -69,7 +69,6 @@ export async function handleEmail(chatId: string, email: string) {
     const { data: { users }, error: userError } = await getSupabase().auth.admin.listUsers()
 
     if (userError) {
-      console.error('Error listing users:', userError)
       await sendTelegramMessage(chatId, '❌ Error verifying account. Please try again later.')
       return
     }
@@ -131,7 +130,6 @@ export async function handleEmail(chatId: string, email: string) {
     await sendTelegramMessage(chatId, `✅ *Success!* Your account (${email}) has been linked.\n\nYou can now create campaigns using:\n\`/campaign Your Topic\``)
 
   } catch (error) {
-    console.error('Error in handleEmail:', error)
     await sendTelegramMessage(chatId, '❌ An unexpected error occurred.')
   }
 }
@@ -182,7 +180,6 @@ export async function handleCampaign(chatId: string, topic: string) {
     const campaign = campaignData as { id: string } | null;
 
     if (createError || !campaign) {
-      console.error('Error creating campaign:', createError)
       await sendTelegramMessage(chatId, '❌ Failed to create campaign. Please try again.')
       return
     }
@@ -204,7 +201,6 @@ export async function handleCampaign(chatId: string, topic: string) {
     await sendTelegramMessage(chatId, `🚀 *Campaign Started!*\n\nTopic: ${topic}\nID: \`${campaign.id.slice(0, 8)}\`\n\nI will notify you when it's ready. Check progress with /status.`)
 
   } catch (error) {
-    console.error('Error in handleCampaign:', error)
     await sendTelegramMessage(chatId, '❌ An unexpected error occurred.')
   }
 }
@@ -251,7 +247,6 @@ export async function handleStatus(chatId: string) {
     await sendTelegramMessage(chatId, message)
 
   } catch (error) {
-    console.error('Error in handleStatus:', error)
     await sendTelegramMessage(chatId, '❌ Error fetching status.')
   }
 }
@@ -301,7 +296,6 @@ export async function handleResults(chatId: string) {
     await sendTelegramMessage(chatId, message)
 
   } catch (error) {
-    console.error('Error in handleResults:', error)
     await sendTelegramMessage(chatId, '❌ Error fetching results.')
   }
 }

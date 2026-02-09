@@ -48,7 +48,6 @@ export async function enhanceNicheScoreWithAI(
     });
 
     if (!response.ok) {
-      console.warn("[AffiliateAIScorer] OpenRouter request failed:", response.status);
       return null;
     }
 
@@ -57,7 +56,6 @@ export async function enhanceNicheScoreWithAI(
     const score = parseInt(content, 10);
     return Number.isFinite(score) ? Math.min(Math.max(score, 0), 100) : null;
   } catch (err) {
-    console.warn("[AffiliateAIScorer] OpenRouter call failed:", err);
     return null;
   }
 }

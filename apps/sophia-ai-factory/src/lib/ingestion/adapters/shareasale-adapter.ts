@@ -23,7 +23,6 @@ export class ShareasaleAdapter extends BaseAdapter {
 
   async fetchProducts(): Promise<RawProduct[]> {
     if (!this.apiToken || !this.apiSecret || !this.affiliateId) {
-      console.warn('ShareASale credentials missing. Returning empty/mock list.')
       if (process.env.NODE_ENV === 'development') return this.getMockData()
       return []
     }
@@ -36,7 +35,6 @@ export class ShareasaleAdapter extends BaseAdapter {
         const categoryProducts = await this.fetchCategory(category)
         allProducts.push(...categoryProducts)
       } catch (error) {
-        console.error(`Failed to fetch ShareASale category ${category}:`, error)
       }
     }
 
@@ -51,7 +49,6 @@ export class ShareasaleAdapter extends BaseAdapter {
     // For Phase 2 MVP, we will simulate the fetch if no credentials.
     // In production, we construct the request with proper auth.
 
-    console.log(`Fetching ShareASale products for: ${categoryKeyword}`)
 
     // Placeholder for actual API request
     // const response = await fetch(...)

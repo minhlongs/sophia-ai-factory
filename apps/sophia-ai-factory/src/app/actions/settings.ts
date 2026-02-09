@@ -27,7 +27,6 @@ export async function getUserProfile(): Promise<UserProfileFormValues> {
     .single();
 
   if (profileError || !data) {
-    console.error('Error fetching profile:', profileError);
     // If profile doesn't exist yet (race condition with trigger), return default
     return {
       fullName: user.user_metadata?.full_name || '',
@@ -168,7 +167,6 @@ export async function updateUserProfile(data: UserProfileFormValues) {
     return { success: true };
 
   } catch (error) {
-    console.error('Update profile error:', error);
     return { error: 'Failed to update profile' };
   }
 }

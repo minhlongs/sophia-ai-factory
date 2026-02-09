@@ -39,7 +39,6 @@ export function SettingsForm({ defaultValues }: SettingsFormProps) {
           toast.success('Settings updated successfully');
         }
       } catch (error) {
-        console.error(error);
         toast.error('Something went wrong. Please try again.');
       }
     });

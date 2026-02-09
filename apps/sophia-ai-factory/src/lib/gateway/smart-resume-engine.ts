@@ -70,8 +70,7 @@ export class SmartResumeEngine {
           );
         if (error) throw error;
         return;
-      } catch (err) {
-        console.warn("[SmartResumeEngine] Supabase write failed, falling back to memory:", err);
+      } catch {
       }
     }
 
@@ -97,8 +96,7 @@ export class SmartResumeEngine {
         if (error) throw error;
         if (!data || data.length === 0) return null;
         return rowToCheckpoint(data[0] as CheckpointRow);
-      } catch (err) {
-        console.warn("[SmartResumeEngine] Supabase read failed, falling back to memory:", err);
+      } catch {
       }
     }
 
@@ -124,8 +122,7 @@ export class SmartResumeEngine {
         if (error) throw error;
         if (!data) return [];
         return (data as CheckpointRow[]).map(rowToCheckpoint);
-      } catch (err) {
-        console.warn("[SmartResumeEngine] Supabase read failed, falling back to memory:", err);
+      } catch {
       }
     }
 
@@ -157,8 +154,7 @@ export class SmartResumeEngine {
         if (error) throw error;
         this.fallbackStore.delete(campaignId);
         return;
-      } catch (err) {
-        console.warn("[SmartResumeEngine] Supabase delete failed, falling back to memory:", err);
+      } catch {
       }
     }
 
@@ -179,8 +175,7 @@ export class SmartResumeEngine {
           .limit(1);
         if (error) throw error;
         return (data?.length ?? 0) > 0;
-      } catch (err) {
-        console.warn("[SmartResumeEngine] Supabase query failed, falling back to memory:", err);
+      } catch {
       }
     }
 

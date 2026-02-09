@@ -15,9 +15,6 @@ const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID;
 let base: Airtable.Base;
 
 if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_ID) {
-  console.warn(
-    "Airtable API Key or Base ID is missing. Airtable integration will not work."
-  );
   // Mock base to prevent build failures during static generation
   base = (() => ({
     create: async () => [],
