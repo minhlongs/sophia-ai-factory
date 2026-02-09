@@ -9,6 +9,8 @@
       "analytics": "Phân Tích",
       "my_videos": "Video Của Tôi",
       "settings": "Cài Đặt",
+      "support": "Hỗ Trợ",
+      "api_docs": "Tài Liệu API",
       "sign_out": "Đăng Xuất"
     },
     "header": {
@@ -72,6 +74,24 @@
       "template_usage": "Sử Dụng Mẫu",
       "duration_min": "Thời lượng (phút)",
       "no_data": "Không có dữ liệu"
+    },
+    "support": {
+      "title": "Hỗ Trợ",
+      "subtitle": "Nhận trợ giúp theo gói của bạn",
+      "current_plan": "Gói Của Bạn",
+      "response_time": "Thời Gian Phản Hồi",
+      "channel": "Kênh Hỗ Trợ",
+      "contact_us": "Cần trợ giúp? Liên hệ đội ngũ hỗ trợ của chúng tôi"
+    },
+    "api_docs": {
+      "title": "Tài Liệu API",
+      "subtitle": "Tích hợp Sophia AI vào quy trình của bạn",
+      "upgrade_required": "Yêu Cầu Gói Enterprise",
+      "upgrade_message": "Truy cập API dành cho người dùng gói Enterprise và Master. Nâng cấp gói để mở khóa tích hợp API.",
+      "view_plans": "Xem Các Gói",
+      "api_key": "API Key Của Bạn",
+      "api_key_hint": "Liên hệ hỗ trợ để tạo API key",
+      "endpoints": "Các Endpoint Có Sẵn"
     }
   },
   "campaign": {

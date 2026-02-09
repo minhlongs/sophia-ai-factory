@@ -9,6 +9,8 @@
       "analytics": "Analytics",
       "my_videos": "My Videos",
       "settings": "Settings",
+      "support": "Support",
+      "api_docs": "API Docs",
       "sign_out": "Sign Out"
     },
     "header": {
@@ -72,6 +74,24 @@
       "template_usage": "Template Usage",
       "duration_min": "Duration (min)",
       "no_data": "No data available"
+    },
+    "support": {
+      "title": "Support",
+      "subtitle": "Get help based on your plan",
+      "current_plan": "Your Plan",
+      "response_time": "Response Time",
+      "channel": "Channel",
+      "contact_us": "Need help? Reach out to our support team"
+    },
+    "api_docs": {
+      "title": "API Documentation",
+      "subtitle": "Integrate Sophia AI into your workflow",
+      "upgrade_required": "Enterprise Plan Required",
+      "upgrade_message": "API access is available for Enterprise and Master tier users. Upgrade your plan to unlock API integrations.",
+      "view_plans": "View Plans",
+      "api_key": "Your API Key",
+      "api_key_hint": "Contact support to generate your API key",
+      "endpoints": "Available Endpoints"
     }
   },
   "campaign": {
