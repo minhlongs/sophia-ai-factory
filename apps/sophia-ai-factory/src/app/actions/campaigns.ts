@@ -44,8 +44,7 @@ export async function createCampaign(formData: FormData) {
 
   const { title, topic, audience } = validation.data;
   // Explicitly cast platforms since it's not in the schema yet but we want to use it for tier check
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const platforms = (rawData as any).platforms as string[];
+  const platforms = rawData.platforms as string[];
 
   // Get current user
   const supabase = await createServerClient();

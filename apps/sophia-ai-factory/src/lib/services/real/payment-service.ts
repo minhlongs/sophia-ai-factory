@@ -26,7 +26,7 @@ export class RealPaymentService implements IPaymentService {
         products: cleanProductIds,
         successUrl: successUrl,
         customerEmail: customerEmail,
-        metadata: metadata as any // eslint-disable-line @typescript-eslint/no-explicit-any,
+        metadata: metadata as Record<string, string>,
       });
 
       return {

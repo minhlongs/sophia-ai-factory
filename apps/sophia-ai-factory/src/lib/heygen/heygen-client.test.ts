@@ -49,11 +49,10 @@ describe('HeyGenClient', () => {
         { avatar_id: 'av1', name: 'Avatar 1', preview_image_url: 'http://test.com/1.jpg', gender: 'female' }
       ];
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global.fetch as any).mockResolvedValue({
+      vi.mocked(fetch).mockResolvedValue({
         ok: true,
         json: async () => ({ data: { avatars: mockAvatars } })
-      });
+      } as Response);
 
       const result = await client.listAvatars();
       expect(result).toEqual(mockAvatars);
@@ -68,12 +67,11 @@ describe('HeyGenClient', () => {
     });
 
     it('should handle API errors gracefully', async () => {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global.fetch as any).mockResolvedValue({
+      vi.mocked(fetch).mockResolvedValue({
         ok: false,
         status: 500,
         text: async () => 'Internal Server Error'
-      });
+      } as Response);
 
       // console.error is called in the catch block
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -88,11 +86,10 @@ describe('HeyGenClient', () => {
   describe('createVideo', () => {
     it('should create video and return video_id', async () => {
       const mockVideoId = 'vid_123';
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global.fetch as any).mockResolvedValue({
+      vi.mocked(fetch).mockResolvedValue({
         ok: true,
         json: async () => ({ data: { video_id: mockVideoId } })
-      });
+      } as Response);
 
       const params = {
         avatarId: 'av1',
@@ -125,8 +122,7 @@ describe('HeyGenClient', () => {
         error: undefined
       };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global.fetch as any).mockResolvedValue({
+      vi.mocked(fetch).mockResolvedValue({
         ok: true,
         json: async () => ({
           data: {
@@ -135,7 +131,7 @@ describe('HeyGenClient', () => {
             thumbnail_url: 'http://thumb.url'
           }
         })
-      });
+      } as Response);
 
       const result = await client.getVideoStatus(videoId);
       expect(result).toEqual(mockStatus);
@@ -146,12 +142,11 @@ describe('HeyGenClient', () => {
     });
 
     it('should throw error on failure', async () => {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global.fetch as any).mockResolvedValue({
+      vi.mocked(fetch).mockResolvedValue({
         ok: false,
         status: 404,
         statusText: 'Not Found'
-      });
+      } as Response);
 
       await expect(client.getVideoStatus('vid_999')).rejects.toThrow();
     });

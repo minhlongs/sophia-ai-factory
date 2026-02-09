@@ -10,8 +10,7 @@ export interface RawProduct {
   price_usd?: number
   commission_rate?: number // 0-1 (e.g., 0.75 for 75%)
   avg_earnings_usd?: number
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  raw_metrics: Record<string, any>
+  raw_metrics: Record<string, unknown>
   category_id?: number // Internal category ID if known, or network specific ID to be mapped
   network_category?: string
 }

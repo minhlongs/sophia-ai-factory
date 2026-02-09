@@ -19,6 +19,19 @@
 | 5 | [FAQ](./faq.md) | Cau hoi thuong gap / Common questions | All Users |
 | 6 | [Troubleshooting](./troubleshooting.md) | Xu ly su co / Issue resolution | All Users |
 | 7 | [Design Guidelines](./design-guidelines.md) | Huong dan thiet ke / Visual identity | Developers |
+| 8 | [System Architecture](./system-architecture.md) | Kien truc he thong / Component diagram & data flow | Developers |
+
+---
+
+## Technical Modules / Module Ky Thuat
+
+| # | Module | Description / Mo Ta | Location |
+|---|---|---|---|
+| 1 | OpenClaw Gateway | Tu dong phan phoi noi dung da kenh / Multi-channel content distribution with self-healing retry | `src/lib/gateway/` |
+| 2 | Smart Resume Engine | Luu diem kiem tra / Checkpoint-based pipeline recovery for failed campaigns | `src/lib/gateway/smart-resume-engine.ts` |
+| 3 | Auto-Discovery Scoring | Cham diem san pham lien ket / SPS scoring engine for affiliate products (Inngest cron, daily 8AM UTC) | `src/lib/intelligence/scoring.ts`, `src/lib/discovery/affiliate-ai-scorer.ts` |
+| 4 | Channel Adapters | Bo chuyen doi kenh / ClickBank, ShareASale ingestion + YouTube, TikTok, Telegram distribution | `src/lib/ingestion/adapters/`, `src/lib/gateway/adapters/` |
+| 5 | Campaign Pipeline | Quy trinh chien dich / Script → Voiceover → Video → Distribute (Inngest orchestration) | `src/lib/inngest/functions/generate-campaign.ts` |
 
 ---
 

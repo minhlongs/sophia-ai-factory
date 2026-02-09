@@ -30,11 +30,45 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `/api/webhooks/telegram` — Telegram bot webhook
 - `/api/inngest` — Inngest function runner
 
+### Gateway Module (OpenClaw)
+- `src/lib/gateway/` — Multi-channel content distribution with self-healing
+- `OpenClawGateway` class: register channels, distribute, healthCheck, selfHeal
+- Channel adapters: YouTube, TikTok, Telegram (in `gateway/adapters/`)
+- Retry: exponential backoff with jitter (configurable RetryPolicy)
+
+### Smart Resume Engine
+- `src/lib/gateway/smart-resume-engine.ts` — Checkpoint-based pipeline recovery
+- Pipeline steps: notify-start → generate-script → generate-voiceover → start-video-generation → poll-video-status → distribute-channels → finalize-campaign
+- Currently in-memory Map storage (TODO: migrate to Supabase `campaign_checkpoints` table)
+- Used by `generate-campaign` Inngest function for resume-from-failure
+
+### Auto-Discovery (Inngest Cron)
+- `src/lib/inngest/functions/auto-discover-affiliates.ts` — Daily 8AM UTC cron
+- Scores affiliate programs via `src/lib/discovery/affiliate-ai-scorer.ts` (deterministic, no AI calls)
+- SPS scoring in `src/lib/intelligence/scoring.ts` (commission + popularity + reliability weights)
+- Stores high-scoring results in Supabase `affiliate_products` table
+- Sends summary to admin via Telegram
+
+### Ingestion Adapters
+- `src/lib/ingestion/` — Affiliate product ingestion from external networks
+- Adapters: `clickbank-adapter.ts`, `shareasale-adapter.ts` (Amazon planned)
+- Base adapter pattern: `IngestionAdapter` interface with `fetchProducts()`
+- Raw products normalized into `RawProduct` type before scoring
+
+### Auth Flow
+- Supabase Magic Link (no password) via `src/lib/auth.ts`
+- Login page: `/[locale]/login` → sends magic link email
+- Auth callback: `/auth/callback` → exchanges code for session
+- Admin invite: `POST /api/admin/invite` (Basic Auth gated, requires `ADMIN_USER`/`ADMIN_PASS`)
+- Tier stored in `user_metadata.tier` (BASIC default)
+- Middleware: i18n + setup wizard redirect + admin basic auth + dashboard auth guard
+
 ### Known Gotchas
 - HeyGen polling takes 1-3min per video
 - Supabase type assertions needed for RLS queries
 - `API_ENCRYPTION_KEY` env var required for key encryption
 - Tier enum must be UPPERCASE: BASIC, PREMIUM, ENTERPRISE
+- Smart Resume engine uses in-memory storage (resets on deploy)
 
 ### Quality Standard
 - 100/100 Diamond Standard

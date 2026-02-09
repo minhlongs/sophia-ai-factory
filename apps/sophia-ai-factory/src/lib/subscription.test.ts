@@ -22,8 +22,8 @@ describe('Subscription Library', () => {
     mockSelect.mockReturnValue({ eq: mockEq });
     mockFrom.mockReturnValue({ select: mockSelect });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (createClient as any).mockReturnValue({
+    // @ts-expect-error - Mock only implements subset of SupabaseClient interface
+    vi.mocked(createClient).mockReturnValue({
       from: mockFrom,
     });
   });

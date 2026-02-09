@@ -4,6 +4,12 @@ import { NextRequest } from 'next/server';
 import { tierGuard } from '@/lib/tier-guard';
 import { checkTierAccess } from '@/lib/features';
 
+// Type for mock NextResponse.json return value
+interface MockResponse {
+    body: Record<string, unknown>;
+    status: number;
+}
+
 // Mock dependencies
 vi.mock('@/lib/tier-guard');
 vi.mock('@/lib/features');
@@ -12,8 +18,7 @@ vi.mock('@/lib/features');
 vi.mock('next/server', async (importOriginal) => {
     const actual = await importOriginal();
     return {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ...(actual as any),
+        ...(actual as Record<string, unknown>),
         NextResponse: {
             json: vi.fn((body, init) => ({
                 body,
@@ -42,10 +47,8 @@ describe('API check-access Integration', () => {
         const response = await GET(req);
 
         expect(tierGuard.checkLimit).toHaveBeenCalledWith('user-123', 'youtubeChannels');
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        expect((response as any).status).toBe(403);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        expect((response as any).body).toMatchObject({
+        expect((response as unknown as MockResponse).status).toBe(403);
+        expect((response as unknown as MockResponse).body).toMatchObject({
             allowed: false,
             upgradeRequired: true
         });
@@ -62,10 +65,8 @@ describe('API check-access Integration', () => {
         const req = new NextRequest('http://localhost:3000/api/check-access?limit=youtubeChannels&userId=user-123');
         const response = await GET(req);
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        expect((response as any).status).toBe(200);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        expect((response as any).body).toMatchObject({
+        expect((response as unknown as MockResponse).status).toBe(200);
+        expect((response as unknown as MockResponse).body).toMatchObject({
             allowed: true
         });
     });
@@ -80,8 +81,7 @@ describe('API check-access Integration', () => {
         const response = await GET(req);
 
         expect(checkTierAccess).toHaveBeenCalledWith('PREMIUM', 'enable_affiliate_engine');
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        expect((response as any).status).toBe(200);
+        expect((response as unknown as MockResponse).status).toBe(200);
     });
 
     it('should return 403 for denied feature access', async () => {
@@ -93,10 +93,8 @@ describe('API check-access Integration', () => {
         const req = new NextRequest('http://localhost:3000/api/check-access?feature=enable_admin_dashboard&tier=BASIC');
         const response = await GET(req);
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        expect((response as any).status).toBe(403);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        expect((response as any).body).toMatchObject({
+        expect((response as unknown as MockResponse).status).toBe(403);
+        expect((response as unknown as MockResponse).body).toMatchObject({
             hasAccess: false,
             upgradeRequired: true
         });
