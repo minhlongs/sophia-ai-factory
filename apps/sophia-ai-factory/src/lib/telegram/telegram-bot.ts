@@ -99,9 +99,9 @@ export async function handleEmail(chatId: string, email: string) {
             telegram_chat_id: chatId,
             settings: { notifications: { telegram: { enabled: true } } } as Json
         }
-        // Cast to any to avoid "never" inference issues with strict typing
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (getSupabase().from('user_profiles') as any).insert(newProfile)
+        // Supabase types resolve Insert to never for tables with Json columns
+        // @ts-expect-error - Known Supabase typing limitation with Json column types
+        await getSupabase().from('user_profiles').insert(newProfile)
     } else {
         // Update existing profile
         const currentSettings = (existingProfile.settings as Record<string, unknown>) || {}
@@ -119,8 +119,8 @@ export async function handleEmail(chatId: string, email: string) {
             }
         } as Json
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (getSupabase().from('user_profiles') as any)
+        await getSupabase().from('user_profiles')
+            // @ts-expect-error - Known Supabase typing limitation with Json column types
             .update({
                 telegram_chat_id: chatId,
                 settings: newSettings
@@ -173,8 +173,8 @@ export async function handleCampaign(chatId: string, topic: string) {
         audio_url: null
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: campaignData, error: createError } = await (getSupabase().from('campaigns') as any)
+    const { data: campaignData, error: createError } = await getSupabase().from('campaigns')
+      // @ts-expect-error - Known Supabase typing limitation with Json column types
       .insert(campaignInsert)
       .select()
       .single()
@@ -226,8 +226,7 @@ export async function handleStatus(chatId: string) {
     }
 
     // 2. Fetch active campaigns
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: campaignsData } = await (getSupabase().from('campaigns') as any)
+    const { data: campaignsData } = await getSupabase().from('campaigns')
       .select('*')
       .eq('user_id', profile.user_id)
       .in('status', ['queued', 'processing_script', 'processing_video'])
@@ -274,8 +273,7 @@ export async function handleResults(chatId: string) {
     }
 
     // 2. Fetch completed campaigns
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: campaignsData } = await (getSupabase().from('campaigns') as any)
+    const { data: campaignsData } = await getSupabase().from('campaigns')
       .select('*')
       .eq('user_id', profile.user_id)
       .eq('status', 'completed')

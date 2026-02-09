@@ -35,8 +35,8 @@ export async function POST(request: NextRequest) {
     // Upsert integration
     const { error } = await supabase
       .from('user_integrations')
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .upsert(integrationData as any)
+      // @ts-expect-error - Known Supabase typing limitation with upsert on typed tables
+      .upsert(integrationData as unknown as Database['public']['Tables']['user_integrations']['Insert'])
 
     if (error) throw error
 

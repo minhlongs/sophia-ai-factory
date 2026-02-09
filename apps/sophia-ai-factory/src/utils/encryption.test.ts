@@ -42,7 +42,6 @@ describe('Encryption Utils', () => {
     expect(maskApiKey('sk-1234567890abcdef', 4)).toBe('sk-...cdef');
     expect(maskApiKey('short', 4)).toBe('********');
     expect(maskApiKey('', 4)).toBe('********');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    expect(maskApiKey(undefined as any, 4)).toBe('********');
+    expect(maskApiKey(undefined as unknown as string, 4)).toBe('********');
   });
 });

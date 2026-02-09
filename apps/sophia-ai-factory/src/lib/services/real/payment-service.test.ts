@@ -33,7 +33,7 @@ describe('RealPaymentService', () => {
     // getProductIdByTier is no longer used in the service, but we keep the mock if needed for other tests
     // or remove it if not used. The service now expects productIds directly.
 
-    vi.mocked(polar.checkouts.create).mockResolvedValue(mockCheckout as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+    vi.mocked(polar.checkouts.create).mockResolvedValue(mockCheckout as unknown as Awaited<ReturnType<typeof polar.checkouts.create>>);
 
     const params = {
       productIds: [mockProductId],

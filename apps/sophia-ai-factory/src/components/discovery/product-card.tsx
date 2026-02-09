@@ -71,8 +71,7 @@ export function ProductCard({ product }: ProductCardProps) {
             <div className="mt-0.5 flex items-center gap-1 text-sm font-medium">
                {/* Placeholder for gravity/rank */}
                {/* We assume raw_metrics exists but it's JSON */}
-               {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-               <span>{(product.raw_metrics as any)?.gravity?.toFixed(0) || '-'} Grav</span>
+               <span>{((product.raw_metrics as Record<string, unknown>)?.gravity as number | undefined)?.toFixed(0) || '-'} Grav</span>
             </div>
           </div>
           <div className="flex flex-col justify-center items-center sm:items-start pt-2 sm:pt-0">

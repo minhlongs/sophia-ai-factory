@@ -23,8 +23,7 @@ export function SettingsForm({ defaultValues }: SettingsFormProps) {
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<UserProfileFormValues>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(userProfileFormSchema) as any, // Cast to any to resolve TS mismatch with zodResolver
+    resolver: zodResolver(userProfileFormSchema) as unknown as import('react-hook-form').Resolver<UserProfileFormValues>,
     defaultValues,
   });
 

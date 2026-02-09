@@ -152,11 +152,9 @@ export async function updateUserProfile(data: UserProfileFormValues) {
     }
 
     // 3. Update Profile Table
-    // Cast to any to bypass "Argument of type ... is not assignable to parameter of type 'never'"
-    // This is likely a circular type reference issue in the Database definitions
-    const { error: updateError } = await (supabase
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .from('user_profiles') as any)
+    const { error: updateError } = await supabase
+      .from('user_profiles')
+      // @ts-expect-error - Known Supabase typing limitation with update on tables with Json columns
       .update({
         settings: settings,
         api_keys: newEncryptedKeys,

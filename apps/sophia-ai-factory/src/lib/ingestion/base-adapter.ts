@@ -59,8 +59,8 @@ export abstract class BaseAdapter implements IngestionAdapter {
 
       const { error } = await supabase
         .from('affiliate_products')
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .upsert(dbRows as any, {
+        // @ts-expect-error - Known Supabase typing limitation with upsert on tables with Json columns
+        .upsert(dbRows as unknown as Database['public']['Tables']['affiliate_products']['Insert'][], {
           onConflict: 'network_id,external_id',
           ignoreDuplicates: false
         })

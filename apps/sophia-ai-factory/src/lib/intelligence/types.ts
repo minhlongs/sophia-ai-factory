@@ -25,8 +25,7 @@ export const DEFAULT_CONFIG: ScoringConfig = {
 export interface ScorableProduct {
   network_id: 'clickbank' | 'shareasale' | 'amazon'
   avg_earnings_usd: number | null
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  raw_metrics: Record<string, any>
+  raw_metrics: Record<string, unknown>
   // In real app, we would have historical metrics here too for velocity
   metric_history?: { gravity?: number[], rank?: number[] }
 }

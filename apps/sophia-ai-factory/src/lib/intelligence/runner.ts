@@ -33,8 +33,7 @@ export async function runScoringBatch(limit: number = 1000, offset: number = 0) 
     const scorable: ScorableProduct = {
       network_id: product.network_id,
       avg_earnings_usd: product.avg_earnings_usd,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      raw_metrics: product.raw_metrics as Record<string, any>
+      raw_metrics: product.raw_metrics as Record<string, unknown>
     }
 
     const scoreResult = scoringService.calculateScore(scorable)
@@ -60,8 +59,8 @@ export async function runScoringBatch(limit: number = 1000, offset: number = 0) 
 
   const { error: updateError } = await supabase
     .from('affiliate_products')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .upsert(updates as any, { onConflict: 'id', ignoreDuplicates: false })
+    // @ts-expect-error - Known Supabase typing limitation with upsert on tables with Json columns
+    .upsert(updates as unknown as Database['public']['Tables']['affiliate_products']['Update'][], { onConflict: 'id', ignoreDuplicates: false })
 
   if (updateError) {
     console.error('Bulk update failed:', updateError)

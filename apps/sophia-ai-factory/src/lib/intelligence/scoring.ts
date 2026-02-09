@@ -22,9 +22,9 @@ export class ScoringService {
     // 2. Popularity Score
     let nPop = 0
     if (product.network_id === 'clickbank') {
-      nPop = normalizeClickBankGravity(product.raw_metrics.gravity)
+      nPop = normalizeClickBankGravity(product.raw_metrics.gravity as number | null | undefined)
     } else if (product.network_id === 'shareasale') {
-      nPop = normalizeShareASaleRank(product.raw_metrics.powerRank || product.raw_metrics.rank)
+      nPop = normalizeShareASaleRank((product.raw_metrics.powerRank || product.raw_metrics.rank) as number | null | undefined)
     } else {
       nPop = 50 // Default
     }

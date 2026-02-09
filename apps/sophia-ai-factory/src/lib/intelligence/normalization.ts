@@ -73,12 +73,11 @@ export function normalizeShareASaleRank(rank: number | null | undefined): number
  * For MVP, we often don't have direct refund rates.
  * We can use Rebill/Recurring as a proxy for LTV/Reliability if available.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function normalizeReliability(metrics: Record<string, any>): number {
+export function normalizeReliability(metrics: Record<string, unknown>): number {
   // Placeholder logic
   // ClickBank: has 'totalRebillAmt' or 'initialEarningsPerSale' vs 'averageEarningsPerSale'
 
-  if (metrics.recurring || metrics.totalRebillAmt > 0) {
+  if (metrics.recurring || (metrics.totalRebillAmt as number) > 0) {
     return 80 // Recurring products are generally more reliable income
   }
 
