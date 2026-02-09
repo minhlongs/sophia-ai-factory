@@ -1,40 +1,19 @@
-name: Green Verification Quality Gate
+name: Verify Green
 
 on:
-  push:
-    branches: [main]
   pull_request:
-    branches: [main]
+    branches: [main, master]
+  workflow_dispatch:
 
 jobs:
   verify:
-    name: Verify Production Readiness
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Run Verification Script
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+      - name: Go-Live Green Verification
         run: ./scripts/verify.sh
-
-      - name: Generate Certification Artifact
-        if: success()
-        run: node scripts/generate-certification.js
-
-      - name: Upload Certification Report
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: certification-report
-          path: CERTIFICATION.md
-          retention-days: 90
