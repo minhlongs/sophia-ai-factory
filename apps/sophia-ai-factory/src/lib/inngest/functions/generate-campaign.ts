@@ -5,6 +5,11 @@ import { sendTelegramMessage } from "@/lib/telegram/telegram-client";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { CampaignStatus } from "@/types";
 import { Database, Json } from "@/lib/supabase/types";
+import { OpenClawGateway } from "@/lib/gateway/openclaw-gateway";
+import { SmartResumeEngine } from "@/lib/gateway/smart-resume-engine";
+import { YouTubeChannelAdapter } from "@/lib/gateway/adapters/youtube-channel-adapter";
+import { TikTokChannelAdapter } from "@/lib/gateway/adapters/tiktok-channel-adapter";
+import { TelegramNotificationAdapter } from "@/lib/gateway/adapters/telegram-notification-adapter";
 
 // Lazy init Supabase Admin client for build compatibility
 let _supabase: SupabaseClient<Database> | null = null;
@@ -20,6 +25,35 @@ function getSupabase(): SupabaseClient<Database> {
     );
   }
   return _supabase;
+}
+
+// Singleton instances for gateway and resume engine
+const resumeEngine = new SmartResumeEngine();
+
+function createGateway(): OpenClawGateway {
+  const gateway = new OpenClawGateway({ maxRetries: 2, baseDelayMs: 2000 });
+  gateway.registerChannel({
+    id: "youtube",
+    name: "YouTube",
+    adapter: new YouTubeChannelAdapter(),
+    enabled: true,
+    rateLimitPerHour: 6,
+  });
+  gateway.registerChannel({
+    id: "tiktok",
+    name: "TikTok",
+    adapter: new TikTokChannelAdapter(),
+    enabled: true,
+    rateLimitPerHour: 10,
+  });
+  gateway.registerChannel({
+    id: "telegram",
+    name: "Telegram Notifications",
+    adapter: new TelegramNotificationAdapter(),
+    enabled: true,
+    rateLimitPerHour: 60,
+  });
+  return gateway;
 }
 
 export const generateCampaign = inngest.createFunction(
@@ -126,6 +160,7 @@ export const generateCampaign = inngest.createFunction(
       const scriptService = ServiceFactory.getScriptService();
       const result = await scriptService.generateScript({ topic, audience, tier });
       await updateStatus("processing_script", 35, { script_content: result });
+      await resumeEngine.checkpoint(campaignId, "generate-script");
       return result;
     });
 
@@ -166,6 +201,7 @@ export const generateCampaign = inngest.createFunction(
       });
 
       await updateStatus("processing_script", 60, { audio_url: voiceoverResult.audio_url });
+      await resumeEngine.checkpoint(campaignId, "generate-voiceover");
       return voiceoverResult.audio_url;
     });
 
@@ -231,13 +267,77 @@ export const generateCampaign = inngest.createFunction(
       throw new Error("Video generation timed out");
     });
 
-    // Step 5: Finalize
+    // Step 4b: Smart Resume checkpoint after video ready
+    await step.run("checkpoint-video-ready", async () => {
+      await resumeEngine.checkpoint(campaignId, "poll-video-status", {
+        video_url: videoAssets.video_url,
+        thumbnail_url: videoAssets.thumbnail_url,
+      });
+    });
+
+    // Step 5: Distribute via OpenClaw Gateway
+    const distributionResult = await step.run("distribute-channels", async () => {
+      const gateway = createGateway();
+
+      const campaignTitle = topic || `Campaign ${campaignId}`;
+      const result = await gateway.distribute({
+        campaignId,
+        videoUrl: videoAssets.video_url,
+        thumbnailUrl: videoAssets.thumbnail_url || undefined,
+        title: campaignTitle,
+        description: `AI-generated video content for ${audience || "general audience"}`,
+        tags: ["sophia-ai", "auto-generated", tier.toLowerCase()],
+      });
+
+      // Self-heal failed channels
+      if (!result.allSucceeded) {
+        const healed = await gateway.selfHeal(
+          {
+            campaignId,
+            videoUrl: videoAssets.video_url,
+            thumbnailUrl: videoAssets.thumbnail_url || undefined,
+            title: campaignTitle,
+            description: `AI-generated video for ${audience || "general audience"}`,
+            tags: ["sophia-ai", "auto-generated", tier.toLowerCase()],
+          },
+          result,
+        );
+        await resumeEngine.checkpoint(campaignId, "distribute-channels", {
+          allSucceeded: healed.allSucceeded,
+          channelCount: healed.results.length,
+        });
+        return healed;
+      }
+
+      await resumeEngine.checkpoint(campaignId, "distribute-channels", {
+        allSucceeded: result.allSucceeded,
+        channelCount: result.results.length,
+      });
+      return result;
+    });
+
+    // Step 6: Finalize
     await step.run("finalize-campaign", async () => {
       await updateStatus("completed", 100, {
         video_url: videoAssets.video_url,
         thumbnail_url: videoAssets.thumbnail_url
       });
-      await notifyUser(`✅ **Campaign Ready!**\nYour video for "${topic}" is ready.\n[Watch Video](${videoAssets.video_url})`);
+
+      const distributedChannels = distributionResult.results
+        .filter((r) => r.success)
+        .map((r) => r.channelId)
+        .join(", ");
+
+      const statusLine = distributionResult.allSucceeded
+        ? `Published to: ${distributedChannels}`
+        : `Partially published (${distributedChannels}). Some channels failed.`;
+
+      await notifyUser(
+        `✅ **Campaign Ready!**\nYour video for "${topic}" is ready.\n${statusLine}\n[Watch Video](${videoAssets.video_url})`
+      );
+
+      await resumeEngine.checkpoint(campaignId, "finalize-campaign");
+      await resumeEngine.clearCheckpoints(campaignId);
     });
 
     return { success: true, campaignId };
