@@ -141,7 +141,6 @@ Always run `npm run lint` before committing.
 
 All TypeScript errors must be resolved before building. The build will fail on type errors due to `strict: true` in tsconfig.json.
 
-
 ---
 
 ## 🚀 AGENT TEAMS + BMAD (Feb 2026)
@@ -149,3 +148,19 @@ All TypeScript errors must be resolved before building. The build will fail on t
 **Enabled:** `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`
 
 **Workflow:** `/plan:hard` → `"Gọi team thực hiện plan này"`
+
+---
+
+## 🚨 RULE: CI/CD GREEN PRODUCTION — KHÔNG ĐƯỢC DỪNG KHI CHƯA XONG
+
+**Bắt buộc tuyệt đối — KHÔNG có ngoại lệ:**
+
+1. **Build PHẢI pass:** `npm run build` — 0 errors
+2. **Lint PHẢI pass:** `npm run lint` — 0 warnings/errors
+3. **Tests PHẢI pass:** `npm test` — 100% green (nếu có test suite)
+4. **Commit + Push:** `git add . && git commit && git push origin main`
+5. **Deploy Production:** `npx vercel --prod` — PHẢI deploy thành công
+6. **Verify Production:** Kiểm tra URL production hoạt động đúng
+
+**KHÔNG ĐƯỢC báo "hoàn thành" nếu chưa qua đủ 6 bước trên.**
+**KHÔNG ĐƯỢC dừng giữa chừng — phải chạy hết pipeline CI/CD → GREEN PRODUCTION.**
