@@ -4,12 +4,14 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { BookOpen, Map, Monitor, HelpCircle, MessageCircle, ArrowLeft, Menu, X } from "lucide-react";
+import { BookOpen, Map, Monitor, HelpCircle, MessageCircle, ArrowLeft, Menu, X, Link2, Terminal } from "lucide-react";
 
 const sidebarLinks = [
   { href: "/guide", label: "Getting Started", icon: BookOpen },
   { href: "/guide/how-it-works", label: "How It Works", icon: Map },
   { href: "/guide/screens", label: "Screen Guide", icon: Monitor },
+  { href: "/guide/integrations", label: "Integrations", icon: Link2 },
+  { href: "/guide/commands", label: "Commands", icon: Terminal },
   { href: "/guide/faq", label: "FAQ", icon: HelpCircle },
   { href: "/guide/telegram", label: "Telegram Bot", icon: MessageCircle },
 ];
