@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { TIER_CONFIGS } from "@/config/tiers";
 import { Tier } from "@/types";
 
 interface UpgradeBannerProps {
@@ -22,9 +23,9 @@ export function UpgradeBanner({
   // However, tier hierarchy checking is better done with a helper.
   // For now, we assume this component is rendered WHEN the user needs to upgrade.
 
-  const isEnterprise = requiredTier === "ENTERPRISE";
-  const upgradeLabel = isEnterprise ? "Contact Sales" : "Upgrade to Premium";
-  const upgradeLink = isEnterprise ? "mailto:support@sophia.agencyos.network" : "/pricing"; // or a billing portal link
+  const requiredName = TIER_CONFIGS[requiredTier].name;
+  const upgradeLabel = requiredTier === "ENTERPRISE" ? "Contact Sales" : `Upgrade to ${requiredName}`;
+  const upgradeLink = requiredTier === "ENTERPRISE" ? "mailto:support@sophia.agencyos.network" : "/pricing";
 
   return (
     <Card className={`bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800 ${className}`}>
@@ -37,11 +38,11 @@ export function UpgradeBanner({
             <h3 className="font-semibold text-foreground flex items-center gap-2">
               Unlock {featureName}
               <span className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 px-2 py-0.5 rounded-full font-medium">
-                {requiredTier}
+                {TIER_CONFIGS[requiredTier].name}
               </span>
             </h3>
             <p className="text-sm text-muted-foreground mt-1">
-              Your current {currentTier} plan doesn&apos;t support this feature.
+              Your current {TIER_CONFIGS[currentTier].name} plan doesn&apos;t support this feature.
               Upgrade to access {featureName} and more.
             </p>
           </div>

@@ -1,4 +1,242 @@
 {
+  "landing": {
+    "nav": {
+      "features": "Tính Năng",
+      "pricing": "Bảng Giá",
+      "guide": "Hướng Dẫn",
+      "affiliates": "Chương Trình Liên Kết",
+      "faq": "Câu Hỏi Thường Gặp",
+      "login": "Đăng Nhập",
+      "dashboard": "Bảng Điều Khiển",
+      "brand": "Sophia AI Factory"
+    },
+    "hero": {
+      "title_1": "Nhà Máy Video AI",
+      "title_2": "Biến Nội Dung Thành Đế Chế",
+      "subtitle": "Tự Động. Mở Rộng. Sinh Lời.",
+      "cta_start": "Bắt Đầu Miễn Phí",
+      "cta_demo": "Tìm Hiểu Thêm",
+      "stats": {
+        "tools": "Công Cụ AI",
+        "videos": "Video Đã Tạo",
+        "automation": "Tự Động Hóa"
+      }
+    },
+    "workflow": {
+      "title": "Nhà Máy Nội Dung Tự Động Của Bạn",
+      "subtitle": "Từ ý tưởng đến thu nhập chỉ trong 4 bước đơn giản",
+      "steps": {
+        "select_niche": {
+          "title": "Chọn Ngách",
+          "description": "Chọn đối tượng mục tiêu và lĩnh vực nội dung"
+        },
+        "ai_generate": {
+          "title": "AI Tạo Nội Dung",
+          "description": "Để AI tạo kịch bản, video và lồng tiếng"
+        },
+        "publish": {
+          "title": "Xuất Bản",
+          "description": "Tự động phân phối đến nhiều kênh YouTube"
+        },
+        "profit": {
+          "title": "Thu Lợi",
+          "description": "Kiếm tiền từ quảng cáo và hoa hồng liên kết"
+        }
+      },
+      "cta": "Tham gia cùng 1.000+ nhà sáng tạo đang xây dựng đế chế nội dung"
+    },
+    "features": {
+      "title": "Mọi Thứ Bạn Cần Để Thống Trị",
+      "subtitle": "Tính năng mạnh mẽ dành cho nhà sáng tạo nội dung chuyên nghiệp",
+      "items": {
+        "multi_channel": {
+          "title": "Phân Phối Đa Kênh",
+          "description": "Quản lý 5+ kênh YouTube từ một bảng điều khiển. Mở rộng đế chế nội dung dễ dàng.",
+          "badge": "Growth"
+        },
+        "auto_affiliate": {
+          "title": "Tích Hợp Liên Kết Tự Động",
+          "description": "Tự động chèn liên kết tiếp thị vào mô tả video với theo dõi thông minh.",
+          "badge": "Premium"
+        },
+        "voice_cloning": {
+          "title": "Nhân Bản Giọng Nói KOL",
+          "description": "Nhân bản giọng nói với AI. Nghe chuyên nghiệp trong mọi video mà không cần thu âm.",
+          "badge": "Growth"
+        },
+        "script_gen": {
+          "title": "Tạo Kịch Bản AI",
+          "description": "Tạo kịch bản hấp dẫn cho mọi ngách trong vài giây. Tối ưu SEO và tập trung chuyển đổi.",
+          "badge": "Starter"
+        },
+        "auto_publish": {
+          "title": "Tự Động Xuất Bản 24/7",
+          "description": "Lên lịch và xuất bản video tự động. Nhà máy nội dung của bạn không bao giờ ngủ.",
+          "badge": "Growth"
+        },
+        "global_reach": {
+          "title": "Phủ Sóng Toàn Cầu",
+          "description": "Dịch và bản địa hóa nội dung cho khán giả quốc tế tự động.",
+          "badge": "Premium"
+        }
+      },
+      "highlight": "Gói Premium mở khóa tích hợp API với PartnerStack, Impact.com, và cập nhật tự động hàng tuần các chương trình liên kết."
+    },
+    "pricing": {
+      "title": "Chọn Gói Của Bạn",
+      "subtitle": "Bảng giá hàng tháng đơn giản với đầy đủ tính năng",
+      "popular": "Phổ Biến Nhất",
+      "per_month": "/tháng",
+      "commitment": "Cam kết 12 tháng",
+      "get_started": "Bắt Đầu",
+      "processing": "Đang Xử Lý...",
+      "error_checkout": "Không thể bắt đầu thanh toán. Vui lòng thử lại.",
+      "error_network": "Lỗi mạng. Vui lòng thử lại.",
+      "master": {
+        "best_value": "Giá Trị Tốt Nhất — Tiết Kiệm 48%",
+        "one_time": "một lần",
+        "compare_price": "$9.588",
+        "compare_label": "so với $799/tháng × 12 tháng",
+        "cta": "Truy Cập Trọn Đời"
+      },
+      "features": {
+        "templates_5": "5 Mẫu Video",
+        "auto_discovery": "Công Cụ Khám Phá Tự Động",
+        "basic_analytics": "Bảng Phân Tích Cơ Bản",
+        "email_support": "Hỗ Trợ Email (phản hồi 48h)",
+        "unlimited_templates": "Mẫu Không Giới Hạn",
+        "advanced_analytics": "Phân Tích & Báo Cáo Nâng Cao",
+        "roi_calculator": "Máy Tính ROI",
+        "priority_support": "Hỗ Trợ Ưu Tiên (phản hồi 24h)",
+        "custom_brand": "Thiết Lập Thương Hiệu Riêng",
+        "custom_templates": "Mẫu Tùy Chỉnh",
+        "white_label": "Thiết Lập Nhãn Trắng",
+        "founder_access": "Truy Cập Trực Tiếp Người Sáng Lập",
+        "api_access": "Truy Cập API",
+        "uptime_sla": "SLA Uptime 99,9%",
+        "everything_premium": "Mọi Thứ Trong Premium",
+        "lifetime_access": "Truy Cập & Cập Nhật Trọn Đời",
+        "onboarding": "Đào Tạo 1-1",
+        "vip_support": "Hỗ Trợ VIP Ưu Tiên Mãi Mãi",
+        "custom_scripts": "Script Tự Động Tùy Chỉnh",
+        "strategy_review": "Đánh Giá Chiến Lược Hàng Tháng",
+        "white_label_license": "Giấy Phép Nhãn Trắng Đầy Đủ",
+        "early_access": "Truy Cập Sớm Tính Năng Beta"
+      },
+      "tiers": {
+        "starter": {
+          "name": "Starter",
+          "description": "Tự động hóa video AI hoàn chỉnh. Cam kết 12 tháng."
+        },
+        "growth": {
+          "name": "Growth",
+          "description": "Mở rộng sản xuất nội dung. Cam kết 12 tháng."
+        },
+        "premium": {
+          "name": "Premium",
+          "description": "Sức mạnh và hỗ trợ doanh nghiệp. Cam kết 12 tháng."
+        },
+        "master": {
+          "name": "Master",
+          "description": "Truy cập trọn đời. Một lần thanh toán. Bao gồm tất cả mãi mãi."
+        }
+      }
+    },
+    "roi": {
+      "title": "Tính Toán Doanh Thu Tiềm Năng",
+      "subtitle": "Xem bạn có thể kiếm được bao nhiêu với tự động hóa nội dung AI",
+      "calculator_title": "Máy Tính ROI",
+      "labels": {
+        "channels": "Số Kênh",
+        "videos_per_week": "Video Mỗi Tuần (mỗi kênh)",
+        "avg_views": "Lượt Xem Trung Bình Mỗi Video",
+        "projected_revenue": "Doanh Thu Dự Kiến Hàng Tháng",
+        "total_videos": "Tổng Video/Tháng",
+        "total_views": "Tổng Lượt Xem/Tháng"
+      },
+      "disclaimer": "Kết quả chỉ là ước tính và có thể thay đổi dựa trên ngách, chất lượng nội dung, tối ưu SEO và mức độ tương tác của khán giả. Doanh thu thực tế phụ thuộc vào nhiều yếu tố.",
+      "estimate_note": "* Ước tính dựa trên $2 CPM + hoa hồng liên kết"
+    },
+    "affiliate": {
+      "title": "Khám Phá Liên Kết Cao Cấp",
+      "subtitle": "Truy cập cơ sở dữ liệu chương trình liên kết trả hoa hồng cao. Tự động hóa nguồn thu nhập với các đối tác đã được chứng minh.",
+      "preview_tier": "Xem trước theo Gói:",
+      "commission": "Hoa Hồng",
+      "epc": "EPC",
+      "apply": "Đăng Ký Ngay",
+      "unlock": "Mở Khóa {tier}",
+      "upgrade": {
+        "title": "Chỉ Dành Cho {tier}",
+        "description": "Nâng cấp gói để truy cập đối tác liên kết cao cấp với EPC cao hơn.",
+        "button": "Nâng Cấp Gói"
+      }
+    },
+    "faq": {
+      "title": "Câu Hỏi Thường Gặp",
+      "subtitle": "Mọi thứ bạn cần biết về Nhà Máy Video AI",
+      "items": {
+        "quality": {
+          "question": "Nội dung do AI tạo có chất lượng cao không?",
+          "answer": "Có! Chúng tôi sử dụng các mô hình AI tiên tiến nhất (RunwayML Gen-3, Pika 1.5, ElevenLabs) để tạo video chuyên nghiệp. Bạn giữ toàn quyền kiểm soát sáng tạo với chỉnh sửa kịch bản, tùy chỉnh giọng nói và phê duyệt cuối cùng trước khi xuất bản."
+        },
+        "copyright": {
+          "question": "Vấn đề bản quyền và quyền sở hữu nội dung như thế nào?",
+          "answer": "Tất cả nội dung AI tạo qua nền tảng đều thuộc sở hữu của bạn. Chúng tôi sử dụng công cụ AI có giấy phép sử dụng thương mại. Bạn giữ 100% quyền sở hữu video, kênh và doanh thu."
+        },
+        "time": {
+          "question": "Mất bao lâu để tạo một video?",
+          "answer": "Với mẫu và tự động hóa, hầu hết video có thể tạo trong dưới 40 phút: 5 phút tạo kịch bản, 10 phút tạo video AI, 3 phút lồng tiếng, 15 phút chỉnh sửa và 5 phút tải lên. Sau khi thành thạo, nhiều nhà sáng tạo giảm xuống 20-30 phút mỗi video."
+        },
+        "skills": {
+          "question": "Tôi có cần kỹ năng kỹ thuật hoặc kinh nghiệm chỉnh sửa video không?",
+          "answer": "Không! Nền tảng được thiết kế cho người mới bắt đầu. Chúng tôi cung cấp hướng dẫn từng bước, mẫu có sẵn và tự động hóa AI xử lý phần phức tạp. Nếu bạn biết sử dụng YouTube và điền form, bạn có thể sử dụng hệ thống."
+        },
+        "support": {
+          "question": "Bạn cung cấp loại hỗ trợ nào?",
+          "answer": "Gói Starter bao gồm hỗ trợ email. Gói Growth thêm hỗ trợ chat với thời gian phản hồi nhanh hơn. Gói Premium bao gồm hỗ trợ ưu tiên 24/7 với quản lý tài khoản riêng và cuộc gọi chiến lược hàng tháng."
+        },
+        "money": {
+          "question": "Tôi có thể thực sự kiếm tiền với tiếp thị liên kết không?",
+          "answer": "Có, nhưng thành công phụ thuộc vào ngách, chất lượng nội dung và sự nhất quán. Công cụ liên kết tự động kết nối bạn với 20+ chương trình trả cao (SmartSuite 50%, Shopify 200%, v.v.). Nhiều nhà sáng tạo kiếm $500-$5.000/tháng hoa hồng sau khi xây dựng khán giả."
+        },
+        "tiers": {
+          "question": "Sự khác biệt giữa các gói giá là gì?",
+          "answer": "Starter ($199/tháng) cung cấp 5 mẫu, công cụ khám phá tự động, phân tích và hỗ trợ email. Growth ($399/tháng) mở khóa mẫu không giới hạn, phân tích nâng cao, máy tính ROI và hỗ trợ ưu tiên. Premium ($799/tháng) thêm mẫu tùy chỉnh, thiết lập nhãn trắng, truy cập người sáng lập và tích hợp API. Master ($4.999 một lần) bao gồm mọi thứ mãi mãi với đào tạo 1-1 và hỗ trợ VIP."
+        },
+        "refund": {
+          "question": "Có chính sách hoàn tiền không?",
+          "answer": "Có! Chúng tôi cam kết hoàn tiền 100% trong 30 ngày. Nếu bạn không hài lòng với nền tảng, liên hệ chúng tôi trong vòng 30 ngày kể từ ngày mua để được hoàn tiền đầy đủ, không hỏi lý do."
+        }
+      }
+    },
+    "footer": {
+      "brand": "Sophia AI Factory",
+      "description": "Biến nội dung thành đế chế. Nền tảng tạo video AI tự động, có thể mở rộng và sinh lời.",
+      "product": "Sản Phẩm",
+      "company": "Công Ty",
+      "links": {
+        "pricing": "Bảng Giá",
+        "features": "Tính Năng",
+        "affiliates": "Chương Trình Liên Kết",
+        "faq": "Câu Hỏi Thường Gặp"
+      },
+      "copyright": "© {year} Sophia AI Factory. Bảo lưu mọi quyền.",
+      "made_by": "Được tạo với ❤️ bởi"
+    },
+    "guide": {
+      "sidebar": {
+        "getting_started": "Bắt Đầu",
+        "how_it_works": "Cách Hoạt Động",
+        "screen_guide": "Hướng Dẫn Giao Diện",
+        "integrations": "Tích Hợp",
+        "commands": "Lệnh",
+        "faq": "Câu Hỏi Thường Gặp",
+        "telegram": "Bot Telegram"
+      },
+      "back_to_dashboard": "Quay Lại Bảng Điều Khiển",
+      "title": "Hướng Dẫn Sử Dụng"
+    }
+  },
   "dashboard": {
     "title": "Bảng Điều Khiển",
     "subtitle": "Quản lý các chiến dịch video tự động của bạn",
@@ -86,8 +324,8 @@
     "api_docs": {
       "title": "Tài Liệu API",
       "subtitle": "Tích hợp Sophia AI vào quy trình của bạn",
-      "upgrade_required": "Yêu Cầu Gói Enterprise",
-      "upgrade_message": "Truy cập API dành cho người dùng gói Enterprise và Master. Nâng cấp gói để mở khóa tích hợp API.",
+      "upgrade_required": "Yêu Cầu Gói Premium",
+      "upgrade_message": "Truy cập API dành cho người dùng gói Premium và Master. Nâng cấp gói để mở khóa tích hợp API.",
       "view_plans": "Xem Các Gói",
       "api_key": "API Key Của Bạn",
       "api_key_hint": "Liên hệ hỗ trợ để tạo API key",

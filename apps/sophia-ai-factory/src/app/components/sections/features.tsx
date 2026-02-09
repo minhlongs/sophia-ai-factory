@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Container } from "@/components/ui/container";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { SectionHeading } from "@/components/ui/section-heading";
@@ -7,52 +8,60 @@ import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import { Zap, Users, Mic, TrendingUp, Bot, Globe } from "lucide-react";
 
-const features = [
-  {
-    title: "Multi-Channel Distribution",
-    description: "Manage 5+ YouTube channels from one dashboard. Scale your content empire effortlessly.",
-    icon: Users,
-    badge: "Premium",
-    size: "large", // Takes 2 columns
-  },
-  {
-    title: "Auto-Affiliate Integration",
-    description: "Automatically insert affiliate links into video descriptions with smart tracking.",
-    icon: TrendingUp,
-    badge: "Enterprise",
-    size: "small",
-  },
-  {
-    title: "KOL Voice Cloning",
-    description: "Clone your voice with AI. Sound like a pro in every video without recording.",
-    icon: Mic,
-    badge: "Premium",
-    size: "small",
-  },
-  {
-    title: "AI Script Generation",
-    description: "Generate engaging scripts for any niche in seconds. SEO-optimized and conversion-focused.",
-    icon: Bot,
-    badge: "Basic",
-    size: "small",
-  },
-  {
-    title: "24/7 Auto-Publishing",
-    description: "Schedule and publish videos automatically. Your content factory never sleeps.",
-    icon: Zap,
-    badge: "Premium",
-    size: "small",
-  },
-  {
-    title: "Global Reach",
-    description: "Translate and localize content for international audiences automatically.",
-    icon: Globe,
-    badge: "Enterprise",
-    size: "large",
-  },
-];
+const badgeVariants: Record<string, "basic" | "premium" | "enterprise"> = {
+  "Starter": "basic",
+  "Growth": "premium",
+  "Premium": "enterprise",
+};
 
 export function Features() {
+  const t = useTranslations("landing");
+
+  const features = [
+    {
+      title: t("features.items.multi_channel.title"),
+      description: t("features.items.multi_channel.description"),
+      icon: Users,
+      badge: t("features.items.multi_channel.badge"),
+      size: "large",
+    },
+    {
+      title: t("features.items.auto_affiliate.title"),
+      description: t("features.items.auto_affiliate.description"),
+      icon: TrendingUp,
+      badge: t("features.items.auto_affiliate.badge"),
+      size: "small",
+    },
+    {
+      title: t("features.items.voice_cloning.title"),
+      description: t("features.items.voice_cloning.description"),
+      icon: Mic,
+      badge: t("features.items.voice_cloning.badge"),
+      size: "small",
+    },
+    {
+      title: t("features.items.script_gen.title"),
+      description: t("features.items.script_gen.description"),
+      icon: Bot,
+      badge: t("features.items.script_gen.badge"),
+      size: "small",
+    },
+    {
+      title: t("features.items.auto_publish.title"),
+      description: t("features.items.auto_publish.description"),
+      icon: Zap,
+      badge: t("features.items.auto_publish.badge"),
+      size: "small",
+    },
+    {
+      title: t("features.items.global_reach.title"),
+      description: t("features.items.global_reach.description"),
+      icon: Globe,
+      badge: t("features.items.global_reach.badge"),
+      size: "large",
+    },
+  ];
+
   return (
     <section id="features" className="py-20 md:py-32 relative overflow-hidden">
       {/* Background glow */}
@@ -60,8 +69,8 @@ export function Features() {
 
       <Container>
         <SectionHeading
-          title="Everything You Need to Dominate"
-          subtitle="Powerful features designed for serious content creators"
+          title={t("features.title")}
+          subtitle={t("features.subtitle")}
         />
 
         {/* Bento Grid */}
@@ -89,13 +98,7 @@ export function Features() {
                         <Icon className="w-6 h-6 text-[var(--neon-cyan)]" />
                       </div>
                       <Badge
-                        variant={
-                          feature.badge === "Basic"
-                            ? "basic"
-                            : feature.badge === "Premium"
-                            ? "premium"
-                            : "enterprise"
-                        }
+                        variant={badgeVariants[feature.badge] || "basic"}
                       >
                         {feature.badge}
                       </Badge>
@@ -121,11 +124,7 @@ export function Features() {
           <Card glass className="max-w-2xl mx-auto bg-card border-border">
             <CardContent className="pt-6">
               <p className="text-muted-foreground">
-                <span className="text-[var(--neon-cyan)] font-semibold">
-                  Enterprise tier
-                </span>{" "}
-                unlocks API integrations with PartnerStack, Impact.com, and weekly
-                auto-updates of affiliate programs.
+                {t("features.highlight")}
               </p>
             </CardContent>
           </Card>

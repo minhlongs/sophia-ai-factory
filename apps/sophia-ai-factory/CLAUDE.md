@@ -8,6 +8,33 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 🚨 GREEN PRODUCTION RULE — BẮT BUỘC TUYỆT ĐỐI
+
+> **KHÔNG ĐƯỢC BÁO CÁO "DONE" KHI CHƯA VERIFY PRODUCTION GREEN!**
+> Vi phạm rule này = toàn bộ task coi như THẤT BẠI.
+
+**Sau mỗi `git push`, PHẢI chạy ĐỦ 3 bước:**
+
+1. **CI/CD Check**: Poll `gh run list -L 1` cho đến khi `conclusion: success`
+2. **Deploy Check**: `curl -sI "https://sophia-ai-factory.vercel.app" | head -3` → HTTP 200
+3. **Smoke Test**: Verify production page loads correctly
+
+**Report Format BẮT BUỘC:**
+
+```
+- Build: ✅/❌
+- Tests: ✅/❌ [N tests]
+- CI/CD: ✅/❌ [GitHub Actions status]
+- Production: ✅/❌ HTTP [code]
+```
+
+**Thiếu bất kỳ dòng nào = task CHƯA XONG.**
+
+```
+PROD_URL="https://sophia-ai-factory.vercel.app"
+GITHUB_REPO="longtho638-jpg/sophia-ai-factory"
+```
+
 ## Project Overview
 
 This is a Next.js 16.1.6 application using the App Router architecture with React 19, TypeScript, and Tailwind CSS 4. The project uses the React Compiler (experimental) for optimized rendering.

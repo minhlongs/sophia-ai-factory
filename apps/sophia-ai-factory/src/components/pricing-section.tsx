@@ -1,67 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
-// Option D: Single monthly subscription with 12-month commitment
-const PRICING_TIERS = [
-  {
-    name: "Starter",
-    description: "Complete AI video automation. 12-month commitment.",
-    tier: "BASIC",
-    monthlyPrice: 19900, // $199/mo
-    features: [
-      "5 Video Templates",
-      "Auto-Discovery Engine",
-      "Basic Analytics Dashboard",
-      "Email Support (48h response)",
-    ],
-  },
-  {
-    name: "Growth",
-    description: "Scale your content production. 12-month commitment.",
-    tier: "PREMIUM",
-    monthlyPrice: 39900, // $399/mo
-    features: [
-      "Unlimited Templates",
-      "Advanced Analytics & Reports",
-      "ROI Calculator",
-      "Priority Support (24h response)",
-      "Custom Brand Setup",
-    ],
-    popular: true,
-  },
-  {
-    name: "Premium",
-    description: "Enterprise power and support. 12-month commitment.",
-    tier: "ENTERPRISE",
-    monthlyPrice: 79900, // $799/mo
-    features: [
-      "Custom Templates",
-      "White-label Setup",
-      "Direct Founder Access",
-      "API Access",
-      "99.9% Uptime SLA",
-    ],
-  },
-];
-
-// Binh Pháp upsell: Master one-time package
-const MASTER_TIER = {
-  name: "Master",
-  description: "Lifetime access. One payment. Everything included forever.",
-  tier: "MASTER",
-  price: 499900, // $4,999 one-time
-  features: [
-    "Everything in Premium",
-    "Lifetime Access & Updates",
-    "1-on-1 Onboarding & Training",
-    "VIP Priority Support Forever",
-    "Custom Automation Scripts",
-    "Monthly Strategy Review",
-    "Full White-label License",
-    "Early Access to Beta Features",
-  ],
-};
+import { useTranslations } from "next-intl";
 
 interface PricingCardProps {
   name: string;
@@ -84,6 +24,8 @@ function PricingCard({
   onSelect,
   loading,
 }: PricingCardProps) {
+  const t = useTranslations("landing");
+
   return (
     <div
       className={`relative flex flex-col rounded-2xl border p-8 transition-colors ${
@@ -94,7 +36,7 @@ function PricingCard({
     >
       {popular && (
         <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-4 py-1 text-sm font-semibold text-primary-foreground">
-          Most Popular
+          {t("pricing.popular")}
         </span>
       )}
       <h3 className="text-xl font-bold text-foreground">{name}</h3>
@@ -106,10 +48,10 @@ function PricingCard({
           <span className="text-3xl font-bold text-foreground">
             ${(monthlyPrice / 100).toLocaleString()}
           </span>
-          <span className="text-muted-foreground">/month</span>
+          <span className="text-muted-foreground">{t("pricing.per_month")}</span>
         </div>
         <span className="mt-1 inline-block rounded bg-primary/10 px-2 py-0.5 text-xs text-primary">
-          12-month commitment
+          {t("pricing.commitment")}
         </span>
       </div>
 
@@ -143,7 +85,7 @@ function PricingCard({
             : "bg-muted text-foreground hover:bg-muted/80"
         } disabled:cursor-not-allowed disabled:opacity-50`}
       >
-        {loading ? "Processing..." : "Get Started"}
+        {loading ? t("pricing.processing") : t("pricing.get_started")}
       </button>
     </div>
   );
@@ -151,6 +93,68 @@ function PricingCard({
 
 export function PricingSection() {
   const [loading, setLoading] = useState<string | null>(null);
+  const t = useTranslations("landing");
+
+  // Option D: Single monthly subscription with 12-month commitment
+  const PRICING_TIERS = [
+    {
+      name: t("pricing.tiers.starter.name"),
+      description: t("pricing.tiers.starter.description"),
+      tier: "BASIC",
+      monthlyPrice: 19900, // $199/mo
+      features: [
+        t("pricing.features.templates_5"),
+        t("pricing.features.auto_discovery"),
+        t("pricing.features.basic_analytics"),
+        t("pricing.features.email_support"),
+      ],
+    },
+    {
+      name: t("pricing.tiers.growth.name"),
+      description: t("pricing.tiers.growth.description"),
+      tier: "PREMIUM",
+      monthlyPrice: 39900, // $399/mo
+      features: [
+        t("pricing.features.unlimited_templates"),
+        t("pricing.features.advanced_analytics"),
+        t("pricing.features.roi_calculator"),
+        t("pricing.features.priority_support"),
+        t("pricing.features.custom_brand"),
+      ],
+      popular: true,
+    },
+    {
+      name: t("pricing.tiers.premium.name"),
+      description: t("pricing.tiers.premium.description"),
+      tier: "ENTERPRISE",
+      monthlyPrice: 79900, // $799/mo
+      features: [
+        t("pricing.features.custom_templates"),
+        t("pricing.features.white_label"),
+        t("pricing.features.founder_access"),
+        t("pricing.features.api_access"),
+        t("pricing.features.uptime_sla"),
+      ],
+    },
+  ];
+
+  // Binh Phap upsell: Master one-time package
+  const MASTER_TIER = {
+    name: t("pricing.tiers.master.name"),
+    description: t("pricing.tiers.master.description"),
+    tier: "MASTER",
+    price: 499900, // $4,999 one-time
+    features: [
+      t("pricing.features.everything_premium"),
+      t("pricing.features.lifetime_access"),
+      t("pricing.features.onboarding"),
+      t("pricing.features.vip_support"),
+      t("pricing.features.custom_scripts"),
+      t("pricing.features.strategy_review"),
+      t("pricing.features.white_label_license"),
+      t("pricing.features.early_access"),
+    ],
+  };
 
   const handleSelectTier = async (tier: string) => {
     setLoading(tier);
@@ -167,10 +171,10 @@ export function PricingSection() {
       if (data.url) {
         window.location.href = data.url;
       } else {
-        alert(data.error || "Failed to start checkout. Please try again.");
+        alert(data.error || t("pricing.error_checkout"));
       }
     } catch {
-      alert("Network error. Please try again.");
+      alert(t("pricing.error_network"));
     } finally {
       setLoading(null);
     }
@@ -181,10 +185,10 @@ export function PricingSection() {
       <div className="mx-auto max-w-7xl px-4">
         <div className="text-center">
           <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
-            Choose Your Plan
+            {t("pricing.title")}
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            Simple monthly pricing with everything included
+            {t("pricing.subtitle")}
           </p>
         </div>
         <div className="mt-12 grid gap-8 md:grid-cols-3">
@@ -203,11 +207,11 @@ export function PricingSection() {
           ))}
         </div>
 
-        {/* Binh Pháp Master Upsell */}
+        {/* Binh Phap Master Upsell */}
         <div className="mt-16 relative">
           <div className="rounded-2xl border-2 border-primary bg-gradient-to-br from-primary/10 via-background to-primary/5 p-8 md:p-12 shadow-xl shadow-primary/10">
             <span className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-primary to-purple-600 px-6 py-1.5 text-sm font-bold text-white shadow-lg">
-              ⚡ Best Value — Save 48%
+              ⚡ {t("pricing.master.best_value")}
             </span>
             <div className="grid md:grid-cols-2 gap-8 items-center">
               <div>
@@ -222,12 +226,12 @@ export function PricingSection() {
                     <span className="text-4xl font-bold text-foreground">
                       ${(MASTER_TIER.price / 100).toLocaleString()}
                     </span>
-                    <span className="text-muted-foreground">one-time</span>
+                    <span className="text-muted-foreground">{t("pricing.master.one_time")}</span>
                   </div>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    <span className="line-through">$9,588</span>{" "}
+                    <span className="line-through">{t("pricing.master.compare_price")}</span>{" "}
                     <span className="text-primary font-semibold">
-                      vs $799/mo × 12 months
+                      {t("pricing.master.compare_label")}
                     </span>
                   </p>
                 </div>
@@ -236,7 +240,7 @@ export function PricingSection() {
                   disabled={loading === MASTER_TIER.tier}
                   className="mt-8 w-full md:w-auto rounded-lg bg-gradient-to-r from-primary to-purple-600 px-10 py-4 font-bold text-white text-lg shadow-lg hover:opacity-90 transition disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {loading === MASTER_TIER.tier ? "Processing..." : "Get Lifetime Access"}
+                  {loading === MASTER_TIER.tier ? t("pricing.processing") : t("pricing.master.cta")}
                 </button>
               </div>
               <ul className="space-y-3">
@@ -266,4 +270,3 @@ export function PricingSection() {
     </section>
   );
 }
-

@@ -3,25 +3,27 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { BookOpen, Map, Monitor, HelpCircle, MessageCircle, ArrowLeft, Menu, X, Link2, Terminal } from "lucide-react";
-
-const sidebarLinks = [
-  { href: "/guide", label: "Getting Started", icon: BookOpen },
-  { href: "/guide/how-it-works", label: "How It Works", icon: Map },
-  { href: "/guide/screens", label: "Screen Guide", icon: Monitor },
-  { href: "/guide/integrations", label: "Integrations", icon: Link2 },
-  { href: "/guide/commands", label: "Commands", icon: Terminal },
-  { href: "/guide/faq", label: "FAQ", icon: HelpCircle },
-  { href: "/guide/telegram", label: "Telegram Bot", icon: MessageCircle },
-];
 
 export default function GuideLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const t = useTranslations('landing');
 
   // Strip locale prefix for matching
   const cleanPath = pathname.replace(/^\/(en|vi)/, "");
+
+  const sidebarLinks = [
+    { href: "/guide", label: t('guide.sidebar.getting_started'), icon: BookOpen },
+    { href: "/guide/how-it-works", label: t('guide.sidebar.how_it_works'), icon: Map },
+    { href: "/guide/screens", label: t('guide.sidebar.screen_guide'), icon: Monitor },
+    { href: "/guide/integrations", label: t('guide.sidebar.integrations'), icon: Link2 },
+    { href: "/guide/commands", label: t('guide.sidebar.commands'), icon: Terminal },
+    { href: "/guide/faq", label: t('guide.sidebar.faq'), icon: HelpCircle },
+    { href: "/guide/telegram", label: t('guide.sidebar.telegram'), icon: MessageCircle },
+  ];
 
   return (
     <div className="min-h-screen bg-background pt-16">
@@ -45,12 +47,12 @@ export default function GuideLayout({ children }: { children: React.ReactNode })
               className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-[var(--neon-cyan)] transition-colors mb-4"
             >
               <ArrowLeft className="w-4 h-4" />
-              Back to Dashboard
+              {t('guide.back_to_dashboard')}
             </Link>
 
             <div className="px-3 py-2">
               <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
-                User Guide
+                {t('guide.title')}
               </h2>
             </div>
 

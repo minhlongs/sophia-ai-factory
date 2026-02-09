@@ -22,11 +22,11 @@ describe('UpgradeBanner', () => {
     );
 
     expect(screen.getByText('Unlock Multi-Channel')).toBeDefined();
-    expect(screen.getByText(/Your current BASIC plan doesn't support this feature/)).toBeDefined();
-    expect(screen.getByText('Upgrade to Premium')).toBeDefined();
+    expect(screen.getByText(/Your current Starter plan doesn't support this feature/)).toBeDefined();
+    expect(screen.getByText('Upgrade to Growth')).toBeDefined();
 
     // Check if link goes to pricing
-    const link = screen.getByRole('link', { name: /Upgrade to Premium/i });
+    const link = screen.getByRole('link', { name: /Upgrade to Growth/i });
     expect(link.getAttribute('href')).toBe('/pricing');
   });
 
@@ -40,7 +40,7 @@ describe('UpgradeBanner', () => {
     );
 
     expect(screen.getByText('Unlock Custom Templates')).toBeDefined();
-    expect(screen.getByText(/Your current PREMIUM plan doesn't support this feature/)).toBeDefined();
+    expect(screen.getByText(/Your current Growth plan doesn't support this feature/)).toBeDefined();
     expect(screen.getByText('Contact Sales')).toBeDefined();
 
     // Check if link goes to contact
@@ -57,8 +57,8 @@ describe('UpgradeBanner', () => {
       />
     );
 
-    // The badge text is just the tier name
-    const badge = screen.getByText('PREMIUM');
+    // The badge text is the display name from TIER_CONFIGS
+    const badge = screen.getByText('Growth');
     expect(badge).toBeDefined();
     expect(badge.className).toContain('bg-blue-100');
   });
