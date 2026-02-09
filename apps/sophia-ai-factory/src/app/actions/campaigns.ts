@@ -93,8 +93,10 @@ export async function createCampaign(formData: FormData) {
 
   // Map DB tier to App Tier
   let tier: Tier = "BASIC";
+  if (profile?.subscription_tier === 'premium') tier = "PREMIUM";
   if (profile?.subscription_tier === 'pro') tier = "PREMIUM";
   if (profile?.subscription_tier === 'enterprise') tier = "ENTERPRISE";
+  if (profile?.subscription_tier === 'master') tier = "MASTER";
 
   try {
     // 1. Create Campaign Record
@@ -166,8 +168,10 @@ export async function retryCampaign(campaignId: string) {
       .single();
 
     let tier: Tier = "BASIC";
+    if (profile?.subscription_tier === 'premium') tier = "PREMIUM";
     if (profile?.subscription_tier === 'pro') tier = "PREMIUM";
     if (profile?.subscription_tier === 'enterprise') tier = "ENTERPRISE";
+    if (profile?.subscription_tier === 'master') tier = "MASTER";
 
     // 3. Reset campaign state
     const { error: updateError } = await getSupabaseAdmin()
@@ -236,8 +240,10 @@ export async function resumeCampaign(campaignId: string) {
       .single();
 
     let tier: Tier = "BASIC";
+    if (profile?.subscription_tier === 'premium') tier = "PREMIUM";
     if (profile?.subscription_tier === 'pro') tier = "PREMIUM";
     if (profile?.subscription_tier === 'enterprise') tier = "ENTERPRISE";
+    if (profile?.subscription_tier === 'master') tier = "MASTER";
 
     // 3. Determine resume point based on existing data
     const hasScript = campaign.script_content && Object.keys(campaign.script_content).length > 0;

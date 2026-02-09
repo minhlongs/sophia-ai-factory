@@ -2,17 +2,18 @@ import { Tier, TierConfig, FeatureFlag } from "@/types";
 
 /**
  * Tier configurations for Sophia AI Video Factory
- * Pricing for KOL Content Factory service:
- * - Starter: $1,200 (setup only)
- * - Growth: $2,000 (setup + automation) ⭐ RECOMMENDED
- * - Premium: $3,000 (full package)
+ * Pricing - Monthly subscriptions (12-month commitment):
+ * - Starter: $199/mo (basic setup)
+ * - Growth: $399/mo (scale production) ⭐ RECOMMENDED
+ * - Premium: $799/mo (enterprise power)
+ * - Master: $4,999 one-time (lifetime access)
  */
 
 export const TIER_CONFIGS: Record<Tier, TierConfig> = {
   BASIC: {
     name: "Starter",
-    price: 1200, // $1,200 USD
-    priceDisplay: "$1,200",
+    price: 199, // $199/mo USD
+    priceDisplay: "$199/mo",
     polarProductId: process.env.POLAR_PRODUCT_ID_STARTER,
     features: [
       // Starter tier - basic setup
@@ -27,8 +28,8 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
 
   PREMIUM: {
     name: "Growth",
-    price: 2000, // $2,000 USD
-    priceDisplay: "$2,000",
+    price: 399, // $399/mo USD
+    priceDisplay: "$399/mo",
     polarProductId: process.env.POLAR_PRODUCT_ID_GROWTH,
     recommended: true,
     features: [
@@ -47,8 +48,8 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
 
   ENTERPRISE: {
     name: "Premium",
-    price: 3000, // $3,000 USD
-    priceDisplay: "$3,000",
+    price: 799, // $799/mo USD
+    priceDisplay: "$799/mo",
     polarProductId: process.env.POLAR_PRODUCT_ID_PREMIUM,
     features: [
       "enable_affiliate_engine",
