@@ -7,6 +7,7 @@ import { QueryProvider } from "@/components/providers/query-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "sonner";
 import { MockModeIndicator } from "@/components/dev/mock-mode-indicator";
+import { FloatingHelpButton } from "@/components/guide/floating-help-button";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 
@@ -84,6 +85,7 @@ export default async function RootLayout({
               <Navbar />
               {children}
               <MockModeIndicator />
+              <FloatingHelpButton />
               <Toaster />
             </QueryProvider>
           </ThemeProvider>
