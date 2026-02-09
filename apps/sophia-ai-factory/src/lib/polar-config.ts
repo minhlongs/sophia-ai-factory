@@ -17,8 +17,9 @@ export interface PolarProductDefinition {
   prices: PolarPrice[];
 }
 
-// Helper to get env var at RUNTIME (not build time) - TRIM to remove trailing newlines
-const getEnv = (key: string): string => (process.env[key] || '').trim();
+// Helper to get env var at RUNTIME (not build time)
+// Strip literal \n (backslash+n) that Vercel CLI appends, then trim whitespace
+const getEnv = (key: string): string => (process.env[key] || '').replace(/\\n$/, '').trim();
 
 // Subscription products (All-in monthly with 12-month commitment)
 export const getPolarProductsSubscription = (): PolarProductDefinition[] => [
