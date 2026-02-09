@@ -21,30 +21,30 @@ export interface PolarProductDefinition {
 // Strip literal \n (backslash+n) that Vercel CLI appends, then trim whitespace
 const getEnv = (key: string): string => (process.env[key] || '').replace(/\\n$/, '').trim();
 
-// Subscription products (All-in monthly with 12-month commitment)
+// Monthly subscription products
 export const getPolarProductsSubscription = (): PolarProductDefinition[] => [
   {
-    name: 'Sophia AI Factory - Starter Sub',
-    description: 'Complete AI video automation. 12-month commitment.',
+    name: 'Sophia AI Factory - Starter',
+    description: 'Complete AI video automation. Monthly subscription.',
     tier: 'BASIC',
     billingType: 'subscription',
-    productId: getEnv('POLAR_PRODUCT_ID_STARTER_SUB') || getEnv('POLAR_PRODUCT_ID_STARTER'),
+    productId: getEnv('POLAR_PRODUCT_ID_STARTER') || getEnv('POLAR_PRODUCT_ID_STARTER_MONTHLY'),
     prices: [{ amountType: 'fixed', priceAmount: 19900, priceCurrency: 'usd' }],
   },
   {
-    name: 'Sophia AI Factory - Growth Sub',
-    description: 'Scale your content production. 12-month commitment.',
+    name: 'Sophia AI Factory - Growth',
+    description: 'Scale your content production. Monthly subscription.',
     tier: 'PREMIUM',
     billingType: 'subscription',
-    productId: getEnv('POLAR_PRODUCT_ID_GROWTH_SUB') || getEnv('POLAR_PRODUCT_ID_GROWTH'),
+    productId: getEnv('POLAR_PRODUCT_ID_GROWTH') || getEnv('POLAR_PRODUCT_ID_GROWTH_MONTHLY'),
     prices: [{ amountType: 'fixed', priceAmount: 39900, priceCurrency: 'usd' }],
   },
   {
-    name: 'Sophia AI Factory - Premium Sub',
-    description: 'Enterprise power and support. 12-month commitment.',
+    name: 'Sophia AI Factory - Premium',
+    description: 'Enterprise power and support. Monthly subscription.',
     tier: 'ENTERPRISE',
     billingType: 'subscription',
-    productId: getEnv('POLAR_PRODUCT_ID_PREMIUM_SUB') || getEnv('POLAR_PRODUCT_ID_PREMIUM'),
+    productId: getEnv('POLAR_PRODUCT_ID_PREMIUM') || getEnv('POLAR_PRODUCT_ID_PREMIUM_MONTHLY'),
     prices: [{ amountType: 'fixed', priceAmount: 79900, priceCurrency: 'usd' }],
   },
 ];

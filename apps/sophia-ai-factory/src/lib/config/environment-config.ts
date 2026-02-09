@@ -24,11 +24,14 @@ const environmentSchema = z.object({
   POLAR_WEBHOOK_SECRET: z.string().min(1).optional(),
   POLAR_ORGANIZATION_ID: z.string().min(1).optional(),
 
-  // Polar Product IDs (Subscriptions)
-  POLAR_PRODUCT_ID_STARTER_SUB: z.string().min(1).optional(),
-  POLAR_PRODUCT_ID_GROWTH_SUB: z.string().min(1).optional(),
-  POLAR_PRODUCT_ID_PREMIUM_SUB: z.string().min(1).optional(),
+  // Polar Product IDs
+  POLAR_PRODUCT_ID_STARTER: z.string().min(1).optional(),
+  POLAR_PRODUCT_ID_GROWTH: z.string().min(1).optional(),
+  POLAR_PRODUCT_ID_PREMIUM: z.string().min(1).optional(),
   POLAR_PRODUCT_ID_MASTER: z.string().min(1).optional(),
+  POLAR_PRODUCT_ID_STARTER_MONTHLY: z.string().min(1).optional(),
+  POLAR_PRODUCT_ID_GROWTH_MONTHLY: z.string().min(1).optional(),
+  POLAR_PRODUCT_ID_PREMIUM_MONTHLY: z.string().min(1).optional(),
 
   // Optional Services
   AIRTABLE_API_KEY: z.string().min(1).optional(),
