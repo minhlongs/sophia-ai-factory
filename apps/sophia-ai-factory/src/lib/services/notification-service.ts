@@ -27,6 +27,7 @@ export async function notifySubscriptionActivated(
     BASIC: 'Starter',
     PREMIUM: 'Growth',
     ENTERPRISE: 'Premium',
+    MASTER: 'Master',
   }
 
   await sendNotification(

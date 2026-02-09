@@ -28,6 +28,7 @@ const environmentSchema = z.object({
   POLAR_PRODUCT_ID_STARTER_SUB: z.string().min(1).optional(),
   POLAR_PRODUCT_ID_GROWTH_SUB: z.string().min(1).optional(),
   POLAR_PRODUCT_ID_PREMIUM_SUB: z.string().min(1).optional(),
+  POLAR_PRODUCT_ID_MASTER: z.string().min(1).optional(),
 
   // Optional Services
   AIRTABLE_API_KEY: z.string().min(1).optional(),

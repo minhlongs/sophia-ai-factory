@@ -28,7 +28,7 @@ export const webhookHeaderSchema = z.object({
 });
 
 export const checkoutSchema = z.object({
-  tier: z.enum(["BASIC", "PREMIUM", "ENTERPRISE"]),
+  tier: z.enum(["BASIC", "PREMIUM", "ENTERPRISE", "MASTER"]),
 });
 
 export const integrationSchema = z.object({

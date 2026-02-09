@@ -3,7 +3,7 @@
  */
 
 // Tier system - defines customer subscription levels
-export type Tier = "BASIC" | "PREMIUM" | "ENTERPRISE";
+export type Tier = "BASIC" | "PREMIUM" | "ENTERPRISE" | "MASTER";
 
 // Feature flags - toggleable features across the application
 export type FeatureFlag =

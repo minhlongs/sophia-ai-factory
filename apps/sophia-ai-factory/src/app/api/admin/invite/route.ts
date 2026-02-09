@@ -4,7 +4,7 @@ import type { Tier } from "@/types";
 
 export const dynamic = "force-dynamic";
 
-const VALID_TIERS: Tier[] = ["BASIC", "PREMIUM", "ENTERPRISE"];
+const VALID_TIERS: Tier[] = ["BASIC", "PREMIUM", "ENTERPRISE", "MASTER"];
 
 /**
  * Validate admin Basic Auth from request headers.

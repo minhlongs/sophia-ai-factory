@@ -34,6 +34,6 @@ export function getCurrentTier(user: User | null): Tier {
  * Check if a user's tier meets the minimum required tier.
  */
 export function hasMinimumTier(userTier: Tier, requiredTier: Tier): boolean {
-  const tierOrder: Tier[] = ["BASIC", "PREMIUM", "ENTERPRISE"];
+  const tierOrder: Tier[] = ["BASIC", "PREMIUM", "ENTERPRISE", "MASTER"];
   return tierOrder.indexOf(userTier) >= tierOrder.indexOf(requiredTier);
 }
