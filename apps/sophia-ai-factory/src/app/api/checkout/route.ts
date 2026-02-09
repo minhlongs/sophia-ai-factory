@@ -23,7 +23,8 @@ export async function POST(request: Request) {
     const productId = getProductIdByTier(tier);
 
     if (!productId) {
-      console.error(`Missing product ID for tier ${tier}`);
+      const tokenPrefix = (process.env.POLAR_ACCESS_TOKEN || '').substring(0, 15);
+      console.error(`Missing product ID for tier ${tier}. Token prefix: ${tokenPrefix}... Env keys: POLAR_PRODUCT_ID_STARTER=${process.env.POLAR_PRODUCT_ID_STARTER?.substring(0, 8)}, POLAR_PRODUCT_ID_MASTER=${process.env.POLAR_PRODUCT_ID_MASTER?.substring(0, 8)}`);
       if (tier === 'MASTER') {
         return NextResponse.json(
           { error: 'Master tier is coming soon. Please contact support@sophia.agencyos.network for early access.' },
@@ -61,9 +62,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ url: checkout.url });
   } catch (error) {
-    console.error('Checkout error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Checkout error:', errorMessage, error);
     return NextResponse.json(
-      { error: 'Failed to create checkout session' },
+      { error: `Failed to create checkout session: ${errorMessage}` },
       { status: 500 }
     );
   }
