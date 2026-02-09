@@ -29,7 +29,7 @@ export function Hero() {
             transition={{ duration: 0.6 }}
           >
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-tight">
-              <span className="bg-gradient-to-r from-[var(--neon-cyan)] via-white to-[var(--neon-purple)] bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-[var(--neon-cyan)] via-white to-[var(--neon-purple)] bg-clip-text text-transparent animate-gradient">
                 {t('hero.title_1')}
               </span>
               <br />
@@ -65,11 +65,7 @@ export function Hero() {
               href="#features"
               onClick={(e) => {
                 e.preventDefault();
-                const el = document.getElementById("features");
-                if (el) {
-                  const y = el.getBoundingClientRect().top + window.pageYOffset - 80;
-                  window.scrollTo({ top: y, behavior: "smooth" });
-                }
+                document.getElementById("features")?.scrollIntoView({ behavior: "smooth", block: "start" });
               }}
             >
               <Button variant="secondary" size="lg" className="w-full sm:w-auto min-w-[200px]">

@@ -82,6 +82,37 @@
       },
       "highlight": "Premium tier unlocks API integrations with PartnerStack, Impact.com, and weekly auto-updates of affiliate programs."
     },
+    "social_proof": {
+      "title": "Trusted by Creators Worldwide",
+      "subtitle": "Join thousands of content creators already building their empires with Sophia AI",
+      "stats": {
+        "creators": "Active Creators",
+        "ai_tools": "AI Tools Integrated",
+        "videos": "Videos Generated"
+      },
+      "testimonials": {
+        "creator_1": {
+          "name": "Michael Chen",
+          "role": "YouTube Creator, 500K+ subs",
+          "quote": "Sophia AI cut my video production time by 80%. I went from 2 videos/week to 10 without hiring anyone."
+        },
+        "creator_2": {
+          "name": "Trang Nguyen",
+          "role": "Affiliate Marketer",
+          "quote": "The auto-affiliate integration alone pays for itself. I'm earning $3,200/month in passive commissions."
+        },
+        "creator_3": {
+          "name": "Sarah Anderson",
+          "role": "Digital Agency Owner",
+          "quote": "We manage 15 client channels from one dashboard. Sophia AI is the backbone of our agency."
+        }
+      },
+      "badges": {
+        "secure": "256-bit Encrypted",
+        "rated": "4.9/5 Creator Rating",
+        "certified": "SOC 2 Compliant"
+      }
+    },
     "pricing": {
       "title": "Choose Your Plan",
       "subtitle": "Simple monthly pricing with everything included",

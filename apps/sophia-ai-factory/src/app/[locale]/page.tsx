@@ -1,6 +1,7 @@
 import { Hero } from "@/app/components/sections/hero";
 import { Workflow } from "@/app/components/sections/workflow";
 import { Features } from "@/app/components/sections/features";
+import { SocialProof } from "@/app/components/sections/social-proof";
 import { PricingSection } from "@/components/pricing-section";
 import { ROICalculator } from "@/app/components/sections/roi-calculator";
 import { AffiliateDiscovery } from "@/app/components/sections/affiliate-discovery";
@@ -13,6 +14,7 @@ export default function Home() {
       <Hero />
       <Workflow />
       <Features />
+      <SocialProof />
       <PricingSection />
       <AffiliateDiscovery />
       <ROICalculator />

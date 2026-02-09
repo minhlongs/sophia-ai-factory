@@ -1,7 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
+import { motion } from "framer-motion";
+
+function formatPrice(cents: number, locale: string): string {
+  return new Intl.NumberFormat(locale === "vi" ? "vi-VN" : "en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(cents / 100);
+}
 
 interface PricingCardProps {
   name: string;
@@ -12,6 +22,7 @@ interface PricingCardProps {
   popular?: boolean;
   onSelect: (tier: string) => void;
   loading?: boolean;
+  locale: string;
 }
 
 function PricingCard({
@@ -23,15 +34,20 @@ function PricingCard({
   popular,
   onSelect,
   loading,
+  locale,
 }: PricingCardProps) {
   const t = useTranslations("landing");
 
   return (
-    <div
-      className={`relative flex flex-col rounded-2xl border p-8 transition-colors ${
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      whileHover={{ y: -8, transition: { duration: 0.2 } }}
+      className={`relative flex flex-col rounded-2xl border p-8 transition-all duration-300 ${
         popular
-          ? "border-primary bg-primary/5 shadow-lg shadow-primary/20"
-          : "border-border bg-card"
+          ? "border-primary bg-primary/5 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30"
+          : "border-border bg-card hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10"
       }`}
     >
       {popular && (
@@ -42,11 +58,10 @@ function PricingCard({
       <h3 className="text-xl font-bold text-foreground">{name}</h3>
       <p className="mt-2 text-sm text-muted-foreground">{description}</p>
 
-      {/* Option D: Single monthly price */}
       <div className="mt-6">
         <div className="flex items-baseline gap-2">
           <span className="text-3xl font-bold text-foreground">
-            ${(monthlyPrice / 100).toLocaleString()}
+            {formatPrice(monthlyPrice, locale)}
           </span>
           <span className="text-muted-foreground">{t("pricing.per_month")}</span>
         </div>
@@ -79,21 +94,22 @@ function PricingCard({
       <button
         onClick={() => onSelect(tier)}
         disabled={loading}
-        className={`mt-8 w-full rounded-lg py-3 font-semibold transition ${
+        className={`mt-8 w-full rounded-lg py-3 font-semibold transition-all duration-300 ${
           popular
-            ? "bg-primary text-primary-foreground hover:bg-primary/90"
-            : "bg-muted text-foreground hover:bg-muted/80"
+            ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-[1.02]"
+            : "bg-muted text-foreground hover:bg-muted/80 hover:scale-[1.02]"
         } disabled:cursor-not-allowed disabled:opacity-50`}
       >
         {loading ? t("pricing.processing") : t("pricing.get_started")}
       </button>
-    </div>
+    </motion.div>
   );
 }
 
 export function PricingSection() {
   const [loading, setLoading] = useState<string | null>(null);
   const t = useTranslations("landing");
+  const locale = useLocale();
 
   // Option D: Single monthly subscription with 12-month commitment
   const PRICING_TIERS = [
@@ -203,13 +219,20 @@ export function PricingSection() {
               popular={pricing.popular}
               onSelect={handleSelectTier}
               loading={loading === pricing.tier}
+              locale={locale}
             />
           ))}
         </div>
 
         {/* Binh Phap Master Upsell */}
-        <div className="mt-16 relative">
-          <div className="rounded-2xl border-2 border-primary bg-gradient-to-br from-primary/10 via-background to-primary/5 p-8 md:p-12 shadow-xl shadow-primary/10">
+        <motion.div
+          className="mt-16 relative"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+        >
+          <div className="rounded-2xl border-2 border-primary bg-gradient-to-br from-primary/10 via-background to-primary/5 p-8 md:p-12 shadow-xl shadow-primary/10 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/20">
             <span className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-primary to-purple-600 px-6 py-1.5 text-sm font-bold text-white shadow-lg">
               ⚡ {t("pricing.master.best_value")}
             </span>
@@ -224,7 +247,7 @@ export function PricingSection() {
                 <div className="mt-6">
                   <div className="flex items-baseline gap-2">
                     <span className="text-4xl font-bold text-foreground">
-                      ${(MASTER_TIER.price / 100).toLocaleString()}
+                      {formatPrice(MASTER_TIER.price, locale)}
                     </span>
                     <span className="text-muted-foreground">{t("pricing.master.one_time")}</span>
                   </div>
@@ -238,7 +261,7 @@ export function PricingSection() {
                 <button
                   onClick={() => handleSelectTier(MASTER_TIER.tier)}
                   disabled={loading === MASTER_TIER.tier}
-                  className="mt-8 w-full md:w-auto rounded-lg bg-gradient-to-r from-primary to-purple-600 px-10 py-4 font-bold text-white text-lg shadow-lg hover:opacity-90 transition disabled:cursor-not-allowed disabled:opacity-50"
+                className="mt-8 w-full md:w-auto rounded-lg bg-gradient-to-r from-primary to-purple-600 px-10 py-4 font-bold text-white text-lg shadow-lg hover:opacity-90 hover:scale-[1.02] transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {loading === MASTER_TIER.tier ? t("pricing.processing") : t("pricing.master.cta")}
                 </button>
@@ -265,7 +288,7 @@ export function PricingSection() {
               </ul>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );
