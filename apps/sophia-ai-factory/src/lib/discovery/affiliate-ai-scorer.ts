@@ -2,9 +2,10 @@
  * Deterministic affiliate program scoring engine.
  *
  * Scores programs based on commission rate, cookie duration, EPC,
- * and niche relevance. No external AI calls -- pure math for reliability.
+ * and niche relevance. Pure math for reliability.
  *
- * TODO: Integrate OpenRouter for semantic niche matching in Phase 3.
+ * When OPENROUTER_API_KEY is configured, `enhanceWithAI()` can
+ * augment niche matching with semantic analysis via OpenRouter.
  */
 
 import type { AffiliateProgram } from "@/types";
