@@ -2,6 +2,45 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Project Identity
+**Sophia AI Video Factory** — Zero Manual Content Production SaaS
+
+### Tech Stack
+| Component | Technology |
+|-----------|-----------|
+| Framework | Next.js 16 (App Router, React 19, TypeScript) |
+| Styling | Tailwind CSS v4 |
+| Database | Supabase (Postgres + Auth + Storage + RLS) |
+| Payments | Polar.sh (subscriptions, webhooks) |
+| Background Jobs | Inngest |
+| AI Router | OpenRouter |
+| Video Gen | HeyGen |
+| Voice Gen | ElevenLabs |
+| Bot | Telegram (Telegraf, webhook mode) |
+| i18n | next-intl |
+
+### Architecture
+- App Router + Server Actions + Supabase RLS + Inngest orchestration
+- Tier system: BASIC / PREMIUM / ENTERPRISE (strict uppercase enum)
+- The Turnkey Standard: Setup Wizard → Build Full → Unlock via Flags
+
+### API Routes
+- `/api/health` — Health check
+- `/api/webhooks/polar` — Polar payment webhooks
+- `/api/webhooks/telegram` — Telegram bot webhook
+- `/api/inngest` — Inngest function runner
+
+### Known Gotchas
+- HeyGen polling takes 1-3min per video
+- Supabase type assertions needed for RLS queries
+- `API_ENCRYPTION_KEY` env var required for key encryption
+- Tier enum must be UPPERCASE: BASIC, PREMIUM, ENTERPRISE
+
+### Quality Standard
+- 100/100 Diamond Standard
+- All tests must pass before commit
+- Zero `:any` TypeScript types
+
 ## Role & Responsibilities
 
 Your role is to analyze user requirements, delegate tasks to appropriate sub-agents, and ensure cohesive delivery of features that meet specifications and architectural standards.
