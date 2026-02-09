@@ -82,6 +82,37 @@
       },
       "highlight": "Gói Premium mở khóa tích hợp API với PartnerStack, Impact.com, và cập nhật tự động hàng tuần các chương trình liên kết."
     },
+    "social_proof": {
+      "title": "Được Tin Dùng Bởi Nhà Sáng Tạo Toàn Cầu",
+      "subtitle": "Tham gia cùng hàng nghìn nhà sáng tạo nội dung đang xây dựng đế chế với Sophia AI",
+      "stats": {
+        "creators": "Nhà Sáng Tạo Hoạt Động",
+        "ai_tools": "Công Cụ AI Tích Hợp",
+        "videos": "Video Đã Tạo"
+      },
+      "testimonials": {
+        "creator_1": {
+          "name": "Michael Chen",
+          "role": "YouTuber, 500K+ subscribers",
+          "quote": "Sophia AI giảm 80% thời gian sản xuất video. Tôi đã tăng từ 2 video/tuần lên 10 mà không cần thuê thêm ai."
+        },
+        "creator_2": {
+          "name": "Trang Nguyễn",
+          "role": "Chuyên Gia Tiếp Thị Liên Kết",
+          "quote": "Riêng tính năng liên kết tự động đã hoàn vốn. Tôi đang kiếm $3.200/tháng hoa hồng thụ động."
+        },
+        "creator_3": {
+          "name": "Sarah Anderson",
+          "role": "Chủ Agency Số",
+          "quote": "Chúng tôi quản lý 15 kênh khách hàng từ một bảng điều khiển. Sophia AI là xương sống của agency."
+        }
+      },
+      "badges": {
+        "secure": "Mã Hóa 256-bit",
+        "rated": "Đánh Giá 4.9/5",
+        "certified": "Tuân Thủ SOC 2"
+      }
+    },
     "pricing": {
       "title": "Chọn Gói Của Bạn",
       "subtitle": "Bảng giá hàng tháng đơn giản với đầy đủ tính năng",
