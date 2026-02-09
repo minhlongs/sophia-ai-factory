@@ -1,15 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { motion } from "framer-motion";
 import { getAllPrograms } from "@/lib/affiliates";
 import { Tier } from "@/types";
+import { TIER_CONFIGS } from "@/config/tiers";
 import { Lock, ExternalLink, Star } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 export function AffiliateDiscovery() {
+  const t = useTranslations('landing');
   const [currentTier, setCurrentTier] = useState<Tier>("BASIC");
   const [filter, setFilter] = useState("All");
 
@@ -31,16 +34,15 @@ export function AffiliateDiscovery() {
       <div className="container mx-auto px-4">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
-            High-Ticket Affiliate Discovery
+            {t('affiliate.title')}
           </h2>
           <p className="text-muted-foreground text-lg">
-            Access our curated database of high-paying affiliate programs.
-            Automate your income streams with proven partners.
+            {t('affiliate.subtitle')}
           </p>
 
           {/* Tier Selector for Demo */}
           <div className="mt-8 p-4 bg-card rounded-xl shadow-sm inline-block border border-border">
-            <p className="text-sm text-muted-foreground mb-2 font-medium">Preview as Tier:</p>
+            <p className="text-sm text-muted-foreground mb-2 font-medium">{t('affiliate.preview_tier')}</p>
             <div className="flex gap-2 justify-center">
               {(["BASIC", "PREMIUM", "ENTERPRISE"] as Tier[]).map((tier) => (
                 <button
@@ -52,7 +54,7 @@ export function AffiliateDiscovery() {
                       : "bg-muted text-muted-foreground hover:bg-muted/80"
                   }`}
                 >
-                  {tier}
+                  {TIER_CONFIGS[tier].name}
                 </button>
               ))}
             </div>
@@ -105,7 +107,7 @@ export function AffiliateDiscovery() {
                         </Badge>
                         {program.tier && program.tier !== "BASIC" && (
                           <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 flex items-center gap-1">
-                            <Star className="w-3 h-3 fill-current" /> {program.tier}
+                          <Star className="w-3 h-3 fill-current" /> {TIER_CONFIGS[program.tier || 'BASIC'].name}
                           </Badge>
                         )}
                       </div>
@@ -114,11 +116,11 @@ export function AffiliateDiscovery() {
 
                   <div className="grid grid-cols-2 gap-4 mt-6">
                     <div className="bg-muted p-3 rounded-lg">
-                      <p className="text-xs text-muted-foreground uppercase font-semibold">Commission</p>
+                      <p className="text-xs text-muted-foreground uppercase font-semibold">{t('affiliate.commission')}</p>
                       <p className="font-bold text-foreground">{locked ? "???" : program.commission}</p>
                     </div>
                     <div className="bg-muted p-3 rounded-lg">
-                      <p className="text-xs text-muted-foreground uppercase font-semibold">EPC</p>
+                      <p className="text-xs text-muted-foreground uppercase font-semibold">{t('affiliate.epc')}</p>
                       <p className="font-bold text-foreground">{locked ? "???" : `$${program.epc}`}</p>
                     </div>
                   </div>
@@ -144,12 +146,12 @@ export function AffiliateDiscovery() {
                   {locked ? (
                     <Button disabled className="w-full flex items-center justify-center gap-2 bg-muted text-muted-foreground cursor-not-allowed hover:bg-muted">
                       <Lock className="w-4 h-4" />
-                      Unlock {program.tier}
+                      {t('affiliate.unlock', { tier: TIER_CONFIGS[program.tier || 'BASIC'].name })}
                     </Button>
                   ) : (
                     <a href={program.link} target="_blank" rel="noopener noreferrer" className="block w-full">
                       <Button className="w-full flex items-center justify-center gap-2">
-                        Apply Now
+                        {t('affiliate.apply')}
                         <ExternalLink className="w-4 h-4" />
                       </Button>
                     </a>
@@ -164,13 +166,13 @@ export function AffiliateDiscovery() {
                         <Lock className="w-6 h-6 text-amber-600 dark:text-amber-400" />
                       </div>
                       <h4 className="font-bold text-foreground mb-2">
-                        {program.tier} Only
+                        {t('affiliate.upgrade.title', { tier: TIER_CONFIGS[program.tier || 'BASIC'].name })}
                       </h4>
                       <p className="text-sm text-muted-foreground mb-4">
-                        Upgrade your plan to access premium affiliate partners with higher EPC.
+                        {t('affiliate.upgrade.description')}
                       </p>
                       <Button className="w-full bg-amber-600 hover:bg-amber-700 text-white">
-                        Upgrade Plan
+                        {t('affiliate.upgrade.button')}
                       </Button>
                     </div>
                   </div>

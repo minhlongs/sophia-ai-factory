@@ -1,4 +1,242 @@
 {
+  "landing": {
+    "nav": {
+      "features": "Features",
+      "pricing": "Pricing",
+      "guide": "Guide",
+      "affiliates": "Affiliate Programs",
+      "faq": "FAQ",
+      "login": "Login",
+      "dashboard": "Dashboard",
+      "brand": "Sophia AI Factory"
+    },
+    "hero": {
+      "title_1": "AI Video Factory",
+      "title_2": "Turn Content into Empire",
+      "subtitle": "Automated. Scalable. Profitable.",
+      "cta_start": "Start Free",
+      "cta_demo": "Learn More",
+      "stats": {
+        "tools": "AI Tools",
+        "videos": "Videos Created",
+        "automation": "Automation"
+      }
+    },
+    "workflow": {
+      "title": "Your Automated Content Factory",
+      "subtitle": "From idea to income in 4 simple steps",
+      "steps": {
+        "select_niche": {
+          "title": "Select Niche",
+          "description": "Choose your target audience and content vertical"
+        },
+        "ai_generate": {
+          "title": "AI Generate",
+          "description": "Let AI create scripts, videos, and voice-overs"
+        },
+        "publish": {
+          "title": "Publish",
+          "description": "Auto-distribute to multiple YouTube channels"
+        },
+        "profit": {
+          "title": "Profit",
+          "description": "Earn from ads and affiliate commissions"
+        }
+      },
+      "cta": "Join 1,000+ creators building their content empires"
+    },
+    "features": {
+      "title": "Everything You Need to Dominate",
+      "subtitle": "Powerful features designed for serious content creators",
+      "items": {
+        "multi_channel": {
+          "title": "Multi-Channel Distribution",
+          "description": "Manage 5+ YouTube channels from one dashboard. Scale your content empire effortlessly.",
+          "badge": "Growth"
+        },
+        "auto_affiliate": {
+          "title": "Auto-Affiliate Integration",
+          "description": "Automatically insert affiliate links into video descriptions with smart tracking.",
+          "badge": "Premium"
+        },
+        "voice_cloning": {
+          "title": "KOL Voice Cloning",
+          "description": "Clone your voice with AI. Sound like a pro in every video without recording.",
+          "badge": "Growth"
+        },
+        "script_gen": {
+          "title": "AI Script Generation",
+          "description": "Generate engaging scripts for any niche in seconds. SEO-optimized and conversion-focused.",
+          "badge": "Starter"
+        },
+        "auto_publish": {
+          "title": "24/7 Auto-Publishing",
+          "description": "Schedule and publish videos automatically. Your content factory never sleeps.",
+          "badge": "Growth"
+        },
+        "global_reach": {
+          "title": "Global Reach",
+          "description": "Translate and localize content for international audiences automatically.",
+          "badge": "Premium"
+        }
+      },
+      "highlight": "Premium tier unlocks API integrations with PartnerStack, Impact.com, and weekly auto-updates of affiliate programs."
+    },
+    "pricing": {
+      "title": "Choose Your Plan",
+      "subtitle": "Simple monthly pricing with everything included",
+      "popular": "Most Popular",
+      "per_month": "/month",
+      "commitment": "12-month commitment",
+      "get_started": "Get Started",
+      "processing": "Processing...",
+      "error_checkout": "Failed to start checkout. Please try again.",
+      "error_network": "Network error. Please try again.",
+      "master": {
+        "best_value": "Best Value — Save 48%",
+        "one_time": "one-time",
+        "compare_price": "$9,588",
+        "compare_label": "vs $799/mo × 12 months",
+        "cta": "Get Lifetime Access"
+      },
+      "features": {
+        "templates_5": "5 Video Templates",
+        "auto_discovery": "Auto-Discovery Engine",
+        "basic_analytics": "Basic Analytics Dashboard",
+        "email_support": "Email Support (48h response)",
+        "unlimited_templates": "Unlimited Templates",
+        "advanced_analytics": "Advanced Analytics & Reports",
+        "roi_calculator": "ROI Calculator",
+        "priority_support": "Priority Support (24h response)",
+        "custom_brand": "Custom Brand Setup",
+        "custom_templates": "Custom Templates",
+        "white_label": "White-label Setup",
+        "founder_access": "Direct Founder Access",
+        "api_access": "API Access",
+        "uptime_sla": "99.9% Uptime SLA",
+        "everything_premium": "Everything in Premium",
+        "lifetime_access": "Lifetime Access & Updates",
+        "onboarding": "1-on-1 Onboarding & Training",
+        "vip_support": "VIP Priority Support Forever",
+        "custom_scripts": "Custom Automation Scripts",
+        "strategy_review": "Monthly Strategy Review",
+        "white_label_license": "Full White-label License",
+        "early_access": "Early Access to Beta Features"
+      },
+      "tiers": {
+        "starter": {
+          "name": "Starter",
+          "description": "Complete AI video automation. 12-month commitment."
+        },
+        "growth": {
+          "name": "Growth",
+          "description": "Scale your content production. 12-month commitment."
+        },
+        "premium": {
+          "name": "Premium",
+          "description": "Enterprise power and support. 12-month commitment."
+        },
+        "master": {
+          "name": "Master",
+          "description": "Lifetime access. One payment. Everything included forever."
+        }
+      }
+    },
+    "roi": {
+      "title": "Calculate Your Potential Revenue",
+      "subtitle": "See how much you could earn with AI-powered content automation",
+      "calculator_title": "ROI Calculator",
+      "labels": {
+        "channels": "Number of Channels",
+        "videos_per_week": "Videos per Week (per channel)",
+        "avg_views": "Average Views per Video",
+        "projected_revenue": "Projected Monthly Revenue",
+        "total_videos": "Total Videos/Month",
+        "total_views": "Total Views/Month"
+      },
+      "disclaimer": "Results are estimates only and may vary based on niche, content quality, SEO optimization, and audience engagement. Actual revenue depends on many factors.",
+      "estimate_note": "* Estimates based on $2 CPM + affiliate commissions"
+    },
+    "affiliate": {
+      "title": "High-Ticket Affiliate Discovery",
+      "subtitle": "Access our curated database of high-paying affiliate programs. Automate your income streams with proven partners.",
+      "preview_tier": "Preview as Tier:",
+      "commission": "Commission",
+      "epc": "EPC",
+      "apply": "Apply Now",
+      "unlock": "Unlock {tier}",
+      "upgrade": {
+        "title": "{tier} Only",
+        "description": "Upgrade your plan to access premium affiliate partners with higher EPC.",
+        "button": "Upgrade Plan"
+      }
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "subtitle": "Everything you need to know about the AI Video Factory",
+      "items": {
+        "quality": {
+          "question": "Is the AI-generated content high quality?",
+          "answer": "Yes! We use state-of-the-art AI models (RunwayML Gen-3, Pika 1.5, ElevenLabs) to create professional-grade videos. You maintain full creative control with script editing, voice customization, and final approval before publishing."
+        },
+        "copyright": {
+          "question": "What about copyright and content ownership?",
+          "answer": "All AI-generated content created through our platform is yours to own. We use licensed AI tools that grant commercial usage rights. You retain 100% ownership of your videos, channel, and revenue."
+        },
+        "time": {
+          "question": "How long does it take to create a video?",
+          "answer": "With our templates and automation, most videos can be created in under 40 minutes: 5 mins for script generation, 10 mins for AI video creation, 3 mins for voice-over, 15 mins for editing, and 5 mins for upload. After training, many creators reduce this to 20-30 minutes per video."
+        },
+        "skills": {
+          "question": "Do I need technical skills or video editing experience?",
+          "answer": "No! Our platform is designed for beginners. We provide step-by-step tutorials, pre-made templates, and AI automation that handles the complex parts. If you can use YouTube and fill out forms, you can use our system."
+        },
+        "support": {
+          "question": "What kind of support do you offer?",
+          "answer": "Starter tier includes email support. Growth tier adds chat support with faster response times. Premium tier includes priority 24/7 support with dedicated account management and monthly strategy calls."
+        },
+        "money": {
+          "question": "Can I really make money with affiliate marketing?",
+          "answer": "Yes, but success depends on your niche, content quality, and consistency. Our auto-affiliate engine connects you with 20+ high-paying programs (SmartSuite at 50%, Shopify at 200%, etc.). Many creators earn $500-$5,000/month in commissions after building an audience."
+        },
+        "tiers": {
+          "question": "What's the difference between the pricing tiers?",
+          "answer": "Starter ($199/mo) gives you 5 templates, auto-discovery engine, analytics, and email support. Growth ($399/mo) unlocks unlimited templates, advanced analytics, ROI calculator, and priority support. Premium ($799/mo) adds custom templates, white-label setup, direct founder access, and API integrations. Master ($4,999 one-time) includes everything forever with 1-on-1 onboarding and VIP support."
+        },
+        "refund": {
+          "question": "Is there a refund policy?",
+          "answer": "Yes! We offer a 30-day money-back guarantee. If you're not satisfied with the platform, contact us within 30 days of purchase for a full refund, no questions asked."
+        }
+      }
+    },
+    "footer": {
+      "brand": "Sophia AI Factory",
+      "description": "Turn content into empire. Automated, scalable, and profitable AI video creation platform.",
+      "product": "Product",
+      "company": "Company",
+      "links": {
+        "pricing": "Pricing",
+        "features": "Features",
+        "affiliates": "Affiliate Programs",
+        "faq": "FAQ"
+      },
+      "copyright": "© {year} Sophia AI Factory. All rights reserved.",
+      "made_by": "Made with ❤️ by"
+    },
+    "guide": {
+      "sidebar": {
+        "getting_started": "Getting Started",
+        "how_it_works": "How It Works",
+        "screen_guide": "Screen Guide",
+        "integrations": "Integrations",
+        "commands": "Commands",
+        "faq": "FAQ",
+        "telegram": "Telegram Bot"
+      },
+      "back_to_dashboard": "Back to Dashboard",
+      "title": "User Guide"
+    }
+  },
   "dashboard": {
     "title": "Dashboard",
     "subtitle": "Manage your automated video campaigns",
@@ -86,8 +324,8 @@
     "api_docs": {
       "title": "API Documentation",
       "subtitle": "Integrate Sophia AI into your workflow",
-      "upgrade_required": "Enterprise Plan Required",
-      "upgrade_message": "API access is available for Enterprise and Master tier users. Upgrade your plan to unlock API integrations.",
+      "upgrade_required": "Premium Plan Required",
+      "upgrade_message": "API access is available for Premium and Master tier users. Upgrade your plan to unlock API integrations.",
       "view_plans": "View Plans",
       "api_key": "Your API Key",
       "api_key_hint": "Contact support to generate your API key",

@@ -1,45 +1,47 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Container } from "@/components/ui/container";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 
-const steps = [
-  {
-    number: "01",
-    title: "Select Niche",
-    description: "Choose your target audience and content vertical",
-    icon: "🎯",
-  },
-  {
-    number: "02",
-    title: "AI Generate",
-    description: "Let AI create scripts, videos, and voice-overs",
-    icon: "🤖",
-  },
-  {
-    number: "03",
-    title: "Publish",
-    description: "Auto-distribute to multiple YouTube channels",
-    icon: "🚀",
-  },
-  {
-    number: "04",
-    title: "Profit",
-    description: "Earn from ads and affiliate commissions",
-    icon: "💰",
-  },
-];
-
 export function Workflow() {
+  const t = useTranslations('landing');
+
+  const steps = [
+    {
+      number: "01",
+      title: t('workflow.steps.select_niche.title'),
+      description: t('workflow.steps.select_niche.description'),
+      icon: "🎯",
+    },
+    {
+      number: "02",
+      title: t('workflow.steps.ai_generate.title'),
+      description: t('workflow.steps.ai_generate.description'),
+      icon: "🤖",
+    },
+    {
+      number: "03",
+      title: t('workflow.steps.publish.title'),
+      description: t('workflow.steps.publish.description'),
+      icon: "🚀",
+    },
+    {
+      number: "04",
+      title: t('workflow.steps.profit.title'),
+      description: t('workflow.steps.profit.description'),
+      icon: "💰",
+    },
+  ];
   return (
     <section className="py-20 md:py-32">
       <Container>
         <SectionHeading
-          title="Your Automated Content Factory"
-          subtitle="From idea to income in 4 simple steps"
+          title={t('workflow.title')}
+          subtitle={t('workflow.subtitle')}
         />
 
         <div className="grid md:grid-cols-4 gap-8 relative">
@@ -99,7 +101,7 @@ export function Workflow() {
           transition={{ delay: 0.6 }}
         >
           <p className="text-gray-400 mb-4">
-            Join 1,000+ creators building their content empires
+            {t('workflow.cta')}
           </p>
         </motion.div>
       </Container>

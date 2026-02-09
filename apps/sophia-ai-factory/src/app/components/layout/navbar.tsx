@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,13 +13,14 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 export function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
+  const t = useTranslations('landing');
 
   const navLinks = [
-    { label: "Features", href: "/#features" },
-    { label: "Pricing", href: "/#pricing" },
-    { label: "Guide", href: "/guide" },
-    { label: "Affiliate Programs", href: "/affiliate-discovery" },
-    { label: "FAQ", href: "/#faq" },
+    { label: t('nav.features'), href: "/#features" },
+    { label: t('nav.pricing'), href: "/#pricing" },
+    { label: t('nav.guide'), href: "/guide" },
+    { label: t('nav.affiliates'), href: "/affiliate-discovery" },
+    { label: t('nav.faq'), href: "/#faq" },
   ];
 
   // Handle smooth scroll with offset for fixed navbar
@@ -42,7 +44,7 @@ export function Navbar() {
           {/* Logo */}
           <Link href="/" className="flex items-center">
             <span className="text-xl font-bold bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] bg-clip-text text-transparent">
-              Sophia AI Factory
+              {t('nav.brand')}
             </span>
           </Link>
 
@@ -65,12 +67,12 @@ export function Navbar() {
             ))}
             <Link href="/login">
               <Button variant="secondary" size="sm">
-                Login
+                {t('nav.login')}
               </Button>
             </Link>
             <Link href="/dashboard">
               <Button variant="primary" size="sm">
-                Dashboard
+                {t('nav.dashboard')}
               </Button>
             </Link>
             <LanguageSwitcher />
@@ -120,7 +122,7 @@ export function Navbar() {
                   className="block"
                 >
                   <Button variant="secondary" className="w-full h-12 text-base">
-                    Login
+                    {t('nav.login')}
                   </Button>
                 </Link>
                 <Link
@@ -129,7 +131,7 @@ export function Navbar() {
                   className="block"
                 >
                   <Button variant="primary" className="w-full h-12 text-base">
-                    Dashboard
+                    {t('nav.dashboard')}
                   </Button>
                 </Link>
               </div>

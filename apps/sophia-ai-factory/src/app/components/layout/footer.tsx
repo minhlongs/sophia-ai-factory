@@ -1,7 +1,9 @@
 import { Container } from "@/components/ui/container";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 
 export function Footer() {
+  const t = useTranslations('landing');
   const currentYear = new Date().getFullYear();
 
   return (
@@ -11,35 +13,35 @@ export function Footer() {
           {/* Brand */}
           <div className="md:col-span-2">
             <h3 className="text-2xl font-bold bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] bg-clip-text text-transparent mb-4">
-              Sophia AI Factory
+              {t('footer.brand')}
             </h3>
             <p className="text-muted-foreground text-sm max-w-sm">
-              Turn content into empire. Automated, scalable, and profitable AI video creation platform.
+              {t('footer.description')}
             </p>
           </div>
 
           {/* Product */}
           <div>
-            <h4 className="font-semibold text-foreground mb-4">Product</h4>
+            <h4 className="font-semibold text-foreground mb-4">{t('footer.product')}</h4>
             <ul className="space-y-2">
               <li>
                 <Link href="/#pricing" className="text-muted-foreground hover:text-[var(--neon-cyan)] transition-colors text-sm">
-                  Pricing
+                  {t('footer.links.pricing')}
                 </Link>
               </li>
               <li>
                 <Link href="/#features" className="text-muted-foreground hover:text-[var(--neon-cyan)] transition-colors text-sm">
-                  Features
+                  {t('footer.links.features')}
                 </Link>
               </li>
               <li>
                 <Link href="/affiliate-discovery" className="text-muted-foreground hover:text-[var(--neon-cyan)] transition-colors text-sm">
-                  Affiliate Programs
+                  {t('footer.links.affiliates')}
                 </Link>
               </li>
               <li>
                 <Link href="/#faq" className="text-muted-foreground hover:text-[var(--neon-cyan)] transition-colors text-sm">
-                  FAQ
+                  {t('footer.links.faq')}
                 </Link>
               </li>
               {/* <li>
@@ -52,7 +54,7 @@ export function Footer() {
 
           {/* Company */}
           <div>
-            <h4 className="font-semibold text-foreground mb-4">Company</h4>
+            <h4 className="font-semibold text-foreground mb-4">{t('footer.company')}</h4>
             <ul className="space-y-2">
               {/* <li>
                 <Link href="#" className="text-muted-foreground hover:text-[var(--neon-cyan)] transition-colors text-sm">
@@ -81,10 +83,10 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-muted-foreground text-sm">
-            © {currentYear} Sophia AI Factory. All rights reserved.
+            {t('footer.copyright', { year: currentYear })}
           </p>
           <p className="text-muted-foreground text-sm">
-            Made with ❤️ by{" "}
+            {t('footer.made_by')}{" "}
             <span className="text-[var(--neon-cyan)]">Mekong CLI</span>
           </p>
         </div>

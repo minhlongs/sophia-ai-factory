@@ -4,9 +4,11 @@ import { Container } from "@/components/ui/container";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { useState, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import { motion } from "framer-motion";
 
 export function ROICalculator() {
+  const t = useTranslations('landing');
   const [channels, setChannels] = useState(3);
   const [videosPerWeek, setVideosPerWeek] = useState(10);
   const [avgViews, setAvgViews] = useState(1000);
@@ -25,20 +27,20 @@ export function ROICalculator() {
     <section className="py-20 md:py-32 relative">
       <Container>
         <SectionHeading
-          title="Calculate Your Potential Revenue"
-          subtitle="See how much you could earn with AI-powered content automation"
+          title={t('roi.title')}
+          subtitle={t('roi.subtitle')}
         />
 
         <Card glass className="max-w-3xl mx-auto">
           <CardHeader>
-            <CardTitle className="text-center">ROI Calculator</CardTitle>
+            <CardTitle className="text-center">{t('roi.calculator_title')}</CardTitle>
           </CardHeader>
 
           <CardContent className="space-y-8">
             {/* Input: Channels */}
             <div>
               <div className="flex justify-between mb-3">
-                <label className="text-foreground/80">Number of Channels</label>
+                <label className="text-foreground/80">{t('roi.labels.channels')}</label>
                 <span className="text-[var(--neon-cyan)] font-bold">{channels}</span>
               </div>
               <input
@@ -58,7 +60,7 @@ export function ROICalculator() {
             {/* Input: Videos per Week */}
             <div>
               <div className="flex justify-between mb-3">
-                <label className="text-foreground/80">Videos per Week (per channel)</label>
+                <label className="text-foreground/80">{t('roi.labels.videos_per_week')}</label>
                 <span className="text-[var(--neon-cyan)] font-bold">{videosPerWeek}</span>
               </div>
               <input
@@ -78,7 +80,7 @@ export function ROICalculator() {
             {/* Input: Average Views */}
             <div>
               <div className="flex justify-between mb-3">
-                <label className="text-foreground/80">Average Views per Video</label>
+                <label className="text-foreground/80">{t('roi.labels.avg_views')}</label>
                 <span className="text-[var(--neon-cyan)] font-bold">
                   {avgViews.toLocaleString()}
                 </span>
@@ -101,7 +103,7 @@ export function ROICalculator() {
             {/* Output: Monthly Revenue */}
             <div className="pt-8 border-t border-border">
               <div className="text-center">
-                <p className="text-muted-foreground mb-2">Projected Monthly Revenue</p>
+                <p className="text-muted-foreground mb-2">{t('roi.labels.projected_revenue')}</p>
                 <motion.div
                   key={monthlyRevenue}
                   initial={{ scale: 1.2, opacity: 0 }}
@@ -111,7 +113,7 @@ export function ROICalculator() {
                   ${monthlyRevenue.toLocaleString()}
                 </motion.div>
                 <p className="text-xs text-muted-foreground mt-4">
-                  * Estimates based on $2 CPM + affiliate commissions
+                  {t('roi.estimate_note')}
                 </p>
               </div>
             </div>
@@ -119,13 +121,13 @@ export function ROICalculator() {
             {/* Breakdown */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
               <div className="text-center p-4 bg-muted/50 rounded-lg">
-                <p className="text-muted-foreground text-sm">Total Videos/Month</p>
+                <p className="text-muted-foreground text-sm">{t('roi.labels.total_videos')}</p>
                 <p className="text-xl font-bold text-foreground mt-1">
                   {channels * videosPerWeek * 4}
                 </p>
               </div>
               <div className="text-center p-4 bg-muted/50 rounded-lg">
-                <p className="text-muted-foreground text-sm">Total Views/Month</p>
+                <p className="text-muted-foreground text-sm">{t('roi.labels.total_views')}</p>
                 <p className="text-xl font-bold text-foreground mt-1">
                   {(channels * videosPerWeek * 4 * avgViews).toLocaleString()}
                 </p>
@@ -136,8 +138,7 @@ export function ROICalculator() {
 
         {/* Disclaimer */}
         <p className="text-center text-muted-foreground text-sm mt-8 max-w-2xl mx-auto">
-          Results are estimates only and may vary based on niche, content quality, SEO optimization,
-          and audience engagement. Actual revenue depends on many factors.
+          {t('roi.disclaimer')}
         </p>
       </Container>
 
