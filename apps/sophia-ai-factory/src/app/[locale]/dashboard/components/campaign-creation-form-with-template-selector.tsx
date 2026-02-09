@@ -92,7 +92,6 @@ export function CreateProjectFormWithTemplates({ templates }: CreateProjectFormP
         }
       }
     } catch (err) {
-      console.error(err);
       setError(t('create_failed'));
     } finally {
       setLoading(false);

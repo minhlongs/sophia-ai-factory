@@ -9,7 +9,6 @@ const POLAR_WEBHOOK_SECRET = process.env.POLAR_WEBHOOK_SECRET!
 
 export async function POST(request: Request) {
   if (!POLAR_WEBHOOK_SECRET) {
-    console.error('POLAR_WEBHOOK_SECRET is not configured')
     return NextResponse.json({ error: 'Configuration Error' }, { status: 500 })
   }
 
@@ -24,7 +23,6 @@ export async function POST(request: Request) {
   })
 
   if (!headerValidation.success) {
-    console.error('Invalid webhook headers:', headerValidation.error)
     return NextResponse.json({ error: 'Invalid headers' }, { status: 400 })
   }
 
@@ -44,7 +42,6 @@ export async function POST(request: Request) {
         'webhook-signature': signature,
       })
     } catch (err) {
-      console.warn('Webhook verification warning:', err)
       const base64Secret = Buffer.from(POLAR_WEBHOOK_SECRET).toString('base64')
       try {
         const whVerify = new Webhook(base64Secret)
@@ -54,12 +51,10 @@ export async function POST(request: Request) {
           'webhook-signature': signature,
         })
       } catch {
-        console.error('Webhook verification failed with both raw and base64 secret')
         throw err
       }
     }
   } catch (err) {
-    console.error('Webhook verification failed:', err)
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
@@ -76,13 +71,11 @@ export async function POST(request: Request) {
     const result = await processWebhookEvent(event, webhookId)
 
     if (!result.success) {
-      console.error('[Polar Webhook] Processing failed:', result.message)
       return NextResponse.json({ error: result.message }, { status: 500 })
     }
 
     return NextResponse.json({ received: true })
   } catch (err: unknown) {
-    console.error('Error processing webhook:', err)
     return NextResponse.json({ error: 'Processing failed' }, { status: 500 })
   }
 }

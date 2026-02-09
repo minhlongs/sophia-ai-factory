@@ -7,7 +7,6 @@ export async function GET() {
     const voices = await videoService.listVoices();
     return NextResponse.json({ voices });
   } catch (error) {
-    console.error("Voice API error:", error);
     return NextResponse.json({ error: "Failed to fetch voices" }, { status: 500 });
   }
 }

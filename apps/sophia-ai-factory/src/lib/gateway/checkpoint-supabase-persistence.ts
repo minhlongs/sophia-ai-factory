@@ -31,10 +31,6 @@ export function getCheckpointSupabase(): SupabaseClient | null {
     if (url && key) {
       _supabase = createClient(url, key);
       _supabaseAvailable = true;
-    } else {
-      console.warn(
-        "[SmartResumeEngine] Supabase not configured, using in-memory storage"
-      );
     }
   }
   return _supabaseAvailable ? _supabase : null;

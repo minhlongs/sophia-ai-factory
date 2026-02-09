@@ -12,7 +12,6 @@ async function sendNotification(
   try {
     await bot.telegram.sendMessage(chatId, text, { parse_mode: 'Markdown' })
   } catch (error) {
-    console.error(`[Notification] Failed to send to ${chatId}:`, error)
   }
 }
 

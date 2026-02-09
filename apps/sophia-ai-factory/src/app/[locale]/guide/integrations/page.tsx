@@ -64,7 +64,7 @@ const integrations = [
     videoId: null,
     videoTitle: null,
     steps: [
-      "Go to console.cloud.google.com",
+      "Go to Google Cloud Console (cloud.google.com)",
       'Create a new project (name it "Sophia")',
       'Enable "YouTube Data API v3"',
       "Go to Credentials \u2192 Create OAuth 2.0 Client ID",

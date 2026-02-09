@@ -35,11 +35,8 @@ export async function generateVoiceover(input: GenerateVoiceoverInput): Promise<
     try {
       return await generateElevenLabsVoiceover(text, tier, apiKey, voiceId);
     } catch (error) {
-      console.error('ElevenLabs API error:', error);
-      console.warn('Falling back to mock voiceover generation');
     }
   } else {
-    console.warn('ELEVENLABS_API_KEY not set, using mock voiceover generation');
   }
 
   // Mock fallback

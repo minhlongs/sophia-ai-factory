@@ -39,7 +39,6 @@ export function CampaignList({ initialCampaigns }: CampaignListProps) {
           table: 'campaigns'
         },
         (payload: RealtimePostgresChangesPayload<Campaign>) => {
-          console.log('Realtime update:', payload);
           if (payload.eventType === 'INSERT') {
              setCampaigns((prev) => [payload.new as Campaign, ...prev]);
           } else if (payload.eventType === 'UPDATE') {

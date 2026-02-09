@@ -20,7 +20,6 @@ export async function setTelegramWebhook() {
 export async function sendTelegramMessage(chatId: string, text: string) {
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   if (!botToken) {
-    console.warn("TELEGRAM_BOT_TOKEN not set, skipping message sending");
     return null;
   }
 
@@ -40,13 +39,11 @@ export async function sendTelegramMessage(chatId: string, text: string) {
 
     if (!response.ok) {
       const error = await response.json();
-      console.error("Failed to send Telegram message:", error);
       return null;
     }
 
     return await response.json();
   } catch (error) {
-    console.error("Error sending Telegram message:", error);
     return null;
   }
 }

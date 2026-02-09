@@ -25,7 +25,6 @@ async function sendMessage(chatId: string, text: string): Promise<void> {
   try {
     await bot.telegram.sendMessage(chatId, text, { parse_mode: 'Markdown' })
   } catch (error) {
-    console.error('Error sending message:', error)
     throw error
   }
 }
@@ -44,7 +43,6 @@ async function sendMessageWithKeyboard(
       reply_markup: keyboard,
     })
   } catch (error) {
-    console.error('Error sending message with keyboard:', error)
     throw error
   }
 }

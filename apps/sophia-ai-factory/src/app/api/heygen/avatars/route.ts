@@ -7,7 +7,6 @@ export async function GET() {
     const avatars = await videoService.listAvatars();
     return NextResponse.json({ avatars });
   } catch (error) {
-    console.error("Avatar API error:", error);
     return NextResponse.json({ error: "Failed to fetch avatars" }, { status: 500 });
   }
 }

@@ -49,7 +49,6 @@ export async function generateScript(formData: FormData) {
         }),
       });
     } else {
-      console.warn("N8N_WEBHOOK_GENERATE_SCRIPT not set. Skipping webhook call.");
       // For demo purposes, we might want to simulate generation if no webhook
       // But adhering to "Real Code" rule, we just log warning.
     }
@@ -57,7 +56,6 @@ export async function generateScript(formData: FormData) {
     revalidatePath("/dashboard");
     return { success: true, message: "Script generation started", scriptId: record.id };
   } catch (error) {
-    console.error("Error generating script:", error);
     return { success: false, message: "Failed to start generation" };
   }
 }
@@ -84,16 +82,14 @@ export async function renderVideo(scriptId: string) {
           scriptId,
           userId: MOCK_USER_ID,
         }),
-      }).catch(err => console.error("Webhook fetch error:", err));
+      }).catch(() => {});
       // We catch fetch error here to not block UI if fire-and-forget fails immediately
     } else {
-      console.warn("N8N_WEBHOOK_RENDER_VIDEO not set");
     }
 
     revalidatePath("/dashboard");
     return { success: true, message: "Video rendering started" };
   } catch (error) {
-    console.error("Error rendering video:", error);
     return { success: false, message: "Failed to start rendering" };
   }
 }
@@ -106,7 +102,6 @@ export async function getUserProjects() {
     const scripts = await airtable.scripts.list(MOCK_USER_ID);
     return scripts;
   } catch (error) {
-    console.error("Error fetching projects:", error);
     return [];
   }
 }

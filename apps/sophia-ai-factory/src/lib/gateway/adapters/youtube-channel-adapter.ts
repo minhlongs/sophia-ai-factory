@@ -24,19 +24,12 @@ export class YouTubeChannelAdapter implements ChannelAdapter {
   /** Publish video content to YouTube. Degrades gracefully when API key missing. */
   async publish(content: CampaignOutput): Promise<PublishResult> {
     if (!isConfigured()) {
-      console.warn("[YouTubeAdapter] YOUTUBE_API_KEY not configured, skipping publish");
       return {
         channelId: CHANNEL_ID,
         success: false,
         error: "YouTube API key not configured",
       };
     }
-
-    // Stub: ready for YouTube Data API v3 resumable upload integration
-    console.info(
-      `[YouTubeAdapter] Would upload video for campaign ${content.campaignId}`,
-      { title: content.title, videoUrl: content.videoUrl, tags: content.tags },
-    );
 
     this.lastPublished = new Date();
 

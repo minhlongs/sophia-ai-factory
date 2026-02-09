@@ -34,7 +34,6 @@ export async function POST(req: Request) {
     });
     return NextResponse.json({ videoId });
   } catch (error) {
-    console.error("Create video error:", error);
     return NextResponse.json({ error: "Failed to create video job" }, { status: 500 });
   }
 }

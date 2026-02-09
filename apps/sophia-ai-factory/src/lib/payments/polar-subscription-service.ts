@@ -96,7 +96,6 @@ export async function activateSubscription(
     .eq('user_id', userId)
 
   if (error) {
-    console.error('[Subscription] Activate failed:', error)
     throw error
   }
 
@@ -129,7 +128,6 @@ export async function cancelSubscription(
     .eq('user_id', user.user_id)
 
   if (error) {
-    console.error('[Subscription] Cancel failed:', error)
     throw error
   }
 
@@ -153,7 +151,6 @@ export async function expireSubscription(userId: string): Promise<void> {
     .eq('user_id', userId)
 
   if (error) {
-    console.error('[Subscription] Expire failed:', error)
     throw error
   }
 

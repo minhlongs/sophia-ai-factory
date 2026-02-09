@@ -57,7 +57,6 @@ export class HeyGenClient {
       // assuming standard response wrapper { data: { avatars: [...] } } or similar
       return data.data.avatars || data.data || [];
     } catch (error) {
-      console.error("Failed to list avatars:", error);
       return [];
     }
   }
@@ -72,7 +71,6 @@ export class HeyGenClient {
       const data = await this.request("/voices");
       return data.data.voices || data.data || [];
     } catch (error) {
-      console.error("Failed to list voices:", error);
       return [];
     }
   }
@@ -134,7 +132,6 @@ let heygenClientInstance: HeyGenClient | null = null;
 export function getHeyGenClient(): HeyGenClient | null {
   const apiKey = process.env.HEYGEN_API_KEY;
   if (!apiKey) {
-    console.warn("HEYGEN_API_KEY not set");
     return null;
   }
 

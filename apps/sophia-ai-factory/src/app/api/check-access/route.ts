@@ -66,7 +66,6 @@ export async function GET(request: NextRequest) {
       { status: 400 }
     );
   } catch (error) {
-    console.error("Check access error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

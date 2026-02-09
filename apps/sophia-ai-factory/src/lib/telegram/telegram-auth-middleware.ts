@@ -62,7 +62,6 @@ export async function checkSubscriptionAuth(
       error: hasAccess ? undefined : `Requires ${requiredTier} subscription`,
     }
   } catch (error) {
-    console.error('[Auth Middleware] Error:', error)
     // Fail open for BASIC, fail closed for premium
     return {
       authorized: requiredTier === 'BASIC',

@@ -70,7 +70,6 @@ describe('HeyGen API Routes', () => {
     it('should handle errors gracefully', async () => {
       mockVideoService.listAvatars.mockRejectedValue(new Error('API Error'));
 
-      // Suppress console.error
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       const response = await getAvatars();

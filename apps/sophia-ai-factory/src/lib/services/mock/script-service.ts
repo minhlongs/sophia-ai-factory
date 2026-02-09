@@ -2,7 +2,6 @@ import { IScriptService, GenerateScriptInput, ScriptOutput } from "../types";
 
 export class MockScriptService implements IScriptService {
   async generateScript(input: GenerateScriptInput): Promise<ScriptOutput> {
-    console.log("[MockScriptService] Generating script for:", input.topic);
 
     return {
       title: `The Ultimate Guide to ${input.topic} (Mock)`,

@@ -54,7 +54,6 @@ export async function checkRateLimit(chatId: string): Promise<RateLimitResult> {
       resetInSeconds: WINDOW_SECONDS,
     }
   } catch (error) {
-    console.error('[Rate Limit] Error:', error)
     // Fail open - allow request if Redis is down
     return { allowed: true, remaining: MAX_COMMANDS_PER_MINUTE, resetInSeconds: WINDOW_SECONDS }
   }

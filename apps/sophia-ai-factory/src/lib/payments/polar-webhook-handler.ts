@@ -53,7 +53,6 @@ async function recordPaymentEvent(
   )
 
   if (error) {
-    console.error('[Payment Events] Record failed:', error)
   }
 }
 
@@ -114,7 +113,6 @@ export async function processWebhookEvent(
         break
 
       default:
-        console.log(`[Polar Webhook] Unhandled event: ${event.type}`)
     }
 
     // Mark as processed
@@ -127,7 +125,6 @@ export async function processWebhookEvent(
 
     return { success: true, message: `Processed ${event.type}` }
   } catch (error) {
-    console.error(`[Polar Webhook] Error processing ${event.type}:`, error)
     return {
       success: false,
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -140,7 +137,6 @@ async function handleCheckoutSuccess(
 ): Promise<void> {
   const { userId, tier, telegramChatId } = extractMetadata(data)
   if (!userId || !tier) {
-    console.log('[Polar] Checkout missing userId or tier in metadata')
     return
   }
 
@@ -170,7 +166,6 @@ async function handleSubscriptionCreated(
 ): Promise<void> {
   const { userId, tier, telegramChatId } = extractMetadata(data)
   if (!userId) {
-    console.log('[Polar] Subscription created missing userId')
     return
   }
 
@@ -201,7 +196,6 @@ async function handleSubscriptionUpdated(
   }
 
   if (!targetUserId) {
-    console.error('[Polar] Cannot identify user for subscription update')
     return
   }
 

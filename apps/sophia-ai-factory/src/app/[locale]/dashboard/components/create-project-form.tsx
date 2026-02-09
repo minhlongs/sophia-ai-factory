@@ -50,7 +50,6 @@ export function CreateProjectForm() {
         setError(result.message || "Something went wrong");
       }
     } catch (err) {
-      console.error(err);
       setError("Failed to create campaign");
     } finally {
       setLoading(false);

@@ -13,7 +13,6 @@ export class ClickbankAdapter extends BaseAdapter {
   }
 
   async fetchProducts(): Promise<RawProduct[]> {
-    console.log('Fetching ClickBank marketplace feed...')
 
     // In a real scenario, we would fetch the ZIP file.
     // For MVP/Demo without real credentials/proxy, we might need to mock or handle the download.
@@ -84,14 +83,11 @@ export class ClickbankAdapter extends BaseAdapter {
         products.push(product)
       }
 
-      console.log(`Parsed ${products.length} products from ClickBank feed`)
       return products
 
     } catch (error) {
-      console.error('Error fetching/parsing ClickBank feed:', error)
       // For development fallback if feed fails (likely due to CORS or network in this env)
       if (process.env.NODE_ENV === 'development') {
-        console.warn('Returning mock ClickBank data for development')
         return this.getMockData()
       }
       return []

@@ -16,12 +16,6 @@ export const getRedisClient = (): Redis => {
   const url = process.env.UPSTASH_REDIS_REST_URL || 'https://dummy-url.upstash.io';
   const token = process.env.UPSTASH_REDIS_REST_TOKEN || 'dummy_token';
 
-  if ((!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) && process.env.NODE_ENV !== 'production') {
-    console.warn(
-      'UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN must be set in environment variables'
-    );
-  }
-
   redisInstance = new Redis({
     url: url.trim(),
     token: token.trim(),

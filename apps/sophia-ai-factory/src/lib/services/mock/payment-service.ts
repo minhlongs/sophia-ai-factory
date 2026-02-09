@@ -2,7 +2,6 @@ import { IPaymentService, CreateCheckoutParams, CheckoutSession } from "../types
 
 export class MockPaymentService implements IPaymentService {
   async createCheckoutSession(params: CreateCheckoutParams): Promise<CheckoutSession> {
-    console.log("[MockPaymentService] Creating checkout session for:", params.productIds);
 
     // Return a dummy URL that might redirect back to the success URL
     const mockSessionId = `mock_session_${Date.now()}`;

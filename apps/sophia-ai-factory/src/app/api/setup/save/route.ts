@@ -87,7 +87,6 @@ export async function POST(request: Request) {
 
       return NextResponse.json({ success: true, message: "Configuration saved" });
     } catch (writeError) {
-      console.error("Failed to write .env.local", writeError);
       return NextResponse.json({
         success: false,
         message: "Could not write to file system (likely read-only environment). Please download the .env file.",
@@ -96,7 +95,6 @@ export async function POST(request: Request) {
     }
 
   } catch (error) {
-    console.error("Save error", error);
     return NextResponse.json({ success: false, message: "Internal server error" }, { status: 500 });
   }
 }

@@ -49,7 +49,6 @@ export function CampaignExportControl() {
 
       setIsOpen(false); // Close panel after success
     } catch (error) {
-      console.error("Export error:", error);
       toast({
         title: t('failed'),
         description: error instanceof Error ? error.message : "Unknown error",

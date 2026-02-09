@@ -3,7 +3,6 @@ import { Telegraf } from 'telegraf'
 const token = process.env.TELEGRAM_BOT_TOKEN || 'dummy_token_for_build'
 
 if (!process.env.TELEGRAM_BOT_TOKEN) {
-  console.warn('TELEGRAM_BOT_TOKEN is not defined. Telegram bot functionality will be disabled.')
 }
 
 /**

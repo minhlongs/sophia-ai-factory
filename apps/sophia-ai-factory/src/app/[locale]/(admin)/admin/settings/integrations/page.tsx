@@ -21,7 +21,6 @@ export default function IntegrationsPage() {
           // Ideally we would show: ClickBank: Connected ✅
         }
       } catch (error) {
-        console.error('Failed to fetch integrations', error)
       } finally {
         setLoading(false)
       }

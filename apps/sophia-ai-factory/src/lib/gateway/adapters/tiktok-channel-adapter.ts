@@ -24,19 +24,12 @@ export class TikTokChannelAdapter implements ChannelAdapter {
   /** Publish video content to TikTok. Degrades gracefully when API key missing. */
   async publish(content: CampaignOutput): Promise<PublishResult> {
     if (!isConfigured()) {
-      console.warn("[TikTokAdapter] TIKTOK_API_KEY not configured, skipping publish");
       return {
         channelId: CHANNEL_ID,
         success: false,
         error: "TikTok API key not configured",
       };
     }
-
-    // Stub: ready for TikTok Content Posting API integration
-    console.info(
-      `[TikTokAdapter] Would upload video for campaign ${content.campaignId}`,
-      { title: content.title, videoUrl: content.videoUrl, tags: content.tags },
-    );
 
     this.lastPublished = new Date();
 

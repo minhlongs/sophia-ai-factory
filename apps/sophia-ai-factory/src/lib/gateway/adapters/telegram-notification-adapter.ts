@@ -22,9 +22,6 @@ async function sendNotification(
 ): Promise<boolean> {
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   if (!botToken) {
-    console.warn(
-      "[TelegramAdapter] TELEGRAM_BOT_TOKEN not set, skipping notification",
-    );
     return false;
   }
 
@@ -43,8 +40,7 @@ async function sendNotification(
     );
 
     return response.ok;
-  } catch (error) {
-    console.error("[TelegramAdapter] Failed to send notification:", error);
+  } catch {
     return false;
   }
 }

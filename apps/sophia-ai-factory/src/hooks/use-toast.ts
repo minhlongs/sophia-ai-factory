@@ -14,10 +14,8 @@ export function useToast() {
     const message = description ? `${title}\n${description}` : title;
 
     if (variant === "destructive") {
-      console.error(message);
       alert(`❌ ${message}`);
     } else {
-      console.log(message);
       alert(`✅ ${message}`);
     }
   };

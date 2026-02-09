@@ -27,7 +27,6 @@ export async function startVideoGeneration(input: GenerateVideoInput): Promise<s
   const avatarId = 'default_avatar_001'; // Replace with a valid default ID
   const voiceId = 'en-US-1'; // Replace with a valid default Voice ID
 
-  console.log('Starting video generation job via ServiceFactory...', { tier });
 
   return await videoService.createVideo({
     avatarId,
@@ -64,7 +63,6 @@ export async function checkVideoGenerationStatus(jobId: string, _tier: Tier): Pr
 
     return { status: 'processing' };
   } catch (error) {
-    console.error(`Error checking video status for ${jobId}:`, error);
     // Return processing on transient errors so we retry
     return { status: 'processing' };
   }
