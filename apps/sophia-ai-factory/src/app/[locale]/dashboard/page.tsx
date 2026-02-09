@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { createServerClient } from "@/lib/supabase/server";
 import { CampaignList } from "./components/campaign-list";
 import { DashboardStats } from "./components/dashboard-stats";
+import { OnboardingWelcomeBanner } from "./components/onboarding-welcome-banner";
 import { createClient } from "@supabase/supabase-js";
 import { Campaign } from "@/types";
 import { getTranslations } from 'next-intl/server';
@@ -45,6 +46,8 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
+      <OnboardingWelcomeBanner />
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">{t('title')}</h1>

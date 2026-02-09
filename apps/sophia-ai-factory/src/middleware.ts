@@ -120,6 +120,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // 4.5. Bare /login redirect — send to locale-prefixed login
+  if (pathname === "/login") {
+    const locale = request.cookies.get("NEXT_LOCALE")?.value || "en";
+    return NextResponse.redirect(new URL(`/${locale}/login`, request.url));
+  }
+
   // 5. API Routes and Setup Wizard - Skip intl middleware
   if (
     pathname.startsWith("/api") ||

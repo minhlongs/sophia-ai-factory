@@ -17,7 +17,6 @@ export function Navbar() {
     { label: "Features", href: "/#features" },
     { label: "Pricing", href: "/#pricing" },
     { label: "Affiliate Programs", href: "/affiliate-discovery" },
-    { label: "Settings", href: "/dashboard/settings" },
     { label: "FAQ", href: "/#faq" },
   ];
 
@@ -63,9 +62,14 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
-            <Link href="/admin">
+            <Link href="/login">
+              <Button variant="secondary" size="sm">
+                Login
+              </Button>
+            </Link>
+            <Link href="/dashboard">
               <Button variant="primary" size="sm">
-                Admin
+                Dashboard
               </Button>
             </Link>
             <LanguageSwitcher />
@@ -108,14 +112,23 @@ export function Navbar() {
                   {link.label}
                 </Link>
               ))}
-              <div className="pt-2">
+              <div className="pt-2 flex flex-col gap-2">
                 <Link
-                  href="/admin"
+                  href="/login"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block"
+                >
+                  <Button variant="secondary" className="w-full h-12 text-base">
+                    Login
+                  </Button>
+                </Link>
+                <Link
+                  href="/dashboard"
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="block"
                 >
                   <Button variant="primary" className="w-full h-12 text-base">
-                    Admin
+                    Dashboard
                   </Button>
                 </Link>
               </div>

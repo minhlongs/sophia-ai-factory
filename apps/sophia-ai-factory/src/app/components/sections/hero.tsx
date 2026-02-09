@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 export function Hero() {
   return (
@@ -53,12 +54,26 @@ export function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
           >
-            <Button variant="glow" size="lg" className="w-full sm:w-auto min-w-[200px]">
-              Start Free
-            </Button>
-            <Button variant="secondary" size="lg" className="w-full sm:w-auto min-w-[200px]">
-              Watch Demo
-            </Button>
+            <Link href="/dashboard">
+              <Button variant="glow" size="lg" className="w-full sm:w-auto min-w-[200px]">
+                Start Free
+              </Button>
+            </Link>
+            <a
+              href="#workflow"
+              onClick={(e) => {
+                e.preventDefault();
+                const el = document.getElementById("workflow");
+                if (el) {
+                  const y = el.getBoundingClientRect().top + window.pageYOffset - 80;
+                  window.scrollTo({ top: y, behavior: "smooth" });
+                }
+              }}
+            >
+              <Button variant="secondary" size="lg" className="w-full sm:w-auto min-w-[200px]">
+                Watch Demo
+              </Button>
+            </a>
           </motion.div>
 
           {/* Stats */}
