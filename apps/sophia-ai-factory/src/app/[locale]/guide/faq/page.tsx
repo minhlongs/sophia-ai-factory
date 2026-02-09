@@ -139,6 +139,28 @@ const content = `# FAQ / Cau Hoi Thuong Gap
 | Email | support@sophia.agency |
 | Ho tro uu tien / Priority | PREMIUM va ENTERPRISE |
 | Ho tro 24/7 | Chi goi ENTERPRISE |
+
+---
+
+## 7. Quyen So Huu Du Lieu / Data Ownership
+
+### Your Data, Your Rules / Du Lieu Cua Ban, Quyen Cua Ban
+
+**English:**
+- You own 100% of all content created by Sophia
+- Videos are published directly to YOUR YouTube/TikTok channel
+- API keys are encrypted and stored securely — only YOU can access them
+- Our database only stores: your email, subscription tier, campaign settings
+- We do NOT store: your videos, scripts, voiceovers, or generated content
+- You can delete your account and all data at any time
+
+**Tieng Viet:**
+- Ban so huu 100% noi dung do Sophia tao ra
+- Video duoc xuat ban truc tiep len kenh YouTube/TikTok CUA BAN
+- API keys duoc ma hoa va luu tru an toan — chi BAN moi truy cap duoc
+- Database chi luu: email, goi dang ky, cai dat chien dich
+- KHONG luu: video, kich ban, giong noi, noi dung da tao
+- Ban co the xoa tai khoan va du lieu bat ky luc nao
 `;
 
 export default function FAQGuidePage() {
