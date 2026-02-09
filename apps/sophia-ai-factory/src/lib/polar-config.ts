@@ -27,7 +27,7 @@ export const getPolarProductsSubscription = (): PolarProductDefinition[] => [
     description: 'Complete AI video automation. 12-month commitment.',
     tier: 'BASIC',
     billingType: 'subscription',
-    productId: getEnv('POLAR_PRODUCT_ID_STARTER_SUB'),
+    productId: getEnv('POLAR_PRODUCT_ID_STARTER_SUB') || getEnv('POLAR_PRODUCT_ID_STARTER'),
     prices: [{ amountType: 'fixed', priceAmount: 19900, priceCurrency: 'usd' }],
   },
   {
@@ -35,7 +35,7 @@ export const getPolarProductsSubscription = (): PolarProductDefinition[] => [
     description: 'Scale your content production. 12-month commitment.',
     tier: 'PREMIUM',
     billingType: 'subscription',
-    productId: getEnv('POLAR_PRODUCT_ID_GROWTH_SUB'),
+    productId: getEnv('POLAR_PRODUCT_ID_GROWTH_SUB') || getEnv('POLAR_PRODUCT_ID_GROWTH'),
     prices: [{ amountType: 'fixed', priceAmount: 39900, priceCurrency: 'usd' }],
   },
   {
@@ -43,7 +43,7 @@ export const getPolarProductsSubscription = (): PolarProductDefinition[] => [
     description: 'Enterprise power and support. 12-month commitment.',
     tier: 'ENTERPRISE',
     billingType: 'subscription',
-    productId: getEnv('POLAR_PRODUCT_ID_PREMIUM_SUB'),
+    productId: getEnv('POLAR_PRODUCT_ID_PREMIUM_SUB') || getEnv('POLAR_PRODUCT_ID_PREMIUM'),
     prices: [{ amountType: 'fixed', priceAmount: 79900, priceCurrency: 'usd' }],
   },
 ];
