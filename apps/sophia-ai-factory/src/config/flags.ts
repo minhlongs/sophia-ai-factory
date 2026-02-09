@@ -24,7 +24,7 @@ export const FEATURE_FLAGS: Record<FeatureFlag, FlagConfig> = {
     name: "Affiliate Discovery Engine",
     description: "Enable the affiliate discovery engine and program listings",
     defaultEnabled: true,
-    requiredTier: "PREMIUM",
+    requiredTier: "BASIC",
   },
   enable_admin_dashboard: {
     name: "Admin Dashboard",
@@ -36,12 +36,12 @@ export const FEATURE_FLAGS: Record<FeatureFlag, FlagConfig> = {
     name: "ROI Calculator",
     description: "Enable the ROI calculator tool on landing page",
     defaultEnabled: true,
-    requiredTier: "PREMIUM",
+    requiredTier: "BASIC",
   },
   enable_api_integrations: {
     name: "API Integrations",
     description: "Enable API integrations with PartnerStack, Impact.com, etc.",
-    defaultEnabled: false,
+    defaultEnabled: true,
     requiredTier: "ENTERPRISE",
   },
   enable_auto_update: {
@@ -49,6 +49,12 @@ export const FEATURE_FLAGS: Record<FeatureFlag, FlagConfig> = {
     description: "Enable weekly auto-update of affiliate programs",
     defaultEnabled: false,
     requiredTier: "ENTERPRISE",
+  },
+  enable_early_access: {
+    name: "Early Access",
+    description: "Early access to beta features for Master tier users",
+    defaultEnabled: true,
+    requiredTier: "MASTER",
   },
 };
 
@@ -66,12 +72,16 @@ const DEFAULT_FLAGS: FeatureFlagConfig = {
     description: "Enable the ROI calculator tool on landing page",
   },
   enable_api_integrations: {
-    enabled: false, // Future feature - disabled by default
+    enabled: true,
     description: "Enable API integrations with PartnerStack, Impact.com, etc.",
   },
   enable_auto_update: {
     enabled: false, // Future feature - disabled by default
     description: "Enable weekly auto-update of affiliate programs",
+  },
+  enable_early_access: {
+    enabled: true,
+    description: "Early access to beta features for Master tier users",
   },
 };
 

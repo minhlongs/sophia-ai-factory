@@ -16,7 +16,8 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
     priceDisplay: "$199/mo",
     polarProductId: process.env.POLAR_PRODUCT_ID_STARTER,
     features: [
-      // Starter tier - basic setup
+      "enable_affiliate_engine",
+      "enable_roi_calculator",
     ],
     limits: {
       youtubeChannels: 1,
@@ -81,6 +82,7 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
       "enable_roi_calculator",
       "enable_api_integrations",
       "enable_auto_update",
+      "enable_early_access",
     ],
     limits: {
       youtubeChannels: 999, // Unlimited

@@ -24,7 +24,7 @@ export function UpgradeBanner({
 
   const isEnterprise = requiredTier === "ENTERPRISE";
   const upgradeLabel = isEnterprise ? "Contact Sales" : "Upgrade to Premium";
-  const upgradeLink = isEnterprise ? "/contact" : "/pricing"; // or a billing portal link
+  const upgradeLink = isEnterprise ? "mailto:support@sophia.agencyos.network" : "/pricing"; // or a billing portal link
 
   return (
     <Card className={`bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800 ${className}`}>

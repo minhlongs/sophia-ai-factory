@@ -10,7 +10,8 @@ export type LimitType =
   | "automationScripts"
   | "affiliateDashboard"
   | "adminDashboard"
-  | "apiAccess";
+  | "apiAccess"
+  | "earlyAccess";
 
 export interface LimitCheckResult {
   allowed: boolean;
@@ -85,6 +86,12 @@ export const tierGuard = {
         limit = config.features.includes("enable_api_integrations") ? Infinity : 0;
         currentUsage = 0;
         requiredTier = "ENTERPRISE";
+        break;
+
+      case "earlyAccess":
+        limit = config.features.includes("enable_early_access") ? Infinity : 0;
+        currentUsage = 0;
+        requiredTier = "MASTER";
         break;
 
       case "trainingSessions":

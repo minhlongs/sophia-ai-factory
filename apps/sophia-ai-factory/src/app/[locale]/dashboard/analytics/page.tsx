@@ -1,7 +1,7 @@
 import React from "react";
 import { createServerClient } from "@/lib/supabase/server";
 import { createClient } from "@supabase/supabase-js";
-import { Campaign } from "@/types";
+import { Campaign, Tier } from "@/types";
 import { AnalyticsView } from "./components/analytics-view";
 import { getTranslations } from 'next-intl/server';
 
@@ -18,8 +18,15 @@ export default async function AnalyticsPage() {
   } = await supabase.auth.getSession();
 
   let campaigns: Campaign[] = [];
+  let userTier: Tier = "BASIC";
 
   if (session?.user) {
+    // Get user tier from metadata
+    const tier = session.user.user_metadata?.tier;
+    if (tier === "PREMIUM" || tier === "ENTERPRISE" || tier === "MASTER") {
+      userTier = tier;
+    }
+
     const { data, error } = await supabase
       .from("campaigns")
       .select("*")
@@ -53,7 +60,7 @@ export default async function AnalyticsPage() {
         </p>
       </div>
 
-      <AnalyticsView campaigns={campaigns} />
+      <AnalyticsView campaigns={campaigns} userTier={userTier} />
     </div>
   );
 }
