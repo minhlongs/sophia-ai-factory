@@ -30,8 +30,13 @@ Screenshots captured from the actual app at `docs/screenshots/`:
 |---|---|---|
 | 1 | `screenshots/01-setup-wizard-step1-system-check.png` | Setup Wizard — System Check (Buoc 1) |
 | 2 | `screenshots/02-setup-wizard-step2-api-keys.png` | Setup Wizard — API Keys (Buoc 2) |
-
-> **Note / Ghi chu:** Additional screenshots can be captured by running the app locally (`npm run dev`) and navigating to each page. The Setup Wizard appears first for unconfigured instances.
+| 3 | `screenshots/03-landing-page-hero.png` | Landing Page — Full Page (Trang Chu) |
+| 4 | `screenshots/04-pricing-page.png` | Pricing — 3 Plans (Bang Gia) |
+| 5 | `screenshots/05-dashboard-main.png` | Dashboard — Stats & Campaigns (Tong Quan) |
+| 6 | `screenshots/06-campaign-creation.png` | Campaign Creation — Templates (Tao Chien Dich) |
+| 7 | `screenshots/07-campaigns-list.png` | Campaigns List (Danh Sach Chien Dich) |
+| 8 | `screenshots/08-analytics.png` | Analytics — Charts & Metrics (Phan Tich) |
+| 9 | `screenshots/09-settings.png` | Settings — Dashboard Layout (Cai Dat) |
 
 ---
 
