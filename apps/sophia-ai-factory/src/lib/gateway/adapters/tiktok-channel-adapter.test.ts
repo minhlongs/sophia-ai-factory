@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { TikTokChannelAdapter } from './tiktok-channel-adapter'
 import type { CampaignOutput } from '../gateway-types'
 
@@ -11,10 +11,16 @@ const sampleContent: CampaignOutput = {
 }
 
 describe('TikTokChannelAdapter', () => {
-  describe('publish', () => {
+  describe('when TIKTOK_API_KEY is configured', () => {
+    beforeEach(() => {
+      vi.stubEnv('TIKTOK_API_KEY', 'test-key')
+    })
+    afterEach(() => {
+      vi.unstubAllEnvs()
+    })
+
     it('should return success with a stub published URL', async () => {
       const adapter = new TikTokChannelAdapter()
-
       const result = await adapter.publish(sampleContent)
 
       expect(result.channelId).toBe('tiktok')
@@ -22,12 +28,9 @@ describe('TikTokChannelAdapter', () => {
       expect(result.publishedUrl).toContain('tiktok.com')
       expect(result.publishedUrl).toContain('camp-002')
     })
-  })
 
-  describe('getStatus', () => {
-    it('should report healthy with zero queue size', async () => {
+    it('should report healthy status', async () => {
       const adapter = new TikTokChannelAdapter()
-
       const status = await adapter.getStatus()
 
       expect(status.channelId).toBe('tiktok')
@@ -46,15 +49,42 @@ describe('TikTokChannelAdapter', () => {
       const statusAfter = await adapter.getStatus()
       expect(statusAfter.lastPublished).toBeInstanceOf(Date)
     })
+
+    it('should return true for healthCheck', async () => {
+      const adapter = new TikTokChannelAdapter()
+      const healthy = await adapter.healthCheck()
+      expect(healthy).toBe(true)
+    })
   })
 
-  describe('healthCheck', () => {
-    it('should return true (stub implementation)', async () => {
+  describe('when TIKTOK_API_KEY is not configured', () => {
+    beforeEach(() => {
+      vi.stubEnv('TIKTOK_API_KEY', '')
+    })
+    afterEach(() => {
+      vi.unstubAllEnvs()
+    })
+
+    it('should return failure on publish', async () => {
       const adapter = new TikTokChannelAdapter()
+      const result = await adapter.publish(sampleContent)
 
+      expect(result.channelId).toBe('tiktok')
+      expect(result.success).toBe(false)
+      expect(result.error).toBe('TikTok API key not configured')
+    })
+
+    it('should report unhealthy status', async () => {
+      const adapter = new TikTokChannelAdapter()
+      const status = await adapter.getStatus()
+
+      expect(status.healthy).toBe(false)
+    })
+
+    it('should return false for healthCheck', async () => {
+      const adapter = new TikTokChannelAdapter()
       const healthy = await adapter.healthCheck()
-
-      expect(healthy).toBe(true)
+      expect(healthy).toBe(false)
     })
   })
 })

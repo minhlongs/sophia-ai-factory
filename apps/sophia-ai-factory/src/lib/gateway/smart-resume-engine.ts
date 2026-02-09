@@ -4,9 +4,15 @@
  * Persists pipeline checkpoints so campaigns can resume from
  * the last successful step after failures or interruptions.
  *
- * Currently uses in-memory Map storage.
- * TODO: Migrate to Supabase `campaign_checkpoints` table for persistence.
+ * Uses Supabase `campaign_checkpoints` table when available,
+ * falls back to in-memory Map when Supabase is not configured.
  */
+
+import {
+  getCheckpointSupabase,
+  rowToCheckpoint,
+  type CheckpointRow,
+} from "./checkpoint-supabase-persistence";
 
 /** A single pipeline checkpoint recording a completed step */
 export interface Checkpoint {
@@ -39,10 +45,7 @@ export type PipelineStep = (typeof PIPELINE_STEPS)[number];
  *   const nextStep = await engine.resumeFrom(last);
  */
 export class SmartResumeEngine {
-  // TODO: Replace with Supabase table `campaign_checkpoints`
-  // Schema: id (uuid), campaign_id (text), step (text),
-  //         completed_at (timestamptz), metadata (jsonb)
-  private store: Map<string, Checkpoint[]> = new Map();
+  private fallbackStore: Map<string, Checkpoint[]> = new Map();
 
   /** Record a checkpoint for a campaign pipeline step */
   async checkpoint(
@@ -50,26 +53,57 @@ export class SmartResumeEngine {
     step: string,
     metadata?: Record<string, unknown>,
   ): Promise<void> {
-    const checkpoint: Checkpoint = {
-      campaignId,
-      step,
-      completedAt: new Date(),
-      metadata,
-    };
+    const supabase = getCheckpointSupabase();
 
-    const existing = this.store.get(campaignId) ?? [];
-    // Remove any previous checkpoint for the same step
-    const filtered = existing.filter((cp) => cp.step !== step);
-    filtered.push(checkpoint);
-    this.store.set(campaignId, filtered);
+    if (supabase) {
+      try {
+        const { error } = await supabase
+          .from("campaign_checkpoints")
+          .upsert(
+            {
+              campaign_id: campaignId,
+              step,
+              completed_at: new Date().toISOString(),
+              metadata: metadata ?? null,
+            },
+            { onConflict: "campaign_id,step" }
+          );
+        if (error) throw error;
+        return;
+      } catch (err) {
+        console.warn("[SmartResumeEngine] Supabase write failed, falling back to memory:", err);
+      }
+    }
+
+    const cp: Checkpoint = { campaignId, step, completedAt: new Date(), metadata };
+    const existing = this.fallbackStore.get(campaignId) ?? [];
+    const filtered = existing.filter((c) => c.step !== step);
+    filtered.push(cp);
+    this.fallbackStore.set(campaignId, filtered);
   }
 
   /** Get the most recent checkpoint for a campaign */
   async getLastCheckpoint(campaignId: string): Promise<Checkpoint | null> {
-    const checkpoints = this.store.get(campaignId);
-    if (!checkpoints || checkpoints.length === 0) return null;
+    const supabase = getCheckpointSupabase();
 
-    // Sort by completedAt descending, return the latest
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from("campaign_checkpoints")
+          .select("*")
+          .eq("campaign_id", campaignId)
+          .order("completed_at", { ascending: false })
+          .limit(1);
+        if (error) throw error;
+        if (!data || data.length === 0) return null;
+        return rowToCheckpoint(data[0] as CheckpointRow);
+      } catch (err) {
+        console.warn("[SmartResumeEngine] Supabase read failed, falling back to memory:", err);
+      }
+    }
+
+    const checkpoints = this.fallbackStore.get(campaignId);
+    if (!checkpoints || checkpoints.length === 0) return null;
     const sorted = [...checkpoints].sort(
       (a, b) => b.completedAt.getTime() - a.completedAt.getTime(),
     );
@@ -78,46 +112,79 @@ export class SmartResumeEngine {
 
   /** Get all checkpoints for a campaign, ordered by completion time */
   async getCheckpoints(campaignId: string): Promise<Checkpoint[]> {
-    const checkpoints = this.store.get(campaignId) ?? [];
+    const supabase = getCheckpointSupabase();
+
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from("campaign_checkpoints")
+          .select("*")
+          .eq("campaign_id", campaignId)
+          .order("completed_at", { ascending: true });
+        if (error) throw error;
+        if (!data) return [];
+        return (data as CheckpointRow[]).map(rowToCheckpoint);
+      } catch (err) {
+        console.warn("[SmartResumeEngine] Supabase read failed, falling back to memory:", err);
+      }
+    }
+
+    const checkpoints = this.fallbackStore.get(campaignId) ?? [];
     return [...checkpoints].sort(
       (a, b) => a.completedAt.getTime() - b.completedAt.getTime(),
     );
   }
 
-  /**
-   * Determine the next pipeline step to resume from after a checkpoint.
-   * Returns the step name following the checkpoint's step in the pipeline.
-   */
+  /** Determine the next pipeline step to resume from after a checkpoint */
   async resumeFrom(checkpoint: Checkpoint): Promise<string> {
-    const currentIndex = PIPELINE_STEPS.indexOf(
-      checkpoint.step as PipelineStep,
-    );
-
-    if (currentIndex === -1) {
-      // Unknown step - start from the beginning
-      return PIPELINE_STEPS[0];
-    }
-
+    const currentIndex = PIPELINE_STEPS.indexOf(checkpoint.step as PipelineStep);
+    if (currentIndex === -1) return PIPELINE_STEPS[0];
     const nextIndex = currentIndex + 1;
-    if (nextIndex >= PIPELINE_STEPS.length) {
-      // Already at the last step - pipeline is complete
-      return "complete";
-    }
-
+    if (nextIndex >= PIPELINE_STEPS.length) return "complete";
     return PIPELINE_STEPS[nextIndex];
   }
 
-  /** Clear all checkpoints for a campaign (e.g., after successful completion) */
+  /** Clear all checkpoints for a campaign */
   async clearCheckpoints(campaignId: string): Promise<void> {
-    this.store.delete(campaignId);
+    const supabase = getCheckpointSupabase();
+
+    if (supabase) {
+      try {
+        const { error } = await supabase
+          .from("campaign_checkpoints")
+          .delete()
+          .eq("campaign_id", campaignId);
+        if (error) throw error;
+        this.fallbackStore.delete(campaignId);
+        return;
+      } catch (err) {
+        console.warn("[SmartResumeEngine] Supabase delete failed, falling back to memory:", err);
+      }
+    }
+
+    this.fallbackStore.delete(campaignId);
   }
 
   /** Check if a specific step has been completed for a campaign */
-  async isStepCompleted(
-    campaignId: string,
-    step: string,
-  ): Promise<boolean> {
-    const checkpoints = this.store.get(campaignId) ?? [];
+  async isStepCompleted(campaignId: string, step: string): Promise<boolean> {
+    const supabase = getCheckpointSupabase();
+
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from("campaign_checkpoints")
+          .select("id")
+          .eq("campaign_id", campaignId)
+          .eq("step", step)
+          .limit(1);
+        if (error) throw error;
+        return (data?.length ?? 0) > 0;
+      } catch (err) {
+        console.warn("[SmartResumeEngine] Supabase query failed, falling back to memory:", err);
+      }
+    }
+
+    const checkpoints = this.fallbackStore.get(campaignId) ?? [];
     return checkpoints.some((cp) => cp.step === step);
   }
 }
