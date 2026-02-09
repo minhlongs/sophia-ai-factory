@@ -130,6 +130,24 @@
       "general": "General"
     }
   },
+  "login": {
+    "title": "Sign In",
+    "emailLabel": "Email Address",
+    "sendLink": "Send Magic Link",
+    "checkEmail": "Check your email for the login link",
+    "error": "Something went wrong"
+  },
+  "admin": {
+    "users": {
+      "title": "User Management",
+      "invite": "Invite New Client",
+      "email": "Email",
+      "tier": "Tier",
+      "status": "Status",
+      "invited": "Invited",
+      "active": "Active"
+    }
+  },
   "common": {
     "loading": "Loading...",
     "error": "Error",

@@ -1,54 +1,39 @@
-import { User, Tier } from "@/types";
+import { createClient } from "@/lib/supabase/server";
+import type { User, Tier } from "@/types";
 
 /**
- * Mock authentication utilities
- * In production, this would integrate with NextAuth, Clerk, or similar
+ * Get the currently authenticated user from Supabase Auth.
+ * Returns null if no user is signed in.
  */
+export async function getCurrentUser(): Promise<User | null> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-/**
- * Mock user for development - simulates different tiers
- * Can be controlled via environment variable or cookie
- */
-export function getCurrentUser(): User {
-  // Check environment variable for tier override
-  const envTier = process.env.NEXT_PUBLIC_MOCK_TIER as Tier | undefined;
+  if (!user) return null;
 
-  // Default to ENTERPRISE for development
-  const tier: Tier = envTier || "ENTERPRISE";
+  const tier = (user.user_metadata?.tier as Tier) || "BASIC";
 
   return {
-    id: "mock-user-001",
-    email: "demo@sophia.ai",
+    id: user.id,
+    email: user.email!,
     tier,
-    createdAt: new Date(),
+    createdAt: new Date(user.created_at),
   };
 }
 
 /**
- * Get current user's tier
+ * Extract tier from a user object (or default to BASIC).
  */
-export function getCurrentTier(): Tier {
-  return getCurrentUser().tier;
+export function getCurrentTier(user: User | null): Tier {
+  return user?.tier || "BASIC";
 }
 
 /**
- * Check if current user has specific tier
+ * Check if a user's tier meets the minimum required tier.
  */
-export function hasMinimumTier(requiredTier: Tier): boolean {
-  const currentTier = getCurrentTier();
+export function hasMinimumTier(userTier: Tier, requiredTier: Tier): boolean {
   const tierOrder: Tier[] = ["BASIC", "PREMIUM", "ENTERPRISE"];
-
-  const currentIndex = tierOrder.indexOf(currentTier);
-  const requiredIndex = tierOrder.indexOf(requiredTier);
-
-  return currentIndex >= requiredIndex;
-}
-
-/**
- * Simulate tier upgrade (for demo purposes)
- * In production, this would handle payment and database updates
- */
-export function mockUpgradeTier(newTier: Tier): void {
-  console.log(`[Mock] Upgrading to ${newTier} tier`);
-  // In production: update database, process payment, send confirmation email
+  return tierOrder.indexOf(userTier) >= tierOrder.indexOf(requiredTier);
 }
