@@ -64,20 +64,26 @@ export async function getUserTier(userId: string): Promise<Tier> {
     return 'BASIC'; // Default to Basic
   }
 
-  // Check if subscription has expired
+  const tier = DB_TIER_MAPPING[data.subscription_tier] || 'BASIC';
+
+  // MASTER tier = lifetime one-time purchase — NEVER expires
+  if (tier === 'MASTER') {
+    return 'MASTER';
+  }
+
+  // Check if subscription has expired (for recurring tiers only)
   if (data.subscription_expires_at) {
     const expiresAt = new Date(data.subscription_expires_at);
     const now = new Date();
     
     if (expiresAt < now) {
       // Subscription expired - downgrade to BASIC
-      // Optionally: update DB here to reflect expiration
       console.log(`[Subscription] User ${userId} subscription expired at ${expiresAt}`);
       return 'BASIC';
     }
   }
 
-  return DB_TIER_MAPPING[data.subscription_tier] || 'BASIC';
+  return tier;
 }
 
 /**
@@ -127,8 +133,9 @@ export async function getSubscriptionStatus(userId: string): Promise<{
   const expiresAt = data.subscription_expires_at ? new Date(data.subscription_expires_at) : null;
   const now = new Date();
   
-  const isActive = !expiresAt || expiresAt > now;
-  const daysRemaining = expiresAt 
+  // MASTER tier is always active (lifetime purchase)
+  const isActive = tier === 'MASTER' || !expiresAt || expiresAt > now;
+  const daysRemaining = tier === 'MASTER' ? null : expiresAt 
     ? Math.max(0, Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
     : null;
 
