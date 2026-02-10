@@ -39,7 +39,7 @@
 
 **Tieng Viet:**
 
-1. Kiem tra dia chi web: dam bao ban nhap dung `https://sophia.agency`
+1. Kiem tra dia chi web: dam bao ban nhap dung `https://sophia.agencyos.network`
 2. Kiem tra ket noi internet: thu mo 1 trang web khac (vi du: google.com)
 3. Lam moi trang: nhan **Ctrl + Shift + R** (Windows) hoac **Cmd + Shift + R** (Mac)
 4. Xoa cache trinh duyet:
@@ -50,7 +50,7 @@
 
 **English:**
 
-1. Check the web address: make sure you typed `https://sophia.agency` correctly
+1. Check the web address: make sure you typed `https://sophia.agencyos.network` correctly
 2. Check your internet: try opening another website (e.g., google.com)
 3. Hard refresh the page: press **Ctrl + Shift + R** (Windows) or **Cmd + Shift + R** (Mac)
 4. Clear browser cache:

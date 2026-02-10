@@ -340,7 +340,7 @@
 ### Q27: Toi quen mat khau / I forgot my password
 
 **Tieng Viet:**
-1. Vao trang dang nhap `https://sophia.agency`
+1. Vao trang dang nhap `https://sophia.agencyos.network`
 2. Nhan **"Quen Mat Khau"** (Forgot Password)
 3. Nhap email dang ky cua ban
 4. Kiem tra hop thu email (ca muc Spam)
@@ -348,7 +348,7 @@
 6. Nhap mat khau moi va nhan **"Xac Nhan"**
 
 **English:**
-1. Go to the login page `https://sophia.agency`
+1. Go to the login page `https://sophia.agencyos.network`
 2. Click **"Forgot Password"**
 3. Enter your registered email
 4. Check your email inbox (including Spam folder)
