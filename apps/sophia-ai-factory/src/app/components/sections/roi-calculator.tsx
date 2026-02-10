@@ -5,7 +5,6 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { motion } from "framer-motion";
 
 export function ROICalculator() {
   const t = useTranslations('landing');
@@ -13,12 +12,11 @@ export function ROICalculator() {
   const [videosPerWeek, setVideosPerWeek] = useState(10);
   const [avgViews, setAvgViews] = useState(1000);
 
-  // Calculate revenue directly with useMemo
   const monthlyRevenue = useMemo(() => {
     const totalVideos = channels * videosPerWeek * 4;
     const totalViews = totalVideos * avgViews;
-    const adRevenue = (totalViews / 1000) * 2; // $2 CPM
-    const affiliateRevenue = (totalViews / 100) * 0.5; // $0.50 per 100 views from affiliate clicks
+    const adRevenue = (totalViews / 1000) * 2;
+    const affiliateRevenue = (totalViews / 100) * 0.5;
     const total = adRevenue + affiliateRevenue;
     return Math.round(total);
   }, [channels, videosPerWeek, avgViews]);
@@ -100,18 +98,13 @@ export function ROICalculator() {
               </div>
             </div>
 
-            {/* Output: Monthly Revenue */}
+            {/* Output: Monthly Revenue — CSS transition instead of framer-motion key animation */}
             <div className="pt-8 border-t border-border">
               <div className="text-center">
                 <p className="text-muted-foreground mb-2">{t('roi.labels.projected_revenue')}</p>
-                <motion.div
-                  key={monthlyRevenue}
-                  initial={{ scale: 1.2, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  className="text-5xl font-bold bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] bg-clip-text text-transparent"
-                >
+                <div className="text-5xl font-bold bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] bg-clip-text text-transparent transition-transform duration-200">
                   ${monthlyRevenue.toLocaleString()}
-                </motion.div>
+                </div>
                 <p className="text-xs text-muted-foreground mt-4">
                   {t('roi.estimate_note')}
                 </p>
@@ -140,7 +133,6 @@ export function ROICalculator() {
         <p className="text-center text-muted-foreground text-sm mt-8 max-w-2xl mx-auto">
           {t('roi.disclaimer')}
         </p>
-      </Container>
 
       {/* Custom slider styles */}
       <style jsx>{`
@@ -164,6 +156,7 @@ export function ROICalculator() {
           box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
         }
       `}</style>
+      </Container>
     </section>
   );
 }

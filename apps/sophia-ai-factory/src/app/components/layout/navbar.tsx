@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { LanguageSwitcher } from "@/components/language-switcher";
 
@@ -89,56 +88,50 @@ export function Navbar() {
       </div>
 
       {/* Mobile Menu */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2 }}
-            className="md:hidden border-t border-border bg-background/95 backdrop-blur-lg"
-          >
-            <div className="px-4 py-4 space-y-3">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={(e) => {
-                    handleScrollClick(e, link.href);
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className={cn(
-                    "block px-4 py-3 rounded-lg transition-colors hover:text-[var(--neon-cyan)] hover:bg-muted text-base font-medium",
-                    pathname === link.href ? "text-[var(--neon-cyan)] bg-muted" : "text-muted-foreground"
-                  )}
-                >
-                  {link.label}
-                </Link>
-              ))}
-              <div className="pt-2 flex flex-col gap-2">
-                <Link
-                  href="/login"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="block"
-                >
-                  <Button variant="secondary" className="w-full h-12 text-base">
-                    {t('nav.login')}
-                  </Button>
-                </Link>
-                <Link
-                  href="/dashboard"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="block"
-                >
-                  <Button variant="primary" className="w-full h-12 text-base">
-                    {t('nav.dashboard')}
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <div
+        className={`md:hidden border-t border-border bg-background/95 backdrop-blur-lg overflow-hidden transition-all duration-200 ease-out ${
+          isMobileMenuOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
+        }`}
+      >
+        <div className="px-4 py-4 space-y-3">
+          {navLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={(e) => {
+                handleScrollClick(e, link.href);
+                setIsMobileMenuOpen(false);
+              }}
+              className={cn(
+                "block px-4 py-3 rounded-lg transition-colors hover:text-[var(--neon-cyan)] hover:bg-muted text-base font-medium",
+                pathname === link.href ? "text-[var(--neon-cyan)] bg-muted" : "text-muted-foreground"
+              )}
+            >
+              {link.label}
+            </Link>
+          ))}
+          <div className="pt-2 flex flex-col gap-2">
+            <Link
+              href="/login"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="block"
+            >
+              <Button variant="secondary" className="w-full h-12 text-base">
+                {t('nav.login')}
+              </Button>
+            </Link>
+            <Link
+              href="/dashboard"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="block"
+            >
+              <Button variant="primary" className="w-full h-12 text-base">
+                {t('nav.dashboard')}
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
     </nav>
   );
 }

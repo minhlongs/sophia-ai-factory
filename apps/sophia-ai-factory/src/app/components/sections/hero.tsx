@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
-import { motion } from "framer-motion";
+import { FadeInView } from "@/components/ui/fade-in-view";
 import Link from "next/link";
 
 export function Hero() {
@@ -23,11 +23,7 @@ export function Hero() {
       <Container size="lg">
         <div className="max-w-4xl mx-auto text-center">
           {/* Main Headline */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
+          <FadeInView duration={600}>
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-tight">
               <span className="bg-gradient-to-r from-[var(--neon-cyan)] via-white to-[var(--neon-purple)] bg-clip-text text-transparent animate-gradient">
                 {t('hero.title_1')}
@@ -37,82 +33,69 @@ export function Hero() {
                 {t('hero.title_2')}
               </span>
             </h1>
-          </motion.div>
+          </FadeInView>
 
           {/* Subtitle */}
-          <motion.p
-            className="text-lg md:text-2xl text-gray-400 mb-12 max-w-2xl mx-auto px-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            {t('hero.subtitle')}
-          </motion.p>
+          <FadeInView delay={200} duration={600}>
+            <p className="text-lg md:text-2xl text-gray-400 mb-12 max-w-2xl mx-auto px-4">
+              {t('hero.subtitle')}
+            </p>
+          </FadeInView>
 
           {/* CTA Buttons */}
-          <motion.div
-            className="flex flex-col sm:flex-row gap-4 justify-center items-center px-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-          >
-            <Link href="/dashboard">
-              <Button variant="glow" size="lg" className="w-full sm:w-auto min-w-[200px]">
-                {t('hero.cta_start')}
-              </Button>
-            </Link>
-            <a
-              href="#features"
-              onClick={(e) => {
-                e.preventDefault();
-                document.getElementById("features")?.scrollIntoView({ behavior: "smooth", block: "start" });
-              }}
-            >
-              <Button variant="secondary" size="lg" className="w-full sm:w-auto min-w-[200px]">
-                {t('hero.cta_demo')}
-              </Button>
-            </a>
-          </motion.div>
+          <FadeInView delay={400} duration={600}>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center px-4">
+              <Link href="/dashboard">
+                <Button variant="glow" size="lg" className="w-full sm:w-auto min-w-[200px]">
+                  {t('hero.cta_start')}
+                </Button>
+              </Link>
+              <a
+                href="#features"
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById("features")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+              >
+                <Button variant="secondary" size="lg" className="w-full sm:w-auto min-w-[200px]">
+                  {t('hero.cta_demo')}
+                </Button>
+              </a>
+            </div>
+          </FadeInView>
 
           {/* Stats */}
-          <motion.div
-            className="mt-20 grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-2xl mx-auto px-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-          >
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] bg-clip-text text-transparent">
-                50+
+          <FadeInView delay={600} duration={600}>
+            <div className="mt-20 grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-2xl mx-auto px-4">
+              <div className="text-center">
+                <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] bg-clip-text text-transparent">
+                  50+
+                </div>
+                <div className="text-sm text-gray-500 mt-2">{t('hero.stats.tools')}</div>
               </div>
-              <div className="text-sm text-gray-500 mt-2">{t('hero.stats.tools')}</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] bg-clip-text text-transparent">
-                10K+
+              <div className="text-center">
+                <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] bg-clip-text text-transparent">
+                  10K+
+                </div>
+                <div className="text-sm text-gray-500 mt-2">{t('hero.stats.videos')}</div>
               </div>
-              <div className="text-sm text-gray-500 mt-2">{t('hero.stats.videos')}</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] bg-clip-text text-transparent">
-                24/7
+              <div className="text-center">
+                <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] bg-clip-text text-transparent">
+                  24/7
+                </div>
+                <div className="text-sm text-gray-500 mt-2">{t('hero.stats.automation')}</div>
               </div>
-              <div className="text-sm text-gray-500 mt-2">{t('hero.stats.automation')}</div>
             </div>
-          </motion.div>
+          </FadeInView>
         </div>
       </Container>
 
-      {/* Scroll Indicator */}
-      <motion.div
-        className="absolute bottom-8 left-1/2 -translate-x-1/2"
-        animate={{ y: [0, 10, 0] }}
-        transition={{ duration: 2, repeat: Infinity }}
-      >
+      {/* Scroll Indicator — CSS animation instead of framer-motion */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce-slow">
         <div className="w-6 h-10 border-2 border-primary/20 rounded-full flex items-start justify-center p-2">
           <div className="w-1 h-3 bg-primary/40 rounded-full" />
         </div>
-      </motion.div>
+      </div>
     </section>
   );
 }

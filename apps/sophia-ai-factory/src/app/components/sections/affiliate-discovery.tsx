@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { motion } from "framer-motion";
+import { FadeInView } from "@/components/ui/fade-in-view";
 import { getAllPrograms } from "@/lib/affiliates";
 import { Tier } from "@/types";
 import { TIER_CONFIGS } from "@/config/tiers";
@@ -21,7 +21,6 @@ export function AffiliateDiscovery() {
 
   const filteredPrograms = allPrograms.filter(p => filter === "All" || p.category === filter);
 
-  // Tier logic
   const tierLevels: Record<Tier, number> = { BASIC: 0, PREMIUM: 1, ENTERPRISE: 2, MASTER: 3 };
 
   const isLocked = (programTier?: Tier) => {
@@ -84,12 +83,9 @@ export function AffiliateDiscovery() {
             const locked = isLocked(program.tier);
 
             return (
-              <motion.div
+              <FadeInView
                 key={program.id}
-                layout
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
+                duration={500}
                 className={`relative group bg-card rounded-2xl border ${
                   locked ? "border-border" : "border-border hover:border-blue-500/50 hover:shadow-lg"
                 } transition-all overflow-hidden flex flex-col h-full`}
@@ -177,7 +173,7 @@ export function AffiliateDiscovery() {
                     </div>
                   </div>
                 )}
-              </motion.div>
+              </FadeInView>
             );
           })}
         </div>

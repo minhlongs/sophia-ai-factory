@@ -5,7 +5,7 @@ import { Container } from "@/components/ui/container";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { Badge } from "@/components/ui/badge";
-import { motion } from "framer-motion";
+import { FadeInView } from "@/components/ui/fade-in-view";
 import { Zap, Users, Mic, TrendingUp, Bot, Globe } from "lucide-react";
 
 const badgeVariants: Record<string, "basic" | "premium" | "enterprise"> = {
@@ -79,12 +79,10 @@ export function Features() {
             const Icon = feature.icon;
 
             return (
-              <motion.div
+              <FadeInView
                 key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
+                delay={index * 100}
+                duration={500}
                 className={
                   feature.size === "large"
                     ? "md:col-span-2 md:row-span-1"
@@ -108,27 +106,23 @@ export function Features() {
                     <CardDescription>{feature.description}</CardDescription>
                   </CardHeader>
                 </Card>
-              </motion.div>
+              </FadeInView>
             );
           })}
         </div>
 
         {/* Feature highlight */}
-        <motion.div
-          className="mt-16 text-center"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.8 }}
-        >
-          <Card glass className="max-w-2xl mx-auto bg-card border-border">
-            <CardContent className="pt-6">
-              <p className="text-muted-foreground">
-                {t("features.highlight")}
-              </p>
-            </CardContent>
-          </Card>
-        </motion.div>
+        <FadeInView delay={800} direction="none">
+          <div className="mt-16 text-center">
+            <Card glass className="max-w-2xl mx-auto bg-card border-border">
+              <CardContent className="pt-6">
+                <p className="text-muted-foreground">
+                  {t("features.highlight")}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </FadeInView>
       </Container>
     </section>
   );

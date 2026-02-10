@@ -39,9 +39,9 @@ export function buildSubscribeKeyboard(checkoutUrl: string): InlineKeyboard {
  */
 export function buildPricingKeyboard(): InlineKeyboard {
   return [
-    [{ text: '🌱 Starter - $19/mo', callback_data: 'subscribe:starter' }],
-    [{ text: '🚀 Growth - $29/mo', callback_data: 'subscribe:growth' }],
-    [{ text: '💎 Premium - $49/mo', callback_data: 'subscribe:premium' }],
+    [{ text: '🌱 Starter - $199/mo', callback_data: 'subscribe:starter' }],
+    [{ text: '🚀 Growth - $399/mo', callback_data: 'subscribe:growth' }],
+    [{ text: '💎 Premium - $799/mo', callback_data: 'subscribe:premium' }],
   ]
 }
 

@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import { Container } from "@/components/ui/container";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { SectionHeading } from "@/components/ui/section-heading";
-import { motion } from "framer-motion";
+import { FadeInView } from "@/components/ui/fade-in-view";
 import { ArrowRight } from "lucide-react";
 
 export function Workflow() {
@@ -49,12 +49,10 @@ export function Workflow() {
           <div className="hidden md:block absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] opacity-20" />
 
           {steps.map((step, index) => (
-            <motion.div
+            <FadeInView
               key={step.number}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
+              delay={index * 100}
+              duration={500}
               className="relative"
             >
               <Card glass hover className="relative z-10 h-full">
@@ -77,33 +75,24 @@ export function Workflow() {
                 </CardHeader>
               </Card>
 
-              {/* Arrow indicator (desktop only, except last item) */}
+              {/* Arrow indicator (desktop only, except last item) — CSS animation */}
               {index < steps.length - 1 && (
-                <div className="hidden md:block absolute top-1/2 -right-4 z-20">
-                  <motion.div
-                    animate={{ x: [0, 5, 0] }}
-                    transition={{ duration: 1.5, repeat: Infinity }}
-                  >
-                    <ArrowRight className="w-6 h-6 text-[var(--neon-cyan)]" />
-                  </motion.div>
+                <div className="hidden md:block absolute top-1/2 -right-4 z-20 animate-arrow-bounce">
+                  <ArrowRight className="w-6 h-6 text-[var(--neon-cyan)]" />
                 </div>
               )}
-            </motion.div>
+            </FadeInView>
           ))}
         </div>
 
         {/* CTA */}
-        <motion.div
-          className="text-center mt-16"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.6 }}
-        >
-          <p className="text-gray-400 mb-4">
-            {t('workflow.cta')}
-          </p>
-        </motion.div>
+        <FadeInView delay={600} direction="none">
+          <div className="text-center mt-16">
+            <p className="text-gray-400 mb-4">
+              {t('workflow.cta')}
+            </p>
+          </div>
+        </FadeInView>
       </Container>
     </section>
   );

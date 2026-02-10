@@ -1,8 +1,56 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { ServiceFactory } from '@/lib/services/factory';
 import { getProductIdByTier } from '@/lib/polar-config';
 import { checkoutSchema } from '@/lib/schemas';
+
+/**
+ * GET handler for Telegram URL buttons which open in browser.
+ * Reads tier from query params, creates checkout session, and redirects.
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const rawTier = request.nextUrl.searchParams.get('tier')?.toUpperCase();
+
+    // Map display names (from Telegram) and enum values to internal tier
+    const tierMap: Record<string, string> = {
+      STARTER: 'BASIC', BASIC: 'BASIC',
+      GROWTH: 'PREMIUM', PREMIUM: 'PREMIUM',
+      PREMIUM_TIER: 'ENTERPRISE', ENTERPRISE: 'ENTERPRISE',
+      MASTER: 'MASTER',
+    };
+    const mappedTier = rawTier ? tierMap[rawTier] : undefined;
+
+    if (!mappedTier) {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network';
+      return NextResponse.redirect(`${appUrl}/pricing`);
+    }
+
+    const productId = getProductIdByTier(mappedTier);
+    if (!productId) {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network';
+      return NextResponse.redirect(`${appUrl}/pricing`);
+    }
+
+    const origin = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network';
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    const userId = user?.id || `guest-${Date.now()}`;
+
+    const paymentService = ServiceFactory.getPaymentService();
+    const checkout = await paymentService.createCheckoutSession({
+      productIds: [productId],
+      successUrl: `${origin}/dashboard?checkout=success`,
+      customerEmail: user?.email,
+      metadata: { tier: mappedTier, userId },
+    });
+
+    return NextResponse.redirect(checkout.url);
+  } catch (error) {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network';
+    return NextResponse.redirect(`${appUrl}/pricing`);
+  }
+}
 
 export async function POST(request: Request) {
   try {
