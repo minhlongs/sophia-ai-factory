@@ -71,7 +71,7 @@ export function CampaignExportControl() {
       </Button>
 
       {isOpen && (
-        <div className="absolute right-0 top-12 z-50 w-80 bg-popover rounded-lg border border-border shadow-xl p-4 animate-in fade-in zoom-in-95 duration-200">
+        <div role="dialog" aria-label={t('title')} className="absolute right-0 top-12 z-50 w-80 bg-popover rounded-lg border border-border shadow-xl p-4 animate-in fade-in zoom-in-95 duration-200">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-medium text-popover-foreground flex items-center gap-2">
               <Filter className="w-4 h-4" />
@@ -80,6 +80,7 @@ export function CampaignExportControl() {
             <button
               onClick={() => setIsOpen(false)}
               className="text-muted-foreground hover:text-foreground"
+              aria-label="Close export options"
             >
               <X className="w-4 h-4" />
             </button>
@@ -88,8 +89,9 @@ export function CampaignExportControl() {
           <div className="space-y-4">
             {/* Status Filter */}
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-popover-foreground">{t('status_label')}</label>
+              <label htmlFor="export-status" className="text-sm font-medium text-popover-foreground">{t('status_label')}</label>
               <select
+                id="export-status"
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
@@ -106,8 +108,9 @@ export function CampaignExportControl() {
             {/* Date Range */}
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-popover-foreground">{t('start_date')}</label>
+                <label htmlFor="export-start-date" className="text-sm font-medium text-popover-foreground">{t('start_date')}</label>
                 <input
+                  id="export-start-date"
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
@@ -115,8 +118,9 @@ export function CampaignExportControl() {
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-popover-foreground">{t('end_date')}</label>
+                <label htmlFor="export-end-date" className="text-sm font-medium text-popover-foreground">{t('end_date')}</label>
                 <input
+                  id="export-end-date"
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}

@@ -34,7 +34,7 @@ export default function DashboardLayout({
           </Link>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1">
+        <nav aria-label="Dashboard sidebar" className="flex-1 p-4 space-y-1">
           <Link
             href="/dashboard"
             className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
@@ -110,7 +110,7 @@ export default function DashboardLayout({
           <ThemeToggle />
         </header>
 
-        <main className="flex-1 p-6 md:p-8 overflow-y-auto pb-20 md:pb-8">
+        <main id="main-content" className="flex-1 p-6 md:p-8 overflow-y-auto pb-20 md:pb-8">
           {children}
         </main>
       </div>

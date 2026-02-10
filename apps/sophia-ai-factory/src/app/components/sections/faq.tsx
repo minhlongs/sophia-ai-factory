@@ -39,15 +39,21 @@ export function FAQ() {
                   <button
                     onClick={() => setOpenIndex(isOpen ? null : index)}
                     className="w-full text-left p-6 flex items-center justify-between hover:bg-muted/50 transition-colors"
+                    aria-expanded={isOpen}
+                    aria-controls={`faq-answer-${index}`}
                   >
                     <span className="font-semibold text-lg pr-8 text-foreground">{faq.question}</span>
                     <ChevronDown
+                      aria-hidden="true"
                       className={`w-5 h-5 text-[var(--neon-cyan)] flex-shrink-0 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
                     />
                   </button>
 
                   {/* CSS-only accordion using grid-template-rows trick */}
                   <div
+                    id={`faq-answer-${index}`}
+                    role="region"
+                    aria-labelledby={`faq-question-${index}`}
                     className="grid transition-[grid-template-rows] duration-300 ease-out"
                     style={{ gridTemplateRows: isOpen ? "1fr" : "0fr" }}
                   >

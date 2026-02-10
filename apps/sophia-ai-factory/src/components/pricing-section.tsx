@@ -75,6 +75,7 @@ function PricingCard({
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
+              aria-hidden="true"
             >
               <path
                 strokeLinecap="round"
@@ -91,6 +92,7 @@ function PricingCard({
       <button
         onClick={() => onSelect(tier)}
         disabled={loading}
+        aria-label={`${loading ? 'Processing' : 'Get started with'} ${name} plan`}
         className={`mt-8 w-full rounded-lg py-3 font-semibold transition-all duration-300 ${
           popular
             ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-[1.02]"
@@ -255,6 +257,7 @@ export function PricingSection() {
                 <button
                   onClick={() => handleSelectTier(MASTER_TIER.tier)}
                   disabled={loading === MASTER_TIER.tier}
+                  aria-label={`${loading === MASTER_TIER.tier ? 'Processing' : 'Get started with'} ${MASTER_TIER.name} plan`}
                 className="mt-8 w-full md:w-auto rounded-lg bg-gradient-to-r from-primary to-purple-600 px-10 py-4 font-bold text-white text-lg shadow-lg hover:opacity-90 hover:scale-[1.02] transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {loading === MASTER_TIER.tier ? t("pricing.processing") : t("pricing.master.cta")}
@@ -268,6 +271,7 @@ export function PricingSection() {
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
+                      aria-hidden="true"
                     >
                       <path
                         strokeLinecap="round"

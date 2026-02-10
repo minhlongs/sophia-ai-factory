@@ -26,10 +26,11 @@ export function FilterPanel({ filters, onFilterChange, categories = [] }: Filter
       </div>
 
       <form onSubmit={handleSearchSubmit} className="relative">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" aria-hidden="true" />
         <input
           type="text"
           placeholder="Search products..."
+          aria-label="Search products"
           className="h-9 w-full rounded-md border border-input bg-transparent pl-9 pr-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           value={localSearch}
           onChange={(e) => setLocalSearch(e.target.value)}
@@ -38,8 +39,9 @@ export function FilterPanel({ filters, onFilterChange, categories = [] }: Filter
 
       <div className="space-y-3">
         <div>
-          <label className="text-xs font-medium text-muted-foreground">Category</label>
+          <label htmlFor="filter-category" className="text-xs font-medium text-muted-foreground">Category</label>
           <select
+            id="filter-category"
             className="mt-1.5 h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             value={filters.category || ''}
             onChange={(e) => onFilterChange({ ...filters, category: e.target.value ? Number(e.target.value) : undefined })}
@@ -54,8 +56,9 @@ export function FilterPanel({ filters, onFilterChange, categories = [] }: Filter
         </div>
 
         <div className="flex items-center justify-between">
-          <label className="text-sm font-medium">Hidden Gems Only</label>
+          <label htmlFor="filter-gems" className="text-sm font-medium">Hidden Gems Only</label>
           <input
+            id="filter-gems"
             type="checkbox"
             className="h-4 w-4 rounded border-primary text-primary focus:ring-primary"
             checked={filters.hiddenGemsOnly || false}
@@ -64,8 +67,9 @@ export function FilterPanel({ filters, onFilterChange, categories = [] }: Filter
         </div>
 
         <div>
-          <label className="text-xs font-medium text-muted-foreground">Min SPS Score: {filters.minSps || 0}</label>
+          <label htmlFor="filter-sps" className="text-xs font-medium text-muted-foreground">Min SPS Score: {filters.minSps || 0}</label>
           <input
+            id="filter-sps"
             type="range"
             min="0"
             max="100"
@@ -73,6 +77,9 @@ export function FilterPanel({ filters, onFilterChange, categories = [] }: Filter
             className="mt-2 h-2 w-full cursor-pointer appearance-none rounded-full bg-secondary accent-primary"
             value={filters.minSps || 0}
             onChange={(e) => onFilterChange({ ...filters, minSps: Number(e.target.value) })}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={filters.minSps || 0}
           />
         </div>
       </div>

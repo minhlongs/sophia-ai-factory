@@ -38,15 +38,19 @@ export function ROICalculator() {
             {/* Input: Channels */}
             <div>
               <div className="flex justify-between mb-3">
-                <label className="text-foreground/80">{t('roi.labels.channels')}</label>
+                <label htmlFor="roi-channels" className="text-foreground/80">{t('roi.labels.channels')}</label>
                 <span className="text-[var(--neon-cyan)] font-bold">{channels}</span>
               </div>
               <input
+                id="roi-channels"
                 type="range"
                 min="1"
                 max="10"
                 value={channels}
                 onChange={(e) => setChannels(Number(e.target.value))}
+                aria-valuemin={1}
+                aria-valuemax={10}
+                aria-valuenow={channels}
                 className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer slider"
               />
               <div className="flex justify-between text-xs text-muted-foreground mt-1">
@@ -58,15 +62,19 @@ export function ROICalculator() {
             {/* Input: Videos per Week */}
             <div>
               <div className="flex justify-between mb-3">
-                <label className="text-foreground/80">{t('roi.labels.videos_per_week')}</label>
+                <label htmlFor="roi-videos" className="text-foreground/80">{t('roi.labels.videos_per_week')}</label>
                 <span className="text-[var(--neon-cyan)] font-bold">{videosPerWeek}</span>
               </div>
               <input
+                id="roi-videos"
                 type="range"
                 min="1"
                 max="30"
                 value={videosPerWeek}
                 onChange={(e) => setVideosPerWeek(Number(e.target.value))}
+                aria-valuemin={1}
+                aria-valuemax={30}
+                aria-valuenow={videosPerWeek}
                 className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer slider"
               />
               <div className="flex justify-between text-xs text-muted-foreground mt-1">
@@ -78,18 +86,22 @@ export function ROICalculator() {
             {/* Input: Average Views */}
             <div>
               <div className="flex justify-between mb-3">
-                <label className="text-foreground/80">{t('roi.labels.avg_views')}</label>
+                <label htmlFor="roi-views" className="text-foreground/80">{t('roi.labels.avg_views')}</label>
                 <span className="text-[var(--neon-cyan)] font-bold">
                   {avgViews.toLocaleString()}
                 </span>
               </div>
               <input
+                id="roi-views"
                 type="range"
                 min="100"
                 max="10000"
                 step="100"
                 value={avgViews}
                 onChange={(e) => setAvgViews(Number(e.target.value))}
+                aria-valuemin={100}
+                aria-valuemax={10000}
+                aria-valuenow={avgViews}
                 className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer slider"
               />
               <div className="flex justify-between text-xs text-muted-foreground mt-1">
@@ -100,7 +112,7 @@ export function ROICalculator() {
 
             {/* Output: Monthly Revenue — CSS transition instead of framer-motion key animation */}
             <div className="pt-8 border-t border-border">
-              <div className="text-center">
+              <div className="text-center" aria-live="polite" aria-atomic="true">
                 <p className="text-muted-foreground mb-2">{t('roi.labels.projected_revenue')}</p>
                 <div className="text-5xl font-bold bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] bg-clip-text text-transparent transition-transform duration-200">
                   ${monthlyRevenue.toLocaleString()}

@@ -31,6 +31,8 @@ export default function GuideLayout({ children }: { children: React.ReactNode })
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
         className="fixed top-20 left-4 z-40 md:hidden p-2 rounded-lg bg-muted/80 backdrop-blur-sm border border-border/40 text-muted-foreground"
+        aria-label={sidebarOpen ? "Close guide menu" : "Open guide menu"}
+        aria-expanded={sidebarOpen}
       >
         {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
       </button>
@@ -63,6 +65,7 @@ export default function GuideLayout({ children }: { children: React.ReactNode })
                   key={link.href}
                   href={link.href}
                   onClick={() => setSidebarOpen(false)}
+                  aria-current={isActive ? "page" : undefined}
                   className={cn(
                     "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                     isActive

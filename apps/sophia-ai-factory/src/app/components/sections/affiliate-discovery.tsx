@@ -47,6 +47,7 @@ export function AffiliateDiscovery() {
                 <button
                   key={tier}
                   onClick={() => setCurrentTier(tier)}
+                  aria-pressed={currentTier === tier}
                   className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
                     currentTier === tier
                       ? "bg-blue-600 text-white shadow-md"
@@ -66,6 +67,7 @@ export function AffiliateDiscovery() {
             <button
               key={category}
               onClick={() => setFilter(category)}
+              aria-pressed={filter === category}
               className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
                 filter === category
                   ? "bg-primary text-primary-foreground"

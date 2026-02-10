@@ -93,7 +93,7 @@ export function Features() {
                   <CardHeader>
                     <div className="flex items-start justify-between mb-4">
                       <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-[var(--neon-cyan)]/20 to-[var(--neon-purple)]/20 flex items-center justify-center">
-                        <Icon className="w-6 h-6 text-[var(--neon-cyan)]" />
+                        <Icon className="w-6 h-6 text-[var(--neon-cyan)]" aria-hidden="true" />
                       </div>
                       <Badge
                         variant={badgeVariants[feature.badge] || "basic"}

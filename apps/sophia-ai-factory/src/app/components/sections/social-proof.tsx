@@ -110,9 +110,9 @@ export function SocialProof() {
               <Card glass className="h-full">
                 <CardContent className="pt-6">
                   {/* Stars */}
-                  <div className="flex gap-1 mb-4">
+                  <div className="flex gap-1 mb-4" aria-label="5 out of 5 stars" role="img">
                     {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                      <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" aria-hidden="true" />
                     ))}
                   </div>
                   <blockquote className="text-muted-foreground mb-4 italic">
