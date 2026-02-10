@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getUserTier, checkTierAccess, isTierHigherOrEqual } from './subscription';
-import { createClient } from '@supabase/supabase-js';
+import { createAdminClient } from '@/lib/supabase/admin';
 
-// Mock Supabase
-vi.mock('@supabase/supabase-js', () => ({
-  createClient: vi.fn(),
+// Mock the admin client module to bypass env var validation
+vi.mock('@/lib/supabase/admin', () => ({
+  createAdminClient: vi.fn(),
 }));
 
 describe('Subscription Library', () => {
@@ -22,10 +22,9 @@ describe('Subscription Library', () => {
     mockSelect.mockReturnValue({ eq: mockEq });
     mockFrom.mockReturnValue({ select: mockSelect });
 
-    // @ts-expect-error - Mock only implements subset of SupabaseClient interface
-    vi.mocked(createClient).mockReturnValue({
+    vi.mocked(createAdminClient).mockReturnValue({
       from: mockFrom,
-    });
+    } as any);
   });
 
   describe('isTierHigherOrEqual', () => {
