@@ -1,8 +1,24 @@
 import React from "react";
-import { CreateProjectFormWithTemplates } from "../components/campaign-creation-form-with-template-selector";
+import dynamic from "next/dynamic";
 import { templateService } from "@/lib/services/template-service";
 import { createServerClient } from "@/lib/supabase/server";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getTranslations } from 'next-intl/server';
+
+const CreateProjectFormWithTemplates = dynamic(
+  () => import("../components/campaign-creation-form-with-template-selector").then(m => ({ default: m.CreateProjectFormWithTemplates })),
+  {
+    loading: () => (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3].map(i => (
+            <Skeleton key={i} className="h-40 rounded-xl" />
+          ))}
+        </div>
+      </div>
+    ),
+  }
+);
 
 export default async function CreateProjectPage() {
   const t = await getTranslations('campaign.template_selection');

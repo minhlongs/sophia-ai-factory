@@ -1,14 +1,28 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
-import { VideoPreview } from "@/components/video-preview";
+import dynamic from "next/dynamic";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Calendar, Users, FileText, CheckCircle2, Clock, AlertCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Campaign } from "@/types";
 import { ScriptOutput } from "@/lib/services/types";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getTranslations, getFormatter } from 'next-intl/server';
+
+const VideoPreview = dynamic(
+  () => import("@/components/video-preview").then(m => ({ default: m.VideoPreview })),
+  {
+    loading: () => (
+      <div className="w-full max-w-2xl mx-auto">
+        <Skeleton className="h-8 w-32 mb-2" />
+        <Skeleton className="h-4 w-48 mb-4" />
+        <Skeleton className="aspect-video w-full rounded-lg" />
+      </div>
+    ),
+  }
+);
 
 interface PageProps {
   params: Promise<{ id: string }>;

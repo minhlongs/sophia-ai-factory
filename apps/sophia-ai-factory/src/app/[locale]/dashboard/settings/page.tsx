@@ -1,7 +1,12 @@
 import { Suspense } from 'react';
 import { Metadata } from 'next';
+import dynamic from 'next/dynamic';
 import { getUserProfile } from '@/app/actions/settings';
-import { SettingsForm } from '@/components/settings/settings-form';
+
+const SettingsForm = dynamic(
+  () => import('@/components/settings/settings-form').then(m => ({ default: m.SettingsForm })),
+  { loading: () => <SettingsSkeleton /> }
+);
 
 export const metadata: Metadata = {
   title: 'Settings - Sophia AI Factory',

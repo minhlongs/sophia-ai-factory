@@ -1,5 +1,25 @@
-import { DiscoveryDashboard } from '@/components/discovery/dashboard'
+import dynamic from 'next/dynamic'
 import { Metadata } from 'next'
+import { Skeleton } from '@/components/ui/skeleton'
+
+const DiscoveryDashboard = dynamic(
+  () => import('@/components/discovery/dashboard').then(m => ({ default: m.DiscoveryDashboard })),
+  {
+    loading: () => (
+      <div className="flex flex-col gap-6 lg:flex-row">
+        <Skeleton className="w-full lg:w-64 h-80 rounded-xl" />
+        <div className="flex-1 space-y-4">
+          <Skeleton className="h-8 w-48" />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {[1, 2, 3, 4, 5, 6].map(i => (
+              <Skeleton key={i} className="h-48 rounded-xl" />
+            ))}
+          </div>
+        </div>
+      </div>
+    ),
+  }
+)
 
 export const metadata: Metadata = {
   title: 'Sophia Index - Affiliate Discovery',

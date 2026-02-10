@@ -1,12 +1,26 @@
 import { createServerClient } from "@/lib/supabase/server";
-import { CampaignList } from "../components/campaign-list";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Campaign } from "@/types";
 import { CampaignExportControl } from "../components/campaign-export-control";
 import { getTranslations } from 'next-intl/server';
+
+const CampaignList = dynamic(
+  () => import("../components/campaign-list").then(m => ({ default: m.CampaignList })),
+  {
+    loading: () => (
+      <div className="space-y-4">
+        {[1, 2, 3].map(i => (
+          <Skeleton key={i} className="h-24 w-full rounded-xl" />
+        ))}
+      </div>
+    ),
+  }
+);
 
 export default async function CampaignsPage() {
   const t = await getTranslations('dashboard');
