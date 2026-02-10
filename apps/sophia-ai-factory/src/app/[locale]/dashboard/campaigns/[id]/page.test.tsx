@@ -19,6 +19,17 @@ vi.mock('@/components/video-preview', () => ({
   VideoPreview: ({ status }: { status: string }) => <div data-testid="video-preview">{status}</div>,
 }));
 
+// Mock next/dynamic to bypass lazy loading in tests.
+// Returns a simple component matching VideoPreview mock interface.
+vi.mock('next/dynamic', () => ({
+  __esModule: true,
+  default: (_loadFn: () => Promise<any>, _opts?: any) => {
+    return function DynamicVideoPreview(props: any) {
+      return <div data-testid="video-preview">{props.status}</div>;
+    };
+  },
+}));
+
 // Mock Supabase
 const mockGetSession = vi.fn();
 const mockFrom = vi.fn();
