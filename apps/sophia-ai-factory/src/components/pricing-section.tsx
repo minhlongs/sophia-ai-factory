@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import { motion } from "framer-motion";
+import { FadeInView } from "@/components/ui/fade-in-view";
 
 function formatPrice(cents: number, locale: string): string {
   return new Intl.NumberFormat(locale === "vi" ? "vi-VN" : "en-US", {
@@ -39,12 +39,9 @@ function PricingCard({
   const t = useTranslations("landing");
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      whileHover={{ y: -8, transition: { duration: 0.2 } }}
-      className={`relative flex flex-col rounded-2xl border p-8 transition-all duration-300 ${
+    <FadeInView
+      duration={500}
+      className={`relative flex flex-col rounded-2xl border p-8 transition-all duration-300 hover:-translate-y-2 ${
         popular
           ? "border-primary bg-primary/5 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30"
           : "border-border bg-card hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10"
@@ -102,7 +99,7 @@ function PricingCard({
       >
         {loading ? t("pricing.processing") : t("pricing.get_started")}
       </button>
-    </motion.div>
+    </FadeInView>
   );
 }
 
@@ -225,12 +222,9 @@ export function PricingSection() {
         </div>
 
         {/* Binh Phap Master Upsell */}
-        <motion.div
+        <FadeInView
           className="mt-16 relative"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
+          duration={500}
         >
           <div className="rounded-2xl border-2 border-primary bg-gradient-to-br from-primary/10 via-background to-primary/5 p-8 md:p-12 shadow-xl shadow-primary/10 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/20">
             <span className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-primary to-purple-600 px-6 py-1.5 text-sm font-bold text-white shadow-lg">
@@ -288,7 +282,7 @@ export function PricingSection() {
               </ul>
             </div>
           </div>
-        </motion.div>
+        </FadeInView>
       </div>
     </section>
   );

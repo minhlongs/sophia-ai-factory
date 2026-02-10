@@ -33,7 +33,7 @@ const StatusBadge = ({ status }: { status: ServiceHealth['status'] }) => {
     case 'up':
     case 'configured':
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200">
           <CheckCircle className="w-3.5 h-3.5" />
           Operational
         </span>
@@ -41,14 +41,14 @@ const StatusBadge = ({ status }: { status: ServiceHealth['status'] }) => {
     case 'down':
     case 'missing_config':
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200">
           <AlertCircle className="w-3.5 h-3.5" />
           {status === 'missing_config' ? 'Missing Config' : 'Down'}
         </span>
       );
     default:
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200">
           <AlertCircle className="w-3.5 h-3.5" />
           Unknown
         </span>
@@ -79,7 +79,7 @@ export default function SystemHealthPage() {
   if (isError || !health) {
     return (
       <div className="p-6">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800 flex items-center gap-3">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 text-red-800 dark:text-red-200 flex items-center gap-3">
           <AlertCircle className="w-5 h-5" />
           <p>Failed to load system health status. The API might be down.</p>
           <button
@@ -97,8 +97,8 @@ export default function SystemHealthPage() {
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">System Health</h1>
-          <p className="text-gray-500 mt-1">Monitor the status of critical infrastructure and services</p>
+          <h1 className="text-2xl font-bold text-foreground">System Health</h1>
+          <p className="text-muted-foreground mt-1">Monitor the status of critical infrastructure and services</p>
         </div>
         <button
           onClick={() => refetch()}

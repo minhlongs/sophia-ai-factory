@@ -1,9 +1,9 @@
-# CLAUDE.md
+# Sophia AI Video Factory — Zero Manual Content Production SaaS
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
-## Project Identity
-**Sophia AI Video Factory** — Zero Manual Content Production SaaS
+> **第五篇 兵勢 (Bing Shi)** — Force multipliers: momentum through automation
+>
+> This file governs CC CLI behavior ONLY when working inside `apps/sophia-ai-factory/`.
+> Inherits from root `CLAUDE.md` (Constitution) and `~/.claude/CLAUDE.md` (Global).
 
 ### Tech Stack
 | Component | Technology |

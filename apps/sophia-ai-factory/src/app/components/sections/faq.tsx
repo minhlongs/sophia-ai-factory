@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { motion, AnimatePresence } from "framer-motion";
+import { FadeInView } from "@/components/ui/fade-in-view";
 import { ChevronDown } from "lucide-react";
 
 export function FAQ() {
@@ -27,45 +27,40 @@ export function FAQ() {
         />
 
         <div className="max-w-3xl mx-auto space-y-4">
-          {faqs.map((faq, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.3, delay: index * 0.05 }}
-            >
-              <Card glass className="overflow-hidden bg-card border-border">
-                <button
-                  onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                  className="w-full text-left p-6 flex items-center justify-between hover:bg-muted/50 transition-colors"
-                >
-                  <span className="font-semibold text-lg pr-8 text-foreground">{faq.question}</span>
-                  <motion.div
-                    animate={{ rotate: openIndex === index ? 180 : 0 }}
-                    transition={{ duration: 0.3 }}
+          {faqs.map((faq, index) => {
+            const isOpen = openIndex === index;
+            return (
+              <FadeInView
+                key={index}
+                delay={index * 50}
+                duration={300}
+              >
+                <Card glass className="overflow-hidden bg-card border-border">
+                  <button
+                    onClick={() => setOpenIndex(isOpen ? null : index)}
+                    className="w-full text-left p-6 flex items-center justify-between hover:bg-muted/50 transition-colors"
                   >
-                    <ChevronDown className="w-5 h-5 text-[var(--neon-cyan)] flex-shrink-0" />
-                  </motion.div>
-                </button>
+                    <span className="font-semibold text-lg pr-8 text-foreground">{faq.question}</span>
+                    <ChevronDown
+                      className={`w-5 h-5 text-[var(--neon-cyan)] flex-shrink-0 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
+                    />
+                  </button>
 
-                <AnimatePresence initial={false}>
-                  {openIndex === index && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                    >
+                  {/* CSS-only accordion using grid-template-rows trick */}
+                  <div
+                    className="grid transition-[grid-template-rows] duration-300 ease-out"
+                    style={{ gridTemplateRows: isOpen ? "1fr" : "0fr" }}
+                  >
+                    <div className="overflow-hidden">
                       <div className="px-6 pb-6 text-muted-foreground leading-relaxed">
                         {faq.answer}
                       </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </Card>
-            </motion.div>
-          ))}
+                    </div>
+                  </div>
+                </Card>
+              </FadeInView>
+            );
+          })}
         </div>
       </Container>
     </section>
