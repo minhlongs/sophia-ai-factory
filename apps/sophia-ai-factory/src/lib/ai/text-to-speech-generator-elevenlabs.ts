@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { Tier } from "@/types";
 
 interface GenerateVoiceoverInput {
@@ -135,10 +135,7 @@ function getDefaultVoiceId(tier: Tier): string {
  * Uses service role key for server-side uploads.
  */
 async function uploadAudioToStorage(audioData: Uint8Array): Promise<string> {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const supabase = createAdminClient();
 
   const fileName = `voiceover-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.mp3`;
   const filePath = `voiceovers/${fileName}`;

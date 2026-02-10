@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { Tier } from '@/types';
 
 // Define Tier Config hierarchy and limitations
@@ -49,10 +49,7 @@ export const TIER_DB_MAPPING: Record<Tier, string> = {
  * - Subscription expired (subscription_expires_at < now)
  */
 export async function getUserTier(userId: string): Promise<Tier> {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from('user_profiles')
@@ -113,10 +110,7 @@ export async function getSubscriptionStatus(userId: string): Promise<{
   expiresAt: Date | null;
   daysRemaining: number | null;
 }> {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const supabase = createAdminClient();
 
   const { data } = await supabase
     .from('user_profiles')

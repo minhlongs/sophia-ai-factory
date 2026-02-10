@@ -27,8 +27,9 @@ function isAdminAuthorized(request: NextRequest): boolean {
   try {
     const authValue = basicAuth.split(" ")[1];
     const [user, pwd] = atob(authValue).split(":");
-    const validUser = process.env.ADMIN_USER || "admin";
-    const validPass = process.env.ADMIN_PASS || "sophia2024";
+    const validUser = process.env.ADMIN_USER;
+    const validPass = process.env.ADMIN_PASS;
+    if (!validUser || !validPass) return false;
     return user === validUser && pwd === validPass;
   } catch {
     return false;
@@ -73,9 +74,15 @@ export async function middleware(request: NextRequest) {
   if (cleanPath.startsWith("/dashboard")) {
     let supabaseResponse = NextResponse.next({ request });
 
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+
     const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      supabaseUrl,
+      supabaseAnonKey,
       {
         cookies: {
           getAll() {

@@ -15,9 +15,20 @@ export default function LoginPage() {
   const [sent, setSent] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <p className="text-destructive">Configuration error: Missing Supabase environment variables.</p>
+      </div>
+    );
+  }
+
   const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    supabaseUrl,
+    supabaseAnonKey
   );
 
   async function handleSubmit(e: React.FormEvent) {
