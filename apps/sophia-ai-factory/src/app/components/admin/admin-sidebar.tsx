@@ -34,7 +34,7 @@ export function AdminSidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4">
+      <nav aria-label="Admin navigation" className="flex-1 p-4">
         <ul className="space-y-1">
           {navigation.map((item) => {
             const isActive = pathname === item.href;
@@ -42,6 +42,7 @@ export function AdminSidebar() {
               <li key={item.name}>
                 <Link
                   href={item.href}
+                  aria-current={isActive ? "page" : undefined}
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-all",
                     isActive

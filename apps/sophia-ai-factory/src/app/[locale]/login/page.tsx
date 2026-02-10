@@ -69,6 +69,7 @@ export default function LoginPage() {
                   viewBox="0 0 24 24"
                   strokeWidth={2}
                   stroke="currentColor"
+                  aria-hidden="true"
                 >
                   <path
                     strokeLinecap="round"
@@ -102,7 +103,7 @@ export default function LoginPage() {
               </div>
 
               {errorMsg && (
-                <p className="text-sm text-red-500">{errorMsg}</p>
+                <p role="alert" className="text-sm text-red-500">{errorMsg}</p>
               )}
 
               <button

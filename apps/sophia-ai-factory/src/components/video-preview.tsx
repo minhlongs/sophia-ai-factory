@@ -83,7 +83,14 @@ export function VideoPreview({
               {status === "processing_video" && "Rendering video avatar..."}
               {status === "queued" && "Queued for generation..."}
             </p>
-            <div className="w-48 h-1.5 bg-muted mt-4 rounded-full overflow-hidden">
+            <div
+              role="progressbar"
+              aria-valuenow={progress}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label={`Video generation progress: ${progress}%`}
+              className="w-48 h-1.5 bg-muted mt-4 rounded-full overflow-hidden"
+            >
               <div
                 className="h-full bg-primary transition-all duration-500 ease-out"
                 style={{ width: `${progress}%` }}

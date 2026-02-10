@@ -15,7 +15,7 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4 space-y-6 text-center">
+    <div role="alert" className="flex flex-col items-center justify-center min-h-screen p-4 space-y-6 text-center">
       <div className="space-y-2 w-full max-w-md">
         <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl text-[var(--neon-pink)]">
           Something went wrong!

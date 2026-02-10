@@ -104,7 +104,7 @@ export function CreateProjectForm() {
       </div>
 
       {error && (
-        <div className="p-3 bg-destructive/10 text-destructive text-sm rounded-lg">
+        <div role="alert" className="p-3 bg-destructive/10 text-destructive text-sm rounded-lg">
           {error}
         </div>
       )}

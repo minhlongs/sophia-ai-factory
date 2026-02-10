@@ -12,7 +12,7 @@ const Footer = dynamic(() => import("@/app/components/layout/footer").then(m => 
 
 export default function Home() {
   return (
-    <main>
+    <main id="main-content">
       <Hero />
       <Workflow />
       <Features />
