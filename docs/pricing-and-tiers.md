@@ -7,14 +7,14 @@
 
 ## Tong Quan Goi Dich Vu / Plan Overview
 
-| | BASIC | PREMIUM | ENTERPRISE |
-|---|---|---|---|
-| **Gia / Price** | **$500/thang** | **$1,200/thang** | **$3,500/thang** |
-| | /month | /month | /month |
+| | Starter (BASIC) | Growth (PREMIUM) | Premium (ENTERPRISE) | Master |
+|---|---|---|---|---|
+| **Gia / Price** | **$199/thang** | **$399/thang** | **$799/thang** | **$4,999 (mot lan)** |
+| | /month | /month | /month | one-time |
 
 ---
 
-## BASIC — $500/thang (per month)
+## Starter (BASIC) — $199/thang (per month)
 
 ### Tieng Viet
 
@@ -52,13 +52,13 @@ The plan for businesses just getting started with AI video.
 
 ---
 
-## PREMIUM — $1,200/thang (per month)
+## Growth (PREMIUM) — $399/thang (per month)
 
 ### Tieng Viet
 
 Goi danh cho doanh nghiep muon mo rong san xuat video tren nhieu kenh.
 
-**Ban duoc tat ca cua BASIC, cong them:**
+**Ban duoc tat ca cua Starter, cong them:**
 - 3 Kenh YouTube duoc quan ly tu dong
 - Khong gioi han Mau Video (unlimited templates)
 - Cap nhat noi dung hang tuan tu dong (weekly auto-updates)
@@ -76,7 +76,7 @@ Goi danh cho doanh nghiep muon mo rong san xuat video tren nhieu kenh.
 
 The plan for businesses ready to scale video production across multiple channels.
 
-**You get everything in BASIC, plus:**
+**You get everything in Starter, plus:**
 - 3 YouTube Channels managed automatically
 - Unlimited Video Templates
 - Weekly automatic content updates
@@ -92,13 +92,13 @@ The plan for businesses ready to scale video production across multiple channels
 
 ---
 
-## ENTERPRISE — $3,500/thang (per month)
+## Premium (ENTERPRISE) — $799/thang (per month)
 
 ### Tieng Viet
 
 Goi toan dien cho doanh nghiep muon tu dong hoa 100% quy trinh san xuat video.
 
-**Ban duoc tat ca cua PREMIUM, cong them:**
+**Ban duoc tat ca cua Growth, cong them:**
 - Pipeline "Khong Can Thao Tac" (Zero Manual) — tu dong hoan toan tu A-Z
 - Khong gioi han kenh YouTube
 - Khong gioi han so luong video moi thang
@@ -119,7 +119,7 @@ Goi toan dien cho doanh nghiep muon tu dong hoa 100% quy trinh san xuat video.
 
 The complete plan for businesses that want 100% automated video production.
 
-**You get everything in PREMIUM, plus:**
+**You get everything in Growth, plus:**
 - "Zero Manual" Pipeline — fully automated from A to Z
 - Unlimited YouTube Channels
 - Unlimited videos per month
@@ -138,55 +138,70 @@ The complete plan for businesses that want 100% automated video production.
 
 ---
 
-## So Sanh Chi Tiet / Detailed Feature Comparison
-
-| Tinh nang / Feature | BASIC | PREMIUM | ENTERPRISE |
-|---|---|---|---|
-| **Landing Page** | 1 | 1 | Tuy chinh / Custom |
-| **Kenh YouTube / YouTube Channels** | 1 | 3 | Khong gioi han / Unlimited |
-| **Mau Video / Video Templates** | 5 | Khong gioi han / Unlimited | Khong gioi han + Tuy chinh / Unlimited + Custom |
-| **Video moi thang / Videos per month** | 20 | 100 | Khong gioi han / Unlimited |
-| **Cap nhat tu dong / Auto updates** | Khong / No | Hang tuan / Weekly | Hang ngay / Daily |
-| **Dashboard** | Co ban / Basic | Nang cao / Advanced | Nang cao + Analytics |
-| **Telegram Bot** | Co / Yes | Co / Yes | Co / Yes |
-| **Ho tro / Support** | Email (gio lam viec / business hours) | Uu tien 4h / Priority 4h | 24/7 + Account Manager |
-| **Xuat du lieu / Data export** | Khong / No | CSV, PDF | CSV, PDF, API |
-| **API Access** | Khong / No | Khong / No | Co / Yes |
-| **Tu dong dang YouTube / Auto YouTube publish** | Khong / No | Co / Yes | Co / Yes |
-| **Hang doi uu tien / Priority queue** | Khong / No | Khong / No | Co / Yes |
-| **Custom branding** | Khong / No | Khong / No | Co / Yes |
-
----
-
-## Cach Nang Cap Goi / How to Upgrade Your Plan
+## Master — $4,999 (mot lan / one-time)
 
 ### Tieng Viet
 
-1. Dang nhap vao **Dashboard** tai `https://sophia.agency`
-2. Nhan vao **ten cua ban** o goc phai tren
-3. Chon **"Goi Dich Vu"** (hoac "Subscription")
-4. Ban se thay goi hien tai cua ban duoc danh dau
-5. Nhan nut **"Nang Cap"** ben canh goi ban muon chuyen len
-6. Trang thanh toan hien ra — nhap thong tin the tin dung hoac chon phuong thuc thanh toan
-7. Nhan **"Xac Nhan Thanh Toan"**
-8. Goi moi se duoc kich hoat **ngay lap tuc**
-9. Ban se nhan email xac nhan nang cap
+Goi cao cap nhat — so huu toan bo he thong, tuy chinh khong gioi han.
 
-> Phan phi chenh lech se duoc tinh theo ty le thoi gian con lai trong thang.
+**Ban duoc tat ca cua Premium, cong them:**
+- Quyen so huu toan bo ma nguon (source code)
+- Tuy chinh khong gioi han theo yeu cau
+- Huong dan cai dat va van hanh
+- Uu tien ho tro ky thuat
+- Khong co phi hang thang — tra mot lan duy nhat
 
 ### English
 
-1. Sign in to your **Dashboard** at `https://sophia.agency`
-2. Click on **your name** at the top right corner
-3. Select **"Subscription"** (or "Goi Dich Vu")
-4. You'll see your current plan highlighted
-5. Click the **"Upgrade"** button next to the plan you want
-6. The payment page appears — enter your credit card info or choose a payment method
-7. Click **"Confirm Payment"**
-8. Your new plan activates **immediately**
-9. You'll receive an email confirming the upgrade
+The ultimate package — full system ownership with unlimited customization.
 
-> The price difference will be prorated based on the remaining time in your billing cycle.
+**You get everything in Premium, plus:**
+- Full source code ownership
+- Unlimited customization
+- Installation and operation guidance
+- Priority technical support
+- No monthly fees — one-time payment only
+
+---
+
+## So Sanh Chi Tiet / Detailed Feature Comparison
+
+| Tinh nang / Feature | Starter | Growth | Premium | Master |
+|---|---|---|---|---|
+| **Gia / Price** | $199/thang | $399/thang | $799/thang | $4,999 mot lan |
+| **Kenh YouTube / YouTube Channels** | 1 | 3 | Khong gioi han | Khong gioi han |
+| **Mau Video / Video Templates** | 5 | Khong gioi han | Khong gioi han + Tuy chinh | Khong gioi han + Tuy chinh |
+| **Video moi thang / Videos per month** | 20 | 100 | Khong gioi han | Khong gioi han |
+| **Dashboard** | Co ban | Nang cao | Nang cao + Analytics | Toan quyen |
+| **Telegram Bot** | Co | Co | Co | Co |
+| **Ho tro / Support** | Email | Uu tien 4h | 24/7 + Account Manager | Uu tien ky thuat |
+| **Xuat du lieu / Data export** | Khong | CSV, PDF | CSV, PDF, API | Toan quyen |
+| **API Access** | Khong | Khong | Co | Co |
+| **Source Code** | Khong | Khong | Khong | Co |
+
+---
+
+## Cach Dang Ky / How to Subscribe
+
+### Tieng Viet
+
+1. Truy cap **trang chu** tai `https://sophia.agencyos.network`
+2. Cuon xuong phan **"Bang Gia"**
+3. Nhan nut **"Bat Dau"** ben canh goi ban muon
+4. Trang thanh toan Polar hien ra — nhap thong tin the tin dung
+5. Nhan **"Pay now"** (Thanh toan)
+6. Tai khoan se duoc kich hoat **ngay lap tuc**
+7. Ban se nhan email xac nhan dang ky
+
+### English
+
+1. Visit **homepage** at `https://sophia.agencyos.network`
+2. Scroll to **"Pricing"** section
+3. Click **"Get Started"** next to the plan you want
+4. Polar checkout page appears — enter your credit card info
+5. Click **"Pay now"**
+6. Your account activates **immediately**
+7. You'll receive a confirmation email
 
 ---
 
@@ -195,10 +210,10 @@ The complete plan for businesses that want 100% automated video production.
 ### Tieng Viet
 
 **Toi co the huy goi bat ky luc nao khong?**
-Co. Ban co the huy goi bat ky luc nao tu Dashboard. Goi se con hieu luc den het chu ky thanh toan hien tai.
+Co. Ban co the huy goi bat ky luc nao. Goi se con hieu luc den het chu ky thanh toan hien tai.
 
 **Thanh toan bang gi?**
-Chung toi chap nhan the tin dung (Visa, Mastercard) va chuyen khoan qua Polar.sh.
+Chung toi chap nhan the tin dung (Visa, Mastercard, American Express, JCB, Discover) va Cash App Pay qua Polar.sh.
 
 **Co hoan tien khong?**
 Chung toi khong hoan tien cho thoi gian da su dung. Khi huy, ban van duoc su dung den het thang da thanh toan.
@@ -206,10 +221,10 @@ Chung toi khong hoan tien cho thoi gian da su dung. Khi huy, ban van duoc su dun
 ### English
 
 **Can I cancel my plan anytime?**
-Yes. You can cancel anytime from Dashboard. Your plan remains active until the end of your current billing cycle.
+Yes. You can cancel anytime. Your plan remains active until the end of your current billing cycle.
 
 **What payment methods do you accept?**
-We accept credit cards (Visa, Mastercard) and bank transfers via Polar.sh.
+We accept credit cards (Visa, Mastercard, American Express, JCB, Discover) and Cash App Pay via Polar.sh.
 
 **Do you offer refunds?**
 We don't refund for time already used. When you cancel, you keep access until the end of the paid month.
@@ -221,5 +236,4 @@ We don't refund for time already used. When you cancel, you keep access until th
 | Tieng Viet | English |
 |---|---|
 | Muon tu van goi phu hop? | Need help choosing a plan? |
-| Email: sales@sophia.agency | Email: sales@sophia.agency |
 | Telegram: @Sophia_Bbot (nhap `/help`) | Telegram: @Sophia_Bbot (type `/help`) |

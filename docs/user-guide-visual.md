@@ -3,7 +3,7 @@
 > Tai lieu nay giup ban hieu **tung man hinh** trong Sophia. Khong can biet ky thuat.
 > This guide helps you understand **every screen** in Sophia. No technical knowledge needed.
 
-**Website:** https://sophia.agency | **Telegram Bot:** @Sophia_Bbot
+**Website:** https://sophia.agencyos.network | **Telegram Bot:** @Sophia_Bbot
 
 ---
 
@@ -77,9 +77,9 @@ The introduction page for Sophia, sections stacked top to bottom:
 
 | Goi / Plan | Gia / Price | Danh cho / Best for |
 |---|---|---|
-| **BASIC** | $500/thang / month | Doanh nghiep nho, thu nghiem / Small biz, testing |
-| **PREMIUM** | $1,200/thang / month | Dang phat trien, da kenh / Growing, multi-channel |
-| **ENTERPRISE** | $3,500/thang / month | DN lon, tu dong hoan toan / Large biz, full automation |
+| **BASIC** | $199/thang / month | Doanh nghiep nho, thu nghiem / Small biz, testing |
+| **PREMIUM** | $399/thang / month | Dang phat trien, da kenh / Growing, multi-channel |
+| **ENTERPRISE** | $799/thang / month | DN lon, tu dong hoan toan / Large biz, full automation |
 
 ### Ban can lam gi / What you need to do
 

@@ -10,7 +10,7 @@
 ### Tieng Viet
 
 1. Mo trinh duyet web (Chrome, Safari, Firefox) tren may tinh hoac dien thoai
-2. Nhap dia chi website vao thanh dia chi: `https://sophia.agency`
+2. Nhap dia chi website vao thanh dia chi: `https://sophia.agencyos.network`
 3. Nhan nut **"Dang Nhap"** o goc phai tren cung
 4. Nhap email va mat khau ban da dang ky
 5. Nhan **"Dang Nhap"** de vao Dashboard
@@ -20,7 +20,7 @@
 ### English
 
 1. Open your web browser (Chrome, Safari, Firefox) on computer or phone
-2. Type the website address into the address bar: `https://sophia.agency`
+2. Type the website address into the address bar: `https://sophia.agencyos.network`
 3. Click the **"Sign In"** button at the top right corner
 4. Enter the email and password you registered with
 5. Click **"Sign In"** to enter your Dashboard

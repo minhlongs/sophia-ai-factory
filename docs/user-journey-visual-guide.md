@@ -3,7 +3,7 @@
 > Ban chi can lam theo tung buoc — Sophia se lo phan con lai.
 > Just follow each step — Sophia handles the rest.
 
-**Website:** https://sophia.agency | **Telegram Bot:** @Sophia_Bbot
+**Website:** https://sophia.agencyos.network | **Telegram Bot:** @Sophia_Bbot
 
 ---
 
@@ -30,7 +30,7 @@ Sophia AI Video Factory is software that **automatically creates videos** using 
     v
 +---------------------------+
 |  1. TRANG CHU / LANDING   |  <-- Xem gioi thieu, bang gia
-|     sophia.agency          |      See intro, pricing
+|     sophia.agencyos.network |      See intro, pricing
 +---------------------------+
     |
     v
@@ -79,7 +79,7 @@ Sophia AI Video Factory is software that **automatically creates videos** using 
 
 ### Man Hinh 1: Trang Chu / Landing Page
 
-**URL:** `https://sophia.agency`
+**URL:** `https://sophia.agencyos.network`
 
 ![Landing Page](screenshots/03-landing-page-hero.png)
 
@@ -101,7 +101,7 @@ Khi mo website, ban se thay / When you open the website, you will see:
 
 ### Man Hinh 2: Thiet Lap / Setup Wizard
 
-**URL:** `https://sophia.agency/setup-wizard`
+**URL:** `https://sophia.agencyos.network/setup-wizard`
 
 Trinh thiet lap co **4 buoc**. Ban chi can lam **1 lan duy nhat**.
 The Setup Wizard has **4 steps**. You only need to do this **once**.
@@ -155,7 +155,7 @@ Confirms everything is set up. Click **"Go to Dashboard"** to start.
 
 ### Man Hinh 3: Dashboard (Trung Tam Dieu Khien)
 
-**URL:** `https://sophia.agency/dashboard`
+**URL:** `https://sophia.agencyos.network/dashboard`
 
 Day la man hinh chinh. Moi thu bat dau tu day.
 This is your main screen. Everything starts here.
@@ -175,7 +175,7 @@ This is your main screen. Everything starts here.
 
 ### Man Hinh 4: Tao Chien Dich / Create Campaign
 
-**URL:** `https://sophia.agency/dashboard/create`
+**URL:** `https://sophia.agencyos.network/dashboard/create`
 
 ![Campaign Creation](screenshots/06-campaign-creation.png)
 
@@ -191,7 +191,7 @@ This is your main screen. Everything starts here.
 
 ### Man Hinh 5: Danh Sach Chien Dich / Campaigns List
 
-**URL:** `https://sophia.agency/dashboard/campaigns`
+**URL:** `https://sophia.agencyos.network/dashboard/campaigns`
 
 ![Campaigns List](screenshots/07-campaigns-list.png)
 
@@ -205,7 +205,7 @@ Hien tat ca chien dich / Shows all your campaigns:
 
 ### Man Hinh 6: Chi Tiet Chien Dich / Campaign Detail
 
-**URL:** `https://sophia.agency/dashboard/campaigns/[id]`
+**URL:** `https://sophia.agencyos.network/dashboard/campaigns/[id]`
 
 Khi nhan vao chien dich / When you click a campaign:
 - Thong tin chi tiet / Detailed info
@@ -217,7 +217,7 @@ Khi nhan vao chien dich / When you click a campaign:
 
 ### Man Hinh 7: Thong Ke / Analytics
 
-**URL:** `https://sophia.agency/dashboard/analytics`
+**URL:** `https://sophia.agencyos.network/dashboard/analytics`
 
 ![Analytics](screenshots/08-analytics.png)
 
@@ -230,7 +230,7 @@ Bieu do va so lieu hieu suat / Charts and performance metrics:
 
 ### Man Hinh 8: Cai Dat / Settings
 
-**URL:** `https://sophia.agency/dashboard/settings`
+**URL:** `https://sophia.agencyos.network/dashboard/settings`
 
 ![Settings](screenshots/09-settings.png)
 
@@ -243,15 +243,15 @@ Bieu do va so lieu hieu suat / Charts and performance metrics:
 
 ### Man Hinh 9: Bang Gia / Pricing
 
-**URL:** `https://sophia.agency/pricing`
+**URL:** `https://sophia.agencyos.network/pricing`
 
 ![Pricing](screenshots/04-pricing-page.png)
 
 | Goi / Plan | Gia / Price | Phu hop / Best for |
 |---|---|---|
-| **BASIC** | $500/thang/month | Doanh nghiep nho, thu nghiem / Small biz, testing |
-| **PREMIUM** | $1,200/thang/month | Dang phat trien, da kenh / Growing, multi-channel |
-| **ENTERPRISE** | $3,500/thang/month | DN lon, tu dong 100% / Large biz, full automation |
+| **BASIC** | $199/thang/month | Doanh nghiep nho, thu nghiem / Small biz, testing |
+| **PREMIUM** | $399/thang/month | Dang phat trien, da kenh / Growing, multi-channel |
+| **ENTERPRISE** | $799/thang/month | DN lon, tu dong 100% / Large biz, full automation |
 
 Nhan **"Chon Goi" / "Choose Plan"** de dang ky hoac nang cap / to sign up or upgrade.
 
@@ -261,7 +261,7 @@ Nhan **"Chon Goi" / "Choose Plan"** de dang ky hoac nang cap / to sign up or upg
 
 ### Man Hinh 10: Admin Panel
 
-**URL:** `https://sophia.agency/admin`
+**URL:** `https://sophia.agencyos.network/admin`
 
 Chi danh cho quan tri vien. Nguoi dung thuong khong can truy cap.
 For administrators only. Regular users do not need this.
@@ -303,13 +303,13 @@ Create and manage videos **from your phone** via Telegram, no computer needed.
 
 | Trang / Page | URL |
 |---|---|
-| Trang chu / Landing | https://sophia.agency |
-| Dashboard | https://sophia.agency/dashboard |
-| Tao video / Create | https://sophia.agency/dashboard/create |
-| Chien dich / Campaigns | https://sophia.agency/dashboard/campaigns |
-| Thong ke / Analytics | https://sophia.agency/dashboard/analytics |
-| Cai dat / Settings | https://sophia.agency/dashboard/settings |
-| Bang gia / Pricing | https://sophia.agency/pricing |
+| Trang chu / Landing | https://sophia.agencyos.network |
+| Dashboard | https://sophia.agencyos.network/dashboard |
+| Tao video / Create | https://sophia.agencyos.network/dashboard/create |
+| Chien dich / Campaigns | https://sophia.agencyos.network/dashboard/campaigns |
+| Thong ke / Analytics | https://sophia.agencyos.network/dashboard/analytics |
+| Cai dat / Settings | https://sophia.agencyos.network/dashboard/settings |
+| Bang gia / Pricing | https://sophia.agencyos.network/pricing |
 | Telegram Bot | @Sophia_Bbot |
 
 ### Quy trinh nhanh / Quick Flow

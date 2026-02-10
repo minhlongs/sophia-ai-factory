@@ -276,7 +276,7 @@ src/lib/
 
 | Feature | BASIC | PREMIUM | ENTERPRISE |
 |---------|-------|---------|------------|
-| Price/month | $500 | $1,200 | $3,500 |
+| Price/month | $199 | $399 | $799 |
 | YouTube Channels | 1 | 3 | Unlimited |
 | Videos/month | 20 | 100 | Unlimited |
 | Templates | 5 | Unlimited | Unlimited + Custom |
