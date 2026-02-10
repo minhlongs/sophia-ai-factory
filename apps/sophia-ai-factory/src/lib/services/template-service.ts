@@ -3,15 +3,21 @@ import { Database } from "@/lib/supabase/types";
 import { CampaignTemplate, CAMPAIGN_TEMPLATES, CampaignCategory } from "@/lib/templates/campaign-templates";
 
 // Initialize client for server-side usage
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+function getSupabaseClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error("Missing required environment variables: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY");
+  }
+  return createClient<Database>(supabaseUrl, supabaseKey);
+}
 
 export const templateService = {
   /**
    * Get all available templates (predefined + user custom)
    */
   async getTemplates(userId?: string): Promise<CampaignTemplate[]> {
-    const supabase = createClient<Database>(supabaseUrl, supabaseKey);
+    const supabase = getSupabaseClient();
 
     let data: Database['public']['Tables']['campaign_templates']['Row'][] | null = null;
     let error = null;
@@ -62,7 +68,7 @@ export const templateService = {
    * Get a specific template by ID
    */
   async getTemplate(id: string): Promise<CampaignTemplate | null> {
-    const supabase = createClient<Database>(supabaseUrl, supabaseKey);
+    const supabase = getSupabaseClient();
 
     const { data, error } = await supabase
       .from("campaign_templates")

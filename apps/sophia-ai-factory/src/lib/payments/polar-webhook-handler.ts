@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { TIER_DB_MAPPING, DB_TIER_MAPPING } from '@/lib/subscription'
 import { Tier } from '@/types'
 import { PaymentEventRecord, PolarWebhookEvent } from './polar-types'
@@ -13,10 +13,7 @@ import {
 } from '@/lib/services/notification-service'
 
 function getSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
+  return createAdminClient()
 }
 
 /**

@@ -3,7 +3,7 @@ import { CampaignList } from "../components/campaign-list";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Plus } from "lucide-react";
-import { createClient } from "@supabase/supabase-js";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { Campaign } from "@/types";
 import { CampaignExportControl } from "../components/campaign-export-control";
 import { getTranslations } from 'next-intl/server';
@@ -25,10 +25,7 @@ export default async function CampaignsPage() {
     campaigns = data as Campaign[] || [];
   } else if (process.env.NODE_ENV === 'development') {
     // Dev fallback: fetch latest 20 campaigns
-    const supabaseAdmin = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const supabaseAdmin = createAdminClient();
     const { data } = await supabaseAdmin
         .from("campaigns")
         .select("*")

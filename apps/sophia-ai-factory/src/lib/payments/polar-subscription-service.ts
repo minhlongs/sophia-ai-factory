@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { getRedisClient } from '@/lib/clients/upstash-redis-client'
 import { Tier } from '@/types'
 import { DB_TIER_MAPPING, TIER_DB_MAPPING } from '@/lib/subscription'
@@ -12,10 +12,7 @@ const CACHE_TTL = 3600 // 1 hour
  */
 
 function getSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
+  return createAdminClient()
 }
 
 /**

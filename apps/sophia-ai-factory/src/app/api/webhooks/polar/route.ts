@@ -5,7 +5,7 @@ import { webhookHeaderSchema } from '@/lib/schemas'
 import { processWebhookEvent } from '@/lib/payments/polar-webhook-handler'
 import { PolarWebhookEvent } from '@/lib/payments/polar-types'
 
-const POLAR_WEBHOOK_SECRET = process.env.POLAR_WEBHOOK_SECRET!
+const POLAR_WEBHOOK_SECRET = process.env.POLAR_WEBHOOK_SECRET
 
 export async function POST(request: Request) {
   if (!POLAR_WEBHOOK_SECRET) {

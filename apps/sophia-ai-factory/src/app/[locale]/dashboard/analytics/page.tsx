@@ -1,6 +1,6 @@
 import React from "react";
 import { createServerClient } from "@/lib/supabase/server";
-import { createClient } from "@supabase/supabase-js";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { Campaign, Tier } from "@/types";
 import { AnalyticsView } from "./components/analytics-view";
 import { getTranslations } from 'next-intl/server';
@@ -37,10 +37,7 @@ export default async function AnalyticsPage() {
     }
   } else if (process.env.NODE_ENV === "development") {
     // Fallback for dev without auth
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const supabaseAdmin = createAdminClient();
     const { data, error } = await supabaseAdmin
       .from("campaigns")
       .select("*")

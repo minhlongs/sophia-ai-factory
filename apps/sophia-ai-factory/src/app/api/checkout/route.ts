@@ -71,7 +71,6 @@ export async function POST(request: Request) {
     const productId = getProductIdByTier(tier);
 
     if (!productId) {
-      const tokenPrefix = (process.env.POLAR_ACCESS_TOKEN || '').substring(0, 15);
       if (tier === 'MASTER') {
         return NextResponse.json(
           { error: 'Master tier is coming soon. Please contact support@sophia.agencyos.network for early access.' },

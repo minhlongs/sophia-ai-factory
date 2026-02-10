@@ -6,7 +6,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { CampaignList } from "./components/campaign-list";
 import { DashboardStats } from "./components/dashboard-stats";
 import { OnboardingWelcomeBanner } from "./components/onboarding-welcome-banner";
-import { createClient } from "@supabase/supabase-js";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { Campaign } from "@/types";
 import { getTranslations } from 'next-intl/server';
 
@@ -25,10 +25,7 @@ export default async function DashboardPage() {
     campaigns = data as Campaign[] || [];
   } else if (process.env.NODE_ENV === 'development') {
      // Fallback for dev
-    const supabaseAdmin = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const supabaseAdmin = createAdminClient();
     const { data } = await supabaseAdmin
         .from("campaigns")
         .select("*")

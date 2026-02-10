@@ -7,7 +7,7 @@ import { ArrowLeft, Calendar, Users, FileText, CheckCircle2, Clock, AlertCircle,
 import Link from "next/link";
 import { Campaign } from "@/types";
 import { ScriptOutput } from "@/lib/services/types";
-import { createClient } from "@supabase/supabase-js";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getTranslations, getFormatter } from 'next-intl/server';
 
 interface PageProps {
@@ -33,10 +33,7 @@ export default async function CampaignDetailPage({ params }: PageProps) {
     campaign = data ? (data as unknown as Campaign) : null;
   } else if (process.env.NODE_ENV === 'development') {
     // Dev fallback
-    const supabaseAdmin = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const supabaseAdmin = createAdminClient();
     const { data } = await supabaseAdmin
         .from("campaigns")
         .select("*")
