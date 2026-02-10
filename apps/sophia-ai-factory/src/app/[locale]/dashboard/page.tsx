@@ -1,14 +1,28 @@
 import React from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { createServerClient } from "@/lib/supabase/server";
-import { CampaignList } from "./components/campaign-list";
 import { DashboardStats } from "./components/dashboard-stats";
 import { OnboardingWelcomeBanner } from "./components/onboarding-welcome-banner";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Campaign } from "@/types";
 import { getTranslations } from 'next-intl/server';
+
+const CampaignList = dynamic(
+  () => import("./components/campaign-list").then(m => ({ default: m.CampaignList })),
+  {
+    loading: () => (
+      <div className="space-y-4">
+        {[1, 2, 3].map(i => (
+          <Skeleton key={i} className="h-24 w-full rounded-xl" />
+        ))}
+      </div>
+    ),
+  }
+);
 
 export default async function DashboardPage() {
   const t = await getTranslations('dashboard');

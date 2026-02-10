@@ -1,9 +1,29 @@
 import React from "react";
+import dynamic from "next/dynamic";
 import { createServerClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Campaign, Tier } from "@/types";
-import { AnalyticsView } from "./components/analytics-view";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getTranslations } from 'next-intl/server';
+
+const AnalyticsView = dynamic(
+  () => import("./components/analytics-view").then(m => ({ default: m.AnalyticsView })),
+  {
+    loading: () => (
+      <div className="space-y-6">
+        <div className="grid gap-4 md:grid-cols-3">
+          {[1, 2, 3].map(i => (
+            <Skeleton key={i} className="h-28 rounded-xl" />
+          ))}
+        </div>
+        <div className="grid gap-6 md:grid-cols-2">
+          <Skeleton className="h-[380px] rounded-xl" />
+          <Skeleton className="h-[380px] rounded-xl" />
+        </div>
+      </div>
+    ),
+  }
+);
 
 export const metadata = {
   title: "Analytics | Sophia AI",
