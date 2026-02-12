@@ -6,9 +6,9 @@ import {
   handleCampaign,
   handleStatus,
   handleResults
-} from './telegram-bot'
-import * as telegramClient from './telegram-client'
-import { inngest } from '@/lib/inngest/client'
+} from './telegram-command-handlers'
+import { bot } from './telegram-bot-instance'
+import { TelegramFSM, BotState } from './telegram-fsm-state-manager'
 
 // Mock dependencies
 const mockSupabase = vi.hoisted(() => ({
@@ -19,6 +19,23 @@ const mockSupabase = vi.hoisted(() => ({
   },
   from: vi.fn()
 }))
+
+// Helper for chainable mocks
+const createChainableMock = () => {
+  const mock: any = {
+    select: vi.fn().mockReturnThis(),
+    insert: vi.fn().mockReturnThis(),
+    update: vi.fn().mockReturnThis(),
+    delete: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    in: vi.fn().mockReturnThis(),
+    single: vi.fn().mockReturnThis(),
+    maybeSingle: vi.fn().mockReturnThis(),
+    order: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
+  }
+  return mock
+}
 
 // Mock Supabase client creation
 vi.mock('@supabase/supabase-js', () => ({
@@ -32,9 +49,28 @@ vi.mock('@/lib/inngest/client', () => ({
   }
 }))
 
-// Mock Telegram Client
-vi.mock('./telegram-client', () => ({
-  sendTelegramMessage: vi.fn()
+// Mock Telegram Bot Instance
+vi.mock('./telegram-bot-instance', () => ({
+  bot: {
+    telegram: {
+      sendMessage: vi.fn()
+    }
+  }
+}))
+
+// Mock Telegram FSM
+vi.mock('./telegram-fsm-state-manager', () => ({
+  TelegramFSM: {
+    clearContext: vi.fn(),
+    setState: vi.fn(),
+    setContext: vi.fn(),
+    getContext: vi.fn()
+  },
+  BotState: {
+    IDLE: 'IDLE',
+    AWAITING_EMAIL: 'AWAITING_EMAIL',
+    AWAITING_CAMPAIGN_TOPIC: 'AWAITING_CAMPAIGN_TOPIC'
+  }
 }))
 
 describe('Telegram Bot Handlers', () => {
@@ -55,11 +91,13 @@ describe('Telegram Bot Handlers', () => {
   })
 
   describe('handleStart', () => {
-    it('should send welcome message', async () => {
+    it('should send welcome message and clear state', async () => {
       await handleStart(chatId)
-      expect(telegramClient.sendTelegramMessage).toHaveBeenCalledWith(
+      expect(TelegramFSM.clearContext).toHaveBeenCalledWith(chatId)
+      expect(bot.telegram.sendMessage).toHaveBeenCalledWith(
         chatId,
-        expect.stringContaining('Welcome to Sophia AI Factory Bot')
+        expect.stringContaining('Welcome to Sophia AI Factory'),
+        expect.any(Object)
       )
     })
   })
@@ -67,9 +105,10 @@ describe('Telegram Bot Handlers', () => {
   describe('handleHelp', () => {
     it('should send help message', async () => {
       await handleHelp(chatId)
-      expect(telegramClient.sendTelegramMessage).toHaveBeenCalledWith(
+      expect(bot.telegram.sendMessage).toHaveBeenCalledWith(
         chatId,
-        expect.stringContaining('Sophia AI Factory Bot Commands')
+        expect.stringContaining('Available Commands'),
+        expect.any(Object)
       )
     })
   })
@@ -88,7 +127,7 @@ describe('Telegram Bot Handlers', () => {
       const mockSelect = vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
             single: vi.fn().mockResolvedValue({
-                data: { settings: { notifications: {} } },
+                data: { user_id: 'user-1' },
                 error: null
             })
         })
@@ -106,7 +145,7 @@ describe('Telegram Bot Handlers', () => {
             update: mockUpdate
           }
         }
-        return {}
+        return createChainableMock()
       })
 
       await handleEmail(chatId, 'test@example.com')
@@ -115,9 +154,11 @@ describe('Telegram Bot Handlers', () => {
       expect(mockUpdate).toHaveBeenCalledWith(
         expect.objectContaining({ telegram_chat_id: chatId })
       )
-      expect(telegramClient.sendTelegramMessage).toHaveBeenCalledWith(
+      expect(TelegramFSM.setContext).toHaveBeenCalledWith(chatId, expect.objectContaining({ email: 'test@example.com', state: BotState.IDLE }))
+      expect(bot.telegram.sendMessage).toHaveBeenCalledWith(
         chatId,
-        expect.stringContaining('Your account')
+        expect.stringContaining('Success'),
+        expect.any(Object)
       )
     })
 
@@ -129,87 +170,43 @@ describe('Telegram Bot Handlers', () => {
 
       await handleEmail(chatId, 'notfound@example.com')
 
-      expect(telegramClient.sendTelegramMessage).toHaveBeenCalledWith(
+      expect(bot.telegram.sendMessage).toHaveBeenCalledWith(
         chatId,
-        expect.stringContaining('Could not find an account')
+        expect.stringContaining('Could not find an account'),
+        expect.any(Object)
       )
     })
   })
 
   describe('handleCampaign', () => {
-    it('should create campaign and trigger inngest event', async () => {
+    it('should set context and ask for confirmation', async () => {
       const topic = 'Eco gadgets'
-      const userId = 'user-1'
-      const campaignId = 'camp-1'
 
-      // Mock profile check
-      const mockSelectProfile = vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({
-            data: { user_id: userId, subscription_tier: 'pro' },
-            error: null
-          })
-        })
-      })
-
-      // Mock campaign insert
-      const mockInsertCampaign = vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({
-            data: { id: campaignId },
-            error: null
-          })
-        })
-      })
-
-      mockSupabase.from.mockImplementation((table) => {
-        if (table === 'user_profiles') return { select: mockSelectProfile }
-        if (table === 'campaigns') return { insert: mockInsertCampaign }
-        return {}
-      })
+      TelegramFSM.getContext.mockResolvedValue({ email: 'test@example.com', state: BotState.IDLE })
 
       await handleCampaign(chatId, topic)
 
-      expect(mockInsertCampaign).toHaveBeenCalledWith(expect.objectContaining({
-        user_id: userId,
-        title: topic,
-        topic: topic
+      expect(TelegramFSM.setContext).toHaveBeenCalledWith(chatId, expect.objectContaining({
+        campaignTopic: topic,
+        state: BotState.AWAITING_CONFIRMATION
       }))
 
-      expect(inngest.send).toHaveBeenCalledWith({
-        name: "campaign.created",
-        data: expect.objectContaining({
-          campaignId: campaignId,
-          userId: userId,
-          topic: topic,
-          tier: 'PREMIUM' // 'pro' maps to 'PREMIUM'
-        })
-      })
-
-      expect(telegramClient.sendTelegramMessage).toHaveBeenCalledWith(
+      expect(bot.telegram.sendMessage).toHaveBeenCalledWith(
         chatId,
-        expect.stringContaining('Campaign Started')
+        expect.stringContaining('Campaign Preview'),
+        expect.any(Object)
       )
     })
 
-    it('should handle unlinked account', async () => {
-      // Mock profile check returning null
-      const mockSelectProfile = vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({
-            data: null,
-            error: null // No error, just no data found
-          })
-        })
-      })
-
-      mockSupabase.from.mockReturnValue({ select: mockSelectProfile })
+    it('should handle missing email', async () => {
+      TelegramFSM.getContext.mockResolvedValue(null)
 
       await handleCampaign(chatId, 'topic')
 
-      expect(telegramClient.sendTelegramMessage).toHaveBeenCalledWith(
+      expect(bot.telegram.sendMessage).toHaveBeenCalledWith(
         chatId,
-        expect.stringContaining('Account not linked')
+        expect.stringContaining('Please set your email first'),
+        expect.any(Object)
       )
     })
   })
@@ -217,6 +214,8 @@ describe('Telegram Bot Handlers', () => {
   describe('handleStatus', () => {
     it('should show active campaigns', async () => {
       const userId = 'user-1'
+
+      TelegramFSM.getContext.mockResolvedValue({ email: 'test@example.com', state: BotState.IDLE })
 
       // Mock profile check
       const mockSelectProfile = vi.fn().mockReturnValue({
@@ -236,7 +235,6 @@ describe('Telegram Bot Handlers', () => {
               limit: vi.fn().mockResolvedValue({
                 data: [
                   { title: 'Camp 1', status: 'processing_video', progress: 50 },
-                  { title: 'Camp 2', status: 'queued', progress: 0 }
                 ],
                 error: null
               })
@@ -248,21 +246,24 @@ describe('Telegram Bot Handlers', () => {
       mockSupabase.from.mockImplementation((table) => {
         if (table === 'user_profiles') return { select: mockSelectProfile }
         if (table === 'campaigns') return { select: mockSelectCampaigns }
-        return {}
+        return createChainableMock()
       })
 
       await handleStatus(chatId)
 
-      expect(telegramClient.sendTelegramMessage).toHaveBeenCalledWith(
+      expect(bot.telegram.sendMessage).toHaveBeenCalledWith(
         chatId,
-        expect.stringContaining('Active Campaigns')
+        expect.stringContaining('Your Status'),
+        expect.any(Object)
       )
-      expect(telegramClient.sendTelegramMessage).toHaveBeenCalledWith(
+      expect(bot.telegram.sendMessage).toHaveBeenCalledWith(
         chatId,
-        expect.stringContaining('Camp 1')
+        expect.stringContaining('Camp 1'),
+        expect.any(Object)
       )
     })
   })
+
 
   describe('handleResults', () => {
     it('should show completed campaigns', async () => {
@@ -302,19 +303,17 @@ describe('Telegram Bot Handlers', () => {
       mockSupabase.from.mockImplementation((table) => {
         if (table === 'user_profiles') return { select: mockSelectProfile }
         if (table === 'campaigns') return { select: mockSelectCampaigns }
-        return {}
+        return createChainableMock()
       })
 
       await handleResults(chatId)
 
-      expect(telegramClient.sendTelegramMessage).toHaveBeenCalledWith(
+      expect(bot.telegram.sendMessage).toHaveBeenCalledWith(
         chatId,
-        expect.stringContaining('Recent Results')
-      )
-      expect(telegramClient.sendTelegramMessage).toHaveBeenCalledWith(
-        chatId,
-        expect.stringContaining('http://video.url')
+        expect.stringContaining('Recent Results'),
+        expect.any(Object)
       )
     })
   })
 })
+

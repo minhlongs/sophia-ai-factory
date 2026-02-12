@@ -80,8 +80,21 @@ const log = (
     };
   }
 
-  // No-op: console statements removed for production cleanliness
-  void formatLogEntry(entry);
+  const formatted = formatLogEntry(entry);
+
+  switch (level) {
+    case 'error':
+      console.error(formatted);
+      break;
+    case 'warn':
+      console.warn(formatted);
+      break;
+    case 'debug':
+      if (isDevelopment) console.debug(formatted);
+      break;
+    default:
+      console.log(formatted);
+  }
 };
 
 export const logger = {
