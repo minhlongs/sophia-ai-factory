@@ -88,11 +88,9 @@ export async function handleEmail(chatId: string, email: string) {
         .eq('user_id', user.id)
         .single()
 
-    // Explicitly cast or check profile
     const existingProfile = profile as { user_id: string; settings: Json } | null;
 
     if (!existingProfile) {
-        // Create profile if it doesn't exist
         const newProfile: Database['public']['Tables']['user_profiles']['Insert'] = {
             user_id: user.id,
             telegram_chat_id: chatId,
@@ -102,7 +100,6 @@ export async function handleEmail(chatId: string, email: string) {
         // @ts-expect-error - Known Supabase typing limitation with Json column types
         await getSupabase().from('user_profiles').insert(newProfile)
     } else {
-        // Update existing profile
         const currentSettings = (existingProfile.settings as Record<string, unknown>) || {}
         const currentNotifications = (currentSettings['notifications'] as Record<string, unknown>) || {}
         const currentTelegram = (currentNotifications['telegram'] as Record<string, unknown>) || {}
@@ -129,7 +126,7 @@ export async function handleEmail(chatId: string, email: string) {
 
     await sendTelegramMessage(chatId, `✅ *Success!* Your account (${email}) has been linked.\n\nYou can now create campaigns using:\n\`/campaign Your Topic\``)
 
-  } catch (error) {
+  } catch {
     await sendTelegramMessage(chatId, '❌ An unexpected error occurred.')
   }
 }
@@ -200,7 +197,7 @@ export async function handleCampaign(chatId: string, topic: string) {
 
     await sendTelegramMessage(chatId, `🚀 *Campaign Started!*\n\nTopic: ${topic}\nID: \`${campaign.id.slice(0, 8)}\`\n\nI will notify you when it's ready. Check progress with /status.`)
 
-  } catch (error) {
+  } catch {
     await sendTelegramMessage(chatId, '❌ An unexpected error occurred.')
   }
 }
@@ -246,7 +243,7 @@ export async function handleStatus(chatId: string) {
 
     await sendTelegramMessage(chatId, message)
 
-  } catch (error) {
+  } catch {
     await sendTelegramMessage(chatId, '❌ Error fetching status.')
   }
 }
@@ -295,7 +292,7 @@ export async function handleResults(chatId: string) {
 
     await sendTelegramMessage(chatId, message)
 
-  } catch (error) {
+  } catch {
     await sendTelegramMessage(chatId, '❌ Error fetching results.')
   }
 }

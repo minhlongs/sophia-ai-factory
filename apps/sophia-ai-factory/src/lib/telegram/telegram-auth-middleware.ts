@@ -61,7 +61,7 @@ export async function checkSubscriptionAuth(
       tier,
       error: hasAccess ? undefined : `Requires ${requiredTier} subscription`,
     }
-  } catch (error) {
+  } catch {
     // Fail open for BASIC, fail closed for premium
     return {
       authorized: requiredTier === 'BASIC',

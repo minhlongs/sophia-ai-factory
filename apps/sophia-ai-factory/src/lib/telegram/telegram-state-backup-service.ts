@@ -38,7 +38,7 @@ export async function backupSessionState(
 
     if (error) {
     }
-  } catch (error) {
+  } catch {
     // Non-critical - log but don't throw
   }
 }
@@ -70,7 +70,7 @@ export async function restoreSessionState(
     }
 
     return data.context_data as UserContext
-  } catch (error) {
+  } catch {
     return null
   }
 }
