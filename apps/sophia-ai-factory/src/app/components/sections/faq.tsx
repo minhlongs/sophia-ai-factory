@@ -37,6 +37,7 @@ export function FAQ() {
               >
                 <Card glass className="overflow-hidden bg-card border-border">
                   <button
+                    id={`faq-question-${index}`}
                     onClick={() => setOpenIndex(isOpen ? null : index)}
                     className="w-full text-left p-6 flex items-center justify-between hover:bg-muted/50 transition-colors"
                     aria-expanded={isOpen}

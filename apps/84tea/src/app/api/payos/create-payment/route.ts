@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 
-// PayOS credentials - should be in .env
-const PAYOS_CLIENT_ID = process.env.PAYOS_CLIENT_ID || "";
-const PAYOS_API_KEY = process.env.PAYOS_API_KEY || "";
-const PAYOS_CHECKSUM_KEY = process.env.PAYOS_CHECKSUM_KEY || "";
+// PayOS credentials - MUST be configured
+const PAYOS_CLIENT_ID = process.env.PAYOS_CLIENT_ID;
+const PAYOS_API_KEY = process.env.PAYOS_API_KEY;
+const PAYOS_CHECKSUM_KEY = process.env.PAYOS_CHECKSUM_KEY;
 
 interface PaymentItem {
   name: string;
@@ -33,6 +33,9 @@ function generateOrderCode(): number {
 }
 
 function createSignature(data: string): string {
+  if (!PAYOS_CHECKSUM_KEY) {
+    throw new Error("PAYOS_CHECKSUM_KEY is not configured");
+  }
   return crypto
     .createHmac("sha256", PAYOS_CHECKSUM_KEY)
     .update(data)
@@ -41,6 +44,27 @@ function createSignature(data: string): string {
 
 export async function POST(request: NextRequest) {
   try {
+    // Security check: Validate environment configuration
+    if (!PAYOS_CLIENT_ID || !PAYOS_API_KEY || !PAYOS_CHECKSUM_KEY) {
+      console.error("PayOS configuration missing");
+
+      // ONLY allow mock response in development mode
+      if (process.env.NODE_ENV === "development") {
+        const orderCode = generateOrderCode();
+        return NextResponse.json({
+          success: true,
+          orderCode,
+          checkoutUrl: `/checkout/success?orderCode=${orderCode}&demo=true`,
+          message: "DEV MODE: PayOS credentials missing, mocking success",
+        });
+      }
+
+      return NextResponse.json(
+        { error: "Payment service configuration error" },
+        { status: 500 }
+      );
+    }
+
     const body: CreatePaymentRequest = await request.json();
     const { amount, items, customerInfo } = body;
 
@@ -105,17 +129,7 @@ export async function POST(request: NextRequest) {
       });
     } else {
       // PayOS error
-      console.error("PayOS error:", payosData);
-      
-      // For demo/development - return mock response
-      if (!PAYOS_CLIENT_ID) {
-        return NextResponse.json({
-          success: true,
-          orderCode,
-          checkoutUrl: `/checkout/success?orderCode=${orderCode}&demo=true`,
-          message: "Demo mode - PayOS credentials not configured",
-        });
-      }
+      console.error("PayOS error code:", payosData.code, "desc:", payosData.desc);
 
       return NextResponse.json(
         { error: payosData.desc || "Payment creation failed" },

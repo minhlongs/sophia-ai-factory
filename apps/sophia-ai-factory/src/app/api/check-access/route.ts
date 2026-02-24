@@ -22,17 +22,20 @@ export async function GET(request: NextRequest) {
       if (user) {
         userId = user.id;
         userTier = await getUserTier(user.id);
-      } else {
-        // Fallback to query params for development/testing only
+      } else if (process.env.NODE_ENV === "development") {
+        // Fallback to query params ONLY in development
         const tierParam = searchParams.get("tier") as Tier | null;
         userTier = tierParam || "BASIC";
         userId = searchParams.get("userId") || "mock-user-id";
       }
+      // In production, unauthenticated users get BASIC tier (default)
     } catch {
-      // Auth check failed - fall back to query params
-      const tierParam = searchParams.get("tier") as Tier | null;
-      userTier = tierParam || "BASIC";
-      userId = searchParams.get("userId") || "mock-user-id";
+      if (process.env.NODE_ENV === "development") {
+        const tierParam = searchParams.get("tier") as Tier | null;
+        userTier = tierParam || "BASIC";
+        userId = searchParams.get("userId") || "mock-user-id";
+      }
+      // In production, auth failure defaults to BASIC tier
     }
 
     if (limitType) {
@@ -65,7 +68,7 @@ export async function GET(request: NextRequest) {
       { error: "Missing feature or limit parameter" },
       { status: 400 }
     );
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useState, type ReactNode } from "react";
+import React, { useRef, useEffect, useState, type ReactNode } from "react";
 
 interface FadeInViewProps {
   children: ReactNode;
@@ -34,9 +34,9 @@ export function FadeInView({
   duration = 500,
   once = true,
   rootMargin = "0px",
-  as: Tag = "div",
+  as: tag = "div",
 }: FadeInViewProps) {
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLElement>(null);
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -59,7 +59,7 @@ export function FadeInView({
     return () => observer.disconnect();
   }, [once, rootMargin]);
 
-  const translateMap = {
+  const directions = {
     up: `translateY(${distance}px)`,
     down: `translateY(-${distance}px)`,
     left: `translateX(${distance}px)`,
@@ -67,16 +67,19 @@ export function FadeInView({
     none: "none",
   };
 
-  const style: React.CSSProperties = {
-    opacity: isVisible ? 1 : 0,
-    transform: isVisible ? "none" : translateMap[direction],
-    transition: `opacity ${duration}ms ease-out ${delay}ms, transform ${duration}ms ease-out ${delay}ms`,
-    willChange: "opacity, transform",
-  };
+  const Tag = tag as React.ElementType;
 
   return (
-    // @ts-expect-error -- dynamic tag
-    <Tag ref={ref} className={className} style={style}>
+    <Tag
+      ref={ref}
+      className={className}
+      style={{
+        opacity: isVisible ? 1 : 0,
+        transform: isVisible ? "none" : directions[direction],
+        transition: `opacity ${duration}ms ease-out ${delay}ms, transform ${duration}ms ease-out ${delay}ms`,
+        willChange: "opacity, transform",
+      }}
+    >
       {children}
     </Tag>
   );

@@ -91,7 +91,7 @@ export function CreateProjectFormWithTemplates({ templates }: CreateProjectFormP
           setUpgradeRequired({ required: true, tier: ('requiredTier' in result ? result.requiredTier : "BASIC") as Tier });
         }
       }
-    } catch (err) {
+    } catch {
       setError(t('create_failed'));
     } finally {
       setLoading(false);

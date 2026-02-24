@@ -1,18 +1,22 @@
 "use server";
 
-import { airtable } from "@/lib/airtable";
+import { createClient } from "@/lib/supabase/server";
 import { Tier } from "@/types";
 import { revalidatePath } from "next/cache";
-
-// Mock User ID for now (until Auth is implemented)
-const MOCK_USER_ID = "user_demo_123";
-const MOCK_USER_TIER: Tier = "PREMIUM";
+import { logger } from "@/lib/utils/logger-utility";
 
 /**
  * Trigger Script Generation Workflow
  * Calls the n8n webhook
  */
 export async function generateScript(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return { success: false, message: "Unauthorized: Please log in" };
+  }
+
   const topic = formData.get("topic") as string;
   const audience = formData.get("audience") as string;
 
@@ -20,16 +24,29 @@ export async function generateScript(formData: FormData) {
     return { success: false, message: "Topic and audience are required" };
   }
 
-  // 1. Create initial record in Airtable (Draft status)
-  // This acts as an optimistic update and ensures we have an ID
+  const rawTier = user.user_metadata?.tier;
+  const userTier: Tier = (typeof rawTier === "string" && ["BASIC", "PREMIUM", "ENTERPRISE", "MASTER"].includes(rawTier))
+    ? (rawTier as Tier)
+    : "BASIC";
+
+  // 1. Create initial record in Supabase (Draft status)
   try {
-    const record = await airtable.scripts.create({
-      topic,
-      content: "Generating...",
-      status: "draft",
-      tier: MOCK_USER_TIER,
-      userId: MOCK_USER_ID,
-    });
+    const { data: campaign, error: dbError } = await supabase
+      .from("campaigns")
+      .insert({
+        topic,
+        audience,
+        title: topic, // Default title to topic
+        status: "draft",
+        user_id: user.id
+      })
+      .select()
+      .single();
+
+    if (dbError || !campaign) {
+      logger.error("Failed to create campaign record", dbError);
+      return { success: false, message: "Failed to initialize campaign" };
+    }
 
     // 2. Call n8n Webhook
     const webhookUrl = process.env.N8N_WEBHOOK_GENERATE_SCRIPT;
@@ -41,21 +58,19 @@ export async function generateScript(formData: FormData) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          scriptId: record.id,
+          scriptId: campaign.id,
           topic,
           audience,
-          userId: MOCK_USER_ID,
-          tier: MOCK_USER_TIER
+          userId: user.id,
+          tier: userTier
         }),
       });
-    } else {
-      // For demo purposes, we might want to simulate generation if no webhook
-      // But adhering to "Real Code" rule, we just log warning.
     }
 
     revalidatePath("/dashboard");
-    return { success: true, message: "Script generation started", scriptId: record.id };
-  } catch (error) {
+    return { success: true, message: "Script generation started", scriptId: campaign.id };
+  } catch (err) {
+    logger.error("Exception in generateScript", err instanceof Error ? err : undefined);
     return { success: false, message: "Failed to start generation" };
   }
 }
@@ -64,11 +79,27 @@ export async function generateScript(formData: FormData) {
  * Trigger Video Rendering Workflow
  */
 export async function renderVideo(scriptId: string) {
+  const supabase = await createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return { success: false, message: "Unauthorized" };
+  }
+
   if (!scriptId) return { success: false, message: "Script ID required" };
 
   try {
     // 1. Update status to video_queued
-    await airtable.scripts.updateStatus(scriptId, "video_queued");
+    const { error: dbError } = await supabase
+      .from("campaigns")
+      .update({ status: "processing_video" })
+      .eq("id", scriptId)
+      .eq("user_id", user.id);
+
+    if (dbError) {
+      logger.error("Failed to update campaign status for rendering", dbError);
+      return { success: false, message: "Failed to update status" };
+    }
 
     // 2. Call n8n Webhook for Video
     const webhookUrl = process.env.N8N_WEBHOOK_RENDER_VIDEO;
@@ -80,16 +111,17 @@ export async function renderVideo(scriptId: string) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           scriptId,
-          userId: MOCK_USER_ID,
+          userId: user.id,
         }),
-      }).catch(() => {});
-      // We catch fetch error here to not block UI if fire-and-forget fails immediately
-    } else {
+      }).catch((err) => {
+        logger.error("Video render webhook failed", err instanceof Error ? err : undefined, { scriptId, webhookUrl });
+      });
     }
 
     revalidatePath("/dashboard");
     return { success: true, message: "Video rendering started" };
-  } catch (error) {
+  } catch (err) {
+    logger.error("Exception in renderVideo", err instanceof Error ? err : undefined);
     return { success: false, message: "Failed to start rendering" };
   }
 }
@@ -98,10 +130,25 @@ export async function renderVideo(scriptId: string) {
  * Fetch user's projects (scripts/videos)
  */
 export async function getUserProjects() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) return [];
+
   try {
-    const scripts = await airtable.scripts.list(MOCK_USER_ID);
-    return scripts;
-  } catch (error) {
+    const { data: campaigns, error } = await supabase
+      .from("campaigns")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      logger.error("Failed to fetch user projects", error);
+      return [];
+    }
+
+    return campaigns || [];
+  } catch {
     return [];
   }
 }

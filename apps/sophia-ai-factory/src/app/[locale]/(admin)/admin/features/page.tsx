@@ -78,6 +78,9 @@ export default function FeatureFlagsPage() {
 
                   {/* Toggle Switch */}
                   <button
+                    role="switch"
+                    aria-checked={isEnabled}
+                    aria-label={`Toggle ${config.name}`}
                     onClick={() => toggleFlag(flag)}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                       isEnabled

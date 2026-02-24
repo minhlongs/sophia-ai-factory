@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { SmartResumeEngine } from './smart-resume-engine'
-import type { Checkpoint } from './smart-resume-engine'
+import type { Checkpoint } from './gateway-types'
 
 describe('SmartResumeEngine', () => {
   let engine: SmartResumeEngine

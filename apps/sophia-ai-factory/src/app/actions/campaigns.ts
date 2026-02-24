@@ -52,11 +52,8 @@ export async function createCampaign(formData: FormData) {
 
   let userId = session?.user?.id;
 
-  // Fallback for development if no session (and using mock auth logic elsewhere)
+  // Fallback for development: use first admin user if no session
   if (!userId) {
-    // Check if we have a mock user override or just fail
-    // For this MVP phase, if we are strictly testing the flow, we might need a real user.
-    // Let's try to get the first user from admin if dev
     if (process.env.NODE_ENV === 'development') {
         const { data: users } = await getSupabaseAdmin().auth.admin.listUsers();
         if (users?.users?.length > 0) {
@@ -132,7 +129,7 @@ export async function createCampaign(formData: FormData) {
     revalidatePath("/dashboard/campaigns");
     return { success: true, message: "Campaign created", campaignId: campaign.id };
 
-  } catch (err) {
+  } catch {
     return { success: false, message: "Internal server error" };
   }
 }

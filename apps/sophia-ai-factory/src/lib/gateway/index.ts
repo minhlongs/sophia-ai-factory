@@ -8,6 +8,7 @@ export type {
   CampaignOutput,
   ChannelAdapter,
   ChannelStatus,
+  Checkpoint,
   DistributionResult,
   GatewayChannel,
   HealthReport,
@@ -15,7 +16,7 @@ export type {
   RetryPolicy,
 } from "./gateway-types";
 export { SmartResumeEngine } from "./smart-resume-engine";
-export type { Checkpoint, PipelineStep } from "./smart-resume-engine";
+export type { PipelineStep } from "./smart-resume-engine";
 export { YouTubeChannelAdapter } from "./adapters/youtube-channel-adapter";
 export { TikTokChannelAdapter } from "./adapters/tiktok-channel-adapter";
 export { TelegramNotificationAdapter } from "./adapters/telegram-notification-adapter";

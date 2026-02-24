@@ -1,7 +1,7 @@
 "use client";
 
 import { Campaign } from "@/types";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import { Database } from "@/lib/supabase/types";
 import Link from "next/link";
@@ -27,9 +27,9 @@ export function CampaignList({ initialCampaigns }: CampaignListProps) {
   if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error("Missing required environment variables: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY");
   }
-  const supabase = createBrowserClient<Database>(
-    supabaseUrl,
-    supabaseAnonKey
+  const supabase = useMemo(
+    () => createBrowserClient<Database>(supabaseUrl, supabaseAnonKey),
+    [supabaseUrl, supabaseAnonKey]
   );
 
   useEffect(() => {

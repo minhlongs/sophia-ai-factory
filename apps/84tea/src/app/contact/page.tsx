@@ -22,7 +22,6 @@ export default function ContactPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // TODO: Integrate with form backend (e.g., Formspree, custom API)
-    console.log("Form submitted:", formData);
     alert("Cảm ơn bạn đã liên hệ! Chúng tôi sẽ phản hồi trong 24h.");
   };
 

@@ -16,11 +16,9 @@ export default function IntegrationsPage() {
         const response = await fetch('/api/user/integrations')
         if (response.ok) {
           await response.json()
-          // We don't get keys back for security, but we could show "Connected" status
-          // For this MVP we just let them overwrite.
-          // Ideally we would show: ClickBank: Connected ✅
+          // Keys not returned for security; user can overwrite existing values
         }
-      } catch (error) {
+      } catch {
       } finally {
         setLoading(false)
       }
@@ -67,7 +65,9 @@ export default function IntegrationsPage() {
         <p className="text-sm text-muted-foreground mb-4">
           Enter your ClickBank API Key to sync sales data.
         </p>
+        <label htmlFor="clickbank-key" className="sr-only">ClickBank API Key</label>
         <input
+          id="clickbank-key"
           type="text"
           placeholder="API Key"
           value={clickbankKey}
@@ -89,14 +89,18 @@ export default function IntegrationsPage() {
         <p className="text-sm text-muted-foreground mb-4">
           Enter your ShareASale API Token and Secret.
         </p>
+        <label htmlFor="shareasale-token" className="sr-only">ShareASale API Token</label>
         <input
+          id="shareasale-token"
           type="text"
           placeholder="API Token"
           value={shareasaleToken}
           onChange={(e) => setShareasaleToken(e.target.value)}
           className="w-full px-4 py-2 border border-input bg-background rounded mb-4 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:outline-none"
         />
+        <label htmlFor="shareasale-secret" className="sr-only">ShareASale API Secret</label>
         <input
+          id="shareasale-secret"
           type="password"
           placeholder="API Secret"
           value={shareasaleSecret}

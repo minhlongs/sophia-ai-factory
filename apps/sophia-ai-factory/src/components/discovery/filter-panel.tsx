@@ -1,7 +1,7 @@
 'use client'
 
 import { Search, SlidersHorizontal } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { DiscoveryFilters } from './types'
 
 interface FilterPanelProps {
@@ -12,6 +12,22 @@ interface FilterPanelProps {
 
 export function FilterPanel({ filters, onFilterChange, categories = [] }: FilterPanelProps) {
   const [localSearch, setLocalSearch] = useState(filters.q || '')
+  const [localMinSps, setLocalMinSps] = useState(filters.minSps || 0)
+  const debounceRef = useRef<NodeJS.Timeout | null>(null)
+  const filtersRef = useRef(filters)
+  const onFilterChangeRef = useRef(onFilterChange)
+
+  useEffect(() => { filtersRef.current = filters }, [filters])
+  useEffect(() => { onFilterChangeRef.current = onFilterChange }, [onFilterChange])
+
+  useEffect(() => {
+    if (localMinSps === (filtersRef.current.minSps || 0)) return
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      onFilterChangeRef.current({ ...filtersRef.current, minSps: localMinSps })
+    }, 300)
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
+  }, [localMinSps])
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -67,7 +83,7 @@ export function FilterPanel({ filters, onFilterChange, categories = [] }: Filter
         </div>
 
         <div>
-          <label htmlFor="filter-sps" className="text-xs font-medium text-muted-foreground">Min SPS Score: {filters.minSps || 0}</label>
+          <label htmlFor="filter-sps" className="text-xs font-medium text-muted-foreground">Min SPS Score: {localMinSps}</label>
           <input
             id="filter-sps"
             type="range"
@@ -75,11 +91,11 @@ export function FilterPanel({ filters, onFilterChange, categories = [] }: Filter
             max="100"
             step="5"
             className="mt-2 h-2 w-full cursor-pointer appearance-none rounded-full bg-secondary accent-primary"
-            value={filters.minSps || 0}
-            onChange={(e) => onFilterChange({ ...filters, minSps: Number(e.target.value) })}
+            value={localMinSps}
+            onChange={(e) => setLocalMinSps(Number(e.target.value))}
             aria-valuemin={0}
             aria-valuemax={100}
-            aria-valuenow={filters.minSps || 0}
+            aria-valuenow={localMinSps}
           />
         </div>
       </div>

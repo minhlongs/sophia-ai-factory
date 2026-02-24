@@ -1,5 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/admin'
-import { TIER_DB_MAPPING, DB_TIER_MAPPING } from '@/lib/subscription'
+import { TIER_DB_MAPPING } from '@/lib/subscription'
 import { Tier } from '@/types'
 import { PaymentEventRecord, PolarWebhookEvent } from './polar-types'
 import {
@@ -11,6 +11,20 @@ import {
   notifySubscriptionActivated,
   notifySubscriptionCancelled,
 } from '@/lib/services/notification-service'
+import { logger } from '@/lib/utils/logger-utility'
+
+const VALID_TIERS: Tier[] = ['BASIC', 'PREMIUM', 'ENTERPRISE']
+
+function safeString(value: unknown): string | null {
+  return typeof value === 'string' && value.length > 0 ? value : null
+}
+
+function safeTier(value: unknown): Tier | null {
+  if (typeof value === 'string' && VALID_TIERS.includes(value as Tier)) {
+    return value as Tier
+  }
+  return null
+}
 
 function getSupabase() {
   return createAdminClient()
@@ -50,6 +64,10 @@ async function recordPaymentEvent(
   )
 
   if (error) {
+    logger.error('Failed to record payment event', error instanceof Error ? error : undefined, {
+      polarEventId: event.polar_event_id,
+      eventType: event.event_type,
+    })
   }
 }
 
@@ -63,9 +81,9 @@ function extractMetadata(data: Record<string, unknown>): {
 } {
   const metadata = (data.metadata || {}) as Record<string, unknown>
   return {
-    userId: (metadata.userId as string) || null,
-    tier: (metadata.tier as Tier) || null,
-    telegramChatId: (metadata.telegram_chat_id as string) || null,
+    userId: safeString(metadata.userId),
+    tier: safeTier(metadata.tier),
+    telegramChatId: safeString(metadata.telegram_chat_id),
   }
 }
 
@@ -139,20 +157,20 @@ async function handleCheckoutSuccess(
 
   const dbTier = TIER_DB_MAPPING[tier]
   const supabase = getSupabase()
+  const polarSubId = safeString(data.id)
 
   const { error } = await supabase
     .from('user_profiles')
     .update({
       subscription_tier: dbTier,
       subscription_status: 'active',
-      polar_subscription_id: data.id as string,
+      polar_subscription_id: polarSubId,
       updated_at: new Date().toISOString(),
     } as Record<string, unknown>)
     .eq('user_id', userId)
 
   if (error) throw error
 
-  // Notify via Telegram if chatId available
   if (telegramChatId) {
     await notifySubscriptionActivated(telegramChatId, tier)
   }
@@ -167,17 +185,20 @@ async function handleSubscriptionCreated(
   }
 
   const resolvedTier = tier || 'PREMIUM'
-  const periodEnd = (data.current_period_end as string) || null
+  const periodEnd = safeString(data.current_period_end)
+  const polarSubId = safeString(data.id)
+
+  if (!polarSubId) return
 
   await activateSubscription(
     userId,
-    data.id as string,
-    resolvedTier as Tier,
+    polarSubId,
+    resolvedTier,
     periodEnd
   )
 
   if (telegramChatId) {
-    await notifySubscriptionActivated(telegramChatId, resolvedTier as Tier)
+    await notifySubscriptionActivated(telegramChatId, resolvedTier)
   }
 }
 
@@ -186,23 +207,26 @@ async function handleSubscriptionUpdated(
 ): Promise<void> {
   const { userId, telegramChatId } = extractMetadata(data)
   let targetUserId = userId
+  const polarSubId = safeString(data.id)
 
   // Fallback: find user by polar subscription ID
-  if (!targetUserId) {
-    targetUserId = await findUserByPolarSubId(data.id as string)
+  if (!targetUserId && polarSubId) {
+    targetUserId = await findUserByPolarSubId(polarSubId)
   }
 
   if (!targetUserId) {
     return
   }
 
-  const status = data.status as string
+  const status = safeString(data.status)
 
   if (status === 'canceled' || status === 'cancelled') {
-    await cancelSubscription(data.id as string)
+    if (polarSubId) {
+      await cancelSubscription(polarSubId)
+    }
 
     if (telegramChatId) {
-      const periodEnd = (data.current_period_end as string) || null
+      const periodEnd = safeString(data.current_period_end)
       await notifySubscriptionCancelled(telegramChatId, periodEnd)
     }
   } else {
@@ -212,7 +236,7 @@ async function handleSubscriptionUpdated(
       .from('user_profiles')
       .update({
         subscription_status: status,
-        subscription_expires_at: data.current_period_end || null,
+        subscription_expires_at: safeString(data.current_period_end),
         updated_at: new Date().toISOString(),
       } as Record<string, unknown>)
       .eq('user_id', targetUserId)
@@ -227,13 +251,14 @@ async function handleOrderCreated(
 
   const dbTier = TIER_DB_MAPPING[tier]
   const supabase = getSupabase()
+  const polarSubId = safeString(data.id)
 
   const { error } = await supabase
     .from('user_profiles')
     .update({
       subscription_tier: dbTier,
       subscription_status: 'active',
-      polar_subscription_id: data.id as string,
+      polar_subscription_id: polarSubId,
       updated_at: new Date().toISOString(),
     } as Record<string, unknown>)
     .eq('user_id', userId)

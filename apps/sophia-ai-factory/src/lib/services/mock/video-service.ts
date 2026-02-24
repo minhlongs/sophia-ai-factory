@@ -2,6 +2,7 @@ import { IVideoService, CreateVideoParams, VideoStatus, Avatar, Voice } from "..
 
 export class MockVideoService implements IVideoService {
   async createVideo(params: CreateVideoParams): Promise<string> {
+    void params;
     return `mock_vid_${Date.now()}`;
   }
 

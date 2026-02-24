@@ -30,9 +30,9 @@ export async function GET(request: Request) {
       count: safeData?.length || 0,
       data: safeData
     })
-  } catch (error) {
+  } catch {
     return NextResponse.json(
-      { error: 'Fetch failed', details: (error as Error).message },
+      { error: 'Fetch failed' },
       { status: 500 }
     )
   }

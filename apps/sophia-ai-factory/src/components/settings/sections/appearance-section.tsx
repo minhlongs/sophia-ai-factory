@@ -30,9 +30,12 @@ export function AppearanceSection({ form }: AppearanceSectionProps) {
       <CardContent>
         <div className="space-y-2">
           <Label>Theme Preference</Label>
-          <div className="grid grid-cols-3 gap-4">
-            <div
-              className={`cursor-pointer items-center justify-between rounded-md border-2 p-4 hover:bg-accent hover:text-accent-foreground ${
+          <div className="grid grid-cols-3 gap-4" role="radiogroup" aria-label="Theme preference">
+            <button
+              type="button"
+              role="radio"
+              aria-checked={theme === 'light'}
+              className={`cursor-pointer items-center justify-between rounded-md border-2 p-4 hover:bg-accent hover:text-accent-foreground text-left w-full ${
                 theme === 'light'
                   ? 'border-primary'
                   : 'border-muted'
@@ -42,12 +45,15 @@ export function AppearanceSection({ form }: AppearanceSectionProps) {
               }
             >
               <div className="flex items-center gap-2">
-                <div className="h-4 w-4 rounded-full border border-primary bg-[#ffffff]" />
+                <div className="h-4 w-4 rounded-full border border-primary bg-[#ffffff]" aria-hidden="true" />
                 <span className="font-medium">Light</span>
               </div>
-            </div>
-            <div
-              className={`cursor-pointer items-center justify-between rounded-md border-2 p-4 hover:bg-accent hover:text-accent-foreground ${
+            </button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={theme === 'dark'}
+              className={`cursor-pointer items-center justify-between rounded-md border-2 p-4 hover:bg-accent hover:text-accent-foreground text-left w-full ${
                 theme === 'dark'
                   ? 'border-primary'
                   : 'border-muted'
@@ -57,12 +63,15 @@ export function AppearanceSection({ form }: AppearanceSectionProps) {
               }
             >
               <div className="flex items-center gap-2">
-                <div className="h-4 w-4 rounded-full border border-primary bg-[#09090b]" />
+                <div className="h-4 w-4 rounded-full border border-primary bg-[#09090b]" aria-hidden="true" />
                 <span className="font-medium">Dark</span>
               </div>
-            </div>
-            <div
-              className={`cursor-pointer items-center justify-between rounded-md border-2 p-4 hover:bg-accent hover:text-accent-foreground ${
+            </button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={theme === 'system'}
+              className={`cursor-pointer items-center justify-between rounded-md border-2 p-4 hover:bg-accent hover:text-accent-foreground text-left w-full ${
                 theme === 'system'
                   ? 'border-primary'
                   : 'border-muted'
@@ -72,12 +81,12 @@ export function AppearanceSection({ form }: AppearanceSectionProps) {
               }
             >
               <div className="flex items-center gap-2">
-                <div className="flex h-4 w-4 items-center justify-center rounded-full border border-primary bg-transparent">
+                <div className="flex h-4 w-4 items-center justify-center rounded-full border border-primary bg-transparent" aria-hidden="true">
                   <span className="text-[10px] font-bold">A</span>
                 </div>
                 <span className="font-medium">System</span>
               </div>
-            </div>
+            </button>
           </div>
           <p className="text-sm text-muted-foreground">
             Select your preferred theme for the dashboard.

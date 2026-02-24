@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
 
     // Extract message from update
     const message = body.message
-    if (!message?.text) {
+    if (!message?.text || !message?.chat?.id) {
       return NextResponse.json({ ok: true })
     }
 
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json({ ok: true })
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

@@ -5,10 +5,15 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  'https://vhlpbginhiqtgjhgpvfm.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZobHBiZ2luaGlxdGdqaGdwdmZtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDM3MTYxNywiZXhwIjoyMDg1OTQ3NjE3fQ.G0HMlHAKsm_gjjzBkuhkYwJYTwJBMIeHmsWEUhsjy8Y'
-);
+const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('❌ Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY env vars before running');
+  process.exit(1);
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function main() {
   console.log('🔧 Creating tables via Supabase SDK...\n');

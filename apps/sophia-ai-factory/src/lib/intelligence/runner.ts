@@ -36,7 +36,6 @@ export async function runScoringBatch(limit: number = 1000, offset: number = 0) 
 
     const scoreResult = scoringService.calculateScore(scorable)
 
-    // Only update if score changed (optimization) - or just update all for now
     updates.push({
       id: product.id,
       sps_score: scoreResult.sps_score,
@@ -44,16 +43,7 @@ export async function runScoringBatch(limit: number = 1000, offset: number = 0) 
     })
   }
 
-  // 3. Bulk Update
-  // Supabase upsert requires all fields for atomic updates or primary key match.
-  // Since we are updating specific fields for existing IDs, we can use upsert.
-  // However, we only want to update `sps_score` and `is_hidden_gem`.
-  // Supabase/PostgREST doesn't support "Patch multiple rows with different values" easily in one HTTP call without a custom RPC or upserting the whole row (which we don't have here, we only fetched raw).
-  // Actually, we fetched `*`, so we could upsert `*` with modified values.
-  // Better approach for large batch: Use upsert with minimal fields if table allows (ignore other non-null constraints? No, upsert needs full row if not partial).
-  // Actually, `upsert` works with partial data if we only touch columns that are nullable or have defaults? No, it updates the row.
-  // If we just send ID + fields to update, Supabase Upsert works as "Update if exists" on PK.
-  // Let's try sending just ID and the fields to update.
+  // 3. Bulk update scores via upsert (ID + changed fields only)
 
   const { error: updateError } = await supabase
     .from('affiliate_products')
@@ -61,8 +51,6 @@ export async function runScoringBatch(limit: number = 1000, offset: number = 0) 
     .upsert(updates as unknown as Database['public']['Tables']['affiliate_products']['Update'][], { onConflict: 'id', ignoreDuplicates: false })
 
   if (updateError) {
-    // Fallback: update sequentially if bulk fails (slow but safe)
-    // Or throw
     throw new Error(`Bulk update failed: ${updateError.message}`)
   }
 

@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { AdminUsersClient } from "./admin-users-client";
+import { AdminUsersClient, type AdminUserRow } from "./admin-users-client";
 
 export const dynamic = "force-dynamic";
 
@@ -10,14 +10,6 @@ interface SupabaseAuthUser {
   created_at: string;
   last_sign_in_at?: string | null;
   email_confirmed_at?: string | null;
-}
-
-export interface AdminUserRow {
-  id: string;
-  email: string;
-  tier: string;
-  status: "active" | "invited";
-  createdAt: string;
 }
 
 /**

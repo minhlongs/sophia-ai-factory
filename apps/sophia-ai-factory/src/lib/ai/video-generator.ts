@@ -17,7 +17,7 @@ interface VideoOutput {
  * Returns a job ID (for HeyGen) or a mock ID.
  */
 export async function startVideoGeneration(input: GenerateVideoInput): Promise<string> {
-  const { tier, script: rawScript } = input;
+  const { script: rawScript } = input;
   const videoService = ServiceFactory.getVideoService();
 
   // Extract narration from script
@@ -62,7 +62,7 @@ export async function checkVideoGenerationStatus(jobId: string, _tier: Tier): Pr
     }
 
     return { status: 'processing' };
-  } catch (error) {
+  } catch {
     // Return processing on transient errors so we retry
     return { status: 'processing' };
   }

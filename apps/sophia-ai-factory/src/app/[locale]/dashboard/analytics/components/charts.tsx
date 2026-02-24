@@ -16,9 +16,7 @@ import {
 } from "recharts";
 import { useTranslations } from 'next-intl';
 
-// Colors for charts - using CSS variables if possible, but Recharts needs hex strings
-// We can define a palette that looks good in both or adapt based on theme context if we had access to it.
-// For now, let's use a standard palette that works reasonably well on both backgrounds.
+// Chart color palette (works on both light and dark backgrounds)
 const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
 
 interface ChartData {

@@ -107,8 +107,8 @@ export async function updateUserProfile(data: UserProfileFormValues) {
     }
 
     // 2. Handle API Keys Encryption
-    // Only update keys that are provided (not empty strings if they were already set)
-    // If the user sends "********", we ignore it (means no change)
+    // Only update keys that are not masked ('********') or empty.
+    // Empty string = user explicitly cleared the key.
 
     // First fetch existing keys to merge
     const { data: currentData } = await supabase
@@ -125,16 +125,6 @@ export async function updateUserProfile(data: UserProfileFormValues) {
     if (apiKeys.openai && apiKeys.openai !== '********') {
       newEncryptedKeys.openai = encrypt(apiKeys.openai);
     } else if (apiKeys.openai === '') {
-       // If explicitly cleared (user deleted it), remove it?
-       // Or usually UI handles "clear" separately.
-       // For now, if empty string, we assume they might want to clear it OR it's just empty.
-       // Let's assume empty string means "clear" if it wasn't masked.
-       // But typically we don't want to clear if they just left it empty.
-       // Logic: If it's empty string, we don't update it unless we want to support deleting.
-       // Let's support deleting if the user passes a specific flag or we can assume empty = delete if user explicitly cleared it.
-       // Ideally, the UI sends `undefined` for no change, and empty string for delete.
-       // Zod schema allows optional or literal empty string.
-       // Let's simplify: If it's not masked '********' and has value, update it.
        if (apiKeys.openai === '') delete newEncryptedKeys.openai;
     }
 
@@ -166,7 +156,7 @@ export async function updateUserProfile(data: UserProfileFormValues) {
     revalidatePath('/settings');
     return { success: true };
 
-  } catch (error) {
+  } catch {
     return { error: 'Failed to update profile' };
   }
 }

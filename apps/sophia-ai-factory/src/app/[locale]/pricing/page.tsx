@@ -1,4 +1,4 @@
-import { PricingSection } from "@/components/pricing-section";
+import { PricingSection } from "@/components/pricing/pricing-section";
 import Link from "next/link";
 
 export const metadata = {

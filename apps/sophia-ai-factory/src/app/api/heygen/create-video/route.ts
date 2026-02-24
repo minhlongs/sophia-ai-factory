@@ -33,7 +33,7 @@ export async function POST(req: Request) {
       title: title || `Video for ${user.email}`
     });
     return NextResponse.json({ videoId });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to create video job" }, { status: 500 });
   }
 }

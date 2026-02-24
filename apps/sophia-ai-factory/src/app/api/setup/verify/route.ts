@@ -2,14 +2,24 @@ import { NextResponse } from 'next/server';
 import {
   validateOpenRouter,
   validateElevenLabs,
-  validateDID,
-  validateAirtable
+  validateDID
 } from '@/lib/validation/services';
 
 export async function POST(request: Request) {
   try {
+    // Guard: reject if app is already configured (prevent API key probing)
+    const isConfigured =
+      process.env.NEXT_PUBLIC_IS_CONFIGURED === "true" ||
+      process.env.IS_CONFIGURED === "true";
+    if (isConfigured) {
+      return NextResponse.json(
+        { valid: false, message: "App is already configured" },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
-    const { service, key, params } = body;
+    const { service, key } = body;
 
     if (!service || !key) {
       return NextResponse.json({ valid: false, message: "Missing service or key" }, { status: 400 });
@@ -27,16 +37,13 @@ export async function POST(request: Request) {
       case 'd-id':
         result = await validateDID(key);
         break;
-      case 'airtable':
-        result = await validateAirtable(key, params?.baseId);
-        break;
       default:
         return NextResponse.json({ valid: false, message: "Unknown service" }, { status: 400 });
     }
 
     return NextResponse.json(result);
 
-  } catch (error) {
+  } catch {
     return NextResponse.json({ valid: false, message: "Internal server error" }, { status: 500 });
   }
 }

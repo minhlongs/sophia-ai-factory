@@ -6,7 +6,6 @@ import { WizardStepper } from './components/wizard-stepper';
 import { ArrowRight, Save, Loader2 } from 'lucide-react';
 import { SystemCheckStep } from './components/steps/system-check-step';
 import { ApiKeysStep } from './components/steps/api-keys-step';
-import { DatabaseStep } from './components/steps/database-step';
 import { FinishStep } from './components/steps/finish-step';
 
 export default function SetupWizardPage() {
@@ -19,8 +18,6 @@ export default function SetupWizardPage() {
     OPENROUTER_API_KEY: '',
     ELEVENLABS_API_KEY: '',
     DID_API_KEY: '',
-    AIRTABLE_ACCESS_TOKEN: '',
-    AIRTABLE_BASE_ID: '',
   });
 
   // Validation State
@@ -28,8 +25,6 @@ export default function SetupWizardPage() {
     OPENROUTER_API_KEY: 'idle',
     ELEVENLABS_API_KEY: 'idle',
     DID_API_KEY: 'idle',
-    AIRTABLE_ACCESS_TOKEN: 'idle',
-    AIRTABLE_BASE_ID: 'idle',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -61,7 +56,7 @@ export default function SetupWizardPage() {
         setErrors(prev => ({ ...prev, [keyName]: data.message || 'Invalid key' }));
       }
       return data.valid;
-    } catch (error) {
+    } catch {
       setStatus(prev => ({ ...prev, [keyName]: 'invalid' }));
       setErrors(prev => ({ ...prev, [keyName]: 'Verification failed' }));
       return false;
@@ -76,19 +71,6 @@ export default function SetupWizardPage() {
         alert("Please verify all API keys before proceeding.");
         return;
       }
-    }
-    // Step 3: Airtable
-    if (step === 3) {
-        // We allow Base ID to be idle if PAT is valid, or require verification?
-        // Let's require PAT verification.
-        if (status.AIRTABLE_ACCESS_TOKEN !== 'valid') {
-            alert("Please verify your Airtable Personal Access Token.");
-            return;
-        }
-        if (!config.AIRTABLE_BASE_ID) {
-            alert("Please enter an Airtable Base ID.");
-            return;
-        }
     }
 
     setStep(prev => prev + 1);
@@ -123,7 +105,7 @@ export default function SetupWizardPage() {
            a.click();
         }
       }
-    } catch (error) {
+    } catch {
       setSaveError("Failed to save configuration.");
     } finally {
       setLoading(false);
@@ -143,7 +125,7 @@ export default function SetupWizardPage() {
         <div className="px-8">
             <WizardStepper
                 currentStep={step}
-                steps={["System", "AI Keys", "Database", "Finish"]}
+                steps={["System", "AI Keys", "Finish"]}
             />
         </div>
 
@@ -161,22 +143,12 @@ export default function SetupWizardPage() {
               />
             )}
 
-            {step === 3 && (
-              <DatabaseStep
-                config={config}
-                updateConfig={updateConfig}
-                verifyKey={verifyKey}
-                status={status}
-                errors={errors}
-              />
-            )}
-
-            {step === 4 && <FinishStep saveError={saveError} />}
+            {step === 3 && <FinishStep saveError={saveError} />}
         </div>
 
         {/* Footer Actions */}
         <div className="bg-muted/50 px-8 py-6 flex justify-between items-center border-t border-border">
-            {step > 1 && step < 4 && (
+            {step > 1 && step < 3 && (
                 <button
                     onClick={() => setStep(prev => prev - 1)}
                     className="text-muted-foreground hover:text-foreground font-medium px-4 py-2"
@@ -187,7 +159,7 @@ export default function SetupWizardPage() {
 
             {step === 1 && <div />} {/* Spacer */}
 
-            {step < 4 ? (
+            {step < 3 ? (
                 <button
                     onClick={handleNext}
                     className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors ml-auto"

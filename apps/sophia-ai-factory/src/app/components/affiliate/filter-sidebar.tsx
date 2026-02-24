@@ -2,7 +2,7 @@
 
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { motion } from "framer-motion";
+import { FadeInView } from "@/components/ui/fade-in-view";
 
 interface FilterSidebarProps {
   categories: string[];
@@ -22,11 +22,7 @@ export function FilterSidebar({
   onRangeChange,
 }: FilterSidebarProps) {
   return (
-    <motion.div
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.4 }}
-    >
+    <FadeInView direction="left" distance={20} duration={400}>
       <Card glass className="p-6 sticky top-24 bg-card border-border">
         {/* Categories */}
         <div className="mb-8">
@@ -118,6 +114,6 @@ export function FilterSidebar({
           </div>
         )}
       </Card>
-    </motion.div>
+    </FadeInView>
   );
 }

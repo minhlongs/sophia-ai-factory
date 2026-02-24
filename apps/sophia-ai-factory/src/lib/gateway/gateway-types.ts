@@ -65,3 +65,11 @@ export interface GatewayChannel {
   enabled: boolean;
   rateLimitPerHour: number;
 }
+
+/** A single pipeline checkpoint recording a completed step */
+export interface Checkpoint {
+  campaignId: string;
+  step: string;
+  completedAt: Date;
+  metadata?: Record<string, unknown>;
+}

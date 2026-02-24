@@ -1,7 +1,7 @@
 import { inngest } from "@/lib/inngest/client";
 import { ServiceFactory } from "@/lib/services/factory";
 import { startVideoGeneration, checkVideoGenerationStatus } from "@/lib/ai/video-generator";
-import { sendTelegramMessage } from "@/lib/telegram/telegram-client";
+import { sendMessage as sendTelegramMessage } from "@/lib/telegram/handlers/utils";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { CampaignStatus } from "@/types";
 import { Database, Json } from "@/lib/supabase/types";
@@ -81,7 +81,7 @@ export const generateCampaign = inngest.createFunction(
 
       const { error } = await getSupabase()
         .from("campaigns")
-        // @ts-expect-error Database type missing Relationships for Supabase generic inference
+        // @ts-expect-error - Known Supabase typing limitation with update on tables with Json columns
         .update(updatePayload)
         .eq("id", campaignId);
 

@@ -39,12 +39,13 @@ export function NotificationsSection({ form, isPending }: NotificationsSectionPr
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between rounded-lg border p-4">
           <div className="space-y-0.5">
-            <Label className="text-base">Marketing Emails</Label>
+            <Label htmlFor="notif-marketing" className="text-base">Marketing Emails</Label>
             <p className="text-sm text-muted-foreground">
               Receive emails about new features and promotions.
             </p>
           </div>
           <Switch
+            id="notif-marketing"
             disabled={isPending}
             checked={marketingEmail}
             onCheckedChange={(checked) =>
@@ -54,12 +55,13 @@ export function NotificationsSection({ form, isPending }: NotificationsSectionPr
         </div>
         <div className="flex items-center justify-between rounded-lg border p-4">
           <div className="space-y-0.5">
-            <Label className="text-base">Security Alerts</Label>
+            <Label htmlFor="notif-security" className="text-base">Security Alerts</Label>
             <p className="text-sm text-muted-foreground">
               Get notified about suspicious activity on your account.
             </p>
           </div>
           <Switch
+            id="notif-security"
             disabled={isPending}
             checked={securityEmail}
             onCheckedChange={(checked) =>
@@ -69,12 +71,13 @@ export function NotificationsSection({ form, isPending }: NotificationsSectionPr
         </div>
         <div className="flex items-center justify-between rounded-lg border p-4">
           <div className="space-y-0.5">
-            <Label className="text-base">Telegram Integration</Label>
+            <Label htmlFor="notif-telegram" className="text-base">Telegram Integration</Label>
             <p className="text-sm text-muted-foreground">
               Receive notifications via Telegram bot.
             </p>
           </div>
           <Switch
+            id="notif-telegram"
             disabled={isPending}
             checked={telegramEnabled}
             onCheckedChange={(checked) =>

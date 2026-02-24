@@ -77,7 +77,7 @@ Return ONLY valid JSON in this exact format:
     });
 
     if (!response.ok) {
-      const error = await response.text();
+      await response.text();
       throw new Error(`OpenRouter API failed: ${response.status}`);
     }
 
@@ -97,7 +97,7 @@ Return ONLY valid JSON in this exact format:
 
     return parsed;
 
-  } catch (error) {
+  } catch {
     return generateMockScript(topic, audience);
   }
 }

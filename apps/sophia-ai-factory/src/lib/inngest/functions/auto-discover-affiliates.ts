@@ -12,7 +12,7 @@ import {
   scoreAffiliates,
   type AffiliateScore,
 } from "@/lib/discovery/affiliate-ai-scorer";
-import { sendTelegramMessage } from "@/lib/telegram/telegram-client";
+import { sendMessage as sendTelegramMessage } from "@/lib/telegram/handlers/utils";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/types";
 

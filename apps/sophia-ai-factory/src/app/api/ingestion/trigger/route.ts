@@ -5,12 +5,17 @@ export const maxDuration = 300 // 5 minutes max duration for Vercel Pro/Enterpri
 
 export async function POST(request: Request) {
   try {
+    const cronSecret = process.env.CRON_SECRET
+    if (!cronSecret) {
+      return NextResponse.json(
+        { error: 'Server misconfiguration: CRON_SECRET not set' },
+        { status: 500 }
+      )
+    }
+
     const authHeader = request.headers.get('authorization')
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      // Allow development override or check for a specific admin secret
-      if (process.env.NODE_ENV !== 'development') {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      }
+    if (authHeader !== `Bearer ${cronSecret}`) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { networks } = await request.json().catch(() => ({ networks: undefined }))

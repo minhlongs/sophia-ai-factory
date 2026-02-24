@@ -29,10 +29,11 @@ export default function AffiliatesPage() {
       {/* Search */}
       <div className="mb-6">
         <div className="relative max-w-md">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" aria-hidden="true" />
           <input
             type="text"
             placeholder="Search programs..."
+            aria-label="Search affiliate programs"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-12 pr-4 py-3 bg-muted border border-input rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-[var(--neon-cyan)] transition-colors"
@@ -136,6 +137,7 @@ export default function AffiliatesPage() {
                     <td className="py-4 px-4">
                       <button
                         onClick={() => window.open(program.link, "_blank")}
+                        aria-label={`Open ${program.name} in new tab`}
                         className="text-muted-foreground hover:text-[var(--neon-cyan)] transition-colors"
                       >
                         <ExternalLink className="w-4 h-4" />

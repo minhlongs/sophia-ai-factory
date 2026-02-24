@@ -95,10 +95,13 @@ export default function DashboardLayout({
 
         <div className="p-4 border-t border-border space-y-2">
           <HealthIndicator />
-          <button className="flex items-center gap-3 px-4 py-3 text-destructive rounded-lg hover:bg-destructive/10 transition-colors w-full">
+          <Link
+            href="/"
+            className="flex items-center gap-3 px-4 py-3 text-destructive rounded-lg hover:bg-destructive/10 transition-colors w-full"
+          >
             <LogOut className="w-5 h-5" />
             <span className="font-medium">{t('sidebar.sign_out')}</span>
-          </button>
+          </Link>
         </div>
       </aside>
 

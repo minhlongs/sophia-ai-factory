@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslations, useLocale } from "next-intl";
+import { useTranslations } from "next-intl";
 import { Container } from "@/components/ui/container";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { Card, CardContent } from "@/components/ui/card";
@@ -57,7 +57,6 @@ const TRUST_BADGES = [
 
 export function SocialProof() {
   const t = useTranslations("landing.social_proof");
-  const locale = useLocale();
 
   const testimonials = [
     { key: "creator_1", avatar: "MC" },

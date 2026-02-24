@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AffiliateProgram } from "@/types";
 import { ExternalLink, TrendingUp, DollarSign } from "lucide-react";
-import { motion } from "framer-motion";
+import { FadeInView } from "@/components/ui/fade-in-view";
 
 interface ProgramCardProps {
   program: AffiliateProgram;
@@ -14,12 +14,7 @@ interface ProgramCardProps {
 
 export function ProgramCard({ program, isLocked = false }: ProgramCardProps) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.4 }}
-    >
+    <FadeInView direction="up" distance={20} duration={400}>
       <Card glass className="h-full hover:shadow-[0_0_30px_rgba(0,240,255,0.15)] transition-all">
         <CardContent className="p-6">
           {/* Header */}
@@ -81,6 +76,6 @@ export function ProgramCard({ program, isLocked = false }: ProgramCardProps) {
           )}
         </CardContent>
       </Card>
-    </motion.div>
+    </FadeInView>
   );
 }

@@ -11,17 +11,16 @@
  * - Campaign creation happy path
  */
 
-// Placeholder: uncomment when Playwright is added as a dev dependency.
-// import { test, expect } from '@playwright/test';
-//
-// test('homepage loads', async ({ page }) => {
-//   await page.goto('/');
-//   await expect(page).toHaveTitle(/Sophia/);
-// });
-//
-// test('setup wizard is accessible', async ({ page }) => {
-//   await page.goto('/setup-wizard');
-//   await expect(page.locator('h1')).toBeVisible();
-// });
+import { test, expect } from '@playwright/test';
+
+test('homepage loads', async ({ page }) => {
+  await page.goto('/');
+  await expect(page).toHaveTitle(/Sophia/);
+});
+
+test('setup wizard is accessible', async ({ page }) => {
+  await page.goto('/setup-wizard');
+  await expect(page.locator('h1')).toBeVisible();
+});
 
 export {};

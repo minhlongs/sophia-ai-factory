@@ -13,14 +13,8 @@ import {
   rowToCheckpoint,
   type CheckpointRow,
 } from "./checkpoint-supabase-persistence";
-
-/** A single pipeline checkpoint recording a completed step */
-export interface Checkpoint {
-  campaignId: string;
-  step: string;
-  completedAt: Date;
-  metadata?: Record<string, unknown>;
-}
+import type { Checkpoint } from "./gateway-types";
+import { logger } from "@/lib/utils/logger-utility";
 
 /** Pipeline step definitions and their order */
 const PIPELINE_STEPS = [
@@ -50,7 +44,7 @@ export class SmartResumeEngine {
   /** Record a checkpoint for a campaign pipeline step */
   async checkpoint(
     campaignId: string,
-    step: string,
+    step: PipelineStep,
     metadata?: Record<string, unknown>,
   ): Promise<void> {
     const supabase = getCheckpointSupabase();
@@ -70,7 +64,8 @@ export class SmartResumeEngine {
           );
         if (error) throw error;
         return;
-      } catch {
+      } catch (err) {
+        logger.error(`[SmartResumeEngine] Failed to record checkpoint for ${campaignId}`, { error: err });
       }
     }
 
@@ -96,7 +91,8 @@ export class SmartResumeEngine {
         if (error) throw error;
         if (!data || data.length === 0) return null;
         return rowToCheckpoint(data[0] as CheckpointRow);
-      } catch {
+      } catch (err) {
+        logger.error(`[SmartResumeEngine] Failed to retrieve last checkpoint for ${campaignId}`, { error: err });
       }
     }
 
@@ -122,7 +118,8 @@ export class SmartResumeEngine {
         if (error) throw error;
         if (!data) return [];
         return (data as CheckpointRow[]).map(rowToCheckpoint);
-      } catch {
+      } catch (err) {
+        logger.error(`[SmartResumeEngine] Failed to retrieve checkpoints for ${campaignId}`, { error: err });
       }
     }
 
@@ -154,7 +151,8 @@ export class SmartResumeEngine {
         if (error) throw error;
         this.fallbackStore.delete(campaignId);
         return;
-      } catch {
+      } catch (err) {
+        logger.error(`[SmartResumeEngine] Failed to clear checkpoints for ${campaignId}`, { error: err });
       }
     }
 
@@ -175,7 +173,8 @@ export class SmartResumeEngine {
           .limit(1);
         if (error) throw error;
         return (data?.length ?? 0) > 0;
-      } catch {
+      } catch (err) {
+        logger.error(`[SmartResumeEngine] Failed to check step completion for ${campaignId}`, { error: err });
       }
     }
 

@@ -37,7 +37,7 @@ export function Hero() {
 
           {/* Subtitle */}
           <FadeInView delay={200} duration={600}>
-            <p className="text-lg md:text-2xl text-gray-400 mb-12 max-w-2xl mx-auto px-4">
+            <p className="text-lg md:text-2xl text-muted-foreground mb-12 max-w-2xl mx-auto px-4">
               {t('hero.subtitle')}
             </p>
           </FadeInView>
@@ -50,42 +50,45 @@ export function Hero() {
                   {t('hero.cta_start')}
                 </Button>
               </Link>
-              <a
-                href="#features"
+              <Button
+                variant="secondary"
+                size="lg"
+                className="w-full sm:w-auto min-w-[200px]"
                 onClick={(e) => {
                   e.preventDefault();
                   document.getElementById("features")?.scrollIntoView({ behavior: "smooth", block: "start" });
                 }}
               >
-                <Button variant="secondary" size="lg" className="w-full sm:w-auto min-w-[200px]">
-                  {t('hero.cta_demo')}
-                </Button>
-              </a>
+                {t('hero.cta_demo')}
+              </Button>
             </div>
           </FadeInView>
 
           {/* Stats */}
           <FadeInView delay={600} duration={600}>
-            <div className="mt-20 grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-2xl mx-auto px-4">
+            <dl className="mt-20 grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-2xl mx-auto px-4" aria-label="Platform Statistics">
               <div className="text-center">
-                <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] bg-clip-text text-transparent">
+                <dt className="sr-only">Number of AI tools available</dt>
+                <dd className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] bg-clip-text text-transparent">
                   50+
-                </div>
-                <div className="text-sm text-gray-500 mt-2">{t('hero.stats.tools')}</div>
+                </dd>
+                <dt className="text-sm text-muted-foreground mt-2">{t('hero.stats.tools')}</dt>
               </div>
               <div className="text-center">
-                <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] bg-clip-text text-transparent">
+                <dt className="sr-only">Videos generated</dt>
+                <dd className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] bg-clip-text text-transparent">
                   10K+
-                </div>
-                <div className="text-sm text-gray-500 mt-2">{t('hero.stats.videos')}</div>
+                </dd>
+                <dt className="text-sm text-muted-foreground mt-2">{t('hero.stats.videos')}</dt>
               </div>
               <div className="text-center">
-                <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] bg-clip-text text-transparent">
+                <dt className="sr-only">Automation availability</dt>
+                <dd className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] bg-clip-text text-transparent">
                   24/7
-                </div>
-                <div className="text-sm text-gray-500 mt-2">{t('hero.stats.automation')}</div>
+                </dd>
+                <dt className="text-sm text-muted-foreground mt-2">{t('hero.stats.automation')}</dt>
               </div>
-            </div>
+            </dl>
           </FadeInView>
         </div>
       </Container>

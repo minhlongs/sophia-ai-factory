@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getUserTier, checkTierAccess, isTierHigherOrEqual } from './subscription';
+import { SupabaseClient } from '@supabase/supabase-js';
 import { createAdminClient } from '@/lib/supabase/admin';
 
 // Mock the admin client module to bypass env var validation
@@ -24,7 +25,7 @@ describe('Subscription Library', () => {
 
     vi.mocked(createAdminClient).mockReturnValue({
       from: mockFrom,
-    } as any);
+    } as unknown as SupabaseClient);
   });
 
   describe('isTierHigherOrEqual', () => {
