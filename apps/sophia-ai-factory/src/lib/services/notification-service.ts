@@ -1,5 +1,6 @@
 import { bot } from '@/lib/telegram/telegram-bot-instance'
 import { Tier } from '@/types'
+import { logger } from '@/lib/utils/logger-utility'
 
 /**
  * Telegram notification service for subscription lifecycle events
@@ -12,6 +13,10 @@ async function sendNotification(
   try {
     await bot.telegram.sendMessage(chatId, text, { parse_mode: 'Markdown' })
   } catch (error) {
+    logger.warn('Failed to send Telegram notification', {
+      chatId,
+      error: error instanceof Error ? error.message : String(error),
+    })
   }
 }
 

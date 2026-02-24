@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/admin';
+import { logger } from '@/lib/utils/logger-utility';
 import { Tier } from "@/types";
 
 interface GenerateVoiceoverInput {
@@ -35,8 +36,10 @@ export async function generateVoiceover(input: GenerateVoiceoverInput): Promise<
     try {
       return await generateElevenLabsVoiceover(text, tier, apiKey, voiceId);
     } catch (error) {
+      // Log and fall through to mock fallback
+      const errMsg = error instanceof Error ? error.message : String(error);
+      logger.warn(`[ElevenLabs] API failed, falling back to mock`, { error: errMsg });
     }
-  } else {
   }
 
   // Mock fallback

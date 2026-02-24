@@ -2,7 +2,14 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import type { AdminUserRow } from "./page";
+
+export interface AdminUserRow {
+  id: string;
+  email: string;
+  tier: string;
+  status: "active" | "invited";
+  createdAt: string;
+}
 
 interface AdminUsersClientProps {
   initialUsers: AdminUserRow[];
@@ -91,10 +98,11 @@ export function AdminUsersClient({ initialUsers }: AdminUsersClientProps) {
           className="rounded-xl border border-border bg-card p-6 space-y-4"
         >
           <div>
-            <label className="block text-sm font-medium text-foreground mb-1">
+            <label htmlFor="invite-email" className="block text-sm font-medium text-foreground mb-1">
               {t("email")}
             </label>
             <input
+              id="invite-email"
               type="email"
               required
               value={inviteEmail}
@@ -104,10 +112,11 @@ export function AdminUsersClient({ initialUsers }: AdminUsersClientProps) {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-foreground mb-1">
+            <label htmlFor="invite-tier" className="block text-sm font-medium text-foreground mb-1">
               {t("tier")}
             </label>
             <select
+              id="invite-tier"
               value={inviteTier}
               onChange={(e) => setInviteTier(e.target.value)}
               className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"

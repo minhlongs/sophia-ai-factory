@@ -30,7 +30,7 @@ export function CampaignItem({ campaign }: CampaignItemProps) {
         <div className="mt-3">
           {/* Progress Bar */}
           {(campaign.status.includes('processing') || campaign.status === 'queued') && (
-            <div className="w-full max-w-[200px] h-2 bg-muted rounded-full overflow-hidden">
+            <div className="w-full max-w-[200px] h-2 bg-muted rounded-full overflow-hidden" role="progressbar" aria-label={`Tiến độ: ${campaign.progress || 0}%`} aria-valuenow={campaign.progress || 0} aria-valuemin={0} aria-valuemax={100}>
               <div
                 className="h-full bg-primary transition-all duration-500"
                 style={{ width: `${campaign.progress || 0}%` }}

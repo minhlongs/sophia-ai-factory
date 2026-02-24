@@ -66,7 +66,7 @@ export function ApiKeyInput({
           type="button"
           onClick={() => setShowPassword(!showPassword)}
           className="absolute right-20 text-muted-foreground hover:text-foreground p-1"
-          tabIndex={-1}
+          aria-label={showPassword ? 'Hide API key' : 'Show API key'}
         >
           {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
         </button>

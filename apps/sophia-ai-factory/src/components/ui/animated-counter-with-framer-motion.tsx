@@ -1,53 +1,40 @@
 "use client";
 
-import React from "react";
-import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
 
 interface AnimatedCounterProps {
   value: number;
-  className?: string;
   duration?: number;
-  prefix?: string;
-  suffix?: string;
-  decimals?: number;
 }
 
-export function AnimatedCounter({
-  value,
-  className,
-  prefix = "",
-  suffix = "",
-  decimals = 0,
-}: AnimatedCounterProps) {
-  return (
-    <span className={cn("tabular-nums", className)}>
-      {prefix}
-      {value.toFixed(decimals)}
-      {suffix}
-    </span>
-  );
-}
+/**
+ * A lightweight animated counter that doesn't depend on framer-motion.
+ * Optimized for performance as part of the Sophia AI Factory performance audit.
+ */
+export function AnimatedCounter({ value, duration = 1500 }: AnimatedCounterProps) {
+  const [count, setCount] = useState(0);
 
-interface AnimatedCounterSimpleProps {
-  from?: number;
-  to: number;
-  className?: string;
-  duration?: number;
-  prefix?: string;
-  suffix?: string;
-}
+  useEffect(() => {
+    let startTimestamp: number | null = null;
+    let animationFrameId: number;
 
-export function AnimatedCounterSimple({
-  to,
-  className,
-  prefix = "",
-  suffix = "",
-}: AnimatedCounterSimpleProps) {
-  return (
-    <span className={cn("tabular-nums", className)}>
-      {prefix}
-      {to}
-      {suffix}
-    </span>
-  );
+    const step = (timestamp: number) => {
+      if (!startTimestamp) startTimestamp = timestamp;
+      const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+
+      // Easing function: easeOutExpo
+      const easedProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+
+      setCount(Math.floor(easedProgress * value));
+
+      if (progress < 1) {
+        animationFrameId = window.requestAnimationFrame(step);
+      }
+    };
+
+    animationFrameId = window.requestAnimationFrame(step);
+    return () => window.cancelAnimationFrame(animationFrameId);
+  }, [value, duration]);
+
+  return <span>{count.toLocaleString()}</span>;
 }

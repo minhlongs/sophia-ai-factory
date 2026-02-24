@@ -6,7 +6,7 @@
  */
 
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
-import type { Checkpoint } from "./smart-resume-engine";
+import type { Checkpoint } from "./gateway-types";
 
 /** Row shape returned from Supabase campaign_checkpoints table */
 export interface CheckpointRow {

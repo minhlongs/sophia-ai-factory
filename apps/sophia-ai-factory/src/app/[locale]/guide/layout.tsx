@@ -34,7 +34,7 @@ export default function GuideLayout({ children }: { children: React.ReactNode })
         aria-label={sidebarOpen ? "Close guide menu" : "Open guide menu"}
         aria-expanded={sidebarOpen}
       >
-        {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        {sidebarOpen ? <X className="w-5 h-5" aria-hidden="true" /> : <Menu className="w-5 h-5" aria-hidden="true" />}
       </button>
 
       <div className="max-w-7xl mx-auto flex">
@@ -73,7 +73,7 @@ export default function GuideLayout({ children }: { children: React.ReactNode })
                       : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                   )}
                 >
-                  <link.icon className="w-4 h-4 shrink-0" />
+                  <link.icon className="w-4 h-4 shrink-0" aria-hidden="true" />
                   {link.label}
                 </Link>
               );
@@ -86,6 +86,8 @@ export default function GuideLayout({ children }: { children: React.ReactNode })
           <div
             className="fixed inset-0 z-20 bg-black/50 md:hidden"
             onClick={() => setSidebarOpen(false)}
+            role="presentation"
+            aria-hidden="true"
           />
         )}
 

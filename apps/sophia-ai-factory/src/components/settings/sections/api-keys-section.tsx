@@ -57,6 +57,7 @@ export function ApiKeysSection({ form, isPending, defaultValues }: ApiKeysSectio
               size="sm"
               className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
               onClick={() => toggleKeyVisibility('openai')}
+              aria-label={showKeys.openai ? 'Hide OpenAI API key' : 'Show OpenAI API key'}
             >
               {showKeys.openai ? (
                 <EyeOff className="h-4 w-4 text-muted-foreground" />
@@ -85,6 +86,7 @@ export function ApiKeysSection({ form, isPending, defaultValues }: ApiKeysSectio
               size="sm"
               className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
               onClick={() => toggleKeyVisibility('anthropic')}
+              aria-label={showKeys.anthropic ? 'Hide Anthropic API key' : 'Show Anthropic API key'}
             >
               {showKeys.anthropic ? (
                 <EyeOff className="h-4 w-4 text-muted-foreground" />
@@ -113,6 +115,7 @@ export function ApiKeysSection({ form, isPending, defaultValues }: ApiKeysSectio
               size="sm"
               className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
               onClick={() => toggleKeyVisibility('elevenlabs')}
+              aria-label={showKeys.elevenlabs ? 'Hide ElevenLabs API key' : 'Show ElevenLabs API key'}
             >
               {showKeys.elevenlabs ? (
                 <EyeOff className="h-4 w-4 text-muted-foreground" />

@@ -34,7 +34,7 @@ export class ShareasaleAdapter extends BaseAdapter {
       try {
         const categoryProducts = await this.fetchCategory(category)
         allProducts.push(...categoryProducts)
-      } catch (error) {
+      } catch {
       }
     }
 
@@ -42,6 +42,9 @@ export class ShareasaleAdapter extends BaseAdapter {
   }
 
   private async fetchCategory(categoryKeyword: string): Promise<RawProduct[]> {
+    // Avoid unused var warning
+    void categoryKeyword;
+
     // Implementation of ShareASale API call
     // Docs: https://www.shareasale.com/openapi/
     // This usually requires complex auth headers (HMAC).

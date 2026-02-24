@@ -41,7 +41,7 @@ export async function POST(request: Request) {
         'webhook-timestamp': timestamp,
         'webhook-signature': signature,
       })
-    } catch (err) {
+    } catch (firstError) {
       const base64Secret = Buffer.from(POLAR_WEBHOOK_SECRET).toString('base64')
       try {
         const whVerify = new Webhook(base64Secret)
@@ -51,10 +51,10 @@ export async function POST(request: Request) {
           'webhook-signature': signature,
         })
       } catch {
-        throw err
+        throw firstError
       }
     }
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
@@ -75,7 +75,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ received: true })
-  } catch (err: unknown) {
+  } catch {
     return NextResponse.json({ error: 'Processing failed' }, { status: 500 })
   }
 }

@@ -1,5 +1,8 @@
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+"use client";
+
+import dynamic from "next/dynamic";
+
+const ReactMarkdown = dynamic(() => import("react-markdown"), { ssr: false });
 
 interface GuideContentRendererProps {
   content: string;
@@ -24,7 +27,7 @@ export function GuideContentRenderer({ content }: GuideContentRendererProps) {
       prose-li:text-muted-foreground prose-li:marker:text-[var(--neon-cyan)]
       prose-hr:border-border/40
     ">
-      <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+      <ReactMarkdown>{content}</ReactMarkdown>
     </div>
   );
 }

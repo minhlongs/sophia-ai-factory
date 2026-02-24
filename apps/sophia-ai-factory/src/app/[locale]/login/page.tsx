@@ -122,7 +122,11 @@ export default function LoginPage() {
                 disabled={loading || !email}
                 className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {loading ? "..." : t("sendLink")}
+                {loading ? (
+                  <span role="status" aria-label={t("loading") || "Loading..."}>...</span>
+                ) : (
+                  t("sendLink")
+                )}
               </button>
             </form>
           )}

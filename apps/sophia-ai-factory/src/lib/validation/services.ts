@@ -65,20 +65,7 @@ export async function validateElevenLabs(key: string): Promise<ValidationResult>
 
 /**
  * Validate D-ID API Key
- * Endpoint: https://api.d-id.com/credits
- * D-ID uses Basic Auth (key is usually "user:pass" encoded, or just Bearer depending on key type)
- * Usually D-ID API keys are Bearer tokens if generated from the studio, or Basic Auth.
- * Let's assume standard API Key as Bearer or Basic.
- * Most D-ID integrations use Basic Auth with the key.
- * If the user provides a single string, we might need to check how they formatted it.
- * But often it is `Authorization: Basic base64(api_key)`.
- * However, newer D-ID keys might be Bearer.
- * Let's try Bearer first as it's common for "API Keys", fallback to checking format.
- * Actually, D-ID API documentation says: Authorization: Basic <base64(username:password)>
- * But many users just copy the "API Key".
- * If the key contains a colon, we base64 it. If it doesn't, we assume it's already encoded or a Bearer token.
- * Let's stick to the prompt's implication of an "API Key".
- * We will assume the user pastes the "API Key" found in D-ID settings.
+ * Uses Basic Auth with the API key against the credits endpoint.
  */
 export async function validateDID(key: string): Promise<ValidationResult> {
   if (!key) return { valid: false, message: "Key is required" };
@@ -87,17 +74,12 @@ export async function validateDID(key: string): Promise<ValidationResult> {
     const response = await fetch('https://api.d-id.com/credits', {
       method: 'GET',
       headers: {
-        'Authorization': `Basic ${key}` // Assuming user provides the pre-encoded key or we might need to handle raw.
-        // If the user pastes "user:pass", we need to base64 it.
-        // If the user pastes the encoded string, we use it directly.
-        // Let's try to detect.
+        'Authorization': `Basic ${key}`
       }
     });
 
     // If Basic fails, try Bearer (some tiers)
     if (response.status === 401) {
-       // Retry logic or just fail? For simplicity, we'll implement robust logic in the API route if needed.
-       // For now, let's assume the user pastes the key as requested.
        return { valid: false, message: `Invalid key (Status: ${response.status})` };
     }
 
@@ -113,16 +95,12 @@ export async function validateDID(key: string): Promise<ValidationResult> {
 }
 
 /**
- * Validate Airtable PAT and Base ID
- * Endpoint: https://api.airtable.com/v0/meta/whoami (for PAT)
- * Endpoint: https://api.airtable.com/v0/{baseId}/{table} (to check base access)
- * Or just list bases if possible, but 'meta/bases' requires scopes.
- * Simplest check for Base ID: Try to list records from a known table or just check PAT first.
+ * Validate Airtable API Key
+ * Endpoint: https://api.airtable.com/v0/meta/whoami
  */
-export async function validateAirtable(key: string, baseId?: string): Promise<ValidationResult> {
+export async function validateAirtable(key: string): Promise<ValidationResult> {
   if (!key) return { valid: false, message: "Key is required" };
 
-  // 1. Validate PAT
   try {
     const response = await fetch('https://api.airtable.com/v0/meta/whoami', {
       method: 'GET',
@@ -131,22 +109,16 @@ export async function validateAirtable(key: string, baseId?: string): Promise<Va
       }
     });
 
-    if (response.status !== 200) {
-      return { valid: false, message: `Invalid Personal Access Token (Status: ${response.status})` };
+    if (response.status === 200) {
+      const data = await response.json();
+      return { valid: true, message: "Valid Airtable key", meta: { id: data.id, email: data.email } };
+    } else if (response.status === 403) {
+      return { valid: false, message: "Invalid Personal Access Token" };
+    } else {
+      return { valid: false, message: `Invalid key (Status: ${response.status})` };
     }
   } catch (error) {
     return { valid: false, message: `Network error validating PAT: ${error instanceof Error ? error.message : String(error)}` };
   }
-
-  // 2. Validate Base ID (if provided)
-  if (baseId) {
-    // We can't easily validate a Base ID without a table name unless we have 'schema.bases:read' scope.
-    // However, if we assume the standard table names from our schema (e.g. "Script", "Video"), we can try that.
-    // But for a generic check, we might just trust the ID if the PAT is valid, or try a lightweight call.
-    // Let's return valid for now if PAT is good, as Base ID is often copy-pasted.
-    // Optimization: We will validate Base ID connection in the actual app usage or if we have a known table.
-    return { valid: true, message: "Valid Airtable Token" };
-  }
-
-  return { valid: true, message: "Valid Airtable Token" };
 }
+

@@ -28,7 +28,11 @@ export function ProductCard({ product }: ProductCardProps) {
                   sizes="64px"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
+                <div
+                  className="flex h-full w-full items-center justify-center text-xs text-muted-foreground"
+                  role="img"
+                  aria-label="No product image available"
+                >
                   No Img
                 </div>
               )}
@@ -76,7 +80,7 @@ export function ProductCard({ product }: ProductCardProps) {
           </div>
           <div className="flex flex-col justify-center items-center sm:items-start pt-2 sm:pt-0">
              <div className="flex items-center gap-1 text-xs text-green-600 font-medium bg-green-50 px-2 py-1 rounded-full sm:bg-transparent sm:px-0 sm:py-0">
-               <TrendingUp className="h-3 w-3" />
+               <TrendingUp className="h-3 w-3" aria-hidden="true" />
                <span>High Velocity</span>
              </div>
           </div>

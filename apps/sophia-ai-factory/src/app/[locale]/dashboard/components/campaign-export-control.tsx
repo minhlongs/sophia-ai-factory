@@ -66,7 +66,7 @@ export function CampaignExportControl() {
         className="flex items-center gap-2"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <Download className="w-4 h-4" />
+        <Download className="w-4 h-4" aria-hidden="true" />
         {t('button')}
       </Button>
 
@@ -74,7 +74,7 @@ export function CampaignExportControl() {
         <div role="dialog" aria-label={t('title')} className="absolute right-0 top-12 z-50 w-80 bg-popover rounded-lg border border-border shadow-xl p-4 animate-in fade-in zoom-in-95 duration-200">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-medium text-popover-foreground flex items-center gap-2">
-              <Filter className="w-4 h-4" />
+              <Filter className="w-4 h-4" aria-hidden="true" />
               {t('title')}
             </h3>
             <button
@@ -82,7 +82,7 @@ export function CampaignExportControl() {
               className="text-muted-foreground hover:text-foreground"
               aria-label="Close export options"
             >
-              <X className="w-4 h-4" />
+              <X className="w-4 h-4" aria-hidden="true" />
             </button>
           </div>
 
@@ -137,7 +137,7 @@ export function CampaignExportControl() {
                 onClick={() => handleExport("json")}
                 disabled={isExporting}
               >
-                <FileJson className="w-4 h-4" />
+                <FileJson className="w-4 h-4" aria-hidden="true" />
                 JSON
               </Button>
               <Button
@@ -146,7 +146,7 @@ export function CampaignExportControl() {
                 onClick={() => handleExport("csv")}
                 disabled={isExporting}
               >
-                <FileSpreadsheet className="w-4 h-4" />
+                <FileSpreadsheet className="w-4 h-4" aria-hidden="true" />
                 CSV
               </Button>
             </div>

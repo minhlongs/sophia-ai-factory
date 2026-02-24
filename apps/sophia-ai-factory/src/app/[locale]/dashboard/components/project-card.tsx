@@ -31,7 +31,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
     try {
       await renderVideo(project.id);
       router.refresh();
-    } catch (error) {
+    } catch {
     } finally {
       setLoading(false);
     }
@@ -68,9 +68,9 @@ export function ProjectCard({ project }: ProjectCardProps) {
             disabled={loading}
           >
             {loading ? (
-              <Loader2 className="w-3 h-3 mr-2 animate-spin" />
+              <Loader2 className="w-3 h-3 mr-2 animate-spin" aria-hidden="true" />
             ) : (
-              <Video className="w-3 h-3 mr-2" />
+              <Video className="w-3 h-3 mr-2" aria-hidden="true" />
             )}
             Render Video
           </Button>
@@ -84,7 +84,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
             className="w-full"
           >
             <Button size="sm" className="w-full bg-green-600 hover:bg-green-700 text-white">
-              <Play className="w-3 h-3 mr-2" />
+              <Play className="w-3 h-3 mr-2" aria-hidden="true" />
               Watch Video
             </Button>
           </a>
@@ -92,7 +92,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
 
         {["draft", "video_queued", "voice_generating"].includes(project.status) && (
           <Button size="sm" variant="outline" className="w-full" disabled>
-            <RefreshCw className="w-3 h-3 mr-2 animate-spin" />
+            <RefreshCw className="w-3 h-3 mr-2 animate-spin" aria-hidden="true" />
             Processing
           </Button>
         )}

@@ -23,8 +23,8 @@ vi.mock('@/components/video-preview', () => ({
 // Returns a simple component matching VideoPreview mock interface.
 vi.mock('next/dynamic', () => ({
   __esModule: true,
-  default: (_loadFn: () => Promise<any>, _opts?: any) => {
-    return function DynamicVideoPreview(props: any) {
+  default: () => {
+    return function DynamicVideoPreview(props: { status: string }) {
       return <div data-testid="video-preview">{props.status}</div>;
     };
   },
@@ -120,9 +120,7 @@ describe('CampaignDetailPage', () => {
     };
     mockSingle.mockResolvedValue({ data: mockCampaign });
 
-    // Since Page is async, we await it.
-    // However, testing library's `render` expects a React Element.
-    // We can resolve the component first.
+    // Server component: resolve async, then render
     const Component = await Page({ params: Promise.resolve({ id: 'c1' }) });
 
     render(Component);

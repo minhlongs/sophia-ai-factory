@@ -18,10 +18,7 @@ export function UpgradeBanner({
   featureName,
   className = ""
 }: UpgradeBannerProps) {
-  // Don't show if user already has required tier (simple check)
-  // In practice, the parent component might handle this, but good to have a safety check logic if needed.
-  // However, tier hierarchy checking is better done with a helper.
-  // For now, we assume this component is rendered WHEN the user needs to upgrade.
+  // Parent component handles tier-gating; this renders when upgrade is needed
 
   const requiredName = TIER_CONFIGS[requiredTier].name;
   const upgradeLabel = requiredTier === "ENTERPRISE" ? "Contact Sales" : `Upgrade to ${requiredName}`;
@@ -32,7 +29,7 @@ export function UpgradeBanner({
       <CardContent className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-start gap-4">
           <div className="p-3 bg-background rounded-full shadow-sm">
-            <Lock className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            <Lock className="w-6 h-6 text-blue-600 dark:text-blue-400" aria-hidden="true" />
           </div>
           <div>
             <h3 className="font-semibold text-foreground flex items-center gap-2">
@@ -50,7 +47,7 @@ export function UpgradeBanner({
 
         <Button asChild className="whitespace-nowrap bg-blue-600 hover:bg-blue-700 text-white">
           <Link href={upgradeLink}>
-            {upgradeLabel} <ArrowRight className="w-4 h-4 ml-2" />
+            {upgradeLabel} <ArrowRight className="w-4 h-4 ml-2" aria-hidden="true" />
           </Link>
         </Button>
       </CardContent>

@@ -5,6 +5,17 @@ import { setupConfigSchema } from '@/lib/schemas';
 
 export async function POST(request: Request) {
   try {
+    // Guard: reject if app is already configured (prevent post-setup tampering)
+    const isConfigured =
+      process.env.NEXT_PUBLIC_IS_CONFIGURED === "true" ||
+      process.env.IS_CONFIGURED === "true";
+    if (isConfigured) {
+      return NextResponse.json(
+        { success: false, message: "App is already configured" },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
 
     // Validate with Zod
@@ -17,8 +28,8 @@ export async function POST(request: Request) {
     }
 
     const { config } = validation.data;
-    // Type assertion because validation guarantees config is Record<string, string>
-    const typedConfig = config as Record<string, string>;
+    // Spread to avoid mutating the original validated config object (delete on line 56 modifies in-place)
+    const typedConfig = { ...config } as Record<string, string>;
 
     // Construct env content
     let envContent = '';
@@ -68,33 +79,32 @@ export async function POST(request: Request) {
 
     // Check for Vercel environment
     if (process.env.VERCEL) {
+      // Return only key names, not values, for security
+      const keyNames = Object.keys(config as Record<string, string>);
       return NextResponse.json({
         success: false,
-        message: "Serverless environment detected (Vercel). Please download the .env file manually.",
-        envContent: envContent
+        message: "Serverless environment detected (Vercel). Please set these environment variables in your Vercel dashboard.",
+        requiredKeys: keyNames
       }, { status: 200 }); // Return 200 so we can handle the logic in UI without treating it as a crash
     }
 
     try {
       await fs.writeFile(envPath, envContent);
 
-      // Also set a marker that setup is done
-      // We can use a cookie or just rely on the existence of keys.
-      // Ideally, we add NEXT_PUBLIC_IS_CONFIGURED="true"
+      // Set configuration marker
       if (!envContent.includes('NEXT_PUBLIC_IS_CONFIGURED')) {
          await fs.appendFile(envPath, '\nNEXT_PUBLIC_IS_CONFIGURED="true"\n');
       }
 
       return NextResponse.json({ success: true, message: "Configuration saved" });
-    } catch (writeError) {
+    } catch {
       return NextResponse.json({
         success: false,
-        message: "Could not write to file system (likely read-only environment). Please download the .env file.",
-        envContent: envContent
-      }, { status: 500 }); // Status 500 triggers the UI to show manual download
+        message: "Could not write to file system (likely read-only environment). Please set environment variables manually.",
+      }, { status: 500 });
     }
 
-  } catch (error) {
+  } catch {
     return NextResponse.json({ success: false, message: "Internal server error" }, { status: 500 });
   }
 }

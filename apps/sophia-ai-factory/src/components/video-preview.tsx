@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,19 +21,8 @@ export function VideoPreview({
   status,
   progress = 0,
   errorMessage,
-  campaignId,
 }: VideoPreviewProps) {
   const [isPlaying, setIsPlaying] = useState(false);
-
-  // Poll for status if processing
-  useEffect(() => {
-    // In a real app, you might poll a campaign status endpoint here
-    // For now, we rely on parent updates or realtime subscriptions passed down via props
-
-    // Placeholder for future polling logic if needed
-    // const intervalId = setInterval(checkStatus, 5000);
-    // return () => clearInterval(intervalId);
-  }, [status, campaignId]);
 
   const isLoading = status === "processing_video" || status === "queued" || status === "processing_script";
   const isFailed = status === "failed";
@@ -48,7 +37,7 @@ export function VideoPreview({
       <Card className="w-full max-w-2xl mx-auto border-destructive/50">
         <CardHeader>
           <CardTitle className="flex items-center text-destructive">
-            <AlertCircle className="w-5 h-5 mr-2" />
+            <AlertCircle className="w-5 h-5 mr-2" aria-hidden="true" />
             Generation Failed
           </CardTitle>
           <CardDescription>
@@ -76,8 +65,12 @@ export function VideoPreview({
       </CardHeader>
       <CardContent className="p-0 relative aspect-video bg-black/5 group">
         {isLoading ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-muted/20 backdrop-blur-sm z-10">
-            <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
+          <div
+            className="absolute inset-0 flex flex-col items-center justify-center bg-muted/20 backdrop-blur-sm z-10"
+            role="status"
+            aria-live="polite"
+          >
+            <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" aria-hidden="true" />
             <p className="text-sm text-muted-foreground font-medium">
               {status === "processing_script" && "Writing script & generating voice..."}
               {status === "processing_video" && "Rendering video avatar..."}
@@ -105,8 +98,10 @@ export function VideoPreview({
               src={videoUrl}
               controls
               autoPlay
+              preload="metadata"
               className="w-full h-full object-cover"
               poster={thumbnailUrl || undefined}
+              aria-label="AI-generated video preview"
             />
           ) : (
             <div className="relative w-full h-full">
@@ -115,6 +110,7 @@ export function VideoPreview({
                   src={thumbnailUrl}
                   alt="Video thumbnail"
                   fill
+                  sizes="(max-width: 672px) 100vw, 672px"
                   className="object-cover"
                 />
               )}
@@ -142,7 +138,7 @@ export function VideoPreview({
         <div className="p-4 flex justify-end border-t border-border bg-muted/10">
           <Button variant="outline" size="sm" asChild>
             <a href={videoUrl} download target="_blank" rel="noopener noreferrer">
-              <Download className="w-4 h-4 mr-2" />
+              <Download className="w-4 h-4 mr-2" aria-hidden="true" />
               Download Video
             </a>
           </Button>

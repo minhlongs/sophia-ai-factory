@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -36,7 +37,8 @@ export default function SettingsPage() {
       </Card>
 
       {/* Integrations Link */}
-      <Card glass className="mb-6 bg-card border-border hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => window.location.href = '/admin/settings/integrations'}>
+      <Link href="/admin/settings/integrations" className="block mb-6">
+        <Card glass className="bg-card border-border hover:bg-muted/50 transition-colors cursor-pointer">
         <CardHeader>
           <CardTitle className="flex justify-between items-center text-foreground">
             <span>Affiliate Integrations</span>
@@ -49,6 +51,7 @@ export default function SettingsPage() {
           </p>
         </CardContent>
       </Card>
+      </Link>
 
       {/* API Keys (Mock) */}
       <Card glass className="mb-6 bg-card border-border">
@@ -58,10 +61,11 @@ export default function SettingsPage() {
         <CardContent>
           <div className="space-y-4">
             <div>
-              <label className="text-sm text-muted-foreground mb-2 block">
+              <label htmlFor="admin-username" className="text-sm text-muted-foreground mb-2 block">
                 Admin Username
               </label>
               <input
+                id="admin-username"
                 type="text"
                 value={process.env.NEXT_PUBLIC_ADMIN_USER || "admin"}
                 disabled
@@ -69,10 +73,10 @@ export default function SettingsPage() {
               />
             </div>
             <div>
-              <label className="text-sm text-muted-foreground mb-2 block">
+              <label htmlFor="mock-tier" className="text-sm text-muted-foreground mb-2 block">
                 Mock Tier Override
               </label>
-              <select className="w-full px-4 py-2 bg-muted border border-input rounded-lg text-foreground">
+              <select id="mock-tier" className="w-full px-4 py-2 bg-muted border border-input rounded-lg text-foreground">
                 <option value="BASIC">BASIC</option>
                 <option value="PREMIUM">PREMIUM</option>
                 <option value="ENTERPRISE" selected>ENTERPRISE</option>

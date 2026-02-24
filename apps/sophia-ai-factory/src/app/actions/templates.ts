@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use server";
 
 import { createServerClient } from "@/lib/supabase/server";
@@ -6,9 +5,8 @@ import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { tierGuard } from "@/lib/tier-guard";
-import { CampaignCategory } from "@/lib/templates/campaign-templates";
 
-const createTemplateSchema = z.object({
+export const createTemplateSchema = z.object({
   name: z.string().min(1).max(50),
   description: z.string().min(1).max(200),
   category: z.enum(["welcome", "product", "seasonal", "promotion", "viral"]),
@@ -100,7 +98,7 @@ export async function createTemplate(data: z.infer<typeof createTemplateSchema>)
 
     revalidatePath("/dashboard/templates");
     return { success: true, message: "Template created successfully" };
-  } catch (err) {
+  } catch {
     return { success: false, message: "Internal server error" };
   }
 }

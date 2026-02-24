@@ -21,20 +21,11 @@ export async function exportCampaigns(
     data: { session },
   } = await supabase.auth.getSession();
 
-  // In development, we might not have a session if using the fallback logic seen in other files.
-  // However, for export, let's enforce auth or handle the dev fallback similar to campaigns.ts if needed.
-  // Looking at campaigns.ts, it has a dev fallback. Let's replicate strict auth for now, as exports are usually protected.
-  // If no user, we return unauthorized.
-
+  // Enforce auth for exports
   const userId = session?.user?.id;
 
   if (!userId) {
      if (process.env.NODE_ENV === 'development') {
-         // Dev fallback logic similar to campaigns.ts could go here if needed,
-         // but strictly, exports should probably require a real user context or be skipped in pure dev without auth.
-         // Let's stick to returning unauthorized for safety unless we really need it.
-         // Actually, to make it testable in dev without auth setup, let's check if we can get a user from admin list like campaigns.ts
-         // But for now, let's return error.
          return { success: false, message: "Unauthorized. Please sign in." };
      }
      return { success: false, message: "Unauthorized" };

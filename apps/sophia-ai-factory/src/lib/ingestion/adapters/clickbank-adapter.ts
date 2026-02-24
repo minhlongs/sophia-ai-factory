@@ -13,13 +13,6 @@ export class ClickbankAdapter extends BaseAdapter {
   }
 
   async fetchProducts(): Promise<RawProduct[]> {
-
-    // In a real scenario, we would fetch the ZIP file.
-    // For MVP/Demo without real credentials/proxy, we might need to mock or handle the download.
-    // Assuming we can fetch it (it's often public or requires simple auth).
-    // Actually, ClickBank marketplace feed v2 usually requires no auth for the public feed,
-    // or we might need a specific URL pattern.
-
     try {
       const response = await fetch(this.feedUrl)
       if (!response.ok) {
@@ -85,7 +78,7 @@ export class ClickbankAdapter extends BaseAdapter {
 
       return products
 
-    } catch (error) {
+    } catch {
       // For development fallback if feed fails (likely due to CORS or network in this env)
       if (process.env.NODE_ENV === 'development') {
         return this.getMockData()

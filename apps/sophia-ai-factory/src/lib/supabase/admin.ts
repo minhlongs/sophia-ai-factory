@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { Database } from "./types";
 
 /**
  * Creates a Supabase client with admin/service-role privileges.
@@ -12,7 +13,7 @@ export function createAdminClient() {
     throw new Error("Missing required environment variables: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY");
   }
 
-  return createClient(
+  return createClient<Database>(
     supabaseUrl,
     serviceRoleKey,
     {

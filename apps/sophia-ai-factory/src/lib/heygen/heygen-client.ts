@@ -52,25 +52,17 @@ export class HeyGenClient {
   async listAvatars(): Promise<HeyGenAvatar[]> {
     try {
       const data = await this.request("/avatars");
-      // Map the response to our interface. Adjust based on actual API response structure
-      // Note: HeyGen API response structure might vary, this is a best-effort mapping
-      // assuming standard response wrapper { data: { avatars: [...] } } or similar
-      return data.data.avatars || data.data || [];
-    } catch (error) {
+      return data?.data?.avatars || data?.data || [];
+    } catch {
       return [];
     }
   }
 
   async listVoices(): Promise<HeyGenVoice[]> {
     try {
-      // Note: HeyGen might not have a direct v2/voices endpoint documented publicly in the same way,
-      // usually voices are part of ElevenLabs or other integrations, but HeyGen has its own voices too.
-      // We'll assume a standard endpoint or fall back to a hardcoded list if needed for v2.
-      // For now, let's try a common pattern or return empty if not found.
-      // Actually, typically you get voices via /voices or similar.
       const data = await this.request("/voices");
-      return data.data.voices || data.data || [];
-    } catch (error) {
+      return data?.data?.voices || data?.data || [];
+    } catch {
       return [];
     }
   }
@@ -108,7 +100,11 @@ export class HeyGenClient {
       body: JSON.stringify(body),
     });
 
-    return data.data.video_id;
+    const videoId = data?.data?.video_id;
+    if (!videoId) {
+      throw new Error(`HeyGen API: missing video_id in response`);
+    }
+    return videoId;
   }
 
   async getVideoStatus(videoId: string): Promise<HeyGenVideoStatus> {

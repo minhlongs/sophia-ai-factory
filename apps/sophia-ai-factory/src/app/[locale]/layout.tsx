@@ -1,24 +1,30 @@
 import type { Metadata, Viewport } from "next";
+import dynamic from "next/dynamic";
 import { Geist, Geist_Mono } from "next/font/google";
 import "../globals.css";
 import { Navbar } from "@/app/components/layout/navbar";
 import { QueryProvider } from "@/components/providers/query-provider";
 
 import { ThemeProvider } from "@/components/providers/theme-provider";
-import { Toaster } from "sonner";
 import { MockModeIndicator } from "@/components/dev/mock-mode-indicator";
-import { FloatingHelpButton } from "@/components/guide/floating-help-button";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 
+const Toaster = dynamic(
+  () => import("sonner").then(m => ({ default: m.Toaster }))
+);
+const FloatingHelpButton = dynamic(
+  () => import("@/components/guide/floating-help-button").then(m => ({ default: m.FloatingHelpButton }))
+);
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
 });
 
 export const metadata: Metadata = {
@@ -78,6 +84,10 @@ export default async function RootLayout({
 
   return (
     <html lang={locale}>
+      <head>
+        <link rel="preconnect" href="https://api.polar.sh" />
+        <link rel="dns-prefetch" href="https://api.polar.sh" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

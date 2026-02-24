@@ -56,10 +56,11 @@ export function ProgramGrid({ programs, showAll = true }: ProgramGridProps) {
       <div className="mb-8 flex flex-col md:flex-row gap-4">
         {/* Search */}
         <div className="flex-1 relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" aria-hidden="true" />
           <input
             type="text"
             placeholder="Search programs..."
+            aria-label="Search affiliate programs"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-12 pr-4 py-3 bg-card border border-input rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
@@ -68,8 +69,9 @@ export function ProgramGrid({ programs, showAll = true }: ProgramGridProps) {
 
         {/* Sort */}
         <div className="relative">
-          <SlidersHorizontal className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+          <SlidersHorizontal className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" aria-hidden="true" />
           <select
+            aria-label="Sort programs"
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortOption)}
             className="w-full md:w-auto pl-12 pr-8 py-3 bg-card border border-input rounded-lg text-foreground focus:outline-none focus:border-primary transition-colors appearance-none cursor-pointer md:min-w-[200px]"

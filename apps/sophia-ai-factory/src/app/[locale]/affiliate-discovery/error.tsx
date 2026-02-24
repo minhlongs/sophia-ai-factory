@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 
 export default function AffiliateDiscoveryError({
-  error,
   reset,
 }: {
   error: Error & { digest?: string };

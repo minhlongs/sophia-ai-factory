@@ -140,10 +140,15 @@ describe('Validation Services', () => {
     it('returns valid for successful PAT check', async () => {
       globalFetch.mockResolvedValueOnce({
         status: 200,
+        json: async () => ({ id: 'usr123', email: 'test@airtable.com' }),
       } as Response);
 
       const result = await validateAirtable('valid-pat');
-      expect(result).toEqual({ valid: true, message: 'Valid Airtable Token' });
+      expect(result).toEqual({
+        valid: true,
+        message: 'Valid Airtable key',
+        meta: { id: 'usr123', email: 'test@airtable.com' }
+      });
     });
 
     it('returns invalid for failed PAT check', async () => {
@@ -179,10 +184,15 @@ describe('Validation Services', () => {
         // Mock success for PAT check
         globalFetch.mockResolvedValueOnce({
           status: 200,
+          json: async () => ({ id: 'usr123', email: 'test@airtable.com' }),
         } as Response);
 
-        const result = await validateAirtable('valid-pat', 'base-id');
-        expect(result).toEqual({ valid: true, message: 'Valid Airtable Token' });
+        const result = await validateAirtable('valid-pat');
+        expect(result).toEqual({
+          valid: true,
+          message: 'Valid Airtable key',
+          meta: { id: 'usr123', email: 'test@airtable.com' }
+        });
     });
   });
 });

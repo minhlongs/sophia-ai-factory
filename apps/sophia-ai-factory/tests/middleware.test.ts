@@ -1,12 +1,23 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { middleware } from '../src/middleware';
+
+// Mock @upstash/redis
+vi.mock('@upstash/redis', () => ({
+  Redis: class Redis {
+    constructor() {}
+    get = vi.fn()
+    set = vi.fn()
+    incr = vi.fn()
+    expire = vi.fn()
+  },
+}));
 
 // Mock next-intl
 vi.mock('next-intl/middleware', async () => {
   const { NextResponse } = await import('next/server');
   return {
-    default: vi.fn(() => (req: any) => NextResponse.next()),
+    default: vi.fn(() => () => NextResponse.next()),
   };
 });
 

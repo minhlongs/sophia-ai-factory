@@ -20,7 +20,7 @@ export const updateCampaignStatusSchema = z.object({
   ]),
   progress: z.number().min(0).max(100).optional(),
   error_message: z.string().optional(),
-  script_content: z.record(z.string(), z.any()).optional(),
+  script_content: z.record(z.string(), z.unknown()).optional(),
   video_url: z.string().url().optional(),
   thumbnail_url: z.string().url().optional(),
 });

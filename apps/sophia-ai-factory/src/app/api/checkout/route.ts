@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.redirect(checkout.url);
-  } catch (error) {
+  } catch {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network';
     return NextResponse.redirect(`${appUrl}/pricing`);
   }
@@ -83,8 +83,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const headersList = request.headers;
-    const origin = headersList.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network';
+    const origin = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network';
 
     // Get user from Supabase auth to pre-fill email if logged in
     const supabase = await createClient();

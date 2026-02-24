@@ -18,13 +18,13 @@ import type { HealthResponse, ServiceHealth } from '@/types/health';
 
 const ServiceIcon = ({ name }: { name: string }) => {
   switch (name) {
-    case 'supabase': return <Database className="w-6 h-6" />;
-    case 'inngest': return <Activity className="w-6 h-6" />;
-    case 'openrouter': return <Cpu className="w-6 h-6" />; // AI
-    case 'elevenlabs': return <Mic className="w-6 h-6" />;
-    case 'heygen': return <Video className="w-6 h-6" />;
-    case 'telegram': return <Send className="w-6 h-6" />;
-    default: return <Cloud className="w-6 h-6" />;
+    case 'supabase': return <Database className="w-6 h-6" aria-hidden="true" />;
+    case 'inngest': return <Activity className="w-6 h-6" aria-hidden="true" />;
+    case 'openrouter': return <Cpu className="w-6 h-6" aria-hidden="true" />;
+    case 'elevenlabs': return <Mic className="w-6 h-6" aria-hidden="true" />;
+    case 'heygen': return <Video className="w-6 h-6" aria-hidden="true" />;
+    case 'telegram': return <Send className="w-6 h-6" aria-hidden="true" />;
+    default: return <Cloud className="w-6 h-6" aria-hidden="true" />;
   }
 };
 
@@ -71,7 +71,9 @@ export default function SystemHealthPage() {
   if (isLoading) {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" role="status" aria-label="Loading system health">
+          <span className="sr-only">Loading...</span>
+        </div>
       </div>
     );
   }

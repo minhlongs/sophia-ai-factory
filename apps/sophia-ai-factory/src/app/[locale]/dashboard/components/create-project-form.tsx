@@ -49,7 +49,7 @@ export function CreateProjectForm() {
       } else {
         setError(result.message || "Something went wrong");
       }
-    } catch (err) {
+    } catch {
       setError("Failed to create campaign");
     } finally {
       setLoading(false);
@@ -117,12 +117,12 @@ export function CreateProjectForm() {
         >
           {loading ? (
             <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" />
               Generating...
             </>
           ) : (
             <>
-              <Sparkles className="w-4 h-4 mr-2" />
+              <Sparkles className="w-4 h-4 mr-2" aria-hidden="true" />
               Generate Script
             </>
           )}

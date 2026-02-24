@@ -11,12 +11,6 @@ export const DEFAULTS = {
   APP_NAME: "Sophia AI Factory",
   LOCALE: "en-US",
 
-  // Airtable Table Names (Must match schema)
-  TABLE_SCRIPTS: "Scripts",
-  TABLE_VIDEOS: "Videos",
-  TABLE_SOCIAL_POSTS: "SocialPosts",
-
   // External Links
-  AIRTABLE_TEMPLATE_URL: "https://airtable.com/appDUMMY/shrDUMMY", // To be replaced with real template link
   N8N_WORKFLOW_TEMPLATE: "https://n8n.io/workflows/dummy" // To be replaced
 };

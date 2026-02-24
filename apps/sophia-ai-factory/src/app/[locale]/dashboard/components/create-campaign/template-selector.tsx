@@ -24,6 +24,7 @@ export function TemplateSelector({ templates, selectedTemplateId, onSelect }: Te
             key={template.id}
             type="button"
             onClick={() => onSelect(template)}
+            aria-pressed={selectedTemplateId === template.id}
             className={`relative p-4 border-2 rounded-lg text-left transition-all hover:shadow-md ${
               selectedTemplateId === template.id
                 ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-700"
@@ -32,7 +33,7 @@ export function TemplateSelector({ templates, selectedTemplateId, onSelect }: Te
           >
             {selectedTemplateId === template.id && (
               <div className="absolute top-2 right-2">
-                <Check className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                <Check className="w-5 h-5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
               </div>
             )}
 

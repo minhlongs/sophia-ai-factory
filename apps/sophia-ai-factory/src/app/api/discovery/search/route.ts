@@ -14,9 +14,7 @@ export async function GET(request: Request) {
 
     if (error) throw error
 
-    // Filter sensitive fields for public API (if RLS doesn't already)
-    // For now, we return what sophiaIndex returns, which is currently `*`.
-    // In a real app, we might map this to a DTO to exclude affiliate_link.
+    // Filter sensitive fields from public API response
     const safeData = data?.map((item: Record<string, unknown>) => ({
       ...item,
       affiliate_link: undefined, // Hide link in search results
@@ -24,9 +22,9 @@ export async function GET(request: Request) {
     }))
 
     return NextResponse.json({ data: safeData })
-  } catch (error) {
+  } catch {
     return NextResponse.json(
-      { error: 'Search failed', details: (error as Error).message },
+      { error: 'Search failed' },
       { status: 500 }
     )
   }

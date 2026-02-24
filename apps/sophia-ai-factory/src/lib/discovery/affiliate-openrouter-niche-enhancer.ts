@@ -55,7 +55,7 @@ export async function enhanceNicheScoreWithAI(
     const content = data.choices?.[0]?.message?.content?.trim() ?? "";
     const score = parseInt(content, 10);
     return Number.isFinite(score) ? Math.min(Math.max(score, 0), 100) : null;
-  } catch (err) {
+  } catch {
     return null;
   }
 }

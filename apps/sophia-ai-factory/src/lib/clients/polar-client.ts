@@ -34,10 +34,14 @@ export const getPolarClient = (): Polar => {
  */
 export const polarHelpers = {
   /**
-   * Verify webhook signature
+   * Verify webhook signature using standardwebhooks library.
+   * Note: The main webhook route (/api/webhooks/polar) handles verification directly.
+   * This helper exists for use by other callers if needed.
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  verifyWebhook: async (_payload: string, _signature: string): Promise<boolean> => {
+  verifyWebhook: async (
+    payload: string,
+    headers: { 'webhook-id': string; 'webhook-timestamp': string; 'webhook-signature': string }
+  ): Promise<boolean> => {
     const secret = process.env.POLAR_WEBHOOK_SECRET;
     if (!secret) {
       logger.error('POLAR_WEBHOOK_SECRET not configured');
@@ -45,11 +49,12 @@ export const polarHelpers = {
     }
 
     try {
-      // Webhook verification logic will be implemented based on Polar.sh docs
-      // For now, this is a placeholder
+      const { Webhook } = await import('standardwebhooks');
+      const wh = new Webhook(secret);
+      wh.verify(payload, headers);
       return true;
     } catch (error) {
-      logger.error('Webhook verification failed', error as Error);
+      logger.error('Webhook verification failed', error instanceof Error ? error : new Error(String(error)));
       return false;
     }
   },

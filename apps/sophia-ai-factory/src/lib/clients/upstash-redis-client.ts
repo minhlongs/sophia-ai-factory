@@ -13,8 +13,20 @@ export const getRedisClient = (): Redis => {
     return redisInstance;
   }
 
-  const url = process.env.UPSTASH_REDIS_REST_URL || 'https://dummy-url.upstash.io';
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN || 'dummy_token';
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+  if (!url || !token) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('Redis: UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN must be set in production');
+    }
+    // Dev/build fallback — dummy client that will fail at runtime, not at import
+    redisInstance = new Redis({
+      url: 'https://dummy-url.upstash.io',
+      token: 'dummy_token',
+    });
+    return redisInstance;
+  }
 
   redisInstance = new Redis({
     url: url.trim(),
