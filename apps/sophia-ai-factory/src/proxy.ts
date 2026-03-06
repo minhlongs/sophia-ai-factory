@@ -4,6 +4,7 @@ import createMiddleware from "next-intl/middleware";
 import { createServerClient } from "@supabase/ssr";
 import { applyCorsHeaders, handleCorsPrelight } from "./lib/security/cors-security-configuration";
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS } from "./lib/security/rate-limiting-middleware";
+import { raasGate, shouldApplyRaasGate } from "./lib/raas-gate";
 
 const intlMiddleware = createMiddleware({
   locales: ["en", "vi"],
@@ -91,6 +92,14 @@ export async function proxy(request: NextRequest) {
           },
         }
       );
+    }
+
+    // RaaS License Gate - Apply after rate limiting
+    if (shouldApplyRaasGate(pathname)) {
+      const raasResult = await raasGate(request);
+      if (!raasResult.valid && raasResult.response) {
+        return raasResult.response;
+      }
     }
   }
 
