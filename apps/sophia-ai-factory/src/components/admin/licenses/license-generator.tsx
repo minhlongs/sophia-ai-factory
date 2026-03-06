@@ -68,6 +68,8 @@ const TIERS: TierInfo[] = [
 export function LicenseGenerator({ onLicenseCreated }: LicenseGeneratorProps) {
   const [tier, setTier] = useState<string>('premium');
   const [expiresAt, setExpiresAt] = useState<string>('');
+  const [durationDays, setDurationDays] = useState<string>('365');
+  const [customerEmail, setCustomerEmail] = useState<string>('');
   const [metadata, setMetadata] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{
@@ -76,14 +78,38 @@ export function LicenseGenerator({ onLicenseCreated }: LicenseGeneratorProps) {
     license?: LicenseSummary;
   } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [emailError, setEmailError] = useState<string>('');
 
   const selectedTier = TIERS.find(t => t.value === tier);
 
+  const validateEmail = (email: string): boolean => {
+    if (!email) return true; // Email is optional
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const handleDurationChange = (days: string) => {
+    setDurationDays(days);
+    if (days) {
+      const date = new Date();
+      date.setDate(date.getDate() + parseInt(days, 10));
+      setExpiresAt(date.toISOString().slice(0, 16));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setEmailError('');
     setLoading(true);
     setResult(null);
     setCopied(false);
+
+    // Validate email if provided
+    if (customerEmail && !validateEmail(customerEmail)) {
+      setEmailError('Invalid email format');
+      setLoading(false);
+      return;
+    }
 
     try {
       const body: Record<string, unknown> = { tier };
@@ -93,12 +119,24 @@ export function LicenseGenerator({ onLicenseCreated }: LicenseGeneratorProps) {
         body.expiresAt = Math.floor(new Date(expiresAt).getTime() / 1000);
       }
 
+      // Build metadata with customer email
+      const finalMetadata: Record<string, unknown> = {};
+
+      if (customerEmail) {
+        finalMetadata.customer_email = customerEmail;
+      }
+
       if (metadata.trim()) {
         try {
-          body.metadata = JSON.parse(metadata);
+          const parsed = JSON.parse(metadata);
+          Object.assign(finalMetadata, parsed);
         } catch {
-          body.metadata = { notes: metadata };
+          finalMetadata.notes = metadata;
         }
+      }
+
+      if (Object.keys(finalMetadata).length > 0) {
+        body.metadata = finalMetadata;
       }
 
       const response = await fetch('/api/admin/licenses/create', {
@@ -143,6 +181,24 @@ export function LicenseGenerator({ onLicenseCreated }: LicenseGeneratorProps) {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Customer Email */}
+          <div>
+            <Label className="text-foreground">Customer Email (optional)</Label>
+            <Input
+              type="email"
+              placeholder="customer@example.com"
+              value={customerEmail}
+              onChange={(e) => setCustomerEmail(e.target.value)}
+              className="bg-muted border-border text-foreground mt-1"
+            />
+            {emailError && (
+              <p className="text-xs text-red-400 mt-1">{emailError}</p>
+            )}
+            <p className="text-xs text-muted-foreground mt-1">
+              Email address to associate with this license
+            </p>
+          </div>
+
           {/* Tier Selection */}
           <div>
             <Label className="text-foreground">Subscription Tier</Label>
@@ -167,22 +223,42 @@ export function LicenseGenerator({ onLicenseCreated }: LicenseGeneratorProps) {
 
           {/* Expiration Date (ẩn với Master tier) */}
           {tier !== 'master' && (
-            <div>
-              <Label className="text-foreground flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
-                Expiration Date
-              </Label>
-              <Input
-                type="datetime-local"
-                value={expiresAt}
-                onChange={(e) => setExpiresAt(e.target.value)}
-                className="bg-muted border-border text-foreground mt-1"
-                min={new Date().toISOString().slice(0, 16)}
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Leave empty for default (1 year from now)
-              </p>
-            </div>
+            <>
+              <div>
+                <Label className="text-foreground flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  Expiration Date
+                </Label>
+                <Input
+                  type="datetime-local"
+                  value={expiresAt}
+                  onChange={(e) => setExpiresAt(e.target.value)}
+                  className="bg-muted border-border text-foreground mt-1"
+                  min={new Date().toISOString().slice(0, 16)}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Leave empty for default (1 year from now)
+                </p>
+              </div>
+
+              {/* Duration Quick Select */}
+              <div>
+                <Label className="text-foreground">Duration (days)</Label>
+                <Select value={durationDays} onValueChange={handleDurationChange}>
+                  <SelectTrigger className="bg-muted border-border text-foreground mt-1">
+                    <SelectValue placeholder="Select duration" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="30">30 days</SelectItem>
+                    <SelectItem value="90">90 days</SelectItem>
+                    <SelectItem value="180">180 days</SelectItem>
+                    <SelectItem value="365">365 days (1 year)</SelectItem>
+                    <SelectItem value="730">730 days (2 years)</SelectItem>
+                    <SelectItem value="0">Custom (use date picker above)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </>
           )}
 
           {/* Metadata (optional) */}

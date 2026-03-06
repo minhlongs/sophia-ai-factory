@@ -32,8 +32,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Key, Search, Filter, MoreHorizontal, Eye, Ban, RefreshCw, RotateCcw } from 'lucide-react';
+import { Key, Search, Filter, MoreHorizontal, Eye, Ban, RefreshCw, RotateCcw, CheckCircle } from 'lucide-react';
 import { LicenseRegenerateDialog } from './license-regenerate-dialog';
+import type { LicenseSummary } from '@/lib/raas-schema';
 
 interface License {
   id: string;
@@ -43,6 +44,7 @@ interface License {
   isRevoked: boolean;
   revokedAt?: number;
   validateCount: number;
+  customerEmail?: string;
 }
 
 interface LicenseListProps {
@@ -91,7 +93,12 @@ export function LicenseList({ onRevoke, onView, onRegenerate }: LicenseListProps
       const data = await response.json();
 
       if (response.ok) {
-        setLicenses(data.licenses);
+        // Extract customerEmail from metadata for each license
+        const licensesWithEmail = data.licenses.map((lic: LicenseSummary) => ({
+          ...lic,
+          customerEmail: (lic.metadata as { customer_email?: string })?.customer_email,
+        }));
+        setLicenses(licensesWithEmail);
         setTotal(data.total);
       }
     } catch (error) {
@@ -154,6 +161,25 @@ export function LicenseList({ onRevoke, onView, onRegenerate }: LicenseListProps
     onRegenerate?.(data);
   };
 
+  const handleReactivate = async (id: string) => {
+    if (!confirm(`Are you sure you want to reactivate license ${id}?`)) return;
+
+    try {
+      const response = await fetch(`/api/admin/licenses/${id}/reactivate`, {
+        method: 'POST',
+      });
+
+      if (response.ok) {
+        await fetchLicenses();
+      } else {
+        const data = await response.json();
+        alert(`Failed to reactivate: ${data.error}`);
+      }
+    } catch (error) {
+      console.error('Failed to reactivate license:', error);
+    }
+  };
+
   return (
     <Card className="bg-card border-border shadow-sm">
       <CardHeader>
@@ -214,6 +240,7 @@ export function LicenseList({ onRevoke, onView, onRegenerate }: LicenseListProps
             <TableHeader>
               <TableRow className="border-border">
                 <TableHead className="text-muted-foreground">ID</TableHead>
+                <TableHead className="text-muted-foreground">Customer Email</TableHead>
                 <TableHead className="text-muted-foreground">Tier</TableHead>
                 <TableHead className="text-muted-foreground">Status</TableHead>
                 <TableHead className="text-muted-foreground">Created</TableHead>
@@ -225,13 +252,13 @@ export function LicenseList({ onRevoke, onView, onRegenerate }: LicenseListProps
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                     Loading...
                   </TableCell>
                 </TableRow>
               ) : licenses.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                     No licenses found
                   </TableCell>
                 </TableRow>
@@ -242,6 +269,11 @@ export function LicenseList({ onRevoke, onView, onRegenerate }: LicenseListProps
                     <TableRow key={license.id} className="border-border">
                       <TableCell className="font-mono text-xs text-[var(--neon-cyan)]">
                         {license.id.slice(0, 8)}...
+                      </TableCell>
+                      <TableCell className="text-sm text-foreground">
+                        {license.customerEmail || (
+                          <span className="text-muted-foreground italic">No email</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Badge className={TIER_COLORS[license.tier]} variant="outline">
@@ -280,7 +312,15 @@ export function LicenseList({ onRevoke, onView, onRegenerate }: LicenseListProps
                               <RotateCcw className="w-4 h-4 mr-2" />
                               Regenerate
                             </DropdownMenuItem>
-                            {!license.isRevoked && (
+                            {license.isRevoked ? (
+                              <DropdownMenuItem
+                                onClick={() => handleReactivate(license.id)}
+                                className="text-green-400"
+                              >
+                                <CheckCircle className="w-4 h-4 mr-2" />
+                                Reactivate
+                              </DropdownMenuItem>
+                            ) : (
                               <DropdownMenuItem
                                 onClick={() => handleRevoke(license.id)}
                                 className="text-red-400"

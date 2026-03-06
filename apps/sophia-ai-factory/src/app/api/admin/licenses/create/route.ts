@@ -10,12 +10,23 @@ import { checkAdminAuth } from '../middleware'
 import { logger } from '@/lib/utils/logger-utility'
 import { Tier, TierLowercase } from '@/types'
 import { createHash } from 'crypto'
+import { z } from 'zod'
 
 const VALID_TIERS: Tier[] = ['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER']
 
 /**
+ * Request body validation schema
+ */
+const createLicenseSchema = z.object({
+  tier: z.string().min(1),
+  expiresAt: z.number().positive().optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
+  customerEmail: z.string().email().optional()
+})
+
+/**
  * POST /api/admin/licenses/create
- * Body: { tier: string, expiresAt?: number (timestamp), metadata?: object }
+ * Body: { tier: string, expiresAt?: number (timestamp), metadata?: object, customerEmail?: string }
  */
 export async function POST(request: NextRequest) {
   // Check admin authentication
@@ -24,7 +35,10 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { tier, expiresAt, metadata = {} } = body
+
+    // Validate request body
+    const validated = createLicenseSchema.parse(body)
+    const { tier, expiresAt, metadata = {}, customerEmail } = validated
 
     // Validate tier
     if (!tier || !VALID_TIERS.includes(tier.toUpperCase() as Tier)) {
@@ -80,6 +94,13 @@ export async function POST(request: NextRequest) {
     // Create SHA256 hash of full key for secure storage
     const keyHash = createHash('sha256').update(fullKey).digest('hex')
 
+    // Build metadata with customer email
+    const finalMetadata: Record<string, unknown> = { ...metadata };
+
+    if (customerEmail) {
+      finalMetadata.customer_email = customerEmail;
+    }
+
     // Store license in Supabase
     const license = await createLicense({
       tier: tierUpper,
@@ -87,7 +108,7 @@ export async function POST(request: NextRequest) {
       keyHash,
       expiresAt: timestamp,
       createdBy: 'admin',
-      metadata
+      metadata: finalMetadata
     })
 
     // Log audit trail
