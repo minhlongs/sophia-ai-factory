@@ -1,9 +1,15 @@
 import { Tier } from "@/types";
+import { trackUsage, hashLicenseKey, calculateCredits, startTimer } from '@/lib/usage-metering';
+import { getUsageContext } from '@/lib/usage-metering/context';
+import { logger } from '@/lib/utils/logger-utility';
 
 interface GenerateScriptInput {
   topic: string;
   audience: string;
   tier: Tier;
+  userId?: string;
+  licenseKey?: string;
+  licenseNonce?: string;
 }
 
 interface ScriptOutput {
@@ -22,12 +28,34 @@ interface ScriptOutput {
  * Falls back to mock if API key is not configured.
  */
 export async function generateScript(input: GenerateScriptInput): Promise<ScriptOutput> {
-  const { topic, audience, tier } = input;
+  const { topic, audience, tier, userId, licenseKey, licenseNonce } = input;
   const apiKey = process.env.OPENROUTER_API_KEY;
+  const stopTimer = startTimer();
+
+  // Get context if available (from async local storage)
+  const context = getUsageContext();
+  const finalUserId = userId || context?.userId || 'unknown';
+  const finalLicenseKey = licenseKey || '';
+  const finalLicenseNonce = licenseNonce || context?.licenseNonce || 'unknown';
+  const licenseKeyHash = hashLicenseKey(finalLicenseKey || 'unknown');
 
   // Fallback to mock if no API key
   if (!apiKey) {
-    return generateMockScript(topic, audience);
+    const mockResult = generateMockScript(topic, audience);
+    // Track mock usage
+    await trackUsage({
+      userId: finalUserId,
+      licenseKeyHash: 'mock',
+      licenseNonce: finalLicenseNonce,
+      service: 'openrouter',
+      endpoint: '/mock',
+      action: 'chat_completion_mock',
+      creditsUsed: 1,
+      tierAtRequest: tier,
+      statusCode: 200,
+      responseTimeMs: stopTimer(),
+    });
+    return mockResult;
   }
 
   try {
@@ -76,8 +104,24 @@ Return ONLY valid JSON in this exact format:
       })
     });
 
+    const responseTime = stopTimer();
+
     if (!response.ok) {
-      await response.text();
+      const errorText = await response.text();
+      // Track failed usage
+      await trackUsage({
+        userId: finalUserId,
+        licenseKeyHash: licenseKeyHash,
+        licenseNonce: finalLicenseNonce,
+        service: 'openrouter',
+        endpoint: '/chat/completions',
+        action: 'chat_completion',
+        tierAtRequest: tier,
+        statusCode: response.status,
+        errorMessage: errorText,
+        responseTimeMs: responseTime,
+        creditsUsed: 0, // Failed call, no credits charged
+      });
       throw new Error(`OpenRouter API failed: ${response.status}`);
     }
 
@@ -95,9 +139,45 @@ Return ONLY valid JSON in this exact format:
       throw new Error('Invalid script format from API');
     }
 
+    // Extract token usage from OpenRouter response
+    const usage = data.usage;
+    const tokensTotal = (usage?.prompt_tokens ?? 0) + (usage?.completion_tokens ?? 0);
+
+    // Track successful usage
+    await trackUsage({
+      userId: finalUserId,
+      licenseKeyHash: licenseKeyHash,
+      licenseNonce: finalLicenseNonce,
+      service: 'openrouter',
+      endpoint: '/chat/completions',
+      action: 'chat_completion',
+      tokensInput: usage?.prompt_tokens ?? 0,
+      tokensOutput: usage?.completion_tokens ?? 0,
+      creditsUsed: calculateCredits('openrouter', 'chatCompletion', tokensTotal, tier),
+      modelName: data.model,
+      requestId: data.id,
+      tierAtRequest: tier,
+      statusCode: response.status,
+      responseTimeMs: responseTime,
+    });
+
     return parsed;
 
-  } catch {
+  } catch (error) {
+    // Track error
+    await trackUsage({
+      userId: finalUserId,
+      licenseKeyHash: licenseKeyHash,
+      licenseNonce: finalLicenseNonce,
+      service: 'openrouter',
+      endpoint: '/chat/completions',
+      action: 'chat_completion',
+      tierAtRequest: tier,
+      errorMessage: error instanceof Error ? error.message : String(error),
+      responseTimeMs: stopTimer(),
+      creditsUsed: 0, // Failed call, no credits charged
+    });
+
     return generateMockScript(topic, audience);
   }
 }

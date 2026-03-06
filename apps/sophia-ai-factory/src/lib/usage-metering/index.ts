@@ -54,4 +54,12 @@ export {
   rowsToCsv,
   getAggregatedSummary,
   QUOTA_LIMITS,
+  batchIngestUsage,
 } from './aggregator';
+
+// Types
+export type {
+  BatchUsageRecord,
+  IngestionResult,
+  BatchIngestionResponse,
+} from './types';

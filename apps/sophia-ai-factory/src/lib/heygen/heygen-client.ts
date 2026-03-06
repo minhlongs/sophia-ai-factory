@@ -1,4 +1,8 @@
 
+import { Tier } from "@/types";
+import { trackUsage, hashLicenseKey, calculateCredits, startTimer } from '@/lib/usage-metering';
+import { getUsageContext } from '@/lib/usage-metering/context';
+
 const HEYGEN_API_URL = "https://api.heygen.com/v2";
 
 export interface HeyGenAvatar {
@@ -26,9 +30,17 @@ export interface HeyGenVideoStatus {
 
 export class HeyGenClient {
   private apiKey: string;
+  private tier: Tier;
+  private userId: string;
+  private licenseNonce: string;
+  private licenseKeyHash: string;
 
-  constructor(apiKey: string) {
+  constructor(apiKey: string, tier: Tier = 'BASIC', userId: string = 'unknown', licenseNonce: string = 'unknown', licenseKeyHash: string = '') {
     this.apiKey = apiKey;
+    this.tier = tier;
+    this.userId = userId;
+    this.licenseNonce = licenseNonce;
+    this.licenseKeyHash = licenseKeyHash;
   }
 
   private async request(endpoint: string, options: RequestInit = {}) {
@@ -73,6 +85,7 @@ export class HeyGenClient {
     script: string;
     title?: string;
   }): Promise<string> {
+    const stopTimer = startTimer();
     const body = {
       video_inputs: [
         {
@@ -95,16 +108,49 @@ export class HeyGenClient {
       title: params.title,
     };
 
-    const data = await this.request("/video/generate", {
-      method: "POST",
-      body: JSON.stringify(body),
-    });
+    try {
+      const data = await this.request("/video/generate", {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
 
-    const videoId = data?.data?.video_id;
-    if (!videoId) {
-      throw new Error(`HeyGen API: missing video_id in response`);
+      const videoId = data?.data?.video_id;
+      if (!videoId) {
+        throw new Error(`HeyGen API: missing video_id in response`);
+      }
+
+      // Track successful usage
+      await trackUsage({
+        userId: this.userId,
+        licenseKeyHash: this.licenseKeyHash,
+        licenseNonce: this.licenseNonce,
+        service: 'heygen',
+        endpoint: '/video/generate',
+        action: 'create_video',
+        creditsUsed: calculateCredits('heygen', 'createVideo', undefined, this.tier),
+        requestId: videoId,
+        tierAtRequest: this.tier,
+        statusCode: 200,
+        responseTimeMs: stopTimer(),
+      });
+
+      return videoId;
+    } catch (error) {
+      // Track failed usage
+      await trackUsage({
+        userId: this.userId,
+        licenseKeyHash: this.licenseKeyHash,
+        licenseNonce: this.licenseNonce,
+        service: 'heygen',
+        endpoint: '/video/generate',
+        action: 'create_video',
+        tierAtRequest: this.tier,
+        errorMessage: error instanceof Error ? error.message : String(error),
+        responseTimeMs: stopTimer(),
+        creditsUsed: 0,
+      });
+      throw error;
     }
-    return videoId;
   }
 
   async getVideoStatus(videoId: string): Promise<HeyGenVideoStatus> {

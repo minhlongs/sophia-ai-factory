@@ -1,11 +1,16 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { logger } from '@/lib/utils/logger-utility';
 import { Tier } from "@/types";
+import { trackUsage, hashLicenseKey, calculateCredits, startTimer } from '@/lib/usage-metering';
+import { getUsageContext } from '@/lib/usage-metering/context';
 
 interface GenerateVoiceoverInput {
   text: string;
   tier: Tier;
   voiceId?: string;
+  userId?: string;
+  licenseKey?: string;
+  licenseNonce?: string;
 }
 
 interface VoiceoverOutput {
@@ -29,39 +34,72 @@ interface VoiceoverOutput {
  * - BASIC: Standard voice (Adam - neutral)
  */
 export async function generateVoiceover(input: GenerateVoiceoverInput): Promise<VoiceoverOutput> {
-  const { text, tier, voiceId } = input;
+  const { text, tier, voiceId, userId, licenseKey, licenseNonce } = input;
   const apiKey = process.env.ELEVENLABS_API_KEY;
+  const stopTimer = startTimer();
+
+  // Get context if available
+  const context = getUsageContext();
+  const finalUserId = userId || context?.userId || 'unknown';
+  const finalLicenseKey = licenseKey || '';
+  const finalLicenseNonce = licenseNonce || context?.licenseNonce || 'unknown';
+  const licenseKeyHash = hashLicenseKey(finalLicenseKey || 'unknown');
 
   if (apiKey) {
     try {
-      return await generateElevenLabsVoiceover(text, tier, apiKey, voiceId);
+      const result = await generateElevenLabsVoiceover(text, tier, apiKey, voiceId);
+      // Track successful usage
+      await trackUsage({
+        userId: finalUserId,
+        licenseKeyHash: licenseKeyHash,
+        licenseNonce: finalLicenseNonce,
+        service: 'elevenlabs',
+        endpoint: `/text-to-speech/${voiceId || 'default'}`,
+        action: 'text_to_speech',
+        creditsUsed: calculateCredits('elevenlabs', 'textToSpeech', undefined, tier),
+        tierAtRequest: tier,
+        statusCode: 200,
+        responseTimeMs: stopTimer(),
+      });
+      return result;
     } catch (error) {
       // Log and fall through to mock fallback
       const errMsg = error instanceof Error ? error.message : String(error);
       logger.warn(`[ElevenLabs] API failed, falling back to mock`, { error: errMsg });
+      // Track failed usage
+      await trackUsage({
+        userId: finalUserId,
+        licenseKeyHash: licenseKeyHash,
+        licenseNonce: finalLicenseNonce,
+        service: 'elevenlabs',
+        endpoint: `/text-to-speech/${voiceId || 'default'}`,
+        action: 'text_to_speech',
+        tierAtRequest: tier,
+        statusCode: 500,
+        errorMessage: errMsg,
+        responseTimeMs: stopTimer(),
+        creditsUsed: 0,
+      });
     }
   }
 
   // Mock fallback
-  await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate processing
+  const mockResult = await generateMockVoiceover(text, tier);
+  // Track mock usage
+  await trackUsage({
+    userId: finalUserId,
+    licenseKeyHash: 'mock',
+    licenseNonce: finalLicenseNonce,
+    service: 'elevenlabs',
+    endpoint: '/mock',
+    action: 'text_to_speech_mock',
+    creditsUsed: 0, // Mock is free
+    tierAtRequest: tier,
+    statusCode: 200,
+    responseTimeMs: stopTimer(),
+  });
 
-  // Return mock audio URLs (public domain sample files)
-  const mockAudioUrls = tier === 'ENTERPRISE'
-    ? [
-        "https://www2.cs.uic.edu/~i101/SoundFiles/BabyElephantWalk60.wav",
-        "https://www2.cs.uic.edu/~i101/SoundFiles/CantinaBand60.wav"
-      ]
-    : [
-        "https://www2.cs.uic.edu/~i101/SoundFiles/ImperialMarch60.wav",
-        "https://www2.cs.uic.edu/~i101/SoundFiles/StarWars60.wav"
-      ];
-
-  const selectedUrl = mockAudioUrls[Math.floor(Math.random() * mockAudioUrls.length)];
-
-  return {
-    audio_url: selectedUrl,
-    duration: Math.floor(text.length / 15) // Rough estimate: ~15 chars per second
-  };
+  return mockResult;
 }
 
 /**
@@ -161,4 +199,29 @@ async function uploadAudioToStorage(audioData: Uint8Array): Promise<string> {
     .getPublicUrl(filePath);
 
   return urlData.publicUrl;
+}
+
+/**
+ * Mock voiceover generator for fallback
+ */
+async function generateMockVoiceover(text: string, tier: Tier): Promise<VoiceoverOutput> {
+  await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate processing
+
+  // Return mock audio URLs (public domain sample files)
+  const mockAudioUrls = tier === 'ENTERPRISE'
+    ? [
+        "https://www2.cs.uic.edu/~i101/SoundFiles/BabyElephantWalk60.wav",
+        "https://www2.cs.uic.edu/~i101/SoundFiles/CantinaBand60.wav"
+      ]
+    : [
+        "https://www2.cs.uic.edu/~i101/SoundFiles/ImperialMarch60.wav",
+        "https://www2.cs.uic.edu/~i101/SoundFiles/StarWars60.wav"
+      ];
+
+  const selectedUrl = mockAudioUrls[Math.floor(Math.random() * mockAudioUrls.length)];
+
+  return {
+    audio_url: selectedUrl,
+    duration: Math.floor(text.length / 15) // Rough estimate: ~15 chars per second
+  };
 }
