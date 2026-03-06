@@ -5,6 +5,8 @@ import { createServerClient } from "@supabase/ssr";
 import { applyCorsHeaders, handleCorsPrelight } from "./lib/security/cors-security-configuration";
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS } from "./lib/security/rate-limiting-middleware";
 import { raasGate, shouldApplyRaasGate } from "./lib/raas-gate";
+import { emitUsageEvent } from "./lib/usage-metering";
+import { logger } from "./lib/utils/logger-utility";
 
 const intlMiddleware = createMiddleware({
   locales: ["en", "vi"],
@@ -49,6 +51,7 @@ const isInternalOrStatic = (pathname: string) =>
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const origin = request.headers.get('origin');
+  const startTime = Date.now();
 
   if (isInternalOrStatic(pathname)) {
     return NextResponse.next();
@@ -76,7 +79,8 @@ export async function proxy(request: NextRequest) {
     const rateLimitResult = await checkRateLimit(identifier, rateLimitConfig);
 
     if (!rateLimitResult.success) {
-      return new NextResponse(
+      const responseTimeMs = Date.now() - startTime;
+      const rateLimitResponse = new NextResponse(
         JSON.stringify({
           error: 'Too many requests',
           retryAfter: rateLimitResult.reset,
@@ -89,16 +93,49 @@ export async function proxy(request: NextRequest) {
             'X-RateLimit-Limit': String(rateLimitConfig.maxRequests),
             'X-RateLimit-Remaining': '0',
             'X-RateLimit-Reset': String(rateLimitResult.reset),
+            'X-Response-Time-Ms': String(responseTimeMs),
           },
         }
       );
+
+      // Track rate-limited request (429) for usage metering
+      // This is important for quota enforcement analytics
+      emitUsageEvent(request, {
+        status: 429,
+        headers: rateLimitResponse.headers,
+      }).catch(err => {
+        logger.error('[Proxy] Failed to emit 429 usage event', err);
+      });
+
+      return rateLimitResponse;
     }
 
     // RaaS License Gate - Apply after rate limiting
     if (shouldApplyRaasGate(pathname)) {
       const raasResult = await raasGate(request);
       if (!raasResult.valid && raasResult.response) {
-        return raasResult.response;
+        const responseTimeMs = Date.now() - startTime;
+        const forbiddenResponse = raasResult.response;
+        forbiddenResponse.headers.set('X-Response-Time-Ms', String(responseTimeMs));
+
+        // Track forbidden request (403) for usage metering
+        emitUsageEvent(request, {
+          status: 403,
+          headers: forbiddenResponse.headers,
+        }, {
+          licenseNonce: null,
+          tier: 'BASIC',
+        }).catch(err => {
+          logger.error('[Proxy] Failed to emit 403 usage event', err);
+        });
+
+        return forbiddenResponse;
+      }
+
+      // Store RaaS context for later usage tracking
+      if (raasResult.valid && raasResult.tier) {
+        // Context will be used by response tracking below
+        request.headers.set('x-raas-tier', raasResult.tier);
       }
     }
   }
@@ -201,7 +238,24 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/api") ||
     pathname.startsWith("/setup-wizard")
   ) {
-    return NextResponse.next();
+    const response = NextResponse.next();
+    const responseTimeMs = Date.now() - startTime;
+    response.headers.set('X-Response-Time-Ms', String(responseTimeMs));
+
+    // Track successful API request for usage metering
+    // Extract RaaS context if available
+    const raasTier = request.headers.get('x-raas-tier');
+    emitUsageEvent(request, {
+      status: response.status,
+      headers: response.headers,
+    }, {
+      tier: raasTier || 'BASIC',
+      // licenseNonce will be extracted from request headers by emitUsageEvent
+    }).catch(err => {
+      logger.error('[Proxy] Failed to emit success usage event', err);
+    });
+
+    return response;
   }
 
   // 6. Run next-intl middleware for everything else

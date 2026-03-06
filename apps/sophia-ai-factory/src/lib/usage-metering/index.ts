@@ -79,6 +79,17 @@ export {
   batchIngestUsage,
 } from './aggregator';
 
+// Gateway instrumentation
+export {
+  emitUsageEvent,
+  startGatewayTimer,
+  withGatewayInstrumentation,
+} from './gateway-instrumentation';
+
+export type {
+  GatewayContext,
+} from './gateway-instrumentation';
+
 // Types
 export type {
   BatchUsageRecord,
