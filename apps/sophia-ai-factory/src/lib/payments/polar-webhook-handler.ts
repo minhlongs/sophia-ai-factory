@@ -389,15 +389,28 @@ async function handleSubscriptionUpdated(
       await notifySubscriptionCancelled(telegramChatId, periodEnd)
     }
   } else {
-    // Handle renewal or other updates
+    // Handle renewal, tier upgrade/downgrade, or other updates
     const supabase = getSupabase()
+    const metadata = (data.metadata || {}) as Record<string, unknown>
+    const newTier = safeTier(metadata.tier)
+
+    const updateData: Record<string, unknown> = {
+      subscription_status: status,
+      subscription_expires_at: safeString(data.current_period_end),
+      updated_at: new Date().toISOString(),
+    }
+
+    // Handle tier change (upgrade/downgrade)
+    if (newTier) {
+      const dbTier = TIER_DB_MAPPING[newTier]
+      updateData.subscription_tier = dbTier
+
+      logger.info(`Tier changed for user ${targetUserId}: ${newTier}`)
+    }
+
     await supabase
       .from('user_profiles')
-      .update({
-        subscription_status: status,
-        subscription_expires_at: safeString(data.current_period_end),
-        updated_at: new Date().toISOString(),
-      } as Record<string, unknown>)
+      .update(updateData)
       .eq('user_id', targetUserId)
   }
 }
