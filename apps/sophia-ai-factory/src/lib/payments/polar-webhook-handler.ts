@@ -12,8 +12,11 @@ import {
   notifySubscriptionCancelled,
 } from '@/lib/services/notification-service'
 import { logger } from '@/lib/utils/logger-utility'
+import { generateLicenseKey } from '@/lib/raas-key-generator'
+import { createLicense, logLicenseCreation, revokeLicense, logLicenseRevocation } from '@/lib/raas-audit'
+import { createHash } from 'crypto'
 
-const VALID_TIERS: Tier[] = ['BASIC', 'PREMIUM', 'ENTERPRISE']
+const VALID_TIERS: Tier[] = ['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER']
 
 function safeString(value: unknown): string | null {
   return typeof value === 'string' && value.length > 0 ? value : null
@@ -28,6 +31,92 @@ function safeTier(value: unknown): Tier | null {
 
 function getSupabase() {
   return createAdminClient() as any
+}
+
+/**
+ * Auto-generate license key on successful payment
+ * Called from checkout.updated, subscription.created, order.created handlers
+ */
+async function generateLicenseOnPayment(params: {
+  userId: string
+  tier: Tier
+  email?: string
+  polarSubscriptionId?: string
+  expiresAt?: string
+}): Promise<{ nonce: string; keyHash: string } | null> {
+  try {
+    const { userId, tier, email, polarSubscriptionId, expiresAt } = params
+
+    // Calculate expiration timestamp
+    let expiresTimestamp: number
+    if (tier === 'MASTER') {
+      // Master tier = perpetual
+      expiresTimestamp = 0
+    } else if (expiresAt) {
+      expiresTimestamp = Math.floor(new Date(expiresAt).getTime() / 1000)
+    } else {
+      // Default: 1 year from now
+      expiresTimestamp = Math.floor(Date.now() / 1000) + (365 * 24 * 60 * 60)
+    }
+
+    // Get secret from env
+    const secret = process.env.RAAS_LICENSE_SECRET
+    if (!secret) {
+      logger.error('RAAS_LICENSE_SECRET not configured')
+      return null
+    }
+
+    // Generate license key
+    const expiresDate = expiresTimestamp === 0
+      ? new Date(0)
+      : new Date(expiresTimestamp * 1000)
+
+    const tierLowercase = tier.toLowerCase() as 'basic' | 'premium' | 'enterprise' | 'master'
+    const licenseKey = generateLicenseKey(tierLowercase, expiresDate, secret)
+
+    // Parse key to get components
+    const parts = licenseKey.split('_')
+    if (parts.length !== 5) {
+      logger.error('Invalid license key format')
+      return null
+    }
+    const nonce = parts[3]
+
+    // Hash the full key for storage
+    const keyHash = createHash('sha256').update(licenseKey).digest('hex')
+
+    // Store in database
+    await createLicense({
+      tier,
+      nonce,
+      keyHash,
+      expiresAt: expiresTimestamp,
+      createdBy: 'polar-webhook',
+      metadata: {
+        customerEmail: email,
+        polarSubscriptionId,
+        source: 'auto-generated',
+        generatedAt: new Date().toISOString()
+      }
+    })
+
+    // Log audit trail
+    await logLicenseCreation({
+      nonce,
+      tier,
+      timestamp: Math.floor(Date.now() / 1000),
+      createdBy: 'polar-webhook',
+      ipAddress: 'webhook',
+      userAgent: 'Polar.sh'
+    })
+
+    logger.info(`Auto-generated license for user ${userId}, tier: ${tier}, nonce: ${nonce.slice(0, 8)}...`)
+
+    return { nonce, keyHash }
+  } catch (error) {
+    logger.error('Failed to auto-generate license', error instanceof Error ? error : undefined)
+    return null
+  }
 }
 
 /**
@@ -88,6 +177,54 @@ function extractMetadata(data: Record<string, unknown>): {
 }
 
 /**
+ * Handle subscription cancellation - deactivate associated license
+ */
+async function handleSubscriptionCancelled(
+  data: Record<string, unknown>
+): Promise<void> {
+  const polarSubId = safeString(data.id)
+  const periodEnd = safeString(data.current_period_end)
+
+  if (!polarSubId) return
+
+  // Cancel subscription in DB
+  await cancelSubscription(polarSubId)
+
+  // Find user by polar subscription ID
+  const targetUserId = await findUserByPolarSubId(polarSubId)
+
+  // Revoke license associated with this subscription
+  if (targetUserId) {
+    const supabase = getSupabase()
+
+    // Find license by polarSubscriptionId in metadata
+    const { data: license } = await supabase
+      .from('raas_licenses')
+      .select('nonce, tier')
+      .eq('metadata->>polarSubscriptionId', polarSubId)
+      .eq('is_revoked', false)
+      .single()
+
+    if (license) {
+      await revokeLicense(license.nonce, 'polar-webhook-cancelled')
+      await logLicenseRevocation({
+        nonce: license.nonce,
+        tier: license.tier,
+        revokedBy: 'polar-webhook-cancelled',
+        reason: 'Subscription cancelled via Polar.sh'
+      })
+      logger.info(`Revoked license ${license.nonce.slice(0, 8)}... due to subscription cancellation`)
+    }
+  }
+
+  // Send notification
+  if (periodEnd) {
+    // Telegram notification would go here if chat_id was available
+    logger.info(`Subscription ${polarSubId.slice(0, 8)}... cancelled, ends at ${periodEnd}`)
+  }
+}
+
+/**
  * Process a Polar.sh webhook event with idempotency
  */
 export async function processWebhookEvent(
@@ -127,6 +264,10 @@ export async function processWebhookEvent(
         await handleOrderCreated(event.data)
         break
 
+      case 'subscription.cancelled':
+        await handleSubscriptionCancelled(event.data)
+        break
+
       default:
     }
 
@@ -158,6 +299,16 @@ async function handleCheckoutSuccess(
   const dbTier = TIER_DB_MAPPING[tier]
   const supabase = getSupabase()
   const polarSubId = safeString(data.id)
+  const customerEmail = (data.customer as Record<string, unknown> | undefined)?.email as string | undefined
+
+  // Auto-generate license key
+  await generateLicenseOnPayment({
+    userId,
+    tier,
+    email: customerEmail || userId,
+    polarSubscriptionId: polarSubId || undefined,
+    expiresAt: undefined // Will default to 1 year
+  })
 
   const { error } = await supabase
     .from('user_profiles')
@@ -180,24 +331,32 @@ async function handleSubscriptionCreated(
   data: Record<string, unknown>
 ): Promise<void> {
   const { userId, tier, telegramChatId } = extractMetadata(data)
-  if (!userId) {
-    return
-  }
-
   const resolvedTier = tier || 'PREMIUM'
   const periodEnd = safeString(data.current_period_end)
   const polarSubId = safeString(data.id)
+  const customerEmail = (data.customer as Record<string, unknown> | undefined)?.email as string | undefined
 
   if (!polarSubId) return
 
+  // Auto-generate license key on subscription creation
+  if (userId) {
+    await generateLicenseOnPayment({
+      userId,
+      tier: resolvedTier,
+      email: customerEmail || userId,
+      polarSubscriptionId: polarSubId,
+      expiresAt: periodEnd || undefined
+    })
+  }
+
   await activateSubscription(
-    userId,
+    userId || 'unknown',
     polarSubId,
     resolvedTier,
     periodEnd
   )
 
-  if (telegramChatId) {
+  if (telegramChatId && userId) {
     await notifySubscriptionActivated(telegramChatId, resolvedTier)
   }
 }
@@ -252,6 +411,16 @@ async function handleOrderCreated(
   const dbTier = TIER_DB_MAPPING[tier]
   const supabase = getSupabase()
   const polarSubId = safeString(data.id)
+  const customerEmail = (data.customer as Record<string, unknown> | undefined)?.email as string | undefined
+
+  // Auto-generate license key for one-time order
+  await generateLicenseOnPayment({
+    userId,
+    tier,
+    email: customerEmail || userId,
+    polarSubscriptionId: polarSubId || undefined,
+    expiresAt: undefined // Will default to 1 year
+  })
 
   const { error } = await supabase
     .from('user_profiles')
