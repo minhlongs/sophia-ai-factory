@@ -5,6 +5,9 @@
 // Tier system - defines customer subscription levels
 export type Tier = "BASIC" | "PREMIUM" | "ENTERPRISE" | "MASTER";
 
+// Lowercase tier for license key generation
+export type TierLowercase = "basic" | "premium" | "enterprise" | "master";
+
 // Feature flags - toggleable features across the application
 export type FeatureFlag =
   | "enable_affiliate_engine"

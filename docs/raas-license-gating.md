@@ -21,6 +21,7 @@ RaaS (ROI-as-a-Service) License Key Gating protects API routes by validating enc
 
 ## Architecture
 
+### Phase 1: Redis-Based (Legacy)
 ```
 Client ──X-RaaS-License-Key──> Middleware ──> raas-service.ts
                                           ├─ parseLicenseKey()
@@ -29,6 +30,34 @@ Client ──X-RaaS-License-Key──> Middleware ──> raas-service.ts
                                           ├─ checkNonce() (Redis)
                                           └─ checkRevocation() (Redis)
 ```
+
+### Phase 2: Supabase-Based (Current - Since 2026-03-06)
+```
+Client ──X-RaaS-License-Key──> Middleware ──> raas-gate.ts
+                                          └─ raas-service.ts
+                                                ├─ parseLicenseKey()
+                                                ├─ verifyHmac()
+                                                ├─ checkExpiration()
+                                                └─ checkRevocation() (Supabase)
+
+Admin UI ──> API Routes ──> raas-audit.ts ──> Supabase
+                                        ├─ raas_licenses table
+                                        └─ raas_audit_logs table
+```
+
+**Storage Migration Summary:**
+| Component | Phase 1 (Redis) | Phase 2 (Supabase) |
+|-----------|-----------------|-------------------|
+| License data | `raas:license:{nonce}` | `raas_licenses` table |
+| Revocation | `raas:revoked:{key}` | `raas_licenses.is_revoked` |
+| Nonces | `raas:nonce:{nonce}` | In-memory (TTL) + DB |
+| Audit logs | `raas:audit:*` | `raas_audit_logs` table |
+
+**Migration Details:**
+- **Database:** Supabase with `raas_licenses` and `raas_audit_logs` tables
+- **Schema:** See `docs/migrations/raas-licenses-schema.sql`
+- **Service Layer:** `src/lib/raas-audit.ts` replaces direct Redis calls
+- **API Changes:** All admin routes require Basic Auth
 
 ---
 
@@ -60,13 +89,18 @@ Master:   raas_master_0_1234567890abcdef1234567890abcdef1234567890abcdef12345678
 
 ## Environment Setup
 
-### Required Variables
+### Required Variables (Phase 2)
 
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `RAAS_LICENSE_SECRET` | YES (prod) | 32+ char secret for HMAC |
-| `UPSTASH_REDIS_REST_URL` | YES (prod) | Redis URL |
-| `UPSTASH_REDIS_REST_TOKEN` | YES (prod) | Redis token |
+| `SUPABASE_SERVICE_ROLE_KEY` | YES (prod) | Supabase service role for admin operations |
+
+**Redis (Optional - Phase 1 backward compatibility)**
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `UPSTASH_REDIS_REST_URL` | NO | Redis URL (legacy) |
+| `UPSTASH_REDIS_REST_TOKEN` | NO | Redis token (legacy) |
 
 ### Development Mode
 ```bash
@@ -76,8 +110,7 @@ RAAS_BYPASS_DEV=true  # Skip validation
 ### Production Mode
 ```bash
 RAAS_LICENSE_SECRET=your-32-char-secret
-UPSTASH_REDIS_REST_URL=https://xxx.upstash.io
-UPSTASH_REDIS_REST_TOKEN=your_token
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
 
 ### Generate Secure Secret
@@ -89,8 +122,7 @@ node -e "console.log(require('crypto').randomBytes(24).toString('hex'))"
 
 ## Admin Guide
 
-### Generate License Key
-
+### Generate License Key (CLI)
 ```bash
 cd apps/sophia-ai-factory && node
 > import { createHmac, randomBytes } from 'crypto';
@@ -102,16 +134,36 @@ cd apps/sophia-ai-factory && node
 > console.log(`raas_${tier}_${expiresAt}_${nonce}_${hmac}`);
 ```
 
+### Generate License via API (Phase 2)
+```bash
+curl -X POST https://sophia-ai-factory.vercel.app/api/admin/licenses/create \
+  -H "Authorization: Basic $ADMIN_AUTH" \
+  -H "Content-Type: application/json" \
+  -d '{"tier": "premium", "expiresAt": 1893456000, "metadata": {"notes": "Custom license"}}'
+```
+
+**Note:** Response includes full license key - copy immediately, it won't be shown again.
+
 ### Revoke Key
 ```typescript
+// Phase 1 (Legacy - via Redis)
 import { redis } from '@/lib/redis';
 await redis.set(`raas:revoked:${key}`, '1', { ex: 31536000 });
+
+// Phase 2 (Current - via API)
+curl -X POST https://sophia-ai-factory.vercel.app/api/admin/licenses/[nonce]/revoke \
+  -H "Authorization: Basic $ADMIN_AUTH"
 ```
 
 ### Monitor
 ```bash
+# Phase 1: Redis monitoring
 redis-cli KEYS "raas:revoked:*"
 redis-cli KEYS "raas:nonce:*"
+
+# Phase 2: Supabase monitoring
+psql "$(npx supabase db url)" -c "SELECT COUNT(*) FROM raas_licenses WHERE is_revoked = true"
+psql "$(npx supabase db url)" -c "SELECT COUNT(*) FROM raas_audit_logs WHERE created_at > extract(epoch from now())::bigint - 86400"
 ```
 
 ---
@@ -149,6 +201,18 @@ curl -X POST http://localhost:3000/api/test \
   -H "X-RaaS-License-Key: raas_premium_1735689600_abc123_..."
 ```
 
+### API Routes (Phase 2)
+
+| Endpoint | Method | Description | Storage |
+|----------|--------|-------------|---------|
+| `/api/admin/licenses` | GET | List all licenses | `raas_licenses` |
+| `/api/admin/licenses/create` | POST | Create new license | `raas_licenses` + `raas_audit_logs` |
+| `/api/admin/licenses/[nonce]` | GET | Get license details | `raas_licenses` |
+| `/api/admin/licenses/[nonce]/revoke` | POST | Revoke license | `raas_licenses` + `raas_audit_logs` |
+| `/api/admin/licenses/audit` | GET | Query audit logs | `raas_audit_logs` |
+
+**Authentication:** All admin routes require Basic Auth with admin role.
+
 ---
 
 ## Troubleshooting
@@ -161,6 +225,8 @@ curl -X POST http://localhost:3000/api/test \
 | `invalid-signature` | 403 | Wrong secret | Use correct `RAAS_LICENSE_SECRET` |
 | `replay-attack` | 403 | Nonce reused | Use new nonce |
 | `revoked` | 403 | Key revoked | Contact admin |
+| `missing-secret` | 500 | Config missing | Set `RAAS_LICENSE_SECRET` |
+| `config-error` | 500 | Supabase not configured | Set `SUPABASE_SERVICE_ROLE_KEY` |
 
 ### Debug
 ```bash
@@ -182,12 +248,48 @@ node -e "const {getRaaSConfig}=require('./src/lib/raas-gate'); console.log(getRa
 Uses `crypto.timingSafeEqual()` for constant-time comparison.
 
 ### Replay Prevention
-- Nonce stored in Redis with TTL (default 1 hour)
-- Redis auto-cleans expired nonces
+- Phase 1: Nonce stored in Redis with TTL (default 1 hour)
+- Phase 2: License metadata tracks validateCount
 
 ### Secret Storage
 **DO:** Environment variables, secret managers, rotate periodically
 **DON'T:** Git, frontend code, plain text logs
+
+---
+
+## Migration Phase 2 (2026-03-06)
+
+### What Changed
+
+1. **Storage Layer:** Redis → Supabase Database
+2. **Service Layer:** Direct Redis calls → `raas-audit.ts` service
+3. **Admin UI:** New API routes with authentication
+
+### Breaking Changes
+
+| Change | Impact |
+|--------|--------|
+| Full license keys not stored | Cannot recover original keys from DB |
+| `raas_service.ts` Redis dependencies removed | API routes no longer use Redis |
+| All admin routes require auth | Anonymous access blocked |
+| `key_hash` instead of `key` | Lookup uses SHA256 hash |
+
+### Data Migration Checklist
+
+- [ ] SQL migration executed: `docs/migrations/raas-licenses-schema.sql`
+- [ ] Supabase tables created: `raas_licenses`, `raas_audit_logs`
+- [ ] RLS policies configured (admin-only access)
+- [ ] Data migrated from Redis (if applicable)
+- [ ] Indexes created for performance
+- [ ] Admin API routes tested
+
+### Migration Resources
+
+- **SQL Schema:** `docs/migrations/raas-licenses-schema.sql`
+- **Migration Script:** `scripts/migrate-redis-to-supabase.ts`
+- **TypeScript Types:** `src/lib/raas-schema.ts`
+- **Audit Service:** `src/lib/raas-audit.ts`
+- **Plan:** `plans/260306-0952-raas-redis-supabase-migration/plan.md`
 
 ---
 
@@ -197,11 +299,16 @@ Uses `crypto.timingSafeEqual()` for constant-time comparison.
 - `src/lib/raas-service.ts` - Core validation
 - `src/lib/raas-key-generator.ts` - Key generation
 - `src/lib/raas-gate.ts` - Middleware
+- `src/lib/raas-audit.ts` - Audit service layer (Phase 2)
+- `src/lib/raas-schema.ts` - TypeScript interfaces (Phase 2)
 - `src/proxy.ts` - API middleware
 
-### Docs
+### Documentation
 - **Plan:** `plans/260306-0901-raas-license-gate/plan.md`
+- **Migration Plan:** `plans/260306-0952-raas-redis-supabase-migration/plan.md`
 - **Research:** `plans/reports/research-260306-0859-raas-license-gating.md`
+- **SQL Schema:** `docs/migrations/raas-licenses-schema.sql`
+- **Migration Guide:** `docs/migrations/REDIS_TO_SUPABASE.md`
 
 ### Commands
 ```bash
@@ -224,13 +331,18 @@ raas_{tier}_{timestamp}_{nonce}_{hmac}
   └─ prefix
 ```
 
-### Validation Checklist
+### Phase 2 Validation Checklist
 - [ ] `RAAS_LICENSE_SECRET` set
-- [ ] Redis connection working
+- [ ] `SUPABASE_SERVICE_ROLE_KEY` set
+- [ ] Supabase connection working
 - [ ] Key format matches
 - [ ] HMAC valid
 - [ ] Timestamp not expired
 - [ ] Nonce not reused
 - [ ] Key not revoked
 
-*Last updated: 2026-03-06 | ROIaaS PHASE 1*
+### Phase 2 Tables
+- `raas_licenses` - License metadata (key_hash, tier, nonce, expires_at, is_revoked)
+- `raas_audit_logs` - Audit trail (action, license_id, user_id, ip_address, details)
+
+*Last updated: 2026-03-06 | ROIaaS PHASE 2 - Supabase Migration*
