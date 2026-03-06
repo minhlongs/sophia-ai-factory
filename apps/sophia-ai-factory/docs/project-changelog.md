@@ -1,6 +1,27 @@
 # Project Changelog
 
-## [Unreleased]
+## [Unreleased] - v1.8.0
+
+### v1.8.0 - Usage Metering & License Gating (2026-03-07)
+- **Feature:** Usage Metering Aggregator with time-windowed summaries
+- **API Endpoints:**
+  - `/api/usage/summary` - Get aggregated usage by period (hourly/daily breakdown)
+  - `/api/usage/export` - Export usage data (CSV/JSON with 90-day validation)
+  - `/api/v1/usage` (POST) - Batch ingestion endpoint (up to 1000 records/batch)
+- **Architecture:**
+  - Clean separation: Tracker (raw) → Aggregator (analytics) → Export (billing)
+  - License-based quota enforcement (BASIC/PREMIUM/ENTERPRISE/MASTER)
+  - CSV injection protection via `escapeCsvField`
+- **Quotas by Tier:**
+  - BASIC: 100 daily / 20 hourly / 500 requests / 2,000 monthly credits
+  - PREMIUM: 500 daily / 100 hourly / 2,500 requests / 10,000 monthly credits
+  - ENTERPRISE: 2,000 daily / 500 hourly / 10,000 requests / 50,000 monthly credits
+  - MASTER: 10,000 daily / 2,000 hourly / 50,000 requests / 200,000 monthly credits
+- **Batch Ingestion:**
+  - Post records to `/api/v1/usage` with Zod validation
+  - Validates timestamp (within 30 days), service enum, feature_key format
+  - Returns per-record results with success/failure + quota remaining
+- **Test Coverage:** 462 tests passing including aggregator and batch ingestion API
 
 ## v1.7.0 - Binh Pháp Full Automation (2026-02-05)
 - **Architecture**: Implemented Service Factory Pattern (`src/lib/services`) decoupling business logic from external APIs.

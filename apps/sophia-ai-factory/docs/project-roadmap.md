@@ -1,8 +1,8 @@
 # Project Roadmap
 
 **Project Name:** Sophia AI Video Factory
-**Current Version:** 1.7.0 (Binh Pháp Full Automation)
-**Last Updated:** 2026-02-05
+**Current Version:** 1.8.0 (Usage Metering & License Gating)
+**Last Updated:** 2026-03-07
 
 ## 📅 Roadmap Overview
 
@@ -127,7 +127,18 @@
   - [x] Post-deploy smoke tests (`scripts/smoke-test.ts`).
   - [x] Automated rollback triggers.
 
-### 🔮 Phase 9: Scaling & SaaS (Future)
+### ✅ Phase 9: Usage Metering & License Gating (Completed)
+**Goal:** Usage tracking, quota enforcement, and analytics for license-based pricing.
+- [x] **Usage Aggregator**: Core aggregation logic with hourly/daily windows
+- [x] **Quota Enforcement**: License-based limits by tier (BASIC/PREMIUM/ENTERPRISE/MASTER)
+- [x] **API Endpoints**: `/api/usage/summary` and `/api/usage/export`
+- [x] **Export Utilities**: CSV export with injection protection, 90-day range validation
+- [x] **Type Safety**: Full TypeScript type definitions for metering system
+- [x] **Batch Ingestion**: `/api/v1/usage` POST endpoint (up to 1000 records/batch)
+- [x] **Validation**: Zod schema validation for timestamp, service, feature_key
+- [x] **Test Coverage**: 462 tests passing (aggregator + batch ingestion API)
+
+### 🔮 Phase 10: Scaling & SaaS (Future)
 **Goal:** Multi-user support and advanced features.
 - [ ] **Authentication**: Move from Basic Auth to NextAuth/Clerk.
 - [ ] **Multi-Tenancy**: Support multiple user accounts per deployment.

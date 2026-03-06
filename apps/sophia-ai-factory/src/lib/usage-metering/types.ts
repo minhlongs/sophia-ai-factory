@@ -180,3 +180,48 @@ export interface CsvExportRow {
   status: 'success' | 'error';
   response_time_ms: number | null;
 }
+
+/**
+ * Batch ingestion record input format
+ */
+export interface BatchUsageRecord {
+  tenant_id: string;
+  feature_key: string;
+  timestamp: number;
+  consumed_units: number;
+  request_count: number;
+  tokens_input: number;
+  tokens_output: number;
+  license_nonce: string;
+  service: string;
+  action: string;
+  status: 'success' | 'error';
+  response_time_ms: number | null;
+}
+
+/**
+ * Single record ingestion result
+ */
+export interface IngestionResult {
+  index: number;
+  success: boolean;
+  error?: string;
+  reason?: 'invalid_license' | 'quota_exceeded' | 'validation_error' | 'duplicate';
+  quotaRemaining?: {
+    dailyCredits: number;
+    hourlyCredits: number;
+    dailyRequests: number;
+    monthlyCredits: number;
+  };
+}
+
+/**
+ * Batch ingestion response
+ */
+export interface BatchIngestionResponse {
+  total: number;
+  accepted: number;
+  rejected: number;
+  results: IngestionResult[];
+  timestamp: string;
+}
