@@ -5,17 +5,21 @@
  * Blocks access if invalid or missing, returns standardized 403 errors
  *
  * Features:
+ * - HMAC-SHA256 signature validation via raas-service.ts
  * - Development bypass with RAAS_BYPASS_DEV=true
  * - Production mode enforcement
+ * - Redis nonce/revocation tracking
+ * - Backward compatibility: RAAS_V1_FORMAT=true fallback
  * - Logging of validation attempts
  * - Standardized error responses
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from './utils/logger-utility';
+import { validateLicenseKey as validateWithHmac, ValidationResult } from './raas-service';
 
 /**
- * RaaS validation result
+ * RaaS validation result (legacy interface for backward compatibility)
  */
 interface RaaSValidationResult {
   valid: boolean;
@@ -24,12 +28,40 @@ interface RaaSValidationResult {
 }
 
 /**
+ * Validate V1 format keys (backward compatibility mode)
+ * Format: raas_{tier}_{encrypted_payload}
+ *
+ * @param key - V1 format key
+ * @returns Validation result
+ */
+function validateV1Format(key: string): RaaSValidationResult {
+  const keyPattern = /^raas_(basic|premium|enterprise|master)_[a-zA-Z0-9]+$/;
+  const match = key.match(keyPattern);
+
+  if (!match) {
+    return { valid: false, reason: 'invalid-format' };
+  }
+
+  const tier = match[1];
+  logger.info('[RaaS Gate] V1 format key validated (legacy)', { tier });
+
+  return { valid: true, tier };
+}
+
+/**
  * Decrypt and validate RaaS license key
  *
- * In production: validates encrypted key format and signature
- * In development: bypasses validation if RAAS_BYPASS_DEV=true
+ * Validation flow:
+ * 1. Check development bypass (RAAS_BYPASS_DEV)
+ * 2. Check V1 format fallback (if RAAS_V1_FORMAT=true)
+ * 3. Call raas-service.validateLicenseKey() with HMAC validation
+ * 4. Check RAAS_LICENSE_SECRET is configured in production
+ * 5. Return result with tier info
+ *
+ * @param key - License key string or null
+ * @returns Validation result
  */
-function validateLicenseKey(key: string | null): RaaSValidationResult {
+async function validateLicenseKey(key: string | null): Promise<RaaSValidationResult> {
   // Check for development bypass
   const bypassDev = process.env.RAAS_BYPASS_DEV === 'true';
   const isDev = process.env.NODE_ENV === 'development';
@@ -44,22 +76,34 @@ function validateLicenseKey(key: string | null): RaaSValidationResult {
     return { valid: false, reason: 'missing-key' };
   }
 
-  // Validate key format (expected: raas_{tier}_{encrypted_payload})
-  const keyPattern = /^raas_(basic|premium|enterprise|master)_[a-zA-Z0-9]+$/;
-  const match = key.match(keyPattern);
-
-  if (!match) {
-    return { valid: false, reason: 'invalid-format' };
+  // Check V1 format fallback (backward compatibility)
+  if (process.env.RAAS_V1_FORMAT === 'true') {
+    const parts = key.split('_');
+    if (parts.length === 3) {
+      logger.info('[RaaS Gate] V1 format detected, using legacy validation');
+      return validateV1Format(key);
+    }
   }
 
-  const tier = match[1];
+  // Validate RAAS_LICENSE_SECRET is configured in production
+  if (!process.env.RAAS_LICENSE_SECRET && isDev === false) {
+    logger.error('[RaaS Gate] RAAS_LICENSE_SECRET not configured in production');
+    return { valid: false, reason: 'config-error' };
+  }
 
-  // In production, you would decrypt and verify the payload here
-  // For now, we validate the format and signature structure
-  // TODO: Integrate with actual RaaS license server for validation
+  // Use raas-service for HMAC validation
+  try {
+    const result: ValidationResult = await validateWithHmac(key);
 
-  logger.info('[RaaS Gate] License key validated', { tier });
-  return { valid: true, tier };
+    return {
+      valid: result.valid,
+      reason: result.reason,
+      tier: result.tier,
+    };
+  } catch (error) {
+    logger.error('[RaaS Gate] Validation error', error instanceof Error ? error : new Error(String(error)));
+    return { valid: false, reason: 'validation-error' };
+  }
 }
 
 /**
@@ -138,7 +182,7 @@ export async function raasGate(request: NextRequest): Promise<{
   tier?: string;
 }> {
   const licenseKey = extractLicenseKey(request);
-  const result = validateLicenseKey(licenseKey);
+  const result = await validateLicenseKey(licenseKey);
 
   // Log validation attempt
   logger.info('[RaaS Gate] Validation attempt', {
@@ -194,15 +238,21 @@ export function getRaaSConfig(): {
   enabled: boolean;
   bypassDev: boolean;
   isDev: boolean;
+  hasSecret: boolean;
+  v1Format: boolean;
 } {
   const isDev = process.env.NODE_ENV === 'development';
   const bypassDev = process.env.RAAS_BYPASS_DEV === 'true';
   const hasLicenseKey = !!process.env.RAAS_LICENSE_KEY;
+  const hasSecret = !!process.env.RAAS_LICENSE_SECRET;
+  const v1Format = process.env.RAAS_V1_FORMAT === 'true';
 
   return {
     enabled: hasLicenseKey || !bypassDev,
     bypassDev,
     isDev,
+    hasSecret,
+    v1Format,
   };
 }
 
