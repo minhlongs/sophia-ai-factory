@@ -1,4 +1,5 @@
-import { redis } from '@/lib/redis'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { logger } from '@/lib/utils/logger-utility'
 
 /**
  * FSM State Types
@@ -15,7 +16,7 @@ export enum BotState {
 }
 
 /**
- * User Context stored in Redis
+ * User Context stored in Supabase
  */
 export interface UserContext {
   state: BotState
@@ -30,62 +31,91 @@ export interface UserContext {
 }
 
 /**
- * FSM Helper for managing user state in Redis
+ * FSM Helper for managing user state in Supabase PostgreSQL
+ * Replaces Redis-based implementation for persistent sessions
  */
 export class TelegramFSM {
-  private static getKey(chatId: string): string {
-    return `telegram:fsm:${chatId}`
-  }
-
-  /**
-   * Get user context from Redis
-   */
   static async getContext(chatId: string): Promise<UserContext | null> {
+    const supabase = createAdminClient()
+
     try {
-      const data = await redis.get<UserContext>(this.getKey(chatId))
-      return data
-    } catch {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any).rpc('get_telegram_user_session', {
+        p_chat_id: chatId,
+      })
+
+      if (error || !data) {
+        logger.error('get_telegram_user_session RPC error', error)
+        return null
+      }
+
+      const row = data?.[0]
+      if (!row) return null
+
+      const contextData = (row.context_data as Record<string, unknown>) || {}
+
+      return {
+        state: row.state || BotState.IDLE,
+        ...contextData,
+        subscriptionTier: row.subscription_tier,
+        lastUpdated: Date.now(),
+      } as UserContext
+    } catch (error) {
+      logger.error('Get Telegram session failed', error instanceof Error ? error : new Error(String(error)))
       return null
     }
   }
 
-  /**
-   * Set user context in Redis
-   */
   static async setContext(
     chatId: string,
     context: Partial<UserContext>
   ): Promise<void> {
+    const supabase = createAdminClient()
+
     try {
-      const current = await this.getContext(chatId)
-      const updated: UserContext = {
-        state: BotState.IDLE,
-        ...current,
-        ...context,
-        lastUpdated: Date.now(),
-      }
-      // Set with 24 hour expiry
-      await redis.set(this.getKey(chatId), updated, { ex: 86400 })
-    } catch (err) {
-      throw err
+      const { state = BotState.IDLE, ...data } = context
+      const contextData: Record<string, unknown> = { ...data }
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any).rpc('set_telegram_user_state', {
+        p_chat_id: chatId,
+        p_state: state,
+        p_context_data: contextData,
+      })
+    } catch (error) {
+      logger.error('Set Telegram context failed', error instanceof Error ? error : new Error(String(error)))
+      throw error
     }
   }
 
-  /**
-   * Clear user context from Redis
-   */
   static async clearContext(chatId: string): Promise<void> {
+    const supabase = createAdminClient()
+
     try {
-      await redis.del(this.getKey(chatId))
-    } catch (err) {
-      throw err
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any).rpc('clear_telegram_session', { p_chat_id: chatId })
+    } catch (error) {
+      logger.error('Clear Telegram session failed', error instanceof Error ? error : new Error(String(error)))
+      throw error
     }
   }
 
-  /**
-   * Update state only
-   */
   static async setState(chatId: string, state: BotState): Promise<void> {
     await this.setContext(chatId, { state })
+  }
+
+  static async setSubscriptionTier(chatId: string, tier: string): Promise<void> {
+    const supabase = createAdminClient()
+
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any).rpc('update_session_subscription_tier', {
+        p_chat_id: chatId,
+        p_tier: tier,
+      })
+    } catch (error) {
+      logger.error('Update subscription tier failed', error instanceof Error ? error : new Error(String(error)))
+      throw error
+    }
   }
 }

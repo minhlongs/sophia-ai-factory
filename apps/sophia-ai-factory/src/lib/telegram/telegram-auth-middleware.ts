@@ -1,13 +1,12 @@
 import { getUserTier, checkTierAccess } from '@/lib/subscription'
-import { redis } from '@/lib/redis'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { Tier } from '@/types'
+import { logger } from '@/lib/utils/logger-utility'
 
 /**
  * Auth middleware - verifies Polar.sh subscription before premium commands
- * Caches subscription status in Redis for 1 hour to reduce DB queries
+ * Uses Supabase PostgreSQL - replaces Redis-based implementation
  */
-
-const CACHE_TTL = 3600 // 1 hour
 
 interface AuthResult {
   authorized: boolean
@@ -17,29 +16,30 @@ interface AuthResult {
 
 /**
  * Check if a Telegram user has an active subscription at required tier
- * Links telegram chatId to Supabase userId via user_sessions table
  */
 export async function checkSubscriptionAuth(
   chatId: string,
   requiredTier: Tier = 'BASIC'
 ): Promise<AuthResult> {
-  try {
-    // Check Redis cache first
-    const cacheKey = `auth:telegram:${chatId}`
-    const cached = await redis.get<{ tier: Tier; userId: string }>(cacheKey)
+  const supabase = createAdminClient()
 
-    if (cached) {
-      const hasAccess = await checkTierAccess(cached.userId, requiredTier)
+  try {
+    // Look up userId from telegram chatId mapping
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any).rpc('get_user_by_telegram_chat_id', {
+      p_chat_id: chatId,
+    })
+
+    if (error || !data) {
+      logger.error('get_user_by_telegram_chat_id RPC error', error)
       return {
-        authorized: hasAccess,
-        tier: cached.tier,
-        error: hasAccess ? undefined : `Requires ${requiredTier} subscription`,
+        authorized: requiredTier === 'BASIC',
+        tier: 'BASIC',
+        error: 'Auth check failed',
       }
     }
 
-    // Look up userId from telegram chatId mapping
-    const mappingKey = `telegram:user:${chatId}`
-    const userId = await redis.get<string>(mappingKey)
+    const userId = data?.[0]?.get_user_by_telegram_chat_id as string | null
 
     if (!userId) {
       return {
@@ -49,20 +49,16 @@ export async function checkSubscriptionAuth(
       }
     }
 
-    // Get tier from Supabase
     const tier = await getUserTier(userId)
     const hasAccess = await checkTierAccess(userId, requiredTier)
-
-    // Cache result
-    await redis.set(cacheKey, { tier, userId }, { ex: CACHE_TTL })
 
     return {
       authorized: hasAccess,
       tier,
       error: hasAccess ? undefined : `Requires ${requiredTier} subscription`,
     }
-  } catch {
-    // Fail open for BASIC, fail closed for premium
+  } catch (error) {
+    logger.error('Subscription auth check failed', error instanceof Error ? error : new Error(String(error)))
     return {
       authorized: requiredTier === 'BASIC',
       tier: 'BASIC',
@@ -78,14 +74,23 @@ export async function linkTelegramUser(
   chatId: string,
   userId: string
 ): Promise<void> {
-  const mappingKey = `telegram:user:${chatId}`
-  await redis.set(mappingKey, userId)
+  const supabase = createAdminClient()
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any).rpc('link_telegram_user', {
+      p_chat_id: chatId,
+      p_user_id: userId,
+    })
+  } catch (error) {
+    logger.error('Link Telegram user failed', error instanceof Error ? error : new Error(String(error)))
+    throw error
+  }
 }
 
 /**
- * Invalidate auth cache for a user (call after subscription changes)
+ * Invalidate auth cache (no-op for SQL-based storage)
  */
 export async function invalidateAuthCache(chatId: string): Promise<void> {
-  const cacheKey = `auth:telegram:${chatId}`
-  await redis.del(cacheKey)
+  // No-op: SQL storage is always current
 }
