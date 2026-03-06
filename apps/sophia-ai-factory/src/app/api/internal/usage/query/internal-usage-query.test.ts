@@ -30,22 +30,41 @@ vi.mock('next/server', () => {
 // Mock Supabase
 const mockSupabaseData = { data: null, error: null };
 let mockSupabaseSingleResult: any = null;
+let mockSupabaseQueryResult: any = { data: [], error: null };
 
 vi.mock('@/lib/supabase/admin', () => ({
   createAdminClient: () => ({
     from: vi.fn((table: string) => ({
-      select: vi.fn((columns?: string) => ({
-        eq: vi.fn(() => ({
-          single: vi.fn(() => Promise.resolve(mockSupabaseSingleResult || mockSupabaseData)),
-        })),
-        gte: vi.fn(() => ({
-          lte: vi.fn(() => ({
-            order: vi.fn(() => ({
-              ascending: vi.fn(() => Promise.resolve({ data: [], error: null })),
-            })),
-          })),
-        })),
-      })),
+      select: vi.fn((columns?: string) => {
+        // Create a mock query builder that supports fluent chaining
+        const mockQueryBuilder = {
+          eq: vi.fn(function(this: any, column: string, value: any) {
+            // Support both single() queries and list queries
+            if (column === 'nonce' || column === 'polar_customer_id' || column === 'stripe_customer_id') {
+              // This is a license lookup query - return single()
+              return {
+                single: vi.fn(() => Promise.resolve(mockSupabaseSingleResult || mockSupabaseData)),
+              };
+            }
+            // This is a list query - allow chaining more eq/gte/lte calls
+            return mockQueryBuilder;
+          }),
+          gte: vi.fn(function(this: any) {
+            return mockQueryBuilder;
+          }),
+          lte: vi.fn(function(this: any) {
+            // Final call in the chain - return awaitable result
+            return Promise.resolve(mockSupabaseQueryResult);
+          }),
+          order: vi.fn(function(this: any) {
+            return mockQueryBuilder;
+          }),
+          ascending: vi.fn(function(this: any) {
+            return Promise.resolve(mockSupabaseQueryResult);
+          }),
+        };
+        return mockQueryBuilder;
+      }),
       insert: vi.fn(() => ({
         select: vi.fn(() => ({
           single: vi.fn(() => Promise.resolve({ data: { id: 'test-id' }, error: null })),
@@ -292,6 +311,9 @@ describe('Internal Usage Query API - Successful Queries', () => {
       },
       error: null,
     };
+
+    // Mock successful query result with empty events (since we're not testing actual data aggregation)
+    mockSupabaseQueryResult = { data: [], error: null };
   });
 
   const createAuthorizedRequest = (searchParams: Record<string, string> = {}) => {

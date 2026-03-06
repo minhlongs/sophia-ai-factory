@@ -394,7 +394,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Step 5: Build response based on format
-    if (format === 'raw' || aggregate === 'none') {
+    // Raw format returns unaggregated events; summary format returns aggregated data
+    if (format === 'raw') {
       return NextResponse.json({
         tenantId: queryUserId,
         licenseNonce: queryLicenseNonce!,
