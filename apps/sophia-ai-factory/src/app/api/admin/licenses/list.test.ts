@@ -58,9 +58,9 @@ describe('License Management API Tests', () => {
         { id: '3', isRevoked: false, expiresAt: now - 86400 }, // expired (past)
       ];
 
-      const active = licenses.filter(l => !l.isRevoked && l.expiresAt > now);
+      const active = licenses.filter(l => !l.isRevoked && l.expiresAt && l.expiresAt > now);
       const revoked = licenses.filter(l => l.isRevoked);
-      const expired = licenses.filter(l => !l.isRevoked && l.expiresAt < now);
+      const expired = licenses.filter(l => !l.isRevoked && l.expiresAt && l.expiresAt < now);
 
       expect(active).toHaveLength(1);
       expect(revoked).toHaveLength(1);

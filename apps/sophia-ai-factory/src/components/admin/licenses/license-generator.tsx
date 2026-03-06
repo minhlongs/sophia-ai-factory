@@ -20,9 +20,10 @@ import {
 } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Copy, Check, Key, AlertTriangle, Calendar } from 'lucide-react';
+import type { LicenseSummary } from '@/lib/raas-schema';
 
 interface LicenseGeneratorProps {
-  onLicenseCreated?: (license: any) => void;
+  onLicenseCreated?: (license: LicenseSummary) => void;
 }
 
 interface TierInfo {
@@ -72,7 +73,7 @@ export function LicenseGenerator({ onLicenseCreated }: LicenseGeneratorProps) {
   const [result, setResult] = useState<{
     key?: string;
     warning?: string;
-    license?: any;
+    license?: LicenseSummary;
   } | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -85,7 +86,7 @@ export function LicenseGenerator({ onLicenseCreated }: LicenseGeneratorProps) {
     setCopied(false);
 
     try {
-      const body: Record<string, any> = { tier };
+      const body: Record<string, unknown> = { tier };
 
       // Master tier = perpetual, không cần expiresAt
       if (tier !== 'master' && expiresAt) {
@@ -272,7 +273,7 @@ export function LicenseGenerator({ onLicenseCreated }: LicenseGeneratorProps) {
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Expires:</span>
                   <span className="text-xs text-foreground">
-                    {result.license.expiresAt === 0
+                    {result.license.expiresAt === 0 || result.license.expiresAt === null
                       ? 'Perpetual (Master)'
                       : new Date(result.license.expiresAt * 1000).toLocaleString()}
                   </span>

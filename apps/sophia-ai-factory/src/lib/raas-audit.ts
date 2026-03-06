@@ -73,11 +73,9 @@ export async function createLicense(params: LicenseCreationParams): Promise<Raas
     is_revoked: false
   }
 
-  const { data, error } = await (supabase
-    .from('raas_licenses') as any)
-    .insert(licenseData)
-    .select()
-    .single()
+  const schema = supabase.from('raas_licenses') as any
+
+  const { data, error } = await schema.insert(licenseData).select().single()
 
   if (error) {
     logger.error('Failed to create license in database', error)
@@ -343,7 +341,9 @@ export async function getAuditLogs(filters: RaasAuditLogFilters): Promise<AuditL
     page = 1,
     limit = 50,
     orderBy = 'created_at',
-    orderDir = 'desc'
+    orderDir = 'desc',
+    startDate,
+    endDate
   } = filters
 
   // Build query
@@ -361,6 +361,13 @@ export async function getAuditLogs(filters: RaasAuditLogFilters): Promise<AuditL
   }
   if (user_id) {
     query = query.eq('user_id', user_id)
+  }
+  // Date range filters for retention policy
+  if (startDate) {
+    query = query.gte('created_at', startDate)
+  }
+  if (endDate) {
+    query = query.lte('created_at', endDate)
   }
 
   // Order
