@@ -1,0 +1,19 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/hourly-rollup",
+      "schedule": "5 * * * *",
+      "comment": "Aggregate usage events into hourly summaries - runs at minute 5 of every hour"
+    },
+    {
+      "path": "/api/cron/daily-rollup",
+      "schedule": "5 1 * * *",
+      "comment": "Aggregate hourly summaries into daily summaries - runs at 01:05 UTC daily"
+    }
+  ],
+  "functions": {
+    "src/app/api/cron/**/*.ts": {
+      "maxDuration": 60
+    }
+  }
+}
