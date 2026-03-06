@@ -108,11 +108,18 @@ CREATE POLICY "Admins have full access to raas_audit_logs"
     )
   );
 
--- Policy: Users can read their own license audit logs (optional)
--- CREATE POLICY "Users can read own audit logs"
---   ON raas_audit_logs
---   FOR SELECT
---   USING (user_id = auth.uid());
+-- Policy: Users can view their own audit logs (SELECT only)
+-- Enables users to fetch their own audit history via /api/user/audit-logs
+-- Note: This policy is active - users have read access to their own logs
+CREATE POLICY "Users can view own audit logs"
+  ON raas_audit_logs
+  FOR SELECT
+  USING (
+    user_id = auth.uid()
+    OR
+    -- Allow service role (backend) to read all logs
+    auth.jwt() ->> 'role' = 'service_role'
+  );
 
 -- ============================================================================
 -- Helper Functions

@@ -12,7 +12,7 @@ import { z } from 'zod'
 
 /**
  * Query params validation schema
- * Note: Audit logs retained for 30 days only
+ * Note: Audit logs retained for 90 days per SOC 2 compliance
  */
 const auditLogSchema = z.object({
   action: z.enum(['CREATE', 'VALIDATE', 'REVOKE', 'UPDATE']).optional(),
@@ -22,13 +22,13 @@ const auditLogSchema = z.object({
 })
 
 /**
- * Calculate timestamp for 30 days ago
- * Audit logs are retained for 30 days only per compliance policy
+ * Calculate timestamp for 90 days ago
+ * Audit logs are retained for 90 days per SOC 2 compliance policy
  */
-function getThirtyDaysAgoTimestamp(): number {
-  const thirtyDaysAgo = new Date()
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-  return Math.floor(thirtyDaysAgo.getTime() / 1000)
+function getNinetyDaysAgoTimestamp(): number {
+  const ninetyDaysAgo = new Date()
+  ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
+  return Math.floor(ninetyDaysAgo.getTime() / 1000)
 }
 
 /**
@@ -44,8 +44,8 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const params = auditLogSchema.parse(Object.fromEntries(searchParams))
 
-    // Apply 30 days retention policy
-    const thirtyDaysAgo = getThirtyDaysAgoTimestamp()
+    // Apply 90 days retention policy
+    const ninetyDaysAgo = getNinetyDaysAgoTimestamp()
 
     const result = await getAuditLogs({
       action: params.action,
@@ -54,14 +54,14 @@ export async function GET(request: NextRequest) {
       limit: params.limit,
       orderBy: 'created_at',
       orderDir: 'desc',
-      // Filter: only logs from last 30 days
-      startDate: thirtyDaysAgo
+      // Filter: only logs from last 90 days
+      startDate: ninetyDaysAgo
     } as any)
 
     return NextResponse.json({
       ...result,
-      retentionNote: 'Audit logs retained for 30 days',
-      retentionDays: 30
+      retentionNote: 'Audit logs retained for 90 days per SOC 2 compliance',
+      retentionDays: 90
     })
 
   } catch (error) {
