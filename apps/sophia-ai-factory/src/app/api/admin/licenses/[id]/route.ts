@@ -82,6 +82,8 @@ export async function POST(
 
   try {
     const { id: nonce } = await params
+    const body = await request.json().catch(() => ({}))
+    const { reason } = body
 
     if (!nonce) {
       return NextResponse.json(
@@ -100,13 +102,14 @@ export async function POST(
     }
 
     // Revoke license
-    const revokedLicense = await revokeLicense(nonce, 'admin')
+    await revokeLicense(nonce, 'admin')
 
-    // Log audit trail
+    // Log audit trail with optional reason
     await logLicenseRevocation({
       nonce,
       tier: existingLicense.tier,
-      revokedBy: 'admin'
+      revokedBy: 'admin',
+      reason
     })
 
     const now = Math.floor(Date.now() / 1000)

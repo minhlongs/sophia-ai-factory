@@ -34,6 +34,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Key, Search, Filter, MoreHorizontal, Eye, Ban, RefreshCw, RotateCcw, CheckCircle } from 'lucide-react';
 import { LicenseRegenerateDialog } from './license-regenerate-dialog';
+import { LicenseRevokeDialog } from './license-revoke-dialog';
 import type { LicenseSummary } from '@/lib/raas-schema';
 
 interface License {
@@ -48,7 +49,7 @@ interface License {
 }
 
 interface LicenseListProps {
-  onRevoke?: (id: string) => void;
+  onRevoke?: (id: string, reason?: string) => void;
   onView?: (id: string) => void;
   onRegenerate?: (data: { oldLicenseId: string; newKey: string }) => void;
 }
@@ -75,6 +76,7 @@ export function LicenseList({ onRevoke, onView, onRegenerate }: LicenseListProps
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [regenerateDialogOpen, setRegenerateDialogOpen] = useState(false);
+  const [revokeDialogOpen, setRevokeDialogOpen] = useState(false);
   const [selectedLicenseId, setSelectedLicenseId] = useState<string | undefined>();
   const limit = 20;
 
@@ -129,17 +131,18 @@ export function LicenseList({ onRevoke, onView, onRegenerate }: LicenseListProps
     return 'active';
   };
 
-  const handleRevoke = async (id: string) => {
-    if (!confirm(`Are you sure you want to revoke license ${id}?`)) return;
-
+  const handleRevoke = async (id: string, reason?: string) => {
     try {
       const response = await fetch(`/api/admin/licenses/${id}/revoke`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason }),
       });
 
       if (response.ok) {
         await fetchLicenses();
-        onRevoke?.(id);
+        onRevoke?.(id, reason);
+        setRevokeDialogOpen(false);
       } else {
         const data = await response.json();
         alert(`Failed to revoke: ${data.error}`);
@@ -322,7 +325,10 @@ export function LicenseList({ onRevoke, onView, onRegenerate }: LicenseListProps
                               </DropdownMenuItem>
                             ) : (
                               <DropdownMenuItem
-                                onClick={() => handleRevoke(license.id)}
+                                onClick={() => {
+                                  setSelectedLicenseId(license.id);
+                                  setRevokeDialogOpen(true);
+                                }}
                                 className="text-red-400"
                               >
                                 <Ban className="w-4 h-4 mr-2" />
@@ -345,6 +351,18 @@ export function LicenseList({ onRevoke, onView, onRegenerate }: LicenseListProps
           <LicenseRegenerateDialog
             licenseId={selectedLicenseId}
             onRegenerate={handleRegenerateComplete}
+          />
+        )}
+
+        {/* Revoke Dialog */}
+        {revokeDialogOpen && selectedLicenseId && (
+          <LicenseRevokeDialog
+            licenseId={selectedLicenseId}
+            onRevoke={handleRevoke}
+            onClose={() => {
+              setRevokeDialogOpen(false);
+              setSelectedLicenseId(undefined);
+            }}
           />
         )}
 
