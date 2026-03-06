@@ -356,7 +356,7 @@ export async function checkQuota(
 /**
  * Generate CSV export rows with standardized field names
  *
- * @param events - Raw usage events
+ * @param events - Raw usage events (can include external_customer_id)
  */
 export function generateCsvRows(events: Array<{
   user_id: string;
@@ -369,6 +369,7 @@ export function generateCsvRows(events: Array<{
   status_code: number | null;
   response_time_ms: number | null;
   created_at: number;
+  external_customer_id?: string | null;
 }>): CsvExportRow[] {
   return events.map(event => ({
     tenant_id: event.user_id,
@@ -383,6 +384,7 @@ export function generateCsvRows(events: Array<{
     action: event.action,
     status: (!event.status_code || event.status_code >= 400) ? 'error' : 'success',
     response_time_ms: event.response_time_ms,
+    external_customer_id: event.external_customer_id || null,
   }));
 }
 

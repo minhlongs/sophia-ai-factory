@@ -90,6 +90,51 @@ export interface UserSessionRow {
   created_at?: string
 }
 
+export interface UsageEventRow {
+  id?: string
+  user_id: string
+  license_key_hash: string
+  license_nonce: string
+  service_name: string
+  endpoint: string
+  action: string
+  tokens_input: number
+  tokens_output: number
+  credits_used: number
+  request_id: string | null
+  model_name: string | null
+  tier_at_request: string
+  status_code: number | null
+  error_message: string | null
+  response_time_ms: number | null
+  created_at: number
+  idempotency_key: string | null
+  external_customer_id: string | null
+  resource_type: string | null
+}
+
+export interface UsageEventInsert {
+  user_id: string
+  license_key_hash: string
+  license_nonce: string
+  service_name: string
+  endpoint: string
+  action: string
+  tokens_input?: number
+  tokens_output?: number
+  credits_used: number
+  request_id?: string | null
+  model_name?: string | null
+  tier_at_request: string
+  status_code?: number | null
+  error_message?: string | null
+  response_time_ms?: number | null
+  created_at?: number
+  idempotency_key?: string | null
+  external_customer_id?: string | null
+  resource_type?: string | null
+}
+
 export interface RateLimitRow {
   id?: string
   identifier: string

@@ -76,20 +76,24 @@ export async function activateSubscription(
   userId: string,
   polarSubId: string,
   tier: Tier,
-  periodEnd: string | null
+  periodEnd: string | null,
+  polarCustomerId?: string | null
 ): Promise<void> {
   const supabase = getSupabase()
   const dbTier = TIER_DB_MAPPING[tier]
 
+  const updateData: Record<string, unknown> = {
+    subscription_tier: dbTier,
+    subscription_status: 'active',
+    polar_subscription_id: polarSubId,
+    subscription_expires_at: periodEnd,
+    polar_customer_id: polarCustomerId,
+    updated_at: new Date().toISOString(),
+  }
+
   const { error } = await (supabase as any)
     .from('user_profiles')
-    .update({
-      subscription_tier: dbTier,
-      subscription_status: 'active',
-      polar_subscription_id: polarSubId,
-      subscription_expires_at: periodEnd,
-      updated_at: new Date().toISOString(),
-    } as Record<string, unknown>)
+    .update(updateData)
     .eq('user_id', userId)
 
   if (error) {
@@ -173,6 +177,22 @@ export async function findUserByPolarSubId(
     .from('user_profiles')
     .select('user_id')
     .eq('polar_subscription_id', polarSubId)
+    .single()
+
+  return data?.user_id || null
+}
+
+/**
+ * Find user ID by Polar customer ID
+ */
+export async function findUserByPolarCustomerId(
+  polarCustomerId: string
+): Promise<string | null> {
+  const supabase = getSupabase()
+  const { data } = await (supabase as any)
+    .from('user_profiles')
+    .select('user_id')
+    .eq('polar_customer_id', polarCustomerId)
     .single()
 
   return data?.user_id || null

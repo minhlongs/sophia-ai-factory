@@ -35,7 +35,29 @@ export {
   calculateCredits,
   hashLicenseKey,
   startTimer,
+  checkIdempotencyKey,
+  insertUsageEvent,
+  resolveExternalCustomerId,
 } from './tracker';
+
+// Idempotency utilities
+export {
+  generateIdempotencyKey,
+  isValidIdempotencyKey,
+  extractIdempotencyKey,
+  buildIdempotencyHeaders,
+} from './idempotency';
+
+// Batch buffer
+export {
+  usageBuffer,
+} from './batch-buffer';
+
+// Debug logger
+export {
+  debugLogger,
+  logFunctionCall,
+} from './debug-logger';
 
 // Export utilities
 export {

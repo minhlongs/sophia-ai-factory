@@ -42,10 +42,11 @@ async function generateLicenseOnPayment(params: {
   tier: Tier
   email?: string
   polarSubscriptionId?: string
+  polarCustomerId?: string
   expiresAt?: string
 }): Promise<{ nonce: string; keyHash: string } | null> {
   try {
-    const { userId, tier, email, polarSubscriptionId, expiresAt } = params
+    const { userId, tier, email, polarSubscriptionId, polarCustomerId, expiresAt } = params
 
     // Calculate expiration timestamp
     let expiresTimestamp: number
@@ -95,6 +96,7 @@ async function generateLicenseOnPayment(params: {
       metadata: {
         customerEmail: email,
         polarSubscriptionId,
+        polarCustomerId: params.polarCustomerId,
         source: 'auto-generated',
         generatedAt: new Date().toISOString()
       }
@@ -370,11 +372,13 @@ async function handleCheckoutSuccess(
 ): Promise<void> {
   const startTime = Date.now()
   const { userId, tier, telegramChatId } = extractMetadata(data)
+  const polarCustomerId = safeString((data.customer as Record<string, unknown>)?.id as string)
 
   logger.info('Processing checkout.success event', {
     userId,
     tier,
     checkoutId: safeString(data.id),
+    polarCustomerId,
   })
 
   if (!userId || !tier) {
@@ -398,6 +402,7 @@ async function handleCheckoutSuccess(
       tier,
       email: customerEmail || userId,
       polarSubscriptionId: polarSubId || undefined,
+      polarCustomerId: polarCustomerId || undefined,
       expiresAt: undefined, // Will default to 1 year
     })
 
@@ -406,16 +411,18 @@ async function handleCheckoutSuccess(
         userId,
         tier,
         noncePrefix: licenseResult.nonce.slice(0, 8),
+        polarCustomerId,
       })
     }
 
-    // Update user profile
+    // Update user profile with polar_customer_id
     const { error } = await supabase
       .from('user_profiles')
       .update({
         subscription_tier: dbTier,
         subscription_status: 'active',
         polar_subscription_id: polarSubId,
+        polar_customer_id: polarCustomerId,
         updated_at: new Date().toISOString(),
       } as Record<string, unknown>)
       .eq('user_id', userId)
@@ -478,12 +485,14 @@ async function handleSubscriptionCreated(
   const resolvedTier = tier || 'PREMIUM'
   const periodEnd = safeString(data.current_period_end)
   const polarSubId = safeString(data.id)
+  const polarCustomerId = safeString((data.customer as Record<string, unknown>)?.id as string)
   const customerEmail = (data.customer as Record<string, unknown> | undefined)?.email as string | undefined
 
   logger.info('Processing subscription.created event', {
     userId,
     tier: resolvedTier,
     polarSubId,
+    polarCustomerId,
     periodEnd,
   })
 
@@ -503,6 +512,7 @@ async function handleSubscriptionCreated(
         tier: resolvedTier,
         email: customerEmail || userId,
         polarSubscriptionId: polarSubId,
+        polarCustomerId: polarCustomerId || undefined,
         expiresAt: periodEnd || undefined,
       })
 
@@ -511,16 +521,18 @@ async function handleSubscriptionCreated(
           userId,
           tier: resolvedTier,
           noncePrefix: licenseResult.nonce.slice(0, 8),
+          polarCustomerId,
         })
       }
     }
 
-    // Activate subscription in DB
+    // Activate subscription in DB with polar_customer_id
     await activateSubscription(
       userId || 'unknown',
       polarSubId,
       resolvedTier,
-      periodEnd
+      periodEnd,
+      polarCustomerId
     )
 
     logger.info('Subscription activated', {
@@ -622,11 +634,13 @@ async function handleOrderCreated(
 ): Promise<void> {
   const startTime = Date.now()
   const { userId, tier, telegramChatId } = extractMetadata(data)
+  const polarCustomerId = safeString((data.customer as Record<string, unknown>)?.id as string)
 
   logger.info('Processing order.created event', {
     userId,
     tier,
     orderId: safeString(data.id),
+    polarCustomerId,
   })
 
   if (!userId || !tier) {
@@ -650,6 +664,7 @@ async function handleOrderCreated(
       tier,
       email: customerEmail || userId,
       polarSubscriptionId: polarSubId || undefined,
+      polarCustomerId: polarCustomerId || undefined,
       expiresAt: undefined, // Will default to 1 year
     })
 
@@ -658,16 +673,18 @@ async function handleOrderCreated(
         userId,
         tier,
         noncePrefix: licenseResult.nonce.slice(0, 8),
+        polarCustomerId,
       })
     }
 
-    // Update user profile
+    // Update user profile with polar_customer_id
     const { error } = await supabase
       .from('user_profiles')
       .update({
         subscription_tier: dbTier,
         subscription_status: 'active',
         polar_subscription_id: polarSubId,
+        polar_customer_id: polarCustomerId,
         updated_at: new Date().toISOString(),
       } as Record<string, unknown>)
       .eq('user_id', userId)
