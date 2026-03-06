@@ -9,7 +9,6 @@ import { createAdminClient } from './supabase/admin'
 import { logger } from './utils/logger-utility'
 import { Tier } from '@/types'
 import type {
-  Database,
   RaasLicenseRow as RaasLicense,
   RaasLicenseInsert,
   RaasLicenseUpdate,
@@ -216,6 +215,81 @@ export async function revokeLicense(
   }
 
   return data as RaasLicense
+}
+
+/**
+ * Extend a license expiration date
+ */
+export async function extendLicense(
+  nonce: string,
+  days: number,
+  extendedBy?: string
+): Promise<RaasLicense> {
+  const supabase = createAdminClient()
+
+  // First get the license to ensure it exists
+  const existingLicense = await getLicenseByNonce(nonce)
+  if (!existingLicense) {
+    throw new Error(`License not found: ${nonce}`)
+  }
+
+  // Check if license is revoked
+  if (existingLicense.is_revoked) {
+    throw new Error(`Cannot extend revoked license: ${nonce}`)
+  }
+
+  // Calculate new expiration date
+  const now = Math.floor(Date.now() / 1000)
+  const currentExpiresAt = existingLicense.expires_at ?? now
+  const newExpiresAt = currentExpiresAt + (days * 24 * 60 * 60)
+
+  // Update expiration
+  const updateData: RaasLicenseUpdate = {
+    expires_at: newExpiresAt
+  }
+
+  const { data, error } = await (supabase
+    .from('raas_licenses') as any)
+    .update(updateData)
+    .eq('nonce', nonce)
+    .select()
+    .single()
+
+  if (error) {
+    logger.error(`Failed to extend license ${nonce}`, error)
+    throw new Error(`Database error: ${error.message}`)
+  }
+
+  logger.info(`License extended: ${nonce} by ${days} days`)
+
+  return data as RaasLicense
+}
+
+/**
+ * Log license extension
+ */
+export async function logLicenseExtension(params: {
+  nonce: string
+  tier?: string
+  days: number
+  extendedBy?: string
+  previousExpiresAt?: number
+  newExpiresAt?: number
+}): Promise<void> {
+  await logAuditAction({
+    action: 'UPDATE',
+    nonce: params.nonce,
+    tier: params.tier,
+    timestamp: Math.floor(Date.now() / 1000),
+    userId: params.extendedBy,
+    details: {
+      action: 'EXTEND',
+      extendedBy: params.extendedBy,
+      days: params.days,
+      previousExpiresAt: params.previousExpiresAt,
+      newExpiresAt: params.newExpiresAt
+    }
+  })
 }
 
 /**
