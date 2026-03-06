@@ -13,7 +13,7 @@ import {
 } from '@/lib/services/notification-service'
 import { logger } from '@/lib/utils/logger-utility'
 import { generateLicenseKey } from '@/lib/raas-key-generator'
-import { createLicense, logLicenseCreation, revokeLicense, logLicenseRevocation } from '@/lib/raas-audit'
+import { createLicense, logLicenseCreation, revokeLicense, logLicenseRevocation, reactivateLicenseBySubscription, revokeLicenseBySubscription } from '@/lib/raas-audit'
 import { createHash } from 'crypto'
 
 const VALID_TIERS: Tier[] = ['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER']
@@ -114,48 +114,113 @@ async function generateLicenseOnPayment(params: {
 
     return { nonce, keyHash }
   } catch (error) {
-    logger.error('Failed to auto-generate license', error instanceof Error ? error : undefined)
+    const err = error instanceof Error ? error : new Error(String(error))
+    logger.error('Failed to auto-generate license', err)
     return null
   }
 }
 
 /**
  * Check if event was already processed (idempotency)
+ * Uses database-level uniqueness of polar_event_id to prevent duplicates
  */
-async function isEventProcessed(polarEventId: string): Promise<boolean> {
+async function isEventProcessed(polarEventId: string): Promise<{
+  isProcessed: boolean
+  existingRecord?: PaymentEventRecord
+}> {
   const supabase = getSupabase()
-  const { data } = await supabase
+
+  // Check for existing processed event
+  const { data, error } = await supabase
     .from('payment_events')
-    .select('id')
+    .select('*')
     .eq('polar_event_id', polarEventId)
-    .eq('processed', true)
     .single()
 
-  return !!data
+  if (error && error.code !== 'PGRST116') { // PGRST116 = not found
+    const err = error instanceof Error ? error : new Error(String(error))
+    logger.error('Failed to check idempotency', err, {
+      polarEventId,
+      errorCode: error.code,
+    })
+    // On DB error, assume not processed to avoid silent failures
+    return { isProcessed: false }
+  }
+
+  if (data?.processed) {
+    logger.info('Event already processed (idempotency check)', {
+      polarEventId,
+      eventType: data.event_type,
+      processedAt: data.created_at,
+    })
+    return { isProcessed: true, existingRecord: data as PaymentEventRecord }
+  }
+
+  // Event exists but not processed yet - could be in-progress or failed
+  if (data && !data.processed) {
+    logger.warn('Event exists but not marked processed - possible retry or in-progress', {
+      polarEventId,
+      eventType: data.event_type,
+      createdAt: data.created_at,
+    })
+  }
+
+  return { isProcessed: false }
 }
 
 /**
- * Record payment event in audit trail
+ * Record payment event in audit trail with retry logic
  */
 async function recordPaymentEvent(
-  event: PaymentEventRecord
+  event: PaymentEventRecord,
+  retryCount = 0
 ): Promise<void> {
   const supabase = getSupabase()
-  const { error } = await supabase.from('payment_events').upsert(
-    {
-      event_type: event.event_type,
-      polar_event_id: event.polar_event_id,
-      payload: event.payload,
-      processed: event.processed,
-      created_at: new Date().toISOString(),
-    },
-    { onConflict: 'polar_event_id' }
-  )
+  const maxRetries = 3
 
-  if (error) {
-    logger.error('Failed to record payment event', error instanceof Error ? error : undefined, {
+  try {
+    const { error } = await supabase.from('payment_events').upsert(
+      {
+        event_type: event.event_type,
+        polar_event_id: event.polar_event_id,
+        payload: event.payload,
+        processed: event.processed,
+        created_at: new Date().toISOString(),
+      },
+      { onConflict: 'polar_event_id' }
+    )
+
+    if (error) {
+      throw error
+    }
+
+    logger.debug('Payment event recorded', {
       polarEventId: event.polar_event_id,
       eventType: event.event_type,
+      processed: event.processed,
+    })
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+
+    if (retryCount < maxRetries) {
+      logger.warn('Failed to record payment event, retrying', {
+        polarEventId: event.polar_event_id,
+        eventType: event.event_type,
+        retryCount: retryCount + 1,
+        maxRetries,
+        error: errorMessage,
+      })
+      // Exponential backoff: 100ms, 200ms, 400ms
+      await new Promise(resolve => setTimeout(resolve, 100 * Math.pow(2, retryCount)))
+      return recordPaymentEvent(event, retryCount + 1)
+    }
+
+    const err = error instanceof Error ? error : new Error(String(error))
+    logger.error('Failed to record payment event after retries', err, {
+      polarEventId: event.polar_event_id,
+      eventType: event.event_type,
+      retryCount,
+      maxRetries,
     })
   }
 }
@@ -225,18 +290,27 @@ async function handleSubscriptionCancelled(
 }
 
 /**
- * Process a Polar.sh webhook event with idempotency
+ * Process a Polar.sh webhook event with idempotency and robust error handling
  */
 export async function processWebhookEvent(
   event: PolarWebhookEvent,
   webhookId: string
 ): Promise<{ success: boolean; message: string }> {
-  // Idempotency check
-  if (await isEventProcessed(webhookId)) {
+  const startTime = Date.now()
+
+  logger.info('Processing webhook event', {
+    eventType: event.type,
+    webhookId,
+    timestamp: new Date().toISOString(),
+  })
+
+  // Idempotency check - return early if already processed
+  const { isProcessed } = await isEventProcessed(webhookId)
+  if (isProcessed) {
     return { success: true, message: 'Event already processed' }
   }
 
-  // Record event as pending
+  // Record event as pending (atomic operation - creates or updates)
   await recordPaymentEvent({
     event_type: event.type,
     polar_event_id: webhookId,
@@ -245,33 +319,10 @@ export async function processWebhookEvent(
   })
 
   try {
-    switch (event.type) {
-      case 'checkout.updated':
-        if (event.data.status === 'succeeded') {
-          await handleCheckoutSuccess(event.data)
-        }
-        break
+    // Route to appropriate handler based on event type
+    await handleEventByType(event)
 
-      case 'subscription.created':
-        await handleSubscriptionCreated(event.data)
-        break
-
-      case 'subscription.updated':
-        await handleSubscriptionUpdated(event.data)
-        break
-
-      case 'order.created':
-        await handleOrderCreated(event.data)
-        break
-
-      case 'subscription.cancelled':
-        await handleSubscriptionCancelled(event.data)
-        break
-
-      default:
-    }
-
-    // Mark as processed
+    // Mark as processed after successful handling
     await recordPaymentEvent({
       event_type: event.type,
       polar_event_id: webhookId,
@@ -279,11 +330,37 @@ export async function processWebhookEvent(
       processed: true,
     })
 
+    const duration = Date.now() - startTime
+    logger.info('Webhook event processed successfully', {
+      eventType: event.type,
+      webhookId,
+      durationMs: duration,
+    })
+
     return { success: true, message: `Processed ${event.type}` }
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const errorStack = error instanceof Error ? error.stack : undefined
+
+    const err = error instanceof Error ? error : new Error(String(error))
+    logger.error('Failed to process webhook event', err, {
+      eventType: event.type,
+      webhookId,
+      error: errorMessage,
+      stack: errorStack,
+    })
+
+    // Mark as failed (still false, allows retry)
+    await recordPaymentEvent({
+      event_type: event.type,
+      polar_event_id: webhookId,
+      payload: event.data,
+      processed: false,
+    })
+
     return {
       success: false,
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: errorMessage,
     }
   }
 }
@@ -291,8 +368,21 @@ export async function processWebhookEvent(
 async function handleCheckoutSuccess(
   data: Record<string, unknown>
 ): Promise<void> {
+  const startTime = Date.now()
   const { userId, tier, telegramChatId } = extractMetadata(data)
+
+  logger.info('Processing checkout.success event', {
+    userId,
+    tier,
+    checkoutId: safeString(data.id),
+  })
+
   if (!userId || !tier) {
+    logger.warn('Checkout success: missing userId or tier in metadata', {
+      checkoutId: safeString(data.id),
+      userId,
+      tier,
+    })
     return
   }
 
@@ -301,63 +391,175 @@ async function handleCheckoutSuccess(
   const polarSubId = safeString(data.id)
   const customerEmail = (data.customer as Record<string, unknown> | undefined)?.email as string | undefined
 
-  // Auto-generate license key
-  await generateLicenseOnPayment({
-    userId,
-    tier,
-    email: customerEmail || userId,
-    polarSubscriptionId: polarSubId || undefined,
-    expiresAt: undefined // Will default to 1 year
-  })
+  try {
+    // Auto-generate license key
+    const licenseResult = await generateLicenseOnPayment({
+      userId,
+      tier,
+      email: customerEmail || userId,
+      polarSubscriptionId: polarSubId || undefined,
+      expiresAt: undefined, // Will default to 1 year
+    })
 
-  const { error } = await supabase
-    .from('user_profiles')
-    .update({
-      subscription_tier: dbTier,
-      subscription_status: 'active',
-      polar_subscription_id: polarSubId,
-      updated_at: new Date().toISOString(),
-    } as Record<string, unknown>)
-    .eq('user_id', userId)
+    if (licenseResult) {
+      logger.info('License generated for checkout', {
+        userId,
+        tier,
+        noncePrefix: licenseResult.nonce.slice(0, 8),
+      })
+    }
 
-  if (error) throw error
+    // Update user profile
+    const { error } = await supabase
+      .from('user_profiles')
+      .update({
+        subscription_tier: dbTier,
+        subscription_status: 'active',
+        polar_subscription_id: polarSubId,
+        updated_at: new Date().toISOString(),
+      } as Record<string, unknown>)
+      .eq('user_id', userId)
 
-  if (telegramChatId) {
-    await notifySubscriptionActivated(telegramChatId, tier)
+    if (error) {
+      logger.error('Failed to update user profile after checkout', error instanceof Error ? error : new Error(String(error)), {
+        userId,
+        tier,
+        polarSubId,
+      })
+      throw error
+    }
+
+    logger.info('User profile updated successfully', {
+      userId,
+      tier: dbTier,
+      polarSubId,
+    })
+
+    // Send Telegram notification if chat_id available
+    if (telegramChatId) {
+      try {
+        await notifySubscriptionActivated(telegramChatId, tier)
+        logger.info('Telegram notification sent', {
+          userId,
+          telegramChatId,
+        })
+      } catch (notifError) {
+        // Non-fatal: don't fail the whole operation
+        logger.warn('Failed to send Telegram notification', {
+          userId,
+          telegramChatId,
+          error: notifError instanceof Error ? notifError.message : String(notifError),
+        })
+      }
+    }
+
+    const duration = Date.now() - startTime
+    logger.info('Checkout success handling complete', {
+      userId,
+      checkoutId: polarSubId,
+      durationMs: duration,
+    })
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error))
+    logger.error('Error handling checkout success', err, {
+      userId,
+      tier,
+      checkoutId: polarSubId,
+    })
+    throw error
   }
 }
 
 async function handleSubscriptionCreated(
   data: Record<string, unknown>
 ): Promise<void> {
+  const startTime = Date.now()
   const { userId, tier, telegramChatId } = extractMetadata(data)
   const resolvedTier = tier || 'PREMIUM'
   const periodEnd = safeString(data.current_period_end)
   const polarSubId = safeString(data.id)
   const customerEmail = (data.customer as Record<string, unknown> | undefined)?.email as string | undefined
 
-  if (!polarSubId) return
+  logger.info('Processing subscription.created event', {
+    userId,
+    tier: resolvedTier,
+    polarSubId,
+    periodEnd,
+  })
 
-  // Auto-generate license key on subscription creation
-  if (userId) {
-    await generateLicenseOnPayment({
+  if (!polarSubId) {
+    logger.warn('Subscription created: missing polarSubId', {
       userId,
       tier: resolvedTier,
-      email: customerEmail || userId,
-      polarSubscriptionId: polarSubId,
-      expiresAt: periodEnd || undefined
     })
+    return
   }
 
-  await activateSubscription(
-    userId || 'unknown',
-    polarSubId,
-    resolvedTier,
-    periodEnd
-  )
+  try {
+    // Auto-generate license key on subscription creation
+    if (userId) {
+      const licenseResult = await generateLicenseOnPayment({
+        userId,
+        tier: resolvedTier,
+        email: customerEmail || userId,
+        polarSubscriptionId: polarSubId,
+        expiresAt: periodEnd || undefined,
+      })
 
-  if (telegramChatId && userId) {
-    await notifySubscriptionActivated(telegramChatId, resolvedTier)
+      if (licenseResult) {
+        logger.info('License generated for subscription', {
+          userId,
+          tier: resolvedTier,
+          noncePrefix: licenseResult.nonce.slice(0, 8),
+        })
+      }
+    }
+
+    // Activate subscription in DB
+    await activateSubscription(
+      userId || 'unknown',
+      polarSubId,
+      resolvedTier,
+      periodEnd
+    )
+
+    logger.info('Subscription activated', {
+      userId,
+      polarSubId,
+      tier: resolvedTier,
+    })
+
+    // Send Telegram notification if chat_id available
+    if (telegramChatId && userId) {
+      try {
+        await notifySubscriptionActivated(telegramChatId, resolvedTier)
+        logger.info('Telegram notification sent', {
+          userId,
+          telegramChatId,
+        })
+      } catch (notifError) {
+        logger.warn('Failed to send Telegram notification', {
+          userId,
+          telegramChatId,
+          error: notifError instanceof Error ? notifError.message : String(notifError),
+        })
+      }
+    }
+
+    const duration = Date.now() - startTime
+    logger.info('Subscription created handling complete', {
+      userId,
+      polarSubId,
+      durationMs: duration,
+    })
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error))
+    logger.error('Error handling subscription created', err, {
+      userId,
+      polarSubId,
+      tier: resolvedTier,
+    })
+    throw error
   }
 }
 
@@ -418,36 +620,214 @@ async function handleSubscriptionUpdated(
 async function handleOrderCreated(
   data: Record<string, unknown>
 ): Promise<void> {
+  const startTime = Date.now()
   const { userId, tier, telegramChatId } = extractMetadata(data)
-  if (!userId || !tier) return
+
+  logger.info('Processing order.created event', {
+    userId,
+    tier,
+    orderId: safeString(data.id),
+  })
+
+  if (!userId || !tier) {
+    logger.warn('Order created: missing userId or tier in metadata', {
+      orderId: safeString(data.id),
+      userId,
+      tier,
+    })
+    return
+  }
 
   const dbTier = TIER_DB_MAPPING[tier]
   const supabase = getSupabase()
   const polarSubId = safeString(data.id)
   const customerEmail = (data.customer as Record<string, unknown> | undefined)?.email as string | undefined
 
-  // Auto-generate license key for one-time order
-  await generateLicenseOnPayment({
+  try {
+    // Auto-generate license key for one-time order
+    const licenseResult = await generateLicenseOnPayment({
+      userId,
+      tier,
+      email: customerEmail || userId,
+      polarSubscriptionId: polarSubId || undefined,
+      expiresAt: undefined, // Will default to 1 year
+    })
+
+    if (licenseResult) {
+      logger.info('License generated for order', {
+        userId,
+        tier,
+        noncePrefix: licenseResult.nonce.slice(0, 8),
+      })
+    }
+
+    // Update user profile
+    const { error } = await supabase
+      .from('user_profiles')
+      .update({
+        subscription_tier: dbTier,
+        subscription_status: 'active',
+        polar_subscription_id: polarSubId,
+        updated_at: new Date().toISOString(),
+      } as Record<string, unknown>)
+      .eq('user_id', userId)
+
+    if (error) {
+      const err = error instanceof Error ? error : new Error(String(error))
+      logger.error('Failed to update user profile after order', err, {
+        userId,
+        tier,
+        polarSubId,
+      })
+      throw error
+    }
+
+    logger.info('User profile updated for order', {
+      userId,
+      tier: dbTier,
+      polarSubId,
+    })
+
+    // Send Telegram notification if chat_id available
+    if (telegramChatId) {
+      try {
+        await notifySubscriptionActivated(telegramChatId, tier)
+        logger.info('Telegram notification sent for order', {
+          userId,
+          telegramChatId,
+        })
+      } catch (notifError) {
+        logger.warn('Failed to send Telegram notification for order', {
+          userId,
+          telegramChatId,
+          error: notifError instanceof Error ? notifError.message : String(notifError),
+        })
+      }
+    }
+
+    const duration = Date.now() - startTime
+    logger.info('Order created handling complete', {
+      userId,
+      orderId: polarSubId,
+      durationMs: duration,
+    })
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error))
+    logger.error('Error handling order created', err, {
+      userId,
+      tier,
+      orderId: polarSubId,
+    })
+    throw error
+  }
+}
+
+/**
+ * Handle subscription.active event - Reactivate license after past_due
+ */
+async function handleSubscriptionActive(data: Record<string, unknown>): Promise<void> {
+  const polarSubId = safeString(data.id)
+  if (!polarSubId) return
+
+  // Reactivate license associated with this subscription
+  await reactivateLicenseBySubscription(polarSubId)
+
+  logger.info('[Polar] Subscription active - license reactivated', { polarSubId })
+}
+
+/**
+ * Handle subscription.past_due event - Add warning metadata (grace period)
+ */
+async function handleSubscriptionPastDue(data: Record<string, unknown>): Promise<void> {
+  const polarSubId = safeString(data.id)
+  const { userId } = extractMetadata(data)
+
+  if (!polarSubId) return
+
+  // Add warning to license metadata (don't revoke yet - 7 day grace period)
+  const supabase = getSupabase()
+  await supabase
+    .from('raas_licenses')
+    .update({
+      metadata: {
+        past_due: true,
+        past_due_at: Date.now(),
+        warning_sent: true,
+      },
+    })
+    .eq('metadata->>polarSubscriptionId', polarSubId)
+
+  logger.warn('[Polar] Subscription past due - warning added', {
     userId,
-    tier,
-    email: customerEmail || userId,
-    polarSubscriptionId: polarSubId || undefined,
-    expiresAt: undefined // Will default to 1 year
+    polarSubId,
+  })
+}
+
+/**
+ * Handle subscription.expired event - Full license revoke
+ */
+async function handleSubscriptionExpired(data: Record<string, unknown>): Promise<void> {
+  const polarSubId = safeString(data.id)
+  if (!polarSubId) return
+
+  // Full revoke (not soft - grace period expired)
+  await revokeLicenseBySubscription(polarSubId, {
+    soft: false,
+    provider: 'polar',
   })
 
-  const { error } = await supabase
-    .from('user_profiles')
-    .update({
-      subscription_tier: dbTier,
-      subscription_status: 'active',
-      polar_subscription_id: polarSubId,
-      updated_at: new Date().toISOString(),
-    } as Record<string, unknown>)
-    .eq('user_id', userId)
+  logger.info('[Polar] Subscription expired - license revoked', { polarSubId })
+}
 
-  if (error) throw error
+/**
+ * Route event to appropriate handler based on type
+ */
+async function handleEventByType(event: PolarWebhookEvent): Promise<void> {
+  switch (event.type) {
+    case 'checkout.updated':
+      if (event.data.status === 'succeeded') {
+        await handleCheckoutSuccess(event.data)
+      } else {
+        logger.debug('Checkout not succeeded, skipping', {
+          webhookId: event.data.id,
+          status: event.data.status,
+        })
+      }
+      break
 
-  if (telegramChatId) {
-    await notifySubscriptionActivated(telegramChatId, tier)
+    case 'subscription.created':
+      await handleSubscriptionCreated(event.data)
+      break
+
+    case 'subscription.updated':
+      await handleSubscriptionUpdated(event.data)
+      break
+
+    case 'subscription.cancelled':
+      await handleSubscriptionCancelled(event.data)
+      break
+
+    // NEW: Phase 2-5 lifecycle events
+    case 'subscription.active':
+      await handleSubscriptionActive(event.data)
+      break
+
+    case 'subscription.past_due':
+      await handleSubscriptionPastDue(event.data)
+      break
+
+    case 'subscription.expired':
+      await handleSubscriptionExpired(event.data)
+      break
+
+    case 'order.created':
+      await handleOrderCreated(event.data)
+      break
+
+    default:
+      logger.warn('Unhandled webhook event type', {
+        eventType: event.type,
+        webhookId: event.data.id,
+      })
   }
 }

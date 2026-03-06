@@ -550,3 +550,122 @@ export async function exportAuditLogs(options?: {
 
   return JSON.stringify(data, null, 2)
 }
+
+/**
+ * Reactivate license by Polar subscription ID
+ * Called when subscription becomes active after past_due
+ */
+export async function reactivateLicenseBySubscription(
+  polarSubscriptionId: string
+): Promise<RaasLicense | null> {
+  const supabase = createAdminClient()
+
+  // Find license by metadata
+  const { data: license, error } = await (supabase
+    .from('raas_licenses') as any)
+    .select('*')
+    .eq('metadata->>polarSubscriptionId', polarSubscriptionId)
+    .single()
+
+  if (error || !license) {
+    logger.warn(`License not found for Polar subscription ${polarSubscriptionId}`)
+    return null
+  }
+
+  // Reactivate
+  const { data: updated, error: updateError } = await (supabase
+    .from('raas_licenses') as any)
+    .update({
+      is_revoked: false,
+      revoked_at: null,
+      revoked_by: null,
+      metadata: { ...(license.metadata as Record<string, unknown>), reactivated_at: Date.now() },
+    })
+    .eq('nonce', license.nonce)
+    .select()
+    .single()
+
+  if (updateError) {
+    logger.error(`Failed to reactivate license ${license.nonce}`, updateError)
+    throw updateError
+  }
+
+  // Log audit
+  await logAuditAction({
+    action: 'UPDATE',
+    nonce: license.nonce,
+    tier: license.tier,
+    timestamp: Math.floor(Date.now() / 1000),
+    details: { action: 'REACTIVATE', polarSubscriptionId },
+  })
+
+  logger.info(`License reactivated for Polar subscription ${polarSubscriptionId}`, {
+    nonce: license.nonce.slice(0, 8),
+  })
+
+  return updated as RaasLicense
+}
+
+/**
+ * Revoke license by subscription ID (Polar or Stripe)
+ * Supports soft revoke (access until period_end) and hard revoke (immediate)
+ */
+export async function revokeLicenseBySubscription(
+  subscriptionId: string,
+  options: {
+    soft?: boolean
+    revokeAt?: number
+    provider?: 'polar' | 'stripe'
+  } = {}
+): Promise<RaasLicense | null> {
+  const supabase = createAdminClient()
+  const revokedAt = options.revokeAt || Math.floor(Date.now() / 1000)
+  const metadataKey = options.provider === 'stripe' ? 'stripeSubscriptionId' : 'polarSubscriptionId'
+
+  // Find license by metadata
+  const { data: license, error } = await (supabase
+    .from('raas_licenses') as any)
+    .select('*')
+    .eq('metadata->>' + metadataKey, subscriptionId)
+    .single()
+
+  if (error || !license) {
+    logger.warn(`License not found for subscription ${subscriptionId}`)
+    return null
+  }
+
+  // Revoke
+  const { data: updated, error: updateError } = await (supabase
+    .from('raas_licenses') as any)
+    .update({
+      is_revoked: true,
+      revoked_at: revokedAt,
+      metadata: {
+        ...(license.metadata as Record<string, unknown>),
+        revoked_by_subscription: true,
+        soft_revoke: options.soft ?? false,
+      },
+    })
+    .eq('nonce', license.nonce)
+    .select()
+    .single()
+
+  if (updateError) {
+    logger.error(`Failed to revoke license ${license.nonce}`, updateError)
+    throw updateError
+  }
+
+  // Log audit
+  await logLicenseRevocation({
+    nonce: license.nonce,
+    tier: license.tier,
+    reason: options.soft ? 'subscription_cancelled' : 'subscription_expired',
+  })
+
+  logger.info(`License revoked for subscription ${subscriptionId}`, {
+    nonce: license.nonce.slice(0, 8),
+    softRevoke: options.soft,
+  })
+
+  return updated as RaasLicense
+}

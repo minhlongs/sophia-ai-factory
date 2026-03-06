@@ -5,11 +5,17 @@ import { Tier } from '@/types'
  */
 
 export type PolarEventType =
+  // Checkout events
   | 'checkout.created'
   | 'checkout.updated'
+  // Subscription events
   | 'subscription.created'
   | 'subscription.updated'
   | 'subscription.cancelled'
+  | 'subscription.active'       // NEW: Reactivation after past_due
+  | 'subscription.past_due'     // NEW: Payment overdue (grace period)
+  | 'subscription.expired'      // NEW: Subscription expired
+  // Order events
   | 'order.created'
 
 export interface PolarWebhookEvent {

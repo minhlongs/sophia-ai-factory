@@ -1,36 +1,44 @@
 import { Webhook } from 'standardwebhooks'
-import { headers } from 'next/headers'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { webhookHeaderSchema } from '@/lib/schemas'
 import { processWebhookEvent } from '@/lib/payments/polar-webhook-handler'
 import { PolarWebhookEvent } from '@/lib/payments/polar-types'
 
 const POLAR_WEBHOOK_SECRET = process.env.POLAR_WEBHOOK_SECRET
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   if (!POLAR_WEBHOOK_SECRET) {
     return NextResponse.json({ error: 'Configuration Error' }, { status: 500 })
   }
 
-  const headersList = await headers()
   const body = await request.text()
 
   // Validate webhook headers with Zod
+  // Support both standard 'webhook-signature' and Polar's 'Polar-Signature' header
   const headerValidation = webhookHeaderSchema.safeParse({
-    'webhook-id': headersList.get('webhook-id'),
-    'webhook-timestamp': headersList.get('webhook-timestamp'),
-    'webhook-signature': headersList.get('webhook-signature'),
+    'webhook-id': request.headers.get('webhook-id'),
+    'webhook-timestamp': request.headers.get('webhook-timestamp'),
+    'webhook-signature': request.headers.get('webhook-signature'),
+    'Polar-Signature': request.headers.get('Polar-Signature'),
   })
 
   if (!headerValidation.success) {
-    return NextResponse.json({ error: 'Invalid headers' }, { status: 400 })
+    return NextResponse.json({
+      error: 'Invalid headers',
+      details: headerValidation.error.message
+    }, { status: 400 })
   }
 
   const {
     'webhook-id': webhookId,
     'webhook-signature': signature,
+    'Polar-Signature': polarSignature,
     'webhook-timestamp': timestamp,
   } = headerValidation.data
+
+  // Use Polar-Signature if available, fallback to webhook-signature
+  // Zod refinement ensures at least one is defined
+  const finalSignature = (polarSignature || signature)!
 
   // Verify signature with standardwebhooks
   try {
@@ -39,7 +47,7 @@ export async function POST(request: Request) {
       wh.verify(body, {
         'webhook-id': webhookId,
         'webhook-timestamp': timestamp,
-        'webhook-signature': signature,
+        'webhook-signature': finalSignature,
       })
     } catch (firstError) {
       const base64Secret = Buffer.from(POLAR_WEBHOOK_SECRET).toString('base64')
@@ -48,7 +56,7 @@ export async function POST(request: Request) {
         whVerify.verify(body, {
           'webhook-id': webhookId,
           'webhook-timestamp': timestamp,
-          'webhook-signature': signature,
+          'webhook-signature': finalSignature,
         })
       } catch {
         throw firstError
