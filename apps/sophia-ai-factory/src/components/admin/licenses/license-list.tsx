@@ -32,9 +32,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Key, Search, Filter, MoreHorizontal, Eye, Ban, RefreshCw, RotateCcw, CheckCircle } from 'lucide-react';
+import { Key, Search, Filter, MoreHorizontal, Eye, Ban, RefreshCw, RotateCcw, CheckCircle, Calendar } from 'lucide-react';
 import { LicenseRegenerateDialog } from './license-regenerate-dialog';
 import { LicenseRevokeDialog } from './license-revoke-dialog';
+import { LicenseExtendDialog } from './license-extend-dialog';
 import type { LicenseSummary } from '@/lib/raas-schema';
 
 interface License {
@@ -52,6 +53,7 @@ interface LicenseListProps {
   onRevoke?: (id: string, reason?: string) => void;
   onView?: (id: string) => void;
   onRegenerate?: (data: { oldLicenseId: string; newKey: string }) => void;
+  onExtend?: (id: string, days: number) => void;
 }
 
 const TIER_COLORS: Record<string, string> = {
@@ -67,7 +69,7 @@ const STATUS_COLORS: Record<string, string> = {
   expired: 'bg-gray-500/10 text-gray-400 border-gray-500/30',
 };
 
-export function LicenseList({ onRevoke, onView, onRegenerate }: LicenseListProps) {
+export function LicenseList({ onRevoke, onView, onRegenerate, onExtend }: LicenseListProps) {
   const [licenses, setLicenses] = useState<License[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -77,6 +79,7 @@ export function LicenseList({ onRevoke, onView, onRegenerate }: LicenseListProps
   const [total, setTotal] = useState(0);
   const [regenerateDialogOpen, setRegenerateDialogOpen] = useState(false);
   const [revokeDialogOpen, setRevokeDialogOpen] = useState(false);
+  const [extendDialogOpen, setExtendDialogOpen] = useState(false);
   const [selectedLicenseId, setSelectedLicenseId] = useState<string | undefined>();
   const limit = 20;
 
@@ -162,6 +165,33 @@ export function LicenseList({ onRevoke, onView, onRegenerate }: LicenseListProps
     setSelectedLicenseId(undefined);
     fetchLicenses();
     onRegenerate?.(data);
+  };
+
+  const handleExtendClick = (id: string) => {
+    setSelectedLicenseId(id);
+    setExtendDialogOpen(true);
+  };
+
+  const handleExtendComplete = async (id: string, days: number) => {
+    try {
+      const response = await fetch(`/api/admin/licenses/${id}/extend`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ days }),
+      });
+
+      if (response.ok) {
+        await fetchLicenses();
+        setExtendDialogOpen(false);
+        setSelectedLicenseId(undefined);
+        onExtend?.(id, days);
+      } else {
+        const data = await response.json();
+        alert(`Failed to extend: ${data.error}`);
+      }
+    } catch (error) {
+      console.error('Failed to extend license:', error);
+    }
   };
 
   const handleReactivate = async (id: string) => {
@@ -315,6 +345,12 @@ export function LicenseList({ onRevoke, onView, onRegenerate }: LicenseListProps
                               <RotateCcw className="w-4 h-4 mr-2" />
                               Regenerate
                             </DropdownMenuItem>
+                            {!license.isRevoked && license.tier !== 'master' && (
+                              <DropdownMenuItem onClick={() => handleExtendClick(license.id)}>
+                                <Calendar className="w-4 h-4 mr-2" />
+                                Extend
+                              </DropdownMenuItem>
+                            )}
                             {license.isRevoked ? (
                               <DropdownMenuItem
                                 onClick={() => handleReactivate(license.id)}
@@ -361,6 +397,18 @@ export function LicenseList({ onRevoke, onView, onRegenerate }: LicenseListProps
             onRevoke={handleRevoke}
             onClose={() => {
               setRevokeDialogOpen(false);
+              setSelectedLicenseId(undefined);
+            }}
+          />
+        )}
+
+        {/* Extend Dialog */}
+        {extendDialogOpen && selectedLicenseId && (
+          <LicenseExtendDialog
+            licenseId={selectedLicenseId}
+            onExtend={handleExtendComplete}
+            onClose={() => {
+              setExtendDialogOpen(false);
               setSelectedLicenseId(undefined);
             }}
           />
