@@ -20,7 +20,7 @@
  */
 
 import { createHmac, randomBytes } from 'crypto';
-import { Tier } from '@/types';
+import { Tier, TierLowercase } from '@/types';
 
 /**
  * Generate license key với HMAC-SHA256 signature
@@ -41,7 +41,7 @@ import { Tier } from '@/types';
  * ```
  */
 export function generateLicenseKey(
-  tier: Tier,
+  tier: TierLowercase,
   expiresAt: Date,
   secret: string
 ): string {
@@ -87,7 +87,7 @@ export function generateLicenseKey(
  * ```
  */
 export function generateMasterKey(
-  tier: Tier,
+  tier: TierLowercase,
   secret: string
 ): string {
   // Validate secret

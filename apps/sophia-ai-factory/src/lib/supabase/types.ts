@@ -85,6 +85,73 @@ export interface UserSessionRow {
   updated_at: string
 }
 
+// ============================================================================
+// RaaS License Management Tables
+// ============================================================================
+
+export interface RaasLicenseRow {
+  id: string
+  key_hash: string
+  tier: string
+  expires_at: number | null
+  nonce: string
+  is_revoked: boolean
+  revoked_at: number | null
+  revoked_by: string | null
+  created_by: string | null
+  created_at: number
+  metadata: Json
+  updated_at: number | null
+}
+
+export interface RaasLicenseInsert {
+  key_hash: string
+  tier: string
+  expires_at?: number | null
+  nonce: string
+  is_revoked?: boolean
+  revoked_at?: number | null
+  revoked_by?: string | null
+  created_by?: string | null
+  created_at?: number
+  metadata?: Json
+}
+
+export interface RaasLicenseUpdate {
+  key_hash?: string
+  tier?: string
+  expires_at?: number | null
+  nonce?: string
+  is_revoked?: boolean
+  revoked_at?: number | null
+  revoked_by?: string | null
+  created_by?: string | null
+  metadata?: Json
+}
+
+export interface RaasAuditLogRow {
+  id: string
+  action: string
+  license_id: string | null
+  license_nonce: string | null
+  user_id: string | null
+  ip_address: string | null
+  user_agent: string | null
+  details: Json
+  created_at: number
+}
+
+export interface RaasAuditLogInsert {
+  action: string
+  license_id?: string | null
+  license_nonce?: string | null
+  user_id?: string | null
+  ip_address?: string | null
+  user_agent?: string | null
+  details?: Json
+  created_at?: number
+}
+
 export interface CampaignRow {
   id: string
   user_id: string
@@ -207,6 +274,23 @@ export interface Database {
         Insert: UserSessionRow
         Update: Partial<UserSessionRow>
         Relationships: []
+      }
+      raas_licenses: {
+        Row: RaasLicenseRow
+        Insert: RaasLicenseInsert
+        Update: RaasLicenseUpdate
+        Relationships: []
+      }
+      raas_audit_logs: {
+        Row: RaasAuditLogRow
+        Insert: RaasAuditLogInsert
+        Update: Partial<RaasAuditLogRow>
+        Relationships: [{
+          foreignKeyName: 'raas_audit_logs_license_id_fkey'
+          columns: ['license_id']
+          referencedRelation: 'raas_licenses'
+          referencedColumns: ['id']
+        }]
       }
     }
     Views: {
