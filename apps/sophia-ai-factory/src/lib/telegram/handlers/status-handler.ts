@@ -42,16 +42,16 @@ export async function handleStatus(chatId: string): Promise<void> {
 
     if (profileData) {
       // 2. Fetch active campaigns
-      const { data: campaigns } = await supabase.from('campaigns')
+      const { data: campaigns } = await (supabase as any).from('campaigns')
         .select('*')
-        .eq('user_id', profileData.user_id)
+        .eq('user_id', (profileData as any).user_id)
         .in('status', ['queued', 'processing_script', 'processing_video'])
         .order('created_at', { ascending: false })
         .limit(3)
 
       if (campaigns && campaigns.length > 0) {
         message += `*Active Campaigns:*\n`
-        campaigns.forEach((c) => {
+        campaigns.forEach((c: any) => {
           const statusEmoji = c.status === 'queued' ? '⏳' : '⚙️'
           message += `${statusEmoji} *${c.title}*\n`
           message += `   Status: ${c.status?.replace('_', ' ')} (${c.progress}%)\n`

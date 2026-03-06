@@ -61,13 +61,13 @@ export async function handleEmail(chatId: string, email: string): Promise<void> 
 
     if (!profile) {
         // Create profile if missing (though it should exist from sign-up)
-        await supabase.from('user_profiles').insert({
+        await (supabase as any).from('user_profiles').insert({
             user_id: user.id,
             telegram_chat_id: chatId,
             settings: { notifications: { telegram: { enabled: true } } }
         })
     } else {
-        await supabase.from('user_profiles')
+        await (supabase as any).from('user_profiles')
             .update({
                 telegram_chat_id: chatId,
             })
@@ -75,7 +75,7 @@ export async function handleEmail(chatId: string, email: string): Promise<void> 
     }
 
     // 3. Save to FSM Context
-    const context = { email, state: BotState.IDLE }
+    const context = { email, state: BotState.IDLE, lastUpdated: Date.now() }
     await TelegramFSM.setContext(chatId, context)
 
     // 4. Backup to Postgres

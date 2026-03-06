@@ -77,6 +77,14 @@ export interface UserProfileInsert {
   updated_at?: string
 }
 
+export interface UserSessionRow {
+  telegram_chat_id: string
+  state: string
+  context_data: Json
+  last_event: string
+  updated_at: string
+}
+
 export interface CampaignRow {
   id: string
   user_id: string
@@ -170,22 +178,34 @@ export interface Database {
       payment_events: {
         Row: {
           id: string
+          event_type: string
+          polar_event_id: string
           payload: Json
           processed: boolean
           created_at: string
         }
         Insert: {
           id?: string
+          event_type: string
+          polar_event_id: string
           payload: Json
           processed?: boolean
           created_at?: string
         }
         Update: {
           id?: string
+          event_type?: string
+          polar_event_id?: string
           payload?: Json
           processed?: boolean
           created_at?: string
         }
+        Relationships: []
+      }
+      user_sessions: {
+        Row: UserSessionRow
+        Insert: UserSessionRow
+        Update: Partial<UserSessionRow>
         Relationships: []
       }
     }

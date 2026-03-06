@@ -49,14 +49,14 @@ export async function getAdminStats(): Promise<AdminStats> {
     { count: totalScripts },
     { count: totalVideos },
     { count: publishedVideos },
-    { data: activeUsersData } as { data: { user_id: string }[] } | null, // Fetch data for unique count
+    activeUsersResult,
     { data: payments },
     { data: recentCampaigns }
   ] = await Promise.all([
     adminSupabase.from("campaigns").select("*", { count: "exact", head: true }),
     adminSupabase.from("campaigns").select("*", { count: "exact", head: true }).not("video_url", "is", null),
     adminSupabase.from("campaigns").select("*", { count: "exact", head: true }).eq("status", "completed"),
-    adminSupabase.from("campaigns").select("user_id") as { data: { user_id: string }[] } | null, // Fetch data for unique count
+    adminSupabase.from("campaigns").select("user_id"),
     adminSupabase.from("payment_events").select("payload").eq("processed", true),
     adminSupabase.from("campaigns")
       .select("id, title, created_at, user_id")
@@ -64,11 +64,14 @@ export async function getAdminStats(): Promise<AdminStats> {
       .limit(5)
   ]);
 
+  const activeUsersData = activeUsersResult?.data as { user_id: string }[] | null;
+  const recentCampaignsTyped = recentCampaigns as { id: string; title: string; created_at: string; user_id: string }[] | null;
+
   // Calculate unique active users
   const uniqueUsers = new Set(activeUsersData?.map(c => c.user_id) || []);
 
   // Calculate revenue from payment payloads (Polar.sh format)
-  const totalRevenue = (payments || []).reduce((sum, p) => {
+  const totalRevenue = ((payments as any[]) || []).reduce((sum, p) => {
     // Type checking for the JSON payload
     const payload = p.payload as { data?: { amount?: number } } | null;
     const amount = payload?.data?.amount || 0;
@@ -76,10 +79,10 @@ export async function getAdminStats(): Promise<AdminStats> {
   }, 0);
 
   // Map recent activity
-  const recentActivity: AdminActivity[] = (recentCampaigns || []).map(c => ({
+  const recentActivity: AdminActivity[] = (recentCampaignsTyped || []).map(c => ({
     id: c.id,
     action: "Campaign Created",
-    user: c.user_id.substring(0, 8) + "...", // Placeholder since we don't join profiles here for speed
+    user: c.user_id.substring(0, 8) + "...",
     time: new Date(c.created_at).toLocaleString()
   }));
 

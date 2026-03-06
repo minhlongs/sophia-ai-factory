@@ -49,7 +49,7 @@ export const TIER_DB_MAPPING: Record<Tier, string> = {
  * - Subscription expired (subscription_expires_at < now)
  */
 export async function getUserTier(userId: string): Promise<Tier> {
-  const supabase = createAdminClient();
+  const supabase = createAdminClient() as any;
 
   const { data, error } = await supabase
     .from('user_profiles')
@@ -57,11 +57,11 @@ export async function getUserTier(userId: string): Promise<Tier> {
     .eq('user_id', userId)
     .single();
 
-  if (error || !data?.subscription_tier) {
+  if (error || !(data as any)?.subscription_tier) {
     return 'BASIC'; // Default to Basic
   }
 
-  const tier = DB_TIER_MAPPING[data.subscription_tier] || 'BASIC';
+  const tier = DB_TIER_MAPPING[(data as any).subscription_tier] || 'BASIC';
 
   // MASTER tier = lifetime one-time purchase — NEVER expires
   if (tier === 'MASTER') {
@@ -69,10 +69,10 @@ export async function getUserTier(userId: string): Promise<Tier> {
   }
 
   // Check if subscription has expired (for recurring tiers only)
-  if (data.subscription_expires_at) {
-    const expiresAt = new Date(data.subscription_expires_at);
+  if ((data as any).subscription_expires_at) {
+    const expiresAt = new Date((data as any).subscription_expires_at);
     const now = new Date();
-    
+
     if (expiresAt < now) {
       // Subscription expired - downgrade to BASIC
       return 'BASIC';
@@ -87,7 +87,7 @@ export async function getUserTier(userId: string): Promise<Tier> {
  */
 export async function checkTierAccess(userId: string, requiredTier: Tier): Promise<boolean> {
   const currentTier = await getUserTier(userId);
-  
+
   const currentRank = TIER_CONFIG[currentTier].rank;
   const requiredRank = TIER_CONFIG[requiredTier].rank;
 
@@ -110,7 +110,7 @@ export async function getSubscriptionStatus(userId: string): Promise<{
   expiresAt: Date | null;
   daysRemaining: number | null;
 }> {
-  const supabase = createAdminClient();
+  const supabase = createAdminClient() as any;
 
   const { data } = await supabase
     .from('user_profiles')
@@ -122,13 +122,13 @@ export async function getSubscriptionStatus(userId: string): Promise<{
     return { tier: 'BASIC', isActive: false, expiresAt: null, daysRemaining: null };
   }
 
-  const tier = DB_TIER_MAPPING[data.subscription_tier] || 'BASIC';
-  const expiresAt = data.subscription_expires_at ? new Date(data.subscription_expires_at) : null;
+  const tier = DB_TIER_MAPPING[(data as any).subscription_tier] || 'BASIC';
+  const expiresAt = (data as any).subscription_expires_at ? new Date((data as any).subscription_expires_at) : null;
   const now = new Date();
-  
+
   // MASTER tier is always active (lifetime purchase)
   const isActive = tier === 'MASTER' || !expiresAt || expiresAt > now;
-  const daysRemaining = tier === 'MASTER' ? null : expiresAt 
+  const daysRemaining = tier === 'MASTER' ? null : expiresAt
     ? Math.max(0, Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
     : null;
 

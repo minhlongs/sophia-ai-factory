@@ -45,7 +45,7 @@ const isInternalOrStatic = (pathname: string) =>
   pathname.startsWith("/favicon.ico") ||
   PUBLIC_FILE_EXTENSIONS.test(pathname);
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const origin = request.headers.get('origin');
 
