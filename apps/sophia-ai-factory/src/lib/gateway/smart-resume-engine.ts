@@ -65,7 +65,7 @@ export class SmartResumeEngine {
         if (error) throw error;
         return;
       } catch (err) {
-        logger.error(`[SmartResumeEngine] Failed to record checkpoint for ${campaignId}`, { error: err });
+        logger.error(`[SmartResumeEngine] Failed to record checkpoint for ${campaignId}`, err instanceof Error ? err : undefined);
       }
     }
 
@@ -92,7 +92,7 @@ export class SmartResumeEngine {
         if (!data || data.length === 0) return null;
         return rowToCheckpoint(data[0] as CheckpointRow);
       } catch (err) {
-        logger.error(`[SmartResumeEngine] Failed to retrieve last checkpoint for ${campaignId}`, { error: err });
+        logger.error(`[SmartResumeEngine] Failed to retrieve last checkpoint for ${campaignId}`, err instanceof Error ? err : undefined);
       }
     }
 
@@ -119,7 +119,7 @@ export class SmartResumeEngine {
         if (!data) return [];
         return (data as CheckpointRow[]).map(rowToCheckpoint);
       } catch (err) {
-        logger.error(`[SmartResumeEngine] Failed to retrieve checkpoints for ${campaignId}`, { error: err });
+        logger.error(`[SmartResumeEngine] Failed to retrieve checkpoints for ${campaignId}`, err instanceof Error ? err : undefined);
       }
     }
 
@@ -152,7 +152,7 @@ export class SmartResumeEngine {
         this.fallbackStore.delete(campaignId);
         return;
       } catch (err) {
-        logger.error(`[SmartResumeEngine] Failed to clear checkpoints for ${campaignId}`, { error: err });
+        logger.error(`[SmartResumeEngine] Failed to clear checkpoints for ${campaignId}`, err instanceof Error ? err : undefined);
       }
     }
 
@@ -174,7 +174,7 @@ export class SmartResumeEngine {
         if (error) throw error;
         return (data?.length ?? 0) > 0;
       } catch (err) {
-        logger.error(`[SmartResumeEngine] Failed to check step completion for ${campaignId}`, { error: err });
+        logger.error(`[SmartResumeEngine] Failed to check step completion for ${campaignId}`, err instanceof Error ? err : undefined);
       }
     }
 

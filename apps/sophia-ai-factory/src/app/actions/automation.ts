@@ -31,8 +31,8 @@ export async function generateScript(formData: FormData) {
 
   // 1. Create initial record in Supabase (Draft status)
   try {
-    const { data: campaign, error: dbError } = await supabase
-      .from("campaigns")
+    const { data: campaign, error: dbError } = await (supabase
+      .from("campaigns") as any)
       .insert({
         topic,
         audience,
@@ -90,8 +90,8 @@ export async function renderVideo(scriptId: string) {
 
   try {
     // 1. Update status to video_queued
-    const { error: dbError } = await supabase
-      .from("campaigns")
+    const { error: dbError } = await (supabase
+      .from("campaigns") as any)
       .update({ status: "processing_video" })
       .eq("id", scriptId)
       .eq("user_id", user.id);

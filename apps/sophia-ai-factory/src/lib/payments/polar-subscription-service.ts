@@ -30,7 +30,7 @@ export async function getActiveSubscription(
 
   // Query DB
   const supabase = getSupabase()
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('user_profiles')
     .select(
       'user_id, subscription_tier, subscription_status, polar_subscription_id, subscription_expires_at'
@@ -81,7 +81,7 @@ export async function activateSubscription(
   const supabase = getSupabase()
   const dbTier = TIER_DB_MAPPING[tier]
 
-  const { error } = await supabase
+  const { error } = await (supabase as any)
     .from('user_profiles')
     .update({
       subscription_tier: dbTier,
@@ -108,7 +108,7 @@ export async function cancelSubscription(
   const supabase = getSupabase()
 
   // Find user by polar subscription ID
-  const { data: user } = await supabase
+  const { data: user } = await (supabase as any)
     .from('user_profiles')
     .select('user_id')
     .eq('polar_subscription_id', polarSubId)
@@ -116,7 +116,7 @@ export async function cancelSubscription(
 
   if (!user) return null
 
-  const { error } = await supabase
+  const { error } = await (supabase as any)
     .from('user_profiles')
     .update({
       subscription_status: 'cancelled',
@@ -138,7 +138,7 @@ export async function cancelSubscription(
 export async function expireSubscription(userId: string): Promise<void> {
   const supabase = getSupabase()
 
-  const { error } = await supabase
+  const { error } = await (supabase as any)
     .from('user_profiles')
     .update({
       subscription_tier: 'basic',
@@ -169,7 +169,7 @@ export async function findUserByPolarSubId(
   polarSubId: string
 ): Promise<string | null> {
   const supabase = getSupabase()
-  const { data } = await supabase
+  const { data } = await (supabase as any)
     .from('user_profiles')
     .select('user_id')
     .eq('polar_subscription_id', polarSubId)

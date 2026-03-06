@@ -21,7 +21,7 @@ export async function backupSessionState(
   event: CriticalEvent
 ): Promise<void> {
   try {
-    const supabase = createAdminClient()
+    const supabase = createAdminClient() as any
 
     const { error } = await supabase
       .from('user_sessions')
@@ -51,7 +51,7 @@ export async function restoreSessionState(
   chatId: string
 ): Promise<UserContext | null> {
   try {
-    const supabase = createAdminClient()
+    const supabase = createAdminClient() as any
 
     const { data, error } = await supabase
       .from('user_sessions')

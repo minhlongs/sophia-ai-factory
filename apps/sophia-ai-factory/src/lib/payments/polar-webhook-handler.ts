@@ -27,7 +27,7 @@ function safeTier(value: unknown): Tier | null {
 }
 
 function getSupabase() {
-  return createAdminClient()
+  return createAdminClient() as any
 }
 
 /**

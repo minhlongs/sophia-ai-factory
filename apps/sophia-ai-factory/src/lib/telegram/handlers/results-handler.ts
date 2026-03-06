@@ -34,9 +34,9 @@ export async function handleResults(chatId: string): Promise<void> {
     }
 
     // 2. Fetch completed campaigns
-    const { data: campaigns } = await supabase.from('campaigns')
+    const { data: campaigns } = await (supabase as any).from('campaigns')
       .select('*')
-      .eq('user_id', profileData.user_id)
+      .eq('user_id', (profileData as any).user_id)
       .eq('status', 'completed')
       .order('updated_at', { ascending: false })
       .limit(5)
@@ -47,7 +47,7 @@ export async function handleResults(chatId: string): Promise<void> {
     }
 
     let message = '✅ *Recent Results:*\n\n'
-    campaigns.forEach((c) => {
+    campaigns.forEach((c: any) => {
       message += `🎬 *${c.title}*\n`
       if (c.video_url) {
         message += `[Watch Video](${c.video_url})\n`

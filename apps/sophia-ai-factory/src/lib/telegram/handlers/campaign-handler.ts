@@ -89,7 +89,7 @@ export async function executeCampaignCreation(chatId: string): Promise<void> {
     const profile = profileData as { user_id: string; subscription_tier: 'free' | 'pro' | 'enterprise' | null }
 
     // 2. Create Campaign in DB
-    const { data: campaignData, error: createError } = await supabase.from('campaigns')
+    const { data: campaignData, error: createError } = await (supabase as any).from('campaigns')
       .insert({
         user_id: profile.user_id,
         title: context.campaignTopic,
