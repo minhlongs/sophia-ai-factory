@@ -29,6 +29,9 @@ export interface UsageEventInput {
   errorMessage?: string;
   responseTimeMs?: number;
   createdAt?: number;
+  idempotencyKey?: string;
+  externalCustomerId?: string;
+  resourceType?: string;
 }
 
 /**
@@ -51,6 +54,9 @@ export interface UsageEventDB {
   error_message: string | null;
   response_time_ms: number | null;
   created_at: number;
+  idempotency_key: string | null;
+  external_customer_id: string | null;
+  resource_type: string | null;
 }
 
 /**
@@ -179,6 +185,7 @@ export interface CsvExportRow {
   action: string;
   status: 'success' | 'error';
   response_time_ms: number | null;
+  external_customer_id?: string | null;
 }
 
 /**
@@ -203,10 +210,13 @@ export interface BatchUsageRecord {
  * Single record ingestion result
  */
 export interface IngestionResult {
-  index: number;
+  index?: number;
   success: boolean;
   error?: string;
   reason?: 'invalid_license' | 'quota_exceeded' | 'validation_error' | 'duplicate';
+  idempotencyKey?: string;
+  recordId?: string;
+  existingRecordId?: string;
   quotaRemaining?: {
     dailyCredits: number;
     hourlyCredits: number;
