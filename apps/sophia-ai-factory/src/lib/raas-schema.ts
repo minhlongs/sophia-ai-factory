@@ -120,6 +120,8 @@ export interface RaasAuditLogFilters {
   limit?: number
   orderBy?: 'created_at' | 'action'
   orderDir?: 'asc' | 'desc'
+  startDate?: number // Unix timestamp for date range filter
+  endDate?: number // Unix timestamp for date range filter
 }
 
 // ============================================================================

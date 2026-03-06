@@ -6,6 +6,7 @@
  */
 
 import { useState } from 'react';
+import type { LicenseSummary } from '@/lib/raas-schema';
 import { LicenseGenerator } from '@/components/admin/licenses/license-generator';
 import { LicenseList } from '@/components/admin/licenses/license-list';
 import { AuditLogTable } from '@/components/admin/licenses/audit-log-table';
@@ -15,7 +16,7 @@ export default function LicensesAdminPage() {
   const [activeTab, setActiveTab] = useState('list');
   const [selectedLicenseId, setSelectedLicenseId] = useState<string | undefined>();
 
-  const handleLicenseCreated = (data: any) => {
+  const handleLicenseCreated = (data: LicenseSummary) => {
     // Optionally switch to list view or show detail
     console.log('License created:', data);
   };

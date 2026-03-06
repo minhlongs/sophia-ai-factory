@@ -32,7 +32,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Key, Search, Filter, MoreHorizontal, Eye, Ban, RefreshCw } from 'lucide-react';
+import { Key, Search, Filter, MoreHorizontal, Eye, Ban, RefreshCw, RotateCcw } from 'lucide-react';
+import { LicenseRegenerateDialog } from './license-regenerate-dialog';
 
 interface License {
   id: string;
@@ -47,6 +48,7 @@ interface License {
 interface LicenseListProps {
   onRevoke?: (id: string) => void;
   onView?: (id: string) => void;
+  onRegenerate?: (data: { oldLicenseId: string; newKey: string }) => void;
 }
 
 const TIER_COLORS: Record<string, string> = {
@@ -62,7 +64,7 @@ const STATUS_COLORS: Record<string, string> = {
   expired: 'bg-gray-500/10 text-gray-400 border-gray-500/30',
 };
 
-export function LicenseList({ onRevoke, onView }: LicenseListProps) {
+export function LicenseList({ onRevoke, onView, onRegenerate }: LicenseListProps) {
   const [licenses, setLicenses] = useState<License[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -70,6 +72,8 @@ export function LicenseList({ onRevoke, onView }: LicenseListProps) {
   const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [regenerateDialogOpen, setRegenerateDialogOpen] = useState(false);
+  const [selectedLicenseId, setSelectedLicenseId] = useState<string | undefined>();
   const limit = 20;
 
   const fetchLicenses = async () => {
@@ -136,6 +140,18 @@ export function LicenseList({ onRevoke, onView }: LicenseListProps) {
     } catch (error) {
       console.error('Failed to revoke license:', error);
     }
+  };
+
+  const handleRegenerateClick = (id: string) => {
+    setSelectedLicenseId(id);
+    setRegenerateDialogOpen(true);
+  };
+
+  const handleRegenerateComplete = (data: { oldLicenseId: string; newKey: string }) => {
+    setRegenerateDialogOpen(false);
+    setSelectedLicenseId(undefined);
+    fetchLicenses();
+    onRegenerate?.(data);
   };
 
   return (
@@ -260,6 +276,10 @@ export function LicenseList({ onRevoke, onView }: LicenseListProps) {
                               <Eye className="w-4 h-4 mr-2" />
                               View Details
                             </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleRegenerateClick(license.id)}>
+                              <RotateCcw className="w-4 h-4 mr-2" />
+                              Regenerate
+                            </DropdownMenuItem>
                             {!license.isRevoked && (
                               <DropdownMenuItem
                                 onClick={() => handleRevoke(license.id)}
@@ -279,6 +299,14 @@ export function LicenseList({ onRevoke, onView }: LicenseListProps) {
             </TableBody>
           </Table>
         </div>
+
+        {/* Regenerate Dialog */}
+        {regenerateDialogOpen && selectedLicenseId && (
+          <LicenseRegenerateDialog
+            licenseId={selectedLicenseId}
+            onRegenerate={handleRegenerateComplete}
+          />
+        )}
 
         {/* Pagination */}
         {total > limit && (

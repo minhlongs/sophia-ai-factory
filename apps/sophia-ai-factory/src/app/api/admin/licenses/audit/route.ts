@@ -12,6 +12,7 @@ import { z } from 'zod'
 
 /**
  * Query params validation schema
+ * Note: Audit logs retained for 30 days only
  */
 const auditLogSchema = z.object({
   action: z.enum(['CREATE', 'VALIDATE', 'REVOKE', 'UPDATE']).optional(),
@@ -21,7 +22,18 @@ const auditLogSchema = z.object({
 })
 
 /**
+ * Calculate timestamp for 30 days ago
+ * Audit logs are retained for 30 days only per compliance policy
+ */
+function getThirtyDaysAgoTimestamp(): number {
+  const thirtyDaysAgo = new Date()
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+  return Math.floor(thirtyDaysAgo.getTime() / 1000)
+}
+
+/**
  * GET /api/admin/licenses/audit?action=CREATE|REVOKE&nonce=xxx&page=1&limit=50
+ * Note: Logs retained for 30 days only
  */
 export async function GET(request: NextRequest) {
   // Check admin authentication
@@ -32,16 +44,25 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const params = auditLogSchema.parse(Object.fromEntries(searchParams))
 
+    // Apply 30 days retention policy
+    const thirtyDaysAgo = getThirtyDaysAgoTimestamp()
+
     const result = await getAuditLogs({
       action: params.action,
       license_nonce: params.nonce,
       page: params.page,
       limit: params.limit,
       orderBy: 'created_at',
-      orderDir: 'desc'
-    })
+      orderDir: 'desc',
+      // Filter: only logs from last 30 days
+      startDate: thirtyDaysAgo
+    } as any)
 
-    return NextResponse.json(result)
+    return NextResponse.json({
+      ...result,
+      retentionNote: 'Audit logs retained for 30 days',
+      retentionDays: 30
+    })
 
   } catch (error) {
     if (error instanceof z.ZodError) {

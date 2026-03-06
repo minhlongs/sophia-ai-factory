@@ -337,11 +337,222 @@ WHERE is_revoked = false
 | Step | Time | Status |
 |------|------|--------|
 | SQL schema review | 5 min | ✅ |
-| SQL execution | 1 min | ⏳ Pending |
+| SQL execution | 1 min | ✅ Script ready |
 | Code deployment | 2 min | ✅ |
 | API testing | 5 min | ⏳ Pending |
 | Redis data migration | 10-60 min | ⏳ Optional |
 | Production verification | 5 min | ⏳ Pending |
+
+---
+
+## Quick Start Commands
+
+### Option A: Automated Script (Recommended)
+
+```bash
+cd /Users/macbookprom1/mekong-cli/apps/sophia-ai-factory
+chmod +x scripts/deploy-raas-migration.sh
+./scripts/deploy-raas-migration.sh
+```
+
+The script will:
+1. Check prerequisites (npx, psql, SQL file)
+2. Link your Supabase project
+3. Execute SQL migration
+4. Verify tables and indexes
+5. Optionally migrate Redis data
+6. Verify API endpoints
+
+### Option B: Manual Commands
+
+```bash
+# Step 1: Login and link
+npx supabase login
+npx supabase link --project-ref YOUR_PROJECT_REF
+
+# Step 2: Execute SQL
+psql "$(npx supabase db url)" -f docs/migrations/raas-licenses-schema.sql
+
+# Step 3: Verify tables
+psql "$(npx supabase db url)" -c "SELECT COUNT(*) FROM raas_licenses;"
+psql "$(npx supabase db url)" -c "SELECT COUNT(*) FROM raas_audit_logs;"
+
+# Step 4: Verify indexes
+psql "$(npx supabase db url)" -c "SELECT indexname FROM pg_indexes WHERE tablename IN ('raas_licenses', 'raas_audit_logs');"
+
+# Step 5: Deploy code
+git add .
+git commit -m "feat: deploy RaaS Supabase migration"
+git push origin main
+
+# Step 6: Set Vercel env vars
+# Go to Vercel dashboard → Settings → Environment Variables
+# Add: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, RAAS_LICENSE_SECRET
+```
+
+---
+
+## Troubleshooting (Chi tiết)
+
+### Error: "relation already exists"
+
+**Nguyên nhân:** Tables đã được tạo từ lần chạy trước
+
+**Giải pháp:**
+```sql
+-- Xóa và tạo lại
+DROP TABLE IF EXISTS raas_audit_logs CASCADE;
+DROP TABLE IF EXISTS raas_licenses CASCADE;
+
+-- Chạy lại migration
+psql "$(npx supabase db url)" -f docs/migrations/raas-licenses-schema.sql
+```
+
+### Error: "permission denied for relation"
+
+**Nguyên nhân:** Chưa login hoặc sai project
+
+**Giải pháp:**
+```bash
+# Logout và login lại
+npx supabase logout
+npx supabase login
+
+# Link lại project
+npx supabase link --project-ref YOUR_PROJECT_REF
+
+# Kiểm tra quyền
+psql "$(npx supabase db url)" -c "SELECT current_user;"
+```
+
+### Error: "connection refused"
+
+**Nguyên nhân:** Database URL không truy cập được
+
+**Giải pháp:**
+```bash
+# Kiểm tra database URL
+npx supabase db url
+
+# Test connection
+psql "$(npx supabase db url)" -c "SELECT 1;"
+
+# Nếu vẫn lỗi, kiểm tra network/firewall
+```
+
+### Error: "Failed to lookup license"
+
+**Nguyên nhân:** License keys stored in Redis không khớp với Supabase
+
+**Giải pháp:**
+- Đây là expected behavior sau migration
+- Redis chỉ lưu metadata, không lưu full license keys
+- Cần generate lại license keys cho users
+- Hoặc chạy data migration script để đồng bộ
+
+### Error: API returns 500 Internal Server Error
+
+**Nguyên nhân:** Environment variables chưa set trên Vercel
+
+**Giải pháp:**
+1. Vào Vercel dashboard → Project → Settings → Environment Variables
+2. Thêm các biến:
+   - `SUPABASE_URL` = https://your-project.supabase.co
+   - `SUPABASE_SERVICE_ROLE_KEY` = your-key-here
+   - `RAAS_LICENSE_SECRET` = your-32-char-secret
+3. Redeploy: https://vercel.com/dashboard/deployments → Redeploy
+
+### Error: "RESOURCE_EXHAUSTED" từ Supabase
+
+**Nguyên nhân:** Vượt quá rate limit của Supabase free tier
+
+**Giải pháp:**
+```bash
+# Kiểm tra usage: https://supabase.com/dashboard/project/YOUR_REF/database/usage
+
+# Upgrade plan nếu cần
+# Hoặc thêm caching layer (Redis) cho validation queries
+```
+
+### Data Migration Fails
+
+**Nguyên nhân:** Redis connection issues hoặc data format mismatch
+
+**Giải pháp:**
+```bash
+# Test Redis connection
+curl "$UPSTASH_REDIS_REST_URL/ping?token=$UPSTASH_REDIS_REST_TOKEN"
+
+# Check Redis keys
+curl "$UPSTASH_REDIS_REST_URL/keys/license:*?token=$UPSTASH_REDIS_REST_TOKEN"
+
+# Nếu Redis empty, skip data migration
+# Migration script sẽ tạo tables rỗng - không sao
+```
+
+### Audit Logs Not Creating
+
+**Nguyên nhân:** `raas-audit.ts` service not called hoặc Supabase insert fails
+
+**Giải pháp:**
+```sql
+-- Check if audit table is writable
+psql "$(npx supabase db url)" -c "INSERT INTO raas_audit_logs (action, created_at) VALUES ('TEST', EXTRACT(EPOCH FROM NOW())::bigint);"
+
+-- Check RLS policies
+psql "$(npx supabase db url)" -c "SELECT * FROM pg_policies WHERE tablename = 'raas_audit_logs';"
+
+-- Nếu RLS blocking, use service role key (bypasses RLS)
+```
+
+---
+
+## Migration Verification Script
+
+Create and run this script to verify migration:
+
+```bash
+#!/bin/bash
+# verify-migration.sh
+
+DB_URL="$(npx supabase db url)"
+
+echo "=== RaaS Migration Verification ==="
+
+# Tables
+echo -n "raas_licenses rows: "
+psql "$DB_URL" -t -c "SELECT COUNT(*) FROM raas_licenses;" | tr -d ' '
+
+echo -n "raas_audit_logs rows: "
+psql "$DB_URL" -t -c "SELECT COUNT(*) FROM raas_audit_logs;" | tr -d ' '
+
+# Indexes
+echo -n "Total indexes: "
+psql "$DB_URL" -t -c "SELECT COUNT(*) FROM pg_indexes WHERE tablename IN ('raas_licenses', 'raas_audit_logs');" | tr -d ' '
+
+# RLS
+echo -n "RLS enabled: "
+psql "$DB_URL" -t -c "SELECT COUNT(*) FROM pg_class WHERE relname IN ('raas_licenses', 'raas_audit_logs') AND relrowsecurity = true;" | tr -d ' '
+
+# Policies
+echo -n "RLS policies: "
+psql "$DB_URL" -t -c "SELECT COUNT(*) FROM pg_policies WHERE tablename IN ('raas_licenses', 'raas_audit_logs');" | tr -d ' '
+
+echo "=== Verification Complete ==="
+```
+
+Run: `chmod +x verify-migration.sh && ./verify-migration.sh`
+
+Expected output:
+```
+=== RaaS Migration Verification ===
+raas_licenses rows: 0
+raas_audit_logs rows: 0
+Total indexes: 11
+RLS enabled: 2
+RLS policies: 2
+=== Verification Complete ===
+```
 
 ---
 

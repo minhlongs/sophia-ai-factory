@@ -43,6 +43,7 @@ export function AuditLogTable({ licenseId }: AuditLogTableProps) {
   const [actionFilter, setActionFilter] = useState('all');
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [retentionNote, setRetentionNote] = useState<string | undefined>();
   const limit = 50;
 
   const fetchLogs = async () => {
@@ -61,6 +62,7 @@ export function AuditLogTable({ licenseId }: AuditLogTableProps) {
       if (response.ok) {
         setLogs(data.logs);
         setTotal(data.total);
+        setRetentionNote(data.retentionNote);
       }
     } catch (error) {
       console.error('Failed to fetch audit logs:', error);
@@ -137,6 +139,11 @@ export function AuditLogTable({ licenseId }: AuditLogTableProps) {
             </Button>
           </div>
         </CardTitle>
+        {retentionNote && (
+          <p className="text-xs text-muted-foreground mt-2">
+            ℹ️ {retentionNote} (last 30 days only)
+          </p>
+        )}
       </CardHeader>
       <CardContent>
         {/* Filter */}
