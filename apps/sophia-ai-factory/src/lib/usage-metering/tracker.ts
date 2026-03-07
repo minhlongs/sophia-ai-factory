@@ -120,7 +120,7 @@ export async function insertUsageEvent(event: UsageEventInput & { idempotencyKey
   // Insert with idempotency key (unique constraint handles duplicates)
   const { data, error } = await supabase
     .from('usage_events')
-    .insert(dbEvent)
+    .insert(dbEvent as any)
     .select('id')
     .single();
 
@@ -143,7 +143,7 @@ export async function insertUsageEvent(event: UsageEventInput & { idempotencyKey
   return {
     success: true,
     idempotencyKey: event.idempotencyKey,
-    recordId: data?.id as string | undefined,
+    recordId: (data as any)?.id as string | undefined,
   };
 }
 
