@@ -243,11 +243,11 @@ export async function upsertHourlySummary(summary: HourlySummaryRecord): Promise
     } as any) as any;
 
   if (error) {
-    logger.error('[Rollup Service] Error upserting hourly summary', {
+    logger.error('[Rollup Service] Error upserting hourly summary', error, {
       hourTimestamp: summary.hourTimestamp,
       tenantId: summary.tenantId,
     });
-    throw error;
+    throw error as any;
   }
 }
 
@@ -525,11 +525,11 @@ export async function upsertDailySummary(summary: ReturnType<typeof calculateDai
     } as any) as any;
 
   if (error) {
-    logger.error('[Rollup Service] Error upserting daily summary', {
+    logger.error('[Rollup Service] Error upserting daily summary', error, {
       dayTimestamp: summary.dayTimestamp,
       tenantId: summary.tenantId,
     });
-    throw error;
+    throw error as any;
   }
 }
 

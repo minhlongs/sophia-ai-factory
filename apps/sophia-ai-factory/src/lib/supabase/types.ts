@@ -485,6 +485,30 @@ export interface Database {
           referencedRelation: 'raas_licenses'
           referencedColumns: ['id']
         }]
+      },
+      usage_events: {
+        Row: UsageEventRow
+        Insert: UsageEventInsert
+        Update: Partial<UsageEventRow>
+        Relationships: []
+      },
+      usage_hourly_summaries: {
+        Row: UsageHourlySummaryRow
+        Insert: UsageHourlySummaryInsert
+        Update: Partial<UsageHourlySummaryRow>
+        Relationships: []
+      },
+      usage_daily_summaries: {
+        Row: UsageDailySummaryRow
+        Insert: UsageDailySummaryInsert
+        Update: Partial<UsageDailySummaryRow>
+        Relationships: []
+      },
+      usage_quota_usage: {
+        Row: UsageQuotaUsageRow
+        Insert: UsageQuotaUsageInsert
+        Update: Partial<UsageQuotaUsageRow>
+        Relationships: []
       }
     }
     Views: {
