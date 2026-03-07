@@ -180,14 +180,14 @@ describe('Telegram Bot Handlers', () => {
 
   describe('handleCampaign', () => {
     it('should set context and ask for confirmation', async () => {
-      const topic = 'Eco gadgets'
+      const testTopic = 'Eco gadgets';
 
       (TelegramFSM.getContext as any).mockResolvedValue({ email: 'test@example.com', state: BotState.IDLE })
 
-      await handleCampaign(chatId, topic)
+      await handleCampaign(chatId, testTopic)
 
       expect(TelegramFSM.setContext).toHaveBeenCalledWith(chatId, expect.objectContaining({
-        campaignTopic: topic,
+        campaignTopic: testTopic,
         state: BotState.AWAITING_CONFIRMATION
       }))
 
@@ -213,7 +213,7 @@ describe('Telegram Bot Handlers', () => {
 
   describe('handleStatus', () => {
     it('should show active campaigns', async () => {
-      const userId = 'user-1'
+      const testUserId = 'user-1';
 
       (TelegramFSM.getContext as any).mockResolvedValue({ email: 'test@example.com', state: BotState.IDLE })
 
@@ -221,7 +221,7 @@ describe('Telegram Bot Handlers', () => {
       const mockSelectProfile = vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
           single: vi.fn().mockResolvedValue({
-            data: { user_id: userId },
+            data: { user_id: testUserId },
             error: null
           })
         })
@@ -267,13 +267,13 @@ describe('Telegram Bot Handlers', () => {
 
   describe('handleResults', () => {
     it('should show completed campaigns', async () => {
-       const userId = 'user-1'
+       const testUserId = 'user-1'
 
       // Mock profile check
       const mockSelectProfile = vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
           single: vi.fn().mockResolvedValue({
-            data: { user_id: userId },
+            data: { user_id: testUserId },
             error: null
           })
         })
