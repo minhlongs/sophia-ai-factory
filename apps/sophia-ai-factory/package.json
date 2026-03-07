@@ -45,6 +45,7 @@
     "date-fns": "4.1.0",
     "graphql": "16.13.1",
     "graphql-tag": "2.12.6",
+    "html2canvas": "^1.4.1",
     "inngest": "^3.50.0",
     "jszip": "^3.10.1",
     "lucide-react": "^0.563.0",

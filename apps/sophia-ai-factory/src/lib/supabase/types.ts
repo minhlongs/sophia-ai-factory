@@ -206,6 +206,7 @@ export interface RaasLicenseUpdate {
   metadata?: Json
   polar_customer_id?: string | null
   stripe_customer_id?: string | null
+  [key: string]: string | number | boolean | Json | null | undefined
 }
 
 // ============================================================================

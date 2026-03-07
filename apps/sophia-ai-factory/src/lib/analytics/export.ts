@@ -16,6 +16,7 @@ export interface ExportOptions {
   startTimestamp: number;
   endTimestamp: number;
   isAdmin: boolean;
+  [key: string]: any;
 }
 
 /**

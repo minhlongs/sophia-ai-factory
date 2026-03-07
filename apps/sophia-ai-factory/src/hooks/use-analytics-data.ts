@@ -1,7 +1,16 @@
 'use client';
 
 import useSWR from 'swr';
+import { useMemo } from 'react';
 import type { UsageMetrics, RevenueMetrics, LicenseMetrics } from '@/lib/analytics/types';
+import { RaasGatewayClient, type RaasUsageMetrics, type BillingMetrics, type LicenseUtilization } from '@/lib/raas-gateway-client';
+
+// RaaS Gateway client instance (singleton)
+const raasClient = new RaasGatewayClient({
+  baseURL: process.env.NEXT_PUBLIC_RAAS_GATEWAY_URL || 'https://raas.agencyos.network',
+  apiKey: process.env.NEXT_PUBLIC_RAAS_API_KEY || '',
+  timeout: 10000,
+});
 
 const fetcher = async (url: string) => {
   const res = await fetch(url);
@@ -11,6 +20,102 @@ const fetcher = async (url: string) => {
   }
   return res.json();
 };
+
+// RaaS Gateway fetcher
+const raasFetcher = {
+  usage: async (start: number, end: number) => {
+    try {
+      return await raasClient.getUsageMetrics(start, end);
+    } catch (error) {
+      console.error('[RaaS] Failed to fetch usage metrics:', error);
+      return null;
+    }
+  },
+  billing: async (period: string) => {
+    try {
+      return await raasClient.getBillingMetrics(period);
+    } catch (error) {
+      console.error('[RaaS] Failed to fetch billing metrics:', error);
+      return null;
+    }
+  },
+  licenses: async () => {
+    try {
+      return await raasClient.getLicenseUtilization();
+    } catch (error) {
+      console.error('[RaaS] Failed to fetch license utilization:', error);
+      return null;
+    }
+  },
+};
+
+interface UseRaasAnalyticsOptions {
+  start?: number;
+  end?: number;
+  autoRefresh?: boolean;
+  isEnabled?: boolean;
+}
+
+/**
+ * Hook for fetching RaaS Gateway analytics data
+ */
+export function useRaasAnalytics(options: UseRaasAnalyticsOptions = {}) {
+  const { start, end, autoRefresh = false, isEnabled = true } = options;
+
+  // Fetch metrics with caching
+  const { data, error, isLoading, mutate } = useSWR<RaasUsageMetrics | null>(
+    isEnabled ? `raas-metrics-${start}-${end}` : null,
+    async () => raasFetcher.usage(start!, end!),
+    {
+      dedupingInterval: 30000, // 30s cache
+      revalidateOnFocus: autoRefresh,
+      keepPreviousData: true,
+    }
+  );
+
+  return { data, loading: isLoading, error, mutate };
+}
+
+/**
+ * Hook for fetching RaaS Gateway billing data
+ */
+export function useRaasBillingAnalytics(options: {
+  period?: string;
+  isEnabled?: boolean;
+} = {}) {
+  const { period = 'last_30_days', isEnabled = true } = options;
+
+  const { data, error, isLoading, mutate } = useSWR<BillingMetrics | null>(
+    isEnabled ? `raas-billing-${period}` : null,
+    async () => raasFetcher.billing(period),
+    {
+      dedupingInterval: 300000, // 5 minutes cache
+      revalidateOnFocus: false,
+      keepPreviousData: true,
+    }
+  );
+
+  return { data, loading: isLoading, error, mutate };
+}
+
+/**
+ * Hook for fetching RaaS Gateway license utilization
+ */
+export function useRaasLicenseAnalytics(options: { isEnabled?: boolean } = {}) {
+  const { isEnabled = true } = options;
+
+  const { data, error, isLoading, mutate } = useSWR<LicenseUtilization[] | null>(
+    isEnabled ? 'raas-licenses' : null,
+    async () => raasFetcher.licenses(),
+    {
+      dedupingInterval: 300000, // 5 minutes cache
+      revalidateOnFocus: false,
+      keepPreviousData: true,
+    }
+  );
+
+  return { data, loading: isLoading, error, mutate };
+}
 
 interface UseUsageAnalyticsOptions {
   licenseNonce?: string | null;
@@ -22,7 +127,7 @@ interface UseUsageAnalyticsOptions {
 }
 
 /**
- * Hook for fetching usage analytics data
+ * Hook for fetching usage analytics data (merged Supabase + RaaS)
  */
 export function useUsageAnalytics(options: UseUsageAnalyticsOptions = {}) {
   const {
@@ -44,7 +149,7 @@ export function useUsageAnalytics(options: UseUsageAnalyticsOptions = {}) {
 
   const url = `/api/analytics/usage?${params.toString()}`;
 
-  const { data, error, isLoading, mutate } = useSWR<UsageMetrics>(
+  const { data: supabaseData, error: supabaseError, isLoading: supabaseLoading, mutate: supabaseMutate } = useSWR<UsageMetrics>(
     isEnabled ? url : null,
     fetcher,
     {
@@ -54,11 +159,36 @@ export function useUsageAnalytics(options: UseUsageAnalyticsOptions = {}) {
     }
   );
 
+  // Add RaaS Gateway data
+  const { data: raasData, error: raasError, loading: raasLoading, mutate: raasMutate } = useRaasAnalytics({
+    start,
+    end,
+    isEnabled,
+  });
+
+  // Merge data sources
+  const mergedData = useMemo(() => {
+    if (!supabaseData) return null;
+    if (!raasData) return supabaseData;
+
+    return {
+      ...supabaseData,
+      summary: {
+        ...supabaseData.summary,
+        // Add RaaS-specific fields
+        activeLicenses: raasData.activeLicenses,
+      },
+      timeSeries: supabaseData.timeSeries, // Prefer Supabase for detailed history
+      serviceBreakdown: supabaseData.serviceBreakdown,
+      quotaTrend: raasData.quotaConsumption,
+    };
+  }, [supabaseData, raasData]);
+
   return {
-    data,
-    loading: isLoading,
-    error,
-    mutate,
+    data: mergedData,
+    loading: supabaseLoading || raasLoading,
+    error: supabaseError || raasError,
+    mutate: () => { supabaseMutate(); raasMutate(); },
   };
 }
 
@@ -69,7 +199,7 @@ interface UseRevenueAnalyticsOptions {
 }
 
 /**
- * Hook for fetching revenue analytics data
+ * Hook for fetching revenue analytics data (merged Supabase + RaaS)
  */
 export function useRevenueAnalytics(options: UseRevenueAnalyticsOptions = {}) {
   const {
@@ -84,7 +214,7 @@ export function useRevenueAnalytics(options: UseRevenueAnalyticsOptions = {}) {
 
   const url = `/api/analytics/revenue?${params.toString()}`;
 
-  const { data, error, isLoading, mutate } = useSWR<RevenueMetrics>(
+  const { data: supabaseData, error: supabaseError, isLoading: supabaseLoading, mutate: supabaseMutate } = useSWR<RevenueMetrics>(
     isEnabled ? url : null,
     fetcher,
     {
@@ -94,11 +224,32 @@ export function useRevenueAnalytics(options: UseRevenueAnalyticsOptions = {}) {
     }
   );
 
+  // Add RaaS Gateway billing data
+  const { data: raasData, error: raasError, loading: raasLoading, mutate: raasMutate } = useRaasBillingAnalytics({
+    period,
+    isEnabled,
+  });
+
+  // Merge data sources
+  const mergedData = useMemo(() => {
+    if (!supabaseData) return null;
+    if (!raasData) return supabaseData;
+
+    return {
+      ...supabaseData,
+      totalRevenue: raasData.totalRevenue || supabaseData.totalRevenue,
+      recurringRevenue: raasData.recurringRevenue || supabaseData.recurringRevenue,
+      oneTimeRevenue: raasData.oneTimeRevenue || supabaseData.oneTimeRevenue,
+      byTier: raasData.byTier.length > 0 ? raasData.byTier : supabaseData.byTier,
+      trend: raasData.trend.length > 0 ? raasData.trend : supabaseData.trend,
+    };
+  }, [supabaseData, raasData]);
+
   return {
-    data,
-    loading: isLoading,
-    error,
-    mutate,
+    data: mergedData,
+    loading: supabaseLoading || raasLoading,
+    error: supabaseError || raasError,
+    mutate: () => { supabaseMutate(); raasMutate(); },
   };
 }
 
@@ -109,7 +260,7 @@ interface UseLicenseAnalyticsOptions {
 }
 
 /**
- * Hook for fetching license analytics data
+ * Hook for fetching license analytics data (merged Supabase + RaaS)
  */
 export function useLicenseAnalytics(options: UseLicenseAnalyticsOptions = {}) {
   const {
@@ -124,7 +275,7 @@ export function useLicenseAnalytics(options: UseLicenseAnalyticsOptions = {}) {
 
   const url = `/api/analytics/licenses?${params.toString()}`;
 
-  const { data, error, isLoading, mutate } = useSWR<LicenseMetrics>(
+  const { data: supabaseData, error: supabaseError, isLoading: supabaseLoading, mutate: supabaseMutate } = useSWR<LicenseMetrics>(
     isEnabled ? url : null,
     fetcher,
     {
@@ -134,11 +285,27 @@ export function useLicenseAnalytics(options: UseLicenseAnalyticsOptions = {}) {
     }
   );
 
+  // Add RaaS Gateway license utilization
+  const { data: raasData, error: raasError, loading: raasLoading, mutate: raasMutate } = useRaasLicenseAnalytics({
+    isEnabled,
+  });
+
+  // Merge data sources
+  const mergedData = useMemo(() => {
+    if (!supabaseData) return null;
+    if (!raasData) return supabaseData;
+
+    return {
+      ...supabaseData,
+      utilization: raasData.length > 0 ? raasData : supabaseData.utilization,
+    };
+  }, [supabaseData, raasData]);
+
   return {
-    data,
-    loading: isLoading,
-    error,
-    mutate,
+    data: mergedData,
+    loading: supabaseLoading || raasLoading,
+    error: supabaseError || raasError,
+    mutate: () => { supabaseMutate(); raasMutate(); },
   };
 }
 
