@@ -19,7 +19,7 @@ describe('RaaS Key Generator', () => {
   describe('generateLicenseKey', () => {
     it('should generate valid license key format', () => {
       const expiresAt = new Date('2027-01-01');
-      const key = generateLicenseKey('PREMIUM', expiresAt, TEST_SECRET);
+      const key = generateLicenseKey('premium', expiresAt, TEST_SECRET);
 
       // Format: raas_{tier}_{timestamp}_{nonce}_{hmac}
       const parts = key.split('_');
@@ -33,7 +33,7 @@ describe('RaaS Key Generator', () => {
 
     it('should use correct expiration timestamp', () => {
       const expiresAt = new Date('2027-01-01T00:00:00Z');
-      const key = generateLicenseKey('BASIC', expiresAt, TEST_SECRET);
+      const key = generateLicenseKey('basic', expiresAt, TEST_SECRET);
       const parts = key.split('_');
       const timestamp = parseInt(parts[2], 10);
 
@@ -44,19 +44,19 @@ describe('RaaS Key Generator', () => {
 
     it('should generate unique keys for same inputs (random nonce)', () => {
       const expiresAt = new Date('2027-01-01');
-      const key1 = generateLicenseKey('PREMIUM', expiresAt, TEST_SECRET);
-      const key2 = generateLicenseKey('PREMIUM', expiresAt, TEST_SECRET);
+      const key1 = generateLicenseKey('premium', expiresAt, TEST_SECRET);
+      const key2 = generateLicenseKey('premium', expiresAt, TEST_SECRET);
 
       expect(key1).not.toBe(key2);
     });
 
     it('should handle all tier types', () => {
       const expiresAt = new Date('2027-01-01');
-      const tiers: Array<'BASIC' | 'PREMIUM' | 'ENTERPRISE' | 'MASTER'> = [
-        'BASIC',
-        'PREMIUM',
-        'ENTERPRISE',
-        'MASTER',
+      const tiers: Array<'basic' | 'premium' | 'enterprise' | 'master'> = [
+        'basic',
+        'premium',
+        'enterprise',
+        'master',
       ];
 
       tiers.forEach((tier) => {
@@ -70,7 +70,7 @@ describe('RaaS Key Generator', () => {
       const expiresAt = new Date('2027-01-01');
 
       expect(() =>
-        generateLicenseKey('PREMIUM', expiresAt, TEST_SECRET_SHORT)
+        generateLicenseKey('premium', expiresAt, TEST_SECRET_SHORT)
       ).toThrow('RAAS_LICENSE_SECRET must be at least 16 characters');
     });
 
@@ -78,14 +78,14 @@ describe('RaaS Key Generator', () => {
       const expiresAt = new Date('2027-01-01');
 
       expect(() =>
-        generateLicenseKey('PREMIUM', expiresAt, '')
+        generateLicenseKey('premium', expiresAt, '')
       ).toThrow('RAAS_LICENSE_SECRET must be at least 16 characters');
     });
   });
 
   describe('generateMasterKey', () => {
     it('should generate perpetual master key with timestamp = 0', () => {
-      const key = generateMasterKey('MASTER', TEST_SECRET);
+      const key = generateMasterKey('master', TEST_SECRET);
       const parts = key.split('_');
 
       expect(parts[0]).toBe('raas');
@@ -96,18 +96,18 @@ describe('RaaS Key Generator', () => {
     });
 
     it('should generate unique keys for same tier', () => {
-      const key1 = generateMasterKey('MASTER', TEST_SECRET);
-      const key2 = generateMasterKey('MASTER', TEST_SECRET);
+      const key1 = generateMasterKey('master', TEST_SECRET);
+      const key2 = generateMasterKey('master', TEST_SECRET);
 
       expect(key1).not.toBe(key2);
     });
 
     it('should work for all tier types', () => {
-      const tiers: Array<'BASIC' | 'PREMIUM' | 'ENTERPRISE' | 'MASTER'> = [
-        'BASIC',
-        'PREMIUM',
-        'ENTERPRISE',
-        'MASTER',
+      const tiers: Array<'basic' | 'premium' | 'enterprise' | 'master'> = [
+        'basic',
+        'premium',
+        'enterprise',
+        'master',
       ];
 
       tiers.forEach((tier) => {
@@ -119,7 +119,7 @@ describe('RaaS Key Generator', () => {
     });
 
     it('should throw error for short secret', () => {
-      expect(() => generateMasterKey('MASTER', TEST_SECRET_SHORT)).toThrow(
+      expect(() => generateMasterKey('master', TEST_SECRET_SHORT)).toThrow(
         'RAAS_LICENSE_SECRET must be at least 16 characters'
       );
     });
@@ -128,7 +128,7 @@ describe('RaaS Key Generator', () => {
   describe('parseKey', () => {
     it('should parse valid license key', () => {
       const expiresAt = new Date('2027-01-01');
-      const key = generateLicenseKey('PREMIUM', expiresAt, TEST_SECRET);
+      const key = generateLicenseKey('premium', expiresAt, TEST_SECRET);
       const parsed = parseKey(key);
 
       expect(parsed).not.toBeNull();
@@ -139,7 +139,7 @@ describe('RaaS Key Generator', () => {
     });
 
     it('should parse master key with timestamp 0', () => {
-      const key = generateMasterKey('MASTER', TEST_SECRET);
+      const key = generateMasterKey('master', TEST_SECRET);
       const parsed = parseKey(key);
 
       expect(parsed).not.toBeNull();
@@ -170,7 +170,7 @@ describe('RaaS Key Generator', () => {
   });
 
   describe('revokeKey', () => {
-    let mockRedis: { sAdd: (key: string, value: string) => Promise<number> };
+    let mockRedis: any;
 
     beforeEach(() => {
       mockRedis = {
@@ -179,7 +179,7 @@ describe('RaaS Key Generator', () => {
     });
 
     it('should add key to revoked keys set', async () => {
-      const key = generateLicenseKey('PREMIUM', new Date('2027-01-01'), TEST_SECRET);
+      const key = generateLicenseKey('premium', new Date('2027-01-01'), TEST_SECRET);
 
       await revokeKey(key, mockRedis as unknown as typeof mockRedis);
 
@@ -202,7 +202,7 @@ describe('RaaS Key Generator', () => {
   describe('Integration: Generate + Parse', () => {
     it('should generate key and parse it back correctly', () => {
       const expiresAt = new Date('2027-06-15T12:30:00Z');
-      const key = generateLicenseKey('ENTERPRISE', expiresAt, TEST_SECRET);
+      const key = generateLicenseKey('enterprise', expiresAt, TEST_SECRET);
       const parsed = parseKey(key);
 
       expect(parsed?.tier).toBe('enterprise');
@@ -212,7 +212,7 @@ describe('RaaS Key Generator', () => {
     });
 
     it('should verify HMAC integrity', () => {
-      const key = generateLicenseKey('PREMIUM', new Date('2027-01-01'), TEST_SECRET);
+      const key = generateLicenseKey('premium', new Date('2027-01-01'), TEST_SECRET);
       const parsed = parseKey(key);
 
       // Recompute HMAC

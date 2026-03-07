@@ -34,7 +34,7 @@ import type { BatchUsageRecord } from '@/lib/usage-metering/types';
 /**
  * Validate API key and return associated user info
  */
-async function validateApiKey(apiKey: string): Promise<{
+async function validateApiKey(apiKey: string | null): Promise<{
   valid: boolean;
   userId?: string;
   licenseNonce?: string;

@@ -130,8 +130,9 @@ export function UsageAnalyticsView({ userTier, userId }: UsageAnalyticsViewProps
         link.click();
         URL.revokeObjectURL(url);
       } else {
-        // PNG export (chart screenshot) - TODO: Implement chart-to-PNG
-        console.log('PNG export not yet implemented');
+        // PNG export (chart screenshot)
+        const { exportChartToPng } = await import('@/lib/analytics/chart-export');
+        await exportChartToPng('usage-chart', `usage-analytics-${Date.now()}`);
       }
     } catch (error) {
       console.error('Export failed:', error);
@@ -249,13 +250,15 @@ export function UsageAnalyticsView({ userTier, userId }: UsageAnalyticsViewProps
       />
 
       {/* Usage Chart */}
-      <UsageChart
-        data={usageData?.timeSeries || null}
-        metric={metric}
-        granularity={dateRangePreset === '24h' ? 'hour' : 'day'}
-        loading={usageLoading}
-        title={t('usage_over_time')}
-      />
+      <div id="usage-chart">
+        <UsageChart
+          data={usageData?.timeSeries || null}
+          metric={metric}
+          granularity={dateRangePreset === '24h' ? 'hour' : 'day'}
+          loading={usageLoading}
+          title={t('usage_over_time')}
+        />
+      </div>
 
       {/* Service Breakdown and License Utilization */}
       <div className="grid gap-6 md:grid-cols-2">

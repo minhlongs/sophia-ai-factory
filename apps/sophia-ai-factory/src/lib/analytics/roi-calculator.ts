@@ -15,14 +15,21 @@ export interface ROIMetrics {
   actualYTD: number;
   paybackMonths: number;
   costPerUsage: number;
+  roiPercent: number;      // ROI percentage: (projectedAnnual - licenseCost) / licenseCost * 100
+  licenseCost: number;      // Original license cost from Polar
+  totalCredits: number;     // Total credits used
 }
 
 /**
  * Calculate ROI metrics for a specific license
  *
  * @param licenseNonce - License nonce to calculate ROI for
+ * @param valuePerCredit - Value per credit in USD (default: 0.01)
  */
-export async function calculateRoiMetrics(licenseNonce: string): Promise<ROIMetrics> {
+export async function calculateRoiMetrics(
+  licenseNonce: string,
+  valuePerCredit: number = 0.01
+): Promise<ROIMetrics> {
   const supabase = createAdminClient();
 
   // Get license details
@@ -66,9 +73,8 @@ export async function calculateRoiMetrics(licenseNonce: string): Promise<ROIMetr
 
   const ytdCredits = ytdUsage?.reduce((sum: any, e: any) => sum + (e.credits_used || 0), 0) || 0;
 
-  // Estimate YTD value based on credits used
-  // Assuming $0.01 per credit as baseline value
-  const actualYTD = ytdCredits * 0.01;
+  // Calculate actual YTD value based on credits used
+  const actualYTD = ytdCredits * valuePerCredit;
 
   // Project annual revenue based on current usage
   const monthsSinceCreation = Math.max(
@@ -77,21 +83,37 @@ export async function calculateRoiMetrics(licenseNonce: string): Promise<ROIMetr
   );
   const projectedAnnual = (actualYTD / monthsSinceCreation) * 12;
 
+  // Calculate ROI percentage: (projectedAnnual - licenseCost) / licenseCost * 100
+  const roiPercent = licenseCost > 0
+    ? ((projectedAnnual - licenseCost) / licenseCost) * 100
+    : 0;
+
   // Calculate payback period in months
-  const paybackMonths = licenseCost > 0 ? Math.ceil(licenseCost / (projectedAnnual / 12)) : 0;
+  const paybackMonths = licenseCost > 0 && projectedAnnual > 0
+    ? Math.ceil(licenseCost / (projectedAnnual / 12))
+    : 0;
 
   return {
     projectedAnnual: Math.round(projectedAnnual * 100) / 100,
     actualYTD: Math.round(actualYTD * 100) / 100,
     paybackMonths: Math.max(1, paybackMonths),
     costPerUsage: Math.round(costPerUsage * 10000) / 10000,
+    roiPercent: Math.round(roiPercent * 100) / 100,
+    licenseCost: Math.round(licenseCost * 100) / 100,
+    totalCredits: totalCreditsUsed,
   };
 }
 
 /**
  * Calculate aggregate ROI across all licenses for a user
+ *
+ * @param userId - User ID to calculate aggregate ROI for
+ * @param valuePerCredit - Value per credit in USD (default: 0.01)
  */
-export async function calculateAggregateRoi(userId: string): Promise<ROIMetrics> {
+export async function calculateAggregateRoi(
+  userId: string,
+  valuePerCredit: number = 0.01
+): Promise<ROIMetrics> {
   const supabase = createAdminClient();
 
   // Get all licenses for user
@@ -107,6 +129,9 @@ export async function calculateAggregateRoi(userId: string): Promise<ROIMetrics>
       actualYTD: 0,
       paybackMonths: 0,
       costPerUsage: 0,
+      roiPercent: 0,
+      licenseCost: 0,
+      totalCredits: 0,
     };
   }
 
@@ -117,7 +142,7 @@ export async function calculateAggregateRoi(userId: string): Promise<ROIMetrics>
   let totalCreditsUsed = 0;
 
   for (const license of licenses) {
-    const metrics = await calculateRoiMetrics(license.nonce);
+    const metrics = await calculateRoiMetrics(license.nonce, valuePerCredit);
     totalProjectedAnnual += metrics.projectedAnnual;
     totalActualYTD += metrics.actualYTD;
 
@@ -141,11 +166,15 @@ export async function calculateAggregateRoi(userId: string): Promise<ROIMetrics>
 
   const costPerUsage = totalCreditsUsed > 0 ? totalCost / totalCreditsUsed : 0;
   const paybackMonths = totalProjectedAnnual > 0 ? Math.ceil(totalCost / (totalProjectedAnnual / 12)) : 0;
+  const roiPercent = totalCost > 0 ? ((totalProjectedAnnual - totalCost) / totalCost) * 100 : 0;
 
   return {
     projectedAnnual: Math.round(totalProjectedAnnual * 100) / 100,
     actualYTD: Math.round(totalActualYTD * 100) / 100,
     paybackMonths: Math.max(1, paybackMonths),
     costPerUsage: Math.round(costPerUsage * 10000) / 10000,
+    roiPercent: Math.round(roiPercent * 100) / 100,
+    licenseCost: Math.round(totalCost * 100) / 100,
+    totalCredits: totalCreditsUsed,
   };
 }
