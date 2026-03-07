@@ -203,7 +203,7 @@ describe('polar-webhook-handler', () => {
         current_period_end: '2027-01-01T00:00:00Z',
       }), webhookId);
 
-      expect(activateSubscription).toHaveBeenCalledWith(userId, subId, 'PREMIUM', '2027-01-01T00:00:00Z');
+      expect(activateSubscription).toHaveBeenCalledWith(userId, subId, 'PREMIUM', '2027-01-01T00:00:00Z', null);
       expect(createLicense).toHaveBeenCalled();
     });
 
@@ -214,7 +214,7 @@ describe('polar-webhook-handler', () => {
         metadata: metadata({ tier: undefined }),
       }), webhookId);
 
-      expect(activateSubscription).toHaveBeenCalledWith(userId, subId, 'PREMIUM', null);
+      expect(activateSubscription).toHaveBeenCalledWith(userId, subId, 'PREMIUM', null, null);
     });
   });
 
