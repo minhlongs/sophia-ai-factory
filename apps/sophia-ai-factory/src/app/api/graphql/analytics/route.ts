@@ -1,0 +1,184 @@
+/**
+ * GraphQL API Handler for Analytics
+ *
+ * POST /api/graphql/analytics
+ *
+ * Handles GraphQL queries for analytics data
+ */
+
+import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/utils/logger-utility';
+import { typeDefs } from './schema';
+import { resolvers } from '@/lib/analytics/graphql-resolvers';
+
+/**
+ * Execute GraphQL query
+ */
+async function executeQuery(
+  query: string,
+  variables?: Record<string, any>,
+  operationName?: string
+): Promise<any> {
+  try {
+    // Parse the query
+    // For a simple implementation, we'll manually resolve
+    // In production, use @graphql-tools/schema with makeExecutableSchema
+
+    // Execute using our resolvers
+    const result = await resolveQuery(query, variables);
+
+    return { data: result };
+  } catch (error) {
+    logger.error('[GraphQL] Query execution error', error instanceof Error ? error : new Error(String(error)));
+    return {
+      errors: [
+        {
+          message: error instanceof Error ? error.message : 'Unknown error',
+        },
+      ],
+    };
+  }
+}
+
+/**
+ * Manually resolve GraphQL query against resolvers
+ * This is a simplified implementation
+ */
+async function resolveQuery(
+  queryString: string,
+  variables?: Record<string, any>
+): Promise<any> {
+  // Simple regex-based extraction for analytics query
+  // This is a basic implementation - for production use graphql-tools
+
+  const analyticsResult: any = {};
+
+  // Check for usage query
+  const usageMatch = queryString.match(/usage\s*\(\s*start:\s*(\d+)\s*,\s*end:\s*(\d+)(?:\s*,\s*granularity:\s*(\w+))?(?:\s*,\s*licenseNonce:\s*"([^"]+)")?/);
+  if (usageMatch) {
+    const args = {
+      start: parseInt(usageMatch[1], 10),
+      end: parseInt(usageMatch[2], 10),
+      granularity: usageMatch[3] as 'hour' | 'day' || 'hour',
+      licenseNonce: usageMatch[4],
+    };
+    if (resolvers.Analytics?.usage) {
+      analyticsResult.usage = await resolvers.Analytics.usage({}, args as any);
+    }
+  }
+
+  // Check for revenue query
+  const revenueMatch = queryString.match(/revenue\s*\(\s*period:\s*"([^"]+)"/);
+  if (revenueMatch) {
+    const args = { period: revenueMatch[1] as 'current_month' | 'last_month' | 'last_7_days' | 'last_30_days' };
+    if (resolvers.Analytics?.revenue) {
+      analyticsResult.revenue = await resolvers.Analytics.revenue({}, args as any);
+    }
+  }
+
+  // Check for licenses query
+  const licensesMatch = queryString.match(/licenses\s*\(\s*status:\s*"([^"]+)"/);
+  if (licensesMatch) {
+    const args = { status: licensesMatch[1] as 'active' | 'expired' | 'revoked' | 'all' };
+    if (resolvers.Analytics?.licenses) {
+      analyticsResult.licenses = await resolvers.Analytics.licenses({}, args as any);
+    }
+  }
+
+  // Check for roi query
+  const roiMatch = queryString.match(/roi\s*\(\s*licenseNonce:\s*"([^"]+)"/);
+  if (roiMatch) {
+    const args = { licenseNonce: roiMatch[1] };
+    if (resolvers.Analytics?.roi) {
+      analyticsResult.roi = await resolvers.Analytics.roi({}, args);
+    }
+  }
+
+  return analyticsResult;
+}
+
+/**
+ * POST handler for GraphQL endpoint
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { query, variables, operationName } = body;
+
+    if (!query) {
+      return NextResponse.json(
+        { error: 'Query is required' },
+        { status: 400 }
+      );
+    }
+
+    logger.info('[GraphQL] Processing query', {
+      query: query.substring(0, 100),
+      variables,
+      operationName,
+    });
+
+    // Execute the query
+    const result = await executeQuery(query, variables, operationName);
+
+    logger.info('[GraphQL] Query executed', {
+      hasData: !!result.data,
+      hasErrors: !!result.errors,
+    });
+
+    return NextResponse.json(result);
+  } catch (error) {
+    logger.error('[GraphQL] Critical error', error instanceof Error ? error : new Error(String(error)));
+
+    return NextResponse.json(
+      {
+        errors: [
+          {
+            message: error instanceof Error ? error.message : 'Internal server error',
+          },
+        ],
+      },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * GET handler for GraphQL endpoint (schema introspection hint)
+ */
+export async function GET() {
+  return NextResponse.json({
+    message: 'Analytics GraphQL API',
+    endpoint: 'POST /api/graphql/analytics',
+    schema: {
+      type: 'Analytics',
+      queries: ['usage', 'revenue', 'licenses', 'roi'],
+    },
+    example: {
+      query: `
+        query {
+          analytics {
+            usage(start: 1709251200, end: 1709337600, granularity: day) {
+              summary {
+                totalRequests
+                totalCredits
+              }
+              timeSeries {
+                timestamp
+                requests
+                credits
+              }
+            }
+            revenue(period: "last_30_days") {
+              totalRevenue
+              byTier {
+                tier
+                revenue
+              }
+            }
+          }
+        }
+      `,
+    },
+  });
+}
