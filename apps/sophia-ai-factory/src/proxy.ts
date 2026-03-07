@@ -123,7 +123,7 @@ export async function proxy(request: NextRequest) {
           status: 403,
           headers: forbiddenResponse.headers,
         }, {
-          licenseNonce: null,
+          licenseNonce: undefined,
           tier: 'BASIC',
         }).catch(err => {
           logger.error('[Proxy] Failed to emit 403 usage event', err);
