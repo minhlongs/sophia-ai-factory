@@ -177,6 +177,8 @@ export interface RaasLicenseRow {
   created_at: number
   metadata: Json
   updated_at: number | null
+  polar_customer_id: string | null
+  stripe_customer_id: string | null
 }
 
 export interface RaasLicenseInsert {
@@ -202,6 +204,8 @@ export interface RaasLicenseUpdate {
   revoked_by?: string | null
   created_by?: string | null
   metadata?: Json
+  polar_customer_id?: string | null
+  stripe_customer_id?: string | null
 }
 
 // ============================================================================

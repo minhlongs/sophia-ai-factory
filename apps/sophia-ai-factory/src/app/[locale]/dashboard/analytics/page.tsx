@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { Campaign, Tier } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getTranslations } from 'next-intl/server';
+import { redirect } from "next/navigation";
 
 const AnalyticsView = dynamic(
   () => import("./components/analytics-view").then(m => ({ default: m.AnalyticsView })),
@@ -37,35 +38,27 @@ export default async function AnalyticsPage() {
     data: { session },
   } = await supabase.auth.getSession();
 
+  if (!session) {
+    redirect('/login');
+  }
+
   let campaigns: Campaign[] = [];
   let userTier: Tier = "BASIC";
+  const userId = session.user.id;
 
-  if (session?.user) {
-    // Get user tier from metadata
-    const tier = session.user.user_metadata?.tier;
-    if (tier === "PREMIUM" || tier === "ENTERPRISE" || tier === "MASTER") {
-      userTier = tier;
-    }
+  // Get user tier from metadata
+  const tier = session.user.user_metadata?.tier;
+  if (tier === "PREMIUM" || tier === "ENTERPRISE" || tier === "MASTER") {
+    userTier = tier;
+  }
 
-    const { data, error } = await supabase
-      .from("campaigns")
-      .select("*")
-      .order("created_at", { ascending: false });
+  const { data, error } = await supabase
+    .from("campaigns")
+    .select("*")
+    .order("created_at", { ascending: false });
 
-    if (!error && data) {
-      campaigns = data as Campaign[];
-    }
-  } else if (process.env.NODE_ENV === "development") {
-    // Fallback for dev without auth
-    const supabaseAdmin = createAdminClient();
-    const { data, error } = await supabaseAdmin
-      .from("campaigns")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-     if (!error && data) {
-      campaigns = data as Campaign[];
-    }
+  if (!error && data) {
+    campaigns = data as Campaign[];
   }
 
   return (
@@ -77,7 +70,7 @@ export default async function AnalyticsPage() {
         </p>
       </div>
 
-      <AnalyticsView campaigns={campaigns} userTier={userTier} />
+      <AnalyticsView campaigns={campaigns} userTier={userTier} userId={userId} />
     </div>
   );
 }
