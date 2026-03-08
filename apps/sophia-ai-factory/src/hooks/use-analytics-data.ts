@@ -4,6 +4,7 @@ import useSWR from 'swr';
 import { useMemo } from 'react';
 import type { UsageMetrics, RevenueMetrics, LicenseMetrics } from '@/lib/analytics/types';
 import { RaasGatewayClient, type RaasUsageMetrics, type BillingMetrics, type LicenseUtilization } from '@/lib/raas-gateway-client';
+import { logger } from '@/lib/utils/logger-utility';
 
 // RaaS Gateway client instance (singleton)
 const raasClient = new RaasGatewayClient({
@@ -27,7 +28,7 @@ const raasFetcher = {
     try {
       return await raasClient.getUsageMetrics(start, end);
     } catch (error) {
-      console.error('[RaaS] Failed to fetch usage metrics:', error);
+      logger.error('[RaaS] Failed to fetch usage metrics', error as Error);
       return null;
     }
   },
@@ -35,7 +36,7 @@ const raasFetcher = {
     try {
       return await raasClient.getBillingMetrics(period);
     } catch (error) {
-      console.error('[RaaS] Failed to fetch billing metrics:', error);
+      logger.error('[RaaS] Failed to fetch billing metrics', error as Error);
       return null;
     }
   },
@@ -43,7 +44,7 @@ const raasFetcher = {
     try {
       return await raasClient.getLicenseUtilization();
     } catch (error) {
-      console.error('[RaaS] Failed to fetch license utilization:', error);
+      logger.error('[RaaS] Failed to fetch license utilization', error as Error);
       return null;
     }
   },

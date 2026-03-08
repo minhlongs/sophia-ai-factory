@@ -7,6 +7,7 @@
 
 import { appendFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
+import { logger } from '@/lib/utils/logger-utility';
 
 const DEBUG_ENABLED = process.env.DEBUG_USAGE_METERING === 'true';
 const DEBUG_LOG_FILE = process.env.USAGE_DEBUG_LOG_FILE || '/tmp/usage_debug.log';
@@ -33,7 +34,7 @@ export const debugLogger = {
       try {
         mkdirSync(logDir, { recursive: true });
       } catch (error) {
-        console.error('[Usage Debug] Failed to create log directory', error);
+        logger.error('[Usage Debug] Failed to create log directory', error as Error);
       }
     }
 
@@ -41,12 +42,12 @@ export const debugLogger = {
     try {
       appendFileSync(DEBUG_LOG_FILE, logLine);
     } catch (error) {
-      console.error('[Usage Debug] Failed to write to log file', error);
+      logger.error('[Usage Debug] Failed to write to log file', error as Error);
     }
 
     // Also log to console in development
     if (process.env.NODE_ENV === 'development') {
-      console.log('[Usage Debug]', message, data ?? '');
+      logger.info('[Usage Debug]', { message, data });
     }
   },
 
@@ -58,7 +59,7 @@ export const debugLogger = {
       try {
         appendFileSync(DEBUG_LOG_FILE, '');
       } catch (error) {
-        console.error('[Usage Debug] Failed to clear log file', error);
+        logger.error('[Usage Debug] Failed to clear log file', error as Error);
       }
     }
   },

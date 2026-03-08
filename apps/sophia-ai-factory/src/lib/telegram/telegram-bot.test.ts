@@ -17,7 +17,8 @@ const mockSupabase = vi.hoisted(() => ({
       listUsers: vi.fn()
     }
   },
-  from: vi.fn()
+  from: vi.fn(),
+  rpc: vi.fn().mockResolvedValue({ data: null, error: null })
 }))
 
 // Helper for chainable mocks
@@ -84,6 +85,8 @@ describe('Telegram Bot Handlers', () => {
       NEXT_PUBLIC_SUPABASE_URL: 'https://example.supabase.co',
       SUPABASE_SERVICE_ROLE_KEY: 'test-key'
     }
+    // Reset the rpc mock with proper return value
+    mockSupabase.rpc.mockResolvedValue({ data: null, error: null })
   })
 
   afterEach(() => {

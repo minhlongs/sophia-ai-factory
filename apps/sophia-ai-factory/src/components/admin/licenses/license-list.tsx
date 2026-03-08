@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { logger } from '@/lib/utils/logger-utility';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -107,7 +108,7 @@ export function LicenseList({ onRevoke, onView, onRegenerate, onExtend }: Licens
         setTotal(data.total);
       }
     } catch (error) {
-      console.error('Failed to fetch licenses:', error);
+      logger.error('Failed to fetch licenses', error as Error);
     } finally {
       setLoading(false);
     }
@@ -151,7 +152,7 @@ export function LicenseList({ onRevoke, onView, onRegenerate, onExtend }: Licens
         alert(`Failed to revoke: ${data.error}`);
       }
     } catch (error) {
-      console.error('Failed to revoke license:', error);
+      logger.error('Failed to revoke license', error as Error);
     }
   };
 
@@ -190,7 +191,7 @@ export function LicenseList({ onRevoke, onView, onRegenerate, onExtend }: Licens
         alert(`Failed to extend: ${data.error}`);
       }
     } catch (error) {
-      console.error('Failed to extend license:', error);
+      logger.error('Failed to extend license', error as Error);
     }
   };
 
@@ -209,7 +210,7 @@ export function LicenseList({ onRevoke, onView, onRegenerate, onExtend }: Licens
         alert(`Failed to reactivate: ${data.error}`);
       }
     } catch (error) {
-      console.error('Failed to reactivate license:', error);
+      logger.error('Failed to reactivate license', error as Error);
     }
   };
 
