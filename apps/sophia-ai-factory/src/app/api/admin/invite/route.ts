@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Tier } from "@/types";
+import { withRateLimit } from '@/middleware/rate-limit-wrapper';
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +31,8 @@ function isAdminAuthorized(request: Request): boolean {
  * Body: { email: string, tier: "BASIC" | "PREMIUM" | "ENTERPRISE" }
  * Invites a user via Supabase Auth admin API with tier metadata.
  */
-export async function POST(request: Request) {
+// Wrap handler with rate limiting (20 requests per minute for admin endpoints)
+export const POST = withRateLimit(async function POST(request: Request) {
   if (!isAdminAuthorized(request)) {
     return NextResponse.json(
       { success: false, message: "Unauthorized" },
@@ -80,4 +82,4 @@ export async function POST(request: Request) {
       { status: 400 }
     );
   }
-}
+}, { addHeaders: true, config: { intervalMs: 60000, maxRequests: 10 } });

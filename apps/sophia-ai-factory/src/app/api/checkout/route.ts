@@ -3,12 +3,14 @@ import { createClient } from '@/lib/supabase/server';
 import { ServiceFactory } from '@/lib/services/factory';
 import { getProductIdByTier } from '@/lib/polar-config';
 import { checkoutSchema } from '@/lib/schemas';
+import { withRateLimit } from '@/middleware/rate-limit-wrapper';
 
 /**
  * GET handler for Telegram URL buttons which open in browser.
  * Reads tier from query params, creates checkout session, and redirects.
  */
-export async function GET(request: NextRequest) {
+// Wrap handler with rate limiting (10 requests per minute for checkout)
+export const GET = withRateLimit(async function GET(request: NextRequest) {
   try {
     const rawTier = request.nextUrl.searchParams.get('tier')?.toUpperCase();
 
@@ -50,9 +52,10 @@ export async function GET(request: NextRequest) {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network';
     return NextResponse.redirect(`${appUrl}/pricing`);
   }
-}
+}, { addHeaders: true, config: { intervalMs: 60000, maxRequests: 10 } });
 
-export async function POST(request: Request) {
+// Wrap POST handler with rate limiting (10 requests per minute for checkout)
+export const POST = withRateLimit(async function POST(request: Request) {
   try {
     const body = await request.json();
 
@@ -113,4 +116,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-}
+}, { addHeaders: true, config: { intervalMs: 60000, maxRequests: 10 } });

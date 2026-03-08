@@ -185,7 +185,7 @@ describe('Batch Usage Ingestion API - Successful Processing', () => {
     const request = createAuthorizedRequest({
       events: [
         {
-          tenant_id: 'user-123',
+          tenant_id: '550e8400-e29b-41d4-a716-446655440000',
           license_nonce: 'test-license',
           service: 'heygen',
           action: 'createVideo',
@@ -199,7 +199,7 @@ describe('Batch Usage Ingestion API - Successful Processing', () => {
           response_time_ms: 100,
         },
         {
-          tenant_id: 'user-123',
+          tenant_id: '550e8400-e29b-41d4-a716-446655440001',
           license_nonce: 'test-license',
           service: 'elevenlabs',
           action: 'textToSpeech',
@@ -238,7 +238,7 @@ describe('Batch Usage Ingestion API - Successful Processing', () => {
 
     const request = createAuthorizedRequest({
       events: Array(3).fill({
-        tenant_id: 'user-123',
+        tenant_id: '550e8400-e29b-41d4-a716-446655440000',
         license_nonce: 'test-license',
         service: 'heygen',
         action: 'createVideo',
@@ -274,7 +274,7 @@ describe('Batch Usage Ingestion API - Successful Processing', () => {
       events: [
         {
           // Different tenant_id/license_nonce - should be overwritten by auth
-          tenant_id: 'different-user',
+          tenant_id: '550e8400-e29b-41d4-a716-446655440002',
           license_nonce: 'different-license',
           service: 'heygen',
           action: 'createVideo',
@@ -321,7 +321,7 @@ describe('Batch Usage Ingestion API - Error Handling', () => {
     const request = createAuthorizedRequest({
       events: [
         {
-          tenant_id: 'user-123',
+          tenant_id: '550e8400-e29b-41d4-a716-446655440000',
           license_nonce: 'test-license',
           service: 'heygen',
           action: 'createVideo',

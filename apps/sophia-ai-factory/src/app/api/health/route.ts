@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { redisHelpers } from '@/lib/clients/upstash-redis-client';
 import type { HealthResponse } from '@/types/health';
+import { withRateLimit } from '@/middleware/rate-limit-wrapper';
 
-export async function GET(req: NextRequest) {
+// Wrap handler with rate limiting (300 requests per minute for health checks)
+export const GET = withRateLimit(async function GET(req: NextRequest) {
   try {
   const searchParams = req.nextUrl.searchParams;
   const token = searchParams.get('token');
@@ -127,4 +129,4 @@ export async function GET(req: NextRequest) {
       { status: 500 }
     );
   }
-}
+}, { addHeaders: true, config: { intervalMs: 60000, maxRequests: 300 } });

@@ -25,6 +25,7 @@ import { batchIngestUsage } from '@/lib/usage-metering/aggregator';
 import { logger } from '@/lib/utils/logger-utility';
 import { z } from 'zod';
 import type { BatchUsageRecord } from '@/lib/usage-metering/types';
+import { withRateLimit } from '@/middleware/rate-limit-wrapper';
 
 /**
  * Zod schema for single usage record
@@ -54,7 +55,8 @@ const batchIngestSchema = z.object({
   records: z.array(usageRecordSchema).min(1).max(1000),
 });
 
-export async function POST(req: NextRequest) {
+// Wrap handler with rate limiting (60 requests per minute for API v1)
+export const POST = withRateLimit(async function POST(req: NextRequest) {
   try {
     // Authenticate user
     const supabase = await createClient();
@@ -123,4 +125,4 @@ export async function POST(req: NextRequest) {
       timestamp: new Date().toISOString(),
     }, { status: 500 });
   }
-}
+}, { addHeaders: true });

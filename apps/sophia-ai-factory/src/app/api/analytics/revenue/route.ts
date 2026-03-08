@@ -17,16 +17,8 @@ import { getCurrentUser } from '@/lib/auth';
 import { logger } from '@/lib/utils/logger-utility';
 import { fetchRevenueMetrics } from '@/lib/analytics/queries';
 import { checkAdmin, canAccessRevenue } from '@/lib/analytics/rbac';
+import { analyticsRevenueQuerySchema } from '@/lib/validation/services';
 import type { RevenuePeriod } from '@/lib/analytics/types';
-
-const VALID_PERIODS: RevenuePeriod[] = [
-  'current_month',
-  'last_month',
-  'last_7_days',
-  'last_30_days',
-];
-
-const VALID_TIERS = ['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER'];
 
 export async function GET(request: NextRequest) {
   try {
@@ -40,34 +32,21 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Step 2: Parse query params
+    // Step 2: Parse query params with Zod schema
     const searchParams = request.nextUrl.searchParams;
-    const periodParam = searchParams.get('period') as RevenuePeriod | null;
-    const tierParam = searchParams.get('tier');
+    const validation = analyticsRevenueQuerySchema.safeParse({
+      period: searchParams.get('period'),
+      tier: searchParams.get('tier'),
+    });
 
-    // Validate period
-    const period: RevenuePeriod = periodParam && VALID_PERIODS.includes(periodParam)
-      ? periodParam
-      : 'current_month';
-
-    if (periodParam && !VALID_PERIODS.includes(periodParam)) {
+    if (!validation.success) {
       return NextResponse.json(
-        {
-          error: `Invalid period - must be one of: ${VALID_PERIODS.join(', ')}`,
-        },
+        { error: 'Invalid query params', details: validation.error.flatten() },
         { status: 400 }
       );
     }
 
-    // Validate tier filter
-    if (tierParam && !VALID_TIERS.includes(tierParam)) {
-      return NextResponse.json(
-        {
-          error: `Invalid tier - must be one of: ${VALID_TIERS.join(', ')}`,
-        },
-        { status: 400 }
-      );
-    }
+    const { period, tier } = validation.data;
 
     // Step 3: RBAC - Check if user is admin
     const isAdmin = await checkAdmin(user.id);
@@ -80,7 +59,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (tierParam && !isAdmin) {
+    if (tier && !isAdmin) {
       return NextResponse.json(
         { error: 'Access denied - tier filter is admin-only' },
         { status: 403 }
@@ -92,15 +71,15 @@ export async function GET(request: NextRequest) {
       userTier: user.tier,
       isAdmin,
       period,
-      tier: tierParam,
+      tier,
     });
 
     // Step 4: Fetch revenue metrics
     const metrics = await fetchRevenueMetrics(period);
 
     // Step 5: Apply tier filter if requested (admin only)
-    if (tierParam && isAdmin) {
-      metrics.byTier = metrics.byTier.filter(t => t.tier === tierParam);
+    if (tier && isAdmin) {
+      metrics.byTier = metrics.byTier.filter(t => t.tier === tier);
       // Note: We don't filter the trend data as it's aggregated across all tiers
     }
 
@@ -115,7 +94,7 @@ export async function GET(request: NextRequest) {
       metadata: {
         queriedAt: new Date().toISOString(),
         period,
-        tier: tierParam,
+        tier,
       },
     });
 

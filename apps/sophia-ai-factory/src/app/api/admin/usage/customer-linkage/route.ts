@@ -10,6 +10,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { logger } from '@/lib/utils/logger-utility';
+import { customerLinkageRequestSchema } from '@/lib/validation/services';
+import type { RaasLicenseUpdate } from '@/lib/supabase/types';
 
 /**
  * Verify admin Basic Auth credentials
@@ -119,10 +121,10 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * POST /api/admin/usage/customer-linkage/fix
+ * POST /api/admin/usage/customer-linkage
  *
- * Backfill missing customer IDs from metadata
- * Returns count of fixed records
+ * Link customer IDs to licenses
+ * Body: { license_nonce, polar_customer_id?, stripe_customer_id? }
  */
 export async function POST(request: NextRequest) {
   if (!isAdminAuthorized(request)) {
@@ -133,77 +135,54 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    // Parse and validate request body with Zod
+    const body = await request.json().catch(() => ({}));
+    const validation = customerLinkageRequestSchema.safeParse(body);
+
+    if (!validation.success) {
+      return NextResponse.json(
+        {
+          error: 'Invalid request body',
+          details: validation.error.flatten()
+        },
+        { status: 400 }
+      );
+    }
+
+    const { license_nonce, polar_customer_id, stripe_customer_id } = validation.data;
     const supabase = createAdminClient();
 
-    // Get all licenses with customer IDs in metadata but not in columns
-    const { data: licensesData, error: fetchError } = await supabase
-      .from('raas_licenses')
-      .select('nonce, metadata')
-      .or('polar_customer_id.is.null,stripe_customer_id.is.null');
+    // Update license with customer IDs - use 'as any' for Supabase type compatibility
+    const { error: updateError } = await (supabase.from('raas_licenses') as any)
+      .update({
+        ...(polar_customer_id ? { polar_customer_id } : {}),
+        ...(stripe_customer_id ? { stripe_customer_id } : {}),
+      })
+      .eq('nonce', license_nonce);
 
-    const licenses = licensesData as Array<{
-      nonce: string;
-      metadata: Record<string, unknown> | null;
-    }> | null;
-
-    if (fetchError) {
-      logger.error('[Customer Linkage Fix] Failed to fetch licenses', fetchError);
+    if (updateError) {
+      logger.error('[Customer Linkage] Failed to update license', updateError);
       return NextResponse.json(
-        { error: 'Failed to fetch licenses', details: fetchError.message },
+        { error: 'Failed to update license', details: updateError.message },
         { status: 500 }
       );
     }
 
-    let fixedCount = 0;
-    const errors: string[] = [];
-
-    for (const license of licenses || []) {
-      const metadata = license.metadata as Record<string, string> | null;
-      if (!metadata) continue;
-
-      const polarCustomerId = metadata.polar_customer_id;
-      const stripeCustomerId = metadata.stripe_customer_id;
-
-      if (!polarCustomerId && !stripeCustomerId) continue;
-
-      // Build update object - Supabase types require any for partial updates
-      const updateData: any = {};
-      if (polarCustomerId) {
-        updateData.polar_customer_id = polarCustomerId;
-      }
-      if (stripeCustomerId) {
-        updateData.stripe_customer_id = stripeCustomerId;
-      }
-
-      // Update license - use any for Supabase type compatibility
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-      const { error: updateError } = await supabase
-        .from('raas_licenses')
-        // @ts-expect-error - Supabase types don't allow partial updates correctly
-        .update(updateData)
-        .eq('nonce', license.nonce);
-
-      if (updateError) {
-        errors.push(`Failed to update ${license.nonce.slice(0, 8)}...: ${updateError.message}`);
-      } else {
-        fixedCount++;
-      }
-    }
-
-    logger.info('[Customer Linkage Fix] Backfill complete', {
-      fixedCount,
-      totalErrors: errors.length,
+    logger.info('[Customer Linkage] License updated successfully', {
+      licenseNonce: license_nonce,
+      polarCustomerId: polar_customer_id,
+      stripeCustomerId: stripe_customer_id,
     });
 
     return NextResponse.json({
       success: true,
-      fixedCount,
-      totalErrors: errors.length,
-      errors: errors.slice(0, 10), // First 10 errors
+      licenseNonce: license_nonce.slice(0, 8) + '...',
+      polarCustomerId: polar_customer_id,
+      stripeCustomerId: stripe_customer_id,
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    logger.error('[Customer Linkage Fix] Critical error', new Error(errorMessage));
+    logger.error('[Customer Linkage] Critical error', new Error(errorMessage));
     return NextResponse.json(
       { error: errorMessage },
       { status: 500 }
