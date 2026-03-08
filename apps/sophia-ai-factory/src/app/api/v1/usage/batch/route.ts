@@ -29,6 +29,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { logger } from '@/lib/utils/logger-utility';
 import { batchIngestUsage } from '@/lib/usage-metering/aggregator';
+import { batchIngestionRequestSchema } from '@/lib/validation/services';
 import type { BatchUsageRecord } from '@/lib/usage-metering/types';
 
 /**
@@ -76,29 +77,6 @@ async function validateApiKey(apiKey: string | null): Promise<{
   }
 }
 
-/**
- * Validate request body structure
- */
-function validateRequestBody(body: any): { valid: boolean; error?: string } {
-  if (!body || typeof body !== 'object') {
-    return { valid: false, error: 'Request body must be a JSON object' };
-  }
-
-  if (!Array.isArray(body.events)) {
-    return { valid: false, error: 'Request body must contain "events" array' };
-  }
-
-  if (body.events.length === 0) {
-    return { valid: false, error: 'Events array cannot be empty' };
-  }
-
-  if (body.events.length > 1000) {
-    return { valid: false, error: 'Maximum 1000 events per batch' };
-  }
-
-  return { valid: true };
-}
-
 export async function POST(request: NextRequest) {
   const requestId = `batch_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
 
@@ -129,7 +107,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Step 2: Parse and validate request body
+    // Step 2: Parse and validate request body with Zod
     let body: any;
     try {
       body = await request.json();
@@ -140,15 +118,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const validation = validateRequestBody(body);
-    if (!validation.valid) {
+    // Use Zod schema for validation
+    const validation = batchIngestionRequestSchema.safeParse(body);
+    if (!validation.success) {
+      logger.warn('[Batch Ingest API] Invalid request body', {
+        requestId,
+        errors: validation.error.flatten(),
+      });
       return NextResponse.json(
-        { error: validation.error, code: 'INVALID_REQUEST' },
+        {
+          error: 'Invalid request body',
+          code: 'INVALID_REQUEST',
+          details: validation.error.flatten()
+        },
         { status: 400 }
       );
     }
 
-    const events = body.events as BatchUsageRecord[];
+    const events = validation.data.events as BatchUsageRecord[];
 
     logger.info('[Batch Ingest API] Processing batch', {
       requestId,

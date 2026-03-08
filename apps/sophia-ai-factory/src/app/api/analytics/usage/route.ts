@@ -20,6 +20,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { logger } from '@/lib/utils/logger-utility';
 import { fetchUsageMetrics } from '@/lib/analytics/queries';
 import { verifyLicenseAccess, getUserLicenseNonce, checkAdmin } from '@/lib/analytics/rbac';
+import { analyticsUsageQuerySchema } from '@/lib/validation/services';
 import type { UsageFilters, AnalyticsGranularity, AiService } from '@/lib/analytics/types';
 
 export async function GET(request: NextRequest) {
@@ -34,57 +35,36 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Step 2: Parse query params
+    // Step 2: Parse query params with Zod schema
     const searchParams = request.nextUrl.searchParams;
-    const licenseNonce = searchParams.get('license_nonce');
-    const startParam = searchParams.get('start');
-    const endParam = searchParams.get('end');
-    const granularity = searchParams.get('granularity') as AnalyticsGranularity || 'hour';
-    const service = searchParams.get('service') as AiService || undefined;
+    const validation = analyticsUsageQuerySchema.safeParse({
+      license_nonce: searchParams.get('license_nonce'),
+      start: searchParams.get('start'),
+      end: searchParams.get('end'),
+      granularity: searchParams.get('granularity'),
+      service: searchParams.get('service'),
+    });
 
-    // Validate granularity
-    if (!['hour', 'day'].includes(granularity)) {
+    if (!validation.success) {
       return NextResponse.json(
-        { error: 'Invalid granularity - must be "hour" or "day"' },
+        { error: 'Invalid query params', details: validation.error.flatten() },
         { status: 400 }
       );
     }
 
-    // Validate service
-    if (service && !['heygen', 'elevenlabs', 'openrouter'].includes(service)) {
+    const { license_nonce, start, end, granularity, service } = validation.data;
+
+    // Handle NaN from transform
+    if (!start || !end || isNaN(start) || isNaN(end)) {
       return NextResponse.json(
-        { error: 'Invalid service - must be "heygen", "elevenlabs", or "openrouter"' },
+        { error: 'Invalid start/end timestamps - must be valid Unix seconds' },
         { status: 400 }
       );
     }
 
-    // Step 3: Parse timestamps
     const now = Math.floor(Date.now() / 1000);
-    let startTimestamp: number;
-    let endTimestamp: number = now;
-
-    if (startParam) {
-      startTimestamp = parseInt(startParam, 10);
-      if (isNaN(startTimestamp)) {
-        return NextResponse.json(
-          { error: 'Invalid start timestamp - must be Unix seconds' },
-          { status: 400 }
-        );
-      }
-    } else {
-      // Default to last 24 hours
-      startTimestamp = now - (24 * 3600);
-    }
-
-    if (endParam) {
-      endTimestamp = parseInt(endParam, 10);
-      if (isNaN(endTimestamp)) {
-        return NextResponse.json(
-          { error: 'Invalid end timestamp - must be Unix seconds' },
-          { status: 400 }
-        );
-      }
-    }
+    let startTimestamp = start;
+    let endTimestamp = end;
 
     // Validate date range
     if (startTimestamp > endTimestamp) {
@@ -103,17 +83,17 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Step 4: RBAC - Determine license_nonce to query
-    let queryLicenseNonce: string | undefined = licenseNonce || undefined;
+    // Step 3: RBAC - Determine license_nonce to query
+    let queryLicenseNonce: string | undefined = license_nonce || undefined;
 
     // Check if user is admin
     const isAdmin = await checkAdmin(user.id);
 
     if (!isAdmin) {
       // Customer users can only see their own data
-      if (licenseNonce) {
+      if (license_nonce) {
         // Verify the license belongs to this user
-        const access = await verifyLicenseAccess(user.id, licenseNonce, isAdmin);
+        const access = await verifyLicenseAccess(user.id, license_nonce, isAdmin);
         if (!access.allowed) {
           return NextResponse.json(
             { error: access.error || 'Access denied' },
@@ -137,7 +117,7 @@ export async function GET(request: NextRequest) {
       service,
     });
 
-    // Step 5: Fetch usage metrics
+    // Step 4: Fetch usage metrics
     const filters: UsageFilters = {
       licenseNonce: queryLicenseNonce,
       startTimestamp,

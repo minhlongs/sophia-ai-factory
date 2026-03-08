@@ -17,6 +17,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { logger } from '@/lib/utils/logger-utility';
 import { calculateRoiMetrics } from '@/lib/analytics/roi-calculator';
 import { verifyLicenseAccess, checkAdmin } from '@/lib/analytics/rbac';
+import { analyticsRoiQuerySchema } from '@/lib/validation/services';
 
 export async function GET(request: NextRequest) {
   try {
@@ -30,23 +31,23 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Step 2: Parse query params
+    // Step 2: Parse query params with Zod schema
     const searchParams = request.nextUrl.searchParams;
-    const licenseNonce = searchParams.get('licenseNonce');
-    const valuePerCreditParam = searchParams.get('valuePerCredit');
+    const validation = analyticsRoiQuerySchema.safeParse({
+      licenseNonce: searchParams.get('licenseNonce'),
+      valuePerCredit: searchParams.get('valuePerCredit'),
+    });
 
-    if (!licenseNonce) {
+    if (!validation.success) {
       return NextResponse.json(
-        { error: 'Missing required parameter: licenseNonce' },
+        { error: 'Invalid query params', details: validation.error.flatten() },
         { status: 400 }
       );
     }
 
-    // Parse and validate valuePerCredit
-    const valuePerCredit = valuePerCreditParam
-      ? parseFloat(valuePerCreditParam)
-      : 0.01;
+    const { licenseNonce, valuePerCredit } = validation.data;
 
+    // Validate valuePerCredit
     if (isNaN(valuePerCredit) || valuePerCredit <= 0) {
       return NextResponse.json(
         { error: 'Invalid valuePerCredit - must be a positive number' },

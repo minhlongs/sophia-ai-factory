@@ -17,10 +17,8 @@ import { getCurrentUser } from '@/lib/auth';
 import { logger } from '@/lib/utils/logger-utility';
 import { fetchLicenseMetrics } from '@/lib/analytics/queries';
 import { checkAdmin, verifyLicenseAccess, getUserLicenseNonce } from '@/lib/analytics/rbac';
+import { analyticsLicensesQuerySchema } from '@/lib/validation/services';
 import type { LicenseStatus, LicenseFilters } from '@/lib/analytics/types';
-
-const VALID_STATUSES: LicenseStatus[] = ['active', 'expired', 'revoked', 'all'];
-const VALID_TIERS = ['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER'];
 
 export async function GET(request: NextRequest) {
   try {
@@ -34,35 +32,22 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Step 2: Parse query params
+    // Step 2: Parse query params with Zod schema
     const searchParams = request.nextUrl.searchParams;
-    const statusParam = searchParams.get('status') as LicenseStatus | null;
-    const tierParam = searchParams.get('tier');
-    const licenseNonceParam = searchParams.get('license_nonce');
+    const validation = analyticsLicensesQuerySchema.safeParse({
+      status: searchParams.get('status'),
+      tier: searchParams.get('tier'),
+      license_nonce: searchParams.get('license_nonce'),
+    });
 
-    // Validate status
-    const status: LicenseStatus = statusParam && VALID_STATUSES.includes(statusParam)
-      ? statusParam
-      : 'active';
-
-    if (statusParam && !VALID_STATUSES.includes(statusParam)) {
+    if (!validation.success) {
       return NextResponse.json(
-        {
-          error: `Invalid status - must be one of: ${VALID_STATUSES.join(', ')}`,
-        },
+        { error: 'Invalid query params', details: validation.error.flatten() },
         { status: 400 }
       );
     }
 
-    // Validate tier filter
-    if (tierParam && !VALID_TIERS.includes(tierParam)) {
-      return NextResponse.json(
-        {
-          error: `Invalid tier - must be one of: ${VALID_TIERS.join(', ')}`,
-        },
-        { status: 400 }
-      );
-    }
+    const { status, tier, license_nonce } = validation.data;
 
     // Step 3: RBAC - Determine access level
     const isAdmin = await checkAdmin(user.id);
@@ -72,8 +57,8 @@ export async function GET(request: NextRequest) {
       userTier: user.tier,
       isAdmin,
       status,
-      tier: tierParam,
-      licenseNonce: licenseNonceParam,
+      tier,
+      licenseNonce: license_nonce,
     });
 
     // Step 4: Handle customer vs admin access
@@ -81,9 +66,9 @@ export async function GET(request: NextRequest) {
 
     if (!isAdmin) {
       // Customer users can only see their own license
-      if (licenseNonceParam) {
+      if (license_nonce) {
         // Verify the license belongs to this user
-        const access = await verifyLicenseAccess(user.id, licenseNonceParam, isAdmin);
+        const access = await verifyLicenseAccess(user.id, license_nonce, isAdmin);
         if (!access.allowed) {
           return NextResponse.json(
             { error: access.error || 'Access denied' },
@@ -102,8 +87,8 @@ export async function GET(request: NextRequest) {
     } else {
       // Admin users can filter by status and tier
       filters.status = status;
-      if (tierParam) {
-        filters.tier = tierParam;
+      if (tier) {
+        filters.tier = tier;
       }
     }
 
@@ -148,7 +133,7 @@ export async function GET(request: NextRequest) {
       metadata: {
         queriedAt: new Date().toISOString(),
         status,
-        tier: tierParam,
+        tier,
         isAdmin,
       },
     });
