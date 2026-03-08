@@ -4,6 +4,8 @@
  * Export charts to PNG format using html2canvas
  */
 
+import { logger } from '@/lib/utils/logger-utility';
+
 /**
  * Export a chart element to PNG
  *
@@ -78,7 +80,7 @@ export async function exportChartsToZip(
 
       zip.file(`chart-${chartId}.png`, blob);
     } catch (error) {
-      console.error(`Failed to export chart ${chartId}:`, error);
+      logger.error(`Failed to export chart ${chartId}`, error as Error);
     }
   }
 

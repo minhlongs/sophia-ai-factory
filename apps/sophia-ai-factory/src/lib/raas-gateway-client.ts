@@ -5,6 +5,8 @@
  * Supports JWT + mk_ API key authentication
  */
 
+import { logger } from '@/lib/utils/logger-utility';
+
 export interface RaasGatewayConfig {
   baseURL: string; // 'https://raas.agencyos.network'
   apiKey: string; // mk_ prefix format
@@ -103,7 +105,7 @@ export class RaasGatewayClient {
 
       return response.ok;
     } catch (error) {
-      console.error('[RaaS] API key validation failed:', error);
+      logger.error('[RaaS] API key validation failed', error as Error);
       return false;
     }
   }
@@ -205,7 +207,7 @@ export class RaasGatewayClient {
       );
 
       ws.onopen = () => {
-        console.log('[RaaS] WebSocket connection established');
+        logger.info('[RaaS] WebSocket connection established');
         ws.send(JSON.stringify({
           type: 'authenticate',
           apiKey: this.config.apiKey,
@@ -220,18 +222,18 @@ export class RaasGatewayClient {
       };
 
       ws.onerror = (error) => {
-        console.error('[RaaS] WebSocket error:', error);
+        logger.error('[RaaS] WebSocket error', new Error('WebSocket error event'));
       };
 
       ws.onclose = () => {
-        console.log('[RaaS] WebSocket connection closed');
+        logger.info('[RaaS] WebSocket connection closed');
       };
 
       return () => {
         ws.close();
       };
     } catch (error) {
-      console.error('[RaaS] WebSocket connection failed:', error);
+      logger.error('[RaaS] WebSocket connection failed', error as Error);
       // Fallback to polling
       const interval = setInterval(async () => {
         try {
@@ -242,7 +244,7 @@ export class RaasGatewayClient {
           );
           callback(metrics);
         } catch (error) {
-          console.error('[RaaS] Polling failed:', error);
+          logger.error('[RaaS] Polling failed', error as Error);
         }
       }, 30000); // 30 seconds interval
 

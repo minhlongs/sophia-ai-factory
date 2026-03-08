@@ -11,6 +11,7 @@ import { LicenseGenerator } from '@/components/admin/licenses/license-generator'
 import { LicenseList } from '@/components/admin/licenses/license-list';
 import { AuditLogTable } from '@/components/admin/licenses/audit-log-table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { logger } from '@/lib/utils/logger-utility';
 
 export default function LicensesAdminPage() {
   const [activeTab, setActiveTab] = useState('list');
@@ -18,11 +19,11 @@ export default function LicensesAdminPage() {
 
   const handleLicenseCreated = (data: LicenseSummary) => {
     // Optionally switch to list view or show detail
-    console.log('License created:', data);
+    logger.info('License created', { data });
   };
 
   const handleRevoke = (id: string) => {
-    console.log('License revoked:', id);
+    logger.info('License revoked', { licenseId: id });
   };
 
   const handleView = (id: string) => {

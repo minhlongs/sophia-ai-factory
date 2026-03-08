@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
+import { logger } from '@/lib/utils/logger-utility';
 
 export interface Customer {
   id: string;
@@ -52,7 +53,7 @@ export function CustomerSearch({
             setCustomers(data);
           }
         } catch (error) {
-          console.error('Failed to search customers:', error);
+          logger.error('Failed to search customers', error as Error);
         } finally {
           setLoading(false);
         }

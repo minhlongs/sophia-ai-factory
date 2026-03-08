@@ -10,6 +10,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { SupabaseClient } from '@supabase/supabase-js';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { logger } from '@/lib/utils/logger-utility';
 import { checkAdminAuth } from '../../licenses/middleware';
@@ -27,6 +28,59 @@ interface ReconciliationFilters {
   endTimestamp?: number;
   limit: number;
   offset: number;
+}
+
+/**
+ * Supabase usage event from database
+ */
+interface SupabaseUsageEvent {
+  id: string;
+  user_id: string;
+  license_nonce: string;
+  service_name: string;
+  endpoint: string;
+  action: string;
+  credits_used: number;
+  tokens_input: number;
+  tokens_output: number;
+  status_code: number | null;
+  error_message: string | null;
+  response_time_ms: number | null;
+  created_at: number;
+  idempotency_key: string | null;
+  external_customer_id: string | null;
+  resource_type: string | null;
+}
+
+/**
+ * License information for reconciliation
+ */
+interface LicenseInfo {
+  nonce: string;
+  tier: string;
+  polar_customer_id: string | null;
+  stripe_customer_id: string | null;
+  polar_subscription_id: string | null;
+  is_revoked: boolean;
+  created_at: string;
+  expires_at: number;
+}
+
+/**
+ * Reconciliation result with analysis
+ */
+interface ReconciliationResult {
+  comparison: ReconciliationComparison | null;
+  anomalies: AnomalyDetected[];
+  quotaCompliance: QuotaCompliance[];
+}
+
+/**
+ * Query result with pagination
+ */
+interface UsageQueryResult {
+  events: SupabaseUsageEvent[];
+  totalCount: number;
 }
 
 /**
@@ -240,9 +294,9 @@ function parseLimit(value: string | null): number {
  * Query usage events from database
  */
 async function queryUsageEvents(
-  supabase: any,
+  supabase: SupabaseClient,
   filters: ReconciliationFilters
-): Promise<{ events: any[]; totalCount: number }> {
+): Promise<UsageQueryResult> {
   let query = supabase
     .from('usage_events')
     .select('*', { count: 'exact' });
@@ -276,7 +330,7 @@ async function queryUsageEvents(
   const rangeEnd = filters.offset + filters.limit - 1;
   query = query.range(rangeStart, rangeEnd);
 
-  const { data, error, count } = await query as any;
+  const { data, error, count } = await query;
 
   if (error) {
     logger.error('[Reconciliation] Failed to query events', error);
@@ -284,7 +338,7 @@ async function queryUsageEvents(
   }
 
   return {
-    events: data || [],
+    events: (data as SupabaseUsageEvent[]) || [],
     totalCount: count || 0,
   };
 }
@@ -293,18 +347,9 @@ async function queryUsageEvents(
  * Get license information for reconciliation
  */
 async function getLicenseInfo(
-  supabase: any,
+  supabase: SupabaseClient,
   nonce: string
-): Promise<{
-  nonce: string;
-  tier: string;
-  polar_customer_id: string | null;
-  stripe_customer_id: string | null;
-  polar_subscription_id: string | null;
-  is_revoked: boolean;
-  created_at: string;
-  expires_at: number;
-} | null> {
+): Promise<LicenseInfo | null> {
   const { data, error } = await supabase
     .from('raas_licenses')
     .select('nonce, tier, polar_customer_id, stripe_customer_id, polar_subscription_id, is_revoked, created_at, expires_at')
@@ -315,14 +360,14 @@ async function getLicenseInfo(
     return null;
   }
 
-  return data as any;
+  return data as LicenseInfo;
 }
 
 /**
  * Query billing periods from payment events
  */
 async function queryBillingPeriods(
-  supabase: any,
+  supabase: SupabaseClient,
   customerId: string | undefined,
   startTimestamp: number | undefined,
   endTimestamp: number | undefined
@@ -338,7 +383,7 @@ async function queryBillingPeriods(
     .or(`event_type.eq.subscription.created,event_type.eq.subscription.updated,event_type.eq.checkout.updated`)
     .order('created_at', { ascending: false });
 
-  const { data, error } = await query as any;
+  const { data, error } = await query;
 
   if (error) {
     logger.error('[Reconciliation] Failed to query billing periods', error);
@@ -396,7 +441,7 @@ async function queryBillingPeriods(
 /**
  * Determine deduplication status of an event
  */
-function determineDeduplicationStatus(event: any): 'success' | 'duplicate' | 'failed' {
+function determineDeduplicationStatus(event: SupabaseUsageEvent): 'success' | 'duplicate' | 'failed' {
   // If idempotency key exists and event was inserted successfully
   if (event.idempotency_key) {
     // Check for error status
@@ -413,7 +458,7 @@ function determineDeduplicationStatus(event: any): 'success' | 'duplicate' | 'fa
 /**
  * Build raw payload for event
  */
-function buildRawPayload(event: any): Record<string, unknown> {
+function buildRawPayload(event: SupabaseUsageEvent): Record<string, unknown> {
   return {
     id: event.id,
     user_id: event.user_id,
@@ -440,12 +485,8 @@ function buildRawPayload(event: any): Record<string, unknown> {
 function performReconciliationAnalysis(
   events: UsageEventWithStatus[],
   billingPeriods: BillingPeriod[],
-  licenseInfo: any
-): {
-  comparison: ReconciliationComparison | null;
-  anomalies: AnomalyDetected[];
-  quotaCompliance: QuotaCompliance[];
-} {
+  licenseInfo: LicenseInfo | null
+): ReconciliationResult {
   const anomalies: AnomalyDetected[] = [];
   const quotaCompliance: QuotaCompliance[] = [];
 
@@ -651,7 +692,7 @@ function detectDuplicateKeys(events: UsageEventWithStatus[], anomalies: AnomalyD
  */
 function buildReconciliationSummary(
   events: UsageEventWithStatus[],
-  licenseInfo: any
+  licenseInfo: LicenseInfo | null
 ): {
   total_events: number;
   total_credits: number;
