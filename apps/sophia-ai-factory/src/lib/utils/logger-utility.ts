@@ -82,18 +82,19 @@ const log = (
 
   const formatted = formatLogEntry(entry);
 
+  // Use process.stdout/stderr.write to avoid console mock issues in tests
   switch (level) {
     case 'error':
-      console.error(formatted);
+      process.stderr.write(formatted + '\n');
       break;
     case 'warn':
-      console.warn(formatted);
+      process.stderr.write(formatted + '\n');
       break;
     case 'debug':
-      if (isDevelopment) console.debug(formatted);
+      if (isDevelopment) process.stdout.write(formatted + '\n');
       break;
     default:
-      console.log(formatted);
+      process.stdout.write(formatted + '\n');
   }
 };
 
