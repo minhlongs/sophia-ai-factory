@@ -6,6 +6,7 @@
 
 import { createAdminClient } from '@/lib/supabase/admin';
 import { logger } from '@/lib/utils/logger-utility';
+import type { UsageEventRow } from '@/lib/supabase/types';
 
 /**
  * Export options
@@ -16,7 +17,7 @@ export interface ExportOptions {
   startTimestamp: number;
   endTimestamp: number;
   isAdmin: boolean;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**
@@ -51,7 +52,7 @@ function formatTimestamp(timestamp: number): string {
 /**
  * Generate CSV rows from usage events
  */
-export function generateUsageCsvRows(events: any[]): UsageCsvRow[] {
+export function generateUsageCsvRows(events: UsageEventRow[]): UsageCsvRow[] {
   const rows: UsageCsvRow[] = [];
 
   for (const event of events) {
@@ -111,7 +112,7 @@ export function rowsToCsv(rows: UsageCsvRow[]): string {
 /**
  * Fetch usage events for export
  */
-export async function fetchUsageForExport(options: ExportOptions): Promise<any[]> {
+export async function fetchUsageForExport(options: ExportOptions): Promise<UsageEventRow[]> {
   const supabase = createAdminClient();
 
   // Validate date range (max 90 days)
@@ -135,10 +136,10 @@ export async function fetchUsageForExport(options: ExportOptions): Promise<any[]
     query = query.eq('user_id', options.userId);
   }
 
-  const { data: events, error } = await query as any;
+  const { data: events, error } = await query as { data: UsageEventRow[]; error: unknown };
 
   if (error) {
-    logger.error('[Analytics Export] Failed to fetch usage events', error);
+    logger.error('[Analytics Export] Failed to fetch usage events', error as Error);
     throw new Error('Failed to fetch usage data for export');
   }
 
@@ -156,7 +157,7 @@ export async function exportUsageToCsv(options: ExportOptions): Promise<{
   logger.info('[Analytics Export] Starting CSV export', options);
 
   // Fetch data
-  const events = await fetchUsageForExport(options as any);
+  const events = await fetchUsageForExport(options);
 
   // Generate CSV
   const rows = generateUsageCsvRows(events);
