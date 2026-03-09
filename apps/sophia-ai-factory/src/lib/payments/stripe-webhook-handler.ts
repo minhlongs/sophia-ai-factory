@@ -7,6 +7,8 @@ import { generateLicenseKey } from '@/lib/raas-key-generator'
 import { createLicense, logLicenseCreation, revokeLicense, logLicenseRevocation } from '@/lib/raas-audit'
 import { createHash } from 'crypto'
 import Stripe from 'stripe'
+import { handlePaymentFailure, handlePaymentSuccess } from '@/lib/billing/dunning-workflow'
+import { sendPaymentFailedEmail, sendPaymentSuccessEmail } from '@/lib/billing/resend-email-service'
 
 const VALID_TIERS: Tier[] = ['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER']
 
@@ -572,85 +574,286 @@ async function handleSubscriptionDeleted(data: Record<string, unknown>): Promise
 
 /**
  * Handle invoice.paid event
+ *
+ * Flow:
+ * 1. Lookup user by Stripe customer/subscription ID
+ * 2. Get license nonce from raas_licenses table
+ * 3. Call handlePaymentSuccess() from dunning-workflow
+ * 4. Send payment success email via Resend
+ * 5. Log to billing_events table
  */
 async function handleInvoicePaid(data: Record<string, unknown>): Promise<void> {
   const stripeSubscriptionId = safeString(data.subscription as string)
   const stripeCustomerId = safeString(data.customer as string)
   const periodEnd = (data.period_end as number) || null
+  const amountDue = data.amount_due as number | undefined
+  const currency = data.currency as string | undefined
 
-  if (!stripeCustomerId) return
-
-  // Find user by customer ID
-  let targetUserId = await findUserByStripeCustomerId(stripeCustomerId)
-
-  // Fallback: find by subscription ID
-  if (!targetUserId && stripeSubscriptionId) {
-    targetUserId = await findUserByStripeSubscriptionId(stripeSubscriptionId)
-  }
-
-  if (!targetUserId) {
-    logger.warn('[Stripe] Invoice paid: user not found', {
-      stripeCustomerId,
-      stripeSubscriptionId,
-    })
+  if (!stripeCustomerId && !stripeSubscriptionId) {
+    logger.warn('[Stripe] Invoice paid: no customer or subscription ID')
     return
   }
 
-  const supabase = getSupabase()
+  const startTime = Date.now()
 
-  // Update subscription expiry
-  await supabase
-    .from('user_profiles')
-    .update({
-      subscription_expires_at: periodEnd
-        ? new Date(periodEnd * 1000).toISOString()
-        : null,
-      updated_at: new Date().toISOString(),
-    } as Record<string, unknown>)
-    .eq('user_id', targetUserId)
+  try {
+    const supabase = getSupabase()
 
-  logger.info('[Stripe] Invoice paid - subscription extended', {
-    userId: targetUserId,
-    stripeCustomerId,
-    periodEnd,
-  })
+    // Find user by customer ID first, then fallback to subscription ID
+    let targetUserId = await findUserByStripeCustomerId(stripeCustomerId!)
+
+    if (!targetUserId && stripeSubscriptionId) {
+      targetUserId = await findUserByStripeSubscriptionId(stripeSubscriptionId)
+    }
+
+    if (!targetUserId) {
+      logger.warn('[Stripe] Invoice paid: user not found', {
+        stripeCustomerId,
+        stripeSubscriptionId,
+      })
+      return
+    }
+
+    // Get license nonce for this user
+    const { data: license } = await supabase
+      .from('raas_licenses')
+      .select('nonce, tier')
+      .eq('created_by', targetUserId)
+      .eq('is_revoked', false)
+      .single()
+
+    if (!license) {
+      logger.warn('[Stripe] Invoice paid: no active license found', {
+        userId: targetUserId,
+        stripeCustomerId,
+      })
+      // Still update subscription expiry
+      await supabase
+        .from('user_profiles')
+        .update({
+          subscription_expires_at: periodEnd
+            ? new Date(periodEnd * 1000).toISOString()
+            : null,
+          updated_at: new Date().toISOString(),
+        } as Record<string, unknown>)
+        .eq('user_id', targetUserId)
+      return
+    }
+
+    const licenseNonce = license.nonce
+    const tier = (license.tier || 'BASIC').toUpperCase() as Tier
+
+    // Get charge ID
+    const chargeId = typeof data.charge === 'string' ? data.charge : (data.charge as any)?.id
+
+    // Call dunning workflow - handle payment success
+    await handlePaymentSuccess({
+      userId: targetUserId,
+      licenseNonce,
+      tier,
+      amount: amountDue || 0,
+      currency: currency || 'usd',
+      paymentProvider: 'stripe',
+      providerChargeId: chargeId || safeString(data.id as string) || '',
+    })
+
+    // Update subscription expiry
+    await supabase
+      .from('user_profiles')
+      .update({
+        subscription_expires_at: periodEnd
+          ? new Date(periodEnd * 1000).toISOString()
+          : null,
+        updated_at: new Date().toISOString(),
+      } as Record<string, unknown>)
+      .eq('user_id', targetUserId)
+
+    // Send payment success email
+    const { data: userProfile } = await supabase
+      .from('user_profiles')
+      .select('email')
+      .eq('user_id', targetUserId)
+      .single()
+
+    if (userProfile?.email) {
+      await sendPaymentSuccessEmail({
+        userId: targetUserId,
+        userEmail: userProfile.email,
+        licenseNonce,
+        tier,
+        amount: amountDue || 0,
+        currency: currency || 'usd',
+        paymentProvider: 'stripe',
+      })
+    }
+
+    // Log to billing_events table
+    await supabase.from('billing_events').insert({
+      user_id: targetUserId,
+      license_nonce: licenseNonce,
+      event_type: 'invoice_payment_succeeded',
+      event_category: 'payment',
+      event_data: {
+        stripe_invoice_id: data.id,
+        stripe_charge_id: chargeId,
+        amount: amountDue,
+        currency,
+        period_end: periodEnd,
+      },
+      amount: amountDue,
+      currency,
+      payment_provider: 'stripe',
+      provider_event_id: safeString(data.id),
+      provider_charge_id: chargeId,
+      processed: true,
+      processed_at: new Date().toISOString(),
+    } as any)
+
+    const duration = Date.now() - startTime
+    logger.info('[Stripe] Invoice paid - subscription extended', {
+      userId: targetUserId,
+      licenseNonce: licenseNonce.slice(0, 8),
+      stripeCustomerId,
+      periodEnd,
+      durationMs: duration,
+    })
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error))
+    logger.error('[Stripe] Failed to handle invoice paid', err)
+    throw error
+  }
 }
 
 /**
  * Handle invoice.payment_failed event
+ *
+ * Flow:
+ * 1. Lookup user by Stripe customer ID
+ * 2. Get license nonce from raas_licenses table
+ * 3. Call handlePaymentFailure() from dunning-workflow
+ * 4. Send payment failed email via Resend
+ * 5. Log to billing_events table
  */
 async function handleInvoicePaymentFailed(data: Record<string, unknown>): Promise<void> {
   const stripeCustomerId = safeString(data.customer as string)
+  const amountDue = data.amount_due as number | undefined
+  const currency = data.currency as string | undefined
+  const failureReason = (data.charge as any)?.failure_message || 'Payment failed'
 
-  if (!stripeCustomerId) return
-
-  const targetUserId = await findUserByStripeCustomerId(stripeCustomerId)
-
-  if (!targetUserId) {
-    logger.warn('[Stripe] Invoice payment failed: user not found', {
-      stripeCustomerId,
-    })
+  if (!stripeCustomerId) {
+    logger.warn('[Stripe] Invoice payment failed: no customer ID')
     return
   }
 
-  // Add warning to user profile metadata
-  const supabase = getSupabase()
-  await supabase
-    .from('user_profiles')
-    .update({
-      metadata: {
-        payment_failed: true,
-        payment_failed_at: Date.now(),
-        warning_sent: true,
-      },
-      updated_at: new Date().toISOString(),
-    } as Record<string, unknown>)
-    .eq('user_id', targetUserId)
+  const startTime = Date.now()
 
-  logger.warn('[Stripe] Invoice payment failed - warning added', {
-    userId: targetUserId,
-    stripeCustomerId,
-  })
+  try {
+    const supabase = getSupabase()
+
+    // Lookup user by Stripe customer ID
+    const targetUserId = await findUserByStripeCustomerId(stripeCustomerId)
+
+    if (!targetUserId) {
+      logger.warn('[Stripe] Invoice payment failed: user not found', {
+        stripeCustomerId,
+      })
+      return
+    }
+
+    // Get license nonce for this user
+    const { data: license } = await supabase
+      .from('raas_licenses')
+      .select('nonce, tier')
+      .eq('created_by', targetUserId)
+      .eq('is_revoked', false)
+      .single()
+
+    if (!license) {
+      logger.warn('[Stripe] Invoice payment failed: no active license found', {
+        userId: targetUserId,
+        stripeCustomerId,
+      })
+      // Still update user profile metadata
+      await supabase
+        .from('user_profiles')
+        .update({
+          metadata: {
+            payment_failed: true,
+            payment_failed_at: Date.now(),
+          },
+          updated_at: new Date().toISOString(),
+        } as Record<string, unknown>)
+        .eq('user_id', targetUserId)
+      return
+    }
+
+    const licenseNonce = license.nonce
+    const tier = (license.tier || 'BASIC').toUpperCase() as Tier
+
+    // Call dunning workflow - handle payment failure
+    await handlePaymentFailure({
+      userId: targetUserId,
+      licenseNonce,
+      tier,
+      amount: amountDue || 0,
+      currency: currency || 'usd',
+      failureReason,
+      paymentProvider: 'stripe',
+      stripeInvoiceId: safeString(data.id as string) || undefined,
+    })
+
+    // Send payment failed email
+    const { data: userProfile } = await supabase
+      .from('user_profiles')
+      .select('email')
+      .eq('user_id', targetUserId)
+      .single()
+
+    if (userProfile?.email) {
+      await sendPaymentFailedEmail({
+        userId: targetUserId,
+        userEmail: userProfile.email,
+        licenseNonce,
+        tier,
+        amount: amountDue || 0,
+        currency: currency || 'usd',
+        failureReason,
+        paymentProvider: 'stripe',
+      })
+    }
+
+    // Log to billing_events table
+    await supabase.from('billing_events').insert({
+      user_id: targetUserId,
+      license_nonce: licenseNonce,
+      event_type: 'invoice_payment_failed',
+      event_category: 'payment',
+      event_data: {
+        stripe_invoice_id: data.id,
+        amount: amountDue,
+        currency,
+        failure_reason: failureReason,
+      },
+      amount: amountDue,
+      currency,
+      payment_provider: 'stripe',
+      provider_event_id: safeString(data.id),
+      processed: true,
+      processed_at: new Date().toISOString(),
+    } as any)
+
+    const duration = Date.now() - startTime
+    logger.info('[Stripe] Invoice payment failed handled', {
+      userId: targetUserId,
+      licenseNonce: licenseNonce.slice(0, 8),
+      amount: amountDue,
+      durationMs: duration,
+    })
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error))
+    logger.error('[Stripe] Failed to handle invoice payment failed', err)
+    throw error
+  }
 }
 
 /**

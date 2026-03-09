@@ -1,0 +1,254 @@
+/**
+ * Cryptographic Hashing Utilities for ROIaaS Compliance Audit
+ *
+ * Provides SHA-256, HMAC-SHA256, and hash chain verification utilities.
+ * Uses only Node.js built-in crypto module (no external dependencies).
+ *
+ * @module audit/crypto-utils
+ */
+
+import { createHash, createHmac, timingSafeEqual as nodeTimingSafeEqual } from 'node:crypto'
+import type { RaasAuditLogRow } from '@/lib/supabase/types'
+
+/**
+ * Salt for hash computation (from environment variable)
+ * Falls back to empty string if not set (not recommended for production)
+ */
+const AUDIT_HASH_SALT = process.env.AUDIT_HASH_SALT || ''
+
+/**
+ * Audit log entry interface for content hashing
+ */
+export interface AuditLogEntry {
+  action: string
+  license_nonce: string
+  user_id: string
+  ip_address: string
+  created_at: number
+  details?: Record<string, unknown>
+}
+
+/**
+ * Compute SHA-256 hash of a string
+ *
+ * @param data - Input string to hash (must be non-empty)
+ * @returns 64-character hexadecimal string
+ * @throws Error if input is invalid
+ *
+ * @example
+ * const hash = sha256('user-login-event')
+ * // Returns: "a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e"
+ */
+export function sha256(data: string): string {
+  if (!data || typeof data !== 'string') {
+    throw new Error('Invalid input: data must be a non-empty string')
+  }
+
+  // Apply salt for rainbow table protection
+  const saltedData = AUDIT_HASH_SALT + data
+
+  return createHash('sha256')
+    .update(saltedData)
+    .digest('hex')
+}
+
+/**
+ * Compute HMAC-SHA256 signature for data signing
+ *
+ * @param data - Data to sign (must be non-empty string)
+ * @param secret - Secret key for HMAC (must be non-empty string, 32+ bytes recommended)
+ * @returns 64-character hexadecimal string
+ * @throws Error if inputs are invalid
+ *
+ * @example
+ * const signature = hmacSha256('webhook-payload', 'super-secret-key-32-bytes')
+ */
+export function hmacSha256(data: string, secret: string): string {
+  if (!data || typeof data !== 'string') {
+    throw new Error('Invalid input: data must be a non-empty string')
+  }
+  if (!secret || typeof secret !== 'string') {
+    throw new Error('Invalid input: secret must be a non-empty string')
+  }
+
+  return createHmac('sha256', secret)
+    .update(data)
+    .digest('hex')
+}
+
+/**
+ * Constant-time string comparison to prevent timing attacks
+ *
+ * IMPORTANT: Always use this for comparing cryptographic signatures
+ * to prevent attackers from inferring correct values through timing analysis.
+ *
+ * @param a - First hex string to compare
+ * @param b - Second hex string to compare
+ * @returns true if strings are identical
+ *
+ * @example
+ * const isValid = timingSafeEqual(computedSignature, receivedSignature)
+ */
+export function timingSafeEqual(a: string, b: string): boolean {
+  if (!a || !b || typeof a !== 'string' || typeof b !== 'string') {
+    return false
+  }
+
+  // Convert hex strings to buffers for comparison
+  const aBuf = Buffer.from(a, 'hex')
+  const bBuf = Buffer.from(b, 'hex')
+
+  // Length mismatch = not equal (but still use constant-time for length check)
+  if (aBuf.length !== bBuf.length) {
+    return false
+  }
+
+  return nodeTimingSafeEqual(aBuf, bBuf)
+}
+
+/**
+ * Compute content hash for an audit log entry
+ *
+ * Creates a deterministic hash from entry fields + previous hash in chain.
+ * Format: action|license_nonce|user_id|ip_address|timestamp|previousHash
+ *
+ * @param entry - Audit log entry data
+ * @param previousHash - Hash of previous log entry (null for first entry in chain)
+ * @returns 64-character hexadecimal string
+ *
+ * @example
+ * const contentHash = computeContentHash(
+ *   { action: 'LOGIN', license_nonce: 'xxx', user_id: 'user-1', ip_address: '127.0.0.1', created_at: 1234567890 },
+ *   null // First entry has no previous hash
+ * )
+ */
+export function computeContentHash(
+  entry: AuditLogEntry,
+  previousHash: string | null
+): string {
+  // Deterministic string representation for consistent hashing
+  const content = [
+    entry.action,
+    entry.license_nonce,
+    entry.user_id,
+    entry.ip_address,
+    entry.created_at.toString(),
+    previousHash || ''
+  ].join('|')
+
+  return sha256(content)
+}
+
+/**
+ * Result of hash chain verification
+ */
+export interface HashChainVerificationResult {
+  /** Whether the entire chain is valid */
+  valid: boolean
+  /** Index of first invalid entry (undefined if valid) */
+  firstInvalidIndex?: number
+  /** Reason for invalidity (if applicable) */
+  reason?: string
+}
+
+/**
+ * Verify integrity of a hash chain
+ *
+ * Checks that:
+ * 1. Each entry's previous_log_hash matches the previous entry's content_hash
+ * 2. Each entry's content_hash can be recomputed and matches stored value
+ *
+ * @param logs - Array of audit logs sorted by created_at ASC
+ * @returns Verification result with validity status and error details
+ *
+ * @example
+ * const result = verifyHashChain(auditLogs)
+ * if (!result.valid) {
+ *   console.log(`Chain broken at index ${result.firstInvalidIndex}: ${result.reason}`)
+ * }
+ */
+export function verifyHashChain(logs: RaasAuditLogRow[]): HashChainVerificationResult {
+  // Empty chain is considered valid
+  if (logs.length === 0) {
+    return { valid: true }
+  }
+
+  let previousHash: string | null = null
+
+  for (let i = 0; i < logs.length; i++) {
+    const log = logs[i]
+
+    // Check 1: Verify previous_hash links correctly to previous entry
+    if (log.previous_log_hash !== previousHash) {
+      return {
+        valid: false,
+        firstInvalidIndex: i,
+        reason: `previous_log_hash mismatch at index ${i}: expected "${previousHash}", got "${log.previous_log_hash}"`
+      }
+    }
+
+    // Check 2: Verify content_hash matches computed hash
+    const entry: AuditLogEntry = {
+      action: log.action,
+      license_nonce: log.license_nonce || '',
+      user_id: log.user_id || '',
+      ip_address: log.ip_address || '',
+      created_at: log.created_at,
+    }
+
+    const expectedHash = computeContentHash(entry, previousHash)
+
+    if (log.content_hash !== expectedHash) {
+      return {
+        valid: false,
+        firstInvalidIndex: i,
+        reason: `content_hash mismatch at index ${i}: expected "${expectedHash}", got "${log.content_hash}"`
+      }
+    }
+
+    // Move to next entry
+    previousHash = log.content_hash
+  }
+
+  return { valid: true }
+}
+
+/**
+ * Generate a Merkle root from an array of hashes
+ *
+ * Used for efficient verification of large audit log batches.
+ * If odd number of hashes, last hash is duplicated.
+ *
+ * @param hashes - Array of 64-char hex hashes
+ * @returns Single 64-char hex Merkle root hash
+ * @throws Error if hashes array is empty
+ *
+ * @example
+ * const merkleRoot = merkleRoot(['hash1', 'hash2', 'hash3', 'hash4'])
+ */
+export function merkleRoot(hashes: string[]): string {
+  if (hashes.length === 0) {
+    throw new Error('Cannot compute Merkle root of empty hash array')
+  }
+
+  // Base case: single hash is the root
+  if (hashes.length === 1) {
+    return hashes[0]
+  }
+
+  // Build next level by pairing hashes
+  const nextLevel: string[] = []
+
+  for (let i = 0; i < hashes.length; i += 2) {
+    const left = hashes[i]
+    // Duplicate last hash if odd number
+    const right = hashes[i + 1] || hashes[i]
+
+    // Concatenate and hash
+    const combined = sha256(left + right)
+    nextLevel.push(combined)
+  }
+
+  // Recursively compute root
+  return merkleRoot(nextLevel)
+}

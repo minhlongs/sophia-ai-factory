@@ -348,7 +348,7 @@
       "usage_subtitle": "Theo dõi lượt gọi API, tokens, credits và chi phí",
       "total_requests": "Tổng Lượt Gọi",
       "total_tokens": "Tổng Tokens",
-      "total_credits": "Credits Đã Dùng",
+      "total_credits": "Tổng Credits",
       "avg_response_time": "Thời Gian Phản Hồi TB",
       "error_rate": "Tỷ Lệ Lỗi",
       "est_cost": "Chi Phí Ước Tính",
@@ -389,7 +389,6 @@
       "return_on_investment": "Lợi Nhuận Đầu Tư",
       "time_to_break_even": "Thời gian để hoàn vốn",
       "license_cost": "Chi Phí Giấy Phép",
-      "total_credits": "Tổng Credits",
       "months": "tháng",
       "mrr": "Doanh Thu Tháng (MRR)",
       "total_revenue": "Tổng Doanh Thu",
@@ -402,7 +401,8 @@
       "revenue_trend": "Xu Hướng Doanh Thu",
       "auto_refresh": "Tự Động Làm Mới",
       "auto_refresh_on": "Tự động làm mới BẬT (30s)",
-      "auto_refresh_off": "Tự động làm mới TẮT"
+      "auto_refresh_off": "Tự động làm mới TẮT",
+      "date_range_placeholder": "Date range placeholder"
     },
     "support": {
       "title": "Hỗ Trợ",
@@ -484,7 +484,8 @@
     "emailLabel": "Địa chỉ Email",
     "sendLink": "Gửi liên kết đăng nhập",
     "checkEmail": "Kiểm tra email để lấy liên kết đăng nhập",
-    "error": "Có lỗi xảy ra"
+    "error": "Có lỗi xảy ra",
+    "loading": "Loading"
   },
   "admin": {
     "users": {
@@ -501,5 +502,23 @@
     "loading": "Đang Tải...",
     "error": "Lỗi",
     "success": "Thành Công"
-  }
+  },
+  "title": "Title",
+  "topic": "Topic",
+  "na": "Na",
+  "audience": "Audience",
+  "general": "General",
+  "template": "Template",
+  "status": "Status",
+  "progress": "Progress",
+  "system_info": "System info",
+  "id": "Id",
+  "updated": "Updated",
+  "back": "Back",
+  "untitled": "Untitled",
+  "created": "Created",
+  "retry": "Retry",
+  "script": "Script",
+  "scene": "Scene",
+  "visual": "Visual"
 }

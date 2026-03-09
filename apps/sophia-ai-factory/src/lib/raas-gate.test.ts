@@ -17,6 +17,12 @@ vi.mock('./utils/logger-utility', () => ({
   },
 }));
 
+// Mock audit logger to prevent Supabase calls during tests
+vi.mock('./audit/audit-logger', () => ({
+  logValidationWithReceipt: vi.fn().mockResolvedValue(null),
+  serializeReceiptForHeader: vi.fn().mockReturnValue(''),
+}));
+
 describe('RaaS Gate', () => {
   describe('shouldApplyRaasGate', () => {
     it('should apply to protected API routes', () => {

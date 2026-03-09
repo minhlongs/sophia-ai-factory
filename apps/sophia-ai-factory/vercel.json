@@ -3,5 +3,11 @@
     "src/app/api/cron/**/*.ts": {
       "maxDuration": 60
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/usage-export",
+      "schedule": "0 2 * * *"
+    }
+  ]
 }

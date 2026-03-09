@@ -33,18 +33,20 @@ export async function calculateRoiMetrics(
   const supabase = createAdminClient();
 
   // Get license details
+  // Note: Using type assertion for Supabase query result since generated types
+  // may not be available. The query returns RaasLicenseRow format.
   const { data: license } = await supabase
     .from('raas_licenses')
     .select('tier, created_at, metadata')
     .eq('nonce', licenseNonce)
-    .single() as any;
+    .single();
 
   if (!license) {
     throw new Error('License not found');
   }
 
   // Get license cost from metadata
-  const metadata = license.metadata as any;
+  const metadata = license.metadata as { amount_usd?: { amount: number }; price?: number };
   const licenseCost = metadata?.amount_usd?.amount || metadata?.price || 0;
 
   // Get usage data for the license (last 30 days)
@@ -54,10 +56,10 @@ export async function calculateRoiMetrics(
     .from('usage_events')
     .select('credits_used, created_at')
     .eq('license_nonce', licenseNonce)
-    .gte('created_at', thirtyDaysAgo) as any;
+    .gte('created_at', thirtyDaysAgo);
 
   // Calculate total credits used
-  const totalCreditsUsed = usageEvents?.reduce((sum: any, e: any) => sum + (e.credits_used || 0), 0) || 0;
+  const totalCreditsUsed = usageEvents?.reduce((sum, e) => sum + (e.credits_used || 0), 0) || 0;
 
   // Calculate cost per usage
   const costPerUsage = totalCreditsUsed > 0 ? licenseCost / totalCreditsUsed : 0;
@@ -69,9 +71,9 @@ export async function calculateRoiMetrics(
     .from('usage_events')
     .select('credits_used')
     .eq('license_nonce', licenseNonce)
-    .gte('created_at', yearStart) as any;
+    .gte('created_at', yearStart);
 
-  const ytdCredits = ytdUsage?.reduce((sum: any, e: any) => sum + (e.credits_used || 0), 0) || 0;
+  const ytdCredits = ytdUsage?.reduce((sum, e) => sum + (e.credits_used || 0), 0) || 0;
 
   // Calculate actual YTD value based on credits used
   const actualYTD = ytdCredits * valuePerCredit;
@@ -146,7 +148,7 @@ export async function calculateAggregateRoi(
     totalProjectedAnnual += metrics.projectedAnnual;
     totalActualYTD += metrics.actualYTD;
 
-    const metadata = license.metadata as any;
+    const metadata = license.metadata as { amount_usd?: { amount: number }; price?: number };
     totalCost += metadata?.amount_usd?.amount || metadata?.price || 0;
   }
 
@@ -158,11 +160,11 @@ export async function calculateAggregateRoi(
     .select('credits_used')
     .in(
       'license_nonce',
-      licenses.map((l: any) => l.nonce)
+      licenses.map((l) => l.nonce)
     )
-    .gte('created_at', thirtyDaysAgo) as any;
+    .gte('created_at', thirtyDaysAgo);
 
-  totalCreditsUsed = usageEvents?.reduce((sum: any, e: any) => sum + (e.credits_used || 0), 0) || 0;
+  totalCreditsUsed = usageEvents?.reduce((sum, e) => sum + (e.credits_used || 0), 0) || 0;
 
   const costPerUsage = totalCreditsUsed > 0 ? totalCost / totalCreditsUsed : 0;
   const paybackMonths = totalProjectedAnnual > 0 ? Math.ceil(totalCost / (totalProjectedAnnual / 12)) : 0;

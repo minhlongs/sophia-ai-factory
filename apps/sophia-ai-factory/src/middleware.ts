@@ -7,6 +7,7 @@ import { checkRateLimit, getClientIdentifier, RATE_LIMITS } from "./lib/security
 import { raasGate, shouldApplyRaasGate } from "./lib/raas-gate";
 import { emitUsageEvent } from "./lib/usage-metering";
 import { logger } from "./lib/utils/logger-utility";
+import { tenantIsolationMiddleware } from "./middleware/tenant-isolation";
 
 const intlMiddleware = createMiddleware({
   locales: ["en", "vi"],
@@ -62,8 +63,13 @@ export async function proxy(request: NextRequest) {
     return handleCorsPrelight(origin);
   }
 
-  // Rate limiting for API routes
+  // Apply multi-tenant isolation for API routes
   if (pathname.startsWith('/api')) {
+    const isolationResult = await tenantIsolationMiddleware(request);
+    if (isolationResult) {
+      return isolationResult; // Return early if isolation validation failed
+    }
+
     const identifier = getClientIdentifier(request);
     let rateLimitConfig: typeof RATE_LIMITS.api | typeof RATE_LIMITS.auth | typeof RATE_LIMITS.webhook = RATE_LIMITS.api;
 
@@ -110,7 +116,7 @@ export async function proxy(request: NextRequest) {
       return rateLimitResponse;
     }
 
-    // RaaS License Gate - Apply after rate limiting
+    // RaaS License Gate - Apply after rate limiting and isolation
     if (shouldApplyRaasGate(pathname)) {
       const raasResult = await raasGate(request);
       if (!raasResult.valid && raasResult.response) {
@@ -118,15 +124,27 @@ export async function proxy(request: NextRequest) {
         const forbiddenResponse = raasResult.response;
         forbiddenResponse.headers.set('X-Response-Time-Ms', String(responseTimeMs));
 
-        // Track forbidden request (403) for usage metering
+        // Add X-RateLimit headers for quota exceeded (429)
+        if (raasResult.quotaExceeded) {
+          // Quota exceeded - set remaining to 0
+          forbiddenResponse.headers.set('X-RateLimit-Remaining', '0');
+          // Set Retry-After if not already set
+          if (!forbiddenResponse.headers.has('Retry-After')) {
+            const resetTimestamp = Math.floor(Date.now() / 1000) + 3600; // Reset in 1 hour
+            forbiddenResponse.headers.set('Retry-After', String(resetTimestamp - Math.floor(Date.now() / 1000)));
+            forbiddenResponse.headers.set('X-RateLimit-Reset', String(resetTimestamp));
+          }
+        }
+
+        // Track forbidden request (403/429) for usage metering
         emitUsageEvent(request, {
-          status: 403,
+          status: forbiddenResponse.status,
           headers: forbiddenResponse.headers,
         }, {
           licenseNonce: undefined,
           tier: 'BASIC',
         }).catch(err => {
-          logger.error('[Proxy] Failed to emit 403 usage event', err);
+          logger.error('[Proxy] Failed to emit forbidden usage event', err);
         });
 
         return forbiddenResponse;
@@ -136,6 +154,16 @@ export async function proxy(request: NextRequest) {
       if (raasResult.valid && raasResult.tier) {
         // Context will be used by response tracking below
         request.headers.set('x-raas-tier', raasResult.tier);
+      }
+
+      // Attach compliance receipt header if available
+      if (raasResult.valid && raasResult.receipt) {
+        request.headers.set('x-raas-receipt', raasResult.receipt);
+      }
+
+      // Store quota remaining for X-RateLimit headers on successful requests
+      if (raasResult.valid && raasResult.quotaRemaining) {
+        request.headers.set('x-quota-remaining', JSON.stringify(raasResult.quotaRemaining));
       }
     }
   }
@@ -241,6 +269,27 @@ export async function proxy(request: NextRequest) {
     const response = NextResponse.next();
     const responseTimeMs = Date.now() - startTime;
     response.headers.set('X-Response-Time-Ms', String(responseTimeMs));
+
+    // Attach compliance receipt header if available from RaaS gate
+    const receiptHeader = request.headers.get('x-raas-receipt');
+    if (receiptHeader) {
+      response.headers.set('X-RaaS-Receipt', receiptHeader);
+    }
+
+    // Add X-RateLimit headers from quota remaining
+    const quotaRemainingJson = request.headers.get('x-quota-remaining');
+    if (quotaRemainingJson) {
+      try {
+        const remaining = JSON.parse(quotaRemainingJson);
+        const resetTimestamp = Math.floor(Date.now() / 1000) + 3600; // Reset in 1 hour
+
+        response.headers.set('X-RateLimit-Limit', String(remaining.hourlyCredits || remaining.dailyCredits));
+        response.headers.set('X-RateLimit-Remaining', String(remaining.hourlyCredits ?? remaining.dailyCredits));
+        response.headers.set('X-RateLimit-Reset', String(resetTimestamp));
+      } catch (error) {
+        logger.error('[Proxy] Failed to parse quota remaining', error as Error);
+      }
+    }
 
     // Track successful API request for usage metering
     // Extract RaaS context if available

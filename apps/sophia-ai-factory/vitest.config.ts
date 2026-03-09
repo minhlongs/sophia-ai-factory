@@ -3,17 +3,20 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react() as any],
   test: {
     environment: 'jsdom',
     globals: true,
-    setupFiles: [],
-    include: ['**/*.test.{ts,tsx}'],
+    setupFiles: ['./src/test/setup.tsx'],
+    include: ['src/**/*.test.{ts,tsx}'],
+    exclude: [
+      'node_modules/**',
+      'dist/**',
+      '**/*.config.ts',
+    ],
     coverage: {
       reporter: ['text', 'json-summary', 'html'],
       thresholds: {
-        // Global thresholds set to 0 for initial baseline.
-        // TODO: Increase these as test coverage improves.
         lines: 0,
         functions: 0,
         branches: 0,
@@ -21,13 +24,31 @@ export default defineConfig({
       },
       include: ['src/**/*.{ts,tsx}'],
       exclude: [
-        'src/components/ui/**', // Exclude shadcn/ui components from strict coverage
+        'src/components/ui/**',
         '**/*.d.ts',
         '**/*.config.ts',
       ],
     },
+    // Mock server-side modules for API route tests
+    server: {
+      deps: {
+        inline: [
+          // Inline these to allow mocking
+        ],
+      },
+    },
+  },
+  resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
+  },
+  // Define globals for tests
+  define: {
+    'process.env.NODE_ENV': '"test"',
+  },
+  // SSR config for API route mocking
+  ssr: {
+    noExternal: ['next/server'],
   },
 });

@@ -15,6 +15,7 @@ import { logger } from '@/lib/utils/logger-utility'
 import { generateLicenseKey } from '@/lib/raas-key-generator'
 import { createLicense, logLicenseCreation, revokeLicense, logLicenseRevocation, reactivateLicenseBySubscription, revokeLicenseBySubscription } from '@/lib/raas-audit'
 import { createHash } from 'crypto'
+import { handlePaymentFailure, handlePaymentSuccess } from '@/lib/billing/dunning-workflow'
 
 const VALID_TIERS: Tier[] = ['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER']
 
@@ -753,31 +754,78 @@ async function handleSubscriptionActive(data: Record<string, unknown>): Promise<
 }
 
 /**
- * Handle subscription.past_due event - Add warning metadata (grace period)
+ * Handle subscription.past_due event - Trigger dunning workflow
  */
 async function handleSubscriptionPastDue(data: Record<string, unknown>): Promise<void> {
   const polarSubId = safeString(data.id)
   const { userId } = extractMetadata(data)
+  const polarCustomerId = safeString((data.customer as Record<string, unknown>)?.id as string)
+  const amount = typeof data.amount === 'number' ? data.amount : 0
+  const currency = safeString(data.currency) || 'USD'
 
   if (!polarSubId) return
 
-  // Add warning to license metadata (don't revoke yet - 7 day grace period)
-  const supabase = getSupabase()
-  await supabase
-    .from('raas_licenses')
-    .update({
-      metadata: {
-        past_due: true,
-        past_due_at: Date.now(),
-        warning_sent: true,
-      },
-    })
-    .eq('metadata->>polarSubscriptionId', polarSubId)
+  // Find user ID if not in metadata
+  let targetUserId = userId
+  if (!targetUserId && polarSubId) {
+    targetUserId = await findUserByPolarSubId(polarSubId)
+  }
 
-  logger.warn('[Polar] Subscription past due - warning added', {
-    userId,
-    polarSubId,
-  })
+  if (!targetUserId) {
+    logger.warn('[Polar] past_due: Could not find user ID', { polarSubId })
+    return
+  }
+
+  // Get license associated with this subscription
+  const supabase = getSupabase()
+  const { data: license } = await supabase
+    .from('raas_licenses')
+    .select('nonce, tier, metadata')
+    .eq('metadata->>polarSubscriptionId', polarSubId)
+    .eq('is_revoked', false)
+    .single() as any
+
+  if (!license) {
+    logger.warn('[Polar] past_due: No active license found', { polarSubId })
+    return
+  }
+
+  const tier = (license.tier || 'PREMIUM') as Tier
+
+  // Trigger dunning workflow - payment failure
+  try {
+    await handlePaymentFailure({
+      userId: targetUserId,
+      licenseNonce: license.nonce,
+      tier,
+      amount: amount * 100, // Convert to cents
+      currency,
+      failureReason: 'subscription_past_due',
+      paymentProvider: 'polar',
+      polarOrderId: polarSubId,
+    })
+
+    logger.info('[Polar] past_due: Dunning workflow triggered', {
+      userId: targetUserId,
+      licenseNonce: license.nonce.slice(0, 8) + '...',
+      polarSubId,
+      amount,
+      currency,
+    })
+  } catch (error) {
+    logger.error('[Polar] past_due: Failed to trigger dunning workflow', error as Error)
+    // Fallback: Add warning metadata (old behavior)
+    await supabase
+      .from('raas_licenses')
+      .update({
+        metadata: {
+          past_due: true,
+          past_due_at: Date.now(),
+          warning_sent: true,
+        },
+      })
+      .eq('metadata->>polarSubscriptionId', polarSubId)
+  }
 }
 
 /**
@@ -797,6 +845,123 @@ async function handleSubscriptionExpired(data: Record<string, unknown>): Promise
 }
 
 /**
+ * Handle checkout.updated with failed payment - trigger dunning workflow
+ */
+async function handleCheckoutFailed(data: Record<string, unknown>): Promise<void> {
+  const polarSubId = safeString(data.id)
+  const { userId } = extractMetadata(data)
+  const polarCustomerId = safeString((data.customer as Record<string, unknown>)?.id as string)
+  const amount = typeof data.amount === 'number' ? data.amount : 0
+  const currency = safeString(data.currency) || 'USD'
+
+  if (!polarSubId) return
+
+  // Find user ID if not in metadata
+  let targetUserId = userId
+  if (!targetUserId && polarSubId) {
+    targetUserId = await findUserByPolarSubId(polarSubId)
+  }
+
+  if (!targetUserId) {
+    logger.warn('[Polar] checkout.failed: Could not find user ID', { polarSubId })
+    return
+  }
+
+  // Get license associated with this checkout/subscription
+  const supabase = getSupabase()
+  const { data: license } = await supabase
+    .from('raas_licenses')
+    .select('nonce, tier, metadata')
+    .eq('metadata->>polarSubscriptionId', polarSubId)
+    .eq('is_revoked', false)
+    .single() as any
+
+  if (!license) {
+    logger.warn('[Polar] checkout.failed: No active license found', { polarSubId })
+    return
+  }
+
+  const tier = (license.tier || 'PREMIUM') as Tier
+
+  // Trigger dunning workflow - payment failure
+  try {
+    await handlePaymentFailure({
+      userId: targetUserId,
+      licenseNonce: license.nonce,
+      tier,
+      amount: amount * 100, // Convert to cents
+      currency,
+      failureReason: 'checkout_failed',
+      paymentProvider: 'polar',
+      polarOrderId: polarSubId,
+    })
+
+    logger.info('[Polar] checkout.failed: Dunning workflow triggered', {
+      userId: targetUserId,
+      licenseNonce: license.nonce.slice(0, 8) + '...',
+      polarSubId,
+      amount,
+      currency,
+    })
+  } catch (error) {
+    logger.error('[Polar] checkout.failed: Failed to trigger dunning workflow', error as Error)
+  }
+}
+
+/**
+ * Handle order.paid event - trigger payment success workflow
+ */
+async function handleOrderPaid(data: Record<string, unknown>): Promise<void> {
+  const polarOrderId = safeString(data.id)
+  const { userId, tier } = extractMetadata(data)
+  const polarCustomerId = safeString((data.customer as Record<string, unknown>)?.id as string)
+  const customerEmail = (data.customer as Record<string, unknown> | undefined)?.email as string | undefined
+
+  if (!userId || !tier) {
+    logger.warn('[Polar] order.paid: missing userId or tier', {
+      polarOrderId,
+      userId,
+      tier,
+    })
+    return
+  }
+
+  const supabase = getSupabase()
+
+  // Get license associated with this order
+  const { data: license } = await supabase
+    .from('raas_licenses')
+    .select('nonce, tier, metadata')
+    .eq('metadata->>polarOrderId', polarOrderId)
+    .eq('is_revoked', false)
+    .single() as any
+
+  if (!license) {
+    logger.warn('[Polar] order.paid: No active license found', { polarOrderId })
+    return
+  }
+
+  // Trigger dunning workflow - payment success
+  try {
+    await handlePaymentSuccess({
+      userId,
+      licenseNonce: license.nonce,
+      tier: license.tier as Tier,
+      paymentProvider: 'polar',
+      polarOrderId,
+    })
+
+    logger.info('[Polar] order.paid: Payment success handled', {
+      userId,
+      licenseNonce: license.nonce.slice(0, 8) + '...',
+      polarOrderId,
+    })
+  } catch (error) {
+    logger.error('[Polar] order.paid: Failed to handle payment success', error as Error)
+  }
+}
+
+/**
  * Route event to appropriate handler based on type
  */
 async function handleEventByType(event: PolarWebhookEvent): Promise<void> {
@@ -804,8 +969,11 @@ async function handleEventByType(event: PolarWebhookEvent): Promise<void> {
     case 'checkout.updated':
       if (event.data.status === 'succeeded') {
         await handleCheckoutSuccess(event.data)
+      } else if (event.data.status === 'failed') {
+        // NEW: Handle failed checkout - trigger dunning workflow
+        await handleCheckoutFailed(event.data)
       } else {
-        logger.debug('Checkout not succeeded, skipping', {
+        logger.debug('Checkout not succeeded/failed, skipping', {
           webhookId: event.data.id,
           status: event.data.status,
         })
@@ -839,6 +1007,11 @@ async function handleEventByType(event: PolarWebhookEvent): Promise<void> {
 
     case 'order.created':
       await handleOrderCreated(event.data)
+      break
+
+    // NEW: Handle order.paid event
+    case 'order.paid':
+      await handleOrderPaid(event.data)
       break
 
     default:

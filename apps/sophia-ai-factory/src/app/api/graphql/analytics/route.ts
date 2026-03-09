@@ -16,9 +16,9 @@ import { resolvers } from '@/lib/analytics/graphql-resolvers';
  */
 async function executeQuery(
   query: string,
-  variables?: Record<string, any>,
+  variables?: Record<string, unknown>,
   operationName?: string
-): Promise<any> {
+): Promise<unknown> {
   try {
     // Parse the query
     // For a simple implementation, we'll manually resolve
@@ -46,12 +46,12 @@ async function executeQuery(
  */
 async function resolveQuery(
   queryString: string,
-  variables?: Record<string, any>
-): Promise<any> {
+  variables?: Record<string, unknown>
+): Promise<unknown> {
   // Simple regex-based extraction for analytics query
   // This is a basic implementation - for production use graphql-tools
 
-  const analyticsResult: any = {};
+  const analyticsResult: Record<string, unknown> = {};
 
   // Check for usage query
   const usageMatch = queryString.match(/usage\s*\(\s*start:\s*(\d+)\s*,\s*end:\s*(\d+)(?:\s*,\s*granularity:\s*(\w+))?(?:\s*,\s*licenseNonce:\s*"([^"]+)")?/);
@@ -63,7 +63,7 @@ async function resolveQuery(
       licenseNonce: usageMatch[4],
     };
     if (resolvers.Analytics?.usage) {
-      analyticsResult.usage = await resolvers.Analytics.usage({}, args as any);
+      analyticsResult.usage = await resolvers.Analytics.usage({}, args);
     }
   }
 
@@ -72,7 +72,7 @@ async function resolveQuery(
   if (revenueMatch) {
     const args = { period: revenueMatch[1] as 'current_month' | 'last_month' | 'last_7_days' | 'last_30_days' };
     if (resolvers.Analytics?.revenue) {
-      analyticsResult.revenue = await resolvers.Analytics.revenue({}, args as any);
+      analyticsResult.revenue = await resolvers.Analytics.revenue({}, args);
     }
   }
 
@@ -81,7 +81,7 @@ async function resolveQuery(
   if (licensesMatch) {
     const args = { status: licensesMatch[1] as 'active' | 'expired' | 'revoked' | 'all' };
     if (resolvers.Analytics?.licenses) {
-      analyticsResult.licenses = await resolvers.Analytics.licenses({}, args as any);
+      analyticsResult.licenses = await resolvers.Analytics.licenses({}, args);
     }
   }
 

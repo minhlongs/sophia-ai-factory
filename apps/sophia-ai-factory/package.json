@@ -13,10 +13,16 @@
     "verify": "./scripts/verify.sh",
     "verify:green": "./scripts/verify.sh",
     "test": "vitest",
+    "pretest": "npm run i18n:validate",
     "test:e2e": "NEXT_PUBLIC_MOCK_AI_SERVICES=true playwright test",
     "test:smoke": "tsx scripts/smoke-test.ts",
     "setup:production": "tsx scripts/production-setup.ts",
-    "infra:sync": "./scripts/infra-sync.sh"
+    "infra:sync": "./scripts/infra-sync.sh",
+    "i18n:validate": "node scripts/validate-i18n-keys.mjs",
+    "i18n:autofill": "node scripts/auto-fill-i18n-keys.mjs",
+    "worker:dev": "wrangler dev",
+    "worker:deploy": "wrangler deploy",
+    "worker:typecheck": "tsc --noEmit --project tsconfig.worker.json"
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",
@@ -47,6 +53,7 @@
     "graphql-tag": "2.12.6",
     "html2canvas": "^1.4.1",
     "inngest": "^3.50.0",
+    "jose": "^6.1.3",
     "jszip": "^3.10.1",
     "lucide-react": "^0.563.0",
     "next": "16.1.6",
@@ -92,6 +99,8 @@
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
     "typescript": "^5",
-    "vitest": "^4.0.18"
+    "vitest": "^4.0.18",
+    "wrangler": "^4.0.0",
+    "@cloudflare/workers-types": "^4.20250204.0"
   }
 }

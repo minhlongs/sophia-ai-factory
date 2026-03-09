@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Step 2: Parse and validate request body with Zod
-    let body: any;
+    let body: unknown;
     try {
       body = await request.json();
     } catch (error) {

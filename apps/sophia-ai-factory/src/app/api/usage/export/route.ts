@@ -2,16 +2,26 @@
  * Usage Export API
  *
  * GET /api/usage/export - Export usage data for billing/analytics
- * Query params:
+ * POST /api/usage/export - Export with JWT + API key auth, audit logging
+ *
+ * Query params (GET):
  *  - start: Unix timestamp (seconds) - start of date range
  *  - end: Unix timestamp (seconds) - end of date range
  *  - format: 'json' | 'csv' (default: 'json')
  *  - service: 'heygen' | 'elevenlabs' | 'openrouter' (optional filter)
  *
- * Authentication:
- *  - Supabase Auth (user must be logged in)
- *  - Admin check: users can only access their own usage
- *  - Admins can access all usage data
+ * Body (POST):
+ *  - billingPeriod: 'weekly' | 'monthly' | 'custom'
+ *  - startDate: Unix timestamp (required for custom)
+ *  - endDate: Unix timestamp (required for custom)
+ *  - externalCustomerId: Polar customer ID filter
+ *  - format: 'json' | 'csv'
+ *  - service: Service filter
+ *
+ * Authentication (POST):
+ *  - JWT (user session) + X-API-Key (mk_ API key)
+ *  - Audit logging for all requests
+ *  - Idempotency via request receipt
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -20,6 +30,14 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { exportUsage, generateCsv } from '@/lib/usage-metering/export';
 import { logger } from '@/lib/utils/logger-utility';
 import { z } from 'zod';
+import { validateApiKey } from '@/lib/security/api-key-validator';
+import { logUsageWithReceipt } from '@/lib/audit/audit-logger';
+import {
+  generateCompleteExport,
+  createDownloadableExport,
+} from '@/lib/usage-export/export-service';
+import type { BillingPeriod, ExportFormat } from '@/lib/usage-export/types';
+import type { UserProfileRow, RaasLicenseRow } from '@/lib/supabase/types';
 
 const exportQuerySchema = z.object({
   start: z.string().transform((val) => parseInt(val, 10)),
@@ -27,6 +45,21 @@ const exportQuerySchema = z.object({
   format: z.enum(['json', 'csv']).default('json'),
   service: z.enum(['heygen', 'elevenlabs', 'openrouter']).optional(),
   license_nonce: z.string().optional(),
+});
+
+/**
+ * POST request schema - Billing reconciliation with Polar.sh support
+ */
+const postExportRequestSchema = z.object({
+  billingPeriod: z.enum(['weekly', 'monthly', 'custom']),
+  startDate: z.number().optional(),
+  endDate: z.number().optional(),
+  externalCustomerId: z.string().optional().nullable(),
+  format: z.enum(['json', 'csv']).default('json'),
+  service: z.string().optional().nullable(),
+  licenseNonce: z.string().optional().nullable(),
+  page: z.number().default(1),
+  pageSize: z.number().default(100),
 });
 
 export async function GET(req: NextRequest) {
@@ -51,7 +84,7 @@ export async function GET(req: NextRequest) {
 
     if (!parseResult.success) {
       return NextResponse.json(
-        { error: 'Invalid query params', details: parseResult.error.flatten() },
+        { error: 'Invalid query params', details: parseResult.error.issues },
         { status: 400 }
       );
     }
@@ -80,9 +113,9 @@ export async function GET(req: NextRequest) {
       .from('user_profiles')
       .select('role')
       .eq('user_id', user.id)
-      .single() as any;
+      .single();
 
-    const isAdmin = userData?.role === 'admin' || (user as any).user_metadata?.role === 'admin';
+    const isAdmin = userData?.role === 'admin' || user.user_metadata?.role === 'admin';
 
     // Determine user ID and license nonce for query
     let userId = user.id;
@@ -95,7 +128,7 @@ export async function GET(req: NextRequest) {
         .from('raas_licenses')
         .select('created_by')
         .eq('nonce', license_nonce)
-        .single() as any;
+        .single();
 
       if (!license || license.created_by !== user.id) {
         return NextResponse.json({ error: 'Forbidden - not your license' }, { status: 403 });
@@ -154,6 +187,205 @@ export async function GET(req: NextRequest) {
     logger.error('[Usage Export API] Error exporting usage', error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { error: 'Failed to export usage' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * POST /api/usage/export
+ *
+ * Export usage data with JWT + API key authentication, audit logging,
+ * and Polar.sh billing period support.
+ *
+ * Authentication:
+ * - JWT: User must be authenticated via Supabase Auth
+ * - API Key: Valid mk_ API key with 'usage:export' permission
+ *
+ * Authorization:
+ * - Users can export their own usage data
+ * - Admins can export all usage data
+ * - License owners can export data for their licenses
+ */
+export async function POST(req: NextRequest) {
+  const requestId = crypto.randomUUID();
+
+  try {
+    // Step 1: Authenticate user via JWT
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      logger.warn('[Usage Export POST] Authentication failed', { requestId });
+      return NextResponse.json({ error: 'Unauthorized - Invalid JWT' }, { status: 401 });
+    }
+
+    // Step 2: Validate API key from X-API-Key header
+    const apiKey = req.headers.get('x-api-key');
+    const apiValidation = await validateApiKey(apiKey);
+
+    if (!apiValidation.valid) {
+      logger.warn('[Usage Export POST] API key validation failed', {
+        requestId,
+        error: apiValidation.error
+      });
+      return NextResponse.json({
+        error: 'Unauthorized - Invalid API key',
+        errorCode: apiValidation.error
+      }, { status: 401 });
+    }
+
+    // Step 3: Check API key permissions
+    const hasPermission = apiValidation.apiKey?.permissions?.includes('usage:export') ?? false;
+    if (!hasPermission) {
+      logger.warn('[Usage Export POST] Insufficient permissions', {
+        requestId,
+        keyId: apiValidation.apiKey?.keyId
+      });
+      return NextResponse.json({
+        error: 'Forbidden - API key lacks usage:export permission'
+      }, { status: 403 });
+    }
+
+    // Step 4: Parse and validate request body
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
+
+    const parseResult = postExportRequestSchema.safeParse(body);
+    if (!parseResult.success) {
+      return NextResponse.json({
+        error: 'Invalid request body',
+        details: parseResult.error.issues
+      }, { status: 400 });
+    }
+
+    const {
+      billingPeriod,
+      startDate,
+      endDate,
+      externalCustomerId,
+      format,
+      service,
+      licenseNonce,
+      page,
+      pageSize
+    } = parseResult.data;
+
+    // Step 5: Check admin status for authorization
+    const { data: userData } = await supabase
+      .from('user_profiles')
+      .select('role')
+      .eq('user_id', user.id)
+      .single();
+
+    const isAdmin = userData?.role === 'admin' || user.user_metadata?.role === 'admin';
+
+    // Step 6: Authorization check
+    // - Admins can export anything
+    // - Regular users can only export their own data or their licenses
+    if (!isAdmin) {
+      if (externalCustomerId && licenseNonce) {
+        // Verify license ownership
+        const { data: license } = await supabase
+          .from('raas_licenses')
+          .select('created_by')
+          .eq('nonce', licenseNonce)
+          .single();
+
+        if (!license || license.created_by !== user.id) {
+          return NextResponse.json({
+            error: 'Forbidden - Not your license'
+          }, { status: 403 });
+        }
+      } else if (externalCustomerId) {
+        // Check if external_customer_id belongs to user
+        const { data: licenseCheck } = await supabase
+          .from('raas_licenses')
+          .select('created_by')
+          .eq('polar_customer_id', externalCustomerId)
+          .single();
+
+        if (!licenseCheck || licenseCheck.created_by !== user.id) {
+          return NextResponse.json({
+            error: 'Forbidden - Not your customer ID'
+          }, { status: 403 });
+        }
+      }
+    }
+
+    // Step 7: Generate export using service
+    const exportResponse = await generateCompleteExport({
+      billingPeriod: billingPeriod as BillingPeriod,
+      startDate,
+      endDate,
+      externalCustomerId,
+      format: format as ExportFormat,
+      service,
+      licenseNonce,
+      page,
+      pageSize,
+    });
+
+    // Step 8: Log to audit with receipt (compliance)
+    const auditReceipt = await logUsageWithReceipt({
+      nonce: licenseNonce || 'system-export',
+      model_name: 'usage-export',
+      token_count: exportResponse.records?.length || 0,
+      endpoint: '/api/usage/export',
+      userId: user.id,
+      tier: userData?.role || 'user',
+    });
+
+    logger.info('[Usage Export POST] Export completed', {
+      requestId,
+      userId: user.id,
+      isAdmin,
+      billingPeriod,
+      format,
+      recordCount: exportResponse.records?.length || 0,
+      auditReceiptId: auditReceipt?.receiptId,
+    });
+
+    // Step 9: Return response
+    if (format === 'csv') {
+      const downloadable = createDownloadableExport(exportResponse, 'csv');
+      return new NextResponse(downloadable.content, {
+        headers: {
+          'Content-Type': downloadable.contentType,
+          'Content-Disposition': `attachment; filename="${downloadable.filename}"`,
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'X-Request-ID': requestId,
+          'X-Audit-Receipt': auditReceipt ? Buffer.from(JSON.stringify(auditReceipt)).toString('base64url') : '',
+        },
+      });
+    }
+
+    // JSON response
+    return NextResponse.json({
+      ...exportResponse,
+      metadata: {
+        ...exportResponse.metadata,
+        requestId,
+        auditReceiptId: auditReceipt?.receiptId,
+        exportedAt: new Date().toISOString(),
+      },
+    }, {
+      headers: {
+        'X-Request-ID': requestId,
+        'X-Audit-Receipt': auditReceipt ? Buffer.from(JSON.stringify(auditReceipt)).toString('base64url') : '',
+      },
+    });
+
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error('[Usage Export POST] Error', err, { requestId });
+
+    return NextResponse.json(
+      { error: 'Failed to export usage', requestId },
       { status: 500 }
     );
   }

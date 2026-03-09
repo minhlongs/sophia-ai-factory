@@ -56,7 +56,7 @@ export const resolvers = {
      * Resolve usage metrics
      */
     usage: async (
-      _parent: any,
+      _parent: unknown,
       args: {
         start: number;
         end: number;
@@ -107,7 +107,7 @@ export const resolvers = {
      * Resolve revenue metrics
      */
     revenue: async (
-      _parent: any,
+      _parent: unknown,
       args: {
         period?: RevenuePeriod;
         tier?: string;
@@ -140,7 +140,7 @@ export const resolvers = {
      * Resolve license metrics
      */
     licenses: async (
-      _parent: any,
+      _parent: unknown,
       args: {
         status?: LicenseStatus;
         tier?: string;
@@ -171,7 +171,11 @@ export const resolvers = {
           .select('nonce')
           .eq('created_by', user.userId);
 
-        const userNonces = new Set(userLicenses?.map((l: any) => l.nonce) || []);
+        interface LicenseRow {
+          nonce: string;
+        }
+
+        const userNonces = new Set(userLicenses?.map((l: LicenseRow) => l.nonce) || []);
 
         metrics.utilization = metrics.utilization.filter(
           (u) => userNonces.has(u.licenseNonce)
@@ -192,7 +196,7 @@ export const resolvers = {
      * Resolve ROI metrics
      */
     roi: async (
-      _parent: any,
+      _parent: unknown,
       args: {
         licenseNonce: string;
       }
