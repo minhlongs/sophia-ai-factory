@@ -134,6 +134,10 @@ export interface LicenseUtilization {
   limitCredit: number;
   percentage: number;
   expiresAt: number | null;
+  // Overage billing fields (Phase 6)
+  overageCount?: number;      // Number of overage events
+  billableCount?: number;     // Number of billable overage events
+  overageCredits?: number;    // Total overage credits
 }
 
 /**
@@ -164,4 +168,73 @@ export interface UserContext {
   userId: string;
   tier: string;
   is_admin: boolean;
+}
+
+// ============================================================================
+// Violation & Quota Enforcement Types
+// ============================================================================
+
+/**
+ * Violation type enum
+ */
+export type ViolationType =
+  | 'quota_exceeded'
+  | 'invalid_license'
+  | 'expired_license'
+  | 'revoked_license'
+  | 'rate_limit_exceeded'
+  | 'unauthorized_access'
+  | 'cross_tenant_access';
+
+/**
+ * Violation severity levels
+ */
+export type ViolationSeverity = 'low' | 'medium' | 'high' | 'critical';
+
+/**
+ * Violation event for analytics dashboard
+ */
+export interface ViolationEvent {
+  id: string;
+  type: ViolationType;
+  severity: ViolationSeverity;
+  userId: string;
+  licenseNonce: string;
+  tier: string;
+  endpoint: string;
+  ipAddress?: string;
+  userAgent?: string;
+  metadata?: Record<string, string>;
+  createdAt: number;
+  resolved: boolean;
+  resolvedAt?: number;
+}
+
+/**
+ * Violation summary statistics
+ */
+export interface ViolationSummary {
+  totalViolations: number;
+  byType: Record<ViolationType, number>;
+  bySeverity: Record<ViolationSeverity, number>;
+  byTier: Record<string, number>;
+  resolvedCount: number;
+  unresolvedCount: number;
+  trend: Array<{
+    date: string;
+    count: number;
+  }>;
+}
+
+/**
+ * Query filters for violation events
+ */
+export interface ViolationFilters {
+  licenseNonce?: string;
+  userId?: string;
+  type?: ViolationType;
+  severity?: ViolationSeverity;
+  startTimestamp?: number;
+  endTimestamp?: number;
+  resolved?: boolean;
 }
