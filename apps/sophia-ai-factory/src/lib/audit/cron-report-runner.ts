@@ -175,7 +175,14 @@ async function fetchComplianceData(
     }
 
     // Build license report data
-    const licenseReportData = licenses.map((lic: any) => ({
+    interface LicenseReportRow {
+      nonce: string;
+      tier: string;
+      created_at: number;
+      last_used_at: number | null;
+    }
+
+    const licenseReportData = licenses.map((lic: LicenseReportRow) => ({
       nonce: lic.nonce,
       tier: lic.tier,
       validationCount: validationCounts.get(lic.nonce) || 0,

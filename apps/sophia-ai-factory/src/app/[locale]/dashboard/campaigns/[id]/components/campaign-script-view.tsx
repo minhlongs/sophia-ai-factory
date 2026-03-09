@@ -4,7 +4,7 @@ import { ScriptOutput } from "@/lib/services/types";
 
 interface CampaignScriptViewProps {
   campaign: Campaign;
-  t: any;
+  t: (key: string) => string;
 }
 
 export function CampaignScriptView({ campaign, t }: CampaignScriptViewProps) {

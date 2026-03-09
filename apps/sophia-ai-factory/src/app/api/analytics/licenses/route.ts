@@ -101,12 +101,16 @@ export async function GET(request: NextRequest) {
       const supabase = createAdminClient();
 
       // Get all licenses owned by this user
+      interface LicenseRow {
+        nonce: string;
+      }
+
       const { data: userLicenses } = await supabase
         .from('raas_licenses')
         .select('nonce')
-        .eq('created_by', user.id) as any;
+        .eq('created_by', user.id) as { data: LicenseRow[] | null };
 
-      const userNonces = new Set(userLicenses?.map((l: any) => l.nonce) || []);
+      const userNonces = new Set(userLicenses?.map((l: LicenseRow) => l.nonce) || []);
 
       // Filter utilization to only user's licenses
       metrics.utilization = metrics.utilization.filter(

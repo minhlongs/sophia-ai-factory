@@ -16,6 +16,8 @@ import {
 } from 'recharts';
 import { useTranslations } from 'next-intl';
 import type { TimeSeriesPoint } from '@/lib/analytics/types';
+import type { TooltipProps } from 'recharts';
+import type { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
 
 export type UsageMetric = 'requests' | 'credits' | 'tokens';
 
@@ -50,7 +52,7 @@ function formatTimestamp(timestamp: number, granularity: 'hour' | 'day'): string
   });
 }
 
-function CustomTooltip({ active, payload, label }: any) {
+function CustomTooltip({ active, payload, label }: TooltipProps<ValueType, NameType>) {
   if (active && payload && payload.length) {
     const data = payload[0].payload as ChartDataPoint;
     return (

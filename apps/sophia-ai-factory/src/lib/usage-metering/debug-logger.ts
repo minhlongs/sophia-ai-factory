@@ -82,8 +82,8 @@ export const debugLogger = {
 /**
  * Decorator for logging function calls
  */
-export function logFunctionCall<T extends (...args: any[]) => any>(
-  target: any,
+export function logFunctionCall<T extends (...args: unknown[]) => unknown>(
+  target: Record<string, unknown>,
   propertyKey: string,
   descriptor: TypedPropertyDescriptor<T>
 ): TypedPropertyDescriptor<T> {
@@ -94,7 +94,7 @@ export function logFunctionCall<T extends (...args: any[]) => any>(
   }
 
   // @ts-expect-error - TypeScript generic constraint limitation
-  descriptor.value = function (...args: any[]) {
+  descriptor.value = function (...args: unknown[]) {
     if (!DEBUG_ENABLED) {
       return originalMethod.apply(this, args);
     }

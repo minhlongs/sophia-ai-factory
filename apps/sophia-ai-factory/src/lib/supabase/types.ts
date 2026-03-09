@@ -315,6 +315,15 @@ export interface RaasAuditLogRow {
   user_agent: string | null
   details: Json
   created_at: number
+  // Hash chain fields for immutable audit trail
+  content_hash: string
+  previous_log_hash: string | null
+  hash_chain_valid: boolean
+  // Usage tracking fields (Phase 6 Advanced Audit Logging)
+  model_name: string | null
+  token_count: number | null
+  ip_address_hash: string | null
+  user_pseudonym: string | null
 }
 
 export interface RaasAuditLogInsert {
@@ -326,6 +335,12 @@ export interface RaasAuditLogInsert {
   user_agent?: string | null
   details?: Json
   created_at?: number
+  // Usage tracking fields (optional on insert)
+  model_name?: string | null
+  token_count?: number | null
+  ip_address_hash?: string | null
+  user_pseudonym?: string | null
+  // Note: content_hash, previous_log_hash, hash_chain_valid are auto-computed by trigger
 }
 
 export interface CampaignRow {
@@ -485,7 +500,7 @@ export interface Database {
           referencedRelation: 'raas_licenses'
           referencedColumns: ['id']
         }]
-      },
+      }
       usage_events: {
         Row: UsageEventRow
         Insert: UsageEventInsert
@@ -508,6 +523,42 @@ export interface Database {
         Row: UsageQuotaUsageRow
         Insert: UsageQuotaUsageInsert
         Update: Partial<UsageQuotaUsageRow>
+        Relationships: []
+      }
+      raas_api_keys: {
+        Row: RaasApiKeyRow
+        Insert: RaasApiKeyInsert
+        Update: RaasApiKeyUpdate
+        Relationships: []
+      }
+      overage_events: {
+        Row: OverageEventRow
+        Insert: OverageEventInsert
+        Update: Partial<OverageEventRow>
+        Relationships: []
+      }
+      quota_limits: {
+        Row: QuotaLimitRow
+        Insert: QuotaLimitInsert
+        Update: Partial<QuotaLimitRow>
+        Relationships: []
+      }
+      dunning_settings: {
+        Row: DunningSettingsRow
+        Insert: DunningSettingsInsert
+        Update: Partial<DunningSettingsRow>
+        Relationships: []
+      }
+      dunning_attempts: {
+        Row: DunningAttemptRow
+        Insert: DunningAttemptInsert
+        Update: Partial<DunningAttemptRow>
+        Relationships: []
+      }
+      billing_events: {
+        Row: BillingEventRow
+        Insert: BillingEventInsert
+        Update: Partial<BillingEventRow>
         Relationships: []
       }
     }
@@ -601,4 +652,251 @@ export interface Database {
       [_ in never]: never
     }
   }
+}
+
+// ============================================================================
+// RaaS API Keys Table (for /api/audit endpoint authentication)
+// ============================================================================
+
+export interface RaasApiKeyRow {
+  id: string
+  key_id: string
+  key_hash: string
+  owner_id: string
+  permissions: Json
+  created_at: string
+  expires_at: number | null
+  revoked_at: number | null
+  last_used_at: number | null
+  rate_limit_per_min: number
+}
+
+export interface RaasApiKeyInsert {
+  key_id: string
+  key_hash: string
+  owner_id: string
+  permissions: Json
+  created_at?: string
+  expires_at?: number | null
+  revoked_at?: number | null
+  last_used_at?: number | null
+  rate_limit_per_min?: number
+}
+
+export interface RaasApiKeyUpdate {
+  key_id?: string
+  key_hash?: string
+  owner_id?: string
+  permissions?: Json
+  expires_at?: number | null
+  revoked_at?: number | null
+  last_used_at?: number | null
+  rate_limit_per_min?: number
+  [key: string]: string | number | boolean | Json | null | undefined
+}
+
+// ============================================================================
+// Quota Management Tables (Phase 6: Overage Billing)
+// ============================================================================
+
+export interface OverageEventRow {
+  id: string
+  user_id: string
+  license_nonce: string
+  exceeded_type: 'hourly_credits' | 'daily_credits' | 'monthly_credits' | 'daily_requests'
+  exceeded_limit: number
+  exceeded_current: number
+  exceeded_by: number
+  requested_credits: number
+  endpoint: string | null
+  service_name: string | null
+  action: string | null
+  tier_at_exceeded: string
+  external_customer_id: string | null
+  billable: boolean
+  ip_address: string | null
+  user_agent: string | null
+  created_at: number
+}
+
+export interface OverageEventInsert {
+  user_id: string
+  license_nonce: string
+  exceeded_type: 'hourly_credits' | 'daily_credits' | 'monthly_credits' | 'daily_requests'
+  exceeded_limit: number
+  exceeded_current: number
+  exceeded_by: number
+  requested_credits?: number
+  endpoint?: string | null
+  service_name?: string | null
+  action?: string | null
+  tier_at_exceeded: string
+  external_customer_id?: string | null
+  billable?: boolean
+  ip_address?: string | null
+  user_agent?: string | null
+  created_at?: number
+}
+
+export interface QuotaLimitRow {
+  id: string
+  license_nonce: string
+  custom_daily_credits: number | null
+  custom_hourly_credits: number | null
+  custom_monthly_credits: number | null
+  custom_daily_requests: number | null
+  overage_allowed: boolean
+  overage_price_per_credit: number | null
+  overage_hard_limit: number | null
+  soft_warning_threshold: number
+  hard_block_threshold: number
+  created_at: number
+  updated_at: number | null
+  created_by: string | null
+}
+
+export interface QuotaLimitInsert {
+  license_nonce: string
+  custom_daily_credits?: number | null
+  custom_hourly_credits?: number | null
+  custom_monthly_credits?: number | null
+  custom_daily_requests?: number | null
+  overage_allowed?: boolean
+  overage_price_per_credit?: number | null
+  overage_hard_limit?: number | null
+  soft_warning_threshold?: number
+  hard_block_threshold?: number
+  created_at?: number
+  updated_at?: number | null
+  created_by?: string | null
+}
+
+// ============================================================================
+// Dunning Workflow Tables (Overage Billing & Dunning - 2026-03-09)
+// ============================================================================
+
+export type DunningState = 'current' | 'past_due' | 'delinquent' | 'suspended'
+
+export interface DunningSettingsRow {
+  id: string
+  user_id: string
+  license_nonce: string
+  polar_customer_id: string | null
+  stripe_customer_id: string | null
+  grace_period_days: number
+  max_retry_attempts: number
+  retry_schedule: string[]
+  send_email_notifications: boolean
+  email_language: string
+  dunning_state: DunningState
+  dunning_state_changed_at: string
+  created_at: string
+  updated_at: string
+}
+
+export interface DunningSettingsInsert {
+  user_id: string
+  license_nonce: string
+  polar_customer_id?: string | null
+  stripe_customer_id?: string | null
+  grace_period_days?: number
+  max_retry_attempts?: number
+  retry_schedule?: string[]
+  send_email_notifications?: boolean
+  email_language?: string
+  dunning_state?: DunningState
+  created_at?: string
+  updated_at?: string
+}
+
+export interface DunningAttemptRow {
+  id: string
+  user_id: string
+  license_nonce: string
+  attempt_number: number
+  attempt_type: string
+  payment_provider: string
+  success: boolean
+  amount: number | null
+  currency: string
+  failure_reason: string | null
+  provider_response_id: string | null
+  dunning_state_before: DunningState | null
+  dunning_state_after: DunningState | null
+  next_retry_at: string | null
+  scheduled_retry_count: number
+  stripe_invoice_id: string | null
+  polar_order_id: string | null
+  ip_address: string | null
+  user_agent: string | null
+  created_at: string
+}
+
+export interface DunningAttemptInsert {
+  user_id: string
+  license_nonce: string
+  attempt_number?: number
+  attempt_type: string
+  payment_provider: string
+  success?: boolean
+  amount?: number | null
+  currency?: string
+  failure_reason?: string | null
+  provider_response_id?: string | null
+  dunning_state_before?: DunningState | null
+  dunning_state_after?: DunningState | null
+  next_retry_at?: string | null
+  scheduled_retry_count?: number
+  stripe_invoice_id?: string | null
+  polar_order_id?: string | null
+  ip_address?: string | null
+  user_agent?: string | null
+  created_at?: string
+}
+
+export interface BillingEventRow {
+  id: string
+  user_id: string
+  license_nonce: string
+  event_type: string
+  event_category: string
+  event_data: Json
+  amount: number | null
+  currency: string
+  payment_provider: string | null
+  provider_event_id: string | null
+  provider_invoice_id: string | null
+  provider_charge_id: string | null
+  email_sent: boolean
+  email_template: string | null
+  email_recipient: string | null
+  email_sent_at: string | null
+  ip_address: string | null
+  user_agent: string | null
+  created_at: string
+  processed: boolean
+  processed_at: string | null
+}
+
+export interface BillingEventInsert {
+  user_id: string
+  license_nonce: string
+  event_type: string
+  event_category: string
+  event_data?: Json
+  amount?: number | null
+  currency?: string
+  payment_provider?: string | null
+  provider_event_id?: string | null
+  provider_invoice_id?: string | null
+  provider_charge_id?: string | null
+  email_sent?: boolean
+  email_template?: string | null
+  email_recipient?: string | null
+  email_sent_at?: string | null
+  ip_address?: string | null
+  user_agent?: string | null
+  created_at?: string
+  processed?: boolean
+  processed_at?: string | null
 }

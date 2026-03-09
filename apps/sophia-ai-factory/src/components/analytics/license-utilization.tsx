@@ -42,7 +42,7 @@ interface ChartDataPoint {
   expiresAt: number | null;
 }
 
-function CustomTooltip({ active, payload }: any) {
+function CustomTooltip({ active, payload }: { active?: boolean; payload?: unknown[] }) {
   if (active && payload && payload.length) {
     const data = payload[0].payload as ChartDataPoint;
     const formatCredits = (num: number) => {

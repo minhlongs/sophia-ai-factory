@@ -27,7 +27,7 @@ export async function resolveExternalCustomerId(licenseNonce: string): Promise<s
       .from('raas_licenses')
       .select('metadata')
       .eq('nonce', licenseNonce)
-      .single() as { data: Pick<RaasLicense, 'metadata'> | null; error: any };
+      .single() as { data: Pick<RaasLicense, 'metadata'> | null; error: Error | unknown };
 
     if (error || !license) {
       logger.debug('[External Customer ID] License not found', { licenseNonce });

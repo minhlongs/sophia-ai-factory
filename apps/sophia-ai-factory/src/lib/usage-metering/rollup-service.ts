@@ -76,7 +76,7 @@ export async function calculateHourlyRollup(hourTimestamp: number): Promise<Hour
       tokens_output: number;
       status_code: number | null;
       response_time_ms: number | null;
-    }> | null; error: any };
+    }> | null; error: Error | unknown };
 
   if (error) {
     logger.error('[Rollup Service] Error fetching events for hourly rollup', error);
@@ -356,7 +356,7 @@ export async function calculateDailyRollup(dayTimestamp: number): Promise<Array<
       total_errors: number;
       avg_response_time_ms: number;
       service_breakdown: Json;
-    }> | null; error: any };
+    }> | null; error: Error | unknown };
 
   if (error) {
     logger.error('[Rollup Service] Error fetching hourly summaries for daily rollup', error);

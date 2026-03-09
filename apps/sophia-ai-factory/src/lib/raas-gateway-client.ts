@@ -54,7 +54,7 @@ export interface LicenseUtilization {
 
 export class RaasGatewayClient {
   private config: RaasGatewayConfig;
-  private cache: Map<string, { data: any; expiresAt: number }>;
+  private cache: Map<string, { data: RaasUsageMetrics | BillingMetrics | LicenseUtilization[]; expiresAt: number }>;
   private jwt: string;
   private jwtExpiresAt: number;
 

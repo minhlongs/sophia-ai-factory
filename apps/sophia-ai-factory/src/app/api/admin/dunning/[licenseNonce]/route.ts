@@ -1,0 +1,80 @@
+/**
+ * GET /api/admin/dunning/[licenseNonce]
+ *
+ * Get dunning state and history for a license
+ * Admin-only endpoint
+ */
+
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { getDunningState, getDunningHistory, type DunningStateResult } from '@/lib/billing/dunning-workflow';
+import { logger } from '@/lib/utils/logger-utility';
+
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { licenseNonce: string } }
+) {
+  try {
+    // Check admin auth
+    const supabase = createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Check admin role
+    const { data: userData } = await supabase
+      .from('user_profiles')
+      .select('role')
+      .eq('user_id', user.id)
+      .single() as any;
+
+    const isAdmin = userData?.role === 'admin' || (user as any).user_metadata?.role === 'admin';
+    if (!isAdmin) {
+      return NextResponse.json({ error: 'Forbidden - admin only' }, { status: 403 });
+    }
+
+    // Get dunning state
+    const dunningState = await getDunningState(params.licenseNonce);
+
+    // Get dunning history (last 20 attempts)
+    const dunningHistory = await getDunningHistory(params.licenseNonce, 20);
+
+    logger.info('[Admin Dunning API] Retrieved dunning state', {
+      licenseNonce: params.licenseNonce.slice(0, 8) + '...',
+      state: dunningState.state,
+      allowed: dunningState.allowed,
+    });
+
+    return NextResponse.json({
+      licenseNonce: params.licenseNonce.slice(0, 8) + '...',
+      state: dunningState.state,
+      allowed: dunningState.allowed,
+      gracePeriodEndsAt: dunningState.gracePeriodEndsAt,
+      nextRetryAt: dunningState.nextRetryAt,
+      failedPaymentCount: dunningState.failedPaymentCount,
+      blockReason: dunningState.blockReason,
+      history: dunningHistory.map(h => ({
+        attemptNumber: h.attempt_number,
+        attemptType: h.attempt_type,
+        paymentProvider: h.payment_provider,
+        success: h.success,
+        amount: h.amount,
+        currency: h.currency,
+        failureReason: h.failure_reason,
+        dunningStateBefore: h.dunning_state_before,
+        dunningStateAfter: h.dunning_state_after,
+        nextRetryAt: h.next_retry_at,
+        createdAt: h.created_at,
+      })),
+    });
+  } catch (error) {
+    logger.error('[Admin Dunning API] Error', error as Error);
+    return NextResponse.json(
+      { error: 'Failed to fetch dunning state' },
+      { status: 500 }
+    );
+  }
+}

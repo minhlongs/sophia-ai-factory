@@ -88,8 +88,8 @@ export async function exportUsage(options: ExportOptions): Promise<{
   );
 
   // Daily breakdown from aggregated data
-  const daily = aggregated.daily.flatMap((day: any) =>
-    day.hourlyBreakdown.map((hourly: any) => ({
+  const daily = aggregated.daily.flatMap((day) =>
+    day.hourlyBreakdown.map((hourly) => ({
       day_timestamp: day.dayTimestamp,
       service_name: hourly.serviceBreakdown[0]?.service_name || 'unknown',
       requests: hourly.totalRequests,

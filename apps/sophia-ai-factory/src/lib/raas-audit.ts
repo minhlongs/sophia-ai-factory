@@ -72,9 +72,13 @@ export async function createLicense(params: LicenseCreationParams): Promise<Raas
     is_revoked: false
   }
 
-  const schema = supabase.from('raas_licenses') as any
-
-  const { data, error } = await schema.insert(licenseData).select().single()
+  // Note: Using type assertion for Supabase query result since generated types
+  // may not be available. The query returns RaasLicenseRow format.
+  const { data, error } = await supabase
+    .from('raas_licenses')
+    .insert(licenseData)
+    .select()
+    .single()
 
   if (error) {
     logger.error('Failed to create license in database', error)
@@ -202,8 +206,10 @@ export async function revokeLicense(
     revoked_by: revokedBy ?? null
   }
 
-  const { data, error } = await (supabase
-    .from('raas_licenses') as any)
+  // Note: Using type assertion for Supabase query result since generated types
+  // may not be available. The query returns RaasLicenseRow format.
+  const { data, error } = await supabase
+    .from('raas_licenses')
     .update(updateData)
     .eq('nonce', nonce)
     .select()
@@ -248,8 +254,10 @@ export async function extendLicense(
     expires_at: newExpiresAt
   }
 
-  const { data, error } = await (supabase
-    .from('raas_licenses') as any)
+  // Note: Using type assertion for Supabase query result since generated types
+  // may not be available. The query returns RaasLicenseRow format.
+  const { data, error } = await supabase
+    .from('raas_licenses')
     .update(updateData)
     .eq('nonce', nonce)
     .select()
@@ -327,7 +335,7 @@ export async function logAuditAction(params: AuditLogParams): Promise<void> {
 
   const { error } = await supabase
     .from('raas_audit_logs')
-    .insert(logData as any)
+    .insert(logData)
 
   if (error) {
     logger.error('Failed to log audit action', error)
@@ -503,8 +511,10 @@ export async function incrementValidationCount(nonce: string): Promise<void> {
   const currentMetadata = (license.metadata as { validateCount?: number }) ?? {}
   const newCount = (currentMetadata.validateCount ?? 0) + 1
 
-  const { error } = await (supabase
-    .from('raas_licenses') as any)
+  // Note: Using type assertion for Supabase query result since generated types
+  // may not be available
+  const { error } = await supabase
+    .from('raas_licenses')
     .update({
       metadata: { ...currentMetadata, validateCount: newCount }
     })
@@ -561,8 +571,10 @@ export async function reactivateLicenseBySubscription(
   const supabase = createAdminClient()
 
   // Find license by metadata
-  const { data: license, error } = await (supabase
-    .from('raas_licenses') as any)
+  // Note: Using type assertion for Supabase query result since generated types
+  // may not be available. The query returns RaasLicenseRow format.
+  const { data: license, error } = await supabase
+    .from('raas_licenses')
     .select('*')
     .eq('metadata->>polarSubscriptionId', polarSubscriptionId)
     .single()
@@ -573,8 +585,8 @@ export async function reactivateLicenseBySubscription(
   }
 
   // Reactivate
-  const { data: updated, error: updateError } = await (supabase
-    .from('raas_licenses') as any)
+  const { data: updated, error: updateError } = await supabase
+    .from('raas_licenses')
     .update({
       is_revoked: false,
       revoked_at: null,
@@ -623,8 +635,10 @@ export async function revokeLicenseBySubscription(
   const metadataKey = options.provider === 'stripe' ? 'stripeSubscriptionId' : 'polarSubscriptionId'
 
   // Find license by metadata
-  const { data: license, error } = await (supabase
-    .from('raas_licenses') as any)
+  // Note: Using type assertion for Supabase query result since generated types
+  // may not be available. The query returns RaasLicenseRow format.
+  const { data: license, error } = await supabase
+    .from('raas_licenses')
     .select('*')
     .eq('metadata->>' + metadataKey, subscriptionId)
     .single()
@@ -635,8 +649,8 @@ export async function revokeLicenseBySubscription(
   }
 
   // Revoke
-  const { data: updated, error: updateError } = await (supabase
-    .from('raas_licenses') as any)
+  const { data: updated, error: updateError } = await supabase
+    .from('raas_licenses')
     .update({
       is_revoked: true,
       revoked_at: revokedAt,

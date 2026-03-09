@@ -474,7 +474,22 @@ export async function fetchViolations(
   }
 
   // Transform database rows to ViolationEvent type
-  const typedViolations: ViolationEvent[] = violations.map((v: any) => ({
+  interface ViolationRow {
+    id: string;
+    type: string;
+    severity: string;
+    user_id: string;
+    license_nonce: string;
+    tier: string;
+    endpoint: string;
+    ip_address: string | null;
+    user_agent: string | null;
+    metadata: Record<string, unknown> | null;
+    created_at: string;
+    resolved: boolean;
+  }
+
+  const typedViolations: ViolationEvent[] = violations.map((v: ViolationRow) => ({
     id: v.id,
     type: v.type,
     severity: v.severity,

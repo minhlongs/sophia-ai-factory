@@ -10,11 +10,13 @@ import {
   Settings,
   Users,
   LogOut,
-  Key
+  Key,
+  BarChart3
 } from "lucide-react";
 
 const navigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
+  { name: "Analytics", href: "/admin/analytics/usage", icon: BarChart3 },
   { name: "Users", href: "/admin/users", icon: Users },
   { name: "Licenses", href: "/admin/licenses", icon: Key },
   { name: "Feature Flags", href: "/admin/features", icon: Flag },

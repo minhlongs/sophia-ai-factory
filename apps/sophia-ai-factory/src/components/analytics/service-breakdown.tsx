@@ -13,6 +13,8 @@ import {
 } from 'recharts';
 import { useTranslations } from 'next-intl';
 import type { ServiceBreakdown } from '@/lib/analytics/types';
+import type { TooltipProps } from 'recharts';
+import type { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
 
 export interface ServiceBreakdownChartProps {
   data: ServiceBreakdown[] | null;
@@ -29,7 +31,7 @@ const SERVICE_COLORS: Record<string, string> = {
   default: '#f59e0b',
 };
 
-function CustomTooltip({ active, payload }: any) {
+function CustomTooltip({ active, payload }: TooltipProps<ValueType, NameType>) {
   if (active && payload && payload.length) {
     const data = payload[0].payload as ServiceBreakdown;
     return (

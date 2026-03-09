@@ -3,9 +3,9 @@ import { Campaign } from "@/types";
 
 interface CampaignDetailsSidebarProps {
   campaign: Campaign;
-  t: any;
-  tStatus: any;
-  format: any;
+  t: (key: string) => string;
+  tStatus: (key: string) => string;
+  format: IntlFormat;
 }
 
 export function CampaignDetailsSidebar({ campaign, t, tStatus, format }: CampaignDetailsSidebarProps) {

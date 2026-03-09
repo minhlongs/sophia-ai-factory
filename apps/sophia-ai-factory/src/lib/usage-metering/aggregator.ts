@@ -247,16 +247,20 @@ export async function checkQuota(
       .lt('created_at', dayStart + 86400) as any;
 
     // Get monthly usage
+    interface UsageDataRow {
+      credits_used: number;
+    }
+
     const { data: monthlyData } = await supabase
       .from('usage_events')
       .select('credits_used')
       .eq('user_id', tenantId)
       .eq('license_nonce', licenseNonce)
-      .gte('created_at', monthStart) as any;
+      .gte('created_at', monthStart) as { data: UsageDataRow[] | null };
 
-    const hourlyCredits = (hourlyData as any[])?.reduce((sum: number, r: any) => sum + (r.credits_used || 0), 0) || 0;
-    const dailyCredits = (dailyData as any[])?.reduce((sum: number, r: any) => sum + (r.credits_used || 0), 0) || 0;
-    const monthlyCredits = (monthlyData as any[])?.reduce((sum: number, r: any) => sum + (r.credits_used || 0), 0) || 0;
+    const hourlyCredits = (hourlyData as UsageDataRow[])?.reduce((sum: number, r: UsageDataRow) => sum + (r.credits_used || 0), 0) || 0;
+    const dailyCredits = (dailyData as UsageDataRow[])?.reduce((sum: number, r: UsageDataRow) => sum + (r.credits_used || 0), 0) || 0;
+    const monthlyCredits = (monthlyData as UsageDataRow[])?.reduce((sum: number, r: UsageDataRow) => sum + (r.credits_used || 0), 0) || 0;
     const dailyRequests = dailyData?.length || 0;
 
     // Check limits
@@ -585,7 +589,7 @@ export async function batchIngestUsage(
 ): Promise<BatchIngestionResponse> {
   const supabase = createAdminClient();
   const results: IngestionResult[] = [];
-  const acceptedRecords: any[] = [];
+  const acceptedRecords: Record<string, unknown>[] = [];
 
   // Track quota usage per license during batch processing
   const quotaCache = new Map<string, QuotaCheckResult>();

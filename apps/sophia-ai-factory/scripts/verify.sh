@@ -16,6 +16,11 @@ trap 'echo_error "Verification failed on line $LINENO"; exit 1' ERR
 
 echo_step "Starting Green Verification Process..."
 
+# 0. i18n Validation
+echo_step "0. Validating i18n Translation Keys..."
+npm run i18n:validate
+echo_success "i18n validation passed"
+
 # 1. Linting
 echo_step "1. Linting Codebase..."
 # npm run lint (Skipping for now as standard lint config might need tuning, trusting build/test for now)

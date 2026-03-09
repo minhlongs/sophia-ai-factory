@@ -46,8 +46,14 @@ export async function handleResults(chatId: string): Promise<void> {
       return
     }
 
+    interface CampaignRow {
+      title: string;
+      video_url: string | null;
+      updated_at: string;
+    }
+
     let message = '✅ *Recent Results:*\n\n'
-    campaigns.forEach((c: any) => {
+    campaigns.forEach((c: CampaignRow) => {
       message += `🎬 *${c.title}*\n`
       if (c.video_url) {
         message += `[Watch Video](${c.video_url})\n`

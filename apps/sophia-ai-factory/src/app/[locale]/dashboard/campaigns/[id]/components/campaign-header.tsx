@@ -1,14 +1,15 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, Users, CheckCircle2, Clock, AlertCircle, Loader2 } from "lucide-react";
+import { ArrowLeft, Calendar, Users, CheckCircle2, Clock, AlertCircle, Loader2, FileText } from "lucide-react";
 import Link from "next/link";
 import { Campaign } from "@/types";
+import type { IntlFormat } from 'intl';
 
 interface CampaignHeaderProps {
   campaign: Campaign;
-  t: any;
-  tStatus: any;
-  format: any;
+  t: (key: string) => string;
+  tStatus: (key: string) => string;
+  format: IntlFormat;
 }
 
 export function CampaignHeader({ campaign, t, tStatus, format }: CampaignHeaderProps) {
