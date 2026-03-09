@@ -112,6 +112,22 @@ export const analyticsRoiQuerySchema = z.object({
   valuePerCredit: z.string().transform((val) => parseFloat(val)).optional().default(0.01),
 });
 
+/**
+ * Schema for violations query params
+ * GET /api/violations
+ */
+export const violationsQuerySchema = z.object({
+  licenseNonce: z.string().optional(),
+  userId: z.string().optional(),
+  type: z.enum(['quota_exceeded', 'invalid_license', 'expired_license', 'revoked_license', 'rate_limit_exceeded', 'unauthorized_access', 'cross_tenant_access']).optional(),
+  severity: z.enum(['low', 'medium', 'high', 'critical']).optional(),
+  start: z.string().transform((val) => parseInt(val, 10)).optional(),
+  end: z.string().transform((val) => parseInt(val, 10)).optional(),
+  resolved: z.string().transform((val) => val === 'true').optional(),
+  page: z.string().transform((val) => parseInt(val, 10)).optional().default('1'),
+  limit: z.string().transform((val) => Math.min(parseInt(val, 10), 100)).optional().default('50'),
+});
+
 // ============================================================================
 // ADMIN SCHEMAS
 // ============================================================================
@@ -151,6 +167,7 @@ export type AnalyticsLicensesQuery = z.infer<typeof analyticsLicensesQuerySchema
 export type AnalyticsRoiQuery = z.infer<typeof analyticsRoiQuerySchema>;
 export type CustomerLinkageRequest = z.infer<typeof customerLinkageRequestSchema>;
 export type IngestionTriggerRequest = z.infer<typeof ingestionTriggerRequestSchema>;
+export type ViolationsQuery = z.infer<typeof violationsQuerySchema>;
 
 /**
  * Validate OpenRouter API Key

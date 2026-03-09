@@ -14,6 +14,9 @@ import type {
   LicenseFilters,
   LicenseMetrics,
   LicenseUtilization,
+  ViolationFilters,
+  ViolationEvent,
+  ViolationSummary,
 } from './types';
 import { QUOTA_LIMITS } from '@/lib/usage-metering/aggregator';
 
@@ -372,11 +375,22 @@ export async function fetchLicenseMetrics(filters: LicenseFilters = {}): Promise
       .from('usage_events')
       .select('credits_used')
       .eq('license_nonce', license.nonce)
-      .gte('created_at', monthStart) as any;
+      .gte('created_at', monthStart);
 
-    const usedCredits = usageData?.reduce((sum: number, r: any) => sum + (r.credits_used || 0), 0) || 0;
+    const usedCredits = usageData?.reduce((sum, r) => sum + (r.credits_used || 0), 0) || 0;
     const limitCredit = quota.monthlyCredits;
     const percentage = limitCredit > 0 ? Math.round((usedCredits / limitCredit) * 10000) / 100 : 0;
+
+    // Get overage events for this license (Phase 6)
+    const { data: overageData } = await supabase
+      .from('overage_events')
+      .select('exceeded_by, billable')
+      .eq('license_nonce', license.nonce)
+      .gte('created_at', monthStart);
+
+    const overageCount = overageData?.length || 0;
+    const billableCount = overageData?.filter((e) => e.billable).length || 0;
+    const overageCredits = overageData?.reduce((sum, e) => sum + (e.exceeded_by || 0), 0) || 0;
 
     utilization.push({
       licenseNonce: license.nonce,
@@ -385,6 +399,9 @@ export async function fetchLicenseMetrics(filters: LicenseFilters = {}): Promise
       limitCredit,
       percentage: Math.min(percentage, 100),
       expiresAt: license.expires_at,
+      overageCount,
+      billableCount,
+      overageCredits,
     });
   }
 
@@ -392,5 +409,195 @@ export async function fetchLicenseMetrics(filters: LicenseFilters = {}): Promise
     total: licenses.length,
     byTier,
     utilization: utilization.sort((a, b) => b.percentage - a.percentage),
+  };
+}
+
+/**
+ * Fetch violation events from Supabase
+ *
+ * @param filters - Query filters for violation data
+ * @param page - Page number (default: 1)
+ * @param limit - Items per page (default: 50, max: 100)
+ */
+export async function fetchViolations(
+  filters: ViolationFilters = {},
+  page: number = 1,
+  limit: number = 50
+): Promise<{ violations: ViolationEvent[]; total: number; hasMore: boolean }> {
+  const supabase = createAdminClient();
+
+  // Build query dynamically based on filters
+  let query = supabase.from('violations').select('*', { count: 'exact' });
+
+  if (filters.licenseNonce) {
+    query = query.eq('license_nonce', filters.licenseNonce);
+  }
+
+  if (filters.userId) {
+    query = query.eq('user_id', filters.userId);
+  }
+
+  if (filters.type) {
+    query = query.eq('type', filters.type);
+  }
+
+  if (filters.severity) {
+    query = query.eq('severity', filters.severity);
+  }
+
+  if (filters.startTimestamp) {
+    query = query.gte('created_at', filters.startTimestamp);
+  }
+
+  if (filters.endTimestamp) {
+    query = query.lte('created_at', filters.endTimestamp);
+  }
+
+  if (filters.resolved !== undefined) {
+    query = query.eq('resolved', filters.resolved);
+  }
+
+  // Apply pagination
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
+  query = query.range(from, to).order('created_at', { ascending: false });
+
+  const { data: violations, error, count } = await query as any;
+
+  if (error) {
+    logger.error('[Analytics] Failed to fetch violations', error);
+    throw new Error('Failed to fetch violations');
+  }
+
+  if (!violations || violations.length === 0) {
+    return { violations: [], total: 0, hasMore: false };
+  }
+
+  // Transform database rows to ViolationEvent type
+  const typedViolations: ViolationEvent[] = violations.map((v: any) => ({
+    id: v.id,
+    type: v.type,
+    severity: v.severity,
+    userId: v.user_id,
+    licenseNonce: v.license_nonce,
+    tier: v.tier,
+    endpoint: v.endpoint,
+    ipAddress: v.ip_address,
+    userAgent: v.user_agent,
+    metadata: v.metadata,
+    createdAt: v.created_at,
+    resolved: v.resolved,
+    resolvedAt: v.resolved_at,
+  }));
+
+  const total = count || violations.length;
+  const hasMore = from + violations.length < total;
+
+  return {
+    violations: typedViolations,
+    total,
+    hasMore,
+  };
+}
+
+/**
+ * Fetch violation summary statistics
+ *
+ * @param filters - Query filters for violation data
+ * @param startTimestamp - Start timestamp for trend data
+ * @param endTimestamp - End timestamp for trend data
+ */
+export async function fetchViolationSummary(
+  filters: ViolationFilters = {},
+  startTimestamp: number,
+  endTimestamp: number
+): Promise<ViolationSummary> {
+  const supabase = createAdminClient();
+
+  // Build base query
+  let query = supabase.from('violations').select('*');
+
+  if (filters.licenseNonce) {
+    query = query.eq('license_nonce', filters.licenseNonce);
+  }
+
+  if (filters.userId) {
+    query = query.eq('user_id', filters.userId);
+  }
+
+  if (filters.type) {
+    query = query.eq('type', filters.type);
+  }
+
+  if (filters.severity) {
+    query = query.eq('severity', filters.severity);
+  }
+
+  if (filters.startTimestamp) {
+    query = query.gte('created_at', filters.startTimestamp);
+  }
+
+  if (filters.endTimestamp) {
+    query = query.lte('created_at', filters.endTimestamp);
+  }
+
+  if (filters.resolved !== undefined) {
+    query = query.eq('resolved', filters.resolved);
+  }
+
+  const { data: violations, error } = await query as any;
+
+  if (error) {
+    logger.error('[Analytics] Failed to fetch violation summary', error);
+    throw new Error('Failed to fetch violation summary');
+  }
+
+  if (!violations || violations.length === 0) {
+    return {
+      totalViolations: 0,
+      byType: {} as any,
+      bySeverity: {} as any,
+      byTier: {},
+      resolvedCount: 0,
+      unresolvedCount: 0,
+      trend: [],
+    };
+  }
+
+  // Calculate breakdowns
+  const byType: Record<string, number> = {};
+  const bySeverity: Record<string, number> = {};
+  const byTier: Record<string, number> = {};
+  let resolvedCount = 0;
+
+  for (const v of violations) {
+    byType[v.type] = (byType[v.type] || 0) + 1;
+    bySeverity[v.severity] = (bySeverity[v.severity] || 0) + 1;
+    byTier[v.tier] = (byTier[v.tier] || 0) + 1;
+    if (v.resolved) {
+      resolvedCount += 1;
+    }
+  }
+
+  // Calculate trend data (daily breakdown)
+  const trendMap = new Map<string, number>();
+  for (const v of violations) {
+    const date = new Date(v.created_at * 1000).toISOString().split('T')[0];
+    const count = trendMap.get(date) || 0;
+    trendMap.set(date, count + 1);
+  }
+
+  const trend = Array.from(trendMap.entries())
+    .map(([date, count]) => ({ date, count }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  return {
+    totalViolations: violations.length,
+    byType: byType as any,
+    bySeverity: bySeverity as any,
+    byTier,
+    resolvedCount,
+    unresolvedCount: violations.length - resolvedCount,
+    trend,
   };
 }
