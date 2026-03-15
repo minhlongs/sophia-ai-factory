@@ -38,6 +38,8 @@ const nextConfig: NextConfig = {
       headers: getSecurityHeaders(),
     },
   ],
+  // Enable Turbopack mode explicitly to avoid webpack config errors
+  turbopack: {},
 };
 
 // Bundle analyzer wrapper

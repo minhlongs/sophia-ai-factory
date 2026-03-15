@@ -1,0 +1,6 @@
+/cook Verify project is running and report status
+
+---
+Project: sophia
+Created: Sun Mar 15 07:36:42 +07 2026
+Dispatched by: 4-project-dispatch.sh
