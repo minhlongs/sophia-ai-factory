@@ -457,4 +457,3 @@ export default {
   DEFAULT_WEIGHTS,
 };
 
-export type { Feature, ScoredFeature, DependencyGraph, SprintPlan, SprintConfig, ScoringFramework, ScoringConfig };
