@@ -453,10 +453,8 @@ export function generateHealthAlerts(customerIdOrResult: string | HealthScoreRes
     if (result.churnProbability > 0.6) {
       alerts.push({ severity: 'critical', reason: `High churn risk: ${Math.round(result.churnProbability * 100)}%`, customerId: result.customerId, churnRisk: result.churnProbability, timestamp: new Date(), recommendedAction: 'Activate retention playbook' });
     }
-    // Convert string alerts to AlertObject format
-    result.alerts.forEach(alertStr => {
-      alerts.push({ severity: 'warning', reason: alertStr, customerId: result.customerId, timestamp: new Date() });
-    });
+    // Merge existing alerts from result
+    alerts.push(...result.alerts);
   }
 
   return alerts;
