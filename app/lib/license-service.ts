@@ -14,14 +14,71 @@ import {
   UpdateSubscriptionInputSchema,
 } from './license-schemas'
 
+// HMAC secret for license key signing (in production, use environment variable)
+const LICENSE_SECRET = process.env.LICENSE_SECRET || 'sophia-license-secret-key-2026'
+
 /**
- * Generate unique license key
+ * Generate random hex string
  */
-function generateLicenseKey(): string {
-  const prefix = 'SOPHIA'
-  const random = Math.random().toString(36).substring(2, 10).toUpperCase()
-  const timestamp = Date.now().toString(36).toUpperCase()
-  return `${prefix}-${random}-${timestamp}`
+function randomHex(length: number): string {
+  const bytes = new Uint8Array(length)
+  crypto.getRandomValues(bytes)
+  return Array.from(bytes)
+    .map(b => b.toString(16).padStart(2, '0').toUpperCase())
+    .join('')
+}
+
+/**
+ * Generate HMAC signature for license key
+ */
+function generateHmacSignature(data: string): string {
+  // Simple hash simulation for browser environment
+  // In production, use Web Crypto API or server-side signing
+  let hash = 0
+  const combined = `${data}-${LICENSE_SECRET}`
+  for (let i = 0; i < combined.length; i++) {
+    const char = combined.charCodeAt(i)
+    hash = ((hash << 5) - hash) + char
+    hash = hash & hash // Convert to 32bit integer
+  }
+  return Math.abs(hash).toString(16).toUpperCase().padStart(8, '0')
+}
+
+/**
+ * Generate unique license key with HMAC signature
+ * Format: RAAS-{TIER}-{RANDOM}-{TIMESTAMP}-{SIGNATURE}
+ */
+export function generateLicenseKey(tier: LicenseTier): string {
+  const random = randomHex(4) // 8 hex chars
+  const timestamp = randomHex(4) // 8 hex chars (using random instead of timestamp for hex-only)
+  const unsignedData = `${tier}-${random}-${timestamp}`
+  const signature = generateHmacSignature(unsignedData)
+  return `RAAS-${unsignedData}-${signature}`
+}
+
+/**
+ * Validate license key by verifying HMAC signature
+ */
+export function validateLicenseKey(key: string): boolean {
+  if (!key || typeof key !== 'string') {
+    return false
+  }
+
+  // Check format: RAAS-{TIER}-{RANDOM}-{TIMESTAMP}-{SIGNATURE}
+  const parts = key.split('-')
+  if (parts.length !== 5 || parts[0] !== 'RAAS') {
+    return false
+  }
+
+  // Reconstruct unsigned data and verify signature
+  const tier = parts[1]
+  const random = parts[2]
+  const timestamp = parts[3]
+  const providedSignature = parts[4]
+  const unsignedData = `${tier}-${random}-${timestamp}`
+  const expectedSignature = generateHmacSignature(unsignedData)
+
+  return providedSignature === expectedSignature
 }
 
 /**
@@ -134,7 +191,7 @@ class LicenseServiceClass {
     const validatedInput = CreateLicenseInputSchema.parse(input)
 
     const id = `lic_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`
-    const licenseKey = generateLicenseKey()
+    const licenseKey = generateLicenseKey(validatedInput.tier)
     const now = new Date()
 
     const license: License = {
@@ -228,6 +285,46 @@ class LicenseServiceClass {
    */
   clear(): void {
     this.licenses.clear()
+  }
+
+  /**
+   * Rotate license key
+   */
+  rotateKey(id: string): { newKey: string } | undefined {
+    const license = this.licenses.get(id)
+    if (!license) {
+      return undefined
+    }
+
+    const oldKey = license.metadata?.licenseKey
+    const newKey = generateLicenseKey(license.tier)
+
+    license.metadata = {
+      ...license.metadata,
+      licenseKey: newKey,
+      rotatedFrom: oldKey,
+      rotatedAt: new Date().toISOString(),
+    }
+
+    this.licenses.set(id, license)
+    return { newKey }
+  }
+
+  /**
+   * Validate license key against stored licenses
+   */
+  validateKey(key: string): boolean {
+    if (!validateLicenseKey(key)) {
+      return false
+    }
+
+    // Check if key exists in any license
+    for (const license of this.licenses.values()) {
+      if (license.metadata?.licenseKey === key) {
+        return true
+      }
+    }
+    return false
   }
 
   /**

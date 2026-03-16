@@ -360,6 +360,7 @@ function LicensesPageContent() {
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => handleRevoke(license.id)}
+                                  aria-label="Revoke license"
                                 >
                                   <RotateCcw className="h-4 w-4" />
                                 </Button>
@@ -368,6 +369,7 @@ function LicensesPageContent() {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleDelete(license.id)}
+                                aria-label="Delete license"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
