@@ -92,7 +92,7 @@ describe('calculateQuickRatio', () => {
 
   it('should return high value for zero churn', () => {
     const noChurnData: MRRData = { ...sampleMRRData, churnedMRR: 0, contractionMRR: 0 };
-    expect(calculateQuickRatio(noChurnData)).toBe(999);
+    expect(calculateQuickRatio(noChurnData)).toBe(Infinity);
   });
 });
 
