@@ -1,6 +1,7 @@
-// License Service for Sophia ROIaaS Phase 2
-// Provides CRUD operations for license management
+// License Service for Sophia ROIaaS Phase 2 (LICENSE_UI)
+// Provides CRUD operations for license management with HMAC-signed keys
 
+import { createHmac, randomBytes } from 'crypto'
 import type {
   License,
   LicenseTier,
@@ -15,13 +16,71 @@ import {
 } from './license-schemas'
 
 /**
- * Generate unique license key
+ * Get HMAC secret from environment
+ * Fallback to dev key in non-production
  */
-function generateLicenseKey(): string {
-  const prefix = 'SOPHIA'
-  const random = Math.random().toString(36).substring(2, 10).toUpperCase()
-  const timestamp = Date.now().toString(36).toUpperCase()
-  return `${prefix}-${random}-${timestamp}`
+function getHmacSecret(): string {
+  return process.env.LICENSE_SECRET || 'dev-secret-key-change-in-prod'
+}
+
+/**
+ * Generate HMAC signature for license key
+ */
+function generateHmacSignature(payload: string): string {
+  return createHmac('sha256', getHmacSecret())
+    .update(payload)
+    .digest('hex')
+    .substring(0, 8)
+}
+
+/**
+ * Generate unique license key with HMAC signature
+ * Format: RAAS-{TIER}-{RANDOM}-{TIMESTAMP}-{SIGNATURE}
+ * All parts are uppercase hex
+ */
+function generateLicenseKey(tier: LicenseTier): string {
+  const tierPrefix = tier.toUpperCase()
+  // Use 4 bytes random (8 hex chars)
+  const randomPart = randomBytes(4).toString('hex').toUpperCase()
+  // Use 4 bytes timestamp-like (8 hex chars)
+  const timestampPart = randomBytes(4).toString('hex').toUpperCase()
+  const payload = `${tierPrefix}-${randomPart}-${timestampPart}`
+  const signature = generateHmacSignature(payload)
+  return `RAAS-${payload}-${signature.toUpperCase()}`
+}
+
+/**
+ * Validate license key HMAC signature
+ */
+function validateLicenseKey(key: string): boolean {
+  if (!key || typeof key !== 'string') return false
+
+  const parts = key.split('-')
+  if (parts.length < 5) return false
+
+  // Extract signature (last part)
+  const providedSignature = parts[parts.length - 1]
+
+  // Reconstruct payload: TIER-RANDOM-TIMESTAMP (skip 'RAAS' prefix at index 0)
+  // Key format: RAAS-TIER-RANDOM-TIMESTAMP-SIGNATURE
+  // Payload should be: TIER-RANDOM-TIMESTAMP
+  const payload = parts.slice(1, -1).join('-')
+
+  // Generate expected signature
+  const expectedSignature = generateHmacSignature(payload)
+
+  // Case-insensitive hex comparison
+  const provided = Buffer.from(providedSignature.toLowerCase(), 'hex')
+  const expected = Buffer.from(expectedSignature.toLowerCase(), 'hex')
+
+  if (provided.length !== expected.length) return false
+
+  let result = 0
+  for (let i = 0; i < provided.length; i++) {
+    result |= provided[i] ^ expected[i]
+  }
+
+  return result === 0
 }
 
 /**
@@ -134,7 +193,7 @@ class LicenseServiceClass {
     const validatedInput = CreateLicenseInputSchema.parse(input)
 
     const id = `lic_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`
-    const licenseKey = generateLicenseKey()
+    const licenseKey = generateLicenseKey(validatedInput.tier)
     const now = new Date()
 
     const license: License = {
@@ -169,6 +228,29 @@ class LicenseServiceClass {
     license.status = 'revoked'
     this.licenses.set(id, license)
     return license
+  }
+
+  /**
+   * Rotate license key (generate new key for existing license)
+   */
+  rotateKey(id: string): { license: License | undefined; newKey: string } | undefined {
+    const license = this.licenses.get(id)
+    if (!license) {
+      return undefined
+    }
+
+    const newKey = generateLicenseKey(license.tier)
+    const oldKey = license.metadata?.licenseKey as string | undefined
+
+    license.metadata = {
+      ...license.metadata,
+      licenseKey: newKey,
+      rotatedFrom: oldKey,
+      rotatedAt: new Date().toISOString(),
+    }
+
+    this.licenses.set(id, license)
+    return { license, newKey }
   }
 
   /**
@@ -231,6 +313,13 @@ class LicenseServiceClass {
   }
 
   /**
+   * Validate a license key using HMAC
+   */
+  validateKey(key: string): boolean {
+    return validateLicenseKey(key)
+  }
+
+  /**
    * Get usage statistics for a license (ROIaaS Phase 4)
    * Integrates with UsageMetering service
    */
@@ -258,3 +347,6 @@ class LicenseServiceClass {
 
 // Singleton instance
 export const LicenseService = new LicenseServiceClass()
+
+// Export helper functions for CLI admin
+export { generateLicenseKey, validateLicenseKey, getHmacSecret }
