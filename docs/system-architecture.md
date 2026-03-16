@@ -13,7 +13,7 @@ Sophia Proposal là một static landing page built với Next.js 16 và React 1
 - **Type:** Static Marketing Site
 - **Architecture:** Single-page Application (SPA)
 - **Rendering:** Static Site Generation (SSG)
-- **Deployment:** Vercel Edge Network
+- **Deployment:** Cloudflare Pages Edge Network
 
 ---
 
@@ -26,7 +26,7 @@ Sophia Proposal là một static landing page built với Next.js 16 và React 1
                       │
                       ▼
 ┌─────────────────────────────────────────────────────────┐
-│              Vercel Edge Network (CDN)                  │
+│              Cloudflare Pages Edge Network (CDN)        │
 │            - Global caching                             │
 │            - HTTPS/SSL termination                      │
 │            - Compression (Brotli)                       │
@@ -201,7 +201,7 @@ git push origin master
     ↓
 GitHub webhook
     ↓
-Vercel auto-deploy
+Cloudflare Pages auto-deploy
     ↓
 Build + Test
     ↓

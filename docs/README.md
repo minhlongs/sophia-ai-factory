@@ -83,7 +83,7 @@ plans/               # Project plans
 | Icons | Lucide React | 0.563.0 |
 | Testing | Vitest | 4.0.18 |
 | Validation | Zod | 4.3.6 |
-| Deployment | Vercel | Latest |
+| Deployment | Cloudflare Pages | Latest |
 
 ---
 
@@ -183,10 +183,10 @@ app/admin/licenses/__tests__/license-page.test.tsx
 
 ```bash
 git push origin main
-# → GitHub Actions → Vercel auto-deploy
+# → GitHub Actions → Cloudflare Pages auto-deploy
 ```
 
-Production: https://sophia-ai-factory.vercel.app
+Production: https://sophia-ai-factory.pages.dev
 
 ---
 

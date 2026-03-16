@@ -84,9 +84,9 @@ git push origin main
 
 After deploy, verify:
 
-1. **Homepage**: https://sophia-ai-factory.vercel.app
-2. **Chat**: https://sophia-ai-factory.vercel.app/chat
-3. **API**: `curl https://sophia-ai-factory.vercel.app/api/generate`
+1. **Homepage**: https://sophia-ai-factory.pages.dev
+2. **Chat**: https://sophia-ai-factory.pages.dev/chat
+3. **API**: `curl https://sophia-ai-factory.pages.dev/api/generate`
 
 ---
 
@@ -153,17 +153,17 @@ npx wrangler pages project list
 
 | Environment | URL | Status |
 |-------------|-----|--------|
-| Production | https://sophia-ai-factory.vercel.app | ✅ Live |
+| Production | https://sophia-ai-factory.pages.dev | ✅ Live |
 | Staging | Deploy previews | On PR |
 
 ### Health Checks
 
 ```bash
 # Homepage
-curl -I https://sophia-ai-factory.vercel.app
+curl -I https://sophia-ai-factory.pages.dev
 
 # API endpoint
-curl -X POST https://sophia-ai-factory.vercel.app/api/generate \
+curl -X POST https://sophia-ai-factory.pages.dev/api/generate \
   -H "Content-Type: application/json" \
   -d '{"prompt": "test"}'
 ```
@@ -181,7 +181,7 @@ git revert HEAD
 # 2. Push to trigger redeploy
 git push origin main
 
-# 3. Or use Vercel dashboard to rollback
+# 3. Or use Cloudflare Pages dashboard to rollback
 ```
 
 ---

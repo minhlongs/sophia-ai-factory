@@ -1,89 +1,83 @@
-# 🚀 Sophia AI Factory - Production GREEN Report
+# Sophia AI Video Factory - Cloudflare Deployment Report
 
-**Date:** 2026-03-11 18:01
-**Status:** ✅ READY TO SHIP
-
----
-
-## ✅ Verification Complete
-
-| Check | Result |
-|-------|--------|
-| Lint | ✅ PASS (0 errors) |
-| TypeScript | ✅ PASS (0 errors) |
-| Build | ✅ PASS (compiled successfully) |
-| Code Quality | ✅ PASS |
-| - console.log | 0 found |
-| - TODO/FIXME | 0 found |
-| - `any` types | 0 found |
+**Date:** 2026-03-16
+**Status:** READY TO DEPLOY
 
 ---
 
-## 📦 Build Output
+## Deployment Target
 
-```
-✓ Compiled successfully
-✓ Generating static pages (5/5)
-✓ Finalizing page optimization
-
-Route (app)                              Size     First Load JS
-┌ ○ /                                    39.6 kB         171 kB
-└ ○ /_not-found                          980 B           106 kB
-+ First Load JS shared by all            105 kB
-```
+**Platform:** Cloudflare Pages (All-in-One)
+**URL:** https://sophia-ai-factory.pages.dev
 
 ---
 
-## 🛠 Tech Stack
+## Deploy Steps
 
-| Layer | Technology | Version |
-|-------|------------|---------|
-| Framework | Next.js | 15.1.0 |
-| UI | React | 19.2.3 |
-| Language | TypeScript | 5.9.3 |
-| Styling | Tailwind CSS | 4.2.1 |
-| Deployment | Vercel | prj_ncgrCuvXZfuRGOCmUAMLSOSxvrpP |
-
----
-
-## 📋 Next Steps
-
-### Option 1: Deploy to Vercel (Recommended)
+### 1. Connect to Cloudflare Pages
 
 ```bash
 cd /Users/macbookprom1/mekong-cli/apps/sophia-proposal
+
+# Login to Cloudflare
+npx wrangler login
+
+# Create Pages project (one-time)
+npx wrangler pages project create sophia-ai-factory
+```
+
+### 2. Build & Deploy
+
+```bash
+# Build production
+pnpm run build
+
+# Deploy to Cloudflare Pages
+pnpm run deploy:cf
+```
+
+### 3. Git Integration (Recommended)
+
+```bash
+# Push to trigger auto-deploy
 git add .
-git commit -m "feat: production ready - GREEN build"
+git commit -m "feat: cloudflare deployment ready"
 git push origin main
 ```
 
-Vercel will auto-deploy from `main` branch.
+---
 
-### Option 2: Manual Deploy
+## Environment Variables
+
+Set in Cloudflare Pages Dashboard → Settings → Environment Variables:
 
 ```bash
-cd /Users/macbookprom1/mekong-cli/apps/sophia-proposal
-pnpm build
-vercel --prod
+# Production
+SHOTSTACK_API_KEY=your_key
+SHOTSTACK_ENV=production
+POLAR_WEBHOOK_SECRET=whsec_xxx
 ```
 
 ---
 
-## 🔗 Production URLs
+## Verification
 
-After deploy, verify:
-- Homepage: https://sophia-proposal.vercel.app
-- Check Console: No errors
-- Check Network: All resources 200 OK
+```bash
+# Homepage
+curl -I https://sophia-ai-factory.pages.dev
 
----
-
-## 📝 Notes
-
-- This report saved locally at `plans/reports/bootstrap-260311-1801-production-green.md`
-- Parent repo (mekong-cli) ignores `apps/sophia-proposal/` as private project
-- To commit: Use separate git repo or add to parent's .gitignore exclusions
+# API endpoint
+curl -X POST https://sophia-ai-factory.pages.dev/api/generate \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "test"}'
+```
 
 ---
 
-**Zero errors. Zero warnings. Production GREEN.** ✅
+## Rollback
+
+Use Cloudflare Pages Dashboard → Deployments → Click previous version → "Rollback to this version"
+
+---
+
+**Cloudflare-First Deployment** ✅

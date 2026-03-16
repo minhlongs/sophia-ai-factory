@@ -30,7 +30,7 @@
 ### April
 - [ ] Error boundaries implementation
 - [ ] Loading states for async operations
-- [ ] Performance monitoring (Vercel Analytics)
+- [ ] Performance monitoring (Cloudflare Analytics)
 
 ### May
 - [ ] A/B testing framework
