@@ -24,7 +24,8 @@
 - [x] **Unit economics algorithms** (LTV, CAC, Gross Margin, Breakeven)
 - [x] **Revenue forecasting** (MRR projection, cohort analysis)
 - [x] **Sales pipeline** (ICP, lead list, outreach sequences)
-- [x] Test suite: 799 tests passing (99.9% coverage)
+- [x] **A/B test engine** (significance calculator, sample size estimator, Bayesian analysis)
+- [x] Test suite: 831 tests passing (99.9% coverage)
 
 ---
 
@@ -36,7 +37,6 @@
 - [ ] Performance monitoring (Cloudflare Analytics)
 
 ### May
-- [ ] A/B testing framework
 - [ ] Conversion tracking
 - [ ] Email capture integration
 
