@@ -25,6 +25,7 @@
 - [x] **Revenue forecasting** (MRR projection, cohort analysis)
 - [x] **Sales pipeline** (ICP, lead list, outreach sequences)
 - [x] **A/B test engine** (significance calculator, sample size estimator, Bayesian analysis)
+- [x] **Content Engine** (SEO analysis, market research, content strategy, social + email)
 - [x] Test suite: 831 tests passing (99.9% coverage)
 
 ---
