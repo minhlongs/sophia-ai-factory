@@ -64,7 +64,7 @@ export const LicenseHealthTable: React.FC<LicenseHealthTableProps> = ({
 
   return (
     <FadeIn direction="up">
-      <GlassCard data-testid="license-health-table" className={cn('p-0 overflow-hidden', className)}>
+      <GlassCard className={cn('p-0 overflow-hidden', className)}>
         {title && (
           <div className="p-6 border-b border-white/5">
             <h3 className="text-lg font-semibold text-white">{title}</h3>
@@ -90,8 +90,8 @@ export const LicenseHealthTable: React.FC<LicenseHealthTableProps> = ({
               transition={{ duration: 0.3, delay: index * 0.05 }}
               className={cn(
                 'grid grid-cols-12 gap-4 px-6 py-4 text-sm',
-                'hover:bg-white/5 transition-colors',
-                onRowClick ? 'cursor-pointer' : 'cursor-default'
+                'hover:bg-white/5 transition-colors cursor-pointer',
+                onRowClick ? '' : 'cursor-default'
               )}
               onClick={() => onRowClick?.(license)}
             >

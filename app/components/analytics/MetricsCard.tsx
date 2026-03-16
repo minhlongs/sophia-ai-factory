@@ -48,7 +48,6 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
   return (
     <FadeIn delay={delay} direction="up">
       <GlassCard
-        data-testid="metrics-card"
         className={cn(
           'p-6 transition-all duration-300',
           glow !== 'none' && cn('border', glowStyles[glow]),

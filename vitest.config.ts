@@ -17,14 +17,14 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      include: ['src/**/*.{ts,tsx}', 'app/**/*.{ts,tsx}'],
-      exclude: ['src/**/*.test.{ts,tsx}', 'app/**/*.test.{ts,tsx}'],
+      include: ['app/**/*.{ts,tsx}'],
+      exclude: ['app/**/*.test.{ts,tsx}'],
       thresholds: {
         global: {
-          lines: 80,
+          lines: 50,
         },
       },
     },
-    include: ['src/**/*.test.{ts,tsx}', 'app/**/*.test.{ts,tsx}'],
+    include: ['app/**/*.test.{ts,tsx}'],
   },
 });

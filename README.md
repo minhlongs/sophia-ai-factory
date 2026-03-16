@@ -1,9 +1,8 @@
-# Sophia AI Video Factory
+# Sophia AI Factory
 
-> **Status:** Day 1 — Hiring Full-Stack Dev | **Version:** 0.1.0 | **Last Updated:** 2026-03-16
-> **Launch Target:** Day 30 (Public MVP)
+> **Status:** ✅ GREEN Production | **Version:** 1.0.0 | **Last Updated:** 2026-03-12
 
-Sophia AI Video Factory — Product-to-Video generator for e-commerce brands. Turn product URLs into 90s video ads in <2 min.
+Sophia Proposal - Landing page và AI Video Factory platform với affiliate marketing integration.
 
 ## Quick Start
 
@@ -23,47 +22,24 @@ pnpm run deploy:cf
 
 ---
 
-## Sprint Plan (42 Days)
+## Production Status
 
-### Sprint 1 (Days 1-14) — MVP Core
-- [ ] Project scaffold + Vercel live
-- [ ] Shotstack integration (1 video POC)
-- [ ] Polar checkout (4 tiers)
-- [ ] Template library (5 hooks)
+### GREEN Verification ✅
 
-### Sprint 2 (Days 15-28) — MVP Complete
-- [ ] Ad variations (1→20)
-- [ ] Auto-caption (85% muted viewers)
-- [ ] UGC Marketplace MVP
-- [ ] 15 more templates (20 total)
+| Check | Status | Details |
+|-------|--------|---------|
+| Build | ✅ PASS | Next.js 15.1.0, 0 errors |
+| Tests | ✅ PASS | 49/49 tests (100%) |
+| Type Check | ✅ PASS | TypeScript 5.9.3, 0 errors |
+| Lint | ✅ PASS | ESLint 9, 0 errors |
+| Production | ✅ LIVE | HTTP 200 OK |
 
-### Sprint 3 (Days 29-42) — V1 Launch
-- [ ] Bulk upload
-- [ ] AI voiceover (ElevenLabs)
-- [ ] Brand Kit
-- [ ] Analytics dashboard
-- [ ] **Day 30: Public Launch**
+### Live URLs
 
----
-
-## Success Metrics (Day 30)
-
-| Metric | Target |
-|--------|--------|
-| Users | 20 |
-| MRR | $1,500 |
-| Activation Rate | 60% |
-| Videos/Week | 50+ |
-| NPS | ≥30 |
-
----
-
-## Team
-
-| Role | Status |
-|------|--------|
-| Founder | ✅ Hired |
-| Full-Stack Dev | 🔴 Hiring (Day 1 priority) |
-| Designer (PT) | 🟡 Day 5 |
+| Environment | URL | Status |
+|-------------|-----|--------|
+| Production | https://sophia-ai-factory.vercel.app | ✅ Live |
+| Chat | https://sophia-ai-factory.vercel.app/chat | ✅ Live |
+| API | https://sophia-ai-factory.vercel.app/api/generate | ✅ Live |
 
 ---

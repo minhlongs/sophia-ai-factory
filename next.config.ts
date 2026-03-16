@@ -1,6 +1,5 @@
 import type { NextConfig } from "next";
 import { getSecurityHeaders } from "./lib/security-headers";
-import withBundleAnalyzer from '@next/bundle-analyzer';
 
 const nextConfig: NextConfig = {
   // Static export for Cloudflare Pages
@@ -38,11 +37,6 @@ const nextConfig: NextConfig = {
       headers: getSecurityHeaders(),
     },
   ],
-  // Enable Turbopack mode explicitly to avoid webpack config errors
-  turbopack: {},
 };
 
-// Bundle analyzer wrapper
-export default withBundleAnalyzer({
-  enabled: process.env.ANALYZE === 'true',
-})(nextConfig);
+export default nextConfig;

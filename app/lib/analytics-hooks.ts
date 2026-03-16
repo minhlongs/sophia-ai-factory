@@ -87,9 +87,8 @@ export function useRevenueMetrics(): RevenueMetrics {
         totalRevenue: mrr, // Simplified: current MRR as total
         byTier,
       }
-    } catch {
-      // Log error for debugging (development only)
-      // TODO: Replace with proper error tracking (Sentry, etc.)
+    } catch (error) {
+      console.error('Error calculating revenue metrics:', error)
       return {
         mrr: 0,
         arr: 0,
@@ -136,8 +135,8 @@ export function useSubscriptionMetrics(): SubscriptionMetrics {
         uncancelledSubscriptions: uncancelled,
         cancelledSubscriptions: cancelled,
       }
-    } catch {
-      // Intentionally left empty - error handled by return statement
+    } catch (error) {
+      console.error('Error calculating subscription metrics:', error)
       return {
         activeSubscriptions: 0,
         churnRate: 0,
@@ -182,9 +181,8 @@ export function useUsageMetrics(): UsageMetrics {
         totalTransferMb,
         byLicense,
       }
-    } catch {
-      // Log error for debugging (development only)
-      // TODO: Replace with proper error tracking (Sentry, etc.)
+    } catch (error) {
+      console.error('Error calculating usage metrics:', error)
       return {
         totalApiCalls: 0,
         totalTransferMb: 0,
@@ -221,9 +219,8 @@ export function useLicenseHealth(): LicenseHealth {
         expired,
         healthScore,
       }
-    } catch {
-      // Log error for debugging (development only)
-      // TODO: Replace with proper error tracking (Sentry, etc.)
+    } catch (error) {
+      console.error('Error calculating license health:', error)
       return {
         total: 0,
         active: 0,
