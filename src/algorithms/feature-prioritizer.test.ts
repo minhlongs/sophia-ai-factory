@@ -15,6 +15,7 @@ import {
   SAMPLE_FEATURES,
   DEFAULT_SPRINT_CONFIG,
   type Feature,
+  type ScoredFeature,
   type SprintConfig,
 } from './feature-prioritizer';
 
@@ -288,7 +289,8 @@ describe('Sprint Capacity Optimizer', () => {
       { id: 'f3', name: 'Large Feature', reach: 5000, impact: 3, confidence: 80, effort: 10, userBusinessValue: 9, timeCriticality: 8, riskReduction: 7, jobSize: 13 },
     ];
     const config: SprintConfig = { capacity: 10, teamSize: 3, duration: 2 };
-    const plan = optimizeSprintPlan(features as any, config);
+    const scored = scoreFeaturesComposite(features, { framework: 'RICE' });
+    const plan = optimizeSprintPlan(scored, config);
     expect(plan.totalEffort).toBeLessThanOrEqual(10);
     expect(plan.utilization).toBeLessThanOrEqual(1);
     expect(plan.features.length + plan.spillover.length).toBe(3);
@@ -300,7 +302,8 @@ describe('Sprint Capacity Optimizer', () => {
       { id: 'f2', name: 'Depends on F1', reach: 2000, impact: 2.5, confidence: 90, effort: 3, userBusinessValue: 8, timeCriticality: 7, riskReduction: 6, jobSize: 3 },
     ];
     const config: SprintConfig = { capacity: 20, teamSize: 3, duration: 2 }; // Increased capacity
-    const plan = optimizeSprintPlan(features as any, config);
+    const scored = scoreFeaturesComposite(features, { framework: 'RICE' });
+    const plan = optimizeSprintPlan(scored, config);
 
     const f1Idx = plan.features.findIndex(f => f.id === 'f1');
     const f2Idx = plan.features.findIndex(f => f.id === 'f2');
@@ -316,14 +319,16 @@ describe('Sprint Capacity Optimizer', () => {
       { id: 'f1', name: 'Big Feature', reach: 5000, impact: 3, confidence: 90, effort: 15, userBusinessValue: 9, timeCriticality: 8, riskReduction: 7, jobSize: 20 },
     ];
     const config: SprintConfig = { capacity: 10, teamSize: 2, duration: 2 };
-    const plan = optimizeSprintPlan(features as any, config);
+    const scored = scoreFeaturesComposite(features, { framework: 'RICE' });
+    const plan = optimizeSprintPlan(scored, config);
     expect(plan.spillover.some(f => f.id === 'f1')).toBe(true);
   });
 
   it('should use velocity when provided', () => {
     const features: Feature[] = [SAMPLE_FEATURES[0]];
     const config: SprintConfig = { capacity: 50, teamSize: 5, duration: 2, velocity: 25 };
-    const plan = optimizeSprintPlan(features as any, config);
+    const scored = scoreFeaturesComposite(features, { framework: 'RICE' });
+    const plan = optimizeSprintPlan(scored, config);
     expect(plan.totalEffort).toBeLessThanOrEqual(25);
   });
 });
@@ -388,7 +393,7 @@ describe('Integration: Full Prioritization Flow', () => {
 
     // Step 3: Plan sprint
     const config: SprintConfig = { capacity: 20, teamSize: 4, duration: 2 };
-    const plan = optimizeSprintPlan(sorted as any, config);
+    const plan = optimizeSprintPlan(sorted as ScoredFeature[], config);
     expect(plan.totalEffort).toBeLessThanOrEqual(20);
   });
 });
