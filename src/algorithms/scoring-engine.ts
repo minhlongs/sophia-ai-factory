@@ -355,7 +355,7 @@ export function scoreProposalsHybrid(
       const weighted = scoreProposalsWeighted(options, criteria);
       const outranking = scoreProposalsOutranking(options, criteria, config.outrankingThreshold);
 
-      const hybridResults = weighted.map((w, i) => {
+      const hybridResults = weighted.map((w) => {
         const o = outranking.find(r => r.optionId === w.optionId)!;
         return {
           ...w,
@@ -523,7 +523,6 @@ export function setPairwiseComparison(
 }
 
 export function normalizeMatrix(matrix: number[][]): number[][] {
-  const n = matrix.length;
   const colSums = matrix[0].map((_, j) => matrix.reduce((sum, row) => sum + row[j], 0));
   return matrix.map(row => row.map((val, j) => val / colSums[j]));
 }

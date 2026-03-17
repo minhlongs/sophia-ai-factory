@@ -220,7 +220,6 @@ export function projectCohortRevenue(
 ): number[] {
   const revenues: number[] = [];
   let customers = cohort.initialCustomers;
-  let cumulativeRevenue = 0;
 
   for (let i = 0; i < monthsToProject; i++) {
     const retentionRate = cohort.retentionRates[i] || cohort.retentionRates[cohort.retentionRates.length - 1] || 0;
@@ -228,7 +227,6 @@ export function projectCohortRevenue(
     customers = customers * clampedRetentionRate;
     const monthlyRevenue = customers * cohort.avgMRRPerCustomer * (1 + cohort.expansionRate);
     revenues.push(monthlyRevenue);
-    cumulativeRevenue += monthlyRevenue;
   }
 
   return revenues;
@@ -297,7 +295,7 @@ export function projectMRR(
     const monthIndex = forecastDate.getMonth();
 
     // Base projection with growth
-    let rawProjection = projectedMRR * (1 + monthlyGrowthRate);
+    const rawProjection = projectedMRR * (1 + monthlyGrowthRate);
 
     // Apply seasonal adjustment
     let finalProjection = rawProjection;
@@ -358,8 +356,9 @@ export function calculateCAGR(
 function validateMRRData(data: MRRData): void {
   const fields: Array<keyof MRRData> = ['startingMRR', 'newMRR', 'expansionMRR', 'contractionMRR', 'churnedMRR', 'reactivatedMRR'];
   for (const field of fields) {
-    if (data[field] < 0) {
-      throw new Error(`${field} cannot be negative`);
+    const value = data[field];
+    if (typeof value === 'number' && value < 0) {
+      throw new Error(`${String(field)} cannot be negative`);
     }
   }
 }

@@ -18,9 +18,12 @@ vi.mock('framer-motion', async (importOriginal) => {
 
 // Mock lucide-react icons
 vi.mock('lucide-react', () => ({
-  ExternalLink: vi.fn((props: React.SVGProps<SVGSVGElement>) => <svg {...props} data-testid="icon-external" />),
-  Tag: vi.fn((props: React.SVGProps<SVGSVGElement>) => <svg {...props} data-testid="icon-tag" />),
-  Percent: vi.fn((props: React.SVGProps<SVGSVGElement>) => <svg {...props} data-testid="icon-percent" />),
+  // @ts-expect-error - Test mock type compatibility
+  ExternalLink: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} data-testid="icon-external" />,
+  // @ts-expect-error - Test mock type compatibility
+  Tag: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} data-testid="icon-tag" />,
+  // @ts-expect-error - Test mock type compatibility
+  Percent: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} data-testid="icon-percent" />,
 }))
 
 // Mock affiliate data

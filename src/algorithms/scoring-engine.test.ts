@@ -23,7 +23,6 @@ import {
   type ScoringCriteria,
   type ProposalOption,
   type UtilityConfig,
-  type TOPSISResult,
 } from './scoring-engine';
 
 describe('Weighted Sum Model', () => {

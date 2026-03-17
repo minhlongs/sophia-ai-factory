@@ -15,7 +15,6 @@ import {
   type CACMetrics,
   type GrossMarginConfig,
   type BreakevenInput,
-  type UnitEconomicsInput,
 } from './unit-economics';
 
 describe('calculateLTV', () => {
@@ -231,7 +230,7 @@ describe('analyzeUnitEconomics', () => {
 
   it('should return all required fields', () => {
     const result = analyzeUnitEconomics(SAMPLE_DATA.healthyStartup);
-    expect(result.analyzedAt).toBeInstanceOf(Date);
+    expect(result.analyzedAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
     expect(result.companyId).toBe('startup-001');
     expect(result.ltv).toBeDefined();
     expect(result.cacPayback).toBeDefined();

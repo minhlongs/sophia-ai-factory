@@ -9,6 +9,18 @@
  */
 
 /**
+ * Default constants for unit economics calculations
+ */
+export const UNIT_ECONOMICS_DEFAULTS = {
+  maxLifetimeMonths: 120, // 10 year cap for zero-churn scenarios
+  defaultDiscountRate: 0.1, // 10% annual discount rate
+  targetGrossMargin: 85, // SaaS benchmark
+  marginImprovementStep: 10, // Gradual improvement target
+  maxPaybackMonths: 999.9, // Cap for infinite payback scenarios
+  daysPerMonth: 30, // Days per month for conversions
+};
+
+/**
  * Customer lifetime value metrics
  */
 export interface LTVMetrics {
@@ -46,7 +58,7 @@ export interface CACMetrics {
   newCustomers: number;
   /** Average revenue per user per month */
   arpu: number;
-  /** Gross margin percentage (0-1) */
+  /** Gross margin percentage (0-100, e.g., 75 = 75%) */
   grossMarginPercent: number;
 }
 
@@ -148,7 +160,7 @@ export interface UnitEconomicsInput {
  * Complete unit economics analysis result
  */
 export interface UnitEconomicsResult {
-  analyzedAt: Date;
+  analyzedAt: string; // ISO 8601 format for JSON serialization
   companyId: string;
   ltv: LTVResult;
   cacPayback: CACPaybackResult;
@@ -217,7 +229,9 @@ export function calculateCACPayback(metrics: CACMetrics): CACPaybackResult {
   const contributionMargin = arpu * (grossMarginPercent / 100);
 
   // Payback period = CAC / Monthly Contribution
-  const paybackMonths = contributionMargin > 0 ? cac / contributionMargin : Infinity;
+  const paybackMonths = contributionMargin > 0
+    ? Math.min(cac / contributionMargin, UNIT_ECONOMICS_DEFAULTS.maxPaybackMonths)
+    : UNIT_ECONOMICS_DEFAULTS.maxPaybackMonths;
 
   // Convert to days
   const paybackDays = Math.round(paybackMonths * 30);
@@ -247,7 +261,7 @@ export function calculateCACPayback(metrics: CACMetrics): CACPaybackResult {
  * Analyze and optimize gross margin
  */
 export function optimizeGrossMargin(config: GrossMarginConfig): GrossMarginResult {
-  const { revenue, cogs, variableCosts, fixedCosts } = config;
+  const { revenue, cogs, variableCosts } = config;
 
   // Current gross margin
   const currentMargin = revenue > 0 ? ((revenue - cogs) / revenue) * 100 : 0;
@@ -310,7 +324,9 @@ export function analyzeBreakeven(input: BreakevenInput): BreakevenResult {
   const contributionMargin = pricePerUnit - variableCostPerUnit;
 
   // Breakeven units = Fixed Costs / Contribution Margin
-  const breakevenUnits = contributionMargin > 0 ? Math.ceil(fixedCosts / contributionMargin) : Infinity;
+  const breakevenUnits = contributionMargin > 0
+    ? Math.min(Math.ceil(fixedCosts / contributionMargin), UNIT_ECONOMICS_DEFAULTS.maxPaybackMonths)
+    : UNIT_ECONOMICS_DEFAULTS.maxPaybackMonths;
 
   // Breakeven revenue
   const breakevenRevenue = breakevenUnits * pricePerUnit;
@@ -335,6 +351,32 @@ export function analyzeBreakeven(input: BreakevenInput): BreakevenResult {
     monthsToBreakeven: gapToBreakeven > 0 && currentUnits > 0 ? Math.ceil(gapToBreakeven / currentUnits) : 0,
     safetyMargin: Math.round(safetyMargin * 10) / 10,
   };
+}
+
+/**
+ * Score a metric against thresholds (excellent=3, good=2, warning=1, else=0)
+ */
+function scoreMetric<T extends number>(
+  value: T,
+  thresholds: { excellent: T; good: T; warning: T }
+): number {
+  if (value >= thresholds.excellent) return 3;
+  if (value >= thresholds.good) return 2;
+  if (value >= thresholds.warning) return 1;
+  return 0;
+}
+
+/**
+ * Score a metric against thresholds for inverse metrics (lower = better)
+ */
+function scoreMetricInverse<T extends number>(
+  value: T,
+  thresholds: { excellent: T; good: T; warning: T }
+): number {
+  if (value <= thresholds.excellent) return 3;
+  if (value <= thresholds.good) return 2;
+  if (value <= thresholds.warning) return 1;
+  return 0;
 }
 
 /**
@@ -398,18 +440,10 @@ export function analyzeUnitEconomics(input: UnitEconomicsInput): UnitEconomicsRe
   const ltvToCacRatio = ltv.ltvToCacRatio || 1;
   const { ltvToCac, cacPayback: cacPaybackThresholds, grossMargin: marginThresholds } = HEALTH_THRESHOLDS;
 
-  let healthScore = 0;
-  if (ltvToCacRatio >= ltvToCac.excellent) healthScore += 3;
-  else if (ltvToCacRatio >= ltvToCac.good) healthScore += 2;
-  else if (ltvToCacRatio >= ltvToCac.warning) healthScore += 1;
-
-  if (cacPayback.paybackMonths <= cacPaybackThresholds.excellent) healthScore += 3;
-  else if (cacPayback.paybackMonths <= cacPaybackThresholds.good) healthScore += 2;
-  else if (cacPayback.paybackMonths <= cacPaybackThresholds.warning) healthScore += 1;
-
-  if (grossMarginPercent >= marginThresholds.excellent) healthScore += 3;
-  else if (grossMarginPercent >= marginThresholds.good) healthScore += 2;
-  else if (grossMarginPercent >= marginThresholds.warning) healthScore += 1;
+  const healthScore =
+    scoreMetric(ltvToCacRatio, ltvToCac) +
+    scoreMetricInverse(cacPayback.paybackMonths, cacPaybackThresholds) +
+    scoreMetric(grossMarginPercent, marginThresholds);
 
   let overallHealth: 'excellent' | 'good' | 'warning' | 'critical';
   if (healthScore >= 8) overallHealth = 'excellent';
@@ -441,7 +475,7 @@ export function analyzeUnitEconomics(input: UnitEconomicsInput): UnitEconomicsRe
   }
 
   return {
-    analyzedAt: new Date(),
+    analyzedAt: new Date().toISOString(),
     companyId,
     ltv,
     cacPayback,

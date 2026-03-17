@@ -48,8 +48,10 @@ vi.mock('../animations/FadeIn', () => ({
 
 // Mock lucide-react icons
 vi.mock('lucide-react', () => ({
-  ChevronDown: vi.fn((props: React.SVGProps<SVGSVGElement>) => <svg {...props} data-testid="icon-chevron-down" />),
-  ChevronUp: vi.fn((props: React.SVGProps<SVGSVGElement>) => <svg {...props} data-testid="icon-chevron-up" />),
+  // @ts-expect-error - Test mock type compatibility
+  ChevronDown: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} data-testid="icon-chevron-down" />,
+  // @ts-expect-error - Test mock type compatibility
+  ChevronUp: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} data-testid="icon-chevron-up" />,
 }))
 
 describe('FAQ', () => {

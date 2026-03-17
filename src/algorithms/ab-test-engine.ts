@@ -614,7 +614,7 @@ export const SAMPLE_DATA = {
   },
 };
 
-export default {
+export const abTestEngine = {
   analyzeABTest,
   frequentistTest,
   bayesianTest,

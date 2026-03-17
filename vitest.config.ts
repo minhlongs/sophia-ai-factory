@@ -25,6 +25,6 @@ export default defineConfig({
         },
       },
     },
-    include: ['app/**/*.test.{ts,tsx}'],
+    include: ['app/**/*.test.{ts,tsx}', 'src/**/*.test.{ts,tsx}'],
   },
 });

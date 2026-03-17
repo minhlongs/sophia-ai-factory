@@ -93,13 +93,20 @@ vi.mock('../ui/FloatingElement', () => ({
 
 // Mock lucide-react icons
 vi.mock('lucide-react', () => ({
-  ArrowRight: vi.fn((props: React.SVGProps<SVGSVGElement>) => <svg {...props} data-testid="icon-arrow" />),
-  Zap: vi.fn((props: React.SVGProps<SVGSVGElement>) => <svg {...props} data-testid="icon-zap" />),
-  TrendingUp: vi.fn((props: React.SVGProps<SVGSVGElement>) => <svg {...props} data-testid="icon-trending" />),
-  Clock: vi.fn((props: React.SVGProps<SVGSVGElement>) => <svg {...props} data-testid="icon-clock" />),
-  Bot: vi.fn((props: React.SVGProps<SVGSVGElement>) => <svg {...props} data-testid="icon-bot" />),
-  Cpu: vi.fn((props: React.SVGProps<SVGSVGElement>) => <svg {...props} data-testid="icon-cpu" />),
-  Workflow: vi.fn((props: React.SVGProps<SVGSVGElement>) => <svg {...props} data-testid="icon-workflow" />),
+  // @ts-expect-error - Test mock type compatibility
+  ArrowRight: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} data-testid="icon-arrow" />,
+  // @ts-expect-error - Test mock type compatibility
+  Zap: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} data-testid="icon-zap" />,
+  // @ts-expect-error - Test mock type compatibility
+  TrendingUp: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} data-testid="icon-trending" />,
+  // @ts-expect-error - Test mock type compatibility
+  Clock: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} data-testid="icon-clock" />,
+  // @ts-expect-error - Test mock type compatibility
+  Bot: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} data-testid="icon-bot" />,
+  // @ts-expect-error - Test mock type compatibility
+  Cpu: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} data-testid="icon-cpu" />,
+  // @ts-expect-error - Test mock type compatibility
+  Workflow: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} data-testid="icon-workflow" />,
 }))
 
 // Mock document.getElementById

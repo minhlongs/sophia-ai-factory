@@ -30,7 +30,7 @@ export const Features = () => {
   };
 
   return (
-    <section id="features" className="py-20">
+    <section id="features" className="py-20" data-testid="features-section">
       <Container>
         <FadeIn className="text-center mb-16">
           <h2 className="text-3xl md:text-5xl font-bold font-heading mb-4">

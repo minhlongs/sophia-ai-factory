@@ -16,6 +16,13 @@ const eslintConfig = defineConfig([
     ".claude/**",
     // Ignore test files in .claude
     "**/__tests__/**",
+    // Ignore Python virtual environments and node_modules
+    ".venv/**",
+    "**/.venv/**",
+    "agi-sops/.venv/**",
+    "**/node_modules/**",
+    "**/coverage/**",
+    "**/dist/**",
   ]),
   // Allow setState in useEffect for initial auth state (legitimate use case)
   {

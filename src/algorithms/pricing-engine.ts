@@ -154,7 +154,7 @@ export function calculateVolumeDiscount(
 
   const subtotal = unitPrice * quantity;
 
-  if (discountRule.type === 'percentage') {
+  if (discountRule.type === 'percentage' || discountRule.type === 'volume') {
     return calculatePercentageDiscount(subtotal, discountRule.value);
   } else if (discountRule.type === 'fixed') {
     return calculateFixedDiscount(subtotal, discountRule.value);

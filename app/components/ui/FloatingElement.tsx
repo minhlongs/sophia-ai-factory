@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ReactNode } from "react";
+import { type ReactNode } from "react";
 import { cn } from "@/app/lib/utils";
 
 interface FloatingElementProps {
@@ -30,6 +30,7 @@ export const FloatingElement = ({
         delay: delay,
       }}
     >
+      {/* @ts-expect-error - Framer motion type compatibility */}
       {children}
     </motion.div>
   );

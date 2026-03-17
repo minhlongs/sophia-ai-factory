@@ -225,9 +225,9 @@ describe('AdminLicensesPage', () => {
     render(<AdminLicensesPage />);
 
     await waitFor(() => {
-      const totalLicensesCard = screen.getByText('Total Licenses').closest('.glass') ||
+      const totalLicensesCard = screen.getByText('Total Licenses').closest('.glass') ??
                                 screen.getByText('Total Licenses').parentElement?.parentElement;
-      expect(within(totalLicensesCard).getByText('0')).toBeInTheDocument();
+      expect(within(totalLicensesCard as HTMLElement).getByText('0')).toBeInTheDocument();
     });
   });
 });

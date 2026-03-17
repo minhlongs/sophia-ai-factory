@@ -45,7 +45,8 @@ vi.mock('../ui/GlassCard', () => ({
 
 // Mock lucide-react
 vi.mock('lucide-react', () => ({
-  ExternalLink: vi.fn((props: React.SVGProps<SVGSVGElement>) => <svg {...props} data-testid="icon-external" />),
+  // @ts-expect-error - Test mock type compatibility
+  ExternalLink: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} data-testid="icon-external" />,
 }))
 
 describe('Affiliates', () => {

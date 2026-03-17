@@ -22,7 +22,6 @@ import {
   SAMPLE_DATA,
   type MRRData,
   type CohortMetrics,
-  type ForecastConfig,
 } from './revenue-forecast';
 
 const sampleMRRData: MRRData = {
