@@ -554,17 +554,3 @@ export const SAMPLE_NPS: NPSData = {
   detractorRate: 0.15,
 };
 
-export default {
-  calculateEngagementScore,
-  detectChurnSignals,
-  calculateChurnRisk,
-  calculateNPSAdjustedScore,
-  correlateNPSWithHealth,
-  generateAlerts,
-  getHealthGrade,
-  analyzeHealthTrend,
-  calculateCustomerHealth,
-  SAMPLE_CUSTOMER,
-  SAMPLE_PREVIOUS,
-  SAMPLE_NPS,
-};

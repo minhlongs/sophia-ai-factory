@@ -487,21 +487,3 @@ export const SAMPLE_USER: User = {
   demographic: { industry: 'retail', size: 'SMB' }
 };
 
-export default {
-  createUserItemMatrix,
-  cosineSimilarity,
-  findSimilarUsers,
-  userBasedCF,
-  itemBasedCF,
-  calculateFeatureSimilarity,
-  calculateTagOverlap,
-  contentBasedScore,
-  contentBasedFiltering,
-  hybridScore,
-  generateRecommendations,
-  getUserPreferences,
-  generateContentReasons,
-  SAMPLE_ITEMS,
-  SAMPLE_INTERACTIONS,
-  SAMPLE_USER
-};

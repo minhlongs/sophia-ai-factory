@@ -444,20 +444,3 @@ export const SAMPLE_FIRMOGRAPHICS: FirmographicData = {
   growthRate: 35,
 };
 
-export default {
-  qualifyLead,
-  qualifyLeadsBatch,
-  calculateICPMatchScore,
-  calculateBehavioralScore,
-  calculateFirmographicScore,
-  classifyLead,
-  compareLeadScores,
-  isHighPriority,
-  assessChurnRisk,
-  generateRecommendedAction,
-  generateNextSteps,
-  LEAD_THRESHOLDS,
-  SAMPLE_ICP,
-  SAMPLE_BEHAVIOR,
-  SAMPLE_FIRMOGRAPHICS,
-};

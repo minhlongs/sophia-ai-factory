@@ -529,12 +529,3 @@ export const SAMPLE_DATA = {
   } as UnitEconomicsInput,
 };
 
-export default {
-  analyzeUnitEconomics,
-  calculateLTV,
-  calculateCACPayback,
-  optimizeGrossMargin,
-  analyzeBreakeven,
-  HEALTH_THRESHOLDS,
-  SAMPLE_DATA,
-};

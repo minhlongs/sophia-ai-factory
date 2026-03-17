@@ -327,7 +327,7 @@ export function determineMoatRating(score: number): MoatRating {
 export function determineCompetitivePosition(
   moatScore: number,
   marketShare: number,
-  competitorCount: number
+  competitorCount: number // eslint-disable-line @typescript-eslint/no-unused-vars
 ): 'leader' | 'challenger' | 'follower' | 'niche' {
   if (marketShare > 0.3 && moatScore >= 60) return 'leader';
   if (marketShare > 0.15 && moatScore >= 40) return 'challenger';
@@ -604,18 +604,3 @@ export const SAMPLE_DATA = {
   } as MoatAnalysisInput,
 };
 
-export default {
-  analyzeMoat,
-  calculateSwitchingCostScore,
-  calculateNetworkEffectScore,
-  calculateBrandStrengthScore,
-  calculateDataAdvantageScore,
-  determineMoatRating,
-  determineCompetitivePosition,
-  generateStrengths,
-  generateWeaknesses,
-  generateRecommendedActions,
-  determineMoatTrend,
-  DEFAULT_WEIGHTS,
-  SAMPLE_DATA,
-};

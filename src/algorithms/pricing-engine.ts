@@ -620,25 +620,3 @@ export const DEFAULT_PRICING_CONFIG: PricingConfig = {
   taxRate: 0.08,
 };
 
-// ============= DEFAULT EXPORT =============
-
-export default {
-  getTierForUsage,
-  calculateTieredPrice,
-  calculatePercentageDiscount,
-  calculateFixedDiscount,
-  calculateVolumeDiscount,
-  applyDiscounts,
-  calculateFinalPrice,
-  calculateBundleQuote,
-  compareBundleVsIndividual,
-  calculateUsageCharge,
-  calculateTotalUsageBill,
-  createCompositeQuote,
-  PRICING_CONFIG_SCHEMA,
-  DEFAULT_PRICING_TIERS,
-  DEFAULT_DISCOUNTS,
-  DEFAULT_BUNDLES,
-  DEFAULT_USAGE_PRICING,
-  DEFAULT_PRICING_CONFIG,
-};

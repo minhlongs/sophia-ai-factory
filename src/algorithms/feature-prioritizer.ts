@@ -439,21 +439,4 @@ export const SAMPLE_FEATURES: Feature[] = [
   },
 ];
 
-export default {
-  calculateRiceScore,
-  calculateIceScore,
-  calculateWsjfScore,
-  scoreFeaturesRice,
-  scoreFeaturesIce,
-  scoreFeaturesWsjf,
-  scoreFeaturesComposite,
-  buildDependencyGraph,
-  topologicalSort,
-  getCriticalPath,
-  optimizeSprintPlan,
-  calculateTeamVelocity,
-  SAMPLE_FEATURES,
-  DEFAULT_SPRINT_CONFIG,
-  DEFAULT_WEIGHTS,
-};
 

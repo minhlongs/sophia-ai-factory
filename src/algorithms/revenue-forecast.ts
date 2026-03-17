@@ -476,21 +476,3 @@ export const SAMPLE_DATA = {
   } as ForecastConfig,
 };
 
-export default {
-  forecastRevenue,
-  projectMRR,
-  projectCohortRevenue,
-  calculateNetMRRChange,
-  calculateEndingMRR,
-  calculateMRRGrowthRate,
-  calculateChurnRate,
-  calculateExpansionRate,
-  calculateQuickRatio,
-  calculateCAGR,
-  calculateVolatility,
-  calculateConfidenceInterval,
-  applySeasonalAdjustment,
-  getSeasonalFactor,
-  DEFAULT_SEASONAL_FACTORS,
-  SAMPLE_DATA,
-};

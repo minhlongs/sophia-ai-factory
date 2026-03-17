@@ -105,7 +105,7 @@ describe('LicenseService - Phase 2 (LICENSE_UI)', () => {
         customerName: 'Rotation Test',
       })
 
-      const result = LicenseService.rotateKey(license.id)
+      const result = LicenseService.rotateKey(license.id) // eslint-disable-line @typescript-eslint/no-unused-vars
       const updated = LicenseService.getById(license.id)
 
       expect(updated?.metadata?.rotatedFrom).toBeDefined()
