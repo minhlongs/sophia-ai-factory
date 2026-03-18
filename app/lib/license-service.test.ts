@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { LicenseService, generateLicenseKey, validateLicenseKey } from './license-service'
-import type { LicenseTier } from './license-types'
 
 describe('LicenseService - Phase 2 (LICENSE_UI)', () => {
   beforeEach(() => {
@@ -105,7 +104,7 @@ describe('LicenseService - Phase 2 (LICENSE_UI)', () => {
         customerName: 'Rotation Test',
       })
 
-      const result = LicenseService.rotateKey(license.id) // eslint-disable-line @typescript-eslint/no-unused-vars
+      LicenseService.rotateKey(license.id)
       const updated = LicenseService.getById(license.id)
 
       expect(updated?.metadata?.rotatedFrom).toBeDefined()
@@ -113,8 +112,7 @@ describe('LicenseService - Phase 2 (LICENSE_UI)', () => {
     })
 
     it('returns undefined for non-existent license', () => {
-      const result = LicenseService.rotateKey('non-existent-id')
-      expect(result).toBeUndefined()
+      expect(LicenseService.rotateKey('non-existent-id')).toBeUndefined()
     })
   })
 

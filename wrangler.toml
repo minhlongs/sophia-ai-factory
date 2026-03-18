@@ -1,7 +1,7 @@
 name = "sophia-proposal"
 compatibility_date = "2024-01-01"
 compatibility_flags = ["nodejs_compat"]
-pages_build_output_dir = "./.next"
+pages_build_output_dir = "./out"
 
 [vars]
 NODE_VERSION = "20"
