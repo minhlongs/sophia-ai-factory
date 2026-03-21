@@ -7,7 +7,7 @@
  * - Survey eligibility checks
  */
 
-import { createServerClient } from '@/lib/supabase/client';
+import { createServerClient } from '@/lib/db/client';
 
 export interface NpsResponse {
   orgId: string;
@@ -69,10 +69,10 @@ export async function checkNpsEligibility(orgId: string): Promise<{
   reason?: string;
   daysSinceLastSurvey?: number;
 }> {
-  const supabase = createServerClient();
+  const db = createServerClient();
 
   // Check active subscription
-  const { data: subscription } = await supabase
+  const { data: subscription } = await db
     .from('subscriptions')
     .select('id, status')
     .eq('org_id', orgId)
@@ -84,7 +84,7 @@ export async function checkNpsEligibility(orgId: string): Promise<{
   }
 
   // Check has at least one proposal
-  const { count: proposalCount } = await supabase
+  const { count: proposalCount } = await db
     .from('proposals')
     .select('*', { count: 'exact', head: true })
     .eq('org_id', orgId);
@@ -94,7 +94,7 @@ export async function checkNpsEligibility(orgId: string): Promise<{
   }
 
   // Check last NPS submission
-  const { data: lastNps } = await supabase
+  const { data: lastNps } = await db
     .from('customer_feedback')
     .select('submitted_at')
     .eq('org_id', orgId)
@@ -129,12 +129,12 @@ export async function scheduleNpsSurvey(
   orgId: string,
   subscriptionDate: Date
 ): Promise<boolean> {
-  const supabase = createServerClient();
+  const db = createServerClient();
 
   const npsDate = new Date(subscriptionDate);
   npsDate.setDate(npsDate.getDate() + 7);
 
-  const { error } = await supabase.from('scheduled_tasks').insert({
+  const { error } = await db.from('scheduled_tasks').insert({
     org_id: orgId,
     task_type: 'nps_survey',
     scheduled_for: npsDate.toISOString(),
@@ -152,14 +152,14 @@ export async function submitNpsFeedback(
   score: number,
   feedback?: string
 ): Promise<{ success: boolean; error?: string }> {
-  const supabase = createServerClient();
+  const db = createServerClient();
 
   // Validate score
   if (score < 0 || score > 10) {
     return { success: false, error: 'Invalid NPS score (must be 0-10)' };
   }
 
-  const { error } = await supabase.from('customer_feedback').insert({
+  const { error } = await db.from('customer_feedback').insert({
     org_id: orgId,
     survey_type: 'nps',
     responses: { feedback: feedback || null },
@@ -177,9 +177,9 @@ export async function submitNpsFeedback(
  * Get NPS statistics for an organization
  */
 export async function getNpsStats(orgId: string): Promise<NpsStats | null> {
-  const supabase = createServerClient();
+  const db = createServerClient();
 
-  const { data: feedbacks } = await supabase
+  const { data: feedbacks } = await db
     .from('customer_feedback')
     .select('nps_score')
     .eq('org_id', orgId)

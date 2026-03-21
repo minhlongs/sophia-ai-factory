@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser, createOrganization, getUserOrganization } from "@/lib/supabase/auth";
+import { getCurrentUser, createOrganization, getUserOrganization } from "@/lib/db/auth";
 import { createOrgSchema } from "@/lib/validators/org";
 
 // API routes are dynamic by default

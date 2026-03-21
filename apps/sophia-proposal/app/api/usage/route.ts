@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/client';
+import { createServerClient } from '@/lib/db/client';
 import { getUsageHistory, getUsageSummary } from '@/lib/billing/usage-tracker';
 
 export async function GET(request: NextRequest) {
@@ -14,10 +14,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const supabase = createServerClient();
+    const db = createServerClient();
 
     // Verify org exists and user has access (can be extended with auth check)
-    const { data: org } = await supabase
+    const { data: org } = await db
       .from('organizations')
       .select('id')
       .eq('id', orgId)

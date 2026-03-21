@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/client';
+import { createServerClient } from '@/lib/db/client';
 import { trackClick } from '@/lib/affiliate/click-tracker';
 
 export const dynamic = 'force-dynamic';
@@ -22,8 +22,8 @@ export async function GET(req: NextRequest) {
   }
 
   // Fetch affiliate URL — use service client for public lookup
-  const supabase = createServerClient();
-  const { data: program } = await supabase
+  const db = createServerClient();
+  const { data: program } = await db
     .from('affiliate_programs')
     .select('affiliate_url')
     .eq('id', programId)

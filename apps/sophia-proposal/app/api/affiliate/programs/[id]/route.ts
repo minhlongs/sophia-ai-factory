@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/client';
+import { createServerClient } from '@/lib/db/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,9 +21,9 @@ export async function GET(
       return NextResponse.json({ error: 'Program ID required' }, { status: 400 });
     }
 
-    const supabase = createServerClient();
+    const db = createServerClient();
 
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('affiliate_programs')
       .select('*')
       .eq('id', id)

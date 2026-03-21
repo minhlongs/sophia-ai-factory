@@ -12,7 +12,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase/client";
+import { createServerClient } from "@/lib/db/client";
 import { verifyWebhookSignature } from "@/lib/video/heygen-client";
 import { heygenWebhookSchema } from "@/lib/validators/video";
 

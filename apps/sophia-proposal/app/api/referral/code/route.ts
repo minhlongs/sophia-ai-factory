@@ -4,8 +4,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser, getUserOrganization } from '@/lib/supabase/auth';
-import { createServerClient } from '@/lib/supabase/client';
+import { getCurrentUser, getUserOrganization } from '@/lib/db/auth';
+import { createServerClient } from '@/lib/db/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,10 +35,10 @@ export async function GET(request: NextRequest) {
     const { org, error, status } = await getAuthenticatedOrg(request);
     if (!org) return NextResponse.json({ error }, { status });
 
-    const supabase = createServerClient();
+    const db = createServerClient();
 
     // Look for existing active code
-    const { data: existing } = await supabase
+    const { data: existing } = await db
       .from('referral_codes')
       .select('*')
       .eq('org_id', org.id)
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
 
     // Auto-create on first access
     const code = generateCode(org.slug);
-    const { data: created, error: insertErr } = await supabase
+    const { data: created, error: insertErr } = await db
       .from('referral_codes')
       .insert({ org_id: org.id, code, commission_rate: 0.20 })
       .select('*')
@@ -76,17 +76,17 @@ export async function POST(request: NextRequest) {
     const { org, error, status } = await getAuthenticatedOrg(request);
     if (!org) return NextResponse.json({ error }, { status });
 
-    const supabase = createServerClient();
+    const db = createServerClient();
 
     // Deactivate existing codes
-    await supabase
+    await db
       .from('referral_codes')
       .update({ is_active: false })
       .eq('org_id', org.id);
 
     // Create new code
     const code = generateCode(org.slug);
-    const { data: created, error: insertErr } = await supabase
+    const { data: created, error: insertErr } = await db
       .from('referral_codes')
       .insert({ org_id: org.id, code, commission_rate: 0.20 })
       .select('*')

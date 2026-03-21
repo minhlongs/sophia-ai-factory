@@ -4,7 +4,7 @@
  * Helper functions for organization operations
  */
 
-import { SupabaseClient } from "@supabase/supabase-js";
+import { D1Client } from './db/d1-query-builder';
 
 /**
  * Get the organization ID for a user
@@ -12,15 +12,15 @@ import { SupabaseClient } from "@supabase/supabase-js";
  */
 export async function getOrgId(
   userId: string,
-  supabase: SupabaseClient
+  db: D1Client
 ): Promise<string | null> {
-  const { data } = await supabase
-    .from("organization_members")
+  const { data } = await db
+    .from("org_members")
     .select("org_id")
     .eq("user_id", userId)
     .single();
 
-  return data?.org_id || null;
+  return (data as Record<string, string>)?.org_id || null;
 }
 
 /**
@@ -28,9 +28,9 @@ export async function getOrgId(
  */
 export async function getOrg(
   orgId: string,
-  supabase: SupabaseClient
+  db: D1Client
 ) {
-  const { data } = await supabase
+  const { data } = await db
     .from("organizations")
     .select("*")
     .eq("id", orgId)
@@ -45,10 +45,10 @@ export async function getOrg(
 export async function isOrgMember(
   userId: string,
   orgId: string,
-  supabase: SupabaseClient
+  db: D1Client
 ): Promise<boolean> {
-  const { data } = await supabase
-    .from("organization_members")
+  const { data } = await db
+    .from("org_members")
     .select("id")
     .eq("user_id", userId)
     .eq("org_id", orgId)
@@ -63,14 +63,14 @@ export async function isOrgMember(
 export async function isOrgAdmin(
   userId: string,
   orgId: string,
-  supabase: SupabaseClient
+  db: D1Client
 ): Promise<boolean> {
-  const { data } = await supabase
-    .from("organization_members")
+  const { data } = await db
+    .from("org_members")
     .select("role")
     .eq("user_id", userId)
     .eq("org_id", orgId)
     .single();
 
-  return data?.role === "admin";
+  return (data as Record<string, string>)?.role === "admin";
 }

@@ -4,7 +4,7 @@
  * Logs MCU consumption for billable features.
  */
 
-import { createServerClient } from '@/lib/supabase/client';
+import { createServerClient } from '@/lib/db/client';
 import { calculateMcuCost } from './mcu-pricing';
 
 export interface UsageEvent {
@@ -34,7 +34,7 @@ export async function logUsage(event: UsageEvent): Promise<{
   remainingBalance?: number;
   error?: string;
 }> {
-  const supabase = createServerClient();
+  const db = createServerClient();
 
   try {
     // Calculate MCU cost for this feature
@@ -42,7 +42,7 @@ export async function logUsage(event: UsageEvent): Promise<{
 
     if (mcuCost <= 0) {
       // Free feature, just log it
-      await supabase.from('usage_logs').insert({
+      await db.from('usage_logs').insert({
         org_id: event.orgId,
         feature: event.feature,
         mcu_cost: 0,
@@ -53,7 +53,7 @@ export async function logUsage(event: UsageEvent): Promise<{
     }
 
     // Use database function to atomically check and deduct
-    const { data, error } = await supabase.rpc('deduct_mcu_balance', {
+    const { data, error } = await db.rpc('deduct_mcu_balance', {
       p_org_id: event.orgId,
       p_amount: mcuCost,
       p_feature: event.feature,
@@ -70,7 +70,7 @@ export async function logUsage(event: UsageEvent): Promise<{
     }
 
     // Get updated balance
-    const { data: balanceData } = await supabase
+    const { data: balanceData } = await db
       .from('org_balances')
       .select('balance')
       .eq('org_id', event.orgId)
@@ -99,9 +99,9 @@ export async function getUsageHistory(
   limit: number = 100,
   offset: number = 0
 ): Promise<UsageLog[]> {
-  const supabase = createServerClient();
+  const db = createServerClient();
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('usage_logs')
     .select('*')
     .eq('org_id', orgId)
@@ -128,12 +128,12 @@ export async function getUsageSummary(
   byFeature: Array<{ feature: string; count: number; mcuUsed: number }>;
   dailyUsage: Array<{ date: string; mcuUsed: number }>;
 }> {
-  const supabase = createServerClient();
+  const db = createServerClient();
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - days);
 
   // Get raw usage data
-  const { data: logs } = await supabase
+  const { data: logs } = await db
     .from('usage_logs')
     .select('feature, mcu_cost, created_at')
     .eq('org_id', orgId)

@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/client';
+import { createServerClient } from '@/lib/db/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,9 +24,9 @@ export async function GET(req: NextRequest) {
   const pageSize = Math.min(50, Math.max(1, parseInt(searchParams.get('pageSize') || '20')));
   const offset = (page - 1) * pageSize;
 
-  const supabase = createServerClient();
+  const db = createServerClient();
 
-  let query = supabase
+  let query = db
     .from('affiliate_content')
     .select('id, program_id, content_type, status, title, meta, created_at, updated_at', { count: 'exact' })
     .eq('org_id', orgId)

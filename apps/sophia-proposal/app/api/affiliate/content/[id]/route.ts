@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/client';
+import { createServerClient } from '@/lib/db/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,8 +18,8 @@ export async function GET(
   const orgId = _req.headers.get('x-org-id');
   if (!orgId) return NextResponse.json({ error: 'Organization ID required' }, { status: 400 });
 
-  const supabase = createServerClient();
-  const { data, error } = await supabase
+  const db = createServerClient();
+  const { data, error } = await db
     .from('affiliate_content')
     .select('*, affiliate_programs(name, company, logo_url)')
     .eq('id', id)
@@ -56,8 +56,8 @@ export async function PATCH(
     );
   }
 
-  const supabase = createServerClient();
-  const { data, error } = await supabase
+  const db = createServerClient();
+  const { data, error } = await db
     .from('affiliate_content')
     .update({ status, updated_at: new Date().toISOString() })
     .eq('id', id)

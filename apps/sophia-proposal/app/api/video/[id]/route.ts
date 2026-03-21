@@ -12,7 +12,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createAuthClient, createServerClient } from "@/lib/supabase/client";
+import { createAuthClient, createServerClient } from "@/lib/db/client";
 import { getVideoStatus } from "@/lib/video/heygen-client";
 
 export async function GET(

@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { validateApiKey } from '@/lib/raas/api-key-manager';
 import { checkRateLimit, rateLimitHeaders } from '@/lib/raas/rate-limiter';
 import { recordUsage } from '@/lib/raas/usage-meter';
-import { createServerClient } from '@/lib/supabase/client';
+import { createServerClient } from '@/lib/db/client';
 
 export const dynamic = 'force-dynamic';
 

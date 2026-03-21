@@ -8,7 +8,7 @@
  * - Pilot customer tracking
  */
 
-import { createServerClient } from '@/lib/supabase/client';
+import { createServerClient } from '@/lib/db/client';
 import { scheduleNpsSurvey } from '@/lib/surveys/nps';
 
 export interface PilotOnboardingData {
@@ -62,7 +62,7 @@ export async function initializePilotOnboarding(
   orgId: string,
   subscriptionDate: Date
 ): Promise<{ success: boolean; error?: string }> {
-  const supabase = createServerClient();
+  const db = createServerClient();
 
   try {
     // Schedule NPS survey for 7 days later
@@ -73,7 +73,7 @@ export async function initializePilotOnboarding(
     }
 
     // Create onboarding record
-    const { error } = await supabase.from('pilot_onboarding').insert({
+    const { error } = await db.from('pilot_onboarding').insert({
       org_id: orgId,
       started_at: subscriptionDate.toISOString(),
       nps_scheduled_at: new Date(subscriptionDate.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString(),
@@ -101,10 +101,10 @@ export async function getPilotOnboardingStatus(orgId: string): Promise<{
   daysSinceStart: number;
   npsDue: boolean;
 } | null> {
-  const supabase = createServerClient();
+  const db = createServerClient();
 
   // Check if organization has active subscription
-  const { data: subscription } = await supabase
+  const { data: subscription } = await db
     .from('subscriptions')
     .select('id, status, created_at')
     .eq('org_id', orgId)
@@ -137,10 +137,10 @@ export async function trackOnboardingMilestone(
   orgId: string,
   milestone: 'first_proposal' | 'onboarding_call' | 'feedback_submitted'
 ): Promise<boolean> {
-  const supabase = createServerClient();
+  const db = createServerClient();
 
   // Try to insert milestone record
-  const { error } = await supabase.from('onboarding_milestones').insert({
+  const { error } = await db.from('onboarding_milestones').insert({
     org_id: orgId,
     milestone_type: milestone,
     completed_at: new Date().toISOString(),
@@ -169,10 +169,10 @@ export async function getOnboardingChecklist(
   firstProposal: boolean;
   feedback: boolean;
 } | null> {
-  const supabase = createServerClient();
+  const db = createServerClient();
 
   // Check subscription
-  const { data: subscription } = await supabase
+  const { data: subscription } = await db
     .from('subscriptions')
     .select('id')
     .eq('org_id', orgId)
@@ -180,13 +180,13 @@ export async function getOnboardingChecklist(
     .single();
 
   // Check proposals
-  const { count: proposalCount } = await supabase
+  const { count: proposalCount } = await db
     .from('proposals')
     .select('*', { count: 'exact', head: true })
     .eq('org_id', orgId);
 
   // Check feedback
-  const { data: feedback } = await supabase
+  const { data: feedback } = await db
     .from('customer_feedback')
     .select('id')
     .eq('org_id', orgId)
@@ -196,7 +196,7 @@ export async function getOnboardingChecklist(
   // Check onboarding call (optional table)
   let hasOnboardingCall = false;
   try {
-    const { data: call } = await supabase
+    const { data: call } = await db
       .from('onboarding_calls')
       .select('id')
       .eq('org_id', orgId)

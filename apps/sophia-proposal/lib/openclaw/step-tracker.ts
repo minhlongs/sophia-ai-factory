@@ -5,7 +5,7 @@
  * after each mutation (Supabase stores execution_log as JSONB, no partial updates).
  */
 
-import { createServerClient } from '@/lib/supabase/client';
+import { createServerClient } from '@/lib/db/client';
 import type { PEVStep } from '@/types/raas';
 
 export class StepTracker {
@@ -72,8 +72,8 @@ export class StepTracker {
   // --------------------------------------------------------------------------
 
   private async persist(): Promise<void> {
-    const supabase = createServerClient();
-    await supabase
+    const db = createServerClient();
+    await db
       .from('missions')
       .update({ execution_log: this.steps, updated_at: new Date().toISOString() })
       .eq('id', this.missionId);

@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createAuthClient, createServerClient } from '@/lib/supabase/client';
+import { createAuthClient, createServerClient } from '@/lib/db/client';
 import { getOrgId } from '@/lib/org';
 
 const HUBSPOT_CLIENT_ID = process.env.HUBSPOT_CLIENT_ID;

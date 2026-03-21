@@ -4,7 +4,7 @@
  * Records API usage per key and provides aggregated stats for billing/analytics.
  */
 
-import { createServerClient } from '@/lib/supabase/client';
+import { createServerClient } from '@/lib/db/client';
 
 // ── Local types ───────────────────────────────────────────────────────────────
 

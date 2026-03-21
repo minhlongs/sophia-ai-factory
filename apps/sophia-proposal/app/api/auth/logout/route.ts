@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { signOut } from "@/lib/supabase/auth";
+import { signOut } from "@/lib/db/auth";
 import { logoutSchema } from "@/lib/validators/auth";
 
 // API routes are dynamic by default
@@ -38,7 +38,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error }, { status: 400 });
     }
 
-    return NextResponse.json({ message: "Logged out successfully" });
+    const response = NextResponse.json({ message: "Logged out successfully" });
+    response.cookies.delete('auth-token');
+    return response;
   } catch (e) {
     console.error("Logout error:", e);
     return NextResponse.json(

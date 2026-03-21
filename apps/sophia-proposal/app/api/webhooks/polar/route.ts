@@ -10,7 +10,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/client';
+import { createServerClient } from '@/lib/db/client';
 import { getPolarClient, PolarWebhookEvent } from '@/lib/billing/polar-client';
 import { getTierByProductId } from '@/lib/billing/mcu-pricing';
 import { createHash } from 'crypto';
@@ -130,7 +130,7 @@ class WebhookKnownError extends Error {}
  * Handle subscription.created event
  */
 async function handleSubscriptionCreated(event: PolarWebhookEvent) {
-  const supabase = createServerClient();
+  const db = createServerClient();
   const attrs = event.data.attributes as Record<string, unknown>;
 
   const subscriptionId = attrs.id as string;
@@ -145,7 +145,7 @@ async function handleSubscriptionCreated(event: PolarWebhookEvent) {
   }
 
   // Upsert subscription record
-  const { error } = await supabase.from('subscriptions').upsert({
+  const { error } = await db.from('subscriptions').upsert({
     polar_subscription_id: subscriptionId,
     polar_customer_id: customerId,
     polar_product_id: productId,
@@ -168,7 +168,7 @@ async function handleSubscriptionCreated(event: PolarWebhookEvent) {
   console.log(`Subscription created: ${subscriptionId} (${tier.name})`);
 
   // Trigger referral commission if org signed up via a referral code
-  await maybeProcessReferralCommission(supabase, customerId, subscriptionId, tier.price);
+  await maybeProcessReferralCommission(db, customerId, subscriptionId, tier.price);
 }
 
 /**
@@ -178,14 +178,14 @@ async function handleSubscriptionCreated(event: PolarWebhookEvent) {
  * referral_code is stored in billing_settings.metadata->referral_code at signup.
  */
 async function maybeProcessReferralCommission(
-  supabase: ReturnType<typeof createServerClient>,
+  db: ReturnType<typeof createServerClient>,
   customerId: string,
   subscriptionId: string,
   subscriptionAmountCents: number
 ) {
   try {
     // Find org and check for referral_code in billing_settings metadata
-    const { data: billing } = await supabase
+    const { data: billing } = await db
       .from('billing_settings')
       .select('org_id, metadata')
       .eq('polar_customer_id', customerId)
@@ -229,14 +229,14 @@ async function maybeProcessReferralCommission(
  * Handle subscription.updated event
  */
 async function handleSubscriptionUpdated(event: PolarWebhookEvent) {
-  const supabase = createServerClient();
+  const db = createServerClient();
   const attrs = event.data.attributes as Record<string, unknown>;
 
   const subscriptionId = attrs.id as string;
   const status = attrs.status as string;
   const cancelAtPeriodEnd = attrs.cancel_at_period_end as boolean;
 
-  const { error } = await supabase
+  const { error } = await db
     .from('subscriptions')
     .update({
       status,
@@ -256,12 +256,12 @@ async function handleSubscriptionUpdated(event: PolarWebhookEvent) {
  * Handle subscription.deleted event
  */
 async function handleSubscriptionDeleted(event: PolarWebhookEvent) {
-  const supabase = createServerClient();
+  const db = createServerClient();
   const attrs = event.data.attributes as Record<string, unknown>;
 
   const subscriptionId = attrs.id as string;
 
-  const { error } = await supabase
+  const { error } = await db
     .from('subscriptions')
     .update({
       status: 'cancelled',
@@ -281,7 +281,7 @@ async function handleSubscriptionDeleted(event: PolarWebhookEvent) {
  * Handle order.paid event (CREDIT MCU)
  */
 async function handleOrderPaid(event: PolarWebhookEvent) {
-  const supabase = createServerClient();
+  const db = createServerClient();
   const attrs = event.data.attributes as Record<string, unknown>;
 
   const orderId = attrs.id as string;
@@ -312,7 +312,7 @@ async function handleOrderPaid(event: PolarWebhookEvent) {
   }
 
   // IDEMPOTENCY: Check if already processed (using order ID as idempotency key)
-  const { data: existingTransaction } = await supabase
+  const { data: existingTransaction } = await db
     .from('transactions')
     .select('id')
     .eq('polar_order_id', orderId)
@@ -325,7 +325,7 @@ async function handleOrderPaid(event: PolarWebhookEvent) {
   }
 
   // Find the organization by Polar customer ID
-  const { data: billingSettings } = await supabase
+  const { data: billingSettings } = await db
     .from('billing_settings')
     .select('org_id')
     .eq('polar_customer_id', customerId)
@@ -341,7 +341,7 @@ async function handleOrderPaid(event: PolarWebhookEvent) {
   const mcuToCredit = tier.mcuMonthly;
 
   // Credit MCU balance using database function with idempotency key
-  const { error } = await supabase.rpc('credit_mcu_balance', {
+  const { error } = await db.rpc('credit_mcu_balance', {
     p_org_id: billingSettings.org_id,
     p_amount: mcuToCredit,
     p_subscription_id: orderId,
@@ -352,7 +352,7 @@ async function handleOrderPaid(event: PolarWebhookEvent) {
   }
 
   // Record transaction for idempotency
-  await supabase.from('transactions').insert({
+  await db.from('transactions').insert({
     org_id: billingSettings.org_id,
     type: 'credit',
     amount: mcuToCredit,
@@ -372,7 +372,7 @@ async function handleOrderPaid(event: PolarWebhookEvent) {
  * Handle order.refunded event (DEDUCT MCU)
  */
 async function handleOrderRefunded(event: PolarWebhookEvent) {
-  const supabase = createServerClient();
+  const db = createServerClient();
   const attrs = event.data.attributes as Record<string, unknown>;
 
   const orderId = attrs.id as string;
@@ -403,7 +403,7 @@ async function handleOrderRefunded(event: PolarWebhookEvent) {
   }
 
   // IDEMPOTENCY: Check if already processed
-  const { data: existingTransaction } = await supabase
+  const { data: existingTransaction } = await db
     .from('transactions')
     .select('id')
     .eq('polar_order_id', orderId)
@@ -416,7 +416,7 @@ async function handleOrderRefunded(event: PolarWebhookEvent) {
   }
 
   // Find the organization
-  const { data: billingSettings } = await supabase
+  const { data: billingSettings } = await db
     .from('billing_settings')
     .select('org_id')
     .eq('polar_customer_id', customerId)
@@ -432,7 +432,7 @@ async function handleOrderRefunded(event: PolarWebhookEvent) {
   const mcuToDeduct = tier.mcuMonthly;
 
   // Get current balance
-  const { data: currentBalance } = await supabase
+  const { data: currentBalance } = await db
     .from('org_balances')
     .select('balance')
     .eq('org_id', billingSettings.org_id)
@@ -440,7 +440,7 @@ async function handleOrderRefunded(event: PolarWebhookEvent) {
 
   const newBalance = (currentBalance?.balance || 0) - mcuToDeduct;
 
-  const { error } = await supabase
+  const { error } = await db
     .from('org_balances')
     .update({
       balance: newBalance,
@@ -453,7 +453,7 @@ async function handleOrderRefunded(event: PolarWebhookEvent) {
   }
 
   // Record transaction for idempotency
-  await supabase.from('transactions').insert({
+  await db.from('transactions').insert({
     org_id: billingSettings.org_id,
     type: 'debit',
     amount: mcuToDeduct,

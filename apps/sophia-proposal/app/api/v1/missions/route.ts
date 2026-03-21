@@ -8,7 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/client';
+import { createServerClient } from '@/lib/db/client';
 import { validateApiKey } from '@/lib/raas/api-key-manager';
 import { checkRateLimit, rateLimitHeaders } from '@/lib/raas/rate-limiter';
 import { recordUsage } from '@/lib/raas/usage-meter';

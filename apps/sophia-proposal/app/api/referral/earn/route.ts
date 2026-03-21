@@ -12,7 +12,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/client';
+import { createServerClient } from '@/lib/db/client';
 import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
@@ -58,10 +58,10 @@ export async function POST(request: NextRequest) {
     const { referral_code, referred_org_id, subscription_amount_cents, polar_subscription_id } =
       parsed.data;
 
-    const supabase = createServerClient();
+    const db = createServerClient();
 
     // Resolve referral code → referrer org
-    const { data: refCode, error: codeErr } = await supabase
+    const { data: refCode, error: codeErr } = await db
       .from('referral_codes')
       .select('org_id, commission_rate, is_active')
       .eq('code', referral_code)
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Idempotency: skip if conversion already recorded for this subscription
-    const { data: existing } = await supabase
+    const { data: existing } = await db
       .from('referral_events')
       .select('id')
       .eq('referrer_org_id', referrerOrgId)
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
     const mcuToCredit = Math.floor(commissionDollars * MCU_PER_DOLLAR);
 
     // Record conversion event
-    await supabase.from('referral_events').insert({
+    await db.from('referral_events').insert({
       referrer_org_id: referrerOrgId,
       referred_org_id,
       referral_code,
@@ -113,26 +113,26 @@ export async function POST(request: NextRequest) {
     });
 
     // Update aggregate counters on referral_codes
-    await supabase.rpc('increment_referral_counter', {
+    await db.rpc('increment_referral_counter', {
       p_code: referral_code,
       p_field: 'conversions',
     });
 
     // Increment total_earned: fetch current value then write updated sum
-    const { data: currentCode } = await supabase
+    const { data: currentCode } = await db
       .from('referral_codes')
       .select('total_earned')
       .eq('code', referral_code)
       .single();
 
-    await supabase
+    await db
       .from('referral_codes')
       .update({ total_earned: Number(currentCode?.total_earned ?? 0) + commissionDollars })
       .eq('code', referral_code);
 
     // Credit MCU to referrer's balance
     if (mcuToCredit > 0) {
-      const { error: creditErr } = await supabase.rpc('credit_mcu_balance', {
+      const { error: creditErr } = await db.rpc('credit_mcu_balance', {
         p_org_id: referrerOrgId,
         p_amount: mcuToCredit,
         p_subscription_id: `referral:${referral_code}:${polar_subscription_id}`,
@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
     const periodStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
-    await supabase.from('affiliate_payouts').insert({
+    await db.from('affiliate_payouts').insert({
       org_id: referrerOrgId,
       amount: commissionDollars,
       status: 'pending',

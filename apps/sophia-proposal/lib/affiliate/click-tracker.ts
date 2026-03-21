@@ -6,7 +6,7 @@
  */
 
 import { createHash } from 'crypto';
-import { createServerClient } from '@/lib/supabase/client';
+import { createServerClient } from '@/lib/db/client';
 
 /**
  * Hash IP address with SHA-256 for privacy-safe storage
@@ -34,10 +34,10 @@ export async function trackClick(
   req: Request
 ): Promise<void> {
   try {
-    const supabase = createServerClient();
+    const db = createServerClient();
     const rawIP = extractIP(req);
 
-    await supabase.from('affiliate_clicks').insert({
+    await db.from('affiliate_clicks').insert({
       program_id: programId,
       content_id: contentId,
       ip_hash: hashIP(rawIP),

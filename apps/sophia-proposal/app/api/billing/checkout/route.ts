@@ -5,8 +5,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/client';
-import { getCurrentUser } from '@/lib/supabase/auth';
+import { createServerClient } from '@/lib/db/client';
+import { getCurrentUser } from '@/lib/db/auth';
 import { getPolarClient, POLAR_TIERS } from '@/lib/billing/polar-client';
 import { z } from 'zod';
 
@@ -52,8 +52,8 @@ export async function POST(request: NextRequest) {
     }
 
     // 3. Get user's organization and email
-    const supabase = createServerClient();
-    const { data: orgMember } = await supabase
+    const db = createServerClient();
+    const { data: orgMember } = await db
       .from('org_members')
       .select('org_id, role')
       .eq('user_id', user.id)
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { data: userData } = await supabase
+    const { data: userData } = await db
       .from('users')
       .select('email')
       .eq('id', user.id)
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
     );
 
     // 6. Store pending subscription intent
-    await supabase.from('billing_settings').upsert({
+    await db.from('billing_settings').upsert({
       org_id: orgMember.org_id,
       polar_customer_id: existingCustomer?.id || null,
       updated_at: new Date().toISOString(),
