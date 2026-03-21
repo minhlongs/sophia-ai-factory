@@ -9,6 +9,7 @@
 export interface QueryResult<T = Record<string, unknown>> {
   data: T | null;
   error: QueryError | null;
+  count?: number;
 }
 
 export interface QueryError {
@@ -46,9 +47,10 @@ export class D1QueryChain<T = Record<string, unknown>> {
     this.table = table;
   }
 
-  select(cols = '*'): this {
+  select(cols = '*', opts?: { count?: string; head?: boolean }): this {
     this.selectCols = cols;
     this.operation = 'select';
+    if (opts?.count) this.isCount = true;
     return this;
   }
 
@@ -249,7 +251,16 @@ export class D1QueryChain<T = Record<string, unknown>> {
     }
 
     const result = await stmt.all<T>();
-    return { data: (result.results ?? []).map(parseJsonFields), error: null };
+    const rows = (result.results ?? []).map(parseJsonFields);
+
+    if (this.isCount) {
+      // Also run a COUNT query for Supabase compat
+      const countSql = `SELECT COUNT(*) as cnt FROM ${this.table}${clause}`;
+      const countResult = await this.db.prepare(countSql).bind(...params).first<{ cnt: number }>();
+      return { data: rows, count: countResult?.cnt ?? rows.length, error: null } as QueryResult<unknown> & { count: number };
+    }
+
+    return { data: rows, error: null };
   }
 
   private async execInsert(): Promise<QueryResult<unknown>> {
