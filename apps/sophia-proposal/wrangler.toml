@@ -1,5 +1,26 @@
-# Cloudflare Pages configuration for Sophia AI Factory
+# Sophia AI Factory — Cloudflare Workers config
+# Deploy: opennextjs-cloudflare build + wrangler deploy
 name = "sophia-ai-factory"
-compatibility_date = "2024-09-23"
-compatibility_flags = ["nodejs_compat"]
-pages_build_output_dir = ".vercel/output/static"
+main = ".open-next/worker.js"
+compatibility_date = "2026-03-17"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+
+[assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "sophia-raas-db"
+database_id = "78bd1961-b62d-43bb-b551-0c5d7d389506"
+
+[[r2_buckets]]
+binding = "NEXT_INC_CACHE_R2_BUCKET"
+bucket_name = "sophia-ai-factory-opennext-cache"
+
+[[services]]
+binding = "WORKER_SELF_REFERENCE"
+service = "sophia-ai-factory"
+
+[images]
+binding = "IMAGES"

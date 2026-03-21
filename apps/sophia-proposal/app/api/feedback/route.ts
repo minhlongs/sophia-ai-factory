@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/client';
+import { createServerClient } from '@/lib/db/client';
 
 export interface FeedbackRequest {
   surveyType: 'nps' | 'onboarding' | 'churn';
@@ -69,10 +69,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = createServerClient();
+    const db = createServerClient();
 
     // Insert feedback
-    const { error } = await supabase.from('customer_feedback').insert({
+    const { error } = await db.from('customer_feedback').insert({
       org_id: orgId,
       survey_type: surveyType,
       responses,

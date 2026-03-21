@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/client';
+import { createServerClient } from '@/lib/db/client';
 import { logUsage } from '@/lib/billing/usage-tracker';
 import { getOrInitializeBalance, requireBalance } from '@/lib/billing/balance-checker';
 import { generateBlogReview } from '@/lib/affiliate/content/blog-generator';
@@ -60,10 +60,10 @@ export async function POST(req: NextRequest) {
   const balanceErr = requireBalance(balance);
   if (balanceErr) return balanceErr;
 
-  const supabase = createServerClient();
+  const db = createServerClient();
 
   // Fetch program data
-  const { data: program, error: pgErr } = await supabase
+  const { data: program, error: pgErr } = await db
     .from('affiliate_programs')
     .select('*')
     .eq('id', programId)
@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
 
   if (contentTypes.includes('blog')) {
     const idempKey = `${programId}:${orgId}:blog:${new Date().toISOString().slice(0, 10)}`;
-    const { data: inserted } = await supabase
+    const { data: inserted } = await db
       .from('affiliate_content')
       .insert({ org_id: orgId, program_id: programId, content_type: 'blog', status: 'generating', idempotency_key: idempKey })
       .select('id')
@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
     if (inserted) {
       try {
         blogContent = await generateBlogReview(program, orgId);
-        await supabase.from('affiliate_content').update({
+        await db.from('affiliate_content').update({
           status: 'draft',
           title: blogContent.title,
           body: blogContent.body,
@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
         await logUsage({ orgId, feature: 'affiliate:blog', metadata: { programId } });
         contentIds['blog'] = inserted.id;
       } catch (err) {
-        await supabase.from('affiliate_content').update({ status: 'failed' }).eq('id', inserted.id);
+        await db.from('affiliate_content').update({ status: 'failed' }).eq('id', inserted.id);
         errors['blog'] = err instanceof Error ? err.message : 'Generation failed';
       }
     }
@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
   // Video generation (uses blog content if available)
   if (contentTypes.includes('video')) {
     const idempKey = `${programId}:${orgId}:video:${new Date().toISOString().slice(0, 10)}`;
-    const { data: inserted } = await supabase
+    const { data: inserted } = await db
       .from('affiliate_content')
       .insert({ org_id: orgId, program_id: programId, content_type: 'video', status: 'generating', idempotency_key: idempKey })
       .select('id')
@@ -119,7 +119,7 @@ export async function POST(req: NextRequest) {
       try {
         const fallbackBlog = blogContent ?? { title: program.name, body: '', metaDescription: '', keywords: [program.category] };
         const videoContent = await generateVideoReview(program, fallbackBlog, orgId);
-        await supabase.from('affiliate_content').update({
+        await db.from('affiliate_content').update({
           status: 'generating', // HeyGen is async
           body: videoContent.script,
           meta: { heygenVideoId: videoContent.heygenVideoId, estimatedDurationSeconds: videoContent.estimatedDurationSeconds },
@@ -127,7 +127,7 @@ export async function POST(req: NextRequest) {
         await logUsage({ orgId, feature: 'affiliate:video', metadata: { programId, heygenVideoId: videoContent.heygenVideoId } });
         contentIds['video'] = inserted.id;
       } catch (err) {
-        await supabase.from('affiliate_content').update({ status: 'failed' }).eq('id', inserted.id);
+        await db.from('affiliate_content').update({ status: 'failed' }).eq('id', inserted.id);
         errors['video'] = err instanceof Error ? err.message : 'Generation failed';
       }
     }
@@ -136,7 +136,7 @@ export async function POST(req: NextRequest) {
   // Social bundle
   if (contentTypes.includes('social')) {
     const idempKey = `${programId}:${orgId}:social:${new Date().toISOString().slice(0, 10)}`;
-    const { data: inserted } = await supabase
+    const { data: inserted } = await db
       .from('affiliate_content')
       .insert({ org_id: orgId, program_id: programId, content_type: 'social', status: 'generating', idempotency_key: idempKey })
       .select('id')
@@ -145,14 +145,14 @@ export async function POST(req: NextRequest) {
     if (inserted) {
       try {
         const socialContent = await generateSocialBundle(program, orgId);
-        await supabase.from('affiliate_content').update({
+        await db.from('affiliate_content').update({
           status: 'draft',
           meta: { linkedin: socialContent.linkedin, twitter: socialContent.twitter, tiktokScript: socialContent.tiktokScript },
         }).eq('id', inserted.id);
         await logUsage({ orgId, feature: 'affiliate:social', metadata: { programId } });
         contentIds['social'] = inserted.id;
       } catch (err) {
-        await supabase.from('affiliate_content').update({ status: 'failed' }).eq('id', inserted.id);
+        await db.from('affiliate_content').update({ status: 'failed' }).eq('id', inserted.id);
         errors['social'] = err instanceof Error ? err.message : 'Generation failed';
       }
     }

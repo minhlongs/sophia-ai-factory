@@ -5,7 +5,7 @@
  * Stub commands delegated to command-helpers.ts; real commands inline.
  */
 
-import { createServerClient } from '@/lib/supabase/client';
+import { createServerClient } from '@/lib/db/client';
 import { generateBlogReview } from '@/lib/affiliate/content/blog-generator';
 import { generateSocialBundle } from '@/lib/affiliate/content/social-generator';
 import { runScrape } from '@/lib/affiliate/program-scraper';
@@ -74,14 +74,14 @@ export async function executeCommand(mission: Mission): Promise<MissionResult> {
 // ============================================================================
 
 async function runAffiliateGenerate(mission: Mission): Promise<MissionResult> {
-  const supabase = createServerClient();
+  const db = createServerClient();
   const { program_id } = mission.params as { program_id?: string };
 
   if (!program_id) {
     return { success: false, error: 'Missing params.program_id' };
   }
 
-  const { data: program, error } = await supabase
+  const { data: program, error } = await db
     .from('affiliate_programs')
     .select('*')
     .eq('id', program_id)
@@ -129,8 +129,8 @@ async function runContentBlog(mission: Mission): Promise<MissionResult> {
   };
 
   if (affiliate_program_id) {
-    const supabase = createServerClient();
-    const { data: program } = await supabase
+    const db = createServerClient();
+    const { data: program } = await db
       .from('affiliate_programs')
       .select('*')
       .eq('id', affiliate_program_id)
@@ -164,8 +164,8 @@ async function runContentSocial(mission: Mission): Promise<MissionResult> {
   const { affiliate_program_id } = mission.params as { affiliate_program_id?: string };
 
   if (affiliate_program_id) {
-    const supabase = createServerClient();
-    const { data: program } = await supabase
+    const db = createServerClient();
+    const { data: program } = await db
       .from('affiliate_programs')
       .select('*')
       .eq('id', affiliate_program_id)

@@ -6,7 +6,7 @@
  */
 
 import crypto from 'crypto';
-import { createServerClient } from '@/lib/supabase/client';
+import { createServerClient } from '@/lib/db/client';
 
 // ── Local types ───────────────────────────────────────────────────────────────
 

@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/client';
+import { createServerClient } from '@/lib/db/client';
 import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
@@ -30,10 +30,10 @@ export async function POST(request: NextRequest) {
     }
 
     const { code, event_type, metadata } = parsed.data;
-    const supabase = createServerClient();
+    const db = createServerClient();
 
     // Look up the referral code to get referrer_org_id
-    const { data: referralCode, error: codeErr } = await supabase
+    const { data: referralCode, error: codeErr } = await db
       .from('referral_codes')
       .select('id, org_id, is_active')
       .eq('code', code)
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     };
 
     // Record the event
-    const { error: eventErr } = await supabase
+    const { error: eventErr } = await db
       .from('referral_events')
       .insert({
         referrer_org_id: referralCode.org_id,
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
 
     // Atomically increment the counter on referral_codes
     const field = event_type === 'click' ? 'clicks' : 'signups';
-    await supabase.rpc('increment_referral_counter', {
+    await db.rpc('increment_referral_counter', {
       p_code: code,
       p_field: field,
     });

@@ -8,7 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser, getUserOrganization } from '@/lib/supabase/auth';
+import { getCurrentUser, getUserOrganization } from '@/lib/db/auth';
 import { logUsage } from '@/lib/billing/usage-tracker';
 import { runScrape } from '@/lib/affiliate/program-scraper';
 

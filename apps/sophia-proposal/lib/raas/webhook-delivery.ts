@@ -5,7 +5,7 @@
  * Retries up to 3 times with exponential backoff.
  */
 
-import { createServerClient } from '@/lib/supabase/client';
+import { createServerClient } from '@/lib/db/client';
 import { signPayload, WEBHOOK_HEADERS } from './webhook-hmac';
 
 const MAX_ATTEMPTS = 3;

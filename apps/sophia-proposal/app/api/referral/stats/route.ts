@@ -6,8 +6,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser, getUserOrganization } from '@/lib/supabase/auth';
-import { createServerClient } from '@/lib/supabase/client';
+import { getCurrentUser, getUserOrganization } from '@/lib/db/auth';
+import { createServerClient } from '@/lib/db/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,10 +25,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
     }
 
-    const supabase = createServerClient();
+    const db = createServerClient();
 
     // Fetch active referral code with aggregate stats
-    const { data: referralCode } = await supabase
+    const { data: referralCode } = await db
       .from('referral_codes')
       .select('code, clicks, signups, conversions, total_earned, commission_rate, is_active')
       .eq('org_id', org.id)
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
       .single();
 
     // Pending payout total
-    const { data: pendingPayouts } = await supabase
+    const { data: pendingPayouts } = await db
       .from('affiliate_payouts')
       .select('amount')
       .eq('org_id', org.id)
@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     );
 
     // Recent payout history (last 10)
-    const { data: payoutHistory } = await supabase
+    const { data: payoutHistory } = await db
       .from('affiliate_payouts')
       .select('id, amount, status, payout_method, period_start, period_end, created_at')
       .eq('org_id', org.id)
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
       .limit(10);
 
     // Recent events (last 20)
-    const { data: recentEvents } = await supabase
+    const { data: recentEvents } = await db
       .from('referral_events')
       .select('event_type, metadata, created_at')
       .eq('referrer_org_id', org.id)

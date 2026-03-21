@@ -8,7 +8,7 @@
  * in parallel or sequential order based on their dependency_type.
  */
 
-import { createServerClient } from '@/lib/supabase/client';
+import { createServerClient } from '@/lib/db/client';
 import { executeCommand } from '@/lib/raas/command-router';
 import { StepTracker } from './step-tracker';
 import type { Mission, MissionCommand, PEVPlan, PEVStep, SubMissionDef } from '@/types/raas';
@@ -44,8 +44,8 @@ export class OpenClawEngine {
    * Never throws — all failures are persisted to the DB.
    */
   async execute(missionId: string): Promise<void> {
-    const supabase = createServerClient();
-    const { data, error } = await supabase
+    const db = createServerClient();
+    const { data, error } = await db
       .from('missions')
       .select('*')
       .eq('id', missionId)
@@ -62,7 +62,7 @@ export class OpenClawEngine {
     const plan = buildPlan(mission.command);
     const tracker = new StepTracker(missionId, plan.steps);
 
-    await supabase.from('missions').update({
+    await db.from('missions').update({
       status: 'planning',
       plan,
       execution_log: tracker.getSteps(),
@@ -71,7 +71,7 @@ export class OpenClawEngine {
     }).eq('id', missionId);
 
     // ── EXECUTE ───────────────────────────────────────────────────────────────
-    await supabase.from('missions').update({
+    await db.from('missions').update({
       status: 'executing',
       updated_at: new Date().toISOString(),
     }).eq('id', missionId);
@@ -84,7 +84,7 @@ export class OpenClawEngine {
     const result = await executeCommand(mission);
 
     // ── VERIFY ────────────────────────────────────────────────────────────────
-    await supabase.from('missions').update({
+    await db.from('missions').update({
       status: 'verifying',
       updated_at: new Date().toISOString(),
     }).eq('id', missionId);
@@ -99,13 +99,13 @@ export class OpenClawEngine {
       if (retried) return; // retry loop took over
 
       // Refund MCU on permanent failure
-      await supabase.rpc('credit_mcu_balance', {
+      await db.rpc('credit_mcu_balance', {
         p_org_id: mission.org_id,
         p_amount: mission.mcu_reserved,
         p_subscription_id: `mission:refund:${missionId}`,
       });
 
-      await supabase.from('missions').update({
+      await db.from('missions').update({
         status: 'failed',
         result: result as unknown as object,
         error_message: result.error ?? 'Execution failed',
@@ -120,7 +120,7 @@ export class OpenClawEngine {
     await tracker.markAllDone();
 
     const completedAt = new Date().toISOString();
-    await supabase.from('missions').update({
+    await db.from('missions').update({
       status: 'completed',
       result: result as unknown as object,
       completed_at: completedAt,
@@ -146,10 +146,10 @@ export class OpenClawEngine {
     parentId: string,
     commands: SubMissionDef[]
   ): Promise<void> {
-    const supabase = createServerClient();
+    const db = createServerClient();
 
     // Fetch parent to inherit org_id
-    const { data: parent } = await supabase
+    const { data: parent } = await db
       .from('missions')
       .select('org_id')
       .eq('id', parentId)
@@ -183,8 +183,8 @@ export class OpenClawEngine {
 
   /** Exponential backoff retry: delays 1s, 2s, 4s … up to max_retries. */
   private async retryWithBackoff(missionId: string, attempt: number): Promise<boolean> {
-    const supabase = createServerClient();
-    const { data } = await supabase
+    const db = createServerClient();
+    const { data } = await db
       .from('missions')
       .select('max_retries, retry_count, error_message')
       .eq('id', missionId)
@@ -193,7 +193,7 @@ export class OpenClawEngine {
     if (!data || attempt > (data.max_retries ?? 3)) return false;
 
     // Log the retry attempt
-    await supabase.from('mission_retries').insert({
+    await db.from('mission_retries').insert({
       mission_id: missionId,
       attempt_number: attempt,
       error_message: data.error_message,
@@ -203,7 +203,7 @@ export class OpenClawEngine {
     const delayMs = 1000 * Math.pow(2, attempt - 1);
     await new Promise((res) => setTimeout(res, delayMs));
 
-    await supabase.from('missions').update({
+    await db.from('missions').update({
       status: 'queued',
       retry_count: attempt,
       error_message: null,
@@ -217,8 +217,8 @@ export class OpenClawEngine {
 
   /** Check if all sibling sub-missions are done → complete the parent. */
   private async checkParentCompletion(parentMissionId: string): Promise<void> {
-    const supabase = createServerClient();
-    const { data: siblings } = await supabase
+    const db = createServerClient();
+    const { data: siblings } = await db
       .from('missions')
       .select('status')
       .eq('parent_mission_id', parentMissionId);
@@ -229,25 +229,18 @@ export class OpenClawEngine {
     const anyFailed = siblings.some((s) => s.status === 'failed');
 
     if (allDone) {
-      await supabase.from('missions').update({
+      await db.from('missions').update({
         status: 'completed',
         completed_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       }).eq('id', parentMissionId);
     } else if (anyFailed) {
-      await supabase.from('missions').update({
+      await db.from('missions').update({
         status: 'failed',
         error_message: 'One or more sub-missions failed',
         updated_at: new Date().toISOString(),
       }).eq('id', parentMissionId);
     }
-  }
-
-  /** Check if hostname is in 172.16.0.0/12 private range. */
-  private isPrivate172(h: string): boolean {
-    if (!h.startsWith('172.')) return false;
-    const second = parseInt(h.split('.')[1], 10);
-    return second >= 16 && second <= 31;
   }
 
   /** Validate webhook URL to prevent SSRF (block internal/cloud metadata IPs). */
@@ -258,7 +251,7 @@ export class OpenClawEngine {
       const host = parsed.hostname;
       // Block internal ranges, cloud metadata, localhost
       if (host === 'localhost' || host === '127.0.0.1' || host === '::1') return false;
-      if (host.startsWith('10.') || host.startsWith('192.168.') || this.isPrivate172(host)) return false;
+      if (host.startsWith('10.') || host.startsWith('192.168.') || host.startsWith('172.')) return false;
       if (host === '169.254.169.254' || host.endsWith('.internal')) return false;
       return true;
     } catch {
@@ -293,9 +286,9 @@ export class OpenClawEngine {
     orgId: string,
     def: SubMissionDef
   ): Promise<string | null> {
-    const supabase = createServerClient();
+    const db = createServerClient();
 
-    const { data: child, error } = await supabase
+    const { data: child, error } = await db
       .from('missions')
       .insert({
         org_id: orgId,
@@ -314,7 +307,7 @@ export class OpenClawEngine {
       return null;
     }
 
-    await supabase.from('mission_dependencies').insert({
+    await db.from('mission_dependencies').insert({
       parent_mission_id: parentId,
       child_mission_id: child.id,
       dependency_type: def.dependency_type,

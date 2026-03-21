@@ -12,7 +12,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createAuthClient, createServerClient } from "@/lib/supabase/client";
+import { createAuthClient, createServerClient } from "@/lib/db/client";
 import { generateVideoSchema } from "@/lib/validators/video";
 import { createVideoTask, estimateDuration } from "@/lib/video/heygen-client";
 import { calculateMcuCost } from "@/lib/billing/mcu-pricing";

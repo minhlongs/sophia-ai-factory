@@ -8,7 +8,7 @@
  * Pipeline: fetch → normalize → score → upsert into affiliate_programs
  */
 
-import { createServerClient } from '@/lib/supabase/client';
+import { createServerClient } from '@/lib/db/client';
 import { scoreProgram } from './program-scorer';
 import { SEED_PROGRAMS } from './seed-programs';
 import type { RawProgram, ScrapeResult, AffiliateProgramInput } from '@/types/affiliate';
@@ -119,12 +119,12 @@ export async function runScrape(): Promise<ScrapeResult> {
   });
 
   // Upsert into Supabase (conflict on name + source)
-  const supabase = createServerClient();
+  const db = createServerClient();
   let inserted = 0;
   let updated = 0;
 
   for (const record of records) {
-    const { data: existing } = await supabase
+    const { data: existing } = await db
       .from('affiliate_programs')
       .select('id')
       .eq('name', record.name)
@@ -132,19 +132,19 @@ export async function runScrape(): Promise<ScrapeResult> {
       .maybeSingle();
 
     if (existing) {
-      await supabase
+      await db
         .from('affiliate_programs')
         .update({ ...record, updated_at: new Date().toISOString() })
         .eq('id', existing.id);
       updated++;
     } else {
-      await supabase.from('affiliate_programs').insert(record);
+      await db.from('affiliate_programs').insert(record);
       inserted++;
     }
   }
 
   // Fetch top programs after upsert
-  const { data: topPrograms } = await supabase
+  const { data: topPrograms } = await db
     .from('affiliate_programs')
     .select('*')
     .gte('score', 60)

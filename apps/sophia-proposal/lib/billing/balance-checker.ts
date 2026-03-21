@@ -5,7 +5,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/client';
+import { createServerClient } from '@/lib/db/client';
 
 export interface BalanceStatus {
   orgId: string;
@@ -19,9 +19,9 @@ export interface BalanceStatus {
  * Check organization balance
  */
 export async function checkBalance(orgId: string): Promise<BalanceStatus | null> {
-  const supabase = createServerClient();
+  const db = createServerClient();
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('org_balances')
     .select('*')
     .eq('org_id', orgId)
@@ -70,10 +70,10 @@ export function requireBalance(
 export async function getOrInitializeBalance(
   orgId: string
 ): Promise<BalanceStatus> {
-  const supabase = createServerClient();
+  const db = createServerClient();
 
   // Try to get existing balance
-  const { data: existing } = await supabase
+  const { data: existing } = await db
     .from('org_balances')
     .select('*')
     .eq('org_id', orgId)
@@ -90,7 +90,7 @@ export async function getOrInitializeBalance(
   }
 
   // Initialize with zero balance
-  await supabase.from('org_balances').insert({
+  await db.from('org_balances').insert({
     org_id: orgId,
     balance: 0,
     lifetime_credits: 0,
@@ -114,9 +114,9 @@ export async function addBonusMcu(
   amount: number,
   reason: string
 ): Promise<boolean> {
-  const supabase = createServerClient();
+  const db = createServerClient();
 
-  const { error } = await supabase.rpc('credit_mcu_balance', {
+  const { error } = await db.rpc('credit_mcu_balance', {
     p_org_id: orgId,
     p_amount: amount,
     p_subscription_id: `bonus:${reason}`,

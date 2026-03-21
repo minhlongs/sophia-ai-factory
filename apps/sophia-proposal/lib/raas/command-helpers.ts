@@ -5,17 +5,16 @@
  * Split out to keep command-router.ts under 200 lines.
  */
 
-import { createServerClient } from '@/lib/supabase/client';
+import { createServerClient } from '@/lib/db/client';
 import { createVideoTask } from '@/lib/video/heygen-client';
-import { OpenClawEngine } from '@/lib/openclaw/engine';
-import type { Mission, MissionResult, SubMissionDef } from '@/types/raas';
+import type { Mission, MissionResult } from '@/types/raas';
 
 // ============================================================================
 // PROPOSAL CREATE
 // ============================================================================
 
 export async function runProposalCreate(mission: Mission): Promise<MissionResult> {
-  const supabase = createServerClient();
+  const db = createServerClient();
   const params = mission.params as { client_name?: string; product_name?: string; tone?: string; sections?: string[] };
 
   const sectionNames = params.sections ?? ['executive_summary', 'scope', 'pricing', 'timeline'];
@@ -33,7 +32,7 @@ export async function runProposalCreate(mission: Mission): Promise<MissionResult
   // Save to proposals table — graceful degrade if table doesn't exist yet
   let proposalId: string | undefined;
   try {
-    const { data } = await supabase
+    const { data } = await db
       .from('proposals')
       .insert({
         org_id: mission.org_id,
@@ -92,9 +91,9 @@ export async function runVideoCreate(mission: Mission): Promise<MissionResult> {
 // ============================================================================
 
 export async function runCrmSync(mission: Mission): Promise<MissionResult> {
-  const supabase = createServerClient();
+  const db = createServerClient();
 
-  const { data: settings } = await supabase
+  const { data: settings } = await db
     .from('crm_settings')
     .select('hubspot_access_token')
     .eq('org_id', mission.org_id)
@@ -118,7 +117,7 @@ export async function runCrmSync(mission: Mission): Promise<MissionResult> {
   let synced = 0;
   for (const c of contacts) {
     const props = c.properties ?? {};
-    await supabase.from('contacts').upsert({
+    await db.from('contacts').upsert({
       org_id: mission.org_id,
       external_id: c.id,
       source: 'hubspot',
@@ -131,7 +130,7 @@ export async function runCrmSync(mission: Mission): Promise<MissionResult> {
     synced++;
   }
 
-  await supabase.from('crm_sync_status').upsert({
+  await db.from('crm_sync_status').upsert({
     org_id: mission.org_id,
     last_sync: new Date().toISOString(),
     contacts_synced: synced,
@@ -150,18 +149,18 @@ export async function runCrmSync(mission: Mission): Promise<MissionResult> {
 // ============================================================================
 
 export async function runAnalyticsExport(mission: Mission): Promise<MissionResult> {
-  const supabase = createServerClient();
+  const db = createServerClient();
   const params = mission.params as { days?: number; format?: string };
   const days = params.days ?? 30;
   const since = new Date(Date.now() - days * 86_400_000).toISOString();
 
   const [{ count: missionCount }, { data: usageLogs }] = await Promise.all([
-    supabase
+    db
       .from('missions')
       .select('*', { count: 'exact', head: true })
       .eq('org_id', mission.org_id)
       .gte('created_at', since),
-    supabase
+    db
       .from('usage_logs')
       .select('mcu_cost')
       .eq('org_id', mission.org_id)
@@ -171,7 +170,7 @@ export async function runAnalyticsExport(mission: Mission): Promise<MissionResul
   // Proposals table may not exist — graceful degrade
   let proposalCount = 0;
   try {
-    const { count } = await supabase
+    const { count } = await db
       .from('proposals')
       .select('*', { count: 'exact', head: true })
       .eq('org_id', mission.org_id)
@@ -201,37 +200,51 @@ export async function runAnalyticsExport(mission: Mission): Promise<MissionResul
 // ============================================================================
 
 export async function runGtmCampaign(mission: Mission): Promise<MissionResult> {
+  const db = createServerClient();
   const params = mission.params as Record<string, unknown>;
 
-  const subMissions: SubMissionDef[] = [
+  const subCommands = [
     {
       command: 'proposal:create',
       title: `GTM Proposal: ${params.campaign_name ?? 'Campaign'}`,
       params: { client_name: params.target_client, product_name: params.product_name },
-      dependency_type: 'sequential',
     },
     {
       command: 'content:blog',
       title: `GTM Blog: ${params.campaign_name ?? 'Campaign'}`,
       params: { topic: params.blog_topic ?? params.campaign_name },
-      dependency_type: 'parallel',
     },
     {
       command: 'content:social',
       title: `GTM Social: ${params.campaign_name ?? 'Campaign'}`,
       params: { topic: params.campaign_name },
-      dependency_type: 'parallel',
     },
   ];
 
-  // Use OpenClaw engine to orchestrate sub-missions with proper tracking
-  const engine = new OpenClawEngine();
-  await engine.orchestrateSubMissions(mission.id, subMissions);
+  const createdIds: string[] = [];
+  for (const sub of subCommands) {
+    const { data } = await db
+      .from('missions')
+      .insert({
+        org_id: mission.org_id,
+        title: sub.title,
+        command: sub.command,
+        params: sub.params,
+        status: 'queued',
+        priority: mission.priority ?? 'normal',
+        mcu_cost: 5,
+        mcu_reserved: 5,
+      })
+      .select('id')
+      .single();
+
+    if (data) createdIds.push(data.id);
+  }
 
   return {
     success: true,
-    summary: `GTM campaign orchestrated with ${subMissions.length} sub-missions (1 sequential + 2 parallel)`,
-    data: { sub_commands: subMissions.map(s => s.command) },
+    summary: `GTM campaign created with ${createdIds.length} sub-missions`,
+    data: { sub_mission_ids: createdIds, sub_commands: subCommands.map(s => s.command) },
   };
 }
 

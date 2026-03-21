@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/client';
+import { createServerClient } from '@/lib/db/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,11 +22,11 @@ export async function GET(req: NextRequest) {
   const since = new Date();
   since.setDate(since.getDate() - days);
 
-  const supabase = createServerClient();
+  const db = createServerClient();
 
   // Verify org owns the program if filtering by program
   if (programId) {
-    const { data: prog } = await supabase
+    const { data: prog } = await db
       .from('affiliate_programs')
       .select('id')
       .eq('id', programId)
@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
     if (!prog) return NextResponse.json({ error: 'Program not found' }, { status: 404 });
   }
 
-  let query = supabase
+  let query = db
     .from('affiliate_clicks')
     .select('program_id, content_id, clicked_at', { count: 'exact' })
     .gte('clicked_at', since.toISOString());

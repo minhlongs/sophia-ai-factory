@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createAuthClient, createServerClient } from '@/lib/supabase/client';
+import { createAuthClient, createServerClient } from '@/lib/db/client';
 import { getOrgId } from '@/lib/org';
 
 export const dynamic = 'force-dynamic';

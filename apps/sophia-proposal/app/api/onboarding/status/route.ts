@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/client';
+import { createServerClient } from '@/lib/db/client';
 
 export interface OnboardingStatus {
   orgId: string;
@@ -28,7 +28,7 @@ export interface OnboardingStatus {
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createServerClient();
+    const db = createServerClient();
 
     // Get user's organization from request context
     // In a real app, this would come from auth session
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get subscription status
-    const { data: subscription } = await supabase
+    const { data: subscription } = await db
       .from('subscriptions')
       .select('tier_name, status, mcu_monthly')
       .eq('org_id', orgId)
@@ -50,13 +50,13 @@ export async function GET(request: NextRequest) {
       .single();
 
     // Check if user has created any proposals
-    const { count: proposalCount } = await supabase
+    const { count: proposalCount } = await db
       .from('proposals')
       .select('*', { count: 'exact', head: true })
       .eq('org_id', orgId);
 
     // Check if feedback has been submitted
-    const { data: feedback } = await supabase
+    const { data: feedback } = await db
       .from('customer_feedback')
       .select('id')
       .eq('org_id', orgId)
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
     // This would typically be in a separate table
     let onboardingCall = null;
     try {
-      const result = await supabase
+      const result = await db
         .from('onboarding_calls')
         .select('id')
         .eq('org_id', orgId)

@@ -4,7 +4,7 @@
  * Template library for video generation with caching
  */
 
-import { createServerClient } from "@/lib/supabase/client";
+import { createServerClient } from "@/lib/db/client";
 import type { VideoTemplate, VideoTemplateInsert } from "@/types/video";
 
 /**
@@ -14,9 +14,9 @@ import type { VideoTemplate, VideoTemplateInsert } from "@/types/video";
 export async function getAvailableTemplates(
   orgId?: string
 ): Promise<VideoTemplate[]> {
-  const supabase = createServerClient();
+  const db = createServerClient();
 
-  let query = supabase
+  let query = db
     .from("video_templates")
     .select("*")
     .eq("is_active", true)
@@ -24,13 +24,13 @@ export async function getAvailableTemplates(
 
   if (orgId) {
     // Get both global and org-specific templates
-    const { data: globalTemplates } = await supabase
+    const { data: globalTemplates } = await db
       .from("video_templates")
       .select("*")
       .is("org_id", null)
       .eq("is_active", true);
 
-    const { data: orgTemplates } = await supabase
+    const { data: orgTemplates } = await db
       .from("video_templates")
       .select("*")
       .eq("org_id", orgId)
@@ -56,9 +56,9 @@ export async function getTemplateById(
   templateId: string,
   orgId?: string
 ): Promise<VideoTemplate | null> {
-  const supabase = createServerClient();
+  const db = createServerClient();
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from("video_templates")
     .select("*")
     .eq("id", templateId)
@@ -88,9 +88,9 @@ export async function createTemplate(
   orgId: string,
   template: VideoTemplateInsert
 ): Promise<VideoTemplate> {
-  const supabase = createServerClient();
+  const db = createServerClient();
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from("video_templates")
     .insert({
       ...template,
@@ -115,9 +115,9 @@ export async function updateTemplate(
   updates: Partial<VideoTemplateInsert>,
   orgId: string
 ): Promise<VideoTemplate | null> {
-  const supabase = createServerClient();
+  const db = createServerClient();
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from("video_templates")
     .update({
       ...updates,
@@ -143,9 +143,9 @@ export async function deleteTemplate(
   templateId: string,
   orgId: string
 ): Promise<void> {
-  const supabase = createServerClient();
+  const db = createServerClient();
 
-  const { error } = await supabase
+  const { error } = await db
     .from("video_templates")
     .update({
       is_active: false,
@@ -167,18 +167,18 @@ export async function getTemplatesByType(
   type: "intro" | "section" | "full_proposal" | "custom",
   orgId?: string
 ): Promise<VideoTemplate[]> {
-  const supabase = createServerClient();
+  const db = createServerClient();
 
   if (orgId) {
     // Get both global and org-specific templates
-    const { data: globalTemplates } = await supabase
+    const { data: globalTemplates } = await db
       .from("video_templates")
       .select("*")
       .eq("template_type", type)
       .eq("is_active", true)
       .is("org_id", null);
 
-    const { data: orgTemplates } = await supabase
+    const { data: orgTemplates } = await db
       .from("video_templates")
       .select("*")
       .eq("template_type", type)
@@ -188,7 +188,7 @@ export async function getTemplatesByType(
     return [...(globalTemplates || []), ...(orgTemplates || [])];
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from("video_templates")
     .select("*")
     .eq("template_type", type)
@@ -209,9 +209,9 @@ export async function getTemplatesByType(
 export async function getDefaultTemplate(
   type: "intro" | "section" | "full_proposal" | "custom"
 ): Promise<VideoTemplate | null> {
-  const supabase = createServerClient();
+  const db = createServerClient();
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from("video_templates")
     .select("*")
     .eq("template_type", type)

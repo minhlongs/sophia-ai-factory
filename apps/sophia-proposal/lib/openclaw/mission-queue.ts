@@ -6,7 +6,7 @@
  * missions execute FIFO without a separate message broker.
  */
 
-import { createServerClient } from '@/lib/supabase/client';
+import { createServerClient } from '@/lib/db/client';
 
 const ORG_CONCURRENCY = 3;
 
@@ -73,8 +73,8 @@ export function getQueuePosition(missionId: string): number {
 // --------------------------------------------------------------------------
 
 async function getOrgIdForMission(missionId: string): Promise<string | null> {
-  const supabase = createServerClient();
-  const { data } = await supabase
+  const db = createServerClient();
+  const { data } = await db
     .from('missions')
     .select('org_id')
     .eq('id', missionId)

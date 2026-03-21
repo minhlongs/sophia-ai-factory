@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { signIn, sendMagicLink } from "@/lib/supabase/auth";
+import { signIn, sendMagicLink } from "@/lib/db/auth";
 import { signInSchema, magicLinkSchema } from "@/lib/validators/auth";
 
 // API routes are dynamic by default
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { email, password } = validatedData.data;
-    const { user, error } = await signIn(email, password);
+    const { user, token, error } = await signIn(email, password);
 
     if (error || !user) {
       return NextResponse.json(
@@ -53,14 +53,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Return user without sensitive data
-    return NextResponse.json({
-      user: {
-        id: user.id,
-        email: user.email,
-        created_at: user.created_at,
-      },
+    const response = NextResponse.json({
+      user: { id: user.id, email: user.email },
+      token,
     });
+    if (token) {
+      response.cookies.set('auth-token', token, {
+        httpOnly: true, secure: true, sameSite: 'lax', maxAge: 7 * 24 * 60 * 60,
+      });
+    }
+    return response;
   } catch (e) {
     console.error("Login error:", e);
     return NextResponse.json(

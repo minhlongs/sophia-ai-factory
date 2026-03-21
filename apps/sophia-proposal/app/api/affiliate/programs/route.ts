@@ -13,7 +13,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/client';
+import { createServerClient } from '@/lib/db/client';
 import type { ProgramNiche } from '@/types/affiliate';
 
 export const dynamic = 'force-dynamic';
@@ -34,9 +34,9 @@ export async function GET(request: NextRequest) {
     );
     const offset = Math.max(parseInt(searchParams.get('offset') ?? '0', 10), 0);
 
-    const supabase = createServerClient();
+    const db = createServerClient();
 
-    let query = supabase
+    let query = db
       .from('affiliate_programs')
       .select('*', { count: 'exact' })
       .eq('is_active', isActive)

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { signUp } from "@/lib/supabase/auth";
+import { signUp } from "@/lib/db/auth";
 import { signUpSchema } from "@/lib/validators/auth";
 
 // API routes are dynamic by default
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     const { email, password } = validatedData.data;
 
     // Sign up user
-    const { user, error } = await signUp(email, password);
+    const { user, token, error } = await signUp(email, password);
 
     if (error || !user) {
       return NextResponse.json(
@@ -40,18 +40,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Success - return user without sensitive data
-    return NextResponse.json(
+    // Success - return user + JWT token
+    const response = NextResponse.json(
       {
-        user: {
-          id: user.id,
-          email: user.email,
-          created_at: user.created_at,
-        },
+        user: { id: user.id, email: user.email },
+        token,
         error: null,
       },
       { status: 201 }
     );
+    if (token) {
+      response.cookies.set('auth-token', token, {
+        httpOnly: true, secure: true, sameSite: 'lax', maxAge: 7 * 24 * 60 * 60,
+      });
+    }
+    return response;
   } catch (e) {
     console.error("Signup error:", e);
     return NextResponse.json(

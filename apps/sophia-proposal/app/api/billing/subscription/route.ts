@@ -5,8 +5,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/client';
-import { getCurrentUser } from '@/lib/supabase/auth';
+import { createServerClient } from '@/lib/db/client';
+import { getCurrentUser } from '@/lib/db/auth';
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,8 +22,8 @@ export async function GET(request: NextRequest) {
     }
 
     // 2. Get user's organization
-    const supabase = createServerClient();
-    const { data: orgMember } = await supabase
+    const db = createServerClient();
+    const { data: orgMember } = await db
       .from('org_members')
       .select('org_id')
       .eq('user_id', user.id)
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
 
     // 3. Get subscription and balance
     const [subscriptionResult, balanceResult] = await Promise.all([
-      supabase
+      db
         .from('subscriptions')
         .select('*')
         .eq('org_id', orgMember.org_id)
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
         .single()
         .then(r => r.data),
 
-      supabase
+      db
         .from('org_balances')
         .select('*')
         .eq('org_id', orgMember.org_id)

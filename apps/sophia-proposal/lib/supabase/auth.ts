@@ -14,7 +14,7 @@ export async function getCurrentUser(
     if (!accessToken) return null;
 
     const supabase = createAuthClient(accessToken);
-    const { data, error } = await supabase.auth.getUser(accessToken);
+    const { data, error } = await db.auth.getUser(accessToken);
 
     if (error || !data.user) return null;
     return data.user;
@@ -32,7 +32,7 @@ export async function signUp(
 ): Promise<{ user: User | null; error: string | null }> {
   try {
     const supabase = createAuthClient();
-    const { data, error } = await supabase.auth.signUp({
+    const { data, error } = await db.auth.signUp({
       email,
       password,
     });
@@ -53,7 +53,7 @@ export async function signIn(
 ): Promise<{ user: User | null; error: string | null }> {
   try {
     const supabase = createAuthClient();
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await db.auth.signInWithPassword({
       email,
       password,
     });
@@ -73,7 +73,7 @@ export async function sendMagicLink(
 ): Promise<{ error: string | null }> {
   try {
     const supabase = createAuthClient();
-    const { error } = await supabase.auth.signInWithOtp({ email });
+    const { error } = await db.auth.signInWithOtp({ email });
 
     if (error) return { error: error.message };
     return { error: null };
@@ -90,7 +90,7 @@ export async function signOut(
 ): Promise<{ error: string | null }> {
   try {
     const supabase = createAuthClient(accessToken);
-    const { error } = await supabase.auth.signOut();
+    const { error } = await db.auth.signOut();
 
     if (error) return { error: error.message };
     return { error: null };
@@ -108,7 +108,7 @@ export async function createOrganization(
   slug: string
 ): Promise<{ orgId: string | null; error: string | null }> {
   try {
-    const supabase = createServerClient();
+    const db = createServerClient();
 
     // Create organization
     const { data: org, error: orgError } = await supabase
