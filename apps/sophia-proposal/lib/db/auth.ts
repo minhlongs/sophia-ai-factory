@@ -5,7 +5,7 @@
  * and JWT token signing/verification.
  */
 
-import { createServerClient } from './client';
+import { getD1Client } from './client';
 import type { User } from './client';
 
 const JWT_SECRET = process.env.JWT_SECRET ?? process.env.INTERNAL_API_SECRET ?? 'sophia-jwt-secret-change-me';
@@ -99,7 +99,7 @@ export async function getCurrentUser(cookies: string): Promise<User | null> {
     const payload = await verifyJwt(token);
     if (!payload?.sub) return null;
 
-    const db = createServerClient();
+    const db = await getD1Client();
     const { data } = await db.from('users').select('id, email, full_name, avatar_url, role').eq('id', payload.sub).single();
     return data as User | null;
   } catch {
@@ -111,7 +111,7 @@ export async function signUp(
   email: string, password: string,
 ): Promise<{ user: User | null; token?: string; error: string | null }> {
   try {
-    const db = createServerClient();
+    const db = await getD1Client();
 
     // Check if email already exists
     const { data: existing } = await db.from('users').select('id').eq('email', email).maybeSingle();
@@ -136,7 +136,7 @@ export async function signIn(
   email: string, password: string,
 ): Promise<{ user: User | null; token?: string; error: string | null }> {
   try {
-    const db = createServerClient();
+    const db = await getD1Client();
     const { data } = await db
       .from('users')
       .select('id, email, full_name, avatar_url, role, password_hash')
@@ -163,7 +163,7 @@ export async function signIn(
 
 export async function sendMagicLink(email: string): Promise<{ error: string | null }> {
   try {
-    const db = createServerClient();
+    const db = await getD1Client();
     const token = crypto.randomUUID();
     const expires = new Date(Date.now() + 15 * 60 * 1000).toISOString(); // 15 min
 
@@ -187,7 +187,7 @@ export async function verifyMagicLink(
   token: string,
 ): Promise<{ user: User | null; authToken?: string; error: string | null }> {
   try {
-    const db = createServerClient();
+    const db = await getD1Client();
     const { data } = await db
       .from('users')
       .select('id, email, full_name, role, magic_link_expires_at')
@@ -225,7 +225,7 @@ export async function createOrganization(
   userId: string, name: string, slug: string,
 ): Promise<{ orgId: string | null; error: string | null }> {
   try {
-    const db = createServerClient();
+    const db = await getD1Client();
     const orgId = crypto.randomUUID();
 
     await db.from('organizations').insert({ id: orgId, name, slug });
@@ -243,7 +243,7 @@ export async function getUserOrganization(
   userId: string,
 ): Promise<{ id: string; name: string; slug: string; role: string } | null> {
   try {
-    const db = createServerClient();
+    const db = await getD1Client();
     const { data: member } = await db
       .from('org_members')
       .select('org_id, role')

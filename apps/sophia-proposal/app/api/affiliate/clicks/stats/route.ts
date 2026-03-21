@@ -51,7 +51,7 @@ export async function GET(req: NextRequest) {
   const byProgram: Record<string, number> = {};
   const byContent: Record<string, number> = {};
 
-  for (const click of clicks ?? []) {
+  for (const click of (clicks ?? []) as Record<string, string>[]) {
     byProgram[click.program_id] = (byProgram[click.program_id] ?? 0) + 1;
     if (click.content_id) {
       byContent[click.content_id] = (byContent[click.content_id] ?? 0) + 1;
