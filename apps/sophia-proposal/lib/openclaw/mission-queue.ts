@@ -6,7 +6,7 @@
  * missions execute FIFO without a separate message broker.
  */
 
-import { createServerClient } from '@/lib/db/client';
+import { getD1Client } from '@/lib/db/client';
 
 const ORG_CONCURRENCY = 3;
 
@@ -73,7 +73,7 @@ export function getQueuePosition(missionId: string): number {
 // --------------------------------------------------------------------------
 
 async function getOrgIdForMission(missionId: string): Promise<string | null> {
-  const db = createServerClient();
+  const db = await getD1Client();
   const { data } = await db
     .from<{ org_id: string }>('missions')
     .select('org_id')

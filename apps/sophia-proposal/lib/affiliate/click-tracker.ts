@@ -6,7 +6,7 @@
  */
 
 import { createHash } from 'crypto';
-import { createServerClient } from '@/lib/db/client';
+import { getD1Client } from '@/lib/db/client';
 
 /**
  * Hash IP address with SHA-256 for privacy-safe storage
@@ -34,7 +34,7 @@ export async function trackClick(
   req: Request
 ): Promise<void> {
   try {
-    const db = createServerClient();
+    const db = await getD1Client();
     const rawIP = extractIP(req);
 
     await db.from('affiliate_clicks').insert({

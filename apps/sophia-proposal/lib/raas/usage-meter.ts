@@ -4,7 +4,7 @@
  * Records API usage per key and provides aggregated stats for billing/analytics.
  */
 
-import { createServerClient } from '@/lib/db/client';
+import { getD1Client } from '@/lib/db/client';
 
 // ── Local types ───────────────────────────────────────────────────────────────
 
@@ -33,7 +33,7 @@ export interface RecordUsageParams {
  */
 export async function recordUsage(params: RecordUsageParams): Promise<void> {
   try {
-    const db = createServerClient();
+    const db = await getD1Client();
     await db.from('raas_api_usage').insert({
       api_key_id:      params.apiKeyId,
       org_id:          params.orgId,
@@ -54,7 +54,7 @@ export async function recordUsage(params: RecordUsageParams): Promise<void> {
  * Return aggregated usage stats for an org over the last N days.
  */
 export async function getUsageStats(orgId: string, days: number): Promise<UsageStats> {
-  const db = createServerClient();
+  const db = await getD1Client();
   const since = new Date(Date.now() - days * 86_400_000).toISOString();
 
   const { data, error } = await db

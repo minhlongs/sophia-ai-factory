@@ -5,7 +5,7 @@
  * Retries up to 3 times with exponential backoff.
  */
 
-import { createServerClient } from '@/lib/db/client';
+import { getD1Client } from '@/lib/db/client';
 import { signPayload, WEBHOOK_HEADERS } from './webhook-hmac';
 
 const MAX_ATTEMPTS = 3;
@@ -49,7 +49,7 @@ export async function deliverWebhook(
     return;
   }
 
-  const db = createServerClient();
+  const db = await getD1Client();
   let attempt = 0;
 
   while (attempt < MAX_ATTEMPTS) {

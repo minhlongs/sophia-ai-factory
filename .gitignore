@@ -74,3 +74,4 @@ products/paid/*.zip
 .Trashes
 ehthumbs.db
 Thumbs.db
+repomix-output.xml

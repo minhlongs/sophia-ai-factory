@@ -5,7 +5,7 @@
  * Split out to keep command-router.ts under 200 lines.
  */
 
-import { createServerClient } from '@/lib/db/client';
+import { getD1Client } from '@/lib/db/client';
 import { createVideoTask } from '@/lib/video/heygen-client';
 import type { Mission, MissionResult } from '@/types/raas';
 
@@ -14,7 +14,7 @@ import type { Mission, MissionResult } from '@/types/raas';
 // ============================================================================
 
 export async function runProposalCreate(mission: Mission): Promise<MissionResult> {
-  const db = createServerClient();
+  const db = await getD1Client();
   const params = mission.params as { client_name?: string; product_name?: string; tone?: string; sections?: string[] };
 
   const sectionNames = params.sections ?? ['executive_summary', 'scope', 'pricing', 'timeline'];
@@ -91,7 +91,7 @@ export async function runVideoCreate(mission: Mission): Promise<MissionResult> {
 // ============================================================================
 
 export async function runCrmSync(mission: Mission): Promise<MissionResult> {
-  const db = createServerClient();
+  const db = await getD1Client();
 
   const { data: settings } = await db
     .from('crm_settings')
@@ -149,7 +149,7 @@ export async function runCrmSync(mission: Mission): Promise<MissionResult> {
 // ============================================================================
 
 export async function runAnalyticsExport(mission: Mission): Promise<MissionResult> {
-  const db = createServerClient();
+  const db = await getD1Client();
   const params = mission.params as { days?: number; format?: string };
   const days = params.days ?? 30;
   const since = new Date(Date.now() - days * 86_400_000).toISOString();
@@ -200,7 +200,7 @@ export async function runAnalyticsExport(mission: Mission): Promise<MissionResul
 // ============================================================================
 
 export async function runGtmCampaign(mission: Mission): Promise<MissionResult> {
-  const db = createServerClient();
+  const db = await getD1Client();
   const params = mission.params as Record<string, unknown>;
 
   const subCommands = [

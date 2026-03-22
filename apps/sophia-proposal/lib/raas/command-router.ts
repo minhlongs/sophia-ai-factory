@@ -5,7 +5,7 @@
  * Stub commands delegated to command-helpers.ts; real commands inline.
  */
 
-import { createServerClient } from '@/lib/db/client';
+import { getD1Client } from '@/lib/db/client';
 import { generateBlogReview } from '@/lib/affiliate/content/blog-generator';
 import { generateSocialBundle } from '@/lib/affiliate/content/social-generator';
 import { runScrape } from '@/lib/affiliate/program-scraper';
@@ -97,7 +97,7 @@ export async function executeCommand(mission: Mission): Promise<MissionResult> {
 // ============================================================================
 
 async function runAffiliateGenerate(mission: Mission): Promise<MissionResult> {
-  const db = createServerClient();
+  const db = await getD1Client();
   const { program_id } = mission.params as { program_id?: string };
 
   if (!program_id) {
@@ -152,7 +152,7 @@ async function runContentBlog(mission: Mission): Promise<MissionResult> {
   };
 
   if (affiliate_program_id) {
-    const db = createServerClient();
+    const db = await getD1Client();
     const { data: program } = await db
       .from<AffiliateProgram>('affiliate_programs')
       .select('*')
@@ -187,7 +187,7 @@ async function runContentSocial(mission: Mission): Promise<MissionResult> {
   const { affiliate_program_id } = mission.params as { affiliate_program_id?: string };
 
   if (affiliate_program_id) {
-    const db = createServerClient();
+    const db = await getD1Client();
     const { data: program } = await db
       .from<AffiliateProgram>('affiliate_programs')
       .select('*')

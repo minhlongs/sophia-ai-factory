@@ -5,7 +5,7 @@
  * after each mutation (D1 stores execution_log as JSON text, no partial updates).
  */
 
-import { createServerClient } from '@/lib/db/client';
+import { getD1Client } from '@/lib/db/client';
 import type { PEVStep } from '@/types/raas';
 
 export class StepTracker {
@@ -72,7 +72,7 @@ export class StepTracker {
   // --------------------------------------------------------------------------
 
   private async persist(): Promise<void> {
-    const db = createServerClient();
+    const db = await getD1Client();
     await db
       .from('missions')
       .update({ execution_log: this.steps, updated_at: new Date().toISOString() })

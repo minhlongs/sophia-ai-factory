@@ -6,7 +6,7 @@
  */
 
 import crypto from 'crypto';
-import { createServerClient } from '@/lib/db/client';
+import { getD1Client } from '@/lib/db/client';
 
 // ── Local types ───────────────────────────────────────────────────────────────
 
@@ -54,7 +54,7 @@ export async function validateApiKey(key: string): Promise<ValidateResult> {
   if (!key?.startsWith('sk_live_')) return { valid: false };
 
   const hash = crypto.createHash('sha256').update(key).digest('hex');
-  const db = createServerClient();
+  const db = await getD1Client();
 
   const { data, error } = await db
     .from<{ id: string; org_id: string; permissions: string[]; rate_limit_per_minute: number; is_active: boolean; expires_at: string | null }>('raas_api_keys')
@@ -91,7 +91,7 @@ export async function createApiKey(
   name: string
 ): Promise<{ key: string; id: string }> {
   const { key, hash, prefix } = generateApiKey();
-  const db = createServerClient();
+  const db = await getD1Client();
 
   const { data, error } = await db
     .from<{ id: string }>('raas_api_keys')
@@ -108,7 +108,7 @@ export async function createApiKey(
  * Verifies org ownership before revoking.
  */
 export async function revokeApiKey(keyId: string, orgId: string): Promise<boolean> {
-  const db = createServerClient();
+  const db = await getD1Client();
   const { error } = await db
     .from('raas_api_keys')
     .update({ is_active: false })
@@ -122,7 +122,7 @@ export async function revokeApiKey(keyId: string, orgId: string): Promise<boolea
  * List all API keys for an org (no hash returned).
  */
 export async function listApiKeys(orgId: string): Promise<ApiKeyInfo[]> {
-  const db = createServerClient();
+  const db = await getD1Client();
   const { data, error } = await db
     .from<ApiKeyInfo>('raas_api_keys')
     .select('id, name, key_prefix, permissions, rate_limit_per_minute, is_active, last_used_at, created_at, expires_at')

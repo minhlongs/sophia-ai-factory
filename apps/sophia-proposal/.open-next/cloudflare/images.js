@@ -16,7 +16,7 @@ var define_IMAGES_QUALITIES_default = [75];
 // <define:__IMAGES_REMOTE_PATTERNS__>
 var define_IMAGES_REMOTE_PATTERNS_default = [];
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/utils/error.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/utils/error.js
 function isOpenNextError(e) {
   try {
     return "__openNextInternal" in e;
@@ -25,7 +25,7 @@ function isOpenNextError(e) {
   }
 }
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/adapters/logger.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/adapters/logger.js
 function debug(...args) {
   if (globalThis.openNextDebug) {
     console.log(...args);
@@ -75,7 +75,7 @@ function getOpenNextErrorLogLevel() {
   }
 }
 
-// node_modules/.pnpm/@opennextjs+cloudflare@1.17.1_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0__ae18998cae57da4e66ae5e0b27d4753f/node_modules/@opennextjs/cloudflare/dist/cli/templates/images.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/cloudflare/dist/cli/templates/images.js
 async function handleImageRequest(requestURL, requestHeaders, env) {
   const parseResult = parseImageRequest(requestURL, requestHeaders);
   if (!parseResult.ok) {

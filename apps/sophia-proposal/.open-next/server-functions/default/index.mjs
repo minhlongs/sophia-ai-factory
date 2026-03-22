@@ -40,7 +40,7 @@ var __toESM = (mod3, isNodeMode, target) => (target = mod3 != null ? __create(__
 ));
 var __toCommonJS = (mod3) => __copyProps(__defProp({}, "__esModule", { value: true }), mod3);
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/utils/error.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/utils/error.js
 function isOpenNextError(e) {
   try {
     return "__openNextInternal" in e;
@@ -50,7 +50,7 @@ function isOpenNextError(e) {
 }
 var IgnorableError;
 var init_error = __esm({
-  "node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/utils/error.js"() {
+  "../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/utils/error.js"() {
     IgnorableError = class extends Error {
       __openNextInternal = true;
       canIgnore = true;
@@ -63,7 +63,7 @@ var init_error = __esm({
   }
 });
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/adapters/logger.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/adapters/logger.js
 function debug(...args) {
   if (globalThis.openNextDebug) {
     console.log(...args);
@@ -106,7 +106,7 @@ function getOpenNextErrorLogLevel() {
 }
 var DOWNPLAYED_ERROR_LOGS, isDownplayedErrorLog;
 var init_logger = __esm({
-  "node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/adapters/logger.js"() {
+  "../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/adapters/logger.js"() {
     init_error();
     DOWNPLAYED_ERROR_LOGS = [
       {
@@ -119,7 +119,7 @@ var init_logger = __esm({
   }
 });
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/http/util.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/http/util.js
 function parseSetCookieHeader(cookies) {
   if (!cookies) {
     return [];
@@ -146,7 +146,7 @@ function getQueryFromIterator(it) {
 }
 var parseHeaders, convertHeader;
 var init_util = __esm({
-  "node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/http/util.js"() {
+  "../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/http/util.js"() {
     init_logger();
     parseHeaders = (headers) => {
       const result = {};
@@ -183,7 +183,7 @@ var init_util = __esm({
   }
 });
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/adapters/config/index.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/adapters/config/index.js
 var config_exports = {};
 __export(config_exports, {
   AppPathRoutesManifest: () => AppPathRoutesManifest,
@@ -204,22 +204,22 @@ __export(config_exports, {
 import path from "node:path";
 var NEXT_DIR, OPEN_NEXT_DIR, NextConfig, BuildId, HtmlPages, RoutesManifest, ConfigHeaders, PrerenderManifest, AppPathsManifestKeys, MiddlewareManifest, AppPathsManifest, AppPathRoutesManifest, FunctionsConfigManifest, PagesManifest;
 var init_config = __esm({
-  "node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/adapters/config/index.js"() {
+  "../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/adapters/config/index.js"() {
     init_logger();
     globalThis.__dirname ??= "";
     NEXT_DIR = path.join(__dirname, ".next");
     OPEN_NEXT_DIR = path.join(__dirname, ".open-next");
     debug({ NEXT_DIR, OPEN_NEXT_DIR });
-    NextConfig = { "env": {}, "webpack": null, "eslint": { "ignoreDuringBuilds": false }, "typescript": { "ignoreBuildErrors": false, "tsconfigPath": "tsconfig.json" }, "typedRoutes": false, "distDir": ".next", "cleanDistDir": true, "assetPrefix": "", "cacheMaxMemorySize": 52428800, "configOrigin": "next.config.ts", "useFileSystemPublicRoutes": true, "generateEtags": true, "pageExtensions": ["tsx", "ts", "jsx", "js"], "poweredByHeader": true, "compress": true, "images": { "deviceSizes": [640, 750, 828, 1080, 1200, 1920, 2048, 3840], "imageSizes": [16, 32, 48, 64, 96, 128, 256, 384], "path": "/_next/image", "loader": "default", "loaderFile": "", "domains": [], "disableStaticImages": false, "minimumCacheTTL": 60, "formats": ["image/webp"], "maximumResponseBody": 5e7, "dangerouslyAllowSVG": false, "contentSecurityPolicy": "script-src 'none'; frame-src 'none'; sandbox;", "contentDispositionType": "attachment", "remotePatterns": [], "unoptimized": false }, "devIndicators": { "position": "bottom-left" }, "onDemandEntries": { "maxInactiveAge": 6e4, "pagesBufferLength": 5 }, "amp": { "canonicalBase": "" }, "basePath": "", "sassOptions": {}, "trailingSlash": false, "i18n": null, "productionBrowserSourceMaps": false, "excludeDefaultMomentLocales": true, "serverRuntimeConfig": {}, "publicRuntimeConfig": {}, "reactProductionProfiling": false, "reactStrictMode": null, "reactMaxHeadersLength": 6e3, "httpAgentOptions": { "keepAlive": true }, "logging": {}, "compiler": {}, "expireTime": 31536e3, "staticPageGenerationTimeout": 60, "output": "standalone", "modularizeImports": { "@mui/icons-material": { "transform": "@mui/icons-material/{{member}}" }, "lodash": { "transform": "lodash/{{member}}" } }, "outputFileTracingRoot": "/private/tmp/sophia-cf-deploy/apps/sophia-proposal", "experimental": { "useSkewCookie": false, "cacheLife": { "default": { "stale": 300, "revalidate": 900, "expire": 4294967294 }, "seconds": { "stale": 30, "revalidate": 1, "expire": 60 }, "minutes": { "stale": 300, "revalidate": 60, "expire": 3600 }, "hours": { "stale": 300, "revalidate": 3600, "expire": 86400 }, "days": { "stale": 300, "revalidate": 86400, "expire": 604800 }, "weeks": { "stale": 300, "revalidate": 604800, "expire": 2592e3 }, "max": { "stale": 300, "revalidate": 2592e3, "expire": 4294967294 } }, "cacheHandlers": {}, "cssChunking": true, "multiZoneDraftMode": false, "appNavFailHandling": false, "prerenderEarlyExit": true, "serverMinification": true, "serverSourceMaps": false, "linkNoTouchStart": false, "caseSensitiveRoutes": false, "clientSegmentCache": false, "clientParamParsing": false, "dynamicOnHover": false, "preloadEntriesOnStart": true, "clientRouterFilter": true, "clientRouterFilterRedirects": false, "fetchCacheKeyPrefix": "", "middlewarePrefetch": "flexible", "optimisticClientCache": true, "manualClientBasePath": false, "cpus": 7, "memoryBasedWorkersCount": false, "imgOptConcurrency": null, "imgOptTimeoutInSeconds": 7, "imgOptMaxInputPixels": 268402689, "imgOptSequentialRead": null, "imgOptSkipMetadata": null, "isrFlushToDisk": true, "workerThreads": false, "optimizeCss": false, "nextScriptWorkers": false, "scrollRestoration": false, "externalDir": false, "disableOptimizedLoading": false, "gzipSize": true, "craCompat": false, "esmExternals": true, "fullySpecified": false, "swcTraceProfiling": false, "forceSwcTransforms": false, "largePageDataBytes": 128e3, "typedEnv": false, "parallelServerCompiles": false, "parallelServerBuildTraces": false, "ppr": false, "authInterrupts": false, "webpackMemoryOptimizations": false, "optimizeServerReact": true, "viewTransition": false, "routerBFCache": false, "removeUncaughtErrorAndRejectionListeners": false, "validateRSCRequestHeaders": false, "staleTimes": { "dynamic": 0, "static": 300 }, "serverComponentsHmrCache": true, "staticGenerationMaxConcurrency": 8, "staticGenerationMinPagesPerWorker": 25, "cacheComponents": false, "inlineCss": false, "useCache": false, "globalNotFound": false, "devtoolSegmentExplorer": true, "browserDebugInfoInTerminal": false, "optimizeRouterScrolling": false, "middlewareClientMaxBodySize": 10485760, "optimizePackageImports": ["lucide-react", "date-fns", "lodash-es", "ramda", "antd", "react-bootstrap", "ahooks", "@ant-design/icons", "@headlessui/react", "@headlessui-float/react", "@heroicons/react/20/solid", "@heroicons/react/24/solid", "@heroicons/react/24/outline", "@visx/visx", "@tremor/react", "rxjs", "@mui/material", "@mui/icons-material", "recharts", "react-use", "effect", "@effect/schema", "@effect/platform", "@effect/platform-node", "@effect/platform-browser", "@effect/platform-bun", "@effect/sql", "@effect/sql-mssql", "@effect/sql-mysql2", "@effect/sql-pg", "@effect/sql-sqlite-node", "@effect/sql-sqlite-bun", "@effect/sql-sqlite-wasm", "@effect/sql-sqlite-react-native", "@effect/rpc", "@effect/rpc-http", "@effect/typeclass", "@effect/experimental", "@effect/opentelemetry", "@material-ui/core", "@material-ui/icons", "@tabler/icons-react", "mui-core", "react-icons/ai", "react-icons/bi", "react-icons/bs", "react-icons/cg", "react-icons/ci", "react-icons/di", "react-icons/fa", "react-icons/fa6", "react-icons/fc", "react-icons/fi", "react-icons/gi", "react-icons/go", "react-icons/gr", "react-icons/hi", "react-icons/hi2", "react-icons/im", "react-icons/io", "react-icons/io5", "react-icons/lia", "react-icons/lib", "react-icons/lu", "react-icons/md", "react-icons/pi", "react-icons/ri", "react-icons/rx", "react-icons/si", "react-icons/sl", "react-icons/tb", "react-icons/tfi", "react-icons/ti", "react-icons/vsc", "react-icons/wi"], "trustHostHeader": false, "isExperimentalCompile": false }, "htmlLimitedBots": "[\\w-]+-Google|Google-[\\w-]+|Chrome-Lighthouse|Slurp|DuckDuckBot|baiduspider|yandex|sogou|bitlybot|tumblr|vkShare|quora link preview|redditbot|ia_archiver|Bingbot|BingPreview|applebot|facebookexternalhit|facebookcatalog|Twitterbot|LinkedInBot|Slackbot|Discordbot|WhatsApp|SkypeUriPreview|Yeti|googleweblight", "bundlePagesRouterDependencies": false, "configFileName": "next.config.ts", "reactCompiler": true, "turbopack": { "root": "/private/tmp/sophia-cf-deploy/apps/sophia-proposal" } };
-    BuildId = "j3goBtifBMc9WLUysTRpi";
+    NextConfig = { "env": {}, "webpack": null, "eslint": { "ignoreDuringBuilds": false }, "typescript": { "ignoreBuildErrors": false, "tsconfigPath": "tsconfig.json" }, "typedRoutes": false, "distDir": ".next", "cleanDistDir": true, "assetPrefix": "", "cacheMaxMemorySize": 52428800, "configOrigin": "next.config.js", "useFileSystemPublicRoutes": true, "generateEtags": true, "pageExtensions": ["tsx", "ts", "jsx", "js"], "poweredByHeader": true, "compress": true, "images": { "deviceSizes": [640, 750, 828, 1080, 1200, 1920, 2048, 3840], "imageSizes": [16, 32, 48, 64, 96, 128, 256, 384], "path": "/_next/image", "loader": "default", "loaderFile": "", "domains": [], "disableStaticImages": false, "minimumCacheTTL": 60, "formats": ["image/webp"], "maximumResponseBody": 5e7, "dangerouslyAllowSVG": false, "contentSecurityPolicy": "script-src 'none'; frame-src 'none'; sandbox;", "contentDispositionType": "attachment", "remotePatterns": [], "unoptimized": true }, "devIndicators": { "position": "bottom-left" }, "onDemandEntries": { "maxInactiveAge": 6e4, "pagesBufferLength": 5 }, "amp": { "canonicalBase": "" }, "basePath": "", "sassOptions": {}, "trailingSlash": false, "i18n": null, "productionBrowserSourceMaps": false, "excludeDefaultMomentLocales": true, "serverRuntimeConfig": {}, "publicRuntimeConfig": {}, "reactProductionProfiling": false, "reactStrictMode": null, "reactMaxHeadersLength": 6e3, "httpAgentOptions": { "keepAlive": true }, "logging": {}, "compiler": {}, "expireTime": 31536e3, "staticPageGenerationTimeout": 60, "output": "standalone", "modularizeImports": { "@mui/icons-material": { "transform": "@mui/icons-material/{{member}}" }, "lodash": { "transform": "lodash/{{member}}" } }, "outputFileTracingRoot": "/private/tmp/sophia-cf-deploy/apps/sophia-proposal", "experimental": { "useSkewCookie": false, "cacheLife": { "default": { "stale": 300, "revalidate": 900, "expire": 4294967294 }, "seconds": { "stale": 30, "revalidate": 1, "expire": 60 }, "minutes": { "stale": 300, "revalidate": 60, "expire": 3600 }, "hours": { "stale": 300, "revalidate": 3600, "expire": 86400 }, "days": { "stale": 300, "revalidate": 86400, "expire": 604800 }, "weeks": { "stale": 300, "revalidate": 604800, "expire": 2592e3 }, "max": { "stale": 300, "revalidate": 2592e3, "expire": 4294967294 } }, "cacheHandlers": {}, "cssChunking": true, "multiZoneDraftMode": false, "appNavFailHandling": false, "prerenderEarlyExit": true, "serverMinification": true, "serverSourceMaps": false, "linkNoTouchStart": false, "caseSensitiveRoutes": false, "clientSegmentCache": false, "clientParamParsing": false, "dynamicOnHover": false, "preloadEntriesOnStart": true, "clientRouterFilter": true, "clientRouterFilterRedirects": false, "fetchCacheKeyPrefix": "", "middlewarePrefetch": "flexible", "optimisticClientCache": true, "manualClientBasePath": false, "cpus": 7, "memoryBasedWorkersCount": false, "imgOptConcurrency": null, "imgOptTimeoutInSeconds": 7, "imgOptMaxInputPixels": 268402689, "imgOptSequentialRead": null, "imgOptSkipMetadata": null, "isrFlushToDisk": true, "workerThreads": false, "optimizeCss": false, "nextScriptWorkers": false, "scrollRestoration": false, "externalDir": false, "disableOptimizedLoading": false, "gzipSize": true, "craCompat": false, "esmExternals": true, "fullySpecified": false, "swcTraceProfiling": false, "forceSwcTransforms": false, "largePageDataBytes": 128e3, "typedEnv": false, "parallelServerCompiles": false, "parallelServerBuildTraces": false, "ppr": false, "authInterrupts": false, "webpackMemoryOptimizations": false, "optimizeServerReact": true, "viewTransition": false, "routerBFCache": false, "removeUncaughtErrorAndRejectionListeners": false, "validateRSCRequestHeaders": false, "staleTimes": { "dynamic": 0, "static": 300 }, "serverComponentsHmrCache": true, "staticGenerationMaxConcurrency": 8, "staticGenerationMinPagesPerWorker": 25, "cacheComponents": false, "inlineCss": false, "useCache": false, "globalNotFound": false, "devtoolSegmentExplorer": true, "browserDebugInfoInTerminal": false, "optimizeRouterScrolling": false, "middlewareClientMaxBodySize": 10485760, "optimizePackageImports": ["lucide-react", "date-fns", "lodash-es", "ramda", "antd", "react-bootstrap", "ahooks", "@ant-design/icons", "@headlessui/react", "@headlessui-float/react", "@heroicons/react/20/solid", "@heroicons/react/24/solid", "@heroicons/react/24/outline", "@visx/visx", "@tremor/react", "rxjs", "@mui/material", "@mui/icons-material", "recharts", "react-use", "effect", "@effect/schema", "@effect/platform", "@effect/platform-node", "@effect/platform-browser", "@effect/platform-bun", "@effect/sql", "@effect/sql-mssql", "@effect/sql-mysql2", "@effect/sql-pg", "@effect/sql-sqlite-node", "@effect/sql-sqlite-bun", "@effect/sql-sqlite-wasm", "@effect/sql-sqlite-react-native", "@effect/rpc", "@effect/rpc-http", "@effect/typeclass", "@effect/experimental", "@effect/opentelemetry", "@material-ui/core", "@material-ui/icons", "@tabler/icons-react", "mui-core", "react-icons/ai", "react-icons/bi", "react-icons/bs", "react-icons/cg", "react-icons/ci", "react-icons/di", "react-icons/fa", "react-icons/fa6", "react-icons/fc", "react-icons/fi", "react-icons/gi", "react-icons/go", "react-icons/gr", "react-icons/hi", "react-icons/hi2", "react-icons/im", "react-icons/io", "react-icons/io5", "react-icons/lia", "react-icons/lib", "react-icons/lu", "react-icons/md", "react-icons/pi", "react-icons/ri", "react-icons/rx", "react-icons/si", "react-icons/sl", "react-icons/tb", "react-icons/tfi", "react-icons/ti", "react-icons/vsc", "react-icons/wi"], "trustHostHeader": false, "isExperimentalCompile": false }, "htmlLimitedBots": "[\\w-]+-Google|Google-[\\w-]+|Chrome-Lighthouse|Slurp|DuckDuckBot|baiduspider|yandex|sogou|bitlybot|tumblr|vkShare|quora link preview|redditbot|ia_archiver|Bingbot|BingPreview|applebot|facebookexternalhit|facebookcatalog|Twitterbot|LinkedInBot|Slackbot|Discordbot|WhatsApp|SkypeUriPreview|Yeti|googleweblight", "bundlePagesRouterDependencies": false, "configFileName": "next.config.js", "reactCompiler": true, "turbopack": { "root": "/private/tmp/sophia-cf-deploy/apps/sophia-proposal" } };
+    BuildId = "z46AUFJByO6aQekqTCh1w";
     HtmlPages = ["/404"];
     RoutesManifest = { "basePath": "", "rewrites": { "beforeFiles": [], "afterFiles": [], "fallback": [] }, "redirects": [{ "source": "/:path+/", "destination": "/:path+", "internal": true, "statusCode": 308, "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))/$" }], "routes": { "static": [{ "page": "/", "regex": "^/(?:/)?$", "routeKeys": {}, "namedRegex": "^/(?:/)?$" }, { "page": "/_not-found", "regex": "^/_not\\-found(?:/)?$", "routeKeys": {}, "namedRegex": "^/_not\\-found(?:/)?$" }, { "page": "/affiliate", "regex": "^/affiliate(?:/)?$", "routeKeys": {}, "namedRegex": "^/affiliate(?:/)?$" }, { "page": "/analytics", "regex": "^/analytics(?:/)?$", "routeKeys": {}, "namedRegex": "^/analytics(?:/)?$" }, { "page": "/billing", "regex": "^/billing(?:/)?$", "routeKeys": {}, "namedRegex": "^/billing(?:/)?$" }, { "page": "/billing/success", "regex": "^/billing/success(?:/)?$", "routeKeys": {}, "namedRegex": "^/billing/success(?:/)?$" }, { "page": "/billing/upgrade", "regex": "^/billing/upgrade(?:/)?$", "routeKeys": {}, "namedRegex": "^/billing/upgrade(?:/)?$" }, { "page": "/dashboard", "regex": "^/dashboard(?:/)?$", "routeKeys": {}, "namedRegex": "^/dashboard(?:/)?$" }, { "page": "/docs/api", "regex": "^/docs/api(?:/)?$", "routeKeys": {}, "namedRegex": "^/docs/api(?:/)?$" }, { "page": "/login", "regex": "^/login(?:/)?$", "routeKeys": {}, "namedRegex": "^/login(?:/)?$" }, { "page": "/magic-link", "regex": "^/magic\\-link(?:/)?$", "routeKeys": {}, "namedRegex": "^/magic\\-link(?:/)?$" }, { "page": "/missions", "regex": "^/missions(?:/)?$", "routeKeys": {}, "namedRegex": "^/missions(?:/)?$" }, { "page": "/onboarding", "regex": "^/onboarding(?:/)?$", "routeKeys": {}, "namedRegex": "^/onboarding(?:/)?$" }, { "page": "/pricing", "regex": "^/pricing(?:/)?$", "routeKeys": {}, "namedRegex": "^/pricing(?:/)?$" }, { "page": "/proposals", "regex": "^/proposals(?:/)?$", "routeKeys": {}, "namedRegex": "^/proposals(?:/)?$" }, { "page": "/proposals/new", "regex": "^/proposals/new(?:/)?$", "routeKeys": {}, "namedRegex": "^/proposals/new(?:/)?$" }, { "page": "/referral", "regex": "^/referral(?:/)?$", "routeKeys": {}, "namedRegex": "^/referral(?:/)?$" }, { "page": "/settings/api-keys", "regex": "^/settings/api\\-keys(?:/)?$", "routeKeys": {}, "namedRegex": "^/settings/api\\-keys(?:/)?$" }, { "page": "/signup", "regex": "^/signup(?:/)?$", "routeKeys": {}, "namedRegex": "^/signup(?:/)?$" }, { "page": "/templates", "regex": "^/templates(?:/)?$", "routeKeys": {}, "namedRegex": "^/templates(?:/)?$" }, { "page": "/usage", "regex": "^/usage(?:/)?$", "routeKeys": {}, "namedRegex": "^/usage(?:/)?$" }], "dynamic": [{ "page": "/api/affiliate/content/[id]", "regex": "^/api/affiliate/content/([^/]+?)(?:/)?$", "routeKeys": { "nxtPid": "nxtPid" }, "namedRegex": "^/api/affiliate/content/(?<nxtPid>[^/]+?)(?:/)?$" }, { "page": "/api/affiliate/programs/[id]", "regex": "^/api/affiliate/programs/([^/]+?)(?:/)?$", "routeKeys": { "nxtPid": "nxtPid" }, "namedRegex": "^/api/affiliate/programs/(?<nxtPid>[^/]+?)(?:/)?$" }, { "page": "/api/proposals/[id]", "regex": "^/api/proposals/([^/]+?)(?:/)?$", "routeKeys": { "nxtPid": "nxtPid" }, "namedRegex": "^/api/proposals/(?<nxtPid>[^/]+?)(?:/)?$" }, { "page": "/api/raas/keys/[id]", "regex": "^/api/raas/keys/([^/]+?)(?:/)?$", "routeKeys": { "nxtPid": "nxtPid" }, "namedRegex": "^/api/raas/keys/(?<nxtPid>[^/]+?)(?:/)?$" }, { "page": "/api/raas/missions/[id]", "regex": "^/api/raas/missions/([^/]+?)(?:/)?$", "routeKeys": { "nxtPid": "nxtPid" }, "namedRegex": "^/api/raas/missions/(?<nxtPid>[^/]+?)(?:/)?$" }, { "page": "/api/v1/missions/[id]", "regex": "^/api/v1/missions/([^/]+?)(?:/)?$", "routeKeys": { "nxtPid": "nxtPid" }, "namedRegex": "^/api/v1/missions/(?<nxtPid>[^/]+?)(?:/)?$" }, { "page": "/api/v1/missions/[id]/cancel", "regex": "^/api/v1/missions/([^/]+?)/cancel(?:/)?$", "routeKeys": { "nxtPid": "nxtPid" }, "namedRegex": "^/api/v1/missions/(?<nxtPid>[^/]+?)/cancel(?:/)?$" }, { "page": "/api/v1/missions/[id]/result", "regex": "^/api/v1/missions/([^/]+?)/result(?:/)?$", "routeKeys": { "nxtPid": "nxtPid" }, "namedRegex": "^/api/v1/missions/(?<nxtPid>[^/]+?)/result(?:/)?$" }, { "page": "/api/v1/missions/[id]/stream", "regex": "^/api/v1/missions/([^/]+?)/stream(?:/)?$", "routeKeys": { "nxtPid": "nxtPid" }, "namedRegex": "^/api/v1/missions/(?<nxtPid>[^/]+?)/stream(?:/)?$" }, { "page": "/api/video/proposal/[proposalId]", "regex": "^/api/video/proposal/([^/]+?)(?:/)?$", "routeKeys": { "nxtPproposalId": "nxtPproposalId" }, "namedRegex": "^/api/video/proposal/(?<nxtPproposalId>[^/]+?)(?:/)?$" }, { "page": "/api/video/[id]", "regex": "^/api/video/([^/]+?)(?:/)?$", "routeKeys": { "nxtPid": "nxtPid" }, "namedRegex": "^/api/video/(?<nxtPid>[^/]+?)(?:/)?$" }, { "page": "/missions/[id]", "regex": "^/missions/([^/]+?)(?:/)?$", "routeKeys": { "nxtPid": "nxtPid" }, "namedRegex": "^/missions/(?<nxtPid>[^/]+?)(?:/)?$" }, { "page": "/proposals/[id]", "regex": "^/proposals/([^/]+?)(?:/)?$", "routeKeys": { "nxtPid": "nxtPid" }, "namedRegex": "^/proposals/(?<nxtPid>[^/]+?)(?:/)?$" }], "data": { "static": [], "dynamic": [] } }, "locales": [] };
     ConfigHeaders = [];
-    PrerenderManifest = { "version": 4, "routes": { "/_not-found": { "initialStatus": 404, "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/_not-found", "dataRoute": "/_not-found.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/analytics": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/analytics", "dataRoute": "/analytics.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/billing/upgrade": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/billing/upgrade", "dataRoute": "/billing/upgrade.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/billing/success": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/billing/success", "dataRoute": "/billing/success.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/billing": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/billing", "dataRoute": "/billing.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/usage": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/usage", "dataRoute": "/usage.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/templates": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/templates", "dataRoute": "/templates.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/onboarding": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/onboarding", "dataRoute": "/onboarding.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/dashboard": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/dashboard", "dataRoute": "/dashboard.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/proposals/new": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/proposals/new", "dataRoute": "/proposals/new.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/", "dataRoute": "/index.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/affiliate": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/affiliate", "dataRoute": "/affiliate.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/proposals": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/proposals", "dataRoute": "/proposals.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/docs/api": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/docs/api", "dataRoute": "/docs/api.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/login": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/login", "dataRoute": "/login.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/referral": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/referral", "dataRoute": "/referral.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/pricing": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/pricing", "dataRoute": "/pricing.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/magic-link": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/magic-link", "dataRoute": "/magic-link.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/settings/api-keys": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/settings/api-keys", "dataRoute": "/settings/api-keys.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/missions": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/missions", "dataRoute": "/missions.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/signup": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/signup", "dataRoute": "/signup.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] } }, "dynamicRoutes": {}, "notFoundRoutes": [], "preview": { "previewModeId": "6f0d09a59d112dd66dc3085960a78ecf", "previewModeSigningKey": "a6e996bad14ef2e80a447191053fca3c0ab76cd92756f9542cc0c6c4ed19fe97", "previewModeEncryptionKey": "402e5bda7d31e564803dd15a088e35dacfd0d9bd5c2f8a8f008a99ac4ed72ab0" } };
-    AppPathsManifestKeys = ["/_not-found", "/api/analytics/conversions/route", "/api/analytics/metrics/route", "/api/analytics/usage/route", "/api/billing/portal/route", "/api/analytics/export/route", "/api/billing/checkout/route", "/api/billing/subscription/route", "/api/crm/callback/route", "/api/crm/connect/route", "/api/crm/sync/route", "/api/feedback/route", "/api/onboarding/progress/route", "/api/onboarding/status/route", "/api/usage/route", "/api/video/webhook/route", "/api/webhooks/polar/route", "/api/video/[id]/route", "/api/video/generate/route", "/api/video/proposal/[proposalId]/route", "/api/affiliate/clicks/track/route", "/api/affiliate/content/[id]/route", "/api/affiliate/programs/[id]/route", "/api/affiliate/content/route", "/api/affiliate/clicks/stats/route", "/api/affiliate/content/generate/route", "/api/affiliate/programs/scrape/route", "/api/affiliate/programs/route", "/api/auth/signup/route", "/api/auth/login/route", "/api/auth/logout/route", "/api/health/route", "/api/proposals/route", "/api/proposals/[id]/route", "/api/health/deep/route", "/api/org/route", "/api/raas/keys/[id]/route", "/api/raas/usage/route", "/api/raas/keys/route", "/api/proposals/generate/route", "/api/referral/stats/route", "/api/raas/templates/route", "/api/raas/execute/route", "/api/raas/missions/[id]/route", "/api/raas/missions/route", "/api/referral/earn/route", "/api/referral/code/route", "/api/v1/missions/[id]/route", "/api/v1/missions/[id]/cancel/route", "/api/templates/route", "/api/v1/missions/[id]/result/route", "/api/referral/track/route", "/api/v1/missions/[id]/stream/route", "/api/v1/missions/route", "/analytics", "/billing", "/billing/success", "/billing/upgrade", "/missions/[id]", "/missions", "/proposals/[id]", "/proposals", "/templates", "/usage", "/proposals/new", "/dashboard", "/onboarding", "/", "/referral", "/settings/api-keys", "/affiliate", "/pricing", "/docs/api", "/login", "/signup", "/magic-link"];
-    MiddlewareManifest = { "version": 3, "middleware": { "/": { "files": ["server/edge-runtime-webpack.js", "server/middleware.js"], "name": "middleware", "page": "/", "matchers": [{ "regexp": "^(?:\\/(_next\\/data\\/[^/]{1,}))?(?:\\/((?!_next\\/static|_next\\/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*))(\\.json)?[\\/#\\?]?$", "originalSource": "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)" }], "wasm": [], "assets": [], "env": { "__NEXT_BUILD_ID": "j3goBtifBMc9WLUysTRpi", "NEXT_SERVER_ACTIONS_ENCRYPTION_KEY": "X6slyH3hEz9mH5qi1GP6f7HTVlqdC63MRNfVWZN2Hw8=", "__NEXT_PREVIEW_MODE_ID": "6f0d09a59d112dd66dc3085960a78ecf", "__NEXT_PREVIEW_MODE_SIGNING_KEY": "a6e996bad14ef2e80a447191053fca3c0ab76cd92756f9542cc0c6c4ed19fe97", "__NEXT_PREVIEW_MODE_ENCRYPTION_KEY": "402e5bda7d31e564803dd15a088e35dacfd0d9bd5c2f8a8f008a99ac4ed72ab0" } } }, "functions": {}, "sortedMiddleware": ["/"] };
-    AppPathsManifest = { "/_not-found/page": "app/_not-found/page.js", "/api/analytics/conversions/route": "app/api/analytics/conversions/route.js", "/api/analytics/metrics/route": "app/api/analytics/metrics/route.js", "/api/analytics/usage/route": "app/api/analytics/usage/route.js", "/api/billing/portal/route": "app/api/billing/portal/route.js", "/api/analytics/export/route": "app/api/analytics/export/route.js", "/api/billing/checkout/route": "app/api/billing/checkout/route.js", "/api/billing/subscription/route": "app/api/billing/subscription/route.js", "/api/crm/callback/route": "app/api/crm/callback/route.js", "/api/crm/connect/route": "app/api/crm/connect/route.js", "/api/crm/sync/route": "app/api/crm/sync/route.js", "/api/feedback/route": "app/api/feedback/route.js", "/api/onboarding/progress/route": "app/api/onboarding/progress/route.js", "/api/onboarding/status/route": "app/api/onboarding/status/route.js", "/api/usage/route": "app/api/usage/route.js", "/api/video/webhook/route": "app/api/video/webhook/route.js", "/api/webhooks/polar/route": "app/api/webhooks/polar/route.js", "/api/video/[id]/route": "app/api/video/[id]/route.js", "/api/video/generate/route": "app/api/video/generate/route.js", "/api/video/proposal/[proposalId]/route": "app/api/video/proposal/[proposalId]/route.js", "/api/affiliate/clicks/track/route": "app/api/affiliate/clicks/track/route.js", "/api/affiliate/content/[id]/route": "app/api/affiliate/content/[id]/route.js", "/api/affiliate/programs/[id]/route": "app/api/affiliate/programs/[id]/route.js", "/api/affiliate/content/route": "app/api/affiliate/content/route.js", "/api/affiliate/clicks/stats/route": "app/api/affiliate/clicks/stats/route.js", "/api/affiliate/content/generate/route": "app/api/affiliate/content/generate/route.js", "/api/affiliate/programs/scrape/route": "app/api/affiliate/programs/scrape/route.js", "/api/affiliate/programs/route": "app/api/affiliate/programs/route.js", "/api/auth/signup/route": "app/api/auth/signup/route.js", "/api/auth/login/route": "app/api/auth/login/route.js", "/api/auth/logout/route": "app/api/auth/logout/route.js", "/api/health/route": "app/api/health/route.js", "/api/proposals/route": "app/api/proposals/route.js", "/api/proposals/[id]/route": "app/api/proposals/[id]/route.js", "/api/health/deep/route": "app/api/health/deep/route.js", "/api/org/route": "app/api/org/route.js", "/api/raas/keys/[id]/route": "app/api/raas/keys/[id]/route.js", "/api/raas/usage/route": "app/api/raas/usage/route.js", "/api/raas/keys/route": "app/api/raas/keys/route.js", "/api/proposals/generate/route": "app/api/proposals/generate/route.js", "/api/referral/stats/route": "app/api/referral/stats/route.js", "/api/raas/templates/route": "app/api/raas/templates/route.js", "/api/raas/execute/route": "app/api/raas/execute/route.js", "/api/raas/missions/[id]/route": "app/api/raas/missions/[id]/route.js", "/api/raas/missions/route": "app/api/raas/missions/route.js", "/api/referral/earn/route": "app/api/referral/earn/route.js", "/api/referral/code/route": "app/api/referral/code/route.js", "/api/v1/missions/[id]/route": "app/api/v1/missions/[id]/route.js", "/api/v1/missions/[id]/cancel/route": "app/api/v1/missions/[id]/cancel/route.js", "/api/templates/route": "app/api/templates/route.js", "/api/v1/missions/[id]/result/route": "app/api/v1/missions/[id]/result/route.js", "/api/referral/track/route": "app/api/referral/track/route.js", "/api/v1/missions/[id]/stream/route": "app/api/v1/missions/[id]/stream/route.js", "/api/v1/missions/route": "app/api/v1/missions/route.js", "/(dashboard)/analytics/page": "app/(dashboard)/analytics/page.js", "/(dashboard)/billing/page": "app/(dashboard)/billing/page.js", "/(dashboard)/billing/success/page": "app/(dashboard)/billing/success/page.js", "/(dashboard)/billing/upgrade/page": "app/(dashboard)/billing/upgrade/page.js", "/(dashboard)/missions/[id]/page": "app/(dashboard)/missions/[id]/page.js", "/(dashboard)/missions/page": "app/(dashboard)/missions/page.js", "/(dashboard)/proposals/[id]/page": "app/(dashboard)/proposals/[id]/page.js", "/(dashboard)/proposals/page": "app/(dashboard)/proposals/page.js", "/(dashboard)/templates/page": "app/(dashboard)/templates/page.js", "/(dashboard)/usage/page": "app/(dashboard)/usage/page.js", "/(dashboard)/proposals/new/page": "app/(dashboard)/proposals/new/page.js", "/dashboard/page": "app/dashboard/page.js", "/onboarding/page": "app/onboarding/page.js", "/page": "app/page.js", "/(dashboard)/referral/page": "app/(dashboard)/referral/page.js", "/(dashboard)/settings/api-keys/page": "app/(dashboard)/settings/api-keys/page.js", "/(dashboard)/affiliate/page": "app/(dashboard)/affiliate/page.js", "/(marketing)/pricing/page": "app/(marketing)/pricing/page.js", "/docs/api/page": "app/docs/api/page.js", "/(auth)/login/page": "app/(auth)/login/page.js", "/(auth)/signup/page": "app/(auth)/signup/page.js", "/(auth)/magic-link/page": "app/(auth)/magic-link/page.js" };
-    AppPathRoutesManifest = { "/_not-found/page": "/_not-found", "/api/analytics/conversions/route": "/api/analytics/conversions", "/api/analytics/metrics/route": "/api/analytics/metrics", "/api/analytics/usage/route": "/api/analytics/usage", "/api/billing/portal/route": "/api/billing/portal", "/api/analytics/export/route": "/api/analytics/export", "/api/billing/checkout/route": "/api/billing/checkout", "/api/billing/subscription/route": "/api/billing/subscription", "/api/crm/callback/route": "/api/crm/callback", "/api/crm/connect/route": "/api/crm/connect", "/api/crm/sync/route": "/api/crm/sync", "/api/feedback/route": "/api/feedback", "/api/onboarding/progress/route": "/api/onboarding/progress", "/api/onboarding/status/route": "/api/onboarding/status", "/api/usage/route": "/api/usage", "/api/video/webhook/route": "/api/video/webhook", "/api/webhooks/polar/route": "/api/webhooks/polar", "/api/video/[id]/route": "/api/video/[id]", "/api/video/generate/route": "/api/video/generate", "/api/video/proposal/[proposalId]/route": "/api/video/proposal/[proposalId]", "/api/affiliate/clicks/track/route": "/api/affiliate/clicks/track", "/api/affiliate/content/[id]/route": "/api/affiliate/content/[id]", "/api/affiliate/programs/[id]/route": "/api/affiliate/programs/[id]", "/api/affiliate/content/route": "/api/affiliate/content", "/api/affiliate/clicks/stats/route": "/api/affiliate/clicks/stats", "/api/affiliate/content/generate/route": "/api/affiliate/content/generate", "/api/affiliate/programs/scrape/route": "/api/affiliate/programs/scrape", "/api/affiliate/programs/route": "/api/affiliate/programs", "/api/auth/signup/route": "/api/auth/signup", "/api/auth/login/route": "/api/auth/login", "/api/auth/logout/route": "/api/auth/logout", "/api/health/route": "/api/health", "/api/proposals/route": "/api/proposals", "/api/proposals/[id]/route": "/api/proposals/[id]", "/api/health/deep/route": "/api/health/deep", "/api/org/route": "/api/org", "/api/raas/keys/[id]/route": "/api/raas/keys/[id]", "/api/raas/usage/route": "/api/raas/usage", "/api/raas/keys/route": "/api/raas/keys", "/api/proposals/generate/route": "/api/proposals/generate", "/api/referral/stats/route": "/api/referral/stats", "/api/raas/templates/route": "/api/raas/templates", "/api/raas/execute/route": "/api/raas/execute", "/api/raas/missions/[id]/route": "/api/raas/missions/[id]", "/api/raas/missions/route": "/api/raas/missions", "/api/referral/earn/route": "/api/referral/earn", "/api/referral/code/route": "/api/referral/code", "/api/v1/missions/[id]/route": "/api/v1/missions/[id]", "/api/v1/missions/[id]/cancel/route": "/api/v1/missions/[id]/cancel", "/api/templates/route": "/api/templates", "/api/v1/missions/[id]/result/route": "/api/v1/missions/[id]/result", "/api/referral/track/route": "/api/referral/track", "/api/v1/missions/[id]/stream/route": "/api/v1/missions/[id]/stream", "/api/v1/missions/route": "/api/v1/missions", "/(dashboard)/analytics/page": "/analytics", "/(dashboard)/billing/page": "/billing", "/(dashboard)/billing/success/page": "/billing/success", "/(dashboard)/billing/upgrade/page": "/billing/upgrade", "/(dashboard)/missions/[id]/page": "/missions/[id]", "/(dashboard)/missions/page": "/missions", "/(dashboard)/proposals/[id]/page": "/proposals/[id]", "/(dashboard)/proposals/page": "/proposals", "/(dashboard)/templates/page": "/templates", "/(dashboard)/usage/page": "/usage", "/(dashboard)/proposals/new/page": "/proposals/new", "/dashboard/page": "/dashboard", "/onboarding/page": "/onboarding", "/page": "/", "/(dashboard)/referral/page": "/referral", "/(dashboard)/settings/api-keys/page": "/settings/api-keys", "/(dashboard)/affiliate/page": "/affiliate", "/(marketing)/pricing/page": "/pricing", "/docs/api/page": "/docs/api", "/(auth)/login/page": "/login", "/(auth)/signup/page": "/signup", "/(auth)/magic-link/page": "/magic-link" };
+    PrerenderManifest = { "version": 4, "routes": { "/_not-found": { "initialStatus": 404, "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/_not-found", "dataRoute": "/_not-found.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/billing/upgrade": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/billing/upgrade", "dataRoute": "/billing/upgrade.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/billing": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/billing", "dataRoute": "/billing.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/proposals/new": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/proposals/new", "dataRoute": "/proposals/new.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/missions": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/missions", "dataRoute": "/missions.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/templates": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/templates", "dataRoute": "/templates.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/proposals": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/proposals", "dataRoute": "/proposals.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/billing/success": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/billing/success", "dataRoute": "/billing/success.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/analytics": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/analytics", "dataRoute": "/analytics.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/usage": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/usage", "dataRoute": "/usage.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/dashboard": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/dashboard", "dataRoute": "/dashboard.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/referral": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/referral", "dataRoute": "/referral.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/affiliate": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/affiliate", "dataRoute": "/affiliate.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/", "dataRoute": "/index.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/onboarding": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/onboarding", "dataRoute": "/onboarding.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/settings/api-keys": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/settings/api-keys", "dataRoute": "/settings/api-keys.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/pricing": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/pricing", "dataRoute": "/pricing.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/magic-link": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/magic-link", "dataRoute": "/magic-link.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/docs/api": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/docs/api", "dataRoute": "/docs/api.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/login": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/login", "dataRoute": "/login.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] }, "/signup": { "experimentalBypassFor": [{ "type": "header", "key": "next-action" }, { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }], "initialRevalidateSeconds": false, "srcRoute": "/signup", "dataRoute": "/signup.rsc", "allowHeader": ["host", "x-matched-path", "x-prerender-revalidate", "x-prerender-revalidate-if-generated", "x-next-revalidated-tags", "x-next-revalidate-tag-token"] } }, "dynamicRoutes": {}, "notFoundRoutes": [], "preview": { "previewModeId": "6f0d09a59d112dd66dc3085960a78ecf", "previewModeSigningKey": "a6e996bad14ef2e80a447191053fca3c0ab76cd92756f9542cc0c6c4ed19fe97", "previewModeEncryptionKey": "402e5bda7d31e564803dd15a088e35dacfd0d9bd5c2f8a8f008a99ac4ed72ab0" } };
+    AppPathsManifestKeys = ["/_not-found", "/api/analytics/conversions/route", "/api/analytics/metrics/route", "/api/analytics/export/route", "/api/crm/callback/route", "/api/billing/subscription/route", "/api/analytics/usage/route", "/api/billing/checkout/route", "/api/feedback/route", "/api/billing/portal/route", "/api/crm/sync/route", "/api/onboarding/progress/route", "/api/onboarding/status/route", "/api/crm/connect/route", "/api/usage/route", "/api/video/generate/route", "/api/video/[id]/route", "/api/video/proposal/[proposalId]/route", "/api/webhooks/polar/route", "/api/video/webhook/route", "/api/affiliate/programs/scrape/route", "/api/affiliate/content/route", "/api/affiliate/programs/route", "/api/affiliate/programs/[id]/route", "/api/affiliate/content/[id]/route", "/api/affiliate/clicks/track/route", "/api/affiliate/clicks/stats/route", "/api/auth/logout/route", "/api/auth/signup/route", "/api/auth/login/route", "/api/affiliate/content/generate/route", "/api/health/route", "/api/health/deep/route", "/api/org/route", "/api/proposals/[id]/route", "/api/proposals/route", "/api/raas/execute/route", "/api/raas/keys/[id]/route", "/api/raas/missions/[id]/route", "/api/raas/keys/route", "/api/raas/usage/route", "/api/raas/templates/route", "/api/proposals/generate/route", "/api/referral/stats/route", "/api/referral/earn/route", "/api/referral/track/route", "/api/raas/missions/route", "/api/referral/code/route", "/api/v1/missions/[id]/cancel/route", "/api/templates/route", "/api/v1/missions/[id]/result/route", "/api/v1/missions/[id]/route", "/api/v1/missions/[id]/stream/route", "/api/v1/missions/route", "/analytics", "/billing/upgrade", "/billing", "/proposals/[id]", "/missions/[id]", "/missions", "/billing/success", "/templates", "/usage", "/proposals/new", "/proposals", "/onboarding", "/", "/dashboard", "/settings/api-keys", "/referral", "/affiliate", "/pricing", "/docs/api", "/signup", "/login", "/magic-link"];
+    MiddlewareManifest = { "version": 3, "middleware": { "/": { "files": ["server/edge-runtime-webpack.js", "server/middleware.js"], "name": "middleware", "page": "/", "matchers": [{ "regexp": "^(?:\\/(_next\\/data\\/[^/]{1,}))?(?:\\/((?!_next\\/static|_next\\/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*))(\\.json)?[\\/#\\?]?$", "originalSource": "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)" }], "wasm": [], "assets": [], "env": { "__NEXT_BUILD_ID": "z46AUFJByO6aQekqTCh1w", "NEXT_SERVER_ACTIONS_ENCRYPTION_KEY": "X6slyH3hEz9mH5qi1GP6f7HTVlqdC63MRNfVWZN2Hw8=", "__NEXT_PREVIEW_MODE_ID": "6f0d09a59d112dd66dc3085960a78ecf", "__NEXT_PREVIEW_MODE_SIGNING_KEY": "a6e996bad14ef2e80a447191053fca3c0ab76cd92756f9542cc0c6c4ed19fe97", "__NEXT_PREVIEW_MODE_ENCRYPTION_KEY": "402e5bda7d31e564803dd15a088e35dacfd0d9bd5c2f8a8f008a99ac4ed72ab0" } } }, "functions": {}, "sortedMiddleware": ["/"] };
+    AppPathsManifest = { "/_not-found/page": "app/_not-found/page.js", "/api/analytics/conversions/route": "app/api/analytics/conversions/route.js", "/api/analytics/metrics/route": "app/api/analytics/metrics/route.js", "/api/analytics/export/route": "app/api/analytics/export/route.js", "/api/crm/callback/route": "app/api/crm/callback/route.js", "/api/billing/subscription/route": "app/api/billing/subscription/route.js", "/api/analytics/usage/route": "app/api/analytics/usage/route.js", "/api/billing/checkout/route": "app/api/billing/checkout/route.js", "/api/feedback/route": "app/api/feedback/route.js", "/api/billing/portal/route": "app/api/billing/portal/route.js", "/api/crm/sync/route": "app/api/crm/sync/route.js", "/api/onboarding/progress/route": "app/api/onboarding/progress/route.js", "/api/onboarding/status/route": "app/api/onboarding/status/route.js", "/api/crm/connect/route": "app/api/crm/connect/route.js", "/api/usage/route": "app/api/usage/route.js", "/api/video/generate/route": "app/api/video/generate/route.js", "/api/video/[id]/route": "app/api/video/[id]/route.js", "/api/video/proposal/[proposalId]/route": "app/api/video/proposal/[proposalId]/route.js", "/api/webhooks/polar/route": "app/api/webhooks/polar/route.js", "/api/video/webhook/route": "app/api/video/webhook/route.js", "/api/affiliate/programs/scrape/route": "app/api/affiliate/programs/scrape/route.js", "/api/affiliate/content/route": "app/api/affiliate/content/route.js", "/api/affiliate/programs/route": "app/api/affiliate/programs/route.js", "/api/affiliate/programs/[id]/route": "app/api/affiliate/programs/[id]/route.js", "/api/affiliate/content/[id]/route": "app/api/affiliate/content/[id]/route.js", "/api/affiliate/clicks/track/route": "app/api/affiliate/clicks/track/route.js", "/api/affiliate/clicks/stats/route": "app/api/affiliate/clicks/stats/route.js", "/api/auth/logout/route": "app/api/auth/logout/route.js", "/api/auth/signup/route": "app/api/auth/signup/route.js", "/api/auth/login/route": "app/api/auth/login/route.js", "/api/affiliate/content/generate/route": "app/api/affiliate/content/generate/route.js", "/api/health/route": "app/api/health/route.js", "/api/health/deep/route": "app/api/health/deep/route.js", "/api/org/route": "app/api/org/route.js", "/api/proposals/[id]/route": "app/api/proposals/[id]/route.js", "/api/proposals/route": "app/api/proposals/route.js", "/api/raas/execute/route": "app/api/raas/execute/route.js", "/api/raas/keys/[id]/route": "app/api/raas/keys/[id]/route.js", "/api/raas/missions/[id]/route": "app/api/raas/missions/[id]/route.js", "/api/raas/keys/route": "app/api/raas/keys/route.js", "/api/raas/usage/route": "app/api/raas/usage/route.js", "/api/raas/templates/route": "app/api/raas/templates/route.js", "/api/proposals/generate/route": "app/api/proposals/generate/route.js", "/api/referral/stats/route": "app/api/referral/stats/route.js", "/api/referral/earn/route": "app/api/referral/earn/route.js", "/api/referral/track/route": "app/api/referral/track/route.js", "/api/raas/missions/route": "app/api/raas/missions/route.js", "/api/referral/code/route": "app/api/referral/code/route.js", "/api/v1/missions/[id]/cancel/route": "app/api/v1/missions/[id]/cancel/route.js", "/api/templates/route": "app/api/templates/route.js", "/api/v1/missions/[id]/result/route": "app/api/v1/missions/[id]/result/route.js", "/api/v1/missions/[id]/route": "app/api/v1/missions/[id]/route.js", "/api/v1/missions/[id]/stream/route": "app/api/v1/missions/[id]/stream/route.js", "/api/v1/missions/route": "app/api/v1/missions/route.js", "/(dashboard)/analytics/page": "app/(dashboard)/analytics/page.js", "/(dashboard)/billing/upgrade/page": "app/(dashboard)/billing/upgrade/page.js", "/(dashboard)/billing/page": "app/(dashboard)/billing/page.js", "/(dashboard)/proposals/[id]/page": "app/(dashboard)/proposals/[id]/page.js", "/(dashboard)/missions/[id]/page": "app/(dashboard)/missions/[id]/page.js", "/(dashboard)/missions/page": "app/(dashboard)/missions/page.js", "/(dashboard)/billing/success/page": "app/(dashboard)/billing/success/page.js", "/(dashboard)/templates/page": "app/(dashboard)/templates/page.js", "/(dashboard)/usage/page": "app/(dashboard)/usage/page.js", "/(dashboard)/proposals/new/page": "app/(dashboard)/proposals/new/page.js", "/(dashboard)/proposals/page": "app/(dashboard)/proposals/page.js", "/onboarding/page": "app/onboarding/page.js", "/page": "app/page.js", "/dashboard/page": "app/dashboard/page.js", "/(dashboard)/settings/api-keys/page": "app/(dashboard)/settings/api-keys/page.js", "/(dashboard)/referral/page": "app/(dashboard)/referral/page.js", "/(dashboard)/affiliate/page": "app/(dashboard)/affiliate/page.js", "/(marketing)/pricing/page": "app/(marketing)/pricing/page.js", "/docs/api/page": "app/docs/api/page.js", "/(auth)/signup/page": "app/(auth)/signup/page.js", "/(auth)/login/page": "app/(auth)/login/page.js", "/(auth)/magic-link/page": "app/(auth)/magic-link/page.js" };
+    AppPathRoutesManifest = { "/_not-found/page": "/_not-found", "/api/analytics/conversions/route": "/api/analytics/conversions", "/api/analytics/metrics/route": "/api/analytics/metrics", "/api/analytics/export/route": "/api/analytics/export", "/api/crm/callback/route": "/api/crm/callback", "/api/billing/subscription/route": "/api/billing/subscription", "/api/analytics/usage/route": "/api/analytics/usage", "/api/billing/checkout/route": "/api/billing/checkout", "/api/feedback/route": "/api/feedback", "/api/billing/portal/route": "/api/billing/portal", "/api/crm/sync/route": "/api/crm/sync", "/api/onboarding/progress/route": "/api/onboarding/progress", "/api/onboarding/status/route": "/api/onboarding/status", "/api/crm/connect/route": "/api/crm/connect", "/api/usage/route": "/api/usage", "/api/video/generate/route": "/api/video/generate", "/api/video/[id]/route": "/api/video/[id]", "/api/video/proposal/[proposalId]/route": "/api/video/proposal/[proposalId]", "/api/webhooks/polar/route": "/api/webhooks/polar", "/api/video/webhook/route": "/api/video/webhook", "/api/affiliate/programs/scrape/route": "/api/affiliate/programs/scrape", "/api/affiliate/content/route": "/api/affiliate/content", "/api/affiliate/programs/route": "/api/affiliate/programs", "/api/affiliate/programs/[id]/route": "/api/affiliate/programs/[id]", "/api/affiliate/content/[id]/route": "/api/affiliate/content/[id]", "/api/affiliate/clicks/track/route": "/api/affiliate/clicks/track", "/api/affiliate/clicks/stats/route": "/api/affiliate/clicks/stats", "/api/auth/logout/route": "/api/auth/logout", "/api/auth/signup/route": "/api/auth/signup", "/api/auth/login/route": "/api/auth/login", "/api/affiliate/content/generate/route": "/api/affiliate/content/generate", "/api/health/route": "/api/health", "/api/health/deep/route": "/api/health/deep", "/api/org/route": "/api/org", "/api/proposals/[id]/route": "/api/proposals/[id]", "/api/proposals/route": "/api/proposals", "/api/raas/execute/route": "/api/raas/execute", "/api/raas/keys/[id]/route": "/api/raas/keys/[id]", "/api/raas/missions/[id]/route": "/api/raas/missions/[id]", "/api/raas/keys/route": "/api/raas/keys", "/api/raas/usage/route": "/api/raas/usage", "/api/raas/templates/route": "/api/raas/templates", "/api/proposals/generate/route": "/api/proposals/generate", "/api/referral/stats/route": "/api/referral/stats", "/api/referral/earn/route": "/api/referral/earn", "/api/referral/track/route": "/api/referral/track", "/api/raas/missions/route": "/api/raas/missions", "/api/referral/code/route": "/api/referral/code", "/api/v1/missions/[id]/cancel/route": "/api/v1/missions/[id]/cancel", "/api/templates/route": "/api/templates", "/api/v1/missions/[id]/result/route": "/api/v1/missions/[id]/result", "/api/v1/missions/[id]/route": "/api/v1/missions/[id]", "/api/v1/missions/[id]/stream/route": "/api/v1/missions/[id]/stream", "/api/v1/missions/route": "/api/v1/missions", "/(dashboard)/analytics/page": "/analytics", "/(dashboard)/billing/upgrade/page": "/billing/upgrade", "/(dashboard)/billing/page": "/billing", "/(dashboard)/proposals/[id]/page": "/proposals/[id]", "/(dashboard)/missions/[id]/page": "/missions/[id]", "/(dashboard)/missions/page": "/missions", "/(dashboard)/billing/success/page": "/billing/success", "/(dashboard)/templates/page": "/templates", "/(dashboard)/usage/page": "/usage", "/(dashboard)/proposals/new/page": "/proposals/new", "/(dashboard)/proposals/page": "/proposals", "/onboarding/page": "/onboarding", "/page": "/", "/dashboard/page": "/dashboard", "/(dashboard)/settings/api-keys/page": "/settings/api-keys", "/(dashboard)/referral/page": "/referral", "/(dashboard)/affiliate/page": "/affiliate", "/(marketing)/pricing/page": "/pricing", "/docs/api/page": "/docs/api", "/(auth)/signup/page": "/signup", "/(auth)/login/page": "/login", "/(auth)/magic-link/page": "/magic-link" };
     FunctionsConfigManifest = { "version": 1, "functions": { "/api/raas/execute": { "maxDuration": 300 } } };
     PagesManifest = { "/_app": "pages/_app.js", "/_error": "pages/_error.js", "/_document": "pages/_document.js", "/404": "pages/404.html" };
     process.env.NEXT_BUILD_ID = BuildId;
@@ -236,7 +236,7 @@ var init_node_module = __esm({
   }
 });
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/utils/stream.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/utils/stream.js
 import { ReadableStream as ReadableStream2 } from "node:stream/web";
 function emptyReadableStream() {
   if (process.env.OPEN_NEXT_FORCE_NON_EMPTY_RESPONSE === "true") {
@@ -256,23 +256,23 @@ function emptyReadableStream() {
 }
 var maybeSomethingBuffer;
 var init_stream = __esm({
-  "node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/utils/stream.js"() {
+  "../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/utils/stream.js"() {
   }
 });
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/overrides/converters/utils.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/overrides/converters/utils.js
 function getQueryFromSearchParams(searchParams) {
   return getQueryFromIterator(searchParams.entries());
 }
 var init_utils = __esm({
-  "node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/overrides/converters/utils.js"() {
+  "../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/overrides/converters/utils.js"() {
     init_util();
   }
 });
 
-// node_modules/.pnpm/cookie@1.1.1/node_modules/cookie/dist/index.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/cookie/dist/index.js
 var require_dist = __commonJS({
-  "node_modules/.pnpm/cookie@1.1.1/node_modules/cookie/dist/index.js"(exports) {
+  "../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/cookie/dist/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.parseCookie = parseCookie;
@@ -519,7 +519,7 @@ var require_dist = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/overrides/converters/edge.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/overrides/converters/edge.js
 var edge_exports = {};
 __export(edge_exports, {
   default: () => edge_default
@@ -527,7 +527,7 @@ __export(edge_exports, {
 import { Buffer as Buffer2 } from "node:buffer";
 var import_cookie, NULL_BODY_STATUSES, converter, edge_default;
 var init_edge = __esm({
-  "node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/overrides/converters/edge.js"() {
+  "../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/overrides/converters/edge.js"() {
     import_cookie = __toESM(require_dist(), 1);
     init_util();
     init_utils();
@@ -609,7 +609,7 @@ var init_edge = __esm({
   }
 });
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/overrides/wrappers/cloudflare-node.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/overrides/wrappers/cloudflare-node.js
 var cloudflare_node_exports = {};
 __export(cloudflare_node_exports, {
   default: () => cloudflare_node_default
@@ -617,7 +617,7 @@ __export(cloudflare_node_exports, {
 import { Writable } from "node:stream";
 var NULL_BODY_STATUSES2, handler, cloudflare_node_default;
 var init_cloudflare_node = __esm({
-  "node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/overrides/wrappers/cloudflare-node.js"() {
+  "../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/overrides/wrappers/cloudflare-node.js"() {
     NULL_BODY_STATUSES2 = /* @__PURE__ */ new Set([101, 204, 205, 304]);
     handler = async (handler3, converter2) => async (request, env, ctx, abortSignal) => {
       globalThis.process = process;
@@ -709,14 +709,14 @@ var init_cloudflare_node = __esm({
   }
 });
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/overrides/tagCache/dummy.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/overrides/tagCache/dummy.js
 var dummy_exports = {};
 __export(dummy_exports, {
   default: () => dummy_default
 });
 var dummyTagCache, dummy_default;
 var init_dummy = __esm({
-  "node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/overrides/tagCache/dummy.js"() {
+  "../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/overrides/tagCache/dummy.js"() {
     dummyTagCache = {
       name: "dummy",
       mode: "original",
@@ -737,14 +737,14 @@ var init_dummy = __esm({
   }
 });
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/overrides/queue/direct.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/overrides/queue/direct.js
 var direct_exports = {};
 __export(direct_exports, {
   default: () => direct_default
 });
 var queue, direct_default;
 var init_direct = __esm({
-  "node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/overrides/queue/direct.js"() {
+  "../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/overrides/queue/direct.js"() {
     queue = {
       name: "dev-queue",
       send: async (message) => {
@@ -765,14 +765,14 @@ var init_direct = __esm({
   }
 });
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/overrides/incrementalCache/dummy.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/overrides/incrementalCache/dummy.js
 var dummy_exports2 = {};
 __export(dummy_exports2, {
   default: () => dummy_default2
 });
 var dummyIncrementalCache, dummy_default2;
 var init_dummy2 = __esm({
-  "node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/overrides/incrementalCache/dummy.js"() {
+  "../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/overrides/incrementalCache/dummy.js"() {
     init_error();
     dummyIncrementalCache = {
       name: "dummy",
@@ -790,14 +790,14 @@ var init_dummy2 = __esm({
   }
 });
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/overrides/assetResolver/dummy.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/overrides/assetResolver/dummy.js
 var dummy_exports3 = {};
 __export(dummy_exports3, {
   default: () => dummy_default3
 });
 var resolver, dummy_default3;
 var init_dummy3 = __esm({
-  "node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/overrides/assetResolver/dummy.js"() {
+  "../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/overrides/assetResolver/dummy.js"() {
     resolver = {
       name: "dummy"
     };
@@ -805,14 +805,14 @@ var init_dummy3 = __esm({
   }
 });
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/overrides/proxyExternalRequest/fetch.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/overrides/proxyExternalRequest/fetch.js
 var fetch_exports = {};
 __export(fetch_exports, {
   default: () => fetch_default
 });
 var fetchProxy, fetch_default;
 var init_fetch = __esm({
-  "node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/overrides/proxyExternalRequest/fetch.js"() {
+  "../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/overrides/proxyExternalRequest/fetch.js"() {
     init_stream();
     fetchProxy = {
       name: "fetch-proxy",
@@ -842,14 +842,14 @@ var init_fetch = __esm({
   }
 });
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/overrides/cdnInvalidation/dummy.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/overrides/cdnInvalidation/dummy.js
 var dummy_exports4 = {};
 __export(dummy_exports4, {
   default: () => dummy_default4
 });
 var dummy_default4;
 var init_dummy4 = __esm({
-  "node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/overrides/cdnInvalidation/dummy.js"() {
+  "../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/overrides/cdnInvalidation/dummy.js"() {
     dummy_default4 = {
       name: "dummy",
       invalidatePaths: (_) => {
@@ -859,10 +859,10 @@ var init_dummy4 = __esm({
   }
 });
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/core/createMainHandler.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/core/createMainHandler.js
 init_logger();
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/adapters/util.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/adapters/util.js
 function setNodeEnv() {
   const processEnv = process.env;
   processEnv.NODE_ENV = process.env.NODE_ENV ?? "production";
@@ -871,10 +871,10 @@ function generateUniqueId() {
   return Math.random().toString(36).slice(2, 8);
 }
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/core/requestHandler.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/core/requestHandler.js
 import { AsyncLocalStorage } from "node:async_hooks";
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/http/openNextResponse.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/http/openNextResponse.js
 init_logger();
 init_util();
 import { Transform } from "node:stream";
@@ -1159,7 +1159,7 @@ var OpenNextNodeResponse = class extends Transform {
   }
 };
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/http/request.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/http/request.js
 import http from "node:http";
 var IncomingMessage = class extends http.IncomingMessage {
   constructor({ method, url, headers, body, remoteAddress }) {
@@ -1192,7 +1192,7 @@ var IncomingMessage = class extends http.IncomingMessage {
   }
 };
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/utils/promise.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/utils/promise.js
 init_logger();
 var DetachedPromise = class {
   resolve;
@@ -1273,22 +1273,22 @@ function runWithOpenNextRequestContext({ isISRRevalidation, waitUntil, requestId
   });
 }
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/core/requestHandler.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/core/requestHandler.js
 init_config();
 init_logger();
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/core/patchAsyncStorage.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/core/patchAsyncStorage.js
 var mod = (init_node_module(), __toCommonJS(node_module_exports));
 var resolveFilename = mod._resolveFilename;
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/core/routing/util.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/core/routing/util.js
 import crypto from "node:crypto";
 init_config();
 init_util();
 init_logger();
 import { ReadableStream as ReadableStream3 } from "node:stream/web";
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/utils/binary.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/utils/binary.js
 var commonBinaryMimeTypes = /* @__PURE__ */ new Set([
   "application/octet-stream",
   // Docs
@@ -1356,12 +1356,12 @@ function isBinaryContentType(contentType) {
   return commonBinaryMimeTypes.has(value);
 }
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/core/routing/i18n/index.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/core/routing/i18n/index.js
 init_config();
 init_stream();
 init_logger();
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/core/routing/i18n/accept-header.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/core/routing/i18n/accept-header.js
 function parse(raw, preferences, options) {
   const lowers = /* @__PURE__ */ new Map();
   const header = raw.replace(/[ \t]/g, "");
@@ -1461,7 +1461,7 @@ function acceptLanguage(header = "", preferences) {
   })[0] || void 0;
 }
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/core/routing/i18n/index.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/core/routing/i18n/index.js
 function isLocalizedPath(path2) {
   return NextConfig.i18n?.locales.includes(path2.split("/")[1].toLowerCase()) ?? false;
 }
@@ -1513,7 +1513,7 @@ function localizePath(internalEvent) {
   return `/${detectedLocale}${internalEvent.rawPath}`;
 }
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/core/routing/queue.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/core/routing/queue.js
 function generateShardId(rawPath, maxConcurrency, prefix) {
   let a = cyrb128(rawPath);
   let t = a += 1831565813;
@@ -1547,7 +1547,7 @@ function cyrb128(str) {
   return h1 >>> 0;
 }
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/core/routing/util.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/core/routing/util.js
 function constructNextUrl(baseUrl, path2) {
   const nextBasePath = NextConfig.basePath ?? "";
   const url = new URL(`${nextBasePath}${path2}`, baseUrl);
@@ -1714,28 +1714,28 @@ async function invalidateCDNOnRequest(params, headers) {
   }
 }
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/core/routingHandler.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/core/routingHandler.js
 init_config();
 init_logger();
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/core/routing/cacheInterceptor.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/core/routing/cacheInterceptor.js
 init_config();
 init_stream();
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/utils/cache.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/utils/cache.js
 init_logger();
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/core/routing/cacheInterceptor.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/core/routing/cacheInterceptor.js
 init_logger();
 var CACHE_ONE_YEAR = 60 * 60 * 24 * 365;
 var CACHE_ONE_MONTH = 60 * 60 * 24 * 30;
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/core/routing/matcher.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/core/routing/matcher.js
 init_config();
 init_stream();
 init_logger();
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/core/routing/routeMatcher.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/core/routing/routeMatcher.js
 init_config();
 var optionalLocalePrefixRegex = `^/(?:${RoutesManifest.locales.map((locale) => `${locale}/?`).join("|")})?`;
 var optionalBasepathPrefixRegex = RoutesManifest.basePath ? `^${RoutesManifest.basePath}/?` : "^/";
@@ -1786,7 +1786,7 @@ function getStaticAPIRoutes() {
   return [...pagesStaticAPIRoutes, ...appPathsStaticAPIRoutes];
 }
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/core/routing/middleware.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/core/routing/middleware.js
 init_config();
 init_stream();
 init_utils();
@@ -1794,7 +1794,7 @@ var middlewareManifest = MiddlewareManifest;
 var functionsConfigManifest = FunctionsConfigManifest;
 var middleMatch = getMiddlewareMatch(middlewareManifest, functionsConfigManifest);
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/core/routingHandler.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/core/routingHandler.js
 var MIDDLEWARE_HEADER_PREFIX = "x-middleware-response-";
 var MIDDLEWARE_HEADER_PREFIX_LEN = MIDDLEWARE_HEADER_PREFIX.length;
 var INTERNAL_HEADER_PREFIX = "x-opennext-";
@@ -1804,17 +1804,17 @@ var INTERNAL_HEADER_RESOLVED_ROUTES = `${INTERNAL_HEADER_PREFIX}resolved-routes`
 var INTERNAL_HEADER_REWRITE_STATUS_CODE = `${INTERNAL_HEADER_PREFIX}rewrite-status-code`;
 var INTERNAL_EVENT_REQUEST_ID = `${INTERNAL_HEADER_PREFIX}request-id`;
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/core/util.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/core/util.js
 init_config();
 init_logger();
 import NextServer from "next/dist/server/next-server.js";
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/core/require-hooks.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/core/require-hooks.js
 init_logger();
 var mod2 = (init_node_module(), __toCommonJS(node_module_exports));
 var resolveFilename2 = mod2._resolveFilename;
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/core/util.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/core/util.js
 var cacheHandlerPath = __require.resolve("./cache.cjs");
 var composableCacheHandlerPath = __require.resolve("./composable-cache.cjs");
 var nextServer = new NextServer.default({
@@ -1884,7 +1884,7 @@ globalThis.__next_route_preloader = async (stage) => {
 };
 var requestHandler = (metadata) => "getRequestHandlerWithMetadata" in nextServer ? nextServer.getRequestHandlerWithMetadata(metadata) : nextServer.getRequestHandler();
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/core/requestHandler.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/core/requestHandler.js
 globalThis.__openNextAls = new AsyncLocalStorage();
 async function openNextHandler(internalEvent, options) {
   const initialHeaders = internalEvent.headers;
@@ -2096,7 +2096,7 @@ async function tryRenderError(type, res, internalEvent) {
   }
 }
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/core/resolve.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/core/resolve.js
 async function resolveConverter(converter2) {
   if (typeof converter2 === "function") {
     return converter2();
@@ -2154,7 +2154,7 @@ async function resolveCdnInvalidation(cdnInvalidation) {
   return m_1.default;
 }
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/core/createMainHandler.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/core/createMainHandler.js
 async function createMainHandler() {
   const config = await import("./open-next.config.mjs").then((m) => m.default);
   const thisFunction = globalThis.fnName ? config.functions[globalThis.fnName] : config.default;
@@ -2175,7 +2175,7 @@ async function createMainHandler() {
   return wrapper(openNextHandler, converter2);
 }
 
-// node_modules/.pnpm/@opennextjs+aws@3.9.16_next@15.5.14_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-d_0cd4cb483b47c4d2aed1d7ebd67fa027/node_modules/@opennextjs/aws/dist/adapters/server-adapter.js
+// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/adapters/server-adapter.js
 setNodeEnv();
 setNextjsServerWorkingDirectory();
 globalThis.internalFetch = fetch;

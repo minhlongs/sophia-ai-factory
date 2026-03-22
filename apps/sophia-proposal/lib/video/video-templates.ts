@@ -4,7 +4,7 @@
  * Template library for video generation with caching
  */
 
-import { createServerClient } from "@/lib/db/client";
+import { getD1Client } from "@/lib/db/client";
 import type { VideoTemplate, VideoTemplateInsert } from "@/types/video";
 
 /**
@@ -14,7 +14,7 @@ import type { VideoTemplate, VideoTemplateInsert } from "@/types/video";
 export async function getAvailableTemplates(
   orgId?: string
 ): Promise<VideoTemplate[]> {
-  const db = createServerClient();
+  const db = await getD1Client();
 
   let query = db
     .from<VideoTemplate>("video_templates")
@@ -56,7 +56,7 @@ export async function getTemplateById(
   templateId: string,
   orgId?: string
 ): Promise<VideoTemplate | null> {
-  const db = createServerClient();
+  const db = await getD1Client();
 
   const { data, error } = await db
     .from<VideoTemplate>("video_templates")
@@ -88,7 +88,7 @@ export async function createTemplate(
   orgId: string,
   template: VideoTemplateInsert
 ): Promise<VideoTemplate> {
-  const db = createServerClient();
+  const db = await getD1Client();
 
   const { data, error } = await db
     .from<VideoTemplate>("video_templates")
@@ -115,7 +115,7 @@ export async function updateTemplate(
   updates: Partial<VideoTemplateInsert>,
   orgId: string
 ): Promise<VideoTemplate | null> {
-  const db = createServerClient();
+  const db = await getD1Client();
 
   const { data, error } = await db
     .from<VideoTemplate>("video_templates")
@@ -143,7 +143,7 @@ export async function deleteTemplate(
   templateId: string,
   orgId: string
 ): Promise<void> {
-  const db = createServerClient();
+  const db = await getD1Client();
 
   const { error } = await db
     .from<VideoTemplate>("video_templates")
@@ -167,7 +167,7 @@ export async function getTemplatesByType(
   type: "intro" | "section" | "full_proposal" | "custom",
   orgId?: string
 ): Promise<VideoTemplate[]> {
-  const db = createServerClient();
+  const db = await getD1Client();
 
   if (orgId) {
     // Get both global and org-specific templates
@@ -209,7 +209,7 @@ export async function getTemplatesByType(
 export async function getDefaultTemplate(
   type: "intro" | "section" | "full_proposal" | "custom"
 ): Promise<VideoTemplate | null> {
-  const db = createServerClient();
+  const db = await getD1Client();
 
   const { data, error } = await db
     .from<VideoTemplate>("video_templates")
