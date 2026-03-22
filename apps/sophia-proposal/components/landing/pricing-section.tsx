@@ -1,9 +1,45 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PRICING_TIERS } from "@/lib/pricing-config";
 
 export function PricingSection() {
+  const [loadingTier, setLoadingTier] = useState<string | null>(null);
+
+  async function handleCheckout(tierId: string, cta: string) {
+    if (cta === "Contact Sales") {
+      window.location.href = "/demo";
+      return;
+    }
+
+    setLoadingTier(tierId);
+    try {
+      const res = await fetch("/api/billing/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tier: tierId }),
+        credentials: "include",
+      });
+
+      if (res.status === 401) {
+        window.location.href = `/signup?plan=${tierId}`;
+        return;
+      }
+
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        console.error("No checkout URL returned:", data);
+      }
+    } catch (err) {
+      console.error("Checkout error:", err);
+    } finally {
+      setLoadingTier(null);
+    }
+  }
+
   return (
     <section className="py-20 bg-surface-container-highest">
       <div className="container mx-auto px-4">
@@ -12,19 +48,19 @@ export function PricingSection() {
             Simple, Transparent Pricing
           </h2>
           <p className="text-xl text-on-surface-variant max-w-2xl mx-auto leading-relaxed">
-            Choose the plan that fits your needs
+            Choose the plan that fits your needs. Start free with 200 MCU.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
           {PRICING_TIERS.map((tier, index) => (
             <div
-              key={tier.name}
+              key={tier.id}
               className={`relative p-8 rounded-2xl ${
                 tier.highlighted
                   ? "bg-primary-container text-on-primary-container shadow-xl"
                   : "bg-surface text-on-surface"
-              } ${index === 1 ? "md:scale-105" : ""}`}
+              } ${tier.highlighted ? "md:scale-105" : ""}`}
             >
               {tier.highlighted && (
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-inverse-primary text-on-inverse-primary text-sm font-bold px-4 py-1 rounded-full">
@@ -59,19 +95,10 @@ export function PricingSection() {
                 variant={tier.highlighted ? "secondary" : "primary"}
                 className="w-full"
                 size="lg"
-                onClick={() => {
-                  const polarUrls: Record<string, string> = {
-                    Starter: "https://buy.polar.sh/polar_cl_XvQ7Z2mN8kLpR3wY6tE1",
-                    Growth: "https://buy.polar.sh/polar_cl_Y8rT4nM2jKpL5vX9wB3q",
-                    Premium: "https://buy.polar.sh/polar_cl_Z1sW6pN4hGfD7xC2vM8t",
-                  };
-                  const checkoutUrl = polarUrls[tier.name];
-                  if (checkoutUrl) {
-                    window.open(checkoutUrl, "_blank");
-                  }
-                }}
+                disabled={loadingTier === tier.id}
+                onClick={() => handleCheckout(tier.id, tier.cta)}
               >
-                {tier.cta}
+                {loadingTier === tier.id ? "Loading..." : tier.cta}
               </Button>
             </div>
           ))}
