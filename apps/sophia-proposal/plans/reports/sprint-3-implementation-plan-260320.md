@@ -140,8 +140,8 @@ Add to `.env.local`:
 ```bash
 # Polar.sh Billing
 POLAR_API_URL=https://api.polar.sh
-POLAR_API_KEY=<YOUR_POLAR_API_KEY>
-POLAR_WEBHOOK_SECRET=<YOUR_WEBHOOK_SECRET>
+POLAR_API_KEY=sk_live_your_api_key
+POLAR_WEBHOOK_SECRET=whsec_your_webhook_secret
 NEXT_PUBLIC_APP_URL=https://sophia.agencyos.network
 ```
 
