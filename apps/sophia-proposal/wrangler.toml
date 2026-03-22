@@ -1,7 +1,7 @@
 # Sophia AI Factory — Cloudflare Workers config
 # Deploy: opennextjs-cloudflare build + wrangler deploy
 name = "sophia-ai-factory"
-main = ".open-next/worker.js"
+main = "/private/tmp/sophia-cf-deploy/apps/sophia-proposal/.open-next/worker.js"
 compatibility_date = "2026-03-17"
 compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
 

@@ -113,7 +113,7 @@ export interface CancelMissionResponse {
 
 export interface SophiaClientConfig {
   apiKey: string;
-  /** Defaults to "https://sophia-ai-factory.vercel.app" */
+  /** Defaults to "https://sophia-ai-factory.agencyos-openclaw.workers.dev" */
   baseUrl?: string;
 }
 
@@ -122,4 +122,27 @@ export interface WaitForResultOptions {
   pollIntervalMs?: number;
   /** Total wait timeout in ms. Default: 300_000 (5 min) */
   timeoutMs?: number;
+}
+
+// ── Stream types ───────────────────────────────────────────────────────────────
+
+export interface MissionStep {
+  step_index: number;
+  step_name: string;
+  status: 'pending' | 'running' | 'completed' | 'failed';
+  started_at?: string;
+  completed_at?: string;
+  output?: Record<string, unknown>;
+}
+
+export interface StreamEvent {
+  type: 'status' | 'step' | 'result' | 'error' | 'heartbeat';
+  /** Payload varies by event type:
+   *  status    → { mission_id, status: MissionStatus }
+   *  step      → MissionStep
+   *  result    → MissionResultResponse
+   *  error     → { message: string }
+   *  heartbeat → { ts: number }
+   */
+  data: unknown;
 }

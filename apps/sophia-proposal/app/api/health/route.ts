@@ -41,7 +41,7 @@ export async function GET() {
     const { data: templates } = await db.from('mission_templates').select('command').eq('is_active', 1);
     const count = Array.isArray(templates) ? templates.length : 0;
     checks.templates = {
-      status: count >= 10 ? 'healthy' : 'degraded',
+      status: count >= 15 ? 'healthy' : 'degraded',
       latency_ms: 0,
     };
   } catch {
