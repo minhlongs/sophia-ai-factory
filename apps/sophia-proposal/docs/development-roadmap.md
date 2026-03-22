@@ -1,6 +1,6 @@
 # Sophia AI Factory — Development Roadmap
 
-**Last Updated:** 2026-03-21
+**Last Updated:** 2026-03-22
 **Target:** $1M ARR via RaaS + SaaS hybrid model
 
 ---
@@ -96,13 +96,26 @@
 
 ---
 
-## Phase 4 — Growth & Scale (Sprint 5) — IN PROGRESS
+## Phase 4 — Growth & Scale (Sprint 5) — DONE
+
+### Wave 1 (Core SDKs + Real-time)
+
+| Milestone | Status | Date |
+|-----------|--------|------|
+| All 15 mission templates seeded (migration 0003) | DONE | 2026-03-22 |
+| Polar webhook fixed for CF Workers (getD1Client) | DONE | 2026-03-22 |
+| SSE real-time mission status (/api/v1/missions/:id/stream) | DONE | 2026-03-22 |
+| @sophia/raas-sdk npm package (SophiaClient, MissionStream) | DONE | 2026-03-22 |
+| Health endpoint → HEALTHY (was degraded) | DONE | 2026-03-22 |
+| Next.js pinned to 15.5.14 (16.x incompatible) | DONE | 2026-03-22 |
+| wrangler.jsonc at repo root with D1 binding | DONE | 2026-03-22 |
+| 80+ routes GREEN, 183 tests PASS | DONE | 2026-03-22 |
+
+### Wave 2 (Planned)
 
 | Milestone | Status | Priority |
 |-----------|--------|----------|
-| @sophia/raas-sdk npm package | IN PROGRESS | High |
-| OpenAPI 3.1 spec + /docs/api page | IN PROGRESS | High |
-| Real-time mission status (SSE or WebSocket) | PLANNED | High |
+| OpenAPI 3.1 spec + /docs/api page | PLANNED | High |
 | Mission template marketplace (community commands) | PLANNED | Medium |
 | HeyGen video polling → production-grade (persistent job) | PLANNED | Medium |
 | HubSpot CRM sync — full field mapping | PLANNED | Medium |
@@ -142,12 +155,13 @@
 
 | Metric | Current | Target |
 |--------|---------|--------|
-| Routes | 80+ GREEN | — |
+| Routes | 80+ GREEN | 100+ |
 | TypeScript errors | 0 | 0 |
 | Commands supported | 15 | 20 |
 | Supabase dependencies | 0 | 0 |
 | Concurrent missions/org | 3 | Configurable |
 | Infrastructure cost | $0/mo | $0/mo |
+| Mission templates | 15 | 30 |
 | NPS Target | — | > 50 |
 | Activation Rate | — | > 60% Day 7 |
 | MRR Target | — | $83K (path to $1M ARR) |

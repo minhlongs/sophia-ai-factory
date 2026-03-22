@@ -7,7 +7,7 @@
  * - Survey eligibility checks
  */
 
-import { createServerClient } from '@/lib/db/client';
+import { getD1Client } from '@/lib/db/client';
 
 export interface NpsResponse {
   orgId: string;
@@ -69,7 +69,7 @@ export async function checkNpsEligibility(orgId: string): Promise<{
   reason?: string;
   daysSinceLastSurvey?: number;
 }> {
-  const db = createServerClient();
+  const db = await getD1Client();
 
   // Check active subscription
   const { data: subscription } = await db
@@ -129,7 +129,7 @@ export async function scheduleNpsSurvey(
   orgId: string,
   subscriptionDate: Date
 ): Promise<boolean> {
-  const db = createServerClient();
+  const db = await getD1Client();
 
   const npsDate = new Date(subscriptionDate);
   npsDate.setDate(npsDate.getDate() + 7);
@@ -152,7 +152,7 @@ export async function submitNpsFeedback(
   score: number,
   feedback?: string
 ): Promise<{ success: boolean; error?: string }> {
-  const db = createServerClient();
+  const db = await getD1Client();
 
   // Validate score
   if (score < 0 || score > 10) {
@@ -177,7 +177,7 @@ export async function submitNpsFeedback(
  * Get NPS statistics for an organization
  */
 export async function getNpsStats(orgId: string): Promise<NpsStats | null> {
-  const db = createServerClient();
+  const db = await getD1Client();
 
   const { data: feedbacks } = await db
     .from('customer_feedback')

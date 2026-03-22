@@ -4,7 +4,7 @@
  * Logs MCU consumption for billable features.
  */
 
-import { createServerClient } from '@/lib/db/client';
+import { getD1Client } from '@/lib/db/client';
 import { calculateMcuCost } from './mcu-pricing';
 import type { OrgBalance, UsageLog as UsageLogRow } from '@/lib/db/types';
 
@@ -35,7 +35,7 @@ export async function logUsage(event: UsageEvent): Promise<{
   remainingBalance?: number;
   error?: string;
 }> {
-  const db = createServerClient();
+  const db = await getD1Client();
 
   try {
     // Calculate MCU cost for this feature
@@ -100,7 +100,7 @@ export async function getUsageHistory(
   limit: number = 100,
   offset: number = 0
 ): Promise<UsageLog[]> {
-  const db = createServerClient();
+  const db = await getD1Client();
 
   const { data, error } = await db
     .from<UsageLogRow>('usage_logs')
@@ -129,7 +129,7 @@ export async function getUsageSummary(
   byFeature: Array<{ feature: string; count: number; mcuUsed: number }>;
   dailyUsage: Array<{ date: string; mcuUsed: number }>;
 }> {
-  const db = createServerClient();
+  const db = await getD1Client();
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - days);
 

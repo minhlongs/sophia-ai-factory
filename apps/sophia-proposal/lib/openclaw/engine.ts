@@ -8,7 +8,7 @@
  * in parallel or sequential order based on their dependency_type.
  */
 
-import { createServerClient } from '@/lib/db/client';
+import { getD1Client } from '@/lib/db/client';
 import { executeCommand } from '@/lib/raas/command-router';
 import { StepTracker } from './step-tracker';
 import type { Mission, MissionCommand, PEVPlan, PEVStep, SubMissionDef } from '@/types/raas';
@@ -49,7 +49,7 @@ export class OpenClawEngine {
    * Never throws — all failures are persisted to the DB.
    */
   async execute(missionId: string): Promise<void> {
-    const db = createServerClient();
+    const db = await getD1Client();
     const { data: mission, error } = await db
       .from<Mission>('missions')
       .select('*')
@@ -149,7 +149,7 @@ export class OpenClawEngine {
     parentId: string,
     commands: SubMissionDef[]
   ): Promise<void> {
-    const db = createServerClient();
+    const db = await getD1Client();
 
     // Fetch parent to inherit org_id
     const { data: parent } = await db
@@ -186,7 +186,7 @@ export class OpenClawEngine {
 
   /** Exponential backoff retry: delays 1s, 2s, 4s … up to max_retries. */
   private async retryWithBackoff(missionId: string, attempt: number): Promise<boolean> {
-    const db = createServerClient();
+    const db = await getD1Client();
     const { data } = await db
       .from<Mission>('missions')
       .select('max_retries, retry_count, error_message')
@@ -220,7 +220,7 @@ export class OpenClawEngine {
 
   /** Check if all sibling sub-missions are done → complete the parent. */
   private async checkParentCompletion(parentMissionId: string): Promise<void> {
-    const db = createServerClient();
+    const db = await getD1Client();
     const { data: siblings } = await db
       .from('missions')
       .select('status')
@@ -289,7 +289,7 @@ export class OpenClawEngine {
     orgId: string,
     def: SubMissionDef
   ): Promise<string | null> {
-    const db = createServerClient();
+    const db = await getD1Client();
 
     const { data: child, error } = await db
       .from<{ id: string }>('missions')

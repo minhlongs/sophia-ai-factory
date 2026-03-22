@@ -8,7 +8,7 @@
  * Pipeline: fetch → normalize → score → upsert into affiliate_programs
  */
 
-import { createServerClient } from '@/lib/db/client';
+import { getD1Client } from '@/lib/db/client';
 import { scoreProgram } from './program-scorer';
 import { SEED_PROGRAMS } from './seed-programs';
 import type { RawProgram, ScrapeResult, AffiliateProgramInput, AffiliateProgram } from '@/types/affiliate';
@@ -119,7 +119,7 @@ export async function runScrape(): Promise<ScrapeResult> {
   });
 
   // Upsert into D1 (conflict on name + source)
-  const db = createServerClient();
+  const db = await getD1Client();
   let inserted = 0;
   let updated = 0;
 

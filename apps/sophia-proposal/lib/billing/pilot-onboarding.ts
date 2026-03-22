@@ -8,7 +8,7 @@
  * - Pilot customer tracking
  */
 
-import { createServerClient } from '@/lib/db/client';
+import { getD1Client } from '@/lib/db/client';
 import { scheduleNpsSurvey } from '@/lib/surveys/nps';
 
 export interface PilotOnboardingData {
@@ -62,7 +62,7 @@ export async function initializePilotOnboarding(
   orgId: string,
   subscriptionDate: Date
 ): Promise<{ success: boolean; error?: string }> {
-  const db = createServerClient();
+  const db = await getD1Client();
 
   try {
     // Schedule NPS survey for 7 days later
@@ -101,7 +101,7 @@ export async function getPilotOnboardingStatus(orgId: string): Promise<{
   daysSinceStart: number;
   npsDue: boolean;
 } | null> {
-  const db = createServerClient();
+  const db = await getD1Client();
 
   // Check if organization has active subscription
   const { data: subscription } = await db
@@ -137,7 +137,7 @@ export async function trackOnboardingMilestone(
   orgId: string,
   milestone: 'first_proposal' | 'onboarding_call' | 'feedback_submitted'
 ): Promise<boolean> {
-  const db = createServerClient();
+  const db = await getD1Client();
 
   // Try to insert milestone record
   const { error } = await db.from('onboarding_milestones').insert({
@@ -169,7 +169,7 @@ export async function getOnboardingChecklist(
   firstProposal: boolean;
   feedback: boolean;
 } | null> {
-  const db = createServerClient();
+  const db = await getD1Client();
 
   // Check subscription
   const { data: subscription } = await db

@@ -5,7 +5,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/db/client';
+import { getD1Client } from '@/lib/db/client';
 import type { OrgBalance } from '@/lib/db/types';
 
 export interface BalanceStatus {
@@ -20,7 +20,7 @@ export interface BalanceStatus {
  * Check organization balance
  */
 export async function checkBalance(orgId: string): Promise<BalanceStatus | null> {
-  const db = createServerClient();
+  const db = await getD1Client();
 
   const { data, error } = await db
     .from<OrgBalance>('org_balances')
@@ -71,7 +71,7 @@ export function requireBalance(
 export async function getOrInitializeBalance(
   orgId: string
 ): Promise<BalanceStatus> {
-  const db = createServerClient();
+  const db = await getD1Client();
 
   // Try to get existing balance
   const { data: existing } = await db
@@ -115,7 +115,7 @@ export async function addBonusMcu(
   amount: number,
   reason: string
 ): Promise<boolean> {
-  const db = createServerClient();
+  const db = await getD1Client();
 
   const { error } = await db.rpc('credit_mcu_balance', {
     p_org_id: orgId,

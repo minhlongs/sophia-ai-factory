@@ -9,7 +9,7 @@
  *   sales:outreach-sequence  — Multi-step email outreach
  */
 
-import { createServerClient } from '@/lib/db/client';
+import { getD1Client } from '@/lib/db/client';
 import type { Mission, MissionResult } from '@/types/raas';
 
 // ── sales:proposal-deck ─────────────────────────────────────────────────────
@@ -61,7 +61,7 @@ export async function runProposalDeck(mission: Mission): Promise<MissionResult> 
   ];
 
   // Persist deck to proposals table
-  const db = createServerClient();
+  const db = await getD1Client();
   let deckId: string | undefined;
   try {
     const { data } = await db
@@ -183,7 +183,7 @@ export async function runCompetitorAnalysis(mission: Mission): Promise<MissionRe
 // ── sales:pricing-optimizer ─────────────────────────────────────────────────
 
 export async function runPricingOptimizer(mission: Mission): Promise<MissionResult> {
-  const db = createServerClient();
+  const db = await getD1Client();
   const params = mission.params as {
     target_segment?: string;
     current_tier?: string;
