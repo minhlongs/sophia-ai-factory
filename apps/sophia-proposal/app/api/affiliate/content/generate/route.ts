@@ -8,6 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
+import type { AffiliateProgram } from '@/types/affiliate';
 import { logUsage } from '@/lib/billing/usage-tracker';
 import { getOrInitializeBalance, requireBalance } from '@/lib/billing/balance-checker';
 import { generateBlogReview } from '@/lib/affiliate/content/blog-generator';
@@ -64,7 +65,7 @@ export async function POST(req: NextRequest) {
 
   // Fetch program data
   const { data: program, error: pgErr } = await db
-    .from('affiliate_programs')
+    .from<AffiliateProgram>('affiliate_programs')
     .select('*')
     .eq('id', programId)
     .eq('org_id', orgId)
@@ -77,20 +78,31 @@ export async function POST(req: NextRequest) {
   const contentIds: Record<string, string> = {};
   const errors: Record<string, string> = {};
 
+  // Map AffiliateProgram (DB shape) to AffiliateProgramData (generator input shape)
+  const programData = {
+    id: program.id,
+    name: program.name,
+    description: program.description ?? '',
+    category: program.niche,
+    website_url: program.url,
+    affiliate_url: program.signup_url ?? program.url,
+    commission_rate: program.commission_rate,
+  };
+
   // Generate blog first (video-generator needs blog content)
   let blogContent = null;
 
   if (contentTypes.includes('blog')) {
     const idempKey = `${programId}:${orgId}:blog:${new Date().toISOString().slice(0, 10)}`;
     const { data: inserted } = await db
-      .from('affiliate_content')
+      .from<{ id: string }>('affiliate_content')
       .insert({ org_id: orgId, program_id: programId, content_type: 'blog', status: 'generating', idempotency_key: idempKey })
       .select('id')
       .single();
 
     if (inserted) {
       try {
-        blogContent = await generateBlogReview(program, orgId);
+        blogContent = await generateBlogReview(programData, orgId);
         await db.from('affiliate_content').update({
           status: 'draft',
           title: blogContent.title,
@@ -110,15 +122,15 @@ export async function POST(req: NextRequest) {
   if (contentTypes.includes('video')) {
     const idempKey = `${programId}:${orgId}:video:${new Date().toISOString().slice(0, 10)}`;
     const { data: inserted } = await db
-      .from('affiliate_content')
+      .from<{ id: string }>('affiliate_content')
       .insert({ org_id: orgId, program_id: programId, content_type: 'video', status: 'generating', idempotency_key: idempKey })
       .select('id')
       .single();
 
     if (inserted) {
       try {
-        const fallbackBlog = blogContent ?? { title: program.name, body: '', metaDescription: '', keywords: [program.category] };
-        const videoContent = await generateVideoReview(program, fallbackBlog, orgId);
+        const fallbackBlog = blogContent ?? { title: programData.name, body: '', metaDescription: '', keywords: [programData.category] };
+        const videoContent = await generateVideoReview(programData, fallbackBlog, orgId);
         await db.from('affiliate_content').update({
           status: 'generating', // HeyGen is async
           body: videoContent.script,
@@ -137,14 +149,14 @@ export async function POST(req: NextRequest) {
   if (contentTypes.includes('social')) {
     const idempKey = `${programId}:${orgId}:social:${new Date().toISOString().slice(0, 10)}`;
     const { data: inserted } = await db
-      .from('affiliate_content')
+      .from<{ id: string }>('affiliate_content')
       .insert({ org_id: orgId, program_id: programId, content_type: 'social', status: 'generating', idempotency_key: idempKey })
       .select('id')
       .single();
 
     if (inserted) {
       try {
-        const socialContent = await generateSocialBundle(program, orgId);
+        const socialContent = await generateSocialBundle(programData, orgId);
         await db.from('affiliate_content').update({
           status: 'draft',
           meta: { linkedin: socialContent.linkedin, twitter: socialContent.twitter, tiktokScript: socialContent.tiktokScript },

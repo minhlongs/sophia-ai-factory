@@ -6,6 +6,7 @@
 
 import { createServerClient } from '@/lib/db/client';
 import { calculateMcuCost } from './mcu-pricing';
+import type { OrgBalance, UsageLog as UsageLogRow } from '@/lib/db/types';
 
 export interface UsageEvent {
   orgId: string;
@@ -77,9 +78,9 @@ export async function logUsage(event: UsageEvent): Promise<{
       .single();
 
     return {
-      success: data, // RPC returns true if successful
+      success: Boolean(data), // RPC returns true if successful
       mcuCost,
-      remainingBalance: balanceData?.balance,
+      remainingBalance: (balanceData as OrgBalance | null)?.balance,
     };
   } catch (error) {
     console.error('Unexpected usage tracking error:', error);
@@ -102,7 +103,7 @@ export async function getUsageHistory(
   const db = createServerClient();
 
   const { data, error } = await db
-    .from('usage_logs')
+    .from<UsageLogRow>('usage_logs')
     .select('*')
     .eq('org_id', orgId)
     .order('created_at', { ascending: false })
@@ -113,7 +114,7 @@ export async function getUsageHistory(
     return [];
   }
 
-  return data || [];
+  return (data as UsageLog[]) || [];
 }
 
 /**
@@ -134,7 +135,7 @@ export async function getUsageSummary(
 
   // Get raw usage data
   const { data: logs } = await db
-    .from('usage_logs')
+    .from<UsageLogRow>('usage_logs')
     .select('feature, mcu_cost, created_at')
     .eq('org_id', orgId)
     .gte('created_at', startDate.toISOString())

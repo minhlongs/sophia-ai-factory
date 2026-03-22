@@ -11,7 +11,7 @@
 import { createServerClient } from '@/lib/db/client';
 import { scoreProgram } from './program-scorer';
 import { SEED_PROGRAMS } from './seed-programs';
-import type { RawProgram, ScrapeResult, AffiliateProgramInput } from '@/types/affiliate';
+import type { RawProgram, ScrapeResult, AffiliateProgramInput, AffiliateProgram } from '@/types/affiliate';
 
 const PARTNERSTACK_API = 'https://api.partnerstack.com/api/v2/partnerships';
 const SCRAPE_DELAY_MS = 2000; // 1 req/2s to respect rate limits
@@ -118,14 +118,14 @@ export async function runScrape(): Promise<ScrapeResult> {
     return { ...normalize(raw), score };
   });
 
-  // Upsert into Supabase (conflict on name + source)
+  // Upsert into D1 (conflict on name + source)
   const db = createServerClient();
   let inserted = 0;
   let updated = 0;
 
   for (const record of records) {
     const { data: existing } = await db
-      .from('affiliate_programs')
+      .from<{ id: string }>('affiliate_programs')
       .select('id')
       .eq('name', record.name)
       .eq('source', record.source)
@@ -145,7 +145,7 @@ export async function runScrape(): Promise<ScrapeResult> {
 
   // Fetch top programs after upsert
   const { data: topPrograms } = await db
-    .from('affiliate_programs')
+    .from<AffiliateProgram>('affiliate_programs')
     .select('*')
     .gte('score', 60)
     .eq('is_active', true)
@@ -155,7 +155,7 @@ export async function runScrape(): Promise<ScrapeResult> {
   return {
     inserted,
     updated,
-    top_programs: topPrograms ?? [],
+    top_programs: (topPrograms as AffiliateProgram[]) ?? [],
     errors,
   };
 }

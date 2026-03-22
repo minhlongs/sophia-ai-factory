@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAuthClient, createServerClient } from '@/lib/db/client';
 import { getOrgId } from '@/lib/org';
+import type { UsageLog, OrgBalance, Subscription } from '@/lib/db/types';
 
 export async function GET(request: NextRequest) {
   try {
@@ -36,7 +37,7 @@ export async function GET(request: NextRequest) {
 
     // 3. Get usage by feature
     const { data: usageData } = await serverClient
-      .from('usage_logs')
+      .from<UsageLog>('usage_logs')
       .select('feature, mcu_cost, created_at')
       .eq('org_id', orgId)
       .order('created_at', { ascending: false })
@@ -55,14 +56,14 @@ export async function GET(request: NextRequest) {
 
     // 5. Get current MCU balance
     const { data: balance } = await serverClient
-      .from('org_balances')
+      .from<OrgBalance>('org_balances')
       .select('balance')
       .eq('org_id', orgId)
       .single();
 
     // 6. Get subscription tier
     const { data: subscription } = await serverClient
-      .from('subscriptions')
+      .from<Subscription>('subscriptions')
       .select('tier_name, mcu_monthly')
       .eq('org_id', orgId)
       .eq('status', 'active')

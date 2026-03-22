@@ -58,7 +58,7 @@ export async function getUsageStats(orgId: string, days: number): Promise<UsageS
   const since = new Date(Date.now() - days * 86_400_000).toISOString();
 
   const { data, error } = await db
-    .from('raas_api_usage')
+    .from<{ status_code: number; mcu_consumed: number; response_time_ms: number; created_at: string }>('raas_api_usage')
     .select('status_code, mcu_consumed, response_time_ms, created_at')
     .eq('org_id', orgId)
     .gte('created_at', since);

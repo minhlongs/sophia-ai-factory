@@ -10,6 +10,7 @@ import { generateBlogReview } from '@/lib/affiliate/content/blog-generator';
 import { generateSocialBundle } from '@/lib/affiliate/content/social-generator';
 import { runScrape } from '@/lib/affiliate/program-scraper';
 import type { Mission, MissionResult } from '@/types/raas';
+import type { AffiliateProgram } from '@/types/affiliate';
 import {
   runProposalCreate,
   runVideoCreate,
@@ -104,7 +105,7 @@ async function runAffiliateGenerate(mission: Mission): Promise<MissionResult> {
   }
 
   const { data: program, error } = await db
-    .from('affiliate_programs')
+    .from<AffiliateProgram>('affiliate_programs')
     .select('*')
     .eq('id', program_id)
     .single();
@@ -153,7 +154,7 @@ async function runContentBlog(mission: Mission): Promise<MissionResult> {
   if (affiliate_program_id) {
     const db = createServerClient();
     const { data: program } = await db
-      .from('affiliate_programs')
+      .from<AffiliateProgram>('affiliate_programs')
       .select('*')
       .eq('id', affiliate_program_id)
       .single();
@@ -188,7 +189,7 @@ async function runContentSocial(mission: Mission): Promise<MissionResult> {
   if (affiliate_program_id) {
     const db = createServerClient();
     const { data: program } = await db
-      .from('affiliate_programs')
+      .from<AffiliateProgram>('affiliate_programs')
       .select('*')
       .eq('id', affiliate_program_id)
       .single();

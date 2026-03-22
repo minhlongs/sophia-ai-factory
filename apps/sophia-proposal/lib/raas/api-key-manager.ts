@@ -57,7 +57,7 @@ export async function validateApiKey(key: string): Promise<ValidateResult> {
   const db = createServerClient();
 
   const { data, error } = await db
-    .from('raas_api_keys')
+    .from<{ id: string; org_id: string; permissions: string[]; rate_limit_per_minute: number; is_active: boolean; expires_at: string | null }>('raas_api_keys')
     .select('id, org_id, permissions, rate_limit_per_minute, is_active, expires_at')
     .eq('key_hash', hash)
     .single();
@@ -94,7 +94,7 @@ export async function createApiKey(
   const db = createServerClient();
 
   const { data, error } = await db
-    .from('raas_api_keys')
+    .from<{ id: string }>('raas_api_keys')
     .insert({ org_id: orgId, name, key_hash: hash, key_prefix: prefix })
     .select('id')
     .single();
@@ -124,11 +124,11 @@ export async function revokeApiKey(keyId: string, orgId: string): Promise<boolea
 export async function listApiKeys(orgId: string): Promise<ApiKeyInfo[]> {
   const db = createServerClient();
   const { data, error } = await db
-    .from('raas_api_keys')
+    .from<ApiKeyInfo>('raas_api_keys')
     .select('id, name, key_prefix, permissions, rate_limit_per_minute, is_active, last_used_at, created_at, expires_at')
     .eq('org_id', orgId)
     .order('created_at', { ascending: false });
 
   if (error) throw new Error('Failed to list API keys');
-  return (data ?? []) as ApiKeyInfo[];
+  return (data as ApiKeyInfo[]) ?? [];
 }

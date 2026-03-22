@@ -6,6 +6,7 @@ import { getSystemTemplate } from "@/lib/ai/proposal-templates";
 import { logUsage } from "@/lib/billing/usage-tracker";
 import { getOrInitializeBalance, requireBalance } from "@/lib/billing/balance-checker";
 import { createServerClient } from "@/lib/db/client";
+import type { Subscription } from "@/lib/db/types";
 
 // API routes are dynamic by default
 export const dynamic = "force-dynamic";
@@ -70,7 +71,7 @@ export async function POST(request: NextRequest) {
     // Get user's subscription tier for pricing
     const db = createServerClient();
     const { data: subscription } = await db
-      .from("subscriptions")
+      .from<Subscription>("subscriptions")
       .select("tier_name")
       .eq("org_id", orgId)
       .eq("status", "active")

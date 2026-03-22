@@ -10,6 +10,7 @@ import { createAuthClient, createServerClient } from '@/lib/db/client';
 import { getOrgId } from '@/lib/org';
 import { listContacts } from '@/lib/crm/hubspot-client';
 import { listDeals } from '@/lib/crm/hubspot-deals-client';
+import type { CrmSettings } from '@/lib/db/types';
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,7 +34,7 @@ export async function POST(request: NextRequest) {
 
     // 3. Read HubSpot tokens from crm_settings
     const { data: crmSettings, error: settingsError } = await serverClient
-      .from('crm_settings')
+      .from<CrmSettings & { hubspot_access_token: string | null; hubspot_refresh_token: string | null; hubspot_token_expires_at: string | null }>('crm_settings')
       .select('hubspot_access_token, hubspot_refresh_token, hubspot_token_expires_at')
       .eq('org_id', orgId)
       .single();
@@ -62,8 +63,7 @@ export async function POST(request: NextRequest) {
       const response = await listContacts(accessToken, contactsAfter, 100);
 
       for (const contact of response.results) {
-        await serverClient.from('contacts').upsert(
-          {
+        await serverClient.from('contacts').upsert({
             org_id: orgId,
             external_id: contact.id,
             email: contact.properties.email ?? null,
@@ -75,9 +75,7 @@ export async function POST(request: NextRequest) {
             external_data: contact,
             synced_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'org_id,external_id,source' }
-        );
+          });
         contactsSynced++;
       }
 
@@ -100,8 +98,7 @@ export async function POST(request: NextRequest) {
           ? deal.properties.closedate.split('T')[0]
           : null;
 
-        await serverClient.from('deals').upsert(
-          {
+        await serverClient.from('deals').upsert({
             org_id: orgId,
             external_id: deal.id,
             name: deal.properties.dealname ?? null,
@@ -113,9 +110,7 @@ export async function POST(request: NextRequest) {
             external_data: deal,
             synced_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'org_id,external_id,source' }
-        );
+          });
         dealsSynced++;
       }
 

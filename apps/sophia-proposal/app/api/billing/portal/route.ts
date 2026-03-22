@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
 import { getCurrentUser } from '@/lib/db/auth';
 import { getPolarClient } from '@/lib/billing/polar-client';
+import type { OrgMember, BillingSettings } from '@/lib/db/types';
 
 export async function GET(request: NextRequest) {
   try {
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
     // 2. Get user's organization
     const db = createServerClient();
     const { data: orgMember } = await db
-      .from('org_members')
+      .from<OrgMember>('org_members')
       .select('org_id')
       .eq('user_id', user.id)
       .single();
@@ -39,7 +40,7 @@ export async function GET(request: NextRequest) {
 
     // 3. Get billing settings for organization
     const { data: billingSettings } = await db
-      .from('billing_settings')
+      .from<BillingSettings>('billing_settings')
       .select('polar_customer_id')
       .eq('org_id', orgMember.org_id)
       .single();

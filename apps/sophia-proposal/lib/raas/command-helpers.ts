@@ -33,7 +33,7 @@ export async function runProposalCreate(mission: Mission): Promise<MissionResult
   let proposalId: string | undefined;
   try {
     const { data } = await db
-      .from('proposals')
+      .from<{ id: string }>('proposals')
       .insert({
         org_id: mission.org_id,
         title: `Proposal for ${params.client_name ?? 'Client'}`,
@@ -126,7 +126,7 @@ export async function runCrmSync(mission: Mission): Promise<MissionResult> {
       last_name: props.lastname,
       company: props.company,
       updated_at: new Date().toISOString(),
-    }, { onConflict: 'org_id,external_id,source' });
+    });
     synced++;
   }
 
@@ -135,7 +135,7 @@ export async function runCrmSync(mission: Mission): Promise<MissionResult> {
     last_sync: new Date().toISOString(),
     contacts_synced: synced,
     status: 'completed',
-  }, { onConflict: 'org_id' });
+  });
 
   return {
     success: true,
@@ -161,7 +161,7 @@ export async function runAnalyticsExport(mission: Mission): Promise<MissionResul
       .eq('org_id', mission.org_id)
       .gte('created_at', since),
     db
-      .from('usage_logs')
+      .from<{ mcu_cost: number }>('usage_logs')
       .select('mcu_cost')
       .eq('org_id', mission.org_id)
       .gte('created_at', since),
@@ -224,7 +224,7 @@ export async function runGtmCampaign(mission: Mission): Promise<MissionResult> {
   const createdIds: string[] = [];
   for (const sub of subCommands) {
     const { data } = await db
-      .from('missions')
+      .from<{ id: string }>('missions')
       .insert({
         org_id: mission.org_id,
         title: sub.title,

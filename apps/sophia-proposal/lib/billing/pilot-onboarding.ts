@@ -105,7 +105,7 @@ export async function getPilotOnboardingStatus(orgId: string): Promise<{
 
   // Check if organization has active subscription
   const { data: subscription } = await db
-    .from('subscriptions')
+    .from<{ id: string; status: string; created_at: string }>('subscriptions')
     .select('id, status, created_at')
     .eq('org_id', orgId)
     .eq('status', 'active')

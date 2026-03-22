@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
 import { getCurrentUser } from '@/lib/db/auth';
 import { getPolarClient, POLAR_TIERS } from '@/lib/billing/polar-client';
+import type { OrgMember, User } from '@/lib/db/types';
 import { z } from 'zod';
 
 const CheckoutRequestSchema = z.object({
@@ -54,7 +55,7 @@ export async function POST(request: NextRequest) {
     // 3. Get user's organization and email
     const db = createServerClient();
     const { data: orgMember } = await db
-      .from('org_members')
+      .from<OrgMember>('org_members')
       .select('org_id, role')
       .eq('user_id', user.id)
       .single();
@@ -67,7 +68,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { data: userData } = await db
-      .from('users')
+      .from<User>('users')
       .select('email')
       .eq('id', user.id)
       .single();
@@ -97,8 +98,6 @@ export async function POST(request: NextRequest) {
       org_id: orgMember.org_id,
       polar_customer_id: existingCustomer?.id || null,
       updated_at: new Date().toISOString(),
-    }, {
-      onConflict: 'org_id'
     });
 
     // 7. Return checkout URL

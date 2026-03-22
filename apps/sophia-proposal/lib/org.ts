@@ -5,6 +5,7 @@
  */
 
 import { D1Client } from './db/d1-query-builder';
+import type { OrgMember } from './db/types';
 
 /**
  * Get the organization ID for a user
@@ -15,12 +16,12 @@ export async function getOrgId(
   db: D1Client
 ): Promise<string | null> {
   const { data } = await db
-    .from("org_members")
+    .from<OrgMember>("org_members")
     .select("org_id")
     .eq("user_id", userId)
     .single();
 
-  return (data as Record<string, string>)?.org_id || null;
+  return data?.org_id || null;
 }
 
 /**
@@ -48,7 +49,7 @@ export async function isOrgMember(
   db: D1Client
 ): Promise<boolean> {
   const { data } = await db
-    .from("org_members")
+    .from<OrgMember>("org_members")
     .select("id")
     .eq("user_id", userId)
     .eq("org_id", orgId)
@@ -66,11 +67,11 @@ export async function isOrgAdmin(
   db: D1Client
 ): Promise<boolean> {
   const { data } = await db
-    .from("org_members")
+    .from<OrgMember>("org_members")
     .select("role")
     .eq("user_id", userId)
     .eq("org_id", orgId)
     .single();
 
-  return (data as Record<string, string>)?.role === "admin";
+  return data?.role === "admin";
 }

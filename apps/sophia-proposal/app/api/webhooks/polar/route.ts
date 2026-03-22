@@ -13,6 +13,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
 import { getPolarClient, PolarWebhookEvent } from '@/lib/billing/polar-client';
 import { getTierByProductId } from '@/lib/billing/mcu-pricing';
+import type { OrgBalance } from '@/lib/db/types';
 import { createHash } from 'crypto';
 
 // Webhook is public - Polar needs to access it without auth
@@ -157,8 +158,6 @@ async function handleSubscriptionCreated(event: PolarWebhookEvent) {
     current_period_end: attrs.current_period_end as string || null,
     cancel_at_period_end: attrs.cancel_at_period_end as boolean || false,
     updated_at: new Date().toISOString(),
-  }, {
-    onConflict: 'polar_subscription_id'
   });
 
   if (error) {
@@ -433,7 +432,7 @@ async function handleOrderRefunded(event: PolarWebhookEvent) {
 
   // Get current balance
   const { data: currentBalance } = await db
-    .from('org_balances')
+    .from<OrgBalance>('org_balances')
     .select('balance')
     .eq('org_id', billingSettings.org_id)
     .single();

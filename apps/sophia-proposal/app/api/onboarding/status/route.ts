@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
+import type { Subscription } from '@/lib/db/types';
 
 export interface OnboardingStatus {
   orgId: string;
@@ -43,7 +44,7 @@ export async function GET(request: NextRequest) {
 
     // Get subscription status
     const { data: subscription } = await db
-      .from('subscriptions')
+      .from<Subscription>('subscriptions')
       .select('tier_name, status, mcu_monthly')
       .eq('org_id', orgId)
       .eq('status', 'active')

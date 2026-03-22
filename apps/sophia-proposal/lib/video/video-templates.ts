@@ -17,7 +17,7 @@ export async function getAvailableTemplates(
   const db = createServerClient();
 
   let query = db
-    .from("video_templates")
+    .from<VideoTemplate>("video_templates")
     .select("*")
     .eq("is_active", true)
     .order("created_at", { ascending: false });
@@ -25,13 +25,13 @@ export async function getAvailableTemplates(
   if (orgId) {
     // Get both global and org-specific templates
     const { data: globalTemplates } = await db
-      .from("video_templates")
+      .from<VideoTemplate>("video_templates")
       .select("*")
       .is("org_id", null)
       .eq("is_active", true);
 
     const { data: orgTemplates } = await db
-      .from("video_templates")
+      .from<VideoTemplate>("video_templates")
       .select("*")
       .eq("org_id", orgId)
       .eq("is_active", true);
@@ -59,7 +59,7 @@ export async function getTemplateById(
   const db = createServerClient();
 
   const { data, error } = await db
-    .from("video_templates")
+    .from<VideoTemplate>("video_templates")
     .select("*")
     .eq("id", templateId)
     .eq("is_active", true);
@@ -91,7 +91,7 @@ export async function createTemplate(
   const db = createServerClient();
 
   const { data, error } = await db
-    .from("video_templates")
+    .from<VideoTemplate>("video_templates")
     .insert({
       ...template,
       org_id: orgId,
@@ -99,9 +99,9 @@ export async function createTemplate(
     .select()
     .single();
 
-  if (error) {
+  if (error || !data) {
     console.error("Error creating template:", error);
-    throw error;
+    throw error ?? new Error('Template insert returned no data');
   }
 
   return data;
@@ -118,7 +118,7 @@ export async function updateTemplate(
   const db = createServerClient();
 
   const { data, error } = await db
-    .from("video_templates")
+    .from<VideoTemplate>("video_templates")
     .update({
       ...updates,
       updated_at: new Date().toISOString(),
@@ -146,7 +146,7 @@ export async function deleteTemplate(
   const db = createServerClient();
 
   const { error } = await db
-    .from("video_templates")
+    .from<VideoTemplate>("video_templates")
     .update({
       is_active: false,
       updated_at: new Date().toISOString(),
@@ -172,14 +172,14 @@ export async function getTemplatesByType(
   if (orgId) {
     // Get both global and org-specific templates
     const { data: globalTemplates } = await db
-      .from("video_templates")
+      .from<VideoTemplate>("video_templates")
       .select("*")
       .eq("template_type", type)
       .eq("is_active", true)
       .is("org_id", null);
 
     const { data: orgTemplates } = await db
-      .from("video_templates")
+      .from<VideoTemplate>("video_templates")
       .select("*")
       .eq("template_type", type)
       .eq("is_active", true)
@@ -189,7 +189,7 @@ export async function getTemplatesByType(
   }
 
   const { data, error } = await db
-    .from("video_templates")
+    .from<VideoTemplate>("video_templates")
     .select("*")
     .eq("template_type", type)
     .eq("is_active", true)
@@ -212,7 +212,7 @@ export async function getDefaultTemplate(
   const db = createServerClient();
 
   const { data, error } = await db
-    .from("video_templates")
+    .from<VideoTemplate>("video_templates")
     .select("*")
     .eq("template_type", type)
     .eq("is_active", true)
