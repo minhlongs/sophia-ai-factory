@@ -8,6 +8,7 @@
 import { getD1Client } from '@/lib/db/client';
 import { createVideoTask } from '@/lib/video/heygen-client';
 import { generateProposal } from '@/lib/ai/claude-proposal-generator';
+import { generateBattlecard } from '@/lib/ai/claude-sales-intelligence';
 import type { Mission, MissionResult } from '@/types/raas';
 
 // ============================================================================
@@ -255,36 +256,14 @@ export async function runSalesBattlecard(mission: Mission): Promise<MissionResul
     return { success: false, error: 'Missing params.competitor' };
   }
 
-  const battlecard = {
+  const battlecard = await generateBattlecard({
     competitor: params.competitor,
-    our_product: params.product ?? 'Sophia AI Factory',
-    strengths: [
-      'AI-powered proposal generation in <30s',
-      'Integrated video production pipeline',
-      'Usage-based MCU pricing — pay for what you use',
-      'Full affiliate marketing automation',
-    ],
-    weaknesses_of_competitor: [
-      `${params.competitor} lacks AI video integration`,
-      `${params.competitor} uses per-seat pricing (expensive at scale)`,
-      `${params.competitor} has no affiliate engine`,
-    ],
-    key_differentiators: [
-      'RaaS model: API-first, automatable',
-      'OpenClaw PEV engine for mission orchestration',
-      'Multi-channel content generation (blog + social + video)',
-    ],
-    objection_handling: {
-      too_expensive: 'Our MCU model means you only pay for actual AI work. No idle seats.',
-      unproven: 'Built by agency operators who understand the proposal-to-close pipeline.',
-      switching_cost: 'HubSpot CRM sync means zero data migration needed.',
-    },
-    generated_at: new Date().toISOString(),
-  };
+    product: params.product,
+  });
 
   return {
     success: true,
-    summary: `Battlecard generated: ${params.competitor} vs Sophia`,
+    summary: `Battlecard generated: ${params.competitor} vs ${battlecard.our_product}`,
     data: { battlecard },
   };
 }
