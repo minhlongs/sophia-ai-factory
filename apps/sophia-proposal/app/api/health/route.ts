@@ -19,11 +19,14 @@ export async function GET() {
   const dbStart = Date.now();
   try {
     const db = createServerClient();
-    const { data } = await db.from('users').select('id').limit(1);
+    const { data } = await db.from('users').select('id').maybeSingle();
     checks.database = {
-      status: data ? 'healthy' : 'degraded',
+      status: 'healthy',
       latency_ms: Date.now() - dbStart,
     };
+    if (data === undefined) {
+      checks.database.status = 'degraded';
+    }
   } catch (err) {
     checks.database = {
       status: 'unhealthy',
@@ -36,8 +39,9 @@ export async function GET() {
   try {
     const db = createServerClient();
     const { data: templates } = await db.from('mission_templates').select('command').eq('is_active', 1);
+    const count = Array.isArray(templates) ? templates.length : 0;
     checks.templates = {
-      status: templates && templates.length >= 10 ? 'healthy' : 'degraded',
+      status: count >= 10 ? 'healthy' : 'degraded',
       latency_ms: 0,
     };
   } catch {
