@@ -1,0 +1,611 @@
+openapi: 3.1.0
+info:
+  title: Sophia AI Factory RaaS API
+  version: 1.0.0
+  description: |
+    Robot-as-a-Service (RaaS) API for Sophia AI Factory.
+
+    Submit AI missions (proposals, videos, GTM campaigns, affiliate content) and
+    poll for results. Each mission deducts MCU credits from your org balance.
+
+    **Auth:** Include your API key as `Authorization: Bearer sk_live_<key>`.
+
+    **Rate limits:** Enforced per API key (default 60 req/min). Headers returned
+    on every response.
+
+    **MCU billing:** 402 is returned when balance is insufficient before queuing.
+  contact:
+    name: Sophia AI Factory
+    url: https://sophia-ai-factory.agencyos-openclaw.workers.dev
+  license:
+    name: MIT
+
+servers:
+  - url: https://sophia-ai-factory.agencyos-openclaw.workers.dev
+    description: Production
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Missions
+    description: Create, list, retrieve, and cancel AI missions
+  - name: Health
+    description: System health check (no auth required)
+
+# ─────────────────────────────────────────────────────────────────────────────
+paths:
+
+  /api/health:
+    get:
+      operationId: getHealth
+      tags: [Health]
+      summary: System health check
+      description: Returns database connectivity, template count, uptime. No auth required.
+      security: []
+      responses:
+        '200':
+          description: System healthy or degraded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: One or more checks unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /api/v1/missions:
+    get:
+      operationId: listMissions
+      tags: [Missions]
+      summary: List missions
+      description: Returns missions for the authenticated org, newest first. Max 50 per call.
+      parameters:
+        - name: status
+          in: query
+          description: Filter by mission status
+          schema:
+            $ref: '#/components/schemas/MissionStatus'
+        - name: limit
+          in: query
+          description: Max results (1-50, default 20)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+      responses:
+        '200':
+          description: Mission list
+          headers:
+            $ref: '#/components/headers/RateLimitHeaders'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  missions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MissionSummary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      operationId: createMission
+      tags: [Missions]
+      summary: Create a mission
+      description: |
+        Queue a new AI mission. Requires `missions:create` permission.
+
+        MCU cost is checked before queuing. On success the mission is immediately
+        dispatched to the PEV engine asynchronously.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMissionRequest'
+            examples:
+              proposalDeck:
+                summary: Sales proposal deck
+                value:
+                  command: sales:proposal-deck
+                  title: Acme Corp Proposal
+                  priority: normal
+                  params:
+                    client_name: Acme Corp
+                    industry: SaaS
+                    budget_range: $5k-$20k
+              videoCreate:
+                summary: AI intro video
+                value:
+                  command: video:create
+                  title: Acme Intro Video
+                  params:
+                    script: Welcome to Sophia AI Factory…
+                  webhook_url: https://hooks.example.com/sophia
+      responses:
+        '201':
+          description: Mission queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateMissionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '402':
+          $ref: '#/components/responses/InsufficientBalance'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/missions/{id}:
+    get:
+      operationId: getMission
+      tags: [Missions]
+      summary: Get mission detail
+      description: Returns full mission including plan, execution log, and result.
+      parameters:
+        - $ref: '#/components/parameters/MissionId'
+      responses:
+        '200':
+          description: Mission detail
+          headers:
+            $ref: '#/components/headers/RateLimitHeaders'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  mission:
+                    $ref: '#/components/schemas/MissionDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/missions/{id}/result:
+    get:
+      operationId: getMissionResult
+      tags: [Missions]
+      summary: Poll mission result
+      description: |
+        Lightweight endpoint for polling. Returns 202 with `Retry-After: 5`
+        while the mission is still running.
+      parameters:
+        - $ref: '#/components/parameters/MissionId'
+      responses:
+        '200':
+          description: Mission completed or failed
+          headers:
+            $ref: '#/components/headers/RateLimitHeaders'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MissionResultResponse'
+        '202':
+          description: Mission still in progress — retry after 5 seconds
+          headers:
+            Retry-After:
+              schema:
+                type: string
+                example: '5'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MissionPendingResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/missions/{id}/cancel:
+    post:
+      operationId: cancelMission
+      tags: [Missions]
+      summary: Cancel a mission
+      description: |
+        Cancels a mission in `queued` or `planning` status.
+        Reserved MCU credits are refunded atomically.
+      parameters:
+        - $ref: '#/components/parameters/MissionId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Mission cancelled and MCU refunded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CancelMissionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Mission not cancellable (already executing/completed/failed)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+# ─────────────────────────────────────────────────────────────────────────────
+components:
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: sk_live_<token>
+      description: API key issued from the Sophia dashboard. Must start with `sk_live_`.
+
+  parameters:
+    MissionId:
+      name: id
+      in: path
+      required: true
+      description: Mission UUID
+      schema:
+        type: string
+        format: uuid
+        example: 550e8400-e29b-41d4-a716-446655440000
+
+  # ── Reusable response headers ───────────────────────────────────────────────
+  headers:
+    RateLimitHeaders:
+      X-RateLimit-Limit:
+        description: Max requests allowed per minute
+        schema:
+          type: integer
+          example: 60
+      X-RateLimit-Remaining:
+        description: Requests remaining in current window
+        schema:
+          type: integer
+          example: 58
+      X-RateLimit-Reset:
+        description: Unix timestamp when the rate limit window resets
+        schema:
+          type: integer
+          example: 1711111200
+
+  # ── Schemas ─────────────────────────────────────────────────────────────────
+  schemas:
+
+    MissionCommand:
+      type: string
+      enum:
+        - proposal:create
+        - video:create
+        - affiliate:generate
+        - affiliate:scrape
+        - content:blog
+        - content:social
+        - crm:sync
+        - analytics:export
+        - gtm:campaign
+        - sales:battlecard
+        - sales:proposal-deck
+        - sales:roi-calculator
+        - sales:competitor-analysis
+        - sales:pricing-optimizer
+        - sales:outreach-sequence
+      description: The AI command to execute. Each command has a fixed MCU cost.
+
+    MissionStatus:
+      type: string
+      enum:
+        - queued
+        - planning
+        - executing
+        - verifying
+        - completed
+        - failed
+
+    MissionPriority:
+      type: string
+      enum:
+        - low
+        - normal
+        - high
+        - urgent
+      default: normal
+
+    CreateMissionRequest:
+      type: object
+      required:
+        - command
+      properties:
+        command:
+          $ref: '#/components/schemas/MissionCommand'
+        title:
+          type: string
+          description: Human-readable label (defaults to command name)
+          maxLength: 255
+          example: Acme Corp Proposal
+        priority:
+          $ref: '#/components/schemas/MissionPriority'
+        params:
+          type: object
+          additionalProperties: true
+          description: Command-specific parameters passed to the PEV engine
+        webhook_url:
+          type: string
+          format: uri
+          description: |
+            Public HTTPS URL to receive result payload when mission completes.
+            Must be a public URL — localhost, RFC-1918 ranges (10.x, 192.168.x,
+            172.16-31.x), 169.254.169.254, and `.internal` hostnames are blocked
+            to prevent SSRF.
+          example: https://hooks.example.com/sophia/callback
+
+    CreateMissionResponse:
+      type: object
+      properties:
+        mission_id:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/MissionStatus'
+        mcu_cost:
+          type: integer
+          description: MCU credits reserved for this mission
+
+    MissionSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        command:
+          $ref: '#/components/schemas/MissionCommand'
+        status:
+          $ref: '#/components/schemas/MissionStatus'
+        mcu_cost:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    MissionDetail:
+      allOf:
+        - $ref: '#/components/schemas/MissionSummary'
+        - type: object
+          properties:
+            params:
+              type: object
+              additionalProperties: true
+            result:
+              type: object
+              nullable: true
+              additionalProperties: true
+              description: Command output — shape varies per command
+            error_message:
+              type: string
+              nullable: true
+            plan:
+              type: object
+              nullable: true
+              description: PEV plan generated by the planner stage
+            execution_log:
+              type: array
+              items:
+                type: object
+                additionalProperties: true
+            started_at:
+              type: string
+              format: date-time
+              nullable: true
+            completed_at:
+              type: string
+              format: date-time
+              nullable: true
+
+    MissionResultResponse:
+      type: object
+      properties:
+        mission_id:
+          type: string
+          format: uuid
+        command:
+          $ref: '#/components/schemas/MissionCommand'
+        status:
+          $ref: '#/components/schemas/MissionStatus'
+        result:
+          type: object
+          nullable: true
+          additionalProperties: true
+        error_message:
+          type: string
+          nullable: true
+        mcu_cost:
+          type: integer
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    MissionPendingResponse:
+      type: object
+      properties:
+        mission_id:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/MissionStatus'
+        message:
+          type: string
+          example: Mission is still in progress. Poll this endpoint until status is completed/failed.
+
+    CancelMissionResponse:
+      type: object
+      properties:
+        cancelled:
+          type: boolean
+          example: true
+        mission_id:
+          type: string
+          format: uuid
+        mcu_refunded:
+          type: integer
+          description: MCU credits returned to org balance
+
+    HealthCheck:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        latency_ms:
+          type: integer
+        error:
+          type: string
+          nullable: true
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        version:
+          type: string
+          example: 1.0.0
+        uptime_seconds:
+          type: integer
+        timestamp:
+          type: string
+          format: date-time
+        region:
+          type: string
+          example: wnam
+        checks:
+          type: object
+          properties:
+            database:
+              $ref: '#/components/schemas/HealthCheck'
+            templates:
+              $ref: '#/components/schemas/HealthCheck'
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+
+  # ── Reusable responses ──────────────────────────────────────────────────────
+  responses:
+    BadRequest:
+      description: Invalid request body or parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: command is required
+
+    Unauthorized:
+      description: Missing or invalid API key
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: Invalid or expired API key
+
+    Forbidden:
+      description: API key lacks required permission
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: 'Forbidden: missing missions:create permission'
+
+    InsufficientBalance:
+      description: Org MCU balance is below the mission cost
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: Insufficient MCU balance
+              required:
+                type: integer
+                description: MCU cost of the requested command
+              current:
+                type: integer
+                description: Current org MCU balance
+
+    NotFound:
+      description: Mission not found (or belongs to a different org)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: Mission not found
+
+    RateLimited:
+      description: Rate limit exceeded
+      headers:
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
+        X-RateLimit-Reset:
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: Rate limit exceeded
+
+    InternalError:
+      description: Unexpected server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: Failed to create mission

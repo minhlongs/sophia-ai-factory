@@ -8,6 +8,8 @@ const publicRoutes = [
   "/api/auth/signup",
   "/api/auth/login",
   "/api/auth/logout",
+  "/api/health",
+  "/docs/api",
   "/",
 ];
 
