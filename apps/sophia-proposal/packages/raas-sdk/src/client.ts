@@ -5,6 +5,8 @@
 
 import { HttpClient } from './http-client.js';
 import { Missions } from './missions.js';
+import { Usage } from './usage.js';
+import { ApiKeys } from './api-keys.js';
 import { MissionStream } from './stream.js';
 import type { MissionStreamOptions } from './stream.js';
 import type { SophiaClientConfig } from './types.js';
@@ -12,8 +14,14 @@ import type { SophiaClientConfig } from './types.js';
 const DEFAULT_BASE_URL = 'https://sophia-ai-factory.agencyos-openclaw.workers.dev';
 
 export class SophiaClient {
-  /** Access all mission operations: create, get, list, cancel, waitForResult */
+  /** Mission operations: create, get, list, cancel, waitForResult, createBatch */
   readonly missions: Missions;
+
+  /** MCU balance and transaction history (requires orgId in config) */
+  readonly usage: Usage | null;
+
+  /** API key management (requires orgId in config) */
+  readonly apiKeys: ApiKeys | null;
 
   private readonly baseUrl: string;
   private readonly apiKey: string;
@@ -25,7 +33,17 @@ export class SophiaClient {
     this.baseUrl = config.baseUrl ?? DEFAULT_BASE_URL;
     this.apiKey = config.apiKey;
     const http = new HttpClient(this.baseUrl, this.apiKey);
+
     this.missions = new Missions(http);
+
+    // Org-scoped resources require orgId
+    if (config.orgId) {
+      this.usage = new Usage(http, config.orgId);
+      this.apiKeys = new ApiKeys(http, config.orgId);
+    } else {
+      this.usage = null;
+      this.apiKeys = null;
+    }
   }
 
   /**

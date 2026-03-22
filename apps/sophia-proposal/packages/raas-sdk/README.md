@@ -6,6 +6,7 @@ TypeScript SDK for the **Sophia AI Factory** RaaS (Robot-as-a-Service) API.
 - Works in Node.js 18+, Deno, Bun, and modern browsers
 - Auto-retry on 429 with `Retry-After` header support
 - Full TypeScript strict-mode types
+- Org-scoped resources: MCU usage, API key management
 
 ## Installation
 
@@ -18,145 +19,132 @@ pnpm add @sophia/raas-sdk
 ## Quick start
 
 ```typescript
-import { SophiaClient, MissionStream } from '@sophia/raas-sdk';
+import { SophiaClient } from '@sophia/raas-sdk';
 
-const sophia = new SophiaClient({ apiKey: 'sk_live_xxx' });
+const sophia = new SophiaClient({
+  apiKey: 'sk_live_xxx',
+  orgId: 'org_abc123', // enables usage + apiKeys resources
+});
 
-// 1. Create a mission
+// Create a mission
 const { mission_id, mcu_cost } = await sophia.missions.create({
   command: 'sales:battlecard',
   params: { competitor: 'Acme Corp' },
 });
 
-// 2. Stream real-time events
-const stream = new MissionStream(
-  'https://sophia-ai-factory.agencyos-openclaw.workers.dev',
-  'sk_live_xxx',
-  mission_id,
-);
-
-stream.onStatus = (e) => console.log('status →', e.data);
-stream.onStep   = (e) => console.log('step →', e.data);
-stream.onResult = (e) => {
-  console.log('done →', e.data);
-  stream.close();
-};
-stream.onError  = (e) => console.error('error →', e.data);
-
-stream.connect();
-
-// 3. Or poll without streaming
+// Poll until done
 const result = await sophia.missions.waitForResult(mission_id);
 console.log(result.result?.summary);
 ```
 
-## Custom base URL (self-hosted)
-
-```typescript
-const sophia = new SophiaClient({
-  apiKey: 'sk_live_xxx',
-  baseUrl: 'https://my-sophia-instance.example.com',
-});
-```
-
-## API reference
+## Missions
 
 ### `sophia.missions.create(req)`
 
-Queue a new mission. Requires `missions:create` permission.
+Queue a new mission. Returns `mission_id`, `status`, and `mcu_cost`.
 
 ```typescript
-const { mission_id, status, mcu_cost } = await sophia.missions.create({
+const { mission_id } = await sophia.missions.create({
   command: 'proposal:create',
-  title: 'Q2 Proposal for Acme',          // optional
+  title: 'Q2 Proposal for Acme',
   params: { client: 'Acme', budget: 50000 },
-  priority: 'high',                        // low | normal | high | urgent
-  webhook_url: 'https://example.com/hook', // optional
+  priority: 'high',           // low | normal | high | urgent
+  webhook_url: 'https://example.com/hook',
+});
+```
+
+### `sophia.missions.createBatch(requests)`
+
+Create multiple missions in parallel. Returns results in same order.
+
+```typescript
+const results = await sophia.missions.createBatch([
+  { command: 'sales:battlecard', params: { competitor: 'Acme' } },
+  { command: 'sales:competitor-analysis', params: { competitor: 'Acme' } },
+  { command: 'content:blog', params: { topic: 'AI in Sales' } },
+]);
+
+// Each result is CreateMissionResponse | { error: string }
+results.forEach((r) => {
+  if ('error' in r) console.error(r.error);
+  else console.log(`Mission ${r.mission_id} queued (${r.mcu_cost} MCU)`);
 });
 ```
 
 ### `sophia.missions.get(id)`
 
-Fetch full mission details including `execution_log` and `plan`.
-
-```typescript
-const mission = await sophia.missions.get(mission_id);
-console.log(mission.status, mission.execution_log);
-```
+Fetch full mission details.
 
 ### `sophia.missions.list(params?)`
 
-List missions for the authenticated org.
-
 ```typescript
-// All missions
-const missions = await sophia.missions.list();
-
-// Filtered
 const queued = await sophia.missions.list({ status: 'queued', limit: 10 });
 ```
 
 ### `sophia.missions.waitForResult(id, opts?)`
 
-Poll `/result` until the mission completes or fails. Throws `Error('waitForResult timed out …')` on timeout.
+Poll until completed or failed. Throws on timeout.
 
 ```typescript
 const result = await sophia.missions.waitForResult(mission_id, {
   pollIntervalMs: 3000,   // default: 2000
   timeoutMs: 120_000,     // default: 300_000 (5 min)
 });
-
-if (result.status === 'completed') {
-  console.log(result.result?.output_url);
-} else {
-  console.error('Mission failed:', result.error_message);
-}
 ```
 
 ### `sophia.missions.cancel(id)`
 
-Cancel a `queued` or `planning` mission and refund reserved MCU.
+Cancel a `queued`/`planning` mission. Returns `{ cancelled, mcu_refunded }`.
+
+## Streaming (SSE)
+
+Real-time mission events via Server-Sent Events.
 
 ```typescript
-const { cancelled, mcu_refunded } = await sophia.missions.cancel(mission_id);
-```
-
-### `sophia.stream(missionId, opts?)` — SSE real-time events
-
-```typescript
-import { SophiaClient } from '@sophia/raas-sdk';
-
-const sophia = new SophiaClient({ apiKey: 'sk_live_xxx' });
-const { mission_id } = await sophia.missions.create({ command: 'video:create', params: {} });
-
-// Open stream
 const stream = sophia.stream(mission_id, {
-  autoReconnect: true,   // default: true
-  maxReconnects: 5,      // default: 5
-  reconnectDelayMs: 1000 // default: 1000 (doubles per attempt)
+  autoReconnect: true,
+  maxReconnects: 5,
 });
 
-stream.onStatus    = (e) => console.log('status  →', e.data);
-stream.onStep      = (e) => console.log('step    →', e.data);
-stream.onResult    = (e) => { console.log('result  →', e.data); stream.close(); };
-stream.onError     = (e) => console.error('error   →', e.data);
-stream.onHeartbeat = (e) => console.debug('ping    →', e.data);
+stream.onStatus = (e) => console.log('status', e.data);
+stream.onStep   = (e) => console.log('step', e.data);
+stream.onResult = (e) => { console.log('done', e.data); stream.close(); };
+stream.onError  = (e) => console.error('error', e.data);
 
-stream.connect(); // start receiving events
+stream.connect();
 ```
 
-Or use `MissionStream` directly (no client required):
+Or use `MissionStream` directly (no client needed):
 
 ```typescript
 import { MissionStream } from '@sophia/raas-sdk';
-
-const stream = new MissionStream(
-  'https://sophia-ai-factory.agencyos-openclaw.workers.dev',
-  'sk_live_xxx',
-  mission_id,
-);
+const stream = new MissionStream(baseUrl, apiKey, missionId);
 stream.onResult = (e) => stream.close();
 stream.connect();
+```
+
+## Usage (MCU Balance)
+
+Requires `orgId` in client config.
+
+```typescript
+const sophia = new SophiaClient({ apiKey: 'sk_live_xxx', orgId: 'org_abc' });
+
+const usage = await sophia.usage!.getBalance();
+console.log(`Balance: ${usage.balance} MCU`);
+console.log(`Reserved: ${usage.reserved} MCU`);
+console.log(`Lifetime: +${usage.lifetime_credits} / -${usage.lifetime_debits}`);
+console.log(`Recent:`, usage.recent_transactions);
+```
+
+## API Keys
+
+Requires `orgId` in client config.
+
+```typescript
+const newKey = await sophia.apiKeys!.create();
+console.log(`New key: ${newKey.api_key}`);     // store securely!
+console.log(`Prefix: ${newKey.key_prefix}`);   // for display: sk_live_abc...
 ```
 
 ## Error handling
@@ -168,29 +156,42 @@ try {
   await sophia.missions.create({ command: 'sales:battlecard' });
 } catch (err) {
   if (err instanceof RaasHttpError) {
-    console.error(`API error ${err.status}:`, err.message);
-    // err.body contains the full response body
     if (err.status === 402) console.error('Insufficient MCU balance');
-    if (err.status === 403) console.error('Missing missions:create permission');
+    if (err.status === 429) console.error('Rate limited (auto-retried 3x)');
+    console.error(`API ${err.status}: ${err.message}`, err.body);
   }
 }
 ```
 
 ## Available commands
 
-| Command | Description |
-|---|---|
-| `proposal:create` | Generate sales proposal |
-| `video:create` | Create AI video |
-| `affiliate:generate` | Generate affiliate content |
-| `content:blog` | Write blog post |
-| `content:social` | Social media content |
-| `sales:battlecard` | Competitive battlecard |
-| `sales:proposal-deck` | Slide deck |
-| `sales:roi-calculator` | ROI analysis |
-| `sales:competitor-analysis` | Deep competitor report |
-| `sales:pricing-optimizer` | Pricing strategy |
-| `sales:outreach-sequence` | Email sequence |
+| Command | MCU | Description |
+|---|---|---|
+| `proposal:create` | 5 | Generate sales proposal |
+| `video:create` | 10 | Create AI video |
+| `affiliate:generate` | 3 | Generate affiliate content |
+| `affiliate:scrape` | 2 | Scrape affiliate programs |
+| `content:blog` | 3 | Write blog post |
+| `content:social` | 2 | Social media content |
+| `crm:sync` | 1 | Sync CRM data |
+| `analytics:export` | 2 | Export analytics |
+| `gtm:campaign` | 5 | GTM campaign plan |
+| `sales:battlecard` | 3 | Competitive battlecard |
+| `sales:proposal-deck` | 5 | Slide deck |
+| `sales:roi-calculator` | 3 | ROI analysis |
+| `sales:competitor-analysis` | 5 | Deep competitor report |
+| `sales:pricing-optimizer` | 3 | Pricing strategy |
+| `sales:outreach-sequence` | 5 | Email outreach sequence |
+
+## Pricing tiers
+
+| Tier | MCU/mo | Price |
+|---|---|---|
+| Free | 200 | $0 |
+| Starter | 500 | $49/mo |
+| Growth | 2,000 | $149/mo |
+| Premium | 10,000 | $499/mo |
+| Master | 25,000 | $999/mo |
 
 ## License
 

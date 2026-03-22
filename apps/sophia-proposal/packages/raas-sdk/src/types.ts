@@ -3,7 +3,7 @@
  * Source of truth: types/raas.ts in the sophia-proposal app.
  */
 
-// ── Unions / Enums ────────────────────────────────────────────────────────────
+// -- Unions / Enums -----------------------------------------------------------
 
 export type MissionStatus =
   | 'queued'
@@ -33,7 +33,7 @@ export type MissionCommand =
   | 'sales:outreach-sequence'
   | (string & Record<never, never>); // allow custom commands without losing autocomplete
 
-// ── Core types ────────────────────────────────────────────────────────────────
+// -- Core types ---------------------------------------------------------------
 
 export interface MissionResult {
   success: boolean;
@@ -62,7 +62,7 @@ export interface Mission {
   updated_at: string;
 }
 
-// ── Request / Response shapes ─────────────────────────────────────────────────
+// -- Request / Response shapes ------------------------------------------------
 
 export interface CreateMissionRequest {
   /** PEV command to execute, e.g. "sales:battlecard" */
@@ -109,12 +109,40 @@ export interface CancelMissionResponse {
   mcu_refunded: number;
 }
 
-// ── SDK config ────────────────────────────────────────────────────────────────
+// -- Usage types --------------------------------------------------------------
+
+export interface UsageBalance {
+  org_id: string;
+  balance: number;
+  reserved: number;
+  lifetime_credits: number;
+  lifetime_debits: number;
+  recent_transactions: UsageTransaction[];
+}
+
+export interface UsageTransaction {
+  id: string;
+  command: string;
+  mcu_cost: number;
+  created_at: string;
+}
+
+// -- API Key types ------------------------------------------------------------
+
+export interface CreateApiKeyResponse {
+  api_key: string;
+  key_prefix: string;
+  created_at: string;
+}
+
+// -- SDK config ---------------------------------------------------------------
 
 export interface SophiaClientConfig {
   apiKey: string;
   /** Defaults to "https://sophia-ai-factory.agencyos-openclaw.workers.dev" */
   baseUrl?: string;
+  /** Required for usage and apiKeys resources */
+  orgId?: string;
 }
 
 export interface WaitForResultOptions {
@@ -124,7 +152,7 @@ export interface WaitForResultOptions {
   timeoutMs?: number;
 }
 
-// ── Stream types ───────────────────────────────────────────────────────────────
+// -- Stream types -------------------------------------------------------------
 
 export interface MissionStep {
   step_index: number;
