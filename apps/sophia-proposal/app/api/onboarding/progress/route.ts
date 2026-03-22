@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAuthClient, createServerClient } from '@/lib/db/client';
 import { getOrgId } from '@/lib/org';
 import { DEFAULT_ONBOARDING_STEPS, calculateProgress } from '@/lib/onboarding/config';
+import type { OnboardingStep } from '@/types/onboarding';
 
 // GET /api/onboarding/progress
 export async function GET(request: NextRequest) {
@@ -54,15 +55,15 @@ export async function POST(request: NextRequest) {
 
     // Get current progress
     const { data: current } = await serverClient
-      .from('onboarding_progress')
+      .from<{ steps: OnboardingStep[] }>('onboarding_progress')
       .select('steps')
       .eq('org_id', orgId)
       .single();
 
-    let steps = current?.steps || DEFAULT_ONBOARDING_STEPS;
+    let steps: OnboardingStep[] = (current?.steps as OnboardingStep[]) || DEFAULT_ONBOARDING_STEPS;
 
     // Update step
-    steps = steps.map((step: any) =>
+    steps = steps.map((step) =>
       step.id === stepId ? { ...step, completed: true } : step
     );
 

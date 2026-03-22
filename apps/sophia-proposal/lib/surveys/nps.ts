@@ -95,7 +95,7 @@ export async function checkNpsEligibility(orgId: string): Promise<{
 
   // Check last NPS submission
   const { data: lastNps } = await db
-    .from('customer_feedback')
+    .from<{ submitted_at: string }>('customer_feedback')
     .select('submitted_at')
     .eq('org_id', orgId)
     .eq('survey_type', 'nps')

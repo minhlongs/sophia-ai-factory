@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     .eq('id', programId)
     .single();
 
-  if (!program?.affiliate_url) {
+  if (!(program as Record<string, string>)?.affiliate_url) {
     return NextResponse.json({ error: 'Program not found' }, { status: 404 });
   }
 
@@ -37,5 +37,5 @@ export async function GET(req: NextRequest) {
   void trackClick(programId, contentId, req);
 
   // 302 redirect to affiliate URL
-  return NextResponse.redirect(program.affiliate_url, { status: 302 });
+  return NextResponse.redirect((program as Record<string, string>).affiliate_url, { status: 302 });
 }

@@ -9,6 +9,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
+import type { MissionTemplate, OrgBalance, Mission } from '@/lib/db/types';
 import { validateApiKey } from '@/lib/raas/api-key-manager';
 import { checkRateLimit, rateLimitHeaders } from '@/lib/raas/rate-limiter';
 import { recordUsage } from '@/lib/raas/usage-meter';
@@ -148,7 +149,7 @@ export async function POST(request: NextRequest) {
 
     // Look up MCU cost
     const { data: template } = await db
-      .from('mission_templates')
+      .from<MissionTemplate>('mission_templates')
       .select('mcu_cost')
       .eq('command', command)
       .eq('is_active', true)
@@ -158,7 +159,7 @@ export async function POST(request: NextRequest) {
 
     // Check balance
     const { data: balance } = await db
-      .from('org_balances')
+      .from<OrgBalance>('org_balances')
       .select('balance')
       .eq('org_id', auth.orgId)
       .single();

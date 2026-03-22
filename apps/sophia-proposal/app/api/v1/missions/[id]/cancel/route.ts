@@ -12,6 +12,7 @@ import { validateApiKey } from '@/lib/raas/api-key-manager';
 import { checkRateLimit, rateLimitHeaders } from '@/lib/raas/rate-limiter';
 import { recordUsage } from '@/lib/raas/usage-meter';
 import { createServerClient } from '@/lib/db/client';
+import type { Mission } from '@/lib/db/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -55,7 +56,7 @@ export async function POST(
 
     // Fetch mission (verify ownership)
     const { data: mission, error: fetchErr } = await db
-      .from('missions')
+      .from<Mission>('missions')
       .select('id, status, mcu_reserved, org_id')
       .eq('id', id)
       .eq('org_id', auth.orgId)

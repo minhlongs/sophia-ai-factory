@@ -14,6 +14,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAuthClient, createServerClient } from "@/lib/db/client";
 import { getVideoStatus } from "@/lib/video/heygen-client";
+import type { VideoAsset, OrgMember } from "@/lib/db/types";
 
 export async function GET(
   request: NextRequest,
@@ -41,7 +42,7 @@ export async function GET(
     // 2. Get video asset record
     const serverClient = createServerClient();
     const { data: video, error: fetchError } = await serverClient
-      .from("video_assets")
+      .from<VideoAsset>("video_assets")
       .select("*")
       .eq("id", videoId)
       .single();
@@ -55,7 +56,7 @@ export async function GET(
 
     // 3. Verify org membership
     const { data: membership } = await serverClient
-      .from("organization_members")
+      .from<OrgMember>("organization_members")
       .select("org_id")
       .eq("org_id", video.org_id)
       .eq("user_id", user.id)
@@ -69,7 +70,7 @@ export async function GET(
     }
 
     // 4. If video is still processing, check HeyGen for latest status
-    if (video.status === "pending" || video.status === "processing") {
+    if ((video.status === "pending" || video.status === "processing") && video.heygen_video_id) {
       try {
         const heygenStatus = await getVideoStatus(video.heygen_video_id);
 

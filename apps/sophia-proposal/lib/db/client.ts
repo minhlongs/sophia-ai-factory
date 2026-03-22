@@ -13,11 +13,11 @@ import { D1Client } from './d1-query-builder';
  */
 function getD1Sync(): D1Database {
   // Try globalThis.__env (set by opennextjs-cloudflare worker)
-  const env = (globalThis as Record<string, Record<string, unknown>>).__env;
+  const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
   if (env?.DB) return env.DB as D1Database;
 
   // Try process.env style (some CF adapters)
-  const procEnv = (process as Record<string, Record<string, unknown>>).env;
+  const procEnv = (process as unknown as Record<string, Record<string, unknown>>).env;
   if (procEnv?.DB && typeof (procEnv.DB as D1Database).prepare === 'function') {
     return procEnv.DB as D1Database;
   }
@@ -128,12 +128,12 @@ class LazyQueryChain {
   private async execute() {
     const db = await this.getDb();
     const client = new D1Client(db);
-    let chain = client.from(this.table) as Record<string, Function>;
+    let chain = client.from(this.table) as unknown as Record<string, (...args: unknown[]) => unknown>;
 
     for (const call of this.calls) {
       const result = chain[call.method](...call.args);
       if (result instanceof Promise) return result;
-      chain = result;
+      chain = result as Record<string, (...args: unknown[]) => unknown>;
     }
 
     // If no terminal method was called, await the chain

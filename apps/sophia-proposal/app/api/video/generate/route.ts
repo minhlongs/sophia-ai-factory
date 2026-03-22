@@ -17,6 +17,7 @@ import { generateVideoSchema } from "@/lib/validators/video";
 import { createVideoTask, estimateDuration } from "@/lib/video/heygen-client";
 import { calculateMcuCost } from "@/lib/billing/mcu-pricing";
 import { getOrgId } from "@/lib/org";
+import type { OrgBalance, Subscription, VideoAsset } from "@/lib/db/types";
 
 export async function POST(request: NextRequest) {
   try {
@@ -70,7 +71,7 @@ export async function POST(request: NextRequest) {
 
     // 4. Check MCU balance
     const { data: balance } = await serverClient
-      .from("org_balances")
+      .from<OrgBalance>("org_balances")
       .select("balance")
       .eq("org_id", orgId)
       .single();
@@ -84,7 +85,7 @@ export async function POST(request: NextRequest) {
 
     // 5. Get user's subscription tier for discount
     const { data: subscription } = await serverClient
-      .from("subscriptions")
+      .from<Subscription>("subscriptions")
       .select("tier_name")
       .eq("org_id", orgId)
       .eq("status", "active")
@@ -161,7 +162,7 @@ export async function POST(request: NextRequest) {
 
     // 8. Idempotency check: reject duplicate heygen_video_id
     const { data: existing } = await serverClient
-      .from("video_assets")
+      .from<VideoAsset>("video_assets")
       .select("id")
       .eq("heygen_video_id", heygenResponse.data.video_id)
       .maybeSingle();
@@ -180,7 +181,7 @@ export async function POST(request: NextRequest) {
 
     // 9. Create video asset record with mcu_reserved flag
     const { data: videoAsset, error: insertError } = await serverClient
-      .from("video_assets")
+      .from<VideoAsset>("video_assets")
       .insert({
         org_id: orgId,
         proposal_id: proposalId,
@@ -213,9 +214,10 @@ export async function POST(request: NextRequest) {
     }
 
     // 10. Return response
+    // videoAsset is guaranteed non-null here (insertError check above throws)
     return NextResponse.json({
       success: true,
-      videoId: videoAsset.id,
+      videoId: videoAsset!.id,
       heygenVideoId: heygenResponse.data.video_id,
       status: "processing",
       estimatedTime: estimateDuration(scriptText) + 30, // Add 30s for processing

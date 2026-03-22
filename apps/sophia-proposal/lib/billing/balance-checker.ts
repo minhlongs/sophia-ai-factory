@@ -6,6 +6,7 @@
 
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
+import type { OrgBalance } from '@/lib/db/types';
 
 export interface BalanceStatus {
   orgId: string;
@@ -22,7 +23,7 @@ export async function checkBalance(orgId: string): Promise<BalanceStatus | null>
   const db = createServerClient();
 
   const { data, error } = await db
-    .from('org_balances')
+    .from<OrgBalance>('org_balances')
     .select('*')
     .eq('org_id', orgId)
     .single();
@@ -74,7 +75,7 @@ export async function getOrInitializeBalance(
 
   // Try to get existing balance
   const { data: existing } = await db
-    .from('org_balances')
+    .from<OrgBalance>('org_balances')
     .select('*')
     .eq('org_id', orgId)
     .single();

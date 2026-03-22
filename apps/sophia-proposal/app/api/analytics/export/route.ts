@@ -12,6 +12,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAuthClient, createServerClient } from '@/lib/db/client';
 import { getOrgId } from '@/lib/org';
+import type { UsageLog, Subscription, Proposal } from '@/lib/db/types';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -82,7 +83,7 @@ async function fetchMetricsRows(
     .gte('created_at', sevenDaysAgo.toISOString());
 
   const { data: subscription } = await serverClient
-    .from('subscriptions')
+    .from<Subscription>('subscriptions')
     .select('tier_name')
     .eq('org_id', orgId)
     .eq('status', 'active')
@@ -113,7 +114,7 @@ async function fetchConversionsRows(
   startDate.setDate(startDate.getDate() - days);
 
   const { data: proposals } = await serverClient
-    .from('proposals')
+    .from<Proposal & { generated_at: string | null }>('proposals')
     .select('status, generated_at, updated_at, created_at')
     .eq('org_id', orgId)
     .gte('created_at', startDate.toISOString())
@@ -149,7 +150,7 @@ async function fetchUsageRows(
   startDate.setDate(startDate.getDate() - days);
 
   const { data: usageData } = await serverClient
-    .from('usage_logs')
+    .from<UsageLog>('usage_logs')
     .select('feature, mcu_cost, created_at')
     .eq('org_id', orgId)
     .gte('created_at', startDate.toISOString())

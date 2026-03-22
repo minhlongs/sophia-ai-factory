@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAuthClient, createServerClient } from '@/lib/db/client';
 import { getOrgId } from '@/lib/org';
 import type { CreateMissionRequest, MissionCommand } from '@/types/raas';
+import type { OrgBalance, MissionTemplate } from '@/lib/db/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -99,7 +100,7 @@ export async function POST(request: NextRequest) {
 
     // 2. Look up MCU cost from template
     const { data: template } = await serverClient
-      .from('mission_templates')
+      .from<MissionTemplate>('mission_templates')
       .select('mcu_cost')
       .eq('command', body.command)
       .eq('is_active', true)
@@ -109,7 +110,7 @@ export async function POST(request: NextRequest) {
 
     // 3. Check MCU balance
     const { data: balance } = await serverClient
-      .from('org_balances')
+      .from<OrgBalance>('org_balances')
       .select('balance')
       .eq('org_id', orgId)
       .single();

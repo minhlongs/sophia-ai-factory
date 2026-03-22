@@ -75,7 +75,7 @@ export function getQueuePosition(missionId: string): number {
 async function getOrgIdForMission(missionId: string): Promise<string | null> {
   const db = createServerClient();
   const { data } = await db
-    .from('missions')
+    .from<{ org_id: string }>('missions')
     .select('org_id')
     .eq('id', missionId)
     .single();
