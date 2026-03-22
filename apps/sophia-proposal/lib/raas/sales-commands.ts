@@ -10,6 +10,11 @@
  */
 
 import { getD1Client } from '@/lib/db/client';
+import { generateProposal } from '@/lib/ai/claude-proposal-generator';
+import {
+  generateCompetitorAnalysis,
+  generateOutreachSequence,
+} from '@/lib/ai/claude-sales-intelligence';
 import type { Mission, MissionResult } from '@/types/raas';
 
 // ── sales:proposal-deck ─────────────────────────────────────────────────────
@@ -27,11 +32,31 @@ export async function runProposalDeck(mission: Mission): Promise<MissionResult> 
     return { success: false, error: 'Missing params.client_name' };
   }
 
+  const product = params.product_name ?? 'Sophia AI Factory';
+
+  // Generate AI narrative for the solution slide
+  const aiProposal = await generateProposal({
+    client_name: params.client_name,
+    product_name: product,
+    tone: 'persuasive',
+    sections: ['executive_summary', 'solution', 'roi'],
+  });
+
+  const solutionContent = aiProposal.sections.find(s => s.title.toLowerCase().includes('solution'))?.content
+    ?? `AI-powered RaaS platform: proposals in <30s, video in <5min, full GTM campaigns automated.`;
+  const summaryContent = aiProposal.sections.find(s => s.title.toLowerCase().includes('summary'))?.content
+    ?? `${product} transforms ${params.client_name}'s proposal pipeline with AI automation.`;
+
   const slides = [
     {
       title: 'Cover',
-      content: `${params.product_name ?? 'Sophia AI Factory'} — Proposal for ${params.client_name}`,
+      content: `${product} — Proposal for ${params.client_name}`,
       type: 'cover',
+    },
+    {
+      title: 'Executive Summary',
+      content: summaryContent,
+      type: 'summary',
     },
     {
       title: 'The Challenge',
@@ -40,7 +65,7 @@ export async function runProposalDeck(mission: Mission): Promise<MissionResult> 
     },
     {
       title: 'Our Solution',
-      content: `AI-powered RaaS platform: proposals in <30s, video in <5min, full GTM campaigns automated.`,
+      content: solutionContent,
       type: 'solution',
     },
     {
@@ -154,14 +179,15 @@ export async function runCompetitorAnalysis(mission: Mission): Promise<MissionRe
   const competitors = params.competitors ?? ['Proposify', 'PandaDoc', 'Qwilr'];
   const product = params.product ?? 'Sophia AI Factory';
 
-  const analyses = competitors.map((comp) => ({
-    competitor: comp,
-    swot: {
-      strengths: [`Established brand`, `Existing customer base`],
-      weaknesses: [`No AI-native workflow`, `Per-seat pricing scales poorly`, `No video integration`],
-      opportunities: [`${product} can win on speed + automation`, `MCU pricing undercuts seat-based`],
-      threats: [`${comp} may add AI features`, `Brand recognition advantage`],
-    },
+  const analyses = await generateCompetitorAnalysis({
+    competitors,
+    product,
+    focus_areas: params.focus_areas,
+  });
+
+  // Enrich with static feature comparison table (always accurate, not LLM-generated)
+  const enriched = analyses.map(a => ({
+    ...a,
     feature_comparison: {
       ai_proposals: { us: true, them: false },
       video_generation: { us: true, them: false },
@@ -170,13 +196,12 @@ export async function runCompetitorAnalysis(mission: Mission): Promise<MissionRe
       crm_integration: { us: true, them: true },
       affiliate_engine: { us: true, them: false },
     },
-    win_strategy: `Lead with ${product}'s AI speed (<30s proposals) and RaaS API. ${comp} cannot match automated GTM campaigns.`,
   }));
 
   return {
     success: true,
     summary: `Competitor analysis: ${competitors.length} competitors analyzed`,
-    data: { analyses, our_product: product },
+    data: { analyses: enriched, our_product: product },
   };
 }
 
@@ -244,41 +269,17 @@ export async function runOutreachSequence(mission: Mission): Promise<MissionResu
     return { success: false, error: 'Missing params.prospect_company' };
   }
 
-  const company = params.prospect_company;
-  const name = params.prospect_name ?? 'there';
-  const role = params.prospect_role ?? 'founder';
-  const pain = params.pain_point ?? 'slow proposal turnaround';
-
-  const sequence = [
-    {
-      day: 1,
-      subject: `${company}: Cut proposal time from hours to seconds`,
-      body: `Hi ${name},\n\nI noticed ${company} is in the ${params.industry ?? 'agency'} space. Many ${role}s tell us their #1 bottleneck is ${pain}.\n\nSophia AI Factory generates client-ready proposals in <30 seconds — with video walkthroughs. Would a 14-day pilot be worth exploring?\n\nBest,\nSophia Team`,
-      channel: 'email',
-    },
-    {
-      day: 3,
-      subject: `Quick follow-up — ${company} proposal automation`,
-      body: `Hi ${name},\n\nJust wanted to share: our agencies report 40% higher close rates after switching to AI-generated proposals.\n\nHere's a 2-min demo: [demo_link]\n\nNo commitment needed — happy to walk you through it.\n\nBest,\nSophia Team`,
-      channel: 'email',
-    },
-    {
-      day: 5,
-      subject: `[LinkedIn] Connect with ${name}`,
-      body: `Hey ${name} — saw ${company}'s work in ${params.industry ?? 'the agency space'}. We help similar teams automate proposals + content with AI. Thought you might find it interesting.`,
-      channel: 'linkedin',
-    },
-    {
-      day: 7,
-      subject: `Last touch — ROI calculator for ${company}`,
-      body: `Hi ${name},\n\nI built a quick ROI estimate for ${company}:\n- Time saved: ~160 hours/month\n- Cost saved: ~$12,000/month\n- ROI: 25x in first month\n\nWant me to send the full breakdown? Takes 2 minutes to review.\n\nBest,\nSophia Team`,
-      channel: 'email',
-    },
-  ];
+  const sequence = await generateOutreachSequence({
+    prospect_name: params.prospect_name,
+    prospect_company: params.prospect_company,
+    prospect_role: params.prospect_role,
+    industry: params.industry,
+    pain_point: params.pain_point,
+  });
 
   return {
     success: true,
-    summary: `Outreach sequence: ${sequence.length} touches for ${company}`,
+    summary: `Outreach sequence: ${sequence.length} touches for ${params.prospect_company}`,
     data: { sequence, prospect: params },
   };
 }

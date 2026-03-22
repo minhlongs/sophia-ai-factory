@@ -7,6 +7,7 @@
 
 import { getD1Client } from '@/lib/db/client';
 import { createVideoTask } from '@/lib/video/heygen-client';
+import { generateProposal } from '@/lib/ai/claude-proposal-generator';
 import type { Mission, MissionResult } from '@/types/raas';
 
 // ============================================================================
@@ -17,17 +18,12 @@ export async function runProposalCreate(mission: Mission): Promise<MissionResult
   const db = await getD1Client();
   const params = mission.params as { client_name?: string; product_name?: string; tone?: string; sections?: string[] };
 
-  const sectionNames = params.sections ?? ['executive_summary', 'scope', 'pricing', 'timeline'];
-  const proposal = {
+  const proposal = await generateProposal({
     client_name: params.client_name ?? 'Client',
     product_name: params.product_name ?? 'Sophia AI',
-    tone: params.tone ?? 'professional',
-    sections: sectionNames.map(s => ({
-      title: s.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
-      content: `[AI-generated ${s} content for ${params.client_name ?? 'client'}]`,
-    })),
-    generated_at: new Date().toISOString(),
-  };
+    tone: params.tone,
+    sections: params.sections,
+  });
 
   // Save to proposals table — graceful degrade if table doesn't exist yet
   let proposalId: string | undefined;

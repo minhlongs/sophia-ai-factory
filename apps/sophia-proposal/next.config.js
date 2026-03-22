@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactCompiler: true,
+  // reactCompiler requires babel-plugin-react-compiler — disabled for CF Workers
+  // reactCompiler: true,
   images: {
     unoptimized: true,
   },
