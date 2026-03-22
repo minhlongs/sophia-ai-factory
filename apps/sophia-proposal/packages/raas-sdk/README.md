@@ -18,17 +18,34 @@ pnpm add @sophia/raas-sdk
 ## Quick start
 
 ```typescript
-import { SophiaClient } from '@sophia/raas-sdk';
+import { SophiaClient, MissionStream } from '@sophia/raas-sdk';
 
 const sophia = new SophiaClient({ apiKey: 'sk_live_xxx' });
 
-// Create a mission
+// 1. Create a mission
 const { mission_id, mcu_cost } = await sophia.missions.create({
   command: 'sales:battlecard',
   params: { competitor: 'Acme Corp' },
 });
 
-// Wait for result (polls every 2s, 5 min timeout)
+// 2. Stream real-time events
+const stream = new MissionStream(
+  'https://sophia-ai-factory.agencyos-openclaw.workers.dev',
+  'sk_live_xxx',
+  mission_id,
+);
+
+stream.onStatus = (e) => console.log('status →', e.data);
+stream.onStep   = (e) => console.log('step →', e.data);
+stream.onResult = (e) => {
+  console.log('done →', e.data);
+  stream.close();
+};
+stream.onError  = (e) => console.error('error →', e.data);
+
+stream.connect();
+
+// 3. Or poll without streaming
 const result = await sophia.missions.waitForResult(mission_id);
 console.log(result.result?.summary);
 ```
@@ -102,6 +119,44 @@ Cancel a `queued` or `planning` mission and refund reserved MCU.
 
 ```typescript
 const { cancelled, mcu_refunded } = await sophia.missions.cancel(mission_id);
+```
+
+### `sophia.stream(missionId, opts?)` — SSE real-time events
+
+```typescript
+import { SophiaClient } from '@sophia/raas-sdk';
+
+const sophia = new SophiaClient({ apiKey: 'sk_live_xxx' });
+const { mission_id } = await sophia.missions.create({ command: 'video:create', params: {} });
+
+// Open stream
+const stream = sophia.stream(mission_id, {
+  autoReconnect: true,   // default: true
+  maxReconnects: 5,      // default: 5
+  reconnectDelayMs: 1000 // default: 1000 (doubles per attempt)
+});
+
+stream.onStatus    = (e) => console.log('status  →', e.data);
+stream.onStep      = (e) => console.log('step    →', e.data);
+stream.onResult    = (e) => { console.log('result  →', e.data); stream.close(); };
+stream.onError     = (e) => console.error('error   →', e.data);
+stream.onHeartbeat = (e) => console.debug('ping    →', e.data);
+
+stream.connect(); // start receiving events
+```
+
+Or use `MissionStream` directly (no client required):
+
+```typescript
+import { MissionStream } from '@sophia/raas-sdk';
+
+const stream = new MissionStream(
+  'https://sophia-ai-factory.agencyos-openclaw.workers.dev',
+  'sk_live_xxx',
+  mission_id,
+);
+stream.onResult = (e) => stream.close();
+stream.connect();
 ```
 
 ## Error handling

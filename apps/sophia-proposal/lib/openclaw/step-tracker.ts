@@ -2,7 +2,7 @@
  * StepTracker — updates individual PEV step status in the execution_log JSONB column.
  *
  * Keeps a local copy of the step array and writes the full array back to DB
- * after each mutation (Supabase stores execution_log as JSONB, no partial updates).
+ * after each mutation (D1 stores execution_log as JSON text, no partial updates).
  */
 
 import { createServerClient } from '@/lib/db/client';

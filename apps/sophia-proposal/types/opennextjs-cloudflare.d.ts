@@ -9,5 +9,4 @@ declare module '@opennextjs/cloudflare' {
     cf: Record<string, unknown>;
   }
   function getCloudflareContext(): Promise<CloudflareContext>;
-  function defineCloudflareConfig(config: Record<string, unknown>): Record<string, unknown>;
 }

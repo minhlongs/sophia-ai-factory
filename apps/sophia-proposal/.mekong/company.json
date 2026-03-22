@@ -1,0 +1,82 @@
+{
+  "name": "Sophia AI Factory",
+  "stage": "zero_psf",
+  "model": "SaaS B2B",
+  "target_arr": "$1M",
+  "icp": "Digital agencies SEA (5-50 employees, $500K-$5M ARR)",
+  "moat": "AI proposal + video generation, <30s generation time, 80%+ quality",
+  "strategy_completed": "2026-03-20",
+  "tri_layer": {
+    "business": {
+      "strategy": "Q2 2026 Validation → Q3 2026 PMF → Q4 2026 Scale → Q2 2027 $1M ARR",
+      "revenue_model": "Tiered SaaS ($49-$999/mo) + usage overage + video add-on",
+      "unit_economics": {
+        "ARPU": "$500/mo",
+        "LTV": "$18000",
+        "CAC_target": "$1500",
+        "payback_months": 3,
+        "gross_margin": "85%"
+      },
+      "go_to_market": "Content marketing, community building, referrals, paid ads (LinkedIn + Google)"
+    },
+    "agentic": {
+      "agents": {
+        "CTO": "Engineering, product development, deployment",
+        "Product": "Roadmap, user research, OKRs",
+        "Revenue": "Sales pipeline, marketing campaigns, conversions",
+        "Ops": "Monitoring, security, compliance",
+        "Success": "Onboarding, NPS, retention"
+      },
+      "automation_targets": {
+        "engineering": "80%",
+        "product": "60%",
+        "sales": "40%",
+        "marketing": "50%",
+        "ops": "70%"
+      }
+    },
+    "governance": {
+      "ipo_readiness_score": "25/100",
+      "legal": "pending",
+      "tax": "pending",
+      "audit": "pre-audit",
+      "board": "founder-only",
+      "compliance": "basic (Polar.sh PCI)"
+    }
+  },
+  "okrs": {
+    "Q2_2026": [
+      "Recruit 10 paid pilot customers @ $499/mo",
+      "Achieve 80%+ proposal quality score",
+      "Reach 70%+ 7-day retention",
+      "Generate NPS score >30",
+      "Publish 20 SEO blog posts",
+      "Launch Video AI pipeline (HeyGen)"
+    ]
+  },
+  "next_commands": [
+    "/product-sprint-plan",
+    "/sales-pipeline-build",
+    "/marketing-campaign-run",
+    "/cto-architect",
+    "/release-ship"
+  ],
+  "gate_1_criteria": {
+    "date": "2026-06-30",
+    "paid_pilots": 10,
+    "mrr_target": "$5K",
+    "nps_target": 30,
+    "retention_target": "70%",
+    "quality_target": "80%"
+  },
+  "phase_2_preview": {
+    "features": [
+      "Video AI Pipeline (HeyGen/D-ID)",
+      "CRM Sync (HubSpot)",
+      "Analytics Dashboard",
+      "Team Collaboration",
+      "Custom Template Builder"
+    ],
+    "timeline": "Q3 2026 (Week 7-12)"
+  }
+}
