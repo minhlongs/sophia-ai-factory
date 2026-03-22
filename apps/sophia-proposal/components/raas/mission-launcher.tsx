@@ -23,6 +23,10 @@ const TEMPLATES: Template[] = [
   { id: 'affiliate:social', name: 'Social Bundle', icon: 'share', mcu: 10, description: 'LinkedIn + Twitter + TikTok', params: [{ key: 'topic', label: 'Topic', placeholder: 'Product launch announcement' }] },
   { id: 'video:intro', name: 'Intro Video', icon: 'play_circle', mcu: 100, description: '30s HeyGen intro video', params: [{ key: 'script', label: 'Key Message', placeholder: 'What should the video convey?' }] },
   { id: 'affiliate:video', name: 'Video Review', icon: 'video_library', mcu: 200, description: 'Full product video review', params: [{ key: 'product', label: 'Product', placeholder: 'Product name or URL' }] },
+  { id: 'sales:proposal-deck', name: 'Sales Deck', icon: 'slideshow', mcu: 10, description: 'Full proposal deck with slides', params: [{ key: 'client_name', label: 'Client Name', placeholder: 'Acme Corp' }, { key: 'industry', label: 'Industry', placeholder: 'Digital Agency' }] },
+  { id: 'sales:roi-calculator', name: 'ROI Calculator', icon: 'calculate', mcu: 5, description: 'ROI projection for prospects', params: [{ key: 'proposals_per_month', label: 'Proposals/Month', placeholder: '20' }, { key: 'avg_deal_size', label: 'Avg Deal Size ($)', placeholder: '5000' }] },
+  { id: 'sales:competitor-analysis', name: 'Competitor Intel', icon: 'query_stats', mcu: 8, description: 'SWOT analysis + win strategy', params: [{ key: 'competitors', label: 'Competitors (comma-sep)', placeholder: 'Proposify, PandaDoc, Qwilr' }] },
+  { id: 'sales:outreach-sequence', name: 'Outreach Sequence', icon: 'forward_to_inbox', mcu: 8, description: 'Email + LinkedIn outreach', params: [{ key: 'prospect_company', label: 'Company', placeholder: 'Target Corp' }, { key: 'prospect_name', label: 'Contact Name', placeholder: 'John Doe' }] },
   { id: 'template:custom', name: 'Custom Task', icon: 'build', mcu: 50, description: 'Run any OpenClaw command', params: [{ key: 'command', label: 'Command', placeholder: '/cook build landing page for...' }] },
 ];
 
