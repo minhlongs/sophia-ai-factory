@@ -23,7 +23,8 @@ export type MissionCategory =
   | 'video'
   | 'affiliate'
   | 'content'
-  | 'analytics';
+  | 'analytics'
+  | 'sales';
 
 export type MissionCommand =
   | 'proposal:create'
@@ -35,7 +36,12 @@ export type MissionCommand =
   | 'crm:sync'
   | 'analytics:export'
   | 'gtm:campaign'
-  | 'sales:battlecard';
+  | 'sales:battlecard'
+  | 'sales:proposal-deck'
+  | 'sales:roi-calculator'
+  | 'sales:competitor-analysis'
+  | 'sales:pricing-optimizer'
+  | 'sales:outreach-sequence';
 
 // ============================================================================
 // CORE TABLE TYPES

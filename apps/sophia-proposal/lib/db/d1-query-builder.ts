@@ -156,12 +156,12 @@ export class D1QueryChain<T = Record<string, unknown>> {
 
   single(): Promise<QueryResult<T>> {
     this.isSingle = true;
-    return this.execute();
+    return this.execute() as Promise<QueryResult<T>>;
   }
 
   maybeSingle(): Promise<QueryResult<T | null>> {
     this.isMaybeSingle = true;
-    return this.execute();
+    return this.execute() as Promise<QueryResult<T | null>>;
   }
 
   // Return select after insert/update
@@ -181,7 +181,7 @@ export class D1QueryChain<T = Record<string, unknown>> {
     onfulfilled?: ((value: QueryResult<T[]>) => TResult1 | PromiseLike<TResult1>) | null,
     onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
   ): Promise<TResult1 | TResult2> {
-    return this.execute().then(onfulfilled as never, onrejected);
+    return (this.execute() as Promise<QueryResult<T[]>>).then(onfulfilled as never, onrejected);
   }
 
   private buildWhere(): { clause: string; params: unknown[] } {

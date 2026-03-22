@@ -93,7 +93,7 @@ async function verifyPassword(password: string, stored: string): Promise<boolean
 export async function getCurrentUser(cookies: string): Promise<User | null> {
   try {
     const cookieMap = new URLSearchParams(cookies.replace(/; /g, '&'));
-    const token = cookieMap.get('auth-token') ?? cookieMap.get('sb-token');
+    const token = cookieMap.get('auth-token');
     if (!token) return null;
 
     const payload = await verifyJwt(token);

@@ -25,7 +25,12 @@ const STEP_NAMES: Record<string, string[]> = {
   'crm:sync':           ['Connect to HubSpot', 'Sync contacts', 'Sync deals'],
   'analytics:export':   ['Query usage data', 'Format output', 'Return export'],
   'gtm:campaign':       ['Create proposal', 'Queue video', 'Generate blog', 'Generate social'],
-  'sales:battlecard':   ['Research competitor', 'Generate battlecard', 'Save to database'],
+  'sales:battlecard':         ['Research competitor', 'Generate battlecard', 'Save to database'],
+  'sales:proposal-deck':      ['Analyze client needs', 'Build slide structure', 'Generate deck content', 'Save proposal'],
+  'sales:roi-calculator':     ['Gather usage data', 'Calculate projections', 'Generate ROI report'],
+  'sales:competitor-analysis':['Identify competitors', 'Run SWOT analysis', 'Generate win strategy'],
+  'sales:pricing-optimizer':  ['Analyze usage patterns', 'Evaluate tiers', 'Generate recommendation'],
+  'sales:outreach-sequence':  ['Research prospect', 'Craft email sequence', 'Add LinkedIn touch', 'Generate follow-ups'],
 };
 
 function buildPlan(command: MissionCommand): PEVPlan {
@@ -45,18 +50,16 @@ export class OpenClawEngine {
    */
   async execute(missionId: string): Promise<void> {
     const db = createServerClient();
-    const { data, error } = await db
-      .from('missions')
+    const { data: mission, error } = await db
+      .from<Mission>('missions')
       .select('*')
       .eq('id', missionId)
       .single();
 
-    if (error || !data) {
+    if (error || !mission) {
       console.error(`[OpenClaw] Mission ${missionId} not found:`, error?.message);
       return;
     }
-
-    const mission = data as Mission;
 
     // ── PLAN ─────────────────────────────────────────────────────────────────
     const plan = buildPlan(mission.command);
@@ -150,7 +153,7 @@ export class OpenClawEngine {
 
     // Fetch parent to inherit org_id
     const { data: parent } = await db
-      .from('missions')
+      .from<Mission>('missions')
       .select('org_id')
       .eq('id', parentId)
       .single();
@@ -185,7 +188,7 @@ export class OpenClawEngine {
   private async retryWithBackoff(missionId: string, attempt: number): Promise<boolean> {
     const db = createServerClient();
     const { data } = await db
-      .from('missions')
+      .from<Mission>('missions')
       .select('max_retries, retry_count, error_message')
       .eq('id', missionId)
       .single();
@@ -289,7 +292,7 @@ export class OpenClawEngine {
     const db = createServerClient();
 
     const { data: child, error } = await db
-      .from('missions')
+      .from<{ id: string }>('missions')
       .insert({
         org_id: orgId,
         title: def.title,

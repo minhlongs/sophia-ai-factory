@@ -18,6 +18,13 @@ import {
   runGtmCampaign,
   runSalesBattlecard,
 } from './command-helpers';
+import {
+  runProposalDeck,
+  runRoiCalculator,
+  runCompetitorAnalysis,
+  runPricingOptimizer,
+  runOutreachSequence,
+} from './sales-commands';
 
 // ============================================================================
 // MAIN ROUTER
@@ -59,6 +66,21 @@ export async function executeCommand(mission: Mission): Promise<MissionResult> {
 
       case 'sales:battlecard':
         return await runSalesBattlecard(mission);
+
+      case 'sales:proposal-deck':
+        return await runProposalDeck(mission);
+
+      case 'sales:roi-calculator':
+        return await runRoiCalculator(mission);
+
+      case 'sales:competitor-analysis':
+        return await runCompetitorAnalysis(mission);
+
+      case 'sales:pricing-optimizer':
+        return await runPricingOptimizer(mission);
+
+      case 'sales:outreach-sequence':
+        return await runOutreachSequence(mission);
 
       default:
         return { success: false, error: `Unknown command: ${mission.command}` };
