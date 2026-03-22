@@ -7,11 +7,11 @@ export function HeroSection() {
   const router = useRouter();
 
   const handleGetStarted = () => {
-    router.push("/pricing");
+    router.push("/signup");
   };
 
   const handleLearnMore = () => {
-    router.push("/about");
+    router.push("/pricing");
   };
 
   return (
@@ -25,15 +25,15 @@ export function HeroSection() {
             Sophia AI Factory
           </h1>
           <p className="text-xl md:text-2xl text-on-surface-variant mb-10 max-w-2xl mx-auto leading-relaxed">
-            AI-powered proposal generator for agencies. Close more deals, faster.
-            Target: $1M ARR.
+            AI-powered proposals, sales decks, and content automation for agencies.
+            Close more deals, faster — 200 free MCU to start.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button variant="primary" size="lg" onClick={handleGetStarted}>
-              Start Free Trial
+              Start Free — 200 MCU
             </Button>
             <Button variant="outline" size="lg" onClick={handleLearnMore}>
-              Watch Demo
+              View Pricing
             </Button>
           </div>
         </div>

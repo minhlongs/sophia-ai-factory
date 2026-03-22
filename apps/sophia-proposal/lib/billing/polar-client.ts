@@ -77,6 +77,7 @@ export const POLAR_TIERS: Record<string, PolarTier> = {
     currency: 'USD',
     mcuMonthly: 500,
     mcuOverageRate: 0.10,
+    polarProductId: process.env.POLAR_PRODUCT_STARTER,
   },
   growth: {
     id: 'growth',
@@ -85,6 +86,7 @@ export const POLAR_TIERS: Record<string, PolarTier> = {
     currency: 'USD',
     mcuMonthly: 2000,
     mcuOverageRate: 0.08,
+    polarProductId: process.env.POLAR_PRODUCT_GROWTH,
   },
   premium: {
     id: 'premium',
@@ -93,6 +95,7 @@ export const POLAR_TIERS: Record<string, PolarTier> = {
     currency: 'USD',
     mcuMonthly: 10000,
     mcuOverageRate: 0.06,
+    polarProductId: process.env.POLAR_PRODUCT_PREMIUM,
   },
   master: {
     id: 'master',
@@ -101,6 +104,7 @@ export const POLAR_TIERS: Record<string, PolarTier> = {
     currency: 'USD',
     mcuMonthly: 25000,
     mcuOverageRate: 0.05,
+    polarProductId: process.env.POLAR_PRODUCT_MASTER,
   },
 };
 
@@ -241,10 +245,10 @@ export class PolarClient {
   /**
    * Verify webhook signature
    */
-  verifyWebhookSignature(
+  async verifyWebhookSignature(
     payload: string,
     signature: string
-  ): boolean {
+  ): Promise<boolean> {
     if (!this.webhookSecret) {
       // CRITICAL: Never skip verification in production
       if (process.env.NODE_ENV === 'production') {
@@ -274,17 +278,24 @@ export class PolarClient {
       return false;
     }
 
-    // Verify HMAC
+    // Verify HMAC using Web Crypto (CF Workers compatible)
     const signedPayload = `${timestamp}.${payload}`;
-    const crypto = require('crypto');
-    const hmac = crypto.createHmac('sha256', this.webhookSecret);
-    hmac.update(signedPayload);
-    const computedSignature = hmac.digest('hex');
-
-    return crypto.timingSafeEqual(
-      Buffer.from(expectedSignature, 'hex'),
-      Buffer.from(computedSignature, 'hex')
+    const enc = new TextEncoder();
+    const key = await globalThis.crypto.subtle.importKey(
+      'raw', enc.encode(this.webhookSecret),
+      { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'],
     );
+    const sigBuf = await globalThis.crypto.subtle.sign('HMAC', key, enc.encode(signedPayload));
+    const computedSignature = Array.from(new Uint8Array(sigBuf))
+      .map(b => b.toString(16).padStart(2, '0')).join('');
+
+    // Constant-time comparison
+    if (computedSignature.length !== expectedSignature.length) return false;
+    let mismatch = 0;
+    for (let i = 0; i < computedSignature.length; i++) {
+      mismatch |= computedSignature.charCodeAt(i) ^ expectedSignature.charCodeAt(i);
+    }
+    return mismatch === 0;
   }
 }
 

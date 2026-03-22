@@ -8,7 +8,7 @@ import { PricingCards } from '@/components/pricing/pricing-cards';
 
 export const metadata: Metadata = {
   title: 'Pricing | Sophia AI Factory',
-  description: 'Simple, transparent pricing for AI-powered business automation. Start free with 50 MCU.',
+  description: 'Simple, transparent pricing for AI-powered business automation. Start free with 200 MCU.',
 };
 
 const FAQ = [
@@ -26,7 +26,7 @@ const FAQ = [
   },
   {
     q: 'Is there a free trial?',
-    a: 'Yes — every new account starts with 50 free MCU, enough to generate 2 proposals or 5 social bundles.',
+    a: 'Yes — every new account starts with 200 free MCU, enough to generate 8 proposals or 20 social bundles.',
   },
   {
     q: 'Do you offer white-label or reseller pricing?',
@@ -60,7 +60,7 @@ export default function PricingPage() {
       <section className="py-16 text-center px-4">
         <div className="inline-flex items-center gap-2 bg-orange-100 text-orange-700 text-sm font-medium px-4 py-1.5 rounded-full mb-6">
           <span className="material-symbols-outlined text-base">bolt</span>
-          50 free MCU on signup — no credit card required
+          200 free MCU on signup — no credit card required
         </div>
         <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4 tracking-tight">
           AI-Powered Business<br className="hidden md:block" /> Automation
@@ -93,12 +93,12 @@ export default function PricingPage() {
       {/* Bottom CTA */}
       <section className="py-16 bg-orange-500 text-white text-center px-4">
         <h2 className="text-2xl md:text-3xl font-bold mb-3">Ready to automate your business?</h2>
-        <p className="text-orange-100 mb-6 text-lg">Start free — 50 MCU included, no credit card needed.</p>
+        <p className="text-orange-100 mb-6 text-lg">Start free — 200 MCU included, no credit card needed.</p>
         <a
-          href="/login"
+          href="/signup"
           className="inline-block px-8 py-3 bg-white text-orange-600 font-bold rounded-xl hover:bg-orange-50 transition-colors text-lg"
         >
-          Start Free Trial — 50 MCU
+          Start Free Trial — 200 MCU
         </a>
       </section>
     </main>
