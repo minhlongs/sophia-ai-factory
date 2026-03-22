@@ -6,7 +6,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/db/client';
+import { getD1Client } from '@/lib/db/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,8 +18,8 @@ export async function GET() {
   // D1 Database check
   const dbStart = Date.now();
   try {
-    const db = createServerClient();
-    const { data } = await db.from('users').select('id').maybeSingle();
+    const db = await getD1Client();
+    const { data } = await db.from('users').select('id').single();
     checks.database = {
       status: 'healthy',
       latency_ms: Date.now() - dbStart,
@@ -37,7 +37,7 @@ export async function GET() {
 
   // Mission templates check (verify seed data)
   try {
-    const db = createServerClient();
+    const db = await getD1Client();
     const { data: templates } = await db.from('mission_templates').select('command').eq('is_active', 1);
     const count = Array.isArray(templates) ? templates.length : 0;
     checks.templates = {
