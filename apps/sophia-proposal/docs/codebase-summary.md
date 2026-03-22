@@ -292,8 +292,8 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
 # Polar.sh (Billing)
 POLAR_API_URL=https://api.polar.sh
-POLAR_API_KEY=<YOUR_POLAR_API_KEY>
-POLAR_WEBHOOK_SECRET=<YOUR_WEBHOOK_SECRET>
+POLAR_API_KEY=sk_live_your_api_key
+POLAR_WEBHOOK_SECRET=whsec_your_webhook_secret
 ```
 
 ---
