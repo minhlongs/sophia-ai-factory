@@ -75,3 +75,7 @@ products/paid/*.zip
 ehthumbs.db
 Thumbs.db
 repomix-output.xml
+
+# Security — never commit SSH scripts or sync scripts with credentials
+sync-*.sh
+**/sync-*.sh

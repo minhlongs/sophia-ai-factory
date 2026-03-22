@@ -1,4 +1,6 @@
 {
+	// NOTE: D1 database_id is required by Wrangler CLI — not a secret.
+	// D1 access requires Cloudflare account authentication.
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"main": "apps/sophia-proposal/.open-next/worker.js",
 	"name": "sophia-ai-factory",
