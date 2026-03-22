@@ -2,8 +2,13 @@
  * RaaS Rate Limiter
  *
  * Sliding window rate limiter for external API endpoints.
- * Uses in-memory Map with periodic cleanup.
+ * Uses in-memory Map with inline cleanup on each call.
  * Checks per-key rate_limit_per_minute from raas_api_keys.
+ *
+ * CF Workers note: Each Worker isolate has its own memory — this provides
+ * per-isolate rate limiting, which is sufficient for V1 with <100 customers.
+ * setInterval is unreliable on CF Workers (doesn't persist between requests),
+ * so cleanup runs inline. D1-backed global rate limiting is a future enhancement.
  */
 
 interface WindowEntry {
@@ -13,23 +18,15 @@ interface WindowEntry {
 
 const windows = new Map<string, WindowEntry>();
 const WINDOW_MS = 60_000; // 1 minute sliding window
-const CLEANUP_INTERVAL_MS = 300_000; // 5 min
+const MAX_ENTRIES = 1000; // cap memory usage per isolate
 
-// Periodic cleanup of expired entries
-let cleanupTimer: ReturnType<typeof setInterval> | null = null;
-
-function ensureCleanup(): void {
-  if (cleanupTimer) return;
-  cleanupTimer = setInterval(() => {
-    const now = Date.now();
-    for (const [key, entry] of windows) {
-      entry.timestamps = entry.timestamps.filter((t) => now - t < WINDOW_MS);
-      if (entry.timestamps.length === 0) windows.delete(key);
-    }
-  }, CLEANUP_INTERVAL_MS);
-  // Allow process to exit without waiting for cleanup
-  if (cleanupTimer && typeof cleanupTimer === 'object' && 'unref' in cleanupTimer) {
-    cleanupTimer.unref();
+// Inline cleanup: purge expired entries when map grows too large
+function inlineCleanup(): void {
+  if (windows.size <= MAX_ENTRIES) return;
+  const now = Date.now();
+  for (const [key, entry] of windows) {
+    entry.timestamps = entry.timestamps.filter((t) => now - t < WINDOW_MS);
+    if (entry.timestamps.length === 0) windows.delete(key);
   }
 }
 
@@ -45,7 +42,7 @@ export interface RateLimitResult {
  * Returns whether the request is allowed + headers info.
  */
 export function checkRateLimit(keyId: string, limitPerMinute: number): RateLimitResult {
-  ensureCleanup();
+  inlineCleanup();
 
   const now = Date.now();
   let entry = windows.get(keyId);
