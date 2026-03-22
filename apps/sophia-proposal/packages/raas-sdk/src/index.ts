@@ -7,6 +7,8 @@ export { SophiaClient } from './client.js';
 
 // Resource classes (for direct instantiation / testing)
 export { Missions } from './missions.js';
+export { Usage } from './usage.js';
+export { ApiKeys } from './api-keys.js';
 
 // SSE stream helper
 export { MissionStream } from './stream.js';
@@ -32,4 +34,9 @@ export type {
   CancelMissionResponse,
   MissionStep,
   StreamEvent,
+  // Usage types
+  UsageBalance,
+  UsageTransaction,
+  // API Key types
+  CreateApiKeyResponse,
 } from './types.js';

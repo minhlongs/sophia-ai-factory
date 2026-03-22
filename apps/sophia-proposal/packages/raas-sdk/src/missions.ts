@@ -25,10 +25,24 @@ export class Missions {
   /**
    * Create and queue a new mission.
    * Requires missions:create permission on the API key.
-   * Returns mission_id, initial status, and mcu_cost.
    */
   async create(req: CreateMissionRequest): Promise<CreateMissionResponse> {
     return this.http.post<CreateMissionResponse>(BASE, req);
+  }
+
+  /**
+   * Create multiple missions in parallel.
+   * Returns results in the same order as the input array.
+   * Individual failures are returned as errors in the results array.
+   */
+  async createBatch(
+    requests: CreateMissionRequest[],
+  ): Promise<Array<CreateMissionResponse | { error: string }>> {
+    return Promise.all(
+      requests.map((req) =>
+        this.create(req).catch((err: Error) => ({ error: err.message })),
+      ),
+    );
   }
 
   /**
@@ -66,8 +80,6 @@ export class Missions {
    *
    * - Returns MissionResultResponse when done (HTTP 200).
    * - Throws Error('timeout') if timeoutMs is exceeded.
-   * - Server returns HTTP 202 with Retry-After while pending; SDK ignores
-   *   Retry-After and uses pollIntervalMs instead for predictable behaviour.
    */
   async waitForResult(
     id: string,
