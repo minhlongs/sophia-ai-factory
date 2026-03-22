@@ -111,7 +111,7 @@ Total: 8/8 passing (648ms)
 
 ```bash
 # Add to .env.local
-ANTHROPIC_API_KEY=sk-ant-your-key-here
+ANTHROPIC_API_KEY=<YOUR_ANTHROPIC_KEY>
 
 # Supabase (already configured for Sprint 1)
 NEXT_PUBLIC_SUPABASE_URL=...
