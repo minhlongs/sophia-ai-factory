@@ -2,22 +2,24 @@
   "name": "@sophia/raas-sdk",
   "version": "1.0.0",
   "description": "Sophia AI Factory — RaaS (Robot-as-a-Service) SDK",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     }
   },
   "files": [
     "dist",
-    "src"
+    "README.md"
   ],
   "scripts": {
-    "build": "tsc --project tsconfig.json",
-    "typecheck": "tsc --noEmit"
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "tsup"
   },
   "keywords": [
     "sophia",
@@ -28,5 +30,8 @@
   "license": "MIT",
   "engines": {
     "node": ">=18"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.1"
   }
 }
