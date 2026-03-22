@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
 
     // 2. Verify webhook signature (uses CF WebCrypto under the hood)
     const polarClient = getPolarClient();
-    const isValid = polarClient.verifyWebhookSignature(rawBody, signature);
+    const isValid = await polarClient.verifyWebhookSignature(rawBody, signature);
 
     if (!isValid) {
       console.error('Invalid webhook signature');
