@@ -41,6 +41,84 @@ export interface OutreachStep {
   channel: string;
 }
 
+// ── Types: Battlecard ────────────────────────────────────────────────────────
+
+export interface BattlecardParams {
+  competitor: string;
+  product?: string;
+}
+
+export interface BattlecardResult {
+  competitor: string;
+  our_product: string;
+  strengths: string[];
+  weaknesses_of_competitor: string[];
+  key_differentiators: string[];
+  objection_handling: Record<string, string>;
+  generated_at: string;
+}
+
+// ── generateBattlecard ──────────────────────────────────────────────────────
+
+export async function generateBattlecard(params: BattlecardParams): Promise<BattlecardResult> {
+  const product = params.product ?? 'Sophia AI Factory';
+
+  const fallback: BattlecardResult = {
+    competitor: params.competitor,
+    our_product: product,
+    strengths: [
+      'AI-powered proposal generation in <30s',
+      'Integrated video production pipeline',
+      'Usage-based MCU pricing — pay for what you use',
+      'Full affiliate marketing automation',
+    ],
+    weaknesses_of_competitor: [
+      `${params.competitor} lacks AI video integration`,
+      `${params.competitor} uses per-seat pricing (expensive at scale)`,
+      `${params.competitor} has no affiliate engine`,
+    ],
+    key_differentiators: [
+      'RaaS model: API-first, automatable',
+      'OpenClaw PEV engine for mission orchestration',
+      'Multi-channel content generation (blog + social + video)',
+    ],
+    objection_handling: {
+      too_expensive: 'Our MCU model means you only pay for actual AI work. No idle seats.',
+      unproven: 'Built by agency operators who understand the proposal-to-close pipeline.',
+      switching_cost: 'HubSpot CRM sync means zero data migration needed.',
+    },
+    generated_at: new Date().toISOString(),
+  };
+
+  try {
+    const client = getClaudeClient();
+    const prompt = `Create a sales battlecard for "${product}" vs "${params.competitor}".
+Include: 4 strengths of our product, 3 weaknesses of competitor, 3 key differentiators, and objection handling for "too_expensive", "unproven", "switching_cost".
+Return JSON: { "strengths": string[], "weaknesses_of_competitor": string[], "key_differentiators": string[], "objection_handling": { "too_expensive": string, "unproven": string, "switching_cost": string } }`;
+
+    const message = await client.messages.create({
+      model: CLAUDE_MODEL,
+      max_tokens: CLAUDE_MAX_TOKENS,
+      messages: [{ role: 'user', content: prompt }],
+    });
+
+    const raw = message.content[0].type === 'text' ? message.content[0].text : '';
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return fallback;
+
+    const parsed = JSON.parse(jsonMatch[0]) as Partial<BattlecardResult>;
+    return {
+      ...fallback,
+      strengths: parsed.strengths ?? fallback.strengths,
+      weaknesses_of_competitor: parsed.weaknesses_of_competitor ?? fallback.weaknesses_of_competitor,
+      key_differentiators: parsed.key_differentiators ?? fallback.key_differentiators,
+      objection_handling: parsed.objection_handling ?? fallback.objection_handling,
+    };
+  } catch {
+    return fallback;
+  }
+}
+
 // ── generateCompetitorAnalysis ───────────────────────────────────────────────
 
 export async function generateCompetitorAnalysis(

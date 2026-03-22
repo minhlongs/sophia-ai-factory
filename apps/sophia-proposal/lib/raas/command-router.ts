@@ -8,6 +8,7 @@
 import { getD1Client } from '@/lib/db/client';
 import { generateBlogReview } from '@/lib/affiliate/content/blog-generator';
 import { generateSocialBundle } from '@/lib/affiliate/content/social-generator';
+import { generateContent } from '@/lib/ai/claude-proposal-generator';
 import { runScrape } from '@/lib/affiliate/program-scraper';
 import type { Mission, MissionResult } from '@/types/raas';
 import type { AffiliateProgram } from '@/types/affiliate';
@@ -176,10 +177,18 @@ async function runContentBlog(mission: Mission): Promise<MissionResult> {
     }
   }
 
+  // No affiliate program — use Claude AI to generate blog content
+  const aiContent = await generateContent('blog', {
+    topic,
+    company: (mission.params as Record<string, string>).company,
+    tone: (mission.params as Record<string, string>).tone,
+    target_audience: (mission.params as Record<string, string>).target_audience,
+  });
+
   return {
     success: true,
-    summary: `Blog post queued for: ${topic ?? 'custom topic'}`,
-    data: { topic, org_id: mission.org_id },
+    summary: `Blog post created: ${aiContent.title}`,
+    data: { blog: aiContent },
   };
 }
 
@@ -211,9 +220,17 @@ async function runContentSocial(mission: Mission): Promise<MissionResult> {
     }
   }
 
+  // No affiliate program — use Claude AI to generate social content
+  const aiSocial = await generateContent('social', {
+    topic: (mission.params as Record<string, string>).topic,
+    company: (mission.params as Record<string, string>).company,
+    tone: (mission.params as Record<string, string>).tone,
+    target_audience: (mission.params as Record<string, string>).target_audience,
+  });
+
   return {
     success: true,
-    summary: 'Social bundle queued',
-    data: { params: mission.params },
+    summary: `Social bundle created: ${aiSocial.title}`,
+    data: { social: aiSocial },
   };
 }
