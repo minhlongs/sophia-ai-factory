@@ -77,17 +77,35 @@
 
 ---
 
-## Phase 4 — Growth & Scale (Sprint 5) — PLANNED
+## Phase 3.5 — Cloudflare Migration + Sales (Sprint 4.5) — DONE
+
+**Goal:** 100% Cloudflare stack, strict TypeScript, sales-focused commands.
+
+| Milestone | Status | Date |
+|-----------|--------|------|
+| Supabase → Cloudflare D1 migration (34 tables) | DONE | 2026-03-21 |
+| Custom JWT auth (Web Crypto PBKDF2 + HMAC-SHA256) | DONE | 2026-03-22 |
+| D1 query builder (Supabase-compatible API) | DONE | 2026-03-22 |
+| Remove @supabase/supabase-js (zero Supabase deps) | DONE | 2026-03-22 |
+| Strict TypeScript — 0 errors, ignoreBuildErrors removed | DONE | 2026-03-22 |
+| 20 typed D1 table interfaces (lib/db/types.ts) | DONE | 2026-03-22 |
+| 5 sales commands (proposal-deck, roi-calculator, competitor-analysis, pricing-optimizer, outreach-sequence) | DONE | 2026-03-22 |
+| Health monitoring (/api/health + /api/health/deep) | DONE | 2026-03-22 |
+| D1 migration 0002 (sales command templates) | DONE | 2026-03-22 |
+| 15 total commands, 0 TS errors | DONE | 2026-03-22 |
+
+---
+
+## Phase 4 — Growth & Scale (Sprint 5) — IN PROGRESS
 
 | Milestone | Status | Priority |
 |-----------|--------|----------|
-| Sentry error tracking integration | PLANNED | High |
+| @sophia/raas-sdk npm package | IN PROGRESS | High |
+| OpenAPI 3.1 spec + /docs/api page | IN PROGRESS | High |
 | Real-time mission status (SSE or WebSocket) | PLANNED | High |
 | Mission template marketplace (community commands) | PLANNED | Medium |
 | HeyGen video polling → production-grade (persistent job) | PLANNED | Medium |
 | HubSpot CRM sync — full field mapping | PLANNED | Medium |
-| Affiliate dashboard UI (PartnerStack integration) | PLANNED | Medium |
-| Multi-region Supabase failover | PLANNED | Low |
 | DR playbook + quarterly restore drills | PLANNED | Low |
 
 ---
@@ -105,14 +123,31 @@
 
 ---
 
+## Infrastructure
+
+| Component | Provider | Cost |
+|-----------|----------|------|
+| App Runtime | Cloudflare Workers | $0 |
+| Database | Cloudflare D1 (sophia-raas-db) | $0 |
+| Storage | Cloudflare R2 | $0 |
+| Auth | Custom JWT (Web Crypto) | $0 |
+| Payments | Polar.sh | Revenue share |
+| Deploy | opennextjs-cloudflare + wrangler | $0 |
+
+**Total infrastructure cost: $0/month**
+
+---
+
 ## Key Metrics
 
 | Metric | Current | Target |
 |--------|---------|--------|
-| Routes | 72 GREEN | — |
-| Tests | 183 PASS | 200+ |
-| Commands supported | 9 | 20 |
+| Routes | 80+ GREEN | — |
+| TypeScript errors | 0 | 0 |
+| Commands supported | 15 | 20 |
+| Supabase dependencies | 0 | 0 |
 | Concurrent missions/org | 3 | Configurable |
+| Infrastructure cost | $0/mo | $0/mo |
 | NPS Target | — | > 50 |
 | Activation Rate | — | > 60% Day 7 |
 | MRR Target | — | $83K (path to $1M ARR) |
