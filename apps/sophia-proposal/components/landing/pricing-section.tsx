@@ -57,13 +57,13 @@ export function PricingSection() {
                   {tier.description}
                 </p>
               </div>
-              <ul className="space-y-4 mb-8">
+              <ul className="space-y-3 mb-8">
                 {tier.features.map((feature) => (
-                  <li key={feature} className="flex items-center gap-3">
-                    <span className="material-symbols-outlined text-sm text-primary">
+                  <li key={feature} className="flex items-start gap-3">
+                    <span className={`material-symbols-outlined text-lg flex-shrink-0 mt-0.5 ${tier.highlighted ? "text-inverse-primary" : "text-primary"}`}>
                       check_circle
                     </span>
-                    <span className={tier.highlighted ? "text-on-surface-dark/80" : "text-on-surface"}>
+                    <span className={`text-sm leading-relaxed ${tier.highlighted ? "text-on-surface-dark/80" : "text-on-surface"}`}>
                       {feature}
                     </span>
                   </li>
