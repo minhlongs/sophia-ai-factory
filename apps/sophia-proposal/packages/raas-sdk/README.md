@@ -182,6 +182,8 @@ try {
 | `sales:competitor-analysis` | 5 | Deep competitor report |
 | `sales:pricing-optimizer` | 3 | Pricing strategy |
 | `sales:outreach-sequence` | 5 | Email outreach sequence |
+| `lead:generate` | 5 | AI prospect research by ICP |
+| `email:send` | 1 | Send email via Resend |
 
 ## Pricing tiers
 
