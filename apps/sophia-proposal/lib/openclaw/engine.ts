@@ -31,6 +31,8 @@ const STEP_NAMES: Record<string, string[]> = {
   'sales:competitor-analysis':['Identify competitors', 'Run SWOT analysis', 'Generate win strategy'],
   'sales:pricing-optimizer':  ['Analyze usage patterns', 'Evaluate tiers', 'Generate recommendation'],
   'sales:outreach-sequence':  ['Research prospect', 'Craft email sequence', 'Add LinkedIn touch', 'Generate follow-ups'],
+  'lead:generate':            ['Define ICP criteria', 'Research prospects via LLM', 'Score and rank leads', 'Save to database'],
+  'email:send':               ['Validate recipient', 'Render email content', 'Send via Resend API', 'Log delivery status'],
 };
 
 function buildPlan(command: MissionCommand): PEVPlan {
@@ -269,6 +271,7 @@ export class OpenClawEngine {
       await fetch(mission.webhook_url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        redirect: 'manual',
         body: JSON.stringify({
           mission_id: mission.id,
           status: mission.status,

@@ -24,7 +24,9 @@ export type MissionCategory =
   | 'affiliate'
   | 'content'
   | 'analytics'
-  | 'sales';
+  | 'sales'
+  | 'leads'
+  | 'email';
 
 export type MissionCommand =
   | 'proposal:create'
@@ -41,7 +43,9 @@ export type MissionCommand =
   | 'sales:roi-calculator'
   | 'sales:competitor-analysis'
   | 'sales:pricing-optimizer'
-  | 'sales:outreach-sequence';
+  | 'sales:outreach-sequence'
+  | 'lead:generate'
+  | 'email:send';
 
 // ============================================================================
 // CORE TABLE TYPES

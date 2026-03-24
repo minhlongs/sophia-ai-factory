@@ -1,16 +1,18 @@
 /**
- * Claude AI Proposal & Content Generator
+ * AI Proposal & Content Generator
  *
- * Generates proposals and content via Anthropic SDK.
+ * Generates proposals and content via LLM Router (DeepSeek/Qwen/Anthropic).
  * Falls back to templates on API failure — never breaks the flow.
  */
 
-import Anthropic from '@anthropic-ai/sdk';
+import { llmGenerate } from './llm-router';
 
 export const CLAUDE_MODEL = 'claude-sonnet-4-20250514';
 export const CLAUDE_MAX_TOKENS = 2000;
 
-export function getClaudeClient(): Anthropic {
+/** @deprecated Use llmGenerate() from llm-router instead */
+export function getClaudeClient() {
+  const Anthropic = require('@anthropic-ai/sdk').default;
   return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 }
 
@@ -69,18 +71,11 @@ export async function generateProposal(params: ProposalParams): Promise<Proposal
   };
 
   try {
-    const client = getClaudeClient();
     const prompt = `Write a ${tone} business proposal for ${params.client_name} for "${product}".
 Include sections: ${sectionNames.join(', ')}. 2-3 concise paragraphs each.
 Return JSON: { "sections": [{ "title": string, "content": string }] }`;
 
-    const message = await client.messages.create({
-      model: CLAUDE_MODEL,
-      max_tokens: CLAUDE_MAX_TOKENS,
-      messages: [{ role: 'user', content: prompt }],
-    });
-
-    const raw = message.content[0].type === 'text' ? message.content[0].text : '';
+    const raw = await llmGenerate(prompt, { maxTokens: CLAUDE_MAX_TOKENS });
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return fallback;
 
@@ -105,7 +100,6 @@ export async function generateContent(type: 'blog' | 'social', params: ContentPa
   };
 
   try {
-    const client = getClaudeClient();
     const isBlog = type === 'blog';
     const prompt = isBlog
       ? `Write a professional blog post about "${topic}" for ${params.company ?? 'a business'}.
@@ -116,13 +110,7 @@ Return JSON: { "title": string, "body": string }`
 Platforms: LinkedIn (professional), Twitter/X (concise + hashtags), Instagram (engaging).
 Return JSON: { "title": string, "body": string } where body has all 3 posts separated by "---"`;
 
-    const message = await client.messages.create({
-      model: CLAUDE_MODEL,
-      max_tokens: CLAUDE_MAX_TOKENS,
-      messages: [{ role: 'user', content: prompt }],
-    });
-
-    const raw = message.content[0].type === 'text' ? message.content[0].text : '';
+    const raw = await llmGenerate(prompt, { maxTokens: CLAUDE_MAX_TOKENS });
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return fallback;
 

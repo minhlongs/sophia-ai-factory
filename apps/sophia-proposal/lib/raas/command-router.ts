@@ -27,6 +27,7 @@ import {
   runPricingOptimizer,
   runOutreachSequence,
 } from './sales-commands';
+import { runLeadGenerate, runEmailSend } from './lead-email-commands';
 
 // ============================================================================
 // MAIN ROUTER
@@ -83,6 +84,12 @@ export async function executeCommand(mission: Mission): Promise<MissionResult> {
 
       case 'sales:outreach-sequence':
         return await runOutreachSequence(mission);
+
+      case 'lead:generate':
+        return await runLeadGenerate(mission);
+
+      case 'email:send':
+        return await runEmailSend(mission);
 
       default:
         return { success: false, error: `Unknown command: ${mission.command}` };
