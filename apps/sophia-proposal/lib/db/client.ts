@@ -30,13 +30,21 @@ function getD1Sync(): D1Database {
 }
 
 /**
- * Get D1 binding — async fallback using getCloudflareContext()
+ * Get D1 binding — uses Cloudflare context symbol set by opennextjs-cloudflare worker
  */
 async function getD1Async(): Promise<D1Database> {
+  // Access cloudflare context via the well-known symbol (set in .open-next/cloudflare/init.js)
+  const ctxSymbol = Symbol.for('__cloudflare-context__');
+  const ctx = (globalThis as Record<symbol, { env?: Record<string, unknown> }>)[ctxSymbol];
+  if (ctx?.env?.DB) {
+    return ctx.env.DB as D1Database;
+  }
+
+  // Fallback: try dynamic import (older opennextjs versions)
   try {
     const { getCloudflareContext } = await import('@opennextjs/cloudflare');
-    const ctx = await getCloudflareContext();
-    const db = (ctx.env as Record<string, unknown>).DB as D1Database;
+    const cfCtx = await getCloudflareContext();
+    const db = (cfCtx.env as Record<string, unknown>).DB as D1Database;
     if (db) return db;
   } catch { /* not available */ }
 
