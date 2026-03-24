@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 export default function AuthLayout({
   children,
 }: {
@@ -20,13 +22,13 @@ export default function AuthLayout({
         </div>
         <p className="text-center text-xs text-gray-500 mt-6">
           By continuing, you agree to our{" "}
-          <a href="/terms" className="text-primary hover:underline">
+          <Link href="/terms" className="text-primary hover:underline">
             Terms of Service
-          </a>{" "}
+          </Link>{" "}
           and{" "}
-          <a href="/privacy" className="text-primary hover:underline">
+          <Link href="/privacy" className="text-primary hover:underline">
             Privacy Policy
-          </a>
+          </Link>
         </p>
       </div>
     </div>

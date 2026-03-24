@@ -23,32 +23,6 @@ export interface PilotOnboardingData {
  * Send welcome email after first payment
  */
 export async function sendWelcomeEmail(data: PilotOnboardingData): Promise<boolean> {
-  // In production, this would integrate with an email service
-  // For now, we'll log the email that would be sent
-  console.log('Welcome Email:', {
-    to: data.customerEmail,
-    subject: `Welcome to Sophia AI Factory - ${data.tierName} Plan`,
-    content: `
-Dear ${data.customerName},
-
-Welcome to Sophia AI Factory!
-
-Thank you for subscribing to the ${data.tierName} plan.
-Your account has been credited with ${data.mcuCredits.toLocaleString()} MCU.
-
-Next Steps:
-1. Schedule your 30-minute onboarding call: https://sophia.agencyos.network/onboarding/schedule
-2. Generate your first AI-powered proposal
-3. Share your feedback to help us improve
-
-As a pilot customer, you have direct access to our team.
-Reply to this email anytime with questions or feedback.
-
-Best regards,
-The Sophia AI Factory Team
-    `.trim(),
-  });
-
   // TODO: Integrate with email service (Resend, SendGrid, etc.)
   // await resend.emails.send({ ... });
 
@@ -82,7 +56,6 @@ export async function initializePilotOnboarding(
 
     if (error) {
       // Table might not exist yet - that's okay for pilot phase
-      console.log('Note: pilot_onboarding table not found (optional for pilot)');
     }
 
     return { success: true };
@@ -148,7 +121,6 @@ export async function trackOnboardingMilestone(
 
   if (error) {
     // Table might not exist - that's okay
-    console.log('Note: onboarding_milestones table not found');
     return false;
   }
 

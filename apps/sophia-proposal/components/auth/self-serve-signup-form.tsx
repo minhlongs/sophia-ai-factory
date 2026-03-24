@@ -47,6 +47,7 @@ export function SelfServeSignupForm() {
   const [formData, setFormData] = useState<FormData>({ orgName: "", email: "", password: "" });
   const [errors, setErrors] = useState<FormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [apiKeyDisplay, setApiKeyDisplay] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -80,8 +81,13 @@ export function SelfServeSignupForm() {
         throw new Error(body?.message ?? body?.error ?? "Failed to create account");
       }
       const data = await res.json();
-      if (data?.api_key) localStorage.setItem("sophia_api_key", data.api_key);
+      // Store only non-sensitive org_id for UI use; never persist API keys in localStorage
       if (data?.org_id) localStorage.setItem("sophia_org_id", data.org_id);
+      // Show API key once — user must copy it before being redirected
+      if (data?.api_key) {
+        setApiKeyDisplay(data.api_key);
+        return; // redirect happens after user dismisses the key display
+      }
       window.location.href = "/dashboard";
     } catch (error) {
       setErrors({
@@ -91,6 +97,36 @@ export function SelfServeSignupForm() {
       setIsLoading(false);
     }
   };
+
+  // One-time API key display — shown after successful signup before redirect
+  if (apiKeyDisplay) {
+    return (
+      <div className="space-y-4">
+        <div className="p-4 rounded-lg bg-amber-50 border border-amber-200 dark:bg-amber-900/20 dark:border-amber-700">
+          <p className="text-sm font-semibold text-amber-800 dark:text-amber-300 mb-1">
+            Your API Key — copy it now
+          </p>
+          <p className="text-xs text-amber-700 dark:text-amber-400 mb-3">
+            This key will NOT be shown again. Store it securely.
+          </p>
+          <code className="block w-full p-2 rounded bg-white dark:bg-gray-900 border border-amber-300 dark:border-amber-600 text-xs font-mono break-all text-gray-900 dark:text-gray-100 select-all">
+            {apiKeyDisplay}
+          </code>
+        </div>
+        <button
+          type="button"
+          onClick={() => { window.location.href = "/dashboard"; }}
+          className="w-full py-2.5 px-4 rounded-lg text-sm font-medium text-white
+            bg-gradient-to-r from-blue-500 to-purple-600
+            hover:from-blue-600 hover:to-purple-700
+            focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
+            transition-all shadow-sm"
+        >
+          I have saved my API key — Go to Dashboard
+        </button>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4" noValidate>

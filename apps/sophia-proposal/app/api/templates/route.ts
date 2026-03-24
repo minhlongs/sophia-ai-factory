@@ -28,19 +28,9 @@ export async function GET() {
  * POST /api/templates
  * Create a new custom template
  */
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    // TODO: Save to database
-    return NextResponse.json({
-      success: true,
-      message: "Template created (not yet persisted)",
-    });
-  } catch (error) {
-    console.error("Create template error:", error);
-    return NextResponse.json(
-      { error: "Failed to create template" },
-      { status: 500 }
-    );
-  }
+export async function POST(_request: NextRequest) {
+  return NextResponse.json(
+    { error: "Proposals feature coming soon", code: "NOT_IMPLEMENTED" },
+    { status: 501 }
+  );
 }

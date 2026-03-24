@@ -5,7 +5,7 @@ import { generateProposalSchema } from "@/lib/validators/proposal";
 import { getAllSystemTemplates } from "@/lib/ai/proposal-templates";
 
 interface AIGenerateButtonProps {
-  onSuccess?: (proposal: any) => void;
+  onSuccess?: (result: Record<string, string>) => void;
   onError?: (error: string) => void;
 }
 

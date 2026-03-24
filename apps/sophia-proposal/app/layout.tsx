@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/auth/auth-provider";
+import { ToastProvider } from "@/components/ui/toast-provider";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -26,21 +27,12 @@ export const metadata: Metadata = {
     description:
       "Build, deploy, and scale AI-powered applications with confidence",
     siteName: "Sophia AI Factory",
-    images: [
-      {
-        url: `${SITE_URL}/og-image.png`,
-        width: 1200,
-        height: 630,
-        alt: "Sophia AI Factory",
-      },
-    ],
   },
   twitter: {
-    card: "summary_large_image",
+    card: "summary",
     title: "Sophia AI Factory",
     description:
       "Build, deploy, and scale AI-powered applications with confidence",
-    images: [`${SITE_URL}/og-image.png`],
   },
   robots: {
     index: true,
@@ -67,7 +59,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable}>
       <body className="antialiased">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </AuthProvider>
       </body>
     </html>
   );

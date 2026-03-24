@@ -3,42 +3,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PRICING_TIERS } from "@/lib/pricing-config";
+import { handleCheckout } from "@/components/pricing/pricing-cards";
 
 export function PricingSection() {
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
-
-  async function handleCheckout(tierId: string, cta: string) {
-    if (cta === "Contact Sales") {
-      window.location.href = "/demo";
-      return;
-    }
-
-    setLoadingTier(tierId);
-    try {
-      const res = await fetch("/api/billing/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tier: tierId }),
-        credentials: "include",
-      });
-
-      if (res.status === 401) {
-        window.location.href = `/signup?plan=${tierId}`;
-        return;
-      }
-
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        console.error("No checkout URL returned:", data);
-      }
-    } catch (err) {
-      console.error("Checkout error:", err);
-    } finally {
-      setLoadingTier(null);
-    }
-  }
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
   return (
     <section className="py-20 bg-surface-container-highest">
@@ -52,8 +21,14 @@ export function PricingSection() {
           </p>
         </div>
 
+        {checkoutError && (
+          <div className="max-w-6xl mx-auto mb-6 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+            {checkoutError}
+          </div>
+        )}
+
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-          {PRICING_TIERS.map((tier, index) => (
+          {PRICING_TIERS.map((tier) => (
             <div
               key={tier.id}
               className={`relative p-8 rounded-2xl ${
@@ -96,7 +71,7 @@ export function PricingSection() {
                 className="w-full"
                 size="lg"
                 disabled={loadingTier === tier.id}
-                onClick={() => handleCheckout(tier.id, tier.cta)}
+                onClick={() => handleCheckout(tier.id, tier.cta, setLoadingTier, setCheckoutError)}
               >
                 {loadingTier === tier.id ? "Loading..." : tier.cta}
               </Button>

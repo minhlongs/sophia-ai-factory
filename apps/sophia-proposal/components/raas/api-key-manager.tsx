@@ -117,7 +117,34 @@ export function ApiKeyManager() {
     }
   }
 
-  if (loading) return <div className="p-8 text-gray-500">Loading...</div>;
+  if (loading) return (
+    <div className="p-8 flex flex-col gap-4 animate-pulse">
+      {/* Usage summary skeleton */}
+      <div className="grid grid-cols-3 gap-4">
+        {[0, 1, 2].map(i => (
+          <div key={i} className="rounded-lg border border-gray-200 bg-white p-4">
+            <div className="h-3 bg-gray-200 rounded w-24 mb-3" />
+            <div className="h-7 bg-gray-200 rounded w-16" />
+          </div>
+        ))}
+      </div>
+      {/* Table skeleton */}
+      <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
+        <div className="bg-gray-50 px-4 py-3 flex gap-4">
+          {[80, 60, 40, 60, 60, 20].map((w, i) => (
+            <div key={i} className={`h-3 bg-gray-200 rounded`} style={{ width: w }} />
+          ))}
+        </div>
+        {[0, 1, 2].map(i => (
+          <div key={i} className="px-4 py-3 flex gap-4 border-t border-gray-100">
+            {[80, 60, 40, 60, 60, 20].map((w, j) => (
+              <div key={j} className="h-3 bg-gray-100 rounded" style={{ width: w }} />
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-8">

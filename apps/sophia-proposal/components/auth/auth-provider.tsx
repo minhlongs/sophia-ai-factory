@@ -28,6 +28,17 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const STORAGE_KEY = "sophia_auth_session";
 const API_BASE = "/api/auth";
 
+// Strip sensitive fields before persisting to localStorage — keep display data only
+function toSafeUser(raw: Record<string, unknown>): User {
+  return {
+    id: raw.id as string,
+    email: raw.email as string,
+    name: raw.name as string | undefined,
+    avatar: raw.avatar as string | undefined,
+    // Intentionally omit: token, api_key, password_hash, etc.
+  };
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AuthState>({
     user: null,
@@ -54,7 +65,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const res = await fetch(`${API_BASE}/session`);
       if (res.ok) {
-        const user = await res.json();
+        const raw = await res.json();
+        const user = toSafeUser(raw);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
         setState({ user, isLoading: false, isAuthenticated: true });
       } else {
@@ -73,7 +85,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       body: JSON.stringify({ email, password }),
     });
     if (!res.ok) throw new Error("Invalid credentials");
-    const user = await res.json();
+    const raw = await res.json();
+    const user = toSafeUser(raw);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
     setState({ user, isLoading: false, isAuthenticated: true });
   };
@@ -94,7 +107,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       body: JSON.stringify({ email, password, name }),
     });
     if (!res.ok) throw new Error("Signup failed");
-    const user = await res.json();
+    const raw = await res.json();
+    const user = toSafeUser(raw);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
     setState({ user, isLoading: false, isAuthenticated: true });
   };

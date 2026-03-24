@@ -12,7 +12,8 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   const secret = req.headers.get('x-internal-secret');
-  if (secret !== (process.env.INTERNAL_API_SECRET ?? '')) {
+  const expected = process.env.INTERNAL_API_SECRET;
+  if (!expected || secret !== expected) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

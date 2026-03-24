@@ -21,7 +21,6 @@ export default function ProposalDetailPage({ params }: { params: Promise<{ id: s
 
   const handleSave = (content: Record<string, string>) => {
     setProposalData((prev) => ({ ...prev, ...content }));
-    console.log("Proposal saved:", content);
   };
 
   return (
