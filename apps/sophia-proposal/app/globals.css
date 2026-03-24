@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0');
-
 /* Material Design 3 Design Tokens */
 :root {
   /* MD3 Color System - Light Theme */
