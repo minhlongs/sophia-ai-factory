@@ -23,7 +23,7 @@ const steps = [
 
 export function HowItWorksSection() {
   return (
-    <section id="how-it-works" className="py-24 bg-gradient-to-b from-white to-gray-50">
+    <section id="how-it-works" className="py-24 bg-surface-container-low">
       <div className="container mx-auto px-4">
         <ScrollReveal className="text-center mb-16">
           <span className="inline-block px-4 py-1.5 mb-4 text-xs font-semibold uppercase tracking-wider text-primary bg-primary/5 rounded-full">
@@ -41,7 +41,7 @@ export function HowItWorksSection() {
           {steps.map((step, index) => (
             <div key={step.step} className="relative text-center">
               {/* Number badge */}
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-[#5ec9ff] text-white text-xl font-bold flex items-center justify-center mx-auto mb-6 shadow-lg shadow-primary/20">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-inverse-primary text-on-surface-dark text-xl font-bold flex items-center justify-center mx-auto mb-6 shadow-md3-2">
                 {step.step}
               </div>
               {/* Icon */}

@@ -66,17 +66,17 @@ const testimonials = [
 
 export function SocialProofSection() {
   return (
-    <section className="py-24 bg-gradient-to-b from-gray-50 to-white">
+    <section className="py-24 bg-surface">
       <div className="container mx-auto px-4">
         {/* Stats bar — dark contrast strip */}
-        <div className="rounded-3xl bg-gradient-to-r from-[#0a1628] to-[#0d2847] p-8 md:p-10 mb-20">
+        <div className="rounded-3xl bg-gradient-to-r from-surface-dark-dim to-surface-dark p-8 md:p-10 mb-20">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {stats.map((stat) => (
               <div key={stat.label} className="text-center">
-                <p className="text-3xl md:text-4xl font-extrabold text-white mb-1 tracking-tight">
+                <p className="text-3xl md:text-4xl font-extrabold text-on-surface-dark mb-1 tracking-tight">
                   <AnimatedCounter value={stat.value} prefix={stat.prefix} suffix={stat.suffix} />
                 </p>
-                <p className="text-white/50 text-sm font-medium">{stat.label}</p>
+                <p className="text-on-surface-dark-variant text-sm font-medium">{stat.label}</p>
               </div>
             ))}
           </div>
@@ -100,7 +100,7 @@ export function SocialProofSection() {
           {testimonials.map((t) => (
             <div
               key={t.name}
-              className="p-6 rounded-2xl bg-white border border-gray-100 card-hover flex flex-col gap-4"
+              className="p-6 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 card-hover flex flex-col gap-4"
             >
               {/* Stars */}
               <div className="flex gap-0.5 text-amber-400 text-sm">
@@ -113,9 +113,9 @@ export function SocialProofSection() {
                 &ldquo;{t.quote}&rdquo;
               </p>
               {/* Author */}
-              <div className="flex items-center gap-3 pt-2 border-t border-gray-50">
+              <div className="flex items-center gap-3 pt-2 border-t border-outline-variant/20">
                 <div
-                  className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-[#5ec9ff] text-white text-sm font-bold flex items-center justify-center flex-shrink-0"
+                  className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-inverse-primary text-on-surface-dark text-sm font-bold flex items-center justify-center flex-shrink-0"
                   aria-label={`Avatar for ${t.name}`}
                 >
                   {t.initials}

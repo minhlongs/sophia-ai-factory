@@ -46,6 +46,18 @@
 
   --md-sys-color-inverse-primary: #5ec9ff;
   --md-sys-color-on-inverse-primary: #003258;
+  --md-sys-color-inverse-surface: #0e1721;
+  --md-sys-color-inverse-on-surface: #f0f0f4;
+  --md-sys-color-outline-variant: #c4c6d0;
+  --md-sys-color-shadow: #000000;
+  --md-sys-color-scrim: #000000;
+
+  /* MD3 Dark surface tones — used for hero, stats bar, highlighted cards */
+  --md-sys-color-surface-dark: #0e1721;
+  --md-sys-color-surface-dark-high: #162233;
+  --md-sys-color-surface-dark-dim: #0a1019;
+  --md-sys-color-on-surface-dark: #e2e2e6;
+  --md-sys-color-on-surface-dark-variant: #a0a3ad;
 
   /* MD3 Typography Tokens */
   --md-sys-typescale-display-large: 400 57px/64px 'Roboto', sans-serif;
