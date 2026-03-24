@@ -21,7 +21,7 @@ export function Button({
   children,
   ...props
 }: ButtonProps) {
-  const baseStyles = "inline-flex items-center justify-center font-medium rounded-full transition-colors";
+  const baseStyles = "inline-flex items-center justify-center font-medium rounded-full transition-colors focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:outline-none";
 
   const variantStyles = {
     primary: "bg-primary text-on-primary hover:bg-primary-hover",

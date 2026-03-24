@@ -65,7 +65,8 @@ export function MissionDashboard({ onLaunchMission }: Props) {
               <button
                 key={t.id}
                 onClick={() => onLaunchMission?.(t.id)}
-                className="flex flex-col items-center gap-1 p-3 rounded-lg border border-gray-200 hover:border-orange-400 hover:bg-orange-50 transition-colors"
+                aria-label={`Quick launch ${t.label}`}
+                className="flex flex-col items-center gap-1 p-3 rounded-lg border border-gray-200 hover:border-orange-400 hover:bg-orange-50 transition-colors cursor-pointer"
               >
                 <span className="material-symbols-outlined text-orange-500 text-2xl">{t.icon}</span>
                 <span className="text-xs font-medium text-gray-700">{t.label}</span>

@@ -71,7 +71,7 @@ export function MissionLauncher({ balance = 0, onClose, onSuccess }: Props) {
       <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl">
         <div className="flex items-center justify-between p-5 border-b">
           <h2 className="text-lg font-semibold text-gray-900">Launch Mission</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <button onClick={onClose} aria-label="Close" className="text-gray-400 hover:text-gray-600">
             <span className="material-symbols-outlined">close</span>
           </button>
         </div>
@@ -80,7 +80,7 @@ export function MissionLauncher({ balance = 0, onClose, onSuccess }: Props) {
           <div className="p-5 grid grid-cols-2 sm:grid-cols-3 gap-3">
             {TEMPLATES.map(t => (
               <button key={t.id} onClick={() => { setSelected(t); setParams({}); }}
-                className="flex flex-col items-start gap-2 p-4 rounded-xl border border-gray-200 hover:border-orange-400 hover:bg-orange-50 text-left transition-colors">
+                className="flex flex-col items-start gap-2 p-4 rounded-xl border border-gray-200 hover:border-orange-400 hover:bg-orange-50 text-left transition-colors cursor-pointer">
                 <span className="material-symbols-outlined text-orange-500 text-2xl">{t.icon}</span>
                 <span className="text-sm font-semibold text-gray-900">{t.name}</span>
                 <span className="text-xs text-gray-500">{t.description}</span>
@@ -90,7 +90,7 @@ export function MissionLauncher({ balance = 0, onClose, onSuccess }: Props) {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="p-5 space-y-4">
-            <button type="button" onClick={() => setSelected(null)} className="text-sm text-orange-600 hover:underline flex items-center gap-1">
+            <button type="button" onClick={() => setSelected(null)} aria-label="Back" className="text-sm text-orange-600 hover:underline flex items-center gap-1">
               <span className="material-symbols-outlined text-sm">arrow_back</span> Back to templates
             </button>
 
@@ -129,7 +129,7 @@ export function MissionLauncher({ balance = 0, onClose, onSuccess }: Props) {
               </a>
             ) : (
               <button type="submit" disabled={submitting}
-                className="w-full py-2.5 bg-orange-500 text-white rounded-xl font-semibold hover:bg-orange-600 disabled:opacity-50 transition-colors">
+                className="w-full py-2.5 bg-orange-500 text-white rounded-xl font-semibold hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                 {submitting ? 'Launching...' : 'Launch Mission'}
               </button>
             )}
