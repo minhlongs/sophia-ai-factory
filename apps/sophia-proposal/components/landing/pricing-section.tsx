@@ -10,14 +10,17 @@ export function PricingSection() {
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
   return (
-    <section className="py-20 bg-surface-container-highest">
+    <section id="pricing" className="py-24 bg-gradient-to-b from-white to-gray-50">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
+          <span className="inline-block px-4 py-1.5 mb-4 text-xs font-semibold uppercase tracking-wider text-primary bg-primary/5 rounded-full">
+            Pricing
+          </span>
           <h2 className="text-3xl md:text-4xl font-bold text-on-surface mb-4 tracking-tight">
             Simple, Transparent Pricing
           </h2>
-          <p className="text-xl text-on-surface-variant max-w-2xl mx-auto leading-relaxed">
-            Choose the plan that fits your needs. Start free with 200 MCU.
+          <p className="text-lg text-on-surface-variant max-w-2xl mx-auto leading-relaxed">
+            Start free with 200 MCU. Scale as you grow.
           </p>
         </div>
 
@@ -31,14 +34,14 @@ export function PricingSection() {
           {PRICING_TIERS.map((tier) => (
             <div
               key={tier.id}
-              className={`relative p-8 rounded-2xl ${
+              className={`relative p-8 rounded-2xl card-hover ${
                 tier.highlighted
-                  ? "bg-primary-container text-on-primary-container shadow-xl"
-                  : "bg-surface text-on-surface"
+                  ? "bg-gradient-to-br from-[#0a1628] to-[#0d2847] text-white shadow-2xl shadow-primary/10 ring-1 ring-[#5ec9ff]/20"
+                  : "bg-white text-on-surface border border-gray-100"
               } ${tier.highlighted ? "md:scale-105" : ""}`}
             >
               {tier.highlighted && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-inverse-primary text-on-inverse-primary text-sm font-bold px-4 py-1 rounded-full">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-primary to-[#5ec9ff] text-white text-sm font-bold px-4 py-1 rounded-full shadow-lg">
                   Most Popular
                 </div>
               )}
@@ -46,11 +49,11 @@ export function PricingSection() {
                 <h3 className="text-2xl font-bold mb-2 tracking-tight">{tier.name}</h3>
                 <div className="flex items-baseline justify-center gap-1 mb-2">
                   <span className="text-4xl font-bold">{tier.price}</span>
-                  <span className={tier.highlighted ? "text-on-primary-container-variant" : "text-on-surface-variant"}>
+                  <span className={tier.highlighted ? "text-white/50" : "text-on-surface-variant"}>
                     /month
                   </span>
                 </div>
-                <p className={tier.highlighted ? "text-on-primary-container-variant" : "text-on-surface-variant"}>
+                <p className={tier.highlighted ? "text-white/60" : "text-on-surface-variant"}>
                   {tier.description}
                 </p>
               </div>
@@ -60,7 +63,7 @@ export function PricingSection() {
                     <span className="material-symbols-outlined text-sm text-primary">
                       check_circle
                     </span>
-                    <span className={tier.highlighted ? "text-on-primary-container" : "text-on-surface"}>
+                    <span className={tier.highlighted ? "text-white/80" : "text-on-surface"}>
                       {feature}
                     </span>
                   </li>
