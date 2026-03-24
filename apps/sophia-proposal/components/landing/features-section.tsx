@@ -2,37 +2,41 @@
 
 const features = [
   {
-    icon: "flash_on",
-    title: "Lightning Fast",
-    description: "Optimized performance with edge deployment and automatic code splitting.",
+    icon: "smart_toy",
+    title: "AI Mission Engine",
+    description:
+      "Deploy autonomous AI agents that execute complex multi-step tasks — from proposal generation to content creation.",
   },
   {
-    icon: "shield",
-    title: "Secure by Default",
-    description: "Enterprise-grade security with built-in authentication and authorization.",
+    icon: "toll",
+    title: "MCU Credit System",
+    description:
+      "Pay only for what you use. Mission Credit Units (MCU) provide transparent, predictable billing with no hidden fees.",
   },
   {
-    icon: "auto_awesome",
-    title: "AI-Powered",
-    description: "Intelligent automation for repetitive tasks and smart decision-making.",
+    icon: "api",
+    title: "Developer-First API",
+    description:
+      "RESTful API with real-time streaming, webhook callbacks, and SDK support. Integrate AI capabilities in minutes.",
   },
   {
-    icon: "trending_up",
-    title: "Scalable Growth",
-    description: "Built to scale from startup to enterprise with zero infrastructure worries.",
+    icon: "speed",
+    title: "Edge-Deployed Performance",
+    description:
+      "Global Cloudflare Workers deployment ensures sub-2s response times with 99.9% uptime guarantee.",
   },
 ];
 
 export function FeaturesSection() {
   return (
-    <section className="py-20 bg-surface">
+    <section id="features" className="py-20 bg-surface">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-on-surface mb-4 tracking-tight">
-            Why Sophia?
+            Built for Agencies, Powered by AI
           </h2>
           <p className="text-xl text-on-surface-variant max-w-2xl mx-auto leading-relaxed">
-            Everything you need to build production-ready AI applications
+            Everything you need to automate AI workflows at scale
           </p>
         </div>
 
@@ -40,7 +44,7 @@ export function FeaturesSection() {
           {features.map((feature) => (
             <div
               key={feature.title}
-              className="p-6 rounded-2xl bg-surface-container-low hover:bg-surface-container-high transition-colors"
+              className="p-6 rounded-2xl bg-surface-container-low hover:bg-surface-container-high transition-colors cursor-pointer"
             >
               <span className="material-symbols-outlined text-5xl text-primary mb-4 block">
                 {feature.icon}
@@ -48,7 +52,9 @@ export function FeaturesSection() {
               <h3 className="text-xl font-semibold text-on-surface mb-2 tracking-tight">
                 {feature.title}
               </h3>
-              <p className="text-on-surface-variant leading-relaxed">{feature.description}</p>
+              <p className="text-on-surface-variant leading-relaxed">
+                {feature.description}
+              </p>
             </div>
           ))}
         </div>
