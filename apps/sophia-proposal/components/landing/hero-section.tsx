@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { TerminalPreview } from "./terminal-preview";
 
 export function HeroSection() {
   const router = useRouter();
@@ -56,8 +57,10 @@ export function HeroSection() {
               View Pricing
             </Button>
           </div>
+          {/* Terminal preview */}
+          <TerminalPreview />
           {/* Trust indicators */}
-          <div className="mt-16 flex items-center justify-center gap-8 text-white/30 text-sm">
+          <div className="mt-12 flex items-center justify-center gap-8 text-white/30 text-sm">
             <span className="flex items-center gap-2">
               <span className="material-symbols-outlined text-base">verified</span>
               99.9% Uptime
