@@ -1,11 +1,12 @@
 /**
- * Claude AI Sales Intelligence
+ * AI Sales Intelligence
  *
- * Competitor SWOT analysis and outreach sequence generation via Anthropic SDK.
+ * Competitor SWOT analysis and outreach sequence generation via LLM Router.
  * Falls back to static templates on API failure — never breaks the flow.
  */
 
-import { getClaudeClient, CLAUDE_MODEL, CLAUDE_MAX_TOKENS } from './claude-proposal-generator';
+import { llmGenerate } from './llm-router';
+import { CLAUDE_MAX_TOKENS } from './claude-proposal-generator';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -91,18 +92,11 @@ export async function generateBattlecard(params: BattlecardParams): Promise<Batt
   };
 
   try {
-    const client = getClaudeClient();
     const prompt = `Create a sales battlecard for "${product}" vs "${params.competitor}".
 Include: 4 strengths of our product, 3 weaknesses of competitor, 3 key differentiators, and objection handling for "too_expensive", "unproven", "switching_cost".
 Return JSON: { "strengths": string[], "weaknesses_of_competitor": string[], "key_differentiators": string[], "objection_handling": { "too_expensive": string, "unproven": string, "switching_cost": string } }`;
 
-    const message = await client.messages.create({
-      model: CLAUDE_MODEL,
-      max_tokens: CLAUDE_MAX_TOKENS,
-      messages: [{ role: 'user', content: prompt }],
-    });
-
-    const raw = message.content[0].type === 'text' ? message.content[0].text : '';
+    const raw = await llmGenerate(prompt, { maxTokens: CLAUDE_MAX_TOKENS });
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return fallback;
 
@@ -139,20 +133,13 @@ export async function generateCompetitorAnalysis(
   }));
 
   try {
-    const client = getClaudeClient();
     const focusAreas = (params.focus_areas ?? ['pricing', 'features', 'market position']).join(', ');
     const prompt = `Analyze ${product} vs: ${competitors.join(', ')}.
 Focus areas: ${focusAreas}.
 For each competitor provide SWOT (4 bullet points each) and a win strategy for ${product}.
 Return JSON: { "analyses": [{ "competitor": string, "swot": { "strengths": [], "weaknesses": [], "opportunities": [], "threats": [] }, "win_strategy": string }] }`;
 
-    const message = await client.messages.create({
-      model: CLAUDE_MODEL,
-      max_tokens: CLAUDE_MAX_TOKENS,
-      messages: [{ role: 'user', content: prompt }],
-    });
-
-    const raw = message.content[0].type === 'text' ? message.content[0].text : '';
+    const raw = await llmGenerate(prompt, { maxTokens: CLAUDE_MAX_TOKENS });
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return fallback;
 
@@ -202,20 +189,13 @@ export async function generateOutreachSequence(params: OutreachParams): Promise<
   ];
 
   try {
-    const client = getClaudeClient();
     const prompt = `Write a 4-touch outreach sequence for: ${name} at ${company} (${role}).
 Industry: ${industry}. Pain point: ${pain}.
 Product: Sophia AI Factory (AI proposals in <30s, MCU pricing, video generation).
 Touches: Day 1 email, Day 3 email, Day 5 LinkedIn, Day 7 email.
 Return JSON: { "sequence": [{ "day": number, "subject": string, "body": string, "channel": string }] }`;
 
-    const message = await client.messages.create({
-      model: CLAUDE_MODEL,
-      max_tokens: CLAUDE_MAX_TOKENS,
-      messages: [{ role: 'user', content: prompt }],
-    });
-
-    const raw = message.content[0].type === 'text' ? message.content[0].text : '';
+    const raw = await llmGenerate(prompt, { maxTokens: CLAUDE_MAX_TOKENS });
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return fallback;
 
