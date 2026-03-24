@@ -13,7 +13,7 @@ const lines = [
 ];
 
 const colorMap: Record<string, string> = {
-  comment: "text-gray-500",
+  comment: "text-on-surface-dark-variant",
   command: "text-green-400",
   flag: "text-blue-300",
   response: "text-amber-300",
@@ -24,17 +24,17 @@ export function TerminalPreview() {
   return (
     <div className="w-full max-w-2xl mx-auto mt-14">
       {/* Window chrome */}
-      <div className="bg-[#1e1e2e] rounded-t-xl px-4 py-3 flex items-center gap-2">
+      <div className="bg-surface-dark-high rounded-t-xl px-4 py-3 flex items-center gap-2">
         <div className="w-3 h-3 rounded-full bg-red-400/80" />
         <div className="w-3 h-3 rounded-full bg-yellow-400/80" />
         <div className="w-3 h-3 rounded-full bg-green-400/80" />
-        <span className="ml-3 text-xs text-gray-500 font-mono">terminal</span>
+        <span className="ml-3 text-xs text-on-surface-dark-variant font-mono">terminal</span>
       </div>
       {/* Code */}
-      <div className="bg-[#11111b] rounded-b-xl p-5 font-mono text-[13px] leading-6 overflow-x-auto border border-gray-800/50 border-t-0">
+      <div className="bg-surface-dark-dim rounded-b-xl p-5 font-mono text-[13px] leading-6 overflow-x-auto border border-outline/20 border-t-0">
         {lines.map((line, i) => (
           <div key={i} className={colorMap[line.type]}>
-            {line.type === "command" && <span className="text-gray-500 mr-2 select-none">$</span>}
+            {line.type === "command" && <span className="text-on-surface-dark-variant mr-2 select-none">$</span>}
             {line.text}
           </div>
         ))}
