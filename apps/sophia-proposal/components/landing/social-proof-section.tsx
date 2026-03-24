@@ -1,9 +1,44 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { ScrollReveal } from "@/components/ui/scroll-reveal";
+
 const stats = [
-  { value: "500+", label: "Missions Completed" },
-  { value: "50+", label: "Agencies" },
-  { value: "99.9%", label: "Uptime" },
-  { value: "< 2s", label: "Response Time" },
+  { value: 500, suffix: "+", label: "Missions Completed" },
+  { value: 50, suffix: "+", label: "Agencies" },
+  { value: 99.9, suffix: "%", label: "Uptime" },
+  { value: 2, prefix: "< ", suffix: "s", label: "Response Time" },
 ];
+
+function AnimatedCounter({ value, prefix = "", suffix = "" }: { value: number; prefix?: string; suffix?: string }) {
+  const [count, setCount] = useState(0);
+  const ref = useRef<HTMLSpanElement>(null);
+  const hasAnimated = useRef(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && !hasAnimated.current) {
+        hasAnimated.current = true;
+        const duration = 1500;
+        const start = performance.now();
+        const isDecimal = value % 1 !== 0;
+        function tick(now: number) {
+          const progress = Math.min((now - start) / duration, 1);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          setCount(isDecimal ? parseFloat((value * eased).toFixed(1)) : Math.floor(value * eased));
+          if (progress < 1) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+      }
+    }, { threshold: 0.3 });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [value]);
+
+  return <span ref={ref}>{prefix}{count}{suffix}</span>;
+}
 
 const testimonials = [
   {
@@ -39,7 +74,7 @@ export function SocialProofSection() {
             {stats.map((stat) => (
               <div key={stat.label} className="text-center">
                 <p className="text-3xl md:text-4xl font-extrabold text-white mb-1 tracking-tight">
-                  {stat.value}
+                  <AnimatedCounter value={stat.value} prefix={stat.prefix} suffix={stat.suffix} />
                 </p>
                 <p className="text-white/50 text-sm font-medium">{stat.label}</p>
               </div>
@@ -48,7 +83,7 @@ export function SocialProofSection() {
         </div>
 
         {/* Section heading */}
-        <div className="text-center mb-12">
+        <ScrollReveal className="text-center mb-12">
           <span className="inline-block px-4 py-1.5 mb-4 text-xs font-semibold uppercase tracking-wider text-primary bg-primary/5 rounded-full">
             Social Proof
           </span>
@@ -58,7 +93,7 @@ export function SocialProofSection() {
           <p className="text-lg text-on-surface-variant max-w-xl mx-auto leading-relaxed">
             Real results from teams who switched to Sophia AI Factory
           </p>
-        </div>
+        </ScrollReveal>
 
         {/* Testimonials */}
         <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">

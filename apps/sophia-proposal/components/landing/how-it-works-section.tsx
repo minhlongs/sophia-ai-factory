@@ -1,3 +1,5 @@
+import { ScrollReveal } from "@/components/ui/scroll-reveal";
+
 const steps = [
   {
     icon: "person_add",
@@ -23,7 +25,7 @@ export function HowItWorksSection() {
   return (
     <section id="how-it-works" className="py-24 bg-gradient-to-b from-white to-gray-50">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16">
+        <ScrollReveal className="text-center mb-16">
           <span className="inline-block px-4 py-1.5 mb-4 text-xs font-semibold uppercase tracking-wider text-primary bg-primary/5 rounded-full">
             Simple Setup
           </span>
@@ -33,7 +35,7 @@ export function HowItWorksSection() {
           <p className="text-lg text-on-surface-variant max-w-xl mx-auto leading-relaxed">
             Three steps from sign-up to production AI output
           </p>
-        </div>
+        </ScrollReveal>
 
         <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
           {steps.map((step, index) => (
