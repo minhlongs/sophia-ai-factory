@@ -37,8 +37,8 @@ export function UpgradeButton({ tierName, variant = 'primary', className = '' }:
 
   const baseClasses = 'py-2 px-4 rounded font-medium transition-colors';
   const variantClasses = variant === 'primary'
-    ? 'bg-blue-600 text-white hover:bg-blue-700'
-    : 'border border-blue-600 text-blue-600 hover:bg-blue-50';
+    ? 'bg-primary text-white hover:bg-primary-hover'
+    : 'border border-primary text-primary hover:bg-primary/10';
 
   return (
     <button

@@ -154,7 +154,7 @@ export function VideoList({ proposalId, onVideoSelect, className }: VideoListPro
     return (
       <div className={clsx("text-center py-12", className)}>
         <p className="text-red-600">{error}</p>
-        <Button onClick={fetchVideos} className="mt-4">
+        <Button onClick={fetchVideos} aria-label="Retry" className="mt-4">
           Retry
         </Button>
       </div>

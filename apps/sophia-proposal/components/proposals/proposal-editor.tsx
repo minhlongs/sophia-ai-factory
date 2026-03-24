@@ -89,7 +89,7 @@ export default function ProposalEditor({
         <div className="flex gap-2">
           <button
             onClick={handleSave}
-            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover"
+            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover focus:ring-2 focus:ring-primary focus:outline-none"
           >
             Save Changes
           </button>
@@ -109,13 +109,13 @@ export default function ProposalEditor({
               )}
               <button
                 onClick={() => setEditingSection(editingSection === section.key ? null : section.key)}
-                className="text-xs text-primary hover:text-primary-hover"
+                className="text-xs text-primary hover:text-primary-hover focus:ring-2 focus:ring-primary focus:outline-none rounded"
               >
                 {editingSection === section.key ? "Preview" : "Edit"}
               </button>
               <button
                 onClick={() => handleRegenerate(section.key)}
-                className="text-xs text-gray-500 hover:text-gray-700"
+                className="text-xs text-gray-500 hover:text-gray-700 focus:ring-2 focus:ring-primary focus:outline-none rounded"
               >
                 Regenerate
               </button>
@@ -127,7 +127,7 @@ export default function ProposalEditor({
                 value={section.content}
                 onChange={(e) => handleContentChange(section.key, e.target.value)}
                 rows={6}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary"
               />
             ) : (
               <div

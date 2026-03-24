@@ -81,9 +81,9 @@ export function MissionsList() {
           <button
             key={f.value}
             onClick={() => setFilter(f.value)}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+            className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
               filter === f.value
-                ? 'bg-indigo-600 text-white'
+                ? 'bg-primary text-white'
                 : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
             }`}
           >
@@ -120,7 +120,10 @@ export function MissionsList() {
                   {mission.command}
                 </span>
                 <span className="text-xs text-gray-400 shrink-0">{fmt(mission.created_at)}</span>
-                <span className="material-symbols-outlined text-gray-400 text-base shrink-0">
+                <span
+                  aria-label={expanded === mission.id ? 'Collapse details' : 'Expand details'}
+                  className="material-symbols-outlined text-gray-400 text-base shrink-0"
+                >
                   {expanded === mission.id ? 'expand_less' : 'expand_more'}
                 </span>
               </button>
