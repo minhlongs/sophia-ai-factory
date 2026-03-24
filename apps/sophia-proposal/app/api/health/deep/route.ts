@@ -69,9 +69,23 @@ export async function GET(req: NextRequest) {
     results.api_calls_24h = 'error';
   }
 
+  // SLA assessment
+  const errorRate = total > 0 ? (failed / total) * 100 : 0;
+  const apiErrors = typeof results.api_errors_24h === 'number' ? results.api_errors_24h : 0;
+  const apiCalls = typeof results.api_calls_24h === 'number' ? results.api_calls_24h : 0;
+  const apiErrorRate = apiCalls > 0 ? (apiErrors / apiCalls) * 100 : 0;
+
+  const sla = {
+    mission_error_rate: { value: `${errorRate.toFixed(1)}%`, threshold: '< 5%', ok: errorRate < 5 },
+    api_error_rate: { value: `${apiErrorRate.toFixed(1)}%`, threshold: '< 2%', ok: apiErrorRate < 2 },
+    missions_24h: { value: total, threshold: '> 0 (system active)', ok: total > 0 },
+    status: errorRate < 5 && apiErrorRate < 2 ? 'SLA_MET' : 'SLA_BREACH',
+  };
+
   return NextResponse.json({
     status: 'deep_check_complete',
     timestamp: new Date().toISOString(),
+    sla,
     ...results,
   }, {
     headers: { 'Cache-Control': 'no-store, max-age=0' },
