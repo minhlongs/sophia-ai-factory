@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
@@ -12,19 +12,27 @@ const navLinks = [
 
 export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 50);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
-    <nav className="sticky top-0 z-50 bg-surface/80 backdrop-blur-md border-b border-outline/20">
+    <nav className={`sticky top-0 z-50 transition-all duration-300 ${scrolled ? "bg-white/90 backdrop-blur-md border-b border-gray-200 shadow-sm" : "bg-transparent border-b border-transparent"}`}>
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 cursor-pointer">
           <span
-            className="material-symbols-outlined text-primary text-2xl"
+            className="material-symbols-outlined text-2xl"
+            style={{ color: scrolled ? "#0061a4" : "#5ec9ff" }}
             aria-hidden="true"
           >
             smart_toy
           </span>
-          <span className="font-semibold text-on-surface text-lg tracking-tight">
+          <span className={`font-semibold text-lg tracking-tight transition-colors ${scrolled ? "text-gray-900" : "text-white"}`}>
             Sophia AI Factory
           </span>
         </Link>
@@ -35,7 +43,7 @@ export function Navbar() {
             <a
               key={link.href}
               href={link.href}
-              className="text-on-surface-variant hover:text-on-surface transition-colors text-sm font-medium cursor-pointer"
+              className={`transition-colors text-sm font-medium cursor-pointer ${scrolled ? "text-gray-600 hover:text-gray-900" : "text-white/70 hover:text-white"}`}
             >
               {link.label}
             </a>
@@ -53,12 +61,12 @@ export function Navbar() {
 
         {/* Mobile hamburger */}
         <button
-          className="md:hidden p-2 rounded-lg hover:bg-surface-container transition-colors cursor-pointer"
+          className={`md:hidden p-2 rounded-lg transition-colors cursor-pointer ${scrolled ? "hover:bg-gray-100" : "hover:bg-white/10"}`}
           aria-label="Toggle navigation menu"
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen(!menuOpen)}
         >
-          <span className="material-symbols-outlined text-on-surface">
+          <span className={`material-symbols-outlined ${scrolled ? "text-gray-700" : "text-white"}`}>
             {menuOpen ? "close" : "menu"}
           </span>
         </button>

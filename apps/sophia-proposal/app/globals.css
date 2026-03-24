@@ -82,6 +82,36 @@
   --md-sys-elevation-level5: 0px 8px 12px 6px rgba(0, 0, 0, 0.15), 0px 4px 4px 0px rgba(0, 0, 0, 0.3);
 }
 
+/* Tailwind CSS v4 Custom Properties Integration */
+@theme inline {
+  --color-primary: var(--md-sys-color-primary);
+  --color-on-primary: var(--md-sys-color-on-primary);
+  --color-primary-hover: var(--md-sys-color-primary-hover);
+  --color-primary-container: var(--md-sys-color-primary-container);
+  --color-on-primary-container: var(--md-sys-color-on-primary-container);
+  --color-primary-container-variant: var(--md-sys-color-primary-container-variant);
+
+  --color-secondary: var(--md-sys-color-secondary);
+  --color-on-secondary: var(--md-sys-color-on-secondary);
+  --color-secondary-hover: var(--md-sys-color-secondary-hover);
+  --color-secondary-container: var(--md-sys-color-secondary-container);
+  --color-on-secondary-container: var(--md-sys-color-on-secondary-container);
+
+  --color-surface: var(--md-sys-color-surface);
+  --color-on-surface: var(--md-sys-color-on-surface);
+  --color-surface-variant: var(--md-sys-color-surface-variant);
+  --color-on-surface-variant: var(--md-sys-color-on-surface-variant);
+  --color-surface-container: var(--md-sys-color-surface-container);
+  --color-surface-container-low: var(--md-sys-color-surface-container-low);
+  --color-surface-container-high: var(--md-sys-color-surface-container-high);
+  --color-surface-container-highest: var(--md-sys-color-surface-container-highest);
+  --color-surface-container-lowest: var(--md-sys-color-surface-container-lowest);
+
+  --color-outline: var(--md-sys-color-outline);
+  --color-inverse-primary: var(--md-sys-color-inverse-primary);
+  --color-on-inverse-primary: var(--md-sys-color-on-inverse-primary);
+}
+
 /* Custom styles */
 html {
   scroll-behavior: smooth;
@@ -100,6 +130,83 @@ body {
 }
 .animate-slide-up {
   animation: slide-up 0.3s ease-out;
+}
+
+/* Hero animated gradient background */
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient-shift 8s ease infinite;
+}
+
+/* Floating orb animation for hero */
+@keyframes float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -30px) scale(1.05); }
+  66% { transform: translate(-20px, 20px) scale(0.95); }
+}
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+.animate-float-delayed {
+  animation: float 8s ease-in-out 2s infinite;
+}
+
+/* Scroll-reveal: fade in from below */
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(2rem); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out both;
+}
+
+/* Gradient text utility */
+.text-gradient {
+  background: linear-gradient(135deg, #0061a4 0%, #5ec9ff 50%, #0061a4 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradient-shift 4s linear infinite;
+}
+
+/* Glow effect for CTA buttons */
+.glow-primary {
+  box-shadow: 0 0 20px rgba(0, 97, 164, 0.3), 0 0 40px rgba(0, 97, 164, 0.1);
+}
+.glow-primary:hover {
+  box-shadow: 0 0 30px rgba(0, 97, 164, 0.4), 0 0 60px rgba(0, 97, 164, 0.15);
+}
+
+/* Card hover lift */
+.card-hover {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+}
+
+/* Pulse ring for stats */
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(0, 97, 164, 0.3); }
+  70% { box-shadow: 0 0 0 10px rgba(0, 97, 164, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 97, 164, 0); }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .animate-gradient,
+  .animate-float,
+  .animate-float-delayed,
+  .animate-fade-in-up,
+  .text-gradient,
+  .card-hover { animation: none !important; transition: none !important; }
+  .card-hover:hover { transform: none; }
 }
 
 /* Material Symbols Icons */

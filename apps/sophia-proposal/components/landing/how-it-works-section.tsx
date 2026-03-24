@@ -21,63 +21,42 @@ const steps = [
 
 export function HowItWorksSection() {
   return (
-    <section id="how-it-works" className="py-20 bg-surface-container-low">
+    <section id="how-it-works" className="py-24 bg-gradient-to-b from-white to-gray-50">
       <div className="container mx-auto px-4">
-        {/* Heading */}
         <div className="text-center mb-16">
+          <span className="inline-block px-4 py-1.5 mb-4 text-xs font-semibold uppercase tracking-wider text-primary bg-primary/5 rounded-full">
+            Simple Setup
+          </span>
           <h2 className="text-3xl md:text-4xl font-bold text-on-surface mb-4 tracking-tight">
-            How It Works
+            Up and Running in Minutes
           </h2>
-          <p className="text-xl text-on-surface-variant max-w-2xl mx-auto leading-relaxed">
-            From sign-up to AI output in three simple steps
+          <p className="text-lg text-on-surface-variant max-w-xl mx-auto leading-relaxed">
+            Three steps from sign-up to production AI output
           </p>
         </div>
 
-        {/* Steps */}
-        <div className="relative flex flex-col md:flex-row items-start md:items-center justify-center gap-0">
+        <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
           {steps.map((step, index) => (
-            <div key={step.step} className="flex flex-col md:flex-row items-center flex-1 min-w-0">
-              {/* Step card */}
-              <div className="flex flex-col items-center text-center px-6 py-8 max-w-xs mx-auto">
-                {/* Step badge */}
-                <div className="w-8 h-8 rounded-full bg-primary text-on-primary text-sm font-bold flex items-center justify-center mb-4">
-                  {step.step}
-                </div>
-                {/* Icon */}
-                <div className="w-16 h-16 rounded-2xl bg-primary-container flex items-center justify-center mb-5">
-                  <span
-                    className="material-symbols-outlined text-3xl text-on-primary-container"
-                    aria-hidden="true"
-                  >
-                    {step.icon}
-                  </span>
-                </div>
-                <h3 className="text-xl font-semibold text-on-surface mb-2 tracking-tight">
-                  {step.title}
-                </h3>
-                <p className="text-on-surface-variant leading-relaxed text-sm">
-                  {step.description}
-                </p>
+            <div key={step.step} className="relative text-center">
+              {/* Number badge */}
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-[#5ec9ff] text-white text-xl font-bold flex items-center justify-center mx-auto mb-6 shadow-lg shadow-primary/20">
+                {step.step}
               </div>
-
-              {/* Connector — hidden after last step */}
+              {/* Icon */}
+              <div className="w-16 h-16 rounded-2xl bg-primary/5 flex items-center justify-center mx-auto mb-5">
+                <span className="material-symbols-outlined text-3xl text-primary" aria-hidden="true">
+                  {step.icon}
+                </span>
+              </div>
+              <h3 className="text-xl font-semibold text-on-surface mb-2 tracking-tight">
+                {step.title}
+              </h3>
+              <p className="text-on-surface-variant leading-relaxed text-sm max-w-xs mx-auto">
+                {step.description}
+              </p>
+              {/* Connector line (desktop only) */}
               {index < steps.length - 1 && (
-                <div className="hidden md:flex items-center justify-center flex-shrink-0 w-12">
-                  <div className="w-full h-0.5 bg-outline/30 relative">
-                    <span
-                      className="material-symbols-outlined text-outline/50 text-sm absolute -top-2.5 left-1/2 -translate-x-1/2"
-                      aria-hidden="true"
-                    >
-                      arrow_forward
-                    </span>
-                  </div>
-                </div>
-              )}
-              {/* Mobile connector */}
-              {index < steps.length - 1 && (
-                <div className="md:hidden flex flex-col items-center h-8">
-                  <div className="w-0.5 h-full bg-outline/30" />
-                </div>
+                <div className="hidden md:block absolute top-7 left-[calc(50%+40px)] w-[calc(100%-80px)] h-0.5 bg-gradient-to-r from-primary/30 to-primary/10" />
               )}
             </div>
           ))}
