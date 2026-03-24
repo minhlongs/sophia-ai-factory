@@ -27,7 +27,7 @@ export default function MissionsPage() {
   }
 
   function handleSuccess(missionId: string) {
-    window.location.href = `/missions/${missionId}`;
+    window.location.href = `/dashboard/missions/${missionId}`;
   }
 
   return (

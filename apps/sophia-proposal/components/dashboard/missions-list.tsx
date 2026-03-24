@@ -59,12 +59,13 @@ export function MissionsList() {
   const [filter, setFilter] = useState<StatusFilter>('all');
   const [expanded, setExpanded] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/missions?limit=100')
       .then(r => r.json())
       .then(data => setMissions(data.missions ?? []))
-      .catch(() => {})
+      .catch(() => setError('Failed to load missions'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -95,6 +96,10 @@ export function MissionsList() {
       {/* List */}
       {loading ? (
         <div className="text-center py-10 text-gray-400">Loading…</div>
+      ) : error ? (
+        <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
       ) : visible.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 p-10 text-center text-gray-400">
           No missions found.

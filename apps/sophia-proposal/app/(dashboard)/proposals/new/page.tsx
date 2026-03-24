@@ -17,8 +17,8 @@ export default function NewProposalPage() {
   const [generatedProposal, setGeneratedProposal] = useState<GeneratedProposal | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSuccess = (proposal: GeneratedProposal) => {
-    setGeneratedProposal(proposal);
+  const handleSuccess = (proposal: Record<string, string>) => {
+    setGeneratedProposal(proposal as unknown as GeneratedProposal);
     setError(null);
   };
 

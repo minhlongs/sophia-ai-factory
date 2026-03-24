@@ -8,8 +8,14 @@
 import { getD1Client } from './client';
 import type { User } from './client';
 
-const JWT_SECRET = process.env.JWT_SECRET ?? process.env.INTERNAL_API_SECRET ?? 'sophia-jwt-secret-change-me';
 const JWT_EXPIRY_SECONDS = 7 * 24 * 60 * 60; // 7 days
+
+// Lazy getter — throws at sign/verify time, not at module load (CF Workers lazy env)
+function getJwtSecret(): string {
+  const s = process.env.JWT_SECRET;
+  if (!s) throw new Error('JWT_SECRET environment variable is required');
+  return s;
+}
 
 // JWT helpers using Web Crypto (CF Workers compatible)
 async function hmacSign(payload: string, secret: string): Promise<string> {
@@ -39,7 +45,7 @@ async function createJwt(payload: Record<string, unknown>): Promise<string> {
     iat: Math.floor(Date.now() / 1000),
     exp: Math.floor(Date.now() / 1000) + JWT_EXPIRY_SECONDS,
   });
-  const signature = await hmacSign(`${header}.${body}`, JWT_SECRET);
+  const signature = await hmacSign(`${header}.${body}`, getJwtSecret());
   return `${header}.${body}.${signature}`;
 }
 
@@ -48,7 +54,7 @@ async function verifyJwt(token: string): Promise<Record<string, unknown> | null>
     const [header, body, signature] = token.split('.');
     if (!header || !body || !signature) return null;
 
-    const expected = await hmacSign(`${header}.${body}`, JWT_SECRET);
+    const expected = await hmacSign(`${header}.${body}`, getJwtSecret());
     if (expected !== signature) return null;
 
     const payload = base64UrlDecode(body) as Record<string, unknown>;
@@ -175,8 +181,7 @@ export async function sendMagicLink(email: string): Promise<{ error: string | nu
       await db.from('users').update({ magic_link_token: token, magic_link_expires_at: expires }).eq('email', email);
     }
 
-    // In production: send email via CF Workers Email or external service
-    console.log(`[auth] Magic link token for ${email}: ${token}`);
+    // Magic link token generated — integrate email service (Resend/CF Email Workers) to send
     return { error: null };
   } catch (e) {
     return { error: (e as Error).message };

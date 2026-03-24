@@ -42,8 +42,7 @@ export async function handleOrderPaid(db: D1Client, event: PolarWebhookEvent) {
     .single();
 
   if (existing) {
-    console.log(`Order ${orderId} already processed - skipping (idempotent)`);
-    return;
+    return; // already processed (idempotent)
   }
 
   const { data: billingSettings } = await db
@@ -77,7 +76,6 @@ export async function handleOrderPaid(db: D1Client, event: PolarWebhookEvent) {
     created_at: new Date().toISOString(),
   });
 
-  console.log(`Order paid: ${orderId} - Credited ${mcuToCredit} MCU to org ${billingSettings.org_id} (${tier.name})`);
 }
 
 export async function handleOrderRefunded(db: D1Client, event: PolarWebhookEvent) {
@@ -101,8 +99,7 @@ export async function handleOrderRefunded(db: D1Client, event: PolarWebhookEvent
     .single();
 
   if (existing) {
-    console.log(`Refund ${orderId} already processed - skipping (idempotent)`);
-    return;
+    return; // already processed (idempotent)
   }
 
   const { data: billingSettings } = await db
@@ -142,5 +139,4 @@ export async function handleOrderRefunded(db: D1Client, event: PolarWebhookEvent
     created_at: new Date().toISOString(),
   });
 
-  console.log(`Order refunded: ${orderId} - Deducted ${mcuToDeduct} MCU from org ${billingSettings.org_id} (${tier.name})`);
 }

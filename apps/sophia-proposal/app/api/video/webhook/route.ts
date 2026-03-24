@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
         );
       }
     } else {
-      console.warn("HEYGEN_WEBHOOK_SECRET not configured - skipping signature verification");
+      console.error("HEYGEN_WEBHOOK_SECRET not configured - skipping signature verification");
     }
 
     // 2. Parse and validate payload
@@ -76,7 +76,6 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (!video) {
-      console.warn("Webhook for unknown video:", video_id);
       return NextResponse.json({ success: true }); // Return 200 to avoid retries
     }
 
@@ -96,7 +95,6 @@ export async function POST(request: NextRequest) {
         })
         .eq("id", video.id);
 
-      console.log(`Video ${video.id} completed, MCU ${video.mcu_cost} already reserved`);
     } else if (event === "task.failed") {
       // Video generation failed — refund the MCU reservation
 
@@ -119,8 +117,6 @@ export async function POST(request: NextRequest) {
 
         if (refundError) {
           console.error("Failed to refund MCU for failed video:", video.id, refundError);
-        } else {
-          console.log(`Video ${video.id} failed — refunded ${video.mcu_cost} MCU to org ${video.org_id}`);
         }
       }
     }

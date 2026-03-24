@@ -71,9 +71,8 @@ export default function ProposalEditor({
     );
   };
 
-  const handleRegenerate = async (key: string) => {
-    // TODO: Call API to regenerate specific section
-    console.log("Regenerating section:", key);
+  const handleRegenerate = async (_key: string) => {
+    // Regenerate section — not yet implemented
   };
 
   const handleSave = () => {

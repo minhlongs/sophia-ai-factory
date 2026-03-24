@@ -2,7 +2,12 @@
  * JWT verification — extracted to avoid circular imports with client.ts
  */
 
-const JWT_SECRET = process.env.JWT_SECRET ?? process.env.INTERNAL_API_SECRET ?? 'sophia-jwt-secret-change-me';
+// Lazy getter — throws at verify time, not at module load (CF Workers lazy env)
+function getJwtSecret(): string {
+  const s = process.env.JWT_SECRET;
+  if (!s) throw new Error('JWT_SECRET environment variable is required');
+  return s;
+}
 
 async function hmacSign(payload: string, secret: string): Promise<string> {
   const enc = new TextEncoder();
@@ -24,7 +29,7 @@ export async function verifyJwt(token: string): Promise<Record<string, unknown> 
     const [header, body, signature] = token.split('.');
     if (!header || !body || !signature) return null;
 
-    const expected = await hmacSign(`${header}.${body}`, JWT_SECRET);
+    const expected = await hmacSign(`${header}.${body}`, getJwtSecret());
     if (expected !== signature) return null;
 
     const payload = base64UrlDecode(body) as Record<string, unknown>;

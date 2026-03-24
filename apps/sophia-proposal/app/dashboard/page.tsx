@@ -47,12 +47,12 @@ export default function DashboardPage() {
               <h1 className="text-lg font-semibold text-gray-900">Sophia AI Factory</h1>
             </div>
             <div className="flex items-center space-x-4">
-              <a href="/missions" className="text-sm font-medium text-orange-600 hover:text-orange-700">Missions</a>
+              <a href="/dashboard/missions" className="text-sm font-medium text-orange-600 hover:text-orange-700">Missions</a>
               <a href="/pricing" className="text-sm text-gray-600 hover:text-gray-900">Pricing</a>
               <span className="text-sm text-gray-600">{user.email}</span>
-              <button className="text-sm text-primary hover:text-primary-hover font-medium">
+              <a href="/dashboard" className="text-sm text-primary hover:text-primary-hover font-medium">
                 Settings
-              </button>
+              </a>
             </div>
           </div>
         </div>

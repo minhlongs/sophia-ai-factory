@@ -45,7 +45,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid JSON payload' }, { status: 400 });
     }
 
-    console.log(`Processing Polar webhook: ${event.type} (id: ${event.data.id})`);
 
     // 4. Resolve D1 client once — shared across all handlers
     const db = await getD1Client();
@@ -68,7 +67,7 @@ export async function POST(request: NextRequest) {
         await handleOrderRefunded(db, event);
         break;
       default:
-        console.log(`Unhandled event type: ${event.type}`);
+        break;
     }
 
     return NextResponse.json({ received: true });

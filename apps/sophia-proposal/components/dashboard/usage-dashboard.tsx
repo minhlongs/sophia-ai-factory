@@ -44,9 +44,11 @@ export function UsageDashboard() {
   const [logs, setLogs] = useState<UsageLog[]>([]);
   const [balance, setBalance] = useState<BalanceData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
+    setError(null);
     const days = range === '7d' ? 7 : range === '30d' ? 30 : 90;
     Promise.all([
       fetch(`/api/usage?limit=500&days=${days}`).then(r => r.json()),
@@ -56,7 +58,7 @@ export function UsageDashboard() {
         setLogs(usageData.logs ?? []);
         setBalance(billingData.balance ?? null);
       })
-      .catch(() => {})
+      .catch(() => setError('Failed to load usage data'))
       .finally(() => setLoading(false));
   }, [range]);
 
@@ -105,10 +107,17 @@ export function UsageDashboard() {
         ))}
       </div>
 
+      {/* Error state */}
+      {error && (
+        <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
       {/* Breakdown table */}
       {loading ? (
         <div className="text-center py-10 text-gray-400">Loading…</div>
-      ) : breakdown.length === 0 ? (
+      ) : error ? null : breakdown.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 p-10 text-center text-gray-400">
           No usage in this period.
         </div>

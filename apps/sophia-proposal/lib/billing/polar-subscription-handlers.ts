@@ -47,8 +47,6 @@ async function maybeProcessReferralCommission(
 
     if (!res.ok) {
       console.error('Referral earn call failed:', await res.json().catch(() => ({})));
-    } else {
-      console.log(`Referral commission processed for code ${referralCode}:`, await res.json());
     }
   } catch (e) {
     console.error('maybeProcessReferralCommission error:', e);
@@ -80,7 +78,6 @@ export async function handleSubscriptionCreated(db: D1Client, event: PolarWebhoo
   });
 
   if (error) throw new Error(`Failed to create subscription: ${error.message}`);
-  console.log(`Subscription created: ${subscriptionId} (${tier.name})`);
 
   await maybeProcessReferralCommission(db, customerId, subscriptionId, tier.price);
 }
@@ -97,7 +94,6 @@ export async function handleSubscriptionUpdated(db: D1Client, event: PolarWebhoo
     .eq('polar_subscription_id', subscriptionId);
 
   if (error) throw new Error(`Failed to update subscription: ${error.message}`);
-  console.log(`Subscription updated: ${subscriptionId} (status: ${status})`);
 }
 
 export async function handleSubscriptionDeleted(db: D1Client, event: PolarWebhookEvent) {
@@ -110,5 +106,4 @@ export async function handleSubscriptionDeleted(db: D1Client, event: PolarWebhoo
     .eq('polar_subscription_id', subscriptionId);
 
   if (error) throw new Error(`Failed to cancel subscription: ${error.message}`);
-  console.log(`Subscription cancelled: ${subscriptionId}`);
 }

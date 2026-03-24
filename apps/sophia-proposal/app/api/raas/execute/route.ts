@@ -11,8 +11,7 @@ import { runMission } from '@/lib/raas/pev-executor';
 
 export const dynamic = 'force-dynamic';
 
-// Max execution time for long-running missions (Vercel: up to 300s on Pro)
-export const maxDuration = 300;
+// CF Workers has 30s CPU limit — long missions use fire-and-forget pattern
 
 export async function POST(request: NextRequest) {
   try {
