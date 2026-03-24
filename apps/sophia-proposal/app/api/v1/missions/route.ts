@@ -8,7 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/db/client';
+import { getD1Client } from '@/lib/db/client';
 import type { MissionTemplate, OrgBalance, Mission } from '@/lib/db/types';
 import { validateApiKey } from '@/lib/raas/api-key-manager';
 import { checkRateLimit, rateLimitHeaders } from '@/lib/raas/rate-limiter';
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const db = createServerClient();
+    const db = await getD1Client();
     const params = request.nextUrl.searchParams;
     const status = params.get('status');
     const limit = Math.min(50, parseInt(params.get('limit') ?? '20', 10));
@@ -84,13 +84,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ missions: missions ?? [] }, { headers: rateLimitHeaders(rl) });
   } catch (err) {
     console.error('GET /api/v1/missions error:', err);
-    await recordUsage({
-      apiKeyId: auth.keyId!, orgId: auth.orgId!,
-      endpoint: ENDPOINT, method: 'GET',
-      statusCode: 500, mcuConsumed: 0,
-      responseTimeMs: Date.now() - start,
-    });
-    return NextResponse.json({ error: 'Failed to fetch missions' }, { status: 500 });
+    try {
+      await recordUsage({
+        apiKeyId: auth.keyId!, orgId: auth.orgId!,
+        endpoint: ENDPOINT, method: 'GET',
+        statusCode: 500, mcuConsumed: 0,
+        responseTimeMs: Date.now() - start,
+      });
+    } catch { /* ignore usage recording failure */ }
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: 'Failed to fetch missions', detail: msg }, { status: 500 });
   }
 }
 
@@ -145,24 +148,28 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const db = createServerClient();
+    const db = await getD1Client();
 
-    // Look up MCU cost
-    const { data: template } = await db
-      .from<MissionTemplate>('mission_templates')
-      .select('mcu_cost')
-      .eq('command', command)
-      .eq('is_active', true)
-      .single();
-
-    const mcuCost: number = template?.mcu_cost ?? 0;
+    // Look up MCU cost (is_active stored as integer 1 in D1)
+    let mcuCost = 0;
+    try {
+      const { data: template } = await db
+        .from<MissionTemplate>('mission_templates')
+        .select('mcu_cost')
+        .eq('command', command)
+        .eq('is_active', 1)
+        .maybeSingle();
+      mcuCost = template?.mcu_cost ?? 5; // default 5 MCU if template not found
+    } catch {
+      mcuCost = 5; // fallback
+    }
 
     // Check balance
     const { data: balance } = await db
       .from<OrgBalance>('org_balances')
       .select('balance')
       .eq('org_id', auth.orgId)
-      .single();
+      .maybeSingle();
 
     if (!balance || balance.balance < mcuCost) {
       return NextResponse.json(
@@ -177,10 +184,12 @@ export async function POST(request: NextRequest) {
     });
     if (deductErr) return NextResponse.json({ error: 'Failed to reserve MCU' }, { status: 402 });
 
-    // Create mission
-    const { data: mission, error: insertErr } = await db
+    // Create mission (generate ID for D1 compatibility)
+    const missionId = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
+    const { error: insertErr } = await db
       .from('missions')
       .insert({
+        id: missionId,
         org_id: auth.orgId,
         title: (title ?? command).trim(),
         command,
@@ -190,15 +199,13 @@ export async function POST(request: NextRequest) {
         mcu_cost: mcuCost,
         mcu_reserved: mcuCost,
         webhook_url: webhook_url ?? null,
-      })
-      .select('id, status, mcu_cost')
-      .single();
+      });
 
-    if (insertErr || !mission) {
+    if (insertErr) {
       await db.rpc('credit_mcu_balance', {
         p_org_id: auth.orgId, p_amount: mcuCost, p_subscription_id: 'mission:refund:v1',
       });
-      throw insertErr ?? new Error('Mission insert failed');
+      throw new Error(insertErr.message ?? 'Mission insert failed');
     }
 
     // Trigger async PEV execution
@@ -209,7 +216,7 @@ export async function POST(request: NextRequest) {
         'Content-Type': 'application/json',
         'x-internal-secret': process.env.INTERNAL_API_SECRET ?? '',
       },
-      body: JSON.stringify({ mission_id: mission.id }),
+      body: JSON.stringify({ mission_id: missionId }),
     }).catch((e) => console.error('[v1/missions] execute trigger failed:', e));
 
     await recordUsage({
@@ -220,17 +227,20 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(
-      { mission_id: mission.id, status: mission.status, mcu_cost: mission.mcu_cost },
+      { mission_id: missionId, status: 'queued', mcu_cost: mcuCost },
       { status: 201 }
     );
   } catch (err) {
     console.error('POST /api/v1/missions error:', err);
-    await recordUsage({
-      apiKeyId: auth.keyId!, orgId: auth.orgId!,
-      endpoint: ENDPOINT, method: 'POST',
-      statusCode: 500, mcuConsumed: 0,
-      responseTimeMs: Date.now() - start,
-    });
-    return NextResponse.json({ error: 'Failed to create mission' }, { status: 500 });
+    try {
+      await recordUsage({
+        apiKeyId: auth.keyId!, orgId: auth.orgId!,
+        endpoint: ENDPOINT, method: 'POST',
+        statusCode: 500, mcuConsumed: 0,
+        responseTimeMs: Date.now() - start,
+      });
+    } catch { /* ignore usage recording failure */ }
+    const msg = err instanceof Error ? err.message : JSON.stringify(err);
+    return NextResponse.json({ error: 'Mission creation error v3', detail: msg }, { status: 500 });
   }
 }
