@@ -1,6 +1,22 @@
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 
+// Mock IntersectionObserver for JSDOM
+class MockIntersectionObserver {
+  readonly root: Element | null = null;
+  readonly rootMargin: string = '';
+  readonly thresholds: ReadonlyArray<number> = [];
+  constructor(private callback: IntersectionObserverCallback) {}
+  observe() { /* no-op */ }
+  unobserve() { /* no-op */ }
+  disconnect() { /* no-op */ }
+  takeRecords(): IntersectionObserverEntry[] { return []; }
+}
+Object.defineProperty(globalThis, 'IntersectionObserver', {
+  value: MockIntersectionObserver,
+  writable: true,
+});
+
 // Mock next/font/google
 vi.mock('next/font/google', () => ({
   Inter: vi.fn(() => ({

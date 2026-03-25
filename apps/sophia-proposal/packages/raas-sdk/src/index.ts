@@ -9,6 +9,8 @@ export { SophiaClient } from './client.js';
 export { Missions } from './missions.js';
 export { Usage } from './usage.js';
 export { ApiKeys } from './api-keys.js';
+export { Webhooks } from './webhooks.js';
+export type { WebhookEndpoint, WebhookEvent, RegisterWebhookRequest } from './webhooks.js';
 
 // SSE stream helper
 export { MissionStream } from './stream.js';

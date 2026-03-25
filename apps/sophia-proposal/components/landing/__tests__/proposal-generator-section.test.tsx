@@ -7,7 +7,7 @@ describe("ProposalGeneratorSection", () => {
     render(<ProposalGeneratorSection />);
 
     const heading = screen.getByRole("heading", {
-      name: /ai proposal generator/i,
+      name: /win more deals faster/i,
     });
     expect(heading).toBeInTheDocument();
   });
@@ -16,7 +16,7 @@ describe("ProposalGeneratorSection", () => {
     render(<ProposalGeneratorSection />);
 
     const description = screen.getByText(
-      /create winning proposals faster with ai assistance/i
+      /create winning proposals with ai assistance/i
     );
     expect(description).toBeInTheDocument();
   });
@@ -24,7 +24,7 @@ describe("ProposalGeneratorSection", () => {
   it("renders all three feature cards", () => {
     render(<ProposalGeneratorSection />);
 
-    expect(screen.getByText(/automated proposal writing/i)).toBeInTheDocument();
+    expect(screen.getByText(/automated proposals/i)).toBeInTheDocument();
     expect(screen.getByText(/ai-powered insights/i)).toBeInTheDocument();
     expect(screen.getByText(/custom templates/i)).toBeInTheDocument();
   });
@@ -33,9 +33,7 @@ describe("ProposalGeneratorSection", () => {
     render(<ProposalGeneratorSection />);
 
     expect(
-      screen.getByText(
-        /generate professional proposals in minutes/i
-      )
+      screen.getByText(/generate professional proposals in minutes/i)
     ).toBeInTheDocument();
     expect(
       screen.getByText(/get intelligent recommendations on pricing/i)
@@ -49,7 +47,7 @@ describe("ProposalGeneratorSection", () => {
     const { container } = render(<ProposalGeneratorSection />);
 
     const section = container.querySelector("section");
-    expect(section).toHaveClass("py-20");
+    expect(section).toHaveClass("py-28");
     expect(section).toHaveClass("bg-surface-container-low");
   });
 });

@@ -41,6 +41,25 @@ function fmt(dateStr: string | null): string {
   });
 }
 
+function CopyPrefixButton({ prefix }: { prefix: string }) {
+  const [copied, setCopied] = useState(false);
+  function handleCopy() {
+    navigator.clipboard.writeText(prefix + '…').catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  }
+  return (
+    <button
+      onClick={handleCopy}
+      title="Copy key prefix"
+      className="ml-1 text-gray-400 hover:text-indigo-600 transition-colors"
+      aria-label="Copy key prefix to clipboard"
+    >
+      <span className="material-symbols-outlined text-sm">{copied ? 'check' : 'content_copy'}</span>
+    </button>
+  );
+}
+
 function todayCalls(stats: UsageStats | null): number {
   if (!stats) return 0;
   const today = new Date().toISOString().substring(0, 10);
@@ -197,7 +216,12 @@ export function ApiKeyManager() {
               {keys.map((k) => (
                 <tr key={k.id}>
                   <td className="px-4 py-3 font-medium text-gray-900">{k.name}</td>
-                  <td className="px-4 py-3 font-mono text-gray-600">{k.key_prefix}…</td>
+                  <td className="px-4 py-3 font-mono text-gray-600">
+                    <span className="inline-flex items-center gap-1">
+                      {k.key_prefix}…
+                      <CopyPrefixButton prefix={k.key_prefix} />
+                    </span>
+                  </td>
                   <td className="px-4 py-3">
                     <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
                       k.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
