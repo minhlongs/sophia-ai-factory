@@ -168,6 +168,123 @@ export async function chatCompletion(
 }
 
 /**
+ * Stream chat completion tokens as an AsyncGenerator<string>.
+ * Supports OpenAI-compat providers (SSE) and Anthropic SDK streaming.
+ */
+export async function* chatCompletionStream(
+  opts: ChatCompletionOptions,
+): AsyncGenerator<string> {
+  const { baseUrl, apiKey, model } = getConfig();
+
+  if (baseUrl && apiKey) {
+    yield* openaiCompatStream(opts, baseUrl, apiKey, model ?? 'deepseek-chat');
+    return;
+  }
+
+  if (process.env.ANTHROPIC_API_KEY) {
+    yield* anthropicStream(opts);
+    return;
+  }
+
+  throw new Error(
+    'No LLM configured. Set LLM_BASE_URL + LLM_API_KEY, or ANTHROPIC_API_KEY.',
+  );
+}
+
+async function* openaiCompatStream(
+  opts: ChatCompletionOptions,
+  baseUrl: string,
+  apiKey: string,
+  defaultModel: string,
+): AsyncGenerator<string> {
+  const model = opts.model ?? defaultModel;
+
+  const body: Record<string, unknown> = {
+    model,
+    messages: opts.messages,
+    max_tokens: opts.maxTokens ?? 2000,
+    temperature: opts.temperature ?? 0.7,
+    stream: true,
+  };
+
+  if (opts.jsonMode) {
+    body.response_format = { type: 'json_object' };
+  }
+
+  const res = await fetch(`${baseUrl.replace(/\/$/, '')}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(120_000),
+  });
+
+  if (!res.ok || !res.body) {
+    const errText = await res.text().catch(() => '');
+    throw new Error(`LLM stream error ${res.status}: ${errText.slice(0, 200)}`);
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() ?? '';
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed.startsWith('data:')) continue;
+      const data = trimmed.slice(5).trim();
+      if (data === '[DONE]') return;
+
+      try {
+        const parsed = JSON.parse(data) as {
+          choices?: Array<{ delta?: { content?: string } }>;
+        };
+        const token = parsed.choices?.[0]?.delta?.content;
+        if (token) yield token;
+      } catch {
+        // skip malformed SSE lines
+      }
+    }
+  }
+}
+
+async function* anthropicStream(opts: ChatCompletionOptions): AsyncGenerator<string> {
+  const { default: Anthropic } = await import('@anthropic-ai/sdk');
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+  const systemMsg = opts.messages.find(m => m.role === 'system')?.content;
+  const nonSystem = opts.messages.filter(m => m.role !== 'system');
+
+  const stream = client.messages.stream({
+    model: opts.model ?? 'claude-sonnet-4-20250514',
+    max_tokens: opts.maxTokens ?? 2000,
+    ...(systemMsg ? { system: systemMsg } : {}),
+    messages: nonSystem.map(m => ({
+      role: m.role as 'user' | 'assistant',
+      content: m.content,
+    })),
+  });
+
+  for await (const event of stream) {
+    if (
+      event.type === 'content_block_delta' &&
+      event.delta.type === 'text_delta'
+    ) {
+      yield event.delta.text;
+    }
+  }
+}
+
+/**
  * Convenience: send a single prompt and get text back.
  */
 export async function llmGenerate(

@@ -9,10 +9,13 @@ import { cookies } from 'next/headers';
 import Link from 'next/link';
 
 const navItems = [
-  { href: '/dashboard', label: 'Overview', icon: 'home' },
-  { href: '/dashboard/api-keys', label: 'API Keys', icon: 'key' },
-  { href: '/dashboard/missions', label: 'Missions', icon: 'rocket_launch' },
-  { href: '/dashboard/usage', label: 'Usage', icon: 'bar_chart' },
+  { href: '/dashboard',              label: 'Overview',  icon: 'home' },
+  { href: '/missions',               label: 'Missions',  icon: 'rocket_launch' },
+  { href: '/proposals',              label: 'Proposals', icon: 'description' },
+  { href: '/settings/api-keys',      label: 'API Keys',  icon: 'key' },
+  { href: '/usage',                  label: 'Usage',     icon: 'bar_chart' },
+  { href: '/billing',                label: 'Billing',   icon: 'credit_card' },
+  { href: '/settings',               label: 'Settings',  icon: 'settings' },
 ];
 
 export default async function DashboardGroupLayout({
@@ -56,8 +59,8 @@ export default async function DashboardGroupLayout({
             href="/dashboard"
             className="flex items-center gap-2 text-xs text-gray-500 hover:text-gray-700"
           >
-            <span className="material-symbols-outlined text-sm">home</span>
-            Dashboard home
+            <span className="material-symbols-outlined text-sm">arrow_back</span>
+            Main dashboard
           </Link>
         </div>
       </aside>

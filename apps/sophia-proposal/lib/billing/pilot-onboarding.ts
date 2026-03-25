@@ -10,6 +10,9 @@
 
 import { getD1Client } from '@/lib/db/client';
 import { scheduleNpsSurvey } from '@/lib/surveys/nps';
+import { sendEmail } from '@/lib/email/sender';
+import { welcomeEmail } from '@/lib/email/email-templates';
+import { scheduleOnboardingDrip } from '@/lib/email/drip-sequence-scheduler';
 
 export interface PilotOnboardingData {
   orgId: string;
@@ -23,10 +26,16 @@ export interface PilotOnboardingData {
  * Send welcome email after first payment
  */
 export async function sendWelcomeEmail(data: PilotOnboardingData): Promise<boolean> {
-  // TODO: Integrate with email service (Resend, SendGrid, etc.)
-  // await resend.emails.send({ ... });
+  const result = await sendEmail({
+    to: data.customerEmail,
+    subject: `Welcome to Sophia AI Factory — ${data.tierName} Plan`,
+    html: welcomeEmail(data.customerName, data.tierName, data.mcuCredits),
+  });
 
-  return true;
+  // Schedule full onboarding drip sequence
+  await scheduleOnboardingDrip(data.orgId, data.customerEmail, data.customerName);
+
+  return result.success;
 }
 
 /**

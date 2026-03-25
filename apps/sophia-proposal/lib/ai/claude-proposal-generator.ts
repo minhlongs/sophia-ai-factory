@@ -6,6 +6,9 @@
  */
 
 import { llmGenerate } from './llm-router';
+import { PROPOSAL_SYSTEM_PROMPT } from './prompts/proposal-create-system-prompt';
+import { CONTENT_BLOG_SYSTEM_PROMPT } from './prompts/content-blog-post-system-prompt';
+import { CONTENT_SOCIAL_SYSTEM_PROMPT } from './prompts/content-social-media-system-prompt';
 
 export const CLAUDE_MODEL = 'claude-sonnet-4-20250514';
 export const CLAUDE_MAX_TOKENS = 2000;
@@ -75,7 +78,7 @@ export async function generateProposal(params: ProposalParams): Promise<Proposal
 Include sections: ${sectionNames.join(', ')}. 2-3 concise paragraphs each.
 Return JSON: { "sections": [{ "title": string, "content": string }] }`;
 
-    const raw = await llmGenerate(prompt, { maxTokens: CLAUDE_MAX_TOKENS });
+    const raw = await llmGenerate(prompt, { system: PROPOSAL_SYSTEM_PROMPT, maxTokens: CLAUDE_MAX_TOKENS });
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return fallback;
 
@@ -101,6 +104,7 @@ export async function generateContent(type: 'blog' | 'social', params: ContentPa
 
   try {
     const isBlog = type === 'blog';
+    const systemPrompt = isBlog ? CONTENT_BLOG_SYSTEM_PROMPT : CONTENT_SOCIAL_SYSTEM_PROMPT;
     const prompt = isBlog
       ? `Write a professional blog post about "${topic}" for ${params.company ?? 'a business'}.
 Audience: ${params.target_audience ?? 'business professionals'}.
@@ -110,7 +114,7 @@ Return JSON: { "title": string, "body": string }`
 Platforms: LinkedIn (professional), Twitter/X (concise + hashtags), Instagram (engaging).
 Return JSON: { "title": string, "body": string } where body has all 3 posts separated by "---"`;
 
-    const raw = await llmGenerate(prompt, { maxTokens: CLAUDE_MAX_TOKENS });
+    const raw = await llmGenerate(prompt, { system: systemPrompt, maxTokens: CLAUDE_MAX_TOKENS });
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return fallback;
 
