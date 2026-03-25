@@ -24,3 +24,6 @@ service = "sophia-ai-factory"
 
 [images]
 binding = "IMAGES"
+
+[triggers]
+crons = ["*/5 * * * *"]
