@@ -4,34 +4,31 @@ import Home from './page';
 describe('Home Page', () => {
   it('renders the main heading', () => {
     render(<Home />);
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Sophia AI Factory');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/AI Agents That/i);
   });
 
-  it('renders the hero description', () => {
+  it('renders the hero subtitle', () => {
     render(<Home />);
-    expect(screen.getByText(/AI-powered proposal generator for agencies/i)).toBeInTheDocument();
+    expect(screen.getByText(/Deploy autonomous AI missions via API/i)).toBeInTheDocument();
   });
 
   it('renders call-to-action buttons', () => {
     render(<Home />);
-    // Hero section buttons
-    const heroButtons = screen.getAllByRole('button');
-    expect(heroButtons[0]).toHaveTextContent(/start free trial/i);
-    expect(heroButtons[1]).toHaveTextContent(/watch demo/i);
+    expect(screen.getByText(/Start Free — 200 MCU/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/API Docs/i).length).toBeGreaterThanOrEqual(1);
   });
 
   it('renders features section', () => {
     render(<Home />);
-    expect(screen.getByText('Why Sophia?')).toBeInTheDocument();
-    expect(screen.getByText('Lightning Fast')).toBeInTheDocument();
-    expect(screen.getByText('Secure by Default')).toBeInTheDocument();
-    expect(screen.getByText('AI-Powered')).toBeInTheDocument();
-    expect(screen.getByText('Scalable Growth')).toBeInTheDocument();
+    expect(screen.getByText('Powered by AI')).toBeInTheDocument();
+    expect(screen.getByText('AI Mission Engine')).toBeInTheDocument();
+    expect(screen.getByText('MCU Credits')).toBeInTheDocument();
+    expect(screen.getByText('Developer-First API')).toBeInTheDocument();
   });
 
   it('renders pricing section', () => {
     render(<Home />);
-    expect(screen.getByText('Simple, Transparent Pricing')).toBeInTheDocument();
+    expect(screen.getByText('Transparent')).toBeInTheDocument();
     expect(screen.getByText('Starter')).toBeInTheDocument();
     expect(screen.getByText('Growth')).toBeInTheDocument();
     expect(screen.getByText('Premium')).toBeInTheDocument();

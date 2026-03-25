@@ -5,11 +5,17 @@ import type { NextRequest } from "next/server";
 const publicRoutes = [
   "/login",
   "/signup",
+  "/magic-link",
   "/api/auth/signup",
   "/api/auth/login",
   "/api/auth/logout",
   "/api/health",
+  "/api/v1/",
+  "/api/webhooks/",
+  "/api/v1/demo-requests",
   "/docs/api",
+  "/terms",
+  "/pilot",
   "/",
 ];
 
