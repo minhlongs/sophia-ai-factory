@@ -6,6 +6,7 @@
  */
 
 import { llmGenerate } from './llm-router';
+import { LEAD_GENERATION_SYSTEM_PROMPT } from './prompts/lead-generation-icp-system-prompt';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -82,7 +83,7 @@ For each lead provide:
 Return JSON: { "leads": [...], "icp_summary": string }`;
 
     const raw = await llmGenerate(prompt, {
-      system: 'You are a B2B lead research assistant. Return valid JSON only.',
+      system: LEAD_GENERATION_SYSTEM_PROMPT,
       maxTokens: 3000,
       jsonMode: true,
     });
