@@ -1,0 +1,354 @@
+{
+  "info": {
+    "name": "Sophia AI Factory API",
+    "description": "Complete API collection for Sophia AI Factory RaaS platform. 17 AI mission commands.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      { "key": "token", "value": "{{SOPHIA_API_KEY}}", "type": "string" }
+    ]
+  },
+  "variable": [
+    { "key": "base_url", "value": "https://sophia.ai/api/v1" },
+    { "key": "SOPHIA_API_KEY", "value": "sk_live_your_key_here" }
+  ],
+  "item": [
+    {
+      "name": "Missions",
+      "item": [
+        {
+          "name": "Create Mission — proposal:create",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/missions",
+            "description": "Generate a full AI sales proposal for a client. Returns structured markdown.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"command\": \"proposal:create\",\n  \"params\": {\n    \"client_name\": \"Acme Corp\",\n    \"product_name\": \"Your Product\",\n    \"tone\": \"professional\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Create Mission — sales:proposal-deck",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/missions",
+            "description": "Generate a slide-deck outline for a sales proposal.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"command\": \"sales:proposal-deck\",\n  \"params\": {\n    \"client_name\": \"Acme Corp\",\n    \"product_name\": \"Your Product\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Create Mission — video:create",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/missions",
+            "description": "Create an AI avatar video from a script using D-ID + ElevenLabs.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"command\": \"video:create\",\n  \"params\": {\n    \"script\": \"Hello, this is a demo of Sophia AI Factory.\",\n    \"avatar_id\": \"avatar_sophia_default\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Create Mission — content:blog",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/missions",
+            "description": "Write a long-form SEO blog post on a given topic.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"command\": \"content:blog\",\n  \"params\": {\n    \"topic\": \"AI in Sales Automation\",\n    \"company\": \"Acme Corp\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Create Mission — content:social",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/missions",
+            "description": "Generate social media posts for LinkedIn, Twitter, or other platforms.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"command\": \"content:social\",\n  \"params\": {\n    \"topic\": \"AI in Sales\",\n    \"company\": \"Acme Corp\",\n    \"platform\": \"linkedin\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Create Mission — affiliate:generate",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/missions",
+            "description": "Generate affiliate marketing content for a product and niche.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"command\": \"affiliate:generate\",\n  \"params\": {\n    \"product\": \"Sophia AI Factory\",\n    \"niche\": \"B2B SaaS\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Create Mission — affiliate:scrape",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/missions",
+            "description": "Scrape and analyze an affiliate program from a given URL.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"command\": \"affiliate:scrape\",\n  \"params\": {\n    \"url\": \"https://example.com/affiliate\",\n    \"program_name\": \"Example Affiliate Program\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Create Mission — sales:battlecard",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/missions",
+            "description": "Generate a competitive battlecard against a named competitor.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"command\": \"sales:battlecard\",\n  \"params\": {\n    \"competitor\": \"Acme Corp\",\n    \"product\": \"Your Product\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Create Mission — sales:competitor-analysis",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/missions",
+            "description": "Deep competitor analysis covering pricing, positioning, and weaknesses.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"command\": \"sales:competitor-analysis\",\n  \"params\": {\n    \"competitor\": \"Acme Corp\",\n    \"market\": \"B2B SaaS\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Create Mission — sales:roi-calculator",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/missions",
+            "description": "Generate a ROI analysis for a product pitched to a client.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"command\": \"sales:roi-calculator\",\n  \"params\": {\n    \"product\": \"Your Product\",\n    \"target_revenue\": 500000\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Create Mission — sales:pricing-optimizer",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/missions",
+            "description": "Generate an optimal pricing strategy based on market and competitors.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"command\": \"sales:pricing-optimizer\",\n  \"params\": {\n    \"product\": \"Your Product\",\n    \"competitors\": \"Acme Corp, Beta Inc\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Create Mission — sales:outreach-sequence",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/missions",
+            "description": "Generate a multi-step email outreach sequence for a prospect.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"command\": \"sales:outreach-sequence\",\n  \"params\": {\n    \"prospect_name\": \"Jane Smith\",\n    \"product\": \"Your Product\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Create Mission — gtm:campaign",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/missions",
+            "description": "Generate a go-to-market campaign plan for a product and target audience.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"command\": \"gtm:campaign\",\n  \"params\": {\n    \"product\": \"Your Product\",\n    \"target_audience\": \"Mid-market B2B SaaS founders\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Create Mission — lead:generate",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/missions",
+            "description": "AI prospect research — returns a list of leads matching your ICP.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"command\": \"lead:generate\",\n  \"params\": {\n    \"icp_description\": \"B2B SaaS founders, 10-50 employees, US-based\",\n    \"count\": 20\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Create Mission — crm:sync",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/missions",
+            "description": "Sync contact data to your CRM integration.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"command\": \"crm:sync\",\n  \"params\": {\n    \"contact_id\": \"contact_abc123\",\n    \"data\": { \"stage\": \"proposal_sent\", \"deal_value\": 25000 }\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Create Mission — analytics:export",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/missions",
+            "description": "Export a usage or performance analytics report.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"command\": \"analytics:export\",\n  \"params\": {\n    \"report_type\": \"mission_summary\",\n    \"date_range\": \"last_30_days\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Create Mission — email:send",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/missions",
+            "description": "Send a transactional email via the Resend integration.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"command\": \"email:send\",\n  \"params\": {\n    \"to\": \"client@example.com\",\n    \"subject\": \"Your AI-generated proposal is ready\",\n    \"body\": \"Hi Jane, please find your proposal attached.\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Mission",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/missions/{{mission_id}}",
+            "description": "Fetch full details for a mission by ID."
+          }
+        },
+        {
+          "name": "List Missions",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/missions?status=completed&limit=20",
+              "query": [
+                { "key": "status", "value": "completed" },
+                { "key": "limit", "value": "20" }
+              ]
+            },
+            "description": "List missions with optional status filter. Statuses: queued | planning | running | completed | failed | cancelled."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Streaming",
+      "item": [
+        {
+          "name": "Stream Mission (SSE)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/missions/{{mission_id}}/stream",
+            "description": "Real-time Server-Sent Events stream for a mission. Events: status | step | delta | result | error.",
+            "header": [{ "key": "Accept", "value": "text/event-stream" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/login",
+            "description": "Authenticate with email + password. Returns a session token.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"your_password\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Signup",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/signup",
+            "description": "Register a new account.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"your_password\",\n  \"name\": \"Jane Smith\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Magic Link",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/magic-link",
+            "description": "Send a passwordless magic link to the given email.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Session",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/auth/session",
+            "description": "Return the current session and user profile for the authenticated API key."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Usage",
+      "item": [
+        {
+          "name": "Get Usage",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/usage",
+            "description": "Retrieve MCU usage statistics for the current billing period."
+          }
+        },
+        {
+          "name": "Get Balance",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/usage/balance",
+            "description": "Return the current MCU balance, reserved credits, and recent transactions."
+          }
+        }
+      ]
+    }
+  ]
+}

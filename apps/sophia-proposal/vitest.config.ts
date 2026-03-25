@@ -5,6 +5,10 @@ export default defineConfig({
   esbuild: {
     jsx: 'automatic',
   },
+  oxc: {
+    jsx: 'automatic',
+    jsxImportSource: 'react',
+  },
   test: {
     include: ['app/**/*.test.tsx', 'components/**/*.test.tsx', 'tests/**/*.test.ts'],
     exclude: ['node_modules', 'dist', '.next'],

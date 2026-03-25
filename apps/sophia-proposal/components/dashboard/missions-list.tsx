@@ -5,7 +5,8 @@
  * Filterable mission list with status badges and expandable detail rows.
  */
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { NewMissionForm } from './new-mission-form';
 
 interface Mission {
   id: string;
@@ -61,13 +62,19 @@ export function MissionsList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchMissions = useCallback(() => {
+    setLoading(true);
+    setError(null);
     fetch('/api/missions?limit=100')
       .then(r => r.json())
-      .then(data => setMissions(data.missions ?? []))
+      .then(data => setMissions((data as { missions?: Mission[] }).missions ?? []))
       .catch(() => setError('Failed to load missions'))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    fetchMissions();
+  }, [fetchMissions]);
 
   const visible = filter === 'all'
     ? missions
@@ -75,6 +82,9 @@ export function MissionsList() {
 
   return (
     <div className="space-y-4">
+      {/* New mission form */}
+      <NewMissionForm onSuccess={fetchMissions} />
+
       {/* Status filter */}
       <div className="flex items-center gap-2 flex-wrap">
         {FILTERS.map(f => (

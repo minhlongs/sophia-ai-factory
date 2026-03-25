@@ -8,13 +8,13 @@
 
 ## Authentication
 
-All API routes (except public webhooks) require authentication via Supabase session.
+All API routes (except public webhooks) require authentication via JWT session (custom auth).
 
 ### Session Management
 
-Sessions are managed through cookies set by Supabase Auth:
+Sessions are managed through cookies set by Custom JWT Auth:
 
-- `sb-[project-ref]-auth-token` — JWT session token
+- `auth-token` — JWT session token (signed via Web Crypto API)
 - Middleware validates session and injects `user_id` context
 
 ### Organization Context

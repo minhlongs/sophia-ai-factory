@@ -11,10 +11,10 @@ mode: --auto --parallel
 
 | Phase | Focus | Owner | Status |
 |-------|-------|-------|--------|
-| 6A | Real Claude AI integration (proposal + content commands) | fullstack-dev-1 | Pending |
-| 6B | Enterprise: API key dashboard + usage analytics UI | fullstack-dev-2 | Pending |
-| 6C | SDK publish + CLI demo tool | fullstack-dev-3 | Pending |
-| 6D | Deploy + M1 Max sync | lead | Pending |
+| 6A | Real Claude AI integration (proposal + content commands) | fullstack-dev-1 | **DONE** |
+| 6B | Enterprise: API key dashboard + usage analytics UI | fullstack-dev-2 | **DONE** |
+| 6C | SDK publish + CLI demo tool | fullstack-dev-3 | **DONE** |
+| 6D | Deploy + M1 Max sync | lead | N/A (ops) |
 
 ## Architecture
 

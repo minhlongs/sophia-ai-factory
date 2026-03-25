@@ -10,3 +10,5 @@ export { PricingSection } from './pricing-section';
 export { FaqSection } from './faq-section';
 export { CtaSection } from './cta-section';
 export { Footer } from './footer';
+export { ExitIntentPopup } from './exit-intent-popup';
+export { StickyMobileCta } from './sticky-mobile-cta';

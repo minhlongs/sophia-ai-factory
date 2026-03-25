@@ -9,7 +9,7 @@
 
 - Node.js 20+
 - pnpm 9+
-- Supabase account + project
+- Cloudflare account + D1 database
 - Polar.sh account (for billing)
 - Anthropic API key (for AI features)
 - Vercel account (for deployment)
@@ -30,12 +30,11 @@ ANTHROPIC_API_KEY=sk-ant-...
 # Get from: https://console.anthropic.com/settings/keys
 
 # ===========================================
-# SUPABASE (Database + Auth)
+# CLOUDFLARE D1 (Database + Auth)
 # ===========================================
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-# Get from: https://supabase.com/dashboard/project/_/settings/api
+CLOUDFLARE_D1_DATABASE_ID=your-d1-database-id
+CLOUDFLARE_ACCOUNT_ID=your-cloudflare-account-id
+# Get from: https://dash.cloudflare.com → Workers & Pages → D1
 
 # ===========================================
 # POLAR.SH (Billing)
@@ -51,9 +50,8 @@ POLAR_WEBHOOK_SECRET=whsec_your_webhook_secret
 | Variable | Type | Description | Required |
 |----------|------|-------------|----------|
 | `ANTHROPIC_API_KEY` | Secret | Anthropic API key | Yes (for AI features) |
-| `NEXT_PUBLIC_SUPABASE_URL` | Public | Supabase project URL | Yes |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public | Supabase anonymous key | Yes |
-| `SUPABASE_SERVICE_ROLE_KEY` | Secret | Supabase service role key | Yes |
+| `CLOUDFLARE_D1_DATABASE_ID` | Secret | Cloudflare D1 database ID | Yes |
+| `CLOUDFLARE_ACCOUNT_ID` | Secret | Cloudflare account ID | Yes |
 | `POLAR_API_URL` | Public | Polar API base URL | Yes |
 | `POLAR_API_KEY` | Secret | Polar API key | Yes (for billing) |
 | `POLAR_WEBHOOK_SECRET` | Secret | Polar webhook signing secret | Yes (for billing) |
@@ -62,24 +60,27 @@ POLAR_WEBHOOK_SECRET=whsec_your_webhook_secret
 
 ## Database Setup
 
-### 1. Create Supabase Project
+### 1. Configure Cloudflare D1
 
-1. Go to https://supabase.com
-2. Click "New Project"
-3. Fill in project details
-4. Save project ref (e.g., `your-project-ref`)
+1. Go to https://dash.cloudflare.com
+2. Navigate to Workers & Pages → D1
+3. Click "Create database" and name it (e.g., `sophia-proposal`)
+4. Save the database ID shown after creation
 
 ### 2. Run Migrations
 
-Execute SQL migrations in order:
+Execute migrations via Wrangler CLI:
 
 ```bash
-# Copy migration files to Supabase SQL Editor
-# https://supabase.com/dashboard/project/_/sql/new
+# Install Wrangler if needed
+npm install -g wrangler
 
-# 1. Run 004_billing_tables.sql
+# Apply migrations to D1
+wrangler d1 migrations apply sophia-proposal
+
+# 1. Runs db/migrations/004_billing_tables.sql
 # Creates: subscriptions, usage_logs, org_balances, billing_settings, customer_feedback
-# Also creates: RLS policies, indexes, utility functions
+# Also creates: indexes and utility functions
 ```
 
 ### 3. Verify Tables
@@ -230,9 +231,8 @@ In Vercel dashboard → Project Settings → Environment Variables:
 | Variable | Value |
 |----------|-------|
 | `ANTHROPIC_API_KEY` | Your Anthropic key |
-| `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase anon key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Your Supabase service key |
+| `CLOUDFLARE_D1_DATABASE_ID` | Your D1 database ID |
+| `CLOUDFLARE_ACCOUNT_ID` | Your Cloudflare account ID |
 | `POLAR_API_KEY` | Your Polar API key |
 | `POLAR_WEBHOOK_SECRET` | Your Polar webhook secret |
 
@@ -355,9 +355,9 @@ curl -I https://sophia.agencyos.network/api/health
 vercel logs <deployment-url>
 ```
 
-**Supabase Logs:**
-- Go to https://supabase.com/dashboard/project/_/logs
-- Filter by function calls, errors
+**Cloudflare D1 Dashboard:**
+- Go to https://dash.cloudflare.com → Workers & Pages → D1
+- View query logs and metrics in the D1 dashboard
 
 ### Database Queries
 

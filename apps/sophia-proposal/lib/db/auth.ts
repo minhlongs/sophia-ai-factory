@@ -7,6 +7,8 @@
 
 import { getD1Client } from './client';
 import type { User } from './client';
+import { sendEmail } from '@/lib/email/sender';
+import { magicLinkEmail } from '@/lib/email/email-templates';
 
 const JWT_EXPIRY_SECONDS = 7 * 24 * 60 * 60; // 7 days
 
@@ -181,7 +183,11 @@ export async function sendMagicLink(email: string): Promise<{ error: string | nu
       await db.from('users').update({ magic_link_token: token, magic_link_expires_at: expires }).eq('email', email);
     }
 
-    // Magic link token generated — integrate email service (Resend/CF Email Workers) to send
+    await sendEmail({
+      to: email,
+      subject: 'Sign in to Sophia AI Factory',
+      html: magicLinkEmail(token),
+    });
     return { error: null };
   } catch (e) {
     return { error: (e as Error).message };

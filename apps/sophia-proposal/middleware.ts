@@ -9,6 +9,7 @@ const publicRoutes = [
   "/api/auth/signup",
   "/api/auth/login",
   "/api/auth/logout",
+  "/api/auth/callback",
   "/api/health",
   "/api/v1/",
   "/api/webhooks/",

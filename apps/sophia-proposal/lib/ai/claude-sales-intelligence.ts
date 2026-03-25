@@ -7,6 +7,7 @@
 
 import { llmGenerate } from './llm-router';
 import { CLAUDE_MAX_TOKENS } from './claude-proposal-generator';
+import { getModelForCommand, getMaxTokensForCommand } from './command-model-routing';
 import { SALES_BATTLECARD_SYSTEM_PROMPT } from './prompts/sales-battlecard-competitor-system-prompt';
 import { SALES_OUTREACH_SYSTEM_PROMPT } from './prompts/sales-outreach-sequence-system-prompt';
 
@@ -98,7 +99,11 @@ export async function generateBattlecard(params: BattlecardParams): Promise<Batt
 Include: 4 strengths of our product, 3 weaknesses of competitor, 3 key differentiators, and objection handling for "too_expensive", "unproven", "switching_cost".
 Return JSON: { "strengths": string[], "weaknesses_of_competitor": string[], "key_differentiators": string[], "objection_handling": { "too_expensive": string, "unproven": string, "switching_cost": string } }`;
 
-    const raw = await llmGenerate(prompt, { system: SALES_BATTLECARD_SYSTEM_PROMPT, maxTokens: CLAUDE_MAX_TOKENS });
+    const raw = await llmGenerate(prompt, {
+      system: SALES_BATTLECARD_SYSTEM_PROMPT,
+      maxTokens: getMaxTokensForCommand('sales:battlecard'),
+      model: getModelForCommand('sales:battlecard'),
+    });
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return fallback;
 
@@ -141,7 +146,10 @@ Focus areas: ${focusAreas}.
 For each competitor provide SWOT (4 bullet points each) and a win strategy for ${product}.
 Return JSON: { "analyses": [{ "competitor": string, "swot": { "strengths": [], "weaknesses": [], "opportunities": [], "threats": [] }, "win_strategy": string }] }`;
 
-    const raw = await llmGenerate(prompt, { maxTokens: CLAUDE_MAX_TOKENS });
+    const raw = await llmGenerate(prompt, {
+      maxTokens: getMaxTokensForCommand('sales:competitor-analysis'),
+      model: getModelForCommand('sales:competitor-analysis'),
+    });
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return fallback;
 
@@ -197,7 +205,11 @@ Product: Sophia AI Factory (AI proposals in <30s, MCU pricing, video generation)
 Touches: Day 1 email, Day 3 email, Day 5 LinkedIn, Day 7 email.
 Return JSON: { "sequence": [{ "day": number, "subject": string, "body": string, "channel": string }] }`;
 
-    const raw = await llmGenerate(prompt, { system: SALES_OUTREACH_SYSTEM_PROMPT, maxTokens: CLAUDE_MAX_TOKENS });
+    const raw = await llmGenerate(prompt, {
+      system: SALES_OUTREACH_SYSTEM_PROMPT,
+      maxTokens: getMaxTokensForCommand('sales:outreach-sequence'),
+      model: getModelForCommand('sales:outreach-sequence'),
+    });
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return fallback;
 

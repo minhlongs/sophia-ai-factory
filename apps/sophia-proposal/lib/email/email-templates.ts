@@ -99,8 +99,9 @@ export function invoiceEmail(
 
 // ── Magic Link ──────────────────────────────────────────────────────────────
 
-export function magicLinkEmail(token: string): string {
-  const link = `https://sophia.ai/auth/callback?token=${token}`;
+export function magicLinkEmail(token: string, baseUrl?: string): string {
+  const base = baseUrl ?? process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.ai';
+  const link = `${base}/api/auth/callback?token=${token}`;
   return wrap(`
     <h2 style="color:${BRAND_COLOR}">Sign in to Sophia AI</h2>
     <p>Click the button below to sign in. This link expires in 15 minutes.</p>

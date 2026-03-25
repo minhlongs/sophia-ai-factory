@@ -49,9 +49,8 @@ sophia-proposal/
 │   │   ├── client.ts             # Anthropic client
 │   │   ├── proposal-templates.ts # Templates
 │   │   └── quality-check.ts      # Validation
-│   ├── supabase/                 # Supabase client (Sprint 1)
-│   │   ├── client.ts             # Server/client clients
-│   │   └── auth.ts               # Auth helpers
+│   ├── db/                       # D1 database client (Sprint 1)
+│   │   └── client.ts             # D1 client + auth helpers
 │   └── validators/               # Zod schemas
 ├── tests/                        # Vitest tests
 │   ├── billing/                  # Billing tests (Sprint 3)
@@ -92,8 +91,7 @@ sophia-proposal/
 
 | File | Purpose |
 |------|---------|
-| `lib/supabase/auth.ts` | Auth helpers, session management |
-| `lib/supabase/client.ts` | Supabase client (server/browser) |
+| `lib/db/client.ts` | D1 client + auth helpers, session management |
 | `middleware.ts` | Route protection, org context injection |
 | `app/api/auth/login/route.ts` | Login endpoint |
 | `app/api/auth/signup/route.ts` | Signup endpoint |
@@ -134,7 +132,7 @@ sophia-proposal/
 
 ## Database Schema Summary
 
-### Tables (lib/supabase/migrations/004_billing_tables.sql)
+### Tables (db/migrations/004_billing_tables.sql)
 
 ```sql
 -- Sprint 1: Auth & Org
@@ -219,8 +217,7 @@ deduct_mcu_balance(p_org_id UUID, p_amount INTEGER, p_feature TEXT, p_metadata J
 
 ```json
 {
-  "@supabase/ssr": "latest",
-  "@supabase/supabase-js": "latest"
+  "@cloudflare/workers-types": "latest"
 }
 ```
 
@@ -285,10 +282,9 @@ export default defineConfig({
 # Anthropic (AI)
 ANTHROPIC_API_KEY=sk-ant-...
 
-# Supabase (Database + Auth)
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+# Cloudflare D1 (Database + Auth)
+CLOUDFLARE_D1_DATABASE_ID=your-d1-database-id
+CLOUDFLARE_ACCOUNT_ID=your-cloudflare-account-id
 
 # Polar.sh (Billing)
 POLAR_API_URL=https://api.polar.sh
@@ -304,19 +300,18 @@ POLAR_WEBHOOK_SECRET=whsec_your_webhook_secret
 
 ```typescript
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/client';
+import { getD1Client } from '@/lib/db/client';
 
 export async function GET(request: NextRequest) {
   try {
     const orgId = request.headers.get('x-org-id');
-    const supabase = createServerClient();
+    const db = getD1Client();
 
     // Business logic
-    const result = await supabase.from('table').select('*');
+    const result = await db.prepare('SELECT * FROM table').all();
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error('Error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

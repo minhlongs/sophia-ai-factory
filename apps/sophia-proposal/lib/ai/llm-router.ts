@@ -289,7 +289,7 @@ async function* anthropicStream(opts: ChatCompletionOptions): AsyncGenerator<str
  */
 export async function llmGenerate(
   prompt: string,
-  opts?: { system?: string; maxTokens?: number; jsonMode?: boolean },
+  opts?: { system?: string; maxTokens?: number; jsonMode?: boolean; model?: string },
 ): Promise<string> {
   const messages: ChatMessage[] = [];
   if (opts?.system) messages.push({ role: 'system', content: opts.system });
@@ -299,7 +299,41 @@ export async function llmGenerate(
     messages,
     maxTokens: opts?.maxTokens,
     jsonMode: opts?.jsonMode,
+    model: opts?.model,
   });
 
   return result.content;
+}
+
+export interface LlmUsageResult {
+  content: string;
+  inputTokens: number;
+  outputTokens: number;
+  model: string;
+}
+
+/**
+ * Like llmGenerate but returns token usage alongside content.
+ */
+export async function llmGenerateWithUsage(
+  prompt: string,
+  opts?: { system?: string; maxTokens?: number; jsonMode?: boolean; model?: string },
+): Promise<LlmUsageResult> {
+  const messages: ChatMessage[] = [];
+  if (opts?.system) messages.push({ role: 'system', content: opts.system });
+  messages.push({ role: 'user', content: prompt });
+
+  const result = await chatCompletion({
+    messages,
+    maxTokens: opts?.maxTokens,
+    jsonMode: opts?.jsonMode,
+    model: opts?.model,
+  });
+
+  return {
+    content: result.content,
+    inputTokens: result.inputTokens,
+    outputTokens: result.outputTokens,
+    model: result.model,
+  };
 }
