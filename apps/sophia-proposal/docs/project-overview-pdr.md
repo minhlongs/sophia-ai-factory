@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-Sophia AI Factory is an AI-powered proposal generation platform that helps agencies create professional sales proposals in minutes. Built with Next.js, Supabase, and Polar.sh billing, the platform uses usage-based pricing (MCU - Machine Consumption Units) to charge customers based on actual usage.
+Sophia AI Factory is an AI-powered proposal generation platform that helps agencies create professional sales proposals in minutes. Built with Next.js, Cloudflare D1, and Polar.sh billing, the platform uses usage-based pricing (MCU - Machine Consumption Units) to charge customers based on actual usage.
 
 ### Key Metrics
 
@@ -44,13 +44,13 @@ Sophia AI Factory is an AI-powered proposal generation platform that helps agenc
 **Status:** ✅ Complete
 
 **Features:**
-- Supabase Auth integration
+- Custom JWT Auth integration (Web Crypto API)
 - Organization management (create, join, switch)
 - Role-based access control (admin/member)
 - Protected routes via middleware
 
 **Key Files:**
-- `lib/supabase/auth.ts`
+- `lib/db/client.ts`
 - `middleware.ts`
 - `app/api/auth/*`
 
@@ -104,8 +104,8 @@ Sophia AI Factory is an AI-powered proposal generation platform that helps agenc
 |-------|------------|
 | Frontend | Next.js 15 (App Router) |
 | Styling | Tailwind CSS |
-| Database | Supabase (PostgreSQL) |
-| Auth | Supabase Auth |
+| Database | Cloudflare D1 |
+| Auth | Custom JWT Auth (Web Crypto) |
 | AI | Anthropic Claude API |
 | Billing | Polar.sh |
 | Hosting | Vercel |
@@ -134,7 +134,7 @@ Sophia AI Factory is an AI-powered proposal generation platform that helps agenc
                          ▼
 ┌─────────────────────────────────────────────────────────┐
 │                    DATA LAYER                            │
-│  Supabase PostgreSQL + RLS + Database Functions         │
+│  Cloudflare D1 + Database Functions                     │
 └─────────────────────────────────────────────────────────┘
                          │
                          ▼
@@ -329,7 +329,7 @@ Sophia AI Factory is an AI-powered proposal generation platform that helps agenc
 
 ```sql
 -- Authentication & Org (Sprint 1)
-users (Supabase Auth)
+users (Custom JWT Auth)
 organizations (id, name, slug)
 organization_members (org_id, user_id, role)
 
@@ -460,7 +460,7 @@ deduct_mcu_balance(p_org_id UUID, p_amount INTEGER, p_feature TEXT, p_metadata J
 
 | Service | Purpose | Cost |
 |---------|---------|------|
-| Supabase | Database + Auth | $0 (Free tier) |
+| Cloudflare D1 | Database | $0 (Free tier) |
 | Anthropic | AI proposal generation | ~$0.01/proposal |
 | Polar.sh | Billing & payments | 5% + $0.50/transaction |
 | Vercel | Hosting | $0 (Hobby tier) |
@@ -482,7 +482,7 @@ deduct_mcu_balance(p_org_id UUID, p_amount INTEGER, p_feature TEXT, p_metadata J
 |------|-------------|--------|------------|
 | Polar.sh API changes | Low | High | Abstract client layer |
 | Anthropic price increase | Medium | Medium | Multi-provider support |
-| Supabase rate limits | Low | Medium | Connection pooling |
+| D1 query limits | Low | Medium | Query optimization + caching |
 | Low pilot activation | Medium | High | Improved onboarding |
 | Webhook failures | Low | High | Manual credit fallback |
 

@@ -6,6 +6,7 @@
  */
 
 import { llmGenerate } from './llm-router';
+import { getModelForCommand, getMaxTokensForCommand } from './command-model-routing';
 import { LEAD_GENERATION_SYSTEM_PROMPT } from './prompts/lead-generation-icp-system-prompt';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -84,8 +85,9 @@ Return JSON: { "leads": [...], "icp_summary": string }`;
 
     const raw = await llmGenerate(prompt, {
       system: LEAD_GENERATION_SYSTEM_PROMPT,
-      maxTokens: 3000,
+      maxTokens: getMaxTokensForCommand('lead:generate'),
       jsonMode: true,
+      model: getModelForCommand('lead:generate'),
     });
 
     const jsonMatch = raw.match(/\{[\s\S]*\}/);

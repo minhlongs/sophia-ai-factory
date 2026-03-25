@@ -5,8 +5,27 @@ import { Button } from "@/components/ui/button";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { useRouter } from "next/navigation";
 
-const DEMO_PREVIEWS: Record<string, string> = {
-  default: `> sophia proposal:create --client "Acme Corp" --budget 50000
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+type DemoCommand = "proposal:create" | "content:blog" | "lead:generate";
+
+interface DemoTab {
+  label: string;
+  command: DemoCommand;
+}
+
+interface DemoApiResponse {
+  result: string;
+  command: string;
+  duration_ms: number;
+  tokens_used: number;
+  error?: string;
+}
+
+// ── Static fallbacks (used when API fails) ────────────────────────────────────
+
+const DEMO_FALLBACKS: Record<DemoCommand, string> = {
+  "proposal:create": `> sophia proposal:create --topic "{topic}"
 
   Analyzing client profile...
   Generating executive summary...
@@ -14,8 +33,10 @@ const DEMO_PREVIEWS: Record<string, string> = {
 
   ✓ Proposal generated in 1.8s
   ✓ 12 pages • 3 pricing tiers • Custom branding
-  ✓ PDF + interactive web link ready`,
-  marketing: `> sophia content:write --type blog --topic "{topic}"
+  ✓ PDF + interactive web link ready
+
+--- Full version includes 12-page proposal with ROI analysis, timeline, pricing, and case studies. Sign up for full access.`,
+  "content:blog": `> sophia content:blog --topic "{topic}"
 
   Researching keywords...
   Drafting outline...
@@ -23,8 +44,10 @@ const DEMO_PREVIEWS: Record<string, string> = {
 
   ✓ Content ready in 2.1s
   ✓ SEO-optimized • Plagiarism-free
-  ✓ Export to Notion, WordPress, or PDF`,
-  sales: `> sophia lead:generate --industry SaaS --size 50-200
+  ✓ Export to Notion, WordPress, or PDF
+
+--- Full version includes 1,500+ word SEO-optimized post with meta tags, images, and social media snippets. Sign up for full access.`,
+  "lead:generate": `> sophia lead:generate --industry "{topic}"
 
   Scanning 42M+ company database...
   Scoring by ICP fit...
@@ -32,54 +55,82 @@ const DEMO_PREVIEWS: Record<string, string> = {
 
   ✓ 87 leads found in 3.2s
   ✓ Email + LinkedIn + phone verified
-  ✓ CRM-ready CSV exported`,
+  ✓ CRM-ready CSV exported
+
+--- Full version generates 10-20 scored leads with contact details, pain points, and personalized outreach. Sign up for full access.`,
 };
 
-function getPreview(topic: string): string {
-  const lower = topic.toLowerCase();
-  if (lower.includes("content") || lower.includes("blog") || lower.includes("marketing")) {
-    return DEMO_PREVIEWS.marketing.replace("{topic}", topic);
-  }
-  if (lower.includes("lead") || lower.includes("sales") || lower.includes("prospect")) {
-    return DEMO_PREVIEWS.sales;
-  }
-  return DEMO_PREVIEWS.default;
-}
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+const DEMO_TABS: DemoTab[] = [
+  { label: "Generate Proposal", command: "proposal:create" },
+  { label: "Write Blog Post", command: "content:blog" },
+  { label: "Find Leads", command: "lead:generate" },
+];
+
+const MAX_DEMOS = 3;
+const TYPING_INTERVAL_MS = 8;
+
+// ── Component ─────────────────────────────────────────────────────────────────
 
 export function DemoSection() {
   const router = useRouter();
   const [topic, setTopic] = useState("");
+  const [activeCommand, setActiveCommand] = useState<DemoCommand>("proposal:create");
   const [output, setOutput] = useState("");
   const [loading, setLoading] = useState(false);
   const [demoCount, setDemoCount] = useState(0);
   const [error, setError] = useState("");
+  const [metrics, setMetrics] = useState<{ durationMs: number; tokensUsed: number } | null>(null);
 
-  const handleGenerate = async () => {
-    if (!topic.trim()) return;
-    if (demoCount >= 3) {
-      setError("You've used all 3 free demos for today. Sign up for unlimited access.");
-      return;
-    }
-
-    setLoading(true);
-    setOutput("");
-    setError("");
-
-    // Simulate streaming output character by character
-    const preview = getPreview(topic);
+  const animateOutput = (text: string) => {
     let i = 0;
     const interval = setInterval(() => {
-      setOutput(preview.slice(0, i + 1));
+      setOutput(text.slice(0, i + 1));
       i++;
-      if (i >= preview.length) {
+      if (i >= text.length) {
         clearInterval(interval);
         setLoading(false);
         setDemoCount((c) => c + 1);
       }
-    }, 8);
+    }, TYPING_INTERVAL_MS);
   };
 
-  const remaining = 3 - demoCount;
+  const handleGenerate = async () => {
+    if (!topic.trim() || loading || demoCount >= MAX_DEMOS) return;
+
+    setLoading(true);
+    setOutput("");
+    setError("");
+    setMetrics(null);
+
+    try {
+      const res = await fetch("/api/v1/demo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ command: activeCommand, topic: topic.trim() }),
+      });
+
+      const data = (await res.json()) as DemoApiResponse;
+
+      if (!res.ok || data.error) {
+        // Graceful fallback to static preview
+        const fallback = DEMO_FALLBACKS[activeCommand].replace("{topic}", topic.trim());
+        animateOutput(fallback);
+        return;
+      }
+
+      setMetrics({ durationMs: data.duration_ms, tokensUsed: data.tokens_used });
+      animateOutput(data.result);
+    } catch {
+      // Network error — use fallback
+      const fallback = DEMO_FALLBACKS[activeCommand].replace("{topic}", topic.trim());
+      animateOutput(fallback);
+    }
+  };
+
+  const remaining = MAX_DEMOS - demoCount;
+  const limitReached = demoCount >= MAX_DEMOS;
 
   return (
     <section className="py-28 bg-surface">
@@ -100,6 +151,24 @@ export function DemoSection() {
 
         <ScrollReveal>
           <div className="max-w-3xl mx-auto">
+            {/* Command tabs */}
+            <div className="flex gap-2 mb-4 flex-wrap">
+              {DEMO_TABS.map((tab) => (
+                <button
+                  key={tab.command}
+                  onClick={() => setActiveCommand(tab.command)}
+                  disabled={loading}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${
+                    activeCommand === tab.command
+                      ? "bg-primary text-white border-primary"
+                      : "bg-surface-container text-on-surface-variant border-outline/30 hover:border-primary/40"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
             {/* Input row */}
             <div className="flex gap-3 mb-4">
               <input
@@ -109,13 +178,13 @@ export function DemoSection() {
                 onKeyDown={(e) => e.key === "Enter" && !loading && handleGenerate()}
                 placeholder="e.g. SaaS proposal for a fintech client..."
                 className="flex-1 px-5 py-3 rounded-full bg-surface-container border border-outline/30 text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/20 text-sm transition-colors"
-                disabled={loading || demoCount >= 3}
+                disabled={loading || limitReached}
               />
               <Button
                 variant="primary"
                 size="md"
                 onClick={handleGenerate}
-                disabled={loading || !topic.trim() || demoCount >= 3}
+                disabled={loading || !topic.trim() || limitReached}
                 className="rounded-full px-6 shrink-0 cursor-pointer"
               >
                 {loading ? (
@@ -152,12 +221,21 @@ export function DemoSection() {
                   <pre className="text-green-400/90 whitespace-pre-wrap leading-relaxed">{output}</pre>
                 ) : (
                   <p className="text-white/20 text-sm">
-                    {demoCount >= 3
+                    {limitReached
                       ? "Daily demo limit reached. Sign up to continue."
                       : "Enter a topic above and click Generate Preview..."}
                   </p>
                 )}
               </div>
+
+              {/* Metrics bar */}
+              {metrics && !loading && (
+                <div className="px-5 py-2 border-t border-white/8 bg-white/[0.02] flex items-center gap-4 text-xs text-white/40 font-mono">
+                  <span>Generated in {metrics.durationMs}ms</span>
+                  <span>|</span>
+                  <span>{metrics.tokensUsed} tokens</span>
+                </div>
+              )}
             </div>
 
             {/* Error message */}
@@ -171,7 +249,9 @@ export function DemoSection() {
             {/* CTA */}
             <div className="mt-8 text-center">
               <p className="text-on-surface-variant text-sm mb-4">
-                This is a preview. Full access unlocks all 17 AI commands with real execution.
+                {limitReached
+                  ? "You've used all 3 free demos."
+                  : "This is a preview. Full access unlocks all 17 AI commands with real execution."}
               </p>
               <Button
                 variant="primary"
@@ -180,7 +260,9 @@ export function DemoSection() {
                 onClick={() => router.push("/signup")}
               >
                 <span className="material-symbols-outlined text-lg mr-2">rocket_launch</span>
-                Get full access — Start free trial
+                {limitReached
+                  ? "Create free account for unlimited access →"
+                  : "Get full access — Start free trial"}
               </Button>
             </div>
           </div>

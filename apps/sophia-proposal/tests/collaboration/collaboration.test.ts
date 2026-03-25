@@ -67,7 +67,7 @@ describe('Collaboration', () => {
 
       // Move section 3 to position 0
       const newSections = [sections[2], sections[0], sections[1]];
-      newSections.forEach((s, i) => (s.order = i as any));
+      newSections.forEach((s, i) => { (s as { id: string; order: number }).order = i; });
 
       expect(newSections[0].order).toBe(0);
       expect(newSections[1].order).toBe(1);

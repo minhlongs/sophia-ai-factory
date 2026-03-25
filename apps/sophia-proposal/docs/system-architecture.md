@@ -8,7 +8,7 @@
 
 ## Overview
 
-Sophia AI Factory is an AI-powered proposal generation platform with usage-based billing via Polar.sh and a full RaaS (Robotics-as-a-Service) layer for external API consumers. Built on Next.js App Router, Supabase (PostgreSQL + Auth), Polar.sh for payment processing, and the OpenClaw PEV Engine for async mission execution.
+Sophia AI Factory is an AI-powered proposal generation platform with usage-based billing via Polar.sh and a full RaaS (Robotics-as-a-Service) layer for external API consumers. Built on Next.js App Router, Cloudflare D1 + Custom JWT Auth, Polar.sh for payment processing, and the OpenClaw PEV Engine for async mission execution.
 
 ---
 
@@ -67,7 +67,7 @@ Sophia AI Factory is an AI-powered proposal generation platform with usage-based
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                      DATA LAYER (Supabase)                       │
+│                      DATA LAYER (Cloudflare D1)                  │
 │  ┌──────────────────────────────────────────────────────────┐   │
 │  │                   PostgreSQL Database                     │   │
 │  │  - users / organizations / organization_members           │   │
@@ -103,10 +103,10 @@ Sophia AI Factory is an AI-powered proposal generation platform with usage-based
 
 ### 1. Authentication System
 
-**Stack:** Supabase Auth + Next.js Middleware
+**Stack:** Custom JWT Auth + Next.js Middleware
 
 ```
-User Signup/Login → Supabase Auth → JWT Session
+User Signup/Login → Custom Auth → JWT Session (Web Crypto)
                          │
                          ▼
               Middleware (auth check)
@@ -116,13 +116,13 @@ User Signup/Login → Supabase Auth → JWT Session
 ```
 
 **Key Files:**
-- `lib/supabase/auth.ts` — Auth helpers
+- `lib/db/client.ts` — D1 client + auth helpers
 - `middleware.ts` — Route protection
 - `app/api/auth/*` — Auth endpoints
 
 ### 2. Billing System (Sprint 3)
 
-**Stack:** Polar.sh + Supabase + Custom MCU tracking
+**Stack:** Polar.sh + D1 + Custom MCU tracking
 
 #### Billing Flow
 
@@ -278,7 +278,7 @@ Payment Success → Welcome Email → Onboarding Checklist
 
 ### 6. OpenClaw PEV Engine (Sprint 4)
 
-**Stack:** TypeScript + Supabase + In-process queue
+**Stack:** TypeScript + D1 + In-process queue
 
 The OpenClaw PEV (Plan → Execute → Verify) engine orchestrates async missions with retry, sub-mission chaining, and webhook notification.
 
@@ -353,7 +353,7 @@ Exponential backoff — delay doubles per attempt. Max retries stored in `missio
 
 ### 7. RaaS Layer — Sale API (Sprint 4)
 
-**Stack:** Next.js API Routes + Supabase + Bearer auth
+**Stack:** Next.js API Routes + D1 + Bearer auth
 
 External partners and CLI tools consume Sophia AI Factory as a service via versioned REST endpoints authenticated with long-lived API keys.
 
@@ -488,7 +488,7 @@ Include: X-RateLimit-{Limit,Remaining,Reset} headers
 
 ```sql
 -- Users & Organizations (Sprint 1)
-users (Supabase Auth)
+users (Custom JWT Auth)
 organizations
   - id, name, slug, created_at
 organization_members
@@ -682,12 +682,13 @@ Polar webhook handler implements:
                               │
                               ▼
 ┌──────────────────────────────────────────────────────────────┐
-│                    Supabase Cloud                            │
+│                    Cloudflare D1                             │
 │                                                               │
-│  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐  │
-│  │  PostgreSQL    │  │   Auth         │  │   Storage      │  │
-│  │  (with RLS)    │  │  (JWT/OAuth)   │  │  (optional)    │  │
-│  └────────────────┘  └────────────────┘  └────────────────┘  │
+│  ┌────────────────┐  ┌────────────────┐                      │
+│  │  D1 Database   │  │  Custom JWT    │                      │
+│  │  (SQLite edge) │  │  Auth (Web     │                      │
+│  │                │  │   Crypto API)  │                      │
+│  └────────────────┘  └────────────────┘                      │
 └──────────────────────────────────────────────────────────────┘
                               │
                               ▼

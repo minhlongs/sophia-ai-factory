@@ -101,6 +101,17 @@ Cancel a `queued`/`planning` mission. Returns `{ cancelled, mcu_refunded }`.
 Real-time mission events via Server-Sent Events.
 
 ```typescript
+// Async iterator style
+const stream = sophia.missions.stream(missionId);
+for await (const event of stream) {
+  if (event.type === 'delta') process.stdout.write(event.text);
+  if (event.type === 'result') console.log('Done:', event.result);
+}
+```
+
+Event handler style (fine-grained control):
+
+```typescript
 const stream = sophia.stream(mission_id, {
   autoReconnect: true,
   maxReconnects: 5,
@@ -122,6 +133,20 @@ const stream = new MissionStream(baseUrl, apiKey, missionId);
 stream.onResult = (e) => stream.close();
 stream.connect();
 ```
+
+## Webhooks
+
+Configure a webhook URL when creating a mission to receive a POST callback on completion.
+
+```typescript
+const mission = await sophia.missions.create({
+  command: 'proposal:create',
+  params: { client_name: 'Acme' },
+  webhook_url: 'https://your-server.com/webhook',
+});
+```
+
+Sophia will POST to your URL with `{ mission_id, status, result }` when the mission completes or fails. Verify the `X-Sophia-Signature` header to authenticate incoming webhooks.
 
 ## Usage (MCU Balance)
 
@@ -163,7 +188,44 @@ try {
 }
 ```
 
-## Available commands
+## All 17 Commands
+
+Each command is called via `sophia.missions.create({ command, params })`.
+
+```typescript
+// --- Proposals ---
+sophia.missions.create({ command: 'proposal:create',     params: { client_name: string; product_name?: string; tone?: string } })
+sophia.missions.create({ command: 'sales:proposal-deck', params: { client_name: string; product_name?: string } })
+
+// --- Video ---
+sophia.missions.create({ command: 'video:create',        params: { script: string; avatar_id?: string } })
+
+// --- Content ---
+sophia.missions.create({ command: 'content:blog',        params: { topic: string; company?: string } })
+sophia.missions.create({ command: 'content:social',      params: { topic?: string; company?: string; platform?: string } })
+
+// --- Affiliate ---
+sophia.missions.create({ command: 'affiliate:generate',  params: { product: string; niche?: string } })
+sophia.missions.create({ command: 'affiliate:scrape',    params: { url: string; program_name?: string } })
+
+// --- Sales ---
+sophia.missions.create({ command: 'sales:battlecard',         params: { competitor: string; product?: string } })
+sophia.missions.create({ command: 'sales:competitor-analysis',params: { competitor: string; market?: string } })
+sophia.missions.create({ command: 'sales:roi-calculator',     params: { product: string; target_revenue?: number } })
+sophia.missions.create({ command: 'sales:pricing-optimizer',  params: { product: string; competitors?: string } })
+sophia.missions.create({ command: 'sales:outreach-sequence',  params: { prospect_name: string; product?: string } })
+
+// --- GTM & Leads ---
+sophia.missions.create({ command: 'gtm:campaign',   params: { product: string; target_audience?: string } })
+sophia.missions.create({ command: 'lead:generate',  params: { icp_description: string; count?: number } })
+
+// --- CRM / Analytics / Email ---
+sophia.missions.create({ command: 'crm:sync',         params: { contact_id: string; data: Record<string, unknown> } })
+sophia.missions.create({ command: 'analytics:export', params: { report_type: string; date_range?: string } })
+sophia.missions.create({ command: 'email:send',       params: { to: string; subject: string; body: string } })
+```
+
+### Available commands reference
 
 | Command | MCU | Description |
 |---|---|---|
@@ -194,6 +256,8 @@ try {
 | Growth | 2,000 | $149/mo |
 | Premium | 10,000 | $499/mo |
 | Master | 25,000 | $999/mo |
+
+Full documentation at https://sophia.ai/docs/api
 
 ## License
 

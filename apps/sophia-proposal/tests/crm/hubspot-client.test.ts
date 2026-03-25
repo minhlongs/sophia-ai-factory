@@ -115,7 +115,7 @@ describe('HubSpot Client', () => {
       };
 
       expect(minimalContact.email).toBeDefined();
-      expect((minimalContact as any).firstname).toBeUndefined();
+      expect('firstname' in minimalContact).toBe(false);
     });
   });
 

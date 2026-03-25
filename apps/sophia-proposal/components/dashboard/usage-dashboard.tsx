@@ -27,6 +27,17 @@ const DATE_RANGE_OPTIONS: { value: DateRange; label: string }[] = [
   { value: '90d', label: 'Last 90 days' },
 ];
 
+function groupByDay(logs: UsageLog[]): { date: string; mcu: number }[] {
+  const map = new Map<string, number>();
+  for (const log of logs) {
+    const day = log.created_at.slice(0, 10); // YYYY-MM-DD
+    map.set(day, (map.get(day) ?? 0) + log.mcu_cost);
+  }
+  return Array.from(map.entries())
+    .map(([date, mcu]) => ({ date, mcu }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
 function groupByFeature(logs: UsageLog[]): { feature: string; count: number; mcu: number }[] {
   const map = new Map<string, { count: number; mcu: number }>();
   for (const log of logs) {
@@ -64,6 +75,8 @@ export function UsageDashboard() {
 
   const totalMcu = logs.reduce((sum, l) => sum + l.mcu_cost, 0);
   const breakdown = groupByFeature(logs);
+  const dailyData = groupByDay(logs);
+  const maxDayMcu = dailyData.reduce((max, d) => Math.max(max, d.mcu), 0);
 
   return (
     <div className="space-y-6">
@@ -88,6 +101,33 @@ export function UsageDashboard() {
           </p>
         </div>
       </div>
+
+      {/* Daily bar chart */}
+      {!loading && !error && dailyData.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <p className="text-sm font-medium text-gray-700 mb-4">Daily MCU Usage</p>
+          <div className="flex items-end gap-1 h-24 overflow-x-auto pb-1">
+            {dailyData.map((day) => {
+              const heightPct = maxDayMcu > 0 ? (day.mcu / maxDayMcu) * 100 : 0;
+              return (
+                <div key={day.date} className="flex flex-col items-center gap-1 shrink-0 min-w-[2rem]">
+                  <span className="text-xs text-gray-400 leading-none">
+                    {day.mcu > 0 ? day.mcu.toLocaleString() : ''}
+                  </span>
+                  <div
+                    className="w-6 bg-indigo-400 rounded-t"
+                    style={{ height: `${Math.max(heightPct, 2)}%`, minHeight: '3px', maxHeight: '64px' }}
+                    title={`${day.date}: ${day.mcu.toLocaleString()} MCU`}
+                  />
+                  <span className="text-xs text-gray-400 leading-none rotate-45 origin-left w-8 truncate">
+                    {day.date.slice(5)} {/* MM-DD */}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Date range filter */}
       <div className="flex items-center gap-2">

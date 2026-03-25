@@ -16,6 +16,7 @@ const navItems = [
   { href: '/usage',                  label: 'Usage',     icon: 'bar_chart' },
   { href: '/billing',                label: 'Billing',   icon: 'credit_card' },
   { href: '/settings',               label: 'Settings',  icon: 'settings' },
+  { href: '/health',                 label: 'Health',    icon: 'monitor_heart' },
 ];
 
 export default async function DashboardGroupLayout({

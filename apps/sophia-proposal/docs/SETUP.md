@@ -34,9 +34,8 @@ Required environment variables in `.env`:
 | Variable | Description | Required |
 |----------|-------------|----------|
 | `ANTHROPIC_API_KEY` | Your Anthropic API token | Yes (AI features) |
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL | Yes |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous key | Yes |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key | Yes |
+| `CLOUDFLARE_D1_DATABASE_ID` | Cloudflare D1 database ID | Yes |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID | Yes |
 
 ### Billing (Sprint 3)
 
@@ -56,11 +55,11 @@ Required environment variables in `.env`:
    ANTHROPIC_API_KEY=sk-ant-...
    ```
 
-#### Supabase
-1. Go to https://supabase.com/dashboard/project/_/settings/api
-2. Copy `Project URL` to `NEXT_PUBLIC_SUPABASE_URL`
-3. Copy `anon public` key to `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-4. Copy `service_role` key to `SUPABASE_SERVICE_ROLE_KEY`
+#### Cloudflare D1
+1. Go to https://dash.cloudflare.com and open your account
+2. Navigate to Workers & Pages → D1
+3. Copy the database ID to `CLOUDFLARE_D1_DATABASE_ID`
+4. Copy your account ID (top-right of dashboard) to `CLOUDFLARE_ACCOUNT_ID`
 
 #### Polar.sh
 1. Go to https://polar.sh/dashboard/settings/api
@@ -129,9 +128,8 @@ sophia-proposal/
 │   │   ├── client.ts
 │   │   ├── proposal-templates.ts
 │   │   └── quality-check.ts
-│   ├── supabase/               # Supabase client
-│   │   ├── client.ts
-│   │   └── auth.ts
+│   ├── db/                     # D1 database client
+│   │   └── client.ts
 │   └── validators/             # Zod schemas
 ├── tests/
 │   ├── billing/                # Billing tests (Sprint 3)

@@ -5,7 +5,8 @@
  * Falls back to templates on API failure — never breaks the flow.
  */
 
-import { llmGenerate } from './llm-router';
+import { llmGenerateWithUsage } from './llm-router';
+import { getModelForCommand, getMaxTokensForCommand } from './command-model-routing';
 import { PROPOSAL_SYSTEM_PROMPT } from './prompts/proposal-create-system-prompt';
 import { CONTENT_BLOG_SYSTEM_PROMPT } from './prompts/content-blog-post-system-prompt';
 import { CONTENT_SOCIAL_SYSTEM_PROMPT } from './prompts/content-social-media-system-prompt';
@@ -78,7 +79,11 @@ export async function generateProposal(params: ProposalParams): Promise<Proposal
 Include sections: ${sectionNames.join(', ')}. 2-3 concise paragraphs each.
 Return JSON: { "sections": [{ "title": string, "content": string }] }`;
 
-    const raw = await llmGenerate(prompt, { system: PROPOSAL_SYSTEM_PROMPT, maxTokens: CLAUDE_MAX_TOKENS });
+    const { content: raw } = await llmGenerateWithUsage(prompt, {
+      system: PROPOSAL_SYSTEM_PROMPT,
+      maxTokens: getMaxTokensForCommand('proposal:create'),
+      model: getModelForCommand('proposal:create'),
+    });
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return fallback;
 
@@ -114,7 +119,12 @@ Return JSON: { "title": string, "body": string }`
 Platforms: LinkedIn (professional), Twitter/X (concise + hashtags), Instagram (engaging).
 Return JSON: { "title": string, "body": string } where body has all 3 posts separated by "---"`;
 
-    const raw = await llmGenerate(prompt, { system: systemPrompt, maxTokens: CLAUDE_MAX_TOKENS });
+    const command = isBlog ? 'content:blog' : 'content:social';
+    const { content: raw } = await llmGenerateWithUsage(prompt, {
+      system: systemPrompt,
+      maxTokens: getMaxTokensForCommand(command),
+      model: getModelForCommand(command),
+    });
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return fallback;
 

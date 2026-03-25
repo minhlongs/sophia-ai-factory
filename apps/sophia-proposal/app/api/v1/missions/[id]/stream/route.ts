@@ -4,6 +4,9 @@
  * Streams real-time mission status updates via Server-Sent Events.
  * Auth: Authorization: Bearer <api_key>
  * Close: terminal state (completed/failed/cancelled) or 5-minute timeout.
+ *
+ * Query params:
+ *   ?stream=tokens  — enable faster polling (500ms) + delta events for partial results
  */
 
 import { NextRequest } from 'next/server';
@@ -12,6 +15,7 @@ import { getD1Client } from '@/lib/db/client';
 export const dynamic = 'force-dynamic';
 
 const POLL_INTERVAL_MS = 2_000;
+const FAST_POLL_INTERVAL_MS = 500;
 const HEARTBEAT_INTERVAL_MS = 15_000;
 const MAX_STREAM_MS = 5 * 60 * 1_000;
 const TERMINAL_STATES = new Set(['completed', 'failed', 'cancelled']);
@@ -70,10 +74,14 @@ export async function GET(
     return new Response('Mission not found', { status: 404 });
   }
 
+  const streamTokens = request.nextUrl.searchParams.get('stream') === 'tokens';
+
   // --- SSE Stream ---
   const encoder = new TextEncoder();
   let lastStatus: string | null = null;
   let lastStepCount = 0;
+  let lastPartialResult: string | null = null;
+  let streamStartEmitted = false;
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -86,7 +94,7 @@ export async function GET(
       const poll = async (): Promise<boolean> => {
         const { data: mission } = await db
           .from('missions')
-          .select('status, result, error_message')
+          .select('status, result, error_message, partial_result')
           .eq('id', missionId)
           .single();
 
@@ -105,6 +113,12 @@ export async function GET(
             })
           );
 
+          // Emit stream_start when execution begins (token streaming mode)
+          if (streamTokens && status === 'executing' && !streamStartEmitted) {
+            streamStartEmitted = true;
+            enqueue(sseEvent('stream_start', { mission_id: missionId }));
+          }
+
           if (status === 'completed' && m.result) {
             enqueue(sseEvent('result', { result: m.result }));
             return true;
@@ -116,6 +130,19 @@ export async function GET(
           }
 
           if (TERMINAL_STATES.has(status)) return true;
+        }
+
+        // Token streaming: emit delta events for partial_result changes
+        if (streamTokens && status === 'executing') {
+          const partial = m.partial_result as string | null;
+          if (partial && partial !== lastPartialResult) {
+            const prevLen = lastPartialResult?.length ?? 0;
+            const delta = partial.slice(prevLen);
+            if (delta) {
+              enqueue(sseEvent('delta', { text: delta }));
+            }
+            lastPartialResult = partial;
+          }
         }
 
         // Poll mission_steps for progress
@@ -142,6 +169,8 @@ export async function GET(
         return false;
       };
 
+      const intervalMs = streamTokens ? FAST_POLL_INTERVAL_MS : POLL_INTERVAL_MS;
+
       try {
         while (Date.now() < deadline) {
           const done = await poll();
@@ -153,7 +182,7 @@ export async function GET(
             heartbeatAt = Date.now() + HEARTBEAT_INTERVAL_MS;
           }
 
-          await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+          await new Promise((r) => setTimeout(r, intervalMs));
         }
       } catch (err) {
         enqueue(sseEvent('error', { message: (err as Error).message }));
