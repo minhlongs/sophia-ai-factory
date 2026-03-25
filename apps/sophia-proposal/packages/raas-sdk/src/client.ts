@@ -7,6 +7,7 @@ import { HttpClient } from './http-client.js';
 import { Missions } from './missions.js';
 import { Usage } from './usage.js';
 import { ApiKeys } from './api-keys.js';
+import { Webhooks } from './webhooks.js';
 import { MissionStream } from './stream.js';
 import type { MissionStreamOptions } from './stream.js';
 import type { SophiaClientConfig } from './types.js';
@@ -22,6 +23,9 @@ export class SophiaClient {
 
   /** API key management (requires orgId in config) */
   readonly apiKeys: ApiKeys | null;
+
+  /** Webhook endpoint management (requires orgId in config) */
+  readonly webhooks: Webhooks | null;
 
   private readonly baseUrl: string;
   private readonly apiKey: string;
@@ -40,9 +44,11 @@ export class SophiaClient {
     if (config.orgId) {
       this.usage = new Usage(http, config.orgId);
       this.apiKeys = new ApiKeys(http, config.orgId);
+      this.webhooks = new Webhooks(http, config.orgId);
     } else {
       this.usage = null;
       this.apiKeys = null;
+      this.webhooks = null;
     }
   }
 

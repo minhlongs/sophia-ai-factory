@@ -1,6 +1,6 @@
 {
   "name": "@sophia/raas-sdk",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "Sophia AI Factory — RaaS (Robot-as-a-Service) SDK",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -25,8 +25,16 @@
     "sophia",
     "raas",
     "missions",
-    "ai-factory"
+    "ai-factory",
+    "ai-proposals",
+    "robot-as-a-service",
+    "ai-agents",
+    "mcu-credits"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/longtho638-jpg/sophia-ai-factory"
+  },
   "license": "MIT",
   "engines": {
     "node": ">=18"

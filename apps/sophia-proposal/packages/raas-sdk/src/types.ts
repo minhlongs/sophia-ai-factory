@@ -31,6 +31,8 @@ export type MissionCommand =
   | 'sales:competitor-analysis'
   | 'sales:pricing-optimizer'
   | 'sales:outreach-sequence'
+  | 'lead:generate'
+  | 'email:send'
   | (string & Record<never, never>); // allow custom commands without losing autocomplete
 
 // -- Core types ---------------------------------------------------------------
