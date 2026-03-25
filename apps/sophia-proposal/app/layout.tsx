@@ -1,17 +1,10 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/auth/auth-provider";
 import { ToastProvider } from "@/components/ui/toast-provider";
 
-const inter = localFont({
-  src: [
-    { path: "../public/fonts/inter-var.woff2", style: "normal" },
-  ],
-  variable: "--font-inter",
-  display: "swap",
-  fallback: ["-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
-});
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 const SITE_URL = "https://sophia.agencyos.network";
 const SITE_TITLE = "Sophia AI Factory — Robot-as-a-Service Platform";
