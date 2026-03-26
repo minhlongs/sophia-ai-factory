@@ -123,27 +123,26 @@ export class PolarError extends Error {
 // Client class
 export class PolarClient {
   private baseUrl: string;
-  private apiKey: string;
+  private apiKey: string | null;
   private webhookSecret: string;
 
   constructor() {
-    const baseUrl = process.env.POLAR_API_URL || 'https://api.polar.sh';
-    const apiKey = process.env.POLAR_API_KEY;
-    const webhookSecret = process.env.POLAR_WEBHOOK_SECRET;
+    this.baseUrl = process.env.POLAR_API_URL || 'https://api.polar.sh';
+    this.apiKey = process.env.POLAR_ACCESS_TOKEN ?? process.env.POLAR_API_KEY ?? null;
+    this.webhookSecret = process.env.POLAR_WEBHOOK_SECRET || '';
+  }
 
-    if (!apiKey) {
-      throw new PolarError('POLAR_API_KEY not configured', 'CONFIG_ERROR');
-    }
-
-    this.baseUrl = baseUrl;
-    this.apiKey = apiKey;
-    this.webhookSecret = webhookSecret || '';
+  isConfigured(): boolean {
+    return this.apiKey !== null;
   }
 
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
+    if (!this.apiKey) {
+      throw new PolarError('Billing not configured: POLAR_ACCESS_TOKEN is missing', 'CONFIG_ERROR');
+    }
     const url = `${this.baseUrl}${endpoint}`;
     const headers: HeadersInit = {
       'Authorization': `Bearer ${this.apiKey}`,
@@ -243,22 +242,17 @@ export class PolarClient {
   }
 
   /**
-   * Verify webhook signature
+   * Verify webhook signature.
+   * Returns null when POLAR_WEBHOOK_SECRET is not set — callers should
+   * accept-but-skip-processing to prevent Polar retry storms.
    */
   async verifyWebhookSignature(
     payload: string,
     signature: string
-  ): Promise<boolean> {
+  ): Promise<boolean | null> {
     if (!this.webhookSecret) {
-      // CRITICAL: Never skip verification in production
-      if (process.env.NODE_ENV === 'production') {
-        throw new PolarError(
-          'POLAR_WEBHOOK_SECRET is required in production',
-          'CONFIG_ERROR'
-        );
-      }
-      console.warn('POLAR_WEBHOOK_SECRET not configured - allowing in dev only');
-      return true;
+      // Signal "not configured" — webhook handler will accept silently
+      return null;
     }
 
     // HMAC verification logic

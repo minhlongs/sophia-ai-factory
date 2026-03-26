@@ -117,7 +117,9 @@ async function anthropicCompletion(
 ): Promise<ChatCompletionResult> {
   const start = Date.now();
   const { default: Anthropic } = await import('@anthropic-ai/sdk');
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) throw new Error('AI not configured: ANTHROPIC_API_KEY is missing');
+  const client = new Anthropic({ apiKey });
 
   const systemMsg = opts.messages.find(m => m.role === 'system')?.content;
   const nonSystem = opts.messages.filter(m => m.role !== 'system');
@@ -163,7 +165,7 @@ export async function chatCompletion(
   }
 
   throw new Error(
-    'No LLM configured. Set LLM_BASE_URL + LLM_API_KEY, or ANTHROPIC_API_KEY.',
+    'AI not configured: set LLM_BASE_URL + LLM_API_KEY, or ANTHROPIC_API_KEY.',
   );
 }
 
@@ -187,7 +189,7 @@ export async function* chatCompletionStream(
   }
 
   throw new Error(
-    'No LLM configured. Set LLM_BASE_URL + LLM_API_KEY, or ANTHROPIC_API_KEY.',
+    'AI not configured: set LLM_BASE_URL + LLM_API_KEY, or ANTHROPIC_API_KEY.',
   );
 }
 
@@ -259,7 +261,9 @@ async function* openaiCompatStream(
 
 async function* anthropicStream(opts: ChatCompletionOptions): AsyncGenerator<string> {
   const { default: Anthropic } = await import('@anthropic-ai/sdk');
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) throw new Error('AI not configured: ANTHROPIC_API_KEY is missing');
+  const client = new Anthropic({ apiKey });
 
   const systemMsg = opts.messages.find(m => m.role === 'system')?.content;
   const nonSystem = opts.messages.filter(m => m.role !== 'system');

@@ -20,13 +20,21 @@ import {
  * Supports: text commands, callback queries (inline keyboards)
  */
 export async function POST(request: NextRequest) {
+  // Degrade silently when Telegram bot is not configured
+  if (!process.env.TELEGRAM_BOT_TOKEN) {
+    return NextResponse.json({ ok: true })
+  }
+
   try {
     const body = await request.json()
 
-    // Verify webhook secret token
-    const token = request.headers.get('X-Telegram-Bot-Api-Secret-Token')
-    if (token !== process.env.TELEGRAM_WEBHOOK_SECRET) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // Verify webhook secret token only when secret is configured
+    const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET
+    if (webhookSecret) {
+      const token = request.headers.get('X-Telegram-Bot-Api-Secret-Token')
+      if (token !== webhookSecret) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
     }
 
     // Handle callback queries (inline keyboard button clicks)

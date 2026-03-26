@@ -12,11 +12,9 @@ import { magicLinkEmail } from '@/lib/email/email-templates';
 
 const JWT_EXPIRY_SECONDS = 7 * 24 * 60 * 60; // 7 days
 
-// Lazy getter — throws at sign/verify time, not at module load (CF Workers lazy env)
-function getJwtSecret(): string {
-  const s = process.env.JWT_SECRET;
-  if (!s) throw new Error('JWT_SECRET environment variable is required');
-  return s;
+// Lazy getter — returns null when JWT_SECRET is not set (zero-config safe)
+function getJwtSecret(): string | null {
+  return process.env.JWT_SECRET ?? null;
 }
 
 // JWT helpers using Web Crypto (CF Workers compatible)
@@ -40,23 +38,28 @@ function base64UrlDecode(s: string): unknown {
   return JSON.parse(atob(padded));
 }
 
-async function createJwt(payload: Record<string, unknown>): Promise<string> {
+async function createJwt(payload: Record<string, unknown>): Promise<string | null> {
+  const secret = getJwtSecret();
+  if (!secret) return null;
   const header = base64UrlEncode({ alg: 'HS256', typ: 'JWT' });
   const body = base64UrlEncode({
     ...payload,
     iat: Math.floor(Date.now() / 1000),
     exp: Math.floor(Date.now() / 1000) + JWT_EXPIRY_SECONDS,
   });
-  const signature = await hmacSign(`${header}.${body}`, getJwtSecret());
+  const signature = await hmacSign(`${header}.${body}`, secret);
   return `${header}.${body}.${signature}`;
 }
 
 async function verifyJwt(token: string): Promise<Record<string, unknown> | null> {
   try {
+    const secret = getJwtSecret();
+    if (!secret) return null;
+
     const [header, body, signature] = token.split('.');
     if (!header || !body || !signature) return null;
 
-    const expected = await hmacSign(`${header}.${body}`, getJwtSecret());
+    const expected = await hmacSign(`${header}.${body}`, secret);
     if (expected !== signature) return null;
 
     const payload = base64UrlDecode(body) as Record<string, unknown>;
@@ -118,6 +121,7 @@ export async function getCurrentUser(cookies: string): Promise<User | null> {
 export async function signUp(
   email: string, password: string,
 ): Promise<{ user: User | null; token?: string; error: string | null }> {
+  if (!getJwtSecret()) return { user: null, error: 'Auth not configured' };
   try {
     const db = await getD1Client();
 
@@ -134,7 +138,7 @@ export async function signUp(
 
     const user: User = { id, email, role: 'user' };
     const token = await createJwt({ sub: id, email });
-    return { user, token, error: null };
+    return { user, token: token ?? undefined, error: null };
   } catch (e) {
     return { user: null, error: (e as Error).message };
   }
@@ -143,6 +147,7 @@ export async function signUp(
 export async function signIn(
   email: string, password: string,
 ): Promise<{ user: User | null; token?: string; error: string | null }> {
+  if (!getJwtSecret()) return { user: null, error: 'Auth not configured' };
   try {
     const db = await getD1Client();
     const { data } = await db
@@ -163,7 +168,7 @@ export async function signIn(
 
     const user: User = { id: row.id, email: row.email, full_name: row.full_name, avatar_url: row.avatar_url, role: row.role };
     const token = await createJwt({ sub: row.id, email: row.email });
-    return { user, token, error: null };
+    return { user, token: token ?? undefined, error: null };
   } catch (e) {
     return { user: null, error: (e as Error).message };
   }
@@ -220,7 +225,7 @@ export async function verifyMagicLink(
 
     const user: User = { id: row.id, email: row.email, full_name: row.full_name, role: row.role };
     const authToken = await createJwt({ sub: row.id, email: row.email });
-    return { user, authToken, error: null };
+    return { user, authToken: authToken ?? undefined, error: null };
   } catch (e) {
     return { user: null, error: (e as Error).message };
   }

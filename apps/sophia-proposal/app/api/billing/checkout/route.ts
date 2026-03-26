@@ -82,6 +82,12 @@ export async function POST(request: NextRequest) {
 
     // 4. Check if customer already exists in Polar
     const polarClient = getPolarClient();
+    if (!polarClient.isConfigured()) {
+      return NextResponse.json(
+        { error: 'Billing not configured' },
+        { status: 503 }
+      );
+    }
     const existingCustomer = await polarClient.getCustomerByEmail(userData.email);
 
     // 5. Create checkout session

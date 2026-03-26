@@ -31,8 +31,12 @@ export async function POST(request: NextRequest) {
     const polarClient = getPolarClient();
     const isValid = await polarClient.verifyWebhookSignature(rawBody, signature);
 
+    // null means POLAR_WEBHOOK_SECRET not configured — accept silently, don't process
+    if (isValid === null) {
+      return NextResponse.json({ received: true, skipped: 'webhook secret not configured' });
+    }
+
     if (!isValid) {
-      console.error('Invalid webhook signature');
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
 

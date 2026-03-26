@@ -24,6 +24,7 @@ describe('Telegram Webhook Route', () => {
 
   beforeEach(() => {
     vi.resetAllMocks()
+    process.env.TELEGRAM_BOT_TOKEN = 'test-bot-token'
     process.env.TELEGRAM_WEBHOOK_SECRET = secret
   })
 

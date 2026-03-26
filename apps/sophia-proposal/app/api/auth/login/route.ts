@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { signIn, sendMagicLink } from "@/lib/db/auth";
 import { signInSchema, magicLinkSchema } from "@/lib/validators/auth";
 
+function authConfigured(): boolean {
+  return Boolean(process.env.JWT_SECRET);
+}
+
 // API routes are dynamic by default
 export const dynamic = "force-dynamic";
 
@@ -10,6 +14,9 @@ export const dynamic = "force-dynamic";
  * Sign in with email/password or send magic link
  */
 export async function POST(request: NextRequest) {
+  if (!authConfigured()) {
+    return NextResponse.json({ error: 'Auth not configured' }, { status: 503 });
+  }
   try {
     const body = await request.json();
     const { magicLink } = body;

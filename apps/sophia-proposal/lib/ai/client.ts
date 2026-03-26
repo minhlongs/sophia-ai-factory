@@ -1,23 +1,26 @@
 import Anthropic from "@anthropic-ai/sdk";
 
-// Lazy client — avoids throwing at module import during Next.js build
+// Lazy client — returns null when ANTHROPIC_API_KEY is not set (zero-config safe)
 let _client: Anthropic | null = null;
 
-function getClient(): Anthropic {
+export function getAnthropicClient(): Anthropic | null {
   if (!_client) {
     const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      throw new Error("Missing ANTHROPIC_API_KEY environment variable");
-    }
+    if (!apiKey) return null;
     _client = new Anthropic({ apiKey });
   }
   return _client;
 }
 
-// Proxy preserves `claudeClient.messages.create(...)` usage across codebase
+// Proxy preserves `claudeClient.messages.create(...)` usage across codebase.
+// Throws a descriptive error at call time (not at module load) when unconfigured.
 export const claudeClient = new Proxy({} as Anthropic, {
   get(_, prop) {
-    return (getClient() as unknown as Record<string | symbol, unknown>)[prop];
+    const client = getAnthropicClient();
+    if (!client) {
+      throw new Error("AI not configured: ANTHROPIC_API_KEY is missing");
+    }
+    return (client as unknown as Record<string | symbol, unknown>)[prop];
   },
 });
 
