@@ -190,8 +190,10 @@ affiliate_content — id, org_id, type, title, content, status
 1. **Index rewrite:** `/` → `/landing` (opennextjs-cloudflare index bug workaround)
 2. **Public route bypass:** Landing, auth, docs, blog, API v1
 3. **JWT validation:** Extract org_id from verified token
-4. **MCU balance check:** For billable routes (`/api/proposals/*`, `/api/video/*`)
-5. **Auth redirect:** Unauthenticated page requests → `/login?redirect=PATH`
+4. **Protected API routes:** `/api/raas/*`, `/api/affiliate/*`, `/api/proposals/*`, `/api/video/*` require auth
+5. **MCU balance check:** For billable routes (`/api/proposals/*`, `/api/video/*`)
+6. **Auth redirect:** Unauthenticated page requests → `/login?redirect=PATH`
+7. **Security headers:** HSTS, CSP, X-Frame-Options, X-Content-Type-Options, Permissions-Policy
 
 ---
 
@@ -273,3 +275,35 @@ crons = ["*/5 * * * *"]
 ### Known Workarounds
 - **Index route bug:** opennextjs-cloudflare returns 500 for `/`. Fixed via middleware rewrite `/` → `/landing`
 - **Peer deps:** `npm install --legacy-peer-deps` required (wrangler v3 vs @opennextjs/cloudflare)
+
+---
+
+## Security & Monitoring (2026-03-26 Audit)
+
+### Authentication & Authorization
+- **JWT Tokens:** PBKDF2 password hashing, 7-day expiry, HttpOnly cookies
+- **Tenant Isolation:** All API routes verify JWT org_id, no header-based org switching
+- **Admin Enforcement:** Provision endpoints verify `role === 'admin'` before allowing changes
+- **Protected Routes:** Middleware enforces authentication on all protected APIs
+
+### XSS Prevention
+- **DOMPurify:** Sanitizes proposal content before rendering to prevent DOM injection
+- **React Auto-escape:** Template literals and user content auto-escaped by default
+- **Content Security Policy:** CSP header restricts inline scripts and external sources
+
+### Infrastructure Security
+- **HSTS Header:** Enforces HTTPS, max-age 1 year, includeSubDomains
+- **Security Headers:** X-Frame-Options: DENY, X-Content-Type-Options: nosniff
+- **Rate Limiting:** `/api/v1/demo` limited to 10 req/minute per IP
+- **Secrets Management:** All keys stored in CF Worker secrets (encrypted at rest), never in code
+
+### Monitoring & Observability
+- **Sentry SDK:** Error tracking for frontend, server, and edge functions
+- **Structured Logging:** JSON logger for all events (lib/logger.ts)
+- **Uptime Check:** Cron job runs `/api/health` every 5 minutes for liveness monitoring
+- **D1 Backup:** Nightly automated backup via GitHub Actions to Cloudflare
+
+### Compliance
+- **Data Protection:** D1 backups encrypted by Cloudflare
+- **Audit Trail:** All MCU transactions logged with user/org context
+- **Branch Protection:** `main` requires code review, no force push allowed
