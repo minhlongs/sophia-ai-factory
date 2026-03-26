@@ -63,6 +63,10 @@ export async function POST(request: NextRequest) {
   const orgName = typeof body.org_name === 'string' && body.org_name.trim()
     ? body.org_name.trim()
     : email.split('@')[0];
+  const validTiers = ['starter', 'growth', 'premium', 'master'];
+  const tier = typeof body.tier === 'string' && validTiers.includes(body.tier)
+    ? body.tier
+    : 'starter';
   const mcuCredits = typeof body.mcu_credits === 'number' ? body.mcu_credits : 200;
 
   try {
@@ -72,7 +76,7 @@ export async function POST(request: NextRequest) {
     const { org_id, api_key } = await createOrganization({
       name: orgName,
       email,
-      plan: 'starter',
+      plan: tier,
     });
 
     // Create user with a temporary password (client will use magic link)
@@ -94,6 +98,7 @@ export async function POST(request: NextRequest) {
       org_id,
       email,
       org_name: orgName,
+      tier,
       api_key,
       mcu_balance: mcuCredits,
       login_url: `https://sophia.agencyos.network/login`,

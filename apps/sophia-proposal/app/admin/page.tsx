@@ -21,7 +21,8 @@ interface ExistingClient {
 export default function AdminPage() {
   const [email, setEmail] = useState("");
   const [orgName, setOrgName] = useState("");
-  const [mcuCredits, setMcuCredits] = useState(200);
+  const [tier, setTier] = useState("starter");
+  const [mcuCredits, setMcuCredits] = useState(500);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ProvisionedClient | null>(null);
   const [error, setError] = useState("");
@@ -45,6 +46,7 @@ export default function AdminPage() {
         body: JSON.stringify({
           email,
           org_name: orgName || undefined,
+          tier,
           mcu_credits: mcuCredits,
         }),
       });
@@ -109,30 +111,61 @@ export default function AdminPage() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Org Name (optional)
-                </label>
-                <input
-                  type="text"
-                  value={orgName}
-                  onChange={(e) => setOrgName(e.target.value)}
-                  placeholder="Auto from email"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Org Name (optional)
+              </label>
+              <input
+                type="text"
+                value={orgName}
+                onChange={(e) => setOrgName(e.target.value)}
+                placeholder="Auto from email"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                RaaS Plan
+              </label>
+              <div className="grid grid-cols-4 gap-2">
+                {[
+                  { id: "starter", label: "Starter", price: "$49/mo", mcu: 500 },
+                  { id: "growth", label: "Growth", price: "$149/mo", mcu: 2000 },
+                  { id: "premium", label: "Premium", price: "$499/mo", mcu: 10000 },
+                  { id: "master", label: "Master", price: "$999/mo", mcu: 25000 },
+                ].map((plan) => (
+                  <button
+                    key={plan.id}
+                    type="button"
+                    onClick={() => {
+                      setTier(plan.id);
+                      setMcuCredits(plan.mcu);
+                    }}
+                    className={`p-3 rounded-lg border-2 text-center transition-colors ${
+                      tier === plan.id
+                        ? "border-indigo-600 bg-indigo-50 text-indigo-700"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <p className="font-semibold text-sm">{plan.label}</p>
+                    <p className="text-xs text-gray-500">{plan.price}</p>
+                    <p className="text-xs font-medium mt-1">{plan.mcu.toLocaleString()} MCU</p>
+                  </button>
+                ))}
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  MCU Credits
-                </label>
-                <input
-                  type="number"
-                  value={mcuCredits}
-                  onChange={(e) => setMcuCredits(Number(e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                MCU Credits (custom)
+              </label>
+              <input
+                type="number"
+                value={mcuCredits}
+                onChange={(e) => setMcuCredits(Number(e.target.value))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              />
             </div>
 
             <button
