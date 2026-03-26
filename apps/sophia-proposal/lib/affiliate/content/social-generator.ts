@@ -51,7 +51,7 @@ Rules:
 - All posts must feel authentic, not like ads`;
 
   const response = await claudeClient.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-sonnet-4-6-20250514',
     max_tokens: 1000,
     messages: [{ role: 'user', content: prompt }],
   });

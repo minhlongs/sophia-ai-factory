@@ -125,7 +125,7 @@ async function anthropicCompletion(
   const nonSystem = opts.messages.filter(m => m.role !== 'system');
 
   const message = await client.messages.create({
-    model: opts.model ?? 'claude-sonnet-4-20250514',
+    model: opts.model ?? 'claude-sonnet-4-6-20250514',
     max_tokens: opts.maxTokens ?? 2000,
     ...(systemMsg ? { system: systemMsg } : {}),
     messages: nonSystem.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
@@ -269,7 +269,7 @@ async function* anthropicStream(opts: ChatCompletionOptions): AsyncGenerator<str
   const nonSystem = opts.messages.filter(m => m.role !== 'system');
 
   const stream = client.messages.stream({
-    model: opts.model ?? 'claude-sonnet-4-20250514',
+    model: opts.model ?? 'claude-sonnet-4-6-20250514',
     max_tokens: opts.maxTokens ?? 2000,
     ...(systemMsg ? { system: systemMsg } : {}),
     messages: nonSystem.map(m => ({

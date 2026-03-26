@@ -79,7 +79,7 @@ export async function generateProposal(
   const userPrompt = buildUserPrompt(params);
 
   const response = await claudeClient.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: "claude-sonnet-4-6-20250514",
     max_tokens: 4000,
     system: systemPrompt,
     messages: [
