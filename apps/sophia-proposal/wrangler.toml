@@ -25,5 +25,10 @@ service = "sophia-ai-factory"
 [images]
 binding = "IMAGES"
 
+# Workaround: opennextjs-cloudflare index route bug
+# Redirect / to /landing until upstream fix
+[vars]
+INDEX_REDIRECT = "/landing"
+
 [triggers]
 crons = ["*/5 * * * *"]

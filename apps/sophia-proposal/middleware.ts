@@ -22,6 +22,7 @@ const publicRoutes = [
   "/blog",
   "/status",
   "/",
+  "/landing",
 ];
 
 // API routes that require authentication

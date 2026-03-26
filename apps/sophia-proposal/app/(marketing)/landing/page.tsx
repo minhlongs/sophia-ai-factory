@@ -11,7 +11,7 @@ import { FaqSection } from "@/components/landing/faq-section";
 import { CtaSection } from "@/components/landing/cta-section";
 import { Footer } from "@/components/landing/footer";
 
-export default function Home() {
+export default function LandingPage() {
   return (
     <ErrorBoundary>
       <Navbar />
