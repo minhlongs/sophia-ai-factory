@@ -1,6 +1,7 @@
-# Tech Debt — GREEN (All Resolved)
+# Tech Debt — GREEN (All Critical Items Resolved)
 
-> **All items resolved or accepted as of 2026-02-09.**
+> **All critical/high-priority items resolved as of 2026-03-26.**
+> **Accepted low-priority items deferred to future versions.**
 
 ## Frontend (Next.js)
 
@@ -16,10 +17,22 @@
 
 ## Infrastructure
 
-### RESOLVED — Vercel Deployment
-- **Status**: Vercel Git integration handles deployment directly. No need for nested GitHub Actions workflow.
-- **Rationale**: Vercel auto-deploys on push to main via Git integration.
+### RESOLVED — Cloudflare Workers Migration
+- **Status**: Fully migrated from Vercel to Cloudflare Workers (2026-03-24).
+- **Rationale**: CF Workers provides lower latency (edge execution), better cost structure, and simpler global deployment.
 
 ### RESOLVED — Secrets Management
-- **Status**: `.env.production.example` created with all required env vars documented. Production secrets managed via Vercel environment variables UI.
-- **Rationale**: Standard Vercel + `.env` pattern is sufficient for current scale.
+- **Status**: All secrets stored in CF Worker secrets (encrypted at rest). `.env.example` documents structure only.
+- **Rationale**: CF Worker secrets are more secure than `.env` and suitable for edge compute model.
+
+### RESOLVED — Security Audit Fixes
+- **Status**: 61→83/100 handover score via critical fixes (2026-03-26).
+  - Tenant isolation (JWT auth enforced)
+  - XSS prevention (DOMPurify)
+  - Admin enforcement (role checks)
+  - Security headers (HSTS, CSP)
+- **Rationale**: All P0 and P1 security items addressed per audit checklist.
+
+### ACCEPTED — Multi-Region Failover
+- **Status**: Deferred to Q3 2026 (single-region D1 acceptable for current load).
+- **Rationale**: RPO 24h via daily backup, RTO 4h via git redeploy meets current SLA.
