@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useState, use } from "react";
+import React, { useState, use, lazy, Suspense } from "react";
 import ProposalEditor from "@/components/proposals/proposal-editor";
-import PDFExportButton, { exportProposalToPDF } from "@/lib/pdf/generator";
+
+// Lazy load PDF generator to reduce initial bundle (517kB → ~100kB)
+const PDFExportButton = lazy(() => import("@/lib/pdf/generator"));
 
 export default function ProposalDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -33,7 +35,9 @@ export default function ProposalDetailPage({ params }: { params: Promise<{ id: s
           <p className="text-gray-600 mt-1">{proposalData.clientCompany}</p>
         </div>
         <div className="flex gap-2">
-          <PDFExportButton proposalData={proposalData} />
+          <Suspense fallback={<span className="px-4 py-2 text-gray-400">Loading PDF...</span>}>
+            <PDFExportButton proposalData={proposalData} />
+          </Suspense>
           <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
             Back to List
           </button>
