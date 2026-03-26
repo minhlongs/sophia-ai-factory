@@ -68,7 +68,9 @@ export async function POST(request: NextRequest) {
   const tier = typeof body.tier === 'string' && validTiers.includes(body.tier)
     ? body.tier
     : 'starter';
-  const mcuCredits = typeof body.mcu_credits === 'number' ? body.mcu_credits : 200;
+  const mcuCredits = typeof body.mcu_credits === 'number' && body.mcu_credits > 0
+    ? Math.floor(body.mcu_credits)
+    : 200;
 
   try {
     const { createOrganization, createAdminUser } = await import('@/lib/raas/onboarding');
