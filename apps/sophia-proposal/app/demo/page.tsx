@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 export default function DemoPage() {
   const [submitted, setSubmitted] = useState(false);
@@ -114,7 +115,7 @@ export default function DemoPage() {
               {loading ? "Submitting..." : "Request Demo"}
             </button>
             <p className="text-xs text-gray-500 text-center">
-              Or <a href="/signup" className="text-orange-600 hover:underline font-medium">start free</a> with 200 MCU credits — no credit card required.
+              Or <Link href="/signup" className="text-orange-600 hover:underline font-medium">start free</Link> with 200 MCU credits — no credit card required.
             </p>
           </form>
         )}

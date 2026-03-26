@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { VideoPlayer } from "./video-player";
 import { Button } from "@/components/ui/button";
 import { clsx } from "clsx";
@@ -34,7 +34,7 @@ export function VideoList({ proposalId, onVideoSelect, className }: VideoListPro
   const [videos, setVideos] = useState<VideoAsset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
+  const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchVideos = useCallback(async () => {
     try {
@@ -52,16 +52,15 @@ export function VideoList({ proposalId, onVideoSelect, className }: VideoListPro
         (v: VideoAsset) => v.status === "pending" || v.status === "processing"
       );
 
-      if (hasProcessing && !pollingInterval) {
+      if (hasProcessing && !pollingRef.current) {
         // Start polling every 5 seconds for processing videos
-        const interval = setInterval(() => {
+        pollingRef.current = setInterval(() => {
           fetchVideos();
         }, 5000);
-        setPollingInterval(interval);
-      } else if (!hasProcessing && pollingInterval) {
+      } else if (!hasProcessing && pollingRef.current) {
         // Stop polling when all videos are done
-        clearInterval(pollingInterval);
-        setPollingInterval(null);
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load videos");
@@ -75,11 +74,11 @@ export function VideoList({ proposalId, onVideoSelect, className }: VideoListPro
 
     // Cleanup polling on unmount
     return () => {
-      if (pollingInterval) {
-        clearInterval(pollingInterval);
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
       }
     };
-  }, [proposalId]);
+  }, [fetchVideos]);
 
   const getStatusColor = (status: string) => {
     switch (status) {

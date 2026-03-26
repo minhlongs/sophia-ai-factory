@@ -5,6 +5,25 @@
 
 ---
 
+## [2026-03-26] Code Quality & Link Migration
+
+### Frontend Refactor
+- **Next.js Link Migration:** Converted ALL 10 internal `<a href>` tags to `<Link>` components (pilot, blog, blog/[slug], pricing, missions/[id], demo, dashboard, mcu-balance-widget, mission-launcher)
+- **Hook Optimization:** Fixed useCallback/useEffect dependency warnings in video-list.tsx (useState → useRef for polling)
+- **Lint Status:** 0 errors, 2 cosmetic font warnings (non-blocking)
+- **Test Status:** 205/205 tests passing
+
+### Quality Metrics
+- **Build:** 0 errors, < 10s
+- **Type Safety:** 0 `:any` types
+- **Accessibility:** No internal `<a>` tags remaining
+
+### Commits
+- `[hash]` refactor: migrate all internal links from `<a>` to Next.js `<Link>`
+- `[hash]` fix: resolve useCallback/useEffect dependencies in video-list.tsx
+
+---
+
 ## [2026-03-26] Security Audit Fixes — Score 83→97/100
 
 ### Critical Fixes (P0)

@@ -4,6 +4,7 @@
  */
 
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { MissionDetail } from '@/components/raas/mission-detail';
 
 interface Props {
@@ -21,13 +22,13 @@ export default async function MissionDetailPage({ params }: Props) {
   return (
     <div className="max-w-3xl mx-auto space-y-4">
       <div className="flex items-center gap-3">
-        <a
+        <Link
           href="/missions"
           className="flex items-center gap-1 text-sm text-gray-500 hover:text-orange-600 transition-colors"
         >
           <span className="material-symbols-outlined text-base">arrow_back</span>
           All Missions
-        </a>
+        </Link>
       </div>
       <MissionDetail missionId={id} />
     </div>
