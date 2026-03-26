@@ -7,6 +7,7 @@
  */
 
 import { useState } from 'react';
+import Link from 'next/link';
 
 interface Template {
   id: string;
@@ -124,9 +125,9 @@ export function MissionLauncher({ balance = 0, onClose, onSuccess }: Props) {
             {error && <p className="text-sm text-red-600">{error}</p>}
 
             {insufficient ? (
-              <a href="/billing/upgrade" className="block w-full py-2.5 bg-orange-500 text-white rounded-xl text-center font-semibold hover:bg-orange-600 transition-colors">
+              <Link href="/billing/upgrade" className="block w-full py-2.5 bg-orange-500 text-white rounded-xl text-center font-semibold hover:bg-orange-600 transition-colors">
                 Insufficient credits — Upgrade Plan
-              </a>
+              </Link>
             ) : (
               <button type="submit" disabled={submitting}
                 className="w-full py-2.5 bg-orange-500 text-white rounded-xl font-semibold hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">

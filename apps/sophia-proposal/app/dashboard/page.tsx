@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
 import { useAuth } from "@/components/auth/auth-provider";
 import { useRouter } from "next/navigation";
 
@@ -47,12 +48,12 @@ export default function DashboardPage() {
               <h1 className="text-lg font-semibold text-gray-900">Sophia AI Factory</h1>
             </div>
             <div className="flex items-center space-x-4">
-              <a href="/dashboard/missions" className="text-sm font-medium text-orange-600 hover:text-orange-700">Missions</a>
-              <a href="/pricing" className="text-sm text-gray-600 hover:text-gray-900">Pricing</a>
+              <Link href="/dashboard/missions" className="text-sm font-medium text-orange-600 hover:text-orange-700">Missions</Link>
+              <Link href="/pricing" className="text-sm text-gray-600 hover:text-gray-900">Pricing</Link>
               <span className="text-sm text-gray-600">{user.email}</span>
-              <a href="/dashboard" className="text-sm text-primary hover:text-primary-hover font-medium">
+              <Link href="/dashboard" className="text-sm text-primary hover:text-primary-hover font-medium">
                 Settings
-              </a>
+              </Link>
             </div>
           </div>
         </div>
@@ -129,7 +130,7 @@ export default function DashboardPage() {
               <div>
                 <p className="text-sm font-semibold text-gray-900">Get your API key</p>
                 <p className="text-sm text-gray-600 mt-1">
-                  Go to <a href="/dashboard/api-keys" className="text-orange-600 hover:underline font-medium">API Keys</a>, create a new key. Copy the <code className="text-xs bg-orange-50 border border-orange-200 px-1.5 py-0.5 rounded">sk_live_*</code> value — you will need it for every request.
+                  Go to <Link href="/dashboard/api-keys" className="text-orange-600 hover:underline font-medium">API Keys</Link>, create a new key. Copy the <code className="text-xs bg-orange-50 border border-orange-200 px-1.5 py-0.5 rounded">sk_live_*</code> value — you will need it for every request.
                 </p>
               </div>
             </div>

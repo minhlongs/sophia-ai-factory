@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { listPublishedPosts } from "@/lib/blog/blog-queries";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
@@ -36,16 +37,16 @@ export default async function BlogPage() {
       {/* Nav */}
       <nav className="bg-surface border-b border-outline-variant">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <a href="/" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2">
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
               <span className="material-symbols-outlined text-white text-sm">smart_toy</span>
             </div>
             <span className="font-bold text-on-surface">Sophia AI Factory</span>
-          </a>
+          </Link>
           <div className="flex items-center gap-4">
-            <a href="/" className="text-sm text-on-surface-variant hover:text-on-surface">Home</a>
-            <a href="/pricing" className="text-sm text-on-surface-variant hover:text-on-surface">Pricing</a>
-            <a href="/pilot" className="text-sm text-on-surface-variant hover:text-on-surface">Early Access</a>
+            <Link href="/" className="text-sm text-on-surface-variant hover:text-on-surface">Home</Link>
+            <Link href="/pricing" className="text-sm text-on-surface-variant hover:text-on-surface">Pricing</Link>
+            <Link href="/pilot" className="text-sm text-on-surface-variant hover:text-on-surface">Early Access</Link>
           </div>
         </div>
       </nav>
@@ -107,13 +108,13 @@ export default async function BlogPage() {
                             <span className="ml-2">{formatDate(post.published_at)}</span>
                           )}
                         </div>
-                        <a
+                        <Link
                           href={`/blog/${post.slug}`}
                           className="text-sm font-medium text-primary hover:underline flex items-center gap-1"
                         >
                           Read more
                           <span className="material-symbols-outlined text-base">arrow_forward</span>
-                        </a>
+                        </Link>
                       </div>
                     </div>
                   </article>
@@ -127,13 +128,13 @@ export default async function BlogPage() {
       {/* CTA */}
       <section className="py-12 px-4 bg-surface-container border-t border-outline-variant text-center">
         <p className="text-on-surface font-semibold mb-2">Ready to automate your proposals?</p>
-        <a
+        <Link
           href="/pilot"
           className="inline-flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-full font-semibold hover:opacity-90 transition-opacity text-sm"
         >
           <span className="material-symbols-outlined text-base">rocket_launch</span>
           Apply for Early Access
-        </a>
+        </Link>
       </section>
     </main>
   );

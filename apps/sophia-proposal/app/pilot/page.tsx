@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { PilotApplicationForm } from "./pilot-application-form";
 
@@ -77,18 +78,18 @@ export default function PilotPage() {
       {/* Nav */}
       <nav className="bg-surface border-b border-outline-variant">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <a href="/" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2">
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
               <span className="material-symbols-outlined text-white text-sm">smart_toy</span>
             </div>
             <span className="font-bold text-on-surface">Sophia AI Factory</span>
-          </a>
+          </Link>
           <div className="flex items-center gap-4">
-            <a href="/" className="text-sm text-on-surface-variant hover:text-on-surface">Home</a>
-            <a href="/pricing" className="text-sm text-on-surface-variant hover:text-on-surface">Pricing</a>
-            <a href="/login" className="text-sm px-4 py-1.5 bg-primary text-white rounded-full hover:opacity-90 font-medium">
+            <Link href="/" className="text-sm text-on-surface-variant hover:text-on-surface">Home</Link>
+            <Link href="/pricing" className="text-sm text-on-surface-variant hover:text-on-surface">Pricing</Link>
+            <Link href="/login" className="text-sm px-4 py-1.5 bg-primary text-white rounded-full hover:opacity-90 font-medium">
               Sign In
-            </a>
+            </Link>
           </div>
         </div>
       </nav>

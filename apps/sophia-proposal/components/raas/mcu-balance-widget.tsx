@@ -6,6 +6,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
 interface BalanceData {
   balance: number;
@@ -43,9 +44,9 @@ export function McuBalanceWidget() {
     <div className={`rounded-xl border p-4 ${low ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white'}`}>
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm font-medium text-gray-600">MCU Balance</span>
-        <a href="/billing/upgrade" className="text-xs text-orange-600 hover:underline font-medium">
+        <Link href="/billing/upgrade" className="text-xs text-orange-600 hover:underline font-medium">
           Buy more
-        </a>
+        </Link>
       </div>
 
       <p className={`text-2xl font-bold ${low ? 'text-red-600' : 'text-gray-900'}`}>

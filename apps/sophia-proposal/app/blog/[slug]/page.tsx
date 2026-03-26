@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPostBySlug } from "@/lib/blog/blog-queries";
 
@@ -61,17 +62,17 @@ export default async function BlogPostPage({ params }: PageProps) {
       {/* Nav */}
       <nav className="bg-surface border-b border-outline-variant">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <a href="/" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2">
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
               <span className="material-symbols-outlined text-white text-sm">smart_toy</span>
             </div>
             <span className="font-bold text-on-surface">Sophia AI Factory</span>
-          </a>
+          </Link>
           <div className="flex items-center gap-4">
-            <a href="/blog" className="text-sm text-on-surface-variant hover:text-on-surface">Blog</a>
-            <a href="/pilot" className="text-sm px-4 py-1.5 bg-primary text-white rounded-full hover:opacity-90 font-medium">
+            <Link href="/blog" className="text-sm text-on-surface-variant hover:text-on-surface">Blog</Link>
+            <Link href="/pilot" className="text-sm px-4 py-1.5 bg-primary text-white rounded-full hover:opacity-90 font-medium">
               Early Access
-            </a>
+            </Link>
           </div>
         </div>
       </nav>
@@ -80,7 +81,7 @@ export default async function BlogPostPage({ params }: PageProps) {
       <article className="py-12 px-4">
         <div className="max-w-3xl mx-auto">
           {/* Back link */}
-          <a
+          <Link
             href="/blog"
             className="inline-flex items-center gap-1 text-sm text-on-surface-variant hover:text-primary mb-8 group"
           >
@@ -88,7 +89,7 @@ export default async function BlogPostPage({ params }: PageProps) {
               arrow_back
             </span>
             All Posts
-          </a>
+          </Link>
 
           {/* Tags */}
           {post.tags.length > 0 && (
@@ -134,13 +135,13 @@ export default async function BlogPostPage({ params }: PageProps) {
             <p className="text-on-surface font-semibold mb-4">
               Ready to automate your proposals?
             </p>
-            <a
+            <Link
               href="/pilot"
               className="inline-flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-full font-semibold hover:opacity-90 transition-opacity text-sm glow-primary"
             >
               <span className="material-symbols-outlined text-base">rocket_launch</span>
               Apply for Early Access
-            </a>
+            </Link>
           </div>
         </div>
       </article>

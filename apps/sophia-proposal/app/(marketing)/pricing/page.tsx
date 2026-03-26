@@ -4,6 +4,7 @@
  */
 
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { PricingCards } from '@/components/pricing/pricing-cards';
 
 export const metadata: Metadata = {
@@ -40,18 +41,18 @@ export default function PricingPage() {
       {/* Nav bar */}
       <nav className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <a href="/" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2">
             <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
               <span className="material-symbols-outlined text-white text-sm">smart_toy</span>
             </div>
             <span className="font-bold text-gray-900">Sophia AI Factory</span>
-          </a>
+          </Link>
           <div className="flex items-center gap-4">
-            <a href="/" className="text-sm text-gray-600 hover:text-gray-900">Home</a>
-            <a href="/pricing" className="text-sm font-semibold text-orange-600">Pricing</a>
-            <a href="/login" className="text-sm px-4 py-1.5 bg-orange-500 text-white rounded-lg hover:bg-orange-600 font-medium">
+            <Link href="/" className="text-sm text-gray-600 hover:text-gray-900">Home</Link>
+            <Link href="/pricing" className="text-sm font-semibold text-orange-600">Pricing</Link>
+            <Link href="/login" className="text-sm px-4 py-1.5 bg-orange-500 text-white rounded-lg hover:bg-orange-600 font-medium">
               Get Started
-            </a>
+            </Link>
           </div>
         </div>
       </nav>
@@ -94,12 +95,12 @@ export default function PricingPage() {
       <section className="py-16 bg-orange-500 text-white text-center px-4">
         <h2 className="text-2xl md:text-3xl font-bold mb-3">Ready to automate your business?</h2>
         <p className="text-orange-100 mb-6 text-lg">Start free — 200 MCU included, no credit card needed.</p>
-        <a
+        <Link
           href="/signup"
           className="inline-block px-8 py-3 bg-white text-orange-600 font-bold rounded-xl hover:bg-orange-50 transition-colors text-lg"
         >
           Start Free Trial — 200 MCU
-        </a>
+        </Link>
       </section>
     </main>
   );
