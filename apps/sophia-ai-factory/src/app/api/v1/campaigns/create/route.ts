@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient, isAdminClientConfigured } from "@/lib/supabase/admin";
 import { logger } from "@/lib/utils/logger-utility";
 import { inngest } from "@/lib/inngest/client";
 
@@ -50,6 +50,15 @@ async function validateRaasApiKey(apiKey: string): Promise<boolean> {
 export async function POST(request: Request): Promise<NextResponse> {
   const requestId = crypto.randomUUID();
   const log = logger.withRequestId(requestId);
+
+  // Degrade gracefully when database is not configured
+  if (!isAdminClientConfigured()) {
+    log.warn("RaaS campaign create: database not configured");
+    return NextResponse.json(
+      { error: "Database not configured", message: "Background jobs not configured" },
+      { status: 503 }
+    );
+  }
 
   try {
     const authHeader = request.headers.get("Authorization");
@@ -109,20 +118,28 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
-    await inngest.send({
-      name: "campaign.created",
-      data: {
-        campaignId: campaign.id,
-        userId,
-        topic: title ?? "RaaS Campaign",
-        audience: "general",
-        tier: "BASIC",
-      },
-    });
+    // Send to Inngest only when event key is configured; skip silently otherwise
+    const inngestConfigured = !!(process.env.INNGEST_EVENT_KEY && process.env.INNGEST_SIGNING_KEY);
+    if (inngestConfigured) {
+      await inngest.send({
+        name: "campaign.created",
+        data: {
+          campaignId: campaign.id,
+          userId,
+          topic: title ?? "RaaS Campaign",
+          audience: "general",
+          tier: "BASIC",
+        },
+      });
+      log.info("RaaS campaign create: queued successfully", { campaignId: campaign.id, userId });
+      return NextResponse.json({ campaignId: campaign.id, status: "queued" }, { status: 201 });
+    }
 
-    log.info("RaaS campaign create: queued successfully", { campaignId: campaign.id, userId });
-
-    return NextResponse.json({ campaignId: campaign.id, status: "queued" }, { status: 201 });
+    log.warn("RaaS campaign create: Inngest not configured, campaign saved but not queued", { campaignId: campaign.id });
+    return NextResponse.json(
+      { campaignId: campaign.id, status: "saved", message: "Background jobs not configured — campaign saved but not queued" },
+      { status: 201 }
+    );
   } catch (error) {
     logger.error(
       "RaaS campaign create: unexpected error",

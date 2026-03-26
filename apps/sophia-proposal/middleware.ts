@@ -15,8 +15,12 @@ const publicRoutes = [
   "/api/webhooks/",
   "/api/v1/demo-requests",
   "/docs/api",
+  "/docs",
   "/terms",
   "/pilot",
+  "/pricing",
+  "/blog",
+  "/status",
   "/",
 ];
 
@@ -68,6 +72,15 @@ export async function middleware(request: NextRequest) {
 
   if (isPublicRoute) {
     return NextResponse.next();
+  }
+
+  // If JWT_SECRET=REDACTED not configured, auth is unavailable
+  if (!process.env.JWT_SECRET=REDACTED) {
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Auth not configured" }, { status: 503 });
+    }
+    // Redirect page requests to /status so user can see config state
+    return NextResponse.redirect(new URL("/status", request.url));
   }
 
   // Check for auth cookie

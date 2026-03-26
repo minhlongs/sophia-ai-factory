@@ -1,4 +1,4 @@
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createAdminClient, isAdminClientConfigured } from '@/lib/supabase/admin';
 import { logger } from '@/lib/utils/logger-utility';
 import { Tier } from "@/types";
 import { trackUsage, hashLicenseKey, calculateCredits, startTimer } from '@/lib/usage-metering';
@@ -174,8 +174,15 @@ function getDefaultVoiceId(tier: Tier): string {
 /**
  * Upload audio buffer to Supabase Storage and return the public URL.
  * Uses service role key for server-side uploads.
+ * Falls back to a data URI when Supabase is not configured.
  */
 async function uploadAudioToStorage(audioData: Uint8Array): Promise<string> {
+  if (!isAdminClientConfigured()) {
+    logger.warn('[ElevenLabs] Supabase not configured, returning data URI for audio');
+    const base64 = Buffer.from(audioData).toString('base64');
+    return `data:audio/mpeg;base64,${base64}`;
+  }
+
   const supabase = createAdminClient();
 
   const fileName = `voiceover-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.mp3`;

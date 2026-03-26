@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateProposalSchema } from "@/lib/validators/proposal";
-import { generateProposal } from "@/lib/ai/client";
+import { generateProposal, getAnthropicClient } from "@/lib/ai/client";
 import { checkProposalQuality } from "@/lib/ai/quality-check";
 import { getSystemTemplate } from "@/lib/ai/proposal-templates";
 import { logUsage } from "@/lib/billing/usage-tracker";
@@ -16,6 +16,9 @@ export const dynamic = "force-dynamic";
  * Generate AI proposal from template and inputs
  */
 export async function POST(request: NextRequest) {
+  if (!getAnthropicClient() && !process.env.LLM_BASE_URL) {
+    return NextResponse.json({ success: false, error: "AI not configured" }, { status: 503 });
+  }
   try {
     const body = await request.json();
 
