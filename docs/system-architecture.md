@@ -1,300 +1,275 @@
 # System Architecture / Kien Truc He Thong
 
-> Sophia AI Video Factory — Zero Manual Content Production SaaS
+> Sophia AI Factory — RaaS (Reasoning-as-a-Service) Platform
 
-**Last Updated / Cap Nhat:** 2026-02-09
+**Last Updated:** 2026-03-26
+**Production:** https://sophia.agencyos.network
 
 ---
 
-## Component Diagram / So Do Thanh Phan
+## Component Diagram
 
 ```
-                           ┌──────────────────────────┐
-                           │     Next.js App Router    │
-                           │   (Vercel Edge/Serverless)│
-                           └────────────┬─────────────┘
-                                        │
-        ┌───────────────┬───────────────┼───────────────┬───────────────┐
-        │               │               │               │               │
-   ┌────▼────┐    ┌─────▼─────┐   ┌─────▼─────┐  ┌─────▼─────┐  ┌─────▼─────┐
-   │  Pages  │    │   API     │   │  Server   │  │ Middleware │  │   Auth    │
-   │  (SSR)  │    │  Routes   │   │  Actions  │  │ (i18n+RLS)│  │ (Supabase)│
-   └────┬────┘    └─────┬─────┘   └─────┬─────┘  └───────────┘  └───────────┘
-        │               │               │
-        └───────────────┼───────────────┘
-                        │
-        ┌───────────────┼───────────────────────────────┐
-        │               │                               │
-   ┌────▼────┐    ┌─────▼──────┐                  ┌─────▼──────┐
-   │Supabase │    │  Inngest   │                  │  Telegram  │
-   │Postgres │    │ (BG Jobs)  │                  │    Bot     │
-   │+Auth    │    └─────┬──────┘                  │ (Webhooks) │
-   │+Storage │          │                         └────────────┘
-   └─────────┘    ┌─────┼──────────────┐
-                  │     │              │
-            ┌─────▼──┐ ┌▼──────────┐ ┌▼───────────────┐
-            │generate│ │auto-disc  │ │ hello-world     │
-            │campaign│ │affiliates │ │ (health check)  │
-            └───┬────┘ └───────────┘ └─────────────────┘
-                │
-   ┌────────────┼──────────────────────────┐
-   │            │                          │
-   │  ┌────────▼────────┐   ┌─────────────▼─────────────┐
-   │  │ Smart Resume     │   │   OpenClaw Gateway         │
-   │  │ (Checkpoints)    │   │ (Multi-Channel Distribute) │
-   │  └─────────────────┘   └─────────┬─────────────────┘
-   │                            ┌─────┼──────┐
-   │                            │     │      │
-   │                       ┌────▼──┐ ┌▼───┐ ┌▼────────┐
-   │                       │YouTube│ │Tik │ │Telegram  │
-   │                       │Adapter│ │Tok │ │Notifier  │
-   │                       └───────┘ └────┘ └──────────┘
-   │
-   │  AI Services Pipeline
-   ├──> OpenRouter (Script Generation)
-   ├──> ElevenLabs (Text-to-Speech)
-   └──> HeyGen/D-ID (Video Generation)
+                        ┌──────────────────────────┐
+                        │     Next.js 15.5          │
+                        │  (Cloudflare Workers)     │
+                        │  opennextjs-cloudflare    │
+                        └────────────┬─────────────┘
+                                     │
+     ┌───────────────┬───────────────┼───────────────┬───────────────┐
+     │               │               │               │               │
+┌────▼────┐    ┌─────▼─────┐   ┌─────▼─────┐  ┌─────▼─────┐  ┌─────▼─────┐
+│  Pages  │    │   API     │   │ Middleware │  │   Auth    │  │  Billing  │
+│  (SSR)  │    │  Routes   │   │ (JWT+MCU) │  │(Custom JWT│  │(Polar.sh) │
+└────┬────┘    └─────┬─────┘   └───────────┘  │ + D1 DB) │  └───────────┘
+     │               │                         └───────────┘
+     └───────────────┤
+                     │
+     ┌───────────────┼───────────────┐
+     │               │               │
+┌────▼────┐    ┌─────▼──────┐  ┌─────▼──────┐
+│Cloudflare│   │  R2 Bucket │  │  External  │
+│   D1    │    │  (Cache)   │  │   APIs     │
+│(SQLite) │    └────────────┘  │            │
+│         │                    │ Anthropic  │
+│- users  │                    │ HeyGen     │
+│- orgs   │                    │ Resend     │
+│- missions│                   │ Polar.sh   │
+│- billing │                   └────────────┘
+│- api_keys│
+│- usage   │
+└──────────┘
 ```
 
 ---
 
-## Data Flow / Luong Du Lieu
+## Tech Stack
 
-### Campaign Pipeline (Chien Dich)
+| Layer | Technology | Notes |
+|-------|-----------|-------|
+| **Runtime** | Cloudflare Workers | Edge compute, global |
+| **Framework** | Next.js 15.5 | App Router, SSR |
+| **Adapter** | opennextjs-cloudflare | Next.js → CF Workers |
+| **Database** | Cloudflare D1 | SQLite-based, `sophia-raas-db` |
+| **Cache** | Cloudflare R2 | `sophia-ai-factory-opennext-cache` |
+| **Auth** | Custom JWT | PBKDF2 hashing, 7-day cookies |
+| **Billing** | Polar.sh | MCU credit system, webhooks |
+| **Email** | Resend | Magic link, notifications |
+| **AI** | Anthropic | Proposal generation |
+| **Video** | HeyGen | Video generation (optional) |
+| **Domain** | sophia.agencyos.network | CF Workers Custom Domains |
 
+---
+
+## Data Flow
+
+### Auth Flow
 ```
-User creates campaign (Dashboard or Telegram /campaign)
-        │
-        ▼
-   ┌─────────────────────────────────────────────────┐
-   │ Inngest: generate-campaign (event: campaign.created) │
-   └───────┬─────────────────────────────────────────┘
-           │
-   Step 1: notify-start
-           │  → Telegram notification to user
-           ▼
-   Step 2: generate-script
-           │  → OpenRouter API → script JSON (scenes + narration)
-           │  → Checkpoint saved
-           ▼
-   Step 3: generate-voiceover
-           │  → ElevenLabs API → audio URL
-           │  → Checkpoint saved
-           ▼
-   Step 4: start-video-generation
-           │  → HeyGen/D-ID API → video job ID
-           ▼
-   Step 5: poll-video-status
-           │  → Poll every 5s, max 60 attempts (5 min)
-           │  → Returns video_url + thumbnail_url
-           │  → Checkpoint saved
-           ▼
-   Step 6: distribute-channels (OpenClaw Gateway)
-           │  → YouTube, TikTok, Telegram (parallel)
-           │  → Self-heal on failure (retry failed channels)
-           │  → Checkpoint saved
-           ▼
-   Step 7: finalize-campaign
-           │  → Status: completed, progress: 100%
-           │  → Telegram notification with video link
-           │  → Clear all checkpoints
-           ▼
-        DONE
+User → /signup or /login
+  ↓
+POST /api/auth/signup OR /api/auth/login
+  ↓
+D1: Create/verify user (PBKDF2 password hash)
+  ↓
+Generate JWT token (7-day expiry)
+  ↓
+Set auth-token cookie (HttpOnly)
+  ↓
+Middleware validates JWT on protected routes
 ```
 
-### Smart Resume (Khoi Phuc Tu Dong)
-
-When a campaign fails mid-pipeline:
-1. Last checkpoint is read from SmartResumeEngine
-2. `resumeFrom` determines which step to skip to
-3. Previously completed artifacts (script, audio, video) are fetched from Supabase
-4. Pipeline resumes from the next uncompleted step
-
+### Mission Pipeline
 ```
-Failure at Step 4 (video gen timeout)
-        │
-        ▼
-Resume event fired with resumeFrom="video"
-        │
-        ▼
-Steps 1-3 skipped (artifacts loaded from DB)
-        │
-        ▼
-Step 4 re-executed → continues normally
+User creates mission (Dashboard or API)
+  ↓
+POST /api/v1/missions
+  ↓
+D1: Create mission record (status: queued)
+  ↓
+MCU balance checked + deducted
+  ↓
+Mission processing:
+  queued → planning → executing → verifying → completed
+  ↓
+D1: Store results in mission_results table
+  ↓
+User retrieves via GET /api/v1/missions/[id]/result
+```
+
+### Billing Flow
+```
+User selects tier → /billing/upgrade
+  ↓
+POST /api/billing/checkout → Polar.sh checkout URL
+  ↓
+User pays via Polar.sh (credit card)
+  ↓
+POST /api/webhooks/polar (signature verified)
+  ↓
+D1: Update billing_settings (tier, polar_subscription_id)
+D1: Credit MCU to org_balances
+  ↓
+/billing/success confirmation
 ```
 
 ---
 
-## Module Structure / Cau Truc Module
+## Database Schema (D1)
 
+**Database:** `sophia-raas-db` (ID: `78bd1961-b62d-43bb-b551-0c5d7d389506`)
+
+### Core Tables
 ```
-src/lib/
-├── ai/                          # AI service integrations
-│   ├── script-generator.ts      # OpenRouter script generation
-│   ├── video-generator.ts       # HeyGen/D-ID video creation
-│   └── text-to-speech-*.ts      # ElevenLabs TTS
-│
-├── gateway/                     # OpenClaw distribution gateway
-│   ├── index.ts                 # Barrel exports
-│   ├── gateway-types.ts         # Type definitions
-│   ├── openclaw-gateway.ts      # Core gateway class
-│   ├── smart-resume-engine.ts   # Checkpoint/resume engine
-│   └── adapters/                # Channel adapters
-│       ├── youtube-channel-adapter.ts
-│       ├── tiktok-channel-adapter.ts
-│       └── telegram-notification-adapter.ts
-│
-├── intelligence/                # SPS scoring engine
-│   ├── types.ts                 # ScorableProduct, ScoreResult, ScoringConfig
-│   ├── scoring.ts               # ScoringService (commission+popularity+reliability)
-│   ├── normalization.ts         # Score normalization functions
-│   └── runner.ts                # Batch scoring runner
-│
-├── discovery/                   # Affiliate discovery
-│   └── affiliate-ai-scorer.ts   # Deterministic program scorer (no AI calls)
-│
-├── ingestion/                   # Product data ingestion
-│   ├── types.ts                 # RawProduct, IngestionAdapter, NetworkId
-│   ├── base-adapter.ts          # Base adapter pattern
-│   ├── runner.ts                # Batch ingestion runner
-│   └── adapters/
-│       ├── clickbank-adapter.ts
-│       └── shareasale-adapter.ts
-│
-├── inngest/                     # Background job definitions
-│   ├── client.ts                # Inngest client singleton
-│   └── functions/
-│       ├── generate-campaign.ts       # Campaign pipeline (event-driven)
-│       ├── auto-discover-affiliates.ts # Daily cron (8AM UTC)
-│       └── hello-world.ts             # Health check function
-│
-├── telegram/                    # Telegram bot
-│   ├── telegram-bot.ts          # Bot instance + command registration
-│   ├── telegram-client.ts       # Low-level API client
-│   ├── telegram-command-handlers.ts
-│   ├── telegram-auth-middleware.ts
-│   ├── telegram-rate-limit-middleware.ts
-│   ├── telegram-fsm-state-manager.ts
-│   ├── telegram-keyboard-builder.ts
-│   └── telegram-message-formatter.ts
-│
-├── supabase/                    # Database clients
-│   ├── server.ts                # SSR client (cookies-based, @supabase/ssr)
-│   ├── client.ts                # Browser client
-│   ├── admin.ts                 # Admin client (SERVICE_ROLE_KEY)
-│   └── types.ts                 # Generated DB types
-│
-├── payments/                    # Polar.sh payment integration
-│   ├── polar-types.ts
-│   ├── polar-pricing-calculator.ts
-│   ├── polar-subscription-service.ts
-│   └── polar-webhook-handler.ts
-│
-├── services/                    # Service layer (factory pattern)
-│   ├── factory.ts               # ServiceFactory (mock vs real toggle)
-│   ├── types.ts                 # Service interfaces
-│   ├── real/                    # Production implementations
-│   │   ├── script-service.ts
-│   │   ├── voice-service.ts
-│   │   ├── video-service.ts
-│   │   └── payment-service.ts
-│   └── mock/                    # Test/dev implementations
-│       ├── script-service.ts
-│       ├── voice-service.ts
-│       └── payment-service.ts
-│
-├── auth.ts                      # getCurrentUser(), tier helpers
-├── affiliates.ts                # Affiliate program catalog
-├── features.ts                  # Feature flags per tier
-├── tier-guard.ts                # Tier-based access control
-└── schemas.ts                   # Zod validation schemas
+users           — id, email, password_hash, full_name, role
+organizations   — id, name, slug, email
+org_members     — org_id, user_id, role (owner/member)
+org_balances    — org_id, balance, reserved, lifetime_credits/debits
+api_keys        — id, org_id, key_hash, name, last_used_at, revoked_at
+```
+
+### Feature Tables
+```
+missions        — id, org_id, template_id, status, mcu_cost
+mission_results — id, mission_id, output (JSON)
+usage_logs      — id, org_id, feature, mcu_used
+```
+
+### Billing Tables
+```
+billing_settings — org_id, tier, polar_subscription_id, polar_customer_id, status
+```
+
+### Growth Tables
+```
+referral_codes    — id, user_id, code, commission_rate (20%), earned_mcu
+affiliates        — id, org_id, program_name, commission_rate
+affiliate_content — id, org_id, type, title, content, status
 ```
 
 ---
 
-## Integration Points / Diem Tich Hop
+## API Routes
 
-| Service | Purpose | Connection |
-|---------|---------|------------|
-| **Supabase** | Postgres DB, Auth (Magic Link), Storage | `@supabase/ssr` + `@supabase/supabase-js` |
-| **Inngest** | Background jobs, cron scheduling | `POST /api/inngest` webhook |
-| **Telegram** | Bot commands, notifications | `POST /api/webhooks/telegram` (Telegraf) |
-| **OpenRouter** | AI script generation (multi-model) | REST API, key in env |
-| **HeyGen** | Avatar video generation | REST API, polling for status |
-| **ElevenLabs** | Text-to-speech voiceover | REST API |
-| **Polar.sh** | Subscriptions, payment webhooks | `POST /api/webhooks/polar` |
-| **Upstash Redis** | Rate limiting, session cache | `@upstash/redis` |
-
----
-
-## Deployment Architecture / Kien Truc Trien Khai
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        Vercel                                │
-│  ┌────────────────┐  ┌──────────────┐  ┌─────────────────┐  │
-│  │  Edge Runtime   │  │  Serverless  │  │  Static Assets  │  │
-│  │  (Middleware)   │  │  (API/SSR)   │  │  (Next.js)      │  │
-│  └────────┬───────┘  └──────┬───────┘  └─────────────────┘  │
-│           │                 │                                 │
-└───────────┼─────────────────┼─────────────────────────────────┘
-            │                 │
-            ▼                 ▼
-┌───────────────────┐  ┌──────────────┐  ┌──────────────────┐
-│    Supabase       │  │   Inngest    │  │  External APIs   │
-│  (Postgres+Auth   │  │  (BG Jobs)   │  │  OpenRouter      │
-│   +Storage)       │  │              │  │  HeyGen          │
-│                   │  │              │  │  ElevenLabs      │
-│                   │  │              │  │  Polar.sh        │
-└───────────────────┘  └──────────────┘  └──────────────────┘
-```
-
-### Environment Variables (Required)
-
-| Variable | Service |
-|----------|---------|
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon/public key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase admin operations |
-| `INNGEST_SIGNING_KEY` | Inngest webhook verification |
-| `INNGEST_EVENT_KEY` | Inngest event sending |
-| `OPENROUTER_API_KEY` | AI script generation |
-| `HEYGEN_API_KEY` | Video generation |
-| `ELEVENLABS_API_KEY` | Voice generation |
-| `TELEGRAM_BOT_TOKEN` | Telegram bot |
-| `TELEGRAM_ADMIN_CHAT_ID` | Admin notifications |
-| `POLAR_ACCESS_TOKEN` | Payment processing |
-| `POLAR_WEBHOOK_SECRET` | Webhook verification |
-| `API_ENCRYPTION_KEY` | User API key encryption |
-| `ADMIN_USER` / `ADMIN_PASS` | Admin panel Basic Auth |
-| `UPSTASH_REDIS_REST_URL` | Redis cache/rate limiting |
-| `UPSTASH_REDIS_REST_TOKEN` | Redis auth |
-
----
-
-## Tier System / He Thong Goi
-
-| Feature | BASIC | PREMIUM | ENTERPRISE |
-|---------|-------|---------|------------|
-| Price/month | $199 | $399 | $799 |
-| YouTube Channels | 1 | 3 | Unlimited |
-| Videos/month | 20 | 100 | Unlimited |
-| Templates | 5 | Unlimited | Unlimited + Custom |
-| Auto YouTube Publish | No | Yes | Yes |
-| Auto-Discovery | No | Yes | Yes |
-| Gateway Channels | Telegram only | +YouTube | +YouTube +TikTok |
-
-Tier enum: `BASIC | PREMIUM | ENTERPRISE` (strict uppercase, stored in `user_metadata.tier`)
-
----
-
-## API Routes / Duong Dan API
-
+### Public (No Auth)
 | Route | Method | Purpose |
 |-------|--------|---------|
 | `/api/health` | GET | Health check |
+| `/api/v1/demo` | POST | Quick demo preview (rate limited) |
+| `/api/v1/demo-requests` | POST | Demo booking |
+| `/api/auth/signup` | POST | User registration |
+| `/api/auth/login` | POST | Password + magic link login |
+| `/api/auth/callback` | POST | Magic link verification |
 | `/api/webhooks/polar` | POST | Polar.sh payment events |
-| `/api/webhooks/telegram` | POST | Telegram bot updates |
-| `/api/inngest` | POST | Inngest function runner |
-| `/api/admin/invite` | POST | Admin user invite (Basic Auth) |
-| `/auth/callback` | GET | Supabase Magic Link callback |
+
+### Protected (Auth Required)
+| Route | Method | Purpose |
+|-------|--------|---------|
+| `/api/org` | GET | Current org info |
+| `/api/billing/subscription` | GET | Subscription + MCU balance |
+| `/api/billing/checkout` | POST | Polar checkout session |
+| `/api/raas/missions` | GET/POST | Mission CRUD |
+| `/api/raas/keys` | GET/POST | API key management |
+| `/api/raas/usage` | GET | MCU usage stats |
+| `/api/proposals/generate` | POST | AI proposal (MCU billable) |
+| `/api/video/generate` | POST | Video generation (MCU billable) |
+
+### RaaS External API (Bearer Token)
+| Route | Method | Purpose |
+|-------|--------|---------|
+| `/api/v1/missions` | GET/POST | List/create missions |
+| `/api/v1/missions/[id]` | GET | Mission detail |
+| `/api/v1/missions/[id]/result` | GET | Mission output |
+| `/api/v1/missions/[id]/stream` | GET | SSE real-time progress |
+
+---
+
+## Middleware
+
+**File:** `middleware.ts`
+
+1. **Index rewrite:** `/` → `/landing` (opennextjs-cloudflare index bug workaround)
+2. **Public route bypass:** Landing, auth, docs, blog, API v1
+3. **JWT validation:** Extract org_id from verified token
+4. **MCU balance check:** For billable routes (`/api/proposals/*`, `/api/video/*`)
+5. **Auth redirect:** Unauthenticated page requests → `/login?redirect=PATH`
+
+---
+
+## MCU Billing System
+
+### Subscription Tiers
+
+| Tier | Price | MCU/month | Discount |
+|------|-------|-----------|----------|
+| Starter | $49/mo | 500 | — |
+| Growth | $149/mo | 2,000 | 10% |
+| Premium | $499/mo | 10,000 | 20% |
+| Master | $999/mo | 25,000 | 30% |
+
+### Feature Costs
+
+| Feature | MCU |
+|---------|-----|
+| `proposal:text:basic` | 10 |
+| `proposal:text:advanced` | 25 |
+| `proposal:text:enterprise` | 50 |
+| `video:intro` | 100 |
+| `video:section` | 250 |
+| `video:full_proposal` | 500 |
+| `affiliate:blog` | 50 |
+| `affiliate:social` | 10 |
+| `email:send` | 1 |
+| `api:call` | 1 |
+
+---
+
+## Deployment
+
+### Cloudflare Workers Config (`wrangler.toml`)
+```toml
+name = "sophia-ai-factory"
+main = ".open-next/worker.js"
+compatibility_date = "2026-03-17"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+
+[assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "sophia-raas-db"
+database_id = "78bd1961-b62d-43bb-b551-0c5d7d389506"
+
+[[r2_buckets]]
+binding = "NEXT_INC_CACHE_R2_BUCKET"
+bucket_name = "sophia-ai-factory-opennext-cache"
+
+[triggers]
+crons = ["*/5 * * * *"]
+```
+
+### Environment Variables (CF Worker Secrets)
+
+| Variable | Service |
+|----------|---------|
+| `JWT_SECRET=REDACTED` | Auth token signing |
+| `ANTHROPIC_API_KEY` | AI proposal generation |
+| `OPENROUTER_API_KEY` | Multi-model AI |
+| `HEYGEN_API_KEY` | Video generation |
+| `RESEND_API_KEY` | Email delivery |
+| `POLAR_ACCESS_TOKEN` | Payment processing |
+| `POLAR_WEBHOOK_SECRET` | Webhook verification |
+| `POLAR_PRODUCT_STARTER` | Polar product ID |
+| `POLAR_PRODUCT_GROWTH` | Polar product ID |
+| `POLAR_PRODUCT_PREMIUM` | Polar product ID |
+| `POLAR_PRODUCT_MASTER` | Polar product ID |
+
+### CI/CD
+- **GitHub Actions:** `.github/workflows/test.yml` — lint + 205 tests
+- **Deploy:** `git push origin main` → GitHub Actions → CF Workers auto-deploy
+- **Build:** `npx opennextjs-cloudflare build` (from `apps/sophia-proposal/`)
+
+### Known Workarounds
+- **Index route bug:** opennextjs-cloudflare returns 500 for `/`. Fixed via middleware rewrite `/` → `/landing`
+- **Peer deps:** `npm install --legacy-peer-deps` required (wrangler v3 vs @opennextjs/cloudflare)

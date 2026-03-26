@@ -1,7 +1,7 @@
 /**
  * (dashboard) Route Group Layout — Sidebar nav with auth guard.
- * Mirrors app/dashboard/layout.tsx for the (dashboard) route group.
- * Auth: redirect to /login if auth-token cookie missing.
+ * Auth: redirect to /login if auth-token missing.
+ * Org guard: redirect to /onboarding if user has no organization.
  */
 
 import { redirect } from 'next/navigation';
@@ -27,6 +27,23 @@ export default async function DashboardGroupLayout({
   const cookieStore = await cookies();
   const hasAuth = cookieStore.has('auth-token');
   if (!hasAuth) redirect('/login');
+
+  // Org guard: verify user has an organization via JWT payload
+  const token = cookieStore.get('auth-token')?.value;
+  if (token) {
+    try {
+      const { verifyJwt } = await import('@/lib/db/auth-verify');
+      const payload = await verifyJwt(token);
+      if (payload?.sub) {
+        const { getUserOrganization } = await import('@/lib/db/auth');
+        const org = await getUserOrganization(payload.sub as string);
+        if (!org) redirect('/onboarding');
+      }
+    } catch {
+      // JWT invalid — redirect to login
+      redirect('/login');
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex">

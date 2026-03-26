@@ -26,7 +26,7 @@ const publicRoutes = [
 ];
 
 // API routes that require authentication
-const protectedApiRoutes = ["/api/org", "/api/billing"];
+const protectedApiRoutes = ["/api/org", "/api/billing", "/api/onboarding"];
 
 // Billable API routes that require MCU balance check
 const billableApiRoutes = [

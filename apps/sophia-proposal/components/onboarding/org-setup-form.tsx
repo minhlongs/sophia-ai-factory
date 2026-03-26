@@ -69,6 +69,7 @@ export function OrgSetupForm({ onSuccess }: OrgSetupFormProps) {
 
     setIsLoading(true);
     try {
+      // Authenticated onboarding — creates org for current logged-in user
       const res = await fetch("/api/onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -77,7 +78,7 @@ export function OrgSetupForm({ onSuccess }: OrgSetupFormProps) {
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.message || "Failed to create organization");
+        throw new Error(data.error || "Failed to create organization");
       }
 
       const data = await res.json();
