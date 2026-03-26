@@ -73,7 +73,7 @@ export function HeroSection() {
       <div className="relative container mx-auto px-4 pt-28 pb-20 text-center">
         <div className="max-w-4xl mx-auto">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-5 py-2 mb-10 text-sm font-medium bg-on-surface-dark/8 text-inverse-primary/90 rounded-full border border-inverse-primary/15 backdrop-blur-sm animate-fade-in-up">
+          <div className="inline-flex items-center gap-2 px-5 py-2 mb-10 text-sm font-medium bg-on-surface-dark/8 text-inverse-primary rounded-full border border-inverse-primary/25 backdrop-blur-sm animate-fade-in-up">
             <span className="w-2 h-2 rounded-full bg-green-400 animate-glow-pulse" />
             Robot-as-a-Service Platform
           </div>
@@ -86,17 +86,17 @@ export function HeroSection() {
 
           {/* Dynamic command display */}
           <div className="mb-8 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-            <span className="text-on-surface-dark-variant text-lg">
+            <span className="text-on-surface-dark/60 text-lg">
               Run{" "}
             </span>
             <TypingRotator />
-            <span className="text-on-surface-dark-variant text-lg">
+            <span className="text-on-surface-dark/60 text-lg">
               {" "}in seconds
             </span>
           </div>
 
           {/* Subtitle */}
-          <p className="text-base md:text-lg text-on-surface-dark-variant/80 mb-12 max-w-2xl mx-auto leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+          <p className="text-base md:text-lg text-on-surface-dark/70 mb-12 max-w-2xl mx-auto leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
             Deploy autonomous AI missions via API. Proposal generation, lead hunting,
             email outreach — all powered by MCU credits with transparent pricing.
           </p>
@@ -129,21 +129,21 @@ export function HeroSection() {
           </div>
 
           {/* Trust indicators */}
-          <div className="mt-14 flex flex-wrap items-center justify-center gap-x-10 gap-y-4 text-on-surface-dark-variant/40 text-sm animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
+          <div className="mt-14 flex flex-wrap items-center justify-center gap-x-10 gap-y-4 text-on-surface-dark/50 text-sm animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
             <span className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-base text-green-400/60">verified</span>
+              <span className="material-symbols-outlined text-base text-green-400">verified</span>
               99.9% Uptime SLA
             </span>
             <span className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-base text-blue-400/60">speed</span>
+              <span className="material-symbols-outlined text-base text-blue-400">speed</span>
               Sub-2s Response
             </span>
             <span className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-base text-amber-400/60">lock</span>
+              <span className="material-symbols-outlined text-base text-amber-400">lock</span>
               Enterprise Security
             </span>
             <span className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-base text-purple-400/60">deployed_code</span>
+              <span className="material-symbols-outlined text-base text-purple-400">deployed_code</span>
               250+ Edge Nodes
             </span>
           </div>
