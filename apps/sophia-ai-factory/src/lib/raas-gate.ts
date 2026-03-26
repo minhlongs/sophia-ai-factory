@@ -25,7 +25,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { hasEmergencyBypass, recordCircuitFailure, recordCircuitSuccess } from './usage-metering/realtime-tracker';
 import { checkPolarSubscriptionStatus } from './billing/polar-metered-billing';
 import { logViolationAndAlert } from '@/lib/alerts/realtime-alert-service';
-import * as crypto from 'crypto';
+import { sha256 } from '@/lib/audit/crypto-utils';
 import type { RaasLicenseRow } from '@/lib/supabase/types';
 
 /**
@@ -252,7 +252,7 @@ export async function raasGate(request: NextRequest): Promise<{
       // Get license info from DB
       // Note: Using type assertion for Supabase query result since generated types
       // may not be available. The query returns RaasLicenseRow format.
-      const keyHash = crypto.createHash('sha256').update(licenseKey).digest('hex');
+      const keyHash = sha256(licenseKey);
       const { data: license } = await supabase
         .from('raas_licenses')
         .select('nonce, tier, polar_customer_id')

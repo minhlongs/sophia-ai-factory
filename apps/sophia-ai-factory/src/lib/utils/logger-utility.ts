@@ -82,19 +82,19 @@ const log = (
 
   const formatted = formatLogEntry(entry);
 
-  // Use process.stdout/stderr.write to avoid console mock issues in tests
+  // Use console methods for Edge Runtime compatibility
   switch (level) {
     case 'error':
-      process.stderr.write(formatted + '\n');
+      console.error(formatted);
       break;
     case 'warn':
-      process.stderr.write(formatted + '\n');
+      console.warn(formatted);
       break;
     case 'debug':
-      if (isDevelopment) process.stdout.write(formatted + '\n');
+      if (isDevelopment) console.debug(formatted);
       break;
     default:
-      process.stdout.write(formatted + '\n');
+      console.log(formatted);
   }
 };
 

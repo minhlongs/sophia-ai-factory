@@ -10,7 +10,7 @@
  * @module audit/compliance-receipt
  */
 
-import { randomUUID } from 'node:crypto'
+// Use globalThis.crypto.randomUUID() for Edge Runtime compatibility
 import { hmacSha256, sha256, timingSafeEqual } from './crypto-utils'
 import type { RaasAuditLogRow } from '@/lib/supabase/types'
 
@@ -83,7 +83,7 @@ export function generateReceipt(log: RaasAuditLogRow): ComplianceReceipt {
 
   // Build receipt structure
   const receipt: ComplianceReceipt = {
-    receiptId: randomUUID(),
+    receiptId: globalThis.crypto.randomUUID(),
     auditLogId: log.id,
     action: log.action,
     licenseNonce: log.license_nonce || '',

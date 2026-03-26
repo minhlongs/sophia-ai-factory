@@ -177,17 +177,14 @@ class UsageBatchBuffer {
 // Singleton instance
 export const usageBuffer = new UsageBatchBuffer();
 
-// Graceful shutdown handling
-if (typeof process !== 'undefined' && process.on) {
-  process.on('beforeExit', () => {
-    usageBuffer.stop();
-  });
-
-  process.on('SIGTERM', () => {
-    usageBuffer.stop();
-  });
-
-  process.on('SIGINT', () => {
-    usageBuffer.stop();
-  });
+// Graceful shutdown handling (Node.js only - not available in Edge Runtime)
+if (
+  typeof process !== 'undefined' &&
+  typeof (process as NodeJS.Process & { on?: unknown }).on === 'function' &&
+  typeof window === 'undefined'
+) {
+  const proc = process as NodeJS.Process;
+  proc.on('beforeExit', () => { usageBuffer.stop(); });
+  proc.on('SIGTERM', () => { usageBuffer.stop(); });
+  proc.on('SIGINT', () => { usageBuffer.stop(); });
 }

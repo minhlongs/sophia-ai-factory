@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import dynamic from "next/dynamic";
-import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "../globals.css";
 import { Navbar } from "@/app/components/layout/navbar";
 import { QueryProvider } from "@/components/providers/query-provider";
@@ -17,14 +17,18 @@ const FloatingHelpButton = dynamic(
   () => import("@/components/guide/floating-help-button").then(m => ({ default: m.FloatingHelpButton }))
 );
 
-const geistSans = Geist({
+const geistSans = localFont({
+  src: "../fonts/GeistVF.woff2",
+  src: "../fonts/GeistVF.woff2",
   variable: "--font-geist-sans",
-  subsets: ["latin", "latin-ext"],
+  weight: "100 900",
 });
 
-const geistMono = Geist_Mono({
+const geistMono = localFont({
+  src: "../fonts/GeistMonoVF.woff2",
+  src: "../fonts/GeistMonoVF.woff2",
   variable: "--font-geist-mono",
-  subsets: ["latin", "latin-ext"],
+  weight: "100 900",
 });
 
 export const metadata: Metadata = {

@@ -29,3 +29,11 @@ export const redis: Redis = new Proxy({} as Redis, {
     return Reflect.get(_redis, prop, receiver)
   },
 })
+
+/** Returns the Redis client or null if env vars are missing (non-production) */
+export function getKvClient(): Redis | null {
+  const url = process.env.UPSTASH_REDIS_REST_URL
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN
+  if (!url || !token) return null
+  return redis
+}

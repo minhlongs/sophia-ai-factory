@@ -484,6 +484,29 @@ export interface UsageLogParams {
  *   tier: 'premium'
  * })
  */
+/** Generic audit event logger for system events (circuit breakers, syncs, etc.) */
+export async function logAuditEvent(params: {
+  action: string
+  userId: string
+  metadata?: Record<string, unknown>
+}): Promise<void> {
+  try {
+    const supabase = createAdminClient()
+    const createdAt = Math.floor(Date.now() / 1000)
+    await insertAuditLog(supabase, {
+      action: params.action.toUpperCase(),
+      license_nonce: 'system',
+      user_id: params.userId,
+      ip_address: null,
+      user_agent: null,
+      created_at: createdAt,
+      details: (params.metadata ?? {}) as Json,
+    })
+  } catch (error) {
+    logger.error('[Audit Logger] logAuditEvent failed', error as Error)
+  }
+}
+
 export async function logUsageWithReceipt(
   params: UsageLogParams
 ): Promise<ComplianceReceipt | null> {

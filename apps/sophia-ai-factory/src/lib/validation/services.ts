@@ -281,3 +281,32 @@ export async function validateAirtable(key: string): Promise<ValidationResult> {
   }
 }
 
+/**
+ * Validate HeyGen API Key
+ * Endpoint: GET https://api.heygen.com/v2/user/remaining_quota
+ * Header: x-api-key
+ */
+export async function validateHeyGen(key: string): Promise<ValidationResult> {
+  if (!key) return { valid: false, message: "Key is required" };
+
+  try {
+    const response = await fetch('https://api.heygen.com/v2/user/remaining_quota', {
+      method: 'GET',
+      headers: {
+        'x-api-key': key,
+      },
+    });
+
+    if (response.status === 200) {
+      const data = await response.json() as Record<string, unknown>;
+      return { valid: true, message: "Valid HeyGen key", meta: data };
+    } else if (response.status === 401) {
+      return { valid: false, message: "Invalid HeyGen API key" };
+    } else {
+      return { valid: false, message: `Invalid key (Status: ${response.status})` };
+    }
+  } catch (error) {
+    return { valid: false, message: `Network error: ${error instanceof Error ? error.message : String(error)}` };
+  }
+}
+
