@@ -13,6 +13,12 @@ function checkRateLimit(ip: string): boolean {
   const entry = rateLimitMap.get(ip);
   if (!entry || now - entry.windowStart > RATE_LIMIT_WINDOW_MS) {
     rateLimitMap.set(ip, { count: 1, windowStart: now });
+    // Evict expired entries to prevent unbounded growth (max 1000 IPs)
+    if (rateLimitMap.size > 1000) {
+      for (const [k, v] of rateLimitMap) {
+        if (now - v.windowStart > RATE_LIMIT_WINDOW_MS) rateLimitMap.delete(k);
+      }
+    }
     return true;
   }
   if (entry.count >= RATE_LIMIT_MAX) return false;

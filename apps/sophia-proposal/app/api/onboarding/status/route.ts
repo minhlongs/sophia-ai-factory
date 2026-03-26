@@ -6,6 +6,7 @@
 
 import { NextResponse } from 'next/server';
 import { getAuthContext } from '@/lib/raas/auth-context';
+import { logger } from '@/lib/logger';
 import { createServerClient } from '@/lib/db/client';
 import type { Subscription } from '@/lib/db/types';
 
@@ -109,7 +110,7 @@ export async function GET() {
 
     return NextResponse.json(status);
   } catch (error) {
-    console.error('Onboarding status error:', error);
+    logger.error('Onboarding status error', error, { path: '/api/onboarding/status' });
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

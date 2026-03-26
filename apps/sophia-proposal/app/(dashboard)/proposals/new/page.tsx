@@ -24,6 +24,7 @@ function SafeProposalPreview({ proposal }: { proposal: GeneratedProposal }) {
       proposedSolution: s(proposal.proposedSolution),
       timeline: s(proposal.timeline),
       investment: s(proposal.investment),
+      caseStudies: s(proposal.caseStudies),
       nextSteps: s(proposal.nextSteps),
     };
   }, [proposal]);
@@ -40,6 +41,8 @@ function SafeProposalPreview({ proposal }: { proposal: GeneratedProposal }) {
       <div dangerouslySetInnerHTML={{ __html: sections.timeline }} />
       <h3 className="text-lg font-semibold text-gray-900 mt-4 mb-2">Investment</h3>
       <div dangerouslySetInnerHTML={{ __html: sections.investment }} />
+      <h3 className="text-lg font-semibold text-gray-900 mt-4 mb-2">Case Studies</h3>
+      <div dangerouslySetInnerHTML={{ __html: sections.caseStudies }} />
       <h3 className="text-lg font-semibold text-gray-900 mt-4 mb-2">Next Steps</h3>
       <div dangerouslySetInnerHTML={{ __html: sections.nextSteps }} />
     </div>
