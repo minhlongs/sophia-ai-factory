@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import DOMPurify from "dompurify";
 
 interface ProposalSection {
   key: string;
@@ -132,7 +133,7 @@ export default function ProposalEditor({
             ) : (
               <div
                 className="prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: section.content || "<em>Empty section</em>" }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(section.content || "<em>Empty section</em>") }}
               />
             )}
           </div>

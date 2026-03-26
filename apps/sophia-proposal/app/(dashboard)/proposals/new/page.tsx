@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import DOMPurify from "dompurify";
 import AIGenerateForm from "@/components/proposals/ai-generate-form";
 
 interface GeneratedProposal {
@@ -11,6 +12,38 @@ interface GeneratedProposal {
   investment: string;
   caseStudies: string;
   nextSteps: string;
+}
+
+/** Sanitize AI-generated HTML to prevent XSS */
+function SafeProposalPreview({ proposal }: { proposal: GeneratedProposal }) {
+  const sections = useMemo(() => {
+    const s = (html: string) => DOMPurify.sanitize(html);
+    return {
+      executiveSummary: s(proposal.executiveSummary),
+      problemStatement: s(proposal.problemStatement),
+      proposedSolution: s(proposal.proposedSolution),
+      timeline: s(proposal.timeline),
+      investment: s(proposal.investment),
+      nextSteps: s(proposal.nextSteps),
+    };
+  }, [proposal]);
+
+  return (
+    <div className="prose prose-sm max-w-none">
+      <h3 className="text-lg font-semibold text-gray-900 mb-2">Executive Summary</h3>
+      <div dangerouslySetInnerHTML={{ __html: sections.executiveSummary }} />
+      <h3 className="text-lg font-semibold text-gray-900 mt-4 mb-2">Problem Statement</h3>
+      <div dangerouslySetInnerHTML={{ __html: sections.problemStatement }} />
+      <h3 className="text-lg font-semibold text-gray-900 mt-4 mb-2">Proposed Solution</h3>
+      <div dangerouslySetInnerHTML={{ __html: sections.proposedSolution }} />
+      <h3 className="text-lg font-semibold text-gray-900 mt-4 mb-2">Timeline</h3>
+      <div dangerouslySetInnerHTML={{ __html: sections.timeline }} />
+      <h3 className="text-lg font-semibold text-gray-900 mt-4 mb-2">Investment</h3>
+      <div dangerouslySetInnerHTML={{ __html: sections.investment }} />
+      <h3 className="text-lg font-semibold text-gray-900 mt-4 mb-2">Next Steps</h3>
+      <div dangerouslySetInnerHTML={{ __html: sections.nextSteps }} />
+    </div>
+  );
 }
 
 export default function NewProposalPage() {
@@ -52,25 +85,7 @@ export default function NewProposalPage() {
               <p className="text-red-800 text-sm">{error}</p>
             </div>
           ) : generatedProposal ? (
-            <div className="prose prose-sm max-w-none">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Executive Summary</h3>
-              <div dangerouslySetInnerHTML={{ __html: generatedProposal.executiveSummary }} />
-
-              <h3 className="text-lg font-semibold text-gray-900 mt-4 mb-2">Problem Statement</h3>
-              <div dangerouslySetInnerHTML={{ __html: generatedProposal.problemStatement }} />
-
-              <h3 className="text-lg font-semibold text-gray-900 mt-4 mb-2">Proposed Solution</h3>
-              <div dangerouslySetInnerHTML={{ __html: generatedProposal.proposedSolution }} />
-
-              <h3 className="text-lg font-semibold text-gray-900 mt-4 mb-2">Timeline</h3>
-              <div dangerouslySetInnerHTML={{ __html: generatedProposal.timeline }} />
-
-              <h3 className="text-lg font-semibold text-gray-900 mt-4 mb-2">Investment</h3>
-              <div dangerouslySetInnerHTML={{ __html: generatedProposal.investment }} />
-
-              <h3 className="text-lg font-semibold text-gray-900 mt-4 mb-2">Next Steps</h3>
-              <div dangerouslySetInnerHTML={{ __html: generatedProposal.nextSteps }} />
-            </div>
+            <SafeProposalPreview proposal={generatedProposal} />
           ) : (
             <div className="text-center py-12 text-gray-500">
               <span className="material-symbols-outlined text-4xl mb-2">description</span>

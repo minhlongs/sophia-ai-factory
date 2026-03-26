@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { logger } from "@/lib/logger";
 
 // Public routes that don't require authentication
 const publicRoutes = [
@@ -26,7 +27,7 @@ const publicRoutes = [
 ];
 
 // API routes that require authentication
-const protectedApiRoutes = ["/api/org", "/api/billing", "/api/onboarding", "/api/admin"];
+const protectedApiRoutes = ["/api/org", "/api/billing", "/api/onboarding", "/api/admin", "/api/raas", "/api/affiliate"];
 
 // Billable API routes that require MCU balance check
 const billableApiRoutes = [
@@ -128,7 +129,7 @@ export async function middleware(request: NextRequest) {
             orgId = org?.id ?? null;
           }
         } catch (error) {
-          console.error('Failed to extract org_id from session:', error);
+          logger.error('Failed to extract org_id from session', error, { path: pathname, method: request.method });
           return NextResponse.json(
             { error: 'Unable to verify organization' },
             { status: 401 }

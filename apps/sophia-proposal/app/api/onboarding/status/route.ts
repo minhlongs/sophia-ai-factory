@@ -4,7 +4,8 @@
  * Get onboarding status and checklist for the current user's organization
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import { getAuthContext } from '@/lib/raas/auth-context';
 import { createServerClient } from '@/lib/db/client';
 import type { Subscription } from '@/lib/db/types';
 
@@ -27,20 +28,18 @@ export interface OnboardingStatus {
   };
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const db = createServerClient();
-
-    // Get user's organization from request context
-    // In a real app, this would come from auth session
-    const orgId = request.headers.get('x-org-id');
-
-    if (!orgId) {
+    const auth = await getAuthContext();
+    if (!auth) {
       return NextResponse.json(
-        { error: 'Organization context required' },
+        { error: 'Unauthorized' },
         { status: 401 }
       );
     }
+
+    const db = createServerClient();
+    const orgId = auth.orgId;
 
     // Get subscription status
     const { data: subscription } = await db
