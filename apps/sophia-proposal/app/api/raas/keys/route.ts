@@ -4,34 +4,46 @@
  * GET  — List API keys for the authenticated user's org
  * POST — Create a new API key (returns raw key once)
  *
- * Auth: Supabase session (dashboard users only)
+ * Auth: JWT cookie (auth-token)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createAuthClient, createServerClient } from '@/lib/db/client';
-import { getOrgId } from '@/lib/org';
+import { cookies } from 'next/headers';
 import { listApiKeys, createApiKey } from '@/lib/raas/api-key-manager';
 
 export const dynamic = 'force-dynamic';
 
+/** Extract userId and orgId from JWT cookie */
+async function getAuthContext(): Promise<{ userId: string; orgId: string } | null> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('auth-token')?.value;
+  if (!token) return null;
+
+  try {
+    const { verifyJwt } = await import('@/lib/db/auth-verify');
+    const payload = await verifyJwt(token);
+    if (!payload?.sub) return null;
+
+    const { getUserOrganization } = await import('@/lib/db/auth');
+    const org = await getUserOrganization(payload.sub as string);
+    if (!org) return null;
+
+    return { userId: payload.sub as string, orgId: org.id };
+  } catch {
+    return null;
+  }
+}
+
 // ── GET ───────────────────────────────────────────────────────────────────────
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const authClient = createAuthClient(
-      request.headers.get('authorization')?.split(' ')[1]
-    );
-    const { data: { user }, error: authError } = await authClient.auth.getUser();
-    if (authError || !user) {
+    const auth = await getAuthContext();
+    if (!auth) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const orgId = await getOrgId(user.id, createServerClient());
-    if (!orgId) {
-      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
-    }
-
-    const keys = await listApiKeys(orgId);
+    const keys = await listApiKeys(auth.orgId);
     return NextResponse.json({ keys });
   } catch (err) {
     console.error('GET /api/raas/keys error:', err);
@@ -43,17 +55,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const authClient = createAuthClient(
-      request.headers.get('authorization')?.split(' ')[1]
-    );
-    const { data: { user }, error: authError } = await authClient.auth.getUser();
-    if (authError || !user) {
+    const auth = await getAuthContext();
+    if (!auth) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const orgId = await getOrgId(user.id, createServerClient());
-    if (!orgId) {
-      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
     }
 
     const body = await request.json();
@@ -62,7 +66,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'name is required' }, { status: 400 });
     }
 
-    const { key, id } = await createApiKey(orgId, name);
+    const { key, id } = await createApiKey(auth.orgId, name);
 
     return NextResponse.json(
       { id, key, message: 'Store this key securely — it will not be shown again.' },
