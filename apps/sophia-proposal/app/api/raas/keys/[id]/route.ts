@@ -3,13 +3,12 @@
  *
  * DELETE — Revoke a specific API key by ID
  *
- * Auth: Supabase session (dashboard users only)
+ * Auth: JWT cookie (auth-token)
  * Note: Next.js 15 — params is a Promise, must be awaited
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createAuthClient, createServerClient } from '@/lib/db/client';
-import { getOrgId } from '@/lib/org';
+import { cookies } from 'next/headers';
 import { revokeApiKey } from '@/lib/raas/api-key-manager';
 
 export const dynamic = 'force-dynamic';
@@ -21,20 +20,25 @@ export async function DELETE(
   try {
     const { id } = await params;
 
-    const authClient = createAuthClient(
-      request.headers.get('authorization')?.split(' ')[1]
-    );
-    const { data: { user }, error: authError } = await authClient.auth.getUser();
-    if (authError || !user) {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth-token')?.value;
+    if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const orgId = await getOrgId(user.id, createServerClient());
-    if (!orgId) {
+    const { verifyJwt } = await import('@/lib/db/auth-verify');
+    const payload = await verifyJwt(token);
+    if (!payload?.sub) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { getUserOrganization } = await import('@/lib/db/auth');
+    const org = await getUserOrganization(payload.sub as string);
+    if (!org) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
     }
 
-    const revoked = await revokeApiKey(id, orgId);
+    const revoked = await revokeApiKey(id, org.id);
     if (!revoked) {
       return NextResponse.json({ error: 'Failed to revoke key or key not found' }, { status: 404 });
     }
