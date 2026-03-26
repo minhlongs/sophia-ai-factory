@@ -102,6 +102,7 @@ export async function createAdminUser(params: {
   org_id: string;
   email: string;
   password: string;
+  role?: string;
 }): Promise<string> {
   const db = await getD1Client();
   const userId = crypto.randomUUID();
@@ -112,7 +113,7 @@ export async function createAdminUser(params: {
     id: userId,
     email: params.email,
     password_hash: passwordHash,
-    role: 'admin',
+    role: params.role ?? 'user',
     created_at: now,
   });
   if (userErr) throw new Error(`Failed to create user: ${userErr.message}`);
