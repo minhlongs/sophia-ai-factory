@@ -2,6 +2,24 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { logger } from "@/lib/logger";
 
+// --- Rate limiting (in-memory, sliding window) ---
+// Limits /api/auth/* to 10 requests per IP per 60 seconds
+const rateLimitMap = new Map<string, { count: number; windowStart: number }>();
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX = 10;
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry || now - entry.windowStart > RATE_LIMIT_WINDOW_MS) {
+    rateLimitMap.set(ip, { count: 1, windowStart: now });
+    return true;
+  }
+  if (entry.count >= RATE_LIMIT_MAX) return false;
+  entry.count++;
+  return true;
+}
+
 // Public routes that don't require authentication
 const publicRoutes = [
   "/login",
@@ -67,6 +85,31 @@ async function checkMcuBalance(
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Unique request ID for distributed tracing
+  const requestId = crypto.randomUUID();
+
+  /** Attach X-Request-Id to any response before returning */
+  function withRequestId(res: NextResponse): NextResponse {
+    res.headers.set('X-Request-Id', requestId);
+    return res;
+  }
+
+  // Rate-limit auth endpoints (10 req/min/IP)
+  if (pathname.startsWith('/api/auth/')) {
+    const ip = request.headers.get('cf-connecting-ip')
+      ?? request.headers.get('x-forwarded-for')?.split(',')[0].trim()
+      ?? 'unknown';
+    if (!checkRateLimit(ip)) {
+      logger.warn('Rate limit exceeded', { path: pathname, ip });
+      return withRequestId(
+        NextResponse.json(
+          { error: 'Too many requests. Please try again later.' },
+          { status: 429 },
+        ),
+      );
+    }
+  }
+
   // Workaround: opennextjs-cloudflare index route bug
   // Rewrite / to /landing internally (URL bar stays as /)
   if (pathname === '/') {
@@ -79,13 +122,13 @@ export async function middleware(request: NextRequest) {
   );
 
   if (isPublicRoute) {
-    return NextResponse.next();
+    return withRequestId(NextResponse.next());
   }
 
   // If JWT_SECRET not configured, auth is unavailable
   if (!process.env.JWT_SECRET) {
     if (pathname.startsWith("/api/")) {
-      return NextResponse.json({ error: "Auth not configured" }, { status: 503 });
+      return withRequestId(NextResponse.json({ error: "Auth not configured" }, { status: 503 }));
     }
     // Redirect page requests to /status so user can see config state
     return NextResponse.redirect(new URL("/status", request.url));
@@ -101,9 +144,8 @@ export async function middleware(request: NextRequest) {
     );
 
     if (isProtectedApi && !hasAuthCookie) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
+      return withRequestId(
+        NextResponse.json({ error: "Unauthorized" }, { status: 401 })
       );
     }
 
@@ -130,9 +172,8 @@ export async function middleware(request: NextRequest) {
           }
         } catch (error) {
           logger.error('Failed to extract org_id from session', error, { path: pathname, method: request.method });
-          return NextResponse.json(
-            { error: 'Unable to verify organization' },
-            { status: 401 }
+          return withRequestId(
+            NextResponse.json({ error: 'Unable to verify organization' }, { status: 401 })
           );
         }
       }
@@ -140,12 +181,12 @@ export async function middleware(request: NextRequest) {
       if (orgId) {
         const balanceResponse = await checkMcuBalance(request, orgId);
         if (balanceResponse) {
-          return balanceResponse;
+          return withRequestId(balanceResponse);
         }
       }
     }
 
-    return NextResponse.next();
+    return withRequestId(NextResponse.next());
   }
 
   // Handle page routes — redirect to login if not authenticated
@@ -155,7 +196,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  return NextResponse.next();
+  return withRequestId(NextResponse.next());
 }
 
 // Configure which routes the middleware runs on
