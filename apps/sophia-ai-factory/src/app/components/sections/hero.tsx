@@ -13,11 +13,11 @@ export function Hero() {
       {/* Background Effects */}
       <div className="absolute inset-0 -z-10">
         {/* Radial gradient glow */}
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[var(--neon-cyan)] opacity-20 blur-[120px] rounded-full" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[var(--neon-purple)] opacity-20 blur-[120px] rounded-full" />
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[var(--neon-cyan)] opacity-[0.15] dark:opacity-20 blur-[120px] rounded-full" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[var(--neon-purple)] opacity-[0.15] dark:opacity-20 blur-[120px] rounded-full" />
 
         {/* Grid pattern */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:100px_100px]" />
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.03)_1px,transparent_1px)] dark:bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:100px_100px]" />
       </div>
 
       <Container size="lg">
@@ -25,11 +25,11 @@ export function Hero() {
           {/* Main Headline */}
           <FadeInView duration={600}>
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-tight">
-              <span className="bg-gradient-to-r from-[var(--neon-cyan)] via-white to-[var(--neon-purple)] bg-clip-text text-transparent animate-gradient">
+              <span className="bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] bg-clip-text text-transparent">
                 {t('hero.title_1')}
               </span>
               <br />
-              <span className="text-white">
+              <span className="text-foreground dark:text-white">
                 {t('hero.title_2')}
               </span>
             </h1>
