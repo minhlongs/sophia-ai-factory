@@ -9,19 +9,15 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createAuthClient, createServerClient } from '@/lib/db/client';
+import { createServerClient } from '@/lib/db/client';
+import { getAuthContext } from '@/lib/raas/auth-context';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
-    const authClient = createAuthClient(
-      request.headers.get('authorization')?.split(' ')[1]
-    );
-    const { data: { user }, error: authError } = await authClient.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const auth = await getAuthContext();
+    if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const serverClient = createServerClient();
     const category = request.nextUrl.searchParams.get('category');

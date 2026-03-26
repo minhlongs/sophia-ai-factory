@@ -4,8 +4,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createAuthClient, createServerClient } from '@/lib/db/client';
-import { getOrgId } from '@/lib/org';
+import { createServerClient } from '@/lib/db/client';
+import { getAuthContext } from '@/lib/raas/auth-context';
 import type { CreateMissionRequest, MissionCommand } from '@/types/raas';
 import type { OrgBalance, MissionTemplate } from '@/lib/db/types';
 
@@ -21,19 +21,11 @@ const VALID_COMMANDS: MissionCommand[] = [
 
 export async function GET(request: NextRequest) {
   try {
-    const authClient = createAuthClient(
-      request.headers.get('authorization')?.split(' ')[1]
-    );
-    const { data: { user }, error: authError } = await authClient.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const auth = await getAuthContext();
+    if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+    const { orgId } = auth;
     const serverClient = createServerClient();
-    const orgId = await getOrgId(user.id, serverClient);
-    if (!orgId) {
-      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
-    }
 
     const params = request.nextUrl.searchParams;
     const status   = params.get('status');
@@ -71,19 +63,11 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const authClient = createAuthClient(
-      request.headers.get('authorization')?.split(' ')[1]
-    );
-    const { data: { user }, error: authError } = await authClient.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const auth = await getAuthContext();
+    if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+    const { orgId } = auth;
     const serverClient = createServerClient();
-    const orgId = await getOrgId(user.id, serverClient);
-    if (!orgId) {
-      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
-    }
 
     const body = (await request.json()) as CreateMissionRequest;
 
