@@ -88,9 +88,12 @@ export async function middleware(request: NextRequest) {
   // Unique request ID for distributed tracing
   const requestId = crypto.randomUUID();
 
-  /** Attach X-Request-Id to any response before returning */
+  /** Attach security headers + X-Request-Id to every response */
   function withRequestId(res: NextResponse): NextResponse {
     res.headers.set('X-Request-Id', requestId);
+    res.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+    res.headers.set('X-Content-Type-Options', 'nosniff');
+    res.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
     return res;
   }
 
