@@ -7,12 +7,7 @@ const nextConfig = {
     unoptimized: true,
   },
 
-  // Workaround: opennextjs-cloudflare index route bug
-  async redirects() {
-    return [
-      { source: '/', destination: '/landing', permanent: false },
-    ];
-  },
+  // Note: / route handled by middleware rewrite (opennextjs-cloudflare index bug)
 
   async headers() {
     return [
