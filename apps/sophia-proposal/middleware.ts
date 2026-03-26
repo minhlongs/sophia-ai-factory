@@ -66,6 +66,12 @@ async function checkMcuBalance(
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Workaround: opennextjs-cloudflare index route bug
+  // Rewrite / to /landing internally (URL bar stays as /)
+  if (pathname === '/') {
+    return NextResponse.rewrite(new URL('/landing', request.url));
+  }
+
   // Check if route is public
   const isPublicRoute = publicRoutes.some(
     (route) => pathname === route || pathname.startsWith(route + "/")
