@@ -1,81 +1,33 @@
 /**
  * Usage Metering - Debug Logger
  *
- * Local debug logging for usage metering development
- * Writes to file and console when DEBUG_USAGE_METERING is enabled
+ * Console-based debug logging for usage metering development.
+ * Edge Runtime compatible (no fs/path imports).
  */
 
-import { appendFileSync, existsSync, mkdirSync } from 'fs';
-import { join, dirname } from 'path';
 import { logger } from '@/lib/utils/logger-utility';
 
 const DEBUG_ENABLED = process.env.DEBUG_USAGE_METERING === 'true';
-const DEBUG_LOG_FILE = process.env.USAGE_DEBUG_LOG_FILE || '/tmp/usage_debug.log';
 
 /**
  * Debug logger for usage metering
  */
 export const debugLogger = {
-  /**
-   * Log a debug message
-   *
-   * @param message - Message to log
-   * @param data - Optional data to log
-   */
   log(message: string, data?: unknown): void {
     if (!DEBUG_ENABLED) return;
-
-    const timestamp = new Date().toISOString();
-    const logLine = `[${timestamp}] ${message}${data ? ' ' + JSON.stringify(data, null, 2) : ''}\n`;
-
-    // Ensure directory exists
-    const logDir = dirname(DEBUG_LOG_FILE);
-    if (!existsSync(logDir)) {
-      try {
-        mkdirSync(logDir, { recursive: true });
-      } catch (error) {
-        logger.error('[Usage Debug] Failed to create log directory', error as Error);
-      }
-    }
-
-    // Write to file
-    try {
-      appendFileSync(DEBUG_LOG_FILE, logLine);
-    } catch (error) {
-      logger.error('[Usage Debug] Failed to write to log file', error as Error);
-    }
-
-    // Also log to console in development
-    if (process.env.NODE_ENV === 'development') {
-      logger.info('[Usage Debug]', { message, data });
-    }
+    logger.info('[Usage Debug]', { message, ...(data ? { data } : {}) });
   },
 
-  /**
-   * Clear the debug log file
-   */
   clear(): void {
-    if (existsSync(DEBUG_LOG_FILE)) {
-      try {
-        appendFileSync(DEBUG_LOG_FILE, '');
-      } catch (error) {
-        logger.error('[Usage Debug] Failed to clear log file', error as Error);
-      }
-    }
+    // No-op in Edge-compatible mode
   },
 
-  /**
-   * Check if debug mode is enabled
-   */
   isEnabled(): boolean {
     return DEBUG_ENABLED;
   },
 
-  /**
-   * Get the log file path
-   */
   getLogFilePath(): string {
-    return DEBUG_LOG_FILE;
+    return '(console-only)';
   },
 };
 

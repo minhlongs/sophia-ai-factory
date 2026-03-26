@@ -86,6 +86,3 @@ export function CampaignHeader({ campaign, t, tStatus, format }: CampaignHeaderP
     </div>
   );
 }
-
-// Re-export icon for use in other components if needed
-import { FileText } from "lucide-react";

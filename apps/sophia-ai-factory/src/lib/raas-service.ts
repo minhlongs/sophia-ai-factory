@@ -10,7 +10,7 @@
  * Example: raas_premium_1735689600_a1b2c3d4e5f6_e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
  */
 
-import { createHmac, timingSafeEqual, randomBytes } from 'crypto';
+import { sha256, hmacSha256, timingSafeEqual } from './audit/crypto-utils';
 import { redis } from './redis';
 import { logger } from './utils/logger-utility';
 
@@ -102,20 +102,10 @@ export function verifyHmac(key: string, secret: string): boolean {
 
     // Recreate HMAC from components
     const data = `${parsed.tier}:${parsed.timestamp}:${parsed.nonce}`;
-    const expectedHmac = createHmac('sha256', secret)
-      .update(data)
-      .digest('hex');
+    const expectedHmac = hmacSha256(data, secret);
 
     // Timing-safe comparison to prevent timing attacks
-    const keyBuffer = Buffer.from(parsed.hmac);
-    const expectedBuffer = Buffer.from(expectedHmac);
-
-    // Ensure both buffers are same length
-    if (keyBuffer.length !== expectedBuffer.length) {
-      return false;
-    }
-
-    return timingSafeEqual(keyBuffer, expectedBuffer);
+    return timingSafeEqual(parsed.hmac, expectedHmac);
   } catch (error) {
     logger.error('[RaaS Service] HMAC verification failed', error instanceof Error ? error : new Error(String(error)));
     return false;
@@ -295,5 +285,7 @@ export async function revokeLicenseKey(
  * @returns 32-character hex string
  */
 export function generateNonce(): string {
-  return randomBytes(16).toString('hex');
+  const bytes = new Uint8Array(16);
+  globalThis.crypto.getRandomValues(bytes);
+  return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
 }

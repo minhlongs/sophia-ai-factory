@@ -4,7 +4,7 @@
  * Generates and validates idempotency keys to prevent duplicate usage tracking
  */
 
-import { createHash } from 'crypto';
+import { sha256 } from '@/lib/audit/crypto-utils';
 
 /**
  * Generate idempotency key from request context
@@ -27,9 +27,7 @@ export function generateIdempotencyKey(event: {
 
   // Deterministic hash based on request context
   // This ensures the same logical request always gets the same key
-  const hash = createHash('sha256')
-    .update(`${event.userId}:${event.licenseNonce}:${event.service}:${event.action}:${Math.floor(event.timestamp / 1000)}`)
-    .digest('hex');
+  const hash = sha256(`${event.userId}:${event.licenseNonce}:${event.service}:${event.action}:${Math.floor(event.timestamp / 1000)}`);
 
   return `gen_${hash}`;
 }

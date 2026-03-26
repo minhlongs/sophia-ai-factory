@@ -17,7 +17,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { logger } from '@/lib/utils/logger-utility';
 import { logValidationWithReceipt } from '@/lib/audit/audit-logger';
 import { jwtVerify } from 'jose';
-import crypto from 'crypto';
+import { sha256 } from '@/lib/audit/crypto-utils';
 
 export interface TenantIsolationResult {
   allowed: boolean;
@@ -98,7 +98,7 @@ async function extractAgencyId(request: NextRequest): Promise<string | null> {
       const supabase = createAdminClient();
 
       // Hash the API key for comparison (as it's stored hashed in the DB)
-      const apiKeyHash = crypto.createHash('sha256').update(apiKey).digest('hex');
+      const apiKeyHash = sha256(apiKey);
 
       const { data, error } = await supabase
         .from('raas_api_keys')

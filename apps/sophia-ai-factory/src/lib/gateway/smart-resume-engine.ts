@@ -76,7 +76,7 @@ export class SmartResumeEngine {
     this.fallbackStore.set(campaignId, filtered);
   }
 
-  /** Get the most recent checkpoint for a campaign */
+  /** Get the most recent checkpoint for a campaign. Returns null on load failure (start from beginning). */
   async getLastCheckpoint(campaignId: string): Promise<Checkpoint | null> {
     const supabase = getCheckpointSupabase();
 
@@ -92,7 +92,9 @@ export class SmartResumeEngine {
         if (!data || data.length === 0) return null;
         return rowToCheckpoint(data[0] as CheckpointRow);
       } catch (err) {
-        logger.error(`[SmartResumeEngine] Failed to retrieve last checkpoint for ${campaignId}`, err instanceof Error ? err : undefined);
+        logger.error(`[SmartResumeEngine] Failed to retrieve last checkpoint for ${campaignId}, starting from beginning`, err instanceof Error ? err : undefined);
+        // Error recovery: return null so pipeline starts from beginning
+        return null;
       }
     }
 
@@ -102,6 +104,41 @@ export class SmartResumeEngine {
       (a, b) => b.completedAt.getTime() - a.completedAt.getTime(),
     );
     return sorted[0];
+  }
+
+  /**
+   * Force retry from a specific step by deleting all checkpoints at and after that step.
+   * Used for manual retry via admin tools.
+   */
+  async retryFromStep(campaignId: string, stepName: PipelineStep): Promise<void> {
+    const stepIndex = PIPELINE_STEPS.indexOf(stepName);
+    if (stepIndex === -1) {
+      logger.warn(`[SmartResumeEngine] Unknown step "${stepName}" for retryFromStep`, { campaignId });
+      return;
+    }
+
+    const stepsToRemove = PIPELINE_STEPS.slice(stepIndex);
+    const supabase = getCheckpointSupabase();
+
+    if (supabase) {
+      try {
+        const { error } = await supabase
+          .from("campaign_checkpoints")
+          .delete()
+          .eq("campaign_id", campaignId)
+          .in("step", stepsToRemove as string[]);
+        if (error) throw error;
+        logger.info(`[SmartResumeEngine] Cleared checkpoints from step "${stepName}" for retry`, { campaignId });
+        return;
+      } catch (err) {
+        logger.error(`[SmartResumeEngine] Failed to clear checkpoints for retryFromStep`, err instanceof Error ? err : undefined, { campaignId });
+      }
+    }
+
+    // Fallback: remove from in-memory store
+    const existing = this.fallbackStore.get(campaignId) ?? [];
+    const filtered = existing.filter((cp) => !stepsToRemove.includes(cp.step as PipelineStep));
+    this.fallbackStore.set(campaignId, filtered);
   }
 
   /** Get all checkpoints for a campaign, ordered by completion time */

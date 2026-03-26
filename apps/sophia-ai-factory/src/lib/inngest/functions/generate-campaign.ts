@@ -10,6 +10,7 @@ import { SmartResumeEngine } from "@/lib/gateway/smart-resume-engine";
 import { YouTubeChannelAdapter } from "@/lib/gateway/adapters/youtube-channel-adapter";
 import { TikTokChannelAdapter } from "@/lib/gateway/adapters/tiktok-channel-adapter";
 import { TelegramNotificationAdapter } from "@/lib/gateway/adapters/telegram-notification-adapter";
+import { logger } from "@/lib/utils/logger-utility";
 
 // Lazy init Supabase Admin client for build compatibility
 let _supabase: SupabaseClient<Database> | null = null;
@@ -217,7 +218,7 @@ export const generateCampaign = inngest.createFunction(
       return await startVideoGeneration({ script, tier });
     });
 
-    // Step 4: Poll Video Status
+    // Step 4: Poll Video Status (10 min max, 120 attempts × 5s)
     const videoAssets = await step.run("poll-video-status", async () => {
       if (resume && resumeFrom === "finalize") {
          // Fetch existing video from database
@@ -242,27 +243,63 @@ export const generateCampaign = inngest.createFunction(
 
       if (!videoJobId) throw new Error("Video Job ID missing");
 
-      // Polling loop with sleep
+      const maxAttempts = 120; // 10 mins total with 5s intervals
+      const pollIntervalMs = 5000;
+      const isTransientError = (err: unknown): boolean => {
+        if (!(err instanceof Error)) return false;
+        const msg = err.message.toLowerCase();
+        return msg.includes('network') || msg.includes('503') || msg.includes('timeout') || msg.includes('econnreset');
+      };
+
       let attempts = 0;
-      const maxAttempts = 60; // 5 mins total with 5s intervals
-
       while (attempts < maxAttempts) {
-        const status = await checkVideoGenerationStatus(videoJobId, tier);
-
-        if (status.status === 'completed' && status.output) {
-           return status.output;
+        let status: Awaited<ReturnType<typeof checkVideoGenerationStatus>>;
+        try {
+          status = await checkVideoGenerationStatus(videoJobId, tier);
+        } catch (err) {
+          // Auto-retry once on transient errors
+          if (isTransientError(err)) {
+            logger.warn(`[poll-video-status] Transient error on attempt ${attempts}, retrying once`, { campaignId });
+            await new Promise(r => setTimeout(r, pollIntervalMs));
+            try {
+              status = await checkVideoGenerationStatus(videoJobId, tier);
+            } catch (retryErr) {
+              logger.error(`[poll-video-status] Retry also failed`, retryErr instanceof Error ? retryErr : undefined, { campaignId });
+              await new Promise(r => setTimeout(r, pollIntervalMs));
+              attempts++;
+              continue;
+            }
+          } else {
+            // Permanent failure
+            const errMsg = err instanceof Error ? err.message : String(err);
+            logger.error(`[poll-video-status] Permanent error`, err instanceof Error ? err : undefined, { campaignId });
+            await updateStatus("failed", 70, { error_message: errMsg });
+            await notifyUser(`❌ **Sophia AI**: Video generation failed for "${topic}". Error: ${errMsg}`);
+            throw new Error(errMsg);
+          }
         }
 
-        if (status.status === 'failed') {
-          throw new Error(status.error || 'Video generation failed');
+        if (status!.status === 'completed' && status!.output) {
+          return status!.output;
         }
 
-        // Wait 5 seconds before next check
-        await new Promise(r => setTimeout(r, 5000));
+        if (status!.status === 'failed') {
+          const errMsg = status!.error || 'Video generation failed';
+          logger.error(`[poll-video-status] HeyGen reported failure`, undefined, { campaignId, error: errMsg });
+          await updateStatus("failed", 70, { error_message: errMsg });
+          await notifyUser(`❌ **Sophia AI**: Video generation failed for "${topic}". Error: ${errMsg}`);
+          throw new Error(errMsg);
+        }
+
+        await new Promise(r => setTimeout(r, pollIntervalMs));
         attempts++;
       }
 
-      throw new Error("Video generation timed out");
+      // Timeout after 10 minutes
+      logger.warn(`[poll-video-status] Timed out after ${maxAttempts} attempts`, { campaignId });
+      await updateStatus("video_timeout" as CampaignStatus, 70, { error_message: "Video generation timed out after 10 minutes" });
+      await notifyUser(`⏱️ **Sophia AI**: Video generation for "${topic}" timed out. Please retry or contact support.`);
+      throw new Error("Video generation timed out after 10 minutes");
     });
 
     // Step 4b: Smart Resume checkpoint after video ready

@@ -4,7 +4,7 @@
  * Core tracking logic for AI service usage
  */
 
-import { createHash } from 'crypto';
+import { sha256 } from '@/lib/audit/crypto-utils';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { logger } from '@/lib/utils/logger-utility';
 import type { UsageEventInput, UsageEventDB, IngestionResult } from './types';
@@ -270,7 +270,7 @@ function getTierMultiplier(tier: string): number {
  * @param key - License key string
  */
 export function hashLicenseKey(key: string): string {
-  return createHash('sha256').update(key).digest('hex');
+  return sha256(key);
 }
 
 /**

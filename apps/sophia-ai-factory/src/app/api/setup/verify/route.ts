@@ -2,9 +2,13 @@ import { NextResponse } from 'next/server';
 import {
   validateOpenRouter,
   validateElevenLabs,
-  validateDID
+  validateDID,
+  validateHeyGen,
 } from '@/lib/validation/services';
 
+// POST /api/setup/verify
+// Body: { service: 'openrouter' | 'heygen' | 'elevenlabs' | 'd-id', apiKey?: string, key?: string }
+// Response: { valid: boolean, error?: string, info?: { name: string } }
 export async function POST(request: Request) {
   try {
     // Guard: reject if app is already configured (prevent API key probing)
@@ -19,23 +23,28 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { service, key } = body;
+    const { service, apiKey, key } = body;
+    // Support both 'apiKey' (new RaaS spec) and 'key' (legacy setup wizard)
+    const resolvedKey = apiKey ?? key;
 
-    if (!service || !key) {
-      return NextResponse.json({ valid: false, message: "Missing service or key" }, { status: 400 });
+    if (!service || !resolvedKey) {
+      return NextResponse.json({ valid: false, message: "Missing service or apiKey" }, { status: 400 });
     }
 
     let result;
 
     switch (service) {
       case 'openrouter':
-        result = await validateOpenRouter(key);
+        result = await validateOpenRouter(resolvedKey);
+        break;
+      case 'heygen':
+        result = await validateHeyGen(resolvedKey);
         break;
       case 'elevenlabs':
-        result = await validateElevenLabs(key);
+        result = await validateElevenLabs(resolvedKey);
         break;
       case 'd-id':
-        result = await validateDID(key);
+        result = await validateDID(resolvedKey);
         break;
       default:
         return NextResponse.json({ valid: false, message: "Unknown service" }, { status: 400 });

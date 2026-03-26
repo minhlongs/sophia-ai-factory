@@ -314,6 +314,9 @@ export async function proxy(request: NextRequest) {
   return applyCorsHeaders(response, origin);
 }
 
+// Export as both 'middleware' (Next.js 15) and 'proxy' (Next.js 16) for compatibility
+export const middleware = proxy;
+
 export const config = {
   matcher: ["/((?!api|_next|_vercel|setup-wizard|auth/callback|.*\\..*).*)"],
 };
