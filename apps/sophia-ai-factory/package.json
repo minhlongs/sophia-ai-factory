@@ -22,11 +22,14 @@
     "i18n:autofill": "node scripts/auto-fill-i18n-keys.mjs",
     "worker:dev": "wrangler dev",
     "worker:deploy": "wrangler deploy",
-    "worker:typecheck": "tsc --noEmit --project tsconfig.worker.json"
+    "worker:typecheck": "tsc --noEmit --project tsconfig.worker.json",
+    "deploy": "npx @opennextjs/cloudflare build && wrangler deploy",
+    "deploy:build": "npx @opennextjs/cloudflare build"
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",
     "@hookform/resolvers": "^5.2.2",
+    "@opennextjs/cloudflare": "^1.17.3",
     "@polar-sh/nextjs": "^0.9.3",
     "@polar-sh/sdk": "^0.42.5",
     "@radix-ui/react-dialog": "^1.1.15",

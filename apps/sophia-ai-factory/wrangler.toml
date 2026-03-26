@@ -1,39 +1,24 @@
-name = "raas-gateway-worker"
-main = "src/worker/index.ts"
-compatibility_date = "2024-01-01"
-compatibility_flags = ["nodejs_compat"]
+# Sophia Video Factory — Cloudflare Workers (OpenNext)
+# Deploy: npm run build && npx wrangler deploy
+name = "sophia-video-factory"
+main = ".open-next/worker.js"
+compatibility_date = "2026-03-17"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
 
-# KV Storage for quota counters
-[[kv_namespaces]]
-binding = "KV_KV"
-id = "<KV_NAMESPACE_ID>"
-preview_id = "<PREVIEW_KV_ID>"
+[assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
 
-# Queue for async usage event processing
-[[queues.producers]]
-queue = "usage-events"
-binding = "USAGE_QUEUE"
-
-[[queues.consumers]]
-queue = "usage-events"
-max_batch_size = 10
-max_wait_ms = 5000
-
-# R2 Bucket for reconciliation reports and audit logs
 [[r2_buckets]]
-binding = "R2_BUCKET"
-bucket_name = "sophia-audit-reports"
+binding = "NEXT_INC_CACHE_R2_BUCKET"
+bucket_name = "sophia-video-factory-opennext-cache"
 
-# Scheduled triggers: every minute for alerts + daily 02:00 UTC for reconciliation
-[triggers]
-crons = ["* * * * *", "0 2 * * *"]
+[[services]]
+binding = "WORKER_SELF_REFERENCE"
+service = "sophia-video-factory"
+
+[images]
+binding = "IMAGES"
 
 [vars]
-ENVIRONMENT = "production"
-HARD_LIMIT_PERCENT = "150"
-AGENCYOS_ALERT_WEBHOOK_URL = "https://agencyos.network/api/alerts"
-AGENCYOS_API_KEY = "<agencyos_api_key>"
-
-[dev]
-port = 8787
-local = true
+NEXT_PUBLIC_MOCK_AI_SERVICES = "true"
