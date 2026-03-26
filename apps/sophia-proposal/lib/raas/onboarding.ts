@@ -70,9 +70,11 @@ export async function createOrganization(params: {
   const { error: keyErr } = await db.from('raas_api_keys').insert({
     id: keyId,
     org_id,
+    name: `${params.name} Key`,
     key_hash: keyHash,
     key_prefix: keyPrefix,
     permissions: JSON.stringify(['missions:create', 'missions:read', 'usage:read']),
+    is_active: 1,
     created_at: now,
   });
   if (keyErr) throw new Error(`Failed to create API key: ${keyErr.message}`);
