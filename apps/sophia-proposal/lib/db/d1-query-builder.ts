@@ -437,16 +437,13 @@ export class D1Client {
   }
 
   private async creditMcuBalance(orgId: string, amount: number, subscriptionId: string): Promise<QueryResult<unknown>> {
+    // Single upsert — handles both new and existing orgs without double-crediting
     await this.db.batch([
-      this.db.prepare('UPDATE org_balances SET balance = balance + ?, updated_at = datetime(\'now\') WHERE org_id = ? ').bind(amount, orgId),
+      this.db.prepare(
+        'INSERT INTO org_balances (org_id, balance, updated_at) VALUES (?, ?, datetime(\'now\')) ON CONFLICT(org_id) DO UPDATE SET balance = balance + ?, updated_at = datetime(\'now\')'
+      ).bind(orgId, amount, amount),
       this.db.prepare('INSERT INTO transactions (org_id, amount, type, description) VALUES (?, ?, ?, ?)').bind(orgId, amount, 'credit', subscriptionId),
     ]);
-
-    // Upsert if no balance row exists yet
-    await this.db
-      .prepare('INSERT INTO org_balances (org_id, balance) VALUES (?, ?) ON CONFLICT(org_id) DO UPDATE SET balance = balance + ?')
-      .bind(orgId, amount, amount)
-      .run();
 
     return { data: { success: true }, error: null };
   }

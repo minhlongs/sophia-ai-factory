@@ -26,3 +26,12 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Test
+        run: npm test
+
+      - name: Security audit
+        run: npm audit --audit-level=high
+
+# Note: Cloudflare Workers deployment is triggered automatically by Cloudflare's
+# GitHub integration (Pages/Workers CI) — not managed in this workflow.

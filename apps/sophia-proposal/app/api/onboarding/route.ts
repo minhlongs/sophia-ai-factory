@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createOrganization } from '@/lib/raas/onboarding';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -91,7 +92,7 @@ export async function POST(request: NextRequest) {
       { status: 201 },
     );
   } catch (err) {
-    console.error('POST /api/onboarding error:', err);
+    logger.error('POST /api/onboarding error', err, { path: '/api/onboarding', method: 'POST' });
     const message = err instanceof Error ? err.message : 'Failed';
 
     if (message.includes('UNIQUE') || message.includes('duplicate')) {

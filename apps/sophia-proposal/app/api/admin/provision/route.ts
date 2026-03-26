@@ -9,6 +9,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -109,19 +110,22 @@ export async function POST(request: NextRequest) {
     if (message.includes('UNIQUE') || message.includes('duplicate')) {
       return NextResponse.json({ error: 'Email or organization already exists' }, { status: 409 });
     }
-    console.error('Admin provision error:', err);
+    logger.error('Admin provision error', err, { path: '/api/admin/provision' });
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
-// GET — list all provisioned clients
+// GET — list all provisioned clients (admin-only)
 export async function GET() {
-  // No auth check needed on GET for admin panel (page itself is protected)
-  // Actually, let's add auth for safety
   const cookieStore = await cookies();
   const token = cookieStore.get('auth-token')?.value;
   if (!token) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const admin = await verifyAdmin(token);
+  if (!admin) {
+    return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
   }
 
   try {
