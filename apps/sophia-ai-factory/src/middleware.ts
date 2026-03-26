@@ -172,12 +172,10 @@ export async function proxy(request: NextRequest) {
     process.env.NEXT_PUBLIC_IS_CONFIGURED === "true" ||
     process.env.IS_CONFIGURED === "true";
 
-  // 1. Setup Wizard Redirection Logic
+  // 1. Setup Wizard Redirection Logic — only redirect dashboard/admin, not public pages
   if (!isConfigured) {
-    if (
-      !pathname.startsWith("/setup-wizard") &&
-      !pathname.startsWith("/api/setup")
-    ) {
+    const cleanedForSetup = pathnameWithoutLocale(pathname);
+    if (cleanedForSetup.startsWith("/dashboard") || cleanedForSetup.startsWith("/admin")) {
       return NextResponse.redirect(new URL("/setup-wizard", request.url));
     }
   } else if (pathname.startsWith("/setup-wizard")) {
@@ -205,7 +203,7 @@ export async function proxy(request: NextRequest) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     if (!supabaseUrl || !supabaseAnonKey) {
-      return NextResponse.redirect(new URL("/", request.url));
+      return NextResponse.redirect(new URL("/login?reason=setup_required", request.url));
     }
 
     const supabase = createServerClient(
@@ -234,9 +232,8 @@ export async function proxy(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      const locale = pathname.match(/^\/(en|vi)\//)?.[1] || "en";
-      const loginUrl = new URL(`/${locale}/login`, request.url);
-      return NextResponse.redirect(loginUrl);
+      // Redirect to /login — intlMiddleware handles locale internally
+      return NextResponse.redirect(new URL("/login", request.url));
     }
 
     // User is authenticated; apply intl middleware on the response
@@ -253,12 +250,6 @@ export async function proxy(request: NextRequest) {
   // 4. Auth callback - skip intl middleware
   if (pathname.startsWith("/auth/callback")) {
     return NextResponse.next();
-  }
-
-  // 4.5. Bare /login redirect — send to locale-prefixed login
-  if (pathname === "/login") {
-    const locale = request.cookies.get("NEXT_LOCALE")?.value || "en";
-    return NextResponse.redirect(new URL(`/${locale}/login`, request.url));
   }
 
   // 5. API Routes and Setup Wizard - Skip intl middleware
