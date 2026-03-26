@@ -64,7 +64,7 @@ RULES:
 Return JSON: { "title": "...", "body": "...(markdown)...", "metaDescription": "...(155 chars max)...", "keywords": ["kw1","kw2","kw3","kw4","kw5"] }`;
 
   const response = await claudeClient.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-sonnet-4-6-20250514',
     max_tokens: 2000,
     messages: [{ role: 'user', content: prompt }],
   });
@@ -107,7 +107,7 @@ Add affiliate disclaimer at top.
 Return JSON: { "title": "...", "body": "...(markdown)...", "metaDescription": "...(155 chars)...", "keywords": ["kw1","kw2","kw3","kw4","kw5"] }`;
 
   const response = await claudeClient.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-sonnet-4-6-20250514',
     max_tokens: 2500,
     messages: [{ role: 'user', content: prompt }],
   });

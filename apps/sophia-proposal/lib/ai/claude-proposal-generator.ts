@@ -11,7 +11,7 @@ import { PROPOSAL_SYSTEM_PROMPT } from './prompts/proposal-create-system-prompt'
 import { CONTENT_BLOG_SYSTEM_PROMPT } from './prompts/content-blog-post-system-prompt';
 import { CONTENT_SOCIAL_SYSTEM_PROMPT } from './prompts/content-social-media-system-prompt';
 
-export const CLAUDE_MODEL = 'claude-sonnet-4-20250514';
+export const CLAUDE_MODEL = 'claude-sonnet-4-6-20250514';
 export const CLAUDE_MAX_TOKENS = 2000;
 
 /** @deprecated Use llmGenerate() from llm-router instead */

@@ -82,7 +82,7 @@ RULES:
 Return only the script text with section labels, no JSON wrapper.`;
 
   const response = await claudeClient.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-sonnet-4-6-20250514',
     max_tokens: 600,
     messages: [{ role: 'user', content: prompt }],
   });
