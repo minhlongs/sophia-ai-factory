@@ -30,5 +30,7 @@ binding = "IMAGES"
 [vars]
 INDEX_REDIRECT = "/landing"
 
+# Custom domain: sophia.agencyos.network (configured via Workers Custom Domains API)
+
 [triggers]
 crons = ["*/5 * * * *"]
