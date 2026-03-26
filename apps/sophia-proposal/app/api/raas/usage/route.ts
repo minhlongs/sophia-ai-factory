@@ -8,26 +8,17 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createAuthClient, createServerClient } from '@/lib/db/client';
-import { getOrgId } from '@/lib/org';
+import { getAuthContext } from '@/lib/raas/auth-context';
 import { getUsageStats } from '@/lib/raas/usage-meter';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
-    const authClient = createAuthClient(
-      request.headers.get('authorization')?.split(' ')[1]
-    );
-    const { data: { user }, error: authError } = await authClient.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const auth = await getAuthContext();
+    if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const orgId = await getOrgId(user.id, createServerClient());
-    if (!orgId) {
-      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
-    }
+    const { orgId } = auth;
 
     const days = Math.min(
       90,

@@ -8,6 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
+import { getAuthContext } from '@/lib/raas/auth-context';
 import type { AffiliateProgram } from '@/types/affiliate';
 import { logUsage } from '@/lib/billing/usage-tracker';
 import { getOrInitializeBalance, requireBalance } from '@/lib/billing/balance-checker';
@@ -26,10 +27,10 @@ const MCU_BY_TYPE: Record<ContentType, number> = {
 };
 
 export async function POST(req: NextRequest) {
-  const orgId = req.headers.get('x-org-id');
-  if (!orgId) {
-    return NextResponse.json({ error: 'Organization ID required' }, { status: 400 });
-  }
+  const auth = await getAuthContext();
+  if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const { orgId } = auth;
 
   let body: { programId?: string; contentTypes?: ContentType[] };
   try {

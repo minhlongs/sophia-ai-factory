@@ -7,12 +7,15 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
+import { getAuthContext } from '@/lib/raas/auth-context';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
-  const orgId = req.headers.get('x-org-id');
-  if (!orgId) return NextResponse.json({ error: 'Organization ID required' }, { status: 400 });
+  const auth = await getAuthContext();
+  if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const { orgId } = auth;
 
   const { searchParams } = new URL(req.url);
   const programId = searchParams.get('programId');
