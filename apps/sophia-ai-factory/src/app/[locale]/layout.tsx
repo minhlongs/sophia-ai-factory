@@ -19,13 +19,11 @@ const FloatingHelpButton = dynamic(
 
 const geistSans = localFont({
   src: "../fonts/GeistVF.woff2",
-  src: "../fonts/GeistVF.woff2",
   variable: "--font-geist-sans",
   weight: "100 900",
 });
 
 const geistMono = localFont({
-  src: "../fonts/GeistMonoVF.woff2",
   src: "../fonts/GeistMonoVF.woff2",
   variable: "--font-geist-mono",
   weight: "100 900",
