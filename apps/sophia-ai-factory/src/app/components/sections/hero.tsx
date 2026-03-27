@@ -29,7 +29,7 @@ export function Hero() {
                 {t('hero.title_1')}
               </span>
               <br />
-              <span className="text-white">
+              <span className="text-foreground">
                 {t('hero.title_2')}
               </span>
             </h1>
