@@ -2,165 +2,119 @@ import { GuideContentRenderer } from "@/components/guide/guide-content-renderer"
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "FAQ — Sophia AI Factory Guide",
-  description: "Frequently asked questions about Sophia AI Video Factory",
+  title: "Câu Hỏi Thường Gặp — Hướng Dẫn Sophia AI Factory",
+  description: "Giải đáp những câu hỏi thường gặp nhất về Sophia AI Video Factory",
 };
 
-const content = `# FAQ / Cau Hoi Thuong Gap
+const content = `# Câu Hỏi Thường Gặp
 
-> Answers to the most common questions about Sophia AI Video Factory
-> Giai dap nhung cau hoi thuong gap nhat ve Sophia AI Video Factory
-
----
-
-## 1. Tong Quan / General
-
-### Q1: Sophia AI Video Factory la gi? / What is Sophia AI Video Factory?
-
-**Tieng Viet:** Sophia la nen tang giup ban tao video tu dong bang tri tue nhan tao (AI). Ban chi can nhap noi dung, Sophia se tu viet kich ban, tao giong noi, va tao video hoan chinh — ban khong can biet lam video.
-
-**English:** Sophia is a platform that helps you create videos automatically using artificial intelligence (AI). You just enter your content, and Sophia writes the script, creates the voiceover, and produces the complete video — no video editing skills needed.
+> Giải đáp những câu hỏi thường gặp nhất về Sophia AI Video Factory
 
 ---
 
-### Q2: Toi can biet lap trinh khong? / Do I need to know coding?
+## 1. Tổng Quan
 
-**Tieng Viet:** Khong. Sophia duoc thiet ke cho nguoi khong biet ky thuat.
+### Sophia AI Video Factory là gì?
 
-**English:** No. Sophia is designed for non-technical users. Everything is guided step-by-step.
-
----
-
-### Q3: Sophia tao video nhu the nao? / How does Sophia create videos?
-
-**Tieng Viet:**
-1. Ban nhap noi dung (chu de video)
-2. AI viet kich ban tu dong (qua OpenRouter)
-3. AI tao giong noi tu nhien (qua ElevenLabs)
-4. AI tao video voi nguoi trinh bay ao (qua HeyGen)
-5. Video hoan chinh duoc gui cho ban
-
-**English:**
-1. You enter the content (video topic)
-2. AI writes the script automatically (via OpenRouter)
-3. AI creates a natural voiceover (via ElevenLabs)
-4. AI creates the video with a virtual presenter (via HeyGen)
-5. The complete video is delivered to you
+Sophia là nền tảng giúp bạn tạo video tự động bằng trí tuệ nhân tạo (AI). Bạn chỉ cần nhập nội dung, Sophia sẽ tự viết kịch bản, tạo giọng nói, và tạo video hoàn chỉnh — bạn không cần biết làm video.
 
 ---
 
-### Q4: Mat bao lau? / How long does it take?
+### Tôi cần biết lập trình không?
 
-**Tieng Viet:** 2-5 phut cho video ngan (duoi 3 phut). Video dai hon co the mat 10-15 phut.
+Không. Sophia được thiết kế cho người không biết kỹ thuật. Mọi thứ đều có hướng dẫn từng bước.
 
-**English:** 2-5 minutes for short videos (under 3 minutes). Longer videos may take 10-15 minutes.
+---
+
+### Sophia tạo video như thế nào?
+
+1. Bạn nhập nội dung (chủ đề video)
+2. AI viết kịch bản tự động (qua OpenRouter)
+3. AI tạo giọng nói tự nhiên (qua ElevenLabs)
+4. AI tạo video với người trình bày ảo (qua HeyGen)
+5. Video hoàn chỉnh được gửi cho bạn
+
+---
+
+### Mất bao lâu?
+
+2-5 phút cho video ngắn (dưới 3 phút). Video dài hơn có thể mất 10-15 phút.
 
 ---
 
 ## 2. API Keys
 
-### Q5: API Key co mat phi khong? / Do API Keys cost money?
+### API Key có mất phí không?
 
-**Tieng Viet:** Cac dich vu deu co goi mien phi de bat dau. Khi su dung nhieu, ban can nang cap goi.
-
-**English:** These services all have free tiers to get started. When you use more, you'll need to upgrade each service's plan separately.
+Các dịch vụ đều có gói miễn phí để bắt đầu. Khi sử dụng nhiều, bạn cần nâng cấp gói của từng dịch vụ.
 
 ---
 
-### Q6: API Key co an toan khong? / Are my API Keys secure?
+### API Key có an toàn không?
 
-**Tieng Viet:** Co. API Keys duoc ma hoa va luu tru an toan. Chung toi khong chia se key cua ban.
-
-**English:** Yes. API Keys are encrypted and stored securely. We never share your keys with anyone.
+Có. API Keys được mã hóa và lưu trữ an toàn. Chúng tôi không chia sẻ key của bạn với bất kỳ ai.
 
 ---
 
-## 3. Chien Dich / Campaigns
+## 3. Chiến Dịch
 
-### Q7: Toi co the tao bao nhieu video? / How many videos can I create?
+### Tôi có thể tạo bao nhiêu video?
 
-| Goi / Plan | Gioi han / Limit |
+| Gói | Giới hạn |
 |---|---|
-| BASIC | 20 video/thang |
-| PREMIUM | 100 video/thang |
-| ENTERPRISE | Khong gioi han / Unlimited |
+| BASIC | 20 video/tháng |
+| PREMIUM | 100 video/tháng |
+| ENTERPRISE | Không giới hạn |
 
 ---
 
-### Q8: Chien dich bi ket? / Campaign stuck at Processing?
+### Chiến dịch bị kẹt ở trạng thái Processing?
 
-**Tieng Viet:**
-1. Doi them 10 phut
-2. Nhan **"Lam Moi"** trang Dashboard
-3. Neu van con ket sau 15 phut, nhan **"Chay Lai"** (Retry)
-4. Lien he ho tro qua Telegram @Sophia_Bbot
-
-**English:**
-1. Wait 10 more minutes
-2. Click **"Refresh"** on the Dashboard
-3. If still stuck after 15 minutes, click **"Retry"**
-4. Contact support via Telegram @Sophia_Bbot
+1. Đợi thêm 10 phút
+2. Nhấn **"Làm Mới"** trang Dashboard
+3. Nếu vẫn còn kẹt sau 15 phút, nhấn **"Chạy Lại"** (Retry)
+4. Liên hệ hỗ trợ qua Telegram @Sophia_Bbot
 
 ---
 
 ## 4. Telegram Bot
 
-### Q9: Bot khong tra loi? / Bot not responding?
+### Bot không trả lời?
 
-**Tieng Viet:**
-1. Kiem tra ten bot: \`@Sophia_Bbot\` (chu B viet hoa)
-2. Dam bao ban da nhan **"START"**
-3. Thu gui lenh \`/help\`
-4. Doi 30 giay roi thu lai
-
-**English:**
-1. Check bot name: \`@Sophia_Bbot\` (capital B)
-2. Make sure you tapped **"START"**
-3. Try sending \`/help\`
-4. Wait 30 seconds and try again
+1. Kiểm tra tên bot: \`@Sophia_Bbot\` (chữ B viết hoa)
+2. Đảm bảo bạn đã nhấn **"START"**
+3. Thử gửi lệnh \`/help\`
+4. Đợi 30 giây rồi thử lại
 
 ---
 
-## 5. Thanh Toan / Billing
+## 5. Thanh Toán
 
-### Q10: Hoa don duoc gui o dau? / Where are invoices sent?
+### Hóa đơn được gửi ở đâu?
 
-**Tieng Viet:** Hoa don tu dong gui qua email sau moi lan thanh toan. Ban co the tai hoa don tu Dashboard muc "Lich Su Thanh Toan."
-
-**English:** Invoices are automatically sent to your registered email. You can also download invoices from Dashboard under "Billing History."
+Hóa đơn tự động gửi qua email sau mỗi lần thanh toán. Bạn có thể tải hóa đơn từ Dashboard mục "Lịch Sử Thanh Toán."
 
 ---
 
-## 6. Ho Tro / Support
+## 6. Hỗ Trợ
 
-| Phuong thuc / Method | Chi tiet / Details |
+| Phương thức | Chi tiết |
 |---|---|
 | Telegram Bot | @Sophia_Bbot (\`/help\`) |
-| Email | support@sophia.agency |
-| Ho tro uu tien / Priority | PREMIUM va ENTERPRISE |
-| Ho tro 24/7 | Chi goi ENTERPRISE |
+| Email | support@agencyos.network |
+| Hỗ trợ ưu tiên | PREMIUM và ENTERPRISE |
+| Hỗ trợ 24/7 | Chỉ gói ENTERPRISE |
 
 ---
 
-## 7. Quyen So Huu Du Lieu / Data Ownership
+## 7. Quyền Sở Hữu Dữ Liệu
 
-### Your Data, Your Rules / Du Lieu Cua Ban, Quyen Cua Ban
-
-**English:**
-- You own 100% of all content created by Sophia
-- Videos are published directly to YOUR YouTube/TikTok channel
-- API keys are encrypted and stored securely — only YOU can access them
-- Our database only stores: your email, subscription tier, campaign settings
-- We do NOT store: your videos, scripts, voiceovers, or generated content
-- You can delete your account and all data at any time
-
-**Tieng Viet:**
-- Ban so huu 100% noi dung do Sophia tao ra
-- Video duoc xuat ban truc tiep len kenh YouTube/TikTok CUA BAN
-- API keys duoc ma hoa va luu tru an toan — chi BAN moi truy cap duoc
-- Database chi luu: email, goi dang ky, cai dat chien dich
-- KHONG luu: video, kich ban, giong noi, noi dung da tao
-- Ban co the xoa tai khoan va du lieu bat ky luc nao
+- Bạn sở hữu 100% nội dung do Sophia tạo ra
+- Video được xuất bản trực tiếp lên kênh YouTube/TikTok CỦA BẠN
+- API keys được mã hóa và lưu trữ an toàn — chỉ BẠN mới truy cập được
+- Database chỉ lưu: email, gói đăng ký, cài đặt chiến dịch
+- KHÔNG lưu: video, kịch bản, giọng nói, nội dung đã tạo
+- Bạn có thể xóa tài khoản và dữ liệu bất kỳ lúc nào
 `;
 
 export default function FAQGuidePage() {
