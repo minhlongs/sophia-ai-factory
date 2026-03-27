@@ -82,13 +82,48 @@
       },
       "highlight": "Gói Premium mở khóa tích hợp API với PartnerStack, Impact.com, và cập nhật tự động hàng tuần các chương trình liên kết."
     },
+    "raas": {
+      "title": "Tự Động Hóa Kinh Doanh Bằng AI",
+      "subtitle": "17 lệnh để tự động hóa đề xuất, tạo khách hàng tiềm năng, email marketing và sản xuất video — qua Telegram hoặc API",
+      "badge": "RaaS — Doanh Thu Dưới Dạng Dịch Vụ",
+      "features": {
+        "proposal": {
+          "title": "Tạo Đề Xuất Kinh Doanh",
+          "description": "Tạo đề xuất chuyên nghiệp cho khách hàng trong vài phút với nội dung AI cá nhân hóa."
+        },
+        "lead": {
+          "title": "Tạo Khách Hàng Tiềm Năng",
+          "description": "Tự động tìm kiếm và đánh giá khách hàng tiềm năng trong mọi ngành. 50 lead chất lượng trong 60 giây."
+        },
+        "email": {
+          "title": "Tự Động Hóa Email",
+          "description": "Viết và gửi chiến dịch email cá nhân hóa ở quy mô lớn. Tỷ lệ mở cao hơn với nội dung tối ưu AI."
+        },
+        "commands": {
+          "title": "17 Lệnh AI",
+          "description": "Bộ lệnh tự động hóa kinh doanh đầy đủ qua Telegram bot hoặc REST API. Không cần lập trình."
+        }
+      },
+      "stats": {
+        "stat1": { "value": "17", "label": "Lệnh AI" },
+        "stat2": { "value": "500+", "label": "Đề Xuất Đã Tạo" },
+        "stat3": { "value": "< 60s", "label": "Thực Thi Nhiệm Vụ" },
+        "stat4": { "value": "99.9%", "label": "Uptime SLA" }
+      },
+      "terminal": {
+        "title": "Xem Hoạt Động Thực Tế",
+        "subtitle": "Chạy nhiệm vụ AI qua Telegram hoặc API — đề xuất, lead, video và nhiều hơn nữa",
+        "cta": "Truy cập qua Telegram bot @Sophia_Bbot và REST API — không cần lập trình"
+      }
+    },
     "social_proof": {
       "title": "Được Tin Dùng Bởi Nhà Sáng Tạo Toàn Cầu",
       "subtitle": "Tham gia cùng hàng nghìn nhà sáng tạo nội dung đang xây dựng đế chế với Sophia AI",
       "stats": {
         "creators": "Nhà Sáng Tạo Hoạt Động",
         "ai_tools": "Công Cụ AI Tích Hợp",
-        "videos": "Video Đã Tạo"
+        "videos": "Video Đã Tạo",
+        "proposals": "Đề Xuất Đã Tạo"
       },
       "testimonials": {
         "creator_1": {
@@ -152,7 +187,20 @@
         "custom_scripts": "Script Tự Động Tùy Chỉnh",
         "strategy_review": "Đánh Giá Chiến Lược Hàng Tháng",
         "white_label_license": "Giấy Phép Nhãn Trắng Đầy Đủ",
-        "early_access": "Truy Cập Sớm Tính Năng Beta"
+        "early_access": "Truy Cập Sớm Tính Năng Beta",
+        "mcu_1000": "1.000 Tín Chỉ AI/tháng",
+        "mcu_5000": "5.000 Tín Chỉ AI/tháng",
+        "mcu_20000": "20.000 Tín Chỉ AI/tháng",
+        "mcu_100000": "100.000 Tín Chỉ AI/tháng",
+        "ai_commands_5": "5 Lệnh AI/tháng",
+        "ai_commands_15": "15 Lệnh AI/tháng",
+        "ai_commands_15_custom": "15 Lệnh AI + Tùy Chỉnh",
+        "ai_commands_unlimited": "Lệnh AI Không Giới Hạn",
+        "team_members_1": "1 Thành Viên Nhóm",
+        "team_members_5": "Tối Đa 5 Thành Viên Nhóm",
+        "team_members_unlimited": "Thành Viên Nhóm Không Giới Hạn",
+        "api_webhooks": "Truy Cập API + Webhooks",
+        "custom_integrations": "Tích Hợp Tùy Chỉnh"
       },
       "tiers": {
         "starter": {
@@ -280,7 +328,113 @@
       "settings": "Cài Đặt",
       "support": "Hỗ Trợ",
       "api_docs": "Tài Liệu API",
-      "sign_out": "Đăng Xuất"
+      "sign_out": "Đăng Xuất",
+      "missions": "Nhiệm Vụ AI",
+      "api_keys": "Khoá API",
+      "proposals": "Đề Xuất"
+    },
+    "missions": {
+      "page_title": "Nhiệm Vụ AI",
+      "page_subtitle": "Khởi chạy và theo dõi các tác vụ AI tự động",
+      "new_mission": "Nhiệm Vụ Mới",
+      "quick_launch": "Khởi Chạy Nhanh",
+      "active_missions": "Nhiệm Vụ Đang Chạy ({count})",
+      "history": "Lịch Sử Nhiệm Vụ",
+      "empty_history": "Chưa có nhiệm vụ nào. Khởi chạy nhiệm vụ đầu tiên.",
+      "mcu_balance": "Số Dư MCU",
+      "upgrade": "Nâng cấp gói",
+      "low_balance": "Số dư thấp — nâng cấp để tiếp tục",
+      "used_this_month": "Đã dùng tháng này",
+      "back_to_missions": "Quay lại Nhiệm Vụ",
+      "back_to_templates": "Quay lại mẫu",
+      "launch_mission": "Khởi Chạy Nhiệm Vụ",
+      "launching": "Đang khởi chạy...",
+      "balance": "Số dư",
+      "cost": "Chi phí",
+      "insufficient_credits": "Không đủ tín dụng — Nâng cấp gói",
+      "template_proposal": "Đề Xuất",
+      "template_blog": "Bài Blog",
+      "template_social": "Gói Mạng Xã Hội",
+      "template_video": "Video Script",
+      "not_found": "Không tìm thấy nhiệm vụ.",
+      "started_at": "Bắt đầu lúc {date}",
+      "pev_pipeline": "Quy Trình PEV",
+      "mission_failed": "Nhiệm vụ thất bại",
+      "execution_log": "Nhật Ký Thực Thi",
+      "result": "Kết Quả",
+      "view_output": "Xem Đầu Ra",
+      "mcu_breakdown": "Chi Tiết MCU",
+      "total": "Tổng Cộng"
+    },
+    "apiKeys": {
+      "page_title": "Khoá API",
+      "page_subtitle": "Quản lý khoá API RaaS cho tích hợp bên ngoài",
+      "title": "Khoá API",
+      "create_key": "Tạo Khoá",
+      "key_name": "Tên Khoá",
+      "key_name_placeholder": "VD: Máy chủ production",
+      "creating": "Đang tạo...",
+      "cancel": "Huỷ",
+      "done": "Xong — Tôi đã sao chép khoá",
+      "copy_now": "Sao Chép Khoá API",
+      "copy_warning": "Khoá này chỉ hiển thị một lần. Lưu trữ an toàn.",
+      "no_keys": "Chưa có khoá API nào.",
+      "calls_today": "Lượt gọi hôm nay",
+      "mcu_consumed": "MCU đã dùng (30 ngày)",
+      "avg_response_ms": "Thời gian phản hồi TB (ms)",
+      "col_name": "Tên",
+      "col_prefix": "Tiền tố khoá",
+      "col_status": "Trạng thái",
+      "col_last_used": "Dùng lần cuối",
+      "col_created": "Tạo lúc",
+      "active": "Đang hoạt động",
+      "revoked": "Đã thu hồi",
+      "revoke": "Thu hồi"
+    },
+    "proposals": {
+      "page_title": "Tạo Đề Xuất",
+      "page_subtitle": "Tạo đề xuất chuyên nghiệp cho khách hàng với AI",
+      "form_title": "Thông Tin Đề Xuất",
+      "client_name": "Tên Khách Hàng",
+      "client_company": "Công Ty",
+      "industry": "Ngành Nghề",
+      "industry_placeholder": "Agency Kỹ Thuật Số",
+      "pain_points": "Vấn Đề (mỗi dòng một vấn đề)",
+      "pain_points_placeholder": "Tỷ lệ chuyển đổi thấp\nTỷ lệ bỏ giỏ hàng cao",
+      "goals": "Mục Tiêu (mỗi dòng một mục tiêu)",
+      "goals_placeholder": "Tăng conversion 50%\nGiảm chi phí 30%",
+      "solution": "Mô Tả Giải Pháp",
+      "timeline": "Thời Gian Thực Hiện",
+      "investment": "Ngân Sách Dự Kiến",
+      "deliverables": "Kết Quả Bàn Giao (mỗi dòng một mục)",
+      "deliverables_placeholder": "Thiết kế lại landing page\nCài đặt A/B testing",
+      "tone": "Giọng Điệu",
+      "tone_professional": "Chuyên nghiệp",
+      "tone_friendly": "Thân thiện",
+      "tone_technical": "Kỹ thuật",
+      "length": "Độ Dài",
+      "length_short": "Ngắn (1.500-2.000 từ)",
+      "length_medium": "Trung bình (2.500-3.000 từ)",
+      "length_long": "Dài (3.500-4.000 từ)",
+      "generate": "Tạo Đề Xuất bằng AI",
+      "generating": "Đang tạo đề xuất...",
+      "preview": "Xem trước",
+      "quality_score": "Điểm Chất Lượng",
+      "quality_passed": "Đề xuất đạt tiêu chuẩn chất lượng",
+      "quality_review": "Nên xem lại trước khi gửi",
+      "editor_title": "Chỉnh Sửa Đề Xuất",
+      "save_changes": "Lưu Thay Đổi",
+      "saved": "Đã lưu",
+      "ai_generated": "AI tạo",
+      "edit": "Chỉnh sửa",
+      "preview_label": "Xem trước",
+      "empty_section": "Phần trống",
+      "section_executiveSummary": "Tóm Tắt Điều Hành",
+      "section_problemStatement": "Xác Định Vấn Đề",
+      "section_proposedSolution": "Giải Pháp Đề Xuất",
+      "section_timeline": "Lịch Trình",
+      "section_investment": "Đầu Tư",
+      "section_nextSteps": "Bước Tiếp Theo"
     },
     "header": {
       "title": "Bảng Điều Khiển Sophia",
@@ -421,7 +575,22 @@
       "api_key": "API Key Của Bạn",
       "api_key_hint": "Liên hệ hỗ trợ để tạo API key",
       "endpoints": "Các Endpoint Có Sẵn"
+    },
+    "crossSell": {
+      "raas_title": "Mở Khoá Tự Động Hoá Kinh Doanh AI",
+      "raas_desc": "Tạo đề xuất, tìm kiếm khách hàng và chạy email tự động — tất cả bằng lệnh AI.",
+      "raas_cta": "Thử Tạo Đề Xuất",
+      "video_title": "Tạo Video Affiliate Với AI",
+      "video_desc": "Biến bất kỳ chủ đề nào thành nội dung video tự động. Ra mắt chiến dịch đầu tiên trong vài phút.",
+      "video_cta": "Tạo Video",
+      "dismiss": "Đóng"
     }
+  },
+  "pricing": {
+    "nav_dashboard": "Bảng Điều Khiển",
+    "combined_badge": "Video Factory + Tự Động Hoá AI",
+    "combined_title": "Video Factory + Tự Động Hoá AI — Một Nền Tảng",
+    "combined_subtitle": "Tất cả công cụ bạn cần để tự động hoá sản xuất nội dung và quy trình kinh doanh"
   },
   "campaign": {
     "template_selection": {

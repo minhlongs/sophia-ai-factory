@@ -82,13 +82,48 @@
       },
       "highlight": "Premium tier unlocks API integrations with PartnerStack, Impact.com, and weekly auto-updates of affiliate programs."
     },
+    "raas": {
+      "title": "AI-Powered Business Automation",
+      "subtitle": "17 commands to automate proposals, lead generation, email campaigns, and video creation — all via Telegram or API",
+      "badge": "RaaS — Revenue as a Service",
+      "features": {
+        "proposal": {
+          "title": "Proposal Generation",
+          "description": "Create professional client proposals in minutes with AI-tailored content and competitive pricing."
+        },
+        "lead": {
+          "title": "Lead Generation",
+          "description": "Automatically find and qualify leads in any niche. Get 50 qualified prospects in under 60 seconds."
+        },
+        "email": {
+          "title": "Email Automation",
+          "description": "Write and send personalized email campaigns at scale. Higher open rates with AI-optimized copy."
+        },
+        "commands": {
+          "title": "17 AI Commands",
+          "description": "Full suite of business automation commands accessible via Telegram bot or REST API. No code required."
+        }
+      },
+      "stats": {
+        "stat1": { "value": "17", "label": "AI Commands" },
+        "stat2": { "value": "500+", "label": "Proposals Generated" },
+        "stat3": { "value": "< 60s", "label": "Mission Execution" },
+        "stat4": { "value": "99.9%", "label": "Uptime SLA" }
+      },
+      "terminal": {
+        "title": "See It in Action",
+        "subtitle": "Run AI missions via Telegram or API — proposals, leads, videos, and more",
+        "cta": "Available via Telegram bot @Sophia_Bbot and REST API — no code required"
+      }
+    },
     "social_proof": {
       "title": "Trusted by Creators Worldwide",
       "subtitle": "Join thousands of content creators already building their empires with Sophia AI",
       "stats": {
         "creators": "Active Creators",
         "ai_tools": "AI Tools Integrated",
-        "videos": "Videos Generated"
+        "videos": "Videos Generated",
+        "proposals": "Proposals Generated"
       },
       "testimonials": {
         "creator_1": {
@@ -152,7 +187,20 @@
         "custom_scripts": "Custom Automation Scripts",
         "strategy_review": "Monthly Strategy Review",
         "white_label_license": "Full White-label License",
-        "early_access": "Early Access to Beta Features"
+        "early_access": "Early Access to Beta Features",
+        "mcu_1000": "1,000 AI Credits/month",
+        "mcu_5000": "5,000 AI Credits/month",
+        "mcu_20000": "20,000 AI Credits/month",
+        "mcu_100000": "100,000 AI Credits/month",
+        "ai_commands_5": "5 AI Commands/month",
+        "ai_commands_15": "15 AI Commands/month",
+        "ai_commands_15_custom": "15 AI Commands + Custom",
+        "ai_commands_unlimited": "Unlimited AI Commands",
+        "team_members_1": "1 Team Member",
+        "team_members_5": "Up to 5 Team Members",
+        "team_members_unlimited": "Unlimited Team Members",
+        "api_webhooks": "API Access + Webhooks",
+        "custom_integrations": "Custom Integrations"
       },
       "tiers": {
         "starter": {
@@ -280,7 +328,113 @@
       "settings": "Settings",
       "support": "Support",
       "api_docs": "API Docs",
-      "sign_out": "Sign Out"
+      "sign_out": "Sign Out",
+      "missions": "Missions",
+      "api_keys": "API Keys",
+      "proposals": "Proposals"
+    },
+    "missions": {
+      "page_title": "AI Missions",
+      "page_subtitle": "Launch and monitor your automated AI tasks",
+      "new_mission": "New Mission",
+      "quick_launch": "Quick Launch",
+      "active_missions": "Active Missions ({count})",
+      "history": "Mission History",
+      "empty_history": "No missions yet. Launch your first mission above.",
+      "mcu_balance": "MCU Balance",
+      "upgrade": "Upgrade plan",
+      "low_balance": "Low balance — upgrade to continue",
+      "used_this_month": "Used this month",
+      "back_to_missions": "Back to Missions",
+      "back_to_templates": "Back to templates",
+      "launch_mission": "Launch Mission",
+      "launching": "Launching...",
+      "balance": "Balance",
+      "cost": "Cost",
+      "insufficient_credits": "Insufficient credits — Upgrade Plan",
+      "template_proposal": "Proposal",
+      "template_blog": "Blog Post",
+      "template_social": "Social Bundle",
+      "template_video": "Video Script",
+      "not_found": "Mission not found.",
+      "started_at": "Started {date}",
+      "pev_pipeline": "PEV Pipeline",
+      "mission_failed": "Mission failed",
+      "execution_log": "Execution Log",
+      "result": "Result",
+      "view_output": "View Output",
+      "mcu_breakdown": "MCU Cost Breakdown",
+      "total": "Total"
+    },
+    "apiKeys": {
+      "page_title": "API Keys",
+      "page_subtitle": "Manage your RaaS API keys for external integrations",
+      "title": "API Keys",
+      "create_key": "Create Key",
+      "key_name": "Key Name",
+      "key_name_placeholder": "e.g. Production Server",
+      "creating": "Creating...",
+      "cancel": "Cancel",
+      "done": "Done — I've copied my key",
+      "copy_now": "Copy Your API Key",
+      "copy_warning": "This key will only be shown once. Store it securely.",
+      "no_keys": "No API keys yet.",
+      "calls_today": "Calls today",
+      "mcu_consumed": "MCU consumed (30d)",
+      "avg_response_ms": "Avg response (ms)",
+      "col_name": "Name",
+      "col_prefix": "Key prefix",
+      "col_status": "Status",
+      "col_last_used": "Last used",
+      "col_created": "Created",
+      "active": "Active",
+      "revoked": "Revoked",
+      "revoke": "Revoke"
+    },
+    "proposals": {
+      "page_title": "Proposal Generator",
+      "page_subtitle": "Generate professional client proposals with AI",
+      "form_title": "Proposal Details",
+      "client_name": "Client Name",
+      "client_company": "Client Company",
+      "industry": "Industry",
+      "industry_placeholder": "Digital Agency",
+      "pain_points": "Pain Points (one per line)",
+      "pain_points_placeholder": "Low conversion rate\nHigh cart abandonment",
+      "goals": "Goals (one per line)",
+      "goals_placeholder": "Increase conversion by 50%\nReduce costs by 30%",
+      "solution": "Solution Description",
+      "timeline": "Timeline",
+      "investment": "Investment Range",
+      "deliverables": "Deliverables (one per line)",
+      "deliverables_placeholder": "Landing page redesign\nA/B testing setup",
+      "tone": "Tone",
+      "tone_professional": "Professional",
+      "tone_friendly": "Friendly",
+      "tone_technical": "Technical",
+      "length": "Length",
+      "length_short": "Short (1,500-2,000 words)",
+      "length_medium": "Medium (2,500-3,000 words)",
+      "length_long": "Long (3,500-4,000 words)",
+      "generate": "Generate Proposal with AI",
+      "generating": "Generating Proposal...",
+      "preview": "Preview",
+      "quality_score": "Quality Score",
+      "quality_passed": "Proposal meets quality standards",
+      "quality_review": "Review suggested before sending",
+      "editor_title": "Proposal Editor",
+      "save_changes": "Save Changes",
+      "saved": "Saved",
+      "ai_generated": "AI-generated",
+      "edit": "Edit",
+      "preview_label": "Preview",
+      "empty_section": "Empty section",
+      "section_executiveSummary": "Executive Summary",
+      "section_problemStatement": "Problem Statement",
+      "section_proposedSolution": "Proposed Solution",
+      "section_timeline": "Timeline",
+      "section_investment": "Investment",
+      "section_nextSteps": "Next Steps"
     },
     "header": {
       "title": "Sophia Dashboard",
@@ -421,7 +575,22 @@
       "api_key": "Your API Key",
       "api_key_hint": "Contact support to generate your API key",
       "endpoints": "Available Endpoints"
+    },
+    "crossSell": {
+      "raas_title": "Unlock AI Business Automation",
+      "raas_desc": "Generate proposals, find leads, and run email campaigns — all with AI commands.",
+      "raas_cta": "Try Proposals",
+      "video_title": "Create Affiliate Videos with AI",
+      "video_desc": "Turn any niche into automated video content. Launch your first campaign in minutes.",
+      "video_cta": "Create Video",
+      "dismiss": "Dismiss"
     }
+  },
+  "pricing": {
+    "nav_dashboard": "Dashboard",
+    "combined_badge": "Video Factory + AI Automation",
+    "combined_title": "Video Factory + AI Automation — One Platform",
+    "combined_subtitle": "Everything you need to automate content creation and business workflows"
   },
   "campaign": {
     "template_selection": {

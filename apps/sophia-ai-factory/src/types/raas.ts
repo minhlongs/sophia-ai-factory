@@ -1,0 +1,169 @@
+/**
+ * RaaS (Robot-as-a-Service) Types
+ *
+ * Adapted from sophia-proposal/types/raas.ts
+ * TypeScript interfaces for missions, templates, PEV execution system.
+ */
+
+// ── Enums / Unions ─────────────────────────────────────────────────────────────
+
+export type MissionStatus =
+  | 'queued'
+  | 'planning'
+  | 'executing'
+  | 'verifying'
+  | 'completed'
+  | 'failed';
+
+export type MissionPriority = 'low' | 'normal' | 'high' | 'urgent';
+
+export type MissionCategory =
+  | 'proposal'
+  | 'video'
+  | 'affiliate'
+  | 'content'
+  | 'analytics'
+  | 'sales'
+  | 'leads'
+  | 'email';
+
+export type MissionCommand =
+  | 'proposal:create'
+  | 'video:create'
+  | 'affiliate:generate'
+  | 'affiliate:scrape'
+  | 'content:blog'
+  | 'content:social'
+  | 'crm:sync'
+  | 'analytics:export'
+  | 'gtm:campaign'
+  | 'sales:battlecard'
+  | 'sales:proposal-deck'
+  | 'sales:roi-calculator'
+  | 'sales:competitor-analysis'
+  | 'sales:pricing-optimizer'
+  | 'sales:outreach-sequence'
+  | 'lead:generate'
+  | 'email:send';
+
+// ── Core Table Types ───────────────────────────────────────────────────────────
+
+export interface Mission {
+  id: string;
+  org_id: string;
+  title: string;
+  description: string | null;
+  command: MissionCommand;
+  params: Record<string, unknown>;
+  status: MissionStatus;
+  priority: MissionPriority;
+  mcu_cost: number;
+  mcu_reserved: number;
+  result: MissionResult | null;
+  error_message: string | null;
+  plan: PEVPlan | null;
+  execution_log: PEVStep[];
+  started_at: string | null;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+  max_retries: number;
+  retry_count: number;
+  parent_mission_id: string | null;
+  webhook_url: string | null;
+  is_sub_mission: boolean;
+}
+
+export interface MissionTemplate {
+  id: string;
+  name: string;
+  command: MissionCommand;
+  description: string | null;
+  default_params: Record<string, unknown>;
+  mcu_cost: number;
+  category: MissionCategory;
+  is_active: boolean;
+  icon: string | null;
+  created_at: string;
+}
+
+// ── PEV Types (Plan → Execute → Verify) ───────────────────────────────────────
+
+export interface PEVStep {
+  step: string;
+  status: 'pending' | 'running' | 'done' | 'failed';
+  started_at?: string;
+  completed_at?: string;
+  details?: string;
+}
+
+export interface PEVPlan {
+  command: string;
+  steps: PEVStep[];
+  estimated_duration_ms: number;
+}
+
+// ── Result Type ────────────────────────────────────────────────────────────────
+
+export interface MissionResult {
+  success: boolean;
+  data?: Record<string, unknown>;
+  error?: string;
+  output_url?: string;
+  summary?: string;
+}
+
+// ── API Request/Response ───────────────────────────────────────────────────────
+
+export interface CreateMissionRequest {
+  title: string;
+  command: MissionCommand;
+  params?: Record<string, unknown>;
+  priority?: MissionPriority;
+  description?: string;
+}
+
+export interface MissionListResponse {
+  missions: Mission[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+// ── API Key Types ──────────────────────────────────────────────────────────────
+
+export interface ApiKeyInfo {
+  id: string;
+  name: string;
+  key_prefix: string;
+  permissions: string[];
+  rate_limit_per_minute: number;
+  is_active: boolean;
+  last_used_at: string | null;
+  created_at: string;
+  expires_at: string | null;
+}
+
+export interface UsageStats {
+  total_calls: number;
+  total_mcu: number;
+  avg_response_ms: number;
+  calls_by_day: { date: string; count: number; mcu: number }[];
+}
+
+// ── OpenClaw Engine Types ──────────────────────────────────────────────────────
+
+export interface SubMissionDef {
+  command: MissionCommand;
+  title: string;
+  params: Record<string, unknown>;
+  dependency_type: 'sequential' | 'parallel';
+}
+
+export interface MissionDependency {
+  id: string;
+  parent_mission_id: string;
+  child_mission_id: string;
+  dependency_type: 'sequential' | 'parallel';
+  created_at: string;
+}

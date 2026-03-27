@@ -9,7 +9,10 @@ import {
   LogOut,
   BarChart2,
   HelpCircle,
-  Code
+  Code,
+  Rocket,
+  KeyRound,
+  FileText
 } from "lucide-react";
 import { HealthIndicator } from "@/components/dashboard/health-indicator";
 import { MobileNav } from "@/components/ui/mobile-nav";
@@ -76,6 +79,27 @@ export default function DashboardLayout({
           >
             <HelpCircle className="w-5 h-5" />
             <span className="font-medium">{t('sidebar.support')}</span>
+          </Link>
+          <Link
+            href="/dashboard/missions"
+            className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
+          >
+            <Rocket className="w-5 h-5" />
+            <span className="font-medium">{t('sidebar.missions')}</span>
+          </Link>
+          <Link
+            href="/dashboard/api-keys"
+            className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
+          >
+            <KeyRound className="w-5 h-5" />
+            <span className="font-medium">{t('sidebar.api_keys')}</span>
+          </Link>
+          <Link
+            href="/dashboard/proposals"
+            className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
+          >
+            <FileText className="w-5 h-5" />
+            <span className="font-medium">{t('sidebar.proposals')}</span>
           </Link>
           <Link
             href="/dashboard/api-docs"

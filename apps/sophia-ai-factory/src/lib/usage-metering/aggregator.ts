@@ -9,6 +9,7 @@
 
 import { createAdminClient } from '@/lib/supabase/admin';
 import { logger } from '@/lib/utils/logger-utility';
+import { UNIFIED_TIERS } from '@/lib/unified-tier-config';
 import type {
   AggregatedUsage,
   HourlySummary,
@@ -22,36 +23,37 @@ import type {
 } from './types';
 
 /**
- * Quota limits by tier
+ * Quota limits by tier — monthly credits sourced from unified-tier-config.
+ * Daily/hourly sub-limits derived proportionally for rate shaping.
  */
 export const QUOTA_LIMITS: Record<string, QuotaLimit> = {
   BASIC: {
     tier: 'BASIC',
-    dailyCredits: 100,
-    hourlyCredits: 20,
+    dailyCredits: Math.ceil(UNIFIED_TIERS.BASIC.mcuMonthly / 30),
+    hourlyCredits: Math.ceil(UNIFIED_TIERS.BASIC.mcuMonthly / 30 / 5),
     dailyRequests: 500,
-    monthlyCredits: 2000,
+    monthlyCredits: UNIFIED_TIERS.BASIC.mcuMonthly,
   },
   PREMIUM: {
     tier: 'PREMIUM',
-    dailyCredits: 500,
-    hourlyCredits: 100,
+    dailyCredits: Math.ceil(UNIFIED_TIERS.PREMIUM.mcuMonthly / 30),
+    hourlyCredits: Math.ceil(UNIFIED_TIERS.PREMIUM.mcuMonthly / 30 / 5),
     dailyRequests: 2500,
-    monthlyCredits: 10000,
+    monthlyCredits: UNIFIED_TIERS.PREMIUM.mcuMonthly,
   },
   ENTERPRISE: {
     tier: 'ENTERPRISE',
-    dailyCredits: 2000,
-    hourlyCredits: 500,
+    dailyCredits: Math.ceil(UNIFIED_TIERS.ENTERPRISE.mcuMonthly / 30),
+    hourlyCredits: Math.ceil(UNIFIED_TIERS.ENTERPRISE.mcuMonthly / 30 / 5),
     dailyRequests: 10000,
-    monthlyCredits: 50000,
+    monthlyCredits: UNIFIED_TIERS.ENTERPRISE.mcuMonthly,
   },
   MASTER: {
     tier: 'MASTER',
-    dailyCredits: 10000,
-    hourlyCredits: 2000,
+    dailyCredits: Math.ceil(UNIFIED_TIERS.MASTER.mcuMonthly / 30),
+    hourlyCredits: Math.ceil(UNIFIED_TIERS.MASTER.mcuMonthly / 30 / 5),
     dailyRequests: 50000,
-    monthlyCredits: 200000,
+    monthlyCredits: UNIFIED_TIERS.MASTER.mcuMonthly,
   },
 };
 
