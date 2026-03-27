@@ -166,16 +166,24 @@
         "cta": "Get Lifetime Access"
       },
       "features": {
+        "group_video": "Video Factory",
+        "group_raas": "AI Automation",
         "templates_5": "5 Video Templates",
+        "campaigns_10": "10 campaigns/month",
+        "youtube_1": "1 YouTube channel",
         "auto_discovery": "Auto-Discovery Engine",
         "basic_analytics": "Basic Analytics Dashboard",
         "email_support": "Email Support (48h response)",
         "unlimited_templates": "Unlimited Templates",
+        "campaigns_50": "50 campaigns/month",
+        "youtube_3": "3 YouTube channels",
         "advanced_analytics": "Advanced Analytics & Reports",
         "roi_calculator": "ROI Calculator",
         "priority_support": "Priority Support (24h response)",
         "custom_brand": "Custom Brand Setup",
         "custom_templates": "Custom Templates",
+        "campaigns_unlimited": "Unlimited campaigns",
+        "youtube_unlimited": "Unlimited YouTube channels",
         "white_label": "White-label Setup",
         "founder_access": "Direct Founder Access",
         "api_access": "API Access",
@@ -188,19 +196,19 @@
         "strategy_review": "Monthly Strategy Review",
         "white_label_license": "Full White-label License",
         "early_access": "Early Access to Beta Features",
-        "mcu_1000": "1,000 AI Credits/month",
-        "mcu_5000": "5,000 AI Credits/month",
-        "mcu_20000": "20,000 AI Credits/month",
-        "mcu_100000": "100,000 AI Credits/month",
-        "ai_commands_5": "5 AI Commands/month",
-        "ai_commands_15": "15 AI Commands/month",
-        "ai_commands_15_custom": "15 AI Commands + Custom",
-        "ai_commands_unlimited": "Unlimited AI Commands",
-        "team_members_1": "1 Team Member",
-        "team_members_5": "Up to 5 Team Members",
-        "team_members_unlimited": "Unlimited Team Members",
-        "api_webhooks": "API Access + Webhooks",
-        "custom_integrations": "Custom Integrations"
+        "mcu_1000": "1,000 MCU credits/month",
+        "mcu_5000": "5,000 MCU credits/month",
+        "mcu_20000": "20,000 MCU credits/month",
+        "mcu_100000": "100,000 MCU credits/month",
+        "ai_commands_5": "5 AI commands/month",
+        "ai_commands_15": "15 AI commands/month",
+        "ai_commands_15_custom": "15 AI commands + custom",
+        "ai_commands_unlimited": "Unlimited AI commands",
+        "team_members_1": "1 team member",
+        "team_members_5": "Up to 5 team members",
+        "team_members_unlimited": "Unlimited team members",
+        "api_webhooks": "API access + webhooks",
+        "custom_integrations": "Custom integrations"
       },
       "tiers": {
         "starter": {
@@ -590,7 +598,17 @@
     "nav_dashboard": "Dashboard",
     "combined_badge": "Video Factory + AI Automation",
     "combined_title": "Video Factory + AI Automation — One Platform",
-    "combined_subtitle": "Everything you need to automate content creation and business workflows"
+    "combined_subtitle": "Everything you need to automate content creation and business workflows",
+    "coupon": {
+      "label": "Have a coupon code?",
+      "placeholder": "ENTER CODE",
+      "apply": "Apply",
+      "applying": "Applying...",
+      "clear": "Remove",
+      "applied": "'{code}' applied — {pct}% off!",
+      "invalid": "Invalid or expired coupon code.",
+      "network_error": "Could not reach coupon service. Please try again."
+    }
   },
   "campaign": {
     "template_selection": {

@@ -5,12 +5,31 @@ import { useTranslations, useLocale } from "next-intl";
 import { FadeInView } from "@/components/ui/fade-in-view";
 import { PricingCard, formatPrice } from "./pricing-card";
 import { usePricingData } from "./pricing-data";
+import { CouponInput } from "./coupon-input";
+
+interface TierDiscount {
+  tier: string;
+  discountPercent: number;
+  originalPrice: number;
+  finalPrice: number;
+}
 
 export function PricingSection() {
   const [loading, setLoading] = useState<string | null>(null);
+  const [discounts, setDiscounts] = useState<Map<string, TierDiscount>>(new Map());
   const t = useTranslations("landing");
   const locale = useLocale();
   const { PRICING_TIERS, MASTER_TIER } = usePricingData();
+
+  const allTiers = [...PRICING_TIERS.map((p) => p.tier), MASTER_TIER.tier];
+
+  const handleDiscountApplied = (applied: TierDiscount[]) => {
+    const map = new Map<string, TierDiscount>();
+    applied.forEach((d) => map.set(d.tier, d));
+    setDiscounts(map);
+  };
+
+  const handleDiscountCleared = () => setDiscounts(new Map());
 
   const handleSelectTier = async (tier: string) => {
     setLoading(tier);
@@ -46,22 +65,36 @@ export function PricingSection() {
             {t("pricing.subtitle")}
           </p>
         </div>
-        <div className="mt-12 grid gap-8 md:grid-cols-3">
-          {PRICING_TIERS.map((pricing) => (
-            <PricingCard
-              key={pricing.tier}
-              name={pricing.name}
-              description={pricing.description}
-              tier={pricing.tier}
-              monthlyPrice={pricing.monthlyPrice}
-              features={pricing.features}
-              popular={pricing.popular}
-              onSelect={handleSelectTier}
-              loading={loading === pricing.tier}
-              locale={locale}
-              selected={loading === pricing.tier}
-            />
-          ))}
+
+        {/* Coupon input */}
+        <div className="mt-8">
+          <CouponInput
+            tiers={allTiers}
+            onDiscountApplied={handleDiscountApplied}
+            onDiscountCleared={handleDiscountCleared}
+          />
+        </div>
+
+        <div className="mt-4 grid gap-8 md:grid-cols-3">
+          {PRICING_TIERS.map((pricing) => {
+            const discount = discounts.get(pricing.tier);
+            return (
+              <PricingCard
+                key={pricing.tier}
+                name={pricing.name}
+                description={pricing.description}
+                tier={pricing.tier}
+                monthlyPrice={pricing.monthlyPrice}
+                featureGroups={pricing.featureGroups}
+                popular={pricing.popular}
+                onSelect={handleSelectTier}
+                loading={loading === pricing.tier}
+                locale={locale}
+                selected={loading === pricing.tier}
+                discountedPriceCents={discount ? Math.round(discount.finalPrice * 100) : undefined}
+              />
+            );
+          })}
         </div>
 
         <FadeInView className="mt-16 relative" duration={500}>
@@ -79,9 +112,20 @@ export function PricingSection() {
                 </p>
                 <div className="mt-6">
                   <div className="flex items-baseline gap-2">
-                    <span className="text-4xl font-bold text-foreground">
-                      {formatPrice(MASTER_TIER.price, locale)}
-                    </span>
+                    {discounts.has(MASTER_TIER.tier) ? (
+                      <>
+                        <span className="text-4xl font-bold text-emerald-400">
+                          {formatPrice(Math.round((discounts.get(MASTER_TIER.tier)?.finalPrice ?? 0) * 100), locale)}
+                        </span>
+                        <span className="text-2xl line-through text-muted-foreground/60">
+                          {formatPrice(MASTER_TIER.price, locale)}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-4xl font-bold text-foreground">
+                        {formatPrice(MASTER_TIER.price, locale)}
+                      </span>
+                    )}
                     <span className="text-muted-foreground">{t("pricing.master.one_time")}</span>
                   </div>
                   <p className="mt-2 text-sm text-muted-foreground">
