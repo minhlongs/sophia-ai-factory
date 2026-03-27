@@ -110,12 +110,18 @@ export const GET = withRateLimit(async function GET(req: NextRequest) {
   }
 
   // Return limited info if not authorized
-  if (!isAuthorized && healthStatus.status !== 'healthy') {
-      // Obscure details for public
-      return NextResponse.json({
+  if (!isAuthorized) {
+      const publicResponse: Record<string, unknown> = {
           status: healthStatus.status,
-          timestamp: healthStatus.timestamp
-      }, {
+          timestamp: healthStatus.timestamp,
+      };
+      // Show basic service status even publicly (no error details)
+      if (healthStatus.status !== 'healthy') {
+          publicResponse.hint = healthStatus.status === 'degraded'
+              ? 'Optional services (Redis/Inngest) not configured — core features operational'
+              : 'Service disruption detected';
+      }
+      return NextResponse.json(publicResponse, {
         status: healthStatus.status === 'unhealthy' ? 503 : 200,
       });
   }

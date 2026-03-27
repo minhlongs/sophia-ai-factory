@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: apps/sophia-proposal
+        working-directory: apps/sophia-ai-factory
 
     steps:
       - uses: actions/checkout@v4
