@@ -40,8 +40,8 @@ export function RaaSShowcase() {
   return (
     <section id="raas" className="py-20 md:py-32 relative overflow-hidden">
       {/* Background glow — violet theme to distinguish from features section */}
-      <div className="absolute top-1/2 left-1/4 w-[600px] h-[600px] bg-violet-600 opacity-8 blur-[140px] rounded-full -z-10" />
-      <div className="absolute bottom-0 right-1/3 w-[400px] h-[400px] bg-cyan-500 opacity-8 blur-[100px] rounded-full -z-10" />
+      <div className="absolute top-1/2 left-1/4 w-[600px] h-[600px] bg-violet-600 opacity-[0.08] blur-[140px] rounded-full -z-10" />
+      <div className="absolute bottom-0 right-1/3 w-[400px] h-[400px] bg-cyan-500 opacity-[0.08] blur-[100px] rounded-full -z-10" />
       {/* Top border accent */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500/40 to-transparent" />
 
