@@ -181,7 +181,7 @@ export function SocialProof() {
                   <div className="flex gap-0.5">
                     {[...Array(t.rating)].map((_, j) => (
                       <span
-                        key={j}
+                        key={`star-${t.name}-${j}`}
                         className="material-symbols-outlined text-base text-amber-400"
                         aria-hidden="true"
                       >

@@ -87,6 +87,11 @@ export default async function RootLayout({
   return (
     <html lang={locale} className="dark">
       <head>
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
+        />
         <link rel="preconnect" href="https://api.nowpayments.io" />
         <link rel="dns-prefetch" href="https://api.nowpayments.io" />
       </head>

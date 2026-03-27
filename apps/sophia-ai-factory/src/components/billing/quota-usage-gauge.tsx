@@ -95,7 +95,7 @@ export function QuotaUsageGauge({
         <CardTitle className="flex items-center justify-between">
           <span>Quota Usage</span>
           {overageAllowed && (
-            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+            <span className="text-xs bg-blue-900/30 text-blue-300 px-2 py-1 rounded">
               Overage Billing Enabled
             </span>
           )}

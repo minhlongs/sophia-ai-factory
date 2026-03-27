@@ -17,6 +17,7 @@ export const cspConfig = {
   styleSrc: [
     "'self'",
     "'unsafe-inline'", // Tailwind CSS requires this
+    'https://fonts.googleapis.com',
   ],
 
   // Images: self + HTTPS + data URIs
@@ -31,6 +32,7 @@ export const cspConfig = {
   fontSrc: [
     "'self'",
     'data:',
+    'https://fonts.gstatic.com',
   ],
 
   // API connections: restricted to known domains
