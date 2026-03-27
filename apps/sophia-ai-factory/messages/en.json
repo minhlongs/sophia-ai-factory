@@ -1,6 +1,7 @@
 {
   "landing": {
     "nav": {
+      "raas": "AI Automation",
       "features": "Features",
       "pricing": "Pricing",
       "guide": "Guide",
@@ -11,9 +12,9 @@
       "brand": "Sophia AI Factory"
     },
     "hero": {
-      "title_1": "AI Video Factory",
-      "title_2": "Turn Content into Empire",
-      "subtitle": "Automated. Scalable. Profitable.",
+      "title_1": "Video Factory + AI Automation",
+      "title_2": "One Platform — Infinite Scale",
+      "subtitle": "Create videos, generate leads, send campaigns — all automated with AI.",
       "cta_start": "Start Free",
       "cta_demo": "Learn More",
       "stats": {

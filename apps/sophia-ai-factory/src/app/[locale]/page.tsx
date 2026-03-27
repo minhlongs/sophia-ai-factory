@@ -83,9 +83,9 @@ export default function Home() {
   return (
     <main id="main-content">
       <Hero />
+      <RaaSShowcase />
       <Workflow />
       <Features />
-      <RaaSShowcase />
       <RaasDemoTerminal />
       <SocialProof />
       <PricingSection />
