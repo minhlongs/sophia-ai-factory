@@ -1,157 +1,222 @@
 "use client";
 
-import { useTranslations } from "next-intl";
-import { Container } from "@/components/ui/container";
-import { SectionHeading } from "@/components/ui/section-heading";
-import { Card, CardContent } from "@/components/ui/card";
-import { FadeInView } from "@/components/ui/fade-in-view";
-import { useRef, useEffect, useState } from "react";
-import { Star, Shield, Award } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
-/** Animated counter using native IntersectionObserver (replaces framer-motion useInView) */
-function AnimatedNumber({ target, suffix = "" }: { target: number; suffix?: string }) {
-  const ref = useRef<HTMLSpanElement>(null);
+interface StatItem {
+  value: number;
+  prefix?: string;
+  suffix?: string;
+  label: string;
+  icon: string;
+}
+
+const stats: StatItem[] = [
+  { value: 500, suffix: "+", label: "Missions Hoàn Thành", icon: "rocket_launch" },
+  { value: 50, suffix: "+", label: "Agency Tin Dùng", icon: "groups" },
+  { value: 99.9, suffix: "%", label: "Uptime", icon: "check_circle" },
+  { value: 2, prefix: "< ", suffix: "s", label: "Thời Gian Phản Hồi", icon: "speed" },
+];
+
+const testimonials = [
+  {
+    initials: "MT",
+    name: "Minh Tuấn",
+    company: "Apex Digital Agency VN",
+    quote: "Sophia giảm thời gian làm video từ 3 ngày xuống còn 30 phút. Tỉ lệ chốt khách hàng tăng 40% ngay quý đầu.",
+    rating: 5,
+  },
+  {
+    initials: "HN",
+    name: "Hương Nguyễn",
+    company: "BrightWave Studios",
+    quote: "Tích hợp API cực kỳ mượt. Chúng tôi kết nối Sophia thẳng vào CRM và mọi điểm tiếp xúc khách hàng đều tự động hóa.",
+    rating: 5,
+  },
+  {
+    initials: "TL",
+    name: "Thành Lê",
+    company: "NorthBridge Consulting",
+    quote: "Scale từ 5 lên 50 khách hàng mà không cần thêm nhân sự. Sophia xử lý hoàn toàn layer nội dung và video.",
+    rating: 5,
+  },
+];
+
+function AnimatedCounter({
+  value,
+  prefix = "",
+  suffix = "",
+}: {
+  value: number;
+  prefix?: string;
+  suffix?: string;
+}) {
   const [count, setCount] = useState(0);
+  const ref = useRef<HTMLSpanElement>(null);
   const hasAnimated = useRef(false);
 
   useEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-
+    const el = ref.current;
+    if (!el) return;
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting && !hasAnimated.current) {
           hasAnimated.current = true;
-          let start = 0;
-          const step = Math.ceil(target / 40);
-          const timer = setInterval(() => {
-            start += step;
-            if (start >= target) {
-              setCount(target);
-              clearInterval(timer);
-            } else {
-              setCount(start);
-            }
-          }, 30);
+          const duration = 1500;
+          const start = performance.now();
+          const isDecimal = value % 1 !== 0;
+          function tick(now: number) {
+            const progress = Math.min((now - start) / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            setCount(
+              isDecimal
+                ? parseFloat((value * eased).toFixed(1))
+                : Math.floor(value * eased)
+            );
+            if (progress < 1) requestAnimationFrame(tick);
+          }
+          requestAnimationFrame(tick);
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.3 }
     );
-
-    observer.observe(element);
+    observer.observe(el);
     return () => observer.disconnect();
-  }, [target]);
+  }, [value]);
 
   return (
-    <span ref={ref} className="tabular-nums">
-      {count.toLocaleString()}{suffix}
+    <span ref={ref}>
+      {prefix}
+      {count}
+      {suffix}
     </span>
   );
 }
 
-const TRUST_BADGES = [
-  { icon: Shield, key: "secure" },
-  { icon: Star, key: "rated" },
-  { icon: Award, key: "certified" },
-] as const;
-
 export function SocialProof() {
-  const t = useTranslations("landing.social_proof");
-
-  const testimonials = [
-    { key: "creator_1", avatar: "MC" },
-    { key: "creator_2", avatar: "TN" },
-    { key: "creator_3", avatar: "SA" },
-  ] as const;
-
-  const stats = [
-    { value: 1000, suffix: "+", labelKey: "stats.creators" },
-    { value: 50, suffix: "+", labelKey: "stats.ai_tools" },
-    { value: 10000, suffix: "+", labelKey: "stats.videos" },
-    { value: 500, suffix: "+", labelKey: "stats.proposals" },
-  ] as const;
-
   return (
-    <section className="py-20 md:py-32 relative overflow-hidden">
-      {/* Background glow */}
-      <div className="absolute top-1/2 left-1/3 w-[600px] h-[600px] bg-[var(--neon-cyan)] opacity-5 blur-[150px] rounded-full -z-10" />
-      <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-[var(--neon-purple)] opacity-5 blur-[120px] rounded-full -z-10" />
+    <section className="py-28 relative overflow-hidden">
+      {/* Background glows */}
+      <div
+        className="absolute top-1/2 left-1/3 w-[600px] h-[600px] rounded-full blur-[150px] -z-10"
+        style={{ background: "var(--neon-cyan)", opacity: 0.04 }}
+      />
+      <div
+        className="absolute bottom-0 right-1/4 w-[400px] h-[400px] rounded-full blur-[120px] -z-10"
+        style={{ background: "var(--neon-purple)", opacity: 0.05 }}
+      />
 
-      <Container>
-        <SectionHeading
-          title={t("title")}
-          subtitle={t("subtitle")}
-        />
-
-        {/* Stats Counter */}
-        <FadeInView duration={500}>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-3xl mx-auto mb-16">
-            {stats.map((stat) => (
-              <div key={stat.labelKey} className="text-center">
-                <div className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] bg-clip-text text-transparent">
-                  <AnimatedNumber target={stat.value} suffix={stat.suffix} />
+      <div className="container mx-auto px-4">
+        {/* Stats bar */}
+        <ScrollReveal>
+          <div
+            className="rounded-3xl p-10 md:p-12 mb-24 relative overflow-hidden"
+            style={{
+              background: "linear-gradient(135deg, #060d16 0%, #0f172a 100%)",
+            }}
+          >
+            {/* Subtle orb */}
+            <div
+              className="absolute top-0 right-0 w-64 h-64 rounded-full blur-[100px] pointer-events-none"
+              style={{ background: "var(--neon-cyan)", opacity: 0.07 }}
+              aria-hidden="true"
+            />
+            <div className="relative grid grid-cols-2 md:grid-cols-4 gap-8 stagger-reveal">
+              {stats.map((stat) => (
+                <div key={stat.label} className="text-center">
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-3"
+                    style={{ background: "rgba(255,255,255,0.06)" }}
+                  >
+                    <span
+                      className="material-symbols-outlined text-lg"
+                      style={{ color: "var(--neon-cyan)", opacity: 0.7 }}
+                    >
+                      {stat.icon}
+                    </span>
+                  </div>
+                  <p className="text-3xl md:text-4xl font-extrabold mb-1 tracking-tight text-foreground">
+                    <AnimatedCounter
+                      value={stat.value}
+                      prefix={stat.prefix}
+                      suffix={stat.suffix}
+                    />
+                  </p>
+                  <p className="text-muted-foreground text-sm font-medium">{stat.label}</p>
                 </div>
-                <div className="text-sm text-muted-foreground mt-2">
-                  {t(stat.labelKey)}
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </FadeInView>
+        </ScrollReveal>
+
+        {/* Section heading */}
+        <ScrollReveal className="text-center mb-14">
+          <span
+            className="inline-flex items-center gap-2 px-4 py-1.5 mb-5 text-xs font-semibold uppercase tracking-wider rounded-full border"
+            style={{
+              color: "var(--neon-cyan)",
+              background: "rgba(0,240,255,0.05)",
+              borderColor: "rgba(0,240,255,0.1)",
+            }}
+          >
+            <span className="material-symbols-outlined text-sm">format_quote</span>
+            Đánh Giá Khách Hàng
+          </span>
+          <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-5 tracking-tight">
+            Được Tin Dùng Bởi{" "}
+            <span className="text-gradient">Các Agency Hàng Đầu</span>
+          </h2>
+          <p className="text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed">
+            Kết quả thực tế từ các team đã chuyển sang dùng Sophia AI Factory
+          </p>
+        </ScrollReveal>
 
         {/* Testimonials */}
-        <div className="grid md:grid-cols-3 gap-6 mb-16">
-          {testimonials.map((item, index) => (
-            <FadeInView
-              key={item.key}
-              delay={index * 150}
-              duration={500}
-            >
-              <Card glass className="h-full">
-                <CardContent className="pt-6">
+        <div className="grid md:grid-cols-3 gap-5 max-w-5xl mx-auto">
+          {testimonials.map((t, i) => (
+            <ScrollReveal key={t.name} delay={i * 100}>
+              <div className="gradient-border h-full cursor-pointer group">
+                <div className="p-6 rounded-[16px] bg-card h-full flex flex-col gap-4">
                   {/* Stars */}
-                  <div className="flex gap-1 mb-4" aria-label="5 out of 5 stars" role="img">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" aria-hidden="true" />
+                  <div className="flex gap-0.5">
+                    {[...Array(t.rating)].map((_, j) => (
+                      <span
+                        key={j}
+                        className="material-symbols-outlined text-base text-amber-400"
+                        aria-hidden="true"
+                      >
+                        star
+                      </span>
                     ))}
                   </div>
-                  <blockquote className="text-muted-foreground mb-4 italic">
-                    &ldquo;{t(`testimonials.${item.key}.quote`)}&rdquo;
-                  </blockquote>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--neon-cyan)] to-[var(--neon-purple)] flex items-center justify-center text-white text-sm font-bold">
-                      {item.avatar}
+                  {/* Quote */}
+                  <p className="text-muted-foreground leading-relaxed text-sm flex-1">
+                    &ldquo;{t.quote}&rdquo;
+                  </p>
+                  {/* Author */}
+                  <div
+                    className="flex items-center gap-3 pt-3 border-t"
+                    style={{ borderColor: "rgba(255,255,255,0.06)" }}
+                  >
+                    <div
+                      className="w-10 h-10 rounded-full text-white text-sm font-bold flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300"
+                      style={{
+                        background: "linear-gradient(135deg, var(--neon-cyan), var(--neon-purple))",
+                      }}
+                    >
+                      {t.initials}
                     </div>
                     <div>
-                      <div className="font-semibold text-foreground text-sm">
-                        {t(`testimonials.${item.key}.name`)}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {t(`testimonials.${item.key}.role`)}
-                      </div>
+                      <p className="text-foreground font-semibold text-sm">{t.name}</p>
+                      <p className="text-muted-foreground text-xs">{t.company}</p>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            </FadeInView>
+                </div>
+              </div>
+            </ScrollReveal>
           ))}
         </div>
-
-        {/* Trust Badges */}
-        <FadeInView delay={300} direction="none">
-          <div className="flex flex-wrap justify-center gap-6 md:gap-10">
-            {TRUST_BADGES.map((badge) => {
-              const Icon = badge.icon;
-              return (
-                <div key={badge.key} className="flex items-center gap-2 text-muted-foreground">
-                  <Icon className="w-5 h-5 text-[var(--neon-cyan)]" />
-                  <span className="text-sm font-medium">{t(`badges.${badge.key}`)}</span>
-                </div>
-              );
-            })}
-          </div>
-        </FadeInView>
-      </Container>
+      </div>
     </section>
   );
 }

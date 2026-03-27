@@ -1,102 +1,179 @@
 "use client";
 
-import { useTranslations } from "next-intl";
-import { Button } from "@/components/ui/button";
-import { Container } from "@/components/ui/container";
-import { FadeInView } from "@/components/ui/fade-in-view";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { TerminalPreview } from "@/app/components/ui/terminal-preview";
+
+const rotatingCommands = [
+  "video:create",
+  "content:write",
+  "lead:generate",
+  "campaign:launch",
+  "subtitle:generate",
+];
+
+function TypingRotator() {
+  const [index, setIndex] = useState(0);
+  const [displayed, setDisplayed] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    const word = rotatingCommands[index];
+    const speed = isDeleting ? 40 : 70;
+
+    if (!isDeleting && displayed === word) {
+      const pause = setTimeout(() => setIsDeleting(true), 2000);
+      return () => clearTimeout(pause);
+    }
+    if (isDeleting && displayed === "") {
+      setIsDeleting(false);
+      setIndex((i) => (i + 1) % rotatingCommands.length);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setDisplayed(
+        isDeleting
+          ? word.slice(0, displayed.length - 1)
+          : word.slice(0, displayed.length + 1)
+      );
+    }, speed);
+    return () => clearTimeout(timer);
+  }, [displayed, isDeleting, index]);
+
+  return (
+    <span className="font-mono" style={{ color: "var(--neon-cyan)" }}>
+      {displayed}
+      <span className="animate-blink" style={{ color: "var(--neon-cyan)", opacity: 0.7 }}>|</span>
+    </span>
+  );
+}
 
 export function Hero() {
-  const t = useTranslations('landing');
   return (
-    <section className="relative min-h-screen flex items-center overflow-hidden pt-16">
-      {/* Background Effects */}
-      <div className="absolute inset-0 -z-10">
-        {/* Radial gradient glow */}
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[var(--neon-cyan)] opacity-20 blur-[120px] rounded-full" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[var(--neon-purple)] opacity-20 blur-[120px] rounded-full" />
-
-        {/* Grid pattern */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:100px_100px]" />
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background pt-16">
+      {/* Animated gradient orbs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+        <div
+          className="absolute top-1/4 left-1/5 w-[500px] h-[500px] rounded-full blur-[120px] animate-float"
+          style={{ background: "var(--neon-cyan)", opacity: 0.07 }}
+        />
+        <div
+          className="absolute bottom-1/4 right-1/5 w-[400px] h-[400px] rounded-full blur-[100px] animate-float-delayed"
+          style={{ background: "var(--neon-purple)", opacity: 0.08 }}
+        />
+        <div
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full blur-[150px] animate-drift"
+          style={{ background: "var(--neon-cyan)", opacity: 0.04 }}
+        />
       </div>
 
-      <Container size="lg">
-        <div className="max-w-4xl mx-auto text-center">
-          {/* Main Headline */}
-          <FadeInView duration={600}>
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-tight">
-              <span className="bg-gradient-to-r from-[var(--neon-cyan)] via-white to-[var(--neon-purple)] bg-clip-text text-transparent animate-gradient">
-                {t('hero.title_1')}
-              </span>
-              <br />
-              <span className="text-foreground">
-                {t('hero.title_2')}
-              </span>
-            </h1>
-          </FadeInView>
+      {/* Dot grid overlay */}
+      <div
+        className="absolute inset-0 opacity-[0.04]"
+        aria-hidden="true"
+        style={{
+          backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.4) 1px, transparent 1px)",
+          backgroundSize: "32px 32px",
+        }}
+      />
+
+      <div className="relative container mx-auto px-4 pt-12 pb-20 text-center">
+        <div className="max-w-4xl mx-auto">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 px-5 py-2 mb-10 text-sm font-medium rounded-full border backdrop-blur-sm animate-fade-in-up"
+            style={{
+              background: "rgba(255,255,255,0.04)",
+              borderColor: "rgba(0,240,255,0.15)",
+              color: "var(--neon-cyan)",
+            }}
+          >
+            <span className="w-2 h-2 rounded-full bg-green-400 animate-glow-pulse" />
+            Video Factory + AI Automation
+          </div>
+
+          {/* Headline */}
+          <h1
+            className="text-5xl md:text-6xl lg:text-[4.5rem] font-extrabold mb-4 tracking-tight leading-[1.08] animate-fade-in-up text-foreground"
+            style={{ animationDelay: "0.1s" }}
+          >
+            Tự Động Hóa Nội Dung
+            <span className="block text-gradient mt-1">Một Nền Tảng</span>
+          </h1>
+
+          {/* Dynamic command display */}
+          <div className="mb-8 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
+            <span className="text-muted-foreground text-lg">Chạy </span>
+            <TypingRotator />
+            <span className="text-muted-foreground text-lg"> trong vài giây</span>
+          </div>
 
           {/* Subtitle */}
-          <FadeInView delay={200} duration={600}>
-            <p className="text-lg md:text-2xl text-muted-foreground mb-12 max-w-2xl mx-auto px-4">
-              {t('hero.subtitle')}
-            </p>
-          </FadeInView>
+          <p
+            className="text-base md:text-lg text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed animate-fade-in-up"
+            style={{ animationDelay: "0.3s" }}
+          >
+            Tạo video AI, tìm kiếm lead, gửi chiến dịch — tất cả tự động hóa.
+            Triển khai AI missions qua API với giá minh bạch theo MCU credits.
+          </p>
 
-          {/* CTA Buttons */}
-          <FadeInView delay={400} duration={600}>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center px-4">
-              <Link href="/dashboard">
-                <Button variant="glow" size="lg" className="w-full sm:w-auto min-w-[200px] glow-primary">
-                  {t('hero.cta_start')}
-                </Button>
-              </Link>
-              <Button
-                variant="secondary"
-                size="lg"
-                className="w-full sm:w-auto min-w-[200px]"
-                onClick={(e) => {
-                  e.preventDefault();
-                  document.getElementById("features")?.scrollIntoView({ behavior: "smooth", block: "start" });
-                }}
-              >
-                {t('hero.cta_demo')}
+          {/* CTAs */}
+          <div
+            className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up"
+            style={{ animationDelay: "0.4s" }}
+          >
+            <Link href="/dashboard">
+              <Button variant="glow" size="lg" className="glow-primary rounded-full px-8 text-base w-full sm:w-auto">
+                Bắt Đầu Miễn Phí
               </Button>
-            </div>
-          </FadeInView>
+            </Link>
+            <Button
+              variant="outline"
+              size="lg"
+              className="rounded-full px-8 text-base w-full sm:w-auto"
+              onClick={() => {
+                document.getElementById("features")?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+            >
+              Tìm Hiểu Thêm
+            </Button>
+          </div>
 
-          {/* Stats */}
-          <FadeInView delay={600} duration={600}>
-            <dl className="mt-20 grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-2xl mx-auto px-4" aria-label="Platform Statistics">
-              <div className="text-center">
-                <dt className="sr-only">Number of AI tools available</dt>
-                <dd className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] bg-clip-text text-transparent">
-                  50+
-                </dd>
-                <dt className="text-sm text-muted-foreground mt-2">{t('hero.stats.tools')}</dt>
-              </div>
-              <div className="text-center">
-                <dt className="sr-only">Videos generated</dt>
-                <dd className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] bg-clip-text text-transparent">
-                  10K+
-                </dd>
-                <dt className="text-sm text-muted-foreground mt-2">{t('hero.stats.videos')}</dt>
-              </div>
-              <div className="text-center">
-                <dt className="sr-only">Automation availability</dt>
-                <dd className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] bg-clip-text text-transparent">
-                  24/7
-                </dd>
-                <dt className="text-sm text-muted-foreground mt-2">{t('hero.stats.automation')}</dt>
-              </div>
-            </dl>
-          </FadeInView>
+          {/* Terminal preview */}
+          <div className="animate-fade-in-up" style={{ animationDelay: "0.5s" }}>
+            <TerminalPreview />
+          </div>
+
+          {/* Trust indicators */}
+          <div
+            className="mt-14 flex flex-wrap items-center justify-center gap-x-10 gap-y-4 text-sm animate-fade-in-up"
+            style={{ animationDelay: "0.6s", color: "rgba(148,163,184,0.5)" }}
+          >
+            <span className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-green-400/60" />
+              99.9% Uptime SLA
+            </span>
+            <span className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full" style={{ background: "var(--neon-cyan)", opacity: 0.7 }} />
+              Phản Hồi Dưới 2 Giây
+            </span>
+            <span className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-amber-400/60" />
+              Bảo Mật Doanh Nghiệp
+            </span>
+            <span className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full" style={{ background: "var(--neon-purple)", opacity: 0.8 }} />
+              250+ Edge Nodes
+            </span>
+          </div>
         </div>
-      </Container>
+      </div>
 
-      {/* Scroll Indicator — CSS animation instead of framer-motion */}
+      {/* Scroll indicator */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce-slow" aria-hidden="true">
-        <div className="w-6 h-10 border-2 border-primary/20 rounded-full flex items-start justify-center p-2">
-          <div className="w-1 h-3 bg-primary/40 rounded-full" />
+        <div className="w-6 h-10 border-2 rounded-full flex items-start justify-center p-2" style={{ borderColor: "rgba(0,240,255,0.2)" }}>
+          <div className="w-1 h-3 rounded-full" style={{ background: "rgba(0,240,255,0.4)" }} />
         </div>
       </div>
     </section>

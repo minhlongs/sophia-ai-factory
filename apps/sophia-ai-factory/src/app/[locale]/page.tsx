@@ -2,6 +2,7 @@ import dynamic from "next/dynamic";
 import { Hero } from "@/app/components/sections/hero";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
+import { StickyMobileCta } from "@/app/components/layout/sticky-mobile-cta";
 
 function SectionSkeleton({ height = "h-96" }: { height?: string }) {
   return (
@@ -75,6 +76,10 @@ const FAQ = dynamic(
   () => import("@/app/components/sections/faq").then(m => ({ default: m.FAQ })),
   { loading: () => <SectionSkeleton height="h-64" /> }
 );
+const CtaSection = dynamic(
+  () => import("@/app/components/sections/cta-section").then(m => ({ default: m.CtaSection })),
+  { loading: () => <SectionSkeleton height="h-64" /> }
+);
 const Footer = dynamic(
   () => import("@/app/components/layout/footer").then(m => ({ default: m.Footer })),
   { loading: () => <Skeleton className="h-48 w-full" /> }
@@ -112,7 +117,11 @@ export default function Home() {
       <ScrollReveal delay={0}>
         <FAQ />
       </ScrollReveal>
+      <ScrollReveal delay={0}>
+        <CtaSection />
+      </ScrollReveal>
       <Footer />
+      <StickyMobileCta />
     </main>
   );
 }
