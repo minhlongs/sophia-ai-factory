@@ -1,6 +1,7 @@
 {
   "landing": {
     "nav": {
+      "raas": "AI Automation",
       "features": "Tính Năng",
       "pricing": "Bảng Giá",
       "guide": "Hướng Dẫn",
@@ -11,9 +12,9 @@
       "brand": "Sophia AI Factory"
     },
     "hero": {
-      "title_1": "Nhà Máy Video AI",
-      "title_2": "Biến Nội Dung Thành Đế Chế",
-      "subtitle": "Tự Động. Mở Rộng. Sinh Lời.",
+      "title_1": "Video Factory + AI Automation",
+      "title_2": "Một Nền Tảng — Vô Hạn Quy Mô",
+      "subtitle": "Tạo video, tìm lead, gửi chiến dịch — tất cả tự động hóa bằng AI.",
       "cta_start": "Bắt Đầu Miễn Phí",
       "cta_demo": "Tìm Hiểu Thêm",
       "stats": {
@@ -598,7 +599,17 @@
     "nav_dashboard": "Bảng Điều Khiển",
     "combined_badge": "Video Factory + Tự Động Hoá AI",
     "combined_title": "Video Factory + Tự Động Hoá AI — Một Nền Tảng",
-    "combined_subtitle": "Tất cả công cụ bạn cần để tự động hoá sản xuất nội dung và quy trình kinh doanh"
+    "combined_subtitle": "Tất cả công cụ bạn cần để tự động hoá sản xuất nội dung và quy trình kinh doanh",
+    "coupon": {
+      "label": "Bạn có mã giảm giá?",
+      "placeholder": "NHẬP MÃ",
+      "apply": "Áp dụng",
+      "applying": "Đang áp dụng...",
+      "clear": "Xoá",
+      "applied": "Đã áp dụng '{code}' — giảm {pct}%!",
+      "invalid": "Mã giảm giá không hợp lệ hoặc đã hết hạn.",
+      "network_error": "Không thể kết nối dịch vụ. Vui lòng thử lại."
+    }
   },
   "campaign": {
     "template_selection": {

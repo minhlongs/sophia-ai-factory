@@ -40,24 +40,26 @@ export function RaaSShowcase() {
   return (
     <section id="raas" className="py-20 md:py-32 relative overflow-hidden">
       {/* Background glow — violet theme to distinguish from features section */}
-      <div className="absolute top-1/2 left-1/4 w-[600px] h-[600px] bg-violet-600 opacity-5 blur-[160px] rounded-full -z-10" />
-      <div className="absolute bottom-0 right-1/3 w-[400px] h-[400px] bg-cyan-500 opacity-5 blur-[120px] rounded-full -z-10" />
+      <div className="absolute top-1/2 left-1/4 w-[600px] h-[600px] bg-violet-600 opacity-8 blur-[140px] rounded-full -z-10" />
+      <div className="absolute bottom-0 right-1/3 w-[400px] h-[400px] bg-cyan-500 opacity-8 blur-[100px] rounded-full -z-10" />
+      {/* Top border accent */}
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500/40 to-transparent" />
 
       <Container>
-        <SectionHeading
-          title={t("title")}
-          subtitle={t("subtitle")}
-        />
-
-        {/* Badge */}
+        {/* Badge — shown FIRST to signal this is a distinct product */}
         <FadeInView duration={400}>
-          <div className="flex justify-center mb-12">
+          <div className="flex justify-center mb-8">
             <span className="inline-flex items-center gap-2 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-violet-400 bg-violet-500/10 rounded-full border border-violet-500/20">
               <Zap className="w-3.5 h-3.5" aria-hidden="true" />
               {t("badge")}
             </span>
           </div>
         </FadeInView>
+
+        <SectionHeading
+          title={t("title")}
+          subtitle={t("subtitle")}
+        />
 
         {/* Feature cards grid */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">

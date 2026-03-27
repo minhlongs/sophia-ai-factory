@@ -19,6 +19,7 @@ export function Navbar() {
   const isHomePage = cleanPath === '/';
 
   const navLinks = [
+    { label: t('nav.raas'), href: isHomePage ? "/#raas" : "/guide/commands" },
     { label: t('nav.features'), href: isHomePage ? "/#features" : "/pricing" },
     { label: t('nav.pricing'), href: "/pricing" },
     { label: t('nav.guide'), href: "/guide" },
