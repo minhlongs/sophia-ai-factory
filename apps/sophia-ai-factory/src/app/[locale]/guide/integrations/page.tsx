@@ -151,7 +151,7 @@ export default function IntegrationsGuidePage() {
           </div>
         </div>
 
-        <YouTubeEmbed videoId="wICY3ZV15QA" title="HeyGen Academy: 101 - Introduction (Part 1)" />
+        <YouTubeEmbed videoId="hYx2RBeBXMc" title="Hướng dẫn thiết lập HeyGen API Key" />
 
         <div className="space-y-3">
           <GuideStepCard step={1} title="Truy cập heygen.com" description='Vào heygen.com và nhấn "Start Free Trial".' />
