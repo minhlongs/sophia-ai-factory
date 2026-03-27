@@ -1,4 +1,18 @@
-import ReactMarkdown from "react-markdown";
+"use client";
+
+import dynamic from "next/dynamic";
+
+const ReactMarkdown = dynamic(() => import("react-markdown"), {
+  ssr: false,
+  loading: () => (
+    <div className="space-y-4 animate-pulse">
+      <div className="h-8 bg-muted/30 rounded w-3/4" />
+      <div className="h-4 bg-muted/20 rounded w-full" />
+      <div className="h-4 bg-muted/20 rounded w-5/6" />
+      <div className="h-4 bg-muted/20 rounded w-4/5" />
+    </div>
+  ),
+});
 
 interface GuideContentRendererProps {
   content: string;

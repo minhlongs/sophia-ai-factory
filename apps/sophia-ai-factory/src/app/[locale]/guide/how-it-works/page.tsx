@@ -2,110 +2,106 @@ import { GuideContentRenderer } from "@/components/guide/guide-content-renderer"
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "How It Works — Sophia AI Factory Guide",
-  description: "User journey map and workflow guide for Sophia AI Video Factory",
+  title: "Cách Hoạt Động — Hướng Dẫn Sophia AI Factory",
+  description: "Bản đồ hành trình người dùng và quy trình làm việc của Sophia AI Video Factory",
 };
 
-const content = `# Hanh Trinh Nguoi Dung / How It Works
+const content = `# Hành Trình Người Dùng
 
-> Ban chi can lam theo tung buoc — Sophia se lo phan con lai.
-> Just follow each step — Sophia handles the rest.
-
----
-
-## 1. Chao Mung / Welcome
-
-Sophia AI Video Factory la phan mem giup ban **tu dong tao video** bang tri tue nhan tao (AI). Ban khong can biet lap trinh. Ban khong can biet dung video. Sophia lam tat ca cho ban.
-
-Sophia AI Video Factory is software that **automatically creates videos** using artificial intelligence (AI). You do not need to know coding or video editing. Sophia does everything for you.
-
-**Sophia giup ban / Sophia helps you:**
-- Tim san pham ban chay de gioi thieu / Find trending products to promote
-- Viet kich ban video tu dong / Write video scripts automatically
-- Tao giong noi AI tu nhien / Create natural AI voiceovers
-- Tao nguoi trinh bay ao (avatar) / Create virtual presenters
-- Dang video len YouTube tu dong / Publish videos to YouTube automatically
+> Bạn chỉ cần làm theo từng bước — Sophia sẽ lo phần còn lại.
 
 ---
 
-## 2. Ban Do Hanh Trinh / Journey Map
+## 1. Chào Mừng
+
+Sophia AI Video Factory là phần mềm giúp bạn **tự động tạo video** bằng trí tuệ nhân tạo (AI). Bạn không cần biết lập trình. Bạn không cần biết dựng video. Sophia làm tất cả cho bạn.
+
+**Sophia giúp bạn:**
+- Tìm sản phẩm bán chạy để giới thiệu
+- Viết kịch bản video tự động
+- Tạo giọng nói AI tự nhiên
+- Tạo người trình bày ảo (avatar)
+- Đăng video lên YouTube tự động
+
+---
+
+## 2. Bản Đồ Hành Trình
 
 \`\`\`
-  BAN / YOU
+  BẠN
     |
     v
 +---------------------------+
-|  1. TRANG CHU / LANDING   |  <-- Xem gioi thieu, bang gia
-|     sophia.agency          |      See intro, pricing
-+---------------------------+
-    |
-    v
-+---------------------------+
-|  2. DANG KY / SIGN UP     |  <-- Tao tai khoan moi
-|     Nhap email + mat khau  |      Create new account
+|  1. TRANG CHỦ / LANDING   |  <-- Xem giới thiệu, bảng giá
+|     sophia.agencyos.network|
 +---------------------------+
     |
     v
 +---------------------------+
-|  3. THIET LAP / SETUP     |  <-- Ket noi 3 dich vu AI
-|     Setup Wizard (4 buoc)  |      Connect 3 AI services
+|  2. ĐĂNG KÝ              |  <-- Tạo tài khoản mới
+|     Nhập email + mật khẩu |
 +---------------------------+
     |
     v
 +---------------------------+
-|  4. DASHBOARD              |  <-- Trung tam dieu khien
-|     Xem tong quan          |      Your main control center
+|  3. THIẾT LẬP             |  <-- Kết nối 3 dịch vụ AI
+|     Setup Wizard (4 bước) |
 +---------------------------+
     |
     v
 +---------------------------+
-|  5. TELEGRAM BOT           |  <-- Tao video tu dien thoai!
-|     @Sophia_Bbot           |      Create videos from phone!
+|  4. DASHBOARD             |  <-- Trung tâm điều khiển
+|     Xem tổng quan         |
++---------------------------+
+    |
+    v
++---------------------------+
+|  5. TELEGRAM BOT          |  <-- Tạo video từ điện thoại!
+|     @Sophia_Bbot           |
 +---------------------------+
 \`\`\`
 
-| Buoc / Step | Thoi gian / Time | Chi lam / Frequency |
+| Bước | Thời gian | Tần suất |
 |---|---|---|
-| Dang ky / Sign up | 2 phut / 2 min | 1 lan / Once |
-| Thiet lap / Setup | 10 phut / 10 min | 1 lan / Once |
-| Tao video / Create video | 2 min nhap + 3-5 min cho | Moi lan / Each time |
+| Đăng ký | 2 phút | 1 lần |
+| Thiết lập | 10 phút | 1 lần |
+| Tạo video | 2 phút nhập + 3-5 phút chờ | Mỗi lần |
 
 ---
 
-## 3. Quy Trinh Nhanh / Quick Flow
+## 3. Quy Trình Nhanh
 
 \`\`\`
-[Dang nhap]  >  [Chon Mau]  >  [Nhap Noi Dung]  >  [Doi 3-5p]  >  [Tai Video]
- Sign in        Template        Content             Wait 3-5m      Download
+[Đăng nhập]  >  [Chọn Mẫu]  >  [Nhập Nội Dung]  >  [Đợi 3-5p]  >  [Tải Video]
 \`\`\`
 
 ---
 
-## 4. Mau Trang Thai / Status Colors
+## 4. Màu Trạng Thái
 
-| Mau / Color | Y nghia / Meaning |
+| Màu | Ý nghĩa |
 |---|---|
-| Vang / Yellow | Dang xu ly / Processing |
-| Xanh la / Green | Hoan thanh / Completed |
-| Do / Red | Co loi / Error |
+| Vàng | Đang xử lý |
+| Xanh lá | Hoàn thành |
+| Đỏ | Có lỗi |
 
 ---
 
-## 5. Ho Tro / Support
+## 5. Hỗ Trợ
 
-| Kenh / Channel | Lien he / Contact |
+| Kênh | Liên hệ |
 |---|---|
-| Email | support@sophia.agency |
+| Email | support@agencyos.network |
 | Telegram | @Sophia_Bbot (\`/help\`) |
-| Tu van goi / Sales | sales@sophia.agency |
+| Tư vấn gói | sales@agencyos.network |
 
 ---
 
-## Tiep Theo / Next
+## Tiếp Theo
 
-- [Xem tat ca man hinh / View all screens](/guide/screens)
-- [Cau hoi thuong gap / FAQ](/guide/faq)
-- [Telegram Bot Guide](/guide/telegram)
+- [Xem tất cả màn hình](/guide/screens)
+- [Câu hỏi thường gặp](/guide/faq)
+- [Hướng dẫn Telegram Bot](/guide/telegram)
 `;
 
 export default function HowItWorksPage() {

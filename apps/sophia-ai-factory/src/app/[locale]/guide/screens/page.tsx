@@ -2,79 +2,78 @@ import { GuideContentRenderer } from "@/components/guide/guide-content-renderer"
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Screen Guide — Sophia AI Factory Guide",
-  description: "A-Z guide for every screen in Sophia AI Video Factory",
+  title: "Hướng Dẫn Màn Hình A-Z — Hướng Dẫn Sophia AI Factory",
+  description: "Hướng dẫn đầy đủ từng màn hình trong Sophia AI Video Factory",
 };
 
-const content = `# Huong Dan Su Dung A-Z / Complete Screen Guide
+const content = `# Hướng Dẫn Sử Dụng A-Z
 
-> Tai lieu nay giup ban hieu **tung man hinh** trong Sophia.
-> This guide helps you understand **every screen** in Sophia.
+> Tài liệu này giúp bạn hiểu **từng màn hình** trong Sophia.
 
 ---
 
-## Muc Luc / Table of Contents
+## Mục Lục
 
-| # | Trang / Page | URL |
+| # | Trang | URL |
 |---|---|---|
-| 1 | Trang Chu / Landing | \`/\` |
-| 2 | Bang Gia / Pricing | \`/pricing\` |
-| 3 | Thiet Lap / Setup Wizard | \`/setup-wizard\` |
+| 1 | Trang Chủ | \`/\` |
+| 2 | Bảng Giá | \`/pricing\` |
+| 3 | Thiết Lập | \`/setup-wizard\` |
 | 4 | Dashboard | \`/dashboard\` |
-| 5 | Tao Chien Dich / Create Campaign | \`/dashboard/create\` |
-| 6 | Danh Sach Chien Dich / Campaigns List | \`/dashboard/campaigns\` |
-| 7 | Thong Ke / Analytics | \`/dashboard/analytics\` |
-| 8 | Cai Dat / Settings | \`/dashboard/settings\` |
-| 9 | Tim San Pham / Affiliate Discovery | \`/affiliate-discovery\` |
+| 5 | Tạo Chiến Dịch | \`/dashboard/create\` |
+| 6 | Danh Sách Chiến Dịch | \`/dashboard/campaigns\` |
+| 7 | Thống Kê | \`/dashboard/analytics\` |
+| 8 | Cài Đặt | \`/dashboard/settings\` |
+| 9 | Tìm Sản Phẩm | \`/affiliate-discovery\` |
 
 ---
 
-## 1. Trang Chu / Landing Page
+## 1. Trang Chủ
 
 **URL:** \`/\`
 
-| Phan / Section | Mo ta / Description |
+| Phần | Mô tả |
 |---|---|
-| **Hero** (dau trang / top) | Tieu de lon + nut "Bat Dau" / Big title + "Get Started" button |
-| **Workflow** | 4 buoc tao video / 4-step video creation flow |
-| **Features** | Cac tinh nang chinh / Key capabilities |
-| **Pricing** | 3 goi: BASIC, PREMIUM, ENTERPRISE |
-| **Affiliate Discovery** | Tim san pham ban chay / Find trending products |
-| **ROI Calculator** | Tinh loi nhuan du kien / Estimate profit |
-| **FAQ** | Cau hoi thuong gap / Common questions |
+| **Hero** (đầu trang) | Tiêu đề lớn + nút "Bắt Đầu" |
+| **Quy trình** | 4 bước tạo video |
+| **Tính năng** | Các tính năng chính |
+| **Bảng Giá** | 3 gói: BASIC, PREMIUM, ENTERPRISE |
+| **Tìm Sản Phẩm** | Tìm sản phẩm bán chạy |
+| **Tính ROI** | Tính lợi nhuận dự kiến |
+| **FAQ** | Câu hỏi thường gặp |
 
-**Ban can lam / What to do:** Nhan **"Bat Dau"** / Click **"Get Started"** de tao tai khoan.
+**Bạn cần làm:** Nhấn **"Bắt Đầu"** để tạo tài khoản.
 
 ---
 
-## 2. Bang Gia / Pricing Page
+## 2. Bảng Giá
 
 **URL:** \`/pricing\`
 
-**3 goi dich vu / 3 Plans:**
+**3 gói dịch vụ:**
 
-| Goi / Plan | Gia / Price | Danh cho / Best for |
+| Gói | Giá | Dành cho |
 |---|---|---|
-| **BASIC** | $500/thang | Doanh nghiep nho / Small biz |
-| **PREMIUM** | $1,200/thang | Dang phat trien / Growing |
-| **ENTERPRISE** | $3,500/thang | DN lon / Large biz |
+| **BASIC** | $500/tháng | Doanh nghiệp nhỏ |
+| **PREMIUM** | $1,200/tháng | Đang phát triển |
+| **ENTERPRISE** | $3,500/tháng | Doanh nghiệp lớn |
 
-Nhan **"Chon Goi"** / Click **"Choose Plan"** de dang ky.
+Nhấn **"Chọn Gói"** để đăng ký.
 
 ---
 
-## 3. Thiet Lap / Setup Wizard
+## 3. Thiết Lập
 
 **URL:** \`/setup-wizard\`
 
-Trinh thiet lap co **4 buoc**. Ban chi can lam **1 lan duy nhat**.
+Trình thiết lập có **4 bước**. Bạn chỉ cần làm **1 lần duy nhất**.
 
-| Buoc / Step | Noi dung / Content |
+| Bước | Nội dung |
 |---|---|
-| 1/4 | Kiem tra he thong / System Check |
-| 2/4 | Nhap API Keys (OpenRouter + ElevenLabs + HeyGen) |
-| 3/4 | Ket noi co so du lieu / Database |
-| 4/4 | Hoan thanh / Finish → Go to Dashboard |
+| 1/4 | Kiểm tra hệ thống |
+| 2/4 | Nhập API Keys (OpenRouter + ElevenLabs + HeyGen) |
+| 3/4 | Kết nối cơ sở dữ liệu |
+| 4/4 | Hoàn thành → Vào Dashboard |
 
 ---
 
@@ -82,70 +81,70 @@ Trinh thiet lap co **4 buoc**. Ban chi can lam **1 lan duy nhat**.
 
 **URL:** \`/dashboard\`
 
-Day la man hinh chinh. / This is your main screen.
+Đây là màn hình chính của bạn.
 
-| Thanh phan / Element | Mo ta / Description |
+| Thành phần | Mô tả |
 |---|---|
-| **Stats cards** (3 o tren / at top) | Tong / Active / Hoan thanh |
-| **Campaign list** | Tat ca video da tao / All created videos |
-| **"Create Campaign"** button | Tao video moi / Create new video |
-| **"Upgrade"** button | Nang cap goi / Upgrade plan |
+| **Stats cards** (3 ô trên) | Tổng / Đang chạy / Hoàn thành |
+| **Danh sách chiến dịch** | Tất cả video đã tạo |
+| **Nút "Tạo Chiến Dịch"** | Tạo video mới |
+| **Nút "Nâng Cấp"** | Nâng cấp gói |
 
-**Mau trang thai:** Vang = Dang xu ly | Xanh = Hoan thanh | Do = Loi
+**Màu trạng thái:** Vàng = Đang xử lý | Xanh = Hoàn thành | Đỏ = Lỗi
 
 ---
 
-## 5. Tao Chien Dich / Create Campaign
+## 5. Tạo Chiến Dịch
 
 **URL:** \`/dashboard/create\`
 
-1. **Chon Mau Video / Choose Template** — Nhan vao mau thich
-2. **Dien thong tin / Fill details:**
-   - Ten chien dich / Campaign name
-   - Noi dung chinh / Main content
-   - Giong noi / Voice (nam/nu)
-3. Nhan **"Tao Chien Dich"** / Click **"Create Campaign"**
-4. Doi 3-5 phut / Wait 3-5 minutes
+1. **Chọn Mẫu Video** — Nhấn vào mẫu thích
+2. **Điền thông tin:**
+   - Tên chiến dịch
+   - Nội dung chính
+   - Giọng nói (nam/nữ)
+3. Nhấn **"Tạo Chiến Dịch"**
+4. Đợi 3-5 phút
 
 ---
 
-## 6. Danh Sach Chien Dich / Campaigns List
+## 6. Danh Sách Chiến Dịch
 
 **URL:** \`/dashboard/campaigns\`
 
-Hien tat ca chien dich: Ten + Trang thai mau + Ngay tao. Nhan ten de xem chi tiet.
+Hiện tất cả chiến dịch: Tên + Trạng thái màu + Ngày tạo. Nhấn tên để xem chi tiết.
 
 ---
 
-## 7. Thong Ke / Analytics
+## 7. Thống Kê
 
 **URL:** \`/dashboard/analytics\`
 
-Bieu do va so lieu: So video theo thoi gian, ty le hoan thanh, chi so hieu suat.
+Biểu đồ và số liệu: Số video theo thời gian, tỷ lệ hoàn thành, chỉ số hiệu suất.
 
 ---
 
-## 8. Cai Dat / Settings
+## 8. Cài Đặt
 
 **URL:** \`/dashboard/settings\`
 
-Cap nhat tai khoan, thay doi API Keys, quan ly goi dich vu, lich su thanh toan.
+Cập nhật tài khoản, thay đổi API Keys, quản lý gói dịch vụ, lịch sử thanh toán.
 
 ---
 
-## 9. Tim San Pham / Affiliate Discovery
+## 9. Tìm Sản Phẩm
 
 **URL:** \`/affiliate-discovery\`
 
-Tim san pham ban chay de quang ba. AI cham diem (SPS Score) de chon san pham tot nhat.
+Tìm sản phẩm bán chạy để quảng bá. AI chấm điểm (SPS Score) để chọn sản phẩm tốt nhất.
 
 ---
 
-## Tiep Theo / Next
+## Tiếp Theo
 
-- [Getting Started](/guide)
-- [FAQ](/guide/faq)
-- [Telegram Bot](/guide/telegram)
+- [Bắt Đầu Sử Dụng](/guide)
+- [Câu Hỏi Thường Gặp](/guide/faq)
+- [Hướng Dẫn Telegram Bot](/guide/telegram)
 `;
 
 export default function ScreensGuidePage() {

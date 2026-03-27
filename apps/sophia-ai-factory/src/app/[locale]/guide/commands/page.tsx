@@ -2,61 +2,59 @@ import { GuideContentRenderer } from "@/components/guide/guide-content-renderer"
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Telegram Bot Commands — Sophia AI Factory Guide",
-  description: "Complete reference for Sophia Telegram bot commands",
+  title: "Lệnh Telegram Bot — Hướng Dẫn Sophia AI Factory",
+  description: "Danh sách đầy đủ các lệnh bot Telegram của Sophia",
 };
 
-const content = `# Telegram Bot Commands / Lenh Bot Telegram
+const content = `# Lệnh Bot Telegram
 
-Sophia has a Telegram bot that lets you manage everything from your phone.
+Sophia có bot Telegram giúp bạn quản lý mọi thứ từ điện thoại.
 **Bot:** @Sophia_Bbot
 
 ---
 
-## Quick Start / Bat Dau Nhanh
+## Bắt Đầu Nhanh
 
-1. Open Telegram
-2. Search for **@Sophia_Bbot** (or use this link: [t.me/Sophia_Bbot](https://t.me/Sophia_Bbot))
-3. Press **"Start"**
-4. Link your email: \`/email your@email.com\`
+1. Mở Telegram
+2. Tìm kiếm **@Sophia_Bbot** (hoặc dùng link: [t.me/Sophia_Bbot](https://t.me/Sophia_Bbot))
+3. Nhấn **"Start"**
+4. Liên kết email của bạn: \`/email your@email.com\`
 
 ---
 
-## Available Commands / Danh Sach Lenh
+## Danh Sách Lệnh
 
-| Command | What It Does | Example |
+| Lệnh | Chức năng | Ví dụ |
 |---------|-------------|---------|
-| \`/start\` | Welcome message + setup | \`/start\` |
-| \`/email\` | Link your Sophia account | \`/email john@example.com\` |
-| \`/campaign\` | Create a new video campaign | \`/campaign Eco-friendly gadgets review\` |
-| \`/status\` | Check your active campaigns | \`/status\` |
-| \`/results\` | Get links to completed videos | \`/results\` |
-| \`/help\` | Show all available commands | \`/help\` |
+| \`/start\` | Tin nhắn chào mừng + thiết lập | \`/start\` |
+| \`/email\` | Liên kết tài khoản Sophia | \`/email john@example.com\` |
+| \`/campaign\` | Tạo chiến dịch video mới | \`/campaign Đánh giá thiết bị thân thiện môi trường\` |
+| \`/status\` | Kiểm tra chiến dịch đang chạy | \`/status\` |
+| \`/results\` | Lấy link video đã hoàn thành | \`/results\` |
+| \`/help\` | Xem tất cả lệnh | \`/help\` |
 
 ---
 
-## How To Create a Video via Telegram / Tao Video Qua Telegram
+## Cách Tạo Video Qua Telegram
 
-**Step 1:** Make sure your account is linked (\`/email\`)
+**Bước 1:** Đảm bảo tài khoản đã được liên kết (\`/email\`)
 
-**Step 2:** Type \`/campaign\` followed by your video topic
+**Bước 2:** Nhập \`/campaign\` theo sau là chủ đề video
 
-**Step 3:** Sophia will write the script, create voice, generate avatar video
+**Bước 3:** Sophia sẽ viết kịch bản, tạo giọng nói, tạo video avatar
 
-**Step 4:** Type \`/status\` to check progress
+**Bước 4:** Nhập \`/status\` để kiểm tra tiến độ
 
-**Step 5:** Type \`/results\` to get the YouTube link when done
-
-That's it!
+**Bước 5:** Nhập \`/results\` để lấy link YouTube khi xong
 
 ---
 
-## Pro Tips / Meo Hay
+## Mẹo Hay
 
-- **Be specific with topics:** \`/campaign Top 5 wireless earbuds under $50 review\` is better than \`/campaign earbuds\`
-- **Check status regularly:** campaigns take 5-10 minutes to complete
-- **All your data belongs to YOU** — videos are published directly to YOUR YouTube channel
-- **Multiple campaigns:** you can create multiple campaigns and check status of all at once
+- **Mô tả chủ đề cụ thể:** \`/campaign Top 5 tai nghe không dây dưới 1 triệu đánh giá\` tốt hơn \`/campaign tai nghe\`
+- **Kiểm tra trạng thái thường xuyên:** chiến dịch mất 5-10 phút để hoàn thành
+- **Dữ liệu thuộc về bạn** — video được đăng trực tiếp lên kênh YouTube CỦA BẠN
+- **Nhiều chiến dịch:** bạn có thể tạo nhiều chiến dịch và kiểm tra trạng thái tất cả cùng lúc
 `;
 
 export default function CommandsGuidePage() {
