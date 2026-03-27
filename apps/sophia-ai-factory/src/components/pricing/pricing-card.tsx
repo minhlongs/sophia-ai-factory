@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { FadeInView } from "@/components/ui/fade-in-view";
+import { FeatureGroups } from "./pricing-data";
 
 export function formatPrice(cents: number, locale: string): string {
   return new Intl.NumberFormat(locale === "vi" ? "vi-VN" : "en-US", {
@@ -17,12 +18,32 @@ interface PricingCardProps {
   description: string;
   tier: string;
   monthlyPrice: number;
-  features: string[];
+  featureGroups: FeatureGroups;
   popular?: boolean;
   onSelect: (tier: string) => void;
   loading?: boolean;
   locale: string;
   selected?: boolean;
+  /** Discounted price in cents — when set, original price is struck through */
+  discountedPriceCents?: number;
+}
+
+/** Renders a single feature item with a checkmark icon. */
+function FeatureItem({ text }: { text: string }) {
+  return (
+    <li className="flex items-center gap-2 text-muted-foreground text-sm">
+      <svg
+        className="h-4 w-4 shrink-0 text-primary"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+      </svg>
+      {text}
+    </li>
+  );
 }
 
 export function PricingCard({
@@ -30,12 +51,13 @@ export function PricingCard({
   description,
   tier,
   monthlyPrice,
-  features,
+  featureGroups,
   popular,
   onSelect,
   loading,
   locale,
   selected,
+  discountedPriceCents,
 }: PricingCardProps) {
   const t = useTranslations("landing");
 
@@ -58,9 +80,20 @@ export function PricingCard({
 
       <div className="mt-6">
         <div className="flex items-baseline gap-2">
-          <span className="text-3xl font-bold text-foreground">
-            {formatPrice(monthlyPrice, locale)}
-          </span>
+          {discountedPriceCents !== undefined ? (
+            <>
+              <span className="text-3xl font-bold text-emerald-400">
+                {formatPrice(discountedPriceCents, locale)}
+              </span>
+              <span className="text-xl line-through text-muted-foreground/60">
+                {formatPrice(monthlyPrice, locale)}
+              </span>
+            </>
+          ) : (
+            <span className="text-3xl font-bold text-foreground">
+              {formatPrice(monthlyPrice, locale)}
+            </span>
+          )}
           <span className="text-muted-foreground">{t("pricing.per_month")}</span>
         </div>
         <span className="mt-1 inline-block rounded bg-primary/10 px-2 py-0.5 text-xs text-primary">
@@ -68,34 +101,39 @@ export function PricingCard({
         </span>
       </div>
 
-      <ul className="mt-6 flex-1 space-y-3">
-        {features.map((feature) => (
-          <li key={feature} className="flex items-center gap-2 text-muted-foreground">
-            <svg
-              className="h-5 w-5 text-primary"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-            {feature}
-          </li>
-        ))}
-      </ul>
+      {/* ── Video Factory group ── */}
+      <div className="mt-6 flex-1">
+        <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-violet-400">
+          <span aria-hidden="true">🎬</span>
+          {t("pricing.features.group_video")}
+        </p>
+        <ul className="space-y-2">
+          {featureGroups.video.map((f) => (
+            <FeatureItem key={f} text={f} />
+          ))}
+        </ul>
+
+        {/* Separator */}
+        <div className="my-4 border-t border-border/50" />
+
+        {/* ── AI Automation group ── */}
+        <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-cyan-400">
+          <span aria-hidden="true">🤖</span>
+          {t("pricing.features.group_raas")}
+        </p>
+        <ul className="space-y-2">
+          {featureGroups.raas.map((f) => (
+            <FeatureItem key={f} text={f} />
+          ))}
+        </ul>
+      </div>
 
       <button
         role="radio"
         aria-checked={selected}
         onClick={() => onSelect(tier)}
         disabled={loading}
-        aria-label={`${loading ? 'Processing' : 'Get started with'} ${name} plan`}
+        aria-label={`${loading ? "Processing" : "Get started with"} ${name} plan`}
         className={`mt-8 w-full rounded-lg py-3 font-semibold transition-all duration-300 ${
           popular
             ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-[1.02]"
