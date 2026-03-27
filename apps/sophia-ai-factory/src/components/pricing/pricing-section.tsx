@@ -12,6 +12,7 @@ interface TierDiscount {
   discountPercent: number;
   originalPrice: number;
   finalPrice: number;
+  checkoutUrl?: string | null;
 }
 
 export function PricingSection() {
@@ -32,6 +33,21 @@ export function PricingSection() {
   const handleDiscountCleared = () => setDiscounts(new Map());
 
   const handleSelectTier = async (tier: string) => {
+    const discount = discounts.get(tier);
+
+    // 100% off — free access, no checkout needed
+    if (discount && discount.finalPrice === 0) {
+      alert("Free access granted! Contact support@sophia.agencyos.network to activate.");
+      return;
+    }
+
+    // Coupon with discounted checkout URL — redirect directly
+    if (discount?.checkoutUrl) {
+      window.location.href = discount.checkoutUrl;
+      return;
+    }
+
+    // Normal checkout (no coupon)
     setLoading(tier);
     try {
       const response = await fetch("/api/checkout", {
