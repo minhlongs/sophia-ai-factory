@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import createMiddleware from "next-intl/middleware";
-import { createServerClient } from "@supabase/ssr";
+import { verifyJwt } from "./lib/db/auth-verify";
 import { applyCorsHeaders, handleCorsPrelight } from "./lib/security/cors-security-configuration";
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS } from "./lib/security/rate-limiting-middleware";
 import { raasGate, shouldApplyRaasGate } from "./lib/raas-gate";
@@ -195,56 +195,26 @@ export async function proxy(request: NextRequest) {
     return NextResponse.rewrite(url);
   }
 
-  // 3. Dashboard Auth Check (Supabase Magic Link)
+  // 3. Dashboard Auth Check (D1 JWT Cookie)
   const cleanPath = pathnameWithoutLocale(pathname);
   if (cleanPath.startsWith("/dashboard")) {
-    let supabaseResponse = NextResponse.next({ request });
+    const token = request.cookies.get('auth-token')?.value;
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if (!supabaseUrl || !supabaseAnonKey) {
-      return NextResponse.redirect(new URL("/login?reason=setup_required", request.url));
-    }
-
-    const supabase = createServerClient(
-      supabaseUrl,
-      supabaseAnonKey,
-      {
-        cookies: {
-          getAll() {
-            return request.cookies.getAll();
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value }) =>
-              request.cookies.set(name, value)
-            );
-            supabaseResponse = NextResponse.next({ request });
-            cookiesToSet.forEach(({ name, value, options }) =>
-              supabaseResponse.cookies.set(name, value, options)
-            );
-          },
-        },
-      }
-    );
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      // Redirect to /login — intlMiddleware handles locale internally
+    if (!token) {
       return NextResponse.redirect(new URL("/login", request.url));
     }
 
-    // User is authenticated; apply intl middleware on the response
-    const intlResponse = intlMiddleware(request);
+    try {
+      const payload = await verifyJwt(token);
+      if (!payload) {
+        return NextResponse.redirect(new URL("/login", request.url));
+      }
+    } catch {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
 
-    // Merge Supabase cookies into the intl response
-    supabaseResponse.cookies.getAll().forEach((cookie) => {
-      intlResponse.cookies.set(cookie.name, cookie.value);
-    });
-
-    return intlResponse;
+    // User is authenticated — apply intl middleware
+    return intlMiddleware(request);
   }
 
   // 4. Auth callback - skip intl middleware
