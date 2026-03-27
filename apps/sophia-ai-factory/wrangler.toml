@@ -1,6 +1,6 @@
 # Sophia Video Factory — Cloudflare Workers (OpenNext)
 # Deploy: npm run build && npx wrangler deploy
-name = "sophia-video-factory"
+name = "sophia-ai-factory"
 main = ".open-next/worker.js"
 compatibility_date = "2026-03-17"
 compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
@@ -11,11 +11,11 @@ binding = "ASSETS"
 
 [[r2_buckets]]
 binding = "NEXT_INC_CACHE_R2_BUCKET"
-bucket_name = "sophia-video-factory-opennext-cache"
+bucket_name = "sophia-ai-factory-opennext-cache"
 
 [[services]]
 binding = "WORKER_SELF_REFERENCE"
-service = "sophia-video-factory"
+service = "sophia-ai-factory"
 
 [images]
 binding = "IMAGES"
