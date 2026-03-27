@@ -7,9 +7,10 @@ export const cspConfig = {
   // Chỉ cho phép scripts từ self và Next.js chunks
   scriptSrc: [
     "'self'",
+    "'unsafe-inline'", // Required for Next.js App Router hydration scripts
     ...(process.env.NODE_ENV === 'production'
       ? []
-      : ["'unsafe-eval'", "'unsafe-inline'"]), // Dev mode needs unsafe-eval for HMR
+      : ["'unsafe-eval'"]), // Dev mode needs unsafe-eval for HMR
   ],
 
   // Styles: self + inline (Tailwind requires)
