@@ -72,7 +72,7 @@ export default function SystemHealthPage() {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" role="status" aria-label="Loading system health">
-          <span className="sr-only">Loading...</span>
+          <span className="sr-only">Đang tải...</span>
         </div>
       </div>
     );
@@ -83,12 +83,12 @@ export default function SystemHealthPage() {
       <div className="p-6">
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 text-red-800 dark:text-red-200 flex items-center gap-3">
           <AlertCircle className="w-5 h-5" />
-          <p>Failed to load system health status. The API might be down.</p>
+          <p>Không thể tải trạng thái hệ thống. API có thể đang gián đoạn.</p>
           <button
             onClick={() => refetch()}
             className="ml-auto px-4 py-2 bg-white border border-red-200 rounded text-sm hover:bg-red-50"
           >
-            Retry
+            Thử lại
           </button>
         </div>
       </div>
@@ -99,8 +99,8 @@ export default function SystemHealthPage() {
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">System Health</h1>
-          <p className="text-muted-foreground mt-1">Monitor the status of critical infrastructure and services</p>
+          <h1 className="text-2xl font-bold text-foreground">Sức Khỏe Hệ Thống</h1>
+          <p className="text-muted-foreground mt-1">Theo dõi trạng thái cơ sở hạ tầng và dịch vụ quan trọng</p>
         </div>
         <button
           onClick={() => refetch()}
@@ -141,7 +141,7 @@ export default function SystemHealthPage() {
               health.status === 'degraded' ? 'text-yellow-700 dark:text-yellow-300' :
               'text-red-700 dark:text-red-300'
             }`}>
-              Last updated: {new Date(health.timestamp).toLocaleString()}
+              Cập nhật lần cuối: {new Date(health.timestamp).toLocaleString()}
             </p>
           </div>
         </div>
@@ -166,7 +166,7 @@ export default function SystemHealthPage() {
               <div className="space-y-2 mt-4">
                 {service.latency !== undefined && (
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Latency</span>
+                    <span className="text-muted-foreground">Độ Trễ</span>
                     <span className={`font-mono ${
                       service.latency < 200 ? 'text-green-600 dark:text-green-400' :
                       service.latency < 500 ? 'text-yellow-600 dark:text-yellow-400' :

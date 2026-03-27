@@ -21,7 +21,7 @@ export default function LoginPage() {
   if (!supabaseUrl || !supabaseAnonKey) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <p className="text-destructive">Configuration error: Missing Supabase environment variables.</p>
+        <p className="text-destructive">Lỗi cấu hình: Thiếu biến môi trường Supabase.</p>
       </div>
     );
   }
@@ -65,7 +65,7 @@ export default function LoginPage() {
             {t("title")}
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Sophia AI Video Factory
+            Sophia AI — Nhà Máy Video Tự Động
           </p>
         </div>
 

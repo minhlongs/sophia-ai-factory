@@ -113,9 +113,9 @@ export function YouTubeConnectionSettings() {
           {status.connected && status.channelTitle ? (
             <p className="text-xs text-muted-foreground">{status.channelTitle}</p>
           ) : status.connected ? (
-            <p className="text-xs text-green-600">Connected</p>
+            <p className="text-xs text-green-600">Đã kết nối</p>
           ) : (
-            <p className="text-xs text-muted-foreground">Not connected</p>
+            <p className="text-xs text-muted-foreground">Chưa kết nối</p>
           )}
           {errorMessage && (
             <p className="text-xs text-red-500 mt-0.5">{errorMessage}</p>

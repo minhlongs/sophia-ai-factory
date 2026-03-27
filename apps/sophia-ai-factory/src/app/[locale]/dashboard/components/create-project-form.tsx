@@ -47,7 +47,7 @@ export function CreateProjectForm() {
         router.push("/dashboard/campaigns");
         router.refresh();
       } else {
-        setError(result.message || "Something went wrong");
+        setError(result.message || "Đã xảy ra lỗi, vui lòng thử lại");
       }
     } catch {
       setError("Failed to create campaign");
@@ -91,12 +91,12 @@ export function CreateProjectForm() {
             fieldErrors.audience ? "border-destructive" : "border-input"
           }`}
         >
-          <option value="">Select an audience...</option>
-          <option value="entrepreneurs">Entrepreneurs</option>
-          <option value="students">Students</option>
-          <option value="parents">Parents</option>
-          <option value="tech-enthusiasts">Tech Enthusiasts</option>
-          <option value="general">General Audience</option>
+          <option value="">Chọn đối tượng...</option>
+          <option value="entrepreneurs">Doanh nhân</option>
+          <option value="students">Học sinh / Sinh viên</option>
+          <option value="parents">Phụ huynh</option>
+          <option value="tech-enthusiasts">Người yêu công nghệ</option>
+          <option value="general">Đối tượng chung</option>
         </select>
         {fieldErrors.audience && (
           <p className="text-xs text-destructive">{fieldErrors.audience}</p>
