@@ -46,6 +46,14 @@ const Features = dynamic(
   () => import("@/app/components/sections/features").then(m => ({ default: m.Features })),
   { loading: () => <SectionSkeleton /> }
 );
+const RaaSShowcase = dynamic(
+  () => import("@/app/components/sections/raas-showcase").then(m => ({ default: m.RaaSShowcase })),
+  { loading: () => <SectionSkeleton /> }
+);
+const RaasDemoTerminal = dynamic(
+  () => import("@/app/components/sections/raas-demo-terminal").then(m => ({ default: m.RaasDemoTerminal })),
+  { loading: () => <SectionSkeleton height="h-[500px]" /> }
+);
 const SocialProof = dynamic(
   () => import("@/app/components/sections/social-proof").then(m => ({ default: m.SocialProof })),
   { loading: () => <SectionSkeleton height="h-64" /> }
@@ -77,6 +85,8 @@ export default function Home() {
       <Hero />
       <Workflow />
       <Features />
+      <RaaSShowcase />
+      <RaasDemoTerminal />
       <SocialProof />
       <PricingSection />
       <AffiliateDiscovery />

@@ -2,18 +2,18 @@
 @.cleo/templates/AGENT-INJECTION.md
 <!-- CLEO:END -->
 
-# Sophia Proposal — 第七篇 軍爭 (Jun Zheng) — Sales Proposals
+# Sophia Proposal — DEPRECATED
 
-> **Inherits**: `../../CLAUDE.md` (Root Constitution)
+> **Status**: DEPRECATED — merged into `apps/sophia-ai-factory`
+> **Migration**: All proposal features (dashboard, missions, API keys) are now live at `/dashboard/proposals` in sophia-ai-factory.
+> **Do NOT develop new features here.** Use `apps/sophia-ai-factory` instead.
+
+---
+
+## Original Context (archived)
+
 > **Domain**: AI Video Factory sales proposals — competitive positioning, client pitches
 > **Binh Phap**: 軍爭 — Military maneuvering: speed-to-proposal, value demonstration
-
-## Core Rules
-
-- Proposal content must be accurate and verifiable
-- Pricing must reference Polar.sh tiers
-- Visual demos must use real Sophia AI Factory outputs
-- Follow ClaudeKit engineer standards
 
 ---
 

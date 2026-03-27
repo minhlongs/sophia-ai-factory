@@ -68,6 +68,7 @@ export function SocialProof() {
     { value: 1000, suffix: "+", labelKey: "stats.creators" },
     { value: 50, suffix: "+", labelKey: "stats.ai_tools" },
     { value: 10000, suffix: "+", labelKey: "stats.videos" },
+    { value: 500, suffix: "+", labelKey: "stats.proposals" },
   ] as const;
 
   return (

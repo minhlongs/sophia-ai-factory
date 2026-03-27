@@ -1,46 +1,44 @@
 import { Tier, TierConfig, FeatureFlag } from "@/types";
 import { NOWPAYMENTS_TIERS } from "@/lib/clients/nowpayments-client";
+import { UNIFIED_TIERS } from "@/lib/unified-tier-config";
 
 /**
  * Tier configurations for Sophia AI Video Factory
- * Pricing - Monthly subscriptions (12-month commitment):
- * - Starter: $199/mo (basic setup)
- * - Growth: $399/mo (scale production) ⭐ RECOMMENDED
- * - Premium: $799/mo (enterprise power)
- * - Master: $4,999 one-time (lifetime access)
+ * Pricing limits are sourced from unified-tier-config.ts.
+ * Payment invoice IDs come from nowpayments-client.ts.
  */
 
 export const TIER_CONFIGS: Record<Tier, TierConfig> = {
   BASIC: {
-    name: "Starter",
-    price: 199, // $199/mo USD
-    priceDisplay: "$199/mo",
+    name: UNIFIED_TIERS.BASIC.name,
+    price: UNIFIED_TIERS.BASIC.price,
+    priceDisplay: `$${UNIFIED_TIERS.BASIC.price}/mo`,
     nowpaymentsInvoiceId: NOWPAYMENTS_TIERS.BASIC.invoiceId,
     features: [
       "enable_affiliate_engine",
       "enable_roi_calculator",
-    ],
+    ] satisfies FeatureFlag[],
     limits: {
-      youtubeChannels: 1,
-      videoTemplates: 5,
+      youtubeChannels: UNIFIED_TIERS.BASIC.youtubeChannels,
+      videoTemplates: UNIFIED_TIERS.BASIC.templates,
       trainingSessions: 2,
       supportMonths: 1,
     },
   },
 
   PREMIUM: {
-    name: "Growth",
-    price: 399, // $399/mo USD
-    priceDisplay: "$399/mo",
+    name: UNIFIED_TIERS.PREMIUM.name,
+    price: UNIFIED_TIERS.PREMIUM.price,
+    priceDisplay: `$${UNIFIED_TIERS.PREMIUM.price}/mo`,
     nowpaymentsInvoiceId: NOWPAYMENTS_TIERS.PREMIUM.invoiceId,
     recommended: true,
     features: [
       "enable_affiliate_engine",
       "enable_roi_calculator",
-    ],
+    ] satisfies FeatureFlag[],
     limits: {
-      youtubeChannels: 3,
-      videoTemplates: 999, // Unlimited
+      youtubeChannels: UNIFIED_TIERS.PREMIUM.youtubeChannels,
+      videoTemplates: UNIFIED_TIERS.PREMIUM.templates,
       trainingSessions: 4,
       supportMonths: 3,
       automationScripts: true,
@@ -49,9 +47,9 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
   },
 
   ENTERPRISE: {
-    name: "Premium",
-    price: 799, // $799/mo USD
-    priceDisplay: "$799/mo",
+    name: UNIFIED_TIERS.ENTERPRISE.name,
+    price: UNIFIED_TIERS.ENTERPRISE.price,
+    priceDisplay: `$${UNIFIED_TIERS.ENTERPRISE.price}/mo`,
     nowpaymentsInvoiceId: NOWPAYMENTS_TIERS.ENTERPRISE.invoiceId,
     features: [
       "enable_affiliate_engine",
@@ -59,10 +57,10 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
       "enable_roi_calculator",
       "enable_api_integrations",
       "enable_auto_update",
-    ],
+    ] satisfies FeatureFlag[],
     limits: {
-      youtubeChannels: 999, // Unlimited
-      videoTemplates: 999,  // Unlimited custom templates
+      youtubeChannels: UNIFIED_TIERS.ENTERPRISE.youtubeChannels,
+      videoTemplates: UNIFIED_TIERS.ENTERPRISE.templates,
       trainingSessions: 8,
       supportMonths: 6,
       automationScripts: true,
@@ -73,9 +71,9 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
   },
 
   MASTER: {
-    name: "Master",
-    price: 4999, // $4,999 USD one-time
-    priceDisplay: "$4,999",
+    name: UNIFIED_TIERS.MASTER.name,
+    price: UNIFIED_TIERS.MASTER.price,
+    priceDisplay: `$${UNIFIED_TIERS.MASTER.price}`,
     nowpaymentsInvoiceId: NOWPAYMENTS_TIERS.MASTER.invoiceId,
     features: [
       "enable_affiliate_engine",
@@ -84,12 +82,12 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
       "enable_api_integrations",
       "enable_auto_update",
       "enable_early_access",
-    ],
+    ] satisfies FeatureFlag[],
     limits: {
-      youtubeChannels: 999, // Unlimited
-      videoTemplates: 999,  // Unlimited custom templates
-      trainingSessions: 999, // Unlimited lifetime
-      supportMonths: 999,   // Lifetime VIP support
+      youtubeChannels: UNIFIED_TIERS.MASTER.youtubeChannels,
+      videoTemplates: UNIFIED_TIERS.MASTER.templates,
+      trainingSessions: 999,
+      supportMonths: 999,
       automationScripts: true,
       affiliateDashboard: true,
       seoOptimization: true,

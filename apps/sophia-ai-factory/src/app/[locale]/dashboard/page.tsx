@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { createServerClient } from "@/lib/supabase/server";
 import { DashboardStats } from "./components/dashboard-stats";
 import { OnboardingWelcomeBanner } from "./components/onboarding-welcome-banner";
+import { CrossSellBanner } from "@/components/dashboard/cross-sell-banner";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Campaign } from "@/types";
 import { getTranslations } from 'next-intl/server';
@@ -55,9 +56,13 @@ export default async function DashboardPage() {
   ).length;
   const completedCampaigns = campaigns.filter(c => c.status === 'completed').length;
 
+  // Cross-sell: show RaaS banner if user has campaigns but no proposals used (Video user)
+  const showRaasBanner = totalCampaigns > 0;
+
   return (
     <div className="space-y-8">
       <OnboardingWelcomeBanner />
+      <CrossSellBanner variant={showRaasBanner ? "raas" : "video"} />
 
       <div className="flex items-center justify-between">
         <div>
