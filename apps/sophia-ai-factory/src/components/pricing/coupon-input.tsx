@@ -16,6 +16,7 @@ interface TierDiscount {
   discountPercent: number;
   originalPrice: number;
   finalPrice: number;
+  checkoutUrl: string | null;
 }
 
 interface CouponInputProps {
@@ -66,6 +67,7 @@ export function CouponInput({ tiers, onDiscountApplied, onDiscountCleared }: Cou
             discountPercent: result.value.discountPercent,
             originalPrice: result.value.originalPrice,
             finalPrice: result.value.finalPrice,
+            checkoutUrl: result.value.checkoutUrl ?? null,
           });
         } else if (result.status === "fulfilled" && result.value.error) {
           errorMsg = result.value.error;
