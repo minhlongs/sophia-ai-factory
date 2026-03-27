@@ -1,122 +1,131 @@
-import { GuideContentRenderer } from "@/components/guide/guide-content-renderer";
 import { Metadata } from "next";
+import { GuideAccordionFaq, FaqItem } from "@/components/guide/guide-accordion-faq";
+import { GuideCallout } from "@/components/guide/guide-callout";
 
 export const metadata: Metadata = {
   title: "Câu Hỏi Thường Gặp — Hướng Dẫn Sophia AI Factory",
   description: "Giải đáp những câu hỏi thường gặp nhất về Sophia AI Video Factory",
 };
 
-const content = `# Câu Hỏi Thường Gặp
+const generalFaqs: FaqItem[] = [
+  {
+    question: "Sophia AI Video Factory là gì?",
+    answer: "Sophia là nền tảng tạo video tự động bằng trí tuệ nhân tạo (AI). Bạn chỉ cần nhập nội dung — Sophia tự viết kịch bản, tạo giọng nói AI, và tạo video với người dẫn ảo. Không cần biết làm video, không cần thiết bị quay phim.",
+  },
+  {
+    question: "Tôi có cần biết lập trình không?",
+    answer: "Không. Sophia được thiết kế hoàn toàn cho người không có kiến thức kỹ thuật. Mọi thứ đều có hướng dẫn từng bước bằng tiếng Việt.",
+  },
+  {
+    question: "Mất bao lâu để tạo một video?",
+    answer: "Video ngắn (dưới 3 phút) mất khoảng 2–5 phút xử lý. Video dài hơn có thể mất 10–15 phút. Bạn sẽ được thông báo qua Telegram khi video hoàn thành.",
+  },
+  {
+    question: "Sophia tạo video như thế nào?",
+    answer: "Sophia kết hợp 3 dịch vụ AI: OpenRouter viết kịch bản, ElevenLabs chuyển kịch bản thành giọng nói tự nhiên, và HeyGen tạo video với người dẫn ảo AI. Tất cả diễn ra tự động sau khi bạn nhập nội dung.",
+  },
+];
 
-> Giải đáp những câu hỏi thường gặp nhất về Sophia AI Video Factory
+const paymentFaqs: FaqItem[] = [
+  {
+    question: "Có gói dùng thử miễn phí không?",
+    answer: "Các dịch vụ API (OpenRouter, ElevenLabs, HeyGen) đều có gói miễn phí để bắt đầu. Tuy nhiên gói Sophia cần đăng ký trả phí để sử dụng đầy đủ tính năng.",
+  },
+  {
+    question: "Tôi có thể tạo bao nhiêu video mỗi tháng?",
+    answer: "Tùy gói: BASIC (20 video/tháng), PREMIUM (100 video/tháng), ENTERPRISE (không giới hạn). Nếu hết hạn mức, bạn có thể nâng cấp gói bất kỳ lúc nào.",
+  },
+  {
+    question: "Hóa đơn được gửi như thế nào?",
+    answer: "Hóa đơn tự động gửi về email sau mỗi lần thanh toán. Bạn cũng có thể tải về từ Dashboard → Cài Đặt → Lịch Sử Thanh Toán.",
+  },
+  {
+    question: "Tôi có thể hủy đăng ký không?",
+    answer: "Có. Bạn có thể hủy bất kỳ lúc nào từ Dashboard → Cài Đặt → Quản Lý Gói. Tài khoản vẫn hoạt động đến hết chu kỳ thanh toán hiện tại.",
+  },
+];
 
----
+const technicalFaqs: FaqItem[] = [
+  {
+    question: "API Key có an toàn không?",
+    answer: "Có. API Keys được mã hóa theo chuẩn AES-256 trước khi lưu vào database. Chúng tôi không chia sẻ key của bạn với bất kỳ bên thứ ba nào.",
+  },
+  {
+    question: "Chiến dịch bị kẹt ở trạng thái 'Đang xử lý'?",
+    answer: "Đợi thêm 10 phút rồi làm mới trang Dashboard. Nếu vẫn còn sau 15 phút, nhấn nút 'Chạy Lại' (Retry) bên cạnh chiến dịch. Nếu vẫn không được, liên hệ hỗ trợ qua Telegram @Sophia_Bbot.",
+  },
+  {
+    question: "Bot Telegram không trả lời?",
+    answer: "Kiểm tra đúng tên bot: @Sophia_Bbot (chữ B viết hoa). Đảm bảo bạn đã nhấn START trước đó. Thử gửi lại lệnh /help và đợi 30 giây. Nếu vẫn không phản hồi, liên hệ support@agencyos.network.",
+  },
+];
 
-## 1. Tổng Quan
-
-### Sophia AI Video Factory là gì?
-
-Sophia là nền tảng giúp bạn tạo video tự động bằng trí tuệ nhân tạo (AI). Bạn chỉ cần nhập nội dung, Sophia sẽ tự viết kịch bản, tạo giọng nói, và tạo video hoàn chỉnh — bạn không cần biết làm video.
-
----
-
-### Tôi cần biết lập trình không?
-
-Không. Sophia được thiết kế cho người không biết kỹ thuật. Mọi thứ đều có hướng dẫn từng bước.
-
----
-
-### Sophia tạo video như thế nào?
-
-1. Bạn nhập nội dung (chủ đề video)
-2. AI viết kịch bản tự động (qua OpenRouter)
-3. AI tạo giọng nói tự nhiên (qua ElevenLabs)
-4. AI tạo video với người trình bày ảo (qua HeyGen)
-5. Video hoàn chỉnh được gửi cho bạn
-
----
-
-### Mất bao lâu?
-
-2-5 phút cho video ngắn (dưới 3 phút). Video dài hơn có thể mất 10-15 phút.
-
----
-
-## 2. API Keys
-
-### API Key có mất phí không?
-
-Các dịch vụ đều có gói miễn phí để bắt đầu. Khi sử dụng nhiều, bạn cần nâng cấp gói của từng dịch vụ.
-
----
-
-### API Key có an toàn không?
-
-Có. API Keys được mã hóa và lưu trữ an toàn. Chúng tôi không chia sẻ key của bạn với bất kỳ ai.
-
----
-
-## 3. Chiến Dịch
-
-### Tôi có thể tạo bao nhiêu video?
-
-| Gói | Giới hạn |
-|---|---|
-| BASIC | 20 video/tháng |
-| PREMIUM | 100 video/tháng |
-| ENTERPRISE | Không giới hạn |
-
----
-
-### Chiến dịch bị kẹt ở trạng thái Processing?
-
-1. Đợi thêm 10 phút
-2. Nhấn **"Làm Mới"** trang Dashboard
-3. Nếu vẫn còn kẹt sau 15 phút, nhấn **"Chạy Lại"** (Retry)
-4. Liên hệ hỗ trợ qua Telegram @Sophia_Bbot
-
----
-
-## 4. Telegram Bot
-
-### Bot không trả lời?
-
-1. Kiểm tra tên bot: \`@Sophia_Bbot\` (chữ B viết hoa)
-2. Đảm bảo bạn đã nhấn **"START"**
-3. Thử gửi lệnh \`/help\`
-4. Đợi 30 giây rồi thử lại
-
----
-
-## 5. Thanh Toán
-
-### Hóa đơn được gửi ở đâu?
-
-Hóa đơn tự động gửi qua email sau mỗi lần thanh toán. Bạn có thể tải hóa đơn từ Dashboard mục "Lịch Sử Thanh Toán."
-
----
-
-## 6. Hỗ Trợ
-
-| Phương thức | Chi tiết |
-|---|---|
-| Telegram Bot | @Sophia_Bbot (\`/help\`) |
-| Email | support@agencyos.network |
-| Hỗ trợ ưu tiên | PREMIUM và ENTERPRISE |
-| Hỗ trợ 24/7 | Chỉ gói ENTERPRISE |
-
----
-
-## 7. Quyền Sở Hữu Dữ Liệu
-
-- Bạn sở hữu 100% nội dung do Sophia tạo ra
-- Video được xuất bản trực tiếp lên kênh YouTube/TikTok CỦA BẠN
-- API keys được mã hóa và lưu trữ an toàn — chỉ BẠN mới truy cập được
-- Database chỉ lưu: email, gói đăng ký, cài đặt chiến dịch
-- KHÔNG lưu: video, kịch bản, giọng nói, nội dung đã tạo
-- Bạn có thể xóa tài khoản và dữ liệu bất kỳ lúc nào
-`;
+const dateFaqs: FaqItem[] = [
+  {
+    question: "Tôi có sở hữu video do Sophia tạo không?",
+    answer: "Có. Bạn sở hữu 100% nội dung. Video được xuất bản trực tiếp lên kênh YouTube/TikTok của bạn. Sophia không giữ quyền sở hữu nội dung nào.",
+  },
+  {
+    question: "Sophia lưu dữ liệu gì của tôi?",
+    answer: "Chúng tôi chỉ lưu: email, gói đăng ký, cài đặt chiến dịch, và API Keys (đã mã hóa). Chúng tôi KHÔNG lưu: video, kịch bản, giọng nói, hay bất kỳ nội dung nào bạn tạo ra.",
+  },
+];
 
 export default function FAQGuidePage() {
-  return <GuideContentRenderer content={content} />;
+  return (
+    <div className="max-w-3xl space-y-10">
+      {/* Hero */}
+      <div>
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent mb-3">
+          Câu Hỏi Thường Gặp
+        </h1>
+        <p className="text-muted-foreground leading-relaxed">
+          Giải đáp nhanh những thắc mắc phổ biến nhất về Sophia AI Factory.
+        </p>
+      </div>
+
+      {/* General */}
+      <div>
+        <h2 className="text-lg font-bold text-foreground mb-3 flex items-center gap-2">
+          <span className="w-1 h-5 rounded bg-gradient-to-b from-violet-500 to-cyan-500 inline-block" />
+          Tổng Quan
+        </h2>
+        <GuideAccordionFaq items={generalFaqs} />
+      </div>
+
+      {/* Payment */}
+      <div>
+        <h2 className="text-lg font-bold text-foreground mb-3 flex items-center gap-2">
+          <span className="w-1 h-5 rounded bg-gradient-to-b from-violet-500 to-cyan-500 inline-block" />
+          Thanh Toán & Gói Dịch Vụ
+        </h2>
+        <GuideAccordionFaq items={paymentFaqs} />
+      </div>
+
+      {/* Technical */}
+      <div>
+        <h2 className="text-lg font-bold text-foreground mb-3 flex items-center gap-2">
+          <span className="w-1 h-5 rounded bg-gradient-to-b from-violet-500 to-cyan-500 inline-block" />
+          Kỹ Thuật & Xử Lý Sự Cố
+        </h2>
+        <GuideAccordionFaq items={technicalFaqs} />
+      </div>
+
+      {/* Data */}
+      <div>
+        <h2 className="text-lg font-bold text-foreground mb-3 flex items-center gap-2">
+          <span className="w-1 h-5 rounded bg-gradient-to-b from-violet-500 to-cyan-500 inline-block" />
+          Quyền Sở Hữu & Dữ Liệu
+        </h2>
+        <GuideAccordionFaq items={dateFaqs} />
+      </div>
+
+      <GuideCallout variant="info" title="Không tìm thấy câu trả lời?">
+        Liên hệ hỗ trợ qua Telegram{" "}
+        <strong className="text-foreground">@Sophia_Bbot</strong> hoặc email{" "}
+        <strong className="text-foreground">support@agencyos.network</strong>.
+        Gói PREMIUM và ENTERPRISE được hỗ trợ ưu tiên. Gói ENTERPRISE hỗ trợ 24/7.
+      </GuideCallout>
+    </div>
+  );
 }
