@@ -309,5 +309,5 @@ export async function proxy(request: NextRequest) {
 export const middleware = proxy;
 
 export const config = {
-  matcher: ["/((?!api|_next|_vercel|setup-wizard|auth/callback|.*\\..*).*)"],
+  matcher: ["/((?!api|_next|_worker|setup-wizard|auth/callback|.*\\..*).*)"],
 };

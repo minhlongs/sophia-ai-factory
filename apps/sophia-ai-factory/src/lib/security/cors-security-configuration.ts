@@ -10,7 +10,7 @@ import { NextResponse } from 'next/server';
  * Thêm production domain và development localhost
  */
 const ALLOWED_ORIGINS = [
-  'https://sophia-ai-factory.vercel.app',
+  'https://sophia-ai-factory.pages.dev', // Cloudflare Pages
   'https://sophia.agencyos.network', // Production domain
   ...(process.env.NODE_ENV === 'development'
     ? ['http://localhost:3000', 'http://localhost:3001']

@@ -1,10 +1,10 @@
 /**
  * Daily Rollup Cron Endpoint
  *
- * Triggered by Vercel Cron to aggregate hourly summaries into daily summaries
+ * Triggered by Cloudflare Cron Trigger to aggregate hourly summaries into daily summaries
  *
  * Schedule: At 01:05 UTC every day (0 1 * * *)
- * See: vercel.json for cron configuration
+ * See: wrangler.toml for cron configuration
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -30,9 +30,9 @@ function verifyCronAuth(request: NextRequest): boolean {
     return true;
   }
 
-  // Check for Vercel cron header
-  const vercelCron = request.headers.get('x-vercel-cron');
-  if (vercelCron === 'true') {
+  // Check for Cloudflare cron header
+  const cfCron = request.headers.get('x-cf-cron');
+  if (cfCron === 'true') {
     return true;
   }
 

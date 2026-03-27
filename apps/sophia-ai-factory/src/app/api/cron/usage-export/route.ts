@@ -1,13 +1,13 @@
 /**
  * Usage Export Cron Endpoint
  *
- * Triggered by Vercel Cron to automatically export usage data for all active licenses
+ * Triggered by Cloudflare Cron Trigger to automatically export usage data for all active licenses
  *
  * Schedule: At 02:00 UTC every day (0 2 * * *)
- * See: vercel.json for cron configuration
+ * See: wrangler.toml for cron configuration
  *
  * Features:
- * - Secret validation via X-Cron-Secret or Vercel-Cron header
+ * - Secret validation via X-Cron-Secret or x-cf-cron header
  * - Query all active (non-revoked, non-expired) licenses
  * - Export usage data for previous day (00:00 - 23:59 UTC)
  * - Generate CSV/JSON exports
@@ -28,7 +28,7 @@ import type { RaasLicenseRow } from '@/lib/supabase/types';
  *
  * Checks for:
  * 1. X-Cron-Secret header matching CRON_SECRET env var
- * 2. Vercel-Cron header (set by Vercel Cron Jobs)
+ * 2. x-cf-cron header (set by Cloudflare Cron Triggers)
  * 3. Bypass in development mode
  */
 function verifyCronAuth(request: NextRequest): boolean {
@@ -49,10 +49,10 @@ function verifyCronAuth(request: NextRequest): boolean {
     return true;
   }
 
-  // Check for Vercel cron header
-  const vercelCron = request.headers.get('x-vercel-cron');
-  if (vercelCron === 'true') {
-    logger.info('[Usage Export Cron] Authenticated via Vercel-Cron');
+  // Check for Cloudflare cron header
+  const cfCron = request.headers.get('x-cf-cron');
+  if (cfCron === 'true') {
+    logger.info('[Usage Export Cron] Authenticated via Cloudflare Cron header');
     return true;
   }
 

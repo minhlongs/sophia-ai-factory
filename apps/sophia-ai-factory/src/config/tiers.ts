@@ -1,4 +1,5 @@
 import { Tier, TierConfig, FeatureFlag } from "@/types";
+import { NOWPAYMENTS_TIERS } from "@/lib/clients/nowpayments-client";
 
 /**
  * Tier configurations for Sophia AI Video Factory
@@ -14,7 +15,7 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
     name: "Starter",
     price: 199, // $199/mo USD
     priceDisplay: "$199/mo",
-    polarProductId: process.env.POLAR_PRODUCT_ID_STARTER,
+    nowpaymentsInvoiceId: NOWPAYMENTS_TIERS.BASIC.invoiceId,
     features: [
       "enable_affiliate_engine",
       "enable_roi_calculator",
@@ -31,7 +32,7 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
     name: "Growth",
     price: 399, // $399/mo USD
     priceDisplay: "$399/mo",
-    polarProductId: process.env.POLAR_PRODUCT_ID_GROWTH,
+    nowpaymentsInvoiceId: NOWPAYMENTS_TIERS.PREMIUM.invoiceId,
     recommended: true,
     features: [
       "enable_affiliate_engine",
@@ -51,7 +52,7 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
     name: "Premium",
     price: 799, // $799/mo USD
     priceDisplay: "$799/mo",
-    polarProductId: process.env.POLAR_PRODUCT_ID_PREMIUM,
+    nowpaymentsInvoiceId: NOWPAYMENTS_TIERS.ENTERPRISE.invoiceId,
     features: [
       "enable_affiliate_engine",
       "enable_admin_dashboard",
@@ -75,7 +76,7 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
     name: "Master",
     price: 4999, // $4,999 USD one-time
     priceDisplay: "$4,999",
-    polarProductId: process.env.POLAR_PRODUCT_ID_MASTER,
+    nowpaymentsInvoiceId: NOWPAYMENTS_TIERS.MASTER.invoiceId,
     features: [
       "enable_affiliate_engine",
       "enable_admin_dashboard",

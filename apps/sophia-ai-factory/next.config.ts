@@ -32,7 +32,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: '*.public.blob.vercel-storage.com', // Allow Vercel Blob (future proofing)
+        hostname: '*.r2.dev', // Allow Cloudflare R2 public buckets
       }
     ],
   },

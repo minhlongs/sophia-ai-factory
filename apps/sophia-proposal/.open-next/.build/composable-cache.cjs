@@ -17,21 +17,21 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/adapters/composable-cache.js
+// node_modules/@opennextjs/aws/dist/adapters/composable-cache.js
 var composable_cache_exports = {};
 __export(composable_cache_exports, {
   default: () => composable_cache_default
 });
 module.exports = __toCommonJS(composable_cache_exports);
 
-// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/adapters/logger.js
+// node_modules/@opennextjs/aws/dist/adapters/logger.js
 function debug(...args) {
   if (globalThis.openNextDebug) {
     console.log(...args);
   }
 }
 
-// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/utils/cache.js
+// node_modules/@opennextjs/aws/dist/utils/cache.js
 function getTagKey(tag) {
   if (typeof tag === "string") {
     return tag;
@@ -61,7 +61,7 @@ async function writeTags(tags) {
   await globalThis.tagCache.writeTags(tagsToWrite);
 }
 
-// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/utils/stream.js
+// node_modules/@opennextjs/aws/dist/utils/stream.js
 var import_web = require("node:stream/web");
 async function fromReadableStream(stream, base64) {
   const chunks = [];
@@ -93,7 +93,7 @@ function toReadableStream(value, isBase64) {
   }, { highWaterMark: 0 });
 }
 
-// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/adapters/composable-cache.js
+// node_modules/@opennextjs/aws/dist/adapters/composable-cache.js
 var pendingWritePromiseMap = /* @__PURE__ */ new Map();
 var composable_cache_default = {
   async get(cacheKey) {

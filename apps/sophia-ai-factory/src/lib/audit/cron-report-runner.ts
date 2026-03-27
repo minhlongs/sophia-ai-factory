@@ -7,7 +7,7 @@
  * - Monthly: Same day each month
  * - Quarterly: Same day every 3 months
  *
- * Run via cron job or serverless schedule (e.g., GitHub Actions, Vercel Cron)
+ * Run via cron job or serverless schedule (e.g., GitHub Actions, Cloudflare Cron Triggers)
  *
  * @module audit/cron-report-runner
  */

@@ -30,7 +30,7 @@ export interface TierConfig {
   name: string;
   price: number;
   priceDisplay: string;
-  polarProductId?: string;
+  nowpaymentsInvoiceId?: string;
   recommended?: boolean;
   features: FeatureFlag[];
   limits: {

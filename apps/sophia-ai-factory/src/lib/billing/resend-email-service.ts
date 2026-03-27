@@ -86,7 +86,7 @@ function getEmailTemplate(
   } = context;
 
   const tierDisplay = tier.charAt(0) + tier.slice(1).toLowerCase();
-  const billingUrl = 'https://sophia-ai-factory.vercel.app/dashboard/billing';
+  const billingUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://sophia-ai-factory.pages.dev'}/dashboard/billing`;
   const supportEmail = 'support@sophia.agencyos.network';
 
   // Vietnamese templates
@@ -377,7 +377,7 @@ function getVietnameseHtmlTemplate(
 ): string {
   const { tier, amount, currency, failureReason, gracePeriodDays } = context;
   const tierDisplay = tier.charAt(0) + tier.slice(1).toLowerCase();
-  const billingUrl = 'https://sophia-ai-factory.vercel.app/dashboard/billing';
+  const billingUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://sophia-ai-factory.pages.dev'}/dashboard/billing`;
 
   const colors = {
     payment_failed: { bg: '#fef2f2', header: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)', accent: '#dc2626' },
@@ -515,7 +515,7 @@ function getEnglishHtmlTemplate(
 ): string {
   const { tier, amount, currency, failureReason, gracePeriodDays } = context;
   const tierDisplay = tier.charAt(0) + tier.slice(1).toLowerCase();
-  const billingUrl = 'https://sophia-ai-factory.vercel.app/dashboard/billing';
+  const billingUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://sophia-ai-factory.pages.dev'}/dashboard/billing`;
 
   const colors = {
     payment_failed: { bg: '#fef2f2', header: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)', accent: '#dc2626' },

@@ -35,7 +35,7 @@ export interface CachedQuota {
 
 /**
  * Cloudflare KV binding type
- * Bind in wrangler.toml or Vercel environment:
+ * Bind in wrangler.toml:
  * kv_namespace = "YOUR_KV_NAMESPACE_ID"
  */
 declare global {

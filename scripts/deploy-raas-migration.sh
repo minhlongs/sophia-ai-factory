@@ -228,14 +228,14 @@ verify_api() {
     echo ""
     log_info "To verify API endpoints, you need:"
     echo "  1. Deploy the code changes (git push)"
-    echo "  2. Set environment variables on Vercel:"
+    echo "  2. Set environment variables on Cloudflare dashboard (Workers & Pages > Settings > Variables):"
     echo "     - SUPABASE_URL"
     echo "     - SUPABASE_SERVICE_ROLE_KEY"
     echo "     - RAAS_LICENSE_SECRET"
     echo ""
 
-    read -p "Enter your production URL (default: https://sophia-ai-factory.vercel.app): " PROD_URL
-    PROD_URL="${PROD_URL:-https://sophia-ai-factory.vercel.app}"
+    read -p "Enter your production URL (default: https://sophia.agencyos.network): " PROD_URL
+    PROD_URL="${PROD_URL:-https://sophia.agencyos.network}"
 
     read -p "Enter admin username (default: admin): " ADMIN_USER
     ADMIN_USER="${ADMIN_USER:-admin}"
@@ -279,9 +279,9 @@ main() {
     echo ""
     log_info "Next steps:"
     echo "  1. Update .env.local with SUPABASE_SERVICE_ROLE_KEY"
-    echo "  2. Set environment variables on Vercel dashboard"
+    echo "  2. Set environment variables on Cloudflare dashboard"
     echo "  3. Deploy: git push origin main"
-    echo "  4. Verify production: curl https://sophia-ai-factory.vercel.app"
+    echo "  4. Verify production: curl https://sophia.agencyos.network"
     echo ""
 }
 

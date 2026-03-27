@@ -1,16 +1,15 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { ServiceFactory } from '@/lib/services/factory';
-import { getProductIdByTier } from '@/lib/polar-config';
+import { createInvoiceUrl, NOWPAYMENTS_TIERS } from '@/lib/clients/nowpayments-client';
 import { checkoutSchema } from '@/lib/schemas';
 import { withRateLimit } from '@/middleware/rate-limit-wrapper';
 
 /**
  * GET handler for Telegram URL buttons which open in browser.
- * Reads tier from query params, creates checkout session, and redirects.
+ * Reads tier from query params, builds NOWPayments invoice URL, and redirects.
  */
-// Wrap handler with rate limiting (10 requests per minute for checkout)
 export const GET = withRateLimit(async function GET(request: NextRequest) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network';
   try {
     const rawTier = request.nextUrl.searchParams.get('tier')?.toUpperCase();
 
@@ -23,38 +22,22 @@ export const GET = withRateLimit(async function GET(request: NextRequest) {
     };
     const mappedTier = rawTier ? tierMap[rawTier] : undefined;
 
-    if (!mappedTier) {
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network';
+    if (!mappedTier || !NOWPAYMENTS_TIERS[mappedTier]) {
       return NextResponse.redirect(`${appUrl}/pricing`);
     }
 
-    const productId = getProductIdByTier(mappedTier);
-    if (!productId) {
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network';
-      return NextResponse.redirect(`${appUrl}/pricing`);
-    }
-
-    const origin = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network';
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     const userId = user?.id || `guest-${Date.now()}`;
 
-    const paymentService = ServiceFactory.getPaymentService();
-    const checkout = await paymentService.createCheckoutSession({
-      productIds: [productId],
-      successUrl: `${origin}/dashboard?checkout=success`,
-      customerEmail: user?.email,
-      metadata: { tier: mappedTier, userId },
-    });
-
-    return NextResponse.redirect(checkout.url);
+    const checkoutUrl = createInvoiceUrl(mappedTier, userId);
+    return NextResponse.redirect(checkoutUrl);
   } catch {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network';
     return NextResponse.redirect(`${appUrl}/pricing`);
   }
 }, { addHeaders: true, config: { intervalMs: 60000, maxRequests: 10 } });
 
-// Wrap POST handler with rate limiting (10 requests per minute for checkout)
+// POST handler — returns NOWPayments invoice URL for frontend redirect
 export const POST = withRateLimit(async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -70,45 +53,22 @@ export const POST = withRateLimit(async function POST(request: Request) {
 
     const { tier } = validation.data;
 
-    // Option D: Single subscription product per tier
-    const productId = getProductIdByTier(tier);
-
-    if (!productId) {
-      if (tier === 'MASTER') {
-        return NextResponse.json(
-          { error: 'Master tier is coming soon. Please contact support@sophia.agencyos.network for early access.' },
-          { status: 400 }
-        );
-      }
+    if (!NOWPAYMENTS_TIERS[tier]) {
       return NextResponse.json(
-        { error: `Missing product configuration for tier: ${tier}` },
+        { error: `Unknown tier: ${tier}` },
         { status: 400 }
       );
     }
 
-    const origin = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network';
-
-    // Get user from Supabase auth to pre-fill email if logged in
+    // Get user from Supabase auth
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-
-    // Generate guest ID if user not logged in (Polar requires non-empty userId)
     const userId = user?.id || `guest-${Date.now()}`;
 
-    // Create a checkout session via PaymentService (supports Mock Mode)
-    const paymentService = ServiceFactory.getPaymentService();
+    // Generate order_id = sophia_{userId}_{timestamp}
+    const checkoutUrl = createInvoiceUrl(tier, userId);
 
-    const checkout = await paymentService.createCheckoutSession({
-      productIds: [productId], // Single subscription product
-      successUrl: `${origin}/dashboard?checkout=success`,
-      customerEmail: user?.email,
-      metadata: {
-        tier: tier,
-        userId: userId,
-      }
-    });
-
-    return NextResponse.json({ url: checkout.url });
+    return NextResponse.json({ url: checkoutUrl });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(

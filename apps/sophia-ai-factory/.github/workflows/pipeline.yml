@@ -77,23 +77,8 @@ jobs:
           path: playwright-report/
           retention-days: 30
 
-  deploy-preview:
-    name: Deploy Preview (Vercel)
-    needs: quality
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      # Vercel deployment would go here
-      # For now, we rely on Vercel's automatic GitHub integration for Previews
-      # But we could enforce it here with vercel cli if needed
-      - name: Placeholder Deploy Step
-        run: echo "Vercel GitHub Integration handles this automatically"
-
   deploy-production:
-    name: Deploy Production
+    name: Deploy to Cloudflare Workers
     needs: [quality, e2e]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -101,16 +86,20 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # Actual deployment step would require VERCEL_TOKEN and project linking
-      # For Binh Phap automation, we would use the CLI
-      # - name: Install Vercel CLI
-      #   run: npm install --global vercel@latest
-      # - name: Pull Vercel Env
-      #   run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-      # - name: Build Project Artifacts
-      #   run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-      # - name: Deploy Project Artifacts to Vercel
-      #   run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
 
-      - name: Deploy Placeholder
-        run: echo "Production deployment would happen here via Vercel CLI or Git Integration"
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build for Cloudflare
+        run: npm run build
+
+      - name: Deploy to Cloudflare Workers
+        run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

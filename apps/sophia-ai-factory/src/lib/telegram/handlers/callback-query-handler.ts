@@ -32,7 +32,7 @@ export async function handleCallbackQuery(
       break
 
     case 'subscribe': {
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia-ai-factory.vercel.app'
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia-ai-factory.pages.dev'
       const checkoutUrl = `${appUrl}/api/checkout?tier=${value}&telegram_chat_id=${chatId}`
       await sendMessageWithKeyboard(
         chatId,

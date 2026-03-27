@@ -16,7 +16,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Sau mỗi `git push`, PHẢI chạy ĐỦ 3 bước:**
 
 1. **CI/CD Check**: Poll `gh run list -L 1` cho đến khi `conclusion: success`
-2. **Deploy Check**: `curl -sI "https://sophia-ai-factory.vercel.app" | head -3` → HTTP 200
+2. **Deploy Check**: `curl -sI "$PROD_URL" | head -3` → HTTP 200
 3. **Smoke Test**: Verify production page loads correctly
 
 **Report Format BẮT BUỘC:**
@@ -31,7 +31,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Thiếu bất kỳ dòng nào = task CHƯA XONG.**
 
 ```
-PROD_URL="https://sophia-ai-factory.vercel.app"
+PROD_URL="https://sophia.agencyos.network"
 GITHUB_REPO="longtho638-jpg/sophia-ai-factory"
 ```
 
@@ -186,7 +186,7 @@ All TypeScript errors must be resolved before building. The build will fail on t
 2. **Lint PHẢI pass:** `npm run lint` — 0 warnings/errors
 3. **Tests PHẢI pass:** `npm test` — 100% green (nếu có test suite)
 4. **Commit + Push:** `git add . && git commit && git push origin main`
-5. **Deploy Production:** `npx vercel --prod` — PHẢI deploy thành công
+5. **Deploy Production:** `npx wrangler deploy` — PHẢI deploy thành công
 6. **Verify Production:** Kiểm tra URL production hoạt động đúng
 
 **KHÔNG ĐƯỢC báo "hoàn thành" nếu chưa qua đủ 6 bước trên.**
