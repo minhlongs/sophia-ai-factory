@@ -48,7 +48,7 @@ export function CouponInput({ tiers, onDiscountApplied, onDiscountCleared }: Cou
           fetch("https://api.cashclaw.cc/api/coupons/apply", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ code: trimmed, tier }),
+            body: JSON.stringify({ code: trimmed, tier, project: "sophia" }),
           }).then((res) => res.json() as Promise<CouponResult & { error?: string }>)
         )
       );
