@@ -22,8 +22,8 @@ const DiscoveryDashboard = dynamic(
 )
 
 export const metadata: Metadata = {
-  title: 'Sophia Index - Affiliate Discovery',
-  description: 'AI-powered affiliate product discovery engine.',
+  title: 'Sophia Index — Khám Phá Sản Phẩm Liên Kết',
+  description: 'Công cụ khám phá sản phẩm liên kết tiềm năng cao, được đánh giá bởi AI.',
 }
 
 export default function AffiliateDiscoveryPage() {
@@ -32,7 +32,7 @@ export default function AffiliateDiscoveryPage() {
       <div className="mb-8 border-b border-border/40 pb-6">
         <h1 className="text-3xl font-bold tracking-tight">Sophia Index</h1>
         <p className="mt-2 text-lg text-muted-foreground">
-          Discover high-potential affiliate products with our AI scoring engine.
+          Khám phá sản phẩm liên kết tiềm năng cao với công cụ chấm điểm AI của chúng tôi.
         </p>
       </div>
 

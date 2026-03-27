@@ -18,10 +18,10 @@ export default function Error({
     <div role="alert" className="flex flex-col items-center justify-center min-h-screen p-4 space-y-6 text-center">
       <div className="space-y-2 w-full max-w-md">
         <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl text-[var(--neon-pink)]">
-          Something went wrong!
+          Đã xảy ra lỗi!
         </h1>
         <p className="text-muted-foreground w-full">
-          We apologize for the inconvenience. An unexpected error has occurred.
+          Xin lỗi vì sự bất tiện này. Đã xảy ra lỗi không mong muốn.
         </p>
       </div>
       <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
@@ -30,13 +30,13 @@ export default function Error({
           variant="outline"
           className="border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10 w-full sm:w-auto"
         >
-          Try again
+          Thử lại
         </Button>
         <Button
           onClick={() => (window.location.href = "/")}
           className="bg-[var(--neon-purple)] hover:bg-[var(--neon-purple)]/80 text-white w-full sm:w-auto"
         >
-          Go Home
+          Về trang chủ
         </Button>
       </div>
     </div>

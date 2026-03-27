@@ -1,134 +1,218 @@
 import { Metadata } from "next";
+import { Brain, Mic, Video, Database, CreditCard, Bot } from "lucide-react";
+import { GuideStepCard } from "@/components/guide/guide-step-card";
+import { GuideCallout } from "@/components/guide/guide-callout";
+import { GuideFeatureGrid, GuideFeatureItem } from "@/components/guide/guide-feature-grid";
 import { YouTubeEmbed } from "@/components/guide/youtube-embed";
 
 export const metadata: Metadata = {
-  title: "Platform Integrations — Sophia AI Factory Guide",
-  description: "Set up OpenRouter, HeyGen, ElevenLabs, and YouTube integrations for Sophia AI Factory",
+  title: "Tích Hợp Dịch Vụ — Hướng Dẫn Sophia AI Factory",
+  description: "Hướng dẫn kết nối OpenRouter, ElevenLabs, HeyGen, Supabase, NOWPayments và Telegram Bot",
 };
 
-const integrations = [
+const services: GuideFeatureItem[] = [
   {
-    emoji: "\u{1F9E0}",
-    name: "OpenRouter — AI Brain",
-    what: "Powers Sophia's script writing and AI intelligence",
-    pricing: "Free tier available, pay-per-use after",
-    setupTime: "2 minutes",
-    videoId: "VvJvJ0uXiVQ",
-    videoTitle: "How to Use AI Models API for Free | OpenRouter Tutorial",
-    steps: [
-      "Go to openrouter.ai",
-      'Click "Sign Up" (use your email)',
-      'After login, click your name \u2192 "Keys"',
-      'Click "Create Key" \u2192 name it "Sophia"',
-      "Copy the key \u2192 paste in Sophia Settings \u2192 API Keys \u2192 OpenRouter",
-    ],
+    icon: Brain,
+    title: "OpenRouter — Viết Kịch Bản AI",
+    description: "Cung cấp trí tuệ nhân tạo để viết kịch bản video tự động, tối ưu cho từng sản phẩm.",
+    iconColor: "text-cyan-400",
   },
   {
-    emoji: "\u{1F3AD}",
-    name: "HeyGen — AI Avatar Creator",
-    what: "Creates realistic AI avatars that present your videos",
-    pricing: "Free trial, paid plans from $29/month",
-    setupTime: "3 minutes",
-    videoId: "wICY3ZV15QA",
-    videoTitle: "HeyGen Academy: 101 - Introduction (Part 1)",
-    steps: [
-      "Go to heygen.com",
-      'Click "Start Free Trial"',
-      "After login, go to Settings \u2192 API",
-      "Copy your API key",
-      "Paste in Sophia Settings \u2192 API Keys \u2192 HeyGen",
-    ],
+    icon: Mic,
+    title: "ElevenLabs — Giọng Nói AI",
+    description: "Chuyển kịch bản thành giọng nói tự nhiên với hàng chục giọng tiếng Việt và Anh.",
+    iconColor: "text-blue-400",
   },
   {
-    emoji: "\u{1F5E3}\uFE0F",
-    name: "ElevenLabs — AI Voice",
-    what: "Creates natural-sounding voiceovers for your videos",
-    pricing: "Free tier (10,000 characters/month), paid from $5/month",
-    setupTime: "2 minutes",
-    videoId: "WBnywbB_4Lk",
-    videoTitle: "How To Use Eleven Labs API",
-    steps: [
-      "Go to elevenlabs.io",
-      'Click "Sign Up" (free)',
-      'After login, click your profile \u2192 "Profile + API key"',
-      "Copy the API key",
-      "Paste in Sophia Settings \u2192 API Keys \u2192 ElevenLabs",
-    ],
+    icon: Video,
+    title: "HeyGen — Avatar Video",
+    description: "Tạo người dẫn ảo AI trình bày nội dung video, không cần quay camera thật.",
+    iconColor: "text-violet-400",
   },
   {
-    emoji: "\u{1F4FA}",
-    name: "YouTube Data API — Publishing Channel",
-    what: "Allows Sophia to publish videos directly to your YouTube channel",
-    pricing: "Free (Google quota limits apply)",
-    setupTime: "5 minutes",
-    videoId: null,
-    videoTitle: null,
-    steps: [
-      "Go to Google Cloud Console (cloud.google.com)",
-      'Create a new project (name it "Sophia")',
-      'Enable "YouTube Data API v3"',
-      "Go to Credentials \u2192 Create OAuth 2.0 Client ID",
-      "Copy Client ID + Secret",
-      "Paste in Sophia Settings \u2192 API Keys \u2192 YouTube",
-    ],
+    icon: Database,
+    title: "Supabase — Cơ Sở Dữ Liệu",
+    description: "Lưu trữ và đồng bộ dữ liệu chiến dịch, API keys và cấu hình hệ thống an toàn.",
+    iconColor: "text-emerald-400",
+  },
+  {
+    icon: CreditCard,
+    title: "NOWPayments — Thanh Toán Crypto",
+    description: "Nhận thanh toán bằng tiền điện tử (USDT, BTC...) từ khách hàng toàn cầu.",
+    iconColor: "text-amber-400",
+  },
+  {
+    icon: Bot,
+    title: "Telegram Bot — Điều Khiển Từ Xa",
+    description: "Tạo và theo dõi chiến dịch video ngay trên Telegram, không cần mở trình duyệt.",
+    iconColor: "text-sky-400",
   },
 ];
 
 export default function IntegrationsGuidePage() {
   return (
-    <div className="prose prose-invert max-w-none">
-      <h1 className="text-3xl font-bold bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] bg-clip-text text-transparent">
-        Platform Integration Guides
-      </h1>
-      <p className="text-lg text-muted-foreground mt-2">
-        Sophia connects to these services. Each guide below helps you set up in under 5 minutes.
-      </p>
-
-      <div className="space-y-12 mt-8">
-        {integrations.map((integration) => (
-          <section
-            key={integration.name}
-            className="rounded-xl border border-white/10 bg-white/[0.02] p-6 space-y-4"
-          >
-            <h2 className="text-2xl font-bold text-foreground flex items-center gap-2 !mt-0">
-              <span>{integration.emoji}</span> {integration.name}
-            </h2>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
-              <div className="rounded-lg border border-white/5 bg-white/[0.02] px-4 py-3">
-                <div className="text-muted-foreground text-xs uppercase tracking-wider mb-1">What</div>
-                <div className="text-foreground">{integration.what}</div>
-              </div>
-              <div className="rounded-lg border border-white/5 bg-white/[0.02] px-4 py-3">
-                <div className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Pricing</div>
-                <div className="text-foreground">{integration.pricing}</div>
-              </div>
-              <div className="rounded-lg border border-white/5 bg-white/[0.02] px-4 py-3">
-                <div className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Setup Time</div>
-                <div className="text-foreground">{integration.setupTime}</div>
-              </div>
-            </div>
-
-            {integration.videoId && integration.videoTitle && (
-              <div>
-                <h3 className="text-lg font-semibold text-foreground !mt-0 mb-2">Video Tutorial</h3>
-                <YouTubeEmbed videoId={integration.videoId} title={integration.videoTitle} />
-              </div>
-            )}
-
-            <div>
-              <h3 className="text-lg font-semibold text-foreground !mt-0 mb-3">Step-by-Step Setup</h3>
-              <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
-                {integration.steps.map((step, i) => (
-                  <li key={i} className="leading-relaxed">
-                    {step}
-                  </li>
-                ))}
-              </ol>
-            </div>
-          </section>
-        ))}
+    <div className="max-w-3xl space-y-10">
+      {/* Hero */}
+      <div>
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent mb-3">
+          Tích Hợp Dịch Vụ
+        </h1>
+        <p className="text-muted-foreground leading-relaxed">
+          Sophia kết nối 6 dịch vụ bên ngoài để tự động hoá toàn bộ quy trình sản xuất video.
+          Mỗi dịch vụ chỉ cần thiết lập <strong className="text-foreground">1 lần duy nhất</strong>.
+        </p>
       </div>
+
+      {/* Overview grid */}
+      <div>
+        <h2 className="text-xl font-bold text-foreground mb-4">Tổng Quan 6 Dịch Vụ</h2>
+        <GuideFeatureGrid features={services} columns={3} />
+      </div>
+
+      {/* OpenRouter */}
+      <section className="space-y-4">
+        <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+          <Brain className="w-5 h-5 text-cyan-400" /> OpenRouter — Não AI Viết Kịch Bản
+        </h2>
+
+        <div className="grid sm:grid-cols-3 gap-3 text-sm">
+          <div className="rounded-lg border border-border/40 bg-card/50 px-4 py-3">
+            <div className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Chi Phí</div>
+            <div className="text-foreground">Miễn phí ban đầu, trả theo dùng</div>
+          </div>
+          <div className="rounded-lg border border-border/40 bg-card/50 px-4 py-3">
+            <div className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Thời Gian Thiết Lập</div>
+            <div className="text-foreground">2 phút</div>
+          </div>
+          <div className="rounded-lg border border-border/40 bg-card/50 px-4 py-3">
+            <div className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Video Hướng Dẫn</div>
+            <div className="text-foreground">Có (xem bên dưới)</div>
+          </div>
+        </div>
+
+        <YouTubeEmbed videoId="VvJvJ0uXiVQ" title="How to Use AI Models API for Free | OpenRouter Tutorial" />
+
+        <div className="space-y-3">
+          <GuideStepCard step={1} title="Truy cập openrouter.ai" description="Mở trình duyệt và vào trang openrouter.ai" />
+          <GuideStepCard step={2} title="Đăng ký tài khoản" description='Nhấn "Sign Up" và dùng email để đăng ký miễn phí.' />
+          <GuideStepCard step={3} title="Tạo API Key" description='Sau khi đăng nhập, nhấn tên bạn → "Keys" → "Create Key" → đặt tên "Sophia".' />
+          <GuideStepCard step={4} title="Dán vào Sophia" description="Sao chép key → vào Sophia Cài Đặt → API Keys → OpenRouter → Lưu." />
+        </div>
+      </section>
+
+      {/* ElevenLabs */}
+      <section className="space-y-4">
+        <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+          <Mic className="w-5 h-5 text-blue-400" /> ElevenLabs — Giọng Nói AI
+        </h2>
+
+        <div className="grid sm:grid-cols-3 gap-3 text-sm">
+          <div className="rounded-lg border border-border/40 bg-card/50 px-4 py-3">
+            <div className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Chi Phí</div>
+            <div className="text-foreground">Miễn phí 10.000 ký tự/tháng</div>
+          </div>
+          <div className="rounded-lg border border-border/40 bg-card/50 px-4 py-3">
+            <div className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Gói Trả Phí</div>
+            <div className="text-foreground">Từ $5/tháng</div>
+          </div>
+          <div className="rounded-lg border border-border/40 bg-card/50 px-4 py-3">
+            <div className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Thời Gian Thiết Lập</div>
+            <div className="text-foreground">2 phút</div>
+          </div>
+        </div>
+
+        <YouTubeEmbed videoId="WBnywbB_4Lk" title="How To Use Eleven Labs API" />
+
+        <div className="space-y-3">
+          <GuideStepCard step={1} title="Truy cập elevenlabs.io" description="Vào trang elevenlabs.io và đăng ký tài khoản miễn phí." />
+          <GuideStepCard step={2} title="Lấy API Key" description='Sau khi đăng nhập, nhấn ảnh đại diện → "Profile + API key" → sao chép key.' />
+          <GuideStepCard step={3} title="Dán vào Sophia" description="Vào Sophia Cài Đặt → API Keys → ElevenLabs → dán key → Lưu." />
+        </div>
+      </section>
+
+      {/* HeyGen */}
+      <section className="space-y-4">
+        <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+          <Video className="w-5 h-5 text-violet-400" /> HeyGen — Avatar Video AI
+        </h2>
+
+        <div className="grid sm:grid-cols-3 gap-3 text-sm">
+          <div className="rounded-lg border border-border/40 bg-card/50 px-4 py-3">
+            <div className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Chi Phí</div>
+            <div className="text-foreground">Dùng thử miễn phí</div>
+          </div>
+          <div className="rounded-lg border border-border/40 bg-card/50 px-4 py-3">
+            <div className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Gói Trả Phí</div>
+            <div className="text-foreground">Từ $29/tháng</div>
+          </div>
+          <div className="rounded-lg border border-border/40 bg-card/50 px-4 py-3">
+            <div className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Thời Gian Thiết Lập</div>
+            <div className="text-foreground">3 phút</div>
+          </div>
+        </div>
+
+        <YouTubeEmbed videoId="wICY3ZV15QA" title="HeyGen Academy: 101 - Introduction (Part 1)" />
+
+        <div className="space-y-3">
+          <GuideStepCard step={1} title="Truy cập heygen.com" description='Vào heygen.com và nhấn "Start Free Trial".' />
+          <GuideStepCard step={2} title="Lấy API Key" description="Sau khi đăng nhập, vào Settings → API → sao chép API key." />
+          <GuideStepCard step={3} title="Dán vào Sophia" description="Vào Sophia Cài Đặt → API Keys → HeyGen → dán key → Lưu." />
+        </div>
+      </section>
+
+      {/* Supabase */}
+      <section className="space-y-4">
+        <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+          <Database className="w-5 h-5 text-emerald-400" /> Supabase — Cơ Sở Dữ Liệu
+        </h2>
+        <GuideCallout variant="info">
+          Supabase được Sophia cấu hình sẵn. Bạn không cần thiết lập gì thêm — dữ liệu của bạn
+          được lưu và mã hóa tự động.
+        </GuideCallout>
+      </section>
+
+      {/* NOWPayments */}
+      <section className="space-y-4">
+        <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+          <CreditCard className="w-5 h-5 text-amber-400" /> NOWPayments — Thanh Toán Crypto
+        </h2>
+        <GuideCallout variant="tip">
+          NOWPayments cho phép nhận USDT, BTC và nhiều loại tiền điện tử khác. Liên hệ hỗ trợ
+          để kích hoạt tính năng này nếu bạn muốn thanh toán bằng crypto.
+        </GuideCallout>
+      </section>
+
+      {/* Telegram Bot */}
+      <section className="space-y-4">
+        <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+          <Bot className="w-5 h-5 text-sky-400" /> Telegram Bot — Điều Khiển Từ Xa
+        </h2>
+        <GuideCallout variant="important">
+          Xem hướng dẫn chi tiết tại trang{" "}
+          <a href="/guide/telegram" className="underline text-violet-300 hover:text-violet-200">
+            Kết Nối Telegram Bot
+          </a>{" "}
+          — tích hợp này cho phép tạo và theo dõi chiến dịch ngay trên điện thoại.
+        </GuideCallout>
+        <div className="space-y-3">
+          <GuideStepCard
+            step={1}
+            title="Tìm bot trên Telegram"
+            description="Mở Telegram và tìm kiếm @Sophia_Bbot"
+            code="@Sophia_Bbot"
+          />
+          <GuideStepCard
+            step={2}
+            title="Kích hoạt bot"
+            description='Nhấn "Start" hoặc gõ /start để kết nối tài khoản Sophia của bạn.'
+          />
+          <GuideStepCard
+            step={3}
+            title="Sử dụng lệnh"
+            description="Dùng /campaign để tạo chiến dịch, /status để kiểm tra tiến độ, /results để xem kết quả."
+          />
+        </div>
+      </section>
     </div>
   );
 }

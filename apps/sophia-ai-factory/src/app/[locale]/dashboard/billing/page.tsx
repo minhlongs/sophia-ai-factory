@@ -93,7 +93,7 @@ export default function BillingPage({ params }: { params: Promise<{ locale: stri
       <div className="flex items-center justify-center p-8">
         <div className="space-y-4">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
-          <p className="text-muted-foreground">Loading billing data...</p>
+          <p className="text-muted-foreground">Đang tải dữ liệu thanh toán...</p>
         </div>
       </div>
     );
@@ -104,7 +104,7 @@ export default function BillingPage({ params }: { params: Promise<{ locale: stri
       <div className="p-6">
         <div className="bg-destructive/15 border border-destructive text-destructive px-4 py-3 rounded-lg">
           <AlertCircle className="h-5 w-5 inline mr-2" />
-          Failed to load billing data. Please try again later.
+          Không thể tải dữ liệu thanh toán. Vui lòng thử lại sau.
         </div>
       </div>
     );
@@ -263,12 +263,12 @@ export default function BillingPage({ params }: { params: Promise<{ locale: stri
 
       {/* Quota Gauges */}
       <div>
-        <h2 className="text-xl font-semibold mb-4">Quota Utilization</h2>
+        <h2 className="text-xl font-semibold mb-4">Sử Dụng Hạn Mức</h2>
         <Card>
           <CardHeader>
-            <CardTitle>Resource Usage</CardTitle>
+            <CardTitle>Mức Dùng Tài Nguyên</CardTitle>
             <CardDescription>
-              Visual representation of your resource consumption
+              Biểu đồ trực quan mức tiêu thụ tài nguyên
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -279,22 +279,22 @@ export default function BillingPage({ params }: { params: Promise<{ locale: stri
 
       {/* Overage Charges Table */}
       <div>
-        <h2 className="text-xl font-semibold mb-4">Overage Details</h2>
+        <h2 className="text-xl font-semibold mb-4">Chi Tiết Vượt Hạn</h2>
         <Card>
           <CardHeader>
-            <CardTitle>Overage Events This Period</CardTitle>
+            <CardTitle>Sự Kiện Vượt Hạn Kỳ Này</CardTitle>
             <CardDescription>
-              Period: {new Date(usageData.period.start).toLocaleDateString()} - {new Date(usageData.period.end).toLocaleDateString()}
+              Kỳ: {new Date(usageData.period.start).toLocaleDateString()} - {new Date(usageData.period.end).toLocaleDateString()}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Resource Type</TableHead>
-                  <TableHead>Overage Credits</TableHead>
-                  <TableHead>Billable Events</TableHead>
-                  <TableHead className="text-right">Est. Charge</TableHead>
+                  <TableHead>Loại Tài Nguyên</TableHead>
+                  <TableHead>Credits Vượt</TableHead>
+                  <TableHead>Sự Kiện Tính Phí</TableHead>
+                  <TableHead className="text-right">Phí Ước Tính</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -322,7 +322,7 @@ export default function BillingPage({ params }: { params: Promise<{ locale: stri
                 {usageData.overageEvents.total === 0 && (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                      No overage events this period
+                      Không có sự kiện vượt hạn trong kỳ này
                     </TableCell>
                   </TableRow>
                 )}
@@ -331,21 +331,21 @@ export default function BillingPage({ params }: { params: Promise<{ locale: stri
 
             <div className="flex items-center justify-between mt-4 pt-4 border-t">
               <div>
-                <p className="text-sm text-muted-foreground">Total Overage Credits</p>
+                <p className="text-sm text-muted-foreground">Tổng Credits Vượt</p>
                 <p className="text-lg font-semibold">
                   {usageData.overageEvents.totalCredits.toLocaleString()}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Grace Period</p>
+                <p className="text-sm text-muted-foreground">Ân Hạn</p>
                 <p className="text-lg font-semibold">
                   {usageData.projectedCharges.gracePeriodCredits === Infinity
-                    ? 'Unlimited'
+                    ? 'Không giới hạn'
                     : usageData.projectedCharges.gracePeriodCredits.toLocaleString()}
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-sm text-muted-foreground">Total Estimated</p>
+                <p className="text-sm text-muted-foreground">Tổng Ước Tính</p>
                 <p className="text-lg font-bold text-primary">
                   {formatCurrency(usageData.projectedCharges.overageChargesCents)}
                 </p>
@@ -355,24 +355,24 @@ export default function BillingPage({ params }: { params: Promise<{ locale: stri
         </Card>
       </div>
 
-      {/* Payment History */}
+      {/* Lịch Sử Thanh Toán */}
       <div>
-        <h2 className="text-xl font-semibold mb-4">Payment History</h2>
+        <h2 className="text-xl font-semibold mb-4">Lịch Sử Thanh Toán</h2>
         <Card>
           <CardHeader>
-            <CardTitle>Recent Payments</CardTitle>
+            <CardTitle>Thanh Toán Gần Đây</CardTitle>
             <CardDescription>
-              Your payment history for the last 6 months
+              Lịch sử thanh toán trong 6 tháng gần nhất
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead>Ngày</TableHead>
+                  <TableHead>Mô Tả</TableHead>
+                  <TableHead>Trạng Thái</TableHead>
+                  <TableHead className="text-right">Số Tiền</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -381,9 +381,9 @@ export default function BillingPage({ params }: { params: Promise<{ locale: stri
                   <TableCell className="font-medium">
                     {new Date().toLocaleDateString()}
                   </TableCell>
-                  <TableCell>{usageData.license.tier} Subscription</TableCell>
+                  <TableCell>{usageData.license.tier} Đăng Ký</TableCell>
                   <TableCell>
-                    <Badge variant="default">Paid</Badge>
+                    <Badge variant="default">Đã Thanh Toán</Badge>
                   </TableCell>
                   <TableCell className="text-right">
                     {formatCurrency(usageData.projectedCharges.basePriceCents)}
@@ -393,9 +393,9 @@ export default function BillingPage({ params }: { params: Promise<{ locale: stri
                   <TableCell className="font-medium">
                     {new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toLocaleDateString()}
                   </TableCell>
-                  <TableCell>{usageData.license.tier} Subscription</TableCell>
+                  <TableCell>{usageData.license.tier} Đăng Ký</TableCell>
                   <TableCell>
-                    <Badge variant="default">Paid</Badge>
+                    <Badge variant="default">Đã Thanh Toán</Badge>
                   </TableCell>
                   <TableCell className="text-right">
                     {formatCurrency(usageData.projectedCharges.basePriceCents)}
@@ -405,9 +405,9 @@ export default function BillingPage({ params }: { params: Promise<{ locale: stri
                   <TableCell className="font-medium">
                     {new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toLocaleDateString()}
                   </TableCell>
-                  <TableCell>{usageData.license.tier} Subscription</TableCell>
+                  <TableCell>{usageData.license.tier} Đăng Ký</TableCell>
                   <TableCell>
-                    <Badge variant="default">Paid</Badge>
+                    <Badge variant="default">Đã Thanh Toán</Badge>
                   </TableCell>
                   <TableCell className="text-right">
                     {formatCurrency(usageData.projectedCharges.basePriceCents)}

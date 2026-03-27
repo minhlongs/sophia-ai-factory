@@ -100,9 +100,9 @@ export function TikTokConnectionSettings() {
           {isConnected && displayName ? (
             <p className="text-xs text-muted-foreground">@{displayName}</p>
           ) : isConnected ? (
-            <p className="text-xs text-green-600">Connected</p>
+            <p className="text-xs text-green-600">Đã kết nối</p>
           ) : (
-            <p className="text-xs text-muted-foreground">Not connected</p>
+            <p className="text-xs text-muted-foreground">Chưa kết nối</p>
           )}
         </div>
       </div>
