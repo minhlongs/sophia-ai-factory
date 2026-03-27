@@ -1,62 +1,80 @@
-import { GuideContentRenderer } from "@/components/guide/guide-content-renderer";
 import { Metadata } from "next";
+import { GuideCommandCard } from "@/components/guide/guide-command-card";
+import { GuideCallout } from "@/components/guide/guide-callout";
 
 export const metadata: Metadata = {
   title: "Lệnh Telegram Bot — Hướng Dẫn Sophia AI Factory",
   description: "Danh sách đầy đủ các lệnh bot Telegram của Sophia",
 };
 
-const content = `# Lệnh Bot Telegram
-
-Sophia có bot Telegram giúp bạn quản lý mọi thứ từ điện thoại.
-**Bot:** @Sophia_Bbot
-
----
-
-## Bắt Đầu Nhanh
-
-1. Mở Telegram
-2. Tìm kiếm **@Sophia_Bbot** (hoặc dùng link: [t.me/Sophia_Bbot](https://t.me/Sophia_Bbot))
-3. Nhấn **"Start"**
-4. Liên kết email của bạn: \`/email your@email.com\`
-
----
-
-## Danh Sách Lệnh
-
-| Lệnh | Chức năng | Ví dụ |
-|---------|-------------|---------|
-| \`/start\` | Tin nhắn chào mừng + thiết lập | \`/start\` |
-| \`/email\` | Liên kết tài khoản Sophia | \`/email john@example.com\` |
-| \`/campaign\` | Tạo chiến dịch video mới | \`/campaign Đánh giá thiết bị thân thiện môi trường\` |
-| \`/status\` | Kiểm tra chiến dịch đang chạy | \`/status\` |
-| \`/results\` | Lấy link video đã hoàn thành | \`/results\` |
-| \`/help\` | Xem tất cả lệnh | \`/help\` |
-
----
-
-## Cách Tạo Video Qua Telegram
-
-**Bước 1:** Đảm bảo tài khoản đã được liên kết (\`/email\`)
-
-**Bước 2:** Nhập \`/campaign\` theo sau là chủ đề video
-
-**Bước 3:** Sophia sẽ viết kịch bản, tạo giọng nói, tạo video avatar
-
-**Bước 4:** Nhập \`/status\` để kiểm tra tiến độ
-
-**Bước 5:** Nhập \`/results\` để lấy link YouTube khi xong
-
----
-
-## Mẹo Hay
-
-- **Mô tả chủ đề cụ thể:** \`/campaign Top 5 tai nghe không dây dưới 1 triệu đánh giá\` tốt hơn \`/campaign tai nghe\`
-- **Kiểm tra trạng thái thường xuyên:** chiến dịch mất 5-10 phút để hoàn thành
-- **Dữ liệu thuộc về bạn** — video được đăng trực tiếp lên kênh YouTube CỦA BẠN
-- **Nhiều chiến dịch:** bạn có thể tạo nhiều chiến dịch và kiểm tra trạng thái tất cả cùng lúc
-`;
+const commandCategories = [
+  {
+    label: "Khởi Đầu",
+    commands: [
+      { command: "/start", description: "Khởi động bot và hiện tin nhắn chào mừng kèm hướng dẫn thiết lập.", example: "/start" },
+      { command: "/help", description: "Xem toàn bộ danh sách lệnh có sẵn và cú pháp sử dụng.", example: "/help" },
+      { command: "/email", description: "Liên kết tài khoản Sophia của bạn với Telegram để bot nhận biết bạn.", example: "/email ban@email.com" },
+    ],
+  },
+  {
+    label: "Chiến Dịch Video",
+    commands: [
+      { command: "/campaign", description: "Tạo chiến dịch video mới. Nhập chủ đề ngay sau lệnh hoặc bot sẽ hỏi từng bước.", example: "/campaign Top 5 tai nghe không dây 2024", mcuCost: "10–50" },
+      { command: "/status", description: "Kiểm tra trạng thái tất cả chiến dịch đang chạy của bạn.", example: "/status" },
+      { command: "/results", description: "Lấy link tải video đã hoàn thành và link YouTube (nếu đã xuất bản).", example: "/results" },
+    ],
+  },
+  {
+    label: "Quản Lý",
+    commands: [
+      { command: "/stop", description: "Tạm dừng chiến dịch đang chạy để tiết kiệm MCU credits.", example: "/stop" },
+      { command: "/link", description: "Tạo lại liên kết xác thực nếu bạn cần đổi tài khoản Telegram.", example: "/link" },
+    ],
+  },
+];
 
 export default function CommandsGuidePage() {
-  return <GuideContentRenderer content={content} />;
+  return (
+    <div className="max-w-3xl space-y-10">
+      {/* Hero */}
+      <div>
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent mb-3">
+          Lệnh Bot Telegram
+        </h1>
+        <p className="text-muted-foreground leading-relaxed">
+          Bot <span className="font-mono text-cyan-400 text-sm">@Sophia_Bbot</span> giúp bạn quản lý chiến dịch ngay trên điện thoại, 24/7.
+        </p>
+      </div>
+
+      <GuideCallout variant="tip" title="Bắt đầu nhanh">
+        Tìm <span className="font-mono text-cyan-400 text-xs">@Sophia_Bbot</span> trên Telegram → nhấn <strong className="text-foreground">START</strong> → nhập <span className="font-mono text-cyan-400 text-xs">/email ban@email.com</span> để liên kết tài khoản.
+      </GuideCallout>
+
+      {/* Commands by category */}
+      {commandCategories.map((cat) => (
+        <div key={cat.label}>
+          <h2 className="text-lg font-bold text-foreground mb-3 flex items-center gap-2">
+            <span className="w-1 h-5 rounded bg-gradient-to-b from-violet-500 to-cyan-500 inline-block" />
+            {cat.label}
+          </h2>
+          <div className="space-y-3">
+            {cat.commands.map((cmd) => (
+              <GuideCommandCard
+                key={cmd.command}
+                command={cmd.command}
+                description={cmd.description}
+                example={cmd.example}
+                mcuCost={"mcuCost" in cmd ? cmd.mcuCost as string : undefined}
+              />
+            ))}
+          </div>
+        </div>
+      ))}
+
+      <GuideCallout variant="info" title="Về MCU Credits">
+        MCU (Media Credit Unit) là đơn vị tính phí xử lý video. Chi phí tùy thuộc vào độ dài video và độ phức tạp.
+        Gói BASIC được 200 MCU/tháng, PREMIUM được 1.000 MCU/tháng, ENTERPRISE không giới hạn.
+      </GuideCallout>
+    </div>
+  );
 }

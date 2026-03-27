@@ -1,152 +1,132 @@
-import { GuideContentRenderer } from "@/components/guide/guide-content-renderer";
 import { Metadata } from "next";
+import { LayoutDashboard, PlusCircle, ListVideo, BarChart3, Settings, Key, CreditCard, Search } from "lucide-react";
+import { GuideFeatureGrid, GuideFeatureItem } from "@/components/guide/guide-feature-grid";
+import { GuideCallout } from "@/components/guide/guide-callout";
 
 export const metadata: Metadata = {
   title: "Hướng Dẫn Màn Hình A-Z — Hướng Dẫn Sophia AI Factory",
   description: "Hướng dẫn đầy đủ từng màn hình trong Sophia AI Video Factory",
 };
 
-const content = `# Hướng Dẫn Sử Dụng A-Z
+const dashboardFeatures: GuideFeatureItem[] = [
+  {
+    icon: LayoutDashboard,
+    title: "Dashboard Tổng Quan",
+    description: "Xem nhanh tổng số video, chiến dịch đang chạy, và tỷ lệ hoàn thành. URL: /dashboard",
+    iconColor: "text-violet-400",
+  },
+  {
+    icon: PlusCircle,
+    title: "Tạo Chiến Dịch",
+    description: "Tạo video mới bằng cách chọn mẫu, nhập nội dung và giọng nói. URL: /dashboard/create",
+    iconColor: "text-cyan-400",
+  },
+  {
+    icon: ListVideo,
+    title: "Danh Sách Chiến Dịch",
+    description: "Quản lý tất cả video đã tạo: xem, tải về, hoặc chạy lại. URL: /dashboard/campaigns",
+    iconColor: "text-blue-400",
+  },
+  {
+    icon: BarChart3,
+    title: "Thống Kê & Analytics",
+    description: "Biểu đồ số video theo thời gian, tỷ lệ thành công, và hiệu suất. URL: /dashboard/analytics",
+    iconColor: "text-emerald-400",
+  },
+  {
+    icon: Key,
+    title: "API Keys",
+    description: "Quản lý keys cho OpenRouter, ElevenLabs và HeyGen. Chỉ nhập 1 lần. URL: /dashboard/settings",
+    iconColor: "text-amber-400",
+  },
+  {
+    icon: CreditCard,
+    title: "Thanh Toán & Gói",
+    description: "Xem gói hiện tại, nâng cấp, và tải lịch sử hóa đơn. URL: /dashboard/settings",
+    iconColor: "text-rose-400",
+  },
+];
 
-> Tài liệu này giúp bạn hiểu **từng màn hình** trong Sophia.
-
----
-
-## Mục Lục
-
-| # | Trang | URL |
-|---|---|---|
-| 1 | Trang Chủ | \`/\` |
-| 2 | Bảng Giá | \`/pricing\` |
-| 3 | Thiết Lập | \`/setup-wizard\` |
-| 4 | Dashboard | \`/dashboard\` |
-| 5 | Tạo Chiến Dịch | \`/dashboard/create\` |
-| 6 | Danh Sách Chiến Dịch | \`/dashboard/campaigns\` |
-| 7 | Thống Kê | \`/dashboard/analytics\` |
-| 8 | Cài Đặt | \`/dashboard/settings\` |
-| 9 | Tìm Sản Phẩm | \`/affiliate-discovery\` |
-
----
-
-## 1. Trang Chủ
-
-**URL:** \`/\`
-
-| Phần | Mô tả |
-|---|---|
-| **Hero** (đầu trang) | Tiêu đề lớn + nút "Bắt Đầu" |
-| **Quy trình** | 4 bước tạo video |
-| **Tính năng** | Các tính năng chính |
-| **Bảng Giá** | 3 gói: BASIC, PREMIUM, ENTERPRISE |
-| **Tìm Sản Phẩm** | Tìm sản phẩm bán chạy |
-| **Tính ROI** | Tính lợi nhuận dự kiến |
-| **FAQ** | Câu hỏi thường gặp |
-
-**Bạn cần làm:** Nhấn **"Bắt Đầu"** để tạo tài khoản.
-
----
-
-## 2. Bảng Giá
-
-**URL:** \`/pricing\`
-
-**3 gói dịch vụ:**
-
-| Gói | Giá | Dành cho |
-|---|---|---|
-| **BASIC** | $500/tháng | Doanh nghiệp nhỏ |
-| **PREMIUM** | $1,200/tháng | Đang phát triển |
-| **ENTERPRISE** | $3,500/tháng | Doanh nghiệp lớn |
-
-Nhấn **"Chọn Gói"** để đăng ký.
-
----
-
-## 3. Thiết Lập
-
-**URL:** \`/setup-wizard\`
-
-Trình thiết lập có **4 bước**. Bạn chỉ cần làm **1 lần duy nhất**.
-
-| Bước | Nội dung |
-|---|---|
-| 1/4 | Kiểm tra hệ thống |
-| 2/4 | Nhập API Keys (OpenRouter + ElevenLabs + HeyGen) |
-| 3/4 | Kết nối cơ sở dữ liệu |
-| 4/4 | Hoàn thành → Vào Dashboard |
-
----
-
-## 4. Dashboard
-
-**URL:** \`/dashboard\`
-
-Đây là màn hình chính của bạn.
-
-| Thành phần | Mô tả |
-|---|---|
-| **Stats cards** (3 ô trên) | Tổng / Đang chạy / Hoàn thành |
-| **Danh sách chiến dịch** | Tất cả video đã tạo |
-| **Nút "Tạo Chiến Dịch"** | Tạo video mới |
-| **Nút "Nâng Cấp"** | Nâng cấp gói |
-
-**Màu trạng thái:** Vàng = Đang xử lý | Xanh = Hoàn thành | Đỏ = Lỗi
-
----
-
-## 5. Tạo Chiến Dịch
-
-**URL:** \`/dashboard/create\`
-
-1. **Chọn Mẫu Video** — Nhấn vào mẫu thích
-2. **Điền thông tin:**
-   - Tên chiến dịch
-   - Nội dung chính
-   - Giọng nói (nam/nữ)
-3. Nhấn **"Tạo Chiến Dịch"**
-4. Đợi 3-5 phút
-
----
-
-## 6. Danh Sách Chiến Dịch
-
-**URL:** \`/dashboard/campaigns\`
-
-Hiện tất cả chiến dịch: Tên + Trạng thái màu + Ngày tạo. Nhấn tên để xem chi tiết.
-
----
-
-## 7. Thống Kê
-
-**URL:** \`/dashboard/analytics\`
-
-Biểu đồ và số liệu: Số video theo thời gian, tỷ lệ hoàn thành, chỉ số hiệu suất.
-
----
-
-## 8. Cài Đặt
-
-**URL:** \`/dashboard/settings\`
-
-Cập nhật tài khoản, thay đổi API Keys, quản lý gói dịch vụ, lịch sử thanh toán.
-
----
-
-## 9. Tìm Sản Phẩm
-
-**URL:** \`/affiliate-discovery\`
-
-Tìm sản phẩm bán chạy để quảng bá. AI chấm điểm (SPS Score) để chọn sản phẩm tốt nhất.
-
----
-
-## Tiếp Theo
-
-- [Bắt Đầu Sử Dụng](/guide)
-- [Câu Hỏi Thường Gặp](/guide/faq)
-- [Hướng Dẫn Telegram Bot](/guide/telegram)
-`;
+const pageSummary = [
+  { url: "/", name: "Trang Chủ", desc: "Giới thiệu tính năng, bảng giá, và đăng ký" },
+  { url: "/pricing", name: "Bảng Giá", desc: "So sánh 3 gói: BASIC, PREMIUM, ENTERPRISE" },
+  { url: "/setup-wizard", name: "Thiết Lập", desc: "Trình hướng dẫn 4 bước nhập API Keys" },
+  { url: "/dashboard", name: "Dashboard", desc: "Trung tâm điều khiển chính" },
+  { url: "/dashboard/create", name: "Tạo Chiến Dịch", desc: "Form tạo video mới" },
+  { url: "/dashboard/campaigns", name: "Chiến Dịch", desc: "Danh sách tất cả video" },
+  { url: "/dashboard/analytics", name: "Thống Kê", desc: "Biểu đồ hiệu suất" },
+  { url: "/dashboard/settings", name: "Cài Đặt", desc: "API Keys, gói, tài khoản" },
+  { url: "/affiliate-discovery", name: "Tìm Sản Phẩm", desc: "AI chấm điểm sản phẩm bán chạy" },
+];
 
 export default function ScreensGuidePage() {
-  return <GuideContentRenderer content={content} />;
+  return (
+    <div className="max-w-3xl space-y-10">
+      {/* Hero */}
+      <div>
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent mb-3">
+          Hướng Dẫn Màn Hình A-Z
+        </h1>
+        <p className="text-muted-foreground leading-relaxed">
+          Tổng quan từng màn hình trong Sophia — biết đâu để làm gì.
+        </p>
+      </div>
+
+      {/* Feature grid */}
+      <div>
+        <h2 className="text-xl font-bold text-foreground mb-4">Các Tính Năng Chính</h2>
+        <GuideFeatureGrid features={dashboardFeatures} columns={2} />
+      </div>
+
+      <GuideCallout variant="tip" title="Màu trạng thái">
+        Vàng = Đang xử lý &nbsp;|&nbsp; Xanh lá = Hoàn thành &nbsp;|&nbsp; Đỏ = Có lỗi (nhấn Retry để thử lại)
+      </GuideCallout>
+
+      {/* Page index */}
+      <div>
+        <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
+          <Search className="w-5 h-5 text-cyan-400" />
+          Bản Đồ Trang
+        </h2>
+        <div className="border border-border/40 rounded-xl overflow-hidden">
+          <div className="grid grid-cols-[auto_1fr_1fr] bg-muted/30 px-5 py-2.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border/40 gap-4">
+            <span>#</span>
+            <span>Tên Trang</span>
+            <span>Mô Tả</span>
+          </div>
+          {pageSummary.map((page, i) => (
+            <div
+              key={page.url}
+              className="grid grid-cols-[auto_1fr_1fr] px-5 py-3 text-sm border-b border-border/30 last:border-0 hover:bg-muted/20 transition-colors gap-4 items-start"
+            >
+              <span className="text-muted-foreground/50 text-xs font-mono w-4">{i + 1}</span>
+              <div>
+                <div className="font-medium text-foreground">{page.name}</div>
+                <div className="font-mono text-xs text-muted-foreground/60 mt-0.5">{page.url}</div>
+              </div>
+              <span className="text-muted-foreground text-xs leading-relaxed">{page.desc}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Pricing tiers */}
+      <div>
+        <h2 className="text-xl font-bold text-foreground mb-4">Giới Hạn Theo Gói</h2>
+        <div className="grid sm:grid-cols-3 gap-3">
+          {[
+            { name: "BASIC", price: "$500/tháng", limit: "20 video/tháng", color: "border-border/40" },
+            { name: "PREMIUM", price: "$1,200/tháng", limit: "100 video/tháng", color: "border-violet-500/40" },
+            { name: "ENTERPRISE", price: "$3,500/tháng", limit: "Không giới hạn", color: "border-cyan-500/40" },
+          ].map((tier) => (
+            <div key={tier.name} className={`bg-card/50 border ${tier.color} rounded-xl p-4`}>
+              <div className="text-xs font-bold text-muted-foreground mb-1">{tier.name}</div>
+              <div className="text-sm font-semibold text-foreground">{tier.price}</div>
+              <div className="text-xs text-muted-foreground mt-1">{tier.limit}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 }
