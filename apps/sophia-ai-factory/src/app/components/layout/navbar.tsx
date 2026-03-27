@@ -14,22 +14,26 @@ export function Navbar() {
   const pathname = usePathname();
   const t = useTranslations('landing');
 
+  // Strip locale prefix to check current page
+  const cleanPath = pathname.replace(/^\/(en|vi)/, '') || '/';
+  const isHomePage = cleanPath === '/';
+
   const navLinks = [
-    { label: t('nav.features'), href: "/#features" },
-    { label: t('nav.pricing'), href: "/#pricing" },
+    { label: t('nav.features'), href: isHomePage ? "/#features" : "/pricing" },
+    { label: t('nav.pricing'), href: "/pricing" },
     { label: t('nav.guide'), href: "/guide" },
     { label: t('nav.affiliates'), href: "/affiliate-discovery" },
-    { label: t('nav.faq'), href: "/#faq" },
+    { label: t('nav.faq'), href: isHomePage ? "/#faq" : "/guide/faq" },
   ];
 
-  // Handle smooth scroll with offset for fixed navbar
+  // Handle smooth scroll with offset for fixed navbar (only on homepage)
   const handleScrollClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-    if (href.startsWith("/#")) {
+    if (href.startsWith("/#") && isHomePage) {
       e.preventDefault();
       const id = href.slice(2);
       const element = document.getElementById(id);
       if (element) {
-        const offset = 80; // navbar height + padding
+        const offset = 80;
         const y = element.getBoundingClientRect().top + window.pageYOffset - offset;
         window.scrollTo({ top: y, behavior: "smooth" });
       }
