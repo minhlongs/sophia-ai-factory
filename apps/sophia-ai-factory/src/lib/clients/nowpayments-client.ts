@@ -20,28 +20,28 @@ export interface NowPaymentsTierConfig {
 export const NOWPAYMENTS_TIERS: Record<string, NowPaymentsTierConfig> = {
   BASIC: {
     tier: 'BASIC',
-    invoiceId: '1531090702',
+    invoiceId: '5710519960',
     price: 199,
     currency: 'USD',
     name: 'Starter',
   },
   PREMIUM: {
     tier: 'PREMIUM',
-    invoiceId: '120104686',
+    invoiceId: '4559269964',
     price: 399,
     currency: 'USD',
     name: 'Growth',
   },
   ENTERPRISE: {
     tier: 'ENTERPRISE',
-    invoiceId: '1405990131',
+    invoiceId: '6336799275',
     price: 799,
     currency: 'USD',
     name: 'Premium',
   },
   MASTER: {
     tier: 'MASTER',
-    invoiceId: '307544778',
+    invoiceId: '5589879034',
     price: 4999,
     currency: 'USD',
     name: 'Master',
