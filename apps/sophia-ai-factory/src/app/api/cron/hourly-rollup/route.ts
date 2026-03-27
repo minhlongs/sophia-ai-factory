@@ -1,10 +1,10 @@
 /**
  * Hourly Rollup Cron Endpoint
  *
- * Triggered by Vercel Cron to aggregate usage events into hourly summaries
+ * Triggered by Cloudflare Cron Trigger to aggregate usage events into hourly summaries
  *
  * Schedule: At minute 5 past every hour (0 * * * *)
- * See: vercel.json for cron configuration
+ * See: wrangler.toml for cron configuration
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -14,7 +14,7 @@ import { logger } from '@/lib/utils/logger-utility';
 /**
  * Verify cron authentication
  *
- * Vercel Cron sends Authorization: Bearer <token> header
+ * Cloudflare Cron sends Authorization: Bearer <token> header
  */
 function verifyCronAuth(request: NextRequest): boolean {
   const authHeader = request.headers.get('authorization');
@@ -32,9 +32,9 @@ function verifyCronAuth(request: NextRequest): boolean {
     return true;
   }
 
-  // Check for Vercel cron header
-  const vercelCron = request.headers.get('x-vercel-cron');
-  if (vercelCron === 'true') {
+  // Check for Cloudflare cron header
+  const cfCron = request.headers.get('x-cf-cron');
+  if (cfCron === 'true') {
     return true;
   }
 

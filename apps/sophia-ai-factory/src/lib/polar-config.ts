@@ -18,7 +18,7 @@ export interface PolarProductDefinition {
 }
 
 // Helper to get env var at RUNTIME (not build time)
-// Strip literal \n (backslash+n) that Vercel CLI appends, then trim whitespace
+// Strip literal \n (backslash+n) that some CLIs append, then trim whitespace
 const getEnv = (key: string): string => (process.env[key] || '').replace(/\\n$/, '').trim();
 
 // Monthly subscription products

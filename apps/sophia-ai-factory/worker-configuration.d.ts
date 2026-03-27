@@ -10,7 +10,6 @@ declare namespace Cloudflare {
 		USAGE_QUEUE: Queue;
 		ENVIRONMENT: "production";
 		HARD_LIMIT_PERCENT: "150";
-		VERCEL_OIDC_TOKEN: string;
 	}
 }
 interface Env extends Cloudflare.Env {}

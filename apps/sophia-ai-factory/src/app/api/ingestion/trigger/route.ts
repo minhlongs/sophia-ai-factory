@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import { ingestionTriggerRequestSchema } from '@/lib/validation/services'
 import { withRateLimit } from '@/middleware/rate-limit-wrapper'
 
-export const maxDuration = 300 // 5 minutes max duration for Vercel Pro/Enterprise
+export const maxDuration = 300 // 5 minutes max duration for Cloudflare Workers
 
 // Wrap handler with rate limiting (100 requests per minute for ingestion)
 export const POST = withRateLimit(async function POST(request: Request) {

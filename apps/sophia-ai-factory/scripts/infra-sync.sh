@@ -13,12 +13,12 @@ fi
 
 echo "🔄 Starting Infrastructure Sync..."
 
-# 1. Vercel Setup (Skip in CI if VERCEL_TOKEN provided, Vercel handles its own linking usually)
+# 1. Cloudflare Setup check
 if [ "$IS_CI" = false ]; then
-    if [ -f "./scripts/setup-vercel.sh" ]; then
-        ./scripts/setup-vercel.sh
+    if command -v wrangler &> /dev/null; then
+        echo "✅ Wrangler CLI found. Run 'wrangler login' if not authenticated."
     else
-        echo "⚠️ scripts/setup-vercel.sh not found."
+        echo "⚠️ Wrangler CLI not found. Install with: npm install -g wrangler"
     fi
 fi
 

@@ -1,8 +1,8 @@
 /**
- * Rate Limiting Middleware for Vercel Serverless
+ * Rate Limiting Middleware for Cloudflare Workers
  * In-memory LRU cache with sliding window algorithm
  *
- * Note: In Vercel serverless, each function instance has its own memory.
+ * Note: In Cloudflare Workers, each isolate has its own memory.
  * This provides best-effort rate limiting. For strict limits, use Redis/Upstash.
  */
 
@@ -199,5 +199,5 @@ export function getClientIdentifier(request: Request): string {
 }
 
 // Singleton instance for global rate limiting
-// Each Vercel function instance will have its own limiter
+// Each Cloudflare Worker isolate will have its own limiter
 export const globalRateLimiter = new RateLimiter()

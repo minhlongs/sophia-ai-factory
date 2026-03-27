@@ -413,7 +413,7 @@ async function sendEmailAlert(
       return false;
     }
 
-    // Use Vercel Blob / Server Action to send email
+    // Use Resend / Server Action to send email
     // For now, log the email that would be sent
     logger.info('[Quota Alert] Email alert prepared', {
       userId,

@@ -6,7 +6,7 @@
  * - Retry logic: 3 attempts with exponential backoff (1s, 2s, 4s)
  * - Logs export outcomes to Analytics dashboard
  *
- * Triggered by Vercel Cron at 0 0 * * *
+ * Triggered by Cloudflare Cron Trigger at 0 0 * * *
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -303,10 +303,10 @@ export async function POST(req: NextRequest) {
 
   try {
     // Verify cron secret if not manual trigger
-    const cronSecret = req.headers.get('x-cron-secret') || req.headers.get('vercel-cron-secret');
+    const cronSecret = req.headers.get('x-cron-secret') || req.headers.get('x-cf-cron-secret');
     const isManualTrigger = req.headers.get('x-manual-trigger') === 'true';
 
-    if (!isManualTrigger && cronSecret !== process.env.VERCEL_CRON_SECRET) {
+    if (!isManualTrigger && cronSecret !== process.env.CRON_SECRET) {
       logger.warn('[Daily Export] Invalid or missing cron secret', { requestId });
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

@@ -29,7 +29,7 @@ export interface AlertEmitterConfig {
  * Default alert emitter configuration
  */
 export const DEFAULT_ALERT_EMITTER_CONFIG: AlertEmitterConfig = {
-  alertsEndpoint: 'https://sophia-ai-factory.vercel.app/api/alerts',
+  alertsEndpoint: process.env.NEXT_PUBLIC_APP_URL ? `${process.env.NEXT_PUBLIC_APP_URL}/api/alerts` : '/api/alerts',
   apiKey: '',
   rateLimitWindowMs: 60000, // 1 minute
   maxAlertsPerWindow: 10,

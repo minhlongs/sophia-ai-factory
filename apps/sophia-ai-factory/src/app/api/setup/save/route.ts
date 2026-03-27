@@ -77,13 +77,13 @@ export async function POST(request: Request) {
     // Write to .env.local
     // Note: This only works in local development or environments with write access.
 
-    // Check for Vercel environment
-    if (process.env.VERCEL) {
+    // Check for serverless environment (Cloudflare Workers)
+    if (process.env.CF_WORKERS || process.env.NEXT_PUBLIC_CF_PAGES) {
       // Return only key names, not values, for security
       const keyNames = Object.keys(config as Record<string, string>);
       return NextResponse.json({
         success: false,
-        message: "Serverless environment detected (Vercel). Please set these environment variables in your Vercel dashboard.",
+        message: "Serverless environment detected (Cloudflare Workers). Please set these environment variables in your Cloudflare dashboard or wrangler.toml.",
         requiredKeys: keyNames
       }, { status: 200 }); // Return 200 so we can handle the logic in UI without treating it as a crash
     }

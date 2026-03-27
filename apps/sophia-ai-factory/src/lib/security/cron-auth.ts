@@ -2,7 +2,7 @@
  * Cron Job Authentication Utility
  *
  * Verifies that requests to /api/cron/* endpoints are authenticated
- * via cron secret or Vercel Cron header
+ * via cron secret or Cloudflare Cron Trigger internal header
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -14,12 +14,13 @@ import { logger } from '@/lib/utils/logger-utility';
  */
 export function verifyCronAuth(req: NextRequest): NextResponse | null {
   const cronSecret = process.env.CRON_SECRET;
-  const vercelCronHeader = req.headers.get('x-vercel-cron');
+  // Cloudflare Workers cron triggers set this header internally
+  const cfCronHeader = req.headers.get('x-cf-cron');
   const authHeader = req.headers.get('authorization');
 
-  // Check for Vercel Cron header (trusted)
-  if (vercelCronHeader === 'true') {
-    logger.info('[Cron Auth] Verified via Vercel Cron header');
+  // Check for Cloudflare Cron header (trusted internal)
+  if (cfCronHeader === 'true') {
+    logger.info('[Cron Auth] Verified via Cloudflare Cron header');
     return null;
   }
 
@@ -48,7 +49,7 @@ export function verifyCronAuth(req: NextRequest): NextResponse | null {
   // Auth failed
   logger.warn('[Cron Auth] Authentication failed', {
     hasCronSecret: !!cronSecret,
-    hasVercelHeader: !!vercelCronHeader,
+    hasCfHeader: !!cfCronHeader,
     hasAuthHeader: !!authHeader,
   });
 

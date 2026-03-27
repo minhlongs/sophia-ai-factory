@@ -17,7 +17,7 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/adapters/cache.js
+// node_modules/@opennextjs/aws/dist/adapters/cache.js
 var cache_exports = {};
 __export(cache_exports, {
   SOFT_TAG_PREFIX: () => SOFT_TAG_PREFIX,
@@ -25,7 +25,7 @@ __export(cache_exports, {
 });
 module.exports = __toCommonJS(cache_exports);
 
-// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/utils/error.js
+// node_modules/@opennextjs/aws/dist/utils/error.js
 function isOpenNextError(e) {
   try {
     return "__openNextInternal" in e;
@@ -34,7 +34,7 @@ function isOpenNextError(e) {
   }
 }
 
-// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/adapters/logger.js
+// node_modules/@opennextjs/aws/dist/adapters/logger.js
 function debug(...args) {
   if (globalThis.openNextDebug) {
     console.log(...args);
@@ -84,7 +84,7 @@ function getOpenNextErrorLogLevel() {
   }
 }
 
-// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/utils/cache.js
+// node_modules/@opennextjs/aws/dist/utils/cache.js
 async function hasBeenRevalidated(key, tags, cacheEntry) {
   if (globalThis.openNextConfig.dangerous?.disableTagCache) {
     return false;
@@ -144,7 +144,7 @@ async function writeTags(tags) {
   await globalThis.tagCache.writeTags(tagsToWrite);
 }
 
-// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/utils/binary.js
+// node_modules/@opennextjs/aws/dist/utils/binary.js
 var commonBinaryMimeTypes = /* @__PURE__ */ new Set([
   "application/octet-stream",
   // Docs
@@ -212,7 +212,7 @@ function isBinaryContentType(contentType) {
   return commonBinaryMimeTypes.has(value);
 }
 
-// ../../../../../Users/macbookprom1/.npm/_npx/6eb4c7ea15b2313f/node_modules/@opennextjs/aws/dist/adapters/cache.js
+// node_modules/@opennextjs/aws/dist/adapters/cache.js
 var SOFT_TAG_PREFIX = "_N_T_/";
 function isFetchCache(options) {
   if (typeof options === "boolean") {

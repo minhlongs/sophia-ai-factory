@@ -1,7 +1,7 @@
 /**
  * Sentry edge runtime configuration.
  * Initializes error tracking for middleware and edge API routes.
- * Edge runtime runs in CF Workers / Vercel Edge — lightweight subset of Node.js.
+ * Edge runtime runs in CF Workers — lightweight subset of Node.js.
  */
 
 import * as Sentry from '@sentry/nextjs';
