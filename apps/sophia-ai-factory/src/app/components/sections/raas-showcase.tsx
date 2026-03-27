@@ -67,7 +67,7 @@ export function RaaSShowcase() {
             const Icon = feature.icon;
             return (
               <FadeInView key={feature.key} delay={index * 100} duration={500}>
-                <Card glass hover className="h-full">
+                <Card glass hover className="h-full card-hover">
                   <CardHeader>
                     <div className={`w-12 h-12 rounded-lg border flex items-center justify-center mb-4 ${feature.bgClass}`}>
                       <Icon className={`w-6 h-6 ${feature.colorClass}`} aria-hidden="true" />

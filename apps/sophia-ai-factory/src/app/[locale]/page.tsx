@@ -1,6 +1,7 @@
 import dynamic from "next/dynamic";
 import { Hero } from "@/app/components/sections/hero";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
 function SectionSkeleton({ height = "h-96" }: { height?: string }) {
   return (
@@ -82,16 +83,35 @@ const Footer = dynamic(
 export default function Home() {
   return (
     <main id="main-content">
+      {/* Hero has its own FadeInView — no ScrollReveal needed */}
       <Hero />
-      <RaaSShowcase />
-      <Workflow />
-      <Features />
-      <RaasDemoTerminal />
-      <SocialProof />
-      <PricingSection />
-      <AffiliateDiscovery />
-      <ROICalculator />
-      <FAQ />
+      <ScrollReveal delay={0}>
+        <RaaSShowcase />
+      </ScrollReveal>
+      <ScrollReveal delay={100}>
+        <Workflow />
+      </ScrollReveal>
+      <ScrollReveal delay={200}>
+        <Features />
+      </ScrollReveal>
+      <ScrollReveal delay={100}>
+        <RaasDemoTerminal />
+      </ScrollReveal>
+      <ScrollReveal delay={0}>
+        <SocialProof />
+      </ScrollReveal>
+      <ScrollReveal delay={100}>
+        <PricingSection />
+      </ScrollReveal>
+      <ScrollReveal delay={0}>
+        <AffiliateDiscovery />
+      </ScrollReveal>
+      <ScrollReveal delay={100}>
+        <ROICalculator />
+      </ScrollReveal>
+      <ScrollReveal delay={0}>
+        <FAQ />
+      </ScrollReveal>
       <Footer />
     </main>
   );

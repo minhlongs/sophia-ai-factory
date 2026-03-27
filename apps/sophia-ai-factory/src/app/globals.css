@@ -187,3 +187,189 @@ html {
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
 }
+
+/* ── MD3 Animations (from sophia-proposal design system) ── */
+
+/* Float animation for decorative orbs */
+@keyframes float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -30px) scale(1.05); }
+  66% { transform: translate(-20px, 20px) scale(0.95); }
+}
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+.animate-float-delayed {
+  animation: float 8s ease-in-out 2s infinite;
+}
+
+/* Scroll-reveal: fade in from below */
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(2rem); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out both;
+}
+
+/* Slide-up for toasts/notifications */
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(1rem); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+/* Card hover lift */
+.card-hover {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+
+/* Glow effect for CTA buttons */
+.glow-primary {
+  box-shadow: 0 0 20px rgba(94, 201, 255, 0.3), 0 0 40px rgba(94, 201, 255, 0.1);
+}
+.glow-primary:hover {
+  box-shadow: 0 0 30px rgba(94, 201, 255, 0.4), 0 0 60px rgba(94, 201, 255, 0.15);
+}
+
+/* MD3 Elevation shadow classes */
+.elevation-1 { box-shadow: 0px 1px 3px 1px rgba(0,0,0,0.15), 0px 1px 2px 0px rgba(0,0,0,0.3); }
+.elevation-2 { box-shadow: 0px 2px 6px 2px rgba(0,0,0,0.15), 0px 1px 2px 0px rgba(0,0,0,0.3); }
+.elevation-3 { box-shadow: 0px 4px 8px 3px rgba(0,0,0,0.15), 0px 1px 3px 0px rgba(0,0,0,0.3); }
+.elevation-4 { box-shadow: 0px 6px 10px 4px rgba(0,0,0,0.15), 0px 2px 3px 0px rgba(0,0,0,0.3); }
+.elevation-5 { box-shadow: 0px 8px 12px 6px rgba(0,0,0,0.15), 0px 4px 4px 0px rgba(0,0,0,0.3); }
+
+/* Pulse ring for stats/icons */
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(94, 201, 255, 0.3); }
+  70% { box-shadow: 0 0 0 10px rgba(94, 201, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(94, 201, 255, 0); }
+}
+.animate-pulse-ring {
+  animation: pulse-ring 2s ease-in-out infinite;
+}
+
+/* Glow pulse for highlighted elements */
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(94,201,255,0.2), 0 0 40px rgba(94,201,255,0.05); }
+  50% { box-shadow: 0 0 30px rgba(94,201,255,0.35), 0 0 60px rgba(94,201,255,0.1); }
+}
+.animate-glow-pulse {
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+/* Number counter scale pop */
+@keyframes scale-pop {
+  0% { transform: scale(0.8); opacity: 0; }
+  60% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.animate-scale-pop {
+  animation: scale-pop 0.5s ease-out both;
+}
+
+/* Subtle parallax drift for decorative elements */
+@keyframes drift {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-10px) rotate(1deg); }
+  75% { transform: translateY(10px) rotate(-1deg); }
+}
+.animate-drift {
+  animation: drift 12s ease-in-out infinite;
+}
+
+/* Staggered reveal for lists */
+.stagger-reveal > * {
+  opacity: 0;
+  transform: translateY(12px);
+  animation: fade-in-up 0.4s ease-out forwards;
+}
+.stagger-reveal > *:nth-child(1) { animation-delay: 0s; }
+.stagger-reveal > *:nth-child(2) { animation-delay: 0.1s; }
+.stagger-reveal > *:nth-child(3) { animation-delay: 0.2s; }
+.stagger-reveal > *:nth-child(4) { animation-delay: 0.3s; }
+
+/* Gradient border effect for cards */
+.gradient-border {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+}
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(94,201,255,0.3), rgba(112,0,255,0.1), rgba(94,201,255,0.3));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.gradient-border:hover::before {
+  opacity: 1;
+}
+
+/* Typing cursor blink */
+@keyframes blink-cursor {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.animate-blink {
+  animation: blink-cursor 1s step-end infinite;
+}
+
+/* Material Symbols Icons */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined', sans-serif;
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -moz-font-feature-settings: 'liga';
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Gradient text utility */
+.text-gradient {
+  background: linear-gradient(135deg, #00f0ff 0%, #7000ff 50%, #00f0ff 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradient-shift 4s linear infinite;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .animate-gradient,
+  .animate-float,
+  .animate-float-delayed,
+  .animate-fade-in-up,
+  .animate-slide-up,
+  .animate-shimmer,
+  .animate-glow-pulse,
+  .animate-pulse-ring,
+  .animate-blink,
+  .animate-scale-pop,
+  .animate-drift,
+  .text-gradient,
+  .card-hover,
+  .stagger-reveal > * { animation: none !important; transition: none !important; opacity: 1 !important; transform: none !important; }
+  .card-hover:hover { transform: none; }
+}

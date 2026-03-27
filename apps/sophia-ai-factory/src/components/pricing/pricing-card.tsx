@@ -64,7 +64,7 @@ export function PricingCard({
   return (
     <FadeInView
       duration={500}
-      className={`relative flex flex-col rounded-2xl border p-8 transition-all duration-300 hover:-translate-y-2 ${
+      className={`card-hover relative flex flex-col rounded-2xl border p-8 transition-all duration-300 ${
         popular
           ? "border-primary bg-primary/5 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30"
           : "border-border bg-card hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10"

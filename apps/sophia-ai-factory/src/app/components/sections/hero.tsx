@@ -46,7 +46,7 @@ export function Hero() {
           <FadeInView delay={400} duration={600}>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center px-4">
               <Link href="/dashboard">
-                <Button variant="glow" size="lg" className="w-full sm:w-auto min-w-[200px]">
+                <Button variant="glow" size="lg" className="w-full sm:w-auto min-w-[200px] glow-primary">
                   {t('hero.cta_start')}
                 </Button>
               </Link>
