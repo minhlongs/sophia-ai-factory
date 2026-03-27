@@ -85,7 +85,7 @@ export default async function RootLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale}>
+    <html lang={locale} className="dark">
       <head>
         <link rel="preconnect" href="https://api.polar.sh" />
         <link rel="dns-prefetch" href="https://api.polar.sh" />
@@ -99,8 +99,8 @@ export default async function RootLayout({
         <NextIntlClientProvider messages={messages}>
           <ThemeProvider
             attribute="class"
-            defaultTheme="system"
-            enableSystem
+            defaultTheme="dark"
+            forcedTheme="dark"
             disableTransitionOnChange
           >
             <QueryProvider>
