@@ -87,8 +87,8 @@ export default async function RootLayout({
   return (
     <html lang={locale} className="dark">
       <head>
-        <link rel="preconnect" href="https://api.polar.sh" />
-        <link rel="dns-prefetch" href="https://api.polar.sh" />
+        <link rel="preconnect" href="https://api.nowpayments.io" />
+        <link rel="dns-prefetch" href="https://api.nowpayments.io" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
