@@ -9,7 +9,7 @@ export default {
       queue: "direct",
     },
   },
-  edgeExternals: ["node:crypto"],
+  edgeExternals: ["node:crypto", "redis", "ioredis"],
   middleware: {
     external: true,
     override: {

@@ -19,6 +19,7 @@ const withPWA = withPWAInit({
 const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
+  serverExternalPackages: ['redis', 'ioredis'],
   typescript: {
     // Skip type checking during build (circular types cause stack overflow)
     ignoreBuildErrors: true,
