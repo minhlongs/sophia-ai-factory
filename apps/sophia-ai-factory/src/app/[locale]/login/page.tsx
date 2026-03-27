@@ -1,135 +1,69 @@
 "use client";
 
-import { useState } from "react";
-import { createBrowserClient } from "@supabase/ssr";
-import { useTranslations } from "next-intl";
+import Link from "next/link";
+import { Mail, ArrowLeft } from "lucide-react";
 
 /**
- * Magic Link login page. Sends a one-time login link to the user's email.
- * After clicking the link, the user is redirected to /auth/callback -> /dashboard.
+ * Login page — hiện tại đang chuyển đổi sang Cloudflare D1 + Custom JWT.
+ * Supabase auth disabled. Hiển thị thông báo liên hệ.
  */
 export default function LoginPage() {
-  const t = useTranslations("login");
-  const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
-
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !supabaseAnonKey) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <p className="text-destructive">Lỗi cấu hình: Thiếu biến môi trường Supabase.</p>
-      </div>
-    );
-  }
-
-  const supabase = createBrowserClient(
-    supabaseUrl,
-    supabaseAnonKey
-  );
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setErrorMsg("");
-
-    try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-
-      if (error) {
-        setErrorMsg(error.message);
-      } else {
-        setSent(true);
-      }
-    } catch {
-      setErrorMsg(t("error"));
-    } finally {
-      setLoading(false);
-    }
-  }
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4 pt-16">
       <div className="w-full max-w-md space-y-8">
         {/* Header */}
         <div className="text-center">
           <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            {t("title")}
+            Đăng Nhập
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Sophia AI — Nhà Máy Video Tự Động
+            Sophia AI — Nhà Máy Video & AI Tự Động
           </p>
         </div>
 
         {/* Card */}
-        <div className="rounded-xl border border-border bg-card p-8 shadow-sm">
-          {sent ? (
-            <div className="text-center space-y-4">
-              <div className="mx-auto w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center">
-                <svg
-                  className="w-6 h-6 text-green-500"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={2}
-                  stroke="currentColor"
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"
-                  />
-                </svg>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {t("checkEmail")}
+        <div className="rounded-xl border border-border bg-card p-8 shadow-sm space-y-6">
+          <div className="text-center space-y-4">
+            <div className="mx-auto w-14 h-14 rounded-full bg-violet-500/10 flex items-center justify-center">
+              <Mail className="w-7 h-7 text-violet-400" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">Liên Hệ Để Truy Cập</h2>
+              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                Hệ thống đăng nhập đang được nâng cấp lên nền tảng Cloudflare.
+                Vui lòng liên hệ để được cấp quyền truy cập Dashboard.
               </p>
             </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-foreground mb-2"
-                >
-                  {t("emailLabel")}
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
-                />
-              </div>
+          </div>
 
-              {errorMsg && (
-                <p role="alert" className="text-sm text-red-500">{errorMsg}</p>
-              )}
+          <div className="space-y-3">
+            <a
+              href="https://t.me/Sophia_Bbot"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 w-full rounded-lg bg-gradient-to-r from-violet-600 to-cyan-600 px-4 py-3 text-sm font-medium text-white hover:opacity-90 transition-opacity"
+            >
+              Liên hệ qua Telegram Bot
+            </a>
+            <a
+              href="mailto:support@agencyos.network"
+              className="flex items-center justify-center gap-2 w-full rounded-lg border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/50 transition-colors"
+            >
+              <Mail className="w-4 h-4" />
+              support@agencyos.network
+            </a>
+          </div>
+        </div>
 
-              <button
-                type="submit"
-                disabled={loading || !email}
-                className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {loading ? (
-                  <span role="status" aria-label={t("loading") || "Loading..."}>...</span>
-                ) : (
-                  t("sendLink")
-                )}
-              </button>
-            </form>
-          )}
+        {/* Back link */}
+        <div className="text-center">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Quay lại trang chủ
+          </Link>
         </div>
       </div>
     </div>
