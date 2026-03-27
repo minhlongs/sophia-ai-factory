@@ -43,6 +43,8 @@ export const cspConfig = {
     'https://openrouter.ai',
     'https://api.elevenlabs.io',
     'https://api.inngest.com',
+    'https://nowpayments.io',
+    'https://api.nowpayments.io',
   ],
 
   // Frames: YouTube only
@@ -61,7 +63,7 @@ export const cspConfig = {
   baseUri: ["'self'"],
 
   // Form actions: self only
-  formAction: ["'self'"],
+  formAction: ["'self'", 'https://nowpayments.io'],
 
   // Object/embed: none
   objectSrc: ["'none'"],
