@@ -3,21 +3,29 @@
 import { Container } from "@/components/ui/container";
 import { Card, CardContent } from "@/components/ui/card";
 import { SectionHeading } from "@/components/ui/section-heading";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { UNIFIED_TIERS } from "@/lib/unified-tier-config";
 import type { Tier } from "@/types";
 import { SliderInput, CostRow, MetricCard, fmt, fmtUSD } from "./production-cost-calculator-parts";
 
 const tiers = Object.keys(UNIFIED_TIERS) as Tier[];
 const tierLabels = Object.fromEntries(
-  tiers.map(t => [t, `${UNIFIED_TIERS[t].name} ($${UNIFIED_TIERS[t].price.toLocaleString()})`])
+  tiers.map(t => {
+    const c = UNIFIED_TIERS[t];
+    const suffix = c.billingType === 'lifetime' ? '(trọn đời)' : '/tháng';
+    return [t, `${c.name} ($${c.price.toLocaleString()} ${suffix})`];
+  })
 ) as Record<Tier, string>;
 
-/** Revenue per 1,000 views (YouTube CPM average) */
+const TIER_DEFAULTS: Record<Tier, { channels: number; videosPerWeek: number; avgViews: number }> = {
+  BASIC:      { channels: 1, videosPerWeek: 3,  avgViews: 500 },
+  PREMIUM:    { channels: 3, videosPerWeek: 10, avgViews: 1000 },
+  ENTERPRISE: { channels: 5, videosPerWeek: 20, avgViews: 2000 },
+  MASTER:     { channels: 10, videosPerWeek: 30, avgViews: 5000 },
+};
+
 const AD_CPM = 2.0;
-/** Affiliate commission per 100 views */
 const AFFILIATE_PER_100 = 0.5;
-/** Average cost to hire a video editor per video (USD) */
 const MANUAL_COST_PER_VIDEO = 50;
 
 export function ProductionCostCalculator() {
@@ -26,8 +34,18 @@ export function ProductionCostCalculator() {
   const [videosPerWeek, setVideosPerWeek] = useState(10);
   const [avgViews, setAvgViews] = useState(1000);
 
+  const handleTierChange = useCallback((tier: Tier) => {
+    setSelectedTier(tier);
+    const d = TIER_DEFAULTS[tier];
+    setChannels(d.channels);
+    setVideosPerWeek(d.videosPerWeek);
+    setAvgViews(d.avgViews);
+  }, []);
+
   const tierConfig = UNIFIED_TIERS[selectedTier];
-  const subscriptionCost = tierConfig.price;
+  const isLifetime = tierConfig.billingType === 'lifetime';
+  /** For lifetime: amortize over 12 months for comparison */
+  const monthlyCost = isLifetime ? Math.round(tierConfig.price / 12) : tierConfig.price;
 
   const result = useMemo(() => {
     const totalVideos = channels * videosPerWeek * 4;
@@ -35,67 +53,73 @@ export function ProductionCostCalculator() {
     const adRevenue = (totalViews / 1000) * AD_CPM;
     const affiliateRevenue = (totalViews / 100) * AFFILIATE_PER_100;
     const monthlyRevenue = adRevenue + affiliateRevenue;
-    const monthlyProfit = monthlyRevenue - subscriptionCost;
+    const monthlyProfit = monthlyRevenue - monthlyCost;
     const manualCost = totalVideos * MANUAL_COST_PER_VIDEO;
-    const savings = manualCost - subscriptionCost;
-    const paybackDays = monthlyRevenue > 0 ? Math.ceil((subscriptionCost / monthlyRevenue) * 30) : 999;
-    const roiPercent = subscriptionCost > 0 ? ((monthlyRevenue - subscriptionCost) / subscriptionCost) * 100 : 0;
-    const annualRevenue = monthlyRevenue * 12;
-    const annualProfit = monthlyProfit * 12;
+    const savings = manualCost - monthlyCost;
+    const paybackDays = monthlyRevenue > 0
+      ? Math.ceil((tierConfig.price / monthlyRevenue) * 30)
+      : 999;
+    const roiPercent = monthlyCost > 0
+      ? ((monthlyRevenue - monthlyCost) / monthlyCost) * 100
+      : 0;
 
     return {
-      totalVideos, totalViews, monthlyRevenue: Math.round(monthlyRevenue),
-      monthlyProfit: Math.round(monthlyProfit), manualCost: Math.round(manualCost),
-      savings: Math.round(savings), paybackDays, roiPercent: Math.round(roiPercent),
-      annualRevenue: Math.round(annualRevenue), annualProfit: Math.round(annualProfit),
-      costPerVideo: totalVideos > 0 ? Math.round((subscriptionCost / totalVideos) * 100) / 100 : 0,
+      totalVideos, totalViews,
+      monthlyRevenue: Math.round(monthlyRevenue),
+      monthlyProfit: Math.round(monthlyProfit),
+      manualCost: Math.round(manualCost),
+      savings: Math.round(savings),
+      paybackDays, roiPercent: Math.round(roiPercent),
+      annualRevenue: Math.round(monthlyRevenue * 12),
+      annualProfit: Math.round(monthlyProfit * 12),
+      costPerVideo: totalVideos > 0 ? Math.round((monthlyCost / totalVideos) * 100) / 100 : 0,
     };
-  }, [channels, videosPerWeek, avgViews, subscriptionCost]);
+  }, [channels, videosPerWeek, avgViews, monthlyCost, tierConfig.price]);
 
   return (
     <section id="cost-calculator" className="py-20 md:py-32 relative">
       <Container>
-        <SectionHeading
-          title="Tính ROI Cho Doanh Nghiệp Của Bạn"
-          subtitle="Xem bạn tiết kiệm bao nhiêu và kiếm được bao nhiêu khi dùng Sophia AI Factory"
-        />
+        <SectionHeading title="Tính ROI Cho Doanh Nghiệp Của Bạn" subtitle="Xem bạn tiết kiệm bao nhiêu và kiếm được bao nhiêu khi dùng Sophia AI Factory" />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
-          {/* Left: Inputs */}
           <div className="space-y-6">
-            <Card glass>
-              <CardContent className="p-6 space-y-6">
-                <h3 className="text-lg font-semibold text-foreground">Thông Tin Kênh Của Bạn</h3>
-                <SliderInput label="Số kênh YouTube" value={channels} min={1} max={10} onChange={setChannels} />
-                <SliderInput label="Video / tuần" value={videosPerWeek} min={1} max={30} onChange={setVideosPerWeek} />
-                <SliderInput label="Lượt xem trung bình / video" value={avgViews} min={100} max={10000} step={100} onChange={setAvgViews} />
-              </CardContent>
-            </Card>
-
             <Card glass>
               <CardContent className="p-6">
                 <h3 className="text-lg font-semibold text-foreground mb-4">Chọn Gói Sophia</h3>
                 <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Gói dịch vụ">
                   {tiers.map((t) => (
-                    <button key={t} role="radio" aria-checked={selectedTier === t} onClick={() => setSelectedTier(t)}
+                    <button key={t} role="radio" aria-checked={selectedTier === t} onClick={() => handleTierChange(t)}
                       className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${selectedTier === t ? "bg-[var(--neon-cyan)]/20 border border-[var(--neon-cyan)] text-[var(--neon-cyan)]" : "bg-white/5 border border-white/10 text-muted-foreground hover:bg-white/10"}`}>
                       {tierLabels[t]}
                     </button>
                   ))}
                 </div>
-
                 <div className="mt-4 space-y-2">
-                  <CostRow label="Phí Sophia / tháng" value={fmtUSD(subscriptionCost)} highlight />
+                  {isLifetime ? (
+                    <>
+                      <CostRow label="Phí một lần (trọn đời)" value={fmtUSD(tierConfig.price)} highlight />
+                      <CostRow label="Tương đương / tháng (12 tháng)" value={fmtUSD(monthlyCost)} />
+                    </>
+                  ) : (
+                    <CostRow label="Phí Sophia / tháng" value={fmtUSD(tierConfig.price)} highlight />
+                  )}
                   <CostRow label="Chi phí / video" value={fmtUSD(result.costPerVideo)} />
-                  <CostRow label="Video tối đa / tháng" value={`${tierConfig.campaignsPerMonth}`} />
+                  <CostRow label="Video tối đa / tháng" value={tierConfig.campaignsPerMonth >= 999 ? "Không giới hạn" : `${tierConfig.campaignsPerMonth}`} />
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card glass>
+              <CardContent className="p-6 space-y-6">
+                <h3 className="text-lg font-semibold text-foreground">Quy Mô Kênh Của Bạn</h3>
+                <SliderInput label="Số kênh YouTube" value={channels} min={1} max={10} onChange={setChannels} />
+                <SliderInput label="Video / tuần" value={videosPerWeek} min={1} max={30} onChange={setVideosPerWeek} />
+                <SliderInput label="Lượt xem TB / video" value={avgViews} min={100} max={50000} step={100} onChange={setAvgViews} />
               </CardContent>
             </Card>
           </div>
 
-          {/* Right: Results */}
           <div className="space-y-6">
-            {/* Revenue projection */}
             <Card glass>
               <CardContent className="p-6">
                 <h3 className="text-lg font-semibold text-foreground mb-4">Doanh Thu Dự Kiến</h3>
@@ -104,12 +128,12 @@ export function ProductionCostCalculator() {
                   <MetricCard label="Lượt xem / tháng" value={fmt(result.totalViews)} unit="views" />
                 </div>
                 <div className="space-y-3">
-                  <CostRow label="Doanh thu quảng cáo" value={fmtUSD(result.monthlyRevenue * 0.8)} />
-                  <CostRow label="Doanh thu affiliate" value={fmtUSD(result.monthlyRevenue * 0.2)} />
+                  <CostRow label="Doanh thu quảng cáo" value={fmtUSD(Math.round(result.monthlyRevenue * 0.8))} />
+                  <CostRow label="Doanh thu affiliate" value={fmtUSD(Math.round(result.monthlyRevenue * 0.2))} />
                   <div className="border-t border-white/10 pt-3">
                     <CostRow label="Tổng doanh thu / tháng" value={fmtUSD(result.monthlyRevenue)} highlight />
                   </div>
-                  <CostRow label="Trừ phí Sophia" value={`-${fmtUSD(subscriptionCost)}`} />
+                  <CostRow label={isLifetime ? "Trừ phí (phân bổ/tháng)" : "Trừ phí Sophia"} value={`-${fmtUSD(monthlyCost)}`} />
                   <div className="border-t border-white/10 pt-3">
                     <CostRow label="Lợi nhuận ròng / tháng" value={fmtUSD(result.monthlyProfit)} highlight />
                   </div>
@@ -117,7 +141,6 @@ export function ProductionCostCalculator() {
               </CardContent>
             </Card>
 
-            {/* ROI & Payback */}
             <Card glass>
               <CardContent className="p-6">
                 <h3 className="text-lg font-semibold text-foreground mb-4">ROI & Hoàn Vốn</h3>
@@ -127,7 +150,7 @@ export function ProductionCostCalculator() {
                 </div>
                 <div className="space-y-3">
                   <CostRow label="Doanh thu / năm" value={fmtUSD(result.annualRevenue)} />
-                  <CostRow label="Chi phí Sophia / năm" value={fmtUSD(subscriptionCost * 12)} />
+                  <CostRow label={isLifetime ? "Chi phí (trả 1 lần)" : "Chi phí Sophia / năm"} value={fmtUSD(isLifetime ? tierConfig.price : tierConfig.price * 12)} />
                   <div className="border-t border-white/10 pt-3">
                     <CostRow label="Lợi nhuận / năm" value={fmtUSD(result.annualProfit)} highlight />
                   </div>
@@ -135,7 +158,6 @@ export function ProductionCostCalculator() {
               </CardContent>
             </Card>
 
-            {/* Savings vs manual */}
             <Card glass className="border-[var(--neon-cyan)]/30">
               <CardContent className="p-6">
                 <h3 className="text-lg font-semibold text-foreground mb-2">So Với Thuê Editor Thủ Công</h3>
@@ -145,9 +167,7 @@ export function ProductionCostCalculator() {
                   <p className="text-4xl font-bold bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] bg-clip-text text-transparent mt-3">
                     Tiết kiệm {fmtUSD(result.savings)}/tháng
                   </p>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    = {fmtUSD(result.savings * 12)}/năm so với thuê người làm
-                  </p>
+                  <p className="text-sm text-muted-foreground mt-2">= {fmtUSD(result.savings * 12)}/năm so với thuê người làm</p>
                 </div>
               </CardContent>
             </Card>
@@ -155,8 +175,7 @@ export function ProductionCostCalculator() {
         </div>
 
         <p className="text-center text-muted-foreground text-xs mt-8 max-w-3xl mx-auto">
-          Ước tính dựa trên CPM trung bình $2/1000 views và hoa hồng affiliate $0.50/100 views.
-          Kết quả thực tế phụ thuộc vào niche, chất lượng nội dung, và chiến lược SEO của bạn.
+          Ước tính dựa trên CPM trung bình $2/1,000 views và hoa hồng affiliate $0.50/100 views. Kết quả thực tế phụ thuộc vào niche, chất lượng nội dung, và chiến lược SEO của bạn.
         </p>
       </Container>
     </section>

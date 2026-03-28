@@ -40,6 +40,8 @@ export interface UnifiedTierLimits {
   customIntegrations: boolean;
   /** White-label license included */
   whiteLabel: boolean;
+  /** Billing type: 'monthly' subscription or 'lifetime' one-time payment */
+  billingType: 'monthly' | 'lifetime';
 }
 
 /**
@@ -52,11 +54,9 @@ export const UNIFIED_TIERS: Record<Tier, UnifiedTierLimits> = {
     priceInCents: 19900,
     price: 199,
     currency: 'USDT',
-    // Video
     templates: 5,
     campaignsPerMonth: 10,
     youtubeChannels: 1,
-    // RaaS
     mcuMonthly: 1000,
     aiCommands: 5,
     teamMembers: 1,
@@ -64,6 +64,7 @@ export const UNIFIED_TIERS: Record<Tier, UnifiedTierLimits> = {
     webhooks: false,
     customIntegrations: false,
     whiteLabel: false,
+    billingType: 'monthly',
   },
 
   PREMIUM: {
@@ -71,11 +72,9 @@ export const UNIFIED_TIERS: Record<Tier, UnifiedTierLimits> = {
     priceInCents: 39900,
     price: 399,
     currency: 'USDT',
-    // Video
     templates: 999,
     campaignsPerMonth: 50,
     youtubeChannels: 3,
-    // RaaS
     mcuMonthly: 5000,
     aiCommands: 15,
     teamMembers: 5,
@@ -83,6 +82,7 @@ export const UNIFIED_TIERS: Record<Tier, UnifiedTierLimits> = {
     webhooks: true,
     customIntegrations: false,
     whiteLabel: false,
+    billingType: 'monthly',
   },
 
   ENTERPRISE: {
@@ -90,11 +90,9 @@ export const UNIFIED_TIERS: Record<Tier, UnifiedTierLimits> = {
     priceInCents: 79900,
     price: 799,
     currency: 'USDT',
-    // Video
     templates: 999,
     campaignsPerMonth: 999,
     youtubeChannels: 999,
-    // RaaS
     mcuMonthly: 20000,
     aiCommands: 15,
     teamMembers: 999,
@@ -102,6 +100,7 @@ export const UNIFIED_TIERS: Record<Tier, UnifiedTierLimits> = {
     webhooks: true,
     customIntegrations: true,
     whiteLabel: false,
+    billingType: 'monthly',
   },
 
   MASTER: {
@@ -109,11 +108,9 @@ export const UNIFIED_TIERS: Record<Tier, UnifiedTierLimits> = {
     priceInCents: 499900,
     price: 4999,
     currency: 'USDT',
-    // Video
     templates: 999,
     campaignsPerMonth: 999,
     youtubeChannels: 999,
-    // RaaS
     mcuMonthly: 100000,
     aiCommands: 999,
     teamMembers: 999,
@@ -121,6 +118,7 @@ export const UNIFIED_TIERS: Record<Tier, UnifiedTierLimits> = {
     webhooks: true,
     customIntegrations: true,
     whiteLabel: true,
+    billingType: 'lifetime',
   },
 } as const;
 
