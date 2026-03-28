@@ -175,9 +175,10 @@ export function ProductionCostCalculator() {
                     <p className="text-xs text-muted-foreground font-medium">Chi phí vận hành đầy đủ</p>
                     <CostRow label={isLifetime ? "Sophia License (trọn đời ÷ 12)" : "Sophia License"} value={`-${fmtUSD(monthlyCost)}`} />
                     <CostRow label={`HeyGen ($${API_COSTS.heygen.perMinute}/video + $${API_COSTS.heygen.monthlyFixed}/th)`} value={`-${fmtUSD(result.totalVideos * API_COSTS.heygen.perMinute + API_COSTS.heygen.monthlyFixed)}`} />
-                    <CostRow label={`ElevenLabs ($${API_COSTS.elevenlabs.monthlyFixed}/th)`} value={`-${fmtUSD(API_COSTS.elevenlabs.monthlyFixed)}`} />
+                    <CostRow label={`ElevenLabs ($${API_COSTS.elevenlabs.perScript}/video + $${API_COSTS.elevenlabs.monthlyFixed}/th)`} value={`-${fmtUSD(result.totalVideos * API_COSTS.elevenlabs.perScript + API_COSTS.elevenlabs.monthlyFixed)}`} />
                     <CostRow label={`OpenRouter ($${API_COSTS.openrouter.perScript}/script)`} value={`-${fmtUSD(result.totalVideos * API_COSTS.openrouter.perScript)}`} />
-                    <CostRow label={`Cloud (CF $${INFRA_COSTS.cloudflareWorkers} + Domain $${INFRA_COSTS.domain})`} value={`-${fmtUSD(INFRA_COSTS.cloudflareWorkers + INFRA_COSTS.domain + INFRA_COSTS.cloudflareR2)}`} />
+                    <CostRow label={`Inngest ($${INFRA_COSTS.inngest}/th)`} value={`-${fmtUSD(INFRA_COSTS.inngest)}`} />
+                    <CostRow label={`Cloud + Redis + Email`} value={`-${fmtUSD(INFRA_COSTS.cloudflareWorkers + INFRA_COSTS.domain + INFRA_COSTS.cloudflareR2 + INFRA_COSTS.upstashRedis + INFRA_COSTS.resend)}`} />
                     <CostRow label="Tổng chi phí / tháng" value={`-${fmtUSD(result.totalMonthlyCost)}`} highlight />
                   </div>
                   <div className="border-t border-white/10 pt-3">
@@ -222,8 +223,8 @@ export function ProductionCostCalculator() {
         </div>
 
         <p className="text-center text-muted-foreground text-xs mt-8 max-w-3xl mx-auto">
-          Chi phí đã bao gồm: Phí Sophia + API (HeyGen $0.50/phút + ElevenLabs $22/tháng + OpenRouter) + Cloud (Cloudflare Workers $5 + R2 + Domain).
-          Doanh thu: CPM $2/1,000 views | Click-to-sale 5% | Lead-to-deal 3% tại $50/deal. Affiliate SaaS thường có recurring commission — con số trên chỉ tính tháng đầu.
+          Chi phí bao gồm ĐẦY ĐỦ: Sophia License + HeyGen ($99/th + $0.50/video) + ElevenLabs ($22/th + $0.04/video) + OpenRouter ($0.03/script) + Inngest ($25/th) + Cloudflare ($5/th) + Upstash Redis ($10/th) + Resend ($5/th) + Domain ($1/th).
+          YouTube, TikTok, Telegram: MIỄN PHÍ. Doanh thu: CPM $2/1K views | Click-to-sale 5% | Lead-to-deal 3%. Affiliate SaaS có recurring commission — con số trên chỉ tính tháng đầu.
         </p>
       </Container>
     </section>
