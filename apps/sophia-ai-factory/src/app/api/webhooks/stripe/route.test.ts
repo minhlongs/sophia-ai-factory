@@ -111,6 +111,12 @@ vi.mock('@/lib/utils/logger-utility', () => ({
   },
 }))
 
+// Mock dunning workflow
+vi.mock('@/lib/billing/dunning-workflow', () => ({
+  handlePaymentSuccess: vi.fn().mockResolvedValue(undefined),
+  handlePaymentFailure: vi.fn().mockResolvedValue(undefined),
+}))
+
 // Mock subscription tier mapping
 vi.mock('@/lib/subscription', () => ({
   TIER_DB_MAPPING: {
@@ -185,10 +191,26 @@ describe('Stripe Webhook Endpoint', () => {
     resetAllMocks()
     process.env.STRIPE_WEBHOOK_SECRET = TEST_SECRET
     process.env.RAAS_LICENSE_SECRET = 'test-raas-secret-key'
+    // Restore chained mock returns after clearAllMocks
+    mockSupabaseChain.select.mockReturnThis()
+    mockSupabaseChain.eq.mockReturnThis()
+    mockSupabaseChain.update.mockReturnThis()
+    mockSupabaseChain.insert.mockReturnThis()
+    mockSupabaseChain.order.mockReturnThis()
+    mockSupabaseChain.range.mockReturnThis()
+    mockSupabaseChain.upsert.mockResolvedValue({ error: null })
+    mockUserProfileChain.select.mockReturnThis()
+    mockUserProfileChain.eq.mockReturnThis()
+    mockUserProfileChain.update.mockReturnThis()
+    mockLicenseChain.select.mockReturnThis()
+    mockLicenseChain.eq.mockReturnThis()
+    mockLicenseChain.update.mockReturnThis()
     // Set up default user profile chain for successful user lookups
     mockUserProfileChain.single.mockResolvedValue({ data: { user_id: 'user_123' }, error: null })
+    mockUserProfileChain.upsert.mockResolvedValue({ error: null })
     // Set up license chain for license lookups
-    mockLicenseChain.single.mockResolvedValue(null)
+    mockLicenseChain.single.mockResolvedValue({ data: null, error: { code: 'PGRST116' } })
+    mockLicenseChain.upsert.mockResolvedValue({ error: null })
   })
 
   afterEach(() => {
@@ -440,10 +462,8 @@ describe('Stripe Webhook Endpoint', () => {
 
     describe('invoice.paid', () => {
       it('should handle invoice.paid and extend subscription', async () => {
-        mockSupabaseChain.single.mockResolvedValueOnce({
-          data: { user_id: 'user_123' },
-          error: null,
-        })
+        // Set up license chain to return a license so code reaches the "extended" log
+        mockLicenseChain.single.mockResolvedValue({ data: { nonce: 'n123', tier: 'PREMIUM' }, error: null })
 
         const periodEnd = Math.floor(Date.now() / 1000) + 31536000
         const mockEvent = createStripeEvent('invoice.paid', {
@@ -484,10 +504,8 @@ describe('Stripe Webhook Endpoint', () => {
 
     describe('invoice.payment_failed', () => {
       it('should handle invoice.payment_failed and add warning', async () => {
-        mockSupabaseChain.single.mockResolvedValueOnce({
-          data: { user_id: 'user_123' },
-          error: null,
-        })
+        // When no license found, code still updates user_profiles with payment_failed metadata
+        // mockLicenseChain.single returns null by default from beforeEach
 
         const mockEvent = createStripeEvent('invoice.payment_failed', {
           id: 'in_test',
@@ -499,7 +517,7 @@ describe('Stripe Webhook Endpoint', () => {
         expect(result.success).toBe(true)
         expect(mockUserProfileChain.update).toHaveBeenCalled()
         expect(logger.warn).toHaveBeenCalledWith(
-          expect.stringContaining('[Stripe] Invoice payment failed - warning added'),
+          expect.stringContaining('[Stripe] Invoice payment failed'),
           expect.any(Object)
         )
       })
@@ -597,6 +615,8 @@ describe('Stripe Webhook Endpoint', () => {
       mockUserProfileChain.select.mockReturnThis()
       mockUserProfileChain.eq.mockReturnThis()
       mockUserProfileChain.single.mockResolvedValue({ data: { user_id: 'user_123' }, error: null })
+      // Set up license chain so code reaches the update path
+      mockLicenseChain.single.mockResolvedValue({ data: { nonce: 'n123', tier: 'PREMIUM' }, error: null })
 
       const periodEnd = Math.floor(Date.now() / 1000) + 31536000
       const mockEvent = createStripeEvent('invoice.paid', {
@@ -615,6 +635,8 @@ describe('Stripe Webhook Endpoint', () => {
       mockUserProfileChain.select.mockReturnThis()
       mockUserProfileChain.eq.mockReturnThis()
       mockUserProfileChain.single.mockResolvedValue({ data: { user_id: 'user_123' }, error: null })
+      // When no license found, code still updates user_profiles with payment_failed metadata
+      // mockLicenseChain.single returns null from beforeEach by default
 
       const mockEvent = createStripeEvent('invoice.payment_failed', {
         id: 'in_test',

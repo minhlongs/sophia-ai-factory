@@ -2,6 +2,18 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { TikTokChannelAdapter } from './tiktok-channel-adapter'
 import type { CampaignOutput } from '../gateway-types'
 
+// Mock TikTok OAuth client
+vi.mock('@/lib/tiktok/tiktok-oauth-client', () => ({
+  publishVideo: vi.fn(),
+  checkPublishStatus: vi.fn(),
+}))
+
+vi.mock('@/lib/utils/logger-utility', () => ({
+  logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+}))
+
+import { publishVideo, checkPublishStatus } from '@/lib/tiktok/tiktok-oauth-client'
+
 const sampleContent: CampaignOutput = {
   campaignId: 'camp-002',
   videoUrl: 'https://example.com/tiktok-video.mp4',
@@ -11,26 +23,30 @@ const sampleContent: CampaignOutput = {
 }
 
 describe('TikTokChannelAdapter', () => {
-  describe('when TIKTOK_API_KEY is configured', () => {
+  describe('when tiktok_access_token is provided', () => {
     beforeEach(() => {
-      vi.stubEnv('TIKTOK_API_KEY', 'test-key')
-    })
-    afterEach(() => {
-      vi.unstubAllEnvs()
+      vi.mocked(publishVideo).mockResolvedValue('publish-123')
+      vi.mocked(checkPublishStatus).mockResolvedValue({
+        status: 'PUBLISH_COMPLETE',
+        publicUrl: 'https://tiktok.com/@user/video/camp-002',
+      })
     })
 
-    it('should return success with a stub published URL', async () => {
-      const adapter = new TikTokChannelAdapter()
+    afterEach(() => {
+      vi.clearAllMocks()
+    })
+
+    it('should return success with a published URL', async () => {
+      const adapter = new TikTokChannelAdapter({ tiktok_access_token: 'test-token' })
       const result = await adapter.publish(sampleContent)
 
       expect(result.channelId).toBe('tiktok')
       expect(result.success).toBe(true)
       expect(result.publishedUrl).toContain('tiktok.com')
-      expect(result.publishedUrl).toContain('camp-002')
     })
 
     it('should report healthy status', async () => {
-      const adapter = new TikTokChannelAdapter()
+      const adapter = new TikTokChannelAdapter({ tiktok_access_token: 'test-token' })
       const status = await adapter.getStatus()
 
       expect(status.channelId).toBe('tiktok')
@@ -39,7 +55,7 @@ describe('TikTokChannelAdapter', () => {
     })
 
     it('should track lastPublished after publishing', async () => {
-      const adapter = new TikTokChannelAdapter()
+      const adapter = new TikTokChannelAdapter({ tiktok_access_token: 'test-token' })
 
       const statusBefore = await adapter.getStatus()
       expect(statusBefore.lastPublished).toBeUndefined()
@@ -51,27 +67,20 @@ describe('TikTokChannelAdapter', () => {
     })
 
     it('should return true for healthCheck', async () => {
-      const adapter = new TikTokChannelAdapter()
+      const adapter = new TikTokChannelAdapter({ tiktok_access_token: 'test-token' })
       const healthy = await adapter.healthCheck()
       expect(healthy).toBe(true)
     })
   })
 
-  describe('when TIKTOK_API_KEY is not configured', () => {
-    beforeEach(() => {
-      vi.stubEnv('TIKTOK_API_KEY', '')
-    })
-    afterEach(() => {
-      vi.unstubAllEnvs()
-    })
-
+  describe('when no tiktok_access_token is provided', () => {
     it('should return failure on publish', async () => {
       const adapter = new TikTokChannelAdapter()
       const result = await adapter.publish(sampleContent)
 
       expect(result.channelId).toBe('tiktok')
       expect(result.success).toBe(false)
-      expect(result.error).toBe('TikTok API key not configured')
+      expect(result.error).toBe('TikTok access token not configured')
     })
 
     it('should report unhealthy status', async () => {

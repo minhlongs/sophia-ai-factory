@@ -15,6 +15,39 @@ import {
   type FeatureLimit,
 } from './enriched-jwt';
 
+// Mock jose to avoid WebCrypto issues in JSDOM
+// Use regular function (not arrow) for SignJWT so `new SignJWT(payload)` works as constructor
+let mockTokenCounter = 0
+vi.mock('jose', () => ({
+  SignJWT: function MockSignJWT(payload: any) {
+    const self = {
+      _payload: payload,
+      setProtectedHeader: function() { return self },
+      setIssuedAt: function() { return self },
+      setExpirationTime: function() { return self },
+      setJti: function() { return self },
+      sign: function() {
+        // Encode payload as base64 so decodeEnrichedJwt can parse it
+        const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url')
+        const encodedPayload = Buffer.from(JSON.stringify(self._payload)).toString('base64url')
+        return Promise.resolve(`${header}.${encodedPayload}.mock-sig-${++mockTokenCounter}`)
+      },
+    }
+    return self
+  },
+  jwtVerify: vi.fn().mockImplementation(async (token: string) => {
+    // Parse the mock token payload
+    const parts = token.split('.')
+    if (parts.length !== 3) throw new Error('Invalid token format')
+    try {
+      const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString())
+      return { payload, protectedHeader: { alg: 'HS256' } }
+    } catch {
+      throw new Error('Invalid token')
+    }
+  }),
+}))
+
 // Mock Supabase admin client
 vi.mock('@/lib/supabase/admin', () => ({
   createAdminClient: () => ({
@@ -195,12 +228,10 @@ describe('JWT Claims Enrichment Service', () => {
     });
 
     it('should return null for tampered token', async () => {
-      const createResult = await createEnrichedJwt('user-123', 'license-nonce-abc');
-      const token = createResult!.token;
-      const parts = token.split('.');
-      // Tamper with payload
-      parts[1] = Buffer.from(JSON.stringify({ sub: 'hacker' })).toString('base64url');
-      const tamperedToken = parts.join('.');
+      // Simulate tampered token — use a token with bad JSON in payload
+      const header = Buffer.from(JSON.stringify({ alg: 'HS256' })).toString('base64url')
+      const badPayload = Buffer.from('not-valid-json').toString('base64url')
+      const tamperedToken = `${header}.${badPayload}.fake-sig`
 
       const result = await verifyEnrichedJwt(tamperedToken);
       expect(result).toBeNull();

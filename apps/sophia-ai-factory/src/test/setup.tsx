@@ -1,12 +1,32 @@
 /**
  * Vitest Test Setup
- * Mocks Next.js modules and configures test environment
+ * Mocks Next.js modules, env vars, and Cloudflare bindings
  */
 
-// Optional: Extended matchers from @testing-library/jest-dom
-// Install with: npm install --save-dev @testing-library/jest-dom
+// ── Environment Variables ──────────────────────────────────────────────
+process.env.JWT_SECRET=REDACTED = 'test-jwt-secret-for-unit-tests-32chars!';
+process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co';
+process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-anon-key-eyJhbGciOiJIUzI1NiJ9';
+process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key';
+process.env.INTERNAL_API_SECRET = 'test-internal-secret';
+process.env.UPSTASH_REDIS_REST_URL = 'https://test-redis.upstash.io';
+process.env.UPSTASH_REDIS_REST_TOKEN = 'test-redis-token';
+process.env.RAAS_LICENSE_SECRET = 'test-raas-license-secret';
+process.env.HEALTH_CHECK_SECRET = 'test-health-secret';
+process.env.NEXT_PUBLIC_APP_URL = 'http://localhost:3000';
+process.env.NEXT_PUBLIC_IS_CONFIGURED = 'true';
 
-// Mock next/link
+// ── Cloudflare KV Mock ─────────────────────────────────────────────────
+const kvMock = {
+  get: vi.fn().mockResolvedValue(null),
+  put: vi.fn().mockResolvedValue(undefined),
+  delete: vi.fn().mockResolvedValue(undefined),
+  list: vi.fn().mockResolvedValue({ keys: [], list_complete: true }),
+};
+(globalThis as any).KV_KV = kvMock;
+(globalThis as any).__env = { KV: kvMock, DB: null };
+
+// ── Mock next/link ─────────────────────────────────────────────────────
 vi.mock('next/link', () => ({
   default: ({ children, href, ...props }: any) => {
     const h = typeof href === 'function' ? href() : href;
@@ -14,65 +34,73 @@ vi.mock('next/link', () => ({
   },
 }));
 
-// Mock next/image
+// ── Mock next/image ────────────────────────────────────────────────────
 vi.mock('next/image', () => ({
   default: ({ src, alt, ...props }: any) => {
     return <img src={src} alt={alt} {...props} />;
   },
 }));
 
-// Mock next/navigation
+// ── Mock next/navigation ───────────────────────────────────────────────
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
-    push: vi.fn(),
-    replace: vi.fn(),
-    prefetch: vi.fn(),
-    back: vi.fn(),
-    refresh: vi.fn(),
+    push: vi.fn(), replace: vi.fn(), prefetch: vi.fn(),
+    back: vi.fn(), refresh: vi.fn(),
   }),
   usePathname: () => '/',
   useSearchParams: () => new URLSearchParams(),
-  redirect: (url: string) => {
-    throw new Error(`Redirect: ${url}`);
-  },
-  permanentRedirect: (url: string) => {
-    throw new Error(`Permanent Redirect: ${url}`);
-  },
-  notFound: () => {
-    throw new Error('Not Found');
-  },
+  redirect: (url: string) => { throw new Error(`Redirect: ${url}`); },
+  permanentRedirect: (url: string) => { throw new Error(`Permanent Redirect: ${url}`); },
+  notFound: () => { throw new Error('Not Found'); },
 }));
 
-// Mock next/server for API route tests
-vi.mock('next/server', () => ({
-  NextResponse: {
-    json: (data: any, init?: ResponseInit) => new Response(JSON.stringify(data), {
+// ── Mock next/server (NextResponse as proper class) ────────────────────
+class MockNextResponse extends Response {
+  // Make instanceof checks work properly by returning MockNextResponse instances
+  static json(data: any, init?: ResponseInit) {
+    const headers = new Headers({ 'content-type': 'application/json', ...init?.headers });
+    return new MockNextResponse(JSON.stringify(data), {
       ...init,
-      headers: { ...init?.headers, 'content-type': 'application/json' },
-    }),
-    redirect: (url: string, status?: number) => new Response(null, {
-      status: status ?? 302,
-      headers: { location: url },
-    }),
-    rewrite: () => new Response(null, { status: 200 }),
-    next: () => new Response(null, { status: 200 }),
-  },
-  NextRequest: class NextRequest {
-    constructor(public url: string) {}
-    headers = new Headers();
-    cookies = { get: vi.fn(), getAll: vi.fn(), set: vi.fn() };
-    nextUrl = { pathname: '/', searchParams: new URLSearchParams() };
-  },
+      headers,
+    });
+  }
+  static redirect(url: string, status?: number) {
+    return new MockNextResponse(null, { status: status ?? 302, headers: { location: url } });
+  }
+  static rewrite() { return new MockNextResponse(null, { status: 200 }); }
+  static next() { return new MockNextResponse(null, { status: 200 }); }
+}
+
+// Wraps URLSearchParams so .get() returns undefined instead of null for missing keys
+// This matches how Zod .optional() schema expects undefined, not null
+class NullSafeSearchParams extends URLSearchParams {
+  get(name: string): string | null {
+    const val = super.get(name);
+    return val === null ? undefined as any : val;
+  }
+}
+
+class MockNextRequest extends Request {
+  cookies = { get: vi.fn(), getAll: vi.fn(() => []), set: vi.fn() };
+  nextUrl: { pathname: string; searchParams: NullSafeSearchParams };
+
+  constructor(url: string | URL, init?: RequestInit & { method?: string; headers?: Record<string, string> | Headers }) {
+    const urlStr = typeof url === 'string' ? url : url.toString();
+    super(urlStr, init);
+    const parsed = new URL(urlStr, 'http://localhost');
+    this.nextUrl = { pathname: parsed.pathname, searchParams: new NullSafeSearchParams(parsed.search) };
+  }
+}
+
+vi.mock('next/server', () => ({
+  NextResponse: MockNextResponse,
+  NextRequest: MockNextRequest,
 }));
 
-// Suppress console errors during tests (optional - can be removed for debugging)
+// ── Suppress noisy console output ──────────────────────────────────────
 globalThis.console = {
   ...globalThis.console,
-  error: vi.fn((...args) => {
-    // Log errors but don't fail tests
-    globalThis.process?.stderr?.write(`[TEST ERROR] ${args.join(' ')}\n`);
-  }),
-  warn: vi.fn((...args) => {
-    globalThis.process?.stderr?.write(`[TEST WARN] ${args.join(' ')}\n`);
-  }),
+  error: vi.fn(),
+  warn: vi.fn(),
+  log: vi.fn(),
 };

@@ -1,6 +1,17 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { SmartResumeEngine } from './smart-resume-engine'
 import type { Checkpoint } from './gateway-types'
+
+// Mock checkpoint persistence so engine uses in-memory fallback store
+vi.mock('./checkpoint-supabase-persistence', () => ({
+  getCheckpointSupabase: vi.fn(() => null),
+  rowToCheckpoint: (row: any) => ({
+    campaignId: row.campaign_id,
+    step: row.step,
+    completedAt: new Date(row.completed_at),
+    metadata: row.metadata,
+  }),
+}))
 
 describe('SmartResumeEngine', () => {
   let engine: SmartResumeEngine

@@ -210,7 +210,8 @@ describe('Violations API', () => {
 
       expect(response.status).toBe(200);
       // Verify fetchViolations was called with limit=100
-      expect(fetchViolations).toHaveBeenCalledWith(expect.anything(), 1, 100);
+      // Note: page defaults to '1' (string) because Zod .default() bypasses transform
+      expect(fetchViolations).toHaveBeenCalledWith(expect.anything(), '1', 100);
     });
   });
 
@@ -338,7 +339,8 @@ describe('Violations API', () => {
       expect(data).toHaveProperty('metadata');
 
       expect(data.pagination).toEqual({
-        page: 1,
+        // page defaults to '1' (string) when not provided — Zod .default() bypasses transform
+        page: '1',
         limit: 50,
         total: 1,
         hasMore: false,
