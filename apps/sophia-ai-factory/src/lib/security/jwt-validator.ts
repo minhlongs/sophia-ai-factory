@@ -7,7 +7,6 @@
  * @module security/jwt-validator
  */
 
-import { createClient } from '@supabase/supabase-js'
 import { jwtVerify, createRemoteJWKSet } from 'jose'
 import { logger } from '@/lib/utils/logger-utility'
 import { checkJwtNonce, markJwtNonceAsUsed } from '@/lib/auth/jwt-nonce-tracker'

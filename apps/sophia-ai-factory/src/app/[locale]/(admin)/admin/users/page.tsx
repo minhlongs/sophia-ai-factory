@@ -17,7 +17,7 @@ interface SupabaseAuthUser {
  * Lists all Supabase Auth users with tier and status info.
  */
 export default async function AdminUsersPage() {
-  const supabaseAdmin = createAdminClient();
+  const supabaseAdmin = await createAdminClient();
 
   let users: AdminUserRow[] = [];
   try {

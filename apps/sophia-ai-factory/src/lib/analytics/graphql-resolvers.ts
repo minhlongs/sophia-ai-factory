@@ -164,7 +164,7 @@ export const resolvers = {
       // Non-admin users only see their own licenses
       if (!user.isAdmin) {
         const { createAdminClient } = await import('@/lib/supabase/admin');
-        const supabase = createAdminClient();
+        const supabase = await createAdminClient();
 
         const { data: userLicenses } = await supabase
           .from('raas_licenses')

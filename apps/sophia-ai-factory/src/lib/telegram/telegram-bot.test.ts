@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import {
   handleStart,
   handleHelp,
@@ -12,11 +12,6 @@ import { TelegramFSM, BotState } from './telegram-fsm-state-manager'
 
 // Mock dependencies
 const mockSupabase = vi.hoisted(() => ({
-  auth: {
-    admin: {
-      listUsers: vi.fn()
-    }
-  },
   from: vi.fn(),
   rpc: vi.fn().mockResolvedValue({ data: null, error: null })
 }))
@@ -38,9 +33,10 @@ const createChainableMock = () => {
   return mock
 }
 
-// Mock Supabase client creation
-vi.mock('@supabase/supabase-js', () => ({
-  createClient: () => mockSupabase
+// Mock D1 shim client creation
+vi.mock('@/lib/supabase/server', () => ({
+  createServerClient: () => mockSupabase,
+  createClient: () => mockSupabase,
 }))
 
 // Mock Inngest
@@ -76,21 +72,11 @@ vi.mock('./telegram-fsm-state-manager', () => ({
 
 describe('Telegram Bot Handlers', () => {
   const chatId = '12345'
-  const originalEnv = process.env
 
   beforeEach(() => {
     vi.resetAllMocks()
-    process.env = {
-      ...originalEnv,
-      NEXT_PUBLIC_SUPABASE_URL: 'https://example.supabase.co',
-      SUPABASE_SERVICE_ROLE_KEY: 'test-key'
-    }
     // Reset the rpc mock with proper return value
     mockSupabase.rpc.mockResolvedValue({ data: null, error: null })
-  })
-
-  afterEach(() => {
-    process.env = originalEnv
   })
 
   describe('handleStart', () => {
@@ -118,21 +104,23 @@ describe('Telegram Bot Handlers', () => {
 
   describe('handleEmail', () => {
     it('should link user account if email exists', async () => {
-      // Mock listUsers response
-      mockSupabase.auth.admin.listUsers.mockResolvedValue({
-        data: {
-          users: [{ id: 'user-1', email: 'test@example.com' }]
-        },
-        error: null
+      // Mock users table lookup (replaces auth.admin.listUsers)
+      const mockUserSelect = vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: { id: 'user-1', email: 'test@example.com' },
+            error: null
+          })
+        })
       })
 
       // Mock user_profiles select (profile exists)
-      const mockSelect = vi.fn().mockReturnValue({
+      const mockProfileSelect = vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({
-                data: { user_id: 'user-1' },
-                error: null
-            })
+          single: vi.fn().mockResolvedValue({
+            data: { user_id: 'user-1' },
+            error: null
+          })
         })
       })
 
@@ -141,19 +129,15 @@ describe('Telegram Bot Handlers', () => {
         eq: vi.fn().mockResolvedValue({ data: null, error: null })
       })
 
-      mockSupabase.from.mockImplementation((table) => {
-        if (table === 'user_profiles') {
-          return {
-            select: mockSelect,
-            update: mockUpdate
-          }
-        }
+      mockSupabase.from.mockImplementation((table: string) => {
+        if (table === 'users') return { select: mockUserSelect }
+        if (table === 'user_profiles') return { select: mockProfileSelect, update: mockUpdate }
         return createChainableMock()
       })
 
       await handleEmail(chatId, 'test@example.com')
 
-      expect(mockSupabase.auth.admin.listUsers).toHaveBeenCalled()
+      expect(mockUserSelect).toHaveBeenCalled()
       expect(mockUpdate).toHaveBeenCalledWith(
         expect.objectContaining({ telegram_chat_id: chatId })
       )
@@ -166,16 +150,26 @@ describe('Telegram Bot Handlers', () => {
     })
 
     it('should handle user not found', async () => {
-      mockSupabase.auth.admin.listUsers.mockResolvedValue({
-        data: { users: [] },
-        error: null
+      // Mock users table returning no result
+      const mockUserSelect = vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: null,
+            error: { message: 'User not found' }
+          })
+        })
+      })
+
+      mockSupabase.from.mockImplementation((table: string) => {
+        if (table === 'users') return { select: mockUserSelect }
+        return createChainableMock()
       })
 
       await handleEmail(chatId, 'notfound@example.com')
 
       expect(bot.telegram.sendMessage).toHaveBeenCalledWith(
         chatId,
-        expect.stringContaining('Could not find an account'),
+        expect.stringContaining('Error verifying account'),
         expect.any(Object)
       )
     })

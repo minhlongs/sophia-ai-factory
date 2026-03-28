@@ -31,7 +31,7 @@ const MAX_DATE_RANGE_DAYS = 90;
  * @param filters - Query filters for usage data
  */
 export async function fetchUsageMetrics(filters: UsageFilters): Promise<UsageMetrics> {
-  const supabase = createAdminClient();
+  const supabase = await createAdminClient();
 
   // Validate date range
   const dateRangeDays = (filters.endTimestamp - filters.startTimestamp) / 86400;
@@ -189,7 +189,7 @@ export async function fetchUsageMetrics(filters: UsageFilters): Promise<UsageMet
  * @param period - Revenue period filter
  */
 export async function fetchRevenueMetrics(period: RevenuePeriod): Promise<RevenueMetrics> {
-  const supabase = createAdminClient();
+  const supabase = await createAdminClient();
 
   // Calculate date range based on period
   const now = new Date();
@@ -314,7 +314,7 @@ export async function fetchRevenueMetrics(period: RevenuePeriod): Promise<Revenu
  * @param filters - Query filters for license data
  */
 export async function fetchLicenseMetrics(filters: LicenseFilters = {}): Promise<LicenseMetrics> {
-  const supabase = createAdminClient();
+  const supabase = await createAdminClient();
   const status = filters.status || 'active';
 
   let query = supabase.from('raas_licenses').select('*');
@@ -424,7 +424,7 @@ export async function fetchViolations(
   page: number = 1,
   limit: number = 50
 ): Promise<{ violations: ViolationEvent[]; total: number; hasMore: boolean }> {
-  const supabase = createAdminClient();
+  const supabase = await createAdminClient();
 
   // Build query dynamically based on filters
   let query = supabase.from('violations').select('*', { count: 'exact' });
@@ -527,7 +527,7 @@ export async function fetchViolationSummary(
   startTimestamp: number,
   endTimestamp: number
 ): Promise<ViolationSummary> {
-  const supabase = createAdminClient();
+  const supabase = await createAdminClient();
 
   // Build base query
   let query = supabase.from('violations').select('*');

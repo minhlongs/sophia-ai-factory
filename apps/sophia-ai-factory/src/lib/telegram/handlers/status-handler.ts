@@ -1,18 +1,9 @@
 import { TelegramFSM } from '../telegram-fsm-state-manager'
-import { createClient } from '@supabase/supabase-js'
-import { Database } from '@/lib/supabase/types'
+import { createServerClient } from '@/lib/supabase/server'
 import { sendMessage } from './utils'
 import { logger } from '../../utils/logger-utility'
 
-const getSupabase = () => {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error('Supabase environment variables not configured')
-  }
-  return createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  )
-}
+const getSupabase = () => createServerClient()
 
 /**
  * Handle /status command

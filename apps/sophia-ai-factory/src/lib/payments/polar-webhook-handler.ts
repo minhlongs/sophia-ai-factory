@@ -30,7 +30,7 @@ function safeTier(value: unknown): Tier | null {
   return null
 }
 
-function getSupabase() {
+async function getSupabase() {
   return createAdminClient() as any
 }
 
@@ -131,7 +131,7 @@ async function isEventProcessed(polarEventId: string): Promise<{
   isProcessed: boolean
   existingRecord?: PaymentEventRecord
 }> {
-  const supabase = getSupabase()
+  const supabase = await getSupabase()
 
   // Check for existing processed event
   const { data, error } = await supabase
@@ -178,7 +178,7 @@ async function recordPaymentEvent(
   event: PaymentEventRecord,
   retryCount = 0
 ): Promise<void> {
-  const supabase = getSupabase()
+  const supabase = await getSupabase()
   const maxRetries = 3
 
   try {
@@ -263,7 +263,7 @@ async function handleSubscriptionCancelled(
 
   // Revoke license associated with this subscription
   if (targetUserId) {
-    const supabase = getSupabase()
+    const supabase = await getSupabase()
 
     // Find license by polarSubscriptionId in metadata
     const { data: license } = await supabase
@@ -392,7 +392,7 @@ async function handleCheckoutSuccess(
   }
 
   const dbTier = TIER_DB_MAPPING[tier]
-  const supabase = getSupabase()
+  const supabase = await getSupabase()
   const polarSubId = safeString(data.id)
   const customerEmail = (data.customer as Record<string, unknown> | undefined)?.email as string | undefined
 
@@ -605,7 +605,7 @@ async function handleSubscriptionUpdated(
     }
   } else {
     // Handle renewal, tier upgrade/downgrade, or other updates
-    const supabase = getSupabase()
+    const supabase = await getSupabase()
     const metadata = (data.metadata || {}) as Record<string, unknown>
     const newTier = safeTier(metadata.tier)
 
@@ -654,7 +654,7 @@ async function handleOrderCreated(
   }
 
   const dbTier = TIER_DB_MAPPING[tier]
-  const supabase = getSupabase()
+  const supabase = await getSupabase()
   const polarSubId = safeString(data.id)
   const customerEmail = (data.customer as Record<string, unknown> | undefined)?.email as string | undefined
 
@@ -777,7 +777,7 @@ async function handleSubscriptionPastDue(data: Record<string, unknown>): Promise
   }
 
   // Get license associated with this subscription
-  const supabase = getSupabase()
+  const supabase = await getSupabase()
   const { data: license } = await supabase
     .from('raas_licenses')
     .select('nonce, tier, metadata')
@@ -868,7 +868,7 @@ async function handleCheckoutFailed(data: Record<string, unknown>): Promise<void
   }
 
   // Get license associated with this checkout/subscription
-  const supabase = getSupabase()
+  const supabase = await getSupabase()
   const { data: license } = await supabase
     .from('raas_licenses')
     .select('nonce, tier, metadata')
@@ -926,7 +926,7 @@ async function handleOrderPaid(data: Record<string, unknown>): Promise<void> {
     return
   }
 
-  const supabase = getSupabase()
+  const supabase = await getSupabase()
 
   // Get license associated with this order
   const { data: license } = await supabase

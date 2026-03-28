@@ -10,7 +10,6 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { SupabaseClient } from '@supabase/supabase-js';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { logger } from '@/lib/utils/logger-utility';
 import { checkAdminAuth } from '../../licenses/middleware';
@@ -197,7 +196,7 @@ export async function GET(request: NextRequest) {
       performAnalysis,
     });
 
-    const supabase = createAdminClient();
+    const supabase = await createAdminClient();
 
     // Query usage events with filters
     const { events, totalCount } = await queryUsageEvents(supabase, filters);
@@ -294,7 +293,7 @@ function parseLimit(value: string | null): number {
  * Query usage events from database
  */
 async function queryUsageEvents(
-  supabase: SupabaseClient,
+  supabase: any,
   filters: ReconciliationFilters
 ): Promise<UsageQueryResult> {
   let query = supabase
@@ -347,7 +346,7 @@ async function queryUsageEvents(
  * Get license information for reconciliation
  */
 async function getLicenseInfo(
-  supabase: SupabaseClient,
+  supabase: any,
   nonce: string
 ): Promise<LicenseInfo | null> {
   const { data, error } = await supabase
@@ -367,7 +366,7 @@ async function getLicenseInfo(
  * Query billing periods from payment events
  */
 async function queryBillingPeriods(
-  supabase: SupabaseClient,
+  supabase: any,
   customerId: string | undefined,
   startTimestamp: number | undefined,
   endTimestamp: number | undefined

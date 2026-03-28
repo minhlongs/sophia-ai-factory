@@ -113,7 +113,7 @@ export function rowsToCsv(rows: UsageCsvRow[]): string {
  * Fetch usage events for export
  */
 export async function fetchUsageForExport(options: ExportOptions): Promise<UsageEventRow[]> {
-  const supabase = createAdminClient();
+  const supabase = await createAdminClient();
 
   // Validate date range (max 90 days)
   const dateRangeDays = (options.endTimestamp - options.startTimestamp) / 86400;

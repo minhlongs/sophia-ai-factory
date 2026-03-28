@@ -13,27 +13,7 @@ import {
   type AffiliateScore,
 } from "@/lib/discovery/affiliate-ai-scorer";
 import { sendMessage as sendTelegramMessage } from "@/lib/telegram/handlers/utils";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/lib/supabase/types";
-
-// Lazy-init admin client (same pattern as generate-campaign)
-let _supabase: SupabaseClient<Database> | null = null;
-
-function getSupabase(): SupabaseClient<Database> {
-  if (!_supabase) {
-    if (
-      !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      !process.env.SUPABASE_SERVICE_ROLE_KEY
-    ) {
-      throw new Error("Supabase environment variables not configured");
-    }
-    _supabase = createClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY
-    );
-  }
-  return _supabase;
-}
+import { createAdminClient } from "@/lib/supabase/admin";
 
 /** Default niches to scan when no user-configured niches exist */
 const DEFAULT_NICHES = [
@@ -94,7 +74,7 @@ export const autoDiscoverAffiliates = inngest.createFunction(
         return { count: 0, newCount: 0 };
       }
 
-      const supabase = getSupabase();
+      const supabase = await createAdminClient();
       let newDiscoveries = 0;
 
       // Check which programs already exist in affiliate_products

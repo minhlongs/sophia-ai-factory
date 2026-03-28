@@ -8,7 +8,7 @@
  * Path:   campaigns/{campaignId}/{timestamp}.mp4
  */
 
-import { createClient } from "@supabase/supabase-js";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { logger } from "@/lib/utils/logger-utility";
 
 export interface VideoStorageResult {
@@ -20,13 +20,8 @@ export interface VideoStorageResult {
 
 const BUCKET = "campaign-videos";
 
-function getStorageClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) {
-    throw new Error("Supabase environment variables not configured");
-  }
-  return createClient(url, key);
+async function getStorageClient() {
+  return createAdminClient();
 }
 
 /**
@@ -48,8 +43,13 @@ export async function downloadAndStore(
     const blob = await response.blob();
     const sizeBytes = blob.size;
 
-    const supabase = getStorageClient();
-    const { error: uploadError } = await supabase.storage
+    const supabase = await getStorageClient();
+    const storage = (supabase as any).storage;
+    if (!storage) {
+      throw new Error("Storage not available in D1 client");
+    }
+
+    const { error: uploadError } = await storage
       .from(BUCKET)
       .upload(storagePath, blob, {
         contentType: "video/mp4",
@@ -60,7 +60,7 @@ export async function downloadAndStore(
       throw new Error(`Storage upload failed: ${uploadError.message}`);
     }
 
-    const { data: publicUrlData } = supabase.storage
+    const { data: publicUrlData } = storage
       .from(BUCKET)
       .getPublicUrl(storagePath);
 
