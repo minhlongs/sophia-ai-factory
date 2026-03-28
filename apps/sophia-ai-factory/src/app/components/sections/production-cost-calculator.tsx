@@ -94,7 +94,7 @@ export function ProductionCostCalculator() {
   }, [channels, videosPerWeek, avgViews, conversionRate, avgCommission, leadCaptureRate, monthlyCost, tierConfig.price]);
 
   return (
-    <section id="cost-calculator" className="py-20 md:py-32 relative">
+    <section id="cost-calculator" className="py-12 md:py-24 relative">
       <Container>
         <SectionHeading title="Tính ROI Cho Affiliate SaaS" subtitle="Xem doanh thu từ quảng cáo, hoa hồng affiliate, và lead generation khi dùng Sophia AI Factory" />
 

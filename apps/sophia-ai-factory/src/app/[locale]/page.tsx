@@ -108,11 +108,11 @@ export default function Home() {
       <ScrollReveal delay={100}>
         <PricingSection />
       </ScrollReveal>
-      <ScrollReveal delay={0}>
-        <AffiliateDiscovery />
-      </ScrollReveal>
       <ScrollReveal delay={100}>
         <ProductionCostCalculator />
+      </ScrollReveal>
+      <ScrollReveal delay={0}>
+        <AffiliateDiscovery />
       </ScrollReveal>
       <ScrollReveal delay={0}>
         <FAQ />
