@@ -1,10 +1,13 @@
-name: Tests
+name: Tests & Deploy
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [main]
+  pull_request:
 
 jobs:
   quality:
-    name: Lint & Build
+    name: Lint & Build & Test
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -36,5 +39,31 @@ jobs:
         run: npm audit --audit-level=high --omit=dev
         continue-on-error: true
 
-# Note: Cloudflare Workers deployment is triggered automatically by Cloudflare's
-# GitHub integration (Pages/Workers CI) — not managed in this workflow.
+  deploy:
+    name: Deploy to Cloudflare Workers
+    needs: quality
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: npm install --legacy-peer-deps
+        working-directory: apps/sophia-ai-factory
+
+      - name: Build for Cloudflare (opennext)
+        run: npx opennextjs-cloudflare build
+        working-directory: apps/sophia-ai-factory
+
+      - name: Deploy to Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
