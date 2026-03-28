@@ -21,20 +21,22 @@ export const API_COSTS = {
   did: { perMinute: 1.13, monthlyFixed: 18 },
 } as const;
 
-/** Cloud infrastructure costs (USD/month) */
+/** Cloud + infrastructure costs (USD/month) */
 export const INFRA_COSTS = {
-  /** Cloudflare Workers Paid plan */
+  /** Cloudflare Workers Paid plan (includes D1, KV) */
   cloudflareWorkers: 5,
-  /** Cloudflare D1 (included in Workers paid) */
-  cloudflareD1: 0,
-  /** Cloudflare R2 storage (~5GB video cache) */
-  cloudflareR2: 0.15, // $0.015/GB × 10GB
-  /** Domain renewal (annual ÷ 12) */
+  /** Cloudflare R2 storage (~10GB video cache, $0.015/GB) */
+  cloudflareR2: 0.15,
+  /** Custom domain renewal (~$12/year ÷ 12) */
   domain: 1,
-  /** NOWPayments merchant plan */
-  nowpayments: 0,
-  /** Upstash Redis (rate limiting, free tier) */
+  /** Upstash Redis — rate limiting (free tier covers most usage) */
   upstashRedis: 0,
+  /** NOWPayments merchant — free for crypto payments */
+  nowpayments: 0,
+  /** Telegram Bot API — free */
+  telegram: 0,
+  /** YouTube Data API — free (OAuth2 quota) */
+  youtube: 0,
 } as const;
 
 /** Total monthly infrastructure cost */
