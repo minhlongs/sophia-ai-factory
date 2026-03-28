@@ -225,7 +225,7 @@ export async function getUsageExportData(
       params.endDate
     );
 
-    const supabase = createAdminClient();
+    const supabase = await createAdminClient();
 
     // Build query with filters
     let query = supabase

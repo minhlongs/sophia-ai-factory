@@ -54,7 +54,7 @@ async function extractAndValidateAgencyId(request: NextRequest): Promise<string 
  */
 async function validateTenantAccess(agencyId: string, tableName: string, resourceId: string): Promise<boolean> {
   try {
-    const supabase = createAdminClient();
+    const supabase = await createAdminClient();
 
     // For different tables, we need different validation strategies
     // This is a simplified version - in reality, you'd need specific validation logic per table
@@ -283,8 +283,8 @@ export async function multiTenantIsolationMiddleware(request: NextRequest): Prom
 
 // Helper function to generate tenant-scoped database queries
 export function createTenantScopedQuery(agencyId: string) {
-  return function(tableName: string) {
-    const supabase = createAdminClient();
+  return async function(tableName: string) {
+    const supabase = await createAdminClient();
     return supabase.from(tableName).eq('user_id', agencyId);
   };
 }

@@ -1,20 +1,10 @@
 import { TelegramFSM, BotState } from '../telegram-fsm-state-manager'
-import { createClient } from '@supabase/supabase-js'
-import { Database } from '@/lib/supabase/types'
+import { createServerClient } from '@/lib/supabase/server'
 import { backupSessionState } from '../telegram-state-backup-service'
 import { sendMessage } from './utils'
 import { logger } from '../../utils/logger-utility'
 
-// Lazy initialization of Supabase client
-const getSupabase = () => {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error('Supabase environment variables not configured')
-  }
-  return createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  )
-}
+const getSupabase = () => createServerClient()
 
 /**
  * Handle /email command or email input
@@ -36,15 +26,19 @@ export async function handleEmail(chatId: string, email: string): Promise<void> 
   try {
     const supabase = getSupabase()
 
-    // 1. Find user by email (using Admin API)
-    const { data: { users }, error: userError } = await supabase.auth.admin.listUsers()
+    // 1. Find user by email via D1 users table
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('id, email')
+      .eq('email', email.toLowerCase())
+      .single()
 
     if (userError) {
       await sendMessage(chatId, '❌ Error verifying account. Please try again later.')
       return
     }
 
-    const user = users.find(u => u.email?.toLowerCase() === email.toLowerCase())
+    const user = userData as { id: string; email: string } | null
 
     if (!user) {
       await sendMessage(chatId, `❌ Could not find an account with email: ${email}\nPlease make sure you have signed up at Sophia AI Factory first.`)

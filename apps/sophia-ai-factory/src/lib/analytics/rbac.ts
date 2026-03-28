@@ -109,7 +109,7 @@ export async function checkAdmin(userId: string): Promise<boolean> {
 
   // Check for admin role in user profile
   const { createAdminClient } = await import('@/lib/supabase/admin');
-  const supabase = createAdminClient();
+  const supabase = await createAdminClient();
 
   const { data: profile } = await supabase
     .from('user_profiles')
@@ -135,7 +135,7 @@ export async function verifyLicenseAccess(
 
   // Non-admin users can only access their own licenses
   const { createAdminClient } = await import('@/lib/supabase/admin');
-  const supabase = createAdminClient();
+  const supabase = await createAdminClient();
 
   const { data: license } = await supabase
     .from('raas_licenses')
@@ -162,7 +162,7 @@ export async function verifyLicenseAccess(
  */
 export async function getUserLicenseNonce(userId: string): Promise<string | null> {
   const { createAdminClient } = await import('@/lib/supabase/admin');
-  const supabase = createAdminClient();
+  const supabase = await createAdminClient();
 
   const { data: license } = await supabase
     .from('raas_licenses')

@@ -30,7 +30,7 @@ export async function calculateRoiMetrics(
   licenseNonce: string,
   valuePerCredit: number = 0.01
 ): Promise<ROIMetrics> {
-  const supabase = createAdminClient();
+  const supabase = await createAdminClient();
 
   // Get license details
   // Note: Using type assertion for Supabase query result since generated types
@@ -116,7 +116,7 @@ export async function calculateAggregateRoi(
   userId: string,
   valuePerCredit: number = 0.01
 ): Promise<ROIMetrics> {
-  const supabase = createAdminClient();
+  const supabase = await createAdminClient();
 
   // Get all licenses for user
   const { data: licenses } = await supabase

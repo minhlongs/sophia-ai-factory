@@ -319,7 +319,7 @@ export async function getMeteredSubscriptionItemId(
   userId: string,
   priceType: 'credits' | 'requests' = 'credits'
 ): Promise<string | null> {
-  const supabase = createAdminClient();
+  const supabase = await createAdminClient();
 
   try {
     // Get user's Stripe customer and subscription IDs
@@ -433,7 +433,7 @@ export async function syncOverageToStripe(
 
     // Mark overage event as synced to Stripe
     if (result.success) {
-      const supabase = createAdminClient();
+      const supabase = await createAdminClient();
       await supabase
         .from('overage_events')
         .update({

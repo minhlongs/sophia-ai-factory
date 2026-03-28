@@ -95,7 +95,7 @@ async function extractAgencyId(request: NextRequest): Promise<string | null> {
   if (apiKey && apiKey.startsWith('mk_')) { // Assume mk_ prefix for agency-specific API keys
     try {
       // Get agency_id associated with this API key from database
-      const supabase = createAdminClient();
+      const supabase = await createAdminClient();
 
       // Hash the API key for comparison (as it's stored hashed in the DB)
       const apiKeyHash = sha256(apiKey);
@@ -215,7 +215,7 @@ function extractResourceInfo(pathname: string, method: string, request: NextRequ
  */
 async function validateResourceAccess(agencyId: string, resourceType: string, resourceId: string | null): Promise<boolean> {
   try {
-    const supabase = createAdminClient();
+    const supabase = await createAdminClient();
 
     // Depending on resource type, check different authorization schemes
     switch(resourceType) {

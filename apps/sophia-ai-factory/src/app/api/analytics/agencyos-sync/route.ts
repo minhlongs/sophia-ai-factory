@@ -84,7 +84,7 @@ async function fetchQuotaUsage(
   monthlyCredits: number;
   requestCount: number;
 }> {
-  const supabase = createAdminClient();
+  const supabase = await createAdminClient();
 
   const { data: usageEvents } = await supabase
     .from('usage_events')
@@ -142,7 +142,7 @@ async function fetchOverageEvents(
   totalCharges: number;
   violations: Array<{ timestamp: string; type: string; exceededBy: number }>;
 }> {
-  const supabase = createAdminClient();
+  const supabase = await createAdminClient();
 
   const { data: overageEvents } = await supabase
     .from('overage_events')
@@ -184,7 +184,7 @@ async function fetchOverageEvents(
 async function fetchTierHistory(
   licenseNonce: string
 ): Promise<Array<{ tier: string; startDate: string }>> {
-  const supabase = createAdminClient();
+  const supabase = await createAdminClient();
 
   const { data: license } = await supabase
     .from('raas_licenses')
@@ -249,7 +249,7 @@ export async function POST(request: NextRequest) {
   });
 
   try {
-    const supabase = createAdminClient();
+    const supabase = await createAdminClient();
     const startTs = Math.floor(new Date(startDate).getTime() / 1000);
     const endTs = Math.floor(new Date(endDate).getTime() / 1000);
 

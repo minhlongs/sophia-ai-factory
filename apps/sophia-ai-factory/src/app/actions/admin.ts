@@ -42,7 +42,7 @@ export async function getAdminStats(): Promise<AdminStats> {
   }
 
   // 2. Fetch Real Stats using Admin Client (to bypass RLS for global analytics)
-  const adminSupabase = createAdminClient();
+  const adminSupabase = await createAdminClient();
 
   // Parallel queries for performance
   const [

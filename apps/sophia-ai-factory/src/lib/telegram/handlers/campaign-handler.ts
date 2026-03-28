@@ -1,22 +1,12 @@
 import { TelegramFSM, BotState } from '../telegram-fsm-state-manager'
-import { createClient } from '@supabase/supabase-js'
-import { Database } from '@/lib/supabase/types'
+import { createServerClient } from '@/lib/supabase/server'
 import { inngest } from '@/lib/inngest/client'
 import { Tier } from '@/types'
 import { backupSessionState } from '../telegram-state-backup-service'
 import { sendMessage } from './utils'
 import { logger } from '../../utils/logger-utility'
 
-// Lazy initialization of Supabase client
-const getSupabase = () => {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error('Supabase environment variables not configured')
-  }
-  return createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  )
-}
+const getSupabase = () => createServerClient()
 
 // Helper to map Supabase subscription tier to App Tier
 function mapSubscriptionToTier(subTier: 'free' | 'pro' | 'enterprise' | null): Tier {
