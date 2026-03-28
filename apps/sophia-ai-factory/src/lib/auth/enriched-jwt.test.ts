@@ -15,29 +15,34 @@ import {
   getLicenseContext,
 } from '@/lib/auth/enriched-jwt'
 
-// Mock jose library
+// Mock jose library — use regular function (not arrow) so `new SignJWT(...)` works
 vi.mock('jose', () => ({
-  SignJWT: vi.fn().mockImplementation(() => ({
-    setProtectedHeader: vi.fn().mockReturnThis(),
-    setIssuedAt: vi.fn().mockReturnThis(),
-    setExpirationTime: vi.fn().mockReturnThis(),
-    setJti: vi.fn().mockReturnThis(),
-    sign: vi.fn().mockResolvedValue('mock-signed-jwt-token'),
-  })),
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  SignJWT: function MockSignJWT(_payload: unknown) {
+    return {
+      setProtectedHeader: vi.fn().mockReturnThis(),
+      setIssuedAt: vi.fn().mockReturnThis(),
+      setExpirationTime: vi.fn().mockReturnThis(),
+      setJti: vi.fn().mockReturnThis(),
+      sign: vi.fn().mockResolvedValue('mock-signed-jwt-token'),
+    }
+  },
   jwtVerify: vi.fn(),
 }))
 
-// Mock Supabase admin client
+// Shared mock client — all calls to createAdminClient() return same instance
+// so tests can configure mocks that production code will see
+const mockSingle = vi.fn()
+const mockEq = vi.fn(() => ({ single: mockSingle }))
+const mockSelect = vi.fn(() => ({ eq: mockEq }))
+const mockInsertUpdate = vi.fn()
+const mockOnConflict = vi.fn(() => ({ update: mockInsertUpdate }))
+const mockInsert = vi.fn(() => ({ onConflict: mockOnConflict }))
+const mockFrom = vi.fn(() => ({ select: mockSelect, insert: mockInsert }))
+const mockSupabaseClient = { from: mockFrom }
+
 vi.mock('@/lib/supabase/admin', () => ({
-  createAdminClient: vi.fn(() => ({
-    from: vi.fn((table: string) => ({
-      select: vi.fn((fields: string) => ({
-        eq: vi.fn((field: string, value: any) => ({
-          single: vi.fn(),
-        })),
-      })),
-    })),
-  })),
+  createAdminClient: vi.fn(() => mockSupabaseClient),
 }))
 
 // Mock logger

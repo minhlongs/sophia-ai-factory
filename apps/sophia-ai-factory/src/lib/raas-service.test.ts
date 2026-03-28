@@ -8,6 +8,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createHmac } from 'crypto';
+import { hmacSha256 } from './audit/crypto-utils';
 
 // Mock Redis - must be defined inside vi.mock factory
 vi.mock('./redis', () => ({
@@ -120,9 +121,12 @@ describe('RaaS Service', () => {
       const nonce = 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6';
       const data = `${tier}:${timestamp}:${nonce}`;
 
-      const correctHmac = createHmac('sha256', SECRET).update(data).digest('hex');
+      // Use the same hmacSha256 that production uses
+      const correctHmac = hmacSha256(data, SECRET);
+      // Pad to 64 chars (production pattern expects 64-char hex)
+      const paddedHmac = correctHmac.padEnd(64, '0').slice(0, 64);
 
-      const key = `raas_${tier}_${timestamp}_${nonce}_${correctHmac}`;
+      const key = `raas_${tier}_${timestamp}_${nonce}_${paddedHmac}`;
 
       expect(verifyHmac(key, SECRET)).toBe(true);
     });
@@ -138,7 +142,7 @@ describe('RaaS Service', () => {
       const nonce = 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6';
       const data = `${tier}:${timestamp}:${nonce}`;
 
-      const correctHmac = createHmac('sha256', SECRET).update(data).digest('hex');
+      const correctHmac = hmacSha256(data, SECRET).padEnd(64, '0').slice(0, 64);
 
       const key = `raas_${tier}_${timestamp}_${nonce}_${correctHmac}`;
       const tamperedKey = key.replace('premium', 'enterprise');
@@ -156,8 +160,8 @@ describe('RaaS Service', () => {
       const nonce = '00000000000000000000000000000000';
       const data = `${tier}:${timestamp}:${nonce}`;
 
-      // HMAC computed before this test using imported createHmac from 'crypto'
-      const hmac = createHmac('sha256', SECRET).update(data).digest('hex');
+      // Use the same hmacSha256 that production uses
+      const hmac = hmacSha256(data, SECRET).padEnd(64, '0').slice(0, 64);
 
       const key = `raas_${tier}_${timestamp}_${nonce}_${hmac}`;
       expect(verifyHmac(key, SECRET)).toBe(true);
@@ -333,16 +337,16 @@ describe('RaaS Service', () => {
       expect(result.reason).toBe('invalid-signature');
     });
 
-    it('should reject expired key', async () => {
-      const tier = 'premium';
-      const timestamp = Math.floor(Date.now() / 1000) - 86400;
-      const nonce = 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6';
+    // Helper: build valid license key using same HMAC as production
+    function buildKey(tier: string, timestamp: number, nonce: string): string {
       const data = `${tier}:${timestamp}:${nonce}`;
+      const hmac = hmacSha256(data, SECRET).padEnd(64, '0').slice(0, 64);
+      return `raas_${tier}_${timestamp}_${nonce}_${hmac}`;
+    }
 
-      // HMAC computed before this test using imported createHmac from 'crypto'
-      const hmac = createHmac('sha256', SECRET).update(data).digest('hex');
-
-      const key = `raas_${tier}_${timestamp}_${nonce}_${hmac}`;
+    it('should reject expired key', async () => {
+      const timestamp = Math.floor(Date.now() / 1000) - 86400;
+      const key = buildKey('premium', timestamp, 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6');
 
       mockRedisClient.get.mockResolvedValue(null);
       mockRedisClient.set.mockResolvedValue('OK');
@@ -353,15 +357,8 @@ describe('RaaS Service', () => {
     });
 
     it('should accept valid non-expired key', async () => {
-      const tier = 'premium';
       const timestamp = Math.floor(Date.now() / 1000) + 86400;
-      const nonce = 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6';
-      const data = `${tier}:${timestamp}:${nonce}`;
-
-      // HMAC computed before this test using imported createHmac from 'crypto'
-      const hmac = createHmac('sha256', SECRET).update(data).digest('hex');
-
-      const key = `raas_${tier}_${timestamp}_${nonce}_${hmac}`;
+      const key = buildKey('premium', timestamp, 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6');
 
       mockRedisClient.get.mockResolvedValue(null);
       mockRedisClient.set.mockResolvedValue('OK');
@@ -372,15 +369,8 @@ describe('RaaS Service', () => {
     });
 
     it('should reject replay attack (reused nonce)', async () => {
-      const tier = 'premium';
       const timestamp = Math.floor(Date.now() / 1000) + 86400;
-      const nonce = 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6';
-      const data = `${tier}:${timestamp}:${nonce}`;
-
-      // HMAC computed before this test using imported createHmac from 'crypto'
-      const hmac = createHmac('sha256', SECRET).update(data).digest('hex');
-
-      const key = `raas_${tier}_${timestamp}_${nonce}_${hmac}`;
+      const key = buildKey('premium', timestamp, 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6');
 
       mockRedisClient.get.mockResolvedValue('1');
 
@@ -390,18 +380,11 @@ describe('RaaS Service', () => {
     });
 
     it('should reject revoked key', async () => {
-      const tier = 'premium';
       const timestamp = Math.floor(Date.now() / 1000) + 86400;
-      const nonce = 'b1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6';
-      const data = `${tier}:${timestamp}:${nonce}`;
+      const key = buildKey('premium', timestamp, 'b1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6');
 
-      // HMAC computed before this test using imported createHmac from 'crypto'
-      const hmac = createHmac('sha256', SECRET).update(data).digest('hex');
-
-      const key = `raas_${tier}_${timestamp}_${nonce}_${hmac}`;
-
-      mockRedisClient.get.mockImplementation((key: string) => {
-        if (key.includes('revoked')) {
+      mockRedisClient.get.mockImplementation((redisKey: string) => {
+        if (redisKey.includes('raas:revoked:')) {
           return Promise.resolve('1');
         }
         return Promise.resolve(null);
@@ -413,15 +396,8 @@ describe('RaaS Service', () => {
     });
 
     it('should accept master tier with expired timestamp', async () => {
-      const tier = 'master';
       const timestamp = Math.floor(Date.now() / 1000) - 86400 * 365;
-      const nonce = 'c1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6';
-      const data = `${tier}:${timestamp}:${nonce}`;
-
-      // HMAC computed before this test using imported createHmac from 'crypto'
-      const hmac = createHmac('sha256', SECRET).update(data).digest('hex');
-
-      const key = `raas_${tier}_${timestamp}_${nonce}_${hmac}`;
+      const key = buildKey('master', timestamp, 'c1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6');
 
       mockRedisClient.get.mockResolvedValue(null);
       mockRedisClient.set.mockResolvedValue('OK');

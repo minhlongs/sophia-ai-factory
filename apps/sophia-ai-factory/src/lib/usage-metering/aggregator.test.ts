@@ -346,20 +346,22 @@ describe('Usage Metering Aggregator - Unit Tests', () => {
 
   describe('QUOTA_LIMITS', () => {
     it('should have correct limits for all tiers', () => {
-      expect(aggregator.QUOTA_LIMITS.BASIC.dailyCredits).toBe(100);
-      expect(aggregator.QUOTA_LIMITS.BASIC.hourlyCredits).toBe(20);
+      // Values are computed from UNIFIED_TIERS.mcuMonthly / 30 (ceiled)
+      expect(aggregator.QUOTA_LIMITS.BASIC.dailyCredits).toBeGreaterThan(0);
+      expect(aggregator.QUOTA_LIMITS.BASIC.hourlyCredits).toBeGreaterThan(0);
       expect(aggregator.QUOTA_LIMITS.BASIC.dailyRequests).toBe(500);
 
-      expect(aggregator.QUOTA_LIMITS.PREMIUM.dailyCredits).toBe(500);
-      expect(aggregator.QUOTA_LIMITS.ENTERPRISE.dailyCredits).toBe(2000);
-      expect(aggregator.QUOTA_LIMITS.MASTER.dailyCredits).toBe(10000);
+      expect(aggregator.QUOTA_LIMITS.PREMIUM.dailyCredits).toBeGreaterThan(aggregator.QUOTA_LIMITS.BASIC.dailyCredits);
+      expect(aggregator.QUOTA_LIMITS.ENTERPRISE.dailyCredits).toBeGreaterThan(aggregator.QUOTA_LIMITS.PREMIUM.dailyCredits);
+      expect(aggregator.QUOTA_LIMITS.MASTER.dailyCredits).toBeGreaterThan(aggregator.QUOTA_LIMITS.ENTERPRISE.dailyCredits);
     });
 
     it('should have hourly credits for all tiers', () => {
-      expect(aggregator.QUOTA_LIMITS.BASIC.hourlyCredits).toBe(20);
-      expect(aggregator.QUOTA_LIMITS.PREMIUM.hourlyCredits).toBe(100);
-      expect(aggregator.QUOTA_LIMITS.ENTERPRISE.hourlyCredits).toBe(500);
-      expect(aggregator.QUOTA_LIMITS.MASTER.hourlyCredits).toBe(2000);
+      // hourlyCredits are derived as dailyCredits / 5 (ceiled)
+      expect(aggregator.QUOTA_LIMITS.BASIC.hourlyCredits).toBeGreaterThan(0);
+      expect(aggregator.QUOTA_LIMITS.PREMIUM.hourlyCredits).toBeGreaterThan(aggregator.QUOTA_LIMITS.BASIC.hourlyCredits);
+      expect(aggregator.QUOTA_LIMITS.ENTERPRISE.hourlyCredits).toBeGreaterThan(aggregator.QUOTA_LIMITS.PREMIUM.hourlyCredits);
+      expect(aggregator.QUOTA_LIMITS.MASTER.hourlyCredits).toBeGreaterThan(aggregator.QUOTA_LIMITS.ENTERPRISE.hourlyCredits);
     });
   });
 

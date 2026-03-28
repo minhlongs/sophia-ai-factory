@@ -26,6 +26,10 @@ describe('Telegram Webhook Route', () => {
     vi.resetAllMocks()
     process.env.TELEGRAM_BOT_TOKEN = 'test-bot-token'
     process.env.TELEGRAM_WEBHOOK_SECRET = secret
+    // Restore withMiddleware implementation after resetAllMocks()
+    vi.mocked(telegramHandlers.withMiddleware).mockImplementation(
+      async (_chatId: string, handler: () => Promise<void>) => handler()
+    )
   })
 
   interface TelegramWebhookBody {

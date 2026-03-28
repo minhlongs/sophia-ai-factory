@@ -13,29 +13,12 @@ import {
   getNonceStats,
 } from '@/lib/auth/jwt-nonce-tracker'
 
-// Mock Supabase admin client
+// Shared mock client — all calls to createAdminClient() return same instance
+const mockNonceFrom = vi.fn()
+const mockNonceSupabaseClient = { from: mockNonceFrom }
+
 vi.mock('@/lib/supabase/admin', () => ({
-  createAdminClient: vi.fn(() => ({
-    from: vi.fn((table: string) => ({
-      select: vi.fn((fields: string) => ({
-        eq: vi.fn((field: string, value: any) => ({
-          single: vi.fn(),
-        })),
-        delete: vi.fn(),
-        lt: vi.fn((field: string, value: any) => ({
-          select: vi.fn(),
-        })),
-        gte: vi.fn((field: string, value: any) => ({
-          select: vi.fn(),
-        })),
-      })),
-      insert: vi.fn((data: any) => ({
-        onConflict: vi.fn((field: string) => ({
-          update: vi.fn(),
-        })),
-      })),
-    })),
-  })),
+  createAdminClient: vi.fn(() => mockNonceSupabaseClient),
 }))
 
 // Mock logger
@@ -65,11 +48,13 @@ describe('checkJwtNonce', () => {
         set: mockKvSet,
       },
       writable: true,
+      configurable: true,
     })
   })
 
   afterEach(() => {
-    delete (globalThis as any).KV_KV
+    // Reset KV_KV to undefined rather than deleting (property may be non-configurable from setup)
+    ;(globalThis as any).KV_KV = undefined
   })
 
   it('should return invalid for empty nonce', async () => {
@@ -134,7 +119,8 @@ describe('checkJwtNonce', () => {
 
   it('should fall back to DB when KV is unavailable', async () => {
     // Remove KV client
-    delete (globalThis as any).KV_KV
+    // Reset KV_KV to undefined rather than deleting (property may be non-configurable from setup)
+    ;(globalThis as any).KV_KV = undefined
 
     const { createAdminClient } = await import('@/lib/supabase/admin')
     const supabase = vi.mocked(createAdminClient)()
@@ -180,7 +166,8 @@ describe('checkJwtNonce', () => {
   })
 
   it('should fail open on database error', async () => {
-    delete (globalThis as any).KV_KV
+    // Reset KV_KV to undefined rather than deleting (property may be non-configurable from setup)
+    ;(globalThis as any).KV_KV = undefined
 
     const { createAdminClient } = await import('@/lib/supabase/admin')
     const supabase = vi.mocked(createAdminClient)()
@@ -210,11 +197,13 @@ describe('markJwtNonceAsUsed', () => {
         set: mockKvSet,
       },
       writable: true,
+      configurable: true,
     })
   })
 
   afterEach(() => {
-    delete (globalThis as any).KV_KV
+    // Reset KV_KV to undefined rather than deleting (property may be non-configurable from setup)
+    ;(globalThis as any).KV_KV = undefined
   })
 
   it('should mark nonce as used in both KV and DB', async () => {
@@ -295,11 +284,13 @@ describe('preRegisterNonce', () => {
         set: mockKvSet,
       },
       writable: true,
+      configurable: true,
     })
   })
 
   afterEach(() => {
-    delete (globalThis as any).KV_KV
+    // Reset KV_KV to undefined rather than deleting (property may be non-configurable from setup)
+    ;(globalThis as any).KV_KV = undefined
   })
 
   it('should pre-register nonce in KV cache', async () => {
@@ -319,7 +310,8 @@ describe('preRegisterNonce', () => {
   })
 
   it('should return false when KV is unavailable', async () => {
-    delete (globalThis as any).KV_KV
+    // Reset KV_KV to undefined rather than deleting (property may be non-configurable from setup)
+    ;(globalThis as any).KV_KV = undefined
 
     const result = await preRegisterNonce('no-kv-nonce', 'user-123', Date.now() + 3600)
 
@@ -407,19 +399,12 @@ describe('getNonceStats', () => {
     const { createAdminClient } = await import('@/lib/supabase/admin')
     const supabase = vi.mocked(createAdminClient)()
 
+    // Production code: .from().select('id', {count: 'exact', head: true}).gte() / .lt()
+    // .gte() and .lt() are the terminal calls that return promises
     vi.mocked(supabase.from).mockReturnValue({
-      select: vi.fn().mockReturnThis(),
-      gte: vi.fn().mockReturnValue({
-        select: vi.fn().mockResolvedValue({
-          count: 150,
-          error: null,
-        }),
-      }),
-      lt: vi.fn().mockReturnValue({
-        select: vi.fn().mockResolvedValue({
-          count: 50,
-          error: null,
-        }),
+      select: vi.fn().mockReturnValue({
+        gte: vi.fn().mockResolvedValue({ count: 150, error: null }),
+        lt: vi.fn().mockResolvedValue({ count: 50, error: null }),
       }),
     } as any)
 
