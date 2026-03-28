@@ -14,7 +14,7 @@ interface ScrollRevealProps {
  * Wraps children with a fade-in-up reveal triggered when the element
  * scrolls into the viewport. Uses IntersectionObserver for performance.
  */
-export function ScrollReveal({ children, delay = 0, threshold = 0.15 }: ScrollRevealProps) {
+export function ScrollReveal({ children, delay = 0, threshold = 0.05 }: ScrollRevealProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
 
