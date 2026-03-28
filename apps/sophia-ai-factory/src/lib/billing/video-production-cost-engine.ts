@@ -13,10 +13,10 @@ import { UNIFIED_TIERS } from '@/lib/unified-tier-config';
 export const API_COSTS = {
   /** HeyGen Scale API: ~$0.50/min for 60s video */
   heygen: { perMinute: 0.50, monthlyFixed: 99 },
-  /** ElevenLabs Creator: ~$0.02 per 350 chars (1 script) */
-  elevenlabs: { perScript: 0.02, monthlyFixed: 22 },
-  /** OpenRouter Claude Haiku: ~$0.008 per script generation */
-  openrouter: { perScript: 0.008, monthlyFixed: 0 },
+  /** ElevenLabs Creator: ~$0.04 per script (~700 chars avg) */
+  elevenlabs: { perScript: 0.04, monthlyFixed: 22 },
+  /** OpenRouter: $0.03/script avg (gpt-4o-mini for BASIC, Claude 3.5 for ENTERPRISE) */
+  openrouter: { perScript: 0.03, monthlyFixed: 0 },
   /** D-ID Build (optional): ~$1.13/min */
   did: { perMinute: 1.13, monthlyFixed: 18 },
 } as const;
@@ -29,14 +29,18 @@ export const INFRA_COSTS = {
   cloudflareR2: 0.15,
   /** Custom domain renewal (~$12/year ÷ 12) */
   domain: 1,
-  /** Upstash Redis — rate limiting (free tier covers most usage) */
-  upstashRedis: 0,
-  /** NOWPayments merchant — free for crypto payments */
-  nowpayments: 0,
+  /** Upstash Redis — rate limiting + nonce tracking */
+  upstashRedis: 10,
+  /** Inngest — background job queue for video pipeline */
+  inngest: 25,
+  /** Resend — billing email notifications */
+  resend: 5,
   /** Telegram Bot API — free */
   telegram: 0,
-  /** YouTube Data API — free (OAuth2 quota) */
+  /** YouTube Data API — free */
   youtube: 0,
+  /** TikTok Publishing API — free */
+  tiktok: 0,
 } as const;
 
 /** Total monthly infrastructure cost */
