@@ -1,4 +1,5 @@
 import { PricingSection } from "@/components/pricing/pricing-section";
+import { ProductionCostCalculator } from "@/app/components/sections/production-cost-calculator";
 import { getTranslations } from "next-intl/server";
 
 export const metadata = {
@@ -27,6 +28,7 @@ export default async function PricingPage() {
       </div>
 
       <PricingSection />
+      <ProductionCostCalculator />
     </main>
   );
 }
