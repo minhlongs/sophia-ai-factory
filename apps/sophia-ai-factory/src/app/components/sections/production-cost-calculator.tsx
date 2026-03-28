@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { useState, useMemo, useCallback } from "react";
 import { UNIFIED_TIERS } from "@/lib/unified-tier-config";
+import { calculateCostBreakdown } from "@/lib/billing/video-production-cost-engine";
 import type { Tier } from "@/types";
 import { SliderInput, CostRow, MetricCard, fmt, fmtUSD } from "./production-cost-calculator-parts";
 
@@ -53,27 +54,30 @@ export function ProductionCostCalculator() {
     const totalVideos = channels * videosPerWeek * 4;
     const totalViews = totalVideos * avgViews;
 
+    // API costs (HeyGen, ElevenLabs, OpenRouter)
+    const apiCost = calculateCostBreakdown(totalVideos);
+    const monthlyApiCost = (apiCost.variableCostPerVideo * totalVideos) + apiCost.monthlyFixedCosts;
+    const totalMonthlyCost = monthlyCost + monthlyApiCost;
+
     // 1. YouTube Ads (CPM)
     const adRevenue = (totalViews / 1000) * AD_CPM;
 
     // 2. Affiliate SaaS Commission
-    // views → clicks (conversionRate%) → sales (assume 5% of clicks convert to purchase)
     const affiliateClicks = totalViews * (conversionRate / 100);
-    const affiliateSales = affiliateClicks * 0.05; // 5% click-to-sale
+    const affiliateSales = affiliateClicks * 0.05;
     const affiliateRevenue = affiliateSales * avgCommission;
 
-    // 3. Lead Generation (email capture → nurture → close)
-    // views → leads (leadCaptureRate%) → close (assume 3% of leads close at $50 avg deal)
+    // 3. Lead Generation
     const leads = totalViews * (leadCaptureRate / 100);
     const leadDeals = leads * 0.03;
     const leadRevenue = leadDeals * 50;
 
     const monthlyRevenue = adRevenue + affiliateRevenue + leadRevenue;
-    const monthlyProfit = monthlyRevenue - monthlyCost;
+    const monthlyProfit = monthlyRevenue - totalMonthlyCost;
     const manualCost = totalVideos * MANUAL_COST_PER_VIDEO;
-    const savings = manualCost - monthlyCost;
-    const paybackDays = monthlyRevenue > 0 ? Math.ceil((tierConfig.price / monthlyRevenue) * 30) : 999;
-    const roiPercent = monthlyCost > 0 ? ((monthlyRevenue - monthlyCost) / monthlyCost) * 100 : 0;
+    const savings = manualCost - totalMonthlyCost;
+    const paybackDays = monthlyRevenue > 0 ? Math.ceil((tierConfig.price + monthlyApiCost) / monthlyRevenue * 30) : 999;
+    const roiPercent = totalMonthlyCost > 0 ? ((monthlyRevenue - totalMonthlyCost) / totalMonthlyCost) * 100 : 0;
 
     return {
       totalVideos, totalViews,
@@ -84,12 +88,16 @@ export function ProductionCostCalculator() {
       leads: Math.round(leads),
       monthlyRevenue: Math.round(monthlyRevenue),
       monthlyProfit: Math.round(monthlyProfit),
+      monthlyApiCost: Math.round(monthlyApiCost),
+      apiCostPerVideo: Math.round(apiCost.variableCostPerVideo * 100) / 100,
+      apiFixedCost: apiCost.monthlyFixedCosts,
+      totalMonthlyCost: Math.round(totalMonthlyCost),
       manualCost: Math.round(manualCost),
       savings: Math.round(savings),
       paybackDays, roiPercent: Math.round(roiPercent),
       annualRevenue: Math.round(monthlyRevenue * 12),
       annualProfit: Math.round(monthlyProfit * 12),
-      costPerVideo: totalVideos > 0 ? Math.round((monthlyCost / totalVideos) * 100) / 100 : 0,
+      costPerVideo: totalVideos > 0 ? Math.round((totalMonthlyCost / totalVideos) * 100) / 100 : 0,
     };
   }, [channels, videosPerWeek, avgViews, conversionRate, avgCommission, leadCaptureRate, monthlyCost, tierConfig.price]);
 
@@ -163,7 +171,12 @@ export function ProductionCostCalculator() {
                   <div className="border-t border-white/10 pt-3">
                     <CostRow label="Tổng doanh thu / tháng" value={fmtUSD(result.monthlyRevenue)} highlight />
                   </div>
-                  <CostRow label={isLifetime ? "Trừ phí (phân bổ/tháng)" : "Trừ phí Sophia"} value={`-${fmtUSD(monthlyCost)}`} />
+                  <div className="border-t border-white/10 pt-3 space-y-2">
+                    <p className="text-xs text-muted-foreground font-medium">Chi phí vận hành</p>
+                    <CostRow label={isLifetime ? "Phí Sophia (phân bổ/tháng)" : "Phí Sophia"} value={`-${fmtUSD(monthlyCost)}`} />
+                    <CostRow label={`Chi phí API + Cloud ($${result.apiCostPerVideo}/video + $${result.apiFixedCost} định phí)`} value={`-${fmtUSD(result.monthlyApiCost)}`} />
+                    <CostRow label="Tổng chi phí / tháng" value={`-${fmtUSD(result.totalMonthlyCost)}`} highlight />
+                  </div>
                   <div className="border-t border-white/10 pt-3">
                     <CostRow label="Lợi nhuận ròng / tháng" value={fmtUSD(result.monthlyProfit)} highlight />
                   </div>
@@ -181,7 +194,7 @@ export function ProductionCostCalculator() {
                 </div>
                 <div className="space-y-3">
                   <CostRow label="Doanh thu / năm" value={fmtUSD(result.annualRevenue)} />
-                  <CostRow label={isLifetime ? "Chi phí (trả 1 lần)" : "Chi phí Sophia / năm"} value={fmtUSD(isLifetime ? tierConfig.price : tierConfig.price * 12)} />
+                  <CostRow label="Tổng chi phí / năm" value={fmtUSD(result.totalMonthlyCost * 12)} />
                   <div className="border-t border-white/10 pt-3">
                     <CostRow label="Lợi nhuận / năm" value={fmtUSD(result.annualProfit)} highlight />
                   </div>
@@ -206,7 +219,8 @@ export function ProductionCostCalculator() {
         </div>
 
         <p className="text-center text-muted-foreground text-xs mt-8 max-w-3xl mx-auto">
-          Ước tính: CPM $2/1,000 views | Click-to-sale 5% | Lead-to-deal 3% tại $50/deal. Affiliate SaaS thường có recurring commission 20-50% MRR — con số trên chỉ tính tháng đầu. Doanh thu thực tế phụ thuộc vào niche, chất lượng nội dung, và offer.
+          Chi phí đã bao gồm: Phí Sophia + API (HeyGen $0.50/phút + ElevenLabs $22/tháng + OpenRouter) + Cloud (Cloudflare Workers $5 + R2 + Domain).
+          Doanh thu: CPM $2/1,000 views | Click-to-sale 5% | Lead-to-deal 3% tại $50/deal. Affiliate SaaS thường có recurring commission — con số trên chỉ tính tháng đầu.
         </p>
       </Container>
     </section>

@@ -21,6 +21,25 @@ export const API_COSTS = {
   did: { perMinute: 1.13, monthlyFixed: 18 },
 } as const;
 
+/** Cloud infrastructure costs (USD/month) */
+export const INFRA_COSTS = {
+  /** Cloudflare Workers Paid plan */
+  cloudflareWorkers: 5,
+  /** Cloudflare D1 (included in Workers paid) */
+  cloudflareD1: 0,
+  /** Cloudflare R2 storage (~5GB video cache) */
+  cloudflareR2: 0.15, // $0.015/GB × 10GB
+  /** Domain renewal (annual ÷ 12) */
+  domain: 1,
+  /** NOWPayments merchant plan */
+  nowpayments: 0,
+  /** Upstash Redis (rate limiting, free tier) */
+  upstashRedis: 0,
+} as const;
+
+/** Total monthly infrastructure cost */
+export const MONTHLY_INFRA_COST = Object.values(INFRA_COSTS).reduce((a, b) => a + b, 0);
+
 /** Production constraints */
 export const PRODUCTION_LIMITS = {
   /** Average video duration in minutes */
@@ -111,6 +130,7 @@ export function calculateVariableCost(durationMin: number = 1): CostBreakdown['c
 
 /**
  * Calculate full cost breakdown for a given monthly volume.
+ * Includes API subscriptions + cloud infrastructure.
  */
 export function calculateCostBreakdown(videosPerMonth: number, durationMin: number = 1): CostBreakdown {
   const components = calculateVariableCost(durationMin);
@@ -119,7 +139,8 @@ export function calculateCostBreakdown(videosPerMonth: number, durationMin: numb
   const monthlyFixedCosts =
     API_COSTS.heygen.monthlyFixed +
     API_COSTS.elevenlabs.monthlyFixed +
-    API_COSTS.openrouter.monthlyFixed;
+    API_COSTS.openrouter.monthlyFixed +
+    MONTHLY_INFRA_COST;
 
   const fixedPerVideo = videosPerMonth > 0 ? monthlyFixedCosts / videosPerMonth : 0;
   const totalCostPerVideo = variableCostPerVideo + fixedPerVideo;
