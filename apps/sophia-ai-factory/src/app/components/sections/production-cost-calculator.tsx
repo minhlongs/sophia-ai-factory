@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { useState, useMemo, useCallback } from "react";
 import { UNIFIED_TIERS } from "@/lib/unified-tier-config";
-import { calculateCostBreakdown } from "@/lib/billing/video-production-cost-engine";
+import { calculateCostBreakdown, API_COSTS, INFRA_COSTS } from "@/lib/billing/video-production-cost-engine";
 import type { Tier } from "@/types";
 import { SliderInput, CostRow, MetricCard, fmt, fmtUSD } from "./production-cost-calculator-parts";
 
@@ -172,9 +172,12 @@ export function ProductionCostCalculator() {
                     <CostRow label="Tổng doanh thu / tháng" value={fmtUSD(result.monthlyRevenue)} highlight />
                   </div>
                   <div className="border-t border-white/10 pt-3 space-y-2">
-                    <p className="text-xs text-muted-foreground font-medium">Chi phí vận hành</p>
-                    <CostRow label={isLifetime ? "Phí Sophia (phân bổ/tháng)" : "Phí Sophia"} value={`-${fmtUSD(monthlyCost)}`} />
-                    <CostRow label={`Chi phí API + Cloud ($${result.apiCostPerVideo}/video + $${result.apiFixedCost} định phí)`} value={`-${fmtUSD(result.monthlyApiCost)}`} />
+                    <p className="text-xs text-muted-foreground font-medium">Chi phí vận hành đầy đủ</p>
+                    <CostRow label={isLifetime ? "Sophia License (trọn đời ÷ 12)" : "Sophia License"} value={`-${fmtUSD(monthlyCost)}`} />
+                    <CostRow label={`HeyGen ($${API_COSTS.heygen.perMinute}/video + $${API_COSTS.heygen.monthlyFixed}/th)`} value={`-${fmtUSD(result.totalVideos * API_COSTS.heygen.perMinute + API_COSTS.heygen.monthlyFixed)}`} />
+                    <CostRow label={`ElevenLabs ($${API_COSTS.elevenlabs.monthlyFixed}/th)`} value={`-${fmtUSD(API_COSTS.elevenlabs.monthlyFixed)}`} />
+                    <CostRow label={`OpenRouter ($${API_COSTS.openrouter.perScript}/script)`} value={`-${fmtUSD(result.totalVideos * API_COSTS.openrouter.perScript)}`} />
+                    <CostRow label={`Cloud (CF $${INFRA_COSTS.cloudflareWorkers} + Domain $${INFRA_COSTS.domain})`} value={`-${fmtUSD(INFRA_COSTS.cloudflareWorkers + INFRA_COSTS.domain + INFRA_COSTS.cloudflareR2)}`} />
                     <CostRow label="Tổng chi phí / tháng" value={`-${fmtUSD(result.totalMonthlyCost)}`} highlight />
                   </div>
                   <div className="border-t border-white/10 pt-3">
