@@ -373,3 +373,23 @@ html {
   .stagger-reveal > * { animation: none !important; transition: none !important; opacity: 1 !important; transform: none !important; }
   .card-hover:hover { transform: none; }
 }
+
+/* ── Slider Thumb ────────────────────────────────────────────────────── */
+.slider-cyan::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+}
+.slider-cyan::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+}

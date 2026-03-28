@@ -68,8 +68,8 @@ const AffiliateDiscovery = dynamic(
   () => import("@/app/components/sections/affiliate-discovery").then(m => ({ default: m.AffiliateDiscovery })),
   { loading: () => <SectionSkeleton /> }
 );
-const ROICalculator = dynamic(
-  () => import("@/app/components/sections/roi-calculator").then(m => ({ default: m.ROICalculator })),
+const ProductionCostCalculator = dynamic(
+  () => import("@/app/components/sections/production-cost-calculator").then(m => ({ default: m.ProductionCostCalculator })),
   { loading: () => <SectionSkeleton height="h-[500px]" /> }
 );
 const FAQ = dynamic(
@@ -112,7 +112,7 @@ export default function Home() {
         <AffiliateDiscovery />
       </ScrollReveal>
       <ScrollReveal delay={100}>
-        <ROICalculator />
+        <ProductionCostCalculator />
       </ScrollReveal>
       <ScrollReveal delay={0}>
         <FAQ />
