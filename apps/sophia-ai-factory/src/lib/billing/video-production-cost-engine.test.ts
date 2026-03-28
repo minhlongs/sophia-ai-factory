@@ -6,6 +6,7 @@ import {
   calculateTierROI,
   calculateARRProjection,
   API_COSTS,
+  MONTHLY_INFRA_COST,
 } from './video-production-cost-engine';
 
 describe('video-production-cost-engine', () => {
@@ -35,9 +36,9 @@ describe('video-production-cost-engine', () => {
       expect(result.totalCostPerVideo).toBe(result.variableCostPerVideo);
     });
 
-    it('monthly fixed costs match API subscriptions', () => {
+    it('monthly fixed costs match API subscriptions + infra', () => {
       const result = calculateCostBreakdown(100);
-      const expected = API_COSTS.heygen.monthlyFixed + API_COSTS.elevenlabs.monthlyFixed + API_COSTS.openrouter.monthlyFixed;
+      const expected = API_COSTS.heygen.monthlyFixed + API_COSTS.elevenlabs.monthlyFixed + API_COSTS.openrouter.monthlyFixed + MONTHLY_INFRA_COST;
       expect(result.monthlyFixedCosts).toBe(expected);
     });
   });
