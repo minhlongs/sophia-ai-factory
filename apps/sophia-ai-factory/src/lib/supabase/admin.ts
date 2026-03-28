@@ -1,37 +1,29 @@
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
-import { Database } from "./types";
+/**
+ * Supabase admin client — compatibility shim backed by D1.
+ *
+ * All callers of `createAdminClient()` and `isAdminClientConfigured()`
+ * continue to work unchanged. D1 has no concept of service-role vs anon —
+ * the same D1Client is returned for all server-side operations.
+ */
+import { getD1Client } from '@/lib/db/client';
 
 /**
- * Creates a Supabase client with admin/service-role privileges.
- * ONLY use server-side for admin operations (user management, etc.).
- * Never expose the service role key to the client.
- *
- * Uses lazy Proxy initialization — safe to import at module level.
- * Throws only when the client is actually used and env vars are missing.
+ * Returns a D1Client with the same query API as the Supabase admin client.
+ * Async because D1 binding resolution may be async on first call.
  */
-export function createAdminClient(): SupabaseClient<Database> {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error("Database not configured: NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required");
-  }
-
-  return createClient<Database>(
-    supabaseUrl,
-    serviceRoleKey,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    }
-  );
+export async function createAdminClient() {
+  return getD1Client();
 }
 
 /**
- * Returns true when Supabase admin credentials are available.
- * Use this to degrade gracefully before calling createAdminClient().
+ * Always returns true — D1 binding is always available in CF Workers context.
+ * Replaces the old Supabase credential presence check.
  */
 export function isAdminClientConfigured(): boolean {
-  return !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+  return true;
 }
+
+/**
+ * Alias kept for any callers that use the old `isSupabaseConfigured` name.
+ */
+export const isSupabaseConfigured = isAdminClientConfigured;

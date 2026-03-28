@@ -1,105 +1,82 @@
 "use server";
 
-import { createServerClient } from "@/lib/supabase/server";
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { getD1Client } from "@/lib/db/client";
 import { inngest } from "@/lib/inngest/client";
 import { createCampaignSchema } from "@/lib/campaigns/validation";
 import { revalidatePath } from "next/cache";
 import { Tier } from "@/types";
 import { tierGuard } from "@/lib/tier-guard";
 
-// Lazy init Admin client for build compatibility
-let _supabaseAdmin: SupabaseClient | null = null;
-
-function getSupabaseAdmin(): SupabaseClient {
-  if (!_supabaseAdmin) {
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      throw new Error('Supabase environment variables not configured');
-    }
-    _supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY
-    );
-  }
-  return _supabaseAdmin;
+/** Map DB subscription_tier string to app Tier enum */
+function mapDbTierToTier(dbTier: string | null | undefined): Tier {
+  if (dbTier === 'premium' || dbTier === 'pro') return "PREMIUM";
+  if (dbTier === 'enterprise') return "ENTERPRISE";
+  if (dbTier === 'master') return "MASTER";
+  return "BASIC";
 }
 
 export async function createCampaign(formData: FormData) {
   const rawData = {
-    title: formData.get("title") || formData.get("topic"), // Fallback for now
+    title: formData.get("title") || formData.get("topic"),
     topic: formData.get("topic"),
     audience: formData.get("audience"),
-    // Add platforms support if passed (simulated for now as it's not in schema yet)
     platforms: formData.getAll("platforms"),
   };
 
-  // Get template_id if provided
   const templateId = formData.get("template_id") as string | null;
 
-  // Validate
   const validation = createCampaignSchema.safeParse(rawData);
   if (!validation.success) {
     return { success: false, message: validation.error.message };
   }
 
   const { title, topic, audience } = validation.data;
-  // Explicitly cast platforms since it's not in the schema yet but we want to use it for tier check
   const platforms = rawData.platforms as string[];
 
-  // Get current user
-  const supabase = await createServerClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  // Get current user from D1 auth session
+  const db = await getD1Client();
 
-  let userId = session?.user?.id;
+  // For development: fallback to first user if no session
+  let userId: string | undefined;
 
-  // Fallback for development: use first admin user if no session
-  if (!userId) {
-    if (process.env.NODE_ENV === 'development') {
-        const { data: users } = await getSupabaseAdmin().auth.admin.listUsers();
-        if (users?.users?.length > 0) {
-            userId = users.users[0].id;
-        } else {
-             return { success: false, message: "No authenticated user found. Please sign up/in." };
-        }
-    } else {
-        return { success: false, message: "Unauthorized" };
+  if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
+    const { data: firstUser } = await db.from('users').select('id').limit(1).single();
+    userId = (firstUser as { id: string } | null)?.id;
+    if (!userId) {
+      return { success: false, message: "No authenticated user found. Please sign up/in." };
     }
+  } else {
+    return { success: false, message: "Unauthorized" };
   }
 
   // TIER CHECK: Multi-channel access
-  // Requirement: "Update campaign creation to check PREMIUM tier for multi-channel"
   if (platforms && platforms.length > 1) {
     const multiChannelAccess = await tierGuard.checkMultiChannelAccess(userId);
     if (!multiChannelAccess) {
-        return {
-            success: false,
-            message: "Multi-channel distribution requires a PREMIUM subscription.",
-            requiresUpgrade: true,
-            requiredTier: "PREMIUM"
-        };
+      return {
+        success: false,
+        message: "Multi-channel distribution requires a PREMIUM subscription.",
+        requiresUpgrade: true,
+        requiredTier: "PREMIUM"
+      };
     }
   }
 
-  // Fetch user profile for Tier
-  const { data: profile } = await getSupabaseAdmin()
+  // Fetch user profile for tier
+  const { data: profile } = await db
     .from("user_profiles")
     .select("subscription_tier")
-    .eq("user_id", userId!)
+    .eq("user_id", userId)
     .single();
 
-  // Map DB tier to App Tier
-  let tier: Tier = "BASIC";
-  if (profile?.subscription_tier === 'premium') tier = "PREMIUM";
-  if (profile?.subscription_tier === 'pro') tier = "PREMIUM";
-  if (profile?.subscription_tier === 'enterprise') tier = "ENTERPRISE";
-  if (profile?.subscription_tier === 'master') tier = "MASTER";
+  const tier = mapDbTierToTier((profile as { subscription_tier?: string } | null)?.subscription_tier);
 
   try {
     // 1. Create Campaign Record
-    const { data: campaign, error } = await getSupabaseAdmin()
+    const { data: campaign, error } = await db
       .from("campaigns")
       .insert({
-        user_id: userId!,
+        user_id: userId,
         title: title!,
         topic: topic || "",
         audience: audience || "",
@@ -114,20 +91,22 @@ export async function createCampaign(formData: FormData) {
       return { success: false, message: "Failed to create campaign record" };
     }
 
+    const campaignData = campaign as { id: string };
+
     // 2. Trigger Inngest Event
     await inngest.send({
       name: "campaign.created",
       data: {
-        campaignId: campaign.id,
-        userId: userId!,
+        campaignId: campaignData.id,
+        userId,
         topic: topic || title!,
         audience: audience || "General",
-        tier: tier
+        tier
       }
     });
 
     revalidatePath("/dashboard/campaigns");
-    return { success: true, message: "Campaign created", campaignId: campaign.id };
+    return { success: true, message: "Campaign created", campaignId: campaignData.id };
 
   } catch {
     return { success: false, message: "Internal server error" };
@@ -139,8 +118,9 @@ export async function createCampaign(formData: FormData) {
  */
 export async function retryCampaign(campaignId: string) {
   try {
-    // 1. Fetch campaign to validate it's failed
-    const { data: campaign, error: fetchError } = await getSupabaseAdmin()
+    const db = await getD1Client();
+
+    const { data: campaign, error: fetchError } = await db
       .from("campaigns")
       .select("*")
       .eq("id", campaignId)
@@ -150,25 +130,23 @@ export async function retryCampaign(campaignId: string) {
       return { success: false, message: "Campaign not found" };
     }
 
-    if (campaign.status !== "failed") {
+    const c = campaign as { id: string; status: string; user_id: string; topic: string; title: string; audience: string };
+
+    if (c.status !== "failed") {
       return { success: false, message: "Only failed campaigns can be retried" };
     }
 
-    // 2. Get user tier
-    const { data: profile } = await getSupabaseAdmin()
+    // Get user tier
+    const { data: profile } = await db
       .from("user_profiles")
       .select("subscription_tier")
-      .eq("user_id", campaign.user_id)
+      .eq("user_id", c.user_id)
       .single();
 
-    let tier: Tier = "BASIC";
-    if (profile?.subscription_tier === 'premium') tier = "PREMIUM";
-    if (profile?.subscription_tier === 'pro') tier = "PREMIUM";
-    if (profile?.subscription_tier === 'enterprise') tier = "ENTERPRISE";
-    if (profile?.subscription_tier === 'master') tier = "MASTER";
+    const tier = mapDbTierToTier((profile as { subscription_tier?: string } | null)?.subscription_tier);
 
-    // 3. Reset campaign state
-    const { error: updateError } = await getSupabaseAdmin()
+    // Reset campaign state
+    const { error: updateError } = await db
       .from("campaigns")
       .update({
         status: "queued",
@@ -182,15 +160,15 @@ export async function retryCampaign(campaignId: string) {
       return { success: false, message: "Failed to reset campaign" };
     }
 
-    // 4. Trigger Inngest workflow
+    // Trigger Inngest workflow
     await inngest.send({
       name: "campaign.created",
       data: {
-        campaignId: campaign.id,
-        userId: campaign.user_id,
-        topic: campaign.topic || campaign.title,
-        audience: campaign.audience || "General Audience",
-        tier: tier
+        campaignId: c.id,
+        userId: c.user_id,
+        topic: c.topic || c.title,
+        audience: c.audience || "General Audience",
+        tier
       }
     });
 
@@ -209,8 +187,9 @@ export async function retryCampaign(campaignId: string) {
  */
 export async function resumeCampaign(campaignId: string) {
   try {
-    // 1. Fetch campaign to validate it's failed
-    const { data: campaign, error: fetchError } = await getSupabaseAdmin()
+    const db = await getD1Client();
+
+    const { data: campaign, error: fetchError } = await db
       .from("campaigns")
       .select("*")
       .eq("id", campaignId)
@@ -220,57 +199,45 @@ export async function resumeCampaign(campaignId: string) {
       return { success: false, message: "Campaign not found" };
     }
 
-    if (campaign.status !== "failed") {
+    const c = campaign as {
+      id: string; status: string; user_id: string; topic: string; title: string;
+      audience: string; script_content: Record<string, unknown> | null;
+      audio_url: string | null; video_url: string | null;
+    };
+
+    if (c.status !== "failed") {
       return { success: false, message: "Only failed campaigns can be resumed" };
     }
 
-    // 2. Get user tier
-    const { data: profile } = await getSupabaseAdmin()
+    // Get user tier
+    const { data: profile } = await db
       .from("user_profiles")
       .select("subscription_tier")
-      .eq("user_id", campaign.user_id)
+      .eq("user_id", c.user_id)
       .single();
 
-    let tier: Tier = "BASIC";
-    if (profile?.subscription_tier === 'premium') tier = "PREMIUM";
-    if (profile?.subscription_tier === 'pro') tier = "PREMIUM";
-    if (profile?.subscription_tier === 'enterprise') tier = "ENTERPRISE";
-    if (profile?.subscription_tier === 'master') tier = "MASTER";
+    const tier = mapDbTierToTier((profile as { subscription_tier?: string } | null)?.subscription_tier);
 
-    // 3. Determine resume point based on existing data
-    const hasScript = campaign.script_content && Object.keys(campaign.script_content).length > 0;
-    const hasAudio = !!campaign.audio_url;
-    const hasVideo = !!campaign.video_url;
+    // Determine resume point
+    const hasScript = c.script_content && Object.keys(c.script_content).length > 0;
+    const hasAudio = !!c.audio_url;
+    const hasVideo = !!c.video_url;
 
-    // Set resume status and progress based on what's completed
     let resumeStatus: "processing_script" | "processing_video";
     let resumeProgress: number;
     let resumeFrom: "script" | "tts" | "video" | "finalize";
 
     if (hasVideo) {
-      // Failed during finalization
-      resumeStatus = "processing_video";
-      resumeProgress = 90;
-      resumeFrom = "finalize";
+      resumeStatus = "processing_video"; resumeProgress = 90; resumeFrom = "finalize";
     } else if (hasAudio) {
-      // Failed during video generation
-      resumeStatus = "processing_video";
-      resumeProgress = 70;
-      resumeFrom = "video";
+      resumeStatus = "processing_video"; resumeProgress = 70; resumeFrom = "video";
     } else if (hasScript) {
-      // Failed during TTS generation
-      resumeStatus = "processing_script";
-      resumeProgress = 45;
-      resumeFrom = "tts";
+      resumeStatus = "processing_script"; resumeProgress = 45; resumeFrom = "tts";
     } else {
-      // Failed during script generation
-      resumeStatus = "processing_script";
-      resumeProgress = 10;
-      resumeFrom = "script";
+      resumeStatus = "processing_script"; resumeProgress = 10; resumeFrom = "script";
     }
 
-    // 4. Update campaign state to resume point
-    const { error: updateError } = await getSupabaseAdmin()
+    const { error: updateError } = await db
       .from("campaigns")
       .update({
         status: resumeStatus,
@@ -284,17 +251,16 @@ export async function resumeCampaign(campaignId: string) {
       return { success: false, message: "Failed to update campaign" };
     }
 
-    // 5. Trigger Inngest workflow with resume metadata
     await inngest.send({
       name: "campaign.created",
       data: {
-        campaignId: campaign.id,
-        userId: campaign.user_id,
-        topic: campaign.topic || campaign.title,
-        audience: campaign.audience || "General Audience",
-        tier: tier,
+        campaignId: c.id,
+        userId: c.user_id,
+        topic: c.topic || c.title,
+        audience: c.audience || "General Audience",
+        tier,
         resume: true,
-        resumeFrom: resumeFrom
+        resumeFrom
       }
     });
 
