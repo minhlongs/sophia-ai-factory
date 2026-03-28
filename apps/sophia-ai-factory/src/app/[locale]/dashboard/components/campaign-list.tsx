@@ -1,17 +1,16 @@
 "use client";
 
 import { Campaign } from "@/types";
-import { useEffect, useMemo, useState } from "react";
-import { createBrowserClient } from "@supabase/ssr";
-import { Database } from "@/lib/supabase/types";
+import { useEffect, useCallback, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import { retryCampaign, resumeCampaign } from "@/app/actions/campaigns";
 import { useToast } from "@/hooks/use-toast";
 import { CampaignItem } from "./campaign-list/campaign-item";
 import { CampaignActions } from "./campaign-list/campaign-actions";
 import { useTranslations } from 'next-intl';
+
+const POLL_INTERVAL_MS = 10000; // 10 seconds
 
 interface CampaignListProps {
   initialCampaigns: Campaign[];
@@ -22,43 +21,23 @@ export function CampaignList({ initialCampaigns }: CampaignListProps) {
   const [retryingCampaigns, setRetryingCampaigns] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const t = useTranslations('dashboard');
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error("Missing required environment variables: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY");
-  }
-  const supabase = useMemo(
-    () => createBrowserClient<Database>(supabaseUrl, supabaseAnonKey),
-    [supabaseUrl, supabaseAnonKey]
-  );
+
+  // Poll for campaign updates instead of Supabase Realtime
+  const fetchCampaigns = useCallback(async () => {
+    try {
+      const res = await fetch('/api/campaigns', { cache: 'no-store' });
+      if (!res.ok) return;
+      const data = await res.json() as { campaigns: Campaign[] };
+      if (data.campaigns) setCampaigns(data.campaigns);
+    } catch {
+      // Silently ignore — stale data is acceptable
+    }
+  }, []);
 
   useEffect(() => {
-    // Subscribe to realtime changes
-    const channel = supabase
-      .channel('realtime-campaigns')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'campaigns'
-        },
-        (payload: RealtimePostgresChangesPayload<Campaign>) => {
-          if (payload.eventType === 'INSERT') {
-             setCampaigns((prev) => [payload.new as Campaign, ...prev]);
-          } else if (payload.eventType === 'UPDATE') {
-             setCampaigns((prev) =>
-               prev.map((c) => c.id === payload.new.id ? { ...c, ...(payload.new as Campaign) } : c)
-             );
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [supabase]);
+    const interval = setInterval(fetchCampaigns, POLL_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [fetchCampaigns]);
 
   const handleRetry = async (campaignId: string) => {
     setRetryingCampaigns(prev => new Set(prev).add(campaignId));

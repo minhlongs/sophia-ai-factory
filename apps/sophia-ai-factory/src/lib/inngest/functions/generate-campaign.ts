@@ -2,9 +2,8 @@ import { inngest } from "@/lib/inngest/client";
 import { ServiceFactory } from "@/lib/services/factory";
 import { startVideoGeneration, checkVideoGenerationStatus } from "@/lib/ai/video-generator";
 import { sendMessage as sendTelegramMessage } from "@/lib/telegram/handlers/utils";
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { getD1Client } from "@/lib/db/client";
 import { CampaignStatus } from "@/types";
-import { Database, Json } from "@/lib/supabase/types";
 import { OpenClawGateway } from "@/lib/gateway/openclaw-gateway";
 import { SmartResumeEngine } from "@/lib/gateway/smart-resume-engine";
 import { YouTubeChannelAdapter } from "@/lib/gateway/adapters/youtube-channel-adapter";
@@ -12,115 +11,65 @@ import { TikTokChannelAdapter } from "@/lib/gateway/adapters/tiktok-channel-adap
 import { TelegramNotificationAdapter } from "@/lib/gateway/adapters/telegram-notification-adapter";
 import { logger } from "@/lib/utils/logger-utility";
 
-// Lazy init Supabase Admin client for build compatibility
-let _supabase: SupabaseClient<Database> | null = null;
-
-function getSupabase(): SupabaseClient<Database> {
-  if (!_supabase) {
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      throw new Error('Supabase environment variables not configured');
-    }
-    _supabase = createClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY
-    );
-  }
-  return _supabase;
-}
-
-// Singleton instances for gateway and resume engine
+// Singleton resume engine
 const resumeEngine = new SmartResumeEngine();
 
 function createGateway(): OpenClawGateway {
   const gateway = new OpenClawGateway({ maxRetries: 2, baseDelayMs: 2000 });
-  gateway.registerChannel({
-    id: "youtube",
-    name: "YouTube",
-    adapter: new YouTubeChannelAdapter(),
-    enabled: true,
-    rateLimitPerHour: 6,
-  });
-  gateway.registerChannel({
-    id: "tiktok",
-    name: "TikTok",
-    adapter: new TikTokChannelAdapter(),
-    enabled: true,
-    rateLimitPerHour: 10,
-  });
-  gateway.registerChannel({
-    id: "telegram",
-    name: "Telegram Notifications",
-    adapter: new TelegramNotificationAdapter(),
-    enabled: true,
-    rateLimitPerHour: 60,
-  });
+  gateway.registerChannel({ id: "youtube",  name: "YouTube",               adapter: new YouTubeChannelAdapter(),          enabled: true, rateLimitPerHour: 6  });
+  gateway.registerChannel({ id: "tiktok",   name: "TikTok",                adapter: new TikTokChannelAdapter(),           enabled: true, rateLimitPerHour: 10 });
+  gateway.registerChannel({ id: "telegram", name: "Telegram Notifications", adapter: new TelegramNotificationAdapter(),    enabled: true, rateLimitPerHour: 60 });
   return gateway;
 }
 
 export const generateCampaign = inngest.createFunction(
-  {
-    id: "generate-campaign",
-    retries: 3
-  },
+  { id: "generate-campaign", retries: 3 },
   { event: "campaign.created" },
   async ({ event, step }) => {
     const { campaignId, userId, topic, audience, tier, resume, resumeFrom } = event.data;
 
-    // Helper to update status
+    /** Update campaign status + optional fields */
     const updateStatus = async (status: CampaignStatus, progress: number, data?: Record<string, unknown>) => {
-      const updatePayload: Database['public']['Tables']['campaigns']['Update'] = {
+      const updatePayload: Record<string, unknown> = {
         status,
         progress,
         updated_at: new Date().toISOString(),
       };
 
-      if (data?.script_content) updatePayload.script_content = data.script_content as Json;
-      if (data?.audio_url) updatePayload.audio_url = data.audio_url as string;
-      if (data?.video_url) updatePayload.video_url = data.video_url as string;
-      if (data?.thumbnail_url) updatePayload.thumbnail_url = data.thumbnail_url as string;
-      if (data?.error_message) updatePayload.error_message = data.error_message as string;
+      if (data?.script_content) updatePayload.script_content = data.script_content;
+      if (data?.audio_url)      updatePayload.audio_url      = data.audio_url;
+      if (data?.video_url)      updatePayload.video_url      = data.video_url;
+      if (data?.thumbnail_url)  updatePayload.thumbnail_url  = data.thumbnail_url;
+      if (data?.error_message)  updatePayload.error_message  = data.error_message;
 
-      const { error } = await getSupabase()
+      const db = await getD1Client();
+      const { error } = await db
         .from("campaigns")
-        // @ts-expect-error - Known Supabase typing limitation with update on tables with Json columns
         .update(updatePayload)
         .eq("id", campaignId);
 
-      if (error) throw new Error(`Failed to update status: ${error.message}`);
+      if (error) throw new Error(`Failed to update status: ${(error as { message?: string }).message}`);
     };
 
-    // Helper to send notification
+    /** Send Telegram notification to user if enabled */
     const notifyUser = async (message: string) => {
-      // 1. Fetch user's telegram chat ID and settings
-      const { data, error } = await getSupabase()
+      const db = await getD1Client();
+      const { data, error } = await db
         .from("user_profiles")
         .select("telegram_chat_id, settings")
         .eq("user_id", userId)
         .single();
 
-      // Cast to expected type to avoid inference issues
       const profile = data as {
         telegram_chat_id: string | null;
-        settings: {
-          notifications?: {
-            telegram?: { enabled?: boolean };
-          };
-        } | null;
+        settings: { notifications?: { telegram?: { enabled?: boolean } } } | null;
       } | null;
 
-      if (error || !profile || !profile.telegram_chat_id) {
-        return;
-      }
+      if (error || !profile?.telegram_chat_id) return;
 
-      // Check if telegram notifications are enabled
-      // Default to false if settings or notification settings are missing
       const telegramEnabled = profile.settings?.notifications?.telegram?.enabled === true;
+      if (!telegramEnabled) return;
 
-      if (!telegramEnabled) {
-        return;
-      }
-
-      // 2. Send message
       await sendTelegramMessage(profile.telegram_chat_id, message);
     };
 
@@ -133,28 +82,23 @@ export const generateCampaign = inngest.createFunction(
       }
     });
 
-    // Step 1: Generate Script (skip if resuming from tts, video or finalize)
+    // Step 1: Generate Script (skip if resuming from tts/video/finalize)
     const script = await step.run("generate-script", async () => {
       if (resume && (resumeFrom === "tts" || resumeFrom === "video" || resumeFrom === "finalize")) {
-        // Fetch existing script from database
-        const { data: campaign } = await getSupabase()
+        const db = await getD1Client();
+        const { data: campaign } = await db
           .from("campaigns")
           .select("script_content")
           .eq("id", campaignId)
           .single();
 
-        // Type assertion for campaign data
-        type CampaignWithScript = { script_content: Record<string, unknown> | null };
-        const typedCampaign = campaign as CampaignWithScript | null;
-
+        const typedCampaign = campaign as { script_content: Record<string, unknown> | null } | null;
         if (!typedCampaign?.script_content) {
           throw new Error("Cannot resume: script content not found");
         }
-
         return typedCampaign.script_content;
       }
 
-      // Generate new script
       await updateStatus("processing_script", 10);
       const scriptService = ServiceFactory.getScriptService();
       const result = await scriptService.generateScript({ topic, audience, tier });
@@ -163,41 +107,33 @@ export const generateCampaign = inngest.createFunction(
       return result;
     });
 
-    // Step 2: Generate Voiceover/TTS (skip if resuming from video or finalize)
+    // Step 2: Generate Voiceover/TTS (skip if resuming from video/finalize)
     await step.run("generate-voiceover", async () => {
       if (resume && (resumeFrom === "video" || resumeFrom === "finalize")) {
-        // Fetch existing audio from database
-        const { data: campaign } = await getSupabase()
+        const db = await getD1Client();
+        const { data: campaign } = await db
           .from("campaigns")
           .select("audio_url")
           .eq("id", campaignId)
           .single();
 
-        type CampaignWithAudio = { audio_url: string | null };
-        const typedCampaign = campaign as CampaignWithAudio | null;
-
+        const typedCampaign = campaign as { audio_url: string | null } | null;
         if (!typedCampaign?.audio_url) {
           throw new Error("Cannot resume: audio URL not found");
         }
-
         return typedCampaign.audio_url;
       }
 
-      // Extract narration from script
       const scriptData = script as { scenes: Array<{ narration: string }> };
       const fullNarration = scriptData.scenes.map(s => s.narration).join(' ');
 
-      // Generate voiceover
       await updateStatus("processing_script", 45);
       if (!resume) {
         await notifyUser(`📝 Script ready! Now generating voiceover...`);
       }
 
       const voiceService = ServiceFactory.getVoiceService();
-      const voiceoverResult = await voiceService.generateVoiceover({
-        text: fullNarration,
-        tier
-      });
+      const voiceoverResult = await voiceService.generateVoiceover({ text: fullNarration, tier });
 
       await updateStatus("processing_script", 60, { audio_url: voiceoverResult.audio_url });
       await resumeEngine.checkpoint(campaignId, "generate-voiceover");
@@ -206,9 +142,7 @@ export const generateCampaign = inngest.createFunction(
 
     // Step 3: Start Video Generation
     const videoJobId = await step.run("start-video-generation", async () => {
-      if (resume && resumeFrom === "finalize") {
-        return null; // Skip if already finalized
-      }
+      if (resume && resumeFrom === "finalize") return null;
 
       await updateStatus("processing_video", 70);
       if (!resume) {
@@ -221,29 +155,26 @@ export const generateCampaign = inngest.createFunction(
     // Step 4: Poll Video Status (10 min max, 120 attempts × 5s)
     const videoAssets = await step.run("poll-video-status", async () => {
       if (resume && resumeFrom === "finalize") {
-         // Fetch existing video from database
-         const { data: campaign } = await getSupabase()
-           .from("campaigns")
-           .select("video_url, thumbnail_url")
-           .eq("id", campaignId)
-           .single();
+        const db = await getD1Client();
+        const { data: campaign } = await db
+          .from("campaigns")
+          .select("video_url, thumbnail_url")
+          .eq("id", campaignId)
+          .single();
 
-         type CampaignWithVideo = { video_url: string | null; thumbnail_url: string | null };
-         const typedCampaign = campaign as CampaignWithVideo | null;
-
-         if (!typedCampaign?.video_url) {
-           throw new Error("Cannot resume: video URL not found");
-         }
-
-         return {
-           video_url: typedCampaign.video_url,
-           thumbnail_url: typedCampaign.thumbnail_url || ""
-         };
+        const typedCampaign = campaign as { video_url: string | null; thumbnail_url: string | null } | null;
+        if (!typedCampaign?.video_url) {
+          throw new Error("Cannot resume: video URL not found");
+        }
+        return {
+          video_url: typedCampaign.video_url,
+          thumbnail_url: typedCampaign.thumbnail_url || ""
+        };
       }
 
       if (!videoJobId) throw new Error("Video Job ID missing");
 
-      const maxAttempts = 120; // 10 mins total with 5s intervals
+      const maxAttempts = 120;
       const pollIntervalMs = 5000;
       const isTransientError = (err: unknown): boolean => {
         if (!(err instanceof Error)) return false;
@@ -257,7 +188,6 @@ export const generateCampaign = inngest.createFunction(
         try {
           status = await checkVideoGenerationStatus(videoJobId, tier);
         } catch (err) {
-          // Auto-retry once on transient errors
           if (isTransientError(err)) {
             logger.warn(`[poll-video-status] Transient error on attempt ${attempts}, retrying once`, { campaignId });
             await new Promise(r => setTimeout(r, pollIntervalMs));
@@ -270,7 +200,6 @@ export const generateCampaign = inngest.createFunction(
               continue;
             }
           } else {
-            // Permanent failure
             const errMsg = err instanceof Error ? err.message : String(err);
             logger.error(`[poll-video-status] Permanent error`, err instanceof Error ? err : undefined, { campaignId });
             await updateStatus("failed", 70, { error_message: errMsg });
@@ -295,14 +224,13 @@ export const generateCampaign = inngest.createFunction(
         attempts++;
       }
 
-      // Timeout after 10 minutes
       logger.warn(`[poll-video-status] Timed out after ${maxAttempts} attempts`, { campaignId });
       await updateStatus("video_timeout" as CampaignStatus, 70, { error_message: "Video generation timed out after 10 minutes" });
       await notifyUser(`⏱️ **Sophia AI**: Video generation for "${topic}" timed out. Please retry or contact support.`);
       throw new Error("Video generation timed out after 10 minutes");
     });
 
-    // Step 4b: Smart Resume checkpoint after video ready
+    // Step 4b: Checkpoint after video ready
     await step.run("checkpoint-video-ready", async () => {
       await resumeEngine.checkpoint(campaignId, "poll-video-status", {
         video_url: videoAssets.video_url,
@@ -313,8 +241,8 @@ export const generateCampaign = inngest.createFunction(
     // Step 5: Distribute via OpenClaw Gateway
     const distributionResult = await step.run("distribute-channels", async () => {
       const gateway = createGateway();
-
       const campaignTitle = topic || `Campaign ${campaignId}`;
+
       const result = await gateway.distribute({
         campaignId,
         videoUrl: videoAssets.video_url,
@@ -324,7 +252,6 @@ export const generateCampaign = inngest.createFunction(
         tags: ["sophia-ai", "auto-generated", tier.toLowerCase()],
       });
 
-      // Self-heal failed channels
       if (!result.allSucceeded) {
         const healed = await gateway.selfHeal(
           {
