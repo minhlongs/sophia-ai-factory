@@ -1,8 +1,20 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
 import { createInvoiceUrl, NOWPAYMENTS_TIERS } from '@/lib/clients/nowpayments-client';
 import { checkoutSchema } from '@/lib/schemas';
 import { withRateLimit } from '@/middleware/rate-limit-wrapper';
+import { getCurrentUser } from '@/lib/db/auth';
+
+/**
+ * Extract user ID from JWT cookie (D1 auth), fallback to guest ID.
+ */
+async function getUserId(request: Request): Promise<string> {
+  try {
+    const cookie = request.headers.get('cookie') ?? '';
+    const user = await getCurrentUser(cookie);
+    if (user?.id) return user.id;
+  } catch { /* ignore — guest checkout */ }
+  return `guest-${Date.now()}`;
+}
 
 /**
  * GET handler for Telegram URL buttons which open in browser.
@@ -13,7 +25,6 @@ export const GET = withRateLimit(async function GET(request: NextRequest) {
   try {
     const rawTier = request.nextUrl.searchParams.get('tier')?.toUpperCase();
 
-    // Map display names (from Telegram) and enum values to internal tier
     const tierMap: Record<string, string> = {
       STARTER: 'BASIC', BASIC: 'BASIC',
       GROWTH: 'PREMIUM', PREMIUM: 'PREMIUM',
@@ -26,10 +37,7 @@ export const GET = withRateLimit(async function GET(request: NextRequest) {
       return NextResponse.redirect(`${appUrl}/pricing`);
     }
 
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    const userId = user?.id || `guest-${Date.now()}`;
-
+    const userId = await getUserId(request);
     const checkoutUrl = createInvoiceUrl(mappedTier, userId);
     return NextResponse.redirect(checkoutUrl);
   } catch {
@@ -42,7 +50,6 @@ export const POST = withRateLimit(async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    // Validate body with Zod
     const validation = checkoutSchema.safeParse(body);
     if (!validation.success) {
       return NextResponse.json(
@@ -60,12 +67,7 @@ export const POST = withRateLimit(async function POST(request: Request) {
       );
     }
 
-    // Get user from Supabase auth
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    const userId = user?.id || `guest-${Date.now()}`;
-
-    // Generate order_id = sophia_{userId}_{timestamp}
+    const userId = await getUserId(request);
     const checkoutUrl = createInvoiceUrl(tier, userId);
 
     return NextResponse.json({ url: checkoutUrl });
