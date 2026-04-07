@@ -61,9 +61,13 @@ jobs:
         run: npx opennextjs-cloudflare build
         working-directory: apps/sophia-ai-factory
 
+      - name: Install root deps (for wrangler)
+        run: npm install --legacy-peer-deps
+
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: '4.80.0'
           command: deploy
