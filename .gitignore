@@ -84,3 +84,8 @@ sync-*.sh
 .vercel/
 .open-next/
 .wrangler/
+
+.antigravity/
+.opencode/
+.agent/
+.internal/
