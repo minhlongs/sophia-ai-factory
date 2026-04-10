@@ -64,13 +64,16 @@ export default function SetupWizardPage() {
   };
 
   const handleNext = () => {
-    // Block if current step has invalid or unchecked required fields
-    // Step 2: Keys
+    // Step 2: Allow proceeding even without all keys verified
+    // Users can add/change keys later in Dashboard → Settings
     if (step === 2) {
-      if (status.OPENROUTER_API_KEY !== 'valid' || status.ELEVENLABS_API_KEY !== 'valid' || status.DID_API_KEY !== 'valid') {
-        alert("Please verify all API keys before proceeding.");
+      const hasAnyKey = Object.values(config).some(v => v.trim().length > 0);
+      const hasInvalid = Object.values(status).some(v => v === 'invalid');
+      if (hasInvalid) {
+        alert("Có API key không hợp lệ. Vui lòng kiểm tra lại hoặc xóa key không đúng.");
         return;
       }
+      // Allow proceeding with no keys — user can add later in Settings
     }
 
     setStep(prev => prev + 1);
@@ -90,20 +93,10 @@ export default function SetupWizardPage() {
       const data = await res.json();
 
       if (data.success) {
-        // Redirect to dashboard
-        router.push('/');
+        // Redirect to dashboard settings to save keys via BYOK form
+        router.push(data.redirect || '/dashboard/settings');
       } else {
-        // Show error or download option
         setSaveError(data.message);
-        if (data.envContent) {
-           // Provide download
-           const blob = new Blob([data.envContent], { type: 'text/plain' });
-           const url = window.URL.createObjectURL(blob);
-           const a = document.createElement('a');
-           a.href = url;
-           a.download = '.env.local';
-           a.click();
-        }
       }
     } catch {
       setSaveError("Failed to save configuration.");
