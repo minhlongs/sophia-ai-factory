@@ -15,37 +15,43 @@
 - [ ] Website hoat dong binh thuong / Website running normally
 - [ ] SSL certificate hop le / SSL certificate valid
 
-### 2. Vercel (Hosting)
+### 2. Cloudflare Workers (Hosting - 2026-04-10 Update)
 
-- [ ] Invite client vao Vercel project (viewer hoac admin)
-- [ ] Invite client to Vercel project (viewer or admin)
-- [ ] Vercel project: `sophia-ai-factory`
-- [ ] Auto-deploy tu `main` branch hoat dong / Auto-deploy from `main` branch working
+- [ ] Invite client vao Cloudflare account
+- [ ] Invite client to Cloudflare account
+- [ ] Cloudflare project: `sophia-ai-factory`
+- [ ] Workers domain: `sophia.agencyos.network`
+- [ ] Auto-deploy tu `main` branch hoat dong / Auto-deploy from `main` branch working (GitHub Actions)
+- [ ] D1 database access configured: `sophia-raas-db`
 
-### 3. Supabase (Database & Auth)
+**Note:** Migrated from Vercel to Cloudflare Workers 2026-03-24. See `cloud-infrastructure.md` for complete setup.
 
-- [ ] Invite client vao Supabase project
-- [ ] Invite client to Supabase project
-- [ ] Project name: _______________
-- [ ] Region: _______________
-- [ ] Auth (Magic Link) hoat dong / Auth (Magic Link) working
-- [ ] RLS policies configured
+### 3. D1 Database (Cloudflare SQLite - 2026-04-10 Update)
 
-### 4. Polar.sh (Payments)
+- [ ] D1 database access cau hinh / D1 database access configured
+- [ ] Database name: `sophia-raas-db`
+- [ ] Daily automated backups enabled
+- [ ] Auth (Custom JWT - PBKDF2) hoat dong / Custom JWT auth working
+- [ ] RLS policies not applicable (D1 = server-side, JWT-based permission model)
 
-- [ ] Chuyen quyen Polar merchant account / Transfer Polar merchant account ownership
+### 4. Payment Providers (2026-04-10 Update)
+
+**NOWPayments (Primary) — Global Credit Card + USDT**
+- [ ] Chuyen quyen NOWPayments merchant account / Transfer NOWPayments merchant account ownership
 - [ ] Hoac invite client vao organization / Or invite client to organization
-- [ ] 4 san pham da cau hinh / 4 products configured:
-  - [ ] Starter ($199/mo)
-  - [ ] Growth ($399/mo)
-  - [ ] Premium ($799/mo)
-  - [ ] Master ($4,999 one-time)
-- [ ] Webhook URL: `https://sophia.agencyos.network/api/webhooks/polar`
+- [ ] IPN Webhook URL: `https://sophia.agencyos.network/api/webhooks/nowpayments`
+
+**PayOS (Backup) — Vietnam Domestic (VietQR, Bank Transfer)**
+- [ ] Chuyen quyen PayOS merchant account / Transfer PayOS merchant account ownership
+- [ ] Test va production API keys cau hinh / Configure test and production API keys
+- [ ] IPN Webhook URL: `https://sophia.agencyos.network/api/webhooks/payos`
+
+**Note:** Polar.sh merchant account removed 2026-04-10 (account flagged for product description). See `project-changelog.md` for details.
 
 ### 5. Telegram Bot
 
 - [ ] Chuyen quyen bot @Sophia_Bbot / Transfer bot @Sophia_Bbot ownership
-- [ ] Bot token duoc luu trong Vercel env vars / Bot token stored in Vercel env vars
+- [ ] Bot token duoc luu trong Cloudflare Workers env vars / Bot token stored in Cloudflare Workers secrets
 - [ ] Webhook URL: `https://sophia.agencyos.network/api/webhooks/telegram`
 
 ### 6. GitHub Repository
@@ -58,7 +64,7 @@
 ### 7. Inngest (Background Jobs)
 
 - [ ] Invite client vao Inngest dashboard / Invite client to Inngest dashboard
-- [ ] Signing key trong Vercel env vars / Signing key in Vercel env vars
+- [ ] Signing key trong Cloudflare Workers secrets / Signing key in Cloudflare Workers secrets
 
 ---
 
