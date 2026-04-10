@@ -349,7 +349,7 @@ export async function validateTenantIsolation(request: NextRequest): Promise<Ten
   const publicRoutes = [
     '/api/health',
     '/api/setup',
-    '/api/webhooks/polar',
+    '/api/webhooks/nowpayments',
     '/api/webhooks/telegram',
     '/api/auth',
     '/api/discovery',

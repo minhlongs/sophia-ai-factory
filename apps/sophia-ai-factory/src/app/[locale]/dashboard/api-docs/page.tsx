@@ -13,7 +13,7 @@ export const metadata = {
 
 const API_ENDPOINTS = [
   { method: "GET", path: "/api/health", description: "Health check" },
-  { method: "POST", path: "/api/webhooks/polar", description: "Polar payment webhook" },
+  { method: "POST", path: "/api/webhooks/nowpayments", description: "NOWPayments IPN webhook" },
   { method: "POST", path: "/api/webhooks/telegram", description: "Telegram bot webhook" },
   { method: "POST", path: "/api/inngest", description: "Inngest function runner" },
   { method: "POST", path: "/api/admin/invite", description: "Invite new user (admin)" },

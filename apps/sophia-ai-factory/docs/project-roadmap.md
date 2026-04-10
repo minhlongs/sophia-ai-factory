@@ -1,8 +1,8 @@
 # Project Roadmap
 
 **Project Name:** Sophia AI Video Factory
-**Current Version:** 1.8.0 (Usage Metering & License Gating)
-**Last Updated:** 2026-03-07
+**Current Version:** 1.9.0 (Polar→NOWPayments Migration Complete)
+**Last Updated:** 2026-04-10
 
 ## 📅 Roadmap Overview
 
@@ -49,25 +49,35 @@
     - [x] System Health Dashboard (`/dashboard/system-health`).
     - [x] Health Check API (`/api/health`).
 
-### ✅ Phase 4: Monetization (Completed)
+### ✅ Phase 4: Monetization (Completed → v1.9.0: Upgraded to NOWPayments)
 **Goal:** Implement payment processing and tier-based access control.
-- [x] **Polar Integration**:
-  - [x] SDK setup and configuration.
-  - [x] Product provisioning script (`scripts/setup-polar-products.ts`).
-  - [x] Checkout session API (`/api/checkout`).
+- [x] **Payment Provider Evolution**:
+  - [x] Phase 4a: Polar Integration (v1.2.0 - v1.8.0) — Later deprecated due to product classification issue
+  - [x] Phase 4b: NOWPayments Integration (v1.9.0) — USDT TRC20 crypto payments
+- [x] **NOWPayments Setup**:
+  - [x] Pre-created invoice IDs (BASIC, PREMIUM, ENTERPRISE, MASTER tiers)
+  - [x] HMAC-SHA512 signature verification for IPN webhooks
+  - [x] IPN webhook handler (`/api/webhooks/nowpayments`) with idempotency tracking
 - [x] **Tiered Pricing**:
-  - [x] 3-Tier Model: Starter ($1,200), Growth ($2,000), Premium ($3,000).
+  - [x] 4-Tier Model: BASIC ($199), PREMIUM ($399), ENTERPRISE ($799), MASTER ($4,999)
   - [x] Feature gating logic in `src/config/tiers.ts`.
 - [x] **Tier Enforcement System**:
   - [x] **Tier Guard Middleware**: Server-side checks for API routes.
   - [x] **UI Gating**: Upgrade banners and disabled states for locked features.
   - [x] **Limit Validation**: Enforcement of channel and template limits.
 - [x] **Webhooks**:
-  - [x] Secure webhook handler with signature verification.
-  - [x] Automatic subscription status updates in Supabase.
+  - [x] Secure IPN webhook handler with HMAC-SHA512 signature verification
+  - [x] Order ID idempotency tracking (`sophia_{orgId}_{timestamp}`)
+  - [x] Automatic subscription status updates in Supabase on payment completion
+- [x] **Backup Payment Provider**:
+  - [x] PayOS (payos.vn) configured for Vietnam domestic payments as fallback
 - [x] **UI Integration**:
-  - [x] Pricing page with "Buy Now" integration.
-  - [x] Loading states and error handling during checkout.
+  - [x] Pricing page with NOWPayments checkout link integration
+  - [x] Loading states and error handling during payment flow
+- [x] **Code Cleanup (v1.9.0)**:
+  - [x] Removed 35+ Polar SDK files, config, and webhook handlers
+  - [x] Removed Stripe metered billing integration
+  - [x] Removed daily usage export and admin billing routes
 
 ### ✅ Phase 5: Mobile Command Center (Completed)
 **Goal:** Enable remote campaign management via Telegram.

@@ -72,9 +72,10 @@ The core differentiator is the **"Turnkey" experience**: a 4-step Setup Wizard t
 - **Framework**: Next.js 16.1.6 (App Router)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS 4
-- **Database**: Airtable (User-friendly CMS)
+- **Database**: Supabase (Auth + Encrypted Keys) + Airtable (Content CMS)
 - **Automation Backend**: n8n (Workflow orchestration)
 - **AI Providers**: OpenRouter (LLM), ElevenLabs (Voice), HeyGen/D-ID (Avatar)
+- **Payment Processing**: NOWPayments (Primary, USDT TRC20) + PayOS (Backup, Vietnam domestic)
 
 ## Roadmap Status
 - [x] **Phase 1: Foundation** - Next.js setup, UI components.

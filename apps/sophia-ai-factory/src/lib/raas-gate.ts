@@ -23,7 +23,7 @@ import { checkQuotaWithOverage, DEFAULT_CONFIG } from './quota/quota-checker';
 import { enforceQuota } from './quota/quota-enforcer';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { hasEmergencyBypass, recordCircuitFailure, recordCircuitSuccess } from './usage-metering/realtime-tracker';
-import { checkPolarSubscriptionStatus } from './billing/polar-metered-billing';
+// Polar subscription check removed — NOWPayments IPN handles tier activation via DB
 import { logViolationAndAlert } from '@/lib/alerts/realtime-alert-service';
 import { sha256 } from '@/lib/audit/crypto-utils';
 import type { RaasLicenseRow } from '@/lib/supabase/types';
@@ -273,58 +273,8 @@ export async function raasGate(request: NextRequest): Promise<{
         const tier = (license.tier || 'BASIC').toUpperCase();
         const polarCustomerId = license.polar_customer_id;
 
-        // POLAR SUBSCRIPTION CHECK (Phase 1 Critical Fix)
-        // Check Polar subscription status before allowing requests
-        if (polarCustomerId) {
-          try {
-            const polarStatus = await checkPolarSubscriptionStatus(polarCustomerId);
-
-            // Block if subscription is not active (except for 'none' tier - legacy users)
-            if (!polarStatus.active && polarStatus.subscriptionTier !== 'none') {
-              logger.warn('[RaaS Gate] Polar subscription not active', {
-                userId,
-                licenseNonce: license.nonce.slice(0, 8) + '...',
-                polarCustomerId,
-                subscriptionTier: polarStatus.subscriptionTier,
-                balance: polarStatus.balance,
-              });
-
-              return {
-                valid: false,
-                response: NextResponse.json(
-                  {
-                    error: 'subscription_inactive',
-                    code: 'SUBSCRIPTION_INACTIVE',
-                    message: 'Your subscription is not active. Please update your billing information.',
-                    subscriptionTier: polarStatus.subscriptionTier,
-                    currentPeriodEnd: polarStatus.currentPeriodEnd,
-                    upgradeUrl: '/dashboard/billing',
-                  },
-                  {
-                    status: 403,
-                    headers: {
-                      'Content-Type': 'application/json',
-                    },
-                  }
-                ),
-                tier: result.tier,
-              };
-            }
-
-            // Log subscription status for audit
-            logger.debug('[RaaS Gate] Polar subscription check passed', {
-              userId,
-              polarCustomerId,
-              active: polarStatus.active,
-              balance: polarStatus.balance,
-              tier: polarStatus.subscriptionTier,
-            });
-          } catch (polarError) {
-            logger.error('[RaaS Gate] Polar subscription check failed', polarError instanceof Error ? polarError : new Error(String(polarError)));
-            // Don't block on Polar API error - fail open with warning
-            logger.warn('[RaaS Gate] Failing open - allowing request despite Polar check failure');
-          }
-        }
+        // Subscription tier is set in DB by NOWPayments IPN webhook
+        // No external API check needed — tier stored locally
 
         // Check emergency bypass (admin override)
         if (hasEmergencyBypass(request.headers)) {
@@ -486,7 +436,7 @@ export async function raasGate(request: NextRequest): Promise<{
  * Excluded routes (public access):
  * - /api/health - Health checks
  * - /api/setup/* - Initial setup wizard
- * - /api/webhooks/polar - Polar.sh webhooks (have their own auth)
+ * - /api/webhooks/nowpayments - NOWPayments IPN webhooks (have their own auth)
  * - /api/webhooks/telegram - Telegram webhooks (have their own auth)
  */
 export function shouldApplyRaasGate(pathname: string): boolean {
@@ -494,7 +444,7 @@ export function shouldApplyRaasGate(pathname: string): boolean {
   const publicRoutes = [
     '/api/health',
     '/api/setup',
-    '/api/webhooks/polar',
+    '/api/webhooks/nowpayments',
     '/api/webhooks/telegram',
     '/api/auth',
     '/api/discovery',

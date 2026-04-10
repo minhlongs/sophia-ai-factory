@@ -99,16 +99,22 @@ graph TD
   - `voice-generator.json`: Text-to-Speech generation.
   - `publish-workflow.json`: Final publishing steps.
 
-### 5. Payment Infrastructure (Polar)
-- **Role**: Payment processing for one-time product purchases (Starter, Growth, Premium).
+### 5. Payment Infrastructure (NOWPayments)
+- **Role**: Payment processing for tier subscriptions via USDT TRC20 cryptocurrency.
+- **Provider**: NOWPayments.io (Polar rejected this product for "wellness/health" classification)
+- **Backup**: PayOS (payos.vn) for Vietnam domestic payments
 - **Flow**:
-  1. **Checkout**: User clicks "Buy Now" -> `/api/checkout` -> Redirects to Polar Checkout.
-  2. **Processing**: Polar handles card processing and fraud detection.
-  3. **Fulfillment**: Polar sends webhook -> `/api/webhooks/polar` -> App updates User Profile (sets `subscription_tier`).
+  1. **Tier Selection**: User selects BASIC/PREMIUM/ENTERPRISE/MASTER tier.
+  2. **Checkout**: App generates NOWPayments invoice link (pre-created invoice IDs in dashboard).
+  3. **Payment**: User completes crypto payment via NOWPayments hosted page.
+  4. **Webhook**: NOWPayments sends IPN (Instant Payment Notification) → `/api/webhooks/nowpayments`
+  5. **Fulfillment**: IPN handler verifies HMAC-SHA512 signature, updates `subscription_tier` + `period_end`
 - **Security**:
-  - Webhook signatures verified using `standard-webhooks`.
-  - No payment data stored in application database.
-  - Product IDs and Secrets managed via environment variables.
+  - HMAC-SHA512 signature verification on `x-nowpayments-sig` header
+  - Order ID format: `sophia_{orgId}_{timestamp}` enables idempotency tracking
+  - No payment data stored in application database
+  - IPN secret managed via `NOWPAYMENTS_IPN_SECRET` environment variable
+  - Invoice IDs (TIER → Invoice ID mapping) stored in `nowpayments-client.ts`
 
 ### 6. Mobile Command Center (Telegram)
 - **Role**: Remote interface for campaign management.

@@ -144,7 +144,7 @@ export async function multiTenantIsolationMiddleware(request: NextRequest): Prom
   const publicRoutes = [
     '/api/health',
     '/api/setup',
-    '/api/webhooks/polar',
+    '/api/webhooks/nowpayments',
     '/api/webhooks/telegram',
     '/api/auth',
     '/api/discovery',

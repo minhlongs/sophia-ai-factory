@@ -34,7 +34,7 @@ describe('RaaS Gate', () => {
     it('should skip public routes', () => {
       expect(shouldApplyRaasGate('/api/health')).toBe(false);
       expect(shouldApplyRaasGate('/api/setup/save')).toBe(false);
-      expect(shouldApplyRaasGate('/api/webhooks/polar')).toBe(false);
+      expect(shouldApplyRaasGate('/api/webhooks/nowpayments')).toBe(false);
       expect(shouldApplyRaasGate('/api/webhooks/telegram')).toBe(false);
       expect(shouldApplyRaasGate('/api/auth')).toBe(false);
       expect(shouldApplyRaasGate('/api/discovery/search')).toBe(false);
