@@ -185,11 +185,20 @@ export async function sendMagicLink(email: string): Promise<{ error: string | nu
       await db.from('users').update({ magic_link_token: token, magic_link_expires_at: expires }).eq('email', email);
     }
 
-    await sendEmail({
+    const emailResult = await sendEmail({
       to: email,
       subject: 'Sign in to Sophia AI Factory',
       html: magicLinkEmail(token),
     });
+
+    if (!emailResult.success) {
+      return { error: `Không gửi được email: ${emailResult.error || 'Unknown error'}` };
+    }
+
+    if (emailResult.provider === 'dry-run') {
+      return { error: 'Email chưa được cấu hình. Vui lòng liên hệ admin.' };
+    }
+
     return { error: null };
   } catch (e) {
     return { error: (e as Error).message };
