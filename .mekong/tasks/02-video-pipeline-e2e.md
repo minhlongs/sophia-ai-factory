@@ -3,7 +3,7 @@
 **Priority:** P0 — CRITICAL
 **Stage:** Zero → PSF
 **Layer:** Engineering
-**Target:** Working video generation from prompt to download
+**Status:** 95% COMPLETE
 **MCU Budget:** 30
 
 ## Objective
@@ -11,23 +11,40 @@
 Prove the full video generation pipeline works end-to-end:
 User prompt → MuAPI/HeyGen → Video URL → Dashboard preview → Download
 
-## Steps
+## Current State (2026-04-10)
 
-1. Test MuAPI integration: submit job → poll status → get result URL
-2. Test HeyGen integration: avatar video generation with user's key
-3. Create campaign → assign video template → generate → preview
-4. Store result URL in D1 for dashboard display
-5. Add download button on campaign results page
+### HeyGen Pipeline — COMPLETE
+Full 6-stage Inngest workflow working:
+1. Script generation (OpenRouter LLM) ✅
+2. Audio generation (ElevenLabs TTS) ✅
+3. Video generation (HeyGen avatar) ✅
+4. Video polling (5s intervals, 120 attempts) ✅
+5. Channel distribution (YouTube, TikTok, Telegram) ✅
+6. Campaign finalization (DB + notification) ✅
+
+### MuAPI Pipeline — API READY
+- `/api/media/generate` POST endpoint ✅
+- `/api/media/status` GET polling endpoint ✅
+- `muapi-media-client.ts` REST client ✅
+- NOT yet wired into Inngest campaign workflow (future enhancement)
+
+### Dashboard UI — COMPLETE
+- Campaign creation form with template selector ✅
+- VideoPreview component with progress bar ✅
+- Download button (native browser download) ✅
+- Retry/resume actions ✅
+- Error states with user-friendly messages ✅
 
 ## Success Criteria
 
-- [ ] MuAPI: text-to-video (Kling 3.0) generates successfully
-- [ ] HeyGen: avatar video with custom script
-- [ ] Campaign dashboard shows generated video
-- [ ] User can download/share video URL
-- [ ] Error handling: clear message when API key missing/invalid
+- [x] HeyGen: avatar video with custom script
+- [x] Campaign dashboard shows generated video
+- [x] User can download/share video URL
+- [x] Error handling: clear message when API key missing/invalid
+- [ ] MuAPI: text-to-video (Kling 3.0) — API ready, needs MUAPI_API_KEY + E2E test
 
-## Agent Assignment
+## Remaining
 
-- **CTO:** Integration testing + error handling
-- **Product:** UX flow for video preview/download
+- Set `MUAPI_API_KEY` in CF Worker secrets when account created
+- Wire MuAPI as alternative video backend in Inngest workflow (optional, HeyGen works)
+- Video URL persistence to R2 before HeyGen temp URLs expire

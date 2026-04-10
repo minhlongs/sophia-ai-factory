@@ -3,6 +3,7 @@
 **Priority:** P0 — CRITICAL
 **Stage:** Zero → PSF
 **Layer:** Business
+**Status:** READY TO EXECUTE
 **Target:** 1 paying customer within 2 weeks
 **MCU Budget:** 50
 
@@ -10,6 +11,18 @@
 
 Get the first customer to pay via NOWPayments (USDT) or PayOS (VND).
 This validates the entire stack: auth → BYOK setup → payment → tier activation → video generation.
+
+## Prerequisites — ALL DONE (2026-04-10)
+
+- [x] Auth system (magic link + password login)
+- [x] BYOK settings page (5 API keys, Vietnamese UX)
+- [x] NOWPayments checkout flow (USDT crypto)
+- [x] Tier activation via IPN webhook
+- [x] Video generation pipeline (HeyGen E2E)
+- [x] Campaign dashboard with preview/download
+- [x] Email delivery (mekongmind.com verified, Resend)
+- [x] Production live (sophia.agencyos.network HTTP 200)
+- [x] 863 tests passing
 
 ## Steps
 

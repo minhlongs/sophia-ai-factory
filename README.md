@@ -1,7 +1,7 @@
 # Sophia AI Factory
 
 > AI Video Factory — SaaS platform for automated AI video creation
-> Binh Pháp Venture Studio 2026
+> Binh Phap Venture Studio 2026
 
 ## Quick Start
 
@@ -16,21 +16,31 @@ npm run dev
 - `apps/sophia-ai-factory/` - Next.js 16 App Router (main application)
 - `docs/` - Project documentation
 - `plans/` - Implementation plans & reports
+- `.mekong/` - BizPlan OS (company.json + CTO missions)
 
 ## Tech Stack
 
 - **Framework**: Next.js 16 (App Router, React 19, TypeScript)
-- **Database**: Supabase (Postgres + Auth + Storage)
-- **Payments**: Polar.sh (subscriptions, webhooks)
-- **Bot**: Telegram (Telegraf + webhook mode)
-- **AI Services**: HeyGen, ElevenLabs, OpenRouter
+- **Database**: Cloudflare D1 (SQLite) + Supabase (Postgres)
+- **Payments**: NOWPayments (USDT crypto) + PayOS (Vietnam domestic)
+- **Email**: Resend (mekongmind.com verified domain)
+- **Bot**: Telegram (@Sophia_Bbot)
+- **AI Services**: HeyGen, ElevenLabs, MuAPI (100+ models), OpenRouter
+- **Auth**: Custom JWT + D1 (magic link + password)
+- **Deployment**: Cloudflare Workers via GitHub Actions
 - **Background Jobs**: Inngest
-- **i18n**: next-intl
+- **i18n**: next-intl (Vietnamese + English)
 - **Styling**: Tailwind CSS 4
 
 ## Revenue Stack
 
-- Polar.sh subscription management (Starter / Growth / Premium)
-- PPP (Purchasing Power Parity) pricing
+- NOWPayments subscription management (BASIC $199 / PREMIUM $399 / ENTERPRISE $799 / MASTER $4,999)
+- BYOK — Customers bring their own API keys (zero vendor lock-in)
 - Telegram bot for user onboarding & commands
 - Automated subscription lifecycle notifications
+
+## Production
+
+- **URL**: https://sophia.agencyos.network
+- **CI/CD**: GitHub Actions → Cloudflare Workers auto-deploy
+- **Tests**: 863 passing (Vitest)
