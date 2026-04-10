@@ -21,37 +21,31 @@ export const GET = withRateLimit(async function GET(req: NextRequest) {
     services: {},
   };
 
-  // 1. Check Database (Supabase — optional, app uses D1 for auth)
+  // 1. Check Database (Supabase — used for profiles/settings, not auth)
+  // Supabase failures are non-critical — app core runs on D1
   const supabaseConfigured = !!process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (supabaseConfigured) {
     const supabaseStartTime = Date.now();
     try {
       const supabase = await createClient();
-      const { error } = await supabase.from('user_profiles').select('count').limit(1);
+      const { error } = await supabase.from('user_profiles').select('user_id').limit(1);
 
       if (isAuthorized) {
         healthStatus.services.supabase = {
-          status: error ? 'down' : 'up',
+          status: error ? 'degraded' : 'up',
           latency: Date.now() - supabaseStartTime,
+          ...(error && { error: error.message }),
         };
       }
-
-      if (error) {
-        healthStatus.status = 'degraded';
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      healthStatus.status = 'degraded';
-
+      // Don't set overall status to unhealthy — Supabase is for profiles, not core
+    } catch {
       if (isAuthorized) {
         healthStatus.services.supabase = {
-          status: 'down',
-          error: errorMessage,
+          status: 'degraded',
           latency: Date.now() - supabaseStartTime,
         };
-      } else {
-        healthStatus.services.supabase = { status: 'down' };
       }
+      // Don't degrade overall status — D1 handles core auth
     }
   } else if (isAuthorized) {
     healthStatus.services.supabase = { status: 'not_configured' };
