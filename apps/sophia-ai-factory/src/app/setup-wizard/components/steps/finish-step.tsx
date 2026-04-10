@@ -13,15 +13,16 @@ export function FinishStep({ saveError }: FinishStepProps) {
       </div>
 
       <div>
-        <h2 className="text-2xl font-bold text-foreground">Ready to Launch!</h2>
-        <p className="text-muted-foreground mt-2">All systems verified. Click below to save configuration and start the dashboard.</p>
+        <h2 className="text-2xl font-bold text-foreground">Sẵn Sàng!</h2>
+        <p className="text-muted-foreground mt-2">
+          Nhấn nút bên dưới để vào Dashboard. Bạn có thể thêm hoặc thay đổi API key bất cứ lúc nào trong Settings.
+        </p>
       </div>
 
       {saveError && (
         <div className="bg-destructive/10 p-4 rounded-lg text-left">
-          <h4 className="font-semibold text-destructive mb-1">Configuration Warning</h4>
+          <h4 className="font-semibold text-destructive mb-1">Lưu ý</h4>
           <p className="text-sm text-destructive">{saveError}</p>
-          <p className="text-xs text-destructive/80 mt-2">If downloading, place the file in your project root as <code>.env.local</code> and restart.</p>
         </div>
       )}
     </div>
