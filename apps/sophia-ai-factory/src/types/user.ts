@@ -22,6 +22,8 @@ export interface EncryptedApiKeys {
   openai?: string;
   anthropic?: string;
   elevenlabs?: string;
+  heygen?: string;
+  muapi?: string;
 }
 
 export interface UserProfile {

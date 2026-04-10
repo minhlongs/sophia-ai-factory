@@ -17,11 +17,13 @@ export const settingsSchema = z.object({
   notifications: notificationsSchema.optional(),
 });
 
-// API Keys Schema
+// API Keys Schema — BYOK (Bring Your Own Key)
 export const apiKeysSchema = z.object({
   openai: z.string().optional().or(z.literal('')),
   anthropic: z.string().optional().or(z.literal('')),
   elevenlabs: z.string().optional().or(z.literal('')),
+  heygen: z.string().optional().or(z.literal('')),
+  muapi: z.string().optional().or(z.literal('')),
 });
 
 // Combined Form Schema
