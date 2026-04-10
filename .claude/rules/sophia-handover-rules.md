@@ -10,7 +10,7 @@
 ## Protected Flows (DO NOT BREAK)
 1. **Setup Wizard** — The onboarding flow where clients enter API keys (OpenRouter, ElevenLabs, D-ID). Must always work end-to-end.
 2. **Telegram Bot** — @Sophia_Bbot must respond to commands (/campaign, /status, /results). Never break webhook integration.
-3. **Payment Flow** — Polar.sh webhook → tier activation. Must be reliable.
+3. **Payment Flow** — NOWPayments IPN webhook → tier activation. Must be reliable. (Polar REJECTED this product — do NOT use Polar for Sophia)
 
 ## Change Rules
 - Every code change MUST be tested before commit
