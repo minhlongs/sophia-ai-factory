@@ -19,13 +19,7 @@ import { checkQuota, incrementUsage, getCurrentUsage } from './lib/quota-counter
 import { calculateOverage, getTierPricing } from './lib/overage-calculator';
 import { createUsageEvent, UsageEvent as WorkerUsageEvent } from './lib/usage-emitter';
 import { buildQuotaExceededResponse, buildQuotaInfoHeaders } from './lib/quota-response';
-import {
-  handlePaymentFailed,
-  handlePaymentSucceeded,
-  handleSubscriptionUpdated,
-  verifyStripeSignature,
-  type DunningStateObject,
-} from './lib/stripe-webhook';
+// Stripe webhook removed — NOWPayments IPN handles payments
 // RaaS Authentication & Feature Access Control
 import {
   raasAuthMiddleware,
@@ -34,7 +28,7 @@ import {
   checkFeatureAccess,
   type AuthContext,
 } from './middleware/raas-auth-middleware';
-import { getSubscriptionStatus, isTierEligibleForOverage } from './middleware/polar-subscription';
+import { isTierEligibleForOverage } from './middleware/feature-entitlement';
 // Phase 7.3: Realtime Alert Dispatcher
 import {
   handleScheduledAlertCheck,
@@ -54,13 +48,11 @@ interface Env {
   ENVIRONMENT: string;
   HARD_LIMIT_PERCENT: string;
   OVERAGE_WEBHOOK_URL?: string;
-  // Stripe webhook environment variables (Phase 6)
-  STRIPE_WEBHOOK_SECRET: string;
+  // NOWPayments (payment provider)
+  NOWPAYMENTS_API_KEY?: string;
+  NOWPAYMENTS_IPN_SECRET?: string;
   AGENCYOS_NOTIFICATION_URL: string;
   AGENCYOS_WEBHOOK_SECRET: string;
-  // Polar API credentials (for subscription status)
-  POLAR_API_KEY?: string;
-  POLAR_API_URL?: string;
   // Phase 7.3: Realtime Alert Dispatcher config
   AGENCYOS_ALERT_WEBHOOK_URL: string;
   AGENCYOS_API_KEY: string;
@@ -149,14 +141,14 @@ export default {
       ctx.waitUntil(
         runMeteringReconciliation(env, ctx)
           .then((result) => {
-            logger.info('[Scheduled] Reconciliation complete', {
+            console.log('[Scheduled] Reconciliation complete', {
               success: result.success,
               reportId: result.report.id,
               totalAmount: result.report.totalAmount,
             });
           })
           .catch((error) => {
-            logger.error('[Scheduled] Reconciliation failed', error as Error);
+            console.error('[Scheduled] Reconciliation failed', error);
           })
       );
     }
@@ -292,33 +284,8 @@ async function handleProxyRequest(
     }
   }
 
-  // Step 4: Check Polar subscription status (if available)
-  let isPaid = authContext.is_paid ?? true;
-  let subscriptionStatus = authContext.polarSubscriptionStatus;
-
-  if (authContext.polarSubscriptionStatus) {
-    const subscription = await getSubscriptionStatus(
-      authContext.polarSubscriptionStatus,
-      env.KV_KV
-    );
-
-    if (subscription) {
-      subscriptionStatus = subscription.status;
-      isPaid = subscription.status === 'active';
-    }
-  }
-
-  // Block if subscription is canceled or inactive
-  if (subscriptionStatus === 'canceled' || subscriptionStatus === 'inactive') {
-    return new Response(JSON.stringify({
-      error: 'Subscription inactive',
-      status: subscriptionStatus,
-      message: 'Please renew your subscription to continue using this service',
-    }), {
-      status: 403,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  }
+  // Step 4: Subscription status from auth context (tier set by NOWPayments IPN)
+  const isPaid = authContext.is_paid ?? true;
 
   // Step 5: Check quota and calculate overage
   const apiKey = authContext.userId;

@@ -1,37 +1,26 @@
 import { IPaymentService, CreateCheckoutParams, CheckoutSession } from "../types";
-import { polar } from "@/lib/polar";
+import { createInvoiceUrl } from "@/lib/clients/nowpayments-client";
 
 export class RealPaymentService implements IPaymentService {
-  constructor() {
-    // Polar is initialized in lib/polar.ts
-  }
-
   async createCheckoutSession(params: CreateCheckoutParams): Promise<CheckoutSession> {
-    const { productIds, successUrl, customerEmail, metadata } = params;
+    const { productIds, metadata } = params;
 
-    // Validate product IDs
     if (!productIds || productIds.length === 0) {
-      throw new Error(`Missing Polar Product IDs`);
+      throw new Error(`Missing product IDs`);
     }
 
-    // Trim all product IDs to remove any trailing whitespace/newlines
-    const cleanProductIds = productIds.map(id => id.trim()).filter(id => id.length > 0);
-
-    if (cleanProductIds.length === 0) {
-      throw new Error(`All Product IDs are empty after cleanup`);
+    const tierId = productIds[0].trim();
+    if (!tierId) {
+      throw new Error(`Product ID is empty`);
     }
 
     try {
-      const checkout = await polar.checkouts.create({
-        products: cleanProductIds,
-        successUrl: successUrl,
-        customerEmail: customerEmail,
-        metadata: metadata as Record<string, string>,
-      });
+      const orgId = (metadata as Record<string, string>)?.orgId || 'default';
+      const url = createInvoiceUrl(tierId, orgId);
 
       return {
-        url: checkout.url,
-        id: checkout.id,
+        url,
+        id: `np_${Date.now()}`,
       };
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';

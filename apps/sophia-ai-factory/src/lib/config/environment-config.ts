@@ -19,19 +19,14 @@ const environmentSchema = z.object({
   UPSTASH_REDIS_REST_URL: z.string().url(),
   UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
 
-  // Polar.sh
-  POLAR_ACCESS_TOKEN: z.string().min(1).optional(),
-  POLAR_WEBHOOK_SECRET: z.string().min(1).optional(),
-  POLAR_ORGANIZATION_ID: z.string().min(1).optional(),
+  // NOWPayments (Primary payment provider)
+  NOWPAYMENTS_API_KEY: z.string().min(1).optional(),
+  NOWPAYMENTS_IPN_SECRET: z.string().min(1).optional(),
 
-  // Polar Product IDs
-  POLAR_PRODUCT_ID_STARTER: z.string().min(1).optional(),
-  POLAR_PRODUCT_ID_GROWTH: z.string().min(1).optional(),
-  POLAR_PRODUCT_ID_PREMIUM: z.string().min(1).optional(),
-  POLAR_PRODUCT_ID_MASTER: z.string().min(1).optional(),
-  POLAR_PRODUCT_ID_STARTER_MONTHLY: z.string().min(1).optional(),
-  POLAR_PRODUCT_ID_GROWTH_MONTHLY: z.string().min(1).optional(),
-  POLAR_PRODUCT_ID_PREMIUM_MONTHLY: z.string().min(1).optional(),
+  // PayOS (Vietnam domestic backup)
+  PAYOS_CLIENT_ID: z.string().min(1).optional(),
+  PAYOS_API_KEY: z.string().min(1).optional(),
+  PAYOS_CHECKSUM_KEY: z.string().min(1).optional(),
 
   // Optional Services
   AIRTABLE_API_KEY: z.string().min(1).optional(),

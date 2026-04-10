@@ -80,39 +80,6 @@ export interface OverageCharge {
 }
 
 /**
- * Stripe invoice item for overage charge
- */
-export interface StripeInvoiceItem {
-  customer: string;
-  price_data: {
-    currency: string;
-    product_data: {
-      name: string;
-      description: string;
-      metadata: {
-        license_nonce: string;
-        tier: string;
-        period_start: string;
-        period_end: string;
-      };
-    };
-    unit_amount: number;
-    recurring?: {
-      interval: 'month' | 'year';
-    };
-  };
-  quantity: number;
-  metadata: {
-    license_nonce: string;
-    overage_credits: string;
-    period_start: string;
-    period_end: string;
-    event_count: string;
-  };
-  idempotency_key: string;
-}
-
-/**
  * Reconciliation result
  */
 export interface ReconciliationResult {
@@ -236,56 +203,4 @@ export function generateIdempotencyKey(
   return `overage-${licenseNonce}-${periodStart}-${periodEnd}`;
 }
 
-/**
- * Polar.sh billing types for metered usage
- */
-export interface PolarBillingConfig {
-  enabled: boolean;
-  meterSlugCredits: string;
-  meterSlugRequests: string;
-  syncEnabled: boolean;
-}
-
-/**
- * Polar usage record for syncing
- */
-export interface PolarUsageRecord {
-  customerId: string;
-  meterSlug: string;
-  quantity: number;
-  timestamp: number;
-  idempotencyKey: string;
-  metadata?: Record<string, string>;
-}
-
-/**
- * Polar billing sync result
- */
-export interface PolarBillingResult {
-  success: boolean;
-  recordsSynced: number;
-  recordsFailed: number;
-  errors: string[];
-}
-
-/**
- * Polar invoice item for one-time charges
- */
-export interface PolarInvoiceItem {
-  customerId: string;
-  amount: number;
-  currency: string;
-  description: string;
-  metadata?: Record<string, string>;
-  idempotencyKey: string;
-}
-
-/**
- * Default Polar billing configuration
- */
-export const DEFAULT_POLAR_BILLING_CONFIG: PolarBillingConfig = {
-  enabled: process.env.POLAR_ACCESS_TOKEN ? true : false,
-  meterSlugCredits: 'api_credits',
-  meterSlugRequests: 'api_requests',
-  syncEnabled: true,
-};
+// Polar billing types removed — NOWPayments IPN handles payments

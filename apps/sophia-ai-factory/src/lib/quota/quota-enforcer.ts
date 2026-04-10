@@ -43,95 +43,7 @@ export interface QuotaExceededResponse {
   dunningReason?: string;
 }
 
-/**
- * Sync quota state from Polar.sh usage records
- *
- * Polar.sh is the source of truth for billing period usage.
- * This function fetches current period usage from Polar API
- * and updates local usage_events cache.
- */
-export async function syncQuotaFromPolar(
-  licenseNonce: string,
-  polarCustomerId: string
-): Promise<{ success: boolean; error?: string }> {
-  const polarApiKey = process.env.POLAR_API_KEY;
-
-  if (!polarApiKey) {
-    logger.warn('[Quota Enforcer] POLAR_API_KEY not set, skipping sync');
-    return { success: false, error: 'POLAR_API_KEY not configured' };
-  }
-
-  try {
-    // Fetch current period usage from Polar
-    const now = new Date();
-    const periodStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const response = await fetch(
-      `https://api.polar.sh/v1/customers/${polarCustomerId}/usage?period_start=${periodStart.toISOString()}`,
-      {
-        headers: {
-          'Authorization': `Bearer ${polarApiKey}`,
-          'Accept': 'application/json',
-        },
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Polar API returned ${response.status}`);
-    }
-
-    const polarUsage = await response.json() as {
-      data: Array<{
-        metric: string;
-        quantity: number;
-        timestamp: string;
-      }>
-    };
-
-    // Update local usage_events with Polar data (idempotent upsert)
-    const supabase = createAdminClient();
-
-    for (const usage of polarUsage.data) {
-      const idempotencyKey = `polar-sync:${polarCustomerId}:${usage.metric}:${usage.timestamp}`;
-
-      await supabase
-        .from('usage_events')
-        .upsert({
-          idempotency_key: idempotencyKey,
-          external_customer_id: polarCustomerId,
-          license_nonce: licenseNonce,
-          service_name: usage.metric.split('.')[0],
-          action: usage.metric.split('.')[1] || 'unknown',
-          credits_used: usage.quantity,
-          created_at: Math.floor(new Date(usage.timestamp).getTime() / 1000),
-          is_polar_synced: true,
-        }, {
-          onConflict: 'idempotency_key',
-        });
-    }
-
-    logger.info('[Quota Enforcer] Synced quota from Polar', {
-      licenseNonce: licenseNonce.slice(0, 8) + '...',
-      polarCustomerId,
-      usageCount: polarUsage.data.length,
-    });
-
-    // Invalidate cache after sync
-    const userId = await getUserIdFromLicense(licenseNonce);
-    if (userId) {
-      await invalidateQuotaCache(userId, licenseNonce);
-      await invalidateRealTimeCache(userId, licenseNonce);
-    }
-
-    return { success: true };
-
-  } catch (error) {
-    logger.error('[Quota Enforcer] Failed to sync from Polar', error as Error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
-    };
-  }
-}
+// Polar quota sync removed — local DB is source of truth, updated by NOWPayments IPN
 
 /**
  * Create standardized 429 quota exceeded response
@@ -242,17 +154,7 @@ export async function enforceQuota(
     return { allowed: false, response: createDunningBlockResponse(dunningCheck) };
   }
 
-  // First: sync from Polar if customer ID available (source of truth)
-  if (polarCustomerId) {
-    const syncResult = await syncQuotaFromPolar(licenseNonce, polarCustomerId);
-    if (!syncResult.success) {
-      logger.warn('[Quota Enforcer] Polar sync failed, using local cache', {
-        error: syncResult.error,
-      });
-    }
-  }
-
-  // Check quota with overage handling
+  // Check quota with overage handling (local DB is source of truth via NOWPayments IPN)
   const quotaResult = await checkQuotaWithOverage(context, config);
 
   // Hard block if not allowed (fail-closed mode)

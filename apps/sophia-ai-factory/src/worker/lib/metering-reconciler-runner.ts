@@ -35,7 +35,7 @@ import {
   emitCompletionAlert,
   DEFAULT_ALERT_EMITTER_CONFIG,
 } from './reconciliation-alert-emitter';
-import { reconcileOverageEvents } from '@/lib/billing/overage-billing-reconciler';
+// Overage billing reconciler removed — NOWPayments handles payments via IPN
 import { syncUsageEventsToKv, getMeteringLogs, markAsReconciled, type MeteringLogEntry } from '@/lib/usage-metering/kv-metering-log-sync';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { logger } from '@/lib/utils/logger-utility';
@@ -360,16 +360,16 @@ export async function runMeteringReconciliation(
       }
     }
 
-    // Step 5: Reconcile overage events with billing system
-    logger.info('[Reconciliation Runner] Running billing reconciliation');
-    const billingResult = await reconcileOverageEvents();
+    // Step 5: Billing reconciliation skipped — NOWPayments handles payments via IPN
+    logger.info('[Reconciliation Runner] Billing reconciliation skipped (NOWPayments IPN)');
+    report.unbilledEventsScanned = 0;
+    report.invoicesCreated = 0;
+    report.totalAmount = 0;
 
-    report.unbilledEventsScanned = billingResult.scannedEvents;
-    report.invoicesCreated = billingResult.invoiceItemsCreated;
-    report.totalAmount = billingResult.totalCharge;
-
-    if (!billingResult.success) {
-      billingResult.errors.forEach((err) => {
+    if (false) {
+      // Placeholder to preserve report error structure
+      const billingErrors: Array<{ message: string; details: unknown; retryable: boolean }> = [];
+      billingErrors.forEach((err) => {
         report.errors.push({
           type: 'billing',
           message: err.message,

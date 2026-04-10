@@ -1,6 +1,28 @@
 # Project Changelog
 
-## [Unreleased] - v1.8.0
+## [Unreleased] - v1.9.0
+
+### v1.9.0 - Polar→NOWPayments Migration Complete (2026-04-10)
+- **Breaking Change**: Removed Polar.sh payment provider entirely. All payment processing now via NOWPayments (USDT TRC20).
+- **Code Removed** (35+ files):
+  - All Polar SDK client code, config, and types
+  - Polar webhook handler (`/api/webhooks/polar`)
+  - Stripe integration (metered billing, invoices, payment-status)
+  - Daily usage export cron jobs
+  - Admin billing reconciliation routes and quota enforcement
+- **Code Added**:
+  - NOWPayments IPN webhook handler (`/api/webhooks/nowpayments`)
+  - HMAC-SHA512 signature verification for webhooks
+  - Order ID format: `sophia_{orgId}_{timestamp}` for idempotency tracking
+  - Tier-to-invoice-ID mapping in `nowpayments-client.ts`
+- **Updated Components**:
+  - Middleware whitelists: `/api/webhooks/polar` → `/api/webhooks/nowpayments`
+  - Subscription gate, RaaS gate, agency isolation validators
+  - Payment service abstraction layer (mock + real implementations)
+  - Billing types to match NOWPayments IPN payload structure
+- **Backup Provider**: PayOS (payos.vn) configured for Vietnam domestic payments
+- **Security**: All Polar credentials removed from environment. NOWPayments API key + IPN secret only.
+- **Test Impact**: 47 tests removed (Polar-specific), 52 new NOWPayments webhook tests added
 
 ### v1.8.0 - Usage Metering & License Gating (2026-03-07)
 - **Feature:** Usage Metering Aggregator with time-windowed summaries

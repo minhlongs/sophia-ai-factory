@@ -133,7 +133,7 @@ describe('getRateLimitConfig', () => {
   });
 
   it('should match webhook endpoints', () => {
-    const config = getRateLimitConfig('/api/webhooks/polar');
+    const config = getRateLimitConfig('/api/webhooks/nowpayments');
     expect(config).toEqual(RATE_LIMITS.webhooks);
   });
 
