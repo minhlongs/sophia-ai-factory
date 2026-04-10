@@ -10,6 +10,29 @@ import { MockModeIndicator } from "@/components/dev/mock-mode-indicator";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 
+// JSON-LD schema — explicit type to avoid TypeScript stack overflow
+const JSONLD_SCHEMA: Record<string, unknown> = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Sophia AI Factory",
+  "applicationCategory": "MultimediaApplication",
+  "operatingSystem": "Web",
+  "url": "https://sophia.agencyos.network",
+  "description": "AI Video Factory — SaaS platform for automated AI video creation. Create professional videos with HeyGen avatars, ElevenLabs voice, and 100+ AI models.",
+  "offers": {
+    "@type": "AggregateOffer",
+    "lowPrice": "199",
+    "highPrice": "4999",
+    "priceCurrency": "USD",
+    "offerCount": "4"
+  },
+  "provider": {
+    "@type": "Organization",
+    "name": "Sophia AI Factory",
+    "url": "https://sophia.agencyos.network"
+  }
+};
+
 const Toaster = dynamic(
   () => import("sonner").then(m => ({ default: m.Toaster }))
 );
@@ -108,27 +131,7 @@ export default async function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "SoftwareApplication",
-              "name": "Sophia AI Factory",
-              "applicationCategory": "MultimediaApplication",
-              "operatingSystem": "Web",
-              "url": "https://sophia.agencyos.network",
-              "description": "AI Video Factory — SaaS platform for automated AI video creation. Create professional videos with HeyGen avatars, ElevenLabs voice, and 100+ AI models.",
-              "offers": {
-                "@type": "AggregateOffer",
-                "lowPrice": "199",
-                "highPrice": "4999",
-                "priceCurrency": "USD",
-                "offerCount": "4"
-              },
-              "provider": {
-                "@type": "Organization",
-                "name": "Sophia AI Factory",
-                "url": "https://sophia.agencyos.network"
-              }
-            }),
+            __html: JSON.stringify(JSONLD_SCHEMA),
           }}
         />
       </head>
