@@ -87,6 +87,9 @@ export default function LoginPage() {
               Chúng tôi đã gửi link đăng nhập đến <strong className="text-foreground">{email}</strong>.
               Link có hiệu lực trong 15 phút.
             </p>
+            <p className="text-xs text-muted-foreground/70">
+              Không thấy email? Kiểm tra thư mục Spam/Junk hoặc tab Promotions.
+            </p>
             <button
               onClick={() => { setMagicSent(false); setMode("password"); }}
               className="text-sm text-violet-400 hover:text-violet-300 transition-colors"
@@ -199,6 +202,8 @@ export default function LoginPage() {
             <form onSubmit={handleMagicLink} className="space-y-4">
               <p className="text-sm text-muted-foreground">
                 Nhập email để nhận link đăng nhập. Không cần mật khẩu.
+                <br />
+                <span className="text-violet-400">Chưa có tài khoản? Magic link sẽ tự động tạo cho bạn.</span>
               </p>
               <div className="space-y-1">
                 <label htmlFor="email-magic" className="text-sm font-medium text-foreground">
