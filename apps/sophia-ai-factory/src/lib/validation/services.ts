@@ -310,3 +310,32 @@ export async function validateHeyGen(key: string): Promise<ValidationResult> {
   }
 }
 
+/**
+ * Validate MuAPI Key (muapi.ai — AI media generation)
+ * Endpoint: GET https://api.muapi.ai/v1/account
+ * Header: Authorization Bearer
+ */
+export async function validateMuAPI(key: string): Promise<ValidationResult> {
+  if (!key) return { valid: false, message: "Key is required" };
+
+  try {
+    const response = await fetch('https://api.muapi.ai/v1/account', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${key}`,
+      },
+    });
+
+    if (response.status === 200) {
+      const data = await response.json() as Record<string, unknown>;
+      return { valid: true, message: "Valid MuAPI key", meta: data };
+    } else if (response.status === 401 || response.status === 403) {
+      return { valid: false, message: "Invalid MuAPI key" };
+    } else {
+      return { valid: false, message: `Invalid key (Status: ${response.status})` };
+    }
+  } catch (error) {
+    return { valid: false, message: `Network error: ${error instanceof Error ? error.message : String(error)}` };
+  }
+}
+
