@@ -54,12 +54,23 @@ export const metadata: Metadata = {
     description: "The ultimate AI video creation workflow. Build, scale, and monetize your YouTube channels with automation.",
     type: "website",
     locale: "en_US",
+    alternateLocale: "vi_VN",
     siteName: "Sophia AI Factory",
+    url: "https://sophia.agencyos.network",
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Sophia AI Video Factory" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Sophia AI Video Factory - Automate Your Content Empire",
     description: "The ultimate AI video creation workflow. Build, scale, and monetize your YouTube channels with automation.",
+    images: ["/og-image.png"],
+  },
+  alternates: {
+    canonical: "https://sophia.agencyos.network",
+    languages: {
+      "en": "https://sophia.agencyos.network/en",
+      "vi": "https://sophia.agencyos.network/vi",
+    },
   },
   robots: {
     index: true,
@@ -94,6 +105,32 @@ export default async function RootLayout({
         />
         <link rel="preconnect" href="https://api.nowpayments.io" />
         <link rel="dns-prefetch" href="https://api.nowpayments.io" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "SoftwareApplication",
+              "name": "Sophia AI Factory",
+              "applicationCategory": "MultimediaApplication",
+              "operatingSystem": "Web",
+              "url": "https://sophia.agencyos.network",
+              "description": "AI Video Factory — SaaS platform for automated AI video creation. Create professional videos with HeyGen avatars, ElevenLabs voice, and 100+ AI models.",
+              "offers": {
+                "@type": "AggregateOffer",
+                "lowPrice": "199",
+                "highPrice": "4999",
+                "priceCurrency": "USD",
+                "offerCount": "4"
+              },
+              "provider": {
+                "@type": "Organization",
+                "name": "Sophia AI Factory",
+                "url": "https://sophia.agencyos.network"
+              }
+            }),
+          }}
+        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
