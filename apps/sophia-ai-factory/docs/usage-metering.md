@@ -12,7 +12,7 @@ Sophia AI Factory includes a comprehensive usage metering system that tracks AI 
 - **License-based quota enforcement** per tenant
 - **Secure export** for billing and analytics
 - **Idempotency protection** against duplicate billing
-- **Customer linkage** for Stripe/Polar reconciliation
+- **Customer linkage** for NOWPayments reconciliation
 - **Debug tools** for development and testing
 
 ---
@@ -73,7 +73,7 @@ Standardized CSV fields for billing compatibility:
 |-------|------|-------------|
 | `tenant_id` | string | User UUID |
 | `license_nonce` | string | License identifier (32-char hex) |
-| `external_customer_id` | string | Polar or Stripe customer ID |
+| `external_customer_id` | string | NOWPayments payment ID or customer reference |
 | `feature_key` | string | `{service}.{action}` (e.g., `heygen.createVideo`) |
 | `timestamp` | number | Unix timestamp (seconds) |
 | `consumed_units` | number | Credits used for this request |
@@ -295,7 +295,7 @@ CREATE TABLE usage_events (
   user_id UUID NOT NULL,
   license_key_hash TEXT NOT NULL,
   license_nonce TEXT NOT NULL,
-  external_customer_id TEXT,  -- Polar or Stripe customer ID for billing reconciliation
+  external_customer_id TEXT,  -- NOWPayments or other payment provider customer ID for billing reconciliation
   service_name TEXT NOT NULL,
   endpoint TEXT NOT NULL,
   action TEXT NOT NULL,
@@ -462,7 +462,7 @@ Admin-only endpoint for comprehensive usage reconciliation.
 | Param | Type | Default | Description |
 |-------|------|---------|-------------|
 | `license_nonce` | string | - | Filter by license |
-| `customer_id` | string | - | Filter by Polar/Stripe customer ID |
+| `customer_id` | string | - | Filter by NOWPayments or other payment provider customer ID |
 | `service` | string | - | Filter by service |
 | `start` | number | - | Start timestamp (Unix seconds) |
 | `end` | number | - | End timestamp (Unix seconds) |
@@ -508,7 +508,7 @@ curl -H "Authorization: Basic $ADMIN_CREDS" \
 
 ### Purpose
 
-Automatically resolves external customer IDs (Polar/Stripe) from license metadata for billing reconciliation.
+Automatically resolves external customer IDs (NOWPayments or other payment provider) from license metadata for billing reconciliation.
 
 ### Signature
 
@@ -535,9 +535,9 @@ async function resolveExternalCustomerId(licenseNonce: string): Promise<string |
 
 1. Queries `raas_licenses` table by nonce
 2. Extracts `metadata` JSON field
-3. Returns `polar_customer_id` if present (higher priority)
-4. Falls back to `stripe_customer_id` if Polar ID not found
-5. Returns `null` if neither exists
+3. Returns `nowpayments_customer_id` if present (higher priority)
+4. Falls back to other payment provider customer IDs if NOWPayments ID not found
+5. Returns `null` if no external customer ID exists
 
 ### Usage Examples
 
@@ -610,7 +610,7 @@ Standardized CSV fields for billing compatibility:
 |-------|------|-------------|
 | `tenant_id` | string | User UUID |
 | `license_nonce` | string | License identifier (32-char hex) |
-| `external_customer_id` | string | Polar or Stripe customer ID |
+| `external_customer_id` | string | NOWPayments payment ID or customer reference |
 | `feature_key` | string | `{service}.{action}` (e.g., `heygen.createVideo`) |
 | `timestamp` | number | Unix timestamp (seconds) |
 | `consumed_units` | number | Credits used for this request |

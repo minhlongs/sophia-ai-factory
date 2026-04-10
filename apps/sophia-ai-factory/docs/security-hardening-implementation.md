@@ -111,7 +111,7 @@ const validEmail = sanitizeEmail(emailInput);
 **Mục đích:** Verify webhook signatures để ensure authenticity
 
 **Functions:**
-- `verifyPolarWebhookSignature()`: Polar.sh webhooks
+- `verifyNowpaymentsWebhookSignature()`: NOWPayments IPN webhooks (HMAC-SHA512)
 - `verifyTelegramWebhookSignature()`: Telegram webhooks
 - `verifyHmacSignature()`: Generic HMAC verification
 - `verifyWebhookTimestamp()`: Prevent replay attacks
@@ -119,9 +119,11 @@ const validEmail = sanitizeEmail(emailInput);
 
 **Sử dụng:**
 ```typescript
-import { verifyPolarWebhookSignature, verifyWebhookTimestamp } from '@/lib/security/webhook-signature-verification';
+import { verifyNowpaymentsWebhookSignature, verifyWebhookTimestamp } from '@/lib/security/webhook-signature-verification';
 
-const isValid = verifyPolarWebhookSignature(payload, signature, secret);
+const signature = request.headers.get('x-nowpayments-sig');
+const rawBody = await request.text();
+const isValid = await verifyNowpaymentsWebhookSignature(rawBody, signature, IPN_SECRET);
 const isRecent = verifyWebhookTimestamp(timestamp, 300); // 5 minutes max age
 
 if (!isValid || !isRecent) {

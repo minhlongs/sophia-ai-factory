@@ -41,9 +41,9 @@ Tests are co-located with the source code they test, typically named `{filename}
     *   Tests the backend logic for triggering script generation and video rendering.
     *   Ensures Zod schemas correctly validate input data.
 
-4.  **Webhooks** (`src/app/api/webhooks/polar/route.test.ts`)
-    *   Tests integration with payment providers (Polar).
-    *   Verifies signature verification and event handling logic.
+4.  **Webhooks** (`src/app/api/webhooks/nowpayments/route.test.ts`)
+    *   Tests integration with payment providers (NOWPayments).
+    *   Verifies HMAC-SHA512 signature verification and IPN event handling logic.
 
 5.  **End-to-End (E2E) Tests** (`tests/e2e/`)
     *   **Playwright** based tests simulating real user user flows.
