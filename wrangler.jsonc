@@ -34,5 +34,9 @@
 	],
 	"images": {
 		"binding": "IMAGES"
+	},
+	"vars": {
+		"NEXT_PUBLIC_IS_CONFIGURED": "true",
+		"IS_CONFIGURED": "true"
 	}
 }
