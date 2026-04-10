@@ -21,35 +21,40 @@ export const GET = withRateLimit(async function GET(req: NextRequest) {
     services: {},
   };
 
-  // 1. Check Supabase (Critical)
-  const supabaseStartTime = Date.now();
-  try {
-    const supabase = await createClient();
-    // Simple query to check connection
-    const { error } = await supabase.auth.getSession();
+  // 1. Check Database (Supabase — optional, app uses D1 for auth)
+  const supabaseConfigured = !!process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (supabaseConfigured) {
+    const supabaseStartTime = Date.now();
+    try {
+      const supabase = await createClient();
+      const { error } = await supabase.from('user_profiles').select('count').limit(1);
 
-    if (error) throw error;
-
-    if (isAuthorized) {
+      if (isAuthorized) {
         healthStatus.services.supabase = {
-          status: 'up',
+          status: error ? 'down' : 'up',
           latency: Date.now() - supabaseStartTime,
         };
-    }
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    healthStatus.status = 'unhealthy';
+      }
 
-    if (isAuthorized) {
+      if (error) {
+        healthStatus.status = 'degraded';
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      healthStatus.status = 'degraded';
+
+      if (isAuthorized) {
         healthStatus.services.supabase = {
-            status: 'down',
-            error: errorMessage,
-            latency: Date.now() - supabaseStartTime,
+          status: 'down',
+          error: errorMessage,
+          latency: Date.now() - supabaseStartTime,
         };
-    } else {
-        // Publicly just show something is wrong without details
+      } else {
         healthStatus.services.supabase = { status: 'down' };
+      }
     }
+  } else if (isAuthorized) {
+    healthStatus.services.supabase = { status: 'not_configured' };
   }
 
   // 2. Check Redis (Optional — only degrade if configured but failing)
