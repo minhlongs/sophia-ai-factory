@@ -6,6 +6,13 @@
       "env": {
         "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
       }
+    },
+    "generative-media": {
+      "command": "npx",
+      "args": ["-y", "@anthropic/generative-media-skills"],
+      "env": {
+        "MUAPI_API_KEY": "${MUAPI_API_KEY}"
+      }
     }
   }
 }
