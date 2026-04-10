@@ -25,7 +25,7 @@ export interface EmailResult {
 
 export async function sendEmail(params: EmailParams): Promise<EmailResult> {
   const apiKey = process.env.RESEND_API_KEY;
-  const from = params.from ?? process.env.EMAIL_FROM ?? 'Sophia AI <noreply@agencyos.network>';
+  const from = params.from ?? process.env.EMAIL_FROM ?? 'Sophia AI <noreply@mekongmind.com>';
 
   if (!apiKey) {
     return { success: true, messageId: `dry_${Date.now()}`, provider: 'dry-run' };

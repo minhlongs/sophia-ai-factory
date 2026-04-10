@@ -16,7 +16,7 @@ function footer(): string {
   return `
   <div style="margin-top:32px;padding-top:16px;border-top:1px solid #e0e0e0;font-size:12px;color:#666;">
     <p>Sophia AI Factory — Robot-as-a-Service Platform</p>
-    <p><a href="${base}" style="color:${BRAND_COLOR}">sophia.agencyos.network</a> · <a href="${base}/dashboard" style="color:${BRAND_COLOR}">Dashboard</a></p>
+    <p><a href="${base}" style="color:${BRAND_COLOR}">Sophia AI Factory</a> · <a href="${base}/dashboard" style="color:${BRAND_COLOR}">Dashboard</a></p>
   </div>
 `;
 }
