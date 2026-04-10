@@ -52,45 +52,49 @@ export const GET = withRateLimit(async function GET(req: NextRequest) {
     }
   }
 
-  // 2. Check Redis (Critical)
-  const redisStartTime = Date.now();
-  try {
-    const isRedisUp = await redisHelpers.ping();
+  // 2. Check Redis (Optional — only degrade if configured but failing)
+  const redisConfigured = !!process.env.UPSTASH_REDIS_REST_URL;
+  if (redisConfigured) {
+    const redisStartTime = Date.now();
+    try {
+      const isRedisUp = await redisHelpers.ping();
 
-    if (isAuthorized) {
-      healthStatus.services.redis = {
-        status: isRedisUp ? 'up' : 'down',
-        latency: Date.now() - redisStartTime,
-      };
-    }
+      if (isAuthorized) {
+        healthStatus.services.redis = {
+          status: isRedisUp ? 'up' : 'down',
+          latency: Date.now() - redisStartTime,
+        };
+      }
 
-    if (!isRedisUp) {
+      if (!isRedisUp) {
+        healthStatus.status = 'degraded';
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       healthStatus.status = 'degraded';
-    }
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    healthStatus.status = 'degraded';
 
-    if (isAuthorized) {
-      healthStatus.services.redis = {
-        status: 'down',
-        error: errorMessage,
-        latency: Date.now() - redisStartTime,
-      };
-    } else {
-      healthStatus.services.redis = { status: 'down' };
+      if (isAuthorized) {
+        healthStatus.services.redis = {
+          status: 'down',
+          error: errorMessage,
+          latency: Date.now() - redisStartTime,
+        };
+      } else {
+        healthStatus.services.redis = { status: 'down' };
+      }
     }
+  } else if (isAuthorized) {
+    healthStatus.services.redis = { status: 'not_configured' };
   }
 
-  // 3. Check Inngest (Configuration check)
+  // 3. Check Inngest (Optional — only degrade if configured but failing)
   const inngestConfigured = !!process.env.INNGEST_EVENT_KEY && !!process.env.INNGEST_SIGNING_KEY;
   if (isAuthorized) {
       healthStatus.services.inngest = {
-        status: inngestConfigured ? 'configured' : 'missing_config',
+        status: inngestConfigured ? 'configured' : 'not_configured',
       };
   }
-
-  if (!inngestConfigured) healthStatus.status = 'degraded';
+  // Not configured = OK (optional service), don't degrade
 
   // 3. Check External Services (Configuration check)
   if (isAuthorized) {
@@ -118,7 +122,7 @@ export const GET = withRateLimit(async function GET(req: NextRequest) {
       // Show basic service status even publicly (no error details)
       if (healthStatus.status !== 'healthy') {
           publicResponse.hint = healthStatus.status === 'degraded'
-              ? 'Optional services (Redis/Inngest) not configured — core features operational'
+              ? 'Some configured services are temporarily unavailable'
               : 'Service disruption detected';
       }
       return NextResponse.json(publicResponse, {
