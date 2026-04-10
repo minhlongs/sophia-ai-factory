@@ -2,8 +2,10 @@
 
 > Sophia AI Factory — RaaS (Reasoning-as-a-Service) Platform
 
-**Last Updated:** 2026-03-26
+**Last Updated:** 2026-04-10
 **Production:** https://sophia.agencyos.network
+
+**PAYMENT PROVIDER MIGRATION (2026-04-10):** Polar.sh references below are historical. Active providers now: NOWPayments (primary) + PayOS (Vietnam backup). See `project-changelog.md` for migration status.
 
 ---
 
@@ -53,7 +55,7 @@
 | **Database** | Cloudflare D1 | SQLite-based, `sophia-raas-db` |
 | **Cache** | Cloudflare R2 | `sophia-ai-factory-opennext-cache` |
 | **Auth** | Custom JWT | PBKDF2 hashing, 7-day cookies |
-| **Billing** | Polar.sh | MCU credit system, webhooks |
+| **Billing** | NOWPayments (primary) + PayOS (backup) | MCU credit system, webhooks |
 | **Email** | Resend | Magic link, notifications |
 | **AI** | Anthropic | Proposal generation |
 | **Video** | HeyGen | Video generation (optional) |
