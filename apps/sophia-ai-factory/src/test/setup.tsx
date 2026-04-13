@@ -24,7 +24,21 @@ const kvMock = {
   list: vi.fn().mockResolvedValue({ keys: [], list_complete: true }),
 };
 (globalThis as any).KV_KV = kvMock;
-(globalThis as any).__env = { KV: kvMock, DB: null };
+
+// ── Cloudflare D1 Mock ─────────────────────────────────────────────────
+// Must be a truthy object with .prepare() to satisfy getD1Sync() check.
+const d1Mock = {
+  prepare: vi.fn().mockReturnValue({
+    bind: vi.fn().mockReturnThis(),
+    first: vi.fn().mockResolvedValue(null),
+    all: vi.fn().mockResolvedValue({ results: [], success: true }),
+    run: vi.fn().mockResolvedValue({ success: true, meta: {} }),
+  }),
+  dump: vi.fn().mockResolvedValue(new ArrayBuffer(0)),
+  batch: vi.fn().mockResolvedValue([]),
+  exec: vi.fn().mockResolvedValue({ count: 0, duration: 0 }),
+};
+(globalThis as any).__env = { KV: kvMock, DB: d1Mock };
 
 // ── Mock next/link ─────────────────────────────────────────────────────
 vi.mock('next/link', () => ({
