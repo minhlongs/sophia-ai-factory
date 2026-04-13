@@ -1,20 +1,18 @@
 /**
  * NOWPayments IPN (Instant Payment Notification) handlers
- * Processes payment status callbacks from NOWPayments webhook
+ * Uses D1 database (Cloudflare Workers compatible)
  *
  * Statuses handled:
- * - finished: Credit MCU + set period_end +30 days
+ * - finished: Update subscription + set period_end +30 days
  * - partially_paid: Hold (wait for full payment)
  * - expired: No-op (invoice expired without payment)
- * - refunded: Deduct MCU credits
+ * - refunded: Cancel subscription
  * - failed: Notify only
  */
 
-import { createAdminClient } from '@/lib/supabase/admin'
-import { TIER_DB_MAPPING } from '@/lib/subscription'
+import { createServerClient } from '@/lib/db/client'
 import { getTierByInvoiceId } from '@/lib/clients/nowpayments-client'
 import { logger } from '@/lib/utils/logger-utility'
-import { handlePaymentSuccess, handlePaymentFailure } from '@/lib/billing/dunning-workflow'
 import type { Tier } from '@/types'
 
 export interface NowPaymentsIpnPayload {
@@ -25,7 +23,7 @@ export interface NowPaymentsIpnPayload {
   price_currency: string
   pay_amount?: number
   pay_currency?: string
-  order_id?: string          // format: sophia_{orgId}_{timestamp}
+  order_id?: string          // format: sophia_{userId}_{timestamp}
   order_description?: string
   invoice_id?: string        // NOWPayments invoice ID maps to tier
   actually_paid?: number
@@ -33,16 +31,16 @@ export interface NowPaymentsIpnPayload {
   outcome_currency?: string
 }
 
-function getSupabase() {
-  return createAdminClient() as ReturnType<typeof createAdminClient>
+function getDb() {
+  return createServerClient()
 }
 
 /**
- * Parse orgId from order_id (format: sophia_{orgId}_{timestamp})
+ * Parse userId from order_id (format: sophia_{userId}_{timestamp})
  */
-function parseOrgIdFromOrderId(orderId: string): string | null {
+function parseUserIdFromOrderId(orderId: string): string | null {
   const parts = orderId.split('_')
-  // sophia_{orgId}_{timestamp} → parts[0]=sophia, parts[1]=orgId, parts[2]=timestamp
+  // sophia_{userId}_{timestamp} → parts[0]=sophia, parts[1]=userId, parts[2]=timestamp
   if (parts.length >= 3 && parts[0] === 'sophia') {
     return parts[1]
   }
@@ -50,21 +48,24 @@ function parseOrgIdFromOrderId(orderId: string): string | null {
 }
 
 /**
- * Check idempotency - return true if payment_id already processed
+ * Check idempotency via D1 payment_events table
  */
 async function isPaymentProcessed(paymentId: string): Promise<boolean> {
-  const supabase = getSupabase()
-  const { data } = await (supabase as any)
-    .from('payment_events')
-    .select('processed')
-    .eq('polar_event_id', `nowpayments_${paymentId}`)
-    .single()
-
-  return data?.processed === true
+  try {
+    const db = getDb()
+    const { data } = await db
+      .from('payment_events')
+      .select('processed')
+      .eq('event_id', `nowpayments_${paymentId}`)
+      .single()
+    return data?.processed === 1 || data?.processed === true
+  } catch {
+    return false
+  }
 }
 
 /**
- * Record IPN event for idempotency tracking
+ * Record IPN event in D1 for idempotency
  */
 async function recordIpnEvent(
   paymentId: string,
@@ -72,23 +73,30 @@ async function recordIpnEvent(
   payload: Record<string, unknown>,
   processed: boolean
 ): Promise<void> {
-  const supabase = getSupabase()
-  await (supabase as any)
-    .from('payment_events')
-    .upsert(
-      {
-        event_type: `nowpayments.${status}`,
-        polar_event_id: `nowpayments_${paymentId}`,
-        payload,
-        processed,
-        created_at: new Date().toISOString(),
-      },
-      { onConflict: 'polar_event_id' }
-    )
+  try {
+    const db = getDb()
+    await db
+      .from('payment_events')
+      .upsert(
+        {
+          event_id: `nowpayments_${paymentId}`,
+          event_type: `nowpayments.${status}`,
+          payload: JSON.stringify(payload),
+          processed: processed ? 1 : 0,
+          created_at: new Date().toISOString(),
+        },
+        { onConflict: 'event_id' }
+      )
+  } catch (err) {
+    logger.warn('[NOWPayments] Failed to record IPN event', {
+      paymentId,
+      error: err instanceof Error ? err.message : String(err),
+    })
+  }
 }
 
 /**
- * Handle finished payment - activate subscription +30 days
+ * Handle finished payment — activate subscription via D1
  */
 async function handleFinished(ipn: NowPaymentsIpnPayload): Promise<void> {
   const invoiceId = ipn.invoice_id
@@ -104,56 +112,97 @@ async function handleFinished(ipn: NowPaymentsIpnPayload): Promise<void> {
   }
 
   const orderId = ipn.order_id || ''
-  const orgId = parseOrgIdFromOrderId(orderId)
-  if (!orgId) {
-    logger.warn('[NOWPayments] finished: cannot parse orgId from order_id', { orderId })
+  const userId = parseUserIdFromOrderId(orderId)
+  if (!userId) {
+    logger.warn('[NOWPayments] finished: cannot parse userId from order_id', { orderId })
     return
   }
 
-  const supabase = getSupabase()
+  const db = getDb()
   const tier: Tier = tierConfig.tier
-  const dbTier = TIER_DB_MAPPING[tier]
-
-  // Set period_end = now + 30 days
   const periodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
 
-  const { error } = await (supabase as any)
-    .from('user_profiles')
-    .update({
-      subscription_tier: dbTier,
-      subscription_status: 'active',
-      subscription_expires_at: periodEnd,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('user_id', orgId)
+  // Update subscription in D1 subscriptions table
+  // First find the user's org
+  const { data: membership } = await db
+    .from('org_members')
+    .select('org_id')
+    .eq('user_id', userId)
+    .single()
 
-  if (error) {
-    logger.error('[NOWPayments] finished: failed to update subscription', error as Error, {
-      orgId,
-      tier,
-      paymentId: ipn.payment_id,
-    })
-    throw error
+  const orgId = membership?.org_id
+
+  if (orgId) {
+    // Update existing subscription or create new one
+    const { data: existingSub } = await db
+      .from('subscriptions')
+      .select('id')
+      .eq('org_id', orgId)
+      .single()
+
+    if (existingSub) {
+      await db
+        .from('subscriptions')
+        .update({
+          plan: tier.toLowerCase(),
+          status: 'active',
+          current_period_end: periodEnd,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('org_id', orgId)
+    } else {
+      await db
+        .from('subscriptions')
+        .insert({
+          org_id: orgId,
+          plan: tier.toLowerCase(),
+          status: 'active',
+          current_period_start: new Date().toISOString(),
+          current_period_end: periodEnd,
+        })
+    }
+
+    // Also update org plan
+    await db
+      .from('organizations')
+      .update({
+        plan: tier.toLowerCase(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', orgId)
+  } else {
+    // No org membership — try to update user_profiles if Supabase is available (fallback)
+    logger.warn('[NOWPayments] No org membership found for userId, trying direct user update', { userId })
+
+    // Create a standalone org + membership for the user
+    const { data: newOrg } = await db
+      .from('organizations')
+      .insert({
+        name: `User ${userId}`,
+        plan: tier.toLowerCase(),
+      })
+      .select('id')
+      .single()
+
+    if (newOrg?.id) {
+      await db.from('org_members').insert({
+        org_id: newOrg.id,
+        user_id: userId,
+        role: 'owner',
+      })
+
+      await db.from('subscriptions').insert({
+        org_id: newOrg.id,
+        plan: tier.toLowerCase(),
+        status: 'active',
+        current_period_start: new Date().toISOString(),
+        current_period_end: periodEnd,
+      })
+    }
   }
 
-  // Trigger dunning payment success
-  try {
-    await handlePaymentSuccess({
-      userId: orgId,
-      licenseNonce: '',
-      tier,
-      paymentProvider: 'nowpayments',
-      polarOrderId: ipn.payment_id,
-    })
-  } catch (err) {
-    // Non-fatal: dunning success is informational
-    logger.warn('[NOWPayments] finished: dunning success handler failed', {
-      orgId,
-      error: err instanceof Error ? err.message : String(err),
-    })
-  }
-
-  logger.info('[NOWPayments] Payment finished - subscription activated', {
+  logger.info('[NOWPayments] Payment finished — subscription activated', {
+    userId,
     orgId,
     tier,
     periodEnd,
@@ -162,66 +211,56 @@ async function handleFinished(ipn: NowPaymentsIpnPayload): Promise<void> {
 }
 
 /**
- * Handle refunded payment - deactivate subscription
+ * Handle refunded payment — cancel subscription
  */
 async function handleRefunded(ipn: NowPaymentsIpnPayload): Promise<void> {
   const orderId = ipn.order_id || ''
-  const orgId = parseOrgIdFromOrderId(orderId)
-  if (!orgId) {
-    logger.warn('[NOWPayments] refunded: cannot parse orgId', { orderId })
+  const userId = parseUserIdFromOrderId(orderId)
+  if (!userId) {
+    logger.warn('[NOWPayments] refunded: cannot parse userId', { orderId })
     return
   }
 
-  const supabase = getSupabase()
-  await (supabase as any)
-    .from('user_profiles')
-    .update({
-      subscription_status: 'cancelled',
-      updated_at: new Date().toISOString(),
-    })
-    .eq('user_id', orgId)
+  const db = getDb()
+  const { data: membership } = await db
+    .from('org_members')
+    .select('org_id')
+    .eq('user_id', userId)
+    .single()
 
-  logger.info('[NOWPayments] Payment refunded - subscription cancelled', {
-    orgId,
+  if (membership?.org_id) {
+    await db
+      .from('subscriptions')
+      .update({
+        status: 'cancelled',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('org_id', membership.org_id)
+  }
+
+  logger.info('[NOWPayments] Payment refunded — subscription cancelled', {
+    userId,
     paymentId: ipn.payment_id,
   })
 }
 
 /**
- * Handle failed payment - notify via dunning workflow
+ * Handle failed payment — log only (dunning workflow removed for D1 simplicity)
  */
 async function handleFailed(ipn: NowPaymentsIpnPayload): Promise<void> {
   const orderId = ipn.order_id || ''
-  const orgId = parseOrgIdFromOrderId(orderId)
-  if (!orgId) return
+  const userId = parseUserIdFromOrderId(orderId)
 
-  const invoiceId = ipn.invoice_id
-  const tierConfig = invoiceId ? getTierByInvoiceId(invoiceId) : null
-  const tier: Tier = tierConfig?.tier ?? 'BASIC'
-
-  try {
-    await handlePaymentFailure({
-      userId: orgId,
-      licenseNonce: '',
-      tier,
-      amount: Math.round(ipn.price_amount * 100),
-      currency: ipn.price_currency,
-      failureReason: 'payment_failed',
-      paymentProvider: 'nowpayments',
-      polarOrderId: ipn.payment_id,
-    })
-  } catch (err) {
-    logger.warn('[NOWPayments] failed: dunning failure handler failed', {
-      orgId,
-      error: err instanceof Error ? err.message : String(err),
-    })
-  }
-
-  logger.info('[NOWPayments] Payment failed - notified', { orgId, paymentId: ipn.payment_id })
+  logger.info('[NOWPayments] Payment failed', {
+    userId,
+    paymentId: ipn.payment_id,
+    amount: ipn.price_amount,
+    currency: ipn.price_currency,
+  })
 }
 
 /**
- * Main IPN dispatcher - routes to appropriate handler based on payment_status
+ * Main IPN dispatcher
  */
 export async function processNowPaymentsIpn(
   ipn: NowPaymentsIpnPayload
@@ -248,13 +287,13 @@ export async function processNowPaymentsIpn(
         await handleFailed(ipn)
         break
       case 'partially_paid':
-        logger.info('[NOWPayments] Partial payment received - holding', { payment_id })
+        logger.info('[NOWPayments] Partial payment received — holding', { payment_id })
         break
       case 'expired':
-        logger.info('[NOWPayments] Payment expired - no action', { payment_id })
+        logger.info('[NOWPayments] Payment expired — no action', { payment_id })
         break
       default:
-        logger.debug('[NOWPayments] Unhandled status (informational)', { payment_status, payment_id })
+        logger.debug('[NOWPayments] Unhandled status', { payment_status, payment_id })
     }
 
     await recordIpnEvent(payment_id, payment_status, ipn as unknown as Record<string, unknown>, true)
