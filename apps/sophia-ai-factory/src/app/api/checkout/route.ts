@@ -5,15 +5,16 @@ import { withRateLimit } from '@/middleware/rate-limit-wrapper';
 import { getCurrentUser } from '@/lib/db/auth';
 
 /**
- * Extract user ID from JWT cookie (D1 auth), fallback to guest ID.
+ * Extract user ID from JWT cookie (D1 auth).
+ * Returns null if not authenticated — checkout requires login.
  */
-async function getUserId(request: Request): Promise<string> {
+async function getUserId(request: Request): Promise<string | null> {
   try {
     const cookie = request.headers.get('cookie') ?? '';
     const user = await getCurrentUser(cookie);
     if (user?.id) return user.id;
-  } catch { /* ignore — guest checkout */ }
-  return `guest-${Date.now()}`;
+  } catch { /* auth failed */ }
+  return null;
 }
 
 /**
@@ -38,6 +39,10 @@ export const GET = withRateLimit(async function GET(request: NextRequest) {
     }
 
     const userId = await getUserId(request);
+    if (!userId) {
+      const redirectUrl = encodeURIComponent(`/api/checkout?tier=${rawTier}`);
+      return NextResponse.redirect(`${appUrl}/login?redirect=${redirectUrl}`);
+    }
     const checkoutUrl = createInvoiceUrl(mappedTier, userId);
     return NextResponse.redirect(checkoutUrl);
   } catch {
@@ -68,6 +73,12 @@ export const POST = withRateLimit(async function POST(request: Request) {
     }
 
     const userId = await getUserId(request);
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Login required before checkout. Please sign in first.' },
+        { status: 401 }
+      );
+    }
     const checkoutUrl = createInvoiceUrl(tier, userId);
 
     return NextResponse.json({ url: checkoutUrl });
