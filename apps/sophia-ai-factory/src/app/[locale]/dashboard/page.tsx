@@ -4,13 +4,14 @@ import dynamic from "next/dynamic";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { createServerClient } from "@/lib/supabase/server";
+import { createServerClient } from "@/lib/db/client";
+import { getCurrentUser } from "@/lib/db/auth";
 import { DashboardStats } from "./components/dashboard-stats";
 import { OnboardingWelcomeBanner } from "./components/onboarding-welcome-banner";
 import { CrossSellBanner } from "@/components/dashboard/cross-sell-banner";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { Campaign } from "@/types";
 import { getTranslations } from 'next-intl/server';
+import { cookies } from "next/headers";
 
 const CampaignList = dynamic(
   () => import("./components/campaign-list").then(m => ({ default: m.CampaignList })),
@@ -27,26 +28,24 @@ const CampaignList = dynamic(
 
 export default async function DashboardPage() {
   const t = await getTranslations('dashboard');
-  const supabase = await createServerClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.getAll().map(c => `${c.name}=${c.value}`).join('; ');
+  const user = await getCurrentUser(cookieHeader);
 
   let campaigns: Campaign[] = [];
 
-  if (session?.user) {
-    const { data } = await supabase
-      .from("campaigns")
-      .select("*")
-      .order("created_at", { ascending: false });
-    campaigns = data as Campaign[] || [];
-  } else if (process.env.NODE_ENV === 'development') {
-     // Fallback for dev
-    const supabaseAdmin = createAdminClient();
-    const { data } = await supabaseAdmin
+  if (user?.id) {
+    try {
+      const db = createServerClient();
+      const { data } = await db
         .from("campaigns")
         .select("*")
-        .order("created_at", { ascending: false })
-        .limit(20);
-    campaigns = data as Campaign[] || [];
+        .order("created_at", { ascending: false });
+      campaigns = (data as Campaign[]) || [];
+    } catch {
+      // D1 campaigns table may not exist yet — show empty dashboard
+      campaigns = [];
+    }
   }
 
   // Calculate stats
