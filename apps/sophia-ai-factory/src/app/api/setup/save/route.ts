@@ -38,8 +38,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: 'Setup complete! Redirecting to login.',
-      redirect: '/login',
+      message: 'Setup complete! Configure your API keys in Settings.',
+      redirect: '/dashboard/settings',
     });
   } catch {
     return NextResponse.json(
