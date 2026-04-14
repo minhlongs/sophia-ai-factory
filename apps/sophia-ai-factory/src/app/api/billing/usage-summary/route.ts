@@ -6,7 +6,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createServerClient } from '@/lib/db/client';
+import { getCurrentUser } from '@/lib/better-auth-session';
 import { logger } from '@/lib/utils/logger-utility';
 import { getOverageSummary } from '@/lib/quota/overage-logger';
 import { getQuotaStatus } from '@/lib/quota/quota-checker';
@@ -18,8 +19,7 @@ import { PRICING_TIERS } from '@/lib/billing/billing-types';
  */
 export async function GET(req: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
 
     if (!user) {
       return NextResponse.json(
@@ -27,9 +27,10 @@ export async function GET(req: NextRequest) {
         { status: 401 }
       );
     }
+    const db = createServerClient();
 
     // Get user's active license
-    const { data: license } = await supabase
+    const { data: license } = await db
       .from('raas_licenses')
       .select('nonce, tier, created_by')
       .eq('created_by', user.id)

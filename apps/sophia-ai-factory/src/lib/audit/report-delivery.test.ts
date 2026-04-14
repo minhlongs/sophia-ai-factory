@@ -14,8 +14,8 @@ import {
 import type { ScheduledReport } from './report-scheduler'
 
 // Mock Supabase admin client
-vi.mock('@/lib/supabase/admin', () => ({
-  createAdminClient: vi.fn(),
+vi.mock('@/lib/db/client', () => ({
+  createServerClient: vi.fn(),
 }))
 
 // Mock logger
@@ -28,7 +28,7 @@ vi.mock('@/lib/utils/logger-utility', () => ({
 }))
 
 // Import after mocks
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createServerClient } from '@/lib/db/client'
 
 describe('emailReport', () => {
   const originalEnv = process.env
@@ -179,7 +179,7 @@ describe('storeReport', () => {
     mockSupabase = {
       storage: mockStorage
     }
-    vi.mocked(createAdminClient).mockReturnValue(mockSupabase)
+    vi.mocked(createServerClient).mockReturnValue(mockSupabase)
   })
 
   it('stores report in Supabase Storage', async () => {
@@ -203,7 +203,7 @@ describe('storeReport', () => {
     const mockSupabaseError = {
       storage: mockStorageError
     } as any
-    vi.mocked(createAdminClient).mockReturnValue(mockSupabaseError)
+    vi.mocked(createServerClient).mockReturnValue(mockSupabaseError)
 
     const url = await storeReport('report-uuid', Buffer.from('content'), 'pdf')
     expect(url).toBeNull()
@@ -242,7 +242,7 @@ describe('downloadStoredReport', () => {
       }),
       storage: mockStorage
     }
-    vi.mocked(createAdminClient).mockReturnValue(mockSupabase)
+    vi.mocked(createServerClient).mockReturnValue(mockSupabase)
   })
 
   it('downloads report from storage', async () => {
@@ -288,7 +288,7 @@ describe('getGeneratedReports', () => {
     mockSupabase = {
       from: vi.fn().mockReturnValue(mockChain)
     }
-    vi.mocked(createAdminClient).mockReturnValue(mockSupabase)
+    vi.mocked(createServerClient).mockReturnValue(mockSupabase)
   })
 
   it('returns list of generated reports', async () => {

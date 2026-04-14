@@ -1,7 +1,7 @@
 "use server";
 
 import { getD1Client } from "@/lib/db/client";
-import { inngest } from "@/lib/inngest/client";
+import { sendCampaignCreatedEvent } from "@/lib/campaigns/create-campaign-core";
 import { createCampaignSchema } from "@/lib/campaigns/validation";
 import { revalidatePath } from "next/cache";
 import { Tier } from "@/types";
@@ -88,15 +88,12 @@ export async function createCampaign(formData: FormData) {
 
     // 2. Trigger Inngest Event (optional — may not be configured on CF Workers)
     try {
-      await inngest.send({
-        name: "campaign.created",
-        data: {
-          campaignId: campaignData.id,
-          userId,
-          topic: topic || title!,
-          audience: audience || "General",
-          tier
-        }
+      await sendCampaignCreatedEvent({
+        campaignId: campaignData.id,
+        userId,
+        topic: topic || title!,
+        audience: audience || "General",
+        tier,
       });
     } catch {
       // Inngest not configured — campaign still created, processing will be manual
@@ -157,15 +154,12 @@ export async function retryCampaign(campaignId: string) {
     }
 
     // Trigger Inngest workflow
-    await inngest.send({
-      name: "campaign.created",
-      data: {
-        campaignId: c.id,
-        userId: c.user_id,
-        topic: c.topic || c.title,
-        audience: c.audience || "General Audience",
-        tier
-      }
+    await sendCampaignCreatedEvent({
+      campaignId: c.id,
+      userId: c.user_id,
+      topic: c.topic || c.title,
+      audience: c.audience || "General Audience",
+      tier,
     });
 
     revalidatePath("/dashboard/campaigns");
@@ -242,17 +236,14 @@ export async function resumeCampaign(campaignId: string) {
       return { success: false, message: "Failed to update campaign" };
     }
 
-    await inngest.send({
-      name: "campaign.created",
-      data: {
-        campaignId: c.id,
-        userId: c.user_id,
-        topic: c.topic || c.title,
-        audience: c.audience || "General Audience",
-        tier,
-        resume: true,
-        resumeFrom
-      }
+    await sendCampaignCreatedEvent({
+      campaignId: c.id,
+      userId: c.user_id,
+      topic: c.topic || c.title,
+      audience: c.audience || "General Audience",
+      tier,
+      resume: true,
+      resumeFrom,
     });
 
     revalidatePath("/dashboard/campaigns");

@@ -10,7 +10,7 @@
  * @module quota/quota-checker
  */
 
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import { QUOTA_LIMITS } from '@/lib/usage-metering/aggregator';
 import type { QuotaLimit, QuotaCheckResult } from '@/lib/usage-metering/types';
@@ -112,8 +112,8 @@ export async function getEffectiveQuotaLimits(
 ): Promise<QuotaLimit> {
   try {
     // Check for custom limits
-    const supabase = createAdminClient();
-    const { data: custom, error } = await supabase
+    const db = createServerClient();
+    const { data: custom, error } = await db
       .from('quota_limits')
       .select('*')
       .eq('license_nonce', licenseNonce)
@@ -208,7 +208,7 @@ async function calculateCurrentUsage(
   userId: string,
   licenseNonce: string
 ): Promise<CachedQuota> {
-  const supabase = createAdminClient();
+  const db = createServerClient();
   const now = Math.floor(Date.now() / 1000);
 
   const hourStart = Math.floor(now / 3600) * 3600;
@@ -218,7 +218,7 @@ async function calculateCurrentUsage(
   try {
     // Parallel queries for performance
     const [hourlyResult, dailyResult, monthlyResult] = await Promise.all([
-      supabase
+      db
         .from('usage_events')
         .select('credits_used')
         .eq('user_id', userId)
@@ -226,7 +226,7 @@ async function calculateCurrentUsage(
         .gte('created_at', hourStart)
         .lt('created_at', hourStart + 3600),
 
-      supabase
+      db
         .from('usage_events')
         .select('credits_used')
         .eq('user_id', userId)
@@ -234,7 +234,7 @@ async function calculateCurrentUsage(
         .gte('created_at', dayStart)
         .lt('created_at', dayStart + 86400),
 
-      supabase
+      db
         .from('usage_events')
         .select('credits_used')
         .eq('user_id', userId)
@@ -285,8 +285,8 @@ export async function logOverageEvent(
   config: QuotaConfig = DEFAULT_CONFIG
 ): Promise<string | null> {
   try {
-    const supabase = createAdminClient();
-    const { data, error } = await supabase
+    const db = createServerClient();
+    const { data, error } = await db
       .from('overage_events')
       .insert({
         user_id: context.userId,

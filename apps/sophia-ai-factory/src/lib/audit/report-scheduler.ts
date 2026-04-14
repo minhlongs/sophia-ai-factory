@@ -8,7 +8,7 @@
  */
 
 import { randomUUID } from 'node:crypto'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createServerClient } from '@/lib/db/client'
 import { logger } from '@/lib/utils/logger-utility'
 import type { Json } from '@/lib/supabase/types'
 
@@ -188,7 +188,7 @@ export async function scheduleReport(
 ): Promise<ScheduledReport> {
   validateFilters(report.filters)
 
-  const supabase = createAdminClient()
+  const db = createServerClient()
   const now = Math.floor(Date.now() / 1000)
   const nextRunAt = Math.floor(calculateNextRunAt(report.frequency) / 1000)
 
@@ -205,7 +205,7 @@ export async function scheduleReport(
   }
 
   try {
-    const result = await (supabase as any)
+    const result = await (db as any)
       .from('compliance_report_schedules')
       .insert(reportData)
       .select()
@@ -252,10 +252,10 @@ export async function scheduleReport(
  * const reports = await getScheduledReports('admin-user-id')
  */
 export async function getScheduledReports(adminId: string): Promise<ScheduledReport[]> {
-  const supabase = createAdminClient()
+  const db = createServerClient()
 
   try {
-    const result = await (supabase as any)
+    const result = await (db as any)
       .from('compliance_report_schedules')
       .select('*')
       .eq('created_by', adminId)
@@ -292,10 +292,10 @@ export async function getScheduledReports(adminId: string): Promise<ScheduledRep
  * await cancelScheduledReport('report-uuid')
  */
 export async function cancelScheduledReport(reportId: string): Promise<void> {
-  const supabase = createAdminClient()
+  const db = createServerClient()
 
   try {
-    const result = await (supabase as any)
+    const result = await (db as any)
       .from('compliance_report_schedules')
       .delete()
       .eq('id', reportId)
@@ -318,11 +318,11 @@ export async function cancelScheduledReport(reportId: string): Promise<void> {
  * @returns Array of reports that are due for execution
  */
 export async function getDueReports(): Promise<ScheduledReport[]> {
-  const supabase = createAdminClient()
+  const db = createServerClient()
   const now = Math.floor(Date.now() / 1000)
 
   try {
-    const result = await (supabase as any)
+    const result = await (db as any)
       .from('compliance_report_schedules')
       .select('*')
       .lte('next_run_at', now)
@@ -359,10 +359,10 @@ export async function updateNextRunAt(
   reportId: string,
   nextRunAt: number
 ): Promise<void> {
-  const supabase = createAdminClient()
+  const db = createServerClient()
 
   try {
-    const result = await (supabase as any)
+    const result = await (db as any)
       .from('compliance_report_schedules')
       .update({ next_run_at: nextRunAt })
       .eq('id', reportId)

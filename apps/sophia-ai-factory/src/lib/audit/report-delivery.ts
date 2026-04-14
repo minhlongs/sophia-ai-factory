@@ -280,7 +280,7 @@ export async function storeReport(
   content: Buffer | string,
   format: string
 ): Promise<string | null> {
-  const supabase = await import('@/lib/supabase/admin').then((m) => m.createAdminClient())
+  const db = await import('@/lib/db/client').then((m) => m.createServerClient())
   const storageBucket = process.env.REPORTS_STORAGE_BUCKET || 'compliance-reports'
 
   try {
@@ -294,7 +294,7 @@ export async function storeReport(
 
     // Upload to Supabase Storage
     // Note: This requires Supabase Storage bucket to be created
-    const { error } = await (supabase as any)
+    const { error } = await (db as any)
       .storage
       .from(storageBucket)
       .upload(path, buffer, {
@@ -308,7 +308,7 @@ export async function storeReport(
     }
 
     // Return public URL
-    const { data } = (supabase as any)
+    const { data } = (db as any)
       .storage
       .from(storageBucket)
       .getPublicUrl(path)
@@ -337,13 +337,13 @@ export async function downloadStoredReport(
   reportId: string,
   format: string
 ): Promise<Buffer | null> {
-  const supabase = await import('@/lib/supabase/admin').then((m) => m.createAdminClient())
+  const db = await import('@/lib/db/client').then((m) => m.createServerClient())
   const storageBucket = process.env.REPORTS_STORAGE_BUCKET || 'compliance-reports'
 
   try {
     // Find the report path (would need to query a reports table for the exact path)
     // For now, assume a simple pattern
-    const { data: reportData } = await (supabase as any)
+    const { data: reportData } = await (db as any)
       .from('compliance_reports')
       .select('storage_path, format')
       .eq('id', reportId)
@@ -355,7 +355,7 @@ export async function downloadStoredReport(
     }
 
     // Download from storage
-    const { data, error } = await (supabase as any)
+    const { data, error } = await (db as any)
       .storage
       .from(storageBucket)
       .download(reportData.storage_path)
@@ -399,10 +399,10 @@ export async function getGeneratedReports(
   adminId: string,
   limit: number = 50
 ): Promise<ReportMetadata[]> {
-  const supabase = await import('@/lib/supabase/admin').then((m) => m.createAdminClient())
+  const db = await import('@/lib/db/client').then((m) => m.createServerClient())
 
   try {
-    const result = await (supabase as any)
+    const result = await (db as any)
       .from('compliance_reports')
       .select('*')
       .eq('generated_by', adminId)

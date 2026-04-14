@@ -6,8 +6,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { getCurrentUser } from '@/lib/better-auth-session';
+import { createServerClient } from '@/lib/db/client';
 import { getDunningState, getDunningHistory, type DunningStateResult } from '@/lib/billing/dunning-workflow';
 import { logger } from '@/lib/utils/logger-utility';
 
@@ -17,15 +17,15 @@ export async function GET(
 ) {
   try {
     // Check admin auth
-    const supabase = createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
 
-    if (authError || !user) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Check admin role
-    const { data: userData } = await supabase
+    const db = createServerClient();
+    const { data: userData } = await db
       .from('user_profiles')
       .select('role')
       .eq('user_id', user.id)

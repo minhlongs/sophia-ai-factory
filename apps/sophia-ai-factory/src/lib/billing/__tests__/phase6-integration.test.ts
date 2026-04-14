@@ -12,14 +12,14 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 // Mock Supabase
-vi.mock('@/lib/supabase/admin', () => ({
-  createAdminClient: () => ({
+vi.mock('@/lib/db/client', () => ({
+  createServerClient: () => ({
     from: vi.fn(),
   }),
 }));
 
 // Mock auth
-vi.mock('@/lib/auth', () => ({
+vi.mock('@/lib/better-auth-session', () => ({
   getCurrentUser: vi.fn(),
 }));
 

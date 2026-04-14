@@ -10,7 +10,7 @@
  * @module quota/overage-logger
  */
 
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 
 /**
@@ -76,8 +76,8 @@ class OverageEventBuffer {
     this.buffer = [];
 
     try {
-      const supabase = createAdminClient();
-      const { error } = await (supabase as any).from('overage_events').insert(
+      const db = createServerClient();
+      const { error } = await (db as any).from('overage_events').insert(
         events.map(event => ({
           user_id: event.userId,
           license_nonce: event.licenseNonce,
@@ -140,7 +140,7 @@ export async function logOverageEventImmediate(
   event: OverageEventInput
 ): Promise<string | null> {
   try {
-    const { data, error } = await (createAdminClient() as any)
+    const { data, error } = await (createServerClient() as any)
       .from('overage_events')
       .insert({
         user_id: event.userId,
@@ -215,10 +215,10 @@ export async function getUserOverageEvents(
   createdAt: number;
   billable: boolean;
 }>> {
-  const supabase = createAdminClient();
+  const db = createServerClient();
   const limit = options.limit ?? 10;
 
-  let query = supabase
+  let query = db
     .from('overage_events')
     .select('id, exceeded_type, exceeded_limit, exceeded_current, exceeded_by, tier_at_exceeded, created_at, billable')
     .eq('user_id', userId)
@@ -275,7 +275,7 @@ export async function getOverageSummary(
   byType: Record<string, number>;
   billableEvents: number;
 }> {
-  const supabase = createAdminClient();
+  const db = createServerClient();
 
   interface OverageSummaryRow {
     exceeded_by: number;
@@ -283,7 +283,7 @@ export async function getOverageSummary(
     billable: boolean;
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('overage_events')
     .select('exceeded_by, exceeded_type, billable')
     .eq('license_nonce', licenseNonce)
@@ -326,7 +326,7 @@ export async function markEventsAsBillable(
   if (eventIds.length === 0) return 0;
 
   try {
-    const { error } = await (createAdminClient() as any)
+    const { error } = await (createServerClient() as any)
       .from('overage_events')
       .update({ billable: true } as any)
       .in('id', eventIds) as any;

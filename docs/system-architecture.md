@@ -5,9 +5,11 @@
 **Last Updated:** 2026-04-14
 **Production:** https://sophia.agencyos.network
 
-**AUTHENTICATION MIGRATION (2026-04-14):** Dashboard Server Components and Server Actions migrated to Better Auth v1.6.2 with D1 Kysely adapter. Email/password + magic link + organization plugin. RLS not used — app layer enforces ownership via `user_id` filters.
+**ARCHITECTURE CONSOLIDATION (2026-04-14):** Unified auth (Better Auth D1), single DB client (`createServerClient` from `@/lib/db/client`), consolidated tier logic at `config/tiers/`, and modularized 5 giant files into 21 focused modules. Legacy Supabase client removed from non-exception paths.
 
-**PAYMENT PROVIDER MIGRATION (2026-04-10):** Polar.sh references below are historical. Active providers now: NOWPayments (primary) + PayOS (Vietnam backup). See `project-changelog.md` for migration status.
+**AUTHENTICATION MIGRATION (2026-04-14):** Dashboard Server Components and Server Actions use Better Auth v1.6.2 with D1 Kysely adapter. Email/password + magic link + organization plugin. RLS not used — app layer enforces ownership via `user_id` filters.
+
+**PAYMENT PROVIDER MIGRATION (2026-04-10):** Polar.sh references below are historical. Active providers now: NOWPayments (primary) + PayOS (Vietnam backup).
 
 ---
 
@@ -339,15 +341,45 @@ crons = ["*/5 * * * *"]
 
 ---
 
+## Code Organization (2026-04-14 Consolidation)
+
+### Auth Consolidation
+- **Single Source:** Better Auth v1.6.2 with D1 Kysely adapter (no multiple auth systems)
+- **Deleted Files:** `lib/auth.ts`, `lib/subscription.ts`, `lib/db/auth-verify.ts`, `lib/clients/supabase-client.ts`
+- **Exceptions:** OAuth callbacks remain on Supabase (external provider requirement), admin invite uses Supabase
+- **Server Client:** All authenticated endpoints use `createServerClient()` from `@/lib/db/client` for D1 queries
+
+### DB Client Consolidation
+- **Migration Complete:** 112 files migrated from Supabase admin/server to D1 client
+- **Entry Point:** `@/lib/db/client` exports `createServerClient()` for D1 access
+- **Pattern:** All lib/ and app/api/ files use `createServerClient()` instead of Supabase clients
+
+### Tier Logic Unification
+- **Single Source:** `config/tiers/tier-configs.ts` + `config/tiers/unified-limits.ts`
+- **Deleted Files:** `lib/tier-gate.ts`, `lib/unified-tier-config.ts`
+- **Pattern:** Tier checks import from config, not dispersed utility files
+
+### File Modularization (5 Giant Files → 21 Modules)
+| Original File | New Location | Module Count |
+|---|---|---|
+| `resend-email-service.ts` | `lib/billing/email/*` | 4 modules (delivery, templates, tracking, types) |
+| `dunning-workflow.ts` | `lib/billing/dunning/*` | 3 modules (actions, state-machine, admin-ops) |
+| `quota-alert-service.ts` | `lib/alerts/quota/*` | 3 modules (evaluator, scheduler, delivery) |
+| `aggregator.ts` | `lib/usage-metering/*` | 3 modules (tracker, rollup, integration) |
+| `raas-audit.ts` | `lib/raas/*` | 4 modules (audit-logging, query-service, invoice, permissions) |
+
+### Shared Utilities
+- **Campaign Creation:** `lib/campaigns/create-campaign-core.ts` — unified creation logic for dashboard and API routes
+
 ## Migration Status (2026-04-14)
 
 ### Completed
+- **Architecture Consolidation:** Auth unified, DB client centralized, tier logic consolidated
+- **File Modularization:** 5 giant files split into 21 focused modules
 - **Better Auth Framework:** v1.6.2 installed with D1 Kysely adapter
-- **Dashboard Server Components:** Migrated from custom JWT to Better Auth (`getCurrentUser()` from Better Auth client)
+- **Dashboard Server Components:** Migrated from custom JWT to Better Auth
 - **Server Actions:** All mutations use Better Auth session context
-- **Auth Endpoints:** `/api/auth/[...all]` handling email/password + magic link
-- **Database:** Migration SQL applied (0003-better-auth.sql) — Better Auth schema configured
-- **Client Library:** `src/lib/auth-client.ts` with magicLinkClient plugin
+- **Database:** Migration SQL applied (0003-better-auth.sql)
 - **Tests:** 859/863 tests passing (4 legacy auth component failures isolated)
 
 ### Pending (Future Task)

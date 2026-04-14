@@ -15,7 +15,7 @@ import { validateLicenseKey as validateWithHmac, ValidationResult } from './raas
 import { logValidationWithReceipt, serializeReceiptForHeader } from './audit/audit-logger';
 import { checkQuotaWithOverage, DEFAULT_CONFIG } from './quota/quota-checker';
 import { enforceQuota } from './quota/quota-enforcer';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
 import { hasEmergencyBypass, recordCircuitFailure, recordCircuitSuccess } from './usage-metering/realtime-tracker';
 import crypto from 'crypto';
 import { jwtVerify } from 'jose';
@@ -139,10 +139,10 @@ export async function extractEnrichedClaimsFromRequest(
  */
 async function validateAgencyAccess(licenseNonce: string, agencyId: string): Promise<boolean> {
   try {
-    const supabase = createAdminClient();
+    const db = createServerClient();
 
     // Check that the license belongs to the agency making the request
-    const { data: license } = await supabase
+    const { data: license } = await db
       .from('raas_licenses')
       .select('id')
       .eq('nonce', licenseNonce)

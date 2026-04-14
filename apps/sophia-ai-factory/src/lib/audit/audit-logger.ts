@@ -10,7 +10,7 @@
  * @module audit/audit-logger
  */
 
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createServerClient } from '@/lib/db/client'
 import { generateReceipt, parseReceipt } from './compliance-receipt'
 import { logger } from '@/lib/utils/logger-utility'
 import type { RaasAuditLogInsert, RaasAuditLogRow, Json } from '@/lib/supabase/types'
@@ -27,12 +27,12 @@ type SupabaseResult<T> = { data: T | null; error: Error | null }
  * to encapsulate the type casting.
  */
 async function updateReceiptSignature(
-  supabase: ReturnType<typeof createAdminClient>,
+  db: ReturnType<typeof createServerClient>,
   logId: string,
   signature: string
 ): Promise<Error | null> {
   // Use function-level type assertion to bypass Supabase type inference
-  const result = await (supabase as any)
+  const result = await (db as any)
     .from('raas_audit_logs')
     .update({ receipt_signature: signature })
     .eq('id', logId)
@@ -43,10 +43,10 @@ async function updateReceiptSignature(
  * Insert audit log - wrapper to bypass Supabase type issues
  */
 async function insertAuditLog(
-  supabase: ReturnType<typeof createAdminClient>,
+  db: ReturnType<typeof createServerClient>,
   logData: RaasAuditLogInsert
 ): Promise<SupabaseResult<RaasAuditLogRow>> {
-  const result = await (supabase as any)
+  const result = await (db as any)
     .from('raas_audit_logs')
     .insert(logData)
     .select()
@@ -123,7 +123,7 @@ export interface RevocationLogParams {
 export async function logValidationWithReceipt(
   params: ValidationLogParams
 ): Promise<ComplianceReceipt | null> {
-  const supabase = createAdminClient()
+  const db = createServerClient()
   const createdAt = Math.floor(Date.now() / 1000)
 
   // Prepare audit log data
@@ -143,7 +143,7 @@ export async function logValidationWithReceipt(
 
   try {
     // Insert audit log using wrapper (database trigger auto-computes hash chain)
-    const insertResult = await insertAuditLog(supabase, logData)
+    const insertResult = await insertAuditLog(db, logData)
 
     const insertedLog = insertResult.data
     const insertError = insertResult.error
@@ -157,7 +157,7 @@ export async function logValidationWithReceipt(
     const receipt = generateReceipt(insertedLog)
 
     // Store receipt signature using wrapper
-    const updateError = await updateReceiptSignature(supabase, insertedLog.id, receipt.signature)
+    const updateError = await updateReceiptSignature(db, insertedLog.id, receipt.signature)
 
     if (updateError) {
       logger.error('[Audit Logger] Failed to store receipt signature', updateError as Error)
@@ -199,7 +199,7 @@ export async function logValidationWithReceipt(
 export async function logCreationWithReceipt(
   params: CreationLogParams
 ): Promise<ComplianceReceipt | null> {
-  const supabase = createAdminClient()
+  const db = createServerClient()
   const createdAt = Math.floor(Date.now() / 1000)
 
   // Prepare audit log data
@@ -218,7 +218,7 @@ export async function logCreationWithReceipt(
 
   try {
     // Insert audit log using wrapper
-    const insertResult = await insertAuditLog(supabase, logData)
+    const insertResult = await insertAuditLog(db, logData)
 
     const insertedLog = insertResult.data
     const insertError = insertResult.error
@@ -232,7 +232,7 @@ export async function logCreationWithReceipt(
     const receipt = generateReceipt(insertedLog)
 
     // Store receipt signature using wrapper
-    const updateError = await updateReceiptSignature(supabase, insertedLog.id, receipt.signature)
+    const updateError = await updateReceiptSignature(db, insertedLog.id, receipt.signature)
 
     if (updateError) {
       logger.error('[Audit Logger] Failed to store creation receipt signature', updateError as Error)
@@ -272,7 +272,7 @@ export async function logCreationWithReceipt(
 export async function logRevocationWithReceipt(
   params: RevocationLogParams
 ): Promise<ComplianceReceipt | null> {
-  const supabase = createAdminClient()
+  const db = createServerClient()
   const createdAt = Math.floor(Date.now() / 1000)
 
   // Prepare audit log data
@@ -293,7 +293,7 @@ export async function logRevocationWithReceipt(
 
   try {
     // Insert audit log using wrapper
-    const insertResult = await insertAuditLog(supabase, logData)
+    const insertResult = await insertAuditLog(db, logData)
 
     const insertedLog = insertResult.data
     const insertError = insertResult.error
@@ -307,7 +307,7 @@ export async function logRevocationWithReceipt(
     const receipt = generateReceipt(insertedLog)
 
     // Store receipt signature using wrapper
-    const updateError = await updateReceiptSignature(supabase, insertedLog.id, receipt.signature)
+    const updateError = await updateReceiptSignature(db, insertedLog.id, receipt.signature)
 
     if (updateError) {
       logger.error('[Audit Logger] Failed to store revocation receipt signature', updateError as Error)
@@ -354,7 +354,7 @@ export async function logUpdateWithReceipt(
     userAgent?: string
   }
 ): Promise<ComplianceReceipt | null> {
-  const supabase = createAdminClient()
+  const db = createServerClient()
   const createdAt = Math.floor(Date.now() / 1000)
 
   // Prepare audit log data (cast changes to Json for type compatibility)
@@ -375,7 +375,7 @@ export async function logUpdateWithReceipt(
 
   try {
     // Insert audit log using wrapper
-    const insertResult = await insertAuditLog(supabase, logData)
+    const insertResult = await insertAuditLog(db, logData)
 
     const insertedLog = insertResult.data
     const insertError = insertResult.error
@@ -389,7 +389,7 @@ export async function logUpdateWithReceipt(
     const receipt = generateReceipt(insertedLog)
 
     // Store receipt signature using wrapper
-    const updateError = await updateReceiptSignature(supabase, insertedLog.id, receipt.signature)
+    const updateError = await updateReceiptSignature(db, insertedLog.id, receipt.signature)
 
     if (updateError) {
       logger.error('[Audit Logger] Failed to store update receipt signature', updateError as Error)
@@ -491,9 +491,9 @@ export async function logAuditEvent(params: {
   metadata?: Record<string, unknown>
 }): Promise<void> {
   try {
-    const supabase = createAdminClient()
+    const db = createServerClient()
     const createdAt = Math.floor(Date.now() / 1000)
-    await insertAuditLog(supabase, {
+    await insertAuditLog(db, {
       action: params.action.toUpperCase(),
       license_nonce: 'system',
       user_id: params.userId,
@@ -510,7 +510,7 @@ export async function logAuditEvent(params: {
 export async function logUsageWithReceipt(
   params: UsageLogParams
 ): Promise<ComplianceReceipt | null> {
-  const supabase = createAdminClient()
+  const db = createServerClient()
   const createdAt = Math.floor(Date.now() / 1000)
 
   // Prepare audit log data with usage tracking fields
@@ -534,7 +534,7 @@ export async function logUsageWithReceipt(
 
   try {
     // Insert audit log using wrapper (database trigger auto-computes hash chain)
-    const insertResult = await insertAuditLog(supabase, logData)
+    const insertResult = await insertAuditLog(db, logData)
 
     const insertedLog = insertResult.data
     const insertError = insertResult.error
@@ -548,7 +548,7 @@ export async function logUsageWithReceipt(
     const receipt = generateReceipt(insertedLog)
 
     // Store receipt signature using wrapper
-    const updateError = await updateReceiptSignature(supabase, insertedLog.id, receipt.signature)
+    const updateError = await updateReceiptSignature(db, insertedLog.id, receipt.signature)
 
     if (updateError) {
       logger.error('[Audit Logger] Failed to store usage receipt signature', updateError as Error)

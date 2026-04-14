@@ -7,7 +7,7 @@
  * @module auth/jwt-nonce-tracker
  */
 
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 
 /**
@@ -90,9 +90,9 @@ export async function checkJwtNonce(nonce: string): Promise<{
 
   // Fallback: Database query
   try {
-    const supabase = createAdminClient();
+    const db = createServerClient();
 
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('jwt_nonces')
       .select('used_at, expires_at')
       .eq('nonce', nonce)
@@ -158,9 +158,9 @@ export async function markJwtNonceAsUsed(
 
   // Database write (authoritative)
   try {
-    const supabase = createAdminClient();
+    const db = createServerClient();
 
-    const { error } = await supabase
+    const { error } = await db
       .from('jwt_nonces')
       .insert({
         nonce,
@@ -227,9 +227,9 @@ export async function cleanupExpiredNonces(): Promise<number> {
 
   // Database cleanup
   try {
-    const supabase = createAdminClient();
+    const db = createServerClient();
 
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('jwt_nonces')
       .delete()
       .lt('expires_at', now)
@@ -259,16 +259,16 @@ export async function getNonceStats(): Promise<{
   replayAttemptsDetected: number;
 }> {
   try {
-    const supabase = createAdminClient();
+    const db = createServerClient();
     const now = Math.floor(Date.now() / 1000);
 
     // Get counts in parallel
     const [activeResult, expiredResult] = await Promise.all([
-      supabase
+      db
         .from('jwt_nonces')
         .select('id', { count: 'exact', head: true })
         .gte('expires_at', now),
-      supabase
+      db
         .from('jwt_nonces')
         .select('id', { count: 'exact', head: true })
         .lt('expires_at', now),

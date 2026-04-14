@@ -17,7 +17,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import { getUsageExportData, exportToCSV, exportToJSON } from '@/lib/usage-export/export-service';
 import { logUsageWithReceipt } from '@/lib/audit/audit-logger';
@@ -98,9 +98,9 @@ function getPreviousDayRange(): { startTimestamp: number; endTimestamp: number }
  * Active = not revoked AND (no expiry OR not expired)
  */
 async function getActiveLicenses(): Promise<RaasLicenseRow[]> {
-  const supabase = createAdminClient();
+  const db = createServerClient();
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('raas_licenses')
     .select('*')
     .eq('is_revoked', false);
@@ -141,12 +141,12 @@ async function storeExportReceipt(params: {
   errorMessage?: string;
 }): Promise<string | null> {
   try {
-    const supabase = createAdminClient();
+    const db = createServerClient();
     const jobId = crypto.randomUUID();
 
     // Note: export_jobs table requires migration - this is a graceful fallback
     // Using type assertion to bypass TypeScript check for untyped table
-    const { error } = await (supabase as any)
+    const { error } = await (db as any)
       .from('export_jobs')
       .insert({
         id: jobId,

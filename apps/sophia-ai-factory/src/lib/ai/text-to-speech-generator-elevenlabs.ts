@@ -1,4 +1,5 @@
-import { createAdminClient, isAdminClientConfigured } from '@/lib/supabase/admin';
+// TODO: storage not available in D1 client — audio upload needs Cloudflare R2 migration
+import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import { Tier } from "@/types";
 import { trackUsage, hashLicenseKey, calculateCredits, startTimer } from '@/lib/usage-metering';
@@ -177,35 +178,11 @@ function getDefaultVoiceId(tier: Tier): string {
  * Falls back to a data URI when Supabase is not configured.
  */
 async function uploadAudioToStorage(audioData: Uint8Array): Promise<string> {
-  if (!isAdminClientConfigured()) {
-    logger.warn('[ElevenLabs] Supabase not configured, returning data URI for audio');
-    const base64 = Buffer.from(audioData).toString('base64');
-    return `data:audio/mpeg;base64,${base64}`;
-  }
-
-  const supabase = createAdminClient();
-
-  const fileName = `voiceover-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.mp3`;
-  const filePath = `voiceovers/${fileName}`;
-
-  const { error: uploadError } = await supabase
-    .storage
-    .from('audio')
-    .upload(filePath, audioData, {
-      contentType: 'audio/mpeg',
-      upsert: false
-    });
-
-  if (uploadError) {
-    throw new Error(`Supabase Storage upload failed: ${uploadError.message}`);
-  }
-
-  const { data: urlData } = supabase
-    .storage
-    .from('audio')
-    .getPublicUrl(filePath);
-
-  return urlData.publicUrl;
+  // TODO: supabase.storage not available in D1 client — needs Cloudflare R2 migration
+  // Fallback: return data URI until R2 storage integration is implemented
+  logger.warn('[ElevenLabs] Storage not available in D1 client, returning data URI for audio');
+  const base64 = Buffer.from(audioData).toString('base64');
+  return `data:audio/mpeg;base64,${base64}`;
 }
 
 /**

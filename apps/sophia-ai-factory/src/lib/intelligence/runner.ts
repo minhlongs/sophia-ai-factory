@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase/client'
+import { createServerClient } from '@/lib/db/client'
 import { scoringService } from './scoring'
 import type { ScorableProduct } from './types'
 import type { Database } from '@/lib/supabase/types'
@@ -6,9 +6,10 @@ import type { Database } from '@/lib/supabase/types'
 type AffiliateProduct = Database['public']['Tables']['affiliate_products']['Row']
 
 export async function runScoringBatch(limit: number = 1000, offset: number = 0) {
+  const db = createServerClient()
 
   // 1. Fetch products
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('affiliate_products')
     .select('*')
     .range(offset, offset + limit - 1)
@@ -45,7 +46,7 @@ export async function runScoringBatch(limit: number = 1000, offset: number = 0) 
 
   // 3. Bulk update scores via upsert (ID + changed fields only)
 
-  const { error: updateError } = await supabase
+  const { error: updateError } = await db
     .from('affiliate_products')
     // @ts-expect-error - Known Supabase typing limitation with upsert on tables with Json columns
     .upsert(updates as unknown as Database['public']['Tables']['affiliate_products']['Update'][], { onConflict: 'id', ignoreDuplicates: false })

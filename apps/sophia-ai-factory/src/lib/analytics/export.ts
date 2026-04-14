@@ -4,7 +4,7 @@
  * Export analytics data to CSV format
  */
 
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import type { UsageEventRow } from '@/lib/supabase/types';
 
@@ -113,7 +113,7 @@ export function rowsToCsv(rows: UsageCsvRow[]): string {
  * Fetch usage events for export
  */
 export async function fetchUsageForExport(options: ExportOptions): Promise<UsageEventRow[]> {
-  const supabase = await createAdminClient();
+  const db = createServerClient();
 
   // Validate date range (max 90 days)
   const dateRangeDays = (options.endTimestamp - options.startTimestamp) / 86400;
@@ -121,7 +121,7 @@ export async function fetchUsageForExport(options: ExportOptions): Promise<Usage
     throw new Error('Date range exceeds maximum of 90 days');
   }
 
-  let query = supabase
+  let query = db
     .from('usage_events')
     .select('*')
     .gte('created_at', options.startTimestamp)

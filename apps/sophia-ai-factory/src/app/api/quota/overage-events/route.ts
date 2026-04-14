@@ -8,8 +8,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
+import { getCurrentUser } from '@/lib/better-auth-session';
 import { logger } from '@/lib/utils/logger-utility';
 import { getQuotaStatus } from '@/lib/quota/quota-checker';
 import { getUserOverageEvents, getOverageSummary } from '@/lib/quota/overage-logger';
@@ -20,8 +20,7 @@ import { getUserOverageEvents, getOverageSummary } from '@/lib/quota/overage-log
  */
 export async function GET(req: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
 
     if (!user) {
       return NextResponse.json(
@@ -29,6 +28,7 @@ export async function GET(req: NextRequest) {
         { status: 401 }
       );
     }
+    const supabase = createServerClient();
 
     const searchParams = req.nextUrl.searchParams;
     const limit = parseInt(searchParams.get('limit') || '10');
@@ -67,8 +67,7 @@ export async function GET(req: NextRequest) {
  */
 export async function GETStatus(req: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
 
     if (!user) {
       return NextResponse.json(
@@ -76,6 +75,7 @@ export async function GETStatus(req: NextRequest) {
         { status: 401 }
       );
     }
+    const supabase = createServerClient();
 
     // Get user's active license
     const { data: license } = await supabase

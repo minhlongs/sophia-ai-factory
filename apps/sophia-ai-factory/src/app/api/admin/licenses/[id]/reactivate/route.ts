@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getLicenseByNonce } from '@/lib/raas-audit'
 import { checkAdminAuth } from '../../middleware'
 import { logger } from '@/lib/utils/logger-utility'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createServerClient } from '@/lib/db/client'
 
 /**
  * POST /api/admin/licenses/[id]/reactivate
@@ -49,8 +49,8 @@ export async function POST(
     }
 
     // Reactivate license
-    const supabase = createAdminClient()
-    const { data, error } = await (supabase.from('raas_licenses') as any)
+    const db = createServerClient()
+    const { data, error } = await (db.from('raas_licenses') as any)
       .update({
         is_revoked: false,
         revoked_at: null,

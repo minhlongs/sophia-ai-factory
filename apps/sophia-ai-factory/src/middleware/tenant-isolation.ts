@@ -13,7 +13,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import { logValidationWithReceipt } from '@/lib/audit/audit-logger';
 import { jwtVerify } from 'jose';
@@ -95,12 +95,12 @@ async function extractAgencyId(request: NextRequest): Promise<string | null> {
   if (apiKey && apiKey.startsWith('mk_')) { // Assume mk_ prefix for agency-specific API keys
     try {
       // Get agency_id associated with this API key from database
-      const supabase = await createAdminClient();
+      const db = createServerClient();
 
       // Hash the API key for comparison (as it's stored hashed in the DB)
       const apiKeyHash = sha256(apiKey);
 
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from('raas_api_keys')
         .select('owner_id, permissions')
         .eq('key_hash', apiKeyHash)
@@ -215,7 +215,7 @@ function extractResourceInfo(pathname: string, method: string, request: NextRequ
  */
 async function validateResourceAccess(agencyId: string, resourceType: string, resourceId: string | null): Promise<boolean> {
   try {
-    const supabase = await createAdminClient();
+    const db = createServerClient();
 
     // Depending on resource type, check different authorization schemes
     switch(resourceType) {
@@ -226,7 +226,7 @@ async function validateResourceAccess(agencyId: string, resourceType: string, re
           return true;
         }
         // Check if this usage event belongs to the requesting agency
-        const { data: usageEvent, error: usageError } = await supabase
+        const { data: usageEvent, error: usageError } = await db
           .from('usage_events')
           .select('user_id')
           .eq('id', resourceId)
@@ -245,7 +245,7 @@ async function validateResourceAccess(agencyId: string, resourceType: string, re
           return true;
         }
         // Check if this license belongs to the requesting agency
-        const { data: license, error: licenseError } = await supabase
+        const { data: license, error: licenseError } = await db
           .from('raas_licenses')
           .select('created_by')
           .eq('nonce', resourceId) // Using nonce as the identifier
@@ -265,7 +265,7 @@ async function validateResourceAccess(agencyId: string, resourceType: string, re
         }
         // Check if this reconciliation job belongs to the requesting agency
         // Using exact match for resource ID to prevent injection
-        const { data: job, error: jobError } = await supabase
+        const { data: job, error: jobError } = await db
           .from('raas_licenses') // Assuming reconcile jobs are tied to licenses
           .select('created_by')
           .eq('id', resourceId) // Exact match rather than pattern matching
@@ -283,7 +283,7 @@ async function validateResourceAccess(agencyId: string, resourceType: string, re
           return true;
         }
         // Check if this audit log belongs to the requesting agency
-        const { data: auditLog, error: auditError } = await supabase
+        const { data: auditLog, error: auditError } = await db
           .from('raas_audit_logs')
           .select('user_id')
           .eq('id', resourceId)
@@ -304,7 +304,7 @@ async function validateResourceAccess(agencyId: string, resourceType: string, re
         }
         // For specific usage summaries, verify it belongs to the requesting agency
         // This would require checking the tenant_id field in the summary table
-        const { data: summary, error: summaryError } = await supabase
+        const { data: summary, error: summaryError } = await db
           .from('usage_daily_summaries')
           .select('tenant_id')
           .eq('id', resourceId)
@@ -312,7 +312,7 @@ async function validateResourceAccess(agencyId: string, resourceType: string, re
 
         if (summaryError || !summary) {
           // Try in hourly summaries as well
-          const { data: hourlySummary, error: hourlyError } = await supabase
+          const { data: hourlySummary, error: hourlyError } = await db
             .from('usage_hourly_summaries')
             .select('tenant_id')
             .eq('id', resourceId)

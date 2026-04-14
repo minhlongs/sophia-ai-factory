@@ -4,7 +4,7 @@
  * Hourly and daily rollup aggregation for usage metrics
  */
 
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import type { Json } from '@/lib/supabase/types';
 
@@ -45,14 +45,14 @@ interface HourlySummaryRecord {
  * @returns Array of hourly summary records
  */
 export async function calculateHourlyRollup(hourTimestamp: number): Promise<HourlySummaryRecord[]> {
-  const supabase = createAdminClient();
+  const db = createServerClient();
 
   // Calculate hour boundaries
   const hourStart = hourTimestamp;
   const hourEnd = hourTimestamp + 3600; // 1 hour = 3600 seconds
 
   // Query raw events for this hour
-  const { data: events, error } = await supabase
+  const { data: events, error } = await db
     .from('usage_events')
     .select(`
       user_id,
@@ -223,9 +223,9 @@ export async function calculateHourlyRollup(hourTimestamp: number): Promise<Hour
  * @param summary - Hourly summary record
  */
 export async function upsertHourlySummary(summary: HourlySummaryRecord): Promise<void> {
-  const supabase = createAdminClient();
+  const db = createServerClient();
 
-  const { error } = await supabase
+  const { error } = await db
     .from('usage_hourly_summary')
     .insert({
       hour_timestamp: summary.hourTimestamp,
@@ -323,14 +323,14 @@ export async function calculateDailyRollup(dayTimestamp: number): Promise<Array<
   }>;
   serviceBreakdown: ServiceBreakdownItem[];
 }>> {
-  const supabase = createAdminClient();
+  const db = createServerClient();
 
   // Calculate day boundaries
   const dayStart = dayTimestamp;
   // const dayEnd = dayTimestamp + 86400; // 24 hours = 86400 seconds - not used
 
   // Query hourly summaries for this day
-  const { data: hourlySummaries, error } = await supabase
+  const { data: hourlySummaries, error } = await db
     .from('usage_hourly_summary')
     .select(`
       hour_timestamp,
@@ -504,9 +504,9 @@ export async function calculateDailyRollup(dayTimestamp: number): Promise<Array<
  * Insert or update daily summary (idempotent)
  */
 export async function upsertDailySummary(summary: ReturnType<typeof calculateDailyRollup> extends Promise<Array<infer T>> ? T : never): Promise<void> {
-  const supabase = createAdminClient();
+  const db = createServerClient();
 
-  const { error } = await supabase
+  const { error } = await db
     .from('usage_daily_summary')
     .insert({
       day_timestamp: summary.dayTimestamp,

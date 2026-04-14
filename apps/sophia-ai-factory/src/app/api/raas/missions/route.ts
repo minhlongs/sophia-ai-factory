@@ -7,7 +7,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createClient } from '@/lib/supabase/server';
+import { createServerClient } from '@/lib/db/client';
+import { getCurrentUser } from '@/lib/better-auth-session';
 import { logger } from '@/lib/utils/logger-utility';
 
 export const dynamic = 'force-dynamic';
@@ -22,18 +23,18 @@ const CreateMissionSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const user = await getCurrentUser();
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const db = createServerClient();
 
     const { searchParams } = new URL(request.url);
     const limit = Math.min(parseInt(searchParams.get('limit') ?? '20'), 100);
     const page = Math.max(parseInt(searchParams.get('page') ?? '1'), 1);
     const offset = (page - 1) * limit;
 
-    const { data: missions, error, count } = await supabase
+    const { data: missions, error, count } = await db
       .from('missions')
       .select('id, title, command, status, priority, mcu_cost, result, error_message, created_at, updated_at, completed_at', { count: 'exact' })
       .eq('org_id', user.id)
@@ -59,11 +60,11 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const user = await getCurrentUser();
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const db = createServerClient();
 
     const body = await request.json();
     const parsed = CreateMissionSchema.safeParse(body);
@@ -73,7 +74,7 @@ export async function POST(request: NextRequest) {
 
     const { title, command, params, priority, description } = parsed.data;
 
-    const { data: mission, error } = await supabase
+    const { data: mission, error } = await db
       .from('missions')
       .insert({
         org_id: user.id,

@@ -1,0 +1,425 @@
+# Codebase Summary — Sophia AI Factory
+
+> Comprehensive overview of the Sophia AI Factory codebase structure, patterns, and architectural decisions.
+> Generated: 2026-04-14
+
+**Production URL:** https://sophia.agencyos.network
+**Tech Stack:** Next.js 15.5 + Cloudflare Workers + D1 SQLite + Better Auth v1.6.2
+
+---
+
+## Project Overview
+
+Sophia AI Factory is a Reasoning-as-a-Service (RaaS) platform providing:
+- **Proposal Generation:** AI-powered business proposal creation (10-50 MCU per proposal)
+- **Video Generation:** Remotion-based video production with HeyGen integration (100-500 MCU per video)
+- **Affiliate Network:** Discovery and management of affiliate partnerships
+- **Usage Metering:** Real-time MCU tracking and tier-based billing
+- **Campaign Automation:** Telegram bot + workflow engine for automated content distribution
+
+---
+
+## Core Stack
+
+| Layer | Technology | Purpose |
+|-------|-----------|---------|
+| **Runtime** | Cloudflare Workers | Edge compute, global distribution |
+| **Framework** | Next.js 15.5 (App Router) | Full-stack React application |
+| **Adapter** | opennextjs-cloudflare | Next.js → CF Workers bridge |
+| **Database** | Cloudflare D1 (SQLite) | Primary data store (sophia-raas-db) |
+| **Cache** | Cloudflare R2 + KV | Static assets + metering logs |
+| **Auth** | Better Auth v1.6.2 | Session-based auth (D1 backend) |
+| **Email** | Resend | Magic link + transactional emails |
+| **Payment** | NOWPayments (primary) + PayOS (backup) | Cryptocurrency + Vietnam domestic |
+| **AI** | Anthropic Claude | Proposal generation |
+| **Video** | HeyGen | Avatar video generation |
+| **Telegram** | Telegram Bot API | User interaction + notifications |
+
+---
+
+## Directory Structure
+
+```
+apps/sophia-ai-factory/
+├── src/
+│   ├── app/[locale]/           # Next.js pages (SSR + Server Components)
+│   │   ├── dashboard/          # Protected dashboard (missions, campaigns, analytics)
+│   │   ├── (admin)/admin/      # Admin panel (tier provisioning, settings)
+│   │   ├── pricing/            # Public pricing page
+│   │   ├── login/              # Auth pages (login, signup, magic link)
+│   │   └── api/                # API routes (auth, webhooks, RaaS endpoints)
+│   │
+│   ├── lib/
+│   │   ├── auth/               # Better Auth integration, JWT enrichment
+│   │   ├── db/                 # D1 client, query builders, type helpers
+│   │   ├── billing/            # MCU billing, dunning, email campaigns
+│   │   │   ├── billing/        # Payment integration (NOWPayments, PayOS)
+│   │   │   ├── dunning/        # Payment retry workflow (3 modules)
+│   │   │   └── email/          # Email templates & delivery (4 modules)
+│   │   │
+│   │   ├── alerts/             # Quota enforcement, alert delivery
+│   │   │   └── quota/          # Quota logic modularized (3 modules)
+│   │   │
+│   │   ├── usage-metering/     # Real-time MCU tracking (3 modules)
+│   │   │   ├── tracker.ts      # Event collection & buffering
+│   │   │   ├── aggregator.ts   # Rollup & debit engine
+│   │   │   └── integration.ts  # Gateway instrumentation
+│   │   │
+│   │   ├── raas/               # RaaS audit & operations (4 modules)
+│   │   │   ├── audit-logging-service.ts
+│   │   │   ├── audit-query-service.ts
+│   │   │   ├── raas-invoice-generator.ts
+│   │   │   └── raas-permission-checker.ts
+│   │   │
+│   │   ├── campaigns/          # Campaign management (shared core logic)
+│   │   │   └── create-campaign-core.ts
+│   │   │
+│   │   ├── gateway/            # OpenClaw integration, channel adapters
+│   │   ├── ingestion/          # Affiliate data ingestion (ClickBank, ShareASale)
+│   │   ├── intelligence/       # Affiliate scoring & normalization
+│   │   ├── discovery/          # Affiliate discovery algorithms
+│   │   ├── telegram/           # Telegram bot (handlers, FSM, rate limiting)
+│   │   ├── security/           # Auth, rate limiting, input validation
+│   │   ├── services/           # Factory pattern (real + mock implementations)
+│   │   ├── ai/                 # AI integrations (script generation, video, TTS)
+│   │   ├── clients/            # External API clients (NOWPayments, Upstash)
+│   │   ├── config/             # Environment & tier configuration
+│   │   ├── analytics/          # Dashboard analytics, ROI calculation
+│   │   ├── audit/              # Compliance, GDPR, audit logging
+│   │   └── utils/              # Helper functions, validators, formatters
+│   │
+│   ├── components/             # React components (organized by feature)
+│   ├── middleware.ts           # Request handling, auth validation, MCU gating
+│   └── types/                  # Shared TypeScript types & interfaces
+│
+├── migrations/                 # Database schema (D1 SQLite)
+│   ├── 0001-init.sql
+│   ├── 0002-payment-events.sql
+│   └── 0003-better-auth.sql
+│
+└── openclaw/                   # OpenClaw autonomous agent configuration
+    ├── skills/                 # Agent skills (affiliate-scout, auto-publisher, content-producer)
+    └── video-factory.yaml      # Workflow definition
+```
+
+---
+
+## Authentication Architecture
+
+### Better Auth Integration
+- **Version:** v1.6.2 with D1 Kysely adapter
+- **Plugins:** emailAndPassword + magicLink + organization
+- **Database:** Tables in D1 (better_auth_users, better_auth_sessions, better_auth_accounts, better_auth_verifications)
+- **Session Management:** HttpOnly, secure, sameSite=lax cookies
+- **Entry Point:** `/api/auth/[...all]` (dynamic catch-all route)
+
+### Auth Flow
+```
+User → /login or /signup
+  ↓
+POST /api/auth/[...all] (Better Auth endpoint)
+  ↓
+D1 Query: Create/verify user (PBKDF2 password hash)
+  ↓
+Email verification or password verification
+  ↓
+Better Auth generates session token (cookie)
+  ↓
+Middleware validates session & extracts user context
+  ↓
+Server Components use getCurrentUser() from Better Auth client
+  ↓
+App layer enforces user_id/org_id ownership (no RLS needed)
+```
+
+### Client Library
+- **Path:** `src/lib/better-auth-client.ts`
+- **Features:** Magic link provider, organization plugin setup
+- **Usage:** Imported in Server Components to get current user + org context
+
+---
+
+## Database Schema (D1 SQLite)
+
+### Core Tables
+```
+users            → id, email, password_hash, full_name, role
+organizations    → id, name, slug, email
+org_members      → org_id, user_id, role (owner/member)
+org_balances     → org_id, balance, reserved, lifetime_credits/debits
+api_keys         → id, org_id, key_hash, name, last_used_at, revoked_at
+```
+
+### Feature Tables
+```
+missions         → id, org_id, template_id, status, mcu_cost
+mission_results  → id, mission_id, output (JSON)
+campaigns        → id, org_id, name, status, created_at
+usage_logs       → id, org_id, feature, mcu_used, timestamp
+```
+
+### Billing Tables
+```
+billing_settings → org_id, tier, nowpayments_order_id, status
+```
+
+### Better Auth Tables (Auto-generated)
+```
+better_auth_users                → id, name, email, email_verified, image, password
+better_auth_sessions             → id, user_id, token, expires_at
+better_auth_accounts             → id, user_id, account_id, provider, provider_account_id
+better_auth_verifications        → id, identifier, value, expires_at
+```
+
+---
+
+## API Routes
+
+### Public (No Auth)
+| Route | Method | Purpose |
+|-------|--------|---------|
+| `/api/health` | GET | Health check |
+| `/api/v1/demo` | POST | Quick demo preview (rate-limited) |
+| `/api/auth/[...all]` | POST | Better Auth endpoints (signup, login, magic link) |
+| `/api/webhooks/nowpayments` | POST | Payment webhook (signature-verified) |
+
+### Protected (Session Auth)
+| Route | Method | Purpose |
+|-------|--------|---------|
+| `/api/org` | GET | Current org info |
+| `/api/billing/subscription` | GET | Subscription + MCU balance |
+| `/api/billing/checkout` | POST | Payment checkout session |
+| `/api/raas/missions` | GET/POST | Mission CRUD |
+| `/api/raas/keys` | GET/POST | API key management |
+| `/api/proposals/generate` | POST | AI proposal generation (MCU billable) |
+
+### RaaS External API (Bearer Token)
+| Route | Method | Purpose |
+|-------|--------|---------|
+| `/api/v1/missions` | GET/POST | List/create missions |
+| `/api/v1/missions/[id]` | GET | Mission detail |
+| `/api/v1/missions/[id]/result` | GET | Mission output |
+| `/api/v1/missions/[id]/stream` | GET | SSE real-time progress |
+
+---
+
+## Key Patterns & Modules
+
+### 1. Authentication (Better Auth)
+- **Files:** `lib/auth/*`, `lib/better-auth-client.ts`, `lib/better-auth-server.ts`
+- **Pattern:** Better Auth handles session logic; app layer enforces org ownership
+- **No RLS:** D1 doesn't support RLS; all queries include `WHERE org_id = ?` filters
+
+### 2. Database Client (D1 Consolidation)
+- **Single Entry Point:** `lib/db/client.ts` exports `createServerClient()`
+- **Migration Complete:** 112 files use centralized client instead of Supabase imports
+- **Pattern:** All authenticated DB access routes through one function
+
+### 3. Tier Logic (Unified Config)
+- **Single Source:** `config/tiers/tier-configs.ts` + `config/tiers/unified-limits.ts`
+- **Deleted Files:** `lib/tier-gate.ts`, `lib/unified-tier-config.ts`
+- **Pattern:** Tier checks import from config, not dispersed utilities
+
+### 4. File Modularization (Giant Files Split)
+| Original | Split Into | Purpose |
+|----------|-----------|---------|
+| resend-email-service.ts | email/delivery, email/templates, email/tracking | Separate concerns |
+| dunning-workflow.ts | dunning/actions, dunning/state-machine, dunning/admin-ops | Payment retry logic |
+| quota-alert-service.ts | quota/evaluator, quota/scheduler, quota/delivery | Quota enforcement |
+| aggregator.ts | usage-metering/tracker, rollup, integration | MCU metering |
+| raas-audit.ts | raas/audit-logging, query-service, invoice, permissions | RaaS operations |
+
+### 5. Usage Metering (Real-time MCU Tracking)
+- **Location:** `lib/usage-metering/*`
+- **Key Files:** tracker.ts, aggregator.ts, integration.ts, rollup-service.ts
+- **Pattern:** Collect events → Buffer → Rollup → Debit from balance
+- **Integration:** Gateway instrumentation for automated tracking
+
+### 6. Billing & Payment
+- **Primary:** NOWPayments (USDT, global)
+- **Backup:** PayOS (Vietnam domestic, VietQR)
+- **Webhook:** `/api/webhooks/nowpayments` handles IPN events
+- **MCU System:** Credits monthly per tier, deducted per feature
+
+### 7. Campaign Automation
+- **Core:** `lib/campaigns/create-campaign-core.ts` (shared logic)
+- **Channels:** YouTube, TikTok, Telegram (adapter pattern)
+- **Orchestration:** OpenClaw autonomous agents
+
+### 8. Telegram Bot
+- **Location:** `lib/telegram/*`
+- **FSM:** State machine for multi-step workflows
+- **Handlers:** Command routing, callback query processing
+- **Rate Limiting:** SQL-based rate limiter per user
+
+### 9. Security
+- **Auth Validation:** JWT enrichment, session verification
+- **API Keys:** PBKDF2 hashing + revocation support
+- **Rate Limiting:** Per-IP and per-user limits
+- **Input Validation:** Zod schemas for all API inputs
+- **Webhook Security:** HMAC signature verification
+
+---
+
+## Middleware & Request Pipeline
+
+**File:** `src/middleware.ts`
+
+1. **Index Rewrite:** `/` → `/landing` (opennextjs-cloudflare workaround)
+2. **Public Route Bypass:** Landing, auth, docs, blog, API v1
+3. **JWT/Session Validation:** Extract org_id from verified token
+4. **Protected API Routes:** `/api/raas/*`, `/api/affiliate/*` require auth
+5. **MCU Balance Check:** For billable routes (`/api/proposals/*`, `/api/video/*`)
+6. **Auth Redirect:** Unauthenticated page requests → `/login?redirect=PATH`
+7. **Security Headers:** HSTS, CSP, X-Frame-Options, X-Content-Type-Options
+
+---
+
+## Subscription Tiers
+
+| Tier | Price | MCU/month | Discount |
+|------|-------|-----------|----------|
+| Starter | $49/mo | 500 | — |
+| Growth | $149/mo | 2,000 | 10% |
+| Premium | $499/mo | 10,000 | 20% |
+| Master | $999/mo | 25,000 | 30% |
+
+### Feature Costs (MCU)
+| Feature | Cost |
+|---------|------|
+| proposal:text:basic | 10 |
+| proposal:text:advanced | 25 |
+| proposal:text:enterprise | 50 |
+| video:intro | 100 |
+| video:section | 250 |
+| video:full_proposal | 500 |
+| affiliate:blog | 50 |
+| affiliate:social | 10 |
+
+---
+
+## Deployment
+
+### Cloudflare Workers Config (`wrangler.jsonc`)
+```jsonc
+{
+  "name": "sophia-ai-factory",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-03-17",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "sophia-raas-db",
+    "database_id": "78bd1961-b62d-43bb-b551-0c5d7d389506"
+  }],
+  
+  "r2_buckets": [{
+    "binding": "NEXT_INC_CACHE_R2_BUCKET",
+    "bucket_name": "sophia-ai-factory-opennext-cache"
+  }]
+}
+```
+
+### Build & Deploy
+- **Build:** `npx opennextjs-cloudflare build` (from project root)
+- **Deploy:** `git push origin main` → GitHub Actions → CF Workers auto-deploy
+- **CI/CD:** `.github/workflows/ci-cd.yml` — lint + test + deploy pipeline
+
+---
+
+## Testing
+
+### Test Coverage
+- **Total Tests:** 859/863 passing (99.5%)
+- **Test Files:** Located alongside source files (`.test.ts` suffix)
+- **Categories:** Unit tests, integration tests, security tests
+
+### Key Test Suites
+| File | Purpose |
+|------|---------|
+| `lib/audit/audit-logger.test.ts` | Compliance logging |
+| `lib/security/api-key-validator.test.ts` | API key validation |
+| `lib/security/jwt-validator.test.ts` | JWT verification |
+| `lib/gateway/openclaw-gateway.test.ts` | OpenClaw integration |
+| `lib/usage-metering/aggregator.test.ts` | MCU metering |
+
+### Run Tests
+```bash
+npm test                    # Run all tests
+npm run test:watch        # Watch mode
+npm run build && npm test  # Full pipeline
+```
+
+---
+
+## Known Issues & Technical Debt
+
+### Accepted (Non-Critical)
+- **opennextjs-cloudflare Index Bug:** `/` returns 500; mitigated with middleware rewrite to `/landing`
+- **Peer Dependency Warning:** `npm install --legacy-peer-deps` required (wrangler v3 vs @opennextjs/cloudflare)
+- **Legacy Auth Components:** 4 tests failing (isolated, not blocking; cleanup pending in Phase 8)
+
+### Resolved
+- ~~Vercel vs CF Workers confusion~~ → Fully migrated to CF Workers
+- ~~Supabase RLS coverage~~ → Migrated to JWT-based permission model
+- ~~Auth source multiplicity~~ → Unified to Better Auth v1.6.2
+
+---
+
+## Performance & Monitoring
+
+### Build Performance
+- **Build Time:** < 10s (optimized with tree-shaking)
+- **Bundle Size:** < 500 KB gzipped
+- **Cold Start:** Edge functions < 100ms
+
+### Observability
+- **Error Tracking:** Sentry SDK integrated
+- **Structured Logging:** JSON logger for all events (`lib/utils/logger-utility.ts`)
+- **Uptime Monitoring:** 5-minute health check cron job
+- **Database Backup:** Nightly automated backup to Cloudflare
+
+---
+
+## Developer Workflow
+
+### Local Development
+```bash
+npm install
+npm run dev           # Local Next.js dev server
+npm run db:push      # Apply migrations to D1
+npm test              # Run all tests
+npm run build        # Production build
+npm run lint         # Type checking + linting
+```
+
+### Environment Variables
+See `.env.example` for required variables (JWT_SECRET=REDACTED, API keys, etc.)
+
+### Code Standards
+- **TypeScript:** Strict mode enabled, 0 `:any` types
+- **Commit Format:** Conventional commits (feat:, fix:, refactor:, docs:)
+- **Testing:** All new code includes unit tests
+- **Documentation:** Inline comments for complex logic
+
+---
+
+## References
+
+- **Architecture Decisions:** See `docs/system-architecture.md`
+- **Code Standards:** See `docs/code-standards.md`
+- **Project Roadmap:** See `docs/project-roadmap.md`
+- **Security Guidelines:** See `docs/security-hardening-implementation.md`
+- **Deployment Guide:** See `docs/deployment-guide.md`
+
+---
+
+**Generated:** 2026-04-14
+**Codebase Version:** After Architecture Consolidation
+**Maintained By:** Documentation Team

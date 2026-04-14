@@ -18,8 +18,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
+import { getCurrentUser } from '@/lib/better-auth-session';
 import { getUsageSummaryForPeriod } from '@/lib/usage-metering/export';
 import {
   aggregateUsageForLicense,
@@ -39,12 +39,12 @@ const summaryQuerySchema = z.object({
 export async function GET(req: NextRequest) {
   try {
     // Authenticate user
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
 
-    if (authError || !user) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const supabase = createServerClient();
 
     // Parse query params
     const searchParams = req.nextUrl.searchParams;

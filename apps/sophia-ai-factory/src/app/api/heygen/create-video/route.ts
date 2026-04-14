@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { ServiceFactory } from "@/lib/services/factory";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/better-auth-session";
 import { createVideoSchema } from "@/lib/schemas";
 
 export async function POST(req: Request) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+
+    const user = await getCurrentUser();
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

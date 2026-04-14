@@ -12,7 +12,7 @@ import { checkAdminAuth } from '@/app/api/admin/licenses/middleware'
 import { rateLimit } from '@/lib/security/rate-limiter'
 import { logger } from '@/lib/utils/logger-utility'
 import { downloadStoredReport } from '@/lib/audit/report-delivery'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createServerClient } from '@/lib/db/client'
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -39,8 +39,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const { id } = await params
 
     // Fetch report metadata from database
-    const supabase = createAdminClient()
-    const { data: report, error: fetchError } = await (supabase as any)
+    const db = createServerClient()
+    const { data: report, error: fetchError } = await (db as any)
       .from('compliance_reports')
       .select('id, report_type, format, storage_path, file_size')
       .eq('id', id)

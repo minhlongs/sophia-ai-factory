@@ -10,11 +10,11 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
+import { D1Client } from '@/lib/db/d1-query-builder';
 import { logger } from '@/lib/utils/logger-utility';
 import { checkAdminAuth } from '../../licenses/middleware';
 import { QUOTA_LIMITS } from '@/lib/usage-metering/aggregator';
-import { TIER_DB_MAPPING } from '@/lib/subscription';
 
 /**
  * Reconciliation request filters
@@ -196,19 +196,19 @@ export async function GET(request: NextRequest) {
       performAnalysis,
     });
 
-    const supabase = await createAdminClient();
+    const db = createServerClient();
 
     // Query usage events with filters
-    const { events, totalCount } = await queryUsageEvents(supabase, filters);
+    const { events, totalCount } = await queryUsageEvents(db, filters);
 
     // Get license info for tier-based reconciliation
     const licenseInfo = filters.licenseNonce
-      ? await getLicenseInfo(supabase, filters.licenseNonce)
+      ? await getLicenseInfo(db, filters.licenseNonce)
       : null;
 
     // Get billing periods from payment events
     const billingPeriods = await queryBillingPeriods(
-      supabase,
+      db,
       filters.customerId || licenseInfo?.polar_customer_id || undefined,
       filters.startTimestamp,
       filters.endTimestamp
@@ -293,7 +293,7 @@ function parseLimit(value: string | null): number {
  * Query usage events from database
  */
 async function queryUsageEvents(
-  supabase: any,
+  supabase: D1Client,
   filters: ReconciliationFilters
 ): Promise<UsageQueryResult> {
   let query = supabase
@@ -346,7 +346,7 @@ async function queryUsageEvents(
  * Get license information for reconciliation
  */
 async function getLicenseInfo(
-  supabase: any,
+  supabase: D1Client,
   nonce: string
 ): Promise<LicenseInfo | null> {
   const { data, error } = await supabase
@@ -366,7 +366,7 @@ async function getLicenseInfo(
  * Query billing periods from payment events
  */
 async function queryBillingPeriods(
-  supabase: any,
+  supabase: D1Client,
   customerId: string | undefined,
   startTimestamp: number | undefined,
   endTimestamp: number | undefined

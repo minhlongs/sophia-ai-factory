@@ -8,8 +8,12 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
 // Mock dependencies
-vi.mock('@/lib/auth', () => ({
+vi.mock('@/lib/better-auth-session', () => ({
   getCurrentUser: vi.fn(),
+}));
+
+vi.mock('@/lib/db/get-user-tier', () => ({
+  getUserTier: vi.fn().mockResolvedValue('BASIC'),
 }));
 
 vi.mock('@/lib/analytics/rbac', () => ({
@@ -36,7 +40,7 @@ vi.mock('@/lib/security/rate-limiter', () => ({
 }));
 
 import { GET } from './route';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser } from '@/lib/better-auth-session';
 import { verifyLicenseAccess, getUserLicenseNonce, checkAdmin } from '@/lib/analytics/rbac';
 import { fetchViolations, fetchViolationSummary } from '@/lib/analytics/queries';
 import { validateApiKey } from '@/lib/security/api-key-validator';

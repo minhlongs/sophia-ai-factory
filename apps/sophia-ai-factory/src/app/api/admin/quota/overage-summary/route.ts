@@ -14,7 +14,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 
 export async function GET(req: NextRequest) {
@@ -58,10 +58,10 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const supabase = createAdminClient();
+    const db = createServerClient();
 
     // Build query
-    let query = supabase
+    let query = db
       .from('overage_events')
       .select('*')
       .gte('created_at', startDate)

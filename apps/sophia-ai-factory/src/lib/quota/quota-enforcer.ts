@@ -10,7 +10,7 @@
  * @module quota/quota-enforcer
  */
 
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import { checkQuotaWithOverage, DEFAULT_CONFIG, getEffectiveQuotaLimits, invalidateQuotaCache } from './quota-checker';
 import type { QuotaCheckContext, EnhancedQuotaCheckResult } from './quota-checker';
@@ -196,8 +196,8 @@ export async function enforceQuota(
  */
 async function getUserIdFromLicense(licenseNonce: string): Promise<string | null> {
   try {
-    const supabase = createAdminClient();
-    const { data } = await supabase
+    const db = createServerClient();
+    const { data } = await db
       .from('raas_licenses')
       .select('created_by')
       .eq('nonce', licenseNonce)
@@ -235,26 +235,26 @@ export async function getQuotaStatus(
   const limits = await getEffectiveQuotaLimits(licenseNonce, tier);
 
   // Calculate from local DB
-  const supabase = createAdminClient();
+  const db = createServerClient();
   const now = Math.floor(Date.now() / 1000);
   const hourStart = Math.floor(now / 3600) * 3600;
   const dayStart = Math.floor(now / 86400) * 86400;
   const monthStart = Math.floor(new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime() / 1000);
 
   const [hourlyResult, dailyResult, monthlyResult] = await Promise.all([
-    supabase
+    db
       .from('usage_events')
       .select('credits_used')
       .eq('user_id', userId)
       .eq('license_nonce', licenseNonce)
       .gte('created_at', hourStart),
-    supabase
+    db
       .from('usage_events')
       .select('credits_used')
       .eq('user_id', userId)
       .eq('license_nonce', licenseNonce)
       .gte('created_at', dayStart),
-    supabase
+    db
       .from('usage_events')
       .select('credits_used')
       .eq('user_id', userId)
@@ -289,7 +289,7 @@ const usage = {
   let lastPolarSync: string | undefined;
 
   if (polarCustomerId) {
-    const { data: syncData } = await supabase
+    const { data: syncData } = await db
       .from('usage_events')
       .select('created_at')
       .eq('external_customer_id', polarCustomerId)

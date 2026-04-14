@@ -9,7 +9,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import { checkAdminAuth } from '../../middleware';
 import { z } from 'zod';
@@ -72,10 +72,10 @@ export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
     const params = dunningListSchema.parse(Object.fromEntries(searchParams));
 
-    const supabase = createAdminClient();
+    const db = createServerClient();
 
     // Build query
-    let query = supabase
+    let query = db
       .from('dunning_settings')
       .select('*', { count: 'exact' });
 
@@ -141,7 +141,7 @@ export async function GET(req: NextRequest) {
     let licenseInfo: LicenseInfo[] = [];
 
     if (licenseNonces.length > 0) {
-      const { data: licenseData } = await supabase
+      const { data: licenseData } = await db
         .from('raas_api_keys')
         .select('license_nonce, tier, status')
         .in('license_nonce', licenseNonces);
@@ -153,7 +153,7 @@ export async function GET(req: NextRequest) {
     let userInfo: UserInfo[] = [];
 
     if (userIds.length > 0) {
-      const { data: userData } = await supabase
+      const { data: userData } = await db
         .from('user_profiles')
         .select('user_id, email')
         .in('user_id', userIds);
@@ -233,10 +233,10 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const parsed = dunningActionSchema.parse(body);
 
-    const supabase = createAdminClient();
+    const db = createServerClient();
 
     // Get user ID for license
-    const { data: licenseData } = await supabase
+    const { data: licenseData } = await db
       .from('raas_api_keys')
       .select('user_id')
       .eq('license_nonce', parsed.licenseNonce)

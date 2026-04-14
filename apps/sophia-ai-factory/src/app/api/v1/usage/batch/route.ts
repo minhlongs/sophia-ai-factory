@@ -26,7 +26,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import { batchIngestUsage } from '@/lib/usage-metering/aggregator';
 import { batchIngestionRequestSchema } from '@/lib/validation/services';
@@ -47,10 +47,10 @@ async function validateApiKey(apiKey: string | null): Promise<{
   }
 
   try {
-    const supabase = createAdminClient();
+    const db = createServerClient();
 
     // Look up API key in raas_api_keys table
-    const { data: apiKeyRecord, error } = await supabase
+    const { data: apiKeyRecord, error } = await db
       .from('raas_api_keys')
       .select('user_id, license_nonce, is_active, tier')
       .eq('key_hash', apiKey)

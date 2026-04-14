@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 
 /**
@@ -45,9 +45,9 @@ export async function GET(request: NextRequest) {
       service,
     });
 
-    const supabase = createAdminClient();
+    const db = createServerClient();
 
-    let query = supabase
+    let query = db
       .from('usage_events')
       .select('*', { count: 'exact' })
       .order('created_at', { ascending: false })

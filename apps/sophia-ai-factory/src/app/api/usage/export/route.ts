@@ -25,8 +25,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
+import { getCurrentUser } from '@/lib/better-auth-session';
 import { exportUsage, generateCsv } from '@/lib/usage-metering/export';
 import { logger } from '@/lib/utils/logger-utility';
 import { z } from 'zod';
@@ -65,15 +65,15 @@ const postExportRequestSchema = z.object({
 export async function GET(req: NextRequest) {
   try {
     // Authenticate user
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
 
-    if (authError || !user) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Parse query params
     const searchParams = req.nextUrl.searchParams;
+    const supabase = createServerClient();
     const parseResult = exportQuerySchema.safeParse({
       start: searchParams.get('start'),
       end: searchParams.get('end'),
@@ -212,13 +212,13 @@ export async function POST(req: NextRequest) {
 
   try {
     // Step 1: Authenticate user via JWT
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
 
-    if (authError || !user) {
+    if (!user) {
       logger.warn('[Usage Export POST] Authentication failed', { requestId });
       return NextResponse.json({ error: 'Unauthorized - Invalid JWT' }, { status: 401 });
     }
+    const supabase = createServerClient();
 
     // Step 2: Validate API key from X-API-Key header
     const apiKey = req.headers.get('x-api-key');

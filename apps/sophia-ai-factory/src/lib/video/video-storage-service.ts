@@ -8,7 +8,8 @@
  * Path:   campaigns/{campaignId}/{timestamp}.mp4
  */
 
-import { createAdminClient } from "@/lib/supabase/admin";
+// TODO: storage not available in D1 client — needs Cloudflare R2 migration
+import { createServerClient } from '@/lib/db/client';
 import { logger } from "@/lib/utils/logger-utility";
 
 export interface VideoStorageResult {
@@ -20,8 +21,8 @@ export interface VideoStorageResult {
 
 const BUCKET = "campaign-videos";
 
-async function getStorageClient() {
-  return createAdminClient();
+function getStorageClient() {
+  return createServerClient();
 }
 
 /**
@@ -43,8 +44,9 @@ export async function downloadAndStore(
     const blob = await response.blob();
     const sizeBytes = blob.size;
 
-    const supabase = await getStorageClient();
-    const storage = (supabase as any).storage;
+    const db = getStorageClient();
+    // TODO: supabase.storage not available in D1 client — needs Cloudflare R2 migration
+    const storage = (db as any).storage;
     if (!storage) {
       throw new Error("Storage not available in D1 client");
     }

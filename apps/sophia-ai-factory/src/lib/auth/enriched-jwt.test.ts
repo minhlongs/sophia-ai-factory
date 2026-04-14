@@ -41,8 +41,8 @@ const mockInsert = vi.fn(() => ({ onConflict: mockOnConflict }))
 const mockFrom = vi.fn(() => ({ select: mockSelect, insert: mockInsert }))
 const mockSupabaseClient = { from: mockFrom }
 
-vi.mock('@/lib/supabase/admin', () => ({
-  createAdminClient: vi.fn(() => mockSupabaseClient),
+vi.mock('@/lib/db/client', () => ({
+  createServerClient: vi.fn(() => mockSupabaseClient),
 }))
 
 // Mock logger
@@ -73,27 +73,17 @@ describe('getLicenseContext', () => {
   })
 
   it('should fetch license context from database', async () => {
-    const { createAdminClient } = await import('@/lib/supabase/admin')
-    const supabase = vi.mocked(createAdminClient)()
-    const mockSelect = vi.fn().mockReturnThis()
-    const mockEq = vi.fn().mockReturnValue({
-      single: vi.fn().mockResolvedValue({
-        data: {
-          tier: 'PREMIUM',
-          agency_id: 'agency-123',
-          polar_customer_id: 'cus_abc123',
-          polar_subscription_status: 'active',
-          expires_at: 1735689600,
-          created_at: 1704067200,
-        },
-        error: null,
-      }),
+    mockSingle.mockResolvedValue({
+      data: {
+        tier: 'PREMIUM',
+        agency_id: 'agency-123',
+        polar_customer_id: 'cus_abc123',
+        polar_subscription_status: 'active',
+        expires_at: 1735689600,
+        created_at: 1704067200,
+      },
+      error: null,
     })
-
-    vi.mocked(supabase.from).mockReturnValue({
-      select: mockSelect,
-      eq: mockEq,
-    } as any)
 
     const result = await getLicenseContext('test-nonce-123')
 
@@ -105,18 +95,10 @@ describe('getLicenseContext', () => {
   })
 
   it('should return null when license not found', async () => {
-    const { createAdminClient } = await import('@/lib/supabase/admin')
-    const supabase = vi.mocked(createAdminClient)()
-
-    vi.mocked(supabase.from).mockReturnValue({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnValue({
-        single: vi.fn().mockResolvedValue({
-          data: null,
-          error: { message: 'Not found' },
-        }),
-      }),
-    } as any)
+    mockSingle.mockResolvedValue({
+      data: null,
+      error: { message: 'Not found' },
+    })
 
     const result = await getLicenseContext('invalid-nonce')
 
@@ -124,25 +106,17 @@ describe('getLicenseContext', () => {
   })
 
   it('should handle missing optional fields gracefully', async () => {
-    const { createAdminClient } = await import('@/lib/supabase/admin')
-    const supabase = vi.mocked(createAdminClient)()
-
-    vi.mocked(supabase.from).mockReturnValue({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnValue({
-        single: vi.fn().mockResolvedValue({
-          data: {
-            tier: 'BASIC',
-            agency_id: null,
-            polar_customer_id: null,
-            polar_subscription_status: null,
-            expires_at: null,
-            created_at: 1704067200,
-          },
-          error: null,
-        }),
-      }),
-    } as any)
+    mockSingle.mockResolvedValue({
+      data: {
+        tier: 'BASIC',
+        agency_id: null,
+        polar_customer_id: null,
+        polar_subscription_status: null,
+        expires_at: null,
+        created_at: 1704067200,
+      },
+      error: null,
+    })
 
     const result = await getLicenseContext('basic-nonce')
 
@@ -165,31 +139,24 @@ describe('createEnrichedJwt', () => {
   })
 
   it('should create enriched JWT with all claims', async () => {
-    const { createAdminClient } = await import('@/lib/supabase/admin')
     const { getEffectiveQuotaLimits } = await import('@/lib/quota/quota-checker')
-    const supabase = vi.mocked(createAdminClient)()
 
-    vi.mocked(supabase.from).mockReturnValue({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnValue({
-        single: vi.fn()
-          .mockResolvedValueOnce({ // First call: license context
-            data: {
-              tier: 'PREMIUM',
-              agency_id: 'agency-123',
-              polar_customer_id: 'cus_abc123',
-              polar_subscription_status: 'active',
-              expires_at: null,
-              created_at: 1704067200,
-            },
-            error: null,
-          })
-          .mockResolvedValueOnce({ // Second call: dunning state
-            data: { state: 'ok' },
-            error: null,
-          }),
-      }),
-    } as any)
+    mockSingle
+      .mockResolvedValueOnce({ // First call: license context
+        data: {
+          tier: 'PREMIUM',
+          agency_id: 'agency-123',
+          polar_customer_id: 'cus_abc123',
+          polar_subscription_status: 'active',
+          expires_at: null,
+          created_at: 1704067200,
+        },
+        error: null,
+      })
+      .mockResolvedValueOnce({ // Second call: dunning state
+        data: { state: 'ok' },
+        error: null,
+      })
 
     vi.mocked(getEffectiveQuotaLimits).mockResolvedValue({
       tier: 'PREMIUM',
@@ -212,18 +179,10 @@ describe('createEnrichedJwt', () => {
   })
 
   it('should return null when license context fetch fails', async () => {
-    const { createAdminClient } = await import('@/lib/supabase/admin')
-    const supabase = vi.mocked(createAdminClient)()
-
-    vi.mocked(supabase.from).mockReturnValue({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnValue({
-        single: vi.fn().mockResolvedValue({
-          data: null,
-          error: { message: 'License not found' },
-        }),
-      }),
-    } as any)
+    mockSingle.mockResolvedValue({
+      data: null,
+      error: { message: 'License not found' },
+    })
 
     const result = await createEnrichedJwt('user-123', 'invalid-nonce')
 
@@ -231,31 +190,24 @@ describe('createEnrichedJwt', () => {
   })
 
   it('should use custom TTL when provided', async () => {
-    const { createAdminClient } = await import('@/lib/supabase/admin')
     const { getEffectiveQuotaLimits } = await import('@/lib/quota/quota-checker')
-    const supabase = vi.mocked(createAdminClient)()
 
-    vi.mocked(supabase.from).mockReturnValue({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnValue({
-        single: vi.fn()
-          .mockResolvedValueOnce({
-            data: {
-              tier: 'BASIC',
-              agency_id: null,
-              polar_customer_id: null,
-              polar_subscription_status: null,
-              expires_at: null,
-              created_at: 1704067200,
-            },
-            error: null,
-          })
-          .mockResolvedValueOnce({
-            data: { state: 'ok' },
-            error: null,
-          }),
-      }),
-    } as any)
+    mockSingle
+      .mockResolvedValueOnce({
+        data: {
+          tier: 'BASIC',
+          agency_id: null,
+          polar_customer_id: null,
+          polar_subscription_status: null,
+          expires_at: null,
+          created_at: 1704067200,
+        },
+        error: null,
+      })
+      .mockResolvedValueOnce({
+        data: { state: 'ok' },
+        error: null,
+      })
 
     vi.mocked(getEffectiveQuotaLimits).mockResolvedValue({
       tier: 'BASIC',
@@ -489,31 +441,24 @@ describe('refreshJwtIfExpired', () => {
     const expiredToken = `${header}.${payload}.${signature}`
 
     // Mock createEnrichedJwt to return a new token
-    const { createAdminClient } = await import('@/lib/supabase/admin')
     const { getEffectiveQuotaLimits } = await import('@/lib/quota/quota-checker')
-    const supabase = vi.mocked(createAdminClient)()
 
-    vi.mocked(supabase.from).mockReturnValue({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnValue({
-        single: vi.fn()
-          .mockResolvedValueOnce({
-            data: {
-              tier: 'BASIC',
-              agency_id: null,
-              polar_customer_id: null,
-              polar_subscription_status: null,
-              expires_at: null,
-              created_at: 1704067200,
-            },
-            error: null,
-          })
-          .mockResolvedValueOnce({
-            data: { state: 'ok' },
-            error: null,
-          }),
-      }),
-    } as any)
+    mockSingle
+      .mockResolvedValueOnce({
+        data: {
+          tier: 'BASIC',
+          agency_id: null,
+          polar_customer_id: null,
+          polar_subscription_status: null,
+          expires_at: null,
+          created_at: 1704067200,
+        },
+        error: null,
+      })
+      .mockResolvedValueOnce({
+        data: { state: 'ok' },
+        error: null,
+      })
 
     vi.mocked(getEffectiveQuotaLimits).mockResolvedValue({
       tier: 'BASIC',

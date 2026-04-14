@@ -10,7 +10,7 @@
  * @module billing/usage-aggregator
  */
 
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import type { Tier } from '@/types';
 import { QUOTA_LIMITS } from '@/lib/usage-metering/aggregator';
@@ -123,11 +123,11 @@ export async function aggregateUsageForLicense(
   periodStart?: number,
   periodEnd?: number
 ): Promise<UsageSummary | null> {
-  const supabase = createAdminClient();
+  const db = createServerClient();
 
   try {
     // Get license info
-    const { data: license, error: licenseError } = await supabase
+    const { data: license, error: licenseError } = await db
       .from('raas_licenses')
       .select('nonce, tier, created_by, polar_customer_id')
       .eq('nonce', licenseNonce)
@@ -157,21 +157,21 @@ export async function aggregateUsageForLicense(
 
     // Fetch usage data in parallel
     const [hourlyResult, dailyResult, monthlyResult] = await Promise.all([
-      supabase
+      db
         .from('usage_events')
         .select('credits_used')
         .eq('user_id', userId)
         .eq('license_nonce', licenseNonce)
         .gte('created_at', hourStart)
         .lt('created_at', hourStart + 3600),
-      supabase
+      db
         .from('usage_events')
         .select('credits_used')
         .eq('user_id', userId)
         .eq('license_nonce', licenseNonce)
         .gte('created_at', dayStart)
         .lt('created_at', dayStart + 86400),
-      supabase
+      db
         .from('usage_events')
         .select('credits_used')
         .eq('user_id', userId)
@@ -212,7 +212,7 @@ export async function aggregateUsageForLicense(
     // Check Polar sync status
     let lastPolarSync: string | undefined;
     if (polarCustomerId) {
-      const { data: syncData } = await supabase
+      const { data: syncData } = await db
         .from('usage_events')
         .select('created_at')
         .eq('external_customer_id', polarCustomerId)

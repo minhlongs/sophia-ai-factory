@@ -23,9 +23,9 @@ vi.mock('next/server', () => ({
   },
 }));
 
-// Mock Supabase
-vi.mock('@/lib/supabase/admin', () => ({
-  createAdminClient: () => ({
+// Mock DB client
+vi.mock('@/lib/db/client', () => ({
+  createServerClient: () => ({
     from: vi.fn((table: string) => ({
       select: vi.fn(() => ({
         eq: vi.fn(() => ({

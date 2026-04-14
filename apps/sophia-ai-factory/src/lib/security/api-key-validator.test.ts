@@ -21,8 +21,8 @@ const mockSupabase = {
   from: vi.fn(),
 }
 
-vi.mock('@/lib/supabase/admin', () => ({
-  createAdminClient: () => mockSupabase,
+vi.mock('@/lib/db/client', () => ({
+  createServerClient: () => mockSupabase,
 }))
 
 // Mock crypto-utils

@@ -4,7 +4,7 @@
  * Replaces Redis sorted set implementation
  */
 
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createServerClient } from '@/lib/db/client'
 import { logger } from '@/lib/utils/logger-utility'
 
 export interface TelegramRateLimitResult {
@@ -24,12 +24,12 @@ export async function checkRateLimit(
   maxCommands: number = MAX_COMMANDS_PER_MINUTE,
   windowSeconds: number = WINDOW_SECONDS
 ): Promise<TelegramRateLimitResult> {
-  const supabase = createAdminClient()
+  const db = createServerClient()
   const now = Date.now()
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase as any).rpc('check_telegram_rate_limit', {
+    const { data, error } = await (db as any).rpc('check_telegram_rate_limit', {
       p_chat_id: chatId,
       p_command_type: 'command',
       p_max_requests: maxCommands,

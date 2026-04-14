@@ -1,5 +1,5 @@
 import { TelegramFSM, BotState } from '../telegram-fsm-state-manager'
-import { createServerClient } from '@/lib/supabase/server'
+import { createServerClient } from '@/lib/db/client'
 import { inngest } from '@/lib/inngest/client'
 import { Tier } from '@/types'
 import { backupSessionState } from '../telegram-state-backup-service'
@@ -62,10 +62,10 @@ export async function executeCampaignCreation(chatId: string): Promise<void> {
   }
 
   try {
-    const supabase = getSupabase()
+    const db = getSupabase()
 
     // 1. Identify user from chatId
-    const { data: profileData, error } = await supabase
+    const { data: profileData, error } = await db
       .from('user_profiles')
       .select('user_id, subscription_tier')
       .eq('telegram_chat_id', chatId)
@@ -79,7 +79,7 @@ export async function executeCampaignCreation(chatId: string): Promise<void> {
     const profile = profileData as { user_id: string; subscription_tier: 'free' | 'pro' | 'enterprise' | null }
 
     // 2. Create Campaign in DB
-    const { data: campaignData, error: createError } = await (supabase as any).from('campaigns')
+    const { data: campaignData, error: createError } = await (db as any).from('campaigns')
       .insert({
         user_id: profile.user_id,
         title: context.campaignTopic,

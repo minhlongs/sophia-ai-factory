@@ -10,7 +10,7 @@
  * @module audit/right-to-erasure
  */
 
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createServerClient } from '@/lib/db/client'
 import { logger } from '@/lib/utils/logger-utility'
 import { generateUserPseudonym, hashIpAddress } from './gdpr-redaction'
 
@@ -78,11 +78,11 @@ export async function handleRightToErasure(
   }
 
   try {
-    const supabase = createAdminClient()
+    const db = createServerClient()
 
     // Query all audit logs for this user
     // Using type assertion to bypass Supabase type inference issues
-    const { data: existingLogs, error: fetchError } = await (supabase as any)
+    const { data: existingLogs, error: fetchError } = await (db as any)
       .from('raas_audit_logs')
       .select('id, user_id, ip_address')
       .eq('user_id', userId)
@@ -114,7 +114,7 @@ export async function handleRightToErasure(
     for (const log of existingLogs) {
       // Update with pseudonymized values
       // Using type assertion to bypass Supabase type inference issues
-      const { error: updateError } = await (supabase as any)
+      const { error: updateError } = await (db as any)
         .from('raas_audit_logs')
         .update({
           user_id: 'ANONYMIZED_' + generateUserPseudonym(userId).slice(0, 8),
@@ -191,11 +191,11 @@ export async function canDeleteUserData(
   logger.info('Checking legal hold status', { userId })
 
   try {
-    const supabase = createAdminClient()
+    const db = createServerClient()
 
     // Check for active legal holds in user metadata via Auth admin API
     // Note: This uses the admin client to fetch user metadata
-    const { data: user, error: userError } = await (supabase as any)
+    const { data: user, error: userError } = await (db as any)
       .from('auth.users')
       .select('raw_user_meta_data')
       .eq('id', userId)
@@ -227,7 +227,7 @@ export async function canDeleteUserData(
     }
 
     // Check SOC 2 retention (90 days minimum)
-    const { data: firstLog } = await (supabase as any)
+    const { data: firstLog } = await (db as any)
       .from('raas_audit_logs')
       .select('created_at')
       .eq('user_id', userId)
@@ -286,11 +286,11 @@ export async function getErasureStatus(userId: string): Promise<{
   anonymizedCount?: number
 }> {
   try {
-    const supabase = createAdminClient()
+    const db = createServerClient()
 
     // Check for pending erasure requests
     // Using type assertion to bypass Supabase type inference issues
-    const { data: request } = await (supabase as any)
+    const { data: request } = await (db as any)
       .from('gdpr_erasure_requests')
       .select('created_at, completed_at, anonymized_count')
       .eq('user_id', userId)

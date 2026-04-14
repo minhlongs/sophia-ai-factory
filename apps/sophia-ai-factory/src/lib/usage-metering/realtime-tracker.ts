@@ -12,7 +12,7 @@
 
 import { logger } from '@/lib/utils/logger-utility';
 import { getKvClient } from '@/lib/redis';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
 import { logAuditEvent } from '@/lib/audit/audit-logger';
 
 /**

@@ -14,8 +14,8 @@ import {
 } from '@/lib/audit/audit-query-logger'
 
 // Mock Supabase admin client
-vi.mock('@/lib/supabase/admin', () => ({
-  createAdminClient: vi.fn(),
+vi.mock('@/lib/db/client', () => ({
+  createServerClient: vi.fn(),
 }))
 
 // Mock logger
@@ -29,7 +29,7 @@ vi.mock('@/lib/utils/logger-utility', () => ({
 }))
 
 // Import mocked modules after vi.mock
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createServerClient } from '@/lib/db/client'
 
 describe('logAuditQuery', () => {
   let mockSupabase: any
@@ -53,7 +53,7 @@ describe('logAuditQuery', () => {
     mockSupabase = {
       from: vi.fn().mockReturnValue(mockFrom),
     }
-    vi.mocked(createAdminClient).mockReturnValue(mockSupabase)
+    vi.mocked(createServerClient).mockReturnValue(mockSupabase)
   })
 
   it('should log audit query successfully', async () => {
@@ -119,7 +119,7 @@ describe('logApiKeyCreation', () => {
     mockSupabase = {
       from: vi.fn().mockReturnValue(mockFrom),
     }
-    vi.mocked(createAdminClient).mockReturnValue(mockSupabase)
+    vi.mocked(createServerClient).mockReturnValue(mockSupabase)
   })
 
   it('should log API key creation successfully', async () => {
@@ -160,7 +160,7 @@ describe('logApiKeyRevocation', () => {
     mockSupabase = {
       from: vi.fn().mockReturnValue(mockFrom),
     }
-    vi.mocked(createAdminClient).mockReturnValue(mockSupabase)
+    vi.mocked(createServerClient).mockReturnValue(mockSupabase)
   })
 
   it('should log API key revocation with reason', async () => {
@@ -201,7 +201,7 @@ describe('logApiKeyValidationFailure', () => {
     mockSupabase = {
       from: vi.fn().mockReturnValue(mockFrom),
     }
-    vi.mocked(createAdminClient).mockReturnValue(mockSupabase)
+    vi.mocked(createServerClient).mockReturnValue(mockSupabase)
   })
 
   it('should log validation failure', async () => {
@@ -240,7 +240,7 @@ describe('queryAuditLogs', () => {
     mockSupabase = {
       from: vi.fn().mockReturnValue(mockFrom),
     }
-    vi.mocked(createAdminClient).mockReturnValue(mockSupabase)
+    vi.mocked(createServerClient).mockReturnValue(mockSupabase)
   })
 
   it('should query audit logs with filters', async () => {

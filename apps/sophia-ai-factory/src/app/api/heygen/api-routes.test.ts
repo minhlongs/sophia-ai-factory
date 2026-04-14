@@ -4,9 +4,9 @@ import { GET as getAvatars } from './avatars/route';
 import { POST as createVideo } from './create-video/route';
 import { GET as getStatus } from './status/[id]/route';
 
-// Mock Supabase server client (used by create-video route for auth)
-vi.mock('@/lib/supabase/server', () => ({
-  createClient: vi.fn(),
+// Mock better-auth-session (used by heygen routes for auth)
+vi.mock('@/lib/better-auth-session', () => ({
+  getCurrentUser: vi.fn(),
 }));
 
 // Mock ServiceFactory (used by all heygen routes)
@@ -16,7 +16,7 @@ vi.mock('@/lib/services/factory', () => ({
   },
 }));
 
-import { createClient } from '@/lib/supabase/server';
+import { getCurrentUser } from '@/lib/better-auth-session';
 import { ServiceFactory } from '@/lib/services/factory';
 
 describe('HeyGen API Routes', () => {
@@ -31,14 +31,7 @@ describe('HeyGen API Routes', () => {
     vi.mocked(ServiceFactory.getVideoService).mockReturnValue(mockVideoService as never);
 
     // Default: authenticated user for create-video tests
-    vi.mocked(createClient).mockResolvedValue({
-      auth: {
-        getUser: vi.fn().mockResolvedValue({
-          data: { user: { id: 'user-1', email: 'test@test.com' } },
-          error: null,
-        }),
-      },
-    } as never);
+    vi.mocked(getCurrentUser).mockResolvedValue({ id: 'user-1', email: 'test@test.com' } as never);
   });
 
   afterEach(() => {

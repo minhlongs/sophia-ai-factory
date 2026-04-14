@@ -11,7 +11,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import { checkAdminAuth } from '../../middleware';
 
@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
     const authError = checkAdminAuth(req);
     if (authError) return authError;
 
-    const supabase = createAdminClient();
+    const db = createServerClient();
 
     // Parallel fetch all summary data
     const [
@@ -57,27 +57,27 @@ export async function GET(req: NextRequest) {
       licensesWithIssuesResult,
     ] = await Promise.all([
       // Calculate MRR from active subscriptions
-      supabase
+      db
         .from('dunning_settings')
         .select('polar_customer_id, stripe_customer_id, dunning_state')
         .eq('dunning_state', 'current'),
       // Get dunning state counts
-      supabase
+      db
         .from('dunning_settings')
         .select('dunning_state')
         .order('dunning_state'),
       // Get unbilled overage total
-      supabase
+      db
         .from('overage_events')
         .select('exceeded_by, tier_at_exceeded')
         .eq('billable', false),
       // Count active licenses
-      supabase
+      db
         .from('raas_api_keys')
         .select('id', { count: 'exact', head: true })
         .eq('status', 'active'),
       // Count licenses with dunning issues
-      supabase
+      db
         .from('dunning_settings')
         .select('id', { count: 'exact', head: true })
         .in('dunning_state', ['past_due', 'delinquent', 'suspended']),

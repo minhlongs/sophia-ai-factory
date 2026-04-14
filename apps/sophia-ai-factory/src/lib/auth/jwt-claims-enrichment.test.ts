@@ -49,8 +49,8 @@ vi.mock('jose', () => ({
 }))
 
 // Mock Supabase admin client
-vi.mock('@/lib/supabase/admin', () => ({
-  createAdminClient: () => ({
+vi.mock('@/lib/db/client', () => ({
+  createServerClient: () => ({
     from: (table: string) => ({
       select: () => ({
         eq: () => ({

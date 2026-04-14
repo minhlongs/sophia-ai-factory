@@ -5,7 +5,7 @@
  */
 
 import { sha256 } from '@/lib/audit/crypto-utils';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import type { UsageEventInput, UsageEventDB, IngestionResult } from './types';
 import type { RaasLicense } from '@/lib/raas-schema';
@@ -22,8 +22,8 @@ import { generateIdempotencyKey } from './idempotency';
  */
 export async function resolveExternalCustomerId(licenseNonce: string): Promise<string | null> {
   try {
-    const supabase = createAdminClient();
-    const { data: license, error } = await supabase
+    const db = createServerClient();
+    const { data: license, error } = await db
       .from('raas_licenses')
       .select('metadata')
       .eq('nonce', licenseNonce)
@@ -65,8 +65,8 @@ export async function resolveExternalCustomerId(licenseNonce: string): Promise<s
  */
 export async function checkIdempotencyKey(idempotencyKey: string): Promise<string | null> {
   try {
-    const supabase = createAdminClient();
-    const { data, error } = await supabase
+    const db = createServerClient();
+    const { data, error } = await db
       .from('usage_events')
       .select('id')
       .eq('idempotency_key', idempotencyKey)
@@ -92,7 +92,7 @@ export async function checkIdempotencyKey(idempotencyKey: string): Promise<strin
  * @returns IngestionResult with success status
  */
 export async function insertUsageEvent(event: UsageEventInput & { idempotencyKey: string }): Promise<IngestionResult> {
-  const supabase = createAdminClient();
+  const db = createServerClient();
   const timestamp = event.createdAt ?? Math.floor(Date.now() / 1000);
 
   const dbEvent = {
@@ -118,7 +118,7 @@ export async function insertUsageEvent(event: UsageEventInput & { idempotencyKey
   };
 
   // Insert with idempotency key (unique constraint handles duplicates)
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('usage_events')
     .insert(dbEvent as any)
     .select('id')

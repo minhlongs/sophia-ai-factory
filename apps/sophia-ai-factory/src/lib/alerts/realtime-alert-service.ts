@@ -14,7 +14,7 @@
  * @module alerts/realtime-alert-service
  */
 
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import type { Tier } from '@/types';
 
@@ -91,9 +91,9 @@ export async function createRealtimeAlert(
   params: CreateAlertParams
 ): Promise<string | null> {
   try {
-    const supabase = createAdminClient();
+    const db = createServerClient();
 
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('user_alerts')
       .insert({
         user_id: params.userId,
@@ -145,9 +145,9 @@ export async function markAlertAsRead(
   userId: string
 ): Promise<boolean> {
   try {
-    const supabase = createAdminClient();
+    const db = createServerClient();
 
-    const { error } = await supabase
+    const { error } = await db
       .from('user_alerts')
       .update({
         read: true,
@@ -181,9 +181,9 @@ export async function dismissAlert(
   userId: string
 ): Promise<boolean> {
   try {
-    const supabase = createAdminClient();
+    const db = createServerClient();
 
-    const { error } = await supabase
+    const { error } = await db
       .from('user_alerts')
       .update({
         dismissed: true,
@@ -217,9 +217,9 @@ export async function getUnreadAlerts(
   limit: number = 20
 ): Promise<UserAlert[]> {
   try {
-    const supabase = createAdminClient();
+    const db = createServerClient();
 
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('user_alerts')
       .select('*')
       .eq('user_id', userId)
@@ -254,9 +254,9 @@ export async function getAlertHistory(
   limit: number = 50
 ): Promise<UserAlert[]> {
   try {
-    const supabase = createAdminClient();
+    const db = createServerClient();
 
-    let query = supabase
+    let query = db
       .from('user_alerts')
       .select('*')
       .eq('user_id', userId)
@@ -291,9 +291,9 @@ export async function getUnreadCount(
   userId: string
 ): Promise<UnreadAlertCount> {
   try {
-    const supabase = createAdminClient();
+    const db = createServerClient();
 
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('user_alerts')
       .select('severity')
       .eq('user_id', userId)
@@ -447,12 +447,12 @@ export async function logViolationAndAlert(params: {
   userAgent?: string;
   metadata?: Record<string, any>;
 }): Promise<{ violationId: string | null; alertId: string | null }> {
-  const supabase = createAdminClient();
+  const db = createServerClient();
 
   // Insert violation
   const violationId = await (async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from('violations')
         .insert({
           type: params.type,
@@ -502,10 +502,10 @@ export async function logViolationAndAlert(params: {
  */
 export async function cleanupExpiredAlerts(): Promise<number> {
   try {
-    const supabase = createAdminClient();
+    const db = createServerClient();
 
     // Delete alerts where expires_at < NOW() OR created_at > 30 days ago
-    const { count, error } = await supabase
+    const { count, error } = await db
       .from('user_alerts')
       .delete()
       .or('expires_at.lt.now(),created_at.lt.now() - interval \'30 days\'');

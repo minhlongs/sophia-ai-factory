@@ -3,7 +3,7 @@
  * CRUD operations for telegram_user_mappings table
  */
 
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createServerClient } from '@/lib/db/client'
 import { logger } from '@/lib/utils/logger-utility'
 
 export interface TelegramUserMapping {
@@ -19,11 +19,11 @@ export async function linkTelegramUser(
   chatId: string,
   userId: string
 ): Promise<string | null> {
-  const supabase = createAdminClient()
+  const db = createServerClient()
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase as any).rpc('link_telegram_user', {
+    const { data, error } = await (db as any).rpc('link_telegram_user', {
       p_chat_id: chatId,
       p_user_id: userId,
     })
@@ -41,11 +41,11 @@ export async function linkTelegramUser(
 }
 
 export async function getUserByChatId(chatId: string): Promise<string | null> {
-  const supabase = createAdminClient()
+  const db = createServerClient()
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase as any).rpc('get_user_by_telegram_chat_id', {
+    const { data, error } = await (db as any).rpc('get_user_by_telegram_chat_id', {
       p_chat_id: chatId,
     })
 
@@ -62,10 +62,10 @@ export async function getUserByChatId(chatId: string): Promise<string | null> {
 }
 
 export async function getChatIdByUserId(userId: string): Promise<string | null> {
-  const supabase = createAdminClient()
+  const db = createServerClient()
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('telegram_user_mappings')
       .select('telegram_chat_id')
       .eq('user_id', userId)
@@ -84,11 +84,11 @@ export async function updateSubscriptionTier(
   chatId: string,
   tier: string
 ): Promise<boolean> {
-  const supabase = createAdminClient()
+  const db = createServerClient()
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any).rpc('update_session_subscription_tier', {
+    const { error } = await (db as any).rpc('update_session_subscription_tier', {
       p_chat_id: chatId,
       p_tier: tier,
     })
@@ -100,10 +100,10 @@ export async function updateSubscriptionTier(
 }
 
 export async function unlinkTelegramUser(chatId: string): Promise<boolean> {
-  const supabase = createAdminClient()
+  const db = createServerClient()
 
   try {
-    const { error } = await supabase
+    const { error } = await db
       .from('telegram_user_mappings')
       .delete()
       .eq('telegram_chat_id', chatId)
@@ -117,10 +117,10 @@ export async function unlinkTelegramUser(chatId: string): Promise<boolean> {
 export async function getMappingByChatId(
   chatId: string
 ): Promise<TelegramUserMapping | null> {
-  const supabase = createAdminClient()
+  const db = createServerClient()
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('telegram_user_mappings')
       .select('*')
       .eq('telegram_chat_id', chatId)

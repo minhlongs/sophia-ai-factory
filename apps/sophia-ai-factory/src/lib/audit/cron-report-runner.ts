@@ -20,7 +20,7 @@ import {
 } from './report-scheduler'
 import { generateReport, type ComplianceReportData } from './pdf-report-generator'
 import { deliverReport, storeReport } from './report-delivery'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createServerClient } from '@/lib/db/client'
 import { calculateNextRunAt } from './report-scheduler'
 
 /**
@@ -54,7 +54,7 @@ export interface ExecutionDetail {
 async function fetchComplianceData(
   filters: { startDate?: number; endDate?: number; licenseNonce?: string }
 ): Promise<ComplianceReportData> {
-  const supabase = createAdminClient()
+  const db = createServerClient()
   const now = Math.floor(Date.now() / 1000)
 
   // Default to last 30 days if no dates specified
@@ -63,7 +63,7 @@ async function fetchComplianceData(
 
   try {
     // Fetch audit logs count
-    const logsQuery = (supabase as any)
+    const logsQuery = (db as any)
       .from('raas_audit_logs')
       .select('*', { count: 'exact', head: true })
       .gte('created_at', startDate)
@@ -76,7 +76,7 @@ async function fetchComplianceData(
     const { count: totalLogs } = await logsQuery
 
     // Fetch hash chain verification status
-    const hashChainQuery = await (supabase as any)
+    const hashChainQuery = await (db as any)
       .from('raas_audit_logs')
       .select('content_hash, hash_chain_valid')
       .gte('created_at', startDate)
@@ -86,7 +86,7 @@ async function fetchComplianceData(
 
     const firstLog = hashChainQuery.data?.[0]
 
-    const hashChainQueryEnd = await (supabase as any)
+    const hashChainQueryEnd = await (db as any)
       .from('raas_audit_logs')
       .select('content_hash')
       .gte('created_at', startDate)
@@ -97,7 +97,7 @@ async function fetchComplianceData(
     const lastLog = hashChainQueryEnd.data?.[0]
 
     // Fetch license breakdown
-    const licenseQuery = await (supabase as any)
+    const licenseQuery = await (db as any)
       .from('raas_licenses')
       .select('nonce, tier, created_at, last_used_at')
       .gte('created_at', startDate)
@@ -106,7 +106,7 @@ async function fetchComplianceData(
     const licenses = licenseQuery.data || []
 
     // Fetch usage statistics per license
-    const usageQuery = await (supabase as any)
+    const usageQuery = await (db as any)
       .from('raas_usage_events')
       .select(`
         license_nonce,
@@ -154,7 +154,7 @@ async function fetchComplianceData(
     )
 
     // Count validations per license
-    const validationQuery = await (supabase as any)
+    const validationQuery = await (db as any)
       .from('raas_audit_logs')
       .select('license_nonce')
       .eq('action', 'VALIDATE')

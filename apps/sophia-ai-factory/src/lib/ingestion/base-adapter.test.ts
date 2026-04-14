@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-// Mock Supabase before importing
-vi.mock('@/lib/supabase/client', () => {
-  const mockFrom = vi.fn()
+// Mock D1 client before importing
+const mockFrom = vi.fn()
+vi.mock('@/lib/db/client', () => {
   return {
-    supabase: {
+    createServerClient: vi.fn(() => ({
       from: mockFrom,
-    },
+    })),
   }
 })
 
@@ -23,7 +23,7 @@ vi.mock('bottleneck', () => {
 
 import { BaseAdapter } from './base-adapter'
 import type { RawProduct } from './types'
-import { supabase } from '@/lib/supabase/client'
+import { createServerClient } from '@/lib/db/client'
 
 // Concrete test implementation of the abstract BaseAdapter
 class TestAdapter extends BaseAdapter {
@@ -48,9 +48,12 @@ function createTestProduct(overrides?: Partial<RawProduct>): RawProduct {
 
 describe('BaseAdapter.upsertProducts', () => {
   let adapter: TestAdapter
+  let mockDb: ReturnType<typeof createServerClient>
 
   beforeEach(() => {
     vi.clearAllMocks()
+    mockDb = { from: mockFrom } as unknown as ReturnType<typeof createServerClient>
+    vi.mocked(createServerClient).mockReturnValue(mockDb)
     adapter = new TestAdapter()
   })
 
@@ -64,11 +67,11 @@ describe('BaseAdapter.upsertProducts', () => {
     expect(result.errors).toEqual([])
   })
 
-  it('should upsert products to Supabase', async () => {
+  it('should upsert products to D1', async () => {
     const upsertMock = vi.fn().mockResolvedValue({ error: null })
-    vi.mocked(supabase.from).mockReturnValue({
+    mockFrom.mockReturnValue({
       upsert: upsertMock,
-    } as ReturnType<typeof supabase.from>)
+    })
 
     const products = [
       createTestProduct({ external_id: 'EXT-001' }),
@@ -81,7 +84,7 @@ describe('BaseAdapter.upsertProducts', () => {
     expect(result.processed).toBe(2)
     expect(result.failed).toBe(0)
     expect(result.errors).toEqual([])
-    expect(supabase.from).toHaveBeenCalledWith('affiliate_products')
+    expect(mockFrom).toHaveBeenCalledWith('affiliate_products')
     expect(upsertMock).toHaveBeenCalledWith(
       expect.arrayContaining([
         expect.objectContaining({
@@ -97,9 +100,9 @@ describe('BaseAdapter.upsertProducts', () => {
 
   it('should handle optional fields with null defaults', async () => {
     const upsertMock = vi.fn().mockResolvedValue({ error: null })
-    vi.mocked(supabase.from).mockReturnValue({
+    mockFrom.mockReturnValue({
       upsert: upsertMock,
-    } as ReturnType<typeof supabase.from>)
+    })
 
     const product = createTestProduct({
       description: undefined,
@@ -127,13 +130,13 @@ describe('BaseAdapter.upsertProducts', () => {
     )
   })
 
-  it('should handle Supabase upsert errors', async () => {
+  it('should handle upsert errors', async () => {
     const upsertMock = vi.fn().mockResolvedValue({
       error: { message: 'Constraint violation' },
     })
-    vi.mocked(supabase.from).mockReturnValue({
+    mockFrom.mockReturnValue({
       upsert: upsertMock,
-    } as ReturnType<typeof supabase.from>)
+    })
 
     const products = [createTestProduct()]
 
@@ -147,9 +150,9 @@ describe('BaseAdapter.upsertProducts', () => {
 
   it('should process products in chunks of 100', async () => {
     const upsertMock = vi.fn().mockResolvedValue({ error: null })
-    vi.mocked(supabase.from).mockReturnValue({
+    mockFrom.mockReturnValue({
       upsert: upsertMock,
-    } as ReturnType<typeof supabase.from>)
+    })
 
     // Create 250 products - should result in 3 upsert calls (100 + 100 + 50)
     const products = Array.from({ length: 250 }, (_, i) =>
@@ -168,9 +171,9 @@ describe('BaseAdapter.upsertProducts', () => {
       .mockResolvedValueOnce({ error: { message: 'First batch failed' } })
       .mockResolvedValueOnce({ error: null })
 
-    vi.mocked(supabase.from).mockReturnValue({
+    mockFrom.mockReturnValue({
       upsert: upsertMock,
-    } as ReturnType<typeof supabase.from>)
+    })
 
     // Create 150 products - 2 chunks (100 + 50)
     const products = Array.from({ length: 150 }, (_, i) =>

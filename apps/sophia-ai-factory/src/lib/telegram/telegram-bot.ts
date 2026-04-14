@@ -1,4 +1,4 @@
-import { createServerClient } from '@/lib/supabase/server'
+import { createServerClient } from '@/lib/db/client'
 import { inngest } from '@/lib/inngest/client'
 import { sendTelegramMessage } from './telegram-client'
 import { Database, Json } from '@/lib/supabase/types'

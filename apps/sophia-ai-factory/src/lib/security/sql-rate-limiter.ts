@@ -3,7 +3,7 @@
  * Replaces Redis-based rate limiting with Supabase PostgreSQL
  */
 
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createServerClient } from '@/lib/db/client'
 import { logger } from '@/lib/utils/logger-utility'
 
 export interface RateLimitResult {
@@ -33,13 +33,13 @@ export const RATE_LIMITS = {
  * Returns current count after increment
  */
 async function incrementRateLimit(
-  supabase: ReturnType<typeof createAdminClient>,
+  db: ReturnType<typeof createServerClient>,
   identifier: string,
   windowSeconds: number
 ): Promise<number> {
-  // Use postgres function via RPC - types are defined in src/lib/supabase/types.ts
+  // Use postgres function via RPC - types are defined in src/lib/db/types.ts
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any).rpc('increment_rate_limit', {
+  const { data, error } = await (db as any).rpc('increment_rate_limit', {
     p_identifier: identifier,
     p_window_seconds: windowSeconds,
   })
@@ -59,13 +59,13 @@ export async function checkRateLimit(
   identifier: string,
   config: RateLimitConfig
 ): Promise<RateLimitResult> {
-  const supabase = createAdminClient()
+  const db = createServerClient()
   const fullIdentifier = `${config.identifier}:${identifier}`
   const now = Date.now()
 
   try {
     const currentCount = await incrementRateLimit(
-      supabase,
+      db,
       fullIdentifier,
       config.windowSeconds
     )
@@ -114,14 +114,14 @@ export function getClientIdentifier(
 export async function cleanupExpiredRateLimits(
   retentionHours: number = 24
 ): Promise<number> {
-  const supabase = createAdminClient()
+  const db = createServerClient()
   const cutoff = new Date(Date.now() - retentionHours * 60 * 60 * 1000).toISOString()
 
   try {
-    const { error } = await supabase.from('rate_limits').delete().lt('window_start', cutoff)
+    const { error } = await db.from('rate_limits').delete().lt('window_start', cutoff)
     if (error) throw error
 
-    await supabase.from('telegram_rate_limits').delete().lt('command_timestamp', cutoff)
+    await db.from('telegram_rate_limits').delete().lt('command_timestamp', cutoff)
     return 1
   } catch (error) {
     logger.error('Rate limit cleanup failed', error instanceof Error ? error : new Error(String(error)))

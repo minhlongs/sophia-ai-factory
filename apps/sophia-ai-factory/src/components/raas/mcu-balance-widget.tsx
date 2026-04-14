@@ -4,7 +4,7 @@
  * MCU Balance Widget
  *
  * Shows MCU credit balance, monthly usage bar, low balance warning.
- * Uses unified-tier-config for tier limits.
+ * Uses config/tiers for tier limits.
  */
 
 import { useEffect, useState } from 'react';

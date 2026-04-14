@@ -7,7 +7,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createClient } from '@/lib/supabase/server';
+import { createServerClient } from '@/lib/db/client';
+import { getCurrentUser } from '@/lib/better-auth-session';
 import { logger } from '@/lib/utils/logger-utility';
 
 export const dynamic = 'force-dynamic';
@@ -24,13 +25,13 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const user = await getCurrentUser();
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const db = createServerClient();
 
-    const { data: mission, error } = await supabase
+    const { data: mission, error } = await db
       .from('missions')
       .select('*')
       .eq('id', id)
@@ -54,11 +55,11 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params;
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const user = await getCurrentUser();
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const db = createServerClient();
 
     const body = await request.json();
     const parsed = UpdateMissionSchema.safeParse(body);
@@ -66,7 +67,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Invalid input', details: parsed.error.errors }, { status: 400 });
     }
 
-    const { data: mission, error } = await supabase
+    const { data: mission, error } = await db
       .from('missions')
       .update({ ...parsed.data, updated_at: new Date().toISOString() })
       .eq('id', id)

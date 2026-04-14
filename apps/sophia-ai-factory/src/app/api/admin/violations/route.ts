@@ -9,7 +9,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
+import { getCurrentUser } from '@/lib/better-auth-session';
 import { logger } from '@/lib/utils/logger-utility';
 import { checkAdminAuth } from '../middleware';
 import { z } from 'zod';
@@ -118,10 +119,10 @@ export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
     const params = violationsListSchema.parse(Object.fromEntries(searchParams));
 
-    const supabase = createAdminClient();
+    const db = createServerClient();
 
     // Build query
-    let query = supabase
+    let query = db
       .from('violations')
       .select('*', { count: 'exact' });
 
@@ -170,7 +171,7 @@ export async function GET(req: NextRequest) {
     let licenseInfo: LicenseInfo[] = [];
 
     if (licenseNonces.length > 0) {
-      const { data: licenseData } = await supabase
+      const { data: licenseData } = await db
         .from('raas_api_keys')
         .select('license_nonce, tier, status')
         .in('license_nonce', licenseNonces);
@@ -182,7 +183,7 @@ export async function GET(req: NextRequest) {
     let userInfo: UserInfo[] = [];
 
     if (userIds.length > 0) {
-      const { data: userData } = await supabase
+      const { data: userData } = await db
         .from('user_profiles')
         .select('user_id, email')
         .in('user_id', userIds);
@@ -266,15 +267,13 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const parsed = violationActionSchema.parse(body);
 
-    const supabase = createAdminClient();
-
     // Get current user ID (admin user)
-    const { data: userData } = await supabase.auth.getUser();
-    const currentUserId = userData.user?.id;
+    const currentUser = await getCurrentUser();
+    const currentUserId = currentUser?.id;
 
     if (parsed.action === 'resolve') {
       // Mark violation as resolved
-      const { error } = await supabase
+      const { error } = await db
         .from('violations')
         .update({
           resolved: true,
@@ -305,7 +304,7 @@ export async function POST(req: NextRequest) {
       });
     } else if (parsed.action === 'escalate') {
       // Escalate violation - update metadata with escalation info
-      const { error } = await supabase
+      const { error } = await db
         .from('violations')
         .update({
           metadata: { escalated: true, escalatedAt: new Date().toISOString(), reason: parsed.reason },

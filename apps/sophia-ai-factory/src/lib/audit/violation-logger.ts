@@ -13,7 +13,7 @@
  * @module audit/violation-logger
  */
 
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 
 /**
@@ -93,9 +93,9 @@ export interface ViolationSummary {
  */
 export async function logViolation(event: ViolationEvent): Promise<string | null> {
   try {
-    const supabase = createAdminClient();
+    const db = createServerClient();
 
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('audit_logs')
       .insert({
         event_type: `violation:${event.type}`,
@@ -223,10 +223,10 @@ export async function getViolationHistory(
   createdAt: number;
   metadata: Record<string, any>;
 }>> {
-  const supabase = createAdminClient();
+  const db = createServerClient();
   const limit = filters.limit ?? 100;
 
-  let query = supabase
+  let query = db
     .from('audit_logs')
     .select('id, event_type, user_id, license_nonce, tier, receipt, created_at')
     .like('event_type', 'violation:%')
@@ -302,10 +302,10 @@ export async function getViolationSummary(options: {
   endDate: Math.floor(Date.now() / 1000),
   limit: 1000,
 }): Promise<ViolationSummary> {
-  const supabase = createAdminClient();
+  const db = createServerClient();
 
   // Fetch all violations in date range
-  const { data } = await supabase
+  const { data } = await db
     .from('audit_logs')
     .select('event_type, user_id, tier, receipt')
     .like('event_type', 'violation:%')

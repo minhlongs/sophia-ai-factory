@@ -12,8 +12,8 @@ import {
 } from './right-to-erasure'
 
 // Mock Supabase admin client
-vi.mock('@/lib/supabase/admin', () => ({
-  createAdminClient: () => ({
+vi.mock('@/lib/db/client', () => ({
+  createServerClient: () => ({
     from: vi.fn().mockReturnValue({
       select: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({

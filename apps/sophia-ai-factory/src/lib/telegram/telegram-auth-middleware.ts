@@ -1,6 +1,6 @@
 import { getUserTier } from '@/lib/db/get-user-tier'
 import { checkTierAccess } from '@/lib/features'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createServerClient } from '@/lib/db/client'
 import { Tier } from '@/types'
 import { logger } from '@/lib/utils/logger-utility'
 
@@ -22,12 +22,12 @@ export async function checkSubscriptionAuth(
   chatId: string,
   requiredTier: Tier = 'BASIC'
 ): Promise<AuthResult> {
-  const supabase = createAdminClient()
+  const db = createServerClient()
 
   try {
     // Look up userId from telegram chatId mapping
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase as any).rpc('get_user_by_telegram_chat_id', {
+    const { data, error } = await (db as any).rpc('get_user_by_telegram_chat_id', {
       p_chat_id: chatId,
     })
 
@@ -75,11 +75,11 @@ export async function linkTelegramUser(
   chatId: string,
   userId: string
 ): Promise<void> {
-  const supabase = createAdminClient()
+  const db = createServerClient()
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any).rpc('link_telegram_user', {
+    await (db as any).rpc('link_telegram_user', {
       p_chat_id: chatId,
       p_user_id: userId,
     })
