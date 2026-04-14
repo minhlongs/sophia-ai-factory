@@ -33,7 +33,7 @@ export function ApiKeyCreateModal({ onCreated, onCancel }: Props) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to create key');
-      onCreated(data.key ?? data.apiKey ?? '');
+      onCreated(data.key?.apiKey ?? data.apiKey ?? '');
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed');
     } finally {

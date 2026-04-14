@@ -185,7 +185,7 @@ export async function generateApiKey(
     key_id: keyId,
     key_hash: keyHash,
     owner_id: userId,
-    permissions: permissions as Json,
+    permissions: JSON.stringify(permissions),
     expires_at: expiresAt ? Math.floor(expiresAt / 1000) : null,
     rate_limit_per_min: rateLimitPerMinute,
   }
