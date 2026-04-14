@@ -12,7 +12,16 @@ export const GET = withRateLimit(async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
 
   const secret = process.env.HEALTH_CHECK_SECRET;
-  const isAuthorized = secret && (token === secret || authHeader === `Bearer ${secret}`);
+  let isAuthorized = !!(secret && (token === secret || authHeader === `Bearer ${secret}`));
+
+  // Also authorize logged-in dashboard users via Better Auth session
+  if (!isAuthorized) {
+    try {
+      const { getCurrentUserFromHeaders } = await import('@/lib/better-auth-session');
+      const user = await getCurrentUserFromHeaders(req.headers);
+      if (user) isAuthorized = true;
+    } catch { /* session check failed */ }
+  }
 
   // Base response
   const healthStatus: HealthResponse = {
