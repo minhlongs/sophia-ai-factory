@@ -1,193 +1,74 @@
-# CLAUDE.md
+# Sophia AI Factory
 
-<!-- CLEO:START -->
+Next.js 16 App Router + React 19 + TypeScript + Tailwind CSS 4.
+Cloudflare Workers deployment via GitHub Actions.
 
-@.cleo/templates/AGENT-INJECTION.md
-
-<!-- CLEO:END -->
-
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
-## 🚨 GREEN PRODUCTION RULE — BẮT BUỘC TUYỆT ĐỐI
-
-> **KHÔNG ĐƯỢC BÁO CÁO "DONE" KHI CHƯA VERIFY PRODUCTION GREEN!**
-> Vi phạm rule này = toàn bộ task coi như THẤT BẠI.
-
-**Sau mỗi `git push`, PHẢI chạy ĐỦ 3 bước:**
-
-1. **CI/CD Check**: Poll `gh run list -L 1` cho đến khi `conclusion: success`
-2. **Deploy Check**: `curl -sI "$PROD_URL" | head -3` → HTTP 200
-3. **Smoke Test**: Verify production page loads correctly
-
-**Report Format BẮT BUỘC:**
-
-```
-- Build: ✅/❌
-- Tests: ✅/❌ [N tests]
-- CI/CD: ✅/❌ [GitHub Actions status]
-- Production: ✅/❌ HTTP [code]
-```
-
-**Thiếu bất kỳ dòng nào = task CHƯA XONG.**
+## Production
 
 ```
 PROD_URL="https://sophia.agencyos.network"
 GITHUB_REPO="longtho638-jpg/sophia-ai-factory"
 ```
 
-## Project Overview
-
-This is a Next.js 16.1.6 application using the App Router architecture with React 19, TypeScript, and Tailwind CSS 4. The project uses the React Compiler (experimental) for optimized rendering.
-
-## Development Commands
-
-### Development Server
+## Commands
 
 ```bash
-npm run dev
+npm run dev      # Dev server :3000
+npm run build    # Production build (0 errors required)
+npm run lint     # ESLint
+npm test         # Vitest (844+ tests)
 ```
 
-Starts the Next.js development server at http://localhost:3000. The app uses hot module replacement for fast iteration.
+## Architecture (post-consolidation 2026-04-14)
 
-### Build & Production
+### Auth
+- **Single source:** `@/lib/better-auth-session` for `getCurrentUser()`
+- **Tier lookup:** `@/lib/db/get-user-tier` for `getUserTier(userId)`
+- DELETED: `lib/auth.ts`, `lib/subscription.ts`, `lib/db/auth-verify.ts`, `lib/clients/`
 
-```bash
-npm run build  # Creates optimized production build
-npm start      # Starts production server (requires build first)
-```
+### Database
+- **Primary:** Cloudflare D1 via `createServerClient()` from `@/lib/db/client`
+- `createServerClient()` is **synchronous** — do NOT `await` it
+- **Supabase exceptions (keep):** OAuth callbacks (tiktok, youtube), admin invite, checkpoint persistence
+- DELETED: direct `@/lib/supabase/admin` and `@/lib/supabase/server` imports (shims remain for exceptions)
 
-### Linting
+### Tier Config
+- **Single source:** `@/config/tiers` (barrel re-exporting from `config/tiers/`)
+- Exports: `TIER_CONFIGS`, `TIER_CONFIG`, `TIER_DB_MAPPING`, `DB_TIER_MAPPING`, `UNIFIED_TIERS`
+- DELETED: `lib/tier-gate.ts`, `lib/unified-tier-config.ts`
 
-```bash
-npm run lint   # Run ESLint with Next.js configuration
-```
+### Modularized Services
+Giant files split into focused modules with barrel re-exports:
+- `lib/billing/email/*` — email templates, delivery, tracking
+- `lib/billing/dunning/*` — state machine, actions, admin ops
+- `lib/alerts/quota/*` — rule evaluator, delivery, scheduling
+- `lib/usage-metering/` — event collector, rollup engine, KV sync
+- `lib/raas/*` — audit logging, permissions, invoice generation
 
-## Project Structure
+### Payments
+- **Primary:** NOWPayments (USDT crypto) — IPN webhook → tier activation
+- **Backup:** PayOS (Vietnam domestic)
+- **BANNED:** Polar.sh (rejected this product), PayPal
 
-### App Router Architecture
+## Protected Flows (DO NOT BREAK)
 
-This project uses Next.js App Router (not Pages Router). All routes are defined in `src/app/`:
+1. **Setup Wizard** — API key onboarding (OpenRouter, ElevenLabs, D-ID)
+2. **Telegram Bot** — @Sophia_Bbot (/campaign, /status, /results)
+3. **Payment Flow** — NOWPayments IPN webhook → tier activation
 
-- `src/app/layout.tsx` - Root layout with fonts (Geist Sans & Geist Mono) and global styles
-- `src/app/page.tsx` - Homepage component
-- `src/app/globals.css` - Global styles with Tailwind directives
+## Quality Gates
 
-### Path Aliases
+- `npm run build` → 0 TypeScript errors
+- `npm test` → 844+ tests pass
+- Zero `:any` types in production code
+- Zero `console.log` in production code
+- Zod validation on all API inputs
+- Server Actions for data mutations
+- Tier enum: `BASIC | PREMIUM | ENTERPRISE | MASTER` (uppercase)
 
-The project uses `@/*` path alias mapping to `./src/*` (configured in tsconfig.json).
+## Green Production Rule
 
-Example:
-
-```typescript
-import { Component } from "@/components/Component";
-```
-
-### Styling
-
-- Tailwind CSS 4 with PostCSS configuration
-- Dark mode support via CSS classes (see `page.tsx` for patterns)
-- Custom CSS variables for theming (check `globals.css`)
-
-## Key Technologies
-
-### React Compiler
-
-The project has `reactCompiler: true` enabled in `next.config.ts`. This is an experimental feature that optimizes component rendering. Be aware:
-
-- Avoid manual memoization (`useMemo`, `useCallback`) where possible - the compiler handles it
-- Follow React's rules strictly (compiler enforces them)
-
-### TypeScript Configuration
-
-- Strict mode enabled
-- ES2017 target for broad browser compatibility
-- Module resolution: "bundler" (Next.js optimized)
-
-### Fonts
-
-Uses Next.js font optimization with Geist font family:
-
-- Geist Sans (variable font)
-- Geist Mono (variable font)
-
-Fonts are defined in `layout.tsx` and applied via CSS variables.
-
-## Development Patterns
-
-### Creating New Pages
-
-Add new route folders under `src/app/`:
-
-```
-src/app/about/page.tsx         # Creates /about route
-src/app/blog/[slug]/page.tsx   # Creates dynamic /blog/:slug route
-```
-
-### Image Optimization
-
-Use Next.js `Image` component from `next/image` for automatic optimization:
-
-```typescript
-import Image from 'next/image'
-// Images in /public are accessible via root path
-<Image src="/logo.png" alt="Logo" width={100} height={100} />
-```
-
-### Metadata
-
-Define page metadata using the `metadata` export or `generateMetadata` function in page/layout files:
-
-```typescript
-export const metadata: Metadata = {
-  title: "Page Title",
-  description: "Description",
-};
-```
-
-## Build Artifacts
-
-The following directories are git-ignored and generated during build/dev:
-
-- `.next/` - Next.js build output and cache
-- `out/` - Static export output (if used)
-- `node_modules/` - Dependencies
-- `.env*` - Environment variables (keep sensitive data here)
-
-## Code Quality Standards
-
-### ESLint Configuration
-
-Uses Next.js recommended ESLint configs:
-
-- `eslint-config-next/core-web-vitals` - Performance and accessibility rules
-- `eslint-config-next/typescript` - TypeScript-specific rules
-
-Always run `npm run lint` before committing.
-
-### TypeScript
-
-All TypeScript errors must be resolved before building. The build will fail on type errors due to `strict: true` in tsconfig.json.
-
----
-
-## 🚀 AGENT TEAMS + BMAD (Feb 2026)
-
-**Enabled:** `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`
-
-**Workflow:** `/plan:hard` → `"Gọi team thực hiện plan này"`
-
----
-
-## 🚨 RULE: CI/CD GREEN PRODUCTION — KHÔNG ĐƯỢC DỪNG KHI CHƯA XONG
-
-**Bắt buộc tuyệt đối — KHÔNG có ngoại lệ:**
-
-1. **Build PHẢI pass:** `npm run build` — 0 errors
-2. **Lint PHẢI pass:** `npm run lint` — 0 warnings/errors
-3. **Tests PHẢI pass:** `npm test` — 100% green (nếu có test suite)
-4. **Commit + Push:** `git add . && git commit && git push origin main`
-5. **Deploy Production:** `npx wrangler deploy` — PHẢI deploy thành công
-6. **Verify Production:** Kiểm tra URL production hoạt động đúng
-
-**KHÔNG ĐƯỢC báo "hoàn thành" nếu chưa qua đủ 6 bước trên.**
-**KHÔNG ĐƯỢC dừng giữa chừng — phải chạy hết pipeline CI/CD → GREEN PRODUCTION.**
+After every `git push`, verify:
+1. **CI/CD:** `gh run list -L 1` → `conclusion: success`
+2. **Deploy:** `curl -sI "$PROD_URL" | head -3` → HTTP 200
+3. **Report:** Build/Tests/CI/CD/Production status lines required

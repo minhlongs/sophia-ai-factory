@@ -1,6 +1,11 @@
 # Sophia AI Factory Rules
-- Core stack: Next.js + Remotion + NOWPayments (crypto/USDT) cho payment gating.
-- Content Factory Pipeline (Phase 47-50): Zero-Manual loop.
-- Luôn đảm bảo render video (Remotion) không block Cloudflare Workers edge functions.
-- Tuân thủ Payment Integration Standard (NOWPayments IPN webhooks).
-- Polar.sh đã REJECT sản phẩm này — KHÔNG dùng Polar cho Sophia. PayOS là backup cho Vietnam domestic.
+
+- Core stack: Next.js 16 + D1 (Cloudflare) + Better Auth + NOWPayments (crypto/USDT)
+- DB: `createServerClient()` from `@/lib/db/client` (sync, NOT async)
+- Auth: `getCurrentUser()` from `@/lib/better-auth-session`
+- Tier config: `@/config/tiers` (single source of truth)
+- Render video (Remotion) must not block Cloudflare Workers edge functions
+- Payment: NOWPayments IPN webhooks for tier activation
+- Polar.sh REJECTED this product — DO NOT use Polar for Sophia
+- PayOS is backup for Vietnam domestic payments
+- App code lives in `apps/sophia-ai-factory/` — run build/test from there
