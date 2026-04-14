@@ -110,11 +110,7 @@ describe('generateApiKey', () => {
     }
 
     mockSupabase.from.mockReturnValue({
-      insert: vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue(mockInsert),
-        }),
-      }),
+      insert: vi.fn().mockResolvedValue(mockInsert),
     })
 
     const result = await generateApiKey('user-123', ['audit:read', 'audit:write'])
@@ -131,11 +127,7 @@ describe('generateApiKey', () => {
     }
 
     mockSupabase.from.mockReturnValue({
-      insert: vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue(mockInsert),
-        }),
-      }),
+      insert: vi.fn().mockResolvedValue(mockInsert),
     })
 
     const expiresAt = Date.now() + 86400000
@@ -151,11 +143,7 @@ describe('generateApiKey', () => {
     }
 
     mockSupabase.from.mockReturnValue({
-      insert: vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue(mockInsert),
-        }),
-      }),
+      insert: vi.fn().mockResolvedValue(mockInsert),
     })
 
     const result = await generateApiKey('user-123', ['audit:read'], undefined, 50)
@@ -165,11 +153,7 @@ describe('generateApiKey', () => {
 
   it('should throw error on database failure', async () => {
     mockSupabase.from.mockReturnValue({
-      insert: vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: null, error: new Error('DB error') }),
-        }),
-      }),
+      insert: vi.fn().mockResolvedValue({ error: new Error('DB error') }),
     })
 
     await expect(generateApiKey('user-123', ['audit:read']))

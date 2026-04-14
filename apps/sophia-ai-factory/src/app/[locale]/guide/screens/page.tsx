@@ -113,11 +113,12 @@ export default function ScreensGuidePage() {
       {/* Pricing tiers */}
       <div>
         <h2 className="text-xl font-bold text-foreground mb-4">Giới Hạn Theo Gói</h2>
-        <div className="grid sm:grid-cols-3 gap-3">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {[
-            { name: "BASIC", price: "$500/tháng", limit: "20 video/tháng", color: "border-border/40" },
-            { name: "PREMIUM", price: "$1,200/tháng", limit: "100 video/tháng", color: "border-violet-500/40" },
-            { name: "ENTERPRISE", price: "$3,500/tháng", limit: "Không giới hạn", color: "border-cyan-500/40" },
+            { name: "Starter", price: "$199/tháng", limit: "10 chiến dịch/tháng", color: "border-border/40" },
+            { name: "Growth", price: "$399/tháng", limit: "50 chiến dịch/tháng", color: "border-violet-500/40" },
+            { name: "Premium", price: "$799/tháng", limit: "Không giới hạn", color: "border-cyan-500/40" },
+            { name: "Master", price: "$4,999 (trọn đời)", limit: "Không giới hạn", color: "border-amber-500/40" },
           ].map((tier) => (
             <div key={tier.name} className={`bg-card/50 border ${tier.color} rounded-xl p-4`}>
               <div className="text-xs font-bold text-muted-foreground mb-1">{tier.name}</div>

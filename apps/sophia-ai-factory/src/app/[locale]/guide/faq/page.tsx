@@ -33,7 +33,7 @@ const paymentFaqs: FaqItem[] = [
   },
   {
     question: "Tôi có thể tạo bao nhiêu video mỗi tháng?",
-    answer: "Tùy gói: BASIC (20 video/tháng), PREMIUM (100 video/tháng), ENTERPRISE (không giới hạn). Nếu hết hạn mức, bạn có thể nâng cấp gói bất kỳ lúc nào.",
+    answer: "Tùy gói: Starter (10 chiến dịch/tháng), Growth (50 chiến dịch/tháng), Premium (không giới hạn), Master (không giới hạn, trọn đời). Nếu hết hạn mức, bạn có thể nâng cấp gói bất kỳ lúc nào.",
   },
   {
     question: "Hóa đơn được gửi như thế nào?",
