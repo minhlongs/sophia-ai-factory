@@ -1,4 +1,4 @@
-import { createServerClient } from "@/lib/db/client";
+import { getD1Client } from "@/lib/db/client";
 import { getCurrentUser } from "@/lib/better-auth-session";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
@@ -39,14 +39,18 @@ export default async function CampaignsPage() {
 
   if (userId) {
     try {
-      const db = createServerClient();
-      const { data } = await db
+      const db = await getD1Client();
+      const { data, error } = await db
         .from("campaigns")
         .select("*")
         .eq("user_id", userId)
         .order("created_at", { ascending: false });
+      if (error) {
+        console.error("[campaigns/page] DB error:", error.message);
+      }
       campaigns = (data as Campaign[]) || [];
-    } catch {
+    } catch (e) {
+      console.error("[campaigns/page] Failed to fetch campaigns:", (e as Error).message);
       campaigns = [];
     }
   }
