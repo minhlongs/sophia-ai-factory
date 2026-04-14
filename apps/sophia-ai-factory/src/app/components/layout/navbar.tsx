@@ -31,6 +31,10 @@ export function Navbar() {
 
   const cleanPath = pathname.replace(/^\/(en|vi)/, "") || "/";
   const isHomePage = cleanPath === "/";
+  const isDashboard = cleanPath.startsWith("/dashboard");
+
+  // Hide public navbar on dashboard pages (dashboard has its own sidebar nav)
+  if (isDashboard) return null;
 
   const navLinks = [
     { label: t("nav.raas"), href: isHomePage ? "/#raas" : "/guide/commands" },
