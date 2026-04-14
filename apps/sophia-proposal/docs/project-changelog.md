@@ -4,6 +4,45 @@ All notable changes are documented here. Format: `[version] date — summary`.
 
 ---
 
+## [3.2.0] 2026-04-14 — IDOR & CORS Security Hardening
+
+### Fixed
+
+**8 IDOR (Insecure Direct Object Reference) Vulnerabilities**
+
+- `app/api/usage/route.ts` — Organization ID now derived from JWT token, not `x-org-id` header
+- `app/api/affiliate/clicks/stats/route.ts` — Added org-scoped program filter, JWT-derived orgId
+- `app/api/onboarding/status/route.ts` — JWT-derived orgId, verified org membership before returning status
+- `app/api/feedback/route.ts` — JWT-derived orgId, feedback now org-scoped
+- `app/api/proposals/generate/route.ts` — JWT-derived orgId, generation cost checked against org balance
+- `app/api/onboarding/progress/route.ts` (GET + POST) — JWT-derived orgId, verified ownership of org
+- `app/api/crm/callback/route.ts` — OAuth state parameter no longer used as orgId
+
+**CORS Configuration Hardening**
+
+- `next.config.js` — `Access-Control-Allow-Origin: *` (wildcard) removed
+- Replaced with: `Access-Control-Allow-Origin: https://sophia.agencyos.network`
+- Removed `X-Org-Id` from `Access-Control-Allow-Headers`
+
+**JWT Implementation**
+
+- `lib/db/auth.ts` — Removed duplicate `verifyJwt` function, now imports timing-safe version from `auth-verify.ts`
+- All API routes use `resolveToken()` + `createAuthClient()` to extract user from JWT
+- Server-side lookup `getOrgId(user.id, db)` ensures authorization
+
+### Impact
+
+**Security Improvement:** Attackers can no longer escalate privileges by forging `x-org-id` headers. Organization membership now cryptographically verified via JWT signature + database lookup.
+
+**API Documentation Updated:**
+- All endpoint examples show JWT-based auth (removed `x-org-id` from headers)
+- Added security notes to affected endpoints
+- CORS section documents origin restrictions
+
+**Backward Compatibility:** None — `x-org-id` header is now ignored by all endpoints. Clients must rely on JWT cookie/Bearer auth only.
+
+---
+
 ## [3.1.0] 2026-03-21 — Wave 2 RaaS Security & Rate Limiting
 
 ### Added
@@ -93,7 +132,7 @@ All notable changes are documented here. Format: `[version] date — summary`.
 
 ### Added
 
-- Polar.sh billing integration: checkout, customer portal, webhook handler with HMAC verification + deduplication
+- NOWPayments billing integration: checkout, customer portal, webhook handler with HMAC verification + deduplication
 - MCU balance system: `org_balances`, `usage_logs`, `credit_mcu_balance()` / `deduct_mcu_balance()` RPCs
 - Subscription tiers: Starter ($49/500 MCU), Growth ($149/2000 MCU), Premium ($499/10000 MCU), Master ($999/25000 MCU)
 - Pilot onboarding flow: checklist, NPS survey scheduling (Day 7), milestone tracking

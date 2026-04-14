@@ -244,9 +244,11 @@ describe('Balance Checker', () => {
 // Describe the middleware integration
 describe('Balance Checker Middleware Integration', () => {
   it('should be usable as middleware in API routes', () => {
-    // Example middleware pattern:
+    // Example middleware pattern (orgId derived from JWT in production):
     const middleware = async (req: Request, next: () => Response) => {
-      const orgId = req.headers.get('x-org-id');
+      // In production: orgId = await getOrgId(user.id, db) from JWT
+      // For testing, we use a hardcoded test org ID
+      const orgId = 'test-org-id';
       if (!orgId) {
         return new Response('Missing org context', { status: 400 });
       }

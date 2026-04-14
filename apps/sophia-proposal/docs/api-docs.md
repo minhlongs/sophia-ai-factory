@@ -8,24 +8,38 @@
 
 ## Authentication
 
-All API routes (except public webhooks) require authentication via JWT session (custom auth).
+All API routes (except public webhooks) require authentication via JWT token.
 
 ### Session Management
 
-Sessions are managed through cookies set by Custom JWT Auth:
+Sessions are managed through cookies:
 
-- `auth-token` — JWT session token (signed via Web Crypto API)
-- Middleware validates session and injects `user_id` context
+- `auth-token` — JWT session token (signed with HS256)
+- Middleware validates JWT signature and extracts `user_id` from `sub` claim
+- JWT token includes: `{ sub: userId, email, iat, exp }`
+- Token TTL: 7 days
 
 ### Organization Context
 
-Protected routes require organization context via header:
+**SECURITY NOTE (April 2026):** Organization ID is now derived server-side from the authenticated user's JWT token, NOT from user-controllable headers.
 
+**Deprecated Pattern:**
 ```
-x-org-id: <uuid>
+x-org-id: <uuid>  ← NEVER trust this header for authorization
 ```
 
-Middleware validates user is member of the organization.
+**Secure Pattern:**
+1. Client sends JWT in `Authorization: Bearer <token>` header or via cookies
+2. Server extracts `user_id` from verified JWT payload
+3. Server queries database to find user's primary organization
+4. All operations scoped to that organization (database-enforced)
+
+Example secure endpoint:
+```typescript
+const authClient = createAuthClient(await resolveToken(request));
+const { data: { user }, error } = await authClient.auth.getUser();
+const orgId = await getOrgId(user.id, db);  // Organization derived from JWT, not header
+```
 
 ---
 
@@ -40,7 +54,6 @@ Create a Polar checkout session for subscription upgrade.
 POST /api/billing/checkout
 Headers:
   Authorization: Bearer <jwt>
-  x-org-id: <uuid>
   Content-Type: application/json
 
 Body:
@@ -51,11 +64,13 @@ Body:
 }
 ```
 
+**Note:** Organization ID is derived server-side from the authenticated JWT token.
+
 **Response:**
 ```typescript
 // 200 OK
 {
-  "url": "https://checkout.polar.sh/..."
+  "url": "https://checkout.nowpayments.io/..."
 }
 
 // 400 Bad Request
@@ -82,7 +97,6 @@ Create a Polar customer portal session for subscription management.
 POST /api/billing/portal
 Headers:
   Authorization: Bearer <jwt>
-  x-org-id: <uuid>
   Content-Type: application/json
 
 Body:
@@ -91,11 +105,13 @@ Body:
 }
 ```
 
+**Note:** Organization ID is derived server-side from the authenticated JWT token.
+
 **Response:**
 ```typescript
 // 200 OK
 {
-  "url": "https://portal.polar.sh/..."
+  "url": "https://portal.nowpayments.io/..."
 }
 
 // 404 Not Found
@@ -117,7 +133,6 @@ Get or update current organization subscription.
 POST /api/billing/subscription
 Headers:
   Authorization: Bearer <jwt>
-  x-org-id: <uuid>
   Content-Type: application/json
 
 Body (for update):
@@ -125,6 +140,8 @@ Body (for update):
   "cancelAtPeriodEnd": true
 }
 ```
+
+**Note:** Organization ID is derived server-side from the authenticated JWT token.
 
 **Response:**
 ```typescript
@@ -153,7 +170,7 @@ Body (for update):
 
 ### POST `/api/webhooks/polar`
 
-Handle Polar.sh webhook events (public endpoint, no auth).
+Handle NOWPayments webhook events (public endpoint, no auth).
 
 **Headers:**
 ```
@@ -210,8 +227,9 @@ Get usage history and summary for organization.
 GET /api/usage?days=30&page=1&limit=50
 Headers:
   Authorization: Bearer <jwt>
-  x-org-id: <uuid>
 ```
+
+**Note:** Organization ID is derived server-side from the authenticated JWT token. Query scoped to user's primary organization.
 
 **Query Parameters:**
 | Param | Type | Default | Description |
@@ -274,8 +292,9 @@ Get aggregated usage statistics (shortcut for dashboard).
 GET /api/usage/summary?days=7
 Headers:
   Authorization: Bearer <jwt>
-  x-org-id: <uuid>
 ```
+
+**Note:** Organization ID is derived server-side from the authenticated JWT token.
 
 **Response:**
 ```typescript
@@ -301,8 +320,9 @@ List all proposals for organization.
 GET /api/proposals?status=draft&page=1&limit=20
 Headers:
   Authorization: Bearer <jwt>
-  x-org-id: <uuid>
 ```
+
+**Note:** Organization ID is derived server-side from the authenticated JWT token.
 
 **Response:**
 ```typescript
@@ -338,7 +358,6 @@ Create a new proposal.
 POST /api/proposals
 Headers:
   Authorization: Bearer <jwt>
-  x-org-id: <uuid>
   Content-Type: application/json
 
 Body:
@@ -348,6 +367,8 @@ Body:
   "content": { ... }
 }
 ```
+
+**Note:** Organization ID is derived server-side from the authenticated JWT token.
 
 **Response:**
 ```typescript
@@ -375,8 +396,9 @@ Get a specific proposal by ID.
 GET /api/proposals/[id]
 Headers:
   Authorization: Bearer <jwt>
-  x-org-id: <uuid>
 ```
+
+**Note:** Organization ID is derived server-side from the authenticated JWT token.
 
 **Response:**
 ```typescript
@@ -408,8 +430,9 @@ Delete a proposal.
 DELETE /api/proposals/[id]
 Headers:
   Authorization: Bearer <jwt>
-  x-org-id: <uuid>
 ```
+
+**Note:** Organization ID is derived server-side from the authenticated JWT token.
 
 **Response:**
 ```typescript
@@ -432,7 +455,6 @@ Generate AI-powered proposal using Claude.
 POST /api/proposals/generate
 Headers:
   Authorization: Bearer <jwt>
-  x-org-id: <uuid>
   Content-Type: application/json
 
 Body:
@@ -447,6 +469,8 @@ Body:
   "tier": "growth" // for cost calculation
 }
 ```
+
+**Note:** Organization ID is derived server-side from the authenticated JWT token. MCU balance checked before generation.
 
 **Response:**
 ```typescript
@@ -483,8 +507,9 @@ Get pilot onboarding status and checklist.
 GET /api/onboarding/status
 Headers:
   Authorization: Bearer <jwt>
-  x-org-id: <uuid>
 ```
+
+**Note:** Organization ID is derived server-side from the authenticated JWT token.
 
 **Response:**
 ```typescript
@@ -522,7 +547,6 @@ Submit customer feedback (NPS survey).
 POST /api/feedback
 Headers:
   Authorization: Bearer <jwt>
-  x-org-id: <uuid>
   Content-Type: application/json
 
 Body:
@@ -532,6 +556,8 @@ Body:
   "feedback": "Great product! Easy to use." // optional
 }
 ```
+
+**Note:** Organization ID is derived server-side from the authenticated JWT token.
 
 **Response:**
 ```typescript
@@ -684,11 +710,11 @@ Future implementation planned:
 
 ---
 
-## Webhook Configuration (Polar.sh Setup)
+## Webhook Configuration (NOWPayments Setup)
 
 ### Configure Webhook in Polar Dashboard
 
-1. Go to https://polar.sh/dashboard/settings/webhooks
+1. Go to https://nowpayments.io/dashboard/settings/webhooks
 2. Click "Add Endpoint"
 3. Enter URL: `https://sophia.agencyos.network/api/webhooks/polar`
 4. Select events:
@@ -700,7 +726,7 @@ Future implementation planned:
 5. Copy the webhook secret
 6. Add to `.env`:
    ```
-   POLAR_WEBHOOK_SECRET=whsec_...
+   NOWPAYMENTS_WEBHOOK_SECRET=whsec_...
    ```
 
 ### Test Webhook Locally
@@ -726,6 +752,27 @@ curl -X POST http://localhost:3000/api/webhooks/polar \
     }
   }'
 ```
+
+---
+
+## CORS Configuration
+
+**Updated April 2026 for security:**
+
+The API now enforces strict CORS origin validation:
+
+```
+Access-Control-Allow-Origin: https://sophia.agencyos.network
+Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization
+```
+
+**Previous Configuration (Deprecated):**
+- Wildcard origin (`*`) removed — was security risk
+- `X-Org-Id` header removed from allowed headers — orgId now server-derived only
+
+**Client Impact:**
+Frontend requests must originate from `https://sophia.agencyos.network`. No other origins are permitted. No `X-Org-Id` header should be sent by clients.
 
 ---
 

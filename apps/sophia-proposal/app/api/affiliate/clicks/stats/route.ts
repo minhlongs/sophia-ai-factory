@@ -6,16 +6,22 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/db/client';
-import { getAuthContext } from '@/lib/raas/auth-context';
+import { createAuthClient, createServerClient } from '@/lib/db/client';
+import { resolveToken } from '@/lib/raas/resolve-token';
+import { getOrgId } from '@/lib/org';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
-  const auth = await getAuthContext();
-  if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const { orgId } = auth;
+  // SECURITY: Derive orgId from JWT, NOT from user-controllable header
+  const authClient = createAuthClient(await resolveToken(req));
+  const { data: { user }, error: authError } = await authClient.auth.getUser();
+  if (authError || !user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  const serverClient = createServerClient();
+  const orgId = await getOrgId(user.id, serverClient);
+  if (!orgId) return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
 
   const { searchParams } = new URL(req.url);
   const programId = searchParams.get('programId');
@@ -25,22 +31,28 @@ export async function GET(req: NextRequest) {
   const since = new Date();
   since.setDate(since.getDate() - days);
 
-  const db = createServerClient();
+  // SECURITY: Scope clicks to programs owned by this org
+  // First, get all program IDs owned by this org
+  const { data: orgPrograms } = await serverClient
+    .from('affiliate_programs')
+    .select('id')
+    .eq('org_id', orgId);
 
-  // Verify org owns the program if filtering by program
-  if (programId) {
-    const { data: prog } = await db
-      .from('affiliate_programs')
-      .select('id')
-      .eq('id', programId)
-      .eq('org_id', orgId)
-      .single();
-    if (!prog) return NextResponse.json({ error: 'Program not found' }, { status: 404 });
+  const orgProgramIds = (orgPrograms ?? []).map((p: Record<string, string>) => p.id);
+
+  if (orgProgramIds.length === 0) {
+    return NextResponse.json({ total: 0, periodDays: days, byProgram: {}, byContent: {} });
   }
 
-  let query = db
+  // Verify requested programId belongs to this org
+  if (programId && !orgProgramIds.includes(programId)) {
+    return NextResponse.json({ error: 'Program not found' }, { status: 404 });
+  }
+
+  let query = serverClient
     .from('affiliate_clicks')
     .select('program_id, content_id, clicked_at', { count: 'exact' })
+    .in('program_id', orgProgramIds)
     .gte('clicked_at', since.toISOString());
 
   if (programId) query = query.eq('program_id', programId);

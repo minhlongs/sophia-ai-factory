@@ -2,9 +2,13 @@
  * JWT verification — extracted to avoid circular imports with client.ts
  */
 
-// Lazy getter — returns null when JWT_SECRET is not set (zero-config safe)
-function getJwtSecret(): string | null {
-  return process.env.JWT_SECRET ?? null;
+import { timingSafeEqual } from 'crypto';
+
+// Lazy getter — throws at verify time, not at module load (CF Workers lazy env)
+function getJwtSecret(): string {
+  const s = process.env.JWT_SECRET;
+  if (!s) throw new Error('JWT_SECRET environment variable is required');
+  return s;
 }
 
 async function hmacSign(payload: string, secret: string): Promise<string> {
@@ -24,14 +28,14 @@ function base64UrlDecode(s: string): unknown {
 
 export async function verifyJwt(token: string): Promise<Record<string, unknown> | null> {
   try {
-    const secret = getJwtSecret();
-    if (!secret) return null;
-
     const [header, body, signature] = token.split('.');
     if (!header || !body || !signature) return null;
 
-    const expected = await hmacSign(`${header}.${body}`, secret);
-    if (expected !== signature) return null;
+    const expected = await hmacSign(`${header}.${body}`, getJwtSecret());
+    // H3: use constant-time comparison to prevent timing-based signature oracle attacks
+    const sigBuffer = Buffer.from(signature);
+    const expBuffer = Buffer.from(expected);
+    if (sigBuffer.length !== expBuffer.length || !timingSafeEqual(sigBuffer, expBuffer)) return null;
 
     const payload = base64UrlDecode(body) as Record<string, unknown>;
     if (typeof payload.exp === 'number' && payload.exp < Date.now() / 1000) return null;

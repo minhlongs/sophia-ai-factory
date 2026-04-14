@@ -8,7 +8,7 @@
 
 ## Repository Overview
 
-This is a Next.js application for Sophia AI Factory — an AI-powered proposal generation platform with usage-based billing via Polar.sh.
+This is a Next.js application for Sophia AI Factory — an AI-powered proposal generation platform with usage-based billing via NOWPayments.
 
 ---
 
@@ -38,7 +38,7 @@ sophia-proposal/
 │   └── ui/                       # Shared UI components
 ├── lib/                          # Business logic
 │   ├── billing/                  # Billing module (Sprint 3)
-│   │   ├── polar-client.ts       # Polar.sh API client
+│   │   ├── polar-client.ts       # NOWPayments API client
 │   │   ├── mcu-pricing.ts        # MCU cost calculations
 │   │   ├── usage-tracker.ts      # Usage logging
 │   │   ├── balance-checker.ts    # Balance queries
@@ -49,8 +49,9 @@ sophia-proposal/
 │   │   ├── client.ts             # Anthropic client
 │   │   ├── proposal-templates.ts # Templates
 │   │   └── quality-check.ts      # Validation
-│   ├── db/                       # D1 database client (Sprint 1)
-│   │   └── client.ts             # D1 client + auth helpers
+│   ├── supabase/                 # Supabase client (Sprint 1)
+│   │   ├── client.ts             # Server/client clients
+│   │   └── auth.ts               # Auth helpers
 │   └── validators/               # Zod schemas
 ├── tests/                        # Vitest tests
 │   ├── billing/                  # Billing tests (Sprint 3)
@@ -91,7 +92,8 @@ sophia-proposal/
 
 | File | Purpose |
 |------|---------|
-| `lib/db/client.ts` | D1 client + auth helpers, session management |
+| `lib/supabase/auth.ts` | Auth helpers, session management |
+| `lib/supabase/client.ts` | Supabase client (server/browser) |
 | `middleware.ts` | Route protection, org context injection |
 | `app/api/auth/login/route.ts` | Login endpoint |
 | `app/api/auth/signup/route.ts` | Signup endpoint |
@@ -114,7 +116,7 @@ sophia-proposal/
 
 | File | Purpose |
 |------|---------|
-| `lib/billing/polar-client.ts` | Polar.sh API client |
+| `lib/billing/polar-client.ts` | NOWPayments API client |
 | `lib/billing/mcu-pricing.ts` | MCU cost calculations |
 | `lib/billing/usage-tracker.ts` | Usage logging |
 | `lib/billing/balance-checker.ts` | Balance queries |
@@ -132,7 +134,7 @@ sophia-proposal/
 
 ## Database Schema Summary
 
-### Tables (db/migrations/004_billing_tables.sql)
+### Tables (lib/supabase/migrations/004_billing_tables.sql)
 
 ```sql
 -- Sprint 1: Auth & Org
@@ -217,7 +219,8 @@ deduct_mcu_balance(p_org_id UUID, p_amount INTEGER, p_feature TEXT, p_metadata J
 
 ```json
 {
-  "@cloudflare/workers-types": "latest"
+  "@supabase/ssr": "latest",
+  "@supabase/supabase-js": "latest"
 }
 ```
 
@@ -282,36 +285,50 @@ export default defineConfig({
 # Anthropic (AI)
 ANTHROPIC_API_KEY=sk-ant-...
 
-# Cloudflare D1 (Database + Auth)
-CLOUDFLARE_D1_DATABASE_ID=your-d1-database-id
-CLOUDFLARE_ACCOUNT_ID=your-cloudflare-account-id
+# Supabase (Database + Auth)
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
-# Polar.sh (Billing)
-POLAR_API_URL=https://api.polar.sh
-POLAR_API_KEY=sk_live_your_api_key
-POLAR_WEBHOOK_SECRET=whsec_your_webhook_secret
+# NOWPayments (Billing)
+NOWPAYMENTS_API_URL=https://api.nowpayments.io
+NOWPAYMENTS_API_KEY=sk_live_your_api_key
+NOWPAYMENTS_WEBHOOK_SECRET=whsec_your_webhook_secret
 ```
 
 ---
 
 ## Code Patterns
 
-### API Route Pattern
+### API Route Pattern (Secure)
 
 ```typescript
 import { NextRequest, NextResponse } from 'next/server';
-import { getD1Client } from '@/lib/db/client';
+import { createAuthClient, createServerClient } from '@/lib/db/client';
+import { resolveToken } from '@/lib/raas/resolve-token';
+import { getOrgId } from '@/lib/org';
 
 export async function GET(request: NextRequest) {
   try {
-    const orgId = request.headers.get('x-org-id');
-    const db = getD1Client();
+    // SECURITY: Derive orgId from JWT, NOT from user-controllable header
+    const authClient = createAuthClient(await resolveToken(request));
+    const { data: { user }, error: authError } = await authClient.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    // Business logic
-    const result = await db.prepare('SELECT * FROM table').all();
+    const db = createServerClient();
+    const orgId = await getOrgId(user.id, db);
+    if (!orgId) {
+      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+    }
+
+    // Business logic scoped to orgId
+    const result = await db.from('table').select('*').eq('org_id', orgId);
 
     return NextResponse.json(result);
   } catch (error) {
+    console.error('Error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -320,14 +337,29 @@ export async function GET(request: NextRequest) {
 }
 ```
 
+**Security Notes:**
+- Never trust `x-org-id` header for authorization
+- Always derive orgId from JWT payload via `getOrgId(user.id, db)`
+- Verify user is authenticated before proceeding
+- Use database queries to enforce organization membership
+
 ### MCU Cost Calculation Pattern
 
 ```typescript
 import { calculateMcuCost } from '@/lib/billing/mcu-pricing';
 import { logUsage } from '@/lib/billing/usage-tracker';
+import { createAuthClient, createServerClient } from '@/lib/db/client';
+import { resolveToken } from '@/lib/raas/resolve-token';
+import { getOrgId } from '@/lib/org';
 
 export async function POST(request: NextRequest) {
-  const orgId = request.headers.get('x-org-id');
+  // SECURITY: Derive orgId from JWT, NOT from headers
+  const authClient = createAuthClient(await resolveToken(request));
+  const { data: { user }, error: authError } = await authClient.auth.getUser();
+  if (authError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const db = createServerClient();
+  const orgId = await getOrgId(user.id, db);
+  if (!orgId) return NextResponse.json({ error: 'Org not found' }, { status: 404 });
   const feature = 'proposal:text:basic';
 
   // Calculate cost

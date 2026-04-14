@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateProposalSchema } from "@/lib/validators/proposal";
-import { generateProposal, getAnthropicClient } from "@/lib/ai/client";
+import { generateProposal } from "@/lib/ai/client";
 import { checkProposalQuality } from "@/lib/ai/quality-check";
 import { getSystemTemplate } from "@/lib/ai/proposal-templates";
 import { logUsage } from "@/lib/billing/usage-tracker";
 import { getOrInitializeBalance, requireBalance } from "@/lib/billing/balance-checker";
-import { createServerClient } from "@/lib/db/client";
+import { createAuthClient, createServerClient } from "@/lib/db/client";
+import { resolveToken } from "@/lib/raas/resolve-token";
+import { getOrgId } from "@/lib/org";
 import type { Subscription } from "@/lib/db/types";
 
 // API routes are dynamic by default
@@ -16,9 +18,6 @@ export const dynamic = "force-dynamic";
  * Generate AI proposal from template and inputs
  */
 export async function POST(request: NextRequest) {
-  if (!getAnthropicClient() && !process.env.LLM_BASE_URL) {
-    return NextResponse.json({ success: false, error: "AI not configured" }, { status: 503 });
-  }
   try {
     const body = await request.json();
 
@@ -31,13 +30,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get organization ID from header (set by middleware or auth)
-    const orgId = request.headers.get("x-org-id");
+    // SECURITY: Derive orgId from JWT, NOT from user-controllable header
+    const authClient = createAuthClient(await resolveToken(request));
+    const { data: { user }, error: authError } = await authClient.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const serverDb = createServerClient();
+    const orgId = await getOrgId(user.id, serverDb);
     if (!orgId) {
-      return NextResponse.json(
-        { error: "Organization ID required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Organization not found" }, { status: 404 });
     }
 
     // Check and initialize balance
@@ -72,8 +74,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user's subscription tier for pricing
-    const db = createServerClient();
-    const { data: subscription } = await db
+    const { data: subscription } = await serverDb
       .from<Subscription>("subscriptions")
       .select("tier_name")
       .eq("org_id", orgId)
