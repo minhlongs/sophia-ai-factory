@@ -190,11 +190,9 @@ export async function generateApiKey(
     rate_limit_per_min: rateLimitPerMinute,
   }
 
-  const { data, error } = await (db as any)
+  const { error } = await db
     .from('raas_api_keys')
     .insert(insertData)
-    .select()
-    .single()
 
   if (error) {
     logger.error('[API Key Validator] Failed to generate API key', error as Error)
