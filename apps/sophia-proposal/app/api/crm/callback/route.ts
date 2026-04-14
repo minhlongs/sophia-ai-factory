@@ -7,6 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createAuthClient, createServerClient } from '@/lib/db/client';
+import { resolveToken } from '@/lib/raas/resolve-token';
 import { getOrgId } from '@/lib/org';
 
 const HUBSPOT_CLIENT_ID = process.env.HUBSPOT_CLIENT_ID;
@@ -64,19 +65,15 @@ export async function GET(request: NextRequest) {
 
     const tokenData: HubSpotTokenResponse = await tokenResponse.json();
 
-    // Resolve org_id: prefer state param, fallback to user session
-    let orgId: string | null = state || null;
+    // SECURITY: ALWAYS derive orgId from JWT session, NEVER from OAuth state param
+    // The state param is attacker-controllable and must not be used as an org identifier
+    const authClient = createAuthClient(await resolveToken(request));
+    const { data: { user } } = await authClient.auth.getUser();
+    let orgId: string | null = null;
 
-    if (!orgId) {
-      const authHeader = request.headers.get('authorization');
-      const accessTokenHeader = authHeader?.split(' ')[1];
-      const authClient = createAuthClient(accessTokenHeader);
-      const { data: { user } } = await authClient.auth.getUser();
-
-      if (user) {
-        const serverClient = createServerClient();
-        orgId = await getOrgId(user.id, serverClient);
-      }
+    if (user) {
+      const serverClient2 = createServerClient();
+      orgId = await getOrgId(user.id, serverClient2);
     }
 
     if (!orgId) {

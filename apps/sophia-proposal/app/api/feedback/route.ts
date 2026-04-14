@@ -5,7 +5,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/db/client';
+import { createAuthClient, createServerClient } from '@/lib/db/client';
+import { resolveToken } from '@/lib/raas/resolve-token';
+import { getOrgId } from '@/lib/org';
 
 export interface FeedbackRequest {
   surveyType: 'nps' | 'onboarding' | 'churn';
@@ -47,29 +49,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // For server-side feedback submission (webhooks, etc.)
-    // If orgId is provided in the request, use it directly
-    const authHeader = request.headers.get('authorization');
-    let orgId: string | null = null;
-
-    // Check for org context in header (from middleware or client)
-    const orgIdHeader = request.headers.get('x-org-id');
-    if (orgIdHeader) {
-      orgId = orgIdHeader;
-    }
-
-    // If no org context, this might be a public endpoint
-    // In a real app, you'd validate auth here
-    if (!orgId) {
-      // For browser-based submissions, we expect the org context
-      // to be available via session/auth
-      return NextResponse.json(
-        { error: 'Organization context required' },
-        { status: 401 }
-      );
+    // SECURITY: Derive orgId from JWT, NOT from user-controllable header
+    const authClient = createAuthClient(await resolveToken(request));
+    const { data: { user }, error: authError } = await authClient.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const db = createServerClient();
+    const orgId = await getOrgId(user.id, db);
+    if (!orgId) {
+      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+    }
 
     // Insert feedback
     const { error } = await db.from('customer_feedback').insert({

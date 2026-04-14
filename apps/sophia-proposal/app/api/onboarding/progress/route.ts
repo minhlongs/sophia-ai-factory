@@ -4,6 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createAuthClient, createServerClient } from '@/lib/db/client';
+import { resolveToken } from '@/lib/raas/resolve-token';
 import { getOrgId } from '@/lib/org';
 import { DEFAULT_ONBOARDING_STEPS, calculateProgress } from '@/lib/onboarding/config';
 import type { OnboardingStep } from '@/types/onboarding';
@@ -11,14 +12,18 @@ import type { OnboardingStep } from '@/types/onboarding';
 // GET /api/onboarding/progress
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const orgId = searchParams.get('orgId');
-
-    if (!orgId) {
-      return NextResponse.json({ error: 'orgId required' }, { status: 400 });
+    // SECURITY: Derive orgId from JWT, NOT from query param
+    const authClient = createAuthClient(await resolveToken(request));
+    const { data: { user }, error: authError } = await authClient.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const serverClient = createServerClient();
+    const orgId = await getOrgId(user.id, serverClient);
+    if (!orgId) {
+      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+    }
 
     // Get onboarding progress
     const { data } = await serverClient
@@ -48,10 +53,22 @@ export async function GET(request: NextRequest) {
 // POST /api/onboarding/step/complete
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { userId, orgId, stepId, action } = body;
+    // SECURITY: Derive orgId and userId from JWT, NOT from request body
+    const authClient = createAuthClient(await resolveToken(request));
+    const { data: { user }, error: authError } = await authClient.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const serverClient = createServerClient();
+    const orgId = await getOrgId(user.id, serverClient);
+    if (!orgId) {
+      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+    }
+
+    const body = await request.json();
+    const { stepId, action } = body;
+    const userId = user.id;
 
     // Get current progress
     const { data: current } = await serverClient

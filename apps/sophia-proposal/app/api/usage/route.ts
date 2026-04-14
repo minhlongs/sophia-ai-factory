@@ -1,33 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/db/client';
+import { createAuthClient, createServerClient } from '@/lib/db/client';
+import { resolveToken } from '@/lib/raas/resolve-token';
+import { getOrgId } from '@/lib/org';
 import { getUsageHistory, getUsageSummary } from '@/lib/billing/usage-tracker';
 
 export async function GET(request: NextRequest) {
   try {
-    // Get org ID from header (set by middleware or auth layer)
-    const orgId = request.headers.get('x-org-id');
-
-    if (!orgId) {
-      return NextResponse.json(
-        { error: 'Organization ID required' },
-        { status: 400 }
-      );
+    // SECURITY: Derive orgId from JWT, NOT from user-controllable header
+    const authClient = createAuthClient(await resolveToken(request));
+    const { data: { user }, error: authError } = await authClient.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const db = createServerClient();
-
-    // Verify org exists and user has access (can be extended with auth check)
-    const { data: org } = await db
-      .from('organizations')
-      .select('id')
-      .eq('id', orgId)
-      .single();
-
-    if (!org) {
-      return NextResponse.json(
-        { error: 'Organization not found' },
-        { status: 404 }
-      );
+    const orgId = await getOrgId(user.id, db);
+    if (!orgId) {
+      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
     }
 
     const searchParams = request.nextUrl.searchParams;

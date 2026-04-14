@@ -4,10 +4,10 @@
  * Get onboarding status and checklist for the current user's organization
  */
 
-import { NextResponse } from 'next/server';
-import { getAuthContext } from '@/lib/raas/auth-context';
-import { logger } from '@/lib/logger';
-import { createServerClient } from '@/lib/db/client';
+import { NextRequest, NextResponse } from 'next/server';
+import { createAuthClient, createServerClient } from '@/lib/db/client';
+import { resolveToken } from '@/lib/raas/resolve-token';
+import { getOrgId } from '@/lib/org';
 import type { Subscription } from '@/lib/db/types';
 
 export interface OnboardingStatus {
@@ -29,18 +29,20 @@ export interface OnboardingStatus {
   };
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const auth = await getAuthContext();
-    if (!auth) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    // SECURITY: Derive orgId from JWT, NOT from user-controllable header
+    const authClient = createAuthClient(await resolveToken(request));
+    const { data: { user }, error: authError } = await authClient.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const db = createServerClient();
-    const orgId = auth.orgId;
+    const orgId = await getOrgId(user.id, db);
+    if (!orgId) {
+      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+    }
 
     // Get subscription status
     const { data: subscription } = await db
@@ -110,7 +112,7 @@ export async function GET() {
 
     return NextResponse.json(status);
   } catch (error) {
-    logger.error('Onboarding status error', error, { path: '/api/onboarding/status' });
+    console.error('Onboarding status error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
