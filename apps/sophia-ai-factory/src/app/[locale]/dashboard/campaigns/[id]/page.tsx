@@ -1,10 +1,11 @@
-import { createServerClient } from "@/lib/supabase/server";
+import { createServerClient } from "@/lib/db/client";
+import { getCurrentUser } from "@/lib/db/auth";
 import { notFound, redirect } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Campaign } from "@/types";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { getTranslations, getFormatter } from 'next-intl/server';
+import { cookies } from "next/headers";
 import { CampaignHeader } from "./components/campaign-header";
 import { CampaignDetailsSidebar } from "./components/campaign-details-sidebar";
 import { CampaignScriptView } from "./components/campaign-script-view";
@@ -31,26 +32,24 @@ export default async function CampaignDetailPage({ params }: PageProps) {
   const t = await getTranslations('campaign.detail');
   const tStatus = await getTranslations('campaign.status');
   const format = await getFormatter();
-  const supabase = await createServerClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.getAll().map(c => `${c.name}=${c.value}`).join('; ');
+  const user = await getCurrentUser(cookieHeader);
 
   let campaign: Campaign | null = null;
 
-  if (session?.user) {
-    const { data } = await supabase
-      .from("campaigns")
-      .select("*")
-      .eq("id", id)
-      .single();
-    campaign = data ? (data as unknown as Campaign) : null;
-  } else if (process.env.NODE_ENV === 'development') {
-    const supabaseAdmin = createAdminClient();
-    const { data } = await supabaseAdmin
+  if (user?.id) {
+    try {
+      const db = createServerClient();
+      const { data } = await db
         .from("campaigns")
         .select("*")
         .eq("id", id)
         .single();
-    campaign = data ? (data as unknown as Campaign) : null;
+      campaign = data ? (data as unknown as Campaign) : null;
+    } catch {
+      campaign = null;
+    }
   } else {
     redirect("/login");
   }

@@ -1,13 +1,14 @@
-import { createServerClient } from "@/lib/supabase/server";
+import { createServerClient } from "@/lib/db/client";
+import { getCurrentUser } from "@/lib/db/auth";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { Plus } from "lucide-react";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { Campaign } from "@/types";
 import { CampaignExportControl } from "../components/campaign-export-control";
 import { getTranslations } from 'next-intl/server';
+import { cookies } from "next/headers";
 
 const CampaignList = dynamic(
   () => import("../components/campaign-list").then(m => ({ default: m.CampaignList })),
@@ -24,28 +25,23 @@ const CampaignList = dynamic(
 
 export default async function CampaignsPage() {
   const t = await getTranslations('dashboard');
-  const supabase = await createServerClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.getAll().map(c => `${c.name}=${c.value}`).join('; ');
+  const user = await getCurrentUser(cookieHeader);
 
-  // For MVP/Dev without full auth: fetch all campaigns via admin if no user
-  // In production, we strictly use session.user.id
   let campaigns: Campaign[] = [];
 
-  if (session?.user) {
-    const { data } = await supabase
-      .from("campaigns")
-      .select("*")
-      .order("created_at", { ascending: false });
-    campaigns = data as Campaign[] || [];
-  } else if (process.env.NODE_ENV === 'development') {
-    // Dev fallback: fetch latest 20 campaigns
-    const supabaseAdmin = createAdminClient();
-    const { data } = await supabaseAdmin
+  if (user?.id) {
+    try {
+      const db = createServerClient();
+      const { data } = await db
         .from("campaigns")
         .select("*")
-        .order("created_at", { ascending: false })
-        .limit(20);
-    campaigns = data as Campaign[] || [];
+        .order("created_at", { ascending: false });
+      campaigns = (data as Campaign[]) || [];
+    } catch {
+      campaigns = [];
+    }
   }
 
   return (
