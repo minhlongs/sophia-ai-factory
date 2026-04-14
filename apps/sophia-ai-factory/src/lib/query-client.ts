@@ -32,23 +32,23 @@ export const queryKeys = {
   usage: {
     all: ['usage'] as const,
     list: (filters: { start: number; end: number; granularity?: string }) =>
-      [...queryKeys.usage, 'list', filters] as const,
-    detail: (nonce: string) => [...queryKeys.usage, 'detail', nonce] as const,
+      [...queryKeys.usage.all, 'list', filters] as const,
+    detail: (nonce: string) => [...queryKeys.usage.all, 'detail', nonce] as const,
   },
 
   // License metrics
   license: {
     all: ['license'] as const,
     list: (filters?: { status?: string; tier?: string }) =>
-      [...queryKeys.license, 'list', filters] as const,
-    utilization: () => [...queryKeys.license, 'utilization'] as const,
+      [...queryKeys.license.all, 'list', filters] as const,
+    utilization: () => [...queryKeys.license.all, 'utilization'] as const,
   },
 
   // Revenue metrics
   revenue: {
     all: ['revenue'] as const,
     list: (filters: { period: string; tier?: string }) =>
-      [...queryKeys.revenue, 'list', filters] as const,
+      [...queryKeys.revenue.all, 'list', filters] as const,
   },
 
   // RaaS Gateway metrics
