@@ -162,13 +162,13 @@ export async function POST(request: NextRequest) {
       rateLimitPerMinute
     )
 
-    // Log the creation
-    await logApiKeyCreation(
+    // Log the creation (non-blocking — don't fail key creation if audit log fails)
+    logApiKeyCreation(
       userId,
       result.keyId,
       body.permissions,
       request.headers.get('x-forwarded-for')?.split(',')[0]
-    )
+    ).catch(e => logger.error('[API Keys] Audit log failed', e as Error))
 
     logger.info('[API Keys] Created new API key', {
       keyId: result.keyId,
@@ -190,9 +190,10 @@ export async function POST(request: NextRequest) {
       warning: 'Store this API key securely. It will never be shown again.',
     })
   } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
     logger.error('[API Keys] Failed to create API key', error as Error)
     return NextResponse.json(
-      { error: 'Failed to create API key' },
+      { error: `Failed to create API key: ${msg}` },
       { status: 500 }
     )
   }
