@@ -1,91 +1,78 @@
-import { createAdminClient } from "@/lib/supabase/admin";
-import { Database } from "@/lib/supabase/types";
+import { createServerClient } from "@/lib/db/client";
 import { CampaignTemplate, CAMPAIGN_TEMPLATES, CampaignCategory } from "@/lib/templates/campaign-templates";
-
-// Initialize D1 client for server-side usage
-async function getSupabaseClient() {
-  return createAdminClient();
-}
 
 export const templateService = {
   /**
    * Get all available templates (predefined + user custom)
    */
   async getTemplates(userId?: string): Promise<CampaignTemplate[]> {
-    const supabase = await getSupabaseClient();
+    try {
+      const db = createServerClient();
 
-    let data: Database['public']['Tables']['campaign_templates']['Row'][] | null = null;
-    let error = null;
-
-    if (userId) {
-      const result = await supabase
-        .from("campaign_templates")
-        .select("*")
-        .or(`is_predefined.eq.true,user_id.eq.${userId}`);
-
-      if (result.data) {
-        data = result.data as Database['public']['Tables']['campaign_templates']['Row'][];
+      let result;
+      if (userId) {
+        result = await db
+          .from("campaign_templates")
+          .select("*")
+          .or(`is_predefined.eq.true,user_id.eq.${userId}`);
+      } else {
+        result = await db
+          .from("campaign_templates")
+          .select("*")
+          .eq("is_predefined", true);
       }
-      error = result.error;
-    } else {
-      const result = await supabase
-        .from("campaign_templates")
-        .select("*")
-        .eq("is_predefined", true);
 
-      if (result.data) {
-        data = result.data as Database['public']['Tables']['campaign_templates']['Row'][];
+      if (result.error || !result.data) {
+        return CAMPAIGN_TEMPLATES;
       }
-      error = result.error;
-    }
 
-    if (error) {
+      const data = result.data as Record<string, unknown>[];
+
+      return data.map((record) => ({
+        id: record.id as string,
+        name: record.name as string,
+        description: record.description as string,
+        category: record.category as CampaignCategory,
+        icon: (record.icon as string) || "📝",
+        is_predefined: record.is_predefined as boolean,
+        defaults: record.defaults as CampaignTemplate['defaults']
+      }));
+    } catch {
+      // D1 table may not exist — return static templates
       return CAMPAIGN_TEMPLATES;
     }
-
-    if (!data) {
-        return CAMPAIGN_TEMPLATES;
-    }
-
-    // Transform DB records to CampaignTemplate type
-    return data.map((record) => ({
-      id: record.id,
-      name: record.name,
-      description: record.description,
-      category: record.category as CampaignCategory,
-      icon: record.icon || "📝",
-      is_predefined: record.is_predefined,
-      defaults: record.defaults as CampaignTemplate['defaults']
-    }));
   },
 
   /**
    * Get a specific template by ID
    */
   async getTemplate(id: string): Promise<CampaignTemplate | null> {
-    const supabase = await getSupabaseClient();
+    try {
+      const db = createServerClient();
 
-    const { data, error } = await supabase
-      .from("campaign_templates")
-      .select("*")
-      .eq("id", id)
-      .single();
+      const { data, error } = await db
+        .from("campaign_templates")
+        .select("*")
+        .eq("id", id)
+        .single();
 
-    if (error || !data) {
-      // Fallback to static lookup
+      if (error || !data) {
+        return CAMPAIGN_TEMPLATES.find(t => t.id === id) || null;
+      }
+
+      const record = data as Record<string, unknown>;
+
+      return {
+        id: record.id as string,
+        name: record.name as string,
+        description: record.description as string,
+        category: record.category as CampaignCategory,
+        icon: (record.icon as string) || "📝",
+        is_predefined: record.is_predefined as boolean,
+        defaults: record.defaults as CampaignTemplate['defaults']
+      };
+    } catch {
       return CAMPAIGN_TEMPLATES.find(t => t.id === id) || null;
     }
-
-    const record = data as Database['public']['Tables']['campaign_templates']['Row'];
-
-    return {
-      id: record.id,
-      name: record.name,
-      description: record.description,
-      category: record.category as CampaignCategory,
-      icon: record.icon || "📝",
-      is_predefined: record.is_predefined,
-      defaults: record.defaults as CampaignTemplate['defaults']
-    };
   }
 };
