@@ -29,7 +29,7 @@ export function ApiKeyCreateModal({ onCreated, onCancel }: Props) {
       const res = await fetch('/api/admin/api-keys', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim() }),
+        body: JSON.stringify({ name: name.trim(), permissions: ['audit:read', 'reports:download'] }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to create key');
