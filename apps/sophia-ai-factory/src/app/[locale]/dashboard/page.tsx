@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { createServerClient } from "@/lib/db/client";
+import { getD1Client } from "@/lib/db/client";
 import { getCurrentUser } from "@/lib/better-auth-session";
 import { DashboardStats } from "./components/dashboard-stats";
 import { OnboardingWelcomeBanner } from "./components/onboarding-welcome-banner";
@@ -33,15 +33,16 @@ export default async function DashboardPage() {
 
   if (user?.id) {
     try {
-      const db = createServerClient();
-      const { data } = await db
+      const db = await getD1Client();
+      const { data, error } = await db
         .from("campaigns")
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
+      if (error) console.error("[dashboard] DB error:", error.message);
       campaigns = (data as Campaign[]) || [];
-    } catch {
-      // D1 campaigns table may not exist yet — show empty dashboard
+    } catch (e) {
+      console.error("[dashboard] Failed to fetch campaigns:", (e as Error).message);
       campaigns = [];
     }
   }
