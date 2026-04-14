@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createCampaign } from './campaigns';
 import { tierGuard } from '@/lib/tier-guard';
+import { getCurrentUser } from '@/lib/better-auth-session';
 import { inngest } from '@/lib/inngest/client';
 
 // Mock D1 client — replaces Supabase
@@ -55,6 +56,10 @@ vi.mock('@/lib/db/client', () => ({
   createServerClient: vi.fn().mockReturnValue({ from: mocks.from }),
 }));
 
+vi.mock('@/lib/better-auth-session', () => ({
+  getCurrentUser: vi.fn(),
+}));
+
 vi.mock('@/lib/inngest/client', () => ({
   inngest: { send: vi.fn() }
 }));
@@ -68,6 +73,14 @@ vi.mock('@/lib/tier-guard');
 describe('createCampaign Integration', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+
+    // Mock getCurrentUser to return a test user
+    vi.mocked(getCurrentUser).mockResolvedValue({
+      id: 'test-user-id',
+      email: 'test@example.com',
+      role: 'user'
+    });
+
     // Reset mocks to default values
     vi.mocked(mocks.from).mockImplementation((table: string) => {
       if (table === 'users') {

@@ -46,7 +46,7 @@ export function CouponInput({ tiers, onDiscountApplied, onDiscountCleared }: Cou
       // Call the coupon API for each tier in parallel
       const results = await Promise.allSettled(
         tiers.map((tier) =>
-          fetch("https://api.cashclaw.cc/api/coupons/apply", {
+          fetch("/api/coupons/apply", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ code: trimmed, tier, project: "sophia" }),

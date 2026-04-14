@@ -1,11 +1,10 @@
 import { createServerClient } from "@/lib/db/client";
-import { getCurrentUser } from "@/lib/db/auth";
+import { getCurrentUser } from "@/lib/better-auth-session";
 import { notFound, redirect } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Campaign } from "@/types";
 import { getTranslations, getFormatter } from 'next-intl/server';
-import { cookies } from "next/headers";
 import { CampaignHeader } from "./components/campaign-header";
 import { CampaignDetailsSidebar } from "./components/campaign-details-sidebar";
 import { CampaignScriptView } from "./components/campaign-script-view";
@@ -32,9 +31,7 @@ export default async function CampaignDetailPage({ params }: PageProps) {
   const t = await getTranslations('campaign.detail');
   const tStatus = await getTranslations('campaign.status');
   const format = await getFormatter();
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.getAll().map(c => `${c.name}=${c.value}`).join('; ');
-  const user = await getCurrentUser(cookieHeader);
+  const user = await getCurrentUser();
 
   let campaign: Campaign | null = null;
 

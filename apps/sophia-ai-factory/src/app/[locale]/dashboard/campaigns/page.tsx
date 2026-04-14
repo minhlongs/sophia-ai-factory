@@ -1,5 +1,5 @@
 import { createServerClient } from "@/lib/db/client";
-import { getCurrentUser } from "@/lib/db/auth";
+import { getCurrentUser } from "@/lib/better-auth-session";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -8,7 +8,6 @@ import { Plus } from "lucide-react";
 import { Campaign } from "@/types";
 import { CampaignExportControl } from "../components/campaign-export-control";
 import { getTranslations } from 'next-intl/server';
-import { cookies } from "next/headers";
 
 const CampaignList = dynamic(
   () => import("../components/campaign-list").then(m => ({ default: m.CampaignList })),
@@ -23,21 +22,28 @@ const CampaignList = dynamic(
   }
 );
 
+async function getAuthUserId(): Promise<string | null> {
+  try {
+    const user = await getCurrentUser();
+    return user?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export default async function CampaignsPage() {
   const t = await getTranslations('dashboard');
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.getAll().map(c => `${c.name}=${c.value}`).join('; ');
-  const user = await getCurrentUser(cookieHeader);
+  const userId = await getAuthUserId();
 
   let campaigns: Campaign[] = [];
 
-  if (user?.id) {
+  if (userId) {
     try {
       const db = createServerClient();
       const { data } = await db
         .from("campaigns")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .order("created_at", { ascending: false });
       campaigns = (data as Campaign[]) || [];
     } catch {

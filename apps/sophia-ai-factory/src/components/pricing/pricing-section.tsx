@@ -35,9 +35,29 @@ export function PricingSection() {
   const handleSelectTier = async (tier: string) => {
     const discount = discounts.get(tier);
 
-    // 100% off — free access, no checkout needed
+    // 100% off — activate coupon directly
     if (discount && discount.finalPrice === 0) {
-      alert("Free access granted! Contact support@sophia.agencyos.network to activate.");
+      setLoading(tier);
+      try {
+        const res = await fetch("/api/coupons/activate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ coupon: "FREE50", tier }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          window.location.href = `/dashboard?activated=${tier}&bonus=${data.mcuBonus}`;
+        } else if (res.status === 401) {
+          // Not logged in → login first, then activate
+          window.location.href = `/${locale}/login?coupon=FREE50&tier=${tier}&free=1`;
+        } else {
+          alert(data.error || "Activation failed");
+        }
+      } catch {
+        window.location.href = `/${locale}/login?coupon=FREE50&tier=${tier}&free=1`;
+      } finally {
+        setLoading(null);
+      }
       return;
     }
 

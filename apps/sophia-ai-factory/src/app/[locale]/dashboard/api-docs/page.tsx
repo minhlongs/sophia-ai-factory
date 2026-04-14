@@ -1,8 +1,8 @@
 import React from "react";
-import { getCurrentUser } from "@/lib/db/auth";
+import { getCurrentUser } from "@/lib/better-auth-session";
+import { getUserTier } from "@/lib/db/get-user-tier";
 import { Tier } from "@/types";
 import { getTranslations } from "next-intl/server";
-import { cookies } from "next/headers";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Code, Key, Lock } from "lucide-react";
 import Link from "next/link";
@@ -22,11 +22,9 @@ const API_ENDPOINTS = [
 
 export default async function ApiDocsPage() {
   const t = await getTranslations("dashboard.api_docs");
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.getAll().map(c => `${c.name}=${c.value}`).join('; ');
-  const user = await getCurrentUser(cookieHeader);
+  const user = await getCurrentUser();
 
-  const userTier: Tier = "BASIC";
+  const userTier: Tier = user ? await getUserTier(user.id) : "BASIC" as Tier;
 
   const hasAccess = userTier === "ENTERPRISE" || userTier === "MASTER";
 

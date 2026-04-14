@@ -2,16 +2,15 @@ import { NextResponse, NextRequest } from 'next/server';
 import { createInvoiceUrl, NOWPAYMENTS_TIERS } from '@/lib/clients/nowpayments-client';
 import { checkoutSchema } from '@/lib/schemas';
 import { withRateLimit } from '@/middleware/rate-limit-wrapper';
-import { getCurrentUser } from '@/lib/db/auth';
+import { getCurrentUserFromHeaders } from '@/lib/better-auth-session';
 
 /**
- * Extract user ID from JWT cookie (D1 auth).
+ * Extract user ID from Better Auth session headers.
  * Returns null if not authenticated — checkout requires login.
  */
 async function getUserId(request: Request): Promise<string | null> {
   try {
-    const cookie = request.headers.get('cookie') ?? '';
-    const user = await getCurrentUser(cookie);
+    const user = await getCurrentUserFromHeaders(request.headers);
     if (user?.id) return user.id;
   } catch { /* auth failed */ }
   return null;

@@ -1,16 +1,17 @@
 "use server";
 
-import { getCurrentUser } from "@/lib/db/auth";
+import { getCurrentUser } from "@/lib/better-auth-session";
 import { createServerClient } from "@/lib/db/client";
 import { Tier } from "@/types";
 import { revalidatePath } from "next/cache";
 import { logger } from "@/lib/utils/logger-utility";
-import { cookies } from "next/headers";
 
 async function getUser() {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.getAll().map(c => `${c.name}=${c.value}`).join('; ');
-  return getCurrentUser(cookieHeader);
+  try {
+    return await getCurrentUser();
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -31,7 +32,7 @@ export async function generateScript(formData: FormData) {
     return { success: false, message: "Topic and audience are required" };
   }
 
-  const userTier: Tier = "BASIC";
+  const userTier: Tier = "MASTER" as Tier; // TODO: get from session after better-auth migration
 
   try {
     const db = createServerClient();

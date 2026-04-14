@@ -1,46 +1,17 @@
-import { NextRequest, NextResponse } from "next/server";
-import { signOut } from "@/lib/db/auth";
-import { logoutSchema } from "@/lib/validators/auth";
-
-export const dynamic = "force-dynamic";
-
 /**
  * POST /api/auth/logout
- * Sign out the current user — clears auth-token cookie
+ *
+ * DEPRECATED — Better Auth handles sign-out via /api/auth/sign-out.
+ * Kept as fallback that clears legacy cookies.
  */
-export async function POST(request: NextRequest) {
-  try {
-    const authHeader = request.headers.get("authorization");
-    const accessToken = authHeader?.replace("Bearer ", "");
 
-    if (!accessToken) {
-      return NextResponse.json(
-        { error: "No access token provided" },
-        { status: 400 }
-      );
-    }
+import { NextResponse } from 'next/server';
 
-    const validatedData = logoutSchema.safeParse({ accessToken });
-    if (!validatedData.success) {
-      return NextResponse.json(
-        { error: validatedData.error.errors[0]?.message || "Invalid token" },
-        { status: 400 }
-      );
-    }
+export const dynamic = 'force-dynamic';
 
-    const { error } = await signOut(accessToken);
-
-    if (error) {
-      return NextResponse.json({ error }, { status: 400 });
-    }
-
-    const response = NextResponse.json({ message: "Logged out successfully" });
-    response.cookies.delete('auth-token');
-    return response;
-  } catch (e) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
-  }
+export async function POST() {
+  const response = NextResponse.json({ message: 'Logged out successfully' });
+  response.cookies.delete('auth-token');
+  response.cookies.delete('better-auth.session_token');
+  return response;
 }

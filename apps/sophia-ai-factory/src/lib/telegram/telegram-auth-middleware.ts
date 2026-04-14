@@ -1,4 +1,5 @@
-import { getUserTier, checkTierAccess } from '@/lib/subscription'
+import { getUserTier } from '@/lib/db/get-user-tier'
+import { checkTierAccess } from '@/lib/features'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { Tier } from '@/types'
 import { logger } from '@/lib/utils/logger-utility'

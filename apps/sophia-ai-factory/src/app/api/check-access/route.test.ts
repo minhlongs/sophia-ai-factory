@@ -3,8 +3,8 @@ import { GET } from './route';
 import { NextRequest } from 'next/server';
 import { tierGuard } from '@/lib/tier-guard';
 import { checkTierAccess } from '@/lib/features';
-import { createClient } from '@/lib/supabase/server';
-import { getUserTier } from '@/lib/subscription';
+import { getCurrentUserFromHeaders } from '@/lib/better-auth-session';
+import { getUserTier } from '@/lib/db/get-user-tier';
 
 // Type for mock NextResponse.json return value
 interface MockResponse {
@@ -15,12 +15,12 @@ interface MockResponse {
 // Mock dependencies
 vi.mock('@/lib/tier-guard');
 vi.mock('@/lib/features');
-vi.mock('@/lib/supabase/server', () => ({
-    createClient: vi.fn(),
+vi.mock('@/lib/better-auth-session', () => ({
+    getCurrentUserFromHeaders: vi.fn(),
 }));
-vi.mock('@/lib/subscription', () => ({
+vi.mock('@/lib/db/get-user-tier', () => ({
     getUserTier: vi.fn(),
-}));
+}), { virtual: true });
 
 // Mock NextResponse
 vi.mock('next/server', async (importOriginal) => {
@@ -40,14 +40,12 @@ describe('API check-access Integration', () => {
     beforeEach(() => {
         vi.clearAllMocks();
 
-        // Default: mock Supabase to return authenticated user
-        vi.mocked(createClient).mockResolvedValue({
-            auth: {
-                getUser: vi.fn().mockResolvedValue({
-                    data: { user: { id: 'user-123' } },
-                }),
-            },
-        } as unknown as ReturnType<typeof createClient> extends Promise<infer T> ? T : never);
+        // Default: mock getCurrentUserFromHeaders to return authenticated user
+        vi.mocked(getCurrentUserFromHeaders).mockResolvedValue({
+            id: 'user-123',
+            email: 'test@example.com',
+            role: 'user'
+        });
 
         vi.mocked(getUserTier).mockResolvedValue('BASIC');
     });

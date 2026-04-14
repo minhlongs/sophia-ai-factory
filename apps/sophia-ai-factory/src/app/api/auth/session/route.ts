@@ -1,38 +1,29 @@
 /**
  * GET /api/auth/session
  *
- * Returns current session state — authenticated user info or 401.
+ * Returns current session state using Better Auth.
  * Used by client-side auth provider to verify token validity.
  */
 
-import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { getCurrentUser } from '@/lib/better-auth-session';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('auth-token')?.value;
-
-  if (!token) {
-    return NextResponse.json({ authenticated: false }, { status: 401 });
-  }
-
   try {
-    const { verifyJwt } = await import('@/lib/db/auth-verify');
-    const payload = await verifyJwt(token);
+    const user = await getCurrentUser();
 
-    if (!payload) {
+    if (!user) {
       return NextResponse.json({ authenticated: false }, { status: 401 });
     }
 
     return NextResponse.json({
       authenticated: true,
       user: {
-        id: payload.sub,
-        email: payload.email,
-        orgId: payload.org_id,
-        role: payload.role,
+        id: user.id,
+        email: user.email,
+        role: user.role,
       },
     });
   } catch {

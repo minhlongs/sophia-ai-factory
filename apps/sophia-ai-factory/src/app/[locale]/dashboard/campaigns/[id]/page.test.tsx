@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import Page from './page';
+import { getCurrentUser } from '@/lib/better-auth-session';
 
 // Mock modules
 vi.mock('next/navigation', () => ({
@@ -30,27 +31,28 @@ vi.mock('next/dynamic', () => ({
   },
 }));
 
-// Mock Supabase
-const mockGetSession = vi.fn();
+// Mock Better Auth session and DB client
+vi.mock('@/lib/better-auth-session', () => ({
+  getCurrentUser: vi.fn(),
+}));
+
 const mockFrom = vi.fn();
 const mockSelect = vi.fn();
 const mockEq = vi.fn();
 const mockSingle = vi.fn();
 
-const mockSupabase = {
-  auth: {
-    getSession: mockGetSession,
-  },
+const mockDb = {
   from: mockFrom,
 };
 
-// Chain setup
+// Chain setup: from().select().eq().eq().single()
 mockFrom.mockReturnValue({ select: mockSelect });
 mockSelect.mockReturnValue({ eq: mockEq });
-mockEq.mockReturnValue({ single: mockSingle });
+// eq is called twice, both times should return an object with eq() method
+mockEq.mockReturnValue({ eq: mockEq, single: mockSingle });
 
-vi.mock('@/lib/supabase/server', () => ({
-  createServerClient: vi.fn(() => Promise.resolve(mockSupabase)),
+vi.mock('@/lib/db/client', () => ({
+  createServerClient: vi.fn(() => mockDb),
 }));
 
 vi.mock('next-intl/server', () => ({
@@ -77,7 +79,7 @@ describe('CampaignDetailPage', () => {
 
   it('redirects to login if no session', async () => {
     const { redirect } = await import('next/navigation');
-    mockGetSession.mockResolvedValue({ data: { session: null } });
+    vi.mocked(getCurrentUser).mockResolvedValue(null);
 
     // In a server component test, we call the function directly
     try {
@@ -91,7 +93,7 @@ describe('CampaignDetailPage', () => {
 
   it('calls notFound if campaign not found', async () => {
     const { notFound } = await import('next/navigation');
-    mockGetSession.mockResolvedValue({ data: { session: { user: { id: 'u1' } } } });
+    vi.mocked(getCurrentUser).mockResolvedValue({ id: 'u1', email: 'test@example.com', role: 'user' });
     mockSingle.mockResolvedValue({ data: null });
 
     try {
@@ -104,7 +106,7 @@ describe('CampaignDetailPage', () => {
   });
 
   it('renders campaign details when found', async () => {
-    mockGetSession.mockResolvedValue({ data: { session: { user: { id: 'u1' } } } });
+    vi.mocked(getCurrentUser).mockResolvedValue({ id: 'u1', email: 'test@example.com', role: 'user' });
     const mockCampaign = {
       id: 'c1',
       title: 'Test Campaign',
@@ -135,7 +137,7 @@ describe('CampaignDetailPage', () => {
   });
 
   it('renders correctly for failed state', async () => {
-    mockGetSession.mockResolvedValue({ data: { session: { user: { id: 'u1' } } } });
+    vi.mocked(getCurrentUser).mockResolvedValue({ id: 'u1', email: 'test@example.com', role: 'user' });
     const mockCampaign = {
       id: 'c1',
       title: 'Failed Campaign',

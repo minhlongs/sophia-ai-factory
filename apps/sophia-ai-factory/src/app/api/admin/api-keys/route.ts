@@ -26,7 +26,7 @@ export const dynamic = 'force-dynamic'
  * Returns user ID if authorized, null otherwise
  */
 async function getAuthorizedUserId(request: NextRequest): Promise<string | null> {
-  // Try JWT first (Authorization: Bearer <token>)
+  // Try JWT from Authorization header first (Bearer <token>)
   const authHeader = request.headers.get('authorization')
   if (authHeader?.startsWith('Bearer ')) {
     const jwtResult = await validateJwt(authHeader)
@@ -35,16 +35,30 @@ async function getAuthorizedUserId(request: NextRequest): Promise<string | null>
     }
   }
 
+  // Try Better Auth session cookie (dashboard users)
+  try {
+    const { getCurrentUserFromHeaders } = await import('@/lib/better-auth-session')
+    const user = await getCurrentUserFromHeaders(request.headers)
+    if (user) return user.id
+  } catch { /* Better Auth session check failed */ }
+
+  // Legacy: Try JWT from auth-token cookie
+  const cookieToken = request.cookies.get('auth-token')?.value
+  if (cookieToken) {
+    const jwtResult = await validateJwt(`Bearer ${cookieToken}`)
+    if (jwtResult.valid) {
+      return jwtResult.payload?.sub || null
+    }
+  }
+
   // Fallback to Basic Auth
-  const basicAuth = authHeader
-  if (basicAuth) {
+  if (authHeader) {
     try {
-      const authValue = basicAuth.split(' ')[1]
+      const authValue = authHeader.split(' ')[1]
       const [user, pwd] = atob(authValue).split(':')
       const validUser = process.env.ADMIN_USER
       const validPass = process.env.ADMIN_PASS
       if (user === validUser && pwd === validPass) {
-        // For Basic Auth, return a special admin user ID
         return 'admin-basic-auth'
       }
     } catch {

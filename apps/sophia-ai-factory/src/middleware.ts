@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import createMiddleware from "next-intl/middleware";
-import { verifyJwt } from "./lib/db/auth-verify";
+import { getAuth } from "./lib/better-auth-server";
 import { applyCorsHeaders, handleCorsPrelight } from "./lib/security/cors-security-configuration";
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS } from "./lib/security/rate-limiting-middleware";
 import { raasGate, shouldApplyRaasGate } from "./lib/raas-gate";
@@ -195,18 +195,15 @@ export async function proxy(request: NextRequest) {
     return NextResponse.rewrite(url);
   }
 
-  // 3. Dashboard Auth Check (D1 JWT Cookie)
+  // 3. Dashboard Auth Check (Better Auth session cookie)
   const cleanPath = pathnameWithoutLocale(pathname);
   if (cleanPath.startsWith("/dashboard")) {
-    const token = request.cookies.get('auth-token')?.value;
-
-    if (!token) {
-      return NextResponse.redirect(new URL("/login", request.url));
-    }
-
     try {
-      const payload = await verifyJwt(token);
-      if (!payload) {
+      const auth = getAuth();
+      const session = await auth.api.getSession({
+        headers: request.headers,
+      });
+      if (!session) {
         return NextResponse.redirect(new URL("/login", request.url));
       }
     } catch {

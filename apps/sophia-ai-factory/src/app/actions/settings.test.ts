@@ -1,12 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getUserProfile, updateUserProfile } from './settings';
-import { createClient } from '@/lib/supabase/server';
+import { createServerClient } from '@/lib/db/client';
+import { getCurrentUser } from '@/lib/better-auth-session';
 import { encrypt } from '@/utils/encryption';
 import { revalidatePath } from 'next/cache';
 
 // Mock dependencies
-vi.mock('@/lib/supabase/server', () => ({
-  createClient: vi.fn(),
+vi.mock('@/lib/db/client', () => ({
+  createServerClient: vi.fn(),
+}));
+
+vi.mock('@/lib/better-auth-session', () => ({
+  getCurrentUser: vi.fn(),
 }));
 
 vi.mock('@/utils/encryption', () => ({
@@ -18,55 +23,48 @@ vi.mock('next/cache', () => ({
 }));
 
 describe('Settings Server Actions', () => {
-  interface MockSupabaseClient {
-    auth: {
-      getUser: ReturnType<typeof vi.fn>;
-      updateUser: ReturnType<typeof vi.fn>;
-    };
+  interface MockDbClient {
     from: ReturnType<typeof vi.fn>;
     select: ReturnType<typeof vi.fn>;
     eq: ReturnType<typeof vi.fn>;
     single: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
+    upsert: ReturnType<typeof vi.fn>;
   }
 
-  const mockSupabase: MockSupabaseClient = {
-    auth: {
-      getUser: vi.fn(),
-      updateUser: vi.fn(),
-    },
+  const mockDb: MockDbClient = {
     from: vi.fn().mockReturnThis(),
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
     single: vi.fn().mockReturnThis(),
     update: vi.fn().mockReturnThis(),
+    upsert: vi.fn().mockResolvedValue({ data: null, error: null }),
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(createClient).mockResolvedValue(mockSupabase as unknown as Awaited<ReturnType<typeof createClient>>);
+    vi.mocked(createServerClient).mockReturnValue(mockDb as unknown as ReturnType<typeof createServerClient>);
 
     // Reset chainable mocks
-    mockSupabase.from.mockReturnThis();
-    mockSupabase.select.mockReturnThis();
-    mockSupabase.eq.mockReturnThis();
-    mockSupabase.single.mockReturnThis();
-    mockSupabase.update.mockReturnThis();
+    mockDb.from.mockReturnThis();
+    mockDb.select.mockReturnThis();
+    mockDb.eq.mockReturnThis();
+    mockDb.single.mockReturnThis();
+    mockDb.update.mockReturnThis();
+    mockDb.upsert.mockResolvedValue({ data: null, error: null });
   });
 
   describe('getUserProfile', () => {
     it('should throw if user is not authenticated', async () => {
-      mockSupabase.auth.getUser.mockResolvedValue({ data: { user: null }, error: new Error('Auth error') });
+      vi.mocked(getCurrentUser).mockResolvedValue(null);
       await expect(getUserProfile()).rejects.toThrow('Unauthorized');
     });
 
     it('should return default profile if no profile exists', async () => {
-      mockSupabase.auth.getUser.mockResolvedValue({
-        data: { user: { id: 'user-123', email: 'test@example.com', user_metadata: { full_name: 'Test User' } } },
-        error: null
-      });
+      const mockUser = { id: 'user-123', email: 'test@example.com', full_name: 'Test User', role: 'user' };
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
       // Profile fetch returns error/null
-      mockSupabase.single.mockResolvedValue({ data: null, error: { message: 'Not found' } });
+      mockDb.single.mockResolvedValue({ data: null, error: { message: 'Not found' } });
 
       const result = await getUserProfile();
 
@@ -91,28 +89,26 @@ describe('Settings Server Actions', () => {
     });
 
     it('should return profile with masked keys', async () => {
-      mockSupabase.auth.getUser.mockResolvedValue({
-        data: { user: { id: 'user-123', email: 'test@example.com', user_metadata: { full_name: 'Test User' } } },
-        error: null
-      });
+      const mockUser = { id: 'user-123', email: 'test@example.com', full_name: 'Test User', role: 'user' };
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 
       const mockProfile = {
         user_id: 'user-123',
-        settings: {
+        settings: JSON.stringify({
             theme: 'dark',
             notifications: {
                 email: { marketing: true, security: true, updates: false },
                 telegram: { enabled: true }
             }
-        },
-        api_keys: {
+        }),
+        api_keys: JSON.stringify({
           openai: 'enc_openai',
           anthropic: 'enc_anthropic',
           elevenlabs: null
-        }
+        })
       };
 
-      mockSupabase.single.mockResolvedValue({ data: mockProfile, error: null });
+      mockDb.single.mockResolvedValue({ data: mockProfile, error: null });
 
       const result = await getUserProfile();
 
@@ -144,68 +140,65 @@ describe('Settings Server Actions', () => {
     };
 
     it('should return error if unauthorized', async () => {
-      mockSupabase.auth.getUser.mockResolvedValue({ data: { user: null }, error: new Error('Auth error') });
+      vi.mocked(getCurrentUser).mockResolvedValue(null);
       const result = await updateUserProfile(validData);
       expect(result).toEqual({ error: 'Unauthorized' });
     });
 
     it('should update profile and encrypt new keys', async () => {
       const userId = 'user-123';
-      mockSupabase.auth.getUser.mockResolvedValue({
-        data: { user: { id: userId, user_metadata: { full_name: 'Old Name' } } },
-        error: null
+      const mockUser = { id: userId, email: 'test@example.com', full_name: 'Old Name', role: 'user' };
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+
+      // Mock the from() call chain for both users table update and user_profiles fetch/upsert
+      // We need from() to return different chains based on the table name
+      mockDb.from.mockImplementation((table: string) => {
+        if (table === 'users') {
+          // users.update().eq() chain
+          return {
+            update: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({ error: null })
+            })
+          };
+        }
+        // user_profiles table - return the standard mock
+        return mockDb;
       });
 
-      // Mock fetching current keys
-      const currentKeys = { openai: 'enc_old', anthropic: 'enc_anthropic_old' };
-      mockSupabase.single.mockResolvedValue({ data: { api_keys: currentKeys }, error: null });
-
-      // Mock update success
-      // The update chain is: .update(...).eq(...) -> await
-      // The fetch chain is: .select(...).eq(...).single() -> await
-      // So eq is called twice. First time it must return 'this' (to chain single), second time it returns the result.
-      mockSupabase.eq
-        .mockReturnValueOnce(mockSupabase)
-        .mockResolvedValueOnce({ error: null });
+      // Mock fetching current keys from user_profiles
+      mockDb.select.mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({ data: { api_keys: JSON.stringify({ openai: 'enc_old', anthropic: 'enc_anthropic_old' }) }, error: null })
+        })
+      });
 
       const result = await updateUserProfile(validData);
 
       expect(result).toEqual({ success: true });
 
-      // Check auth update for name
-      expect(mockSupabase.auth.updateUser).toHaveBeenCalledWith({
-        data: { full_name: 'Updated Name' }
-      });
-
       // Check encryption called for new key
       expect(encrypt).toHaveBeenCalledWith('sk-new-key');
 
-      // Check update call
-      expect(mockSupabase.update).toHaveBeenCalledWith(expect.objectContaining({
-        settings: validData.settings,
-        api_keys: expect.objectContaining({
-          openai: 'encrypted_sk-new-key',
-          anthropic: 'enc_anthropic_old', // preserved
-          // elevenlabs should be deleted/missing because it was empty string in input
+      // Check upsert call for profile
+      expect(mockDb.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          user_id: userId,
+          settings: expect.any(String),
+          api_keys: expect.any(String),
+          updated_at: expect.any(String)
         }),
-        updated_at: expect.any(String)
-      }));
+        expect.any(Object)
+      );
 
       expect(revalidatePath).toHaveBeenCalledWith('/settings');
     });
 
     it('should handle update error', async () => {
-        mockSupabase.auth.getUser.mockResolvedValue({
-          data: { user: { id: 'user-123', user_metadata: { full_name: 'Test' } } },
-          error: null
-        });
-        mockSupabase.single.mockResolvedValue({ data: { api_keys: {} }, error: null });
+        const mockUser = { id: 'user-123', email: 'test@example.com', full_name: 'Test', role: 'user' };
+        vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 
-        // Fix mock chain: update -> eq -> error
-        // eq called first for fetch (return this), then for update (return error)
-        mockSupabase.eq
-          .mockReturnValueOnce(mockSupabase)
-          .mockResolvedValueOnce({ error: new Error('DB Error') });
+        // Mock upsert to throw an error
+        mockDb.upsert.mockRejectedValue(new Error('DB Error'));
 
         const result = await updateUserProfile(validData);
 

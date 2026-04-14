@@ -1,21 +1,18 @@
 'use server';
 
-import { getCurrentUser } from '@/lib/db/auth';
+import { getCurrentUser } from '@/lib/better-auth-session';
 import { createServerClient } from '@/lib/db/client';
 import { revalidatePath } from 'next/cache';
 import { encrypt } from '@/utils/encryption';
 import { UserProfileFormValues, userProfileFormSchema } from '@/lib/schemas/settings';
 import { EncryptedApiKeys } from '@/types/user';
-import { cookies } from 'next/headers';
 
 /**
  * Fetch the current user's profile, including settings and masked API keys.
- * Uses D1 auth (not Supabase).
+ * Uses Better Auth sessions (D1).
  */
 export async function getUserProfile(): Promise<UserProfileFormValues> {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.getAll().map(c => `${c.name}=${c.value}`).join('; ');
-  const user = await getCurrentUser(cookieHeader);
+  const user = await getCurrentUser();
 
   if (!user) {
     throw new Error('Unauthorized');
@@ -95,9 +92,7 @@ export async function updateUserProfile(data: UserProfileFormValues) {
 
   const { settings, apiKeys, fullName } = result.data;
 
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.getAll().map(c => `${c.name}=${c.value}`).join('; ');
-  const user = await getCurrentUser(cookieHeader);
+  const user = await getCurrentUser();
 
   if (!user) {
     return { error: 'Unauthorized' };

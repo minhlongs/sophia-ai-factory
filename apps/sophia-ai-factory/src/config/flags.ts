@@ -98,8 +98,8 @@ export function getFeatureFlag(flag: FeatureFlag): boolean {
     return envValue === "true" || envValue === "1";
   }
 
-  // Return default value
-  return DEFAULT_FLAGS[flag].enabled;
+  // Return default value (unknown flags default to true)
+  return DEFAULT_FLAGS[flag]?.enabled ?? true;
 }
 
 /**
@@ -119,5 +119,5 @@ export function getAllFeatureFlags(): Record<FeatureFlag, boolean> {
  * Get feature flag description
  */
 export function getFeatureFlagDescription(flag: FeatureFlag): string {
-  return DEFAULT_FLAGS[flag].description;
+  return DEFAULT_FLAGS[flag]?.description ?? flag;
 }

@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { FeatureFlag, Tier } from "@/types";
 import { checkTierAccess } from "@/lib/features";
 import { tierGuard, LimitType } from "@/lib/tier-guard";
-import { createClient } from "@/lib/supabase/server";
-import { getUserTier } from "@/lib/subscription";
+import { getUserTier } from "@/lib/db/get-user-tier";
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,31 +10,19 @@ export async function GET(request: NextRequest) {
     const feature = searchParams.get("feature") as FeatureFlag | null;
     const limitType = searchParams.get("limit") as LimitType | null;
 
-    // Get user tier from auth session, fall back to query param for dev/testing
+    // Get user tier from Better Auth session
     let userTier: Tier = "BASIC";
-    let userId = "mock-user-id";
+    let userId = "anonymous";
 
     try {
-      const supabase = await createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-
+      const { getCurrentUserFromHeaders } = await import("@/lib/better-auth-session");
+      const user = await getCurrentUserFromHeaders(request.headers);
       if (user) {
         userId = user.id;
-        userTier = await getUserTier(user.id);
-      } else if (process.env.NODE_ENV === "development") {
-        // Fallback to query params ONLY in development
-        const tierParam = searchParams.get("tier") as Tier | null;
-        userTier = tierParam || "BASIC";
-        userId = searchParams.get("userId") || "mock-user-id";
+        userTier = await getUserTier(userId);
       }
-      // In production, unauthenticated users get BASIC tier (default)
     } catch {
-      if (process.env.NODE_ENV === "development") {
-        const tierParam = searchParams.get("tier") as Tier | null;
-        userTier = tierParam || "BASIC";
-        userId = searchParams.get("userId") || "mock-user-id";
-      }
-      // In production, auth failure defaults to BASIC tier
+      // Auth failure defaults to BASIC tier
     }
 
     if (limitType) {
@@ -68,9 +55,9 @@ export async function GET(request: NextRequest) {
       { error: "Missing feature or limit parameter" },
       { status: 400 }
     );
-  } catch {
+  } catch (e) {
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Internal server error", detail: (e as Error).message },
       { status: 500 }
     );
   }
