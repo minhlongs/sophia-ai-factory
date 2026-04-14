@@ -124,7 +124,7 @@ export default function FAQGuidePage() {
         Liên hệ hỗ trợ qua Telegram{" "}
         <strong className="text-foreground">@Sophia_Bbot</strong> hoặc email{" "}
         <strong className="text-foreground">support@agencyos.network</strong>.
-        Gói PREMIUM và ENTERPRISE được hỗ trợ ưu tiên. Gói ENTERPRISE hỗ trợ 24/7.
+        Gói Growth và Premium được hỗ trợ ưu tiên. Gói Master hỗ trợ VIP 24/7.
       </GuideCallout>
     </div>
   );

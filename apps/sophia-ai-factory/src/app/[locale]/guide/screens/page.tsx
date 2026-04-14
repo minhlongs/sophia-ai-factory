@@ -49,7 +49,7 @@ const dashboardFeatures: GuideFeatureItem[] = [
 
 const pageSummary = [
   { url: "/", name: "Trang Chủ", desc: "Giới thiệu tính năng, bảng giá, và đăng ký" },
-  { url: "/pricing", name: "Bảng Giá", desc: "So sánh 3 gói: BASIC, PREMIUM, ENTERPRISE" },
+  { url: "/pricing", name: "Bảng Giá", desc: "So sánh 4 gói: Starter, Growth, Premium, Master" },
   { url: "/setup-wizard", name: "Thiết Lập", desc: "Trình hướng dẫn 4 bước nhập API Keys" },
   { url: "/dashboard", name: "Dashboard", desc: "Trung tâm điều khiển chính" },
   { url: "/dashboard/create", name: "Tạo Chiến Dịch", desc: "Form tạo video mới" },

@@ -7,7 +7,7 @@ import { YouTubeEmbed } from "@/components/guide/youtube-embed";
 
 export const metadata: Metadata = {
   title: "Tích Hợp Dịch Vụ — Hướng Dẫn Sophia AI Factory",
-  description: "Hướng dẫn kết nối OpenRouter, ElevenLabs, HeyGen, Supabase, NOWPayments và Telegram Bot",
+  description: "Hướng dẫn kết nối OpenRouter, ElevenLabs, HeyGen, Cloudflare D1, NOWPayments và Telegram Bot",
 };
 
 const services: GuideFeatureItem[] = [
@@ -31,8 +31,8 @@ const services: GuideFeatureItem[] = [
   },
   {
     icon: Database,
-    title: "Supabase — Cơ Sở Dữ Liệu",
-    description: "Lưu trữ và đồng bộ dữ liệu chiến dịch, API keys và cấu hình hệ thống an toàn.",
+    title: "Cloudflare D1 — Cơ Sở Dữ Liệu",
+    description: "Lưu trữ dữ liệu chiến dịch, API keys và cấu hình hệ thống. Chạy trên edge, tốc độ cao.",
     iconColor: "text-emerald-400",
   },
   {
@@ -163,11 +163,11 @@ export default function IntegrationsGuidePage() {
       {/* Supabase */}
       <section className="space-y-4">
         <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-          <Database className="w-5 h-5 text-emerald-400" /> Supabase — Cơ Sở Dữ Liệu
+          <Database className="w-5 h-5 text-emerald-400" /> Cloudflare D1 — Cơ Sở Dữ Liệu
         </h2>
         <GuideCallout variant="info">
-          Supabase được Sophia cấu hình sẵn. Bạn không cần thiết lập gì thêm — dữ liệu của bạn
-          được lưu và mã hóa tự động.
+          Cơ sở dữ liệu được Sophia cấu hình sẵn trên Cloudflare D1 (edge database). Bạn không cần thiết lập gì thêm — dữ liệu của bạn
+          được lưu và bảo mật tự động.
         </GuideCallout>
       </section>
 
