@@ -51,6 +51,7 @@ export default async function AnalyticsPage() {
     const { data } = await db
       .from("campaigns")
       .select("*")
+      .eq("user_id", userId)
       .order("created_at", { ascending: false });
     if (data) campaigns = data as Campaign[];
   } catch {

@@ -1,13 +1,24 @@
 import { createServerClient } from "@/lib/db/client";
+import { getCurrentUser } from "@/lib/db/auth";
 import { AdminUsersClient, type AdminUserRow } from "./admin-users-client";
+import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
 /**
  * Admin Users Management page (server component).
- * Lists all users from D1 users table.
+ * Lists all users from D1 users table. Requires admin role.
  */
 export default async function AdminUsersPage() {
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.getAll().map(c => `${c.name}=${c.value}`).join('; ');
+  const currentUser = await getCurrentUser(cookieHeader);
+
+  if (!currentUser || currentUser.role !== 'admin') {
+    redirect('/dashboard');
+  }
+
   let users: AdminUserRow[] = [];
   try {
     const db = createServerClient();

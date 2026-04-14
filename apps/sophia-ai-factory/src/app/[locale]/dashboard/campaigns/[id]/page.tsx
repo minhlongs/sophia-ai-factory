@@ -45,6 +45,7 @@ export default async function CampaignDetailPage({ params }: PageProps) {
         .from("campaigns")
         .select("*")
         .eq("id", id)
+        .eq("user_id", user.id)
         .single();
       campaign = data ? (data as unknown as Campaign) : null;
     } catch {
