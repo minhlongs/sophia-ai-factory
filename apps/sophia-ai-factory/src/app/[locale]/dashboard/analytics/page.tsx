@@ -1,6 +1,6 @@
 import React from "react";
 import dynamic from "next/dynamic";
-import { createServerClient } from "@/lib/db/client";
+import { getD1Client } from "@/lib/db/client";
 import { getCurrentUser } from "@/lib/better-auth-session";
 import { getUserTier } from "@/lib/db/get-user-tier";
 import { Campaign, Tier } from "@/types";
@@ -45,7 +45,7 @@ export default async function AnalyticsPage() {
   const userId = user.id;
 
   try {
-    const db = createServerClient();
+    const db = await getD1Client();
     const { data } = await db
       .from("campaigns")
       .select("*")
