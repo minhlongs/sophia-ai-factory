@@ -1,81 +1,85 @@
 'use server';
 
-import { createClient } from '@/lib/supabase/server';
+import { getCurrentUser } from '@/lib/db/auth';
+import { createServerClient } from '@/lib/db/client';
 import { revalidatePath } from 'next/cache';
 import { encrypt } from '@/utils/encryption';
 import { UserProfileFormValues, userProfileFormSchema } from '@/lib/schemas/settings';
-import { UserSettings, EncryptedApiKeys } from '@/types/user';
-import { Database } from '@/lib/supabase/types';
-
-type ProfileRow = Database['public']['Tables']['user_profiles']['Row'];
+import { EncryptedApiKeys } from '@/types/user';
+import { cookies } from 'next/headers';
 
 /**
- * Fetch the current user's profile, including settings and masked API keys
+ * Fetch the current user's profile, including settings and masked API keys.
+ * Uses D1 auth (not Supabase).
  */
 export async function getUserProfile(): Promise<UserProfileFormValues> {
-  const supabase = await createClient();
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.getAll().map(c => `${c.name}=${c.value}`).join('; ');
+  const user = await getCurrentUser(cookieHeader);
 
-  if (authError || !user) {
+  if (!user) {
     throw new Error('Unauthorized');
   }
 
-  const { data, error: profileError } = await supabase
-    .from('user_profiles')
-    .select('*')
-    .eq('user_id', user.id)
-    .single();
+  // Try to fetch profile from D1 user_profiles table
+  try {
+    const db = createServerClient();
+    const { data } = await db
+      .from('user_profiles')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
 
-  if (profileError || !data) {
-    // If profile doesn't exist yet (race condition with trigger), return default
-    return {
-      fullName: user.user_metadata?.full_name || '',
-      email: user.email || '',
-      settings: {
-        theme: 'system',
-        notifications: {
-          email: { marketing: false, security: true, updates: true },
-          telegram: { enabled: false },
+    if (data) {
+      const profile = data as Record<string, unknown>;
+      const apiKeys = (profile.api_keys ? JSON.parse(profile.api_keys as string) : {}) as EncryptedApiKeys;
+      const settings = profile.settings ? JSON.parse(profile.settings as string) : {};
+
+      const maskedKeys = {
+        openai: apiKeys.openai ? '********' : '',
+        anthropic: apiKeys.anthropic ? '********' : '',
+        elevenlabs: apiKeys.elevenlabs ? '********' : '',
+      };
+
+      const theme = (settings.theme === 'light' || settings.theme === 'dark' || settings.theme === 'system')
+        ? settings.theme
+        : 'system';
+
+      return {
+        fullName: (user.full_name as string) || '',
+        email: user.email || '',
+        settings: {
+          theme,
+          notifications: {
+            email: {
+              marketing: settings.notifications?.email?.marketing ?? false,
+              security: settings.notifications?.email?.security ?? true,
+              updates: settings.notifications?.email?.updates ?? true,
+            },
+            telegram: {
+              enabled: settings.notifications?.telegram?.enabled ?? false,
+            },
+          },
         },
-      },
-      apiKeys: { openai: '', anthropic: '', elevenlabs: '' },
-    };
+        apiKeys: maskedKeys,
+      };
+    }
+  } catch {
+    // user_profiles table may not exist yet in D1
   }
 
-  const profile = data as ProfileRow;
-
-  // Decrypt keys only to check existence/mask them (NEVER send full keys to client)
-  const apiKeys = (profile.api_keys as unknown as EncryptedApiKeys) || {};
-  const maskedKeys = {
-    openai: apiKeys.openai ? '********' : '',
-    anthropic: apiKeys.anthropic ? '********' : '',
-    elevenlabs: apiKeys.elevenlabs ? '********' : '',
-  };
-
-  const currentSettings = (profile.settings as unknown as UserSettings) || {};
-
-  // Ensure theme is one of the valid values
-  const theme = (currentSettings.theme === 'light' || currentSettings.theme === 'dark' || currentSettings.theme === 'system')
-    ? currentSettings.theme
-    : 'system';
-
+  // Default profile
   return {
-    fullName: user.user_metadata?.full_name || '',
+    fullName: (user.full_name as string) || '',
     email: user.email || '',
     settings: {
-      theme: theme,
+      theme: 'system',
       notifications: {
-        email: {
-          marketing: currentSettings.notifications?.email?.marketing ?? false,
-          security: currentSettings.notifications?.email?.security ?? true,
-          updates: currentSettings.notifications?.email?.updates ?? true,
-        },
-        telegram: {
-          enabled: currentSettings.notifications?.telegram?.enabled ?? false,
-        },
+        email: { marketing: false, security: true, updates: true },
+        telegram: { enabled: false },
       },
     },
-    apiKeys: maskedKeys,
+    apiKeys: { openai: '', anthropic: '', elevenlabs: '' },
   };
 }
 
@@ -91,41 +95,45 @@ export async function updateUserProfile(data: UserProfileFormValues) {
 
   const { settings, apiKeys, fullName } = result.data;
 
-  const supabase = await createClient();
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.getAll().map(c => `${c.name}=${c.value}`).join('; ');
+  const user = await getCurrentUser(cookieHeader);
 
-  if (authError || !user) {
+  if (!user) {
     return { error: 'Unauthorized' };
   }
 
   try {
-    // 1. Update Auth Metadata (Full Name)
-    if (fullName !== user.user_metadata?.full_name) {
-      await supabase.auth.updateUser({
-        data: { full_name: fullName }
-      });
+    const db = createServerClient();
+
+    // Update user full_name in users table
+    if (fullName !== user.full_name) {
+      await db.from('users').update({ full_name: fullName }).eq('id', user.id);
     }
 
-    // 2. Handle API Keys Encryption
-    // Only update keys that are not masked ('********') or empty.
-    // Empty string = user explicitly cleared the key.
+    // Fetch existing keys to merge
+    let currentKeys: EncryptedApiKeys = {};
+    try {
+      const { data: currentData } = await db
+        .from('user_profiles')
+        .select('api_keys')
+        .eq('user_id', user.id)
+        .single();
 
-    // First fetch existing keys to merge
-    const { data: currentData } = await supabase
-      .from('user_profiles')
-      .select('api_keys')
-      .eq('user_id', user.id)
-      .single();
+      if (currentData) {
+        const row = currentData as Record<string, unknown>;
+        currentKeys = (row.api_keys ? JSON.parse(row.api_keys as string) : {}) as EncryptedApiKeys;
+      }
+    } catch {
+      // profile may not exist yet
+    }
 
-    const currentProfile = currentData as { api_keys: unknown } | null;
-    const currentKeys = (currentProfile?.api_keys as EncryptedApiKeys) || {};
     const newEncryptedKeys: EncryptedApiKeys = { ...currentKeys };
 
-    // Process each key type
     if (apiKeys.openai && apiKeys.openai !== '********') {
       newEncryptedKeys.openai = encrypt(apiKeys.openai);
     } else if (apiKeys.openai === '') {
-       if (apiKeys.openai === '') delete newEncryptedKeys.openai;
+      delete newEncryptedKeys.openai;
     }
 
     if (apiKeys.anthropic && apiKeys.anthropic !== '********') {
@@ -137,21 +145,21 @@ export async function updateUserProfile(data: UserProfileFormValues) {
     if (apiKeys.elevenlabs && apiKeys.elevenlabs !== '********') {
       newEncryptedKeys.elevenlabs = encrypt(apiKeys.elevenlabs);
     } else if (apiKeys.elevenlabs === '') {
-       delete newEncryptedKeys.elevenlabs;
+      delete newEncryptedKeys.elevenlabs;
     }
 
-    // 3. Update Profile Table
-    const { error: updateError } = await supabase
+    // Upsert profile
+    await db
       .from('user_profiles')
-      // @ts-expect-error - Known Supabase typing limitation with update on tables with Json columns
-      .update({
-        settings: settings,
-        api_keys: newEncryptedKeys,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('user_id', user.id);
-
-    if (updateError) throw updateError;
+      .upsert(
+        {
+          user_id: user.id,
+          settings: JSON.stringify(settings),
+          api_keys: JSON.stringify(newEncryptedKeys),
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id' },
+      );
 
     revalidatePath('/settings');
     return { success: true };

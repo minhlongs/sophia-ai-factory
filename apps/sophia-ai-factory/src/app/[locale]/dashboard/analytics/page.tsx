@@ -1,11 +1,12 @@
 import React from "react";
 import dynamic from "next/dynamic";
-import { createServerClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createServerClient } from "@/lib/db/client";
+import { getCurrentUser } from "@/lib/db/auth";
 import { Campaign, Tier } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getTranslations } from 'next-intl/server';
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 
 const AnalyticsView = dynamic(
   () => import("./components/analytics-view").then(m => ({ default: m.AnalyticsView })),
@@ -33,32 +34,27 @@ export const metadata = {
 
 export default async function AnalyticsPage() {
   const t = await getTranslations('dashboard.analytics');
-  const supabase = await createServerClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.getAll().map(c => `${c.name}=${c.value}`).join('; ');
+  const user = await getCurrentUser(cookieHeader);
 
-  if (!session) {
+  if (!user) {
     redirect('/login');
   }
 
   let campaigns: Campaign[] = [];
-  let userTier: Tier = "BASIC";
-  const userId = session.user.id;
+  const userTier: Tier = "BASIC";
+  const userId = user.id;
 
-  // Get user tier from metadata
-  const tier = session.user.user_metadata?.tier;
-  if (tier === "PREMIUM" || tier === "ENTERPRISE" || tier === "MASTER") {
-    userTier = tier;
-  }
-
-  const { data, error } = await supabase
-    .from("campaigns")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  if (!error && data) {
-    campaigns = data as Campaign[];
+  try {
+    const db = createServerClient();
+    const { data } = await db
+      .from("campaigns")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (data) campaigns = data as Campaign[];
+  } catch {
+    campaigns = [];
   }
 
   return (

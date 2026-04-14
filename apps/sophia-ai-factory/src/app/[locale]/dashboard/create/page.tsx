@@ -1,9 +1,10 @@
 import React from "react";
 import dynamic from "next/dynamic";
 import { templateService } from "@/lib/services/template-service";
-import { createServerClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/db/auth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getTranslations } from 'next-intl/server';
+import { cookies } from "next/headers";
 
 const CreateProjectFormWithTemplates = dynamic(
   () => import("../components/campaign-creation-form-with-template-selector").then(m => ({ default: m.CreateProjectFormWithTemplates })),
@@ -22,10 +23,11 @@ const CreateProjectFormWithTemplates = dynamic(
 
 export default async function CreateProjectPage() {
   const t = await getTranslations('campaign.template_selection');
-  const supabase = await createServerClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.getAll().map(c => `${c.name}=${c.value}`).join('; ');
+  const user = await getCurrentUser(cookieHeader);
 
-  const templates = await templateService.getTemplates(session?.user?.id);
+  const templates = await templateService.getTemplates(user?.id);
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">

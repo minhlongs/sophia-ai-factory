@@ -1,7 +1,8 @@
 import React from "react";
-import { createServerClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/db/auth";
 import { Tier } from "@/types";
 import { getTranslations } from "next-intl/server";
+import { cookies } from "next/headers";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Code, Key, Lock } from "lucide-react";
 import Link from "next/link";
@@ -21,18 +22,11 @@ const API_ENDPOINTS = [
 
 export default async function ApiDocsPage() {
   const t = await getTranslations("dashboard.api_docs");
-  const supabase = await createServerClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.getAll().map(c => `${c.name}=${c.value}`).join('; ');
+  const user = await getCurrentUser(cookieHeader);
 
-  let userTier: Tier = "BASIC";
-  if (session?.user) {
-    const tier = session.user.user_metadata?.tier;
-    if (tier === "PREMIUM" || tier === "ENTERPRISE" || tier === "MASTER") {
-      userTier = tier;
-    }
-  }
+  const userTier: Tier = "BASIC";
 
   const hasAccess = userTier === "ENTERPRISE" || userTier === "MASTER";
 
