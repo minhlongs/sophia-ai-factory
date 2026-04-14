@@ -1,10 +1,9 @@
 "use server";
 
-import { getCurrentUser } from "@/lib/db/auth";
+import { getCurrentUser } from "@/lib/better-auth-session";
 import { createServerClient } from "@/lib/db/client";
 import { Campaign } from "@/types";
 import { convertToCSV } from "@/lib/export-utils";
-import { cookies } from "next/headers";
 
 export type ExportFormat = "json" | "csv";
 
@@ -18,9 +17,7 @@ export async function exportCampaigns(
   format: ExportFormat,
   filters: ExportFilters
 ) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.getAll().map(c => `${c.name}=${c.value}`).join('; ');
-  const user = await getCurrentUser(cookieHeader);
+  const user = await getCurrentUser();
 
   if (!user?.id) {
     return { success: false, message: "Unauthorized" };

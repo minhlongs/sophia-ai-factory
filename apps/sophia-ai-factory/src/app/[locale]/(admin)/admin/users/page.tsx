@@ -1,8 +1,7 @@
 import { createServerClient } from "@/lib/db/client";
-import { getCurrentUser } from "@/lib/db/auth";
+import { getCurrentUser } from "@/lib/better-auth-session";
 import { AdminUsersClient, type AdminUserRow } from "./admin-users-client";
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
@@ -11,9 +10,7 @@ export const dynamic = "force-dynamic";
  * Lists all users from D1 users table. Requires admin role.
  */
 export default async function AdminUsersPage() {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.getAll().map(c => `${c.name}=${c.value}`).join('; ');
-  const currentUser = await getCurrentUser(cookieHeader);
+  const currentUser = await getCurrentUser();
 
   if (!currentUser || currentUser.role !== 'admin') {
     redirect('/dashboard');

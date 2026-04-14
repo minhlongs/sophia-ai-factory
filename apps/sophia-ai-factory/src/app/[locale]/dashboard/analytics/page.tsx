@@ -1,12 +1,12 @@
 import React from "react";
 import dynamic from "next/dynamic";
 import { createServerClient } from "@/lib/db/client";
-import { getCurrentUser } from "@/lib/db/auth";
+import { getCurrentUser } from "@/lib/better-auth-session";
+import { getUserTier } from "@/lib/db/get-user-tier";
 import { Campaign, Tier } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getTranslations } from 'next-intl/server';
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
 
 const AnalyticsView = dynamic(
   () => import("./components/analytics-view").then(m => ({ default: m.AnalyticsView })),
@@ -34,16 +34,14 @@ export const metadata = {
 
 export default async function AnalyticsPage() {
   const t = await getTranslations('dashboard.analytics');
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.getAll().map(c => `${c.name}=${c.value}`).join('; ');
-  const user = await getCurrentUser(cookieHeader);
+  const user = await getCurrentUser();
 
   if (!user) {
     redirect('/login');
   }
 
   let campaigns: Campaign[] = [];
-  const userTier: Tier = "BASIC";
+  const userTier: Tier = await getUserTier(user.id);
   const userId = user.id;
 
   try {

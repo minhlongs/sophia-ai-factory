@@ -1,6 +1,6 @@
 import { Tier } from "@/types";
 import { getTierConfig } from "@/config/tiers";
-import { getUserTier } from "@/lib/subscription";
+import { getUserTier } from "@/lib/db/get-user-tier";
 import { templateService } from "@/lib/services/template-service";
 
 export type LimitType =

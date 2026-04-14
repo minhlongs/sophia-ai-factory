@@ -1,43 +1,33 @@
 /**
- * JWT verification — extracted to avoid circular imports with client.ts
- * Lightweight module used by middleware for fast token validation.
+ * Auth verification — delegates to Better Auth.
+ *
+ * This module is kept for backward compatibility with code that imports verifyJwt.
+ * New code should use getCurrentUser() from '@/lib/better-auth-session' instead.
  */
 
-// Lazy getter — returns null when JWT_SECRET=REDACTED is not set (zero-config safe)
-function getJwtSecret(): string | null {
-  return process.env.JWT_SECRET=REDACTED ?? null;
-}
+import { getAuth } from '@/lib/better-auth-server';
 
-async function hmacSign(payload: string, secret: string): Promise<string> {
-  const enc = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    'raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'],
-  );
-  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(payload));
-  return btoa(String.fromCharCode(...new Uint8Array(sig)))
-    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
-
-function base64UrlDecode(s: string): unknown {
-  const padded = s.replace(/-/g, '+').replace(/_/g, '/');
-  return JSON.parse(atob(padded));
-}
-
-export async function verifyJwt(token: string): Promise<Record<string, unknown> | null> {
+/**
+ * @deprecated Use getCurrentUser() or getCurrentUserFromHeaders() instead.
+ * Verifies auth by checking Better Auth session from request headers.
+ * Returns a JWT-like payload shape for backward compat.
+ */
+export async function verifyJwt(
+  _token: string,
+  headers?: Headers,
+): Promise<Record<string, unknown> | null> {
   try {
-    const secret = getJwtSecret();
-    if (!secret) return null;
+    if (!headers) return null;
+    const auth = getAuth();
+    const session = await auth.api.getSession({ headers });
+    if (!session) return null;
 
-    const [header, body, signature] = token.split('.');
-    if (!header || !body || !signature) return null;
-
-    const expected = await hmacSign(`${header}.${body}`, secret);
-    if (expected !== signature) return null;
-
-    const payload = base64UrlDecode(body) as Record<string, unknown>;
-    if (typeof payload.exp === 'number' && payload.exp < Date.now() / 1000) return null;
-
-    return payload;
+    const user = session.user as Record<string, unknown>;
+    return {
+      sub: session.user.id,
+      email: session.user.email,
+      role: user.role ?? 'user',
+    };
   } catch {
     return null;
   }

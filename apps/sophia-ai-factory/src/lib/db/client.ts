@@ -151,22 +151,17 @@ export async function getD1Client(): Promise<D1Client> {
 
 /**
  * Compatibility shim for createAuthClient(token).
+ * @deprecated Use getCurrentUser() from '@/lib/better-auth-session' instead.
  */
-export function createAuthClient(token?: string) {
+export function createAuthClient(_token?: string) {
   return {
     auth: {
       async getUser() {
-        if (!token) return { data: { user: null }, error: { message: 'No token' } };
         try {
-          const { verifyJwt } = await import('./auth-verify');
-          const payload = await verifyJwt(token);
-          if (!payload?.sub) return { data: { user: null }, error: { message: 'Invalid token' } };
-
-          const db = await getD1Async();
-          const client = new D1Client(db);
-          const { data } = await client.from('users').select('id, email, full_name, avatar_url, role').eq('id', payload.sub).single();
-          if (!data) return { data: { user: null }, error: { message: 'User not found' } };
-          return { data: { user: data as User }, error: null };
+          const { getCurrentUser } = await import('@/lib/better-auth-session');
+          const user = await getCurrentUser();
+          if (!user) return { data: { user: null }, error: { message: 'Not authenticated' } };
+          return { data: { user }, error: null };
         } catch (e) {
           return { data: { user: null }, error: { message: (e as Error).message } };
         }

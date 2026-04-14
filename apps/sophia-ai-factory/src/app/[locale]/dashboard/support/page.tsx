@@ -1,8 +1,8 @@
 import React from "react";
-import { getCurrentUser } from "@/lib/db/auth";
+import { getCurrentUser } from "@/lib/better-auth-session";
+import { getUserTier } from "@/lib/db/get-user-tier";
 import { Tier } from "@/types";
 import { getTranslations } from "next-intl/server";
-import { cookies } from "next/headers";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mail, Clock, Crown, Star } from "lucide-react";
 
@@ -48,11 +48,9 @@ const SUPPORT_TIERS = [
 
 export default async function SupportPage() {
   const t = await getTranslations("dashboard.support");
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.getAll().map(c => `${c.name}=${c.value}`).join('; ');
-  const user = await getCurrentUser(cookieHeader);
+  const user = await getCurrentUser();
 
-  const userTier: Tier = "BASIC";
+  const userTier: Tier = user ? await getUserTier(user.id) : "BASIC" as Tier;
 
   return (
     <div className="space-y-8">

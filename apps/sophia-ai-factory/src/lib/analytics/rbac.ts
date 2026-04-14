@@ -5,7 +5,7 @@
  */
 
 import { Tier } from '@/types';
-import { getUserTier } from '@/lib/subscription';
+import { getUserTier } from '@/lib/db/get-user-tier';
 
 /**
  * Analytics feature access levels

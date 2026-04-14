@@ -11,6 +11,7 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const pathname = usePathname();
   const t = useTranslations("landing");
 
@@ -19,6 +20,14 @@ export function Navbar() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  useEffect(() => {
+    // Check Better Auth session cookie (or legacy auth-token)
+    setIsLoggedIn(
+      document.cookie.includes('better-auth.session_token=')
+      || document.cookie.includes('auth-token='),
+    );
+  }, [pathname]);
 
   const cleanPath = pathname.replace(/^\/(en|vi)/, "") || "/";
   const isHomePage = cleanPath === "/";
@@ -99,11 +108,13 @@ export function Navbar() {
         {/* Desktop CTA */}
         <div className="hidden md:flex items-center gap-3">
           <LanguageSwitcher />
-          <Link href="/login">
-            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-              {t("nav.login")}
-            </Button>
-          </Link>
+          {!isLoggedIn && (
+            <Link href="/login">
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                {t("nav.login")}
+              </Button>
+            </Link>
+          )}
           <Link href="/dashboard">
             <Button variant="primary" size="sm" className="rounded-full px-5">
               {t("nav.dashboard")}

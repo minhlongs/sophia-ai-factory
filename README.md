@@ -26,7 +26,7 @@ npm run dev
 - **Email**: Resend (mekongmind.com verified domain)
 - **Bot**: Telegram (@Sophia_Bbot)
 - **AI Services**: HeyGen, ElevenLabs, MuAPI (100+ models), OpenRouter
-- **Auth**: Custom JWT + D1 (magic link + password)
+- **Auth**: Better Auth v1.6.2 with D1 Kysely adapter (email/password + magic link + org plugin)
 - **Deployment**: Cloudflare Workers via GitHub Actions
 - **Background Jobs**: Inngest
 - **i18n**: next-intl (Vietnamese + English)

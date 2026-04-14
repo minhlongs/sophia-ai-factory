@@ -1,8 +1,7 @@
 "use server";
 
-import { getCurrentUser } from "@/lib/db/auth";
+import { getCurrentUser } from "@/lib/better-auth-session";
 import { createServerClient } from "@/lib/db/client";
-import { cookies } from "next/headers";
 
 export interface AdminActivity {
   id: string;
@@ -21,9 +20,7 @@ export interface AdminStats {
 }
 
 export async function getAdminStats(): Promise<AdminStats> {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.getAll().map(c => `${c.name}=${c.value}`).join('; ');
-  const user = await getCurrentUser(cookieHeader);
+  const user = await getCurrentUser();
 
   if (!user || user.role !== 'admin') {
     throw new Error("Unauthorized: Admin access required");

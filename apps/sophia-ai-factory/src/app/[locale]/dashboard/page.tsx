@@ -5,13 +5,12 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createServerClient } from "@/lib/db/client";
-import { getCurrentUser } from "@/lib/db/auth";
+import { getCurrentUser } from "@/lib/better-auth-session";
 import { DashboardStats } from "./components/dashboard-stats";
 import { OnboardingWelcomeBanner } from "./components/onboarding-welcome-banner";
 import { CrossSellBanner } from "@/components/dashboard/cross-sell-banner";
 import { Campaign } from "@/types";
 import { getTranslations } from 'next-intl/server';
-import { cookies } from "next/headers";
 
 const CampaignList = dynamic(
   () => import("./components/campaign-list").then(m => ({ default: m.CampaignList })),
@@ -28,9 +27,7 @@ const CampaignList = dynamic(
 
 export default async function DashboardPage() {
   const t = await getTranslations('dashboard');
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.getAll().map(c => `${c.name}=${c.value}`).join('; ');
-  const user = await getCurrentUser(cookieHeader);
+  const user = await getCurrentUser();
 
   let campaigns: Campaign[] = [];
 

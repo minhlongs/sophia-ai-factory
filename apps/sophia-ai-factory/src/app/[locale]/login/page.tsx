@@ -1,19 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Mail, Lock, ArrowLeft, Loader2, CheckCircle } from "lucide-react";
+import { authClient } from "@/lib/better-auth-client";
 
 type AuthMode = "password" | "magic";
 
 /**
- * Login page — D1 + JWT custom auth.
+ * Login page — Better Auth client.
  * Supports password login and magic link (email OTP).
  * Vietnamese UI, dark theme.
  */
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const coupon = searchParams.get('coupon');
+  const tier = searchParams.get('tier');
   const [mode, setMode] = useState<AuthMode>("password");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,15 +31,20 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+      const { error: authError } = await authClient.signIn.email({
+        email,
+        password,
+        callbackURL: "/dashboard",
       });
-      const data = await res.json() as { error?: string };
 
-      if (!res.ok) {
-        setError(data.error ?? "Đăng nhập thất bại");
+      if (authError) {
+        setError(authError.message ?? "Đăng nhập thất bại");
+        return;
+      }
+
+      // If coupon params present, activate after login
+      if (coupon && tier) {
+        window.location.href = `/api/coupons/activate-redirect?coupon=${coupon}&tier=${tier}`;
         return;
       }
 
@@ -54,15 +63,13 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, magicLink: true }),
+      const { error: authError } = await authClient.signIn.magicLink({
+        email,
+        callbackURL: "/dashboard",
       });
-      const data = await res.json() as { error?: string };
 
-      if (!res.ok) {
-        setError(data.error ?? "Gửi magic link thất bại");
+      if (authError) {
+        setError(authError.message ?? "Gửi magic link thất bại");
         return;
       }
 

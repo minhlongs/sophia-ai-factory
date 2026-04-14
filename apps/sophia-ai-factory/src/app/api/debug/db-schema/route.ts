@@ -1,0 +1,45 @@
+/**
+ * GET /api/debug/db-schema — List all D1 tables + subscriptions data
+ * TEMP diagnostic endpoint — remove after debug
+ */
+import { NextResponse } from 'next/server';
+
+function getD1(): D1Database | null {
+  const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
+  if (env?.DB) return env.DB as D1Database;
+  const ctx = (globalThis as Record<symbol, { env?: Record<string, unknown> }>)[Symbol.for('__cloudflare-context__')];
+  if (ctx?.env?.DB) return ctx.env.DB as D1Database;
+  return null;
+}
+
+export async function GET() {
+  const d1 = getD1();
+  if (!d1) return NextResponse.json({ error: 'D1 not available' });
+
+  const tables = await d1.prepare("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name").all();
+
+  let subscriptions = null;
+  let subsSchema = null;
+  try {
+    subsSchema = await d1.prepare("PRAGMA table_info(subscriptions)").all();
+    subscriptions = await d1.prepare('SELECT * FROM subscriptions LIMIT 10').all();
+  } catch (e) { subscriptions = { error: (e as Error).message }; }
+
+  let orgBalances = null;
+  try {
+    orgBalances = await d1.prepare('SELECT * FROM org_balances LIMIT 10').all();
+  } catch (e) { orgBalances = { error: (e as Error).message }; }
+
+  let users = null;
+  try {
+    users = await d1.prepare('SELECT id, email, role FROM users LIMIT 10').all();
+  } catch (e) { users = { error: (e as Error).message }; }
+
+  let campaigns = null;
+  try { campaigns = await d1.prepare('SELECT id, user_id, title, status, created_at FROM campaigns ORDER BY created_at DESC LIMIT 10').all(); } catch (e) { campaigns = { error: (e as Error).message }; }
+
+  let orgMembers = null;
+  try { orgMembers = await d1.prepare('SELECT user_id, org_id, role FROM org_members LIMIT 20').all(); } catch (e) { orgMembers = { error: (e as Error).message }; }
+
+  return NextResponse.json({ tables: tables.results, subsSchema: subsSchema?.results, subscriptions, orgBalances, users, campaigns, orgMembers });
+}

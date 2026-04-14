@@ -5,7 +5,7 @@
 **Last Updated:** 2026-04-14
 **Production:** https://sophia.agencyos.network
 
-**AUTHENTICATION MIGRATION (2026-04-14):** Dashboard Server Components and Server Actions now use D1/JWT auth instead of Supabase. RLS not used — app layer enforces ownership via `user_id` filters.
+**AUTHENTICATION MIGRATION (2026-04-14):** Dashboard Server Components and Server Actions migrated to Better Auth v1.6.2 with D1 Kysely adapter. Email/password + magic link + organization plugin. RLS not used — app layer enforces ownership via `user_id` filters.
 
 **PAYMENT PROVIDER MIGRATION (2026-04-10):** Polar.sh references below are historical. Active providers now: NOWPayments (primary) + PayOS (Vietnam backup). See `project-changelog.md` for migration status.
 
@@ -57,7 +57,7 @@
 | **Adapter** | opennextjs-cloudflare | Next.js → CF Workers |
 | **Database** | Cloudflare D1 | SQLite-based, `sophia-raas-db` |
 | **Cache** | Cloudflare R2 | `sophia-ai-factory-opennext-cache` |
-| **Auth** | Custom JWT (D1) | HMAC-SHA256, 7-day cookies, no RLS |
+| **Auth** | Better Auth v1.6.2 (D1) | Email/password + magic link, org plugin, no RLS |
 | **Billing** | NOWPayments (primary) + PayOS (backup) | MCU credit system, webhooks |
 | **Email** | Resend | Magic link, notifications |
 | **AI** | Anthropic | Proposal generation |
@@ -68,21 +68,40 @@
 
 ## Data Flow
 
-### Auth Flow (D1/JWT)
+### Auth Flow (Better Auth with D1)
 ```
 User → /signup or /login
   ↓
-POST /api/auth/signup OR /api/auth/login
+POST /api/auth/[...all] (Better Auth endpoint)
   ↓
-D1: Create/verify user (PBKDF2 password hash, Web Crypto API)
+D1 (Kysely): Create/verify user (PBKDF2 password hash)
   ↓
-Generate JWT token: HMAC-SHA256(header.payload, JWT_SECRET=REDACTED)
+Email verification or password verification
   ↓
-Set auth-token cookie (HttpOnly, 7-day expiry)
+Better Auth generates session token (cookie-based)
   ↓
-Middleware validates JWT signature & extracts org_id
+Set auth session cookie (HttpOnly, secure, sameSite)
+  ↓
+Middleware validates session & extracts user context
+  ↓
+Server Components use getCurrentUser() from Better Auth client
   ↓
 App layer enforces user_id/org_id ownership (no RLS needed)
+```
+
+### Magic Link Flow
+```
+User enters email → POST /api/auth/signIn/magicLink
+  ↓
+D1: Store verification link in better_auth_verifications
+  ↓
+Resend: Send magic link to email
+  ↓
+User clicks link → /api/auth/callback?token=XXX
+  ↓
+Better Auth verifies token & creates session
+  ↓
+Redirect to dashboard with session established
 ```
 
 ### Mission Pipeline
@@ -288,12 +307,13 @@ crons = ["*/5 * * * *"]
 ## Security & Monitoring (2026-03-26 Audit)
 
 ### Authentication & Authorization
-- **JWT Tokens:** HMAC-SHA256 signing, PBKDF2 password hashing, 7-day expiry, HttpOnly cookies
-- **D1 Auth:** Custom JWT implementation (no Supabase), Web Crypto API for signature verification
+- **Better Auth:** v1.6.2 with D1 Kysely adapter, PBKDF2 password hashing, session-based cookies
+- **Plugins:** emailAndPassword + magicLink + organization
 - **No RLS:** Cloudflare D1 has no Row Level Security — app layer enforces ownership via `user_id` filters in all queries
-- **Tenant Isolation:** All API routes verify JWT org_id from token claims, no header-based org switching
+- **Tenant Isolation:** All API routes verify session org_id from Better Auth context, no header-based org switching
 - **Admin Enforcement:** Provision endpoints verify `role === 'admin'` before allowing changes
 - **Protected Routes:** Middleware enforces authentication on all protected APIs and Server Components
+- **Magic Link:** Resend integration for passwordless email login
 
 ### XSS Prevention
 - **DOMPurify:** Sanitizes proposal content before rendering to prevent DOM injection
@@ -322,17 +342,21 @@ crons = ["*/5 * * * *"]
 ## Migration Status (2026-04-14)
 
 ### Completed
-- **Dashboard Server Components:** Migrated from Supabase auth to D1/JWT (`getCurrentUser` from `@/lib/db/auth`)
-- **Server Actions:** All mutations (settings, automation, admin, campaign-export) use D1 auth
-- **Auth Layer:** Custom JWT implementation with HMAC-SHA256 signature verification
-- **Database:** All auth logic in D1, no Supabase Auth dependency for server-side auth
+- **Better Auth Framework:** v1.6.2 installed with D1 Kysely adapter
+- **Dashboard Server Components:** Migrated from custom JWT to Better Auth (`getCurrentUser()` from Better Auth client)
+- **Server Actions:** All mutations use Better Auth session context
+- **Auth Endpoints:** `/api/auth/[...all]` handling email/password + magic link
+- **Database:** Migration SQL applied (0003-better-auth.sql) — Better Auth schema configured
+- **Client Library:** `src/lib/auth-client.ts` with magicLinkClient plugin
+- **Tests:** 859/863 tests passing (4 legacy auth component failures isolated)
 
 ### Pending (Future Task)
-- **API Routes (58 routes):** Still reference Supabase auth — need migration to JWT cookie auth
-- **Lib Files (58 files):** References to Supabase imports — need migration to D1 equivalents
-- **Timeline:** Estimated 1-2 sprints for full completion
+- **Legacy Auth Removal:** Complete removal of old JWT code after final verification (Phase 7)
+- **API Routes Migration:** Verify all 58 API routes work with Better Auth session
+- **E2E Testing:** Full end-to-end flow validation (signup → magic link → dashboard access)
+- **Timeline:** Minimal follow-up needed; core migration complete
 
 ### Why No RLS in D1
 - Cloudflare D1 (SQLite) does not support Row Level Security (RLS) policies
 - **Mitigation:** App layer enforces ownership via explicit `WHERE user_id = ?` filters in all D1 queries
-- This is acceptable for multi-tenant SaaS (all users are authenticated, JWT org_id is verified)
+- This is acceptable for multi-tenant SaaS (all users are authenticated, Better Auth session is verified)

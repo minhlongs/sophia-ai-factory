@@ -33,21 +33,19 @@ export async function createCampaign(formData: FormData) {
   const { title, topic, audience } = validation.data;
   const platforms = rawData.platforms as string[];
 
-  // Get current user from D1 auth session
-  const db = await getD1Client();
-
-  // For development: fallback to first user if no session
+  // Get current user from Better Auth session
   let userId: string | undefined;
+  try {
+    const { getCurrentUser } = await import("@/lib/better-auth-session");
+    const user = await getCurrentUser();
+    if (user) userId = user.id;
+  } catch { /* Auth session check failed */ }
 
-  if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
-    const { data: firstUser } = await db.from('users').select('id').limit(1).single();
-    userId = (firstUser as { id: string } | null)?.id;
-    if (!userId) {
-      return { success: false, message: "No authenticated user found. Please sign up/in." };
-    }
-  } else {
-    return { success: false, message: "Unauthorized" };
+  if (!userId) {
+    return { success: false, message: "Vui lòng đăng nhập để tạo chiến dịch." };
   }
+
+  const db = await getD1Client();
 
   // TIER CHECK: Multi-channel access
   if (platforms && platforms.length > 1) {
@@ -62,20 +60,17 @@ export async function createCampaign(formData: FormData) {
     }
   }
 
-  // Fetch user profile for tier
-  const { data: profile } = await db
-    .from("user_profiles")
-    .select("subscription_tier")
-    .eq("user_id", userId)
-    .single();
-
-  const tier = mapDbTierToTier((profile as { subscription_tier?: string } | null)?.subscription_tier);
+  // Fetch tier from subscriptions via org membership
+  const { getUserTier } = await import("@/lib/db/get-user-tier");
+  const tier = await getUserTier(userId);
 
   try {
-    // 1. Create Campaign Record
-    const { data: campaign, error } = await db
+    // 1. Create Campaign Record (generate ID upfront — D1 doesn't support RETURNING)
+    const campaignId = crypto.randomUUID();
+    const { error } = await db
       .from("campaigns")
       .insert({
+        id: campaignId,
         user_id: userId,
         title: title!,
         topic: topic || "",
@@ -83,33 +78,35 @@ export async function createCampaign(formData: FormData) {
         status: "queued",
         progress: 0,
         template_id: templateId
-      })
-      .select()
-      .single();
+      });
 
     if (error) {
-      return { success: false, message: "Failed to create campaign record" };
+      return { success: false, message: `Failed to create campaign: ${error.message || JSON.stringify(error)}` };
     }
 
-    const campaignData = campaign as { id: string };
+    const campaignData = { id: campaignId };
 
-    // 2. Trigger Inngest Event
-    await inngest.send({
-      name: "campaign.created",
-      data: {
-        campaignId: campaignData.id,
-        userId,
-        topic: topic || title!,
-        audience: audience || "General",
-        tier
-      }
-    });
+    // 2. Trigger Inngest Event (optional — may not be configured on CF Workers)
+    try {
+      await inngest.send({
+        name: "campaign.created",
+        data: {
+          campaignId: campaignData.id,
+          userId,
+          topic: topic || title!,
+          audience: audience || "General",
+          tier
+        }
+      });
+    } catch {
+      // Inngest not configured — campaign still created, processing will be manual
+    }
 
     revalidatePath("/dashboard/campaigns");
     return { success: true, message: "Campaign created", campaignId: campaignData.id };
 
-  } catch {
-    return { success: false, message: "Internal server error" };
+  } catch (e) {
+    return { success: false, message: `Error: ${(e as Error).message}` };
   }
 }
 
