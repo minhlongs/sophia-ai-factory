@@ -4,7 +4,8 @@
  * Resolves GraphQL queries to analytics data functions
  */
 
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser } from '@/lib/better-auth-session';
+import { getUserTier } from '@/lib/db/get-user-tier';
 import { fetchUsageMetrics, fetchRevenueMetrics, fetchLicenseMetrics } from '@/lib/analytics/queries';
 import {
   checkAdmin,
@@ -33,13 +34,16 @@ async function getUserContext() {
     throw new Error('Unauthorized - authentication required');
   }
 
-  const isAdmin = await checkAdmin(user.id);
+  const [isAdmin, tier] = await Promise.all([
+    checkAdmin(user.id),
+    getUserTier(user.id),
+  ]);
 
   return {
     userId: user.id,
-    tier: user.tier,
+    tier,
     isAdmin,
-    access: getAnalyticsAccess(user.tier, isAdmin),
+    access: getAnalyticsAccess(tier, isAdmin),
   };
 }
 
@@ -163,10 +167,10 @@ export const resolvers = {
 
       // Non-admin users only see their own licenses
       if (!user.isAdmin) {
-        const { createAdminClient } = await import('@/lib/supabase/admin');
-        const supabase = await createAdminClient();
+        const { createServerClient } = await import('@/lib/db/client');
+        const db = createServerClient();
 
-        const { data: userLicenses } = await supabase
+        const { data: userLicenses } = await db
           .from('raas_licenses')
           .select('nonce')
           .eq('created_by', user.userId);

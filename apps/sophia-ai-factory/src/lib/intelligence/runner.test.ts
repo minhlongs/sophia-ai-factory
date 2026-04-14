@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-// Mock Supabase before importing runner
-vi.mock('@/lib/supabase/client', () => {
-  const mockFrom = vi.fn()
+// Mock D1 client before importing runner
+const mockFrom = vi.fn()
+vi.mock('@/lib/db/client', () => {
   return {
-    supabase: {
+    createServerClient: vi.fn(() => ({
       from: mockFrom,
-    },
+    })),
   }
 })
 
@@ -22,7 +22,7 @@ vi.mock('./scoring', () => ({
 }))
 
 import { runScoringBatch, scoreAllProducts } from './runner'
-import { supabase } from '@/lib/supabase/client'
+import { createServerClient } from '@/lib/db/client'
 import { scoringService } from './scoring'
 
 interface MockProduct {
@@ -33,8 +33,12 @@ interface MockProduct {
 }
 
 describe('runScoringBatch', () => {
+  let mockDb: ReturnType<typeof createServerClient>
+
   beforeEach(() => {
     vi.clearAllMocks()
+    mockDb = { from: mockFrom } as unknown as ReturnType<typeof createServerClient>
+    vi.mocked(createServerClient).mockReturnValue(mockDb)
   })
 
   it('should fetch products, score them, and upsert results', async () => {
@@ -58,15 +62,14 @@ describe('runScoringBatch', () => {
     })
     const upsertMock = vi.fn().mockResolvedValue({ error: null })
 
-    vi.mocked(supabase.from).mockImplementation((table: string) => {
+    mockFrom.mockImplementation((table: string) => {
       if (table === 'affiliate_products') {
-        // Return different chains based on usage (select vs upsert)
         return {
           select: selectMock,
           upsert: upsertMock,
-        } as ReturnType<typeof supabase.from>
+        }
       }
-      return {} as ReturnType<typeof supabase.from>
+      return {}
     })
 
     const result = await runScoringBatch(100, 0)
@@ -82,9 +85,9 @@ describe('runScoringBatch', () => {
       range: vi.fn().mockResolvedValue({ data: [], error: null }),
     })
 
-    vi.mocked(supabase.from).mockReturnValue({
+    mockFrom.mockReturnValue({
       select: selectMock,
-    } as ReturnType<typeof supabase.from>)
+    })
 
     const result = await runScoringBatch(100, 0)
 
@@ -97,9 +100,9 @@ describe('runScoringBatch', () => {
       range: vi.fn().mockResolvedValue({ data: null, error: null }),
     })
 
-    vi.mocked(supabase.from).mockReturnValue({
+    mockFrom.mockReturnValue({
       select: selectMock,
-    } as ReturnType<typeof supabase.from>)
+    })
 
     const result = await runScoringBatch(100, 0)
 
@@ -115,9 +118,9 @@ describe('runScoringBatch', () => {
       }),
     })
 
-    vi.mocked(supabase.from).mockReturnValue({
+    mockFrom.mockReturnValue({
       select: selectMock,
-    } as ReturnType<typeof supabase.from>)
+    })
 
     await expect(runScoringBatch(100, 0)).rejects.toThrow(
       'Failed to fetch products for scoring: Database connection error',
@@ -141,10 +144,10 @@ describe('runScoringBatch', () => {
       error: { message: 'Upsert constraint violation' },
     })
 
-    vi.mocked(supabase.from).mockReturnValue({
+    mockFrom.mockReturnValue({
       select: selectMock,
       upsert: upsertMock,
-    } as ReturnType<typeof supabase.from>)
+    })
 
     await expect(runScoringBatch(100, 0)).rejects.toThrow(
       'Bulk update failed: Upsert constraint violation',
@@ -155,6 +158,7 @@ describe('runScoringBatch', () => {
 describe('scoreAllProducts', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(createServerClient).mockReturnValue({ from: mockFrom } as unknown as ReturnType<typeof createServerClient>)
   })
 
   it('should process multiple batches until all products scored', async () => {
@@ -177,10 +181,10 @@ describe('scoreAllProducts', () => {
     })
     const upsertMock = vi.fn().mockResolvedValue({ error: null })
 
-    vi.mocked(supabase.from).mockReturnValue({
+    mockFrom.mockReturnValue({
       select: selectMock,
       upsert: upsertMock,
-    } as ReturnType<typeof supabase.from>)
+    })
 
     const result = await scoreAllProducts()
 
@@ -192,9 +196,9 @@ describe('scoreAllProducts', () => {
       range: vi.fn().mockResolvedValue({ data: [], error: null }),
     })
 
-    vi.mocked(supabase.from).mockReturnValue({
+    mockFrom.mockReturnValue({
       select: selectMock,
-    } as ReturnType<typeof supabase.from>)
+    })
 
     const result = await scoreAllProducts()
 

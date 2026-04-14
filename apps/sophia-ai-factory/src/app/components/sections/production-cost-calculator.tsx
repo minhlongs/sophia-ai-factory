@@ -4,7 +4,7 @@ import { Container } from "@/components/ui/container";
 import { Card, CardContent } from "@/components/ui/card";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { useState, useMemo, useCallback } from "react";
-import { UNIFIED_TIERS } from "@/lib/unified-tier-config";
+import { UNIFIED_TIERS } from "@/config/tiers";
 import { calculateCostBreakdown, API_COSTS, INFRA_COSTS } from "@/lib/billing/video-production-cost-engine";
 import type { Tier } from "@/types";
 import { SliderInput, CostRow, MetricCard, fmt, fmtUSD } from "./production-cost-calculator-parts";

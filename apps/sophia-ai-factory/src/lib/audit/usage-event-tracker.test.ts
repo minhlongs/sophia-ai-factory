@@ -17,8 +17,8 @@ import {
 } from './audit-hashing'
 
 // Mock Supabase admin client
-vi.mock('@/lib/supabase/admin', () => ({
-  createAdminClient: vi.fn(() => ({
+vi.mock('@/lib/db/client', () => ({
+  createServerClient: vi.fn(() => ({
     from: vi.fn((table: string) => ({
       insert: vi.fn((data: unknown) => ({
         select: vi.fn(() => ({

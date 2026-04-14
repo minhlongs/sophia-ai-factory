@@ -13,7 +13,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import { verifyWebhookSignature } from '@/lib/security/webhook-validator';
 
@@ -84,9 +84,9 @@ async function fetchQuotaUsage(
   monthlyCredits: number;
   requestCount: number;
 }> {
-  const supabase = await createAdminClient();
+  const db = createServerClient();
 
-  const { data: usageEvents } = await supabase
+  const { data: usageEvents } = await db
     .from('usage_events')
     .select('credits_used, created_at')
     .eq('license_nonce', licenseNonce)
@@ -142,9 +142,9 @@ async function fetchOverageEvents(
   totalCharges: number;
   violations: Array<{ timestamp: string; type: string; exceededBy: number }>;
 }> {
-  const supabase = await createAdminClient();
+  const db = createServerClient();
 
-  const { data: overageEvents } = await supabase
+  const { data: overageEvents } = await db
     .from('overage_events')
     .select('exceeded_type, exceeded_by, created_at')
     .eq('license_nonce', licenseNonce)
@@ -184,9 +184,9 @@ async function fetchOverageEvents(
 async function fetchTierHistory(
   licenseNonce: string
 ): Promise<Array<{ tier: string; startDate: string }>> {
-  const supabase = await createAdminClient();
+  const db = createServerClient();
 
-  const { data: license } = await supabase
+  const { data: license } = await db
     .from('raas_licenses')
     .select('tier, created_at')
     .eq('nonce', licenseNonce)
@@ -249,12 +249,12 @@ export async function POST(request: NextRequest) {
   });
 
   try {
-    const supabase = await createAdminClient();
+    const db = createServerClient();
     const startTs = Math.floor(new Date(startDate).getTime() / 1000);
     const endTs = Math.floor(new Date(endDate).getTime() / 1000);
 
     // Fetch all licenses for this agency
-    const { data: licenses } = await supabase
+    const { data: licenses } = await db
       .from('raas_licenses')
       .select('nonce, tier, polar_customer_id, created_by')
       .eq('created_by', agencyId)

@@ -10,7 +10,7 @@
  * @module audit/audit-query-logger
  */
 
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createServerClient } from '@/lib/db/client'
 import { logger } from '@/lib/utils/logger-utility'
 import type { RaasAuditLogInsert, Json } from '@/lib/supabase/types'
 
@@ -52,7 +52,7 @@ export interface AuditQueryLogParams {
  * @returns true if logging succeeded
  */
 export async function logAuditQuery(params: AuditQueryLogParams): Promise<boolean> {
-  const supabase = createAdminClient()
+  const db = createServerClient()
   const createdAt = Math.floor(Date.now() / 1000)
 
   // Prepare audit log entry
@@ -74,7 +74,7 @@ export async function logAuditQuery(params: AuditQueryLogParams): Promise<boolea
 
   try {
     // Insert audit log (database trigger auto-computes hash chain)
-    const { data, error } = await (supabase as any)
+    const { data, error } = await (db as any)
       .from('raas_audit_logs')
       .insert(logData)
       .select()
@@ -115,7 +115,7 @@ export async function logApiKeyCreation(
   permissions: string[],
   ipAddress?: string
 ): Promise<boolean> {
-  const supabase = createAdminClient()
+  const db = createServerClient()
   const createdAt = Math.floor(Date.now() / 1000)
 
   const logData: RaasAuditLogInsert = {
@@ -132,7 +132,7 @@ export async function logApiKeyCreation(
   }
 
   try {
-    const { error } = await (supabase as any)
+    const { error } = await (db as any)
       .from('raas_audit_logs')
       .insert(logData)
 
@@ -168,7 +168,7 @@ export async function logApiKeyRevocation(
   reason?: string,
   ipAddress?: string
 ): Promise<boolean> {
-  const supabase = createAdminClient()
+  const db = createServerClient()
   const createdAt = Math.floor(Date.now() / 1000)
 
   const logData: RaasAuditLogInsert = {
@@ -185,7 +185,7 @@ export async function logApiKeyRevocation(
   }
 
   try {
-    const { error } = await (supabase as any)
+    const { error } = await (db as any)
       .from('raas_audit_logs')
       .insert(logData)
 
@@ -220,7 +220,7 @@ export async function logApiKeyValidationFailure(
   error: string,
   ipAddress?: string
 ): Promise<boolean> {
-  const supabase = createAdminClient()
+  const db = createServerClient()
   const createdAt = Math.floor(Date.now() / 1000)
 
   const logData: RaasAuditLogInsert = {
@@ -237,7 +237,7 @@ export async function logApiKeyValidationFailure(
   }
 
   try {
-    const { error: insertError } = await (supabase as any)
+    const { error: insertError } = await (db as any)
       .from('raas_audit_logs')
       .insert(logData)
 
@@ -278,11 +278,11 @@ export async function queryAuditLogs(
   },
   includePII: boolean = false
 ): Promise<any[]> {
-  const supabase = createAdminClient()
+  const db = createServerClient()
   const startTime = Date.now()
 
   // Build query
-  let query = (supabase as any)
+  let query = (db as any)
     .from('raas_audit_logs')
     .select('*', { count: 'exact' })
 

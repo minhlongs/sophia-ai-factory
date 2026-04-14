@@ -8,7 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import { customerLinkageRequestSchema } from '@/lib/validation/services';
 import type { RaasLicenseUpdate } from '@/lib/supabase/types';
@@ -47,10 +47,10 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const supabase = createAdminClient();
+    const db = createServerClient();
 
     // Find licenses missing customer IDs
-    const { data: licensesData, error } = await supabase
+    const { data: licensesData, error } = await db
       .from('raas_licenses')
       .select(`
         nonce,
@@ -150,10 +150,10 @@ export async function POST(request: NextRequest) {
     }
 
     const { license_nonce, polar_customer_id, stripe_customer_id } = validation.data;
-    const supabase = createAdminClient();
+    const db = createServerClient();
 
     // Update license with customer IDs - use 'as any' for Supabase type compatibility
-    const { error: updateError } = await (supabase.from('raas_licenses') as any)
+    const { error: updateError } = await (db.from('raas_licenses') as any)
       .update({
         ...(polar_customer_id ? { polar_customer_id } : {}),
         ...(stripe_customer_id ? { stripe_customer_id } : {}),

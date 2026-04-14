@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createAdminClient, isAdminClientConfigured } from "@/lib/supabase/admin";
+import { createServerClient } from "@/lib/db/client";
 import { logger } from "@/lib/utils/logger-utility";
-import { inngest } from "@/lib/inngest/client";
+import { sendCampaignCreatedEvent } from "@/lib/campaigns/create-campaign-core";
 
 // POST /api/v1/campaigns/create
 // Headers: Authorization: Bearer <raas_api_key>
@@ -23,13 +23,13 @@ function extractBearerToken(authHeader: string | null): string | null {
 }
 
 async function validateRaasApiKey(apiKey: string): Promise<boolean> {
-  const supabase = createAdminClient();
+  const db = createServerClient();
 
   // Hash the incoming key for comparison
   const { createHash } = await import("crypto");
   const keyHash = createHash("sha256").update(apiKey).digest("hex");
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from("raas_licenses")
     .select("id, is_revoked, expires_at")
     .eq("key_hash", keyHash)
@@ -50,15 +50,6 @@ async function validateRaasApiKey(apiKey: string): Promise<boolean> {
 export async function POST(request: Request): Promise<NextResponse> {
   const requestId = crypto.randomUUID();
   const log = logger.withRequestId(requestId);
-
-  // Degrade gracefully when database is not configured
-  if (!isAdminClientConfigured()) {
-    log.warn("RaaS campaign create: database not configured");
-    return NextResponse.json(
-      { error: "Database not configured", message: "Background jobs not configured" },
-      { status: 503 }
-    );
-  }
 
   try {
     const authHeader = request.headers.get("Authorization");
@@ -96,8 +87,8 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     const { script, title, userId } = parsed.data;
 
-    const supabase = createAdminClient();
-    const { data: campaign, error: insertError } = await supabase
+    const db = createServerClient();
+    const { data: campaign, error: insertError } = await db
       .from("campaigns")
       .insert({
         user_id: userId,
@@ -118,18 +109,16 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
-    // Send to Inngest only when event key is configured; skip silently otherwise
+    // Send to Inngest; check config to determine response status
     const inngestConfigured = !!(process.env.INNGEST_EVENT_KEY && process.env.INNGEST_SIGNING_KEY);
+
     if (inngestConfigured) {
-      await inngest.send({
-        name: "campaign.created",
-        data: {
-          campaignId: campaign.id,
-          userId,
-          topic: title ?? "RaaS Campaign",
-          audience: "general",
-          tier: "BASIC",
-        },
+      await sendCampaignCreatedEvent({
+        campaignId: campaign.id,
+        userId,
+        topic: title ?? "RaaS Campaign",
+        audience: "general",
+        tier: "BASIC",
       });
       log.info("RaaS campaign create: queued successfully", { campaignId: campaign.id, userId });
       return NextResponse.json({ campaignId: campaign.id, status: "queued" }, { status: 201 });

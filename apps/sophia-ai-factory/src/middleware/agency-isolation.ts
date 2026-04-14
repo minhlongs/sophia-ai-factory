@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import { logUsageWithReceipt } from '@/lib/audit/audit-logger';
 import { jwtVerify } from 'jose';
@@ -54,7 +54,7 @@ async function extractAndValidateAgencyId(request: NextRequest): Promise<string 
  */
 async function validateTenantAccess(agencyId: string, tableName: string, resourceId: string): Promise<boolean> {
   try {
-    const supabase = await createAdminClient();
+    const db = createServerClient();
 
     // For different tables, we need different validation strategies
     // This is a simplified version - in reality, you'd need specific validation logic per table
@@ -62,21 +62,21 @@ async function validateTenantAccess(agencyId: string, tableName: string, resourc
 
     switch(tableName) {
       case 'usage_events':
-        query = supabase
+        query = db
           .from('usage_events')
           .select('id')
           .eq('id', resourceId)
           .eq('user_id', agencyId); // Using user_id as tenant identifier for usage events
         break;
       case 'raas_licenses':
-        query = supabase
+        query = db
           .from('raas_licenses')
           .select('id')
           .eq('nonce', resourceId)  // nonce would be the resource identifier for licenses
           .eq('created_by', agencyId); // Using created_by as tenant identifier
         break;
       case 'raas_audit_logs':
-        query = supabase
+        query = db
           .from('raas_audit_logs')
           .select('id')
           .eq('id', resourceId)
@@ -283,9 +283,9 @@ export async function multiTenantIsolationMiddleware(request: NextRequest): Prom
 
 // Helper function to generate tenant-scoped database queries
 export function createTenantScopedQuery(agencyId: string) {
-  return async function(tableName: string) {
-    const supabase = await createAdminClient();
-    return supabase.from(tableName).eq('user_id', agencyId);
+  return function(tableName: string) {
+    const db = createServerClient();
+    return db.from(tableName).eq('user_id', agencyId);
   };
 }
 

@@ -108,10 +108,10 @@ export async function checkAdmin(userId: string): Promise<boolean> {
   }
 
   // Check for admin role in user profile
-  const { createAdminClient } = await import('@/lib/supabase/admin');
-  const supabase = await createAdminClient();
+  const { createServerClient } = await import('@/lib/db/client');
+  const db = createServerClient();
 
-  const { data: profile } = await supabase
+  const { data: profile } = await db
     .from('user_profiles')
     .select('role')
     .eq('user_id', userId)
@@ -134,10 +134,10 @@ export async function verifyLicenseAccess(
   }
 
   // Non-admin users can only access their own licenses
-  const { createAdminClient } = await import('@/lib/supabase/admin');
-  const supabase = await createAdminClient();
+  const { createServerClient } = await import('@/lib/db/client');
+  const db = createServerClient();
 
-  const { data: license } = await supabase
+  const { data: license } = await db
     .from('raas_licenses')
     .select('created_by')
     .eq('nonce', licenseNonce)
@@ -161,10 +161,10 @@ export async function verifyLicenseAccess(
  * Get user's own active license nonce
  */
 export async function getUserLicenseNonce(userId: string): Promise<string | null> {
-  const { createAdminClient } = await import('@/lib/supabase/admin');
-  const supabase = await createAdminClient();
+  const { createServerClient } = await import('@/lib/db/client');
+  const db = createServerClient();
 
-  const { data: license } = await supabase
+  const { data: license } = await db
     .from('raas_licenses')
     .select('nonce')
     .eq('created_by', userId)

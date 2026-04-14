@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createClient } from '@/lib/supabase/server';
+import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 
 export const dynamic = 'force-dynamic';
@@ -36,8 +36,8 @@ export async function POST(request: NextRequest) {
     const { mission_id } = parsed.data;
 
     // Update mission to planning state
-    const supabase = await createClient();
-    const { error: updateError } = await supabase
+    const db = createServerClient();
+    const { error: updateError } = await db
       .from('missions')
       .update({ status: 'planning', started_at: new Date().toISOString() })
       .eq('id', mission_id)

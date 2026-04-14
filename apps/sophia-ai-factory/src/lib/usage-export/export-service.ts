@@ -5,7 +5,7 @@
  * Provides database queries, formatters, and aggregation functions
  */
 
-import { createAdminClient } from '../supabase/admin';
+import { createServerClient } from '../db/client';
 import { logger } from '../utils/logger-utility';
 import type { UsageEventRow } from '../supabase/types';
 import type {
@@ -225,10 +225,10 @@ export async function getUsageExportData(
       params.endDate
     );
 
-    const supabase = await createAdminClient();
+    const db = createServerClient();
 
     // Build query with filters
-    let query = supabase
+    let query = db
       .from('usage_events')
       .select('*', { count: 'exact' })
       .gte('created_at', periodStart)

@@ -4,7 +4,7 @@
  * Export utilities for billing and analytics
  */
 
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import type { ExportOptions, UsageSummary, DailyUsage } from './types';
 import { generateCsvRows, rowsToCsv, getAggregatedSummary } from './aggregator';
@@ -25,10 +25,10 @@ export async function exportUsage(options: ExportOptions): Promise<{
     totalRequests: number;
   };
 }> {
-  const supabase = createAdminClient();
+  const db = createServerClient();
 
   // Get raw events for aggregation
-  let query = supabase
+  let query = db
     .from('usage_events')
     .select('*')
     .order('created_at', { ascending: true });

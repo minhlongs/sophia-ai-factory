@@ -24,7 +24,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser } from '@/lib/better-auth-session';
+import { getUserTier } from '@/lib/db/get-user-tier';
 import { logger } from '@/lib/utils/logger-utility';
 import { fetchViolations, fetchViolationSummary } from '@/lib/analytics/queries';
 import { verifyLicenseAccess, getUserLicenseNonce, checkAdmin } from '@/lib/analytics/rbac';
@@ -53,7 +54,7 @@ export async function GET(request: NextRequest) {
       userId = jwtResult.payload.sub;
       const user = await getCurrentUser();
       if (user) {
-        userTier = user.tier;
+        userTier = await getUserTier(user.id);
         isAdmin = await checkAdmin(user.id);
 
         // Check rate limit for JWT users (100 requests per minute default)

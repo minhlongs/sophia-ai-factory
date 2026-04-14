@@ -11,7 +11,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import { checkAdminAuth } from '../../middleware';
 import { z } from 'zod';
@@ -47,10 +47,10 @@ export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
     const params = overageEventsSchema.parse(Object.fromEntries(searchParams));
 
-    const supabase = createAdminClient();
+    const db = createServerClient();
 
     // Build query
-    let query = supabase
+    let query = db
       .from('overage_events')
       .select('*', { count: 'exact' });
 
@@ -98,7 +98,7 @@ export async function GET(req: NextRequest) {
     let licenseInfo: LicenseInfo[] = [];
 
     if (licenseNonces.length > 0) {
-      const { data: licenseData } = await supabase
+      const { data: licenseData } = await db
         .from('raas_api_keys')
         .select('license_nonce, tier, status, user_id')
         .in('license_nonce', licenseNonces);
@@ -115,7 +115,7 @@ export async function GET(req: NextRequest) {
     let userInfo: UserInfo[] = [];
 
     if (userIds.length > 0) {
-      const { data: userData } = await supabase
+      const { data: userData } = await db
         .from('user_profiles')
         .select('user_id, email')
         .in('user_id', userIds);

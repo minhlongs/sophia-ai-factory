@@ -7,7 +7,7 @@
  * @module security/api-key-validator
  */
 
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createServerClient } from '@/lib/db/client'
 import { hmacSha256, timingSafeEqual } from '@/lib/audit/crypto-utils'
 import { logger } from '@/lib/utils/logger-utility'
 import type { Json } from '@/lib/supabase/types'
@@ -165,7 +165,7 @@ export async function generateApiKey(
   expiresAt?: number,
   rateLimitPerMinute: number = 100
 ): Promise<GenerateApiKeyResult> {
-  const supabase = createAdminClient()
+  const db = createServerClient()
 
   // Generate keyId and compute signature
   const keyId = generateKeyId()
@@ -190,7 +190,7 @@ export async function generateApiKey(
     rate_limit_per_min: rateLimitPerMinute,
   }
 
-  const { data, error } = await (supabase as any)
+  const { data, error } = await (db as any)
     .from('raas_api_keys')
     .insert(insertData)
     .select()
@@ -228,7 +228,7 @@ export async function checkApiKey(
   keyId: string,
   signature: string
 ): Promise<ValidationResult> {
-  const supabase = createAdminClient()
+  const db = createServerClient()
 
   // First verify signature locally (fast path)
   const expectedSignature = computeSignature(keyId)
@@ -241,7 +241,7 @@ export async function checkApiKey(
   }
 
   // Look up in database
-  const { data, error } = await (supabase as any)
+  const { data, error } = await (db as any)
     .from('raas_api_keys')
     .select('id, key_id, key_hash, owner_id, permissions, created_at, expires_at, revoked_at, last_used_at, rate_limit_per_min')
     .eq('key_id', keyId)
@@ -272,7 +272,7 @@ export async function checkApiKey(
   }
 
   // Update last_used_at for active key
-  await (supabase as any)
+  await (db as any)
     .from('raas_api_keys')
     .update({ last_used_at: now })
     .eq('id', data.id)
@@ -333,10 +333,10 @@ export async function validateApiKey(apiKey: string | null): Promise<ValidationR
  * @returns true if successful
  */
 export async function revokeApiKey(keyId: string): Promise<boolean> {
-  const supabase = createAdminClient()
+  const db = createServerClient()
   const now = Math.floor(Date.now() / 1000)
 
-  const { error } = await (supabase as any)
+  const { error } = await (db as any)
     .from('raas_api_keys')
     .update({ revoked_at: now })
     .eq('key_id', keyId)
@@ -357,9 +357,9 @@ export async function revokeApiKey(keyId: string): Promise<boolean> {
  * @returns Array of API key info (without secrets)
  */
 export async function getUserApiKeys(userId: string): Promise<ApiKeyInfo[]> {
-  const supabase = createAdminClient()
+  const db = createServerClient()
 
-  const { data, error } = await (supabase as any)
+  const { data, error } = await (db as any)
     .from('raas_api_keys')
     .select('id, key_id, owner_id, permissions, created_at, expires_at, revoked_at, last_used_at, rate_limit_per_min')
     .eq('owner_id', userId)
@@ -399,9 +399,9 @@ export async function getUserApiKeys(userId: string): Promise<ApiKeyInfo[]> {
  * @returns true if successful
  */
 export async function deleteApiKey(keyId: string): Promise<boolean> {
-  const supabase = createAdminClient()
+  const db = createServerClient()
 
-  const { error } = await (supabase as any)
+  const { error } = await (db as any)
     .from('raas_api_keys')
     .delete()
     .eq('key_id', keyId)

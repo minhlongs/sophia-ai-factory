@@ -27,13 +27,13 @@ vi.mock('next/server', () => {
   };
 });
 
-// Mock Supabase
+// Mock DB client
 const mockSupabaseData = { data: null, error: null };
 let mockSupabaseSingleResult: any = null;
 let mockSupabaseQueryResult: any = { data: [], error: null };
 
-vi.mock('@/lib/supabase/admin', () => ({
-  createAdminClient: () => ({
+vi.mock('@/lib/db/client', () => ({
+  createServerClient: () => ({
     from: vi.fn((table: string) => ({
       select: vi.fn((columns?: string) => {
         // Create a mock query builder that supports fluent chaining

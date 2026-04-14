@@ -19,7 +19,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import { validateJwt } from '@/lib/security/jwt-validator';
 import { checkRateLimit as checkApiRateLimit } from '@/lib/security/rate-limiter';
@@ -99,8 +99,8 @@ export async function GET(
     }
 
     // Step 4: Fetch license info for tenant
-    const supabase = createAdminClient();
-    const { data: license, error: licenseError } = await supabase
+    const db = createServerClient();
+    const { data: license, error: licenseError } = await db
       .from('raas_licenses')
       .select('nonce, tier, agency_id')
       .eq('agency_id', tenantId)
@@ -124,7 +124,7 @@ export async function GET(
     const typedLicense = license as { nonce: string; tier: string; agency_id: string };
 
     // Step 5: Fetch overage events for tenant
-    const { data: overageEvents, error: overageError } = await supabase
+    const { data: overageEvents, error: overageError } = await db
       .from('overage_events')
       .select('*')
       .eq('user_id', userId)

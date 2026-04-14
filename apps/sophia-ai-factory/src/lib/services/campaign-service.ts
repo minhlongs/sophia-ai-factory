@@ -1,9 +1,10 @@
-import { supabase } from "@/lib/supabase/client";
+import { createServerClient } from '@/lib/db/client';
 import { Campaign } from "@/types";
 
 export const campaignService = {
   async getCampaigns(userId: string) {
-    const { data, error } = await supabase
+    const db = createServerClient();
+    const { data, error } = await db
       .from("campaigns")
       .select("*")
       .eq("user_id", userId)
@@ -14,7 +15,8 @@ export const campaignService = {
   },
 
   async getCampaign(id: string) {
-    const { data, error } = await supabase
+    const db = createServerClient();
+    const { data, error } = await db
       .from("campaigns")
       .select("*")
       .eq("id", id)

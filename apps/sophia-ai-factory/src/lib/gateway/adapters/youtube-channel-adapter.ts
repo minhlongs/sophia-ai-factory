@@ -15,7 +15,7 @@ import {
   uploadVideo,
   refreshAccessToken,
 } from "@/lib/youtube/youtube-oauth-client";
-import { createClient } from "@/lib/supabase/server";
+import { createServerClient } from '@/lib/db/client';
 import { logger } from "@/lib/utils/logger-utility";
 
 const CHANNEL_ID = "youtube";
@@ -54,8 +54,8 @@ export class YouTubeChannelAdapter implements ChannelAdapter {
       throw new Error("No userId provided — cannot fetch YouTube credentials");
     }
 
-    const supabase = await createClient();
-    const { data, error } = await supabase
+    const db = createServerClient();
+    const { data, error } = await db
       .from("user_profiles")
       .select("api_keys")
       .eq("user_id", this.userId)
@@ -91,7 +91,7 @@ export class YouTubeChannelAdapter implements ChannelAdapter {
       },
     };
 
-    await supabase
+    await db
       .from("user_profiles")
       .update({ api_keys: updatedApiKeys })
       .eq("user_id", this.userId);

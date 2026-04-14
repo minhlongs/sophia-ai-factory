@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { trackUsage, hashLicenseKey } from '@/lib/usage-metering';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 
 const SERVICES = ['heygen', 'elevenlabs', 'openrouter'] as const;
@@ -117,10 +117,10 @@ export async function GET(request: NextRequest) {
  */
 export async function DELETE() {
   try {
-    const supabase = createAdminClient();
+    const db = createServerClient();
 
     // First get count of events to delete
-    const { count, error: countError } = await supabase
+    const { count, error: countError } = await db
       .from('usage_events')
       .select('id', { count: 'exact', head: true })
       .like('idempotency_key', 'mock_%');
@@ -134,7 +134,7 @@ export async function DELETE() {
     }
 
     // Delete all events with idempotency_key starting with 'mock_'
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await db
       .from('usage_events')
       .delete()
       .like('idempotency_key', 'mock_%');

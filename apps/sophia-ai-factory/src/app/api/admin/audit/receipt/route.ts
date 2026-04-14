@@ -9,7 +9,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createServerClient } from '@/lib/db/client'
 import { generateReceipt, serializeReceipt } from '@/lib/audit/compliance-receipt'
 import { checkAdminAuth } from '@/app/api/admin/licenses/middleware'
 import { logger } from '@/lib/utils/logger-utility'
@@ -51,8 +51,8 @@ export async function GET(request: NextRequest) {
     })
 
     // Fetch audit log from database
-    const supabase = createAdminClient()
-    const { data: log, error: fetchError } = await supabase
+    const db = createServerClient()
+    const { data: log, error: fetchError } = await db
       .from('raas_audit_logs')
       .select('*')
       .eq('id', params.logId)

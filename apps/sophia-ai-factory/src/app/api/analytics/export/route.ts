@@ -16,7 +16,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser } from '@/lib/better-auth-session';
+import { getUserTier } from '@/lib/db/get-user-tier';
 import { logger } from '@/lib/utils/logger-utility';
 import { exportUsageToCsv } from '@/lib/analytics/export';
 import { checkAdmin, canExport } from '@/lib/analytics/rbac';
@@ -35,8 +36,9 @@ export async function POST(request: NextRequest) {
 
     // Step 2: Check export access
     const isAdmin = await checkAdmin(user.id);
+    const userTier = await getUserTier(user.id);
 
-    if (!canExport(user.tier, isAdmin)) {
+    if (!canExport(userTier, isAdmin)) {
       return NextResponse.json(
         { error: 'Export requires PREMIUM tier or higher' },
         { status: 403 }
@@ -74,7 +76,7 @@ export async function POST(request: NextRequest) {
 
     logger.info('[Analytics Export] Starting export', {
       userId: user.id,
-      userTier: user.tier,
+      userTier,
       isAdmin,
       start,
       end,

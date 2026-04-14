@@ -7,7 +7,7 @@
  * @module audit/usage-event-tracker
  */
 
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createServerClient } from '@/lib/db/client'
 import { hashIpAddress, generateUserPseudonym } from './audit-hashing'
 import { logger } from '@/lib/utils/logger-utility'
 import type { RaasAuditLogInsert } from '@/lib/supabase/types'
@@ -68,7 +68,7 @@ const AUDIT_HASH_SALT = process.env.AUDIT_HASH_SALT || ''
 export async function logModelInvocation(
   event: ModelInvocationEvent
 ): Promise<boolean> {
-  const supabase = createAdminClient()
+  const db = createServerClient()
   const createdAt = Math.floor(Date.now() / 1000)
 
   // Prepare audit log data
@@ -90,7 +90,7 @@ export async function logModelInvocation(
 
   try {
     // Insert audit log (database trigger auto-computes hash chain)
-    const result = await (supabase as any)
+    const result = await (db as any)
       .from('raas_audit_logs')
       .insert(logData)
       .select()
@@ -135,7 +135,7 @@ export async function logApiUsage(
   userId: string | undefined,
   licenseNonce: string
 ): Promise<boolean> {
-  const supabase = createAdminClient()
+  const db = createServerClient()
   const createdAt = Math.floor(Date.now() / 1000)
 
   const logData: RaasAuditLogInsert = {
@@ -151,7 +151,7 @@ export async function logApiUsage(
   }
 
   try {
-    const result = await (supabase as any)
+    const result = await (db as any)
       .from('raas_audit_logs')
       .insert(logData)
       .select()

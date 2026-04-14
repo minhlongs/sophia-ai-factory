@@ -1,4 +1,4 @@
-import { createServerClient } from '@/lib/supabase/server'
+import { createServerClient } from '@/lib/db/client'
 import { sendMessage } from './utils'
 import { logger } from '../../utils/logger-utility'
 
@@ -10,10 +10,10 @@ const getSupabase = () => createServerClient()
  */
 export async function handleResults(chatId: string): Promise<void> {
   try {
-    const supabase = getSupabase()
+    const db = getSupabase()
 
     // 1. Identify user
-    const { data: profileData } = await supabase
+    const { data: profileData } = await db
       .from('user_profiles')
       .select('user_id')
       .eq('telegram_chat_id', chatId)
@@ -25,7 +25,7 @@ export async function handleResults(chatId: string): Promise<void> {
     }
 
     // 2. Fetch completed campaigns
-    const { data: campaigns } = await (supabase as any).from('campaigns')
+    const { data: campaigns } = await (db as any).from('campaigns')
       .select('*')
       .eq('user_id', (profileData as any).user_id)
       .eq('status', 'completed')

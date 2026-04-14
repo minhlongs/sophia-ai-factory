@@ -17,8 +17,8 @@ import {
 const mockNonceFrom = vi.fn()
 const mockNonceSupabaseClient = { from: mockNonceFrom }
 
-vi.mock('@/lib/supabase/admin', () => ({
-  createAdminClient: vi.fn(() => mockNonceSupabaseClient),
+vi.mock('@/lib/db/client', () => ({
+  createServerClient: vi.fn(() => mockNonceSupabaseClient),
 }))
 
 // Mock logger
@@ -72,10 +72,10 @@ describe('checkJwtNonce', () => {
   it('should return valid when nonce not in KV cache', async () => {
     mockKvGet.mockResolvedValue(null)
 
-    const { createAdminClient } = await import('@/lib/supabase/admin')
-    const supabase = vi.mocked(createAdminClient)()
+    const { createServerClient } = await import('@/lib/db/client')
+    const db = vi.mocked(createServerClient)()
 
-    vi.mocked(supabase.from).mockReturnValue({
+    vi.mocked(mockNonceFrom).mockReturnValue({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnValue({
         single: vi.fn().mockResolvedValue({
@@ -122,10 +122,10 @@ describe('checkJwtNonce', () => {
     // Reset KV_KV to undefined rather than deleting (property may be non-configurable from setup)
     ;(globalThis as any).KV_KV = undefined
 
-    const { createAdminClient } = await import('@/lib/supabase/admin')
-    const supabase = vi.mocked(createAdminClient)()
+    const { createServerClient } = await import('@/lib/db/client')
+    const db = vi.mocked(createServerClient)()
 
-    vi.mocked(supabase.from).mockReturnValue({
+    vi.mocked(mockNonceFrom).mockReturnValue({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnValue({
         single: vi.fn().mockResolvedValue({
@@ -143,10 +143,10 @@ describe('checkJwtNonce', () => {
   it('should return already-used when DB shows used_at', async () => {
     mockKvGet.mockResolvedValue(null)
 
-    const { createAdminClient } = await import('@/lib/supabase/admin')
-    const supabase = vi.mocked(createAdminClient)()
+    const { createServerClient } = await import('@/lib/db/client')
+    const db = vi.mocked(createServerClient)()
 
-    vi.mocked(supabase.from).mockReturnValue({
+    vi.mocked(mockNonceFrom).mockReturnValue({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnValue({
         single: vi.fn().mockResolvedValue({
@@ -169,10 +169,10 @@ describe('checkJwtNonce', () => {
     // Reset KV_KV to undefined rather than deleting (property may be non-configurable from setup)
     ;(globalThis as any).KV_KV = undefined
 
-    const { createAdminClient } = await import('@/lib/supabase/admin')
-    const supabase = vi.mocked(createAdminClient)()
+    const { createServerClient } = await import('@/lib/db/client')
+    const db = vi.mocked(createServerClient)()
 
-    vi.mocked(supabase.from).mockReturnValue({
+    vi.mocked(mockNonceFrom).mockReturnValue({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnValue({
         single: vi.fn().mockRejectedValue(new Error('DB error')),
@@ -209,10 +209,10 @@ describe('markJwtNonceAsUsed', () => {
   it('should mark nonce as used in both KV and DB', async () => {
     mockKvSet.mockResolvedValue(undefined)
 
-    const { createAdminClient } = await import('@/lib/supabase/admin')
-    const supabase = vi.mocked(createAdminClient)()
+    const { createServerClient } = await import('@/lib/db/client')
+    const db = vi.mocked(createServerClient)()
 
-    vi.mocked(supabase.from).mockReturnValue({
+    vi.mocked(mockNonceFrom).mockReturnValue({
       insert: vi.fn().mockReturnValue({
         onConflict: vi.fn().mockReturnValue({
           update: vi.fn().mockResolvedValue({ error: null }),
@@ -236,10 +236,10 @@ describe('markJwtNonceAsUsed', () => {
   it('should succeed even if KV write fails', async () => {
     mockKvSet.mockRejectedValue(new Error('KV error'))
 
-    const { createAdminClient } = await import('@/lib/supabase/admin')
-    const supabase = vi.mocked(createAdminClient)()
+    const { createServerClient } = await import('@/lib/db/client')
+    const db = vi.mocked(createServerClient)()
 
-    vi.mocked(supabase.from).mockReturnValue({
+    vi.mocked(mockNonceFrom).mockReturnValue({
       insert: vi.fn().mockReturnValue({
         onConflict: vi.fn().mockReturnValue({
           update: vi.fn().mockResolvedValue({ error: null }),
@@ -255,10 +255,10 @@ describe('markJwtNonceAsUsed', () => {
   it('should return false when DB write fails', async () => {
     mockKvSet.mockResolvedValue(undefined)
 
-    const { createAdminClient } = await import('@/lib/supabase/admin')
-    const supabase = vi.mocked(createAdminClient)()
+    const { createServerClient } = await import('@/lib/db/client')
+    const db = vi.mocked(createServerClient)()
 
-    vi.mocked(supabase.from).mockReturnValue({
+    vi.mocked(mockNonceFrom).mockReturnValue({
       insert: vi.fn().mockReturnValue({
         onConflict: vi.fn().mockReturnValue({
           update: vi.fn().mockRejectedValue(new Error('DB error')),
@@ -333,10 +333,10 @@ describe('cleanupExpiredNonces', () => {
   })
 
   it('should delete expired nonces from database', async () => {
-    const { createAdminClient } = await import('@/lib/supabase/admin')
-    const supabase = vi.mocked(createAdminClient)()
+    const { createServerClient } = await import('@/lib/db/client')
+    const db = vi.mocked(createServerClient)()
 
-    vi.mocked(supabase.from).mockReturnValue({
+    vi.mocked(mockNonceFrom).mockReturnValue({
       delete: vi.fn().mockReturnValue({
         lt: vi.fn().mockReturnValue({
           select: vi.fn().mockResolvedValue({
@@ -353,10 +353,10 @@ describe('cleanupExpiredNonces', () => {
   })
 
   it('should return 0 when cleanup fails', async () => {
-    const { createAdminClient } = await import('@/lib/supabase/admin')
-    const supabase = vi.mocked(createAdminClient)()
+    const { createServerClient } = await import('@/lib/db/client')
+    const db = vi.mocked(createServerClient)()
 
-    vi.mocked(supabase.from).mockReturnValue({
+    vi.mocked(mockNonceFrom).mockReturnValue({
       delete: vi.fn().mockReturnValue({
         lt: vi.fn().mockReturnValue({
           select: vi.fn().mockRejectedValue(new Error('Cleanup error')),
@@ -370,10 +370,10 @@ describe('cleanupExpiredNonces', () => {
   })
 
   it('should handle empty result', async () => {
-    const { createAdminClient } = await import('@/lib/supabase/admin')
-    const supabase = vi.mocked(createAdminClient)()
+    const { createServerClient } = await import('@/lib/db/client')
+    const db = vi.mocked(createServerClient)()
 
-    vi.mocked(supabase.from).mockReturnValue({
+    vi.mocked(mockNonceFrom).mockReturnValue({
       delete: vi.fn().mockReturnValue({
         lt: vi.fn().mockReturnValue({
           select: vi.fn().mockResolvedValue({
@@ -396,12 +396,12 @@ describe('getNonceStats', () => {
   })
 
   it('should return nonce statistics', async () => {
-    const { createAdminClient } = await import('@/lib/supabase/admin')
-    const supabase = vi.mocked(createAdminClient)()
+    const { createServerClient } = await import('@/lib/db/client')
+    const db = vi.mocked(createServerClient)()
 
     // Production code: .from().select('id', {count: 'exact', head: true}).gte() / .lt()
     // .gte() and .lt() are the terminal calls that return promises
-    vi.mocked(supabase.from).mockReturnValue({
+    vi.mocked(mockNonceFrom).mockReturnValue({
       select: vi.fn().mockReturnValue({
         gte: vi.fn().mockResolvedValue({ count: 150, error: null }),
         lt: vi.fn().mockResolvedValue({ count: 50, error: null }),
@@ -416,10 +416,10 @@ describe('getNonceStats', () => {
   })
 
   it('should handle null counts', async () => {
-    const { createAdminClient } = await import('@/lib/supabase/admin')
-    const supabase = vi.mocked(createAdminClient)()
+    const { createServerClient } = await import('@/lib/db/client')
+    const db = vi.mocked(createServerClient)()
 
-    vi.mocked(supabase.from).mockReturnValue({
+    vi.mocked(mockNonceFrom).mockReturnValue({
       select: vi.fn().mockReturnThis(),
       gte: vi.fn().mockReturnValue({
         select: vi.fn().mockResolvedValue({
@@ -442,10 +442,10 @@ describe('getNonceStats', () => {
   })
 
   it('should return zeros on error', async () => {
-    const { createAdminClient } = await import('@/lib/supabase/admin')
-    const supabase = vi.mocked(createAdminClient)()
+    const { createServerClient } = await import('@/lib/db/client')
+    const db = vi.mocked(createServerClient)()
 
-    vi.mocked(supabase.from).mockReturnValue({
+    vi.mocked(mockNonceFrom).mockReturnValue({
       select: vi.fn().mockReturnThis(),
       gte: vi.fn().mockReturnValue({
         select: vi.fn().mockRejectedValue(new Error('Stats error')),

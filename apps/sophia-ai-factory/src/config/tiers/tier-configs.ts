@@ -1,12 +1,12 @@
-import { Tier, TierConfig, FeatureFlag } from "@/types";
-import { NOWPAYMENTS_TIERS } from "@/lib/clients/nowpayments-client";
-import { UNIFIED_TIERS } from "@/lib/unified-tier-config";
-
 /**
- * Tier configurations for Sophia AI Video Factory
- * Pricing limits are sourced from unified-tier-config.ts.
+ * Tier configurations for Sophia AI Video Factory.
+ * Pricing limits are sourced from unified-limits.ts.
  * Payment invoice IDs come from nowpayments-client.ts.
  */
+
+import { Tier, TierConfig, FeatureFlag } from '@/types';
+import { NOWPAYMENTS_TIERS } from '@/lib/clients/nowpayments-client';
+import { UNIFIED_TIERS } from './unified-limits';
 
 export const TIER_CONFIGS: Record<Tier, TierConfig> = {
   BASIC: {
@@ -15,8 +15,8 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
     priceDisplay: `$${UNIFIED_TIERS.BASIC.price}/mo`,
     nowpaymentsInvoiceId: NOWPAYMENTS_TIERS.BASIC.invoiceId,
     features: [
-      "enable_affiliate_engine",
-      "enable_roi_calculator",
+      'enable_affiliate_engine',
+      'enable_roi_calculator',
     ] satisfies FeatureFlag[],
     limits: {
       youtubeChannels: UNIFIED_TIERS.BASIC.youtubeChannels,
@@ -33,8 +33,8 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
     nowpaymentsInvoiceId: NOWPAYMENTS_TIERS.PREMIUM.invoiceId,
     recommended: true,
     features: [
-      "enable_affiliate_engine",
-      "enable_roi_calculator",
+      'enable_affiliate_engine',
+      'enable_roi_calculator',
     ] satisfies FeatureFlag[],
     limits: {
       youtubeChannels: UNIFIED_TIERS.PREMIUM.youtubeChannels,
@@ -52,11 +52,11 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
     priceDisplay: `$${UNIFIED_TIERS.ENTERPRISE.price}/mo`,
     nowpaymentsInvoiceId: NOWPAYMENTS_TIERS.ENTERPRISE.invoiceId,
     features: [
-      "enable_affiliate_engine",
-      "enable_admin_dashboard",
-      "enable_roi_calculator",
-      "enable_api_integrations",
-      "enable_auto_update",
+      'enable_affiliate_engine',
+      'enable_admin_dashboard',
+      'enable_roi_calculator',
+      'enable_api_integrations',
+      'enable_auto_update',
     ] satisfies FeatureFlag[],
     limits: {
       youtubeChannels: UNIFIED_TIERS.ENTERPRISE.youtubeChannels,
@@ -76,12 +76,12 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
     priceDisplay: `$${UNIFIED_TIERS.MASTER.price}`,
     nowpaymentsInvoiceId: NOWPAYMENTS_TIERS.MASTER.invoiceId,
     features: [
-      "enable_affiliate_engine",
-      "enable_admin_dashboard",
-      "enable_roi_calculator",
-      "enable_api_integrations",
-      "enable_auto_update",
-      "enable_early_access",
+      'enable_affiliate_engine',
+      'enable_admin_dashboard',
+      'enable_roi_calculator',
+      'enable_api_integrations',
+      'enable_auto_update',
+      'enable_early_access',
     ] satisfies FeatureFlag[],
     limits: {
       youtubeChannels: UNIFIED_TIERS.MASTER.youtubeChannels,
@@ -96,23 +96,43 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
   },
 };
 
-/**
- * Get tier configuration
- */
+/** Get tier configuration */
 export function getTierConfig(tier: Tier): TierConfig {
   return TIER_CONFIGS[tier];
 }
 
-/**
- * Check if a tier includes a specific feature
- */
+/** Check if a tier includes a specific feature */
 export function tierHasFeature(tier: Tier, feature: FeatureFlag): boolean {
   return TIER_CONFIGS[tier].features.includes(feature);
 }
 
-/**
- * Get all available tiers
- */
+/** Get all available tiers */
 export function getAllTiers(): Tier[] {
   return Object.keys(TIER_CONFIGS) as Tier[];
 }
+
+/** Tier rank/label/features for subscription gate checks */
+export const TIER_CONFIG: Record<Tier, { rank: number; label: string; features: string[] }> = {
+  BASIC: { rank: 1, label: 'Basic', features: ['1 YouTube Channel', '5 Templates', 'Basic Analytics'] },
+  PREMIUM: { rank: 2, label: 'Premium', features: ['3 YouTube Channels', 'Unlimited Templates', 'Advanced Analytics', 'Priority Support'] },
+  ENTERPRISE: { rank: 3, label: 'Enterprise', features: ['Unlimited Channels', 'Custom Templates', 'White-labeling', 'Dedicated Account Manager', 'API Access'] },
+  MASTER: { rank: 4, label: 'Master', features: ['Everything in Enterprise', 'Lifetime Access', 'VIP Support Forever', 'Monthly Strategy Calls', 'Early Access'] },
+};
+
+/** Map DB values → Tier enum */
+export const DB_TIER_MAPPING: Record<string, Tier> = {
+  'basic': 'BASIC',
+  'premium': 'PREMIUM',
+  'pro': 'PREMIUM',
+  'enterprise': 'ENTERPRISE',
+  'master': 'MASTER',
+  'free': 'BASIC',
+};
+
+/** Map Tier enum → DB values */
+export const TIER_DB_MAPPING: Record<Tier, string> = {
+  BASIC: 'basic',
+  PREMIUM: 'premium',
+  ENTERPRISE: 'enterprise',
+  MASTER: 'master',
+};

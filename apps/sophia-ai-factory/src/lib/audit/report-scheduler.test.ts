@@ -11,8 +11,8 @@ import {
 } from './report-scheduler'
 
 // Mock Supabase admin client
-vi.mock('@/lib/supabase/admin', () => ({
-  createAdminClient: vi.fn(),
+vi.mock('@/lib/db/client', () => ({
+  createServerClient: vi.fn(),
 }))
 
 // Mock logger
@@ -26,7 +26,7 @@ vi.mock('@/lib/utils/logger-utility', () => ({
 
 // Import after mocks
 import { scheduleReport, getScheduledReports, cancelScheduledReport, getDueReports, updateNextRunAt } from './report-scheduler'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createServerClient } from '@/lib/db/client'
 
 describe('calculateNextRunAt', () => {
   const baseTime = new Date('2026-03-08T12:00:00Z').getTime()
@@ -136,7 +136,7 @@ describe('scheduleReport', () => {
     mockSupabase = {
       from: vi.fn().mockReturnValue(mockChain)
     }
-    vi.mocked(createAdminClient).mockReturnValue(mockSupabase)
+    vi.mocked(createServerClient).mockReturnValue(mockSupabase)
   })
 
   it('schedules a report successfully', async () => {
@@ -207,7 +207,7 @@ describe('getScheduledReports', () => {
     mockSupabase = {
       from: vi.fn().mockReturnValue(mockChain)
     }
-    vi.mocked(createAdminClient).mockReturnValue(mockSupabase)
+    vi.mocked(createServerClient).mockReturnValue(mockSupabase)
   })
 
   it('returns empty array when no reports exist', async () => {
@@ -262,7 +262,7 @@ describe('cancelScheduledReport', () => {
     mockSupabase = {
       from: vi.fn().mockReturnValue(mockChain)
     }
-    vi.mocked(createAdminClient).mockReturnValue(mockSupabase)
+    vi.mocked(createServerClient).mockReturnValue(mockSupabase)
   })
 
   it('cancels a report successfully', async () => {
@@ -290,7 +290,7 @@ describe('updateNextRunAt', () => {
     mockSupabase = {
       from: vi.fn().mockReturnValue(mockChain)
     }
-    vi.mocked(createAdminClient).mockReturnValue(mockSupabase)
+    vi.mocked(createServerClient).mockReturnValue(mockSupabase)
   })
 
   it('updates next run timestamp', async () => {
@@ -319,7 +319,7 @@ describe('getDueReports', () => {
     mockSupabase = {
       from: vi.fn().mockReturnValue(mockSelect)
     }
-    vi.mocked(createAdminClient).mockReturnValue(mockSupabase)
+    vi.mocked(createServerClient).mockReturnValue(mockSupabase)
   })
 
   it('returns due reports', async () => {

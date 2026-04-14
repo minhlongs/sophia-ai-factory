@@ -1,4 +1,4 @@
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createServerClient } from '@/lib/db/client'
 import { UserContext, BotState } from './telegram-fsm-state-manager'
 
 /**
@@ -21,9 +21,9 @@ export async function backupSessionState(
   event: CriticalEvent
 ): Promise<void> {
   try {
-    const supabase = createAdminClient() as any
+    const db = createServerClient() as any
 
-    const { error } = await supabase
+    const { error } = await db
       .from('user_sessions')
       .upsert(
         {
@@ -51,9 +51,9 @@ export async function restoreSessionState(
   chatId: string
 ): Promise<UserContext | null> {
   try {
-    const supabase = createAdminClient() as any
+    const db = createServerClient() as any
 
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('user_sessions')
       .select('context_data, updated_at')
       .eq('telegram_chat_id', chatId)

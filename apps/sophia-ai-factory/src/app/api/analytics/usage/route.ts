@@ -16,7 +16,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser } from '@/lib/better-auth-session';
+import { getUserTier } from '@/lib/db/get-user-tier';
 import { logger } from '@/lib/utils/logger-utility';
 import { fetchUsageMetrics } from '@/lib/analytics/queries';
 import { verifyLicenseAccess, getUserLicenseNonce, checkAdmin } from '@/lib/analytics/rbac';
@@ -88,6 +89,7 @@ export async function GET(request: NextRequest) {
 
     // Check if user is admin
     const isAdmin = await checkAdmin(user.id);
+    const userTier = await getUserTier(user.id);
 
     if (!isAdmin) {
       // Customer users can only see their own data
@@ -108,7 +110,7 @@ export async function GET(request: NextRequest) {
 
     logger.info('[Analytics Usage] Querying usage metrics', {
       userId: user.id,
-      userTier: user.tier,
+      userTier,
       isAdmin,
       licenseNonce: queryLicenseNonce,
       startTimestamp,

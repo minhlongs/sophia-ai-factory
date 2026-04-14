@@ -1,5 +1,5 @@
 /**
- * Unified Tier Config — Single source of truth for ALL tier limits
+ * Unified Tier Limits — Single source of truth for ALL tier limits.
  *
  * Covers both Video Factory and RaaS (AI Automation) features.
  * Payment handled by NOWPayments (invoice IDs in nowpayments-client.ts).
@@ -44,10 +44,7 @@ export interface UnifiedTierLimits {
   billingType: 'monthly' | 'lifetime';
 }
 
-/**
- * UNIFIED_TIERS — canonical source for all tier definitions.
- * Import this in tiers.ts, raas-gate.ts, quota checks, and pricing UI.
- */
+/** Canonical tier definitions used by all tier checks, quota logic, and pricing UI. */
 export const UNIFIED_TIERS: Record<Tier, UnifiedTierLimits> = {
   BASIC: {
     name: 'Starter',
@@ -122,24 +119,17 @@ export const UNIFIED_TIERS: Record<Tier, UnifiedTierLimits> = {
   },
 } as const;
 
-/**
- * Get unified tier limits for a given tier key.
- */
+/** Get unified tier limits for a given tier key. */
 export function getUnifiedTierLimits(tier: Tier): UnifiedTierLimits {
   return UNIFIED_TIERS[tier];
 }
 
-/**
- * Get MCU monthly allowance for a tier (used by quota-checker).
- */
+/** Get MCU monthly allowance for a tier (used by quota-checker). */
 export function getMcuMonthlyLimit(tier: Tier): number {
   return UNIFIED_TIERS[tier].mcuMonthly;
 }
 
-/**
- * Get AI command quota for a tier.
- * Returns 999 for effectively unlimited tiers.
- */
+/** Get AI command quota for a tier. Returns 999 for effectively unlimited tiers. */
 export function getAiCommandLimit(tier: Tier): number {
   return UNIFIED_TIERS[tier].aiCommands;
 }

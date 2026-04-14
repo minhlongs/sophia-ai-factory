@@ -1,10 +1,10 @@
 /**
  * Analytics Query Helpers
  *
- * Supabase query functions for analytics dashboard
+ * D1 query functions for analytics dashboard
  */
 
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import type {
   UsageFilters,
@@ -31,7 +31,7 @@ const MAX_DATE_RANGE_DAYS = 90;
  * @param filters - Query filters for usage data
  */
 export async function fetchUsageMetrics(filters: UsageFilters): Promise<UsageMetrics> {
-  const supabase = await createAdminClient();
+  const db = createServerClient();
 
   // Validate date range
   const dateRangeDays = (filters.endTimestamp - filters.startTimestamp) / 86400;
@@ -39,7 +39,7 @@ export async function fetchUsageMetrics(filters: UsageFilters): Promise<UsageMet
     throw new Error(`Date range exceeds maximum of ${MAX_DATE_RANGE_DAYS} days`);
   }
 
-  let query = supabase
+  let query = db
     .from('usage_events')
     .select('*')
     .gte('created_at', filters.startTimestamp)
@@ -189,7 +189,7 @@ export async function fetchUsageMetrics(filters: UsageFilters): Promise<UsageMet
  * @param period - Revenue period filter
  */
 export async function fetchRevenueMetrics(period: RevenuePeriod): Promise<RevenueMetrics> {
-  const supabase = await createAdminClient();
+  const db = createServerClient();
 
   // Calculate date range based on period
   const now = new Date();
@@ -215,7 +215,7 @@ export async function fetchRevenueMetrics(period: RevenuePeriod): Promise<Revenu
   }
 
   // Query raas_licenses table
-  const { data: licenses, error } = await supabase
+  const { data: licenses, error } = await db
     .from('raas_licenses')
     .select('tier, created_at, metadata')
     .gte('created_at', startTimestamp)
@@ -227,7 +227,7 @@ export async function fetchRevenueMetrics(period: RevenuePeriod): Promise<Revenu
   }
 
   // Query payment_events for revenue trend
-  const { data: paymentEvents } = await supabase
+  const { data: paymentEvents } = await db
     .from('payment_events')
     .select('event_type, payload, created_at')
     .gte('created_at', new Date(startTimestamp * 1000).toISOString())
@@ -314,10 +314,10 @@ export async function fetchRevenueMetrics(period: RevenuePeriod): Promise<Revenu
  * @param filters - Query filters for license data
  */
 export async function fetchLicenseMetrics(filters: LicenseFilters = {}): Promise<LicenseMetrics> {
-  const supabase = await createAdminClient();
+  const db = createServerClient();
   const status = filters.status || 'active';
 
-  let query = supabase.from('raas_licenses').select('*');
+  let query = db.from('raas_licenses').select('*');
 
   // Apply status filter
   const now = Math.floor(Date.now() / 1000);
@@ -371,7 +371,7 @@ export async function fetchLicenseMetrics(filters: LicenseFilters = {}): Promise
     // Get usage for this license (current month)
     const monthStart = Math.floor(new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime() / 1000);
 
-    const { data: usageData } = await supabase
+    const { data: usageData } = await db
       .from('usage_events')
       .select('credits_used')
       .eq('license_nonce', license.nonce)
@@ -382,7 +382,7 @@ export async function fetchLicenseMetrics(filters: LicenseFilters = {}): Promise
     const percentage = limitCredit > 0 ? Math.round((usedCredits / limitCredit) * 10000) / 100 : 0;
 
     // Get overage events for this license (Phase 6)
-    const { data: overageData } = await supabase
+    const { data: overageData } = await db
       .from('overage_events')
       .select('exceeded_by, billable')
       .eq('license_nonce', license.nonce)
@@ -424,10 +424,10 @@ export async function fetchViolations(
   page: number = 1,
   limit: number = 50
 ): Promise<{ violations: ViolationEvent[]; total: number; hasMore: boolean }> {
-  const supabase = await createAdminClient();
+  const db = createServerClient();
 
   // Build query dynamically based on filters
-  let query = supabase.from('violations').select('*', { count: 'exact' });
+  let query = db.from('violations').select('*', { count: 'exact' });
 
   if (filters.licenseNonce) {
     query = query.eq('license_nonce', filters.licenseNonce);
@@ -527,10 +527,10 @@ export async function fetchViolationSummary(
   startTimestamp: number,
   endTimestamp: number
 ): Promise<ViolationSummary> {
-  const supabase = await createAdminClient();
+  const db = createServerClient();
 
   // Build base query
-  let query = supabase.from('violations').select('*');
+  let query = db.from('violations').select('*');
 
   if (filters.licenseNonce) {
     query = query.eq('license_nonce', filters.licenseNonce);

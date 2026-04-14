@@ -14,7 +14,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import { RaasGatewayClient } from '@/lib/raas-gateway-client';
 import { getKvClient } from '@/lib/redis';
@@ -206,11 +206,11 @@ async function syncFromGateway(
  * Sync from local database (fallback)
  */
 async function syncFromDatabase(licenseNonce: string): Promise<SyncResult> {
-  const supabase = createAdminClient();
+  const db = createServerClient();
 
   try {
     // Fetch license from raas_api_keys table
-    const { data: license, error } = await supabase
+    const { data: license, error } = await db
       .from('raas_api_keys')
       .select(`
         nonce,
@@ -278,7 +278,7 @@ async function updateLicenseInDatabase(
   featureEntitlements: string[];
   dunningState: string;
 }> {
-  const supabase = createAdminClient();
+  const db = createServerClient();
 
   // Determine status based on expiration
   const now = Date.now();
@@ -293,7 +293,7 @@ async function updateLicenseInDatabase(
   }
 
   // Upsert license data
-  const { data: updated, error } = await supabase
+  const { data: updated, error } = await db
     .from('raas_api_keys')
     .upsert(
       {

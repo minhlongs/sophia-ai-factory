@@ -8,7 +8,7 @@
  */
 
 import { SignJWT, jwtVerify } from 'jose';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import { getEffectiveQuotaLimits } from '@/lib/quota/quota-checker';
 import type { QuotaLimit } from '@/lib/usage-metering/types';
@@ -186,10 +186,10 @@ async function fetchPolarBillingStatus(
   }
 
   try {
-    const supabase = createAdminClient();
+    const db = createServerClient();
 
     // Fetch from user_profiles or billing_events
-    const { data } = await supabase
+    const { data } = await db
       .from('user_profiles')
       .select('subscription_status, subscription_tier')
       .eq('polar_customer_id', polarCustomerId)
@@ -248,9 +248,9 @@ function getJwtSecret(): Uint8Array {
  */
 export async function getLicenseContext(licenseNonce: string): Promise<LicenseContext | null> {
   try {
-    const supabase = createAdminClient();
+    const db = createServerClient();
 
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('raas_licenses')
       .select('tier, agency_id, polar_customer_id, polar_subscription_status, expires_at, created_at')
       .eq('license_nonce', licenseNonce)
@@ -280,9 +280,9 @@ export async function getLicenseContext(licenseNonce: string): Promise<LicenseCo
  */
 async function fetchDunningState(licenseNonce: string): Promise<'ok' | 'grace_period' | 'suspended' | 'delinquent'> {
   try {
-    const supabase = createAdminClient();
+    const db = createServerClient();
 
-    const { data } = await supabase
+    const { data } = await db
       .from('dunning_states')
       .select('state')
       .eq('license_nonce', licenseNonce)

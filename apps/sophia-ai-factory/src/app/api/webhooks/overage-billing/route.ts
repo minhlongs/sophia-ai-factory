@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { Webhook } from 'standardwebhooks';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
 import { z } from 'zod';
 
 // Webhook event schema
@@ -131,7 +131,7 @@ function verifyCloudflareSignature(
  */
 async function checkIdempotency(
   idempotencyKey: string,
-  supabase: ReturnType<typeof createAdminClient>
+  supabase: ReturnType<typeof createServerClient>
 ): Promise<boolean> {
   const { data, error } = await supabase
     .from('usage_events')
@@ -147,7 +147,7 @@ async function checkIdempotency(
  */
 async function storeUsageEvent(
   event: z.infer<typeof overageEventSchema>,
-  supabase: ReturnType<typeof createAdminClient>
+  supabase: ReturnType<typeof createServerClient>
 ): Promise<{ success: boolean; error?: string }> {
   const { error } = await supabase.from('usage_events').insert({
     license_nonce: event.licenseNonce,
@@ -234,8 +234,8 @@ export async function POST(request: NextRequest) {
 
     const validatedEvent = parseResult.data;
 
-    // Initialize Supabase admin client
-    const supabase = createAdminClient();
+    // Initialize D1 database client
+    const supabase = createServerClient();
 
     // Check idempotency
     const isDuplicate = await checkIdempotency(validatedEvent.idempotencyKey, supabase);

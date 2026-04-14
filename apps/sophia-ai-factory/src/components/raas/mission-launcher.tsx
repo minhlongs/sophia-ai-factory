@@ -4,7 +4,7 @@
  * Mission Launcher
  *
  * Modal for creating new missions from templates.
- * Checks MCU balance against tier limit from unified-tier-config.
+ * Checks MCU balance against tier limit from config/tiers.
  */
 
 import { useState } from 'react';

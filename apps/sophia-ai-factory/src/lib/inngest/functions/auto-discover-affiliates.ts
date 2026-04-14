@@ -13,7 +13,7 @@ import {
   type AffiliateScore,
 } from "@/lib/discovery/affiliate-ai-scorer";
 import { sendMessage as sendTelegramMessage } from "@/lib/telegram/handlers/utils";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createServerClient } from '@/lib/db/client';
 
 /** Default niches to scan when no user-configured niches exist */
 const DEFAULT_NICHES = [
@@ -74,12 +74,12 @@ export const autoDiscoverAffiliates = inngest.createFunction(
         return { count: 0, newCount: 0 };
       }
 
-      const supabase = await createAdminClient();
+      const db = createServerClient();
       let newDiscoveries = 0;
 
       // Check which programs already exist in affiliate_products
       const programIds = scoredResults.map((s) => s.programId);
-      const { data: existing } = await supabase
+      const { data: existing } = await db
         .from("affiliate_products")
         .select("external_id")
         .in("external_id", programIds);
@@ -102,7 +102,7 @@ export const autoDiscoverAffiliates = inngest.createFunction(
         );
         if (!matchedProgram) continue;
 
-        const { error } = await supabase
+        const { error } = await db
           .from("affiliate_products")
           // @ts-expect-error Database type missing Relationships for Supabase generic inference
           .insert({

@@ -17,7 +17,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import { z } from 'zod';
 
@@ -59,10 +59,10 @@ export async function POST(req: NextRequest) {
     }
 
     const { licenseNonce, customLimits, reason, effectiveDate } = validation.data;
-    const supabase = createAdminClient();
+    const db = createServerClient();
 
     // Check if license exists
-    const { data: license, error: licenseError } = await supabase
+    const { data: license, error: licenseError } = await db
       .from('raas_licenses')
       .select('nonce, tier, created_by')
       .eq('nonce', licenseNonce)
@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Upsert quota limits
-    const { error: upsertError } = await supabase
+    const { error: upsertError } = await db
       .from('quota_limits')
       .upsert({
         license_nonce: licenseNonce,
@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Log audit event
-    const { data: auditData } = await supabase
+    const { data: auditData } = await db
       .from('audit_logs')
       .insert({
         event_type: 'quota_adjusted',

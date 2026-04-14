@@ -13,7 +13,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser } from '@/lib/better-auth-session';
+import { getUserTier } from '@/lib/db/get-user-tier';
 import { logger } from '@/lib/utils/logger-utility';
 import { fetchLicenseMetrics } from '@/lib/analytics/queries';
 import { checkAdmin, verifyLicenseAccess, getUserLicenseNonce } from '@/lib/analytics/rbac';
@@ -51,10 +52,11 @@ export async function GET(request: NextRequest) {
 
     // Step 3: RBAC - Determine access level
     const isAdmin = await checkAdmin(user.id);
+    const userTier = await getUserTier(user.id);
 
     logger.info('[Analytics Licenses] Querying license metrics', {
       userId: user.id,
-      userTier: user.tier,
+      userTier,
       isAdmin,
       status,
       tier,

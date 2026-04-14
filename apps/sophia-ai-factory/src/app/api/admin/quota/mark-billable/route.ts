@@ -12,7 +12,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import { z } from 'zod';
 
@@ -48,10 +48,10 @@ export async function POST(req: NextRequest) {
     }
 
     const { eventIds, pricePerCredit, reason } = validation.data;
-    const supabase = createAdminClient();
+    const db = createServerClient();
 
     // Get events to calculate total credits
-    const { data: events, error: fetchError } = await supabase
+    const { data: events, error: fetchError } = await db
       .from('overage_events')
       .select('id, exceeded_by, user_id, license_nonce')
       .in('id', eventIds);
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Mark events as billable
-    const { error: updateError } = await supabase
+    const { error: updateError } = await db
       .from('overage_events')
       .update({
         billable: true,
@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
     const estimatedCost = pricePerCredit ? totalCredits * pricePerCredit : null;
 
     // Log audit event
-    await supabase
+    await db
       .from('audit_logs')
       .insert({
         event_type: 'overage_marked_billable',

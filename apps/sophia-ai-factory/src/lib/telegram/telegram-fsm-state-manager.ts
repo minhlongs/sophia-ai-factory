@@ -1,4 +1,4 @@
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createServerClient } from '@/lib/db/client'
 import { logger } from '@/lib/utils/logger-utility'
 
 /**
@@ -36,11 +36,11 @@ export interface UserContext {
  */
 export class TelegramFSM {
   static async getContext(chatId: string): Promise<UserContext | null> {
-    const supabase = createAdminClient()
+    const db = createServerClient()
 
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase as any).rpc('get_telegram_user_session', {
+      const { data, error } = await (db as any).rpc('get_telegram_user_session', {
         p_chat_id: chatId,
       })
 
@@ -70,14 +70,14 @@ export class TelegramFSM {
     chatId: string,
     context: Partial<UserContext>
   ): Promise<void> {
-    const supabase = createAdminClient()
+    const db = createServerClient()
 
     try {
       const { state = BotState.IDLE, ...data } = context
       const contextData: Record<string, unknown> = { ...data }
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase as any).rpc('set_telegram_user_state', {
+      await (db as any).rpc('set_telegram_user_state', {
         p_chat_id: chatId,
         p_state: state,
         p_context_data: contextData,
@@ -89,11 +89,11 @@ export class TelegramFSM {
   }
 
   static async clearContext(chatId: string): Promise<void> {
-    const supabase = createAdminClient()
+    const db = createServerClient()
 
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase as any).rpc('clear_telegram_session', { p_chat_id: chatId })
+      await (db as any).rpc('clear_telegram_session', { p_chat_id: chatId })
     } catch (error) {
       logger.error('Clear Telegram session failed', error instanceof Error ? error : new Error(String(error)))
       throw error
@@ -105,11 +105,11 @@ export class TelegramFSM {
   }
 
   static async setSubscriptionTier(chatId: string, tier: string): Promise<void> {
-    const supabase = createAdminClient()
+    const db = createServerClient()
 
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase as any).rpc('update_session_subscription_tier', {
+      await (db as any).rpc('update_session_subscription_tier', {
         p_chat_id: chatId,
         p_tier: tier,
       })

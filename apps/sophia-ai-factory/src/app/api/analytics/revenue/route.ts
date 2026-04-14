@@ -13,7 +13,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser } from '@/lib/better-auth-session';
+import { getUserTier } from '@/lib/db/get-user-tier';
 import { logger } from '@/lib/utils/logger-utility';
 import { fetchRevenueMetrics } from '@/lib/analytics/queries';
 import { checkAdmin, canAccessRevenue } from '@/lib/analytics/rbac';
@@ -50,9 +51,10 @@ export async function GET(request: NextRequest) {
 
     // Step 3: RBAC - Check if user is admin
     const isAdmin = await checkAdmin(user.id);
+    const userTier = await getUserTier(user.id);
 
     // Check revenue access
-    if (!canAccessRevenue(user.tier, isAdmin)) {
+    if (!canAccessRevenue(userTier, isAdmin)) {
       return NextResponse.json(
         { error: 'Access denied - revenue metrics require ENTERPRISE tier or higher' },
         { status: 403 }
@@ -68,7 +70,7 @@ export async function GET(request: NextRequest) {
 
     logger.info('[Analytics Revenue] Querying revenue metrics', {
       userId: user.id,
-      userTier: user.tier,
+      userTier,
       isAdmin,
       period,
       tier,

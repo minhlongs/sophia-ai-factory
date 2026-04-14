@@ -17,7 +17,7 @@
  * @module usage-metering/kv-metering-log-sync
  */
 
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
 import { getKvClient } from '@/lib/redis';
 import { logger } from '@/lib/utils/logger-utility';
 import { createHash } from 'crypto';
@@ -143,7 +143,7 @@ export async function syncUsageEventsToKv(
   }
 
   try {
-    const supabase = createAdminClient();
+    const db = createServerClient();
 
     // Calculate time range
     const now = Math.floor(Date.now() / 1000);
@@ -155,7 +155,7 @@ export async function syncUsageEventsToKv(
       startTime: new Date(startTime * 1000).toISOString(),
     });
 
-    const { data: events, error } = await supabase
+    const { data: events, error } = await db
       .from('usage_events')
       .select(`
         id,
@@ -316,8 +316,8 @@ export async function getMeteringLogs(
     logger.warn('[KV Metering Logs] Range query not efficient in KV, using database fallback');
 
     // Fallback to database query
-    const supabase = createAdminClient();
-    const { data, error } = await supabase
+    const db = createServerClient();
+    const { data, error } = await db
       .from('usage_events')
       .select('*')
       .gte('created_at', startTime)

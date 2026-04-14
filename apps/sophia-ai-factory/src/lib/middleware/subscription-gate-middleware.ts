@@ -1,6 +1,6 @@
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createServerClient } from '@/lib/db/client'
 import { Tier } from '@/types'
-import { TIER_CONFIG } from '@/lib/subscription'
+import { TIER_CONFIG } from '@/config/tiers'
 
 /**
  * Subscription gate middleware for API routes and bot commands
@@ -22,10 +22,10 @@ export async function checkSubscriptionGate(
   userId: string,
   requiredTier: Tier = 'PREMIUM'
 ): Promise<GateResult> {
-  const supabase = createAdminClient()
+  const db = createServerClient()
 
   // Get tier from raas_licenses table (set by NOWPayments IPN webhook)
-  const { data: license } = await supabase
+  const { data: license } = await db
     .from('raas_licenses')
     .select('tier, status')
     .eq('created_by', userId)

@@ -21,7 +21,7 @@ import { validateLicenseKey as validateWithHmac, ValidationResult } from './raas
 import { logValidationWithReceipt, serializeReceiptForHeader } from './audit/audit-logger';
 import { checkQuotaWithOverage, DEFAULT_CONFIG } from './quota/quota-checker';
 import { enforceQuota } from './quota/quota-enforcer';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
 import { hasEmergencyBypass, recordCircuitFailure, recordCircuitSuccess } from './usage-metering/realtime-tracker';
 // Polar subscription check removed — NOWPayments IPN handles tier activation via DB
 import { logViolationAndAlert } from '@/lib/alerts/realtime-alert-service';
@@ -247,13 +247,13 @@ export async function raasGate(request: NextRequest): Promise<{
     let licenseNonceForError: string | undefined;
 
     try {
-      const supabase = createAdminClient();
+      const db = createServerClient();
 
       // Get license info from DB
       // Note: Using type assertion for Supabase query result since generated types
       // may not be available. The query returns RaasLicenseRow format.
       const keyHash = sha256(licenseKey);
-      const { data: license } = await supabase
+      const { data: license } = await db
         .from('raas_licenses')
         .select('nonce, tier, polar_customer_id')
         .eq('key_hash', keyHash)
@@ -263,7 +263,7 @@ export async function raasGate(request: NextRequest): Promise<{
         licenseNonceForError = license.nonce;
 
         // Get user ID from license owner
-        const { data: licenseData } = await supabase
+        const { data: licenseData } = await db
           .from('raas_licenses')
           .select('created_by')
           .eq('nonce', license.nonce)

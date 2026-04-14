@@ -37,7 +37,6 @@ import {
 } from './reconciliation-alert-emitter';
 // Overage billing reconciler removed — NOWPayments handles payments via IPN
 import { syncUsageEventsToKv, getMeteringLogs, markAsReconciled, type MeteringLogEntry } from '@/lib/usage-metering/kv-metering-log-sync';
-import { createAdminClient } from '@/lib/supabase/admin';
 import { logger } from '@/lib/utils/logger-utility';
 
 /**

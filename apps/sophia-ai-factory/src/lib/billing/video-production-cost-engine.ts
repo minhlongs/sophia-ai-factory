@@ -7,7 +7,7 @@
  */
 
 import type { Tier } from '@/types';
-import { UNIFIED_TIERS } from '@/lib/unified-tier-config';
+import { UNIFIED_TIERS } from '@/config/tiers';
 
 /** Real API costs per video component (USD) */
 export const API_COSTS = {

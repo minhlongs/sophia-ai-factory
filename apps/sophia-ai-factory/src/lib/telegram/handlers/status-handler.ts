@@ -1,5 +1,5 @@
 import { TelegramFSM } from '../telegram-fsm-state-manager'
-import { createServerClient } from '@/lib/supabase/server'
+import { createServerClient } from '@/lib/db/client'
 import { sendMessage } from './utils'
 import { logger } from '../../utils/logger-utility'
 
@@ -22,10 +22,10 @@ export async function handleStatus(chatId: string): Promise<void> {
   message += `Bot State: ${context.state}\n\n`
 
   try {
-    const supabase = getSupabase()
+    const db = getSupabase()
 
     // 1. Identify user from chatId
-    const { data: profileData } = await supabase
+    const { data: profileData } = await db
       .from('user_profiles')
       .select('user_id')
       .eq('telegram_chat_id', chatId)
@@ -33,7 +33,7 @@ export async function handleStatus(chatId: string): Promise<void> {
 
     if (profileData) {
       // 2. Fetch active campaigns
-      const { data: campaigns } = await (supabase as any).from('campaigns')
+      const { data: campaigns } = await (db as any).from('campaigns')
         .select('*')
         .eq('user_id', (profileData as { user_id: string }).user_id)
         .in('status', ['queued', 'processing_script', 'processing_video'])

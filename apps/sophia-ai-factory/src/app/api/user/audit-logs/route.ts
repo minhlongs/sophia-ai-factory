@@ -7,7 +7,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createServerClient } from '@/lib/db/client'
+import { getCurrentUser } from '@/lib/better-auth-session'
 import { logger } from '@/lib/utils/logger-utility'
 import { z } from 'zod'
 
@@ -37,19 +38,17 @@ function getNinetyDaysAgoTimestamp(): number {
  */
 export async function GET(request: NextRequest) {
   try {
-    // Create authenticated Supabase client
-    const supabase = await createClient()
-
     // Get current user
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    const user = await getCurrentUser()
 
-    if (userError || !user) {
-      logger.warn('User audit logs: Authentication failed', { error: userError })
+    if (!user) {
+      logger.warn('User audit logs: Authentication failed')
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
       )
     }
+    const supabase = createServerClient()
 
     // Parse query parameters
     const searchParams = request.nextUrl.searchParams

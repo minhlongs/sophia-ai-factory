@@ -6,23 +6,24 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createServerClient } from '@/lib/db/client';
+import { getCurrentUser } from '@/lib/better-auth-session';
 import { logger } from '@/lib/utils/logger-utility';
-import { UNIFIED_TIERS } from '@/lib/unified-tier-config';
+import { UNIFIED_TIERS } from '@/config/tiers';
 import type { Tier } from '@/types';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(_request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const user = await getCurrentUser();
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const db = createServerClient();
 
     // Try fetching from DB first; fall back to static list if table doesn't exist yet
-    const { data: templates, error } = await supabase
+    const { data: templates, error } = await db
       .from('mission_templates')
       .select('*')
       .eq('is_active', true)

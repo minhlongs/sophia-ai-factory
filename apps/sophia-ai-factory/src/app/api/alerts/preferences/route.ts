@@ -6,7 +6,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createServerClient } from '@/lib/db/client';
+import { getCurrentUser } from '@/lib/better-auth-session';
 import { logger } from '@/lib/utils/logger-utility';
 
 /**
@@ -15,16 +16,15 @@ import { logger } from '@/lib/utils/logger-utility';
  */
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient();
-
     // Get current user
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
     }
+    const supabase = createServerClient();
 
     // Fetch preferences
     const { data: prefs, error } = await supabase
@@ -65,16 +65,15 @@ export async function GET(request: NextRequest) {
  */
 export async function PUT(request: NextRequest) {
   try {
-    const supabase = createClient();
-
     // Get current user
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
     }
+    const supabase = createServerClient();
 
     // Parse request body
     const body = await request.json();

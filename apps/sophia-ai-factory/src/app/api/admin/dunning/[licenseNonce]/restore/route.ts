@@ -5,7 +5,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { getCurrentUser } from '@/lib/better-auth-session';
+import { createServerClient } from '@/lib/db/client';
 import { restoreLicense } from '@/lib/billing/dunning-workflow';
 import { logger } from '@/lib/utils/logger-utility';
 
@@ -15,15 +16,15 @@ export async function POST(
 ) {
   try {
     // Check admin auth
-    const supabase = createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
 
-    if (authError || !user) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Check admin role
-    const { data: userData } = await supabase
+    const db = createServerClient();
+    const { data: userData } = await db
       .from('user_profiles')
       .select('role')
       .eq('user_id', user.id)
@@ -39,8 +40,7 @@ export async function POST(
     const reason = body.reason || 'Manual restoration by admin';
 
     // Get user ID from license
-    const adminSupabase = createAdminClient();
-    const { data: license } = await adminSupabase
+    const { data: license } = await db
       .from('raas_licenses')
       .select('created_by')
       .eq('nonce', params.licenseNonce)

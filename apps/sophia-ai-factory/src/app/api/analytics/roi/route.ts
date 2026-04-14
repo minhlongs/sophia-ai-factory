@@ -13,7 +13,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser } from '@/lib/better-auth-session';
+import { getUserTier } from '@/lib/db/get-user-tier';
 import { logger } from '@/lib/utils/logger-utility';
 import { calculateRoiMetrics } from '@/lib/analytics/roi-calculator';
 import { verifyLicenseAccess, checkAdmin } from '@/lib/analytics/rbac';
@@ -66,9 +67,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const userTier = await getUserTier(user.id);
+
     logger.info('[Analytics ROI] Calculating ROI metrics', {
       userId: user.id,
-      userTier: user.tier,
+      userTier,
       isAdmin,
       licenseNonce,
       valuePerCredit,

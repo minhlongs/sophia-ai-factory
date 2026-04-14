@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase/client'
+import { createServerClient } from '@/lib/db/client'
 import type { IngestionAdapter, IngestionResult, RawProduct } from './types'
 import type { Database, Json } from '@/lib/supabase/types'
 import Bottleneck from 'bottleneck'
@@ -57,7 +57,8 @@ export abstract class BaseAdapter implements IngestionAdapter {
         is_hidden_gem: false,
       }))
 
-      const { error } = await supabase
+      const db = createServerClient()
+      const { error } = await db
         .from('affiliate_products')
         // @ts-expect-error - Known Supabase typing limitation with upsert on tables with Json columns
         .upsert(dbRows as unknown as Database['public']['Tables']['affiliate_products']['Insert'][], {

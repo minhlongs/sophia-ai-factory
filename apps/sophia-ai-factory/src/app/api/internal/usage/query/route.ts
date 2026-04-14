@@ -53,7 +53,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import { QUOTA_LIMITS } from '@/lib/usage-metering/aggregator';
 import type { HourlySummary, DailySummary } from '@/lib/usage-metering/types';
@@ -320,10 +320,10 @@ export async function GET(request: NextRequest) {
     let tier = 'BASIC';
 
     if (externalCustomerId) {
-      const supabase = createAdminClient();
+      const db = createServerClient();
 
       // Try to find license by Polar customer ID
-      const { data: license } = await supabase
+      const { data: license } = await db
         .from('raas_licenses')
         .select('nonce, tier, created_by, polar_customer_id')
         .eq('polar_customer_id', externalCustomerId)
@@ -331,7 +331,7 @@ export async function GET(request: NextRequest) {
 
       if (!license) {
         // Try Stripe customer ID
-        const { data: stripeLicense } = await supabase
+        const { data: stripeLicense } = await db
           .from('raas_licenses')
           .select('nonce, tier, created_by, stripe_customer_id')
           .eq('stripe_customer_id', externalCustomerId)
@@ -354,8 +354,8 @@ export async function GET(request: NextRequest) {
       }
     } else {
       // Query by license_nonce - get user_id and tier
-      const supabase = createAdminClient();
-      const { data: license } = await supabase
+      const db = createServerClient();
+      const { data: license } = await db
         .from('raas_licenses')
         .select('tier, created_by')
         .eq('nonce', licenseNonce!)
@@ -373,9 +373,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Step 4: Get aggregated usage data
-    const supabase = createAdminClient();
+    const db2 = createServerClient();
 
-    let query = supabase
+    let query = db2
       .from('usage_events')
       .select('*')
       .eq('user_id', queryUserId!)

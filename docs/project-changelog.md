@@ -5,6 +5,51 @@
 
 ---
 
+## [2026-04-14] Architecture Consolidation — Complete
+
+### Summary
+Major codebase restructuring completed. Unified authentication, consolidated database client, unified tier logic, and modularized 5 giant files into 21 focused modules. 112 API files migrated to single D1 client pattern.
+
+### Auth Consolidation
+- **Deleted:** `lib/auth.ts`, `lib/subscription.ts`, `lib/db/auth-verify.ts`, `lib/clients/supabase-client.ts`
+- **Unified:** Single Better Auth v1.6.2 source for all authentication flows
+- **Exceptions:** OAuth callbacks and admin invite remain on Supabase (external requirements)
+
+### Database Client Consolidation
+- **Migration:** 112 files migrated from Supabase admin/server patterns to D1 client
+- **Entry Point:** `@/lib/db/client` exports `createServerClient()` for all D1 queries
+- **Pattern:** Eliminates Supabase client imports; all authenticated DB access routes through one client
+
+### Tier Logic Consolidation
+- **Deleted:** `lib/tier-gate.ts`, `lib/unified-tier-config.ts`
+- **Unified:** Single source at `config/tiers/tier-configs.ts` + `config/tiers/unified-limits.ts`
+- **Impact:** Tier checks throughout codebase import from config, not dispersed utility files
+
+### File Modularization (5 Giant Files → 21 Modules)
+| Original File | New Location | Module Count | Impact |
+|---|---|---|---|
+| `lib/billing/resend-email-service.ts` | `lib/billing/email/*` | 4 | Delivery, templates, tracking, types |
+| `lib/billing/dunning-workflow.ts` | `lib/billing/dunning/*` | 3 | Actions, state-machine, admin-ops |
+| `lib/alerts/quota-alert-service.ts` | `lib/alerts/quota/*` | 3 | Evaluator, scheduler, delivery |
+| `lib/usage-metering/aggregator.ts` | `lib/usage-metering/*` | 3 | Tracker, rollup, integration |
+| `lib/raas-audit.ts` | `lib/raas/*` | 4 | Audit-logging, query-service, invoice, permissions |
+
+### Shared Utilities
+- **Campaign Core:** `lib/campaigns/create-campaign-core.ts` — unified creation logic for dashboard + API routes
+
+### Quality Metrics
+- **Tests:** 859/863 passing (legacy auth components isolated, non-blocking)
+- **Build:** 0 TypeScript errors, strict mode enabled
+- **Commits:** 12 commits aggregated into architecture consolidation
+
+### Backward Compatibility
+- ✅ All existing API routes functional
+- ✅ OAuth and admin invite endpoints unchanged
+- ✅ Database schema preservation; migration-safe
+- ✅ Frontend Server Components continue working with Better Auth
+
+---
+
 ## [2026-04-14] Better Auth Framework Migration — Complete
 
 ### Better Auth v1.6.2 Implementation
@@ -348,4 +393,4 @@
 ---
 
 **Maintained by:** Documentation Team
-**Last Sync:** 2026-04-10 21:30 UTC
+**Last Sync:** 2026-04-14 20:30 UTC

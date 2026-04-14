@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createServerClient } from '@/lib/db/client';
 import { redisHelpers } from '@/lib/clients/upstash-redis-client';
 import type { HealthResponse } from '@/types/health';
 import { withRateLimit } from '@/middleware/rate-limit-wrapper';
@@ -27,8 +27,8 @@ export const GET = withRateLimit(async function GET(req: NextRequest) {
   if (supabaseConfigured) {
     const supabaseStartTime = Date.now();
     try {
-      const supabase = await createClient();
-      const { error } = await supabase.from('user_profiles').select('user_id').limit(1);
+      const db = createServerClient();
+      const { error } = await db.from('user_profiles').select('user_id').limit(1);
 
       if (isAuthorized) {
         healthStatus.services.supabase = {

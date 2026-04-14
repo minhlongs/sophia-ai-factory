@@ -7,7 +7,7 @@
 
 import { checkRateLimit as checkSqlRateLimit, RATE_LIMITS } from './sql-rate-limiter'
 import type { RateLimitConfig, RateLimitResult as SqlRateLimitResult } from './sql-rate-limiter'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createServerClient } from '@/lib/db/client'
 import { logger } from '@/lib/utils/logger-utility'
 
 /**

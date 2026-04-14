@@ -1,5 +1,5 @@
 import { useTranslations } from "next-intl";
-import { UNIFIED_TIERS } from "@/lib/unified-tier-config";
+import { UNIFIED_TIERS } from "@/config/tiers";
 
 /** Grouped feature sets — one group per product (Video Factory + AI Automation). */
 export interface FeatureGroups {

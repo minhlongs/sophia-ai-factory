@@ -1,5 +1,5 @@
 import { TelegramFSM, BotState } from '../telegram-fsm-state-manager'
-import { createServerClient } from '@/lib/supabase/server'
+import { createServerClient } from '@/lib/db/client'
 import { backupSessionState } from '../telegram-state-backup-service'
 import { sendMessage } from './utils'
 import { logger } from '../../utils/logger-utility'
@@ -24,10 +24,10 @@ export async function handleEmail(chatId: string, email: string): Promise<void> 
   }
 
   try {
-    const supabase = getSupabase()
+    const db = getSupabase()
 
     // 1. Find user by email via D1 users table
-    const { data: userData, error: userError } = await supabase
+    const { data: userData, error: userError } = await db
       .from('users')
       .select('id, email')
       .eq('email', email.toLowerCase())
@@ -47,7 +47,7 @@ export async function handleEmail(chatId: string, email: string): Promise<void> 
 
     // 2. Update user profile with chat_id
     // First check if profile exists
-    const { data: profile } = await supabase
+    const { data: profile } = await db
         .from('user_profiles')
         .select('user_id')
         .eq('user_id', user.id)
@@ -55,13 +55,13 @@ export async function handleEmail(chatId: string, email: string): Promise<void> 
 
     if (!profile) {
         // Create profile if missing (though it should exist from sign-up)
-        await (supabase as any).from('user_profiles').insert({
+        await (db as any).from('user_profiles').insert({
             user_id: user.id,
             telegram_chat_id: chatId,
             settings: { notifications: { telegram: { enabled: true } } }
         })
     } else {
-        await (supabase as any).from('user_profiles')
+        await (db as any).from('user_profiles')
             .update({
                 telegram_chat_id: chatId,
             })

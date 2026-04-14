@@ -6,26 +6,27 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createServerClient } from '@/lib/db/client';
+import { getCurrentUser } from '@/lib/better-auth-session';
 import { logger } from '@/lib/utils/logger-utility';
-import { getMcuMonthlyLimit } from '@/lib/unified-tier-config';
+import { getMcuMonthlyLimit } from '@/config/tiers';
 import type { Tier } from '@/types';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const user = await getCurrentUser();
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const db = createServerClient();
 
     const { searchParams } = new URL(request.url);
     const days = Math.min(parseInt(searchParams.get('days') ?? '30'), 90);
 
     // Get user tier from profiles table
-    const { data: profile } = await supabase
+    const { data: profile } = await db
       .from('profiles')
       .select('tier')
       .eq('id', user.id)
@@ -39,7 +40,7 @@ export async function GET(request: NextRequest) {
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
 
-    const { data: usageData } = await supabase
+    const { data: usageData } = await db
       .from('missions')
       .select('mcu_cost, created_at')
       .eq('org_id', user.id)
@@ -53,7 +54,7 @@ export async function GET(request: NextRequest) {
     const sinceDate = new Date();
     sinceDate.setDate(sinceDate.getDate() - days);
 
-    const { data: dailyData } = await supabase
+    const { data: dailyData } = await db
       .from('missions')
       .select('mcu_cost, created_at')
       .eq('org_id', user.id)

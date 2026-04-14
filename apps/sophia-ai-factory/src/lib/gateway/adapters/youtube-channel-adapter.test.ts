@@ -8,8 +8,8 @@ vi.mock('@/lib/youtube/youtube-oauth-client', () => ({
   refreshAccessToken: vi.fn(),
 }))
 
-vi.mock('@/lib/supabase/server', () => ({
-  createClient: vi.fn(),
+vi.mock('@/lib/db/client', () => ({
+  createServerClient: vi.fn(),
 }))
 
 vi.mock('@/lib/utils/logger-utility', () => ({
@@ -17,7 +17,7 @@ vi.mock('@/lib/utils/logger-utility', () => ({
 }))
 
 import { uploadVideo, refreshAccessToken } from '@/lib/youtube/youtube-oauth-client'
-import { createClient } from '@/lib/supabase/server'
+import { createServerClient } from '@/lib/db/client'
 
 const sampleContent: CampaignOutput = {
   campaignId: 'camp-001',
@@ -35,7 +35,7 @@ describe('YouTubeChannelAdapter', () => {
       vi.stubEnv('YOUTUBE_REDIRECT_URI', 'http://localhost/callback')
 
       // Mock Supabase returning stored credentials
-      vi.mocked(createClient).mockResolvedValue({
+      vi.mocked(createServerClient).mockReturnValue({
         from: () => ({
           select: () => ({
             eq: () => ({
