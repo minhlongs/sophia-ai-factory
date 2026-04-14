@@ -73,7 +73,7 @@ export default function CommandsGuidePage() {
 
       <GuideCallout variant="info" title="Về MCU Credits">
         MCU (Media Credit Unit) là đơn vị tính phí xử lý video. Chi phí tùy thuộc vào độ dài video và độ phức tạp.
-        Gói BASIC được 200 MCU/tháng, PREMIUM được 1.000 MCU/tháng, ENTERPRISE không giới hạn.
+        Gói Starter được 1.000 MCU/tháng, Growth được 5.000 MCU/tháng, Premium được 20.000 MCU/tháng, Master được 100.000 MCU/tháng.
       </GuideCallout>
     </div>
   );
