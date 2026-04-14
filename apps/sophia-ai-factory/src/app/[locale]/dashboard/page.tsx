@@ -40,6 +40,7 @@ export default async function DashboardPage() {
       const { data } = await db
         .from("campaigns")
         .select("*")
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       campaigns = (data as Campaign[]) || [];
     } catch {
