@@ -1,7 +1,38 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-04-10
+> **Last Updated:** 2026-04-14
+
+---
+
+## [2026-04-14] Supabase → D1 Authentication Migration
+
+### Dashboard & Server-Side Auth Completed
+- **Dashboard Pages:** All Server Components migrated from Supabase auth to D1/JWT (`getCurrentUser` from `@/lib/db/auth`)
+- **Server Actions:** Settings, automation, admin, campaign-export actions now use D1 auth
+- **Auth Mechanism:** Custom JWT with HMAC-SHA256 signature verification (Web Crypto API)
+- **Storage:** JWT tokens in `auth-token` cookie (HttpOnly, 7-day expiry)
+- **Verification:** Middleware validates JWT signature and extracts org_id claims
+
+### Database & Security
+- **No RLS in D1:** Cloudflare D1 (SQLite) does not support Row Level Security
+- **Mitigation:** App layer enforces ownership via explicit `WHERE user_id = ?` filters in all D1 queries
+- **Password Hashing:** PBKDF2 algorithm with Web Crypto API
+
+### Verification
+- All dashboard pages load correctly with D1 auth
+- Server Actions execute with proper user context
+- Session management stable (7-day cookie expiry)
+- No breaking changes to existing API contracts
+
+### Pending Work (Future Sprint)
+- 58 API routes still reference Supabase auth — need migration to JWT cookie auth
+- 58 lib files still have Supabase imports — need migration to D1 equivalents
+- Expected timeline: 1-2 sprints for full completion
+
+### Documentation Updated
+- `system-architecture.md` — Added D1/JWT auth flow, no RLS explanation, migration status
+- `project-changelog.md` — This entry
 
 ---
 
@@ -275,7 +306,9 @@
 | **2026-03-24** | Cloudflare Workers Migration | ✅ Complete |
 | **2026-03-26** | Security Audit Fixes (83/100) | ✅ Complete |
 | **2026-04-10** | DevOps Cleanup & Payment Provider Migration | ✅ Complete |
+| **2026-04-14** | Supabase → D1 Authentication Migration | ✅ Complete (dashboard) |
 | **2026-04-15** | APM & Monitoring (97/100)* | 🔄 Planned |
+| **2026-05-01** | API Routes D1 Migration (58 routes)* | 🔄 Planned |
 
 *Target: Complete real-time APM integration for endpoint-level monitoring.
 **Note:** Polar migration deferred; NOWPayments + PayOS now primary providers.
