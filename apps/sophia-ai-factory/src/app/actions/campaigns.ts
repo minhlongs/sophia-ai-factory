@@ -148,7 +148,6 @@ export async function retryCampaign(campaignId: string) {
       .update({
         status: "queued",
         progress: 0,
-        error_message: null,
         updated_at: new Date().toISOString()
       })
       .eq("id", campaignId);
@@ -198,8 +197,7 @@ export async function resumeCampaign(campaignId: string) {
 
     const c = campaign as {
       id: string; status: string; user_id: string; topic: string; title: string;
-      audience: string; script_content: Record<string, unknown> | null;
-      audio_url: string | null; video_url: string | null;
+      audience: string; script: string | null; video_url: string | null;
     };
 
     if (c.status !== "failed") {
@@ -215,9 +213,8 @@ export async function resumeCampaign(campaignId: string) {
 
     const tier = mapDbTierToTier((profile as { subscription_tier?: string } | null)?.subscription_tier);
 
-    // Determine resume point
-    const hasScript = c.script_content && Object.keys(c.script_content).length > 0;
-    const hasAudio = !!c.audio_url;
+    // Determine resume point based on existing data
+    const hasScript = !!c.script && c.script.length > 0;
     const hasVideo = !!c.video_url;
 
     let resumeStatus: "processing_script" | "processing_video";
@@ -226,8 +223,6 @@ export async function resumeCampaign(campaignId: string) {
 
     if (hasVideo) {
       resumeStatus = "processing_video"; resumeProgress = 90; resumeFrom = "finalize";
-    } else if (hasAudio) {
-      resumeStatus = "processing_video"; resumeProgress = 70; resumeFrom = "video";
     } else if (hasScript) {
       resumeStatus = "processing_script"; resumeProgress = 45; resumeFrom = "tts";
     } else {
@@ -239,7 +234,6 @@ export async function resumeCampaign(campaignId: string) {
       .update({
         status: resumeStatus,
         progress: resumeProgress,
-        error_message: null,
         updated_at: new Date().toISOString()
       })
       .eq("id", campaignId);

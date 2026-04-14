@@ -32,7 +32,9 @@ export async function generateScript(formData: FormData) {
     return { success: false, message: "Topic and audience are required" };
   }
 
-  const userTier: Tier = "MASTER" as Tier; // TODO: get from session after better-auth migration
+  // Get actual user tier from D1
+  const { getUserTier } = await import("@/lib/db/get-user-tier");
+  const userTier: Tier = await getUserTier(user.id);
 
   try {
     const db = createServerClient();
