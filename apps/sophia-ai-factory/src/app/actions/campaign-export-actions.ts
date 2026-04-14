@@ -1,8 +1,10 @@
 "use server";
 
-import { createServerClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/db/auth";
+import { createServerClient } from "@/lib/db/client";
 import { Campaign } from "@/types";
 import { convertToCSV } from "@/lib/export-utils";
+import { cookies } from "next/headers";
 
 export type ExportFormat = "json" | "csv";
 
@@ -16,25 +18,19 @@ export async function exportCampaigns(
   format: ExportFormat,
   filters: ExportFilters
 ) {
-  const supabase = await createServerClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.getAll().map(c => `${c.name}=${c.value}`).join('; ');
+  const user = await getCurrentUser(cookieHeader);
 
-  // Enforce auth for exports
-  const userId = session?.user?.id;
-
-  if (!userId) {
-     if (process.env.NODE_ENV === 'development') {
-         return { success: false, message: "Unauthorized. Please sign in." };
-     }
-     return { success: false, message: "Unauthorized" };
+  if (!user?.id) {
+    return { success: false, message: "Unauthorized" };
   }
 
-  let query = supabase
+  const db = createServerClient();
+  let query = db
     .from("campaigns")
     .select("*")
-    .eq("user_id", userId)
+    .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
   if (filters.status && filters.status !== "all") {
@@ -46,7 +42,6 @@ export async function exportCampaigns(
   }
 
   if (filters.endDate) {
-    // Append time to include the full end day
     query = query.lte("created_at", `${filters.endDate}T23:59:59`);
   }
 
@@ -58,7 +53,6 @@ export async function exportCampaigns(
 
   const campaigns = data as Campaign[];
 
-  // Map to clean DTO
   const cleanData = campaigns.map((c) => ({
     id: c.id,
     title: c.title,

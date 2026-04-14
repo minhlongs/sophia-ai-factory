@@ -1,19 +1,26 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/db/auth";
+import { createServerClient } from "@/lib/db/client";
 import { Tier } from "@/types";
 import { revalidatePath } from "next/cache";
 import { logger } from "@/lib/utils/logger-utility";
+import { cookies } from "next/headers";
+
+async function getUser() {
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.getAll().map(c => `${c.name}=${c.value}`).join('; ');
+  return getCurrentUser(cookieHeader);
+}
 
 /**
  * Trigger Script Generation Workflow
  * Calls the n8n webhook
  */
 export async function generateScript(formData: FormData) {
-  const supabase = await createClient();
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  const user = await getUser();
 
-  if (authError || !user) {
+  if (!user) {
     return { success: false, message: "Unauthorized: Please log in" };
   }
 
@@ -24,19 +31,16 @@ export async function generateScript(formData: FormData) {
     return { success: false, message: "Topic and audience are required" };
   }
 
-  const rawTier = user.user_metadata?.tier;
-  const userTier: Tier = (typeof rawTier === "string" && ["BASIC", "PREMIUM", "ENTERPRISE", "MASTER"].includes(rawTier))
-    ? (rawTier as Tier)
-    : "BASIC";
+  const userTier: Tier = "BASIC";
 
-  // 1. Create initial record in Supabase (Draft status)
   try {
-    const { data: campaign, error: dbError } = await (supabase
-      .from("campaigns") as any)
+    const db = createServerClient();
+    const { data: campaign, error: dbError } = await db
+      .from("campaigns")
       .insert({
         topic,
         audience,
-        title: topic, // Default title to topic
+        title: topic,
         status: "draft",
         user_id: user.id
       })
@@ -48,17 +52,17 @@ export async function generateScript(formData: FormData) {
       return { success: false, message: "Failed to initialize campaign" };
     }
 
-    // 2. Call n8n Webhook
+    const campaignData = campaign as Record<string, string>;
+
+    // Call n8n Webhook
     const webhookUrl = process.env.N8N_WEBHOOK_GENERATE_SCRIPT;
 
     if (webhookUrl) {
-      // Fire and forget (or await if we want to confirm receipt)
-      // We pass the Record ID so n8n can update it
       await fetch(webhookUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          scriptId: campaign.id,
+          scriptId: campaignData.id,
           topic,
           audience,
           userId: user.id,
@@ -68,7 +72,7 @@ export async function generateScript(formData: FormData) {
     }
 
     revalidatePath("/dashboard");
-    return { success: true, message: "Script generation started", scriptId: campaign.id };
+    return { success: true, message: "Script generation started", scriptId: campaignData.id };
   } catch (err) {
     logger.error("Exception in generateScript", err instanceof Error ? err : undefined);
     return { success: false, message: "Failed to start generation" };
@@ -79,19 +83,18 @@ export async function generateScript(formData: FormData) {
  * Trigger Video Rendering Workflow
  */
 export async function renderVideo(scriptId: string) {
-  const supabase = await createClient();
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  const user = await getUser();
 
-  if (authError || !user) {
+  if (!user) {
     return { success: false, message: "Unauthorized" };
   }
 
   if (!scriptId) return { success: false, message: "Script ID required" };
 
   try {
-    // 1. Update status to video_queued
-    const { error: dbError } = await (supabase
-      .from("campaigns") as any)
+    const db = createServerClient();
+    const { error: dbError } = await db
+      .from("campaigns")
       .update({ status: "processing_video" })
       .eq("id", scriptId)
       .eq("user_id", user.id);
@@ -101,11 +104,10 @@ export async function renderVideo(scriptId: string) {
       return { success: false, message: "Failed to update status" };
     }
 
-    // 2. Call n8n Webhook for Video
+    // Call n8n Webhook for Video
     const webhookUrl = process.env.N8N_WEBHOOK_RENDER_VIDEO;
 
     if (webhookUrl) {
-      // Fire and forget
       fetch(webhookUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -130,13 +132,13 @@ export async function renderVideo(scriptId: string) {
  * Fetch user's projects (scripts/videos)
  */
 export async function getUserProjects() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getUser();
 
   if (!user) return [];
 
   try {
-    const { data: campaigns, error } = await supabase
+    const db = createServerClient();
+    const { data: campaigns, error } = await db
       .from("campaigns")
       .select("*")
       .eq("user_id", user.id)
