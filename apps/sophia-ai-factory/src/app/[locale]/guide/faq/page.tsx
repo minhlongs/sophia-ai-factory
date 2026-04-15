@@ -43,6 +43,10 @@ const paymentFaqs: FaqItem[] = [
     question: "Tôi có thể hủy đăng ký không?",
     answer: "Có. Bạn có thể hủy bất kỳ lúc nào từ Dashboard → Cài Đặt → Quản Lý Gói. Tài khoản vẫn hoạt động đến hết chu kỳ thanh toán hiện tại.",
   },
+  {
+    question: "Làm sao để nâng cấp hoặc hạ cấp gói?",
+    answer: "Vào Dashboard → Bảng Giá → chọn gói mới → thanh toán. Gói mới sẽ được kích hoạt ngay lập tức. Gói cũ sẽ hết hiệu lực khi chu kỳ hiện tại kết thúc.",
+  },
 ];
 
 const technicalFaqs: FaqItem[] = [
@@ -57,6 +61,14 @@ const technicalFaqs: FaqItem[] = [
   {
     question: "Bot Telegram không trả lời?",
     answer: "Kiểm tra đúng tên bot: @Sophia_Bbot (chữ B viết hoa). Đảm bảo bạn đã nhấn START trước đó. Thử gửi lại lệnh /help và đợi 30 giây. Nếu vẫn không phản hồi, liên hệ support@agencyos.network.",
+  },
+  {
+    question: "Thanh toán bị lỗi hoặc không được ghi nhận?",
+    answer: "Kiểm tra: 1) Ví USDT có đủ số dư. 2) Giao dịch đã xác nhận trên blockchain (thường 2-5 phút). 3) Nếu sau 30 phút vẫn chưa kích hoạt, liên hệ @Sophia_Bbot với mã giao dịch. Hệ thống tự động kiểm tra IPN từ NOWPayments mỗi vài phút.",
+  },
+  {
+    question: "Video xuất ra bị mất tiếng hoặc không có avatar?",
+    answer: "Nguyên nhân thường gặp: API key ElevenLabs (giọng nói) hoặc D-ID (avatar) đã hết hạn hoặc hết quota miễn phí. Vào Cài Đặt → API Keys để kiểm tra. Nếu key còn hạn, thử nhấn 'Chạy Lại' trên chiến dịch.",
   },
 ];
 

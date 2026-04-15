@@ -26,14 +26,22 @@ const steps = [
 ];
 
 export function OnboardingWelcomeBanner() {
-  const [dismissed, setDismissed] = useState(false);
+  const [dismissed, setDismissed] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('sophia_onboarding_dismissed') === 'true';
+  });
+
+  function handleDismiss() {
+    setDismissed(true);
+    localStorage.setItem('sophia_onboarding_dismissed', 'true');
+  }
 
   if (dismissed) return null;
 
   return (
     <div className="relative rounded-xl border border-[var(--neon-cyan)]/30 bg-gradient-to-r from-[var(--neon-cyan)]/5 to-[var(--neon-purple)]/5 p-6">
       <button
-        onClick={() => setDismissed(true)}
+        onClick={handleDismiss}
         className="absolute top-3 right-3 p-1 rounded-md text-muted-foreground hover:text-foreground transition-colors"
         aria-label="Dismiss"
       >

@@ -7,6 +7,7 @@ import { QueryProvider } from "@/components/providers/query-provider";
 
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { MockModeIndicator } from "@/components/dev/mock-mode-indicator";
+import { ErrorReporter } from "@/components/providers/error-reporter";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 
@@ -154,6 +155,7 @@ export default async function RootLayout({
               <MockModeIndicator />
               <FloatingHelpButton />
               <Toaster />
+              <ErrorReporter />
             </QueryProvider>
           </ThemeProvider>
         </NextIntlClientProvider>
