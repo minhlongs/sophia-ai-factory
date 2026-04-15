@@ -35,6 +35,7 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
     features: [
       'enable_affiliate_engine',
       'enable_roi_calculator',
+      'enable_api_integrations', // API access + webhooks unlocked at PREMIUM (Growth) tier
     ] satisfies FeatureFlag[],
     limits: {
       youtubeChannels: UNIFIED_TIERS.PREMIUM.youtubeChannels,

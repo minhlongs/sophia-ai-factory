@@ -281,9 +281,13 @@ export async function checkFeatureAccess(
     };
   }
 
-  // Check subscription status if available
-  if (authContext.polarSubscriptionStatus === 'canceled' ||
-      authContext.polarSubscriptionStatus === 'inactive') {
+  // Lifetime tier (MASTER) never expires — skip subscription expiry check
+  const isMasterLifetime = authContext.tier?.toUpperCase() === 'MASTER';
+
+  // Check subscription status if available (skip for lifetime tiers)
+  if (!isMasterLifetime &&
+      (authContext.polarSubscriptionStatus === 'canceled' ||
+       authContext.polarSubscriptionStatus === 'inactive')) {
     return {
       allowed: false,
       reason: 'subscription_expired',
