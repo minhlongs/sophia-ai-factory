@@ -108,6 +108,15 @@ export function getAuth() {
               // Non-critical — org creation failure shouldn't block signup
               console.error('[databaseHook] org creation failed:', err);
             }
+
+            // Send welcome email (non-blocking)
+            import('@/lib/email/sender').then(({ sendEmail }) => {
+              sendEmail({
+                to: user.email,
+                subject: 'Welcome to Sophia AI Factory!',
+                html: buildWelcomeHtml(user.name || user.email),
+              }).catch(() => {});
+            }).catch(() => {});
           },
         },
       },
@@ -115,6 +124,23 @@ export function getAuth() {
   });
 
   return _auth;
+}
+
+function buildWelcomeHtml(nameOrEmail: string): string {
+  const name = nameOrEmail.includes('@') ? nameOrEmail.split('@')[0] : nameOrEmail;
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"></head>
+<body style="font-family:-apple-system,sans-serif;line-height:1.6;max-width:600px;margin:0 auto;padding:24px;">
+  <h2 style="color:#6750A4">Welcome to Sophia AI Factory!</h2>
+  <p>Hi ${name},</p>
+  <p>Your account is ready. Here's how to get started:</p>
+  <ol>
+    <li>Set up your API keys in <a href="https://sophia.agencyos.network/setup-wizard" style="color:#6750A4;">Settings</a></li>
+    <li>Create your first AI video campaign</li>
+    <li>Connect Telegram bot @Sophia_Bbot for mobile access</li>
+  </ol>
+  <p>Need help? Reply to this email or message @Sophia_Bbot on Telegram.</p>
+  <p style="font-size:13px;color:#666;">Sophia AI Factory — AI-powered video production platform</p>
+</body></html>`;
 }
 
 function buildMagicLinkHtml(rawUrl: string): string {
