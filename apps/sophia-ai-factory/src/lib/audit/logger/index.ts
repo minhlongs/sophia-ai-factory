@@ -1,8 +1,8 @@
 /**
- * Audit Logger - Barrel Re-export (backward compatibility)
+ * Audit Logger - Barrel Re-export
  *
- * Implementation moved to logger/ directory for modular code management.
- * Import from here or directly from '@/lib/audit/logger/*'.
+ * All audit logging functions and types consolidated for import.
+ * Import from '@/lib/audit/audit-logger' (backward compat) or this barrel.
  */
 
 export type {
@@ -10,21 +10,21 @@ export type {
   CreationLogParams,
   RevocationLogParams,
   UsageLogParams,
-} from './logger/audit-event-builder'
+} from './audit-event-builder'
 
 export {
   logValidationWithReceipt,
   logCreationWithReceipt,
   logRevocationWithReceipt,
-} from './logger/audit-writer'
+} from './audit-writer'
 
 export {
   logUpdateWithReceipt,
   logUsageWithReceipt,
-} from './logger/audit-writer-extended'
+} from './audit-writer-extended'
 
 export {
   serializeReceiptForHeader,
   parseReceiptFromHeader,
   logAuditEvent,
-} from './logger/audit-query'
+} from './audit-query'
