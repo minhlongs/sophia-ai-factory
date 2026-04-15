@@ -2,6 +2,7 @@ import { TelegramFSM, BotState } from '../telegram-fsm-state-manager'
 import { sendMessage } from './utils'
 import { handleEmail } from './email-handler'
 import { handleCampaign, executeCampaignCreation } from './campaign-handler'
+import { matchFaq } from './faq-handler'
 
 /**
  * Handle text messages based on FSM state
@@ -29,8 +30,15 @@ export async function handleTextMessage(chatId: string, text: string): Promise<v
       }
       break
 
-    default:
-      await handleUnknown(chatId)
+    default: {
+      // Auto-FAQ: check for known keywords before falling back to unknown
+      const faqResponse = matchFaq(text)
+      if (faqResponse) {
+        await sendMessage(chatId, faqResponse)
+      } else {
+        await handleUnknown(chatId)
+      }
+    }
   }
 }
 

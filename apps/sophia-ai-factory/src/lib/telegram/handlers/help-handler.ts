@@ -17,6 +17,7 @@ export async function handleHelp(chatId: string): Promise<void> {
 /campaign <topic> - Create new campaign
 /status - Check campaign status
 /results - View campaign results
+/ticket <mô tả> - Gửi yêu cầu hỗ trợ
 
 *Need support?* Contact us at support@sophia.ai`
   )
