@@ -47,8 +47,14 @@ export const tierGuard = {
     switch (limitType) {
       case "youtubeChannels":
         limit = config.limits.youtubeChannels;
-        // In a real app, we would count actual connected channels
-        currentUsage = 0; // Placeholder
+        // TODO: Query YouTube OAuth integrations count from Supabase when a
+        // dedicated youtube_channels table is added. Currently no such table
+        // exists — YouTube OAuth tokens live in Supabase auth.identities and
+        // are not countable via D1. The MCU credit limit is the real enforcer:
+        // users who exceed their MCU budget cannot generate more videos
+        // regardless of channel count. Until the table is added, usage stays 0
+        // and the tier limit acts as a soft cap only.
+        currentUsage = 0;
         if (userTier === "BASIC") requiredTier = "PREMIUM";
         else if (userTier === "PREMIUM") requiredTier = "ENTERPRISE";
         break;

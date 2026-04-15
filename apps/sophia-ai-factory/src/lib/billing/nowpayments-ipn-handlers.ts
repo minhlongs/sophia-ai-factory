@@ -3,7 +3,7 @@
  * Uses D1 database (Cloudflare Workers compatible)
  *
  * Statuses handled:
- * - finished: Update subscription + set period_end +30 days
+ * - finished: Update subscription + set period_end (+30 days for monthly, 2099 for lifetime)
  * - partially_paid: Hold (wait for full payment)
  * - expired: No-op (invoice expired without payment)
  * - refunded: Cancel subscription
@@ -13,6 +13,7 @@
 import { createServerClient } from '@/lib/db/client'
 import { getTierByInvoiceId } from '@/lib/clients/nowpayments-client'
 import { logger } from '@/lib/utils/logger-utility'
+import { UNIFIED_TIERS } from '@/config/tiers'
 import type { Tier } from '@/types'
 
 export interface NowPaymentsIpnPayload {
@@ -120,7 +121,12 @@ async function handleFinished(ipn: NowPaymentsIpnPayload): Promise<void> {
 
   const db = getDb()
   const tier: Tier = tierConfig.tier
-  const periodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+
+  // Lifetime tiers (MASTER) get far-future expiry — never expire in practice
+  const isLifetime = UNIFIED_TIERS[tier]?.billingType === 'lifetime'
+  const periodEnd = isLifetime
+    ? new Date('2099-12-31T23:59:59Z').toISOString()
+    : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
 
   // Update subscription in D1 subscriptions table
   // First find the user's org
@@ -205,6 +211,7 @@ async function handleFinished(ipn: NowPaymentsIpnPayload): Promise<void> {
     userId,
     orgId,
     tier,
+    isLifetime,
     periodEnd,
     paymentId: ipn.payment_id,
   })
