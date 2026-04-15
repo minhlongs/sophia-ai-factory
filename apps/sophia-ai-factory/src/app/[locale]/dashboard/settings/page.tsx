@@ -2,7 +2,10 @@ import { Suspense } from 'react';
 import { Metadata } from 'next';
 import dynamic from 'next/dynamic';
 import { getUserProfile } from '@/app/actions/settings';
+import { getCurrentUser } from '@/lib/better-auth-session';
+import { getUserTier } from '@/lib/db/get-user-tier';
 import { ReferralShareWidget } from '@/components/dashboard/referral-share-widget';
+import { PlanUpgradeWidget } from '@/components/dashboard/plan-upgrade-widget';
 
 const SettingsForm = dynamic(
   () => import('@/components/settings/settings-form').then(m => ({ default: m.SettingsForm })),
@@ -15,16 +18,19 @@ export const metadata: Metadata = {
 };
 
 export default async function SettingsPage() {
-  const profile = await getUserProfile();
+  const [profile, user] = await Promise.all([getUserProfile(), getCurrentUser()]);
 
   // If getUserProfile throws (Unauthorized), Next.js error boundary will handle it
   // or middleware should have redirected already.
+
+  const currentTier = user ? await getUserTier(user.id) : 'BASIC';
 
   return (
     <div className="container mx-auto max-w-4xl py-10 space-y-6">
       <Suspense fallback={<SettingsSkeleton />}>
         <SettingsForm defaultValues={profile} />
       </Suspense>
+      <PlanUpgradeWidget currentTier={currentTier} />
       <ReferralShareWidget />
     </div>
   );
