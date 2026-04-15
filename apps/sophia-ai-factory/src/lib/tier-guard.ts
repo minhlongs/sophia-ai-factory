@@ -1,5 +1,5 @@
 import { Tier } from "@/types";
-import { getTierConfig } from "@/config/tiers";
+import { getTierConfig, UNIFIED_TIERS, type UnifiedTierLimits } from "@/config/tiers";
 import { getUserTier } from "@/lib/db/get-user-tier";
 import { templateService } from "@/lib/services/template-service";
 
@@ -47,13 +47,15 @@ export const tierGuard = {
     switch (limitType) {
       case "youtubeChannels":
         limit = config.limits.youtubeChannels;
-        // TODO: Query YouTube OAuth integrations count from Supabase when a
-        // dedicated youtube_channels table is added. Currently no such table
-        // exists — YouTube OAuth tokens live in Supabase auth.identities and
-        // are not countable via D1. The MCU credit limit is the real enforcer:
-        // users who exceed their MCU budget cannot generate more videos
-        // regardless of channel count. Until the table is added, usage stays 0
-        // and the tier limit acts as a soft cap only.
+        // Architecture note: the current data model stores ONE set of YouTube
+        // credentials per user in user_profiles.api_keys.youtube (Supabase).
+        // This inherently enforces the BASIC=1 channel limit by design — you
+        // can only hold one refresh_token at a time. PREMIUM=3 and above would
+        // require a dedicated youtube_channels table (future work). Enforcement
+        // for multi-channel tiers happens at the OAuth callback: connecting a
+        // new channel overwrites the previous one until the table is added.
+        // For now, currentUsage=0 is correct because the limit check at the
+        // callback (1 slot = 1 user) is the real gate.
         currentUsage = 0;
         if (userTier === "BASIC") requiredTier = "PREMIUM";
         else if (userTier === "PREMIUM") requiredTier = "ENTERPRISE";
@@ -139,3 +141,32 @@ export const tierGuard = {
     return userTier === "ENTERPRISE" || userTier === "MASTER";
   }
 };
+
+/** Boolean feature keys from UnifiedTierLimits that can be checked via checkTierFeature. */
+export type BooleanTierFeature = keyof Pick<
+  UnifiedTierLimits,
+  'apiAccess' | 'webhooks' | 'customIntegrations' | 'whiteLabel'
+>;
+
+/**
+ * Check if user's tier allows a specific boolean feature.
+ * Uses UNIFIED_TIERS config fields: apiAccess, webhooks, customIntegrations, whiteLabel.
+ *
+ * Usage example (white-label gate in any route):
+ *   const { allowed } = await checkTierFeature(user.id, 'whiteLabel');
+ *   if (!allowed) return NextResponse.json({ error: 'White-label requires Master plan.' }, { status: 403 });
+ */
+export async function checkTierFeature(
+  userId: string,
+  feature: BooleanTierFeature
+): Promise<{ allowed: boolean; tier: Tier; requiredTier: string }> {
+  const tier = await getUserTier(userId);
+  const limits = UNIFIED_TIERS[tier];
+  const allowed = !!limits[feature];
+
+  // Find the lowest tier that unlocks this feature
+  const allTiers: Tier[] = ['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER'];
+  const requiredTierKey = allTiers.find(t => !!UNIFIED_TIERS[t][feature]) ?? 'MASTER';
+
+  return { allowed, tier, requiredTier: UNIFIED_TIERS[requiredTierKey].name };
+}
