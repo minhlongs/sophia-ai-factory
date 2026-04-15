@@ -11,31 +11,31 @@ describe('Encryption Utils', () => {
     vi.unstubAllEnvs();
   });
 
-  it('should encrypt and decrypt a string correctly', () => {
+  it('should encrypt and decrypt a string correctly', async () => {
     const text = 'sk-1234567890abcdef';
-    const encrypted = encrypt(text);
+    const encrypted = await encrypt(text);
 
     expect(encrypted).not.toBe(text);
-    expect(encrypted).toContain(':'); // Should have IV and AuthTag parts
+    expect(encrypted).toContain(':'); // Should have IV:ciphertext parts
 
-    const decrypted = decrypt(encrypted);
+    const decrypted = await decrypt(encrypted);
     expect(decrypted).toBe(text);
   });
 
-  it('should generate different ciphertexts for the same plaintext (random IV)', () => {
+  it('should generate different ciphertexts for the same plaintext (random IV)', async () => {
     const text = 'secret-message';
-    const enc1 = encrypt(text);
-    const enc2 = encrypt(text);
+    const enc1 = await encrypt(text);
+    const enc2 = await encrypt(text);
 
     expect(enc1).not.toBe(enc2);
-    expect(decrypt(enc1)).toBe(text);
-    expect(decrypt(enc2)).toBe(text);
+    expect(await decrypt(enc1)).toBe(text);
+    expect(await decrypt(enc2)).toBe(text);
   });
 
-  it('should throw error if API_ENCRYPTION_KEY is missing', () => {
+  it('should throw error if API_ENCRYPTION_KEY is missing', async () => {
     vi.stubEnv('API_ENCRYPTION_KEY', '');
-    expect(() => encrypt('test')).toThrow('Encryption key not configured');
-    expect(() => decrypt('test')).toThrow('Encryption key not configured');
+    await expect(encrypt('test')).rejects.toThrow('Encryption key not configured');
+    await expect(decrypt('test')).rejects.toThrow();
   });
 
   it('should mask API keys correctly', () => {
