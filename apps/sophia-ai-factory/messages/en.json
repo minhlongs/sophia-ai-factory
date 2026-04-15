@@ -154,7 +154,7 @@
       "subtitle": "Simple monthly pricing with everything included",
       "popular": "Most Popular",
       "per_month": "/month",
-      "commitment": "12-month commitment",
+      "commitment": "Monthly subscription",
       "get_started": "Get Started",
       "processing": "Processing...",
       "error_checkout": "Failed to start checkout. Please try again.",
@@ -214,15 +214,15 @@
       "tiers": {
         "starter": {
           "name": "Starter",
-          "description": "Complete AI video automation. 12-month commitment."
+          "description": "Complete AI video automation. Monthly subscription."
         },
         "growth": {
           "name": "Growth",
-          "description": "Scale your content production. 12-month commitment."
+          "description": "Scale your content production. Monthly subscription."
         },
         "premium": {
           "name": "Premium",
-          "description": "Enterprise power and support. 12-month commitment."
+          "description": "Enterprise power and support. Monthly subscription."
         },
         "master": {
           "name": "Master",
@@ -265,7 +265,7 @@
       "items": {
         "quality": {
           "question": "Is the AI-generated content high quality?",
-          "answer": "Yes! We use state-of-the-art AI models (RunwayML Gen-3, Pika 1.5, ElevenLabs) to create professional-grade videos. You maintain full creative control with script editing, voice customization, and final approval before publishing."
+          "answer": "Yes! We use state-of-the-art AI models (OpenRouter LLMs, ElevenLabs voice synthesis, D-ID avatars) to create professional-grade videos. You maintain full creative control with script editing, voice customization, and final approval before publishing."
         },
         "copyright": {
           "question": "What about copyright and content ownership?",
@@ -289,7 +289,7 @@
         },
         "tiers": {
           "question": "What's the difference between the pricing tiers?",
-          "answer": "Starter ($199/mo) gives you 5 templates, auto-discovery engine, analytics, and email support. Growth ($399/mo) unlocks unlimited templates, advanced analytics, ROI calculator, and priority support. Premium ($799/mo) adds custom templates, white-label setup, direct founder access, and API integrations. Master ($4,999 one-time) includes everything forever with 1-on-1 onboarding and VIP support."
+          "answer": "Starter ($199/mo) gives you 5 templates, auto-discovery engine, analytics, and email support. Growth ($399/mo) unlocks unlimited templates, advanced analytics, ROI calculator, and priority support. Premium ($799/mo) adds custom templates, unlimited channels, direct founder access, and API integrations. Master ($4,999 one-time) includes everything forever with 1-on-1 onboarding and VIP support."
         },
         "refund": {
           "question": "Is there a refund policy?",

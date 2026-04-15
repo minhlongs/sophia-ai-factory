@@ -31,7 +31,7 @@ const features: GuideFeatureItem[] = [
   },
   {
     icon: Video,
-    title: "HeyGen — Avatar Video",
+    title: "D-ID — Avatar Video",
     description: "Tạo người dẫn ảo AI (AI avatar) trình bày nội dung, không cần quay camera thật.",
     iconColor: "text-violet-400",
   },

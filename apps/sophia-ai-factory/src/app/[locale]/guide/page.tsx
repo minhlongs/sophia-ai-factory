@@ -53,7 +53,7 @@ export default function GuidePage() {
             <span>
               Sophia cần 3 API keys để tạo video: <strong className="text-foreground">OpenRouter</strong> (viết kịch bản AI),{" "}
               <strong className="text-foreground">ElevenLabs</strong> (giọng nói AI), và{" "}
-              <strong className="text-foreground">HeyGen</strong> (video avatar). Vào{" "}
+              <strong className="text-foreground">D-ID</strong> (video avatar). Vào{" "}
               <strong className="text-foreground">Cài Đặt → API Keys</strong> để nhập.
             </span>
           }

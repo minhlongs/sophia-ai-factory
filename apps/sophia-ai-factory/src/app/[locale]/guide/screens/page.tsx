@@ -36,7 +36,7 @@ const dashboardFeatures: GuideFeatureItem[] = [
   {
     icon: Key,
     title: "API Keys",
-    description: "Quản lý keys cho OpenRouter, ElevenLabs và HeyGen. Chỉ nhập 1 lần. URL: /dashboard/settings",
+    description: "Quản lý keys cho OpenRouter, ElevenLabs và D-ID. Chỉ nhập 1 lần. URL: /dashboard/settings",
     iconColor: "text-amber-400",
   },
   {

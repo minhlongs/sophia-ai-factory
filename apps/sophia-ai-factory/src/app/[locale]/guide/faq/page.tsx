@@ -22,14 +22,14 @@ const generalFaqs: FaqItem[] = [
   },
   {
     question: "Sophia tạo video như thế nào?",
-    answer: "Sophia kết hợp 3 dịch vụ AI: OpenRouter viết kịch bản, ElevenLabs chuyển kịch bản thành giọng nói tự nhiên, và HeyGen tạo video với người dẫn ảo AI. Tất cả diễn ra tự động sau khi bạn nhập nội dung.",
+    answer: "Sophia kết hợp 3 dịch vụ AI: OpenRouter viết kịch bản, ElevenLabs chuyển kịch bản thành giọng nói tự nhiên, và D-ID tạo video với người dẫn ảo AI. Tất cả diễn ra tự động sau khi bạn nhập nội dung.",
   },
 ];
 
 const paymentFaqs: FaqItem[] = [
   {
     question: "Có gói dùng thử miễn phí không?",
-    answer: "Các dịch vụ API (OpenRouter, ElevenLabs, HeyGen) đều có gói miễn phí để bắt đầu. Tuy nhiên gói Sophia cần đăng ký trả phí để sử dụng đầy đủ tính năng.",
+    answer: "Các dịch vụ API (OpenRouter, ElevenLabs, D-ID) đều có gói miễn phí để bắt đầu. Tuy nhiên gói Sophia cần đăng ký trả phí để sử dụng đầy đủ tính năng.",
   },
   {
     question: "Tôi có thể tạo bao nhiêu video mỗi tháng?",
