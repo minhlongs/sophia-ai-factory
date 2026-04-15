@@ -87,6 +87,34 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     const { script, title, userId } = parsed.data;
 
+    // TIER CHECK: Monthly campaign limit
+    const { getUserTier } = await import("@/lib/db/get-user-tier");
+    const { UNIFIED_TIERS } = await import("@/config/tiers");
+    const tier = await getUserTier(userId);
+    const monthLimit = UNIFIED_TIERS[tier].campaignsPerMonth;
+
+    if (monthLimit < 999) {
+      const db = createServerClient();
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const { data: countData } = await db
+        .from("campaigns")
+        .select("id")
+        .eq("user_id", userId)
+        .gte("created_at", startOfMonth.toISOString());
+
+      const currentCount = (countData as { id: string }[] | null)?.length ?? 0;
+      if (currentCount >= monthLimit) {
+        log.warn("RaaS campaign create: monthly limit reached", { userId, currentCount, monthLimit });
+        return NextResponse.json(
+          { error: `Monthly campaign limit reached (${monthLimit}). Upgrade your plan for more.` },
+          { status: 429 }
+        );
+      }
+    }
+
     const db = createServerClient();
     const { data: campaign, error: insertError } = await db
       .from("campaigns")

@@ -64,6 +64,31 @@ export async function createCampaign(formData: FormData) {
   const { getUserTier } = await import("@/lib/db/get-user-tier");
   const tier = await getUserTier(userId);
 
+  // TIER CHECK: Monthly campaign limit
+  const { UNIFIED_TIERS } = await import("@/config/tiers");
+  const monthLimit = UNIFIED_TIERS[tier].campaignsPerMonth;
+
+  if (monthLimit < 999) {
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const { data: countData } = await db
+      .from("campaigns")
+      .select("id")
+      .eq("user_id", userId)
+      .gte("created_at", startOfMonth.toISOString());
+
+    const currentCount = (countData as { id: string }[] | null)?.length ?? 0;
+    if (currentCount >= monthLimit) {
+      return {
+        success: false,
+        message: `Monthly campaign limit reached (${monthLimit}). Upgrade your plan for more.`,
+        requiresUpgrade: true,
+      };
+    }
+  }
+
   try {
     // 1. Create Campaign Record (generate ID upfront — D1 doesn't support RETURNING)
     const campaignId = crypto.randomUUID();

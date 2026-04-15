@@ -38,8 +38,12 @@ const mocks = vi.hoisted(() => {
         })
       };
     }
-    // campaigns table
+    // campaigns table — handles both count query and insert
+    const gteMock = vi.fn().mockResolvedValue({ data: [], error: null });
+    const campaignEqMock = vi.fn().mockReturnValue({ gte: gteMock });
+    const campaignSelectMock = vi.fn().mockReturnValue({ eq: campaignEqMock });
     return {
+      select: campaignSelectMock,
       insert: vi.fn().mockReturnValue({
         select: vi.fn().mockReturnValue({
           single: vi.fn().mockResolvedValue({ data: { id: 'campaign-123' }, error: null })
@@ -101,7 +105,12 @@ describe('createCampaign Integration', () => {
           })
         };
       }
+      // campaigns table — handles both count query and insert
+      const gteMock = vi.fn().mockResolvedValue({ data: [], error: null });
+      const campaignEqMock = vi.fn().mockReturnValue({ gte: gteMock });
+      const campaignSelectMock = vi.fn().mockReturnValue({ eq: campaignEqMock });
       return {
+        select: campaignSelectMock,
         insert: vi.fn().mockReturnValue({
           select: vi.fn().mockReturnValue({
             single: vi.fn().mockResolvedValue({ data: { id: 'campaign-123' }, error: null })
