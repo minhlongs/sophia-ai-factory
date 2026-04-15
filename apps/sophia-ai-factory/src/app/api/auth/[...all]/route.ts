@@ -8,17 +8,30 @@
 
 import { getAuth } from '@/lib/better-auth-server';
 import { toNextJsHandler } from 'better-auth/next-js';
+import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
-  const auth = getAuth();
-  const { GET: handler } = toNextJsHandler(auth);
-  return handler(request);
+  try {
+    const auth = getAuth();
+    const { GET: handler } = toNextJsHandler(auth);
+    return handler(request);
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : 'Internal error';
+    console.error('[auth/all] GET error:', msg);
+    return NextResponse.json({ error: 'Authentication service error' }, { status: 500 });
+  }
 }
 
 export async function POST(request: Request) {
-  const auth = getAuth();
-  const { POST: handler } = toNextJsHandler(auth);
-  return handler(request);
+  try {
+    const auth = getAuth();
+    const { POST: handler } = toNextJsHandler(auth);
+    return handler(request);
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : 'Internal error';
+    console.error('[auth/all] POST error:', msg);
+    return NextResponse.json({ error: 'Authentication service error' }, { status: 500 });
+  }
 }

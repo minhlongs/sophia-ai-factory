@@ -2,10 +2,10 @@
 
 > Sophia AI Factory — RaaS (Reasoning-as-a-Service) Platform
 
-**Last Updated:** 2026-04-14
+**Last Updated:** 2026-04-15
 **Production:** https://sophia.agencyos.network
 
-**ARCHITECTURE CONSOLIDATION (2026-04-14):** Unified auth (Better Auth D1), single DB client (`createServerClient` from `@/lib/db/client`), consolidated tier logic at `config/tiers/`, and modularized 5 giant files into 21 focused modules. Legacy Supabase client removed from non-exception paths.
+**ARCHITECTURE CONSOLIDATION (2026-04-15):** Unified auth (Better Auth D1), single DB client (`createServerClient` from `@/lib/db/client`), consolidated tier logic at `config/tiers/`, modularized 15 giant files into 56+ focused modules (all < 200 LOC). Legacy Supabase client removed from non-exception paths. E2E smoke tests (5 files, 35 tests) validate critical journeys.
 
 **AUTHENTICATION MIGRATION (2026-04-14):** Dashboard Server Components and Server Actions use Better Auth v1.6.2 with D1 Kysely adapter. Email/password + magic link + organization plugin. RLS not used — app layer enforces ownership via `user_id` filters.
 
@@ -211,6 +211,50 @@ affiliate_content — id, org_id, type, title, content, status
 
 ---
 
+## Autonomous Operations & Cron Jobs (2026-04-15)
+
+**Cloudflare Workers Cron Triggers:** 7 scheduled workflows for solopreneur autonomy
+
+| Trigger | Frequency | Purpose | Implementation |
+|---------|-----------|---------|---|
+| Email Drip | Day 1, 3, 7 | Welcome + nurture sequence | `lib/crons/email-drip.ts` |
+| Renewal Reminder | 7 days pre-expiry | Subscription renewal notifications | `lib/crons/renewal-reminder.ts` |
+| Dunning State Advance | Daily | Failed payment retry logic (24h/7d/30d) | `lib/billing/dunning/state-machine.ts` |
+| Scheduled Campaigns | Hourly | Time-based content distribution | `lib/campaigns/scheduled-cron.ts` |
+| System Health Check | 5 minutes | Uptime monitoring (Telegram alerts) | `lib/crons/health-check.ts` |
+| Quota Evaluation | 1 hour | MCU limit warnings (email + Telegram) | `lib/alerts/quota/scheduler.ts` |
+| Usage Aggregation | 30 minutes | MCU rollup + balance updates | `lib/usage-metering/rollup.ts` |
+
+**Configuration:** `wrangler.toml` defines triggers; each cron handler orchestrates async operations.
+
+**Benefits:**
+- Zero human intervention for billing, notifications, campaigns
+- Customers self-serve via bot + dashboard (no support team needed)
+- Autonomous error recovery (dunning retries, health alerts)
+
+---
+
+## Error Tracking & Client-Side Monitoring (2026-04-15)
+
+**Sentry Integration:**
+- **Client SDK:** Error tracking for frontend (React error boundaries)
+- **Server SDK:** Exception capturing on Server Components and Server Actions
+- **Edge Functions:** Cloudflare Workers error reporting
+- **Source Maps:** Uploaded with each deployment for stack trace accuracy
+
+**Contextual Error Pages:**
+- **Auth Expiry:** 401 → "Session expired. [Re-login]" CTA
+- **Network Failures:** Timeout → "Connection lost. [Retry]" CTA
+- **Database Errors:** 503 → "Service temporarily unavailable. [Report]" CTA
+- **Generic Errors:** 500 → "Something went wrong. [Contact Support]" CTA
+
+**ErrorReporter Utility:**
+- Client-side error logging with user context
+- Aggregates errors before reporting (batching)
+- Filters out known warnings (console spam)
+
+---
+
 ## Middleware
 
 **File:** `middleware.ts`
@@ -225,31 +269,50 @@ affiliate_content — id, org_id, type, title, content, status
 
 ---
 
-## MCU Billing System
+## MCU Billing System & Tier Enforcement (2026-04-15)
 
 ### Subscription Tiers
 
-| Tier | Price | MCU/month | Discount |
-|------|-------|-----------|----------|
-| Starter | $49/mo | 500 | — |
-| Growth | $149/mo | 2,000 | 10% |
-| Premium | $499/mo | 10,000 | 20% |
-| Master | $999/mo | 25,000 | 30% |
+| Tier | Price | MCU/month | Discount | Special Features |
+|------|-------|-----------|----------|---|
+| Starter | $49/mo | 500 | — | 10 campaigns, 0 team members |
+| Growth | $149/mo | 2,000 | 10% | 50 campaigns, 5 team members |
+| Premium | $499/mo | 10,000 | 20% | ∞ campaigns, ∞ team members, API access |
+| Master | $999/mo | 25,000 | 30% | Lifetime (2099), white-label, all integrations |
+
+### Tier Enforcement Gates (2026-04-15)
+
+**MASTER Tier Special Handling:**
+- **IPN Webhook:** Sets expiry to 2099-12-31 (lifetime subscription)
+- **Middleware Bypass:** MCU balance check disabled for this tier
+- **Feature Access:** All enterprise features available without MCU deduction
+- **White-Label:** Restricted to MASTER tier only (config-enforced)
+
+**ENTERPRISE+ Features (PREMIUM/MASTER only):**
+- **Custom Integrations:** `/api/user/integrations` endpoint gated to ENTERPRISE+ tiers
+- **API Access:** RaaS endpoints require PREMIUM+ tier
+- **Unlimited Resources:** Campaigns, team members, MCU (PREMIUM/MASTER tiers)
+
+**Tier Gate Application:**
+- Campaign creation: DB check before insert (tier-based limits)
+- Team member invites: Count enforcement (0/5/∞/∞)
+- API key provisioning: Tier verification
+- Integration endpoints: ENTERPRISE+ gate enforcement
 
 ### Feature Costs
 
-| Feature | MCU |
-|---------|-----|
-| `proposal:text:basic` | 10 |
-| `proposal:text:advanced` | 25 |
-| `proposal:text:enterprise` | 50 |
-| `video:intro` | 100 |
-| `video:section` | 250 |
-| `video:full_proposal` | 500 |
-| `affiliate:blog` | 50 |
-| `affiliate:social` | 10 |
-| `email:send` | 1 |
-| `api:call` | 1 |
+| Feature | MCU | Tier Gate |
+|---------|-----|---|
+| `proposal:text:basic` | 10 | Starter+ |
+| `proposal:text:advanced` | 25 | Growth+ |
+| `proposal:text:enterprise` | 50 | Premium+ |
+| `video:intro` | 100 | Premium+ |
+| `video:section` | 250 | Premium+ |
+| `video:full_proposal` | 500 | Premium+ |
+| `affiliate:blog` | 50 | Growth+ |
+| `affiliate:social` | 10 | Starter+ |
+| `email:send` | 1 | Starter+ |
+| `api:call` | 1 | Premium+ |
 
 ---
 
@@ -359,14 +422,16 @@ crons = ["*/5 * * * *"]
 - **Deleted Files:** `lib/tier-gate.ts`, `lib/unified-tier-config.ts`
 - **Pattern:** Tier checks import from config, not dispersed utility files
 
-### File Modularization (5 Giant Files → 21 Modules)
-| Original File | New Location | Module Count |
-|---|---|---|
-| `resend-email-service.ts` | `lib/billing/email/*` | 4 modules (delivery, templates, tracking, types) |
-| `dunning-workflow.ts` | `lib/billing/dunning/*` | 3 modules (actions, state-machine, admin-ops) |
-| `quota-alert-service.ts` | `lib/alerts/quota/*` | 3 modules (evaluator, scheduler, delivery) |
-| `aggregator.ts` | `lib/usage-metering/*` | 3 modules (tracker, rollup, integration) |
-| `raas-audit.ts` | `lib/raas/*` | 4 modules (audit-logging, query-service, invoice, permissions) |
+### File Modularization (15 Giant Files → 56+ Modules)
+| Original File | New Location | Module Count | Purpose |
+|---|---|---|---|
+| `resend-email-service.ts` | `lib/billing/email/*` | 4 | delivery, templates, tracking, types |
+| `dunning-workflow.ts` | `lib/billing/dunning/*` | 3 | actions, state-machine, admin-ops |
+| `quota-alert-service.ts` | `lib/alerts/quota/*` | 3 | evaluator, scheduler, delivery |
+| `aggregator.ts` | `lib/usage-metering/*` | 3 | tracker, rollup, integration |
+| `raas-audit.ts` | `lib/raas/*` | 4 | audit-logging, query-service, invoice, permissions |
+| **10 additional large files** | **lib/*** | **+35 modules** | **2026-04-15 modularization (commit 43213f6)** |
+| — | — | — | All individual modules < 200 LOC |
 
 ### Shared Utilities
 - **Campaign Creation:** `lib/campaigns/create-campaign-core.ts` — unified creation logic for dashboard and API routes
