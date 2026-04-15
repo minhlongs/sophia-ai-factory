@@ -1,10 +1,11 @@
 import React from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import { redirect } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getD1Client } from "@/lib/db/client";
+import { createServerClient } from "@/lib/db/client";
 import { getCurrentUser } from "@/lib/better-auth-session";
 import { DashboardStats } from "./components/dashboard-stats";
 import { OnboardingWelcomeBanner } from "./components/onboarding-welcome-banner";
@@ -33,7 +34,7 @@ export default async function DashboardPage() {
 
   if (user?.id) {
     try {
-      const db = await getD1Client();
+      const db = createServerClient();
       const { data, error } = await db
         .from("campaigns")
         .select("*")
@@ -44,6 +45,26 @@ export default async function DashboardPage() {
     } catch (e) {
       console.error("[dashboard] Failed to fetch campaigns:", (e as Error).message);
       campaigns = [];
+    }
+
+    // First-login redirect: no campaigns and no API keys configured → setup wizard
+    if (campaigns.length === 0) {
+      try {
+        const db = createServerClient();
+        const { data: profile } = await db
+          .from("user_profiles")
+          .select("api_keys")
+          .eq("user_id", user.id)
+          .single();
+        const apiKeys = profile?.api_keys as Record<string, unknown> | null | undefined;
+        const hasApiKeys = apiKeys && Object.keys(apiKeys).length > 0;
+        if (!hasApiKeys) {
+          redirect("/setup-wizard");
+        }
+      } catch {
+        // If profile fetch fails (new user, no row), redirect to setup wizard
+        redirect("/setup-wizard");
+      }
     }
   }
 
