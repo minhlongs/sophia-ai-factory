@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { Metadata } from 'next';
 import dynamic from 'next/dynamic';
 import { getUserProfile } from '@/app/actions/settings';
+import { ReferralShareWidget } from '@/components/dashboard/referral-share-widget';
 
 const SettingsForm = dynamic(
   () => import('@/components/settings/settings-form').then(m => ({ default: m.SettingsForm })),
@@ -20,10 +21,11 @@ export default async function SettingsPage() {
   // or middleware should have redirected already.
 
   return (
-    <div className="container mx-auto max-w-4xl py-10">
+    <div className="container mx-auto max-w-4xl py-10 space-y-6">
       <Suspense fallback={<SettingsSkeleton />}>
         <SettingsForm defaultValues={profile} />
       </Suspense>
+      <ReferralShareWidget />
     </div>
   );
 }

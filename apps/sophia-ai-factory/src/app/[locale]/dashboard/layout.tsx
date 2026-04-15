@@ -118,6 +118,12 @@ export default function DashboardLayout({
         </nav>
 
         <div className="p-4 border-t border-border space-y-2">
+          <Link
+            href="/pricing"
+            className="flex items-center gap-2 px-4 py-2 text-sm bg-gradient-to-r from-violet-500 to-cyan-500 text-white rounded-lg hover:opacity-90 transition-opacity"
+          >
+            Nâng Cấp Gói
+          </Link>
           <HealthIndicator />
           <Link
             href="/"
