@@ -154,7 +154,7 @@
       "subtitle": "Bảng giá hàng tháng đơn giản với đầy đủ tính năng",
       "popular": "Phổ Biến Nhất",
       "per_month": "/tháng",
-      "commitment": "Cam kết 12 tháng",
+      "commitment": "Thanh toán hàng tháng",
       "get_started": "Bắt Đầu",
       "processing": "Đang Xử Lý...",
       "error_checkout": "Không thể bắt đầu thanh toán. Vui lòng thử lại.",
@@ -214,15 +214,15 @@
       "tiers": {
         "starter": {
           "name": "Starter",
-          "description": "Tự động hóa video AI hoàn chỉnh. Cam kết 12 tháng."
+          "description": "Tự động hóa video AI hoàn chỉnh. Thanh toán hàng tháng."
         },
         "growth": {
           "name": "Growth",
-          "description": "Mở rộng sản xuất nội dung. Cam kết 12 tháng."
+          "description": "Mở rộng sản xuất nội dung. Thanh toán hàng tháng."
         },
         "premium": {
           "name": "Premium",
-          "description": "Sức mạnh và hỗ trợ doanh nghiệp. Cam kết 12 tháng."
+          "description": "Sức mạnh và hỗ trợ doanh nghiệp. Thanh toán hàng tháng."
         },
         "master": {
           "name": "Master",
@@ -265,7 +265,7 @@
       "items": {
         "quality": {
           "question": "Nội dung do AI tạo có chất lượng cao không?",
-          "answer": "Có! Chúng tôi sử dụng các mô hình AI tiên tiến nhất (RunwayML Gen-3, Pika 1.5, ElevenLabs) để tạo video chuyên nghiệp. Bạn giữ toàn quyền kiểm soát sáng tạo với chỉnh sửa kịch bản, tùy chỉnh giọng nói và phê duyệt cuối cùng trước khi xuất bản."
+          "answer": "Có! Chúng tôi sử dụng các mô hình AI tiên tiến nhất (OpenRouter LLMs, tổng hợp giọng nói ElevenLabs, avatar D-ID) để tạo video chuyên nghiệp. Bạn giữ toàn quyền kiểm soát sáng tạo với chỉnh sửa kịch bản, tùy chỉnh giọng nói và phê duyệt cuối cùng trước khi xuất bản."
         },
         "copyright": {
           "question": "Vấn đề bản quyền và quyền sở hữu nội dung như thế nào?",
@@ -289,7 +289,7 @@
         },
         "tiers": {
           "question": "Sự khác biệt giữa các gói giá là gì?",
-          "answer": "Starter ($199/tháng) cung cấp 5 mẫu, công cụ khám phá tự động, phân tích và hỗ trợ email. Growth ($399/tháng) mở khóa mẫu không giới hạn, phân tích nâng cao, máy tính ROI và hỗ trợ ưu tiên. Premium ($799/tháng) thêm mẫu tùy chỉnh, thiết lập nhãn trắng, truy cập người sáng lập và tích hợp API. Master ($4.999 một lần) bao gồm mọi thứ mãi mãi với đào tạo 1-1 và hỗ trợ VIP."
+          "answer": "Starter ($199/tháng) cung cấp 5 mẫu, công cụ khám phá tự động, phân tích và hỗ trợ email. Growth ($399/tháng) mở khóa mẫu không giới hạn, phân tích nâng cao, máy tính ROI và hỗ trợ ưu tiên. Premium ($799/tháng) thêm mẫu tùy chỉnh, kênh không giới hạn, truy cập người sáng lập và tích hợp API. Master ($4.999 một lần) bao gồm mọi thứ mãi mãi với đào tạo 1-1 và hỗ trợ VIP."
         },
         "refund": {
           "question": "Có chính sách hoàn tiền không?",

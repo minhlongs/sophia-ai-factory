@@ -7,7 +7,7 @@ import { YouTubeEmbed } from "@/components/guide/youtube-embed";
 
 export const metadata: Metadata = {
   title: "Tích Hợp Dịch Vụ — Hướng Dẫn Sophia AI Factory",
-  description: "Hướng dẫn kết nối OpenRouter, ElevenLabs, HeyGen, Cloudflare D1, NOWPayments và Telegram Bot",
+  description: "Hướng dẫn kết nối OpenRouter, ElevenLabs, D-ID, Cloudflare D1, NOWPayments và Telegram Bot",
 };
 
 const services: GuideFeatureItem[] = [
@@ -25,7 +25,7 @@ const services: GuideFeatureItem[] = [
   },
   {
     icon: Video,
-    title: "HeyGen — Avatar Video",
+    title: "D-ID — Avatar Video",
     description: "Tạo người dẫn ảo AI trình bày nội dung video, không cần quay camera thật.",
     iconColor: "text-violet-400",
   },
@@ -130,10 +130,10 @@ export default function IntegrationsGuidePage() {
         </div>
       </section>
 
-      {/* HeyGen */}
+      {/* D-ID */}
       <section className="space-y-4">
         <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-          <Video className="w-5 h-5 text-violet-400" /> HeyGen — Avatar Video AI
+          <Video className="w-5 h-5 text-violet-400" /> D-ID — Avatar Video AI
         </h2>
 
         <div className="grid sm:grid-cols-3 gap-3 text-sm">
@@ -143,7 +143,7 @@ export default function IntegrationsGuidePage() {
           </div>
           <div className="rounded-lg border border-border/40 bg-card/50 px-4 py-3">
             <div className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Gói Trả Phí</div>
-            <div className="text-foreground">Từ $29/tháng</div>
+            <div className="text-foreground">Từ $5.9/tháng</div>
           </div>
           <div className="rounded-lg border border-border/40 bg-card/50 px-4 py-3">
             <div className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Thời Gian Thiết Lập</div>
@@ -151,12 +151,10 @@ export default function IntegrationsGuidePage() {
           </div>
         </div>
 
-        <YouTubeEmbed videoId="hYx2RBeBXMc" title="Hướng dẫn thiết lập HeyGen API Key" />
-
         <div className="space-y-3">
-          <GuideStepCard step={1} title="Truy cập heygen.com" description='Vào heygen.com và nhấn "Start Free Trial".' />
-          <GuideStepCard step={2} title="Lấy API Key" description="Sau khi đăng nhập, vào Settings → API → sao chép API key." />
-          <GuideStepCard step={3} title="Dán vào Sophia" description="Vào Sophia Cài Đặt → API Keys → HeyGen → dán key → Lưu." />
+          <GuideStepCard step={1} title="Truy cập studio.d-id.com" description='Vào studio.d-id.com và nhấn "Start Free Trial".' />
+          <GuideStepCard step={2} title="Lấy API Key" description="Sau khi đăng nhập, nhấn ảnh đại diện → Settings → API → sao chép D-ID API key." />
+          <GuideStepCard step={3} title="Dán vào Sophia" description="Vào Sophia Cài Đặt → API Keys → D-ID → dán key → Lưu." />
         </div>
       </section>
 
