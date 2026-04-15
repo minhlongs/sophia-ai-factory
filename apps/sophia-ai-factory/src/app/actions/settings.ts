@@ -29,8 +29,10 @@ export async function getUserProfile(): Promise<UserProfileFormValues> {
 
     if (data) {
       const profile = data as Record<string, unknown>;
-      const apiKeys = (profile.api_keys ? JSON.parse(profile.api_keys as string) : {}) as EncryptedApiKeys;
-      const settings = profile.settings ? JSON.parse(profile.settings as string) : {};
+      const rawKeys = profile.api_keys;
+      const apiKeys = (typeof rawKeys === 'string' ? JSON.parse(rawKeys) : rawKeys || {}) as EncryptedApiKeys;
+      const rawSettings = profile.settings;
+      const settings = typeof rawSettings === 'string' ? JSON.parse(rawSettings) : rawSettings || {};
 
       const maskedKeys = {
         openai: apiKeys.openai ? '********' : '',
@@ -117,7 +119,8 @@ export async function updateUserProfile(data: UserProfileFormValues) {
 
       if (currentData) {
         const row = currentData as Record<string, unknown>;
-        currentKeys = (row.api_keys ? JSON.parse(row.api_keys as string) : {}) as EncryptedApiKeys;
+        const rawKeys = row.api_keys;
+        currentKeys = (typeof rawKeys === 'string' ? JSON.parse(rawKeys) : rawKeys || {}) as EncryptedApiKeys;
       }
     } catch {
       // profile may not exist yet
@@ -126,19 +129,19 @@ export async function updateUserProfile(data: UserProfileFormValues) {
     const newEncryptedKeys: EncryptedApiKeys = { ...currentKeys };
 
     if (apiKeys.openai && apiKeys.openai !== '********') {
-      newEncryptedKeys.openai = encrypt(apiKeys.openai);
+      newEncryptedKeys.openai = await encrypt(apiKeys.openai);
     } else if (apiKeys.openai === '') {
       delete newEncryptedKeys.openai;
     }
 
     if (apiKeys.anthropic && apiKeys.anthropic !== '********') {
-      newEncryptedKeys.anthropic = encrypt(apiKeys.anthropic);
+      newEncryptedKeys.anthropic = await encrypt(apiKeys.anthropic);
     } else if (apiKeys.anthropic === '') {
       delete newEncryptedKeys.anthropic;
     }
 
     if (apiKeys.elevenlabs && apiKeys.elevenlabs !== '********') {
-      newEncryptedKeys.elevenlabs = encrypt(apiKeys.elevenlabs);
+      newEncryptedKeys.elevenlabs = await encrypt(apiKeys.elevenlabs);
     } else if (apiKeys.elevenlabs === '') {
       delete newEncryptedKeys.elevenlabs;
     }
