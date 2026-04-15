@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createServerClient } from "@/lib/db/client";
+import { UNIFIED_TIERS } from "@/config/tiers";
 import type { Tier } from "@/types";
 import { withRateLimit } from '@/middleware/rate-limit-wrapper';
 
@@ -56,6 +58,24 @@ export const POST = withRateLimit(async function POST(request: Request) {
         { success: false, message: "Valid tier is required (BASIC, PREMIUM, ENTERPRISE)" },
         { status: 400 }
       );
+    }
+
+    // TIER CHECK: Team member limit for the target tier
+    const teamLimit = UNIFIED_TIERS[tier as Tier].teamMembers;
+
+    if (teamLimit < 999) {
+      const db = createServerClient();
+      const { data: members } = await db
+        .from("users")
+        .select("id");
+
+      const memberCount = (members as { id: string }[] | null)?.length ?? 0;
+      if (memberCount >= teamLimit) {
+        return NextResponse.json(
+          { success: false, message: `Team member limit reached (${teamLimit}). Upgrade for more.` },
+          { status: 403 }
+        );
+      }
     }
 
     const supabaseAdmin = createAdminClient();

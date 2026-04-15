@@ -29,7 +29,6 @@ export const usePricingData = () => {
         ],
         raas: [
           t("pricing.features.mcu_1000"),
-          t("pricing.features.ai_commands_5"),
           t("pricing.features.team_members_1"),
           t("pricing.features.email_support"),
         ],
@@ -49,7 +48,6 @@ export const usePricingData = () => {
         ],
         raas: [
           t("pricing.features.mcu_5000"),
-          t("pricing.features.ai_commands_15"),
           t("pricing.features.team_members_5"),
           t("pricing.features.api_webhooks"),
         ],
@@ -70,7 +68,6 @@ export const usePricingData = () => {
         ],
         raas: [
           t("pricing.features.mcu_20000"),
-          t("pricing.features.ai_commands_15_custom"),
           t("pricing.features.team_members_unlimited"),
           t("pricing.features.api_webhooks"),
         ],
@@ -87,7 +84,6 @@ export const usePricingData = () => {
       t("pricing.features.everything_premium"),
       t("pricing.features.lifetime_access"),
       t("pricing.features.mcu_100000"),
-      t("pricing.features.ai_commands_unlimited"),
       t("pricing.features.team_members_unlimited"),
       t("pricing.features.onboarding"),
       t("pricing.features.vip_support"),
