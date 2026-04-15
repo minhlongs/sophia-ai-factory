@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/db/client'
 import { getCurrentUser } from '@/lib/better-auth-session'
+import { getUserTier } from '@/lib/db/get-user-tier'
+import { UNIFIED_TIERS } from '@/config/tiers'
 import { integrationSchema } from '@/lib/schemas'
 
 export async function POST(request: NextRequest) {
@@ -9,6 +11,16 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    // Custom integrations are gated to ENTERPRISE and MASTER tiers
+    const tier = await getUserTier(user.id)
+    if (!UNIFIED_TIERS[tier].customIntegrations) {
+      return NextResponse.json(
+        { error: 'Custom integrations require Premium or Master plan.' },
+        { status: 403 }
+      )
+    }
+
     const db = createServerClient()
 
     const body = await request.json()
@@ -54,6 +66,16 @@ export async function GET() {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    // Custom integrations are gated to ENTERPRISE and MASTER tiers
+    const tier = await getUserTier(user.id)
+    if (!UNIFIED_TIERS[tier].customIntegrations) {
+      return NextResponse.json(
+        { error: 'Custom integrations require Premium or Master plan.' },
+        { status: 403 }
+      )
+    }
+
     const db = createServerClient()
 
     const { data, error } = await db
