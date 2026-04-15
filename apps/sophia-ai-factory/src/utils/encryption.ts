@@ -1,54 +1,82 @@
-import crypto from 'crypto';
+/**
+ * Encryption utilities — Web Crypto API (Cloudflare Workers compatible).
+ * Uses AES-GCM with 256-bit keys.
+ */
 
-const IV_LENGTH = 16; // For AES, this is always 16
+const IV_LENGTH = 12; // GCM recommended IV length
 
-function getEncryptionKey(): Buffer {
+function getEncryptionKey(): string {
   const keyHex = process.env.API_ENCRYPTION_KEY;
   if (!keyHex) {
     throw new Error('Encryption key not configured');
   }
-  return Buffer.from(keyHex, 'hex');
+  return keyHex;
+}
+
+function hexToBytes(hex: string): Uint8Array {
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < hex.length; i += 2) {
+    bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
+  }
+  return bytes;
+}
+
+function bytesToHex(bytes: Uint8Array): string {
+  return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function importKey(keyHex: string): Promise<CryptoKey> {
+  const keyBytes = hexToBytes(keyHex);
+  return crypto.subtle.importKey(
+    'raw',
+    keyBytes,
+    { name: 'AES-GCM' },
+    false,
+    ['encrypt', 'decrypt'],
+  );
 }
 
 /**
- * Encrypts text using AES-256-GCM
+ * Encrypts text using AES-256-GCM (Web Crypto API).
+ * Returns format: iv:encryptedContent (hex encoded)
  */
-export function encrypt(text: string): string {
-  const key = getEncryptionKey();
-  const iv = crypto.randomBytes(IV_LENGTH);
+export async function encrypt(text: string): Promise<string> {
+  const keyHex = getEncryptionKey();
+  const key = await importKey(keyHex);
+  const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH));
+  const enc = new TextEncoder();
 
-  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
-  let encrypted = cipher.update(text);
-  encrypted = Buffer.concat([encrypted, cipher.final()]);
+  const ciphertext = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv },
+    key,
+    enc.encode(text),
+  );
 
-  const authTag = cipher.getAuthTag();
-
-  // Return format: iv:authTag:encryptedContent
-  return `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted.toString('hex')}`;
+  return `${bytesToHex(iv)}:${bytesToHex(new Uint8Array(ciphertext))}`;
 }
 
 /**
- * Decrypts text using AES-256-GCM
+ * Decrypts text using AES-256-GCM (Web Crypto API).
  */
-export function decrypt(text: string): string {
-  const key = getEncryptionKey();
+export async function decrypt(text: string): Promise<string> {
+  const keyHex = getEncryptionKey();
+  const key = await importKey(keyHex);
 
   const parts = text.split(':');
-  if (parts.length !== 3) {
+  if (parts.length !== 2) {
     throw new Error('Invalid encrypted text format');
   }
 
-  const iv = Buffer.from(parts[0], 'hex');
-  const authTag = Buffer.from(parts[1], 'hex');
-  const encryptedText = Buffer.from(parts[2], 'hex');
+  const iv = hexToBytes(parts[0]);
+  const ciphertext = hexToBytes(parts[1]);
 
-  const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
-  decipher.setAuthTag(authTag);
+  const plaintext = await crypto.subtle.decrypt(
+    { name: 'AES-GCM', iv },
+    key,
+    ciphertext,
+  );
 
-  let decrypted = decipher.update(encryptedText);
-  decrypted = Buffer.concat([decrypted, decipher.final()]);
-
-  return decrypted.toString();
+  return new TextDecoder().decode(plaintext);
 }
 
 /**
