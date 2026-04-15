@@ -11,8 +11,10 @@ import {
   handleTextMessage,
   handleUnknown,
   handleCallbackQuery,
+  handleTicket,
   withMiddleware,
 } from '@/lib/telegram/telegram-command-handlers'
+import { createServerClient } from '@/lib/db/client'
 
 /**
  * Telegram Webhook Handler
@@ -77,6 +79,22 @@ export async function POST(request: NextRequest) {
         await handleStatus(chatId)
       } else if (text === '/results') {
         await handleResults(chatId)
+      } else if (text.startsWith('/ticket')) {
+        const ticketText = text.replace('/ticket', '').trim()
+        // Resolve userId from chat_id — fall back to empty string if not linked
+        let userId = ''
+        try {
+          const db = createServerClient()
+          const { data } = await db
+            .from('user_profiles')
+            .select('user_id')
+            .eq('telegram_chat_id', chatId)
+            .single()
+          if (data) userId = (data as { user_id: string }).user_id
+        } catch {
+          // Not linked — ticket still created with empty userId
+        }
+        await handleTicket(chatId, userId, ticketText)
       } else if (text.startsWith('/')) {
         await handleUnknown(chatId)
       } else {

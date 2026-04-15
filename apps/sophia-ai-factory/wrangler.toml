@@ -25,7 +25,8 @@ binding = "IMAGES"
 # "5 * * * *"  — hourly at :05 → /api/cron/usage-export (usage rollup)
 # "0 1 * * *"  — daily 01:00 UTC → /api/cron/dunning (dunning state machine)
 # "0 2 * * *"  — daily 02:00 UTC → /api/cron/reminders (subscription reminders)
-crons = ["5 * * * *", "0 1 * * *", "0 2 * * *"]
+# "0 3 * * *"  — daily 03:00 UTC → /api/cron/scheduled-campaigns (auto-create recurring campaigns)
+crons = ["5 * * * *", "0 1 * * *", "0 2 * * *", "0 3 * * *"]
 
 [vars]
 # NEXT_PUBLIC_MOCK_AI_SERVICES — set in .dev.vars for local dev only
