@@ -22,11 +22,13 @@ binding = "IMAGES"
 
 [triggers]
 # Cron schedule:
+# "*/5 * * * *" — every 5 min → /api/cron/uptime-check (self-monitoring + Telegram alert)
 # "5 * * * *"  — hourly at :05 → /api/cron/usage-export (usage rollup)
 # "0 1 * * *"  — daily 01:00 UTC → /api/cron/dunning (dunning state machine)
 # "0 2 * * *"  — daily 02:00 UTC → /api/cron/reminders (subscription reminders)
 # "0 3 * * *"  — daily 03:00 UTC → /api/cron/scheduled-campaigns (auto-create recurring campaigns)
-crons = ["5 * * * *", "0 1 * * *", "0 2 * * *", "0 3 * * *"]
+# "0 4 * * *"  — daily 04:00 UTC → /api/cron/email-drip (nurture drip on day 1, 3, 7 after signup)
+crons = ["*/5 * * * *", "5 * * * *", "0 1 * * *", "0 2 * * *", "0 3 * * *", "0 4 * * *"]
 
 [vars]
 # NEXT_PUBLIC_MOCK_AI_SERVICES — set in .dev.vars for local dev only

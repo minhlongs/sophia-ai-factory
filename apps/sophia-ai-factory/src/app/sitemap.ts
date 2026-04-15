@@ -21,6 +21,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/guide/telegram', priority: 0.5, changeFrequency: 'monthly' as const },
     { path: '/affiliate-discovery', priority: 0.6, changeFrequency: 'monthly' as const },
     { path: '/setup-wizard', priority: 0.4, changeFrequency: 'monthly' as const },
+    { path: '/blog', priority: 0.7, changeFrequency: 'weekly' as const },
   ];
 
   const entries: MetadataRoute.Sitemap = [];
