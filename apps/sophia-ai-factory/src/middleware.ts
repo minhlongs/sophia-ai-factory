@@ -70,6 +70,29 @@ export async function proxy(request: NextRequest) {
       return isolationResult; // Return early if isolation validation failed
     }
 
+    // RED-TEAM #7: Webhook version pinning — force webhook senders to stable version during canary.
+    // /api/webhooks/* without Cloudflare-Workers-Version-Key: stable → 503 (senders auto-retry).
+    // NOWPayments + PayOS confirmed to retry on 5xx. Telegram uses long-poll (unaffected).
+    if (
+      pathname.startsWith('/api/webhooks/nowpayments') ||
+      pathname.startsWith('/api/webhooks/payos') ||
+      pathname.startsWith('/api/webhooks/telegram')
+    ) {
+      const versionKey = request.headers.get('Cloudflare-Workers-Version-Key');
+      if (versionKey !== 'stable') {
+        return new Response(
+          JSON.stringify({ error: 'canary_window', message: 'Webhook pinned to stable version — retry shortly' }),
+          {
+            status: 503,
+            headers: {
+              'Content-Type': 'application/json',
+              'Retry-After': '30',
+            },
+          }
+        );
+      }
+    }
+
     const identifier = getClientIdentifier(request);
     let rateLimitConfig: typeof RATE_LIMITS.api | typeof RATE_LIMITS.auth | typeof RATE_LIMITS.webhook = RATE_LIMITS.api;
 

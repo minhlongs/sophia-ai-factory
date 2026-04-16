@@ -39,7 +39,7 @@ export const cspConfig = {
   connectSrc: [
     "'self'",
     'https://*.supabase.co',
-    'https://api.polar.sh',
+    // polar.sh removed — Polar rejected this product (2026-03-23)
     'https://api.heygen.com',
     'https://api.openai.com',
     'https://openrouter.ai',

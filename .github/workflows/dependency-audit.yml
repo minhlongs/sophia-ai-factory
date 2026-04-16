@@ -1,0 +1,55 @@
+name: Dependency Audit (Gate 4)
+
+# RED-TEAM #1: pull_request ONLY. Secrets withheld from forks.
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  gate-4-dependency:
+    name: Gate 4 — Dependency (outdated + license check)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/sophia-ai-factory
+
+    steps:
+      # RED-TEAM #1: SHA-pinned (actions/checkout v4.2.2)
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      # RED-TEAM #1: SHA-pinned (actions/setup-node v4.2.0)
+      - uses: actions/setup-node@1d0ff469b13e2c3f0cd29f4c2db6d4e6fe80d0c9
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: apps/sophia-ai-factory/package-lock.json
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Gate 4a — npm outdated (informational)
+        run: |
+          echo "=== Outdated packages (informational — does not block merge) ==="
+          npm outdated --json 2>/dev/null | python3 -c "
+          import json, sys
+          try:
+            data = json.load(sys.stdin)
+            if not data:
+              print('All packages up to date.')
+            else:
+              for pkg, info in data.items():
+                current = info.get('current', '?')
+                wanted = info.get('wanted', '?')
+                latest = info.get('latest', '?')
+                print(f'  {pkg}: {current} → wanted={wanted} latest={latest}')
+          except:
+            print('(no outdated packages or parse error)')
+          " || true
+        continue-on-error: true
+
+      - name: Gate 4b — License check (block AGPL + GPL-3.0)
+        run: |
+          npx license-checker --failOn 'AGPL-3.0;GPL-3.0' --production --summary
