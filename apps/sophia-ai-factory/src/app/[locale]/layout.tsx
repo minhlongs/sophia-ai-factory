@@ -4,6 +4,7 @@ import localFont from "next/font/local";
 import "../globals.css";
 import { Navbar } from "@/app/components/layout/navbar";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { PostHogProvider } from "@/components/posthog-provider";
 
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { MockModeIndicator } from "@/components/dev/mock-mode-indicator";
@@ -142,6 +143,7 @@ export default async function RootLayout({
         <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:top-4 focus:left-4 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none">
           Skip to main content
         </a>
+        <PostHogProvider>
         <NextIntlClientProvider messages={messages}>
           <ThemeProvider
             attribute="class"
@@ -159,6 +161,7 @@ export default async function RootLayout({
             </QueryProvider>
           </ThemeProvider>
         </NextIntlClientProvider>
+        </PostHogProvider>
       </body>
     </html>
   );
