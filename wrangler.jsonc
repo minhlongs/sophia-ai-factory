@@ -39,4 +39,20 @@
 		"NEXT_PUBLIC_IS_CONFIGURED": "true",
 		"IS_CONFIGURED": "true"
 	}
+
+	// === P1-VARS-BEGIN ===
+	// vars block managed by P1 — appended above. COMMIT_SHA/DEPLOYED_AT are CF Secrets.
+	// === P1-VARS-END ===
+
+	// === P2-CRONS-BEGIN ===
+	// P2 appends cron triggers here
+	// === P2-CRONS-END ===
+
+	// === P3-CRONS-BEGIN ===
+	// P3 appends cron triggers here
+	// === P3-CRONS-END ===
+
+	// === P3-KV-BEGIN ===
+	// P3 appends KV namespace bindings here
+	// === P3-KV-END ===
 }
