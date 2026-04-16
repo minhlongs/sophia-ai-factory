@@ -35,24 +35,30 @@
 	"images": {
 		"binding": "IMAGES"
 	},
+	// === P1-VARS-BEGIN ===
 	"vars": {
 		"NEXT_PUBLIC_IS_CONFIGURED": "true",
 		"IS_CONFIGURED": "true"
-	}
-
-	// === P1-VARS-BEGIN ===
-	// vars block managed by P1 — appended above. COMMIT_SHA/DEPLOYED_AT are CF Secrets.
+	},
 	// === P1-VARS-END ===
-
-	// === P2-CRONS-BEGIN ===
-	// P2 appends cron triggers here
-	// === P2-CRONS-END ===
-
-	// === P3-CRONS-BEGIN ===
-	// P3 appends cron triggers here
-	// === P3-CRONS-END ===
-
 	// === P3-KV-BEGIN ===
-	// P3 appends KV namespace bindings here
+	// EXPERIMENT_KV: PostHog feature flag + A/B variant cache (60s TTL)
+	// Run: wrangler kv namespace create EXPERIMENT_KV  →  paste id below
+	"kv_namespaces": [
+		{
+			"binding": "EXPERIMENT_KV",
+			"id": "REPLACE_WITH_EXPERIMENT_KV_ID",
+			"preview_id": "REPLACE_WITH_EXPERIMENT_KV_PREVIEW_ID"
+		}
+	],
 	// === P3-KV-END ===
+	// === P2-CRONS-BEGIN ===
+	// (P2 cron triggers are in wrangler.toml; jsonc consolidated triggers below)
+	// === P2-CRONS-END ===
+	// === P3-CRONS-BEGIN ===
+	// "0 6 * * 1" — Monday 06:00 UTC → /api/cron/weekly-signals-digest
+	"triggers": {
+		"crons": ["*/5 * * * *", "5 * * * *", "0 1 * * *", "0 2 * * *", "0 3 * * *", "0 4 * * *", "0 6 * * 1"]
+	}
+	// === P3-CRONS-END ===
 }

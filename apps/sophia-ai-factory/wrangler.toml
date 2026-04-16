@@ -33,7 +33,19 @@ binding = "IMAGES"
 # "0 2 * * *"  — daily 02:00 UTC → /api/cron/reminders (subscription reminders)
 # "0 3 * * *"  — daily 03:00 UTC → /api/cron/scheduled-campaigns (auto-create recurring campaigns)
 # "0 4 * * *"  — daily 04:00 UTC → /api/cron/email-drip (nurture drip on day 1, 3, 7 after signup)
-crons = ["*/5 * * * *", "5 * * * *", "0 1 * * *", "0 2 * * *", "0 3 * * *", "0 4 * * *"]
+crons = ["*/5 * * * *", "5 * * * *", "0 1 * * *", "0 2 * * *", "0 3 * * *", "0 4 * * *", "0 6 * * 1"]
+# === P3-CRONS-BEGIN ===
+# "0 6 * * 1" — Monday 06:00 UTC → /api/cron/weekly-signals-digest (PostHog signals digest)
+# === P3-CRONS-END ===
+
+# === P3-KV-BEGIN ===
+# EXPERIMENT_KV: PostHog feature flag + A/B variant cache (60s TTL)
+# Run: wrangler kv namespace create EXPERIMENT_KV  →  paste id below
+[[kv_namespaces]]
+binding = "EXPERIMENT_KV"
+id = "REPLACE_WITH_EXPERIMENT_KV_ID"
+preview_id = "REPLACE_WITH_EXPERIMENT_KV_PREVIEW_ID"
+# === P3-KV-END ===
 
 [vars]
 # NEXT_PUBLIC_MOCK_AI_SERVICES — set in .dev.vars for local dev only
