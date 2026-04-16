@@ -38,3 +38,20 @@ crons = ["*/5 * * * *", "5 * * * *", "0 1 * * *", "0 2 * * *", "0 3 * * *", "0 4
 [vars]
 # NEXT_PUBLIC_MOCK_AI_SERVICES — set in .dev.vars for local dev only
 # Production uses real AI services (BYOK keys from customer)
+
+# === P1-VARS-BEGIN ===
+# vars block managed by P1 — phase 1 CI/CD enforcement
+# COMMIT_SHA and DEPLOYED_AT are injected as CF Secrets (not vars) via wrangler-set-build-vars.sh
+# === P1-VARS-END ===
+
+# === P2-CRONS-BEGIN ===
+# P2 appends cron triggers here (error-digest, heartbeat)
+# === P2-CRONS-END ===
+
+# === P3-CRONS-BEGIN ===
+# P3 appends cron triggers here (weekly-signals-digest)
+# === P3-CRONS-END ===
+
+# === P3-KV-BEGIN ===
+# P3 appends KV namespace bindings here (EXPERIMENT_KV)
+# === P3-KV-END ===

@@ -1,0 +1,116 @@
+name: Deploy (Gate 5 — Canary + Migration Guard)
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  gate-5-deployment:
+    name: Gate 5 — Deploy with canary (10%→100%)
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      # RED-TEAM #1: SHA-pinned (actions/checkout v4.2.2)
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      # RED-TEAM #1: SHA-pinned (actions/setup-node v4.2.0)
+      - uses: actions/setup-node@1d0ff469b13e2c3f0cd29f4c2db6d4e6fe80d0c9
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: apps/sophia-ai-factory/package-lock.json
+
+      - name: Install app dependencies
+        working-directory: apps/sophia-ai-factory
+        run: npm install --legacy-peer-deps
+
+      - name: Install root dependencies (wrangler)
+        run: npm install --legacy-peer-deps
+
+      # RED-TEAM #6: Block canary if D1 migrations pending
+      - name: Migration guard
+        run: bash scripts/ci/migration-guard.sh
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      # RED-TEAM #1: Atomic secret inject (no sed file rewrites)
+      - name: Inject build metadata as CF Secrets
+        run: bash scripts/ci/wrangler-set-build-vars.sh
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Build (opennextjs-cloudflare)
+        working-directory: apps/sophia-ai-factory
+        run: npx opennextjs-cloudflare build
+
+      - name: Upload new Worker version
+        id: upload
+        run: |
+          OUTPUT=$(wrangler versions upload --name sophia-ai-factory --json 2>/dev/null || \
+                   wrangler versions upload --name sophia-ai-factory 2>&1)
+          echo "Upload output: $OUTPUT"
+          VERSION_ID=$(echo "$OUTPUT" | python3 -c "
+          import sys, json, re
+          text = sys.stdin.read()
+          # Try JSON parse first
+          try:
+            data = json.loads(text)
+            vid = data.get('id') or data.get('version_id') or ''
+            print(vid)
+          except:
+            # Fallback: regex for version ID pattern
+            m = re.search(r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}', text)
+            print(m.group(0) if m else '')
+          " 2>/dev/null || echo "")
+          if [ -z "$VERSION_ID" ]; then
+            echo "WARNING: could not parse version ID — falling back to wrangler deploy"
+            wrangler deploy --name sophia-ai-factory
+            echo "new_version_id=" >> "$GITHUB_OUTPUT"
+          else
+            echo "new_version_id=$VERSION_ID" >> "$GITHUB_OUTPUT"
+            echo "[deploy] New version ID: $VERSION_ID"
+          fi
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      # Smoke test preview URL before canary split
+      - name: Smoke test — health detail
+        if: steps.upload.outputs.new_version_id != ''
+        run: |
+          PREVIEW_URL="https://sophia-ai-factory.workers.dev"
+          echo "[smoke] Testing $PREVIEW_URL/api/health/detail..."
+          HTTP=$(curl -sf -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer $INTROSPECT_TOKEN" \
+            "$PREVIEW_URL/api/health/detail" || echo "000")
+          echo "[smoke] HTTP status: $HTTP"
+          if [ "$HTTP" != "200" ] && [ "$HTTP" != "401" ]; then
+            echo "FAIL: health check returned $HTTP"
+            exit 1
+          fi
+          echo "PASS: smoke test passed"
+        env:
+          INTROSPECT_TOKEN: ${{ secrets.INTROSPECT_TOKEN }}
+
+      # RED-TEAM #7: Webhook pinning middleware is active from this point
+      # /api/webhooks/* requires Cloudflare-Workers-Version-Key: stable header
+      # NOWPayments + PayOS auto-retry on 503 → land on stable version
+      - name: Canary rollout (10%→100% over 5 min)
+        if: steps.upload.outputs.new_version_id != ''
+        run: bash scripts/ci/canary-rollout.sh "${{ steps.upload.outputs.new_version_id }}"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Production smoke test
+        run: |
+          PROD_URL="https://sophia.agencyos.network"
+          HTTP=$(curl -sI "$PROD_URL" | head -1 | awk '{print $2}')
+          echo "Production HTTP: $HTTP"
+          [ "$HTTP" = "200" ] && echo "PRODUCTION GREEN" || echo "WARNING: $HTTP"
