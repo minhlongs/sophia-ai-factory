@@ -3,7 +3,7 @@ import { generateScript as legacyGenerateScript } from "@/lib/ai/script-generato
 
 export class RealScriptService implements IScriptService {
   async generateScript(input: GenerateScriptInput): Promise<ScriptOutput> {
-    // Delegate to existing implementation
+    // `input.orgId` threads the tenant scope into the LLM cache (Phase 4F).
     return await legacyGenerateScript(input);
   }
 }
