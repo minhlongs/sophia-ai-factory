@@ -92,10 +92,10 @@ mekong --agent cto "Validate Phase 1 CI gates are all passing"
 
 ## Journal Pattern
 
-After each task, append to `.sophia-factory/journal/YYYYMMDD-cto-{slug}.md`:
+After each task, write a journal entry via the helper script (PII-scrubbed, filename-validated):
 
-```markdown
-## Action
+```bash
+echo "## Action
 {what was requested}
 
 ## Decision
@@ -106,9 +106,12 @@ After each task, append to `.sophia-factory/journal/YYYYMMDD-cto-{slug}.md`:
 
 ## Lessons
 {pattern to remember}
+" | scripts/agent-journal/append-entry.sh cto {kebab-case-slug}
 ```
 
-**PII SCRUB before write**: strip BYOK keys (`sk-*`), JWTs (`eyJ*`), customer emails.
+The helper writes to `.sophia-factory/journal/{YYYY-MM-DD}-cto-{slug}.md` and auto-strips
+BYOK keys, JWTs, Bearer tokens, emails, VN phones, webhook secrets via `scrub-pii.sh`.
+Self-review loop (`.github/workflows/agent-self-review.yml`) consumes these weekly.
 
 ## References (do NOT duplicate content)
 - `.claude/rules/development-rules.md`
