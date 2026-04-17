@@ -1,8 +1,8 @@
 # Phase B — Customer BYOK Adapter + Provider Router
 
-**Status:** deferred (next iteration) | **Priority:** P1 | **Effort:** 2d | **Depends:** Phase A
+**Status:** complete | **Priority:** P1 | **Effort:** 2d | **Depends:** Phase A, C
 
-> **DEFERRED — DO NOT IMPLEMENT THIS ITERATION.** Hydrate from this skeleton next session after Phase A burn-in.
+> **SHIPPED 2026-04-17 PM-4** in iteration 260417-1306. Commit `1962229`. Files: `migrations/0006-users-local-mode.sql` + `src/lib/byok/provider-router.{ts,test.ts}` (9 tests) + niche-enhancer extended w/ optional `userId` param + 2 new test cases. 953/953 tests pass.
 
 ## Goal
 Generalize Phase A's env-var single-tenant adapter into a per-user opt-in BYOK provider stored in D1, gated by a KV feature flag for percentage rollout.
