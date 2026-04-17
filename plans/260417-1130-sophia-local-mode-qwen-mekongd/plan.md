@@ -3,7 +3,7 @@ title: "Sophia Local Mode (Qwen 3.6 + mekongd)"
 description: "Route Sophia LLM calls to customer-owned mekongd on M1 Max via Cloudflare Tunnel (BYOK, edge-safe, fallback-on-failure)"
 status: in-progress
 priority: P1
-effort: 9d (Phase A: 1d this iteration; Phases B-F: 8d deferred)
+effort: 7d (Phase A: 1d; Phases B-F: 6d shipped parallel 260417-1431)
 branch: master
 tags: [sophia, byok, local-mode, mekongd, qwen, a16z-solo, edge]
 created: 2026-04-17
@@ -15,8 +15,8 @@ created: 2026-04-17
 Enable Sophia to route LLM inference to a customer-owned mekongd instance running Qwen 3.6-35B-A3B on M1 Max via Cloudflare Tunnel. BYOK pattern, edge-safe, silent fallback to OpenRouter on failure.
 
 ## Strategy
-- **Phase A — eat-own-dogfood (THIS ITERATION):** founder's Sophia → founder's M1 Max via existing `m1max-cf` tunnel. Validates loop end-to-end before any customer build.
-- **Phases B-F — DEFERRED:** customer-facing implementation (per-user opt-in, encryption, auto-installer, UI, monitoring). Skeletons hydrated; next-session planner can pick up without re-research.
+- **Phase A — eat-own-dogfood:** founder's Sophia → founder's M1 Max via existing `m1max-cf` tunnel. Validates loop end-to-end before any customer build. ✅ SHIPPED.
+- **Phases B-F — customer-facing implementation (parallel cook 260417-1431):** per-user opt-in, encryption, auto-installer, UI, monitoring. All 6 phases shipped. 974 tests pass.
 
 ## Reuses just-shipped infra
 - BYOK timeout wrapper: `apps/sophia-ai-factory/src/lib/byok/with-timeout.ts`
@@ -27,12 +27,12 @@ Enable Sophia to route LLM inference to a customer-owned mekongd instance runnin
 
 | # | Phase | Effort | Status | Depends |
 |---|---|---|---|---|
-| A | Eat-own-dogfood (founder M1 Max → founder Sophia) | 1d | pending | — |
+| A | Eat-own-dogfood (founder M1 Max → founder Sophia) | 1d | complete | — |
 | B | Customer BYOK adapter + provider router | 2d | complete | A, C |
 | C | D1 encryption helper (AES-GCM via crypto.subtle) | 1d | complete | A |
-| D | Auto-installer + tunnel provision | 3d | deferred | B, C |
-| E | Setup wizard "Local Mode" UI tab | 1-2d | deferred | D |
-| F | Health monitoring cron + customer docs | 1d | deferred | D |
+| D | Auto-installer + tunnel provision | 1.5d actual | complete | B, C |
+| E | Setup wizard "Local Mode" UI tab | 1.5d actual | complete | D |
+| F | Health monitoring cron + customer docs | 1d actual | complete | D |
 
 ## Dependency Graph
 ```

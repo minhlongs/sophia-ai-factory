@@ -193,6 +193,26 @@ Per audit `plans/reports/audit-...-mekong-vs-claudekit-gap.md`:
 
 ---
 
+---
+
+## Local Mode (Phase F — mekongd Tunnel)
+
+[VN] Bật Local Mode để Sophia chạy AI trên máy M1 Max của bạn — cắt chi phí API 4–10×.
+Xem hướng dẫn đầy đủ: `docs/sophia-local-mode-runbook.md`
+
+[EN] Enable Local Mode to run AI on your M1 Max — cut API costs 4–10×.
+Full guide: `docs/sophia-local-mode-runbook.md`
+
+**Quick steps / Các bước nhanh:**
+1. Cài mekongd theo `docs/sophia-local-mode-installer.md` (Phase D)
+2. Chạy `bash scripts/sophia-local-mode-install.sh`
+3. Setup Wizard → tab **Local Mode** → xác nhận badge ✅ Connected
+
+**Health cron:** Sophia tự kiểm tra tunnel mỗi 15 phút. Sau 3 lần thất bại liên tiếp (45 phút), hệ thống tự tắt Local Mode và chuyển về cloud API.
+Secrets cần thêm: `LOCAL_MODE_DEK` (32-byte base64 random key) vào CF Worker secrets.
+
+---
+
 **Last verified:** 2026-04-17 08:29 ICT
 **Author:** Sophia Factory bootstrap session
 **Related:** `plans/260416-2328-sophia-factory-raas-solo-platform/plan.md`

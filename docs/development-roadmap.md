@@ -68,9 +68,34 @@
 
 ---
 
-## Q3 2026: Post-Launch Enhancements
+## Q2 2026: Local Mode + Offline-First (Shipped 2026-04-17)
 
-### Phase 5: Analytics Dashboard (Planned)
+### Phase 5: Local Mode Provisioning ✅ SHIPPED (Phase D)
+- **Status:** Auto-installer deployed (2026-04-17)
+- **Features:**
+  - Automatic installer script for M1 Max / Qwen mekongd integration
+  - Secure CF Tunnel provisioning with operator verification
+  - Environment variable setup automation
+- **Metrics:** 165 LOC installer guide (bilingual)
+
+### Phase 6: Local Mode Setup Wizard ✅ SHIPPED (Phase E)
+- **Status:** Customer self-serve UI live (2026-04-17)
+- **Features:**
+  - Multi-step setup component for founder dogfood
+  - Local mekongd endpoint detection
+  - Tier + BYOK provisioning UI
+  - Health status dashboard
+- **Metrics:** 336 LOC runbook (bilingual) + UI components
+
+### Phase 7: Local Mode Health Monitoring ✅ SHIPPED (Phase F)
+- **Status:** Self-heal + diagnostics deployed (2026-04-17)
+- **Features:**
+  - `/api/cron/local-mode-health` health check endpoint
+  - Automated tunnel restart on connection loss
+  - Troubleshooting runbook + FAQ
+- **Metrics:** Integrated into sophia-local-mode-runbook.md
+
+### Phase 8: Analytics Dashboard (Planned)
 - **Timeline:** May 2026
 - **Features:**
   - Client revenue tracking (tier adoption, churn)
@@ -148,7 +173,8 @@
 | 2026-03-26 | Security Audit (97/100) | ✅ |
 | 2026-04-10 | Payment Provider Migration | ✅ |
 | 2026-04-15 | Architecture Consolidation | ✅ |
-| **2026-04-17** | **Sophia Factory RaaS Solo Platform (4 PRs)** | **✅ SHIPPED** |
+| 2026-04-17 | Sophia Factory RaaS Solo Platform (4 PRs) | ✅ |
+| **2026-04-17** | **Local Mode Provisioning + Installer + Health Monitoring** | **✅ SHIPPED** |
 | 2026-05-01 | Analytics Dashboard | 🔄 Planned |
 | 2026-06-01 | Multi-Language Support (Vietnamese) | 🔄 Planned |
 | 2026-07-01 | Telegram Bot Enhancement | 🔄 Planned |

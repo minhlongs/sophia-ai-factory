@@ -2,16 +2,19 @@
 
 > Sophia AI Factory — RaaS (Reasoning-as-a-Service) Platform with AI-Native CI/CD, Observability, & Signals
 
-**Last Updated:** 2026-04-17 (4-Phase RaaS Platform Shipped)
+**Last Updated:** 2026-04-17 (Local Mode + RaaS Platform Shipped)
 **Production:** https://sophia.agencyos.network
 **Production Dashboard:** https://sophia.agencyos.network/dashboard
 
 ### Recent Shipments (2026-04-17)
-4 major production releases merged to main (PRs #15-18):
-- **P1 CI/CD:** 5 enforcement gates + canary rollout (1114 LOC)
-- **P2 Observability:** Better Stack structured logging + heartbeats (833 LOC)
-- **P3 Signals:** PostHog A/B framework + weekly digest (960 LOC)
-- **P4 SDLC:** AI factory scaffold + 4 C-Level agents (1715 LOC)
+7 major features shipped (4 RaaS PRs + 3 Local Mode phases):
+- **RaaS P1 CI/CD:** 5 enforcement gates + canary rollout (1114 LOC)
+- **RaaS P2 Observability:** Better Stack structured logging + heartbeats (833 LOC)
+- **RaaS P3 Signals:** PostHog A/B framework + weekly digest (960 LOC)
+- **RaaS P4 SDLC:** AI factory scaffold + 4 C-Level agents (1715 LOC)
+- **Local Mode Phase D:** Auto-installer script for Qwen mekongd + CF Tunnel provisioning
+- **Local Mode Phase E:** Setup wizard React UI for customer self-serve
+- **Local Mode Phase F:** Health monitoring cron + troubleshooting runbook (bilingual)
 
 **ARCHITECTURE CONSOLIDATION (2026-04-15):** Unified auth (Better Auth D1), single DB client, consolidated tier logic, modularized 15→56+ focused modules (all < 200 LOC). E2E smoke tests validate critical journeys.
 
@@ -278,6 +281,13 @@ affiliate_content — id, org_id, type, title, content, status
 | `/api/v1/missions/[id]` | GET | Mission detail |
 | `/api/v1/missions/[id]/result` | GET | Mission output |
 | `/api/v1/missions/[id]/stream` | GET | SSE real-time progress |
+
+### Local Mode Setup (Auth Required, Phases D-F)
+| Route | Method | Purpose |
+|-------|--------|---------|
+| `/api/setup/local-mode/provision` | POST | Activate local mekongd mode + CF Tunnel |
+| `/api/setup/local-mode/status` | GET | Check local mode provisioning status |
+| `/api/cron/local-mode-health` | GET | Health check for local mekongd connection |
 
 ---
 

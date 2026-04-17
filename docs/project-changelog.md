@@ -1,7 +1,47 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-04-17 (Ops Telemetry Uplift + RaaS Platform Shipped)
+> **Last Updated:** 2026-04-17 (Local Mode Phases D/E/F Shipped)
+
+---
+
+## [2026-04-17] Sophia Local Mode Phases D/E/F — Offline-First Installer + Setup Wizard + Health Monitoring
+
+### Summary
+3-phase local mode implementation for founder dogfood + customer self-serve. Phase D: auto-installer for M1 Max Qwen mekongd. Phase E: setup wizard React UI. Phase F: health monitoring cron + troubleshooting guide. Tests: 974/974 passing. New docs: sophia-local-mode-installer.md (165 LOC, bilingual), sophia-local-mode-runbook.md (336 LOC, bilingual). Activation: sophia-activation-runbook.md updated with "Local Mode" section.
+
+### Changes
+1. **Phase D: Auto-Installer** — `scripts/sophia-local-mode-install.sh`
+   - Qwen mekongd detection + CF Tunnel provisioning
+   - Secure operator verification flow
+   - Environment variable auto-setup
+   - Bilingual install guide (165 LOC)
+
+2. **Phase E: Setup Wizard UI** — `src/components/setup-wizard/local-mode-step{,-ui}.tsx`
+   - Multi-step React component for customer onboarding
+   - Local mekongd endpoint detection
+   - Tier provisioning + BYOK configuration
+   - Health status dashboard
+
+3. **Phase F: Health Monitoring** — `/api/cron/local-mode-health`
+   - Scheduled health checks for local mekongd connection
+   - Automated tunnel restart on failure
+   - Troubleshooting runbook + FAQ (336 LOC, bilingual)
+
+4. **Route Integrations** — `src/app/api/setup/local-mode/{provision,status}/route.ts`
+   - POST /setup/local-mode/provision — activate local mode
+   - GET /setup/local-mode/status — check provisioning status
+   - Zod-validated input + error handling
+
+### Docs Updated
+- `docs/sophia-local-mode-installer.md` — NEW (customer install guide, VN+EN)
+- `docs/sophia-local-mode-runbook.md` — NEW (health monitoring + troubleshooting, VN+EN)
+- `docs/sophia-activation-runbook.md` — +20 lines (added "Local Mode" provisioning section)
+
+### Test Results
+- 974/974 tests passing (100%)
+- No TypeScript errors
+- Build time < 10s
 
 ---
 

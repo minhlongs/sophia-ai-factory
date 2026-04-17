@@ -1,8 +1,12 @@
 # Phase E — Setup Wizard "Local Mode" UI Tab
 
-**Status:** deferred (next iteration) | **Priority:** P2 | **Effort:** 1-2d | **Depends:** Phase D
+**Status:** complete | **Priority:** P2 | **Effort:** 1.5d actual | **Depends:** Phase D
 
-> **DEFERRED — DO NOT IMPLEMENT THIS ITERATION.**
+> **SHIPPED 2026-04-17 PM-5** in iteration 260417-1431 cook parallel.
+> Files: `local-mode-step.tsx` (177 LOC), `local-mode-step-ui.tsx` (104 LOC), `status/route.ts` (112 LOC), wizard registration at position 3.
+> Tests: 6+5 = 11 pass.
+> 
+> Adds "Local Mode" tab to setup wizard with eligibility detection (darwin/arm64), install one-liner, health-check status badge (green/yellow/red), toggle enable/disable. Bilingual (VN+EN) per sophia-handover-rules.md. Polls /api/setup/local-mode/status every 5s.
 
 ## Goal
 Add "Local Mode" tab to the existing setup wizard. Auto-detect darwin/arm64, show install one-liner if eligible, render health-check status badge, toggle ON/OFF.

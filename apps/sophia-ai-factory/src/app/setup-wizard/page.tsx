@@ -6,6 +6,7 @@ import { WizardStepper } from './components/wizard-stepper';
 import { ArrowRight, Save, Loader2 } from 'lucide-react';
 import { SystemCheckStep } from './components/steps/system-check-step';
 import { ApiKeysStep } from './components/steps/api-keys-step';
+import { LocalModeStep } from '@/components/setup-wizard/local-mode-step';
 import { FinishStep } from './components/steps/finish-step';
 
 export default function SetupWizardPage() {
@@ -118,7 +119,7 @@ export default function SetupWizardPage() {
         <div className="px-8">
             <WizardStepper
                 currentStep={step}
-                steps={["System", "AI Keys", "Finish"]}
+                steps={["System", "AI Keys", "Local Mode", "Finish"]}
             />
         </div>
 
@@ -136,12 +137,14 @@ export default function SetupWizardPage() {
               />
             )}
 
-            {step === 3 && <FinishStep saveError={saveError} />}
+            {step === 3 && <LocalModeStep />}
+
+            {step === 4 && <FinishStep saveError={saveError} />}
         </div>
 
         {/* Footer Actions */}
         <div className="bg-muted/50 px-8 py-6 flex justify-between items-center border-t border-border">
-            {step > 1 && step < 3 && (
+            {step > 1 && step < 4 && (
                 <button
                     onClick={() => setStep(prev => prev - 1)}
                     className="text-muted-foreground hover:text-foreground font-medium px-4 py-2"
@@ -152,7 +155,7 @@ export default function SetupWizardPage() {
 
             {step === 1 && <div />} {/* Spacer */}
 
-            {step < 3 ? (
+            {step < 4 ? (
                 <button
                     onClick={handleNext}
                     className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors ml-auto"
