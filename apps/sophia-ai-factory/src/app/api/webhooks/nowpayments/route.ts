@@ -8,6 +8,8 @@ import { verifyIpnSignature } from '@/lib/clients/nowpayments-client'
 import { processNowPaymentsIpn, type NowPaymentsIpnPayload } from '@/lib/billing/nowpayments-ipn-handlers'
 import { logger } from '@/lib/utils/logger-utility'
 import { captureTierUpgraded } from '@/lib/signals/posthog-capture'
+import { track } from '@/lib/signals/track'
+import { D1Events } from '@/lib/signals/d1-event-types'
 
 const NOWPAYMENTS_IPN_SECRET = process.env.NOWPAYMENTS_IPN_SECRET
 
@@ -52,6 +54,7 @@ export async function POST(request: NextRequest) {
       payment_id: ipn.payment_id,
       payment_status: ipn.payment_status,
     })
+    track(D1Events.PAYMENT_FAILED, 'webhook', { provider: 'nowpayments', payment_id: ipn.payment_id, reason: result.message })
     return NextResponse.json({ error: result.message }, { status: 500 })
   }
 
@@ -59,6 +62,8 @@ export async function POST(request: NextRequest) {
   if (ipn.payment_status === 'finished' && ipn.order_id) {
     const userId = ipn.order_id.split('_')[1] ?? ipn.order_id
     void captureTierUpgraded({ distinctId: userId, tier: ipn.invoice_id ?? 'unknown', amount: ipn.price_amount, currency: ipn.price_currency })
+    track(D1Events.PAYMENT_SUCCESS, 'webhook', { amount_usd: ipn.price_amount, currency: ipn.price_currency, provider: 'nowpayments', payment_id: ipn.payment_id }, userId)
+    track(D1Events.TIER_CONVERSION, userId, { from_tier: 'BASIC', to_tier: ipn.invoice_id ?? 'unknown', amount_usd: ipn.price_amount, provider: 'nowpayments' }, userId)
   }
 
   return NextResponse.json({ received: true })

@@ -13,6 +13,8 @@ import type {
   PublishResult,
   RetryPolicy,
 } from "./gateway-types";
+import { track } from "@/lib/signals/track";
+import { D1Events } from "@/lib/signals/d1-event-types";
 
 export type {
   CampaignOutput,
@@ -104,6 +106,7 @@ export class OpenClawGateway {
       }),
     );
 
+    track(D1Events.AGENT_DISPATCH, 'system', { campaign_id: content.campaignId, channel_count: enabledChannels.length });
     return {
       campaignId: content.campaignId,
       results,
