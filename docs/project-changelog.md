@@ -1,7 +1,58 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-04-17 (Supervisor Agent MVP + Local Mode Phases D/E/F Shipped)
+> **Last Updated:** 2026-04-17 (Phase 4D Langfuse Activation Shipped)
+
+---
+
+## [2026-04-17] Phase 4D — Langfuse External LLM Observability (Env-Gated Fire-and-Forget)
+
+### Summary
+PDF Giai đoạn 4 "Advanced Observability: OpenTelemetry + Langfuse" bullet completed. Activates the Langfuse HTTP POST sink deferred since Phase 4B. Secondary fire-and-forget mirror alongside existing D1 `LLM_CALL_TRACE` event — D1 remains source of truth, Langfuse is observability luxury for human inspection. Zero new dependency (uses built-in `fetch` + `btoa`). Metrics: 90 new LOC (langfuse-client + tests), 4 new tests (1123 total, +4 from 1119 baseline), 0 TS errors, `npm run build` green in ~15s.
+
+### Changes
+1. **langfuse-client** — `src/lib/telemetry/langfuse-client.ts` (new, ~100 LOC)
+   - `readLangfuseConfig()` returns null when `LANGFUSE_PUBLIC_KEY` or `LANGFUSE_SECRET_KEY` missing
+   - `sendToLangfuse(trace, actor, orgId, config?)` POSTs `generation-create` batch event to `/api/public/ingestion`
+   - Basic auth via `btoa(public:secret)`; default host `https://cloud.langfuse.com`, overridable via `LANGFUSE_HOST` (empty-string & whitespace fall back)
+   - `AbortSignal.timeout(2000)` caps latency to stay well inside CF subrequest budget
+   - `scrubPIIDeep(event)` scrub before `JSON.stringify` to strip any leaked API keys from `errorClass` strings
+   - Catches network / timeout / `btoa` non-ASCII throws — never blocks caller
+
+2. **llm-trace wiring** — `src/lib/telemetry/llm-trace.ts` (modified)
+   - After existing D1 `track()`, fires `void sendToLangfuse(...).catch(...)` double-guard
+   - D1 emission stays primary and synchronous; Langfuse never delays Supervisor cron
+
+3. **Tests** — `langfuse-client.test.ts` (new, 17 tests) + `llm-trace.test.ts` (+2 tests)
+   - Config env permutations (both missing, one missing, both present, custom host)
+   - POST shape, deterministic trace id, cost placed in `body.usage.totalCost`
+   - Contract test — every `LlmCallTrace` field present in serialized body (guards silent drift)
+   - AbortSignal.timeout wired to fetch init
+   - Rejection swallow + explicit config override path
+   - D1 still emits when Langfuse sink rejects (regression guard for Phase 4B behaviour)
+
+### Quality Gates
+- Build: ✅ `npm run build` exit 0 (~15s)
+- Tests: ✅ 1123/1123 (+4)
+- Code Review: ✅ 9.5/10 after H1/H2/M2/M3/L4 fixes applied in-PR
+- Files: all < 200 LOC
+- Security: zero secret leaks (PII scrub + basic-auth header only, no header logging)
+- Language bilingual: N/A (pure infra)
+
+### Post-Deploy (manual founder action)
+```bash
+wrangler secret put LANGFUSE_PUBLIC_KEY
+wrangler secret put LANGFUSE_SECRET_KEY
+# Optional self-hosted override:
+wrangler secret put LANGFUSE_HOST
+```
+Without these secrets, `sendToLangfuse()` skips silently — feature is dark-launched by default.
+
+### Deferred
+- Batched emission (scale > 10 steps/sec) — Phase 5
+- `LLM_SINK_FAILURE` signal on non-2xx Langfuse response — Phase 4E
+- DRY `fetchWithTimeout` helper (retrofit better-stack-client.ts) — separate PR
+- Retry dedup on `body.id` — revisit with PEV engine
 
 ---
 

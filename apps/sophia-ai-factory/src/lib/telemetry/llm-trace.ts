@@ -1,15 +1,16 @@
 /**
- * LLM Call Trace — Phase 4B Advanced Observability.
+ * LLM Call Trace — Phase 4B/4D Advanced Observability.
  *
- * Emits per-step LLM call metadata to D1 signals_events.
- * Future: wire to Langfuse /api/public/ingestion when LANGFUSE_PUBLIC_KEY env set.
+ * Emits per-step LLM call metadata to D1 signals_events (primary)
+ * and to Langfuse /api/public/ingestion (secondary, env-gated).
  *
  * PDF Giai đoạn 4 "Advanced Observability: OpenTelemetry + Langfuse" bullet.
- * MVP = D1 emission only. No external dep. Safe fire-and-forget.
+ * Both sinks are fire-and-forget — failures never block caller.
  */
 
 import { track } from '@/lib/signals/track'
 import { D1Events } from '@/lib/signals/d1-event-types'
+import { sendToLangfuse } from './langfuse-client'
 
 export interface LlmCallTrace {
   workflowId:    string
@@ -70,4 +71,10 @@ export function recordLlmCall(
   } catch {
     // Telemetry must never break caller. Swallow.
   }
+
+  // Phase 4D: secondary emission to Langfuse (env-gated, fire-and-forget).
+  // Promise intentionally not awaited — caller is synchronous.
+  void sendToLangfuse(trace, actor, orgId).catch(() => {
+    // Defensive: sendToLangfuse already swallows; double-guard never throws.
+  })
 }

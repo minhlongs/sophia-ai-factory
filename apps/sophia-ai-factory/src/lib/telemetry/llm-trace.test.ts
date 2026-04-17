@@ -6,12 +6,21 @@ vi.mock('@/lib/signals/track', () => ({
   track: vi.fn(),
 }))
 
+// Mock langfuse-client so Phase 4D secondary emission stays isolated
+// from these D1-focused tests.
+vi.mock('./langfuse-client', () => ({
+  sendToLangfuse: vi.fn().mockResolvedValue(undefined),
+}))
+
 import { track } from '@/lib/signals/track'
 import { D1Events } from '@/lib/signals/d1-event-types'
+import { sendToLangfuse } from './langfuse-client'
 
 describe('llm-trace', () => {
   beforeEach(() => {
     vi.mocked(track).mockClear()
+    vi.mocked(sendToLangfuse).mockClear()
+    vi.mocked(sendToLangfuse).mockResolvedValue(undefined)
   })
 
   describe('buildTraceId', () => {
@@ -146,6 +155,51 @@ describe('llm-trace', () => {
 
       const [, , , orgId] = vi.mocked(track).mock.calls[0]
       expect(orgId).toBeUndefined()
+    })
+
+    it('forwards to Langfuse secondary sink with same actor + orgId', () => {
+      recordLlmCall(
+        {
+          workflowId: 'wf-lf',
+          stepOrder:  2,
+          stepType:   'execute',
+          provider:   'openrouter',
+          model:      'gpt-4o-mini',
+          durationMs: 33,
+          ok:         true,
+        },
+        'wf-lf',
+        'org-lf',
+      )
+
+      expect(sendToLangfuse).toHaveBeenCalledTimes(1)
+      const [trace, actor, orgId] = vi.mocked(sendToLangfuse).mock.calls[0]
+      expect(trace.workflowId).toBe('wf-lf')
+      expect(trace.stepOrder).toBe(2)
+      expect(actor).toBe('wf-lf')
+      expect(orgId).toBe('org-lf')
+    })
+
+    it('still emits to D1 even if Langfuse sink rejects', () => {
+      vi.mocked(sendToLangfuse).mockRejectedValueOnce(new Error('langfuse down'))
+
+      expect(() => {
+        recordLlmCall(
+          {
+            workflowId: 'wf-lf-fail',
+            stepOrder:  1,
+            stepType:   'plan',
+            provider:   'stub',
+            model:      'mvp-stub',
+            durationMs: 5,
+            ok:         true,
+          },
+          'wf-lf-fail',
+        )
+      }).not.toThrow()
+
+      expect(track).toHaveBeenCalledTimes(1)
+      expect(sendToLangfuse).toHaveBeenCalledTimes(1)
     })
   })
 

@@ -95,6 +95,19 @@
   - Troubleshooting runbook + FAQ
 - **Metrics:** Integrated into sophia-local-mode-runbook.md
 
+### Phase 8.5: Langfuse External LLM Observability ✅ SHIPPED (Phase 4D)
+- **Status:** Secondary fire-and-forget sink live, dark-launched (2026-04-17)
+- **Features:**
+  - Env-gated HTTP POST to Langfuse `/api/public/ingestion` (generation-create)
+  - Basic auth via `btoa(public:secret)`; overridable host via `LANGFUSE_HOST`
+  - `AbortSignal.timeout(2000)` caps CF subrequest blast radius
+  - `scrubPIIDeep` defence-in-depth against leaked API keys
+  - Contract test guards `LlmCallTrace` → Langfuse body drift
+  - D1 `LLM_CALL_TRACE` remains source of truth; Langfuse is mirror
+- **Metrics:** ~90 new LOC, 19 new tests (4 wired to llm-trace, 15 standalone), 1123/1123 total
+- **Files:** `src/lib/telemetry/langfuse-client.{ts,test.ts}` + `llm-trace.{ts,test.ts}` edits
+- **Activation:** `wrangler secret put LANGFUSE_PUBLIC_KEY / LANGFUSE_SECRET_KEY` (founder manual)
+
 ### Phase 8: Supervisor Agent MVP (D1+Cron) ✅ SHIPPED (Giai đoạn 3 Bước 3.4)
 - **Status:** Linear 3-step workflow orchestrator live (2026-04-17)
 - **Features:**
@@ -189,6 +202,7 @@
 | 2026-04-17 | Sophia Factory RaaS Solo Platform (4 PRs) | ✅ |
 | 2026-04-17 | Local Mode Provisioning + Installer + Health Monitoring | ✅ |
 | **2026-04-17** | **Supervisor Agent MVP (D1+Cron stepper, Giai đoạn 3.4)** | **✅ SHIPPED** |
+| **2026-04-17** | **Phase 4D Langfuse External LLM Observability (env-gated)** | **✅ SHIPPED** |
 | 2026-05-01 | Analytics Dashboard | 🔄 Planned |
 | 2026-06-01 | Multi-Language Support (Vietnamese) | 🔄 Planned |
 | 2026-07-01 | Telegram Bot Enhancement | 🔄 Planned |
