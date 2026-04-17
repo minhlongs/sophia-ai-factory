@@ -1,9 +1,7 @@
 // TODO: storage not available in D1 client — audio upload needs Cloudflare R2 migration
-import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
-import { track } from '@/lib/signals/track';
-import { D1Events } from '@/lib/signals/d1-event-types';
 import { Tier } from "@/types";
+import { withTimeout } from '@/lib/byok/with-timeout';
 import { trackUsage, hashLicenseKey, calculateCredits, startTimer } from '@/lib/usage-metering';
 import { getUsageContext } from '@/lib/usage-metering/context';
 
@@ -51,7 +49,6 @@ export async function generateVoiceover(input: GenerateVoiceoverInput): Promise<
   if (apiKey) {
     try {
       const result = await generateElevenLabsVoiceover(text, tier, apiKey, voiceId);
-      track(D1Events.BYOK_CALL, finalUserId, { provider: 'elevenlabs', status_code: 200, latency_ms: stopTimer() });
       // Track successful usage
       await trackUsage({
         userId: finalUserId,
@@ -70,7 +67,6 @@ export async function generateVoiceover(input: GenerateVoiceoverInput): Promise<
       // Log and fall through to mock fallback
       const errMsg = error instanceof Error ? error.message : String(error);
       logger.warn(`[ElevenLabs] API failed, falling back to mock`, { error: errMsg });
-      track(D1Events.BYOK_CALL, finalUserId, { provider: 'elevenlabs', status_code: 500, latency_ms: stopTimer(), error_class: error instanceof Error ? error.name : 'Error' });
       // Track failed usage
       await trackUsage({
         userId: finalUserId,
@@ -122,7 +118,7 @@ async function generateElevenLabsVoiceover(
   // ElevenLabs API endpoint
   const url = `https://api.elevenlabs.io/v1/text-to-speech/${defaultVoiceId}`;
 
-  const response = await fetch(url, {
+  const response = await withTimeout(url, {
     method: 'POST',
     headers: {
       'Accept': 'audio/mpeg',
@@ -138,7 +134,8 @@ async function generateElevenLabsVoiceover(
         style: tier === 'ENTERPRISE' ? 0.5 : 0.0,
         use_speaker_boost: tier !== 'BASIC'
       }
-    })
+    }),
+    provider: 'elevenlabs',
   });
 
   if (!response.ok) {

@@ -7,8 +7,7 @@
  */
 
 import type { AffiliateProgram } from "@/types";
-import { track } from "@/lib/signals/track";
-import { D1Events } from "@/lib/signals/d1-event-types";
+import { withTimeout } from "@/lib/byok/with-timeout";
 
 /** OpenRouter response shape for chat completions */
 interface OpenRouterChoice {
@@ -26,9 +25,8 @@ export async function enhanceNicheScoreWithAI(
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) return null;
 
-  const t0 = Date.now();
   try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    const response = await withTimeout("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${apiKey}`,
@@ -48,9 +46,8 @@ export async function enhanceNicheScoreWithAI(
         ],
         max_tokens: 10,
       }),
+      provider: 'openrouter',
     });
-
-    track(D1Events.BYOK_CALL, 'system', { provider: 'openrouter', status_code: response.status, latency_ms: Date.now() - t0 });
 
     if (!response.ok) {
       return null;
@@ -60,8 +57,7 @@ export async function enhanceNicheScoreWithAI(
     const content = data.choices?.[0]?.message?.content?.trim() ?? "";
     const score = parseInt(content, 10);
     return Number.isFinite(score) ? Math.min(Math.max(score, 0), 100) : null;
-  } catch (err) {
-    track(D1Events.BYOK_CALL, 'system', { provider: 'openrouter', status_code: 0, latency_ms: Date.now() - t0, error_class: err instanceof Error ? err.name : 'Error' });
+  } catch {
     return null;
   }
 }
