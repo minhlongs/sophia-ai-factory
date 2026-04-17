@@ -8,7 +8,7 @@
 
 ## Overview
 - **Priority:** P0 (low effort, high observability win)
-- **Status:** pending
+- **Status:** complete
 - **Owner:** dev-B (fullstack-developer)
 - **Effort:** 1h
 - Script + workflow EXIST — debug-only phase. Add Telegram fallback so founder is notified when loop breaks (currently silent failure).
@@ -87,16 +87,16 @@ python scripts/agent-self-review/summarize.py
 - **Blocked by:** Phase 0
 
 ## Todo List
-- [ ] Reproduce failure locally + capture error
-- [ ] Diagnose root cause
-- [ ] Apply minimal fix to `summarize.py`
-- [ ] Add `notify_telegram()` helper
-- [ ] Add try/except wrapper around main
-- [ ] Add Telegram secrets to workflow env
-- [ ] Verify Telegram secrets exist (or flag missing)
-- [ ] Manual workflow_dispatch run → success
-- [ ] Verify GH Issue posted
-- [ ] Verify Telegram fallback fires on simulated failure
+- [x] Reproduce failure locally + capture error
+- [x] Diagnose root cause
+- [x] Apply minimal fix to `summarize.py`
+- [x] Add `notify_telegram()` helper
+- [x] Add try/except wrapper around main
+- [x] Add Telegram secrets to workflow env
+- [x] Verify Telegram secrets exist (or flag missing)
+- [x] Manual workflow_dispatch run → success
+- [x] Verify GH Issue posted
+- [x] Verify Telegram fallback fires on simulated failure
 
 ## Success Criteria
 - `gh workflow run agent-self-review.yml` completes green.

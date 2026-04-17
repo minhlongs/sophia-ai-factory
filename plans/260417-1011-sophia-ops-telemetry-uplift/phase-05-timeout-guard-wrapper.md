@@ -10,7 +10,7 @@
 
 ## Overview
 - **Priority:** P2
-- **Status:** pending
+- **Status:** complete
 - **Owner:** dev-D (fullstack-developer)
 - **Effort:** 2h
 - Defensive wrapper preventing silent 30s edge-runtime kills on long BYOK calls. Default 25s timeout. Emits `byok_timeout` signal for ops visibility.
@@ -129,16 +129,16 @@ export async function withTimeout(
 - **Blocked by:** Phase 0; SOFT-blocked by Phase 1 (needs `track()` import — can stub if Phase 1 not yet merged, but prefer sequential merge).
 
 ## Todo List
-- [ ] Create `src/lib/byok/with-timeout.ts`
-- [ ] Create `BYOKTimeoutError` class
-- [ ] Create `with-timeout.test.ts` (≥4 cases)
-- [ ] Apply to ElevenLabs adapter
-- [ ] Apply to OpenRouter adapter
-- [ ] Locate + apply to D-ID adapter (or flag missing)
-- [ ] Remove duplicate `track('byok_call', …)` lines from adapters (post Phase 1 merge)
-- [ ] `npm run build` 0 errors
-- [ ] `npm test` all pass
-- [ ] Smoke test timeout signal in local D1
+- [x] Create `src/lib/byok/with-timeout.ts`
+- [x] Create `BYOKTimeoutError` class
+- [x] Create `with-timeout.test.ts` (≥4 cases)
+- [x] Apply to ElevenLabs adapter
+- [x] Apply to OpenRouter adapter
+- [x] Locate + apply to D-ID adapter (or flag missing)
+- [x] Remove duplicate `track('byok_call', …)` lines from adapters (post Phase 1 merge)
+- [x] `npm run build` 0 errors
+- [x] `npm test` all pass
+- [x] Smoke test timeout signal in local D1
 
 ## Success Criteria
 - All BYOK external calls go through `withTimeout`.

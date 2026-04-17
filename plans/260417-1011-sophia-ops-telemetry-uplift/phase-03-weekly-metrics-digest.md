@@ -8,7 +8,7 @@
 
 ## Overview
 - **Priority:** P1
-- **Status:** pending
+- **Status:** complete
 - **Owner:** dev-A (handoff from Phase 1 — same dev for context continuity)
 - **Effort:** 6h
 - **CRITICAL:** Existing route at `/api/cron/weekly-signals-digest` queries PostHog + emails. Extend to ALSO query D1 `signals_events` AND post to GH Issue + Telegram. Idempotent per ISO week.
@@ -95,15 +95,15 @@ GET /api/cron/weekly-signals-digest  (requireCron bearer auth)
 - **Blocked by:** Phase 1 (needs `signals_events` table)
 
 ## Todo List
-- [ ] `d1-aggregates.ts` w/ 5 typed query functions
-- [ ] `markdown-renderer.ts` bilingual VN+EN
-- [ ] `github-issue-poster.ts` idempotent upsert
-- [ ] `telegram-poster.ts`
-- [ ] Wire all into `route.ts` (additive, preserve email path)
-- [ ] Tests pass (≥6 new tests)
-- [ ] `npm run build` 0 errors
-- [ ] Local cron trigger smoke test
-- [ ] Verify idempotent re-run
+- [x] `d1-aggregates.ts` w/ 5 typed query functions
+- [x] `markdown-renderer.ts` bilingual VN+EN
+- [x] `github-issue-poster.ts` idempotent upsert
+- [x] `telegram-poster.ts`
+- [x] Wire all into `route.ts` (additive, preserve email path)
+- [x] Tests pass (≥6 new tests)
+- [x] `npm run build` 0 errors
+- [x] Local cron trigger smoke test
+- [x] Verify idempotent re-run
 
 ## Success Criteria
 - One cron fire produces: 1 GH Issue + 1 Telegram + 1 Email (existing).

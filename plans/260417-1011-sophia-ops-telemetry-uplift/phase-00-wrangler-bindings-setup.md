@@ -6,7 +6,7 @@
 
 ## Overview
 - **Priority:** P0 BLOCKER (must finish before Phases 1/4 start)
-- **Status:** pending
+- **Status:** complete
 - **Owner:** lead (NOT a parallel task)
 - **Effort:** 0.5h
 - Single sequential touch on `wrangler.toml` — eliminates parallel-edit conflict between Phase 1 (D1) and Phase 4 (KV).
@@ -45,10 +45,10 @@ Single config file edit, committed atomically before parallel split.
 - **Blocked by:** none
 
 ## Todo List
-- [ ] Read `wrangler.toml` and audit bindings
-- [ ] Confirm D1 `DB` binding
-- [ ] Confirm KV `EXPERIMENT_KV` binding
-- [ ] Mark phase complete + signal downstream
+- [x] Read `wrangler.toml` and audit bindings
+- [x] Confirm D1 `DB` binding
+- [x] Confirm KV `EXPERIMENT_KV` binding
+- [x] Mark phase complete + signal downstream
 
 ## Success Criteria
 - All required bindings exist; no merge conflicts possible on `wrangler.toml` from parallel phases.

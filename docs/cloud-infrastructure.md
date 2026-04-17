@@ -52,13 +52,13 @@ id: 78bd1961-b62d-43bb-b551-0c5d7d389506
 name: sophia-raas-db
 type: SQLite
 region: SFO (US-West)
-tables: 41 (users, orgs, missions, billing, etc.)
-size: ~50 MB (as of 2026-03-26)
+tables: 42 (users, orgs, missions, billing, signals, etc.)
+size: ~50 MB (as of 2026-04-17)
 backup: Daily (automatic + manual export)
 replication: None (single-region)
 ```
 
-**Tables (41 total):**
+**Tables (42 total):**
 
 | Category | Tables |
 |----------|--------|
@@ -67,6 +67,7 @@ replication: None (single-region)
 | **Billing** | billing_settings, org_balances |
 | **Growth** | referral_codes, affiliates, affiliate_content |
 | **Content** | blog_posts (+ 5 hardcoded SEO posts) |
+| **Telemetry** | signals_events (append-only founder ops telemetry) |
 | **System** | migrations (schema history) |
 
 **Access:**
@@ -76,9 +77,15 @@ replication: None (single-region)
 - **Direct URL:** `https://dash.cloudflare.com > Workers > D1 > sophia-raas-db`
 
 **Migrations:**
-- Stored in `.wrangler/migrations/`
-- Numbered: `0001_init.sql` → `0009_blog_posts.sql`
+- Stored in `migrations/` (D1 SQLite)
+- Numbered: `0001-init.sql` → `0005-signals-events.sql`
 - Applied automatically on `wrangler d1 migrations apply`
+
+**Founder Ops Telemetry (signals_events):**
+- **Purpose:** Append-only log for operational metrics (not product analytics)
+- **Events:** tier_conversion, payment_success, payment_failed, agent_dispatch, api_rate_limit_hit, byok_call, byok_timeout
+- **Writers:** `src/lib/signals/track.ts` (emitted during feature execution)
+- **Readers:** Weekly digest cron queries + exports to GH Issue + Telegram TL;DR
 
 ### R2 Storage (Cache & Assets)
 
@@ -125,7 +132,7 @@ ttl: 3600 (1 hour)
 
 ### Layer 1: Database (D1) — 9/10
 
-- **Schema:** 41 tables, versioned migrations
+- **Schema:** 42 tables, versioned migrations (0001-0005)
 - **RLS:** Handled in application logic (JWT org_id checks)
 - **Backups:** Automatic daily + manual `npx wrangler d1 export`
 - **Disaster Recovery:** RPO 24h, RTO 4h (restore from D1 backup + git redeploy)

@@ -7,7 +7,7 @@
 
 ## Overview
 - **Priority:** P2
-- **Status:** pending
+- **Status:** complete
 - **Owner:** dev-C (fullstack-developer)
 - **Effort:** 2h
 - New helper at `src/lib/feature-flags/index.ts` providing **percentage-rollout primitive** independent of PostHog. Co-exists with `signals/feature-flags.ts` (PostHog A/B). Use cases: "ship to 10% then 50% then 100%" without PostHog dep.
@@ -122,13 +122,13 @@ export async function setFlag(/* … */): Promise<void> { /* PUT to KV */ }
 - **Blocked by:** Phase 0
 
 ## Todo List
-- [ ] Create `src/lib/feature-flags/index.ts` (~100 LOC)
-- [ ] Implement FNV-1a hash
-- [ ] Implement `isEnabled`, `bucketFor`, `setFlag`
-- [ ] Write 6+ unit tests (deterministic distribution test critical)
-- [ ] Add JSDoc usage example
-- [ ] `npm run build` 0 errors
-- [ ] `npm test` all pass
+- [x] Create `src/lib/feature-flags/index.ts` (~100 LOC)
+- [x] Implement FNV-1a hash
+- [x] Implement `isEnabled`, `bucketFor`, `setFlag`
+- [x] Write 6+ unit tests (deterministic distribution test critical)
+- [x] Add JSDoc usage example
+- [x] `npm run build` 0 errors
+- [x] `npm test` all pass
 
 ## Success Criteria
 - `await isEnabled('test-flag', 'user123')` returns same value across calls.
