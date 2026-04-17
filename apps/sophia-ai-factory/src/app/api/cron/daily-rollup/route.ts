@@ -15,17 +15,19 @@ import { logger } from '@/lib/utils/logger-utility';
  * Verify cron authentication
  */
 function verifyCronAuth(request: NextRequest): boolean {
-  const authHeader = request.headers.get('authorization');
-
   // Allow bypass in development
   if (process.env.NODE_ENV === 'development') {
     return true;
   }
 
-  // Check for cron secret
-  const cronSecret = request.headers.get('x-cron-secret');
   const expectedSecret = process.env.CRON_SECRET;
+  // P2: Accept Authorization: Bearer <CRON_SECRET> (standard CF Workers cron pattern)
+  if (expectedSecret && request.headers.get('authorization') === `Bearer ${expectedSecret}`) {
+    return true;
+  }
 
+  // Check for cron secret via x-cron-secret header
+  const cronSecret = request.headers.get('x-cron-secret');
   if (expectedSecret && cronSecret === expectedSecret) {
     return true;
   }

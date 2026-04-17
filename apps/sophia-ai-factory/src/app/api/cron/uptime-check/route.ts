@@ -53,6 +53,9 @@ function isAuthorised(req: NextRequest): boolean {
   const secret = process.env.CRON_SECRET;
   if (!secret) return true; // no secret configured → open (CF-internal only)
 
+  // P2: Accept Authorization: Bearer <CRON_SECRET> (standard CF Workers cron pattern)
+  if (req.headers.get('authorization') === `Bearer ${secret}`) return true;
+
   const token = req.nextUrl.searchParams.get('token');
   const cronHeader =
     req.headers.get('x-cron-secret') || req.headers.get('x-cf-cron');
