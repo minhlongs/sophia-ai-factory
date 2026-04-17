@@ -12,6 +12,7 @@ import { getCurrentUser } from '@/lib/better-auth-session'
 import { track } from '@/lib/signals/track'
 import { D1Events } from '@/lib/signals/d1-event-types'
 import { createWorkflow, listWorkflows } from '@/lib/db/workflow-repository'
+import { detectInjection } from '@/lib/security/prompt-guard'
 import { logger } from '@/lib/utils/logger-utility'
 
 export const dynamic = 'force-dynamic'
@@ -75,6 +76,30 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const orgId = await resolveOrgId(user.id)
     if (!orgId) {
       return NextResponse.json({ error: 'org_not_found' }, { status: 422 })
+    }
+
+    // Phase 4A: Prompt injection guard at LLM ingress
+    const guard = detectInjection(parsed.data.prompt)
+    if (guard.flagged) {
+      const eventProps = {
+        severity:      guard.severity,
+        reasons:       guard.reasons,
+        prompt_length: parsed.data.prompt.length,
+        blocked:       guard.severity === 'high',
+        endpoint:      'POST /api/raas/workflows',
+      }
+      track(D1Events.PROMPT_INJECTION_DETECTED, user.id, eventProps, orgId)
+      if (guard.severity === 'high') {
+        return NextResponse.json(
+          {
+            error:    'prompt_injection_detected',
+            severity: guard.severity,
+            reasons:  guard.reasons,
+          },
+          { status: 400 },
+        )
+      }
+      // medium → proceed, already logged
     }
 
     const workflow = await createWorkflow(orgId, parsed.data.prompt)
