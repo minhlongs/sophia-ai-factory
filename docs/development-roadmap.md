@@ -2,7 +2,7 @@
 
 > Product milestones and progress tracking (2026)
 
-**Last Updated:** 2026-04-17 (Phase 4E LLM Semantic Cache MVP)
+**Last Updated:** 2026-04-17 (Phase 4.7 Admin Monitoring Dashboard)
 **Target:** $1M ARR, 100/100 a16z solo company score
 
 ---
@@ -94,6 +94,18 @@
   - Automated tunnel restart on connection loss
   - Troubleshooting runbook + FAQ
 - **Metrics:** Integrated into sophia-local-mode-runbook.md
+
+### Phase 8.7: Admin Monitoring Dashboard ✅ SHIPPED (Phase 4.7)
+- **Status:** Server-rendered admin page live, closes Phase 4E M-2 (2026-04-17)
+- **Features:**
+  - `/admin/monitoring` Next.js Server Component, admin-guarded
+  - D1 aggregates: LLM cache (total/fresh/expired/hits/tokens-saved), workflows 24h (queued/running/completed/failed), top-10 signals 24h
+  - 4 stat cards + workflow status pills + top-N signals list (no Recharts, no client polling — YAGNI)
+  - Degraded-state banner when any D1 RPC fails — distinguishes idle from broken
+  - `increment_llm_cache_hit` RPC closes Phase 4E M-2 (dead hit_count column)
+- **Metrics:** ~400 new LOC (page + queries + RPC + tests), 20 new tests (1165 total), commit `7f4d2dc`
+- **Files:** `src/app/[locale]/(admin)/admin/monitoring/page.tsx` + `src/lib/admin/monitoring-queries.{ts,test.ts}` + `src/lib/db/d1-query-builder.ts` + `src/lib/llm/cache/llm-cache.ts`
+- **Activation:** none — page renders immediately post-deploy for `role === 'admin'` users
 
 ### Phase 8.6: LLM Semantic Cache MVP ✅ SHIPPED (Phase 4E)
 - **Status:** Exact-match SHA-256 D1 cache live, dark-launched (2026-04-17)
@@ -217,6 +229,7 @@
 | **2026-04-17** | **Supervisor Agent MVP (D1+Cron stepper, Giai đoạn 3.4)** | **✅ SHIPPED** |
 | **2026-04-17** | **Phase 4D Langfuse External LLM Observability (env-gated)** | **✅ SHIPPED** |
 | **2026-04-17** | **Phase 4E LLM Semantic Cache MVP (exact-match + D1, env-gated)** | **✅ SHIPPED** |
+| **2026-04-17** | **Phase 4.7 Admin Monitoring Dashboard (D1 aggregates + M-2 hit_count close)** | **✅ SHIPPED** |
 | 2026-05-01 | Analytics Dashboard | 🔄 Planned |
 | 2026-06-01 | Multi-Language Support (Vietnamese) | 🔄 Planned |
 | 2026-07-01 | Telegram Bot Enhancement | 🔄 Planned |

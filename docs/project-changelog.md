@@ -1,7 +1,60 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-04-17 (Phase 4E LLM Semantic Cache MVP Shipped)
+> **Last Updated:** 2026-04-17 (Phase 4.7 Admin Monitoring Dashboard Shipped)
+
+---
+
+## [2026-04-17] Phase 4.7 — Admin Monitoring Dashboard MVP + 4E M-2 Hit-Count Close
+
+### Summary
+PDF Solo-Platform Giai đoạn 4 Bước 4.7 "Dashboard Monitoring" — shipped admin-guarded server-rendered page at `/admin/monitoring` aggregating LLM cache + workflows + signals from D1. YAGNI MVP: no client polling, no Recharts (stat cards + status pills + top-N list), D1 outage surfaces a "degraded" banner instead of an ambiguous all-zero view. Also closes Phase 4E deferred item M-2: `hit_count` column was dead (upsert preserved but nothing incremented); `lookupCache` now fires `increment_llm_cache_hit` RPC fire-and-forget on fresh hits so the dashboard hit-ratio card reflects real traffic.
+
+### Changes
+1. **Admin monitoring page** — `src/app/[locale]/(admin)/admin/monitoring/page.tsx` (new, ~170 LOC)
+   - Server Component, auth-guarded (`getCurrentUser()` → redirect `/dashboard` if `role !== 'admin'`)
+   - Parallel `Promise.all` over three D1 RPC aggregates
+   - 4 stat cards (cache entries, hits, tokens-saved, 24h workflows) + workflow status pills + top-10 signals list
+   - Degraded-state banner when any D1 query fails (`ok: false`)
+
+2. **Monitoring queries module** — `src/lib/admin/monitoring-queries.ts` (new, ~105 LOC)
+   - `getCacheStats()`, `getWorkflowStats()`, `getSignalsStats(limit)` — typed `QueryResult<T>` wrappers with `ok` flag
+   - `cacheHitRate(stats)` — approximate ratio `hits / (hits + entries)`; acknowledged upsert skew, to be replaced by explicit miss counter in Phase 4.7.1
+
+3. **D1 query builder RPCs** — `src/lib/db/d1-query-builder.ts` (modified)
+   - `increment_llm_cache_hit` — `UPDATE llm_cache SET hit_count = hit_count + 1 WHERE hash = ?`
+   - `llm_cache_stats` — total/fresh/expired/hits/tokens-saved
+   - `workflow_stats_24h` — queued/running/completed/failed since 24h ago (ISO-8601 bind; writer always ISO)
+   - `signals_top_events_24h` — top-N grouped, **binds unix-ms integer** to match `signals_events.ts INTEGER` column (reviewer C-1 fix)
+
+4. **LLM cache hit_count increment** — `src/lib/llm/cache/llm-cache.ts` (modified)
+   - `lookupCache` now calls `void incrementHitCount(hash)` before returning on fresh hit
+   - `incrementHitCount` — swallows all errors, never blocks cache hit hot path
+
+5. **Admin sidebar** — `src/app/components/admin/admin-sidebar.tsx` (modified)
+   - Added "Monitoring" nav item (lucide `Activity` icon) between "Dashboard" and "Analytics"
+
+6. **Tests** — 20 new
+   - `monitoring-queries.test.ts` (17) — snake→camel mapping, string-numeric coercion, ok-flag behavior, limit passthrough, rpc rejection swallowing, hit-rate math edges
+   - `llm-cache.test.ts` (3 added) — RPC fires on fresh hit with valid hash, NOT on expired row, RPC rejection swallowed while entry still returned
+
+### Quality Gates
+- Build: ✅ `npm run build` exit 0
+- Tests: ✅ 1165/1165 (+17 from 1148 Phase 4E baseline; +3 of 20 replaced existing edge cases)
+- Code Review: ✅ 9.5+/10 SHIP after C-1 + H-1/H-2/H-3 fixes (initial 8.7 → fixed BLOCK items)
+- Files: all new files < 200 LOC
+
+### Activation
+- No manual activation needed — page renders for any admin-role user immediately post-deploy.
+- To see cache metrics, founder must enable Phase 4E first: `wrangler secret put LLM_CACHE_ENABLED --value 1`.
+
+### Deferred (Phase 4.7.1+)
+- Real-time polling / SSE stream for live dashboard updates
+- Recharts time-series line charts (24h cache hits, workflows by hour)
+- Explicit `llm_cache_miss_count` for accurate hit-rate (vs current approximation)
+- Per-model LLM trace breakdown (requires dedicated `llm_call_trace` D1 table)
+- Alerts: threshold → email / telegram notification
+- Pre-existing `llm-cache.ts:97` `as CacheRow` double-cast fix (Phase 4E debt, baseline `tsc --noEmit` surface)
 
 ---
 
