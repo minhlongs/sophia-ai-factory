@@ -1,7 +1,54 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-04-17 (Phase 4D Langfuse Activation Shipped)
+> **Last Updated:** 2026-04-17 (Phase 4E LLM Semantic Cache MVP Shipped)
+
+---
+
+## [2026-04-17] Phase 4E — LLM Semantic Cache MVP (Exact-Match + D1 + Env-Gated)
+
+### Summary
+PDF Solo-Platform Bước 4.6 "Semantic Cache – Redis-based caching giảm 40-60% token usage" — shipped exact-match SHA-256 hash cache as first slice. Semantic similarity (embedding-based top-K) deferred to Phase 4E.2. D1 chosen over Redis (native CF Workers binding, no new infra). Dark-launched: `LLM_CACHE_ENABLED=1` gates the module; inert in prod until founder activates. Wired into `weekly-signals-digest` cron as the lowest-risk first integration; additional call sites opt-in post-bake. Metrics: commit `69fe6a5`, 565 new LOC (migration + module + tests + wiring), 25 new tests (1148 total, +25 from 1123 baseline), 0 TS errors, `npm run build` green in 14.6s.
+
+### Changes
+1. **llm_cache migration** — `apps/sophia-ai-factory/migrations/0008-llm-cache.sql` (new, ~20 LOC)
+   - Table `llm_cache`: `hash TEXT PK`, `provider`, `model`, `response`, `input_tokens`, `output_tokens`, `cost_usd`, `created_at`, `expires_at`, `hit_count INT DEFAULT 0`
+   - Index `idx_llm_cache_expires_at` for future purge job (Phase 4E.3)
+
+2. **llm-cache module** — `src/lib/llm/cache/llm-cache.ts` (new, ~140 LOC)
+   - `hashCacheKey(key)` — SHA-256 hex of deterministic JSON `{provider, model, messages[{role,content}]}`
+   - `isCacheEnabled()` — strict `LLM_CACHE_ENABLED === '1'`
+   - `readTtlSeconds()` — parses `LLM_CACHE_TTL_SECONDS`, defaults 24h, rejects 0/negative/NaN
+   - `lookupCache(key)` — D1 read + TTL check, swallows all errors → null
+   - `writeCache(key, entry, ttlSeconds?)` — D1 upsert; payload omits `hit_count` + `created_at` so ON CONFLICT DO UPDATE preserves them; swallows all errors
+
+3. **weekly-signals-digest wiring** — `src/app/api/cron/weekly-signals-digest/route.ts` (modified)
+   - `summarizeWithAI()` now does `lookupCache()` before OpenRouter fetch, `void writeCache().catch(() => {})` after success
+   - Fire-and-forget write uses `usage.prompt_tokens` / `usage.completion_tokens` from OpenRouter response
+
+4. **Tests** — `llm-cache.test.ts` (new, 25 tests)
+   - Hash determinism + provider/model/content/order sensitivity (5)
+   - `isCacheEnabled` strict-match (3)
+   - `readTtlSeconds` env parsing (5)
+   - `lookupCache` cache-miss / fresh-hit / expired / D1-throw / null-token normalization (6)
+   - `writeCache` payload shape / TTL override / preserves hit_count / swallows throws (6)
+
+### Quality Gates
+- Build: ✅ `npm run build` exit 0 (14.6s)
+- Tests: ✅ 1148/1148 (+25 from 1123 Phase 4D baseline)
+- Code Review: ✅ 9.7/10 SHIP (0 critical, 1 High + 2 Medium deferred to Phase 4E.2)
+- Files: all < 200 LOC
+- Security: zero secret leaks (no new env accepts secrets; read-only use of `OPENROUTER_API_KEY` unchanged)
+- Binh Pháp Rule #0: CI "Tests & Deploy" + "Post-Merge Tests" both green; prod HTTP 200 at sophia.agencyos.network with `/api/version` shortSha `69fe6a5e` matching HEAD `69fe6a5`
+
+### Deferred (Phase 4E.2+)
+- **H-1 user/org scoping** — `CacheKey.orgId` + migration `ALTER TABLE llm_cache ADD COLUMN org_id TEXT`. Mandatory before wiring into Supervisor or user-facing prompts to prevent cross-tenant leak. Safe NOW because only wired site is cron (no user input).
+- **M-1 sampling-param hashing** — `CacheKey.params { max_tokens?, temperature?, top_p? }`. Needed when second caller uses different `max_tokens` on same prompt.
+- **M-2 hit_count drop or increment path** — column currently dead. Drop (YAGNI) or add fire-and-forget `UPDATE … SET hit_count = hit_count + 1` after hit.
+- **Phase 4E.2 semantic similarity** — embedding-based top-K fallback when exact-match misses.
+- **Phase 4E.3 purge job** — daily cron deletes `WHERE expires_at < datetime('now')`.
+- **Observability** — `llm_cache_hits_total` / `_misses_total` Prometheus counters + D1 `LLM_CACHE_HIT`/`LLM_CACHE_MISS` signals so the PDF 40-60% token-reduction claim is measurable.
+- **Activation** — founder must `wrangler secret put LLM_CACHE_ENABLED --value 1` (plus optional `LLM_CACHE_TTL_SECONDS`). Without this the module returns null on every call.
 
 ---
 
