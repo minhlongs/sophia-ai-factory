@@ -47,8 +47,8 @@
 	"kv_namespaces": [
 		{
 			"binding": "EXPERIMENT_KV",
-			"id": "REPLACE_WITH_EXPERIMENT_KV_ID",
-			"preview_id": "REPLACE_WITH_EXPERIMENT_KV_PREVIEW_ID"
+			"id": "c3857792e4014334ba31b62b19d2f32a",
+			"preview_id": "1f440b4e8566471d841aff66e90644ff"
 		}
 	],
 	// === P3-KV-END ===
