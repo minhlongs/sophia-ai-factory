@@ -17,6 +17,7 @@ const baseKey: CacheKey = {
   provider: 'openrouter',
   model:    'openai/gpt-4o-mini',
   messages: [{ role: 'user', content: 'hello' }],
+  orgId:    'test-org-a',
 }
 
 type MockChain = {
@@ -147,6 +148,15 @@ describe('llm-cache', () => {
       }
       expect(await hashCacheKey(two)).not.toBe(await hashCacheKey(swapped))
     })
+
+    // H-1: hash divergence by orgId
+    it('differs when orgId differs (identical other fields)', async () => {
+      const hashA = await hashCacheKey({ ...baseKey, orgId: 'org-A' })
+      const hashB = await hashCacheKey({ ...baseKey, orgId: 'org-B' })
+      expect(hashA).not.toBe(hashB)
+      expect(hashA).toMatch(/^[0-9a-f]{64}$/)
+      expect(hashB).toMatch(/^[0-9a-f]{64}$/)
+    })
   })
 
   describe('lookupCache', () => {
@@ -251,7 +261,8 @@ describe('llm-cache', () => {
       await new Promise((r) => setTimeout(r, 0))
 
       expect(rpc).toHaveBeenCalledWith('increment_llm_cache_hit', {
-        p_hash: expect.stringMatching(/^[0-9a-f]{64}$/),
+        p_hash:   expect.stringMatching(/^[0-9a-f]{64}$/),
+        p_org_id: 'test-org-a',
       })
     })
 
@@ -294,6 +305,36 @@ describe('llm-cache', () => {
       const result = await lookupCache(baseKey)
       expect(result?.response).toBe('cached answer')
     })
+
+    // H-1: empty orgId short-circuit
+    it('returns null immediately when orgId is empty (no DB call)', async () => {
+      process.env.LLM_CACHE_ENABLED = '1'
+      const chain = buildChainMock({ data: null, error: null })
+      const { from } = mockDbChain(chain)
+
+      const result = await lookupCache({ ...baseKey, orgId: '' })
+      expect(result).toBeNull()
+      expect(from).not.toHaveBeenCalled()
+    })
+
+    // H-1: cross-org isolation — org B cannot read org A's cached response
+    it('returns null for org B when only org A has a cached entry', async () => {
+      process.env.LLM_CACHE_ENABLED = '1'
+      // Simulate DB returning "not found" for org B (different hash → no row)
+      const chain = buildChainMock({ data: null, error: { message: 'Row not found', code: 'PGRST116' } })
+      const { from } = mockDbChain(chain)
+
+      const keyOrgB = { ...baseKey, orgId: 'org-b' }
+      const result = await lookupCache(keyOrgB)
+      expect(result).toBeNull()
+
+      // Confirm eq was called with org-b scope
+      const eqCalls = chain.eq.mock.calls as [string, unknown][]
+      const orgEq = eqCalls.find(([col]) => col === 'org_id')
+      expect(orgEq).toBeDefined()
+      expect(orgEq![1]).toBe('org-b')
+      void from
+    })
   })
 
   describe('writeCache', () => {
@@ -302,7 +343,7 @@ describe('llm-cache', () => {
       expect(vi.mocked(createServerClient)).not.toHaveBeenCalled()
     })
 
-    it('upserts row with derived hash + expires_at', async () => {
+    it('upserts row with derived hash + expires_at + org_id', async () => {
       process.env.LLM_CACHE_ENABLED = '1'
       const chain = buildChainMock({ data: null, error: null })
       const { from } = mockDbChain(chain)
@@ -318,6 +359,7 @@ describe('llm-cache', () => {
       expect(chain.upsert).toHaveBeenCalledTimes(1)
       const payload = chain.upsert.mock.calls[0][0] as Record<string, unknown>
       expect(payload.hash).toMatch(/^[0-9a-f]{64}$/)
+      expect(payload.org_id).toBe('test-org-a')
       expect(payload.provider).toBe('openrouter')
       expect(payload.model).toBe('openai/gpt-4o-mini')
       expect(payload.response).toBe('answer')
@@ -370,6 +412,55 @@ describe('llm-cache', () => {
       mockDbChain(chain)
 
       await expect(writeCache(baseKey, { response: 'x' })).resolves.toBeUndefined()
+    })
+
+    // H-1: empty orgId short-circuit write
+    it('is no-op when orgId is empty (no DB call)', async () => {
+      process.env.LLM_CACHE_ENABLED = '1'
+      const chain = buildChainMock({ data: null, error: null })
+      const { from } = mockDbChain(chain)
+
+      await writeCache({ ...baseKey, orgId: '' }, { response: 'x' })
+      expect(from).not.toHaveBeenCalled()
+    })
+
+    // H-1: upsert payload includes org_id
+    it('upsert payload includes org_id matching key', async () => {
+      process.env.LLM_CACHE_ENABLED = '1'
+      const chain = buildChainMock({ data: null, error: null })
+      mockDbChain(chain)
+
+      await writeCache({ ...baseKey, orgId: 'tenant-xyz' }, { response: 'resp' })
+
+      const payload = chain.upsert.mock.calls[0][0] as Record<string, unknown>
+      expect(payload.org_id).toBe('tenant-xyz')
+    })
+  })
+
+  describe('H-1 org isolation integration', () => {
+    // H-1: RPC args include p_org_id on fresh hit
+    it('increment_llm_cache_hit RPC receives p_org_id from CacheKey', async () => {
+      process.env.LLM_CACHE_ENABLED = '1'
+      const future = new Date(Date.now() + 60_000).toISOString()
+      const rpc = vi.fn().mockResolvedValue({ data: { success: true }, error: null })
+      mockDbChain(buildChainMock({
+        data: {
+          response:      'hit',
+          input_tokens:  5,
+          output_tokens: 10,
+          cost_usd:      null,
+          expires_at:    future,
+        },
+        error: null,
+      }), rpc)
+
+      await lookupCache({ ...baseKey, orgId: 'specific-org' })
+      await new Promise((r) => setTimeout(r, 0))
+
+      expect(rpc).toHaveBeenCalledWith('increment_llm_cache_hit', {
+        p_hash:   expect.stringMatching(/^[0-9a-f]{64}$/),
+        p_org_id: 'specific-org',
+      })
     })
   })
 })

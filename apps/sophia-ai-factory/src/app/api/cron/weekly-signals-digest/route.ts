@@ -84,6 +84,7 @@ async function summarizeWithAI(eventsSummary: string): Promise<string> {
     provider: 'openrouter',
     model:    'openai/gpt-4o-mini',
     messages,
+    orgId:    'system',
   }
 
   // Phase 4E: serve from cache on hit (env-gated; null when disabled or miss).

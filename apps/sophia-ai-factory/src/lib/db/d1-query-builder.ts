@@ -394,7 +394,7 @@ export class D1Client {
         case 'increment_referral_counter':
           return await this.incrementReferralCounter(params.p_code as string);
         case 'increment_llm_cache_hit':
-          return await this.incrementLlmCacheHit(params.p_hash as string);
+          return await this.incrementLlmCacheHit(params.p_hash as string, params.p_org_id as string);
         case 'llm_cache_stats':
           return await this.llmCacheStats();
         case 'workflow_stats_24h':
@@ -446,10 +446,10 @@ export class D1Client {
     return { data: { success: true }, error: null };
   }
 
-  private async incrementLlmCacheHit(hash: string): Promise<QueryResult<unknown>> {
+  private async incrementLlmCacheHit(hash: string, orgId: string): Promise<QueryResult<unknown>> {
     await this.db
-      .prepare('UPDATE llm_cache SET hit_count = hit_count + 1 WHERE hash = ?')
-      .bind(hash)
+      .prepare('UPDATE llm_cache SET hit_count = hit_count + 1 WHERE hash = ? AND org_id = ?')
+      .bind(hash, orgId)
       .run();
     return { data: { success: true }, error: null };
   }
