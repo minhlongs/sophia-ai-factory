@@ -10,6 +10,7 @@ import { YouTubeChannelAdapter } from "@/lib/gateway/adapters/youtube-channel-ad
 import { TikTokChannelAdapter } from "@/lib/gateway/adapters/tiktok-channel-adapter";
 import { TelegramNotificationAdapter } from "@/lib/gateway/adapters/telegram-notification-adapter";
 import { logger } from "@/lib/utils/logger-utility";
+import { resolveOrgId } from "@/lib/auth/resolve-org-id";
 
 // Singleton resume engine
 const resumeEngine = new SmartResumeEngine();
@@ -101,11 +102,11 @@ export const generateCampaign = inngest.createFunction(
 
       await updateStatus("processing_script", 10);
       const scriptService = ServiceFactory.getScriptService();
-      // `orgId: userId` is the single-tenant Sophia idiom (matches
-      // src/app/api/raas/missions/route.ts:40). Real org_members lookup
-      // deferred to Phase 4F.1 — the cache PK composite + hash-prefix
-      // isolation still holds correctness either way.
-      const result = await scriptService.generateScript({ topic, audience, tier, orgId: userId });
+      // Phase 4F.1: resolve real org_id from org_members; fall back to
+      // userId (single-tenant idiom) when user has no org membership.
+      // Composite PK (hash, org_id) keeps cross-tenant isolation either way.
+      const resolvedOrgId = (await resolveOrgId(userId)) ?? userId;
+      const result = await scriptService.generateScript({ topic, audience, tier, orgId: resolvedOrgId });
       await updateStatus("processing_script", 35, { script_content: result });
       await resumeEngine.checkpoint(campaignId, "generate-script");
       return result;
