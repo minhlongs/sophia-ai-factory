@@ -76,7 +76,7 @@ export async function reportError(
 
   try {
     await env.DB.prepare(
-      `INSERT INTO error_log (ts, level, msg, msg_class, fingerprint, ctx_json, commit, route, status)
+      `INSERT INTO error_log (ts, level, msg, msg_class, fingerprint, ctx_json, commit_sha, route, status)
        VALUES (?, 'error', ?, ?, ?, ?, ?, ?, ?)`
     )
       .bind(ts, safeMsg, msgClass, fingerprint, ctxJson, commit, ctx.route ?? '', 500)

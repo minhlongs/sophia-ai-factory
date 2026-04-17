@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS error_log (
   msg_class TEXT    NOT NULL,           -- error constructor name (e.g. 'TypeError')
   fingerprint TEXT  NOT NULL,           -- sha256(normalizedMsg + ':' + msgClass)
   ctx_json  TEXT    NOT NULL DEFAULT '{}', -- scrubbed context JSON
-  commit    TEXT    NOT NULL DEFAULT 'unknown', -- COMMIT_SHA from env (P1)
+  commit_sha TEXT   NOT NULL DEFAULT 'unknown', -- COMMIT_SHA from env (P1) — `commit` is reserved keyword
   route     TEXT    NOT NULL DEFAULT '', -- originating API route
   status    INTEGER NOT NULL DEFAULT 500 -- HTTP status at time of error
 );
