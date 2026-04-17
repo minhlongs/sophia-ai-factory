@@ -1,9 +1,13 @@
 ---
 name: Sophia Phase 4F Cache Wiring (MVP)
-status: in_progress
+status: shipped
 priority: P1
 estimate: 1.5h
 session: PM-14 2026-04-18
+commit: ea0e8ca7
+shipped_at: 2026-04-18
+final_tests: 1175/1175
+review_score: 9.7/10
 ---
 
 # Phase 4F Cache Wiring — MVP
@@ -24,13 +28,13 @@ path so the `LLM_CACHE_ENABLED=1` flag actually cuts the bill when flipped.
 
 | Phase | File(s)                                              | Status |
 |-------|------------------------------------------------------|--------|
-| 1     | `lib/llm/cache/call-with-cache.ts` (new, <80 LOC)    | todo   |
-| 1     | `lib/llm/cache/call-with-cache.test.ts` (new, 4 t)   | todo   |
-| 2     | `lib/ai/script-generator.ts` (wrap fetch)            | todo   |
-| 2     | `lib/services/types.ts` (+ `orgId?: string`)         | todo   |
-| 2     | `lib/services/real/script-service.ts` (pass-through) | todo   |
-| 2     | `lib/inngest/functions/generate-campaign.ts:104`     | todo   |
-| 3     | `lib/ai/script-generator.test.ts` (new, 2 t)         | todo   |
+| 1     | `lib/llm/cache/call-with-cache.ts` (new, <80 LOC)    | done   |
+| 1     | `lib/llm/cache/call-with-cache.test.ts` (new, 4 t)   | done   |
+| 2     | `lib/ai/script-generator.ts` (wrap fetch)            | done   |
+| 2     | `lib/services/types.ts` (+ `orgId?: string`)         | done   |
+| 2     | `lib/services/real/script-service.ts` (pass-through) | done   |
+| 2     | `lib/inngest/functions/generate-campaign.ts:104`     | done   |
+| 3     | `lib/ai/script-generator.test.ts` (new, 2 t)         | done   |
 
 ## Out of scope
 
