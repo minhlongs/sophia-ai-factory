@@ -84,10 +84,10 @@ mekong --agent cmo "Improve SEO metadata for /pricing page"
 
 ## Journal Pattern
 
-After each task, append to `.sophia-factory/journal/YYYYMMDD-cmo-{slug}.md`:
+After each task, write a journal entry via the helper script (PII-scrubbed, filename-validated):
 
-```markdown
-## Action
+```bash
+echo "## Action
 {what was requested}
 
 ## Decision
@@ -98,9 +98,12 @@ After each task, append to `.sophia-factory/journal/YYYYMMDD-cmo-{slug}.md`:
 
 ## Lessons
 {tone/keyword insight to remember}
+" | scripts/agent-journal/append-entry.sh cmo {kebab-case-slug}
 ```
 
-**PII SCRUB before write**: strip customer emails, names, any identifying info.
+The helper writes to `.sophia-factory/journal/{YYYY-MM-DD}-cmo-{slug}.md` and auto-strips
+JWTs, BYOK keys (sk-/GitHub/AWS/NOWPayments/ElevenLabs), Bearer tokens, emails,
+VN phones, webhook secrets via `scrub-pii.sh`. Self-review loop consumes weekly.
 
 ## References (do NOT duplicate content)
 - `docs/design-guidelines.md`

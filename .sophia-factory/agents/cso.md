@@ -82,10 +82,10 @@ mekong --agent cso "Update pricing page copy for new ENTERPRISE tier"
 
 ## Journal Pattern
 
-After each task, append to `.sophia-factory/journal/YYYYMMDD-cso-{slug}.md`:
+After each task, write a journal entry via the helper script (PII-scrubbed):
 
-```markdown
-## Action
+```bash
+echo "## Action
 {what was requested}
 
 ## Decision
@@ -96,10 +96,13 @@ After each task, append to `.sophia-factory/journal/YYYYMMDD-cso-{slug}.md`:
 
 ## Lessons
 {conversion insight or objection pattern to remember}
+" | scripts/agent-journal/append-entry.sh cso {kebab-case-slug}
 ```
 
-**PII SCRUB before write**: strip customer names, emails, company names.
-Replace with: `[CUSTOMER-A]`, `[CUSTOMER-B]`, etc.
+The helper writes to `.sophia-factory/journal/{YYYY-MM-DD}-cso-{slug}.md` and auto-strips
+JWTs, BYOK keys (sk-/GitHub/AWS/NOWPayments/ElevenLabs), Bearer tokens, emails,
+VN phones, webhook secrets via `scrub-pii.sh`. For customer names/companies, manually
+substitute `[CUSTOMER-A]`, `[CUSTOMER-B]`, etc. before piping in. Self-review loop consumes weekly.
 
 ## References (do NOT duplicate content)
 - `docs/pricing-and-tiers.md` (tier definitions — source of truth)

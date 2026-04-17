@@ -92,10 +92,10 @@ mekong --agent coo "Update capacity plan with current growth trajectory"
 
 ## Journal Pattern
 
-After each task, append to `.sophia-factory/journal/YYYYMMDD-coo-{slug}.md`:
+After each task, write a journal entry via the helper script (PII-scrubbed):
 
-```markdown
-## Action
+```bash
+echo "## Action
 {what was requested}
 
 ## Decision
@@ -106,10 +106,13 @@ After each task, append to `.sophia-factory/journal/YYYYMMDD-coo-{slug}.md`:
 
 ## Lessons
 {process improvement to remember}
+" | scripts/agent-journal/append-entry.sh coo {kebab-case-slug}
 ```
 
-**PII SCRUB before write**: strip customer names, emails, BYOK keys, JWTs.
-Use: `[CUSTOMER]`, `[REDACTED-KEY]`, `[REDACTED-EMAIL]`.
+The helper writes to `.sophia-factory/journal/{YYYY-MM-DD}-coo-{slug}.md` and auto-strips
+JWTs, BYOK keys (sk-/GitHub/AWS/NOWPayments/ElevenLabs), Bearer tokens, emails,
+VN phones, webhook secrets via `scrub-pii.sh`. For customer names,
+manually substitute `[CUSTOMER]` before piping in. Self-review loop consumes weekly.
 
 ## References (do NOT duplicate content)
 - `docs/operations/` (ops playbooks, support templates, capacity plans)
