@@ -11,6 +11,7 @@ import { track } from '@/lib/signals/track'
 import { D1Events } from '@/lib/signals/d1-event-types'
 import { logger } from '@/lib/utils/logger-utility'
 import { computeNext } from '@/lib/workflows/compute-next'
+import { recordLlmCall } from '@/lib/telemetry/llm-trace'
 import type { WorkflowRow, StepMissionRow } from '@/lib/db/workflow-repository'
 
 export const dynamic = 'force-dynamic'
@@ -43,6 +44,7 @@ async function executeStep(
 ): Promise<void> {
   const now = new Date().toISOString()
   const result = `Step ${stepType} completed: ${workflow.prompt.slice(0, 100)}`
+  const startedAt = Date.now()
 
   try {
     // Flip workflow to 'running' if still 'queued' (first step)
@@ -78,6 +80,21 @@ async function executeStep(
       step_type: stepType,
       source: 'cron',
     }, workflow.org_id)
+
+    // Phase 4B: emit LLM call trace for observability (stub provider for MVP)
+    recordLlmCall(
+      {
+        workflowId: workflow.id,
+        stepOrder,
+        stepType,
+        provider:   'stub',
+        model:      'mvp-stub',
+        durationMs: Date.now() - startedAt,
+        ok:         true,
+      },
+      workflow.id,
+      workflow.org_id,
+    )
   } catch (err) {
     // Fail-fast: mark mission failed + propagate to workflow
     const msg = err instanceof Error ? err.message : String(err)
@@ -94,6 +111,22 @@ async function executeStep(
       error_class: msg.slice(0, 200),
       source: 'cron',
     }, workflow.org_id)
+
+    // Phase 4B: emit failed LLM trace for observability
+    recordLlmCall(
+      {
+        workflowId:  workflow.id,
+        stepOrder,
+        stepType,
+        provider:    'stub',
+        model:       'mvp-stub',
+        durationMs:  Date.now() - startedAt,
+        ok:          false,
+        errorClass:  msg.slice(0, 200),
+      },
+      workflow.id,
+      workflow.org_id,
+    )
     throw err  // rethrow so advanceOne outer catch logs it
   }
 }

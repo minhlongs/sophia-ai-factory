@@ -25,6 +25,7 @@ export const D1Events = {
   WORKFLOW_COMPLETED:       'workflow_completed',      // Supervisor: all 3 steps done
   WORKFLOW_FAILED:          'workflow_failed',         // Supervisor: step mission failed
   PROMPT_INJECTION_DETECTED: 'prompt_injection_detected', // Phase 4A: guard flagged prompt at ingress
+  LLM_CALL_TRACE:            'llm_call_trace',            // Phase 4B: per-step LLM call observability
 } as const
 
 export type D1EventType = typeof D1Events[keyof typeof D1Events]
@@ -148,6 +149,22 @@ const PromptInjectionDetectedSchema = z.object({
   endpoint:      z.string(),               // e.g. 'POST /api/raas/workflows'
 })
 
+/** llm_call_trace — per-step LLM call observability (Phase 4B Advanced Observability) */
+const LlmCallTraceSchema = z.object({
+  trace_id:       z.string(),              // derived from workflow_id + step_order
+  workflow_id:    z.string(),
+  step_order:     z.number().int().min(1).max(3),
+  step_type:      z.string(),              // plan | execute | test
+  provider:       z.string(),              // stub | openrouter | anthropic | local-mekongd
+  model:          z.string(),              // mvp-stub | gpt-4o-mini | claude-sonnet-4
+  duration_ms:    z.number().nonnegative(),
+  ok:             z.boolean(),
+  error_class:    z.string().optional(),
+  input_tokens:   z.number().int().nonnegative().optional(),
+  output_tokens:  z.number().int().nonnegative().optional(),
+  cost_usd:       z.number().nonnegative().optional(),
+})
+
 // ── Schema registry ───────────────────────────────────────────────────────────
 const SCHEMAS: Record<D1EventType, z.ZodTypeAny> = {
   [D1Events.TIER_CONVERSION]:         TierConversionSchema,
@@ -166,6 +183,7 @@ const SCHEMAS: Record<D1EventType, z.ZodTypeAny> = {
   [D1Events.WORKFLOW_COMPLETED]:      WorkflowCompletedSchema,
   [D1Events.WORKFLOW_FAILED]:         WorkflowFailedSchema,
   [D1Events.PROMPT_INJECTION_DETECTED]: PromptInjectionDetectedSchema,
+  [D1Events.LLM_CALL_TRACE]:            LlmCallTraceSchema,
 }
 
 /**
