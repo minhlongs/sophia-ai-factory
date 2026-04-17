@@ -78,6 +78,9 @@ export async function hashCacheKey(key: CacheKey): Promise<string> {
 /**
  * Read a cached response. Returns null when disabled, missing, expired, or
  * D1 fails. Never throws — cache is best-effort.
+ *
+ * On fresh hit: fire-and-forget UPDATE hit_count += 1 (Phase 4E M-2 close —
+ * powers the admin monitoring dashboard; swallow-all-errors).
  */
 export async function lookupCache(key: CacheKey): Promise<CacheEntry | null> {
   if (!isCacheEnabled()) return null
@@ -95,6 +98,8 @@ export async function lookupCache(key: CacheKey): Promise<CacheEntry | null> {
 
     if (new Date(row.expires_at).getTime() <= Date.now()) return null
 
+    void incrementHitCount(hash)
+
     return {
       response:     row.response,
       inputTokens:  row.input_tokens  ?? undefined,
@@ -103,6 +108,19 @@ export async function lookupCache(key: CacheKey): Promise<CacheEntry | null> {
     }
   } catch {
     return null
+  }
+}
+
+/**
+ * Fire-and-forget hit_count increment via D1 RPC. Never throws — hit_count is
+ * telemetry for the admin dashboard; a failure must not break a cache hit.
+ */
+async function incrementHitCount(hash: string): Promise<void> {
+  try {
+    const db = createServerClient()
+    await db.rpc('increment_llm_cache_hit', { p_hash: hash })
+  } catch {
+    // Swallow
   }
 }
 
