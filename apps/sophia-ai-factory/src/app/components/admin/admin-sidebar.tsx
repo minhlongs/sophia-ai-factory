@@ -11,11 +11,13 @@ import {
   Users,
   LogOut,
   Key,
-  BarChart3
+  BarChart3,
+  Activity
 } from "lucide-react";
 
 const navigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
+  { name: "Monitoring", href: "/admin/monitoring", icon: Activity },
   { name: "Analytics", href: "/admin/analytics/usage", icon: BarChart3 },
   { name: "Users", href: "/admin/users", icon: Users },
   { name: "Licenses", href: "/admin/licenses", icon: Key },

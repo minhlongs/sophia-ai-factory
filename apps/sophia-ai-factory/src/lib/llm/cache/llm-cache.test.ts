@@ -39,10 +39,11 @@ function buildChainMock(singleResult: { data: unknown; error: unknown }) {
   return chain
 }
 
-function mockDbChain(chain: MockChain) {
+function mockDbChain(chain: MockChain, rpc?: ReturnType<typeof vi.fn>) {
   const from = vi.fn().mockReturnValue(chain)
-  vi.mocked(createServerClient).mockReturnValue({ from } as unknown as ReturnType<typeof createServerClient>)
-  return from
+  const rpcFn = rpc ?? vi.fn().mockResolvedValue({ data: { success: true }, error: null })
+  vi.mocked(createServerClient).mockReturnValue({ from, rpc: rpcFn } as unknown as ReturnType<typeof createServerClient>)
+  return { from, rpc: rpcFn }
 }
 
 describe('llm-cache', () => {
@@ -230,6 +231,69 @@ describe('llm-cache', () => {
       expect(result?.outputTokens).toBeUndefined()
       expect(result?.costUsd).toBeUndefined()
     })
+
+    it('fires increment_llm_cache_hit RPC on fresh hit (M-2 close)', async () => {
+      process.env.LLM_CACHE_ENABLED = '1'
+      const future = new Date(Date.now() + 60_000).toISOString()
+      const rpc = vi.fn().mockResolvedValue({ data: { success: true }, error: null })
+      mockDbChain(buildChainMock({
+        data: {
+          response:      'cached answer',
+          input_tokens:  100,
+          output_tokens: 42,
+          cost_usd:      0.001,
+          expires_at:    future,
+        },
+        error: null,
+      }), rpc)
+
+      await lookupCache(baseKey)
+      await new Promise((r) => setTimeout(r, 0))
+
+      expect(rpc).toHaveBeenCalledWith('increment_llm_cache_hit', {
+        p_hash: expect.stringMatching(/^[0-9a-f]{64}$/),
+      })
+    })
+
+    it('does NOT increment hit_count on expired row', async () => {
+      process.env.LLM_CACHE_ENABLED = '1'
+      const past = new Date(Date.now() - 60_000).toISOString()
+      const rpc = vi.fn().mockResolvedValue({ data: null, error: null })
+      mockDbChain(buildChainMock({
+        data: {
+          response:      'stale',
+          input_tokens:  null,
+          output_tokens: null,
+          cost_usd:      null,
+          expires_at:    past,
+        },
+        error: null,
+      }), rpc)
+
+      await lookupCache(baseKey)
+      await new Promise((r) => setTimeout(r, 0))
+
+      expect(rpc).not.toHaveBeenCalled()
+    })
+
+    it('swallows RPC failure silently (still returns cached entry)', async () => {
+      process.env.LLM_CACHE_ENABLED = '1'
+      const future = new Date(Date.now() + 60_000).toISOString()
+      const rpc = vi.fn().mockRejectedValue(new Error('D1 RPC blew up'))
+      mockDbChain(buildChainMock({
+        data: {
+          response:      'cached answer',
+          input_tokens:  10,
+          output_tokens: 20,
+          cost_usd:      0.0001,
+          expires_at:    future,
+        },
+        error: null,
+      }), rpc)
+
+      const result = await lookupCache(baseKey)
+      expect(result?.response).toBe('cached answer')
+    })
   })
 
   describe('writeCache', () => {
@@ -241,7 +305,7 @@ describe('llm-cache', () => {
     it('upserts row with derived hash + expires_at', async () => {
       process.env.LLM_CACHE_ENABLED = '1'
       const chain = buildChainMock({ data: null, error: null })
-      const from = mockDbChain(chain)
+      const { from } = mockDbChain(chain)
 
       await writeCache(baseKey, {
         response:     'answer',

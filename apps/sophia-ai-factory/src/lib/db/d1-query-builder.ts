@@ -393,6 +393,14 @@ export class D1Client {
           );
         case 'increment_referral_counter':
           return await this.incrementReferralCounter(params.p_code as string);
+        case 'increment_llm_cache_hit':
+          return await this.incrementLlmCacheHit(params.p_hash as string);
+        case 'llm_cache_stats':
+          return await this.llmCacheStats();
+        case 'workflow_stats_24h':
+          return await this.workflowStats24h();
+        case 'signals_top_events_24h':
+          return await this.signalsTopEvents24h((params.p_limit as number | undefined) ?? 10);
         default:
           return { data: null, error: { message: `Unknown RPC: ${fnName}` } };
       }
@@ -436,5 +444,66 @@ export class D1Client {
       .bind(code)
       .run();
     return { data: { success: true }, error: null };
+  }
+
+  private async incrementLlmCacheHit(hash: string): Promise<QueryResult<unknown>> {
+    await this.db
+      .prepare('UPDATE llm_cache SET hit_count = hit_count + 1 WHERE hash = ?')
+      .bind(hash)
+      .run();
+    return { data: { success: true }, error: null };
+  }
+
+  private async llmCacheStats(): Promise<QueryResult<unknown>> {
+    const nowIso = new Date().toISOString();
+    const row = await this.db
+      .prepare(
+        `SELECT
+          COUNT(*)                                            AS total,
+          COALESCE(SUM(CASE WHEN expires_at > ? THEN 1 ELSE 0 END), 0)    AS fresh,
+          COALESCE(SUM(CASE WHEN expires_at <= ? THEN 1 ELSE 0 END), 0)   AS expired,
+          COALESCE(SUM(hit_count), 0)                                     AS total_hits,
+          COALESCE(SUM((COALESCE(input_tokens, 0) + COALESCE(output_tokens, 0)) * hit_count), 0) AS tokens_saved
+        FROM llm_cache`,
+      )
+      .bind(nowIso, nowIso)
+      .first<{ total: number; fresh: number; expired: number; total_hits: number; tokens_saved: number }>();
+    return { data: row ?? null, error: null };
+  }
+
+  private async workflowStats24h(): Promise<QueryResult<unknown>> {
+    const sinceIso = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const row = await this.db
+      .prepare(
+        `SELECT
+          COALESCE(SUM(CASE WHEN status = 'queued'    THEN 1 ELSE 0 END), 0) AS queued,
+          COALESCE(SUM(CASE WHEN status = 'running'   THEN 1 ELSE 0 END), 0) AS running,
+          COALESCE(SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END), 0) AS completed,
+          COALESCE(SUM(CASE WHEN status = 'failed'    THEN 1 ELSE 0 END), 0) AS failed
+        FROM workflows
+        WHERE created_at >= ?`,
+      )
+      .bind(sinceIso)
+      .first<{ queued: number; running: number; completed: number; failed: number }>();
+    return { data: row ?? null, error: null };
+  }
+
+  private async signalsTopEvents24h(limit: number): Promise<QueryResult<unknown>> {
+    // signals_events.ts is INTEGER unix ms — bind as number, not ISO string
+    // (migration 0005-signals-events.sql: `ts INTEGER NOT NULL`).
+    const sinceMs = Date.now() - 24 * 60 * 60 * 1000;
+    const safeLimit = Math.max(1, Math.min(100, Math.floor(limit)));
+    const res = await this.db
+      .prepare(
+        `SELECT event_type, COUNT(*) AS cnt
+         FROM signals_events
+         WHERE ts >= ?
+         GROUP BY event_type
+         ORDER BY cnt DESC
+         LIMIT ?`,
+      )
+      .bind(sinceMs, safeLimit)
+      .all<{ event_type: string; cnt: number }>();
+    return { data: res.results ?? [], error: null };
   }
 }
