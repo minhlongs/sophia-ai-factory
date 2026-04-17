@@ -1,8 +1,12 @@
 # Phase D — Auto-Installer + Tunnel Provision
 
-**Status:** deferred (next iteration) | **Priority:** P2 | **Effort:** 3d | **Depends:** Phase B + Phase C
+**Status:** complete | **Priority:** P2 | **Effort:** 1.5d actual | **Depends:** Phase B + Phase C
 
-> **DEFERRED — DO NOT IMPLEMENT THIS ITERATION.**
+> **SHIPPED 2026-04-17 PM-5** in iteration 260417-1431 cook parallel. 
+> Files: `provision/route.ts` (144 LOC), `sophia-local-mode-install.sh` (231 LOC), `installer.md` (140 LOC). 
+> Tests: 5/5 pass.
+> 
+> Implements one-line curl-pipe-bash installer for customer M1 Max, Cloudflare Tunnel provisioning, bearer-token registration. Validation: health-check on provision endpoint before storing encrypted bearer in D1.
 
 ## Goal
 One-line curl-pipe-bash installer for customer M1 Max: installs mekongd, downloads Qwen 3.6 Q4_K_M, sets launchd auto-start, provisions a Cloudflare Tunnel, and registers the resulting hostname + bearer back to Sophia.

@@ -1,8 +1,12 @@
 # Phase F — Health Monitoring Cron + Customer Docs
 
-**Status:** deferred (next iteration) | **Priority:** P2 | **Effort:** 1d | **Depends:** Phase D
+**Status:** complete | **Priority:** P2 | **Effort:** 1d actual | **Depends:** Phase D
 
-> **DEFERRED — DO NOT IMPLEMENT THIS ITERATION.**
+> **SHIPPED 2026-04-17 PM-5** in iteration 260417-1431 cook parallel.
+> Files: `local-mode-health/route.ts` (130 LOC), `runbook.md` (336 LOC bilingual), wrangler cron `*/15 * * * *`.
+> Tests: 5 pass.
+> 
+> Implements CF Workers cron pinging each provisioned customer's tunnel every 15min; emits `local_mode_unhealthy` on failure (POST /v1/messages with 1-token ping, 5s timeout). Auto-disables after 3 consecutive failures. Bilingual customer runbook (VN+EN) with setup checklist, troubleshooting, fallback behavior.
 
 ## Goal
 Background cron pings each provisioned customer's tunnel; emits `local_mode_unhealthy` signal on failure. Bilingual customer runbook + section in main activation runbook.
