@@ -8,8 +8,8 @@
 const PATTERNS: [RegExp, string][] = [
   // BYOK API keys (OpenAI/Anthropic style)
   [/sk-[a-zA-Z0-9]{20,}/g, '[REDACTED-SK]'],
-  // Publishable keys
-  [/pk_[a-zA-Z0-9]{20,}/g, '[REDACTED-PK]'],
+  // Publishable keys (pk_live_... pk_test_... Stripe/etc patterns include underscores)
+  [/pk_[a-zA-Z0-9_]{20,}/g, '[REDACTED-PK]'],
   // JWTs (header.payload.signature — eyJ prefix)
   [/eyJ[a-zA-Z0-9._-]+/g, '[REDACTED-JWT]'],
   // Bearer tokens in Authorization headers
