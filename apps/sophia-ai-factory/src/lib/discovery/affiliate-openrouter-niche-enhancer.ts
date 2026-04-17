@@ -9,6 +9,7 @@
 import type { AffiliateProgram } from "@/types";
 import { withTimeout } from "@/lib/byok/with-timeout";
 import { callLocalMekongd } from "@/lib/byok/local-mekongd-adapter";
+import { resolveLocalMekongdForUser } from "@/lib/byok/provider-router";
 
 /** OpenRouter response shape for chat completions */
 interface OpenRouterChoice {
@@ -33,17 +34,34 @@ function parseScore(text: string | null | undefined): number | null {
  * Enhance a program's niche score using OpenRouter semantic analysis.
  * Returns an AI-generated relevance score (0-100) or null if unavailable.
  *
- * Phase A "eat-own-dogfood": when SOPHIA_LOCAL_MEKONGD_URL is set, route
- * through local mekongd (founder's M1 Max via CF Tunnel) FIRST. On any
- * failure, fall through to the existing OpenRouter call path.
+ * Resolution order (priority high → low):
+ *   1. Per-user local mekongd (Phase B BYOK) — if userId provided + KV flag on + D1 row set
+ *   2. Founder env-var dogfood path (Phase A) — SOPHIA_LOCAL_MEKONGD_URL env var
+ *   3. OpenRouter cloud fallback (unchanged)
+ *
+ * @param program  Affiliate program to score
+ * @param niche    Target niche string
+ * @param userId   Optional auth user ID — enables per-user BYOK routing (default: undefined)
  */
 export async function enhanceNicheScoreWithAI(
   program: AffiliateProgram,
   niche: string,
+  userId?: string,
 ): Promise<number | null> {
   const prompt = buildPrompt(program, niche);
 
-  // Local mekongd path (founder dogfood) — opt-in via env var.
+  // Priority 1: per-user BYOK local mekongd (Phase B) — userId-scoped D1 + KV gate.
+  if (userId) {
+    const userConfig = await resolveLocalMekongdForUser(userId);
+    if (userConfig) {
+      const userText = await callLocalMekongd(prompt, userConfig);
+      const userScore = parseScore(userText);
+      if (userScore !== null) return userScore;
+      // null → fall through to next path (silent)
+    }
+  }
+
+  // Priority 2: founder dogfood env-var path (Phase A) — unchanged.
   const localUrl = process.env.SOPHIA_LOCAL_MEKONGD_URL;
   if (localUrl) {
     const localText = await callLocalMekongd(prompt, {
