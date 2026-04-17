@@ -110,13 +110,15 @@ apps/sophia-ai-factory/
 │   ├── 0002-payment-events.sql
 │   └── 0003-better-auth.sql
 │
-├── .github/workflows/          # CI/CD enforcement gates (P1) (6 files)
-│   ├── deploy.yml              # Main deployment orchestrator
+├── .github/workflows/          # CI/CD enforcement gates (P1)
+│   ├── test.yml                # Tests + Deploy (lint/build/test → wrangler deploy + D1 migration-guard)
 │   ├── security-scan.yml       # SAST + npm audit + secret scan
 │   ├── quality-gate.yml        # Test coverage + mutation score
 │   ├── dependency-audit.yml    # Outdated packages + breaking changes
-│   ├── canary-rollback.yml     # Wrangler versions + error monitoring
-│   └── post-merge-tests.yml    # Final validation on main
+│   ├── canary-rollback.yml     # Manual rollback (workflow_dispatch only)
+│   ├── post-merge-tests.yml    # Final validation on main
+│   ├── d1-backup.yml           # Daily D1 export → R2
+│   └── agent-self-review.yml   # Weekly journal summary → GH Issue
 │
 ├── .sophia-factory/            # AI factory & SDLC (P4)
 │   ├── agents/                 # Agent definitions (4 files)

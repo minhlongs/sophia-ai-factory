@@ -69,8 +69,8 @@ jobs:
           REASON="${{ github.event.inputs.reason }}"
           ALERT_ID="${{ github.event.inputs.alert_id }}"
           MSG="auto: BS alert ${ALERT_ID:-none} — ${REASON}"
-          echo "[rollback] Executing: wrangler rollback — $MSG"
-          wrangler rollback --name sophia-ai-factory --message "$MSG" --yes
+          echo "[rollback] Executing: npx wrangler rollback — $MSG"
+          npx wrangler rollback --name sophia-ai-factory --message "$MSG" --yes
           echo "[rollback] Rollback complete."
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

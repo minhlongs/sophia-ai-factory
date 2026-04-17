@@ -82,11 +82,13 @@ wrangler secret put FOUNDER_EMAIL --config apps/sophia-ai-factory/wrangler.toml
 3. **Uptime** project → add 7 heartbeat monitors:
    - sophia-uptime-check, sophia-error-digest, sophia-heartbeat, sophia-usage-export, sophia-dunning, sophia-reminders, sophia-email-drip
    - Each gives a heartbeat URL → use first one as `BETTER_STACK_HEARTBEAT_URL`
-4. **Alert rule** for canary auto-rollback:
+4. **Alert rule** for emergency rollback (manual-trigger workflow):
    - Trigger: error rate > 1% over 5 min
    - Action: webhook POST to `https://api.github.com/repos/longtho638-jpg/sophia-ai-factory/actions/workflows/canary-rollback.yml/dispatches`
    - Header: `Authorization: Bearer <WEBHOOK_SECRET>`
    - Body: `{"ref": "main"}`
+   - Note: 10/90 canary split was dropped 2026-04-17 (YAGNI pre-launch).
+     This workflow now does a direct rollback to the previous version when triggered.
 
 ---
 
