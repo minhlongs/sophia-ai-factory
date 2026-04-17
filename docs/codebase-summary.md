@@ -1,11 +1,12 @@
 # Codebase Summary — Sophia AI Factory
 
 > Comprehensive overview of the Sophia AI Factory codebase structure, patterns, and architectural decisions.
-> **Last Updated:** 2026-04-15 (Architecture Consolidation + a16z 100/100)
+> **Last Updated:** 2026-04-17 (4-Phase RaaS Platform Shipped)
 
 **Production URL:** https://sophia.agencyos.network
-**Tech Stack:** Next.js 15.5 + Cloudflare Workers + D1 SQLite + Better Auth v1.6.2
+**Tech Stack:** Next.js 15.5 + Cloudflare Workers + D1 SQLite + Better Auth v1.6.2 + Better Stack + PostHog
 **Test Status:** 863/863 passing (99.5%) | **Build:** < 10s, 0 TS errors | **Bundle:** < 500 KB gzipped
+**Shipped (2026-04-17):** P1 CI/CD, P2 Observability, P3 Signals, P4 SDLC (4,522 LOC, 40+ modules)
 
 ---
 
@@ -53,6 +54,7 @@ apps/sophia-ai-factory/
 │   ├── lib/
 │   │   ├── auth/               # Better Auth integration, JWT enrichment
 │   │   ├── db/                 # D1 client, query builders, type helpers
+│   │   │
 │   │   ├── billing/            # MCU billing, dunning, email campaigns
 │   │   │   ├── billing/        # Payment integration (NOWPayments, PayOS)
 │   │   │   ├── dunning/        # Payment retry workflow (3 modules)
@@ -72,6 +74,16 @@ apps/sophia-ai-factory/
 │   │   │   ├── raas-invoice-generator.ts
 │   │   │   └── raas-permission-checker.ts
 │   │   │
+│   │   ├── telemetry/          # Better Stack observability (P2) (3 modules)
+│   │   │   ├── event-capture.ts        # Structured logging, tokenization
+│   │   │   ├── batch-delivery.ts       # Better Stack push + retry
+│   │   │   └── error-digest.ts         # Daily cron summary
+│   │   │
+│   │   ├── signals/            # PostHog analytics & A/B (P3) (3 modules)
+│   │   │   ├── event-batcher.ts        # Event buffering + flush
+│   │   │   ├── variant-resolver.ts     # EXPERIMENT_KV assignment
+│   │   │   └── digest-generator.ts     # Weekly metrics email
+│   │   │
 │   │   ├── campaigns/          # Campaign management (shared core logic)
 │   │   │   └── create-campaign-core.ts
 │   │   │
@@ -83,7 +95,7 @@ apps/sophia-ai-factory/
 │   │   ├── security/           # Auth, rate limiting, input validation
 │   │   ├── services/           # Factory pattern (real + mock implementations)
 │   │   ├── ai/                 # AI integrations (script generation, video, TTS)
-│   │   ├── clients/            # External API clients (NOWPayments, Upstash)
+│   │   ├── clients/            # External API clients (NOWPayments, Upstash, Better Stack, PostHog)
 │   │   ├── config/             # Environment & tier configuration
 │   │   ├── analytics/          # Dashboard analytics, ROI calculation
 │   │   ├── audit/              # Compliance, GDPR, audit logging
@@ -97,6 +109,34 @@ apps/sophia-ai-factory/
 │   ├── 0001-init.sql
 │   ├── 0002-payment-events.sql
 │   └── 0003-better-auth.sql
+│
+├── .github/workflows/          # CI/CD enforcement gates (P1) (6 files)
+│   ├── deploy.yml              # Main deployment orchestrator
+│   ├── security-scan.yml       # SAST + npm audit + secret scan
+│   ├── quality-gate.yml        # Test coverage + mutation score
+│   ├── dependency-audit.yml    # Outdated packages + breaking changes
+│   ├── canary-rollback.yml     # Wrangler versions + error monitoring
+│   └── post-merge-tests.yml    # Final validation on main
+│
+├── .sophia-factory/            # AI factory & SDLC (P4)
+│   ├── agents/                 # Agent definitions (4 files)
+│   │   ├── cto.md              # Code quality, security, infrastructure
+│   │   ├── cmo.md              # Content, marketing, brand
+│   │   ├── cso.md              # Sales, pricing, customer acquisition
+│   │   └── coo.md              # Operations, support, metrics
+│   │
+│   ├── CLAUDE.specification.md # Phase 1: Requirements template
+│   ├── CLAUDE.design.md        # Phase 2: Architecture decisions
+│   ├── CLAUDE.code.md          # Phase 3: Implementation patterns
+│   ├── CLAUDE.deploy.md        # Phase 4: Deployment checklist
+│   │
+│   ├── templates/              # Reusable task templates
+│   │   ├── requirement.md
+│   │   ├── design.md
+│   │   └── deployment-checklist.md
+│   │
+│   └── journal/                # Agent audit trail (committed to repo)
+│       └── YYYYMMDD-{agent}-{slug}.md  # PII-scrubbed journals
 │
 └── openclaw/                   # OpenClaw autonomous agent configuration
     ├── skills/                 # Agent skills (affiliate-scout, auto-publisher, content-producer)

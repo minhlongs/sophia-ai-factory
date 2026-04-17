@@ -1,52 +1,122 @@
 # System Architecture / Kien Truc He Thong
 
-> Sophia AI Factory — RaaS (Reasoning-as-a-Service) Platform
+> Sophia AI Factory — RaaS (Reasoning-as-a-Service) Platform with AI-Native CI/CD, Observability, & Signals
 
-**Last Updated:** 2026-04-15
+**Last Updated:** 2026-04-17 (4-Phase RaaS Platform Shipped)
 **Production:** https://sophia.agencyos.network
+**Production Dashboard:** https://sophia.agencyos.network/dashboard
 
-**ARCHITECTURE CONSOLIDATION (2026-04-15):** Unified auth (Better Auth D1), single DB client (`createServerClient` from `@/lib/db/client`), consolidated tier logic at `config/tiers/`, modularized 15 giant files into 56+ focused modules (all < 200 LOC). Legacy Supabase client removed from non-exception paths. E2E smoke tests (5 files, 35 tests) validate critical journeys.
+### Recent Shipments (2026-04-17)
+4 major production releases merged to main (PRs #15-18):
+- **P1 CI/CD:** 5 enforcement gates + canary rollout (1114 LOC)
+- **P2 Observability:** Better Stack structured logging + heartbeats (833 LOC)
+- **P3 Signals:** PostHog A/B framework + weekly digest (960 LOC)
+- **P4 SDLC:** AI factory scaffold + 4 C-Level agents (1715 LOC)
 
-**AUTHENTICATION MIGRATION (2026-04-14):** Dashboard Server Components and Server Actions use Better Auth v1.6.2 with D1 Kysely adapter. Email/password + magic link + organization plugin. RLS not used — app layer enforces ownership via `user_id` filters.
+**ARCHITECTURE CONSOLIDATION (2026-04-15):** Unified auth (Better Auth D1), single DB client, consolidated tier logic, modularized 15→56+ focused modules (all < 200 LOC). E2E smoke tests validate critical journeys.
 
-**PAYMENT PROVIDER MIGRATION (2026-04-10):** Polar.sh references below are historical. Active providers now: NOWPayments (primary) + PayOS (Vietnam backup).
+**AUTHENTICATION MIGRATION (2026-04-14):** Better Auth v1.6.2 with D1 Kysely adapter. Email/password + magic link + organization plugin.
+
+**PAYMENT PROVIDER MIGRATION (2026-04-10):** NOWPayments (primary) + PayOS (Vietnam backup).
 
 ---
 
-## Component Diagram
+## Architecture Layers (7 Total)
 
+```mermaid
+graph TB
+    APP["Application Layer"] --> SDLC["SDLC + Agent Factory"]
+    APP --> SIGNALS["Signals & Feedback"]
+    APP --> OBS["Observability"]
+    APP --> CICD["CI/CD & Enforcement"]
+    CICD -->|5 Gates| CF["Cloudflare Workers"]
+    CF -->|Edge Deploy| APP
+    
+    APP -->|SSR| AUTH["Auth Layer"]
+    APP -->|API| API["RaaS API"]
+    AUTH --> D1["D1 Database"]
+    API --> D1
+    APP -->|Billing| BILL["MCU Billing"]
+    BILL --> D1
+    
+    OBS -->|PII-Safe Logs| BS["Better Stack"]
+    SIGNALS -->|A/B Events| PH["PostHog KV"]
+    SDLC -->|AI Agents| AF[".sophia-factory/"]
+    
+    D1 -->|Cache| R2["R2 Bucket"]
+    CF -->|External APIs| EXT["Anthropic<br/>Resend<br/>D-ID"]
 ```
-                        ┌──────────────────────────┐
-                        │     Next.js 15.5          │
-                        │  (Cloudflare Workers)     │
-                        │  opennextjs-cloudflare    │
-                        └────────────┬─────────────┘
-                                     │
-     ┌───────────────┬───────────────┼───────────────┬───────────────┐
-     │               │               │               │               │
-┌────▼────┐    ┌─────▼─────┐   ┌─────▼─────┐  ┌─────▼─────┐  ┌─────▼─────┐
-│  Pages  │    │   API     │   │ Middleware │  │   Auth    │  │  Billing  │
-│  (SSR)  │    │  Routes   │   │ (JWT+MCU) │  │(JWT D1   │  │(NOWPayments)│
-│  D1 Auth│    │  Routes   │   │ (JWT+MCU) │  │ + HMAC)  │  │(+ PayOS)  │
-└────┬────┘    └─────┬─────┘   └───────────┘  └───────────┘  └───────────┘
-     │               │                         └───────────┘
-     └───────────────┤
-                     │
-     ┌───────────────┼───────────────┐
-     │               │               │
-┌────▼────┐    ┌─────▼──────┐  ┌─────▼──────┐
-│Cloudflare│   │  R2 Bucket │  │  External  │
-│   D1    │    │  (Cache)   │  │   APIs     │
-│(SQLite) │    └────────────┘  │            │
-│         │                    │ Anthropic  │
-│- users  │                    │ HeyGen     │
-│- orgs   │                    │ Resend     │
-│- missions│                   │ Polar.sh   │
-│- billing │                   └────────────┘
-│- api_keys│
-│- usage   │
-└──────────┘
-```
+
+---
+
+## Layer 1: CI/CD & Enforcement Gates (2026-04-17)
+
+**5 Enforcement Gates** via GitHub Actions (`.github/workflows/`)
+
+| Gate | Trigger | Purpose | Action |
+|------|---------|---------|--------|
+| **Validation Gate** | Every push | Type safety, lint, format | Block non-conforming PRs |
+| **Security Gate** | Every push | SAST, npm audit, secret scan | Fail on vulnerabilities |
+| **Quality Gate** | Every push | Test coverage, mutation score | Require 80%+ coverage |
+| **Dependency Gate** | Every push | Outdated packages, SCA | Alert on breaking deps |
+| **Deployment Gate** | main only | Canary to 10% traffic | Rollback on error rate spike |
+
+**Canary Rollout:** Wrangler versions deploy + Better Stack error monitoring auto-triggers rollback if error rate >2%.
+
+**Health Endpoints:**
+- `/api/version` — Returns git SHA + build info (auth-gated via INTROSPECT_TOKEN)
+- `/api/health/detail` — Full system status (auth-gated, PII-safe)
+
+---
+
+## Layer 2: Observability (2026-04-17)
+
+**Better Stack Structured Logging** for production monitoring
+
+| Feature | Implementation | Details |
+|---------|---|---|
+| **PII-Safe Logging** | Tokenized payloads | No API keys, emails, or tokens in logs |
+| **Heartbeats** | Every 5 minutes | Uptime signal from edge |
+| **Error Digest** | Daily cron | Aggregated error report email |
+| **Request Tracing** | Per-request ID | Trace user journeys across services |
+| **Custom Metrics** | MCU, tier, org_id | Business metrics tracked |
+
+**Integration:** `src/lib/telemetry/*` modules for event capture, batching, delivery.
+
+---
+
+## Layer 3: Signals & Feedback (2026-04-17)
+
+**PostHog Event Tracking** for product analytics & A/B testing
+
+| Feature | Implementation | Details |
+|---------|---|---|
+| **Event Capture** | Lightweight SDK | Page views, feature usage, custom events |
+| **A/B Framework** | EXPERIMENT_KV binding | Define experiments in D1, track variants |
+| **Weekly Digest** | Cron job (Sunday 9am UTC) | Email summary of top features, funnel metrics |
+| **Funnel Analysis** | Native PostHog UI | Track user journeys (signup → upgrade → mission) |
+
+**Configuration:** `src/lib/signals/*` modules handle event batching, variant assignment, result logging.
+
+---
+
+## Layer 4: SDLC & Agent Factory (2026-04-17)
+
+**4 C-Level AI Agents** sandboxed in `.sophia-factory/`
+
+| Agent | Role | Allowed Paths | Tools |
+|-------|------|---|---|
+| **CTO** | Code quality + security | `src/**`, `tests/**`, `.github/**` | Read, Edit, Bash, Grep |
+| **CMO** | Content + marketing | `src/app/(marketing)/**`, `messages/**`, `docs/**` | Read, Edit, Grep |
+| **CSO** | Sales + pricing | `pricing/**`, `messages/**`, `docs/sales/**` | Read, Edit, Grep |
+| **COO** | Operations + support | `docs/operations/**`, `.sophia-factory/journal/**` | Read, Edit |
+
+**Artifacts:**
+- Agent definitions: `.sophia-factory/agents/{cto,cmo,cso,coo}.md`
+- SDLC lifecycle: `.sophia-factory/CLAUDE.{specification,design,code,deploy}.md`
+- Audit trail: `.sophia-factory/journal/` (committed to repo)
+
+**Cost:** ~$27/month total (Sonnet pricing, Opus for critical decisions only).
 
 ---
 
