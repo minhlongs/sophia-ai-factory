@@ -12,7 +12,8 @@ import {
   Code,
   Rocket,
   KeyRound,
-  FileText
+  FileText,
+  GitBranch
 } from "lucide-react";
 import { HealthIndicator } from "@/components/dashboard/health-indicator";
 import { MobileNav } from "@/components/ui/mobile-nav";
@@ -100,6 +101,13 @@ export default function DashboardLayout({
           >
             <FileText className="w-5 h-5" />
             <span className="font-medium">{t('sidebar.proposals')}</span>
+          </Link>
+          <Link
+            href="/dashboard/workflows"
+            className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
+          >
+            <GitBranch className="w-5 h-5" />
+            <span className="font-medium">{t('sidebar.workflows')}</span>
           </Link>
           <Link
             href="/dashboard/api-docs"

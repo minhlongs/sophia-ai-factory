@@ -33,8 +33,9 @@ binding = "IMAGES"
 # "0 2 * * *"  — daily 02:00 UTC → /api/cron/reminders (subscription reminders)
 # "0 3 * * *"  — daily 03:00 UTC → /api/cron/scheduled-campaigns (auto-create recurring campaigns)
 # "0 4 * * *"  — daily 04:00 UTC → /api/cron/email-drip (nurture drip on day 1, 3, 7 after signup)
-crons = ["*/5 * * * *", "5 * * * *", "0 1 * * *", "0 2 * * *", "0 3 * * *", "0 4 * * *", "0 5 * * *", "*/10 * * * *", "0 6 * * 1", "*/15 * * * *"]
+crons = ["*/5 * * * *", "5 * * * *", "0 1 * * *", "0 2 * * *", "0 3 * * *", "0 4 * * *", "0 5 * * *", "*/10 * * * *", "0 6 * * 1", "*/15 * * * *", "*/1 * * * *"]
 # "*/15 * * * *" — every 15 min → /api/cron/local-mode-health (Phase F: tunnel health check)
+# "*/1 * * * *"  — every 1 min  → /api/cron/workflow-stepper (Phase 03 Supervisor Agent)
 # P2: "0 5 * * *" — daily 05:00 UTC → /api/cron/error-digest (D1 self-monitoring)
 # P2: "*/10 * * * *" — every 10min → /api/cron/heartbeat (Better Stack ping)
 # === P3-CRONS-BEGIN ===

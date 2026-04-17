@@ -198,7 +198,69 @@ graph TD
    - Status becomes `completed`.
    - Video URL is displayed for playback/download.
 
+## Supervisor Agent (2026-04-17 MVP)
+
+**Overview**: Autonomous workflow orchestrator managing a 3-step linear pipeline (plan → execute → test) on Cloudflare Workers edge.
+
+### Architecture
+
+```
+User Mission Request
+  ↓
+POST /api/raas/workflows
+  ↓
+D1: Create workflows row (status=PLANNING, step=PLAN)
+  ↓
+Cron Trigger (*/1 * * * *): GET /api/cron/workflow-stepper
+  ↓
+  ├─ Fetch active workflows from D1
+  ├─ Execute appropriate step (PLAN/EXECUTE/TEST)
+  ├─ Update D1 with results
+  └─ Emit signal events (STEP_COMPLETED, WORKFLOW_COMPLETED, etc.)
+  ↓
+Dashboard Polling (3s): GET /api/raas/workflows/[id]
+  ↓
+Timeline UI Shows Progress: PLAN → EXECUTE → TEST → COMPLETED
+```
+
+### D1 Tables
+- **workflows**: id, org_id, mission_id, parent_mission_id, status, plan_prompt, current_step, step_result, error_message, created_at, updated_at, completed_at
+- **Reuses** `missions.parent_mission_id` for hierarchical relationships
+
+### API Endpoints
+| Route | Method | Purpose |
+|-------|--------|---------|
+| `/api/raas/workflows` | POST | Create workflow |
+| `/api/raas/workflows` | GET | List all workflows |
+| `/api/raas/workflows/[id]` | GET | Workflow detail + timeline |
+| `/api/cron/workflow-stepper` | GET | Internal cron (automatic, */1 * * * *) |
+
+### Signal Events (D1 signals_events table)
+- `WORKFLOW_STARTED` — Workflow created
+- `STEP_COMPLETED` — Plan/Execute/Test step finishes
+- `WORKFLOW_COMPLETED` — All 3 steps done
+- `WORKFLOW_FAILED` — Any step fails
+
+### MVP Implementation
+Step functions currently stubbed:
+- **PLAN**: `"Step PLAN completed: {prompt[:100]}"`
+- **EXECUTE**: `"Step EXECUTE completed: {prompt[:100]}"`
+- **TEST**: `"Step TEST completed: {prompt[:100]}"`
+
+Real PEV (Prompt Execution Validator) engine deferred to Phase 2.
+
+### Dashboard UI
+- **`/dashboard/workflows`**: List view with status badges, 3s polling
+- **`/dashboard/workflows/[id]`**: Detail view with timeline, step results (JSON)
+
+### See Also
+- **Runbook**: `docs/sophia-supervisor-agent-runbook.md` (bilingual VN+EN, troubleshooting, manual ops, rollback)
+- **Changelog**: `docs/project-changelog.md` (2026-04-17 entry)
+
+---
+
 ## Scalability Considerations
 - **Frontend**: Stateless, deployable to Vercel Edge/Serverless.
 - **Backend**: n8n can be self-hosted or cloud-hosted; scales independently.
 - **Database**: Airtable has rate limits (5 requests/sec), suitable for SMB/Personal use. Future upgrade path: Supabase.
+- **Supervisor Agent**: Cloudflare Workers cron (*/1 min) scales horizontally; D1 SQLite suitable for <100K workflows/org.

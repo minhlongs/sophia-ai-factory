@@ -106,10 +106,22 @@
         }
       },
       "stats": {
-        "stat1": { "value": "17", "label": "Lệnh AI" },
-        "stat2": { "value": "500+", "label": "Đề Xuất Đã Tạo" },
-        "stat3": { "value": "< 60s", "label": "Thực Thi Nhiệm Vụ" },
-        "stat4": { "value": "99.9%", "label": "Uptime SLA" }
+        "stat1": {
+          "value": "17",
+          "label": "Lệnh AI"
+        },
+        "stat2": {
+          "value": "500+",
+          "label": "Đề Xuất Đã Tạo"
+        },
+        "stat3": {
+          "value": "< 60s",
+          "label": "Thực Thi Nhiệm Vụ"
+        },
+        "stat4": {
+          "value": "99.9%",
+          "label": "Uptime SLA"
+        }
       },
       "terminal": {
         "title": "Xem Hoạt Động Thực Tế",
@@ -340,7 +352,8 @@
       "sign_out": "Đăng Xuất",
       "missions": "Nhiệm Vụ AI",
       "api_keys": "Khoá API",
-      "proposals": "Đề Xuất"
+      "proposals": "Đề Xuất",
+      "workflows": "Quy Trình"
     },
     "missions": {
       "page_title": "Nhiệm Vụ AI",

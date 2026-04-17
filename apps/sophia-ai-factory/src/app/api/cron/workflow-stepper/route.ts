@@ -1,0 +1,225 @@
+/**
+ * Workflow Stepper Cron — Phase 03 Supervisor Agent
+ *
+ * Schedule: every 1 min → advances queued/running workflows one step at a time.
+ * Idempotent: all UPDATEs gated by WHERE status=<expected>.
+ * Per-workflow try/catch: one bad workflow never kills the batch.
+ */
+
+import { NextRequest, NextResponse } from 'next/server'
+import { track } from '@/lib/signals/track'
+import { D1Events } from '@/lib/signals/d1-event-types'
+import { logger } from '@/lib/utils/logger-utility'
+import { computeNext } from '@/lib/workflows/compute-next'
+import type { WorkflowRow, StepMissionRow } from '@/lib/db/workflow-repository'
+
+export const dynamic = 'force-dynamic'
+
+// ── D1 binding helper (matches local-mode-health pattern) ─────────────────────
+
+function getDb(): D1Database {
+  const env = (globalThis as Record<string, unknown>).__env as Record<string, unknown> | undefined
+  const db = env?.DB as D1Database | undefined
+  if (!db) throw new Error('D1 binding not available')
+  return db
+}
+
+// ── Auth: internal-only (same pattern as local-mode-health) ──────────────────
+
+function isAuthorised(req: NextRequest): boolean {
+  const secret = process.env.CRON_SECRET
+  if (!secret) return true  // dev: allow if no secret configured
+  return req.headers.get('authorization') === `Bearer ${secret}`
+}
+
+// ── Step executor stub (MVP: simulate work inline) ────────────────────────────
+
+async function executeStep(
+  db: D1Database,
+  workflow: WorkflowRow,
+  missionId: string,
+  stepOrder: number,
+  stepType: string,
+): Promise<void> {
+  const now = new Date().toISOString()
+  const result = `Step ${stepType} completed: ${workflow.prompt.slice(0, 100)}`
+
+  try {
+    // Flip workflow to 'running' if still 'queued' (first step)
+    if (workflow.status === 'queued') {
+      await db
+        .prepare(`UPDATE workflows SET status='running', updated_at=? WHERE id=? AND status='queued'`)
+        .bind(now, workflow.id)
+        .run()
+    }
+
+    // Mark mission running + write started_at (CAS guard on status='queued')
+    const runRes = await db
+      .prepare(`UPDATE missions SET status='running', started_at=?, updated_at=? WHERE id=? AND status='queued'`)
+      .bind(now, now, missionId)
+      .run()
+
+    if (runRes.meta.changes === 0) return  // another tick already advanced this mission
+
+    // Complete mission + write completed_at
+    const doneRes = await db
+      .prepare(
+        `UPDATE missions SET status='completed', result=?, completed_at=?, updated_at=? WHERE id=? AND status='running'`,
+      )
+      .bind(result, now, now, missionId)
+      .run()
+
+    if (doneRes.meta.changes === 0) return  // raced — another worker completed it
+
+    // actor=workflow.id, source:'cron' (Phase F pattern). org_id passed as userId param.
+    track(D1Events.WORKFLOW_STEP_COMPLETED, workflow.id, {
+      workflow_id: workflow.id,
+      step_order: stepOrder,
+      step_type: stepType,
+      source: 'cron',
+    }, workflow.org_id)
+  } catch (err) {
+    // Fail-fast: mark mission failed + propagate to workflow
+    const msg = err instanceof Error ? err.message : String(err)
+    await db
+      .prepare(`UPDATE missions SET status='failed', error_message=?, updated_at=? WHERE id=? AND status IN ('queued','running')`)
+      .bind(msg.slice(0, 500), now, missionId)
+      .run()
+    await db
+      .prepare(`UPDATE workflows SET status='failed', final_result=?, updated_at=? WHERE id=? AND status IN ('queued','running')`)
+      .bind(`Step ${stepType} failed: ${msg.slice(0, 200)}`, now, workflow.id)
+      .run()
+    track(D1Events.WORKFLOW_FAILED, workflow.id, {
+      workflow_id: workflow.id,
+      error_class: msg.slice(0, 200),
+      source: 'cron',
+    }, workflow.org_id)
+    throw err  // rethrow so advanceOne outer catch logs it
+  }
+}
+
+// ── advanceOne — apply a single transition for one workflow ───────────────────
+
+interface ActionRecord { workflowId: string; action: string }
+
+async function advanceOne(db: D1Database, workflow: WorkflowRow): Promise<ActionRecord> {
+  const { results } = await db
+    .prepare(
+      `SELECT id, org_id, parent_mission_id, status, params,
+              result, error_message, started_at, completed_at, created_at
+       FROM missions WHERE parent_mission_id=?
+       ORDER BY CAST(json_extract(params,'$.step_order') AS INTEGER) ASC`,
+    )
+    .bind(workflow.id)
+    .all<StepMissionRow>()
+
+  const missions = results ?? []
+  const next = computeNext(workflow, missions)
+  const now = new Date().toISOString()
+
+  switch (next.action) {
+    case 'unblock': {
+      await db
+        .prepare(`UPDATE missions SET status='queued', updated_at=? WHERE id=? AND status='blocked'`)
+        .bind(now, next.nextMissionId)
+        .run()
+      // No event emit for unblock — not a user-visible transition
+      break
+    }
+
+    case 'execute': {
+      const mission = missions.find(m => m.id === next.nextMissionId)
+      if (!mission) break
+      const params = JSON.parse(mission.params) as { step_order: number; step_type: string }
+      await executeStep(db, workflow, mission.id, params.step_order, params.step_type)
+      break
+    }
+
+    case 'complete': {
+      const lastCompleted = [...missions]
+        .filter(m => m.status === 'completed')
+        .sort((a, b) => {
+          const ao = (JSON.parse(a.params) as { step_order: number }).step_order
+          const bo = (JSON.parse(b.params) as { step_order: number }).step_order
+          return bo - ao
+        })[0]
+      const finalResult = lastCompleted
+        ? `Workflow completed — last step: ${(JSON.parse(lastCompleted.params) as { step_type: string }).step_type}`
+        : 'Workflow completed'
+      const res = await db
+        .prepare(
+          `UPDATE workflows SET status='completed', final_result=?, updated_at=? WHERE id=? AND status IN ('queued','running')`,
+        )
+        .bind(finalResult, now, workflow.id)
+        .run()
+      // H4: emit event only if CAS actually transitioned
+      if (res.meta.changes > 0) {
+        track(D1Events.WORKFLOW_COMPLETED, workflow.id, {
+          workflow_id: workflow.id,
+          source: 'cron',
+        }, workflow.org_id)
+      }
+      break
+    }
+
+    case 'fail': {
+      const res = await db
+        .prepare(
+          `UPDATE workflows SET status='failed', final_result=?, updated_at=? WHERE id=? AND status IN ('queued','running')`,
+        )
+        .bind(next.reason, now, workflow.id)
+        .run()
+      if (res.meta.changes > 0) {
+        track(D1Events.WORKFLOW_FAILED, workflow.id, {
+          workflow_id: workflow.id,
+          error_class: next.reason,
+          source: 'cron',
+        }, workflow.org_id)
+      }
+      break
+    }
+
+    case 'none':
+    default:
+      break
+  }
+
+  return { workflowId: workflow.id, action: next.action }
+}
+
+// ── GET handler (CF cron invokes GET) ─────────────────────────────────────────
+
+export async function GET(req: NextRequest): Promise<NextResponse> {
+  if (!isAuthorised(req)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  let db: D1Database
+  try {
+    db = getDb()
+  } catch {
+    return NextResponse.json({ error: 'D1 unavailable' }, { status: 500 })
+  }
+
+  const { results: workflows } = await db
+    .prepare(
+      `SELECT id, org_id, prompt, status, final_result, error_message, created_at, updated_at
+       FROM workflows WHERE status IN ('queued','running') LIMIT 20`,
+    )
+    .all<WorkflowRow>()
+
+  const active = workflows ?? []
+  const actions: ActionRecord[] = []
+
+  for (const wf of active) {
+    try {
+      const record = await advanceOne(db, wf)
+      actions.push(record)
+    } catch (err) {
+      logger.warn('[workflow-stepper] advanceOne failed', { workflowId: wf.id, err })
+      actions.push({ workflowId: wf.id, action: 'error' })
+    }
+  }
+
+  return NextResponse.json({ processed: active.length, actions })
+}

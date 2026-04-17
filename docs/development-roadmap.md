@@ -95,7 +95,20 @@
   - Troubleshooting runbook + FAQ
 - **Metrics:** Integrated into sophia-local-mode-runbook.md
 
-### Phase 8: Analytics Dashboard (Planned)
+### Phase 8: Supervisor Agent MVP (D1+Cron) ✅ SHIPPED (Giai đoạn 3 Bước 3.4)
+- **Status:** Linear 3-step workflow orchestrator live (2026-04-17)
+- **Features:**
+  - D1 `workflows` table + `missions` link via `parent_mission_id`
+  - 3-step linear chain: create_plan → execute_development → run_tests
+  - Cron stepper `*/1 * * * *` (1-min tick) with idempotent state machine
+  - Dashboard timeline + real-time polling (3s interval)
+  - 4 D1 event types: WORKFLOW_STARTED/STEP_COMPLETED/COMPLETED/FAILED
+  - POST/GET /api/raas/workflows + /api/cron/workflow-stepper
+- **Metrics:** 1,200 LOC (11 modules ≤200 each), 78 new tests (1054 total pass), 0 TS errors, bilingual UI
+- **Files:** migrations/0007-workflows.sql + supervisor-*.ts + workflow-*.ts + components + routes + runbook
+- **Deployment:** GH Actions green, CF Pages HTTP 200, prod E2E verified
+
+### Phase 9: Analytics Dashboard (Planned)
 - **Timeline:** May 2026
 - **Features:**
   - Client revenue tracking (tier adoption, churn)
@@ -105,7 +118,7 @@
 - **Owner:** Data team
 - **Target:** Real-time dashboard for founder
 
-### Phase 6: Multi-Language Support (Planned)
+### Phase 10: Multi-Language Support (Planned)
 - **Timeline:** June 2026
 - **Features:**
   - Vietnamese + English bilingual UI
@@ -174,7 +187,8 @@
 | 2026-04-10 | Payment Provider Migration | ✅ |
 | 2026-04-15 | Architecture Consolidation | ✅ |
 | 2026-04-17 | Sophia Factory RaaS Solo Platform (4 PRs) | ✅ |
-| **2026-04-17** | **Local Mode Provisioning + Installer + Health Monitoring** | **✅ SHIPPED** |
+| 2026-04-17 | Local Mode Provisioning + Installer + Health Monitoring | ✅ |
+| **2026-04-17** | **Supervisor Agent MVP (D1+Cron stepper, Giai đoạn 3.4)** | **✅ SHIPPED** |
 | 2026-05-01 | Analytics Dashboard | 🔄 Planned |
 | 2026-06-01 | Multi-Language Support (Vietnamese) | 🔄 Planned |
 | 2026-07-01 | Telegram Bot Enhancement | 🔄 Planned |
