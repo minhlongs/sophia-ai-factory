@@ -8,6 +8,8 @@ import { raasGate, shouldApplyRaasGate } from "./lib/raas-gate";
 import { emitUsageEvent } from "./lib/usage-metering";
 import { logger } from "./lib/utils/logger-utility";
 import { tenantIsolationMiddleware } from "./middleware/tenant-isolation";
+import { track } from "./lib/signals/track";
+import { D1Events } from "./lib/signals/d1-event-types";
 
 const intlMiddleware = createMiddleware({
   locales: ["en", "vi"],
@@ -127,6 +129,7 @@ export async function proxy(request: NextRequest) {
         }
       );
 
+      track(D1Events.API_RATE_LIMIT_HIT, identifier, { path: pathname, identifier, limit_type: rateLimitConfig === RATE_LIMITS.auth ? 'auth' : rateLimitConfig === RATE_LIMITS.webhook ? 'webhook' : 'api' });
       // Track rate-limited request (429) for usage metering
       // This is important for quota enforcement analytics
       emitUsageEvent(request, {
