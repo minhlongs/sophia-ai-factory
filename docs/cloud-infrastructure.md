@@ -105,8 +105,9 @@ public: No (private bucket, accessed via CF Workers)
 registrar: Cloudflare
 nameservers: CloudFlare NS (ns1/ns2/ns3...)
 record:
-  type: CNAME
-  target: sophia-ai-factory.workers.dev
+  type: Worker route
+  target: sophia.agencyos.network/* → sophia-ai-factory Worker
+  note: workers.dev subdomain is OFF (custom domain only)
 status: Active, resolves globally
 ssl_certificate: Auto-issued by Cloudflare (auto-renewal)
 ttl: 3600 (1 hour)
