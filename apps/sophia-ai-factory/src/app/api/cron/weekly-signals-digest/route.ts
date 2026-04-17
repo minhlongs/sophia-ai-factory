@@ -19,6 +19,7 @@ import {
 import { renderDigestMarkdown, buildTldr, type DigestData } from '@/lib/signals/digest/markdown-renderer'
 import { upsertGithubIssue, buildIssueTitle } from '@/lib/signals/digest/github-issue-poster'
 import { postTelegramDigest } from '@/lib/signals/digest/telegram-poster'
+import { lookupCache, writeCache, type CacheKey } from '@/lib/llm/cache/llm-cache'
 
 const POSTHOG_QUERY_URL = 'https://us.i.posthog.com/api/projects/@current/events/'
 
@@ -60,7 +61,7 @@ async function fetchTopEvents(): Promise<PostHogEvent[]> {
   }
 }
 
-/** Summarize events via OpenRouter (cheap model — gpt-4o-mini) */
+/** Summarize events via OpenRouter (cheap model — gpt-4o-mini). Phase 4E: cache first. */
 async function summarizeWithAI(eventsSummary: string): Promise<string> {
   const openRouterKey = process.env.OPENROUTER_API_KEY
   if (!openRouterKey) return eventsSummary
@@ -78,6 +79,20 @@ async function summarizeWithAI(eventsSummary: string): Promise<string> {
     eventsSummary,
   ].join('\n')
 
+  const messages = [{ role: 'user', content: prompt }]
+  const cacheKey: CacheKey = {
+    provider: 'openrouter',
+    model:    'openai/gpt-4o-mini',
+    messages,
+  }
+
+  // Phase 4E: serve from cache on hit (env-gated; null when disabled or miss).
+  const cached = await lookupCache(cacheKey)
+  if (cached) {
+    logger.info('[digest] LLM cache hit — skipping OpenRouter call')
+    return cached.response
+  }
+
   try {
     const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -88,7 +103,7 @@ async function summarizeWithAI(eventsSummary: string): Promise<string> {
       },
       body: JSON.stringify({
         model: 'openai/gpt-4o-mini',
-        messages: [{ role: 'user', content: prompt }],
+        messages,
         max_tokens: 600,
       }),
     })
@@ -96,8 +111,20 @@ async function summarizeWithAI(eventsSummary: string): Promise<string> {
     if (res.ok) {
       const data = (await res.json()) as {
         choices?: Array<{ message?: { content?: string } }>
+        usage?:   { prompt_tokens?: number; completion_tokens?: number }
       }
-      return data.choices?.[0]?.message?.content ?? eventsSummary
+      const content = data.choices?.[0]?.message?.content ?? eventsSummary
+
+      // Phase 4E: fire-and-forget cache write (env-gated + error-swallowed inside).
+      void writeCache(cacheKey, {
+        response:     content,
+        inputTokens:  data.usage?.prompt_tokens,
+        outputTokens: data.usage?.completion_tokens,
+      }).catch(() => {
+        // Defensive: writeCache already swallows internally.
+      })
+
+      return content
     }
   } catch (err) {
     logger.warn('[digest] OpenRouter summarize failed', {
