@@ -53,8 +53,8 @@ jobs:
       - name: Upload new Worker version
         id: upload
         run: |
-          OUTPUT=$(wrangler versions upload --name sophia-ai-factory --json 2>/dev/null || \
-                   wrangler versions upload --name sophia-ai-factory 2>&1)
+          OUTPUT=$(npx wrangler versions upload --name sophia-ai-factory --json 2>/dev/null || \
+                   npx wrangler versions upload --name sophia-ai-factory 2>&1)
           echo "Upload output: $OUTPUT"
           VERSION_ID=$(echo "$OUTPUT" | python3 -c "
           import sys, json, re
@@ -71,7 +71,7 @@ jobs:
           " 2>/dev/null || echo "")
           if [ -z "$VERSION_ID" ]; then
             echo "WARNING: could not parse version ID — falling back to wrangler deploy"
-            wrangler deploy --name sophia-ai-factory
+            npx wrangler deploy --name sophia-ai-factory
             echo "new_version_id=" >> "$GITHUB_OUTPUT"
           else
             echo "new_version_id=$VERSION_ID" >> "$GITHUB_OUTPUT"

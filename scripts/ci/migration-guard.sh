@@ -10,7 +10,7 @@ DB_NAME="sophia-raas-db"
 
 echo "[migration-guard] Checking D1 pending migrations for $DB_NAME..."
 
-PENDING=$(wrangler d1 migrations list "$DB_NAME" --json 2>/dev/null \
+PENDING=$(npx wrangler d1 migrations list "$DB_NAME" --json 2>/dev/null \
   | python3 -c "
 import sys, json
 data = json.load(sys.stdin)
@@ -21,7 +21,7 @@ for m in pending:
 " 2>&1 >/dev/null || echo "0")
 
 # Capture pending count (stdout only)
-PENDING_COUNT=$(wrangler d1 migrations list "$DB_NAME" --json 2>/dev/null \
+PENDING_COUNT=$(npx wrangler d1 migrations list "$DB_NAME" --json 2>/dev/null \
   | python3 -c "
 import sys, json
 try:

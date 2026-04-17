@@ -13,8 +13,8 @@ echo "[vars] Injecting build metadata as Cloudflare Secrets..."
 echo "[vars] SHA: ${COMMIT_SHA:0:8}... | Branch: $BRANCH | At: $DEPLOYED_AT"
 
 # Atomic secret injection — no file writes, no diff noise, scoped to Worker
-echo "$COMMIT_SHA"   | wrangler secret put COMMIT_SHA   --name sophia-ai-factory
-echo "$DEPLOYED_AT"  | wrangler secret put DEPLOYED_AT  --name sophia-ai-factory
-echo "$BRANCH"       | wrangler secret put DEPLOY_BRANCH --name sophia-ai-factory
+echo "$COMMIT_SHA"   | npx wrangler secret put COMMIT_SHA   --name sophia-ai-factory
+echo "$DEPLOYED_AT"  | npx wrangler secret put DEPLOYED_AT  --name sophia-ai-factory
+echo "$BRANCH"       | npx wrangler secret put DEPLOY_BRANCH --name sophia-ai-factory
 
 echo "[vars] Build metadata injected successfully."

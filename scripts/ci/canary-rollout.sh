@@ -14,7 +14,7 @@ fi
 WORKER="sophia-ai-factory"
 
 echo "[canary] Fetching previous stable version..."
-PREV_VERSION=$(wrangler versions list --name "$WORKER" --json 2>/dev/null \
+PREV_VERSION=$(npx wrangler versions list --name "$WORKER" --json 2>/dev/null \
   | python3 -c "
 import sys, json
 versions = json.load(sys.stdin)
@@ -28,13 +28,13 @@ else:
 
 if [ -z "$PREV_VERSION" ]; then
   echo "[canary] No previous version found — deploying 100% (first deploy)."
-  wrangler versions deploy "${NEW_VERSION}:100%" --name "$WORKER" --yes
+  npx wrangler versions deploy "${NEW_VERSION}:100%" --name "$WORKER" --yes
   echo "[canary] First deploy complete at 100%."
   exit 0
 fi
 
 echo "[canary] Starting canary: NEW=$NEW_VERSION (10%) PREV=$PREV_VERSION (90%)"
-wrangler versions deploy \
+npx wrangler versions deploy \
   "${NEW_VERSION}:10%" \
   "${PREV_VERSION}:90%" \
   --name "$WORKER" \
@@ -53,7 +53,7 @@ ELAPSED=$(( $(date +%s) - CANARY_START ))
 echo "[canary] ${ELAPSED}s elapsed. No rollback signal received."
 echo "[canary] Promoting canary to 100%..."
 
-wrangler versions deploy \
+npx wrangler versions deploy \
   "${NEW_VERSION}:100%" \
   --name "$WORKER" \
   --yes
