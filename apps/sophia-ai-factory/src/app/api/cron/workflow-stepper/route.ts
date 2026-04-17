@@ -12,6 +12,7 @@ import { D1Events } from '@/lib/signals/d1-event-types'
 import { logger } from '@/lib/utils/logger-utility'
 import { computeNext } from '@/lib/workflows/compute-next'
 import { recordLlmCall } from '@/lib/telemetry/llm-trace'
+import { route as routeLlm } from '@/lib/ai/llm-router'
 import type { WorkflowRow, StepMissionRow } from '@/lib/db/workflow-repository'
 
 export const dynamic = 'force-dynamic'
@@ -45,6 +46,12 @@ async function executeStep(
   const now = new Date().toISOString()
   const result = `Step ${stepType} completed: ${workflow.prompt.slice(0, 100)}`
   const startedAt = Date.now()
+
+  // Phase 4C: Smart LLM Router — classify prompt complexity + pick cloud tier.
+  // BYOK local-mekongd preference deferred: workflows.org_id refs organizations(id),
+  // not users(id). Future slice: join org_members or denormalize created_by_user_id,
+  // then pass hasLocalMode=true when resolveLocalMekongdForUser() returns a config.
+  const decision = routeLlm(workflow.prompt, false)
 
   try {
     // Flip workflow to 'running' if still 'queued' (first step)
@@ -81,14 +88,14 @@ async function executeStep(
       source: 'cron',
     }, workflow.org_id)
 
-    // Phase 4B: emit LLM call trace for observability (stub provider for MVP)
+    // Phase 4B+4C: emit LLM call trace with router-selected provider/model
     recordLlmCall(
       {
         workflowId: workflow.id,
         stepOrder,
         stepType,
-        provider:   'stub',
-        model:      'mvp-stub',
+        provider:   decision.provider,
+        model:      decision.model,
         durationMs: Date.now() - startedAt,
         ok:         true,
       },
@@ -112,14 +119,14 @@ async function executeStep(
       source: 'cron',
     }, workflow.org_id)
 
-    // Phase 4B: emit failed LLM trace for observability
+    // Phase 4B+4C: emit failed LLM trace with router-selected provider/model
     recordLlmCall(
       {
         workflowId:  workflow.id,
         stepOrder,
         stepType,
-        provider:    'stub',
-        model:       'mvp-stub',
+        provider:    decision.provider,
+        model:       decision.model,
         durationMs:  Date.now() - startedAt,
         ok:          false,
         errorClass:  msg.slice(0, 200),
