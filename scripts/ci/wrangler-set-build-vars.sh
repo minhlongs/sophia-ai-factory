@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # wrangler-set-build-vars.sh — RED-TEAM #1
 # Atomically injects build metadata as CF Secrets (NOT sed file rewrites).
-# Called in gate-5 (deploy.yml) after checkout, before build.
+# Called in test.yml deploy job before Migration guard + Deploy step.
+# (Originally lived in gate-5/deploy.yml; restored to test.yml in eb475f2.)
 # Requires: CLOUDFLARE_API_TOKEN env var set (via GH Secrets).
 set -euo pipefail
 
