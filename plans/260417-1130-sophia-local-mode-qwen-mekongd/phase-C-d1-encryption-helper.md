@@ -1,8 +1,8 @@
 # Phase C — D1 Encryption Helper (AES-GCM via crypto.subtle)
 
-**Status:** deferred (next iteration) | **Priority:** P1 | **Effort:** 1d | **Depends:** Phase A
+**Status:** complete | **Priority:** P1 | **Effort:** 1d | **Depends:** Phase A
 
-> **DEFERRED — DO NOT IMPLEMENT THIS ITERATION.**
+> **SHIPPED 2026-04-17 PM-3** in iteration 260417-1202. See `apps/sophia-ai-factory/src/lib/crypto/encrypt-secret.{ts,test.ts}`. 8 tests pass, 940/940 full suite. Awaiting Phase B to consume.
 
 ## Goal
 Edge-safe symmetric encryption for storing customer-provided tunnel bearer tokens in D1 (Phase B writes ciphertext; Phase B reads + decrypts on adapter call).

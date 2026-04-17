@@ -29,7 +29,7 @@ Enable Sophia to route LLM inference to a customer-owned mekongd instance runnin
 |---|---|---|---|---|
 | A | Eat-own-dogfood (founder M1 Max → founder Sophia) | 1d | pending | — |
 | B | Customer BYOK adapter + provider router | 2d | deferred | A |
-| C | D1 encryption helper (AES-GCM via crypto.subtle) | 1d | deferred | A |
+| C | D1 encryption helper (AES-GCM via crypto.subtle) | 1d | complete | A |
 | D | Auto-installer + tunnel provision | 3d | deferred | B, C |
 | E | Setup wizard "Local Mode" UI tab | 1-2d | deferred | D |
 | F | Health monitoring cron + customer docs | 1d | deferred | D |
