@@ -20,6 +20,8 @@ function verifyCronAuth(req: NextRequest): boolean {
   if (process.env.NODE_ENV === 'development') return true;
 
   const secret = process.env.CRON_SECRET;
+  // P2: Accept Authorization: Bearer <CRON_SECRET> (standard CF Workers cron pattern)
+  if (secret && req.headers.get('authorization') === `Bearer ${secret}`) return true;
 
   // Support both header-based (CF Workers) and query-param-based auth
   const headerSecret = req.headers.get('x-cron-secret');

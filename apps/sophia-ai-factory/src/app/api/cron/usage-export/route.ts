@@ -32,18 +32,21 @@ import type { RaasLicenseRow } from '@/lib/supabase/types';
  * 3. Bypass in development mode
  */
 function verifyCronAuth(request: NextRequest): boolean {
-  const authHeader = request.headers.get('authorization');
-
   // Allow bypass in development
   if (process.env.NODE_ENV === 'development') {
     logger.info('[Usage Export Cron] Development mode - skipping auth');
     return true;
   }
 
-  // Check for cron secret
-  const cronSecret = request.headers.get('x-cron-secret');
   const expectedSecret = process.env.CRON_SECRET;
+  // P2: Accept Authorization: Bearer <CRON_SECRET> (standard CF Workers cron pattern)
+  if (expectedSecret && request.headers.get('authorization') === `Bearer ${expectedSecret}`) {
+    logger.info('[Usage Export Cron] Authenticated via Authorization Bearer');
+    return true;
+  }
 
+  // Check for cron secret via x-cron-secret header
+  const cronSecret = request.headers.get('x-cron-secret');
   if (expectedSecret && cronSecret === expectedSecret) {
     logger.info('[Usage Export Cron] Authenticated via X-Cron-Secret');
     return true;

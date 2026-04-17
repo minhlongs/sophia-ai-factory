@@ -19,8 +19,11 @@ const REMINDER_DAYS = [7, 3] as const;
 function verifyCronAuth(request: NextRequest): boolean {
   if (process.env.NODE_ENV === 'development') return true;
 
-  const cronSecret = request.headers.get('x-cron-secret');
   const expectedSecret = process.env.CRON_SECRET;
+  // P2: Accept Authorization: Bearer <CRON_SECRET> (standard CF Workers cron pattern)
+  if (expectedSecret && request.headers.get('authorization') === `Bearer ${expectedSecret}`) return true;
+
+  const cronSecret = request.headers.get('x-cron-secret');
   if (expectedSecret && cronSecret === expectedSecret) return true;
 
   const cfCron = request.headers.get('x-cf-cron');
