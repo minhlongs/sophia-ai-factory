@@ -64,6 +64,14 @@ jobs:
       - name: Install root deps (for wrangler)
         run: npm install --legacy-peer-deps
 
+      # Inject build metadata as CF Secrets (preserved from removed Gate 5).
+      # Refreshes COMMIT_SHA / DEPLOYED_AT / DEPLOY_BRANCH so /api/version is current.
+      - name: Inject build metadata (COMMIT_SHA / DEPLOYED_AT / DEPLOY_BRANCH)
+        run: bash scripts/ci/wrangler-set-build-vars.sh
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
       # RED-TEAM #6: Block deploy if pending D1 migrations
       # (preserved from removed deploy.yml Gate 5; same script).
       - name: Migration guard (D1 schema-skew protection)
