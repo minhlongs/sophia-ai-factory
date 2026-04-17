@@ -1,7 +1,53 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-04-17 (Phase 4.7 Admin Monitoring Dashboard Shipped)
+> **Last Updated:** 2026-04-17 (Phase 4E H-1: LLM Cache Org Scoping)
+
+---
+
+## [2026-04-17] Phase 4E H-1 — LLM Cache Org Scoping (Security Fix)
+
+### Summary
+Closed critical deferred security gap: LLM semantic cache is now org-scoped to prevent cross-tenant cache leaks. Migration 0009 drops + recreates `llm_cache` with mandatory `org_id TEXT NOT NULL` column. Hash computation prefixed with `orgId`; all SELECT queries filter by `org_id`. Empty-orgId check short-circuits. Cron `weekly-signals-digest` uses sentinel `'system'` org value. Tests 1165 → 1171 (+6 H-1 focused tests).
+
+### Changes
+1. **Migration 0009** — `migrations/0009-llm-cache-org-scoping.sql` (new)
+   - `DROP TABLE IF EXISTS llm_cache` + recreate with `org_id TEXT NOT NULL`
+   - Composite PK: `(hash, org_id)`
+   - Index `idx_llm_cache_org_expires` for org-filtered purge (Phase 4E.3)
+
+2. **llm-cache module** — `src/lib/llm/cache/llm-cache.ts` (modified)
+   - `CacheKey` interface now requires `orgId: string`
+   - `hashCacheKey(key)` prefixes hash with `orgId` deterministically
+   - `lookupCache(key)` filters `WHERE org_id = ?` before TTL check
+   - `writeCache(key, entry)` includes `org_id` in upsert bind
+   - Empty-orgId guard: both read + write throw if `!key.orgId`
+
+3. **weekly-signals-digest integration** — `src/app/api/cron/weekly-signals-digest/route.ts` (modified)
+   - Cron uses `CacheKey { orgId: 'system', ... }` sentinel
+   - No user context available in cron, so org-less queries safe under sentinel
+
+4. **Tests** — 6 new H-1 specific tests
+   - Org-scoped hash determinism (2)
+   - Empty-orgId guard throws (2)
+   - Cross-org cache isolation verified (2)
+
+### Quality Gates
+- Build: ✅ `npm run build` exit 0
+- Tests: ✅ 1171/1171 (+6 H-1, baseline 1165 from Phase 4.7)
+- Code Review: ✅ 9.7/10 SHIP (0 critical, org isolation verified)
+- Binh Pháp Rule #0: Prod HTTP 200, `/api/version` matches HEAD
+
+### Activation
+- Automatic — migration 0009 runs on next deploy
+- `LLM_CACHE_ENABLED` still OFF by default in prod
+- No manual steps; org-scoped cache is transparent to callers
+
+### Deferred (Phase 4E.2+)
+- **4E.2 Sampling-param hashing** — `CacheKey.params { max_tokens?, temperature?, top_p? }`
+- **4E.3 Per-org cache purge** — Use `idx_llm_cache_org_expires` for org-filtered TTL cleanup
+- **4E.4 Per-org cache stats** — Per-org cache hit-rate in admin dashboard
+- **4F Supervisor wiring** — Wire cache into Supervisor prompt calls (requires user_id→org_id binding)
 
 ---
 

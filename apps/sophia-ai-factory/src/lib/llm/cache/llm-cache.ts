@@ -21,6 +21,8 @@ export interface CacheKey {
   provider: string
   model:    string
   messages: CacheMessage[]
+  /** Tenant scope. Use `'system'` for server-side crons with no user context. */
+  orgId:    string
 }
 
 export interface CacheEntry {
@@ -63,7 +65,8 @@ export function readTtlSeconds(): number {
  * must never return a response for a materially different prompt).
  */
 export async function hashCacheKey(key: CacheKey): Promise<string> {
-  const normalized = JSON.stringify({
+  // orgId prefix ensures cross-tenant hash divergence even before WHERE clause
+  const normalized = `orgId:${key.orgId}|` + JSON.stringify({
     provider: key.provider,
     model:    key.model,
     messages: key.messages.map((m) => ({ role: m.role, content: m.content })),
@@ -84,6 +87,8 @@ export async function hashCacheKey(key: CacheKey): Promise<string> {
  */
 export async function lookupCache(key: CacheKey): Promise<CacheEntry | null> {
   if (!isCacheEnabled()) return null
+  // Defense-in-depth: empty orgId could match unscoped rows — reject early
+  if (!key.orgId) return null
   try {
     const hash = await hashCacheKey(key)
     const db = createServerClient()
@@ -91,6 +96,7 @@ export async function lookupCache(key: CacheKey): Promise<CacheEntry | null> {
       .from('llm_cache')
       .select('response, input_tokens, output_tokens, cost_usd, expires_at')
       .eq('hash', hash)
+      .eq('org_id', key.orgId)
       .single()
 
     if (error || !data) return null
@@ -98,7 +104,7 @@ export async function lookupCache(key: CacheKey): Promise<CacheEntry | null> {
 
     if (new Date(row.expires_at).getTime() <= Date.now()) return null
 
-    void incrementHitCount(hash)
+    void incrementHitCount(hash, key.orgId)
 
     return {
       response:     row.response,
@@ -115,10 +121,10 @@ export async function lookupCache(key: CacheKey): Promise<CacheEntry | null> {
  * Fire-and-forget hit_count increment via D1 RPC. Never throws — hit_count is
  * telemetry for the admin dashboard; a failure must not break a cache hit.
  */
-async function incrementHitCount(hash: string): Promise<void> {
+async function incrementHitCount(hash: string, orgId: string): Promise<void> {
   try {
     const db = createServerClient()
-    await db.rpc('increment_llm_cache_hit', { p_hash: hash })
+    await db.rpc('increment_llm_cache_hit', { p_hash: hash, p_org_id: orgId })
   } catch {
     // Swallow
   }
@@ -134,6 +140,8 @@ export async function writeCache(
   ttlSeconds: number = readTtlSeconds(),
 ): Promise<void> {
   if (!isCacheEnabled()) return
+  // Defense-in-depth: never write unscoped rows
+  if (!key.orgId) return
   try {
     const hash = await hashCacheKey(key)
     const expiresAt = new Date(Date.now() + ttlSeconds * 1000)
@@ -143,6 +151,7 @@ export async function writeCache(
     // (those cols are not in the payload, so ON CONFLICT DO UPDATE skips them).
     await db.from('llm_cache').upsert({
       hash,
+      org_id:        key.orgId,
       provider:      key.provider,
       model:         key.model,
       response:      entry.response,

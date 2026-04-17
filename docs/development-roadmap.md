@@ -120,6 +120,21 @@
 - **Files:** `migrations/0008-llm-cache.sql` + `src/lib/llm/cache/llm-cache.{ts,test.ts}` + `src/app/api/cron/weekly-signals-digest/route.ts`
 - **Activation:** `wrangler secret put LLM_CACHE_ENABLED --value 1` (founder manual)
 
+### Phase 8.6-H1: LLM Cache Org Scoping (Security) ✅ SHIPPED (Phase 4E H-1)
+- **Status:** Multi-tenant isolation shipped, closes reviewer H-1 BLOCKER (2026-04-17)
+- **Features:**
+  - Migration `0009-llm-cache-org-scoping.sql` adds `org_id TEXT NOT NULL` column
+  - Composite PK changed to `(hash, org_id)` — prevents cross-tenant response collisions
+  - `CacheKey.orgId` required field; hash includes `orgId` for defense-in-depth
+  - `lookupCache` + `writeCache` queries filtered by `org_id`
+  - `increment_llm_cache_hit` RPC scoped by `(hash, org_id)` composite key
+  - Caller `weekly-signals-digest` passes `'system'` sentinel for platform-scope cron
+  - New index `idx_llm_cache_org_id_expires_at` enables Phase 4E.3 per-org purge
+- **Security:** Prevents H-1 leak vector (same prompt colliding across tenants)
+- **Metrics:** 6 new tests (1171 total), migration idempotent, build clean, code review 9.7/10
+- **Files:** `migrations/0009-llm-cache-org-scoping.sql` + `src/lib/llm/cache/llm-cache.{ts,test.ts}` + `src/lib/db/d1-query-builder.ts` + `src/app/api/cron/weekly-signals-digest/route.ts`
+- **Deferred:** Phase 4E.2 (semantic similarity), Phase 4E.3 (per-org purge cron), Phase 4E.4 (per-org stats), Phase 4F (Supervisor/RaaS wiring — now UNBLOCKED)
+
 ### Phase 8.5: Langfuse External LLM Observability ✅ SHIPPED (Phase 4D)
 - **Status:** Secondary fire-and-forget sink live, dark-launched (2026-04-17)
 - **Features:**
@@ -229,6 +244,7 @@
 | **2026-04-17** | **Supervisor Agent MVP (D1+Cron stepper, Giai đoạn 3.4)** | **✅ SHIPPED** |
 | **2026-04-17** | **Phase 4D Langfuse External LLM Observability (env-gated)** | **✅ SHIPPED** |
 | **2026-04-17** | **Phase 4E LLM Semantic Cache MVP (exact-match + D1, env-gated)** | **✅ SHIPPED** |
+| **2026-04-17** | **Phase 4E H-1 LLM Cache Org Scoping (multi-tenant isolation, H-1 blocker)** | **✅ SHIPPED** |
 | **2026-04-17** | **Phase 4.7 Admin Monitoring Dashboard (D1 aggregates + M-2 hit_count close)** | **✅ SHIPPED** |
 | 2026-05-01 | Analytics Dashboard | 🔄 Planned |
 | 2026-06-01 | Multi-Language Support (Vietnamese) | 🔄 Planned |

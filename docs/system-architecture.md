@@ -132,6 +132,7 @@ graph TB
 | **Adapter** | opennextjs-cloudflare | Next.js → CF Workers |
 | **Database** | Cloudflare D1 | SQLite-based, `sophia-raas-db` |
 | **Cache** | Cloudflare R2 | `sophia-ai-factory-opennext-cache` |
+| **LLM Cache** | D1 (Org-Scoped) | Exact-match SHA-256 hash, per-tenant isolation (Phase 4E H-1) |
 | **Auth** | Better Auth v1.6.2 (D1) | Email/password + magic link, org plugin, no RLS |
 | **Billing** | NOWPayments (primary) + PayOS (backup) | MCU credit system, webhooks |
 | **Email** | Resend | Magic link, notifications |
