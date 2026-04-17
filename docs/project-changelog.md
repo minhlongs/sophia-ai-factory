@@ -1,7 +1,39 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-04-17 (Sophia Factory RaaS Solo Platform Shipped)
+> **Last Updated:** 2026-04-17 (Ops Telemetry Uplift + RaaS Platform Shipped)
+
+---
+
+## [2026-04-17] Ops Telemetry Uplift — D1 Signals + KV Canary + BYOK Timeout (6 commits, 75 files)
+
+### Summary
+Dual signals architecture: PostHog product analytics + D1 founder ops telemetry. New modules: D1 `signals_events` table (6 event types), feature-flags canary via FNV-1a, BYOK timeout guard (25s AbortController). Weekly digest extended to emit GH Issue + Telegram TL;DR. Tests 854 → 921 (+75 files). Self-review script now alerts Telegram on missing OPENROUTER_API_KEY.
+
+### Changes
+1. **D1 Signals Layer** — `src/lib/signals/track.ts` + migration `0005-signals-events.sql`
+   - Event types: tier_conversion, payment_success, payment_failed, agent_dispatch, api_rate_limit_hit, byok_call, byok_timeout
+   - Append-only audit log for founder ops visibility
+2. **Weekly Digest Extension** — `/api/cron/weekly-signals-digest` now posts GH Issue (label `metrics:weekly`) + Telegram TL;DR
+   - Idempotent: uses dedup key to prevent duplicate posts
+   - PostHog + D1 paths both active (backward compatible)
+3. **Feature Flags Canary** — `src/lib/feature-flags/index.ts` (independent of PostHog A/B)
+   - FNV-1a percentage rollouts via EXPERIMENT_KV namespace
+   - Used for BYOK timeout guard canary
+4. **BYOK Timeout Wrapper** — `src/lib/byok/with-timeout.ts`
+   - 25s AbortController on ElevenLabs + OpenRouter fetch calls
+   - Emits `byok_call` / `byok_timeout` signals to D1
+5. **Self-Review Alert** — `scripts/agent-self-review/summarize.py` now emits Telegram warning when OPENROUTER_API_KEY missing
+   - Workflow has Telegram secrets wired (GH Actions)
+6. **Test Expansion** — 75 new test files covering signals, feature-flags, BYOK timeout
+
+### Founder Deferred (NOT yet in GH Secrets)
+- `OPENROUTER_API_KEY` (blocks self-review summaries)
+- `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` (blocks Telegram alerts)
+- `GITHUB_TOKEN_DIGEST` PAT w/ repo scope (blocks GH Issue digest)
+
+### Commits
+- 9d93e3c..f444641 (6 commits, ops telemetry iteration)
 
 ---
 

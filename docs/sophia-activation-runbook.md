@@ -155,11 +155,30 @@ graph LR
 
 ---
 
+## Phase 6 — Ops Telemetry Activation (NEW, 2026-04-17)
+
+Ops telemetry uplift shipped 2026-04-17 (6 commits, D1 signals + feature-flags canary + BYOK timeout).
+To fully activate D1 signals digest → GH Issue + Telegram alerts, add 3 secrets to GH Actions:
+
+| Secret Name | Source |
+|---|---|
+| `OPENROUTER_API_KEY` | https://openrouter.ai/keys (for self-review summaries) |
+| `TELEGRAM_BOT_TOKEN` | From @BotFather (existing — already in Phase 1) |
+| `GITHUB_TOKEN_DIGEST` | New PAT w/ `repo` scope (for GH Issue digest posting) |
+
+After adding these 3 secrets:
+```bash
+cd ~/sophia-ai-factory && git push origin $(git rev-parse --abbrev-ref HEAD)
+```
+Next scheduled weekly digest (Sunday 9am UTC) will auto-post to GH Issues + Telegram.
+
+---
+
 ## What's NEXT (deferred)
 
 Per audit `plans/reports/audit-...-mekong-vs-claudekit-gap.md`:
 - **PostHog client-side JS in landing pages** — wire `<PostHogProvider>` to `app/[locale]/layout.tsx` for marketing pages (currently only protected pages instrumented)
-- **First A/B experiment** — test pricing page variant via `EXPERIMENT_KV` framework
+- **First A/B experiment** — test pricing page variant via `EXPERIMENT_KV` framework (feature-flags canary framework now live)
 - **Vertical templates** — domain-specific Sophia presets (sophia-finance, sophia-edu, sophia-marketing) for Mekong CLI vertical AI strategy
 - **Benevolent neglect loop** — agent reads own journal weekly, suggests prompt improvements
 

@@ -9,7 +9,7 @@
 
 ## Overview
 - **Priority:** P0
-- **Status:** pending
+- **Status:** complete
 - **Owner:** dev-A (fullstack-developer)
 - **Effort:** 8h
 - Founder-owned D1 telemetry — independent of PostHog (BYOK provider). Source of truth for the weekly digest (Phase 3).
@@ -150,18 +150,18 @@ Phase 3 weekly digest reads via SELECT WHERE ts > now-7d
 - **Blocked by:** Phase 0
 
 ## Todo List
-- [ ] Create migration `0005-signals-events.sql`
-- [ ] Apply migration locally + verify table
-- [ ] Create `d1-event-types.ts` w/ Zod schemas
-- [ ] Create `track.ts` helper
-- [ ] Create `track.test.ts` (≥4 cases)
-- [ ] Instrument NOWPayments webhook
-- [ ] Instrument agent dispatcher
-- [ ] Instrument middleware 429 branch
-- [ ] Instrument 2 BYOK adapters
-- [ ] `npm run build` 0 errors
-- [ ] `npm test` all pass
-- [ ] PR description flags remote migration step
+- [x] Create migration `0005-signals-events.sql`
+- [x] Apply migration locally + verify table
+- [x] Create `d1-event-types.ts` w/ Zod schemas
+- [x] Create `track.ts` helper
+- [x] Create `track.test.ts` (≥4 cases)
+- [x] Instrument NOWPayments webhook
+- [x] Instrument agent dispatcher
+- [x] Instrument middleware 429 branch
+- [x] Instrument 2 BYOK adapters
+- [x] `npm run build` 0 errors
+- [x] `npm test` all pass
+- [x] PR description flags remote migration step
 
 ## Success Criteria
 - `wrangler d1 execute sophia-raas-db --local --command "SELECT COUNT(*) FROM signals_events"` returns ≥1 after running test suite that triggers a track call.

@@ -5,8 +5,8 @@
 
 **Production URL:** https://sophia.agencyos.network
 **Tech Stack:** Next.js 15.5 + Cloudflare Workers + D1 SQLite + Better Auth v1.6.2 + Better Stack + PostHog
-**Test Status:** 863/863 passing (99.5%) | **Build:** < 10s, 0 TS errors | **Bundle:** < 500 KB gzipped
-**Shipped (2026-04-17):** P1 CI/CD, P2 Observability, P3 Signals, P4 SDLC (4,522 LOC, 40+ modules)
+**Test Status:** 921/921 passing (100%) | **Build:** < 10s, 0 TS errors | **Bundle:** < 500 KB gzipped
+**Shipped (2026-04-17):** P1 CI/CD, P2 Observability, P3 Signals+Telemetry, P4 SDLC (4,622 LOC, 43+ modules)
 
 ---
 
@@ -79,10 +79,18 @@ apps/sophia-ai-factory/
 │   │   │   ├── batch-delivery.ts       # Better Stack push + retry
 │   │   │   └── error-digest.ts         # Daily cron summary
 │   │   │
-│   │   ├── signals/            # PostHog analytics & A/B (P3) (3 modules)
-│   │   │   ├── event-batcher.ts        # Event buffering + flush
-│   │   │   ├── variant-resolver.ts     # EXPERIMENT_KV assignment
-│   │   │   └── digest-generator.ts     # Weekly metrics email
+│   │   ├── signals/            # Dual signals: PostHog + D1 ops telemetry (P3) (5 modules)
+│   │   │   ├── posthog-capture.ts      # Event buffering + PostHog flush
+│   │   │   ├── feature-flags.ts        # EXPERIMENT_KV A/B assignment
+│   │   │   ├── track.ts                # D1 signals_events append + helpers
+│   │   │   ├── variant-resolver.ts     # Percentage-based canary rollouts
+│   │   │   └── digest-generator.ts     # Weekly metrics email + GH Issue + Telegram TL;DR
+│   │   │
+│   │   ├── feature-flags/      # FNV-1a percentage rollouts (P3 extension)
+│   │   │   └── index.ts                # Canary gate for BYOK timeout, tier features
+│   │   │
+│   │   ├── byok/               # Bring-Your-Own-Keys timeout wrapper (P3 extension)
+│   │   │   └── with-timeout.ts         # 25s AbortController, signals byok_call/byok_timeout
 │   │   │
 │   │   ├── campaigns/          # Campaign management (shared core logic)
 │   │   │   └── create-campaign-core.ts
@@ -108,7 +116,9 @@ apps/sophia-ai-factory/
 ├── migrations/                 # Database schema (D1 SQLite)
 │   ├── 0001-init.sql
 │   ├── 0002-payment-events.sql
-│   └── 0003-better-auth.sql
+│   ├── 0003-better-auth.sql
+│   ├── 0004-usage-metering.sql
+│   └── 0005-signals-events.sql        # Append-only: tier_conversion, payment_*, agent_dispatch, api_rate_limit_hit, byok_*
 │
 ├── .github/workflows/          # CI/CD enforcement gates (P1)
 │   ├── test.yml                # Tests + Deploy (lint/build/test → wrangler deploy + D1 migration-guard)
