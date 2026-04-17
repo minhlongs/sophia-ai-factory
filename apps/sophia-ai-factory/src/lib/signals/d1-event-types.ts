@@ -24,6 +24,7 @@ export const D1Events = {
   WORKFLOW_STEP_COMPLETED:  'workflow_step_completed', // Supervisor: one step mission done
   WORKFLOW_COMPLETED:       'workflow_completed',      // Supervisor: all 3 steps done
   WORKFLOW_FAILED:          'workflow_failed',         // Supervisor: step mission failed
+  PROMPT_INJECTION_DETECTED: 'prompt_injection_detected', // Phase 4A: guard flagged prompt at ingress
 } as const
 
 export type D1EventType = typeof D1Events[keyof typeof D1Events]
@@ -138,6 +139,15 @@ const WorkflowFailedSchema = z.object({
   error_class:  z.string().optional(),
 })
 
+/** prompt_injection_detected — fired when guard flags prompt at LLM ingress */
+const PromptInjectionDetectedSchema = z.object({
+  severity:      z.enum(['low', 'medium', 'high']),
+  reasons:       z.array(z.string()),      // pattern IDs only — NO raw prompt
+  prompt_length: z.number().int().nonnegative(),
+  blocked:       z.boolean(),              // true = request rejected (severity=high)
+  endpoint:      z.string(),               // e.g. 'POST /api/raas/workflows'
+})
+
 // ── Schema registry ───────────────────────────────────────────────────────────
 const SCHEMAS: Record<D1EventType, z.ZodTypeAny> = {
   [D1Events.TIER_CONVERSION]:         TierConversionSchema,
@@ -155,6 +165,7 @@ const SCHEMAS: Record<D1EventType, z.ZodTypeAny> = {
   [D1Events.WORKFLOW_STEP_COMPLETED]: WorkflowStepCompletedSchema,
   [D1Events.WORKFLOW_COMPLETED]:      WorkflowCompletedSchema,
   [D1Events.WORKFLOW_FAILED]:         WorkflowFailedSchema,
+  [D1Events.PROMPT_INJECTION_DETECTED]: PromptInjectionDetectedSchema,
 }
 
 /**
