@@ -1,0 +1,1 @@
+../../.sophia-factory/agents/cmo.md
