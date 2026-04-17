@@ -9,34 +9,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/better-auth-session'
 import { getWorkflow } from '@/lib/db/workflow-repository'
 import { logger } from '@/lib/utils/logger-utility'
+import { resolveOrgId } from '@/lib/auth/resolve-org-id'
 
 export const dynamic = 'force-dynamic'
-
-// ── D1 org_id resolver (same pattern as list route) ───────────────────────────
-
-function getD1Raw(): D1Database {
-  const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env
-  if (env?.DB) return env.DB as D1Database
-  const ctxSymbol = Symbol.for('__cloudflare-context__')
-  const ctx = (globalThis as Record<symbol, { env?: Record<string, unknown> }>)[ctxSymbol]
-  if (ctx?.env?.DB) return ctx.env.DB as D1Database
-  const g = (globalThis as Record<string, unknown>).__D1_DB as D1Database | undefined
-  if (g) return g
-  throw new Error('D1 binding not available')
-}
-
-async function resolveOrgId(userId: string): Promise<string | null> {
-  try {
-    const db = getD1Raw()
-    const row = await db
-      .prepare('SELECT org_id FROM org_members WHERE user_id=? LIMIT 1')
-      .bind(userId)
-      .first<{ org_id: string }>()
-    return row?.org_id ?? null
-  } catch {
-    return null
-  }
-}
 
 // ── GET ───────────────────────────────────────────────────────────────────────
 

@@ -13,26 +13,10 @@ import { WorkflowTimeline } from '@/components/workflows/workflow-timeline'
 import { WORKFLOW_LABELS, STATUS_LABELS } from '@/lib/workflows/workflow-labels'
 import type { StepRowData } from '@/components/workflows/workflow-step-row'
 import { getWorkflow } from '@/lib/db/workflow-repository'
+import { resolveOrgId } from '@/lib/auth/resolve-org-id'
 
 interface Props {
   params: Promise<{ id: string; locale: string }>
-}
-
-async function resolveOrgId(userId: string): Promise<string | null> {
-  const envBag = (globalThis as unknown as Record<string, Record<string, unknown>>).__env
-  const ctxSymbol = Symbol.for('__cloudflare-context__')
-  const ctx = (globalThis as Record<symbol, { env?: Record<string, unknown> }>)[ctxSymbol]
-  const db = (envBag?.DB ?? ctx?.env?.DB ?? (globalThis as Record<string, unknown>).__D1_DB) as D1Database | undefined
-  if (!db) return null
-  try {
-    const row = await db
-      .prepare('SELECT org_id FROM org_members WHERE user_id=? LIMIT 1')
-      .bind(userId)
-      .first<{ org_id: string }>()
-    return row?.org_id ?? null
-  } catch {
-    return null
-  }
 }
 
 const STATUS_CLASSES: Record<string, string> = {
