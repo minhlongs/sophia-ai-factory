@@ -1,8 +1,8 @@
 # Project Roadmap
 
 **Project Name:** Sophia AI Video Factory
-**Current Version:** 1.9.0 (Polar→NOWPayments Migration Complete)
-**Last Updated:** 2026-04-10
+**Current Version:** 1.10.0 (Supervisor Agent MVP Shipped)
+**Last Updated:** 2026-04-17
 
 ## 📅 Roadmap Overview
 
@@ -148,7 +148,27 @@
 - [x] **Validation**: Zod schema validation for timestamp, service, feature_key
 - [x] **Test Coverage**: 462 tests passing (aggregator + batch ingestion API)
 
-### 🔮 Phase 10: Scaling & SaaS (Future)
+### ✅ Phase 10: Supervisor Agent MVP (Completed - 2026-04-17)
+**Goal:** Autonomous workflow orchestration for mission planning, execution, testing.
+- [x] **D1 Schema**: workflows table with status state machine (PLANNING → EXECUTING → TESTING → COMPLETED)
+- [x] **API Layer**: POST/GET /api/raas/workflows, workflow detail endpoint
+- [x] **Cron Stepper**: Cloudflare Workers trigger (*/1 * * * *) for autonomous step execution
+- [x] **Step Implementation**: 3-step pipeline (plan → execute → test) with MVP stubs
+- [x] **Signal Events**: WORKFLOW_STARTED, STEP_COMPLETED, WORKFLOW_COMPLETED, WORKFLOW_FAILED
+- [x] **Dashboard UI**: Workflow list + detail views with real-time timeline
+- [x] **Documentation**: Bilingual runbook (344 LOC, architecture, troubleshooting, manual ops, rollback)
+- [x] **Test Coverage**: All workflow routes + cron stepper + UI components tested
+
+### 🔮 Phase 11: Supervisor Agent Phase 2 (Future)
+**Goal:** Real PEV (Prompt Execution Validator) engine + advanced features.
+- [ ] **PEV Engine Integration**: Replace MVP stubs with real executeStep logic
+- [ ] **Manual Workflow Controls**: Retry button, force-complete, reset endpoints
+- [ ] **Advanced Filtering**: Status, date range, search in workflow list
+- [ ] **Batch Operations**: Create multiple workflows, bulk status updates
+- [ ] **Export & Analytics**: CSV export, workflow metrics dashboard
+- [ ] **WebSocket Real-time**: Replace 3s polling with live updates
+
+### 🔮 Phase 12: Scaling & SaaS (Future)
 **Goal:** Multi-user support and advanced features.
 - [ ] **Authentication**: Move from Basic Auth to NextAuth/Clerk.
 - [ ] **Multi-Tenancy**: Support multiple user accounts per deployment.
