@@ -2,12 +2,23 @@
  * GET /api/cron/weekly-signals-digest — Monday 06:00 UTC weekly signals digest
  * RED-TEAM #3: CRON_SECRET bearer only (no session — server-to-server)
  * Flow: PostHog Query API → OpenRouter summarize → Resend email + Telegram
+ *       + D1 aggregates → GH Issue upsert + Telegram TL;DR (Phase 3 extension)
  * Bilingual: VN + EN digest
  */
 
 import { NextRequest } from 'next/server'
 import { requireCron } from '@/lib/signals/auth-helper'
 import { logger } from '@/lib/utils/logger-utility'
+import {
+  querySignupStats,
+  queryConversionsByTier,
+  queryPaymentStats,
+  queryTopByokProviders,
+  queryAgentDispatches,
+} from '@/lib/signals/digest/d1-aggregates'
+import { renderDigestMarkdown, buildTldr, type DigestData } from '@/lib/signals/digest/markdown-renderer'
+import { upsertGithubIssue, buildIssueTitle } from '@/lib/signals/digest/github-issue-poster'
+import { postTelegramDigest } from '@/lib/signals/digest/telegram-poster'
 
 const POSTHOG_QUERY_URL = 'https://us.i.posthog.com/api/projects/@current/events/'
 
@@ -153,12 +164,29 @@ async function sendTelegram(summary: string): Promise<void> {
   }
 }
 
+/** Get D1 binding from CF Workers runtime env (same pattern as track.ts) */
+function getD1(): D1Database | null {
+  try {
+    const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env
+    if (env?.DB) return env.DB as D1Database
+
+    const ctxSymbol = Symbol.for('__cloudflare-context__')
+    const ctx = (globalThis as Record<symbol, { env?: Record<string, unknown> }>)[ctxSymbol]
+    if (ctx?.env?.DB) return ctx.env.DB as D1Database
+
+    return null
+  } catch {
+    return null
+  }
+}
+
 export async function GET(req: NextRequest) {
   const auth = await requireCron(req)
   if (auth instanceof Response) return auth
 
   logger.info('[digest] Starting weekly signals digest')
 
+  // ── Existing path: PostHog + OpenRouter summarize + email + legacy Telegram ──
   const events = await fetchTopEvents()
 
   const eventCounts = events.reduce<Record<string, number>>((acc, e) => {
@@ -179,7 +207,78 @@ export async function GET(req: NextRequest) {
 
   await Promise.allSettled([sendEmail(summary), sendTelegram(summary)])
 
+  // ── Phase 3 extension: D1 aggregates → GH Issue + Telegram TL;DR ────────────
+  const db = getD1()
+  let issueUrl: string | null = null
+  let telegramOk = false
+
+  if (!db) {
+    logger.warn('[digest] D1 binding not available — skipping D1 aggregates')
+  } else {
+    const now = new Date()
+    const weekLabel = buildIssueTitle(now)
+
+    // Fetch all 5 aggregates in parallel (independent queries)
+    const [signups, conversions, payments, byokProviders, agentDispatches] =
+      await Promise.all([
+        querySignupStats(db).catch(() => ({ count: 0 })),
+        queryConversionsByTier(db).catch(() => []),
+        queryPaymentStats(db).catch(() => ({ success_count: 0, failed_count: 0, total_usd: 0 })),
+        queryTopByokProviders(db).catch(() => []),
+        queryAgentDispatches(db).catch(() => []),
+      ])
+
+    const digestData: DigestData = {
+      weekLabel,
+      signups,
+      conversions,
+      payments,
+      byokProviders,
+      agentDispatches,
+      posthogSummary: summary !== eventSummaryText ? summary : undefined,
+    }
+
+    const markdownBody = renderDigestMarkdown(digestData)
+    const tldr = buildTldr(digestData)
+
+    // GH Issue upsert + Telegram post — independent failure isolation
+    const [ghResult, tgResult] = await Promise.allSettled([
+      upsertGithubIssue({ title: weekLabel, body: markdownBody }),
+      // Telegram sent after GH so we can include the issue URL — but we
+      // still isolate failures via allSettled, passing null URL if GH fails
+      Promise.resolve(null), // placeholder; real Telegram call below
+    ])
+
+    issueUrl =
+      ghResult.status === 'fulfilled' && ghResult.value
+        ? ghResult.value.url
+        : null
+
+    // Now post Telegram with the resolved issue URL
+    const tgFinal = await postTelegramDigest({ tldr, issueUrl, weekLabel }).catch((err) => {
+      logger.warn('[digest] Telegram post threw', {
+        error: err instanceof Error ? err.message : String(err),
+      })
+      return { ok: false, reason: 'thrown' }
+    })
+    telegramOk = tgFinal.ok
+
+    void tgResult // satisfy no-unused-vars (placeholder settled above)
+
+    logger.info('[digest] D1 digest complete', {
+      issueUrl,
+      issueAction: ghResult.status === 'fulfilled' ? ghResult.value?.action : 'failed',
+      telegramOk,
+    })
+  }
+
   logger.info('[digest] Weekly signals digest sent')
 
-  return Response.json({ ok: true, eventCount: events.length })
+  return Response.json({
+    ok: true,
+    eventCount: events.length,
+    issue_url: issueUrl,
+    telegram_ok: telegramOk,
+    sources: ['posthog', 'd1'],
+  })
 }
