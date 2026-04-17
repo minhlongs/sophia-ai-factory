@@ -2,7 +2,7 @@
 
 > Product milestones and progress tracking (2026)
 
-**Last Updated:** 2026-04-17 (Phase 4.7 Admin Monitoring Dashboard)
+**Last Updated:** 2026-04-18 (Phase 4F LLM Cache Wiring shipped)
 **Target:** $1M ARR, 100/100 a16z solo company score
 
 ---
@@ -119,6 +119,20 @@
 - **Metrics:** ~565 new LOC (migration + module + tests + wiring), 25 new tests (1148 total), commit `69fe6a5`
 - **Files:** `migrations/0008-llm-cache.sql` + `src/lib/llm/cache/llm-cache.{ts,test.ts}` + `src/app/api/cron/weekly-signals-digest/route.ts`
 - **Activation:** `wrangler secret put LLM_CACHE_ENABLED --value 1` (founder manual)
+
+### Phase 8.8: LLM Cache Wiring MVP ✅ SHIPPED (Phase 4F)
+- **Status:** Production integration live, dark-launched (2026-04-18)
+- **Features:**
+  - `callWithCache(key, fetchLive)` wrapper primitive for transparent cache lookup + fallback
+  - Wired into OpenRouter chat-completion in script-generator (campaign generation path)
+  - Cache scope keyed by `event.data.userId` (single-tenant Sophia idiom)
+  - Cache hit returns deserialize JSON + skips `trackUsage()` (zero-cost cache benefit)
+  - Swallows all D1 errors (transparent fall-through on disabled/empty orgId/outage)
+  - Feature-gated `LLM_CACHE_ENABLED` (OFF in prod, dark-launch pattern)
+- **Metrics:** 4 new tests (1175 total), 1 new module (~80 LOC), 2 files wired (~20 LOC), code review 9.7/10
+- **Files:** `src/lib/llm/cache/call-with-cache.{ts,test.ts}` + `src/lib/ai/script-generator.ts` + `src/lib/inngest/functions/generate-campaign.ts`
+- **Activation:** `wrangler secret put LLM_CACHE_ENABLED 1` (founder manual)
+- **Deferred:** Phase 4F.1 (org_id refinement), Phase 4E.2 (semantic similarity), Phase 4E.3 (per-org purge), Phase 4E.4 (per-org stats), Supervisor wiring
 
 ### Phase 8.6-H1: LLM Cache Org Scoping (Security) ✅ SHIPPED (Phase 4E H-1)
 - **Status:** Multi-tenant isolation shipped, closes reviewer H-1 BLOCKER (2026-04-17)
@@ -246,6 +260,7 @@
 | **2026-04-17** | **Phase 4E LLM Semantic Cache MVP (exact-match + D1, env-gated)** | **✅ SHIPPED** |
 | **2026-04-17** | **Phase 4E H-1 LLM Cache Org Scoping (multi-tenant isolation, H-1 blocker)** | **✅ SHIPPED** |
 | **2026-04-17** | **Phase 4.7 Admin Monitoring Dashboard (D1 aggregates + M-2 hit_count close)** | **✅ SHIPPED** |
+| **2026-04-18** | **Phase 4F LLM Cache Wiring (campaign script generation integration, env-gated)** | **✅ SHIPPED** |
 | 2026-05-01 | Analytics Dashboard | 🔄 Planned |
 | 2026-06-01 | Multi-Language Support (Vietnamese) | 🔄 Planned |
 | 2026-07-01 | Telegram Bot Enhancement | 🔄 Planned |

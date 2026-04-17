@@ -1,7 +1,56 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-04-17 (Phase 4E H-1: LLM Cache Org Scoping)
+> **Last Updated:** 2026-04-18 (Phase 4F: LLM Cache Wiring)
+
+---
+
+## [2026-04-18] Phase 4F — LLM Cache Wiring MVP (Campaign Script-Generator Integration)
+
+### Summary
+Phase 4F wires the org-scoped LLM cache (Phase 4E H-1) into production call paths. New `callWithCache(key, fetchLive)` wrapper encapsulates cache lookup + fallback pattern. Integrated into OpenRouter chat-completion in `script-generator.ts`, called from `generate-campaign.ts` Inngest job. Cache scope keyed by `event.data.userId` → org_id (single-tenant Sophia idiom). Cache hits skip fetch + `trackUsage` (user freebie). Transparent fall-through on `LLM_CACHE_ENABLED=false` (dark-launched), empty org, or D1 outage. Tests 1171 → 1175 (+4 cache-wiring specifics).
+
+### Changes
+1. **Cache wrapper module** — `src/lib/llm/cache/call-with-cache.ts` (new)
+   - `callWithCache<T>(key: CacheKey, fetchLive: () => Promise<T>): Promise<T>`
+   - Check `LLM_CACHE_ENABLED` feature flag; return fresh fetch if disabled
+   - Guard empty `orgId` with throw
+   - `lookupCache(key)` on hit: deserialize JSON + return (skip fetch + trackUsage)
+   - Cache miss or error: call `fetchLive()`, write result via `writeCache(key, ...)`
+   - All D1 errors swallowed (user sees fresh fetch, no error bubble)
+
+2. **Script-generator integration** — `src/lib/ai/script-generator.ts` (modified)
+   - OpenRouter chat-completion wrapped in `callWithCache({ provider: 'openrouter', model, messages, orgId })`
+   - Cache key deterministic from normalized `{ provider, model, messages }` + `orgId` (Defense-in-depth composite PK)
+   - Cache hit → no `trackUsage()` call (founder approval: zero-cost cache benefit)
+
+3. **Inngest job wiring** — `src/lib/inngest/functions/generate-campaign.ts` (modified)
+   - Pass `event.data.userId` → `CacheKey.orgId` at callWithCache invocation
+   - Org lookup via single-tenant Sophia convention (no async lookup; userId IS org_id)
+
+4. **Tests** — 4 new
+   - `callWithCache` hit path: skipFetch assertion
+   - `callWithCache` miss path: writeCache assertion
+   - Feature flag OFF → fresh fetch path
+   - Empty orgId → throws
+
+### Quality Gates
+- Build: ✅ `npm run build` exit 0
+- Tests: ✅ 1175/1175 (+4 Phase 4F, baseline 1171 from Phase 4E H-1)
+- Code Review: ✅ 9.7/10 SHIP
+- Binh Pháp Rule #0: Prod HTTP 200 `/api/version` shortSha=ea0e8ca7 matches HEAD
+
+### Activation
+- Dark-launched: `LLM_CACHE_ENABLED=0` by default in prod
+- Activate: `wrangler secret put LLM_CACHE_ENABLED 1` (founder manual)
+- Transparent to callers — existing Inngest jobs auto-benefit
+
+### Unblocks
+- **Phase 4F.1 Refinement** — org_id lookup (deferred until Supervisor context available)
+- **Phase 4E.2 Semantic Similarity** — embedding top-K beyond exact-match SHA-256
+- **Phase 4E.3 Per-org Purge** — scheduled D1 cleanup per org TTL
+- **Phase 4E.4 Per-org Stats** — per-org cache analytics in admin dashboard
+- **Future Supervisor Wiring** — cache Supervisor prompt calls once PEV engine matures
 
 ---
 
