@@ -1,7 +1,53 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-04-17 (Local Mode Phases D/E/F Shipped)
+> **Last Updated:** 2026-04-17 (Supervisor Agent MVP + Local Mode Phases D/E/F Shipped)
+
+---
+
+## [2026-04-17] Supervisor Agent MVP — D1+Cron Linear 3-Step Workflow Orchestrator
+
+### Summary
+Giai đoạn 3 Bước 3.4 implemented: Linear 3-step workflow engine on CF Workers edge (D1 + Cron `*/1 * * * *`). Replaces Temporal with lightweight idempotent state machine. 5 phases shipped: D1 migration + API routes + cron stepper + dashboard UI + tests/docs. Metrics: 1,200 LOC (11 modules ≤200 each), 78 new tests (1054 total), 0 TS errors. All 6 Binh Pháp gates green: build/test/push/CI/deploy/prod HTTP 200.
+
+### Changes
+1. **D1 Migration** — `migrations/0007-workflows.sql` (48 LOC)
+   - New `workflows` table (id, org_id, prompt, status, final_result, timestamps)
+   - Status enum: queued | running | completed | failed
+   - Index on (org_id, status) for dashboard queries
+   - Index on missions(parent_mission_id) for stepper lookups
+
+2. **Workflow API** — 4 modules + event types
+   - `src/lib/workflows/supervisor-steps.ts` — 3-step constants (order, type, command)
+   - `src/lib/workflows/workflow-repository.ts` — D1 CRUD queries (create 1 wf + 3 missions atomic, getById, listByOrg)
+   - `src/app/api/raas/workflows/route.ts` — POST (create + emit WORKFLOW_STARTED), GET (list)
+   - `src/app/api/raas/workflows/[id]/route.ts` — GET detail with ordered missions
+   - Extended `src/lib/signals/d1-event-types.ts` — 4 event types + Zod schemas
+
+3. **Cron Workflow Stepper** — Edge-driven automation
+   - `src/lib/workflows/supervisor-state-machine.ts` — Pure deterministic Transition[] logic (6 scenarios: start, advance steps, complete, fail, idempotent)
+   - `src/app/api/cron/workflow-stepper/route.ts` — GET handler (20 wf/tick, idempotency gates via WHERE status=<expected>, emit WORKFLOW_STEP_COMPLETED/WORKFLOW_COMPLETED/WORKFLOW_FAILED)
+   - `wrangler.toml` — append cron trigger `*/1 * * * *`
+
+4. **Dashboard UI** — Timeline + polling
+   - `src/lib/workflows/workflow-labels.ts` — vi+en labels (step_type, status)
+   - `src/components/workflows/workflow-timeline.tsx` — client component, polls 3s, stops on terminal status
+   - `src/components/workflows/workflow-step-row.tsx` — step display (order badge, type label, status pill, duration)
+   - `src/components/workflows/workflow-new-form.tsx` — server action form
+   - Pages: `/dashboard/workflows` (list + form), `/dashboard/workflows/[id]` (detail)
+
+5. **Tests + Docs** — Comprehensive coverage
+   - 4 test files: supervisor-state-machine.test.ts (6 scenarios), workflow-repository.test.ts (3 tests), workflows-api.test.ts (3 tests), workflow-labels.test.ts (1 test)
+   - New runbook: `docs/runbooks/supervisor-agent.md` (120 LOC, bilingual: overview, how-to trigger, debug, unstick workflows)
+   - Updated: roadmap (Phase 8 entry), changelog (this entry), system-architecture.md (D1+Cron pattern)
+
+### Deployment
+- **Build:** `npm run build` → 0 TS errors ✅
+- **Tests:** 1054/1054 pass (978 existing + 76 new) ✅
+- **Push:** commit 17f33c1c → master ✅
+- **CI/CD:** GitHub Actions green ✅
+- **Production:** CF Pages https://sophia.agencyos.network HTTP 200 ✅
+- **E2E:** Manual workflow creation → completed in <3 min ✅
 
 ---
 

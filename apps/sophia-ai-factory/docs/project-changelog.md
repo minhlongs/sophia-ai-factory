@@ -1,5 +1,58 @@
 # Project Changelog
 
+**Last Updated:** 2026-04-17 | **Current Version:** 1.10.0
+
+---
+
+## [2026-04-17] Supervisor Agent MVP — Linear 3-Step Workflow Orchestrator (v1.10.0)
+
+### Summary
+Supervisor Agent shipped: autonomous workflow orchestrator managing 3-step pipeline (plan → execute → test) on Cloudflare Workers edge. D1 + Cron stepper (`*/1 * * * *`). Dashboard with real-time timeline. 4 signal events. MVP stubs ready for Phase 2 PEV engine integration.
+
+### Changes
+1. **D1 Migration** — `workflows` table (0007-workflows.sql)
+   - id, org_id, mission_id, parent_mission_id, status (PLANNING|EXECUTING|TESTING|COMPLETED|FAILED)
+   - current_step (PLAN|EXECUTE|TEST), plan_prompt, step_result, error_message
+   - Timestamps: created_at, updated_at, completed_at
+
+2. **API Endpoints** (4 routes, all auth-gated)
+   - `POST /api/raas/workflows` — Create workflow
+   - `GET /api/raas/workflows` — List all for org (paginated)
+   - `GET /api/raas/workflows/[id]` — Detail + timeline
+   - `GET /api/cron/workflow-stepper` — Internal cron (automatic, */1 * * * *)
+
+3. **Cron Stepper** — Cloudflare Workers trigger
+   - Runs every 1 minute: fetches active workflows, executes appropriate step
+   - MVP step implementations: write `"Step {type} completed: {prompt[:100]}"`
+   - Error handling: catch exceptions, set status=FAILED, emit signal
+
+4. **Dashboard UI** (2 pages)
+   - `/dashboard/workflows` — List with status badges, 3s polling
+   - `/dashboard/workflows/[id]` — Detail with timeline, step results (JSON expandable)
+
+5. **Signal Events** (4 types, appended to signals_events table)
+   - WORKFLOW_STARTED, STEP_COMPLETED, WORKFLOW_COMPLETED, WORKFLOW_FAILED
+
+6. **Documentation**
+   - NEW: `docs/sophia-supervisor-agent-runbook.md` (344 LOC, bilingual VN+EN)
+     - Architecture, API reference, cron stepper behavior, troubleshooting, manual ops, rollback
+   - UPDATED: `docs/system-architecture.md` (+45 lines, Supervisor Agent section)
+   - UPDATED: `docs/project-changelog.md` (this entry)
+
+### Test Results
+- All workflow routes tested (create, list, detail)
+- Cron stepper tested (fetches/updates workflows)
+- Dashboard components tested (polling, timeline rendering)
+- No breaking changes to existing RaaS API
+
+### Phase 2 Deferred (NOT in MVP)
+- Real executeStep implementation (integrate PEV engine)
+- Manual workflow retry button
+- Admin workflow reset endpoint
+- WebSocket real-time updates (currently 3s polling)
+
+---
+
 ## [Unreleased] - v1.9.0
 
 ### v1.9.0 - Polar→NOWPayments Migration Complete (2026-04-10)

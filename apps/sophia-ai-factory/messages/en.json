@@ -106,10 +106,22 @@
         }
       },
       "stats": {
-        "stat1": { "value": "17", "label": "AI Commands" },
-        "stat2": { "value": "500+", "label": "Proposals Generated" },
-        "stat3": { "value": "< 60s", "label": "Mission Execution" },
-        "stat4": { "value": "99.9%", "label": "Uptime SLA" }
+        "stat1": {
+          "value": "17",
+          "label": "AI Commands"
+        },
+        "stat2": {
+          "value": "500+",
+          "label": "Proposals Generated"
+        },
+        "stat3": {
+          "value": "< 60s",
+          "label": "Mission Execution"
+        },
+        "stat4": {
+          "value": "99.9%",
+          "label": "Uptime SLA"
+        }
       },
       "terminal": {
         "title": "See It in Action",
@@ -340,7 +352,8 @@
       "sign_out": "Sign Out",
       "missions": "Missions",
       "api_keys": "API Keys",
-      "proposals": "Proposals"
+      "proposals": "Proposals",
+      "workflows": "Workflows"
     },
     "missions": {
       "page_title": "AI Missions",
