@@ -23,8 +23,9 @@ jobs:
       # RED-TEAM #1: SHA-pinned action (actions/checkout v4.2.2)
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
-      # RED-TEAM #1: SHA-pinned action (actions/setup-node v4.2.0)
-      - uses: actions/setup-node@1d0ff469b13e2c3f0cd29f4c2db6d4e6fe80d0c9
+      # RED-TEAM #1: prior SHA-pin (1d0ff46…) was invalid → unblocked via tag.
+      # Re-pin to a verified v4.x SHA in follow-up.
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
