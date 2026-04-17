@@ -2,6 +2,7 @@ import { Tier } from "@/types";
 import { trackUsage, hashLicenseKey, calculateCredits, startTimer } from '@/lib/usage-metering';
 import { getUsageContext } from '@/lib/usage-metering/context';
 import { logger } from '@/lib/utils/logger-utility';
+import { callWithCache } from '@/lib/llm/cache/call-with-cache';
 
 interface GenerateScriptInput {
   topic: string;
@@ -10,6 +11,8 @@ interface GenerateScriptInput {
   userId?: string;
   licenseKey?: string;
   licenseNonce?: string;
+  /** Tenant scope for LLM cache (Phase 4F). Empty/omitted → cache skipped. */
+  orgId?: string;
 }
 
 interface ScriptOutput {
@@ -28,7 +31,7 @@ interface ScriptOutput {
  * Falls back to mock if API key is not configured.
  */
 export async function generateScript(input: GenerateScriptInput): Promise<ScriptOutput> {
-  const { topic, audience, tier, userId, licenseKey, licenseNonce } = input;
+  const { topic, audience, tier, userId, licenseKey, licenseNonce, orgId } = input;
   const apiKey = process.env.OPENROUTER_API_KEY;
   const stopTimer = startTimer();
 
@@ -84,82 +87,92 @@ Return ONLY valid JSON in this exact format:
   "total_duration": 16
 }`;
 
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-        'X-Title': 'Sophia AI Factory',
-        'Content-Type': 'application/json'
+    const model = tier === 'ENTERPRISE' ? 'anthropic/claude-3.5-sonnet' : 'openai/gpt-4o-mini';
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      { role: 'user',   content: userPrompt },
+    ];
+
+    const cached = await callWithCache(
+      { provider: 'openrouter', model, messages, orgId: orgId ?? '' },
+      async () => {
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+            'X-Title':      'Sophia AI Factory',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model,
+            messages,
+            response_format: { type: 'json_object' },
+            temperature: 0.7,
+            max_tokens:  1000,
+          }),
+        });
+
+        const responseTime = stopTimer();
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          await trackUsage({
+            userId:         finalUserId,
+            licenseKeyHash,
+            licenseNonce:   finalLicenseNonce,
+            service:        'openrouter',
+            endpoint:       '/chat/completions',
+            action:         'chat_completion',
+            tierAtRequest:  tier,
+            statusCode:     response.status,
+            errorMessage:   errorText,
+            responseTimeMs: responseTime,
+            creditsUsed:    0,
+          });
+          throw new Error(`OpenRouter API failed: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const content = data.choices?.[0]?.message?.content;
+
+        if (!content) {
+          throw new Error('No content in OpenRouter response');
+        }
+
+        const usage = data.usage;
+        const tokensTotal = (usage?.prompt_tokens ?? 0) + (usage?.completion_tokens ?? 0);
+
+        await trackUsage({
+          userId:         finalUserId,
+          licenseKeyHash,
+          licenseNonce:   finalLicenseNonce,
+          service:        'openrouter',
+          endpoint:       '/chat/completions',
+          action:         'chat_completion',
+          tokensInput:    usage?.prompt_tokens     ?? 0,
+          tokensOutput:   usage?.completion_tokens ?? 0,
+          creditsUsed:    calculateCredits('openrouter', 'chatCompletion', tokensTotal, tier),
+          modelName:      data.model,
+          requestId:      data.id,
+          tierAtRequest:  tier,
+          statusCode:     response.status,
+          responseTimeMs: responseTime,
+        });
+
+        return {
+          response:     content as string,
+          inputTokens:  usage?.prompt_tokens     ?? 0,
+          outputTokens: usage?.completion_tokens ?? 0,
+        };
       },
-      body: JSON.stringify({
-        model: tier === 'ENTERPRISE' ? 'anthropic/claude-3.5-sonnet' : 'openai/gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        response_format: { type: 'json_object' },
-        temperature: 0.7,
-        max_tokens: 1000
-      })
-    });
+    );
 
-    const responseTime = stopTimer();
+    const parsed = JSON.parse(cached.response) as ScriptOutput;
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      // Track failed usage
-      await trackUsage({
-        userId: finalUserId,
-        licenseKeyHash: licenseKeyHash,
-        licenseNonce: finalLicenseNonce,
-        service: 'openrouter',
-        endpoint: '/chat/completions',
-        action: 'chat_completion',
-        tierAtRequest: tier,
-        statusCode: response.status,
-        errorMessage: errorText,
-        responseTimeMs: responseTime,
-        creditsUsed: 0, // Failed call, no credits charged
-      });
-      throw new Error(`OpenRouter API failed: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content;
-
-    if (!content) {
-      throw new Error('No content in OpenRouter response');
-    }
-
-    const parsed = JSON.parse(content) as ScriptOutput;
-
-    // Validate required fields
     if (!parsed.title || !Array.isArray(parsed.scenes) || parsed.scenes.length === 0) {
       throw new Error('Invalid script format from API');
     }
-
-    // Extract token usage from OpenRouter response
-    const usage = data.usage;
-    const tokensTotal = (usage?.prompt_tokens ?? 0) + (usage?.completion_tokens ?? 0);
-
-    // Track successful usage
-    await trackUsage({
-      userId: finalUserId,
-      licenseKeyHash: licenseKeyHash,
-      licenseNonce: finalLicenseNonce,
-      service: 'openrouter',
-      endpoint: '/chat/completions',
-      action: 'chat_completion',
-      tokensInput: usage?.prompt_tokens ?? 0,
-      tokensOutput: usage?.completion_tokens ?? 0,
-      creditsUsed: calculateCredits('openrouter', 'chatCompletion', tokensTotal, tier),
-      modelName: data.model,
-      requestId: data.id,
-      tierAtRequest: tier,
-      statusCode: response.status,
-      responseTimeMs: responseTime,
-    });
 
     return parsed;
 

@@ -101,7 +101,11 @@ export const generateCampaign = inngest.createFunction(
 
       await updateStatus("processing_script", 10);
       const scriptService = ServiceFactory.getScriptService();
-      const result = await scriptService.generateScript({ topic, audience, tier });
+      // `orgId: userId` is the single-tenant Sophia idiom (matches
+      // src/app/api/raas/missions/route.ts:40). Real org_members lookup
+      // deferred to Phase 4F.1 — the cache PK composite + hash-prefix
+      // isolation still holds correctness either way.
+      const result = await scriptService.generateScript({ topic, audience, tier, orgId: userId });
       await updateStatus("processing_script", 35, { script_content: result });
       await resumeEngine.checkpoint(campaignId, "generate-script");
       return result;

@@ -6,6 +6,8 @@ export interface GenerateScriptInput {
   topic: string;
   audience: string;
   tier: Tier;
+  /** Tenant scope for LLM cache (Phase 4F). Empty/omitted → cache skipped. */
+  orgId?: string;
 }
 
 export interface ScriptScene {
