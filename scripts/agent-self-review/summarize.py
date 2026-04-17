@@ -24,6 +24,28 @@ WINDOW_DAYS = 7
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 MODEL = "anthropic/claude-haiku-4-5"  # cheap + fast for summarization
 
+TELEGRAM_API_URL = "https://api.telegram.org/bot{token}/sendMessage"
+
+
+def notify_telegram(msg: str) -> None:
+    """Best-effort Telegram notification — never raises."""
+    token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID", "")
+    if not token or not chat_id:
+        return  # secrets not provisioned — silent skip
+    try:
+        payload = {"chat_id": chat_id, "text": msg, "parse_mode": "HTML"}
+        req = urllib.request.Request(
+            TELEGRAM_API_URL.format(token=token),
+            data=json.dumps(payload).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(req, timeout=10) as _:
+            pass
+    except Exception:  # noqa: BLE001 — best-effort, never propagate
+        pass
+
+
 PROMPT_TEMPLATE = """You are reviewing the past 7 days of work by the **{agent}** agent in Sophia AI Factory.
 
 Below are the journal entries. Suggest the top 3 prompt-improvement opportunities.
@@ -112,7 +134,9 @@ def main() -> int:
     repo = os.environ.get("GITHUB_REPOSITORY", "longtho638-jpg/sophia-ai-factory")
 
     if not api_key:
-        print("OPENROUTER_API_KEY missing — skipping self-review", file=sys.stderr)
+        msg = "Sophia self-review skipped — OPENROUTER_API_KEY not provisioned. Rotate via GH Secrets."
+        print(msg, file=sys.stderr)
+        notify_telegram(msg)
         return 0  # not a failure (graceful no-op until secret provisioned)
 
     entries_by_agent = load_journal_entries()
@@ -150,4 +174,8 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except Exception as exc:
+        notify_telegram(f"Sophia self-review FAILED: {exc}")
+        raise
