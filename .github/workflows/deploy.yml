@@ -81,21 +81,29 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-      # Smoke test preview URL before canary split
-      - name: Smoke test — health detail
+      # Smoke-test the live route before canary promotes new version.
+      # workers.dev subdomain is OFF for Sophia (custom domain only),
+      # so we hit the prod custom route which still serves the OLD version
+      # at this point — the goal is "site is reachable & responds" before
+      # we route real traffic to the freshly-uploaded version.
+      - name: Smoke test — health detail (pre-canary liveness)
         if: steps.upload.outputs.new_version_id != ''
         run: |
-          PREVIEW_URL="https://sophia-ai-factory.workers.dev"
+          PREVIEW_URL="https://sophia.agencyos.network"
           echo "[smoke] Testing $PREVIEW_URL/api/health/detail..."
-          HTTP=$(curl -sf -o /dev/null -w "%{http_code}" \
+          HTTP=$(curl -s -o /dev/null -w "%{http_code}" \
             -H "Authorization: Bearer $INTROSPECT_TOKEN" \
+            --max-time 15 \
             "$PREVIEW_URL/api/health/detail" || echo "000")
           echo "[smoke] HTTP status: $HTTP"
+          # 401 = auth gate active (expected when INTROSPECT_TOKEN unset)
+          # 200 = healthy
+          # anything else = real failure
           if [ "$HTTP" != "200" ] && [ "$HTTP" != "401" ]; then
             echo "FAIL: health check returned $HTTP"
             exit 1
           fi
-          echo "PASS: smoke test passed"
+          echo "PASS: smoke test passed (HTTP $HTTP)"
         env:
           INTROSPECT_TOKEN: ${{ secrets.INTROSPECT_TOKEN }}
 
