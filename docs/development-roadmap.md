@@ -2,7 +2,7 @@
 
 > Product milestones and progress tracking (2026)
 
-**Last Updated:** 2026-04-17
+**Last Updated:** 2026-04-17 (Phase 4E LLM Semantic Cache MVP)
 **Target:** $1M ARR, 100/100 a16z solo company score
 
 ---
@@ -94,6 +94,19 @@
   - Automated tunnel restart on connection loss
   - Troubleshooting runbook + FAQ
 - **Metrics:** Integrated into sophia-local-mode-runbook.md
+
+### Phase 8.6: LLM Semantic Cache MVP ✅ SHIPPED (Phase 4E)
+- **Status:** Exact-match SHA-256 D1 cache live, dark-launched (2026-04-17)
+- **Features:**
+  - `llm_cache` D1 table (hash PK + expires_at index)
+  - `hashCacheKey` SHA-256 hex over normalized `{provider, model, messages}`
+  - `lookupCache` + `writeCache` D1 client wrappers, swallow-all-errors pattern
+  - TTL via `LLM_CACHE_TTL_SECONDS` (default 24h), gate via `LLM_CACHE_ENABLED=1`
+  - Wired into `weekly-signals-digest` cron OpenRouter summarize path
+  - Semantic similarity (embedding top-K) deferred to Phase 4E.2
+- **Metrics:** ~565 new LOC (migration + module + tests + wiring), 25 new tests (1148 total), commit `69fe6a5`
+- **Files:** `migrations/0008-llm-cache.sql` + `src/lib/llm/cache/llm-cache.{ts,test.ts}` + `src/app/api/cron/weekly-signals-digest/route.ts`
+- **Activation:** `wrangler secret put LLM_CACHE_ENABLED --value 1` (founder manual)
 
 ### Phase 8.5: Langfuse External LLM Observability ✅ SHIPPED (Phase 4D)
 - **Status:** Secondary fire-and-forget sink live, dark-launched (2026-04-17)
@@ -203,6 +216,7 @@
 | 2026-04-17 | Local Mode Provisioning + Installer + Health Monitoring | ✅ |
 | **2026-04-17** | **Supervisor Agent MVP (D1+Cron stepper, Giai đoạn 3.4)** | **✅ SHIPPED** |
 | **2026-04-17** | **Phase 4D Langfuse External LLM Observability (env-gated)** | **✅ SHIPPED** |
+| **2026-04-17** | **Phase 4E LLM Semantic Cache MVP (exact-match + D1, env-gated)** | **✅ SHIPPED** |
 | 2026-05-01 | Analytics Dashboard | 🔄 Planned |
 | 2026-06-01 | Multi-Language Support (Vietnamese) | 🔄 Planned |
 | 2026-07-01 | Telegram Bot Enhancement | 🔄 Planned |
