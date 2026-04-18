@@ -8,6 +8,8 @@ export interface GenerateScriptInput {
   tier: Tier;
   /** Tenant scope for LLM cache (Phase 4F). Empty/omitted → cache skipped. */
   orgId?: string;
+  /** Owner userId for BYOK key resolution (Phase 7B). */
+  userId?: string;
 }
 
 export interface ScriptScene {

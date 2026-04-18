@@ -1,8 +1,8 @@
 import { Tier } from "@/types";
 import { trackUsage, hashLicenseKey, calculateCredits, startTimer } from '@/lib/usage-metering';
 import { getUsageContext } from '@/lib/usage-metering/context';
-import { logger } from '@/lib/utils/logger-utility';
 import { callWithCache } from '@/lib/llm/cache/call-with-cache';
+import { resolveUserApiKey } from '@/lib/byok/resolve-user-api-key';
 
 interface GenerateScriptInput {
   topic: string;
@@ -32,7 +32,6 @@ interface ScriptOutput {
  */
 export async function generateScript(input: GenerateScriptInput): Promise<ScriptOutput> {
   const { topic, audience, tier, userId, licenseKey, licenseNonce, orgId } = input;
-  const apiKey = process.env.OPENROUTER_API_KEY;
   const stopTimer = startTimer();
 
   // Get context if available (from async local storage)
@@ -41,6 +40,16 @@ export async function generateScript(input: GenerateScriptInput): Promise<Script
   const finalLicenseKey = licenseKey || '';
   const finalLicenseNonce = licenseNonce || context?.licenseNonce || 'unknown';
   const licenseKeyHash = hashLicenseKey(finalLicenseKey || 'unknown');
+
+  // Phase 7B: BYOK — prefer user's stored OpenRouter key (when BYOK_ENABLED=1
+  // and a key is set for this user); otherwise fall back to the env key.
+  // Resolver short-circuits safely when no real userId ('unknown' sentinel).
+  const resolvedUserId = finalUserId === 'unknown' ? null : finalUserId;
+  const apiKey = await resolveUserApiKey(
+    resolvedUserId,
+    'openrouter',
+    process.env.OPENROUTER_API_KEY,
+  );
 
   // Fallback to mock if no API key
   if (!apiKey) {

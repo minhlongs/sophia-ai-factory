@@ -10,6 +10,7 @@ import type { AffiliateProgram } from "@/types";
 import { withTimeout } from "@/lib/byok/with-timeout";
 import { callLocalMekongd } from "@/lib/byok/local-mekongd-adapter";
 import { resolveLocalMekongdForUser } from "@/lib/byok/provider-router";
+import { resolveUserApiKey } from "@/lib/byok/resolve-user-api-key";
 
 /** OpenRouter response shape for chat completions */
 interface OpenRouterChoice {
@@ -73,7 +74,12 @@ export async function enhanceNicheScoreWithAI(
     // null → fall through to OpenRouter (silent fallback)
   }
 
-  const apiKey = process.env.OPENROUTER_API_KEY;
+  // Phase 7C: BYOK-aware — prefer user's stored OpenRouter key; fall back to env.
+  const apiKey = await resolveUserApiKey(
+    userId ?? null,
+    "openrouter",
+    process.env.OPENROUTER_API_KEY,
+  );
   if (!apiKey) return null;
 
   try {

@@ -21,14 +21,21 @@ vi.mock('@/lib/byok/with-timeout', () => ({
 vi.mock('@/lib/byok/provider-router', () => ({
   resolveLocalMekongdForUser: vi.fn(),
 }))
+vi.mock('@/lib/byok/resolve-user-api-key', () => ({
+  resolveUserApiKey: vi.fn((_userId, _provider, envFallback) =>
+    Promise.resolve(envFallback ?? null),
+  ),
+}))
 
 import { callLocalMekongd } from '@/lib/byok/local-mekongd-adapter'
 import { withTimeout } from '@/lib/byok/with-timeout'
 import { resolveLocalMekongdForUser } from '@/lib/byok/provider-router'
+import { resolveUserApiKey } from '@/lib/byok/resolve-user-api-key'
 
 const mockLocal = vi.mocked(callLocalMekongd)
 const mockOpenRouter = vi.mocked(withTimeout)
 const mockResolveUser = vi.mocked(resolveLocalMekongdForUser)
+const mockResolveByokKey = vi.mocked(resolveUserApiKey)
 
 const program: AffiliateProgram = {
   id: 'p1',
@@ -47,6 +54,10 @@ describe('enhanceNicheScoreWithAI() — local-mekongd routing', () => {
     delete process.env.OPENROUTER_API_KEY
     // Default: user router returns null (no per-user config)
     mockResolveUser.mockResolvedValue(null)
+    // Reset pass-through BYOK default wiped by clearAllMocks.
+    mockResolveByokKey.mockImplementation((_u, _p, envFallback) =>
+      Promise.resolve(envFallback ?? null),
+    )
   })
 
   afterEach(() => {
@@ -152,5 +163,48 @@ describe('enhanceNicheScoreWithAI() — local-mekongd routing', () => {
       expect.stringContaining('Rate how well'),
       expect.objectContaining({ endpoint: 'https://founder-tunnel.cashclaw.cc' }),
     )
+  })
+
+  // Phase 7C: BYOK OpenRouter key resolution in the cloud-fallback path.
+
+  it('7C: OpenRouter fetch uses BYOK-resolved key (user key wins over env)', async () => {
+    process.env.OPENROUTER_API_KEY = 'sk-or-env'
+    mockResolveUser.mockResolvedValueOnce(null) // no local config for user
+    mockResolveByokKey.mockResolvedValueOnce('sk-or-user-byok')
+    mockOpenRouter.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({ choices: [{ message: { content: '91' } }] }),
+    } as Response)
+
+    const score = await enhanceNicheScoreWithAI(program, 'fintech', 'user-xyz')
+
+    expect(score).toBe(91)
+    // BYOK resolver called with userId + openrouter + env fallback
+    expect(mockResolveByokKey).toHaveBeenCalledWith(
+      'user-xyz',
+      'openrouter',
+      'sk-or-env',
+    )
+    // Authorization header carries the user's BYOK key, not the env fallback
+    expect(mockOpenRouter).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: 'Bearer sk-or-user-byok',
+        }),
+      }),
+    )
+  })
+
+  it('7C: OpenRouter fetch skipped when BYOK resolver returns null (no env, no user key)', async () => {
+    // no env key set, no user key
+    mockResolveUser.mockResolvedValueOnce(null)
+    mockResolveByokKey.mockResolvedValueOnce(null)
+
+    const score = await enhanceNicheScoreWithAI(program, 'fintech', 'user-xyz')
+
+    expect(score).toBeNull()
+    expect(mockOpenRouter).not.toHaveBeenCalled()
   })
 })
