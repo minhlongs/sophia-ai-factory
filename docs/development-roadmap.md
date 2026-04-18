@@ -159,6 +159,21 @@
 - **Closes:** Phase 4E multi-tenant cache lifecycle (H-1 org scoping + F wiring + 4E.3 purge ops)
 - **Deferred:** Phase 4E.4 (per-org cache stats dashboard)
 
+### Phase 8.6.5: Telemetry Honesty + LLM Trace Stats ✅ SHIPPED (Phase 4G-FIX + 4I)
+- **Status:** Dark-launch refinement + ops endpoint live (2026-04-18)
+- **Features:**
+  - Phase 4G-FIX: Provider gate + empty response handling (closes 3 reviewer findings)
+    - Unsupported providers skip live fetch, emit `llm_router_unsupported` warn
+    - Empty LLM response triggers `llm_empty_response` degraded signal
+    - `recordLlmCall()` writes `ok:false, errorClass:'LLM_LIVE_FAILED_FALLBACK'` when degraded
+  - Phase 4I: `GET /api/admin/llm-trace-stats` JSON endpoint (CRON_SECRET-guarded, 24h aggregates)
+    - Returns `{ ok, ts, stats: { total, success, failure, successRate, avgDurationMs }, topProviders, topModels }`
+    - Exported `aggregateTraceStats()` for dashboard reuse
+- **Metrics:** 9 new tests (1202 total), ~40 LOC new endpoint + ~20 LOC fixes, code review 9.6/10
+- **Files:** `src/lib/llm/router.ts` (modify) + `src/app/api/cron/workflow-stepper/route.ts` (modify) + `src/app/api/admin/llm-trace-stats/route.ts` (new)
+- **Closes:** Phase 4G reviewer findings (provider gate, empty response, telemetry honesty), Phase 4I trace stats API
+- **Activation:** Automatic — no new gates; refines existing dark-launch behavior
+
 ### Phase 8.6.4: Real LLM Workflow + Cache Stats API ✅ SHIPPED (Phase 4G + 4H)
 - **Status:** Dark-launched real LLM + ops endpoint live (2026-04-18)
 - **Features:**

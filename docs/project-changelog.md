@@ -5,6 +5,46 @@
 
 ---
 
+## [2026-04-18] Phase 4G-FIX + 4I — Telemetry Honesty & LLM Trace Stats (Dark Launch Refinement)
+
+### Summary
+Follow-up shipment fixing Phase 4G dark-launch telemetry integrity + shipping Phase 4I trace stats API. Phase 4G-FIX closes 3 reviewer findings: unsupported providers skip live fetch + `llm_router_unsupported` warn flag, `llm_empty_response` degraded signal, `llmDegraded` flag flowing through to `recordLlmCall(ok:false)` for honest success-rate tracking. Phase 4I adds `GET /api/admin/llm-trace-stats` endpoint (CRON_SECRET-guarded) returning 24h aggregates `{ total, success, failure, successRate, avgDurationMs, byProvider, byModel }` for ops observability. Tests 1193 → 1202 (+9: 3 workflow-stepper + 6 trace-stats).
+
+### Changes
+1. **Phase 4G-FIX: Telemetry Honesty** — `src/lib/llm/router.ts` + `src/app/api/cron/workflow-stepper/route.ts` (modify)
+   - Unsupported providers (e.g. provider not in router) skip live fetch, emit `llm_router_unsupported` warn flag
+   - Empty/null live LLM response triggers `llm_empty_response` degraded flag
+   - `recordLlmCall()` writes `ok:false, errorClass:'LLM_LIVE_FAILED_FALLBACK'` when `llmDegraded=true`
+   - Preserves fallback behavior; signals failure transparently to observability
+
+2. **Phase 4I: LLM Trace Stats API** — `src/app/api/admin/llm-trace-stats/route.ts` (new, ~40 LOC)
+   - `GET /api/admin/llm-trace-stats` — CRON_SECRET header validation
+   - Queries `signals_events` table WHERE `event_type='llm_call_trace'` over 24h window
+   - Returns `{ ok: true, ts, stats: { total, success, failure, successRate, avgDurationMs }, topProviders: [...], topModels: [...] }`
+   - Exported `aggregateTraceStats()` for reuse in dashboards
+   - Returns `{ ok: false, reason }` on auth/DB failure
+
+3. **Tests** — 9 new
+   - Phase 4G-FIX: unsupported provider path, empty response fallback, llmDegraded flag propagation
+   - Phase 4I: CRON_SECRET validation, 24h aggregation window, top-5 provider/model cardinality, error cases
+
+### Quality Gates
+- Build: ✅ `npm run build` exit 0
+- Tests: ✅ 1202/1202 (+9 from Phase 4G+4H baseline 1193)
+- Code Review: ✅ 9.6/10 SHIP (telemetry honesty verified, trace stats endpoint validated)
+- Prod: ✅ HTTP 200 `/api/version` shortSha=b7c750d9, endpoints live
+
+### Activation
+- Phase 4G-FIX: Automatic — no new gates, refines existing dark-launch behavior
+- Phase 4I: Automatic — ops monitoring can query 24h trace stats immediately
+- No breaking changes; all changes backward compatible
+
+### Closes
+- Phase 4G-FIX reviewer findings (provider gate, empty response, telemetry honesty)
+- Phase 4I JSON endpoint ("external ops LLM trace stats API")
+
+---
+
 ## [2026-04-18] Phase 4G + 4H — Real LLM Workflow & Cache Stats API (Dark Launch + Ops)
 
 ### Summary

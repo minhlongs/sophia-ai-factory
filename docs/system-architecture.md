@@ -132,7 +132,7 @@ graph TB
 | **Adapter** | opennextjs-cloudflare | Next.js → CF Workers |
 | **Database** | Cloudflare D1 | SQLite-based, `sophia-raas-db` |
 | **Cache** | Cloudflare R2 | `sophia-ai-factory-opennext-cache` |
-| **LLM Cache** | D1 (Org-Scoped) | `callWithCache()` wrapper wired into script-generator (Phase 4F); exact-match SHA-256 hash, per-tenant isolation via `resolveOrgId()` helper (Phase 4E H-1, refined Phase 4F.1), daily purge cron `/api/cron/llm-cache-purge` (Phase 4E.3), real LLM dark-launch in workflow-stepper with gate (Phase 4G, `WORKFLOW_REAL_LLM_ENABLED`), stats endpoint `/api/admin/llm-cache-stats` (Phase 4H), dark-launched |
+| **LLM Cache** | D1 (Org-Scoped) | `callWithCache()` wrapper wired into script-generator (Phase 4F); exact-match SHA-256 hash, per-tenant isolation via `resolveOrgId()` helper (Phase 4E H-1, refined Phase 4F.1), daily purge cron `/api/cron/llm-cache-purge` (Phase 4E.3), real LLM dark-launch in workflow-stepper with gate (Phase 4G, `WORKFLOW_REAL_LLM_ENABLED`), stats endpoint `/api/admin/llm-cache-stats` (Phase 4H), telemetry honesty fixes + provider-gate handling (Phase 4G-FIX, 2026-04-18), LLM trace stats 24h aggregates `/api/admin/llm-trace-stats` (Phase 4I, 2026-04-18), dark-launched |
 | **Auth** | Better Auth v1.6.2 (D1) | Email/password + magic link, org plugin, no RLS |
 | **Billing** | NOWPayments (primary) + PayOS (backup) | MCU credit system, webhooks |
 | **Email** | Resend | Magic link, notifications |
