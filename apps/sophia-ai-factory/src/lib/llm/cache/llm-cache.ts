@@ -171,7 +171,12 @@ export async function writeCache(
       if (vec) {
         embedding      = encodeEmbedding(vec)
         embeddingModel = EMBEDDING_MODEL_ID
-        promptText     = normalized
+        // Phase 4E.2-TUNING: plaintext prompt kept only when explicitly
+        // opted-in (potential PII / GDPR concern). Default off — vector
+        // alone still drives cosine retrieval.
+        if (process.env.LLM_CACHE_STORE_PROMPT_TEXT === '1') {
+          promptText = normalized
+        }
       }
     }
 

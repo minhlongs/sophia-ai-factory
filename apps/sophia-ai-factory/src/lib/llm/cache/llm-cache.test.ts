@@ -435,6 +435,62 @@ describe('llm-cache', () => {
       const payload = chain.upsert.mock.calls[0][0] as Record<string, unknown>
       expect(payload.org_id).toBe('tenant-xyz')
     })
+
+    // Phase 4E.2-TUNING: embedding / embedding_model columns NULL when gate off
+    it('leaves embedding columns null when LLM_CACHE_SEMANTIC_ENABLED is off', async () => {
+      process.env.LLM_CACHE_ENABLED = '1'
+      delete process.env.LLM_CACHE_SEMANTIC_ENABLED
+      const chain = buildChainMock({ data: null, error: null })
+      mockDbChain(chain)
+
+      await writeCache(baseKey, { response: 'r' })
+
+      const payload = chain.upsert.mock.calls[0][0] as Record<string, unknown>
+      expect(payload.embedding).toBeNull()
+      expect(payload.embedding_model).toBeNull()
+      expect(payload.prompt_text).toBeNull()
+    })
+
+    // Phase 4E.2-TUNING L-3: prompt_text gated by separate PII env flag
+    it('does NOT store prompt_text when LLM_CACHE_STORE_PROMPT_TEXT is off (PII default)', async () => {
+      process.env.LLM_CACHE_ENABLED = '1'
+      process.env.LLM_CACHE_SEMANTIC_ENABLED = '1'
+      delete process.env.LLM_CACHE_STORE_PROMPT_TEXT
+      // Install AI binding so embedPrompt succeeds
+      ;(globalThis as unknown as { AI: unknown }).AI = {
+        run: async () => ({ data: [[0.1, 0.2, 0.3]] }),
+      }
+
+      const chain = buildChainMock({ data: null, error: null })
+      mockDbChain(chain)
+
+      await writeCache(baseKey, { response: 'r' })
+
+      const payload = chain.upsert.mock.calls[0][0] as Record<string, unknown>
+      // Embedding is stored (vector is public-safe) but prompt_text is withheld
+      expect(payload.embedding).not.toBeNull()
+      expect(payload.embedding_model).toBe('@cf/baai/bge-base-en-v1.5')
+      expect(payload.prompt_text).toBeNull()
+      delete (globalThis as unknown as { AI?: unknown }).AI
+    })
+
+    it('DOES store prompt_text only when explicitly opted-in', async () => {
+      process.env.LLM_CACHE_ENABLED = '1'
+      process.env.LLM_CACHE_SEMANTIC_ENABLED = '1'
+      process.env.LLM_CACHE_STORE_PROMPT_TEXT = '1'
+      ;(globalThis as unknown as { AI: unknown }).AI = {
+        run: async () => ({ data: [[0.1, 0.2, 0.3]] }),
+      }
+
+      const chain = buildChainMock({ data: null, error: null })
+      mockDbChain(chain)
+
+      await writeCache(baseKey, { response: 'r' })
+
+      const payload = chain.upsert.mock.calls[0][0] as Record<string, unknown>
+      expect(payload.prompt_text).toBe('hello')
+      delete (globalThis as unknown as { AI?: unknown }).AI
+    })
   })
 
   describe('H-1 org isolation integration', () => {
