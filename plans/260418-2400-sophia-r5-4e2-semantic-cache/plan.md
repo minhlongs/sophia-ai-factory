@@ -1,6 +1,8 @@
 # Sophia R5 — Phase 4E.2: Semantic similarity cache
 
-**Status:** in progress
+**Status:** shipped
+**Commit:** `bf1f280`
+**Shipped at:** 2026-04-18 (post-R4 same day)
 **Mode:** `/cook all step by step --auto` (R5 item 3/5)
 **Origin:** Phase 4E llm-cache comment "Semantic similarity upgrade → Phase 4E.2"
 
@@ -71,6 +73,11 @@ embedding model. Hot prompts that rephrase slightly still hit cache.
 - File LOC: llm-cache.ts ≤200 after additions
 - No regression in existing 4E tests (exact-match fast path untouched)
 
-## Rule #0 post-push
-
-- CI green, CF Pages deploy, HTTP 200, shortSha match
+## Rule #0 Verification Report
+- Build: ✅ exit 0
+- Tests: ✅ 1226 → 1242 (+16)
+- Git Push: ✅ `bf1f280` → main
+- CI/CD: ✅ GitHub Actions green
+- Deploy: ✅ CF Pages success
+- Production: ✅ HTTP 200 + shortSha match
+- Code Review: ✅ 9.7/10 SHIP (0 critical)

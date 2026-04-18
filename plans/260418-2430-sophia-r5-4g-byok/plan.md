@@ -1,6 +1,8 @@
 # Sophia R5 — Phase 4G-BYOK: per-user API keys (MVP)
 
-**Status:** in progress
+**Status:** shipped
+**Commit:** `aa73a67`
+**Shipped at:** 2026-04-18 (post-R4 same day)
 **Mode:** `/cook all step by step --auto` (R5 item 5/5)
 **Origin:** Phase 4G memory note "per-user OpenRouter + Anthropic keys"
 
@@ -62,8 +64,11 @@ and table so subsequent work (`4G-WIRE`) can plug them in.
 - No key rotation workflow (future)
 - No audit-log on set/clear (future)
 
-## Verification
-
-- Tests: 1249 → 1261+ (+12)
-- Build: 0 errors
-- LOC per file ≤200
+## Rule #0 Verification Report
+- Build: ✅ exit 0
+- Tests: ✅ 1249 → 1282 (+33)
+- Git Push: ✅ `aa73a67` → main
+- CI/CD: ✅ GitHub Actions green
+- Deploy: ✅ CF Pages success
+- Production: ✅ HTTP 200 + shortSha match
+- Code Review: ✅ 9.6/10 SHIP (0 critical)

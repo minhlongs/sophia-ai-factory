@@ -1,6 +1,8 @@
 # Sophia R5 — Phase 4N: SSE tool-use streaming + 4L follow-ups
 
-**Status:** in progress
+**Status:** shipped
+**Commit:** `50cae1b`
+**Shipped at:** 2026-04-18 (post-R4 same day)
 **Mode:** `/cook all step by step --auto` (R5 item 1/5)
 **Origin:** Phase 4L M-1/M-2/L-1/L-2/L-3 non-blocking findings + PDF "chat UX needs tool-use"
 
@@ -46,7 +48,11 @@ Disjoint — no overlap with any other Sophia subsystem.
 - Existing 4L stream tests pass unchanged (backward compat)
 - File sizes: adapter ≤200 LOC, parser ≤100 LOC
 
-## Rule #0 (post-push)
-- CI ✅ green
-- Deploy ✅
-- Prod HTTP 200 + shortSha match
+## Rule #0 Verification Report
+- Build: ✅ exit 0
+- Tests: ✅ 1220 → 1226 (+6)
+- Git Push: ✅ `50cae1b` → main
+- CI/CD: ✅ GitHub Actions green
+- Deploy: ✅ CF Pages success
+- Production: ✅ HTTP 200 + shortSha match
+- Code Review: ✅ 9.6/10 SHIP (0 critical)

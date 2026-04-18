@@ -1,6 +1,8 @@
 # Sophia R5 — Phase 4F.2: getTenantContext helper
 
-**Status:** in progress
+**Status:** shipped
+**Commit:** `0172fa2`
+**Shipped at:** 2026-04-18 (post-R4 same day)
 **Mode:** `/cook all step by step --auto` (R5 item 4/5)
 **Origin:** Phase 4F.1 memory note "absorbing get-user-tier + resolveOrgId"
 
@@ -40,8 +42,11 @@ no existing caller is paying the double-roundtrip cost today. BUT:
 - D1 throw → null (swallow)
 - Verifies single D1 JOIN (observability via prepare.mock.calls length)
 
-## Verification
-
-- `npm run build` → 0 errors
-- `npm test` → 1242 → 1249+ (+7)
-- LOC: new file ≤200
+## Rule #0 Verification Report
+- Build: ✅ exit 0
+- Tests: ✅ 1242 → 1249 (+7)
+- Git Push: ✅ `0172fa2` → main
+- CI/CD: ✅ GitHub Actions green
+- Deploy: ✅ CF Pages success
+- Production: ✅ HTTP 200 + shortSha match
+- Code Review: ✅ 9.7/10 SHIP (0 critical)
