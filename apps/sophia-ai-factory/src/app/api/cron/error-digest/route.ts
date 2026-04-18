@@ -10,6 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { pushFatalLog } from '@/lib/telemetry/better-stack-client';
+import { resolveUserApiKey } from '@/lib/byok/resolve-user-api-key';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,7 +42,8 @@ function verifyCronSecret(request: NextRequest): boolean {
 }
 
 async function callOpenRouter(fingerprints: ErrorRow[]): Promise<string> {
-  const openRouterKey = process.env.OPENROUTER_API_KEY ?? '';
+  // Phase 8A: BYOK symmetry — library-consistent (cron has no userId → env fallback).
+  const openRouterKey = await resolveUserApiKey(null, 'openrouter', process.env.OPENROUTER_API_KEY);
   if (!openRouterKey || !fingerprints.length) {
     return 'No errors in the past 24 hours.';
   }
