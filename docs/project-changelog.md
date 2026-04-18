@@ -1,7 +1,50 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-04-18 PM-22 (Phase 4F.3/4N-POLISH/4E.2-TUNING/4G-WIRE: R6 Refinement Pack — Tier Normalization, SSE Polish, Cache Index Widening, BYOK Integration)
+> **Last Updated:** 2026-04-18 PM-23 (Phase 7A/7B/7C: R7 BYOK Wiring Completion — OpenRouter degrade-to-mock + script-generator + niche-enhancer)
+
+---
+
+## [2026-04-18] Phase 7A + 7B + 7C — BYOK Wiring Completion for OpenRouter Callers (Round 7)
+
+### Summary
+Three narrow follow-ups closing R6's 4G-WIRE L-1 + extending BYOK resolution to the remaining two OpenRouter callers. Phase 7A mirrors the Anthropic-path null-key degrade in workflow-stepper: when `resolveUserApiKey` returns null, degrade-to-mock before fetch with dedicated `llm_openrouter_missing_key` warn event (prevents `Bearer ` empty → 401 upstream + keeps telemetry honest via `llmDegraded=true`). Phase 7B threads `userId` through script-generator → generate-campaign Inngest path: `GenerateScriptInput` gains `userId?: string`; generate-campaign passes `event.data.userId`; script-generator resolves OpenRouter key via `resolveUserApiKey(userId, 'openrouter', env)` (with `'unknown'` sentinel stripped to `null`). Phase 7C applies the same pattern to `enhanceNicheScoreWithAI`'s cloud-fallback branch (local-mekongd priorities 1+2 unchanged). All three wire-ins use identical resolver shape; BYOK-off default is byte-identical to pre-wire. Tests 1294 → 1300 (+6). Review 9.5/10 SHIP, 0 critical, 0 high.
+
+### Changes
+1. **Phase 7A: OpenRouter degrade-to-mock** — `src/app/api/cron/workflow-stepper/route.ts` (modify)
+   - Added `if (!openrouterKey)` guard before fetch; sets `llmDegraded = true`, logs `llm_openrouter_missing_key`, writes mock result
+   - Mirrors existing Anthropic-path pattern (lines 123-130) for consistency
+   - Telemetry (`recordLlmCall`) reports `ok: false` + `errorClass: 'LLM_LIVE_FAILED_FALLBACK'`
+   - Test 11 added (route.test.ts); `@/lib/byok/resolve-user-api-key` module-mocked with pass-through default
+
+2. **Phase 7B: BYOK wire into script-generator** — `src/lib/ai/script-generator.ts` + 2 callers (modify)
+   - Imports `resolveUserApiKey`; replaces `const apiKey = process.env.OPENROUTER_API_KEY` with resolver call using `finalUserId` (sentinel `'unknown'` → `null`)
+   - `src/lib/services/types.ts` — `GenerateScriptInput` gains `userId?: string`
+   - `src/lib/inngest/functions/generate-campaign.ts` — passes `userId` through `scriptService.generateScript`
+   - `src/lib/ai/script-generator.test.ts` (new, 95 LOC) — 3 narrow tests: resolver call shape, null-fallback mock, sentinel strip
+
+3. **Phase 7C: BYOK wire into niche-enhancer** — `src/lib/discovery/affiliate-openrouter-niche-enhancer.ts` (modify)
+   - Imports `resolveUserApiKey`; priority 3 (OpenRouter cloud) reads via resolver using existing `userId` param
+   - Priorities 1+2 (per-user + founder local-mekongd) unchanged
+   - +2 test cases: user key overrides env, resolver-null returns null without fetch
+
+### Tests & Quality
+- **Tests:** 1294 → 1300 (+6): 1 workflow-stepper + 3 script-generator + 2 niche-enhancer
+- **Build:** ✅ npm run build exit 0
+- **Lint:** ✅ ESLint clean (pre-existing unused `logger` import in script-generator dropped in same commit)
+- **Code Review:** ✅ 9.5/10 SHIP, 0 critical, 0 high, 4 low (2 non-blocking cron follow-ups deferred to R8)
+- **CI:** ✅ Tests & Deploy + Post-Merge Tests both green on commit `0cab570`
+- **Prod:** ✅ shortSha `0cab5705` match, HTTP 200
+
+### Backward Compatibility
+- 100% backward-compatible; `BYOK_ENABLED=1` gate in resolver keeps BYOK-off path byte-identical to pre-wire
+- No schema changes, no new env vars required
+- `GenerateScriptInput.userId` is optional — existing callers unaffected
+- All three resolver calls use shared signature: `resolveUserApiKey(userId | null, 'openrouter', envFallback)`
+
+### Deferred to R8 (non-blocking)
+- `cron/weekly-signals-digest/route.ts:66` + `cron/error-digest/route.ts:44` — read `OPENROUTER_API_KEY` directly. Both have early-return-on-null (no 401 risk); crons have no userId so BYOK adds no value. Tracked for symmetry-invariant pass only.
+- `LLM_MISSING_KEY_FALLBACK` errorClass discriminability (collapsed under `LLM_LIVE_FAILED_FALLBACK` — low priority)
 
 ---
 

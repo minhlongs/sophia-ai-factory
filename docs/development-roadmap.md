@@ -2,7 +2,7 @@
 
 > Product milestones and progress tracking (2026)
 
-**Last Updated:** 2026-04-18 PM-22 (Phase 4F.3/4N-POLISH/4E.2-TUNING/4G-WIRE: R6 Refinement Pack shipped — Tier Normalization, SSE Polish, Cache Index Widening, BYOK Integration)
+**Last Updated:** 2026-04-18 PM-23 (Phase 7A/7B/7C: R7 BYOK Wiring Completion — workflow-stepper degrade-to-mock + script-generator + niche-enhancer)
 **Target:** $1M ARR, 100/100 a16z solo company score
 
 ---
@@ -257,6 +257,18 @@
 - **Activation:** All gates remain off by default; Phase 4F.3 automatic (replaces unsafe casts); 4N-POLISH automatic (SSE reader safety); 4E.2-TUNING automatic (index) + opt-in text storage; 4G-WIRE automatic when BYOK_ENABLED=1
 - **Backward Compatibility:** 100% backward-compatible; all existing calls work unchanged; BYOK gate off by default
 
+### Phase 8.11: BYOK Wiring Completion for OpenRouter Callers ✅ SHIPPED (Round 7: Phase 7A + 7B + 7C)
+- **Status:** Three narrow follow-ups live (2026-04-18)
+- **Features:**
+  - Phase 7A: workflow-stepper OpenRouter `!openrouterKey` guard → degrade-to-mock with `llm_openrouter_missing_key` warn event (mirrors Anthropic pattern; closes R6 4G-WIRE L-1)
+  - Phase 7B: `GenerateScriptInput.userId` threaded through generate-campaign Inngest → script-generator resolves OpenRouter key via `resolveUserApiKey(userId, 'openrouter', env)` with sentinel `'unknown'` stripped
+  - Phase 7C: `enhanceNicheScoreWithAI` cloud-fallback (priority 3) uses same resolver with existing `userId` param; local-mekongd priorities 1+2 unchanged
+- **Metrics:** 6 new tests (1294 → 1300 total), review 9.5/10 SHIP, 0 critical, 0 high, no breaking changes
+- **Files:** `workflow-stepper/route.ts` + `script-generator.ts` + `generate-campaign.ts` + `services/types.ts` + `affiliate-openrouter-niche-enhancer.ts` + 3 test files (1 new, 2 extended)
+- **Activation:** All three resolvers inert when `BYOK_ENABLED` unset (envFallback pass-through); identical to pre-wire behavior
+- **Backward Compatibility:** 100% backward-compatible; `GenerateScriptInput.userId` optional; no schema or env changes
+- **Commit:** `0cab570` — CI green, prod HTTP 200, shortSha match
+
 ### Phase 9: Analytics Dashboard (Planned)
 - **Timeline:** May 2026
 - **Features:**
@@ -350,6 +362,7 @@
 | **2026-04-18** | **Phase 4M + 4L Trace Aggregator Extraction + Anthropic Streaming/Tool-Use (Round 4)** | **✅ SHIPPED** |
 | **2026-04-18** | **Phase 4N SSE Parser Extraction + Phase 4E.2 Semantic Cache + Phase 4F.2 Tenant Helpers + Phase 4G-BYOK Foundations (Round 5)** | **✅ SHIPPED** |
 | **2026-04-18** | **Phase 4F.3 Tier Normalization + Phase 4N-POLISH SSE Reader + Phase 4E.2-TUNING Cache Index + Phase 4G-WIRE BYOK Integration (Round 6)** | **✅ SHIPPED** |
+| **2026-04-18** | **Phase 7A OpenRouter Degrade-to-Mock + Phase 7B script-generator BYOK + Phase 7C niche-enhancer BYOK (Round 7)** | **✅ SHIPPED** |
 | 2026-05-01 | Analytics Dashboard | 🔄 Planned |
 | 2026-06-01 | Multi-Language Support (Vietnamese) | 🔄 Planned |
 | 2026-07-01 | Telegram Bot Enhancement | 🔄 Planned |
