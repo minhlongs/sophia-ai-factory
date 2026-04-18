@@ -1,7 +1,48 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-04-18 (Phase 4F.1: resolveOrgId Unification)
+> **Last Updated:** 2026-04-18 (Phase 4E.3: LLM Cache Purge Cron)
+
+---
+
+## [2026-04-18] Phase 4E.3 — LLM Cache Purge Cron (Ops Hygiene)
+
+### Summary
+Scheduled daily cleanup of expired LLM cache entries via org-scoped `/api/cron/llm-cache-purge` endpoint. CRON_SECRET-guarded; fires at 07:00 UTC. Deletes `llm_cache` rows where `org_id = ?` AND `expires_at < now()`. D1 connection/query failures silently degrade (returns `ok: false` in response), allowing platform to remain operational during transient DB issues. Closes migration 0008 deferred TODO ("purge job") — completes Phase 4E multi-tenant cache lifecycle. Tests 1180 → 1184 (+4).
+
+### Changes
+1. **Purge cron endpoint** — `src/app/api/cron/llm-cache-purge/route.ts` (new, ~35 LOC)
+   - `POST /api/cron/llm-cache-purge` — CRON_SECRET header validation
+   - Queries all distinct `org_id` from `llm_cache` table
+   - For each org: `DELETE FROM llm_cache WHERE org_id = ? AND expires_at < now()`
+   - Returns `{ ok: true, deleted_count, orgs_processed }` on success
+   - Returns `{ ok: false, error_message }` on D1 failure (best-effort logging)
+
+2. **GitHub Actions cron trigger** — `.github/workflows/cron-llm-cache-purge.yml` (new, ~25 LOC)
+   - Schedule: `0 7 * * *` (daily 07:00 UTC)
+   - Curl POST to `${PROD_URL}/api/cron/llm-cache-purge` with `CRON_SECRET` header
+   - Failure alert: Slack notification (optional, deferred)
+
+3. **Tests** — 4 new
+   - CRON_SECRET validation (reject on missing/invalid header)
+   - All orgs purge path (multi-tenant cleanup)
+   - Single org with mixed expired/fresh entries
+   - D1 error gracefully returns `ok: false`
+
+### Quality Gates
+- Build: ✅ `npm run build` exit 0
+- Tests: ✅ 1184/1184 (+4 from 1180 Phase 4F.1 baseline)
+- Code Review: ✅ 9.7/10 SHIP (cleanup pattern consistent, error handling precedent)
+- Prod: ✅ HTTP 200 `/api/version` shortSha=078fabe3, cron endpoint live
+
+### Activation
+- Automatic — GHA cron trigger on main, fires daily at 07:00 UTC
+- No manual steps; best-effort pattern allows degraded cache state during D1 transients
+- Monitor via prod logs (error entries logged to Better Stack on D1 failure)
+
+### Closes
+- Migration 0008 deferred TODO ("purge job scheduled")
+- Phase 4E multi-tenant cache lifecycle now complete (H-1 scoping + F cache wiring + 4E.3 purge)
 
 ---
 

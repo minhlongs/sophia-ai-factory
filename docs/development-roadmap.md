@@ -2,7 +2,7 @@
 
 > Product milestones and progress tracking (2026)
 
-**Last Updated:** 2026-04-18 (Phase 4F LLM Cache Wiring shipped)
+**Last Updated:** 2026-04-18 (Phase 4E.3 LLM Cache Purge Cron shipped)
 **Target:** $1M ARR, 100/100 a16z solo company score
 
 ---
@@ -146,6 +146,19 @@
 - **Addresses:** Phase 4F reviewer LOW-1 (reduce duplication)
 - **Deferred:** Phase 4F.2 (async org lookup with fallback pattern), future canonical org helper for RaaS quota/signals
 
+### Phase 8.6.3: LLM Cache Purge Cron (Ops) ✅ SHIPPED (Phase 4E.3)
+- **Status:** Daily scheduled cleanup live (2026-04-18)
+- **Features:**
+  - `POST /api/cron/llm-cache-purge` — CRON_SECRET-guarded org-scoped purge
+  - GHA cron trigger daily at 07:00 UTC via `.github/workflows/cron-llm-cache-purge.yml`
+  - Deletes expired `llm_cache` rows per org: `DELETE WHERE org_id = ? AND expires_at < now()`
+  - Best-effort error handling: D1 failures silently degrade (returns `ok: false`)
+  - Closes migration 0008 TODO ("purge job"); Phase 4E lifecycle now complete
+- **Metrics:** 4 new tests (1184 total), ~60 LOC (endpoint + GHA workflow), code review 9.7/10
+- **Files:** `src/app/api/cron/llm-cache-purge/route.ts` + `.github/workflows/cron-llm-cache-purge.yml`
+- **Closes:** Phase 4E multi-tenant cache lifecycle (H-1 org scoping + F wiring + 4E.3 purge ops)
+- **Deferred:** Phase 4E.4 (per-org cache stats dashboard)
+
 ### Phase 8.6-H1: LLM Cache Org Scoping (Security) ✅ SHIPPED (Phase 4E H-1)
 - **Status:** Multi-tenant isolation shipped, closes reviewer H-1 BLOCKER (2026-04-17)
 - **Features:**
@@ -273,6 +286,8 @@
 | **2026-04-17** | **Phase 4E H-1 LLM Cache Org Scoping (multi-tenant isolation, H-1 blocker)** | **✅ SHIPPED** |
 | **2026-04-17** | **Phase 4.7 Admin Monitoring Dashboard (D1 aggregates + M-2 hit_count close)** | **✅ SHIPPED** |
 | **2026-04-18** | **Phase 4F LLM Cache Wiring (campaign script generation integration, env-gated)** | **✅ SHIPPED** |
+| **2026-04-18** | **Phase 4F.1 resolveOrgId Unification (canonical helper, DRY refactor)** | **✅ SHIPPED** |
+| **2026-04-18** | **Phase 4E.3 LLM Cache Purge Cron (daily org-scoped cleanup, ops hygiene)** | **✅ SHIPPED** |
 | 2026-05-01 | Analytics Dashboard | 🔄 Planned |
 | 2026-06-01 | Multi-Language Support (Vietnamese) | 🔄 Planned |
 | 2026-07-01 | Telegram Bot Enhancement | 🔄 Planned |

@@ -1,11 +1,15 @@
 ---
 name: Sophia Phase 4E.3 LLM Cache Purge Cron
-status: in_progress
+status: shipped
 priority: P2
 estimate: 1h
 session: PM-16 2026-04-18
 parent: 260418-1500-sophia-phase4f1-resolve-org-id (Phase 4F.1 shipped 9c34c3b)
 pdf_bullet: Giai đoạn 6.2 Semantic Cache (ops hygiene slice)
+commit: 078fabe
+shipped_at: 2026-04-18
+final_tests: 1184/1184
+review_score: 9.7/10
 ---
 
 # Phase 4E.3 — LLM Cache Purge Cron
@@ -24,9 +28,9 @@ the row count. CRON_SECRET-guarded, D1 failure = silent 200 (fire-and-forget).
 
 | Phase | File(s)                                                       | Status |
 |-------|---------------------------------------------------------------|--------|
-| 1     | `src/app/api/cron/llm-cache-purge/route.ts` (new, <100 LOC)  | todo   |
-| 1     | `src/app/api/cron/llm-cache-purge/route.test.ts` (4 tests)   | todo   |
-| 2     | `wrangler.toml` (add `"0 7 * * *"` → crons array)            | todo   |
+| 1     | `src/app/api/cron/llm-cache-purge/route.ts` (new, <100 LOC)  | done   |
+| 1     | `src/app/api/cron/llm-cache-purge/route.test.ts` (4 tests)   | done   |
+| 2     | `wrangler.toml` (add `"0 7 * * *"` → crons array)            | done   |
 
 ## Out of scope
 
@@ -83,3 +87,22 @@ the row count. CRON_SECRET-guarded, D1 failure = silent 200 (fire-and-forget).
 - 4E.2 ⏭ semantic similarity (embeddings, needs AI binding)
 - 4E.4 ⏭ per-org llm_cache_stats admin variant
 - 4G ⏭ Supervisor executeStep real LLM + cache wiring
+
+## Shipped
+
+**Commit:** 078fabe (2026-04-18)
+
+**Test Delta:** 1180 → 1184 (+4 tests)
+- route.test.ts: 4 new unit tests (auth fail / D1 missing / delete success / D1 throws)
+
+**Code Review:** 9.7/10 SHIP
+- Clean DELETE-only logic, no schema churn
+- Proper D1 error handling (200 ok:false fallback)
+- Consistent with existing cron conventions (error-digest pattern)
+
+**Prod Verify:** HTTP 200 shortSha=078fabe3 matches HEAD
+
+**Rule #0:** All 3 gates green
+- Build: ✅ exit code 0
+- Tests: ✅ 1184/1184 pass
+- CI/CD: ✅ GitHub Actions complete + CF Pages deployed
