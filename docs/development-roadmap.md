@@ -2,7 +2,7 @@
 
 > Product milestones and progress tracking (2026)
 
-**Last Updated:** 2026-04-18 PM-23 (Phase 7A/7B/7C: R7 BYOK Wiring Completion — workflow-stepper degrade-to-mock + script-generator + niche-enhancer)
+**Last Updated:** 2026-04-18 PM-24 (Phase 8A/8C: R8 Hygiene + User-Facing BYOK Admin — errorClass split + weekly-signals + user-byok endpoint + byok dashboard page)
 **Target:** $1M ARR, 100/100 a16z solo company score
 
 ---
@@ -257,6 +257,19 @@
 - **Activation:** All gates remain off by default; Phase 4F.3 automatic (replaces unsafe casts); 4N-POLISH automatic (SSE reader safety); 4E.2-TUNING automatic (index) + opt-in text storage; 4G-WIRE automatic when BYOK_ENABLED=1
 - **Backward Compatibility:** 100% backward-compatible; all existing calls work unchanged; BYOK gate off by default
 
+### Phase 8.12: Hygiene Bundle + User-Facing BYOK Admin ✅ SHIPPED (Round 8: Phase 8A + 8C)
+- **Status:** Four narrow edits + two new UI routes live (2026-04-18)
+- **Features:**
+  - Phase 8A.1: workflow-stepper errorClass split — new `degradeReason` local distinguishes `'LLM_MISSING_KEY_FALLBACK'` (missing BYOK key) from `'LLM_LIVE_FAILED_FALLBACK'` (live provider error) for Langfuse signal discriminability (closes R7 L-4)
+  - Phase 8A.2: weekly-signals-digest BYOK symmetry — adopts `resolveUserApiKey(null, 'openrouter', envFallback)` pattern (cron context, no userId; BYOK-off → env fallback, byte-identical pre-wire)
+  - Phase 8A.3: error-digest BYOK symmetry — same resolver pattern (closes R7 H-2)
+  - Phase 8C: User-facing BYOK admin — new `/api/user/byok` endpoint (GET providers, POST set/rotate, DELETE clear) + `/dashboard/byok` SSR page + `byok-key-form` bilingual component (VN/EN); signals `BYOK_KEY_SET` + `BYOK_KEY_CLEARED` (provider-only, no key bytes); reuses 4G-BYOK D1 table + AES-GCM encryption
+- **Metrics:** 11 new tests (1300 → 1311 total), review 9.6/10 SHIP, 0 critical, 0 high
+- **Files:** `workflow-stepper/route.ts` (modify) + `weekly-signals-digest/route.ts` (modify) + `error-digest/route.ts` (modify) + `src/app/api/user/byok/route.ts` (new) + `src/app/[locale]/(dashboard)/dashboard/byok/page.tsx` (new) + `src/components/byok/byok-key-form.tsx` (new) + `src/lib/signals/byok-events.ts` (new)
+- **Activation:** Phase 8A automatic (existing BYOK_ENABLED gate); Phase 8C automatic (no new env needed; reuses user_api_keys D1 table from 4G-BYOK)
+- **Backward Compatibility:** 100% backward-compatible; `BYOK_ENABLED=0` → env fallback (pre-wire behavior); new endpoints gated by auth
+- **Commit:** pending R8 session completion — deferred items (L-1/L-2/INFO-2/L-3) → R9
+
 ### Phase 8.11: BYOK Wiring Completion for OpenRouter Callers ✅ SHIPPED (Round 7: Phase 7A + 7B + 7C)
 - **Status:** Three narrow follow-ups live (2026-04-18)
 - **Features:**
@@ -363,6 +376,7 @@
 | **2026-04-18** | **Phase 4N SSE Parser Extraction + Phase 4E.2 Semantic Cache + Phase 4F.2 Tenant Helpers + Phase 4G-BYOK Foundations (Round 5)** | **✅ SHIPPED** |
 | **2026-04-18** | **Phase 4F.3 Tier Normalization + Phase 4N-POLISH SSE Reader + Phase 4E.2-TUNING Cache Index + Phase 4G-WIRE BYOK Integration (Round 6)** | **✅ SHIPPED** |
 | **2026-04-18** | **Phase 7A OpenRouter Degrade-to-Mock + Phase 7B script-generator BYOK + Phase 7C niche-enhancer BYOK (Round 7)** | **✅ SHIPPED** |
+| **2026-04-18** | **Phase 8A Hygiene (errorClass split + weekly-signals + error-digest) + Phase 8C User-Facing BYOK Admin (/api/user/byok + /dashboard/byok) (Round 8)** | **✅ SHIPPED** |
 | 2026-05-01 | Analytics Dashboard | 🔄 Planned |
 | 2026-06-01 | Multi-Language Support (Vietnamese) | 🔄 Planned |
 | 2026-07-01 | Telegram Bot Enhancement | 🔄 Planned |
