@@ -1,12 +1,16 @@
 ---
 name: Sophia Parallel Shipment — Phase 4G MVP + Phase 4H JSON Cache-Stats
-status: in_progress
+status: shipped
 priority: P2
 estimate: 2h (parallel ≈ 1h wall-clock)
 session: PM-17 2026-04-18
 parent: 260418-1800-sophia-phase4e3-llm-cache-purge-cron (shipped 078fabe)
 pdf_bullet: Giai đoạn 6.2 (cache wiring) + operator JSON observability
 mode: --auto --parallel
+commit: dde51a24
+shipped_at: 2026-04-18
+final_tests: 1193/1193
+review_score: 9.5/10
 ---
 
 # Sophia Parallel Shipment — 4G MVP + 4H JSON
@@ -101,4 +105,20 @@ Degraded: `{ "ok": false, "reason": "D1_UNAVAILABLE", ... }` with status 200.
 
 ## Shipped
 
-TBD after implementation.
+**Commit:** dde51a24 (2026-04-18 02:37 UTC)
+
+**Test Delta:** 1184 → 1193 (+9 tests)
+- Phase 4G workflow-stepper/route.test.ts: 5 new unit tests (disabled gate / missing key / cache hit / cache miss+live / live error)
+- Phase 4H llm-cache-stats/route.test.ts: 4 new unit tests (auth fail / happy path / D1 degraded / throws)
+
+**Code Review:** 9.5/10 SHIP
+- Zero critical findings
+- Parallel file ownership enforced (4G + 4H no overlap)
+- Both phases env-gated or additive (zero rollback friction)
+
+**Prod Verify:** HTTP 200 shortSha=dde51a24 matches HEAD
+
+**Rule #0:** All 3 gates green
+- Build: ✅ exit code 0
+- Tests: ✅ 1193/1193 pass
+- CI/CD: ✅ GitHub Actions complete + CF Pages deployed
