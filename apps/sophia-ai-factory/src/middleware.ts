@@ -98,8 +98,8 @@ export async function proxy(request: NextRequest) {
     const identifier = getClientIdentifier(request);
     let rateLimitConfig: typeof RATE_LIMITS.api | typeof RATE_LIMITS.auth | typeof RATE_LIMITS.webhook = RATE_LIMITS.api;
 
-    // Stricter limits for auth routes
-    if (pathname.startsWith('/api/auth') || pathname.startsWith('/api/admin')) {
+    // Stricter limits for auth routes and sensitive user key management
+    if (pathname.startsWith('/api/auth') || pathname.startsWith('/api/admin') || pathname.startsWith('/api/user/byok')) {
       rateLimitConfig = RATE_LIMITS.auth;
     }
     // Higher limits for webhooks

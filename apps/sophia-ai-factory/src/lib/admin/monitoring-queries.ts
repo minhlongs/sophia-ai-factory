@@ -137,6 +137,47 @@ export function cacheHitRate(stats: CacheStats): number {
   return stats.totalHits / denom
 }
 
+export interface ByokEventCounts {
+  setCount:  number
+  clearCount: number
+  netChange:  number // setCount - clearCount
+}
+
+const ZERO_BYOK: ByokEventCounts = { setCount: 0, clearCount: 0, netChange: 0 }
+
+/**
+ * Count BYOK key-set / key-cleared signals_events within the last `hoursBack` hours.
+ * Returns zero-safe object on D1 failure — dashboard degrades gracefully.
+ */
+export async function aggregateByokEvents(hoursBack = 24): Promise<ByokEventCounts> {
+  const db = (globalThis as unknown as { DB?: D1Binding }).DB
+  if (!db) return ZERO_BYOK
+
+  try {
+    const result = await db
+      .prepare(
+        `SELECT event_type, COUNT(*) AS cnt
+         FROM signals_events
+         WHERE event_type IN ('byok_key_set','byok_key_cleared')
+           AND created_at >= datetime('now', '-' || ? || ' hours')
+         GROUP BY event_type`,
+      )
+      .bind(hoursBack)
+      .all()
+
+    const rows = (result.results ?? []) as unknown as Array<{ event_type: string; cnt: number }>
+    let setCount = 0
+    let clearCount = 0
+    for (const row of rows) {
+      if (row.event_type === 'byok_key_set')     setCount  = Number(row.cnt ?? 0)
+      if (row.event_type === 'byok_key_cleared') clearCount = Number(row.cnt ?? 0)
+    }
+    return { setCount, clearCount, netChange: setCount - clearCount }
+  } catch {
+    return ZERO_BYOK
+  }
+}
+
 /**
  * LLM call trace aggregates — Phase 4K SSR helper.
  *

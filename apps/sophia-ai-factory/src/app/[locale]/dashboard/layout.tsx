@@ -12,6 +12,7 @@ import {
   Code,
   Rocket,
   KeyRound,
+  KeySquare,
   FileText,
   GitBranch
 } from "lucide-react";
@@ -99,7 +100,7 @@ export default function DashboardLayout({
             href="/dashboard/byok"
             className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
           >
-            <KeyRound className="w-5 h-5" />
+            <KeySquare className="w-5 h-5" />
             <span className="font-medium">Provider Keys / BYOK</span>
           </Link>
           <Link
