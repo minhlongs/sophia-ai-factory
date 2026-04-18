@@ -2,7 +2,7 @@
 
 > Product milestones and progress tracking (2026)
 
-**Last Updated:** 2026-04-18 PM-21 (Phase 4N/4E.2/4F.2/4G-BYOK: Streaming Refinement, Semantic Cache, Tenant Helpers, BYOK Foundations shipped — Round 5)
+**Last Updated:** 2026-04-18 PM-22 (Phase 4F.3/4N-POLISH/4E.2-TUNING/4G-WIRE: R6 Refinement Pack shipped — Tier Normalization, SSE Polish, Cache Index Widening, BYOK Integration)
 **Target:** $1M ARR, 100/100 a16z solo company score
 
 ---
@@ -245,6 +245,18 @@
 - **Activation:** Phase 4N automatic; 4E.2 via env flag + Workers AI binding; 4F.2 available API; 4G-BYOK via `BYOK_ENABLED=1` + `BYOK_MASTER_KEY` (base64 32 bytes)
 - **Backward Compatibility:** All changes backward-compatible; exact-match LLM cache unaffected when Phase 4E.2 disabled; env-driven API key callers work unchanged
 
+### Phase 8.10: Tier Normalization + SSE Polish + Cache Index Tuning + BYOK Integration ✅ SHIPPED (Round 6: Phase 4F.3 + 4N-POLISH + 4E.2-TUNING + 4G-WIRE)
+- **Status:** Four follow-up refinements live (2026-04-18)
+- **Features:**
+  - Phase 4F.3: `normalizePlanToTier(plan)` canonical helper using DB_TIER_MAPPING — safe enum coercion from D1 text columns (closes unsafe casts)
+  - Phase 4N-POLISH: Try/finally reader cleanup + `parse_error` SSE event variant — robust stream error handling with graceful degradation
+  - Phase 4E.2-TUNING: Semantic-cache index widened to `(org_id, embedding_model, provider, model, created_at)` + `LLM_CACHE_STORE_PROMPT_TEXT=1` PII/GDPR gate (vectors always, text optional)
+  - Phase 4G-WIRE: `resolveOrgOwnerUserId` helper + per-user key resolution into workflow-stepper cron + Anthropic/OpenRouter live callers (BYOK fully integrated)
+- **Metrics:** 9 new tests (1285 → 1294 total), all 4 reviews 9.5–9.7/10 SHIP, 0 critical/high, no breaking changes
+- **Files:** `src/lib/auth/normalize-tier.ts` (new) + migrations/0010 (widen) + anthropic-sse-parser.ts (modify) + llm-cache-semantic.ts (modify) + workflow-stepper (modify)
+- **Activation:** All gates remain off by default; Phase 4F.3 automatic (replaces unsafe casts); 4N-POLISH automatic (SSE reader safety); 4E.2-TUNING automatic (index) + opt-in text storage; 4G-WIRE automatic when BYOK_ENABLED=1
+- **Backward Compatibility:** 100% backward-compatible; all existing calls work unchanged; BYOK gate off by default
+
 ### Phase 9: Analytics Dashboard (Planned)
 - **Timeline:** May 2026
 - **Features:**
@@ -337,6 +349,7 @@
 | **2026-04-18** | **Phase 4J Anthropic API Adapter + Phase 4K Admin Monitoring LLM Trace (real Anthropic + trace embed)** | **✅ SHIPPED** |
 | **2026-04-18** | **Phase 4M + 4L Trace Aggregator Extraction + Anthropic Streaming/Tool-Use (Round 4)** | **✅ SHIPPED** |
 | **2026-04-18** | **Phase 4N SSE Parser Extraction + Phase 4E.2 Semantic Cache + Phase 4F.2 Tenant Helpers + Phase 4G-BYOK Foundations (Round 5)** | **✅ SHIPPED** |
+| **2026-04-18** | **Phase 4F.3 Tier Normalization + Phase 4N-POLISH SSE Reader + Phase 4E.2-TUNING Cache Index + Phase 4G-WIRE BYOK Integration (Round 6)** | **✅ SHIPPED** |
 | 2026-05-01 | Analytics Dashboard | 🔄 Planned |
 | 2026-06-01 | Multi-Language Support (Vietnamese) | 🔄 Planned |
 | 2026-07-01 | Telegram Bot Enhancement | 🔄 Planned |

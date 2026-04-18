@@ -1,7 +1,51 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-04-18 (Phase 4N/4E.2/4F.2/4G-BYOK: Streaming + Semantic Cache + Tenant Helpers + BYOK Foundations)
+> **Last Updated:** 2026-04-18 PM-22 (Phase 4F.3/4N-POLISH/4E.2-TUNING/4G-WIRE: R6 Refinement Pack — Tier Normalization, SSE Polish, Cache Index Widening, BYOK Integration)
+
+---
+
+## [2026-04-18] Phase 4F.3 + 4N-POLISH + 4E.2-TUNING + 4G-WIRE — Tier Normalization, SSE Polish, Cache Index Widening, BYOK Integration (Round 6)
+
+### Summary
+Four follow-up refinements shipping in batches to close Phase 4 review findings and extend BYOK wiring. Phase 4F.3 introduces `normalizePlanToTier()` helper using canonical `DB_TIER_MAPPING` for safe enum coercion from D1 text columns (closes unsafe casts). Phase 4N-POLISH adds try/finally reader cleanup + `parse_error` SSE event variant for robust stream error handling. Phase 4E.2-TUNING widens semantic-cache index to full 4-column `(org_id, embedding_model, provider, model, created_at)` for range queries on freshness; adds `LLM_CACHE_STORE_PROMPT_TEXT=1` PII/GDPR gate separating vector storage (always) from prompt_text storage (opt-in). Phase 4G-WIRE deploys per-user API key resolution into workflow-stepper cron + Anthropic/OpenRouter live callers; introduces `resolveOrgOwnerUserId` helper for cron context bridge. Tests 1285 → 1294 (+9). Build green, all 4 reviews 9.5–9.7/10 SHIP (0 critical/high). No breaking changes; all gates remain off by default.
+
+### Changes
+1. **Phase 4F.3: Tier Normalization** — `src/lib/auth/normalize-tier.ts` (new, ~35 LOC)
+   - `normalizePlanToTier(plan: string): Tier` safe coercion with DB_TIER_MAPPING
+   - Replaces unsafe `.toUpperCase()` casts on D1 text columns
+   - Maps: "starter"→BASIC, "pro"→PREMIUM, "enterprise"→ENTERPRISE, "master"→MASTER + error fallback
+   - Wired into workflow-stepper org tier fetch (closes unsafe cast concern)
+
+2. **Phase 4N-POLISH: SSE Reader Cleanup** — `src/lib/ai/anthropic-sse-parser.ts` (modify)
+   - Try/finally guard on `reader.cancel()` — ensures stream cleanup on exception or early exit
+   - New `parse_error` discriminated event variant `{ type: 'parse_error'; error: string }`
+   - `parseAnthropicSse` emits parse_error on JSON.parse fail instead of throwing (graceful degradation)
+
+3. **Phase 4E.2-TUNING: Cache Index + PII Gate** — `migrations/0010.sql` + `llm-cache-semantic.ts` (modify)
+   - Index widened to full 4 columns: `(org_id, embedding_model, provider, model, created_at)`
+   - `LLM_CACHE_STORE_PROMPT_TEXT=1` env gate separates vector (always) from text storage (opt-in)
+   - `cosineSimilarity()` + semantic fallback unchanged; index improves range freshness queries
+   - Vector embeddings computed/stored regardless of text gate (compliance via column toggle)
+
+4. **Phase 4G-WIRE: Per-User Key Integration** — `src/lib/byok/resolve-user-api-key.ts` + callers (modify)
+   - `resolveOrgOwnerUserId(orgId, userId)` helper queries users via org membership to extract owner user_id (cron context)
+   - Workflow-stepper cron calls `resolveUserApiKey(provider, userId)` before Anthropic/OpenRouter live fetch
+   - `BYOK_ENABLED=1` → use stored key; else → env fallback (strict, no mutation)
+   - Anthropic adapter + script-generator updated to accept optional user context for key resolution
+
+### Tests & Quality
+- **Tests:** 1285 → 1294 (+9): 2 normalize-tier + 3 SSE parse_error + 1 index coverage + 3 BYOK wire
+- **Build:** ✅ npm run build exit 0
+- **Code Review:** ✅ 4F.3 (9.5/10) + 4N-POLISH (9.6/10) + 4E.2-TUNING (9.5/10) + 4G-WIRE (9.7/10); 0 critical, 0 high
+- **Prod:** ✅ HTTP 200, shortSha match
+
+### Backward Compatibility
+- All changes 100% backward-compatible; no breaking APIs
+- `normalizePlanToTier` adds safety without changing contract
+- SSE parse_error event opt-in; callers ignore if not handled
+- Cache index purely structural (no query change); BYOK gate off by default
+- Existing env-driven callers work unchanged when BYOK_ENABLED=0
 
 ---
 
