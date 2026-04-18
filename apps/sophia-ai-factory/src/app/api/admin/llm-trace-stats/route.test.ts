@@ -6,8 +6,9 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { NextRequest } from 'next/server'
-import { aggregateTraceStats, GET } from './route'
-import type { TraceRow } from './route'
+import { GET } from './route'
+import { aggregateTraceStats } from '@/lib/admin/trace-aggregator'
+import type { TraceRow } from '@/lib/admin/trace-aggregator'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

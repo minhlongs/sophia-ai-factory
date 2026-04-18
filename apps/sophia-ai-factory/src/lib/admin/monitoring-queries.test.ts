@@ -7,7 +7,7 @@ import {
   cacheHitRate,
 } from './monitoring-queries'
 import { createServerClient } from '@/lib/db/client'
-import type { TraceRow } from '@/app/api/admin/llm-trace-stats/route'
+import type { TraceRow } from '@/lib/admin/trace-aggregator'
 
 vi.mock('@/lib/db/client', () => ({
   createServerClient: vi.fn(),
