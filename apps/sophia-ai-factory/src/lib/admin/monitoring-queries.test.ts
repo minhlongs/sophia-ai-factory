@@ -1,11 +1,13 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
   getCacheStats,
   getWorkflowStats,
   getSignalsStats,
+  getTraceStats,
   cacheHitRate,
 } from './monitoring-queries'
 import { createServerClient } from '@/lib/db/client'
+import type { TraceRow } from '@/app/api/admin/llm-trace-stats/route'
 
 vi.mock('@/lib/db/client', () => ({
   createServerClient: vi.fn(),
@@ -143,5 +145,69 @@ describe('monitoring-queries', () => {
       expect(rate).toBeGreaterThan(0)
       expect(rate).toBeLessThanOrEqual(1)
     })
+  })
+})
+
+// ── getTraceStats — Phase 4K SSR helper ──────────────────────────────────────
+
+function buildD1(rows: TraceRow[]) {
+  return {
+    DB: {
+      prepare: vi.fn().mockReturnValue({
+        bind: vi.fn().mockReturnValue({
+          all: vi.fn().mockResolvedValue({ results: rows }),
+        }),
+      }),
+    },
+  }
+}
+
+function buildThrowingD1() {
+  return {
+    DB: {
+      prepare: vi.fn().mockReturnValue({
+        bind: vi.fn().mockReturnValue({
+          all: vi.fn().mockRejectedValue(new Error('D1 boom')),
+        }),
+      }),
+    },
+  }
+}
+
+describe('getTraceStats', () => {
+  afterEach(() => {
+    delete (globalThis as Record<string, unknown>).DB
+  })
+
+  it('happy path: 3 rows → returns aggregated TraceStats shape', async () => {
+    const rows: TraceRow[] = [
+      { props: JSON.stringify({ ok: true,  provider: 'openrouter',  model: 'gpt-4o-mini',     duration_ms: 120, trace_id: 'a', workflow_id: 'w1', step_order: 1, step_type: 'plan' }) },
+      { props: JSON.stringify({ ok: true,  provider: 'anthropic',   model: 'claude-sonnet-4', duration_ms: 200, trace_id: 'b', workflow_id: 'w1', step_order: 2, step_type: 'write' }) },
+      { props: JSON.stringify({ ok: false, provider: 'openrouter',  model: 'gpt-4o-mini',     duration_ms: 80,  trace_id: 'c', workflow_id: 'w2', step_order: 1, step_type: 'plan' }) },
+    ]
+    Object.assign(globalThis, buildD1(rows))
+
+    const result = await getTraceStats()
+
+    expect(result).not.toBeNull()
+    expect(result!.total).toBe(3)
+    expect(result!.success).toBe(2)
+    expect(result!.failure).toBe(1)
+    expect(result!.successRate).toBeCloseTo(2 / 3)
+    expect(result!.avgDurationMs).toBeCloseTo((120 + 200 + 80) / 3)
+    expect(result!.byProvider[0]).toEqual({ provider: 'openrouter', count: 2 })
+    expect(result!.byModel[0]).toEqual({ model: 'gpt-4o-mini', count: 2 })
+  })
+
+  it('returns null when D1 binding is missing (globalThis.DB unbound)', async () => {
+    // DB not set on globalThis
+    const result = await getTraceStats()
+    expect(result).toBeNull()
+  })
+
+  it('returns null (no throw) when D1 query throws', async () => {
+    Object.assign(globalThis, buildThrowingD1())
+    const result = await getTraceStats()
+    expect(result).toBeNull()
   })
 })

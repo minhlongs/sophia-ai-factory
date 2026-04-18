@@ -14,6 +14,7 @@ import { computeNext } from '@/lib/workflows/compute-next'
 import { recordLlmCall } from '@/lib/telemetry/llm-trace'
 import { route as routeLlm } from '@/lib/ai/llm-router'
 import { callWithCache } from '@/lib/llm/cache/call-with-cache'
+import { callAnthropic } from '@/lib/ai/anthropic-adapter'
 import type { CacheKey, CacheEntry } from '@/lib/llm/cache/llm-cache'
 import type { WorkflowRow, StepMissionRow } from '@/lib/db/workflow-repository'
 
@@ -62,9 +63,9 @@ function isRealLlmEnabled(): boolean {
   )
 }
 
-// Providers supported by the live OpenRouter fetch path.
-// 'anthropic' and 'stub' are NOT supported — skip live fetch, fall through to mock.
-const REAL_LLM_PROVIDERS: ReadonlySet<string> = new Set(['openrouter', 'local-mekongd'])
+// Providers supported by the live fetch path.
+// Phase 4J: 'anthropic' added — handled via callAnthropic adapter (ANTHROPIC_API_KEY required).
+const REAL_LLM_PROVIDERS: ReadonlySet<string> = new Set(['openrouter', 'local-mekongd', 'anthropic'])
 
 // ── Step executor ─────────────────────────────────────────────────────────────
 
@@ -97,7 +98,7 @@ export async function executeStep(
   if (isRealLlmEnabled()) {
     const { provider, model } = decision
 
-    // Gate live fetch to supported providers. Anthropic/stub → skip + warn operator.
+    // Gate live fetch to supported providers. Unknown/stub → skip + warn operator.
     if (!REAL_LLM_PROVIDERS.has(provider)) {
       llmDegraded = true
       logger.warn('[workflow-stepper] unsupported LLM provider, skipping live fetch', {
@@ -107,6 +108,59 @@ export async function executeStep(
         workflowId: workflow.id,
       })
       result = `Step ${stepType} completed: ${workflow.prompt.slice(0, 100)}`
+    } else if (provider === 'anthropic') {
+      // Phase 4J: Anthropic native adapter path.
+      // Env-gated: ANTHROPIC_API_KEY must be set; otherwise degrade to mock.
+      const anthropicKey = process.env.ANTHROPIC_API_KEY
+      if (!anthropicKey) {
+        llmDegraded = true
+        logger.warn('[workflow-stepper] ANTHROPIC_API_KEY not set, falling back to mock', {
+          event:      'llm_anthropic_missing_key',
+          workflowId: workflow.id,
+          model,
+        })
+        result = `Step ${stepType} completed: ${workflow.prompt.slice(0, 100)}`
+      } else {
+        const cacheKey: CacheKey = {
+          provider: 'anthropic',
+          model,
+          messages: [
+            { role: 'user', content: workflow.prompt },
+          ],
+          orgId: workflow.org_id || 'system',
+        }
+
+        try {
+          const cacheResult = await callWithCache(cacheKey, async (): Promise<CacheEntry> => {
+            const text = await callAnthropic({
+              model,
+              messages: [{ role: 'user', content: workflow.prompt }],
+              apiKey:   anthropicKey,
+            })
+            return { response: text }
+          })
+
+          if (cacheResult.response) {
+            result = cacheResult.response
+          } else {
+            llmDegraded = true
+            logger.warn('[workflow-stepper] empty LLM response, falling back to mock', {
+              event:      'llm_empty_response',
+              workflowId: workflow.id,
+              model,
+            })
+            result = `Step ${stepType} completed: ${workflow.prompt.slice(0, 100)}`
+          }
+        } catch (err) {
+          llmDegraded = true
+          logger.warn('[workflow-stepper] live LLM call failed, falling back to mock', {
+            workflowId: workflow.id,
+            model,
+            err,
+          })
+          result = `Step ${stepType} completed: ${workflow.prompt.slice(0, 100)}`
+        }
+      }
     } else {
       const cacheKey: CacheKey = {
         // local-mekongd → use openrouter endpoint during dark-launch

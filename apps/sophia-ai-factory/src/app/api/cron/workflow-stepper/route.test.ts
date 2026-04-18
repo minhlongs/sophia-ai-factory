@@ -33,6 +33,10 @@ vi.mock('@/lib/ai/llm-router', () => ({
   route: vi.fn(),
 }))
 
+vi.mock('@/lib/ai/anthropic-adapter', () => ({
+  callAnthropic: vi.fn(),
+}))
+
 // ── Imports after mocks ───────────────────────────────────────────────────────
 
 import { executeStep } from './route'
@@ -40,6 +44,7 @@ import { callWithCache } from '@/lib/llm/cache/call-with-cache'
 import { logger } from '@/lib/utils/logger-utility'
 import { recordLlmCall } from '@/lib/telemetry/llm-trace'
 import { route as routeLlm } from '@/lib/ai/llm-router'
+import { callAnthropic } from '@/lib/ai/anthropic-adapter'
 import type { WorkflowRow } from '@/lib/db/workflow-repository'
 import type { RouteDecision } from '@/lib/ai/llm-router'
 
@@ -47,6 +52,7 @@ const mockCallWithCache  = vi.mocked(callWithCache)
 const mockLoggerWarn     = vi.mocked(logger.warn)
 const mockRecordLlmCall  = vi.mocked(recordLlmCall)
 const mockRouteLlm       = vi.mocked(routeLlm)
+const mockCallAnthropic  = vi.mocked(callAnthropic)
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -270,18 +276,18 @@ describe('executeStep — Phase 4G gate', () => {
 
   // ── Test 6 (4G-FIX finding #1) ────────────────────────────────────────────
 
-  it('gate on + unsupported provider (anthropic) → skips live fetch, recordLlmCall ok:false', async () => {
+  it('gate on + truly unsupported provider (stub) → skips live fetch, recordLlmCall ok:false', async () => {
     vi.stubEnv('WORKFLOW_REAL_LLM_ENABLED', '1')
     vi.stubEnv('OPENROUTER_API_KEY', 'sk-real')
 
-    // Simulate complex prompt → anthropic provider
-    const anthropicDecision: RouteDecision = {
-      provider:   'anthropic',
-      model:      'claude-sonnet-4-6',
-      complexity: 'complex',
-      reason:     'cloud:complex',
-    }
-    mockRouteLlm.mockReturnValue(anthropicDecision)
+    // Simulate a future/unknown provider that is not in REAL_LLM_PROVIDERS
+    const stubDecision = {
+      provider:   'stub',
+      model:      'stub-model',
+      complexity: 'simple',
+      reason:     'stub',
+    } as unknown as RouteDecision
+    mockRouteLlm.mockReturnValue(stubDecision)
 
     const db = buildMockDb()
     const workflow = buildWorkflow()
@@ -297,7 +303,7 @@ describe('executeStep — Phase 4G gate', () => {
       '[workflow-stepper] unsupported LLM provider, skipping live fetch',
       expect.objectContaining({
         event:    'llm_router_unsupported',
-        provider: 'anthropic',
+        provider: 'stub',
       }),
     )
 
@@ -367,6 +373,100 @@ describe('executeStep — Phase 4G gate', () => {
     ).resolves.toBeUndefined()
 
     // recordLlmCall reports degraded — NOT ok:true as it was before the fix
+    expect(mockRecordLlmCall).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ok:         false,
+        errorClass: 'LLM_LIVE_FAILED_FALLBACK',
+      }),
+      workflow.id,
+      workflow.org_id,
+    )
+  })
+
+  // ── Test 9 (Phase 4J) ─────────────────────────────────────────────────────
+
+  it('anthropic + ANTHROPIC_API_KEY set → calls adapter, recordLlmCall ok:true', async () => {
+    vi.stubEnv('WORKFLOW_REAL_LLM_ENABLED', '1')
+    vi.stubEnv('OPENROUTER_API_KEY', 'sk-or-unused')
+    vi.stubEnv('ANTHROPIC_API_KEY', 'sk-ant-real')
+
+    const anthropicDecision: RouteDecision = {
+      provider:   'anthropic',
+      model:      'claude-sonnet-4-6',
+      complexity: 'complex',
+      reason:     'cloud:complex',
+    }
+    mockRouteLlm.mockReturnValue(anthropicDecision)
+
+    const liveResponse = 'Anthropic answer for the complex workflow step'
+    // callWithCache passes through to fetchLive (which calls callAnthropic)
+    mockCallWithCache.mockImplementation(async (_key, fetchLive) => {
+      const entry = await fetchLive()
+      return { ...entry, fromCache: false }
+    })
+    mockCallAnthropic.mockResolvedValue(liveResponse)
+
+    const db = buildMockDb()
+    const workflow = buildWorkflow({ prompt: 'analyze and design this system' })
+
+    await executeStep(db, workflow, 'mission-9', 2, 'analyze')
+
+    // Adapter must have been called with the correct params
+    expect(mockCallAnthropic).toHaveBeenCalledOnce()
+    expect(mockCallAnthropic).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model:  'claude-sonnet-4-6',
+        apiKey: 'sk-ant-real',
+      }),
+    )
+
+    // Telemetry honest: ok:true (live call succeeded)
+    expect(mockRecordLlmCall).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ok:        true,
+        provider:  'anthropic',
+        model:     'claude-sonnet-4-6',
+      }),
+      workflow.id,
+      workflow.org_id,
+    )
+  })
+
+  // ── Test 10 (Phase 4J) ────────────────────────────────────────────────────
+
+  it('anthropic + no ANTHROPIC_API_KEY → warn + mock fallback + recordLlmCall ok:false', async () => {
+    vi.stubEnv('WORKFLOW_REAL_LLM_ENABLED', '1')
+    vi.stubEnv('OPENROUTER_API_KEY', 'sk-or-unused')
+    // ANTHROPIC_API_KEY intentionally not set
+
+    const anthropicDecision: RouteDecision = {
+      provider:   'anthropic',
+      model:      'claude-sonnet-4-6',
+      complexity: 'complex',
+      reason:     'cloud:complex',
+    }
+    mockRouteLlm.mockReturnValue(anthropicDecision)
+
+    const db = buildMockDb()
+    const workflow = buildWorkflow()
+
+    await executeStep(db, workflow, 'mission-10', 2, 'analyze')
+
+    // Adapter must NOT have been called — no key
+    expect(mockCallAnthropic).not.toHaveBeenCalled()
+    expect(mockCallWithCache).not.toHaveBeenCalled()
+
+    // Operator warning with correct event name
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      '[workflow-stepper] ANTHROPIC_API_KEY not set, falling back to mock',
+      expect.objectContaining({
+        event:      'llm_anthropic_missing_key',
+        model:      'claude-sonnet-4-6',
+        workflowId: workflow.id,
+      }),
+    )
+
+    // Telemetry honest: ok:false + errorClass
     expect(mockRecordLlmCall).toHaveBeenCalledWith(
       expect.objectContaining({
         ok:         false,

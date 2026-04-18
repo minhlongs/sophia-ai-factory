@@ -9,6 +9,22 @@
  */
 
 import { createServerClient } from '@/lib/db/client'
+import {
+  aggregateTraceStats,
+  type TraceRow,
+} from '@/app/api/admin/llm-trace-stats/route'
+
+// Re-export TraceStats shape for consumers (page.tsx, tests)
+export type { AggregateStats as TraceStats } from '@/app/api/admin/llm-trace-stats/route'
+
+/** D1 binding shape — mirrors the minimal interface used by llm-trace-stats route */
+interface D1Binding {
+  prepare: (sql: string) => {
+    bind: (...args: unknown[]) => {
+      all: () => Promise<{ results?: TraceRow[] }>
+    }
+  }
+}
 
 export interface CacheStats {
   total:        number
@@ -119,4 +135,31 @@ export function cacheHitRate(stats: CacheStats): number {
   const denom = stats.totalHits + stats.total
   if (denom === 0) return 0
   return stats.totalHits / denom
+}
+
+/**
+ * LLM call trace aggregates — Phase 4K SSR helper.
+ *
+ * Reads last 24h of llm_call_trace events from D1 signals_events and
+ * delegates to the pure `aggregateTraceStats()` from the 4I API route.
+ * Returns null when D1 is unavailable or query throws — page renders
+ * a graceful "No LLM traces yet" placeholder without error banners.
+ */
+export async function getTraceStats() {
+  const db = (globalThis as unknown as { DB?: D1Binding }).DB
+  if (!db) return null
+
+  try {
+    const result = await db
+      .prepare(
+        `SELECT props FROM signals_events WHERE event_type='llm_call_trace' AND created_at >= datetime('now','-24 hours')`,
+      )
+      .bind()
+      .all()
+
+    const rows: TraceRow[] = (result.results ?? []) as TraceRow[]
+    return aggregateTraceStats(rows)
+  } catch {
+    return null
+  }
 }
