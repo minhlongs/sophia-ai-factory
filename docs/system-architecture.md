@@ -2,19 +2,19 @@
 
 > Sophia AI Factory — RaaS (Reasoning-as-a-Service) Platform with AI-Native CI/CD, Observability, & Signals
 
-**Last Updated:** 2026-04-18 (Phase 4M + 4L: Trace Aggregator Extraction & Anthropic Streaming/Tool-Use)
+**Last Updated:** 2026-04-18 PM-21 (Phase 4N/4E.2/4F.2/4G-BYOK: Streaming Refinement, Semantic Cache, Tenant Helpers, BYOK Foundations — Round 5)
 **Production:** https://sophia.agencyos.network
 **Production Dashboard:** https://sophia.agencyos.network/dashboard
 
 ### Recent Shipments (2026-04-18)
-7 major features shipped (4 RaaS PRs + 3 Local Mode phases):
-- **RaaS P1 CI/CD:** 5 enforcement gates + canary rollout (1114 LOC)
-- **RaaS P2 Observability:** Better Stack structured logging + heartbeats (833 LOC)
-- **RaaS P3 Signals:** PostHog A/B framework + weekly digest (960 LOC)
-- **RaaS P4 SDLC:** AI factory scaffold + 4 C-Level agents (1715 LOC)
-- **Local Mode Phase D:** Auto-installer script for Qwen mekongd + CF Tunnel provisioning
-- **Local Mode Phase E:** Setup wizard React UI for customer self-serve
-- **Local Mode Phase F:** Health monitoring cron + troubleshooting runbook (bilingual)
+Rounds 4 + 5: 11 major features shipped (LLM observability + async ops + signals):
+- **Round 5 - Round 4.5 Refinement (2026-04-18):** Phase 4N SSE parser extraction (7-event union, tool-use streaming) + Phase 4E.2 semantic cache fallback (Workers AI embeddings, dark-launched) + Phase 4F.2 tenant context helper (single-JOIN, YAGNI) + Phase 4G-BYOK per-user API key foundations (AES-GCM crypto + D1 store, env fallback) = 62 new tests, 4 new modules
+- **Round 4 - Trace Aggregation & Anthropic (2026-04-18):** Phase 4M aggregateTraceStats extraction + Phase 4J Anthropic API adapter + Phase 4K admin monitoring LLM trace embed + Phase 4L Anthropic streaming/tool-use library prep = 8 new tests, callAnthropicFull/callAnthropicStream available
+- **Round 3 - Real LLM & Ops Endpoints (2026-04-18):** Phase 4G dark-launched real LLM + Phase 4H cache stats API + Phase 4I trace stats API + Phase 4G-FIX telemetry honesty = 9 new tests, ops monitoring endpoints live
+- **Round 2 - Cache Lifecycle (2026-04-18):** Phase 4E LLM cache MVP + Phase 4E H-1 org scoping + Phase 4E.3 purge cron + Phase 4F cache wiring + Phase 4F.1 resolveOrgId unification = 6+25+4+4+5=44 new tests
+- **Round 1 - Foundations (2026-04-17):** Phase 4D Langfuse secondary sink + Phase 4C smart LLM router + Phase 4B provisioning + Phase 4A signals digest
+- **RaaS P1–P4:** CI/CD + observability + signals + SDLC agents
+- **Local Mode D–F:** Auto-installer + setup wizard + health monitoring
 
 **ARCHITECTURE CONSOLIDATION (2026-04-15):** Unified auth (Better Auth D1), single DB client, consolidated tier logic, modularized 15→56+ focused modules (all < 200 LOC). E2E smoke tests validate critical journeys.
 
@@ -132,7 +132,9 @@ graph TB
 | **Adapter** | opennextjs-cloudflare | Next.js → CF Workers |
 | **Database** | Cloudflare D1 | SQLite-based, `sophia-raas-db` |
 | **Cache** | Cloudflare R2 | `sophia-ai-factory-opennext-cache` |
-| **LLM Cache** | D1 (Org-Scoped) | `callWithCache()` wrapper wired into script-generator (Phase 4F); exact-match SHA-256 hash, per-tenant isolation via `resolveOrgId()` helper (Phase 4E H-1, refined Phase 4F.1), daily purge cron `/api/cron/llm-cache-purge` (Phase 4E.3), real LLM dark-launch in workflow-stepper with gate (Phase 4G, `WORKFLOW_REAL_LLM_ENABLED`), stats endpoint `/api/admin/llm-cache-stats` (Phase 4H), telemetry honesty fixes + provider-gate handling (Phase 4G-FIX, 2026-04-18), LLM trace stats 24h aggregates `/api/admin/llm-trace-stats` (Phase 4I, 2026-04-18), Anthropic API thin wrapper (Phase 4J, 2026-04-18, `ANTHROPIC_API_KEY` gate), dark-launched |
+| **LLM Cache** | D1 (Org-Scoped) | Exact-match SHA-256 (Phase 4E) + optional semantic-similarity fallback via Workers AI embeddings (Phase 4E.2, `LLM_CACHE_SEMANTIC_ENABLED`, dark-launched); per-tenant isolation via `resolveOrgId()` + `getTenantContext()` helpers (Phase 4E H-1 → 4F.1 → 4F.2); `callWithCache()` wrapper wired into script-generator (Phase 4F); daily purge cron (Phase 4E.3); real LLM in workflow-stepper (Phase 4G, `WORKFLOW_REAL_LLM_ENABLED`); stats endpoints `/api/admin/llm-cache-stats` (Phase 4H) + `/api/admin/llm-trace-stats` (Phase 4I) |
+| **AI Streaming** | Anthropic SSE + Tool-Use | `parseAnthropicSse()` async generator + `AnthropicStreamEvent` discriminated union (Phase 4N); `callAnthropicStreamEvents` yields 7 event types (message_start, content_block_start/stop, text_delta, input_json_delta, message_delta, message_stop); `callAnthropicStream` backward-compat text-only filter; `callAnthropicFull` for tool-use flows |
+| **Per-User API Keys** | D1 + AES-GCM Crypto | BYOK foundations (Phase 4G-BYOK): `user_api_keys` D1 table, AES-GCM-256 encryption (`byok-crypto.ts`), D1 store (`user-api-key-store.ts`), resolver with envFallback (`resolve-user-api-key.ts`); opt-in via `BYOK_ENABLED=1` + `BYOK_MASTER_KEY` (base64 32 bytes); no caller migration yet (Phase 4G-WIRE deferred) |
 | **AI Providers** | Anthropic + OpenRouter | Anthropic API adapter (Phase 4J) routes via `fetchFromAnthropicAPI()` when `ANTHROPIC_API_KEY` set; OpenRouter fallback via router (Phase 4C); cache reuse across both via `callWithCache()` |
 | **Auth** | Better Auth v1.6.2 (D1) | Email/password + magic link, org plugin, no RLS |
 | **Billing** | NOWPayments (primary) + PayOS (backup) | MCU credit system, webhooks |

@@ -2,7 +2,7 @@
 
 > Product milestones and progress tracking (2026)
 
-**Last Updated:** 2026-04-18 (Phase 4M + 4L: Trace Aggregator Extraction & Anthropic Streaming/Tool-Use shipped)
+**Last Updated:** 2026-04-18 PM-21 (Phase 4N/4E.2/4F.2/4G-BYOK: Streaming Refinement, Semantic Cache, Tenant Helpers, BYOK Foundations shipped — Round 5)
 **Target:** $1M ARR, 100/100 a16z solo company score
 
 ---
@@ -229,6 +229,22 @@
 - **Files:** migrations/0007-workflows.sql + supervisor-*.ts + workflow-*.ts + components + routes + runbook
 - **Deployment:** GH Actions green, CF Pages HTTP 200, prod E2E verified
 
+### Phase 8.9: SSE Parser + Semantic Cache + Tenant Helpers + BYOK Foundations ✅ SHIPPED (Round 5: Phase 4N + 4E.2 + 4F.2 + 4G-BYOK)
+- **Status:** Four parallel feature shipments live (2026-04-18)
+- **Features:**
+  - Phase 4N: SSE parser extraction (`parseAnthropicSse` + `AnthropicStreamEvent` union, 7 event types) + `callAnthropicStreamEvents` for tool-use flows
+  - Phase 4E.2: Semantic LLM cache fallback via Workers AI embeddings (`llm-cache-semantic.ts` + `@cf/baai/bge-base-en-v1.5`, opt-in `LLM_CACHE_SEMANTIC_ENABLED=1`)
+  - Phase 4F.2: `getTenantContext(userId)` single-JOIN helper returning `{ orgId, tier }` (future callers; YAGNI: zero current use both together)
+  - Phase 4G-BYOK: Per-user API key foundations (AES-GCM crypto + D1 store + resolver, opt-in `BYOK_ENABLED=1`, env fallback when disabled; no caller wiring yet)
+- **Metrics:** 62 new tests (1220 → 1282 total), 4 new modules (total ~641 LOC), migration 0010 + 0011, code review ≥9.6/10 all phases
+- **Files:**
+  - Phase 4N: `src/lib/ai/anthropic-sse-parser.ts` (128 LOC)
+  - Phase 4E.2: `src/lib/llm/cache/llm-cache-semantic.ts` (170 LOC) + migration 0010
+  - Phase 4F.2: `src/lib/auth/get-tenant-context.ts` (40 LOC)
+  - Phase 4G-BYOK: `src/lib/byok/{byok-crypto,user-api-key-store,resolve-user-api-key}.ts` (271 LOC) + migration 0011
+- **Activation:** Phase 4N automatic; 4E.2 via env flag + Workers AI binding; 4F.2 available API; 4G-BYOK via `BYOK_ENABLED=1` + `BYOK_MASTER_KEY` (base64 32 bytes)
+- **Backward Compatibility:** All changes backward-compatible; exact-match LLM cache unaffected when Phase 4E.2 disabled; env-driven API key callers work unchanged
+
 ### Phase 9: Analytics Dashboard (Planned)
 - **Timeline:** May 2026
 - **Features:**
@@ -319,6 +335,8 @@
 | **2026-04-18** | **Phase 4E.3 LLM Cache Purge Cron (daily org-scoped cleanup, ops hygiene)** | **✅ SHIPPED** |
 | **2026-04-18** | **Phase 4G Real LLM Workflow + Phase 4H Cache Stats API (dark launch + ops endpoint)** | **✅ SHIPPED** |
 | **2026-04-18** | **Phase 4J Anthropic API Adapter + Phase 4K Admin Monitoring LLM Trace (real Anthropic + trace embed)** | **✅ SHIPPED** |
+| **2026-04-18** | **Phase 4M + 4L Trace Aggregator Extraction + Anthropic Streaming/Tool-Use (Round 4)** | **✅ SHIPPED** |
+| **2026-04-18** | **Phase 4N SSE Parser Extraction + Phase 4E.2 Semantic Cache + Phase 4F.2 Tenant Helpers + Phase 4G-BYOK Foundations (Round 5)** | **✅ SHIPPED** |
 | 2026-05-01 | Analytics Dashboard | 🔄 Planned |
 | 2026-06-01 | Multi-Language Support (Vietnamese) | 🔄 Planned |
 | 2026-07-01 | Telegram Bot Enhancement | 🔄 Planned |

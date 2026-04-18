@@ -1,7 +1,69 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-04-18 (Phase 4M + 4L: aggregateTraceStats extraction & Anthropic streaming/tool-use)
+> **Last Updated:** 2026-04-18 (Phase 4N/4E.2/4F.2/4G-BYOK: Streaming + Semantic Cache + Tenant Helpers + BYOK Foundations)
+
+---
+
+## [2026-04-18] Phase 4N + 4E.2 + 4F.2 + 4G-BYOK — Streaming Refinement, Semantic Cache, Tenant Helpers, BYOK Foundations (Round 5)
+
+### Summary
+Four parallel feature shipments advancing LLM observability, semantic understanding, multi-tenant ops, and per-user secret management. Phase 4N extracts pure SSE parser for structured tool-use flows (`callAnthropicStreamEvents` + `AnthropicStreamEvent` union, 7 event types); backward-compat `callAnthropicStream` filters text events. Phase 4E.2 adds semantic-similarity LLM cache fallback via Workers AI embeddings (dark-launched, opt-in flag + topK candidate ranking). Phase 4F.2 introduces `getTenantContext(userId)` single-JOIN helper returning `{ orgId, tier }` for future callers needing both values. Phase 4G-BYOK lays foundations for per-user API key management: AES-GCM encryption (`byok-crypto.ts`), D1 store (`user-api-key-store.ts`), fallback resolver (`resolve-user-api-key.ts`), migration 0011. All backward-compatible, no caller wiring yet. Tests 1220 → 1282 (+62: 6 4N parser + 12 semantic + 7 tenant + 33 BYOK + 4 integration). Build green, CI green, prod HTTP 200.
+
+### Changes
+1. **Phase 4N: SSE Parser Extraction** — new `src/lib/ai/anthropic-sse-parser.ts` (~128 LOC)
+   - `parseAnthropicSse()` async generator + `AnthropicStreamEvent` discriminated union (7 variants)
+   - Covers: `message_start`, `content_block_start/stop`, `text_delta`, `input_json_delta`, `message_delta`, `message_stop`
+   - `callAnthropicStreamEvents(params)` yields structured events; enables tool-use input_json assembly
+   - `callAnthropicStream` now 2-line filter over events (text-only, backward-compat)
+   - `httpError` truncates to 500 chars (closes 4L L-1 body-leak concern)
+
+2. **Phase 4E.2: Semantic LLM Cache** — new `src/lib/llm/cache/llm-cache-semantic.ts` (~170 LOC) + migration 0010
+   - Workers AI embeddings fallback (`@cf/baai/bge-base-en-v1.5`); opt-in via `LLM_CACHE_SEMANTIC_ENABLED=1`
+   - Pure helpers: `cosineSimilarity()`, `normalizePromptForEmbedding()`, `embedPrompt()` (5s timeout guard)
+   - `semanticLookup(key, threshold, topK)` — score top-K candidates by similarity
+   - `trySemanticFallback(key)` — gated entry; short-circuits if gate-off
+   - wrangler.jsonc: new `AI` binding for Workers AI service
+   - Env vars: `LLM_CACHE_SIMILARITY_THRESHOLD` (0.95), `LLM_CACHE_SEMANTIC_TOP_K` (10)
+
+3. **Phase 4F.2: Tenant Context Helper** — new `src/lib/auth/get-tenant-context.ts` (~40 LOC)
+   - `getTenantContext(userId, db?)` → `{ orgId, tier } | null` via single D1 JOIN
+   - Replaces 2–3 roundtrips for callers needing both values (e.g., future 4G-BYOK tier-gated endpoints)
+   - Returns `null` on: missing userId, unavailable D1, non-member, or exception
+   - Existing helpers (`resolveOrgId`, `getUserTier`) unchanged (YAGNI: zero current callers use both together)
+
+4. **Phase 4G-BYOK: Per-User API Key Foundations** — 3 new modules + migration 0011 (~271 LOC)
+   - `src/lib/byok/byok-crypto.ts` (105 LOC) — AES-GCM-256 via Web Crypto (Cloudflare native)
+     * `encryptApiKey(plain) / decryptApiKey(packed)` with AEAD tamper detection
+     * `BYOK_MASTER_KEY` (base64 32 bytes, validated with error classes)
+     * `generateMasterKey()` — ops helper for key rotation
+   - `src/lib/byok/user-api-key-store.ts` (128 LOC) — D1 table access
+     * `setUserApiKey / getUserApiKey / clearUserApiKey / listUserApiKeyProviders`
+     * Reads degrade to `null` (callers fall back to env); writes throw on error
+   - `src/lib/byok/resolve-user-api-key.ts` (38 LOC) — resolver with envFallback
+     * Gate `BYOK_ENABLED=1` → user key; else → env fallback (strict, no mutation)
+   - migration 0011: `user_api_keys(user_id, provider, encrypted_key BLOB, updated_at)`
+     * PK (user_id, provider); index on user_id for per-user lookups
+   - No caller migration this pass (workflow-stepper + crons lack user context; wired in 4G-WIRE)
+
+### Tests & Quality Gates
+- **Tests:** 1220 → 1282 (+62): 6 Phase 4N + 12 Phase 4E.2 + 7 Phase 4F.2 + 33 Phase 4G-BYOK
+- **Build:** ✅ `npm run build` exit 0
+- **Code Review:** ✅ all 4 phases ≥9.6/10 SHIP (no critical, structured events verified, semantic fallback gated, tenant JOIN validated, crypto tamper checks passed)
+- **Prod:** ✅ HTTP 200, all routes live
+
+### Activation & Env Flags
+- **Phase 4N:** Automatic — callers using `callAnthropicStream` unchanged; new `callAnthropicStreamEvents` available for tool-use flows
+- **Phase 4E.2:** Manual opt-in: `LLM_CACHE_SEMANTIC_ENABLED=1` + `wrangler secret put BAAI_BGE_MODEL_ID` (dark-launched, exact-match fast-path unchanged)
+- **Phase 4F.2:** Available API (no activation needed) — usage driven by future callers
+- **Phase 4G-BYOK:** Manual opt-in: `BYOK_ENABLED=1` + `BYOK_MASTER_KEY` (base64 32 bytes via `generateMasterKey()`); env fallback when disabled
+
+### Backward Compatibility
+- All changes backward-compatible; existing callers untouched
+- `callAnthropicStream(params)` still returns text strings (unchanged contract)
+- Exact-match LLM cache unaffected when Phase 4E.2 disabled
+- Existing auth/tier helpers work as before; `getTenantContext` is opt-in helper
+- BYOK disabled by default; env-driven callers work unchanged
 
 ---
 
