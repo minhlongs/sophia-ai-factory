@@ -1,6 +1,48 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-17 | **Current Version:** 1.10.0
+**Last Updated:** 2026-04-18 | **Current Version:** 1.11.0
+
+---
+
+## [2026-04-18] BYOK Admin Polish & Discovery Score Endpoint (v1.11.0)
+
+### Summary
+R9 shipped two bundles: BYOK admin refinements (rate-limit strict bucket, sidebar icon upgrade, skeleton loader, monitoring aggregator) + new `/api/discovery/score` POST endpoint for user-authenticated program niche scoring via BYOK resolver.
+
+### Changes
+
+**Bundle 9A — BYOK Admin Polish** (Closes R8 L-1/L-2/L-3/INFO-2)
+1. **Middleware Rate Limiting**: `/api/user/byok` routed to `RATE_LIMITS.auth` (stricter bucket, default inheritance)
+2. **Dashboard Icon**: BYOK sidebar icon upgraded from `KeyRound` → `KeySquare` (differentiates from RaaS API Keys)
+3. **Loading State**: NEW `src/app/[locale]/dashboard/byok/loading.tsx` — server component skeleton loader (~28 LOC)
+4. **Admin Monitoring**: `src/lib/admin/monitoring-queries.ts` → `aggregateByokEvents(hoursBack = 24)` returning `{ setCount, clearCount, netChange }` (+7 tests)
+
+**Bundle 9B — /api/discovery/score Endpoint** (Closes R7 L-2)
+1. **Route**: NEW `src/app/api/discovery/score/route.ts` — auth-required POST endpoint
+2. **Wiring**: Calls `enhanceNicheScoreWithAI(program, niche, user.id)` — user.id flows through BYOK resolver
+3. **Validation**: Zod schema enforces `program.id` + `program.name` (required), `program.category` (optional), `niche` (1–200 chars)
+4. **Error Handling**: 401 (auth), 400×4 (input validation), 200 (success), 500 (server error) — 8 test cases
+
+### Post-Review Fixes Applied (H-1 + M-2)
+- Docstring corrected: rate-limit inherits default `RATE_LIMITS.api` (not discovery bucket — does not exist yet)
+- `ProgramSchema`: added `category: z.string().optional()`
+
+### Test Results
+- Tests: 1311 → 1326 (+15 new tests)
+- Bundle 9A: 3 new tests (monitoring aggregator)
+- Bundle 9B: 8 endpoint tests + 4 utility tests
+- All existing tests remain passing
+- No breaking changes
+
+### Quality & Review
+- Review Score: 9.3/10 SHIP (post-fix)
+- Severity: 0 critical, 0 high
+- Reviewer feedback: defer H-1/M-2 to future sprint (rate-limit metrics + alternative routing)
+
+### Deferred (Future Phases)
+- `/api/discovery/*` full suite (currently only `/score` implemented)
+- Alternative program routing (e.g., weighted by category)
+- Rate-limit metrics dashboard integration
 
 ---
 
