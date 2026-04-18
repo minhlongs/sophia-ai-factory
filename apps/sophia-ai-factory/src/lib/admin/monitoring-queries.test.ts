@@ -5,6 +5,7 @@ import {
   getSignalsStats,
   getTraceStats,
   cacheHitRate,
+  aggregateByokEvents,
 } from './monitoring-queries'
 import { createServerClient } from '@/lib/db/client'
 import type { TraceRow } from '@/lib/admin/trace-aggregator'
@@ -209,5 +210,93 @@ describe('getTraceStats', () => {
     Object.assign(globalThis, buildThrowingD1())
     const result = await getTraceStats()
     expect(result).toBeNull()
+  })
+})
+
+// ── aggregateByokEvents — Phase 9A ───────────────────────────────────────────
+
+function buildByokD1(rows: Array<{ event_type: string; cnt: number }>) {
+  return {
+    DB: {
+      prepare: vi.fn().mockReturnValue({
+        bind: vi.fn().mockReturnValue({
+          all: vi.fn().mockResolvedValue({ results: rows }),
+        }),
+      }),
+    },
+  }
+}
+
+describe('aggregateByokEvents', () => {
+  afterEach(() => {
+    delete (globalThis as Record<string, unknown>).DB
+  })
+
+  it('returns zero counts when DB binding is absent', async () => {
+    // globalThis.DB not set
+    const result = await aggregateByokEvents()
+    expect(result).toEqual({ setCount: 0, clearCount: 0, netChange: 0 })
+  })
+
+  it('counts set and clear separately and computes net change', async () => {
+    Object.assign(globalThis, buildByokD1([
+      { event_type: 'byok_key_set',     cnt: 5 },
+      { event_type: 'byok_key_cleared', cnt: 2 },
+    ]))
+    const result = await aggregateByokEvents(24)
+    expect(result.setCount).toBe(5)
+    expect(result.clearCount).toBe(2)
+    expect(result.netChange).toBe(3)
+  })
+
+  it('handles only set events (clear absent from results)', async () => {
+    Object.assign(globalThis, buildByokD1([
+      { event_type: 'byok_key_set', cnt: 7 },
+    ]))
+    const result = await aggregateByokEvents()
+    expect(result.setCount).toBe(7)
+    expect(result.clearCount).toBe(0)
+    expect(result.netChange).toBe(7)
+  })
+
+  it('handles only clear events (set absent from results)', async () => {
+    Object.assign(globalThis, buildByokD1([
+      { event_type: 'byok_key_cleared', cnt: 3 },
+    ]))
+    const result = await aggregateByokEvents()
+    expect(result.setCount).toBe(0)
+    expect(result.clearCount).toBe(3)
+    expect(result.netChange).toBe(-3)
+  })
+
+  it('returns zeros when query returns empty rows', async () => {
+    Object.assign(globalThis, buildByokD1([]))
+    const result = await aggregateByokEvents()
+    expect(result).toEqual({ setCount: 0, clearCount: 0, netChange: 0 })
+  })
+
+  it('returns zeros (no throw) when D1 query rejects', async () => {
+    Object.assign(globalThis, {
+      DB: {
+        prepare: vi.fn().mockReturnValue({
+          bind: vi.fn().mockReturnValue({
+            all: vi.fn().mockRejectedValue(new Error('D1 boom')),
+          }),
+        }),
+      },
+    })
+    const result = await aggregateByokEvents()
+    expect(result).toEqual({ setCount: 0, clearCount: 0, netChange: 0 })
+  })
+
+  it('passes hoursBack to the D1 bind call', async () => {
+    const bindMock = vi.fn().mockReturnValue({
+      all: vi.fn().mockResolvedValue({ results: [] }),
+    })
+    Object.assign(globalThis, {
+      DB: { prepare: vi.fn().mockReturnValue({ bind: bindMock }) },
+    })
+    await aggregateByokEvents(48)
+    expect(bindMock).toHaveBeenCalledWith(48)
   })
 })
