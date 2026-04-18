@@ -1,8 +1,8 @@
 # Project Roadmap
 
 **Project Name:** Sophia AI Video Factory
-**Current Version:** 1.10.0 (Supervisor Agent MVP Shipped)
-**Last Updated:** 2026-04-17
+**Current Version:** 1.11.0 (BYOK Admin & Discovery Score Shipped)
+**Last Updated:** 2026-04-18
 
 ## 📅 Roadmap Overview
 
@@ -147,6 +147,22 @@
 - [x] **Batch Ingestion**: `/api/v1/usage` POST endpoint (up to 1000 records/batch)
 - [x] **Validation**: Zod schema validation for timestamp, service, feature_key
 - [x] **Test Coverage**: 462 tests passing (aggregator + batch ingestion API)
+
+### ✅ Phase 9.1: BYOK Admin Polish (Completed - 2026-04-18)
+**Goal:** Refine BYOK user experience and monitoring capabilities.
+- [x] **Rate Limiting**: `/api/user/byok` routed to `RATE_LIMITS.auth` (stricter bucket)
+- [x] **Dashboard UI**: BYOK sidebar icon upgrade (KeyRound → KeySquare, differentiates from RaaS)
+- [x] **Loading State**: NEW skeleton loader component for async BYOK operations
+- [x] **Admin Monitoring**: `aggregateByokEvents(hoursBack)` helper for dashboard insights
+- [x] **Closes**: R8 L-1, L-2, L-3, INFO-2
+
+### ✅ Phase 9.2: Discovery Score Endpoint (Completed - 2026-04-18)
+**Goal:** User-authenticated program niche scoring via BYOK resolver.
+- [x] **Route**: NEW `/api/discovery/score` POST endpoint (auth-required)
+- [x] **Wiring**: `enhanceNicheScoreWithAI(program, niche, user.id)` — BYOK-aware
+- [x] **Validation**: Zod schema (program.id, program.name required; category optional; niche 1–200 chars)
+- [x] **Error Handling**: 401/400/200/500 status codes with 8 test cases
+- [x] **Closes**: R7 L-2
 
 ### ✅ Phase 10: Supervisor Agent MVP (Completed - 2026-04-17)
 **Goal:** Autonomous workflow orchestration for mission planning, execution, testing.

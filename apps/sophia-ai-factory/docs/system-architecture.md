@@ -227,13 +227,20 @@ Timeline UI Shows Progress: PLAN → EXECUTE → TEST → COMPLETED
 - **workflows**: id, org_id, mission_id, parent_mission_id, status, plan_prompt, current_step, step_result, error_message, created_at, updated_at, completed_at
 - **Reuses** `missions.parent_mission_id` for hierarchical relationships
 
-### API Endpoints
-| Route | Method | Purpose |
-|-------|--------|---------|
-| `/api/raas/workflows` | POST | Create workflow |
-| `/api/raas/workflows` | GET | List all workflows |
-| `/api/raas/workflows/[id]` | GET | Workflow detail + timeline |
-| `/api/cron/workflow-stepper` | GET | Internal cron (automatic, */1 * * * *) |
+### API Endpoints (Protected Routes - Auth Required)
+
+| Route | Method | Purpose | Rate Limit |
+|-------|--------|---------|-----------|
+| `/api/raas/workflows` | POST | Create workflow | default |
+| `/api/raas/workflows` | GET | List all workflows | default |
+| `/api/raas/workflows/[id]` | GET | Workflow detail + timeline | default |
+| `/api/cron/workflow-stepper` | GET | Internal cron (automatic, */1 * * * *) | — |
+| `/api/discovery/score` | POST | Score program niche via BYOK | default |
+| `/api/user/byok` | GET/POST/DELETE | BYOK credential management | auth (strict) |
+
+**Rate Limit Notes:**
+- `RATE_LIMITS.default` — standard API bucket (apply to most endpoints)
+- `RATE_LIMITS.auth` — stricter bucket for sensitive operations (user credential management)
 
 ### Signal Events (D1 signals_events table)
 - `WORKFLOW_STARTED` — Workflow created
@@ -253,9 +260,15 @@ Real PEV (Prompt Execution Validator) engine deferred to Phase 2.
 - **`/dashboard/workflows`**: List view with status badges, 3s polling
 - **`/dashboard/workflows/[id]`**: Detail view with timeline, step results (JSON)
 
+### Admin Monitoring Helpers
+
+**`src/lib/admin/monitoring-queries.ts`** — Utility functions for dashboard aggregation:
+- `aggregateByokEvents(hoursBack = 24)` — Returns `{ setCount, clearCount, netChange }` for BYOK statistics
+- Other existing helpers for system health and performance metrics
+
 ### See Also
 - **Runbook**: `docs/sophia-supervisor-agent-runbook.md` (bilingual VN+EN, troubleshooting, manual ops, rollback)
-- **Changelog**: `docs/project-changelog.md` (2026-04-17 entry)
+- **Changelog**: `docs/project-changelog.md` (2026-04-18 entry)
 
 ---
 
