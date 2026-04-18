@@ -1,12 +1,16 @@
 ---
 name: Sophia Round 2 Parallel — Phase 4G-FIX + Phase 4I
-status: in_progress
+status: shipped
 priority: P2
 estimate: 1.5h (parallel ≈ 45 min wall-clock)
 session: PM-18 2026-04-18
 parent: 260418-2100-sophia-parallel-4g-4h (shipped dde51a24)
 pdf_bullet: Giai đoạn 4 (observability) + 6.2 (cache hygiene)
 mode: --auto --parallel
+commit: b7c750d9
+shipped_at: 2026-04-18
+final_tests: 1202/1202
+review_score: 9.6/10
 ---
 
 # Round 2 — Phase 4G-FIX + Phase 4I (parallel)
@@ -124,3 +128,19 @@ skips secret. Production requires `Authorization: Bearer $CRON_SECRET`.
 ## Risk
 - **LOW** — 4G-FIX improves correctness of gated code (still default OFF)
 - **LOW** — 4I is additive-only, reuses signals_events table
+
+## Shipped
+
+**Verification Report (Rule #0)**
+
+- Build: ✅ exit code 0
+- Tests: ✅ 1202/1202 passed (+9: workflow-stepper ×3, llm-trace-stats ×6)
+- Git Push: ✅ commit b7c750d9 → main
+- CI/CD: ✅ Tests & Deploy GREEN, Post-Merge Tests GREEN
+- Production: ✅ HTTP 200 at https://sophia.agencyos.network
+- shortSha: b7c750d9 = HEAD[:8] ✅
+- Timestamp: 2026-04-18 02:54 UTC
+
+**Phase Summary**
+
+4G-FIX: Provider routing gate fixed (anthropic/stub → mock, no live fetch). Telemetry honesty added (llmDegraded flag). Empty-response fallback covered. 4I: Admin JSON LLM trace stats endpoint shipped — 24h aggregates (success rate, latency, provider/model breakdown) from signals_events, CRON_SECRET guarded.
