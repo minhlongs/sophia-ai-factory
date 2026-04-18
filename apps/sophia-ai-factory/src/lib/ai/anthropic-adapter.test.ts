@@ -12,6 +12,8 @@ import {
   callAnthropic,
   callAnthropicFull,
   callAnthropicStream,
+  callAnthropicStreamEvents,
+  type AnthropicStreamEvent,
   type AnthropicTool,
   type AnthropicToolUseBlock,
 } from './anthropic-adapter'
@@ -304,5 +306,161 @@ describe('callAnthropicStream', () => {
 
     const gen = callAnthropicStream(BASE_PARAMS)
     await expect(gen.next()).rejects.toThrow('ANTHROPIC_NO_STREAM_BODY')
+  })
+
+  // ── Phase 4N L-3: chunk boundary mid-event split ─────────────────────────
+
+  it('handles SSE event split across chunk boundary', async () => {
+    // The "data: {...}\n\n" is split deliberately inside the JSON payload.
+    const sseChunks = [
+      'event: content_block_delta\ndata: {"type":"content_bl',
+      'ock_delta","index":0,"delta":{"type":"text_delta","text":"Split"}}\n\n',
+      'event: content_block_delta\ndata: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"OK"}}\n\n',
+    ]
+
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(makeSseStream(sseChunks), {
+        status:  200,
+        headers: { 'Content-Type': 'text/event-stream' },
+      }),
+    )
+
+    const deltas: string[] = []
+    for await (const chunk of callAnthropicStream(BASE_PARAMS)) {
+      deltas.push(chunk)
+    }
+    expect(deltas).toEqual(['Split', 'OK'])
+  })
+})
+
+// ── Phase 4N: callAnthropicStreamEvents (structured tool-use + text stream) ──
+
+function makeSseStream(chunks: string[]): ReadableStream<Uint8Array> {
+  const encoder = new TextEncoder()
+  return new ReadableStream<Uint8Array>({
+    start(controller) {
+      for (const chunk of chunks) controller.enqueue(encoder.encode(chunk))
+      controller.close()
+    },
+  })
+}
+
+describe('callAnthropicStreamEvents', () => {
+  beforeEach(() => {
+    vi.stubGlobal('fetch', vi.fn())
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('emits full tool_use flow (start → input_json_delta → stop → message_delta)', async () => {
+    const sseChunks = [
+      'event: message_start\ndata: {"type":"message_start","message":{"id":"msg_abc"}}\n\n',
+      'event: content_block_start\ndata: {"type":"content_block_start","index":0,"content_block":{"type":"tool_use","id":"toolu_01","name":"get_weather"}}\n\n',
+      'event: content_block_delta\ndata: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"{\\"location\\":"}}\n\n',
+      'event: content_block_delta\ndata: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"\\"Hanoi\\"}"}}\n\n',
+      'event: content_block_stop\ndata: {"type":"content_block_stop","index":0}\n\n',
+      'event: message_delta\ndata: {"type":"message_delta","delta":{"stop_reason":"tool_use","stop_sequence":null}}\n\n',
+      'event: message_stop\ndata: {"type":"message_stop"}\n\n',
+    ]
+
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(makeSseStream(sseChunks), { status: 200 }),
+    )
+
+    const events: AnthropicStreamEvent[] = []
+    for await (const e of callAnthropicStreamEvents(BASE_PARAMS)) events.push(e)
+
+    expect(events).toHaveLength(7)
+    expect(events[0]).toEqual({ type: 'message_start', messageId: 'msg_abc' })
+    expect(events[1]).toEqual({
+      type:  'content_block_start',
+      index: 0,
+      block: { type: 'tool_use', id: 'toolu_01', name: 'get_weather' },
+    })
+    expect(events[2]).toEqual({ type: 'input_json_delta', index: 0, partialJson: '{"location":' })
+    expect(events[3]).toEqual({ type: 'input_json_delta', index: 0, partialJson: '"Hanoi"}' })
+    expect(events[4]).toEqual({ type: 'content_block_stop', index: 0 })
+    expect(events[5]).toEqual({ type: 'message_delta', stopReason: 'tool_use', stopSequence: null })
+    expect(events[6]).toEqual({ type: 'message_stop' })
+
+    // Assemble partial_json → full input
+    const partials = events
+      .filter((e): e is Extract<AnthropicStreamEvent, { type: 'input_json_delta' }> => e.type === 'input_json_delta')
+      .map((e) => e.partialJson)
+      .join('')
+    expect(JSON.parse(partials)).toEqual({ location: 'Hanoi' })
+  })
+
+  it('emits message_delta.stop_reason for text completion (L-2)', async () => {
+    const sseChunks = [
+      'event: content_block_delta\ndata: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"done"}}\n\n',
+      'event: message_delta\ndata: {"type":"message_delta","delta":{"stop_reason":"end_turn","stop_sequence":null}}\n\n',
+      'event: message_stop\ndata: {"type":"message_stop"}\n\n',
+    ]
+
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(makeSseStream(sseChunks), { status: 200 }),
+    )
+
+    const events: AnthropicStreamEvent[] = []
+    for await (const e of callAnthropicStreamEvents(BASE_PARAMS)) events.push(e)
+
+    const msgDelta = events.find((e) => e.type === 'message_delta')
+    expect(msgDelta).toEqual({ type: 'message_delta', stopReason: 'end_turn', stopSequence: null })
+  })
+
+  it('skips malformed JSON and unknown event types', async () => {
+    const sseChunks = [
+      'data: {not valid json\n\n',
+      'data: {"type":"ping"}\n\n',
+      'event: content_block_delta\ndata: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"hi"}}\n\n',
+    ]
+
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(makeSseStream(sseChunks), { status: 200 }),
+    )
+
+    const events: AnthropicStreamEvent[] = []
+    for await (const e of callAnthropicStreamEvents(BASE_PARAMS)) events.push(e)
+
+    expect(events).toEqual([{ type: 'text_delta', index: 0, text: 'hi' }])
+  })
+})
+
+// ── Phase 4N L-1: httpError body truncation ──────────────────────────────────
+
+describe('httpError body truncation', () => {
+  beforeEach(() => {
+    vi.stubGlobal('fetch', vi.fn())
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('truncates upstream error body to 500 chars', async () => {
+    const longBody = 'X'.repeat(1000)
+    vi.mocked(fetch).mockResolvedValue(new Response(longBody, { status: 400 }))
+
+    await expect(callAnthropicFull(BASE_PARAMS)).rejects.toThrow(/\.\.\.\[truncated\]$/)
+
+    try {
+      await callAnthropicFull(BASE_PARAMS)
+    } catch (err) {
+      const msg = (err as Error).message
+      // Expected format: "ANTHROPIC_HTTP_400: XXX...X...[truncated]"
+      // Total: prefix + 500 chars + "...[truncated]"
+      expect(msg.includes('ANTHROPIC_HTTP_400')).toBe(true)
+      expect(msg.length).toBeLessThan(600)  // way less than original 1000
+    }
+  })
+
+  it('does NOT truncate short error bodies', async () => {
+    const shortBody = 'bad request'
+    vi.mocked(fetch).mockResolvedValue(new Response(shortBody, { status: 400 }))
+
+    await expect(callAnthropicFull(BASE_PARAMS)).rejects.toThrow('ANTHROPIC_HTTP_400: bad request')
   })
 })
