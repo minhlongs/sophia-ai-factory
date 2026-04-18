@@ -42,3 +42,36 @@ export async function resolveOrgId(
     return null
   }
 }
+
+/**
+ * Inverse of `resolveOrgId` — given an org, return the earliest member's
+ * user_id. Powers Phase 4G-WIRE: cron-driven LLM callers (which only
+ * hold `workflow.org_id`) can resolve the org owner's user_id so the
+ * BYOK resolver can check for a per-user key.
+ *
+ * Solo-company assumption: 1 org usually = 1 user. For multi-member
+ * orgs the earliest joiner is treated as the BYOK key owner.
+ * Returns null on missing orgId / D1 unavailable / no members / throw.
+ */
+export async function resolveOrgOwnerUserId(
+  orgId: string | null | undefined,
+  db?:   D1Database | null,
+): Promise<string | null> {
+  if (!orgId) return null
+  const d1 = db ?? getD1Raw()
+  if (!d1) return null
+  try {
+    const row = await d1
+      .prepare(
+        `SELECT user_id FROM org_members
+         WHERE org_id=?
+         ORDER BY created_at ASC
+         LIMIT 1`,
+      )
+      .bind(orgId)
+      .first<{ user_id: string }>()
+    return row?.user_id ?? null
+  } catch {
+    return null
+  }
+}
