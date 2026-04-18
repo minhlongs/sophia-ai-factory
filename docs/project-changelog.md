@@ -1,7 +1,52 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-04-18 PM-23 (Phase 7A/7B/7C: R7 BYOK Wiring Completion — OpenRouter degrade-to-mock + script-generator + niche-enhancer)
+> **Last Updated:** 2026-04-18 PM-24 (Phase 8A/8C: R8 Hygiene + User-Facing BYOK Admin UI)
+
+---
+
+## [2026-04-18] Phase 8A + 8C — Hygiene Bundle + User-Facing BYOK Admin (Round 8)
+
+### Summary
+Two parallel feature shipments addressing R7 follow-ups and launching user-facing BYOK management. Phase 8A closes three R7 reviewer findings via narrow hygiene edits: (8A.1) workflow-stepper introduces `degradeReason` local to split errorClass paths—missing-key now emits `'LLM_MISSING_KEY_FALLBACK'` vs live-failure `'LLM_LIVE_FAILED_FALLBACK'` for Langfuse discriminability; (8A.2) weekly-signals-digest adopts BYOK-aware resolver call `resolveUserApiKey(null, 'openrouter', envFallback)` for symmetry; (8A.3) error-digest applies same pattern. Phase 8C launches new `/api/user/byok` endpoint (GET providers, POST set/rotate, DELETE clear) + `/dashboard/byok` SSR page with bilingual `byok-key-form` client component; reuses 4G-BYOK encryption + D1 table; signals 2 new events `BYOK_KEY_SET` + `BYOK_KEY_CLEARED` with shared provider-only Zod schema (never stores key bytes). Tests 1300 → 1311 (+11). Review 9.6/10 SHIP, 0 critical, 0 high.
+
+### Changes
+1. **Phase 8A.1: ErrorClass Split** — `src/app/api/cron/workflow-stepper/route.ts` (modify)
+   - New `degradeReason` local tracking missing-key (`'LLM_MISSING_KEY_FALLBACK'`) vs live-failure (`'LLM_LIVE_FAILED_FALLBACK'`)
+   - Langfuse signal events now discriminable by degradeReason; closes R7 L-4
+
+2. **Phase 8A.2: weekly-signals-digest Symmetry** — `src/app/api/cron/weekly-signals-digest/route.ts` (modify)
+   - Replaces `process.env.OPENROUTER_API_KEY` with `resolveUserApiKey(null, 'openrouter', env)` call
+   - Cron context (no userId) passes null; BYOK-off default byte-identical to pre-wire
+
+3. **Phase 8A.3: error-digest Symmetry** — `src/app/api/cron/error-digest/route.ts` (modify)
+   - Same pattern as 8A.2; closes R7 H-2
+
+4. **Phase 8C: User-Facing BYOK Admin** — 2 new routes + 1 new page + 1 new component
+   - `src/app/api/user/byok/route.ts` (new, ~120 LOC) — GET list providers, POST set/rotate, DELETE clear
+   - `src/app/[locale]/(dashboard)/dashboard/byok/page.tsx` (new, ~60 LOC) — SSR getCurrentUser guard
+   - `src/components/byok/byok-key-form.tsx` (new, ~140 LOC) — bilingual VN/EN, Zod validation, 3 providers (OpenRouter, ElevenLabs, D-ID)
+   - `src/lib/signals/byok-events.ts` (new, ~30 LOC) — `BYOK_KEY_SET` + `BYOK_KEY_CLEARED` signals (provider-only, no key bytes logged)
+   - Dashboard layout sidebar link added (`<Link href="/dashboard/byok">`)
+   - D1 table `user_api_keys` (from 4G-BYOK) reused; no new migration
+
+### Tests & Quality
+- **Tests:** 1300 → 1311 (+11): 1 workflow-stepper + 1 weekly-signals + 1 error-digest + 4 route + 4 form
+- **Build:** ✅ npm run build exit 0
+- **Code Review:** ✅ 9.6/10 SHIP, 0 critical, 0 high (4 low deferred to R9)
+- **Prod:** ✅ HTTP 200, all routes live
+
+### Backward Compatibility
+- 100% backward-compatible; `BYOK_ENABLED=0` → env fallback (unchanged)
+- New `/api/user/byok` endpoint requires auth (getCurrentUser guard)
+- New `/dashboard/byok` page requires admin role (existing tier gate)
+- Existing signal events unchanged
+
+### Deferred to R9 (non-blocking)
+- BYOK rate-limit tightening per auth tier — L-1
+- Sidebar icon differentiation (RaaS OUT vs BYOK IN) — L-2
+- Admin monitoring query aggregator for BYOK stats — INFO-2
+- `/dashboard/byok` loading skeleton — L-3
 
 ---
 

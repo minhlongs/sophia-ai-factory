@@ -2,12 +2,14 @@
 
 > Sophia AI Factory — RaaS (Reasoning-as-a-Service) Platform with AI-Native CI/CD, Observability, & Signals
 
-**Last Updated:** 2026-04-18 PM-22 (Phase 4F.3/4N-POLISH/4E.2-TUNING/4G-WIRE: R6 Refinement Pack — Tier Normalization, SSE Polish, Cache Index Widening, BYOK Integration)
+**Last Updated:** 2026-04-18 PM-24 (Phase 8A/8C: R8 Hygiene + User-Facing BYOK Admin — errorClass split, weekly-signals + error-digest BYOK wire, /api/user/byok endpoint, /dashboard/byok page)
 **Production:** https://sophia.agencyos.network
 **Production Dashboard:** https://sophia.agencyos.network/dashboard
 
 ### Recent Shipments (2026-04-18)
-Rounds 4 + 5 + 6: 15 major features shipped (LLM observability + async ops + signals + BYOK integration):
+Rounds 4 + 5 + 6 + 7 + 8: 20+ major features shipped (LLM observability + async ops + signals + BYOK integration + user admin):
+- **Round 8 - R8 Hygiene + User-Facing BYOK Admin (2026-04-18):** Phase 8A errorClass split in workflow-stepper + weekly-signals-digest + error-digest BYOK resolver symmetry + Phase 8C new `/api/user/byok` endpoint (GET/POST/DELETE key management) + `/dashboard/byok` SSR page with bilingual component + `BYOK_KEY_SET/BYOK_KEY_CLEARED` signal events = 11 new tests, user-facing BYOK admin ready
+- **Round 7 - R7 BYOK Wiring Completion (2026-04-18):** Phase 7A OpenRouter degrade-to-mock in workflow-stepper + Phase 7B script-generator BYOK resolver wire + Phase 7C niche-enhancer BYOK resolver wire = 6 new tests, all OpenRouter callers BYOK-integrated
 - **Round 6 - R6 Refinement Pack (2026-04-18):** Phase 4F.3 tier normalization (DB_TIER_MAPPING canonical safety) + Phase 4N-POLISH SSE reader cleanup + parse_error event + Phase 4E.2-TUNING cache index widening + PII gate + Phase 4G-WIRE per-user key integration into cron/LLM callers = 9 new tests, BYOK fully wired
 - **Round 5 - Round 4.5 Refinement (2026-04-18):** Phase 4N SSE parser extraction (7-event union, tool-use streaming) + Phase 4E.2 semantic cache fallback (Workers AI embeddings, dark-launched) + Phase 4F.2 tenant context helper (single-JOIN, YAGNI) + Phase 4G-BYOK per-user API key foundations (AES-GCM crypto + D1 store, env fallback) = 62 new tests, 4 new modules
 - **Round 4 - Trace Aggregation & Anthropic (2026-04-18):** Phase 4M aggregateTraceStats extraction + Phase 4J Anthropic API adapter + Phase 4K admin monitoring LLM trace embed + Phase 4L Anthropic streaming/tool-use library prep = 8 new tests, callAnthropicFull/callAnthropicStream available
@@ -278,6 +280,7 @@ affiliate_content — id, org_id, type, title, content, status
 | `/api/raas/usage` | GET | MCU usage stats |
 | `/api/proposals/generate` | POST | AI proposal (MCU billable) |
 | `/api/video/generate` | POST | Video generation (MCU billable) |
+| `/api/user/byok` | GET/POST/DELETE | User BYOK API key management (Phase 8C) |
 
 ### RaaS External API (Bearer Token)
 | Route | Method | Purpose |
