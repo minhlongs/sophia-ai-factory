@@ -2,12 +2,13 @@
 
 > Sophia AI Factory — RaaS (Reasoning-as-a-Service) Platform with AI-Native CI/CD, Observability, & Signals
 
-**Last Updated:** 2026-04-18 PM-21 (Phase 4N/4E.2/4F.2/4G-BYOK: Streaming Refinement, Semantic Cache, Tenant Helpers, BYOK Foundations — Round 5)
+**Last Updated:** 2026-04-18 PM-22 (Phase 4F.3/4N-POLISH/4E.2-TUNING/4G-WIRE: R6 Refinement Pack — Tier Normalization, SSE Polish, Cache Index Widening, BYOK Integration)
 **Production:** https://sophia.agencyos.network
 **Production Dashboard:** https://sophia.agencyos.network/dashboard
 
 ### Recent Shipments (2026-04-18)
-Rounds 4 + 5: 11 major features shipped (LLM observability + async ops + signals):
+Rounds 4 + 5 + 6: 15 major features shipped (LLM observability + async ops + signals + BYOK integration):
+- **Round 6 - R6 Refinement Pack (2026-04-18):** Phase 4F.3 tier normalization (DB_TIER_MAPPING canonical safety) + Phase 4N-POLISH SSE reader cleanup + parse_error event + Phase 4E.2-TUNING cache index widening + PII gate + Phase 4G-WIRE per-user key integration into cron/LLM callers = 9 new tests, BYOK fully wired
 - **Round 5 - Round 4.5 Refinement (2026-04-18):** Phase 4N SSE parser extraction (7-event union, tool-use streaming) + Phase 4E.2 semantic cache fallback (Workers AI embeddings, dark-launched) + Phase 4F.2 tenant context helper (single-JOIN, YAGNI) + Phase 4G-BYOK per-user API key foundations (AES-GCM crypto + D1 store, env fallback) = 62 new tests, 4 new modules
 - **Round 4 - Trace Aggregation & Anthropic (2026-04-18):** Phase 4M aggregateTraceStats extraction + Phase 4J Anthropic API adapter + Phase 4K admin monitoring LLM trace embed + Phase 4L Anthropic streaming/tool-use library prep = 8 new tests, callAnthropicFull/callAnthropicStream available
 - **Round 3 - Real LLM & Ops Endpoints (2026-04-18):** Phase 4G dark-launched real LLM + Phase 4H cache stats API + Phase 4I trace stats API + Phase 4G-FIX telemetry honesty = 9 new tests, ops monitoring endpoints live
@@ -132,9 +133,9 @@ graph TB
 | **Adapter** | opennextjs-cloudflare | Next.js → CF Workers |
 | **Database** | Cloudflare D1 | SQLite-based, `sophia-raas-db` |
 | **Cache** | Cloudflare R2 | `sophia-ai-factory-opennext-cache` |
-| **LLM Cache** | D1 (Org-Scoped) | Exact-match SHA-256 (Phase 4E) + optional semantic-similarity fallback via Workers AI embeddings (Phase 4E.2, `LLM_CACHE_SEMANTIC_ENABLED`, dark-launched); per-tenant isolation via `resolveOrgId()` + `getTenantContext()` helpers (Phase 4E H-1 → 4F.1 → 4F.2); `callWithCache()` wrapper wired into script-generator (Phase 4F); daily purge cron (Phase 4E.3); real LLM in workflow-stepper (Phase 4G, `WORKFLOW_REAL_LLM_ENABLED`); stats endpoints `/api/admin/llm-cache-stats` (Phase 4H) + `/api/admin/llm-trace-stats` (Phase 4I) |
-| **AI Streaming** | Anthropic SSE + Tool-Use | `parseAnthropicSse()` async generator + `AnthropicStreamEvent` discriminated union (Phase 4N); `callAnthropicStreamEvents` yields 7 event types (message_start, content_block_start/stop, text_delta, input_json_delta, message_delta, message_stop); `callAnthropicStream` backward-compat text-only filter; `callAnthropicFull` for tool-use flows |
-| **Per-User API Keys** | D1 + AES-GCM Crypto | BYOK foundations (Phase 4G-BYOK): `user_api_keys` D1 table, AES-GCM-256 encryption (`byok-crypto.ts`), D1 store (`user-api-key-store.ts`), resolver with envFallback (`resolve-user-api-key.ts`); opt-in via `BYOK_ENABLED=1` + `BYOK_MASTER_KEY` (base64 32 bytes); no caller migration yet (Phase 4G-WIRE deferred) |
+| **LLM Cache** | D1 (Org-Scoped) | Exact-match SHA-256 (Phase 4E) + optional semantic-similarity fallback via Workers AI embeddings (Phase 4E.2, `LLM_CACHE_SEMANTIC_ENABLED`, dark-launched; Phase 4E.2-TUNING: index widened to full 4 columns `(org_id, embedding_model, provider, model, created_at)` for range freshness queries); per-tenant isolation via `resolveOrgId()` + `getTenantContext()` helpers (Phase 4E H-1 → 4F.1 → 4F.2); `LLM_CACHE_STORE_PROMPT_TEXT=1` PII/GDPR gate (vectors always stored, text optional); `callWithCache()` wrapper wired into script-generator (Phase 4F); daily purge cron (Phase 4E.3); real LLM in workflow-stepper (Phase 4G, `WORKFLOW_REAL_LLM_ENABLED`); stats endpoints `/api/admin/llm-cache-stats` (Phase 4H) + `/api/admin/llm-trace-stats` (Phase 4I) |
+| **AI Streaming** | Anthropic SSE + Tool-Use | `parseAnthropicSse()` async generator + `AnthropicStreamEvent` discriminated union (Phase 4N); `callAnthropicStreamEvents` yields 7 event types (message_start, content_block_start/stop, text_delta, input_json_delta, message_delta, message_stop; Phase 4N-POLISH: added `parse_error` variant + try/finally reader cleanup for robust error handling); `callAnthropicStream` backward-compat text-only filter; `callAnthropicFull` for tool-use flows |
+| **Per-User API Keys** | D1 + AES-GCM Crypto | BYOK foundations (Phase 4G-BYOK): `user_api_keys` D1 table, AES-GCM-256 encryption (`byok-crypto.ts`), D1 store (`user-api-key-store.ts`), resolver with envFallback (`resolve-user-api-key.ts`); opt-in via `BYOK_ENABLED=1` + `BYOK_MASTER_KEY` (base64 32 bytes); Phase 4G-WIRE: fully integrated into workflow-stepper cron via `resolveOrgOwnerUserId()` helper for cron context bridge; per-user key resolution before Anthropic/OpenRouter live calls; env fallback when BYOK disabled |
 | **AI Providers** | Anthropic + OpenRouter | Anthropic API adapter (Phase 4J) routes via `fetchFromAnthropicAPI()` when `ANTHROPIC_API_KEY` set; OpenRouter fallback via router (Phase 4C); cache reuse across both via `callWithCache()` |
 | **Auth** | Better Auth v1.6.2 (D1) | Email/password + magic link, org plugin, no RLS |
 | **Billing** | NOWPayments (primary) + PayOS (backup) | MCU credit system, webhooks |
@@ -373,6 +374,11 @@ affiliate_content — id, org_id, type, title, content, status
 
 ### Tier Enforcement Gates (2026-04-15)
 
+**Tier Normalization (Phase 4F.3):**
+- `normalizePlanToTier(plan: string)` canonical helper uses `DB_TIER_MAPPING` for safe enum coercion
+- Maps: "starter"→BASIC, "pro"→PREMIUM, "enterprise"→ENTERPRISE, "master"→MASTER + error fallback
+- Replaces unsafe `.toUpperCase()` casts on D1 text columns (database text to TypeScript enum safety)
+
 **MASTER Tier Special Handling:**
 - **IPN Webhook:** Sets expiry to 2099-12-31 (lifetime subscription)
 - **Middleware Bypass:** MCU balance check disabled for this tier
@@ -387,7 +393,7 @@ affiliate_content — id, org_id, type, title, content, status
 **Tier Gate Application:**
 - Campaign creation: DB check before insert (tier-based limits)
 - Team member invites: Count enforcement (0/5/∞/∞)
-- API key provisioning: Tier verification
+- API key provisioning: Tier verification (via `normalizePlanToTier` safety wrapper)
 - Integration endpoints: ENTERPRISE+ gate enforcement
 
 ### Feature Costs
