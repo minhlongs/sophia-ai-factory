@@ -1,14 +1,22 @@
 /**
- * LLM Cache — Phase 4E exact-match MVP (PDF Bước 4.6 Semantic Cache).
+ * LLM Cache — Phase 4E exact-match + Phase 4E.2 semantic fallback.
  *
  * D1-backed, env-gated, fire-and-forget dual of `recordLlmCall()`:
- * hash = SHA-256 of normalized (provider + model + messages).
+ *   - Exact path: SHA-256 of (provider + model + messages + orgId) → hash.
+ *   - Semantic path (4E.2): bge-base-en-v1.5 embedding → top-K cosine match.
  *
- * Semantic similarity upgrade (embedding-based top-K) → Phase 4E.2.
- * Purge job for expired rows                         → Phase 4E.3.
+ * Purge job for expired rows → Phase 4E.3.
  */
 
 import { createServerClient } from '@/lib/db/client'
+import {
+  EMBEDDING_MODEL_ID,
+  embedPrompt,
+  encodeEmbedding,
+  isSemanticCacheEnabled,
+  normalizePromptForEmbedding,
+  trySemanticFallback,
+} from './llm-cache-semantic'
 
 const DEFAULT_TTL_SEC = 24 * 60 * 60
 
@@ -47,6 +55,8 @@ interface CacheRow {
 export function isCacheEnabled(): boolean {
   return process.env.LLM_CACHE_ENABLED === '1'
 }
+
+export { isSemanticCacheEnabled } from './llm-cache-semantic'
 
 /**
  * Read TTL from env or default to 24h. Invalid / zero / negative → default.
@@ -99,10 +109,12 @@ export async function lookupCache(key: CacheKey): Promise<CacheEntry | null> {
       .eq('org_id', key.orgId)
       .single()
 
-    if (error || !data) return null
+    if (error || !data) return await trySemanticFallback(key)
     const row = data as CacheRow
 
-    if (new Date(row.expires_at).getTime() <= Date.now()) return null
+    if (new Date(row.expires_at).getTime() <= Date.now()) {
+      return await trySemanticFallback(key)
+    }
 
     void incrementHitCount(hash, key.orgId)
 
@@ -113,9 +125,10 @@ export async function lookupCache(key: CacheKey): Promise<CacheEntry | null> {
       costUsd:      row.cost_usd      ?? undefined,
     }
   } catch {
-    return null
+    return await trySemanticFallback(key)
   }
 }
+
 
 /**
  * Fire-and-forget hit_count increment via D1 RPC. Never throws — hit_count is
@@ -147,18 +160,36 @@ export async function writeCache(
     const expiresAt = new Date(Date.now() + ttlSeconds * 1000)
     const db = createServerClient()
 
+    // Phase 4E.2: embed prompt iff semantic path enabled AND AI binding present.
+    // Null-safe: missing binding or failed embed just stores exact row.
+    let embedding:      Uint8Array | null = null
+    let embeddingModel: string     | null = null
+    let promptText:     string     | null = null
+    if (isSemanticCacheEnabled()) {
+      const normalized = normalizePromptForEmbedding(key.messages)
+      const vec = await embedPrompt(normalized)
+      if (vec) {
+        embedding      = encodeEmbedding(vec)
+        embeddingModel = EMBEDDING_MODEL_ID
+        promptText     = normalized
+      }
+    }
+
     // Upsert keeps existing hit_count + created_at untouched on update
     // (those cols are not in the payload, so ON CONFLICT DO UPDATE skips them).
     await db.from('llm_cache').upsert({
       hash,
-      org_id:        key.orgId,
-      provider:      key.provider,
-      model:         key.model,
-      response:      entry.response,
-      input_tokens:  entry.inputTokens,
-      output_tokens: entry.outputTokens,
-      cost_usd:      entry.costUsd,
-      expires_at:    expiresAt.toISOString(),
+      org_id:          key.orgId,
+      provider:        key.provider,
+      model:           key.model,
+      response:        entry.response,
+      input_tokens:    entry.inputTokens,
+      output_tokens:   entry.outputTokens,
+      cost_usd:        entry.costUsd,
+      expires_at:      expiresAt.toISOString(),
+      embedding,
+      embedding_model: embeddingModel,
+      prompt_text:     promptText,
     })
   } catch {
     // Swallow — cache write must never block caller.
