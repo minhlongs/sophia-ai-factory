@@ -13,9 +13,28 @@ import { logger } from '@/lib/utils/logger-utility'
 import { computeNext } from '@/lib/workflows/compute-next'
 import { recordLlmCall } from '@/lib/telemetry/llm-trace'
 import { route as routeLlm } from '@/lib/ai/llm-router'
+import { callWithCache } from '@/lib/llm/cache/call-with-cache'
+import type { CacheKey, CacheEntry } from '@/lib/llm/cache/llm-cache'
 import type { WorkflowRow, StepMissionRow } from '@/lib/db/workflow-repository'
 
 export const dynamic = 'force-dynamic'
+
+// ── OpenRouter response interface ─────────────────────────────────────────────
+
+interface OpenRouterChoice {
+  message: {
+    role:    string
+    content: string
+  }
+}
+
+interface OpenRouterResponse {
+  choices: OpenRouterChoice[]
+  usage?: {
+    prompt_tokens?:     number
+    completion_tokens?: number
+  }
+}
 
 // ── D1 binding helper (matches local-mode-health pattern) ─────────────────────
 
@@ -34,9 +53,18 @@ function isAuthorised(req: NextRequest): boolean {
   return req.headers.get('authorization') === `Bearer ${secret}`
 }
 
-// ── Step executor stub (MVP: simulate work inline) ────────────────────────────
+// ── LLM gate check ────────────────────────────────────────────────────────────
 
-async function executeStep(
+function isRealLlmEnabled(): boolean {
+  return (
+    process.env.WORKFLOW_REAL_LLM_ENABLED === '1' &&
+    Boolean(process.env.OPENROUTER_API_KEY)
+  )
+}
+
+// ── Step executor ─────────────────────────────────────────────────────────────
+
+export async function executeStep(
   db: D1Database,
   workflow: WorkflowRow,
   missionId: string,
@@ -44,7 +72,6 @@ async function executeStep(
   stepType: string,
 ): Promise<void> {
   const now = new Date().toISOString()
-  const result = `Step ${stepType} completed: ${workflow.prompt.slice(0, 100)}`
   const startedAt = Date.now()
 
   // Phase 4C: Smart LLM Router — classify prompt complexity + pick cloud tier.
@@ -52,6 +79,67 @@ async function executeStep(
   // not users(id). Future slice: join org_members or denormalize created_by_user_id,
   // then pass hasLocalMode=true when resolveLocalMekongdForUser() returns a config.
   const decision = routeLlm(workflow.prompt, false)
+
+  // Phase 4G: dark-launched real LLM call via callWithCache + OpenRouter.
+  // Falls back to mock string when gate disabled or live fetch fails.
+  // Rationale: swallowing live errors keeps the dark-launch safe — workflows
+  // still make progress; operators can inspect logs to validate LLM quality
+  // before enabling WORKFLOW_REAL_LLM_ENABLED=1 in production.
+  let result: string
+  if (isRealLlmEnabled()) {
+    const cacheKey: CacheKey = {
+      provider: decision.provider === 'local-mekongd' ? 'openrouter' : decision.provider,
+      model:    decision.model,
+      messages: [
+        { role: 'system', content: `You are a workflow step executor for step type: ${stepType}` },
+        { role: 'user',   content: workflow.prompt },
+      ],
+      orgId: workflow.org_id || 'system',
+    }
+
+    try {
+      const cacheResult = await callWithCache(cacheKey, async (): Promise<CacheEntry> => {
+        const apiKey = process.env.OPENROUTER_API_KEY as string
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method:  'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type':  'application/json',
+          },
+          body: JSON.stringify({
+            model:    decision.model,
+            messages: cacheKey.messages,
+          }),
+        })
+
+        if (!response.ok) {
+          throw new Error(`OpenRouter ${response.status}: ${await response.text()}`)
+        }
+
+        const data = await response.json() as OpenRouterResponse
+        const content = data.choices[0]?.message?.content ?? ''
+
+        return {
+          response:     content,
+          inputTokens:  data.usage?.prompt_tokens,
+          outputTokens: data.usage?.completion_tokens,
+        }
+      })
+
+      result = cacheResult.response || `Step ${stepType} completed: ${workflow.prompt.slice(0, 100)}`
+    } catch (err) {
+      // Dark-launch safety: swallow live errors, fall back to mock string.
+      // Never propagate — workflow must keep making progress during gate testing.
+      logger.warn('[workflow-stepper] live LLM call failed, falling back to mock', {
+        workflowId: workflow.id,
+        model:      decision.model,
+        err,
+      })
+      result = `Step ${stepType} completed: ${workflow.prompt.slice(0, 100)}`
+    }
+  } else {
+    result = `Step ${stepType} completed: ${workflow.prompt.slice(0, 100)}`
+  }
 
   try {
     // Flip workflow to 'running' if still 'queued' (first step)
