@@ -318,6 +318,7 @@
 | **2026-04-18** | **Phase 4F.1 resolveOrgId Unification (canonical helper, DRY refactor)** | **✅ SHIPPED** |
 | **2026-04-18** | **Phase 4E.3 LLM Cache Purge Cron (daily org-scoped cleanup, ops hygiene)** | **✅ SHIPPED** |
 | **2026-04-18** | **Phase 4G Real LLM Workflow + Phase 4H Cache Stats API (dark launch + ops endpoint)** | **✅ SHIPPED** |
+| **2026-04-18** | **Phase 4J Anthropic API Adapter + Phase 4K Admin Monitoring LLM Trace (real Anthropic + trace embed)** | **✅ SHIPPED** |
 | 2026-05-01 | Analytics Dashboard | 🔄 Planned |
 | 2026-06-01 | Multi-Language Support (Vietnamese) | 🔄 Planned |
 | 2026-07-01 | Telegram Bot Enhancement | 🔄 Planned |
