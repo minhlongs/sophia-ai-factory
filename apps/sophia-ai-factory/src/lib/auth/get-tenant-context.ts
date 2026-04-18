@@ -16,6 +16,7 @@
  */
 
 import type { Tier } from '@/types'
+import { normalizePlanToTier } from '@/lib/db/get-user-tier'
 import { getD1Raw } from './resolve-org-id'
 
 export interface TenantContext {
@@ -55,7 +56,7 @@ export async function getTenantContext(
 
     return {
       orgId: row.org_id,
-      tier:  (row.plan as Tier | null) ?? ('BASIC' as Tier),
+      tier:  normalizePlanToTier(row.plan),
     }
   } catch {
     return null

@@ -66,6 +66,25 @@ describe('getTenantContext', () => {
     expect(result).toEqual({ orgId: 'org-enterprise', tier: 'ENTERPRISE' })
   })
 
+  // Phase 4F.3: DB stores lowercase per migration 0001; normalize to Tier enum
+  it('normalizes DB lowercase plan to Tier enum (premium → PREMIUM)', async () => {
+    const { d1 } = makeD1({ org_id: 'org-1', plan: 'premium' })
+    const result = await getTenantContext('user-1', d1)
+    expect(result).toEqual({ orgId: 'org-1', tier: 'PREMIUM' })
+  })
+
+  it('normalizes legacy "pro" plan alias to PREMIUM', async () => {
+    const { d1 } = makeD1({ org_id: 'org-2', plan: 'pro' })
+    const result = await getTenantContext('user-2', d1)
+    expect(result).toEqual({ orgId: 'org-2', tier: 'PREMIUM' })
+  })
+
+  it('unknown plan string falls back to BASIC', async () => {
+    const { d1 } = makeD1({ org_id: 'org-3', plan: 'legacy-plan-xyz' })
+    const result = await getTenantContext('user-3', d1)
+    expect(result).toEqual({ orgId: 'org-3', tier: 'BASIC' })
+  })
+
   it('swallows D1 throws and returns null', async () => {
     const d1 = {
       prepare: vi.fn().mockImplementation(() => {
