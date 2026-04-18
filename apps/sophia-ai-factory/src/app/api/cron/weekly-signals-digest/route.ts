@@ -20,6 +20,7 @@ import { renderDigestMarkdown, buildTldr, type DigestData } from '@/lib/signals/
 import { upsertGithubIssue, buildIssueTitle } from '@/lib/signals/digest/github-issue-poster'
 import { postTelegramDigest } from '@/lib/signals/digest/telegram-poster'
 import { lookupCache, writeCache, type CacheKey } from '@/lib/llm/cache/llm-cache'
+import { resolveUserApiKey } from '@/lib/byok/resolve-user-api-key'
 
 const POSTHOG_QUERY_URL = 'https://us.i.posthog.com/api/projects/@current/events/'
 
@@ -61,9 +62,11 @@ async function fetchTopEvents(): Promise<PostHogEvent[]> {
   }
 }
 
-/** Summarize events via OpenRouter (cheap model — gpt-4o-mini). Phase 4E: cache first. */
+/** Summarize events via OpenRouter (cheap model — gpt-4o-mini). Phase 4E: cache first.
+ *  Phase 8A: BYOK symmetry — library-consistent resolver call (no userId: cron is systemic).
+ *  Resolver short-circuits on null userId → returns envFallback as-is. */
 async function summarizeWithAI(eventsSummary: string): Promise<string> {
-  const openRouterKey = process.env.OPENROUTER_API_KEY
+  const openRouterKey = await resolveUserApiKey(null, 'openrouter', process.env.OPENROUTER_API_KEY)
   if (!openRouterKey) return eventsSummary
 
   const prompt = [

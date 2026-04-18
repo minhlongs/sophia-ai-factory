@@ -26,6 +26,8 @@ export const D1Events = {
   WORKFLOW_FAILED:          'workflow_failed',         // Supervisor: step mission failed
   PROMPT_INJECTION_DETECTED: 'prompt_injection_detected', // Phase 4A: guard flagged prompt at ingress
   LLM_CALL_TRACE:            'llm_call_trace',            // Phase 4B: per-step LLM call observability
+  BYOK_KEY_SET:              'byok_key_set',              // Phase 8C: user-facing BYOK admin — store/rotate
+  BYOK_KEY_CLEARED:          'byok_key_cleared',          // Phase 8C: user-facing BYOK admin — delete
 } as const
 
 export type D1EventType = typeof D1Events[keyof typeof D1Events]
@@ -149,6 +151,12 @@ const PromptInjectionDetectedSchema = z.object({
   endpoint:      z.string(),               // e.g. 'POST /api/raas/workflows'
 })
 
+/** byok_key_set / byok_key_cleared — Phase 8C audit of user-facing BYOK admin.
+ *  Props whitelist: provider only (plaintext keys NEVER enter signals_events). */
+const ByokKeyAdminSchema = z.object({
+  provider: z.enum(['openrouter', 'anthropic', 'elevenlabs', 'd-id']),
+})
+
 /** llm_call_trace — per-step LLM call observability (Phase 4B Advanced Observability) */
 const LlmCallTraceSchema = z.object({
   trace_id:       z.string(),              // derived from workflow_id + step_order
@@ -184,6 +192,8 @@ const SCHEMAS: Record<D1EventType, z.ZodTypeAny> = {
   [D1Events.WORKFLOW_FAILED]:         WorkflowFailedSchema,
   [D1Events.PROMPT_INJECTION_DETECTED]: PromptInjectionDetectedSchema,
   [D1Events.LLM_CALL_TRACE]:            LlmCallTraceSchema,
+  [D1Events.BYOK_KEY_SET]:              ByokKeyAdminSchema,
+  [D1Events.BYOK_KEY_CLEARED]:          ByokKeyAdminSchema,
 }
 
 /**

@@ -96,6 +96,9 @@ export async function executeStep(
   // Track whether live LLM succeeded. Flipped to true on any failure/skip path
   // so success-path recordLlmCall telemetry is honest during dark-launch.
   let llmDegraded = false
+  // Phase 8A: split degrade reason for Langfuse discriminability —
+  // missing-key (BYOK unset + env unset) vs live-failure (upstream 4xx/5xx, timeout, empty).
+  let degradeReason: 'LLM_MISSING_KEY_FALLBACK' | 'LLM_LIVE_FAILED_FALLBACK' | undefined
 
   if (isRealLlmEnabled()) {
     const { provider, model } = decision
@@ -103,6 +106,7 @@ export async function executeStep(
     // Gate live fetch to supported providers. Unknown/stub → skip + warn operator.
     if (!REAL_LLM_PROVIDERS.has(provider)) {
       llmDegraded = true
+      degradeReason = 'LLM_LIVE_FAILED_FALLBACK'
       logger.warn('[workflow-stepper] unsupported LLM provider, skipping live fetch', {
         event:    'llm_router_unsupported',
         provider,
@@ -122,6 +126,7 @@ export async function executeStep(
       )
       if (!anthropicKey) {
         llmDegraded = true
+        degradeReason = 'LLM_MISSING_KEY_FALLBACK'
         logger.warn('[workflow-stepper] ANTHROPIC_API_KEY not set, falling back to mock', {
           event:      'llm_anthropic_missing_key',
           workflowId: workflow.id,
@@ -152,6 +157,7 @@ export async function executeStep(
             result = cacheResult.response
           } else {
             llmDegraded = true
+            degradeReason = 'LLM_LIVE_FAILED_FALLBACK'
             logger.warn('[workflow-stepper] empty LLM response, falling back to mock', {
               event:      'llm_empty_response',
               workflowId: workflow.id,
@@ -161,6 +167,7 @@ export async function executeStep(
           }
         } catch (err) {
           llmDegraded = true
+          degradeReason = 'LLM_LIVE_FAILED_FALLBACK'
           logger.warn('[workflow-stepper] live LLM call failed, falling back to mock', {
             workflowId: workflow.id,
             model,
@@ -182,6 +189,7 @@ export async function executeStep(
 
       if (!openrouterKey) {
         llmDegraded = true
+        degradeReason = 'LLM_MISSING_KEY_FALLBACK'
         logger.warn('[workflow-stepper] OPENROUTER_API_KEY not set, falling back to mock', {
           event:      'llm_openrouter_missing_key',
           workflowId: workflow.id,
@@ -235,6 +243,7 @@ export async function executeStep(
         } else {
           // Empty response from LLM likely indicates upstream issue — treat as degraded.
           llmDegraded = true
+          degradeReason = 'LLM_LIVE_FAILED_FALLBACK'
           logger.warn('[workflow-stepper] empty LLM response, falling back to mock', {
             event:      'llm_empty_response',
             workflowId: workflow.id,
@@ -246,6 +255,7 @@ export async function executeStep(
         // Dark-launch safety: swallow live errors, fall back to mock string.
         // Never propagate — workflow must keep making progress during gate testing.
         llmDegraded = true
+        degradeReason = 'LLM_LIVE_FAILED_FALLBACK'
         logger.warn('[workflow-stepper] live LLM call failed, falling back to mock', {
           workflowId: workflow.id,
           model,
@@ -306,7 +316,7 @@ export async function executeStep(
         model:       decision.model,
         durationMs:  Date.now() - startedAt,
         ok:          !llmDegraded,
-        errorClass:  llmDegraded ? 'LLM_LIVE_FAILED_FALLBACK' : undefined,
+        errorClass:  llmDegraded ? (degradeReason ?? 'LLM_LIVE_FAILED_FALLBACK') : undefined,
       },
       workflow.id,
       workflow.org_id,

@@ -479,11 +479,11 @@ describe('executeStep — Phase 4G gate', () => {
       }),
     )
 
-    // Telemetry honest: ok:false + errorClass
+    // Telemetry honest: ok:false + errorClass (Phase 8A: missing-key split)
     expect(mockRecordLlmCall).toHaveBeenCalledWith(
       expect.objectContaining({
         ok:         false,
-        errorClass: 'LLM_LIVE_FAILED_FALLBACK',
+        errorClass: 'LLM_MISSING_KEY_FALLBACK',
       }),
       workflow.id,
       workflow.org_id,
@@ -519,11 +519,11 @@ describe('executeStep — Phase 4G gate', () => {
       }),
     )
 
-    // Telemetry honest: ok:false + errorClass
+    // Telemetry honest: ok:false + errorClass (Phase 8A: missing-key split)
     expect(mockRecordLlmCall).toHaveBeenCalledWith(
       expect.objectContaining({
         ok:         false,
-        errorClass: 'LLM_LIVE_FAILED_FALLBACK',
+        errorClass: 'LLM_MISSING_KEY_FALLBACK',
       }),
       workflow.id,
       workflow.org_id,
