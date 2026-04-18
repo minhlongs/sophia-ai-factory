@@ -1,10 +1,12 @@
 /**
  * Get user's subscription tier from D1.
- * Reads 'plan' column from subscriptions table.
- * Returns 'BASIC' as default if no subscription found.
+ * Reads 'plan' column from subscriptions table (stored lowercase per
+ * migration 0001) and normalizes via DB_TIER_MAPPING to the uppercase
+ * Tier enum. Returns 'BASIC' on any miss.
  */
 
 import { Tier } from '@/types';
+import { DB_TIER_MAPPING } from '@/config/tiers';
 
 function getD1(): D1Database | null {
   const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
@@ -12,6 +14,15 @@ function getD1(): D1Database | null {
   const ctx = (globalThis as Record<symbol, { env?: Record<string, unknown> }>)[Symbol.for('__cloudflare-context__')];
   if (ctx?.env?.DB) return ctx.env.DB as D1Database;
   return null;
+}
+
+/**
+ * Phase 4F.3: normalize DB plan string ('premium', 'pro', 'free', ...)
+ * to the canonical `Tier` enum value. Unknown or null → 'BASIC'.
+ */
+export function normalizePlanToTier(plan: string | null | undefined): Tier {
+  if (!plan) return 'BASIC' as Tier;
+  return DB_TIER_MAPPING[plan.toLowerCase()] ?? ('BASIC' as Tier);
 }
 
 export async function getUserTier(userId: string): Promise<Tier> {
@@ -26,7 +37,7 @@ export async function getUserTier(userId: string): Promise<Tier> {
     const sub = await d1.prepare("SELECT plan FROM subscriptions WHERE org_id = ? AND status = 'active' LIMIT 1")
       .bind(member.org_id).first<{ plan: string }>();
 
-    return (sub?.plan as Tier) || ('BASIC' as Tier);
+    return normalizePlanToTier(sub?.plan);
   } catch {
     return 'BASIC' as Tier;
   }
