@@ -170,6 +170,27 @@ export async function executeStep(
         }
       }
     } else {
+      // Phase 4G-WIRE: BYOK — resolve the workflow owner's key with env fallback.
+      // Phase 7A: mirror Anthropic degrade-to-mock when both BYOK + env missing
+      // (prevents `Bearer ` empty → 401 upstream + honest llmDegraded telemetry).
+      const ownerUserId   = await resolveOrgOwnerUserId(workflow.org_id)
+      const openrouterKey = await resolveUserApiKey(
+        ownerUserId,
+        'openrouter',
+        process.env.OPENROUTER_API_KEY,
+      )
+
+      if (!openrouterKey) {
+        llmDegraded = true
+        logger.warn('[workflow-stepper] OPENROUTER_API_KEY not set, falling back to mock', {
+          event:      'llm_openrouter_missing_key',
+          workflowId: workflow.id,
+          model,
+        })
+        result = `Step ${stepType} completed: ${workflow.prompt.slice(0, 100)}`
+        // Skip the live fetch + cache block entirely.
+        // Falls through to the shared DB write + recordLlmCall below.
+      } else {
       const cacheKey: CacheKey = {
         // local-mekongd → use openrouter endpoint during dark-launch
         provider: provider === 'local-mekongd' ? 'openrouter' : provider,
@@ -181,21 +202,12 @@ export async function executeStep(
         orgId: workflow.org_id || 'system',
       }
 
-      // Phase 4G-WIRE: BYOK — resolve the workflow owner's key with env fallback.
-      const ownerUserId     = await resolveOrgOwnerUserId(workflow.org_id)
-      const openrouterKey   = await resolveUserApiKey(
-        ownerUserId,
-        'openrouter',
-        process.env.OPENROUTER_API_KEY,
-      )
-
       try {
         const cacheResult = await callWithCache(cacheKey, async (): Promise<CacheEntry> => {
-          const apiKey = openrouterKey ?? ''
           const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
             method:  'POST',
             headers: {
-              'Authorization': `Bearer ${apiKey}`,
+              'Authorization': `Bearer ${openrouterKey}`,
               'Content-Type':  'application/json',
             },
             body: JSON.stringify({
@@ -240,6 +252,7 @@ export async function executeStep(
           err,
         })
         result = `Step ${stepType} completed: ${workflow.prompt.slice(0, 100)}`
+      }
       }
     }
   } else {

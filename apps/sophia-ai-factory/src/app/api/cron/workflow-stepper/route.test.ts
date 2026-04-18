@@ -37,6 +37,13 @@ vi.mock('@/lib/ai/anthropic-adapter', () => ({
   callAnthropic: vi.fn(),
 }))
 
+vi.mock('@/lib/byok/resolve-user-api-key', () => ({
+  // Default: pass-through env fallback (matches BYOK-off real behavior).
+  resolveUserApiKey: vi.fn((_userId, _provider, envFallback) =>
+    Promise.resolve(envFallback ?? null),
+  ),
+}))
+
 // ── Imports after mocks ───────────────────────────────────────────────────────
 
 import { executeStep } from './route'
@@ -45,14 +52,16 @@ import { logger } from '@/lib/utils/logger-utility'
 import { recordLlmCall } from '@/lib/telemetry/llm-trace'
 import { route as routeLlm } from '@/lib/ai/llm-router'
 import { callAnthropic } from '@/lib/ai/anthropic-adapter'
+import { resolveUserApiKey } from '@/lib/byok/resolve-user-api-key'
 import type { WorkflowRow } from '@/lib/db/workflow-repository'
 import type { RouteDecision } from '@/lib/ai/llm-router'
 
-const mockCallWithCache  = vi.mocked(callWithCache)
-const mockLoggerWarn     = vi.mocked(logger.warn)
-const mockRecordLlmCall  = vi.mocked(recordLlmCall)
-const mockRouteLlm       = vi.mocked(routeLlm)
-const mockCallAnthropic  = vi.mocked(callAnthropic)
+const mockCallWithCache    = vi.mocked(callWithCache)
+const mockLoggerWarn       = vi.mocked(logger.warn)
+const mockRecordLlmCall    = vi.mocked(recordLlmCall)
+const mockRouteLlm         = vi.mocked(routeLlm)
+const mockCallAnthropic    = vi.mocked(callAnthropic)
+const mockResolveUserApiKey = vi.mocked(resolveUserApiKey)
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -98,6 +107,10 @@ describe('executeStep — Phase 4G gate', () => {
     vi.clearAllMocks()
     vi.stubGlobal('fetch', vi.fn())
     mockRouteLlm.mockReturnValue(defaultDecision)
+    // Reset pass-through default after clearAllMocks wipes it.
+    mockResolveUserApiKey.mockImplementation((_u, _p, envFallback) =>
+      Promise.resolve(envFallback ?? null),
+    )
   })
 
   afterEach(() => {
@@ -462,6 +475,46 @@ describe('executeStep — Phase 4G gate', () => {
       expect.objectContaining({
         event:      'llm_anthropic_missing_key',
         model:      'claude-sonnet-4-6',
+        workflowId: workflow.id,
+      }),
+    )
+
+    // Telemetry honest: ok:false + errorClass
+    expect(mockRecordLlmCall).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ok:         false,
+        errorClass: 'LLM_LIVE_FAILED_FALLBACK',
+      }),
+      workflow.id,
+      workflow.org_id,
+    )
+  })
+
+  // ── Test 11 (Phase 7A) ────────────────────────────────────────────────────
+
+  it('openrouter + resolveUserApiKey returns null → degrade-to-mock, no fetch (mirror anthropic L-1)', async () => {
+    vi.stubEnv('WORKFLOW_REAL_LLM_ENABLED', '1')
+    vi.stubEnv('OPENROUTER_API_KEY', 'sk-env-present')  // gate must pass
+
+    // BYOK resolver returns null — e.g. BYOK on, user stored empty key,
+    // env fallback also stripped post-gate. Without 7A, would send
+    // `Bearer ` → 401. With 7A, degrade-to-mock before fetch.
+    mockResolveUserApiKey.mockResolvedValue(null)
+
+    const db = buildMockDb()
+    const workflow = buildWorkflow()
+
+    await executeStep(db, workflow, 'mission-11', 1, 'draft')
+
+    // No live fetch, no cache interaction
+    expect(mockCallWithCache).not.toHaveBeenCalled()
+    expect(vi.mocked(fetch)).not.toHaveBeenCalled()
+
+    // Operator warning with dedicated event name
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      '[workflow-stepper] OPENROUTER_API_KEY not set, falling back to mock',
+      expect.objectContaining({
+        event:      'llm_openrouter_missing_key',
         workflowId: workflow.id,
       }),
     )

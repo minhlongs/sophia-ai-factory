@@ -106,7 +106,8 @@ export const generateCampaign = inngest.createFunction(
       // userId (single-tenant idiom) when user has no org membership.
       // Composite PK (hash, org_id) keeps cross-tenant isolation either way.
       const resolvedOrgId = (await resolveOrgId(userId)) ?? userId;
-      const result = await scriptService.generateScript({ topic, audience, tier, orgId: resolvedOrgId });
+      // Phase 7B: thread userId so script-generator can resolve user's BYOK OpenRouter key.
+      const result = await scriptService.generateScript({ topic, audience, tier, orgId: resolvedOrgId, userId });
       await updateStatus("processing_script", 35, { script_content: result });
       await resumeEngine.checkpoint(campaignId, "generate-script");
       return result;
