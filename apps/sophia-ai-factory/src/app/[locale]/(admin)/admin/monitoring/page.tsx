@@ -1,12 +1,14 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/better-auth-session";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Activity, AlertTriangle, Database, Workflow, Gauge } from "lucide-react";
+import { Activity, AlertTriangle, Database, Workflow, Gauge, Cpu } from "lucide-react";
 import {
   getCacheStats,
   getWorkflowStats,
   getSignalsStats,
+  getTraceStats,
   cacheHitRate,
+  type TraceStats,
 } from "@/lib/admin/monitoring-queries";
 
 export const dynamic = "force-dynamic";
@@ -23,10 +25,11 @@ export default async function AdminMonitoringPage() {
     redirect("/dashboard");
   }
 
-  const [cacheRes, workflowsRes, signalsRes] = await Promise.all([
+  const [cacheRes, workflowsRes, signalsRes, traceStats] = await Promise.all([
     getCacheStats(),
     getWorkflowStats(),
     getSignalsStats(10),
+    getTraceStats(),
   ]);
 
   const cache     = cacheRes.data;
@@ -114,7 +117,7 @@ export default async function AdminMonitoringPage() {
       </Card>
 
       {/* Top signals events */}
-      <Card className="bg-card border-border shadow-sm">
+      <Card className="bg-card border-border shadow-sm mb-8">
         <CardHeader>
           <CardTitle className="text-foreground">Top signals — last 24h</CardTitle>
         </CardHeader>
@@ -135,6 +138,9 @@ export default async function AdminMonitoringPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* LLM Trace (24h) — Phase 4K */}
+      <LlmTraceSection stats={traceStats} />
     </div>
   );
 }
@@ -185,6 +191,106 @@ function WorkflowPill({ label, value, tone }: WorkflowPillProps) {
     <div className={`rounded-lg px-4 py-3 ${toneClass}`}>
       <p className="text-xs uppercase tracking-wide opacity-80">{label}</p>
       <p className="text-2xl font-bold tabular-nums">{value}</p>
+    </div>
+  );
+}
+
+// ── LLM Trace section — Phase 4K ─────────────────────────────────────────────
+
+interface LlmTraceSectionProps {
+  stats: TraceStats | null;
+}
+
+function LlmTraceSection({ stats }: LlmTraceSectionProps) {
+  const empty = stats === null || stats.total === 0;
+
+  return (
+    <div>
+      <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
+        <Cpu className="w-5 h-5 text-[var(--neon-cyan)]" />
+        LLM Trace (24h)
+      </h2>
+
+      {empty ? (
+        <Card className="bg-card border-border shadow-sm">
+          <CardContent className="p-6">
+            <p className="text-sm text-muted-foreground">No LLM traces yet</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          {/* 4 summary cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            <StatCard
+              label="Total Calls"
+              value={stats.total.toString()}
+              sub="llm_call_trace events"
+              icon={Cpu}
+              color="text-[var(--neon-cyan)]"
+              bg="bg-[var(--neon-cyan)]/10"
+            />
+            <StatCard
+              label="Success Rate"
+              value={`${(stats.successRate * 100).toFixed(1)}%`}
+              sub={`${stats.success} ok · ${stats.failure} failed`}
+              icon={Activity}
+              color="text-green-400"
+              bg="bg-green-400/10"
+            />
+            <StatCard
+              label="Avg Duration"
+              value={`${stats.avgDurationMs.toFixed(0)} ms`}
+              sub="mean per trace"
+              icon={Gauge}
+              color="text-yellow-400"
+              bg="bg-yellow-400/10"
+            />
+            <StatCard
+              label="Failures"
+              value={stats.failure.toString()}
+              sub="trace ok=false"
+              icon={AlertTriangle}
+              color="text-red-400"
+              bg="bg-red-500/10"
+            />
+          </div>
+
+          {/* Provider + Model breakdown tables */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card className="bg-card border-border shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-foreground text-base">Top Provider</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="divide-y divide-border">
+                  {stats.byProvider.map((p) => (
+                    <li key={p.provider} className="flex items-center justify-between py-2">
+                      <span className="font-mono text-sm text-foreground">{p.provider}</span>
+                      <span className="text-sm tabular-nums text-muted-foreground">{p.count}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card border-border shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-foreground text-base">Top Model</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="divide-y divide-border">
+                  {stats.byModel.map((m) => (
+                    <li key={m.model} className="flex items-center justify-between py-2">
+                      <span className="font-mono text-sm text-foreground">{m.model}</span>
+                      <span className="text-sm tabular-nums text-muted-foreground">{m.count}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          </div>
+        </>
+      )}
     </div>
   );
 }
