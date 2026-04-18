@@ -23,6 +23,8 @@ export type AnthropicStreamEvent =
   | { type: 'content_block_stop';  index: number }
   | { type: 'message_delta';       stopReason: string | null; stopSequence: string | null }
   | { type: 'message_stop' }
+  /** Phase 4N-POLISH: emitted when an SSE payload fails JSON.parse. */
+  | { type: 'parse_error';         reason: string; rawPayload: string }
 
 interface RawSseEvent {
   type?:  string
@@ -103,26 +105,39 @@ export async function* parseAnthropicSse(
     if (!payload || payload === '[DONE]') return
     let raw: RawSseEvent
     try { raw = JSON.parse(payload) as RawSseEvent }
-    catch { return }
+    catch (err) {
+      const reason = err instanceof Error ? err.message : 'JSON parse failed'
+      // Phase 4N-POLISH M-2: surface malformed events instead of silent drop;
+      // consumer can log / count without breaking the stream.
+      yield { type: 'parse_error', reason, rawPayload: payload.slice(0, 200) }
+      return
+    }
     const event = mapEvent(raw)
     if (event) yield event
   }
 
-  while (true) {
-    const { value, done } = await reader.read()
-    if (done) break
-    buffer += decoder.decode(value, { stream: true })
+  // Phase 4N-POLISH L-6: always release the reader when the consumer
+  // stops early (break / throw / return). Without this, the underlying
+  // fetch connection would stay half-open until GC.
+  try {
+    while (true) {
+      const { value, done } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
 
-    let eol: number
-    while ((eol = buffer.indexOf('\n')) >= 0) {
-      const line = buffer.slice(0, eol)
-      buffer = buffer.slice(eol + 1)
-      yield* tryEmit(line)
+      let eol: number
+      while ((eol = buffer.indexOf('\n')) >= 0) {
+        const line = buffer.slice(0, eol)
+        buffer = buffer.slice(eol + 1)
+        yield* tryEmit(line)
+      }
     }
-  }
 
-  if (buffer.length > 0) {
-    yield* tryEmit(buffer)
-    buffer = ''
+    if (buffer.length > 0) {
+      yield* tryEmit(buffer)
+      buffer = ''
+    }
+  } finally {
+    reader.cancel().catch(() => { /* already released */ })
   }
 }

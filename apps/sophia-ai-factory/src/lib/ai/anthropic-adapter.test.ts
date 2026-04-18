@@ -411,7 +411,7 @@ describe('callAnthropicStreamEvents', () => {
     expect(msgDelta).toEqual({ type: 'message_delta', stopReason: 'end_turn', stopSequence: null })
   })
 
-  it('skips malformed JSON and unknown event types', async () => {
+  it('emits parse_error for malformed JSON and skips unknown event types', async () => {
     const sseChunks = [
       'data: {not valid json\n\n',
       'data: {"type":"ping"}\n\n',
@@ -425,7 +425,51 @@ describe('callAnthropicStreamEvents', () => {
     const events: AnthropicStreamEvent[] = []
     for await (const e of callAnthropicStreamEvents(BASE_PARAMS)) events.push(e)
 
-    expect(events).toEqual([{ type: 'text_delta', index: 0, text: 'hi' }])
+    // 4N-POLISH M-2: malformed payload now surfaced as parse_error event
+    const parseErr = events.find((e) => e.type === 'parse_error')
+    expect(parseErr).toBeDefined()
+    expect(parseErr).toMatchObject({
+      type:       'parse_error',
+      rawPayload: expect.stringContaining('{not valid json'),
+    })
+    // Unknown event 'ping' still silently skipped (mapEvent returns null)
+    const textDelta = events.find((e) => e.type === 'text_delta')
+    expect(textDelta).toEqual({ type: 'text_delta', index: 0, text: 'hi' })
+  })
+
+  // 4N-POLISH L-6: reader is released on consumer early break
+  it('releases reader on early consumer break', async () => {
+    const sseChunks = [
+      'event: content_block_delta\ndata: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"one"}}\n\n',
+      'event: content_block_delta\ndata: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"two"}}\n\n',
+      'event: content_block_delta\ndata: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"three"}}\n\n',
+    ]
+
+    // Track cancel() calls via a custom ReadableStream with cancel hook
+    let cancelled = false
+    const encoder = new TextEncoder()
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        for (const c of sseChunks) controller.enqueue(encoder.encode(c))
+        controller.close()
+      },
+      cancel() { cancelled = true },
+    })
+
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(stream, { status: 200 }),
+    )
+
+    // Consume only the first event and break
+    let count = 0
+    for await (const _e of callAnthropicStreamEvents(BASE_PARAMS)) {
+      count++
+      if (count >= 1) break
+    }
+
+    // Yield microtasks so the finally block's reader.cancel() can run
+    await new Promise((r) => setTimeout(r, 0))
+    expect(cancelled).toBe(true)
   })
 })
 
