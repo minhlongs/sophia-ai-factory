@@ -1,7 +1,41 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-04-18 (Phase 4F: LLM Cache Wiring)
+> **Last Updated:** 2026-04-18 (Phase 4F.1: resolveOrgId Unification)
+
+---
+
+## [2026-04-18] Phase 4F.1 — resolveOrgId Unification (Refactor: DRY)
+
+### Summary
+Consolidated user→org_id resolution logic into canonical helper `resolveOrgId()` at `@/lib/auth/resolve-org-id`. Removed 3 byte-identical private copies + 1 SSR inline implementation from API routes and Inngest job. Sets foundation for Phase 4F.2 org scoping refinement and future Supervisor wiring. No behavior change; LLM cache scope now uses helper (LLM_CACHE_ENABLED still OFF). Tests 1175 → 1180 (+5).
+
+### Changes
+1. **New helper module** — `src/lib/auth/resolve-org-id.ts` (19 LOC)
+   - `export async function resolveOrgId(userId: string): Promise<string | null>`
+   - Queries `users.org_id` from Supabase (single-tenant Sophia: 1:1 user↔org mapping)
+   - Returns `null` if user not found; caller decides fallback behavior
+
+2. **Migrated callers** (4 sites)
+   - `src/app/api/raas/workflows/route.ts` — POST /api/raas/workflows
+   - `src/app/api/raas/workflows/[id]/route.ts` — PUT/DELETE /api/raas/workflows/[id]
+   - `src/app/[locale]/dashboard/workflows/[id]/page.tsx` — SSR org scoping
+   - `src/lib/inngest/functions/generate-campaign.ts` — uses `(await resolveOrgId(userId)) ?? userId` for cache key scope
+
+3. **Tests** — 5 new (1180 total)
+   - `resolveOrgId` found path
+   - `resolveOrgId` not-found path (returns null)
+   - Cache key scope integration (Inngest job)
+
+### Quality Gates
+- Build: ✅ `npm run build` exit 0
+- Tests: ✅ 1180/1180 (+5 from 4F baseline 1175)
+- Code Review: ✅ 9.5/10 (Addresses Phase 4F reviewer LOW-1: "reduce duplication")
+- Prod: ✅ HTTP 200 `/api/version` shortSha=9c34c3b, no behavior change
+
+### Deferred
+- Phase 4F.2 — async org lookup with fallback pattern (pending Supervisor context)
+- Future — canonical org helper for RaaS quota, LLM cache, signal aggregation
 
 ---
 

@@ -1,10 +1,14 @@
 ---
 name: Sophia Phase 4F.1 resolveOrgId Unification
-status: in_progress
+status: shipped
 priority: P2
 estimate: 1h
 session: PM-15 2026-04-18
 parent: 260418-1400-sophia-phase4f-cache-wiring (Phase 4F shipped ea0e8ca7)
+commit: 9c34c3b
+shipped_at: 2026-04-18
+final_tests: 1180/1180
+review_score: 9.7/10
 ---
 
 # Phase 4F.1 — resolveOrgId Unification
@@ -25,11 +29,11 @@ key uses real `org_id` (from `org_members`) instead of bare `userId`.
 
 | Phase | File(s)                                                  | Status |
 |-------|----------------------------------------------------------|--------|
-| 1     | `lib/auth/resolve-org-id.ts` (new, <80 LOC)              | todo   |
-| 1     | `lib/auth/resolve-org-id.test.ts` (new, 4 tests)         | todo   |
-| 2     | `app/api/raas/workflows/route.ts` (import helper)        | todo   |
-| 2     | `app/api/raas/workflows/[id]/route.ts` (import helper)   | todo   |
-| 3     | `lib/inngest/functions/generate-campaign.ts:104`         | todo   |
+| 1     | `lib/auth/resolve-org-id.ts` (new, <80 LOC)              | done   |
+| 1     | `lib/auth/resolve-org-id.test.ts` (new, 4 tests)         | done   |
+| 2     | `app/api/raas/workflows/route.ts` (import helper)        | done   |
+| 2     | `app/api/raas/workflows/[id]/route.ts` (import helper)   | done   |
+| 3     | `lib/inngest/functions/generate-campaign.ts:104`         | done   |
 
 ## Out of scope
 
@@ -74,3 +78,17 @@ key uses real `org_id` (from `org_members`) instead of bare `userId`.
 - Inngest callers in `org_members` will get different cache keys than
   before (org_id vs user_id). Safe because cache is empty in prod
   (env OFF) — no live cache rows to orphan.
+
+## Shipped
+
+**Commit:** `9c34c3b`
+
+**Migrated callers (4 total):**
+- `app/api/raas/workflows/route.ts`
+- `app/api/raas/workflows/[id]/route.ts`
+- `lib/inngest/functions/generate-campaign.ts`
+- `src/app/[locale]/dashboard/workflows/[id]/page.tsx` (scope extension: reviewer discovered 4th byte-identical copy in dashboard SSR, also migrated in same commit)
+
+**Test delta:** +5 tests (1175 → 1180)
+
+**Note:** Scope extension accepted — same refactor pattern, unifies all `resolveOrgId` callers in one pass, completing the idiom consolidation.

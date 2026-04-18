@@ -134,6 +134,18 @@
 - **Activation:** `wrangler secret put LLM_CACHE_ENABLED 1` (founder manual)
 - **Deferred:** Phase 4F.1 (org_id refinement), Phase 4E.2 (semantic similarity), Phase 4E.3 (per-org purge), Phase 4E.4 (per-org stats), Supervisor wiring
 
+### Phase 8.8.1: resolveOrgId Unification ✅ SHIPPED (Phase 4F.1)
+- **Status:** Canonical helper deployed, DRY refactor complete (2026-04-18)
+- **Features:**
+  - `export async function resolveOrgId(userId: string): Promise<string | null>` — single source of truth
+  - Queries `users.org_id` from D1 (single-tenant mapping: 1 user = 1 org)
+  - Removed 3 byte-identical private copies + 1 SSR inline from 4 caller sites
+  - Inngest `generate-campaign` cache scope now uses helper: `(await resolveOrgId(userId)) ?? userId`
+- **Metrics:** 5 new tests (1180 total), 19 LOC new module, 4 sites refactored, code review 9.5/10
+- **Files:** `src/lib/auth/resolve-org-id.{ts,test.ts}` + 4 callers updated (API routes, dashboard page, Inngest job)
+- **Addresses:** Phase 4F reviewer LOW-1 (reduce duplication)
+- **Deferred:** Phase 4F.2 (async org lookup with fallback pattern), future canonical org helper for RaaS quota/signals
+
 ### Phase 8.6-H1: LLM Cache Org Scoping (Security) ✅ SHIPPED (Phase 4E H-1)
 - **Status:** Multi-tenant isolation shipped, closes reviewer H-1 BLOCKER (2026-04-17)
 - **Features:**

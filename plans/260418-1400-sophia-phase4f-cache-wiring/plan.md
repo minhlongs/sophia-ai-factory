@@ -40,7 +40,7 @@ path so the `LLM_CACHE_ENABLED=1` flag actually cuts the bill when flipped.
 
 - Supervisor `executeStep` real LLM call (still stub — Phase 4G)
 - RaaS direct workflow endpoints (no user-facing LLM call yet)
-- `resolveOrgId()` helper unification (Phase 4F.1)
+- `resolveOrgId()` helper unification (Phase 4F.1 — Status: shipped 2026-04-18, commit 9c34c3b)
 - Embedding / semantic similarity (Phase 4E.2)
 - Per-org purge cron (Phase 4E.3)
 
