@@ -2,7 +2,7 @@
 
 > Product milestones and progress tracking (2026)
 
-**Last Updated:** 2026-04-18 (Phase 4E.3 LLM Cache Purge Cron shipped)
+**Last Updated:** 2026-04-18 (Phase 4G + 4H: Real LLM Workflow & Cache Stats API shipped)
 **Target:** $1M ARR, 100/100 a16z solo company score
 
 ---
@@ -159,6 +159,20 @@
 - **Closes:** Phase 4E multi-tenant cache lifecycle (H-1 org scoping + F wiring + 4E.3 purge ops)
 - **Deferred:** Phase 4E.4 (per-org cache stats dashboard)
 
+### Phase 8.6.4: Real LLM Workflow + Cache Stats API ✅ SHIPPED (Phase 4G + 4H)
+- **Status:** Dark-launched real LLM + ops endpoint live (2026-04-18)
+- **Features:**
+  - Phase 4G: Dark-launched real LLM in workflow-stepper (gate: `WORKFLOW_REAL_LLM_ENABLED=1` + `OPENROUTER_API_KEY`)
+    - Routes through `callWithCache()` + `routeLlm()` + OpenRouter
+    - Falls back to mock on gate-off or live error; no behavior change when disabled
+  - Phase 4H: `GET /api/admin/llm-cache-stats` JSON endpoint (CRON_SECRET-guarded)
+    - Returns `{ ok, ts, stats: { total, hit, miss }, hitRate }`
+    - Reuses `getCacheStats()` helper; returns `{ ok: false, reason }` on failure
+- **Metrics:** 9 new tests (1193 total), ~60 LOC combined, code review 9.5/10
+- **Files:** `src/app/api/cron/workflow-stepper/route.ts` (modify) + `src/app/api/admin/llm-cache-stats/route.ts` (new)
+- **Closes:** Phase 4G stub (real LLM dark launch), Phase 4H JSON endpoint (external ops stats API)
+- **Activation:** Phase 4G via env gate (default off, safe); Phase 4H automatic for ops monitoring
+
 ### Phase 8.6-H1: LLM Cache Org Scoping (Security) ✅ SHIPPED (Phase 4E H-1)
 - **Status:** Multi-tenant isolation shipped, closes reviewer H-1 BLOCKER (2026-04-17)
 - **Features:**
@@ -288,6 +302,7 @@
 | **2026-04-18** | **Phase 4F LLM Cache Wiring (campaign script generation integration, env-gated)** | **✅ SHIPPED** |
 | **2026-04-18** | **Phase 4F.1 resolveOrgId Unification (canonical helper, DRY refactor)** | **✅ SHIPPED** |
 | **2026-04-18** | **Phase 4E.3 LLM Cache Purge Cron (daily org-scoped cleanup, ops hygiene)** | **✅ SHIPPED** |
+| **2026-04-18** | **Phase 4G Real LLM Workflow + Phase 4H Cache Stats API (dark launch + ops endpoint)** | **✅ SHIPPED** |
 | 2026-05-01 | Analytics Dashboard | 🔄 Planned |
 | 2026-06-01 | Multi-Language Support (Vietnamese) | 🔄 Planned |
 | 2026-07-01 | Telegram Bot Enhancement | 🔄 Planned |

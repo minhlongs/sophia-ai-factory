@@ -1,7 +1,45 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-04-18 (Phase 4E.3: LLM Cache Purge Cron)
+> **Last Updated:** 2026-04-18 (Phase 4G + 4H: Real LLM Workflow + Cache Stats API)
+
+---
+
+## [2026-04-18] Phase 4G + 4H — Real LLM Workflow & Cache Stats API (Dark Launch + Ops)
+
+### Summary
+Parallel shipment of Phase 4G (dark-launched real LLM in workflow-stepper via gate-controlled execution) and Phase 4H (ops JSON endpoint for cache statistics). Phase 4G gates behind `WORKFLOW_REAL_LLM_ENABLED=1` AND `OPENROUTER_API_KEY`; falls back to mock on gate-off or live error. Routes through `callWithCache` + `routeLlm` + OpenRouter; no behavior change when disabled. Phase 4H adds `GET /api/admin/llm-cache-stats` JSON endpoint (CRON_SECRET-guarded) returning `{ ok, ts, stats, hitRate }` for external monitoring systems. Tests 1184 → 1193 (+9).
+
+### Changes
+1. **Phase 4G: Real LLM Workflow** — `src/app/api/cron/workflow-stepper/route.ts` (modify)
+   - Dark launch: if `WORKFLOW_REAL_LLM_ENABLED=1` AND `OPENROUTER_API_KEY` present, use `routeLlm()` + `callWithCache()`
+   - Fallback: on gate-off or live error, silently return mock response
+   - Uses existing LLM cache (Phase 4E) + router (Phase 4C)
+
+2. **Phase 4H: Cache Stats API** — `src/app/api/admin/llm-cache-stats/route.ts` (new, ~25 LOC)
+   - `GET /api/admin/llm-cache-stats` — CRON_SECRET header validation
+   - Returns `{ ok: true, ts, stats: { total, hit, miss }, hitRate: number }` on success
+   - Returns `{ ok: false, reason }` on auth/DB failure
+   - Reuses `getCacheStats()` helper from Phase 4E
+
+3. **Tests** — 9 new
+   - Phase 4G: gate on/off path, live error fallback, cache hit path
+   - Phase 4H: CRON_SECRET validation, stats JSON shape, error cases
+
+### Quality Gates
+- Build: ✅ `npm run build` exit 0
+- Tests: ✅ 1193/1193 (+9 from Phase 4F.1 baseline 1184)
+- Code Review: ✅ 9.5/10 SHIP (dark launch pattern verified, ops endpoint precedent)
+- Prod: ✅ HTTP 200 `/api/version` shortSha=dde51a24, endpoints live
+
+### Activation
+- Phase 4G: Manual gate activation via env (default off, safe)
+- Phase 4H: Automatic — ops monitoring can immediately query stats
+- No breaking changes; all changes backward compatible
+
+### Closes
+- Phase 4G stub ("real LLM in workflow-stepper dark launch")
+- Phase 4H JSON endpoint ("external ops cache stats API")
 
 ---
 
