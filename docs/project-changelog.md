@@ -1,7 +1,48 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-04-18 (Phase 4G + 4H: Real LLM Workflow + Cache Stats API)
+> **Last Updated:** 2026-04-18 (Phase 4J + 4K: Anthropic API Adapter & Admin Monitoring LLM Trace SSR)
+
+---
+
+## [2026-04-18] Phase 4J + 4K — Anthropic API Adapter & Admin Monitoring LLM Trace (Round 3)
+
+### Summary
+Dual shipment of Phase 4J (Anthropic API thin fetch wrapper + workflow-stepper real Anthropic routing when ANTHROPIC_API_KEY set) and Phase 4K (Admin monitoring SSR embed with "LLM Trace (24h)" card showing aggregated stats). Phase 4J routes complex prompts to api.anthropic.com/v1/messages with fallback to mock; preserves llmDegraded telemetry. Phase 4K adds server-rendered trace cards to /admin/monitoring (Total Calls, Success Rate, Avg Duration, Failures) + Top Provider/Model tables, reuses aggregateTraceStats() from Phase 4I for DRY. Tests 1202 → 1212 (+10). Build green, CI green, prod HTTP 200.
+
+### Changes
+1. **Phase 4J: Anthropic API Adapter** — `src/lib/ai/anthropic-adapter.ts` (new, ~60 LOC)
+   - `fetchFromAnthropicAPI(prompt, model)` — thin wrapper over api.anthropic.com/v1/messages
+   - Routes via `callWithCache()` + Anthropic API when `ANTHROPIC_API_KEY` set
+   - Falls back to mock on gate-off or live error; no behavior change when disabled
+   - Preserves cache hit benefit + llmDegraded telemetry on failure
+   - Wired into workflow-stepper step processing
+
+2. **Phase 4K: Admin Monitoring LLM Trace SSR** — `src/app/[locale]/(admin)/admin/monitoring/page.tsx` (modify)
+   - New "LLM Trace (24h)" card section below cache stats
+   - Server-side `getTraceStats()` from `src/lib/admin/monitoring-queries.ts` (reuses Phase 4I aggregateTraceStats())
+   - Renders: Total Calls, Success Rate (%), Avg Duration (ms), Failure Count cards
+   - Tables: Top 5 Providers + Top 5 Models by call count
+   - No Recharts; static HTML render — YAGNI
+
+3. **Tests** — 10 new (1202 → 1212)
+   - Phase 4J: Anthropic adapter call success, cache hit, gate-off fallback, live error fallback
+   - Phase 4K: trace stats SSR rendering, top provider/model extraction, degraded state handling
+
+### Quality Gates
+- Build: ✅ `npm run build` exit 0
+- Tests: ✅ 1212/1212 (+10 from Phase 4G-FIX baseline 1202)
+- Code Review: ✅ 9.6/10 SHIP (real Anthropic integration verified, admin dashboard completeness)
+- Prod: ✅ HTTP 200 `/api/version` shortSha=32bb4690, pages live
+
+### Activation
+- Phase 4J: Manual gate via `ANTHROPIC_API_KEY` env (default OFF, safe dark launch)
+- Phase 4K: Automatic — admin page renders trace cards for admins immediately
+- No breaking changes; all changes backward compatible
+
+### Closes
+- Phase 4J stub ("Anthropic API real integration")
+- Phase 4K admin dashboard ("LLM trace monitoring SSR card")
 
 ---
 
