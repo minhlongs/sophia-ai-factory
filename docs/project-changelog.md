@@ -1,7 +1,39 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-04-18 (Phase 4J + 4K: Anthropic API Adapter & Admin Monitoring LLM Trace SSR)
+> **Last Updated:** 2026-04-18 (Phase 4M + 4L: aggregateTraceStats extraction & Anthropic streaming/tool-use)
+
+---
+
+## [2026-04-18] Phase 4M + 4L — Trace Aggregator Extraction & Anthropic Streaming/Tool-Use (Round 4)
+
+### Summary
+Sequential shipment (`/cook step by step --auto`) of Phase 4M refactor (extract pure `aggregateTraceStats` + types out of 4I API route into `src/lib/admin/trace-aggregator.ts` — closes Phase 4K Low-1 lib→app-route coupling) and Phase 4L library prep for Anthropic streaming + tool-use (new `callAnthropicFull` / `callAnthropicStream` + `AnthropicContentBlock` discriminated union + param-ized `maxTokens` / `tools` / `system` — closes Phase 4J Low-2). No caller wired for streaming yet (pairs with future chat UX). Tests 1212 → 1220 (+8). Build green, CI green, prod HTTP 200.
+
+### Changes
+1. **Phase 4M: Trace aggregator extraction** — new `src/lib/admin/trace-aggregator.ts` (~90 LOC)
+   - `aggregateTraceStats(rows) → AggregateStats` (pure, no side effects)
+   - Types: `TraceRow`, `AggregateStats`, `ProviderCount`, `ModelCount`
+   - `src/app/api/admin/llm-trace-stats/route.ts` now imports from lib (−50 LOC)
+   - `src/lib/admin/monitoring-queries.ts` imports redirect
+   - Route test + monitoring-queries test imports updated
+   - Zero behavior change
+
+2. **Phase 4L: Anthropic streaming + tool-use** — `src/lib/ai/anthropic-adapter.ts` (78 → 188 LOC)
+   - `callAnthropicFull(params)` — full `AnthropicResponse` with discriminated content blocks (text | tool_use)
+   - `callAnthropicStream(params)` — async generator yielding `text_delta` strings from SSE
+   - Extended `CallAnthropicParams`: `maxTokens?` (default 1024), `tools?`, `system?`
+   - `callAnthropic` delegates to `callAnthropicFull` → first text block; 4J workflow-stepper wire untouched
+   - Shared helpers: `buildHeaders`, `buildBody`, `httpError`
+
+3. **Tests** — 8 new (1212 → 1220)
+   - `callAnthropicFull`: tool_use block / custom maxTokens / tools+system passed / omitted when absent
+   - `callAnthropicStream`: SSE text_delta yield / missing apiKey / HTTP 500 / null body
+
+### Code Review
+- **Score:** 9.6/10 SHIP (0 critical, 0 high)
+- **Medium (non-blocking):** M-1 SSE CRLF edge / M-2 flush-on-done tail dropped (both safe for Anthropic current behavior)
+- **Low:** L-1 `httpError` body leak (truncate to 500) / L-2 stream ignores `stop_reason` / L-3 missing chunk-boundary split test
 
 ---
 

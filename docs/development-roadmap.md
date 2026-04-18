@@ -2,7 +2,7 @@
 
 > Product milestones and progress tracking (2026)
 
-**Last Updated:** 2026-04-18 (Phase 4G + 4H: Real LLM Workflow & Cache Stats API shipped)
+**Last Updated:** 2026-04-18 (Phase 4M + 4L: Trace Aggregator Extraction & Anthropic Streaming/Tool-Use shipped)
 **Target:** $1M ARR, 100/100 a16z solo company score
 
 ---
