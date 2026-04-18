@@ -15,6 +15,8 @@ import { recordLlmCall } from '@/lib/telemetry/llm-trace'
 import { route as routeLlm } from '@/lib/ai/llm-router'
 import { callWithCache } from '@/lib/llm/cache/call-with-cache'
 import { callAnthropic } from '@/lib/ai/anthropic-adapter'
+import { resolveOrgOwnerUserId } from '@/lib/auth/resolve-org-id'
+import { resolveUserApiKey } from '@/lib/byok/resolve-user-api-key'
 import type { CacheKey, CacheEntry } from '@/lib/llm/cache/llm-cache'
 import type { WorkflowRow, StepMissionRow } from '@/lib/db/workflow-repository'
 
@@ -110,8 +112,14 @@ export async function executeStep(
       result = `Step ${stepType} completed: ${workflow.prompt.slice(0, 100)}`
     } else if (provider === 'anthropic') {
       // Phase 4J: Anthropic native adapter path.
-      // Env-gated: ANTHROPIC_API_KEY must be set; otherwise degrade to mock.
-      const anthropicKey = process.env.ANTHROPIC_API_KEY
+      // Phase 4G-WIRE: BYOK — prefer the workflow owner's stored key when
+      // BYOK is enabled; otherwise fall back to `ANTHROPIC_API_KEY` env.
+      const ownerUserId = await resolveOrgOwnerUserId(workflow.org_id)
+      const anthropicKey = await resolveUserApiKey(
+        ownerUserId,
+        'anthropic',
+        process.env.ANTHROPIC_API_KEY,
+      )
       if (!anthropicKey) {
         llmDegraded = true
         logger.warn('[workflow-stepper] ANTHROPIC_API_KEY not set, falling back to mock', {
@@ -173,9 +181,17 @@ export async function executeStep(
         orgId: workflow.org_id || 'system',
       }
 
+      // Phase 4G-WIRE: BYOK — resolve the workflow owner's key with env fallback.
+      const ownerUserId     = await resolveOrgOwnerUserId(workflow.org_id)
+      const openrouterKey   = await resolveUserApiKey(
+        ownerUserId,
+        'openrouter',
+        process.env.OPENROUTER_API_KEY,
+      )
+
       try {
         const cacheResult = await callWithCache(cacheKey, async (): Promise<CacheEntry> => {
-          const apiKey = process.env.OPENROUTER_API_KEY as string
+          const apiKey = openrouterKey ?? ''
           const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
             method:  'POST',
             headers: {
