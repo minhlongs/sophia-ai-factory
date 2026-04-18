@@ -35,6 +35,13 @@
 	"images": {
 		"binding": "IMAGES"
 	},
+	// === P4-AI-BEGIN ===
+	// Phase 4E.2: Workers AI for semantic cache embeddings.
+	// Model: @cf/baai/bge-base-en-v1.5 (768 dims).
+	"ai": {
+		"binding": "AI"
+	},
+	// === P4-AI-END ===
 	// === P1-VARS-BEGIN ===
 	"vars": {
 		"NEXT_PUBLIC_IS_CONFIGURED": "true",
