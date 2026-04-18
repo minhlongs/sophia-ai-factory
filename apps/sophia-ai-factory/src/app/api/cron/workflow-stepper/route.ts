@@ -62,6 +62,10 @@ function isRealLlmEnabled(): boolean {
   )
 }
 
+// Providers supported by the live OpenRouter fetch path.
+// 'anthropic' and 'stub' are NOT supported — skip live fetch, fall through to mock.
+const REAL_LLM_PROVIDERS: ReadonlySet<string> = new Set(['openrouter', 'local-mekongd'])
+
 // ── Step executor ─────────────────────────────────────────────────────────────
 
 export async function executeStep(
@@ -86,56 +90,87 @@ export async function executeStep(
   // still make progress; operators can inspect logs to validate LLM quality
   // before enabling WORKFLOW_REAL_LLM_ENABLED=1 in production.
   let result: string
+  // Track whether live LLM succeeded. Flipped to true on any failure/skip path
+  // so success-path recordLlmCall telemetry is honest during dark-launch.
+  let llmDegraded = false
+
   if (isRealLlmEnabled()) {
-    const cacheKey: CacheKey = {
-      provider: decision.provider === 'local-mekongd' ? 'openrouter' : decision.provider,
-      model:    decision.model,
-      messages: [
-        { role: 'system', content: `You are a workflow step executor for step type: ${stepType}` },
-        { role: 'user',   content: workflow.prompt },
-      ],
-      orgId: workflow.org_id || 'system',
-    }
+    const { provider, model } = decision
 
-    try {
-      const cacheResult = await callWithCache(cacheKey, async (): Promise<CacheEntry> => {
-        const apiKey = process.env.OPENROUTER_API_KEY as string
-        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-          method:  'POST',
-          headers: {
-            'Authorization': `Bearer ${apiKey}`,
-            'Content-Type':  'application/json',
-          },
-          body: JSON.stringify({
-            model:    decision.model,
-            messages: cacheKey.messages,
-          }),
-        })
-
-        if (!response.ok) {
-          throw new Error(`OpenRouter ${response.status}: ${await response.text()}`)
-        }
-
-        const data = await response.json() as OpenRouterResponse
-        const content = data.choices[0]?.message?.content ?? ''
-
-        return {
-          response:     content,
-          inputTokens:  data.usage?.prompt_tokens,
-          outputTokens: data.usage?.completion_tokens,
-        }
-      })
-
-      result = cacheResult.response || `Step ${stepType} completed: ${workflow.prompt.slice(0, 100)}`
-    } catch (err) {
-      // Dark-launch safety: swallow live errors, fall back to mock string.
-      // Never propagate — workflow must keep making progress during gate testing.
-      logger.warn('[workflow-stepper] live LLM call failed, falling back to mock', {
+    // Gate live fetch to supported providers. Anthropic/stub → skip + warn operator.
+    if (!REAL_LLM_PROVIDERS.has(provider)) {
+      llmDegraded = true
+      logger.warn('[workflow-stepper] unsupported LLM provider, skipping live fetch', {
+        event:    'llm_router_unsupported',
+        provider,
+        model,
         workflowId: workflow.id,
-        model:      decision.model,
-        err,
       })
       result = `Step ${stepType} completed: ${workflow.prompt.slice(0, 100)}`
+    } else {
+      const cacheKey: CacheKey = {
+        // local-mekongd → use openrouter endpoint during dark-launch
+        provider: provider === 'local-mekongd' ? 'openrouter' : provider,
+        model,
+        messages: [
+          { role: 'system', content: `You are a workflow step executor for step type: ${stepType}` },
+          { role: 'user',   content: workflow.prompt },
+        ],
+        orgId: workflow.org_id || 'system',
+      }
+
+      try {
+        const cacheResult = await callWithCache(cacheKey, async (): Promise<CacheEntry> => {
+          const apiKey = process.env.OPENROUTER_API_KEY as string
+          const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method:  'POST',
+            headers: {
+              'Authorization': `Bearer ${apiKey}`,
+              'Content-Type':  'application/json',
+            },
+            body: JSON.stringify({
+              model,
+              messages: cacheKey.messages,
+            }),
+          })
+
+          if (!response.ok) {
+            throw new Error(`OpenRouter ${response.status}: ${await response.text()}`)
+          }
+
+          const data = await response.json() as OpenRouterResponse
+          const content = data.choices[0]?.message?.content ?? ''
+
+          return {
+            response:     content,
+            inputTokens:  data.usage?.prompt_tokens,
+            outputTokens: data.usage?.completion_tokens,
+          }
+        })
+
+        if (cacheResult.response) {
+          result = cacheResult.response
+        } else {
+          // Empty response from LLM likely indicates upstream issue — treat as degraded.
+          llmDegraded = true
+          logger.warn('[workflow-stepper] empty LLM response, falling back to mock', {
+            event:      'llm_empty_response',
+            workflowId: workflow.id,
+            model,
+          })
+          result = `Step ${stepType} completed: ${workflow.prompt.slice(0, 100)}`
+        }
+      } catch (err) {
+        // Dark-launch safety: swallow live errors, fall back to mock string.
+        // Never propagate — workflow must keep making progress during gate testing.
+        llmDegraded = true
+        logger.warn('[workflow-stepper] live LLM call failed, falling back to mock', {
+          workflowId: workflow.id,
+          model,
+          err,
+        })
+        result = `Step ${stepType} completed: ${workflow.prompt.slice(0, 100)}`
+      }
     }
   } else {
     result = `Step ${stepType} completed: ${workflow.prompt.slice(0, 100)}`
@@ -176,16 +211,19 @@ export async function executeStep(
       source: 'cron',
     }, workflow.org_id)
 
-    // Phase 4B+4C: emit LLM call trace with router-selected provider/model
+    // Phase 4B+4C+4G-FIX: emit LLM call trace with honest ok flag.
+    // llmDegraded=true when live call was skipped (unsupported provider),
+    // returned empty, or threw — so dashboards correctly show fallback-to-mock.
     recordLlmCall(
       {
-        workflowId: workflow.id,
+        workflowId:  workflow.id,
         stepOrder,
         stepType,
-        provider:   decision.provider,
-        model:      decision.model,
-        durationMs: Date.now() - startedAt,
-        ok:         true,
+        provider:    decision.provider,
+        model:       decision.model,
+        durationMs:  Date.now() - startedAt,
+        ok:          !llmDegraded,
+        errorClass:  llmDegraded ? 'LLM_LIVE_FAILED_FALLBACK' : undefined,
       },
       workflow.id,
       workflow.org_id,

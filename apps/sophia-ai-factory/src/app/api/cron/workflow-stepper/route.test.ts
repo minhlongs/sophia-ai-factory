@@ -26,6 +26,11 @@ vi.mock('@/lib/utils/logger-utility', () => ({
 
 vi.mock('@/lib/telemetry/llm-trace', () => ({
   recordLlmCall: vi.fn(),
+  buildTraceId:  vi.fn(),
+}))
+
+vi.mock('@/lib/ai/llm-router', () => ({
+  route: vi.fn(),
 }))
 
 // ── Imports after mocks ───────────────────────────────────────────────────────
@@ -33,10 +38,15 @@ vi.mock('@/lib/telemetry/llm-trace', () => ({
 import { executeStep } from './route'
 import { callWithCache } from '@/lib/llm/cache/call-with-cache'
 import { logger } from '@/lib/utils/logger-utility'
+import { recordLlmCall } from '@/lib/telemetry/llm-trace'
+import { route as routeLlm } from '@/lib/ai/llm-router'
 import type { WorkflowRow } from '@/lib/db/workflow-repository'
+import type { RouteDecision } from '@/lib/ai/llm-router'
 
-const mockCallWithCache = vi.mocked(callWithCache)
-const mockLoggerWarn    = vi.mocked(logger.warn)
+const mockCallWithCache  = vi.mocked(callWithCache)
+const mockLoggerWarn     = vi.mocked(logger.warn)
+const mockRecordLlmCall  = vi.mocked(recordLlmCall)
+const mockRouteLlm       = vi.mocked(routeLlm)
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -69,9 +79,19 @@ function buildMockDb(changes = 1): D1Database {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('executeStep — Phase 4G gate', () => {
+  // Default route decision (openrouter) used by existing tests.
+  // New tests override this per-test when needed.
+  const defaultDecision: RouteDecision = {
+    provider:   'openrouter',
+    model:      'gpt-4o-mini',
+    complexity: 'simple',
+    reason:     'cloud:simple',
+  }
+
   beforeEach(() => {
     vi.clearAllMocks()
     vi.stubGlobal('fetch', vi.fn())
+    mockRouteLlm.mockReturnValue(defaultDecision)
   })
 
   afterEach(() => {
@@ -246,5 +266,114 @@ describe('executeStep — Phase 4G gate', () => {
       .flat()
       .find((arg) => typeof arg === 'string' && arg.startsWith('Step draft completed:'))
     expect(mockResultWritten).toBeDefined()
+  })
+
+  // ── Test 6 (4G-FIX finding #1) ────────────────────────────────────────────
+
+  it('gate on + unsupported provider (anthropic) → skips live fetch, recordLlmCall ok:false', async () => {
+    vi.stubEnv('WORKFLOW_REAL_LLM_ENABLED', '1')
+    vi.stubEnv('OPENROUTER_API_KEY', 'sk-real')
+
+    // Simulate complex prompt → anthropic provider
+    const anthropicDecision: RouteDecision = {
+      provider:   'anthropic',
+      model:      'claude-sonnet-4-6',
+      complexity: 'complex',
+      reason:     'cloud:complex',
+    }
+    mockRouteLlm.mockReturnValue(anthropicDecision)
+
+    const db = buildMockDb()
+    const workflow = buildWorkflow()
+
+    await executeStep(db, workflow, 'mission-6', 2, 'analyze')
+
+    // callWithCache must NOT have been called — provider not in REAL_LLM_PROVIDERS
+    expect(mockCallWithCache).not.toHaveBeenCalled()
+    expect(vi.mocked(fetch)).not.toHaveBeenCalled()
+
+    // Operator warning logged with correct event
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      '[workflow-stepper] unsupported LLM provider, skipping live fetch',
+      expect.objectContaining({
+        event:    'llm_router_unsupported',
+        provider: 'anthropic',
+      }),
+    )
+
+    // recordLlmCall must see ok:false + errorClass to avoid dashboard dishonesty
+    expect(mockRecordLlmCall).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ok:         false,
+        errorClass: 'LLM_LIVE_FAILED_FALLBACK',
+      }),
+      workflow.id,
+      workflow.org_id,
+    )
+  })
+
+  // ── Test 7 (4G-FIX finding #3) ────────────────────────────────────────────
+
+  it('gate on + key + cache returns empty response → falls back to mock, recordLlmCall ok:false', async () => {
+    vi.stubEnv('WORKFLOW_REAL_LLM_ENABLED', '1')
+    vi.stubEnv('OPENROUTER_API_KEY', 'sk-real')
+
+    // callWithCache resolves with empty response string
+    mockCallWithCache.mockResolvedValue({
+      response:     '',
+      fromCache:    false,
+      inputTokens:  5,
+      outputTokens: 0,
+    })
+
+    const db = buildMockDb()
+    const workflow = buildWorkflow({ prompt: 'quick summary' })
+
+    await executeStep(db, workflow, 'mission-7', 1, 'summarize')
+
+    expect(mockCallWithCache).toHaveBeenCalledOnce()
+
+    // Empty response → degraded warning
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      '[workflow-stepper] empty LLM response, falling back to mock',
+      expect.objectContaining({ event: 'llm_empty_response' }),
+    )
+
+    // Telemetry honest: ok:false
+    expect(mockRecordLlmCall).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ok:         false,
+        errorClass: 'LLM_LIVE_FAILED_FALLBACK',
+      }),
+      workflow.id,
+      workflow.org_id,
+    )
+  })
+
+  // ── Test 8 (4G-FIX finding #2) ────────────────────────────────────────────
+
+  it('gate on + key + live error swallowed → recordLlmCall sees ok:false (telemetry honest)', async () => {
+    vi.stubEnv('WORKFLOW_REAL_LLM_ENABLED', '1')
+    vi.stubEnv('OPENROUTER_API_KEY', 'sk-real')
+
+    mockCallWithCache.mockRejectedValue(new Error('OpenRouter 429 rate limit'))
+
+    const db = buildMockDb()
+    const workflow = buildWorkflow()
+
+    // Must NOT throw
+    await expect(
+      executeStep(db, workflow, 'mission-8', 1, 'draft'),
+    ).resolves.toBeUndefined()
+
+    // recordLlmCall reports degraded — NOT ok:true as it was before the fix
+    expect(mockRecordLlmCall).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ok:         false,
+        errorClass: 'LLM_LIVE_FAILED_FALLBACK',
+      }),
+      workflow.id,
+      workflow.org_id,
+    )
   })
 })
