@@ -16,6 +16,7 @@
 
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import type { Tier } from '@/types';
 
 /**
@@ -112,7 +113,7 @@ export async function createRealtimeAlert(
       .single();
 
     if (error || !data) {
-      logger.error('[Realtime Alert] Failed to create alert', error as Error);
+      logger.error('[Realtime Alert] Failed to create alert', toError(error));
       return null;
     }
 
@@ -128,7 +129,7 @@ export async function createRealtimeAlert(
 
     return data.id;
   } catch (error) {
-    logger.error('[Realtime Alert] Error creating alert', error as Error);
+    logger.error('[Realtime Alert] Error creating alert', toError(error));
     return null;
   }
 }
@@ -164,7 +165,7 @@ export async function markAlertAsRead(
     logger.info('[Realtime Alert] Alert marked as read', { alertId, userId });
     return true;
   } catch (error) {
-    logger.error('[Realtime Alert] Error marking as read', error as Error);
+    logger.error('[Realtime Alert] Error marking as read', toError(error));
     return false;
   }
 }
@@ -200,7 +201,7 @@ export async function dismissAlert(
     logger.info('[Realtime Alert] Alert dismissed', { alertId, userId });
     return true;
   } catch (error) {
-    logger.error('[Realtime Alert] Error dismissing alert', error as Error);
+    logger.error('[Realtime Alert] Error dismissing alert', toError(error));
     return false;
   }
 }
@@ -235,7 +236,7 @@ export async function getUnreadAlerts(
 
     return data || [];
   } catch (error) {
-    logger.error('[Realtime Alert] Error fetching unread', error as Error);
+    logger.error('[Realtime Alert] Error fetching unread', toError(error));
     return [];
   }
 }
@@ -276,7 +277,7 @@ export async function getAlertHistory(
 
     return data || [];
   } catch (error) {
-    logger.error('[Realtime Alert] Error fetching history', error as Error);
+    logger.error('[Realtime Alert] Error fetching history', toError(error));
     return [];
   }
 }
@@ -315,7 +316,7 @@ export async function getUnreadCount(
 
     return result;
   } catch (error) {
-    logger.error('[Realtime Alert] Error counting', error as Error);
+    logger.error('[Realtime Alert] Error counting', toError(error));
     return { total: 0, critical: 0, high: 0 };
   }
 }
@@ -470,7 +471,7 @@ export async function logViolationAndAlert(params: {
 
       return data?.id || null;
     } catch (error) {
-      logger.error('[Realtime Alert] Failed to log violation', error as Error);
+      logger.error('[Realtime Alert] Failed to log violation', toError(error));
       return null;
     }
   })();
@@ -518,7 +519,7 @@ export async function cleanupExpiredAlerts(): Promise<number> {
     logger.info('[Realtime Alert] Cleaned up expired alerts', { count });
     return count || 0;
   } catch (error) {
-    logger.error('[Realtime Alert] Error during cleanup', error as Error);
+    logger.error('[Realtime Alert] Error during cleanup', toError(error));
     return 0;
   }
 }

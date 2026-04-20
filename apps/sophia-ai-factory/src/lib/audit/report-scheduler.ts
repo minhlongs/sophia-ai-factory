@@ -11,6 +11,7 @@ import { randomUUID } from 'node:crypto'
 import { createServerClient } from '@/lib/db/client'
 import { insertTyped } from '@/lib/db/insert-typed'
 import { logger } from '@/lib/utils/logger-utility'
+import { toError } from '@/lib/utils/to-error'
 import type { Json } from '@/lib/supabase/types'
 import type { AuditScheduledReportRow } from './types'
 
@@ -197,7 +198,7 @@ export async function scheduleReport(
       .single()
 
     if (result.error) {
-      logger.error('[Report Scheduler] Failed to schedule report', result.error as Error)
+      logger.error('[Report Scheduler] Failed to schedule report', toError(result.error))
       throw result.error
     }
 
@@ -222,7 +223,7 @@ export async function scheduleReport(
       createdBy: inserted.created_by
     }
   } catch (error) {
-    logger.error('[Report Scheduler] Schedule report failed', error as Error)
+    logger.error('[Report Scheduler] Schedule report failed', toError(error))
     throw error
   }
 }
@@ -246,7 +247,7 @@ export async function getScheduledReports(adminId: string): Promise<ScheduledRep
       .order('next_run_at', { ascending: true })
 
     if (result.error) {
-      logger.error('[Report Scheduler] Failed to fetch reports', result.error as Error)
+      logger.error('[Report Scheduler] Failed to fetch reports', toError(result.error))
       throw result.error
     }
 
@@ -262,7 +263,7 @@ export async function getScheduledReports(adminId: string): Promise<ScheduledRep
       createdBy: row.created_by
     }))
   } catch (error) {
-    logger.error('[Report Scheduler] Get reports failed', error as Error)
+    logger.error('[Report Scheduler] Get reports failed', toError(error))
     throw error
   }
 }
@@ -284,13 +285,13 @@ export async function cancelScheduledReport(reportId: string): Promise<void> {
       .eq('id', reportId)
 
     if (result.error) {
-      logger.error('[Report Scheduler] Failed to cancel report', result.error as Error)
+      logger.error('[Report Scheduler] Failed to cancel report', toError(result.error))
       throw result.error
     }
 
     logger.info('[Report Scheduler] Report cancelled', { reportId })
   } catch (error) {
-    logger.error('[Report Scheduler] Cancel report failed', error as Error)
+    logger.error('[Report Scheduler] Cancel report failed', toError(error))
     throw error
   }
 }
@@ -310,7 +311,7 @@ export async function getDueReports(): Promise<ScheduledReport[]> {
       .lte('next_run_at', now)
 
     if (result.error) {
-      logger.error('[Report Scheduler] Failed to fetch due reports', result.error as Error)
+      logger.error('[Report Scheduler] Failed to fetch due reports', toError(result.error))
       throw result.error
     }
 
@@ -326,7 +327,7 @@ export async function getDueReports(): Promise<ScheduledReport[]> {
       createdBy: row.created_by
     }))
   } catch (error) {
-    logger.error('[Report Scheduler] Get due reports failed', error as Error)
+    logger.error('[Report Scheduler] Get due reports failed', toError(error))
     throw error
   }
 }
@@ -349,11 +350,11 @@ export async function updateNextRunAt(
       .eq('id', reportId)
 
     if (result.error) {
-      logger.error('[Report Scheduler] Failed to update next run', result.error as Error)
+      logger.error('[Report Scheduler] Failed to update next run', toError(result.error))
       throw result.error
     }
   } catch (error) {
-    logger.error('[Report Scheduler] Update next run failed', error as Error)
+    logger.error('[Report Scheduler] Update next run failed', toError(error))
     throw error
   }
 }
