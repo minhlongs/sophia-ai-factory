@@ -90,10 +90,22 @@ export function Button({ className, ...props }: ButtonProps) {
 }
 ```
 
-### Error Handling
+### Error Handling & Logging
 - Use `try/catch` blocks in Server Actions and API routes.
-- Log errors to console (for now) or a logging service.
+- Log errors via `logger.error()` from `@/lib/logger` (routes through observability stack).
+- `logger.error()` accepts: `(message, {error?, ...metadata}?, requestId?)` object form OR legacy `(message, error, metadata, requestId)` form for backward compatibility.
 - Return user-friendly error messages to the UI.
+
+**Logging Best Practices:**
+```typescript
+import { logger } from '@/lib/logger';
+
+// New object form (preferred)
+logger.error('Operation failed', { error: err, userId, orgId }, requestId);
+
+// Legacy form (still supported)
+logger.error('Operation failed', err, { userId, orgId }, requestId);
+```
 
 ## Environment Variables
 - Access environment variables **only on the server**.

@@ -203,8 +203,11 @@ Deployed D1 migrations (0013 rate_limits, 0014 export_jobs) to production. Refac
 ### ✅ Phase 3: API Routes `:any` Reduction (2026-04-19)
 Removed 26 TypeScript `:any` types from 14 API route files. Implemented strict patterns: `.single<T>()`, typed user_metadata casts. Tests: 1291/1328 pass. Status: COMPLETE.
 
-### ✅ Phase 4: Phase 5 Review Nits + Telegram Module (2026-04-20)
+### ✅ Phase 5: Phase 5 Review Nits + Telegram Module (2026-04-20)
 Resolved Phase 5 nits (env-validation loop merge, provision HTTP codes) + eliminated 11 `eslint-disable @typescript-eslint/no-explicit-any` from telegram module (4 files). Fixed latent checkTierAccess bug with O(1) `TIER_RANK` map. Tests: 1297/1297 (100% pass). Status: COMPLETE.
+
+### ✅ Phase 6: Logger Ergonomics + BotState Validation + Rate Limiter Observability (2026-04-20)
+Delivered 3 quick wins: (1) new `logger.error()` overload with `{error?, ...metadata}` object form (backward-compatible); (2) `isBotState()` type guard + D1 state validation; (3) fail-open rate-limiter metrics emission. Tests: 1297/1297 (100% pass). Status: COMPLETE.
 
 ---
 

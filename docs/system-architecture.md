@@ -495,7 +495,8 @@ crons = ["*/5 * * * *"]
 
 ### Monitoring & Observability
 - **Sentry SDK:** Error tracking for frontend, server, and edge functions
-- **Structured Logging:** JSON logger for all events (lib/logger.ts)
+- **Structured Logging:** JSON logger for all events (`lib/logger.ts`); `logger.error()` supports `{error?, ...metadata}` object form for backward compatibility
+- **Rate Limiter Metrics:** Fail-open branches emit `[metric] telegram_ratelimit_fail_open` with `reason: rpc_error|exception` — downstream log aggregator alerts on sustained spikes
 - **Uptime Check:** Cron job runs `/api/health` every 5 minutes for liveness monitoring
 - **D1 Backup:** Nightly automated backup via GitHub Actions to Cloudflare
 
