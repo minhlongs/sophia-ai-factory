@@ -10,6 +10,7 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import { getEffectiveQuotaLimits } from '@/lib/quota/quota-checker';
 import type { QuotaLimit } from '@/lib/usage-metering/types';
 import { getAccessibleFeatures } from '@/lib/features';
@@ -216,7 +217,7 @@ async function fetchPolarBillingStatus(
       overageAllowed: subscriptionTier === 'enterprise' || subscriptionTier === 'master',
     };
   } catch (error) {
-    logger.warn('[Enriched JWT] Failed to fetch Polar billing status', error as Error);
+    logger.warn('[Enriched JWT] Failed to fetch Polar billing status', toError(error));
     return null;
   }
 }
@@ -257,7 +258,7 @@ export async function getLicenseContext(licenseNonce: string): Promise<LicenseCo
       .single();
 
     if (error || !data) {
-      logger.error('[Enriched JWT] Failed to fetch license', error as Error);
+      logger.error('[Enriched JWT] Failed to fetch license', toError(error));
       return null;
     }
 
@@ -270,7 +271,7 @@ export async function getLicenseContext(licenseNonce: string): Promise<LicenseCo
       createdAt: data.created_at,
     };
   } catch (error) {
-    logger.error('[Enriched JWT] Error fetching license context', error as Error);
+    logger.error('[Enriched JWT] Error fetching license context', toError(error));
     return null;
   }
 }
@@ -290,7 +291,7 @@ async function fetchDunningState(licenseNonce: string): Promise<'ok' | 'grace_pe
 
     return (data?.state as 'ok' | 'grace_period' | 'suspended' | 'delinquent') || 'ok';
   } catch (error) {
-    logger.warn('[Enriched JWT] Failed to fetch dunning state', error as Error);
+    logger.warn('[Enriched JWT] Failed to fetch dunning state', toError(error));
     return 'ok'; // Default to ok on error
   }
 }
@@ -373,7 +374,7 @@ export async function createEnrichedJwt(
 
     return { token, payload };
   } catch (error) {
-    logger.error('[Enriched JWT] Failed to create JWT', error as Error);
+    logger.error('[Enriched JWT] Failed to create JWT', toError(error));
     return null;
   }
 }
@@ -395,7 +396,7 @@ export async function verifyEnrichedJwt(
 
     return payload as EnrichedJwtPayload;
   } catch (error) {
-    logger.warn('[Enriched JWT] JWT verification failed', error as Error);
+    logger.warn('[Enriched JWT] JWT verification failed', toError(error));
     return null;
   }
 }

@@ -12,6 +12,7 @@
 
 import { ExecutionContext } from '@cloudflare/workers-types';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 
 /** Alert dispatcher configuration */
 export interface AlertDispatcherConfig {
@@ -79,7 +80,7 @@ async function isDebounced(
       return (Date.now() - state.lastAlertTime) < debounceMs;
     }
   } catch (error) {
-    logger.error('[Alert Dispatcher] Debounce check error', error as Error);
+    logger.error('[Alert Dispatcher] Debounce check error', toError(error));
   }
   return false;
 }
@@ -97,7 +98,7 @@ async function markAlertSent(
     const state: DebounceState = { lastAlertTime: Date.now(), threshold };
     await kv.put(key, JSON.stringify(state), { expirationTtl: ttlSeconds });
   } catch (error) {
-    logger.error('[Alert Dispatcher] Mark sent error', error as Error);
+    logger.error('[Alert Dispatcher] Mark sent error', toError(error));
   }
 }
 
@@ -124,7 +125,7 @@ async function dispatchToAgencyos(
     logger.warn('[Alert Dispatcher] AgencyOS webhook failed', { status: response.status });
     return false;
   } catch (error) {
-    logger.error('[Alert Dispatcher] Dispatch error', error as Error);
+    logger.error('[Alert Dispatcher] Dispatch error', toError(error));
     return false;
   }
 }
@@ -221,7 +222,7 @@ async function handleUsageEvent(
       );
     }
   } catch (error) {
-    logger.error('[Alert Dispatcher] Event handling error', error as Error);
+    logger.error('[Alert Dispatcher] Event handling error', toError(error));
   }
 }
 
@@ -265,7 +266,7 @@ export async function handleScheduledAlertCheck(
 
     logger.info('[Alert Dispatcher] Scheduled check completed', { eventsProcessed: recentEvents.length });
   } catch (error) {
-    logger.error('[Alert Dispatcher] Scheduled check error', error as Error);
+    logger.error('[Alert Dispatcher] Scheduled check error', toError(error));
   }
 }
 
@@ -295,7 +296,7 @@ export async function handleAlertDispatchRequest(
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    logger.error('[Alert Dispatcher] Request error', error as Error);
+    logger.error('[Alert Dispatcher] Request error', toError(error));
     return new Response('Internal error', { status: 500 });
   }
 }

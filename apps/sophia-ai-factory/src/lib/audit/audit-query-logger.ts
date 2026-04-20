@@ -13,6 +13,7 @@
 import { createServerClient } from '@/lib/db/client'
 import { insertTyped } from '@/lib/db/insert-typed'
 import { logger } from '@/lib/utils/logger-utility'
+import { toError } from '@/lib/utils/to-error'
 import type { RaasAuditLogInsert, RaasAuditLogRow, Json } from '@/lib/supabase/types'
 
 /**
@@ -80,7 +81,7 @@ export async function logAuditQuery(params: AuditQueryLogParams): Promise<boolea
       .single()
 
     if (error) {
-      logger.error('[Audit Query Logger] Failed to log audit query', error as Error)
+      logger.error('[Audit Query Logger] Failed to log audit query', toError(error))
       return false
     }
 
@@ -93,7 +94,7 @@ export async function logAuditQuery(params: AuditQueryLogParams): Promise<boolea
 
     return true
   } catch (error) {
-    logger.error('[Audit Query Logger] Audit query logging failed', error as Error)
+    logger.error('[Audit Query Logger] Audit query logging failed', toError(error))
     // Non-fatal: don't block the original query response
     return false
   }
@@ -145,7 +146,7 @@ export async function logApiKeyCreation(
 
     return true
   } catch (error) {
-    logger.error('[Audit Query Logger] API key creation logging failed', error as Error)
+    logger.error('[Audit Query Logger] API key creation logging failed', toError(error))
     return false
   }
 }
@@ -197,7 +198,7 @@ export async function logApiKeyRevocation(
 
     return true
   } catch (error) {
-    logger.error('[Audit Query Logger] API key revocation logging failed', error as Error)
+    logger.error('[Audit Query Logger] API key revocation logging failed', toError(error))
     return false
   }
 }
@@ -235,7 +236,7 @@ export async function logApiKeyValidationFailure(
     const { error: insertError } = await insertTyped(db.from<RaasAuditLogRow>('raas_audit_logs'), logData)
 
     if (insertError) {
-      logger.error('[Audit Query Logger] Failed to log validation failure', insertError as Error)
+      logger.error('[Audit Query Logger] Failed to log validation failure', toError(insertError))
       return false
     }
 
@@ -246,7 +247,7 @@ export async function logApiKeyValidationFailure(
 
     return true
   } catch (err) {
-    logger.error('[Audit Query Logger] Validation failure logging failed', err as Error)
+    logger.error('[Audit Query Logger] Validation failure logging failed', toError(err))
     return false
   }
 }
@@ -315,7 +316,7 @@ export async function queryAuditLogs(
   const { data, error } = await query
 
   if (error) {
-    logger.error('[Audit Query Logger] Failed to query audit logs', error as Error)
+    logger.error('[Audit Query Logger] Failed to query audit logs', toError(error))
     return []
   }
 
