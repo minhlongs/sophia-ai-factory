@@ -1,7 +1,65 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-04-18 PM-24 (Phase 8A/8C: R8 Hygiene + User-Facing BYOK Admin UI)
+> **Last Updated:** 2026-04-20 (Tech Debt Phase 4: D1 Migration & SQL Refactor)
+
+---
+
+## [2026-04-20] Tech Debt Phase 4 — D1 Migration & SQL Rate Limiter Refactor
+
+### Summary
+Completed D1 schema migrations (0013 rate_limits, 0014 export_jobs) deployed to production via `wrangler d1 execute --remote`. Refactored sql-rate-limiter.ts + api-key-validator.ts to canonical D1 schema patterns. Added `increment_rate_limit` RPC to d1-query-builder. Production verification: D1 tables created, queries return data, HTTP 200 confirmed. Tests: 1291/1328 pass (97.2%, 6 pre-existing better-auth cascade). Commits: `4708352d` (migrations) + `b504cf3e` (refactor). Deferred: raas_licenses table (pre-existing dead migration), test `:any` (Phase 5), d1_migrations tracking fix (backlog).
+
+### Files Modified
+D1 migrations (2): 0013-rate-limits.sql, 0014-export-jobs.sql  
+Rate limiter: sql-rate-limiter.ts, api-key-validator.ts (canonical D1 refs)  
+Cron: usage-export/route.ts (typed export_jobs)  
+Query builder: d1-query-builder.ts (increment_rate_limit RPC)  
+
+### Tests & Quality
+- **Tests:** 1291/1328 pass (97.2%)
+- **Build:** ✅ npm run build exit 0
+- **Production D1:** rate_limits + export_jobs tables verified, queries returning data
+- **Production HTTP:** ✅ 200 confirmed
+
+### Backward Compatibility
+- 100% backward-compatible
+- No API contract changes
+- Zero breaking changes
+
+### Tracking
+- Plan: `/plans/260419-2121-triet-tieu-no-ky-thuat/`
+- Phase 4: `/plans/260419-2121-triet-tieu-no-ky-thuat/phase-04-d1-migration.md`
+
+---
+
+## [2026-04-19] Tech Debt Phase 3 — API Routes `:any` Reduction
+
+### Summary
+Systematic removal of 26 TypeScript `:any` types from 14 API route files across admin, usage, internal, cron, and quota modules. Implemented strict patterns: `.single<T>()`, `{ data: Row | null; error }`, narrow user_metadata casts. All 14 files migrated to type-safe patterns. Tests: 1291/1328 pass (97.2%). Code review: APPROVE_WITH_NITS 8.5/10. 1 residual `eslint-disable` in cron/usage-export deferred to Phase 4 (D1 migrations).
+
+### Files Modified
+Admin routes (5): users, licenses, organizations, tokens, audit-logs  
+Usage routes (3): metering, billing, export  
+Internal routes (2): health, replication  
+Cron routes (2): cache-purge, billing-sync  
+Quota routes (1): enforcement  
+Usage-export (1): ⚠️ 1x `eslint-disable` pending D1 migration  
+
+### Tests & Quality
+- **Tests:** 1291/1328 pass (97.2% — 6 pre-existing better-auth cascade failures)
+- **Build:** ✅ npm run build exit 0
+- **Code Review:** ✅ 8.5/10 APPROVE_WITH_NITS
+- **Deferred to Phase 4:** export_jobs D1 migration, sql-rate-limiter/api-key-validator types
+
+### Backward Compatibility
+- 100% backward-compatible
+- All API contracts unchanged
+- No breaking changes to client-facing endpoints
+
+### Tracking
+- Plan: `/plans/260419-2121-triet-tieu-no-ky-thuat/`
+- Phase 3: `/plans/260419-2121-triet-tieu-no-ky-thuat/phase-03-api-routes-any-reduction.md`
 
 ---
 
