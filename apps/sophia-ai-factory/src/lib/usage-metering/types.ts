@@ -237,11 +237,6 @@ export interface BatchIngestionResponse {
 }
 
 /**
- * Generic D1 query response shape
- */
-export type D1Response<T> = { data: T | null; error: unknown }
-
-/**
  * D1 usage_events insert schema
  */
 export interface UsageEventInsertable {

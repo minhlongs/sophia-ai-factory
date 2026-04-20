@@ -6,6 +6,7 @@
  */
 
 import { createServerClient } from '@/lib/db/client'
+import { insertTyped } from '@/lib/db/insert-typed'
 import type { RaasAuditLogInsert, RaasAuditLogRow } from '@/lib/supabase/types'
 
 /** Type helper for Supabase query results */
@@ -18,8 +19,7 @@ export async function insertAuditLog(
   db: ReturnType<typeof createServerClient>,
   logData: RaasAuditLogInsert
 ): Promise<SupabaseResult<RaasAuditLogRow>> {
-  const result = await db.from<RaasAuditLogRow>('raas_audit_logs')
-    .insert(logData as unknown as Record<string, unknown>)
+  const result = await insertTyped(db.from<RaasAuditLogRow>('raas_audit_logs'), logData)
     .select()
     .single()
   return result as SupabaseResult<RaasAuditLogRow>

@@ -7,7 +7,9 @@
 import { sha256 } from '@/lib/audit/crypto-utils';
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
-import type { UsageEventInput, UsageEventDB, IngestionResult, D1Response } from './types';
+import { insertTyped } from '@/lib/db/insert-typed';
+import type { UsageEventInput, UsageEventDB, IngestionResult } from './types';
+import type { D1Response } from '@/lib/db/types';
 import type { RaasLicense } from '@/lib/raas-schema';
 import { CREDIT_RULES } from './constants';
 import { generateIdempotencyKey } from './idempotency';
@@ -123,9 +125,7 @@ export async function insertUsageEvent(event: UsageEventInput & { idempotencyKey
   };
 
   // Insert with idempotency key (unique constraint handles duplicates)
-  const { data, error } = await db
-    .from('usage_events')
-    .insert(dbEvent as unknown as Record<string, unknown>)
+  const { data, error } = await insertTyped(db.from('usage_events'), dbEvent)
     .select('id')
     .single();
 

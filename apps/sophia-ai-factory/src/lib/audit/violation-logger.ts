@@ -14,6 +14,7 @@
  */
 
 import { createServerClient } from '@/lib/db/client';
+import { insertTyped } from '@/lib/db/insert-typed';
 import { logger } from '@/lib/utils/logger-utility';
 
 /**
@@ -145,8 +146,7 @@ export async function logViolation(event: ViolationEvent): Promise<string | null
       tier: event.tier,
     };
 
-    const { data, error } = await db.from<ViolationAuditRow>('audit_logs')
-      .insert(insertPayload as unknown as Record<string, unknown>)
+    const { data, error } = await insertTyped(db.from<ViolationAuditRow>('audit_logs'), insertPayload)
       .select('id')
       .single();
 

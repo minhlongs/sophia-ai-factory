@@ -9,6 +9,7 @@
 
 import { randomUUID } from 'node:crypto'
 import { createServerClient } from '@/lib/db/client'
+import { insertTyped } from '@/lib/db/insert-typed'
 import { logger } from '@/lib/utils/logger-utility'
 import type { Json } from '@/lib/supabase/types'
 import type { AuditScheduledReportRow } from './types'
@@ -191,8 +192,7 @@ export async function scheduleReport(
   }
 
   try {
-    const result = await db.from<AuditScheduledReportRow>('compliance_report_schedules')
-      .insert(reportData as unknown as Record<string, unknown>)
+    const result = await insertTyped(db.from<AuditScheduledReportRow>('compliance_report_schedules'), reportData)
       .select()
       .single()
 

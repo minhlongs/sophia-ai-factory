@@ -6,7 +6,8 @@
 
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
-import type { ExportOptions, UsageSummary, DailyUsage, D1Response } from './types';
+import type { ExportOptions, UsageSummary, DailyUsage } from './types';
+import type { D1Response } from '@/lib/db/types';
 import { generateCsvRows, rowsToCsv, getAggregatedSummary } from './aggregator';
 
 /** Raw usage event row returned from D1 export queries */
