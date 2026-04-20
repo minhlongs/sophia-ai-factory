@@ -59,8 +59,20 @@ export class TelegramFSM {
 
       const contextData = (row.context_data as Record<string, unknown>) || {}
 
+      let resolvedState: BotState
+      if (isBotState(row.state)) {
+        resolvedState = row.state
+      } else {
+        logger.warn('telegram_fsm_invalid_state', {
+          metric: 'telegram_fsm_invalid_state',
+          chatId,
+          rawState: row.state,
+        })
+        resolvedState = BotState.IDLE
+      }
+
       return {
-        state: isBotState(row.state) ? row.state : (logger.warn('Invalid BotState in D1', { chatId, rawState: row.state }), BotState.IDLE),
+        state: resolvedState,
         ...contextData,
         subscriptionTier: row.subscription_tier as string | undefined,
         lastUpdated: Date.now(),

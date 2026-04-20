@@ -115,10 +115,11 @@ function resolveErrorArgs(
 ): { err: Error | undefined; meta: Record<string, unknown> | undefined; reqId: string | undefined } {
   if (arg2 !== undefined && !(arg2 instanceof Error)) {
     // New form: arg2 is a plain object { error?, ...metadata }
+    // arg3 is the optional requestId string; arg4 is not used in this form
     const { error: embeddedErr, ...rest } = arg2 as Record<string, unknown>;
     const err = embeddedErr instanceof Error ? embeddedErr : undefined;
     const meta = Object.keys(rest).length > 0 ? rest : undefined;
-    return { err, meta, reqId: arg3 as string | undefined ?? arg4 };
+    return { err, meta, reqId: arg3 as string | undefined };
   }
   // Legacy form
   return { err: arg2 as Error | undefined, meta: arg3, reqId: arg4 };

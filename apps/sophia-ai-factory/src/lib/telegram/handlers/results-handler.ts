@@ -24,10 +24,19 @@ export async function handleResults(chatId: string): Promise<void> {
       return
     }
 
+    interface ProfileRow { user_id: string }
+    const profile = profileData as unknown as ProfileRow
+
+    interface CampaignRow {
+      title: string;
+      video_url: string | null;
+      updated_at: string;
+    }
+
     // 2. Fetch completed campaigns
-    const { data: campaigns } = await (db as any).from('campaigns')
+    const { data: campaigns } = await db.from<CampaignRow>('campaigns')
       .select('*')
-      .eq('user_id', (profileData as any).user_id)
+      .eq('user_id', profile.user_id)
       .eq('status', 'completed')
       .order('updated_at', { ascending: false })
       .limit(5)
@@ -37,14 +46,8 @@ export async function handleResults(chatId: string): Promise<void> {
       return
     }
 
-    interface CampaignRow {
-      title: string;
-      video_url: string | null;
-      updated_at: string;
-    }
-
     let message = '✅ *Recent Results:*\n\n'
-    campaigns.forEach((c: CampaignRow) => {
+    campaigns.forEach((c) => {
       message += `🎬 *${c.title}*\n`
       if (c.video_url) {
         message += `[Watch Video](${c.video_url})\n`
