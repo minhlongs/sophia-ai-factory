@@ -1,7 +1,42 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-04-20 (Tech Debt Phase 9: Audit Module `:any` Cleanup)
+> **Last Updated:** 2026-04-20 (Tech Debt Phase 10: Usage Metering + Route Handlers `:any` Cleanup)
+
+---
+
+## [2026-04-20] Tech Debt Phase 10 — Usage Metering + Route Handlers `:any` Cleanup
+
+### Summary
+Eliminated all 20 non-test `:any` / `as any` casts in `src/lib/usage-metering/*` (6 modules) and 2 route handlers (`api/v1/usage/batch`, `api/admin/licenses/audit`). Extended `src/lib/usage-metering/types.ts` with 4 reusable interfaces (`D1Response<T>`, `UsageEventInsertable`, `LicenseMetadataRow`, `ApiKeyRecord`). Type coverage in scope: 100%. Incidentally fixed 2 pre-existing bugs (export.ts field rename `.serviceBreakdown` → `.featureKey`, tracker.ts property access guard). Tests: 1297/1297 ✅. Build: 0 TS errors ✅. Code Review: 9.6/10 APPROVE ✅. Production HTTP 200 ✅.
+
+### Files Modified (9 Total)
+**New:**
+- `src/lib/usage-metering/types.ts` — 4 new interfaces + `D1Response<T>` generic
+
+**Updated:**
+- `src/lib/usage-metering/rollup/hourly-rollup.ts` — 3 `:any` → 0
+- `src/lib/usage-metering/rollup/daily-rollup.ts` — 4 `:any` → 0
+- `src/lib/usage-metering/usage-kv-sync.ts` — 3 `:any` → 0
+- `src/lib/usage-metering/export.ts` — 2 `:any` → 0 + field-rename bug fix
+- `src/lib/usage-metering/tracker.ts` — 2 `:any` → 0
+- `src/lib/usage-metering/usage-rollup-engine.ts` — 4 `:any` → 0
+- `src/app/api/v1/usage/batch/route.ts` — 1 `:any` → 0
+- `src/app/api/admin/licenses/audit/route.ts` — 1 `:any` → 0
+
+### Tests & Quality
+- **Tests:** 1297/1297 (100% pass), usage-metering-scoped 156/156
+- **Build:** ✅ npm run build exit 0, 0 TS errors
+- **Code Review:** ✅ 9.6/10 APPROVE
+- **Production HTTP:** ✅ 200 confirmed
+- **TypeScript `:any` count:** 20 → 0 (usage-metering + routes)
+
+### Pattern Established
+Reusable `D1Response<T>` generic + domain-specific row interfaces in `<module>/types.ts` = canonical pattern for future modules. Candidate to promote to `@/lib/db/types.ts` in Phase 11+ for cross-module reuse.
+
+### Tracking
+- Plan: `/plans/260419-2121-triet-tieu-no-ky-thuat/`
+- Phase 10: `/plans/260419-2121-triet-tieu-no-ky-thuat/phase-10-usage-metering-any-cleanup.md`
 
 ---
 
