@@ -9,6 +9,7 @@
 
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 
 /**
  * Nonce cache structure for KV storage
@@ -80,7 +81,7 @@ export async function checkJwtNonce(nonce: string): Promise<{
         return { valid: true };
       }
     } catch (error) {
-      logger.error('[JWT Nonce] KV cache read error', error as Error);
+      logger.error('[JWT Nonce] KV cache read error', toError(error));
       // Fall through to DB query
     }
   }
@@ -96,7 +97,7 @@ export async function checkJwtNonce(nonce: string): Promise<{
       .single();
 
     if (error && error.code !== 'PGRST116') { // PGRST116 = not found
-      logger.error('[JWT Nonce] Database error', error as Error);
+      logger.error('[JWT Nonce] Database error', toError(error));
       return { valid: false, reason: 'invalid' };
     }
 
@@ -121,7 +122,7 @@ export async function checkJwtNonce(nonce: string): Promise<{
 
     return { valid: true };
   } catch (error) {
-    logger.error('[JWT Nonce] Error checking nonce', error as Error);
+    logger.error('[JWT Nonce] Error checking nonce', toError(error));
     // Fail open on error
     return { valid: true };
   }
@@ -148,7 +149,7 @@ export async function markJwtNonceAsUsed(
       const key = `nonce:${nonce}`;
       await kv.set(key, { used: true, userId, expiresAt }, { expirationTtl: expiresAt - now });
     } catch (error) {
-      logger.error('[JWT Nonce] KV cache write error', error as Error);
+      logger.error('[JWT Nonce] KV cache write error', toError(error));
       // Continue to DB write
     }
   }
@@ -170,13 +171,13 @@ export async function markJwtNonceAsUsed(
       .update({ used_at: now });
 
     if (error) {
-      logger.error('[JWT Nonce] Failed to mark nonce as used', error as Error);
+      logger.error('[JWT Nonce] Failed to mark nonce as used', toError(error));
       return false;
     }
 
     return true;
   } catch (error) {
-    logger.error('[JWT Nonce] Error marking nonce as used', error as Error);
+    logger.error('[JWT Nonce] Error marking nonce as used', toError(error));
     return false;
   }
 }
@@ -204,7 +205,7 @@ export async function preRegisterNonce(
       await kv.set(key, { used: false, userId, expiresAt }, { expirationTtl: ttl });
       return true;
     } catch (error) {
-      logger.error('[JWT Nonce] KV pre-registration error', error as Error);
+      logger.error('[JWT Nonce] KV pre-registration error', toError(error));
     }
   }
 
@@ -233,7 +234,7 @@ export async function cleanupExpiredNonces(): Promise<number> {
       .select('id');
 
     if (error) {
-      logger.error('[JWT Nonce] Cleanup failed', error as Error);
+      logger.error('[JWT Nonce] Cleanup failed', toError(error));
       return 0;
     }
 
@@ -242,7 +243,7 @@ export async function cleanupExpiredNonces(): Promise<number> {
 
     return count;
   } catch (error) {
-    logger.error('[JWT Nonce] Cleanup error', error as Error);
+    logger.error('[JWT Nonce] Cleanup error', toError(error));
     return 0;
   }
 }
@@ -277,7 +278,7 @@ export async function getNonceStats(): Promise<{
       replayAttemptsDetected: 0, // Would need separate tracking table
     };
   } catch (error) {
-    logger.error('[JWT Nonce] Stats error', error as Error);
+    logger.error('[JWT Nonce] Stats error', toError(error));
     return { totalActive: 0, expiredCount: 0, replayAttemptsDetected: 0 };
   }
 }
