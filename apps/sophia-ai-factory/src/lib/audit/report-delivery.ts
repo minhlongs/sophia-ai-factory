@@ -10,6 +10,7 @@
  */
 
 import { logger } from '@/lib/utils/logger-utility'
+import { toError } from '@/lib/utils/to-error'
 import type { ScheduledReport } from './report-scheduler'
 import type {
   AuditComplianceReportRow,
@@ -197,7 +198,7 @@ export async function emailReport(
       filename
     })
   } catch (error) {
-    logger.error('[Report Delivery] Email delivery failed', error as Error)
+    logger.error('[Report Delivery] Email delivery failed', toError(error))
     throw error
   }
 }
@@ -277,10 +278,10 @@ export async function deliverReport(
       recipients: deliveredRecipients
     }
   } catch (error) {
-    logger.error('[Report Delivery] Deliver report failed', error as Error)
+    logger.error('[Report Delivery] Deliver report failed', toError(error))
     return {
       delivered: false,
-      errors: [(error as Error).message]
+      errors: [toError(error).message]
     }
   }
 }
@@ -338,7 +339,7 @@ export async function storeReport(
 
     return data?.publicUrl || path
   } catch (error) {
-    logger.error('[Report Delivery] Store report failed', error as Error)
+    logger.error('[Report Delivery] Store report failed', toError(error))
     return null
   }
 }
@@ -377,7 +378,7 @@ export async function downloadStoredReport(
       .download(reportData.storage_path)
 
     if (error) {
-      logger.error('[Report Delivery] Download failed', error as Error)
+      logger.error('[Report Delivery] Download failed', toError(error))
       return null
     }
 
@@ -385,7 +386,7 @@ export async function downloadStoredReport(
     const arrayBuffer = await data.arrayBuffer()
     return Buffer.from(arrayBuffer)
   } catch (error) {
-    logger.error('[Report Delivery] Download report failed', error as Error)
+    logger.error('[Report Delivery] Download report failed', toError(error))
     return null
   }
 }
@@ -440,7 +441,7 @@ export async function getGeneratedReports(
       fileSize: row.file_size ?? undefined
     }))
   } catch (error) {
-    logger.error('[Report Delivery] Get generated reports failed', error as Error)
+    logger.error('[Report Delivery] Get generated reports failed', toError(error))
     throw error
   }
 }

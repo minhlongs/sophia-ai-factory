@@ -158,7 +158,7 @@ export async function markAlertAsRead(
       .eq('user_id', userId);
 
     if (error) {
-      logger.error('[Realtime Alert] Failed to mark as read', error);
+      logger.error('[Realtime Alert] Failed to mark as read', toError(error));
       return false;
     }
 
@@ -194,7 +194,7 @@ export async function dismissAlert(
       .eq('user_id', userId);
 
     if (error) {
-      logger.error('[Realtime Alert] Failed to dismiss', error);
+      logger.error('[Realtime Alert] Failed to dismiss', toError(error));
       return false;
     }
 
@@ -230,7 +230,7 @@ export async function getUnreadAlerts(
       .limit(limit);
 
     if (error) {
-      logger.error('[Realtime Alert] Failed to fetch unread', error);
+      logger.error('[Realtime Alert] Failed to fetch unread', toError(error));
       return [];
     }
 
@@ -271,7 +271,7 @@ export async function getAlertHistory(
     const { data, error } = await query;
 
     if (error) {
-      logger.error('[Realtime Alert] Failed to fetch history', error);
+      logger.error('[Realtime Alert] Failed to fetch history', toError(error));
       return [];
     }
 
@@ -302,7 +302,7 @@ export async function getUnreadCount(
       .eq('dismissed', false);
 
     if (error) {
-      logger.error('[Realtime Alert] Failed to count', error);
+      logger.error('[Realtime Alert] Failed to count', toError(error));
       return { total: 0, critical: 0, high: 0 };
     }
 
@@ -512,7 +512,7 @@ export async function cleanupExpiredAlerts(): Promise<number> {
       .or('expires_at.lt.now(),created_at.lt.now() - interval \'30 days\'');
 
     if (error) {
-      logger.error('[Realtime Alert] Cleanup failed', error);
+      logger.error('[Realtime Alert] Cleanup failed', toError(error));
       return 0;
     }
 

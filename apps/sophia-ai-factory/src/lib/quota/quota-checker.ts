@@ -12,6 +12,7 @@
 
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import { QUOTA_LIMITS } from '@/lib/usage-metering/aggregator';
 import type { QuotaLimit, QuotaCheckResult } from '@/lib/usage-metering/types';
 import type { QuotaLimitRow } from '@/lib/supabase/types';
@@ -134,7 +135,7 @@ export async function getEffectiveQuotaLimits(
       dailyRequests: custom.custom_daily_requests ?? defaultLimit.dailyRequests,
     };
   } catch (error) {
-    logger.error('[Quota Checker] Error fetching quota limits', error as Error);
+    logger.error('[Quota Checker] Error fetching quota limits', toError(error));
     // Fallback to defaults on error
     return QUOTA_LIMITS[tier] || QUOTA_LIMITS.BASIC;
   }
@@ -156,7 +157,7 @@ async function getCachedUsage(
     const cached = await kv.get(key);
     return cached;
   } catch (error) {
-    logger.error('[Quota Checker] KV cache read error', error as Error);
+    logger.error('[Quota Checker] KV cache read error', toError(error));
     return null;
   }
 }
@@ -178,7 +179,7 @@ async function updateCachedUsage(
     const key = `quota:${userId}:${licenseNonce}`;
     await kv.set(key, usage, { expirationTtl: ttlSeconds });
   } catch (error) {
-    logger.error('[Quota Checker] KV cache write error', error as Error);
+    logger.error('[Quota Checker] KV cache write error', toError(error));
   }
 }
 
@@ -196,7 +197,7 @@ export async function invalidateQuotaCache(
     const key = `quota:${userId}:${licenseNonce}`;
     await kv.set(key, null); // Delete key
   } catch (error) {
-    logger.error('[Quota Checker] Cache invalidation error', error as Error);
+    logger.error('[Quota Checker] Cache invalidation error', toError(error));
   }
 }
 
@@ -263,7 +264,7 @@ async function calculateCurrentUsage(
       requests: dailyResult.data?.length ?? 0,
     };
   } catch (error) {
-    logger.error('[Quota Checker] Error calculating usage', error as Error);
+    logger.error('[Quota Checker] Error calculating usage', toError(error));
     // Return zero usage on error (fail-open)
     return { hourly: 0, daily: 0, monthly: 0, requests: 0 };
   }
@@ -341,13 +342,13 @@ export async function logOverageEvent(
         exceededType: context.exceededType,
         ipAddress: context.ipAddress,
       }).catch(err => {
-        logger.error('[Quota Checker] Failed to trigger real-time alert', err as Error);
+        logger.error('[Quota Checker] Failed to trigger real-time alert', toError(err));
       });
     }
 
     return data?.id ?? null;
   } catch (error) {
-    logger.error('[Quota Checker] Failed to log overage event', error as Error);
+    logger.error('[Quota Checker] Failed to log overage event', toError(error));
     // Don't throw - audit logging failure shouldn't block request
     return null;
   }
