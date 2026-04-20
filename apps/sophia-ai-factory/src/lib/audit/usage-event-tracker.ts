@@ -10,7 +10,7 @@
 import { createServerClient } from '@/lib/db/client'
 import { hashIpAddress, generateUserPseudonym } from './audit-hashing'
 import { logger } from '@/lib/utils/logger-utility'
-import type { RaasAuditLogInsert } from '@/lib/supabase/types'
+import type { RaasAuditLogInsert, RaasAuditLogRow } from '@/lib/supabase/types'
 
 /**
  * Model invocation event for usage tracking
@@ -90,9 +90,8 @@ export async function logModelInvocation(
 
   try {
     // Insert audit log (database trigger auto-computes hash chain)
-    const result = await (db as any)
-      .from('raas_audit_logs')
-      .insert(logData)
+    const result = await db.from<RaasAuditLogRow>('raas_audit_logs')
+      .insert(logData as unknown as Record<string, unknown>)
       .select()
       .single()
 
@@ -151,9 +150,8 @@ export async function logApiUsage(
   }
 
   try {
-    const result = await (db as any)
-      .from('raas_audit_logs')
-      .insert(logData)
+    const result = await db.from<RaasAuditLogRow>('raas_audit_logs')
+      .insert(logData as unknown as Record<string, unknown>)
       .select()
       .single()
 

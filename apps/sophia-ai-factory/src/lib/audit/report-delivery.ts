@@ -11,6 +11,24 @@
 
 import { logger } from '@/lib/utils/logger-utility'
 import type { ScheduledReport } from './report-scheduler'
+import type {
+  AuditComplianceReportRow,
+  AuditComplianceReportStorageRow,
+} from './types'
+
+/** Minimal interface for Supabase Storage bucket operations used in this module. */
+interface StorageBucket {
+  upload(path: string, data: Buffer, opts: { contentType: string; upsert: boolean }): Promise<{ error: { message: string } | null }>
+  getPublicUrl(path: string): { data: { publicUrl: string } }
+  download(path: string): Promise<{ data: { arrayBuffer(): Promise<ArrayBuffer> }; error: { message: string } | null }>
+}
+
+/** Minimal interface for clients that expose Supabase Storage. */
+interface ClientWithStorage {
+  storage: {
+    from(bucket: string): StorageBucket
+  }
+}
 
 /**
  * Report delivery result
@@ -240,7 +258,7 @@ export async function deliverReport(
       await emailReport(report.recipients, subject, content, filename)
       deliveredRecipients.push(...report.recipients)
     } catch (emailError) {
-      errors.push(`Email delivery failed: ${(emailError as Error).message}`)
+      errors.push(`Email delivery failed: ${emailError instanceof Error ? emailError.message : String(emailError)}`)
     }
 
     // Log delivery attempt
@@ -294,8 +312,8 @@ export async function storeReport(
 
     // Upload to Supabase Storage
     // Note: This requires Supabase Storage bucket to be created
-    const { error } = await (db as any)
-      .storage
+    const storageClient = (db as unknown as ClientWithStorage).storage
+    const { error } = await storageClient
       .from(storageBucket)
       .upload(path, buffer, {
         contentType: getContentType(format, path),
@@ -303,13 +321,12 @@ export async function storeReport(
       })
 
     if (error) {
-      logger.error('[Report Delivery] Storage upload failed', error as Error)
+      logger.error('[Report Delivery] Storage upload failed', new Error(error.message))
       return null
     }
 
     // Return public URL
-    const { data } = (db as any)
-      .storage
+    const { data } = storageClient
       .from(storageBucket)
       .getPublicUrl(path)
 
@@ -343,8 +360,7 @@ export async function downloadStoredReport(
   try {
     // Find the report path (would need to query a reports table for the exact path)
     // For now, assume a simple pattern
-    const { data: reportData } = await (db as any)
-      .from('compliance_reports')
+    const { data: reportData } = await db.from<AuditComplianceReportStorageRow>('compliance_reports')
       .select('storage_path, format')
       .eq('id', reportId)
       .single()
@@ -355,8 +371,8 @@ export async function downloadStoredReport(
     }
 
     // Download from storage
-    const { data, error } = await (db as any)
-      .storage
+    const storageClient = (db as unknown as ClientWithStorage).storage
+    const { data, error } = await storageClient
       .from(storageBucket)
       .download(reportData.storage_path)
 
@@ -402,27 +418,26 @@ export async function getGeneratedReports(
   const db = await import('@/lib/db/client').then((m) => m.createServerClient())
 
   try {
-    const result = await (db as any)
-      .from('compliance_reports')
+    const result = await db.from<AuditComplianceReportRow>('compliance_reports')
       .select('*')
       .eq('generated_by', adminId)
       .order('generated_at', { ascending: false })
       .limit(limit)
 
     if (result.error) {
-      logger.error('[Report Delivery] Get reports failed', result.error as Error)
-      throw result.error
+      logger.error('[Report Delivery] Get reports failed', new Error(result.error.message))
+      throw new Error(result.error.message)
     }
 
-    return (result.data as any[]).map((row) => ({
+    return (result.data || []).map((row: AuditComplianceReportRow) => ({
       id: row.id,
       type: row.report_type,
       format: row.format,
       generatedAt: row.generated_at,
       generatedBy: row.generated_by,
-      scheduleId: row.schedule_id,
-      storagePath: row.storage_path,
-      fileSize: row.file_size
+      scheduleId: row.schedule_id ?? undefined,
+      storagePath: row.storage_path ?? undefined,
+      fileSize: row.file_size ?? undefined
     }))
   } catch (error) {
     logger.error('[Report Delivery] Get generated reports failed', error as Error)
