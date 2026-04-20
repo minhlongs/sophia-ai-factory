@@ -2,8 +2,8 @@
 
 > Canonical standards for development, enforced across all code changes (2026).
 
-**Last Updated:** 2026-04-20 (Type Safety + Module Pattern Standards + Discriminated Union Narrowing)
-**Codebase Commitment:** Zero `:any` types, 100% TypeScript strict mode, 1297+ test pass rate, 65 `:any` eliminated (Phases 7-11)
+**Last Updated:** 2026-04-20 (Type Safety + DB Helpers + FSM Design)
+**Codebase Commitment:** Zero `:any` types, 100% TypeScript strict mode, 1297+ test pass rate, 87+ `:any` eliminated (Phases 5-12)
 
 ---
 
@@ -18,11 +18,11 @@
 ### Canonical Pattern: D1Response<T> Generic
 **Purpose:** Type-safe wrapper for D1 query results that return `{ data: T | null; error: unknown }`.
 
-**Location:** `src/lib/usage-metering/types.ts` (established Phase 10) — candidate to promote to `src/lib/db/types.ts` in Phase 11+.
+**Location:** `src/lib/db/types.ts` (canonical source since Phase 12).
 
 **Usage:**
 ```typescript
-import { D1Response } from '@/lib/usage-metering/types';
+import { D1Response } from '@/lib/db/types';
 
 const result = await db.from('licenses').select().single();
 const typed = result as unknown as D1Response<LicenseRow>;
@@ -30,6 +30,48 @@ if (typed.error) {
   // handle error
 }
 ```
+
+### Canonical Pattern: insertTyped<R, T> Helper
+**Purpose:** Type-safe D1 insert wrapper that eliminates boilerplate `as unknown as Record<string, unknown>` casts on `.insert()` calls.
+
+**Location:** `src/lib/db/insert-typed.ts` (established Phase 12).
+
+**Type Parameters:**
+- `<R>` — Result row type (e.g., `UsageEventRow`), flows through `.select().single()` chaining
+- `<T>` — Payload type (e.g., `UsageEventInsertable`), enforced at call site
+
+**Usage (Anti-pattern ❌):**
+```typescript
+// Without helper — requires unsafe cast:
+const { data, error } = await db
+  .from<UsageEventRow>('usage_events')
+  .insert(payload as unknown as Record<string, unknown>)
+  .select()
+  .single();
+```
+
+**Usage (Pattern ✅):**
+```typescript
+import { insertTyped } from '@/lib/db/insert-typed';
+import { D1Response, UsageEventRow, UsageEventInsertable } from '@/lib/db/types';
+
+// With helper — type-safe, chain preserves downstream typing:
+const result = await insertTyped<UsageEventRow, UsageEventInsertable>(
+  db.from<UsageEventRow>('usage_events'),
+  payload
+).select().single();
+
+const typed = result as unknown as D1Response<UsageEventRow>;
+if (typed.error) {
+  logger.error('insert failed', { error: typed.error });
+}
+```
+
+**Benefits:**
+- Eliminates 40 chars of boilerplate per site
+- Payload type `T` enforced at call site (IDE autocomplete works)
+- Result type `R` flows through chaining (e.g., `.select().single()` preserves return type)
+- Zero `:any` required
 
 ### Module-Level Types Pattern
 **Rule:** Every domain module must have a `<module>/types.ts` file exporting:
@@ -210,7 +252,10 @@ try {
 | Phase | Pattern | Location |
 |-------|---------|----------|
 | 9 | Module types extraction | `src/lib/audit/types.ts` |
-| 10 | D1Response<T> generic | `src/lib/usage-metering/types.ts` |
+| 10 | D1Response<T> generic | `src/lib/usage-metering/types.ts` (promoted Phase 12) |
+| 11 | Discriminated union narrowing | `src/lib/raas/raas-rate-limiter.ts` |
+| 12 | **insertTyped<R,T> helper (NEW)** | **`src/lib/db/insert-typed.ts`** |
+| 12 | **D1Response canonical location** | **`src/lib/db/types.ts`** |
 | - | Tier normalization | `src/lib/auth/normalize-tier.ts` |
 | - | BYOK encryption | `src/lib/byok/*` |
 | - | Org resolution | `src/lib/auth/resolve-org-id.ts` |
@@ -233,12 +278,18 @@ try {
 
 ## Remaining Type-Safety Backlog
 
-**Phases 7–10 cumulative:** 20 + 33 + 34 + 0 = **87 `:any` eliminated** (Phases 5-10)
+**Phases 5–12 cumulative:** 20 + 33 + 34 + 20 + 3 + 0 + 0 (no `:any` in P12) = **110+ `:any` eliminated** (Phases 5-12)
+
+**DB Helper Consolidation (Phase 12):**
+- ✅ D1Response<T> — 1 canonical export in `@/lib/db/types.ts`, 5 callers migrated
+- ✅ insertTyped<R,T> helper — 10 call sites refactored, 0 remaining `as unknown as Record` on `.insert()`
+- ✅ FSM design decision documented — log-only no-writeback, ops thresholds (10/hr warn, 100/hr page)
 
 **Future phases (candidate work):**
-- **Phase 11+:** `lib/raas/*` (license table, quota logic)
-- **Phase 12+:** FSM self-heal write-back in `telegram-fsm-state-manager.ts` (design phase 9 deferred)
-- **Phase 13+:** `raas_licenses` audit table queries
+- **Phase 13:** Remove `insertManyTyped` dead code (YAGNI), lint rule to enforce `insertTyped()` usage
+- **Phase 13+:** `as Error` / `instanceof Error` standardization across error handlers
+- **Phase 13+:** `ClientWithStorage` R2 migration audit
+- **Phase 13+:** `raas_licenses` D1-vs-Supabase consolidation
 - **Ongoing:** Ad-hoc refactors as new code written
 
 Current status: **All current production code: 0 `:any` types** ✅

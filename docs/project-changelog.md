@@ -1,7 +1,49 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-04-20 (Tech Debt Phase 11: RaaS License System Type Safety + Incidental Bug Fix)
+> **Last Updated:** 2026-04-20 (Tech Debt Phase 12: DB Helpers & FSM Design Documentation)
+
+---
+
+## [2026-04-20] Tech Debt Phase 12 — DB Helpers Consolidation & FSM Design Documentation
+
+### Summary
+Three architectural refinements: (1) Promoted `D1Response<T>` generic from `src/lib/usage-metering/types.ts` → `src/lib/db/types.ts` (single source of truth for cross-module reuse). (2) Created `src/lib/db/insert-typed.ts` helper (`insertTyped<R,T>()`) to eliminate 40 chars of boilerplate per call site; migrated 10 sites across 7 files from unsafe `as unknown as Record<string, unknown>` pattern on `.insert()` calls → 0 remaining. (3) Documented FSM self-heal design decision (log-only, NO write-back) in system architecture with ops thresholds (10/hr warn, 100/hr page) and deferred `FSM_SELF_HEAL=true` gate (YAGNI). Tests: 1297/1297 ✅. Build: 0 TS errors ✅. Code Review: 9.6/10 APPROVE ✅.
+
+### Files Modified (13 Total)
+**New:**
+- `src/lib/db/types.ts` — Canonical `D1Response<T>` export (11 LOC)
+- `src/lib/db/insert-typed.ts` — `insertTyped<R,T>()` helper (25 LOC, preserves `.select().single()` chaining)
+
+**Updated:**
+- `src/lib/usage-metering/types.ts` — Removed `D1Response<T>` definition, imported from canonical path (288 → 283 LOC)
+- `src/lib/usage-metering/usage-kv-sync.ts` — D1Response import migration
+- `src/lib/usage-metering/export.ts` — D1Response import migration
+- `src/lib/usage-metering/usage-rollup-engine.ts` — D1Response import migration
+- `src/lib/usage-metering/tracker.ts` — D1Response import + insertTyped migration (1 site)
+- `src/app/api/v1/usage/batch/route.ts` — D1Response import migration
+- `src/lib/audit/logger/audit-event-builder.ts` — insertTyped migration (1 site, type-param fix spike)
+- `src/lib/audit/report-scheduler.ts` — insertTyped migration (1 site)
+- `src/lib/audit/violation-logger.ts` — insertTyped migration (1 site)
+- `src/lib/audit/usage-event-tracker.ts` — insertTyped migration (2 sites)
+- `src/lib/audit/audit-query-logger.ts` — insertTyped migration (4 sites)
+- `apps/sophia-ai-factory/docs/system-architecture.md` — FSM self-heal design decision section (log-only no-writeback, ops thresholds, deferred FSM_SELF_HEAL gate)
+
+### Type Safety & Cleanup
+- **D1Response consolidation:** 1 export in canonical `@/lib/db/types.ts`, 5 callers updated, 0 stray duplicates
+- **insertTyped migration:** 10 sites (`as unknown as Record<string, unknown>`) → 0 remaining on `.insert()` calls
+- **Type parameters:** Fixed `<R, T>` signature on insertTyped to preserve `D1QueryChain<T>` invariance (spike in audit-event-builder resolved)
+- **Deferred nits:** `insertManyTyped` dead code (YAGNI removal), JSDoc example enhancement with `.select().single()` chain
+
+### Tests & Quality
+- **Tests:** 1297/1297 (100% pass)
+- **Build:** ✅ npm run build exit 0, 0 TS errors
+- **Code Review:** ✅ 9.6/10 APPROVE
+- **No regressions:** 0 new `:any`, `@ts-ignore`, `console.*` introduced
+
+### Tracking
+- Plan: `/plans/260419-2121-triet-tieu-no-ky-thuat/phase-12-db-helpers-and-fsm-design.md`
+- Reports: fullstack-phase-12-260420.md, tester-phase-12-260420.md, code-reviewer-phase-12-260420.md
 
 ---
 

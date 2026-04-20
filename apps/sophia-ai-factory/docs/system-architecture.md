@@ -275,6 +275,40 @@ Real PEV (Prompt Execution Validator) engine deferred to Phase 2.
 
 ---
 
+## Telegram FSM State Validation (Phase 12 design)
+
+The Telegram bot FSM persists conversation state (`BotState` enum) in D1 table `telegram_fsm_state`. On read, `telegram-fsm-state-manager.ts` validates the persisted `row.state` against the current enum via `isBotState()` runtime guard.
+
+**Invalid-state policy: LOG-ONLY, NO WRITE-BACK.**
+
+When `row.state` fails the runtime guard:
+1. Emit `logger.warn('telegram_fsm_invalid_state', { metric: 'telegram_fsm_invalid_state', chatId, rawState })`.
+2. Return `BotState.IDLE` as a safe default to the caller.
+3. **Do NOT write `IDLE` back to D1.**
+
+### Rationale
+
+Three causes of invalid state exist. Only one is safely auto-healable:
+
+| Cause | Self-heal safe? |
+|---|---|
+| DB corruption (bit flip, partial write) | ❌ Write-back hides evidence of corruption |
+| Enum value removed in a migration | ✅ Write-back is harmless (old value is dead) |
+| Manual DB edit by admin | ❌ Write-back erases intentional change |
+
+Silent write-back would mask causes 1 and 3. We chose to preserve the invalid row and let ops investigate. The `metric: 'telegram_fsm_invalid_state'` log key enables alerting dashboards to thresh on frequency.
+
+### Ops alert recommendation
+
+- **Warning threshold:** >10 occurrences/hour — possible migration drift or bad deploy.
+- **Critical threshold:** >100/hour sustained — DB corruption suspected; page oncall.
+
+### Future env-flag opt-in (deferred)
+
+If a concrete migration scenario emerges (e.g., deliberate mass cleanup of a removed enum value), add `FSM_SELF_HEAL=true` env flag to enable opt-in write-back. Not implemented now — YAGNI until demanded.
+
+---
+
 ## Scalability Considerations
 - **Frontend**: Stateless, deployable to Vercel Edge/Serverless.
 - **Backend**: n8n can be self-hosted or cloud-hosted; scales independently.
