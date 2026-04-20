@@ -37,7 +37,7 @@ export async function checkRateLimit(
 
     if (error || !data) {
       logger.error('check_telegram_rate_limit RPC error', { code: error?.code, message: error?.message })
-      logger.warn('[metric] telegram_ratelimit_fail_open', {
+      logger.warn('telegram_ratelimit_fail_open', {
         metric: 'telegram_ratelimit_fail_open',
         reason: 'rpc_error',
         code: error?.code,
@@ -65,7 +65,7 @@ export async function checkRateLimit(
     return { allowed, remaining, resetInSeconds }
   } catch (error) {
     logger.error('Telegram SQL rate limit check failed', error instanceof Error ? error : new Error(String(error)))
-    logger.warn('[metric] telegram_ratelimit_fail_open', {
+    logger.warn('telegram_ratelimit_fail_open', {
       metric: 'telegram_ratelimit_fail_open',
       reason: 'exception',
       errorMessage: error instanceof Error ? error.message : String(error),

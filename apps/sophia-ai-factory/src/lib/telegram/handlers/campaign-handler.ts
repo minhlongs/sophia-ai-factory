@@ -79,7 +79,8 @@ export async function executeCampaignCreation(chatId: string): Promise<void> {
     const profile = profileData as { user_id: string; subscription_tier: 'free' | 'pro' | 'enterprise' | null }
 
     // 2. Create Campaign in DB
-    const { data: campaignData, error: createError } = await (db as any).from('campaigns')
+    interface CampaignInsertRow { id: string }
+    const { data: campaignData, error: createError } = await db.from<CampaignInsertRow>('campaigns')
       .insert({
         user_id: profile.user_id,
         title: context.campaignTopic,
@@ -91,12 +92,12 @@ export async function executeCampaignCreation(chatId: string): Promise<void> {
       .single()
 
     if (createError || !campaignData) {
-      logger.error('Campaign creation error', new Error(createError.message))
+      logger.error('Campaign creation error', new Error(createError?.message ?? 'Unknown error'))
       await sendMessage(chatId, '❌ Failed to create campaign in database. Please try again.')
       return
     }
 
-    const campaign = campaignData as { id: string }
+    const campaign = campaignData
 
     // 3. Trigger Inngest Event
     const tier = mapSubscriptionToTier(profile.subscription_tier)
