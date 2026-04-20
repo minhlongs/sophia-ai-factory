@@ -29,7 +29,7 @@ vi.mock('@/lib/db/client', () => ({
 vi.mock('@/lib/audit/crypto-utils', async () => {
   const actual = await vi.importActual('@/lib/audit/crypto-utils')
   return {
-    ...(actual as any),
+    ...(actual as Record<string, unknown>),
     hmacSha256: vi.fn((data: string, secret: string) => {
       // Return consistent 64-char hex hash for testing
       // The real function returns 64 chars (SHA256 = 32 bytes = 64 hex chars)
@@ -76,8 +76,8 @@ describe('validateApiKeyFormat', () => {
 
   it('should reject empty or null keys', () => {
     expect(validateApiKeyFormat('')).toBe(false)
-    expect(validateApiKeyFormat(null as any)).toBe(false)
-    expect(validateApiKeyFormat(undefined as any)).toBe(false)
+    expect(validateApiKeyFormat(null as unknown as string)).toBe(false)
+    expect(validateApiKeyFormat(undefined as unknown as string)).toBe(false)
   })
 })
 

@@ -10,6 +10,7 @@ import { magicLink } from 'better-auth/plugins';
 import { hashPassword, verifyPassword } from '@/lib/crypto/password-hash';
 import { sendEmail } from '@/lib/email/sender';
 import { getD1Client } from '@/lib/db/client';
+import { logger } from '@/lib/utils/logger-utility';
 
 /** Resolve D1 binding from CF Workers context */
 function getD1(): D1Database {
@@ -106,7 +107,7 @@ export function getAuth() {
               });
             } catch (err) {
               // Non-critical — org creation failure shouldn't block signup
-              console.error('[databaseHook] org creation failed:', err);
+              logger.error('[databaseHook] org creation failed', err instanceof Error ? err : new Error(String(err)));
             }
 
             // Send welcome email (non-blocking)

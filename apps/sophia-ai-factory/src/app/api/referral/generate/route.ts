@@ -7,6 +7,7 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@/lib/db/client";
 import { getCurrentUserFromHeaders } from "@/lib/better-auth-session";
+import { logger } from "@/lib/utils/logger-utility";
 
 /** Generate a short alphanumeric referral code */
 function generateCode(length = 8): string {
@@ -102,7 +103,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       { status: 201 }
     );
   } catch (error) {
-    console.error("[referral/generate] Unexpected error:", (error as Error).message);
+    logger.error("[referral/generate] Unexpected error", error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

@@ -8,6 +8,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createServerClient } from "@/lib/db/client";
 import { getCurrentUserFromHeaders } from "@/lib/better-auth-session";
+import { logger } from "@/lib/utils/logger-utility";
 
 const applyBodySchema = z.object({
   code: z.string().min(1, "code is required").max(32),
@@ -80,7 +81,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       rewardAmount: referral.reward_amount ?? 0,
     });
   } catch (error) {
-    console.error("[referral/apply] Unexpected error:", (error as Error).message);
+    logger.error("[referral/apply] Unexpected error", error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

@@ -7,6 +7,8 @@
  * @module worker/kv-license-cache
  */
 
+import { logger } from '@/lib/utils/logger-utility';
+
 /**
  * License context cached in KV
  */
@@ -77,7 +79,7 @@ export async function getLicenseFromCache(
 
     return cached;
   } catch (error) {
-    console.error('[KV License Cache] Cache read error:', error instanceof Error ? error.message : error);
+    logger.error('[KV License Cache] Cache read error', error instanceof Error ? error : new Error(String(error)));
     return null;
   }
 }
@@ -108,7 +110,7 @@ export async function cacheLicense(
 
     return true;
   } catch (error) {
-    console.error('[KV License Cache] Cache write error:', error instanceof Error ? error.message : error);
+    logger.error('[KV License Cache] Cache write error', error instanceof Error ? error : new Error(String(error)));
     return false;
   }
 }
@@ -129,7 +131,7 @@ export async function invalidateLicense(
     await kv.delete(key);
     return true;
   } catch (error) {
-    console.error('[KV License Cache] Cache invalidation error:', error instanceof Error ? error.message : error);
+    logger.error('[KV License Cache] Cache invalidation error', error instanceof Error ? error : new Error(String(error)));
     return false;
   }
 }
@@ -166,7 +168,7 @@ export async function getCacheStats(kv: KVNamespace): Promise<{
       keyPrefix: CACHE_CONFIG.keyPrefix,
     };
   } catch (error) {
-    console.error('[KV License Cache] Stats error:', error instanceof Error ? error.message : error);
+    logger.error('[KV License Cache] Stats error', error instanceof Error ? error : new Error(String(error)));
     return {
       totalKeys: 0,
       keyPrefix: CACHE_CONFIG.keyPrefix,

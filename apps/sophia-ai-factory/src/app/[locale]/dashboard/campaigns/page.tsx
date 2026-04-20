@@ -1,5 +1,6 @@
 import { getD1Client } from "@/lib/db/client";
 import { getCurrentUser } from "@/lib/better-auth-session";
+import { logger } from "@/lib/utils/logger-utility";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -46,11 +47,11 @@ export default async function CampaignsPage() {
         .eq("user_id", userId)
         .order("created_at", { ascending: false });
       if (error) {
-        console.error("[campaigns/page] DB error:", error.message);
+        logger.error("[campaigns/page] DB error", new Error(error.message));
       }
       campaigns = (data as Campaign[]) || [];
     } catch (e) {
-      console.error("[campaigns/page] Failed to fetch campaigns:", (e as Error).message);
+      logger.error("[campaigns/page] Failed to fetch campaigns", e instanceof Error ? e : new Error(String(e)));
       campaigns = [];
     }
   }

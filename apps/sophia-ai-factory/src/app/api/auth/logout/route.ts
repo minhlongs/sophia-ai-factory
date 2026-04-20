@@ -6,6 +6,7 @@
  */
 
 import { NextResponse } from 'next/server';
+import { logger } from '@/lib/utils/logger-utility';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,8 +17,7 @@ export async function POST() {
     response.cookies.delete('better-auth.session_token');
     return response;
   } catch (error) {
-    const msg = error instanceof Error ? error.message : 'Internal error';
-    console.error('[auth/logout] POST error:', msg);
+    logger.error('[auth/logout] POST error', error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json({ error: 'Logout failed' }, { status: 500 });
   }
 }

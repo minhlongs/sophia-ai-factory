@@ -20,6 +20,7 @@ import { z } from 'zod'
 import { createServerClient } from '@/lib/db/client'
 import { isEnabled } from '@/lib/feature-flags'
 import { decryptSecret } from '@/lib/crypto/encrypt-secret'
+import { logger } from '@/lib/utils/logger-utility'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -72,7 +73,7 @@ export async function resolveLocalMekongdForUser(
   try {
     row = await fetchLocalModeRow(userId)
   } catch (err) {
-    console.warn('[provider-router] D1 query error for userId=%s: %s', userId, String(err))
+    logger.warn('[provider-router] D1 query error', { userId, error: String(err) })
     return null
   }
 
@@ -87,11 +88,7 @@ export async function resolveLocalMekongdForUser(
       bearer = await decryptSecret(row.local_mode_bearer_encrypted)
     } catch (err) {
       // Tampered ciphertext, wrong key, or key rotation mismatch — fail closed
-      console.warn(
-        '[provider-router] bearer decrypt failed for userId=%s — failing closed: %s',
-        userId,
-        String(err),
-      )
+      logger.warn('[provider-router] bearer decrypt failed — failing closed', { userId, error: String(err) })
       return null
     }
     return { endpoint, bearer }
@@ -121,7 +118,7 @@ async function fetchLocalModeRow(userId: string): Promise<LocalModeRow | null> {
   // Zod-validate the row shape — never trust raw D1 output
   const parsed = LocalModeRowSchema.safeParse(data)
   if (!parsed.success) {
-    console.warn('[provider-router] unexpected D1 row shape for userId=%s', userId)
+    logger.warn('[provider-router] unexpected D1 row shape', { userId })
     return null
   }
 

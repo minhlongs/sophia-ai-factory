@@ -10,6 +10,7 @@ import { jwtVerify } from 'jose';
 import { validateApiKey } from '../../lib/security/api-key-validator';
 import { validateJwt, extractEnrichedClaims } from '../../lib/security/jwt-validator';
 import type { EnrichedJwtPayload } from '../../lib/auth/enriched-jwt';
+import { logger } from '@/lib/utils/logger-utility';
 
 // Cloudflare Worker types
 /// <reference types="@cloudflare/workers-types" />
@@ -108,7 +109,7 @@ async function getLicenseContext(
     // For now, return null to indicate cache miss
     return null;
   } catch (error) {
-    console.error('[RaaS Auth Middleware] Failed to fetch license context', error);
+    logger.error('[RaaS Auth Middleware] Failed to fetch license context', error instanceof Error ? error : new Error(String(error)));
     return null;
   }
 }
@@ -138,7 +139,7 @@ async function getSubscriptionStatus(
 
     return null;
   } catch (error) {
-    console.error('[RaaS Auth Middleware] Failed to fetch subscription status', error);
+    logger.error('[RaaS Auth Middleware] Failed to fetch subscription status', error instanceof Error ? error : new Error(String(error)));
     return null;
   }
 }
@@ -202,7 +203,7 @@ export async function validateLicense(
         },
       };
     } catch (error) {
-      console.error('[RaaS Auth Middleware] API key validation failed', error);
+      logger.error('[RaaS Auth Middleware] API key validation failed', error instanceof Error ? error : new Error(String(error)));
       return {
         valid: false,
         error: 'API key validation failed',
@@ -245,7 +246,7 @@ export async function validateLicense(
         },
       };
     } catch (error) {
-      console.error('[RaaS Auth Middleware] JWT validation failed', error);
+      logger.error('[RaaS Auth Middleware] JWT validation failed', error instanceof Error ? error : new Error(String(error)));
       return {
         valid: false,
         error: 'JWT validation failed',

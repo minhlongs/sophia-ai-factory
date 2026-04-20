@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createServerClient } from "@/lib/db/client";
 import { getCurrentUser } from "@/lib/better-auth-session";
+import { logger } from "@/lib/utils/logger-utility";
 import { DashboardStats } from "./components/dashboard-stats";
 import { OnboardingWelcomeBanner } from "./components/onboarding-welcome-banner";
 import { CrossSellBanner } from "@/components/dashboard/cross-sell-banner";
@@ -40,10 +41,10 @@ export default async function DashboardPage() {
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
-      if (error) console.error("[dashboard] DB error:", error.message);
+      if (error) logger.error("[dashboard] DB error", new Error(error.message));
       campaigns = (data as Campaign[]) || [];
     } catch (e) {
-      console.error("[dashboard] Failed to fetch campaigns:", (e as Error).message);
+      logger.error("[dashboard] Failed to fetch campaigns", e instanceof Error ? e : new Error(String(e)));
       campaigns = [];
     }
 

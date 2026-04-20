@@ -19,6 +19,7 @@ import { getCurrentUserFromHeaders } from '@/lib/better-auth-session'
 import { encryptSecret } from '@/lib/crypto/encrypt-secret'
 import { track } from '@/lib/signals/track'
 import { D1Events } from '@/lib/signals/d1-event-types'
+import { logger } from '@/lib/utils/logger-utility'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -113,7 +114,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     encrypted = await encryptSecret(bearer)
   } catch (err) {
-    console.warn('[provision] encryptSecret failed for userId=%s: %s', user.id, String(err))
+    logger.warn('[provision] encryptSecret failed', { userId: user.id, error: String(err) })
     return NextResponse.json({ error: 'encryption_failed' }, { status: 500 })
   }
 
@@ -130,7 +131,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       .bind(hostname, encrypted, user.id)
       .run()
   } catch (err) {
-    console.warn('[provision] D1 write failed for userId=%s: %s', user.id, String(err))
+    logger.warn('[provision] D1 write failed', { userId: user.id, error: String(err) })
     return NextResponse.json({ error: 'd1_write_failed' }, { status: 500 })
   }
 
@@ -165,7 +166,7 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
       .bind(user.id)
       .run()
   } catch (err) {
-    console.warn('[provision] D1 disable failed for userId=%s: %s', user.id, String(err))
+    logger.warn('[provision] D1 disable failed', { userId: user.id, error: String(err) })
     return NextResponse.json({ error: 'd1_write_failed' }, { status: 500 })
   }
 
