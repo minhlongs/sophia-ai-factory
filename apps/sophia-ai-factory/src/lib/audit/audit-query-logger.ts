@@ -11,6 +11,7 @@
  */
 
 import { createServerClient } from '@/lib/db/client'
+import { insertTyped } from '@/lib/db/insert-typed'
 import { logger } from '@/lib/utils/logger-utility'
 import type { RaasAuditLogInsert, RaasAuditLogRow, Json } from '@/lib/supabase/types'
 
@@ -74,8 +75,7 @@ export async function logAuditQuery(params: AuditQueryLogParams): Promise<boolea
 
   try {
     // Insert audit log (database trigger auto-computes hash chain)
-    const { data, error } = await db.from<RaasAuditLogRow>('raas_audit_logs')
-      .insert(logData as unknown as Record<string, unknown>)
+    const { data, error } = await insertTyped(db.from<RaasAuditLogRow>('raas_audit_logs'), logData)
       .select()
       .single()
 
@@ -131,8 +131,7 @@ export async function logApiKeyCreation(
   }
 
   try {
-    const { error } = await db.from<RaasAuditLogRow>('raas_audit_logs')
-      .insert(logData as unknown as Record<string, unknown>)
+    const { error } = await insertTyped(db.from<RaasAuditLogRow>('raas_audit_logs'), logData)
 
     if (error) {
       logger.error('[Audit Query Logger] Failed to log API key creation', new Error(error.message))
@@ -183,8 +182,7 @@ export async function logApiKeyRevocation(
   }
 
   try {
-    const { error } = await db.from<RaasAuditLogRow>('raas_audit_logs')
-      .insert(logData as unknown as Record<string, unknown>)
+    const { error } = await insertTyped(db.from<RaasAuditLogRow>('raas_audit_logs'), logData)
 
     if (error) {
       logger.error('[Audit Query Logger] Failed to log API key revocation', new Error(error.message))
@@ -234,8 +232,7 @@ export async function logApiKeyValidationFailure(
   }
 
   try {
-    const { error: insertError } = await db.from<RaasAuditLogRow>('raas_audit_logs')
-      .insert(logData as unknown as Record<string, unknown>)
+    const { error: insertError } = await insertTyped(db.from<RaasAuditLogRow>('raas_audit_logs'), logData)
 
     if (insertError) {
       logger.error('[Audit Query Logger] Failed to log validation failure', insertError as Error)

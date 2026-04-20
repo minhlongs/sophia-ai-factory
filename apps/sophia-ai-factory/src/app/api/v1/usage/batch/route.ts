@@ -30,7 +30,8 @@ import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import { batchIngestUsage } from '@/lib/usage-metering/aggregator';
 import { batchIngestionRequestSchema } from '@/lib/validation/services';
-import type { BatchUsageRecord, ApiKeyRecord, D1Response } from '@/lib/usage-metering/types';
+import type { BatchUsageRecord, ApiKeyRecord } from '@/lib/usage-metering/types';
+import type { D1Response } from '@/lib/db/types';
 
 /**
  * Validate API key and return associated user info

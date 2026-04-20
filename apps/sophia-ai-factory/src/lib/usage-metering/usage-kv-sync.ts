@@ -10,7 +10,8 @@
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import { checkQuota } from './usage-rollup-engine';
-import type { BatchUsageRecord, IngestionResult, BatchIngestionResponse, QuotaCheckResult, D1Response, LicenseMetadataRow } from './types';
+import type { BatchUsageRecord, IngestionResult, BatchIngestionResponse, QuotaCheckResult, LicenseMetadataRow } from './types';
+import type { D1Response } from '@/lib/db/types';
 
 /**
  * Validate a single batch usage record format

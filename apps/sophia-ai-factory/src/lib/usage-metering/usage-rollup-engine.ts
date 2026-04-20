@@ -16,8 +16,8 @@ import type {
   QuotaCheckResult,
   HourlySummary,
   DailySummary,
-  D1Response,
 } from './types';
+import type { D1Response } from '@/lib/db/types';
 
 /** Maximum date range for queries (90 days) — prevents expensive full-table scans */
 const MAX_DATE_RANGE_DAYS = 90;
