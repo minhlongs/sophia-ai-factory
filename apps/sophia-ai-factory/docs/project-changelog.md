@@ -1,6 +1,28 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-20 | **Current Version:** 1.12.2
+**Last Updated:** 2026-04-20 | **Current Version:** 1.12.3
+
+---
+
+## [2026-04-20] Phase 17 — toError() Slice 4 (GDPR + inline expressions) (v1.12.3)
+
+### Summary
+Fourth migration slice of the `as Error` → `toError()` standardization. 31 sites normalized across 7 top-concentration files; two new sub-patterns handled (`as unknown as Error` double-cast + inline `(e as Error).message` expressions).
+
+### Changes
+- `src/lib/security/api-key-validator.ts` — 5 sites migrated (incl. inline template-string `.message`)
+- `src/lib/audit/logger/audit-writer-extended.ts` — 5 sites migrated
+- `src/app/api/debug/db-schema/route.ts` — 5 sites migrated (inline `.message` on response objects)
+- `src/lib/audit/usage-event-tracker.ts` — 4 sites migrated
+- `src/lib/audit/right-to-erasure.ts` — 4 sites migrated (`as unknown as Error` double-cast removed; GDPR erasure path)
+- `src/lib/audit/cron-report-runner.ts` — 4 sites migrated (incl. inline member assignment)
+- `src/lib/alerts/quota/alert-delivery-service.ts` — 4 sites migrated
+
+### Quality & Review
+- Build: 0 new TypeScript errors on 7 edited files
+- Tests: 1306/1306 pass (baseline unchanged — pure migration)
+- Code Review: 9.8/10 APPROVE SHIP (0 blockers / nits / unresolved)
+- Cumulative since Phase 13: 123 `as Error` sites normalized via `toError()`
 
 ---
 
