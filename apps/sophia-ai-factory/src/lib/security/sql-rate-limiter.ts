@@ -31,7 +31,14 @@ export const RATE_LIMITS = {
 } as const
 
 /**
- * Increment rate limit counter using PostgreSQL function
+ * RPC response shape from increment_rate_limit
+ */
+interface RateLimitRpcRow {
+  current_count: number
+}
+
+/**
+ * Increment rate limit counter using D1 RPC shim
  * Returns current count after increment
  */
 async function incrementRateLimit(
@@ -39,15 +46,13 @@ async function incrementRateLimit(
   identifier: string,
   windowSeconds: number
 ): Promise<number> {
-  // Use postgres function via RPC - types are defined in src/lib/db/types.ts
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (db as any).rpc('increment_rate_limit', {
+  const { data, error } = await db.rpc('increment_rate_limit', {
     p_identifier: identifier,
     p_window_seconds: windowSeconds,
-  })
+  }) as { data: RateLimitRpcRow[] | null; error: unknown }
 
   if (error || !data) {
-    logger.error('increment_rate_limit RPC error', error)
+    logger.error('increment_rate_limit RPC error', error instanceof Error ? error : new Error(String(error)))
     return Number.MAX_SAFE_INTEGER // Fail closed
   }
 

@@ -130,9 +130,25 @@ async function getActiveLicenses(): Promise<RaasLicenseRow[]> {
 }
 
 /**
+ * export_jobs row shape (migration 0014-export-jobs.sql)
+ * Columns: id, org_id (optional), license_nonce, export_format,
+ *          period_start, period_end, record_count, success, error_message, created_at
+ */
+interface ExportJobInsert {
+  id: string
+  org_id?: string | null
+  license_nonce: string
+  export_format: 'json' | 'csv'
+  period_start: number   // Unix seconds
+  period_end: number     // Unix seconds
+  record_count: number
+  success: number        // SQLite boolean: 1=true, 0=false
+  error_message: string | null
+  created_at: number     // Unix seconds
+}
+
+/**
  * Store export job record in database
- *
- * Note: Uses type assertion since export_jobs table types will be added in future migration
  */
 async function storeExportReceipt(params: {
   licenseNonce: string;
@@ -147,10 +163,8 @@ async function storeExportReceipt(params: {
     const db = createServerClient();
     const jobId = crypto.randomUUID();
 
-    // Note: export_jobs table requires migration - this is a graceful fallback
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (db as unknown as { from: (t: string) => any })
-      .from('export_jobs')
+    const { error } = await db
+      .from<ExportJobInsert>('export_jobs')
       .insert({
         id: jobId,
         license_nonce: params.licenseNonce,
@@ -158,7 +172,7 @@ async function storeExportReceipt(params: {
         export_format: params.format,
         period_start: params.periodStart,
         period_end: params.periodEnd,
-        success: params.success,
+        success: params.success ? 1 : 0,  // SQLite boolean
         error_message: params.errorMessage || null,
         created_at: Math.floor(Date.now() / 1000),
       });

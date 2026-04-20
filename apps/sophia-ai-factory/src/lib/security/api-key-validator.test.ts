@@ -173,15 +173,16 @@ describe('checkApiKey', () => {
     vi.mocked(timingSafeEqual).mockReturnValue(true)
 
     const mockKey = {
-      id: '1',
-      key_id: '0123456789abcdef',
-      owner_id: 'user-123',
+      id: '0123456789abcdef',
+      org_id: 'user-123',
+      key_hash: 'hash',
+      key_prefix: 'mk_01234',
       permissions: ['audit:read'],
-      created_at: 1234567890,
+      created_at: '2024-01-01T00:00:00Z',
       expires_at: null,
-      revoked_at: null,
+      is_active: 1,
       last_used_at: null,
-      rate_limit_per_min: 100,
+      rate_limit_per_minute: 100,
     }
 
     mockSupabase.from.mockReturnValue({
@@ -231,15 +232,16 @@ describe('checkApiKey', () => {
     vi.mocked(timingSafeEqual).mockReturnValue(true)
 
     const expiredKey = {
-      id: '1',
-      key_id: '0123456789abcdef',
-      owner_id: 'user-123',
+      id: '0123456789abcdef',
+      org_id: 'user-123',
+      key_hash: 'hash',
+      key_prefix: 'mk_01234',
       permissions: ['audit:read'],
-      created_at: 1234567890,
-      expires_at: 1234567890,
-      revoked_at: null,
+      created_at: '2024-01-01T00:00:00Z',
+      expires_at: 1234567890, // far in past — expired
+      is_active: 1,           // active (not revoked), so expiry check runs
       last_used_at: null,
-      rate_limit_per_min: 100,
+      rate_limit_per_minute: 100,
     }
 
     mockSupabase.from.mockReturnValue({
@@ -334,15 +336,16 @@ describe('getUserApiKeys', () => {
   it('should return array of API keys for user', async () => {
     const mockKeys = [
       {
-        id: '1',
-        key_id: '0123456789abcdef',
-        owner_id: 'user-123',
+        id: '0123456789abcdef',
+        org_id: 'user-123',
+        key_hash: 'hash',
+        key_prefix: 'mk_01234',
         permissions: ['audit:read'],
-        created_at: 1234567890,
+        created_at: '2024-01-01T00:00:00Z',
         expires_at: null,
-        revoked_at: null,
+        is_active: 1,
         last_used_at: null,
-        rate_limit_per_min: 100,
+        rate_limit_per_minute: 100,
       },
     ]
 
