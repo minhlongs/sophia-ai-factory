@@ -11,6 +11,7 @@ import { createServerClient } from '@/lib/db/client'
 import { insertTyped } from '@/lib/db/insert-typed'
 import { hashIpAddress, generateUserPseudonym } from './audit-hashing'
 import { logger } from '@/lib/utils/logger-utility'
+import { toError } from '@/lib/utils/to-error'
 import type { RaasAuditLogInsert, RaasAuditLogRow } from '@/lib/supabase/types'
 
 /**
@@ -98,7 +99,7 @@ export async function logModelInvocation(
     const insertError = result.error
 
     if (insertError) {
-      logger.error('[Usage Tracker] Failed to insert model invocation', insertError as Error)
+      logger.error('[Usage Tracker] Failed to insert model invocation', toError(insertError))
       return false
     }
 
@@ -113,7 +114,7 @@ export async function logModelInvocation(
 
     return true
   } catch (error) {
-    logger.error('[Usage Tracker] Audit logging failed', error as Error)
+    logger.error('[Usage Tracker] Audit logging failed', toError(error))
     // Graceful degradation: don't block API response on logging failure
     return false
   }
@@ -155,13 +156,13 @@ export async function logApiUsage(
       .single()
 
     if (result.error) {
-      logger.error('[Usage Tracker] Failed to insert API usage', result.error as Error)
+      logger.error('[Usage Tracker] Failed to insert API usage', toError(result.error))
       return false
     }
 
     return true
   } catch (error) {
-    logger.error('[Usage Tracker] API usage logging failed', error as Error)
+    logger.error('[Usage Tracker] API usage logging failed', toError(error))
     return false
   }
 }

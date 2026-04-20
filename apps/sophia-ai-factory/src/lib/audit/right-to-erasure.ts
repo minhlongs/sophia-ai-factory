@@ -12,6 +12,7 @@
 
 import { createServerClient } from '@/lib/db/client'
 import { logger } from '@/lib/utils/logger-utility'
+import { toError } from '@/lib/utils/to-error'
 import { generateUserPseudonym, hashIpAddress } from './gdpr-redaction'
 import type { RaasAuditLogRow, AuditUserMetadataRow, AuditGdprErasureRow } from './types'
 
@@ -87,7 +88,7 @@ export async function handleRightToErasure(
       .eq('user_id', userId)
 
     if (fetchError) {
-      logger.error('Failed to fetch audit logs for erasure', fetchError as unknown as Error, {
+      logger.error('Failed to fetch audit logs for erasure', toError(fetchError), {
         userId,
       })
       return {
@@ -126,7 +127,7 @@ export async function handleRightToErasure(
         .eq('id', log.id)
 
       if (updateError) {
-        logger.error('Failed to anonymize log entry', updateError as unknown as Error, {
+        logger.error('Failed to anonymize log entry', toError(updateError), {
           logId: log.id,
         })
         errors.push(`Log ${log.id}: ${updateError.message}`)
@@ -150,7 +151,7 @@ export async function handleRightToErasure(
 
     return { anonymizedCount }
   } catch (error) {
-    logger.error('Unexpected error during right-to-erasure', error as unknown as Error, {
+    logger.error('Unexpected error during right-to-erasure', toError(error), {
       userId,
     })
     return {
@@ -259,7 +260,7 @@ export async function canDeleteUserData(
     logger.info('No legal holds found - erasure permitted', { userId })
     return { canDelete: true }
   } catch (error) {
-    logger.error('Error checking legal hold status', error as unknown as Error, { userId })
+    logger.error('Error checking legal hold status', toError(error), { userId })
     // Default to blocking deletion on error
     return {
       canDelete: false,

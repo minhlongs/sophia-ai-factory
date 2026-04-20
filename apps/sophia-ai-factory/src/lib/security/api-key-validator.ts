@@ -10,6 +10,7 @@
 import { createServerClient } from '@/lib/db/client'
 import { hmacSha256, timingSafeEqual } from '@/lib/audit/crypto-utils'
 import { logger } from '@/lib/utils/logger-utility'
+import { toError } from '@/lib/utils/to-error'
 
 /**
  * D1 canonical raas_api_keys row shape
@@ -227,8 +228,8 @@ export async function generateApiKey(
     .insert(insertData)
 
   if (error) {
-    logger.error('[API Key Validator] Failed to generate API key', error as Error)
-    throw new Error(`Failed to generate API key: ${(error as Error).message}`)
+    logger.error('[API Key Validator] Failed to generate API key', toError(error))
+    throw new Error(`Failed to generate API key: ${toError(error).message}`)
   }
 
   logger.info('[API Key Validator] Generated new API key', {
@@ -381,7 +382,7 @@ export async function revokeApiKey(keyId: string): Promise<boolean> {
     .eq('id', keyId)
 
   if (error) {
-    logger.error('[API Key Validator] Failed to revoke API key', error as Error)
+    logger.error('[API Key Validator] Failed to revoke API key', toError(error))
     return false
   }
 
@@ -405,7 +406,7 @@ export async function getUserApiKeys(userId: string): Promise<ApiKeyInfo[]> {
     .order('created_at', { ascending: false })
 
   if (error) {
-    logger.error('[API Key Validator] Failed to fetch user API keys', error as Error)
+    logger.error('[API Key Validator] Failed to fetch user API keys', toError(error))
     return []
   }
 
@@ -449,7 +450,7 @@ export async function deleteApiKey(keyId: string): Promise<boolean> {
     .eq('id', keyId)
 
   if (error) {
-    logger.error('[API Key Validator] Failed to delete API key', error as Error)
+    logger.error('[API Key Validator] Failed to delete API key', toError(error))
     return false
   }
 
