@@ -4,6 +4,30 @@
 
 ---
 
+## [2026-04-20] Phase 15 — toError() PostgrestError Shape Preservation (v1.12.1)
+
+### Summary
+Phase 15 extended `toError()` utility (from Phase 13) to recognize and preserve Supabase `PostgrestError` shape (message/code/details/hint) for structured error logging.
+
+### Changes
+
+**Phase 15 — toError() PostgrestError Shape Preservation**
+- Extended `src/lib/utils/to-error.ts` to recognize `{ message: string, code?, details?, hint? }` objects
+- Previously collapsed to `Error("[object Object]")`; now returns `Error(message)` with supplementary fields as own-properties
+- Enables structured logging of Supabase error context (code, details, hint) downstream
+- Added 3 test cases: full PostgrestError shape, partial shape (code only), AuthError-like shape
+
+### Quality & Review
+- Build: 0 new TypeScript errors on changed files
+- Tests: 1303 → 1306 (+3 new tests)
+- Code Review: 9.7/10 APPROVE SHIP
+- CI GREEN + Production HTTP 200
+
+### Addendum — Phase 14 (earlier same day, already shipped)
+Phase 14 was the second `toError()` migration slice: 34 `as Error` / raw-error sites → `toError()` across `realtime-tracker.ts`, `quota-checker.ts`, `report-delivery.ts`, `audit-writer.ts`, `realtime-alert-service.ts`. Code Review 9.6/10 APPROVE. See `plans/260419-2121-triet-tieu-no-ky-thuat/phase-14-to-error-slice-2.md`.
+
+---
+
 ## [2026-04-20] Query Optimization & Discovery Rate Limiting (v1.12.0)
 
 ### Summary

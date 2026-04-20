@@ -96,16 +96,26 @@ export function Button({ className, ...props }: ButtonProps) {
 - Log errors via `logger.error()` from `@/lib/logger` (routes through observability stack).
 - `logger.error()` accepts: `(message, {error?, ...metadata}?, requestId?)` object form OR legacy `(message, error, metadata, requestId)` form for backward compatibility.
 - Return user-friendly error messages to the UI.
+- Use `toError()` from `@/lib/utils/to-error` to normalize thrown values into Error instances. `toError()` also recognizes Supabase `PostgrestError` shape — when given a `{ message: string, code?, details?, hint? }` object, it returns `new Error(message)` with `code`, `details`, and `hint` attached as own-properties for structured logging.
 
 **Logging Best Practices:**
 ```typescript
 import { logger } from '@/lib/logger';
+import { toError } from '@/lib/utils/to-error';
 
 // New object form (preferred)
 logger.error('Operation failed', { error: err, userId, orgId }, requestId);
 
 // Legacy form (still supported)
 logger.error('Operation failed', err, { userId, orgId }, requestId);
+
+// Normalize unknown errors (including PostgrestError) to Error
+try {
+  await someSupabaseCall();
+} catch (e) {
+  const err = toError(e); // Preserves { message, code, details, hint } if present
+  logger.error('Supabase operation failed', { error: err, userId });
+}
 ```
 
 ## Environment Variables
