@@ -143,7 +143,7 @@ describe('POST /api/setup/local-mode/provision', () => {
 
   // ── Case 4: D1 write error ────────────────────────────────────────────────
 
-  it('returns 500 with d1_write_failed error when D1 prepare throws', async () => {
+  it('returns 503 with d1_write_failed error when D1 prepare throws', async () => {
     const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env ?? {}
     env.DB = {
       prepare: vi.fn().mockImplementation(() => {
@@ -155,7 +155,7 @@ describe('POST /api/setup/local-mode/provision', () => {
     const req = makeRequest({ hostname: VALID_HOSTNAME, bearer: VALID_BEARER })
     const res = await POST(req)
 
-    expect(res.status).toBe(500)
+    expect(res.status).toBe(503)
     const body = await res.json()
     expect(body).toEqual({ error: 'd1_write_failed' })
     expect(mockTrack).not.toHaveBeenCalled()

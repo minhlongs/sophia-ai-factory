@@ -1,13 +1,19 @@
 import { getUserTier } from '@/lib/db/get-user-tier'
-import { checkTierAccess } from '@/lib/features'
 import { createServerClient } from '@/lib/db/client'
 import { Tier } from '@/types'
 import { logger } from '@/lib/utils/logger-utility'
 
 /**
- * Auth middleware - verifies Polar.sh subscription before premium commands
- * Uses Supabase PostgreSQL - replaces Redis-based implementation
+ * Auth middleware - verifies subscription tier before premium commands
+ * Uses D1 PostgreSQL - replaces Redis-based implementation
  */
+
+const TIER_RANK: Record<Tier, number> = {
+  BASIC: 0,
+  PREMIUM: 1,
+  ENTERPRISE: 2,
+  MASTER: 3,
+}
 
 interface AuthResult {
   authorized: boolean
@@ -26,13 +32,12 @@ export async function checkSubscriptionAuth(
 
   try {
     // Look up userId from telegram chatId mapping
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (db as any).rpc('get_user_by_telegram_chat_id', {
+    const { data, error } = await db.rpc('get_user_by_telegram_chat_id', {
       p_chat_id: chatId,
     })
 
     if (error || !data) {
-      logger.error('get_user_by_telegram_chat_id RPC error', error)
+      logger.error('get_user_by_telegram_chat_id RPC error', undefined, { code: error?.code, message: error?.message })
       return {
         authorized: requiredTier === 'BASIC',
         tier: 'BASIC',
@@ -40,7 +45,8 @@ export async function checkSubscriptionAuth(
       }
     }
 
-    const userId = data?.[0]?.get_user_by_telegram_chat_id as string | null
+    const rows = data as Array<Record<string, unknown>>
+    const userId = (rows[0]?.get_user_by_telegram_chat_id as string | null) ?? null
 
     if (!userId) {
       return {
@@ -51,7 +57,7 @@ export async function checkSubscriptionAuth(
     }
 
     const tier = await getUserTier(userId)
-    const hasAccess = await checkTierAccess(userId, requiredTier)
+    const hasAccess = TIER_RANK[tier] >= TIER_RANK[requiredTier]
 
     return {
       authorized: hasAccess,
@@ -78,8 +84,7 @@ export async function linkTelegramUser(
   const db = createServerClient()
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (db as any).rpc('link_telegram_user', {
+    await db.rpc('link_telegram_user', {
       p_chat_id: chatId,
       p_user_id: userId,
     })
@@ -92,6 +97,6 @@ export async function linkTelegramUser(
 /**
  * Invalidate auth cache (no-op for SQL-based storage)
  */
-export async function invalidateAuthCache(chatId: string): Promise<void> {
+export async function invalidateAuthCache(_chatId: string): Promise<void> {
   // No-op: SQL storage is always current
 }
