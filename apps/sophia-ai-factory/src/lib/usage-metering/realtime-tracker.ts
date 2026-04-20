@@ -11,6 +11,7 @@
  */
 
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import { getKvClient } from '@/lib/redis';
 import { createServerClient } from '@/lib/db/client';
 import { logAuditEvent } from '@/lib/audit/audit-logger';
@@ -84,7 +85,7 @@ async function getCircuitState(
       const cached = await kv.get(key);
       if (cached) return cached as CircuitBreakerState;
     } catch (error) {
-      logger.error('[Circuit Breaker] Redis read error', error as Error);
+      logger.error('[Circuit Breaker] Redis read error', toError(error));
     }
   }
 
@@ -113,7 +114,7 @@ async function setCircuitState(
     try {
       await kv.set(key, state, { expirationTtl: ttlSeconds });
     } catch (error) {
-      logger.error('[Circuit Breaker] Redis write error', error as Error);
+      logger.error('[Circuit Breaker] Redis write error', toError(error));
     }
   }
 
@@ -318,7 +319,7 @@ export async function getRealTimeUsage(
 
     return null;
   } catch (error) {
-    logger.error('[Real-Time Tracker] Redis read error', error as Error);
+    logger.error('[Real-Time Tracker] Redis read error', toError(error));
     return null;
   }
 }
@@ -340,7 +341,7 @@ export async function updateRealTimeUsage(
     const key = `usage:${usage.userId}:${usage.licenseNonce}`;
     await kv.set(key, usage, { expirationTtl: ttlSeconds });
   } catch (error) {
-    logger.error('[Real-Time Tracker] Redis write error', error as Error);
+    logger.error('[Real-Time Tracker] Redis write error', toError(error));
   }
 }
 
@@ -364,7 +365,7 @@ export async function invalidateRealTimeCache(
       licenseNonce: licenseNonce.slice(0, 8) + '...',
     });
   } catch (error) {
-    logger.error('[Real-Time Tracker] Cache invalidation error', error as Error);
+    logger.error('[Real-Time Tracker] Cache invalidation error', toError(error));
   }
 }
 
@@ -450,11 +451,11 @@ export async function trackWithCircuitBreaker(
     };
   } catch (error) {
     // Record failure
-    await recordCircuitFailure(licenseNonce, error as Error);
+    await recordCircuitFailure(licenseNonce, toError(error));
 
     return {
       allowed: false,
-      reason: `tracking-error: ${(error as Error).message}`,
+      reason: `tracking-error: ${toError(error).message}`,
     };
   }
 }

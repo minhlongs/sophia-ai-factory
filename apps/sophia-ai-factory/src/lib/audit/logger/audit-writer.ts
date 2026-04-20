@@ -8,6 +8,7 @@
 import { createServerClient } from '@/lib/db/client'
 import { generateReceipt } from '../compliance-receipt'
 import { logger } from '@/lib/utils/logger-utility'
+import { toError } from '@/lib/utils/to-error'
 import type { RaasAuditLogInsert, RaasAuditLogRow, Json } from '@/lib/supabase/types'
 import type { ComplianceReceipt } from '../compliance-receipt'
 import { insertAuditLog, updateReceiptSignature } from './audit-event-builder'
@@ -24,7 +25,7 @@ async function finalizeReceipt(
   const receipt = generateReceipt(log)
   const updateError = await updateReceiptSignature(db, logId, receipt.signature)
   if (updateError) {
-    logger.error('[Audit Logger] Failed to store receipt signature', updateError as Error)
+    logger.error('[Audit Logger] Failed to store receipt signature', toError(updateError))
   }
   return receipt
 }
@@ -51,14 +52,14 @@ export async function logValidationWithReceipt(
   try {
     const { data: insertedLog, error } = await insertAuditLog(db, logData)
     if (error || !insertedLog) {
-      logger.error('[Audit Logger] Failed to insert audit log', error as Error)
+      logger.error('[Audit Logger] Failed to insert audit log', toError(error))
       return null
     }
     const receipt = await finalizeReceipt(db, insertedLog.id, insertedLog)
     logger.info('[Audit Logger] Validation logged', { logId: insertedLog.id, nonce: params.nonce.slice(0, 8), isValid: params.isValid, receiptId: receipt.receiptId })
     return receipt
   } catch (error) {
-    logger.error('[Audit Logger] Audit logging failed', error as Error)
+    logger.error('[Audit Logger] Audit logging failed', toError(error))
     return null
   }
 }
@@ -85,14 +86,14 @@ export async function logCreationWithReceipt(
   try {
     const { data: insertedLog, error } = await insertAuditLog(db, logData)
     if (error || !insertedLog) {
-      logger.error('[Audit Logger] Failed to insert creation audit log', error as Error)
+      logger.error('[Audit Logger] Failed to insert creation audit log', toError(error))
       return null
     }
     const receipt = await finalizeReceipt(db, insertedLog.id, insertedLog)
     logger.info('[Audit Logger] Creation logged', { logId: insertedLog.id, nonce: params.nonce.slice(0, 8), tier: params.tier, receiptId: receipt.receiptId })
     return receipt
   } catch (error) {
-    logger.error('[Audit Logger] Creation audit logging failed', error as Error)
+    logger.error('[Audit Logger] Creation audit logging failed', toError(error))
     return null
   }
 }
@@ -119,14 +120,14 @@ export async function logRevocationWithReceipt(
   try {
     const { data: insertedLog, error } = await insertAuditLog(db, logData)
     if (error || !insertedLog) {
-      logger.error('[Audit Logger] Failed to insert revocation audit log', error as Error)
+      logger.error('[Audit Logger] Failed to insert revocation audit log', toError(error))
       return null
     }
     const receipt = await finalizeReceipt(db, insertedLog.id, insertedLog)
     logger.info('[Audit Logger] Revocation logged', { logId: insertedLog.id, nonce: params.nonce.slice(0, 8), reason: params.reason, receiptId: receipt.receiptId })
     return receipt
   } catch (error) {
-    logger.error('[Audit Logger] Revocation audit logging failed', error as Error)
+    logger.error('[Audit Logger] Revocation audit logging failed', toError(error))
     return null
   }
 }
