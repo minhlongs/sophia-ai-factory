@@ -19,7 +19,7 @@ import { createServerClient } from '@/lib/db/client';
 import { hasEmergencyBypass, recordCircuitFailure, recordCircuitSuccess } from './usage-metering/realtime-tracker';
 import crypto from 'crypto';
 import { jwtVerify } from 'jose';
-import { extractEnrichedClaims, type EnrichedJwtClaims } from './security/jwt-validator';
+import { extractEnrichedClaims, type EnrichedJwtClaims, type ExtendedJwtPayload } from './security/jwt-validator';
 
 // Enhanced interface to include agency_id and enriched claims
 interface RaaSValidationResult {
@@ -45,7 +45,7 @@ async function verifyJwtAndExtractEnrichedClaims(token: string): Promise<Enriche
     const verified = await jwtVerify(token, secret);
 
     // Extract enriched claims using helper function
-    const payload = verified.payload as any;
+    const payload = verified.payload as unknown as ExtendedJwtPayload;
 
     // Check for enriched claims (Phase 2)
     if (payload.feature_entitlements && payload.license_nonce) {

@@ -15,6 +15,13 @@ import { logViolationAndAlert } from '@/lib/alerts/realtime-alert-service'
 import { sha256 } from '@/lib/audit/crypto-utils'
 import { serializeReceiptForHeader } from '@/lib/audit/logger/audit-query'
 import type { ComplianceReceipt } from '@/lib/audit/compliance-receipt'
+import type { Tier } from '@/types'
+
+const VALID_TIERS: readonly Tier[] = ['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER'] as const
+
+function narrowTier(value: string): Tier {
+  return (VALID_TIERS as readonly string[]).includes(value) ? (value as Tier) : 'BASIC'
+}
 
 /**
  * Quota enforcement result returned to raas-auth-gate
@@ -118,55 +125,54 @@ export async function enforceRaasQuota(
       polarCustomerId: license.polar_customer_id || undefined,
     }, DEFAULT_CONFIG)
 
-    // Cast to any to access result fields — quotaResult shape differs by allowed/denied
-    const quotaResultAny = quotaResult as any
-
     if (!quotaResult.allowed) {
       await recordCircuitSuccess(license.nonce)
+
+      const deniedResponse = quotaResult.response
+      const typedTier = narrowTier(tier)
 
       // Log violation and create real-time alert
       await logViolationAndAlert({
         userId,
         licenseNonce: license.nonce,
-        tier: tier as any,
+        tier: typedTier,
         type: 'quota_exceeded',
-        severity: quotaResultAny.result?.exceeded?.type === 'hourly_credits' ? 'critical' : 'high',
+        severity: deniedResponse.exceeded.type === 'hourly_credits' ? 'critical' : 'high',
         endpoint: request.nextUrl.pathname,
         ipAddress: request.headers.get('x-forwarded-for') || undefined,
         userAgent: request.headers.get('user-agent') || undefined,
         metadata: {
-          exceeded: quotaResultAny.result?.exceeded,
-          remaining: quotaResultAny.result?.remaining,
-          retryAfter: quotaResult.response?.retryAfter,
+          exceeded: deniedResponse.exceeded,
+          remaining: deniedResponse.remaining,
+          retryAfter: deniedResponse.retryAfter,
         },
       }).catch(err => {
         logger.error('[RaaS Gate] Failed to log violation and alert', err as Error)
       })
 
-      const quotaResponse = quotaResult.response
       return {
         allowed: false,
         response: NextResponse.json(
           {
-            error: quotaResponse.code || 'quota_exceeded',
-            code: quotaResponse.code || 'QUOTA_EXCEEDED',
-            message: quotaResponse.message || 'Usage limit exceeded',
-            exceeded: quotaResponse.exceeded,
-            remaining: quotaResponse.remaining,
-            retry_after: quotaResponse.retryAfter,
-            upgrade_url: quotaResponse.upgradeUrl,
-            polar_customer_id: quotaResponse.polarCustomerId,
-            dunning_state: quotaResponse.dunningState,
-            dunning_reason: quotaResponse.dunningReason,
+            error: deniedResponse.code || 'quota_exceeded',
+            code: deniedResponse.code || 'QUOTA_EXCEEDED',
+            message: deniedResponse.message || 'Usage limit exceeded',
+            exceeded: deniedResponse.exceeded,
+            remaining: deniedResponse.remaining,
+            retry_after: deniedResponse.retryAfter,
+            upgrade_url: deniedResponse.upgradeUrl,
+            polar_customer_id: deniedResponse.polarCustomerId,
+            dunning_state: deniedResponse.dunningState,
+            dunning_reason: deniedResponse.dunningReason,
           },
           {
             status: 429,
             headers: {
               'Content-Type': 'application/json',
-              'Retry-After': String(quotaResponse.retryAfter || 3600),
-              'X-RateLimit-Limit': String(quotaResponse.exceeded?.limit || 0),
+              'Retry-After': String(deniedResponse.retryAfter || 3600),
+              'X-RateLimit-Limit': String(deniedResponse.exceeded.limit || 0),
               'X-RateLimit-Remaining': '0',
-              'X-RateLimit-Reset': String(Math.floor(Date.now() / 1000) + (quotaResponse.retryAfter || 3600)),
+              'X-RateLimit-Reset': String(Math.floor(Date.now() / 1000) + (deniedResponse.retryAfter || 3600)),
             },
           }
         ),
@@ -177,23 +183,25 @@ export async function enforceRaasQuota(
 
     await recordCircuitSuccess(license.nonce)
 
-    if (quotaResultAny.result?.warningThreshold) {
+    const allowedResult = quotaResult.result
+
+    if (allowedResult?.warningThreshold) {
       logger.warn('[RaaS Gate] Quota warning threshold reached', {
         userId,
         licenseNonce: license.nonce.slice(0, 8) + '...',
-        remaining: quotaResultAny.result?.remaining,
+        remaining: allowedResult.remaining,
       })
       return {
         allowed: true,
         tier: resultTier,
         receipt: receipt ? serializeReceiptForHeader(receipt) : undefined,
         quotaWarning: true,
-        quotaRemaining: quotaResultAny.result?.remaining,
+        quotaRemaining: allowedResult.remaining,
       }
     }
 
     // Store remaining for X-RateLimit headers on successful requests
-    request.headers.set('x-quota-remaining', JSON.stringify(quotaResultAny.result?.remaining))
+    request.headers.set('x-quota-remaining', JSON.stringify(allowedResult?.remaining))
     return {
       allowed: true,
       tier: resultTier,
