@@ -15,6 +15,7 @@
    - Strict TypeScript mode is enabled.
    - No `any` types allowed.
    - Define interfaces for all API responses (especially from Airtable and n8n).
+   - **Shared Row Interfaces:** For modules with multiple files (e.g., audit, raas, usage-metering), extract reusable database row types to `<module>/types.ts` as canonical source. Example: `AuditScheduledReportRow`, `AuditLicenseRow`, `AuditUsageEventRow` in `src/lib/audit/types.ts` eliminate type duplication and improve maintainability.
 
 ## Directory Structure & Naming
 
