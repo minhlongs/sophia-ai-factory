@@ -235,18 +235,21 @@ Timeline UI Shows Progress: PLAN → EXECUTE → TEST → COMPLETED
 | `/api/raas/workflows` | GET | List all workflows | default |
 | `/api/raas/workflows/[id]` | GET | Workflow detail + timeline | default |
 | `/api/cron/workflow-stepper` | GET | Internal cron (automatic, */1 * * * *) | — |
-| `/api/discovery/score` | POST | Score program niche via BYOK | default |
+| `/api/discovery/score` | POST | Score program niche via BYOK | discovery (strict) |
+| `/api/discovery/*` | — | Full discovery scope | discovery (strict) |
 | `/api/user/byok` | GET/POST/DELETE | BYOK credential management | auth (strict) |
 
 **Rate Limit Notes:**
 - `RATE_LIMITS.default` — standard API bucket (apply to most endpoints)
 - `RATE_LIMITS.auth` — stricter bucket for sensitive operations (user credential management)
+- `RATE_LIMITS.discovery` — stricter bucket (30/60s) for `/api/discovery/*` due to OpenRouter cost exposure
 
 ### Signal Events (D1 signals_events table)
 - `WORKFLOW_STARTED` — Workflow created
 - `STEP_COMPLETED` — Plan/Execute/Test step finishes
 - `WORKFLOW_COMPLETED` — All 3 steps done
 - `WORKFLOW_FAILED` — Any step fails
+- `DISCOVERY_SCORE_REQUESTED` — Niche scoring operation requested via `/api/discovery/score`
 
 ### MVP Implementation
 Step functions currently stubbed:
