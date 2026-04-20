@@ -154,15 +154,16 @@ export async function aggregateByokEvents(hoursBack = 24): Promise<ByokEventCoun
   if (!db) return ZERO_BYOK
 
   try {
+    const cutoffMs = Date.now() - hoursBack * 3600 * 1000
     const result = await db
       .prepare(
         `SELECT event_type, COUNT(*) AS cnt
          FROM signals_events
          WHERE event_type IN ('byok_key_set','byok_key_cleared')
-           AND created_at >= datetime('now', '-' || ? || ' hours')
+           AND ts >= ?
          GROUP BY event_type`,
       )
-      .bind(hoursBack)
+      .bind(cutoffMs)
       .all()
 
     const rows = (result.results ?? []) as unknown as Array<{ event_type: string; cnt: number }>
@@ -191,11 +192,12 @@ export async function getTraceStats() {
   if (!db) return null
 
   try {
+    const cutoffMs = Date.now() - 24 * 3600 * 1000
     const result = await db
       .prepare(
-        `SELECT props FROM signals_events WHERE event_type='llm_call_trace' AND created_at >= datetime('now','-24 hours')`,
+        `SELECT props_json AS props FROM signals_events WHERE event_type = 'llm_call_trace' AND ts >= ?`,
       )
-      .bind()
+      .bind(cutoffMs)
       .all()
 
     const rows: TraceRow[] = (result.results ?? []) as TraceRow[]

@@ -96,11 +96,21 @@ export async function proxy(request: NextRequest) {
     }
 
     const identifier = getClientIdentifier(request);
-    let rateLimitConfig: typeof RATE_LIMITS.api | typeof RATE_LIMITS.auth | typeof RATE_LIMITS.webhook = RATE_LIMITS.api;
+    // INFO-1 R10: matcher at line 305 excludes /api/* — this entire /api branch is
+    // dead code at the Next.js middleware layer (negative-lookahead on 'api').
+    // Rate-limit, tenant-isolation and webhook-version-pin fire via per-route
+    // wrappers (src/app/api/admin/middleware.ts, etc.).
+    // Rewrite deferred to R11; keep logic intact to avoid accidental breakage
+    // if matcher is widened. See plans/260420-1113-r10-close-r9-deferrals/reports/middleware-matcher-audit.md
+    let rateLimitConfig: typeof RATE_LIMITS.api | typeof RATE_LIMITS.auth | typeof RATE_LIMITS.webhook | typeof RATE_LIMITS.discovery = RATE_LIMITS.api;
 
     // Stricter limits for auth routes and sensitive user key management
     if (pathname.startsWith('/api/auth') || pathname.startsWith('/api/admin') || pathname.startsWith('/api/user/byok')) {
       rateLimitConfig = RATE_LIMITS.auth;
+    }
+    // Discovery scoring — stricter than default api (OpenRouter cost exposure)
+    else if (pathname.startsWith('/api/discovery')) {
+      rateLimitConfig = RATE_LIMITS.discovery;
     }
     // Higher limits for webhooks
     else if (pathname.startsWith('/api/webhooks')) {
@@ -129,7 +139,7 @@ export async function proxy(request: NextRequest) {
         }
       );
 
-      track(D1Events.API_RATE_LIMIT_HIT, identifier, { path: pathname, identifier, limit_type: rateLimitConfig === RATE_LIMITS.auth ? 'auth' : rateLimitConfig === RATE_LIMITS.webhook ? 'webhook' : 'api' });
+      track(D1Events.API_RATE_LIMIT_HIT, identifier, { path: pathname, identifier, limit_type: rateLimitConfig === RATE_LIMITS.auth ? 'auth' : rateLimitConfig === RATE_LIMITS.webhook ? 'webhook' : rateLimitConfig === RATE_LIMITS.discovery ? 'discovery' : 'api' });
       // Track rate-limited request (429) for usage metering
       // This is important for quota enforcement analytics
       emitUsageEvent(request, {

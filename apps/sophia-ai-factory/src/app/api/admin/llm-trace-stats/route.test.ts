@@ -44,16 +44,12 @@ const SAMPLE_ROWS: TraceRow[] = [
 
 // ── D1 binding mock factory ───────────────────────────────────────────────────
 
-function buildDb(rows: TraceRow[]): { DB: unknown } {
-  return {
-    DB: {
-      prepare: vi.fn().mockReturnValue({
-        bind: vi.fn().mockReturnValue({
-          all: vi.fn().mockResolvedValue({ results: rows }),
-        }),
-      }),
-    },
-  }
+function buildDb(rows: TraceRow[]): { DB: unknown; _prepareMock: ReturnType<typeof vi.fn>; _bindMock: ReturnType<typeof vi.fn> } {
+  const bindMock = vi.fn().mockReturnValue({
+    all: vi.fn().mockResolvedValue({ results: rows }),
+  })
+  const prepareMock = vi.fn().mockReturnValue({ bind: bindMock })
+  return { DB: { prepare: prepareMock }, _prepareMock: prepareMock, _bindMock: bindMock }
 }
 
 function buildThrowingDb(): { DB: unknown } {
@@ -92,7 +88,8 @@ describe('GET /api/admin/llm-trace-stats', () => {
   })
 
   it('returns {ok:true, stats} on happy path with 3 sample rows (2 success, 1 failure, 2 providers, 2 models)', async () => {
-    Object.assign(globalThis, buildDb(SAMPLE_ROWS))
+    const db = buildDb(SAMPLE_ROWS)
+    Object.assign(globalThis, { DB: db.DB })
 
     const res = await GET(buildRequest('Bearer test-secret'))
     expect(res.status).toBe(200)
@@ -111,6 +108,12 @@ describe('GET /api/admin/llm-trace-stats', () => {
         byModel:    Array<{ model: string;    count: number }>
       }
     }
+
+    // Verify SQL uses ts >= ? not created_at
+    const sql: string = db._prepareMock.mock.calls[0][0] as string
+    expect(sql).toContain('ts >= ?')
+    expect(sql).not.toContain('created_at')
+    expect(db._bindMock).toHaveBeenCalledWith(expect.any(Number))
 
     expect(body.ok).toBe(true)
     expect(body.windowHours).toBe(24)
