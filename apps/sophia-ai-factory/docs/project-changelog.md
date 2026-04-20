@@ -1,6 +1,26 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-20 | **Current Version:** 1.12.0
+**Last Updated:** 2026-04-20 | **Current Version:** 1.12.2
+
+---
+
+## [2026-04-20] Phase 16 — toError() Slice 3 (Worker scope validated) (v1.12.2)
+
+### Summary
+Third migration slice of the `as Error` → `toError()` standardization. 29 sites normalized across 5 top-concentration files; Worker-scope `@/lib/*` alias validated for `toError` import.
+
+### Changes
+- `src/lib/audit/audit-query-logger.ts` — 7 sites migrated
+- `src/worker/lib/realtime-alert-dispatcher.ts` — 6 sites migrated (Worker scope)
+- `src/lib/auth/enriched-jwt.ts` — 6 sites migrated
+- `src/worker/lib/r2-report-storage.ts` — 5 sites migrated (Worker scope)
+- `src/lib/usage-metering/kv-metering-log-sync.ts` — 5 sites migrated (includes 2 `const err = error as Error` idiom conversions)
+
+### Quality & Review
+- Build: 0 new TypeScript errors on 5 edited files
+- Tests: 1306/1306 pass (baseline unchanged — pure migration, no new/removed tests)
+- Code Review: 9.8/10 APPROVE SHIP
+- Cumulative since Phase 13: 92 `as Error` sites normalized via `toError()`
 
 ---
 

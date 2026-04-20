@@ -1,7 +1,7 @@
 # Triệt Tiêu Nợ Kỹ Thuật (Clean Tech Debt) — Sophia AI Factory
 
 **Plan ID:** 260419-2121  
-**Status:** IN PROGRESS (Phase 15 ✅ COMPLETE / Phase 16+ BACKLOG)  
+**Status:** IN PROGRESS (Phase 16 ✅ COMPLETE / Phase 17+ BACKLOG)  
 **Timeline:** 2026-04-19 → ongoing  
 
 ## Overview
@@ -27,6 +27,7 @@ Systematic removal of TypeScript `:any` types, eslint-disables, and deferred deb
 | 13 | `toError()` Helper Standardization | ✅ COMPLETE | [Phase 13](phase-13-to-error-helper.md) |
 | 14 | toError() Slice 2 (next 34 sites) | ✅ COMPLETE | [Phase 14](phase-14-to-error-slice-2.md) |
 | 15 | toError() preserves Supabase PostgrestError shape | ✅ COMPLETE | [Phase 15](phase-15-to-error-postgrest-shape.md) |
+| 16 | toError() Slice 3 (next 29 sites) | ✅ COMPLETE | [Phase 16](phase-16-to-error-slice-3.md) |
 
 ## Key Metrics
 
@@ -41,11 +42,12 @@ Systematic removal of TypeScript `:any` types, eslint-disables, and deferred deb
 - **Phase 13 Result:** `toError()` helper created in `@/lib/utils/to-error`; 29 `as Error` casts → 0 across 3 top-concentration files (jwt-nonce-tracker, report-scheduler, realtime-alert-service); 6 unit tests; Code Review 9.7/10 APPROVE; strict behavior improvement — non-Error throws now produce full log entries
 - **Phase 14 Result:** 34 `as Error` / raw-error sites → `toError()` across 5 files (realtime-tracker, quota-checker, report-delivery, audit-writer, realtime-alert-service); Code Review 9.6/10 APPROVE; no regression
 - **Phase 15 Result:** toError() extended to preserve Supabase PostgrestError shape — `{message, code?, details?, hint?}` → `Error(message)` with own-properties attached; 3 new tests (1306 total); Code Review 9.7/10 APPROVE SHIP
+- **Phase 16 Result:** 29 `as Error` sites → `toError()` across 5 files (audit-query-logger, realtime-alert-dispatcher, enriched-jwt, r2-report-storage, kv-metering-log-sync); Worker-scope `@/lib/*` alias validated for `toError` import; Code Review 9.8/10 APPROVE SHIP; 0 behavior regression
 - **Tests:** 1306/1306 pass (100% maintained across all phases; 31 skipped = legitimate fixtures)
-- **Code Review:** APPROVE 9.7/10 (Phase 15 latest), SHIP verdict
+- **Code Review:** APPROVE 9.8/10 (Phase 16 latest), SHIP verdict
 - **Production:** pending push (CI GREEN; to be verified by git-manager after sync)
-- **Cumulative (Phase 1→15):** ~509 `:any` removed; 63 `as Error` casts normalized (Phase 13: 29 + Phase 14: 34) + toError() now preserves Supabase PostgrestError shape (Phase 15); 2 reusable DB helpers + 1 error helper created; tech debt elimination spans auth, API routes, database, observability, telegram, audit, metering, RAAS, D1-layer, error-handling modules
-- **Deferred to Phase 16+:** ~160 remaining `as Error` sites (further slices ~30 each), raas_licenses audit (17+ active usages, design discussion), coupon routes WIP cleanup, 244 `instanceof Error` ternary simplifications, ClientWithStorage R2 migration, types.ts modularization
+- **Cumulative (Phase 1→16):** ~509 `:any` removed; 92 `as Error` sites normalized (Phase 13: 29 + Phase 14: 34 + Phase 16: 29) + toError() preserves Supabase PostgrestError shape (Phase 15); 2 reusable DB helpers + 1 error helper created; tech debt elimination spans auth, API routes, database, observability, telegram, audit, metering, RAAS, D1-layer, error-handling, worker (R2/alert-dispatcher) modules
+- **Deferred to Phase 17+:** ~131 remaining `as Error` sites (further slices ~30 each), 244 `instanceof Error` ternary simplifications, ClientWithStorage → R2 migration (runtime bug in report-delivery), ESLint rule to enforce toError(), Logger-utility structured metadata pickup (pairs with Phase 15 helper), raas_licenses audit, types.ts split, enriched-jwt.ts logger-signature tech debt at lines 220/294/399 (flagged by Phase 16 reviewer)
 
 ## Links
 
