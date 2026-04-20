@@ -1,7 +1,39 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-04-20 (Tech Debt Phase 6: Phase 5 Nits + Telegram `any` Types)
+> **Last Updated:** 2026-04-20 (Tech Debt Phase 8: Telegram Handlers + Review Nits)
+
+---
+
+## [2026-04-20] Tech Debt Phase 8 — Telegram Handlers Type Safety + FSM/Rate-Limiter Review Nits
+
+### Summary
+Eliminated remaining `:any` types from 4 telegram handler files (campaign, email, results, status) using typed `db.from<T>()` generics and narrow row interfaces. Resolved Phase 7 review nits: FSM comma-ternary → plain `if/else`, dead `arg4` fallback removed from `resolveErrorArgs`, `[metric]` prefix removed from messages (structured `metric:` key canonical). Tests: 1297/1297 ✅. Build: 0 errors ✅. Review: 9.2/10 APPROVE_WITH_NITS ✅. Production HTTP 200 ✅. Deferred: FSM self-heal write-back (Phase 9+).
+
+### Files Modified (6 Total)
+- `src/services/telegram-integration/handlers/campaign-handler.ts` — `:any` → typed `db.from<CampaignRow>().select()`
+- `src/services/telegram-integration/handlers/email-handler.ts` — `:any` → `EmailRow` interface
+- `src/services/telegram-integration/handlers/results-handler.ts` — `:any` → `ResultRow` interface
+- `src/services/telegram-integration/handlers/status-handler.ts` — `:any` → `StatusRow` interface
+- `src/services/telegram-integration/telegram-fsm-state-manager.ts` — Comma-ternary → `if/else`
+- `src/services/telegram-integration/sql-rate-limiter.ts` — Removed `[metric]` prefix from message
+
+### Tests & Quality
+- **Tests:** 1297/1297 (100% pass)
+- **Build:** ✅ npm run build exit 0
+- **Code Review:** ✅ 9.2/10 APPROVE_WITH_NITS
+- **Production HTTP:** ✅ 200 confirmed
+- **TypeScript `:any` count:** 0 (complete elimination)
+
+### Backward Compatibility
+- 100% backward-compatible
+- No API contracts changed
+- Logging format unchanged (structured `metric:` metadata preserved)
+- Zero breaking changes
+
+### Tracking
+- Plan: `/plans/260419-2121-triet-tieu-no-ky-thuat/`
+- Phase 8: `/plans/260419-2121-triet-tieu-no-ky-thuat/phase-08-telegram-handlers-nits.md`
 
 ---
 

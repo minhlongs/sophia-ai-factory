@@ -2,7 +2,7 @@
 
 > Sophia AI Factory — RaaS (Reasoning-as-a-Service) Platform with AI-Native CI/CD, Observability, & Signals
 
-**Last Updated:** 2026-04-18 PM-24 (Phase 8A/8C: R8 Hygiene + User-Facing BYOK Admin — errorClass split, weekly-signals + error-digest BYOK wire, /api/user/byok endpoint, /dashboard/byok page)
+**Last Updated:** 2026-04-20 (Phase 8: Telegram Handlers Type Safety + FSM/Rate-Limiter Review Nits)
 **Production:** https://sophia.agencyos.network
 **Production Dashboard:** https://sophia.agencyos.network/dashboard
 
@@ -86,6 +86,7 @@ graph TB
 | **Error Digest** | Daily cron | Aggregated error report email |
 | **Request Tracing** | Per-request ID | Trace user journeys across services |
 | **Custom Metrics** | MCU, tier, org_id | Business metrics tracked |
+| **Telegram FSM Metric** | `telegram_fsm_invalid_state` | Emitted when FSM reads D1 state value failing `isBotState()` guard; reasons: schema drift, migration bug |
 
 **Integration:** `src/lib/telemetry/*` modules for event capture, batching, delivery.
 
