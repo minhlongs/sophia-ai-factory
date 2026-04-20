@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
 
     // Check if metadata has customer IDs (for backfill)
     const canBackfillFromMetadata = licenses?.filter(l => {
-      const metadata = l.metadata as Record<string, any> | null;
+      const metadata = l.metadata as Record<string, unknown> | null;
       return metadata && (metadata.polar_customer_id || metadata.stripe_customer_id);
     }).length || 0;
 
@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
         createdAt: l.created_at,
         hasPolarCustomerId: !!l.polar_customer_id,
         hasStripeCustomerId: !!l.stripe_customer_id,
-        hasMetadataCustomerId: !!(l.metadata as any)?.polar_customer_id || !!(l.metadata as any)?.stripe_customer_id,
+        hasMetadataCustomerId: !!(l.metadata as Record<string, unknown> | null)?.polar_customer_id || !!(l.metadata as Record<string, unknown> | null)?.stripe_customer_id,
       })),
     });
   } catch (error) {
@@ -152,8 +152,8 @@ export async function POST(request: NextRequest) {
     const { license_nonce, polar_customer_id, stripe_customer_id } = validation.data;
     const db = createServerClient();
 
-    // Update license with customer IDs - use 'as any' for Supabase type compatibility
-    const { error: updateError } = await (db.from('raas_licenses') as any)
+    // Update license with customer IDs
+    const { error: updateError } = await (db.from('raas_licenses') as ReturnType<typeof db.from>)
       .update({
         ...(polar_customer_id ? { polar_customer_id } : {}),
         ...(stripe_customer_id ? { stripe_customer_id } : {}),

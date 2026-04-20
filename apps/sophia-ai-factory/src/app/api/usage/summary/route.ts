@@ -67,9 +67,9 @@ export async function GET(req: NextRequest) {
       .from('user_profiles')
       .select('role')
       .eq('user_id', user.id)
-      .single() as any;
+      .single<{ role: string | null }>();
 
-    const isAdmin = userData?.role === 'admin' || (user as any).user_metadata?.role === 'admin';
+    const isAdmin = userData?.role === 'admin' || (user.user_metadata as { role?: string } | undefined)?.role === 'admin';
 
     // Verify license ownership if provided
     if (license_nonce && !isAdmin) {
@@ -77,7 +77,7 @@ export async function GET(req: NextRequest) {
         .from('raas_licenses')
         .select('created_by')
         .eq('nonce', license_nonce)
-        .single() as any;
+        .single<{ created_by: string | null }>();
 
       if (!license || license.created_by !== user.id) {
         return NextResponse.json({ error: 'Forbidden - not your license' }, { status: 403 });

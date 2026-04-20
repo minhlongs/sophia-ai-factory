@@ -327,7 +327,7 @@ export async function GET(request: NextRequest) {
         .from('raas_licenses')
         .select('nonce, tier, created_by, polar_customer_id')
         .eq('polar_customer_id', externalCustomerId)
-        .single() as any;
+        .single<{ nonce: string; tier: string; created_by: string | null; polar_customer_id: string | null }>();
 
       if (!license) {
         // Try Stripe customer ID
@@ -335,7 +335,7 @@ export async function GET(request: NextRequest) {
           .from('raas_licenses')
           .select('nonce, tier, created_by, stripe_customer_id')
           .eq('stripe_customer_id', externalCustomerId)
-          .single() as any;
+          .single<{ nonce: string; tier: string; created_by: string | null; stripe_customer_id: string | null }>();
 
         if (!stripeLicense) {
           return NextResponse.json(
@@ -359,7 +359,7 @@ export async function GET(request: NextRequest) {
         .from('raas_licenses')
         .select('tier, created_by')
         .eq('nonce', licenseNonce!)
-        .single() as any;
+        .single<{ tier: string; created_by: string | null }>();
 
       if (!license) {
         return NextResponse.json(
@@ -375,7 +375,7 @@ export async function GET(request: NextRequest) {
     // Step 4: Get aggregated usage data
     const db2 = createServerClient();
 
-    let query = db2
+    const query = db2
       .from('usage_events')
       .select('*')
       .eq('user_id', queryUserId!)
@@ -383,7 +383,7 @@ export async function GET(request: NextRequest) {
       .gte('created_at', startTimestamp)
       .lte('created_at', endTimestamp);
 
-    const { data: events, error } = await query as any;
+    const { data: events, error } = await query;
 
     if (error) {
       logger.error('[Internal Usage Query] Failed to fetch events', error);
@@ -413,7 +413,7 @@ export async function GET(request: NextRequest) {
     for (const event of (events || [])) {
       const hourTs = Math.floor(event.created_at / 3600) * 3600;
 
-      let hourly = hourlyMap.get(hourTs) || {
+      const hourly = hourlyMap.get(hourTs) || {
         hourTimestamp: hourTs,
         serviceBreakdown: [],
         totalCredits: 0,
@@ -468,7 +468,7 @@ export async function GET(request: NextRequest) {
     for (const hour of hourly) {
       const dayTs = Math.floor(hour.hourTimestamp / 86400) * 86400;
 
-      let daily = dailyMap.get(dayTs) || {
+      const daily = dailyMap.get(dayTs) || {
         dayTimestamp: dayTs,
         hourlyBreakdown: [],
         totalCredits: 0,

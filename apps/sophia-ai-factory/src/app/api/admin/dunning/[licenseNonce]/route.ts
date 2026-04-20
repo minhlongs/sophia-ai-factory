@@ -29,9 +29,9 @@ export async function GET(
       .from('user_profiles')
       .select('role')
       .eq('user_id', user.id)
-      .single() as any;
+      .single() as { data: { role: string } | null; error: Error | null };
 
-    const isAdmin = userData?.role === 'admin' || (user as any).user_metadata?.role === 'admin';
+    const isAdmin = userData?.role === 'admin' || (user as { user_metadata?: { role?: string } }).user_metadata?.role === 'admin';
     if (!isAdmin) {
       return NextResponse.json({ error: 'Forbidden - admin only' }, { status: 403 });
     }

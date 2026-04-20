@@ -85,7 +85,7 @@ export async function GETStatus(req: NextRequest) {
       .eq('is_revoked', false)
       .order('created_at', { ascending: false })
       .limit(1)
-      .single() as any;
+      .single<{ nonce: string; tier: string; created_by: string | null }>();
 
     if (!license) {
       return NextResponse.json(

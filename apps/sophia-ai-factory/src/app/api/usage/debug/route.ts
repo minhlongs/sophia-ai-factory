@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const { data, error, count } = await query as any;
+    const { data, error, count } = await query;
 
     if (error) {
       logger.error('[Debug Usage] Failed to query events', error);

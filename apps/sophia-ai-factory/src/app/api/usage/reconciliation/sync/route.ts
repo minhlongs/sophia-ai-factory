@@ -27,7 +27,7 @@ import { logAuditEvent } from '@/lib/audit/audit-logger';
 /**
  * GET - Trigger sync and return statistics
  */
-export async function GET(): Promise<NextResponse<any>> {
+export async function GET(): Promise<NextResponse> {
   const requestId = `sync-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
   try {
@@ -80,7 +80,7 @@ export async function GET(): Promise<NextResponse<any>> {
 /**
  * POST - Trigger sync with custom configuration
  */
-export async function POST(request: NextRequest): Promise<NextResponse<any>> {
+export async function POST(request: NextRequest): Promise<NextResponse> {
   const requestId = `sync-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
   try {

@@ -40,11 +40,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     // Fetch report metadata from database
     const db = createServerClient()
-    const { data: report, error: fetchError } = await (db as any)
-      .from('compliance_reports')
+    const { data: report, error: fetchError } = await (db.from('compliance_reports') as ReturnType<typeof db.from>)
       .select('id, report_type, format, storage_path, file_size')
       .eq('id', id)
-      .single()
+      .single() as { data: { id: string; report_type: string; format: string; storage_path: string; file_size: number } | null; error: Error | null }
 
     if (fetchError || !report) {
       logger.warn('[API] Report not found', { reportId: id, error: fetchError })

@@ -148,8 +148,8 @@ async function storeExportReceipt(params: {
     const jobId = crypto.randomUUID();
 
     // Note: export_jobs table requires migration - this is a graceful fallback
-    // Using type assertion to bypass TypeScript check for untyped table
-    const { error } = await (db as any)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (db as unknown as { from: (t: string) => any })
       .from('export_jobs')
       .insert({
         id: jobId,
