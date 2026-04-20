@@ -1,7 +1,42 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-04-20 (Tech Debt Phase 5: Console.log → logger Refactor)
+> **Last Updated:** 2026-04-20 (Tech Debt Phase 6: Phase 5 Nits + Telegram `any` Types)
+
+---
+
+## [2026-04-20] Tech Debt Phase 6 — Phase 5 Review Nits + Telegram Module Type Safety
+
+### Summary
+Completed two parallel workstreams resolving Phase 5 review nits and eliminating TypeScript `:any` types from telegram module. **Group A:** merged env-validation logger.warn loop spam into single structured call; migrated provision route HTTP error codes (D1 failures → 503, encryption → 500); synced test assertion. **Group B:** Systematically removed 11 `eslint-disable @typescript-eslint/no-explicit-any` directives from 4 files (user-mappings-service.ts, telegram-fsm-state-manager.ts, telegram-auth-middleware.ts, sql-rate-limiter.ts). Fixed latent bug in checkTierAccess: swapped BASIC/PREMIUM args replaced with O(1) `TIER_RANK` ordinal map. Code review: 8.8/10 APPROVE_WITH_NITS. Production: HTTP 200 ✅. Tests: 1297/1297 (100% pass maintained).
+
+### Files Modified (5 Total)
+**Group A (Phase 5 nits):**
+- `src/lib/env-validation.ts` — logger.warn loop → single structured call
+- `src/app/api/setup/local-mode/provision/route.ts` — HTTP error code mapping (500/503)
+
+**Group B (Telegram `:any` elimination):**
+- `src/services/telegram-integration/user-mappings-service.ts` — 3x `eslint-disable` removed, types added
+- `src/services/telegram-integration/telegram-fsm-state-manager.ts` — 4x `eslint-disable` removed, `TIER_RANK` map added
+- `src/services/telegram-integration/telegram-auth-middleware.ts` — 2x `eslint-disable` removed, state typing narrowed
+- `src/services/telegram-integration/sql-rate-limiter.ts` — 2x `eslint-disable` removed, RPS limits typed
+
+### Tests & Quality
+- **Tests:** 1297/1297 (100% pass maintained)
+- **Build:** ✅ npm run build exit 0
+- **Code Review:** ✅ 8.8/10 APPROVE_WITH_NITS
+- **Production HTTP:** ✅ 200 confirmed
+- **Latent Bug:** checkTierAccess(BASIC, PREMIUM) swapped args fixed → `TIER_RANK` map O(1) comparison
+
+### Backward Compatibility
+- 100% backward-compatible
+- No API contracts changed
+- Error codes now semantically correct (D1 ext deps → 503)
+- Zero breaking changes
+
+### Tracking
+- Plan: `/plans/260419-2121-triet-tieu-no-ky-thuat/`
+- Phase 6: `/plans/260419-2121-triet-tieu-no-ky-thuat/phase-06-phase5-nits-telegram-any.md`
 
 ---
 

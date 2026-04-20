@@ -192,6 +192,22 @@
 - [x] **Admin Observability**: Dashboard can now track niche-scoring frequency + cost exposure
 - [x] **Deferred (R11)**: `/api/*` dead code cleanup in middleware (HIGH risk collateral damage)
 
+## 🔧 Tech Debt Elimination Program (2026-04-19 → 2026-04-20)
+
+### ✅ Phase 1: Console.log → Structured Logger (2026-04-20)
+Eliminated all `console.log/warn/error` from production code (17 files, 34 statements). Migrated to `@/lib/logger` for observability stack integration (Langfuse, D1, Sentry). Tests: 1291 → 1297 (+6). Status: COMPLETE.
+
+### ✅ Phase 2: D1 Migration & SQL Rate Limiter (2026-04-20)
+Deployed D1 migrations (0013 rate_limits, 0014 export_jobs) to production. Refactored rate-limiter and api-key-validator to canonical D1 patterns. Tests: 1291/1328 pass. Status: COMPLETE.
+
+### ✅ Phase 3: API Routes `:any` Reduction (2026-04-19)
+Removed 26 TypeScript `:any` types from 14 API route files. Implemented strict patterns: `.single<T>()`, typed user_metadata casts. Tests: 1291/1328 pass. Status: COMPLETE.
+
+### ✅ Phase 4: Phase 5 Review Nits + Telegram Module (2026-04-20)
+Resolved Phase 5 nits (env-validation loop merge, provision HTTP codes) + eliminated 11 `eslint-disable @typescript-eslint/no-explicit-any` from telegram module (4 files). Fixed latent checkTierAccess bug with O(1) `TIER_RANK` map. Tests: 1297/1297 (100% pass). Status: COMPLETE.
+
+---
+
 ### 🔮 Phase 11: Supervisor Agent Phase 2 (Future)
 **Goal:** Real PEV (Prompt Execution Validator) engine + advanced features.
 - [ ] **PEV Engine Integration**: Replace MVP stubs with real executeStep logic
