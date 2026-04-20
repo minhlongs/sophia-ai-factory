@@ -16,6 +16,7 @@ import type {
   QuotaCheckResult,
   HourlySummary,
   DailySummary,
+  D1Response,
 } from './types';
 
 /** Maximum date range for queries (90 days) — prevents expensive full-table scans */
@@ -76,10 +77,11 @@ export async function checkQuota(
   const monthStart = Math.floor(new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime() / 1000);
 
   try {
+    type QuotaQuery = D1Response<UsageDataRow[]>;
     const [hourlyRes, dailyRes, monthlyRes] = await Promise.all([
-      (db.from('usage_events').select('credits_used').eq('user_id', tenantId).eq('license_nonce', licenseNonce).gte('created_at', hourStart).lt('created_at', hourStart + 3600) as any),
-      (db.from('usage_events').select('credits_used').eq('user_id', tenantId).eq('license_nonce', licenseNonce).gte('created_at', dayStart).lt('created_at', dayStart + 86400) as any),
-      (db.from('usage_events').select('credits_used').eq('user_id', tenantId).eq('license_nonce', licenseNonce).gte('created_at', monthStart) as { data: UsageDataRow[] | null }),
+      (db.from('usage_events').select('credits_used').eq('user_id', tenantId).eq('license_nonce', licenseNonce).gte('created_at', hourStart).lt('created_at', hourStart + 3600) as unknown as QuotaQuery),
+      (db.from('usage_events').select('credits_used').eq('user_id', tenantId).eq('license_nonce', licenseNonce).gte('created_at', dayStart).lt('created_at', dayStart + 86400) as unknown as QuotaQuery),
+      (db.from('usage_events').select('credits_used').eq('user_id', tenantId).eq('license_nonce', licenseNonce).gte('created_at', monthStart) as unknown as QuotaQuery),
     ]);
 
     const sum = (data: UsageDataRow[] | null) =>
@@ -142,14 +144,25 @@ export async function getAggregatedSummary(
     query = query.eq('license_nonce', licenseNonce);
   }
 
-  const { data: events, error } = await query as any;
+  const { data: events, error } = await query as unknown as D1Response<Record<string, unknown>[]>;
 
   if (error || !events || events.length === 0) {
-    if (error) logger.error('[Aggregator] Failed to fetch events', error);
+    if (error) logger.error('[Aggregator] Failed to fetch events', error instanceof Error ? error : new Error(String(error)));
     return { hourly: [], daily: [], totalCredits: 0, totalRequests: 0 };
   }
 
-  const aggregated = aggregateUsageEvents(events as any, 'hour');
+  const aggregated = aggregateUsageEvents(events as Array<{
+    user_id: string;
+    license_nonce: string;
+    service_name: string;
+    action: string;
+    credits_used: number;
+    tokens_input: number;
+    tokens_output: number;
+    response_time_ms: number | null;
+    status_code: number | null;
+    created_at: number;
+  }>, 'hour');
   const hourly = buildHourlySummary(aggregated);
   const daily = buildDailySummary(hourly);
 

@@ -10,7 +10,7 @@
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import { checkQuota } from './usage-rollup-engine';
-import type { BatchUsageRecord, IngestionResult, BatchIngestionResponse, QuotaCheckResult } from './types';
+import type { BatchUsageRecord, IngestionResult, BatchIngestionResponse, QuotaCheckResult, D1Response, LicenseMetadataRow } from './types';
 
 /**
  * Validate a single batch usage record format
@@ -79,7 +79,7 @@ export async function batchIngestUsage(
         .from('raas_licenses')
         .select('nonce, tier, is_revoked, created_by')
         .eq('nonce', record.license_nonce)
-        .single() as any;
+        .single() as unknown as D1Response<LicenseMetadataRow>;
 
       if (licenseError || !license) {
         result.error = 'License not found';
@@ -129,7 +129,7 @@ export async function batchIngestUsage(
         error_message: record.status === 'error' ? 'Client-reported error' : null,
         response_time_ms: record.response_time_ms ?? null,
         created_at: record.timestamp,
-      } as any);
+      });
 
       result.success = true;
       result.quotaRemaining = quotaResult.remaining;
@@ -144,10 +144,10 @@ export async function batchIngestUsage(
 
   // Step 5: Bulk insert accepted records
   if (acceptedRecords.length > 0) {
-    const { error: insertError } = await (db as any).from('usage_events').insert(acceptedRecords);
+    const { error: insertError } = await db.from('usage_events').insert(acceptedRecords);
 
     if (insertError) {
-      logger.error('[Batch Ingest] Failed to insert records', insertError);
+      logger.error('[Batch Ingest] Failed to insert records', new Error(insertError.message));
       for (const r of results) {
         if (r.success) {
           r.success = false;

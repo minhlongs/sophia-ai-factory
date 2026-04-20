@@ -30,7 +30,7 @@ import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import { batchIngestUsage } from '@/lib/usage-metering/aggregator';
 import { batchIngestionRequestSchema } from '@/lib/validation/services';
-import type { BatchUsageRecord } from '@/lib/usage-metering/types';
+import type { BatchUsageRecord, ApiKeyRecord, D1Response } from '@/lib/usage-metering/types';
 
 /**
  * Validate API key and return associated user info
@@ -54,7 +54,7 @@ async function validateApiKey(apiKey: string | null): Promise<{
       .from('raas_api_keys')
       .select('user_id, license_nonce, is_active, tier')
       .eq('key_hash', apiKey)
-      .single() as any;
+      .single() as unknown as D1Response<ApiKeyRecord>;
 
     if (error || !apiKeyRecord) {
       return { valid: false, error: 'Invalid API key' };

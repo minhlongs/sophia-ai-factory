@@ -235,3 +235,54 @@ export interface BatchIngestionResponse {
   results: IngestionResult[];
   timestamp: string;
 }
+
+/**
+ * Generic D1 query response shape
+ */
+export type D1Response<T> = { data: T | null; error: unknown }
+
+/**
+ * D1 usage_events insert schema
+ */
+export interface UsageEventInsertable {
+  user_id: string;
+  license_key_hash: string;
+  license_nonce: string;
+  service_name: string;
+  endpoint: string;
+  action: string;
+  tokens_input: number;
+  tokens_output: number;
+  credits_used: number;
+  request_id: string | null;
+  model_name: string | null;
+  tier_at_request: string;
+  status_code: number | null;
+  error_message: string | null;
+  response_time_ms: number | null;
+  created_at: number;
+  idempotency_key: string | null;
+  external_customer_id: string | null;
+  resource_type: string | null;
+}
+
+/**
+ * License metadata lookup row (for tracker + route handlers)
+ */
+export interface LicenseMetadataRow {
+  nonce: string;
+  tier: string;
+  is_revoked: boolean;
+  created_by: string;
+  metadata: Record<string, unknown> | null;
+}
+
+/**
+ * API key record row (for batch route handler)
+ */
+export interface ApiKeyRecord {
+  user_id: string;
+  license_nonce: string;
+  is_active: boolean;
+  tier: string | null;
+}
