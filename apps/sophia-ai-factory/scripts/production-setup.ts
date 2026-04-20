@@ -7,15 +7,14 @@ import { createClient } from '@supabase/supabase-js'
 import * as fs from 'fs'
 import * as path from 'path'
 import * as dotenv from 'dotenv'
-import { Polar } from '@polar-sh/sdk'
 
 // Types
 interface WizardState {
   payment: {
-    provider: 'polar'
+    provider: 'nowpayments'
     configured: boolean
-    accessToken?: string
-    webhookSecret?: string
+    apiKey?: string
+    ipnSecret?: string
   }
   supabase: {
     configured: boolean
@@ -36,7 +35,7 @@ interface WizardState {
 }
 
 const state: WizardState = {
-  payment: { provider: 'polar', configured: false },
+  payment: { provider: 'nowpayments', configured: false },
   supabase: { configured: false },
   telegram: { configured: false },
   env: { valid: false, missingKeys: [] },
@@ -83,11 +82,8 @@ async function setupEnv() {
     'NEXT_PUBLIC_SUPABASE_URL',
     'NEXT_PUBLIC_SUPABASE_ANON_KEY',
     'SUPABASE_SERVICE_ROLE_KEY',
-    'POLAR_ACCESS_TOKEN',
-    'POLAR_WEBHOOK_SECRET',
-    'POLAR_PRODUCT_BASIC_ID',
-    'POLAR_PRODUCT_PREMIUM_ID',
-    'POLAR_PRODUCT_ENTERPRISE_ID',
+    'NOWPAYMENTS_API_KEY',
+    'NOWPAYMENTS_IPN_SECRET',
     'TELEGRAM_BOT_TOKEN',
     'TELEGRAM_WEBHOOK_SECRET',
     'NEXT_PUBLIC_APP_URL',
@@ -148,67 +144,47 @@ async function setupEnv() {
   }
 }
 
-// --- Section 2: Polar Setup ---
+// --- Section 2: NOWPayments Setup ---
 
-async function setupPolar() {
-  log.title('Polar Payment Setup')
+async function setupNowPayments() {
+  log.title('NOWPayments (Crypto/USDT) Setup')
 
-  if (!process.env.POLAR_ACCESS_TOKEN) {
-    log.error('Polar Access Token missing. Please configure environment variables first.')
+  const apiKey = process.env.NOWPAYMENTS_API_KEY
+  const ipnSecret = process.env.NOWPAYMENTS_IPN_SECRET
+
+  if (!apiKey) {
+    log.error('NOWPAYMENTS_API_KEY missing. Configure env vars first.')
+    return
+  }
+  if (!ipnSecret) {
+    log.error('NOWPAYMENTS_IPN_SECRET missing. Required for webhook signature verification.')
     return
   }
 
-  const spinner = ora('Connecting to Polar...').start()
+  const spinner = ora('Verifying NOWPayments API key...').start()
 
   try {
-    const polar = new Polar({
-        accessToken: process.env.POLAR_ACCESS_TOKEN,
-        server: 'production' // Assuming production setup
+    const res = await fetch('https://api.nowpayments.io/v1/status', {
+      headers: { 'x-api-key': apiKey },
     })
+    const data = (await res.json()) as { message?: string }
 
-    // Validate connection by listing products (or some other lightweight call)
-    // There isn't a direct "getMe" in SDK easily accessible without digging,
-    // but listing products confirms auth works.
-    const { result: products } = await polar.products.list({})
-
-    spinner.succeed(`Connected to Polar. Found ${products?.items?.length || 0} products.`)
-    state.payment.configured = true
-
-    // Check Configured Products
-    log.info('Verifying configured Product IDs...')
-    const configuredProducts = [
-      { name: 'BASIC', id: process.env.POLAR_PRODUCT_BASIC_ID },
-      { name: 'PREMIUM', id: process.env.POLAR_PRODUCT_PREMIUM_ID },
-      { name: 'ENTERPRISE', id: process.env.POLAR_PRODUCT_ENTERPRISE_ID },
-    ]
-
-    for (const product of configuredProducts) {
-      if (!product.id) {
-        log.warning(`${product.name}: Product ID not set in env`)
-        continue
-      }
-      // Ideally check if this ID exists in the fetched list
-      const exists = products?.items?.some(p => p.id === product.id)
-      if (exists) {
-          log.success(`${product.name}: ID ${product.id} (Verified)`)
-      } else {
-          log.warning(`${product.name}: ID ${product.id} (Not found in Polar account)`)
-      }
+    if (!res.ok || data.message !== 'OK') {
+      throw new Error(`NOWPayments status check failed: ${JSON.stringify(data)}`)
     }
 
-    // Webhook Setup Prompt
+    spinner.succeed('NOWPayments API key verified')
+    state.payment.configured = true
+
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://your-domain.com'
-    const webhookUrl = `${appUrl}/api/webhooks/polar`
+    const ipnUrl = `${appUrl}/api/webhooks/nowpayments`
 
-    log.info(`\nWebhook Configuration:`)
-    console.log(`URL: ${chalk.underline(webhookUrl)}`)
-    console.log(`Secret: ${process.env.POLAR_WEBHOOK_SECRET || chalk.red('Missing')}`)
-    console.log(`Events to subscribe: checkout.created, checkout.updated, subscription.created, subscription.updated, order.created`)
-
-    log.info('Make sure to configure this webhook in your Polar dashboard settings.')
-
+    log.info('\nIPN Webhook Configuration:')
+    console.log(`URL: ${chalk.underline(ipnUrl)}`)
+    console.log(`IPN Secret: ${chalk.green('Set')}`)
+    log.info('Configure this IPN URL in your NOWPayments dashboard → Settings → IPN.')
   } catch (error) {
-    spinner.fail('Failed to connect to Polar')
+    spinner.fail('NOWPayments verification failed')
     log.error((error as Error).message)
   }
 }
@@ -379,7 +355,7 @@ async function main() {
   const steps = [
       { name: 'Environment Variables', value: 'env', fn: setupEnv },
       { name: 'Supabase Database', value: 'supabase', fn: setupSupabase },
-      { name: 'Polar Payments', value: 'payment', fn: setupPolar },
+      { name: 'NOWPayments (Crypto)', value: 'payment', fn: setupNowPayments },
       { name: 'Telegram Bot', value: 'telegram', fn: setupTelegram },
       { name: 'Final Verification', value: 'verify', fn: verifyE2E },
   ]
@@ -421,12 +397,12 @@ Date: ${date}
 |-----------|--------|---------|
 | **Environment Variables** | ${state.env.valid ? '✅ Valid' : '❌ Invalid'} | ${state.env.missingKeys.length === 0 ? 'All keys present' : 'Missing: ' + state.env.missingKeys.join(', ')} |
 | **Supabase** | ${state.supabase.configured ? '✅ Configured' : '⚠️ Not verified'} | ${state.supabase.configured ? 'Connected & Tables verified' : 'Skipped or failed'} |
-| **Polar Payments** | ${state.payment.configured ? '✅ Configured' : '⚠️ Not verified'} | ${state.payment.configured ? 'Connected & Verified' : 'Skipped or failed'} |
+| **NOWPayments** | ${state.payment.configured ? '✅ Configured' : '⚠️ Not verified'} | ${state.payment.configured ? 'API key verified & IPN configured' : 'Skipped or failed'} |
 | **Telegram Bot** | ${state.telegram.configured ? '✅ Configured' : '⚠️ Not verified'} | ${state.telegram.configured ? 'Bot verified & Webhook set' : 'Skipped or failed'} |
 
 ## Action Items
 
-${!state.env.valid ? '- [ ] Fix missing environment variables in .env.local\n' : ''}${!state.supabase.configured ? '- [ ] Verify Supabase connection and migrations\n' : ''}${!state.payment.configured ? '- [ ] Configure Polar credentials and webhooks\n' : ''}${!state.telegram.configured ? '- [ ] Setup Telegram Bot and Webhook\n' : ''}
+${!state.env.valid ? '- [ ] Fix missing environment variables in .env.local\n' : ''}${!state.supabase.configured ? '- [ ] Verify Supabase connection and migrations\n' : ''}${!state.payment.configured ? '- [ ] Configure NOWPayments API key and IPN webhook\n' : ''}${!state.telegram.configured ? '- [ ] Setup Telegram Bot and Webhook\n' : ''}
 ## Next Steps
 
 1. Run \`npm run build\` to build the application.

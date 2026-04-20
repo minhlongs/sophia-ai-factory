@@ -1,205 +1,80 @@
 /**
- * Phase 6 Integration Tests
+ * Phase 6 Integration Tests — SKIPPED STUBS
  *
- * End-to-end testing for:
- * - License enforcement
- * - Usage metering
- * - Webhook-triggered overage billing (Stripe/Polar)
- * - Real-time analytics sync
- * - Violations logging
+ * End-to-end coverage for license enforcement, usage metering, webhook-triggered
+ * overage billing (Stripe + NOWPayments IPN), violations logging, dunning workflow,
+ * analytics sync, and cron jobs.
+ *
+ * All tests marked `it.skip` until their subjects-under-test land real assertions.
+ * Un-skip each block as you implement the subject-under-test.
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-
-// Mock Supabase
-vi.mock('@/lib/db/client', () => ({
-  createServerClient: () => ({
-    from: vi.fn(),
-  }),
-}));
-
-// Mock auth
-vi.mock('@/lib/better-auth-session', () => ({
-  getCurrentUser: vi.fn(),
-}));
+import { describe, it } from 'vitest';
 
 describe('Phase 6 Integration Tests', () => {
   describe('License Enforcement', () => {
-    it('should reject requests when license is expired', async () => {
-      // TODO: Implement license expiration test
-      expect(true).toBe(true);
-    });
-
-    it('should reject requests when license is revoked', async () => {
-      // TODO: Implement revoked license test
-      expect(true).toBe(true);
-    });
-
-    it('should allow requests when license is active', async () => {
-      // TODO: Implement active license test
-      expect(true).toBe(true);
-    });
+    it.skip('rejects requests when license is expired', async () => {});
+    it.skip('rejects requests when license is revoked', async () => {});
+    it.skip('allows requests when license is active', async () => {});
   });
 
   describe('Usage Metering', () => {
-    it('should track usage events correctly', async () => {
-      // TODO: Implement usage tracking test
-      expect(true).toBe(true);
-    });
-
-    it('should calculate credits used correctly', async () => {
-      // TODO: Implement credit calculation test
-      expect(true).toBe(true);
-    });
-
-    it('should handle batch ingestion', async () => {
-      // TODO: Implement batch ingestion test
-      expect(true).toBe(true);
-    });
+    it.skip('tracks usage events correctly', async () => {});
+    it.skip('calculates credits used correctly', async () => {});
+    it.skip('handles batch ingestion', async () => {});
   });
 
   describe('Overage Billing', () => {
-    it('should detect quota exceeded events', async () => {
-      // TODO: Implement quota detection test
-      expect(true).toBe(true);
-    });
-
-    it('should calculate overage fees correctly', async () => {
-      // TODO: Implement overage fee calculation test
-      expect(true).toBe(true);
-    });
-
-    it('should log overage events to database', async () => {
-      // TODO: Implement overage logging test
-      expect(true).toBe(true);
-    });
+    it.skip('detects quota exceeded events', async () => {});
+    it.skip('calculates overage fees correctly', async () => {});
+    it.skip('logs overage events to database', async () => {});
   });
 
   describe('Stripe Webhooks', () => {
-    it('should handle invoice.payment_failed event', async () => {
-      // TODO: Implement payment failed test
-      expect(true).toBe(true);
-    });
-
-    it('should handle invoice.payment_succeeded event', async () => {
-      // TODO: Implement payment succeeded test
-      expect(true).toBe(true);
-    });
-
-    it('should handle customer.subscription.updated event', async () => {
-      // TODO: Implement subscription updated test
-      expect(true).toBe(true);
-    });
+    it.skip('handles invoice.payment_failed event', async () => {});
+    it.skip('handles invoice.payment_succeeded event', async () => {});
+    it.skip('handles customer.subscription.updated event', async () => {});
   });
 
-  describe('Polar Webhooks', () => {
-    it('should handle subscription.created event', async () => {
-      // TODO: Implement Polar subscription created test
-      expect(true).toBe(true);
-    });
-
-    it('should handle subscription.active event', async () => {
-      // TODO: Implement Polar subscription active test
-      expect(true).toBe(true);
-    });
-
-    it('should handle subscription.past_due event', async () => {
-      // TODO: Implement Polar past due test
-      expect(true).toBe(true);
-    });
-
-    it('should handle order.paid event for overage', async () => {
-      // TODO: Implement Polar order paid test
-      expect(true).toBe(true);
-    });
+  describe('NOWPayments IPN', () => {
+    it.skip('handles payment_status finished (subscription renewal)', async () => {});
+    it.skip('handles payment_status failed (overage retry)', async () => {});
+    it.skip('handles payment_status partially_paid', async () => {});
+    it.skip('verifies IPN signature via NOWPAYMENTS_IPN_SECRET', async () => {});
   });
 
   describe('Dunning Workflow', () => {
-    it('should transition to past_due on payment failure', async () => {
-      // TODO: Implement past_due transition test
-      expect(true).toBe(true);
-    });
-
-    it('should transition to current on payment success', async () => {
-      // TODO: Implement current transition test
-      expect(true).toBe(true);
-    });
-
-    it('should transition to suspended after grace period', async () => {
-      // TODO: Implement suspended transition test
-      expect(true).toBe(true);
-    });
+    it.skip('transitions to past_due on payment failure', async () => {});
+    it.skip('transitions to current on payment success', async () => {});
+    it.skip('transitions to suspended after grace period', async () => {});
   });
 
   describe('RaaS Gateway Enforcement', () => {
-    it('should block requests when dunning state is suspended', async () => {
-      // TODO: Implement suspended blocking test
-      expect(true).toBe(true);
-    });
-
-    it('should allow requests when dunning state is current', async () => {
-      // TODO: Implement current state test
-      expect(true).toBe(true);
-    });
-
-    it('should warn when approaching quota limit', async () => {
-      // TODO: Implement quota warning test
-      expect(true).toBe(true);
-    });
+    it.skip('blocks requests when dunning state is suspended', async () => {});
+    it.skip('allows requests when dunning state is current', async () => {});
+    it.skip('warns when approaching quota limit', async () => {});
   });
 
   describe('Violations API', () => {
-    it('should log violations when quota exceeded', async () => {
-      // TODO: Implement violation logging test
-      expect(true).toBe(true);
-    });
-
-    it('should query violations with filters', async () => {
-      // TODO: Implement violations query test
-      expect(true).toBe(true);
-    });
-
-    it('should enforce RBAC for violations access', async () => {
-      // TODO: Implement violations RBAC test
-      expect(true).toBe(true);
-    });
+    it.skip('logs violations when quota exceeded', async () => {});
+    it.skip('queries violations with filters', async () => {});
+    it.skip('enforces RBAC for violations access', async () => {});
   });
 
   describe('Analytics Sync', () => {
-    it('should sync usage data to analytics dashboard', async () => {
-      // TODO: Implement usage sync test
-      expect(true).toBe(true);
-    });
-
-    it('should calculate revenue metrics correctly', async () => {
-      // TODO: Implement revenue calculation test
-      expect(true).toBe(true);
-    });
-
-    it('should update license utilization in real-time', async () => {
-      // TODO: Implement utilization sync test
-      expect(true).toBe(true);
-    });
+    it.skip('syncs usage data to analytics dashboard', async () => {});
+    it.skip('calculates revenue metrics correctly', async () => {});
+    it.skip('updates license utilization in real-time', async () => {});
   });
 });
 
 describe('Cron Jobs Integration', () => {
   describe('Daily Overage Billing', () => {
-    it('should reconcile overage events daily', async () => {
-      // TODO: Implement daily reconciliation test
-      expect(true).toBe(true);
-    });
-
-    it('should handle cron authentication', async () => {
-      // TODO: Implement cron auth test
-      expect(true).toBe(true);
-    });
+    it.skip('reconciles overage events daily', async () => {});
+    it.skip('enforces cron authentication', async () => {});
   });
 
   describe('Usage Export', () => {
-    it('should export daily usage data', async () => {
-      // TODO: Implement daily export test
-      expect(true).toBe(true);
-    });
+    it.skip('exports daily usage data', async () => {});
   });
 });
