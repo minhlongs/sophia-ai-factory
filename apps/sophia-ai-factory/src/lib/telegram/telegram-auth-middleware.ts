@@ -37,7 +37,7 @@ export async function checkSubscriptionAuth(
     })
 
     if (error || !data) {
-      logger.error('get_user_by_telegram_chat_id RPC error', undefined, { code: error?.code, message: error?.message })
+      logger.error('get_user_by_telegram_chat_id RPC error', { code: error?.code, message: error?.message })
       return {
         authorized: requiredTier === 'BASIC',
         tier: 'BASIC',

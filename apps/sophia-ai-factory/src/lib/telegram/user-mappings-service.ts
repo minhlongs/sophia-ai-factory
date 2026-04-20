@@ -28,7 +28,7 @@ export async function linkTelegramUser(
     })
 
     if (error || !data) {
-      logger.error('link_telegram_user RPC error', undefined, { code: error?.code, message: error?.message })
+      logger.error('link_telegram_user RPC error', { code: error?.code, message: error?.message })
       return null
     }
 
@@ -49,7 +49,7 @@ export async function getUserByChatId(chatId: string): Promise<string | null> {
     })
 
     if (error || !data) {
-      logger.error('get_user_by_telegram_chat_id RPC error', undefined, { code: error?.code, message: error?.message })
+      logger.error('get_user_by_telegram_chat_id RPC error', { code: error?.code, message: error?.message })
       return null
     }
 

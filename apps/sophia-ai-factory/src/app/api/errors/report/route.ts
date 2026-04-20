@@ -6,8 +6,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { message, stack, url, userAgent, timestamp } = body;
 
-    // logger.error signature: (message, error?, metadata?, requestId?)
-    logger.error('[Client Error]', undefined, {
+    logger.error('[Client Error]', {
       message,
       stack: stack?.slice(0, 500),
       url,

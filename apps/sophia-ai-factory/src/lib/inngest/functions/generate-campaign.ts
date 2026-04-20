@@ -220,7 +220,7 @@ export const generateCampaign = inngest.createFunction(
 
         if (status!.status === 'failed') {
           const errMsg = status!.error || 'Video generation failed';
-          logger.error(`[poll-video-status] HeyGen reported failure`, undefined, { campaignId, error: errMsg });
+          logger.error(`[poll-video-status] HeyGen reported failure`, { campaignId, error: errMsg });
           await updateStatus("failed", 70, { error_message: errMsg });
           await notifyUser(`❌ **Sophia AI**: Video generation failed for "${topic}". Error: ${errMsg}`);
           throw new Error(errMsg);
