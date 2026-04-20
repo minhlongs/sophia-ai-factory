@@ -1,6 +1,47 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-18 | **Current Version:** 1.11.0
+**Last Updated:** 2026-04-20 | **Current Version:** 1.12.0
+
+---
+
+## [2026-04-20] Query Optimization & Discovery Rate Limiting (v1.12.0)
+
+### Summary
+R10 shipped two bundles: Query optimization fixes (M-1 timestamp bind + L-1 schema column alias) + Discovery endpoint rate limiting (L-3 bucket + audit event).
+
+### Changes
+
+**Bundle 10A — Query Performance & Bug Fixes**
+1. **M-1 FIXED**: `created_at` → `ts >= ?` unix-ms bind across 3 callers
+   - `src/lib/admin/monitoring-queries.ts:157,195` — Supervisor Agent event aggregation
+   - `src/app/api/llm-trace-stats/route.ts:54` — LLM trace statistics export
+   - Now hits `idx_signals_events_type_ts` for efficient filtering
+2. **Latent Bug Fix**: `SELECT props` → `SELECT props_json AS props` in schema queries
+   - Corrects column name mismatch (schema column is `props_json`)
+
+**Bundle 10B — BYOK Loading & Discovery Rate Limiting** (Closes R9 L-1, L-3)
+1. **L-1 FIXED**: BYOK skeleton loader width parity
+   - `src/app/[locale]/dashboard/byok/loading.tsx` — visual consistency with live page
+2. **L-3 FIXED**: NEW `RATE_LIMITS.discovery` bucket (30/60s)
+   - Applied to `/api/discovery/score` and `/api/discovery/*` endpoints
+   - Stricter than default due to OpenRouter cost exposure
+3. **Audit Event**: `DISCOVERY_SCORE_REQUESTED` added to `signals_events` catalog
+   - Enables admin observability on niche-scoring operations
+
+### Post-Review Audits
+- INFO-1 AUDITED: Middleware matcher excludes `/api/*` correctly
+  - `/api` branch in `src/app/middleware.ts` marked as dead code
+  - Fix deferred to R11 (HIGH risk of collateral RaaS/tenant-isolation double-apply)
+
+### Test Results
+- Tests: 1326 → 1328 (+2 new tests)
+- All existing tests remain passing
+- No breaking changes
+
+### Quality & Review
+- Review Score: 9.6/10 SHIP
+- Severity: 0 critical, 0 high
+- Deferred: `/api/*` dead code cleanup (R11), middleware matcher audit (future)
 
 ---
 

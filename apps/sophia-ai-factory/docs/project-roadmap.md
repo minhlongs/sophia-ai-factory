@@ -1,8 +1,8 @@
 # Project Roadmap
 
 **Project Name:** Sophia AI Video Factory
-**Current Version:** 1.11.0 (BYOK Admin & Discovery Score Shipped)
-**Last Updated:** 2026-04-18
+**Current Version:** 1.12.0 (Query Optimization & Discovery Rate Limiting Shipped)
+**Last Updated:** 2026-04-20
 
 ## 📅 Roadmap Overview
 
@@ -174,6 +174,23 @@
 - [x] **Dashboard UI**: Workflow list + detail views with real-time timeline
 - [x] **Documentation**: Bilingual runbook (344 LOC, architecture, troubleshooting, manual ops, rollback)
 - [x] **Test Coverage**: All workflow routes + cron stepper + UI components tested
+
+### ✅ Phase 10.1: Query Optimization & Performance Hardening (Completed - 2026-04-20)
+**Goal:** Fix timestamp filtering and schema consistency across monitoring + trace aggregation.
+- [x] **M-1 FIXED**: `created_at` → `ts >= ?` unix-ms bind in monitoring queries (2 callers)
+- [x] **M-1 FIXED**: `ts >= ?` unix-ms bind in LLM trace stats aggregation (1 caller)
+- [x] **Query Index**: Now properly hits `idx_signals_events_type_ts` for efficient event filtering
+- [x] **Latent Bug Fix**: `SELECT props` → `SELECT props_json AS props` schema alignment
+- [x] **Test Coverage**: +2 tests for timestamp filtering edge cases
+
+### ✅ Phase 10.2: Discovery Endpoint Rate Limiting & Audit Events (Completed - 2026-04-20)
+**Goal:** Enforce strict rate limits on `/api/discovery/*` due to OpenRouter cost exposure + audit trail.
+- [x] **L-1 FIXED**: BYOK skeleton loader width visual parity with live page
+- [x] **L-3 FIXED**: NEW `RATE_LIMITS.discovery` bucket (30 requests/60s)
+- [x] **Rate Limit Apply**: Assigned to `/api/discovery/score` and full `/api/discovery/*` scope
+- [x] **Audit Event**: `DISCOVERY_SCORE_REQUESTED` added to `signals_events` event catalog
+- [x] **Admin Observability**: Dashboard can now track niche-scoring frequency + cost exposure
+- [x] **Deferred (R11)**: `/api/*` dead code cleanup in middleware (HIGH risk collateral damage)
 
 ### 🔮 Phase 11: Supervisor Agent Phase 2 (Future)
 **Goal:** Real PEV (Prompt Execution Validator) engine + advanced features.
