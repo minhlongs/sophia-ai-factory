@@ -401,6 +401,11 @@ export class D1Client {
           return await this.workflowStats24h();
         case 'signals_top_events_24h':
           return await this.signalsTopEvents24h((params.p_limit as number | undefined) ?? 10);
+        case 'increment_rate_limit':
+          return await this.incrementRateLimit(
+            params.p_identifier as string,
+            params.p_window_seconds as number,
+          );
         default:
           return { data: null, error: { message: `Unknown RPC: ${fnName}` } };
       }
@@ -505,5 +510,32 @@ export class D1Client {
       .bind(sinceMs, safeLimit)
       .all<{ event_type: string; cnt: number }>();
     return { data: res.results ?? [], error: null };
+  }
+
+  private async incrementRateLimit(
+    identifier: string,
+    windowSeconds: number,
+  ): Promise<QueryResult<{ current_count: number }[]>> {
+    // windowStart is unix seconds — rows older than this are expired
+    const windowStart = Math.floor(Date.now() / 1000) - windowSeconds;
+    const stmt = this.db.prepare(`
+      INSERT INTO rate_limits (identifier, current_count, window_start, window_seconds)
+      VALUES (?1, 1, datetime('now'), ?2)
+      ON CONFLICT(identifier) DO UPDATE SET
+        current_count = CASE
+          WHEN CAST(strftime('%s', window_start) AS INTEGER) < ?3 THEN 1
+          ELSE current_count + 1
+        END,
+        window_start = CASE
+          WHEN CAST(strftime('%s', window_start) AS INTEGER) < ?3 THEN datetime('now')
+          ELSE window_start
+        END,
+        updated_at = datetime('now')
+      RETURNING current_count
+    `);
+    const row = await stmt
+      .bind(identifier, windowSeconds, windowStart)
+      .first<{ current_count: number }>();
+    return { data: row ? [row] : null, error: null };
   }
 }

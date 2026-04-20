@@ -10,20 +10,50 @@
 import { createServerClient } from '@/lib/db/client'
 import { hmacSha256, timingSafeEqual } from '@/lib/audit/crypto-utils'
 import { logger } from '@/lib/utils/logger-utility'
-import type { Json } from '@/lib/supabase/types'
 
 /**
- * API Key information stored in database
+ * D1 canonical raas_api_keys row shape
+ * Columns: id, org_id, name, key_hash, key_prefix, permissions,
+ *          rate_limit_per_minute, is_active, last_used_at, expires_at, created_at
+ */
+interface ApiKeyRow {
+  id: string
+  org_id: string
+  name: string | null
+  key_hash: string
+  key_prefix: string
+  permissions: string[] | string
+  rate_limit_per_minute: number | null
+  is_active: number // 1 = active, 0 = revoked (SQLite boolean)
+  last_used_at: number | null
+  expires_at: number | null
+  created_at: string
+}
+
+/**
+ * API Key information returned to callers.
+ *
+ * NOTE: D1 schema is org-centric — user IDs from Better Auth map to org_id.
+ * A user creating a key owns it via org_id; single-user orgs are 1:1 user:org.
+ *
+ * Field mapping from old Supabase schema → D1 canonical:
+ *   keyId (old) → id (D1)       — exposed as both `id` and `keyId` for backward compat
+ *   ownerId (old) → orgId (D1)  — exposed as both `orgId` and `ownerId` for backward compat
+ *   revoked_at (old) → is_active=0 (D1 soft revoke)
+ *   rate_limit_per_min (old) → rate_limit_per_minute (D1)
  */
 export interface ApiKeyInfo {
-  keyId: string
-  keyPrefix: string // First 8 chars of mk_...
-  ownerId: string
+  id: string            // D1 canonical primary key
+  keyId: string         // backward-compat alias for id
+  keyPrefix: string     // First 8 chars of mk_...
+  orgId: string         // D1 org_id
+  ownerId: string       // backward-compat alias for orgId
   permissions: string[] // ['audit:read', 'audit:write', 'reports:download']
-  createdAt: number
+  createdAt: number | string
   expiresAt?: number
   lastUsedAt?: number
   rateLimitPerMinute: number
+  isActive: boolean     // replaces revoked_at (soft revoke via is_active=0)
 }
 
 /**
@@ -153,7 +183,7 @@ function computeSignature(keyId: string): string {
 /**
  * Generate new API key for user
  *
- * @param userId - User ID who owns this key
+ * @param userId - User ID (maps to org_id in D1 schema — org-centric model)
  * @param permissions - Array of permissions (e.g., ['audit:read', 'audit:write'])
  * @param expiresAt - Optional expiration timestamp (ms)
  * @param rateLimitPerMinute - Rate limit (default 100)
@@ -180,14 +210,16 @@ export async function generateApiKey(
   // Hash the full key for storage (never store plain key)
   const keyHash = hmacSha256(apiKey, getApiKeySecret() + '_storage')
 
-  // Insert into database
+  // D1 canonical schema: id=keyId, org_id=userId (user maps to org in single-user org model)
   const insertData = {
-    key_id: keyId,
+    id: keyId,
     key_hash: keyHash,
-    owner_id: userId,
+    key_prefix: keyPrefix,
+    org_id: userId,
     permissions: JSON.stringify(permissions),
     expires_at: expiresAt ? Math.floor(expiresAt / 1000) : null,
-    rate_limit_per_min: rateLimitPerMinute,
+    rate_limit_per_minute: rateLimitPerMinute,
+    is_active: 1,
   }
 
   const { error } = await db
@@ -202,7 +234,7 @@ export async function generateApiKey(
   logger.info('[API Key Validator] Generated new API key', {
     keyId,
     keyPrefix,
-    ownerId: userId,
+    orgId: userId,
     permissions,
     expiresAt,
   })
@@ -238,11 +270,11 @@ export async function checkApiKey(
     }
   }
 
-  // Look up in database
-  const { data, error } = await (db as any)
-    .from('raas_api_keys')
-    .select('id, key_id, key_hash, owner_id, permissions, created_at, expires_at, revoked_at, last_used_at, rate_limit_per_min')
-    .eq('key_id', keyId)
+  // Look up in database using D1 canonical column `id`
+  const { data, error } = await db
+    .from<ApiKeyRow>('raas_api_keys')
+    .select('id, org_id, key_hash, key_prefix, permissions, created_at, expires_at, is_active, last_used_at, rate_limit_per_minute')
+    .eq('id', keyId)
     .single()
 
   if (error || !data) {
@@ -252,8 +284,8 @@ export async function checkApiKey(
     }
   }
 
-  // Check if revoked
-  if (data.revoked_at) {
+  // Check if revoked (is_active = 0 means soft-revoked)
+  if (data.is_active !== 1) {
     return {
       valid: false,
       error: 'revoked',
@@ -270,22 +302,31 @@ export async function checkApiKey(
   }
 
   // Update last_used_at for active key
-  await (db as any)
+  await db
     .from('raas_api_keys')
     .update({ last_used_at: now })
     .eq('id', data.id)
 
+  const permissions = Array.isArray(data.permissions)
+    ? data.permissions
+    : (JSON.parse(data.permissions as string) as string[])
+
+  const prefix = data.key_prefix || (API_KEY_PREFIX + data.id).slice(0, 8)
+
   return {
     valid: true,
     apiKey: {
-      keyId: data.key_id,
-      keyPrefix: (API_KEY_PREFIX + data.key_id).slice(0, 8),
-      ownerId: data.owner_id,
-      permissions: data.permissions as string[],
+      id: data.id,
+      keyId: data.id, // backward-compat alias
+      keyPrefix: prefix,
+      orgId: data.org_id,
+      ownerId: data.org_id, // backward-compat alias
+      permissions,
       createdAt: data.created_at,
       expiresAt: data.expires_at ? data.expires_at * 1000 : undefined,
       lastUsedAt: data.last_used_at ? data.last_used_at * 1000 : undefined,
-      rateLimitPerMinute: data.rate_limit_per_min || 100,
+      rateLimitPerMinute: data.rate_limit_per_minute || 100,
+      isActive: data.is_active === 1,
     },
   }
 }
@@ -325,19 +366,19 @@ export async function validateApiKey(apiKey: string | null): Promise<ValidationR
 }
 
 /**
- * Revoke API key by keyId
+ * Revoke API key by keyId (soft revoke: sets is_active=0, expires_at=now)
  *
- * @param keyId - Key ID to revoke
+ * @param keyId - Key ID to revoke (maps to D1 `id` column)
  * @returns true if successful
  */
 export async function revokeApiKey(keyId: string): Promise<boolean> {
   const db = createServerClient()
   const now = Math.floor(Date.now() / 1000)
 
-  const { error } = await (db as any)
+  const { error } = await db
     .from('raas_api_keys')
-    .update({ revoked_at: now })
-    .eq('key_id', keyId)
+    .update({ is_active: 0, expires_at: now })
+    .eq('id', keyId)
 
   if (error) {
     logger.error('[API Key Validator] Failed to revoke API key', error as Error)
@@ -351,16 +392,16 @@ export async function revokeApiKey(keyId: string): Promise<boolean> {
 /**
  * Get all API keys for a user
  *
- * @param userId - User ID
+ * @param userId - User ID (maps to org_id in D1 schema)
  * @returns Array of API key info (without secrets)
  */
 export async function getUserApiKeys(userId: string): Promise<ApiKeyInfo[]> {
   const db = createServerClient()
 
-  const { data, error } = await (db as any)
-    .from('raas_api_keys')
-    .select('id, key_id, owner_id, permissions, created_at, expires_at, revoked_at, last_used_at, rate_limit_per_min')
-    .eq('owner_id', userId)
+  const { data, error } = await db
+    .from<ApiKeyRow>('raas_api_keys')
+    .select('id, org_id, key_prefix, permissions, created_at, expires_at, is_active, last_used_at, rate_limit_per_minute')
+    .eq('org_id', userId)
     .order('created_at', { ascending: false })
 
   if (error) {
@@ -368,41 +409,44 @@ export async function getUserApiKeys(userId: string): Promise<ApiKeyInfo[]> {
     return []
   }
 
-  interface ApiKeyRow {
-    key_id: string;
-    owner_id: string;
-    permissions: string[];
-    created_at: string;
-    expires_at: number | null;
-    last_used_at: number | null;
-    rate_limit_per_min: number | null;
-  }
+  const rows = (data ?? []) as ApiKeyRow[]
 
-  return data.map((row: ApiKeyRow) => ({
-    keyId: row.key_id,
-    keyPrefix: (API_KEY_PREFIX + row.key_id).slice(0, 8),
-    ownerId: row.owner_id,
-    permissions: row.permissions as string[],
-    createdAt: row.created_at,
-    expiresAt: row.expires_at ? row.expires_at * 1000 : undefined,
-    lastUsedAt: row.last_used_at ? row.last_used_at * 1000 : undefined,
-    rateLimitPerMinute: row.rate_limit_per_min || 100,
-  }))
+  return rows.map((row) => {
+    const permissions = Array.isArray(row.permissions)
+      ? row.permissions
+      : (JSON.parse(row.permissions as string) as string[])
+
+    const prefix = row.key_prefix || (API_KEY_PREFIX + row.id).slice(0, 8)
+
+    return {
+      id: row.id,
+      keyId: row.id, // backward-compat alias
+      keyPrefix: prefix,
+      orgId: row.org_id,
+      ownerId: row.org_id, // backward-compat alias
+      permissions,
+      createdAt: row.created_at,
+      expiresAt: row.expires_at ? row.expires_at * 1000 : undefined,
+      lastUsedAt: row.last_used_at ? row.last_used_at * 1000 : undefined,
+      rateLimitPerMinute: row.rate_limit_per_minute || 100,
+      isActive: row.is_active === 1,
+    }
+  })
 }
 
 /**
  * Delete API key by keyId (permanent deletion)
  *
- * @param keyId - Key ID to delete
+ * @param keyId - Key ID to delete (maps to D1 `id` column)
  * @returns true if successful
  */
 export async function deleteApiKey(keyId: string): Promise<boolean> {
   const db = createServerClient()
 
-  const { error } = await (db as any)
+  const { error } = await db
     .from('raas_api_keys')
     .delete()
-    .eq('key_id', keyId)
+    .eq('id', keyId)
 
   if (error) {
     logger.error('[API Key Validator] Failed to delete API key', error as Error)
