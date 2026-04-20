@@ -152,15 +152,11 @@ describe('monitoring-queries', () => {
 // ── getTraceStats — Phase 4K SSR helper ──────────────────────────────────────
 
 function buildD1(rows: TraceRow[]) {
-  return {
-    DB: {
-      prepare: vi.fn().mockReturnValue({
-        bind: vi.fn().mockReturnValue({
-          all: vi.fn().mockResolvedValue({ results: rows }),
-        }),
-      }),
-    },
-  }
+  const bindMock = vi.fn().mockReturnValue({
+    all: vi.fn().mockResolvedValue({ results: rows }),
+  })
+  const prepareMock = vi.fn().mockReturnValue({ bind: bindMock })
+  return { DB: { prepare: prepareMock }, _prepareMock: prepareMock, _bindMock: bindMock }
 }
 
 function buildThrowingD1() {
@@ -186,9 +182,16 @@ describe('getTraceStats', () => {
       { props: JSON.stringify({ ok: true,  provider: 'anthropic',   model: 'claude-sonnet-4', duration_ms: 200, trace_id: 'b', workflow_id: 'w1', step_order: 2, step_type: 'write' }) },
       { props: JSON.stringify({ ok: false, provider: 'openrouter',  model: 'gpt-4o-mini',     duration_ms: 80,  trace_id: 'c', workflow_id: 'w2', step_order: 1, step_type: 'plan' }) },
     ]
-    Object.assign(globalThis, buildD1(rows))
+    const d1 = buildD1(rows)
+    Object.assign(globalThis, { DB: d1.DB })
 
     const result = await getTraceStats()
+
+    // Verify SQL uses ts >= ? not created_at
+    const sql: string = d1._prepareMock.mock.calls[0][0] as string
+    expect(sql).toContain('ts >= ?')
+    expect(sql).not.toContain('created_at')
+    expect(d1._bindMock).toHaveBeenCalledWith(expect.any(Number))
 
     expect(result).not.toBeNull()
     expect(result!.total).toBe(3)
@@ -289,14 +292,25 @@ describe('aggregateByokEvents', () => {
     expect(result).toEqual({ setCount: 0, clearCount: 0, netChange: 0 })
   })
 
-  it('passes hoursBack to the D1 bind call', async () => {
+  it('passes numeric unix-ms cutoff to the D1 bind call (not hoursBack)', async () => {
+    const before = Date.now()
     const bindMock = vi.fn().mockReturnValue({
       all: vi.fn().mockResolvedValue({ results: [] }),
     })
+    const prepareMock = vi.fn().mockReturnValue({ bind: bindMock })
     Object.assign(globalThis, {
-      DB: { prepare: vi.fn().mockReturnValue({ bind: bindMock }) },
+      DB: { prepare: prepareMock },
     })
     await aggregateByokEvents(48)
-    expect(bindMock).toHaveBeenCalledWith(48)
+    // bind receives cutoffMs = Date.now() - 48 * 3600 * 1000
+    const after = Date.now()
+    expect(bindMock).toHaveBeenCalledWith(expect.any(Number))
+    const [cutoff] = bindMock.mock.calls[0] as [number]
+    expect(cutoff).toBeGreaterThan(before - 48 * 3600 * 1000 - 100)
+    expect(cutoff).toBeLessThanOrEqual(after - 48 * 3600 * 1000 + 100)
+    // SQL must use ts >= ? not created_at
+    const sql: string = prepareMock.mock.calls[0][0] as string
+    expect(sql).toContain('ts >= ?')
+    expect(sql).not.toContain('created_at')
   })
 })

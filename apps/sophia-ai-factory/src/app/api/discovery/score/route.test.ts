@@ -8,7 +8,9 @@
  *   400 when niche >200 chars
  *   400 when program.id missing
  *   200 happy path — enhancer called with (program, niche, user.id)
+ *   200 happy path — track() called with DISCOVERY_SCORE_REQUESTED audit event
  *   500 when enhancer throws — logger.warn called
+ *   rate-limit bucket — RATE_LIMITS.discovery exists with 30 req/min
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
@@ -26,14 +28,22 @@ vi.mock('@/lib/utils/logger-utility', () => ({
   logger: { warn: vi.fn(), info: vi.fn(), error: vi.fn() },
 }))
 
+vi.mock('@/lib/signals/track', () => ({
+  track: vi.fn(),
+}))
+
 import { POST } from './route'
 import { getCurrentUser } from '@/lib/better-auth-session'
 import { enhanceNicheScoreWithAI } from '@/lib/discovery/affiliate-openrouter-niche-enhancer'
 import { logger } from '@/lib/utils/logger-utility'
+import { track } from '@/lib/signals/track'
+import { D1Events } from '@/lib/signals/d1-event-types'
+import { RATE_LIMITS } from '@/lib/security/sql-rate-limiter'
 
 const mockGetCurrentUser    = vi.mocked(getCurrentUser)
 const mockEnhanceNicheScore = vi.mocked(enhanceNicheScoreWithAI)
 const mockLogger            = vi.mocked(logger)
+const mockTrack             = vi.mocked(track)
 
 const USER = { id: 'user-abc' } as Awaited<ReturnType<typeof getCurrentUser>>
 
@@ -139,5 +149,30 @@ describe('POST /api/discovery/score', () => {
         error:  'OPENROUTER_UNAVAILABLE',
       }),
     )
+  })
+
+  it('200 emits DISCOVERY_SCORE_REQUESTED audit event with correct props', async () => {
+    mockGetCurrentUser.mockResolvedValue(USER)
+    mockEnhanceNicheScore.mockResolvedValue(72)
+
+    const res = await POST(makeRequest({ program: VALID_PROGRAM, niche: VALID_NICHE }))
+    expect(res.status).toBe(200)
+
+    expect(mockTrack).toHaveBeenCalledWith(
+      D1Events.DISCOVERY_SCORE_REQUESTED,
+      USER!.id,
+      {
+        program_id: VALID_PROGRAM.id,
+        niche_len:  VALID_NICHE.length,
+        score_null: false,
+      },
+    )
+  })
+
+  it('rate-limit bucket — RATE_LIMITS.discovery has 30 requests per 60s', () => {
+    expect(RATE_LIMITS.discovery).toBeDefined()
+    expect(RATE_LIMITS.discovery.maxRequests).toBe(30)
+    expect(RATE_LIMITS.discovery.windowSeconds).toBe(60)
+    expect(RATE_LIMITS.discovery.identifier).toBe('discovery')
   })
 })

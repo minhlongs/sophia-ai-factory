@@ -28,6 +28,7 @@ export const D1Events = {
   LLM_CALL_TRACE:            'llm_call_trace',            // Phase 4B: per-step LLM call observability
   BYOK_KEY_SET:              'byok_key_set',              // Phase 8C: user-facing BYOK admin — store/rotate
   BYOK_KEY_CLEARED:          'byok_key_cleared',          // Phase 8C: user-facing BYOK admin — delete
+  DISCOVERY_SCORE_REQUESTED: 'discovery_score_requested', // R10: audit trail for OpenRouter-backed scoring
 } as const
 
 export type D1EventType = typeof D1Events[keyof typeof D1Events]
@@ -70,7 +71,7 @@ const AgentDispatchSchema = z.object({
 const ApiRateLimitHitSchema = z.object({
   path:         z.string(),
   identifier:   z.string(),   // hashed IP / API key prefix — no raw values
-  limit_type:   z.enum(['api', 'auth', 'webhook']),
+  limit_type:   z.enum(['api', 'auth', 'webhook', 'discovery']),
 })
 
 /** byok_call — fired per outbound BYOK provider call */
@@ -157,6 +158,13 @@ const ByokKeyAdminSchema = z.object({
   provider: z.enum(['openrouter', 'anthropic', 'elevenlabs', 'd-id']),
 })
 
+/** discovery_score_requested — R10: OpenRouter-backed affiliate scoring audit trail. */
+const DiscoveryScoreRequestedSchema = z.object({
+  program_id: z.string(),
+  niche_len:  z.number().int().nonnegative(),
+  score_null: z.boolean(),
+})
+
 /** llm_call_trace — per-step LLM call observability (Phase 4B Advanced Observability) */
 const LlmCallTraceSchema = z.object({
   trace_id:       z.string(),              // derived from workflow_id + step_order
@@ -194,6 +202,7 @@ const SCHEMAS: Record<D1EventType, z.ZodTypeAny> = {
   [D1Events.LLM_CALL_TRACE]:            LlmCallTraceSchema,
   [D1Events.BYOK_KEY_SET]:              ByokKeyAdminSchema,
   [D1Events.BYOK_KEY_CLEARED]:          ByokKeyAdminSchema,
+  [D1Events.DISCOVERY_SCORE_REQUESTED]: DiscoveryScoreRequestedSchema,
 }
 
 /**

@@ -51,11 +51,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 
   try {
+    const cutoffMs = Date.now() - 24 * 3600 * 1000
     const result = await db
       .prepare(
-        `SELECT props FROM signals_events WHERE event_type='llm_call_trace' AND created_at >= datetime('now','-24 hours')`,
+        `SELECT props_json AS props FROM signals_events WHERE event_type = 'llm_call_trace' AND ts >= ?`,
       )
-      .bind()
+      .bind(cutoffMs)
       .all()
 
     const rows: TraceRow[] = (result.results ?? []) as TraceRow[]

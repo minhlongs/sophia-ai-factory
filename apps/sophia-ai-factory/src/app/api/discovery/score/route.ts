@@ -5,9 +5,10 @@
  * using the OpenRouter-powered semantic enhancer (Phase 7C).
  *
  * Auth: getCurrentUser() required — 401 when missing.
- * Rate limiting: inherits default RATE_LIMITS.api (100 req/min) — dedicated
- * 'discovery' bucket deferred to R10 if abuse observed (OpenRouter cost exposure).
- * No audit event — scoring is a cheap read-like op, not a sensitive mutation.
+ * Rate limiting: RATE_LIMITS.discovery (30 req/min) — stricter than default api
+ *   to limit OpenRouter cost exposure.
+ * Audit: emits D1Events.DISCOVERY_SCORE_REQUESTED after each successful 200 response.
+ *   Emission is fire-and-forget; never fails the score response.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -15,6 +16,8 @@ import { z } from 'zod'
 import { getCurrentUser } from '@/lib/better-auth-session'
 import { enhanceNicheScoreWithAI } from '@/lib/discovery/affiliate-openrouter-niche-enhancer'
 import { logger } from '@/lib/utils/logger-utility'
+import { track } from '@/lib/signals/track'
+import { D1Events } from '@/lib/signals/d1-event-types'
 import type { AffiliateProgram } from '@/types'
 
 const ProgramSchema = z.object({
@@ -62,6 +65,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       error:  err instanceof Error ? err.message : String(err),
     })
     return NextResponse.json({ error: 'Scoring failed' }, { status: 500 })
+  }
+
+  // Audit trail — fire-and-forget, must never fail the 200 response
+  try {
+    track(D1Events.DISCOVERY_SCORE_REQUESTED, user.id, {
+      program_id: parsed.data.program.id,
+      niche_len:  parsed.data.niche.length,
+      score_null: score === null,
+    })
+  } catch {
+    // swallow — audit failure must not break scoring
   }
 
   return NextResponse.json({ score })

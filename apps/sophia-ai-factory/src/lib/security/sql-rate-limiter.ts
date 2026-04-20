@@ -26,6 +26,8 @@ export const RATE_LIMITS = {
   webhook: { maxRequests: 1000, windowSeconds: 60, identifier: 'webhook' },
   auth: { maxRequests: 10, windowSeconds: 60, identifier: 'auth' },
   admin: { maxRequests: 50, windowSeconds: 60, identifier: 'admin' },
+  // discovery: stricter than api (100/min) — OpenRouter cost exposure
+  discovery: { maxRequests: 30, windowSeconds: 60, identifier: 'discovery' },
 } as const
 
 /**

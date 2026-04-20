@@ -4,7 +4,7 @@
  */
 export default function ByokLoading() {
   return (
-    <div className="max-w-2xl mx-auto space-y-6 animate-pulse">
+    <div className="space-y-6 animate-pulse">
       {/* Status banner placeholder */}
       <div className="h-12 bg-muted rounded-lg" />
 
