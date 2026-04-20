@@ -98,6 +98,32 @@ const log = (
   }
 };
 
+/**
+ * Resolve overloaded error() arguments into (metadata, error) pair.
+ *
+ * Supports two call forms:
+ *   Legacy:  error(msg, error?, metadata?, requestId?)
+ *   New:     error(msg, { error?, ...metadata }, requestId?)
+ *
+ * When the second argument is a plain object (not an Error instance),
+ * it is treated as the new form: `error` key pulled out, rest is metadata.
+ */
+function resolveErrorArgs(
+  arg2: Error | Record<string, unknown> | undefined,
+  arg3: Record<string, unknown> | undefined,
+  arg4: string | undefined
+): { err: Error | undefined; meta: Record<string, unknown> | undefined; reqId: string | undefined } {
+  if (arg2 !== undefined && !(arg2 instanceof Error)) {
+    // New form: arg2 is a plain object { error?, ...metadata }
+    const { error: embeddedErr, ...rest } = arg2 as Record<string, unknown>;
+    const err = embeddedErr instanceof Error ? embeddedErr : undefined;
+    const meta = Object.keys(rest).length > 0 ? rest : undefined;
+    return { err, meta, reqId: arg3 as string | undefined ?? arg4 };
+  }
+  // Legacy form
+  return { err: arg2 as Error | undefined, meta: arg3, reqId: arg4 };
+}
+
 export const logger = {
   debug: (message: string, metadata?: Record<string, unknown>, requestId?: string) => {
     log('debug', message, metadata, undefined, requestId);
@@ -111,13 +137,26 @@ export const logger = {
     log('warn', message, metadata, undefined, requestId);
   },
 
+  /**
+   * Two supported call forms:
+   *   Legacy: error(message, error?, metadata?, requestId?)
+   *   New:    error(message, { error?, ...metadata }, requestId?)
+   */
   error: (
     message: string,
-    error?: Error,
-    metadata?: Record<string, unknown>,
-    requestId?: string
+    arg2?: Error | Record<string, unknown>,
+    arg3?: Record<string, unknown> | string,
+    arg4?: string
   ) => {
-    log('error', message, metadata, error, requestId);
+    // Normalise arg3 — in legacy form it's metadata (object); in new form it would be requestId (string)
+    const meta3 = typeof arg3 === 'object' ? arg3 : undefined;
+    const reqId3 = typeof arg3 === 'string' ? arg3 : arg4;
+    const { err, meta, reqId } = resolveErrorArgs(
+      arg2 as Error | Record<string, unknown> | undefined,
+      meta3,
+      reqId3
+    );
+    log('error', message, meta, err, reqId);
   },
 
   /**
@@ -130,8 +169,11 @@ export const logger = {
       logger.info(message, metadata, requestId),
     warn: (message: string, metadata?: Record<string, unknown>) =>
       logger.warn(message, metadata, requestId),
-    error: (message: string, error?: Error, metadata?: Record<string, unknown>) =>
-      logger.error(message, error, metadata, requestId),
+    error: (
+      message: string,
+      arg2?: Error | Record<string, unknown>,
+      arg3?: Record<string, unknown> | string
+    ) => logger.error(message, arg2, arg3, requestId),
   }),
 };
 

@@ -15,6 +15,11 @@ export enum BotState {
   EXPORTING_CAMPAIGN = 'exporting_campaign',
 }
 
+/** Runtime guard — narrows unknown DB value to BotState */
+export function isBotState(value: unknown): value is BotState {
+  return typeof value === 'string' && Object.values(BotState).includes(value as BotState)
+}
+
 /**
  * User Context stored in Supabase
  */
@@ -44,7 +49,7 @@ export class TelegramFSM {
       })
 
       if (error || !data) {
-        logger.error('get_telegram_user_session RPC error', undefined, { code: error?.code, message: error?.message })
+        logger.error('get_telegram_user_session RPC error', { code: error?.code, message: error?.message })
         return null
       }
 
@@ -55,7 +60,7 @@ export class TelegramFSM {
       const contextData = (row.context_data as Record<string, unknown>) || {}
 
       return {
-        state: row.state as BotState || BotState.IDLE,
+        state: isBotState(row.state) ? row.state : (logger.warn('Invalid BotState in D1', { chatId, rawState: row.state }), BotState.IDLE),
         ...contextData,
         subscriptionTier: row.subscription_tier as string | undefined,
         lastUpdated: Date.now(),
