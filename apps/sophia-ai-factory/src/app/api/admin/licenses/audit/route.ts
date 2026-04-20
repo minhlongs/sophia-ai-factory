@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAuditLogs } from '@/lib/raas-audit'
 import { checkAdminAuth } from '../middleware'
 import { logger } from '@/lib/utils/logger-utility'
-import type { AuditAction } from '@/lib/raas-schema'
+import type { AuditAction, RaasAuditLogFilters } from '@/lib/raas-schema'
 import { z } from 'zod'
 
 /**
@@ -47,16 +47,17 @@ export async function GET(request: NextRequest) {
     // Apply 90 days retention policy
     const ninetyDaysAgo = getNinetyDaysAgoTimestamp()
 
-    const result = await getAuditLogs({
-      action: params.action,
+    const auditFilters: RaasAuditLogFilters = {
+      action: params.action as AuditAction | undefined,
       license_nonce: params.nonce,
       page: params.page,
       limit: params.limit,
       orderBy: 'created_at',
       orderDir: 'desc',
       // Filter: only logs from last 90 days
-      startDate: ninetyDaysAgo
-    } as any)
+      startDate: ninetyDaysAgo,
+    }
+    const result = await getAuditLogs(auditFilters)
 
     return NextResponse.json({
       ...result,

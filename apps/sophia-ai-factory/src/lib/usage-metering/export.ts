@@ -6,8 +6,23 @@
 
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
-import type { ExportOptions, UsageSummary, DailyUsage } from './types';
+import type { ExportOptions, UsageSummary, DailyUsage, D1Response } from './types';
 import { generateCsvRows, rowsToCsv, getAggregatedSummary } from './aggregator';
+
+/** Raw usage event row returned from D1 export queries */
+type UsageEventExportRow = {
+  user_id: string;
+  license_nonce: string;
+  service_name: string;
+  action: string;
+  credits_used: number;
+  tokens_input: number;
+  tokens_output: number;
+  status_code: number | null;
+  response_time_ms: number | null;
+  created_at: number;
+  external_customer_id?: string | null;
+};
 
 /**
  * Export usage data for billing
@@ -17,7 +32,7 @@ import { generateCsvRows, rowsToCsv, getAggregatedSummary } from './aggregator';
 export async function exportUsage(options: ExportOptions): Promise<{
   summary: UsageSummary[];
   daily: DailyUsage[];
-  events: unknown[];
+  events: UsageEventExportRow[];
   aggregated?: {
     hourly: import('./types').HourlySummary[];
     daily: import('./types').DailySummary[];
@@ -46,19 +61,15 @@ export async function exportUsage(options: ExportOptions): Promise<{
     .gte('created_at', options.startTimestamp)
     .lte('created_at', options.endTimestamp);
 
-  const { data: rawEvents, error: eventsError } = await query as any;
+  const { data: rawEvents, error: eventsError } = await query as unknown as D1Response<UsageEventExportRow[]>;
 
   if (eventsError) {
-    logger.error('[Usage Export] Failed to get events', eventsError);
-    throw eventsError;
+    const err = eventsError instanceof Error ? eventsError : new Error(String(eventsError));
+    logger.error('[Usage Export] Failed to get events', err);
+    throw err;
   }
 
-  const events = (rawEvents ?? []) as Array<{
-    service_name: string;
-    tokens_input: number;
-    tokens_output: number;
-    credits_used: number;
-  }>;
+  const events: UsageEventExportRow[] = rawEvents ?? [];
 
   // Aggregate summary manually (backward compatible)
   const summaryMap = new Map<string, UsageSummary>();
@@ -91,14 +102,14 @@ export async function exportUsage(options: ExportOptions): Promise<{
   const daily = aggregated.daily.flatMap((day) =>
     day.hourlyBreakdown.map((hourly) => ({
       day_timestamp: day.dayTimestamp,
-      service_name: hourly.serviceBreakdown[0]?.service_name || 'unknown',
+      service_name: hourly.serviceBreakdown[0]?.featureKey || 'unknown',
       requests: hourly.totalRequests,
       credits: hourly.totalCredits,
     }))
   ) as unknown as DailyUsage[];
 
   // Get raw events for export
-  let exportEvents: unknown[] = [];
+  let exportEvents: UsageEventExportRow[] = [];
   if (options.format === 'json') {
     exportEvents = rawEvents ?? [];
   }
@@ -116,13 +127,25 @@ export async function exportUsage(options: ExportOptions): Promise<{
  *
  * @param events - Usage events
  */
-export function generateCsv(events: unknown[]): string {
+export function generateCsv(events: Array<{
+  user_id: string;
+  license_nonce: string;
+  service_name: string;
+  action: string;
+  credits_used: number;
+  tokens_input: number;
+  tokens_output: number;
+  status_code: number | null;
+  response_time_ms: number | null;
+  created_at: number;
+  external_customer_id?: string | null;
+}>): string {
   if (!events || events.length === 0) {
     return '';
   }
 
   // Use new aggregator CSV generation with standardized fields
-  const csvRows = generateCsvRows(events as any);
+  const csvRows = generateCsvRows(events);
   return rowsToCsv(csvRows);
 }
 

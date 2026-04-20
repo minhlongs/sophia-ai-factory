@@ -7,7 +7,7 @@
 import { sha256 } from '@/lib/audit/crypto-utils';
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
-import type { UsageEventInput, UsageEventDB, IngestionResult } from './types';
+import type { UsageEventInput, UsageEventDB, IngestionResult, D1Response } from './types';
 import type { RaasLicense } from '@/lib/raas-schema';
 import { CREDIT_RULES } from './constants';
 import { generateIdempotencyKey } from './idempotency';
@@ -27,26 +27,28 @@ export async function resolveExternalCustomerId(licenseNonce: string): Promise<s
       .from('raas_licenses')
       .select('metadata')
       .eq('nonce', licenseNonce)
-      .single() as { data: Pick<RaasLicense, 'metadata'> | null; error: Error | unknown };
+      .single() as unknown as D1Response<Pick<RaasLicense, 'metadata'>>;
 
     if (error || !license) {
       logger.debug('[External Customer ID] License not found', { licenseNonce });
       return null;
     }
 
-    const metadata = license.metadata as Record<string, any> | null;
+    const metadata = license.metadata as Record<string, unknown> | null;
     if (!metadata) {
       return null;
     }
 
     // Priority: polar_customer_id > stripe_customer_id
-    const externalId = metadata.polar_customer_id || metadata.stripe_customer_id || null;
+    const polarId = typeof metadata.polar_customer_id === 'string' ? metadata.polar_customer_id : null;
+    const stripeId = typeof metadata.stripe_customer_id === 'string' ? metadata.stripe_customer_id : null;
+    const externalId: string | null = polarId || stripeId;
 
     if (externalId) {
       logger.debug('[External Customer ID] Resolved', {
         licenseNonce,
         externalId,
-        source: metadata.polar_customer_id ? 'polar' : 'stripe',
+        source: polarId ? 'polar' : 'stripe',
       });
     }
 
@@ -76,7 +78,10 @@ export async function checkIdempotencyKey(idempotencyKey: string): Promise<strin
       return null;
     }
 
-    return (data as { id: string }).id;
+    if (data && typeof data === 'object' && 'id' in data && typeof (data as { id: unknown }).id === 'string') {
+      return (data as { id: string }).id;
+    }
+    return null;
   } catch (error) {
     logger.error('[Idempotency Check] Error checking key', error instanceof Error ? error : new Error(String(error)));
     return null;
@@ -120,7 +125,7 @@ export async function insertUsageEvent(event: UsageEventInput & { idempotencyKey
   // Insert with idempotency key (unique constraint handles duplicates)
   const { data, error } = await db
     .from('usage_events')
-    .insert(dbEvent as any)
+    .insert(dbEvent as unknown as Record<string, unknown>)
     .select('id')
     .single();
 
@@ -130,10 +135,10 @@ export async function insertUsageEvent(event: UsageEventInput & { idempotencyKey
       return {
         success: false,
         reason: 'duplicate',
-        existingRecordId: String(error.details),
+        existingRecordId: error.message,
       };
     }
-    logger.error('[Insert Usage Event] Database error', error);
+    logger.error('[Insert Usage Event] Database error', new Error(error.message));
     return {
       success: false,
       error: error.message,
@@ -143,7 +148,9 @@ export async function insertUsageEvent(event: UsageEventInput & { idempotencyKey
   return {
     success: true,
     idempotencyKey: event.idempotencyKey,
-    recordId: (data as any)?.id as string | undefined,
+    recordId: (data && typeof data === 'object' && 'id' in data && typeof (data as { id: unknown }).id === 'string')
+      ? (data as { id: string }).id
+      : undefined,
   };
 }
 

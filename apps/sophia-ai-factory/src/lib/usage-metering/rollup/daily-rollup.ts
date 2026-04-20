@@ -22,7 +22,7 @@ export async function calculateDailyRollup(dayTimestamp: number): Promise<DailyS
       hour_timestamp, tenant_id, license_nonce, external_customer_id,
       total_requests, total_credits, total_tokens_input, total_tokens_output,
       total_errors, avg_response_time_ms, service_breakdown
-    `) as { data: HourlySummaryRow[] | null; error: Error | unknown };
+    `) as unknown as { data: HourlySummaryRow[] | null; error: unknown };
 
   if (error) {
     const err = error instanceof Error ? error : new Error(String(error));
@@ -89,7 +89,9 @@ export async function calculateDailyRollup(dayTimestamp: number): Promise<DailyS
     });
 
     // Aggregate service breakdown from hourly JSON
-    const services = (hourly.service_breakdown as unknown as ServiceBreakdownItem[]) || [];
+    const services = Array.isArray(hourly.service_breakdown)
+      ? (hourly.service_breakdown as ServiceBreakdownItem[])
+      : [];
     for (const svc of services) {
       let svcStats = group.serviceMap.get(svc.service);
       if (!svcStats) {
@@ -152,30 +154,33 @@ export async function calculateDailyRollup(dayTimestamp: number): Promise<DailyS
 export async function upsertDailySummary(summary: DailySummaryRecord): Promise<void> {
   const db = createServerClient();
 
+  const insertPayload: Record<string, unknown> = {
+    day_timestamp: summary.dayTimestamp,
+    tenant_id: summary.tenantId,
+    license_nonce: summary.licenseNonce,
+    external_customer_id: summary.externalCustomerId,
+    total_requests: summary.totalRequests,
+    total_credits: summary.totalCredits,
+    total_tokens_input: summary.totalTokensInput,
+    total_tokens_output: summary.totalTokensOutput,
+    total_errors: summary.totalErrors,
+    avg_response_time_ms: summary.avgResponseTimeMs,
+    hourly_breakdown: summary.hourlyBreakdown,
+    service_breakdown: summary.serviceBreakdown,
+    updated_at: new Date().toISOString(),
+  };
+
   const { error } = await db
     .from('usage_daily_summary')
-    .insert({
-      day_timestamp: summary.dayTimestamp,
-      tenant_id: summary.tenantId,
-      license_nonce: summary.licenseNonce,
-      external_customer_id: summary.externalCustomerId,
-      total_requests: summary.totalRequests,
-      total_credits: summary.totalCredits,
-      total_tokens_input: summary.totalTokensInput,
-      total_tokens_output: summary.totalTokensOutput,
-      total_errors: summary.totalErrors,
-      avg_response_time_ms: summary.avgResponseTimeMs,
-      hourly_breakdown: summary.hourlyBreakdown as any,
-      service_breakdown: summary.serviceBreakdown as any,
-      updated_at: new Date().toISOString(),
-    } as any) as any;
+    .insert(insertPayload);
 
   if (error) {
-    logger.error('[Rollup Service] Error upserting daily summary', error, {
+    const err = new Error(error.message);
+    logger.error('[Rollup Service] Error upserting daily summary', err, {
       dayTimestamp: summary.dayTimestamp,
       tenantId: summary.tenantId,
     });
-    throw error as any;
+    throw err;
   }
 }
 

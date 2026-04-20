@@ -26,7 +26,7 @@ export async function calculateHourlyRollup(hourTimestamp: number): Promise<Hour
       status_code, response_time_ms
     `)
     .gte('created_at', hourStart)
-    .lt('created_at', hourEnd) as { data: UsageEventRow[] | null; error: Error | unknown };
+    .lt('created_at', hourEnd) as unknown as { data: UsageEventRow[] | null; error: unknown };
 
   if (error) {
     const err = error instanceof Error ? error : new Error(String(error));
@@ -142,29 +142,32 @@ export async function calculateHourlyRollup(hourTimestamp: number): Promise<Hour
 export async function upsertHourlySummary(summary: HourlySummaryRecord): Promise<void> {
   const db = createServerClient();
 
+  const insertPayload: Record<string, unknown> = {
+    hour_timestamp: summary.hourTimestamp,
+    tenant_id: summary.tenantId,
+    license_nonce: summary.licenseNonce,
+    external_customer_id: summary.externalCustomerId,
+    total_requests: summary.totalRequests,
+    total_credits: summary.totalCredits,
+    total_tokens_input: summary.totalTokensInput,
+    total_tokens_output: summary.totalTokensOutput,
+    total_errors: summary.totalErrors,
+    avg_response_time_ms: summary.avgResponseTimeMs,
+    service_breakdown: summary.serviceBreakdown,
+    updated_at: new Date().toISOString(),
+  };
+
   const { error } = await db
     .from('usage_hourly_summary')
-    .insert({
-      hour_timestamp: summary.hourTimestamp,
-      tenant_id: summary.tenantId,
-      license_nonce: summary.licenseNonce,
-      external_customer_id: summary.externalCustomerId,
-      total_requests: summary.totalRequests,
-      total_credits: summary.totalCredits,
-      total_tokens_input: summary.totalTokensInput,
-      total_tokens_output: summary.totalTokensOutput,
-      total_errors: summary.totalErrors,
-      avg_response_time_ms: summary.avgResponseTimeMs,
-      service_breakdown: summary.serviceBreakdown as any,
-      updated_at: new Date().toISOString(),
-    } as any) as any;
+    .insert(insertPayload);
 
   if (error) {
-    logger.error('[Rollup Service] Error upserting hourly summary', error, {
+    const err = new Error(error.message);
+    logger.error('[Rollup Service] Error upserting hourly summary', err, {
       hourTimestamp: summary.hourTimestamp,
       tenantId: summary.tenantId,
     });
-    throw error as any;
+    throw err;
   }
 }
 
