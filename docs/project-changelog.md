@@ -5,6 +5,34 @@
 
 ---
 
+## [2026-04-20] Tech Debt Phase 7 — Logger API Ergonomics + BotState Validation + Rate Limiter Observability
+
+### Summary
+Delivered 3 observability & safety quick wins from Phase 6 backlog. **Logger Ergonomics:** New `logger.error(msg, {error?, ...metadata}, requestId?)` overload (backward-compatible with legacy form) eliminates awkward `undefined` pass-through. **BotState Runtime Validation:** `isBotState()` type guard exported from telegram-fsm-state-manager.ts; D1 reads now validate invalid states, log `warn`, fall back to `BotState.IDLE`. **Rate Limiter Observability:** `sql-rate-limiter.ts` fail-open branches emit structured metric `[metric] telegram_ratelimit_fail_open` with `reason: rpc_error|exception` for downstream log aggregator alerting on silent bypass. Tests: 1297/1297 (100% pass). Code review: 9.2/10 APPROVE_WITH_NITS. Production: HTTP 200 ✅.
+
+### Files Modified (3 Total)
+- `src/lib/logger.ts` — Added `error()` overload with `{error?, ...metadata}` object form
+- `src/services/telegram-integration/telegram-fsm-state-manager.ts` — `isBotState()` guard + state validation  
+- `src/services/telegram-integration/sql-rate-limiter.ts` — Fail-open metric emission (rpc_error, exception)
+
+### Tests & Quality
+- **Tests:** 1297/1297 (100% pass maintained)
+- **Build:** ✅ npm run build exit 0
+- **Code Review:** ✅ 9.2/10 APPROVE_WITH_NITS
+- **Production HTTP:** ✅ 200 confirmed
+
+### Backward Compatibility
+- 100% backward-compatible
+- Logger still accepts legacy `(message, error, metadata, requestId)` form
+- No API contract changes
+- Zero breaking changes
+
+### Tracking
+- Plan: `/plans/260419-2121-triet-tieu-no-ky-thuat/`
+- Phase 7: `/plans/260419-2121-triet-tieu-no-ky-thuat/phase-07-logger-botstate-ratelimiter.md`
+
+---
+
 ## [2026-04-20] Tech Debt Phase 6 — Phase 5 Review Nits + Telegram Module Type Safety
 
 ### Summary

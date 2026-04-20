@@ -1,7 +1,7 @@
 # Triệt Tiêu Nợ Kỹ Thuật (Clean Tech Debt) — Sophia AI Factory
 
 **Plan ID:** 260419-2121  
-**Status:** IN PROGRESS (Phase 6 ✅ COMPLETE / Phase 7 PENDING)  
+**Status:** IN PROGRESS (Phase 7 ✅ COMPLETE / Phase 8+ PENDING)  
 **Timeline:** 2026-04-19 → ongoing  
 
 ## Overview
@@ -18,15 +18,17 @@ Systematic removal of TypeScript `:any` types, eslint-disables, and deferred deb
 | 4 | **Database & Migration Cleanup** | ✅ COMPLETE | [Phase 4](phase-04-d1-migration.md) |
 | 5 | **Console.log → logger Refactor** | ✅ COMPLETE | [Phase 5](phase-05-console-cleanup.md) |
 | 6 | ESLint Disables & Review | ✅ COMPLETE | [Phase 6](phase-06-eslint-disables-and-nits.md) |
+| 7 | Observability & Safety | ✅ COMPLETE | [Phase 7](phase-07-observability-and-safety.md) |
 
 ## Key Metrics
 
 - **Phase 5 Result:** 34 console.log/warn/error → logger.* across 17 production files; 3 nits deferred
 - **Phase 6 Result:** 11 eslint-disables → 0 in telegram module; fixed latent bug in checkTierAccess
-- **Tests:** 1297/1297 pass (100% maintained across phases)
-- **Code Review Phase 6:** APPROVE_WITH_NITS 8.8/10 (excellent score)
-- **Production:** HTTP 200 ✅
-- **Deferred to Phase 7:** logger.error API shape, BotState enum validation, rate-limiter observability, ~420 `:any` in components
+- **Phase 7 Result:** logger.error() overload + isBotState() guard + rate-limiter warn metrics; raas_licenses scope dropped (17 active usages found)
+- **Tests:** 1297/1297 pass (100% maintained across all phases)
+- **Code Review Phase 7:** APPROVE_WITH_NITS 9.2/10 (excellent quality)
+- **Production:** HTTP 200 ✅ (CI passes; local blocked by untracked coupon WIP)
+- **Deferred to Phase 8+:** ~420 `:any` in components, raas_licenses audit, coupon routes WIP cleanup, 5 code-reviewer nits
 
 ## Links
 
