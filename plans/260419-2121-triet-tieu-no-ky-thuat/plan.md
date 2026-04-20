@@ -16,16 +16,16 @@ Systematic removal of TypeScript `:any` types, eslint-disables, and deferred deb
 | 2 | Core API Routes `:any` Reduction | ✅ COMPLETE | [Phase 2](phase-02-any-type-auth-security.md) |
 | 3 | **API Routes Expansion** | ✅ COMPLETE | [Phase 3](phase-03-api-routes-any-reduction.md) |
 | 4 | **Database & Migration Cleanup** | ✅ COMPLETE | [Phase 4](phase-04-d1-migration.md) |
-| 5 | Test Files `:any` Reduction | ⏳ PENDING | Phase 5 (~74 `:any` in tests) |
-| 6 | ESLint Disables & Review | ⏳ PENDING | Phase 6 (residual 1 disable) |
+| 5 | **Console.log → logger Refactor** | ✅ COMPLETE | [Phase 5](phase-05-console-cleanup.md) |
+| 6 | ESLint Disables & Review | ⏳ PENDING | Phase 6 (residual disables) |
 
 ## Key Metrics
 
-- **Phase 4 Result:** D1 migrations 0013+0014 deployed, sql-rate-limiter typed, api-key-validator canonical
-- **Tests:** 1291/1328 pass (6 pre-existing better-auth cascade failures)
-- **Commits:** 4708352d + b504cf3e
-- **Production:** HTTP 200 ✅, D1 tables verified ✅
-- **Deferred:** raas_licenses table + test file `:any` (Phase 5) + d1_migrations tracking (backlog)
+- **Phase 5 Result:** 34 console.log/warn/error → logger.* across 17 production files
+- **Tests:** 1297/1297 pass (100%, +6 vs Phase 4 baseline 1291/6-fail — better-auth cascade resolved)
+- **Code Review:** APPROVE_WITH_NITS 8.5/10 (3 non-blocking nits deferred to Phase 6)
+- **Production:** HTTP 200 ✅
+- **Deferred:** env-validation loop merge, Supabase error field preservation, provision HTTP 500 severity (Phase 6 or backlog)
 
 ## Links
 
