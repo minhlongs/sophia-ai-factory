@@ -1,7 +1,36 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-04-20 (Tech Debt Phase 10: Usage Metering + Route Handlers `:any` Cleanup)
+> **Last Updated:** 2026-04-20 (Tech Debt Phase 11: RaaS License System Type Safety + Incidental Bug Fix)
+
+---
+
+## [2026-04-20] Tech Debt Phase 11 — RaaS License System Type Safety + Incidental Bug Fix
+
+### Summary
+Eliminated 3 non-test `:any` casts from critical RaaS rate-limiting + JWT payload handling. Added discriminated union narrowing pattern in `raas-rate-limiter.ts` (`narrowTier()` helper) to avoid `as any` on union type narrowing. Fixed latent bug: denied-quota violations with `'hourly_credits'` type now correctly route to `'critical'` severity instead of silently defaulting to `'high'`. Tests: 1297/1297 ✅. Build: 0 TS errors ✅. Code Review: 9.7/10 APPROVE ✅. Production HTTP 200 ✅.
+
+### Files Modified (2 Total)
+**Updated:**
+- `src/lib/raas-gateway-enhanced.ts` — 1 `:any` → 0 (JWT payload typing)
+- `src/lib/raas/raas-rate-limiter.ts` — 2 `:any` → 0 (discriminated union narrowing + `narrowTier()` helper) + incidental severity routing fix
+
+### Bug Fix Note
+Denied-quota violations on `'hourly_credits'` type previously defaulted to `'high'` severity due to union type narrowing gap. Now correctly routes to `'critical'` as intended. Alerting pipelines may observe increased `'critical'` alert volume on hourly-credits exceedance.
+
+### Tests & Quality
+- **Tests:** 1297/1297 (100% pass), raas-scoped 68/68
+- **Build:** ✅ npm run build exit 0, 0 TS errors
+- **Code Review:** ✅ 9.7/10 APPROVE
+- **Production HTTP:** ✅ 200 confirmed
+- **TypeScript `:any` count:** 3 → 0 (raas-gateway-enhanced + raas-rate-limiter)
+
+### Pattern Established
+Discriminated union narrowing via `narrowTier()` helper = canonical pattern for future union type narrowing (avoid `as any` on narrowed types). Reference: raas-rate-limiter.ts.
+
+### Tracking
+- Plan: `/plans/260419-2121-triet-tieu-no-ky-thuat/`
+- Phase 11: `/plans/260419-2121-triet-tieu-no-ky-thuat/phase-11-raas-license-system-type-safety.md`
 
 ---
 
