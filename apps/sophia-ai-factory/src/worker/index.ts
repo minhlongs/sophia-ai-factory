@@ -39,6 +39,7 @@ import {
 import {
   runMeteringReconciliation,
 } from './lib/metering-reconciler-runner';
+import { logger } from '@/lib/utils/logger-utility';
 
 // Environment bindings
 interface Env {
@@ -141,14 +142,14 @@ export default {
       ctx.waitUntil(
         runMeteringReconciliation(env, ctx)
           .then((result) => {
-            console.log('[Scheduled] Reconciliation complete', {
+            logger.info('[Scheduled] Reconciliation complete', {
               success: result.success,
               reportId: result.report.id,
               totalAmount: result.report.totalAmount,
             });
           })
           .catch((error) => {
-            console.error('[Scheduled] Reconciliation failed', error);
+            logger.error('[Scheduled] Reconciliation failed', error instanceof Error ? error : new Error(String(error)));
           })
       );
     }

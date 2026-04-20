@@ -7,6 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/utils/logger-utility';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,8 +20,7 @@ export async function GET(request: NextRequest) {
     // Old magic links cannot be verified — redirect to login
     return NextResponse.redirect(new URL('/login?error=expired_link', request.url));
   } catch (error) {
-    const msg = error instanceof Error ? error.message : 'Internal error';
-    console.error('[auth/callback] GET error:', msg);
+    logger.error('[auth/callback] GET error', error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json({ error: 'Callback handling failed' }, { status: 500 });
   }
 }

@@ -1,5 +1,6 @@
 import { getD1Client } from "@/lib/db/client";
 import { getCurrentUser } from "@/lib/better-auth-session";
+import { logger } from "@/lib/utils/logger-utility";
 import { notFound, redirect } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -45,11 +46,11 @@ export default async function CampaignDetailPage({ params }: PageProps) {
         .eq("user_id", user.id)
         .single();
       if (error) {
-        console.error("[campaigns/[id]] DB error:", error.message);
+        logger.error("[campaigns/[id]] DB error", new Error(error.message));
       }
       campaign = data ? (data as unknown as Campaign) : null;
     } catch (e) {
-      console.error("[campaigns/[id]] Failed to fetch campaign:", (e as Error).message);
+      logger.error("[campaigns/[id]] Failed to fetch campaign", e instanceof Error ? e : new Error(String(e)));
       campaign = null;
     }
   } else {

@@ -7,6 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getJobStatus } from '@/lib/clients/muapi-media-client'
+import { logger } from '@/lib/utils/logger-utility'
 
 export async function GET(req: NextRequest) {
   try {
@@ -34,8 +35,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(result.job)
   } catch (error) {
-    const msg = error instanceof Error ? error.message : 'Internal error';
-    console.error('[media/status] GET error:', msg);
+    logger.error('[media/status] GET error', error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json({ error: 'Failed to get media status' }, { status: 500 });
   }
 }

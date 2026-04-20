@@ -2,6 +2,7 @@ import { getD1Client } from "@/lib/db/client";
 import { getCurrentUser } from "@/lib/better-auth-session";
 import { AdminUsersClient, type AdminUserRow } from "./admin-users-client";
 import { redirect } from "next/navigation";
+import { logger } from "@/lib/utils/logger-utility";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +25,7 @@ export default async function AdminUsersPage() {
       .select('id, email, role, created_at, last_sign_in_at')
       .order('created_at', { ascending: false });
 
-    if (error) console.error("[admin/users] DB error:", error.message);
+    if (error) logger.error("[admin/users] DB error", new Error(error.message));
     if (data) {
       users = (data as Record<string, string>[]).map((u) => ({
         id: u.id,
@@ -35,7 +36,7 @@ export default async function AdminUsersPage() {
       }));
     }
   } catch (e) {
-    console.error("[admin/users] Failed to fetch users:", (e as Error).message);
+    logger.error("[admin/users] Failed to fetch users", e instanceof Error ? e : new Error(String(e)));
   }
 
   return <AdminUsersClient initialUsers={users} />;

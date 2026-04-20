@@ -9,6 +9,7 @@
  */
 
 import { z } from 'zod';
+import { logger } from '@/lib/utils/logger-utility';
 
 const envSchema = z.object({
   // Required for core operation
@@ -50,9 +51,9 @@ export function getValidatedEnv(): Env {
   const result = envSchema.safeParse(process.env);
 
   if (!result.success) {
-    console.warn('[env-validation] Missing or invalid environment variables:');
+    logger.warn('[env-validation] Missing or invalid environment variables');
     for (const issue of result.error.issues) {
-      console.warn(`  - ${issue.path.join('.')}: ${issue.message}`);
+      logger.warn(`  - ${issue.path.join('.')}: ${issue.message}`);
     }
     // Fall through with raw process.env — don't block startup
     _validated = process.env as unknown as Env;
