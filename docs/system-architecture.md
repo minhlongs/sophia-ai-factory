@@ -232,7 +232,7 @@ users           — id, email, password_hash, full_name, role
 organizations   — id, name, slug, email
 org_members     — org_id, user_id, role (owner/member)
 org_balances    — org_id, balance, reserved, lifetime_credits/debits
-api_keys        — id, org_id, key_hash, name, last_used_at, revoked_at
+api_keys        — id, org_id, key_hash, name, is_active, expires_at, rate_limit_per_minute (Phase 4 D1 canonical)
 ```
 
 ### Feature Tables
@@ -240,6 +240,8 @@ api_keys        — id, org_id, key_hash, name, last_used_at, revoked_at
 missions        — id, org_id, template_id, status, mcu_cost
 mission_results — id, mission_id, output (JSON)
 usage_logs      — id, org_id, feature, mcu_used
+rate_limits     — identifier (PK), current_count, window_start, window_seconds (Phase 4 D1 atomic)
+export_jobs     — id, org_id, license_nonce, export_format, period_start/end, record_count, success, error_message (Phase 4 D1 cron)
 ```
 
 ### Billing Tables

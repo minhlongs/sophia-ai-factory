@@ -52,22 +52,23 @@ id: 78bd1961-b62d-43bb-b551-0c5d7d389506
 name: sophia-raas-db
 type: SQLite
 region: SFO (US-West)
-tables: 42 (users, orgs, missions, billing, signals, etc.)
-size: ~50 MB (as of 2026-04-17)
+tables: 44 (users, orgs, missions, billing, signals, rate_limits, export_jobs, etc.)
+size: ~50 MB (as of 2026-04-19)
 backup: Daily (automatic + manual export)
 replication: None (single-region)
 ```
 
-**Tables (42 total):**
+**Tables (44 total):**
 
 | Category | Tables |
 |----------|--------|
-| **Auth** | users, organizations, org_members, api_keys |
+| **Auth** | users, organizations, org_members, api_keys (Phase 4: D1 canonical schema) |
 | **Features** | missions, mission_results, usage_logs |
 | **Billing** | billing_settings, org_balances |
 | **Growth** | referral_codes, affiliates, affiliate_content |
 | **Content** | blog_posts (+ 5 hardcoded SEO posts) |
 | **Telemetry** | signals_events (append-only founder ops telemetry) |
+| **Operations** | rate_limits (atomic counter + window), export_jobs (cron tracking) |
 | **System** | migrations (schema history) |
 
 **Access:**
@@ -78,8 +79,9 @@ replication: None (single-region)
 
 **Migrations:**
 - Stored in `migrations/` (D1 SQLite)
-- Numbered: `0001-init.sql` → `0005-signals-events.sql`
+- Numbered: `0001-init.sql` → `0014-export-jobs.sql` (Phase 4 D1 tech debt closure)
 - Applied automatically on `wrangler d1 migrations apply`
+- **Phase 4 additions (0013–0014):** rate_limits atomic counter + export_jobs cron tracking (replaces Supabase legacy tables)
 
 **Founder Ops Telemetry (signals_events):**
 - **Purpose:** Append-only log for operational metrics (not product analytics)
@@ -132,10 +134,11 @@ ttl: 3600 (1 hour)
 
 ### Layer 1: Database (D1) — 9/10
 
-- **Schema:** 42 tables, versioned migrations (0001-0005)
+- **Schema:** 44 tables, versioned migrations (0001-0014, Phase 4 tech debt closure)
 - **RLS:** Handled in application logic (JWT org_id checks)
 - **Backups:** Automatic daily + manual `npx wrangler d1 export`
 - **Disaster Recovery:** RPO 24h, RTO 4h (restore from D1 backup + git redeploy)
+- **Phase 4 Improvements:** rate_limits (atomic), export_jobs (cron), api_keys (D1 canonical schema with is_active/expires_at)
 - **Gap:** Single-region only (no cross-region failover)
 
 ### Layer 2: Server (Workers) — 8/10

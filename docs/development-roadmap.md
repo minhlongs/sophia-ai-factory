@@ -2,7 +2,7 @@
 
 > Product milestones and progress tracking (2026)
 
-**Last Updated:** 2026-04-18 PM-24 (Phase 8A/8C: R8 Hygiene + User-Facing BYOK Admin — errorClass split + weekly-signals + user-byok endpoint + byok dashboard page)
+**Last Updated:** 2026-04-20 (Tech Debt Phase 4: D1 Migration & SQL Refactor — 2 migrations deployed, 1291/1328 tests pass)
 **Target:** $1M ARR, 100/100 a16z solo company score
 
 ---
