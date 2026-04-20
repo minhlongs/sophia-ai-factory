@@ -2,8 +2,8 @@
 
 > Canonical standards for development, enforced across all code changes (2026).
 
-**Last Updated:** 2026-04-20 (Type Safety + Module Pattern Standards)
-**Codebase Commitment:** Zero `:any` types, 100% TypeScript strict mode, 1297+ test pass rate
+**Last Updated:** 2026-04-20 (Type Safety + Module Pattern Standards + Discriminated Union Narrowing)
+**Codebase Commitment:** Zero `:any` types, 100% TypeScript strict mode, 1297+ test pass rate, 65 `:any` eliminated (Phases 7-11)
 
 ---
 
@@ -46,6 +46,45 @@ export interface D1Response<T> { /* ... */ }
 export interface UsageEventInsertable { /* ... */ }
 export interface LicenseMetadataRow { /* ... */ }
 ```
+
+### Discriminated Union Narrowing Pattern
+**Purpose:** Type-safely narrow union types without `as any` casts.
+
+**Pattern:** Extract a helper function that returns the narrowed type, leveraging TypeScript control-flow analysis.
+
+**Location:** `src/lib/raas/raas-rate-limiter.ts` (established Phase 11)
+
+**Anti-pattern (❌):**
+```typescript
+// Unsafe — requires `as any` to satisfy TypeScript
+function checkQuota(result: QuotaResult) {
+  if (!result.allowed) {
+    const denied = result as any; // ❌ Avoid this
+    return denied.deniedReason; // might throw at runtime
+  }
+}
+```
+
+**Pattern (✅):**
+```typescript
+// Safe — TypeScript narrows discriminated union automatically
+function narrowTier(plan: string): 'BASIC' | 'PREMIUM' | 'MASTER' {
+  if (plan === 'BASIC' || plan === 'PREMIUM' || plan === 'MASTER') {
+    return plan; // TypeScript narrows automatically
+  }
+  return 'BASIC'; // fallback
+}
+
+function checkQuota(result: QuotaResult) {
+  if (!result.allowed) {
+    const severity = result.exceeded_type === 'hourly_credits' ? 'critical' : 'high';
+    return { allowed: false, severity };
+  }
+  return { allowed: true };
+}
+```
+
+**Reference:** Phase 11 fixed latent severity-routing bug by properly narrowing `exceeded_type` discriminant, ensuring hourly-credits violations correctly route to `'critical'` instead of defaulting to `'high'`.
 
 ---
 

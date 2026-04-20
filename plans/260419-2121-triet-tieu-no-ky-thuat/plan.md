@@ -1,7 +1,7 @@
 # Triệt Tiêu Nợ Kỹ Thuật (Clean Tech Debt) — Sophia AI Factory
 
 **Plan ID:** 260419-2121  
-**Status:** IN PROGRESS (Phase 10 ✅ COMPLETE / Phase 11+ BACKLOG)  
+**Status:** IN PROGRESS (Phase 11 ✅ COMPLETE / Phase 12+ BACKLOG)  
 **Timeline:** 2026-04-19 → ongoing  
 
 ## Overview
@@ -22,6 +22,7 @@ Systematic removal of TypeScript `:any` types, eslint-disables, and deferred deb
 | 8 | Telegram Handlers + Nits | ✅ COMPLETE | [Phase 8](phase-08-telegram-handlers-plus-nits.md) |
 | 9 | Audit Module `:any` Cleanup | ✅ COMPLETE | [Phase 9](phase-09-audit-module-any-cleanup.md) |
 | 10 | Usage Metering + Route Handlers `:any` Cleanup | ✅ COMPLETE | [Phase 10](phase-10-usage-metering-and-routes.md) |
+| 11 | `lib/raas*` `:any` Cleanup (Careful Scope) | ✅ COMPLETE | [Phase 11](phase-11-raas-module-careful-scope.md) |
 
 ## Key Metrics
 
@@ -31,10 +32,12 @@ Systematic removal of TypeScript `:any` types, eslint-disables, and deferred deb
 - **Phase 8 Result:** Telegram handlers `:any` count 6 → 0 across 4 files; Phase 7 nits #1-#4 resolved; nit #5 deferred to Phase 9+ (FSM self-heal write-back design)
 - **Phase 9 Result:** lib/audit `:any` count 33 → 0 across 11 files; new `types.ts` with 8 shared row interfaces; inline nit (duplicate `ScheduledReportRow`) fixed; 6 nits deferred to Phase 10+
 - **Phase 10 Result:** lib/usage-metering `:any` count 20 → 0 across 9 files (1 lib module + 2 routes); 4 new interfaces (D1Response<T>, UsageEventInsertable, LicenseMetadataRow, ApiKeyRecord); 2 pre-existing bugs fixed incidentally (service_name, error.message); 6 nits deferred to Phase 11+
+- **Phase 11 Result:** lib/raas* `:any` count 3 → 0 across 2 files; JWT payload typing + discriminated union narrowing + Tier guard; latent bug fix (severity routing in denied-quota branch); incidental: ops/alerting should expect elevated critical counts for hourly_credits exceedance
 - **Tests:** 1297/1297 pass (100% maintained across all phases; 31 skipped = legitimate fixtures)
-- **Code Review Phase 10:** APPROVE 9.6/10 (excellent quality)
+- **Code Review Phase 11:** APPROVE 9.7/10 (nit #1 inline fix — dropped unnecessary `?.` on non-optional `exceeded` field)
 - **Production:** pending push (CI GREEN; to be verified by git-manager after sync)
-- **Deferred to Phase 11+:** ~420 `:any` in components, raas_licenses audit (17+ active usages, design discussion), coupon routes WIP cleanup, FSM self-heal write-back design, D1Response promotion, types.ts modularization
+- **Cumulative (Phase 1→11):** ~480 `:any` removed; tech debt elimination spans auth, API routes, database, observability, telegram, audit, metering, RAAS modules
+- **Deferred to Phase 12+:** ~420 `:any` in components, raas_licenses audit (17+ active usages, design discussion), coupon routes WIP cleanup, FSM self-heal write-back design, D1Response promotion, types.ts modularization
 
 ## Links
 
