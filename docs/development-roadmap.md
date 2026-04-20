@@ -2,7 +2,7 @@
 
 > Product milestones and progress tracking (2026)
 
-**Last Updated:** 2026-04-20 (Tech Debt Phase 5: Console.log → logger Refactor — 17 files, 34 statements replaced, 1297/1297 tests pass)
+**Last Updated:** 2026-04-20 (Tech Debt Phase 8: Telegram Handlers Type Safety + FSM/Rate-Limiter Review Nits — 6 files, `:any` elimination complete, 1297/1297 tests pass)
 **Target:** $1M ARR, 100/100 a16z solo company score
 
 ---
@@ -378,6 +378,7 @@
 | **2026-04-18** | **Phase 7A OpenRouter Degrade-to-Mock + Phase 7B script-generator BYOK + Phase 7C niche-enhancer BYOK (Round 7)** | **✅ SHIPPED** |
 | **2026-04-18** | **Phase 8A Hygiene (errorClass split + weekly-signals + error-digest) + Phase 8C User-Facing BYOK Admin (/api/user/byok + /dashboard/byok) (Round 8)** | **✅ SHIPPED** |
 | **2026-04-20** | **Tech Debt Phase 5: Console.log → logger Refactor (17 files, 34 statements, 1297/1297 tests 100%)** | **✅ COMPLETE** |
+| **2026-04-20** | **Tech Debt Phase 8: Telegram Handlers Type Safety + FSM/Rate-Limiter Review Nits (6 files, `:any` → 0, 9.2/10 APPROVE_WITH_NITS)** | **✅ COMPLETE** |
 | 2026-05-01 | Analytics Dashboard | 🔄 Planned |
 | 2026-06-01 | Multi-Language Support (Vietnamese) | 🔄 Planned |
 | 2026-07-01 | Telegram Bot Enhancement | 🔄 Planned |
