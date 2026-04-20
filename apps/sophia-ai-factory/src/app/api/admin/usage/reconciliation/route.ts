@@ -376,7 +376,7 @@ async function queryBillingPeriods(
   }
 
   // Query payment events for subscription data
-  let query = supabase
+  const query = supabase
     .from('payment_events')
     .select('event_type, payload, created_at')
     .or(`event_type.eq.subscription.created,event_type.eq.subscription.updated,event_type.eq.checkout.updated`)

@@ -50,7 +50,7 @@ export async function POST(
 
     // Reactivate license
     const db = createServerClient()
-    const { data, error } = await (db.from('raas_licenses') as any)
+    const { data, error } = await (db.from('raas_licenses') as ReturnType<typeof db.from>)
       .update({
         is_revoked: false,
         revoked_at: null,

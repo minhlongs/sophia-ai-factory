@@ -64,12 +64,12 @@ export async function POST(req: NextRequest) {
     }
 
     // Mark events as billable
-    const { error: updateError } = await db
-      .from('overage_events')
+    const { error: updateError } = await (db
+      .from('overage_events') as ReturnType<typeof db.from>)
       .update({
         billable: true,
         updated_at: new Date().toISOString(),
-      } as any)
+      })
       .in('id', eventIds);
 
     if (updateError) {
