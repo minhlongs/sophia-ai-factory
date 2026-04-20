@@ -14,6 +14,7 @@
 
 import type { ReconciliationReport, R2ReportMetadata } from '@/lib/billing/reconciliation-types';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 
 /**
  * Store reconciliation report in R2
@@ -58,7 +59,7 @@ export async function storeReconciliationReport(
 
     return key;
   } catch (error) {
-    logger.error('[R2 Storage] Failed to store report', error as Error, { key });
+    logger.error('[R2 Storage] Failed to store report', toError(error), { key });
     throw error;
   }
 }
@@ -92,7 +93,7 @@ export async function getReconciliationReport(
 
     return report;
   } catch (error) {
-    logger.error('[R2 Storage] Failed to retrieve report', error as Error, { key });
+    logger.error('[R2 Storage] Failed to retrieve report', toError(error), { key });
     return null;
   }
 }
@@ -134,7 +135,7 @@ export async function listReconciliationReports(
 
     return reports;
   } catch (error) {
-    logger.error('[R2 Storage] Failed to list reports', error as Error);
+    logger.error('[R2 Storage] Failed to list reports', toError(error));
     return [];
   }
 }
@@ -173,7 +174,7 @@ export async function cleanupOldReports(
 
     return deleted;
   } catch (error) {
-    logger.error('[R2 Storage] Failed to cleanup old reports', error as Error);
+    logger.error('[R2 Storage] Failed to cleanup old reports', toError(error));
     return 0;
   }
 }
@@ -203,7 +204,7 @@ export async function getReportDownloadUrl(
     // This is a placeholder - implement signed URLs based on your R2 configuration
     return `/api/admin/audit/reports/download/${encodeURIComponent(key)}`;
   } catch (error) {
-    logger.error('[R2 Storage] Failed to get download URL', error as Error, { key });
+    logger.error('[R2 Storage] Failed to get download URL', toError(error), { key });
     return null;
   }
 }

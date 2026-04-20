@@ -20,6 +20,7 @@
 import { createServerClient } from '@/lib/db/client';
 import { getKvClient } from '@/lib/redis';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import { createHash } from 'crypto';
 
 /**
@@ -238,7 +239,7 @@ export async function syncUsageEventsToKv(
           kvKey,
         });
       } catch (error) {
-        const err = error as Error;
+        const err = toError(error);
         result.errors.push({
           eventId: row.id,
           error: err.message,
@@ -260,7 +261,7 @@ export async function syncUsageEventsToKv(
 
     return result;
   } catch (error) {
-    const err = error as Error;
+    const err = toError(error);
     logger.error('[KV Metering Sync] Sync failed', err);
 
     result.success = false;
@@ -377,7 +378,7 @@ export async function getMeteringLogs(
         reconciledWithGateway: false,
       }));
   } catch (error) {
-    logger.error('[KV Metering Logs] Failed to fetch logs', error as Error);
+    logger.error('[KV Metering Logs] Failed to fetch logs', toError(error));
     return [];
   }
 }
@@ -428,7 +429,7 @@ export async function markAsReconciled(
 
     return true;
   } catch (error) {
-    logger.error('[KV Metering Sync] Failed to mark as reconciled', error as Error);
+    logger.error('[KV Metering Sync] Failed to mark as reconciled', toError(error));
     return false;
   }
 }
@@ -466,7 +467,7 @@ export async function getSyncStats(): Promise<{
       discrepancyCount: 0,
     };
   } catch (error) {
-    logger.error('[KV Metering Sync] Failed to get stats', error as Error);
+    logger.error('[KV Metering Sync] Failed to get stats', toError(error));
     return {
       totalKeys: 0,
       oldestTimestamp: null,
