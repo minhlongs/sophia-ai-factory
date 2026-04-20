@@ -22,18 +22,18 @@ export async function linkTelegramUser(
   const db = createServerClient()
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (db as any).rpc('link_telegram_user', {
+    const { data, error } = await db.rpc('link_telegram_user', {
       p_chat_id: chatId,
       p_user_id: userId,
     })
 
     if (error || !data) {
-      logger.error('link_telegram_user RPC error', error)
+      logger.error('link_telegram_user RPC error', undefined, { code: error?.code, message: error?.message })
       return null
     }
 
-    return data?.[0]?.link_telegram_user as string | null
+    const rows = data as Array<Record<string, unknown>>
+    return (rows[0]?.link_telegram_user as string | null) ?? null
   } catch (error) {
     logger.error('Link Telegram user failed', error instanceof Error ? error : new Error(String(error)))
     return null
@@ -44,17 +44,17 @@ export async function getUserByChatId(chatId: string): Promise<string | null> {
   const db = createServerClient()
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (db as any).rpc('get_user_by_telegram_chat_id', {
+    const { data, error } = await db.rpc('get_user_by_telegram_chat_id', {
       p_chat_id: chatId,
     })
 
     if (error || !data) {
-      logger.error('get_user_by_telegram_chat_id RPC error', error)
+      logger.error('get_user_by_telegram_chat_id RPC error', undefined, { code: error?.code, message: error?.message })
       return null
     }
 
-    return data?.[0]?.get_user_by_telegram_chat_id as string | null
+    const rows = data as Array<Record<string, unknown>>
+    return (rows[0]?.get_user_by_telegram_chat_id as string | null) ?? null
   } catch (error) {
     logger.error('Get user by chatId failed', error instanceof Error ? error : new Error(String(error)))
     return null
@@ -72,8 +72,7 @@ export async function getChatIdByUserId(userId: string): Promise<string | null> 
       .single()
 
     if (error || !data) return null
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (data as any).telegram_chat_id as string | null
+    return (data as Record<string, unknown>).telegram_chat_id as string | null
   } catch (error) {
     logger.error('Get chatId by userId failed', error instanceof Error ? error : new Error(String(error)))
     return null
@@ -87,8 +86,7 @@ export async function updateSubscriptionTier(
   const db = createServerClient()
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (db as any).rpc('update_session_subscription_tier', {
+    const { error } = await db.rpc('update_session_subscription_tier', {
       p_chat_id: chatId,
       p_tier: tier,
     })
@@ -127,7 +125,7 @@ export async function getMappingByChatId(
       .single()
 
     if (error || !data) return null
-    return data as TelegramUserMapping
+    return data as unknown as TelegramUserMapping
   } catch (error) {
     logger.error('Get mapping by chatId failed', error instanceof Error ? error : new Error(String(error)))
     return null

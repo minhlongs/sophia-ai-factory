@@ -39,25 +39,25 @@ export class TelegramFSM {
     const db = createServerClient()
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (db as any).rpc('get_telegram_user_session', {
+      const { data, error } = await db.rpc('get_telegram_user_session', {
         p_chat_id: chatId,
       })
 
       if (error || !data) {
-        logger.error('get_telegram_user_session RPC error', error)
+        logger.error('get_telegram_user_session RPC error', undefined, { code: error?.code, message: error?.message })
         return null
       }
 
-      const row = data?.[0]
+      const rows = data as Array<Record<string, unknown>>
+      const row = rows[0]
       if (!row) return null
 
       const contextData = (row.context_data as Record<string, unknown>) || {}
 
       return {
-        state: row.state || BotState.IDLE,
+        state: row.state as BotState || BotState.IDLE,
         ...contextData,
-        subscriptionTier: row.subscription_tier,
+        subscriptionTier: row.subscription_tier as string | undefined,
         lastUpdated: Date.now(),
       } as UserContext
     } catch (error) {
@@ -76,8 +76,7 @@ export class TelegramFSM {
       const { state = BotState.IDLE, ...data } = context
       const contextData: Record<string, unknown> = { ...data }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (db as any).rpc('set_telegram_user_state', {
+      await db.rpc('set_telegram_user_state', {
         p_chat_id: chatId,
         p_state: state,
         p_context_data: contextData,
@@ -92,8 +91,7 @@ export class TelegramFSM {
     const db = createServerClient()
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (db as any).rpc('clear_telegram_session', { p_chat_id: chatId })
+      await db.rpc('clear_telegram_session', { p_chat_id: chatId })
     } catch (error) {
       logger.error('Clear Telegram session failed', error instanceof Error ? error : new Error(String(error)))
       throw error
@@ -108,8 +106,7 @@ export class TelegramFSM {
     const db = createServerClient()
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (db as any).rpc('update_session_subscription_tier', {
+      await db.rpc('update_session_subscription_tier', {
         p_chat_id: chatId,
         p_tier: tier,
       })

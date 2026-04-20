@@ -132,7 +132,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       .run()
   } catch (err) {
     logger.warn('[provision] D1 write failed', { userId: user.id, error: String(err) })
-    return NextResponse.json({ error: 'd1_write_failed' }, { status: 500 })
+    return NextResponse.json({ error: 'd1_write_failed' }, { status: 503 })
   }
 
   // 6. Emit signal (fire-and-forget)
@@ -167,7 +167,7 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
       .run()
   } catch (err) {
     logger.warn('[provision] D1 disable failed', { userId: user.id, error: String(err) })
-    return NextResponse.json({ error: 'd1_write_failed' }, { status: 500 })
+    return NextResponse.json({ error: 'd1_write_failed' }, { status: 503 })
   }
 
   // 3. Emit signal (fire-and-forget)

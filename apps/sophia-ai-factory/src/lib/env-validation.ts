@@ -51,10 +51,9 @@ export function getValidatedEnv(): Env {
   const result = envSchema.safeParse(process.env);
 
   if (!result.success) {
-    logger.warn('[env-validation] Missing or invalid environment variables');
-    for (const issue of result.error.issues) {
-      logger.warn(`  - ${issue.path.join('.')}: ${issue.message}`);
-    }
+    logger.warn('[env-validation] Missing or invalid environment variables', {
+      issues: result.error.issues.map(i => ({ path: i.path.join('.'), message: i.message })),
+    });
     // Fall through with raw process.env — don't block startup
     _validated = process.env as unknown as Env;
   } else {

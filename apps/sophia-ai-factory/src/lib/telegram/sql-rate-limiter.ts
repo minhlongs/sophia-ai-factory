@@ -28,8 +28,7 @@ export async function checkRateLimit(
   const now = Date.now()
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (db as any).rpc('check_telegram_rate_limit', {
+    const { data, error } = await db.rpc('check_telegram_rate_limit', {
       p_chat_id: chatId,
       p_command_type: 'command',
       p_max_requests: maxCommands,
@@ -37,12 +36,13 @@ export async function checkRateLimit(
     })
 
     if (error || !data) {
-      logger.error('check_telegram_rate_limit RPC error', error)
+      logger.error('check_telegram_rate_limit RPC error', undefined, { code: error?.code, message: error?.message })
       // Fail open
       return { allowed: true, remaining: maxCommands, resetInSeconds: windowSeconds }
     }
 
-    const row = data?.[0]
+    const rows = data as Array<Record<string, unknown>>
+    const row = rows[0]
     if (!row) {
       return { allowed: true, remaining: maxCommands, resetInSeconds: windowSeconds }
     }
