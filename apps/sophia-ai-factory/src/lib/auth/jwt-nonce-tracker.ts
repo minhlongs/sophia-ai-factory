@@ -34,10 +34,7 @@ declare global {
  * Get KV client (lazy init for Cloudflare Workers)
  */
 function getKvClient() {
-  if (typeof globalThis !== 'undefined' && (globalThis as any).KV_KV) {
-    return (globalThis as any).KV_KV;
-  }
-  return null;
+  return typeof globalThis !== 'undefined' && globalThis.KV_KV ? globalThis.KV_KV : null;
 }
 
 /**

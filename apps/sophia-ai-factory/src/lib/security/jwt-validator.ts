@@ -108,7 +108,7 @@ export function extractEnrichedClaims(
     sub: payload.sub,
     iat: payload.iat,
     exp: payload.exp,
-    jti: (payload as any).jti,
+    jti: (payload as { jti?: string }).jti,
     agency_id: payload.agency_id || '',
     license_nonce: payload.license_nonce,
     license_tier: payload.license_tier || 'BASIC',
@@ -254,30 +254,32 @@ export async function validateJwt(
       clockTolerance: 60, // 60 second tolerance for clock skew
     })
 
-    // Extract typed payload (basic claims)
+    // Extract typed payload (basic + enriched claims). jose's JWTPayload
+    // has [key: string]: unknown, so we narrow custom claims explicitly.
+    const claims = payload as Partial<ExtendedJwtPayload>
     const jwtPayload: ExtendedJwtPayload = {
       sub: (payload.sub as string) || 'unknown',
       iat: payload.iat || 0,
       exp: payload.exp || 0,
-      permissions: (payload as any).permissions,
+      permissions: claims.permissions,
       aud: Array.isArray(payload.aud) ? payload.aud[0] : (payload.aud || undefined),
       iss: payload.iss || undefined,
       // Enriched claims (Phase 2)
-      license_nonce: (payload as any).license_nonce,
-      license_tier: (payload as any).license_tier as ExtendedJwtPayload['license_tier'],
-      license_issued_at: (payload as any).license_issued_at,
-      license_expires_at: (payload as any).license_expires_at,
-      quota: (payload as any).quota,
-      agency_id: (payload as any).agency_id,
-      polar_customer_id: (payload as any).polar_customer_id,
-      polar_subscription_id: (payload as any).polar_subscription_id,
-      polar_subscription_status: (payload as any).polar_subscription_status,
-      billing_status: (payload as any).billing_status,
-      is_paid: (payload as any).is_paid,
-      overage_allowed: (payload as any).overage_allowed,
-      dunning_state: (payload as any).dunning_state,
-      feature_entitlements: (payload as any).feature_entitlements,
-      feature_limits: (payload as any).feature_limits,
+      license_nonce: claims.license_nonce,
+      license_tier: claims.license_tier,
+      license_issued_at: claims.license_issued_at,
+      license_expires_at: claims.license_expires_at,
+      quota: claims.quota,
+      agency_id: claims.agency_id,
+      polar_customer_id: claims.polar_customer_id,
+      polar_subscription_id: claims.polar_subscription_id,
+      polar_subscription_status: claims.polar_subscription_status,
+      billing_status: claims.billing_status,
+      is_paid: claims.is_paid,
+      overage_allowed: claims.overage_allowed,
+      dunning_state: claims.dunning_state,
+      feature_entitlements: claims.feature_entitlements,
+      feature_limits: claims.feature_limits,
     }
 
     // NEW: Check nonce for replay prevention (if jti claim exists)
