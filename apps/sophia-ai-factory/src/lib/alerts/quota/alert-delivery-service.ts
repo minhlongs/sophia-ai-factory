@@ -9,6 +9,7 @@
 
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import { sendWebhookAlert, createQuotaThresholdPayload } from '@/lib/alerts/webhook-notification-service';
 import {
   getAlertTemplate,
@@ -68,7 +69,7 @@ async function sendEmailAlert(
 
     return true;
   } catch (error) {
-    logger.error('[Quota Alert] Failed to send email', error as Error);
+    logger.error('[Quota Alert] Failed to send email', toError(error));
     return false;
   }
 }
@@ -115,7 +116,7 @@ async function sendSmsAlert(
 
     return true;
   } catch (error) {
-    logger.error('[Quota Alert] Failed to send SMS', error as Error);
+    logger.error('[Quota Alert] Failed to send SMS', toError(error));
     return false;
   }
 }
@@ -165,7 +166,7 @@ async function sendWebhookAlertChannel(
 
     return result.success;
   } catch (error) {
-    logger.error('[Quota Alert] Failed to send webhook', error as Error);
+    logger.error('[Quota Alert] Failed to send webhook', toError(error));
     return false;
   }
 }
@@ -247,7 +248,7 @@ export async function triggerQuotaAlert(context: QuotaAlertContext): Promise<Ale
 
     return { success, emailSent, smsSent, webhookSent };
   } catch (error) {
-    logger.error('[Quota Alert] Failed to trigger alert', error as Error);
+    logger.error('[Quota Alert] Failed to trigger alert', toError(error));
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
 }

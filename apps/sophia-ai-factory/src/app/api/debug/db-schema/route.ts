@@ -3,6 +3,7 @@
  * TEMP diagnostic endpoint — remove after debug
  */
 import { NextResponse } from 'next/server';
+import { toError } from '@/lib/utils/to-error';
 
 function getD1(): D1Database | null {
   const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
@@ -23,23 +24,23 @@ export async function GET() {
   try {
     subsSchema = await d1.prepare("PRAGMA table_info(subscriptions)").all();
     subscriptions = await d1.prepare('SELECT * FROM subscriptions LIMIT 10').all();
-  } catch (e) { subscriptions = { error: (e as Error).message }; }
+  } catch (e) { subscriptions = { error: toError(e).message }; }
 
   let orgBalances = null;
   try {
     orgBalances = await d1.prepare('SELECT * FROM org_balances LIMIT 10').all();
-  } catch (e) { orgBalances = { error: (e as Error).message }; }
+  } catch (e) { orgBalances = { error: toError(e).message }; }
 
   let users = null;
   try {
     users = await d1.prepare('SELECT id, email, role FROM users LIMIT 10').all();
-  } catch (e) { users = { error: (e as Error).message }; }
+  } catch (e) { users = { error: toError(e).message }; }
 
   let campaigns = null;
-  try { campaigns = await d1.prepare('SELECT id, user_id, title, status, created_at FROM campaigns ORDER BY created_at DESC LIMIT 10').all(); } catch (e) { campaigns = { error: (e as Error).message }; }
+  try { campaigns = await d1.prepare('SELECT id, user_id, title, status, created_at FROM campaigns ORDER BY created_at DESC LIMIT 10').all(); } catch (e) { campaigns = { error: toError(e).message }; }
 
   let orgMembers = null;
-  try { orgMembers = await d1.prepare('SELECT user_id, org_id, role FROM org_members LIMIT 20').all(); } catch (e) { orgMembers = { error: (e as Error).message }; }
+  try { orgMembers = await d1.prepare('SELECT user_id, org_id, role FROM org_members LIMIT 20').all(); } catch (e) { orgMembers = { error: toError(e).message }; }
 
   return NextResponse.json({ tables: tables.results, subsSchema: subsSchema?.results, subscriptions, orgBalances, users, campaigns, orgMembers });
 }

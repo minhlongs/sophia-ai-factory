@@ -13,6 +13,7 @@
  */
 
 import { logger } from '@/lib/utils/logger-utility'
+import { toError } from '@/lib/utils/to-error'
 import {
   getDueReports,
   updateNextRunAt,
@@ -206,7 +207,7 @@ async function fetchComplianceData(
       }
     }
   } catch (error) {
-    logger.error('[Cron Runner] Fetch compliance data failed', error as Error)
+    logger.error('[Cron Runner] Fetch compliance data failed', toError(error))
     throw error
   }
 }
@@ -259,7 +260,7 @@ export async function generateAndDeliverReport(
       storageUrl
     })
   } catch (error) {
-    logger.error('[Cron Runner] Generate and deliver failed', error as Error)
+    logger.error('[Cron Runner] Generate and deliver failed', toError(error))
     throw error
   }
 }
@@ -312,7 +313,7 @@ export async function runScheduledReports(): Promise<RunResult> {
         detail.recipients = report.recipients
         executed++
       } catch (error) {
-        detail.error = (error as Error).message
+        detail.error = toError(error).message
         errors++
         logger.error('[Cron Runner] Report execution failed', {
           reportId: report.id,
@@ -331,7 +332,7 @@ export async function runScheduledReports(): Promise<RunResult> {
 
     return { executed, errors, details }
   } catch (error) {
-    logger.error('[Cron Runner] Run scheduled reports failed', error as Error)
+    logger.error('[Cron Runner] Run scheduled reports failed', toError(error))
     return {
       executed,
       errors: errors + 1,
