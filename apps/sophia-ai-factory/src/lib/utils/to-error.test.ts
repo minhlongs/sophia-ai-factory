@@ -23,8 +23,8 @@ describe('toError', () => {
     expect(result.message).toBe('42')
   })
 
-  it('wraps plain object — .message equals "[object Object]"', () => {
-    const result = toError({ code: 500 })
+  it('wraps plain object without message — .message equals "[object Object]"', () => {
+    const result = toError({ foo: 'bar' })
     expect(result).toBeInstanceOf(Error)
     expect(result.message).toBe('[object Object]')
   })
@@ -39,5 +39,37 @@ describe('toError', () => {
     const result = toError(undefined)
     expect(result).toBeInstanceOf(Error)
     expect(result.message).toBe('undefined')
+  })
+
+  it('preserves Supabase PostgrestError shape (message + code/details/hint)', () => {
+    const pgErr = {
+      message: 'relation "users" does not exist',
+      code: '42P01',
+      details: 'Schema public scanned',
+      hint: 'Did you mean table "user"?',
+    }
+    const result = toError(pgErr)
+    expect(result).toBeInstanceOf(Error)
+    expect(result.message).toBe('relation "users" does not exist')
+    expect((result as Error & { code?: string }).code).toBe('42P01')
+    expect((result as Error & { details?: string }).details).toBe('Schema public scanned')
+    expect((result as Error & { hint?: string }).hint).toBe('Did you mean table "user"?')
+  })
+
+  it('preserves partial PostgrestError (message + code only)', () => {
+    const pgErr = { message: 'permission denied', code: '42501' }
+    const result = toError(pgErr)
+    expect(result).toBeInstanceOf(Error)
+    expect(result.message).toBe('permission denied')
+    expect((result as Error & { code?: string }).code).toBe('42501')
+    expect('details' in result).toBe(false)
+    expect('hint' in result).toBe(false)
+  })
+
+  it('handles AuthError-like object (message + status)', () => {
+    const authErr = { message: 'JWT expired', status: 401 }
+    const result = toError(authErr)
+    expect(result).toBeInstanceOf(Error)
+    expect(result.message).toBe('JWT expired')
   })
 })
