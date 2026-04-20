@@ -11,6 +11,7 @@ import { randomUUID } from 'node:crypto'
 import { createServerClient } from '@/lib/db/client'
 import { logger } from '@/lib/utils/logger-utility'
 import type { Json } from '@/lib/supabase/types'
+import type { AuditScheduledReportRow } from './types'
 
 /**
  * Report types available for scheduling
@@ -78,21 +79,6 @@ export type ScheduleReportInput = Omit<ScheduledReport, 'id' | 'nextRunAt' | 'cr
  * Database insert type for scheduled reports
  */
 interface ScheduledReportInsert {
-  id: string
-  report_type: string
-  format: string
-  frequency: string
-  recipients: string[]
-  filters: Json
-  next_run_at: number
-  created_at: number
-  created_by: string
-}
-
-/**
- * Database row type for scheduled reports
- */
-export interface ScheduledReportRow {
   id: string
   report_type: string
   format: string
@@ -205,9 +191,8 @@ export async function scheduleReport(
   }
 
   try {
-    const result = await (db as any)
-      .from('compliance_report_schedules')
-      .insert(reportData)
+    const result = await db.from<AuditScheduledReportRow>('compliance_report_schedules')
+      .insert(reportData as unknown as Record<string, unknown>)
       .select()
       .single()
 
@@ -216,7 +201,7 @@ export async function scheduleReport(
       throw result.error
     }
 
-    const inserted = result.data as ScheduledReportRow
+    const inserted = result.data as AuditScheduledReportRow
 
     logger.info('[Report Scheduler] Report scheduled', {
       reportId: inserted.id,
@@ -255,8 +240,7 @@ export async function getScheduledReports(adminId: string): Promise<ScheduledRep
   const db = createServerClient()
 
   try {
-    const result = await (db as any)
-      .from('compliance_report_schedules')
+    const result = await db.from<AuditScheduledReportRow>('compliance_report_schedules')
       .select('*')
       .eq('created_by', adminId)
       .order('next_run_at', { ascending: true })
@@ -266,7 +250,7 @@ export async function getScheduledReports(adminId: string): Promise<ScheduledRep
       throw result.error
     }
 
-    return (result.data as ScheduledReportRow[]).map((row) => ({
+    return (result.data as AuditScheduledReportRow[]).map((row) => ({
       id: row.id,
       type: row.report_type as ReportType,
       format: row.format as ReportFormat,
@@ -295,8 +279,7 @@ export async function cancelScheduledReport(reportId: string): Promise<void> {
   const db = createServerClient()
 
   try {
-    const result = await (db as any)
-      .from('compliance_report_schedules')
+    const result = await db.from<AuditScheduledReportRow>('compliance_report_schedules')
       .delete()
       .eq('id', reportId)
 
@@ -322,8 +305,7 @@ export async function getDueReports(): Promise<ScheduledReport[]> {
   const now = Math.floor(Date.now() / 1000)
 
   try {
-    const result = await (db as any)
-      .from('compliance_report_schedules')
+    const result = await db.from<AuditScheduledReportRow>('compliance_report_schedules')
       .select('*')
       .lte('next_run_at', now)
 
@@ -332,7 +314,7 @@ export async function getDueReports(): Promise<ScheduledReport[]> {
       throw result.error
     }
 
-    return (result.data as ScheduledReportRow[]).map((row) => ({
+    return (result.data as AuditScheduledReportRow[]).map((row) => ({
       id: row.id,
       type: row.report_type as ReportType,
       format: row.format as ReportFormat,
@@ -362,8 +344,7 @@ export async function updateNextRunAt(
   const db = createServerClient()
 
   try {
-    const result = await (db as any)
-      .from('compliance_report_schedules')
+    const result = await db.from<AuditScheduledReportRow>('compliance_report_schedules')
       .update({ next_run_at: nextRunAt })
       .eq('id', reportId)
 

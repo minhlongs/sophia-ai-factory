@@ -17,6 +17,30 @@ import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 
 /**
+ * DB row shape for audit_logs table (violation events).
+ */
+interface ViolationAuditRow {
+  id: string;
+  event_type: string;
+  user_id: string;
+  license_nonce: string;
+  receipt: string | Record<string, unknown>;
+  tier: string;
+  created_at: string;
+}
+
+/**
+ * Insert shape for audit_logs table (violation events).
+ */
+interface ViolationAuditInsert {
+  event_type: string;
+  user_id: string;
+  license_nonce: string;
+  receipt: string;
+  tier: string;
+}
+
+/**
  * Violation event types
  */
 export type ViolationType =
@@ -54,7 +78,7 @@ export interface ViolationEvent {
   auditReceiptId?: string;    // Links to audit_logs.receipt
   overageEventId?: string;    // Links to overage_events.id
   // Metadata
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -95,40 +119,41 @@ export async function logViolation(event: ViolationEvent): Promise<string | null
   try {
     const db = createServerClient();
 
-    const { data, error } = await db
-      .from('audit_logs')
-      .insert({
-        event_type: `violation:${event.type}`,
-        user_id: event.userId,
-        license_nonce: event.licenseNonce,
-        receipt: JSON.stringify({
-          type: event.type,
-          tier: event.tier,
-          exceeded_type: event.exceededType,
-          exceeded_limit: event.exceededLimit,
-          exceeded_current: event.exceededCurrent,
-          exceeded_by: event.exceededBy,
-          requested_credits: event.requestedCredits,
-          endpoint: event.endpoint,
-          ip_address: event.ipAddress,
-          user_agent: event.userAgent,
-          billable: event.billable,
-          price_per_credit: event.pricePerCredit,
-          total_charge: event.totalCharge,
-          audit_receipt_id: event.auditReceiptId,
-          overage_event_id: event.overageEventId,
-          ...event.metadata,
-        }),
-        // Use tier for additional metadata
+    const insertPayload: ViolationAuditInsert = {
+      event_type: `violation:${event.type}`,
+      user_id: event.userId,
+      license_nonce: event.licenseNonce,
+      receipt: JSON.stringify({
+        type: event.type,
         tier: event.tier,
-      } as any)
+        exceeded_type: event.exceededType,
+        exceeded_limit: event.exceededLimit,
+        exceeded_current: event.exceededCurrent,
+        exceeded_by: event.exceededBy,
+        requested_credits: event.requestedCredits,
+        endpoint: event.endpoint,
+        ip_address: event.ipAddress,
+        user_agent: event.userAgent,
+        billable: event.billable,
+        price_per_credit: event.pricePerCredit,
+        total_charge: event.totalCharge,
+        audit_receipt_id: event.auditReceiptId,
+        overage_event_id: event.overageEventId,
+        ...event.metadata,
+      }),
+      // Use tier for additional metadata
+      tier: event.tier,
+    };
+
+    const { data, error } = await db.from<ViolationAuditRow>('audit_logs')
+      .insert(insertPayload as unknown as Record<string, unknown>)
       .select('id')
-      .single() as any;
+      .single();
 
     if (error) throw error;
 
     logger.warn('[Violation Logger] Violation logged', {
-      violationId: (data as any)?.id,
+      violationId: data?.id,
       type: event.type,
       userId: event.userId,
       licenseNonce: event.licenseNonce.slice(0, 8) + '...',
@@ -136,7 +161,7 @@ export async function logViolation(event: ViolationEvent): Promise<string | null
       billable: event.billable,
     });
 
-    return data.id;
+    return data?.id ?? null;
   } catch (error) {
     logger.error('[Violation Logger] Failed to log violation', error as Error);
     return null;
@@ -199,7 +224,7 @@ export async function logBillingEvent(event: {
   pricePerCredit?: number;
   totalCharge?: number;
   overageEventId?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }): Promise<string | null> {
   return logViolation({
     type: 'OVERAGE_BILLED',
@@ -221,17 +246,16 @@ export async function getViolationHistory(
   licenseNonce: string;
   tier: string;
   createdAt: number;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }>> {
   const db = createServerClient();
   const limit = filters.limit ?? 100;
 
-  let query = db
-    .from('audit_logs')
+  let query = db.from<ViolationAuditRow>('audit_logs')
     .select('id, event_type, user_id, license_nonce, tier, receipt, created_at')
     .like('event_type', 'violation:%')
     .order('created_at', { ascending: false })
-    .limit(limit) as any;
+    .limit(limit);
 
   // Apply filters
   if (filters.userId) {
@@ -253,28 +277,26 @@ export async function getViolationHistory(
   const { data, error } = await query;
 
   if (error) {
-    logger.error('[Violation Logger] Failed to fetch violation history', error);
+    logger.error('[Violation Logger] Failed to fetch violation history', new Error(error.message));
     return [];
   }
 
-  interface ViolationRow {
-    id: string;
-    event_type: string;
-    user_id: string;
-    license_nonce: string;
-    tier: string;
-    created_at: string;
-    receipt: string | Record<string, unknown>;
-  }
+  const VALID_VIOLATION_TYPES = new Set<string>([
+    'QUOTA_EXCEEDED', 'REQUEST_THROTTLED', 'OVERAGE_BILLED',
+    'LICENSE_SUSPENDED', 'QUOTA_ADJUSTED', 'PAYMENT_CONFIRMED',
+  ]);
 
-  return (data || []).map((row: ViolationRow) => {
+  return (data || []).map((row: ViolationAuditRow) => {
     // Parse receipt JSON
     const receipt = typeof row.receipt === 'string'
       ? JSON.parse(row.receipt)
       : row.receipt || {};
 
-    // Extract event type from "violation:EVENT_TYPE"
-    const type = row.event_type?.replace('violation:', '') as ViolationType;
+    // Extract and validate event type from "violation:EVENT_TYPE"
+    const rawType = row.event_type?.replace('violation:', '') ?? '';
+    const type: ViolationType = VALID_VIOLATION_TYPES.has(rawType)
+      ? (rawType as ViolationType)
+      : 'QUOTA_EXCEEDED'; // fallback to defined default
 
     return {
       id: row.id,
@@ -282,7 +304,7 @@ export async function getViolationHistory(
       userId: row.user_id,
       licenseNonce: row.license_nonce,
       tier: row.tier,
-      createdAt: row.created_at,
+      createdAt: typeof row.created_at === 'number' ? row.created_at : Number(row.created_at),
       metadata: receipt,
     };
   });
@@ -305,13 +327,12 @@ export async function getViolationSummary(options: {
   const db = createServerClient();
 
   // Fetch all violations in date range
-  const { data } = await db
-    .from('audit_logs')
+  const { data } = await db.from<ViolationAuditRow>('audit_logs')
     .select('event_type, user_id, tier, receipt')
     .like('event_type', 'violation:%')
     .gte('created_at', options.startDate)
     .lte('created_at', options.endDate)
-    .limit(options.limit) as any;
+    .limit(options.limit ?? 1000);
 
   if (!data || data.length === 0) {
     return {

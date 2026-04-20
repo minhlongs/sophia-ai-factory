@@ -12,7 +12,7 @@
 
 import { createServerClient } from '@/lib/db/client'
 import { logger } from '@/lib/utils/logger-utility'
-import type { RaasAuditLogInsert, Json } from '@/lib/supabase/types'
+import type { RaasAuditLogInsert, RaasAuditLogRow, Json } from '@/lib/supabase/types'
 
 /**
  * Parameters for audit query logging
@@ -74,9 +74,8 @@ export async function logAuditQuery(params: AuditQueryLogParams): Promise<boolea
 
   try {
     // Insert audit log (database trigger auto-computes hash chain)
-    const { data, error } = await (db as any)
-      .from('raas_audit_logs')
-      .insert(logData)
+    const { data, error } = await db.from<RaasAuditLogRow>('raas_audit_logs')
+      .insert(logData as unknown as Record<string, unknown>)
       .select()
       .single()
 
@@ -132,12 +131,11 @@ export async function logApiKeyCreation(
   }
 
   try {
-    const { error } = await (db as any)
-      .from('raas_audit_logs')
-      .insert(logData)
+    const { error } = await db.from<RaasAuditLogRow>('raas_audit_logs')
+      .insert(logData as unknown as Record<string, unknown>)
 
     if (error) {
-      logger.error('[Audit Query Logger] Failed to log API key creation', error as Error)
+      logger.error('[Audit Query Logger] Failed to log API key creation', new Error(error.message))
       return false
     }
 
@@ -185,12 +183,11 @@ export async function logApiKeyRevocation(
   }
 
   try {
-    const { error } = await (db as any)
-      .from('raas_audit_logs')
-      .insert(logData)
+    const { error } = await db.from<RaasAuditLogRow>('raas_audit_logs')
+      .insert(logData as unknown as Record<string, unknown>)
 
     if (error) {
-      logger.error('[Audit Query Logger] Failed to log API key revocation', error as Error)
+      logger.error('[Audit Query Logger] Failed to log API key revocation', new Error(error.message))
       return false
     }
 
@@ -237,9 +234,8 @@ export async function logApiKeyValidationFailure(
   }
 
   try {
-    const { error: insertError } = await (db as any)
-      .from('raas_audit_logs')
-      .insert(logData)
+    const { error: insertError } = await db.from<RaasAuditLogRow>('raas_audit_logs')
+      .insert(logData as unknown as Record<string, unknown>)
 
     if (insertError) {
       logger.error('[Audit Query Logger] Failed to log validation failure', insertError as Error)
@@ -277,13 +273,12 @@ export async function queryAuditLogs(
     offset?: number
   },
   includePII: boolean = false
-): Promise<any[]> {
+): Promise<RaasAuditLogRow[] | Record<string, unknown>[]> {
   const db = createServerClient()
   const startTime = Date.now()
 
   // Build query
-  let query = (db as any)
-    .from('raas_audit_logs')
+  let query = db.from<RaasAuditLogRow>('raas_audit_logs')
     .select('*', { count: 'exact' })
 
   // Apply filters
@@ -307,9 +302,9 @@ export async function queryAuditLogs(
     query = query.eq('user_id', filters.userId)
   }
 
-  // Apply model filter if stored in details
+  // Apply model filter if stored in details (D1 JSON text search via LIKE)
   if (filters.model) {
-    query = query.contains('details', { model_name: filters.model })
+    query = query.like('details', `%"model_name":"${filters.model}"%`)
   }
 
   // Pagination
@@ -337,18 +332,10 @@ export async function queryAuditLogs(
 
   // Apply GDPR redaction if requested
   if (!includePII && data) {
-    interface AuditLogWithRedaction {
-      ip_address: string | null;
-      user_id: string;
-      ip_address_hash?: string;
-      user_pseudonym?: string;
-      [key: string]: unknown;
-    }
-
-    return data.map((log: AuditLogWithRedaction) => ({
+    return data.map((log: RaasAuditLogRow) => ({
       ...log,
       ip_address: log.ip_address_hash || null,
-      user_id: log.user_pseudonym || log.user_id,
+      user_id: log.user_pseudonym || log.user_id || '',
     }))
   }
 

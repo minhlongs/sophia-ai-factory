@@ -22,6 +22,12 @@ import { generateReport, type ComplianceReportData } from './pdf-report-generato
 import { deliverReport, storeReport } from './report-delivery'
 import { createServerClient } from '@/lib/db/client'
 import { calculateNextRunAt } from './report-scheduler'
+import type {
+  RaasAuditLogRow,
+  AuditLicenseRow,
+  AuditUsageEventRow,
+  AuditHashChainRow,
+} from './types'
 
 /**
  * Result from running scheduled reports
@@ -63,8 +69,7 @@ async function fetchComplianceData(
 
   try {
     // Fetch audit logs count
-    const logsQuery = (db as any)
-      .from('raas_audit_logs')
+    const logsQuery = db.from<RaasAuditLogRow>('raas_audit_logs')
       .select('*', { count: 'exact', head: true })
       .gte('created_at', startDate)
       .lte('created_at', endDate)
@@ -76,8 +81,7 @@ async function fetchComplianceData(
     const { count: totalLogs } = await logsQuery
 
     // Fetch hash chain verification status
-    const hashChainQuery = await (db as any)
-      .from('raas_audit_logs')
+    const hashChainQuery = await db.from<AuditHashChainRow>('raas_audit_logs')
       .select('content_hash, hash_chain_valid')
       .gte('created_at', startDate)
       .lte('created_at', endDate)
@@ -86,8 +90,7 @@ async function fetchComplianceData(
 
     const firstLog = hashChainQuery.data?.[0]
 
-    const hashChainQueryEnd = await (db as any)
-      .from('raas_audit_logs')
+    const hashChainQueryEnd = await db.from<AuditHashChainRow>('raas_audit_logs')
       .select('content_hash')
       .gte('created_at', startDate)
       .lte('created_at', endDate)
@@ -97,8 +100,7 @@ async function fetchComplianceData(
     const lastLog = hashChainQueryEnd.data?.[0]
 
     // Fetch license breakdown
-    const licenseQuery = await (db as any)
-      .from('raas_licenses')
+    const licenseQuery = await db.from<AuditLicenseRow>('raas_licenses')
       .select('nonce, tier, created_at, last_used_at')
       .gte('created_at', startDate)
       .lte('created_at', endDate)
@@ -106,15 +108,8 @@ async function fetchComplianceData(
     const licenses = licenseQuery.data || []
 
     // Fetch usage statistics per license
-    const usageQuery = await (db as any)
-      .from('raas_usage_events')
-      .select(`
-        license_nonce,
-        model_name,
-        token_count,
-        tokens_input,
-        tokens_output
-      `)
+    const usageQuery = await db.from<AuditUsageEventRow>('raas_usage_events')
+      .select('license_nonce, model_name, token_count, tokens_input, tokens_output')
       .gte('created_at', startDate)
       .lte('created_at', endDate)
 
@@ -154,8 +149,7 @@ async function fetchComplianceData(
     )
 
     // Count validations per license
-    const validationQuery = await (db as any)
-      .from('raas_audit_logs')
+    const validationQuery = await db.from<{ license_nonce: string }>('raas_audit_logs')
       .select('license_nonce')
       .eq('action', 'VALIDATE')
       .gte('created_at', startDate)
@@ -175,14 +169,7 @@ async function fetchComplianceData(
     }
 
     // Build license report data
-    interface LicenseReportRow {
-      nonce: string;
-      tier: string;
-      created_at: number;
-      last_used_at: number | null;
-    }
-
-    const licenseReportData = licenses.map((lic: LicenseReportRow) => ({
+    const licenseReportData = licenses.map((lic: AuditLicenseRow) => ({
       nonce: lic.nonce,
       tier: lic.tier,
       validationCount: validationCounts.get(lic.nonce) || 0,
@@ -329,8 +316,8 @@ export async function runScheduledReports(): Promise<RunResult> {
         errors++
         logger.error('[Cron Runner] Report execution failed', {
           reportId: report.id,
-          errorMessage: (error as Error).message
-        } as any)
+          errorMessage: error instanceof Error ? error.message : String(error)
+        })
       }
 
       details.push(detail)

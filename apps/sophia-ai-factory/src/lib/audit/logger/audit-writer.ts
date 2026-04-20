@@ -8,7 +8,7 @@
 import { createServerClient } from '@/lib/db/client'
 import { generateReceipt } from '../compliance-receipt'
 import { logger } from '@/lib/utils/logger-utility'
-import type { RaasAuditLogInsert, Json } from '@/lib/supabase/types'
+import type { RaasAuditLogInsert, RaasAuditLogRow, Json } from '@/lib/supabase/types'
 import type { ComplianceReceipt } from '../compliance-receipt'
 import { insertAuditLog, updateReceiptSignature } from './audit-event-builder'
 import type { ValidationLogParams, CreationLogParams, RevocationLogParams } from './audit-event-builder'
@@ -19,7 +19,7 @@ import type { ValidationLogParams, CreationLogParams, RevocationLogParams } from
 async function finalizeReceipt(
   db: ReturnType<typeof createServerClient>,
   logId: string,
-  log: any
+  log: RaasAuditLogRow
 ): Promise<ComplianceReceipt> {
   const receipt = generateReceipt(log)
   const updateError = await updateReceiptSignature(db, logId, receipt.signature)

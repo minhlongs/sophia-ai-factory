@@ -18,9 +18,8 @@ export async function insertAuditLog(
   db: ReturnType<typeof createServerClient>,
   logData: RaasAuditLogInsert
 ): Promise<SupabaseResult<RaasAuditLogRow>> {
-  const result = await (db as any)
-    .from('raas_audit_logs')
-    .insert(logData)
+  const result = await db.from<RaasAuditLogRow>('raas_audit_logs')
+    .insert(logData as unknown as Record<string, unknown>)
     .select()
     .single()
   return result as SupabaseResult<RaasAuditLogRow>
@@ -34,9 +33,8 @@ export async function updateReceiptSignature(
   logId: string,
   signature: string
 ): Promise<Error | null> {
-  const result = await (db as any)
-    .from('raas_audit_logs')
-    .update({ receipt_signature: signature })
+  const result = await db.from<RaasAuditLogRow>('raas_audit_logs')
+    .update({ receipt_signature: signature } as Partial<RaasAuditLogRow>)
     .eq('id', logId)
   return (result as { error: Error | null }).error
 }
