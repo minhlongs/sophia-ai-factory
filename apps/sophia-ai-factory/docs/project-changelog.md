@@ -1,6 +1,29 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-23 | **Current Version:** 1.12.5
+**Last Updated:** 2026-04-23 | **Current Version:** 1.12.6
+
+---
+
+## [2026-04-23] Phase 20 — toError() Slice 7 FINAL (46 long-tail migrations) (v1.12.6)
+
+### Summary
+Final migration slice of `as Error` → `toError()`. 46 sites normalized across 46 files; long-tail completion locking pattern since Phase 13. Error-handling surface now consistent across entire codebase.
+
+### Changes (46 files)
+- 24 API routes: `src/app/api/**/*` — toError() applied to all route-level error handlers
+- 6 UI/hooks: `src/hooks/**/*.ts`, `src/components/**/*.ts` — React client scope error handling
+- 16 libraries: `src/lib/**/*.ts` — utility, service, and infrastructure error normalization
+
+### Quality & Review
+- Build: 0 new TypeScript errors on 46 edited files
+- Tests: 1306/1306 pass (baseline unchanged)
+- Code Review: 9.7/10 APPROVE SHIP (0 blockers)
+- Cumulative since Phase 13: 225 `as Error` sites normalized via `toError()`
+
+### Deferred (Phase 21+ backlog)
+- `logger-utility.ts` 2× union-type casts (overload typing — requires signature rework)
+- ~244 `instanceof Error` ternary simplifications
+- ESLint rule enforcement to prevent future `as Error` regression
 
 ---
 
