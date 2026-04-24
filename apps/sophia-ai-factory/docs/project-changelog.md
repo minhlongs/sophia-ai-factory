@@ -1,6 +1,42 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-24 | **Current Version:** 1.12.16
+**Last Updated:** 2026-04-24 | **Current Version:** 1.12.17
+
+---
+
+## [2026-04-24] Phase 31 Wave 5 — Non-`err` Sweep `src/app/**` Pure-DRY (v1.12.17)
+
+### Summary
+Extended Phase 30 ternary consolidation into `src/app/**` cron routes. Replaced 6 bare `instanceof Error ? X.message : String(X)` ternaries with `getErrorMessage(X)` helper across 5 files. Pure refactor, zero behavior change. Cumulative Phase 26→31 series now ~92 files consolidated.
+
+### Changes (5 files)
+- `src/app/api/admin/api-keys/route.ts` — 1 ternary → `getErrorMessage(err)`, added import
+- `src/app/api/cron/usage-export/route.ts` — 2 ternaries → `getErrorMessage(err)`, added import
+- `src/app/api/cron/uptime-check/route.ts` — 1 ternary → `getErrorMessage(err)`, added import
+- `src/app/api/cron/error-digest/route.ts` — 1 ternary (`d1Err`) → `getErrorMessage(d1Err)`, added import
+- `src/app/api/cron/heartbeat/route.ts` — 1 ternary (`d1Err`) → `getErrorMessage(d1Err)`, added import
+
+### Semantic Preservation Notes
+- 18 string-literal fallback residuals left intact (error messages in template literals, error codes, etc.)
+- ~60 Error-returning type-guards untouched (established Phase 30 pattern per anthropic-sse-parser precedent)
+- No behavioral deviation from Phase 30 baseline
+
+### Quality & Review
+- Build: 0 new TypeScript errors (baseline 611)
+- Tests: 1321 pass + 31 skip (unchanged)
+- TSC: 611 errors (delta 0)
+- Lint: 0 new violations
+- Code Review: 9.9/10 APPROVE SHIP (0 blockers)
+- CI GREEN + Production HTTP 200
+
+### Cumulative Bilan (Phase 26→31)
+- Phase 26: `getErrorMessage()` helper export (baseline)
+- Phase 27: 7 ternaries in `src/lib/signals/**`
+- Phase 28: 14 ternaries in `src/app/api/**`
+- Phase 29: ~43 remaining ternaries (Phase 29 Wave 3)
+- Phase 30: 22 files swept in `src/lib/**` (non-`err` identifiers)
+- Phase 31: 5 files swept in `src/app/**` (cron routes)
+- **Total consolidated:** ~92 files across series; remaining ~244 `instanceof Error` ternary simplifications deferred (Phases 32+)
 
 ---
 
