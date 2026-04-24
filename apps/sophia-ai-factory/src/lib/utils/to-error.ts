@@ -35,3 +35,16 @@ export function toError(value: unknown): Error {
 
   return new Error(String(value))
 }
+
+/**
+ * Extract a string message from any thrown/rejected value.
+ *
+ * Shortcut for the ubiquitous `err instanceof Error ? err.message : String(err)`
+ * ternary. Delegates to `toError()` so PostgrestError-shaped objects return
+ * `.message` (not `"[object Object]"`) — same robustness as the full `toError()`
+ * path, but returns a plain string for call-sites that only need the text
+ * (logging metadata, user-facing error bodies, etc.).
+ */
+export function getErrorMessage(value: unknown): string {
+  return toError(value).message
+}

@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { toError } from './to-error'
+import { toError, getErrorMessage } from './to-error'
 
 describe('toError', () => {
   it('returns Error instance unchanged (identity preserved)', () => {
@@ -71,5 +71,20 @@ describe('toError', () => {
     const result = toError(authErr)
     expect(result).toBeInstanceOf(Error)
     expect(result.message).toBe('JWT expired')
+  })
+})
+
+describe('getErrorMessage', () => {
+  it('Error instance → returns .message', () => {
+    expect(getErrorMessage(new Error('boom'))).toBe('boom')
+  })
+
+  it('string → returns the string', () => {
+    expect(getErrorMessage('plain text')).toBe('plain text')
+  })
+
+  it('PostgrestError-shaped object → returns .message (NOT "[object Object]")', () => {
+    const pgErr = { message: 'relation "users" does not exist', code: '42P01' }
+    expect(getErrorMessage(pgErr)).toBe('relation "users" does not exist')
   })
 })
