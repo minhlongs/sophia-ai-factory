@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getD1Client } from '@/lib/db/client';
 import { verifyJwt } from '@/lib/db/auth-verify';
+import { toError } from '@/lib/utils/to-error';
 
 const VALID_COUPONS: Record<string, { tier: string; mcuBonus: number }> = {
   FREE50: { tier: 'MASTER', mcuBonus: 1000 },
@@ -83,7 +84,7 @@ export async function POST(request: NextRequest) {
   } catch (e) {
     return NextResponse.json({
       success: false,
-      error: (e as Error).message,
+      error: toError(e).message,
     }, { status: 500 });
   }
 }
