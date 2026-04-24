@@ -16,6 +16,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import { RaasGatewayClient } from '@/lib/raas-gateway-client';
 import { getKvClient } from '@/lib/redis';
 import { logAuditEvent } from '@/lib/audit/audit-logger';
@@ -123,7 +124,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<SyncResul
 
     return NextResponse.json(result);
   } catch (error) {
-    logger.error('[License Sync] Sync failed', error as Error, { requestId });
+    logger.error('[License Sync] Sync failed', toError(error), { requestId });
 
     return NextResponse.json(
       {
@@ -190,7 +191,7 @@ async function syncFromGateway(
       kvCacheInvalidated: kvInvalidated,
     };
   } catch (error) {
-    logger.error('[License Sync] Gateway sync failed', error as Error, { requestId });
+    logger.error('[License Sync] Gateway sync failed', toError(error), { requestId });
 
     // Fallback to database
     logger.info('[License Sync] Falling back to database sync');
@@ -256,7 +257,7 @@ async function syncFromDatabase(licenseNonce: string): Promise<SyncResult> {
       kvCacheInvalidated: false,
     };
   } catch (error) {
-    logger.error('[License Sync] Database sync failed', error as Error);
+    logger.error('[License Sync] Database sync failed', toError(error));
     throw error;
   }
 }
@@ -349,7 +350,7 @@ async function invalidateKvCache(licenseNonce: string): Promise<boolean> {
 
     return true;
   } catch (error) {
-    logger.error('[License Sync] KV cache invalidation failed', error as Error);
+    logger.error('[License Sync] KV cache invalidation failed', toError(error));
     return false;
   }
 }

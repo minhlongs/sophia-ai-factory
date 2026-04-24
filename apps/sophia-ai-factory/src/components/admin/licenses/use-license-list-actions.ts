@@ -7,6 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import type { LicenseSummary } from '@/lib/raas-schema';
 
 export interface License {
@@ -63,7 +64,7 @@ export function useLicenseListActions({ onRevoke, onExtend }: UseLicenseListActi
         setTotal(data.total);
       }
     } catch (error) {
-      logger.error('Failed to fetch licenses', error as Error);
+      logger.error('Failed to fetch licenses', toError(error));
     } finally {
       setLoading(false);
     }
@@ -93,7 +94,7 @@ export function useLicenseListActions({ onRevoke, onExtend }: UseLicenseListActi
         alert(`Failed to revoke: ${data.error}`);
       }
     } catch (error) {
-      logger.error('Failed to revoke license', error as Error);
+      logger.error('Failed to revoke license', toError(error));
     }
   };
 
@@ -108,7 +109,7 @@ export function useLicenseListActions({ onRevoke, onExtend }: UseLicenseListActi
         alert(`Failed to reactivate: ${data.error}`);
       }
     } catch (error) {
-      logger.error('Failed to reactivate license', error as Error);
+      logger.error('Failed to reactivate license', toError(error));
     }
   };
 
@@ -129,7 +130,7 @@ export function useLicenseListActions({ onRevoke, onExtend }: UseLicenseListActi
         alert(`Failed to extend: ${data.error}`);
       }
     } catch (error) {
-      logger.error('Failed to extend license', error as Error);
+      logger.error('Failed to extend license', toError(error));
     }
   };
 

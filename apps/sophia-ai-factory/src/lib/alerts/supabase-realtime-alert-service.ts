@@ -9,6 +9,7 @@
 
 import { getD1Client } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import { triggerUsageThresholdAlert } from '@/lib/alerts/realtime-alert-service';
 
 /** Configuration for alert polling */
@@ -139,7 +140,7 @@ async function handleUsageEvent(
       });
     }
   } catch (error) {
-    logger.error('[Alert] Error handling usage event', error as Error);
+    logger.error('[Alert] Error handling usage event', toError(error));
   }
 }
 
@@ -172,7 +173,7 @@ export async function subscribeToUsageEvents(
         }
       }
     } catch (error) {
-      logger.error('[Alert] Poll error', error as Error);
+      logger.error('[Alert] Poll error', toError(error));
     }
   };
 
@@ -214,7 +215,7 @@ export async function subscribeToViolations(
         }
       }
     } catch (error) {
-      logger.error('[Alert] Violations poll error', error as Error);
+      logger.error('[Alert] Violations poll error', toError(error));
     }
   };
 

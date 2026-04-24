@@ -6,6 +6,7 @@
  */
 
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 
 export interface RaasGatewayConfig {
   baseURL: string; // 'https://raas.agencyos.network'
@@ -105,7 +106,7 @@ export class RaasGatewayClient {
 
       return response.ok;
     } catch (error) {
-      logger.error('[RaaS] API key validation failed', error as Error);
+      logger.error('[RaaS] API key validation failed', toError(error));
       return false;
     }
   }
@@ -233,7 +234,7 @@ export class RaasGatewayClient {
         ws.close();
       };
     } catch (error) {
-      logger.error('[RaaS] WebSocket connection failed', error as Error);
+      logger.error('[RaaS] WebSocket connection failed', toError(error));
       // Fallback to polling
       const interval = setInterval(async () => {
         try {
@@ -244,7 +245,7 @@ export class RaasGatewayClient {
           );
           callback(metrics);
         } catch (error) {
-          logger.error('[RaaS] Polling failed', error as Error);
+          logger.error('[RaaS] Polling failed', toError(error));
         }
       }, 30000); // 30 seconds interval
 

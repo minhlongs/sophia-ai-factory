@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { logger } from '@/lib/utils/logger-utility'
+import { toError } from '@/lib/utils/to-error'
 
 import {
   generateApiKey,
@@ -101,7 +102,7 @@ export async function GET(request: NextRequest) {
       })),
     })
   } catch (error) {
-    logger.error('[API Keys] Failed to fetch API keys', error as Error)
+    logger.error('[API Keys] Failed to fetch API keys', toError(error))
     return NextResponse.json(
       { error: 'Failed to fetch API keys' },
       { status: 500 }
@@ -168,7 +169,7 @@ export async function POST(request: NextRequest) {
       result.keyId,
       body.permissions,
       request.headers.get('x-forwarded-for')?.split(',')[0]
-    ).catch(e => logger.error('[API Keys] Audit log failed', e as Error))
+    ).catch(e => logger.error('[API Keys] Audit log failed', toError(e)))
 
     logger.info('[API Keys] Created new API key', {
       keyId: result.keyId,
@@ -191,7 +192,7 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
-    logger.error('[API Keys] Failed to create API key', error as Error)
+    logger.error('[API Keys] Failed to create API key', toError(error))
     return NextResponse.json(
       { error: `Failed to create API key: ${msg}` },
       { status: 500 }
