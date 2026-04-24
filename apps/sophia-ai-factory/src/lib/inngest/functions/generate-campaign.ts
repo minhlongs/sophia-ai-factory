@@ -10,6 +10,7 @@ import { YouTubeChannelAdapter } from "@/lib/gateway/adapters/youtube-channel-ad
 import { TikTokChannelAdapter } from "@/lib/gateway/adapters/tiktok-channel-adapter";
 import { TelegramNotificationAdapter } from "@/lib/gateway/adapters/telegram-notification-adapter";
 import { logger } from "@/lib/utils/logger-utility";
+import { getErrorMessage } from "@/lib/utils/to-error";
 import { resolveOrgId } from "@/lib/auth/resolve-org-id";
 
 // Singleton resume engine
@@ -206,7 +207,7 @@ export const generateCampaign = inngest.createFunction(
               continue;
             }
           } else {
-            const errMsg = err instanceof Error ? err.message : String(err);
+            const errMsg = getErrorMessage(err);
             logger.error(`[poll-video-status] Permanent error`, err instanceof Error ? err : undefined, { campaignId });
             await updateStatus("failed", 70, { error_message: errMsg });
             await notifyUser(`❌ **Sophia AI**: Video generation failed for "${topic}". Error: ${errMsg}`);

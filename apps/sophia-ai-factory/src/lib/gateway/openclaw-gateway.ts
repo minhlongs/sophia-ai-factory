@@ -15,6 +15,7 @@ import type {
 } from "./gateway-types";
 import { track } from "@/lib/signals/track";
 import { D1Events } from "@/lib/signals/d1-event-types";
+import { getErrorMessage } from "@/lib/utils/to-error";
 
 export type {
   CampaignOutput,
@@ -185,7 +186,7 @@ export class OpenClawGateway {
         if (result.success) return result;
         lastError = result.error;
       } catch (err) {
-        lastError = err instanceof Error ? err.message : String(err);
+        lastError = getErrorMessage(err);
       }
 
       if (attempt < this.retryPolicy.maxRetries) {

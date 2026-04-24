@@ -1,3 +1,5 @@
+import { getErrorMessage } from '@/lib/utils/to-error';
+
 export async function setTelegramWebhook() {
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
@@ -28,7 +30,7 @@ export async function setTelegramWebhook() {
 
     return response.json();
   } catch (err) {
-    return { ok: false, description: `Network error: ${err instanceof Error ? err.message : String(err)}` };
+    return { ok: false, description: `Network error: ${getErrorMessage(err)}` };
   }
 }
 
