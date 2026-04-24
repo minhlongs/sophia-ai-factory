@@ -121,8 +121,8 @@ function resolveErrorArgs(
     const meta = Object.keys(rest).length > 0 ? rest : undefined;
     return { err, meta, reqId: arg3 as string | undefined };
   }
-  // Legacy form
-  return { err: arg2 as Error | undefined, meta: arg3, reqId: arg4 };
+  // Legacy form — narrowing already guarantees arg2 is Error | undefined here
+  return { err: arg2, meta: arg3, reqId: arg4 };
 }
 
 export const logger = {
@@ -152,11 +152,7 @@ export const logger = {
     // Normalise arg3 — in legacy form it's metadata (object); in new form it would be requestId (string)
     const meta3 = typeof arg3 === 'object' ? arg3 : undefined;
     const reqId3 = typeof arg3 === 'string' ? arg3 : arg4;
-    const { err, meta, reqId } = resolveErrorArgs(
-      arg2 as Error | Record<string, unknown> | undefined,
-      meta3,
-      reqId3
-    );
+    const { err, meta, reqId } = resolveErrorArgs(arg2, meta3, reqId3);
     log('error', message, meta, err, reqId);
   },
 
