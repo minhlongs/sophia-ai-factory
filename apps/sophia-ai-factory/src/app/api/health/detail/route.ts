@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getErrorMessage } from "@/lib/utils/to-error";
 
 // RED-TEAM #10: Requires INTROSPECT_TOKEN bearer — returns 401 otherwise.
 // Exposes binding statuses + cron last-run timestamps.
@@ -58,7 +59,7 @@ async function checkD1(env: CloudflareEnv): Promise<SubsystemCheck> {
     return {
       status: "degraded",
       latencyMs: Date.now() - t0,
-      error: err instanceof Error ? err.message : String(err),
+      error: getErrorMessage(err),
     };
   }
 }
@@ -76,7 +77,7 @@ async function checkR2(env: CloudflareEnv): Promise<SubsystemCheck> {
     return {
       status: "degraded",
       latencyMs: Date.now() - t0,
-      error: err instanceof Error ? err.message : String(err),
+      error: getErrorMessage(err),
     };
   }
 }

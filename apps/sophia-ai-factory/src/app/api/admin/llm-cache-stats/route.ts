@@ -7,6 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getCacheStats, cacheHitRate } from '@/lib/admin/monitoring-queries'
+import { getErrorMessage } from '@/lib/utils/to-error'
 
 export const dynamic = 'force-dynamic'
 
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const hitRate = cacheHitRate(result.data)
     return NextResponse.json({ ok: true, ts, stats: result.data, hitRate }, { status: 200 })
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
+    const message = getErrorMessage(err)
     return NextResponse.json(
       { ok: false, reason: 'D1_ERROR', error: message, ts },
       { status: 200 },

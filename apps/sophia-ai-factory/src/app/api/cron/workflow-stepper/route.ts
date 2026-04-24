@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { track } from '@/lib/signals/track'
 import { D1Events } from '@/lib/signals/d1-event-types'
 import { logger } from '@/lib/utils/logger-utility'
+import { getErrorMessage } from '@/lib/utils/to-error'
 import { computeNext } from '@/lib/workflows/compute-next'
 import { recordLlmCall } from '@/lib/telemetry/llm-trace'
 import { route as routeLlm } from '@/lib/ai/llm-router'
@@ -323,7 +324,7 @@ export async function executeStep(
     )
   } catch (err) {
     // Fail-fast: mark mission failed + propagate to workflow
-    const msg = err instanceof Error ? err.message : String(err)
+    const msg = getErrorMessage(err)
     await db
       .prepare(`UPDATE missions SET status='failed', error_message=?, updated_at=? WHERE id=? AND status IN ('queued','running')`)
       .bind(msg.slice(0, 500), now, missionId)

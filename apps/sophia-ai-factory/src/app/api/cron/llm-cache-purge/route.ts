@@ -9,6 +9,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { getErrorMessage } from '@/lib/utils/to-error'
 
 export const dynamic = 'force-dynamic'
 
@@ -61,7 +62,7 @@ async function handler(request: NextRequest): Promise<NextResponse> {
       ts:      new Date().toISOString(),
     })
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
+    const message = getErrorMessage(err)
     return NextResponse.json(
       { ok: false, reason: 'D1_ERROR', error: message },
       { status: 200 },

@@ -12,6 +12,7 @@ import {
   aggregateTraceStats,
   type TraceRow,
 } from '@/lib/admin/trace-aggregator'
+import { getErrorMessage } from '@/lib/utils/to-error'
 
 export const dynamic = 'force-dynamic'
 
@@ -67,7 +68,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       { status: 200 },
     )
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
+    const message = getErrorMessage(err)
     return NextResponse.json({ ok: false, reason: 'D1_ERROR', error: message }, { status: 200 })
   }
 }

@@ -9,6 +9,7 @@
 import { NextRequest } from 'next/server'
 import { requireCron } from '@/lib/signals/auth-helper'
 import { logger } from '@/lib/utils/logger-utility'
+import { getErrorMessage } from '@/lib/utils/to-error'
 import {
   querySignupStats,
   queryConversionsByTier,
@@ -56,7 +57,7 @@ async function fetchTopEvents(): Promise<PostHogEvent[]> {
     return data.results ?? []
   } catch (err) {
     logger.warn('[digest] PostHog events fetch failed', {
-      error: err instanceof Error ? err.message : String(err),
+      error: getErrorMessage(err),
     })
     return []
   }
@@ -132,7 +133,7 @@ async function summarizeWithAI(eventsSummary: string): Promise<string> {
     }
   } catch (err) {
     logger.warn('[digest] OpenRouter summarize failed', {
-      error: err instanceof Error ? err.message : String(err),
+      error: getErrorMessage(err),
     })
   }
 
@@ -169,7 +170,7 @@ async function sendEmail(summary: string): Promise<void> {
     }
   } catch (err) {
     logger.warn('[digest] Resend email failed', {
-      error: err instanceof Error ? err.message : String(err),
+      error: getErrorMessage(err),
     })
   }
 }
@@ -190,7 +191,7 @@ async function sendTelegram(summary: string): Promise<void> {
     })
   } catch (err) {
     logger.warn('[digest] Telegram send failed', {
-      error: err instanceof Error ? err.message : String(err),
+      error: getErrorMessage(err),
     })
   }
 }
@@ -288,7 +289,7 @@ export async function GET(req: NextRequest) {
     // Now post Telegram with the resolved issue URL
     const tgFinal = await postTelegramDigest({ tldr, issueUrl, weekLabel }).catch((err) => {
       logger.warn('[digest] Telegram post threw', {
-        error: err instanceof Error ? err.message : String(err),
+        error: getErrorMessage(err),
       })
       return { ok: false, reason: 'thrown' }
     })
