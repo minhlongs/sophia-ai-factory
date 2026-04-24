@@ -11,6 +11,7 @@
 
 import { z } from 'zod'
 import { logger } from '@/lib/utils/logger-utility'
+import { getErrorMessage } from '@/lib/utils/to-error'
 
 // ── Zod schemas for GH API responses ─────────────────────────────────────────
 
@@ -149,7 +150,7 @@ export async function upsertGithubIssue(
     return { url: created.html_url, action: 'created', issueNumber: created.number }
   } catch (err) {
     logger.warn('[digest/gh] upsert failed', {
-      error: err instanceof Error ? err.message : String(err),
+      error: getErrorMessage(err),
     })
     return null
   }

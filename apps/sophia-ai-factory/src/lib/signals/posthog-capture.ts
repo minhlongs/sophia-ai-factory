@@ -5,6 +5,7 @@
  */
 
 import { logger } from '@/lib/utils/logger-utility'
+import { getErrorMessage } from '@/lib/utils/to-error'
 import { isServerOnly, validateEventProps, type EventName, Events } from './event-types'
 
 const POSTHOG_ENDPOINT = 'https://us.i.posthog.com/i/v0/e/'
@@ -68,7 +69,7 @@ export async function captureServer(opts: CaptureOptions): Promise<void> {
     // Fire-and-forget: log but never throw to caller
     logger.warn('[signals] PostHog capture failed', {
       event,
-      error: err instanceof Error ? err.message : String(err),
+      error: getErrorMessage(err),
     })
   }
 }

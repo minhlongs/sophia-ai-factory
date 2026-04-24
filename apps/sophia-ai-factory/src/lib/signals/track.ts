@@ -9,6 +9,7 @@
  */
 
 import { logger } from '@/lib/utils/logger-utility'
+import { getErrorMessage } from '@/lib/utils/to-error'
 import { type D1EventType, schemaForEvent } from './d1-event-types'
 
 /** Get raw D1Database from CF runtime env (edge-compatible, no Node APIs) */
@@ -57,7 +58,7 @@ export function track<T extends D1EventType>(
     } catch (err) {
       logger.warn('[signals/d1] track failed', {
         event,
-        error: err instanceof Error ? err.message : String(err),
+        error: getErrorMessage(err),
       })
     }
   })()

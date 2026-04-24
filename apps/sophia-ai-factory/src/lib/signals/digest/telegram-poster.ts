@@ -11,6 +11,7 @@
  */
 
 import { logger } from '@/lib/utils/logger-utility'
+import { getErrorMessage } from '@/lib/utils/to-error'
 
 export interface TelegramPostParams {
   tldr: string
@@ -88,7 +89,7 @@ export async function postTelegramDigest(
     return { ok: true }
   } catch (err) {
     logger.warn('[digest/telegram] sendMessage failed', {
-      error: err instanceof Error ? err.message : String(err),
+      error: getErrorMessage(err),
     })
     return { ok: false, reason: 'fetch_error' }
   }

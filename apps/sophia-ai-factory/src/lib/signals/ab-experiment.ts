@@ -5,6 +5,7 @@
 
 import { flag } from './feature-flags'
 import { logger } from '@/lib/utils/logger-utility'
+import { getErrorMessage } from '@/lib/utils/to-error'
 
 const COOKIE_MAX_AGE = 30 * 24 * 60 * 60 // 30 days
 
@@ -40,7 +41,7 @@ export async function assignVariant(
   } catch (err) {
     logger.warn('[signals] assignVariant flag lookup failed — defaulting to control', {
       experimentName,
-      error: err instanceof Error ? err.message : String(err),
+      error: getErrorMessage(err),
     })
   }
 
