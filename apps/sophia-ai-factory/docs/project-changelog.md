@@ -1,6 +1,29 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-23 | **Current Version:** 1.12.7
+**Last Updated:** 2026-04-23 | **Current Version:** 1.12.8
+
+---
+
+## [2026-04-23] Phase 22 — logger-utility `as Error` closure (v1.12.8)
+
+### Summary
+Final closure of Phase 13→21 `as Error` → `toError()` migration series. Removed 2 redundant union-type casts in `logger-utility.ts` (lines 125 & 156); TypeScript narrowing already guaranteed target types. Dropped `logger-utility.ts` from ESLint `no-restricted-syntax` ignore list — no longer needed.
+
+### Changes
+- `src/lib/utils/logger-utility.ts` — 2 union-type `as Error | ...` casts removed (TypeScript narrowing sufficient)
+- `eslint.config.mjs` — Dropped `logger-utility.ts` from ignore list; regression guard now protects entire `src/` tree (excluding only `to-error.ts` JSDoc prose)
+
+### Quality & Review
+- Build: 0 new TypeScript errors
+- Tests: 1306/1306 pass, 31 skipped (baseline unchanged)
+- TSC: 621 errors (delta 0)
+- Code Review: 10/10 APPROVE SHIP (0 blockers)
+- **Cumulative Phase 13→22: 229 `as Error` sites normalized to `toError()`. Zero bare `as Error` casts remain in production code.**
+
+### Deferred (Phase 23+ backlog)
+- ~244 `instanceof Error` ternary simplifications
+- `scripts/production-setup.ts` 3 cast sites
+- 1 test-file cast in `src/lib/ai/anthropic-adapter.test.ts`
 
 ---
 
