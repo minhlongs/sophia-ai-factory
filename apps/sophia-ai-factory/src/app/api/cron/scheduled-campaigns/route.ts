@@ -13,6 +13,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 
 export const dynamic = 'force-dynamic';
 
@@ -120,7 +121,7 @@ export async function GET(req: NextRequest) {
       } catch (e) {
         logger.error(
           `[scheduled-campaigns] Failed for schedule ${schedule.id}`,
-          e as Error
+          toError(e)
         );
         failures.push(schedule.id);
       }
@@ -135,7 +136,7 @@ export async function GET(req: NextRequest) {
       failures: failures.length > 0 ? failures : undefined,
     });
   } catch (e) {
-    logger.error('[scheduled-campaigns] Cron failed', e as Error);
+    logger.error('[scheduled-campaigns] Cron failed', toError(e));
     return NextResponse.json({ error: 'Cron failed' }, { status: 500 });
   }
 }

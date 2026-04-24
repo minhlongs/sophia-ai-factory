@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
 import { getCurrentUser } from '@/lib/better-auth-session';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 
 /**
  * GET /api/alerts/rules
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ rules: rules || [] });
   } catch (error) {
-    logger.error('[Alert Rules API] GET error', error as Error);
+    logger.error('[Alert Rules API] GET error', toError(error));
     return NextResponse.json(
       { error: 'Failed to fetch alert rules' },
       { status: 500 }
@@ -106,7 +107,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ rule });
   } catch (error) {
-    logger.error('[Alert Rules API] POST error', error as Error);
+    logger.error('[Alert Rules API] POST error', toError(error));
     return NextResponse.json(
       { error: 'Failed to create/update alert rule' },
       { status: 500 }

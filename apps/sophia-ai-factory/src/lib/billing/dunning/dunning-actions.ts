@@ -9,6 +9,7 @@
 
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import type { Tier } from '@/types';
 import {
   DUNNING_TIER_CONFIGS,
@@ -172,7 +173,7 @@ export async function handlePaymentFailure(context: PaymentFailureContext): Prom
     logger.info('[Dunning] Payment failure handled', { licenseNonce: licenseNonce.slice(0, 8), amount, attemptNumber, newState });
     return getDunningState(licenseNonce);
   } catch (error) {
-    logger.error('[Dunning] Failed to handle payment failure', error as Error);
+    logger.error('[Dunning] Failed to handle payment failure', toError(error));
     throw error;
   }
 }
@@ -208,7 +209,7 @@ export async function handlePaymentSuccess(context: PaymentSuccessContext): Prom
     logger.info('[Dunning] Payment success handled', { licenseNonce: licenseNonce.slice(0, 8), amount, oldState });
     return getDunningState(licenseNonce);
   } catch (error) {
-    logger.error('[Dunning] Failed to handle payment success', error as Error);
+    logger.error('[Dunning] Failed to handle payment success', toError(error));
     throw error;
   }
 }

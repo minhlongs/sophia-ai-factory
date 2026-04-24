@@ -13,6 +13,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import {
   subscribeToUsageEvents,
   subscribeToViolations,
@@ -59,7 +60,7 @@ export async function GET(request: NextRequest) {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    logger.error('[Realtime Alerts API] Initialization error', error as Error);
+    logger.error('[Realtime Alerts API] Initialization error', toError(error));
     return NextResponse.json(
       {
         error: 'Failed to initialize realtime subscriptions',
@@ -98,7 +99,7 @@ export async function DELETE() {
 
     return NextResponse.json({ status: 'cleaned_up' });
   } catch (error) {
-    logger.error('[Realtime Alerts API] Cleanup error', error as Error);
+    logger.error('[Realtime Alerts API] Cleanup error', toError(error));
     return NextResponse.json(
       { error: 'Failed to cleanup subscriptions' },
       { status: 500 }

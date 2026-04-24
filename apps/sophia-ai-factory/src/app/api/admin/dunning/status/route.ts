@@ -11,6 +11,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import { checkAdminAuth } from '../../middleware';
 import { z } from 'zod';
 import type { DunningState } from '@/lib/billing/dunning-workflow';
@@ -211,7 +212,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    logger.error('[Dunning Status] Error', error as Error);
+    logger.error('[Dunning Status] Error', toError(error));
     return NextResponse.json(
       { error: 'Failed to fetch dunning statuses' },
       { status: 500 }
@@ -283,7 +284,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    logger.error('[Dunning Status] Error performing action', error as Error);
+    logger.error('[Dunning Status] Error performing action', toError(error));
     return NextResponse.json(
       { error: 'Failed to perform action' },
       { status: 500 }

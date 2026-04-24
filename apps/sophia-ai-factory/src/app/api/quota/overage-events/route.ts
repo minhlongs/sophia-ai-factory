@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
 import { getCurrentUser } from '@/lib/better-auth-session';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import { getQuotaStatus } from '@/lib/quota/quota-checker';
 import { getUserOverageEvents, getOverageSummary } from '@/lib/quota/overage-logger';
 
@@ -53,7 +54,7 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error) {
-    logger.error('[Overage API] Error fetching events', error as Error);
+    logger.error('[Overage API] Error fetching events', toError(error));
     return NextResponse.json(
       { error: 'Failed to fetch overage events' },
       { status: 500 }
@@ -108,7 +109,7 @@ export async function GETStatus(req: NextRequest) {
       quota: quotaStatus,
     });
   } catch (error) {
-    logger.error('[Quota API] Error fetching quota status', error as Error);
+    logger.error('[Quota API] Error fetching quota status', toError(error));
     return NextResponse.json(
       { error: 'Failed to fetch quota status' },
       { status: 500 }

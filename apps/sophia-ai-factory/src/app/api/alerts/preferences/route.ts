@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
 import { getCurrentUser } from '@/lib/better-auth-session';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 
 /**
  * GET /api/alerts/preferences
@@ -51,7 +52,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ preferences });
   } catch (error) {
-    logger.error('[Alert Preferences API] GET error', error as Error);
+    logger.error('[Alert Preferences API] GET error', toError(error));
     return NextResponse.json(
       { error: 'Failed to fetch notification preferences' },
       { status: 500 }
@@ -112,7 +113,7 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ preferences: prefs });
   } catch (error) {
-    logger.error('[Alert Preferences API] PUT error', error as Error);
+    logger.error('[Alert Preferences API] PUT error', toError(error));
     return NextResponse.json(
       { error: 'Failed to update notification preferences' },
       { status: 500 }
