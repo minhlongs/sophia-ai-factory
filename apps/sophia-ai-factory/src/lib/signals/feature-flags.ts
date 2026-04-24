@@ -4,6 +4,7 @@
  */
 
 import { logger } from '@/lib/utils/logger-utility'
+import { getErrorMessage } from '@/lib/utils/to-error'
 
 const POSTHOG_DECIDE_URL = 'https://us.i.posthog.com/decide/?v=3'
 const CACHE_TTL_SECONDS = 60
@@ -42,7 +43,7 @@ export async function flag(
       }
     } catch (err) {
       logger.warn('[signals] KV get failed', {
-        error: err instanceof Error ? err.message : String(err),
+        error: getErrorMessage(err),
       })
     }
   }
@@ -70,7 +71,7 @@ export async function flag(
     }
   } catch (err) {
     logger.warn('[signals] PostHog /decide/ failed', {
-      error: err instanceof Error ? err.message : String(err),
+      error: getErrorMessage(err),
     })
   }
 
