@@ -8,6 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/lib/better-auth-session';
+import { toError } from '@/lib/utils/to-error';
 
 const VALID_COUPONS: Record<string, { mcuBonus: number }> = {
   FREE50: { mcuBonus: 1000 },
@@ -93,6 +94,6 @@ export async function POST(request: NextRequest) {
       mcuBonus: couponDef.mcuBonus,
     });
   } catch (e) {
-    return NextResponse.json({ success: false, error: (e as Error).message }, { status: 500 });
+    return NextResponse.json({ success: false, error: toError(e).message }, { status: 500 });
   }
 }

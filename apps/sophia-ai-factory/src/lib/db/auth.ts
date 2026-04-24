@@ -9,6 +9,7 @@ import { getD1Client } from './client';
 
 // Re-export getCurrentUser from Better Auth session module (backward compat)
 export { getCurrentUser } from '@/lib/better-auth-session';
+import { toError } from '@/lib/utils/to-error';
 
 export async function createOrganization(
   userId: string, name: string, slug: string,
@@ -23,7 +24,7 @@ export async function createOrganization(
 
     return { orgId, error: null };
   } catch (e) {
-    return { orgId: null, error: (e as Error).message };
+    return { orgId: null, error: toError(e).message };
   }
 }
 

@@ -1,4 +1,5 @@
 import { sophiaIndex } from '@/lib/supabase/sophia-index'
+import { toError } from '@/lib/utils/to-error'
 import { NextResponse } from 'next/server'
 
 export async function GET() {
@@ -14,7 +15,7 @@ export async function GET() {
     })
   } catch (error) {
     return NextResponse.json(
-      { status: 'error', message: (error as Error).message },
+      { status: 'error', message: toError(error).message },
       { status: 500 }
     )
   }

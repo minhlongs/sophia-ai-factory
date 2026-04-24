@@ -12,6 +12,7 @@
 
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import type { Tier } from '@/types';
 import { QUOTA_LIMITS } from '@/lib/usage-metering/aggregator';
 
@@ -262,7 +263,7 @@ export async function aggregateUsageForLicense(
 
     return summary;
   } catch (error) {
-    logger.error('[Usage Aggregator] Failed to aggregate usage', error as Error);
+    logger.error('[Usage Aggregator] Failed to aggregate usage', toError(error));
     return null;
   }
 }

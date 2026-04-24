@@ -3,6 +3,7 @@ import { FeatureFlag, Tier } from "@/types";
 import { checkTierAccess } from "@/lib/features";
 import { tierGuard, LimitType } from "@/lib/tier-guard";
 import { getUserTier } from "@/lib/db/get-user-tier";
+import { toError } from "@/lib/utils/to-error";
 
 export async function GET(request: NextRequest) {
   try {
@@ -57,7 +58,7 @@ export async function GET(request: NextRequest) {
     );
   } catch (e) {
     return NextResponse.json(
-      { error: "Internal server error", detail: (e as Error).message },
+      { error: "Internal server error", detail: toError(e).message },
       { status: 500 }
     );
   }

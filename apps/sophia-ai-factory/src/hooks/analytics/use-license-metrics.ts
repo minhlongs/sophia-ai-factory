@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/query-client';
 import { RaasGatewayClient, type LicenseUtilization } from '@/lib/raas-gateway-client';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 
 // RaaS Gateway client instance (singleton)
 const raasClient = new RaasGatewayClient({
@@ -29,7 +30,7 @@ export function useLicenseMetrics(options: LicenseMetricsOptions = {}) {
       try {
         return await raasClient.getLicenseUtilization();
       } catch (error) {
-        logger.error('[useLicenseMetrics] Failed to fetch license metrics', error as Error);
+        logger.error('[useLicenseMetrics] Failed to fetch license metrics', toError(error));
         return null;
       }
     },

@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
 import { getCurrentUser } from '@/lib/better-auth-session';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 
 /**
  * GET /api/alerts/history
@@ -67,7 +68,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    logger.error('[Alert History API] GET error', error as Error);
+    logger.error('[Alert History API] GET error', toError(error));
     return NextResponse.json(
       { error: 'Failed to fetch alert history' },
       { status: 500 }

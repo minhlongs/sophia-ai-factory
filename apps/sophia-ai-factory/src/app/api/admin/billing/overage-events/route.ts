@@ -13,6 +13,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import { checkAdminAuth } from '../../middleware';
 import { z } from 'zod';
 import type { OverageEventRow } from '@/lib/billing/billing-types';
@@ -162,7 +163,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    logger.error('[Overage Events] Error', error as Error);
+    logger.error('[Overage Events] Error', toError(error));
     return NextResponse.json(
       { error: 'Failed to fetch overage events' },
       { status: 500 }

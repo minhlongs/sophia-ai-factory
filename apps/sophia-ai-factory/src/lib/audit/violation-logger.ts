@@ -16,6 +16,7 @@
 import { createServerClient } from '@/lib/db/client';
 import { insertTyped } from '@/lib/db/insert-typed';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 
 /**
  * DB row shape for audit_logs table (violation events).
@@ -163,7 +164,7 @@ export async function logViolation(event: ViolationEvent): Promise<string | null
 
     return data?.id ?? null;
   } catch (error) {
-    logger.error('[Violation Logger] Failed to log violation', error as Error);
+    logger.error('[Violation Logger] Failed to log violation', toError(error));
     return null;
   }
 }

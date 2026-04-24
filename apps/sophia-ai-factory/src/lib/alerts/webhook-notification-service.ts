@@ -15,6 +15,7 @@
  */
 
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import crypto from 'crypto';
 import { triggerWebhookFailedAlert } from '@/lib/alerts/realtime-alert-service';
 
@@ -266,7 +267,7 @@ export async function sendWebhookAlert(
     attempts: maxRetries,
     error: lastError || 'Unknown error',
   }).catch(err => {
-    logger.error('[Webhook Alert] Failed to trigger real-time alert', err as Error);
+    logger.error('[Webhook Alert] Failed to trigger real-time alert', toError(err));
   });
 
   return {

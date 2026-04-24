@@ -9,6 +9,7 @@ import { getCurrentUser } from '@/lib/better-auth-session';
 import { createServerClient } from '@/lib/db/client';
 import { restoreLicense } from '@/lib/billing/dunning-workflow';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 
 export async function POST(
   req: NextRequest,
@@ -66,7 +67,7 @@ export async function POST(
       allowed: result.allowed,
     });
   } catch (error) {
-    logger.error('[Admin Dunning API] Error restoring license', error as Error);
+    logger.error('[Admin Dunning API] Error restoring license', toError(error));
     return NextResponse.json(
       { error: 'Failed to restore license' },
       { status: 500 }

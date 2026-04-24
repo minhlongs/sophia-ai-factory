@@ -6,6 +6,7 @@ import { createCampaignSchema } from "@/lib/campaigns/validation";
 import { revalidatePath } from "next/cache";
 import { Tier } from "@/types";
 import { tierGuard } from "@/lib/tier-guard";
+import { toError } from "@/lib/utils/to-error";
 
 /** Map DB subscription_tier string to app Tier enum */
 function mapDbTierToTier(dbTier: string | null | undefined): Tier {
@@ -128,7 +129,7 @@ export async function createCampaign(formData: FormData) {
     return { success: true, message: "Campaign created", campaignId: campaignData.id };
 
   } catch (e) {
-    return { success: false, message: `Error: ${(e as Error).message}` };
+    return { success: false, message: `Error: ${toError(e).message}` };
   }
 }
 

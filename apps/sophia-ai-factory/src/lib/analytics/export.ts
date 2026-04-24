@@ -6,6 +6,7 @@
 
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import type { UsageEventRow } from '@/lib/supabase/types';
 
 /**
@@ -139,7 +140,7 @@ export async function fetchUsageForExport(options: ExportOptions): Promise<Usage
   const { data: events, error } = await query as { data: UsageEventRow[]; error: unknown };
 
   if (error) {
-    logger.error('[Analytics Export] Failed to fetch usage events', error as Error);
+    logger.error('[Analytics Export] Failed to fetch usage events', toError(error));
     throw new Error('Failed to fetch usage data for export');
   }
 

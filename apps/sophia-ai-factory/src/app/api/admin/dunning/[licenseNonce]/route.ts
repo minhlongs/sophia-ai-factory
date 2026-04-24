@@ -10,6 +10,7 @@ import { getCurrentUser } from '@/lib/better-auth-session';
 import { createServerClient } from '@/lib/db/client';
 import { getDunningState, getDunningHistory, type DunningStateResult } from '@/lib/billing/dunning-workflow';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 
 export async function GET(
   req: NextRequest,
@@ -71,7 +72,7 @@ export async function GET(
       })),
     });
   } catch (error) {
-    logger.error('[Admin Dunning API] Error', error as Error);
+    logger.error('[Admin Dunning API] Error', toError(error));
     return NextResponse.json(
       { error: 'Failed to fetch dunning state' },
       { status: 500 }

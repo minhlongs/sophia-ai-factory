@@ -1,4 +1,5 @@
 import { scoreAllProducts } from '@/lib/intelligence/runner'
+import { toError } from '@/lib/utils/to-error'
 import { NextResponse } from 'next/server'
 
 export const maxDuration = 300 // 5 minutes
@@ -27,7 +28,7 @@ export async function POST(request: Request) {
     })
   } catch (error) {
     return NextResponse.json(
-      { success: false, error: (error as Error).message },
+      { success: false, error: toError(error).message },
       { status: 500 }
     )
   }

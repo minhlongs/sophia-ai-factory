@@ -9,6 +9,7 @@
 
 import { Resend } from 'resend';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import { buildHtmlTemplate, buildTextTemplate, getEmailSubject } from './email-template-builder';
 import { logEmailDelivery } from './email-tracking-service';
 import type { EmailTemplateType, BillingEmailContext } from './types';
@@ -90,7 +91,7 @@ export async function sendBillingEmail(
 
     return { success: true, emailId: data?.id };
   } catch (error) {
-    logger.error('[Resend] Failed to send email', error as Error, {
+    logger.error('[Resend] Failed to send email', toError(error), {
       type,
       to: context.userEmail,
     });

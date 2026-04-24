@@ -13,6 +13,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import { checkAdminAuth } from '../../middleware';
 
 /**
@@ -163,7 +164,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(summary);
   } catch (error) {
-    logger.error('[Billing Summary] Error', error as Error);
+    logger.error('[Billing Summary] Error', toError(error));
     return NextResponse.json(
       { error: 'Failed to fetch billing summary' },
       { status: 500 }

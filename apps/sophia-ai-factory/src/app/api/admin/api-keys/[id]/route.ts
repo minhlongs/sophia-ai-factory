@@ -8,6 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@/lib/utils/logger-utility'
+import { toError } from '@/lib/utils/to-error'
 
 import {
   revokeApiKey,
@@ -127,7 +128,7 @@ export async function DELETE(
       keyId,
     })
   } catch (error) {
-    logger.error('[API Keys] Failed to delete API key', error as Error)
+    logger.error('[API Keys] Failed to delete API key', toError(error))
     return NextResponse.json(
       { error: 'Failed to delete API key' },
       { status: 500 }

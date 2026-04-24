@@ -12,6 +12,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
 import { sendEmail } from '@/lib/email/sender';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 
 /** Days before expiry at which to send reminders */
 const REMINDER_DAYS = [7, 3] as const;
@@ -166,7 +167,7 @@ export async function GET(request: NextRequest) {
           if (result.success) remindersSent++;
         } catch (innerErr) {
           errors++;
-          logger.error('[RenewalReminder] Per-sub error', innerErr as Error, { org_id: sub.org_id });
+          logger.error('[RenewalReminder] Per-sub error', toError(innerErr), { org_id: sub.org_id });
         }
       }
     }

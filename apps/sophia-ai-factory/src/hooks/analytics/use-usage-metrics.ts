@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/query-client';
 import { RaasGatewayClient, type RaasUsageMetrics } from '@/lib/raas-gateway-client';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 
 // RaaS Gateway client instance (singleton)
 const raasClient = new RaasGatewayClient({
@@ -31,7 +32,7 @@ export function useUsageMetrics(options: UsageMetricsOptions) {
       try {
         return await raasClient.getUsageMetrics(start, end);
       } catch (error) {
-        logger.error('[useUsageMetrics] Failed to fetch usage metrics', error as Error);
+        logger.error('[useUsageMetrics] Failed to fetch usage metrics', toError(error));
         return null;
       }
     },

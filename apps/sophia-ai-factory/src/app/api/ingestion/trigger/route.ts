@@ -2,6 +2,7 @@ import { runIngestion } from '@/lib/ingestion/runner'
 import { NextResponse } from 'next/server'
 import { ingestionTriggerRequestSchema } from '@/lib/validation/services'
 import { withRateLimit } from '@/middleware/rate-limit-wrapper'
+import { toError } from '@/lib/utils/to-error'
 
 export const maxDuration = 300 // 5 minutes max duration for Cloudflare Workers
 
@@ -47,7 +48,7 @@ export const POST = withRateLimit(async function POST(request: Request) {
     })
   } catch (error) {
     return NextResponse.json(
-      { success: false, error: (error as Error).message },
+      { success: false, error: toError(error).message },
       { status: 500 }
     )
   }

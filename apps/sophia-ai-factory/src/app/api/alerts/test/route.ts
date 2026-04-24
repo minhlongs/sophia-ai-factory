@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/better-auth-session';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import { sendWebhookAlert, createQuotaThresholdPayload } from '@/lib/alerts/webhook-notification-service';
 
 /**
@@ -75,7 +76,7 @@ export async function POST(request: NextRequest) {
       attempts: result.attempts,
     });
   } catch (error) {
-    logger.error('[Alert Test API] POST error', error as Error);
+    logger.error('[Alert Test API] POST error', toError(error));
     return NextResponse.json(
       { error: 'Failed to send test alert' },
       { status: 500 }

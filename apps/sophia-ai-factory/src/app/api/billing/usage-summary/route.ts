@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
 import { getCurrentUser } from '@/lib/better-auth-session';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import { getOverageSummary } from '@/lib/quota/overage-logger';
 import { getQuotaStatus } from '@/lib/quota/quota-checker';
 import { PRICING_TIERS } from '@/lib/billing/billing-types';
@@ -109,7 +110,7 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error) {
-    logger.error('[Billing API] Error fetching usage summary', error as Error);
+    logger.error('[Billing API] Error fetching usage summary', toError(error));
     return NextResponse.json(
       { error: 'Failed to fetch usage summary' },
       { status: 500 }
