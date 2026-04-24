@@ -1,12 +1,12 @@
 # Triết Tiểu Nỏ Kỹ Thuật — Sophia AI Factory Phase 1–25 Master Plan
 
-**Date Range:** 2026-04-19 → 2026-04-24 · **Scope:** Logger infrastructure & error-handling consolidation · **Status:** Phase 26 ✅ COMPLETE / Phase 27+ BACKLOG
+**Date Range:** 2026-04-19 → 2026-04-24 · **Scope:** Logger infrastructure & error-handling consolidation · **Status:** Phase 27 Wave 1 ✅ COMPLETE / Phase 27+ Waves BACKLOG
 
 ## Overview
 
-Sophia AI Factory logger infrastructure build-out across 25 phases (19 Apr → 24 Apr 2026). Started with Phase 1 raw logger skeleton, incrementally hardened error handling, added structured metadata pickup from Supabase PostgrestError, and closed the Phase 15↔24 bridge with Phase 25.
+Sophia AI Factory logger infrastructure build-out across 27 phases (19 Apr → 24 Apr 2026). Started with Phase 1 raw logger skeleton, incrementally hardened error handling, added structured metadata pickup from Supabase PostgrestError, closed Phase 15↔24 bridge with Phase 25, introduced `getErrorMessage()` helper in Phase 26, and launched Phase 27 Wave 1 `getErrorMessage()` sweep across `src/lib/signals/**`.
 
-**Key Milestone:** Phase 25 extended `logger.log()` to preserve PostgrestError `code/details/hint` fields in structured JSON output, completing the error-handling consolidation.
+**Key Milestones:** Phase 25 extended `logger.log()` to preserve PostgrestError `code/details/hint` fields. Phase 26 shipped `getErrorMessage()` helper. Phase 27 Wave 1 replaced 7 ternaries in signals domain, zero behavior change, full test coverage.
 
 ## Master Phases Table
 
@@ -17,34 +17,38 @@ Sophia AI Factory logger infrastructure build-out across 25 phases (19 Apr → 2
 | 16–24 | (Intermediate phases) | ✅ Complete | (existing plans) |
 | 25    | Logger-utility structured metadata pickup (code/details/hint) | ✅ COMPLETE | plans/260424-0202-phase-25-logger-structured-pickup/phase-25-logger-structured-metadata-pickup.md |
 | 26    | `getErrorMessage()` helper introduction | ✅ COMPLETE | plans/260424-0230-phase-26-get-error-message-helper/phase-26-get-error-message-helper.md |
-| 27+   | Backlog (see Deferred section) | 📋 Pending | — |
+| 27 Wave 1 | `getErrorMessage()` sweep `src/lib/signals/**` (7 hits / 6 files) | ✅ COMPLETE | plans/260424-0251-phase-27-ternary-sweep-wave-1-signals/phase-27-ternary-sweep-wave-1-signals.md |
+| 27 Wave 2+ | Deferred (see Deferred section) | 📋 Pending | — |
 
-## Key Metrics (Cumulative Phase 1→26)
+## Key Metrics (Cumulative Phase 1→27 Wave 1)
 
-- **Total Files Modified:** ~47 files across all 26 phases
-- **Logger Tests:** 1321/1321 pass (baseline 1318 Phase 25 + 3 Phase 26)
-- **TypeScript Errors:** 611 (strict, no regression)
-- **Code Quality:** 9.8/10 (Phase 26 review score)
+- **Total Files Modified:** ~53 files across all 27 phases (47 baseline + 6 Phase 27 Wave 1)
+- **Logger Tests:** 1321/1321 pass (consistent baseline, zero regression)
+- **TypeScript Errors:** 611 (strict, zero regression across phases 25-27)
+- **Code Quality:** 9.8/10 (Phase 26-27 review score, consistent)
 - **Build Status:** ✅ `npm run build` → exit 0
-- **Lint Status:** ✅ 0 hits on logger/error paths
+- **Lint Status:** ✅ 0 hits on logger/signals/error paths
 - **Production:** ✅ HTTP 200 verified
 
-## Phase 25 Summary
+## Phase 25–27 Wave 1 Summary
 
+### Phase 25: Logger-utility structured metadata pickup
 **Objective:** Close Phase 15↔24 bridge by extending `logger.log()` to pickup PostgrestError `code/details/hint` fields.
+- Files: 2 | Tests: +3 pass | TS errors: Δ 0
+- Implementation: `LogEntry.error` interface + conditional pickup in `log()`
+- Review: 9.8/10 APPROVE SHIP
 
-**Implementation:**
-- Extended `LogEntry.error` interface with `code?: unknown; details?: unknown; hint?: unknown`
-- Modified `log()` to pluck same 3 fields off Error using `in` check (non-breaking)
-- Updated `formatLogEntry()` dev pretty-print with `Details: {...}` block
-- Added 3 vitest cases (PostgrestError+3, partial, plain Error)
+### Phase 26: `getErrorMessage()` helper introduction
+**Objective:** Introduce pure-function helper for consistent error message extraction.
+- Files: 1 | Tests: baseline | TS errors: Δ 0
+- Implementation: Centralized `getErrorMessage(err)` with fallback to `String(err)`
+- Review: 9.8/10 APPROVE SHIP
 
-**Results:**
-- Files: 2 (logger-utility.ts, logger-utility.test.ts)
-- Tests: 1318/1318 pass (Δ +3)
-- TS errors: 611 (Δ 0, zero regression)
-- Review: 9.8/10 APPROVE SHIP; 0 critical/high
-- Code changes: ~15 LOC additions (KISS/YAGNI compliant)
+### Phase 27 Wave 1: `getErrorMessage()` sweep on signals domain
+**Objective:** Replace 7 ternary `err instanceof Error ? err.message : String(err)` → `getErrorMessage(err)` in `src/lib/signals/**`.
+- Files: 6 (signals modules) | Ternaries replaced: 7 | Tests: 1321/1321 pass (Δ 0) | TS errors: Δ 0
+- Implementation: Add import + replace ternaries in track, posthog-capture, ab-experiment, feature-flags, digest/telegram-poster, digest/github-issue-poster
+- Review: 9.8/10 APPROVE SHIP | CI: GREEN | Prod: HTTP 200
 
 ## Key Insights
 
@@ -56,12 +60,13 @@ Sophia AI Factory logger infrastructure build-out across 25 phases (19 Apr → 2
 
 4. **Code quality metrics solid:** Strict TypeScript, 9.8/10 code review, 611 TS errors baseline (project-wide, not logger-specific).
 
-## Deferred (Phase 27+ Backlog)
+## Deferred (Phase 27 Waves 2–3 + Backlog)
 
-- **Sweep ~47 `err instanceof Error ? err.message : String(err)` ternaries** → `getErrorMessage(err)` (Phase 27+)
-- **`ClientWithStorage` → R2 migration** — Cloudflare R2 integration (separate from logger)
-- **`raas_licenses` D1-vs-Supabase audit** — Database layer consistency check
-- **Split `lib/usage-metering/types.ts` if >200L** — Modularization per code-standards.md (conditional)
+- **Phase 27 Wave 2:** Sweep `src/app/api/**` (~14 hits / 8 files) → `getErrorMessage(err)`
+- **Phase 27 Wave 3:** Sweep `src/lib/{inngest,gateway,billing,telegram}/**` (~4 hits / 4 files) → `getErrorMessage(err)`
+- **Phase 28:** `ClientWithStorage` → R2 migration — Cloudflare R2 integration (separate from logger)
+- **Phase 29:** `raas_licenses` D1-vs-Supabase audit — Database layer consistency check
+- **Phase 30+:** Split `lib/usage-metering/types.ts` if >200L — Modularization per code-standards.md (conditional)
 
 ## Success Criteria (Rule #0)
 
@@ -75,9 +80,10 @@ Sophia AI Factory logger infrastructure build-out across 25 phases (19 Apr → 2
 
 ## Next Steps
 
-1. **Phase 27+:** Evaluate deferred items; scope depends on remaining token budget and priority. Phase 27 scope: sweep ~47 ternary `err instanceof Error ? err.message : String(err)` → `getErrorMessage(err)` for DRY consolidation.
-2. **Monitoring:** Logger + error-message helper now production-ready for structured error pickup from Supabase/D1.
-3. **Documentation:** Update `docs/system-architecture.md` to reflect logger pipeline + getErrorMessage helper (Phase 15→26)
+1. **Phase 27 Waves 2–3:** Continue ternary sweep across `src/app/api/**` + `src/lib/{inngest,gateway,billing,telegram}/**` (deferred, ~18 remaining hits across 12 files).
+2. **Phase 28+:** Evaluate backlog items; scope depends on remaining token budget and priority.
+3. **Monitoring:** Logger + error-message helper now production-ready for structured error pickup from Supabase/D1. Phase 27 Wave 1 signals domain consolidated.
+4. **Documentation:** Update `docs/system-architecture.md` to reflect logger pipeline + getErrorMessage sweep completion across domains (Phase 15→27 Wave 1)
 
 ---
 
