@@ -44,7 +44,7 @@ All use the same pattern: `(error as Error).message` in `catch (error) { ... }` 
 - [x] `npm run lint` passes (0 rule violations, 0 delta)
 - [x] `npm test` → 1306/1306 pass
 - [x] `grep -r "as Error" apps/sophia-ai-factory/` returns only `to-error.ts` JSDoc + `to-error.test.ts` + ESLint config comments + changelog mentions
-- [x] Code review ≥ 9.5/10 APPROVE SHIP
+- [x] Code review ≥ 9.5/10 APPROVE SHIP (9.7/10 APPROVE)
 - [x] CI GREEN + Production HTTP 200
 
 ## Risk Assessment
