@@ -1,7 +1,7 @@
 # Triệt Tiêu Nợ Kỹ Thuật (Clean Tech Debt) — Sophia AI Factory
 
 **Plan ID:** 260419-2121  
-**Status:** IN PROGRESS (Phase 19 ✅ COMPLETE / Phase 20+ BACKLOG)  
+**Status:** IN PROGRESS (Phase 20 ✅ COMPLETE / Phase 21+ BACKLOG)  
 **Timeline:** 2026-04-19 → ongoing  
 
 ## Overview
@@ -31,6 +31,7 @@ Systematic removal of TypeScript `:any` types, eslint-disables, and deferred deb
 | 17 | toError() Slice 4 (next 31 sites) | ✅ COMPLETE | [Phase 17](phase-17-to-error-slice-4.md) |
 | 18 | toError() Slice 5 (next 29 sites) | ✅ COMPLETE | [Phase 18](phase-18-to-error-slice-5.md) |
 | 19 | toError() Slice 6 (27 sites, long-tail 2-site files) | ✅ COMPLETE | [Phase 19](phase-19-to-error-slice-6.md) |
+| 20 | toError() Slice 7 (final 46 sites) | ✅ COMPLETE | [Phase 20](phase-20-to-error-slice-7.md) |
 
 ## Key Metrics
 
@@ -52,7 +53,8 @@ Systematic removal of TypeScript `:any` types, eslint-disables, and deferred deb
 - **Tests:** 1306/1306 pass (100% maintained across all phases; 31 skipped = legitimate fixtures)
 - **Code Review:** APPROVE 9.8/10 (Phase 19 latest), SHIP verdict
 - **Production:** pending push (CI GREEN; to be verified by git-manager after sync)
-- **Cumulative (Phase 1→19):** ~509 `:any` removed; 179 `as Error` sites normalized (Phase 13: 29 + Phase 14: 34 + Phase 16: 29 + Phase 17: 31 + Phase 18: 29 + Phase 19: 27) + React client hook/component bundle + toError() preserves Supabase PostgrestError shape (Phase 15) + GDPR erasure path + inline-message expressions (Phase 17) + long-tail slice (billing/dunning + 10 API routes); 2 reusable DB helpers + 1 error helper created; tech debt elimination spans auth, API routes, database, observability, telegram, audit, metering, RAAS, D1-layer, error-handling, worker (R2/alert-dispatcher), GDPR, React client modules
+- **Phase 20 Result:** 46 `as Error` sites → `toError()` across 46 files (20 API routes + 6 UI/hooks + 20 lib modules); final slice with largest file count; 3 remaining `as Error` refs (1 documentation comment + 2 union-type casts in logger-utility); Code Review 9.7/10 APPROVE SHIP; 0 behavior regression.
+- **Cumulative (Phase 1→20):** ~509 `:any` removed; 225 `as Error` sites normalized (Phase 13: 29 + Phase 14: 34 + Phase 16: 29 + Phase 17: 31 + Phase 18: 29 + Phase 19: 27 + Phase 20: 46) + React client hook/component bundle + toError() preserves Supabase PostgrestError shape (Phase 15) + GDPR erasure path + inline-message expressions (Phase 17) + long-tail slice (billing/dunning + 10 API routes) + final slice (20 routes + 6 components + 20 lib files); 2 reusable DB helpers + 1 error helper created; tech debt elimination spans auth, API routes, database, observability, telegram, audit, metering, RAAS, D1-layer, error-handling, worker (R2/alert-dispatcher), GDPR, React client modules
 - **Deferred to Phase 20+:** Remaining ~51 `as Error` sites (1–2 more slices), 244 `instanceof Error` ternary simplifications, `logger-utility.ts` 2× union-type casts (overload typing), `ClientWithStorage` → R2 migration, ESLint rule to enforce `toError()`, Logger-utility structured metadata pickup, enriched-jwt.ts logger-signature tech debt (lines 220/294/399), `raas_licenses` D1-vs-Supabase audit, Split `lib/usage-metering/types.ts`
 
 ## Links
