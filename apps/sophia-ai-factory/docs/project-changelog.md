@@ -1,6 +1,32 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-20 | **Current Version:** 1.12.3
+**Last Updated:** 2026-04-20 | **Current Version:** 1.12.4
+
+---
+
+## [2026-04-20] Phase 18 — toError() Slice 5 (React client scope) (v1.12.4)
+
+### Summary
+Fifth migration slice of the `as Error` → `toError()` standardization. 29 sites normalized across 10 files; first expansion to React client bundle (`'use client'` hook + component).
+
+### Changes
+- `src/components/admin/licenses/use-license-list-actions.ts` — 4 sites (React hook, `'use client'`)
+- `src/app/api/license/sync/route.ts` — 4 sites
+- `src/worker/lib/metering-reconciler-runner.ts` — 3 sites (incl. `const err = toError(error)` idiom)
+- `src/lib/raas-gateway-client.ts` — 3 sites
+- `src/lib/alerts/supabase-realtime-alert-service.ts` — 3 sites
+- `src/hooks/use-analytics-data.ts` — 3 sites (React hook, `'use client'`)
+- `src/app/api/admin/api-keys/route.ts` — 3 sites (incl. inline `.catch(e => logger.error(..., toError(e)))`)
+- `src/lib/raas/raas-rate-limiter.ts` — 2 sites
+- `src/lib/quota/overage-logger.ts` — 2 sites
+- `src/lib/ingestion/runner.ts` — 2 sites (inline `toError(error).message` on object literals)
+
+### Quality & Review
+- Build: 0 new TypeScript errors on 10 edited files
+- Tests: 1306/1306 pass (baseline unchanged)
+- Code Review: 9.8/10 APPROVE SHIP (0 blockers / nits / unresolved)
+- Client-bundle safety: `@/lib/utils/to-error` tree-shakes cleanly into `'use client'` files
+- Cumulative since Phase 13: 152 `as Error` sites normalized via `toError()`
 
 ---
 
