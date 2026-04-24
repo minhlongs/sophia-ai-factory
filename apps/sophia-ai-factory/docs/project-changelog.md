@@ -1,6 +1,38 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-20 | **Current Version:** 1.12.4
+**Last Updated:** 2026-04-23 | **Current Version:** 1.12.5
+
+---
+
+## [2026-04-23] Phase 19 — toError() Slice 6 (long-tail 2-site files) (v1.12.5)
+
+### Summary
+Sixth migration slice of `as Error` → `toError()`. 27 sites normalized across 14 files; long-tail of the list where each file had only 1–2 casts.
+
+### Changes (14 files)
+- `src/lib/db/d1-query-builder.ts` — 2 inline `toError(err).message` on QueryResult.error shape
+- `src/lib/clients/muapi-media-client.ts` — 2 inline on result
+- `src/lib/billing/dunning/dunning-actions.ts` — 2 logger direct
+- `src/app/api/usage/reconciliation/sync/route.ts` — 2 logger + requestId meta
+- `src/app/api/realtime/alerts/route.ts` — 2 logger (init + cleanup)
+- `src/app/api/quota/overage-events/route.ts` — 2 logger
+- `src/app/api/cron/scheduled-campaigns/route.ts` — 2 logger (multi-line arg)
+- `src/app/api/cron/email-drip/route.ts` — 2 logger (template-literal msgs)
+- `src/app/api/cron/dunning-advance/route.ts` — 2 logger + meta (innerErr)
+- `src/app/api/alerts/rules/route.ts` — 2 GET + POST
+- `src/app/api/alerts/preferences/route.ts` — 2 GET + PUT
+- `src/app/api/admin/violations/route.ts` — 2 list + action
+- `src/app/api/admin/dunning/status/route.ts` — 2 status + action
+- `src/worker/lib/reconciliation-alert-emitter.ts` — 1 Worker scope
+
+### Quality & Review
+- Build: 0 new TypeScript errors on 14 edited files
+- Tests: 1306/1306 pass (baseline unchanged)
+- Code Review: 9.8/10 APPROVE SHIP (0 blockers)
+- Cumulative since Phase 13: 179 `as Error` sites normalized via `toError()`
+
+### Deferred
+- `logger-utility.ts` 2× union-type casts (overload typing — requires signature rework, separate phase)
 
 ---
 
