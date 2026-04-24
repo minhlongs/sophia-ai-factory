@@ -13,6 +13,7 @@
 import { createServerClient } from '@/lib/db/client'
 import { getTierByInvoiceId } from '@/lib/clients/nowpayments-client'
 import { logger } from '@/lib/utils/logger-utility'
+import { getErrorMessage } from '@/lib/utils/to-error'
 import { UNIFIED_TIERS } from '@/config/tiers'
 import type { Tier } from '@/types'
 
@@ -91,7 +92,7 @@ async function recordIpnEvent(
   } catch (err) {
     logger.warn('[NOWPayments] Failed to record IPN event', {
       paymentId,
-      error: err instanceof Error ? err.message : String(err),
+      error: getErrorMessage(err),
     })
   }
 }
