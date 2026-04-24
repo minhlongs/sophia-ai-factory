@@ -1,4 +1,5 @@
 import { Tier } from "@/types";
+import { getErrorMessage } from '@/lib/utils/to-error';
 import { trackUsage, hashLicenseKey, calculateCredits, startTimer } from '@/lib/usage-metering';
 import { getUsageContext } from '@/lib/usage-metering/context';
 import { callWithCache } from '@/lib/llm/cache/call-with-cache';
@@ -195,7 +196,7 @@ Return ONLY valid JSON in this exact format:
       endpoint: '/chat/completions',
       action: 'chat_completion',
       tierAtRequest: tier,
-      errorMessage: error instanceof Error ? error.message : String(error),
+      errorMessage: getErrorMessage(error),
       responseTimeMs: stopTimer(),
       creditsUsed: 0, // Failed call, no credits charged
     });

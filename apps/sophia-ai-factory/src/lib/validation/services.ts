@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { getErrorMessage } from '@/lib/utils/to-error';
 
 // ============================================================================
 // COMMON SCHEMAS
@@ -192,7 +193,7 @@ export async function validateOpenRouter(key: string): Promise<ValidationResult>
       return { valid: false, message: `Invalid key (Status: ${response.status})` };
     }
   } catch (error) {
-    return { valid: false, message: `Network error: ${error instanceof Error ? error.message : String(error)}` };
+    return { valid: false, message: `Network error: ${getErrorMessage(error)}` };
   }
 }
 
@@ -218,7 +219,7 @@ export async function validateElevenLabs(key: string): Promise<ValidationResult>
       return { valid: false, message: `Invalid key (Status: ${response.status})` };
     }
   } catch (error) {
-    return { valid: false, message: `Network error: ${error instanceof Error ? error.message : String(error)}` };
+    return { valid: false, message: `Network error: ${getErrorMessage(error)}` };
   }
 }
 
@@ -249,7 +250,7 @@ export async function validateDID(key: string): Promise<ValidationResult> {
       return { valid: false, message: `Invalid key (Status: ${response.status})` };
     }
   } catch (error) {
-    return { valid: false, message: `Network error: ${error instanceof Error ? error.message : String(error)}` };
+    return { valid: false, message: `Network error: ${getErrorMessage(error)}` };
   }
 }
 
@@ -277,7 +278,7 @@ export async function validateAirtable(key: string): Promise<ValidationResult> {
       return { valid: false, message: `Invalid key (Status: ${response.status})` };
     }
   } catch (error) {
-    return { valid: false, message: `Network error validating PAT: ${error instanceof Error ? error.message : String(error)}` };
+    return { valid: false, message: `Network error validating PAT: ${getErrorMessage(error)}` };
   }
 }
 
@@ -306,7 +307,7 @@ export async function validateHeyGen(key: string): Promise<ValidationResult> {
       return { valid: false, message: `Invalid key (Status: ${response.status})` };
     }
   } catch (error) {
-    return { valid: false, message: `Network error: ${error instanceof Error ? error.message : String(error)}` };
+    return { valid: false, message: `Network error: ${getErrorMessage(error)}` };
   }
 }
 
@@ -335,7 +336,7 @@ export async function validateMuAPI(key: string): Promise<ValidationResult> {
       return { valid: false, message: `Invalid key (Status: ${response.status})` };
     }
   } catch (error) {
-    return { valid: false, message: `Network error: ${error instanceof Error ? error.message : String(error)}` };
+    return { valid: false, message: `Network error: ${getErrorMessage(error)}` };
   }
 }
 

@@ -7,6 +7,7 @@
 import { scrubPIIDeep } from './pii-scrubber';
 import { logger } from './logger';
 import { pushFatalLog } from './better-stack-client';
+import { getErrorMessage } from '@/lib/utils/to-error';
 
 export interface ErrorContext {
   route?: string;
@@ -82,7 +83,7 @@ export async function reportError(
       .bind(ts, safeMsg, msgClass, fingerprint, ctxJson, commit, ctx.route ?? '', 500)
       .run();
   } catch (d1Err) {
-    const errMsg = d1Err instanceof Error ? d1Err.message : String(d1Err);
+    const errMsg = getErrorMessage(d1Err);
     // RED-TEAM #5: D1 unavailable — push directly to Better Stack, skip normal path
     await pushFatalLog('D1_UNAVAILABLE', errMsg, {
       logsToken: env.BETTER_STACK_LOGS_TOKEN ?? '',

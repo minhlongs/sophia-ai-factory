@@ -9,7 +9,7 @@
 
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
-import { toError } from '@/lib/utils/to-error';
+import { toError, getErrorMessage } from '@/lib/utils/to-error';
 import { sendWebhookAlert, createQuotaThresholdPayload } from '@/lib/alerts/webhook-notification-service';
 import {
   getAlertTemplate,
@@ -249,6 +249,6 @@ export async function triggerQuotaAlert(context: QuotaAlertContext): Promise<Ale
     return { success, emailSent, smsSent, webhookSent };
   } catch (error) {
     logger.error('[Quota Alert] Failed to trigger alert', toError(error));
-    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    return { success: false, error: getErrorMessage(error) };
   }
 }

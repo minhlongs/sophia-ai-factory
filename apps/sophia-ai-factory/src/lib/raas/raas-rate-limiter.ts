@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@/lib/utils/logger-utility'
-import { toError } from '@/lib/utils/to-error'
+import { toError, getErrorMessage } from '@/lib/utils/to-error'
 import { checkQuotaWithOverage, DEFAULT_CONFIG } from '@/lib/quota/quota-checker'
 import { enforceQuota } from '@/lib/quota/quota-enforcer'
 import { createServerClient } from '@/lib/db/client'
@@ -209,7 +209,7 @@ export async function enforceRaasQuota(
       receipt: receipt ? serializeReceiptForHeader(receipt) : undefined,
     }
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const errorMessage = getErrorMessage(error)
     logger.error('[RaaS Gate] Quota check error', toError(error))
 
     if (licenseNonceForError) {

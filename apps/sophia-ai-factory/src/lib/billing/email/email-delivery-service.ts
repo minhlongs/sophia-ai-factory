@@ -9,7 +9,7 @@
 
 import { Resend } from 'resend';
 import { logger } from '@/lib/utils/logger-utility';
-import { toError } from '@/lib/utils/to-error';
+import { toError, getErrorMessage } from '@/lib/utils/to-error';
 import { buildHtmlTemplate, buildTextTemplate, getEmailSubject } from './email-template-builder';
 import { logEmailDelivery } from './email-tracking-service';
 import type { EmailTemplateType, BillingEmailContext } from './types';
@@ -100,7 +100,7 @@ export async function sendBillingEmail(
 
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: getErrorMessage(error),
     };
   }
 }

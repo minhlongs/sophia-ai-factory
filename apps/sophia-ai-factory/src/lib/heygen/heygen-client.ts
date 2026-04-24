@@ -1,5 +1,6 @@
 
 import { Tier } from "@/types";
+import { getErrorMessage } from '@/lib/utils/to-error';
 import { trackUsage, hashLicenseKey, calculateCredits, startTimer } from '@/lib/usage-metering';
 import { getUsageContext } from '@/lib/usage-metering/context';
 
@@ -145,7 +146,7 @@ export class HeyGenClient {
         endpoint: '/video/generate',
         action: 'create_video',
         tierAtRequest: this.tier,
-        errorMessage: error instanceof Error ? error.message : String(error),
+        errorMessage: getErrorMessage(error),
         responseTimeMs: stopTimer(),
         creditsUsed: 0,
       });

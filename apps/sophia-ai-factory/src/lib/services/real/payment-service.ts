@@ -1,5 +1,6 @@
 import { IPaymentService, CreateCheckoutParams, CheckoutSession } from "../types";
 import { createInvoiceUrl } from "@/lib/clients/nowpayments-client";
+import { getErrorMessage } from "@/lib/utils/to-error";
 
 export class RealPaymentService implements IPaymentService {
   async createCheckoutSession(params: CreateCheckoutParams): Promise<CheckoutSession> {
@@ -23,7 +24,7 @@ export class RealPaymentService implements IPaymentService {
         id: `np_${Date.now()}`,
       };
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage = getErrorMessage(error);
       throw new Error(`Failed to create checkout: ${errorMessage}`);
     }
   }

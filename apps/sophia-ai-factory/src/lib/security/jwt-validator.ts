@@ -9,6 +9,7 @@
 
 import { jwtVerify, createRemoteJWKSet } from 'jose'
 import { logger } from '@/lib/utils/logger-utility'
+import { getErrorMessage } from '@/lib/utils/to-error'
 import { checkJwtNonce, markJwtNonceAsUsed } from '@/lib/auth/jwt-nonce-tracker'
 import type { EnrichedJwtPayload } from '@/lib/auth/enriched-jwt'
 
@@ -311,7 +312,7 @@ export async function validateJwt(
       payload: jwtPayload,
     }
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error)
+    const errorMessage = getErrorMessage(error)
 
     // Determine error type based on message
     if (errorMessage.includes('expired')) {

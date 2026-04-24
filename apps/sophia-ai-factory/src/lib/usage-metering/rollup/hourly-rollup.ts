@@ -4,6 +4,7 @@
 
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
+import { getErrorMessage } from '@/lib/utils/to-error';
 import type { HourlySummaryRecord, ServiceBreakdownItem, UsageEventRow } from './rollup-utils';
 import { calcAvgResponseTime } from './rollup-utils';
 
@@ -195,7 +196,7 @@ export async function runHourlyRollup(hourTimestamp?: number): Promise<{
     logger.info('[Rollup Service] Hourly rollup complete', { hourStart, processed: summaries.length });
     return { processed: summaries.length, success: true };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorMessage = getErrorMessage(error);
     logger.error('[Rollup Service] Hourly rollup failed', new Error(errorMessage));
     return { processed: 0, success: false };
   }
