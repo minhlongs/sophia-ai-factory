@@ -7,6 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@/lib/utils/logger-utility'
+import { toError } from '@/lib/utils/to-error'
 import { checkQuotaWithOverage, DEFAULT_CONFIG } from '@/lib/quota/quota-checker'
 import { enforceQuota } from '@/lib/quota/quota-enforcer'
 import { createServerClient } from '@/lib/db/client'
@@ -147,7 +148,7 @@ export async function enforceRaasQuota(
           retryAfter: deniedResponse.retryAfter,
         },
       }).catch(err => {
-        logger.error('[RaaS Gate] Failed to log violation and alert', err as Error)
+        logger.error('[RaaS Gate] Failed to log violation and alert', toError(err))
       })
 
       return {
@@ -209,7 +210,7 @@ export async function enforceRaasQuota(
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-    logger.error('[RaaS Gate] Quota check error', error as Error)
+    logger.error('[RaaS Gate] Quota check error', toError(error))
 
     if (licenseNonceForError) {
       await recordCircuitFailure(licenseNonceForError, error instanceof Error ? error : new Error(errorMessage))

@@ -38,6 +38,7 @@ import {
 // Overage billing reconciler removed — NOWPayments handles payments via IPN
 import { syncUsageEventsToKv, getMeteringLogs, markAsReconciled, type MeteringLogEntry } from '@/lib/usage-metering/kv-metering-log-sync';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 
 /**
  * Default reconciliation configuration for cron trigger
@@ -89,7 +90,7 @@ async function logErrorToSentry(
 ): Promise<void> {
   // Placeholder for Sentry integration
   // In production, use @sentry/worker or Sentry webhook
-  logger.error('[Sentry] Error logged', error as Error, {
+  logger.error('[Sentry] Error logged', toError(error), {
     eventId: context.eventId,
     licenseNonce: context.licenseNonce,
     operation: context.operation,
@@ -121,7 +122,7 @@ async function logErrorToKv(
     };
     await kv.put(errorKey, JSON.stringify(errorEntry), { expirationTtl: 7 * 24 * 60 * 60 }); // 7 days
   } catch (logError) {
-    logger.error('[Reconciliation Runner] Failed to log error to KV', logError as Error);
+    logger.error('[Reconciliation Runner] Failed to log error to KV', toError(logError));
   }
 }
 
@@ -462,7 +463,7 @@ export async function runMeteringReconciliation(
       retriesPerformed,
     };
   } catch (error) {
-    const err = error as Error;
+    const err = toError(error);
     logger.error('[Reconciliation Runner] Reconciliation failed', err);
 
     report.errors.push({

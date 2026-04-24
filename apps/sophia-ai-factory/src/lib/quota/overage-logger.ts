@@ -12,6 +12,7 @@
 
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 
 /**
  * Overage event input
@@ -100,7 +101,7 @@ class OverageEventBuffer {
 
       logger.info('[Overage Logger] Flushed batch', { count: events.length });
     } catch (error) {
-      logger.error('[Overage Logger] Batch flush failed', error as Error);
+      logger.error('[Overage Logger] Batch flush failed', toError(error));
       // Re-add to buffer for retry (with limit)
       if (this.buffer.length < 100) {
         this.buffer.unshift(...events);
@@ -173,7 +174,7 @@ export async function logOverageEventImmediate(
 
     return data.id;
   } catch (error) {
-    logger.error('[Overage Logger] Failed to log event', error as Error);
+    logger.error('[Overage Logger] Failed to log event', toError(error));
     return null;
   }
 }
