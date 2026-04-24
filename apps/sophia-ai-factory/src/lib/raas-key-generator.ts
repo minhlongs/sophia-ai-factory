@@ -21,6 +21,7 @@
 
 import { createHmac, randomBytes } from 'crypto';
 import { Tier, TierLowercase } from '@/types';
+import { getErrorMessage } from '@/lib/utils/to-error';
 
 /**
  * Generate license key với HMAC-SHA256 signature
@@ -138,7 +139,7 @@ export async function revokeKey(
     await redisClient.sAdd(REVOKED_KEYS_SET, key);
   } catch (error) {
     throw new Error(
-      `Failed to revoke key: ${error instanceof Error ? error.message : 'Unknown error'}`
+      `Failed to revoke key: ${getErrorMessage(error)}`
     );
   }
 }

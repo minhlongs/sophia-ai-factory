@@ -1,5 +1,6 @@
 // TODO: storage not available in D1 client — audio upload needs Cloudflare R2 migration
 import { logger } from '@/lib/utils/logger-utility';
+import { getErrorMessage } from '@/lib/utils/to-error';
 import { Tier } from "@/types";
 import { withTimeout } from '@/lib/byok/with-timeout';
 import { trackUsage, hashLicenseKey, calculateCredits, startTimer } from '@/lib/usage-metering';
@@ -65,7 +66,7 @@ export async function generateVoiceover(input: GenerateVoiceoverInput): Promise<
       return result;
     } catch (error) {
       // Log and fall through to mock fallback
-      const errMsg = error instanceof Error ? error.message : String(error);
+      const errMsg = getErrorMessage(error);
       logger.warn(`[ElevenLabs] API failed, falling back to mock`, { error: errMsg });
       // Track failed usage
       await trackUsage({

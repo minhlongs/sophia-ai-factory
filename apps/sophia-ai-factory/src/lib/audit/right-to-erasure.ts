@@ -12,7 +12,7 @@
 
 import { createServerClient } from '@/lib/db/client'
 import { logger } from '@/lib/utils/logger-utility'
-import { toError } from '@/lib/utils/to-error'
+import { toError, getErrorMessage } from '@/lib/utils/to-error'
 import { generateUserPseudonym, hashIpAddress } from './gdpr-redaction'
 import type { RaasAuditLogRow, AuditUserMetadataRow, AuditGdprErasureRow } from './types'
 
@@ -156,7 +156,7 @@ export async function handleRightToErasure(
     })
     return {
       anonymizedCount: 0,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: getErrorMessage(error),
     }
   }
 }
@@ -307,7 +307,7 @@ export async function getErasureStatus(userId: string): Promise<{
   } catch (error) {
     logger.warn('Failed to fetch erasure status', {
       userId,
-      errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      errorMessage: getErrorMessage(error),
     })
     return { hasErasureRequest: false }
   }

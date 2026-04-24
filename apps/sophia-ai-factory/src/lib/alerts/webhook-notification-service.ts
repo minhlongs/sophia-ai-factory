@@ -15,7 +15,7 @@
  */
 
 import { logger } from '@/lib/utils/logger-utility';
-import { toError } from '@/lib/utils/to-error';
+import { toError, getErrorMessage } from '@/lib/utils/to-error';
 import crypto from 'crypto';
 import { triggerWebhookFailedAlert } from '@/lib/alerts/realtime-alert-service';
 
@@ -233,7 +233,7 @@ export async function sendWebhookAlert(
 
     } catch (error) {
       const deliveryTime = Date.now() - startTime;
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage = getErrorMessage(error);
       lastError = errorMessage;
 
       logger.warn('[Webhook Alert] Delivery failed', {

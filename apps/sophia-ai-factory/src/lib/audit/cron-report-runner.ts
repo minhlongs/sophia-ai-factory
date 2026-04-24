@@ -13,7 +13,7 @@
  */
 
 import { logger } from '@/lib/utils/logger-utility'
-import { toError } from '@/lib/utils/to-error'
+import { toError, getErrorMessage } from '@/lib/utils/to-error'
 import {
   getDueReports,
   updateNextRunAt,
@@ -317,7 +317,7 @@ export async function runScheduledReports(): Promise<RunResult> {
         errors++
         logger.error('[Cron Runner] Report execution failed', {
           reportId: report.id,
-          errorMessage: error instanceof Error ? error.message : String(error)
+          errorMessage: getErrorMessage(error)
         })
       }
 

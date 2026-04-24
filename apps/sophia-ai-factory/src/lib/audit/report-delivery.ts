@@ -10,7 +10,7 @@
  */
 
 import { logger } from '@/lib/utils/logger-utility'
-import { toError } from '@/lib/utils/to-error'
+import { toError, getErrorMessage } from '@/lib/utils/to-error'
 import type { ScheduledReport } from './report-scheduler'
 import type {
   AuditComplianceReportRow,
@@ -259,7 +259,7 @@ export async function deliverReport(
       await emailReport(report.recipients, subject, content, filename)
       deliveredRecipients.push(...report.recipients)
     } catch (emailError) {
-      errors.push(`Email delivery failed: ${emailError instanceof Error ? emailError.message : String(emailError)}`)
+      errors.push(`Email delivery failed: ${getErrorMessage(emailError)}`)
     }
 
     // Log delivery attempt

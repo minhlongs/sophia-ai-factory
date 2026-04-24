@@ -6,6 +6,7 @@
  */
 
 import { logger } from '@/lib/utils/logger-utility';
+import { getErrorMessage } from '@/lib/utils/to-error';
 
 const DEBUG_ENABLED = process.env.DEBUG_USAGE_METERING === 'true';
 
@@ -75,7 +76,7 @@ export function logFunctionCall<T extends (...args: unknown[]) => unknown>(
     } catch (error) {
       debugLogger.log(`[Function Error] ${propertyKey}() failed`, {
         duration: Date.now() - startTime,
-        error: error instanceof Error ? error.message : String(error),
+        error: getErrorMessage(error),
       });
       throw error;
     }

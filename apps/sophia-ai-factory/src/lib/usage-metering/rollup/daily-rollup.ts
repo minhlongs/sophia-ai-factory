@@ -4,6 +4,7 @@
 
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
+import { getErrorMessage } from '@/lib/utils/to-error';
 import type { DailySummaryRecord, ServiceBreakdownItem, HourlySummaryRow } from './rollup-utils';
 import { calcAvgResponseTime } from './rollup-utils';
 
@@ -209,7 +210,7 @@ export async function runDailyRollup(dayTimestamp?: number): Promise<{
     logger.info('[Rollup Service] Daily rollup complete', { dayStart, processed: summaries.length });
     return { processed: summaries.length, success: true };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorMessage = getErrorMessage(error);
     logger.error('[Rollup Service] Daily rollup failed', new Error(errorMessage));
     return { processed: 0, success: false };
   }

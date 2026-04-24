@@ -6,6 +6,7 @@
 
 import { createServerClient } from '@/lib/db/client'
 import { logger } from '@/lib/utils/logger-utility'
+import { getErrorMessage } from '@/lib/utils/to-error'
 
 export interface TelegramRateLimitResult {
   allowed: boolean
@@ -68,7 +69,7 @@ export async function checkRateLimit(
     logger.warn('telegram_ratelimit_fail_open', {
       metric: 'telegram_ratelimit_fail_open',
       reason: 'exception',
-      errorMessage: error instanceof Error ? error.message : String(error),
+      errorMessage: getErrorMessage(error),
     })
     return { allowed: true, remaining: maxCommands, resetInSeconds: windowSeconds }
   }

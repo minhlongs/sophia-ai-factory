@@ -6,6 +6,7 @@
  */
 
 import { logger } from '@/lib/utils/logger-utility';
+import { getErrorMessage } from '@/lib/utils/to-error';
 import type { UsageEventInput, IngestionResult } from './types';
 import { generateIdempotencyKey } from './idempotency';
 import { trackUsage } from './tracker';
@@ -123,7 +124,7 @@ class UsageBatchBuffer {
           results.push({
             index: results.length,
             success: false,
-            error: error instanceof Error ? error.message : 'Unknown error'
+            error: getErrorMessage(error)
           });
         }
       }

@@ -7,6 +7,7 @@
 import { sha256 } from '@/lib/audit/crypto-utils';
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
+import { getErrorMessage } from '@/lib/utils/to-error';
 import { insertTyped } from '@/lib/db/insert-typed';
 import type { UsageEventInput, UsageEventDB, IngestionResult } from './types';
 import type { D1Response } from '@/lib/db/types';
@@ -219,7 +220,7 @@ export async function trackUsage(event: UsageEventInput): Promise<IngestionResul
     // Return failure result instead of throwing
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: getErrorMessage(error),
     };
   }
 }
