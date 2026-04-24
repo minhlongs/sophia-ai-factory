@@ -12,6 +12,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
 import { getCurrentUser } from '@/lib/better-auth-session';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import { checkAdminAuth } from '../middleware';
 import { z } from 'zod';
 
@@ -245,7 +246,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    logger.error('[Violations] Error', error as Error);
+    logger.error('[Violations] Error', toError(error));
     return NextResponse.json(
       { error: 'Failed to fetch violations' },
       { status: 500 }
@@ -337,7 +338,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    logger.error('[Violations] Error performing action', error as Error);
+    logger.error('[Violations] Error performing action', toError(error));
     return NextResponse.json(
       { error: 'Failed to perform action' },
       { status: 500 }

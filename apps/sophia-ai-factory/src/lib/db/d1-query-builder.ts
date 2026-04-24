@@ -5,6 +5,8 @@
  * code needs minimal changes when migrating from Supabase to D1.
  */
 
+import { toError } from '@/lib/utils/to-error';
+
 // Result types matching Supabase response shape
 export interface QueryResult<T = Record<string, unknown>> {
   data: T | null;
@@ -216,7 +218,7 @@ export class D1QueryChain<T = Record<string, unknown>> {
           return { data: null, error: { message: `Unknown operation: ${this.operation}` } };
       }
     } catch (err) {
-      return { data: null, error: { message: (err as Error).message } };
+      return { data: null, error: { message: toError(err).message } };
     }
   }
 
@@ -410,7 +412,7 @@ export class D1Client {
           return { data: null, error: { message: `Unknown RPC: ${fnName}` } };
       }
     } catch (err) {
-      return { data: null, error: { message: (err as Error).message } };
+      return { data: null, error: { message: toError(err).message } };
     }
   }
 

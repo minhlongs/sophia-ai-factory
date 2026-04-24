@@ -8,6 +8,8 @@
  * Ref: github.com/SamurAIGPT/Generative-Media-Skills
  */
 
+import { toError } from '@/lib/utils/to-error'
+
 const MUAPI_BASE = 'https://api.muapi.ai/v1'
 
 export type MediaType = 'image' | 'video' | 'audio'
@@ -106,7 +108,7 @@ export async function submitMediaJob(
       },
     }
   } catch (err) {
-    return { success: false, error: (err as Error).message }
+    return { success: false, error: toError(err).message }
   }
 }
 
@@ -153,7 +155,7 @@ export async function getJobStatus(jobId: string): Promise<MediaGenerationResult
       },
     }
   } catch (err) {
-    return { success: false, error: (err as Error).message }
+    return { success: false, error: toError(err).message }
   }
 }
 

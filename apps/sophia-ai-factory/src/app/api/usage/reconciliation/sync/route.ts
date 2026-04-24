@@ -17,6 +17,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import {
   syncUsageEventsToKv,
   getSyncStats,
@@ -64,7 +65,7 @@ export async function GET(): Promise<NextResponse> {
       requestId,
     });
   } catch (error) {
-    logger.error('[Usage Reconciliation Sync] Sync failed', error as Error, { requestId });
+    logger.error('[Usage Reconciliation Sync] Sync failed', toError(error), { requestId });
 
     return NextResponse.json(
       {
@@ -140,7 +141,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       requestId,
     });
   } catch (error) {
-    logger.error('[Usage Reconciliation Sync] Sync failed', error as Error, { requestId });
+    logger.error('[Usage Reconciliation Sync] Sync failed', toError(error), { requestId });
 
     return NextResponse.json(
       {

@@ -14,6 +14,7 @@
 
 import type { ReconciliationAlert, Discrepancy } from '@/lib/billing/reconciliation-types';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 
 /**
  * Alert emitter configuration
@@ -122,7 +123,7 @@ export async function emitReconciliationAlert(
     });
     return false;
   } catch (error) {
-    logger.error('[Alert Emitter] Alert emission error', error as Error, {
+    logger.error('[Alert Emitter] Alert emission error', toError(error), {
       type: alert.type,
       userId: alert.userId,
     });

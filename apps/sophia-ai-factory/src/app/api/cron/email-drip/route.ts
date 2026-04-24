@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
 import { sendEmail } from '@/lib/email/sender';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 
 export const dynamic = 'force-dynamic';
 
@@ -117,11 +118,11 @@ export async function GET(req: NextRequest) {
             logger.warn(`[email-drip] Send failed for user ${user.id}: ${result.error}`);
           }
         } catch (e) {
-          logger.error(`[email-drip] Failed for user ${user.id}`, e as Error);
+          logger.error(`[email-drip] Failed for user ${user.id}`, toError(e));
         }
       }
     } catch (e) {
-      logger.error(`[email-drip] Drip ${drip.templateKey} query failed`, e as Error);
+      logger.error(`[email-drip] Drip ${drip.templateKey} query failed`, toError(e));
     }
   }
 

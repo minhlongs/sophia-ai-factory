@@ -13,6 +13,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
 import { transitionDunningState } from '@/lib/billing/dunning/dunning-state-machine';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 
 function verifyCronAuth(request: NextRequest): boolean {
   if (process.env.NODE_ENV === 'development') return true;
@@ -84,7 +85,7 @@ export async function GET(request: NextRequest) {
         advanced++;
       } catch (innerErr) {
         errors++;
-        logger.error('[DunningAdvance] Error advancing past_due row', innerErr as Error, {
+        logger.error('[DunningAdvance] Error advancing past_due row', toError(innerErr), {
           license_nonce: row.license_nonce.slice(0, 8),
         });
       }
@@ -133,7 +134,7 @@ export async function GET(request: NextRequest) {
         advanced++;
       } catch (innerErr) {
         errors++;
-        logger.error('[DunningAdvance] Error advancing delinquent row', innerErr as Error, {
+        logger.error('[DunningAdvance] Error advancing delinquent row', toError(innerErr), {
           license_nonce: row.license_nonce.slice(0, 8),
         });
       }
