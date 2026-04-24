@@ -1,6 +1,28 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-23 | **Current Version:** 1.12.9
+**Last Updated:** 2026-04-23 | **Current Version:** 1.12.10
+
+---
+
+## [2026-04-23] Phase 24 — Logger Signature Alignment (v1.12.10)
+
+### Summary
+Logger warn/info/debug signatures unified with logger.error via shared `dispatch()` helper. Latent bug fix: `resolveErrorArgs()` now preserves string-valued `{ error: 'msg' }` metadata across ~10 enriched-jwt call sites that were silently dropping data.
+
+### Changes
+- `src/lib/utils/logger-utility.ts` — Refactor warn/info/debug to use shared `dispatch()` helper; error handling normalized across all levels
+- `src/lib/utils/logger-utility.test.ts` — NEW file, 9 test cases validating signature alignment and metadata preservation
+- `src/lib/auth/enriched-jwt.ts` — 3 call sites (lines 220/294/399) now preserve error name/message/stack in structured output
+
+### Quality & Review
+- Build: 0 new TypeScript errors
+- Tests: 1306 → 1315 (+9 new tests)
+- TSC: 621 → 611 (delta -10)
+- Code Review: 9.7/10 APPROVE SHIP (round 2, after round-1 block on silent-drop now resolved)
+
+### Deferred (Phase 25+ backlog)
+- ~244 `instanceof Error` ternary simplifications
+- Additional error-metadata preservation patterns in other service layers
 
 ---
 
