@@ -34,11 +34,11 @@ After Phase 21's ESLint regression guard, the only remaining `as Error` casts in
 
 ## Success Criteria
 
-- [ ] `npm run build` passes (TS error count unchanged from Phase 21)
-- [ ] `npm run lint` passes (0 rule violations in `logger-utility.ts`)
-- [ ] `npm test` → 1306/1306 pass
-- [ ] Code review ≥ 9.5/10 APPROVE SHIP
-- [ ] CI GREEN + Production HTTP 200
+- [x] `npm run build` passes (TS error count unchanged from Phase 21: 621)
+- [x] `npm run lint` passes (0 rule violations in `logger-utility.ts`)
+- [x] `npm test` → 1306/1306 pass
+- [x] Code review ≥ 9.5/10 APPROVE SHIP (10/10 APPROVE)
+- [x] CI GREEN + Production HTTP 200
 
 ## Risk Assessment
 

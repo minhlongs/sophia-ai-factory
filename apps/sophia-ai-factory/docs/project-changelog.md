@@ -1,6 +1,24 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-23 | **Current Version:** 1.12.10
+**Last Updated:** 2026-04-24 | **Current Version:** 1.12.11
+
+---
+
+## [2026-04-24] Phase 25 — Logger-Utility Structured Metadata Pickup (v1.12.11)
+
+### Summary
+Extended `LogEntry.error` interface with optional fields (code, details, hint) to capture PostgreSQL/Supabase error context. Logger now conditionally spreads these fields from Error own-properties. Dev-mode rendering shows `Details: {...}` JSON block post-stack. Closes Phase 15↔Phase 24 bridge: Phase 15 preserves PostgrestError shape via `toError()`, Phase 24 unified logger signatures, Phase 25 now extracts metadata in the logging sink.
+
+### Changes
+- `src/lib/utils/logger-utility.ts` — `LogEntry.error` interface extended with `code?: unknown; details?: unknown; hint?: unknown`; `log()` conditionally spreads same 3 fields from Error own-properties; `formatLogEntry()` renders metadata JSON block (dev-mode only)
+- `src/lib/utils/logger-utility.test.ts` — 3 new test cases: full PostgrestError shape / partial code-only / plain Error unchanged
+
+### Quality & Review
+- Build: 0 new TypeScript errors
+- Tests: 1315 → 1318 (+3 new tests)
+- TSC: 611 (no regression from Phase 24 baseline)
+- Code Review: 9.8/10 APPROVE SHIP (0 blockers)
+- CI GREEN + Production HTTP 200
 
 ---
 
