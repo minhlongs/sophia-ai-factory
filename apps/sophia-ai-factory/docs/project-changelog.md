@@ -1,6 +1,32 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-23 | **Current Version:** 1.12.6
+**Last Updated:** 2026-04-23 | **Current Version:** 1.12.7
+
+---
+
+## [2026-04-23] Phase 21 — ESLint regression guard for `toError()` (v1.12.7)
+
+### Summary
+Added ESLint `no-restricted-syntax` rule flagging bare `as Error` casts to prevent regression of Phase 13–20 migration. Union-type casts (e.g., `as Error | undefined`) intentionally allowed; 2 legitimate overload patterns in `logger-utility.ts` remain valid. Both helpers (`to-error.ts`, `logger-utility.ts`) explicitly exempted.
+
+### Changes
+- ESLint rule scope: `src/**/*.{ts,tsx}` (excluding test files and helper modules)
+- AST selector: `TSAsExpression[typeAnnotation.type='TSTypeReference'][typeAnnotation.typeName.name='Error']`
+- 2 carry-over `as Error` sites in `src/app/api/coupons/coupons/{activate,activate-redirect}/route.ts` (Phase 20 slice 7) now migrated to `toError()`
+- Cumulative normalized sites: 227 across Phase 13–21
+
+### Quality & Review
+- Build: 0 new TypeScript errors
+- Tests: 1306/1306 pass (baseline — no runtime change)
+- TSC: 621 errors (delta 0)
+- Lint: 0 `no-restricted-syntax` hits on tracked code; rule self-test confirmed positive detection
+- Code Review: 9.7/10 APPROVE SHIP (round 2; round 1 scored 7.5/10 with 1 blocker now resolved)
+
+### Deferred (Phase 22+ backlog)
+- `logger-utility.ts` union-type casts (overload typing rework)
+- ~244 `instanceof Error` ternary simplifications
+- `scripts/production-setup.ts` 3 cast sites
+- 1 test-file cast in `src/lib/ai/anthropic-adapter.test.ts`
 
 ---
 
