@@ -16,6 +16,9 @@ interface LogEntry {
     name: string;
     message: string;
     stack?: string;
+    code?: unknown;
+    details?: unknown;
+    hint?: unknown;
   };
 }
 
@@ -42,6 +45,13 @@ const formatLogEntry = (entry: LogEntry): string => {
 
     if (entry.error) {
       output += `\n  Error: ${entry.error.name}: ${entry.error.message}`;
+      const extras: Record<string, unknown> = {};
+      if (entry.error.code !== undefined) extras.code = entry.error.code;
+      if (entry.error.details !== undefined) extras.details = entry.error.details;
+      if (entry.error.hint !== undefined) extras.hint = entry.error.hint;
+      if (Object.keys(extras).length > 0) {
+        output += `\n  Details: ${JSON.stringify(extras, null, 2)}`;
+      }
       if (entry.error.stack) {
         output += `\n${entry.error.stack}`;
       }
@@ -73,10 +83,14 @@ const log = (
   };
 
   if (error) {
+    const errRecord = error as Error & { code?: unknown; details?: unknown; hint?: unknown };
     entry.error = {
       name: error.name,
       message: error.message,
       stack: error.stack,
+      ...(errRecord.code !== undefined && { code: errRecord.code }),
+      ...(errRecord.details !== undefined && { details: errRecord.details }),
+      ...(errRecord.hint !== undefined && { hint: errRecord.hint }),
     };
   }
 
