@@ -9,6 +9,7 @@
 
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import type { Tier } from '@/types';
 
 // -------------------------------------------------------------------------
@@ -255,7 +256,7 @@ export async function isRateLimited(
 
     return (recentAlerts?.length ?? 0) > 0;
   } catch (error) {
-    logger.error('[Quota Alert] Error checking rate limit', error as Error);
+    logger.error('[Quota Alert] Error checking rate limit', toError(error));
     return false; // Fail-open
   }
 }

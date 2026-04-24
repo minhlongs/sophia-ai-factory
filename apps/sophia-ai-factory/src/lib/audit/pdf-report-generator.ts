@@ -13,6 +13,7 @@
  */
 
 import { logger } from '@/lib/utils/logger-utility'
+import { toError } from '@/lib/utils/to-error'
 import type { ReportFilters } from './report-scheduler'
 
 /**
@@ -464,7 +465,7 @@ export function generateReport(
         throw new Error(`Invalid format: ${format}`)
     }
   } catch (error) {
-    logger.error('[Report Generator] Generate report failed', error as Error)
+    logger.error('[Report Generator] Generate report failed', toError(error))
     throw error
   }
 }

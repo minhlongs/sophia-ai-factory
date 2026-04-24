@@ -21,6 +21,7 @@ import { getAnalyticsAccess } from '@/lib/analytics/rbac';
 import { downloadCsv } from '@/lib/analytics/export';
 import { DateRange } from 'react-day-picker';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 
 interface UsageAnalyticsViewProps {
   userTier: Tier;
@@ -133,7 +134,7 @@ export function UsageAnalyticsView({ userTier, userId }: UsageAnalyticsViewProps
         await exportChartToPng('usage-chart', `usage-analytics-${Date.now()}`);
       }
     } catch (error) {
-      logger.error('Export failed', error as Error);
+      logger.error('Export failed', toError(error));
     } finally {
       setIsExporting(false);
     }

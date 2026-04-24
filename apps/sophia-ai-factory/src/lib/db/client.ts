@@ -6,6 +6,7 @@
  */
 
 import { D1Client } from './d1-query-builder';
+import { toError } from '@/lib/utils/to-error';
 
 /**
  * Get D1 database binding synchronously from CF request context.
@@ -163,7 +164,7 @@ export function createAuthClient(_token?: string) {
           if (!user) return { data: { user: null }, error: { message: 'Not authenticated' } };
           return { data: { user }, error: null };
         } catch (e) {
-          return { data: { user: null }, error: { message: (e as Error).message } };
+          return { data: { user: null }, error: { message: toError(e).message } };
         }
       },
     },

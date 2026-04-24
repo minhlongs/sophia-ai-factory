@@ -12,6 +12,7 @@
 
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import { checkQuotaWithOverage, DEFAULT_CONFIG, getEffectiveQuotaLimits, invalidateQuotaCache } from './quota-checker';
 import type { QuotaCheckContext, EnhancedQuotaCheckResult } from './quota-checker';
 import { invalidateRealTimeCache } from '@/lib/usage-metering/realtime-tracker';
@@ -205,7 +206,7 @@ async function getUserIdFromLicense(licenseNonce: string): Promise<string | null
 
     return data?.created_by || null;
   } catch (error) {
-    logger.error('[Quota Enforcer] Error getting user ID from license', error as Error);
+    logger.error('[Quota Enforcer] Error getting user ID from license', toError(error));
     return null;
   }
 }

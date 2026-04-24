@@ -3,6 +3,7 @@
  * TEMP endpoint — remove after migration complete
  */
 import { NextResponse } from 'next/server';
+import { toError } from '@/lib/utils/to-error';
 
 function getD1(): D1Database | null {
   const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
@@ -100,7 +101,7 @@ export async function GET() {
       const tableName = sql.match(/CREATE TABLE IF NOT EXISTS (\w+)/)?.[1] || 'unknown';
       results.push(`OK: ${tableName}`);
     } catch (e) {
-      results.push(`FAIL: ${(e as Error).message}`);
+      results.push(`FAIL: ${toError(e).message}`);
     }
   }
 

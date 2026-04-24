@@ -14,6 +14,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 
 export interface Customer {
   id: string;
@@ -53,7 +54,7 @@ export function CustomerSearch({
             setCustomers(data);
           }
         } catch (error) {
-          logger.error('Failed to search customers', error as Error);
+          logger.error('Failed to search customers', toError(error));
         } finally {
           setLoading(false);
         }

@@ -7,6 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/lib/better-auth-session';
+import { toError } from '@/lib/utils/to-error';
 
 // Direct D1 access for raw SQL (query builder may not support upsert)
 function getD1Binding(): D1Database | null {
@@ -82,6 +83,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.redirect(new URL(`/dashboard?activated=${tier}&bonus=${couponDef.mcuBonus}`, request.url));
   } catch (e) {
-    return NextResponse.redirect(new URL(`/dashboard?error=${encodeURIComponent((e as Error).message)}`, request.url));
+    return NextResponse.redirect(new URL(`/dashboard?error=${encodeURIComponent(toError(e).message)}`, request.url));
   }
 }

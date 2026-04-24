@@ -9,6 +9,7 @@
 
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import type { Tier } from '@/types';
 import {
   DUNNING_TIER_CONFIGS,
@@ -49,7 +50,7 @@ export async function getDunningHistory(
     .limit(limit);
 
   if (error) {
-    logger.error('[Dunning] Failed to fetch history', error as Error);
+    logger.error('[Dunning] Failed to fetch history', toError(error));
     return [];
   }
 

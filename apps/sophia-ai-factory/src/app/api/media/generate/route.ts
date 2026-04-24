@@ -14,6 +14,7 @@ import {
   SUPPORTED_MODELS,
   type MediaType,
 } from '@/lib/clients/muapi-media-client'
+import { toError } from '@/lib/utils/to-error'
 
 const generateSchema = z.object({
   type: z.enum(['image', 'video', 'audio']),
@@ -76,7 +77,7 @@ export async function POST(req: NextRequest) {
     })
   } catch (err) {
     return NextResponse.json(
-      { error: (err as Error).message },
+      { error: toError(err).message },
       { status: 500 },
     )
   }

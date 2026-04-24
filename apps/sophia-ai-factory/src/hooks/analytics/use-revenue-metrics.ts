@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/query-client';
 import { RaasGatewayClient, type BillingMetrics } from '@/lib/raas-gateway-client';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 
 // RaaS Gateway client instance (singleton)
 const raasClient = new RaasGatewayClient({
@@ -29,7 +30,7 @@ export function useRevenueMetrics(options: RevenueMetricsOptions = {}) {
       try {
         return await raasClient.getBillingMetrics(period);
       } catch (error) {
-        logger.error('[useRevenueMetrics] Failed to fetch revenue metrics', error as Error);
+        logger.error('[useRevenueMetrics] Failed to fetch revenue metrics', toError(error));
         return null;
       }
     },

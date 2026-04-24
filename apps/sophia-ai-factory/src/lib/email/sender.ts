@@ -6,6 +6,8 @@
  * Falls back to dry-run logging when key is not configured.
  */
 
+import { toError } from '@/lib/utils/to-error';
+
 export interface EmailParams {
   to: string;
   from?: string;
@@ -57,6 +59,6 @@ export async function sendEmail(params: EmailParams): Promise<EmailResult> {
     const data = await res.json() as { id?: string };
     return { success: true, messageId: data.id, provider: 'resend' };
   } catch (err) {
-    return { success: false, error: (err as Error).message, provider: 'resend' };
+    return { success: false, error: toError(err).message, provider: 'resend' };
   }
 }

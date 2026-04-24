@@ -7,6 +7,7 @@
 
 import { parseReceipt } from '../compliance-receipt'
 import { logger } from '@/lib/utils/logger-utility'
+import { toError } from '@/lib/utils/to-error'
 import { createServerClient } from '@/lib/db/client'
 import type { ComplianceReceipt } from '../compliance-receipt'
 import type { Json } from '@/lib/supabase/types'
@@ -61,6 +62,6 @@ export async function logAuditEvent(params: {
       details: (params.metadata ?? {}) as Json,
     })
   } catch (error) {
-    logger.error('[Audit Logger] logAuditEvent failed', error as Error)
+    logger.error('[Audit Logger] logAuditEvent failed', toError(error))
   }
 }

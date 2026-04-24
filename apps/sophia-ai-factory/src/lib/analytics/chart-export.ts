@@ -5,6 +5,7 @@
  */
 
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 
 /**
  * Export a chart element to PNG
@@ -80,7 +81,7 @@ export async function exportChartsToZip(
 
       zip.file(`chart-${chartId}.png`, blob);
     } catch (error) {
-      logger.error(`Failed to export chart ${chartId}`, error as Error);
+      logger.error(`Failed to export chart ${chartId}`, toError(error));
     }
   }
 

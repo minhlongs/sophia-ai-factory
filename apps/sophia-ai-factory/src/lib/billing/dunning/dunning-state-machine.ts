@@ -11,6 +11,7 @@
 
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import type { Tier } from '@/types';
 
 // -------------------------------------------------------------------------
@@ -100,7 +101,7 @@ export async function getDunningSettings(licenseNonce: string): Promise<DunningS
 
     return data as DunningSettingsRow;
   } catch (error) {
-    logger.error('[Dunning] Failed to get settings', error as Error);
+    logger.error('[Dunning] Failed to get settings', toError(error));
     return null;
   }
 }

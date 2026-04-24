@@ -19,6 +19,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import { z } from 'zod';
 
 const adjustQuotaSchema = z.object({
@@ -137,7 +138,7 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (error) {
-    logger.error('[Admin Quota API] Unexpected error', error as Error);
+    logger.error('[Admin Quota API] Unexpected error', toError(error));
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

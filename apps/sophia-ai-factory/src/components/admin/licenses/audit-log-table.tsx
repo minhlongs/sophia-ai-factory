@@ -7,6 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -66,7 +67,7 @@ export function AuditLogTable({ licenseId }: AuditLogTableProps) {
         setRetentionNote(data.retentionNote);
       }
     } catch (error) {
-      logger.error('Failed to fetch audit logs', error as Error);
+      logger.error('Failed to fetch audit logs', toError(error));
     } finally {
       setLoading(false);
     }

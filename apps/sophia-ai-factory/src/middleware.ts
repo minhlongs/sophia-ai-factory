@@ -7,6 +7,7 @@ import { checkRateLimit, getClientIdentifier, RATE_LIMITS } from "./lib/security
 import { raasGate, shouldApplyRaasGate } from "./lib/raas-gate";
 import { emitUsageEvent } from "./lib/usage-metering";
 import { logger } from "./lib/utils/logger-utility";
+import { toError } from "@/lib/utils/to-error";
 import { tenantIsolationMiddleware } from "./middleware/tenant-isolation";
 import { track } from "./lib/signals/track";
 import { D1Events } from "./lib/signals/d1-event-types";
@@ -281,7 +282,7 @@ export async function proxy(request: NextRequest) {
         response.headers.set('X-RateLimit-Remaining', String(remaining.hourlyCredits ?? remaining.dailyCredits));
         response.headers.set('X-RateLimit-Reset', String(resetTimestamp));
       } catch (error) {
-        logger.error('[Proxy] Failed to parse quota remaining', error as Error);
+        logger.error('[Proxy] Failed to parse quota remaining', toError(error));
       }
     }
 
