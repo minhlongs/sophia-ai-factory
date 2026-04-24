@@ -19,17 +19,19 @@ Sophia AI Factory logger infrastructure build-out across 27 phases (19 Apr → 2
 | 26    | `getErrorMessage()` helper introduction | ✅ COMPLETE | plans/260424-0230-phase-26-get-error-message-helper/phase-26-get-error-message-helper.md |
 | 27 Wave 1 | `getErrorMessage()` sweep `src/lib/signals/**` (7 hits / 6 files) | ✅ COMPLETE | plans/260424-0251-phase-27-ternary-sweep-wave-1-signals/phase-27-ternary-sweep-wave-1-signals.md |
 | 28 Wave 2 | `getErrorMessage()` sweep `src/app/api/**` (14 hits / 8 files) | ✅ COMPLETE | plans/260424-0325-phase-28-ternary-sweep-wave-2-api/phase-28-ternary-sweep-wave-2-api.md |
-| 29 Wave 3 | Deferred (see Deferred section) | 📋 Pending | — |
+| 29 Wave 3 | `getErrorMessage()` sweep `src/lib/{audit,usage-metering,ai,heygen,telegram,telemetry,alerts,raas,services,billing,security}/**` (~11 hits / 11 files) | ✅ COMPLETE | plans/260424-0350-phase-29-ternary-sweep-wave-3-lib/phase-29-ternary-sweep-wave-3-lib.md |
+| 30 Wave 4 | `getErrorMessage()` sweep `src/lib/**` (28 hits / 23 files) | ✅ COMPLETE | plans/260424-0438-phase-30-non-err-sweep-wave-4-lib/phase-30-non-err-sweep-wave-4-lib.md |
 
-## Key Metrics (Cumulative Phase 1→28 Wave 2)
+## Key Metrics (Cumulative Phase 1→30 Wave 4)
 
-- **Total Files Modified:** ~61 files across all 28 phases (47 baseline + 6 Phase 27 Wave 1 + 8 Phase 28 Wave 2)
+- **Total Files Modified:** ~87 files across all 30 phases (47 baseline + 6 Phase 27 Wave 1 + 8 Phase 28 Wave 2 + 11 Phase 29 Wave 3 + 23 Phase 30 Wave 4) [cumulative sweep across signals/api/lib domains]
+- **Total Hits Replaced:** 60 ternary expressions → `getErrorMessage()` (7 + 14 + 11 + 28)
 - **Logger Tests:** 1321/1321 pass (consistent baseline, zero regression)
-- **TypeScript Errors:** 611 (strict, zero regression across phases 25-28)
-- **Code Quality:** 9.7/10 (Phase 28 Wave 2 review score, consistent high bar)
+- **TypeScript Errors:** 611 (strict, zero regression across phases 25-30)
+- **Code Quality:** 9.7/10 (Phase 30 Wave 4 review score, consistent high bar)
 - **Build Status:** ✅ `npm run build` → exit 0
-- **Lint Status:** ✅ 0 hits on logger/signals/api/error paths
-- **Production:** ✅ HTTP 200 verified (pending git-manager push confirmation)
+- **Lint Status:** ✅ 0 hits on logger/signals/api/lib/error paths
+- **Production:** ✅ HTTP 200 verified (Phase 30 Wave 4 shipped 2026-04-24)
 
 ## Phase 25–27 Wave 1 Summary
 
@@ -61,12 +63,12 @@ Sophia AI Factory logger infrastructure build-out across 27 phases (19 Apr → 2
 
 4. **Code quality metrics solid:** Strict TypeScript, 9.8/10 code review, 611 TS errors baseline (project-wide, not logger-specific).
 
-## Deferred (Phase 29+ + Backlog)
+## Deferred (Phase 31+ + Backlog)
 
-- **Phase 29 Wave 3:** Sweep `src/lib/{inngest,gateway,billing,telegram}/**` (~4 hits / 4 files) → `getErrorMessage(err)` [Last ternary sweep wave]
-- **Phase 30:** `ClientWithStorage` → R2 migration — Cloudflare R2 integration (separate from logger)
-- **Phase 31:** `raas_licenses` D1-vs-Supabase audit — Database layer consistency check
-- **Phase 32+:** Split `lib/usage-metering/types.ts` if >200L — Modularization per code-standards.md (conditional)
+- **Phase 31:** `getErrorMessage()` sweep `src/app/**` non-`err` residuals (~30 hits across api routes, server actions, pages, components)
+- **Phase 32:** `ClientWithStorage` → R2 migration — Cloudflare R2 integration (separate from logger)
+- **Phase 33:** `raas_licenses` D1-vs-Supabase audit — Database layer consistency check
+- **Phase 34+:** Split `lib/usage-metering/types.ts` if >200L — Modularization per code-standards.md (conditional)
 
 ## Success Criteria (Rule #0)
 

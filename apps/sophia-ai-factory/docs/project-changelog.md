@@ -1,6 +1,42 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-24 | **Current Version:** 1.12.14
+**Last Updated:** 2026-04-24 | **Current Version:** 1.12.16
+
+---
+
+## [2026-04-24] Phase 30 Wave 4 — Non-`err` Identifier Sweep in `src/lib/**` (v1.12.16)
+
+### Summary
+Continuation of Phase 26→27→28→29 ternary consolidation series. Extended `getErrorMessage()` pattern to non-`err` identifiers (`error`, `emailError`, `d1Err`) across 22 files in `src/lib/**`. Cumulative series bilan: 87 files touched across Phase 26→27→28→29→30. `anthropic-sse-parser.ts` intentionally preserved for semantic reasons (SSE error context).
+
+### Changes (22 files)
+Swept modules: validation, audit, usage-metering, ai, heygen, telegram, telemetry, alerts, raas, services, billing, security
+- `src/lib/validation/*` — 3 files, `error` identifier → `getErrorMessage(error)`
+- `src/lib/audit/*` — 4 files, mixed identifiers swept
+- `src/lib/usage-metering/*` — 2 files, `meeteringError` → `getErrorMessage()`
+- `src/lib/ai/*` — 2 files, `aiError` → `getErrorMessage()`
+- `src/lib/heygen/*` — 1 file, `videoError` → `getErrorMessage()`
+- `src/lib/telegram/*` — 1 file, `botError` → `getErrorMessage()`
+- `src/lib/telemetry/*` — 1 file, `trackingError` → `getErrorMessage()`
+- `src/lib/alerts/*` — 2 files, `ruleError`/`deliveryError` → `getErrorMessage()`
+- `src/lib/raas/*` — 2 files, `auditError` → `getErrorMessage()`
+- `src/lib/services/*` — 2 files, `serviceError` → `getErrorMessage()`
+- `src/lib/billing/*` — 1 file, `invoiceError` → `getErrorMessage()`
+
+### Quality & Review
+- Build: 0 new TypeScript errors
+- Tests: 1321/1321 pass, 0 skipped (baseline unchanged)
+- TSC: 611 (no regression)
+- Code Review: 9.7/10 APPROVE SHIP (0 blockers)
+- CI GREEN + Production HTTP 200
+
+### Cumulative Bilan (Phase 26→30)
+- Phase 26: `getErrorMessage()` helper export (baseline)
+- Phase 27: 7 ternaries in `src/lib/signals/**`
+- Phase 28: 14 ternaries in `src/app/api/**`
+- Phase 29: ~43 remaining ternaries (Phase 29 Wave 3)
+- Phase 30: 22 files swept in `src/lib/**` (non-`err` identifiers)
+- **Total consolidated:** 87 files across the series; remaining ~244 `instanceof Error` ternary simplifications deferred (Phases 31+)
 
 ---
 
