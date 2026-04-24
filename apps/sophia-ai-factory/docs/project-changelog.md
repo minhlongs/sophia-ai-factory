@@ -1,6 +1,32 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-24 | **Current Version:** 1.12.12
+**Last Updated:** 2026-04-24 | **Current Version:** 1.12.13
+
+---
+
+## [2026-04-24] Phase 27 Wave 1 — getErrorMessage() Ternary Consolidation (v1.12.13)
+
+### Summary
+Bulk consolidation of `instanceof Error ? err.message : String(err)` ternaries across signal-layer logging. Replaced 7 instances with `getErrorMessage(err)` helper across 6 files in `src/lib/signals/**`. Pure refactor, behavior-preserving; PostgrestError-shape robustness now live in signals/ logging callsites. Foundation for Phase 27 Wave 2+ (remaining ~40 ternaries across service layers).
+
+### Changes
+- `src/lib/signals/track.ts` — 1 ternary → `getErrorMessage(err)`, added import
+- `src/lib/signals/posthog-capture.ts` — 2 ternaries → `getErrorMessage(err)`, added import
+- `src/lib/signals/ab-experiment.ts` — 1 ternary → `getErrorMessage(err)`, added import
+- `src/lib/signals/feature-flags.ts` — 1 ternary → `getErrorMessage(err)`, added import
+- `src/lib/signals/digest/telegram-poster.ts` — 1 ternary → `getErrorMessage(err)`, added import
+- `src/lib/signals/digest/github-issue-poster.ts` — 1 ternary → `getErrorMessage(err)`, added import
+
+### Quality & Review
+- Build: 0 new TypeScript errors
+- Tests: 1321/1321 pass, 0 skipped (baseline unchanged)
+- TSC: 611 (no regression)
+- Code Review: 9.8/10 APPROVE SHIP (0 blockers)
+- CI GREEN + Production HTTP 200
+
+### Deferred (Phase 27 Wave 2+ backlog)
+- ~40 remaining `instanceof Error ? err.message : String(err)` ternaries across service layers (billing, alerts, auth, etc.)
+- Batch migration using `getErrorMessage()` helper
 
 ---
 
