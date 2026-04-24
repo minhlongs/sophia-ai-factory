@@ -185,7 +185,7 @@ async function setupNowPayments() {
     log.info('Configure this IPN URL in your NOWPayments dashboard → Settings → IPN.')
   } catch (error) {
     spinner.fail('NOWPayments verification failed')
-    log.error((error as Error).message)
+    log.error(error instanceof Error ? error.message : String(error))
   }
 }
 
@@ -235,7 +235,7 @@ async function setupSupabase() {
 
   } catch (error) {
       spinner.fail('Supabase connection failed')
-      log.error((error as Error).message)
+      log.error(error instanceof Error ? error.message : String(error))
   }
 }
 
@@ -301,7 +301,7 @@ async function setupTelegram() {
 
   } catch (error) {
       spinner.fail('Telegram check failed')
-      log.error((error as Error).message)
+      log.error(error instanceof Error ? error.message : String(error))
   }
 }
 
