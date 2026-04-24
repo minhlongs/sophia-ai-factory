@@ -18,17 +18,18 @@ Sophia AI Factory logger infrastructure build-out across 27 phases (19 Apr → 2
 | 25    | Logger-utility structured metadata pickup (code/details/hint) | ✅ COMPLETE | plans/260424-0202-phase-25-logger-structured-pickup/phase-25-logger-structured-metadata-pickup.md |
 | 26    | `getErrorMessage()` helper introduction | ✅ COMPLETE | plans/260424-0230-phase-26-get-error-message-helper/phase-26-get-error-message-helper.md |
 | 27 Wave 1 | `getErrorMessage()` sweep `src/lib/signals/**` (7 hits / 6 files) | ✅ COMPLETE | plans/260424-0251-phase-27-ternary-sweep-wave-1-signals/phase-27-ternary-sweep-wave-1-signals.md |
-| 27 Wave 2+ | Deferred (see Deferred section) | 📋 Pending | — |
+| 28 Wave 2 | `getErrorMessage()` sweep `src/app/api/**` (14 hits / 8 files) | ✅ COMPLETE | plans/260424-0325-phase-28-ternary-sweep-wave-2-api/phase-28-ternary-sweep-wave-2-api.md |
+| 29 Wave 3 | Deferred (see Deferred section) | 📋 Pending | — |
 
-## Key Metrics (Cumulative Phase 1→27 Wave 1)
+## Key Metrics (Cumulative Phase 1→28 Wave 2)
 
-- **Total Files Modified:** ~53 files across all 27 phases (47 baseline + 6 Phase 27 Wave 1)
+- **Total Files Modified:** ~61 files across all 28 phases (47 baseline + 6 Phase 27 Wave 1 + 8 Phase 28 Wave 2)
 - **Logger Tests:** 1321/1321 pass (consistent baseline, zero regression)
-- **TypeScript Errors:** 611 (strict, zero regression across phases 25-27)
-- **Code Quality:** 9.8/10 (Phase 26-27 review score, consistent)
+- **TypeScript Errors:** 611 (strict, zero regression across phases 25-28)
+- **Code Quality:** 9.7/10 (Phase 28 Wave 2 review score, consistent high bar)
 - **Build Status:** ✅ `npm run build` → exit 0
-- **Lint Status:** ✅ 0 hits on logger/signals/error paths
-- **Production:** ✅ HTTP 200 verified
+- **Lint Status:** ✅ 0 hits on logger/signals/api/error paths
+- **Production:** ✅ HTTP 200 verified (pending git-manager push confirmation)
 
 ## Phase 25–27 Wave 1 Summary
 
@@ -60,13 +61,12 @@ Sophia AI Factory logger infrastructure build-out across 27 phases (19 Apr → 2
 
 4. **Code quality metrics solid:** Strict TypeScript, 9.8/10 code review, 611 TS errors baseline (project-wide, not logger-specific).
 
-## Deferred (Phase 27 Waves 2–3 + Backlog)
+## Deferred (Phase 29+ + Backlog)
 
-- **Phase 27 Wave 2:** Sweep `src/app/api/**` (~14 hits / 8 files) → `getErrorMessage(err)`
-- **Phase 27 Wave 3:** Sweep `src/lib/{inngest,gateway,billing,telegram}/**` (~4 hits / 4 files) → `getErrorMessage(err)`
-- **Phase 28:** `ClientWithStorage` → R2 migration — Cloudflare R2 integration (separate from logger)
-- **Phase 29:** `raas_licenses` D1-vs-Supabase audit — Database layer consistency check
-- **Phase 30+:** Split `lib/usage-metering/types.ts` if >200L — Modularization per code-standards.md (conditional)
+- **Phase 29 Wave 3:** Sweep `src/lib/{inngest,gateway,billing,telegram}/**` (~4 hits / 4 files) → `getErrorMessage(err)` [Last ternary sweep wave]
+- **Phase 30:** `ClientWithStorage` → R2 migration — Cloudflare R2 integration (separate from logger)
+- **Phase 31:** `raas_licenses` D1-vs-Supabase audit — Database layer consistency check
+- **Phase 32+:** Split `lib/usage-metering/types.ts` if >200L — Modularization per code-standards.md (conditional)
 
 ## Success Criteria (Rule #0)
 
@@ -80,10 +80,10 @@ Sophia AI Factory logger infrastructure build-out across 27 phases (19 Apr → 2
 
 ## Next Steps
 
-1. **Phase 27 Waves 2–3:** Continue ternary sweep across `src/app/api/**` + `src/lib/{inngest,gateway,billing,telegram}/**` (deferred, ~18 remaining hits across 12 files).
-2. **Phase 28+:** Evaluate backlog items; scope depends on remaining token budget and priority.
-3. **Monitoring:** Logger + error-message helper now production-ready for structured error pickup from Supabase/D1. Phase 27 Wave 1 signals domain consolidated.
-4. **Documentation:** Update `docs/system-architecture.md` to reflect logger pipeline + getErrorMessage sweep completion across domains (Phase 15→27 Wave 1)
+1. **Phase 29 Wave 3:** Final ternary sweep across `src/lib/{inngest,gateway,billing,telegram}/**` (~4 remaining hits across 4 files). Closes getErrorMessage consolidation.
+2. **Phase 30+:** Evaluate backlog items (R2 migration, D1-vs-Supabase audit, modularization); scope depends on token budget and priority.
+3. **Monitoring:** Logger + error-message helper now production-ready for structured error pickup from Supabase/D1. Phase 27-28 signals + api domains fully consolidated.
+4. **Documentation:** Update `docs/system-architecture.md` to reflect logger pipeline + getErrorMessage sweep completion across domains (Phase 15→28 Wave 2)
 
 ---
 

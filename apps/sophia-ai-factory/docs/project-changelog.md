@@ -1,6 +1,33 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-24 | **Current Version:** 1.12.13
+**Last Updated:** 2026-04-24 | **Current Version:** 1.12.14
+
+---
+
+## [2026-04-24] Phase 28 Wave 2 — getErrorMessage() API Route Sweep (v1.12.14)
+
+### Summary
+Bulk consolidation of `instanceof Error ? err.message : String(err)` ternaries across API route error handlers in `src/app/api/**`. Replaced 14 instances with `getErrorMessage(err)` helper across 8 files. Pure refactor, behavior-preserving; PostgrestError-shape robustness now extends to API route logging callsites. Foundation for Phase 29 Wave 3 (remaining ~4 ternaries in `src/lib/{inngest,gateway,billing,telegram}/**`).
+
+### Changes
+- `src/app/api/health/detail/route.ts` — 2 ternaries → `getErrorMessage(err)`, added import
+- `src/app/api/user/byok/route.ts` — 2 ternaries → `getErrorMessage(err)`, added import
+- `src/app/api/discovery/score/route.ts` — 1 ternary → `getErrorMessage(err)`, added import
+- `src/app/api/admin/llm-cache-stats/route.ts` — 1 ternary → `getErrorMessage(err)`, added import
+- `src/app/api/admin/llm-trace-stats/route.ts` — 1 ternary → `getErrorMessage(err)`, added import
+- `src/app/api/cron/llm-cache-purge/route.ts` — 1 ternary → `getErrorMessage(err)`, added import
+- `src/app/api/cron/workflow-stepper/route.ts` — 1 ternary → `getErrorMessage(err)`, added import
+- `src/app/api/cron/weekly-signals-digest/route.ts` — 5 ternaries → `getErrorMessage(err)`, added import
+
+### Quality & Review
+- Build: 0 new TypeScript errors
+- Tests: 1321/1321 pass, 0 skipped (baseline unchanged)
+- TSC: 611 (no regression)
+- Code Review: 9.7/10 APPROVE SHIP (0 blockers)
+- CI GREEN + Production HTTP 200
+
+### Deferred (Phase 29 Wave 3+ backlog)
+- ~4 remaining `instanceof Error ? err.message : String(err)` ternaries in `src/lib/{inngest,gateway,billing,telegram}/**`
 
 ---
 
