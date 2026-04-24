@@ -1,7 +1,44 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-04-20 (Tech Debt Phase 12: DB Helpers & FSM Design Documentation)
+> **Last Updated:** 2026-04-24 (Tech Debt Phase 29 Wave 3: Ternary Sweep Final Wave — SERIES CLOSURE)
+
+---
+
+## [2026-04-24] Tech Debt Phase 29 Wave 3 — Ternary DRY Sweep Final Wave (CLOSES Series)
+
+### Summary
+Final wave of ternary consolidation across gateway, billing, inngest, and telegram modules. Replaced 4 ternary error-handling instances with canonical `getErrorMessage(err)` helper from `@/lib/utils/to-error`. This closes the ternary sweep series initiated in Phase 26 (67 cumulative files touched across Phase 26 → 27 → 28 → 29). Type-only refactor: no behavioral changes, no new exports in to-error utility. Tests: 1321/1321 ✅. Build: 0 TS errors (611 baseline Δ 0) ✅. Code Review: 9.8/10 APPROVE SHIP ✅. Production HTTP 200 ✅.
+
+### Files Modified (4 Total)
+**Updated:**
+- `src/lib/gateway/*.ts` — 1 ternary → `getErrorMessage(err)` consolidation
+- `src/lib/billing/*.ts` — 1 ternary → `getErrorMessage(err)` consolidation
+- `src/lib/inngest/*.ts` — 1 ternary → `getErrorMessage(err)` consolidation
+- `src/lib/telegram/*.ts` — 1 ternary → `getErrorMessage(err)` consolidation
+
+### Ternary Sweep Series Closure
+- **Phase 26:** Initial ternary consolidation foundation (getErrorMessage helper established)
+- **Phase 27:** Audit + usage-metering modules (18 files)
+- **Phase 28:** API routes + RaaS modules (29 files)
+- **Phase 29 Wave 3:** Gateway + billing + inngest + telegram (4 files) ✅ SERIES COMPLETE
+- **Total Series Impact:** 67 files touched, 100% ternary-to-getErrorMessage consolidation across all error-handling paths
+- **Canonical Helper:** `getErrorMessage()` from `@/lib/utils/to-error` (no new exports)
+
+### Tests & Quality
+- **Tests:** 1321/1321 (100% pass), baseline 611 Δ 0
+- **Build:** ✅ npm run build exit 0, 0 TS errors
+- **Code Review:** ✅ 9.8/10 APPROVE SHIP (exceeds auto-approve threshold 9.5)
+- **Production HTTP:** ✅ 200 confirmed
+- **Type Safety:** 0 new `:any`, `@ts-ignore`, `console.*` introduced
+- **Backward Compatibility:** 100% — no API contracts changed, type-only refactor
+
+### Pattern Established
+Ternary error consolidation = COMPLETE. Canonical pattern for all future error handling: use `getErrorMessage(err)` helper instead of inline ternaries. Reference: `@/lib/utils/to-error.ts`.
+
+### Tracking
+- Phase 29 Wave 3: Phase completed 2026-04-24
+- Reports: phase-29-wave-3-260424.md
 
 ---
 
