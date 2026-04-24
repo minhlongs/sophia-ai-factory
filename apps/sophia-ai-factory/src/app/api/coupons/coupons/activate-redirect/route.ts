@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getD1Client } from '@/lib/db/client';
 import { verifyJwt } from '@/lib/db/auth-verify';
+import { toError } from '@/lib/utils/to-error';
 
 const VALID_COUPONS: Record<string, { mcuBonus: number }> = {
   FREE50: { mcuBonus: 1000 },
@@ -71,6 +72,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.redirect(new URL(`/dashboard?activated=${tier}&bonus=${couponDef.mcuBonus}`, request.url));
   } catch (e) {
-    return NextResponse.redirect(new URL(`/dashboard?error=${encodeURIComponent((e as Error).message)}`, request.url));
+    return NextResponse.redirect(new URL(`/dashboard?error=${encodeURIComponent(toError(e).message)}`, request.url));
   }
 }
