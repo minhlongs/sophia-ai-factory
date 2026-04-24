@@ -135,6 +135,57 @@ describe('logger-utility — overloaded error-arg signatures', () => {
     }
   });
 
+  it('Phase 25 — picks up code/details/hint from PostgrestError-shaped Error', () => {
+    const pgErr = Object.assign(new Error('relation "users" does not exist'), {
+      code: '42P01',
+      details: 'Schema public scanned',
+      hint: 'Did you mean table "user"?',
+    });
+    logger.error('db query failed', pgErr);
+    expect(errorSpy).toHaveBeenCalledOnce();
+    const out = parseOutput(errorSpy);
+    const err = (out.error ?? (out.raw as string)) as Record<string, unknown> | string;
+    if (typeof err === 'string') {
+      expect(err).toContain('42P01');
+      expect(err).toContain('Schema public scanned');
+    } else {
+      expect(err.message).toBe('relation "users" does not exist');
+      expect(err.code).toBe('42P01');
+      expect(err.details).toBe('Schema public scanned');
+      expect(err.hint).toBe('Did you mean table "user"?');
+    }
+  });
+
+  it('Phase 25 — partial PostgrestError (only code) outputs only that extra field', () => {
+    const pgErr = Object.assign(new Error('permission denied'), { code: '42501' });
+    logger.error('rls blocked', pgErr);
+    expect(errorSpy).toHaveBeenCalledOnce();
+    const out = parseOutput(errorSpy);
+    const err = (out.error ?? (out.raw as string)) as Record<string, unknown> | string;
+    if (typeof err === 'string') {
+      expect(err).toContain('42501');
+    } else {
+      expect(err.code).toBe('42501');
+      expect('details' in err).toBe(false);
+      expect('hint' in err).toBe(false);
+    }
+  });
+
+  it('Phase 25 — plain Error (no extras) keeps output shape unchanged', () => {
+    logger.error('plain error', new Error('classic'));
+    expect(errorSpy).toHaveBeenCalledOnce();
+    const out = parseOutput(errorSpy);
+    const err = (out.error ?? (out.raw as string)) as Record<string, unknown> | string;
+    if (typeof err === 'string') {
+      expect(err).toContain('classic');
+    } else {
+      expect(err.message).toBe('classic');
+      expect('code' in err).toBe(false);
+      expect('details' in err).toBe(false);
+      expect('hint' in err).toBe(false);
+    }
+  });
+
   it('warn with { error: string } preserves value at warn level too', () => {
     logger.warn('rate-limit probe', { error: 'throttled', retryAfter: 30 });
     expect(warnSpy).toHaveBeenCalledOnce();
