@@ -16,7 +16,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/utils/logger-utility';
-import { toError } from '@/lib/utils/to-error';
+import { toError, getErrorMessage } from '@/lib/utils/to-error';
 
 export const dynamic = 'force-dynamic';
 
@@ -93,7 +93,7 @@ export async function GET(req: NextRequest) {
     logger.info(`[uptime-check] OK — ${latency}ms`);
     return NextResponse.json({ healthy: true, status: res.status, latency });
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
+    const msg = getErrorMessage(e);
     await alertAdmin(`🔴 SOPHIA UNREACHABLE\nError: ${msg}`);
     logger.error('[uptime-check] Health check failed', toError(e));
     return NextResponse.json({ healthy: false, error: msg });

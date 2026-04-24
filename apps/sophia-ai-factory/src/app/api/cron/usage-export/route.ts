@@ -19,6 +19,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
+import { getErrorMessage } from '@/lib/utils/to-error';
 import { getUsageExportData, exportToCSV, exportToJSON } from '@/lib/usage-export/export-service';
 import { logUsageWithReceipt } from '@/lib/audit/audit-logger';
 import type { RaasLicenseRow } from '@/lib/supabase/types';
@@ -256,7 +257,7 @@ async function processLicenseExport(
       format: 'json',
     };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorMessage = getErrorMessage(error);
     logger.error('[Usage Export Cron] Failed to process license', error instanceof Error ? error : new Error(String(error)), {
       nonce: license.nonce.slice(0, 8),
     });
@@ -375,7 +376,7 @@ export async function GET(request: NextRequest) {
       results,
     });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorMessage = getErrorMessage(error);
     const duration = Date.now() - startTime;
 
     logger.error('[Usage Export Cron] Critical error', error instanceof Error ? error : new Error(String(error)), {
