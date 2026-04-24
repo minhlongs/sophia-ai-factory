@@ -1,6 +1,24 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-23 | **Current Version:** 1.12.8
+**Last Updated:** 2026-04-23 | **Current Version:** 1.12.9
+
+---
+
+## [2026-04-23] Phase 23 — Scripts + Test-File `as Error` Closure (v1.12.9)
+
+### Summary
+Final closure of Phase 13→22 `as Error` → `toError()` migration series, now extending to scripts and test files (previously deferred). Repo-wide finalization: **0 bare `as Error` casts remain** across production, scripts, and tests. 4 sites normalized (3 in `scripts/production-setup.ts`, 1 in test file).
+
+### Changes
+- `scripts/production-setup.ts` — 3 union-type `as Error | ...` casts → inline `instanceof Error ? msg : String(x)` ternary (self-contained, no import)
+- `src/lib/ai/anthropic-adapter.test.ts` — 1 cast → `toError()` utility (aligns with production pattern)
+
+### Quality & Review
+- Build: 0 new TypeScript errors
+- Tests: 1306/1306 pass, 31 skipped (baseline unchanged)
+- TSC: 621 errors (delta 0)
+- Code Review: 9.7/10 APPROVE SHIP (0 blockers)
+- **Cumulative Phase 13→23: 233 `as Error` sites normalized. Repo now 100% clean.** Only JSDoc prose + intentional widening casts (e.g., `as Error & {code?}`) remain.
 
 ---
 

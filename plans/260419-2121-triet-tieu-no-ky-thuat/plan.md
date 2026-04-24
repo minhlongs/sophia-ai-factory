@@ -1,7 +1,7 @@
 # Triệt Tiêu Nợ Kỹ Thuật (Clean Tech Debt) — Sophia AI Factory
 
 **Plan ID:** 260419-2121  
-**Status:** IN PROGRESS (Phase 22 ✅ COMPLETE / Phase 23+ BACKLOG)  
+**Status:** IN PROGRESS (Phase 23 ✅ COMPLETE / Phase 24+ BACKLOG)  
 **Timeline:** 2026-04-19 → ongoing  
 
 ## Overview
@@ -34,6 +34,7 @@ Systematic removal of TypeScript `:any` types, eslint-disables, and deferred deb
 | 20 | toError() Slice 7 (final 46 sites) | ✅ COMPLETE | [Phase 20](phase-20-to-error-slice-7.md) |
 | 21 | ESLint Regression Guard (`no-restricted-syntax`) + 2 carry-over migrations | ✅ COMPLETE | [Phase 21](phase-21-eslint-no-as-error.md) |
 | 22 | Logger-utility `as Error` closure (final 2 union casts + ESLint ignore drop) | ✅ COMPLETE | [Phase 22](phase-22-logger-utility-as-error-closure.md) |
+| 23 | Scripts + test-file as Error closure (4 final casts) | ✅ COMPLETE | [Phase 23](phase-23-scripts-and-test-closure.md) |
 
 ## Key Metrics
 
@@ -58,8 +59,9 @@ Systematic removal of TypeScript `:any` types, eslint-disables, and deferred deb
 - **Phase 20 Result:** 46 `as Error` sites → `toError()` across 46 files (20 API routes + 6 UI/hooks + 20 lib modules); final slice with largest file count; 3 remaining `as Error` refs (1 documentation comment + 2 union-type casts in logger-utility); Code Review 9.7/10 APPROVE SHIP; 0 behavior regression.
 - **Phase 21 Result:** ESLint `no-restricted-syntax` rule added to flag bare `as Error` casts + 2 carry-over coupon route migrations (inadvertently committed in Phase 20); regression guard locks in Phase 13→20 gains; Code Review 9.7/10 APPROVE SHIP.
 - **Phase 22 Result:** Eliminated final 2 union-type `as Error | ...` casts in `logger-utility.ts` (lines 125 & 156, redundant — TS narrowing handles both). Dropped file from ESLint ignore list. No runtime impact. Code Review 10/10 APPROVE SHIP.
-- **Cumulative (Phase 1→22):** ~509 `:any` removed; 229 `as Error` sites normalized (Phase 13: 29 + Phase 14: 34 + Phase 16: 29 + Phase 17: 31 + Phase 18: 29 + Phase 19: 27 + Phase 20: 46 + Phase 21: 2 + Phase 22: 2) + React client hook/component bundle + toError() preserves Supabase PostgrestError shape (Phase 15) + GDPR erasure path + inline-message expressions (Phase 17) + long-tail slice (billing/dunning + 10 API routes) + final slices (46 in Phase 20, 2 in Phase 21, 2 in Phase 22); ESLint regression guard; 0 bare `as Error` casts remain in production code; 2 reusable DB helpers + 1 error helper created; tech debt elimination spans auth, API routes, database, observability, telegram, audit, metering, RAAS, D1-layer, error-handling, worker (R2/alert-dispatcher), GDPR, React client modules
-- **Deferred to Phase 23+:** 244 `instanceof Error` ternary simplifications, Logger-utility structured metadata pickup, enriched-jwt.ts logger-signature tech debt (lines 220/294/399), `ClientWithStorage` → R2 migration, `raas_licenses` D1-vs-Supabase audit, Split `lib/usage-metering/types.ts`, 3 cast sites in `scripts/production-setup.ts` (outside `src/`), 1 test-file cast in `src/lib/ai/anthropic-adapter.test.ts`
+- **Phase 23 Result:** Eliminated final 4 `as Error` casts across 2 files: 3 inline ternary in `scripts/production-setup.ts` (lines 188, 238, 304 — self-contained pattern `error instanceof Error ? error.message : String(error)`) + 1 `toError()` replacement in `src/lib/ai/anthropic-adapter.test.ts` (line 496). Repo-wide closure: entire codebase (production + scripts + tests) now free of bare `as Error` casts. Code Review 9.7/10 APPROVE SHIP.
+- **Cumulative (Phase 1→23):** ~509 `:any` removed; 233 `as Error` sites normalized (Phase 13: 29 + Phase 14: 34 + Phase 16: 29 + Phase 17: 31 + Phase 18: 29 + Phase 19: 27 + Phase 20: 46 + Phase 21: 2 + Phase 22: 2 + Phase 23: 4) + React client hook/component bundle + toError() preserves Supabase PostgrestError shape (Phase 15) + GDPR erasure path + inline-message expressions (Phase 17) + long-tail slice (billing/dunning + 10 API routes) + final slices (46 in Phase 20, 2 in Phase 21, 2 in Phase 22) + scripts/test closure (Phase 23); ESLint regression guard; 0 bare `as Error` casts remain repo-wide; 2 reusable DB helpers + 1 error helper created; tech debt elimination spans auth, API routes, database, observability, telegram, audit, metering, RAAS, D1-layer, error-handling, worker (R2/alert-dispatcher), GDPR, React client modules, scripts, test utilities
+- **Deferred to Phase 24+:** 244 `instanceof Error` ternary simplifications, Logger-utility structured metadata pickup, enriched-jwt.ts logger-signature tech debt (lines 220/294/399), `ClientWithStorage` → R2 migration, `raas_licenses` D1-vs-Supabase audit, Split `lib/usage-metering/types.ts`
 
 ## Links
 
