@@ -11,6 +11,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { pushFatalLog } from '@/lib/telemetry/better-stack-client';
 import { resolveUserApiKey } from '@/lib/byok/resolve-user-api-key';
+import { getErrorMessage } from '@/lib/utils/to-error';
 
 export const dynamic = 'force-dynamic';
 
@@ -161,7 +162,7 @@ async function handler(request: NextRequest): Promise<NextResponse> {
       .all();
     rows = result.results ?? [];
   } catch (d1Err) {
-    const errMsg = d1Err instanceof Error ? d1Err.message : String(d1Err);
+    const errMsg = getErrorMessage(d1Err);
     // RED-TEAM #5: push fatal directly to BS, skip digest
     await pushFatalLog('D1_UNAVAILABLE', errMsg, bsConfig);
     return NextResponse.json({ ok: false, reason: 'D1_UNAVAILABLE' }, { status: 200 });

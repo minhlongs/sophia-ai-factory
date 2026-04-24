@@ -11,6 +11,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { pushHeartbeat, pushFatalLog } from '@/lib/telemetry/better-stack-client';
+import { getErrorMessage } from '@/lib/utils/to-error';
 
 export const dynamic = 'force-dynamic';
 
@@ -61,7 +62,7 @@ async function handler(request: NextRequest): Promise<NextResponse> {
     try {
       await db.prepare('SELECT 1').first();
     } catch (d1Err) {
-      const errMsg = d1Err instanceof Error ? d1Err.message : String(d1Err);
+      const errMsg = getErrorMessage(d1Err);
       // D1 unavailable: push fatal log, SKIP heartbeat (silence = BS missed-heartbeat alert)
       await pushFatalLog('D1_UNAVAILABLE', errMsg, bsConfig);
       return NextResponse.json(

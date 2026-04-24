@@ -10,7 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { logger } from '@/lib/utils/logger-utility'
-import { toError } from '@/lib/utils/to-error'
+import { toError, getErrorMessage } from '@/lib/utils/to-error'
 
 import {
   generateApiKey,
@@ -191,7 +191,7 @@ export async function POST(request: NextRequest) {
       warning: 'Store this API key securely. It will never be shown again.',
     })
   } catch (error) {
-    const msg = error instanceof Error ? error.message : String(error);
+    const msg = getErrorMessage(error);
     logger.error('[API Keys] Failed to create API key', toError(error))
     return NextResponse.json(
       { error: `Failed to create API key: ${msg}` },
