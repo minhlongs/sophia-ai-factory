@@ -17,6 +17,7 @@ import {
   type AnthropicTool,
   type AnthropicToolUseBlock,
 } from './anthropic-adapter'
+import { toError } from '@/lib/utils/to-error'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -493,7 +494,7 @@ describe('httpError body truncation', () => {
     try {
       await callAnthropicFull(BASE_PARAMS)
     } catch (err) {
-      const msg = (err as Error).message
+      const msg = toError(err).message
       // Expected format: "ANTHROPIC_HTTP_400: XXX...X...[truncated]"
       // Total: prefix + 500 chars + "...[truncated]"
       expect(msg.includes('ANTHROPIC_HTTP_400')).toBe(true)
