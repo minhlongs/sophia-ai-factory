@@ -114,63 +114,85 @@ function resolveErrorArgs(
   arg4: string | undefined
 ): { err: Error | undefined; meta: Record<string, unknown> | undefined; reqId: string | undefined } {
   if (arg2 !== undefined && !(arg2 instanceof Error)) {
-    // New form: arg2 is a plain object { error?, ...metadata }
-    // arg3 is the optional requestId string; arg4 is not used in this form
-    const { error: embeddedErr, ...rest } = arg2 as Record<string, unknown>;
-    const err = embeddedErr instanceof Error ? embeddedErr : undefined;
-    const meta = Object.keys(rest).length > 0 ? rest : undefined;
-    return { err, meta, reqId: arg3 as string | undefined };
+    const record = arg2 as Record<string, unknown>;
+    const embeddedErr = record.error;
+    if (embeddedErr instanceof Error) {
+      // New form with genuine Error — pull it out, rest becomes metadata
+      const { error: _pulled, ...rest } = record;
+      void _pulled;
+      const meta = Object.keys(rest).length > 0 ? rest : undefined;
+      return { err: embeddedErr, meta, reqId: arg3 as string | undefined };
+    }
+    // Non-Error `error` value (string/number/object) — keep the whole record
+    // as metadata so the value is preserved in output (no silent data loss).
+    return { err: undefined, meta: record, reqId: arg3 as string | undefined };
   }
   // Legacy form — narrowing already guarantees arg2 is Error | undefined here
   return { err: arg2, meta: arg3, reqId: arg4 };
 }
 
+/**
+ * Shared dispatch for debug/info/warn/error — resolves overloaded args and logs at the given level.
+ *
+ * Supports three call forms for all four levels:
+ *   Metadata only: level(msg, metadata?, requestId?)
+ *   Legacy error:  level(msg, errorInstance, metadata?, requestId?)
+ *   New embedded:  level(msg, { error?, ...metadata }, requestId?)
+ */
+function dispatch(
+  level: LogLevel,
+  message: string,
+  arg2: Error | Record<string, unknown> | undefined,
+  arg3: Record<string, unknown> | string | undefined,
+  arg4: string | undefined
+): void {
+  const meta3 = typeof arg3 === 'object' ? arg3 : undefined;
+  const reqId3 = typeof arg3 === 'string' ? arg3 : arg4;
+  const { err, meta, reqId } = resolveErrorArgs(arg2, meta3, reqId3);
+  log(level, message, meta, err, reqId);
+}
+
 export const logger = {
-  debug: (message: string, metadata?: Record<string, unknown>, requestId?: string) => {
-    log('debug', message, metadata, undefined, requestId);
-  },
+  debug: (
+    message: string,
+    arg2?: Error | Record<string, unknown>,
+    arg3?: Record<string, unknown> | string,
+    arg4?: string
+  ) => dispatch('debug', message, arg2, arg3, arg4),
 
-  info: (message: string, metadata?: Record<string, unknown>, requestId?: string) => {
-    log('info', message, metadata, undefined, requestId);
-  },
+  info: (
+    message: string,
+    arg2?: Error | Record<string, unknown>,
+    arg3?: Record<string, unknown> | string,
+    arg4?: string
+  ) => dispatch('info', message, arg2, arg3, arg4),
 
-  warn: (message: string, metadata?: Record<string, unknown>, requestId?: string) => {
-    log('warn', message, metadata, undefined, requestId);
-  },
+  warn: (
+    message: string,
+    arg2?: Error | Record<string, unknown>,
+    arg3?: Record<string, unknown> | string,
+    arg4?: string
+  ) => dispatch('warn', message, arg2, arg3, arg4),
 
-  /**
-   * Two supported call forms:
-   *   Legacy: error(message, error?, metadata?, requestId?)
-   *   New:    error(message, { error?, ...metadata }, requestId?)
-   */
   error: (
     message: string,
     arg2?: Error | Record<string, unknown>,
     arg3?: Record<string, unknown> | string,
     arg4?: string
-  ) => {
-    // Normalise arg3 — in legacy form it's metadata (object); in new form it would be requestId (string)
-    const meta3 = typeof arg3 === 'object' ? arg3 : undefined;
-    const reqId3 = typeof arg3 === 'string' ? arg3 : arg4;
-    const { err, meta, reqId } = resolveErrorArgs(arg2, meta3, reqId3);
-    log('error', message, meta, err, reqId);
-  },
+  ) => dispatch('error', message, arg2, arg3, arg4),
 
   /**
    * Create a logger with a bound request ID
    */
   withRequestId: (requestId: string) => ({
-    debug: (message: string, metadata?: Record<string, unknown>) =>
-      logger.debug(message, metadata, requestId),
-    info: (message: string, metadata?: Record<string, unknown>) =>
-      logger.info(message, metadata, requestId),
-    warn: (message: string, metadata?: Record<string, unknown>) =>
-      logger.warn(message, metadata, requestId),
-    error: (
-      message: string,
-      arg2?: Error | Record<string, unknown>,
-      arg3?: Record<string, unknown> | string
-    ) => logger.error(message, arg2, arg3, requestId),
+    debug: (message: string, arg2?: Error | Record<string, unknown>, arg3?: Record<string, unknown> | string) =>
+      logger.debug(message, arg2, arg3, requestId),
+    info: (message: string, arg2?: Error | Record<string, unknown>, arg3?: Record<string, unknown> | string) =>
+      logger.info(message, arg2, arg3, requestId),
+    warn: (message: string, arg2?: Error | Record<string, unknown>, arg3?: Record<string, unknown> | string) =>
+      logger.warn(message, arg2, arg3, requestId),
+    error: (message: string, arg2?: Error | Record<string, unknown>, arg3?: Record<string, unknown> | string) =>
+      logger.error(message, arg2, arg3, requestId),
   }),
 };
 
