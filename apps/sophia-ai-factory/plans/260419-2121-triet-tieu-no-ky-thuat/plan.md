@@ -1,6 +1,6 @@
 # Triết Tiểu Nỏ Kỹ Thuật — Sophia AI Factory Phase 1–25 Master Plan
 
-**Date Range:** 2026-04-19 → 2026-04-24 · **Scope:** Logger infrastructure & error-handling consolidation · **Status:** Phase 27 Wave 1 ✅ COMPLETE / Phase 27+ Waves BACKLOG
+**Date Range:** 2026-04-19 → 2026-04-24 · **Scope:** Logger infrastructure & error-handling consolidation + types modularization · **Status:** Phase 32 ✅ COMPLETE / Phase 33+ BACKLOG
 
 ## Overview
 
@@ -22,17 +22,19 @@ Sophia AI Factory logger infrastructure build-out across 27 phases (19 Apr → 2
 | 29 Wave 3 | `getErrorMessage()` sweep `src/lib/{audit,usage-metering,ai,heygen,telegram,telemetry,alerts,raas,services,billing,security}/**` (~11 hits / 11 files) | ✅ COMPLETE | plans/260424-0350-phase-29-ternary-sweep-wave-3-lib/phase-29-ternary-sweep-wave-3-lib.md |
 | 30 Wave 4 | `getErrorMessage()` sweep `src/lib/**` (28 hits / 23 files) | ✅ COMPLETE | plans/260424-0438-phase-30-non-err-sweep-wave-4-lib/phase-30-non-err-sweep-wave-4-lib.md |
 | 31 Wave 5 | non-`err` sweep `src/app/**` pure-DRY (6 hits / 5 files) | ✅ COMPLETE | plans/260424-0500-phase-31-non-err-sweep-wave-5-app/phase-31-non-err-sweep-wave-5-app.md |
+| 32 | `lib/usage-metering/types.ts` modularization (283L > 4 sub-modules) | ✅ COMPLETE | plans/260424-0543-phase-32-types-modularization/phase-32-types-modularization.md |
 
-## Key Metrics (Cumulative Phase 1→31 Wave 5)
+## Key Metrics (Cumulative Phase 1→32)
 
-- **Total Files Modified:** ~92 files across all 31 phases (47 baseline + 6 Phase 27 Wave 1 + 8 Phase 28 Wave 2 + 11 Phase 29 Wave 3 + 23 Phase 30 Wave 4 + 5 Phase 31 Wave 5) [cumulative sweep across signals/api/lib/app domains]
+- **Total Files Modified:** ~96 files across all 32 phases (47 baseline + 6 Phase 27 Wave 1 + 8 Phase 28 Wave 2 + 11 Phase 29 Wave 3 + 23 Phase 30 Wave 4 + 5 Phase 31 Wave 5 + 4 Phase 32 modularization) [cumulative sweep across signals/api/lib/app domains + types modularization]
 - **Total Hits Replaced:** 66 ternary expressions → `getErrorMessage()` (7 + 14 + 11 + 28 + 6)
+- **Files Modularized:** `lib/usage-metering/types.ts` (283L) split into 4 sub-modules (event-types, aggregation-types, quota-types, ingestion-types)
 - **Logger Tests:** 1321/1321 pass (consistent baseline, zero regression)
-- **TypeScript Errors:** 611 (strict, zero regression across phases 25-31)
-- **Code Quality:** 9.9/10 (Phase 31 Wave 5 review score, highest bar achieved)
+- **TypeScript Errors:** 611 (strict, zero regression across phases 25-32)
+- **Code Quality:** 9/10 (Phase 32 review score, APPROVE SHIP)
 - **Build Status:** ✅ `npm run build` → exit 0
 - **Lint Status:** ✅ 0 hits on logger/signals/api/lib/app/error paths
-- **Production:** ✅ HTTP 200 verified (Phase 31 Wave 5 shipped 2026-04-24)
+- **Production:** ✅ HTTP 200 verified (Phase 32 shipped 2026-04-24)
 
 ## Phase 25–27 Wave 1 Summary
 
@@ -64,12 +66,11 @@ Sophia AI Factory logger infrastructure build-out across 27 phases (19 Apr → 2
 
 4. **Code quality metrics solid:** Strict TypeScript, 9.8/10 code review, 611 TS errors baseline (project-wide, not logger-specific).
 
-## Deferred (Phase 32+ Backlog)
+## Deferred (Phase 33+ Backlog)
 
-- **Phase 32:** String-literal fallback residuals (21 semantic-preserve, Phase 31 deferred)
-- **Phase 32:** `ClientWithStorage` → R2 migration — Cloudflare R2 integration (separate from logger)
-- **Phase 33:** `raas_licenses` D1-vs-Supabase audit — Database layer consistency check
-- **Phase 33:** `lib/usage-metering/types.ts` modularization (283L > 200L threshold, conditional per scope-creep risk)
+- **Phase 32 Deferred:** `UsageEventDB` vs `UsageEventInsertable` dedup (structural duplicate, pre-existing — noted in Phase 32 code review)
+- **Phase 33+:** `ClientWithStorage` → R2 migration — Cloudflare R2 integration (separate from logger)
+- **Phase 33+:** `raas_licenses` D1-vs-Supabase audit — Database layer consistency check
 
 ## Success Criteria (Rule #0)
 
