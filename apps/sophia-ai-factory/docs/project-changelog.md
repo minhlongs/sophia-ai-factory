@@ -1,6 +1,28 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-24 | **Current Version:** 1.12.11
+**Last Updated:** 2026-04-24 | **Current Version:** 1.12.12
+
+---
+
+## [2026-04-24] Phase 26 — getErrorMessage() Helper Export (v1.12.12)
+
+### Summary
+Foundational helper introduction: `getErrorMessage(value: unknown): string` exported from `src/lib/utils/to-error.ts`. One-liner shortcut for `toError(value).message`. Purely additive, zero call-site changes. Bridges Phase 15 (`toError` utility) → Phase 27+ (ternary DRY sweep across ~47 `instanceof Error ? err.message : String(err)` ternaries). MVP for future consolidation.
+
+### Changes
+- `src/lib/utils/to-error.ts` — NEW export: `getErrorMessage()` function (~2 LOC, wraps `toError(value).message`)
+- `src/lib/utils/to-error.test.ts` — 3 new test cases: full Error shape / unknown types / edge cases
+
+### Quality & Review
+- Build: 0 new TypeScript errors
+- Tests: 1318 → 1321 (+3 new tests)
+- TSC: 611 (no regression)
+- Code Review: 9.8/10 APPROVE SHIP (0 blockers)
+- CI GREEN + Production HTTP 200
+
+### Deferred (Phase 27+ backlog)
+- ~47 `instanceof Error ? err.message : String(err)` ternary consolidations across ~34 files
+- Bulk migration using `getErrorMessage()` helper
 
 ---
 
