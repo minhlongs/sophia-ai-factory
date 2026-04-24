@@ -22,6 +22,7 @@ import {
 import { track } from '@/lib/signals/track'
 import { D1Events } from '@/lib/signals/d1-event-types'
 import { logger } from '@/lib/utils/logger-utility'
+import { getErrorMessage } from '@/lib/utils/to-error'
 
 const PROVIDERS = ['openrouter', 'anthropic', 'elevenlabs', 'd-id'] as const
 
@@ -69,7 +70,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     logger.warn('[byok-admin] setUserApiKey failed', {
       userId:   user.id,
       provider,
-      error:    err instanceof Error ? err.message : String(err),
+      error:    getErrorMessage(err),
     })
     return NextResponse.json({ error: 'Failed to store key' }, { status: 500 })
   }
@@ -107,7 +108,7 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
     logger.warn('[byok-admin] clearUserApiKey failed', {
       userId:   user.id,
       provider,
-      error:    err instanceof Error ? err.message : String(err),
+      error:    getErrorMessage(err),
     })
     return NextResponse.json({ error: 'Failed to clear key' }, { status: 500 })
   }

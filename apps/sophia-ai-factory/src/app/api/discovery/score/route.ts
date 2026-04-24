@@ -16,6 +16,7 @@ import { z } from 'zod'
 import { getCurrentUser } from '@/lib/better-auth-session'
 import { enhanceNicheScoreWithAI } from '@/lib/discovery/affiliate-openrouter-niche-enhancer'
 import { logger } from '@/lib/utils/logger-utility'
+import { getErrorMessage } from '@/lib/utils/to-error'
 import { track } from '@/lib/signals/track'
 import { D1Events } from '@/lib/signals/d1-event-types'
 import type { AffiliateProgram } from '@/types'
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   } catch (err) {
     logger.warn('[discovery-score] enhanceNicheScoreWithAI failed', {
       userId: user.id,
-      error:  err instanceof Error ? err.message : String(err),
+      error:  getErrorMessage(err),
     })
     return NextResponse.json({ error: 'Scoring failed' }, { status: 500 })
   }
