@@ -1,6 +1,23 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-24 | **Current Version:** 1.12.17
+**Last Updated:** 2026-04-24 | **Current Version:** 1.12.18
+
+---
+
+## [2026-04-24] Phase 37 — Realtime Alert Service Modularization (v1.12.18)
+
+### Summary
+Pure structural refactor: `lib/alerts/realtime-alert-service.ts` (525L) split into 5 focused sub-modules. Zero behavioral change, improved maintainability via single-responsibility separation.
+
+### Changes
+- `src/lib/alerts/realtime-alert-service.ts` — split into 5 sub-modules (barrel re-export maintained)
+- Modularized components: dispatcher, delivery, state management, reconnection logic, event handlers
+- NO behavioral deviation; all integration points preserved
+
+### Quality & Review
+- Build: 0 new TypeScript errors
+- Tests: unchanged (behavior-preserving refactor)
+- Code Review: 10/10 APPROVE SHIP (structural only)
 
 ---
 
