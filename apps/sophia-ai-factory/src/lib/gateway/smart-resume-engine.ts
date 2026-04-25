@@ -13,21 +13,17 @@ import {
   rowToCheckpoint,
   type CheckpointRow,
 } from "./checkpoint-supabase-persistence";
+import {
+  PIPELINE_STEPS,
+  getNextStep,
+  getStepsFromIndex,
+  isValidStep,
+} from "./pipeline-step-navigator";
+import type { PipelineStep } from "./pipeline-step-navigator";
 import type { Checkpoint } from "./gateway-types";
 import { logger } from "@/lib/utils/logger-utility";
 
-/** Pipeline step definitions and their order */
-const PIPELINE_STEPS = [
-  "notify-start",
-  "generate-script",
-  "generate-voiceover",
-  "start-video-generation",
-  "poll-video-status",
-  "distribute-channels",
-  "finalize-campaign",
-] as const;
-
-export type PipelineStep = (typeof PIPELINE_STEPS)[number];
+export type { PipelineStep };
 
 /**
  * SmartResumeEngine manages campaign pipeline checkpoints.
@@ -54,12 +50,7 @@ export class SmartResumeEngine {
         const { error } = await supabase
           .from("campaign_checkpoints")
           .upsert(
-            {
-              campaign_id: campaignId,
-              step,
-              completed_at: new Date().toISOString(),
-              metadata: metadata ?? null,
-            },
+            { campaign_id: campaignId, step, completed_at: new Date().toISOString(), metadata: metadata ?? null },
             { onConflict: "campaign_id,step" }
           );
         if (error) throw error;
@@ -76,7 +67,7 @@ export class SmartResumeEngine {
     this.fallbackStore.set(campaignId, filtered);
   }
 
-  /** Get the most recent checkpoint for a campaign. Returns null on load failure (start from beginning). */
+  /** Get the most recent checkpoint for a campaign. Returns null on load failure. */
   async getLastCheckpoint(campaignId: string): Promise<Checkpoint | null> {
     const supabase = getCheckpointSupabase();
 
@@ -93,31 +84,25 @@ export class SmartResumeEngine {
         return rowToCheckpoint(data[0] as CheckpointRow);
       } catch (err) {
         logger.error(`[SmartResumeEngine] Failed to retrieve last checkpoint for ${campaignId}, starting from beginning`, err instanceof Error ? err : undefined);
-        // Error recovery: return null so pipeline starts from beginning
         return null;
       }
     }
 
     const checkpoints = this.fallbackStore.get(campaignId);
     if (!checkpoints || checkpoints.length === 0) return null;
-    const sorted = [...checkpoints].sort(
-      (a, b) => b.completedAt.getTime() - a.completedAt.getTime(),
-    );
-    return sorted[0];
+    return [...checkpoints].sort((a, b) => b.completedAt.getTime() - a.completedAt.getTime())[0];
   }
 
   /**
-   * Force retry from a specific step by deleting all checkpoints at and after that step.
-   * Used for manual retry via admin tools.
+   * Force retry from a specific step by deleting checkpoints at and after that step.
    */
   async retryFromStep(campaignId: string, stepName: PipelineStep): Promise<void> {
-    const stepIndex = PIPELINE_STEPS.indexOf(stepName);
-    if (stepIndex === -1) {
+    if (!isValidStep(stepName)) {
       logger.warn(`[SmartResumeEngine] Unknown step "${stepName}" for retryFromStep`, { campaignId });
       return;
     }
 
-    const stepsToRemove = PIPELINE_STEPS.slice(stepIndex);
+    const stepsToRemove = getStepsFromIndex(stepName);
     const supabase = getCheckpointSupabase();
 
     if (supabase) {
@@ -135,10 +120,11 @@ export class SmartResumeEngine {
       }
     }
 
-    // Fallback: remove from in-memory store
     const existing = this.fallbackStore.get(campaignId) ?? [];
-    const filtered = existing.filter((cp) => !stepsToRemove.includes(cp.step as PipelineStep));
-    this.fallbackStore.set(campaignId, filtered);
+    this.fallbackStore.set(
+      campaignId,
+      existing.filter((cp) => !stepsToRemove.includes(cp.step as PipelineStep))
+    );
   }
 
   /** Get all checkpoints for a campaign, ordered by completion time */
@@ -160,19 +146,14 @@ export class SmartResumeEngine {
       }
     }
 
-    const checkpoints = this.fallbackStore.get(campaignId) ?? [];
-    return [...checkpoints].sort(
+    return [...(this.fallbackStore.get(campaignId) ?? [])].sort(
       (a, b) => a.completedAt.getTime() - b.completedAt.getTime(),
     );
   }
 
   /** Determine the next pipeline step to resume from after a checkpoint */
   async resumeFrom(checkpoint: Checkpoint): Promise<string> {
-    const currentIndex = PIPELINE_STEPS.indexOf(checkpoint.step as PipelineStep);
-    if (currentIndex === -1) return PIPELINE_STEPS[0];
-    const nextIndex = currentIndex + 1;
-    if (nextIndex >= PIPELINE_STEPS.length) return "complete";
-    return PIPELINE_STEPS[nextIndex];
+    return getNextStep(checkpoint.step as string);
   }
 
   /** Clear all checkpoints for a campaign */
@@ -215,7 +196,9 @@ export class SmartResumeEngine {
       }
     }
 
-    const checkpoints = this.fallbackStore.get(campaignId) ?? [];
-    return checkpoints.some((cp) => cp.step === step);
+    return (this.fallbackStore.get(campaignId) ?? []).some((cp) => cp.step === step);
   }
 }
+
+// Re-export PIPELINE_STEPS for consumers that imported it from this module
+export { PIPELINE_STEPS };
