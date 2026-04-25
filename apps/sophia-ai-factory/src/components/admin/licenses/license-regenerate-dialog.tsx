@@ -2,118 +2,32 @@
 
 /**
  * License Regenerate Dialog Component
- * Dialog để regenerate license key với cảnh báo migration
+ * State/API logic in use-license-regenerate.ts
  */
 
-import { useState } from 'react';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogTrigger,
-  DialogClose,
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+  DialogDescription, DialogFooter, DialogTrigger, DialogClose,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import {
-  Key,
-  RefreshCw,
-  AlertTriangle,
-  Copy,
-  Check,
-  ShieldAlert,
-} from 'lucide-react';
-import { LicenseSummary, LicenseTier } from '@/lib/raas-schema';
+import { Key, RefreshCw, AlertTriangle, Copy, Check, ShieldAlert } from 'lucide-react';
+import { LicenseSummary } from '@/lib/raas-schema';
+import { useLicenseRegenerate, RegenerateCallbackData } from './use-license-regenerate';
 
 interface LicenseRegenerateDialogProps {
   licenseId?: string;
-  onRegenerate?: (data: { oldLicenseId: string; newKey: string; newLicense: LicenseSummary }) => void;
+  onRegenerate?: (data: RegenerateCallbackData) => void;
 }
 
-interface RegenerateResult {
-  newKey?: string;
-  warning?: string;
-  newLicense?: LicenseSummary;
-}
-
-export function LicenseRegenerateDialog({
-  licenseId: propLicenseId,
-  onRegenerate,
-}: LicenseRegenerateDialogProps) {
-  const [open, setOpen] = useState(false);
-  const [licenseId, setLicenseId] = useState(propLicenseId || '');
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<RegenerateResult | null>(null);
-  const [copied, setCopied] = useState(false);
-
-  const handleRegenerate = async () => {
-    if (!licenseId.trim()) {
-      setResult({ warning: 'License ID is required' });
-      return;
-    }
-
-    setLoading(true);
-    setResult(null);
-    setCopied(false);
-
-    try {
-      const response = await fetch(`/api/admin/licenses/${licenseId}/regenerate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to regenerate license');
-      }
-
-      setResult({
-        newKey: data.newKey,
-        newLicense: data.newLicense,
-      });
-
-      onRegenerate?.({
-        oldLicenseId: licenseId,
-        newKey: data.newKey,
-        newLicense: data.newLicense,
-      });
-    } catch (error) {
-      setResult({
-        warning: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCopy = async () => {
-    if (result?.newKey) {
-      await navigator.clipboard.writeText(result.newKey);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
-  const handleOpenChange = (newOpen: boolean) => {
-    setOpen(newOpen);
-    if (!newOpen) {
-      // Reset state when closing
-      setTimeout(() => {
-        setResult(null);
-        setCopied(false);
-        if (!propLicenseId) {
-          setLicenseId('');
-        }
-      }, 200);
-    }
-  };
+export function LicenseRegenerateDialog({ licenseId: propLicenseId, onRegenerate }: LicenseRegenerateDialogProps) {
+  const {
+    open, licenseId, setLicenseId, loading, result, copied,
+    handleRegenerate, handleCopy, handleOpenChange,
+  } = useLicenseRegenerate(propLicenseId, onRegenerate);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -136,7 +50,6 @@ export function LicenseRegenerateDialog({
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {/* Warning Box */}
           <Alert className="bg-yellow-500/10 border-yellow-500/30 text-yellow-400">
             <AlertTriangle className="w-5 h-5" />
             <AlertDescription>
@@ -150,7 +63,6 @@ export function LicenseRegenerateDialog({
             </AlertDescription>
           </Alert>
 
-          {/* License ID Input (nếu không có từ prop) */}
           {!propLicenseId && (
             <div>
               <Label className="text-foreground">License ID</Label>
@@ -160,21 +72,16 @@ export function LicenseRegenerateDialog({
                 onChange={(e) => setLicenseId(e.target.value)}
                 className="bg-muted border-border text-foreground font-mono"
               />
-              <p className="text-xs text-muted-foreground mt-1">
-                ID của license cần regenerate
-              </p>
+              <p className="text-xs text-muted-foreground mt-1">ID của license cần regenerate</p>
             </div>
           )}
 
-          {/* Result Display */}
           {result && (
             <div className="space-y-4">
               {result.newKey ? (
                 <Alert className="bg-green-500/10 border-green-500/30 text-green-400">
                   <Check className="w-5 h-5" />
-                  <AlertDescription>
-                    <strong>✅ License Regenerated Successfully!</strong>
-                  </AlertDescription>
+                  <AlertDescription><strong>✅ License Regenerated Successfully!</strong></AlertDescription>
                 </Alert>
               ) : (
                 <Alert className="bg-red-500/10 border-red-500/30 text-red-400">
@@ -190,17 +97,8 @@ export function LicenseRegenerateDialog({
                       <ShieldAlert className="w-4 h-4 text-yellow-400" />
                       Copy New Key Immediately!
                     </Label>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleCopy}
-                      className="border-border hover:bg-muted"
-                    >
-                      {copied ? (
-                        <Check className="w-4 h-4 text-green-400" />
-                      ) : (
-                        <Copy className="w-4 h-4" />
-                      )}
+                    <Button variant="outline" size="sm" onClick={handleCopy} className="border-border hover:bg-muted">
+                      {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
                     </Button>
                   </div>
                   <div className="p-3 bg-muted border border-border rounded-lg break-all font-mono text-xs text-foreground">
@@ -209,53 +107,14 @@ export function LicenseRegenerateDialog({
                 </div>
               )}
 
-              {result.newLicense && (
-                <div className="p-3 bg-muted border border-border rounded-lg space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">New License ID:</span>
-                    <code className="text-xs text-[var(--neon-cyan)] font-mono">
-                      {result.newLicense.id}
-                    </code>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Tier:</span>
-                    <Badge
-                      className={`
-                        ${(result.newLicense.tier as string).toLowerCase() === 'master' ? 'bg-red-500/10 text-red-400 border-red-500/30' : ''}
-                        ${(result.newLicense.tier as string).toLowerCase() === 'enterprise' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30' : ''}
-                        ${(result.newLicense.tier as string).toLowerCase() === 'premium' ? 'bg-purple-500/10 text-purple-400 border-purple-500/30' : ''}
-                        ${(result.newLicense.tier as string).toLowerCase() === 'basic' ? 'bg-blue-500/10 text-blue-400 border-blue-500/30' : ''}
-                      `}
-                      variant="outline"
-                    >
-                      {result.newLicense.tier}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Created:</span>
-                    <span className="text-xs text-foreground">
-                      {new Date(result.newLicense.createdAt * 1000).toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Expires:</span>
-                    <span className="text-xs text-foreground">
-                      {result.newLicense.expiresAt === 0 || result.newLicense.expiresAt === null
-                        ? 'Perpetual'
-                        : new Date(result.newLicense.expiresAt * 1000).toLocaleDateString()}
-                    </span>
-                  </div>
-                </div>
-              )}
+              {result.newLicense && <NewLicenseInfo license={result.newLicense} />}
             </div>
           )}
         </div>
 
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="outline" className="border-border hover:bg-muted">
-              Close
-            </Button>
+            <Button variant="outline" className="border-border hover:bg-muted">Close</Button>
           </DialogClose>
           <Button
             onClick={handleRegenerate}
@@ -263,19 +122,47 @@ export function LicenseRegenerateDialog({
             className="bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] text-white font-semibold"
           >
             {loading ? (
-              <>
-                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                Regenerating...
-              </>
+              <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Regenerating...</>
             ) : (
-              <>
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Regenerate Key
-              </>
+              <><RefreshCw className="w-4 h-4 mr-2" />Regenerate Key</>
             )}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function NewLicenseInfo({ license }: { license: LicenseSummary }) {
+  const tierClass = {
+    master: 'bg-red-500/10 text-red-400 border-red-500/30',
+    enterprise: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30',
+    premium: 'bg-purple-500/10 text-purple-400 border-purple-500/30',
+    basic: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
+  }[(license.tier as string).toLowerCase()] ?? '';
+
+  return (
+    <div className="p-3 bg-muted border border-border rounded-lg space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-muted-foreground">New License ID:</span>
+        <code className="text-xs text-[var(--neon-cyan)] font-mono">{license.id}</code>
+      </div>
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-muted-foreground">Tier:</span>
+        <Badge className={tierClass} variant="outline">{license.tier}</Badge>
+      </div>
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-muted-foreground">Created:</span>
+        <span className="text-xs text-foreground">{new Date(license.createdAt * 1000).toLocaleString()}</span>
+      </div>
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-muted-foreground">Expires:</span>
+        <span className="text-xs text-foreground">
+          {license.expiresAt === 0 || license.expiresAt === null
+            ? 'Perpetual'
+            : new Date(license.expiresAt * 1000).toLocaleDateString()}
+        </span>
+      </div>
+    </div>
   );
 }
