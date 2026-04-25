@@ -4,7 +4,6 @@
  */
 
 import { createServerClient } from '@/lib/db/client'
-import { getKvClient } from '@/lib/redis'
 import { logger } from '@/lib/utils/logger-utility'
 import { toError } from '@/lib/utils/to-error'
 import type { MeteringLogEntry } from './kv-metering-log-sync-types'
@@ -32,11 +31,6 @@ export async function getMeteringLogs(
   endTime: number,
   options?: { licenseNonce?: string; userId?: string; service?: string },
 ): Promise<MeteringLogEntry[]> {
-  const kv = getKvClient()
-  if (!kv) {
-    logger.warn('[KV Metering Logs] KV client not available')
-    return []
-  }
   try {
     logger.debug('[KV Metering Logs] Fetching logs', {
       startTime: new Date(startTime * 1000).toISOString(),

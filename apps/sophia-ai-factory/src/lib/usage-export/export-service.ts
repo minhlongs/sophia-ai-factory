@@ -13,6 +13,7 @@ import type { UsageExportRecord, UsageExportSummary, UsageExportResponse, Export
 import { formatAsCSV, formatSummaryAsCSV } from './csv-formatter'
 import { formatAsJSON, formatExportResponse, createJSONDownload } from './json-formatter'
 import { getUsageExportData, calculateSummary } from './export-service-query'
+import type { GetUsageExportParams } from './export-service-params'
 
 export type { GetUsageExportParams } from './export-service-params'
 export { getUsageExportData } from './export-service-query'
@@ -34,8 +35,6 @@ export function generateExportSummary(records: UsageExportRecord[]): UsageExport
   logger.info('[UsageExport] Generating summary', { recordCount: records.length })
   return calculateSummary(records)
 }
-
-import type { GetUsageExportParams } from './export-service-params'
 
 export async function generateCompleteExport(
   params: GetUsageExportParams & { format: ExportFormat },

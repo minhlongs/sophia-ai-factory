@@ -13,20 +13,26 @@ export async function getLicenseContext(licenseNonce: string): Promise<LicenseCo
     const db = createServerClient()
     const { data, error } = await db
       .from('raas_licenses')
-      .select('tier, agency_id, polar_customer_id, polar_subscription_status, expires_at, created_at')
+      .select('tier, agency_id, polar_customer_id, polar_subscription_id, polar_subscription_status, expires_at, created_at')
       .eq('license_nonce', licenseNonce)
       .single()
     if (error || !data) {
       logger.error('[Enriched JWT] Failed to fetch license', toError(error))
       return null
     }
+    const row = data as {
+      tier: string; agency_id: string | null; polar_customer_id: string | null;
+      polar_subscription_id: string | null; polar_subscription_status: string | null;
+      expires_at: number | null; created_at: number;
+    }
     return {
-      tier: data.tier,
-      agencyId: data.agency_id || undefined,
-      polarCustomerId: data.polar_customer_id || undefined,
-      polarStatus: data.polar_subscription_status || undefined,
-      expiresAt: data.expires_at ? data.expires_at * 1000 : undefined,
-      createdAt: data.created_at,
+      tier: row.tier,
+      agencyId: row.agency_id || undefined,
+      polarCustomerId: row.polar_customer_id || undefined,
+      polarSubscriptionId: row.polar_subscription_id || undefined,
+      polarStatus: row.polar_subscription_status || undefined,
+      expiresAt: row.expires_at ? row.expires_at * 1000 : undefined,
+      createdAt: row.created_at,
     }
   } catch (error) {
     logger.error('[Enriched JWT] Error fetching license context', toError(error))
