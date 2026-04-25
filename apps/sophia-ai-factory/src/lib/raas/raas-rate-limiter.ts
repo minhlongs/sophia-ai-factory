@@ -17,6 +17,7 @@ import { sha256 } from '@/lib/audit/crypto-utils'
 import { serializeReceiptForHeader } from '@/lib/audit/logger/audit-query'
 import type { ComplianceReceipt } from '@/lib/audit/compliance-receipt'
 import type { Tier } from '@/types'
+import { buildQuotaExceededResponse, buildQuotaErrorResponse } from './raas-quota-response-builder'
 
 const VALID_TIERS: readonly Tier[] = ['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER'] as const
 
@@ -24,23 +25,14 @@ function narrowTier(value: string): Tier {
   return (VALID_TIERS as readonly string[]).includes(value) ? (value as Tier) : 'BASIC'
 }
 
-/**
- * Quota enforcement result returned to raas-auth-gate
- */
+/** Quota enforcement result returned to raas-auth-gate */
 export interface QuotaEnforcementResult {
-  /** Whether the request is allowed to proceed */
   allowed: boolean
-  /** 429 response to return if quota exceeded */
   response?: NextResponse
-  /** Tier from license record */
   tier?: string
-  /** Serialized receipt for X-Receipt header */
   receipt?: string
-  /** Whether quota warning threshold reached */
   quotaWarning?: boolean
-  /** Whether quota was exceeded */
   quotaExceeded?: boolean
-  /** Remaining quota metrics */
   quotaRemaining?: {
     dailyCredits: number
     hourlyCredits: number
@@ -49,15 +41,7 @@ export interface QuotaEnforcementResult {
   }
 }
 
-/**
- * Enforce quota for a validated license key
- *
- * @param request - Incoming Next.js request
- * @param licenseKey - Validated license key
- * @param resultTier - Tier from HMAC validation
- * @param receipt - Compliance receipt from audit logger (or null)
- * @returns Quota enforcement result
- */
+/** Enforce quota for a validated license key */
 export async function enforceRaasQuota(
   request: NextRequest,
   licenseKey: string,
@@ -79,7 +63,6 @@ export async function enforceRaasQuota(
     const license = licenseRaw as { nonce: string; tier: string; polar_customer_id: string | null } | null
 
     if (!license) {
-      // No license record — allow but skip quota
       return {
         allowed: true,
         tier: resultTier,
@@ -132,7 +115,6 @@ export async function enforceRaasQuota(
       const deniedResponse = quotaResult.response
       const typedTier = narrowTier(tier)
 
-      // Log violation and create real-time alert
       await logViolationAndAlert({
         userId,
         licenseNonce: license.nonce,
@@ -153,30 +135,7 @@ export async function enforceRaasQuota(
 
       return {
         allowed: false,
-        response: NextResponse.json(
-          {
-            error: deniedResponse.code || 'quota_exceeded',
-            code: deniedResponse.code || 'QUOTA_EXCEEDED',
-            message: deniedResponse.message || 'Usage limit exceeded',
-            exceeded: deniedResponse.exceeded,
-            remaining: deniedResponse.remaining,
-            retry_after: deniedResponse.retryAfter,
-            upgrade_url: deniedResponse.upgradeUrl,
-            polar_customer_id: deniedResponse.polarCustomerId,
-            dunning_state: deniedResponse.dunningState,
-            dunning_reason: deniedResponse.dunningReason,
-          },
-          {
-            status: 429,
-            headers: {
-              'Content-Type': 'application/json',
-              'Retry-After': String(deniedResponse.retryAfter || 3600),
-              'X-RateLimit-Limit': String(deniedResponse.exceeded.limit || 0),
-              'X-RateLimit-Remaining': '0',
-              'X-RateLimit-Reset': String(Math.floor(Date.now() / 1000) + (deniedResponse.retryAfter || 3600)),
-            },
-          }
-        ),
+        response: buildQuotaExceededResponse(deniedResponse),
         tier: resultTier,
         quotaExceeded: true,
       }
@@ -201,7 +160,6 @@ export async function enforceRaasQuota(
       }
     }
 
-    // Store remaining for X-RateLimit headers on successful requests
     request.headers.set('x-quota-remaining', JSON.stringify(allowedResult?.remaining))
     return {
       allowed: true,
@@ -221,25 +179,11 @@ export async function enforceRaasQuota(
       logger.warn('[RaaS Gate] Fail-closed mode: blocking due to quota check failure')
       return {
         allowed: false,
-        response: NextResponse.json(
-          {
-            error: 'Quota check failed',
-            message: 'Unable to verify quota. Please try again later.',
-            code: 'quota_check_error',
-          },
-          {
-            status: 503,
-            headers: {
-              'Content-Type': 'application/json',
-              'Retry-After': '30',
-            },
-          }
-        ),
+        response: buildQuotaErrorResponse(),
         tier: resultTier,
       }
     }
 
-    // Fail-open: allow request if quota check fails
     logger.warn('[RaaS Gate] Fail-open mode: allowing request despite quota check failure')
     return {
       allowed: true,
