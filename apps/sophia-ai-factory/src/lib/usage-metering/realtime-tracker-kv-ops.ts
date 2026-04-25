@@ -40,7 +40,7 @@ export async function invalidateRealTimeCache(userId: string, licenseNonce: stri
   const kv = getKvClient()
   if (!kv) return
   try {
-    await kv.set(`usage:${userId}:${licenseNonce}`, null)
+    await kv.del(`usage:${userId}:${licenseNonce}`)
     logger.debug('[Real-Time Tracker] Cache invalidated', {
       userId, licenseNonce: licenseNonce.slice(0, 8) + '...',
     })

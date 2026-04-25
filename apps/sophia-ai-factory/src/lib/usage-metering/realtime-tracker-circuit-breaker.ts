@@ -26,7 +26,9 @@ async function getCircuitState(licenseNonce: string): Promise<CircuitBreakerStat
   if (kv) {
     try {
       const cached = await kv.get(key)
-      if (cached) return cached as CircuitBreakerState
+      if (cached) {
+        return (typeof cached === 'string' ? JSON.parse(cached) : cached) as CircuitBreakerState
+      }
     } catch (error) {
       logger.error('[Circuit Breaker] Redis read error', toError(error))
     }

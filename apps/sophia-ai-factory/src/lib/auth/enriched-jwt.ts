@@ -28,7 +28,7 @@ import { getLicenseContext, fetchDunningState, fetchPolarBillingStatus } from '.
 const JWT_CONFIG = { algorithm: 'HS256' as const, ttlSeconds: 3600 }
 
 function getJwtSecret(): Uint8Array {
-  const secret = process.env.JWT_SECRET || process.env.NEXT_PUBLIC_JWT_SECRET
+  const secret = process.env.JWT_SECRET
   if (!secret) {
     logger.warn('[Enriched JWT] JWT_SECRET not set, using insecure default')
     return new TextEncoder().encode('insecure-dev-secret-change-in-production')
@@ -65,7 +65,7 @@ export async function createEnrichedJwt(
       polar_subscription_id: licenseContext.polarSubscriptionId,
       polar_subscription_status: licenseContext.polarStatus as EnrichedJwtPayload['polar_subscription_status'],
       billing_status: polarBilling?.billingStatus || 'active',
-      is_paid: polarBilling?.isPaid || true,
+      is_paid: polarBilling?.isPaid ?? true,
       overage_allowed: polarBilling?.overageAllowed || false,
       dunning_state: dunningState,
       feature_entitlements: featureEntitlements,

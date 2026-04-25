@@ -6,7 +6,6 @@
 import { getKvClient } from '@/lib/redis'
 import { logger } from '@/lib/utils/logger-utility'
 import { toError } from '@/lib/utils/to-error'
-import { createHash } from 'crypto'
 import { DEFAULT_KV_METERING_LOG_CONFIG } from './kv-metering-log-sync-types'
 import type { MeteringLogEntry } from './kv-metering-log-sync-types'
 
@@ -14,16 +13,6 @@ export function generateKvKey(event: { eventId: string; timestamp: number }): st
   return `${DEFAULT_KV_METERING_LOG_CONFIG.kvKeyPrefix}${event.timestamp}:${event.eventId}`
 }
 
-export function generateEventHash(event: {
-  userId: string;
-  licenseNonce: string;
-  service: string;
-  creditsUsed: number;
-  timestamp: number;
-}): string {
-  const payload = `${event.userId}:${event.licenseNonce}:${event.service}:${event.creditsUsed}:${event.timestamp}`
-  return createHash('sha256').update(payload).digest('hex')
-}
 
 export async function markAsReconciled(
   eventId: string,
@@ -63,13 +52,6 @@ export async function getSyncStats(): Promise<{
   reconciledCount: number;
   discrepancyCount: number;
 }> {
-  const kv = getKvClient()
-  const empty = { totalKeys: 0, oldestTimestamp: null, newestTimestamp: null, reconciledCount: 0, discrepancyCount: 0 }
-  if (!kv) return empty
-  try {
-    return empty
-  } catch (error) {
-    logger.error('[KV Metering Sync] Failed to get stats', toError(error))
-    return empty
-  }
+  // TODO: KV list API not available on Cloudflare Workers KV — implement when range-query support lands
+  return { totalKeys: 0, oldestTimestamp: null, newestTimestamp: null, reconciledCount: 0, discrepancyCount: 0 }
 }
