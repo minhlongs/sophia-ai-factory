@@ -132,15 +132,31 @@ export async function markJwtNonceAsUsed(
 
 /**
  * Pre-register nonce (called when JWT is created)
- * This allows proactive cache warming
+ * This allows proactive cache warming.
+ * Fails closed: returns false if KV is unavailable or write fails.
  */
 export async function preRegisterNonce(
   nonce: string,
   userId: string,
   expiresAt: number
 ): Promise<boolean> {
-  await writeNonceToKv(nonce, { used: false, userId, expiresAt }, expiresAt);
-  return true;
+  // Import here to access getKvClient without circular dependency
+  const { getKvClient } = await import('./jwt-nonce-storage');
+  const kv = getKvClient();
+  if (!kv) {
+    logger.warn('[JWT Nonce] KV unavailable — preRegisterNonce returning false (fail-closed)');
+    return false;
+  }
+
+  try {
+    const key = `nonce:${nonce}`;
+    const ttl = expiresAt - Math.floor(Date.now() / 1000);
+    await kv.set(key, { used: false, userId, expiresAt }, { expirationTtl: ttl });
+    return true;
+  } catch (error) {
+    logger.error('[JWT Nonce] KV write failed in preRegisterNonce', toError(error));
+    return false;
+  }
 }
 
 /**

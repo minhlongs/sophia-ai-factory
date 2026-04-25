@@ -11,4 +11,5 @@ export {
   fetchLicenseMetrics,
   fetchViolations,
   fetchViolationSummary,
+  fetchRevenueSnapshot,
 } from './queries/index';

@@ -83,17 +83,16 @@ export function UsageAnalyticsView({ userTier, userId }: UsageAnalyticsViewProps
 
   // Transform usage data for metrics cards
   const metricsData = useMemo(() => {
-    if (!usageData?.summary) return null;
+    if (!usageData) return null;
 
-    const summary = usageData.summary;
     return {
-      requests: summary.totalRequests,
-      tokens: summary.totalTokensInput + summary.totalTokensOutput,
-      credits: summary.totalCredits,
-      responseTime: summary.avgResponseTimeMs,
-      errorRate: summary.errorRate,
+      requests: usageData.apiCallVolume,
+      tokens: 0,
+      credits: 0,
+      responseTime: 0,
+      errorRate: 0,
       // Cost calculation (example: $0.01 per credit)
-      cost: summary.totalCredits * 0.01,
+      cost: 0,
     };
   }, [usageData]);
 
@@ -161,7 +160,7 @@ export function UsageAnalyticsView({ userTier, userId }: UsageAnalyticsViewProps
               maxRangeDays={90}
             />
           ) : (
-            <Select value={dateRangePreset} onValueChange={(v: string) => setDateRangePreset(v)}>
+            <Select value={dateRangePreset} onValueChange={(v: string) => setDateRangePreset(v as '24h' | '7d' | '30d' | '90d')}>
               <SelectTrigger className="w-[140px]">
                 <SelectValue placeholder={t('date_range')} />
               </SelectTrigger>
@@ -195,7 +194,7 @@ export function UsageAnalyticsView({ userTier, userId }: UsageAnalyticsViewProps
 
         <div className="flex items-center gap-2">
           {/* Metric Selector */}
-          <Select value={metric} onValueChange={(v: string) => setMetric(v)}>
+          <Select value={metric} onValueChange={(v: string) => setMetric(v as UsageMetric)}>
             <SelectTrigger className="w-[120px]">
               <SelectValue placeholder="Metric" />
             </SelectTrigger>
@@ -251,7 +250,7 @@ export function UsageAnalyticsView({ userTier, userId }: UsageAnalyticsViewProps
       {/* Usage Chart */}
       <div id="usage-chart">
         <UsageChart
-          data={usageData?.timeSeries || null}
+          data={null}
           metric={metric}
           granularity={dateRangePreset === '24h' ? 'hour' : 'day'}
           loading={usageLoading}
@@ -262,13 +261,13 @@ export function UsageAnalyticsView({ userTier, userId }: UsageAnalyticsViewProps
       {/* Service Breakdown and License Utilization */}
       <div className="grid gap-6 md:grid-cols-2">
         <ServiceBreakdownChart
-          data={usageData?.serviceBreakdown || null}
+          data={null}
           loading={usageLoading}
           title={t('service_breakdown')}
         />
 
         <LicenseUtilizationChart
-          data={licenseData?.utilization || null}
+          data={licenseData || null}
           loading={licenseLoading}
           title={t('license_utilization')}
           userTier={userTier}

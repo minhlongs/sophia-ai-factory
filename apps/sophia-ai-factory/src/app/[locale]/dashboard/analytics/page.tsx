@@ -3,13 +3,17 @@ import dynamic from "next/dynamic";
 import { getD1Client } from "@/lib/db/client";
 import { getCurrentUser } from "@/lib/better-auth-session";
 import { getUserTier } from "@/lib/db/get-user-tier";
+import { checkAdmin, canAccessRevenue } from "@/lib/analytics/rbac";
 import { Campaign, Tier } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getTranslations } from 'next-intl/server';
 import { redirect } from "next/navigation";
+import type { RevenueSnapshot } from "@/types/analytics-revenue";
 
-const AnalyticsView = dynamic(
-  () => import("./components/analytics-view").then(m => ({ default: m.AnalyticsView })),
+// ── Dynamic imports ──────────────────────────────────────────────────────────
+
+const AnalyticsDashboardClient = dynamic(
+  () => import("./components/analytics-dashboard-client").then(m => ({ default: m.AnalyticsDashboardClient })),
   {
     loading: () => (
       <div className="space-y-6">
@@ -27,10 +31,37 @@ const AnalyticsView = dynamic(
   }
 );
 
+// AnalyticsView is passed as a prop to preserve existing behaviour
+const AnalyticsView = dynamic(
+  () => import("./components/analytics-view").then(m => ({ default: m.AnalyticsView })),
+  { ssr: false }
+);
+
+// ── Metadata ─────────────────────────────────────────────────────────────────
+
 export const metadata = {
   title: "Analytics | Sophia AI",
   description: "Campaign performance statistics and metrics",
 };
+
+// ── Revenue prefetch ──────────────────────────────────────────────────────────
+
+async function fetchInitialRevenue(
+  userId: string,
+  userTier: Tier,
+  isAdmin: boolean,
+): Promise<RevenueSnapshot | null> {
+  if (!canAccessRevenue(userTier, isAdmin)) return null;
+
+  try {
+    const { fetchRevenueSnapshot } = await import('@/lib/analytics/queries/revenue-nowpayments');
+    return await fetchRevenueSnapshot('30d', undefined);
+  } catch {
+    return null;
+  }
+}
+
+// ── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function AnalyticsPage() {
   const t = await getTranslations('dashboard.analytics');
@@ -41,7 +72,10 @@ export default async function AnalyticsPage() {
   }
 
   let campaigns: Campaign[] = [];
-  const userTier: Tier = await getUserTier(user.id);
+  const [userTier, isAdmin]: [Tier, boolean] = await Promise.all([
+    getUserTier(user.id),
+    checkAdmin(user.id),
+  ]);
   const userId = user.id;
 
   try {
@@ -51,10 +85,12 @@ export default async function AnalyticsPage() {
       .select("*")
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
-    if (data) campaigns = data as Campaign[];
+    if (data) campaigns = data as unknown as Campaign[];
   } catch {
     campaigns = [];
   }
+
+  const initialRevenue = await fetchInitialRevenue(userId, userTier, isAdmin);
 
   return (
     <div className="space-y-8">
@@ -65,7 +101,14 @@ export default async function AnalyticsPage() {
         </p>
       </div>
 
-      <AnalyticsView campaigns={campaigns} userTier={userTier} userId={userId} />
+      <AnalyticsDashboardClient
+        campaigns={campaigns}
+        userTier={userTier}
+        userId={userId}
+        isAdmin={isAdmin}
+        initialRevenue={initialRevenue}
+        AnalyticsViewComponent={AnalyticsView}
+      />
     </div>
   );
 }

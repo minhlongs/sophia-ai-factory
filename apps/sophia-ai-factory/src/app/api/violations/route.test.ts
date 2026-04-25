@@ -47,6 +47,11 @@ import { validateApiKey } from '@/lib/security/api-key-validator';
 import { validateJwt } from '@/lib/security/jwt-validator';
 import { checkRateLimit } from '@/lib/security/rate-limiter';
 
+/** Helper to type JSON responses in tests */
+async function getJson(response: Response): Promise<Record<string, unknown>> {
+  return response.json() as Promise<Record<string, unknown>>;
+}
+
 describe('Violations API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -61,7 +66,7 @@ describe('Violations API', () => {
       const response = await GET(request);
 
       expect(response.status).toBe(401);
-      const data = await response.json();
+      const data = await getJson(response);
       expect(data.error).toContain('authentication required');
     });
 
@@ -145,7 +150,7 @@ describe('Violations API', () => {
       const response = await GET(request);
 
       expect(response.status).toBe(429);
-      const data = await response.json();
+      const data = await getJson(response);
       expect(data.error).toBe('Rate limit exceeded');
       expect(data.retryAfter).toBe(30);
     });
@@ -190,7 +195,7 @@ describe('Violations API', () => {
       const response = await GET(request);
 
       expect(response.status).toBe(400);
-      const data = await response.json();
+      const data = await getJson(response);
       expect(data.error).toContain('90 days');
     });
 
@@ -214,8 +219,8 @@ describe('Violations API', () => {
 
       expect(response.status).toBe(200);
       // Verify fetchViolations was called with limit=100
-      // Note: page defaults to '1' (string) because Zod .default() bypasses transform
-      expect(fetchViolations).toHaveBeenCalledWith(expect.anything(), '1', 100);
+      // Note: page defaults to 1 (number) from Zod .default(1)
+      expect(fetchViolations).toHaveBeenCalledWith(expect.anything(), 1, 100);
     });
   });
 
@@ -237,7 +242,7 @@ describe('Violations API', () => {
       const response = await GET(request);
 
       expect(response.status).toBe(403);
-      const data = await response.json();
+      const data = await getJson(response);
       expect(data.error).toContain('Access denied');
     });
 
@@ -335,7 +340,7 @@ describe('Violations API', () => {
         new URL('http://localhost:3000/api/violations')
       );
       const response = await GET(request);
-      const data = await response.json();
+      const data = await getJson(response);
 
       expect(data).toHaveProperty('violations');
       expect(data).toHaveProperty('pagination');
@@ -343,14 +348,14 @@ describe('Violations API', () => {
       expect(data).toHaveProperty('metadata');
 
       expect(data.pagination).toEqual({
-        // page defaults to '1' (string) when not provided — Zod .default() bypasses transform
-        page: '1',
+        // page defaults to 1 (number) from Zod .default(1)
+        page: 1,
         limit: 50,
         total: 1,
         hasMore: false,
       });
 
-      expect(data.summary.totalViolations).toBe(1);
+      expect((data.summary as Record<string, unknown>).totalViolations).toBe(1);
     });
   });
 });

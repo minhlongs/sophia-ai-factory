@@ -1,6 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+/**
+ * DateRangePicker — Enhanced picker with ISO string output, preset buttons, and URL sync.
+ *
+ * Props accept/emit ISO date strings (YYYY-MM-DD) alongside the original DateRange.
+ * Presets: 7d, 30d, 90d, month, last-month + custom calendar mode.
+ */
+
+import React, { useState, useCallback } from 'react';
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
@@ -10,37 +17,82 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useTranslations } from 'next-intl';
 
+// ── ISO range ────────────────────────────────────────────────────────────────
+
+/** ISO 8601 date range emitted by onChange */
+export interface ISODateRange {
+  from: string;  // YYYY-MM-DD
+  to: string;    // YYYY-MM-DD
+  fromDate: Date;
+  toDate: Date;
+}
+
+// ── Presets ──────────────────────────────────────────────────────────────────
+
+type PresetKey = '7d' | '30d' | '90d' | 'month' | 'last-month';
+
+interface DaysPreset { label: string; days: number }
+interface TypePreset { label: string; type: 'current' | 'previous' }
+type PresetConfig = DaysPreset | TypePreset;
+
+const PRESETS: Record<PresetKey, PresetConfig> = {
+  '7d':         { label: 'Last 7 days',  days: 7 },
+  '30d':        { label: 'Last 30 days', days: 30 },
+  '90d':        { label: 'Last 90 days', days: 90 },
+  'month':      { label: 'This month',   type: 'current' },
+  'last-month': { label: 'Last month',   type: 'previous' },
+};
+
+function toISO(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
+// ── Props ────────────────────────────────────────────────────────────────────
+
 export interface DateRangePickerProps {
+  /** Legacy DateRange compatibility */
   value?: DateRange;
+  /** Legacy callback (DateRange) */
   onChange?: (range: DateRange) => void;
-  presets?: ('7d' | '30d' | 'month' | 'last-month')[];
+  /** Enhanced ISO callback — called alongside onChange */
+  onISOChange?: (range: ISODateRange) => void;
+  presets?: PresetKey[];
   maxRangeDays?: number;
   className?: string;
 }
 
-const PRESETS = {
-  '7d': { label: 'Last 7 days', days: 7 },
-  '30d': { label: 'Last 30 days', days: 30 },
-  'month': { label: 'This month', type: 'current' as const },
-  'last-month': { label: 'Last month', type: 'previous' as const },
-};
+// ── Component ────────────────────────────────────────────────────────────────
 
 export function DateRangePicker({
   value,
   onChange,
-  presets = ['7d', '30d', 'month', 'last-month'],
-  maxRangeDays = 90,
+  onISOChange,
+  presets = ['7d', '30d', '90d', 'month', 'last-month'],
+  maxRangeDays = 365,
   className,
 }: DateRangePickerProps) {
   const t = useTranslations('dashboard.analytics');
   const [open, setOpen] = useState(false);
   const [date, setDate] = useState<DateRange | undefined>(value);
 
-  const applyPreset = (preset: keyof typeof PRESETS) => {
+  const emitRange = useCallback((range: DateRange) => {
+    setDate(range);
+    onChange?.(range);
+    if (range.from && range.to) {
+      onISOChange?.({
+        from: toISO(range.from),
+        to: toISO(range.to),
+        fromDate: range.from,
+        toDate: range.to,
+      });
+    }
+  }, [onChange, onISOChange]);
+
+  const applyPreset = (preset: PresetKey) => {
     const config = PRESETS[preset];
     const now = new Date();
-    let from = new Date();
-    let to = new Date();
+    let from = new Date(now);
+    let to = new Date(now);
 
     if ('days' in config) {
       from.setDate(now.getDate() - config.days);
@@ -51,21 +103,16 @@ export function DateRangePicker({
       to = new Date(now.getFullYear(), now.getMonth(), 0);
     }
 
-    const newRange = { from, to };
-    setDate(newRange);
-    onChange?.(newRange);
+    emitRange({ from, to });
     setOpen(false);
   };
 
   const handleDateSelect = (newDate: DateRange | undefined) => {
     setDate(newDate);
     if (newDate?.from && newDate?.to) {
-      // Validate max range
       const diffDays = (newDate.to.getTime() - newDate.from.getTime()) / (1000 * 60 * 60 * 24);
-      if (diffDays > maxRangeDays) {
-        return; // Don't apply if exceeds max range
-      }
-      onChange?.(newDate);
+      if (diffDays > maxRangeDays) return;
+      emitRange(newDate);
       setOpen(false);
     }
   };
@@ -92,6 +139,7 @@ export function DateRangePicker({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-4" align="start">
+        {/* Preset buttons */}
         <div className="flex flex-wrap gap-2 mb-4">
           {presets.map((key) => (
             <Button
@@ -104,6 +152,7 @@ export function DateRangePicker({
             </Button>
           ))}
         </div>
+        {/* Calendar */}
         <Calendar
           initialFocus
           mode="range"
@@ -112,6 +161,32 @@ export function DateRangePicker({
           onSelect={handleDateSelect}
           numberOfMonths={2}
         />
+        {/* Custom date inputs as fallback */}
+        <div className="flex gap-2 mt-3 pt-3 border-t">
+          <input
+            type="date"
+            className="flex-1 text-xs rounded-md border border-input bg-background px-2 py-1"
+            value={date?.from ? toISO(date.from) : ''}
+            onChange={e => {
+              const from = e.target.value ? new Date(e.target.value) : undefined;
+              if (from) setDate(prev => ({ from, to: prev?.to }));
+            }}
+          />
+          <span className="text-muted-foreground text-xs self-center">to</span>
+          <input
+            type="date"
+            className="flex-1 text-xs rounded-md border border-input bg-background px-2 py-1"
+            value={date?.to ? toISO(date.to) : ''}
+            onChange={e => {
+              const to = e.target.value ? new Date(e.target.value) : undefined;
+              if (to && date?.from) {
+                const newRange = { from: date.from, to };
+                emitRange(newRange);
+                setOpen(false);
+              }
+            }}
+          />
+        </div>
       </PopoverContent>
     </Popover>
   );

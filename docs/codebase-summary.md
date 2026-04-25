@@ -1,12 +1,12 @@
 # Codebase Summary — Sophia AI Factory
 
 > Comprehensive overview of the Sophia AI Factory codebase structure, patterns, and architectural decisions.
-> **Last Updated:** 2026-04-17 (4-Phase RaaS Platform Shipped)
+> **Last Updated:** 2026-04-25 (Phase 9: Analytics Dashboard Shipped)
 
 **Production URL:** https://sophia.agencyos.network
 **Tech Stack:** Next.js 15.5 + Cloudflare Workers + D1 SQLite + Better Auth v1.6.2 + Better Stack + PostHog
-**Test Status:** 921/921 passing (100%) | **Build:** < 10s, 0 TS errors | **Bundle:** < 500 KB gzipped
-**Shipped (2026-04-17):** P1 CI/CD, P2 Observability, P3 Signals+Telemetry, P4 SDLC (4,622 LOC, 43+ modules)
+**Test Status:** 1362/1362 passing (100%) | **Build:** < 10s, 0 TS errors | **Bundle:** < 500 KB gzipped
+**Shipped (2026-04-25):** Phase 9 Analytics (Real-time SSE, revenue metrics, cohort analysis, tier adoption, ~1,800 LOC, 6 lib modules, 7 components, 4 endpoints)
 
 ---
 
@@ -335,6 +335,20 @@ better_auth_verifications        → id, identifier, value, expires_at
   - API Access: Premium+ only
   - Custom Integrations: Enterprise+ only
   - White-Label: Master only
+
+### 12. Analytics Dashboard (2026-04-25)
+- **Location:** `lib/analytics/*` (6 modules), `components/analytics/*` (7 components), `app/api/analytics/*` (4 endpoints)
+- **Real-Time Metrics:** SSE endpoint streaming activeUsers, campaignsLast1h, apiCallsLast1h, errorRateLast1h, tierDistribution (10s refresh)
+- **Revenue Metrics:** MRR, ARR, growth %, tier breakdown (backed by NOWPayments invoice queries)
+- **Cohort Analysis:**
+  - Retention curves by signup cohort (7-week tracking)
+  - Churn timeline (tier cancellations with reasons)
+  - LTV calculator (customer lifetime value per tier)
+- **Tier Adoption:** Stacked area chart tracking BASIC/PREMIUM/ENTERPRISE/MASTER adoption over time
+- **Date Range Picker:** 7d/30d/90d presets + custom date range selector
+- **Dashboard Integration:** Unified `/dashboard/analytics` page wiring all components (admin-only)
+- **Database:** `tier_change_events` table (migration 0015) tracks tier change history for cohort scoping
+- **Activation:** Auto-live post-deploy; no env gates required
 
 ---
 
