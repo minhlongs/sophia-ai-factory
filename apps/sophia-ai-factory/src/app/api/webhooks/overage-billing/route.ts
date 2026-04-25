@@ -7,167 +7,15 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { Webhook } from 'standardwebhooks';
 import { createServerClient } from '@/lib/db/client';
-import { z } from 'zod';
-
-// Webhook event schema
-const overageEventSchema = z.object({
-  licenseNonce: z.string(),
-  userId: z.string(),
-  tier: z.string(),
-  usageCount: z.number(),
-  overageCount: z.number(),
-  overageFee: z.number(),
-  timestamp: z.number(),
-  idempotencyKey: z.string(),
-  service: z.string().optional(),
-  billingPeriod: z.string().optional()
-});
-
-// Header validation schema
-const headerSchema = z.object({
-  'webhook-id': z.string().min(1),
-  'webhook-timestamp': z.string().min(1),
-  'webhook-signature': z.string().min(1).optional(),
-  'Polar-Signature': z.string().min(1).optional(),
-  'X-Cloudflare-Signature': z.string().min(1).optional()
-}).refine(
-  data => data['webhook-signature'] || data['Polar-Signature'] || data['X-Cloudflare-Signature'],
-  { message: 'At least one signature header required' }
-);
-
-/**
- * Verify webhook signature using timing-safe comparison
- * Supports Polar, Stripe, and Cloudflare signature formats
- */
-async function verifySignature(
-  body: string,
-  headers: Record<string, string | undefined>,
-  secret: string
-): Promise<boolean> {
-  try {
-    const wh = new Webhook(secret);
-    const signature = headers['Polar-Signature'] || headers['webhook-signature'];
-
-    if (!signature) {
-      return false;
-    }
-
-    wh.verify(body, {
-      'webhook-id': headers['webhook-id'],
-      'webhook-timestamp': headers['webhook-timestamp'],
-      'webhook-signature': signature
-    });
-
-    return true;
-  } catch {
-    // Try base64-decoded secret
-    try {
-      const base64Secret = Buffer.from(secret).toString('base64');
-      const wh = new Webhook(base64Secret);
-      const signature = headers['Polar-Signature'] || headers['webhook-signature'];
-
-      if (!signature) {
-        return false;
-      }
-
-      wh.verify(body, {
-        'webhook-id': headers['webhook-id'],
-        'webhook-timestamp': headers['webhook-timestamp'],
-        'webhook-signature': signature
-      });
-
-      return true;
-    } catch {
-      return false;
-    }
-  }
-}
-
-/**
- * Verify HMAC-SHA256 signature with timing-safe comparison
- * Prevents timing attacks on signature validation
- */
-async function verifyHmacSignature(
-  body: string,
-  signature: string,
-  secret: string
-): Promise<boolean> {
-  try {
-    const crypto = await import('node:crypto');
-    const expectedHex = crypto.createHmac('sha256', secret).update(body).digest('hex');
-
-    // Convert to buffers for timing-safe comparison
-    const signatureBuf = Buffer.from(signature, 'hex');
-    const expectedBuf = Buffer.from(expectedHex, 'hex');
-
-    // Length check first, then timing-safe comparison
-    return signatureBuf.length === expectedBuf.length &&
-      crypto.timingSafeEqual(signatureBuf, expectedBuf);
-  } catch {
-    // Fallback for environments without node:crypto
-    return false;
-  }
-}
-
-/**
- * Verify Cloudflare queue event signature using timing-safe comparison
- */
-function verifyCloudflareSignature(
-  signature: string | undefined,
-  expectedSecret: string
-): boolean {
-  if (!signature || !expectedSecret) {
-    return false;
-  }
-
-  // Use HMAC-SHA256 with timing-safe comparison
-  return verifyHmacSignature(signature, expectedSecret, expectedSecret);
-}
-
-/**
- * Check if event was already processed (idempotency)
- */
-async function checkIdempotency(
-  idempotencyKey: string,
-  supabase: ReturnType<typeof createServerClient>
-): Promise<boolean> {
-  const { data, error } = await supabase
-    .from('usage_events')
-    .select('id')
-    .eq('idempotency_key', idempotencyKey)
-    .single();
-
-  return !error && data !== null;
-}
-
-/**
- * Store usage event in Supabase
- */
-async function storeUsageEvent(
-  event: z.infer<typeof overageEventSchema>,
-  supabase: ReturnType<typeof createServerClient>
-): Promise<{ success: boolean; error?: string }> {
-  const { error } = await supabase.from('usage_events').insert({
-    license_nonce: event.licenseNonce,
-    user_id: event.userId,
-    tier: event.tier.toUpperCase(),
-    usage_count: event.usageCount,
-    overage_count: event.overageCount,
-    overage_fee: event.overageFee,
-    event_timestamp: new Date(event.timestamp).toISOString(),
-    idempotency_key: event.idempotencyKey,
-    service: event.service || 'default',
-    billing_period: event.billingPeriod
-  });
-
-  if (error) {
-    return { success: false, error: error.message };
-  }
-
-  return { success: true };
-}
+import { verifySignature, verifyCloudflareSignature } from './overage-billing-signature-verifier';
+import {
+  overageEventSchema,
+  headerSchema,
+  checkIdempotency,
+  storeUsageEvent,
+  logOverageEvent,
+} from './overage-billing-event-store';
 
 /**
  * POST handler for overage billing webhook
@@ -201,12 +49,10 @@ export async function POST(request: NextRequest) {
     // Verify signature based on source
     const cloudflareSig = rawHeaders['X-Cloudflare-Signature'];
     if (cloudflareSig && cloudflareSecret) {
-      // Cloudflare Queue event
       if (!verifyCloudflareSignature(cloudflareSig, cloudflareSecret)) {
         return NextResponse.json({ error: 'Invalid Cloudflare signature' }, { status: 400 });
       }
     } else if (webhookSecret) {
-      // Polar/Stripe webhook
       const isValid = await verifySignature(body, rawHeaders, webhookSecret);
       if (!isValid) {
         return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
@@ -233,20 +79,16 @@ export async function POST(request: NextRequest) {
     }
 
     const validatedEvent = parseResult.data;
-
-    // Initialize D1 database client
     const supabase = createServerClient();
 
     // Check idempotency
     const isDuplicate = await checkIdempotency(validatedEvent.idempotencyKey, supabase);
     if (isDuplicate) {
-      // Already processed - return success for idempotency
       return NextResponse.json({ received: true, duplicate: true });
     }
 
     // Store event
     const result = await storeUsageEvent(validatedEvent, supabase);
-
     if (!result.success) {
       return NextResponse.json({
         error: 'Failed to store event',
@@ -254,35 +96,16 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
 
-    // Log overage for billing reconciliation
-    if (validatedEvent.overageFee > 0) {
-      const { error: billingError } = await supabase
-        .from('overage_events')
-        .insert({
-          user_id: validatedEvent.userId,
-          license_nonce: validatedEvent.licenseNonce,
-          overage_count: validatedEvent.overageCount,
-          overage_fee: validatedEvent.overageFee,
-          billing_period: validatedEvent.billingPeriod,
-          processed: false
-        });
-
-      if (billingError) {
-        // Log overage event but don't fail the webhook
-        // In production, use a proper logger instead
-      }
-    }
+    // Log overage for billing reconciliation (non-critical)
+    await logOverageEvent(validatedEvent, supabase);
 
     return NextResponse.json({
       received: true,
       processed: true,
       eventId: validatedEvent.idempotencyKey
     });
-  } catch (error) {
-    // In production, use a proper logger
-    return NextResponse.json({
-      error: 'Internal server error'
-    }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
