@@ -2,7 +2,7 @@
  * Dunning Actions — Payment Handlers
  *
  * Handles payment failure and success events.
- * Admin operations moved to dunning-admin-operations.ts
+ * Types and DB helper extracted to dunning-attempt-recorder.ts
  *
  * @module billing/dunning/dunning-actions
  */
@@ -10,7 +10,6 @@
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import { toError } from '@/lib/utils/to-error';
-import type { Tier } from '@/types';
 import {
   DUNNING_TIER_CONFIGS,
   getDunningSettings,
@@ -22,95 +21,14 @@ import {
   type DunningStateResult,
   type DunningSettingsRow,
 } from './dunning-state-machine';
+import {
+  recordDunningAttempt,
+  type DunningAttemptRow,
+  type PaymentFailureContext,
+  type PaymentSuccessContext,
+} from './dunning-attempt-recorder';
 
-// -------------------------------------------------------------------------
-// Types
-// -------------------------------------------------------------------------
-
-export interface DunningAttemptRow {
-  id: string;
-  user_id: string;
-  license_nonce: string;
-  attempt_number: number;
-  attempt_type: string;
-  payment_provider: string;
-  success: boolean;
-  amount: number | null;
-  currency: string;
-  failure_reason: string | null;
-  provider_response_id: string | null;
-  dunning_state_before: DunningState | null;
-  dunning_state_after: DunningState | null;
-  next_retry_at: string | null;
-  scheduled_retry_count: number;
-  stripe_invoice_id: string | null;
-  polar_order_id: string | null;
-  created_at: string;
-}
-
-export interface PaymentFailureContext {
-  userId: string;
-  licenseNonce: string;
-  tier: Tier;
-  amount: number;
-  currency: string;
-  failureReason: string;
-  paymentProvider: 'stripe' | 'polar';
-  stripeInvoiceId?: string;
-  polarOrderId?: string;
-  ipAddress?: string;
-  userAgent?: string;
-}
-
-export interface PaymentSuccessContext {
-  userId: string;
-  licenseNonce: string;
-  tier: Tier;
-  amount: number;
-  currency: string;
-  paymentProvider: 'stripe' | 'polar';
-  providerChargeId: string;
-  providerInvoiceId?: string;
-}
-
-// -------------------------------------------------------------------------
-// Internal helper
-// -------------------------------------------------------------------------
-
-async function recordDunningAttempt(attempt: Omit<DunningAttemptRow, 'id' | 'created_at'>): Promise<string> {
-  const db = createServerClient();
-  const { data, error } = await db
-    .from('dunning_attempts')
-    .insert({
-      user_id: attempt.user_id,
-      license_nonce: attempt.license_nonce,
-      attempt_number: attempt.attempt_number,
-      attempt_type: attempt.attempt_type,
-      payment_provider: attempt.payment_provider,
-      success: attempt.success,
-      amount: attempt.amount,
-      currency: attempt.currency,
-      failure_reason: attempt.failure_reason,
-      provider_response_id: attempt.provider_response_id,
-      dunning_state_before: attempt.dunning_state_before,
-      dunning_state_after: attempt.dunning_state_after,
-      next_retry_at: attempt.next_retry_at,
-      scheduled_retry_count: attempt.scheduled_retry_count,
-      stripe_invoice_id: attempt.stripe_invoice_id,
-      polar_order_id: attempt.polar_order_id,
-      ...(attempt.ip_address && { ip_address: attempt.ip_address }),
-      ...(attempt.user_agent && { user_agent: attempt.user_agent }),
-    } as any)
-    .select('id')
-    .single();
-
-  if (error || !data) throw new Error(`Failed to record dunning attempt: ${error?.message || 'Unknown error'}`);
-  return data.id;
-}
-
-// -------------------------------------------------------------------------
-// Payment handlers
-// -------------------------------------------------------------------------
+export type { DunningAttemptRow, PaymentFailureContext, PaymentSuccessContext } from './dunning-attempt-recorder';
 
 /** Handle payment failure - core dunning logic */
 export async function handlePaymentFailure(context: PaymentFailureContext): Promise<DunningStateResult> {
@@ -136,7 +54,7 @@ export async function handlePaymentFailure(context: PaymentFailureContext): Prom
         .single();
 
       if (error || !newSettings) throw new Error(`Failed to initialize dunning settings: ${error?.message}`);
-      settings = newSettings as DunningSettingsRow;
+      settings = newSettings as unknown as DunningSettingsRow;
     }
 
     const { count: recentFailures } = await db
