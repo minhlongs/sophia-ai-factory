@@ -4,17 +4,10 @@ import { getD1Client } from "@/lib/db/client";
 import { sendCampaignCreatedEvent } from "@/lib/campaigns/create-campaign-core";
 import { createCampaignSchema } from "@/lib/campaigns/validation";
 import { revalidatePath } from "next/cache";
-import { Tier } from "@/types";
 import { tierGuard } from "@/lib/tier-guard";
 import { toError } from "@/lib/utils/to-error";
 
-/** Map DB subscription_tier string to app Tier enum */
-function mapDbTierToTier(dbTier: string | null | undefined): Tier {
-  if (dbTier === 'premium' || dbTier === 'pro') return "PREMIUM";
-  if (dbTier === 'enterprise') return "ENTERPRISE";
-  if (dbTier === 'master') return "MASTER";
-  return "BASIC";
-}
+export { retryCampaign, resumeCampaign } from './campaigns-retry-resume';
 
 export async function createCampaign(formData: FormData) {
   const rawData = {
@@ -34,7 +27,6 @@ export async function createCampaign(formData: FormData) {
   const { title, topic, audience } = validation.data;
   const platforms = rawData.platforms as string[];
 
-  // Get current user from Better Auth session
   let userId: string | undefined;
   try {
     const { getCurrentUser } = await import("@/lib/better-auth-session");
@@ -61,7 +53,6 @@ export async function createCampaign(formData: FormData) {
     }
   }
 
-  // Fetch tier from subscriptions via org membership
   const { getUserTier } = await import("@/lib/db/get-user-tier");
   const tier = await getUserTier(userId);
 
@@ -91,7 +82,6 @@ export async function createCampaign(formData: FormData) {
   }
 
   try {
-    // 1. Create Campaign Record (generate ID upfront — D1 doesn't support RETURNING)
     const campaignId = crypto.randomUUID();
     const { error } = await db
       .from("campaigns")
@@ -110,174 +100,22 @@ export async function createCampaign(formData: FormData) {
       return { success: false, message: `Failed to create campaign: ${error.message || JSON.stringify(error)}` };
     }
 
-    const campaignData = { id: campaignId };
-
-    // 2. Trigger Inngest Event (optional — may not be configured on CF Workers)
     try {
       await sendCampaignCreatedEvent({
-        campaignId: campaignData.id,
+        campaignId,
         userId,
         topic: topic || title!,
         audience: audience || "General",
         tier,
       });
     } catch {
-      // Inngest not configured — campaign still created, processing will be manual
+      // Inngest not configured — campaign still created
     }
 
     revalidatePath("/dashboard/campaigns");
-    return { success: true, message: "Campaign created", campaignId: campaignData.id };
+    return { success: true, message: "Campaign created", campaignId };
 
   } catch (e) {
     return { success: false, message: `Error: ${toError(e).message}` };
-  }
-}
-
-/**
- * Retry a failed campaign from the beginning
- */
-export async function retryCampaign(campaignId: string) {
-  try {
-    const db = await getD1Client();
-
-    const { data: campaign, error: fetchError } = await db
-      .from("campaigns")
-      .select("*")
-      .eq("id", campaignId)
-      .single();
-
-    if (fetchError || !campaign) {
-      return { success: false, message: "Campaign not found" };
-    }
-
-    const c = campaign as { id: string; status: string; user_id: string; topic: string; title: string; audience: string };
-
-    if (c.status !== "failed") {
-      return { success: false, message: "Only failed campaigns can be retried" };
-    }
-
-    // Get user tier
-    const { data: profile } = await db
-      .from("user_profiles")
-      .select("subscription_tier")
-      .eq("user_id", c.user_id)
-      .single();
-
-    const tier = mapDbTierToTier((profile as { subscription_tier?: string } | null)?.subscription_tier);
-
-    // Reset campaign state
-    const { error: updateError } = await db
-      .from("campaigns")
-      .update({
-        status: "queued",
-        progress: 0,
-        updated_at: new Date().toISOString()
-      })
-      .eq("id", campaignId);
-
-    if (updateError) {
-      return { success: false, message: "Failed to reset campaign" };
-    }
-
-    // Trigger Inngest workflow
-    await sendCampaignCreatedEvent({
-      campaignId: c.id,
-      userId: c.user_id,
-      topic: c.topic || c.title,
-      audience: c.audience || "General Audience",
-      tier,
-    });
-
-    revalidatePath("/dashboard/campaigns");
-    return { success: true, message: "Campaign retry initiated" };
-  } catch (error) {
-    return {
-      success: false,
-      message: error instanceof Error ? error.message : "Unknown error"
-    };
-  }
-}
-
-/**
- * Resume a failed campaign from the last successful step
- */
-export async function resumeCampaign(campaignId: string) {
-  try {
-    const db = await getD1Client();
-
-    const { data: campaign, error: fetchError } = await db
-      .from("campaigns")
-      .select("*")
-      .eq("id", campaignId)
-      .single();
-
-    if (fetchError || !campaign) {
-      return { success: false, message: "Campaign not found" };
-    }
-
-    const c = campaign as {
-      id: string; status: string; user_id: string; topic: string; title: string;
-      audience: string; script: string | null; video_url: string | null;
-    };
-
-    if (c.status !== "failed") {
-      return { success: false, message: "Only failed campaigns can be resumed" };
-    }
-
-    // Get user tier
-    const { data: profile } = await db
-      .from("user_profiles")
-      .select("subscription_tier")
-      .eq("user_id", c.user_id)
-      .single();
-
-    const tier = mapDbTierToTier((profile as { subscription_tier?: string } | null)?.subscription_tier);
-
-    // Determine resume point based on existing data
-    const hasScript = !!c.script && c.script.length > 0;
-    const hasVideo = !!c.video_url;
-
-    let resumeStatus: "processing_script" | "processing_video";
-    let resumeProgress: number;
-    let resumeFrom: "script" | "tts" | "video" | "finalize";
-
-    if (hasVideo) {
-      resumeStatus = "processing_video"; resumeProgress = 90; resumeFrom = "finalize";
-    } else if (hasScript) {
-      resumeStatus = "processing_script"; resumeProgress = 45; resumeFrom = "tts";
-    } else {
-      resumeStatus = "processing_script"; resumeProgress = 10; resumeFrom = "script";
-    }
-
-    const { error: updateError } = await db
-      .from("campaigns")
-      .update({
-        status: resumeStatus,
-        progress: resumeProgress,
-        updated_at: new Date().toISOString()
-      })
-      .eq("id", campaignId);
-
-    if (updateError) {
-      return { success: false, message: "Failed to update campaign" };
-    }
-
-    await sendCampaignCreatedEvent({
-      campaignId: c.id,
-      userId: c.user_id,
-      topic: c.topic || c.title,
-      audience: c.audience || "General Audience",
-      tier,
-      resume: true,
-      resumeFrom,
-    });
-
-    revalidatePath("/dashboard/campaigns");
-    return { success: true, message: `Campaign resumed from ${resumeFrom} step` };
-  } catch (error) {
-    return {
-      success: false,
-      message: error instanceof Error ? error.message : "Unknown error"
-    };
   }
 }
