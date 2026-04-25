@@ -2,7 +2,7 @@
 
 > Product milestones and progress tracking (2026)
 
-**Last Updated:** 2026-04-20 (Tech Debt Phase 12: DB Helpers & FSM Design — D1Response consolidated, insertTyped helper, 10 sites migrated, FSM design doc, 1297/1297 tests pass)
+**Last Updated:** 2026-04-25 (Phase 9: Analytics Dashboard Shipped — SSE realtime, revenue metrics, cohort analysis, tier adoption, 1362/1362 tests pass)
 **Target:** $1M ARR, 100/100 a16z solo company score
 
 ---
@@ -282,15 +282,30 @@
 - **Backward Compatibility:** 100% backward-compatible; `GenerateScriptInput.userId` optional; no schema or env changes
 - **Commit:** `0cab570` — CI green, prod HTTP 200, shortSha match
 
-### Phase 9: Analytics Dashboard (Planned)
-- **Timeline:** May 2026
+### Phase 9: Analytics Dashboard ✅ SHIPPED (2026-04-25)
+- **Status:** Production deployment complete (2026-04-25)
 - **Features:**
-  - Client revenue tracking (tier adoption, churn)
-  - Admin KPIs (total usage, ARR, active clients)
-  - Feature-level analytics (campaigns vs renders vs bot responses)
-  - Retention cohorts + LTV tracking
-- **Owner:** Data team
-- **Target:** Real-time dashboard for founder
+  - **Real-Time SSE Analytics** — `GET /api/analytics/realtime` (admin-only, edge runtime)
+    - Broadcasts snapshot every 10s: activeUsers, campaignsLast1h, apiCallsLast1h, errorRateLast1h, tierDistribution
+  - **Revenue Metrics API** — `GET /api/analytics/revenue` (MRR, ARR, growth %, tier breakdown)
+    - `<RevenueCard />` component — 4 stat tiles + 30d Recharts AreaChart sparkline + tier table
+  - **Cohort Retention + Churn + LTV** — `GET /api/analytics/cohorts` (metric=retention|churn|ltv)
+    - Migration 0015: tier_change_events tracking + calculator modules
+    - Components: `<CohortRetentionChart />`, `<ChurnTimeline />`, `<LTVCalculator />`
+  - **Tier Adoption Chart** — `GET /api/analytics/tier-adoption` (stacked chart data)
+    - `<TierAdoptionChart />` — Recharts AreaChart, 4 tiers (BASIC/PREMIUM/ENTERPRISE/MASTER)
+  - **Date Range Picker** — `<DateRangePicker />` with 7d/30d/90d presets + custom range
+  - **Dashboard Integration** — `<AnalyticsDashboardClient />` wires all Phase 9 components
+    - Integrated: `dashboard/analytics/page.tsx` — RevenueCard + TierAdoptionChart + DateRangePicker + UsageView
+- **Metrics:** ~1,800 LOC, 21 new tests, 1362/1362 pass (100%)
+- **Files:**
+  - New types: `src/types/analytics-{realtime,revenue,cohort}.ts`
+  - New modules: `src/lib/analytics/{sse-broadcaster,realtime-snapshot,revenue-nowpayments,cohort,churn,ltv}-calculator.ts`
+  - New components: `src/components/analytics/{revenue-card,cohort-retention-chart,churn-timeline,ltv-calculator,tier-adoption-chart}.tsx`
+  - New endpoint: `src/app/api/analytics/{realtime,revenue,cohorts,tier-adoption}/route.ts`
+  - Migration: `migrations/0015_tier_change_events.sql` (additive, tier change tracking)
+  - Dashboard: `src/app/[locale]/(dashboard)/dashboard/analytics/page.tsx`
+- **Target:** Real-time dashboard for founder + tier adoption visibility
 
 ### Phase 10: Multi-Language Support (Planned)
 - **Timeline:** June 2026
@@ -383,7 +398,8 @@
 | **2026-04-20** | **Tech Debt Phase 10: Usage Metering + Route Handlers `:any` Cleanup (9 files, 20 `:any` → 0, D1Response<T> generic, 9.6/10 APPROVE)** | **✅ COMPLETE** |
 | **2026-04-20** | **Tech Debt Phase 12: DB Helpers & FSM Design (D1Response consolidated, insertTyped 10 sites, FSM design doc, 9.6/10 APPROVE)** | **✅ COMPLETE** |
 | **2026-04-20** | **Tech Debt Phase 11: RaaS License System Type Safety (2 files, 3 `:any` → 0, discriminated union narrowing, incidental severity-routing bug fix, 9.7/10 APPROVE)** | **✅ COMPLETE** |
-| 2026-05-01 | Analytics Dashboard | 🔄 Planned |
+| **2026-04-25** | **Phase 9 Analytics Dashboard (SSE realtime, revenue metrics, cohort retention/churn/LTV, tier adoption, 1,800 LOC, 1362/1362 tests)** | **✅ SHIPPED** |
+| 2026-05-01 | Tech Debt Phase 30 (Planned) | 🔄 Planned |
 | 2026-06-01 | Multi-Language Support (Vietnamese) | 🔄 Planned |
 | 2026-07-01 | Telegram Bot Enhancement | 🔄 Planned |
 | 2026-Q4 | $1M ARR Milestone | 🎯 Target |

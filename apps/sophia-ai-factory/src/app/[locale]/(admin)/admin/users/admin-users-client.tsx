@@ -3,6 +3,12 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 
+interface AdminInviteResponse {
+  success: boolean;
+  message?: string;
+  userId?: string;
+}
+
 export interface AdminUserRow {
   id: string;
   email: string;
@@ -43,10 +49,10 @@ export function AdminUsersClient({ initialUsers }: AdminUsersClientProps) {
         body: JSON.stringify({ email: inviteEmail, tier: inviteTier }),
       });
 
-      const data = await res.json();
+      const data = await res.json() as AdminInviteResponse;
 
       if (data.success) {
-        setFeedback(data.message);
+        setFeedback(data.message ?? 'Invite sent successfully');
         setUsers((prev) => [
           ...prev,
           {

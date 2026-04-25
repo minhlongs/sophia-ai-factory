@@ -110,6 +110,17 @@ export default function BillingPage({ params }: { params: Promise<{ locale: stri
     );
   }
 
+  if (!usageData) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="space-y-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
+          <p className="text-muted-foreground">Đang tải dữ liệu thanh toán...</p>
+        </div>
+      </div>
+    );
+  }
+
   const formatCurrency = (cents: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',

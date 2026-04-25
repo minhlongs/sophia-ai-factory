@@ -1,111 +1,114 @@
 /**
  * GET /api/analytics/revenue
  *
- * Revenue metrics from Polar.sh subscriptions
+ * Revenue snapshot — NOWPayments IPN + raas_licenses source.
+ * Returns ARR, MRR, MRR growth %, per-tier breakdown, 30d trend.
  *
- * Query Params:
- * - period - 'current_month' | 'last_month' | 'last_7_days' | 'last_30_days' (default: 'current_month')
- * - tier - Filter by tier (optional, admin only)
+ * Query params:
+ *   period  — '30d' | '90d' | '12m'  (default: '30d')
+ *   org_id  — cross-tenant filter    (admin only)
  *
  * RBAC:
- * - Admin: Can access all revenue data, filter by tier
- * - Customer: Only see aggregate data (no tier filter allowed)
+ *   Admin / MASTER — full data, org_id filter allowed
+ *   ENTERPRISE     — own aggregates only
+ *   BASIC/PREMIUM  — 403 (revenue is ENTERPRISE+ feature)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { getCurrentUser } from '@/lib/better-auth-session';
 import { getUserTier } from '@/lib/db/get-user-tier';
-import { logger } from '@/lib/utils/logger-utility';
-import { fetchRevenueMetrics } from '@/lib/analytics/queries';
 import { checkAdmin, canAccessRevenue } from '@/lib/analytics/rbac';
-import { analyticsRevenueQuerySchema } from '@/lib/validation/services';
-import type { RevenuePeriod } from '@/lib/analytics/types';
+import { fetchRevenueSnapshot } from '@/lib/analytics/queries/revenue-nowpayments';
+import { logger } from '@/lib/utils/logger-utility';
+
+export const runtime = 'edge';
+
+// ── Zod schema ──────────────────────────────────────────────────────────────
+
+const revenueQuerySchema = z.object({
+  period: z.enum(['30d', '90d', '12m']).default('30d'),
+  org_id: z.string().optional(),
+});
+
+// ── Route handler ───────────────────────────────────────────────────────────
 
 export async function GET(request: NextRequest) {
   try {
-    // Step 1: Get authenticated user
+    // Auth
     const user = await getCurrentUser();
-
     if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized - authentication required' },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
-    // Step 2: Parse query params with Zod schema
+    // Validate query params
     const searchParams = request.nextUrl.searchParams;
-    const validation = analyticsRevenueQuerySchema.safeParse({
-      period: searchParams.get('period'),
-      tier: searchParams.get('tier'),
+    const validation = revenueQuerySchema.safeParse({
+      period: searchParams.get('period') ?? undefined,
+      org_id: searchParams.get('org_id') ?? undefined,
     });
 
     if (!validation.success) {
       return NextResponse.json(
         { error: 'Invalid query params', details: validation.error.flatten() },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    const { period, tier } = validation.data;
+    const { period, org_id } = validation.data;
 
-    // Step 3: RBAC - Check if user is admin
-    const isAdmin = await checkAdmin(user.id);
-    const userTier = await getUserTier(user.id);
+    // RBAC
+    const [userTier, isAdmin] = await Promise.all([
+      getUserTier(user.id),
+      checkAdmin(user.id),
+    ]);
 
-    // Check revenue access
     if (!canAccessRevenue(userTier, isAdmin)) {
       return NextResponse.json(
-        { error: 'Access denied - revenue metrics require ENTERPRISE tier or higher' },
-        { status: 403 }
+        { error: 'Access denied - revenue metrics require ENTERPRISE tier or admin role' },
+        { status: 403 },
       );
     }
 
-    if (tier && !isAdmin) {
+    // org_id cross-tenant filter is admin-only
+    if (org_id && !isAdmin) {
       return NextResponse.json(
-        { error: 'Access denied - tier filter is admin-only' },
-        { status: 403 }
+        { error: 'Access denied - org_id filter is admin only' },
+        { status: 403 },
       );
     }
 
-    logger.info('[Analytics Revenue] Querying revenue metrics', {
+    logger.info('[Analytics Revenue] Querying snapshot', {
       userId: user.id,
       userTier,
       isAdmin,
       period,
-      tier,
+      org_id,
     });
 
-    // Step 4: Fetch revenue metrics
-    const metrics = await fetchRevenueMetrics(period);
-
-    // Step 5: Apply tier filter if requested (admin only)
-    if (tier && isAdmin) {
-      metrics.byTier = metrics.byTier.filter(t => t.tier === tier);
-      // Note: We don't filter the trend data as it's aggregated across all tiers
-    }
-
-    logger.info('[Analytics Revenue] Query complete', {
-      totalRevenue: metrics.totalRevenue,
-      recurringRevenue: metrics.recurringRevenue,
-      byTierCount: metrics.byTier.length,
-    });
+    // Fetch snapshot
+    const snapshot = await fetchRevenueSnapshot(period, org_id);
 
     return NextResponse.json({
-      ...metrics,
+      ...snapshot,
       metadata: {
         queriedAt: new Date().toISOString(),
         period,
-        tier,
+        isAdmin,
       },
     });
 
   } catch (error) {
-    logger.error('[Analytics Revenue] Critical error', error instanceof Error ? error : new Error(String(error)));
-
+    logger.error(
+      '[Analytics Revenue] Critical error',
+      error instanceof Error ? error : new Error(String(error)),
+    );
     return NextResponse.json(
       { error: 'Failed to query revenue data' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

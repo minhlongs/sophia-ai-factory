@@ -58,7 +58,7 @@ export default function UsageAnalyticsPage() {
       const response = await fetch(`/api/analytics/usage?${params}`);
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json() as { error?: string };
         throw new Error(errorData.error || 'Failed to fetch usage metrics');
       }
 
@@ -83,7 +83,7 @@ export default function UsageAnalyticsPage() {
       const response = await fetch('/api/analytics/licenses?status=all');
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json() as { error?: string };
         throw new Error(errorData.error || 'Failed to fetch license metrics');
       }
 

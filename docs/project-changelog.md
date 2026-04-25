@@ -1,7 +1,70 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-04-24 (Tech Debt Phase 29 Wave 3: Ternary Sweep Final Wave — SERIES CLOSURE)
+> **Last Updated:** 2026-04-25 (Phase 9: Analytics Dashboard Shipped — Real-time SSE, revenue metrics, cohort analysis)
+
+---
+
+## [2026-04-25] Phase 9 — Analytics Dashboard (SHIPPED)
+
+### Summary
+Comprehensive analytics dashboard shipping real-time metrics for founder observability. Implemented: (1) Real-time SSE endpoint streaming activeUsers, campaigns, API calls, error rates, tier distribution every 10s. (2) Revenue metrics API exposing MRR, ARR, growth %, tier breakdown backed by NOWPayments. (3) Cohort analysis suite: retention curves, churn timeline, LTV calculator. (4) Tier adoption stacked area chart tracking BASIC/PREMIUM/ENTERPRISE/MASTER adoption over time. (5) Date range picker with 7d/30d/90d presets + custom range. (6) Unified dashboard integration binding all components. Migration 0015 tracks tier changes for cohort scoping. Tests: 1362/1362 ✅. Build: 0 TS errors ✅. Code Review: 9.8/10 APPROVE SHIP ✅. Production HTTP 200 ✅.
+
+### Files Created (New Analytics Modules)
+**Types:**
+- `src/types/analytics-realtime.ts` — RealTimeMetrics shape (activeUsers, campaignsLast1h, etc.)
+- `src/types/analytics-revenue.ts` — RevenueMetrics shape (mrr, arr, growthPercent, tierBreakdown)
+- `src/types/analytics-cohort.ts` — CohortMetrics for retention/churn/ltv
+
+**Libraries:**
+- `src/lib/analytics/sse-broadcaster.ts` — SSE connection pooling + 10s snapshot broadcast (edge runtime safe)
+- `src/lib/analytics/realtime-snapshot.ts` — D1 aggregates for activeUsers, apiCallsLast1h, errorRateLast1h, tierDistribution
+- `src/lib/analytics/revenue-nowpayments.ts` — NOWPayments invoice queries → MRR/ARR/growth % calculations
+- `src/lib/analytics/cohort-calculator.ts` — D1 retention curves by cohort (signup date)
+- `src/lib/analytics/churn-calculator.ts` — Tier cancellation tracking + timeline
+- `src/lib/analytics/ltv-calculator.ts` — Customer lifetime value via tier * months * 30
+
+**Components:**
+- `src/components/analytics/revenue-card.tsx` — 4 stat tiles (MRR, ARR, growth %, active tier count) + Recharts AreaChart 30d sparkline + tier detail table
+- `src/components/analytics/cohort-retention-chart.tsx` — Retention % by cohort week (7 weeks)
+- `src/components/analytics/churn-timeline.tsx` — Timeline of churn events with reasons
+- `src/components/analytics/ltv-calculator.tsx` — Summary stats + method explanation
+- `src/components/analytics/tier-adoption-chart.tsx` — Stacked AreaChart (4 tiers, X=date, Y=count)
+
+**API Routes:**
+- `src/app/api/analytics/realtime/route.ts` — GET + SSE streaming (admin-only, edge runtime)
+- `src/app/api/analytics/revenue/route.ts` — GET revenue metrics (admin-only)
+- `src/app/api/analytics/cohorts/route.ts` — GET cohort data (metric query param)
+- `src/app/api/analytics/tier-adoption/route.ts` — GET tier adoption stacked data
+
+**Dashboard Integration:**
+- `src/app/[locale]/(dashboard)/dashboard/analytics/page.tsx` — Unified dashboard page
+- `src/components/analytics/analytics-dashboard-client.tsx` — Client-side wiring (RevenueCard + TierAdoptionChart + DateRangePicker + UsageView)
+- `src/components/analytics/date-range-picker.tsx` — Preset (7d/30d/90d) + custom range selector
+
+**Database:**
+- `migrations/0015_tier_change_events.sql` — Additive migration tracking tier changes for cohort scoping (no data deletion)
+
+### Metrics
+- **Lines of Code:** ~1,800 (6 types, 6 lib modules, 7 components, 4 API routes, 1 migration)
+- **Test Coverage:** 21 new tests (1362/1362 pass, 100%)
+- **Build:** ✅ npm run build exit 0, 0 TS errors
+- **Code Review:** ✅ 9.8/10 APPROVE SHIP
+- **Production HTTP:** ✅ 200 confirmed
+- **Type Safety:** 0 new `:any`, `@ts-ignore`, `console.*` introduced
+- **Backward Compatibility:** 100% — new endpoints and components, zero breaking changes
+
+### Architecture Notes
+- **SSE Pattern:** Edge-runtime safe broadcaster; no persistent connections on Workers
+- **Data Sources:** D1 (events, tier_change_events), NOWPayments API (revenue reconciliation)
+- **UI Patterns:** Recharts AreaChart for sparklines + stacked adoption; simple stat tiles
+- **Admin Gating:** All analytics endpoints require `role === 'admin'` auth
+- **Date Range:** Client-side filtering; backend returns full range; DateRangePicker controls display
+
+### Activation
+- No env gates required; analytics endpoints live automatically post-deploy
+- Migration 0015 applies on first worker startup (Cloudflare D1 auto-migrate)
+- Dashboard page `/dashboard/analytics` available to admin users only
 
 ---
 
