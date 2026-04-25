@@ -7,55 +7,26 @@
 
 import { logger } from '@/lib/utils/logger-utility';
 import { toError } from '@/lib/utils/to-error';
+import type {
+  RaasGatewayConfig,
+  RaasUsageMetrics,
+  BillingMetrics,
+  LicenseUtilization,
+  CacheEntry,
+} from './raas-gateway-types';
 
-export interface RaasGatewayConfig {
-  baseURL: string; // 'https://raas.agencyos.network'
-  apiKey: string; // mk_ prefix format
-  timeout: number; // Default 10000ms
-}
-
-export interface RaasUsageMetrics {
-  apiCallVolume: number;
-  activeLicenses: number;
-  costPerTenant: Record<string, number>;
-  quotaConsumption: QuotaTrend[];
-  timestamp: number;
-}
-
-export interface QuotaTrend {
-  timestamp: number;
-  used: number;
-  limit: number;
-  percentage: number;
-}
-
-export interface BillingMetrics {
-  totalRevenue: number;
-  recurringRevenue: number;
-  oneTimeRevenue: number;
-  byTier: {
-    tier: string;
-    customers: number;
-    revenue: number;
-  }[];
-  trend: {
-    date: string;
-    revenue: number;
-  }[];
-}
-
-export interface LicenseUtilization {
-  licenseNonce: string;
-  tier: string;
-  usedCredits: number;
-  limitCredit: number;
-  percentage: number;
-  expiresAt: number | null;
-}
+// Re-export types so consumers can import from the single entry point
+export type {
+  RaasGatewayConfig,
+  RaasUsageMetrics,
+  BillingMetrics,
+  LicenseUtilization,
+  QuotaTrend,
+} from './raas-gateway-types';
 
 export class RaasGatewayClient {
   private config: RaasGatewayConfig;
-  private cache: Map<string, { data: RaasUsageMetrics | BillingMetrics | LicenseUtilization[]; expiresAt: number }>;
+  private cache: Map<string, CacheEntry>;
   private jwt: string;
   private jwtExpiresAt: number;
 
@@ -66,14 +37,13 @@ export class RaasGatewayClient {
     this.jwtExpiresAt = 0;
   }
 
-  // Authentication
+  // ---- Authentication ----
+
   async authenticate(): Promise<string> {
-    // If JWT is still valid (expires in > 5 minutes), reuse it
     if (this.jwt && this.jwtExpiresAt > Date.now() + 5 * 60 * 1000) {
       return this.jwt;
     }
 
-    // Authenticate with mk_ API key
     const response = await fetch(`${this.config.baseURL}/api/v2/auth`, {
       method: 'POST',
       headers: {
@@ -87,10 +57,9 @@ export class RaasGatewayClient {
       throw new Error(`Authentication failed: ${response.statusText}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as { jwt?: string; expiresIn?: number };
     this.jwt = data.jwt || '';
-    this.jwtExpiresAt = Date.now() + (data.expiresIn || 3600) * 1000; // Default 1 hour
-
+    this.jwtExpiresAt = Date.now() + (data.expiresIn || 3600) * 1000;
     return this.jwt;
   }
 
@@ -98,12 +67,9 @@ export class RaasGatewayClient {
     try {
       const response = await fetch(`${this.config.baseURL}/api/v2/auth/validate`, {
         method: 'GET',
-        headers: {
-          'X-RaaS-API-Key': this.config.apiKey,
-        },
+        headers: { 'X-RaaS-API-Key': this.config.apiKey },
         signal: AbortSignal.timeout(this.config.timeout),
       });
-
       return response.ok;
     } catch (error) {
       logger.error('[RaaS] API key validation failed', toError(error));
@@ -111,97 +77,74 @@ export class RaasGatewayClient {
     }
   }
 
-  // Metrics endpoints
+  // ---- Metrics endpoints ----
+
   async getUsageMetrics(start: number, end: number): Promise<RaasUsageMetrics> {
     const cacheKey = `usage-${start}-${end}`;
     const cached = this.getFromCache<RaasUsageMetrics>(cacheKey);
-    if (cached) {
-      return cached;
-    }
+    if (cached) return cached;
 
     const jwt = await this.authenticate();
     const response = await fetch(
       `${this.config.baseURL}/api/v2/metrics/usage?start=${start}&end=${end}`,
       {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${jwt}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Authorization': `Bearer ${jwt}`, 'Content-Type': 'application/json' },
         signal: AbortSignal.timeout(this.config.timeout),
       }
     );
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch usage metrics: ${response.statusText}`);
-    }
+    if (!response.ok) throw new Error(`Failed to fetch usage metrics: ${response.statusText}`);
 
     const data = await response.json() as RaasUsageMetrics;
-    this.setCache(cacheKey, data, 300000); // 5 minutes TTL
-
+    this.setCache(cacheKey, data, 300000);
     return data;
   }
 
   async getBillingMetrics(period: string): Promise<BillingMetrics> {
     const cacheKey = `billing-${period}`;
     const cached = this.getFromCache<BillingMetrics>(cacheKey);
-    if (cached) {
-      return cached;
-    }
+    if (cached) return cached;
 
     const jwt = await this.authenticate();
     const response = await fetch(
       `${this.config.baseURL}/api/v2/metrics/billing?period=${period}`,
       {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${jwt}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Authorization': `Bearer ${jwt}`, 'Content-Type': 'application/json' },
         signal: AbortSignal.timeout(this.config.timeout),
       }
     );
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch billing metrics: ${response.statusText}`);
-    }
+    if (!response.ok) throw new Error(`Failed to fetch billing metrics: ${response.statusText}`);
 
     const data = await response.json() as BillingMetrics;
-    this.setCache(cacheKey, data, 300000); // 5 minutes TTL
-
+    this.setCache(cacheKey, data, 300000);
     return data;
   }
 
   async getLicenseUtilization(): Promise<LicenseUtilization[]> {
     const cacheKey = `licenses-utilization`;
     const cached = this.getFromCache<LicenseUtilization[]>(cacheKey);
-    if (cached) {
-      return cached;
-    }
+    if (cached) return cached;
 
     const jwt = await this.authenticate();
     const response = await fetch(`${this.config.baseURL}/api/v2/licenses/utilization`, {
       method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${jwt}`,
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Authorization': `Bearer ${jwt}`, 'Content-Type': 'application/json' },
       signal: AbortSignal.timeout(this.config.timeout),
     });
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch license utilization: ${response.statusText}`);
-    }
+    if (!response.ok) throw new Error(`Failed to fetch license utilization: ${response.statusText}`);
 
     const data = await response.json() as LicenseUtilization[];
-    this.setCache(cacheKey, data, 300000); // 5 minutes TTL
-
+    this.setCache(cacheKey, data, 300000);
     return data;
   }
 
-  // Real-time updates
+  // ---- Real-time updates ----
+
   subscribeToMetrics(callback: (metrics: RaasUsageMetrics) => void): () => void {
-    // Try WebSocket connection
     try {
       const ws = new WebSocket(
         `${this.config.baseURL.replace('https://', 'wss://').replace('http://', 'ws://')}/api/v2/realtime`
@@ -209,66 +152,40 @@ export class RaasGatewayClient {
 
       ws.onopen = () => {
         logger.info('[RaaS] WebSocket connection established');
-        ws.send(JSON.stringify({
-          type: 'authenticate',
-          apiKey: this.config.apiKey,
-        }));
+        ws.send(JSON.stringify({ type: 'authenticate', apiKey: this.config.apiKey }));
       };
-
       ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        if (data.type === 'metrics') {
-          callback(data.payload);
-        }
+        if (data.type === 'metrics') callback(data.payload);
       };
+      ws.onerror = () => logger.error('[RaaS] WebSocket error', new Error('WebSocket error event'));
+      ws.onclose = () => logger.info('[RaaS] WebSocket connection closed');
 
-      ws.onerror = (error) => {
-        logger.error('[RaaS] WebSocket error', new Error('WebSocket error event'));
-      };
-
-      ws.onclose = () => {
-        logger.info('[RaaS] WebSocket connection closed');
-      };
-
-      return () => {
-        ws.close();
-      };
+      return () => ws.close();
     } catch (error) {
       logger.error('[RaaS] WebSocket connection failed', toError(error));
-      // Fallback to polling
       const interval = setInterval(async () => {
         try {
           const now = Date.now();
-          const metrics = await this.getUsageMetrics(
-            now - 3600000, // Last hour
-            now
-          );
-          callback(metrics);
-        } catch (error) {
-          logger.error('[RaaS] Polling failed', toError(error));
+          callback(await this.getUsageMetrics(now - 3600000, now));
+        } catch (err) {
+          logger.error('[RaaS] Polling failed', toError(err));
         }
-      }, 30000); // 30 seconds interval
-
-      return () => {
-        clearInterval(interval);
-      };
+      }, 30000);
+      return () => clearInterval(interval);
     }
   }
 
-  // Caching layer
+  // ---- Cache helpers ----
+
   private getFromCache<T>(key: string): T | null {
     const entry = this.cache.get(key);
-    if (entry && entry.expiresAt > Date.now()) {
-      return entry.data as T;
-    }
+    if (entry && entry.expiresAt > Date.now()) return entry.data as T;
     this.cache.delete(key);
     return null;
   }
 
   private setCache<T>(key: string, data: T, ttl: number): void {
-    this.cache.set(key, {
-      data,
-      expiresAt: Date.now() + ttl,
-    });
+    this.cache.set(key, { data: data as CacheEntry['data'], expiresAt: Date.now() + ttl });
   }
 }
