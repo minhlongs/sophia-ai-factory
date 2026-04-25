@@ -1,7 +1,7 @@
 # Codebase Summary
 
-**Last Updated:** 2026-02-05
-**Version:** 1.0.2 (Bootstrap Review Complete)
+**Last Updated:** 2026-04-25
+**Version:** 1.0.4 (Phase 39 Metering Reconciler Modularization)
 
 ## Project Structure Overview
 
@@ -48,6 +48,17 @@ Sophia AI Video Factory is a Next.js 16 application structured around the App Ro
   - **`types.ts`**: Core interfaces (`IVideoService`, `IVoiceService`, `IScriptService`) decoupling logic from implementation.
   - **`real/`**: Production implementations (HeyGen, ElevenLabs, OpenRouter).
   - **`mock/`**: Zero-cost, offline-capable mock implementations for development, testing, and CI/CD.
+- **`quota/`**: Usage quota management system (Phase 38 modularized).
+  - **`quota-checker.ts`**: Main barrel export (checkQuotaWithOverage function) with KV cache + DB fallback + overage logging.
+  - **`quota-checker-types.ts`**: Core types (ExceededType, CachedQuota, QuotaCheckContext, QuotaConfig, EnhancedQuotaCheckResult).
+  - **`quota-checker-kv-cache.ts`**: KV operations (getCachedUsage, updateCachedUsage, invalidateQuotaCache).
+  - **`quota-checker-db.ts`**: Database queries (getEffectiveQuotaLimits, calculateCurrentUsage).
+  - **`quota-checker-overage.ts`**: Overage handling and status (logOverageEvent, getQuotaStatus).
+  - **`quota-enforcer.ts`**: Soft/hard limit enforcement and billing flag logic.
+  - **`quota-api-helpers.ts`**: API response formatting helpers.
+  - **`overage-logger.ts`**: Detailed overage event logging and admin tracking.
+- **`usage-metering/`**: Usage metering aggregation system.
+  - **`kv-metering-log-sync.ts`**: KV synchronization and metering log persistence.
 - **`heygen/`**: Legacy HeyGen client (deprecated in favor of services).
 - **`airtable.ts`**: Typed client for Airtable operations.
 - **`n8n.ts`**: Client for triggering n8n webhooks.
@@ -82,6 +93,9 @@ Sophia AI Video Factory is a Next.js 16 application structured around the App Ro
   - `NEXT_PUBLIC_FEATURE_AFFILIATE_ENGINE`: Toggles affiliate tools.
 
 ## Recent Major Changes
+- **Phase 39 (2026-04-25)**: Metering Reconciler Modularization — Split `src/worker/lib/metering-reconciler-runner.ts` (497L) into 5 focused sub-modules (types, error logger, license validator, aggregator, main barrel) with zero behavioral change. Added `Env` interface export from `src/worker/index.ts`.
+- **Phase 38 (2026-04-25)**: Quota Checker Service Modularization — Split monolithic `quota-checker.ts` (499L) into 5 focused sub-modules (types, KV cache, DB, overage, main barrel) with zero behavioral change.
+- **Phase 37 (2026-04-24)**: Realtime Alert Service Modularization — Split `realtime-alert-service.ts` (525L) into dispatcher, delivery, state, reconnection sub-modules.
 - **HeyGen Integration**: Added direct API integration for high-fidelity avatar video generation (`v1.5.0`).
 - **Turnkey Setup Wizard**: Implemented a comprehensive 4-step wizard to eliminate manual `.env` editing for end-users.
 - **Middleware Redirection**: Automatic routing to wizard for fresh installs.
