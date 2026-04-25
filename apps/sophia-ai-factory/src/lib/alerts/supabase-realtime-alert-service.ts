@@ -11,6 +11,12 @@ import { getD1Client } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import { toError } from '@/lib/utils/to-error';
 import { triggerUsageThresholdAlert } from '@/lib/alerts/realtime-alert-service';
+import {
+  checkThresholds,
+  isDebounced,
+  markAlertSent,
+  getQuotaLimitForTier,
+} from './alert-threshold-utils';
 
 /** Configuration for alert polling */
 export interface RealtimeAlertConfig {
@@ -36,45 +42,6 @@ interface UsageEventRecord {
   service_name?: string;
   created_at: string;
   tenant_id?: string;
-}
-
-/** In-process debounce state */
-const debounceState = new Map<string, number>();
-
-function checkThresholds(
-  currentUsage: number,
-  limit: number,
-  thresholds: number[]
-): { breached: boolean; threshold: number; percentage: number } {
-  const percentage = (currentUsage / limit) * 100;
-  for (const threshold of thresholds.sort((a, b) => b - a)) {
-    if (percentage >= threshold) {
-      return { breached: true, threshold, percentage };
-    }
-  }
-  return { breached: false, threshold: 0, percentage };
-}
-
-function isDebounced(userId: string, licenseNonce: string, threshold: number, debounceMs: number): boolean {
-  const key = `${userId}:${licenseNonce}:${threshold}`;
-  const lastTime = debounceState.get(key);
-  if (!lastTime) return false;
-  return (Date.now() - lastTime) < debounceMs;
-}
-
-function markAlertSent(userId: string, licenseNonce: string, threshold: number): void {
-  const key = `${userId}:${licenseNonce}:${threshold}`;
-  debounceState.set(key, Date.now());
-}
-
-function getQuotaLimitForTier(tier: string): { hourly: number; daily: number; monthly: number } {
-  const limits: Record<string, { hourly: number; daily: number; monthly: number }> = {
-    BASIC:      { hourly: 100,   daily: 1000,   monthly: 10000 },
-    PREMIUM:    { hourly: 500,   daily: 5000,   monthly: 50000 },
-    ENTERPRISE: { hourly: 2000,  daily: 20000,  monthly: 200000 },
-    MASTER:     { hourly: 10000, daily: 100000, monthly: 1000000 },
-  };
-  return limits[tier.toUpperCase()] || limits.BASIC;
 }
 
 async function handleUsageEvent(
@@ -115,9 +82,7 @@ async function handleUsageEvent(
 
     if (!thresholdCheck.breached) return;
 
-    if (isDebounced(user_id, license_nonce, thresholdCheck.threshold, config.debounceMs)) {
-      return;
-    }
+    if (isDebounced(user_id, license_nonce, thresholdCheck.threshold, config.debounceMs)) return;
 
     const alertId = await triggerUsageThresholdAlert({
       userId: user_id,
@@ -177,7 +142,7 @@ export async function subscribeToUsageEvents(
     }
   };
 
-  const intervalId = setInterval(poll, 30000); // poll every 30s
+  const intervalId = setInterval(poll, 30000);
   logger.info('[Alert] Polling usage_events for threshold alerts (30s interval)');
 
   return async () => {
