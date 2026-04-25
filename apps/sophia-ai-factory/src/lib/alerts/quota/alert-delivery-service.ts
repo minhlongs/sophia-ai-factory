@@ -1,8 +1,7 @@
 /**
  * Alert Delivery Service
  *
- * Handles multi-channel delivery of quota alerts:
- * email, SMS, and webhook notifications.
+ * Main dispatch: checks rate limit, resolves channels, delegates to senders.
  *
  * @module alerts/quota/alert-delivery-service
  */
@@ -10,170 +9,19 @@
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import { toError, getErrorMessage } from '@/lib/utils/to-error';
-import { sendWebhookAlert, createQuotaThresholdPayload } from '@/lib/alerts/webhook-notification-service';
 import {
   getAlertTemplate,
   isRateLimited,
   TIER_ALERT_CONFIGS,
   type AlertChannel,
-  type AlertTemplate,
-  type AlertThreshold,
-  type QuotaAlertContext,
   type AlertDeliveryResult,
+  type QuotaAlertContext,
 } from './alert-rule-evaluator';
-
-// -------------------------------------------------------------------------
-// Channel senders
-// -------------------------------------------------------------------------
-
-/**
- * Send email alert via configured email provider
- */
-async function sendEmailAlert(
-  userId: string,
-  template: AlertTemplate,
-  context: QuotaAlertContext
-): Promise<boolean> {
-  try {
-    const db = createServerClient();
-
-    const { data: profile } = await db
-      .from('user_profiles')
-      .select('email')
-      .eq('user_id', userId)
-      .single();
-
-    if (!profile?.email) {
-      logger.warn('[Quota Alert] No email found for user', { userId });
-      return false;
-    }
-
-    logger.info('[Quota Alert] Email alert prepared', {
-      userId,
-      to: profile.email,
-      subject: template.subject,
-      threshold: context.threshold,
-    });
-
-    // Record alert
-    await db.from('quota_alerts').insert({
-      user_id: userId,
-      license_nonce: context.licenseNonce,
-      threshold: context.threshold,
-      channel: 'email',
-      recipient: profile.email,
-      template_subject: template.subject,
-      sent: true,
-      sent_at: new Date().toISOString(),
-    } as any);
-
-    return true;
-  } catch (error) {
-    logger.error('[Quota Alert] Failed to send email', toError(error));
-    return false;
-  }
-}
-
-/**
- * Send SMS alert via Twilio
- */
-async function sendSmsAlert(
-  userId: string,
-  template: AlertTemplate,
-  context: QuotaAlertContext
-): Promise<boolean> {
-  try {
-    const db = createServerClient();
-
-    const { data: profile } = await db
-      .from('user_profiles')
-      .select('phone')
-      .eq('user_id', userId)
-      .single();
-
-    if (!profile?.phone) {
-      logger.warn('[Quota Alert] No phone found for user', { userId });
-      return false;
-    }
-
-    logger.info('[Quota Alert] SMS alert prepared', {
-      userId,
-      to: profile.phone,
-      message: template.smsBody,
-      threshold: context.threshold,
-    });
-
-    await db.from('quota_alerts').insert({
-      user_id: userId,
-      license_nonce: context.licenseNonce,
-      threshold: context.threshold,
-      channel: 'sms',
-      recipient: profile.phone,
-      template_body: template.smsBody,
-      sent: true,
-      sent_at: new Date().toISOString(),
-    } as any);
-
-    return true;
-  } catch (error) {
-    logger.error('[Quota Alert] Failed to send SMS', toError(error));
-    return false;
-  }
-}
-
-/**
- * Send webhook alert to custom endpoint
- */
-async function sendWebhookAlertChannel(
-  userId: string,
-  context: QuotaAlertContext,
-  webhookUrl: string,
-  webhookSecret?: string
-): Promise<boolean> {
-  try {
-    const payload = createQuotaThresholdPayload({
-      userId,
-      licenseNonce: context.licenseNonce,
-      threshold: context.threshold,
-      percentage: context.percentage,
-      limit: context.limit,
-      currentUsage: context.currentUsage,
-      tier: context.tier,
-      exceededType: context.exceededType,
-      metadata: {
-        polarCustomerId: context.polarCustomerId,
-        stripeCustomerId: context.stripeCustomerId,
-        ipAddress: context.ipAddress,
-      },
-    });
-
-    const result = await sendWebhookAlert(webhookUrl, payload, webhookSecret);
-
-    const db = createServerClient();
-    await db.from('quota_alerts').insert({
-      user_id: userId,
-      license_nonce: context.licenseNonce,
-      threshold: context.threshold,
-      channel: 'webhook',
-      recipient: webhookUrl,
-      sent: result.success,
-      sent_at: result.success ? new Date().toISOString() : null,
-      delivery_error: result.error || null,
-      ip_address: context.ipAddress,
-    } as any);
-
-    logger.info('[Quota Alert] Webhook alert sent', { userId, url: webhookUrl, success: result.success });
-
-    return result.success;
-  } catch (error) {
-    logger.error('[Quota Alert] Failed to send webhook', toError(error));
-    return false;
-  }
-}
-
-// -------------------------------------------------------------------------
-// Main dispatch
-// -------------------------------------------------------------------------
+import {
+  sendEmailAlert,
+  sendSmsAlert,
+  sendWebhookAlertChannel,
+} from './alert-channel-senders';
 
 /**
  * Trigger quota alert for a user
@@ -204,7 +52,7 @@ export async function triggerQuotaAlert(context: QuotaAlertContext): Promise<Ale
       .single();
 
     // Determine channels (rule > preferences > tier default)
-    const enabledChannels: AlertChannel[] = alertRules?.channels || [
+    const enabledChannels: AlertChannel[] = (alertRules?.channels as AlertChannel[] | undefined) || [
       ...(preferences?.email_enabled !== false ? ['email' as const] : []),
       ...(preferences?.sms_enabled === true ? ['sms' as const] : []),
       ...(preferences?.webhook_enabled === true ? ['webhook' as const] : []),
@@ -234,16 +82,14 @@ export async function triggerQuotaAlert(context: QuotaAlertContext): Promise<Ale
 
     let webhookSent = false;
     if (enabledChannels.includes('webhook')) {
-      const webhookUrl = alertRules?.webhook_url || preferences?.default_webhook_url;
-      const webhookSecret = alertRules?.webhook_secret || preferences?.default_webhook_secret;
-
+      const webhookUrl = (alertRules?.webhook_url || preferences?.default_webhook_url) as string | undefined;
+      const webhookSecret = (alertRules?.webhook_secret || preferences?.default_webhook_secret) as string | undefined;
       if (webhookUrl) {
         webhookSent = await sendWebhookAlertChannel(userId, context, webhookUrl, webhookSecret);
       }
     }
 
     const success = emailSent || smsSent || webhookSent;
-
     logger.info('[Quota Alert] Alert triggered', { userId, threshold, emailSent, smsSent, webhookSent });
 
     return { success, emailSent, smsSent, webhookSent };
