@@ -4,6 +4,13 @@ import { trackUsage, hashLicenseKey, calculateCredits, startTimer } from '@/lib/
 import { getUsageContext } from '@/lib/usage-metering/context';
 import { callWithCache } from '@/lib/llm/cache/call-with-cache';
 import { resolveUserApiKey } from '@/lib/byok/resolve-user-api-key';
+import {
+  generateMockScript,
+  buildScriptUserPrompt,
+  SCRIPT_SYSTEM_PROMPT,
+} from './script-prompt-builders';
+
+export type { ScriptOutput } from './script-prompt-builders';
 
 interface GenerateScriptInput {
   topic: string;
@@ -16,35 +23,21 @@ interface GenerateScriptInput {
   orgId?: string;
 }
 
-interface ScriptOutput {
-  title: string;
-  scenes: {
-    scene_number: number;
-    visual_description: string;
-    narration: string;
-    duration_estimate: number;
-  }[];
-  total_duration: number;
-}
-
 /**
  * Generates a video script using OpenRouter API.
  * Falls back to mock if API key is not configured.
  */
-export async function generateScript(input: GenerateScriptInput): Promise<ScriptOutput> {
+export async function generateScript(input: GenerateScriptInput) {
   const { topic, audience, tier, userId, licenseKey, licenseNonce, orgId } = input;
   const stopTimer = startTimer();
 
-  // Get context if available (from async local storage)
   const context = getUsageContext();
   const finalUserId = userId || context?.userId || 'unknown';
   const finalLicenseKey = licenseKey || '';
   const finalLicenseNonce = licenseNonce || context?.licenseNonce || 'unknown';
   const licenseKeyHash = hashLicenseKey(finalLicenseKey || 'unknown');
 
-  // Phase 7B: BYOK — prefer user's stored OpenRouter key (when BYOK_ENABLED=1
-  // and a key is set for this user); otherwise fall back to the env key.
-  // Resolver short-circuits safely when no real userId ('unknown' sentinel).
+  // Phase 7B: BYOK — prefer user's stored OpenRouter key; fallback to env key.
   const resolvedUserId = finalUserId === 'unknown' ? null : finalUserId;
   const apiKey = await resolveUserApiKey(
     resolvedUserId,
@@ -52,10 +45,8 @@ export async function generateScript(input: GenerateScriptInput): Promise<Script
     process.env.OPENROUTER_API_KEY,
   );
 
-  // Fallback to mock if no API key
   if (!apiKey) {
     const mockResult = generateMockScript(topic, audience);
-    // Track mock usage
     await trackUsage({
       userId: finalUserId,
       licenseKeyHash: 'mock',
@@ -72,35 +63,10 @@ export async function generateScript(input: GenerateScriptInput): Promise<Script
   }
 
   try {
-    const systemPrompt = `You are an expert video script writer specializing in affiliate marketing content. Create engaging, conversion-focused scripts that hook viewers immediately and build desire for the product.`;
-
-    const userPrompt = `Create a video script for promoting a product about "${topic}" to ${audience}.
-
-Requirements:
-- Hook the viewer in the first 5 seconds
-- 3-5 scenes total
-- Each scene should have clear visual description and narration
-- Total duration: 15-30 seconds
-- Focus on benefits and transformation
-
-Return ONLY valid JSON in this exact format:
-{
-  "title": "string",
-  "scenes": [
-    {
-      "scene_number": 1,
-      "visual_description": "string",
-      "narration": "string",
-      "duration_estimate": 5
-    }
-  ],
-  "total_duration": 16
-}`;
-
     const model = tier === 'ENTERPRISE' ? 'anthropic/claude-3.5-sonnet' : 'openai/gpt-4o-mini';
     const messages = [
-      { role: 'system', content: systemPrompt },
-      { role: 'user',   content: userPrompt },
+      { role: 'system', content: SCRIPT_SYSTEM_PROMPT },
+      { role: 'user',   content: buildScriptUserPrompt(topic, audience) },
     ];
 
     const cached = await callWithCache(
@@ -143,12 +109,15 @@ Return ONLY valid JSON in this exact format:
           throw new Error(`OpenRouter API failed: ${response.status}`);
         }
 
-        const data = await response.json();
+        const data = await response.json() as {
+          choices?: { message?: { content?: string } }[];
+          usage?: { prompt_tokens?: number; completion_tokens?: number };
+          model?: string;
+          id?: string;
+        };
         const content = data.choices?.[0]?.message?.content;
 
-        if (!content) {
-          throw new Error('No content in OpenRouter response');
-        }
+        if (!content) throw new Error('No content in OpenRouter response');
 
         const usage = data.usage;
         const tokensTotal = (usage?.prompt_tokens ?? 0) + (usage?.completion_tokens ?? 0);
@@ -178,7 +147,7 @@ Return ONLY valid JSON in this exact format:
       },
     );
 
-    const parsed = JSON.parse(cached.response) as ScriptOutput;
+    const parsed = JSON.parse(cached.response) as import('./script-prompt-builders').ScriptOutput;
 
     if (!parsed.title || !Array.isArray(parsed.scenes) || parsed.scenes.length === 0) {
       throw new Error('Invalid script format from API');
@@ -187,7 +156,6 @@ Return ONLY valid JSON in this exact format:
     return parsed;
 
   } catch (error) {
-    // Track error
     await trackUsage({
       userId: finalUserId,
       licenseKeyHash: licenseKeyHash,
@@ -198,39 +166,9 @@ Return ONLY valid JSON in this exact format:
       tierAtRequest: tier,
       errorMessage: getErrorMessage(error),
       responseTimeMs: stopTimer(),
-      creditsUsed: 0, // Failed call, no credits charged
+      creditsUsed: 0,
     });
 
     return generateMockScript(topic, audience);
   }
-}
-
-/**
- * Mock script generator for fallback or development
- */
-function generateMockScript(topic: string, audience: string): ScriptOutput {
-  return {
-    title: `The Ultimate Guide to ${topic}`,
-    scenes: [
-      {
-        scene_number: 1,
-        visual_description: "Fast-paced montage of successful people working.",
-        narration: `Are you tired of failing at ${topic}? You're not alone.`,
-        duration_estimate: 5
-      },
-      {
-        scene_number: 2,
-        visual_description: "Graphic showing statistics rising.",
-        narration: `In this video, I'm going to show you the secret method that ${audience} are using to dominate.`,
-        duration_estimate: 8
-      },
-      {
-        scene_number: 3,
-        visual_description: "Host speaking directly to camera with confidence.",
-        narration: "Let's dive in.",
-        duration_estimate: 3
-      }
-    ],
-    total_duration: 16
-  };
 }
