@@ -42,7 +42,7 @@ import {
 import { logger } from '@/lib/utils/logger-utility';
 
 // Environment bindings
-interface Env {
+export interface Env {
   KV_KV: KVNamespace;
   USAGE_QUEUE: Queue<WorkerUsageEvent>;
   R2_BUCKET: R2Bucket;  // Phase 6: R2 storage for reconciliation reports
