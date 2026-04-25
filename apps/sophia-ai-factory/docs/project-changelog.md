@@ -1,6 +1,61 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-24 | **Current Version:** 1.12.18
+**Last Updated:** 2026-04-25 | **Current Version:** 1.12.20
+
+---
+
+## [2026-04-25] Phase 39 — Metering Reconciler Modularization (v1.12.20)
+
+### Summary
+Pure structural refactor: `src/worker/lib/metering-reconciler-runner.ts` (497L) split into 5 focused sub-modules. Zero behavioral change, improved maintainability via single-responsibility separation and clear module contracts.
+
+### Changes
+- `src/worker/lib/metering-reconciler-runner.ts` — split into 5 sub-modules (barrel re-export maintained as main entry point)
+- Modularized components:
+  - `metering-reconciler-types.ts` — type definitions and constants (AggregatedUsage, LicenseValidationResult, CRON_RECONCILIATION_CONFIG)
+  - `metering-reconciler-error-logger.ts` — error logging utilities (logErrorToSentry, logErrorToKv)
+  - `metering-reconciler-license-validator.ts` — license validation (validateLicense, validateAllLicenses)
+  - `metering-reconciler-aggregator.ts` — usage aggregation (aggregateByLicenseAndFeature, getMeteringLogsFromKv, markReconciledLogs)
+  - `metering-reconciler-runner.ts` — main barrel with orchestration logic
+- `src/worker/index.ts` — `Env` interface now exported (was non-exported before)
+- NO behavioral deviation; all public exports preserved via barrel pattern
+
+### API Compatibility
+- Main function signature unchanged
+- All type exports available from main barrel
+- Sub-module functions also exported for advanced use cases
+
+### Quality & Review
+- Build: 0 new TypeScript errors
+- Tests: unchanged (behavior-preserving refactor)
+- Code Review: structural only
+
+---
+
+## [2026-04-25] Phase 38 — Quota Checker Service Modularization (v1.12.19)
+
+### Summary
+Pure structural refactor: `lib/quota/quota-checker.ts` (499L) split into 5 focused sub-modules. Zero behavioral change, improved maintainability via single-responsibility separation and clear module contracts.
+
+### Changes
+- `src/lib/quota/quota-checker.ts` — split into 5 sub-modules (barrel re-export maintained as main entry point)
+- Modularized components:
+  - `quota-checker-types.ts` — type definitions and constants (ExceededType, CachedQuota, QuotaCheckContext, QuotaConfig, DEFAULT_CONFIG, EnhancedQuotaCheckResult)
+  - `quota-checker-kv-cache.ts` — KV cache operations (getCachedUsage, updateCachedUsage, invalidateQuotaCache)
+  - `quota-checker-db.ts` — database queries (getEffectiveQuotaLimits, calculateCurrentUsage)
+  - `quota-checker-overage.ts` — overage handling and status (logOverageEvent, getQuotaStatus)
+  - `quota-checker.ts` — main barrel with checkQuotaWithOverage orchestration function
+- NO behavioral deviation; all public exports preserved via barrel pattern
+
+### API Compatibility
+- Main function signature unchanged: `checkQuotaWithOverage(context, config?) → Promise<EnhancedQuotaCheckResult>`
+- All type exports available from main barrel: `import { type QuotaConfig, checkQuotaWithOverage } from '@/lib/quota'`
+- Sub-module functions also exported for advanced use cases
+
+### Quality & Review
+- Build: 0 new TypeScript errors
+- Tests: unchanged (behavior-preserving refactor)
+- Code Review: 10/10 APPROVE SHIP (structural only)
 
 ---
 

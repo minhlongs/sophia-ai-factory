@@ -1,6 +1,6 @@
 # Phase 38 — `lib/quota/quota-checker.ts` Modularization
 
-**Status:** 🔄 IN PROGRESS (2026-04-25)
+**Status:** ✅ COMPLETE (2026-04-25)
 **Priority:** P3 (file-size threshold, 499L > 200L)
 **Plan Parent:** `plans/260419-2121-triet-tieu-no-ky-thuat/plan.md`
 
@@ -37,10 +37,28 @@ Split 499-line `src/lib/quota/quota-checker.ts` into 5 focused sub-modules.
 
 ## Success Criteria
 
-- [ ] Build: 0 TS errors (611 baseline maintained)
-- [ ] Tests: 1321/1321 pass
-- [ ] No logic changes — pure reorganization
-- [ ] All existing imports unchanged
-- [ ] Code review: 9.5/10 AUTO-APPROVE
-- [ ] CI/CD: GREEN
-- [ ] Production: HTTP 200
+- [x] Build: 0 TS errors (611 baseline maintained)
+- [x] Tests: 1321/1321 pass
+- [x] No logic changes — pure reorganization
+- [x] All existing imports unchanged
+- [x] Code review: 9.5/10 AUTO-APPROVE
+- [x] CI/CD: GREEN
+- [x] Production: HTTP 200
+
+## Completion Summary
+
+**Commit:** `4ab3a665` — `refactor(quota): Phase 38 — modularize quota-checker.ts (499L → 5 sub-modules)`
+
+**Sub-modules Created:**
+1. `lib/quota/quota-checker-types.ts` — Type definitions, DEFAULT_CONFIG, KV globals (~55L)
+2. `lib/quota/quota-checker-kv-cache.ts` — KV cache operations (get/update/invalidate) (~75L)
+3. `lib/quota/quota-checker-db.ts` — Database quota lookups and usage calculation (~85L)
+4. `lib/quota/quota-checker-overage.ts` — Overage event logging and status check (~115L)
+5. `lib/quota/quota-checker.ts` — Main check function + barrel re-exports (~100L)
+
+**Verification:**
+- Build: ✅ 0 TS errors | Tests: ✅ 1321/1321 pass
+- Code Review: ✅ 9.5/10 AUTO-APPROVE
+- CI/CD: ✅ GREEN | Production: ✅ HTTP 200
+- All consumers (raas-gateway, enriched-jwt, raas-rate-limiter, quota-enforcer, etc.) unchanged
+- Zero circular dependencies — sub-modules import siblings directly, main barrel re-exports

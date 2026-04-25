@@ -1,6 +1,6 @@
 # Phase 35 — `lib/audit/pdf-report-generator.ts` Modularization
 
-**Status:** 🔄 IN PROGRESS (2026-04-24)
+**Status:** ✅ COMPLETE (2026-04-24)
 **Priority:** P3 (file-size threshold, 494L > 200L)
 **Plan Parent:** `plans/260419-2121-triet-tieu-no-ky-thuat/plan.md`
 
@@ -30,7 +30,28 @@ Also remove `ReportSummary` (structural duplicate of `ComplianceReportSummary`, 
 
 ## Success Criteria
 
-- [ ] Build: 0 TS errors (611 baseline maintained)
-- [ ] Tests: 1321/1321 pass
-- [ ] No logic changes — pure reorganization + dead code removal
-- [ ] All existing imports unchanged
+- [x] Build: 0 TS errors (611 baseline maintained)
+- [x] Tests: 1321/1321 pass
+- [x] No logic changes — pure reorganization + dead code removal
+- [x] All existing imports unchanged
+- [x] Code review: 9.7/10 APPROVE SHIP
+- [x] CI/CD: GREEN
+- [x] Production: HTTP 200
+
+## Completion Summary
+
+**Commit:** `refactor(audit): Phase 35 — modularize pdf-report-generator.ts (494L → 4 sub-modules), remove ReportSummary duplicate`
+
+**Implementation complete 2026-04-24.** Split pdf-report-generator.ts into 4 focused modules:
+- `report-types.ts` (65L) — Type definitions
+- `report-html-template.ts` (285L) — HTML generation
+- `report-formatters.ts` (55L) — CSV/JSON formatters
+- Barrel re-export (40L) + dispatch
+
+**Dead code removed:** `ReportSummary` interface (duplicate of `ComplianceReportSummary`, zero consumers).
+
+**Verification:**
+- Build: ✅ 0 TS errors
+- Tests: ✅ 1321/1321 pass
+- Code review: ✅ 9.7/10 APPROVE SHIP
+- Production: ✅ HTTP 200 verified
