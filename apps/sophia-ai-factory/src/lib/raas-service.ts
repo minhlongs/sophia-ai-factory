@@ -10,178 +10,21 @@
  * Example: raas_premium_1735689600_a1b2c3d4e5f6_e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
  */
 
-import { sha256, hmacSha256, timingSafeEqual } from './audit/crypto-utils';
 import { redis } from './redis';
 import { logger } from './utils/logger-utility';
+import {
+  parseLicenseKey,
+  verifyHmac,
+  checkExpiration,
+  checkNonce,
+  checkRevocation,
+  generateNonce,
+} from './raas-service-key-operations';
+import { REDIS_KEYS } from './raas-service-types-and-constants';
 
-/**
- * Supported subscription tiers
- */
-export type Tier = 'basic' | 'premium' | 'enterprise' | 'master';
-
-/**
- * Parsed license key components
- */
-export interface ParsedLicenseKey {
-  tier: Tier;
-  timestamp: number;
-  nonce: string;
-  hmac: string;
-}
-
-/**
- * Validation result
- */
-export interface ValidationResult {
-  valid: boolean;
-  reason?: string;
-  tier?: Tier;
-}
-
-/**
- * Validation options
- */
-export interface ValidateOptions {
-  redisClient?: typeof redis;
-  bypassExpirationCheck?: boolean;
-}
-
-/**
- * License key pattern
- * Matches: raas_{tier}_{timestamp}_{nonce}_{hmac}
- */
-const LICENSE_KEY_PATTERN = /^raas_(basic|premium|enterprise|master)_(\d{10})_([a-f0-9]{32})_([a-f0-9]{64})$/;
-
-/**
- * Redis key prefixes
- */
-const REDIS_KEYS = {
-  NONCE: 'raas:nonce:',
-  REVOKED: 'raas:revoked:',
-};
-
-/**
- * Default Redis TTL for nonce tracking (1 hour)
- */
-const DEFAULT_REDIS_TTL = 3600;
-
-/**
- * Parse license key string into components
- *
- * @param key - License key string
- * @returns Parsed components or null if invalid format
- */
-export function parseLicenseKey(key: string): ParsedLicenseKey | null {
-  const match = key.match(LICENSE_KEY_PATTERN);
-
-  if (!match) {
-    return null;
-  }
-
-  return {
-    tier: match[1] as Tier,
-    timestamp: parseInt(match[2], 10),
-    nonce: match[3],
-    hmac: match[4],
-  };
-}
-
-/**
- * Verify HMAC signature using timing-safe comparison
- *
- * @param key - Full license key string
- * @param secret - HMAC secret key
- * @returns true if signature valid, false otherwise
- */
-export function verifyHmac(key: string, secret: string): boolean {
-  try {
-    const parsed = parseLicenseKey(key);
-    if (!parsed) {
-      return false;
-    }
-
-    // Recreate HMAC from components
-    const data = `${parsed.tier}:${parsed.timestamp}:${parsed.nonce}`;
-    const expectedHmac = hmacSha256(data, secret);
-
-    // Timing-safe comparison to prevent timing attacks
-    return timingSafeEqual(parsed.hmac, expectedHmac);
-  } catch (error) {
-    logger.error('[RaaS Service] HMAC verification failed', error instanceof Error ? error : new Error(String(error)));
-    return false;
-  }
-}
-
-/**
- * Check if license key has expired
- *
- * @param timestamp - Expiration timestamp (Unix seconds)
- * @param tier - License tier (master tier has no expiration)
- * @returns true if expired, false if valid
- */
-export function checkExpiration(timestamp: number, tier: Tier): boolean {
-  // Master tier: perpetual license (no expiration)
-  if (tier === 'master') {
-    return false;
-  }
-
-  const now = Math.floor(Date.now() / 1000);
-  return now > timestamp;
-}
-
-/**
- * Check if nonce has been used before (replay attack prevention)
- *
- * @param nonce - Unique nonce string
- * @param redisClient - Redis client instance
- * @returns true if nonce already used (replay attack), false if new
- */
-export async function checkNonce(
-  nonce: string,
-  redisClient: typeof redis
-): Promise<boolean> {
-  const ttl = parseInt(process.env.RAAS_REDIS_TTL || String(DEFAULT_REDIS_TTL), 10);
-  const key = `${REDIS_KEYS.NONCE}${nonce}`;
-
-  try {
-    // Check if nonce exists
-    const exists = await redisClient.get(key);
-    if (exists) {
-      logger.warn('[RaaS Service] Replay attack detected - nonce reused', { nonce });
-      return true; // Nonce already used = replay attack
-    }
-
-    // Store nonce with TTL
-    await redisClient.set(key, '1', { ex: ttl });
-    return false; // Nonce is new
-  } catch (error) {
-    // Redis unavailable - log warning but don't block
-    logger.error('[RaaS Service] Redis nonce check failed', error instanceof Error ? error : new Error(String(error)));
-    return false; // Fail open in production
-  }
-}
-
-/**
- * Check if license key has been revoked
- *
- * @param key - Full license key string
- * @param redisClient - Redis client instance
- * @returns true if revoked, false if active
- */
-export async function checkRevocation(
-  key: string,
-  redisClient: typeof redis
-): Promise<boolean> {
-  const cacheKey = `${REDIS_KEYS.REVOKED}${key}`;
-
-  try {
-    const exists = await redisClient.get(cacheKey);
-    return !!exists;
-  } catch (error) {
-    logger.error('[RaaS Service] Redis revocation check failed', error instanceof Error ? error : new Error(String(error)));
-    return false; // Fail open in production
-  }
-}
+// Re-export types and primitives for consumers
+export type { Tier, ParsedLicenseKey, ValidationResult, ValidateOptions } from './raas-service-types-and-constants';
+export { parseLicenseKey, verifyHmac, checkExpiration, checkNonce, checkRevocation, generateNonce } from './raas-service-key-operations';
 
 /**
  * Main license key validation function
@@ -192,15 +35,11 @@ export async function checkRevocation(
  * 3. Check expiration
  * 4. Check nonce (replay prevention)
  * 5. Check revocation
- *
- * @param key - License key string
- * @param options - Validation options
- * @returns Validation result
  */
 export async function validateLicenseKey(
   key: string,
-  options: ValidateOptions = {}
-): Promise<ValidationResult> {
+  options: { redisClient?: typeof redis; bypassExpirationCheck?: boolean } = {}
+): Promise<{ valid: boolean; reason?: string; tier?: import('./raas-service-types-and-constants').Tier }> {
   const {
     redisClient = redis,
     bypassExpirationCheck = false,
@@ -259,9 +98,6 @@ export async function validateLicenseKey(
 
 /**
  * Revoke a license key (add to revocation set)
- *
- * @param key - License key to revoke
- * @param redisClient - Redis client instance
  */
 export async function revokeLicenseKey(
   key: string,
@@ -277,15 +113,4 @@ export async function revokeLicenseKey(
     logger.error('[RaaS Service] Failed to revoke key', error instanceof Error ? error : new Error(String(error)));
     throw error;
   }
-}
-
-/**
- * Generate a random nonce for license key creation
- *
- * @returns 32-character hex string
- */
-export function generateNonce(): string {
-  const bytes = new Uint8Array(16);
-  globalThis.crypto.getRandomValues(bytes);
-  return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
 }
