@@ -1,10 +1,8 @@
 /**
  * Dunning State Machine
  *
- * Manages state transitions for the dunning lifecycle:
- * current → past_due → delinquent → suspended
- *
- * Handles state reads, transitions, and grace period calculations.
+ * Manages state reads, transitions, and access decisions for the dunning lifecycle.
+ * Pure transition logic lives in dunning-transition-logic.ts.
  *
  * @module billing/dunning/dunning-state-machine
  */
@@ -12,14 +10,18 @@
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import { toError } from '@/lib/utils/to-error';
-import type { Tier } from '@/types';
+import {
+  determineAccess,
+  calculateGracePeriodEnd,
+} from './dunning-transition-logic';
+
+// Re-export types for backward compatibility
+export type { DunningState, DunningTierConfig } from './dunning-transition-logic';
+export { DUNNING_TIER_CONFIGS, calculateNextRetry, determineNewState } from './dunning-transition-logic';
 
 // -------------------------------------------------------------------------
-// Types
+// Types (local to this module)
 // -------------------------------------------------------------------------
-
-/** Dunning lifecycle states */
-export type DunningState = 'current' | 'past_due' | 'delinquent' | 'suspended';
 
 /** Dunning event types for audit logging */
 export type DunningEventType =
@@ -33,14 +35,6 @@ export type DunningEventType =
   | 'retry_attempted'
   | 'state_changed';
 
-/** Per-tier dunning configuration */
-export interface DunningTierConfig {
-  gracePeriodDays: number;
-  maxRetryAttempts: number;
-  retryIntervals: number[];
-  allowOverage: boolean;
-}
-
 /** Database row shape for dunning_settings */
 export interface DunningSettingsRow {
   id: string;
@@ -53,7 +47,7 @@ export interface DunningSettingsRow {
   retry_schedule: string[];
   send_email_notifications: boolean;
   email_language: string;
-  dunning_state: DunningState;
+  dunning_state: import('./dunning-transition-logic').DunningState;
   dunning_state_changed_at: string;
   created_at: string;
   updated_at: string;
@@ -61,7 +55,7 @@ export interface DunningSettingsRow {
 
 /** Result of dunning state check */
 export interface DunningStateResult {
-  state: DunningState;
+  state: import('./dunning-transition-logic').DunningState;
   allowed: boolean;
   gracePeriodEndsAt: Date | null;
   nextRetryAt: Date | null;
@@ -69,24 +63,15 @@ export interface DunningStateResult {
   blockReason?: string;
 }
 
-/** Tier-specific dunning configurations */
-export const DUNNING_TIER_CONFIGS: Record<Tier, DunningTierConfig> = {
-  BASIC:      { gracePeriodDays: 3,  maxRetryAttempts: 3, retryIntervals: [1, 3, 7],          allowOverage: false },
-  PREMIUM:    { gracePeriodDays: 5,  maxRetryAttempts: 4, retryIntervals: [1, 3, 7, 15],      allowOverage: false },
-  ENTERPRISE: { gracePeriodDays: 7,  maxRetryAttempts: 5, retryIntervals: [1, 2, 5, 10, 15],  allowOverage: true  },
-  MASTER:     { gracePeriodDays: 14, maxRetryAttempts: 6, retryIntervals: [1, 2, 3, 7, 14, 21], allowOverage: true },
-};
-
 // -------------------------------------------------------------------------
 // State reads
 // -------------------------------------------------------------------------
 
 /**
- * Get dunning settings from database
+ * Get dunning settings from database.
  */
 export async function getDunningSettings(licenseNonce: string): Promise<DunningSettingsRow | null> {
   const db = createServerClient();
-
   try {
     const { data, error } = await db
       .from('dunning_settings')
@@ -98,8 +83,7 @@ export async function getDunningSettings(licenseNonce: string): Promise<DunningS
       logger.debug('[Dunning] No settings found', { licenseNonce: licenseNonce.slice(0, 8) });
       return null;
     }
-
-    return data as DunningSettingsRow;
+    return data as unknown as DunningSettingsRow;
   } catch (error) {
     logger.error('[Dunning] Failed to get settings', toError(error));
     return null;
@@ -107,7 +91,7 @@ export async function getDunningSettings(licenseNonce: string): Promise<DunningS
 }
 
 /**
- * Get current dunning state with access decision
+ * Get current dunning state with access decision.
  */
 export async function getDunningState(licenseNonce: string): Promise<DunningStateResult> {
   const settings = await getDunningSettings(licenseNonce);
@@ -129,32 +113,16 @@ export async function getDunningState(licenseNonce: string): Promise<DunningStat
 
   const failedPaymentCount = failedAttempts?.length || 0;
   const nextRetryAt = failedAttempts?.[0]?.next_retry_at
-    ? new Date(failedAttempts[0].next_retry_at)
+    ? new Date(failedAttempts[0].next_retry_at as string)
     : null;
 
-  // Calculate grace period end
-  let gracePeriodEndsAt: Date | null = null;
-  if (settings.dunning_state === 'past_due' && settings.dunning_state_changed_at) {
-    const stateChangedAt = new Date(settings.dunning_state_changed_at);
-    gracePeriodEndsAt = new Date(
-      stateChangedAt.getTime() + settings.grace_period_days * 24 * 60 * 60 * 1000
-    );
-  }
+  const gracePeriodEndsAt = calculateGracePeriodEnd(
+    settings.dunning_state,
+    settings.dunning_state_changed_at,
+    settings.grace_period_days
+  );
 
-  // Determine access
-  let allowed = true;
-  let blockReason: string | undefined;
-
-  if (settings.dunning_state === 'suspended') {
-    allowed = false;
-    blockReason = 'Account suspended due to non-payment';
-  } else if (settings.dunning_state === 'delinquent') {
-    allowed = false;
-    blockReason = 'Account delinquent - payment required to restore access';
-  } else if (settings.dunning_state === 'past_due' && gracePeriodEndsAt && gracePeriodEndsAt < new Date()) {
-    allowed = false;
-    blockReason = 'Grace period expired - account suspended';
-  }
+  const { allowed, blockReason } = determineAccess(settings.dunning_state, gracePeriodEndsAt);
 
   return { state: settings.dunning_state, allowed, gracePeriodEndsAt, nextRetryAt, failedPaymentCount, blockReason };
 }
@@ -164,12 +132,12 @@ export async function getDunningState(licenseNonce: string): Promise<DunningStat
 // -------------------------------------------------------------------------
 
 /**
- * Transition dunning state in the database
+ * Transition dunning state in the database.
  */
 export async function transitionDunningState(
   licenseNonce: string,
   userId: string,
-  newState: DunningState
+  newState: import('./dunning-transition-logic').DunningState
 ): Promise<void> {
   const currentSettings = await getDunningSettings(licenseNonce);
   const oldState = currentSettings?.dunning_state || 'current';
@@ -180,7 +148,6 @@ export async function transitionDunningState(
   }
 
   const db = createServerClient();
-
   await db.rpc('update_dunning_state', {
     p_license_nonce: licenseNonce,
     p_new_state: newState,
@@ -192,30 +159,4 @@ export async function transitionDunningState(
     from: oldState,
     to: newState,
   });
-}
-
-/**
- * Calculate next retry date using exponential backoff
- */
-export function calculateNextRetry(attemptNumber: number, config: DunningTierConfig): Date {
-  const intervalIndex = Math.min(attemptNumber - 1, config.retryIntervals.length - 1);
-  const daysUntilRetry = config.retryIntervals[intervalIndex] || 7;
-
-  const nextRetry = new Date();
-  nextRetry.setDate(nextRetry.getDate() + daysUntilRetry);
-  return nextRetry;
-}
-
-/**
- * Determine new dunning state based on attempt count
- */
-export function determineNewState(
-  currentState: DunningState,
-  attemptNumber: number,
-  config: DunningTierConfig
-): DunningState {
-  if (currentState === 'current') return 'past_due';
-  if (currentState === 'past_due' && attemptNumber >= config.maxRetryAttempts) return 'suspended';
-  if (currentState === 'past_due' && attemptNumber >= Math.ceil(config.maxRetryAttempts / 2)) return 'delinquent';
-  return currentState;
 }
