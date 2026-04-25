@@ -10,33 +10,16 @@
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import { toError } from '@/lib/utils/to-error';
+import {
+  readNonceFromKv,
+  writeNonceToKv,
+  queryNonceFromDb,
+  upsertNonceInDb,
+  deleteExpiredNoncesFromDb,
+} from './jwt-nonce-storage';
 
-/**
- * Nonce cache structure for KV storage
- */
-interface NonceCache {
-  used: boolean;
-  userId: string;
-  expiresAt: number;
-}
-
-/**
- * Cloudflare KV binding type
- */
-declare global {
-  // eslint-disable-next-line no-var
-  var KV_KV: {
-    get: (key: string) => Promise<NonceCache | null>;
-    set: (key: string, value: NonceCache, options?: { expirationTtl?: number }) => Promise<void>;
-  } | undefined;
-}
-
-/**
- * Get KV client (lazy init for Cloudflare Workers)
- */
-function getKvClient() {
-  return typeof globalThis !== 'undefined' && globalThis.KV_KV ? globalThis.KV_KV : null;
-}
+// Re-export storage primitives for consumers
+export type { NonceCache } from './jwt-nonce-storage';
 
 /**
  * Check if JWT nonce has been used (replay attack prevention)
@@ -56,160 +39,108 @@ export async function checkJwtNonce(nonce: string): Promise<{
     return { valid: false, reason: 'invalid' };
   }
 
-  // Try KV cache first
-  const kv = getKvClient();
-  if (kv) {
-    try {
-      const key = `nonce:${nonce}`;
-      const cached = await kv.get(key);
-
-      if (cached) {
-        // Check if already used
-        if (cached.used) {
-          logger.warn('[JWT Nonce] Replay attempt detected (KV cache)', {
-            nonce: nonce.slice(0, 8) + '...',
-          });
-          return { valid: false, reason: 'already-used' };
-        }
-
-        // Check expiration
-        const now = Math.floor(Date.now() / 1000);
-        if (cached.expiresAt < now) {
-          return { valid: false, reason: 'expired' };
-        }
-
-        return { valid: true };
-      }
-    } catch (error) {
-      logger.error('[JWT Nonce] KV cache read error', toError(error));
-      // Fall through to DB query
+  // Try KV cache first (fast path)
+  const cached = await readNonceFromKv(nonce);
+  if (cached !== null) {
+    if (cached.used) {
+      logger.warn('[JWT Nonce] Replay attempt detected (KV cache)', {
+        nonce: nonce.slice(0, 8) + '...',
+      });
+      return { valid: false, reason: 'already-used' };
     }
+
+    const now = Math.floor(Date.now() / 1000);
+    if (cached.expiresAt < now) {
+      return { valid: false, reason: 'expired' };
+    }
+
+    return { valid: true };
   }
 
   // Fallback: Database query
   try {
-    const db = createServerClient();
+    const row = await queryNonceFromDb(nonce);
 
-    const { data, error } = await db
-      .from('jwt_nonces')
-      .select('used_at, expires_at')
-      .eq('nonce', nonce)
-      .single();
+    if (row === null) {
+      // queryNonceFromDb returns null both for "not found" and "error"
+      // Check DB directly to distinguish
+      const db = createServerClient();
+      const { data, error } = await db
+        .from('jwt_nonces')
+        .select('used_at, expires_at')
+        .eq('nonce', nonce)
+        .single();
 
-    if (error && error.code !== 'PGRST116') { // PGRST116 = not found
-      logger.error('[JWT Nonce] Database error', toError(error));
-      return { valid: false, reason: 'invalid' };
-    }
+      if (error && error.code !== 'PGRST116') {
+        logger.error('[JWT Nonce] Database error', toError(error));
+        return { valid: false, reason: 'invalid' };
+      }
 
-    // Nonce not found = first use (valid)
-    if (!data) {
+      if (!data) {
+        return { valid: true }; // Not found = first use
+      }
+
+      const dbRow = data as { used_at: unknown; expires_at: unknown };
+      if (dbRow.used_at) {
+        logger.warn('[JWT Nonce] Replay attempt detected (DB)', {
+          nonce: nonce.slice(0, 8) + '...',
+        });
+        return { valid: false, reason: 'already-used' };
+      }
+
+      const now = Math.floor(Date.now() / 1000);
+      if (typeof dbRow.expires_at === 'number' && dbRow.expires_at < now) {
+        return { valid: false, reason: 'expired' };
+      }
+
       return { valid: true };
     }
 
-    // Check if already used
-    if (data.used_at) {
+    if (row.used_at) {
       logger.warn('[JWT Nonce] Replay attempt detected (DB)', {
         nonce: nonce.slice(0, 8) + '...',
       });
       return { valid: false, reason: 'already-used' };
     }
 
-    // Check expiration
     const now = Math.floor(Date.now() / 1000);
-    if (data.expires_at < now) {
+    if (row.expires_at < now) {
       return { valid: false, reason: 'expired' };
     }
 
     return { valid: true };
   } catch (error) {
     logger.error('[JWT Nonce] Error checking nonce', toError(error));
-    // Fail open on error
-    return { valid: true };
+    return { valid: true }; // Fail open on error
   }
 }
 
 /**
  * Mark JWT nonce as used (called after successful validation)
- *
- * @param nonce - JWT jti claim
- * @param userId - User ID
- * @param expiresAt - Nonce expiration timestamp (seconds)
  */
 export async function markJwtNonceAsUsed(
   nonce: string,
   userId: string,
   expiresAt: number
 ): Promise<boolean> {
-  const kv = getKvClient();
-  const now = Math.floor(Date.now() / 1000);
-
   // Update KV cache (fast path)
-  if (kv) {
-    try {
-      const key = `nonce:${nonce}`;
-      await kv.set(key, { used: true, userId, expiresAt }, { expirationTtl: expiresAt - now });
-    } catch (error) {
-      logger.error('[JWT Nonce] KV cache write error', toError(error));
-      // Continue to DB write
-    }
-  }
+  await writeNonceToKv(nonce, { used: true, userId, expiresAt }, expiresAt);
 
   // Database write (authoritative)
-  try {
-    const db = createServerClient();
-
-    const { error } = await db
-      .from('jwt_nonces')
-      .insert({
-        nonce,
-        user_id: userId,
-        issued_at: now,
-        expires_at: Math.floor(expiresAt),
-        used_at: now,
-      })
-      .onConflict('nonce')
-      .update({ used_at: now });
-
-    if (error) {
-      logger.error('[JWT Nonce] Failed to mark nonce as used', toError(error));
-      return false;
-    }
-
-    return true;
-  } catch (error) {
-    logger.error('[JWT Nonce] Error marking nonce as used', toError(error));
-    return false;
-  }
+  return upsertNonceInDb(nonce, userId, expiresAt);
 }
 
 /**
  * Pre-register nonce (called when JWT is created)
  * This allows proactive cache warming
- *
- * @param nonce - JWT jti claim
- * @param userId - User ID
- * @param expiresAt - Nonce expiration timestamp (seconds)
  */
 export async function preRegisterNonce(
   nonce: string,
   userId: string,
   expiresAt: number
 ): Promise<boolean> {
-  const kv = getKvClient();
-
-  // Pre-register in KV (not marked as used yet)
-  if (kv) {
-    try {
-      const key = `nonce:${nonce}`;
-      const ttl = expiresAt - Math.floor(Date.now() / 1000);
-      await kv.set(key, { used: false, userId, expiresAt }, { expirationTtl: ttl });
-      return true;
-    } catch (error) {
-      logger.error('[JWT Nonce] KV pre-registration error', toError(error));
-    }
-  }
-
-  return false;
+  await writeNonceToKv(nonce, { used: false, userId, expiresAt }, expiresAt);
+  return true;
 }
 
 /**
@@ -217,35 +148,9 @@ export async function preRegisterNonce(
  * Should be run hourly via scheduled function
  */
 export async function cleanupExpiredNonces(): Promise<number> {
-  const kv = getKvClient();
-  const now = Math.floor(Date.now() / 1000);
-
-  // KV cleanup (if using ephemeral KV)
-  // Note: Cloudflare KV auto-expires based on TTL, so this is optional
-
-  // Database cleanup
-  try {
-    const db = createServerClient();
-
-    const { data, error } = await db
-      .from('jwt_nonces')
-      .delete()
-      .lt('expires_at', now)
-      .select('id');
-
-    if (error) {
-      logger.error('[JWT Nonce] Cleanup failed', toError(error));
-      return 0;
-    }
-
-    const count = data?.length || 0;
-    logger.info('[JWT Nonce] Cleanup complete', { deletedCount: count });
-
-    return count;
-  } catch (error) {
-    logger.error('[JWT Nonce] Cleanup error', toError(error));
-    return 0;
-  }
+  const count = await deleteExpiredNoncesFromDb();
+  logger.info('[JWT Nonce] Cleanup complete', { deletedCount: count });
+  return count;
 }
 
 /**
@@ -260,7 +165,6 @@ export async function getNonceStats(): Promise<{
     const db = createServerClient();
     const now = Math.floor(Date.now() / 1000);
 
-    // Get counts in parallel
     const [activeResult, expiredResult] = await Promise.all([
       db
         .from('jwt_nonces')
@@ -275,7 +179,7 @@ export async function getNonceStats(): Promise<{
     return {
       totalActive: (activeResult.count as number) || 0,
       expiredCount: (expiredResult.count as number) || 0,
-      replayAttemptsDetected: 0, // Would need separate tracking table
+      replayAttemptsDetected: 0,
     };
   } catch (error) {
     logger.error('[JWT Nonce] Stats error', toError(error));
