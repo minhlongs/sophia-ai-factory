@@ -17,6 +17,7 @@ bucket_name = "sophia-ai-factory-opennext-cache"
 binding = "DB"
 database_name = "sophia-raas-db"
 database_id = "78bd1961-b62d-43bb-b551-0c5d7d389506"
+migrations_dir = "migrations"
 
 [[services]]
 binding = "WORKER_SELF_REFERENCE"

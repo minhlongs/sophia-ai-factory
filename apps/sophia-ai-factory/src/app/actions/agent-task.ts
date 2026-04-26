@@ -7,6 +7,7 @@
 
 import { z } from 'zod';
 import { getCurrentUser } from '@/lib/better-auth-session';
+import { getUserTier } from '@/lib/db/get-user-tier';
 import { seedDefaultTeam } from '@/lib/agents/seed-default-team';
 import { createTask, listAgents, getTask } from '@/lib/agents/repository';
 import { runAgent } from '@/lib/agents/runner';
@@ -61,8 +62,11 @@ export async function createAgentTask(
     // Create task
     const task = await createTask({ orgId, agentId: resolvedAgentId, input: taskInput });
 
+    // Resolve real user tier (B1 fix: previously defaulted to BASIC, blocking all paid users)
+    const userTier = await getUserTier(user.id);
+
     // Run inline (Cloudflare Workers free tier — no background jobs)
-    await runAgent(task.id, orgId);
+    await runAgent(task.id, orgId, userTier);
 
     // Return completed task
     const completed = await getTask(task.id, orgId);

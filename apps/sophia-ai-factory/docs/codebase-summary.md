@@ -1,7 +1,7 @@
 # Codebase Summary
 
 **Last Updated:** 2026-04-25
-**Version:** 1.0.4 (Phase 39 Metering Reconciler Modularization)
+**Version:** 1.13.0 (Multi-Tenant AI Agent Factory Infrastructure)
 
 ## Project Structure Overview
 
@@ -34,6 +34,14 @@ Sophia AI Video Factory is a Next.js 16 application structured around the App Ro
 - **`/dashboard`**: The main user interface.
   - `page.tsx`: Dashboard view.
 - **`/api`**: Serverless API routes.
+  - `/api/agents/*`: Agent Factory multi-tenant endpoints.
+    - `GET /api/agents/teams`: List agent teams for user.
+    - `POST /api/agents/teams`: Create new agent team.
+    - `GET /api/agents/agents`: List agents in team.
+    - `POST /api/agents/agents`: Create new agent.
+    - `GET /api/agents/tasks`: List tasks with filtering.
+    - `POST /api/agents/tasks`: Create new task.
+    - `GET /api/agents/logs`: Stream agent logs via SSE.
   - `/api/generate-script`: Triggers n8n script workflow.
   - `/api/render-video`: Triggers n8n video workflow.
   - `/api/setup`: Endpoint for wizard configuration validation.
@@ -43,6 +51,12 @@ Sophia AI Video Factory is a Next.js 16 application structured around the App Ro
   - Protects `/admin` routes if configured.
 
 ### `/src/lib` (Core Logic)
+- **`agents/`**: Multi-tenant AI Agent Factory infrastructure (Phase 11).
+  - **`agent-runner.ts`**: Core orchestration engine for agent execution.
+  - **`task-queue.ts`**: D1-backed task queue with state machine (pending → assigned → running → completed/failed).
+  - **`agent-logger.ts`**: Structured logging for agent lifecycle and task events.
+  - **`agent-types.ts`**: Core interfaces (Agent, AgentTeam, AgentTask, AgentLog, SignalEvent).
+  - **`signal-events.ts`**: Event emission and tracking for agent diagnostics.
 - **`services/`**: Service Factory Architecture.
   - **`factory.ts`**: Central dependency injection container ensuring singleton instances.
   - **`types.ts`**: Core interfaces (`IVideoService`, `IVoiceService`, `IScriptService`) decoupling logic from implementation.
@@ -93,6 +107,7 @@ Sophia AI Video Factory is a Next.js 16 application structured around the App Ro
   - `NEXT_PUBLIC_FEATURE_AFFILIATE_ENGINE`: Toggles affiliate tools.
 
 ## Recent Major Changes
+- **Phase 11 (2026-04-25)**: Multi-Tenant AI Agent Factory — Complete 4-phase restructure (Seed → Tree → Forest → Land). D1 agent tables, runner, task queue, Mission Control UI, SSE streams, feedback loop, observability gates. 1394 tests pass. Commit e6a180d8.
 - **Phase 39 (2026-04-25)**: Metering Reconciler Modularization — Split `src/worker/lib/metering-reconciler-runner.ts` (497L) into 5 focused sub-modules (types, error logger, license validator, aggregator, main barrel) with zero behavioral change. Added `Env` interface export from `src/worker/index.ts`.
 - **Phase 38 (2026-04-25)**: Quota Checker Service Modularization — Split monolithic `quota-checker.ts` (499L) into 5 focused sub-modules (types, KV cache, DB, overage, main barrel) with zero behavioral change.
 - **Phase 37 (2026-04-24)**: Realtime Alert Service Modularization — Split `realtime-alert-service.ts` (525L) into dispatcher, delivery, state, reconnection sub-modules.
