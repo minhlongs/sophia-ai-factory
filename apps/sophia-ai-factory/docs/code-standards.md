@@ -262,7 +262,7 @@ const data = (await getAnalyticsData(params)) as AnalyticsQueryResponse;
 
 Prefer this approach to modifying the helper's return type annotation (which may affect multiple callsites or break abstraction). The interface is defined **at the narrowest consumption point** with only the fields actually used (YAGNI principle).
 
-### Sub-Variant 4: DB-Result Cast (16 Instances)
+### Sub-Variant 4: DB-Result Cast (22 Instances)
 
 Casting Supabase/D1 query results from `unknown` (via `ReturnType<typeof db.from>` helper) to local DB-row interface at narrow consumption point.
 
@@ -273,6 +273,8 @@ Casting Supabase/D1 query results from `unknown` (via `ReturnType<typeof db.from
 - **Phase 21 (usage summary):** `src/app/api/billing/usage-summary/route.ts` — `UsageSummaryLicenseRow` interface cast from license SELECT query. Pattern: minimal 3-field interface (YAGNI scope), optional-chained threshold reads.
 - **Phase 22 (invoice generator):** `src/lib/raas/raas-invoice-generator.ts` — `RaasLicense` interface cast at 4 query sites (2 SELECT via `.single()`, 2 UPDATE via `.update().select().single()`). Pattern: for subscription lifecycle (reactivate/revoke), 2 functions use double-cast pattern `as unknown as RaasLicense` on UPDATE chains. Demonstrates pattern generalizes to write-then-read scenarios where Supabase return type doesn't structurally overlap with domain row interface. Added `toError()` wrapper for 2 UPDATE error logs.
 - **Phase 22 (quota overage API):** `src/app/api/quota/overage-events/route.ts` — `QuotaLicenseRow` interface cast from license SELECT. Pattern: documents D1 client limitation — D1 `.single<T>()` does NOT support generic type arguments (TS2558 error with `.single<{nonce: string}>()`); fix: cast with `as unknown as QuotaLicenseRow`. Canonical anti-example of unsupported generic argument on `.single()` chain.
+- **Phase 23 (internal usage query API):** `src/app/api/internal/usage/query/route.ts` — `CustomerLicenseRow`, `NonceLicenseRow`, `RawUsageEventRow` interfaces cast at 4 query sites. Pattern: 3-interface approach separates license lookups by lookup method (customer_id, stripe_customer_id, nonce) from event aggregation; all nullable casts for `.single()` returns; optional-chained reads with fallbacks for defensive null handling. Removed 3 unsupported `.single<{...}>()` generic arguments following D1 limitation (cumulative removals: Phase 22 ×1 + Phase 23 ×3 = 4 total).
+- **Phase 23 (usage summary API):** `src/app/api/usage/summary/route.ts` — `UserProfileRoleRow`, `LicenseOwnerRow` interfaces cast at 2 query sites. Pattern: defensive license ownership verification with nullable casts; optional-chained metadata reads with fallbacks. Removed 2 unsupported `.single<{...}>()` generic arguments (cumulative removals: Phase 22 ×1 + Phase 23 ×5 = 6 total generic-removal instances).
 
 **General Pattern:**
 ```typescript
@@ -314,7 +316,7 @@ return rawUpdated as unknown as RaasLicense;  // Double-cast avoids TS2352
 
 Rationale: Supabase's query builder returns `Promise<unknown>` from `.single()` without full type information about the SELECT shape. A direct `as RaasLicense` cast may trigger TS2352 (no structural overlap detected). The workaround: cast to `unknown` first (always valid), then to the target interface. Runtime behavior unchanged; pure TypeScript workaround for query builder limitations.
 
-**D1 Client `.single()` Limitation (NEW — Phase 22):**
+**D1 Client `.single()` Limitation (NEW — Phase 22, Extended Phase 23):**
 The D1 query chain client does NOT support generic type arguments on `.single<T>()`. Attempting `db.from('table').select().single<{nonce: string}>()` causes TS2558 ("Object is of type unknown").
 
 **Anti-Example (DO NOT DO):**
@@ -346,7 +348,29 @@ const license = rawLicense as QuotaLicenseRow | null;
 
 Use interface cast pattern instead of generic argument. This is a known D1 client limitation; all D1 + Supabase queries should use cast-at-consumption-point rather than generic type parameters on the `.single()` call itself.
 
-Distinct from HTTP boundary casts: DB results are strongly typed by schema but TypeScript cannot infer `ReturnType<typeof db.from>` without manual interface definition at point of use. Cast occurs at **narrowest consumption point**, interfaces omit unused fields, all reads optional-chained. 16 instances codebase-wide (Phase 22 adds 5 new + Phase 21 7 new + Phase 20 1 + 3 pre-existing).
+**Cumulative Status (Phase 23):** 5 unsupported `.single<T>()` generic arguments have been removed across phases 22–23 (Phase 22 ×1, Phase 23 ×5 = 6 total instances eliminated). No new TS2558 errors introduced.
+
+Distinct from HTTP boundary casts: DB results are strongly typed by schema but TypeScript cannot infer `ReturnType<typeof db.from>` without manual interface definition at point of use. Cast occurs at **narrowest consumption point**, interfaces omit unused fields, all reads optional-chained. 22 instances codebase-wide (Phase 23 adds 6 new + Phase 22 5 new + Phase 21 7 new + Phase 20 1 + 3 pre-existing).
+
+**For Better Auth User Type Assertion (NEW — Phase 23):**
+
+When accessing legacy `user_metadata` field on Better Auth `User` type (which doesn't expose this property natively), apply defensive type assertion pattern at the consumption point:
+
+```typescript
+// src/app/api/usage/summary/route.ts L81
+const user = await getCurrentUser(); // Returns Better Auth User type
+
+// Direct access fails: Property 'user_metadata' does not exist on type 'User'
+// const userRole = user.user_metadata?.role; // ← TS2339 ERROR
+
+// Fix: Type assertion with defensive shape
+const userMeta = (user as { user_metadata?: { role?: string } }).user_metadata;
+const userRole = userMeta?.role ?? 'default_role';
+```
+
+**Rationale:** Better Auth's `User` type doesn't include `user_metadata` in its TypeScript interface, but this field may exist at runtime for legacy sessions or custom migrations. The defensive assertion `as { user_metadata?: { role?: string } }` allows access without polluting the Better Auth type definition (which is external/owned by the library). This pattern is specific to auth migration scenarios where legacy user properties must remain accessible during transition periods.
+
+**Scope:** Use this pattern ONLY for Better Auth `User` legacy field access. Do NOT apply to general DB-Result casts (use Sub-Variant 4 interface pattern instead). This is a transitional pattern; consider deprecation in Phase 24+ as Better Auth migration completes.
 
 ---
 

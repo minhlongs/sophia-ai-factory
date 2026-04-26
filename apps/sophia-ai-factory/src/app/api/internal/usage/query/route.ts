@@ -14,6 +14,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import {
   validateInternalSecret,
   calculateTotalsFromHourly,
@@ -22,6 +23,30 @@ import {
   calculateQuotaUsage,
 } from './usage-query-helpers';
 import { buildHourlyAggregation, buildDailyFromHourly } from './usage-query-aggregator';
+
+interface CustomerLicenseRow {
+  nonce: string;
+  tier: string;
+  created_by: string | null;
+}
+
+interface NonceLicenseRow {
+  tier: string;
+  created_by: string | null;
+}
+
+interface RawUsageEventRow {
+  user_id: string;
+  license_nonce: string;
+  service_name: string;
+  action: string;
+  credits_used: number | null;
+  tokens_input: number | null;
+  tokens_output: number | null;
+  response_time_ms: number | null;
+  status_code: number | null;
+  created_at: number;
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -96,18 +121,20 @@ export async function GET(request: NextRequest) {
     const db = createServerClient();
 
     if (externalCustomerId) {
-      const { data: license } = await db
+      const { data: rawLicense } = await db
         .from('raas_licenses')
         .select('nonce, tier, created_by, polar_customer_id')
         .eq('polar_customer_id', externalCustomerId)
-        .single<{ nonce: string; tier: string; created_by: string | null; polar_customer_id: string | null }>();
+        .single();
+      const license = rawLicense as CustomerLicenseRow | null;
 
       if (!license) {
-        const { data: stripeLicense } = await db
+        const { data: rawStripeLicense } = await db
           .from('raas_licenses')
           .select('nonce, tier, created_by, stripe_customer_id')
           .eq('stripe_customer_id', externalCustomerId)
-          .single<{ nonce: string; tier: string; created_by: string | null; stripe_customer_id: string | null }>();
+          .single();
+        const stripeLicense = rawStripeLicense as CustomerLicenseRow | null;
 
         if (!stripeLicense) {
           return NextResponse.json({ error: `No license found for external_customer_id: ${externalCustomerId}` }, { status: 404 });
@@ -122,11 +149,12 @@ export async function GET(request: NextRequest) {
         tier = license.tier || 'BASIC';
       }
     } else {
-      const { data: license } = await db
+      const { data: rawLicense } = await db
         .from('raas_licenses')
         .select('tier, created_by')
         .eq('nonce', licenseNonce!)
-        .single<{ tier: string; created_by: string | null }>();
+        .single();
+      const license = rawLicense as NonceLicenseRow | null;
 
       if (!license) {
         return NextResponse.json({ error: `License not found: ${licenseNonce}` }, { status: 404 });
@@ -136,16 +164,17 @@ export async function GET(request: NextRequest) {
       tier = license.tier || 'BASIC';
     }
 
-    const { data: events, error } = await db
+    const { data: rawEvents, error } = await db
       .from('usage_events')
       .select('*')
       .eq('user_id', queryUserId!)
       .eq('license_nonce', queryLicenseNonce!)
       .gte('created_at', startTimestamp)
       .lte('created_at', endTimestamp);
+    const events = rawEvents as RawUsageEventRow[] | null;
 
     if (error) {
-      logger.error('[Internal Usage Query] Failed to fetch events', error);
+      logger.error('[Internal Usage Query] Failed to fetch events', toError(error));
       return NextResponse.json({ error: 'Failed to query usage data' }, { status: 500 });
     }
 

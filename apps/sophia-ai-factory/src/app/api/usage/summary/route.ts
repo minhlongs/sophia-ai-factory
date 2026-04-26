@@ -36,6 +36,14 @@ const summaryQuerySchema = z.object({
   license_nonce: z.string().optional(),
 });
 
+interface UserProfileRoleRow {
+  role: string | null;
+}
+
+interface LicenseOwnerRow {
+  created_by: string | null;
+}
+
 export async function GET(req: NextRequest) {
   try {
     // Authenticate user
@@ -63,21 +71,24 @@ export async function GET(req: NextRequest) {
     const { period, license_nonce } = parseResult.data;
 
     // Check admin status
-    const { data: userData } = await supabase
+    const { data: rawUserData } = await supabase
       .from('user_profiles')
       .select('role')
       .eq('user_id', user.id)
-      .single<{ role: string | null }>();
+      .single();
+    const userData = rawUserData as UserProfileRoleRow | null;
 
-    const isAdmin = userData?.role === 'admin' || (user.user_metadata as { role?: string } | undefined)?.role === 'admin';
+    const userMeta = (user as { user_metadata?: { role?: string } }).user_metadata;
+    const isAdmin = userData?.role === 'admin' || userMeta?.role === 'admin';
 
     // Verify license ownership if provided
     if (license_nonce && !isAdmin) {
-      const { data: license } = await supabase
+      const { data: rawLicense } = await supabase
         .from('raas_licenses')
         .select('created_by')
         .eq('nonce', license_nonce)
-        .single<{ created_by: string | null }>();
+        .single();
+      const license = rawLicense as LicenseOwnerRow | null;
 
       if (!license || license.created_by !== user.id) {
         return NextResponse.json({ error: 'Forbidden - not your license' }, { status: 403 });

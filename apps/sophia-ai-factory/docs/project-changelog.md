@@ -1,6 +1,12 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-26 | **Current Version:** 1.12.40
+**Last Updated:** 2026-04-26 | **Current Version:** 1.12.41
+
+---
+
+## [2026-04-26] B2 Phase 23 — Sister Usage APIs TypeScript Cleanup (v1.12.41)
+
+**B2 Phase 23 (internal/usage/query + usage/summary batch):** Refactored `src/app/api/internal/usage/query/route.ts` (223 lines) + `src/app/api/usage/summary/route.ts` (185 lines), applied Sub-Variant 4 (DB-Result Cast) pattern at 6 new sites. Removed 5 unsupported generic arguments to `single<{...}>()` following D1 client limitation (Phase 22 established 1 instance; Phase 23 extends to 5 total cumulative). Pattern instances: Sub-Variant 4 ×4 (internal query route: CustomerLicenseRow, NonceLicenseRow, RawUsageEventRow) + ×2 (usage summary: UserProfileRoleRow, LicenseOwnerRow) = 6 new sites. Extended canonical examples: 3-interface approach separates license lookups (customer_id, stripe_customer_id, nonce variants) from event aggregation; nullable casts for `.single()` returns; type-narrowed reads with optional-chaining fallbacks. Fixed Better Auth User type assertion for `user_metadata` access (pre-existing TS2339): `(user as { user_metadata?: { role?: string } }).user_metadata` pattern in usage/summary route. Extended logger toError pattern: +1 error wrapper in internal query route (webhook system logs). Eliminated 16 TS errors (336→320, -4.8% Phase 23 delta, -30.8% cumulative B2 from baseline 462→320). TS18046 unchanged at 4 (Telegram PROTECTED FLOW deferred to Phase 24). Tests 1394/1394 pass. Code review 9.7/10 auto-approved. Closes B2 Tier 4 bundle.
 
 ---
 
