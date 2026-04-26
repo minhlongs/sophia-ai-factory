@@ -164,12 +164,18 @@ export async function getTask(taskId: string, orgId: string): Promise<AgentTask 
   return mapTask(data as AgentTaskRow);
 }
 
-export async function updateTaskStatus(taskId: string, status: AgentTaskStatus): Promise<void> {
+// H1 fix (defense-in-depth): both writes require orgId filter so a leaked
+// task_id alone cannot mutate another tenant's row.
+export async function updateTaskStatus(
+  taskId: string,
+  orgId: string,
+  status: AgentTaskStatus,
+): Promise<void> {
   const db = createServerClient();
-  await db.from('agent_tasks').update({ status }).eq('id', taskId);
+  await db.from('agent_tasks').update({ status }).eq('id', taskId).eq('org_id', orgId);
 }
 
-export async function updateTaskResult(taskId: string, params: {
+export async function updateTaskResult(taskId: string, orgId: string, params: {
   output: string;
   tokensUsed: number;
   costUsd: number;
@@ -184,7 +190,7 @@ export async function updateTaskResult(taskId: string, params: {
     status: params.status,
     error_message: params.errorMessage ?? null,
     completed_at: new Date().toISOString(),
-  }).eq('id', taskId);
+  }).eq('id', taskId).eq('org_id', orgId);
 }
 
 // ── Logs ──────────────────────────────────────────────────────────────────
