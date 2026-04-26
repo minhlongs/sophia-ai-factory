@@ -204,7 +204,7 @@ Client receives response from server, casts `(await res.json()) as InterfaceName
 - **Phase 21 (response-body + internal list):** `src/components/raas/mission-dashboard.tsx` — `MissionListResponse` cast from `/api/missions` endpoint. Pattern variant: mirrors Phase 12/19 dual-fetch pattern structure; establishes client-side contract before server implementation complete.
 - **Phase 21 (response-body + discriminated union):** `src/components/raas/mission-detail.tsx` — `MissionDetailResponse` cast from `/api/missions/[id]` endpoint with discriminated-union fallback: `'mission' in data && data.mission ? data.mission : (data as MissionData)`. Pattern variant: demonstrates safe narrowing when API contract uses wrapper object or direct data shape interchangeably.
 
-### Sub-Variant 2: Request-Body Type Cast (6 Instances)
+### Sub-Variant 2: Request-Body Type Cast (7 Instances) — CANONICAL PATTERN
 
 Server API route receives request body from client, casts `(await request.json()) as InterfaceName`.
 
@@ -214,8 +214,9 @@ Server API route receives request body from client, casts `(await request.json()
 - **Phase 16 (third request-body variant, defensive `.catch()` pattern):** `src/app/api/usage/reconciliation/sync/route.ts` — `UsageReconciliationSyncRequest` cast from POST `/api/usage/reconciliation/sync` body. Defensive variant: request body is optional (cron/admin endpoint), wrapped with `.catch(() => ({}))` before cast to prevent parse failures from throwing. Interface has all-optional fields so empty object `{}` is structurally valid.
 - **Phase 17 (fourth + fifth request-body variants, batch admin dunning):** `src/app/api/admin/dunning/[licenseNonce]/restore/route.ts` — `RestoreLicenseRequest` + `src/app/api/admin/dunning/[licenseNonce]/suspend/route.ts` — `SuspendLicenseRequest`. Both apply defensive `.catch(() => ({}))` pattern. Both interfaces share identical shape (`reason?: string`) but maintained as separate types per HTTP boundary anti-corruption isolation principle (avoids god-type, each endpoint owns its contract). Canonical examples of defensive variant reuse across sibling admin endpoints.
 - **Phase 20 (sixth request-body variant, graphql analytics):** `src/app/api/graphql/analytics/route.ts` — defensive `.catch(() => ({}))` wrapper on internal Promise boundary cast (secondary pattern instance in same file). Demonstrates Sub-Variant 2 generalizes to defensive boundaries beyond pure HTTP request-body scenarios.
+- **Phase 27 (seventh + CANONICAL webhook pattern):** `src/app/api/webhooks/telegram/route.ts` — `TelegramUpdate` cast from POST `/api/webhooks/telegram` body. **THE canonical Sub-Variant 2 pattern for ALL HTTP request-body parsing across both internal AND webhook endpoints.** Defensive `.catch(() => ({}))` wrapper on request.json() ensures malformed JSON gracefully returns empty object rather than throwing, preventing Telegram retry storms. Interface models only consumed fields: optional `callback_query?: { data?: string }` (for inline keyboard button presses) + optional `message?: { text?: string; chat?: { id?: number | string } }` (for text commands). Demonstrates pattern robustness in protected-flow webhook context where payload shape varies by Telegram update type. Behavior change: malformed JSON now returns 200 OK (was 500 Internal Server Error) — more graceful, Telegram-compliant, prevents unnecessary retries.
 
-**Defensive Variant Pattern** (Phase 16 / Phase 17):
+**Defensive Variant Pattern** (Phase 16 / Phase 17 / Phase 27):
 ```typescript
 interface UsageReconciliationSyncRequest {
   timeRangeHours?: number;
@@ -232,10 +233,26 @@ interface SuspendLicenseRequest {
 }
 const restoreBody = (await req.json().catch(() => ({}))) as RestoreLicenseRequest;
 const suspendBody = (await req.json().catch(() => ({}))) as SuspendLicenseRequest;
-```
-Use this pattern when parse failure must not throw (e.g., cron jobs, admin operations with no required body). Ensure the cast target interface has all-optional fields so `{}` is structurally valid. For multi-endpoint batches with identical shape, create separate interfaces per endpoint rather than a shared god-type — maintains boundary isolation clarity.
 
-**Pattern Maturity:** Established standard. Apply to all new HTTP boundary type-casts across the codebase. Distinguish between response-body (client reads server) and request-body (server reads client) variants. For multi-endpoint scenarios, maintain separate interfaces per endpoint rather than merging responses.
+// Phase 27 CANONICAL WEBHOOK PATTERN — apply to ALL request-body parsing
+interface TelegramUpdate {
+  callback_query?: {
+    data?: string;
+  };
+  message?: {
+    text?: string;
+    chat?: {
+      id?: number | string;
+    };
+  };
+}
+const body = (await request.json().catch(() => ({}))) as TelegramUpdate;
+// Malformed JSON → empty {}, type-safe guards on optional chains prevent crashes
+```
+
+Use this pattern when parse failure must not throw (e.g., cron jobs, admin operations, webhook endpoints with no guaranteed body structure). Ensure the cast target interface has all-optional fields so `{}` is structurally valid. For multi-endpoint batches with identical shape, create separate interfaces per endpoint rather than a shared god-type — maintains boundary isolation clarity. **Sub-Variant 2 with `.catch(() => ({}))` defensive fallback is the canonical pattern for ALL HTTP request-body parsing across both internal AND webhook endpoints.**
+
+**Pattern Maturity:** **CANONICAL STANDARD.** Apply to all new HTTP boundary type-casts across the codebase. Distinguish between response-body (client reads server) and request-body (server reads client) variants. For multi-endpoint scenarios, maintain separate interfaces per endpoint rather than merging responses. Phase 27 confirms pattern reliability in protected-flow webhook context.
 
 ### Sub-Variant 3: Internal Promise<unknown> Type Cast (1 Instance — NEW)
 
