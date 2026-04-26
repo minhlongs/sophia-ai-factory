@@ -17,6 +17,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import { toError } from '@/lib/utils/to-error';
+import type { OverageEventRow } from '@/lib/supabase/types';
 
 export async function GET(req: NextRequest) {
   const adminAuth = req.headers.get('x-admin-key');
@@ -75,7 +76,8 @@ export async function GET(req: NextRequest) {
       query = query.eq('tier_at_exceeded', tier.toUpperCase());
     }
 
-    const { data: events, error: eventsError } = await query;
+    const { data: rawEvents, error: eventsError } = await query;
+    const events = rawEvents as unknown as OverageEventRow[] | null;
 
     if (eventsError) {
       logger.error('[Admin Quota API] Failed to fetch overage events', toError(eventsError));

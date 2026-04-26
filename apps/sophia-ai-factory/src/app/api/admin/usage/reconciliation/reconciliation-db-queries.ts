@@ -84,7 +84,7 @@ export async function queryBillingPeriods(
   const { data, error } = await query;
 
   if (error) {
-    logger.error('[Reconciliation] Failed to query billing periods', error);
+    logger.error('[Reconciliation] Failed to query billing periods', toError(error));
     return [];
   }
 

@@ -1,6 +1,12 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-26 | **Current Version:** 1.14.4
+**Last Updated:** 2026-04-26 | **Current Version:** 1.14.5
+
+---
+
+## MILESTONE v1.14.5 — Canonical OverageEventRow Type Consolidation (Phase 40)
+
+**Phase 40 B2 (Sub-Variant 4 canonical type consolidation batch):** Targeted 3 files to consolidate inline `OverageEventRow` interfaces into canonical definition from `lib/supabase/types.ts`. Applied Sub-Variant 4 principle: prefer canonical types from centralized location when available; inline interfaces only as fallback for tables without canonical types. Files: `src/lib/usage-metering/kv-usage-event-sync.ts`, `src/app/api/quota/overage-events/route.ts`, `src/lib/usage-metering/cron-usage-export.ts` — all now import `OverageEventRow` from `@/lib/supabase/types` instead of defining locally. TS error reduction: 101 → 89 (-12 TS2322 errors). Cumulative B2: 462 → 89 (80.7% reduction — over 80% milestone achieved). Tests 1398/1398 pass. Code review 9.8/10 auto-approved. Protected flows untouched.
 
 ---
 
