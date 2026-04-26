@@ -1,6 +1,12 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-26 | **Current Version:** 1.12.37
+**Last Updated:** 2026-04-26 | **Current Version:** 1.12.38
+
+---
+
+## [2026-04-26] B2 Phase 20 — Formalize DB-Result Cast Sub-Variant + GraphQL Analytics Sub-Variant 2 (v1.12.38)
+
+**B2 Phase 20 (graphql/analytics + admin/licenses/reactivate batch):** Extended `src/app/api/graphql/analytics/route.ts` with **HTTP Boundary Cast Sub-Variant 2 instance #6** — defensive `.catch(() => ({}))` wrapper pattern on internal Promise boundary (Phase 19 introduced Sub-Variant 3 internal promise cast; Phase 20 demonstrates Sub-Variant 2 applied to same file's secondary cast). Refactored `src/app/api/admin/licenses/[id]/reactivate/route.ts`, formalized **NEW Sub-Variant 4: DB-Result Cast** — casting Supabase/D1 query results from `unknown` via `ReturnType<typeof db.from>` helper to local DB-row interface at narrow consumption point. Pattern canonical example: rename pattern (`data` → `rawData`), nullable cast (`as ReactivatedLicenseRow | null`), optional-chained reads with fallbacks (`?? defaultValue`). 5 instances codebase-wide (including 4 pre-existing). Eliminated 6 TS2339 + TS18046 errors (19 → 13, -31.6% Phase 20 delta, -97.2% cumulative B2 from baseline 462 → 13). Tests 1394/1394 pass. Code review 9.8/10 auto-approved. Closes Phase 19 M1 review carry.
 
 ---
 

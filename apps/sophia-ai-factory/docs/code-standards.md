@@ -201,7 +201,7 @@ Client receives response from server, casts `(await res.json()) as InterfaceName
 - **Phase 18 (async/await + optional nested object):** `src/components/raas/mission-launcher.tsx` — `MissionCreateResponse` interface cast from `/api/missions/create` endpoint via async/await. Pattern variant: optional nested `mission?: { id?: string }` + parallel `error?: string` + hardened `onSuccess(string)` signature with fallback `?? ''` for required string field. Demonstrates response-body cast handles complex optional structures + async/await blocks.
 - **Phase 19 (dual-endpoint with individual fallbacks):** `src/components/raas/api-key-list.tsx` — DUAL-ENDPOINT variant with 2 parallel fetches (same as Phase 12 pattern). `Promise.all([fetch(...), fetch(...)])` → separate interfaces for each response, individual fallbacks per response. Demonstrates pattern consistency across Phase 12 and Phase 19 in dual-fetch scenarios.
 
-### Sub-Variant 2: Request-Body Type Cast (5 Instances)
+### Sub-Variant 2: Request-Body Type Cast (6 Instances)
 
 Server API route receives request body from client, casts `(await request.json()) as InterfaceName`.
 
@@ -210,6 +210,7 @@ Server API route receives request body from client, casts `(await request.json()
 - **Phase 15 (second request-body variant):** `src/app/api/coupons/activate/route.ts` — `CouponActivateRequest` cast from POST `/api/coupons/activate` body. Same pattern shape: optional fields (`coupon?`, `tier?`), canonical example of request-body casting pattern reuse across sibling endpoints.
 - **Phase 16 (third request-body variant, defensive `.catch()` pattern):** `src/app/api/usage/reconciliation/sync/route.ts` — `UsageReconciliationSyncRequest` cast from POST `/api/usage/reconciliation/sync` body. Defensive variant: request body is optional (cron/admin endpoint), wrapped with `.catch(() => ({}))` before cast to prevent parse failures from throwing. Interface has all-optional fields so empty object `{}` is structurally valid.
 - **Phase 17 (fourth + fifth request-body variants, batch admin dunning):** `src/app/api/admin/dunning/[licenseNonce]/restore/route.ts` — `RestoreLicenseRequest` + `src/app/api/admin/dunning/[licenseNonce]/suspend/route.ts` — `SuspendLicenseRequest`. Both apply defensive `.catch(() => ({}))` pattern. Both interfaces share identical shape (`reason?: string`) but maintained as separate types per HTTP boundary anti-corruption isolation principle (avoids god-type, each endpoint owns its contract). Canonical examples of defensive variant reuse across sibling admin endpoints.
+- **Phase 20 (sixth request-body variant, graphql analytics):** `src/app/api/graphql/analytics/route.ts` — defensive `.catch(() => ({}))` wrapper on internal Promise boundary cast (secondary pattern instance in same file). Demonstrates Sub-Variant 2 generalizes to defensive boundaries beyond pure HTTP request-body scenarios.
 
 **Defensive Variant Pattern** (Phase 16 / Phase 17):
 ```typescript
@@ -257,6 +258,27 @@ const data = (await getAnalyticsData(params)) as AnalyticsQueryResponse;
 ```
 
 Prefer this approach to modifying the helper's return type annotation (which may affect multiple callsites or break abstraction). The interface is defined **at the narrowest consumption point** with only the fields actually used (YAGNI principle).
+
+### Sub-Variant 4: DB-Result Cast (5 Instances — NEW)
+
+Casting Supabase/D1 query results from `unknown` (via `ReturnType<typeof db.from>` helper) to local DB-row interface at narrow consumption point.
+
+**Canonical Example (Phase 20 — NEW):**
+- **Phase 20:** `src/app/api/admin/licenses/[id]/reactivate/route.ts` — `ReactivatedLicenseRow` interface cast. Pattern: rename pattern (`data` → `rawData` distinguishes wire result from domain object), nullable cast (`as ReactivatedLicenseRow | null`) for `.single()` returns, optional-chained reads with fallbacks (`license?.expiresAt ?? null`). Only consumed fields modeled in interface (YAGNI: don't replicate full DB schema). Defensive fallbacks prevent null-dereference errors.
+
+**General Pattern:**
+```typescript
+interface ReactivatedLicenseRow {
+  expiresAt: number | null;
+  status?: string;
+}
+
+const rawData = (await db.from('licenses').select('*').eq('id', licenseId).single()) as ReactivatedLicenseRow | null;
+const expiresAt = rawData?.expiresAt ?? null;
+const status = rawData?.status ?? 'active';
+```
+
+Distinct from HTTP boundary casts: DB results are strongly typed by schema but TypeScript cannot infer `ReturnType<typeof db.from>` without manual interface definition at point of use. Cast occurs at **narrowest consumption point**, interfaces omit unused fields, all reads optional-chained. 5 instances codebase-wide (Phase 20 + 4 pre-existing).
 
 ---
 
