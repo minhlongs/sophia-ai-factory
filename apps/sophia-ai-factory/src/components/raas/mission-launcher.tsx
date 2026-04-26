@@ -44,6 +44,12 @@ interface Props {
   onSuccess?: (missionId: string) => void;
 }
 
+interface MissionCreateResponse {
+  mission?: { id: string };
+  id?: string;
+  error?: string;
+}
+
 export function MissionLauncher({ balance = 0, onClose, onSuccess }: Props) {
   const t = useTranslations('dashboard.missions');
   const [selected, setSelected] = useState<Template | null>(null);
@@ -68,9 +74,9 @@ export function MissionLauncher({ balance = 0, onClose, onSuccess }: Props) {
           params,
         }),
       });
-      if (!res.ok) throw new Error((await res.json()).error || 'Failed');
-      const data = await res.json();
-      onSuccess?.(data.mission?.id ?? data.id);
+      if (!res.ok) throw new Error(((await res.json()) as MissionCreateResponse).error || 'Failed');
+      const data = (await res.json()) as MissionCreateResponse;
+      onSuccess?.(data.mission?.id ?? data.id ?? '');
       onClose();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
