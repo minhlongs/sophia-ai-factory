@@ -15,6 +15,13 @@ interface Props {
   onCancel: () => void;
 }
 
+interface ApiKeysCreateResponse {
+  error?: string;
+  message?: string;
+  key?: { apiKey?: string };
+  apiKey?: string;
+}
+
 export function ApiKeyCreateModal({ onCreated, onCancel }: Props) {
   const t = useTranslations('dashboard.apiKeys');
   const [name, setName] = useState('');
@@ -31,7 +38,7 @@ export function ApiKeyCreateModal({ onCreated, onCancel }: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: name.trim(), permissions: ['audit:read', 'reports:download'] }),
       });
-      const data = await res.json();
+      const data = (await res.json()) as ApiKeysCreateResponse;
       if (!res.ok) throw new Error(data.error ?? data.message ?? `HTTP ${res.status}`);
       onCreated(data.key?.apiKey ?? data.apiKey ?? '');
     } catch (e: unknown) {

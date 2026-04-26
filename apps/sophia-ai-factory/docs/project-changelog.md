@@ -1,6 +1,12 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-26 | **Current Version:** 1.12.27
+**Last Updated:** 2026-04-26 | **Current Version:** 1.12.28
+
+---
+
+## [2026-04-26] B2 Phase 10 — API Key Create Modal HTTP Boundary Casting (v1.12.28)
+
+**B2 Phase 10 (API key create modal):** Refactored `src/components/raas/api-key-create-modal.tsx`, added local `ApiKeysCreateResponse` interface to type-cast HTTP boundary response from `/api/raas/api-keys/create` endpoint, applied anti-corruption cast pattern `(await response.json()) as ApiKeysCreateResponse`. Pattern instance #4 of "HTTP boundary cast" (Phase 6 `RaasSyncResponse`, Phase 8 `HeyGenVideoStatusResponse`, Phase 9 `ProposalApiResponse`). Eliminated 4 TS18046 errors (47→43, -8.5% cumulative from baseline 63 TS18046 in B2 Phase 1). Tests 1394/1394 pass. Review 9.6/10.
 
 ---
 
