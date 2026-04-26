@@ -34,9 +34,10 @@
 | B2-P10 | src/components/raas/api-key-create-modal.tsx | -4 | HTTP boundary anti-corruption | 1394/1394 ✅ | 9.6/10 | ✅ DONE | TBD |
 | B2-P11 | src/components/admin/licenses/audit-log-table.tsx | -3 | HTTP boundary anti-corruption | 1394/1394 ✅ | 9.7/10 | ✅ DONE | TBD |
 | B2-P12 | src/components/quota/quota-usage-dashboard.tsx | -3 | HTTP boundary (dual-endpoint) | 1394/1394 ✅ | 9.7/10 | ✅ DONE | TBD |
+| B2-P13 | src/components/dashboard/referral-share-widget.tsx | -2 | HTTP boundary (single-endpoint) | 1394/1394 ✅ | 9.8/10 | ✅ DONE | TBD |
 
-**Cumulative TS18046 Reduction:** 462 baseline → 37 remaining (-425 fixed, 92% reduction)
-**Phase 13 Ready:** Backlog candidates identified (`referral-share-widget.tsx`, `coupons/apply/route.ts`, etc.)
+**Cumulative TS18046 Reduction:** 462 baseline → 35 remaining (-427 fixed, 92.4% reduction)
+**Phase 14 Ready:** Backlog candidates identified (`coupons/apply/route.ts`, `licenses/[id]/reactivate/route.ts`, `usage/reconciliation/sync/route.ts`)
 
 **Baseline Discrepancy (Unresolved):** Initial tracker recorded 462 baseline errors (next.config.ts:24 ref). Post-Phase 8 `npx tsc --noEmit 2>&1 | grep -c "TS18046"` returns 51. Post-Phase 10 baseline = 43. Possible explanations: (1) prior untracked phases fixed errors, (2) baseline may have included other error types, (3) configuration changes affected detection. Continue from current 43-error state. **Carry forward to Phase 11 planning.**
 

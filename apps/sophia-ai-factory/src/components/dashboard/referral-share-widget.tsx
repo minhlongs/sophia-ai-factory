@@ -4,6 +4,11 @@ import { useState } from 'react';
 import { Copy, Check, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+interface ReferralGenerateResponse {
+  code?: string;
+  error?: string;
+}
+
 export function ReferralShareWidget() {
   const [code, setCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -13,7 +18,7 @@ export function ReferralShareWidget() {
     setLoading(true);
     try {
       const res = await fetch('/api/referral/generate', { method: 'POST' });
-      const data = await res.json();
+      const data = (await res.json()) as ReferralGenerateResponse;
       if (data.code) setCode(data.code);
     } catch { /* ignore */ }
     setLoading(false);

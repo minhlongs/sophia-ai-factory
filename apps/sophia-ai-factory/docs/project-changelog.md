@@ -1,6 +1,12 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-26 | **Current Version:** 1.12.30
+**Last Updated:** 2026-04-26 | **Current Version:** 1.12.31
+
+---
+
+## [2026-04-26] B2 Phase 13 — Referral Share Widget Single-Endpoint HTTP Boundary Casting (v1.12.31)
+
+**B2 Phase 13 (referral share widget):** Refactored `src/components/dashboard/referral-share-widget.tsx`, added local `ReferralGenerateResponse` interface to type-cast HTTP boundary response from `/api/referral/generate` endpoint, applied anti-corruption cast pattern `(await res.json()) as ReferralGenerateResponse`. Pattern instance #7 of "HTTP boundary cast" — **single-endpoint minimal-interface variant** (mirrors Phase 11 cleanness: strict YAGNI, omits unused server fields). Eliminated 2 TS18046 errors (37→35, -5.4% Phase 13 delta, -92.4% cumulative B2 from baseline 462→35). Tests 1394/1394 pass. Review 9.8/10 auto-approved.
 
 ---
 
