@@ -11,6 +11,15 @@ import { getCurrentUser } from '@/lib/better-auth-session';
 import { logger } from '@/lib/utils/logger-utility';
 import { toError } from '@/lib/utils/to-error';
 
+interface AlertPreferencesPayload {
+  emailEnabled?: boolean;
+  smsEnabled?: boolean;
+  webhookEnabled?: boolean;
+  defaultWebhookUrl?: string;
+  defaultWebhookSecret?: string;
+  language?: string;
+}
+
 /**
  * GET /api/alerts/preferences
  * Fetch notification preferences for current user
@@ -77,7 +86,7 @@ export async function PUT(request: NextRequest) {
     const supabase = createServerClient();
 
     // Parse request body
-    const body = await request.json();
+    const body = (await request.json().catch(() => ({}))) as AlertPreferencesPayload;
     const {
       emailEnabled,
       smsEnabled,

@@ -1,6 +1,12 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-26 | **Current Version:** 1.13.4
+**Last Updated:** 2026-04-26 | **Current Version:** 1.13.5
+
+---
+
+## MILESTONE v1.13.5 — Smart Resume Runtime Fix + Alerts API Type Safety (Phase 32)
+
+**Phase 32 B2 (TS2339 high-frequency cleanup with critical runtime bug fix):** Targeted 3 files to eliminate 19 TypeScript errors via async correctness and defensive request-body casting. **Group A: Smart Resume Engine Runtime Bug Fix.** `src/lib/gateway/smart-resume-engine.ts` corrected 6 missing `await` statements on `getCheckpointSupabase()` Promise calls (lines 46, 72, 106, 132, 161, 182). Pre-fix: code assigned `Promise<SupabaseClient | null>` to `supabase` variable, then called `.from()` on Promise object → runtime crash when Supabase configured. Post-fix: all 6 sites properly `await` async result. **CRITICAL FIX:** Checkpoint persistence could fail silently in production; campaigns could not resume from saved checkpoints. TS error reduction: 6 TS2339 errors eliminated (property `.from()` does not exist on Promise). **Group B: Alerts API Type Safety.** `src/app/api/alerts/preferences/route.ts` added `AlertPreferencesPayload` interface + Sub-Variant 2 cast (`as AlertPreferencesPayload`) with defensive `.catch(() => ({}))` for malformed JSON. `src/app/api/alerts/rules/route.ts` added `AlertRulePayload` interface + Sub-Variant 2 request-body cast (line 80) + Sub-Variant 4 DB-result cast (`as AlertRuleRow | null`, line 113) for null-safe rule access. Validation flow preserved: missing `thresholdPercent` still triggers 400 error; empty object from `.catch()` → undefined fields → validation rejects. TS error reduction: 13 errors eliminated (6 TS2339 request property access + 1 TS18047 null safety, 6 TS2339 body cast). **Summary:** 235 → 216 TS errors (-19 total: 6 runtime + 12 TS2339 + 1 TS18047). Tests 1398/1398 pass. Code review 9.7/10 auto-approved. Protected flows (Setup Wizard, Telegram Bot, NOWPayments) untouched.
 
 ---
 
