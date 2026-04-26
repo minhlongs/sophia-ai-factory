@@ -54,11 +54,12 @@ export async function extractAgencyId(request: NextRequest): Promise<string | nu
       const db = createServerClient();
       const apiKeyHash = sha256(apiKey);
 
-      const { data, error } = await db
+      const { data: rawData, error } = await db
         .from('raas_api_keys')
         .select('owner_id, permissions')
         .eq('key_hash', apiKeyHash)
         .single();
+      const data = rawData as { owner_id: string | null; permissions?: unknown } | null;
 
       if (error) {
         logger.error('[Tenant Isolation] Error fetching API key data', toError(error));

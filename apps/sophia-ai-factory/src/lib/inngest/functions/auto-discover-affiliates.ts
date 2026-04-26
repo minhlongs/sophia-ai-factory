@@ -104,7 +104,6 @@ export const autoDiscoverAffiliates = inngest.createFunction(
 
         const { error } = await db
           .from("affiliate_products")
-          // @ts-expect-error Database type missing Relationships for Supabase generic inference
           .insert({
             external_id: matchedProgram.id,
             network_id: "clickbank" as const,

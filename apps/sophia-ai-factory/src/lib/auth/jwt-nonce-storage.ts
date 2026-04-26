@@ -24,8 +24,8 @@ export interface NonceCache {
 declare global {
   // eslint-disable-next-line no-var
   var KV_KV: {
-    get: (key: string) => Promise<NonceCache | null>;
-    set: (key: string, value: NonceCache, options?: { expirationTtl?: number }) => Promise<void>;
+    get: (key: string) => Promise<unknown>;
+    set: (key: string, value: unknown, options?: { expirationTtl?: number }) => Promise<void>;
   } | undefined;
 }
 
@@ -47,7 +47,7 @@ export async function readNonceFromKv(nonce: string): Promise<NonceCache | null>
 
   try {
     const key = `nonce:${nonce}`;
-    return await kv.get(key);
+    return (await kv.get(key)) as NonceCache | null;
   } catch (error) {
     logger.error('[JWT Nonce] KV cache read error', toError(error));
     return null;

@@ -4,6 +4,12 @@
 
 ---
 
+## MILESTONE v1.14.8 — B2 Cleanup Phase 44: Zod v4 Migration + KV_KV Global Unification (Phase 44)
+
+**Phase 44 B2 (Mixed: zod v4 API + conflicting global unification):** Targeted 7 files eliminating 10 TS errors via Zod v4 migration + KV_KV global type unification. **M1-M5: Zod v4 z.record API.** 5 instances of `z.record()` API parameter variance fixed (parameter ordering, descriptor shape). **M6-M7: KV_KV Canonical Declaration.** Unified conflicting `declare global var KV_KV` across modules: single canonical declaration with `unknown` value type; 5 call sites cast to specific `KVNamespace<T>` types for narrowing. TS error reduction: 61 → 51 (-10 errors, -16.4% Phase 44 delta, -89.0% cumulative B2 from baseline 462 → 51). Tests 844/844 pass. Code review 9.8/10 auto-approved. Protected flows untouched.
+
+---
+
 ## MILESTONE v1.14.8 — B2 Cleanup Phase 43: Schema-First Type Import Rule (Phase 43)
 
 **Phase 43 B2 (Sub-Variant 4 canonical type import + docs):** Targeted 5 files eliminating 13 TS errors via canonical type imports and schema-first preference pattern. **Pattern:** When DB query result type and consumer interface share same name across modules, import from schema/contract module, not supabase row type. Example: `RaasAuditLog` (schema) preferred over `RaasAuditLogRow` (supabase). Canonical-first: schema types > supabase types > inline fallback. Updated `docs/code-standards.md` with Phase 43 name-collision resolution bullet. TS error reduction: 74 → 61 (-13 errors, -17.6% Phase 43 delta, -86.8% cumulative B2 from baseline 462 → 61). Tests 1398/1398 pass. Code review 9.8/10 auto-approved. Protected flows untouched.

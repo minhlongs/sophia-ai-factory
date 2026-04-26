@@ -10,13 +10,8 @@ export interface CachedQuota {
   timestamp?: number;
 }
 
-declare global {
-  // eslint-disable-next-line no-var
-  var KV_KV: {
-    get: (key: string) => Promise<CachedQuota | null>;
-    set: (key: string, value: CachedQuota, options?: { expirationTtl?: number }) => Promise<void>;
-  } | undefined;
-}
+// KV_KV global is declared in jwt-nonce-storage.ts with unknown value type.
+// Callers in this module cast to/from CachedQuota at usage sites.
 
 export interface QuotaCheckContext {
   userId: string;
