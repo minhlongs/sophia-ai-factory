@@ -40,7 +40,7 @@ interface LicenseRowData {
   id: string;
   tier: string;
   createdAt: number;
-  expiresAt: number;
+  expiresAt: number | null;
   isRevoked: boolean;
   validateCount: number;
   customerEmail?: string;
@@ -89,7 +89,7 @@ export function LicenseListTableRow({
         {new Date(license.createdAt * 1000).toLocaleDateString()}
       </TableCell>
       <TableCell className="text-sm text-muted-foreground">
-        {license.expiresAt === 0
+        {!license.expiresAt
           ? 'Perpetual'
           : new Date(license.expiresAt * 1000).toLocaleDateString()}
       </TableCell>

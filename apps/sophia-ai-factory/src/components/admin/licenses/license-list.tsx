@@ -30,9 +30,9 @@ interface LicenseListProps {
   onExtend?: (id: string, days: number) => void;
 }
 
-function getLicenseStatus(license: { isRevoked: boolean; expiresAt: number }): string {
+function getLicenseStatus(license: { isRevoked: boolean; expiresAt: number | null }): string {
   if (license.isRevoked) return 'revoked';
-  if (license.expiresAt !== 0 && license.expiresAt < Math.floor(Date.now() / 1000)) return 'expired';
+  if (license.expiresAt && license.expiresAt < Math.floor(Date.now() / 1000)) return 'expired';
   return 'active';
 }
 

@@ -8,13 +8,13 @@
 import { useState, useEffect } from 'react';
 import { logger } from '@/lib/utils/logger-utility';
 import { toError } from '@/lib/utils/to-error';
-import type { LicenseSummary } from '@/lib/raas-schema';
+import type { LicenseSummary, LicenseListResponse } from '@/lib/raas-schema';
 
 export interface License {
   id: string;
   tier: string;
   createdAt: number;
-  expiresAt: number;
+  expiresAt: number | null;
   isRevoked: boolean;
   revokedAt?: number;
   validateCount: number;
@@ -26,6 +26,10 @@ export const LIMIT = 20;
 interface UseLicenseListActionsProps {
   onRevoke?: (id: string, reason?: string) => void;
   onExtend?: (id: string, days: number) => void;
+}
+
+interface ActionErrorResponse {
+  error?: string;
 }
 
 export function useLicenseListActions({ onRevoke, onExtend }: UseLicenseListActionsProps) {
@@ -53,7 +57,7 @@ export function useLicenseListActions({ onRevoke, onExtend }: UseLicenseListActi
       });
 
       const response = await fetch(`/api/admin/licenses?${params}`);
-      const data = await response.json();
+      const data = (await response.json()) as LicenseListResponse;
 
       if (response.ok) {
         const licensesWithEmail = data.licenses.map((lic: LicenseSummary) => ({
@@ -90,7 +94,7 @@ export function useLicenseListActions({ onRevoke, onExtend }: UseLicenseListActi
         onRevoke?.(id, reason);
         setRevokeDialogOpen(false);
       } else {
-        const data = await response.json();
+        const data = (await response.json()) as ActionErrorResponse;
         alert(`Failed to revoke: ${data.error}`);
       }
     } catch (error) {
@@ -105,7 +109,7 @@ export function useLicenseListActions({ onRevoke, onExtend }: UseLicenseListActi
       if (response.ok) {
         await fetchLicenses();
       } else {
-        const data = await response.json();
+        const data = (await response.json()) as ActionErrorResponse;
         alert(`Failed to reactivate: ${data.error}`);
       }
     } catch (error) {
@@ -126,7 +130,7 @@ export function useLicenseListActions({ onRevoke, onExtend }: UseLicenseListActi
         setSelectedLicenseId(undefined);
         onExtend?.(id, days);
       } else {
-        const data = await response.json();
+        const data = (await response.json()) as ActionErrorResponse;
         alert(`Failed to extend: ${data.error}`);
       }
     } catch (error) {

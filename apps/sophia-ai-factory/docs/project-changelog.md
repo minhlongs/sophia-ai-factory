@@ -4,6 +4,12 @@
 
 ---
 
+## [2026-04-25] B2 Phase 5 — License List Actions Type Safety & Cascade Fix (v1.12.23)
+
+**B2 Phase 5 (license list actions):** Refactored `src/components/admin/licenses/use-license-list-actions.ts`, added local `LicenseListResponse` + `ActionErrorResponse` interfaces + type cast responses from canonical `raas-schema`, cascade-fixed `License.expiresAt` (number → number | null) alignment with canonical `LicenseSummary` in `license-list.tsx` and `license-list-table-row.tsx`, latent UI bug fix: `!expiresAt` truthy check now correctly handles null AND 0 as "perpetual" license. Eliminated 5 TS18046 errors (435→430, cumulative -32 from baseline 462). Tests 1394/1394 pass. Review 9.7/10.
+
+---
+
 ## [2026-04-25] B2 Phase 4 — License Regenerate Hook Type Safety (v1.12.22)
 
 **B2 Phase 4 (license regenerate):** Refactored `src/components/admin/licenses/use-license-regenerate.ts`, added local `RegenerateApiResponse` interface + type cast `(await response.json()) as RegenerateApiResponse` + runtime guard for data forwarded via callback, eliminated 5 TS18046 errors (440→435, -1.1%). Tests 1394/1394 pass. Admin/licenses regenerate flow (PROTECTED FLOW) behavior preserved.
