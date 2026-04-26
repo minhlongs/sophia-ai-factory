@@ -11,6 +11,10 @@ import { suspendLicense } from '@/lib/billing/dunning-workflow';
 import { logger } from '@/lib/utils/logger-utility';
 import { toError } from '@/lib/utils/to-error';
 
+interface SuspendLicenseRequest {
+  reason?: string;
+}
+
 export async function POST(
   req: NextRequest,
   { params }: { params: { licenseNonce: string } }
@@ -37,7 +41,7 @@ export async function POST(
     }
 
     // Get request body
-    const body = await req.json().catch(() => ({}));
+    const body = (await req.json().catch(() => ({}))) as SuspendLicenseRequest;
     const reason = body.reason || 'Manual suspension by admin';
 
     // Get user ID from license
