@@ -15,6 +15,12 @@ import { toError } from '@/lib/utils/to-error';
 import { getQuotaStatus } from '@/lib/quota/quota-checker';
 import { getUserOverageEvents, getOverageSummary } from '@/lib/quota/overage-logger';
 
+interface QuotaLicenseRow {
+  nonce: string;
+  tier: string;
+  created_by: string | null;
+}
+
 /**
  * GET /api/quota/overage-events
  * Fetch user's overage events for dashboard display
@@ -79,14 +85,15 @@ export async function GETStatus(req: NextRequest) {
     const supabase = createServerClient();
 
     // Get user's active license
-    const { data: license } = await supabase
+    const { data: rawLicense } = await supabase
       .from('raas_licenses')
       .select('nonce, tier, created_by')
       .eq('created_by', user.id)
       .eq('is_revoked', false)
       .order('created_at', { ascending: false })
       .limit(1)
-      .single<{ nonce: string; tier: string; created_by: string | null }>();
+      .single();
+    const license = rawLicense as QuotaLicenseRow | null;
 
     if (!license) {
       return NextResponse.json(

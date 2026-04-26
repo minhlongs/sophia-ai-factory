@@ -262,7 +262,7 @@ const data = (await getAnalyticsData(params)) as AnalyticsQueryResponse;
 
 Prefer this approach to modifying the helper's return type annotation (which may affect multiple callsites or break abstraction). The interface is defined **at the narrowest consumption point** with only the fields actually used (YAGNI principle).
 
-### Sub-Variant 4: DB-Result Cast (12 Instances)
+### Sub-Variant 4: DB-Result Cast (16 Instances)
 
 Casting Supabase/D1 query results from `unknown` (via `ReturnType<typeof db.from>` helper) to local DB-row interface at narrow consumption point.
 
@@ -271,6 +271,8 @@ Casting Supabase/D1 query results from `unknown` (via `ReturnType<typeof db.from
 - **Phase 21 (roi calculation):** `src/lib/analytics/roi-calculator.ts` — `RaasLicenseRoiRow` + `UsageEventCreditRow` interfaces cast at 4 query sites. Pattern: 2-interface approach separates license metrics from event aggregation; defensive nonce filtering at L163 (`if (!license.nonce) continue`) + optional-chained reads with fallbacks; type-narrowed metadata reads via `.filter((n): n is string => !!n)` for guaranteed string array before iteration. Demonstrates pattern scales to multi-query aggregation scenarios.
 - **Phase 21 (violation analytics):** `src/lib/analytics/queries/violation-queries.ts` — `ViolationRow` interface cast at 2 query sites with `toError()` logging wrapper. Pattern: combines DB-Result Cast with Logger Error Handling (see below); enum coercions (`as ViolationType`, `as SeverityLevel`) at map boundary; defensive null→undefined conversions (`resolved_at: v.resolved_at ?? undefined`) for domain contract alignment.
 - **Phase 21 (usage summary):** `src/app/api/billing/usage-summary/route.ts` — `UsageSummaryLicenseRow` interface cast from license SELECT query. Pattern: minimal 3-field interface (YAGNI scope), optional-chained threshold reads.
+- **Phase 22 (invoice generator):** `src/lib/raas/raas-invoice-generator.ts` — `RaasLicense` interface cast at 4 query sites (2 SELECT via `.single()`, 2 UPDATE via `.update().select().single()`). Pattern: for subscription lifecycle (reactivate/revoke), 2 functions use double-cast pattern `as unknown as RaasLicense` on UPDATE chains. Demonstrates pattern generalizes to write-then-read scenarios where Supabase return type doesn't structurally overlap with domain row interface. Added `toError()` wrapper for 2 UPDATE error logs.
+- **Phase 22 (quota overage API):** `src/app/api/quota/overage-events/route.ts` — `QuotaLicenseRow` interface cast from license SELECT. Pattern: documents D1 client limitation — D1 `.single<T>()` does NOT support generic type arguments (TS2558 error with `.single<{nonce: string}>()`); fix: cast with `as unknown as QuotaLicenseRow`. Canonical anti-example of unsupported generic argument on `.single()` chain.
 
 **General Pattern:**
 ```typescript
@@ -295,7 +297,56 @@ const licenses = rawLicenses.filter((l) => l.nonce); // Type: (RaasLicenseRoiRow
 const noncesList = licenses.map(l => l.nonce);
 ```
 
-Distinct from HTTP boundary casts: DB results are strongly typed by schema but TypeScript cannot infer `ReturnType<typeof db.from>` without manual interface definition at point of use. Cast occurs at **narrowest consumption point**, interfaces omit unused fields, all reads optional-chained. 12 instances codebase-wide (Phase 21 adds 7 new + Phase 20 1 + 4 pre-existing).
+**For .update().select().single() Chain (NEW — Phase 22):**
+When chaining `.update().select().single()` on Supabase, the return type may not structurally overlap with the row interface. Use **double-cast pattern** `as unknown as InterfaceName` to avoid TS2352 (comparison with incompatible type):
+
+```typescript
+// src/lib/raas/raas-invoice-generator.ts L66
+const rawUpdated = await db
+  .from('raas_licenses')
+  .update({ status: 'active' })
+  .eq('id', licenseId)
+  .select()
+  .single();
+
+return rawUpdated as unknown as RaasLicense;  // Double-cast avoids TS2352
+```
+
+Rationale: Supabase's query builder returns `Promise<unknown>` from `.single()` without full type information about the SELECT shape. A direct `as RaasLicense` cast may trigger TS2352 (no structural overlap detected). The workaround: cast to `unknown` first (always valid), then to the target interface. Runtime behavior unchanged; pure TypeScript workaround for query builder limitations.
+
+**D1 Client `.single()` Limitation (NEW — Phase 22):**
+The D1 query chain client does NOT support generic type arguments on `.single<T>()`. Attempting `db.from('table').select().single<{nonce: string}>()` causes TS2558 ("Object is of type unknown").
+
+**Anti-Example (DO NOT DO):**
+```typescript
+// TS2558 error — D1 doesn't support generics on .single()
+const result = await db
+  .from('licenses')
+  .select('nonce')
+  .eq('id', id)
+  .single<{nonce: string}>(); // ← ERROR
+```
+
+**Canonical Fix (Phase 22):**
+```typescript
+// src/app/api/quota/overage-events/route.ts L96
+interface QuotaLicenseRow {
+  nonce: string | null;
+  status: string;
+}
+
+const rawLicense = await db
+  .from('licenses')
+  .select('*')
+  .eq('id', licenseId)
+  .single();
+
+const license = rawLicense as QuotaLicenseRow | null;
+```
+
+Use interface cast pattern instead of generic argument. This is a known D1 client limitation; all D1 + Supabase queries should use cast-at-consumption-point rather than generic type parameters on the `.single()` call itself.
+
+Distinct from HTTP boundary casts: DB results are strongly typed by schema but TypeScript cannot infer `ReturnType<typeof db.from>` without manual interface definition at point of use. Cast occurs at **narrowest consumption point**, interfaces omit unused fields, all reads optional-chained. 16 instances codebase-wide (Phase 22 adds 5 new + Phase 21 7 new + Phase 20 1 + 3 pre-existing).
 
 ---
 
@@ -328,6 +379,7 @@ try {
 **Canonical Sites (Phase 21+):**
 - `src/lib/analytics/queries/violation-queries.ts` — 2 query error sites wrapped with `toError()`
 - `src/app/api/admin/licenses/[id]/reactivate/route.ts` — logger at L71 wrapped with `toError()`
+- `src/lib/raas/raas-invoice-generator.ts` — 2 UPDATE error sites (L50, L113) wrapped with `toError()` for Supabase QueryError normalization
 - Any route or function catching query/async errors should use `toError()` before `logger.error()`
 
 **Documentation Reference:**

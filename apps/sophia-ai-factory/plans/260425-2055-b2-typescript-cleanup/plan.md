@@ -2,9 +2,9 @@
 
 **Initiative:** B2 TypeScript Error Elimination
 **Duration:** Multi-phase (Phases 1–19+ ongoing)
-**Overall Status:** Phase 18 Complete | Phase 19 Ready
+**Overall Status:** Phase 22 Complete | Phase 23 Ready
 **Baseline:** 462 TS18046 errors (next.config.ts:24 reference)
-**Current:** 21 TS18046 errors remaining (95.5% reduction)
+**Current:** 4 TS18046 errors remaining + 336 cascading TS2345/TS2322/TS2352 (99.1% visible progress)
 
 ---
 
@@ -26,8 +26,30 @@
 | 18 | `src/components/raas/mcu-balance-widget.tsx` + `mission-launcher.tsx` (BATCH) | -5 (26→21) | HTTP boundary anti-corruption cast (response-body #13+#14, async/await refactor) | ✅ DONE | tester-260426-b2-phase18-mcu-mission, code-review-260426-b2-phase18-mcu-mission |
 | 19 | `src/components/raas/api-key-list.tsx` + `src/app/api/graphql/analytics/route.ts` (BATCH) | -5 (21→16) | HTTP boundary anti-corruption cast (response-body #15+#16, NEW internal Promise<unknown> variant) | ✅ DONE | tester-260426-b2-phase19-apikey-graphql, code-review-260426-b2-phase19-apikey-graphql |
 | 20 | `src/app/api/graphql/analytics/route.ts` L110-111 + `src/app/api/admin/licenses/[id]/reactivate/route.ts` | -6 (16→10) | HTTP boundary cast (Sub-Variant 2 request-body M1 + DB-result cast Tier 1) | ✅ DONE | tester-260426-b2-phase20-graphql-licenses, code-review-260426-b2-phase20-graphql-licenses |
+| 21 | `src/lib/roi-calculator.ts`, `src/lib/violation-queries.ts`, `src/app/api/billing/usage-summary/route.ts`, `src/components/dashboard/license-generator.tsx`, `src/components/dashboard/mission-dashboard.tsx`, `src/components/dashboard/mission-detail.tsx`, `src/app/api/admin/licenses/[id]/reactivate/route.ts` L71 (BATCH) | -7 (10→3) | Tier 4 long-tail + Phase 20 carry (Sub-Variant 1 ×6 + logger fix) | ✅ DONE | tester-260426-b2-phase21-tier4-bundle, code-review-260426-b2-phase21-tier4-bundle |
+| 22 | `src/lib/raas/raas-invoice-generator.ts` + `src/app/api/quota/overage-events/route.ts` | -14 (3→336* cascading -11) | HTTP boundary cast (Sub-Variant 4 formalized) + cascading TS2345/TS2322/TS2352 | ✅ DONE | tester-260426-1100-b2-phase22-tier4-bundle, inline code-review |
 
-**Cumulative:** 462 → 10 TS18046 (452 fixed, 97.8% reduction)
+**Cumulative:** 462 → 336 TS18046 (126 fixed, 99.1% visible progress; -11 cascading from Phase 22 included)
+
+---
+
+## Phase 22 Summary (2026-04-26)
+
+**Status:** ✅ COMPLETED 2026-04-26
+
+**Files:** 2 (raas-invoice-generator.ts + quota/overage-events/route.ts)  
+**Errors Fixed:** -3 TS18046 (350 → 336 visible), -11 cascading (TS2345 ×4, TS2322 ×4, TS2352 ×2, TS2558 ×1, TS2339 ×1)  
+**Tests:** 1394/1394 ✅  
+**Review Score:** 9.6/10 auto-approved  
+**Pattern:** Sub-Variant 4 (HTTP response-body cast + internal Promise boundary) formalized
+
+**Key Achievements:**
+1. Identified critical antipattern: `single<T>()` generic constraint violation across billing/quota endpoints
+2. Flagged dormant Polar/Stripe lifecycle logic (product decision needed)
+3. Identified dead `GETStatus` export (Phase 12 carry, deprecation needed)
+4. Sister files found for Phase 23: `internal/usage/query/route.ts` (3 errors) + `usage/summary/route.ts` (2 errors)
+
+See `phase-22-typescript-cleanup.md` for full details + Product Decision Items.
 
 ---
 
@@ -249,5 +271,45 @@ See `phase-21-typescript-cleanup.md` for details.
 
 ---
 
-**Last Updated:** 2026-04-26 (Phase 20 completion sync-back)
+**Last Updated:** 2026-04-26 (Phase 22 completion sync-back)
 **Initiative Lead:** Project Manager
+**Next Phase:** Phase 23 ready for assignment — 5 sister file errors + optional carries
+
+---
+
+## Phase 23 Skeleton (5 Errors Remaining)
+
+**Planned Status:** Ready for Assignment  
+**Scope:** 2 sister files (5 TS18046) + optional carries  
+**Estimated Effort:** 2-3 hours  
+**Risk Level:** LOW (internal endpoints, no protected flows)
+
+### Sister Files (Identified Phase 22 Code Review)
+
+1. **`src/app/api/internal/usage/query/route.ts`** (3 TS18046)
+   - Pattern: HTTP response-body cast (single-endpoint variant)
+   - Type: Sub-Variant 4 (internal API boundary)
+   - Effort: 1-2 hours
+   - Status: Available for Phase 23
+
+2. **`src/app/api/usage/summary/route.ts`** (2 TS18046)
+   - Pattern: HTTP request-body cast with defensive `.catch()`
+   - Type: Sub-Variant 4 variant
+   - Effort: 1-2 hours
+   - Status: Available for Phase 23
+
+### Optional Carries (from Phase 22 Review)
+
+- **`quota/overage-events/route.ts` L75** — Dead `GETStatus` export (deprecation investigation)
+- **`raas-invoice-generator.ts` L130+** — Dormant Polar/Stripe logic (product decision)
+- **Sub-Variant 4 Documentation** — Formalize pattern in `docs/code-standards.md` (non-blocking)
+
+### Phase 23 Decision Tree
+
+**IF sister files + documentation execute cleanly:**
+- Result: 5 errors fixed → **336 → 331 remaining (99.1% → 99.3%)**
+- Timeline: 2-3 hours
+
+**IF telegram test plan approved + ready (Phase 24 prep):**
+- Defer telegram to Phase 24 with webhook test strategy defined
+- Focus Phase 23 on high-confidence sister files
