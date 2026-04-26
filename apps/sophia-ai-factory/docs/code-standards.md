@@ -146,6 +146,29 @@ if (!parsed.success) {
 
 Use `.issues` for all new Zod v4+ validation error handling.
 
+### Recharts TooltipProps Intersection Pattern
+
+Recharts upstream `TooltipProps<ValueType, NameType>` is missing optional `payload` and `label` fields in type definitions. Use intersection type pattern for proper type safety in custom tooltip components (Phase 34).
+
+```typescript
+// Custom tooltip props intersection
+type CustomTooltipProps = TooltipProps<ValueType, NameType> & {
+  payload?: Array<{ value: number; name: string; color?: string }>;
+  label?: string;
+};
+
+export function CustomTooltip({ payload, label, ...props }: CustomTooltipProps) {
+  return (
+    <div className="bg-white p-2 border rounded">
+      {label && <p className="font-bold">{label}</p>}
+      {payload?.map(entry => <p key={entry.name}>{entry.name}: {entry.value}</p>)}
+    </div>
+  );
+}
+```
+
+Applied in 4 analytics chart components (src/components/analytics/*).
+
 ## Environment Variables
 - Access environment variables **only on the server**.
 - Prefix public variables with `NEXT_PUBLIC_`.

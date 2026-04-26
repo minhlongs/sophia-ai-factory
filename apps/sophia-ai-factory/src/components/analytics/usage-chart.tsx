@@ -52,7 +52,12 @@ function formatTimestamp(timestamp: number, granularity: 'hour' | 'day'): string
   });
 }
 
-function CustomTooltip({ active, payload, label }: TooltipProps<ValueType, NameType>) {
+type CustomTooltipProps = TooltipProps<ValueType, NameType> & {
+  payload?: Array<{ payload: ChartDataPoint }>;
+  label?: string;
+};
+
+function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   if (active && payload && payload.length) {
     const data = payload[0].payload as ChartDataPoint;
     return (

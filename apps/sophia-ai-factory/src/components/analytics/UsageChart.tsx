@@ -67,12 +67,17 @@ export function UsageChart({
   };
 
   // Custom tooltip with proper Recharts types
-  const CustomTooltip = ({ active, payload, label }: TooltipProps<ValueType, NameType>) => {
+  type CustomTooltipProps = TooltipProps<ValueType, NameType> & {
+    payload?: Array<{ name?: string; value?: number; color?: string; payload?: unknown }>;
+    label?: string;
+  };
+
+  const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-background border border-border rounded-lg p-3 shadow-lg">
           <p className="text-sm font-semibold mb-2">{label}</p>
-          {payload.map((entry, index) => (
+          {payload.map((entry: { name?: string; value?: number; color?: string }, index: number) => (
             <div key={index} className="flex items-center gap-2 text-sm" style={{ color: entry.color }}>
               <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
               <span>{entry.name}:</span>

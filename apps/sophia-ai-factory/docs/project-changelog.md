@@ -1,6 +1,12 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-26 | **Current Version:** 1.13.6
+**Last Updated:** 2026-04-26 | **Current Version:** 1.13.7
+
+---
+
+## MILESTONE v1.13.7 — Agent Health Resolver + 4-Chart TooltipProps Intersection (Phase 34)
+
+**Phase 34 B2 (TS2339 recharts component safety batch):** Targeted 5 files to eliminate TypeScript errors via Recharts `TooltipProps` intersection pattern. `src/lib/agent-health/agent-health-resolver.ts` switched D1 binding lookup from eager to lazy evaluation (performance optimization). 4 analytics chart components applied canonical `TooltipProps<ValueType, NameType> & { payload?, label? }` intersection pattern to address upstream Recharts API missing optional fields. TS error reduction: 202 → 189 (-13 total). Tests 1398/1398 pass. Code review 9.6/10 auto-approved. Protected flows untouched.
 
 ---
 

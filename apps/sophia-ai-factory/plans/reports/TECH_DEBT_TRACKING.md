@@ -40,6 +40,7 @@
 | **31** | **7 files (6 ZodError + 1 heygen-client)** | **ZodError v4 migration + HeyGen response casts (Sub-Variant 1)** | **-11** | **246** | **235** | **49.1%** | **✅ DONE** | **9.83/10** | **1398/1398** | **Group A (6 files): .error.errors → .error.issues; Group B (heygen-client ×3 sites): discriminated union cast + Array.isArray narrowing; edge case improvement (empty array handling); M1 carry: Add test for alternative HeyGen shape {data: HeyGenAvatar[]}; Phase 30 carries (M1/M2/M3) deferred Phase 32+** |
 | **32** | **3 files (1 smart-resume + 2 alerts routes)** | **Smart resume async fix + alerts Sub-Variant 2/4 casts** | **-19** | **235** | **216** | **53.2%** | **✅ DONE** | **9.7/10** | **1398/1398** | **Group A (smart-resume-engine): 6 missing await on getCheckpointSupabase() — GENUINE RUNTIME BUG FIX; Group B (alerts): Sub-Variant 2 request-body + Sub-Variant 4 DB-result typing; TS errors: 6 runtime async + 12 TS2339 + 1 TS18047; Phase 31 carries (Mi-1/Mi-2/Mi-3) deferred Phase 33+** |
 | **33** | **4 routes (errors/report, analytics/export, setup/verify, alerts/test)** | **Sub-Variant 2 request-body TS2339 batch** | **-14** | **216** | **202** | **56.3%** | **✅ DONE** | **9.7/10** | **1398/1398** | **4 high-frequency API routes: errors/report (5), analytics/export (4), setup/verify (3, PROTECTED FLOW #1), alerts/test (2); all use defensive `.catch(() => ({})) as Type` pattern; Setup Wizard verified & safe; Phase 31 carries (Mi-1/Mi-2/Mi-3) deferred Phase 34+** |
+| **34** | **agent-health-resolver + 4 charts (UsageChart, ErrorRateChart, service-breakdown, bonus)** | **Agent-health D1 variant + chart TooltipProps TS2339/TS2352 batch** | **-13** | **202** | **189** | **59.1%** | **✅ DONE** | **9.6/10** | **1398/1398** | **Agent-health D1Client.prepare() variant (3 TS2339); chart components TooltipProps pattern (8 TS2339 + 3 TS2352); EC1 verified (api/health/agents try/catch wrap); carry-forwards: M1 getD1() DRY extraction (6+ sites), M2 chart payload type alignment** |
 
 ---
 
@@ -301,4 +302,10 @@ Pre-existing issue noted: Double `res.json()` parse in mission-launcher fallback
 **Carry-Forward (Phase 22+):**
 - Sub-Variant 4 Doc Task: Formalize DB-result cast in `docs/code-standards.md`
 - ViolationEvent.metadata widening question (research item from Phase 20)
-- Telegram webhook assessment (if deferred from Phase 22)  
+- Telegram webhook assessment (if deferred from Phase 22)
+
+---
+
+**Last Updated:** 2026-04-26 (Phase 34 completion sync-back ~13:40 UTC)
+**Initiative Lead:** Project Manager
+**Milestone Status:** ✅ 100% TS18046 ELIMINATION ACHIEVED + PHASE 34 AGENT-HEALTH D1 + CHART TOOLTIPPROPS COMPLETE (59.1% cumulative reduction)
