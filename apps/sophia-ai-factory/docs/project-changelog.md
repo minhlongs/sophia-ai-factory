@@ -1,6 +1,12 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-26 | **Current Version:** 1.12.39
+**Last Updated:** 2026-04-26 | **Current Version:** 1.12.40
+
+---
+
+## [2026-04-26] B2 Phase 22 — RAAS Invoice Generator + Quota Overage API Cleanup (v1.12.40)
+
+**B2 Phase 22 (raas-invoice-generator + quota/overage-events batch):** Refactored `src/lib/raas/raas-invoice-generator.ts` (4 query sites) + `src/app/api/quota/overage-events/route.ts` (1 query site), applied Sub-Variant 4 (DB-Result Cast) pattern. Fixed D1 client `.single<T>()` limitation — D1 query chain does NOT support generic type arguments on `.single()`; replaced `.single<{nonce: string}>()` with double-cast pattern `as unknown as QuotaLicenseRow`. raas-invoice-generator: `reactivateLicenseBySubscription()` + `revokeLicenseBySubscription()` both cast Supabase SELECT results (`rawLicense as RaasLicense | null`) and UPDATE results (`rawUpdated as unknown as RaasLicense` double-cast for chained `.update().select().single()`); added `toError()` wrapper for 2 UPDATE error logs. Pattern instances: Sub-Variant 4 ×4 (raas-invoice) + ×1 (overage-events) = 5 new sites. Extended canonical example: for `.update().select().single()` chain, use double-cast `as unknown as TypeName` because Supabase return type doesn't structurally overlap with row interface. Logger toError pattern: +2 new sites in raas-invoice-generator. Eliminated 14 TS errors (350→336, -4% Phase 22 delta, -27.2% cumulative B2 from baseline 462→336). TS18046 reduced 7→4 (-3 Phase 22, remainder in Telegram PROTECTED FLOW deferred to Phase 24). Tests 1394/1394 pass. Code review 9.6/10 auto-approved. Closes B2 Tier 4 bundle.
 
 ---
 

@@ -9,6 +9,7 @@
 
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import type { RaasLicenseRow as RaasLicense } from '@/lib/supabase/types';
 import { logAuditAction, logLicenseRevocation } from './audit-logging-service';
 
@@ -21,18 +22,19 @@ export async function reactivateLicenseBySubscription(
 ): Promise<RaasLicense | null> {
   const db = createServerClient();
 
-  const { data: license, error } = await db
+  const { data: rawLicense, error } = await db
     .from('raas_licenses')
     .select('*')
     .eq('metadata->>polarSubscriptionId', polarSubscriptionId)
     .single();
+  const license = rawLicense as RaasLicense | null;
 
   if (error || !license) {
     logger.warn(`License not found for Polar subscription ${polarSubscriptionId}`);
     return null;
   }
 
-  const { data: updated, error: updateError } = await db
+  const { data: rawUpdated, error: updateError } = await db
     .from('raas_licenses')
     .update({
       is_revoked: false,
@@ -45,7 +47,7 @@ export async function reactivateLicenseBySubscription(
     .single();
 
   if (updateError) {
-    logger.error(`Failed to reactivate license ${license.nonce}`, updateError);
+    logger.error(`Failed to reactivate license ${license.nonce}`, toError(updateError));
     throw updateError;
   }
 
@@ -61,7 +63,7 @@ export async function reactivateLicenseBySubscription(
     nonce: license.nonce.slice(0, 8),
   });
 
-  return updated as RaasLicense;
+  return rawUpdated as unknown as RaasLicense;
 }
 
 /**
@@ -80,18 +82,19 @@ export async function revokeLicenseBySubscription(
   const revokedAt = options.revokeAt || Math.floor(Date.now() / 1000);
   const metadataKey = options.provider === 'stripe' ? 'stripeSubscriptionId' : 'polarSubscriptionId';
 
-  const { data: license, error } = await db
+  const { data: rawLicense, error } = await db
     .from('raas_licenses')
     .select('*')
     .eq('metadata->>' + metadataKey, subscriptionId)
     .single();
+  const license = rawLicense as RaasLicense | null;
 
   if (error || !license) {
     logger.warn(`License not found for subscription ${subscriptionId}`);
     return null;
   }
 
-  const { data: updated, error: updateError } = await db
+  const { data: rawUpdated, error: updateError } = await db
     .from('raas_licenses')
     .update({
       is_revoked: true,
@@ -107,7 +110,7 @@ export async function revokeLicenseBySubscription(
     .single();
 
   if (updateError) {
-    logger.error(`Failed to revoke license ${license.nonce}`, updateError);
+    logger.error(`Failed to revoke license ${license.nonce}`, toError(updateError));
     throw updateError;
   }
 
@@ -122,5 +125,5 @@ export async function revokeLicenseBySubscription(
     softRevoke: options.soft,
   });
 
-  return updated as RaasLicense;
+  return rawUpdated as unknown as RaasLicense;
 }
