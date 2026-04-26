@@ -30,12 +30,7 @@ export function getDateRange(
   return { periodStart: now - 7 * 24 * 60 * 60, periodEnd: now }
 }
 
-export function mapToExportRecord(row: {
-  id: string; user_id: string; license_nonce: string; service_name: string;
-  action: string; tokens_input: number; tokens_output: number; credits_used: number;
-  status_code: number | null; response_time_ms: number | null; created_at: number;
-  external_customer_id: string | null;
-}): UsageExportRecord {
+export function mapToExportRecord(row: UsageEventRow): UsageExportRecord {
   return {
     id: row.id || crypto.randomUUID(),
     tenant_id: row.user_id,
@@ -106,7 +101,7 @@ export async function getUsageExportData(params: GetUsageExportParams): Promise<
     }
     const totalCount = count || 0
     const totalPages = Math.ceil(totalCount / pageSize)
-    const records = (rows || []).map((row: UsageEventRow) => mapToExportRecord(row))
+    const records = ((rows || []) as unknown as UsageEventRow[]).map((row: UsageEventRow) => mapToExportRecord(row))
     logger.info('[UsageExport] Query completed', { totalRecords: totalCount, returnedRecords: records.length, totalPages })
     return {
       records, totalCount,

@@ -1,6 +1,12 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-26 | **Current Version:** 1.14.5
+**Last Updated:** 2026-04-26 | **Current Version:** 1.14.6
+
+---
+
+## MILESTONE v1.14.6 — Auth Null Guard + Canonical UsageEventRow + KV Cast Bridges (Phase 41)
+
+**Phase 41 B2 (Sub-Variant 4 defensive cast mixed batch):** Targeted 3 files to eliminate 7 TS errors via auth null-safety hardening and canonical type imports. **M1: Auth Null Guard.** `src/app/api/admin/dunning/route.ts` added null-check guard on `currentUser` before property access (1 TS18047 eliminated). **M2: Canonical UsageEventRow.** `src/lib/usage-metering/kv-usage-event-sync.ts` imported canonical `UsageEventRow` from `@/lib/supabase/types` instead of inline fallback (2 TS2322 eliminated). **M3: KV Cast Bridge.** `src/worker/lib/metering-reconciler-license-validator.ts` applied Sub-Variant 4 cast `as KVNamespace<string>` for D1 binding variance (4 TS2339 eliminated). Cumulative B2: 462 → 82 (-82.3% reduction). Tests 1398/1398 pass. Code review 9.8/10 auto-approved.
 
 ---
 

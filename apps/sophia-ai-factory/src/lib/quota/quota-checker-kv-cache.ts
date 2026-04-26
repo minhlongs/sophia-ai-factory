@@ -19,7 +19,7 @@ export async function getCachedUsage(
 
   try {
     const key = `quota:${userId}:${licenseNonce}`;
-    return await kv.get(key);
+    return (await kv.get(key)) as unknown as CachedQuota | null;
   } catch (error) {
     logger.error('[Quota Checker] KV cache read error', toError(error));
     return null;
@@ -38,7 +38,7 @@ export async function updateCachedUsage(
 
   try {
     const key = `quota:${userId}:${licenseNonce}`;
-    await kv.set(key, usage, { expirationTtl: ttlSeconds });
+    await kv.set(key, usage as unknown as Parameters<typeof kv.set>[1], { expirationTtl: ttlSeconds });
   } catch (error) {
     logger.error('[Quota Checker] KV cache write error', toError(error));
   }
@@ -54,7 +54,7 @@ export async function invalidateQuotaCache(
 
   try {
     const key = `quota:${userId}:${licenseNonce}`;
-    await kv.set(key, null as unknown as CachedQuota);
+    await kv.set(key, null as unknown as Parameters<typeof kv.set>[1]);
   } catch (error) {
     logger.error('[Quota Checker] Cache invalidation error', toError(error));
   }
