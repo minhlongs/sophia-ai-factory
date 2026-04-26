@@ -14,6 +14,12 @@ import { getOverageSummary } from '@/lib/quota/overage-logger';
 import { getQuotaStatus } from '@/lib/quota/quota-checker';
 import { PRICING_TIERS } from '@/lib/billing/billing-types';
 
+interface UsageSummaryLicenseRow {
+  nonce: string;
+  tier: string;
+  created_by: string;
+}
+
 /**
  * GET /api/billing/usage-summary
  * Returns: { usage, limits, overageEvents, projectedCharges }
@@ -31,7 +37,7 @@ export async function GET(req: NextRequest) {
     const db = createServerClient();
 
     // Get user's active license
-    const { data: license } = await db
+    const { data: rawLicense } = await db
       .from('raas_licenses')
       .select('nonce, tier, created_by')
       .eq('created_by', user.id)
@@ -39,6 +45,7 @@ export async function GET(req: NextRequest) {
       .order('created_at', { ascending: false })
       .limit(1)
       .single();
+    const license = rawLicense as UsageSummaryLicenseRow | null;
 
     if (!license) {
       return NextResponse.json(

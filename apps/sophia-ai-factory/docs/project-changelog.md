@@ -1,6 +1,12 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-26 | **Current Version:** 1.12.38
+**Last Updated:** 2026-04-26 | **Current Version:** 1.12.39
+
+---
+
+## [2026-04-26] B2 Phase 21 — Tier 4 Long-Tail Cleanup + Logger Reactivation Fix (v1.12.39)
+
+**B2 Phase 21 (roi-calculator + violation-queries + usage-summary + license-generator + mission-dashboard/detail + reactivate logger):** Consolidated Sub-Variant 4 (DB-Result Cast) across 7 files, closed Phase 20 carry-forward (1 TS2345 reactivate logger), eliminated 6 TS18046 errors (13 → 7, -46.2% Phase 21 delta, -98.5% cumulative B2 from baseline 462 → 7). Pattern instances: Sub-Variant 1 ×3 (license-generator, mission-dashboard, mission-detail) + Sub-Variant 4 ×7 (roi-calculator ×4, violation-queries ×2, usage-summary ×1). Latent bug fix in `license-generator.tsx`: callback now passes `data.license` (`LicenseSummary`) instead of full response envelope. Phase 21 extended Sub-Variant 4 canonical examples: `RaasLicenseRoiRow` / `UsageEventCreditRow` (roi-calculator), `ViolationRow` (violation-queries), `UsageSummaryLicenseRow` (billing), `MissionListResponse` / `MissionDetailResponse` (discriminated union variant). Logger wrapper pattern formalized: `toError()` adoption for Supabase QueryError / PostgrestError-shaped objects. Tests 1394/1394 pass. Code review 9.6/10 auto-approved. Closes B2 Tier 4 bundle + Phase 20 M1 carry-forward.
 
 ---
 

@@ -7,6 +7,7 @@
 import { createServerClient } from '@/lib/db/client';
 import type { D1QueryChain } from '@/lib/db/d1-query-chain';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import type { ViolationFilters, ViolationEvent, ViolationSummary, ViolationType, ViolationSeverity } from '../types';
 
 /**
@@ -63,31 +64,32 @@ export async function fetchViolations(
   const from = (page - 1) * limit;
   query = query.range(from, from + limit - 1).order('created_at', { ascending: false });
 
-  const { data: violations, error, count } = await query;
+  const { data: rawViolations, error, count } = await query;
 
   if (error) {
-    logger.error('[Analytics] Failed to fetch violations', error);
+    logger.error('[Analytics] Failed to fetch violations', toError(error));
     throw new Error('Failed to fetch violations');
   }
 
+  const violations = rawViolations as ViolationRow[] | null;
   if (!violations || violations.length === 0) {
     return { violations: [], total: 0, hasMore: false };
   }
 
   const typedViolations: ViolationEvent[] = violations.map((v: ViolationRow) => ({
     id: v.id,
-    type: v.type,
-    severity: v.severity,
+    type: v.type as ViolationType,
+    severity: v.severity as ViolationSeverity,
     userId: v.user_id,
     licenseNonce: v.license_nonce,
     tier: v.tier,
     endpoint: v.endpoint,
-    ipAddress: v.ip_address,
-    userAgent: v.user_agent,
-    metadata: v.metadata,
-    createdAt: v.created_at,
+    ipAddress: v.ip_address ?? undefined,
+    userAgent: v.user_agent ?? undefined,
+    metadata: (v.metadata ?? undefined) as Record<string, string> | undefined,
+    createdAt: typeof v.created_at === 'number' ? v.created_at : Number(v.created_at),
     resolved: v.resolved,
-    resolvedAt: v.resolved_at,
+    resolvedAt: v.resolved_at ? Number(v.resolved_at) : undefined,
   }));
 
   const total = count || violations.length;
@@ -112,13 +114,14 @@ export async function fetchViolationSummary(
   query = applyViolationFilters(query, filters);
   query = query.gte('created_at', startTimestamp).lte('created_at', endTimestamp);
 
-  const { data: violations, error } = await query;
+  const { data: rawViolations, error } = await query;
 
   if (error) {
-    logger.error('[Analytics] Failed to fetch violation summary', error);
+    logger.error('[Analytics] Failed to fetch violation summary', toError(error));
     throw new Error('Failed to fetch violation summary');
   }
 
+  const violations = rawViolations as ViolationRow[] | null;
   if (!violations || violations.length === 0) {
     return {
       totalViolations: 0,
@@ -147,7 +150,8 @@ export async function fetchViolationSummary(
   // Calculate daily trend
   const trendMap = new Map<string, number>();
   for (const v of violations) {
-    const date = new Date(v.created_at * 1000).toISOString().split('T')[0];
+    const ts = typeof v.created_at === 'number' ? v.created_at : Number(v.created_at);
+    const date = new Date(ts * 1000).toISOString().split('T')[0];
     trendMap.set(date, (trendMap.get(date) || 0) + 1);
   }
 

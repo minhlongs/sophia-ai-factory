@@ -7,6 +7,18 @@
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 
+interface RaasLicenseRoiRow {
+  tier: string;
+  created_at: number;
+  metadata: Record<string, unknown> | null;
+  nonce?: string;
+}
+
+interface UsageEventCreditRow {
+  credits_used: number | null;
+  created_at?: number;
+}
+
 /**
  * ROI Metrics result
  */
@@ -35,11 +47,12 @@ export async function calculateRoiMetrics(
   // Get license details
   // Note: Using type assertion for Supabase query result since generated types
   // may not be available. The query returns RaasLicenseRow format.
-  const { data: license } = await db
+  const { data: rawLicense } = await db
     .from('raas_licenses')
     .select('tier, created_at, metadata')
     .eq('nonce', licenseNonce)
     .single();
+  const license = rawLicense as RaasLicenseRoiRow | null;
 
   if (!license) {
     throw new Error('License not found');
@@ -52,11 +65,12 @@ export async function calculateRoiMetrics(
   // Get usage data for the license (last 30 days)
   const thirtyDaysAgo = Math.floor(Date.now() / 1000) - (30 * 86400);
 
-  const { data: usageEvents } = await db
+  const { data: rawUsageEvents } = await db
     .from('usage_events')
     .select('credits_used, created_at')
     .eq('license_nonce', licenseNonce)
     .gte('created_at', thirtyDaysAgo);
+  const usageEvents = rawUsageEvents as UsageEventCreditRow[] | null;
 
   // Calculate total credits used
   const totalCreditsUsed = usageEvents?.reduce((sum, e) => sum + (e.credits_used || 0), 0) || 0;
@@ -67,11 +81,12 @@ export async function calculateRoiMetrics(
   // Get year-to-date usage for actual YTD calculation
   const yearStart = Math.floor(new Date(new Date().getFullYear(), 0, 1).getTime() / 1000);
 
-  const { data: ytdUsage } = await db
+  const { data: rawYtdUsage } = await db
     .from('usage_events')
     .select('credits_used')
     .eq('license_nonce', licenseNonce)
     .gte('created_at', yearStart);
+  const ytdUsage = rawYtdUsage as UsageEventCreditRow[] | null;
 
   const ytdCredits = ytdUsage?.reduce((sum, e) => sum + (e.credits_used || 0), 0) || 0;
 
@@ -119,11 +134,12 @@ export async function calculateAggregateRoi(
   const db = createServerClient();
 
   // Get all licenses for user
-  const { data: licenses } = await db
+  const { data: rawLicenses } = await db
     .from('raas_licenses')
     .select('nonce, tier, created_at, metadata')
     .eq('created_by', userId)
-    .eq('is_revoked', false) as any;
+    .eq('is_revoked', false);
+  const licenses = rawLicenses as RaasLicenseRoiRow[] | null;
 
   if (!licenses || licenses.length === 0) {
     return {
@@ -144,6 +160,7 @@ export async function calculateAggregateRoi(
   let totalCreditsUsed = 0;
 
   for (const license of licenses) {
+    if (!license.nonce) continue;
     const metrics = await calculateRoiMetrics(license.nonce, valuePerCredit);
     totalProjectedAnnual += metrics.projectedAnnual;
     totalActualYTD += metrics.actualYTD;
@@ -155,14 +172,15 @@ export async function calculateAggregateRoi(
   // Get total credits used across all licenses
   const thirtyDaysAgo = Math.floor(Date.now() / 1000) - (30 * 86400);
 
-  const { data: usageEvents } = await db
+  const { data: rawAggUsageEvents } = await db
     .from('usage_events')
     .select('credits_used')
     .in(
       'license_nonce',
-      licenses.map((l) => l.nonce)
+      licenses.map((l) => l.nonce).filter((n): n is string => !!n)
     )
     .gte('created_at', thirtyDaysAgo);
+  const usageEvents = rawAggUsageEvents as UsageEventCreditRow[] | null;
 
   totalCreditsUsed = usageEvents?.reduce((sum, e) => sum + (e.credits_used || 0), 0) || 0;
 

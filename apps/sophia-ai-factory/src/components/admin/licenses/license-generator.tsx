@@ -23,6 +23,13 @@ interface GeneratorResult {
   license?: LicenseSummary;
 }
 
+interface CreateLicenseResponse {
+  key?: string;
+  warning?: string;
+  license?: LicenseSummary;
+  error?: string;
+}
+
 export function LicenseGenerator({ onLicenseCreated }: LicenseGeneratorProps) {
   const [tier, setTier] = useState<string>('premium');
   const [expiresAt, setExpiresAt] = useState<string>('');
@@ -91,14 +98,14 @@ export function LicenseGenerator({ onLicenseCreated }: LicenseGeneratorProps) {
         body: JSON.stringify(body),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as CreateLicenseResponse;
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to create license');
       }
 
       setResult(data);
-      onLicenseCreated?.(data);
+      if (data.license) onLicenseCreated?.(data.license);
     } catch (error) {
       setResult({
         key: undefined,
