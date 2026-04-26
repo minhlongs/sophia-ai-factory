@@ -185,7 +185,7 @@ async getVideoStatus(videoId: string): Promise<string> {
 - Separation prevents external API changes from cascading into domain logic
 - Type cast occurs at boundary; fallback (`?? 'pending'`) handles schema evolution gracefully
 
-### Sub-Variant 1: Response-Body Type Cast (9 Instances)
+### Sub-Variant 1: Response-Body Type Cast (11 Instances)
 
 Client receives response from server, casts `(await res.json()) as InterfaceName`.
 
@@ -199,6 +199,7 @@ Client receives response from server, casts `(await res.json()) as InterfaceName
 - **Phase 13 (single-endpoint minimal):** `src/components/dashboard/referral-share-widget.tsx` — `ReferralGenerateResponse` cast from `/api/referral/generate`. Pattern variant: minimal 2-field interface (`code?`, `error?`), inline cast in event handler, clean YAGNI scope.
 - **Phase 18 (async/await + snake_case API contract):** `src/components/raas/mcu-balance-widget.tsx` — `RaasUsageResponse` cast from `/api/raas/usage` endpoint via async/await block. Pattern variant: preserves snake_case API contract (`credit_balance?`, `monthly_limit?`), demonstrates response-body cast works in async/await context (prior Phases 6–13 used .then() chains or inline).
 - **Phase 18 (async/await + optional nested object):** `src/components/raas/mission-launcher.tsx` — `MissionCreateResponse` interface cast from `/api/missions/create` endpoint via async/await. Pattern variant: optional nested `mission?: { id?: string }` + parallel `error?: string` + hardened `onSuccess(string)` signature with fallback `?? ''` for required string field. Demonstrates response-body cast handles complex optional structures + async/await blocks.
+- **Phase 19 (dual-endpoint with individual fallbacks):** `src/components/raas/api-key-list.tsx` — DUAL-ENDPOINT variant with 2 parallel fetches (same as Phase 12 pattern). `Promise.all([fetch(...), fetch(...)])` → separate interfaces for each response, individual fallbacks per response. Demonstrates pattern consistency across Phase 12 and Phase 19 in dual-fetch scenarios.
 
 ### Sub-Variant 2: Request-Body Type Cast (5 Instances)
 
@@ -231,6 +232,31 @@ const suspendBody = (await req.json().catch(() => ({}))) as SuspendLicenseReques
 Use this pattern when parse failure must not throw (e.g., cron jobs, admin operations with no required body). Ensure the cast target interface has all-optional fields so `{}` is structurally valid. For multi-endpoint batches with identical shape, create separate interfaces per endpoint rather than a shared god-type — maintains boundary isolation clarity.
 
 **Pattern Maturity:** Established standard. Apply to all new HTTP boundary type-casts across the codebase. Distinguish between response-body (client reads server) and request-body (server reads client) variants. For multi-endpoint scenarios, maintain separate interfaces per endpoint rather than merging responses.
+
+### Sub-Variant 3: Internal Promise<unknown> Type Cast (1 Instance — NEW)
+
+The HTTP Boundary Cast pattern **generalizes beyond HTTP boundaries** to ANY `Promise<unknown>` boundary in typed code. When an internal async helper or async function returns `Promise<unknown>`, narrow at the **consumption site** (not the definition) with a local interface + inline `as` cast.
+
+**Canonical Example (Phase 19 — NEW):**
+- **Phase 19:** `src/app/api/graphql/analytics/route.ts` — `AnalyticsQueryResponse` cast applied to internal async helper return value. Pattern variant: same anti-corruption layer principle (define local interface inline, cast at boundary with `as AnalyticsQueryResponse`), but applied to **internal Promise<unknown>** rather than external HTTP response. The narrowing occurs where the promise result is consumed, not where it's created. Interface includes only fields consumed at the call site (YAGNI: don't replicate full return shape of the helper). This pattern is generalizable to any `Promise<unknown>` → typed code boundary.
+
+**General Pattern:**
+```typescript
+// Internal async helper returns Promise<unknown> (common in type-erased patterns)
+async function getAnalyticsData(query: QueryInput): Promise<unknown> {
+  // ...implementation
+}
+
+// At consumption site: define local interface, cast with as
+interface AnalyticsQueryResponse {
+  result?: Record<string, number>;
+  error?: string;
+}
+
+const data = (await getAnalyticsData(params)) as AnalyticsQueryResponse;
+```
+
+Prefer this approach to modifying the helper's return type annotation (which may affect multiple callsites or break abstraction). The interface is defined **at the narrowest consumption point** with only the fields actually used (YAGNI principle).
 
 ---
 
