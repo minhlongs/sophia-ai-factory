@@ -1,6 +1,12 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-26 | **Current Version:** 1.13.2
+**Last Updated:** 2026-04-26 | **Current Version:** 1.13.3
+
+---
+
+## MILESTONE v1.13.3 — TS2307 Import Path Fixes & Component Cleanup (Phase 30)
+
+**Phase 30 B2 (ScrollArea removal + worker import path fixes quick-win):** Targeted 5 files to eliminate TS2307 "cannot find module" errors via dead code removal and correct import path resolution. **M1: ScrollArea Removal.** `src/components/license/license-alert-panel.tsx` removed non-existent `@/components/ui/scroll-area` import, replaced with native `div` overflow scroll (h-[400px] overflow-y-auto). Functional scroll preserved; styled scrollbar removed (acceptable UX trade-off). **M2: Dead Export Cleanup.** `src/lib/index.ts` removed non-existent `export * as Commerce from './commerce'` barrel re-export (export never referenced, no functional impact). **M3-M5: Worker Import Paths.** Fixed 3 files in `src/worker/lib/` (metering-reconciler-license-validator.ts, metering-reconciler-runner.ts, metering-reconciler-steps.ts) correcting `import type { Env } from './index'` → `import type { Env } from '../index'` (Env interface lives in `src/worker/index.ts`, not `src/worker/lib/index.ts`). TS error reduction: 251 → 246 (-5 total: 5 TS2307 errors eliminated). **100% TS2307 elimination achieved.** Tests 1398/1398 pass. Code review 9.8/10 auto-approved. Protected flows (Setup Wizard, Telegram Bot, NOWPayments) untouched. Phase 29 M1 review carry (admin auth helper variant) officially closed.
 
 ---
 

@@ -13,7 +13,7 @@
  *   runDiscrepancyStep   — Step 7: Detect discrepancies
  */
 
-import type { Env } from './index';
+import type { Env } from '../index';
 import type { ReconciliationReport, ReconciliationConfig } from '@/lib/billing/reconciliation-types';
 import { detectDiscrepancies } from './kv-discrepancy-detector';
 import { syncUsageEventsToKv } from '@/lib/usage-metering/kv-metering-log-sync';

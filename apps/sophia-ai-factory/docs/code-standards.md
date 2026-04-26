@@ -747,6 +747,27 @@ See `Error Handling & Logging` section above for full signature and usage of `lo
 
 ---
 
+## Worker Import Path Convention (Phase 30)
+
+Files in `src/worker/lib/` must import the `Env` interface from `../index` (parent directory), NOT from `./index` (same directory, which does not exist as a barrel file).
+
+**Pattern:**
+
+```typescript
+// src/worker/lib/metering-reconciler-license-validator.ts
+import type { Env } from '../index'  // ✓ CORRECT — Env is in src/worker/index.ts
+
+// NOT from './index'  // ✗ WRONG — no barrel file in src/worker/lib/
+```
+
+**Rationale:**
+
+The `Env` interface is defined in `src/worker/index.ts` (Cloudflare Workers binding type definitions). Files in the `src/worker/lib/` subdirectory import it from the parent directory using `../index`. There is no barrel file (`src/worker/lib/index.ts`); attempting to import from `./index` triggers TS2307 "cannot find module" errors.
+
+**Phase 30 Reference:** Fixed 3 files in `src/worker/lib/` (metering-reconciler-license-validator.ts, metering-reconciler-runner.ts, metering-reconciler-steps.ts), correcting all `Env` imports from `./index` → `../index`, eliminating 5 TS2307 errors (100% TS2307 elimination).
+
+---
+
 ## Testing Standards
 - **Framework**: Vitest + React Testing Library.
 - **Requirement**: Core business logic and server actions must have unit tests.
