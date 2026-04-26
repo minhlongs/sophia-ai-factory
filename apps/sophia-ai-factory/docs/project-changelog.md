@@ -1,6 +1,12 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-25 | **Current Version:** 1.12.20
+**Last Updated:** 2026-04-26 | **Current Version:** 1.12.25
+
+---
+
+## [2026-04-26] B2 Phase 7 — Rate Limit Wrapper Test File Inline Narrowest Casting (v1.12.25)
+
+**B2 Phase 7 (rate limit test):** Refactored `src/middleware/rate-limit-wrapper.test.ts`, applied inline narrowest `as` casts at 3 assertion sites. Each test asserts known shape (success response / error response / error+retryAfter). No shared interface — KISS pattern for test files. Eliminated 4 TS18046 errors (59→55, -6.8% cumulative from baseline 63 TS18046 in B2 Phase 1). Tests 1394/1394 pass. Review 9.7/10.
 
 ---
 

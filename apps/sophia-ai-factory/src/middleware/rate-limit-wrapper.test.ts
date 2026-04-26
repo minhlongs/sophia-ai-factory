@@ -43,7 +43,7 @@ describe('withRateLimit', () => {
     expect(testHandler).toHaveBeenCalledTimes(1);
     expect(response.status).toBe(200);
 
-    const data = await response.json();
+    const data = (await response.json()) as { success: boolean };
     expect(data.success).toBe(true);
   });
 
@@ -66,7 +66,7 @@ describe('withRateLimit', () => {
     expect(response.status).toBe(429);
     expect(testHandler).toHaveBeenCalledTimes(2);
 
-    const data = await response.json();
+    const data = (await response.json()) as { error: string };
     expect(data.error).toBe('Too Many Requests');
   });
 
@@ -127,7 +127,7 @@ describe('withRateLimit', () => {
     const response = await wrappedHandler(request2);
 
     expect(response.status).toBe(429);
-    const data = await response.json();
+    const data = (await response.json()) as { error: string; retryAfter: number };
     expect(data.error).toBe('Custom rate limit message');
     expect(data.retryAfter).toBeGreaterThan(0);
   });
