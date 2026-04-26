@@ -19,6 +19,12 @@ export interface RegenerateCallbackData {
   newLicense: LicenseSummary;
 }
 
+interface RegenerateApiResponse {
+  newKey?: string;
+  newLicense?: LicenseSummary;
+  error?: string;
+}
+
 export function useLicenseRegenerate(
   propLicenseId: string | undefined,
   onRegenerate?: (data: RegenerateCallbackData) => void,
@@ -45,10 +51,14 @@ export function useLicenseRegenerate(
         headers: { 'Content-Type': 'application/json' },
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as RegenerateApiResponse;
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to regenerate license');
+      }
+
+      if (!data.newKey || !data.newLicense) {
+        throw new Error('Invalid response from server');
       }
 
       setResult({ newKey: data.newKey, newLicense: data.newLicense });
