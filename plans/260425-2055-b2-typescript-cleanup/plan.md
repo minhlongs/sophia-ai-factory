@@ -44,11 +44,18 @@ Resolve 462 TypeScript errors currently masked by `ignoreBuildErrors: true` in `
 - Tests: 1394 pass, 0 fail
 - Review: 9.7/10 auto-approved
 
-### Phase 4: License Regenerate Hook (NEXT)
+### Phase 4: License Regenerate Hook (DONE)
+- File: `src/components/admin/licenses/use-license-regenerate.ts`
+- Change: Type cast (client→server) + runtime guard (data forwarded via callback)
+- Errors fixed: -5 TS18046
+- Metric: 440 → **435 errors**
+- Tests: 1394 pass, 0 fail
+- Review: 9.7/10 auto-approved
+
+### Phase 5: License List Actions Hook (NEXT)
 Prioritized by TS18046 density:
 
-1. `src/components/admin/licenses/use-license-regenerate.ts` (5 TS18046) — **NEXT**
-2. `src/components/admin/licenses/use-license-list-actions.ts` (5 TS18046)
+1. `src/components/admin/licenses/use-license-list-actions.ts` (5 TS18046) — **NEXT**
 3. `src/worker/lib/metering-reconciler-license-validator.ts` (4 TS18046)
 4. `src/middleware/rate-limit-wrapper.test.ts` (4 TS18046)
 5. `src/lib/heygen/heygen-client.ts` (4 TS18046)
@@ -72,11 +79,13 @@ git diff next.config.ts  # ignoreBuildErrors removed
 | 1 | api-keys/route.ts | -10 | 462→452 | -2.2% |
 | 2 | pricing-section.tsx | -6 | 452→446 | -4.1% |
 | 3 | setup-wizard/page.tsx | -6 | 446→440 | -4.8% |
+| 4 | use-license-regenerate.ts | -5 | 440→435 | -5.8% |
 
 ## Status
 
 - [x] Phase 1: API Handler Zod Validation
 - [x] Phase 2: Pricing Section Type Guards
 - [x] Phase 3: Setup Wizard Type Guards
-- [ ] Phase 4-10: Backlog resolution
+- [x] Phase 4: License Regenerate Hook
+- [ ] Phase 5-10: Backlog resolution
 - [ ] Final: Remove ignoreBuildErrors, verify 0 errors
