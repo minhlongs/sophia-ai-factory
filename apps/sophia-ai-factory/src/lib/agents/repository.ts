@@ -100,6 +100,10 @@ export async function listAgents(teamId: string): Promise<Agent[]> {
   return (data as AgentRow[]).map(mapAgent);
 }
 
+// H5 fix: cap system_prompt length so admin-injected prompts can't blow
+// the context window or run up unbounded LLM cost.
+const MAX_SYSTEM_PROMPT_CHARS = 8_000;
+
 export async function createAgent(params: {
   teamId: string;
   role: 'CEO' | 'Developer';
@@ -107,6 +111,11 @@ export async function createAgent(params: {
   systemPrompt: string;
   model?: string;
 }): Promise<Agent> {
+  if (params.systemPrompt.length > MAX_SYSTEM_PROMPT_CHARS) {
+    throw new Error(
+      `createAgent failed: systemPrompt exceeds ${MAX_SYSTEM_PROMPT_CHARS} chars (got ${params.systemPrompt.length})`,
+    );
+  }
   const db = createServerClient();
   const { data, error } = await db
     .from('agents')
