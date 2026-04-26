@@ -147,11 +147,11 @@ export async function GET(
 
     // Step 6: Format events and calculate totals
     const events: FormattedOverageEvent[] = overageEvents
-      ? formatOverageEvents(overageEvents as OverageEvent[])
+      ? formatOverageEvents(overageEvents as unknown as OverageEvent[])
       : [];
 
     const totals: OverageTotals = overageEvents
-      ? calculateOverageTotals(overageEvents as OverageEvent[])
+      ? calculateOverageTotals(overageEvents as unknown as OverageEvent[])
       : {
           totalOverage: 0,
           billedOverage: 0,

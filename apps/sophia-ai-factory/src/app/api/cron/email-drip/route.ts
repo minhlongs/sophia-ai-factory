@@ -82,7 +82,7 @@ export async function GET(req: NextRequest) {
       if (!users || users.length === 0) continue;
 
       for (const rawUser of users) {
-        const user = rawUser as UserRow;
+        const user = rawUser as unknown as UserRow;
         try {
           // Dedup — skip if already sent this drip to this user
           const { data: existing } = await db

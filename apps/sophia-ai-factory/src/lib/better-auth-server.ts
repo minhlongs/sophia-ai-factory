@@ -14,7 +14,7 @@ import { logger } from '@/lib/utils/logger-utility';
 
 /** Resolve D1 binding from CF Workers context */
 function getD1(): D1Database {
-  const env = (globalThis as Record<string, Record<string, unknown>>).__env;
+  const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
   if (env?.DB) return env.DB as D1Database;
 
   const ctxSymbol = Symbol.for('__cloudflare-context__');

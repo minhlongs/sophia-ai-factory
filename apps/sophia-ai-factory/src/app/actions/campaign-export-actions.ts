@@ -48,7 +48,7 @@ export async function exportCampaigns(
     return { success: false, message: "Failed to fetch campaigns" };
   }
 
-  const campaigns = data as Campaign[];
+  const campaigns = data as unknown as Campaign[];
 
   const cleanData = campaigns.map((c) => ({
     id: c.id,

@@ -85,7 +85,7 @@ export async function GET(req: NextRequest) {
     let created = 0;
     const failures: string[] = [];
 
-    for (const schedule of schedules as ScheduledCampaignRow[]) {
+    for (const schedule of schedules as unknown as ScheduledCampaignRow[]) {
       try {
         // Create campaign from schedule template
         const { error: insertError } = await db.from('campaigns').insert({

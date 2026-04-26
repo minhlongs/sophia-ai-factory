@@ -53,7 +53,7 @@ export async function GET() {
       return NextResponse.json({ agents: [] });
     }
 
-    const agentIds = (agentRows as AgentRow[]).map(a => a.id);
+    const agentIds = (agentRows as unknown as AgentRow[]).map(a => a.id);
     const threshold = new Date(Date.now() - 30_000).toISOString();
 
     // Get recent tasks to derive status
@@ -68,14 +68,14 @@ export async function GET() {
     // Build agent-id → latest task map
     const taskMap = new Map<string, AgentTaskRow>();
     if (recentTasks) {
-      for (const task of recentTasks as AgentTaskRow[]) {
+      for (const task of recentTasks as unknown as AgentTaskRow[]) {
         if (!taskMap.has(task.agent_id)) {
           taskMap.set(task.agent_id, task);
         }
       }
     }
 
-    const agents: AgentWithStatus[] = (agentRows as AgentRow[]).map(agent => {
+    const agents: AgentWithStatus[] = (agentRows as unknown as AgentRow[]).map(agent => {
       const task = taskMap.get(agent.id);
       let status: AgentStatus = 'idle';
       if (task) {

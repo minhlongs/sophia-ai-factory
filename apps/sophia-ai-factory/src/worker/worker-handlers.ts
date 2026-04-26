@@ -45,7 +45,7 @@ export async function handleProxyRequest(request: Request, env: Env, ctx: Execut
   const authResponse = await raasAuthMiddleware(request, env, ctx)
   if (authResponse) return authResponse
 
-  const authContext = (env as Record<string, unknown>).__authContext as AuthContext | undefined
+  const authContext = (env as unknown as Record<string, unknown>).__authContext as AuthContext | undefined
   if (!authContext) {
     return new Response(JSON.stringify({ error: 'Authentication context missing' }), { status: 500, headers: { 'Content-Type': 'application/json' } })
   }

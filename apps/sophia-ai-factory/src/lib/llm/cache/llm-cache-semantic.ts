@@ -153,7 +153,7 @@ export async function semanticLookup(
       .limit(topK)
 
     if (error || !data) return null
-    const rows = data as CandidateRow[]
+    const rows = data as unknown as CandidateRow[]
 
     const now = Date.now()
     let best: { score: number; row: CandidateRow } | null = null

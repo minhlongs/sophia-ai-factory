@@ -46,7 +46,7 @@ export async function queryUsageEvents(
   }
 
   return {
-    events: (data as SupabaseUsageEvent[]) || [],
+    events: (data as unknown as SupabaseUsageEvent[]) || [],
     totalCount: count || 0,
   };
 }
@@ -63,7 +63,7 @@ export async function getLicenseInfo(
     .single();
 
   if (error || !data) return null;
-  return data as LicenseInfo;
+  return data as unknown as LicenseInfo;
 }
 
 /** Query billing periods from payment events for a customer. */

@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
           consecutiveErrors = 0; // reset on success
 
           if (data && data.length > 0) {
-            for (const row of data as AgentTaskRow[]) {
+            for (const row of data as unknown as AgentTaskRow[]) {
               controller.enqueue(encodeSSE({
                 type: `agent.task.${row.status}`,
                 taskId: row.id,
@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
                 completedAt: row.completed_at,
               }));
             }
-            lastSeenCreatedAt = (data as AgentTaskRow[])[data.length - 1].created_at;
+            lastSeenCreatedAt = (data as unknown as AgentTaskRow[])[data.length - 1].created_at;
           }
         } catch {
           consecutiveErrors++;

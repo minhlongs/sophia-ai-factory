@@ -54,7 +54,7 @@ export async function getDunningHistory(
     return [];
   }
 
-  return data as DunningAttemptRow[];
+  return data as unknown as DunningAttemptRow[];
 }
 
 /**
@@ -97,7 +97,7 @@ export async function initializeDunningSettings(
     gracePeriodDays: tierConfig.gracePeriodDays,
   });
 
-  return data as DunningSettingsRow;
+  return data as unknown as DunningSettingsRow;
 }
 
 /**

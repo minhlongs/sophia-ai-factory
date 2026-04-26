@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Generate receipt (cast to RaasAuditLogRow for type safety)
-    const auditLog = log as RaasAuditLogRow
+    const auditLog = log as unknown as RaasAuditLogRow
     const receipt = generateReceipt(auditLog)
 
     logger.info('Generated compliance receipt', {

@@ -1,10 +1,10 @@
 # B2 TypeScript Cleanup — Cumulative Tech Debt Tracking
 
 **Initiative:** B2 TS18046 Error Elimination + TS2345 QueryError Normalization + TS2304/TS2307 Quick-Wins + TS2339 Property Mismatch Cleanup
-**Overall Progress:** 🎉 56.3% — TS18046 100% ELIMINATED + QUERYERROR LOGGING 100% NORMALIZED + TS2304/TS2307 QUICK-WINS COMPLETE + ZODERROR + HEYGEN CASTS + PHASE 33 4-ROUTE BATCH DELIVERED (462 → 202 via Phase 33)
-**Current Status:** Phase 33 Complete — 4 ROUTES SUB-VARIANT 2 TS2339 BATCH DELIVERED
-**Last Updated:** 2026-04-26 (Phase 33 completion sync-back ~13:26 UTC)
-**Remaining Tech Debt:** 202 errors (TS2339 ×35 + TS2322 ×49 + TS2352 ×41 + other types ×77 — Phase 34+ cleanup)  
+**Overall Progress:** 🎉 68% — TS18046 100% ELIMINATED + QUERYERROR LOGGING 100% NORMALIZED + TS2304/TS2307 QUICK-WINS COMPLETE + ZODERROR + HEYGEN CASTS + PHASE 33 4-ROUTE BATCH + PHASE 35 MASS TS2352 BATCH DELIVERED (462 → 148 via Phase 35)
+**Current Status:** Phase 35 Complete — MASS TS2352 BATCH (100% ELIMINATION MILESTONE)
+**Last Updated:** 2026-04-26 (Phase 35 completion sync-back ~14:52 UTC)
+**Remaining Tech Debt:** 148 errors (TS2339 ×25 + TS2322 ×49 + TS2352 ×0 + other types ×74 — Phase 36+ cleanup)  
 
 ---
 
@@ -41,6 +41,7 @@
 | **32** | **3 files (1 smart-resume + 2 alerts routes)** | **Smart resume async fix + alerts Sub-Variant 2/4 casts** | **-19** | **235** | **216** | **53.2%** | **✅ DONE** | **9.7/10** | **1398/1398** | **Group A (smart-resume-engine): 6 missing await on getCheckpointSupabase() — GENUINE RUNTIME BUG FIX; Group B (alerts): Sub-Variant 2 request-body + Sub-Variant 4 DB-result typing; TS errors: 6 runtime async + 12 TS2339 + 1 TS18047; Phase 31 carries (Mi-1/Mi-2/Mi-3) deferred Phase 33+** |
 | **33** | **4 routes (errors/report, analytics/export, setup/verify, alerts/test)** | **Sub-Variant 2 request-body TS2339 batch** | **-14** | **216** | **202** | **56.3%** | **✅ DONE** | **9.7/10** | **1398/1398** | **4 high-frequency API routes: errors/report (5), analytics/export (4), setup/verify (3, PROTECTED FLOW #1), alerts/test (2); all use defensive `.catch(() => ({})) as Type` pattern; Setup Wizard verified & safe; Phase 31 carries (Mi-1/Mi-2/Mi-3) deferred Phase 34+** |
 | **34** | **agent-health-resolver + 4 charts (UsageChart, ErrorRateChart, service-breakdown, bonus)** | **Agent-health D1 variant + chart TooltipProps TS2339/TS2352 batch** | **-13** | **202** | **189** | **59.1%** | **✅ DONE** | **9.6/10** | **1398/1398** | **Agent-health D1Client.prepare() variant (3 TS2339); chart components TooltipProps pattern (8 TS2339 + 3 TS2352); EC1 verified (api/health/agents try/catch wrap); carry-forwards: M1 getD1() DRY extraction (6+ sites), M2 chart payload type alignment** |
+| **35** | **25 files (41 TS2352 sites: discriminated unions, array guards, literal narrowing)** | **Mass TS2352 batch (Phase 22 doctrine): canonical `as const` + union guard strengthening** | **-41** | **189** | **148** | **68.0%** | **✅ DONE** | **9.8/10** | **1398/1398** | **🎉 MILESTONE: 100% TS2352 ELIMINATION ACHIEVED — 38 baseline + 3 cascading TS2339/TS2345 side-effects; discriminated union guards refined; literal narrowing improved; zero behavioral change; protected flows verified (Setup Wizard, Telegram, NOWPayments); M1/M2 carries deferred Phase 36+** |
 
 ---
 
@@ -306,6 +307,6 @@ Pre-existing issue noted: Double `res.json()` parse in mission-launcher fallback
 
 ---
 
-**Last Updated:** 2026-04-26 (Phase 34 completion sync-back ~13:40 UTC)
+**Last Updated:** 2026-04-26 (Phase 35 completion sync-back ~14:52 UTC)
 **Initiative Lead:** Project Manager
-**Milestone Status:** ✅ 100% TS18046 ELIMINATION ACHIEVED + PHASE 34 AGENT-HEALTH D1 + CHART TOOLTIPPROPS COMPLETE (59.1% cumulative reduction)
+**Milestone Status:** ✅ 100% TS18046 ELIMINATION + 100% TS2345 QUERYERROR + 100% TS2352 ACHIEVED + PHASE 35 MASS TS2352 BATCH COMPLETE (68% cumulative reduction, 462 → 148)

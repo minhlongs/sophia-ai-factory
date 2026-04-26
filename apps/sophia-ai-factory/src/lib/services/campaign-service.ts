@@ -11,7 +11,7 @@ export const campaignService = {
       .order("created_at", { ascending: false });
 
     if (error) throw error;
-    return data as Campaign[];
+    return data as unknown as Campaign[];
   },
 
   async getCampaign(id: string) {
@@ -23,6 +23,6 @@ export const campaignService = {
       .single();
 
     if (error) throw error;
-    return data as Campaign;
+    return data as unknown as Campaign;
   }
 };
