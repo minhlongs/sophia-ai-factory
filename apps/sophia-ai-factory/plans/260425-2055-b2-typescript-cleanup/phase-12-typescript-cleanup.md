@@ -88,12 +88,12 @@ Continue B2 TS18046 cleanup using proven inline cast methodology. Phase 11 compl
 
 ## Success Criteria
 
-- [ ] Phase 12 target file implemented
-- [ ] TS18046 errors reduced by 3-4 (40 → 36-37)
-- [ ] Tests: 1394/1394 passing
-- [ ] Code review: 9.5+/10 approved
-- [ ] Commit: Conventional format, descriptive message
-- [ ] Phase 13 backlog identified
+- [x] Phase 12 target file implemented (`quota-usage-dashboard.tsx`)
+- [x] TS18046 errors reduced by 3 (40 → 37)
+- [x] Tests: 1394/1394 passing
+- [x] Code review: 9.7/10 approved (exceeds 9.5 threshold)
+- [x] Commit: Conventional format, descriptive message
+- [x] Phase 13 backlog identified (candidates listed below)
 
 ---
 
@@ -133,6 +133,37 @@ From Phase 11 review and earlier phases:
 
 ---
 
-**Status:** Backlog candidates identified, Phase 12 ready for assignment
-**Next Step:** Delegate Phase 12 implementation (recommend `quota-usage-dashboard.tsx`)
-**Estimated Duration:** Phase 12 implementation ~3-4 hours
+---
+
+## Phase 12 Completion Report
+
+**Target File:** `src/components/quota/quota-usage-dashboard.tsx`  
+**Implementation Date:** 2026-04-26
+
+**Changes Delivered:**
+1. Added local `QuotaStatusResponse` interface (3 lines, L44-46)
+2. Added local `OverageEventsResponse` interface (4 lines, L48-51)
+3. Applied HTTP boundary cast at two sites: `/api/quota/status` and `/api/quota/overage-events` (L107-108)
+4. Added defensive fallbacks: `?? null`, `?? []` at state setters (L110-112)
+
+**Quality Metrics:**
+- **TS18046 Fixed:** -3 errors (40 → 37)
+- **Test Suite:** 1394/1394 ✅ (zero regressions)
+- **Code Review:** 9.7/10 (auto-approved, no critical issues)
+- **Pattern Instance:** #6 of HTTP boundary anti-corruption cast (first dual-endpoint application)
+- **YAGNI Discipline:** Strict omission of unused server fields (`license.nonce`, `license.tier`)
+
+**Protected Flows:** No impact (internal dashboard component, read-only quota queries)
+
+**Reports:**
+- Test verification: `plans/reports/tester-260426-0821-b2-phase12-quota-dashboard.md`
+- Code review findings: `plans/reports/code-review-260426-0821-b2-phase12-quota-dashboard.md`
+
+**Unresolved Questions Carried to Phase 13:**
+1. `/api/quota/status` route file does NOT exist — `GETStatus` export in `overage-events/route.ts` L69 is dead code. Dashboard fetch returns 404 → error UI. Pre-existing bug, file separate ticket. Not Phase 12's scope.
+2. Pre-existing `AuditLog` row-shape camelCase/snake_case mismatch (Phase 11 carried).
+3. HTTP Boundary Pattern formalization: bump "5 instances" → "6 instances" in `docs/code-standards.md`, document dual-endpoint sub-pattern.
+4. 462-vs-37 baseline discrepancy (ongoing tracking).
+5. File modularization deferred (audit-log-table.tsx 255 lines).
+
+**Status:** ✅ COMPLETE | Next: Phase 13 Ready

@@ -1,10 +1,10 @@
 # B2: TypeScript Cleanup Initiative
 
 **Initiative:** B2 TypeScript Error Elimination
-**Duration:** Multi-phase (Phases 1–11+ ongoing)
-**Overall Status:** Phase 10 Complete | Phase 11 Ready
+**Duration:** Multi-phase (Phases 1–12+ ongoing)
+**Overall Status:** Phase 12 Complete | Phase 13 Ready
 **Baseline:** 462 TS18046 errors (next.config.ts:24 reference)
-**Current:** 43 TS18046 errors remaining (91% reduction)
+**Current:** 37 TS18046 errors remaining (92% reduction)
 
 ---
 
@@ -17,8 +17,9 @@
 | 9 | `src/app/[locale]/dashboard/proposals/page.tsx` | -4 (51→47) | HTTP boundary anti-corruption cast | ✅ DONE | tester-260426-*, code-review-260426-* |
 | 10 | `src/components/raas/api-key-create-modal.tsx` | -4 (47→43) | HTTP boundary anti-corruption cast | ✅ DONE | tester-260426-*, code-review-260426-* |
 | 11 | `src/components/admin/licenses/audit-log-table.tsx` | -3 (43→40) | HTTP boundary anti-corruption cast | ✅ DONE | tester-260426-b2-phase11-audit-log-table, code-review-260426-b2-phase11-audit-log-table |
+| 12 | `src/components/quota/quota-usage-dashboard.tsx` | -3 (40→37) | HTTP boundary anti-corruption cast (dual-endpoint) | ✅ DONE | tester-260426-0821-b2-phase12-quota-dashboard, code-review-260426-0821-b2-phase12-quota-dashboard |
 
-**Cumulative:** 462 → 40 TS18046 (422 fixed, 91% reduction)
+**Cumulative:** 462 → 37 TS18046 (425 fixed, 92% reduction)
 
 ---
 
@@ -126,30 +127,33 @@ npx tsc --noEmit 2>&1 | grep "TS18046" | \
 - [x] Phase 10 implementation delivered (-4 errors, 9.6/10 review)
 - [x] Phase 11 target file identified
 - [x] Phase 11 implementation delivered (-3 errors, 9.7/10 review)
-- [ ] Phase 12 target file identified
+- [x] Phase 12 target file identified and completed
+- [x] Phase 12 implementation delivered (-3 errors, 9.7/10 review)
+- [ ] Phase 13 target file identified
 
 ---
 
-## Phase 11 Completion Metrics
+## Phase 12 Completion Metrics
 
-**File:** `src/components/admin/licenses/audit-log-table.tsx`  
-**Method:** HTTP boundary anti-corruption cast (Instance #5)  
-**Errors Fixed:** -3 (43 → 40)  
+**File:** `src/components/quota/quota-usage-dashboard.tsx`  
+**Method:** HTTP boundary anti-corruption cast (Instance #6, first dual-endpoint)  
+**Errors Fixed:** -3 (40 → 37)  
 **Tests:** 1394/1394 ✅ (0 regressions)  
 **Review Score:** 9.7/10 (auto-approved)  
-**Quality:** Cleanest instance to date — strict YAGNI (omitted unused server fields `retentionDays`, `page`, `limit`)
+**Quality:** First dual-endpoint application — two local interfaces, strict YAGNI (omitted unused server fields `license.nonce`, `license.tier`)
 
 **Implementation Pattern:**
-- Local `AuditLogsResponse` interface (5 lines)
-- Single cast at HTTP boundary: `(await response.json()) as AuditLogsResponse`
-- Defensive fallbacks: `data.logs ?? []`, `data.total ?? 0`
-- Zero protected-flow impact (admin internal component)
+- Local `QuotaStatusResponse` interface (3 lines)
+- Local `OverageEventsResponse` interface (4 lines)
+- Dual casts at HTTP boundaries (parallel `Promise.all` endpoints)
+- Defensive fallbacks: `?? null`, `?? []` at state setters
+- Zero protected-flow impact (internal dashboard component)
 
 **Reports:**
-- `plans/reports/tester-260426-b2-phase11-audit-log-table.md`
-- `plans/reports/code-review-260426-b2-phase11-audit-log-table.md`
+- `plans/reports/tester-260426-0821-b2-phase12-quota-dashboard.md`
+- `plans/reports/code-review-260426-0821-b2-phase12-quota-dashboard.md`
 
 ---
 
-**Last Updated:** 2026-04-26 (Phase 11 sync-back)
+**Last Updated:** 2026-04-26 (Phase 12 sync-back)
 **Initiative Lead:** Project Manager
