@@ -1,8 +1,8 @@
 # B2: TypeScript Cleanup Initiative
 
 **Initiative:** B2 TypeScript Error Elimination
-**Duration:** Multi-phase (Phases 1–12+ ongoing)
-**Overall Status:** Phase 14 Complete | Phase 15 Ready
+**Duration:** Multi-phase (Phases 1–15+ ongoing)
+**Overall Status:** Phase 15 Complete | Phase 16 Ready
 **Baseline:** 462 TS18046 errors (next.config.ts:24 reference)
 **Current:** 32 TS18046 errors remaining (93.1% reduction)
 
@@ -20,8 +20,9 @@
 | 12 | `src/components/quota/quota-usage-dashboard.tsx` | -3 (40→37) | HTTP boundary anti-corruption cast (dual-endpoint) | ✅ DONE | tester-260426-0821-b2-phase12-quota-dashboard, code-review-260426-0821-b2-phase12-quota-dashboard |
 | 13 | `src/components/dashboard/referral-share-widget.tsx` | -2 (37→35) | HTTP boundary anti-corruption cast (single-endpoint) | ✅ DONE | tester-260426-0835-b2-phase13-referral-widget, code-review-260426-1030-b2-phase13-referral-widget |
 | 14 | `src/app/api/coupons/apply/route.ts` | -3 (35→32) | HTTP boundary anti-corruption cast (request-body) | ✅ DONE | tester-260426-0840-b2-phase14-coupons-apply, code-review-260426-0840-b2-phase14-coupons-apply |
+| 15 | `src/app/api/coupons/activate/route.ts` | -2 (32→30) | HTTP boundary anti-corruption cast (request-body #2) | ✅ DONE | tester-260426-0854-b2-phase15-coupons-activate, code-review-260426-0853-b2-phase15-coupons-activate |
 
-**Cumulative:** 462 → 32 TS18046 (430 fixed, 93.1% reduction)
+**Cumulative:** 462 → 30 TS18046 (432 fixed, 93.5% reduction)
 
 ---
 

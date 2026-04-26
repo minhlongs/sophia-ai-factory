@@ -10,6 +10,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/lib/better-auth-session';
 import { toError } from '@/lib/utils/to-error';
 
+interface CouponActivateRequest {
+  coupon?: string;
+  tier?: string;
+}
+
 const VALID_COUPONS: Record<string, { mcuBonus: number }> = {
   FREE50: { mcuBonus: 1000 },
   LAUNCH25: { mcuBonus: 500 },
@@ -37,7 +42,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Not authenticated' }, { status: 401 });
     }
 
-    const body = await request.json();
+    const body = (await request.json()) as CouponActivateRequest;
     const coupon = (body.coupon || '').trim().toUpperCase();
     const tier = (body.tier || 'MASTER').toUpperCase();
 
