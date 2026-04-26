@@ -9,6 +9,17 @@ import { ApiKeysStep } from './components/steps/api-keys-step';
 import { LocalModeStep } from '@/components/setup-wizard/local-mode-step';
 import { FinishStep } from './components/steps/finish-step';
 
+interface VerifyKeyResponse {
+  valid?: boolean;
+  message?: string;
+}
+
+interface SaveConfigResponse {
+  success?: boolean;
+  redirect?: string;
+  message?: string;
+}
+
 export default function SetupWizardPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
@@ -48,15 +59,16 @@ export default function SetupWizardPage() {
         body: JSON.stringify({ service, key: keyValue, params })
       });
 
-      const data = await res.json();
+      const data = (await res.json()) as VerifyKeyResponse;
+      const isValid = data.valid === true;
 
-      if (data.valid) {
+      if (isValid) {
         setStatus(prev => ({ ...prev, [keyName]: 'valid' }));
       } else {
         setStatus(prev => ({ ...prev, [keyName]: 'invalid' }));
         setErrors(prev => ({ ...prev, [keyName]: data.message || 'Invalid key' }));
       }
-      return data.valid;
+      return isValid;
     } catch {
       setStatus(prev => ({ ...prev, [keyName]: 'invalid' }));
       setErrors(prev => ({ ...prev, [keyName]: 'Verification failed' }));
@@ -91,13 +103,12 @@ export default function SetupWizardPage() {
         body: JSON.stringify({ config })
       });
 
-      const data = await res.json();
+      const data = (await res.json()) as SaveConfigResponse;
 
       if (data.success) {
-        // Redirect to dashboard settings to save keys via BYOK form
         router.push(data.redirect || '/dashboard/settings');
       } else {
-        setSaveError(data.message);
+        setSaveError(data.message ?? 'Failed to save configuration.');
       }
     } catch {
       setSaveError("Failed to save configuration.");
