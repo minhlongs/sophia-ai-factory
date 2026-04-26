@@ -162,7 +162,7 @@ export function getMyService(): IMyService {
 
 ### HTTP Boundary Type Cast (Anti-Corruption Layer) — Standard Pattern
 
-External HTTP responses arrive as `unknown` after `.json()`. Use local interfaces at the boundary to type-cast wire contracts, separated from internal domain types. This is now an **established standard** across 7 verified instances (Phases 6–13).
+External HTTP requests/responses arrive as `unknown` after `.json()`. Use local interfaces at the boundary to type-cast wire contracts, separated from internal domain types. This is now an **established standard** across 8 verified instances (Phases 6–14), with 2 formalized sub-variants.
 
 **Pattern: Local Interface + Cast + Fallback**
 
@@ -185,7 +185,11 @@ async getVideoStatus(videoId: string): Promise<string> {
 - Separation prevents external API changes from cascading into domain logic
 - Type cast occurs at boundary; fallback (`?? 'pending'`) handles schema evolution gracefully
 
-**Canonical Examples (7 Verified Instances):**
+### Sub-Variant 1: Response-Body Type Cast (7 Instances)
+
+Client receives response from server, casts `(await res.json()) as InterfaceName`.
+
+**Canonical Examples:**
 - Phase 6: `src/worker/lib/metering-reconciler-license-validator.ts` — `RaasSyncResponse` cast from `/api/license/sync` (single-endpoint)
 - Phase 8: `src/lib/heygen/heygen-client.ts` — `HeyGenVideoStatusResponse` cast from HeyGen API (single-endpoint)
 - Phase 9: `src/app/[locale]/dashboard/proposals/page.tsx` — `ProposalApiResponse` cast from `/api/proposals` (single-endpoint)
@@ -194,7 +198,14 @@ async getVideoStatus(videoId: string): Promise<string> {
 - **Phase 12 (dual-endpoint variant):** `src/components/quota/quota-usage-dashboard.tsx` — `QuotaUsageResponse` + `QuotaLimitResponse` casts from parallel `Promise.all([fetch1, fetch2])` on `/api/quota/usage` + `/api/quota/limits`. **Sub-pattern: DUAL-ENDPOINT** — 2 separate response interfaces for independent parallel fetches (do NOT merge into god-type); each interface typed individually, each cast applied at boundary with fallback.
 - **Phase 13 (single-endpoint minimal):** `src/components/dashboard/referral-share-widget.tsx` — `ReferralGenerateResponse` cast from `/api/referral/generate`. Pattern variant: minimal 2-field interface (`code?`, `error?`), inline cast in event handler, clean YAGNI scope.
 
-**Pattern Maturity:** Established standard. Apply to all new HTTP boundary type-casts across the codebase. For multi-endpoint scenarios, maintain separate interfaces per endpoint rather than merging responses.
+### Sub-Variant 2: Request-Body Type Cast (1 Instance)
+
+Server API route receives request body from client, casts `(await request.json()) as InterfaceName`.
+
+**Canonical Examples:**
+- **Phase 14 (first request-body variant):** `src/app/api/coupons/apply/route.ts` — `CouponApplyRequest` cast from POST `/api/coupons/apply` body. Pattern variant: API boundary input validation, interface models optional fields (`code?`, `tier?`, `project?`) for flexible client submissions.
+
+**Pattern Maturity:** Established standard. Apply to all new HTTP boundary type-casts across the codebase. Distinguish between response-body (client reads server) and request-body (server reads client) variants. For multi-endpoint scenarios, maintain separate interfaces per endpoint rather than merging responses.
 
 ---
 

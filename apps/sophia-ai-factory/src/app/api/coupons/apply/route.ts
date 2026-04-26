@@ -7,6 +7,12 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
+interface CouponApplyRequest {
+  code?: string;
+  tier?: string;
+  project?: string;
+}
+
 const COUPONS: Record<string, {
   discountPercent: number;
   maxUses: number;
@@ -35,7 +41,7 @@ const PRICING: Record<string, number> = {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const body = (await request.json()) as CouponApplyRequest;
     const code = (body.code || '').trim().toUpperCase();
     const tier = (body.tier || 'BASIC').toUpperCase();
     const project = body.project || 'sophia';

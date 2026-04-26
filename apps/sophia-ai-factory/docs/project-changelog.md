@@ -1,6 +1,12 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-26 | **Current Version:** 1.12.31
+**Last Updated:** 2026-04-26 | **Current Version:** 1.12.32
+
+---
+
+## [2026-04-26] B2 Phase 14 — Coupon Apply Request-Body HTTP Boundary Casting (v1.12.32)
+
+**B2 Phase 14 (coupon apply endpoint):** Refactored `src/app/api/coupons/apply/route.ts`, added local `CouponApplyRequest` interface to type-cast HTTP boundary request body from client POST to `/api/coupons/apply` endpoint, applied anti-corruption cast pattern `(await request.json()) as CouponApplyRequest`. Pattern instance #8 of "HTTP boundary cast" — **first REQUEST-BODY variant** (Phases 6–13 were response-body variants). Eliminated 3 TS18046 errors (35→32, -8.6% Phase 14 delta, -93.1% cumulative B2 from baseline 462→32). Tests 1394/1394 pass. Review 9.8/10 auto-approved.
 
 ---
 
