@@ -469,22 +469,100 @@ export async function POST(request: Request) {
 - `src/app/api/usage/export/usage-export-post-handler.ts` — POST handler refactored (userData fetch kept separate, used for audit-receipt tier field)
 - `src/app/api/usage/summary/route.ts` — GET handler refactored
 
-**Special Note — `usage-export-post-handler.ts`:**
+**Phase 26 Extension — `isUserAdminWithRole()` Variant:**
 
-This file keeps a separate `userData` fetch because the user profile data is consumed for audit-receipt `tier` field (line 70), not just for admin-check. This is intentional — extract only the duplicated admin-check logic, keep other operations separate (follows DRY principle: eliminate duplication, not useful information).
+Phase 26 extracted a new variant `isUserAdminWithRole(user): Promise<{isAdmin: boolean, dbRole: string | null}>` for callers needing both the admin boolean AND the user's role string (e.g., audit logs, tier assignment). This eliminates redundant double DB fetches.
+
+**Canonical Implementation (Phase 26):**
 
 ```typescript
-// Admin check via helper
-const isAdmin = await isUserAdmin(user);
+import { User } from '@/lib/db/client';
+import { createServerClient } from '@/lib/db/client';
+
+export async function isUserAdminWithRole(
+  user: User
+): Promise<{ isAdmin: boolean; dbRole: string | null }> {
+  // Fast path: Check session role first (cheap, from Better Auth)
+  if (user.role === 'admin') {
+    return { isAdmin: true, dbRole: 'admin' }; // Synthesized from session
+  }
+
+  // Fallback: DB lookup if session role is falsy
+  if (!user.id) {
+    return { isAdmin: false, dbRole: null };
+  }
+
+  const db = createServerClient();
+  const { data: userData } = await db
+    .from('user_profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  // Cast with Sub-Variant 4 pattern for type safety
+  interface UserProfileRoleRow {
+    role?: string;
+  }
+  const userProfile = userData as UserProfileRoleRow | null;
+
+  const dbRole = userProfile?.role ?? null;
+  return { isAdmin: dbRole === 'admin', dbRole };
+}
+
+// Phase 25 version now delegates (DRY)
+export async function isUserAdmin(user: User): Promise<boolean> {
+  const { isAdmin } = await isUserAdminWithRole(user);
+  return isAdmin;
+}
+```
+
+**New Usage — When Caller Needs Role String:**
+
+```typescript
+// src/app/api/usage/export/usage-export-post-handler.ts (Phase 26)
+import { isUserAdminWithRole } from '@/lib/auth/is-user-admin';
+
+const { isAdmin, dbRole } = await isUserAdminWithRole(user);
+if (!isAdmin) {
+  return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+}
+
+// Audit receipt now uses dbRole (typed string | null) instead of separate userData fetch
+const auditReceipt = {
+  tier: dbRole || 'user', // Properly typed, no unknown coercion
+  // ... other audit fields
+};
+```
+
+**Why This Variant:**
+
+1. **Eliminates double DB call** — When a route needs both admin-check AND role for audit/tier logic, use tuple return instead of separate queries
+2. **Type safety** — `dbRole` is properly typed (`string | null`), not `unknown` from raw query result
+3. **Backward compatible** — Existing `isUserAdmin()` callers unchanged (delegates to variant)
+4. **Applied Sites (Phase 26):**
+   - `src/app/api/usage/export/usage-export-post-handler.ts` — Uses `isUserAdminWithRole()` for both check + audit tier field
+
+**For New Routes Needing Both Admin + Role:**
+
+When a route needs admin-check AND the user's role for audit logging or tier assignment, use `isUserAdminWithRole()` instead of making separate queries. This is the modern pattern post-Phase 26.
+
+**Special Note — `usage-export-post-handler.ts` (Updated Phase 26):**
+
+Previously kept a separate `userData` fetch. Phase 26 consolidated this via `isUserAdminWithRole()`, which returns both the boolean and the role string in one DB call. The audit-receipt `tier` field now uses `dbRole` from the helper tuple instead of a separate query.
+
+```typescript
+// Phase 26: Consolidated pattern
+const { isAdmin, dbRole } = await isUserAdminWithRole(user);
 if (!isAdmin) return 403;
 
-// Separate userData fetch for audit-receipt (intentionally not merged)
-const { data: userData } = await db.from('user_profiles').select('tier').eq('id', user.id).single();
+const auditReceipt = {
+  tier: dbRole || 'user', // From helper, no separate fetch needed
+};
 ```
 
 **For New Admin Routes:**
 
-When adding new admin-protected routes, always use `isUserAdmin()` helper instead of inline checks. This maintains consistency and centralized admin-access logic.
+When adding new admin-protected routes, use `isUserAdmin()` for simple boolean checks. If the route also needs the user's role string for audit/tier logic, use `isUserAdminWithRole()` instead to avoid double DB calls. This maintains consistency and ensures efficient DB access patterns.
 
 ---
 

@@ -1,10 +1,10 @@
 # B2: TypeScript Cleanup Initiative
 
 **Initiative:** B2 TypeScript Error Elimination
-**Duration:** Multi-phase (Phases 1–25 complete, Phase 26 ready)
-**Overall Status:** Phase 25 Complete | Phase 26 Ready
+**Duration:** Multi-phase (Phases 1–26 complete, Phase 27 planned)
+**Overall Status:** Phase 26 Complete | Phase 27 Ready (Telegram requires webhook test plan approval)
 **Baseline:** 462 TS18046 errors (next.config.ts:24 reference)
-**Current:** 4 TS18046 errors remaining (318 net after Phase 24 side-effects, Phase 25 maintains) + 2 NEW files (M1 orphan + M2 helper) (99.4% visible progress)
+**Current:** 4 TS18046 errors remaining (318 net after Phase 24 side-effects, Phase 26 maintains) + 5 NEW files (M1 orphan + M2 helper + M1 tests) (99.4% visible progress)
 
 ---
 
@@ -31,8 +31,39 @@
 | 23 | `src/app/api/internal/usage/query/route.ts` + `src/app/api/usage/summary/route.ts` | -16 (336→320 TS18046: 5 TS2558 + 8 TS2322 + 2 TS2345 + 1 TS2339) | HTTP boundary cast (Sub-Variant 4 sister-file pattern) + defensive `.catch()` | ✅ DONE | tester-260426-1107-b2-phase23-sister-cleanup, inline code-review |
 | 24 | 9 files (user_metadata cleanup, dead code removal, inline docs) | -2 side-effect (320→318) + TS18046 defer | Hygiene cleanup batch (not primary TS18046 elimination) | ✅ DONE | tester-260426-1124-phase24-b2-execution-summary, code-review-260426-1124-b2-phase24-hygiene-cleanup |
 | 25 | 8 files (2 NEW: quota/status/route + is-user-admin.ts; 6 modified: dunning ×3, usage-export ×2, usage/summary ×1) | 0 TS18046 reduction (M1/M2 carries, 318 baseline maintained) | Path B: Orphan endpoint restoration + DRY refactor (Telegram deferred) | ✅ DONE | tester-260426-1135-b2-phase25-orphan-helper, inline code-review 9.6/10 |
+| 26 | 4 files (1 NEW: is-user-admin.test.ts; 3 modified: is-user-admin.ts, usage-export-post-handler.ts, quota/status/route.ts) | 0 TS18046 reduction (M1/M2/M3 carries, 318 baseline maintained) | Path B: M1 unit tests + M2 variant + M3 docs (Telegram deferred Phase 27) | ✅ DONE | tester-260426-1158-b2-phase26-helper-tests, code-review-260426-1158-b2-phase26-helper-tests 9.75/10 |
 
-**Cumulative:** 462 → 318 TS18046 (144 fixed via Phase 24 side-effects; 99.4% visible progress; TS18046 telegram deferred Phase 26+; Phase 25 adds 2 NEW files, maintains 318 baseline)
+**Cumulative:** 462 → 318 TS18046 (144 fixed via Phase 24 side-effects; 99.4% visible progress; TS18046 telegram deferred Phase 27+; Phase 26 closes Phase 25 review carries, maintains 318 baseline)
+
+---
+
+## Phase 26 Summary (2026-04-26)
+
+**Status:** ✅ COMPLETED 2026-04-26 ~12:58 UTC
+
+**Execution Path:** B (M1/M2/M3 review carries — not primary TS18046 elimination)  
+**Files:** 4 (1 NEW test + 3 modified)  
+**Errors Fixed:** 0 TS18046 reduction (quality carries, baseline maintained)  
+**Tests:** 1394 → 1398 (+4 isUserAdmin unit tests, all passing)  
+**Review Score:** 9.75/10 auto-approved  
+**TS18046 (Telegram):** 4 unchanged (deferred Phase 27+)
+
+**Key Actions:**
+1. Added `is-user-admin.test.ts` with 4 unit tests (session admin, DB admin, neither, null DB)
+2. Created `isUserAdminWithRole()` variant returning `{isAdmin, dbRole}` tuple — applied to usage-export to eliminate double DB fetch + fix semantic bug (tier field now uses string dbRole instead of unknown userData?.role)
+3. Tightened `is-user-admin.ts` doc comments (clarified DB lookup unconditional on non-admin)
+4. Anchored `quota/status/route.ts:7` comment to Phase 24 deletion event
+
+**Newly Flagged (Phase 27+ backlog):**
+- Mi-1 (Phase 26 review): JSDoc clarify session-trust asymmetry
+- Mi-2 (Phase 26 review): Direct `isUserAdminWithRole.dbRole` assertion in tests
+- Mi-3 (Phase 26 review): One-line comment documenting tier behavior change
+
+**Reports:**
+- Tester: `plans/reports/tester-260426-1158-b2-phase26-helper-tests.md`
+- Code Review: `plans/reports/code-review-260426-1158-b2-phase26-helper-tests.md`
+
+See `phase-26-typescript-cleanup.md` for full completion details.
 
 ---
 
@@ -347,18 +378,18 @@ See `phase-21-typescript-cleanup.md` for details.
 
 ---
 
-**Last Updated:** 2026-04-26 (Phase 25 completion sync-back ~11:35 UTC)
+**Last Updated:** 2026-04-26 (Phase 26 completion sync-back ~12:58 UTC)
 **Initiative Lead:** Project Manager
-**Next Phase:** Phase 26 ready for assignment — Telegram protected flow (4 TS18046) + M2 refinement (telegram test plan approval pending)
+**Next Phase:** Phase 27 ready — Telegram protected flow (4 TS18046) requires webhook integration test plan approval
 
 ---
 
-## Phase 26 Preview (Telegram Protected Flow + M2 Refinement)
+## Phase 27 Preview (Telegram Protected Flow)
 
-**Planned Status:** Ready for Execution  
-**Scope:** 1 protected flow (Tier 3) + M2 unit tests + M2 variant enhancement  
-**Estimated Effort:** 4-6 hours (depends on telegram test plan approval)  
-**Risk Level:** HIGH (telegram protected flow) + LOW (M2 refinement)
+**Planned Status:** Ready for Execution (pending webhook test plan approval)  
+**Scope:** 1 protected flow (Tier 3) — 4 TS18046 errors  
+**Estimated Effort:** 3-4 hours (implementation + integration test)  
+**Risk Level:** HIGH (telegram protected flow)
 
 ### Critical Path: Tier 3 Protected Flow (4 TS18046)
 
@@ -370,20 +401,17 @@ See `phase-21-typescript-cleanup.md` for details.
    - Status: **REQUIRES STAKEHOLDER APPROVAL FIRST**
    - Expected result: 318 → 314 (if approved)
 
-### M2 Refinement (from Phase 25 Review Flags)
+### Phase 27 Blockers
 
-- **M1 (Phase 25): Add `is-user-admin.test.ts`** — 4 unit test cases (session admin, DB admin, neither, null DB)
-- **M2 (Phase 25): Create `isUserAdminWithRole()` variant** — Avoid double DB fetch in usage-export
-- **M3 (Phase 25): Tighten doc comments** — Clarify DB lookup behavior, anchor quota/status to Phase 24
+**Webhook Integration Test Plan Required:**
+- [ ] Staging environment telegram token configured
+- [ ] QA verification steps defined
+- [ ] Bot command testing (verify /campaign, /status, /results still work)
+- [ ] IPN idempotency guards documented
+- [ ] Rollback procedure defined
 
-### Phase 26 Decision Tree
-
-**IF telegram test plan approved + webhook QA ready:**
-- Execute Path A: Telegram protected flow (4) → **318 → 314 remaining (99.6%)**
-- Also execute M2 refinement in parallel
-- Timeline: 4-5 hours implementation + integration test
-
-**IF telegram deferred:**
-- Execute Path B: M2 refinement only (unit tests + variant + docs)
-- Defer telegram to Phase 27 with explicit test plan
-- Timeline: 2-3 hours (no TS18046 reduction, code quality improvements)
+**Carry-Forward (Phase 27+):**
+- Mi-1: JSDoc clarify session-trust asymmetry
+- Mi-2: Unit test assertions on `isUserAdminWithRole.dbRole`
+- Mi-3: Tier behavior change comment in usage-export
+- `User.role?: string` optional tightening (Phase 24 doctrine)

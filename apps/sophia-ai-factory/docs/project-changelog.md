@@ -1,6 +1,12 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-26 | **Current Version:** 1.12.43
+**Last Updated:** 2026-04-26 | **Current Version:** 1.12.44
+
+---
+
+## [2026-04-26] B2 Phase 26 — Admin Auth Helper Variant + Unit Tests (v1.12.44)
+
+**B2 Phase 26 (M1-M4 hygiene continuation from Phase 25):** Hygiene phase targeting 4 files (1 new test + 3 refactored) to extract admin role variant helper and unit-test the admin-auth pattern. **M1: Unit Tests.** Created `src/lib/auth/is-user-admin.test.ts` (59 LOC, 4 test cases) with Vitest to cover `isUserAdmin()` behavior: fast-path session admin check (returns true, no DB call), DB admin fallback (session non-admin but DB promotes to admin), neither scenario (both session + DB non-admin → false), and null DB row (missing user profile → false). Mocks D1 query layer via `vi.mock()` with `from().select().eq().single()` chain matching actual helper call pattern. **M2: Helper Variant.** Extracted new `isUserAdminWithRole(user): Promise<{isAdmin: boolean, dbRole: string | null}>` from existing `isUserAdmin()` logic (33 LOC), returning tuple with both boolean + role string for callers needing role for audit/tier logging. `isUserAdmin()` now delegates to `isUserAdminWithRole.isAdmin` (DRY). Pattern prevents double DB fetch when caller needs both auth check AND role string. **M3: JSDoc Clarification.** Enhanced `isUserAdmin()` comments: documented fast-path (trust session admin), DB fallback (validate non-admin), nullability contract for DB row. **M4: Doc Anchor.** Tightened quota/status route comment referencing Phase 24 orphan deletion context. Applied to 1 new site: `usage-export-post-handler.ts` now imports `isUserAdminWithRole`, uses tuple for audit `tier` field (eliminates separate `userData` fetch, fixes TS2322 typing). Phase 25 M1-M4 closure verified: 5 existing `isUserAdmin()` callers (summary, get-handler, 3 dunning routes) unchanged. Eliminated 1 pre-existing TS error (318→317, TS2322 at L68). Tests 1394→1398 (+4 new unit tests). Code review 9.75/10 auto-approved. Protected flows (Setup Wizard, Telegram Bot, NOWPayments) untouched.
 
 ---
 

@@ -3,7 +3,7 @@
 **Initiative:** B2 TS18046 Error Elimination  
 **Overall Progress:** 99.4% (144 visible TS18046 fixed; -29 cascading additional via Phases 22-24)  
 **Current Status:** Phase 24 Complete | Phase 25 Ready  
-**Last Updated:** 2026-04-26 (Phase 24 completion sync-back 11:24 UTC)  
+**Last Updated:** 2026-04-26 (Phase 26 completion sync-back ~12:58 UTC)  
 **Note:** Cascading error count now tracked separately (TS2345/TS2322/TS2352/TS2558/TS2339 eliminated via scoped HTTP boundary casts)  
 
 ---
@@ -32,6 +32,7 @@
 | **23** | **internal/usage/query/route.ts + usage/summary/route.ts** | **HTTP boundary cast (Sub-Variant 4 sister-file) + defensive .catch()** | **-16** | **336** | **320** | **99.3%** | **✅ DONE** | **9.7/10** | **1394/1394** | **-5 TS18046 + -11 cascading (TS2558×5, TS2322×8, TS2345×2, TS2339×1); 8 unsupported generics removed; toError() added** |
 | **24** | **9 files (user_metadata cleanup, dead code, inline docs)** | **Hygiene cleanup (Path B: not primary TS18046 elimination)** | **-2** | **320** | **318** | **99.4%** | **✅ DONE** | **9.7/10** | **1394/1394** | **Side-effect: -2 TS18046 from GETStatus deletion + cleanup; 6 user_metadata fallbacks removed; TS18046 (telegram) deferred Phase 25+** |
 | **25** | **8 files (2 NEW: quota/status/route.ts + is-user-admin.ts; 6 modified: dunning ×3, usage-export ×2, usage/summary ×1)** | **M1 orphan endpoint + M2 DRY refactor (Path B: not primary TS18046 elimination)** | **0** | **318** | **318** | **99.4%** | **✅ DONE** | **9.6/10** | **1394/1394** | **M1: Restored /api/quota/status endpoint (fixes quota-usage-dashboard 404 bug); M2: Extracted isUserAdmin() helper (6 admin sites consolidated); No TS18046 reduction (quality carries); TS18046 (telegram) deferred Phase 26+** |
+| **26** | **4 files (1 NEW: is-user-admin.test.ts; 3 modified: is-user-admin.ts, usage-export-post-handler.ts, quota/status/route.ts)** | **M1 unit tests + M2 variant + M3 docs (Path B: not primary TS18046 elimination)** | **0** | **318** | **318** | **99.4%** | **✅ DONE** | **9.75/10** | **1398/1398** | **M1: Added 4 unit tests for isUserAdmin() (session, DB, neither, null); M2: Created isUserAdminWithRole() variant, applied to usage-export (eliminates double DB fetch, fixes tier semantic bug); M3: Tightened docs in is-user-admin.ts + quota/status/route.ts; 0 TS18046 reduction (quality carries); TS18046 (telegram) deferred Phase 27+** |
 
 ---
 
