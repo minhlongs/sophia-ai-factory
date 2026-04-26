@@ -119,10 +119,14 @@ export async function cleanupExpiredAlerts(): Promise<number> {
   try {
     const db = createServerClient();
 
+    // Use computed Unix timestamps — D1 .or() parser passes values as bound params,
+    // so PostgREST literals like `now()` won't be evaluated (silent no-match risk).
+    const nowSec = Math.floor(Date.now() / 1000);
+    const thirtyDaysAgo = nowSec - 30 * 24 * 60 * 60;
     const { count, error } = await db
       .from('user_alerts')
       .delete()
-      .or('expires_at.lt.now(),created_at.lt.now() - interval \'30 days\'');
+      .or(`expires_at.lt.${nowSec},created_at.lt.${thirtyDaysAgo}`);
 
     if (error) {
       logger.error('[Realtime Alert] Cleanup failed', toError(error));

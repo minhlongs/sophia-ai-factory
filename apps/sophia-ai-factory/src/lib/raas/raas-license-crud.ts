@@ -81,8 +81,6 @@ export async function getLicenses(params: {
   if (status === 'revoked') {
     query = query.eq('is_revoked', true);
   } else if (status === 'active') {
-    // TODO P1: D1QueryChain does NOT implement .or() — runtime crash on this code path.
-    // TS2339 left intentionally as visibility flag until D1QueryChain extends with .or()
     query = query.eq('is_revoked', false).or(`expires_at.is.null,expires_at.gt.${now}`);
   } else if (status === 'expired') {
     query = query.eq('is_revoked', false).lt('expires_at', now);

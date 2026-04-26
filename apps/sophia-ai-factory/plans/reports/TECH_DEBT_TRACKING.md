@@ -1,10 +1,10 @@
 # B2 TypeScript Cleanup — Cumulative Tech Debt Tracking
 
-**Initiative:** B2 TS18046 Error Elimination + TS2345 QueryError Normalization + TS2304/TS2307 Quick-Wins + TS2339 Property Mismatch Cleanup
-**Overall Progress:** 🎉 77.7% — TS18046 100% ELIMINATED + QUERYERROR LOGGING 100% NORMALIZED + TS2304/TS2307 QUICK-WINS COMPLETE + ZODERROR + HEYGEN CASTS + PHASE 33 4-ROUTE BATCH + PHASE 35 MASS TS2352 BATCH + PHASE 36 TS2322 BATCH + PHASE 37 MIXED BATCH + PHASE 38 ALERTS/RAAS/QUOTA/LICENSING BATCH DELIVERED (462 → 103 via Phase 38)
-**Current Status:** Phase 38 Complete — ALERTS/RAAS/QUOTA/LICENSING BATCH + D1 .or() CRITICAL IDENTIFICATION
-**Last Updated:** 2026-04-26 (Phase 38 completion sync-back ~14:30 UTC)
-**Remaining Tech Debt:** 103 errors (TS2339 ×13 + TS2322 ×20 + TS2352 ×0 + other types ×70 — Phase 39+ cleanup; **P1 CRITICAL: D1QueryChain .or() method missing**)  
+**Initiative:** B2 TS18046 Error Elimination + TS2345 QueryError Normalization + TS2304/TS2307 Quick-Wins + TS2339 Property Mismatch Cleanup + D1 QueryChain .or() Implementation
+**Overall Progress:** 🎉 78.1% — TS18046 100% ELIMINATED + QUERYERROR LOGGING 100% NORMALIZED + TS2304/TS2307 QUICK-WINS COMPLETE + ZODERROR + HEYGEN CASTS + PHASE 33 4-ROUTE BATCH + PHASE 35 MASS TS2352 BATCH + PHASE 36 TS2322 BATCH + PHASE 37 MIXED BATCH + PHASE 38 ALERTS/RAAS/QUOTA/LICENSING BATCH + PHASE 39 D1 QUERYCHAIN .or() DELIVERED (462 → 101 via Phase 39)
+**Current Status:** Phase 39 Complete — D1 QUERYCHAIN .or() METHOD IMPLEMENTED + C1 SILENT FAILURE FIXED
+**Last Updated:** 2026-04-26 (Phase 39 completion sync-back ~21:10 UTC)
+**Remaining Tech Debt:** 101 errors (TS2339 ×11 + TS2322 ×18 + TS2352 ×0 + other types ×72 — Phase 40+ cleanup; **P1 CRITICAL D1 .or() COMPLETED**)  
 
 ---
 
@@ -45,6 +45,7 @@
 | **36** | **2 files (kv-metering-log-sync.ts + quota-checker-db.ts)** | **DB schema type assignment + cascading error elimination (TS2322 hard targets)** | **-25** | **148** | **123** | **73.4%** | **✅ DONE** | **9.6/10** | **1398/1398** | **TS2322 hard targets: 22 baseline + 3 cascading TS2365; local DB row interfaces applied; nullability narrowing; zero behavioral change; protected flows verified (Setup Wizard, Telegram, NOWPayments); M1/M2/M3 carries deferred Phase 37+** |
 | **37** | **4 files (admin/billing/overage-events, cron/usage-export-db, raas/usage, customer-search)** | **Mixed batch: property narrowing + DB schema + object instantiation** | **-11** | **123** | **112** | **75.8%** | **✅ DONE** | **9.7/10** | **1398/1398** | **TS2339 batch: -7 property mismatch (discriminated union casting); TS2322 batch: -7 DB schema type assignment + object instantiation; 3 cascading side-effects cleared; protected flows verified (Setup Wizard, Telegram, NOWPayments); C1/C2/C3 carries deferred Phase 38+** |
 | **38** | **5 files (alerts/raas/quota/licensing fixes)** | **Mixed batch alerts/quota/raas: HTTP boundaries + DB schema narrowing + D1 .or() visibility** | **-9** | **112** | **103** | **77.7%** | **✅ DONE** | **9.2/10** | **1398/1398** | **TS2339 batch: -5 property mismatch (HTTP boundaries + component props); TS2322/misc batch: -4 DB schema type assignment + 1x .or() revert for D1 QueryChain visibility; P1 CRITICAL: D1 .or() method missing (blocks admin getLicenses query); protected flows verified (Setup Wizard, Telegram, NOWPayments); P1 + C1/C2/C3 carries to Phase 39+** |
+| **39** | **5 files (d1-query-chain, d1-query-chain-executors, raas-license-crud, realtime-alert-mutations, customer-linkage)** | **D1 QueryChain .or() method implementation + C1 silent failure fix + H3 hardening** | **-2** | **103** | **101** | **78.1%** | **✅ DONE** | **9.0/10** | **1398/1398** | **P1 CRITICAL: D1QueryChain .or() method now implemented w/ SQL OR clause generation + allowlist validation; C1: realtime-alert-mutations now uses computed Unix timestamps instead of now() literal (silent failure fix); H3: column-name allowlist regex hardening; protected flows verified (Setup Wizard, Telegram, NOWPayments); C2/L2/M4 carries to Phase 40+** |
 
 ---
 
