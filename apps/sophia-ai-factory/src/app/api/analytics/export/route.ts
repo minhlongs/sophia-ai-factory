@@ -22,6 +22,13 @@ import { logger } from '@/lib/utils/logger-utility';
 import { exportUsageToCsv } from '@/lib/analytics/export';
 import { checkAdmin, canExport } from '@/lib/analytics/rbac';
 
+interface AnalyticsExportPayload {
+  start?: number;
+  end?: number;
+  licenseNonce?: string;
+  format?: 'csv' | 'json';
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Step 1: Authenticate user
@@ -46,7 +53,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Step 3: Parse request body
-    const body = await request.json();
+    const body = (await request.json().catch(() => ({}))) as AnalyticsExportPayload;
     const { start, end, licenseNonce, format = 'csv' } = body;
 
     if (!start || !end) {

@@ -6,6 +6,12 @@ import {
   validateHeyGen,
 } from '@/lib/validation/services';
 
+interface SetupVerifyPayload {
+  service?: string;
+  apiKey?: string;
+  key?: string;
+}
+
 // POST /api/setup/verify
 // Body: { service: 'openrouter' | 'heygen' | 'elevenlabs' | 'd-id', apiKey?: string, key?: string }
 // Response: { valid: boolean, error?: string, info?: { name: string } }
@@ -22,7 +28,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const body = await request.json();
+    const body = (await request.json().catch(() => ({}))) as SetupVerifyPayload;
     const { service, apiKey, key } = body;
     // Support both 'apiKey' (new RaaS spec) and 'key' (legacy setup wizard)
     const resolvedKey = apiKey ?? key;
