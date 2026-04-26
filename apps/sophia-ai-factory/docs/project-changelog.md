@@ -1,6 +1,12 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-26 | **Current Version:** 1.12.28
+**Last Updated:** 2026-04-26 | **Current Version:** 1.12.29
+
+---
+
+## [2026-04-26] B2 Phase 11 — Audit Log Table HTTP Boundary Casting (v1.12.29)
+
+**B2 Phase 11 (audit log table):** Refactored `src/components/admin/licenses/audit-log-table.tsx`, added local `AuditLogsResponse` interface to type-cast HTTP boundary response from `/api/admin/licenses/audit-logs` endpoint, applied anti-corruption cast pattern `(await response.json()) as AuditLogsResponse`. Pattern instance #5 of "HTTP boundary cast" (Phase 6 `RaasSyncResponse`, Phase 8 `HeyGenVideoStatusResponse`, Phase 9 `ProposalApiResponse`, Phase 10 `ApiKeysCreateResponse`). Cleanest instance: strict YAGNI (omits unused server fields, minimal scope). Eliminated 3 TS18046 errors (43→40, -6.98% cumulative from baseline 63 TS18046 in B2 Phase 1). Tests 1394/1394 pass. Review 9.7/10.
 
 ---
 

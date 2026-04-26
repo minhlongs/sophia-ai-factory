@@ -160,9 +160,9 @@ export function getMyService(): IMyService {
 
 ## TypeScript Patterns
 
-### HTTP Boundary Type Cast (Anti-Corruption Layer)
+### HTTP Boundary Type Cast (Anti-Corruption Layer) — Standard Pattern
 
-External HTTP responses arrive as `unknown` after `.json()`. Use local interfaces at the boundary to type-cast wire contracts, separated from internal domain types.
+External HTTP responses arrive as `unknown` after `.json()`. Use local interfaces at the boundary to type-cast wire contracts, separated from internal domain types. This is now an **established standard** across 5 verified instances (Phases 6–11).
 
 **Pattern: Local Interface + Cast + Fallback**
 
@@ -185,11 +185,14 @@ async getVideoStatus(videoId: string): Promise<string> {
 - Separation prevents external API changes from cascading into domain logic
 - Type cast occurs at boundary; fallback (`?? 'pending'`) handles schema evolution gracefully
 
-**Canonical Examples:**
+**Canonical Examples (5 Verified Instances):**
 - Phase 6: `src/worker/lib/metering-reconciler-license-validator.ts` — `RaasSyncResponse` cast from `/api/license/sync`
 - Phase 8: `src/lib/heygen/heygen-client.ts` — `HeyGenVideoStatusResponse` cast from HeyGen API
 - Phase 9: `src/app/[locale]/dashboard/proposals/page.tsx` — `ProposalApiResponse` cast from `/api/proposals`
 - Phase 10: `src/components/raas/api-key-create-modal.tsx` — `ApiKeysCreateResponse` cast from `/api/raas/api-keys/create`
+- Phase 11 (cleanest): `src/components/admin/licenses/audit-log-table.tsx` — `AuditLogsResponse` cast from `/api/admin/licenses/audit-logs` (strict YAGNI: omits unused server fields, minimal scope)
+
+**Pattern Maturity:** Established standard. Apply to all new HTTP boundary type-casts across the codebase.
 
 ---
 
