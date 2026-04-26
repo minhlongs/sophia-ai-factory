@@ -29,11 +29,18 @@ Resolve 462 TypeScript errors currently masked by `ignoreBuildErrors: true` in `
 - Metric: 462 → **452 errors**
 - Tests: 1394 pass, 0 fail
 
-### Phase 2: Backlog (Next PRs)
+### Phase 2: Pricing Section Type Guards (DONE)
+- File: `src/components/pricing/pricing-section.tsx`
+- Change: Added 2 local response interfaces (CouponActivateResponse, CheckoutResponse) + typed casts on fetch().json()
+- Errors fixed: -6 TS18046
+- Metric: 452 → **446 errors**
+- Tests: 1394 pass, 0 fail
+
+### Phase 3: Setup Wizard Type Guards (IN PROGRESS)
 Prioritized by TS18046 density within file:
 
-1. `src/components/pricing/pricing-section.tsx` (6 TS18046)
-2. `src/app/setup-wizard/page.tsx` (6 TS18046)
+1. `src/app/setup-wizard/page.tsx` (6 TS18046) — **CURRENT**
+2. `src/components/admin/licenses/use-license-regenerate.ts` (5 TS18046)
 3. `src/components/admin/licenses/use-license-regenerate.ts` (5 TS18046)
 4. `src/components/admin/licenses/use-license-list-actions.ts` (5 TS18046)
 5. `src/worker/lib/metering-reconciler-license-validator.ts` (4 TS18046)
@@ -55,5 +62,7 @@ git diff next.config.ts  # ignoreBuildErrors removed
 ## Status
 
 - [x] Phase 1: API Handler Zod Validation
-- [ ] Phase 2-10: Backlog resolution
+- [x] Phase 2: Pricing Section Type Guards
+- [ ] Phase 3: Setup Wizard Type Guards
+- [ ] Phase 4-10: Backlog resolution
 - [ ] Final: Remove ignoreBuildErrors, verify 0 errors
