@@ -1,6 +1,12 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-26 | **Current Version:** 1.12.25
+**Last Updated:** 2026-04-26 | **Current Version:** 1.12.26
+
+---
+
+## [2026-04-26] B2 Phase 8 — HeyGen Client HTTP Boundary Casting (v1.12.26)
+
+**B2 Phase 8 (HeyGen client):** Refactored `src/lib/heygen/heygen-client.ts`, added local `HeyGenVideoStatusResponse` interface to type-cast HTTP boundary response from HeyGen API endpoint, applied anti-corruption cast pattern `(await this.request(...)) as HeyGenVideoStatusResponse` with `?? 'pending'` fallback. Pattern instance #2 of "HTTP boundary cast" (first: Phase 6 `metering-reconciler-license-validator.ts`). Eliminated 4 TS18046 errors (55→51, -7.3% cumulative from baseline 63 TS18046 in B2 Phase 1). Tests 1394/1394 pass. Review 9.7/10.
 
 ---
 

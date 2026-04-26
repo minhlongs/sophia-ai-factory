@@ -2,9 +2,9 @@
 
 **Initiative:** B2 TypeScript Error Elimination
 **Duration:** Multi-phase (Phases 1–8+ ongoing)
-**Overall Status:** Phase 7 Complete | Phase 8 Scoping In Progress
+**Overall Status:** Phase 8 Complete | Phase 9 Backlog Ready
 **Baseline:** 462 TS18046 errors (next.config.ts:24 reference)
-**Current:** 55 TS18046 errors remaining (88% reduction)
+**Current:** 51 TS18046 errors remaining (89% reduction)
 
 ---
 
@@ -13,8 +13,9 @@
 | Phase | Target | Errors Fixed | Method | Status | Reports |
 |-------|--------|--------------|--------|--------|---------|
 | 7 | `src/middleware/rate-limit-wrapper.test.ts` | -4 (426→422 local) | Inline `as` casts | ✅ DONE | tester-260426-0030-* |
+| 8 | `src/lib/heygen/heygen-client.ts` | -4 (55→51) | HTTP boundary anti-corruption cast | ✅ DONE | code-review-260426-* |
 
-**Cumulative:** 462 → 55 TS18046 (407 fixed, 88% reduction)
+**Cumulative:** 462 → 51 TS18046 (411 fixed, 89% reduction)
 
 ---
 
@@ -38,9 +39,17 @@
 
 ---
 
-## Phase 8 Scoping
+## Phase 8 Completion
 
-**Current Backlog:** 55 TS18046 errors remaining
+**Target:** `src/lib/heygen/heygen-client.ts` — HTTP boundary anti-corruption layer
+- Added local `HeyGenVideoStatusResponse` interface at request site
+- Cast external response type with narrowest scope
+- Fallback: `?? 'pending'` for undefined status
+- Tests: 1394/1394 ✅ (zero regressions)
+- Review: 9.7/10 auto-approved
+- Pattern: SECOND instance of "HTTP boundary cast" pattern (Phase 6 first)
+
+**Phase 9 Backlog:** 51 TS18046 errors remaining
 
 **Top 5 Files by Error Frequency:**
 ```bash
@@ -106,10 +115,12 @@ npx tsc --noEmit 2>&1 | grep "TS18046" | \
 - [x] Phase 7 TS18046 fixed (-4 errors)
 - [x] All tests passing (1394/1394)
 - [x] Code review approved (9.7/10)
-- [ ] Phase 8 target file identified
-- [ ] Phase 8 implementation plan drafted
+- [x] Phase 8 target file identified and completed
+- [x] Phase 8 implementation delivered (-4 errors, 9.7/10 review)
+- [ ] Phase 9 target file identified
+- [ ] Phase 9 implementation backlog ready
 
 ---
 
-**Last Updated:** 2026-04-26 (Phase 7 sync-back)
+**Last Updated:** 2026-04-26 (Phase 8 sync-back)
 **Initiative Lead:** Project Manager

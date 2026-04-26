@@ -24,15 +24,17 @@
 
 **Total:** 4,174 lines → 36 sub-modules | 2 review fix commits
 
-### TypeScript TS18046 Cleanup (Phase 7, April 26, 2026)
+### TypeScript TS18046 Cleanup (Phases 7-8, April 26, 2026)
 
 | Phase | File | Errors Fixed | Method | Tests | Status | Commit |
 |-------|------|--------------|--------|-------|--------|--------|
-| B2-P7 | src/middleware/rate-limit-wrapper.test.ts | -4 | Inline `as` casts | 13/13 ✅ | ✅ | TBD |
+| B2-P7 | src/middleware/rate-limit-wrapper.test.ts | -4 | Inline `as` casts | 1394/1394 ✅ | ✅ DONE | TBD |
+| B2-P8 | src/lib/heygen/heygen-client.ts | -4 | HTTP boundary anti-corruption | 1394/1394 ✅ | ✅ DONE | TBD |
 
-**Cumulative TS18046 Reduction:** 462 baseline → 55 remaining (-407 fixed, 88% reduction)
+**Cumulative TS18046 Reduction:** 462 baseline → 51 remaining (-411 fixed, 89% reduction)
+**Phase 9 Ready:** 3 backlog candidates identified (proposals/page.tsx recommended first)
 
-**Note on Baseline Discrepancy:** Initial tracker recorded 462 baseline errors (next.config.ts:24 ref). Actual `npx tsc --noEmit 2>&1 | grep -c "TS18046"` returns 55 after Phase 7. Possible explanations: (1) prior phases fixed untracked errors, (2) baseline may have included other error types, (3) configuration changes affected error detection. Recommend re-baseline and continue from current 55-error state.
+**Baseline Discrepancy (Unresolved):** Initial tracker recorded 462 baseline errors (next.config.ts:24 ref). Post-Phase 8 `npx tsc --noEmit 2>&1 | grep -c "TS18046"` returns 51. Possible explanations: (1) prior untracked phases fixed errors, (2) baseline may have included other error types, (3) configuration changes affected detection. Continue from current 51-error state. **Flag for investigation in Phase 10 planning.**
 
 ### Dead-Code Cleanup Sync (April 25, 2026 — Post /debug --auto)
 

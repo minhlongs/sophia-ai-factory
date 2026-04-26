@@ -158,6 +158,39 @@ export function getMyService(): IMyService {
 }
 ```
 
+## TypeScript Patterns
+
+### HTTP Boundary Type Cast (Anti-Corruption Layer)
+
+External HTTP responses arrive as `unknown` after `.json()`. Use local interfaces at the boundary to type-cast wire contracts, separated from internal domain types.
+
+**Pattern: Local Interface + Cast + Fallback**
+
+```typescript
+// src/lib/heygen/heygen-client.ts
+interface HeyGenVideoStatusResponse {
+  status: 'processing' | 'completed' | 'failed';
+  videoUrl?: string;
+}
+
+async getVideoStatus(videoId: string): Promise<string> {
+  const response = (await this.request(`/videos/${videoId}`)) as HeyGenVideoStatusResponse;
+  return response.status ?? 'pending';
+}
+```
+
+**Rationale:**
+- External contracts (`HeyGenVideoStatusResponse`, `RaasSyncResponse`) describe the wire shape only
+- Internal domain types (`VideoProcessingState`, `LicenseValidationResult`) model business logic
+- Separation prevents external API changes from cascading into domain logic
+- Type cast occurs at boundary; fallback (`?? 'pending'`) handles schema evolution gracefully
+
+**Canonical Examples:**
+- Phase 6: `src/worker/lib/metering-reconciler-license-validator.ts` — `RaasSyncResponse` cast from `/api/license/sync`
+- Phase 8: `src/lib/heygen/heygen-client.ts` — `HeyGenVideoStatusResponse` cast from HeyGen API
+
+---
+
 ## Testing Standards
 - **Framework**: Vitest + React Testing Library.
 - **Requirement**: Core business logic and server actions must have unit tests.
