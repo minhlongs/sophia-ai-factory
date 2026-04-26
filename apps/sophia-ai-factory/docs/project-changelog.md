@@ -1,6 +1,12 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-26 | **Current Version:** 1.12.29
+**Last Updated:** 2026-04-26 | **Current Version:** 1.12.30
+
+---
+
+## [2026-04-26] B2 Phase 12 — Quota Usage Dashboard Dual-Endpoint HTTP Boundary Casting (v1.12.30)
+
+**B2 Phase 12 (quota usage dashboard):** Refactored `src/components/quota/quota-usage-dashboard.tsx`, added 2 local response interfaces (`QuotaUsageResponse`, `QuotaLimitResponse`) to type-cast HTTP boundary responses from parallel `Promise.all([fetch1, fetch2])` on endpoints `/api/quota/usage` + `/api/quota/limits`, applied anti-corruption cast pattern with fallback for each response. Pattern instance #6 of "HTTP boundary cast" — **first DUAL-ENDPOINT application** with separate interfaces per parallel fetch (Phase 11 was single-endpoint, Phase 12 extends pattern to multi-endpoint scenarios). Eliminated 3 TS18046 errors (40→37, -7.5% Phase 12 delta, -92% cumulative B2 from baseline 462→37). Tests 1394/1394 pass. Review 9.7/10 auto-approved.
 
 ---
 

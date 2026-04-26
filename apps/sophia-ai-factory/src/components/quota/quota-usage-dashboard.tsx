@@ -41,6 +41,15 @@ interface OveragesSummary {
   billableEvents: number;
 }
 
+interface QuotaStatusResponse {
+  quota?: QuotaStatus;
+}
+
+interface OverageEventsResponse {
+  events?: OverageEvent[];
+  summary?: OveragesSummary;
+}
+
 /** Inline quota gauge — small enough to stay in root file */
 function QuotaGauge({
   title,
@@ -95,12 +104,12 @@ export function QuotaUsageDashboard() {
         if (!quotaRes.ok) throw new Error('Failed to fetch quota status');
         if (!overageRes.ok) throw new Error('Failed to fetch overage events');
 
-        const quotaData = await quotaRes.json();
-        const overageData = await overageRes.json();
+        const quotaData = (await quotaRes.json()) as QuotaStatusResponse;
+        const overageData = (await overageRes.json()) as OverageEventsResponse;
 
-        setQuotaStatus(quotaData.quota);
-        setOverageEvents(overageData.events);
-        setSummary(overageData.summary);
+        setQuotaStatus(quotaData.quota ?? null);
+        setOverageEvents(overageData.events ?? []);
+        setSummary(overageData.summary ?? null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');
       } finally {
