@@ -110,7 +110,7 @@ export async function lookupCache(key: CacheKey): Promise<CacheEntry | null> {
       .single()
 
     if (error || !data) return await trySemanticFallback(key)
-    const row = data as CacheRow
+    const row = data as unknown as CacheRow
 
     if (new Date(row.expires_at).getTime() <= Date.now()) {
       return await trySemanticFallback(key)

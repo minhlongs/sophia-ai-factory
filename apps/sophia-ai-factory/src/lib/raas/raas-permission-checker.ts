@@ -40,7 +40,7 @@ export async function revokeLicense(nonce: string, revokedBy?: string): Promise<
     throw new Error(`Database error: ${error.message}`);
   }
 
-  return data as RaasLicense;
+  return data as unknown as RaasLicense;
 }
 
 /** Extend license expiration by N days */
@@ -68,7 +68,7 @@ export async function extendLicense(nonce: string, days: number, extendedBy?: st
   }
 
   logger.info(`License extended: ${nonce} by ${days} days (by ${extendedBy ?? 'system'})`);
-  return data as RaasLicense;
+  return data as unknown as RaasLicense;
 }
 
 /** Increment validation count in license metadata */

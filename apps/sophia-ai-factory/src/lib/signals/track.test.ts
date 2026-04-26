@@ -19,7 +19,7 @@ const flushAsync = () => new Promise<void>((r) => setTimeout(r, 0))
 
 /** Retrieve the D1 mock from the global env set by test/setup.tsx */
 function getD1Mock() {
-  const env = (globalThis as Record<string, Record<string, unknown>>).__env
+  const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env
   return env.DB as {
     prepare: ReturnType<typeof vi.fn>
   }

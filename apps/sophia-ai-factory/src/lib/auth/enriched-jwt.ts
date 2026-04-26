@@ -98,7 +98,7 @@ export async function verifyEnrichedJwt(token: string): Promise<EnrichedJwtPaylo
       algorithms: [JWT_CONFIG.algorithm],
       clockTolerance: 60,
     })
-    return payload as EnrichedJwtPayload
+    return payload as unknown as EnrichedJwtPayload
   } catch (error) {
     logger.warn('[Enriched JWT] JWT verification failed', toError(error))
     return null

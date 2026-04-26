@@ -137,7 +137,7 @@ export async function fetchUsageForExport(options: ExportOptions): Promise<Usage
     query = query.eq('user_id', options.userId);
   }
 
-  const { data: events, error } = await query as { data: UsageEventRow[]; error: unknown };
+  const { data: events, error } = await query as unknown as { data: UsageEventRow[]; error: unknown };
 
   if (error) {
     logger.error('[Analytics Export] Failed to fetch usage events', toError(error));

@@ -42,7 +42,7 @@ export default async function DashboardPage() {
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       if (error) logger.error("[dashboard] DB error", new Error(error.message));
-      campaigns = (data as Campaign[]) || [];
+      campaigns = (data as unknown as Campaign[]) || [];
     } catch (e) {
       logger.error("[dashboard] Failed to fetch campaigns", e instanceof Error ? e : new Error(String(e)));
       campaigns = [];

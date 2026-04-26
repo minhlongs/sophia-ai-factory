@@ -60,8 +60,8 @@ export async function fetchLicenseMetrics(filters: LicenseFilters = {}): Promise
 
   // Client-side filter: active = not revoked AND (no expiry OR not yet expired)
   const licenses = (status === 'active'
-    ? (rawLicenses as LicenseRow[]).filter(l => !l.expires_at || l.expires_at > now)
-    : rawLicenses as LicenseRow[]
+    ? (rawLicenses as unknown as LicenseRow[]).filter(l => !l.expires_at || l.expires_at > now)
+    : rawLicenses as unknown as LicenseRow[]
   );
 
   // Calculate byTier counts

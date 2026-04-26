@@ -65,5 +65,5 @@ export function extractEnrichedClaims(payload: JwtPayload | ExtendedJwtPayload):
     is_paid: payload.is_paid,
     overage_allowed: payload.overage_allowed,
     quota_remaining: payload.quota ? { dailyCredits: payload.quota.dailyCredits, hourlyCredits: payload.quota.hourlyCredits, monthlyCredits: payload.quota.monthlyCredits } : undefined,
-  } as EnrichedJwtPayload
+  } as unknown as EnrichedJwtPayload
 }

@@ -46,7 +46,7 @@ export async function getMeteringLogs(
       .lte('created_at', endTime)
     if (error) throw new Error(`Database error: ${error.message}`)
     if (!data) return []
-    return (data as MeteringLogRow[])
+    return (data as unknown as MeteringLogRow[])
       .filter(row => {
         if (options?.licenseNonce && row.license_nonce !== options.licenseNonce) return false
         if (options?.userId && row.user_id !== options.userId) return false

@@ -46,7 +46,7 @@ export async function createLicense(params: LicenseCreationParams): Promise<Raas
     throw new Error(`Database error: ${error.message}`);
   }
 
-  return data as RaasLicense;
+  return data as unknown as RaasLicense;
 }
 
 /** Get license by nonce — returns null if not found */

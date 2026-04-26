@@ -49,7 +49,7 @@ export default async function CampaignsPage() {
       if (error) {
         logger.error("[campaigns/page] DB error", new Error(error.message));
       }
-      campaigns = (data as Campaign[]) || [];
+      campaigns = (data as unknown as Campaign[]) || [];
     } catch (e) {
       logger.error("[campaigns/page] Failed to fetch campaigns", e instanceof Error ? e : new Error(String(e)));
       campaigns = [];

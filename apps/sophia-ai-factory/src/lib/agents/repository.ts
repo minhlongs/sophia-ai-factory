@@ -67,7 +67,7 @@ export async function getTeamByOrgId(orgId: string): Promise<AgentTeam | null> {
     .eq('org_id', orgId)
     .maybeSingle();
   if (error || !data) return null;
-  return mapTeam(data as AgentTeamRow);
+  return mapTeam(data as unknown as AgentTeamRow);
 }
 
 export async function createTeam(orgId: string, name = 'My AI Company'): Promise<AgentTeam> {
@@ -78,7 +78,7 @@ export async function createTeam(orgId: string, name = 'My AI Company'): Promise
     .select()
     .single();
   if (error || !data) throw new Error(`createTeam failed: ${String(error)}`);
-  return mapTeam(data as AgentTeamRow);
+  return mapTeam(data as unknown as AgentTeamRow);
 }
 
 export async function getOrCreateTeam(orgId: string): Promise<AgentTeam> {
@@ -97,7 +97,7 @@ export async function listAgents(teamId: string): Promise<Agent[]> {
     .eq('team_id', teamId)
     .eq('enabled', 1);
   if (error || !data) return [];
-  return (data as AgentRow[]).map(mapAgent);
+  return (data as unknown as AgentRow[]).map(mapAgent);
 }
 
 // H5 fix: cap system_prompt length so admin-injected prompts can't blow
@@ -130,7 +130,7 @@ export async function createAgent(params: {
     .select()
     .single();
   if (error || !data) throw new Error(`createAgent failed: ${String(error)}`);
-  return mapAgent(data as AgentRow);
+  return mapAgent(data as unknown as AgentRow);
 }
 
 export async function getAgentById(agentId: string): Promise<Agent | null> {
@@ -141,7 +141,7 @@ export async function getAgentById(agentId: string): Promise<Agent | null> {
     .eq('id', agentId)
     .maybeSingle();
   if (error || !data) return null;
-  return mapAgent(data as AgentRow);
+  return mapAgent(data as unknown as AgentRow);
 }
 
 // ── Tasks ─────────────────────────────────────────────────────────────────
@@ -158,7 +158,7 @@ export async function createTask(params: {
     .select()
     .single();
   if (error || !data) throw new Error(`createTask failed: ${String(error)}`);
-  return mapTask(data as AgentTaskRow);
+  return mapTask(data as unknown as AgentTaskRow);
 }
 
 export async function getTask(taskId: string, orgId: string): Promise<AgentTask | null> {
@@ -170,7 +170,7 @@ export async function getTask(taskId: string, orgId: string): Promise<AgentTask 
     .eq('org_id', orgId)
     .maybeSingle();
   if (error || !data) return null;
-  return mapTask(data as AgentTaskRow);
+  return mapTask(data as unknown as AgentTaskRow);
 }
 
 // H1 fix (defense-in-depth): both writes require orgId filter so a leaked
@@ -220,7 +220,7 @@ export async function appendLog(params: {
     .select()
     .single();
   if (error || !data) throw new Error(`appendLog failed: ${String(error)}`);
-  const row = data as AgentLogRow;
+  const row = data as unknown as AgentLogRow;
   return {
     id: row.id,
     taskId: row.task_id,
