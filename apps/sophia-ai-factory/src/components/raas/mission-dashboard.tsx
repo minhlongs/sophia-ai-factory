@@ -21,6 +21,10 @@ interface MissionRow {
   created_at: string;
 }
 
+interface MissionListResponse {
+  missions?: MissionRow[];
+}
+
 const STATUS_STYLES: Record<MissionStatus, string> = {
   queued: 'bg-muted text-muted-foreground',
   planning: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
@@ -48,7 +52,7 @@ export function MissionDashboard({ onLaunchMission }: Props) {
 
   useEffect(() => {
     fetch('/api/raas/missions?limit=20')
-      .then(r => r.json())
+      .then(r => r.json() as Promise<MissionListResponse>)
       .then(d => { setMissions(d.missions ?? []); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);

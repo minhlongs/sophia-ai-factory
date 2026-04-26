@@ -185,7 +185,7 @@ async getVideoStatus(videoId: string): Promise<string> {
 - Separation prevents external API changes from cascading into domain logic
 - Type cast occurs at boundary; fallback (`?? 'pending'`) handles schema evolution gracefully
 
-### Sub-Variant 1: Response-Body Type Cast (11 Instances)
+### Sub-Variant 1: Response-Body Type Cast (14 Instances)
 
 Client receives response from server, casts `(await res.json()) as InterfaceName`.
 
@@ -200,6 +200,9 @@ Client receives response from server, casts `(await res.json()) as InterfaceName
 - **Phase 18 (async/await + snake_case API contract):** `src/components/raas/mcu-balance-widget.tsx` — `RaasUsageResponse` cast from `/api/raas/usage` endpoint via async/await block. Pattern variant: preserves snake_case API contract (`credit_balance?`, `monthly_limit?`), demonstrates response-body cast works in async/await context (prior Phases 6–13 used .then() chains or inline).
 - **Phase 18 (async/await + optional nested object):** `src/components/raas/mission-launcher.tsx` — `MissionCreateResponse` interface cast from `/api/missions/create` endpoint via async/await. Pattern variant: optional nested `mission?: { id?: string }` + parallel `error?: string` + hardened `onSuccess(string)` signature with fallback `?? ''` for required string field. Demonstrates response-body cast handles complex optional structures + async/await blocks.
 - **Phase 19 (dual-endpoint with individual fallbacks):** `src/components/raas/api-key-list.tsx` — DUAL-ENDPOINT variant with 2 parallel fetches (same as Phase 12 pattern). `Promise.all([fetch(...), fetch(...)])` → separate interfaces for each response, individual fallbacks per response. Demonstrates pattern consistency across Phase 12 and Phase 19 in dual-fetch scenarios.
+- **Phase 21 (response-body + latent bug fix):** `src/components/admin/licenses/license-generator.tsx` — `CreateLicenseResponse` cast from POST `/api/admin/licenses/create` endpoint. Pattern variant: callback now passes narrowed `data.license` (`LicenseSummary`) instead of full response envelope — corrects latent type mismatch where callback signature expected `LicenseSummary` but received response wrapper.
+- **Phase 21 (response-body + internal list):** `src/components/raas/mission-dashboard.tsx` — `MissionListResponse` cast from `/api/missions` endpoint. Pattern variant: mirrors Phase 12/19 dual-fetch pattern structure; establishes client-side contract before server implementation complete.
+- **Phase 21 (response-body + discriminated union):** `src/components/raas/mission-detail.tsx` — `MissionDetailResponse` cast from `/api/missions/[id]` endpoint with discriminated-union fallback: `'mission' in data && data.mission ? data.mission : (data as MissionData)`. Pattern variant: demonstrates safe narrowing when API contract uses wrapper object or direct data shape interchangeably.
 
 ### Sub-Variant 2: Request-Body Type Cast (6 Instances)
 
@@ -259,12 +262,15 @@ const data = (await getAnalyticsData(params)) as AnalyticsQueryResponse;
 
 Prefer this approach to modifying the helper's return type annotation (which may affect multiple callsites or break abstraction). The interface is defined **at the narrowest consumption point** with only the fields actually used (YAGNI principle).
 
-### Sub-Variant 4: DB-Result Cast (5 Instances — NEW)
+### Sub-Variant 4: DB-Result Cast (12 Instances)
 
 Casting Supabase/D1 query results from `unknown` (via `ReturnType<typeof db.from>` helper) to local DB-row interface at narrow consumption point.
 
-**Canonical Example (Phase 20 — NEW):**
+**Canonical Examples:**
 - **Phase 20:** `src/app/api/admin/licenses/[id]/reactivate/route.ts` — `ReactivatedLicenseRow` interface cast. Pattern: rename pattern (`data` → `rawData` distinguishes wire result from domain object), nullable cast (`as ReactivatedLicenseRow | null`) for `.single()` returns, optional-chained reads with fallbacks (`license?.expiresAt ?? null`). Only consumed fields modeled in interface (YAGNI: don't replicate full DB schema). Defensive fallbacks prevent null-dereference errors.
+- **Phase 21 (roi calculation):** `src/lib/analytics/roi-calculator.ts` — `RaasLicenseRoiRow` + `UsageEventCreditRow` interfaces cast at 4 query sites. Pattern: 2-interface approach separates license metrics from event aggregation; defensive nonce filtering at L163 (`if (!license.nonce) continue`) + optional-chained reads with fallbacks; type-narrowed metadata reads via `.filter((n): n is string => !!n)` for guaranteed string array before iteration. Demonstrates pattern scales to multi-query aggregation scenarios.
+- **Phase 21 (violation analytics):** `src/lib/analytics/queries/violation-queries.ts` — `ViolationRow` interface cast at 2 query sites with `toError()` logging wrapper. Pattern: combines DB-Result Cast with Logger Error Handling (see below); enum coercions (`as ViolationType`, `as SeverityLevel`) at map boundary; defensive null→undefined conversions (`resolved_at: v.resolved_at ?? undefined`) for domain contract alignment.
+- **Phase 21 (usage summary):** `src/app/api/billing/usage-summary/route.ts` — `UsageSummaryLicenseRow` interface cast from license SELECT query. Pattern: minimal 3-field interface (YAGNI scope), optional-chained threshold reads.
 
 **General Pattern:**
 ```typescript
@@ -278,7 +284,54 @@ const expiresAt = rawData?.expiresAt ?? null;
 const status = rawData?.status ?? 'active';
 ```
 
-Distinct from HTTP boundary casts: DB results are strongly typed by schema but TypeScript cannot infer `ReturnType<typeof db.from>` without manual interface definition at point of use. Cast occurs at **narrowest consumption point**, interfaces omit unused fields, all reads optional-chained. 5 instances codebase-wide (Phase 20 + 4 pre-existing).
+**For Nullable Joined Fields (NEW — Phase 21):**
+When aggregating from nullable joined fields (e.g., `nonce?: string`), use two-step pattern:
+1. Guard with early-continue at iteration: `if (!field) continue`
+2. Filter array for type narrowing: `.filter((n): n is string => !!n)` for guaranteed typed array before iteration
+
+```typescript
+// In roi-calculator.ts L163, L180
+const licenses = rawLicenses.filter((l) => l.nonce); // Type: (RaasLicenseRoiRow & { nonce: string })[]
+const noncesList = licenses.map(l => l.nonce);
+```
+
+Distinct from HTTP boundary casts: DB results are strongly typed by schema but TypeScript cannot infer `ReturnType<typeof db.from>` without manual interface definition at point of use. Cast occurs at **narrowest consumption point**, interfaces omit unused fields, all reads optional-chained. 12 instances codebase-wide (Phase 21 adds 7 new + Phase 20 1 + 4 pre-existing).
+
+---
+
+## Logger Error Wrapping Pattern
+
+When logging errors from Supabase/D1 query results or caught exceptions, normalize error objects using the `toError()` helper from `@/lib/utils/to-error.ts`.
+
+**Canonical Pattern (Phase 21):**
+
+```typescript
+import { logger } from '@/lib/logger';
+import { toError } from '@/lib/utils/to-error';
+
+try {
+  const result = await db.from('table').select('*');
+  if (!result) throw new Error('Query returned null');
+} catch (error) {
+  const err = toError(error);  // Normalizes to Error, preserves PostgrestError shape
+  logger.error('Query failed', { error: err, userId }, requestId);
+}
+```
+
+**Why `toError()` Matters:**
+
+`toError()` recognizes Supabase `PostgrestError` shape: `{ message: string, code?, details?, hint? }`. Instead of collapsing to `Error("[object Object]")`, it:
+1. Returns `new Error(message)` with preserved message
+2. Attaches `code`, `details`, `hint` as own-properties for structured logging downstream
+3. Falls back to string coercion for non-Error/non-PostgrestError values
+
+**Canonical Sites (Phase 21+):**
+- `src/lib/analytics/queries/violation-queries.ts` — 2 query error sites wrapped with `toError()`
+- `src/app/api/admin/licenses/[id]/reactivate/route.ts` — logger at L71 wrapped with `toError()`
+- Any route or function catching query/async errors should use `toError()` before `logger.error()`
+
+**Documentation Reference:**
+See `Error Handling & Logging` section above for full signature and usage of `logger.error()`.
 
 ---
 

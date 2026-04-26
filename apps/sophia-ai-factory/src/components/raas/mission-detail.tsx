@@ -22,6 +22,10 @@ interface MissionData {
   mcu_breakdown?: { label: string; cost: number }[];
 }
 
+interface MissionDetailResponse {
+  mission?: MissionData;
+}
+
 const PEV_STAGES: { key: MissionStatus; label: string; icon: string }[] = [
   { key: 'queued',    label: 'Queued',    icon: 'schedule' },
   { key: 'planning',  label: 'Planning',  icon: 'psychology' },
@@ -41,8 +45,12 @@ export function MissionDetail({ missionId }: Props) {
 
   useEffect(() => {
     fetch(`/api/raas/missions/${missionId}`)
-      .then(r => r.json())
-      .then(d => { setMission(d.mission ?? d); setLoading(false); })
+      .then(r => r.json() as Promise<MissionDetailResponse | MissionData>)
+      .then(d => {
+        const m = 'mission' in d && d.mission ? d.mission : (d as MissionData);
+        setMission(m);
+        setLoading(false);
+      })
       .catch(() => setLoading(false));
   }, [missionId]);
 

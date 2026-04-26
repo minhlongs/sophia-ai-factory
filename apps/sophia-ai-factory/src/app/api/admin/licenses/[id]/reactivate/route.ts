@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getLicenseByNonce } from '@/lib/raas-audit'
 import { checkAdminAuth } from '../../middleware'
 import { logger } from '@/lib/utils/logger-utility'
+import { toError } from '@/lib/utils/to-error'
 import { createServerClient } from '@/lib/db/client'
 
 interface ReactivatedLicenseRow {
@@ -68,7 +69,7 @@ export async function POST(
     const data = rawData as ReactivatedLicenseRow | null
 
     if (error) {
-      logger.error('Failed to reactivate license', error)
+      logger.error('Failed to reactivate license', toError(error))
       return NextResponse.json(
         { error: 'Failed to reactivate license' },
         { status: 500 }
