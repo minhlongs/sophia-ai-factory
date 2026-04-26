@@ -29,6 +29,15 @@ export interface HeyGenVideoStatus {
   id: string;
 }
 
+interface HeyGenVideoStatusResponse {
+  data?: {
+    status?: HeyGenVideoStatus['status'];
+    video_url?: string;
+    thumbnail_url?: string;
+    error?: { message?: string };
+  };
+}
+
 export class HeyGenClient {
   private apiKey: string;
   private tier: Tier;
@@ -156,12 +165,12 @@ export class HeyGenClient {
 
   async getVideoStatus(videoId: string): Promise<HeyGenVideoStatus> {
     // Use v2 endpoint
-    const data = await this.request(`/video/${videoId}`);
+    const data = (await this.request(`/video/${videoId}`)) as HeyGenVideoStatusResponse;
     const status = data.data?.status;
 
     return {
       id: videoId,
-      status: status,
+      status: status ?? 'pending',
       video_url: data.data?.video_url,
       thumbnail_url: data.data?.thumbnail_url,
       error: data.data?.error?.message
