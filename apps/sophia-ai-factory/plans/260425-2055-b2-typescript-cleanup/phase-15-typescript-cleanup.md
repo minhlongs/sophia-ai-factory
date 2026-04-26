@@ -106,12 +106,35 @@ Continue B2 TS18046 cleanup using proven inline cast methodology. Phase 14 compl
 
 ## Success Criteria
 
-- [ ] Phase 15 target file identified and assigned
-- [ ] TS18046 errors reduced by 2 (32 → 30)
-- [ ] Tests: 1394/1394 passing
-- [ ] Code review: 9.5+/10 approved
-- [ ] Commit: Conventional format, descriptive message
-- [ ] Phase 16 backlog identified
+- [x] Phase 15 target file identified and assigned
+- [x] TS18046 errors reduced by 2 (32 → 30)
+- [x] Tests: 1394/1394 passing
+- [x] Code review: 9.5+/10 approved
+- [x] Commit: Conventional format, descriptive message
+- [x] Phase 16 backlog identified
+
+---
+
+## Phase 15 Completion Report
+
+**Target File:** `src/app/api/coupons/activate/route.ts`  
+**Pattern:** HTTP Boundary Cast — Instance #9, second canonical request-body variant  
+**Errors Fixed:** -2 (32 → 30)  
+**Tests:** 1394/1394 ✅ (0 regressions)  
+**Review Score:** 9.8/10 (auto-approved, 0 critical)  
+**Quality:** Request-body HTTP boundary pattern identical to Phase 14 (coupons/apply). Local `CouponActivateRequest` interface with narrowest scope fields (`code`, `projectId`). Cast applied at `(await request.json()) as CouponActivateRequest` boundary. Defensive guard: `if (!req.code)` protection before activation logic.
+
+**Implementation Pattern:**
+- Local `CouponActivateRequest` interface (2 lines)
+- Request body cast: `(await request.json()) as CouponActivateRequest`
+- Defensive truthiness guard: `if (!req.code)` and `if (!req.projectId)`
+- YAGNI: Omitted unused fields from request schema
+
+**Key Reports:**
+- `plans/reports/tester-260426-0854-b2-phase15-coupons-activate.md`
+- `plans/reports/code-review-260426-0853-b2-phase15-coupons-activate.md`
+
+**Timestamp:** 2026-04-26 08:55 UTC
 
 ---
 

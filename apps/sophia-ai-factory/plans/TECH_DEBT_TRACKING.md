@@ -36,9 +36,10 @@
 | B2-P12 | src/components/quota/quota-usage-dashboard.tsx | -3 | HTTP boundary (dual-endpoint) | 1394/1394 ✅ | 9.7/10 | ✅ DONE | TBD |
 | B2-P13 | src/components/dashboard/referral-share-widget.tsx | -2 | HTTP boundary (single-endpoint) | 1394/1394 ✅ | 9.8/10 | ✅ DONE | TBD |
 | B2-P14 | src/app/api/coupons/apply/route.ts | -3 | HTTP boundary (request-body) | 1394/1394 ✅ | 9.8/10 | ✅ DONE | TBD |
+| B2-P15 | src/app/api/coupons/activate/route.ts | -2 | HTTP boundary (request-body #2) | 1394/1394 ✅ | 9.8/10 | ✅ DONE | TBD |
 
-**Cumulative TS18046 Reduction:** 462 baseline → 32 remaining (-430 fixed, 93.1% reduction)
-**Phase 15 Ready:** `coupons/activate/route.ts` (2 errors, RECOMMENDED) — similar coupon system pattern, proven approach
+**Cumulative TS18046 Reduction:** 462 baseline → 30 remaining (-432 fixed, 93.5% reduction)
+**Phase 16 Ready:** `usage/reconciliation/sync/route.ts` (2 errors, RECOMMENDED) — request-body quota system pattern
 
 **Baseline Discrepancy (Unresolved):** Initial tracker recorded 462 baseline errors (next.config.ts:24 ref). Post-Phase 8 `npx tsc --noEmit 2>&1 | grep -c "TS18046"` returns 51. Post-Phase 10 baseline = 43. Possible explanations: (1) prior untracked phases fixed errors, (2) baseline may have included other error types, (3) configuration changes affected detection. Continue from current 43-error state. **Carry forward to Phase 11 planning.**
 

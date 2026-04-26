@@ -1,6 +1,12 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-26 | **Current Version:** 1.12.32
+**Last Updated:** 2026-04-26 | **Current Version:** 1.12.33
+
+---
+
+## [2026-04-26] B2 Phase 15 — Coupon Activate Request-Body HTTP Boundary Casting (v1.12.33)
+
+**B2 Phase 15 (coupon activate endpoint):** Refactored `src/app/api/coupons/activate/route.ts`, added local `CouponActivateRequest` interface to type-cast HTTP boundary request body from client POST to `/api/coupons/activate` endpoint, applied anti-corruption cast pattern `(await request.json()) as CouponActivateRequest`. Pattern instance #9 of "HTTP boundary cast" — **second REQUEST-BODY variant** (mirrors Phase 14 shape: `coupon?`, `tier?` optional fields for flexible client submissions). Eliminated 2 TS18046 errors (32→30, -6.25% Phase 15 delta, -93.5% cumulative B2 from baseline 462→30). Tests 1394/1394 pass. Review 9.8/10 auto-approved. Commit pending.
 
 ---
 
