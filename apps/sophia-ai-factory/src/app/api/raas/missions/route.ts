@@ -24,7 +24,7 @@ const CreateMissionSchema = z.discriminatedUnion('mode', [
     mode: z.literal('template').optional(),
     title: z.string().min(1).max(200),
     command: z.string().min(1).max(100),
-    params: z.record(z.unknown()).optional().default({}),
+    params: z.record(z.string(), z.unknown()).optional().default({}),
     priority: z.enum(['low', 'normal', 'high', 'urgent']).optional().default('normal'),
     description: z.string().max(500).optional(),
   }),
@@ -34,7 +34,7 @@ const CreateMissionSchema = z.discriminatedUnion('mode', [
 const LegacyMissionSchema = z.object({
   title: z.string().min(1).max(200),
   command: z.string().min(1).max(100),
-  params: z.record(z.unknown()).optional().default({}),
+  params: z.record(z.string(), z.unknown()).optional().default({}),
   priority: z.enum(['low', 'normal', 'high', 'urgent']).optional().default('normal'),
   description: z.string().max(500).optional(),
 });

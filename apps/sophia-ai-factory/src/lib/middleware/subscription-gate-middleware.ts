@@ -25,7 +25,7 @@ export async function checkSubscriptionGate(
   const db = createServerClient()
 
   // Get tier from raas_licenses table (set by NOWPayments IPN webhook)
-  const { data: license } = await db
+  const { data: rawLicense } = await db
     .from('raas_licenses')
     .select('tier, status')
     .eq('created_by', userId)
@@ -33,6 +33,7 @@ export async function checkSubscriptionGate(
     .order('created_at', { ascending: false })
     .limit(1)
     .single()
+  const license = rawLicense as { tier: string | null; status: string | null } | null
 
   if (!license) {
     return {

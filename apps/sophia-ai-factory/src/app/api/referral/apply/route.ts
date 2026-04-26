@@ -34,11 +34,12 @@ export async function POST(request: Request): Promise<NextResponse> {
     const db = createServerClient();
 
     // Fetch the referral code record
-    const { data: referral, error: fetchError } = await db
+    const { data: rawReferral, error: fetchError } = await db
       .from("referral_codes")
       .select("id, user_id, uses, max_uses, reward_amount")
       .eq("code", code)
       .single();
+    const referral = rawReferral as { id: string; user_id: string; uses: number | null; max_uses: number | null; reward_amount: number | null } | null;
 
     if (fetchError || !referral) {
       return NextResponse.json({ error: "Referral code not found" }, { status: 404 });
@@ -55,7 +56,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     // Check max_uses limit (null = unlimited)
     const currentUses = referral.uses ?? 0;
     const maxUses = referral.max_uses;
-    if (maxUses !== null && currentUses >= maxUses) {
+    if (maxUses !== null && maxUses !== undefined && currentUses >= maxUses) {
       return NextResponse.json(
         { error: "This referral code has reached its maximum usage limit" },
         { status: 410 }
