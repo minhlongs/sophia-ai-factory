@@ -198,7 +198,7 @@ Client receives response from server, casts `(await res.json()) as InterfaceName
 - **Phase 12 (dual-endpoint variant):** `src/components/quota/quota-usage-dashboard.tsx` — `QuotaUsageResponse` + `QuotaLimitResponse` casts from parallel `Promise.all([fetch1, fetch2])` on `/api/quota/usage` + `/api/quota/limits`. **Sub-pattern: DUAL-ENDPOINT** — 2 separate response interfaces for independent parallel fetches (do NOT merge into god-type); each interface typed individually, each cast applied at boundary with fallback.
 - **Phase 13 (single-endpoint minimal):** `src/components/dashboard/referral-share-widget.tsx` — `ReferralGenerateResponse` cast from `/api/referral/generate`. Pattern variant: minimal 2-field interface (`code?`, `error?`), inline cast in event handler, clean YAGNI scope.
 
-### Sub-Variant 2: Request-Body Type Cast (3 Instances)
+### Sub-Variant 2: Request-Body Type Cast (5 Instances)
 
 Server API route receives request body from client, casts `(await request.json()) as InterfaceName`.
 
@@ -206,16 +206,27 @@ Server API route receives request body from client, casts `(await request.json()
 - **Phase 14 (first request-body variant):** `src/app/api/coupons/apply/route.ts` — `CouponApplyRequest` cast from POST `/api/coupons/apply` body. Pattern variant: API boundary input validation, interface models optional fields (`code?`, `tier?`, `project?`) for flexible client submissions.
 - **Phase 15 (second request-body variant):** `src/app/api/coupons/activate/route.ts` — `CouponActivateRequest` cast from POST `/api/coupons/activate` body. Same pattern shape: optional fields (`coupon?`, `tier?`), canonical example of request-body casting pattern reuse across sibling endpoints.
 - **Phase 16 (third request-body variant, defensive `.catch()` pattern):** `src/app/api/usage/reconciliation/sync/route.ts` — `UsageReconciliationSyncRequest` cast from POST `/api/usage/reconciliation/sync` body. Defensive variant: request body is optional (cron/admin endpoint), wrapped with `.catch(() => ({}))` before cast to prevent parse failures from throwing. Interface has all-optional fields so empty object `{}` is structurally valid.
+- **Phase 17 (fourth + fifth request-body variants, batch admin dunning):** `src/app/api/admin/dunning/[licenseNonce]/restore/route.ts` — `RestoreLicenseRequest` + `src/app/api/admin/dunning/[licenseNonce]/suspend/route.ts` — `SuspendLicenseRequest`. Both apply defensive `.catch(() => ({}))` pattern. Both interfaces share identical shape (`reason?: string`) but maintained as separate types per HTTP boundary anti-corruption isolation principle (avoids god-type, each endpoint owns its contract). Canonical examples of defensive variant reuse across sibling admin endpoints.
 
-**Defensive Variant Pattern** (Phase 16):
+**Defensive Variant Pattern** (Phase 16 / Phase 17):
 ```typescript
 interface UsageReconciliationSyncRequest {
   timeRangeHours?: number;
   batchSize?: number;
 }
 const body = (await request.json().catch(() => ({}))) as UsageReconciliationSyncRequest;
+
+// Phase 17 sibling pattern (separate types, shared shape)
+interface RestoreLicenseRequest {
+  reason?: string;
+}
+interface SuspendLicenseRequest {
+  reason?: string;
+}
+const restoreBody = (await req.json().catch(() => ({}))) as RestoreLicenseRequest;
+const suspendBody = (await req.json().catch(() => ({}))) as SuspendLicenseRequest;
 ```
-Use this pattern when parse failure must not throw (e.g., cron jobs, admin operations with no required body). Ensure the cast target interface has all-optional fields so `{}` is structurally valid.
+Use this pattern when parse failure must not throw (e.g., cron jobs, admin operations with no required body). Ensure the cast target interface has all-optional fields so `{}` is structurally valid. For multi-endpoint batches with identical shape, create separate interfaces per endpoint rather than a shared god-type — maintains boundary isolation clarity.
 
 **Pattern Maturity:** Established standard. Apply to all new HTTP boundary type-casts across the codebase. Distinguish between response-body (client reads server) and request-body (server reads client) variants. For multi-endpoint scenarios, maintain separate interfaces per endpoint rather than merging responses.
 

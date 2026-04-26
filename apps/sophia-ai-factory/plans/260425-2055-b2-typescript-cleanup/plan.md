@@ -1,10 +1,10 @@
 # B2: TypeScript Cleanup Initiative
 
 **Initiative:** B2 TypeScript Error Elimination
-**Duration:** Multi-phase (Phases 1–15+ ongoing)
-**Overall Status:** Phase 16 Complete | Phase 17 Ready
+**Duration:** Multi-phase (Phases 1–18+ ongoing)
+**Overall Status:** Phase 17 Complete | Phase 18 Ready
 **Baseline:** 462 TS18046 errors (next.config.ts:24 reference)
-**Current:** 28 TS18046 errors remaining (93.9% reduction)
+**Current:** 26 TS18046 errors remaining (94.4% reduction)
 
 ---
 
@@ -22,8 +22,9 @@
 | 14 | `src/app/api/coupons/apply/route.ts` | -3 (35→32) | HTTP boundary anti-corruption cast (request-body) | ✅ DONE | tester-260426-0840-b2-phase14-coupons-apply, code-review-260426-0840-b2-phase14-coupons-apply |
 | 15 | `src/app/api/coupons/activate/route.ts` | -2 (32→30) | HTTP boundary anti-corruption cast (request-body #2) | ✅ DONE | tester-260426-0854-b2-phase15-coupons-activate, code-review-260426-0853-b2-phase15-coupons-activate |
 | 16 | `src/app/api/usage/reconciliation/sync/route.ts` | -2 (30→28) | HTTP boundary anti-corruption cast (request-body #3) | ✅ DONE | tester-260426-b2-phase16-usage-recon-sync, code-review-260426-0907-b2-phase16-usage-recon-sync |
+| 17 | `src/app/api/admin/dunning/[licenseNonce]/restore+suspend/route.ts` (BATCH) | -2 (28→26) | HTTP boundary anti-corruption cast (request-body #4+#5, defensive `.catch()`) | ✅ DONE | tester-260426-b2-phase17-admin-dunning-routes, code-review-260426-b2-phase17-admin-dunning-routes |
 
-**Cumulative:** 462 → 28 TS18046 (434 fixed, 93.9% reduction)
+**Cumulative:** 462 → 26 TS18046 (436 fixed, 94.4% reduction)
 
 ---
 
@@ -213,16 +214,16 @@ npx tsc --noEmit 2>&1 | grep "TS18046" | \
 
 ---
 
-## Phase 17 Ready
+## Phase 18 Ready
 
-**Recommended Batch Targets:**
-- **Primary Combo (2 errors):** `admin/dunning/[licenseNonce]/restore/route.ts` + `admin/dunning/[licenseNonce]/suspend/route.ts` (1 error each, very low risk, admin ops)
-- **Alternative Singles:** `mcu-balance-widget.tsx` (3), `raas/api-key-list.tsx` (3), `raas/mission-launcher.tsx` (2), `graphql/analytics/route.ts` (2)
-- **Defer:** `webhooks/telegram/route.ts` (4, HIGH RISK), `admin/licenses/[id]/reactivate/route.ts` (3, scope verify needed)
+**Recommended Candidates (26 errors remaining):**
+- **Primary Singles:** `mcu-balance-widget.tsx` (3), `raas/api-key-list.tsx` (3)
+- **Alternatives:** `raas/mission-launcher.tsx` (2), `graphql/analytics/route.ts` (2), `webhooks/telegram/route.ts` (4, HIGH RISK Phase 18+), `admin/licenses/[id]/reactivate/route.ts` (3, scope verify)
+- **Long tail:** 7x single-error files (roi-calculator, violation-queries, billing/usage-summary, quota/overage-events, mission-dashboard, mission-detail, license-generator)
 
-See `phase-17-typescript-cleanup.md` for full Phase 17 planning.
+See `phase-18-typescript-cleanup.md` for Phase 18 planning.
 
 ---
 
-**Last Updated:** 2026-04-26 (Phase 16 sync-back)
+**Last Updated:** 2026-04-26 (Phase 17 sync-back)
 **Initiative Lead:** Project Manager

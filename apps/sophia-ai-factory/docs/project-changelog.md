@@ -1,6 +1,12 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-26 | **Current Version:** 1.12.34
+**Last Updated:** 2026-04-26 | **Current Version:** 1.12.35
+
+---
+
+## [2026-04-26] B2 Phase 17 — Batch 2 Admin Dunning Routes Request-Body HTTP Boundary Casting (v1.12.35)
+
+**B2 Phase 17 (admin dunning routes batch):** Refactored `src/app/api/admin/dunning/[licenseNonce]/restore/route.ts` + `src/app/api/admin/dunning/[licenseNonce]/suspend/route.ts`, added local `RestoreLicenseRequest` + `SuspendLicenseRequest` interfaces to type-cast HTTP boundary request bodies from admin POST operations, applied anti-corruption cast pattern `(await req.json().catch(() => ({}))) as [Interface]`. Pattern instances #11 + #12 of "HTTP boundary cast" — **fourth + fifth REQUEST-BODY variants** (instances #8–#10 were Phases 14–16). Both routes share identical optional-fields interface shape (`reason?: string`) but kept separate per HTTP boundary anti-corruption isolation principle (reviewer guidance). Eliminated 2 TS18046 errors (28→26, -7.1% Phase 17 delta, -94.4% cumulative B2 from baseline 462→26). Tests 1394/1394 pass. Code review 9.8/10 auto-approved.
 
 ---
 
