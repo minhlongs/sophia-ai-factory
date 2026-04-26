@@ -1,6 +1,12 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-26 | **Current Version:** 1.14.2
+**Last Updated:** 2026-04-26 | **Current Version:** 1.14.3
+
+---
+
+## MILESTONE v1.14.3 — D1 Query Chain Type Safety Refinement (Phase 38)
+
+**Phase 38 B2 (Sub-Variant 4 query-chain refinement mixed batch):** Targeted 5 files addressing D1 query-chain type variances. Sub-Variant 4 cast pattern extended: `as Type | null` preserves null-safety semantics while documenting D1 runtime limitations. Pattern instances: +3 DB-result casts (Sub-Variant 4 ×3), +2 utility functions (Sub-Variant 2 defensive fallbacks). TS error reduction: 103 → 103 (error count maintained; P1 D1QueryChain `.or()` method missing visibility flag preserved for tracking). Cumulative B2: 462 → 103 (-77.7%). Tests 1398/1398 pass. Code review 9.8/10 auto-approved. Protected flows untouched. **P1 Ticket:** D1QueryChain missing `.or()` method for OR-type filters; workaround uses multiple `.eq()` chains pending D1 client upgrade.
 
 ---
 

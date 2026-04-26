@@ -39,7 +39,7 @@ export async function createLicense(params: LicenseCreationParams): Promise<Raas
     is_revoked: false,
   };
 
-  const { data, error } = await db.from('raas_licenses').insert(licenseData).select().single();
+  const { data, error } = await db.from('raas_licenses').insert(licenseData as unknown as Record<string, unknown>).select().single();
 
   if (error) {
     logger.error('Failed to create license in database', toError(error));
@@ -59,7 +59,7 @@ export async function getLicenseByNonce(nonce: string): Promise<RaasLicense | nu
     throw new Error(`Database error: ${error.message}`);
   }
 
-  return data;
+  return data as unknown as RaasLicense | null;
 }
 
 /** Get all licenses with pagination and optional filters */
@@ -81,6 +81,8 @@ export async function getLicenses(params: {
   if (status === 'revoked') {
     query = query.eq('is_revoked', true);
   } else if (status === 'active') {
+    // TODO P1: D1QueryChain does NOT implement .or() — runtime crash on this code path.
+    // TS2339 left intentionally as visibility flag until D1QueryChain extends with .or()
     query = query.eq('is_revoked', false).or(`expires_at.is.null,expires_at.gt.${now}`);
   } else if (status === 'expired') {
     query = query.eq('is_revoked', false).lt('expires_at', now);
@@ -100,7 +102,7 @@ export async function getLicenses(params: {
     throw new Error(`Database error: ${error.message}`);
   }
 
-  const licenses: LicenseSummary[] = (data || []).map((license: RaasLicense) => ({
+  const licenses: LicenseSummary[] = ((data || []) as unknown as RaasLicense[]).map((license: RaasLicense) => ({
     id: license.nonce,
     tier: license.tier as LicenseTier,
     createdAt: license.created_at,

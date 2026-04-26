@@ -79,7 +79,7 @@ export async function logOverageEvent(
       });
     }
 
-    return data?.id ?? null;
+    return (data as { id?: string } | null)?.id ?? null;
   } catch (error) {
     logger.error('[Quota Checker] Failed to log overage event', toError(error));
     return null;

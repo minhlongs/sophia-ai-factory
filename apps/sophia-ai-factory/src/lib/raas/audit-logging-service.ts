@@ -44,7 +44,7 @@ async function getLicenseIdFromNonce(nonce: string): Promise<string | null> {
   try {
     const db = createServerClient();
     const { data } = await db.from('raas_licenses').select('id').eq('nonce', nonce).single();
-    return data?.id || null;
+    return (data as { id?: string } | null)?.id || null;
   } catch {
     return null;
   }
@@ -78,7 +78,7 @@ export async function logAuditAction(params: AuditLogParams): Promise<void> {
     }) as Json,
   };
 
-  const { error } = await db.from('raas_audit_logs').insert(logData);
+  const { error } = await db.from('raas_audit_logs').insert(logData as unknown as Record<string, unknown>);
 
   if (error) {
     logger.error('Failed to log audit action', toError(error));

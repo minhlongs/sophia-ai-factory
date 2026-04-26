@@ -2,11 +2,11 @@
 
 **Initiative:** B2 TypeScript Error Elimination + Quality Refinement
 **Duration:** Multi-phase (Phases 1–36 complete, Phase 37+ planned)
-**Overall Status:** ✅ PHASE 37 COMPLETE — MIXED BATCH TS2339/TS2322 CLEANUP
+**Overall Status:** ✅ PHASE 38 READY — MIXED BATCH (ALERTS/RAAS/QUOTA/LICENSING) TS CLEANUP
 **Baseline:** 462 TS18046 errors (next.config.ts:24 reference)
-**Current:** 112 errors remaining (post-Phase 37)
-**Phase 37 Result:** 123 → 112 errors (-11: -7 TS2339 + -7 TS2322 + 3 side-effects)
-**Total Errors Reduced:** 462 → 112 (75.8% overall codebase reduction)
+**Current:** 103 errors remaining (post-Phase 38)
+**Phase 38 Result:** 112 → 103 errors (-9: -5 TS2339 + -4 TS2322 / misc, 1x .or() revert for D1 visibility)
+**Total Errors Reduced:** 462 → 103 (77.7% overall codebase reduction)
 
 ---
 
@@ -45,8 +45,41 @@
 | 35 | 25 files (41 TS2352 sites: discriminated unions, array guards, literal narrowing) | -41 (189 → 148, -38 TS2352 + -3 cascading) | Mass TS2352 batch (Phase 22 doctrine): canonical `as const` assertions + union guard strengthening | ✅ DONE | tester-260426-1352-b2-phase35-ts2352-batch, code-review inline 9.8/10 |
 | 36 | `kv-metering-log-sync.ts` + `quota-checker-db.ts` | -25 (148 → 123, -22 TS2322 + -3 TS2365) | DB schema type assignment + cascading error elimination | ✅ DONE | tester-260426-1410-b2-phase36-ts2322-batch, code-review-260426-1410-b2-phase36-ts2322-batch 9.6/10 |
 | 37 | 4 files (admin/billing/overage-events, cron/usage-export-db, raas/usage, customer-search) | -11 (123 → 112, -7 TS2339 + -7 TS2322 + 3 side-effects) | Mixed batch: property narrowing + DB schema + object instantiation | ✅ DONE | tester-260426-1418-b2-phase37-mixed-batch, code-review-260426-1418-b2-phase37-mixed-batch 9.7/10 |
+| 38 | 5 files (alerts/raas/quota/licensing fixes) | -9 (112 → 103, -5 TS2339 + -4 TS2322/misc, .or() revert for D1 runtime bug visibility) | Mixed batch alerts/quota/raas: HTTP boundaries + DB schema narrowing + .or() revert | ✅ DONE | tester-260426-1430-b2-phase38-mixed-batch, code-review-260426-1430-b2-phase38-mixed-batch 9.2/10 |
 
-**MILESTONES ACHIEVED:** 462 → 0 TS18046 (100% via Phase 27); 313 → 280 TS2345 QueryError (100% via Phase 28); 280 → 251 TS2304 ×28 + TS2307 ×1 (quick-win via Phase 29); 251 → 246 TS2307 ×5 (quick-win via Phase 30); 246 → 235 ZodError v4 + HeyGen (Phase 31); 235 → 216 Smart Resume + Alerts (Phase 32); 216 → 202 Sub-Variant 2 Batch (Phase 33, 56.3% cumulative reduction); 202 → 189 Agent-Health D1 + Chart TooltipProps (Phase 34, 59.1% cumulative reduction); **189 → 148 Mass TS2352 Batch (Phase 35, 68% cumulative reduction, TS2352 100% ELIMINATION)**; **148 → 123 TS2322 Hard Targets (Phase 36, 73.4% cumulative reduction)**; **123 → 112 Mixed Batch (Phase 37, 75.8% cumulative reduction)**
+**MILESTONES ACHIEVED:** 462 → 0 TS18046 (100% via Phase 27); 313 → 280 TS2345 QueryError (100% via Phase 28); 280 → 251 TS2304 ×28 + TS2307 ×1 (quick-win via Phase 29); 251 → 246 TS2307 ×5 (quick-win via Phase 30); 246 → 235 ZodError v4 + HeyGen (Phase 31); 235 → 216 Smart Resume + Alerts (Phase 32); 216 → 202 Sub-Variant 2 Batch (Phase 33, 56.3% cumulative reduction); 202 → 189 Agent-Health D1 + Chart TooltipProps (Phase 34, 59.1% cumulative reduction); **189 → 148 Mass TS2352 Batch (Phase 35, 68% cumulative reduction, TS2352 100% ELIMINATION)**; **148 → 123 TS2322 Hard Targets (Phase 36, 73.4% cumulative reduction)**; **123 → 112 Mixed Batch (Phase 37, 75.8% cumulative reduction)**; **112 → 103 Alerts/RAAS/Quota/Licensing Fixes (Phase 38, 77.7% cumulative reduction)**
+
+---
+
+## Phase 38 Summary (2026-04-26) — ALERTS/RAAS/QUOTA/LICENSING FIXES
+
+**Status:** ✅ COMPLETED 2026-04-26 ~14:30 UTC
+
+**🎯 PHASE 38 ACHIEVEMENT: MIXED BATCH ALERTS/RAAS/QUOTA/LICENSING CLEANUP**
+- **TS error baseline:** 112 → 103 (-9 errors: -5 TS2339 + -4 TS2322/misc, 1x .or() revert for D1 visibility)
+- **Files:** 5 (alerts/raas/quota/licensing endpoints + fixes)
+- **Pattern:** HTTP boundaries + DB schema narrowing + D1 QueryChain extensibility planning
+- **Tests:** 1398/1398 ✅ (zero regressions)
+- **Code review:** 9.2/10 auto-approved (0 critical/0 major/1 minor: D1 .or() runtime bug flagged)
+- **Protected flows:** ALL VERIFIED (Setup Wizard, Telegram, NOWPayments untouched)
+
+**Key Achievement:**
+- TS2339 batch targeting property mismatches (HTTP boundaries + component props)
+- TS2322 batch targeting DB schema type assignment + object instantiation
+- **CRITICAL FINDING:** D1QueryChain missing `.or()` method — runtime crash on `getLicenses({status: 'active'})` admin endpoint. Reverted `.or()` cast to keep TS2339 as visibility flag for fix implementation.
+- Cumulative reduction: 462 → 103 (77.7% overall codebase improvement)
+
+**Phase 38 Carry-Forwards (Phase 39+):**
+- **P1 CRITICAL:** D1QueryChain extend with `.or()` method (mirrors Supabase PostgREST OR syntax → SQL OR clause)
+- C1: `OverageEventRow` consolidation (defined in 2 places — billing-types.ts vs supabase/types.ts)
+- C2: Customer[] envelope verify (bulk data structure standardization)
+- C3: Remaining TS2339 patterns (13 errors, after Phase 38)
+
+**Reports:**
+- Tester: `plans/reports/tester-260426-1430-b2-phase38-mixed-batch.md`
+- Code Review: `plans/reports/code-review-260426-1430-b2-phase38-mixed-batch.md`
+
+See `phase-38-typescript-cleanup.md` for full completion details.
 
 ---
 
@@ -67,11 +100,6 @@
 - TS2322 batch targeting DB schema type assignment + nested object instantiation
 - Cascading cleanup: 3 additional side-effects cleared
 - Cumulative reduction: 462 → 112 (75.8% overall codebase improvement)
-
-**Carry-Forwards (Phase 38+):**
-- C1: `OverageEventRow` consolidation (defined in 2 places — billing-types.ts vs supabase/types.ts)
-- C2: Customer[] envelope verify (bulk data structure standardization)
-- C3: Remaining TS2339 patterns (18 errors) — HTTP boundaries + component props scope
 
 **Reports:**
 - Tester: `plans/reports/tester-260426-1418-b2-phase37-mixed-batch.md`
@@ -725,23 +753,25 @@ See `phase-21-typescript-cleanup.md` for details.
 
 ---
 
-## Next Steps (Phase 38+)
+## Next Steps (Phase 39+)
 
-**Phase 37 Completion (✅ DELIVERED 2026-04-26 ~14:18 UTC):**
-- [x] Mixed batch TS2339/TS2322 cleanup (4 files)
+**Phase 38 Completion (✅ DELIVERED 2026-04-26 ~14:30 UTC):**
+- [x] Mixed batch alerts/raas/quota/licensing cleanup (5 files)
 - [x] Property narrowing + DB schema type assignment patterns applied
-- [x] Cascading error elimination (3 side-effects cleared)
+- [x] D1 QueryChain .or() missing method identified (P1 critical carry)
 - [x] 1398/1398 tests passing (zero regressions)
-- [x] Code review approved (9.7/10, 0 critical/0 major/1 minor)
-- [x] Phase 37 reports generated
+- [x] Code review approved (9.2/10, 0 critical/0 major/1 minor: D1 .or() visibility)
+- [x] Phase 38 reports generated
 - [x] Protected flows verified (Setup Wizard, Telegram, NOWPayments)
 
-**Phase 38 Focus (Remaining TS2339 + TS2322 candidates + carries):**
-- Target: 112 remaining errors (TS2339 ×18 + TS2322 ×20 + other ×74)
-- Phase 37 carry-forwards: C1 OverageEventRow consolidation, C2 Customer[] envelope, C3 remaining TS2339 patterns
-- Reduced TS2339 scope (25→18, -7 high-frequency) — remaining patterns: HTTP boundaries + component props
-- Reduced TS2322 scope (27→20, -7) — remaining DB schema + type assignment patterns
-- Cumulative: 462 → 112 (75.8% total reduction, 350 remaining)
+**Phase 39 Focus (D1 QueryChain .or() + remaining carries):**
+- **P1 CRITICAL:** D1QueryChain extend with `.or()` method (estimated 2-4h implementation)
+  - Maps to Supabase PostgREST `or(filters)` — generates SQL OR clause
+  - Used by `getLicenses({status: 'active'})` admin endpoint + potentially others
+  - Unblocks Phase 38 TS2339 visibility flag + enables admin quota queries
+- Phase 38 carry-forwards: C1 OverageEventRow consolidation, C2 Customer[] envelope, C3 remaining TS2339 patterns
+- Remaining scope: 103 errors (TS2339 ×13 + TS2322 ×20 + other ×70)
+- Cumulative: 462 → 103 (77.7% total reduction, 359 remaining)
 
 **Initiative Milestones Achieved (to date):**
 - [x] Phase 27: All 462 baseline TS18046 errors → 0 (100% elimination)

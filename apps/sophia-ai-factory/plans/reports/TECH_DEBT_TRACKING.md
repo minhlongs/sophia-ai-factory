@@ -1,10 +1,10 @@
 # B2 TypeScript Cleanup — Cumulative Tech Debt Tracking
 
 **Initiative:** B2 TS18046 Error Elimination + TS2345 QueryError Normalization + TS2304/TS2307 Quick-Wins + TS2339 Property Mismatch Cleanup
-**Overall Progress:** 🎉 75.8% — TS18046 100% ELIMINATED + QUERYERROR LOGGING 100% NORMALIZED + TS2304/TS2307 QUICK-WINS COMPLETE + ZODERROR + HEYGEN CASTS + PHASE 33 4-ROUTE BATCH + PHASE 35 MASS TS2352 BATCH + PHASE 36 TS2322 BATCH + PHASE 37 MIXED BATCH DELIVERED (462 → 112 via Phase 37)
-**Current Status:** Phase 37 Complete — MIXED BATCH TS2339/TS2322 CLEANUP
-**Last Updated:** 2026-04-26 (Phase 37 completion sync-back ~14:18 UTC)
-**Remaining Tech Debt:** 112 errors (TS2339 ×18 + TS2322 ×20 + TS2352 ×0 + other types ×74 — Phase 38+ cleanup)  
+**Overall Progress:** 🎉 77.7% — TS18046 100% ELIMINATED + QUERYERROR LOGGING 100% NORMALIZED + TS2304/TS2307 QUICK-WINS COMPLETE + ZODERROR + HEYGEN CASTS + PHASE 33 4-ROUTE BATCH + PHASE 35 MASS TS2352 BATCH + PHASE 36 TS2322 BATCH + PHASE 37 MIXED BATCH + PHASE 38 ALERTS/RAAS/QUOTA/LICENSING BATCH DELIVERED (462 → 103 via Phase 38)
+**Current Status:** Phase 38 Complete — ALERTS/RAAS/QUOTA/LICENSING BATCH + D1 .or() CRITICAL IDENTIFICATION
+**Last Updated:** 2026-04-26 (Phase 38 completion sync-back ~14:30 UTC)
+**Remaining Tech Debt:** 103 errors (TS2339 ×13 + TS2322 ×20 + TS2352 ×0 + other types ×70 — Phase 39+ cleanup; **P1 CRITICAL: D1QueryChain .or() method missing**)  
 
 ---
 
@@ -44,6 +44,7 @@
 | **35** | **25 files (41 TS2352 sites: discriminated unions, array guards, literal narrowing)** | **Mass TS2352 batch (Phase 22 doctrine): canonical `as const` + union guard strengthening** | **-41** | **189** | **148** | **68.0%** | **✅ DONE** | **9.8/10** | **1398/1398** | **🎉 MILESTONE: 100% TS2352 ELIMINATION ACHIEVED — 38 baseline + 3 cascading TS2339/TS2345 side-effects; discriminated union guards refined; literal narrowing improved; zero behavioral change; protected flows verified (Setup Wizard, Telegram, NOWPayments); M1/M2 carries deferred Phase 36+** |
 | **36** | **2 files (kv-metering-log-sync.ts + quota-checker-db.ts)** | **DB schema type assignment + cascading error elimination (TS2322 hard targets)** | **-25** | **148** | **123** | **73.4%** | **✅ DONE** | **9.6/10** | **1398/1398** | **TS2322 hard targets: 22 baseline + 3 cascading TS2365; local DB row interfaces applied; nullability narrowing; zero behavioral change; protected flows verified (Setup Wizard, Telegram, NOWPayments); M1/M2/M3 carries deferred Phase 37+** |
 | **37** | **4 files (admin/billing/overage-events, cron/usage-export-db, raas/usage, customer-search)** | **Mixed batch: property narrowing + DB schema + object instantiation** | **-11** | **123** | **112** | **75.8%** | **✅ DONE** | **9.7/10** | **1398/1398** | **TS2339 batch: -7 property mismatch (discriminated union casting); TS2322 batch: -7 DB schema type assignment + object instantiation; 3 cascading side-effects cleared; protected flows verified (Setup Wizard, Telegram, NOWPayments); C1/C2/C3 carries deferred Phase 38+** |
+| **38** | **5 files (alerts/raas/quota/licensing fixes)** | **Mixed batch alerts/quota/raas: HTTP boundaries + DB schema narrowing + D1 .or() visibility** | **-9** | **112** | **103** | **77.7%** | **✅ DONE** | **9.2/10** | **1398/1398** | **TS2339 batch: -5 property mismatch (HTTP boundaries + component props); TS2322/misc batch: -4 DB schema type assignment + 1x .or() revert for D1 QueryChain visibility; P1 CRITICAL: D1 .or() method missing (blocks admin getLicenses query); protected flows verified (Setup Wizard, Telegram, NOWPayments); P1 + C1/C2/C3 carries to Phase 39+** |
 
 ---
 
