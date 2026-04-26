@@ -1,5 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { Campaign } from "@/types";
+import type { getFormatter } from "next-intl/server";
+
+type IntlFormat = Awaited<ReturnType<typeof getFormatter>>;
 
 interface CampaignDetailsSidebarProps {
   campaign: Campaign;

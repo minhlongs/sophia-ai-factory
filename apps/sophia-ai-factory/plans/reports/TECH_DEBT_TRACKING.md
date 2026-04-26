@@ -1,10 +1,10 @@
 # B2 TypeScript Cleanup — Cumulative Tech Debt Tracking
 
-**Initiative:** B2 TS18046 Error Elimination + TS2345 QueryError Normalization
-**Overall Progress:** 🎉 39.4% — TS18046 100% ELIMINATED + QUERYERROR LOGGING CONSISTENCY (462 → 280 via Phase 28 mass refactor)
-**Current Status:** Phase 28 Complete — MASS LOGGER.ERROR TOERROR REFACTOR DELIVERED
-**Last Updated:** 2026-04-26 (Phase 28 completion sync-back ~13:30 UTC)
-**Remaining Tech Debt:** 280 errors (non-TS18046/non-QueryError types: TS2339, TS2322, TS2352, TS2304, TS2538, TS2769, etc. — Phase 29+ optional cleanup)  
+**Initiative:** B2 TS18046 Error Elimination + TS2345 QueryError Normalization + TS2304 Quick-Win
+**Overall Progress:** 🎉 45.7% — TS18046 100% ELIMINATED + QUERYERROR LOGGING 100% NORMALIZED + TS2304 QUICK-WIN COMPLETE (462 → 251 via Phase 29 quick-win)
+**Current Status:** Phase 29 Complete — TS2304 QUICK-WIN DELIVERED (vi import + IntlFormat type aliases)
+**Last Updated:** 2026-04-26 (Phase 29 completion sync-back ~12:45 UTC)
+**Remaining Tech Debt:** 251 errors (TS2339 ×72 + TS2322 ×49 + TS2352 ×41 + other types ×89 — Phase 30+ optional cleanup)  
 
 ---
 
@@ -35,6 +35,7 @@
 | **26** | **4 files (1 NEW: is-user-admin.test.ts; 3 modified: is-user-admin.ts, usage-export-post-handler.ts, quota/status/route.ts)** | **M1 unit tests + M2 variant + M3 docs (Path B: not primary TS18046 elimination)** | **0** | **318** | **318** | **99.4%** | **✅ DONE** | **9.75/10** | **1398/1398** | **M1: Added 4 unit tests for isUserAdmin() (session, DB, neither, null); M2: Created isUserAdminWithRole() variant, applied to usage-export (eliminates double DB fetch, fixes tier semantic bug); M3: Tightened docs in is-user-admin.ts + quota/status/route.ts; 0 TS18046 reduction (quality carries); TS18046 (telegram) deferred Phase 27+** |
 | **27** | **`src/webhooks/telegram/route.ts` (PROTECTED FLOW)** | **Telegram webhook protected flow (Sub-Variant 4 request-body cast #7, integration test)** | **-4** | **318** | **0** | **100%** | **✅ DONE** | **9.7/10** | **1398/1398** | **🎉 MILESTONE: 100% TS18046 ELIMINATION ACHIEVED — All 462 baseline errors eliminated; Protected flow verified; Bot commands working; Graceful malformed JSON handling; Phase 26 carries (Mi-1/Mi-2/Mi-3) deferred Phase 28+** |
 | **28** | **23 files (mass logger.error toError refactor)** | **Canonical toError() helper wrapping all QueryError logger sites (33 instances)** | **-33** | **313** | **280** | **39.4%** | **✅ DONE** | **9.7/10** | **1398/1398** | **Mass mechanical refactor: logger.error(QueryError) → logger.error(toError(QueryError)); PostgrestError metadata (code, details, hint) now preserved in production logs instead of [object Object]; 0 behavioral change** |
+| **29** | **3 files (vi import + campaign components IntlFormat)** | **TS2304 quick-win: vi undefined + IntlFormat type alias fixes** | **-29** | **280** | **251** | **45.7%** | **✅ DONE** | **9.7/10** | **1398/1398** | **TS2304 ×28 (27 vi undefined + 1 IntlFormat) + TS2307 ×1 (broken intl import) eliminated; bonus latent bug fix (campaign-header non-existent intl export); 5 pre-existing TS2307 (scroll-area, commerce, metering-reconciler ×3) deferred Phase 30** |
 
 ---
 

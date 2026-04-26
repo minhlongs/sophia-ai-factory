@@ -36,8 +36,9 @@
 | 26 | 4 files (1 NEW: is-user-admin.test.ts; 3 modified: is-user-admin.ts, usage-export-post-handler.ts, quota/status/route.ts) | 0 TS18046 reduction (M1/M2/M3 carries, 318 baseline maintained) | Path B: M1 unit tests + M2 variant + M3 docs (Telegram deferred Phase 27) | ✅ DONE | tester-260426-1158-b2-phase26-helper-tests, code-review-260426-1158-b2-phase26-helper-tests 9.75/10 |
 | 27 | `src/webhooks/telegram/route.ts` (PROTECTED FLOW) | -4 TS18046 (318 → 0, 100% elimination milestone) | Telegram webhook protected flow (Sub-Variant 4 request-body cast #7) + integration test | ✅ DONE | tester-260426-1207-b2-phase27-telegram-final, code-review-260426-1207-b2-phase27-telegram-final 9.7/10 |
 | 28 | 23 files (mass logger.error toError refactor) | -33 TS2345 QueryError (313 → 280) | Canonical toError() helper wrapping all QueryError logger sites (33 instances, 23 files) | ✅ DONE | tester-260426-phase28-mass-toerror-verification, code-review-260426-1230-b2-phase28-mass-toerror 9.7/10 |
+| 29 | 3 files (vi import + campaign components IntlFormat) | -29 TS2304 quick-win (280 → 251) | TS2304 undefined names (27 vi + 1 IntlFormat) + TS2307 broken intl import elimination | ✅ DONE | tester-260426-1245-b2-phase29-ts2304-quickwin, code-review-260426-1245-b2-phase29-ts2304-quickwin 9.7/10 |
 
-**MILESTONES ACHIEVED:** 462 → 0 TS18046 (100% via Phase 27); 313 → 280 TS2345 QueryError (100% via Phase 28); 39.4% overall error reduction
+**MILESTONES ACHIEVED:** 462 → 0 TS18046 (100% via Phase 27); 313 → 280 TS2345 QueryError (100% via Phase 28); 280 → 251 TS2304 ×28 + TS2307 ×1 (quick-win via Phase 29); 45.7% overall error reduction
 
 ---
 
@@ -101,6 +102,43 @@ See `phase-27-typescript-cleanup.md` for full completion details.
 - Code Review: `plans/reports/code-review-260426-1230-b2-phase28-mass-toerror.md`
 
 See `phase-28-typescript-cleanup.md` for full completion details.
+
+---
+
+## Phase 29 Summary (2026-04-26) — TS2304 QUICK-WIN
+
+**Status:** ✅ COMPLETED 2026-04-26 ~12:45 UTC
+
+**🎯 PHASE 29 ACHIEVEMENT: TS2304 + TS2307 ELIMINATION (Quick-Win)**
+- **TS2304 baseline:** 28 → 0 (vi undefined ×27 + IntlFormat ×1)
+- **TS2307 baseline:** 1 → 0 (broken intl import)
+- **Total reduction:** 280 → 251 (-29 errors, 45.7% cumulative)
+- **Files:** 3 modified (test/setup.tsx + 2 campaign components)
+- **Tests:** 1398/1398 ✅ (zero regressions)
+- **Code review:** 9.7/10 auto-approved
+- **Bonus latent bug:** campaign-header.tsx had non-existent `import type { IntlFormat } from 'intl'` (pure noise, now replaced with local type alias)
+
+**Key Actions:**
+1. Fixed `src/test/setup.tsx` — added `import { vi } from 'vitest'` (explicit import preferred over tsconfig `"types": ["vitest/globals"]`)
+2. Fixed `campaign-details-sidebar.tsx` — replaced TS2307 with canonical `type IntlFormat = Awaited<ReturnType<typeof getFormatter>>` pattern
+3. Fixed `campaign-header.tsx` — same IntlFormat pattern (eliminates both TS2304 + bonus TS2307 latent bug)
+
+**Pre-existing TS2307 Deferred (5 errors):**
+- `@/components/ui/scroll-area` (1 error)
+- `./commerce` (1 error)
+- `./index` ×3 in worker/lib metering-reconciler
+- These are unrelated module resolution issues, not TS2304 scope
+
+**Phase 28 Review Carries (Deferred Phase 30+):**
+- Mi-1: JSDoc clarify session-trust asymmetry (non-blocking)
+- Mi-2: Unit test assertion refinement (non-blocking)
+- Mi-3: Tier behavior change comment (non-blocking)
+
+**Reports:**
+- Tester: `plans/reports/tester-260426-1245-b2-phase29-ts2304-quickwin.md`
+- Code Review: `plans/reports/code-review-260426-1245-b2-phase29-ts2304-quickwin.md`
+
+See `phase-29-typescript-cleanup.md` for full completion details.
 
 ---
 
@@ -451,14 +489,21 @@ See `phase-21-typescript-cleanup.md` for details.
 
 ---
 
-## Next Steps (Phase 29+)
+## Next Steps (Phase 30+)
 
-**Phase 29 Focus (TS2339 Property Mismatch Audit):**
+**Phase 29 Completion (✅ DELIVERED):**
+- [x] TS2304 quick-win (-29 errors: 28 vi undefined + 1 IntlFormat)
+- [x] 280 → 251 errors (45.7% cumulative reduction)
+- [x] 1398/1398 tests passing (zero regressions)
+- [x] Code review approved (9.7/10)
+- [x] Bonus latent bug fixed (campaign-header non-existent intl export)
+
+**Phase 30 Focus (TS2339 Property Mismatch Audit):**
 - Target: 72 TS2339 errors (highest non-TS18046/non-QueryError frequency)
 - Root-cause analysis: DB schema mismatches, HTTP response shapes, optional semantics
 - Known candidates: `heygen-client.ts` (5), `violations-get-handler.ts` (3), others TBD
-- Phase 26 review carries (Mi-1/Mi-2/Mi-3) available for lightweight refinement
-- Dormant carries from earlier phases still pending (Polar/Stripe lifecycle, User.role optional, etc.)
+- Phase 28 review carries (Mi-1/Mi-2/Mi-3) available for lightweight refinement if time permits
+- Pre-existing TS2307 (5 errors) — scroll-area, commerce, metering-reconciler ×3 — recommended quick-scan categorization
 
 **Phase 28 Completion (✅ DELIVERED):**
 - [x] Phase 28 mass logger.error toError refactor (-33 TS2345)

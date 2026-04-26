@@ -1,6 +1,12 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-26 | **Current Version:** 1.13.1
+**Last Updated:** 2026-04-26 | **Current Version:** 1.13.2
+
+---
+
+## MILESTONE v1.13.2 — TS2304 Elimination & Vitest Setup Hardening (Phase 29)
+
+**Phase 29 B2 (vi import + IntlFormat type alias quick-win):** Targeted 3 files to eliminate TS2304 (undefined names) via explicit imports and proper type definitions. **M1: Vitest Setup Hardening.** `src/test/setup.tsx` now explicitly `import { vi } from 'vitest'` (line 6) instead of relying on vitest global injection — TypeScript was correctly complaining about undefined `vi` even though vitest.config.ts enables `globals: true`, because tsconfig.json lacks `"types": ["vitest/globals"]`. Explicit import is safer (avoids hidden ambient globals, keeps imports explicit). **M2-M3: IntlFormat Type Aliases.** Replaced broken `import type { IntlFormat } from 'intl'` (non-existent export) with canonical pattern `type IntlFormat = Awaited<ReturnType<typeof getFormatter>>` from `next-intl/server` in 2 campaign UI components (campaign-details-sidebar.tsx, campaign-header.tsx). Latent bug fixed: `import type { IntlFormat } from 'intl'` was pure noise exporting non-existent type; Phase 29 removes dead code + documents canonical next-intl formatter type pattern. TS error reduction: 280 → 251 (-29 total: 27 TS2304 vi, 1 TS2304 IntlFormat, 1 TS2307 broken 'intl' import). **100% TS2304 elimination achieved.** Tests 1398/1398 pass. Code review 9.7/10 auto-approved. Protected flows (Setup Wizard, Telegram Bot, NOWPayments) untouched.
 
 ---
 

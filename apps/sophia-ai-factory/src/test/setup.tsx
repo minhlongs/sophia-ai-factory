@@ -3,6 +3,8 @@
  * Mocks Next.js modules, env vars, and Cloudflare bindings
  */
 
+import { vi } from 'vitest';
+
 // ── Environment Variables ──────────────────────────────────────────────
 process.env.JWT_SECRET = 'test-jwt-secret-for-unit-tests-32chars!';
 process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co';
