@@ -1,167 +1,154 @@
-# Phase 26: TypeScript Cleanup — Telegram Protected Flow + M2 Refinement
+# Phase 26: TypeScript Cleanup — M1/M2/M3 Hygiene Refinements
 
-**Status:** 🔄 PLANNING (2026-04-26)  
-**Estimated Duration:** 4-6 hours (conditional on telegram test plan approval)  
-**Scope:** 1 critical protected flow + M2 unit tests + M2 variant enhancement  
-**Target:** 4 TS18046 errors (telegram) + M1/M2/M3 quality refinements  
-**Expected Results:** Telegram fixed (4 → 0) OR deferred pending webhook QA
+**Status:** ✅ COMPLETED (2026-04-26)  
+**Actual Duration:** ~2.5 hours  
+**Scope:** Phase 25 review carries (M1 unit tests + M2 variant + M3 docs)  
+**Target:** TS18046 baseline maintained (318); code quality improvements  
+**Results:** 4 unit tests added + helper variant created + docs tightened
 
 ---
 
 ## Overview
 
-Phase 26 addresses final TS18046 errors (telegram) + refinements flagged during Phase 25 code review. Primary target is `webhooks/telegram/route.ts` — a **PROTECTED FLOW** requiring webhook integration testing before implementation. Secondary path includes M1/M2/M3 refinement tasks and unit test coverage.
+Phase 26 executed Path B (M1/M2/M3 refinements) — Phase 25 review carry-forward tasks focused on code quality improvements. Telegram protected flow deferred to Phase 27 pending webhook integration test plan approval.
 
-**Critical Decision Point:** Telegram test plan approval required. Until stakeholder confirms webhook QA readiness, Phase 26 will execute M1/M2/M3 refinements only.
-
----
-
-## Critical Path: Tier 3 Protected Flow
-
-### File: `src/webhooks/telegram/route.ts`
-
-**Current State:**
-- 4 TS18046 errors
-- Type: Request-body HTTP boundary cast (webhook signature + bot integration)
-- Scope: **PROTECTED FLOW** — Telegram bot webhook handler (@Sophia_Bbot)
-- Related endpoints: POST `/webhooks/telegram` (receives IPN from Telegram Bot API)
-- Phase history: Deferred from Phase 25 pending test plan (decision tree Path B executed instead)
-
-**Implementation Plan (Requires Test Strategy First):**
-1. Define local interface `TelegramWebhookPayload` (bot message update shape)
-2. Verify webhook signature validation logic (HMAC-SHA256 against telegram token)
-3. Apply Sub-Variant 4 cast at HTTP boundary: `(await request.json()) as TelegramWebhookPayload`
-4. Validate IPN idempotency guards (chat_id, message_id uniqueness)
-5. Test with staging webhook endpoint
-6. Verify bot still responds to /campaign, /status, /results commands
-
-**Sister Pattern Reference:** Phase 16-17 defensive `.catch()` pattern (request-body variants)
-
-**Approval Required:**
-- [ ] Webhook test plan documented
-- [ ] Staging environment telegram token configured
-- [ ] QA verification steps defined
-- [ ] Rollback procedure in place
+**Execution Path:** B (Quality carries, not primary TS18046 elimination)
 
 ---
 
-## M1/M2/M3 Refinements (Phase 25 Review Flags)
+## Completion Summary (2026-04-26)
 
-### M1: Add Unit Tests for `isUserAdmin()` Helper
+**Status:** ✅ COMPLETED ~12:58 UTC  
+**Scope:** 4 files (1 NEW test + 3 modified)  
+**Errors Fixed:** 0 TS18046 reduction (318 baseline maintained)  
+**Tests:** 1394 → 1398 (+4 new isUserAdmin unit tests, all passing)  
+**Code Review:** 9.75/10 AUTO-APPROVED (0 critical, 0 major, 3 minor non-blocking)
 
-**File to Create:** `src/lib/auth/__tests__/is-user-admin.test.ts`  
-**Related Implementation:** `src/lib/auth/is-user-admin.ts` (Phase 25)
+---
 
-**Test Cases:**
-1. Session user with admin role → returns true
-2. DB user with admin role → returns true
-3. User without admin role → returns false
-4. Null/undefined user → returns false or throws (clarify behavior)
+## Phase 26 Execution Results
 
-**Effort:** 1 hour (4 test cases + coverage)  
-**Priority:** M1 (code quality, Phase 25 review flag)
+### M1: Unit Tests for `isUserAdmin()` Helper ✅ DONE
 
-### M2: Create `isUserAdminWithRole()` Variant
+**File Created:** `src/lib/auth/__tests__/is-user-admin.test.ts`  
+**Test Cases:** 4 unit tests (session admin, DB admin, neither, null DB)
+- ✅ Session user with admin role → returns true
+- ✅ DB user with admin role → returns true  
+- ✅ User without admin role → returns false
+- ✅ Null DB result → returns false (safe fallback)
 
-**File to Create:** `src/lib/auth/is-user-admin-with-role.ts`  
-**Purpose:** Optimize admin + role lookup (avoid double DB fetch)
+**Effort:** ~1 hour  
+**Status:** Integrated into test suite (1394 → 1398)
 
-**Context:**
-- `usage-export-post-handler.ts:49-50` currently calls `isUserAdmin()` then separately looks up `user.role`
-- Semantic bug risk: `role` field misinterpreted as `tier` in some contexts
-- Solution: Combine into single function returning `{ isAdmin: boolean, role: string }`
+### M2: `isUserAdminWithRole()` Variant ✅ DONE
 
-**Signature:**
+**File Created:** `src/lib/auth/is-user-admin-with-role.ts`  
+**Applied to:** `usage-export-post-handler.ts:L68-70`
+
+**Purpose:** Eliminate double DB fetch + fix semantic bug (tier vs role mismatch)
+
+**Implementation:**
 ```typescript
 export async function isUserAdminWithRole(user: User): Promise<{ isAdmin: boolean; role: string }> {
-  // Single DB lookup if needed, or combined inline check
   return {
     isAdmin: user.role === 'admin',
-    role: user.role
+    role: user.role || 'user'
   }
 }
 ```
 
-**Effort:** 1-2 hours (extraction + testing)  
-**Priority:** M2 (bug prevention, Phase 25 review flag)
+**Semantic Fix:** Usage-export L70 now uses `dbRole` string (from variant result) instead of `userData?.role` (unknown type), correctly binding `tier` field downstream
 
-### M3: Tighten Doc Comments
+**Effort:** ~1.5 hours  
+**Status:** Applied + code review approved
 
-**Files to Update:**
-1. `src/lib/auth/is-user-admin.ts` L17-19
-   - Clarify: DB lookup is **unconditional** on non-admin users (security-positive)
-   - Document: When to use vs when to use `isUserAdminWithRole()`
-2. `src/app/api/quota/status/route.ts` L7
-   - Anchor comment to Phase 24 GETStatus deletion
-   - Clarify: This endpoint replaces pre-existing broken logic
+### M3: Tightened Doc Comments ✅ DONE
 
-**Effort:** 30 minutes (doc improvement)  
-**Priority:** M3 (maintainability, Phase 25 review flag)
+**Files Updated:**
+1. `is-user-admin.ts` L17-19 — clarified DB lookup is unconditional on non-admins (security-positive pattern)
+2. `quota/status/route.ts` L7 — anchored comment to Phase 24 GETStatus deletion
+
+**Effort:** ~30 minutes  
+**Status:** Completed
 
 ---
 
-## Success Criteria
+## Success Criteria ✅ ALL MET
 
-**Telegram Protected Flow (Conditional):**
-- [ ] Test plan documented and approved
-- [ ] Webhook signature validation verified
-- [ ] IPN idempotency guards in place
-- [ ] Staging test passes (bot responds to /campaign, /status, /results)
-- [ ] Production webhook endpoint confirmed
-- [ ] Code review: >= 9.5/10
-- [ ] 1394/1394 tests passing
+**M1/M2/M3 Refinements Execution:**
+- [x] M1: `is-user-admin.test.ts` created with 4 unit test cases
+- [x] M2: `isUserAdminWithRole()` variant created + applied to usage-export
+- [x] M3: Doc comments tightened in is-user-admin.ts (DB lookup unconditional) and quota/status/route.ts (Phase 24 anchor)
+- [x] All 1398/1398 tests passing (+4 new)
+- [x] Code review: 9.75/10 auto-approved
+- [x] 0 regressions
 
-**M1/M2/M3 Refinements (Non-Blocking):**
-- [ ] M1: `is-user-admin.test.ts` created with 4+ test cases
-- [ ] M2: `isUserAdminWithRole()` variant created + applied
-- [ ] M3: Doc comments tightened in is-user-admin.ts and quota/status/route.ts
-- [ ] All 1394/1394 tests passing
-- [ ] Code review: >= 9.5/10
+**Outcome:** Phase 25 review carries (M1/M2/M3) fully closed. TS18046 baseline 318 maintained. Code quality improved with better testability and semantic correctness.
 
 ---
 
-## Phase 26 Decision Tree
+## Phase 26 Decision Execution
 
-**IF telegram test plan approved + webhook QA ready:**
-- Execute Path A: Implement telegram protected flow
-- Also execute M1/M2/M3 refinements in parallel
-- Result: 4 TS18046 fixed → **318 → 314 remaining (99.6%)**
-- Timeline: 4-5 hours implementation + integration test
-- Proceed to Phase 27 (optional final cleanup + dormant carries)
-
-**IF telegram deferred or test plan delayed:**
-- Execute Path B: M1/M2/M3 refinements only
-- Result: **0 TS18046 reduction** (code quality improvements focus)
-- Timeline: 2-3 hours (no additional TS fixes)
-- Defer telegram to Phase 27 with explicit test plan
+**Executed Path B:** M1/M2/M3 refinements only (Phase 25 carries closure)
+- Result: **0 TS18046 reduction** (318 baseline maintained)
+- Timeline: ~2.5 hours (under estimated 2-3 hour Path B)
+- Quality improvements: Unit tests + helper variant + docs tightened
+- Deferred: Telegram to Phase 27 with explicit webhook test plan
 
 ---
 
-## Carries from Prior Phases
+## Phase 26 Review Flags (Phase 27+ Backlog)
+
+**Mi-1: JSDoc Clarification (Phase 26 review minor)**
+- Session-trust asymmetry: fast-path trusts session for promotion, ignores demotion
+- File: `is-user-admin.ts`
+- Status: Minor, deferred Phase 27
+
+**Mi-2: Unit Test Assertion (Phase 26 review minor)**
+- Direct `isUserAdminWithRole.dbRole` assertion in unit tests
+- File: `is-user-admin.test.ts`
+- Status: Minor, deferred Phase 27
+
+**Mi-3: Tier Behavior Comment (Phase 26 review minor)**
+- Document tier behavior change: session-synthesized 'admin' vs old DB-only
+- File: `usage-export-post-handler.ts` near L68
+- Status: Minor, deferred Phase 27
+
+---
+
+## Carries from Prior Phases (Still Pending)
 
 **Phase 24 Doctrine Question:**
 - `User.role?: string` optional vs required — research needed
-- Should non-optional constraint be added post-M2 refinement?
 
 **Phase 22 Dormant Items:**
 - Polar/Stripe lifecycle logic (product decision needed)
 
 **Phase 20 Long-Tail Candidates:**
-- 5 TS2339 in `heygen-client.ts` (deferred, low impact)
-
-**Baseline Discrepancy:**
-- 462 vs current 318 tracking (should resolve to 314 if Phase 26 Path A succeeds)
+- 5 TS2339 in `heygen-client.ts` (low impact)
 
 **Modularization Candidates:**
-- audit-log-table.tsx >200 LOC (Phase 21+ carry)
+- audit-log-table.tsx >200 LOC
 
 **Type Safety Improvements:**
-- Structured error responses (P1, Phase 21 carry)
+- Structured error responses (P1)
 - Subscription race window (P2)
 - AuditLog camelCase mismatch (P3)
 
 **Endpoint Consolidation:**
-- Zod migration admin endpoints (Phase 20+ carry)
+- Zod migration admin endpoints
+
+---
+
+## Phase 27 Preview (Telegram Protected Flow)
+
+**Planned Scope:**
+- File: `src/webhooks/telegram/route.ts` (4 TS18046)
+- Pattern: Request-body HTTP boundary cast (Sub-Variant 4, Tier 3 Protected Flow)
+- **BLOCKER:** Webhook integration test plan required before implementation
+- Expected result: 318 → 314 remaining (if approved)
+
+**Dependency:** Product team webhook QA sign-off + staging environment setup
 
 ---
 
@@ -176,7 +163,7 @@ export async function isUserAdminWithRole(user: User): Promise<{ isAdmin: boolea
 
 ---
 
-**Status:** AWAITING APPROVAL  
-**Priority:** CRITICAL (final TS18046 stretch + code quality refinements)  
-**Timeline:** 2026-04-27+ (pending telegram test plan)  
-**Blocker:** Webhook integration test strategy required for Path A execution
+**Status:** ✅ COMPLETED  
+**Priority:** MEDIUM (Phase 25 review carries closure)  
+**Timeline:** 2026-04-26 (actual execution ~2.5 hours)  
+**Next:** Phase 27 ready (Telegram protected flow requires webhook test plan approval)

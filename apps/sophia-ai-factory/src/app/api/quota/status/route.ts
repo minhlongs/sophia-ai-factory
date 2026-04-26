@@ -4,7 +4,7 @@
  * GET /api/quota/status - Get current quota status for dashboard
  *
  * Authentication: Better Auth session (user must be logged in).
- * Restored from prior `GETStatus` export that was unreachable in `quota/overage-events`.
+ * Restored after Phase 24 deletion of orphan GETStatus export in overage-events route.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
