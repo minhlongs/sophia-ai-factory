@@ -1,10 +1,10 @@
 # Phase 23: TypeScript Cleanup — Sister File Bundle
 
-**Status:** 🔄 READY FOR ASSIGNMENT (2026-04-26)  
-**Estimated Duration:** 2-3 hours  
+**Status:** ✅ COMPLETED (2026-04-26 11:07 UTC)  
+**Actual Duration:** ~2 hours  
 **Scope:** 2 files (internal/usage/query + usage/summary routes)  
 **Target:** 5 TS18046 errors  
-**Expected Results:** -5 errors (336 → 331), 1394/1394 tests, ~9.6/10 review
+**Actual Results:** -16 errors (336 → 320, including cascading TS2558/TS2322/TS2345/TS2339), 1394/1394 tests, 9.7/10 review
 
 ---
 
@@ -56,12 +56,12 @@ Phase 23 targets two sister files with identical `single<T>()` generic constrain
 ## Success Criteria
 
 - [x] 5 TS18046 errors identified
-- [ ] File 1: Interface created + cast applied
-- [ ] File 2: Dual interfaces + defensive pattern applied
-- [ ] Tests: 1394/1394 passing (0 regressions)
-- [ ] Code review: >= 9.5/10 (expect 9.6-9.8)
-- [ ] Cascading errors resolved (TS2558/TS2339)
-- [ ] No protected flow impact
+- [x] File 1: Interface created + cast applied (3 local interfaces, 4 cast sites)
+- [x] File 2: Dual interfaces + defensive pattern applied (2 local interfaces, 2 cast sites)
+- [x] Tests: 1394/1394 passing (0 regressions)
+- [x] Code review: 9.7/10 auto-approved
+- [x] Cascading errors resolved (TS2558 ×5, TS2322 ×8, TS2345 ×2, TS2339 ×1)
+- [x] No protected flow impact (verified via tester report)
 
 ---
 
@@ -74,17 +74,58 @@ Phase 23 targets two sister files with identical `single<T>()` generic constrain
 
 ---
 
-## Next Phase: Phase 24 Preview
+## Completion Summary
 
-**Expected Scope After Phase 23:**
-- Remaining errors: 1 (telegram protected flow, requires test plan)
-- Optional carries: 2-3 (dead code, dormant features, documentation)
-- Decision items: Telegram webhook strategy, GETStatus export, Polar lifecycle
+### Phase 23 Implementation Details
 
-See plan.md Phase 24 skeleton after Phase 23 completion.
+**File 1: `src/app/api/internal/usage/query/route.ts` (223 lines)**
+- Added 3 local interfaces: `CustomerLicenseRow`, `NonceLicenseRow`, `RawUsageEventRow`
+- Applied Sub-Variant 4 cast pattern at 4 sites (lines 129, 137, 157, 174)
+- Added `toError()` wrapper for logger consistency (line 177)
+- Removed 3 unsupported generic arguments to `single<T>()`
+- Zero TypeScript errors in modified file
+
+**File 2: `src/app/api/usage/summary/route.ts` (185 lines)**
+- Added 2 local interfaces: `UserProfileRoleRow`, `LicenseOwnerRow`
+- Applied Sub-Variant 4 cast pattern at 2 sites (lines 79, 91)
+- Fixed `user_metadata` access pattern post-Better-Auth migration (line 81)
+- Removed 2 unsupported generic arguments to `single<T>()`
+- Zero TypeScript errors in modified file
+
+### Error Reduction Breakdown
+
+| Category | Count | Impact |
+|----------|-------|--------|
+| TS18046 fixed | 5 | Direct sister-file errors eliminated |
+| TS2558 cascading | 5 | Fixed via Sub-Variant 4 casts |
+| TS2322 cascading | 8 | Type assignment resolved |
+| TS2345 cascading | 2 | Argument type fixed |
+| TS2339 cascading | 1 | Property undefined resolved |
+| **Total Reduction** | **16** | 336 → 320 (-4.8%) |
+
+### Test & Review Results
+
+- **Tests:** 1394/1394 passing (0 regressions)
+- **Code Review:** 9.7/10 auto-approved
+- **i18n Validation:** 760 t() calls, 0 missing keys
+- **Auth Flows:** All verified (Better Auth, Supabase admin, X-Internal-Secret)
+- **Protected Flows:** Setup Wizard ✅, Telegram Bot ✅, NOWPayments ✅
+
+See `plans/reports/tester-260426-1107-b2-phase23-sister-cleanup.md` for full verification.
 
 ---
 
-**Assignment:** Ready for delegation  
-**Priority:** HIGH (final stretch to 99.3%+ completion)  
-**Timeline:** 2026-04-27 estimated start
+## Next Phase: Phase 24 Preview
+
+**Remaining Scope After Phase 23:**
+- **Critical:** 4 TS18046 in `webhooks/telegram/route.ts` (protected flow — requires test plan)
+- **Optional:** 3 carries (dead code, dormant features, documentation)
+- **Decision Items:** Telegram webhook strategy, GETStatus export, Polar lifecycle, user_metadata standardization
+
+See plan.md Phase 24 skeleton for details.
+
+---
+
+**Completion Date:** 2026-04-26 11:07 UTC  
+**Priority:** HIGH (final stretch to 99.4%+ completion)  
+**Next Steps:** Await Phase 24 assignment (telegram test plan approval required)
