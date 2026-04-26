@@ -1,8 +1,8 @@
 # Project Roadmap
 
 **Project Name:** Sophia AI Video Factory
-**Current Version:** 1.12.0 (Query Optimization & Discovery Rate Limiting Shipped)
-**Last Updated:** 2026-04-20
+**Current Version:** 1.13.0 (Multi-Tenant AI Agent Factory Infrastructure)
+**Last Updated:** 2026-04-25
 
 ## 📅 Roadmap Overview
 
@@ -191,6 +191,32 @@
 - [x] **Audit Event**: `DISCOVERY_SCORE_REQUESTED` added to `signals_events` event catalog
 - [x] **Admin Observability**: Dashboard can now track niche-scoring frequency + cost exposure
 - [x] **Deferred (R11)**: `/api/*` dead code cleanup in middleware (HIGH risk collateral damage)
+
+### ✅ Phase 11: Multi-Tenant AI Agent Factory Infrastructure (Completed - 2026-04-25)
+**Goal:** Transform Sophia from AI video tool into multi-tenant AI Company OS (Agent Factory).
+- [x] **Phase 01 Seed**: Agent infrastructure
+  - [x] D1 schema: `agent_teams`, `agents`, `agent_tasks`, `agent_logs` tables
+  - [x] Agent runner orchestration service
+  - [x] Task queue and state machine (pending → assigned → running → completed/failed)
+  - [x] API routes: `/api/agents/*` (teams, agents, tasks, logs endpoints)
+  - [x] 15 unit tests covering all infrastructure paths
+- [x] **Phase 02 Tree**: Mission Control UI
+  - [x] Natural language mission input interface
+  - [x] AgentTeamPanel component for team visualization
+  - [x] TaskFeed with Server-Sent Events (SSE) real-time updates
+  - [x] i18n keys for Vietnamese/English support
+- [x] **Phase 03 Forest**: Feedback Loop
+  - [x] Agent signal events tracking (`created_at`, `agent_id`, `event_type`, `metadata`)
+  - [x] A/B prompt variant system for LLM optimization
+  - [x] Analytics card for mission performance metrics
+  - [x] Feedback thumbs UI for user ratings
+- [x] **Phase 04 Land**: Observability + AI CI/CD
+  - [x] Enforcement gates (tier-based agent access: BASIC→1 agent, PREMIUM→5, ENTERPRISE→20, MASTER→unlimited)
+  - [x] Agent health card in system-health dashboard
+  - [x] Error enrichment with agent context (agent_id, mission_id, step_number)
+  - [x] Signal events for agent lifecycle (startup, shutdown, error recovery)
+- [x] **Testing**: 1394 tests pass (0 failures)
+- [x] **Production**: HTTP 200, commit e6a180d8
 
 ## 🔧 Tech Debt Elimination Program (2026-04-19 → 2026-04-20)
 
