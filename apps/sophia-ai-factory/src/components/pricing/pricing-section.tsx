@@ -15,6 +15,17 @@ interface TierDiscount {
   checkoutUrl?: string | null;
 }
 
+interface CouponActivateResponse {
+  success?: boolean;
+  mcuBonus?: number;
+  error?: string;
+}
+
+interface CheckoutResponse {
+  url?: string;
+  error?: string;
+}
+
 export function PricingSection() {
   const [loading, setLoading] = useState<string | null>(null);
   const [discounts, setDiscounts] = useState<Map<string, TierDiscount>>(new Map());
@@ -44,7 +55,7 @@ export function PricingSection() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ coupon: "FREE50", tier }),
         });
-        const data = await res.json();
+        const data = (await res.json()) as CouponActivateResponse;
         if (data.success) {
           window.location.href = `/dashboard?activated=${tier}&bonus=${data.mcuBonus}`;
         } else if (res.status === 401) {
@@ -76,7 +87,7 @@ export function PricingSection() {
         body: JSON.stringify({ tier }),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as CheckoutResponse;
 
       if (data.url) {
         window.location.href = data.url;

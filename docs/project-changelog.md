@@ -1,7 +1,13 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-04-25 (B2 TypeScript Cleanup Phase 1 + Dead-Code Cleanup + Analytics Query Type Safety + Billing Modularization)
+> **Last Updated:** 2026-04-25 (B2 TypeScript Cleanup Phase 2 + Phase 1 + Dead-Code Cleanup + Analytics Query Type Safety + Billing Modularization)
+
+---
+
+## [2026-04-25] B2 TypeScript Cleanup Phase 2 — pricing-section.tsx Fetch Responses Typed
+
+- `src/components/pricing-section.tsx` — Added response types for fetch operations. Eliminated 6 TS18046 errors. Total project TS errors: 452 → 446. Tests: 1394/1394 ✅.
 
 ---
 
