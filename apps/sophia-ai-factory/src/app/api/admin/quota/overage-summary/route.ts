@@ -78,7 +78,7 @@ export async function GET(req: NextRequest) {
     const { data: events, error: eventsError } = await query;
 
     if (eventsError) {
-      logger.error('[Admin Quota API] Failed to fetch overage events', eventsError);
+      logger.error('[Admin Quota API] Failed to fetch overage events', toError(eventsError));
       return NextResponse.json(
         { error: 'Failed to fetch overage events' },
         { status: 500 }

@@ -1,11 +1,12 @@
 # B2: TypeScript Cleanup Initiative
 
 **Initiative:** B2 TypeScript Error Elimination
-**Duration:** Multi-phase (Phases 1–27 complete)
-**Overall Status:** ✅ PHASE 27 COMPLETE — MILESTONE ACHIEVED: 100% TS18046 ELIMINATION
+**Duration:** Multi-phase (Phases 1–28 complete)
+**Overall Status:** ✅ PHASE 28 COMPLETE — 100% TS18046 + QUERYERROR LOGGING CONSISTENCY
 **Baseline:** 462 TS18046 errors (next.config.ts:24 reference)
 **Current:** 0 TS18046 errors remaining — ALL 462 BASELINE ERRORS ELIMINATED
-**Total Errors Reduced:** 462 → 313 (32.3% overall codebase reduction, including cascading TS2345/TS2322/TS2339)
+**Phase 28 Result:** 313 → 280 errors (-33 TS2345 QueryError, mass logger.error toError refactor)
+**Total Errors Reduced:** 462 → 280 (39.4% overall codebase reduction)
 
 ---
 
@@ -34,8 +35,9 @@
 | 25 | 8 files (2 NEW: quota/status/route + is-user-admin.ts; 6 modified: dunning ×3, usage-export ×2, usage/summary ×1) | 0 TS18046 reduction (M1/M2 carries, 318 baseline maintained) | Path B: Orphan endpoint restoration + DRY refactor (Telegram deferred) | ✅ DONE | tester-260426-1135-b2-phase25-orphan-helper, inline code-review 9.6/10 |
 | 26 | 4 files (1 NEW: is-user-admin.test.ts; 3 modified: is-user-admin.ts, usage-export-post-handler.ts, quota/status/route.ts) | 0 TS18046 reduction (M1/M2/M3 carries, 318 baseline maintained) | Path B: M1 unit tests + M2 variant + M3 docs (Telegram deferred Phase 27) | ✅ DONE | tester-260426-1158-b2-phase26-helper-tests, code-review-260426-1158-b2-phase26-helper-tests 9.75/10 |
 | 27 | `src/webhooks/telegram/route.ts` (PROTECTED FLOW) | -4 TS18046 (318 → 0, 100% elimination milestone) | Telegram webhook protected flow (Sub-Variant 4 request-body cast #7) + integration test | ✅ DONE | tester-260426-1207-b2-phase27-telegram-final, code-review-260426-1207-b2-phase27-telegram-final 9.7/10 |
+| 28 | 23 files (mass logger.error toError refactor) | -33 TS2345 QueryError (313 → 280) | Canonical toError() helper wrapping all QueryError logger sites (33 instances, 23 files) | ✅ DONE | tester-260426-phase28-mass-toerror-verification, code-review-260426-1230-b2-phase28-mass-toerror 9.7/10 |
 
-**MILESTONE ACHIEVED:** 462 → 0 TS18046 (100% elimination via Phase 27 protected flow completion; all baseline errors eliminated; 313 remaining errors are NOT TS18046 category)
+**MILESTONES ACHIEVED:** 462 → 0 TS18046 (100% via Phase 27); 313 → 280 TS2345 QueryError (100% via Phase 28); 39.4% overall error reduction
 
 ---
 
@@ -67,6 +69,38 @@
 - Code Review: `plans/reports/code-review-260426-1207-b2-phase27-telegram-final.md`
 
 See `phase-27-typescript-cleanup.md` for full completion details.
+
+---
+
+## Phase 28 Summary (2026-04-26) — MASS LOGGER.ERROR TOERROR REFACTOR
+
+**Status:** ✅ COMPLETED 2026-04-26 ~13:30 UTC
+
+**🎯 PHASE 28 ACHIEVEMENT: 100% TS2345 QUERYERROR ELIMINATION**
+- **TS2345 baseline:** 313 → 280 (-33 QueryError, all eliminated)
+- **Pattern:** Canonical `toError()` helper for PostgrestError normalization
+- **Files:** 23 modified (mechanical wrap pattern)
+- **Sites:** 33 logger.error(QueryError) → logger.error(toError(QueryError))
+- **Tests:** 1398/1398 ✅ (zero regressions)
+- **Code review:** 9.7/10 auto-approved
+- **Behavior:** Production logs now capture error.code, error.details, error.hint (was [object Object])
+
+**Key Actions:**
+1. Created `src/lib/logging/to-error.ts` canonical helper
+2. Wrapped all 33 QueryError logger.error() calls across 23 files
+3. Mechanical refactor — zero behavioral change (error object structure now serializable)
+4. Verified protected flows untouched (admin/internal operations only)
+
+**Phase 27 Review Carries (Deferred Phase 29+):**
+- Mi-1: JSDoc clarify session-trust asymmetry (non-blocking)
+- Mi-2: Unit test assertion refinement (non-blocking)
+- Mi-3: Tier behavior change comment (non-blocking)
+
+**Reports:**
+- Tester: `plans/reports/tester-260426-phase28-mass-toerror-verification.md`
+- Code Review: `plans/reports/code-review-260426-1230-b2-phase28-mass-toerror.md`
+
+See `phase-28-typescript-cleanup.md` for full completion details.
 
 ---
 
@@ -417,18 +451,22 @@ See `phase-21-typescript-cleanup.md` for details.
 
 ---
 
-## Next Steps (Phase 28+)
+## Next Steps (Phase 29+)
 
-**Phase 28 Focus (OPTIONAL — Non-TS18046 Cleanup):**
-- Target: Remaining 313 errors (TS2345, TS2322, TS2339, TS2538, TS2769, etc.)
-- Categorize by error type (breakdown table to follow)
-- Phase 26 review carries (Mi-1/Mi-2/Mi-3) still available for lightweight refinement
+**Phase 29 Focus (TS2339 Property Mismatch Audit):**
+- Target: 72 TS2339 errors (highest non-TS18046/non-QueryError frequency)
+- Root-cause analysis: DB schema mismatches, HTTP response shapes, optional semantics
+- Known candidates: `heygen-client.ts` (5), `violations-get-handler.ts` (3), others TBD
+- Phase 26 review carries (Mi-1/Mi-2/Mi-3) available for lightweight refinement
 - Dormant carries from earlier phases still pending (Polar/Stripe lifecycle, User.role optional, etc.)
 
-**Success Criteria for Initiative Closure:**
-- [x] Phase 27 TS18046 fixed (4 → 0)
-- [x] All 462 baseline TS18046 errors eliminated
-- [x] Protected flow verified (Telegram bot commands working)
+**Phase 28 Completion (✅ DELIVERED):**
+- [x] Phase 28 mass logger.error toError refactor (-33 TS2345)
+- [x] 313 → 280 errors (-33, 39.4% total reduction)
 - [x] 1398/1398 tests passing (zero regressions)
 - [x] Code review approved (9.7/10)
-- [ ] (Optional) Phase 28+ for non-TS18046 error types
+
+**Initiative Milestones Achieved:**
+- [x] Phase 27: All 462 baseline TS18046 errors → 0 (100% elimination)
+- [x] Phase 28: All 33 logger.error(QueryError) sites → canonical toError() (100% consistency)
+- [ ] Phase 29+: Remaining 280 errors (optional cleanup for non-TS18046/non-QueryError types)

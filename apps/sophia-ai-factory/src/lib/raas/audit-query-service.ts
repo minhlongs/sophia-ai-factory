@@ -9,6 +9,7 @@
 
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import type { RaasAuditLogRow as RaasAuditLog } from '@/lib/supabase/types';
 import type { RaasAuditLogFilters, AuditLogResponse } from '@/lib/raas-schema';
 
@@ -41,7 +42,7 @@ export async function getAuditLogs(filters: RaasAuditLogFilters): Promise<AuditL
   const { data, error, count } = await query;
 
   if (error) {
-    logger.error('Failed to fetch audit logs', error);
+    logger.error('Failed to fetch audit logs', toError(error));
     throw new Error(`Database error: ${error.message}`);
   }
 
@@ -61,7 +62,7 @@ export async function getAuditLogsByLicense(nonce: string): Promise<RaasAuditLog
     .order('created_at', { ascending: false });
 
   if (error) {
-    logger.error(`Failed to fetch audit logs for license ${nonce}`, error);
+    logger.error(`Failed to fetch audit logs for license ${nonce}`, toError(error));
     throw new Error(`Database error: ${error.message}`);
   }
 
@@ -88,7 +89,7 @@ export async function exportAuditLogs(options?: {
   const { data, error } = await query;
 
   if (error) {
-    logger.error('Failed to export audit logs', error);
+    logger.error('Failed to export audit logs', toError(error));
     throw new Error(`Database error: ${error.message}`);
   }
 

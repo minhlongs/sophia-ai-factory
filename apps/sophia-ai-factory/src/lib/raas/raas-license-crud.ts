@@ -5,6 +5,7 @@
 
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import { Tier } from '@/types';
 import type {
   RaasLicenseRow as RaasLicense,
@@ -41,7 +42,7 @@ export async function createLicense(params: LicenseCreationParams): Promise<Raas
   const { data, error } = await db.from('raas_licenses').insert(licenseData).select().single();
 
   if (error) {
-    logger.error('Failed to create license in database', error);
+    logger.error('Failed to create license in database', toError(error));
     throw new Error(`Database error: ${error.message}`);
   }
 
@@ -54,7 +55,7 @@ export async function getLicenseByNonce(nonce: string): Promise<RaasLicense | nu
   const { data, error } = await db.from('raas_licenses').select('*').eq('nonce', nonce).single();
 
   if (error && error.code !== 'PGRST116') {
-    logger.error(`Failed to fetch license ${nonce}`, error);
+    logger.error(`Failed to fetch license ${nonce}`, toError(error));
     throw new Error(`Database error: ${error.message}`);
   }
 
@@ -95,7 +96,7 @@ export async function getLicenses(params: {
   const { data, error, count } = await query;
 
   if (error) {
-    logger.error('Failed to fetch licenses', error);
+    logger.error('Failed to fetch licenses', toError(error));
     throw new Error(`Database error: ${error.message}`);
   }
 

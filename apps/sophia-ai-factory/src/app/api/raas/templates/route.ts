@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
 import { getCurrentUser } from '@/lib/better-auth-session';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import { UNIFIED_TIERS } from '@/config/tiers';
 import type { Tier } from '@/types';
 
@@ -30,7 +31,7 @@ export async function GET(_request: NextRequest) {
       .order('category', { ascending: true });
 
     if (error) {
-      logger.warn('[GET /api/raas/templates] Table not found, using static templates', error);
+      logger.warn('[GET /api/raas/templates] Table not found, using static templates', toError(error));
       return NextResponse.json({ templates: STATIC_TEMPLATES });
     }
 

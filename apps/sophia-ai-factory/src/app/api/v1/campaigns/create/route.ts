@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createServerClient } from "@/lib/db/client";
 import { logger } from "@/lib/utils/logger-utility";
+import { toError } from "@/lib/utils/to-error";
 import { sendCampaignCreatedEvent } from "@/lib/campaigns/create-campaign-core";
 
 // POST /api/v1/campaigns/create
@@ -130,7 +131,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       .single();
 
     if (insertError || !campaign) {
-      log.error("RaaS campaign create: DB insert failed", insertError ?? undefined);
+      log.error("RaaS campaign create: DB insert failed", insertError ? toError(insertError) : undefined);
       return NextResponse.json(
         { error: "Failed to create campaign record" },
         { status: 500 }

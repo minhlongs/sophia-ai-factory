@@ -10,6 +10,7 @@ import { z } from 'zod';
 import { createServerClient } from '@/lib/db/client';
 import { getCurrentUser } from '@/lib/better-auth-session';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 
 export const dynamic = 'force-dynamic';
 
@@ -59,7 +60,7 @@ export async function GET(request: NextRequest) {
       .range(offset, offset + limit - 1);
 
     if (error) {
-      logger.error('[GET /api/raas/missions] Supabase error', error);
+      logger.error('[GET /api/raas/missions] Supabase error', toError(error));
       return NextResponse.json({ error: 'Failed to fetch missions' }, { status: 500 });
     }
 
@@ -145,7 +146,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      logger.error('[POST /api/raas/missions] Supabase error', error);
+      logger.error('[POST /api/raas/missions] Supabase error', toError(error));
       return NextResponse.json({ error: 'Failed to create mission' }, { status: 500 });
     }
 

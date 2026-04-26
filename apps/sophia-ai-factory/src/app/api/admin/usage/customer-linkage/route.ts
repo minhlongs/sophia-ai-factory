@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import { customerLinkageRequestSchema } from '@/lib/validation/services';
 import type { RaasLicenseUpdate } from '@/lib/supabase/types';
 
@@ -161,7 +162,7 @@ export async function POST(request: NextRequest) {
       .eq('nonce', license_nonce);
 
     if (updateError) {
-      logger.error('[Customer Linkage] Failed to update license', updateError);
+      logger.error('[Customer Linkage] Failed to update license', toError(updateError));
       return NextResponse.json(
         { error: 'Failed to update license', details: updateError.message },
         { status: 500 }

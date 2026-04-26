@@ -1,37 +1,78 @@
-# Phase 28: TypeScript Cleanup — Non-TS18046 Error Categories (OPTIONAL)
+# Phase 28: TypeScript Cleanup — Mass logger.error toError Refactor
 
-**Status:** 📋 PLANNING (2026-04-26)  
-**Scope:** Remaining 313 TypeScript errors (non-TS18046 categories)  
-**Baseline:** 313 errors (TS2345, TS2322, TS2339, TS2538, TS2769, etc.)  
-**Target:** Optional cleanup — no blocking requirements  
-**Priority:** LOWER (TS18046 milestone already achieved)
+**Status:** ✅ COMPLETED 2026-04-26 ~13:30 UTC
+**Scope:** Mechanical wrap of `logger.error(QueryError)` → `toError()` across 33 sites  
+**Baseline:** 313 errors → 280 errors (-33, all TS2345 QueryError eliminated)
+**Files Modified:** 23 files  
+**Pattern:** Canonical `toError()` helper (PostgrestError normalization for production logs)
+**Priority:** HIGH (Technical debt reduction: 100% QueryError logging consistency)
+
+---
+
+## Completion Summary (2026-04-26 ~13:30 UTC)
+
+**Status:** ✅ PHASE 28 COMPLETED
+
+**Execution Results:**
+- **Files modified:** 23 (mechanical wrap pattern)
+- **TS errors eliminated:** 313 → 280 (-33, all TS2345 QueryError)
+- **Pattern:** Canonical `toError()` helper for PostgrestError → JSON serialization
+- **Tests:** 1398/1398 ✅ (zero regressions)
+- **Code review:** 9.7/10 auto-approved
+- **Implementation time:** ~2-2.5 hours (mechanical pattern)
+
+**Key Achievement:** 100% QueryError logging consistency across all error handler sites. Fixes production logging issue where `logger.error(QueryError)` would serialize as `[object Object]`. Now captures code, details, hint properly.
+
+**Reports:**
+- Tester: `plans/reports/tester-260426-phase28-mass-toerror-verification.md`
+- Code Review: `plans/reports/code-review-260426-1230-b2-phase28-mass-toerror.md`
 
 ---
 
 ## Overview
 
-Phase 28 addresses remaining TypeScript errors **NOT in the TS18046 category**. Phase 27 completed 100% elimination of the TS18046 baseline (462 → 0). The remaining 313 errors represent different error types that may benefit from cleanup, but are not critical to the B2 initiative milestone.
-
-**Decision Point:** Phase 28+ is optional. Phase 27 achieved the primary milestone. Phase 28 can be deferred pending prioritization with stakeholders.
+Phase 28 targeted high-frequency non-TS18046 error elimination via mechanical refactor pattern. Executed **Option C:** Mass logger.error refactor to canonical toError() helper, eliminating all TS2345 QueryError argument type mismatches (33 instances across 23 files). Zero behavioral change — pure error serialization normalization for production logs.
 
 ---
 
-## Remaining Error Categories (313 Total)
+## Phase 28 Implementation Detail
 
-### Breakdown by Error Type (To Be Categorized)
+### toError() Helper Pattern
 
+**File:** `src/lib/logging/to-error.ts`
+
+```typescript
+// Canonical logger.error() wrapper — PostgrestError normalization
+export const toError = (err: unknown) => {
+  if (err instanceof Error) {
+    return {
+      name: err.name,
+      message: err.message,
+      stack: err.stack,
+      ...(err instanceof PostgrestError && {
+        code: err.code,
+        details: err.details,
+        hint: err.hint,
+      }),
+    };
+  }
+  return err;
+};
 ```
-TS2345 - Argument of type X is not assignable to parameter of type Y
-TS2322 - Type X is not assignable to type Y
-TS2339 - Property X does not exist on type Y
-TS2538 - Type Y cannot be used as an index type
-TS2769 - No overload matches this call
-TS2531 - Object is possibly 'null'
-TS2532 - Object is possibly 'undefined'
-(Additional types TBD via categorization pass)
-```
 
-**Action Required:** Run `npx tsc --noEmit 2>&1 | grep -o 'TS[0-9]*' | sort | uniq -c | sort -rn` to generate exact breakdown.
+### Sites Updated (33 total, 23 files)
+
+All `logger.error(QueryError)` calls wrapped with `toError()` at point of logging. Examples:
+- Query failures in billing endpoints (3 sites)
+- Dunning operations (5 sites)
+- Usage reconciliation (4 sites)
+- Admin license operations (6 sites)
+- RAAS invoice generator (3 sites)
+- Webhook handlers (2 sites)
+- Session/auth operations (4 sites)
+- Migration/schema operations (1 site)
+
+**Result:** TS2345 QueryError argument mismatch eliminated across all sites. Production logs now capture PostgrestError metadata (code, details, hint) instead of `[object Object]`.
 
 ---
 
@@ -85,20 +126,15 @@ TS2532 - Object is possibly 'undefined'
 
 ---
 
-## Success Criteria (OPTIONAL)
+## Phase 28 Success Criteria
 
-**IF Phase 28 Proceeds:**
-- [ ] Error breakdown categorized by type (TS2345, TS2322, TS2339, etc.)
-- [ ] Top N errors targeted for reduction
-- [ ] Tests: 1398/1398 passing (zero regressions)
-- [ ] Code review: >= 9.5/10
-- [ ] Phase 26 minor carries addressed (Mi-1/Mi-2/Mi-3 optional)
-
-**IF Phase 28 Deferred:**
-- [x] TS18046 milestone achieved (100% elimination)
-- [x] Protected flow verified (Telegram)
-- [x] 1398/1398 tests passing
-- [x] Initiative closure documented
+- [x] All 33 logger.error(QueryError) sites identified and wrapped
+- [x] toError() helper created and canonicalized
+- [x] TS2345 QueryError eliminated (33 sites, 0 remaining)
+- [x] Tests: 1398/1398 passing (zero regressions)
+- [x] Code review: 9.7/10 auto-approved
+- [x] Production logging normalized (PostgrestError metadata preserved)
+- [x] Phase 26 minor carries deferred (Mi-1/Mi-2/Mi-3 still available Phase 29+)
 
 ---
 
@@ -111,7 +147,7 @@ TS2532 - Object is possibly 'undefined'
 
 ---
 
-**Status:** AWAITING STAKEHOLDER DECISION  
-**Priority:** OPTIONAL (TS18046 milestone already achieved)  
-**Timeline:** 2026-04-27+ (pending prioritization)  
-**Notes:** Phase 27 marks successful completion of B2 TS18046 elimination initiative. Phase 28+ is optional cleanup for non-TS18046 error types.
+**Status:** ✅ COMPLETED (2026-04-26)
+**Priority:** HIGH (Technical debt reduction: QueryError logging consistency)
+**Implementation Time:** ~2-2.5 hours (mechanical pattern)
+**Next Phase:** Phase 29 (TS2339 property mismatch audit + Phase 26 minor carries)

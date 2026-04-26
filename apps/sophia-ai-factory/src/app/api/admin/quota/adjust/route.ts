@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
       });
 
     if (upsertError) {
-      logger.error('[Admin Quota API] Failed to adjust quota limits', upsertError);
+      logger.error('[Admin Quota API] Failed to adjust quota limits', toError(upsertError));
       return NextResponse.json(
         { error: 'Failed to adjust quota limits', details: upsertError.message },
         { status: 500 }

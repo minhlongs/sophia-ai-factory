@@ -7,6 +7,7 @@
 
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import type {
   RaasLicenseRow as RaasLicense,
   RaasLicenseUpdate,
@@ -35,7 +36,7 @@ export async function revokeLicense(nonce: string, revokedBy?: string): Promise<
   const { data, error } = await db.from('raas_licenses').update(updateData).eq('nonce', nonce).select().single();
 
   if (error) {
-    logger.error(`Failed to revoke license ${nonce}`, error);
+    logger.error(`Failed to revoke license ${nonce}`, toError(error));
     throw new Error(`Database error: ${error.message}`);
   }
 
@@ -62,7 +63,7 @@ export async function extendLicense(nonce: string, days: number, extendedBy?: st
     .single();
 
   if (error) {
-    logger.error(`Failed to extend license ${nonce}`, error);
+    logger.error(`Failed to extend license ${nonce}`, toError(error));
     throw new Error(`Database error: ${error.message}`);
   }
 
@@ -89,6 +90,6 @@ export async function incrementValidationCount(nonce: string): Promise<void> {
     .eq('nonce', nonce);
 
   if (error) {
-    logger.error(`Failed to increment validation count for ${nonce}`, error);
+    logger.error(`Failed to increment validation count for ${nonce}`, toError(error));
   }
 }

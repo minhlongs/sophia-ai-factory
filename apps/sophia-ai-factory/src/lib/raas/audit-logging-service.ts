@@ -9,6 +9,7 @@
 
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import type { Tier } from '@/types';
 import type {
   RaasAuditLogInsert,
@@ -80,7 +81,7 @@ export async function logAuditAction(params: AuditLogParams): Promise<void> {
   const { error } = await db.from('raas_audit_logs').insert(logData);
 
   if (error) {
-    logger.error('Failed to log audit action', error);
+    logger.error('Failed to log audit action', toError(error));
     // Don't throw — audit logging failure shouldn't block main operation
   }
 }

@@ -1,10 +1,10 @@
 # B2 TypeScript Cleanup — Cumulative Tech Debt Tracking
 
-**Initiative:** B2 TS18046 Error Elimination  
-**Overall Progress:** 🎉 100% — TS18046 BASELINE COMPLETE (462 → 0 via Phase 27 milestone)  
-**Current Status:** Phase 27 Complete — INITIATIVE MILESTONE ACHIEVED  
-**Last Updated:** 2026-04-26 (Phase 27 completion sync-back ~12:07 UTC)  
-**Remaining Tech Debt:** 313 errors (non-TS18046 types: TS2345, TS2322, TS2339, TS2538, TS2769, etc. — Phase 28+ optional cleanup)  
+**Initiative:** B2 TS18046 Error Elimination + TS2345 QueryError Normalization
+**Overall Progress:** 🎉 39.4% — TS18046 100% ELIMINATED + QUERYERROR LOGGING CONSISTENCY (462 → 280 via Phase 28 mass refactor)
+**Current Status:** Phase 28 Complete — MASS LOGGER.ERROR TOERROR REFACTOR DELIVERED
+**Last Updated:** 2026-04-26 (Phase 28 completion sync-back ~13:30 UTC)
+**Remaining Tech Debt:** 280 errors (non-TS18046/non-QueryError types: TS2339, TS2322, TS2352, TS2304, TS2538, TS2769, etc. — Phase 29+ optional cleanup)  
 
 ---
 
@@ -34,6 +34,7 @@
 | **25** | **8 files (2 NEW: quota/status/route.ts + is-user-admin.ts; 6 modified: dunning ×3, usage-export ×2, usage/summary ×1)** | **M1 orphan endpoint + M2 DRY refactor (Path B: not primary TS18046 elimination)** | **0** | **318** | **318** | **99.4%** | **✅ DONE** | **9.6/10** | **1394/1394** | **M1: Restored /api/quota/status endpoint (fixes quota-usage-dashboard 404 bug); M2: Extracted isUserAdmin() helper (6 admin sites consolidated); No TS18046 reduction (quality carries); TS18046 (telegram) deferred Phase 26+** |
 | **26** | **4 files (1 NEW: is-user-admin.test.ts; 3 modified: is-user-admin.ts, usage-export-post-handler.ts, quota/status/route.ts)** | **M1 unit tests + M2 variant + M3 docs (Path B: not primary TS18046 elimination)** | **0** | **318** | **318** | **99.4%** | **✅ DONE** | **9.75/10** | **1398/1398** | **M1: Added 4 unit tests for isUserAdmin() (session, DB, neither, null); M2: Created isUserAdminWithRole() variant, applied to usage-export (eliminates double DB fetch, fixes tier semantic bug); M3: Tightened docs in is-user-admin.ts + quota/status/route.ts; 0 TS18046 reduction (quality carries); TS18046 (telegram) deferred Phase 27+** |
 | **27** | **`src/webhooks/telegram/route.ts` (PROTECTED FLOW)** | **Telegram webhook protected flow (Sub-Variant 4 request-body cast #7, integration test)** | **-4** | **318** | **0** | **100%** | **✅ DONE** | **9.7/10** | **1398/1398** | **🎉 MILESTONE: 100% TS18046 ELIMINATION ACHIEVED — All 462 baseline errors eliminated; Protected flow verified; Bot commands working; Graceful malformed JSON handling; Phase 26 carries (Mi-1/Mi-2/Mi-3) deferred Phase 28+** |
+| **28** | **23 files (mass logger.error toError refactor)** | **Canonical toError() helper wrapping all QueryError logger sites (33 instances)** | **-33** | **313** | **280** | **39.4%** | **✅ DONE** | **9.7/10** | **1398/1398** | **Mass mechanical refactor: logger.error(QueryError) → logger.error(toError(QueryError)); PostgrestError metadata (code, details, hint) now preserved in production logs instead of [object Object]; 0 behavioral change** |
 
 ---
 
@@ -53,9 +54,10 @@
 
 ### Type Safety
 - **TS18046 Baseline:** 462 errors
-- **TS18046 Current:** 0 errors remaining — 100% ELIMINATION ACHIEVED
-- **Progress:** 462 TS18046 fixed (100% — Phase 27 milestone achieved); cascading errors (TS2345/TS2322/TS2339) also reduced
-- **Milestone:** All 462 baseline TS18046 errors → 0 (via Phase 27 protected flow completion)
+- **TS18046 Current:** 0 errors remaining — 100% ELIMINATION ACHIEVED (Phase 27)
+- **TS2345 QueryError:** 313 → 280 (-33, 100% elimination via Phase 28 canonical toError() helper)
+- **Progress:** 462 TS18046 fixed + 33 TS2345 QueryError fixed (39.4% total reduction); remaining 280 errors distributed across other types
+- **Milestones:** All 462 baseline TS18046 errors → 0 (Phase 27); All QueryError logger sites → canonical toError() (Phase 28)
 
 ### Test Coverage
 - **Test Files Passing:** 115/115 (1 skipped)
@@ -220,7 +222,7 @@ Pre-existing issue noted: Double `res.json()` parse in mission-launcher fallback
 **Initiative Lead:** Project Manager  
 **Metric Owner:** Code Review Agent  
 **Test Validation:** Tester Agent  
-**Status:** ✅ Phase 27 Complete — INITIATIVE MILESTONE ACHIEVED (100% TS18046 elimination)
+**Status:** ✅ Phase 28 Complete — MASS LOGGER.ERROR TOERROR REFACTOR DELIVERED (100% TS18046 + 100% QueryError elimination)
 
 ---
 

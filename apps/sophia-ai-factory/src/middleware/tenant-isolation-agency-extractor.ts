@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import { jwtVerify } from 'jose';
 import { sha256 } from '@/lib/audit/crypto-utils';
 
@@ -60,7 +61,7 @@ export async function extractAgencyId(request: NextRequest): Promise<string | nu
         .single();
 
       if (error) {
-        logger.error('[Tenant Isolation] Error fetching API key data', error);
+        logger.error('[Tenant Isolation] Error fetching API key data', toError(error));
         return null;
       }
 
