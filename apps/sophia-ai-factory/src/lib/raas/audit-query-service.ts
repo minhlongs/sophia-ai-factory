@@ -10,8 +10,7 @@
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import { toError } from '@/lib/utils/to-error';
-import type { RaasAuditLogRow as RaasAuditLog } from '@/lib/supabase/types';
-import type { RaasAuditLogFilters, AuditLogResponse } from '@/lib/raas-schema';
+import type { RaasAuditLogFilters, AuditLogResponse, RaasAuditLog } from '@/lib/raas-schema';
 
 /**
  * Get audit logs with filters and pagination
@@ -46,6 +45,7 @@ export async function getAuditLogs(filters: RaasAuditLogFilters): Promise<AuditL
     throw new Error(`Database error: ${error.message}`);
   }
 
+  // Cast: DB CHECK constraint on `action` enforces RaasAuditLog['action'] union.
   return { logs: (data || []) as unknown as RaasAuditLog[], total: count || 0, page, limit };
 }
 

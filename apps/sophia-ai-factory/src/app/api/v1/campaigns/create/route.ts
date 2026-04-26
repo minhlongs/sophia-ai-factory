@@ -30,11 +30,12 @@ async function validateRaasApiKey(apiKey: string): Promise<boolean> {
   const { createHash } = await import("crypto");
   const keyHash = createHash("sha256").update(apiKey).digest("hex");
 
-  const { data, error } = await db
+  const { data: rawData, error } = await db
     .from("raas_licenses")
     .select("id, is_revoked, expires_at")
     .eq("key_hash", keyHash)
     .single();
+  const data = rawData as { id?: string; is_revoked?: boolean; expires_at?: number | null } | null;
 
   if (error || !data) return false;
   if (data.is_revoked) return false;
@@ -117,7 +118,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
 
     const db = createServerClient();
-    const { data: campaign, error: insertError } = await db
+    const { data: rawCampaign, error: insertError } = await db
       .from("campaigns")
       .insert({
         user_id: userId,
@@ -129,6 +130,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       })
       .select("id")
       .single();
+    const campaign = rawCampaign as { id: string } | null;
 
     if (insertError || !campaign) {
       log.error("RaaS campaign create: DB insert failed", insertError ? toError(insertError) : undefined);

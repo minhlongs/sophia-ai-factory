@@ -11,13 +11,13 @@ import { useRaasAnalytics, useRaasBillingAnalytics, useRaasLicenseAnalytics } fr
 
 export { useRaasAnalytics, useRaasBillingAnalytics, useRaasLicenseAnalytics } from './use-raas-analytics'
 
-const fetcher = async (url: string) => {
+const fetcher = async <T>(url: string): Promise<T> => {
   const res = await fetch(url)
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: 'Failed to fetch' })) as Record<string, string>
     throw new Error(err.error || 'Failed to fetch analytics data')
   }
-  return res.json()
+  return (await res.json()) as T
 }
 
 const swrConfig = { dedupingInterval: 60000, revalidateOnFocus: false, keepPreviousData: true } as const

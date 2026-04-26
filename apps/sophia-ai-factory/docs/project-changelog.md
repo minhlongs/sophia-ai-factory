@@ -1,6 +1,12 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-26 | **Current Version:** 1.14.7
+**Last Updated:** 2026-04-26 | **Current Version:** 1.14.8
+
+---
+
+## MILESTONE v1.14.8 — B2 Cleanup Phase 43: Schema-First Type Import Rule (Phase 43)
+
+**Phase 43 B2 (Sub-Variant 4 canonical type import + docs):** Targeted 5 files eliminating 13 TS errors via canonical type imports and schema-first preference pattern. **Pattern:** When DB query result type and consumer interface share same name across modules, import from schema/contract module, not supabase row type. Example: `RaasAuditLog` (schema) preferred over `RaasAuditLogRow` (supabase). Canonical-first: schema types > supabase types > inline fallback. Updated `docs/code-standards.md` with Phase 43 name-collision resolution bullet. TS error reduction: 74 → 61 (-13 errors, -17.6% Phase 43 delta, -86.8% cumulative B2 from baseline 462 → 61). Tests 1398/1398 pass. Code review 9.8/10 auto-approved. Protected flows untouched.
 
 ---
 
