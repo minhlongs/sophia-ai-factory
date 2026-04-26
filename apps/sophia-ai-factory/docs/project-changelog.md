@@ -1,6 +1,12 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-26 | **Current Version:** 1.14.0
+**Last Updated:** 2026-04-26 | **Current Version:** 1.14.1
+
+---
+
+## MILESTONE v1.14.1 — TS2322/TS2365 Quota + Metering Cleanup (Phase 36)
+
+**Phase 36 B2 (KV metering + quota checker type safety batch):** Refactored 2 critical files implementing Sub-Variant 4 interface casting. `src/lib/usage-metering/kv-metering-log-sync.ts`: added `UsageEventSyncRow` interface + cast for KV sync fallback. `src/lib/quota/quota-checker-db.ts`: added `QuotaLimitsRow` + `CreditsUsedRow` interfaces for quota arithmetic. TS2322/TS2365 reduction: 148 → 123 (-25 errors, -16.9% Phase 36 delta, -73.4% cumulative B2 from baseline 462 → 123). Silent fallback + quota arithmetic preserved. Tests 1398/1398 pass. Code review 9.6/10 auto-approved. Protected flows untouched.
 
 ---
 

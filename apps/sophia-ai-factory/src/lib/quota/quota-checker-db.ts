@@ -5,6 +5,17 @@ import { QUOTA_LIMITS } from '@/lib/usage-metering/aggregator';
 import type { QuotaLimit } from '@/lib/usage-metering/types';
 import type { CachedQuota } from './quota-checker-types';
 
+interface QuotaLimitsRow {
+  custom_daily_credits: number | null;
+  custom_hourly_credits: number | null;
+  custom_monthly_credits: number | null;
+  custom_daily_requests: number | null;
+}
+
+interface CreditsUsedRow {
+  credits_used: number | null;
+}
+
 /**
  * Get effective quota limits (DB override > tier defaults).
  * Priority: quota_limits table (custom per-license) > QUOTA_LIMITS constant (tier defaults).
@@ -15,11 +26,12 @@ export async function getEffectiveQuotaLimits(
 ): Promise<QuotaLimit> {
   try {
     const db = createServerClient();
-    const { data: custom, error } = await db
+    const { data: rawCustom, error } = await db
       .from('quota_limits')
       .select('*')
       .eq('license_nonce', licenseNonce)
       .single();
+    const custom = rawCustom as QuotaLimitsRow | null;
 
     const defaultLimit = QUOTA_LIMITS[tier] || QUOTA_LIMITS.BASIC;
 
@@ -81,15 +93,15 @@ export async function calculateCurrentUsage(
         .gte('created_at', monthStart),
     ]);
 
-    const hourlyCredits = (hourlyResult.data ?? []).reduce(
+    const hourlyCredits = ((hourlyResult.data ?? []) as unknown as CreditsUsedRow[]).reduce(
       (sum, row) => sum + (row.credits_used ?? 0),
       0
     );
-    const dailyCredits = (dailyResult.data ?? []).reduce(
+    const dailyCredits = ((dailyResult.data ?? []) as unknown as CreditsUsedRow[]).reduce(
       (sum, row) => sum + (row.credits_used ?? 0),
       0
     );
-    const monthlyCredits = (monthlyResult.data ?? []).reduce(
+    const monthlyCredits = ((monthlyResult.data ?? []) as unknown as CreditsUsedRow[]).reduce(
       (sum, row) => sum + (row.credits_used ?? 0),
       0
     );
