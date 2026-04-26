@@ -33,8 +33,7 @@ const AnalyticsDashboardClient = dynamic(
 
 // AnalyticsView is passed as a prop to preserve existing behaviour
 const AnalyticsView = dynamic(
-  () => import("./components/analytics-view").then(m => ({ default: m.AnalyticsView })),
-  { ssr: false }
+  () => import("./components/analytics-view").then(m => ({ default: m.AnalyticsView }))
 );
 
 // ── Metadata ─────────────────────────────────────────────────────────────────

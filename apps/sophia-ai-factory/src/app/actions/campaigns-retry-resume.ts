@@ -14,7 +14,7 @@ import { revalidatePath } from "next/cache";
 import { Tier } from "@/types";
 
 /** Map DB subscription_tier string to app Tier enum */
-export function mapDbTierToTier(dbTier: string | null | undefined): Tier {
+function mapDbTierToTier(dbTier: string | null | undefined): Tier {
   if (dbTier === 'premium' || dbTier === 'pro') return "PREMIUM";
   if (dbTier === 'enterprise') return "ENTERPRISE";
   if (dbTier === 'master') return "MASTER";

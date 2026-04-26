@@ -7,8 +7,6 @@ import { revalidatePath } from "next/cache";
 import { tierGuard } from "@/lib/tier-guard";
 import { toError } from "@/lib/utils/to-error";
 
-export { retryCampaign, resumeCampaign } from './campaigns-retry-resume';
-
 export async function createCampaign(formData: FormData) {
   const rawData = {
     title: formData.get("title") || formData.get("topic"),
