@@ -2,9 +2,9 @@
 
 **Initiative:** B2 TypeScript Error Elimination
 **Duration:** Multi-phase (Phases 1–15+ ongoing)
-**Overall Status:** Phase 15 Complete | Phase 16 Ready
+**Overall Status:** Phase 16 Complete | Phase 17 Ready
 **Baseline:** 462 TS18046 errors (next.config.ts:24 reference)
-**Current:** 32 TS18046 errors remaining (93.1% reduction)
+**Current:** 28 TS18046 errors remaining (93.9% reduction)
 
 ---
 
@@ -21,8 +21,9 @@
 | 13 | `src/components/dashboard/referral-share-widget.tsx` | -2 (37→35) | HTTP boundary anti-corruption cast (single-endpoint) | ✅ DONE | tester-260426-0835-b2-phase13-referral-widget, code-review-260426-1030-b2-phase13-referral-widget |
 | 14 | `src/app/api/coupons/apply/route.ts` | -3 (35→32) | HTTP boundary anti-corruption cast (request-body) | ✅ DONE | tester-260426-0840-b2-phase14-coupons-apply, code-review-260426-0840-b2-phase14-coupons-apply |
 | 15 | `src/app/api/coupons/activate/route.ts` | -2 (32→30) | HTTP boundary anti-corruption cast (request-body #2) | ✅ DONE | tester-260426-0854-b2-phase15-coupons-activate, code-review-260426-0853-b2-phase15-coupons-activate |
+| 16 | `src/app/api/usage/reconciliation/sync/route.ts` | -2 (30→28) | HTTP boundary anti-corruption cast (request-body #3) | ✅ DONE | tester-260426-b2-phase16-usage-recon-sync, code-review-260426-0907-b2-phase16-usage-recon-sync |
 
-**Cumulative:** 462 → 30 TS18046 (432 fixed, 93.5% reduction)
+**Cumulative:** 462 → 28 TS18046 (434 fixed, 93.9% reduction)
 
 ---
 
@@ -136,6 +137,11 @@ npx tsc --noEmit 2>&1 | grep "TS18046" | \
 - [x] Phase 13 implementation delivered (-2 errors, 9.8/10 review)
 - [x] Phase 14 target file identified and completed
 - [x] Phase 14 implementation delivered (-3 errors, 9.8/10 review)
+- [x] Phase 15 target file identified
+- [x] Phase 15 implementation delivered (-2 errors, 9.8/10 review)
+- [x] Phase 16 target file identified and completed
+- [x] Phase 16 implementation delivered (-2 errors, 9.8/10 review)
+- [x] Phase 17 skeleton created with candidates identified
 
 ---
 
@@ -207,5 +213,16 @@ npx tsc --noEmit 2>&1 | grep "TS18046" | \
 
 ---
 
-**Last Updated:** 2026-04-26 (Phase 14 sync-back)
+## Phase 17 Ready
+
+**Recommended Batch Targets:**
+- **Primary Combo (2 errors):** `admin/dunning/[licenseNonce]/restore/route.ts` + `admin/dunning/[licenseNonce]/suspend/route.ts` (1 error each, very low risk, admin ops)
+- **Alternative Singles:** `mcu-balance-widget.tsx` (3), `raas/api-key-list.tsx` (3), `raas/mission-launcher.tsx` (2), `graphql/analytics/route.ts` (2)
+- **Defer:** `webhooks/telegram/route.ts` (4, HIGH RISK), `admin/licenses/[id]/reactivate/route.ts` (3, scope verify needed)
+
+See `phase-17-typescript-cleanup.md` for full Phase 17 planning.
+
+---
+
+**Last Updated:** 2026-04-26 (Phase 16 sync-back)
 **Initiative Lead:** Project Manager

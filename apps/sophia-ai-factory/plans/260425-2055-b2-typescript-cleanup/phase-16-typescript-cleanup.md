@@ -1,15 +1,33 @@
-# Phase 16: TypeScript TS18046 Cleanup (Backlog Ready)
+# Phase 16: TypeScript TS18046 Cleanup (COMPLETE)
 
-**Status:** Pending | Candidate Selection Ready
-**Target Errors:** 30 TS18046 remaining (Phase 15 baseline)
-**Methodology:** Inline narrowest `as` type assertions (proven Phase 7-15 approach)
-**Success Criteria:** -2 to -3 errors, 100% test pass rate, 9.5+/10 review score
+**Status:** ✅ DONE
+**Target Errors:** 30 TS18046 baseline
+**Actual Results:** -2 errors (30 → 28)
+**Methodology:** HTTP boundary cast (request-body variant, instance #10)
+**Success Criteria:** All met — 9.8/10 review, 1394/1394 tests pass, zero regressions
 
 ---
 
-## Overview
+## Completion Report
 
-Continue B2 TS18046 cleanup using proven inline cast methodology. Phase 15 completed with request-body HTTP boundary pattern on `coupons/activate/route.ts` (-2 errors, 9.8/10). Phase 16 targets usage reconciliation sync with similar quota system context.
+**File:** `src/app/api/usage/reconciliation/sync/route.ts`  
+**Pattern:** HTTP boundary anti-corruption cast (Instance #10, third request-body variant in series)  
+**Errors Fixed:** -2 (30 → 28)  
+**Tests:** 1394/1394 ✅ (0 regressions, 100% pass rate)  
+**Code Review:** 9.8/10 auto-approved (0 critical/major, 0 blocking findings)  
+**Quality:** Request-body HTTP boundary cast for usage reconciliation sync payload. Local `SyncReconciliationRequest` interface with narrowest scope. Cast applied at `(await request.json()) as SyncReconciliationRequest` boundary. Defensive null/undefined checks on sync params before execution.
+
+**Implementation Pattern (Phase 16):**
+- Local `SyncReconciliationRequest` interface (4 lines) — batchSize, timeRangeHours, includeProjectIds
+- Request body cast: `(await request.json()) as SyncReconciliationRequest`
+- Defensive guards: `if (!req.batchSize)`, `if (!req.timeRangeHours)`
+- YAGNI: Omitted unused fields from larger sync schema
+- Same quota system context as Phase 12-13-14-15
+
+**Baseline Progression (B2 Initiative):**
+- Phase 15 baseline: 30 errors
+- Phase 16 result: 28 errors (-2)
+- Cumulative B2: 462 → 28 (-434, 93.9% reduction)
 
 ---
 
@@ -96,12 +114,13 @@ Continue B2 TS18046 cleanup using proven inline cast methodology. Phase 15 compl
 
 ## Success Criteria
 
-- [ ] Phase 16 target file identified and assigned
-- [ ] TS18046 errors reduced by 2 (30 → 28)
-- [ ] Tests: 1394/1394 passing
-- [ ] Code review: 9.5+/10 approved
-- [ ] Commit: Conventional format, descriptive message
-- [ ] Phase 17 backlog identified
+- [x] Phase 16 target file implemented: `usage/reconciliation/sync/route.ts`
+- [x] TS18046 errors reduced by 2 (30 → 28)
+- [x] Tests: 1394/1394 passing (100% pass rate)
+- [x] Code review: 9.8/10 auto-approved
+- [x] Commit: Conventional format, descriptive message
+- [x] Phase 17 skeleton created with Phase 17 candidates identified
+- [x] Open questions logged for carry-forward
 
 ---
 
@@ -126,6 +145,22 @@ Continue B2 TS18046 cleanup using proven inline cast methodology. Phase 15 compl
 
 ---
 
-**Status:** Backlog candidates identified, Phase 16 ready for assignment
-**Next Step:** Delegate Phase 16 implementation (recommend `usage/reconciliation/sync/route.ts`)
-**Estimated Duration:** Phase 16 implementation ~2-3 hours
+## Open Questions (Carry Forward to Phase 17)
+
+1. **Negative-value validation** — Should `batchSize` and `timeRangeHours` reject negative values at sync library level? Currently relying on type-level safety.
+2. **`.catch(() => ({}))`defensive variant** — Document pattern in code-standards.md for defensive HTTP boundary casts.
+3. **Auth middleware protection** — Confirm `/api/usage/reconciliation/sync` has auth middleware protecting against unauthorized calls (infra config check).
+
+---
+
+## Reports & Evidence
+
+- **Tester Report:** `plans/reports/tester-260426-b2-phase16-usage-recon-sync.md`
+- **Code Review Report:** `plans/reports/code-review-260426-0907-b2-phase16-usage-recon-sync.md`
+- **Pattern Reference:** Phase 15 (request-body variant #2), Phase 14 (request-body variant #1)
+
+---
+
+**Status:** ✅ Phase 16 COMPLETE — Phase 17 Ready
+**Next Step:** Phase 17 implementation (2-error batch recommended: `admin/dunning/*`)
+**Estimated Phase 17 Duration:** 2-3 hours
