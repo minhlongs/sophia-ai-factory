@@ -4,9 +4,9 @@
 **Duration:** Multi-phase (Phases 1–36 complete, Phase 37+ planned)
 **Overall Status:** ✅ PHASE 40 COMPLETE — B2 MIXED BATCH SYNCED
 **Baseline:** 462 TS18046 errors (next.config.ts:24 reference)
-**Current:** 89 errors remaining (post-Phase 40)
-**Phase 40 Result:** 101 → 89 errors (-12: customer-linkage logger + reconciliation logger + overage-summary canonical cast)
-**Total Errors Reduced:** 462 → 89 (80.7% overall codebase reduction)
+**Current:** 74 errors remaining (post-Phase 42)
+**Phase 42 Result:** 82 → 74 errors (-8: ServiceHealth type widen + ScrollReveal className prop)
+**Total Errors Reduced:** 462 → 74 (84.0% overall codebase reduction)
 
 ---
 
@@ -49,8 +49,9 @@
 | 39 | 5 files (d1-query-chain, d1-query-chain-executors, raas-license-crud, realtime-alert-mutations, customer-linkage) | -2 (103 → 101, P1 D1 .or() impl + C1 silent now() fix + H3 allowlist hardening) | D1 QueryChain .or() method + realtime-alert mutations computed timestamp + column-name allowlist | ✅ DONE | tester-260426-1438-b2-phase39-d1-or-impl, code-review-260426-1438-b2-phase39-d1-or-impl 9.0/10 |
 | 40 | 3 files (customer-linkage, usage-reconciliation, overage-summary) | -12 (101 → 89, logger fix + logger fix + canonical OverageEventRow cast) | Customer-linkage logger fix + reconciliation logger fix + overage-summary canonical type cast | ✅ DONE | tester-260426-1500-b2-phase40-mixed-batch, inline 8.5/10 → M1 addressed |
 | 41 | 3 files (auth route, export service, quota checker KV) | -7 (89 → 82, H2 addressed: mapToExportRecord signature clarity) | Auth null guard + canonical UsageEventRow cast + KV type bridge | ✅ DONE | tester-260426-1515-b2-phase41-mixed-batch, code-review-260426-1515-b2-phase41-mixed-batch 8.8→9.5/10 |
+| 42 | 2 files (health.ts ServiceHealth widen + scroll-reveal.tsx className prop) | -8 (82 → 74, type widen + component prop addition) | ServiceHealth + ScrollReveal interface widening | ✅ DONE | tester-260426-1530-b2-phase42-type-widen, code-review-260426-1530-b2-phase42-type-widen 9.7/10 |
 
-**MILESTONES ACHIEVED:** 462 → 0 TS18046 (100% via Phase 27); 313 → 280 TS2345 QueryError (100% via Phase 28); 280 → 251 TS2304 ×28 + TS2307 ×1 (quick-win via Phase 29); 251 → 246 TS2307 ×5 (quick-win via Phase 30); 246 → 235 ZodError v4 + HeyGen (Phase 31); 235 → 216 Smart Resume + Alerts (Phase 32); 216 → 202 Sub-Variant 2 Batch (Phase 33, 56.3% cumulative reduction); 202 → 189 Agent-Health D1 + Chart TooltipProps (Phase 34, 59.1% cumulative reduction); **189 → 148 Mass TS2352 Batch (Phase 35, 68% cumulative reduction, TS2352 100% ELIMINATION)**; **148 → 123 TS2322 Hard Targets (Phase 36, 73.4% cumulative reduction)**; **123 → 112 Mixed Batch (Phase 37, 75.8% cumulative reduction)**; **112 → 103 Alerts/RAAS/Quota/Licensing Fixes (Phase 38, 77.7% cumulative reduction)**; **103 → 101 D1 QueryChain .or() + Carries (Phase 39, 78.1% cumulative reduction)**; **101 → 89 Logger Fixes + Canonical Type Cast (Phase 40, 80.7% cumulative reduction)**; **89 → 82 Mixed Batch Auth/Export/KV (Phase 41, 82.3% cumulative reduction, Sub-Variant 4 doctrine update)**
+**MILESTONES ACHIEVED:** 462 → 0 TS18046 (100% via Phase 27); 313 → 280 TS2345 QueryError (100% via Phase 28); 280 → 251 TS2304 ×28 + TS2307 ×1 (quick-win via Phase 29); 251 → 246 TS2307 ×5 (quick-win via Phase 30); 246 → 235 ZodError v4 + HeyGen (Phase 31); 235 → 216 Smart Resume + Alerts (Phase 32); 216 → 202 Sub-Variant 2 Batch (Phase 33, 56.3% cumulative reduction); 202 → 189 Agent-Health D1 + Chart TooltipProps (Phase 34, 59.1% cumulative reduction); **189 → 148 Mass TS2352 Batch (Phase 35, 68% cumulative reduction, TS2352 100% ELIMINATION)**; **148 → 123 TS2322 Hard Targets (Phase 36, 73.4% cumulative reduction)**; **123 → 112 Mixed Batch (Phase 37, 75.8% cumulative reduction)**; **112 → 103 Alerts/RAAS/Quota/Licensing Fixes (Phase 38, 77.7% cumulative reduction)**; **103 → 101 D1 QueryChain .or() + Carries (Phase 39, 78.1% cumulative reduction)**; **101 → 89 Logger Fixes + Canonical Type Cast (Phase 40, 80.7% cumulative reduction)**; **89 → 82 Mixed Batch Auth/Export/KV (Phase 41, 82.3% cumulative reduction, Sub-Variant 4 doctrine update)**; **82 → 74 Type Widen ServiceHealth + ScrollReveal (Phase 42, 84.0% cumulative reduction)**
 
 ---
 

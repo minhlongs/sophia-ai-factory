@@ -1,5 +1,5 @@
 export interface ServiceHealth {
-  status: 'up' | 'down' | 'configured' | 'missing_config';
+  status: 'up' | 'down' | 'degraded' | 'configured' | 'not_configured' | 'missing_config';
   latency?: number;
   error?: string;
 }

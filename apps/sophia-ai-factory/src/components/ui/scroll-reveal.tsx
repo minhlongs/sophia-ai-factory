@@ -8,13 +8,15 @@ interface ScrollRevealProps {
   delay?: number;
   /** IntersectionObserver threshold — 0 to 1 */
   threshold?: number;
+  /** Optional Tailwind/CSS class names */
+  className?: string;
 }
 
 /**
  * Wraps children with a fade-in-up reveal triggered when the element
  * scrolls into the viewport. Uses IntersectionObserver for performance.
  */
-export function ScrollReveal({ children, delay = 0, threshold = 0.05 }: ScrollRevealProps) {
+export function ScrollReveal({ children, delay = 0, threshold = 0.05, className }: ScrollRevealProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
 
@@ -37,6 +39,7 @@ export function ScrollReveal({ children, delay = 0, threshold = 0.05 }: ScrollRe
   return (
     <div
       ref={ref}
+      className={className}
       style={{
         opacity: visible ? 1 : 0,
         transform: visible ? "none" : "translateY(2rem)",
