@@ -110,6 +110,14 @@ export async function GET(request: NextRequest) {
   }
 }
 
+const PERMISSION_VALUES = ['audit:read', 'audit:write', 'reports:download', 'reports:generate'] as const
+
+const createApiKeyBodySchema = z.object({
+  permissions: z.array(z.enum(PERMISSION_VALUES)).min(1, 'permissions array is required'),
+  expiresAt: z.coerce.number().int().positive().optional(),
+  rateLimitPerMinute: z.coerce.number().int().positive().default(100),
+})
+
 /**
  * POST /api/admin/api-keys
  * Create a new API key
@@ -130,35 +138,27 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const body = await request.json()
+    let rawBody: unknown
+    try {
+      rawBody = await request.json()
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+    }
 
-    // Validate request body
-    if (!body.permissions || !Array.isArray(body.permissions)) {
+    const parsed = createApiKeyBodySchema.safeParse(rawBody)
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'permissions array is required' },
+        { error: 'Invalid request body', details: parsed.error.flatten() },
         { status: 400 }
       )
     }
 
-    const validPermissions = ['audit:read', 'audit:write', 'reports:download', 'reports:generate']
-    const invalidPermissions = body.permissions.filter(
-      (p: string) => !validPermissions.includes(p)
-    )
-
-    if (invalidPermissions.length > 0) {
-      return NextResponse.json(
-        { error: 'Invalid permissions', invalid: invalidPermissions },
-        { status: 400 }
-      )
-    }
-
-    const expiresAt = body.expiresAt ? Number(body.expiresAt) : undefined
-    const rateLimitPerMinute = body.rateLimitPerMinute ? Number(body.rateLimitPerMinute) : 100
+    const { permissions, expiresAt, rateLimitPerMinute } = parsed.data
 
     // Generate API key
     const result = await generateApiKey(
       userId,
-      body.permissions,
+      permissions,
       expiresAt,
       rateLimitPerMinute
     )
@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
     logApiKeyCreation(
       userId,
       result.keyId,
-      body.permissions,
+      permissions,
       request.headers.get('x-forwarded-for')?.split(',')[0]
     ).catch(e => logger.error('[API Keys] Audit log failed', toError(e)))
 
@@ -183,7 +183,7 @@ export async function POST(request: NextRequest) {
         apiKey: result.apiKey, // Full key - only shown once!
         keyId: result.keyId,
         keyPrefix: result.keyPrefix,
-        permissions: body.permissions,
+        permissions,
         expiresAt,
         rateLimitPerMinute,
         createdAt: Date.now(),
