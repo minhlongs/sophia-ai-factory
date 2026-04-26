@@ -9,6 +9,12 @@ import { checkAdminAuth } from '../../middleware'
 import { logger } from '@/lib/utils/logger-utility'
 import { createServerClient } from '@/lib/db/client'
 
+interface ReactivatedLicenseRow {
+  nonce: string
+  tier: string
+  metadata: Record<string, unknown> | null
+}
+
 /**
  * POST /api/admin/licenses/[id]/reactivate
  * Reactivate revoked license
@@ -50,7 +56,7 @@ export async function POST(
 
     // Reactivate license
     const db = createServerClient()
-    const { data, error } = await (db.from('raas_licenses') as ReturnType<typeof db.from>)
+    const { data: rawData, error } = await (db.from('raas_licenses') as ReturnType<typeof db.from>)
       .update({
         is_revoked: false,
         revoked_at: null,
@@ -59,6 +65,7 @@ export async function POST(
       .eq('nonce', nonce)
       .select()
       .single()
+    const data = rawData as ReactivatedLicenseRow | null
 
     if (error) {
       logger.error('Failed to reactivate license', error)
@@ -76,10 +83,10 @@ export async function POST(
       success: true,
       reactivatedAt: now,
       license: {
-        id: data.nonce,
-        tier: data.tier.toLowerCase(),
+        id: data?.nonce ?? nonce,
+        tier: data?.tier?.toLowerCase() ?? '',
         isRevoked: false,
-        metadata: data.metadata
+        metadata: data?.metadata ?? null
       },
       message: 'License has been reactivated successfully'
     })

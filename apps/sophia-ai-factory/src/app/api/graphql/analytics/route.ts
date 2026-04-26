@@ -16,6 +16,12 @@ interface GraphQLExecutionResult {
   errors?: Array<{ message: string }>;
 }
 
+interface GraphQLQueryRequest {
+  query?: string;
+  variables?: Record<string, unknown>;
+  operationName?: string;
+}
+
 /**
  * Execute GraphQL query
  */
@@ -107,7 +113,7 @@ async function resolveQuery(
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const body = (await request.json().catch(() => ({}))) as GraphQLQueryRequest;
     const { query, variables, operationName } = body;
 
     if (!query) {
