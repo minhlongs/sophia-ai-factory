@@ -4,6 +4,12 @@
 
 ---
 
+## [2026-04-25] B2 Phase 3 — TypeScript Cleanup (v1.12.21)
+
+**B2 Phase 3 (TS cleanup):** Refactored `src/app/setup-wizard/page.tsx`, added 2 local response interfaces (`VerifyKeyResponse`, `SaveConfigResponse`), normalized boolean coercion, eliminated 6 TS18046 errors. Cumulative B2: 462→440 (-22, -4.8%). Tests 1394/1394 pass. Setup Wizard (PROTECTED FLOW) behavior preserved.
+
+---
+
 ## [2026-04-25] Phase 04 (Land) — Observability + AI-Native CI/CD (v1.12.21)
 
 ### Summary
