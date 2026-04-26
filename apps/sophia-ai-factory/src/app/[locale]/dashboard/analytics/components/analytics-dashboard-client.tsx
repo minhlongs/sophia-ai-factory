@@ -15,7 +15,7 @@
  *   ENTERPRISE/MASTER/admin — all sections
  */
 
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { useTranslations } from 'next-intl';
 import { DateRangePicker } from '@/components/analytics/date-range-picker';
 import { TierAdoptionChart } from '@/components/analytics/tier-adoption-chart';
@@ -25,6 +25,11 @@ import { Lock, BarChart3 } from 'lucide-react';
 import type { Campaign, Tier } from '@/types';
 import type { ISODateRange } from '@/components/analytics/date-range-picker';
 import type { RevenueSnapshot } from '@/types/analytics-revenue';
+
+// Lazy-load: no impact on initial analytics paint
+const AgentPerformanceCard = lazy(() =>
+  import('./agent-performance-card').then((m) => ({ default: m.AgentPerformanceCard }))
+);
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -132,6 +137,11 @@ export function AnalyticsDashboardClient({
         userTier={userTier}
         userId={userId}
       />
+
+      {/* Phase 03: Agent Performance — lazy-loaded, auto-refreshes every 60s */}
+      <Suspense fallback={null}>
+        <AgentPerformanceCard />
+      </Suspense>
     </div>
   );
 }

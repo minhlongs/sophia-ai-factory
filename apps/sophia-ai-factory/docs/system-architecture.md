@@ -309,6 +309,90 @@ If a concrete migration scenario emerges (e.g., deliberate mass cleanup of a rem
 
 ---
 
+## Agent Factory (Phase 01 — 2026-04-25)
+
+Each org auto-provisions an **AI Company** with CEO + Developer agents.
+
+### Tables
+- `agent_teams` — one per org, stores team config
+- `agents` — individual agents (role: CEO|Developer, system_prompt, model)
+- `agent_tasks` — task queue (input, output, status, tokens, cost)
+- `agent_logs` — append-only audit trail per task
+
+### Request Flow
+```
+User → POST /api/agents/task or Server Action createAgentTask
+         ↓
+   getCurrentUser() → orgId (= user.id)
+         ↓
+   seedDefaultTeam(orgId) — idempotent CEO+Developer seed
+         ↓
+   createTask(orgId, agentId, input)
+         ↓
+   runAgent(taskId, orgId) — inline OpenRouter call (gpt-4o-mini)
+         ↓
+   updateTaskResult + appendLog (action: invoke)
+         ↓
+   Return task / GET /api/agents/status/[id]
+```
+
+### Key Design Decisions
+- Tasks executed **inline** (no Durable Objects) — Cloudflare Workers free tier constraint
+- `org_id = user.id` — consistent with existing missions/referral pattern
+- Agent system_prompts stored server-side only, never echoed to client
+- Default model: `openai/gpt-4o-mini` (cost-efficient, low latency)
+- Phase 02 will add Durable Objects for stateful multi-turn sessions
+
+---
+
+## Agent Observability (Phase 04 — Land)
+
+### Overview
+Agent runtime metrics are surfaced via two D1 tables: `signals_events` (Phase 03) and `error_log`. No external APM (Sentry not used).
+
+### Components
+
+```
+agent runner (runner.ts)
+  │
+  ├── ENFORCEMENT GATE: assertTierAllowsAgent(userTier, role)
+  │       └── AgentTierBlockedError → HTTP 403
+  │           ├── updateTaskResult(status: 'failed')
+  │           └── track(AGENT_TASK_FAIL, { error_class: 'tier_blocked' })
+  │
+  ├── try { fetch(openrouter) } catch (err) {
+  │       void reportError(err, { route:'agent.runner', agent_role, task_id, variant })
+  │       track(AGENT_TASK_FAIL, ...)
+  │       throw
+  │   }
+  │
+  └── success path: track(AGENT_TASK_COMPLETE, ...)
+
+system-health page (/dashboard/system-health)
+  │
+  ├── /api/health           → existing services grid
+  └── /api/health/agents    → AgentHealthCard (React Query 30s)
+                               └── agent-health-resolver.ts
+                                   ├── signals_events GROUP BY agent_role (24h)
+                                   └── error_log WHERE ctx_json.agent_role != null
+```
+
+### Tier Gate Map
+| Agent Role | Minimum Tier Required |
+|------------|----------------------|
+| CEO        | PREMIUM              |
+| Developer  | PREMIUM              |
+| (unknown)  | ENTERPRISE (deny)    |
+| (MASTER)   | bypass all gates     |
+
+### Error Context Extension
+`ErrorContext` in `error-tracker.ts` gained three optional fields:
+- `agent_role?: string` — correlates error to agent role
+- `task_id?: string` — correlates to `agent_tasks` row
+- `variant?: string` — A/B prompt variant label
+
+---
+
 ## Scalability Considerations
 - **Frontend**: Stateless, deployable to Vercel Edge/Serverless.
 - **Backend**: n8n can be self-hosted or cloud-hosted; scales independently.

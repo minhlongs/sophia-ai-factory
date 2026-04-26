@@ -29,6 +29,10 @@ export const D1Events = {
   BYOK_KEY_SET:              'byok_key_set',              // Phase 8C: user-facing BYOK admin — store/rotate
   BYOK_KEY_CLEARED:          'byok_key_cleared',          // Phase 8C: user-facing BYOK admin — delete
   DISCOVERY_SCORE_REQUESTED: 'discovery_score_requested', // R10: audit trail for OpenRouter-backed scoring
+  AGENT_TASK_START:          'agent_task_start',           // Phase 03: agent task begins LLM call
+  AGENT_TASK_COMPLETE:       'agent_task_complete',         // Phase 03: agent task finished successfully
+  AGENT_TASK_FAIL:           'agent_task_fail',             // Phase 03: agent task failed
+  AGENT_FEEDBACK:            'agent_feedback',              // Phase 03: user thumbs up/down on task result
 } as const
 
 export type D1EventType = typeof D1Events[keyof typeof D1Events]
@@ -181,6 +185,39 @@ const LlmCallTraceSchema = z.object({
   cost_usd:       z.number().nonnegative().optional(),
 })
 
+/** agent_task_start — fired before LLM call in runner */
+const AgentTaskStartSchema = z.object({
+  task_id:    z.string(),
+  agent_role: z.string(),
+  agent_id:   z.string(),
+  variant:    z.string(),
+})
+
+/** agent_task_complete — fired on successful LLM response */
+const AgentTaskCompleteSchema = z.object({
+  task_id:     z.string(),
+  agent_role:  z.string(),
+  variant:     z.string(),
+  duration_ms: z.number().nonnegative(),
+  tokens_used: z.number().int().nonnegative().optional(),
+})
+
+/** agent_task_fail — fired when runner throws */
+const AgentTaskFailSchema = z.object({
+  task_id:     z.string(),
+  agent_role:  z.string(),
+  variant:     z.string(),
+  error_class: z.string(),
+})
+
+/** agent_feedback — fired when user submits thumbs up/down */
+const AgentFeedbackSchema = z.object({
+  task_id:    z.string(),
+  agent_role: z.string(),
+  score:      z.union([z.literal(1), z.literal(-1)]),
+  comment:    z.string().max(280).optional(),
+})
+
 // ── Schema registry ───────────────────────────────────────────────────────────
 const SCHEMAS: Record<D1EventType, z.ZodTypeAny> = {
   [D1Events.TIER_CONVERSION]:         TierConversionSchema,
@@ -203,6 +240,10 @@ const SCHEMAS: Record<D1EventType, z.ZodTypeAny> = {
   [D1Events.BYOK_KEY_SET]:              ByokKeyAdminSchema,
   [D1Events.BYOK_KEY_CLEARED]:          ByokKeyAdminSchema,
   [D1Events.DISCOVERY_SCORE_REQUESTED]: DiscoveryScoreRequestedSchema,
+  [D1Events.AGENT_TASK_START]:           AgentTaskStartSchema,
+  [D1Events.AGENT_TASK_COMPLETE]:        AgentTaskCompleteSchema,
+  [D1Events.AGENT_TASK_FAIL]:            AgentTaskFailSchema,
+  [D1Events.AGENT_FEEDBACK]:             AgentFeedbackSchema,
 }
 
 /**

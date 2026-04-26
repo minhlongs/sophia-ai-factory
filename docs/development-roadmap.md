@@ -399,7 +399,8 @@
 | **2026-04-20** | **Tech Debt Phase 12: DB Helpers & FSM Design (D1Response consolidated, insertTyped 10 sites, FSM design doc, 9.6/10 APPROVE)** | **✅ COMPLETE** |
 | **2026-04-20** | **Tech Debt Phase 11: RaaS License System Type Safety (2 files, 3 `:any` → 0, discriminated union narrowing, incidental severity-routing bug fix, 9.7/10 APPROVE)** | **✅ COMPLETE** |
 | **2026-04-25** | **Phase 9 Analytics Dashboard (SSE realtime, revenue metrics, cohort retention/churn/LTV, tier adoption, 1,800 LOC, 1362/1362 tests)** | **✅ SHIPPED** |
-| 2026-05-01 | Tech Debt Phase 30 (Planned) | 🔄 Planned |
+| **2026-04-25** | **Tech Debt Phase 30: Analytics Query Type Safety + Billing Page Modularization (`:any` elimination, 440L→139L, 1362/1362 tests)** | **✅ COMPLETE** |
+| **2026-04-25** | **Build Fix: 8 Turbopack Errors Resolved (server re-exports, ssr:false in SC, vi.json translations)** | **✅ COMPLETE** |
 | 2026-06-01 | Multi-Language Support (Vietnamese) | 🔄 Planned |
 | 2026-07-01 | Telegram Bot Enhancement | 🔄 Planned |
 | 2026-Q4 | $1M ARR Milestone | 🎯 Target |
