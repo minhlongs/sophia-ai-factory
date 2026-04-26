@@ -583,6 +583,81 @@ When adding new admin-protected routes, use `isUserAdmin()` for simple boolean c
 
 ---
 
+## next-intl Formatter Type Pattern (Phase 29)
+
+Use the canonical type alias pattern when accepting a formatter result as a prop from `next-intl/server`. This replaces broken `import type { IntlFormat } from 'intl'` (non-existent export).
+
+**Problem:** The `intl` npm package does not export an `IntlFormat` type. Importing it causes TS2307 (module not found) and creates a latent runtime bug if code tries to narrow on the type.
+
+**Canonical Solution:**
+
+```typescript
+// src/components/campaign-details-sidebar.tsx
+import type { getFormatter } from "next-intl/server";
+
+// Define the type locally at component scope
+type IntlFormat = Awaited<ReturnType<typeof getFormatter>>;
+
+interface CampaignDetailsSidebarProps {
+  campaignId: string;
+  format: IntlFormat;  // Properly typed formatter result
+}
+
+export function CampaignDetailsSidebar({ format, ...props }: CampaignDetailsSidebarProps) {
+  // Safe to call formatter methods
+  const dateStr = format.dateTime(new Date());
+  // ...
+}
+```
+
+**Why This Pattern:**
+
+1. **Tracks `getFormatter()` signature** — `Awaited<ReturnType<typeof getFormatter>>` automatically reflects upstream next-intl changes
+2. **Type-safe narrowing** — Component receives result of `await getFormatter()` from parent; type alias ensures full type information
+3. **Zero runtime cost** — Type alias is purely structural; no codegen or runtime overhead
+4. **Tested across components** — Used in campaign-details-sidebar.tsx and campaign-header.tsx (Phase 29); both components render without type errors
+
+**When to Use:**
+
+When a server component calls `const format = await getFormatter()` and passes the result to a child component as a prop, define a local type alias in the child using this pattern instead of importing a non-existent `IntlFormat` type.
+
+**Phase 29 Reference:** Eliminated TS2304 + TS2307 errors in 2 campaign UI components by replacing broken import with this pattern.
+
+---
+
+## Vitest setup file convention (Phase 29)
+
+Even when `vitest.config.ts` sets `globals: true`, explicitly import `vi` in `src/test/setup.tsx` to satisfy TypeScript. The `globals: true` flag enables runtime global injection, but TypeScript still requires ambient type declaration or explicit import for type checking.
+
+**Pattern:**
+
+```typescript
+// src/test/setup.tsx
+import { vi } from 'vitest';  // Explicit import, line 6
+import { beforeAll, afterEach } from 'vitest';
+
+// Global mocks below
+vi.mock('@/lib/db/client', () => ({
+  createServerClient: () => kvMock,
+}));
+
+// ... rest of setup
+```
+
+**Why This Matters:**
+
+1. **TypeScript correctness** — `tsconfig.json` does NOT include `"types": ["vitest/globals"]`, so ambient `vi` is undefined at type-check time
+2. **Explicit over implicit** — Explicit import makes test files self-documenting; easier for maintainers to understand setup dependencies
+3. **No conflict with runtime injection** — With `globals: true` AND explicit import, both resolve to the same `vi` instance; no duplication
+
+**When `globals: true` Alone Isn't Enough:**
+
+TypeScript type-checking happens before runtime. The `globals: true` flag in vitest.config.ts tells Vitest to inject globals at runtime, but doesn't automatically register them with TypeScript. Without either `"types": ["vitest/globals"]` in tsconfig or explicit `import { vi }`, TypeScript emits TS2304 (vi is not defined).
+
+**Phase 29 Reference:** Added explicit `import { vi } from 'vitest'` to setup.tsx, eliminating 27 TS2304 errors across all test files that rely on the setup.
+
+---
+
 ## Dead Export Detection in API Routes (Phase 24)
 
 Next.js App Router **only recognizes HTTP-method-named exports** in route files: `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `OPTIONS`, `HEAD`. All other exports are unreachable code and should be removed.

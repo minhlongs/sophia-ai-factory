@@ -3,7 +3,9 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, Users, CheckCircle2, Clock, AlertCircle, Loader2, FileText } from "lucide-react";
 import Link from "next/link";
 import { Campaign } from "@/types";
-import type { IntlFormat } from 'intl';
+import type { getFormatter } from "next-intl/server";
+
+type IntlFormat = Awaited<ReturnType<typeof getFormatter>>;
 
 interface CampaignHeaderProps {
   campaign: Campaign;
