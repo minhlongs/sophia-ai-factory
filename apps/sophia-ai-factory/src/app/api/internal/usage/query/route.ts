@@ -35,6 +35,8 @@ interface NonceLicenseRow {
   created_by: string | null;
 }
 
+// Mirrors RawUsageEvent in usage-query-aggregator.ts — keep in sync.
+// DB-row contract owned here; aggregator owns domain input contract (Sub-Variant 4 doctrine).
 interface RawUsageEventRow {
   user_id: string;
   license_nonce: string;

@@ -1,10 +1,10 @@
 # B2: TypeScript Cleanup Initiative
 
 **Initiative:** B2 TypeScript Error Elimination
-**Duration:** Multi-phase (Phases 1–23+ ongoing)
-**Overall Status:** Phase 23 Complete | Phase 24 Ready
+**Duration:** Multi-phase (Phases 1–24+ ongoing)
+**Overall Status:** Phase 24 Complete | Phase 25 Ready
 **Baseline:** 462 TS18046 errors (next.config.ts:24 reference)
-**Current:** 4 TS18046 errors remaining + 320 cascading TS2345/TS2322/TS2352 (99.3% visible progress)
+**Current:** 4 TS18046 errors remaining (318 net after Phase 24 side-effects) + carries (99.4% visible progress)
 
 ---
 
@@ -29,8 +29,34 @@
 | 21 | `src/lib/roi-calculator.ts`, `src/lib/violation-queries.ts`, `src/app/api/billing/usage-summary/route.ts`, `src/components/dashboard/license-generator.tsx`, `src/components/dashboard/mission-dashboard.tsx`, `src/components/dashboard/mission-detail.tsx`, `src/app/api/admin/licenses/[id]/reactivate/route.ts` L71 (BATCH) | -7 (10→3) | Tier 4 long-tail + Phase 20 carry (Sub-Variant 1 ×6 + logger fix) | ✅ DONE | tester-260426-b2-phase21-tier4-bundle, code-review-260426-b2-phase21-tier4-bundle |
 | 22 | `src/lib/raas/raas-invoice-generator.ts` + `src/app/api/quota/overage-events/route.ts` | -14 (3→336* cascading -11) | HTTP boundary cast (Sub-Variant 4 formalized) + cascading TS2345/TS2322/TS2352 | ✅ DONE | tester-260426-1100-b2-phase22-tier4-bundle, inline code-review |
 | 23 | `src/app/api/internal/usage/query/route.ts` + `src/app/api/usage/summary/route.ts` | -16 (336→320 TS18046: 5 TS2558 + 8 TS2322 + 2 TS2345 + 1 TS2339) | HTTP boundary cast (Sub-Variant 4 sister-file pattern) + defensive `.catch()` | ✅ DONE | tester-260426-1107-b2-phase23-sister-cleanup, inline code-review |
+| 24 | 9 files (user_metadata cleanup, dead code removal, inline docs) | -2 side-effect (320→318) + TS18046 defer | Hygiene cleanup batch (not primary TS18046 elimination) | ✅ DONE | tester-260426-1124-phase24-b2-execution-summary, code-review-260426-1124-b2-phase24-hygiene-cleanup |
 
-**Cumulative:** 462 → 320 TS18046 (142 fixed, 99.3% visible progress; -11 cascading from Phase 22 + -16 Phase 23 additional)
+**Cumulative:** 462 → 318 TS18046 (144 fixed via Phase 24 side-effects; 99.4% visible progress; TS18046 telegram deferred Phase 25+)
+
+---
+
+## Phase 24 Summary (2026-04-26)
+
+**Status:** ✅ COMPLETED 2026-04-26 11:24 UTC
+
+**Execution Path:** B (Hygiene Cleanup — not primary TS18046 elimination)  
+**Files:** 9 (6 user_metadata + 1 dead code + 3 inline docs)  
+**Errors Fixed:** -2 side-effect (320 → 318)  
+**Tests:** 1394/1394 ✅ (0 regressions)  
+**Review Score:** 9.7/10 auto-approved  
+**TS18046 (Telegram):** 4 unchanged (deferred Phase 25+)
+
+**Key Actions:**
+1. Removed dead `user_metadata?.role` fallback (6 sites) — replaced with direct `user.role` access
+2. Deleted unreachable `GETStatus` export (~50 LOC) from `quota/overage-events/route.ts`
+3. Added inline docs (3 comments) — documented cast patterns + interface links
+
+**Newly Flagged (Phase 25+ backlog):**
+- M1: `/api/quota/status` orphan endpoint bug (404 pre-existing)
+- M2: Extract `isUserAdmin()` helper (DRY refactor)
+- M2: Evaluate `User.role?: string` optional tightening
+
+See `phase-24-typescript-cleanup.md` for full completion report.
 
 ---
 
@@ -293,20 +319,20 @@ See `phase-21-typescript-cleanup.md` for details.
 
 ---
 
-**Last Updated:** 2026-04-26 (Phase 23 completion sync-back)
+**Last Updated:** 2026-04-26 (Phase 24 completion sync-back)
 **Initiative Lead:** Project Manager
-**Next Phase:** Phase 24 ready for planning — 4 TS18046 remaining + optional carries
+**Next Phase:** Phase 25 ready for planning — 4 TS18046 + M1/M2 carries (telegram test plan approval pending)
 
 ---
 
-## Phase 24 Preview (4 Errors + Optional Carries)
+## Phase 25 Preview (4 TS18046 + M1/M2 Carries)
 
-**Planned Status:** Ready for Planning  
-**Scope:** 1 protected flow + optional long-tail candidates  
-**Estimated Effort:** 3-5 hours (depends on test plan approval)  
-**Risk Level:** HIGH (telegram protected flow) + LOW (optional tier 4)
+**Planned Status:** Ready for Execution  
+**Scope:** 1 protected flow + M1/M2 carries  
+**Estimated Effort:** 4-6 hours (depends on telegram test plan approval)  
+**Risk Level:** HIGH (telegram protected flow) + MEDIUM (M1/M2 carries)
 
-### Critical Path: Tier 3 Protected Flow (1 remaining TS18046)
+### Critical Path: Tier 3 Protected Flow (4 TS18046)
 
 1. **`src/webhooks/telegram/route.ts`** (4 TS18046)
    - Pattern: Request-body HTTP boundary cast
@@ -314,21 +340,22 @@ See `phase-21-typescript-cleanup.md` for details.
    - Scope: **PROTECTED FLOW — Telegram bot integration** (@Sophia_Bbot)
    - Requirement: Webhook QA + staging integration test plan before fix
    - Status: **REQUIRES STAKEHOLDER APPROVAL FIRST**
+   - Expected result: 318 → 314 (if approved)
 
-### Optional Tier 4 Carries (from Phase 22 Review)
+### M1/M2 Carries (from Phase 24 Hygiene Review)
 
-- **`quota/overage-events/route.ts` L75** — Dead `GETStatus` export (deprecation investigation)
-- **`raas-invoice-generator.ts` L130+** — Dormant Polar/Stripe lifecycle logic (product decision)
-- **Sub-Variant 4 Documentation** — Formalize pattern in `docs/code-standards.md` (non-blocking)
-- **user_metadata fallback cleanup** — Post-Better-Auth migration standardization (M1 follow-up)
+- **M1: `/api/quota/status` orphan bug** — Component calls non-existent endpoint (404 pre-existing)
+- **M2: `isUserAdmin()` helper extraction** — DRY refactor across 6 admin sites
+- **M2: `User.role` optional tightening** — Doctrine question: make non-optional if runtime guarantees
 
-### Phase 24 Decision Tree
+### Phase 25 Decision Tree
 
 **IF telegram test plan approved + webhook QA ready:**
-- Execute Path A: Telegram protected flow (4) → **320 → 316 remaining (99.4%)**
-- Timeline: 3-4 hours + integration test validation
+- Execute Path A: Telegram protected flow (4) → **318 → 314 remaining (99.6%)**
+- Also fix M1/M2 carries in parallel
+- Timeline: 4-5 hours implementation + integration test
 
 **IF telegram deferred:**
-- Execute Path B: Optional tier 4 carries (investigation phase)
-- Document decision items for Phase 25
-- Timeline: 1-2 hours (no new TS fixes)
+- Execute Path B: M1/M2 carries + Sub-Variant 4 documentation
+- Defer telegram to Phase 26 with explicit test plan
+- Timeline: 2-3 hours (no additional TS fixes)

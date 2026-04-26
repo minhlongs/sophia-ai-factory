@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
     }
 
     const { data: userData } = await supabase.from('user_profiles').select('role').eq('user_id', user.id).single()
-    const isAdmin = userData?.role === 'admin' || user.user_metadata?.role === 'admin'
+    const isAdmin = userData?.role === 'admin' || user.role === 'admin'
     const userId = user.id
 
     if (license_nonce && !isAdmin) {

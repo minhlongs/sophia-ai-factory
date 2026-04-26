@@ -63,6 +63,8 @@ export async function reactivateLicenseBySubscription(
     nonce: license.nonce.slice(0, 8),
   });
 
+  // Double-cast: Supabase .update().select().single() return type is structurally
+  // narrower than RaasLicenseRow (TS2352). `as unknown` first widens the cast.
   return rawUpdated as unknown as RaasLicense;
 }
 
@@ -125,5 +127,7 @@ export async function revokeLicenseBySubscription(
     softRevoke: options.soft,
   });
 
+  // Double-cast: Supabase .update().select().single() return type is structurally
+  // narrower than RaasLicenseRow (TS2352). `as unknown` first widens the cast.
   return rawUpdated as unknown as RaasLicense;
 }

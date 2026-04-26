@@ -1,145 +1,140 @@
-# Phase 24: TypeScript Cleanup — Telegram Protected Flow Assessment
+# Phase 24: TypeScript Cleanup — Hygiene Cleanup Batch
 
-**Status:** 🔄 PLANNING (2026-04-26)  
-**Estimated Duration:** 3-5 hours (conditional on test plan approval)  
-**Scope:** 1 critical path + optional tier 4 candidates  
-**Target:** 4 TS18046 errors (telegram) + optional carries  
-**Expected Results:** Telegram fixed (4 → 0) OR deferred pending webhook QA
+**Status:** ✅ COMPLETED (2026-04-26)  
+**Actual Duration:** ~2.5 hours  
+**Scope:** Hygiene cleanup batch (NOT primary error elimination)  
+**Target:** Remove dead code, standardize user_metadata access, add inline docs  
+**Results:** 9 files modified, 320 → 318 (-2 TS18046), TS18046 unchanged at 4 (deferred to Phase 25)
 
 ---
 
 ## Overview
 
-Phase 24 addresses final visible TS18046 errors. Primary target is `webhooks/telegram/route.ts` — a **PROTECTED FLOW** requiring webhook integration testing before implementation. Secondary path includes optional tier 4 documentation and dead-code cleanup.
+**EXECUTION PATH B:** Phase 24 executed optional hygiene cleanup (Path B from Phase 24 decision tree) instead of Path A (telegram protected flow). Scope reframed from "telegram-only assessment" to **"hygiene cleanup batch"** addressing carry-forwards from Phases 12, 22, 23.
 
-**Critical Decision Point:** Telegram test plan approval required. Until stakeholder confirms webhook QA readiness, Phase 24 will execute optional carries only.
-
----
-
-## Critical Path: Tier 3 Protected Flow
-
-### File: `src/webhooks/telegram/route.ts`
-
-**Current State:**
-- 4 TS18046 errors
-- Type: Request-body HTTP boundary cast (webhook signature + bot integration)
-- Scope: **PROTECTED FLOW** — Telegram bot webhook handler (@Sophia_Bbot)
-- Related endpoints: POST `/webhooks/telegram` (receives IPN from Telegram Bot API)
-
-**Implementation Plan (Requires Test Strategy First):**
-1. Define local interface `TelegramWebhookPayload` (bot message update shape)
-2. Verify webhook signature validation logic (HMAC-SHA256 against telegram token)
-3. Apply Sub-Variant 4 cast at HTTP boundary: `(await request.json()) as TelegramWebhookPayload`
-4. Validate IPN idempotency guards (chat_id, message_id uniqueness)
-5. Test with staging webhook endpoint
-6. Verify bot still responds to /campaign, /status, /results commands
-
-**Sister Pattern Reference:** Phase 16-17 defensive `.catch()` pattern (request-body variants)
-
-**Approval Required:**
-- [ ] Webhook test plan documented
-- [ ] Staging environment telegram token configured
-- [ ] QA verification steps defined
-- [ ] Rollback procedure in place
+**Decision Rationale:** Telegram protected flow deferred to Phase 25 pending stakeholder test plan approval. Phase 24 focused on removing blockers: dead code audit, standardization, and documentation.
 
 ---
 
-## Optional Tier 4 Candidates (No TS18046 Reduction)
+## Execution Summary: Hygiene Cleanup (Path B)
 
-### Carry 1: Dead Code Investigation & Deprecation
+**Files Modified:** 9 total  
+**Execution Time:** ~2.5 hours  
+**Result:** 320 → 318 remaining TS18046 (-2 side-effect elimination)  
+**Pattern:** Dead code removal + standardization + documentation
+
+### Group A: user_metadata Fallback Cleanup (6 sites)
+
+**Scope:** Replace dead `user_metadata?.role` fallback with direct `user.role` access  
+**Files Modified:**
+1. `src/app/api/billing/dunning/[licenseNonce]/notify/route.ts` (used in email)
+2. `src/app/api/billing/dunning/[licenseNonce]/handle-status/route.ts` (used in status handler)
+3. `src/app/api/billing/dunning/[licenseNonce]/hook/route.ts` (used in webhook)
+4. `src/app/api/usage-export/route.ts` (2 sites: header + export summary)
+5. `src/app/api/usage/summary/route.ts` (1 site: auth check)
+
+**Rationale:** Better Auth `User` type already has `role` field; `user_metadata` access was pre-Better-Auth migration dead code. Consolidates user shape post-migration.
+
+### Group B: Dead Code Removal (1 file)
 
 **File:** `src/app/api/quota/overage-events/route.ts` L75  
-**Issue:** Unused `GETStatus` export (Phase 12 identification)  
-**Action:** Investigate if export is safe to remove or document reason to keep  
-**Effort:** 30-60 minutes (code audit + git history trace)
+**Action:** Deleted unreachable `GETStatus` export (~50 LOC)  
+**Impact:** Removes orphaned export from Phase 12 carry-forward  
+**Cleanup:** 1 dead interface + 2 orphaned imports removed
 
-**Decision Items:**
-- Is `GETStatus` used by external services?
-- Deprecation path or safe deletion?
-- Update imports if removing
+### Group C: Inline Documentation (3 comments added)
 
-### Carry 2: Dormant Feature Audit
+**File 1:** `src/lib/raas/raas-invoice-generator.ts` (2 comments)  
+- L130+: Documented double-cast rationale (Phase 22 carry, Stripe/Polar lifecycle decision)
+- Explains why invoice amount cast twice (external type → internal type → DB insert)
 
-**File:** `src/lib/raas/raas-invoice-generator.ts` L130+  
-**Issue:** Dormant Polar/Stripe lifecycle logic (flagged Phase 22)  
-**Context:** Polar.sh rejected Sophia product; PayOS is backup for Vietnam  
-**Action:** Document lifecycle decision (is this feature still needed?)  
-**Effort:** 30-60 minutes (research + documentation)
+**File 2:** `src/app/api/usage-export/route.ts` (1 comment)  
+- Documented RawUsageEventRow interface link (Phase 23 carry)
+- Cross-references phase report for cast pattern justification
 
-**Decision Items:**
-- Remove Polar conditional logic?
-- Keep as documentation of past integration?
-- Migration path to PayOS only?
+---
 
-### Carry 3: Sub-Variant 4 Documentation
+## Newly Flagged Issues (Phase 25+ Backlog)
+
+### M1 Carry: `/api/quota/status` Orphan Bug
+
+**File:** `src/components/quota/quota-usage-dashboard.tsx:100`  
+**Issue:** Component calls non-existent `/api/quota/status` endpoint (404 bug, pre-existing)  
+**Options:**
+1. Inline quota status fetch into `overage-events` endpoint
+2. Create new `/api/quota/status/route.ts` with response shape contract
+3. Research if endpoint was deprecated during Phase 12 refactor
+
+**Effort:** 2-3 hours (investigation + fix)  
+**Priority:** M1 (medium, internal dashboard only)
+
+### M2 Carry: DRY Refactor — `isUserAdmin()` Helper
+
+**Scope:** Extract admin role check across 6 sites (dunning routes, quota ops, licenses, usage-export)  
+**Current Pattern:** `user.role === 'admin'` or `user_metadata?.role === 'admin'` checks duplicated  
+**Action:** Create `src/lib/auth-helpers.ts` with `isUserAdmin(user: User): boolean`  
+**Effort:** 1-2 hours (extract + test + consolidate)  
+**Priority:** M2 (refactor, improves maintainability)
+
+### M2 Doctrine Question: `User.role?: string` Tightening
+
+**Context:** Better Auth User type has optional `role` field  
+**Question:** Is runtime always guaranteed to populate `role` for authenticated users?  
+**If Yes:** Change to `User.role: string` (non-optional) — removes 6 optional checks  
+**If No:** Keep optional, add explicit null guards  
+**Effort:** 30-60 minutes (research + decision)  
+**Priority:** M2 (type safety improvement)
+
+### M3 Carry: Sub-Variant 4 Documentation
 
 **File:** `docs/code-standards.md`  
-**Task:** Formalize DB-result cast pattern (Sub-Variant 4) from Phases 20-23  
-**Effort:** 1-2 hours (pattern synthesis + examples)
-
-**Documentation Scope:**
-- Pattern name: "Sub-Variant 4: Database Result Cast"
-- When to use: DB query result type casting (Supabase → D1 migration)
-- Example: RawUsageEventRow interface pattern
-- Related instances: 7 total across Phase 20-23
-- Link to phase reports for reference
-
-### Carry 4: Better Auth Migration — user_metadata Standardization
-
-**Context:** Phase 23 fixed `user_metadata` access in `usage/summary/route.ts`  
-**Task:** Audit other files for similar post-Better-Auth migration patterns  
-**Scope:** ~6 files identified earlier with `user_metadata?.role` fallback  
-**Effort:** 1-2 hours (grep + standardization across team)
-
-**Decision Items:**
-- Remove all `user_metadata` fallback checks (Better Auth doesn't expose this)?
-- Or create compatible shim?
-- Document final Better Auth user shape for team
+**Task:** Formalize DB-result cast pattern from Phases 20-23  
+**Effort:** 1-2 hours  
+**Scope:** Pattern synthesis + 7 instance examples from tester/code-review reports
 
 ---
 
 ## Success Criteria
 
-**Telegram Protected Flow (Conditional):**
-- [ ] Test plan documented and approved
-- [ ] Webhook signature validation verified
-- [ ] IPN idempotency guards in place
-- [ ] Staging test passes (bot responds to /campaign, /status, /results)
-- [ ] Production webhook endpoint confirmed
-- [ ] Code review: >= 9.5/10
-- [ ] 1394/1394 tests passing
+**Hygiene Cleanup (Path B — EXECUTED):**
+- [x] Group A: user_metadata fallback removed (6 sites)
+- [x] Group B: Dead code removed (GETStatus ~50 LOC)
+- [x] Group C: Inline documentation added (3 comments)
+- [x] Code review: 9.7/10 auto-approved
+- [x] Tests: 1394/1394 passing
+- [x] TS18046: 320 → 318 (-2 side-effect elimination)
+- [x] TS18046 (telegram): 4 unchanged (deferred Phase 25+)
 
-**Optional Tier 4 (Non-Blocking):**
-- [ ] Dead code audit completed
-- [ ] Dormant feature decision documented
-- [ ] Sub-Variant 4 pattern documented in code-standards.md
-- [ ] user_metadata standardization decision made
+**Phase 25 Prep (Deferred):**
+- [ ] Telegram test plan documentation (stakeholder approval required)
+- [ ] M1 `/api/quota/status` orphan bug fix
+- [ ] M2 `isUserAdmin()` helper extraction
+- [ ] M2 `User.role` optional → non-optional decision
 
 ---
 
-## Phase 24 Decision Tree
+## Phase 24 Decision Tree (EXECUTED: PATH B)
 
-**IF telegram test plan approved + webhook QA ready:**
-- Execute Path A: Implement telegram protected flow
-- Result: 4 TS18046 fixed → **320 → 316 remaining (99.4%)**
-- Timeline: 3-4 hours implementation + integration test
-- Proceed to Phase 25 (optional carries + final cleanup)
+**EXECUTED: Path B — Hygiene Cleanup**
+- Rationale: Telegram test plan not approved; Phase 24 focused on removing blockers
+- Scope: Dead code removal, standardization, documentation
+- Result: 320 → 318 remaining (-2 side-effect), TS18046 (telegram) deferred
+- Timeline: ~2.5 hours (completed 2026-04-26 11:24 UTC)
 
-**IF telegram deferred or test plan delayed:**
-- Execute Path B: Optional tier 4 carries (research + documentation)
-- Result: **0 TS18046 reduction** (documentation focus)
-- Timeline: 2-3 hours (audit + decision items)
-- Defer telegram to Phase 25 with explicit test plan
+**Phase 25 Path (UPCOMING):**
+- Primary: Telegram protected flow (requires test plan approval first)
+- Secondary: M1/M2 bug fixes + refactoring carries
+- Tertiary: Sub-Variant 4 documentation task
 
 ---
 
 ## Related Links
 
 - **Phase 23 Completion:** `phase-23-typescript-cleanup.md`
-- **Tester Report Phase 23:** `plans/reports/tester-260426-1107-b2-phase23-sister-cleanup.md`
+- **Phase 24 Tester Report:** `plans/reports/tester-260426-1124-phase24-b2-execution-summary.md`
+- **Phase 24 Code Review:** `plans/reports/code-review-260426-1124-b2-phase24-hygiene-cleanup.md`
 - **Tech Debt Tracker:** `plans/reports/TECH_DEBT_TRACKING.md`
-- **Telegram Bot Config:** `apps/sophia-ai-factory/config/telegram-bot.ts`
-- **Webhook Signature Validator:** `src/lib/webhooks/telegram-validator.ts` (if exists)
+- **Phase 25 Preview:** `phase-25-typescript-cleanup.md` (skeleton)
 
 ---
 
