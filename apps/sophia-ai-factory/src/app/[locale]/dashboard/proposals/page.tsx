@@ -31,6 +31,12 @@ interface QualityResult {
   passed: boolean;
 }
 
+interface ProposalApiResponse {
+  error?: string;
+  quality?: { score?: number; passed?: boolean };
+  proposal?: Record<string, string>;
+}
+
 export default function ProposalsPage() {
   const t = useTranslations('dashboard.proposals');
   const [formData, setFormData] = useState<ProposalFormData>(INITIAL_FORM);
@@ -56,7 +62,7 @@ export default function ProposalsPage() {
           deliverables: data.deliverables.split('\n').filter(Boolean),
         }),
       });
-      const result = await res.json();
+      const result = (await res.json()) as ProposalApiResponse;
       if (!res.ok) throw new Error(result.error || 'Failed to generate proposal');
       setQuality({ score: result.quality?.score ?? 80, passed: result.quality?.passed ?? true });
       setGeneratedContent(result.proposal ?? {});

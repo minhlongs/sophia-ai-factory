@@ -2,9 +2,9 @@
 
 **Initiative:** B2 TypeScript Error Elimination
 **Duration:** Multi-phase (Phases 1–8+ ongoing)
-**Overall Status:** Phase 8 Complete | Phase 9 Backlog Ready
+**Overall Status:** Phase 9 Complete | Phase 10 Ready
 **Baseline:** 462 TS18046 errors (next.config.ts:24 reference)
-**Current:** 51 TS18046 errors remaining (89% reduction)
+**Current:** 47 TS18046 errors remaining (90% reduction)
 
 ---
 
@@ -14,8 +14,9 @@
 |-------|--------|--------------|--------|--------|---------|
 | 7 | `src/middleware/rate-limit-wrapper.test.ts` | -4 (426→422 local) | Inline `as` casts | ✅ DONE | tester-260426-0030-* |
 | 8 | `src/lib/heygen/heygen-client.ts` | -4 (55→51) | HTTP boundary anti-corruption cast | ✅ DONE | code-review-260426-* |
+| 9 | `src/app/[locale]/dashboard/proposals/page.tsx` | -4 (51→47) | HTTP boundary anti-corruption cast | ✅ DONE | tester-260426-*, code-review-260426-* |
 
-**Cumulative:** 462 → 51 TS18046 (411 fixed, 89% reduction)
+**Cumulative:** 462 → 47 TS18046 (415 fixed, 90% reduction)
 
 ---
 

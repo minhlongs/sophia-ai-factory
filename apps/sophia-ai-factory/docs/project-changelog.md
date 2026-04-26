@@ -1,6 +1,12 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-26 | **Current Version:** 1.12.26
+**Last Updated:** 2026-04-26 | **Current Version:** 1.12.27
+
+---
+
+## [2026-04-26] B2 Phase 9 — Proposals Page HTTP Boundary Casting (v1.12.27)
+
+**B2 Phase 9 (proposals page):** Refactored `src/app/[locale]/dashboard/proposals/page.tsx`, added local `ProposalApiResponse` interface to type-cast HTTP boundary response from `/api/proposals` endpoint (route not yet implemented; local interface establishes client-side contract), applied anti-corruption cast pattern `(await res.json()) as ProposalApiResponse`. Pattern instance #3 of "HTTP boundary cast" (Phase 6 `RaasSyncResponse`, Phase 8 `HeyGenVideoStatusResponse`). Eliminated 4 TS18046 errors (51→47, -7.8% cumulative from baseline 63 TS18046 in B2 Phase 1). Tests 1394/1394 pass. Review 9.7/10.
 
 ---
 

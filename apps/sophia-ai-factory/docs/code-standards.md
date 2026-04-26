@@ -188,6 +188,7 @@ async getVideoStatus(videoId: string): Promise<string> {
 **Canonical Examples:**
 - Phase 6: `src/worker/lib/metering-reconciler-license-validator.ts` — `RaasSyncResponse` cast from `/api/license/sync`
 - Phase 8: `src/lib/heygen/heygen-client.ts` — `HeyGenVideoStatusResponse` cast from HeyGen API
+- Phase 9: `src/app/[locale]/dashboard/proposals/page.tsx` — `ProposalApiResponse` cast from `/api/proposals`
 
 ---
 
