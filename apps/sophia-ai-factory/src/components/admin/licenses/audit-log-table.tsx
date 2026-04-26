@@ -39,6 +39,12 @@ interface AuditLogTableProps {
   licenseId?: string;
 }
 
+interface AuditLogsResponse {
+  logs?: AuditLog[];
+  total?: number;
+  retentionNote?: string;
+}
+
 export function AuditLogTable({ licenseId }: AuditLogTableProps) {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,11 +65,11 @@ export function AuditLogTable({ licenseId }: AuditLogTableProps) {
       });
 
       const response = await fetch(`/api/admin/licenses/audit?${params}`);
-      const data = await response.json();
+      const data = (await response.json()) as AuditLogsResponse;
 
       if (response.ok) {
-        setLogs(data.logs);
-        setTotal(data.total);
+        setLogs(data.logs ?? []);
+        setTotal(data.total ?? 0);
         setRetentionNote(data.retentionNote);
       }
     } catch (error) {
