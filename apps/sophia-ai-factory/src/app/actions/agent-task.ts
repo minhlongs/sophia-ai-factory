@@ -37,7 +37,7 @@ export async function createAgentTask(
 
   const parsed = CreateAgentTaskSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.errors[0]?.message ?? 'Invalid input' };
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   const { agentId, input: taskInput, role } = parsed.data;

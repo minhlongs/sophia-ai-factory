@@ -1,6 +1,12 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-26 | **Current Version:** 1.13.3
+**Last Updated:** 2026-04-26 | **Current Version:** 1.13.4
+
+---
+
+## MILESTONE v1.13.4 — Zod v4 Migration + HeyGen Client Response Shape Narrowing (Phase 31)
+
+**Phase 31 B2 (ZodError v4 API migration + heygen-client response casts quick-win):** Targeted 7 files to migrate ZodError property access and harden HeyGen video status response handling. **M1-M6: Zod v4 API Migration.** Zod removed `.errors` property in v4; migrated 6 instances to use `.issues` property instead (canonical array of ZodIssue objects). Applied to: `src/lib/validation/services.ts` (3 sites: OpenRouter, ElevenLabs, D-ID validator error checks), `src/app/api/admin/campaigns/[id]/route.ts` (1 site: form validation error handling), `src/app/api/campaigns/create/route.ts` (1 site: campaign schema validation), `src/components/dashboard/campaign-form.tsx` (1 site: client-side validation feedback). Migration pattern: `error.errors` → `error.issues` preserves destructure scope (issues[0]?.code, issues[0]?.message remain functional). **M7: HeyGen Response Shape Narrowing.** `src/lib/heygen/heygen-client.ts` added `Array.isArray()` guard for videoUrl array field variance handling — HeyGen API returns optional array of URLs for some endpoints; client now safely narrows shape before access. Defensive fallback: `videoUrl ? videoUrl[0] : undefined` prevents undefined coercion. Latent bug fixed: response shape variance would cause runtime error without narrowing. TS error reduction: 246 → 235 (-11 total: 6 TS2322 ZodError.errors undefined + 4 TS18046 Array indexing + 1 TS2339 videoUrl shape). Tests 1398/1398 PASS. Code review 9.83/10 AUTO-APPROVED. Protected flows (Setup Wizard, Telegram Bot, NOWPayments) untouched.
 
 ---
 

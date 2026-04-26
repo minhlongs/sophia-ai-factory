@@ -73,8 +73,10 @@ export class HeyGenClient {
 
   async listAvatars(): Promise<HeyGenAvatar[]> {
     try {
-      const data = await this.request("/avatars");
-      return data?.data?.avatars || data?.data || [];
+      const data = (await this.request("/avatars")) as { data?: { avatars?: HeyGenAvatar[] } | HeyGenAvatar[] };
+      const inner = data?.data;
+      if (inner && Array.isArray(inner)) return inner;
+      return inner?.avatars ?? [];
     } catch {
       return [];
     }
@@ -82,8 +84,10 @@ export class HeyGenClient {
 
   async listVoices(): Promise<HeyGenVoice[]> {
     try {
-      const data = await this.request("/voices");
-      return data?.data?.voices || data?.data || [];
+      const data = (await this.request("/voices")) as { data?: { voices?: HeyGenVoice[] } | HeyGenVoice[] };
+      const inner = data?.data;
+      if (inner && Array.isArray(inner)) return inner;
+      return inner?.voices ?? [];
     } catch {
       return [];
     }
@@ -119,10 +123,10 @@ export class HeyGenClient {
     };
 
     try {
-      const data = await this.request("/video/generate", {
+      const data = (await this.request("/video/generate", {
         method: "POST",
         body: JSON.stringify(body),
-      });
+      })) as { data?: { video_id?: string } };
 
       const videoId = data?.data?.video_id;
       if (!videoId) {

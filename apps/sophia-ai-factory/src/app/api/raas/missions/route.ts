@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
     const legacyParsed = parsed.success ? null : LegacyMissionSchema.safeParse(body);
 
     if (!parsed.success && !legacyParsed?.success) {
-      return NextResponse.json({ error: 'Invalid input', details: parsed.error.errors }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid input', details: parsed.error.issues }, { status: 400 });
     }
 
     let title: string;

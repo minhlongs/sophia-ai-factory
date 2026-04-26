@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     const parsed = TaskRequestSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Invalid input', details: parsed.error.errors },
+        { error: 'Invalid input', details: parsed.error.issues },
         { status: 400 },
       );
     }
