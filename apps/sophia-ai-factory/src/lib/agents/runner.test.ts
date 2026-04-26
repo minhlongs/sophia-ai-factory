@@ -83,6 +83,7 @@ describe('runAgent', () => {
     await expect(runAgent(TASK_ID, ORG_ID, 'PREMIUM')).rejects.toThrow('Rate limited');
     expect(updateTaskResult).toHaveBeenCalledWith(
       TASK_ID,
+      ORG_ID,
       expect.objectContaining({ status: 'failed' }),
     );
   });
@@ -96,6 +97,7 @@ describe('runAgent', () => {
     await expect(runAgent(TASK_ID, ORG_ID, 'PREMIUM')).rejects.toThrow('OPENROUTER_API_KEY');
     expect(updateTaskResult).toHaveBeenCalledWith(
       TASK_ID,
+      ORG_ID,
       expect.objectContaining({ status: 'failed' }),
     );
   });
@@ -140,6 +142,7 @@ describe('runAgent', () => {
     }
     expect(updateTaskResult).toHaveBeenCalledWith(
       TASK_ID,
+      ORG_ID,
       expect.objectContaining({ status: 'failed' }),
     );
   });

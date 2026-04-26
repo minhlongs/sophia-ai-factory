@@ -34,7 +34,7 @@ interface OpenRouterResponse {
  */
 export async function runAgent(taskId: string, orgId: string, userTier = 'BASIC'): Promise<AgentTask> {
   // Mark as running
-  await updateTaskStatus(taskId, 'running');
+  await updateTaskStatus(taskId, orgId, 'running');
   await appendLog({ taskId, action: 'start', payload: { taskId } });
 
   const task = await getTask(taskId, orgId);
@@ -44,7 +44,7 @@ export async function runAgent(taskId: string, orgId: string, userTier = 'BASIC'
 
   const agent = await getAgentById(task.agentId);
   if (!agent) {
-    await updateTaskResult(taskId, {
+    await updateTaskResult(taskId, orgId, {
       output: '',
       tokensUsed: 0,
       costUsd: 0,
@@ -59,7 +59,7 @@ export async function runAgent(taskId: string, orgId: string, userTier = 'BASIC'
     assertTierAllowsAgent(userTier, agent.role);
   } catch (gateErr) {
     if (gateErr instanceof AgentTierBlockedError) {
-      await updateTaskResult(taskId, {
+      await updateTaskResult(taskId, orgId, {
         output: '',
         tokensUsed: 0,
         costUsd: 0,
@@ -81,7 +81,7 @@ export async function runAgent(taskId: string, orgId: string, userTier = 'BASIC'
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
     const errMsg = 'OPENROUTER_API_KEY not configured';
-    await updateTaskResult(taskId, { output: '', tokensUsed: 0, costUsd: 0, status: 'failed', errorMessage: errMsg });
+    await updateTaskResult(taskId, orgId, { output: '', tokensUsed: 0, costUsd: 0, status: 'failed', errorMessage: errMsg });
     throw new Error(errMsg);
   }
 
@@ -114,7 +114,8 @@ export async function runAgent(taskId: string, orgId: string, userTier = 'BASIC'
       headers: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://sophia.agencyos.network',
+        // H6 fix: read from env so staging/preview don't leak prod referer to OpenRouter analytics
+        'HTTP-Referer': process.env.PROD_URL ?? process.env.NEXT_PUBLIC_SITE_URL ?? 'https://sophia.agencyos.network',
       },
       body: JSON.stringify({
         model: agent.model,
@@ -130,7 +131,7 @@ export async function runAgent(taskId: string, orgId: string, userTier = 'BASIC'
 
     if (!res.ok || data.error) {
       const errMsg = data.error?.message ?? `OpenRouter HTTP ${res.status}`;
-      await updateTaskResult(taskId, { output: '', tokensUsed: 0, costUsd: 0, status: 'failed', errorMessage: errMsg });
+      await updateTaskResult(taskId, orgId, { output: '', tokensUsed: 0, costUsd: 0, status: 'failed', errorMessage: errMsg });
       await appendLog({ taskId, action: 'error', payload: { error: errMsg } });
 
       // Phase 03: emit AGENT_TASK_FAIL (fire-and-forget)
@@ -151,7 +152,7 @@ export async function runAgent(taskId: string, orgId: string, userTier = 'BASIC'
     const costUsd = tokensUsed * COST_PER_TOKEN;
     const durationMs = Date.now() - startMs;
 
-    await updateTaskResult(taskId, { output, tokensUsed, costUsd, status: 'completed' });
+    await updateTaskResult(taskId, orgId, { output, tokensUsed, costUsd, status: 'completed' });
     await appendLog({
       taskId,
       action: 'invoke',
@@ -194,7 +195,7 @@ export async function runAgent(taskId: string, orgId: string, userTier = 'BASIC'
 
     // Don't double-update if already written above
     try {
-      await updateTaskResult(taskId, { output: '', tokensUsed: 0, costUsd: 0, status: 'failed', errorMessage: errMsg });
+      await updateTaskResult(taskId, orgId, { output: '', tokensUsed: 0, costUsd: 0, status: 'failed', errorMessage: errMsg });
     } catch { /* best-effort */ }
     throw err;
   }
