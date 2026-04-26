@@ -1,7 +1,28 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-04-25 (Tech Debt Phase 30: Analytics Query Type Safety + Billing Modularization)
+> **Last Updated:** 2026-04-25 (Dead-Code Cleanup + Analytics Query Type Safety + Billing Modularization)
+
+---
+
+## [2026-04-25] Dead-Code Cleanup — Agency Isolation & RaaS Gateway Enhanced Modules Removed
+
+### Summary
+Removed 510 LOC of dead-code modules superseded by live implementations. Deleted 4 zero-consumer files: `agency-isolation.ts` (171 LOC), `agency-isolation-validators.ts` (175 LOC), `raas-gateway-enhanced.ts` (96 LOC), `raas-gateway-enhanced-jwt.ts` (68 LOC). Live equivalents retained: `tenant-isolation.ts` (mounted in middleware-api-handler.ts) and `raas-gate.ts` (mounted in middleware-api-handler.ts). Documentation references updated.
+
+### Files Deleted
+- `src/middleware/agency-isolation.ts` (171 LOC) → superseded by `tenant-isolation.ts`
+- `src/middleware/agency-isolation-validators.ts` (175 LOC) → merged into `tenant-isolation.ts`
+- `src/lib/raas-gateway-enhanced.ts` (96 LOC) → superseded by `raas-gate.ts`
+- `src/lib/raas-gateway-enhanced-jwt.ts` (68 LOC) → functionality in `raas-gate.ts`
+
+### Documentation Updates
+- `docs/project-changelog.md` — Removed stale references to `raas-gateway-enhanced`; added this entry
+
+### Quality
+- Build: ✅ No breakage (modules were zero-consumer)
+- Test impact: ✅ No test files reference deleted modules
+- Type safety: ✅ No dangling imports
 
 ---
 
@@ -199,7 +220,7 @@ Eliminated 3 non-test `:any` casts from critical RaaS rate-limiting + JWT payloa
 
 ### Files Modified (2 Total)
 **Updated:**
-- `src/lib/raas-gateway-enhanced.ts` — 1 `:any` → 0 (JWT payload typing)
+- `src/lib/raas-gateway-enhanced.ts` — 1 `:any` → 0 (JWT payload typing) [DELETED in 2026-04-25 dead-code cleanup — superseded by raas-gate.ts]
 - `src/lib/raas/raas-rate-limiter.ts` — 2 `:any` → 0 (discriminated union narrowing + `narrowTier()` helper) + incidental severity routing fix
 
 ### Bug Fix Note
@@ -210,7 +231,7 @@ Denied-quota violations on `'hourly_credits'` type previously defaulted to `'hig
 - **Build:** ✅ npm run build exit 0, 0 TS errors
 - **Code Review:** ✅ 9.7/10 APPROVE
 - **Production HTTP:** ✅ 200 confirmed
-- **TypeScript `:any` count:** 3 → 0 (raas-gateway-enhanced + raas-rate-limiter)
+- **TypeScript `:any` count:** 3 → 0 (raas-gateway-enhanced [now deleted] + raas-rate-limiter)
 
 ### Pattern Established
 Discriminated union narrowing via `narrowTier()` helper = canonical pattern for future union type narrowing (avoid `as any` on narrowed types). Reference: raas-rate-limiter.ts.
