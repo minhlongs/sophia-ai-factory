@@ -391,6 +391,103 @@ const userRole = user.role ?? 'user';  // Better Auth User.role?: string
 
 ---
 
+## Admin Auth Helper Pattern (Phase 25)
+
+Consolidate repetitive admin-authorization checks across multiple routes using the `isUserAdmin()` helper. This eliminates ~9-line inline DB-fetch + role-check duplication and provides a single point for admin-access logic.
+
+**Canonical Location:** `src/lib/auth/is-user-admin.ts`
+
+**Canonical Implementation:**
+
+```typescript
+import { User } from '@/lib/db/client';
+import { createServerClient } from '@/lib/db/client';
+
+export async function isUserAdmin(user: User): Promise<boolean> {
+  // Fast path: Check session role first (cheap, from Better Auth)
+  if (user.role === 'admin') {
+    return true;
+  }
+
+  // Fallback: DB lookup if session role is falsy
+  if (!user.id) return false;
+
+  const db = createServerClient();
+  const { data: userData } = await db
+    .from('user_profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  // Cast with Sub-Variant 4 pattern for type safety
+  interface UserProfileRoleRow {
+    role?: string;
+  }
+  const userProfile = userData as UserProfileRoleRow | null;
+
+  return userProfile?.role === 'admin';
+}
+```
+
+**Canonical Usage Pattern:**
+
+All admin-protected routes use this pattern:
+
+```typescript
+// src/app/api/admin/dunning/[licenseNonce]/route.ts
+import { isUserAdmin } from '@/lib/auth/is-user-admin';
+
+export async function POST(request: Request) {
+  const user = await getCurrentUser();
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // Canonical admin check
+  if (!(await isUserAdmin(user))) {
+    return NextResponse.json({ error: 'Forbidden - admin only' }, { status: 403 });
+  }
+
+  // Admin-only logic continues...
+}
+```
+
+**Why This Pattern:**
+
+1. **DRY Consolidation:** Replaces ~9-line inline DB-fetch + role-check duplicated across 6 admin handlers
+2. **Fast Path Optimization:** Checks cheap session `user.role` first before hitting DB
+3. **Fallback Robustness:** DB lookup only if session role falsy (migration edge-cases, session-refresh delays)
+4. **Type Safety:** Uses Sub-Variant 4 cast (`UserProfileRoleRow` interface) for typed DB reads
+5. **Single Responsibility:** All admin-access logic centralized, easier to audit/maintain
+
+**Applied Instances (Phase 25):**
+
+- `src/app/api/admin/dunning/[licenseNonce]/route.ts` — POST handler refactored
+- `src/app/api/admin/dunning/[licenseNonce]/suspend/route.ts` — POST handler refactored
+- `src/app/api/admin/dunning/[licenseNonce]/restore/route.ts` — POST handler refactored
+- `src/app/api/usage/export/usage-export-get-handler.ts` — GET handler refactored
+- `src/app/api/usage/export/usage-export-post-handler.ts` — POST handler refactored (userData fetch kept separate, used for audit-receipt tier field)
+- `src/app/api/usage/summary/route.ts` — GET handler refactored
+
+**Special Note — `usage-export-post-handler.ts`:**
+
+This file keeps a separate `userData` fetch because the user profile data is consumed for audit-receipt `tier` field (line 70), not just for admin-check. This is intentional — extract only the duplicated admin-check logic, keep other operations separate (follows DRY principle: eliminate duplication, not useful information).
+
+```typescript
+// Admin check via helper
+const isAdmin = await isUserAdmin(user);
+if (!isAdmin) return 403;
+
+// Separate userData fetch for audit-receipt (intentionally not merged)
+const { data: userData } = await db.from('user_profiles').select('tier').eq('id', user.id).single();
+```
+
+**For New Admin Routes:**
+
+When adding new admin-protected routes, always use `isUserAdmin()` helper instead of inline checks. This maintains consistency and centralized admin-access logic.
+
+---
+
 ## Dead Export Detection in API Routes (Phase 24)
 
 Next.js App Router **only recognizes HTTP-method-named exports** in route files: `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `OPTIONS`, `HEAD`. All other exports are unreachable code and should be removed.

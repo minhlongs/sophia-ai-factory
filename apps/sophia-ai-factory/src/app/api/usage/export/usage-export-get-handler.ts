@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/db/client'
 import { getCurrentUser } from '@/lib/better-auth-session'
+import { isUserAdmin } from '@/lib/auth/is-user-admin'
 import { exportUsage, generateCsv } from '@/lib/usage-metering/export'
 import { logger } from '@/lib/utils/logger-utility'
 import { exportQuerySchema } from './usage-export-schemas'
@@ -35,8 +36,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: `Date range exceeds maximum of ${maxRange} seconds (${Math.floor(maxRange / 86400)} days)`, suggestion: 'Split your request into multiple smaller date ranges' }, { status: 400 })
     }
 
-    const { data: userData } = await supabase.from('user_profiles').select('role').eq('user_id', user.id).single()
-    const isAdmin = userData?.role === 'admin' || user.role === 'admin'
+    const isAdmin = await isUserAdmin(user)
     const userId = user.id
 
     if (license_nonce && !isAdmin) {

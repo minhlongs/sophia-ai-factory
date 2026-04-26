@@ -20,6 +20,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
 import { getCurrentUser } from '@/lib/better-auth-session';
+import { isUserAdmin } from '@/lib/auth/is-user-admin';
 import { getUsageSummaryForPeriod } from '@/lib/usage-metering/export';
 import {
   aggregateUsageForLicense,
@@ -35,10 +36,6 @@ const summaryQuerySchema = z.object({
   period: z.enum(['current_month', 'last_month', 'last_7_days', 'last_30_days']).default('current_month'),
   license_nonce: z.string().optional(),
 });
-
-interface UserProfileRoleRow {
-  role: string | null;
-}
 
 interface LicenseOwnerRow {
   created_by: string | null;
@@ -71,14 +68,7 @@ export async function GET(req: NextRequest) {
     const { period, license_nonce } = parseResult.data;
 
     // Check admin status
-    const { data: rawUserData } = await supabase
-      .from('user_profiles')
-      .select('role')
-      .eq('user_id', user.id)
-      .single();
-    const userData = rawUserData as UserProfileRoleRow | null;
-
-    const isAdmin = userData?.role === 'admin' || user.role === 'admin';
+    const isAdmin = await isUserAdmin(user);
 
     // Verify license ownership if provided
     if (license_nonce && !isAdmin) {

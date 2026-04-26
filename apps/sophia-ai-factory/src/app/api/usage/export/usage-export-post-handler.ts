@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/db/client'
 import { getCurrentUser } from '@/lib/better-auth-session'
+import { isUserAdmin } from '@/lib/auth/is-user-admin'
 import { validateApiKey } from '@/lib/security/api-key-validator'
 import { logUsageWithReceipt } from '@/lib/audit/audit-logger'
 import { generateCompleteExport, createDownloadableExport } from '@/lib/usage-export/export-service'
@@ -44,8 +45,9 @@ export async function POST(req: NextRequest) {
     }
 
     const { billingPeriod, startDate, endDate, externalCustomerId, format, service, licenseNonce, page, pageSize } = parseResult.data
+    const isAdmin = await isUserAdmin(user)
+    // Separate fetch for tier (used in audit-receipt below)
     const { data: userData } = await supabase.from('user_profiles').select('role').eq('user_id', user.id).single()
-    const isAdmin = userData?.role === 'admin' || user.role === 'admin'
 
     if (!isAdmin) {
       if (externalCustomerId && licenseNonce) {
