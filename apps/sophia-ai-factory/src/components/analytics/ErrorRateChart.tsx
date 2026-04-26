@@ -63,7 +63,12 @@ export function ErrorRateChart({
   }));
 
   // Custom tooltip with proper Recharts types
-  const CustomTooltip = ({ active, payload, label }: TooltipProps<ValueType, NameType>) => {
+  type CustomTooltipProps = TooltipProps<ValueType, NameType> & {
+    payload?: Array<{ payload?: { errors?: number; requests?: number } }>;
+    label?: string;
+  };
+
+  const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
     if (active && payload && payload.length) {
       const errors = payload[0]?.payload?.errors || 0;
       const requests = payload[0]?.payload?.requests || 0;

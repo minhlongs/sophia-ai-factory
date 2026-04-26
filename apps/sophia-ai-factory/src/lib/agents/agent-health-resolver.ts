@@ -4,7 +4,23 @@
  * 24-hour rolling window. Tolerates zero rows (Phase 03 may not be populated).
  */
 
-import { createServerClient } from '@/lib/db/client';
+/**
+ * Raw D1Database access — agent-health-resolver uses native .prepare() API,
+ * not the Supabase-style D1Client wrapper from createServerClient().
+ */
+function getD1(): D1Database {
+  const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
+  if (env?.DB) return env.DB as D1Database;
+
+  const ctxSymbol = Symbol.for('__cloudflare-context__');
+  const ctx = (globalThis as Record<symbol, { env?: Record<string, unknown> }>)[ctxSymbol];
+  if (ctx?.env?.DB) return ctx.env.DB as D1Database;
+
+  const globalDb = (globalThis as Record<string, unknown>).__D1_DB as D1Database | undefined;
+  if (globalDb) return globalDb;
+
+  throw new Error('[agent-health-resolver] D1 binding not available');
+}
 
 export interface AgentRoleHealth {
   role: string;
@@ -45,7 +61,7 @@ export async function resolveAgentHealth(): Promise<AgentHealthSummary> {
   const now = Date.now();
   if (cache && cache.expires > now) return cache.summary;
 
-  const db = createServerClient();
+  const db = getD1();
   const since = new Date(now - 24 * 60 * 60 * 1000).toISOString();
 
   // Success/fail counts per role from signals_events
@@ -63,7 +79,7 @@ export async function resolveAgentHealth(): Promise<AgentHealthSummary> {
       )
       .bind(since)
       .all();
-    signalRows = (result.results ?? []) as SignalsEventRow[];
+    signalRows = (result.results ?? []) as unknown as SignalsEventRow[];
   } catch {
     // signals_events may not exist yet — return zeroed metrics
   }
@@ -84,7 +100,7 @@ export async function resolveAgentHealth(): Promise<AgentHealthSummary> {
       )
       .bind(since)
       .all();
-    for (const row of (result.results ?? []) as LastFailRow[]) {
+    for (const row of (result.results ?? []) as unknown as LastFailRow[]) {
       if (row.role) lastFailMap.set(row.role, row.last_failure_at);
     }
   } catch { /* tolerate */ }
@@ -104,7 +120,7 @@ export async function resolveAgentHealth(): Promise<AgentHealthSummary> {
       )
       .bind(since)
       .all();
-    for (const row of (result.results ?? []) as ErrorCountRow[]) {
+    for (const row of (result.results ?? []) as unknown as ErrorCountRow[]) {
       totalErrors24h += Number(row.error_count ?? 0);
     }
   } catch { /* tolerate */ }

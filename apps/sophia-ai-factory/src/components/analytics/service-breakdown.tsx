@@ -31,7 +31,11 @@ const SERVICE_COLORS: Record<string, string> = {
   default: '#f59e0b',
 };
 
-function CustomTooltip({ active, payload }: TooltipProps<ValueType, NameType>) {
+type CustomTooltipProps = TooltipProps<ValueType, NameType> & {
+  payload?: Array<{ payload: ServiceBreakdown }>;
+};
+
+function CustomTooltip({ active, payload }: CustomTooltipProps) {
   if (active && payload && payload.length) {
     const data = payload[0].payload as ServiceBreakdown;
     return (
@@ -125,7 +129,7 @@ export function ServiceBreakdownChart({
                 fill="#8884d8"
                 dataKey="credits"
                 nameKey="name"
-                onClick={(data) => onSelectService?.(data.service)}
+                onClick={(data) => onSelectService?.((data as { service?: string }).service ?? '')}
                 style={{ cursor: onSelectService ? 'pointer' : 'default' }}
               >
                 {chartData.map((entry, index) => (

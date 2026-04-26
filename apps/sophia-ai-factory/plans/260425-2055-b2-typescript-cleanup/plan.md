@@ -41,8 +41,9 @@
 | 31 | 7 files (6 ZodError + 1 heygen-client) | -11 (246 → 235) | ZodError v4 migration + HeyGen response casts | ✅ DONE | tester-260426-1306-b2-phase31-zoderror-heygen, code-review-260426-1306-b2-phase31-zoderror-heygen 9.83/10 |
 | 32 | 3 files (1 smart-resume + 2 alerts routes) | -19 (235 → 216) | Smart resume async fix (RUNTIME BUG) + alerts Sub-Variant 2 casts | ✅ DONE | tester-260426-1316-b2-phase32-ts2339-batch, code-review-260426-1316-b2-phase32-ts2339-batch 9.7/10 |
 | 33 | 4 routes (errors/report + analytics/export + setup/verify + alerts/test) | -14 (216 → 202) | Sub-Variant 2 request-body TS2339 batch (4 high-frequency routes) | ✅ DONE | tester-260426-1326-b2-phase33-ts2339-batch, code-review-260426-1326-b2-phase33-ts2339-batch 9.7/10 |
+| 34 | agent-health-resolver + 4 charts (UsageChart, ErrorRateChart, service-breakdown, bonus) | -13 (202 → 189, -15 actual per tester) | Agent-health D1 variant + chart TooltipProps TS2339/TS2352 batch | ✅ DONE | tester-260426-1340-b2-phase34-ts2339-batch, code-review-260426-1340-b2-phase34-ts2339-batch 9.6/10 |
 
-**MILESTONES ACHIEVED:** 462 → 0 TS18046 (100% via Phase 27); 313 → 280 TS2345 QueryError (100% via Phase 28); 280 → 251 TS2304 ×28 + TS2307 ×1 (quick-win via Phase 29); 251 → 246 TS2307 ×5 (quick-win via Phase 30); 246 → 235 ZodError v4 + HeyGen (Phase 31); 235 → 216 Smart Resume + Alerts (Phase 32); **216 → 202 Sub-Variant 2 Batch (Phase 33, 56.3% cumulative reduction)**
+**MILESTONES ACHIEVED:** 462 → 0 TS18046 (100% via Phase 27); 313 → 280 TS2345 QueryError (100% via Phase 28); 280 → 251 TS2304 ×28 + TS2307 ×1 (quick-win via Phase 29); 251 → 246 TS2307 ×5 (quick-win via Phase 30); 246 → 235 ZodError v4 + HeyGen (Phase 31); 235 → 216 Smart Resume + Alerts (Phase 32); 216 → 202 Sub-Variant 2 Batch (Phase 33, 56.3% cumulative reduction); **202 → 189 Agent-Health D1 + Chart TooltipProps (Phase 34, 59.1% cumulative reduction)**
 
 ---
 
@@ -618,23 +619,23 @@ See `phase-21-typescript-cleanup.md` for details.
 
 ---
 
-## Next Steps (Phase 34+)
+## Next Steps (Phase 35+)
 
-**Phase 33 Completion (✅ DELIVERED 2026-04-26 ~13:26 UTC):**
-- [x] 4 API routes Sub-Variant 2 request-body casting
-- [x] TS2339 property mismatch elimination (216 → 202, -14 errors)
-- [x] Setup Wizard PROTECTED FLOW verified & safe
+**Phase 34 Completion (✅ DELIVERED 2026-04-26 ~13:40 UTC):**
+- [x] Agent-health D1 variant casting (3 TS2339)
+- [x] Chart TooltipProps TS2339/TS2352 batch (8 TS2339 + 3 TS2352)
+- [x] EC1 protection verified (api/health/agents/route.ts try/catch wraps resolveAgentHealth)
 - [x] 1398/1398 tests passing (zero regressions)
-- [x] Code review approved (9.7/10, 0 critical/0 major)
-- [x] Phase 33 reports generated
+- [x] Code review approved (9.6/10, 0 critical/0 major)
+- [x] Phase 34 reports generated
 
-**Phase 34 Focus (Remaining TS2339 + TS2322 + TS2352 candidates):**
-- Target: 202 remaining errors (TS2339 ×35 + TS2322 ×49 + TS2352 ×41 + other ×77)
-- High-frequency TS2339 candidates: agent-health-resolver (3, D1Client.prepare variant), analytics charts (UsageChart, ErrorRateChart, service-breakdown — 2 each, 4+ files), other singletons (20+)
+**Phase 35 Focus (Remaining TS2339 + TS2322 + TS2352 candidates):**
+- Target: 189 remaining errors (TS2339 ×25 + TS2322 ×49 + TS2352 ×38 + other ×77)
+- Phase 34 carry-forwards: M1 getD1() helper DRY extraction (6+ sites), M2 chart payload type alignment
+- TS2339 deep-dive (25 remaining) — mixed patterns (DB schema, HTTP boundaries, component props)
 - TS2322 deep-dive (49 errors) — DB schema + type assignment patterns
-- TS2352 type-assertion cleanup (41 errors)
-- Phase 31 carry-forwards (Mi-1/Mi-2/Mi-3) — lightweight JSDoc/docs refinement if time permits
-- MIN-1: smart-resume-engine.ts modularization (205 LOC, over guideline)
+- TS2352 type-assertion cleanup (38 errors)
+- Remaining hard targets require pattern analysis
 
 **Initiative Milestones Achieved (to date):**
 - [x] Phase 27: All 462 baseline TS18046 errors → 0 (100% elimination)
@@ -644,4 +645,5 @@ See `phase-21-typescript-cleanup.md` for details.
 - [x] Phase 31: ZodError v4 migration + HeyGen response casts (-11 errors)
 - [x] Phase 32: Smart resume runtime bug fix + alerts route casts (-19 errors)
 - [x] Phase 33: 4 routes Sub-Variant 2 batch (-14 errors, 56.3% cumulative reduction)
-- [ ] Phase 34+: Remaining 202 errors (TS2339 ×35 + TS2322 ×49 + TS2352 ×41 + other ×77)
+- [x] Phase 34: Agent-health D1 + chart TooltipProps (-13 errors, 59.1% cumulative reduction)
+- [ ] Phase 35+: Remaining 189 errors (TS2339 ×25 + TS2322 ×49 + TS2352 ×38 + other ×77)
