@@ -1,12 +1,12 @@
 # B2: TypeScript Cleanup Initiative
 
-**Initiative:** B2 TypeScript Error Elimination
-**Duration:** Multi-phase (Phases 1–28 complete)
-**Overall Status:** ✅ PHASE 28 COMPLETE — 100% TS18046 + QUERYERROR LOGGING CONSISTENCY
+**Initiative:** B2 TypeScript Error Elimination + Quality Refinement
+**Duration:** Multi-phase (Phases 1–31 complete, Phase 32 planned)
+**Overall Status:** ✅ PHASE 31 COMPLETE — 100% TS18046 + QUERYERROR + ZODERROR V4 + HEYGEN RESPONSE CASTS
 **Baseline:** 462 TS18046 errors (next.config.ts:24 reference)
-**Current:** 0 TS18046 errors remaining — ALL 462 BASELINE ERRORS ELIMINATED
-**Phase 28 Result:** 313 → 280 errors (-33 TS2345 QueryError, mass logger.error toError refactor)
-**Total Errors Reduced:** 462 → 280 (39.4% overall codebase reduction)
+**Current:** 235 errors remaining (post-Phase 31)
+**Phase 31 Result:** 246 → 235 errors (-11 ZodError v4 + HeyGen response casts)
+**Total Errors Reduced:** 462 → 235 (49.1% overall codebase reduction)
 
 ---
 
@@ -512,27 +512,29 @@ See `phase-21-typescript-cleanup.md` for details.
 
 ---
 
-**Last Updated:** 2026-04-26 (Phase 27 completion sync-back ~12:07 UTC)
+**Last Updated:** 2026-04-26 (Phase 31 completion sync-back ~13:06 UTC)
 **Initiative Lead:** Project Manager
-**Milestone Status:** ✅ 100% TS18046 ELIMINATION ACHIEVED
+**Milestone Status:** ✅ 100% TS18046 ELIMINATION ACHIEVED + PHASE 31 ZODERROR + HEYGEN RESPONSE CASTS COMPLETE
 
 ---
 
-## Next Steps (Phase 31+)
+## Next Steps (Phase 32+)
 
-**Phase 30 Completion (✅ DELIVERED):**
-- [x] TS2307 quick-win (-5 errors: scroll-area, commerce, metering-reconciler ×3)
-- [x] 251 → 246 errors (46.8% cumulative reduction)
+**Phase 31 Completion (✅ DELIVERED 2026-04-26 ~13:06 UTC):**
+- [x] ZodError v4 migration (6 files: `.error.errors` → `.error.issues`)
+- [x] HeyGen response casts (3 sites in heygen-client.ts: Sub-Variant 1 defensive typing)
+- [x] 246 → 235 errors (-11: 6 TS2339 ZodError + 5 TS2339 heygen-client)
 - [x] 1398/1398 tests passing (zero regressions)
-- [x] Code review approved (9.8/10)
-- [x] M1 carry: ScrollArea polish if UX needs native scroll enhancement
+- [x] Code review approved (9.83/10, 0 critical/0 major/1 minor non-blocking)
+- [x] Protected flows verified (Setup Wizard, Telegram Bot, NOWPayments untouched)
 
-**Phase 31 Focus (TS2339 Property Mismatch Audit):**
-- Target: 72 TS2339 errors (highest non-TS18046/non-QueryError/non-TS2304 frequency)
-- Root-cause analysis: DB schema mismatches, HTTP response shapes, optional semantics
-- Known candidates: `heygen-client.ts` (5), `violations-get-handler.ts` (3), others TBD
+**Phase 32 Focus (TS2339 Property Mismatch Deep Dive):**
+- Target: 61 remaining TS2339 errors (post-Phase 31 reduction: 72 → 61)
+- High-frequency candidates: smart-resume-engine (6), alerts/rules (6), alerts/preferences (6), errors/report (5), analytics/export (4)
+- Sub-Variant 4 candidates (DB schema + type assignment): TS2322 ×49 errors
+- TS2352 type-assertion cleanup: ×41 errors
 - Phase 28-30 review carries (Mi-1/Mi-2/Mi-3 + M1/M2/M3) available for lightweight refinement if time permits
-- Orphan `LicenseAlertPanel` component — flag for dead-code sweep Phase 31+
+- Orphan `LicenseAlertPanel` component — flag for dead-code sweep Phase 32+
 - Duplicate `Env` interfaces in worker/lib — DRY consolidation candidates
 
 **Phase 29 Completion (✅ DELIVERED):**

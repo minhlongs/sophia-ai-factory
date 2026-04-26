@@ -118,6 +118,34 @@ try {
 }
 ```
 
+### Zod v4 API Migration
+
+Zod v4 removed the `.errors` property from ZodError. Use `.issues` instead for accessing validation errors.
+
+**Migration Pattern (Phase 31):**
+
+```typescript
+// OLD (Zod v3)
+if (!parsed.success) {
+  const firstError = parsed.error.errors[0];  // ✗ Property 'errors' does not exist
+}
+
+// NEW (Zod v4+)
+if (!parsed.success) {
+  const firstError = parsed.error.issues[0];  // ✓ Correct
+  const errorCode = firstError?.code;
+  const errorMessage = firstError?.message;
+}
+```
+
+**Applied Across 6 Instances (Phase 31):**
+- Validation services (OpenRouter, ElevenLabs, D-ID key validators)
+- Admin campaign routes (form validation)
+- Campaign creation endpoints
+- Client-side campaign form validation
+
+Use `.issues` for all new Zod v4+ validation error handling.
+
 ## Environment Variables
 - Access environment variables **only on the server**.
 - Prefix public variables with `NEXT_PUBLIC_`.
