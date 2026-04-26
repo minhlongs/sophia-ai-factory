@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { AgentHealthCard } from './components/agent-health-card';
 import { useQuery } from '@tanstack/react-query';
 import {
   Activity,
@@ -193,6 +194,9 @@ export default function SystemHealthPage() {
           </div>
         ))}
       </div>
+
+      {/* AI Agent Health */}
+      <AgentHealthCard />
     </div>
   );
 }

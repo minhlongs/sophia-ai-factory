@@ -13,7 +13,24 @@ import { logger } from '@/lib/utils/logger-utility';
 
 export const dynamic = 'force-dynamic';
 
-const CreateMissionSchema = z.object({
+const CreateMissionSchema = z.discriminatedUnion('mode', [
+  z.object({
+    mode: z.literal('nl'),
+    prompt: z.string().min(1).max(2000),
+    priority: z.enum(['low', 'normal', 'high', 'urgent']).optional().default('normal'),
+  }),
+  z.object({
+    mode: z.literal('template').optional(),
+    title: z.string().min(1).max(200),
+    command: z.string().min(1).max(100),
+    params: z.record(z.unknown()).optional().default({}),
+    priority: z.enum(['low', 'normal', 'high', 'urgent']).optional().default('normal'),
+    description: z.string().max(500).optional(),
+  }),
+]);
+
+// Legacy schema without mode field (backward compat)
+const LegacyMissionSchema = z.object({
   title: z.string().min(1).max(200),
   command: z.string().min(1).max(100),
   params: z.record(z.unknown()).optional().default({}),
@@ -66,13 +83,46 @@ export async function POST(request: NextRequest) {
     }
     const db = createServerClient();
 
-    const body = await request.json();
+    const body = await request.json() as unknown;
+
+    // Try NL/template discriminated union first, then legacy schema
     const parsed = CreateMissionSchema.safeParse(body);
-    if (!parsed.success) {
+    const legacyParsed = parsed.success ? null : LegacyMissionSchema.safeParse(body);
+
+    if (!parsed.success && !legacyParsed?.success) {
       return NextResponse.json({ error: 'Invalid input', details: parsed.error.errors }, { status: 400 });
     }
 
-    const { title, command, params, priority, description } = parsed.data;
+    let title: string;
+    let command: string;
+    let params: Record<string, unknown>;
+    let priority: string;
+    let description: string | undefined;
+
+    if (parsed.success) {
+      const data = parsed.data;
+      if (data.mode === 'nl') {
+        // NL mode: derive title and command from prompt
+        title = data.prompt.slice(0, 100);
+        command = 'nl_decompose';
+        params = { prompt: data.prompt };
+        priority = data.priority ?? 'normal';
+        description = data.prompt;
+      } else {
+        title = data.title;
+        command = data.command;
+        params = data.params ?? {};
+        priority = data.priority ?? 'normal';
+        description = data.description;
+      }
+    } else {
+      const data = legacyParsed!.data!;
+      title = data.title;
+      command = data.command;
+      params = data.params ?? {};
+      priority = data.priority ?? 'normal';
+      description = data.description;
+    }
 
     const { data: mission, error } = await db
       .from('missions')
@@ -110,7 +160,7 @@ export async function POST(request: NextRequest) {
       }).catch(() => {});
     }
 
-    return NextResponse.json({ mission }, { status: 201 });
+    return NextResponse.json({ mission, mission_id: (mission as { id: string } | null)?.id }, { status: 201 });
   } catch (err) {
     logger.error('[POST /api/raas/missions] Unexpected error', err instanceof Error ? err : new Error(String(err)));
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

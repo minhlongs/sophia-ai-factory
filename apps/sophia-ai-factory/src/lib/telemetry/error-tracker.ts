@@ -12,6 +12,12 @@ import { getErrorMessage } from '@/lib/utils/to-error';
 export interface ErrorContext {
   route?: string;
   userId?: string;
+  /** Agent role that triggered the error (e.g. 'CEO', 'Developer') */
+  agent_role?: string;
+  /** Agent task ID for correlation with agent_tasks table */
+  task_id?: string;
+  /** A/B prompt variant label (e.g. 'control', 'variant_a') */
+  variant?: string;
   [key: string]: unknown;
 }
 

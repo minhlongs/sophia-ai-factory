@@ -1,8 +1,8 @@
 /**
  * Dashboard Missions Page
  *
- * Main missions landing — shows MissionDashboard with launch button.
- * Opens MissionLauncher modal when user clicks launch.
+ * Mission Control layout: NL input + agent team panel + live SSE feed
+ * Preserves existing MissionDashboard and MissionLauncher below.
  */
 
 'use client';
@@ -11,6 +11,9 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { MissionDashboard } from '@/components/raas/mission-dashboard';
 import { MissionLauncher } from '@/components/raas/mission-launcher';
+import { MissionControlHeader } from '@/components/missions/mission-control-header';
+import { AgentTeamPanel } from '@/components/missions/agent-team-panel';
+import { TaskFeed } from '@/components/missions/task-feed';
 import { useRouter } from 'next/navigation';
 
 export default function MissionsPage() {
@@ -20,10 +23,9 @@ export default function MissionsPage() {
   const [balance, setBalance] = useState(0);
 
   function handleLaunchMission(_templateId?: string) {
-    // Fetch balance before opening launcher
     fetch('/api/raas/usage')
       .then(r => r.json())
-      .then(d => setBalance(d.balance ?? 0))
+      .then(d => setBalance((d as { balance?: number }).balance ?? 0))
       .catch(() => {})
       .finally(() => setShowLauncher(true));
   }
@@ -49,6 +51,16 @@ export default function MissionsPage() {
         </button>
       </div>
 
+      {/* Mission Control: NL input + Quick Actions */}
+      <MissionControlHeader onMissionCreated={handleMissionCreated} />
+
+      {/* Agent Team Panel + Live Task Feed */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <AgentTeamPanel />
+        <TaskFeed />
+      </div>
+
+      {/* Existing dashboard (history + quick templates) */}
       <MissionDashboard onLaunchMission={handleLaunchMission} />
 
       {showLauncher && (

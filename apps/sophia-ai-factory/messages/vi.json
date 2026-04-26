@@ -386,7 +386,29 @@
       "result": "Kết Quả",
       "view_output": "Xem Đầu Ra",
       "mcu_breakdown": "Chi Tiết MCU",
-      "total": "Tổng Cộng"
+      "total": "Tổng Cộng",
+      "control": {
+        "title": "Trung Tâm Điều Hành",
+        "subtitle": "Điều phối đội AI bằng ngôn ngữ tự nhiên",
+        "prompt_placeholder": "Mô tả nhiệm vụ bằng ngôn ngữ tự nhiên... VD: 'Tạo kênh YouTube về công nghệ, đăng 3 video mỗi tuần'",
+        "submit": "Khởi Động Nhiệm Vụ",
+        "submitting": "Đang khởi động...",
+        "pause_all": "Dừng Tất Cả",
+        "view_logs": "Xem Nhật Ký",
+        "new_mission": "Nhiệm Vụ Mới",
+        "agent_team": "Đội AI",
+        "task_feed": "Luồng Nhiệm Vụ Trực Tiếp",
+        "no_events": "Chưa có sự kiện nào — khởi động nhiệm vụ để xem cập nhật trực tiếp",
+        "agent_idle": "Rảnh",
+        "agent_working": "Đang làm",
+        "agent_blocked": "Bị chặn",
+        "agent_error": "Lỗi",
+        "create_team_cta": "Tạo Đội AI",
+        "no_agents": "Chưa có agent nào",
+        "connected": "Đã kết nối",
+        "disconnected": "Mất kết nối",
+        "paused_count": "Đã dừng {count} tác vụ"
+      }
     },
     "apiKeys": {
       "page_title": "Khoá API",

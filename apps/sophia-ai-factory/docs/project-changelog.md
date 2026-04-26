@@ -4,6 +4,30 @@
 
 ---
 
+## [2026-04-25] Phase 04 (Land) — Observability + AI-Native CI/CD (v1.12.21)
+
+### Summary
+Agent execution is now observable and tier-gated. Added enforcement gate, health metrics API, agent health card on system-health page, and extended error tracking with agent context. 25 new Vitest tests added.
+
+### Changes
+- **New:** `src/lib/agents/enforcement-gate.ts` — `assertTierAllowsAgent()` + `AgentTierBlockedError`; BASIC blocked, PREMIUM allows CEO+Developer, MASTER bypasses all
+- **Modified:** `src/lib/agents/runner.ts` — tier gate before LLM call; `reportError` in catch (non-blocking); accepts `userTier` param
+- **Modified:** `src/lib/telemetry/error-tracker.ts` — `ErrorContext` extended with `agent_role?`, `task_id?`, `variant?` (additive, non-breaking)
+- **New:** `src/lib/agents/agent-health-resolver.ts` — D1 SQL aggregator (24h window) with 30s in-memory cache; tolerates empty tables
+- **New:** `src/app/api/health/agents/route.ts` — GET, auth-gated, returns `AgentHealthSummary` JSON
+- **New:** `src/app/[locale]/dashboard/system-health/components/agent-health-card.tsx` — React Query 30s poll; success rate badges; role metrics table
+- **Modified:** `src/app/[locale]/dashboard/system-health/page.tsx` — `<AgentHealthCard />` mounted below services grid
+- **New:** `src/lib/agents/enforcement-gate.test.ts` — 11 gate tests covering all (role, tier) pairs
+- **Modified:** `src/lib/agents/runner.test.ts` — 14 total tests; 7 new Phase 04 tests (gate block, no-fetch, reportError, MASTER bypass)
+- **Modified:** `docs/system-architecture.md` — Agent Observability subsection added
+
+### Quality
+- Build: 0 TypeScript errors
+- Tests: 1394 passed (25 new, 1425 total with skips)
+- Zero `:any` types, all new files under 200 lines
+
+---
+
 ## [2026-04-25] Phase 39 — Metering Reconciler Modularization (v1.12.20)
 
 ### Summary

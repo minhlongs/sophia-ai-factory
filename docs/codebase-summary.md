@@ -1,7 +1,7 @@
 # Codebase Summary — Sophia AI Factory
 
 > Comprehensive overview of the Sophia AI Factory codebase structure, patterns, and architectural decisions.
-> **Last Updated:** 2026-04-25 (Phase 9: Analytics Dashboard Shipped)
+> **Last Updated:** 2026-04-25 (Tech Debt Phase 30: Analytics Query Type Safety + Billing Modularization)
 
 **Production URL:** https://sophia.agencyos.network
 **Tech Stack:** Next.js 15.5 + Cloudflare Workers + D1 SQLite + Better Auth v1.6.2 + Better Stack + PostHog
@@ -336,10 +336,10 @@ better_auth_verifications        → id, identifier, value, expires_at
   - Custom Integrations: Enterprise+ only
   - White-Label: Master only
 
-### 12. Analytics Dashboard (2026-04-25)
-- **Location:** `lib/analytics/*` (6 modules), `components/analytics/*` (7 components), `app/api/analytics/*` (4 endpoints)
+### 12. Analytics Dashboard (2026-04-25) + Type Safety Hardening (Phase 30)
+- **Location:** `lib/analytics/*` (9 modules with Phase 30 type safety), `components/analytics/*` (7 components), `app/api/analytics/*` (4 endpoints)
 - **Real-Time Metrics:** SSE endpoint streaming activeUsers, campaignsLast1h, apiCallsLast1h, errorRateLast1h, tierDistribution (10s refresh)
-- **Revenue Metrics:** MRR, ARR, growth %, tier breakdown (backed by NOWPayments invoice queries)
+- **Revenue Metrics:** MRR, ARR, growth %, tier breakdown (backed by NOWPayments invoice queries with full type safety)
 - **Cohort Analysis:**
   - Retention curves by signup cohort (7-week tracking)
   - Churn timeline (tier cancellations with reasons)
@@ -348,6 +348,15 @@ better_auth_verifications        → id, identifier, value, expires_at
 - **Date Range Picker:** 7d/30d/90d presets + custom date range selector
 - **Dashboard Integration:** Unified `/dashboard/analytics` page wiring all components (admin-only)
 - **Database:** `tier_change_events` table (migration 0015) tracks tier change history for cohort scoping
+- **Query Type Safety (Phase 30):**
+  - `campaign-queries.ts` — Typed with `LicenseRow`, `UsageRow`, `OverageRow` interfaces; generic `D1QueryChain<T>`
+  - `violation-queries.ts` — Typed `D1QueryChain`; fixed bug where `startTimestamp`/`endTimestamp` were accepted but not applied
+  - `revenue-nowpayments.ts` — Fully typed with `D1QueryChain<LicenseRow>` generic; no `:any` types
+  - All 3 query files: 0 `:any` types, comprehensive test coverage
+- **Billing Page Modularization (Phase 30):** Reduced from 440L → 139L (69% reduction)
+  - New components: `billing-charge-summary.tsx`, `billing-overage-table.tsx`, `billing-payment-history.tsx`
+  - New shared types: `billing-page-types.ts`
+  - Improves maintainability and component reusability
 - **Activation:** Auto-live post-deploy; no env gates required
 
 ---

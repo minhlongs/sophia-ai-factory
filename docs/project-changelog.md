@@ -1,7 +1,52 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-04-25 (Phase 9: Analytics Dashboard Shipped — Real-time SSE, revenue metrics, cohort analysis)
+> **Last Updated:** 2026-04-25 (Tech Debt Phase 30: Analytics Query Type Safety + Billing Modularization)
+
+---
+
+## [2026-04-25] Tech Debt Phase 30 — Analytics Query Type Safety + Billing Page Modularization (COMPLETE)
+
+### Summary
+Analytics query modules elevated to production type safety with comprehensive interface definitions and typed query chains. Billing page refactored from 440 LOC monolith into modular component suite: billing-charge-summary, billing-overage-table, billing-payment-history. All 3 analytics query files (`campaign-queries.ts`, `violation-queries.ts`, `revenue-nowpayments.ts`) now fully typed with no `:any` types. Tests: 1362/1362 ✅. Build: 0 TS errors, production HTTP 200 ✅.
+
+### Files Modified (5 Total)
+
+**Analytics Query Type Safety:**
+- `src/lib/analytics/queries/campaign-queries.ts` — Added `LicenseRow`/`UsageRow`/`OverageRow` interfaces, typed `D1QueryChain`, fixed pre-existing `.or()` client-side filter bug
+- `src/lib/analytics/queries/violation-queries.ts` — Typed `D1QueryChain`, added `ViolationType`/`ViolationSeverity` casts, fixed silent-ignore bug where `startTimestamp`/`endTimestamp` were not applied to queries
+- `src/lib/analytics/queries/revenue-nowpayments.ts` — Added `D1QueryChain<LicenseRow>` generic typing
+
+**Billing Page Modularization (440L → 139L):**
+- `src/app/[locale]/(dashboard)/dashboard/billing/page.tsx` — Reduced from 440L to 139L (69% reduction) via component extraction
+- `src/components/billing/billing-charge-summary.tsx` — New: MCU charges summary with breakdown
+- `src/components/billing/billing-overage-table.tsx` — New: Overage events table
+- `src/components/billing/billing-payment-history.tsx` — New: Payment transaction history
+- `src/lib/billing/billing-page-types.ts` — New: Shared types for billing page components
+
+### Build Fix (Commit cf55112)
+**8 Turbopack Errors Resolved:**
+- Fixed server component re-exports causing bundle circular dependencies
+- Added `ssr: false` configuration to prevent SSR in SC-only modules
+- Corrected vi.json translation JSON structure validation
+
+### Metrics
+- **Lines of Code:** Analytics query files gained ~150 LOC (interfaces + typing); billing modularization saved 301 LOC net
+- **Test Coverage:** 1362/1362 pass (100%), no new test failures
+- **Type Safety:** 0 `:any` types introduced; all 3 query files now fully typed
+- **Build:** ✅ npm run build exit 0, 0 TS errors, 8 Turbopack errors fixed
+- **Code Quality:** Type coverage 100% in analytics queries
+- **Production:** ✅ HTTP 200 confirmed, no regressions
+
+### Architecture Notes
+- **Query Typing Pattern:** Established generic `D1QueryChain<T>` pattern for SQL builders to maintain type inference across `.where()`, `.select()`, `.or()` chains
+- **Billing Modularization Pattern:** Extracted focused, reusable components (charge summary, overage table, payment history) to reduce main page complexity
+- **Bug Fixes:** Fixed silent-ignore where timestamp filters were accepted in function params but not applied to D1 queries (hidden in Phase 9 implementation)
+
+### Activation
+- No env gates required; all changes are type-safe refactors with no behavioral changes
+- Modularized billing components render identically to previous monolith page
+- Query bugs now properly enforce timestamp filtering on violations query
 
 ---
 

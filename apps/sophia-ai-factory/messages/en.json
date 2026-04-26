@@ -386,7 +386,29 @@
       "result": "Result",
       "view_output": "View Output",
       "mcu_breakdown": "MCU Cost Breakdown",
-      "total": "Total"
+      "total": "Total",
+      "control": {
+        "title": "Mission Control",
+        "subtitle": "Command your AI agent team with natural language",
+        "prompt_placeholder": "Describe your mission in natural language... e.g. 'Create a YouTube channel for tech reviews, post 3 videos per week'",
+        "submit": "Launch Mission",
+        "submitting": "Launching...",
+        "pause_all": "Pause All",
+        "view_logs": "View Logs",
+        "new_mission": "New Mission",
+        "agent_team": "Agent Team",
+        "task_feed": "Live Task Feed",
+        "no_events": "No events yet — launch a mission to see live updates",
+        "agent_idle": "Idle",
+        "agent_working": "Working",
+        "agent_blocked": "Blocked",
+        "agent_error": "Error",
+        "create_team_cta": "Create AI Team",
+        "no_agents": "No agents provisioned yet",
+        "connected": "Connected",
+        "disconnected": "Disconnected",
+        "paused_count": "{count} tasks paused"
+      }
     },
     "apiKeys": {
       "page_title": "API Keys",
