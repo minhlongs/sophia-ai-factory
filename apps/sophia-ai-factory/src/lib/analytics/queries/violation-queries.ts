@@ -5,13 +5,14 @@
  */
 
 import { createServerClient } from '@/lib/db/client';
+import type { D1QueryChain } from '@/lib/db/d1-query-chain';
 import { logger } from '@/lib/utils/logger-utility';
-import type { ViolationFilters, ViolationEvent, ViolationSummary } from '../types';
+import type { ViolationFilters, ViolationEvent, ViolationSummary, ViolationType, ViolationSeverity } from '../types';
 
 /**
  * Apply common violation filters to a Supabase query builder
  */
-function applyViolationFilters(query: any, filters: ViolationFilters): any {
+function applyViolationFilters(query: D1QueryChain, filters: ViolationFilters): D1QueryChain {
   if (filters.licenseNonce) query = query.eq('license_nonce', filters.licenseNonce);
   if (filters.userId) query = query.eq('user_id', filters.userId);
   if (filters.type) query = query.eq('type', filters.type);
@@ -62,7 +63,7 @@ export async function fetchViolations(
   const from = (page - 1) * limit;
   query = query.range(from, from + limit - 1).order('created_at', { ascending: false });
 
-  const { data: violations, error, count } = await query as any;
+  const { data: violations, error, count } = await query;
 
   if (error) {
     logger.error('[Analytics] Failed to fetch violations', error);
@@ -109,8 +110,9 @@ export async function fetchViolationSummary(
 
   let query = db.from('violations').select('*');
   query = applyViolationFilters(query, filters);
+  query = query.gte('created_at', startTimestamp).lte('created_at', endTimestamp);
 
-  const { data: violations, error } = await query as any;
+  const { data: violations, error } = await query;
 
   if (error) {
     logger.error('[Analytics] Failed to fetch violation summary', error);
@@ -120,8 +122,8 @@ export async function fetchViolationSummary(
   if (!violations || violations.length === 0) {
     return {
       totalViolations: 0,
-      byType: {} as any,
-      bySeverity: {} as any,
+      byType: {} as Record<ViolationType, number>,
+      bySeverity: {} as Record<ViolationSeverity, number>,
       byTier: {},
       resolvedCount: 0,
       unresolvedCount: 0,
@@ -153,14 +155,10 @@ export async function fetchViolationSummary(
     .map(([date, count]) => ({ date, count }))
     .sort((a, b) => a.date.localeCompare(b.date));
 
-  // Suppress unused param warning — timestamps are for caller filtering
-  void startTimestamp;
-  void endTimestamp;
-
   return {
     totalViolations: violations.length,
-    byType: byType as any,
-    bySeverity: bySeverity as any,
+    byType: byType as Record<ViolationType, number>,
+    bySeverity: bySeverity as Record<ViolationSeverity, number>,
     byTier,
     resolvedCount,
     unresolvedCount: violations.length - resolvedCount,
