@@ -35,7 +35,7 @@ export async function POST(
       .eq('user_id', user.id)
       .single() as { data: { role: string } | null; error: Error | null };
 
-    const isAdmin = userData?.role === 'admin' || (user as { user_metadata?: { role?: string } }).user_metadata?.role === 'admin';
+    const isAdmin = userData?.role === 'admin' || user.role === 'admin';
     if (!isAdmin) {
       return NextResponse.json({ error: 'Forbidden - admin only' }, { status: 403 });
     }

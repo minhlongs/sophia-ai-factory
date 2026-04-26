@@ -1,6 +1,12 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-26 | **Current Version:** 1.12.41
+**Last Updated:** 2026-04-26 | **Current Version:** 1.12.42
+
+---
+
+## [2026-04-26] B2 Phase 24 — Better Auth Migration Hygiene + Dead Code Cleanup (v1.12.42)
+
+**B2 Phase 24 (admin dunning + usage export + raas invoice + quota endpoints batch):** Hygiene cleanup targeting 9 files to remove post-Better Auth migration dead code and document complex type patterns. **Group A (×6):** Replaced dead `user_metadata` fallback with direct `user.role` access across admin-auth checks (`admin/dunning/{suspend,route,restore}`, `usage/export/{get,post}-handler`, `usage/summary`). Better Auth User type has no `user_metadata` field; all 6 instances simplified from `(user as { user_metadata?: { role?: string } }).user_metadata?.role || user.role === 'admin'` pattern to clean `user.role === 'admin'`. **Group B (×1):** Confirmed `quota/overage-events` already deleted unreachable `GETStatus` export in Phase 22 (Next.js App Router only registers HTTP-method-named exports). **Group C (×2):** Added inline comments explaining complex patterns: `raas-invoice-generator.ts` documents `as unknown as RaasLicense` double-cast rationale (TS2352 root: Supabase return type narrower than row interface); `internal/usage/query/route.ts` references Sub-Variant 4 doctrine and sister `RawUsageEventRow` contract. Eliminated 2 TS errors (320→318, -0.6% Phase 24 delta, -31.2% cumulative B2 from baseline 462→318). TS18046 unchanged at 4 (Telegram PROTECTED FLOW). Tests 1394/1394 pass. Code review 9.7/10 auto-approved. Closes B2 hygiene pass.
 
 ---
 

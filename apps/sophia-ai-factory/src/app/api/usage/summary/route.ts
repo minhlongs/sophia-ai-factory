@@ -78,8 +78,7 @@ export async function GET(req: NextRequest) {
       .single();
     const userData = rawUserData as UserProfileRoleRow | null;
 
-    const userMeta = (user as { user_metadata?: { role?: string } }).user_metadata;
-    const isAdmin = userData?.role === 'admin' || userMeta?.role === 'admin';
+    const isAdmin = userData?.role === 'admin' || user.role === 'admin';
 
     // Verify license ownership if provided
     if (license_nonce && !isAdmin) {

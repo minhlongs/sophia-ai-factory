@@ -352,25 +352,78 @@ Use interface cast pattern instead of generic argument. This is a known D1 clien
 
 Distinct from HTTP boundary casts: DB results are strongly typed by schema but TypeScript cannot infer `ReturnType<typeof db.from>` without manual interface definition at point of use. Cast occurs at **narrowest consumption point**, interfaces omit unused fields, all reads optional-chained. 22 instances codebase-wide (Phase 23 adds 6 new + Phase 22 5 new + Phase 21 7 new + Phase 20 1 + 3 pre-existing).
 
-**For Better Auth User Type Assertion (NEW — Phase 23):**
+**For Better Auth User Type Assertion (DEPRECATED — Phase 23, REMOVED Phase 24):**
 
-When accessing legacy `user_metadata` field on Better Auth `User` type (which doesn't expose this property natively), apply defensive type assertion pattern at the consumption point:
+~~Legacy pattern (Phase 23 documentation):~~ When accessing `user_metadata` field via defensive type assertion, the pattern was:
 
 ```typescript
-// src/app/api/usage/summary/route.ts L81
-const user = await getCurrentUser(); // Returns Better Auth User type
-
-// Direct access fails: Property 'user_metadata' does not exist on type 'User'
-// const userRole = user.user_metadata?.role; // ← TS2339 ERROR
-
-// Fix: Type assertion with defensive shape
+// DEPRECATED — DO NOT USE (Phase 23 usage pattern, eliminated in Phase 24)
 const userMeta = (user as { user_metadata?: { role?: string } }).user_metadata;
 const userRole = userMeta?.role ?? 'default_role';
 ```
 
-**Rationale:** Better Auth's `User` type doesn't include `user_metadata` in its TypeScript interface, but this field may exist at runtime for legacy sessions or custom migrations. The defensive assertion `as { user_metadata?: { role?: string } }` allows access without polluting the Better Auth type definition (which is external/owned by the library). This pattern is specific to auth migration scenarios where legacy user properties must remain accessible during transition periods.
+**Why Deprecated (Phase 24):** Better Auth `User` type has no `user_metadata` field at runtime — this was defensive code from pre-migration era. The pattern is dead code (zero references post-Phase 24 cleanup). See "Direct `user.role` Access (CANONICAL — Phase 24)" immediately below.
 
-**Scope:** Use this pattern ONLY for Better Auth `User` legacy field access. Do NOT apply to general DB-Result casts (use Sub-Variant 4 interface pattern instead). This is a transitional pattern; consider deprecation in Phase 24+ as Better Auth migration completes.
+---
+
+**Better Auth User Type — Direct `role` Access (CANONICAL — Phase 24):**
+
+After Better Auth migration completion (Phase 24), access user role directly from `User` object:
+
+```typescript
+// Correct (Phase 24+)
+const user = await getCurrentUser(); // Better Auth User type
+const isAdmin = user.role === 'admin';
+
+// Also correct (with fallback for type safety)
+const userRole = user.role ?? 'user';  // Better Auth User.role?: string
+```
+
+**Why Direct Access Works:** Better Auth `User` type (defined at `@/lib/db/client.ts:177-183`) exposes `role?: string` directly. The `getCurrentUser()` helper (src/lib/better-auth-session.ts:43) guarantees a populated string with `'user'` fallback: `role: (user.role as string) ?? 'user'`. Defensive `user_metadata` branch was migration cleanup; once migration complete, direct `user.role` access is canonical.
+
+**Migration Cleanup (Phase 24 Completed):**
+- ✅ Removed dead `(user as { user_metadata?: { ... } }).user_metadata?.role` pattern from 6 sites
+- ✅ All admin-auth checks simplified to `user.role === 'admin'`
+- ✅ TS2339 errors (property 'user_metadata' does not exist) eliminated
+- Files cleaned: `admin/dunning/{suspend,route,restore}`, `usage/export/{get,post}-handler`, `usage/summary`
+
+**Scope:** Use `user.role === 'admin'` for all new admin checks. The `user_metadata` assertion pattern is DEPRECATED and should not be used for new code.
+
+---
+
+## Dead Export Detection in API Routes (Phase 24)
+
+Next.js App Router **only recognizes HTTP-method-named exports** in route files: `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `OPTIONS`, `HEAD`. All other exports are unreachable code and should be removed.
+
+**Pattern:**
+
+```typescript
+// src/app/api/quota/overage-events/route.ts
+
+export async function GET(request: Request) {
+  // ✓ Recognized by Next.js, will be invoked
+}
+
+export async function GETStatus() {
+  // ✗ UNREACHABLE — not an HTTP method
+  // ✗ Should be deleted or moved to a library file
+}
+```
+
+**Detection & Cleanup (Phase 24):**
+
+When auditing API routes:
+1. **Identify non-standard exports** via grep or code review
+2. **Verify no callers exist** across the entire codebase (grep for function name)
+3. **Delete** the unreachable export once verified
+4. **Remove orphaned imports** (e.g., `getQuotaStatus` import if only used by `GETStatus()`)
+
+Example from Phase 24: `src/app/api/quota/overage-events/route.ts` had an unreachable `GETStatus` function (only exports HTTP-method names now). Deletion eliminated orphaned helper function that would never execute.
+
+**Why This Matters:** Dead exports:
+- Inflate code size with unused logic
+- Create confusion for future maintainers (suggests API contract that doesn't exist)
+- May suggest a mismatch between intended API structure and actual routes
 
 ---
 

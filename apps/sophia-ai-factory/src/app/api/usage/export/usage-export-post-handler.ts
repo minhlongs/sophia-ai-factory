@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
 
     const { billingPeriod, startDate, endDate, externalCustomerId, format, service, licenseNonce, page, pageSize } = parseResult.data
     const { data: userData } = await supabase.from('user_profiles').select('role').eq('user_id', user.id).single()
-    const isAdmin = userData?.role === 'admin' || user.user_metadata?.role === 'admin'
+    const isAdmin = userData?.role === 'admin' || user.role === 'admin'
 
     if (!isAdmin) {
       if (externalCustomerId && licenseNonce) {
