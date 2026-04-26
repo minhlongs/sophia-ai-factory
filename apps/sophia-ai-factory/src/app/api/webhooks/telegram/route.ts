@@ -16,6 +16,17 @@ import {
 } from '@/lib/telegram/telegram-command-handlers'
 import { createServerClient } from '@/lib/db/client'
 
+interface TelegramUpdate {
+  callback_query?: {
+    data?: string
+    message?: { chat?: { id?: number | string } }
+  }
+  message?: {
+    text?: string
+    chat?: { id?: number | string }
+  }
+}
+
 /**
  * Telegram Webhook Handler
  * Processes incoming updates from Telegram Bot API
@@ -28,7 +39,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const body = await request.json()
+    const body = (await request.json().catch(() => ({}))) as TelegramUpdate
 
     // Verify webhook secret token only when secret is configured
     const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET
