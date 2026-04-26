@@ -1,6 +1,6 @@
 import type { Discrepancy } from '@/lib/billing/reconciliation-types';
 import { logger } from '@/lib/utils/logger-utility';
-import type { Env } from './index';
+import type { Env } from '../index';
 import type { AggregatedUsage, LicenseValidationResult } from './metering-reconciler-types';
 import { logErrorToKv } from './metering-reconciler-error-logger';
 

@@ -4,7 +4,6 @@
 
 export * as Core from './core';
 export * as AI from './ai';
-export * as Commerce from './commerce';
 export * as Shared from './shared';
 
 // Selective top-level exports for common use cases

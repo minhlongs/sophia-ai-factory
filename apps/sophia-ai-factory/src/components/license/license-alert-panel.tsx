@@ -10,7 +10,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Bell } from 'lucide-react';
 import { LicenseAlertItem } from './license-alert-item';
 import type { UserAlert } from './license-alert-item';
@@ -107,7 +106,7 @@ export function LicenseAlertPanel({ userId, licenseNonce, limit = 10 }: AlertPan
             <p>No active alerts</p>
           </div>
         ) : (
-          <ScrollArea className="h-[400px] pr-4">
+          <div className="h-[400px] overflow-y-auto pr-4">
             <div className="space-y-3">
               {alerts.map((alert) => (
                 <LicenseAlertItem
@@ -120,7 +119,7 @@ export function LicenseAlertPanel({ userId, licenseNonce, limit = 10 }: AlertPan
                 />
               ))}
             </div>
-          </ScrollArea>
+          </div>
         )}
       </CardContent>
     </Card>

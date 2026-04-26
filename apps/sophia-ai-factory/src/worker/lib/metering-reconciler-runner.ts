@@ -16,7 +16,7 @@
  * @module worker/metering-reconciler-runner
  */
 
-import type { Env } from './index';
+import type { Env } from '../index';
 import type {
   ReconciliationReport,
   ReconciliationConfig,
