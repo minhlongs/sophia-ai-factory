@@ -578,8 +578,8 @@
       "auto_refresh": "Tự Động Làm Mới",
       "auto_refresh_on": "Tự động làm mới BẬT (30s)",
       "auto_refresh_off": "Tự động làm mới TẮT",
-      "date_range_placeholder": "Date range placeholder",
-      "tier_adoption_title": "Tier adoption title"
+      "date_range_placeholder": "Chọn khoảng thời gian",
+      "tier_adoption_title": "Biểu Đồ Phân Bổ Gói Dịch Vụ"
     },
     "support": {
       "title": "Hỗ Trợ",

@@ -4,7 +4,7 @@ import { Campaign } from "@/types";
 import { useEffect, useCallback, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { retryCampaign, resumeCampaign } from "@/app/actions/campaigns";
+import { retryCampaign, resumeCampaign } from "@/app/actions/campaigns-retry-resume";
 import { useToast } from "@/hooks/use-toast";
 import { CampaignItem } from "./campaign-list/campaign-item";
 import { CampaignActions } from "./campaign-list/campaign-actions";
