@@ -10,6 +10,11 @@ import { logger } from '@/lib/utils/logger-utility';
 import { toError } from '@/lib/utils/to-error';
 import { sendWebhookAlert, createQuotaThresholdPayload } from '@/lib/alerts/webhook-notification-service';
 
+interface AlertTestPayload {
+  webhookUrl?: string;
+  webhookSecret?: string;
+}
+
 /**
  * POST /api/alerts/test
  * Send test webhook to verify configuration
@@ -26,7 +31,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Parse request body
-    const body = await request.json();
+    const body = (await request.json().catch(() => ({}))) as AlertTestPayload;
     const { webhookUrl, webhookSecret } = body;
 
     if (!webhookUrl) {

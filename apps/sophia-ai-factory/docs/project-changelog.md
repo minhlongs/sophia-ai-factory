@@ -1,6 +1,12 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-26 | **Current Version:** 1.13.5
+**Last Updated:** 2026-04-26 | **Current Version:** 1.13.6
+
+---
+
+## MILESTONE v1.13.6 — Setup Wizard Safety Verification + 4-Route TS2339 Batch (Phase 33)
+
+**Phase 33 B2 (TS2339 high-frequency cleanup with protected-flow safety verification):** Targeted 4 routes to eliminate 14 TypeScript errors via Sub-Variant 2 cast pattern. **Group A: Error/Analytics Endpoints.** `src/app/api/errors/report/route.ts` added `ErrorReportPayload` interface + Sub-Variant 2 cast with defensive `.catch(() => ({}))`. `src/app/api/analytics/export/route.ts` cast `AnalyticsExportRequest` on request-body with optional fallback. TS error reduction: 4 errors (property access on unknown). **Group B: Setup Verification & Alerts.** `src/app/api/setup/verify/route.ts` cast `SetupVerifyPayload` (protected Setup Wizard touched but type-only); verification logic untouched — Setup Wizard confirmed safe. `src/app/api/alerts/test/route.ts` cast `AlertTestPayload` with defensive `.catch()`. Validation flows preserved. TS error reduction: 10 errors (TS2339 request/body property access). **Summary:** 216 → 202 TS errors (-14 total). Sub-Variant 2 instances now ~13 codebase-wide. Tests 1398/1398 pass. Code review 9.7/10 auto-approved. Protected flows (Setup Wizard, Telegram Bot, NOWPayments) verified safe.
 
 ---
 

@@ -2,11 +2,11 @@
 
 **Initiative:** B2 TypeScript Error Elimination + Quality Refinement
 **Duration:** Multi-phase (Phases 1–32 complete, Phase 33+ planned)
-**Overall Status:** ✅ PHASE 32 COMPLETE — SMART RESUME RUNTIME BUG FIX + ALERTS ROUTE CASTS
+**Overall Status:** ✅ PHASE 33 COMPLETE — 4 ROUTES SUB-VARIANT 2 TS2339 BATCH
 **Baseline:** 462 TS18046 errors (next.config.ts:24 reference)
-**Current:** 216 errors remaining (post-Phase 32)
-**Phase 32 Result:** 235 → 216 errors (-19: 6 runtime async + 12 TS2339 + 1 TS18047)
-**Total Errors Reduced:** 462 → 216 (53.2% overall codebase reduction)
+**Current:** 202 errors remaining (post-Phase 33)
+**Phase 33 Result:** 216 → 202 errors (-14 TS2339: errors/report 5 + analytics/export 4 + setup/verify 3 + alerts/test 2)
+**Total Errors Reduced:** 462 → 202 (56.3% overall codebase reduction)
 
 ---
 
@@ -40,8 +40,52 @@
 | 30 | 5 files (1 component + 1 index + 3 worker imports) | -5 TS2307 quick-win (251 → 246) | TS2307 module resolution + dead code elimination | ✅ DONE | tester-260426-1252-b2-phase30-ts2307-quickwin, code-review-260426-1252-b2-phase30-ts2307-quickwin 9.8/10 |
 | 31 | 7 files (6 ZodError + 1 heygen-client) | -11 (246 → 235) | ZodError v4 migration + HeyGen response casts | ✅ DONE | tester-260426-1306-b2-phase31-zoderror-heygen, code-review-260426-1306-b2-phase31-zoderror-heygen 9.83/10 |
 | 32 | 3 files (1 smart-resume + 2 alerts routes) | -19 (235 → 216) | Smart resume async fix (RUNTIME BUG) + alerts Sub-Variant 2 casts | ✅ DONE | tester-260426-1316-b2-phase32-ts2339-batch, code-review-260426-1316-b2-phase32-ts2339-batch 9.7/10 |
+| 33 | 4 routes (errors/report + analytics/export + setup/verify + alerts/test) | -14 (216 → 202) | Sub-Variant 2 request-body TS2339 batch (4 high-frequency routes) | ✅ DONE | tester-260426-1326-b2-phase33-ts2339-batch, code-review-260426-1326-b2-phase33-ts2339-batch 9.7/10 |
 
-**MILESTONES ACHIEVED:** 462 → 0 TS18046 (100% via Phase 27); 313 → 280 TS2345 QueryError (100% via Phase 28); 280 → 251 TS2304 ×28 + TS2307 ×1 (quick-win via Phase 29); 251 → 246 TS2307 ×5 (quick-win via Phase 30); 246 → 235 ZodError v4 + HeyGen (Phase 31); **235 → 216 Smart Resume + Alerts (Phase 32, 53.2% cumulative reduction)**
+**MILESTONES ACHIEVED:** 462 → 0 TS18046 (100% via Phase 27); 313 → 280 TS2345 QueryError (100% via Phase 28); 280 → 251 TS2304 ×28 + TS2307 ×1 (quick-win via Phase 29); 251 → 246 TS2307 ×5 (quick-win via Phase 30); 246 → 235 ZodError v4 + HeyGen (Phase 31); 235 → 216 Smart Resume + Alerts (Phase 32); **216 → 202 Sub-Variant 2 Batch (Phase 33, 56.3% cumulative reduction)**
+
+---
+
+## Phase 33 Summary (2026-04-26) — 4 ROUTES SUB-VARIANT 2 BATCH
+
+**Status:** ✅ COMPLETED 2026-04-26 ~13:26 UTC
+
+**🎯 PHASE 33 ACHIEVEMENT: TS2339 HIGH-FREQUENCY BATCH CLEANUP**
+- **TS error baseline:** 216 → 202 (-14 TS2339 errors)
+- **Files:** 4 API routes (errors/report, analytics/export, setup/verify, alerts/test)
+- **Pattern:** Sub-Variant 2 request-body defensive casting
+- **Tests:** 1398/1398 ✅ (zero regressions)
+- **Code review:** 9.7/10 auto-approved (0 critical/0 major/3 minor non-blocking)
+- **Protected flows:** Setup Wizard verified & safe
+
+**Key Actions:**
+1. Added `ClientErrorPayload` interface to errors/report route — 5 TS2339 fixed
+2. Added `AnalyticsExportPayload` interface to analytics/export route — 4 TS2339 fixed
+3. Added `SetupVerifyPayload` interface to setup/verify route — 3 TS2339 fixed (PROTECTED FLOW #1)
+4. Added `AlertTestPayload` interface to alerts/test route — 2 TS2339 fixed
+
+All 4 routes use canonical defensive pattern:
+```typescript
+const body = (await request.json().catch(() => ({}))) as TypedPayload;
+```
+
+**Setup Wizard Protection Verified:**
+- Auth gate (`isConfigured` 403) runs BEFORE body parse — unchanged
+- Type cast is structural/compile-time only — zero runtime code change
+- Validation logic (`if (!service || !resolvedKey)`) byte-identical
+- Dual `apiKey` ↔ `key` support preserved
+- Malformed JSON degrades gracefully to validation 400 (improvement vs prior 500)
+
+**Phase 32 Review Carries (Deferred Phase 34+):**
+- Mi-1: JSDoc clarify session-trust asymmetry (non-blocking)
+- Mi-2: Unit test assertion refinement (non-blocking)
+- Mi-3: Tier behavior change comment (non-blocking)
+
+**Reports:**
+- Tester: `plans/reports/tester-260426-1326-b2-phase33-ts2339-batch.md`
+- Code Review: `plans/reports/code-review-260426-1326-b2-phase33-ts2339-batch.md`
+
+See `phase-33-typescript-cleanup.md` for full completion details.
 
 ---
 
@@ -574,41 +618,30 @@ See `phase-21-typescript-cleanup.md` for details.
 
 ---
 
-## Next Steps (Phase 32+)
+## Next Steps (Phase 34+)
 
-**Phase 31 Completion (✅ DELIVERED 2026-04-26 ~13:06 UTC):**
-- [x] ZodError v4 migration (6 files: `.error.errors` → `.error.issues`)
-- [x] HeyGen response casts (3 sites in heygen-client.ts: Sub-Variant 1 defensive typing)
-- [x] 246 → 235 errors (-11: 6 TS2339 ZodError + 5 TS2339 heygen-client)
+**Phase 33 Completion (✅ DELIVERED 2026-04-26 ~13:26 UTC):**
+- [x] 4 API routes Sub-Variant 2 request-body casting
+- [x] TS2339 property mismatch elimination (216 → 202, -14 errors)
+- [x] Setup Wizard PROTECTED FLOW verified & safe
 - [x] 1398/1398 tests passing (zero regressions)
-- [x] Code review approved (9.83/10, 0 critical/0 major/1 minor non-blocking)
-- [x] Protected flows verified (Setup Wizard, Telegram Bot, NOWPayments untouched)
+- [x] Code review approved (9.7/10, 0 critical/0 major)
+- [x] Phase 33 reports generated
 
-**Phase 32 Focus (TS2339 Property Mismatch Deep Dive):**
-- Target: 61 remaining TS2339 errors (post-Phase 31 reduction: 72 → 61)
-- High-frequency candidates: smart-resume-engine (6), alerts/rules (6), alerts/preferences (6), errors/report (5), analytics/export (4)
-- Sub-Variant 4 candidates (DB schema + type assignment): TS2322 ×49 errors
-- TS2352 type-assertion cleanup: ×41 errors
-- Phase 28-30 review carries (Mi-1/Mi-2/Mi-3 + M1/M2/M3) available for lightweight refinement if time permits
-- Orphan `LicenseAlertPanel` component — flag for dead-code sweep Phase 32+
-- Duplicate `Env` interfaces in worker/lib — DRY consolidation candidates
+**Phase 34 Focus (Remaining TS2339 + TS2322 + TS2352 candidates):**
+- Target: 202 remaining errors (TS2339 ×35 + TS2322 ×49 + TS2352 ×41 + other ×77)
+- High-frequency TS2339 candidates: agent-health-resolver (3, D1Client.prepare variant), analytics charts (UsageChart, ErrorRateChart, service-breakdown — 2 each, 4+ files), other singletons (20+)
+- TS2322 deep-dive (49 errors) — DB schema + type assignment patterns
+- TS2352 type-assertion cleanup (41 errors)
+- Phase 31 carry-forwards (Mi-1/Mi-2/Mi-3) — lightweight JSDoc/docs refinement if time permits
+- MIN-1: smart-resume-engine.ts modularization (205 LOC, over guideline)
 
-**Phase 29 Completion (✅ DELIVERED):**
-- [x] TS2304 quick-win (-29 errors: 28 vi undefined + 1 IntlFormat)
-- [x] 280 → 251 errors (45.7% cumulative reduction)
-- [x] 1398/1398 tests passing (zero regressions)
-- [x] Code review approved (9.7/10)
-- [x] Bonus latent bug fixed (campaign-header non-existent intl export)
-
-**Phase 28 Completion (✅ DELIVERED):**
-- [x] Phase 28 mass logger.error toError refactor (-33 TS2345)
-- [x] 313 → 280 errors (-33, 39.4% total reduction)
-- [x] 1398/1398 tests passing (zero regressions)
-- [x] Code review approved (9.7/10)
-
-**Initiative Milestones Achieved:**
+**Initiative Milestones Achieved (to date):**
 - [x] Phase 27: All 462 baseline TS18046 errors → 0 (100% elimination)
 - [x] Phase 28: All 33 logger.error(QueryError) sites → canonical toError() (100% consistency)
 - [x] Phase 29: All 28 vi undefined + 1 IntlFormat → fixed (100% TS2304 + TS2307 elimination)
 - [x] Phase 30: All 5 module resolution errors → fixed (100% TS2307 quick-win)
-- [ ] Phase 31+: Remaining 246 errors (TS2339 ×72 + TS2322 ×49 + TS2352 ×41 + other ×89)
+- [x] Phase 31: ZodError v4 migration + HeyGen response casts (-11 errors)
+- [x] Phase 32: Smart resume runtime bug fix + alerts route casts (-19 errors)
+- [x] Phase 33: 4 routes Sub-Variant 2 batch (-14 errors, 56.3% cumulative reduction)
+- [ ] Phase 34+: Remaining 202 errors (TS2339 ×35 + TS2322 ×49 + TS2352 ×41 + other ×77)

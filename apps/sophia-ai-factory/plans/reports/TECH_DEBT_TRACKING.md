@@ -1,10 +1,10 @@
 # B2 TypeScript Cleanup — Cumulative Tech Debt Tracking
 
-**Initiative:** B2 TS18046 Error Elimination + TS2345 QueryError Normalization + TS2304/TS2307 Quick-Wins + TS2339 Property Mismatch
-**Overall Progress:** 🎉 49.1% — TS18046 100% ELIMINATED + QUERYERROR LOGGING 100% NORMALIZED + TS2304/TS2307 QUICK-WINS COMPLETE + ZODERROR + HEYGEN CASTS DELIVERED (462 → 235 via Phase 31)
-**Current Status:** Phase 31 Complete — ZODERROR V4 MIGRATION + HEYGEN RESPONSE CASTS DELIVERED
-**Last Updated:** 2026-04-26 (Phase 31 completion sync-back ~13:06 UTC)
-**Remaining Tech Debt:** 235 errors (TS2339 ×61 + TS2322 ×49 + TS2352 ×41 + other types ×84 — Phase 32+ cleanup)  
+**Initiative:** B2 TS18046 Error Elimination + TS2345 QueryError Normalization + TS2304/TS2307 Quick-Wins + TS2339 Property Mismatch Cleanup
+**Overall Progress:** 🎉 56.3% — TS18046 100% ELIMINATED + QUERYERROR LOGGING 100% NORMALIZED + TS2304/TS2307 QUICK-WINS COMPLETE + ZODERROR + HEYGEN CASTS + PHASE 33 4-ROUTE BATCH DELIVERED (462 → 202 via Phase 33)
+**Current Status:** Phase 33 Complete — 4 ROUTES SUB-VARIANT 2 TS2339 BATCH DELIVERED
+**Last Updated:** 2026-04-26 (Phase 33 completion sync-back ~13:26 UTC)
+**Remaining Tech Debt:** 202 errors (TS2339 ×35 + TS2322 ×49 + TS2352 ×41 + other types ×77 — Phase 34+ cleanup)  
 
 ---
 
@@ -39,6 +39,7 @@
 | **30** | **5 files (1 component + 1 index + 3 worker imports)** | **TS2307 quick-win: module resolution + dead code elimination** | **-5** | **251** | **246** | **46.8%** | **✅ DONE** | **9.8/10** | **1398/1398** | **TS2307 ×5 (scroll-area, commerce, metering-reconciler ×3) eliminated; replaced ScrollArea with native div (YAGNI), deleted dead commerce export, fixed worker import paths; M1 carry: ScrollArea polish if UX needs enhancement; M2: orphan LicenseAlertPanel flagged for dead-code sweep; M3: duplicate Env interfaces DRY consolidation** |
 | **31** | **7 files (6 ZodError + 1 heygen-client)** | **ZodError v4 migration + HeyGen response casts (Sub-Variant 1)** | **-11** | **246** | **235** | **49.1%** | **✅ DONE** | **9.83/10** | **1398/1398** | **Group A (6 files): .error.errors → .error.issues; Group B (heygen-client ×3 sites): discriminated union cast + Array.isArray narrowing; edge case improvement (empty array handling); M1 carry: Add test for alternative HeyGen shape {data: HeyGenAvatar[]}; Phase 30 carries (M1/M2/M3) deferred Phase 32+** |
 | **32** | **3 files (1 smart-resume + 2 alerts routes)** | **Smart resume async fix + alerts Sub-Variant 2/4 casts** | **-19** | **235** | **216** | **53.2%** | **✅ DONE** | **9.7/10** | **1398/1398** | **Group A (smart-resume-engine): 6 missing await on getCheckpointSupabase() — GENUINE RUNTIME BUG FIX; Group B (alerts): Sub-Variant 2 request-body + Sub-Variant 4 DB-result typing; TS errors: 6 runtime async + 12 TS2339 + 1 TS18047; Phase 31 carries (Mi-1/Mi-2/Mi-3) deferred Phase 33+** |
+| **33** | **4 routes (errors/report, analytics/export, setup/verify, alerts/test)** | **Sub-Variant 2 request-body TS2339 batch** | **-14** | **216** | **202** | **56.3%** | **✅ DONE** | **9.7/10** | **1398/1398** | **4 high-frequency API routes: errors/report (5), analytics/export (4), setup/verify (3, PROTECTED FLOW #1), alerts/test (2); all use defensive `.catch(() => ({})) as Type` pattern; Setup Wizard verified & safe; Phase 31 carries (Mi-1/Mi-2/Mi-3) deferred Phase 34+** |
 
 ---
 
