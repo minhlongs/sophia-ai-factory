@@ -7,6 +7,7 @@
  */
 
 import { createServerClient } from '@/lib/db/client';
+import type { D1QueryChain } from '@/lib/db/d1-query-chain';
 import { TIER_CONFIGS } from '@/config/tiers';
 import { logger } from '@/lib/utils/logger-utility';
 import type { Tier } from '@/types';
@@ -117,8 +118,7 @@ export async function fetchRevenueSnapshot(
   const { start, end, priorStart, priorEnd } = resolvePeriodBounds(period);
 
   // ── Current active licenses ──
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let currentQuery: any = db
+  let currentQuery: D1QueryChain<LicenseRow> = db
     .from('raas_licenses')
     .select('tier, is_revoked, created_at')
     .eq('is_revoked', false)
