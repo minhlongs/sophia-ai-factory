@@ -77,7 +77,8 @@ export async function GET(req: NextRequest) {
     const to = from + params.limit - 1;
     query = query.range(from, to).order('created_at', { ascending: false });
 
-    const { data: eventsData, error: eventsError, count } = await query;
+    const { data: rawEventsData, error: eventsError, count } = await query;
+    const eventsData = rawEventsData as unknown as OverageEventRow[] | null;
 
     if (eventsError) {
       logger.error('[Overage Events] Error fetching overage events', toError(eventsError));
@@ -103,7 +104,7 @@ export async function GET(req: NextRequest) {
         .from('raas_api_keys')
         .select('license_nonce, tier, status, user_id')
         .in('license_nonce', licenseNonces);
-      licenseInfo = licenseData || [];
+      licenseInfo = (licenseData || []) as unknown as LicenseInfo[];
     }
 
     // Get user emails for each record
@@ -120,7 +121,7 @@ export async function GET(req: NextRequest) {
         .from('user_profiles')
         .select('user_id, email')
         .in('user_id', userIds);
-      userInfo = userData || [];
+      userInfo = (userData || []) as unknown as UserInfo[];
     }
 
     // Combine data

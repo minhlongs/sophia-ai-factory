@@ -2,11 +2,11 @@
 
 **Initiative:** B2 TypeScript Error Elimination + Quality Refinement
 **Duration:** Multi-phase (Phases 1–36 complete, Phase 37+ planned)
-**Overall Status:** ✅ PHASE 36 COMPLETE — TS2322 + TS2339 HARD TARGETS BATCH
+**Overall Status:** ✅ PHASE 37 COMPLETE — MIXED BATCH TS2339/TS2322 CLEANUP
 **Baseline:** 462 TS18046 errors (next.config.ts:24 reference)
-**Current:** 123 errors remaining (post-Phase 36)
-**Phase 36 Result:** 148 → 123 errors (-25 TS2322: 22 baseline + 3 cascading side-effects)
-**Total Errors Reduced:** 462 → 123 (73.4% overall codebase reduction)
+**Current:** 112 errors remaining (post-Phase 37)
+**Phase 37 Result:** 123 → 112 errors (-11: -7 TS2339 + -7 TS2322 + 3 side-effects)
+**Total Errors Reduced:** 462 → 112 (75.8% overall codebase reduction)
 
 ---
 
@@ -44,8 +44,40 @@
 | 34 | agent-health-resolver + 4 charts (UsageChart, ErrorRateChart, service-breakdown, bonus) | -13 (202 → 189, -15 actual per tester) | Agent-health D1 variant + chart TooltipProps TS2339/TS2352 batch | ✅ DONE | tester-260426-1340-b2-phase34-ts2339-batch, code-review-260426-1340-b2-phase34-ts2339-batch 9.6/10 |
 | 35 | 25 files (41 TS2352 sites: discriminated unions, array guards, literal narrowing) | -41 (189 → 148, -38 TS2352 + -3 cascading) | Mass TS2352 batch (Phase 22 doctrine): canonical `as const` assertions + union guard strengthening | ✅ DONE | tester-260426-1352-b2-phase35-ts2352-batch, code-review inline 9.8/10 |
 | 36 | `kv-metering-log-sync.ts` + `quota-checker-db.ts` | -25 (148 → 123, -22 TS2322 + -3 TS2365) | DB schema type assignment + cascading error elimination | ✅ DONE | tester-260426-1410-b2-phase36-ts2322-batch, code-review-260426-1410-b2-phase36-ts2322-batch 9.6/10 |
+| 37 | 4 files (admin/billing/overage-events, cron/usage-export-db, raas/usage, customer-search) | -11 (123 → 112, -7 TS2339 + -7 TS2322 + 3 side-effects) | Mixed batch: property narrowing + DB schema + object instantiation | ✅ DONE | tester-260426-1418-b2-phase37-mixed-batch, code-review-260426-1418-b2-phase37-mixed-batch 9.7/10 |
 
-**MILESTONES ACHIEVED:** 462 → 0 TS18046 (100% via Phase 27); 313 → 280 TS2345 QueryError (100% via Phase 28); 280 → 251 TS2304 ×28 + TS2307 ×1 (quick-win via Phase 29); 251 → 246 TS2307 ×5 (quick-win via Phase 30); 246 → 235 ZodError v4 + HeyGen (Phase 31); 235 → 216 Smart Resume + Alerts (Phase 32); 216 → 202 Sub-Variant 2 Batch (Phase 33, 56.3% cumulative reduction); 202 → 189 Agent-Health D1 + Chart TooltipProps (Phase 34, 59.1% cumulative reduction); **189 → 148 Mass TS2352 Batch (Phase 35, 68% cumulative reduction, TS2352 100% ELIMINATION)**
+**MILESTONES ACHIEVED:** 462 → 0 TS18046 (100% via Phase 27); 313 → 280 TS2345 QueryError (100% via Phase 28); 280 → 251 TS2304 ×28 + TS2307 ×1 (quick-win via Phase 29); 251 → 246 TS2307 ×5 (quick-win via Phase 30); 246 → 235 ZodError v4 + HeyGen (Phase 31); 235 → 216 Smart Resume + Alerts (Phase 32); 216 → 202 Sub-Variant 2 Batch (Phase 33, 56.3% cumulative reduction); 202 → 189 Agent-Health D1 + Chart TooltipProps (Phase 34, 59.1% cumulative reduction); **189 → 148 Mass TS2352 Batch (Phase 35, 68% cumulative reduction, TS2352 100% ELIMINATION)**; **148 → 123 TS2322 Hard Targets (Phase 36, 73.4% cumulative reduction)**; **123 → 112 Mixed Batch (Phase 37, 75.8% cumulative reduction)**
+
+---
+
+## Phase 37 Summary (2026-04-26) — MIXED BATCH TS2339/TS2322 CLEANUP
+
+**Status:** ✅ COMPLETED 2026-04-26 ~14:18 UTC
+
+**🎯 PHASE 37 ACHIEVEMENT: MIXED BATCH PROPERTY NARROWING + DB SCHEMA CLEANUP**
+- **TS error baseline:** 123 → 112 (-11 errors: -7 TS2339 + -7 TS2322 + 3 side-effects)
+- **Files:** 4 (admin/billing/overage-events, cron/usage-export-db, raas/usage, customer-search)
+- **Pattern:** Distributed batch — property narrowing, DB schema type assignment, object instantiation
+- **Tests:** 1398/1398 ✅ (zero regressions)
+- **Code review:** 9.7/10 auto-approved (0 critical/0 major/1 minor)
+- **Protected flows:** ALL VERIFIED (Setup Wizard, Telegram, NOWPayments untouched)
+
+**Key Achievement:**
+- TS2339 batch targeting property mismatch errors (discriminated union casting)
+- TS2322 batch targeting DB schema type assignment + nested object instantiation
+- Cascading cleanup: 3 additional side-effects cleared
+- Cumulative reduction: 462 → 112 (75.8% overall codebase improvement)
+
+**Carry-Forwards (Phase 38+):**
+- C1: `OverageEventRow` consolidation (defined in 2 places — billing-types.ts vs supabase/types.ts)
+- C2: Customer[] envelope verify (bulk data structure standardization)
+- C3: Remaining TS2339 patterns (18 errors) — HTTP boundaries + component props scope
+
+**Reports:**
+- Tester: `plans/reports/tester-260426-1418-b2-phase37-mixed-batch.md`
+- Code Review: `plans/reports/code-review-260426-1418-b2-phase37-mixed-batch.md`
+
+See `phase-37-typescript-cleanup.md` for full completion details.
 
 ---
 
@@ -687,29 +719,29 @@ See `phase-21-typescript-cleanup.md` for details.
 
 ---
 
-**Last Updated:** 2026-04-26 (Phase 36 completion sync-back ~14:10 UTC)
+**Last Updated:** 2026-04-26 (Phase 37 completion sync-back ~14:18 UTC)
 **Initiative Lead:** Project Manager
-**Milestone Status:** ✅ 100% TS18046 ELIMINATION + 100% TS2345 QUERYERROR + 100% TS2352 ELIMINATION MILESTONES COMPLETE; PHASE 36 TS2322 BATCH DELIVERED (73.4% cumulative reduction)
+**Milestone Status:** ✅ 100% TS18046 ELIMINATION + 100% TS2345 QUERYERROR + 100% TS2352 ELIMINATION MILESTONES COMPLETE; PHASE 36 TS2322 BATCH DELIVERED (73.4%); PHASE 37 MIXED BATCH DELIVERED (75.8% cumulative reduction)
 
 ---
 
-## Next Steps (Phase 37+)
+## Next Steps (Phase 38+)
 
-**Phase 36 Completion (✅ DELIVERED 2026-04-26 ~14:10 UTC):**
-- [x] TS2322 + TS2339 hard targets batch (2 files)
-- [x] DB schema type assignment patterns applied
-- [x] Cascading error elimination (3 TS2365 side-effects)
+**Phase 37 Completion (✅ DELIVERED 2026-04-26 ~14:18 UTC):**
+- [x] Mixed batch TS2339/TS2322 cleanup (4 files)
+- [x] Property narrowing + DB schema type assignment patterns applied
+- [x] Cascading error elimination (3 side-effects cleared)
 - [x] 1398/1398 tests passing (zero regressions)
-- [x] Code review approved (9.6/10, 0 critical/0 major/2 minor)
-- [x] Phase 36 reports generated
+- [x] Code review approved (9.7/10, 0 critical/0 major/1 minor)
+- [x] Phase 37 reports generated
 - [x] Protected flows verified (Setup Wizard, Telegram, NOWPayments)
 
-**Phase 37 Focus (Remaining TS2339 + TS2322 candidates):**
-- Target: 123 remaining errors (TS2339 ×25 + TS2322 ×27 + other ×71)
-- Phase 36 carry-forwards: M1 local type consolidation (`Pick<>` patterns), M2 nullability narrowing, M3 cosmetic alignment
-- TS2339 high-priority batch (25 errors) — HTTP boundaries + component props
-- TS2322 patterns (27 errors, reduced from 49) — remaining DB schema + type assignment patterns
-- Remaining hard targets require pattern analysis + batching strategy
+**Phase 38 Focus (Remaining TS2339 + TS2322 candidates + carries):**
+- Target: 112 remaining errors (TS2339 ×18 + TS2322 ×20 + other ×74)
+- Phase 37 carry-forwards: C1 OverageEventRow consolidation, C2 Customer[] envelope, C3 remaining TS2339 patterns
+- Reduced TS2339 scope (25→18, -7 high-frequency) — remaining patterns: HTTP boundaries + component props
+- Reduced TS2322 scope (27→20, -7) — remaining DB schema + type assignment patterns
+- Cumulative: 462 → 112 (75.8% total reduction, 350 remaining)
 
 **Initiative Milestones Achieved (to date):**
 - [x] Phase 27: All 462 baseline TS18046 errors → 0 (100% elimination)

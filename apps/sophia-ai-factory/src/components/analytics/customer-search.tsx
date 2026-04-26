@@ -50,7 +50,7 @@ export function CustomerSearch({
         try {
           const res = await fetch(`/api/admin/customers/search?q=${encodeURIComponent(query)}`);
           if (res.ok) {
-            const data = await res.json();
+            const data = (await res.json()) as Customer[];
             setCustomers(data);
           }
         } catch (error) {
