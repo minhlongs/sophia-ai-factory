@@ -61,8 +61,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const { task_id, agent_role, score, comment } = validation.data;
 
-    // org_id scope (Sophia: single-tenant per user)
-    const orgId = (user as Record<string, unknown>).orgId as string | undefined ?? user.id;
+    // org_id scope (Sophia: single-tenant per user — H2 fix: standardize on user.id
+    // to match stream/pause/status/task routes; multi-org not on roadmap per YAGNI)
+    const orgId = user.id;
 
     logger.info('[Agents Feedback] Received', {
       userId: user.id,

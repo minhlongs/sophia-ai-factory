@@ -45,9 +45,12 @@ export async function GET(request: NextRequest) {
       // Initial connection event
       controller.enqueue(encodeSSE({ type: 'connected', orgId }));
 
-      // Poll loop
+      // Poll loop with H4 fix: exponential backoff on DB errors
+      // (prevents constant reconnects across all SSE clients during D1 outage)
+      let consecutiveErrors = 0;
+      const MAX_BACKOFF_MS = 30_000;
+
       while (Date.now() - startedAt < MAX_DURATION_MS) {
-        // Check if client disconnected
         if (request.signal.aborted) break;
 
         try {
@@ -60,6 +63,8 @@ export async function GET(request: NextRequest) {
             .gt('created_at', lastSeenCreatedAt)
             .order('created_at', { ascending: true })
             .limit(20);
+
+          consecutiveErrors = 0; // reset on success
 
           if (data && data.length > 0) {
             for (const row of data as AgentTaskRow[]) {
@@ -77,10 +82,15 @@ export async function GET(request: NextRequest) {
             lastSeenCreatedAt = (data as AgentTaskRow[])[data.length - 1].created_at;
           }
         } catch {
-          // DB error — keep polling
+          consecutiveErrors++;
         }
 
-        await new Promise(r => setTimeout(r, POLL_MS));
+        // Backoff: base POLL_MS, then exponential up to MAX_BACKOFF_MS, with ±20% jitter
+        const backoff = consecutiveErrors === 0
+          ? POLL_MS
+          : Math.min(POLL_MS * Math.pow(2, consecutiveErrors), MAX_BACKOFF_MS);
+        const jitter = backoff * (0.8 + Math.random() * 0.4);
+        await new Promise(r => setTimeout(r, jitter));
       }
 
       if (heartbeatTimer) clearInterval(heartbeatTimer);
