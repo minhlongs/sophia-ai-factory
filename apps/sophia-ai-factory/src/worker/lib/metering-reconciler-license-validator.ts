@@ -4,6 +4,12 @@ import type { Env } from './index';
 import type { AggregatedUsage, LicenseValidationResult } from './metering-reconciler-types';
 import { logErrorToKv } from './metering-reconciler-error-logger';
 
+interface RaasSyncResponse {
+  valid?: boolean;
+  status?: string;
+  tier?: string;
+}
+
 /** Validate a single license via RaaS Gateway /api/license/sync endpoint. */
 export async function validateLicense(
   licenseNonce: string,
@@ -32,7 +38,7 @@ export async function validateLicense(
       };
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as RaasSyncResponse;
 
     return {
       valid: data.valid === true || data.status === 'active',
