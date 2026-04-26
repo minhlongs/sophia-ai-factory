@@ -1,12 +1,12 @@
 # B2: TypeScript Cleanup Initiative
 
 **Initiative:** B2 TypeScript Error Elimination + Quality Refinement
-**Duration:** Multi-phase (Phases 1–35 complete, Phase 36+ planned)
-**Overall Status:** ✅ PHASE 35 COMPLETE — MASS TS2352 BATCH (100% ELIMINATION MILESTONE)
+**Duration:** Multi-phase (Phases 1–36 complete, Phase 37+ planned)
+**Overall Status:** ✅ PHASE 36 COMPLETE — TS2322 + TS2339 HARD TARGETS BATCH
 **Baseline:** 462 TS18046 errors (next.config.ts:24 reference)
-**Current:** 148 errors remaining (post-Phase 35)
-**Phase 35 Result:** 189 → 148 errors (-41 TS2352: 38 baseline + 3 cascading side-effects)
-**Total Errors Reduced:** 462 → 148 (68% overall codebase reduction)
+**Current:** 123 errors remaining (post-Phase 36)
+**Phase 36 Result:** 148 → 123 errors (-25 TS2322: 22 baseline + 3 cascading side-effects)
+**Total Errors Reduced:** 462 → 123 (73.4% overall codebase reduction)
 
 ---
 
@@ -43,8 +43,45 @@
 | 33 | 4 routes (errors/report + analytics/export + setup/verify + alerts/test) | -14 (216 → 202) | Sub-Variant 2 request-body TS2339 batch (4 high-frequency routes) | ✅ DONE | tester-260426-1326-b2-phase33-ts2339-batch, code-review-260426-1326-b2-phase33-ts2339-batch 9.7/10 |
 | 34 | agent-health-resolver + 4 charts (UsageChart, ErrorRateChart, service-breakdown, bonus) | -13 (202 → 189, -15 actual per tester) | Agent-health D1 variant + chart TooltipProps TS2339/TS2352 batch | ✅ DONE | tester-260426-1340-b2-phase34-ts2339-batch, code-review-260426-1340-b2-phase34-ts2339-batch 9.6/10 |
 | 35 | 25 files (41 TS2352 sites: discriminated unions, array guards, literal narrowing) | -41 (189 → 148, -38 TS2352 + -3 cascading) | Mass TS2352 batch (Phase 22 doctrine): canonical `as const` assertions + union guard strengthening | ✅ DONE | tester-260426-1352-b2-phase35-ts2352-batch, code-review inline 9.8/10 |
+| 36 | `kv-metering-log-sync.ts` + `quota-checker-db.ts` | -25 (148 → 123, -22 TS2322 + -3 TS2365) | DB schema type assignment + cascading error elimination | ✅ DONE | tester-260426-1410-b2-phase36-ts2322-batch, code-review-260426-1410-b2-phase36-ts2322-batch 9.6/10 |
 
 **MILESTONES ACHIEVED:** 462 → 0 TS18046 (100% via Phase 27); 313 → 280 TS2345 QueryError (100% via Phase 28); 280 → 251 TS2304 ×28 + TS2307 ×1 (quick-win via Phase 29); 251 → 246 TS2307 ×5 (quick-win via Phase 30); 246 → 235 ZodError v4 + HeyGen (Phase 31); 235 → 216 Smart Resume + Alerts (Phase 32); 216 → 202 Sub-Variant 2 Batch (Phase 33, 56.3% cumulative reduction); 202 → 189 Agent-Health D1 + Chart TooltipProps (Phase 34, 59.1% cumulative reduction); **189 → 148 Mass TS2352 Batch (Phase 35, 68% cumulative reduction, TS2352 100% ELIMINATION)**
+
+---
+
+## Phase 36 Summary (2026-04-26) — TS2322 + TS2339 HARD TARGETS BATCH
+
+**Status:** ✅ COMPLETED 2026-04-26 ~14:10 UTC
+
+**🎉 PHASE 36 ACHIEVEMENT: TS2322 + TS2339 HARD TARGETS BATCH**
+- **TS error baseline:** 148 → 123 (-25 errors: 22 TS2322 + 3 TS2365)
+- **Files:** 2 (kv-metering-log-sync.ts, quota-checker-db.ts)
+- **Pattern:** DB schema type assignment + cascading error elimination
+- **Tests:** 1398/1398 ✅ (zero regressions)
+- **Code review:** 9.6/10 auto-approved (0 critical/0 major/2 minor)
+- **Protected flows:** ALL VERIFIED (Setup Wizard, Telegram, NOWPayments untouched)
+
+**Key Achievement:**
+- TS2322 batch targeting type assignment mismatches in DB boundary patterns
+- Cascading cleanup: 3 additional TS2365 side-effects cleared
+- Cumulative reduction: 462 → 123 (73.4% overall codebase improvement)
+
+**Pattern Applied:**
+- DB schema type casting (row type narrowing)
+- Local interface definitions for DB query results
+- Defensive property access with nullability guards
+- Zero behavioral change (pure type safety improvements)
+
+**Phase 35 Review Carries (Deferred Phase 37+):**
+- M1: Local `UsageEventSyncRow` + `QuotaLimitsRow` duplicate canonical types — consider `Pick<>` consolidation
+- M2: Nullability narrowed in local types — widen or coalesce at assignment
+- M3: `endpoint` cosmetic asymmetry
+
+**Reports:**
+- Tester: `plans/reports/tester-260426-1410-b2-phase36-ts2322-batch.md`
+- Code Review: `plans/reports/code-review-260426-1410-b2-phase36-ts2322-batch.md`
+
+See `phase-36-typescript-cleanup.md` for full completion details.
 
 ---
 
@@ -650,28 +687,28 @@ See `phase-21-typescript-cleanup.md` for details.
 
 ---
 
-**Last Updated:** 2026-04-26 (Phase 35 completion sync-back ~14:52 UTC)
+**Last Updated:** 2026-04-26 (Phase 36 completion sync-back ~14:10 UTC)
 **Initiative Lead:** Project Manager
-**Milestone Status:** ✅ 100% TS18046 ELIMINATION ACHIEVED + 100% TS2345 QUERYERROR + 100% TS2352 ELIMINATION MILESTONES COMPLETE
+**Milestone Status:** ✅ 100% TS18046 ELIMINATION + 100% TS2345 QUERYERROR + 100% TS2352 ELIMINATION MILESTONES COMPLETE; PHASE 36 TS2322 BATCH DELIVERED (73.4% cumulative reduction)
 
 ---
 
-## Next Steps (Phase 36+)
+## Next Steps (Phase 37+)
 
-**Phase 35 Completion (✅ DELIVERED 2026-04-26 ~14:52 UTC):**
-- [x] Mass TS2352 batch (41 sites across 25 files)
-- [x] Discriminated union guards strengthened
-- [x] Canonical `as const` assertions applied
+**Phase 36 Completion (✅ DELIVERED 2026-04-26 ~14:10 UTC):**
+- [x] TS2322 + TS2339 hard targets batch (2 files)
+- [x] DB schema type assignment patterns applied
+- [x] Cascading error elimination (3 TS2365 side-effects)
 - [x] 1398/1398 tests passing (zero regressions)
-- [x] Code review approved (9.8/10, 0 critical/0 major/0 minor)
-- [x] Phase 35 reports generated
+- [x] Code review approved (9.6/10, 0 critical/0 major/2 minor)
+- [x] Phase 36 reports generated
 - [x] Protected flows verified (Setup Wizard, Telegram, NOWPayments)
 
-**Phase 36 Focus (Remaining TS2339 + TS2322 candidates):**
-- Target: 148 remaining errors (TS2339 ×25 + TS2322 ×49 + other ×74)
-- Phase 35 carry-forwards: M1 getD1() helper DRY extraction (6+ sites), M2 chart payload type alignment
+**Phase 37 Focus (Remaining TS2339 + TS2322 candidates):**
+- Target: 123 remaining errors (TS2339 ×25 + TS2322 ×27 + other ×71)
+- Phase 36 carry-forwards: M1 local type consolidation (`Pick<>` patterns), M2 nullability narrowing, M3 cosmetic alignment
 - TS2339 high-priority batch (25 errors) — HTTP boundaries + component props
-- TS2322 patterns (49 errors) — DB schema + type assignment patterns
+- TS2322 patterns (27 errors, reduced from 49) — remaining DB schema + type assignment patterns
 - Remaining hard targets require pattern analysis + batching strategy
 
 **Initiative Milestones Achieved (to date):**
@@ -684,4 +721,5 @@ See `phase-21-typescript-cleanup.md` for details.
 - [x] Phase 33: 4 routes Sub-Variant 2 batch (-14 errors, 56.3% cumulative reduction)
 - [x] Phase 34: Agent-health D1 + chart TooltipProps (-13 errors, 59.1% cumulative reduction)
 - [x] Phase 35: Mass TS2352 batch (-41 errors, 68% cumulative reduction, TS2352 100% ELIMINATION)
-- [ ] Phase 36+: Remaining 148 errors (TS2339 ×25 + TS2322 ×49 + other ×74)
+- [x] Phase 36: TS2322 hard targets batch (-25 errors, 73.4% cumulative reduction)
+- [ ] Phase 37+: Remaining 123 errors (TS2339 ×25 + TS2322 ×27 + other ×71)

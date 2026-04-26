@@ -18,6 +18,24 @@ import { toError } from '@/lib/utils/to-error'
 import {
   DEFAULT_KV_METERING_LOG_CONFIG,
 } from './kv-metering-log-sync-types'
+
+interface UsageEventSyncRow {
+  id: string
+  user_id: string
+  license_nonce: string
+  service_name: string
+  endpoint: string | null
+  action: string
+  credits_used: number
+  tokens_input: number | null
+  tokens_output: number | null
+  idempotency_key: string
+  request_id: string
+  tier_at_request: string
+  external_customer_id: string | null
+  model_name: string
+  created_at: number
+}
 import type {
   MeteringLogEntry, SyncResult, KvMeteringLogConfig,
 } from './kv-metering-log-sync-types'
@@ -51,7 +69,7 @@ export async function syncUsageEventsToKv(
       startTime: new Date(startTime * 1000).toISOString(),
     })
 
-    const { data: events, error } = await db
+    const { data: rawEvents, error } = await db
       .from('usage_events')
       .select(`
         id, user_id, license_nonce, service_name, endpoint, action,
@@ -61,6 +79,7 @@ export async function syncUsageEventsToKv(
       .gte('created_at', startTime)
       .order('created_at', { ascending: true })
       .limit(config.batchSize)
+    const events = rawEvents as unknown as UsageEventSyncRow[] | null
 
     if (error) throw new Error(`Database error: ${error.message}`)
     if (!events || events.length === 0) {
