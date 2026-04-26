@@ -25,6 +25,11 @@ import {
 } from '@/lib/usage-metering/kv-metering-log-sync';
 import { logAuditEvent } from '@/lib/audit/audit-logger';
 
+interface UsageReconciliationSyncRequest {
+  timeRangeHours?: number;
+  batchSize?: number;
+}
+
 /**
  * GET - Trigger sync and return statistics
  */
@@ -86,7 +91,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   try {
     // Parse request body
-    const body = await request.json().catch(() => ({}));
+    const body = (await request.json().catch(() => ({}))) as UsageReconciliationSyncRequest;
 
     // Build custom config
     const config: KvMeteringLogConfig = {

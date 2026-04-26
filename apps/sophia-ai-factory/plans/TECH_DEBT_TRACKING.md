@@ -37,9 +37,10 @@
 | B2-P13 | src/components/dashboard/referral-share-widget.tsx | -2 | HTTP boundary (single-endpoint) | 1394/1394 ✅ | 9.8/10 | ✅ DONE | TBD |
 | B2-P14 | src/app/api/coupons/apply/route.ts | -3 | HTTP boundary (request-body) | 1394/1394 ✅ | 9.8/10 | ✅ DONE | TBD |
 | B2-P15 | src/app/api/coupons/activate/route.ts | -2 | HTTP boundary (request-body #2) | 1394/1394 ✅ | 9.8/10 | ✅ DONE | TBD |
+| B2-P16 | src/app/api/usage/reconciliation/sync/route.ts | -2 | HTTP boundary (request-body #3) | 1394/1394 ✅ | 9.8/10 | ✅ DONE | TBD |
 
-**Cumulative TS18046 Reduction:** 462 baseline → 30 remaining (-432 fixed, 93.5% reduction)
-**Phase 16 Ready:** `usage/reconciliation/sync/route.ts` (2 errors, RECOMMENDED) — request-body quota system pattern
+**Cumulative TS18046 Reduction:** 462 baseline → 28 remaining (-434 fixed, 93.9% reduction)
+**Phase 17 Ready:** `admin/dunning/[licenseNonce]/restore+suspend` (2 errors total, 1 each, RECOMMENDED batch) — admin response pattern
 
 **Baseline Discrepancy (Unresolved):** Initial tracker recorded 462 baseline errors (next.config.ts:24 ref). Post-Phase 8 `npx tsc --noEmit 2>&1 | grep -c "TS18046"` returns 51. Post-Phase 10 baseline = 43. Possible explanations: (1) prior untracked phases fixed errors, (2) baseline may have included other error types, (3) configuration changes affected detection. Continue from current 43-error state. **Carry forward to Phase 11 planning.**
 
@@ -250,5 +251,14 @@ done
 
 ---
 
-*Last Updated: April 25, 2026*
+## Open Carry-Forward Questions (Phase 16 → Phase 17)
+
+1. **Negative-value validation** — Should `batchSize` and `timeRangeHours` in sync library reject negative values? Currently type-safe but no runtime checks at library boundary.
+2. **Defensive HTTP cast pattern** — Document `.catch(() => ({}))` defensive variant in code-standards.md for HTTP boundary safety.
+3. **Auth middleware protection** — Verify `/api/usage/reconciliation/sync` protected by auth middleware (infra config review needed).
+
+---
+
+*Last Updated: April 26, 2026 09:15 (Phase 16 sync-back)*
 *Initiative Lead: Project Manager*
+*Status: Phase 17 Ready — Admin Dunning Batch Recommended*

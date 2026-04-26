@@ -1,6 +1,12 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-26 | **Current Version:** 1.12.33
+**Last Updated:** 2026-04-26 | **Current Version:** 1.12.34
+
+---
+
+## [2026-04-26] B2 Phase 16 — Usage Reconciliation Sync Request-Body HTTP Boundary Casting (v1.12.34)
+
+**B2 Phase 16 (usage reconciliation sync endpoint):** Refactored `src/app/api/usage/reconciliation/sync/route.ts`, added local `UsageReconciliationSyncRequest` interface to type-cast HTTP boundary request body from client POST to `/api/usage/reconciliation/sync` endpoint, applied anti-corruption cast pattern `(await request.json().catch(() => ({}))) as UsageReconciliationSyncRequest`. Pattern instance #10 of "HTTP boundary cast" — **third REQUEST-BODY variant** (distinguishing defensive `.catch(() => ({}))` wrapper pattern for cron/admin endpoints with no required body). Eliminated 2 TS18046 errors (30→28, -6.7% Phase 16 delta, -93.9% cumulative B2 from baseline 462→28). Tests 1394/1394 pass. Review 9.8/10 auto-approved. Commit pending.
 
 ---
 
