@@ -11,6 +11,11 @@ import { logger } from '@/lib/utils/logger-utility';
 import { typeDefs } from './schema';
 import { resolvers } from '@/lib/analytics/graphql-resolvers';
 
+interface GraphQLExecutionResult {
+  data?: unknown;
+  errors?: Array<{ message: string }>;
+}
+
 /**
  * Execute GraphQL query
  */
@@ -119,7 +124,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Execute the query
-    const result = await executeQuery(query, variables, operationName);
+    const result = (await executeQuery(query, variables, operationName)) as GraphQLExecutionResult;
 
     logger.info('[GraphQL] Query executed', {
       hasData: !!result.data,

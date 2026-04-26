@@ -42,6 +42,15 @@ interface Props {
   refreshTrigger?: number;
 }
 
+interface ApiKeysListResponse {
+  keys?: ApiKeyInfo[];
+  apiKeys?: ApiKeyInfo[];
+}
+
+interface UsageResponse {
+  stats?: UsageStats;
+}
+
 export function ApiKeyList({ onCreateKey, refreshTrigger = 0 }: Props) {
   const t = useTranslations('dashboard.apiKeys');
   const [keys, setKeys] = useState<ApiKeyInfo[]>([]);
@@ -57,8 +66,8 @@ export function ApiKeyList({ onCreateKey, refreshTrigger = 0 }: Props) {
         fetch('/api/admin/api-keys'),
         fetch('/api/raas/usage?days=30'),
       ]);
-      const keysData = await keysRes.json();
-      const usageData = await usageRes.json();
+      const keysData = (await keysRes.json()) as ApiKeysListResponse;
+      const usageData = (await usageRes.json()) as UsageResponse;
       setKeys(keysData.keys ?? keysData.apiKeys ?? []);
       setStats(usageData.stats ?? null);
     } catch {

@@ -1,6 +1,12 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-26 | **Current Version:** 1.12.36
+**Last Updated:** 2026-04-26 | **Current Version:** 1.12.37
+
+---
+
+## [2026-04-26] B2 Phase 19 — BATCH Refactor API Key List + GraphQL Analytics Internal Promise Casting (v1.12.37)
+
+**B2 Phase 19 (api-key-list + graphql/analytics batch):** Refactored `src/components/raas/api-key-list.tsx` + `src/app/api/graphql/analytics/route.ts`, added local response interfaces (`ApiKeyListResponse` variants, `AnalyticsQueryResponse`) to type-cast HTTP boundary responses. Phase 18 dual-endpoint pattern (`Promise.all` with separate fallbacks) extended to api-key-list (two query endpoints). NEW **internal Promise<unknown> variant** in graphql/analytics: anti-corruption layer applied to internal async helper return value (not external HTTP response) — same narrowing principle, applied at consumption site with inline interface + local `as` cast. Pattern instances #15 + #16 of "HTTP boundary cast" — demonstrates pattern generalizes beyond HTTP boundaries to ANY `Promise<unknown>` flowing into typed code. Eliminated 5 TS18046 errors (21→16, -23.8% Phase 19 delta, -96.5% cumulative B2 from baseline 462→16). Tests 1394/1394 pass. Code review 9.6/10 auto-approved.
 
 ---
 

@@ -24,8 +24,9 @@
 | 16 | `src/app/api/usage/reconciliation/sync/route.ts` | -2 (30→28) | HTTP boundary anti-corruption cast (request-body #3) | ✅ DONE | tester-260426-b2-phase16-usage-recon-sync, code-review-260426-0907-b2-phase16-usage-recon-sync |
 | 17 | `src/app/api/admin/dunning/[licenseNonce]/restore+suspend/route.ts` (BATCH) | -2 (28→26) | HTTP boundary anti-corruption cast (request-body #4+#5, defensive `.catch()`) | ✅ DONE | tester-260426-b2-phase17-admin-dunning-routes, code-review-260426-b2-phase17-admin-dunning-routes |
 | 18 | `src/components/raas/mcu-balance-widget.tsx` + `mission-launcher.tsx` (BATCH) | -5 (26→21) | HTTP boundary anti-corruption cast (response-body #13+#14, async/await refactor) | ✅ DONE | tester-260426-b2-phase18-mcu-mission, code-review-260426-b2-phase18-mcu-mission |
+| 19 | `src/components/raas/api-key-list.tsx` + `src/app/api/graphql/analytics/route.ts` (BATCH) | -5 (21→16) | HTTP boundary anti-corruption cast (response-body #15+#16, NEW internal Promise<unknown> variant) | ✅ DONE | tester-260426-b2-phase19-apikey-graphql, code-review-260426-b2-phase19-apikey-graphql |
 
-**Cumulative:** 462 → 21 TS18046 (441 fixed, 95.5% reduction)
+**Cumulative:** 462 → 16 TS18046 (446 fixed, 96.5% reduction)
 
 ---
 
@@ -233,18 +234,33 @@ See `phase-18-typescript-cleanup.md` for full completion report.
 
 ---
 
-## Phase 19 Ready
+## Phase 20 Candidates (16 Errors Remaining)
 
-**Recommended Candidates (21 errors remaining):**
-- **Primary Tier 1:** `raas/api-key-list.tsx` (3 errors, response var variant, low risk — similar to Phase 18)
-- **Batch Option:** `api-key-list.tsx` (3) + `graphql/analytics/route.ts` (2) = 5 errors (batch continuation)
-- **Single-Error Sweep:** 5x long-tail files for efficiency (license-generator, mission-dashboard, mission-detail, roi-calculator, violation-queries)
-- **Deferred High-Risk:** `webhooks/telegram/route.ts` (4 errors, Phase 18+ with webhook testing)
-- **Scope Verify:** `admin/licenses/[id]/reactivate/route.ts` (3 errors, licensing flow)
+**Recommended Tier 1 Candidates (PRIORITY):**
 
-See `phase-19-typescript-cleanup.md` for Phase 19 planning skeleton.
+1. **URGENT (M1 Closure):** `src/app/api/graphql/analytics/route.ts` L110-111 (3 TS2339, request-body Sub-Variant 2)
+   - Phase 19 code review flagged pre-existing TS2339 in dead request-body destructure
+   - Closes review M1: Define `GraphQLQueryRequest` interface + cast `(await request.json().catch(() => ({}))) as GraphQLQueryRequest`
+   - Estimated: -3 TS2339, makes file fully clean
+   - Risk: LOW (same pattern as Phase 14-17 request-body variants)
+
+2. **Tier 1:** `src/app/api/admin/licenses/[id]/reactivate/route.ts` (3 TS18046, request-body variant #6)
+   - License reactivation API handler
+   - Scope verify required: payment-adjacent logic (tier activation, payment flows interaction)
+   - Estimated: -3 TS18046, 2-3 hours
+   - **Recommendation:** Confirm with team lead payment safety before assignment
+
+3. **Tier 4 Long-Tail (Optional for Phase 20 batch momentum):**
+   - `roi-calculator.ts` (1), `violation-queries.ts` (1), `billing/usage-summary/route.ts` (1)
+   - Total: -3 additional if bundled with Tier 1
+   - Phase 20 Option: Tier 1 (3) + batch 2-3 singles (2-3) = -5 to -6 errors
+
+**Deferred High-Risk:**
+- `webhooks/telegram/route.ts` (4, PROTECTED FLOW #2) → Phase 21+ with webhook testing plan
+
+See `phase-20-typescript-cleanup.md` (skeleton below).
 
 ---
 
-**Last Updated:** 2026-04-26 (Phase 18 completion sync-back)
+**Last Updated:** 2026-04-26 (Phase 19 completion sync-back)
 **Initiative Lead:** Project Manager
