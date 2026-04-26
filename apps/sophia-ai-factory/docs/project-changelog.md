@@ -4,6 +4,12 @@
 
 ---
 
+## [2026-04-25] B2 Phase 6 — Metering Reconciler License Validator HTTP Boundary Casting (v1.12.24)
+
+**B2 Phase 6 (license validator):** Refactored `src/worker/lib/metering-reconciler-license-validator.ts`, added local `RaasSyncResponse` interface to type-cast HTTP boundary response from `/api/license/sync` external endpoint, eliminated 4 TS18046 errors (63→59, -6.3% cumulative from baseline 63 TS18046 in B2 Phase 1). Anti-corruption layer pattern: external wire contract `RaasSyncResponse` ≠ domain contract `LicenseValidationResult`. Tests 1394/1394 pass. Review 9.5/10.
+
+---
+
 ## [2026-04-25] B2 Phase 5 — License List Actions Type Safety & Cascade Fix (v1.12.23)
 
 **B2 Phase 5 (license list actions):** Refactored `src/components/admin/licenses/use-license-list-actions.ts`, added local `LicenseListResponse` + `ActionErrorResponse` interfaces + type cast responses from canonical `raas-schema`, cascade-fixed `License.expiresAt` (number → number | null) alignment with canonical `LicenseSummary` in `license-list.tsx` and `license-list-table-row.tsx`, latent UI bug fix: `!expiresAt` truthy check now correctly handles null AND 0 as "perpetual" license. Eliminated 5 TS18046 errors (435→430, cumulative -32 from baseline 462). Tests 1394/1394 pass. Review 9.7/10.

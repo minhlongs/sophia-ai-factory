@@ -62,15 +62,23 @@ Resolve 462 TypeScript errors currently masked by `ignoreBuildErrors: true` in `
 - Review: 9.7/10 auto-approved
 - Pattern: Type widening cascade — canonical schema alignment surfaces consumer type mismatches
 
-### Phase 6: Backlog Candidates (NEXT)
+### Phase 6: Metering Reconciler License Validator (DONE)
+- File: `src/worker/lib/metering-reconciler-license-validator.ts`
+- Change: Added `RaasSyncResponse` interface + HTTP boundary type cast
+- Errors fixed: -4 TS18046
+- Metric: 430 → **426 errors**
+- Tests: 1394 pass, 0 fail
+- Review: 9.5/10 auto-approved
+- Pattern: HTTP boundary type cast (standard at fetch().json() nullability)
+
+### Phase 7: Backlog Candidates (NEXT)
 Prioritized by TS18046 density:
 
-1. `src/worker/lib/metering-reconciler-license-validator.ts` (4 TS18046) — **NEXT**
-2. `src/middleware/rate-limit-wrapper.test.ts` (4 TS18046)
-3. `src/lib/heygen/heygen-client.ts` (4 TS18046)
-4. `src/components/raas/api-key-create-modal.tsx` (4 TS18046)
-5. `src/app/api/webhooks/telegram/route.ts` (4 TS18046)
-6. `src/app/[locale]/dashboard/proposals/page.tsx` (4 TS18046)
+1. `src/middleware/rate-limit-wrapper.test.ts` (4 TS18046) — **NEXT**
+2. `src/lib/heygen/heygen-client.ts` (4 TS18046)
+3. `src/components/raas/api-key-create-modal.tsx` (4 TS18046)
+4. `src/app/api/webhooks/telegram/route.ts` (4 TS18046)
+5. `src/app/[locale]/dashboard/proposals/page.tsx` (4 TS18046)
 
 ## Success Verification
 
@@ -90,6 +98,7 @@ git diff next.config.ts  # ignoreBuildErrors removed
 | 3 | setup-wizard/page.tsx | -6 | 446→440 | -4.8% |
 | 4 | use-license-regenerate.ts | -5 | 440→435 | -5.8% |
 | 5 | use-license-list-actions.ts | -5 | 435→430 | -6.9% |
+| 6 | metering-reconciler-license-validator.ts | -4 | 430→426 | -7.8% |
 
 ## Status
 
@@ -98,5 +107,6 @@ git diff next.config.ts  # ignoreBuildErrors removed
 - [x] Phase 3: Setup Wizard Type Guards
 - [x] Phase 4: License Regenerate Hook
 - [x] Phase 5: License List Actions Hook
-- [ ] Phase 6-10: Backlog resolution
+- [x] Phase 6: Metering Reconciler License Validator
+- [ ] Phase 7-11: Backlog resolution (37 errors remaining ÷ ~4.5 per phase = ~8 phases)
 - [ ] Final: Remove ignoreBuildErrors, verify 0 errors
