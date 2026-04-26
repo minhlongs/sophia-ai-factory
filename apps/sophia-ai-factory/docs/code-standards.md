@@ -331,9 +331,9 @@ const data = (await getAnalyticsData(params)) as AnalyticsQueryResponse;
 
 Prefer this approach to modifying the helper's return type annotation (which may affect multiple callsites or break abstraction). The interface is defined **at the narrowest consumption point** with only the fields actually used (YAGNI principle).
 
-### Sub-Variant 4: DB-Result Cast (22 Instances)
+### Sub-Variant 4: DB-Result Cast (25 Instances)
 
-Casting Supabase/D1 query results from `unknown` (via `ReturnType<typeof db.from>` helper) to local DB-row interface at narrow consumption point.
+Casting Supabase/D1 query results from `unknown` (via `ReturnType<typeof db.from>` helper) to local DB-row interface at narrow consumption point. **Phase 40 doctrine:** Prefer canonical types from `lib/supabase/types.ts` when available; inline interfaces only as fallback for tables without canonical types. Example: `OverageEventRow` now imported centrally rather than redefined inline across 3 files.
 
 **Canonical Examples:**
 - **Phase 20:** `src/app/api/admin/licenses/[id]/reactivate/route.ts` — `ReactivatedLicenseRow` interface cast. Pattern: rename pattern (`data` → `rawData` distinguishes wire result from domain object), nullable cast (`as ReactivatedLicenseRow | null`) for `.single()` returns, optional-chained reads with fallbacks (`license?.expiresAt ?? null`). Only consumed fields modeled in interface (YAGNI: don't replicate full DB schema). Defensive fallbacks prevent null-dereference errors.

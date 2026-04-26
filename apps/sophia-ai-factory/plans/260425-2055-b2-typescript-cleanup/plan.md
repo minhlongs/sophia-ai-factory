@@ -2,11 +2,11 @@
 
 **Initiative:** B2 TypeScript Error Elimination + Quality Refinement
 **Duration:** Multi-phase (Phases 1–36 complete, Phase 37+ planned)
-**Overall Status:** ✅ PHASE 39 READY — D1 QUERYCHAIN .or() + CARRIES
+**Overall Status:** ✅ PHASE 40 COMPLETE — B2 MIXED BATCH SYNCED
 **Baseline:** 462 TS18046 errors (next.config.ts:24 reference)
-**Current:** 101 errors remaining (post-Phase 39)
-**Phase 39 Result:** 103 → 101 errors (-2: P1 D1 .or() impl + C1 silent failure fix)
-**Total Errors Reduced:** 462 → 101 (78.1% overall codebase reduction)
+**Current:** 89 errors remaining (post-Phase 40)
+**Phase 40 Result:** 101 → 89 errors (-12: customer-linkage logger + reconciliation logger + overage-summary canonical cast)
+**Total Errors Reduced:** 462 → 89 (80.7% overall codebase reduction)
 
 ---
 
@@ -47,6 +47,7 @@
 | 37 | 4 files (admin/billing/overage-events, cron/usage-export-db, raas/usage, customer-search) | -11 (123 → 112, -7 TS2339 + -7 TS2322 + 3 side-effects) | Mixed batch: property narrowing + DB schema + object instantiation | ✅ DONE | tester-260426-1418-b2-phase37-mixed-batch, code-review-260426-1418-b2-phase37-mixed-batch 9.7/10 |
 | 38 | 5 files (alerts/raas/quota/licensing fixes) | -9 (112 → 103, -5 TS2339 + -4 TS2322/misc, .or() revert for D1 runtime bug visibility) | Mixed batch alerts/quota/raas: HTTP boundaries + DB schema narrowing + .or() revert | ✅ DONE | tester-260426-1430-b2-phase38-mixed-batch, code-review-260426-1430-b2-phase38-mixed-batch 9.2/10 |
 | 39 | 5 files (d1-query-chain, d1-query-chain-executors, raas-license-crud, realtime-alert-mutations, customer-linkage) | -2 (103 → 101, P1 D1 .or() impl + C1 silent now() fix + H3 allowlist hardening) | D1 QueryChain .or() method + realtime-alert mutations computed timestamp + column-name allowlist | ✅ DONE | tester-260426-1438-b2-phase39-d1-or-impl, code-review-260426-1438-b2-phase39-d1-or-impl 9.0/10 |
+| 40 | 3 files (customer-linkage, usage-reconciliation, overage-summary) | -12 (101 → 89, logger fix + logger fix + canonical OverageEventRow cast) | Customer-linkage logger fix + reconciliation logger fix + overage-summary canonical type cast | ✅ DONE | tester-260426-1500-b2-phase40-mixed-batch, inline 8.5/10 → M1 addressed |
 
 **MILESTONES ACHIEVED:** 462 → 0 TS18046 (100% via Phase 27); 313 → 280 TS2345 QueryError (100% via Phase 28); 280 → 251 TS2304 ×28 + TS2307 ×1 (quick-win via Phase 29); 251 → 246 TS2307 ×5 (quick-win via Phase 30); 246 → 235 ZodError v4 + HeyGen (Phase 31); 235 → 216 Smart Resume + Alerts (Phase 32); 216 → 202 Sub-Variant 2 Batch (Phase 33, 56.3% cumulative reduction); 202 → 189 Agent-Health D1 + Chart TooltipProps (Phase 34, 59.1% cumulative reduction); **189 → 148 Mass TS2352 Batch (Phase 35, 68% cumulative reduction, TS2352 100% ELIMINATION)**; **148 → 123 TS2322 Hard Targets (Phase 36, 73.4% cumulative reduction)**; **123 → 112 Mixed Batch (Phase 37, 75.8% cumulative reduction)**; **112 → 103 Alerts/RAAS/Quota/Licensing Fixes (Phase 38, 77.7% cumulative reduction)**
 

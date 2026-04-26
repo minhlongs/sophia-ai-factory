@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
     }> | null;
 
     if (error) {
-      logger.error('[Customer Linkage Audit] Failed to query licenses', error);
+      logger.error('[Customer Linkage Audit] Failed to query licenses', toError(error));
       return NextResponse.json(
         { error: 'Database query failed', details: error.message },
         { status: 500 }

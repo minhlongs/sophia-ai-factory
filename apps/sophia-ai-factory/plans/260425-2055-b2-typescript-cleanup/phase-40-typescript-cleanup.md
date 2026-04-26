@@ -1,10 +1,10 @@
-# Phase 40: TypeScript Cleanup — C2 OBSOLETE ENDPOINT VERIFY + L2/M4 CARRIES
+# Phase 40: TypeScript Cleanup — B2 MIXED BATCH (CUSTOMER-LINKAGE LOGGER + RECONCILIATION LOGGER + OVERAGE-SUMMARY CAST)
 
-**Status:** 📋 READY FOR EXECUTION (2026-04-26 post-Phase 39)
+**Status:** ✅ COMPLETED 2026-04-26
 **Baseline:** 101 errors (post-Phase 39)
-**Target:** C2 customer-linkage endpoint obsolescence check + L2 defense drop + M4 JSDoc + remaining backlog
+**Result:** 101 → 89 (-12 errors: customer-linkage logger fix + reconciliation logger fix + overage-summary canonical type cast)
 **Priority:** **MEDIUM** (C2/L2 code cleanup) + **P2** (M4 documentation)
-**Estimated Effort:** 1-2 hours (C2 verification + L2/M4 carries)
+**Effort:** 1.5 hours (mixed batch execution)
 
 ---
 
