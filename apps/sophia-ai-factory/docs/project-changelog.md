@@ -1,6 +1,12 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-26 | **Current Version:** 1.13.0
+**Last Updated:** 2026-04-26 | **Current Version:** 1.13.1
+
+---
+
+## MILESTONE v1.13.1 — Mass Logger toError Refactor (Phase 28)
+
+**Phase 28 B2 (mass logger.error toError wrapping refactor):** Mechanical refactor across 23 files implementing canonical **Logger Error Wrapping Pattern** — all error objects passed to `logger.error()` now normalized via `toError()` helper before logging. Pattern consolidates error handling from Supabase QueryError, PostgrestError, and caught exceptions into structured logging layer. TS error reduction: 313 → 280 (-33, all TS2345 QueryError eliminated). Instance count: ~28+ sites now consistently use `const err = toError(error); logger.error('msg', { error: err, ... })` pattern across admin routes, raas operations, usage export, audit services, and middleware. Behavior improvement: PostgrestError shape (`{ message, code?, details?, hint? }`) now preserved in production logs — previously direct pass-through lost error context. Pattern canonical: see "Logger Error Wrapping Pattern" in code-standards.md. Tests 1398/1398 pass. Code review 9.7/10 auto-approved. Protected flows (Setup Wizard, Telegram Bot, NOWPayments) untouched.
 
 ---
 

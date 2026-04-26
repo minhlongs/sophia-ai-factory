@@ -5,6 +5,7 @@ import { createServerClient } from "@/lib/db/client";
 import { Tier } from "@/types";
 import { revalidatePath } from "next/cache";
 import { logger } from "@/lib/utils/logger-utility";
+import { toError } from "@/lib/utils/to-error";
 
 async function getUser() {
   try {
@@ -51,7 +52,7 @@ export async function generateScript(formData: FormData) {
       .single();
 
     if (dbError || !campaign) {
-      logger.error("Failed to create campaign record", dbError);
+      logger.error("Failed to create campaign record", toError(dbError));
       return { success: false, message: "Failed to initialize campaign" };
     }
 
@@ -103,7 +104,7 @@ export async function renderVideo(scriptId: string) {
       .eq("user_id", user.id);
 
     if (dbError) {
-      logger.error("Failed to update campaign status for rendering", dbError);
+      logger.error("Failed to update campaign status for rendering", toError(dbError));
       return { success: false, message: "Failed to update status" };
     }
 
@@ -148,7 +149,7 @@ export async function getUserProjects() {
       .order("created_at", { ascending: false });
 
     if (error) {
-      logger.error("Failed to fetch user projects", error);
+      logger.error("Failed to fetch user projects", toError(error));
       return [];
     }
 

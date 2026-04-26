@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { exchangeCodeForTokens } from '@/lib/tiktok/tiktok-oauth-client';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
@@ -55,7 +56,7 @@ export async function GET(request: NextRequest) {
       .upsert({ user_id: user.id, api_keys: updatedKeys, updated_at: new Date().toISOString() });
 
     if (updateError) {
-      logger.error('TikTok callback: failed to store tokens', updateError);
+      logger.error('TikTok callback: failed to store tokens', toError(updateError));
       return NextResponse.redirect(
         new URL('/dashboard/settings?error=tiktok_store_failed', request.url),
       );

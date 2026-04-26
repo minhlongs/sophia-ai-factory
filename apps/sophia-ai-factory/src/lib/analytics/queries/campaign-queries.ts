@@ -8,6 +8,7 @@
 import { createServerClient } from '@/lib/db/client';
 import type { D1QueryChain } from '@/lib/db/d1-query-chain';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 import type { LicenseFilters, LicenseMetrics, LicenseUtilization } from '../types';
 import { QUOTA_LIMITS } from '@/lib/usage-metering/aggregator';
 
@@ -49,7 +50,7 @@ export async function fetchLicenseMetrics(filters: LicenseFilters = {}): Promise
   const { data: rawLicenses, error } = await query;
 
   if (error) {
-    logger.error('[Analytics] Failed to fetch licenses', error);
+    logger.error('[Analytics] Failed to fetch licenses', toError(error));
     throw new Error('Failed to fetch license data');
   }
 

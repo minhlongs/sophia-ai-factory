@@ -5,6 +5,7 @@
 
 import { createServerClient } from '../db/client'
 import { logger } from '../utils/logger-utility'
+import { toError } from '../utils/to-error'
 import type { UsageEventRow } from '../supabase/types'
 import type { UsageExportRecord, UsageExportSummary, BillingPeriod } from './types'
 import type { GetUsageExportParams } from './export-service-params'
@@ -100,7 +101,7 @@ export async function getUsageExportData(params: GetUsageExportParams): Promise<
     if (params.licenseNonce) query = query.eq('license_nonce', params.licenseNonce)
     const { data: rows, error, count } = await query
     if (error) {
-      logger.error('[UsageExport] Database query failed', error, { billingPeriod: params.billingPeriod })
+      logger.error('[UsageExport] Database query failed', toError(error), { billingPeriod: params.billingPeriod })
       throw new Error(`Database query failed: ${error.message}`)
     }
     const totalCount = count || 0

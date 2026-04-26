@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
       .eq('status', 'queued');
 
     if (updateError) {
-      logger.error('[POST /api/raas/execute] Failed to update mission status', updateError);
+      logger.error('[POST /api/raas/execute] Failed to update mission status', toError(updateError));
       return NextResponse.json({ error: 'Failed to start mission' }, { status: 500 });
     }
 

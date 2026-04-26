@@ -80,7 +80,7 @@ export async function GET(req: NextRequest) {
     const { data: eventsData, error: eventsError, count } = await query;
 
     if (eventsError) {
-      logger.error('[Overage Events] Error fetching overage events', eventsError);
+      logger.error('[Overage Events] Error fetching overage events', toError(eventsError));
       return NextResponse.json(
         { error: 'Failed to fetch overage events' },
         { status: 500 }

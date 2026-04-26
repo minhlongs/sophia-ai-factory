@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 
 /**
  * GET: Query recent usage events
@@ -79,7 +80,7 @@ export async function GET(request: NextRequest) {
     const { data, error, count } = await query;
 
     if (error) {
-      logger.error('[Debug Usage] Failed to query events', error);
+      logger.error('[Debug Usage] Failed to query events', toError(error));
       return NextResponse.json(
         { error: error.message },
         { status: 500 }

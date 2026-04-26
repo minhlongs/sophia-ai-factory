@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/db/client'
 import { getCurrentUser } from '@/lib/better-auth-session'
 import { logger } from '@/lib/utils/logger-utility'
+import { toError } from '@/lib/utils/to-error'
 import { z } from 'zod'
 
 /**
@@ -68,7 +69,7 @@ export async function GET(request: NextRequest) {
       .range((params.page - 1) * params.limit, params.page * params.limit - 1)
 
     if (error) {
-      logger.error('Failed to fetch user audit logs', error)
+      logger.error('Failed to fetch user audit logs', toError(error))
       return NextResponse.json(
         { error: 'Failed to fetch audit logs', details: error.message },
         { status: 500 }

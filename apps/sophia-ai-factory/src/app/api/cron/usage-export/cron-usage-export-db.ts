@@ -5,6 +5,7 @@
 
 import { createServerClient } from '@/lib/db/client'
 import { logger } from '@/lib/utils/logger-utility'
+import { toError } from '@/lib/utils/to-error'
 import type { RaasLicenseRow } from '@/lib/supabase/types'
 
 interface ExportJobInsert {
@@ -24,7 +25,7 @@ export async function getActiveLicenses(): Promise<RaasLicenseRow[]> {
   const db = createServerClient()
   const { data, error } = await db.from('raas_licenses').select('*').eq('is_revoked', false)
   if (error) {
-    logger.error('[Usage Export Cron] Failed to query licenses', error)
+    logger.error('[Usage Export Cron] Failed to query licenses', toError(error))
     throw new Error(`Database query failed: ${error.message}`)
   }
   const now = Math.floor(Date.now() / 1000)

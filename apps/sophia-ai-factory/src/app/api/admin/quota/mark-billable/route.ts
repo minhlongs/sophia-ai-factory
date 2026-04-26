@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
       .in('id', eventIds);
 
     if (updateError) {
-      logger.error('[Admin Quota API] Failed to mark events as billable', updateError);
+      logger.error('[Admin Quota API] Failed to mark events as billable', toError(updateError));
       return NextResponse.json(
         { error: 'Failed to mark events as billable', details: updateError.message },
         { status: 500 }

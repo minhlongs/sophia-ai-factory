@@ -621,9 +621,11 @@ Example from Phase 24: `src/app/api/quota/overage-events/route.ts` had an unreac
 
 ## Logger Error Wrapping Pattern
 
+**CANONICAL PATTERN** — All error objects passed to `logger.error()` MUST be normalized via `toError()` helper before logging. This is now the project-wide standard across ~28+ instances (Phase 28 mass refactor).
+
 When logging errors from Supabase/D1 query results or caught exceptions, normalize error objects using the `toError()` helper from `@/lib/utils/to-error.ts`.
 
-**Canonical Pattern (Phase 21):**
+**Canonical Pattern (Phase 21+, Standardized Phase 28):**
 
 ```typescript
 import { logger } from '@/lib/logger';
@@ -640,16 +642,30 @@ try {
 
 **Why `toError()` Matters:**
 
-`toError()` recognizes Supabase `PostgrestError` shape: `{ message: string, code?, details?, hint? }`. Instead of collapsing to `Error("[object Object]")`, it:
+`toError()` recognizes Supabase/PostgreSQL `PostgrestError` shape: `{ message: string, code?, details?, hint? }`. Instead of collapsing to `Error("[object Object]")`, it:
 1. Returns `new Error(message)` with preserved message
 2. Attaches `code`, `details`, `hint` as own-properties for structured logging downstream
 3. Falls back to string coercion for non-Error/non-PostgrestError values
 
-**Canonical Sites (Phase 21+):**
+**Behavior Improvement (Phase 28):**
+
+Direct error pass-through loses error context in production logs (code, details, hint fields invisible). With `toError()` wrapping, PostgrestError shape is fully preserved: `{ message, code, details, hint }` all available to observability stack for structured error analysis. Production logs now contain actionable error metadata from database layer.
+
+**Canonical Sites (Phase 21+, Phase 28 Mass Refactor):**
+
+**Phase 21 (Initial Introduction):**
 - `src/lib/analytics/queries/violation-queries.ts` — 2 query error sites wrapped with `toError()`
 - `src/app/api/admin/licenses/[id]/reactivate/route.ts` — logger at L71 wrapped with `toError()`
 - `src/lib/raas/raas-invoice-generator.ts` — 2 UPDATE error sites (L50, L113) wrapped with `toError()` for Supabase QueryError normalization
-- Any route or function catching query/async errors should use `toError()` before `logger.error()`
+
+**Phase 28 Mass Refactor (Mechanical Batch - 23 Files, ~28+ Total Instances):**
+- All admin routes (dunning routes, audit services)
+- RAAS operations (invoice generator, MCU balance, mission launcher)
+- Usage export handlers (GET/POST)
+- Middleware and internal usage query APIs
+- All instances now follow canonical pattern: `const err = toError(error); logger.error('msg', { error: err, ... })`
+
+**Rule:** Any route or function catching query/async errors MUST use `toError()` before passing to `logger.error()`. No direct error pass-through allowed for database/async operations.
 
 **Documentation Reference:**
 See `Error Handling & Logging` section above for full signature and usage of `logger.error()`.

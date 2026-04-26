@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { trackUsage, hashLicenseKey } from '@/lib/usage-metering';
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
 
 const SERVICES = ['heygen', 'elevenlabs', 'openrouter'] as const;
 const ACTIONS = {
@@ -126,7 +127,7 @@ export async function DELETE() {
       .like('idempotency_key', 'mock_%');
 
     if (countError) {
-      logger.error('[Mock Usage] Failed to count mock data', countError);
+      logger.error('[Mock Usage] Failed to count mock data', toError(countError));
       return NextResponse.json(
         { error: 'Failed to clear mock data', details: countError.message },
         { status: 500 }
@@ -140,7 +141,7 @@ export async function DELETE() {
       .like('idempotency_key', 'mock_%');
 
     if (deleteError) {
-      logger.error('[Mock Usage] Failed to clear mock data', deleteError);
+      logger.error('[Mock Usage] Failed to clear mock data', toError(deleteError));
       return NextResponse.json(
         { error: 'Failed to clear mock data', details: deleteError.message },
         { status: 500 }
