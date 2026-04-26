@@ -25,7 +25,7 @@ export async function getUnreadAlerts(
       return [];
     }
 
-    return data || [];
+    return (data || []) as unknown as UserAlert[];
   } catch (error) {
     logger.error('[Realtime Alert] Error fetching unread', toError(error));
     return [];
@@ -59,7 +59,7 @@ export async function getAlertHistory(
       return [];
     }
 
-    return data || [];
+    return (data || []) as unknown as UserAlert[];
   } catch (error) {
     logger.error('[Realtime Alert] Error fetching history', toError(error));
     return [];

@@ -46,7 +46,7 @@ export async function getAuditLogs(filters: RaasAuditLogFilters): Promise<AuditL
     throw new Error(`Database error: ${error.message}`);
   }
 
-  return { logs: data || [], total: count || 0, page, limit };
+  return { logs: (data || []) as unknown as RaasAuditLog[], total: count || 0, page, limit };
 }
 
 /**
@@ -66,7 +66,7 @@ export async function getAuditLogsByLicense(nonce: string): Promise<RaasAuditLog
     throw new Error(`Database error: ${error.message}`);
   }
 
-  return data || [];
+  return (data || []) as unknown as RaasAuditLog[];
 }
 
 /**
