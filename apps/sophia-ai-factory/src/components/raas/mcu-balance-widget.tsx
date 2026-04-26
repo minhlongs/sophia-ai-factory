@@ -17,23 +17,34 @@ interface BalanceData {
   monthlyLimit: number;
 }
 
+interface RaasUsageResponse {
+  balance?: number;
+  monthly_used?: number;
+  monthly_limit?: number;
+}
+
 export function McuBalanceWidget() {
   const t = useTranslations('dashboard.missions');
   const [data, setData] = useState<BalanceData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/raas/usage')
-      .then(r => r.json())
-      .then(d => {
+    const fetchUsage = async () => {
+      try {
+        const r = await fetch('/api/raas/usage');
+        const d = (await r.json()) as RaasUsageResponse;
         setData({
           balance: d.balance ?? 0,
           monthlyUsed: d.monthly_used ?? 0,
           monthlyLimit: d.monthly_limit ?? 1000,
         });
+      } catch {
+        // silently fail, use defaults
+      } finally {
         setLoading(false);
-      })
-      .catch(() => setLoading(false));
+      }
+    };
+    fetchUsage();
   }, []);
 
   if (loading) return <div className="h-24 bg-muted animate-pulse rounded-xl" />;

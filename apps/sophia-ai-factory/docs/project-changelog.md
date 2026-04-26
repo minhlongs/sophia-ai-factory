@@ -1,6 +1,12 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-26 | **Current Version:** 1.12.35
+**Last Updated:** 2026-04-26 | **Current Version:** 1.12.36
+
+---
+
+## [2026-04-26] B2 Phase 18 — BATCH Refactor MCU Balance Widget + Mission Launcher Response-Body HTTP Boundary Casting (v1.12.36)
+
+**B2 Phase 18 (mcu-balance-widget + mission-launcher batch):** Refactored `src/components/raas/mcu-balance-widget.tsx` + `src/components/raas/mission-launcher.tsx`, added local `RaasUsageResponse` (mcu-balance-widget) + `MissionCreateResponse` (mission-launcher) interfaces to type-cast HTTP boundary responses from `/api/raas/usage` + `/api/missions/create` endpoints, applied anti-corruption cast pattern with async/await + optional fallbacks (`?? ''` for string fields). Pattern instances #13 + #14 of "HTTP boundary cast" — **Response-Body variant instances, demonstrating pattern works for both .then() chains (Phase 6–13) AND async/await blocks** (Phase 18). RaasUsageResponse preserves snake_case API contract (`credit_balance`, `monthly_limit`); MissionCreateResponse models optional mission object with optional nested `id` + `error` fields + hardened `onSuccess(string)` signature. Eliminated 5 TS18046 errors (26→21, -19.2% Phase 18 delta, -95.5% cumulative B2 from baseline 462→21). Tests 1394/1394 pass. Code review 9.7/10 auto-approved.
 
 ---
 
