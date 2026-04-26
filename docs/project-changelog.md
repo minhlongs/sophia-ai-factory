@@ -1,7 +1,28 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-04-25 (Dead-Code Cleanup + Analytics Query Type Safety + Billing Modularization)
+> **Last Updated:** 2026-04-25 (B2 TypeScript Cleanup Phase 1 + Dead-Code Cleanup + Analytics Query Type Safety + Billing Modularization)
+
+---
+
+## [2026-04-25] B2 TypeScript Cleanup Phase 1 — api-keys POST Handler Zod Validation
+
+### Summary
+Eliminated 10 TS18046 errors in `api-keys/route.ts` POST handler by introducing Zod schema validation. Replaced imperative type guards with declarative schema parsing. Total project TS errors: 462 → 452. Behavior unchanged for happy-path; error response shape evolved from `{ error, invalid: [...] }` to `{ error, details: { fieldErrors, formErrors } }` (verified zero consumers of old error shape). Tests: 1394/1394 ✅.
+
+### Files Modified (1)
+- `src/app/api/admin/api-keys/route.ts` — Added `CreateApiKeyRequest` Zod schema, refactored POST handler to use `schema.parse()`, eliminated manual `body: unknown` guards
+
+### Alignment
+- Follows Sophia standard: "Zod validation on all API inputs" (code-standards.md)
+- No breaking changes: error consumers verified via grep to be non-existent
+- Establishes pattern for remaining 25 API routes in B2 cleanup
+
+### Metrics
+- **TS Errors Eliminated:** 10 (TS18046 — 'body' unknown type)
+- **Build:** ✅ npm run build exit 0
+- **Test Coverage:** 1394/1394 pass (100%)
+- **Type Safety:** Improved via Zod compile-time validation
 
 ---
 
