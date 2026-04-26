@@ -2,9 +2,9 @@
 
 **Initiative:** B2 TypeScript Error Elimination
 **Duration:** Multi-phase (Phases 1–12+ ongoing)
-**Overall Status:** Phase 12 Complete | Phase 13 Ready
+**Overall Status:** Phase 14 Complete | Phase 15 Ready
 **Baseline:** 462 TS18046 errors (next.config.ts:24 reference)
-**Current:** 37 TS18046 errors remaining (92% reduction)
+**Current:** 32 TS18046 errors remaining (93.1% reduction)
 
 ---
 
@@ -19,8 +19,9 @@
 | 11 | `src/components/admin/licenses/audit-log-table.tsx` | -3 (43→40) | HTTP boundary anti-corruption cast | ✅ DONE | tester-260426-b2-phase11-audit-log-table, code-review-260426-b2-phase11-audit-log-table |
 | 12 | `src/components/quota/quota-usage-dashboard.tsx` | -3 (40→37) | HTTP boundary anti-corruption cast (dual-endpoint) | ✅ DONE | tester-260426-0821-b2-phase12-quota-dashboard, code-review-260426-0821-b2-phase12-quota-dashboard |
 | 13 | `src/components/dashboard/referral-share-widget.tsx` | -2 (37→35) | HTTP boundary anti-corruption cast (single-endpoint) | ✅ DONE | tester-260426-0835-b2-phase13-referral-widget, code-review-260426-1030-b2-phase13-referral-widget |
+| 14 | `src/app/api/coupons/apply/route.ts` | -3 (35→32) | HTTP boundary anti-corruption cast (request-body) | ✅ DONE | tester-260426-0840-b2-phase14-coupons-apply, code-review-260426-0840-b2-phase14-coupons-apply |
 
-**Cumulative:** 462 → 35 TS18046 (427 fixed, 92.4% reduction)
+**Cumulative:** 462 → 32 TS18046 (430 fixed, 93.1% reduction)
 
 ---
 
@@ -132,6 +133,8 @@ npx tsc --noEmit 2>&1 | grep "TS18046" | \
 - [x] Phase 12 implementation delivered (-3 errors, 9.7/10 review)
 - [x] Phase 13 target file identified
 - [x] Phase 13 implementation delivered (-2 errors, 9.8/10 review)
+- [x] Phase 14 target file identified and completed
+- [x] Phase 14 implementation delivered (-3 errors, 9.8/10 review)
 
 ---
 
@@ -180,5 +183,28 @@ npx tsc --noEmit 2>&1 | grep "TS18046" | \
 
 ---
 
-**Last Updated:** 2026-04-26 (Phase 13 sync-back)
+---
+
+## Phase 14 Completion Metrics
+
+**File:** `src/app/api/coupons/apply/route.ts`  
+**Method:** HTTP boundary anti-corruption cast (Instance #8, first request-body variant in series)  
+**Errors Fixed:** -3 (35 → 32)  
+**Tests:** 1394/1394 ✅ (0 regressions)  
+**Review Score:** 9.8/10 (auto-approved, 0 critical)  
+**Quality:** Request-body HTTP boundary pattern — same approach as response-body variants. Local `CouponApplyRequest` interface with `code`, `tier`, `project` fields. Cast applied at `(await request.json()) as CouponApplyRequest` boundary. Defensive null check before apply operation.
+
+**Implementation Pattern:**
+- Local `CouponApplyRequest` interface (3 lines)
+- Request body cast: `(await request.json()) as CouponApplyRequest`
+- Defensive guard: `if (!req.code)` protection
+- YAGNI: Omitted unused fields from request schema
+
+**Reports:**
+- `plans/reports/tester-260426-0840-b2-phase14-coupons-apply.md`
+- `plans/reports/code-review-260426-0840-b2-phase14-coupons-apply.md`
+
+---
+
+**Last Updated:** 2026-04-26 (Phase 14 sync-back)
 **Initiative Lead:** Project Manager
