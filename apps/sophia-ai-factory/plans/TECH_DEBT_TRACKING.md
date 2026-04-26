@@ -22,7 +22,18 @@
 | 47 | src/lib/security/api-key-validator.ts | 459L | 4 | ✅ | 824a081a |
 | 48 | src/lib/usage-export/export-service.ts | 445L | 3 | ✅ | 6e478075 |
 
-**Total:** 4,174 lines → 36 sub-modules | 1 review fix commit
+**Total:** 4,174 lines → 36 sub-modules | 2 review fix commits
+
+### Dead-Code Cleanup Sync (April 25, 2026 — Post /debug --auto)
+
+| Issue | Type | Resolution | Status |
+|-------|------|-----------|--------|
+| H3 | Dead-code cleanup | Deleted 4 unused files (510 LOC, zero consumers) | ✅ COMPLETE |
+| next.config.ts:24 | Misleading comment | Updated reference from audit A1 → audit B2 (462 TS errors) | ✅ FIXED |
+| B1+B3+B4 | Tier hardcoding, D1 missing remote, wrangler config | Fixed in commit 1f4a98af | ✅ |
+| H1+H6 | Org_id writes, prod referer leak | Fixed in commit d7b5ff04 | ✅ |
+| H2+H4+H5 | Feedback orgId, SSE backoff, prompt cap | Fixed in commit bcb7604b | ✅ |
+| B2 | 462 TypeScript errors | BLOCKED — requires split-PR initiative (TBD) | 🟡 OPEN |
 
 ---
 
@@ -134,6 +145,17 @@ bdb1b0da Phase 46 — Realtime tracker
 - **Phase 47 (api-key-validator):** Rate limiting insights
   - Tracks attempts per API key
   - Logs suspicious patterns for security review
+
+---
+
+## Stale Plan Docs Requiring Doc-Sync
+
+Following plan phase files reference deleted modules and need updates:
+
+1. **`plans/260309-0747-overage-billing-phase1/phase-01-quota-overage-api.md:164`** — References deleted module
+2. **`plans/260425-0033-phase-38-quota-checker-modularization/phase-38-quota-checker-modularization.md:23`** — References deleted module
+
+**Action Required:** Schedule follow-up doc-sync pass to align plan references with current codebase state.
 
 ---
 

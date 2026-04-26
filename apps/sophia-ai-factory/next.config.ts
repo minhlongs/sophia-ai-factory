@@ -21,7 +21,7 @@ const nextConfig: NextConfig = {
   reactCompiler: true,
   serverExternalPackages: ['redis', 'ioredis'],
   typescript: {
-    // Skip type checking during build (circular types cause stack overflow)
+    // Tech-debt: ~462 TS errors masked here; scheduled for split-PR cleanup (see audit B2).
     ignoreBuildErrors: true,
   },
   images: {
