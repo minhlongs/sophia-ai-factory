@@ -1,12 +1,12 @@
 # B2: TypeScript Cleanup Initiative
 
 **Initiative:** B2 TypeScript Error Elimination + Quality Refinement
-**Duration:** Multi-phase (Phases 1–31 complete, Phase 32 planned)
-**Overall Status:** ✅ PHASE 31 COMPLETE — 100% TS18046 + QUERYERROR + ZODERROR V4 + HEYGEN RESPONSE CASTS
+**Duration:** Multi-phase (Phases 1–32 complete, Phase 33+ planned)
+**Overall Status:** ✅ PHASE 32 COMPLETE — SMART RESUME RUNTIME BUG FIX + ALERTS ROUTE CASTS
 **Baseline:** 462 TS18046 errors (next.config.ts:24 reference)
-**Current:** 235 errors remaining (post-Phase 31)
-**Phase 31 Result:** 246 → 235 errors (-11 ZodError v4 + HeyGen response casts)
-**Total Errors Reduced:** 462 → 235 (49.1% overall codebase reduction)
+**Current:** 216 errors remaining (post-Phase 32)
+**Phase 32 Result:** 235 → 216 errors (-19: 6 runtime async + 12 TS2339 + 1 TS18047)
+**Total Errors Reduced:** 462 → 216 (53.2% overall codebase reduction)
 
 ---
 
@@ -37,8 +37,11 @@
 | 27 | `src/webhooks/telegram/route.ts` (PROTECTED FLOW) | -4 TS18046 (318 → 0, 100% elimination milestone) | Telegram webhook protected flow (Sub-Variant 4 request-body cast #7) + integration test | ✅ DONE | tester-260426-1207-b2-phase27-telegram-final, code-review-260426-1207-b2-phase27-telegram-final 9.7/10 |
 | 28 | 23 files (mass logger.error toError refactor) | -33 TS2345 QueryError (313 → 280) | Canonical toError() helper wrapping all QueryError logger sites (33 instances, 23 files) | ✅ DONE | tester-260426-phase28-mass-toerror-verification, code-review-260426-1230-b2-phase28-mass-toerror 9.7/10 |
 | 29 | 3 files (vi import + campaign components IntlFormat) | -29 TS2304 quick-win (280 → 251) | TS2304 undefined names (27 vi + 1 IntlFormat) + TS2307 broken intl import elimination | ✅ DONE | tester-260426-1245-b2-phase29-ts2304-quickwin, code-review-260426-1245-b2-phase29-ts2304-quickwin 9.7/10 |
+| 30 | 5 files (1 component + 1 index + 3 worker imports) | -5 TS2307 quick-win (251 → 246) | TS2307 module resolution + dead code elimination | ✅ DONE | tester-260426-1252-b2-phase30-ts2307-quickwin, code-review-260426-1252-b2-phase30-ts2307-quickwin 9.8/10 |
+| 31 | 7 files (6 ZodError + 1 heygen-client) | -11 (246 → 235) | ZodError v4 migration + HeyGen response casts | ✅ DONE | tester-260426-1306-b2-phase31-zoderror-heygen, code-review-260426-1306-b2-phase31-zoderror-heygen 9.83/10 |
+| 32 | 3 files (1 smart-resume + 2 alerts routes) | -19 (235 → 216) | Smart resume async fix (RUNTIME BUG) + alerts Sub-Variant 2 casts | ✅ DONE | tester-260426-1316-b2-phase32-ts2339-batch, code-review-260426-1316-b2-phase32-ts2339-batch 9.7/10 |
 
-**MILESTONES ACHIEVED:** 462 → 0 TS18046 (100% via Phase 27); 313 → 280 TS2345 QueryError (100% via Phase 28); 280 → 251 TS2304 ×28 + TS2307 ×1 (quick-win via Phase 29); 251 → 246 TS2307 ×5 (quick-win via Phase 30); 46.8% overall error reduction
+**MILESTONES ACHIEVED:** 462 → 0 TS18046 (100% via Phase 27); 313 → 280 TS2345 QueryError (100% via Phase 28); 280 → 251 TS2304 ×28 + TS2307 ×1 (quick-win via Phase 29); 251 → 246 TS2307 ×5 (quick-win via Phase 30); 246 → 235 ZodError v4 + HeyGen (Phase 31); **235 → 216 Smart Resume + Alerts (Phase 32, 53.2% cumulative reduction)**
 
 ---
 
@@ -168,6 +171,59 @@ See `phase-29-typescript-cleanup.md` for full completion details.
 - Code Review: `plans/reports/code-review-260426-1252-b2-phase30-ts2307-quickwin.md`
 
 See `phase-30-typescript-cleanup.md` for full completion details.
+
+---
+
+## Phase 31 Summary (2026-04-26) — ZODERROR V4 + HEYGEN RESPONSE CASTS
+
+**Status:** ✅ COMPLETED 2026-04-26 ~13:06 UTC
+
+**🎯 PHASE 31 ACHIEVEMENT: ZODERROR V4 MIGRATION + HEYGEN RESPONSE CASTS**
+- **TS2339 baseline:** 246 → 235 (-11 errors)
+- **Group A (6 files):** `.error.errors` → `.error.issues` ZodError v4 API migration
+- **Group B (heygen-client ×3 sites):** Discriminated union cast + Array.isArray narrowing
+- **Tests:** 1398/1398 ✅ (zero regressions)
+- **Code review:** 9.83/10 auto-approved (0 critical/0 major/1 minor)
+- **Protected flows:** Verified (Setup Wizard, Telegram Bot, NOWPayments untouched)
+
+**Key Actions:**
+1. Updated all ZodError property access across 6 files (migration to v4 API)
+2. Applied Sub-Variant 1 defensive casts to heygen-client response shapes
+3. Improved edge case handling (empty array scenarios)
+
+**Reports:**
+- Tester: `plans/reports/tester-260426-1306-b2-phase31-zoderror-heygen.md`
+- Code Review: `plans/reports/code-review-260426-1306-b2-phase31-zoderror-heygen.md`
+
+See `phase-31-typescript-cleanup.md` for full completion details.
+
+---
+
+## Phase 32 Summary (2026-04-26) — SMART RESUME RUNTIME BUG FIX + ALERTS ROUTE CASTS
+
+**Status:** ✅ COMPLETED 2026-04-26 ~13:18 UTC
+
+**🎯 PHASE 32 ACHIEVEMENT: RUNTIME BUG FIX + TS2339 HIGH-FREQUENCY CLEANUP**
+- **TS error baseline:** 235 → 216 (-19 errors: 6 async + 12 TS2339 + 1 TS18047)
+- **Group A (smart-resume-engine.ts):** 6 missing `await` on `getCheckpointSupabase()` — **GENUINE RUNTIME BUG FIX**
+- **Group B (alerts routes ×2):** Sub-Variant 2 request-body casts + Sub-Variant 4 DB-result typing
+- **Tests:** 1398/1398 ✅ (zero regressions)
+- **Code review:** 9.7/10 auto-approved (0 critical/0 major/1 minor non-blocking)
+- **Protected flows:** Untouched (Telegram, Setup Wizard, Payment)
+
+**Critical Finding:**
+Group A was **silent production bug**: `getCheckpointSupabase()` returns `Promise<SupabaseClient | null>`. Pre-fix code assigned Promise to variable, then `if (supabase)` always truthy (Promise is truthy), then `.from()` called on Promise object → runtime crash. Checkpoint persistence would fail unpredictably in production when Supabase configured. Tests passed because mock returns sync `null`, masking issue in staging.
+
+**Key Actions:**
+1. Added `await` to 6 `getCheckpointSupabase()` call sites
+2. Applied Sub-Variant 2 defensive request-body cast pattern to alerts endpoints
+3. Applied Sub-Variant 4 DB-result typing to alerts/rules null-safety scenario
+
+**Reports:**
+- Tester: `plans/reports/tester-260426-1316-b2-phase32-ts2339-batch.md`
+- Code Review: `plans/reports/code-review-260426-1316-b2-phase32-ts2339-batch.md`
+
+See `phase-32-typescript-cleanup.md` for full completion details.
 
 ---
 

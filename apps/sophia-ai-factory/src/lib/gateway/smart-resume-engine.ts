@@ -43,7 +43,7 @@ export class SmartResumeEngine {
     step: PipelineStep,
     metadata?: Record<string, unknown>,
   ): Promise<void> {
-    const supabase = getCheckpointSupabase();
+    const supabase = await getCheckpointSupabase();
 
     if (supabase) {
       try {
@@ -69,7 +69,7 @@ export class SmartResumeEngine {
 
   /** Get the most recent checkpoint for a campaign. Returns null on load failure. */
   async getLastCheckpoint(campaignId: string): Promise<Checkpoint | null> {
-    const supabase = getCheckpointSupabase();
+    const supabase = await getCheckpointSupabase();
 
     if (supabase) {
       try {
@@ -103,7 +103,7 @@ export class SmartResumeEngine {
     }
 
     const stepsToRemove = getStepsFromIndex(stepName);
-    const supabase = getCheckpointSupabase();
+    const supabase = await getCheckpointSupabase();
 
     if (supabase) {
       try {
@@ -129,7 +129,7 @@ export class SmartResumeEngine {
 
   /** Get all checkpoints for a campaign, ordered by completion time */
   async getCheckpoints(campaignId: string): Promise<Checkpoint[]> {
-    const supabase = getCheckpointSupabase();
+    const supabase = await getCheckpointSupabase();
 
     if (supabase) {
       try {
@@ -158,7 +158,7 @@ export class SmartResumeEngine {
 
   /** Clear all checkpoints for a campaign */
   async clearCheckpoints(campaignId: string): Promise<void> {
-    const supabase = getCheckpointSupabase();
+    const supabase = await getCheckpointSupabase();
 
     if (supabase) {
       try {
@@ -179,7 +179,7 @@ export class SmartResumeEngine {
 
   /** Check if a specific step has been completed for a campaign */
   async isStepCompleted(campaignId: string, step: string): Promise<boolean> {
-    const supabase = getCheckpointSupabase();
+    const supabase = await getCheckpointSupabase();
 
     if (supabase) {
       try {

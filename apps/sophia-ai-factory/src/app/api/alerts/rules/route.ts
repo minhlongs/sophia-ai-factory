@@ -11,6 +11,20 @@ import { getCurrentUser } from '@/lib/better-auth-session';
 import { logger } from '@/lib/utils/logger-utility';
 import { toError } from '@/lib/utils/to-error';
 
+interface AlertRulePayload {
+  licenseNonce?: string;
+  thresholdPercent?: number;
+  enabled?: boolean;
+  channels?: string[];
+  webhookUrl?: string;
+  webhookSecret?: string;
+}
+
+interface AlertRuleRow {
+  id: string;
+  [key: string]: unknown;
+}
+
 /**
  * GET /api/alerts/rules
  * Fetch all alert rules for current user
@@ -63,7 +77,7 @@ export async function POST(request: NextRequest) {
     const supabase = createServerClient();
 
     // Parse request body
-    const body = await request.json();
+    const body = (await request.json().catch(() => ({}))) as AlertRulePayload;
     const {
       licenseNonce,
       thresholdPercent,
@@ -82,7 +96,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Upsert alert rule
-    const { data: rule, error } = await supabase
+    const { data: rawRule, error } = await supabase
       .from('alert_rules')
       .upsert({
         user_id: user.id,
@@ -96,12 +110,13 @@ export async function POST(request: NextRequest) {
       })
       .select()
       .single();
+    const rule = rawRule as AlertRuleRow | null;
 
     if (error) throw error;
 
     logger.info('[Alert Rules API] Rule created/updated', {
       userId: user.id,
-      ruleId: rule.id,
+      ruleId: rule?.id,
       threshold: thresholdPercent,
     });
 
