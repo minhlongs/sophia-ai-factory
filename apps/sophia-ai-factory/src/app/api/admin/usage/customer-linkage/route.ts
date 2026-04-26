@@ -52,6 +52,8 @@ export async function GET(request: NextRequest) {
 
     // Find licenses missing customer IDs
     const { data: licensesData, error } = await db
+      // TODO P2: polar_customer_id / stripe_customer_id columns may not exist in raas_licenses schema.
+      // Polar.sh is BANNED per Sophia rules (CLAUDE.md). This admin endpoint may be obsolete — verify or delete.
       .from('raas_licenses')
       .select(`
         nonce,

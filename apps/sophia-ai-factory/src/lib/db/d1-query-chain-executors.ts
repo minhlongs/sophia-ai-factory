@@ -13,6 +13,7 @@ export interface QueryState {
   selectCols: string
   filters: FilterOp[]
   inFilters: { col: string; vals: unknown[] }[]
+  orFilters: FilterOp[][]  // each inner array is a group of OR'd filters (clauses joined by OR within the group)
   orderSpecs: OrderSpec[]
   limitVal?: number
   offsetVal?: number
@@ -35,6 +36,15 @@ export function buildWhere(state: QueryState): { clause: string; params: unknown
   for (const inf of state.inFilters) {
     parts.push(`${inf.col} IN (${inf.vals.map(() => '?').join(', ')})`)
     params.push(...inf.vals)
+  }
+  for (const group of state.orFilters ?? []) {
+    const groupParts: string[] = []
+    for (const f of group) {
+      if (f.op === 'IS' && f.val === null) groupParts.push(`${f.col} IS NULL`)
+      else if (f.op === 'IS NOT' && f.val === null) groupParts.push(`${f.col} IS NOT NULL`)
+      else { groupParts.push(`${f.col} ${f.op} ?`); params.push(f.val) }
+    }
+    if (groupParts.length > 0) parts.push(`(${groupParts.join(' OR ')})`)
   }
   return { clause: parts.length > 0 ? ` WHERE ${parts.join(' AND ')}` : '', params }
 }

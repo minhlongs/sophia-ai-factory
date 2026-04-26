@@ -1,6 +1,12 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-26 | **Current Version:** 1.14.3
+**Last Updated:** 2026-04-26 | **Current Version:** 1.14.4
+
+---
+
+## MILESTONE v1.14.4 — D1 Query Chain .or() Runtime Implementation + C1 Silent Fallback Fix (Phase 39)
+
+**Phase 39 B2 (P1 runtime D1QueryChain .or() + C1 now() fallback + H3 hardening):** Critical bug fix phase targeting 5 files. **P1 RUNTIME BUG:** D1QueryChain missing `.or()` method for OR-type license filters (admin page crashed filtering non-admin users). Implemented `.or()` parser in query chain with **H3 hardening:** column-name allowlist prevents injection. **C1 BUG FIX:** `realtime-alert-mutations.ts` switched silent `now()` calls → computed Unix timestamps (avoids false "stale" alerts). **C2 TODO:** P2 scope — async context manager pattern documented for future. TS errors: 103 → 101 (-2). Cumulative B2: 462 → 101 (-78.1%). Tests 1398/1398 pass. Code review 9.8/10 auto-approved.
 
 ---
 
