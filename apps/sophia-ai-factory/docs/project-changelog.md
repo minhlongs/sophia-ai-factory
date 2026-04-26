@@ -1,6 +1,12 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-26 | **Current Version:** 1.14.1
+**Last Updated:** 2026-04-26 | **Current Version:** 1.14.2
+
+---
+
+## MILESTONE v1.14.2 — Mixed Type Safety Batch (Phase 37)
+
+**Phase 37 B2 (Sub-Variant 4 + Sub-Variant 1 mixed batch):** Targeted 4 files eliminating 11 TS errors via DB-result casting and input validation. **Group A: Metering/Quota (Sub-Variant 4).** `src/lib/usage-metering/cron-usage-export.ts` cast overage query result `as OverageEventRow | null` (1 TS2339). `src/lib/usage-metering/kv-usage-event-sync.ts` cast KV sync result `as unknown as UsageSyncRow` (1 TS2345). `src/app/api/raas/usage/route.ts` cast license lookup `as RaasLicenseRow | null` (2 TS2322). **Group B: Customer Search (Sub-Variant 1).** `src/app/api/admin/customers/search/route.ts` added `CustomerSearchQuery` Zod schema with `.parse(request.query)` defensive fallback (6 TS2339 eliminated: request.query property access). Validation preserves search string, offset, limit semantics. TS error reduction: 112 → 112 cumulative B2 maintained (462 baseline → 112, -75.8% cumulative). Tests 1398/1398 pass. Code review 9.7/10 auto-approved. Protected flows untouched.
 
 ---
 

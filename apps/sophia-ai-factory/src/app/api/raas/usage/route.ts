@@ -40,12 +40,13 @@ export async function GET(request: NextRequest) {
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
 
-    const { data: usageData } = await db
+    const { data: rawUsageData } = await db
       .from('missions')
       .select('mcu_cost, created_at')
       .eq('org_id', user.id)
       .eq('status', 'completed')
       .gte('created_at', startOfMonth.toISOString());
+    const usageData = rawUsageData as unknown as { mcu_cost: number; created_at: string }[] | null;
 
     const monthlyUsed = (usageData ?? []).reduce((sum, m) => sum + (m.mcu_cost ?? 0), 0);
     const balance = Math.max(0, monthlyLimit - monthlyUsed);
@@ -54,11 +55,12 @@ export async function GET(request: NextRequest) {
     const sinceDate = new Date();
     sinceDate.setDate(sinceDate.getDate() - days);
 
-    const { data: dailyData } = await db
+    const { data: rawDailyData } = await db
       .from('missions')
       .select('mcu_cost, created_at')
       .eq('org_id', user.id)
       .gte('created_at', sinceDate.toISOString());
+    const dailyData = rawDailyData as unknown as { mcu_cost: number; created_at: string }[] | null;
 
     const callsByDay = buildDailyStats(dailyData ?? []);
 

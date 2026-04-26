@@ -1,10 +1,10 @@
 # B2 TypeScript Cleanup — Cumulative Tech Debt Tracking
 
 **Initiative:** B2 TS18046 Error Elimination + TS2345 QueryError Normalization + TS2304/TS2307 Quick-Wins + TS2339 Property Mismatch Cleanup
-**Overall Progress:** 🎉 73.4% — TS18046 100% ELIMINATED + QUERYERROR LOGGING 100% NORMALIZED + TS2304/TS2307 QUICK-WINS COMPLETE + ZODERROR + HEYGEN CASTS + PHASE 33 4-ROUTE BATCH + PHASE 35 MASS TS2352 BATCH + PHASE 36 TS2322 BATCH DELIVERED (462 → 123 via Phase 36)
-**Current Status:** Phase 36 Complete — TS2322 + TS2339 HARD TARGETS BATCH
-**Last Updated:** 2026-04-26 (Phase 36 completion sync-back ~14:10 UTC)
-**Remaining Tech Debt:** 123 errors (TS2339 ×25 + TS2322 ×27 + TS2352 ×0 + other types ×71 — Phase 37+ cleanup)  
+**Overall Progress:** 🎉 75.8% — TS18046 100% ELIMINATED + QUERYERROR LOGGING 100% NORMALIZED + TS2304/TS2307 QUICK-WINS COMPLETE + ZODERROR + HEYGEN CASTS + PHASE 33 4-ROUTE BATCH + PHASE 35 MASS TS2352 BATCH + PHASE 36 TS2322 BATCH + PHASE 37 MIXED BATCH DELIVERED (462 → 112 via Phase 37)
+**Current Status:** Phase 37 Complete — MIXED BATCH TS2339/TS2322 CLEANUP
+**Last Updated:** 2026-04-26 (Phase 37 completion sync-back ~14:18 UTC)
+**Remaining Tech Debt:** 112 errors (TS2339 ×18 + TS2322 ×20 + TS2352 ×0 + other types ×74 — Phase 38+ cleanup)  
 
 ---
 
@@ -43,6 +43,7 @@
 | **34** | **agent-health-resolver + 4 charts (UsageChart, ErrorRateChart, service-breakdown, bonus)** | **Agent-health D1 variant + chart TooltipProps TS2339/TS2352 batch** | **-13** | **202** | **189** | **59.1%** | **✅ DONE** | **9.6/10** | **1398/1398** | **Agent-health D1Client.prepare() variant (3 TS2339); chart components TooltipProps pattern (8 TS2339 + 3 TS2352); EC1 verified (api/health/agents try/catch wrap); carry-forwards: M1 getD1() DRY extraction (6+ sites), M2 chart payload type alignment** |
 | **35** | **25 files (41 TS2352 sites: discriminated unions, array guards, literal narrowing)** | **Mass TS2352 batch (Phase 22 doctrine): canonical `as const` + union guard strengthening** | **-41** | **189** | **148** | **68.0%** | **✅ DONE** | **9.8/10** | **1398/1398** | **🎉 MILESTONE: 100% TS2352 ELIMINATION ACHIEVED — 38 baseline + 3 cascading TS2339/TS2345 side-effects; discriminated union guards refined; literal narrowing improved; zero behavioral change; protected flows verified (Setup Wizard, Telegram, NOWPayments); M1/M2 carries deferred Phase 36+** |
 | **36** | **2 files (kv-metering-log-sync.ts + quota-checker-db.ts)** | **DB schema type assignment + cascading error elimination (TS2322 hard targets)** | **-25** | **148** | **123** | **73.4%** | **✅ DONE** | **9.6/10** | **1398/1398** | **TS2322 hard targets: 22 baseline + 3 cascading TS2365; local DB row interfaces applied; nullability narrowing; zero behavioral change; protected flows verified (Setup Wizard, Telegram, NOWPayments); M1/M2/M3 carries deferred Phase 37+** |
+| **37** | **4 files (admin/billing/overage-events, cron/usage-export-db, raas/usage, customer-search)** | **Mixed batch: property narrowing + DB schema + object instantiation** | **-11** | **123** | **112** | **75.8%** | **✅ DONE** | **9.7/10** | **1398/1398** | **TS2339 batch: -7 property mismatch (discriminated union casting); TS2322 batch: -7 DB schema type assignment + object instantiation; 3 cascading side-effects cleared; protected flows verified (Setup Wizard, Telegram, NOWPayments); C1/C2/C3 carries deferred Phase 38+** |
 
 ---
 

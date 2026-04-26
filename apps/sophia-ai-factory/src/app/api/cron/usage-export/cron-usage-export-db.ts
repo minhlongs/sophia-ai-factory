@@ -23,11 +23,12 @@ interface ExportJobInsert {
 
 export async function getActiveLicenses(): Promise<RaasLicenseRow[]> {
   const db = createServerClient()
-  const { data, error } = await db.from('raas_licenses').select('*').eq('is_revoked', false)
+  const { data: rawData, error } = await db.from('raas_licenses').select('*').eq('is_revoked', false)
   if (error) {
     logger.error('[Usage Export Cron] Failed to query licenses', toError(error))
     throw new Error(`Database query failed: ${error.message}`)
   }
+  const data = rawData as unknown as RaasLicenseRow[] | null
   const now = Math.floor(Date.now() / 1000)
   const activeLicenses = (data || []).filter((license: RaasLicenseRow) => !license.expires_at || license.expires_at > now)
   logger.info('[Usage Export Cron] Found active licenses', { total: data?.length || 0, active: activeLicenses.length })
