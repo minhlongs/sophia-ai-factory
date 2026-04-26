@@ -78,8 +78,8 @@ export async function GET(request: NextRequest) {
     }));
 
     let reconciliationAnalysis = null;
-    let anomalies = [];
-    let quotaCompliance = [];
+    let anomalies: unknown[] = [];
+    let quotaCompliance: unknown[] = [];
 
     if (performAnalysis) {
       const analysis = performReconciliationAnalysis(eventsWithStatus, billingPeriods, licenseInfo);

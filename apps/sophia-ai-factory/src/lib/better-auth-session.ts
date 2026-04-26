@@ -17,6 +17,7 @@ export async function getSession() {
   try {
     const { headers } = await import('next/headers');
     const auth = getAuth();
+    if (!auth) return null;
     const session = await auth.api.getSession({
       headers: await headers(),
     });
@@ -53,6 +54,7 @@ export async function getCurrentUserFromHeaders(
 ): Promise<User | null> {
   try {
     const auth = getAuth();
+    if (!auth) return null;
     const session = await auth.api.getSession({ headers: reqHeaders });
     if (!session) return null;
 
