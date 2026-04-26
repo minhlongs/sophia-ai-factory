@@ -1,0 +1,67 @@
+/**
+ * Quota Status API
+ *
+ * GET /api/quota/status - Get current quota status for dashboard
+ *
+ * Authentication: Better Auth session (user must be logged in).
+ * Restored from prior `GETStatus` export that was unreachable in `quota/overage-events`.
+ */
+
+import { NextRequest, NextResponse } from 'next/server';
+import { createServerClient } from '@/lib/db/client';
+import { getCurrentUser } from '@/lib/better-auth-session';
+import { logger } from '@/lib/utils/logger-utility';
+import { toError } from '@/lib/utils/to-error';
+import { getQuotaStatus } from '@/lib/quota/quota-checker';
+
+interface QuotaStatusLicenseRow {
+  nonce: string;
+  tier: string;
+  created_by: string | null;
+}
+
+export async function GET(req: NextRequest) {
+  try {
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const supabase = createServerClient();
+
+    const { data: rawLicense } = await supabase
+      .from('raas_licenses')
+      .select('nonce, tier, created_by')
+      .eq('created_by', user.id)
+      .eq('is_revoked', false)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+    const license = rawLicense as QuotaStatusLicenseRow | null;
+
+    if (!license) {
+      return NextResponse.json({ error: 'No active license found' }, { status: 404 });
+    }
+
+    const quotaStatus = await getQuotaStatus(
+      user.id,
+      license.nonce,
+      (license.tier || 'BASIC').toUpperCase()
+    );
+
+    return NextResponse.json({
+      license: {
+        nonce: license.nonce.slice(0, 8) + '...',
+        tier: license.tier,
+      },
+      quota: quotaStatus,
+    });
+  } catch (error) {
+    logger.error('[Quota API] Error fetching quota status', toError(error));
+    return NextResponse.json(
+      { error: 'Failed to fetch quota status' },
+      { status: 500 }
+    );
+  }
+}

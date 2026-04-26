@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/better-auth-session';
 import { createServerClient } from '@/lib/db/client';
+import { isUserAdmin } from '@/lib/auth/is-user-admin';
 import { suspendLicense } from '@/lib/billing/dunning-workflow';
 import { logger } from '@/lib/utils/logger-utility';
 import { toError } from '@/lib/utils/to-error';
@@ -28,17 +29,11 @@ export async function POST(
     }
 
     // Check admin role
-    const db = createServerClient();
-    const { data: userData } = await db
-      .from('user_profiles')
-      .select('role')
-      .eq('user_id', user.id)
-      .single() as { data: { role: string } | null; error: Error | null };
-
-    const isAdmin = userData?.role === 'admin' || user.role === 'admin';
-    if (!isAdmin) {
+    if (!(await isUserAdmin(user))) {
       return NextResponse.json({ error: 'Forbidden - admin only' }, { status: 403 });
     }
+
+    const db = createServerClient();
 
     // Get request body
     const body = (await req.json().catch(() => ({}))) as SuspendLicenseRequest;

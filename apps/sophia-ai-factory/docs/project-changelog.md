@@ -1,6 +1,12 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-26 | **Current Version:** 1.12.42
+**Last Updated:** 2026-04-26 | **Current Version:** 1.12.43
+
+---
+
+## [2026-04-26] B2 Phase 25 — Orphan Endpoint Restoration + Admin Auth Helper Extraction (v1.12.43)
+
+**B2 Phase 25 (M1 quota orphan restore + M2 admin auth DRY refactor):** Hygiene phase targeting 8 files (2 new + 6 refactored) to restore missing quota endpoint and consolidate duplicated admin-auth checks. **M1: Orphan Endpoint Restoration.** Created `src/app/api/quota/status/route.ts` (68 lines) to restore dead-code endpoint from Phase 12 `GETStatus` export (previously unreachable, deleted in Phase 24). GET handler `/api/quota/status` fixes 404 error at `quota-usage-dashboard.tsx:100` (dashboard now fetches quota status without 404). Implements `getQuotaStatus()` helper with auth check (401 if not logged in), license lookup, tier validation, masked license nonce return (first 8 chars + "..."), and proper error logging via `toError(error)` helper. Uses Sub-Variant 4 cast pattern: `as QuotaStatusLicenseRow | null`. **M2: Admin Auth Helper Extraction.** Created `src/lib/auth/is-user-admin.ts` (33 lines) with canonical helper `async isUserAdmin(user: User): Promise<boolean>`. Pattern: fast path checks `user.role === 'admin'` first (cheap, from Better Auth session), falls back to DB lookup `user_profiles.role` if session role falsy. Type-safe with `UserProfileRoleRow` interface using Sub-Variant 4 cast. Applied across 6 admin routes (replaced ~9-line inline check duplicated per route): `admin/dunning/{route,suspend,restore}`, `usage/export/{get,post}-handler`, `usage/summary`. Canonical pattern: `if (!(await isUserAdmin(user))) return 403`. Cumulative DRY: extracted ~30 LOC duplicate admin-check logic; 6 routes now call single helper. **Phase 25 is hygiene-focused — no TS error reduction (318 pre-existing).** Tests 1394/1394 pass. Code review 9.6/10 auto-approved.
 
 ---
 
