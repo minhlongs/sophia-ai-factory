@@ -39,3 +39,27 @@ export async function notifyUserByTelegram(userId: string, message: string): Pro
 
   await sendTelegramMessage(profile.telegram_chat_id, message)
 }
+
+/**
+ * Notify user of a new affiliate conversion earning via Telegram.
+ * Bilingual VI+EN message. Fire-and-forget wrapper — never throws.
+ *
+ * @param userId - User who earned the commission
+ * @param amount - Commission amount in USD (user's 70% share)
+ * @param campaignId - Source campaign identifier
+ */
+export async function notifyConversionEarned(
+  userId: string,
+  amount: number,
+  campaignId: string
+): Promise<void> {
+  const formatted = amount.toFixed(2)
+  const message =
+    `💰 Bạn vừa kiếm được $${formatted} USD từ campaign! / ` +
+    `You earned $${formatted} USD from your campaign! (ID: ${campaignId})`
+  try {
+    await notifyUserByTelegram(userId, message)
+  } catch {
+    // Fire-and-forget — suppress errors to avoid blocking webhook response
+  }
+}
