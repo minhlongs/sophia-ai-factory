@@ -24,6 +24,7 @@ import { validateJwt } from '@/lib/security/jwt-validator';
 import { getQuotaStatus } from '@/lib/quota/quota-enforcer';
 import { checkRateLimit as checkApiRateLimit } from '@/lib/security/rate-limiter';
 import { formatQuotaResponse } from '@/lib/quota/quota-api-helpers';
+import type { Tier } from '@/types';
 
 /**
  * GET handler for quota status
@@ -115,7 +116,7 @@ export async function GET(
       );
     }
 
-    const typedLicense = license as { nonce: string; tier: string; agency_id: string };
+    const typedLicense = license as { nonce: string; tier: Tier; agency_id: string };
 
     // Step 5: Get quota status with Polar sync info
     const quotaStatus = await getQuotaStatus(

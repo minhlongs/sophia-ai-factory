@@ -28,8 +28,6 @@ export interface Env {
   AGENCYOS_WEBHOOK_SECRET: string
   AGENCYOS_ALERT_WEBHOOK_URL: string
   AGENCYOS_API_KEY: string
-  SUPABASE_URL: string
-  SUPABASE_SERVICE_KEY: string
 }
 
 export type { WorkerUsageEvent as UsageEvent }
@@ -45,7 +43,6 @@ export default {
     if (url.pathname === '/api/webhooks/overage') return handleOverageWebhook(request, env)
     if (url.pathname === '/api/alerts/dispatch') {
       const config: AlertDispatcherConfig = {
-        supabaseUrl: env.SUPABASE_URL, supabaseServiceKey: env.SUPABASE_SERVICE_KEY,
         agencyosWebhookUrl: env.AGENCYOS_ALERT_WEBHOOK_URL, agencyosApiKey: env.AGENCYOS_API_KEY,
         debounceMs: 60000, enabledThresholds: [80, 90, 100],
       }
@@ -56,7 +53,6 @@ export default {
 
   async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
     const config: AlertDispatcherConfig = {
-      supabaseUrl: env.SUPABASE_URL, supabaseServiceKey: env.SUPABASE_SERVICE_KEY,
       agencyosWebhookUrl: env.AGENCYOS_ALERT_WEBHOOK_URL, agencyosApiKey: env.AGENCYOS_API_KEY,
       debounceMs: 60000, enabledThresholds: [80, 90, 100],
     }

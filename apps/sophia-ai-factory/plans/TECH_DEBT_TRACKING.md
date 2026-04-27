@@ -261,13 +261,16 @@ done
 
 ---
 
-## Post-B2 Follow-Ups (2026-04-26)
+## Post-B2 Follow-Ups (2026-04-26+)
 
 | Follow-Up | Scope | Files | Status | Date | Review |
 |-----------|-------|-------|--------|------|--------|
 | T2: JWT Nonces Migration | D1 schema migration (Supabase→D1) + callsite updates | migrations/0017-jwt-nonces.sql, src/lib/auth/jwt-nonce-storage.ts:155, jwt-nonce-tracker.ts:187,191 | ✅ CLOSED | 2026-04-26 | 9.5/10 |
+| T3: Cosmetic Cleanup Batch (Phase 46 #6-10) | Dead code removal (MockBuilder.textSearch, isMonthExpired), type casts (Badge variant → tierToBadgeVariant, tier string→Tier), env cleanup (worker Supabase vars) | src/lib/supabase/sophia-index.test.ts, src/worker/lib/quota-counter.ts, src/components/analytics/license-utilization.tsx, src/app/api/v1/quota/[tenantId]/route.ts, src/worker/index.ts, src/worker/lib/realtime-alert-dispatcher.ts | ✅ CLOSED | 2026-04-27 | 9.3/10 |
 
 **T2 Impact:** Fixes silent replay-protection bypass when D1 cache misses (HIGH security). Schema forced by D1QueryChain.upsert() bare ON CONFLICT semantics. Tests 20/20 jwt-nonce + 1398/1398 full suite pass.
+
+**T3 Impact:** 5 cosmetic items (TS=0, tests 1398/1429 pass, 31 skipped). Removes unused mocks + dead code, tightens type safety (Badge variant, tier branding), purges vestigial Supabase credentials from worker infrastructure. Logger.info noise sweep deferred as separate track.
 
 ---
 
