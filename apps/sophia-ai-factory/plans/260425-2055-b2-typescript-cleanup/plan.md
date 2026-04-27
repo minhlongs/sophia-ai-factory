@@ -955,9 +955,17 @@ See `phase-21-typescript-cleanup.md` for details.
   - Verification: TS=0, jwt-nonce tests 20/20, full suite 1398/1398
   - Code review: 9.5/10 APPROVED
   - Impact: Fixes silent replay-protection bypass on cache miss (HIGH security fix)
+- [x] T3: Cosmetic cleanups (Phase 46 batch #6-10) (CLOSED 2026-04-27)
+  - Removed `textSearch` from MockBuilder (sophia-index.test.ts)
+  - Removed dead `isMonthExpired()` function (quota-counter.ts)
+  - Replaced `as any` Badge variant with `tierToBadgeVariant()` (license-utilization.tsx)
+  - Tightened `tier` cast from `string` → `Tier` (v1/quota/[tenantId]/route.ts)
+  - Removed vestigial Supabase env vars from worker Env + AlertDispatcherConfig (worker/index.ts, realtime-alert-dispatcher.ts)
+  - Verification: TS=0, 1398/1429 tests pass (31 skipped), code-review 9.3/10 APPROVED
+  - Note: logger.info noise sweep deferred as separate track
 
 **Open Follow-Ups (separate track):**
-- T3: Cosmetic cleanups (dead routes, logger.info noise)
+- (None currently — logger.info noise deferred)
 
 **Reports:**
 - `plans/reports/tester-260426-1530-b2-phase46-final-batch.md`

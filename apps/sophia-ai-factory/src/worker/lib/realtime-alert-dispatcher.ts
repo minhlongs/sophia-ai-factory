@@ -10,8 +10,6 @@ import { toError } from '@/lib/utils/to-error'
 import { handleUsageEvent, type UsageEvent } from './realtime-alert-dispatcher-event-handler'
 
 export interface AlertDispatcherConfig {
-  supabaseUrl: string
-  supabaseServiceKey: string
   agencyosWebhookUrl: string
   agencyosApiKey: string
   debounceMs: number

@@ -53,15 +53,6 @@ function getResetDate(): string {
 }
 
 /**
- * Check if month needs to be reset
- */
-function isMonthExpired(storedMonth: string): boolean {
-  const now = new Date();
-  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  return storedMonth !== currentMonth;
-}
-
-/**
  * Atomic increment of usage counter
  * Uses KV's atomic operations for race condition safety
  */

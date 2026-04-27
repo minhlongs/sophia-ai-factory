@@ -1,6 +1,6 @@
 # Codebase Summary
 
-**Last Updated:** 2026-04-26
+**Last Updated:** 2026-04-27
 **Version:** 1.14.8 (B2 TypeScript Cleanup Complete — 462→0 Errors)
 
 ## Project Structure Overview
@@ -107,6 +107,7 @@ Sophia AI Video Factory is a Next.js 16 application structured around the App Ro
   - `NEXT_PUBLIC_FEATURE_AFFILIATE_ENGINE`: Toggles affiliate tools.
 
 ## Recent Major Changes
+- **T3 Cosmetic Cleanup Batch (2026-04-27)**: Closed 5 LOW-priority Phase 46 code-review items. Removed orphan `textSearch` mock, deleted dead `isMonthExpired()` function, type-safe Badge variant via `tierToBadgeVariant()` helper, tightened tier cast to `Tier` brand. Purged vestigial `SUPABASE_URL`/`SUPABASE_SERVICE_KEY` from worker Env interface (confirms full D1 migration). 1398/1429 tests pass. TS: 0 errors. Review: 9.3/10.
 - **D1 Migration 0017 — JWT Nonce Replay Protection (2026-04-26)**: Added `migrations/0017-jwt-nonces.sql` to establish JWT nonce table for replay-attack defense. Fixed production runtime risk where code referenced table that didn't exist. Updated 3 callsites in `src/lib/auth/jwt-nonce-*.ts` to align with PK-only schema. All 1398 tests pass. TS: 0 errors.
 - **Phase 46 B2 Complete (2026-04-26)**: TypeScript Cleanup Mission — Final phase eliminating 100% of type errors (462→0). All 1398 tests pass. Build time 10.0s. Architectural patterns documented in `docs/code-standards.md` (Web Crypto, D1/Supabase divergence, Better Auth, Zod v4, etc.). Protected flows verified: Setup Wizard, Telegram Bot, NOWPayments all operational.
 - **Phase 11 (2026-04-25)**: Multi-Tenant AI Agent Factory — Complete 4-phase restructure (Seed → Tree → Forest → Land). D1 agent tables, runner, task queue, Mission Control UI, SSE streams, feedback loop, observability gates. 1394 tests pass. Commit e6a180d8.

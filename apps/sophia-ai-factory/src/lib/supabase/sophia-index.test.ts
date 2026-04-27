@@ -25,7 +25,6 @@ describe('sophiaIndex', () => {
     limit: ReturnType<typeof vi.fn>;
     eq: ReturnType<typeof vi.fn>;
     gte: ReturnType<typeof vi.fn>;
-    textSearch: ReturnType<typeof vi.fn>;
     ilike: ReturnType<typeof vi.fn>;
     single: ReturnType<typeof vi.fn>;
     then: (resolve: (value: unknown) => unknown) => Promise<unknown>;
@@ -37,7 +36,6 @@ describe('sophiaIndex', () => {
       limit: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       gte: vi.fn().mockReturnThis(),
-      textSearch: vi.fn().mockReturnThis(),
       ilike: vi.fn().mockReturnThis(),
       single: vi.fn().mockReturnThis(),
       then: (resolve: (value: unknown) => unknown) => Promise.resolve(result).then(resolve)

@@ -1,6 +1,14 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-26 | **Current Version:** 1.14.8
+**Last Updated:** 2026-04-27 | **Current Version:** 1.14.8
+
+---
+
+## T3 Cosmetic Cleanup Batch — Code Debt Reduction (2026-04-27)
+
+**Severity: LOW | Type: Refactor | Status: SHIPPED**
+
+Closed 5 LOW-priority items from Phase 46 code review (items #6-10). Removed orphan `textSearch` mock from `sophia-index.test.ts`. Deleted dead `isMonthExpired()` function from `worker/lib/quota-counter.ts`. Type-safe Badge variant in `license-utilization.tsx` (replaced `as any` with `tierToBadgeVariant()` helper using `BadgeProps['variant']`). Tightened tier cast to `Tier` brand in `v1/quota/[tenantId]/route.ts`. Purged vestigial `SUPABASE_URL`/`SUPABASE_SERVICE_KEY` from worker Env interface + AlertDispatcherConfig + 2 callsites (Phase 46 review item #10) — confirms full D1 migration completion. **Tests:** 1398/1429 pass. **TS:** 0 errors. **Review:** 9.3/10. Protected flows untouched (Setup Wizard, Telegram Bot, NOWPayments). Logger noise deferral (category C4) to separate track.
 
 ---
 

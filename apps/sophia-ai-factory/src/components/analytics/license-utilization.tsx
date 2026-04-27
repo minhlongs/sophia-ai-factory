@@ -3,7 +3,7 @@
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
+import { Badge, type BadgeProps } from '@/components/ui/badge';
 import {
   BarChart,
   Bar,
@@ -33,6 +33,12 @@ const TIER_COLORS: Record<string, string> = {
   MASTER: '#f59e0b',
 };
 
+function tierToBadgeVariant(tier: string): BadgeProps['variant'] {
+  const lower = tier.toLowerCase();
+  if (lower === 'basic' || lower === 'premium' || lower === 'enterprise') return lower;
+  return 'enterprise';
+}
+
 interface ChartDataPoint {
   name: string;
   usedCredits: number;
@@ -54,7 +60,7 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: unknow
     return (
       <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
         <div className="flex items-center gap-2 mb-2">
-          <Badge variant={data.tier.toLowerCase() as any}>
+          <Badge variant={tierToBadgeVariant(data.tier)}>
             {data.tier}
           </Badge>
         </div>
