@@ -335,6 +335,10 @@ Prefer this approach to modifying the helper's return type annotation (which may
 
 Casting Supabase/D1 query results from `unknown` (via `ReturnType<typeof db.from>` helper) to local DB-row interface at narrow consumption point. **Phase 40 doctrine:** Prefer canonical types from `lib/supabase/types.ts` when available; inline interfaces only as fallback for tables without canonical types. Example: `OverageEventRow` now imported centrally rather than redefined inline across 3 files.
 
+### Web Crypto API Cast Pattern (Phase 45)
+
+Web Crypto API in TypeScript 5: `Uint8Array` from `hexToBytes`/`crypto.getRandomValues` requires explicit `as BufferSource` cast when passed to `subtle.importKey/encrypt/decrypt` due to `ArrayBuffer<->SharedArrayBuffer` narrowing. Pattern: `const material = await subtle.importKey('raw', keyBytes as BufferSource, ...)`
+
 **Name-Collision Resolution (Phase 43):** When a DB query result type and a consumer interface share the same name but live in different modules (e.g., `RaasAuditLogRow` in `@/lib/supabase/types` vs `RaasAuditLog` in `raas-schema`), **import from the schema/contract module, not the supabase row type module.** This ensures domain logic uses the canonical business contract, not the implementation detail. Apply canonical-first preference: schema types > supabase types > inline fallback.
 
 **Conflicting `declare global var X` Blocks Across Modules (Phase 44):** When the same global variable is declared in 2+ modules with conflicting value types (e.g., `var KV_KV: KVNamespace<string>` vs `var KV_KV: KVNamespace<unknown>`), unify to single canonical declaration with `unknown` value type at the declaration site; cast to specific types at usage/call sites where narrowing is needed.

@@ -29,7 +29,7 @@ async function importKey(keyHex: string): Promise<CryptoKey> {
   const keyBytes = hexToBytes(keyHex);
   return crypto.subtle.importKey(
     'raw',
-    keyBytes,
+    keyBytes as BufferSource,
     { name: 'AES-GCM' },
     false,
     ['encrypt', 'decrypt'],
@@ -71,9 +71,9 @@ export async function decrypt(text: string): Promise<string> {
   const ciphertext = hexToBytes(parts[1]);
 
   const plaintext = await crypto.subtle.decrypt(
-    { name: 'AES-GCM', iv },
+    { name: 'AES-GCM', iv: iv as BufferSource },
     key,
-    ciphertext,
+    ciphertext as BufferSource,
   );
 
   return new TextDecoder().decode(plaintext);

@@ -116,7 +116,7 @@ export async function logViolationAndAlert(params: {
 
   const violationId = await (async () => {
     try {
-      const { data, error } = await db
+      const { data: rawData, error } = await db
         .from('violations')
         .insert({
           type: params.type,
@@ -131,6 +131,7 @@ export async function logViolationAndAlert(params: {
         })
         .select('id')
         .single();
+      const data = rawData as { id: string } | null;
 
       return data?.id || null;
     } catch (error) {
