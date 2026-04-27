@@ -20,7 +20,9 @@ Split 499-line `src/lib/quota/quota-checker.ts` into 5 focused sub-modules.
 
 ## Consumers (unchanged imports)
 
-- `raas-gateway-enhanced.ts`: `checkQuotaWithOverage, DEFAULT_CONFIG`
+> **Note (post-refactor 2026-04):** `raas-gateway-enhanced.ts` was subsequently split into `raas-gateway-client.ts` + `raas-gateway-types.ts`. The import surface from `@/lib/quota/quota-checker` remained unchanged.
+
+- `raas-gateway-enhanced.ts` (deleted, see note above): `checkQuotaWithOverage, DEFAULT_CONFIG`
 - `auth/enriched-jwt.ts`: `getEffectiveQuotaLimits`
 - `raas/raas-rate-limiter.ts`: `checkQuotaWithOverage, DEFAULT_CONFIG`
 - `quota/quota-enforcer.ts`: `checkQuotaWithOverage, DEFAULT_CONFIG, getEffectiveQuotaLimits, invalidateQuotaCache, QuotaCheckContext, EnhancedQuotaCheckResult`

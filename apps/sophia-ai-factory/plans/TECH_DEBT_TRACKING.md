@@ -169,14 +169,12 @@ bdb1b0da Phase 46 — Realtime tracker
 
 ---
 
-## Stale Plan Docs Requiring Doc-Sync
+## Stale Plan Docs — Doc-Sync ✅ COMPLETE 2026-04-27
 
-Following plan phase files reference deleted modules and need updates:
+Both stale references resolved:
 
-1. **`plans/260309-0747-overage-billing-phase1/phase-01-quota-overage-api.md:164`** — References deleted module
-2. **`plans/260425-0033-phase-38-quota-checker-modularization/phase-38-quota-checker-modularization.md:23`** — References deleted module
-
-**Action Required:** Schedule follow-up doc-sync pass to align plan references with current codebase state.
+1. ✅ `plans/260309-0747-overage-billing-phase1/phase-01-quota-overage-api.md:164` — Updated to point at `src/lib/security/jwt-validator.ts` (current location of JWT validation)
+2. ✅ `plans/260425-0033-phase-38-quota-checker-modularization/phase-38-quota-checker-modularization.md:23` — Added post-refactor note clarifying `raas-gateway-enhanced.ts` was split into `raas-gateway-client.ts` + `raas-gateway-types.ts`
 
 ---
 
