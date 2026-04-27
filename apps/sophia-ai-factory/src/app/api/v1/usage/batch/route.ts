@@ -82,8 +82,6 @@ export async function POST(request: NextRequest) {
   const requestId = `batch_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
 
   try {
-    logger.info('[Batch Ingest API] Received request', { requestId });
-
     // Step 1: Validate API key
     const apiKey = request.headers.get('x-api-key');
     const authResult = await validateApiKey(apiKey);
@@ -138,7 +136,7 @@ export async function POST(request: NextRequest) {
 
     const events = validation.data.events as BatchUsageRecord[];
 
-    logger.info('[Batch Ingest API] Processing batch', {
+    logger.debug('[Batch Ingest API] Processing batch', {
       requestId,
       eventCount: events.length,
       userId,
@@ -156,7 +154,7 @@ export async function POST(request: NextRequest) {
     // Step 4: Process batch with validation and quota enforcement
     const result = await batchIngestUsage(normalizedEvents, userId!);
 
-    logger.info('[Batch Ingest API] Batch processing complete', {
+    logger.debug('[Batch Ingest API] Batch processing complete', {
       requestId,
       total: result.total,
       accepted: result.accepted,

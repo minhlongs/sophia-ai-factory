@@ -160,8 +160,7 @@ export async function GET(
           billableEvents: 0,
         };
 
-    // Step 7: Log audit event
-    logger.info('[Overage API] Overage events fetched', {
+    logger.debug('[Overage API] Overage events fetched', {
       userId,
       tenantId,
       eventCount: events.length,
