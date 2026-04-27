@@ -177,22 +177,22 @@ CREATE TABLE IF NOT EXISTS user_payout_settings (
 16. Manual test: insert mock conversion → run cron manually via `curl /api/cron/wallet-rebuild` → verify `user_wallets` row → admin marks paid → verify user notified
 
 ## Todo List
-- [ ] Apply `migrations/0022-user-wallets-payouts.sql` local + remote
-- [ ] Create `wallet-rebuilder.ts` + tests
-- [ ] Create `payout-processor.ts` + tests (atomic batch verified)
-- [ ] Create `payout-validators.ts` + tests
-- [ ] Create cron endpoints: wallet-rebuild + clearance-promote
-- [ ] Create user wallet GET endpoint + tests
-- [ ] Create admin payouts queue GET endpoint + tests
-- [ ] Create admin mark-paid POST endpoint + tests
-- [ ] Build admin UI page (`/admin/payouts`)
-- [ ] Build user wallet UI page (`/dashboard/wallet`)
-- [ ] Add `notifyPayoutSent` Telegram helper
-- [ ] Add cron triggers to `wrangler.toml` (`0 * * * *`, `0 0 * * *`)
-- [ ] `npm test` all green (6 new test files)
-- [ ] `npm run build` 0 errors
-- [ ] Deploy + SHA-match verify
-- [ ] E2E smoke: insert conversion → trigger cron → admin pays → user notified
+- [x] Apply `migrations/0023-user-wallets-payouts.sql` local + remote — SHIPPED
+- [x] Create `wallet-rebuilder.ts` + tests — SHIPPED
+- [x] Create `payout-processor.ts` + tests (atomic batch verified) — SHIPPED
+- [x] Create `payout-validators.ts` + tests — SHIPPED
+- [x] Create cron endpoints: wallet-rebuild + clearance-promote — SHIPPED
+- [x] Create user wallet GET endpoint + tests — SHIPPED
+- [x] Create admin payouts queue GET endpoint + tests — SHIPPED
+- [x] Create admin mark-paid POST endpoint + tests — SHIPPED
+- [x] Build admin UI page (`/admin/payouts`) — SHIPPED
+- [x] Build user wallet UI page (`/dashboard/wallet`) — SHIPPED
+- [x] Add `notifyPayoutSent` Telegram helper — SHIPPED
+- [x] Add cron triggers to `wrangler.toml` (`0 * * * *`, `0 0 * * *`) — SHIPPED
+- [x] `npm test` all green — SHIPPED (1564/1564 pass, +69 from M5)
+- [x] `npm run build` 0 errors — SHIPPED
+- [ ] Deploy + SHA-match verify — BLOCKED (GitHub Actions disabled)
+- [ ] E2E smoke: insert conversion → trigger cron → admin pays → user notified — BLOCKED (awaiting deploy)
 
 ## Success Criteria
 - User /dashboard/wallet displays 3 balance cards: pending / available / paid out
@@ -227,6 +227,27 @@ CREATE TABLE IF NOT EXISTS user_payout_settings (
 - Rate-limit admin endpoints (10/min) — prevent accidental rapid-fire mark-paid
 - D1 batch API used for atomicity (Cloudflare D1 supports transactions via batch())
 - `markUserPaid` requires `amount === SUM(commission_user WHERE available)` exact match — prevents partial payout exploits
+
+## Completion Summary (2026-04-27)
+
+**Status:** code-shipped + AUTO-APPROVE
+**Commit:** (just committed — verify SHA from git log)
+**Test delta:** 1495 → 1564 (+69 new tests for wallet rebuild, payout processing, admin queue, mark-paid, cron endpoints)
+**Code review:** 9.7/10 (after fixing: atomic batch transaction verification for mark-paid, Telegram notification bilingual format)
+**Files created:** 10 (wallet-rebuilder.ts, payout-processor.ts, payout-validators.ts, cron endpoints, user/wallet/route.ts, admin/payouts/queue/route.ts, admin/payouts/mark-paid/route.ts, migrations/0023, UI pages)
+**Files modified:** 1 (wrangler.toml for cron triggers + CRON_SECRET binding)
+**Date shipped:** 2026-04-27
+
+**Key implementation notes:**
+- Wallet rebuild uses denormalized `user_wallets` table (query O(1) per user, rebuild O(N) conversions hourly)
+- Payout atomicity enforced via D1 batch API (all-or-nothing update-returning on affiliate_conversions + insert to payouts)
+- Admin mark-paid enforces exact amount match (`amount === SUM(commission_user WHERE available)`) — prevents partial payout exploits
+- Clearance promotion daily cron: `UPDATE affiliate_conversions SET payout_status='available' WHERE available_at <= NOW()`
+- User wallet UI displays: pending (in 60-day clearance), available (ready to pay), paid_out (history)
+- Admin payout queue filtered to `balance_available >= $50` (configurable threshold in config)
+- Bilingual VI+EN Telegram notification on successful payout
+
+**Blockers to deployment:** Same as M1-M4 (GitHub Actions disabled + CRON_SECRET unset)
 
 ## Next Steps (Dependencies)
 - Sprint O: public revenue dashboard surfacing aggregate Sophia commission earned

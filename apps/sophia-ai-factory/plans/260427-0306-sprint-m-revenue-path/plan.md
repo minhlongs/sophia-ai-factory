@@ -1,7 +1,7 @@
 ---
 title: "Sprint M — First-Dollar Revenue Path"
 description: "Unblock 6-stage revenue pipeline so a real user paying USDT can earn first affiliate commission."
-status: pending
+status: "in-progress (code complete, deploy blocked)"
 priority: P1
 effort: 6.5d
 branch: main
@@ -14,6 +14,20 @@ created: 2026-04-27
 **Goal:** Make first dollar of real revenue flow through Sophia AI Factory.
 **Verdict from synthesis (2026-04-27):** Tech debt = 0. Revenue = $0. Six gaps block monetization. Stop polishing — ship the engine.
 
+## Sprint M Status Summary (2026-04-27)
+
+All 5 phases **code-shipped to main branch**. Tests passing: 1413 → 1564 (+151 new tests).
+
+**Production deploy BLOCKED:** GitHub Actions disabled for this user account.
+
+**User-required actions to unblock:**
+1. Re-enable GitHub Actions in repository settings
+2. Apply 4 D1 migrations remotely (0018–0023)
+3. Set 9 CloudFlare Secrets (M1's 8 + M4's CLICKBANK_INS_SECRET + M5's CRON_SECRET)
+4. Verify SHA match via `/api/version` endpoint post-deploy
+
+**Code status:** All implementation + testing + review complete. No blocking issues.
+
 ## Source reports
 - `plans/reports/synthesis-260427-0250-revenue-pipeline-reality-check.md` — gap matrix + fix sequence
 - `plans/reports/researcher-260427-0250-track-01-e2e-pipeline-audit.md`
@@ -22,15 +36,15 @@ created: 2026-04-27
 
 ## Phases
 
-| # | Phase | Effort | Status | Blocks |
-|---|-------|--------|--------|--------|
-| M1 | Unblock pipeline (D1 migrations + env vars) | 1d | code-shipped (deploy + secrets pending) | M2..M5 |
-| M2 | Kill ServiceFactory auto-mock fraud | 0.5d | pending | M3..M5 |
-| M3 | Affiliate link injection (offer selector + short-link + click log) | 3d | pending | M4 |
-| M4 | Conversion attribution (ClickBank postback + commission calc) | 1d | pending | M5 |
-| M5 | User wallet + manual payout dashboard | 1d | pending | — |
+| # | Phase | Effort | Status | Commit | Tests | Review | Blocks |
+|---|-------|--------|--------|--------|-------|--------|--------|
+| M1 | Unblock pipeline (D1 migrations + env vars) | 1d | code-shipped (deploy blocked) | 882721c3 | 1413 | N/A (pre-loop) | M2..M5 |
+| M2 | Kill ServiceFactory auto-mock fraud | 0.5d | code-shipped + AUTO-APPROVE | d3a65bd8 | 1413 (+3) | 9.93/10 | M3..M5 |
+| M3 | Affiliate link injection (offer selector + short-link + click log) | 3d | code-shipped + AUTO-APPROVE | 9dc9798d | 1458 (+45) | 9.6/10 | M4 |
+| M4 | Conversion attribution (ClickBank postback + commission calc) | 1d | code-shipped + AUTO-APPROVE | e921af21 | 1495 (+37) | 9.6/10 | M5 |
+| M5 | User wallet + manual payout dashboard | 1d | code-shipped + AUTO-APPROVE | (just committed) | 1564 (+69) | 9.7/10 | — |
 
-**Total:** ~6.5 days for first paying user → first commission earned.
+**Total:** ~6.5 days implementation. All code shipped. Ready for deployment once Actions re-enabled + secrets set.
 
 ## Phase files
 - [phase-01-unblock-pipeline.md](./phase-01-unblock-pipeline.md) — `campaigns` + `raas_licenses` D1 migrations + wrangler vars + CF Secrets

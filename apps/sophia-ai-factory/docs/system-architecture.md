@@ -280,7 +280,172 @@ Real PEV (Prompt Execution Validator) engine deferred to Phase 2.
 
 ### See Also
 - **Runbook**: `docs/sophia-supervisor-agent-runbook.md` (bilingual VN+EN, troubleshooting, manual ops, rollback)
-- **Changelog**: `docs/project-changelog.md` (2026-04-18 entry)
+- **Changelog**: `docs/project-changelog.md` (2026-04-27 Sprint M entry)
+
+---
+
+## Revenue Pipeline (Sprint M — 2026-04-27)
+
+**Overview:** End-to-end first-dollar monetization system. Users discover affiliate products → generate videos with CTA links → track conversions → receive payouts. Powered by ClickBank affiliate webhooks + D1 settlement engine.
+
+### Architecture
+
+```
+User (Telegram Bot)
+  ├─ /campaign "Topic" → Create campaigns row
+  ├─ Select offer → Store in affiliate_offers_selected + FSM state
+  │
+Campaign Generator (Inngest)
+  ├─ Generate script + voice
+  ├─ Inject CTA: "Get [offer_name] at bit.ly/[shortcode]"
+  └─ Render video with short-link
+  │
+Short-Link Handler (/api/r/[code])
+  ├─ Rate-limit 100/min
+  ├─ Log click in affiliate_clicks D1 table
+  └─ Redirect to ClickBank offer
+  │
+ClickBank Vendor (External)
+  ├─ User purchases product
+  └─ Send IPN postback
+  │
+Webhook Handler (/api/webhooks/clickbank)
+  ├─ HMAC-SHA1 verify signature
+  ├─ Log conversion in affiliate_conversions (70/30 split)
+  └─ Mark TEST events as unavailable_at=null (skip in payouts)
+  │
+Payout Engine (Cron)
+  ├─ Hourly: rebuild user_wallets from conversions
+  │   - Apply 60-day clearance window
+  │   - Sync balance_pending vs balance_available
+  │
+  └─ Daily: promote cleared conversions
+      - Transfer pending → available
+      - Update wallet timestamp
+  │
+Admin Dashboard (/admin/payouts)
+  ├─ Review pending payouts
+  ├─ Mark Paid → update payouts table
+  └─ Trigger Telegram notification
+  │
+User Wallet (/dashboard/wallet)
+  └─ View balance_available, balance_pending, lifetime_paid_out
+```
+
+### D1 Tables
+
+**Core Tables (Revenue)**
+- **affiliate_offers_selected**: Records user's chosen affiliate product for a campaign
+  - Columns: id, user_id, campaign_id, offer_id, offer_title, offer_url, created_at
+  - Purpose: Binding affiliate product choice to specific campaign (enables per-campaign attribution)
+
+- **affiliate_clicks**: Click event log (fire-and-forget, no rate limit on logging)
+  - Columns: id, shortcode, user_id, offer_id, referrer, created_at
+  - Indexes: user_id, offer_id, created_at
+  - Purpose: Attribution trail; helps debug conversion gaps
+
+- **affiliate_conversions**: ClickBank postback records (webhook-driven)
+  - Columns: id, receipt, click_id, campaign_id, user_id, offer_id, event_type, gross_amount, commission_user (70%), commission_sophia (30%), payout_status, available_at, paid_at, raw_payload, created_at
+  - Unique: (receipt, event_type) — prevents double-counting webhook retries
+  - available_at: NULL for TEST events; Unix timestamp (now + 60 days) for SALE; prevents chargebacks within clearance window
+  - payout_status: pending_clearance → available → paid | reversed | unattributed
+  - Purpose: Single source of truth for owed commissions; audit trail of all conversions
+
+- **user_wallets**: Materialized balance view (rebuilt hourly via cron)
+  - Columns: user_id (PK), balance_pending, balance_available, balance_paid_out, last_rebuilt_at
+  - Purpose: Fast read for UI; durable aggregate of conversions subject to clearance window
+
+- **payouts**: Admin-approved payout records
+  - Columns: id, user_id, amount, currency, method (usdt_trc20|usdt_erc20|bank_transfer|other), reference, notes, paid_by_admin, created_at
+  - Indexes: user_id, created_at
+  - Purpose: Audit trail of all money moved out; enables reconciliation
+
+- **user_payout_settings**: User KYC preferences (lightweight, no full KYC)
+  - Columns: user_id (PK), preferred_method, payout_address (encrypted PII, TODO), verified_at
+  - Purpose: Store user's payment destination; prevents typos on payout day
+
+**Related Extended Tables**
+- **user_profiles**: Added `subscription_tier` (TEXT) and `telegram_chat_id` (TEXT) in migration 0020
+  - Enables affiliate tier-gating (future: ENTERPRISE+ only) + Telegram notifications
+
+### API Endpoints
+
+| Route | Method | Auth | Rate Limit | Purpose |
+|-------|--------|------|-----------|---------|
+| `/api/r/[code]` | GET | none | 100/min | Short-link redirect with click logging |
+| `/api/webhooks/clickbank` | POST | HMAC-SHA1 | 1000/min per IP | ClickBank conversion postback |
+| `/api/user/wallet` | GET | session | default | View user's wallet balances |
+| `/api/admin/payouts/queue` | GET | admin | default | List pending payouts (next 30 days) |
+| `/api/admin/payouts/mark-paid` | POST | admin | default | Mark payout as paid + notify user |
+| `/api/campaigns` | POST | session | default | Create new campaign (via Telegram FSM) |
+
+### Cron Jobs (Cloudflare Workers)
+
+| Schedule | Handler | Purpose |
+|----------|---------|---------|
+| `0 * * * *` (hourly) | `cron/payout-wallet-rebuilder` | Aggregate conversions, apply clearance window, update user_wallets |
+| `0 0 * * *` (daily) | `cron/payout-clearance-promoter` | Move pending conversions to available after 60-day hold |
+
+### Webhook Security
+
+**ClickBank INS (Instant Notification Service)**
+- Signature header: `x-clickbank-signature` (HMAC-SHA1)
+- Verification: Compare computed vs provided signature (timing-safe)
+- Failure response: 401 Unauthorized (no retry from ClickBank)
+- Success response: 200 OK (even if DB insert fails; prevent webhook storm)
+- Idempotency: (user_id, receipt, event_type) unique constraint prevents double-processing on retry
+
+### Settlement Logic
+
+**Clearance Window (60 days)**
+- Conversion logged → available_at = now + 60 days
+- Hourly cron: if conversion.available_at <= now, move to balance_available
+- Prevents chargebacks within window (conservative merchant practice)
+- Adjustments: Admin can manually move back to pending if dispute filed
+
+**Commission Split**
+- gross_amount = ClickBank merchant-net commission (what Sophia receives from ClickBank)
+- commission_user = gross_amount × 0.70 (user receives 70%)
+- commission_sophia = gross_amount × 0.30 (Sophia retains 30%)
+- Both stored in affiliate_conversions row; wallet accumulates commission_user over all conversions
+
+**Payout Methods**
+- USDT TRC20 (default, fastest, lowest fee)
+- USDT ERC20 (fallback if TRC20 address invalid)
+- Bank transfer (slow, high min ~$100)
+- Other (manual, e.g., crypto exchange credit)
+
+### Telegram Notifications
+
+**On payout approval:**
+```
+Subject: [Notification] 💰 Payout Approved
+Body: Your payout of $XXX USD has been approved and will be sent to [method] within 24-48 hours.
+```
+
+**On conversion:**
+```
+(Future: async notification when conversion posts, enabling real-time motivation)
+```
+
+### Deployment Requirements
+
+**Secrets (Cloudflare)**
+- `CLICKBANK_INS_SECRET` — Webhook signature key from ClickBank vendor dashboard
+- `CRON_SECRET` — Shared secret for cron trigger validation (prevent unauthorized execution)
+
+**Configuration**
+- ClickBank vendor INS URL → https://sophia.agencyos.network/api/webhooks/clickbank
+- D1 migrations 0018-0023 applied to remote DB
+- Cron triggers enabled in wrangler.toml (already configured; requires deploy)
+
+**Testing Checklist**
+- [ ] Telegram: /campaign flow creates row in campaigns + checkpoint tables
+- [ ] Web: /dashboard/campaigns/new loads affiliate offers + dropdown works
+- [ ] Click: /api/r/[code] logs to affiliate_clicks + redirects
+- [ ] Conversion: ClickBank "Send Test INS" → verified + logs to affiliate_conversions
+- [ ] Wallet: Cron runs → user_wallets updated, balance_available changes visible
+- [ ] Payout: Admin marks paid → user receives Telegram notification + payouts row created
 
 ---
 
