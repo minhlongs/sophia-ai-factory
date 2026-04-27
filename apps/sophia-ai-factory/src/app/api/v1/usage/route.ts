@@ -97,15 +97,9 @@ export const POST = withRateLimit(async function POST(req: NextRequest) {
 
     const { records } = parseResult.data;
 
-    logger.info('[Batch Ingest API] Received batch ingestion request', {
-      userId: user.id,
-      recordCount: records.length,
-    });
-
-    // Process batch ingestion
     const result = await batchIngestUsage(records, user.id);
 
-    logger.info('[Batch Ingest API] Batch ingestion complete', {
+    logger.debug('[Batch Ingest API] Batch ingestion complete', {
       userId: user.id,
       total: result.total,
       accepted: result.accepted,

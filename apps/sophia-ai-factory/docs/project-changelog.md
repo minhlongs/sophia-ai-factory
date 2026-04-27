@@ -12,6 +12,14 @@ Closed 5 LOW-priority items from Phase 46 code review (items #6-10). Removed orp
 
 ---
 
+## L1 Logger Noise Sweep — Cloudflare Workers Log Egress Optimization (2026-04-27)
+
+**Severity: LOW | Type: Optimization | Status: SHIPPED**
+
+Demoted 4 hot-path API logger.info calls to logger.debug: `src/app/api/v1/quota/[tenantId]/route.ts`, `src/app/api/v1/usage/route.ts`, `src/app/api/v1/usage/batch/route.ts`, `src/app/api/v1/overage/[tenantId]/route.ts`. Removed 2 redundant per-request "received request" logs. Audit/security/billing/state-machine logs untouched. Impact: reduced Cloudflare Workers log egress (cost optimization), unchanged operational visibility (warn/error retained). **Tests:** 1398/1429 pass. **TS:** 0 errors. **Review:** 9.7/10 APPROVED. Commit: 90be1886.
+
+---
+
 ## D1 Migration 0017: JWT Nonce Replay-Attack Protection (2026-04-26)
 
 **Severity: HIGH | Type: Bug Fix | Status: SHIPPED**

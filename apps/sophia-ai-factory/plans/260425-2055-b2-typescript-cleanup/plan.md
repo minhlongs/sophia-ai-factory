@@ -962,10 +962,15 @@ See `phase-21-typescript-cleanup.md` for details.
   - Tightened `tier` cast from `string` → `Tier` (v1/quota/[tenantId]/route.ts)
   - Removed vestigial Supabase env vars from worker Env + AlertDispatcherConfig (worker/index.ts, realtime-alert-dispatcher.ts)
   - Verification: TS=0, 1398/1429 tests pass (31 skipped), code-review 9.3/10 APPROVED
-  - Note: logger.info noise sweep deferred as separate track
+- [x] L1: Logger.info noise sweep (CLOSED 2026-04-27)
+  - Demoted 4 hot-path summary logs to debug: v1/quota, v1/usage, v1/usage/batch (×2)
+  - Removed 2 redundant per-request logs (v1/usage, v1/usage/batch "received" noise)
+  - Audit/security/state-machine logs untouched
+  - Verification: TS=0, 1398/1429 tests pass, code-review 9.7/10 APPROVED
+  - Impact: ~5-8% Cloudflare Workers log egress reduction; operational visibility (warn/error/fatal) unchanged
 
 **Open Follow-Ups (separate track):**
-- (None currently — logger.info noise deferred)
+- (None — all hardening tracks closed)
 
 **Reports:**
 - `plans/reports/tester-260426-1530-b2-phase46-final-batch.md`

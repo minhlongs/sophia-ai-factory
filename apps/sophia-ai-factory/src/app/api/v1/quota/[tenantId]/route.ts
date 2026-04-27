@@ -135,8 +135,7 @@ export async function GET(
       quotaStatus.lastPolarSync
     );
 
-    // Step 7: Log audit event
-    logger.info('[Quota API] Quota status fetched', {
+    logger.debug('[Quota API] Quota status fetched', {
       userId,
       tenantId,
       status: quotaStatus.status,
