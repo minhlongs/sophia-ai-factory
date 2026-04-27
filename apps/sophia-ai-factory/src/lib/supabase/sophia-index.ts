@@ -26,12 +26,15 @@ export const sophiaIndex = {
     return query
   },
 
-  // Search products
+  // Search products (D1/SQLite — LIKE substring match; full-text search unavailable).
+  // Escape LIKE metacharacters so user input cannot inject wildcards on this
+  // public endpoint (e.g. "%" would scan the entire table).
   async search(query: string) {
+    const escaped = query.replace(/[\\%_]/g, (c) => `\\${c}`)
     return supabase
       .from('affiliate_products')
       .select('*')
-      .textSearch('title', query)
+      .ilike('title', `%${escaped}%`)
       .order('sps_score', { ascending: false })
       .limit(20)
   },

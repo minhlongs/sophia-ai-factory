@@ -831,6 +831,124 @@ The `Env` interface is defined in `src/worker/index.ts` (Cloudflare Workers bind
 
 ---
 
+## TypeScript Patterns (Post-B2 Cleanup, 2026-04-26)
+
+### Web Crypto BufferSource Cast Pattern
+
+Web Crypto API in TypeScript 5 requires explicit `as BufferSource` cast when passing `Uint8Array` from `hexToBytes` or `crypto.getRandomValues` to `subtle.importKey/encrypt/decrypt`:
+
+```typescript
+// Pattern: explicit BufferSource cast for Web Crypto APIs
+const keyBytes = hexToBytes(keyHex);  // Returns Uint8Array
+const key = await subtle.importKey(
+  'raw',
+  keyBytes as BufferSource,  // ✓ Required cast
+  { name: 'HMAC', hash: 'SHA-256' },
+  false,
+  ['sign', 'verify']
+);
+```
+
+Rationale: TS5 `ArrayBuffer<->SharedArrayBuffer` narrowing requires type hint. Direct pass-through causes TS2345 errors.
+
+### Upstash Redis API Pattern
+
+Sophia uses `@upstash/redis` (NOT Cloudflare Workers KV). Use `kv.set()` with `ex` option for TTL:
+
+```typescript
+import { Redis } from '@upstash/redis';
+
+const kv = new Redis({ /* ... */ });
+
+// ✓ CORRECT — Upstash syntax
+await kv.set(key, value, { ex: 3600 });
+
+// ✗ WRONG — CF KV syntax (different API)
+// await kv.put(key, value, { expirationTtl: 3600 });
+```
+
+**Key difference:** Upstash auto-serializes JSON; do NOT pre-stringify.
+
+### D1 Query Chain vs Supabase Divergence
+
+**Text Search:** No `.textSearch()` on D1/SQLite. Use `.ilike()` with escaped patterns:
+
+```typescript
+// Prevent wildcard injection — escape %, _, \ from user input first
+const escaped = userInput.replace(/[%_\\]/g, '\\$&');
+const results = await db
+  .from('table')
+  .select('*')
+  .ilike('column', `%${escaped}%`);
+```
+
+**Upsert:** No `.insert().onConflict().update()` chain on D1. Use `.upsert()` directly:
+
+```typescript
+// ✓ CORRECT — D1 upsert
+await db.from('table').upsert(data);
+
+// ✗ WRONG — Supabase-only chain
+// await db.from('table').insert(data).onConflict('id').update(data);
+```
+
+**Null Ordering:** No `nulls: 'last'` option on `.order()`. Order by column, then handle nulls in memory if needed.
+
+### Web Crypto Constants-Time Comparison
+
+`crypto.subtle.timingSafeEqual` does NOT exist on Cloudflare Workers. Implement constant-time comparison via XOR loop:
+
+```typescript
+// Constant-time comparison helper
+function timingSafeEqual(a: Uint8Array, b: Uint8Array): boolean {
+  if (a.length !== b.length) return false;
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a[i] ^ b[i];
+  }
+  return result === 0;
+}
+```
+
+### Better Auth Deep Generic Inference
+
+When assigning Better Auth singleton to a typed variable, use double-cast to break structurally-equivalent `Prettify<...>` types:
+
+```typescript
+import { betterAuth } from 'better-auth';
+
+// Double-cast pattern for type inference
+const auth = betterAuth({...}) as unknown as AuthInstance;
+```
+
+Document as known TS quirk, not a bug. Related to Better Auth's generic-heavy type architecture.
+
+### OAuth Callback Auth Pattern
+
+Use `getCurrentUser()` from `@/lib/better-auth-session`. Sophia migrated off Supabase Auth:
+
+```typescript
+// ✓ CORRECT — Better Auth session
+const user = await getCurrentUser();
+
+// ✗ WRONG — Supabase Auth (removed)
+// const user = await supabaseAdmin.auth.admin.getUserById(userId);
+```
+
+The shim at `@/lib/supabase/server` exposes D1 only (not `.auth`).
+
+### Zod v4 Record Signature
+
+Use `z.record(z.string(), z.unknown())` — `z.record(z.unknown())` is v3 syntax:
+
+```typescript
+// ✓ CORRECT — Zod v4
+const schema = z.record(z.string(), z.unknown());
+
+// ✗ WRONG — Zod v3 syntax
+// const schema = z.record(z.unknown());
+```
+
 ## Testing Standards
 - **Framework**: Vitest + React Testing Library.
 - **Requirement**: Core business logic and server actions must have unit tests.

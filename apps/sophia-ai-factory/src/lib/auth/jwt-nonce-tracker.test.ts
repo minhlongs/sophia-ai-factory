@@ -213,11 +213,7 @@ describe('markJwtNonceAsUsed', () => {
     const db = vi.mocked(createServerClient)()
 
     vi.mocked(mockNonceFrom).mockReturnValue({
-      insert: vi.fn().mockReturnValue({
-        onConflict: vi.fn().mockReturnValue({
-          update: vi.fn().mockResolvedValue({ error: null }),
-        }),
-      }),
+      upsert: vi.fn().mockResolvedValue({ error: null }),
     } as any)
 
     const now = Math.floor(Date.now() / 1000)
@@ -240,11 +236,7 @@ describe('markJwtNonceAsUsed', () => {
     const db = vi.mocked(createServerClient)()
 
     vi.mocked(mockNonceFrom).mockReturnValue({
-      insert: vi.fn().mockReturnValue({
-        onConflict: vi.fn().mockReturnValue({
-          update: vi.fn().mockResolvedValue({ error: null }),
-        }),
-      }),
+      upsert: vi.fn().mockResolvedValue({ error: null }),
     } as any)
 
     const result = await markJwtNonceAsUsed('kv-fail-nonce', 'user-123', Date.now() + 3600)
@@ -259,11 +251,7 @@ describe('markJwtNonceAsUsed', () => {
     const db = vi.mocked(createServerClient)()
 
     vi.mocked(mockNonceFrom).mockReturnValue({
-      insert: vi.fn().mockReturnValue({
-        onConflict: vi.fn().mockReturnValue({
-          update: vi.fn().mockRejectedValue(new Error('DB error')),
-        }),
-      }),
+      upsert: vi.fn().mockRejectedValue(new Error('DB error')),
     } as any)
 
     const result = await markJwtNonceAsUsed('db-fail-nonce', 'user-123', Date.now() + 3600)

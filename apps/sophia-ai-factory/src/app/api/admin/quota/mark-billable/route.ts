@@ -52,10 +52,17 @@ export async function POST(req: NextRequest) {
     const db = createServerClient();
 
     // Get events to calculate total credits
-    const { data: events, error: fetchError } = await db
+    interface OverageEventRow {
+      id: string;
+      exceeded_by: number;
+      user_id: string;
+      license_nonce: string;
+    }
+    const { data: rawEvents, error: fetchError } = await db
       .from('overage_events')
       .select('id, exceeded_by, user_id, license_nonce')
       .in('id', eventIds);
+    const events = rawEvents as OverageEventRow[] | null;
 
     if (fetchError || !events || events.length === 0) {
       return NextResponse.json(

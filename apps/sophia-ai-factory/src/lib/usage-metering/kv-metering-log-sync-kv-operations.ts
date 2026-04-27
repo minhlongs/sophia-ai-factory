@@ -26,16 +26,15 @@ export async function markAsReconciled(
   }
   try {
     const kvKey = generateKvKey({ eventId, timestamp })
-    const existing = await kv.get(kvKey)
+    const existing = await kv.get<MeteringLogEntry>(kvKey)
     if (!existing) {
       logger.debug('[KV Metering Sync] Entry not found, skipping reconciliation mark', { eventId })
       return false
     }
-    const entry = JSON.parse(existing) as MeteringLogEntry
-    entry.reconciledWithGateway = true
+    const entry: MeteringLogEntry = { ...existing, reconciledWithGateway: true }
     if (options?.discrepancy) entry.gatewayDiscrepancy = options.discrepancy
-    await kv.put(kvKey, JSON.stringify(entry), {
-      expirationTtl: DEFAULT_KV_METERING_LOG_CONFIG.ttlSeconds,
+    await kv.set(kvKey, entry, {
+      ex: DEFAULT_KV_METERING_LOG_CONFIG.ttlSeconds,
     })
     logger.debug('[KV Metering Sync] Marked as reconciled', { eventId, hasDiscrepancy: !!options?.discrepancy })
     return true

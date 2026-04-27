@@ -13,7 +13,7 @@ import { isServerOnly, type EventName } from '@/lib/signals/event-types'
 const TrackBodySchema = z.object({
   event: z.string().min(1).max(100),
   distinctId: z.string().min(1).max(200),
-  properties: z.record(z.unknown()).optional().default({}),
+  properties: z.record(z.string(), z.unknown()).optional().default({}),
 })
 
 export async function POST(req: NextRequest) {

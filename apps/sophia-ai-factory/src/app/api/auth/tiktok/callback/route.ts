@@ -5,7 +5,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createServerClient } from '@/lib/db/client';
+import { getCurrentUser } from '@/lib/better-auth-session';
 import { exchangeCodeForTokens } from '@/lib/tiktok/tiktok-oauth-client';
 import { logger } from '@/lib/utils/logger-utility';
 import { toError } from '@/lib/utils/to-error';
@@ -23,10 +24,9 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const supabase = await createClient();
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
 
-    if (userError || !user) {
+    if (!user) {
       logger.warn('TikTok callback: unauthenticated request', { state });
       return NextResponse.redirect(
         new URL('/login?error=unauthenticated', request.url),
@@ -34,13 +34,15 @@ export async function GET(request: NextRequest) {
     }
 
     const tokens = await exchangeCodeForTokens(code);
+    const supabase = createServerClient();
 
     // Merge into existing api_keys JSONB to preserve other keys
-    const { data: profile } = await supabase
+    const { data: rawProfile } = await supabase
       .from('user_profiles')
       .select('api_keys')
       .eq('user_id', user.id)
       .single();
+    const profile = rawProfile as { api_keys?: Record<string, unknown> } | null;
 
     const existingKeys = (profile?.api_keys ?? {}) as Record<string, unknown>;
     const updatedKeys = {

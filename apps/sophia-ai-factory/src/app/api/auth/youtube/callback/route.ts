@@ -5,7 +5,8 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createServerClient } from "@/lib/db/client";
+import { getCurrentUser } from "@/lib/better-auth-session";
 import { exchangeCodeForTokens } from "@/lib/youtube/youtube-oauth-client";
 import { logger } from "@/lib/utils/logger-utility";
 
@@ -31,11 +32,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 
   try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
 
     if (!user) {
       dashboardUrl.searchParams.set("youtube_error", "unauthorized");
@@ -50,13 +47,15 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       return NextResponse.redirect(dashboardUrl.toString());
     }
 
+    const supabase = createServerClient();
+
     // Merge YouTube credentials into existing api_keys JSONB
-    const { data: profile } = await supabase
+    const { data: rawProfile } = await supabase
       .from("user_profiles")
       .select("api_keys")
       .eq("user_id", user.id)
       .single();
-
+    const profile = rawProfile as { api_keys?: Record<string, unknown> } | null;
     const existingKeys = (profile?.api_keys as Record<string, unknown>) ?? {};
     const nowSec = Math.floor(Date.now() / 1000);
 

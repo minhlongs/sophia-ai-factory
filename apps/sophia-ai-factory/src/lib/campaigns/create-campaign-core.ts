@@ -7,6 +7,7 @@
  */
 
 import { inngest } from "@/lib/inngest/client";
+import type { Tier } from "@/types";
 
 export interface CampaignInsertData {
   id?: string;
@@ -25,7 +26,7 @@ export interface CampaignInngestData {
   userId: string;
   topic: string;
   audience: string;
-  tier: string;
+  tier: Tier;
   resume?: boolean;
   resumeFrom?: "script" | "tts" | "video" | "finalize";
 }

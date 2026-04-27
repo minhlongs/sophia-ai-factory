@@ -89,8 +89,6 @@ export async function POST(req: NextRequest) {
         updated_at: new Date().toISOString(),
         notes: `Adjusted via Admin API: ${reason}`,
         effective_from: effectiveDate ? new Date(effectiveDate).getTime() : null,
-      }, {
-        onConflict: 'license_nonce',
       });
 
     if (upsertError) {

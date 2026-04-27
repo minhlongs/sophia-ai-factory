@@ -207,7 +207,7 @@ describe('JWT Claims Enrichment Service', () => {
       );
 
       const payload = result?.payload;
-      expect(payload?.exp - payload?.iat).toBe(ttlSeconds);
+      expect(payload!.exp! - payload!.iat!).toBe(ttlSeconds);
     });
   });
 

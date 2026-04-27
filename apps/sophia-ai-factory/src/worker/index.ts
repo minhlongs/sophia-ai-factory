@@ -18,6 +18,7 @@ export interface Env {
   KV_KV: KVNamespace
   USAGE_QUEUE: Queue<WorkerUsageEvent>
   R2_BUCKET: R2Bucket
+  DB: D1Database
   ENVIRONMENT: string
   HARD_LIMIT_PERCENT: string
   OVERAGE_WEBHOOK_URL?: string
@@ -48,7 +49,7 @@ export default {
         agencyosWebhookUrl: env.AGENCYOS_ALERT_WEBHOOK_URL, agencyosApiKey: env.AGENCYOS_API_KEY,
         debounceMs: 60000, enabledThresholds: [80, 90, 100],
       }
-      return handleAlertDispatchRequest(request, config, env.KV_KV)
+      return handleAlertDispatchRequest(request, config, env.KV_KV, env.DB)
     }
     return new Response('Not Found', { status: 404 })
   },
@@ -59,7 +60,7 @@ export default {
       agencyosWebhookUrl: env.AGENCYOS_ALERT_WEBHOOK_URL, agencyosApiKey: env.AGENCYOS_API_KEY,
       debounceMs: 60000, enabledThresholds: [80, 90, 100],
     }
-    await handleScheduledAlertCheck(config, env.KV_KV, ctx)
+    await handleScheduledAlertCheck(config, env.KV_KV, ctx, env.DB)
     if (event.cron === '0 2 * * *') {
       ctx.waitUntil(
         runMeteringReconciliation(env, ctx)

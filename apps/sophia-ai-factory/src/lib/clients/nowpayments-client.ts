@@ -98,11 +98,15 @@ export async function verifyIpnSignature(
     const computed = Array.from(new Uint8Array(sig))
       .map(b => b.toString(16).padStart(2, '0'))
       .join('')
-    // Timing-safe comparison to prevent signature brute-force
+    // Timing-safe comparison to prevent signature brute-force.
+    // Web Crypto API doesn't expose timingSafeEqual on edge — use constant-time
+    // XOR loop over equal-length byte arrays instead.
     if (computed.length !== signature.length) return false
     const a = enc.encode(computed)
     const b = enc.encode(signature)
-    return crypto.subtle.timingSafeEqual(a, b)
+    let diff = 0
+    for (let i = 0; i < a.length; i++) diff |= a[i] ^ b[i]
+    return diff === 0
   } catch {
     return false
   }

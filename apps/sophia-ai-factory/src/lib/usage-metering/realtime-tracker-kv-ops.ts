@@ -30,7 +30,7 @@ export async function updateRealTimeUsage(usage: RealTimeUsage, ttlSeconds: numb
     return
   }
   try {
-    await kv.set(`usage:${usage.userId}:${usage.licenseNonce}`, usage, { expirationTtl: ttlSeconds })
+    await kv.set(`usage:${usage.userId}:${usage.licenseNonce}`, usage, { ex: ttlSeconds })
   } catch (error) {
     logger.error('[Real-Time Tracker] Redis write error', toError(error))
   }

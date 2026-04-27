@@ -147,7 +147,7 @@ export async function emitDiscrepancyAlerts(
   for (const discrepancy of discrepancies) {
     const alert: ReconciliationAlert = {
       type: 'discrepancy_detected',
-      severity: discrepancy.severity,
+      severity: discrepancy.severity === 'low' ? 'info' : discrepancy.severity,
       licenseNonce: discrepancy.licenseNonce,
       userId: discrepancy.userId,
       details: {
