@@ -948,8 +948,15 @@ See `phase-21-typescript-cleanup.md` for details.
 - **Reduction:** 100% ✅ (462 → 0)
 - **Cumulative phases:** 1-46 (22 days continuous cleanup)
 
-**Open Follow-Ups (separate hardening track):**
-- T2: jwt_nonces table migration from Supabase to D1 (backcompat shim added Phase 45)
+**Resolved Follow-Ups (hardening track):**
+- [x] T2: jwt_nonces table migration from Supabase to D1 (CLOSED 2026-04-26)
+  - Created `migrations/0017-jwt-nonces.sql` with schema: nonce TEXT PRIMARY KEY, user_id, issued_at, expires_at, used_at + 2 indexes
+  - Updated callsites: storage.ts:155, tracker.ts:187,191 (`select('id')` → `select('nonce')`)
+  - Verification: TS=0, jwt-nonce tests 20/20, full suite 1398/1398
+  - Code review: 9.5/10 APPROVED
+  - Impact: Fixes silent replay-protection bypass on cache miss (HIGH security fix)
+
+**Open Follow-Ups (separate track):**
 - T3: Cosmetic cleanups (dead routes, logger.info noise)
 
 **Reports:**

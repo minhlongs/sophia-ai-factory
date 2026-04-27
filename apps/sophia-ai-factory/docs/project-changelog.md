@@ -4,6 +4,14 @@
 
 ---
 
+## D1 Migration 0017: JWT Nonce Replay-Attack Protection (2026-04-26)
+
+**Severity: HIGH | Type: Bug Fix | Status: SHIPPED**
+
+Created D1 migration `migrations/0017-jwt-nonces.sql` establishing JWT nonce table for replay-attack defense. Schema: `nonce TEXT PRIMARY KEY, user_id TEXT, issued_at INTEGER, expires_at INTEGER, used_at INTEGER` with indexes on `user_id` and `expires_at`. Fixed production runtime risk where code referenced table that didn't exist. Updated 3 callsites in `src/lib/auth/jwt-nonce-{storage,tracker}.ts` to select on PK-only schema (changed `select('id')` → `select('nonce')`). **Tests:** 1398/1398 pass. **TS:** 0 errors. **Review:** 9.5/10. Closes B2 T2 follow-up from replay-protection gap identified in B2 cleanup review.
+
+---
+
 ## ✅ MISSION COMPLETE — B2 TypeScript Cleanup: 462→0 Errors (Phase 46)
 
 **Phase 46 B2 Final (Architectural documentation + final verification):** Mission complete. Final phase consolidated 46-phase B2 TypeScript Cleanup mission (baseline 462 errors → **0 errors**, 100% elimination achieved). **Status: 1398/1398 tests PASS. Build: ✓ Compiled successfully in 10.0s.** Documented 7 critical architectural decisions as canonical TypeScript patterns in `docs/code-standards.md`: (1) Web Crypto BufferSource cast, (2) Upstash Redis vs CF KV divergence, (3) D1 query chain limitations (no textSearch, no insert-onConflict chain, no nulls-ordering), (4) crypto.subtle.timingSafeEqual missing on Workers, (5) Better Auth generic-inference double-cast quirk, (6) OAuth callback session pattern migration, (7) Zod v4 record signature. All patterns cross-validated against production codebase. Protected flows verified operational: Setup Wizard, Telegram Bot (@Sophia_Bbot), NOWPayments IPN webhook. Zero regressions introduced. Production verified green via CI/CD workflow `Tests & Deploy`. **🎉 ENTERPRISE-GRADE TYPE SAFETY MILESTONE ACHIEVED.** Closes B2 initiative (2026-04-10 → 2026-04-26, 46 phases, ~180 files touched).

@@ -184,11 +184,11 @@ export async function getNonceStats(): Promise<{
     const [activeResult, expiredResult] = await Promise.all([
       db
         .from('jwt_nonces')
-        .select('id', { count: 'exact', head: true })
+        .select('nonce', { count: 'exact', head: true })
         .gte('expires_at', now),
       db
         .from('jwt_nonces')
-        .select('id', { count: 'exact', head: true })
+        .select('nonce', { count: 'exact', head: true })
         .lt('expires_at', now),
     ]);
 

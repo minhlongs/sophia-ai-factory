@@ -152,7 +152,7 @@ export async function deleteExpiredNoncesFromDb(): Promise<number> {
       .from('jwt_nonces')
       .delete()
       .lt('expires_at', now)
-      .select('id');
+      .select('nonce');
 
     if (error) {
       logger.error('[JWT Nonce] Cleanup failed', toError(error));
