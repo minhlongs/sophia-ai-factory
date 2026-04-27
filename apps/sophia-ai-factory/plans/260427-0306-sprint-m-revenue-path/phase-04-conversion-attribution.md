@@ -149,18 +149,18 @@ CREATE INDEX IF NOT EXISTS idx_conv_created ON affiliate_conversions(created_at 
 14. Wait for first real conversion from M3 short-link click → verify attribution chain end-to-end
 
 ## Todo List
-- [ ] Apply `migrations/0021-affiliate-conversions.sql` local + remote
-- [ ] Create `src/config/revenue-share.ts`
-- [ ] Create `commission-calculator.ts` + tests
-- [ ] Create `clickbank-signature-verifier.ts` + tests
-- [ ] Create `clickbank-postback-parser.ts`
-- [ ] Create `conversion-attributor.ts` + tests
-- [ ] Create `src/app/api/webhooks/clickbank/route.ts` + tests
-- [ ] Add `notifyConversionEarned` helper to telegram notifications
-- [ ] Set CF Secret `CLICKBANK_INS_SECRET`
+- [x] Apply `migrations/0022-affiliate-conversions.sql` local (remote: pending deploy)
+- [x] Create `src/config/revenue-share.ts`
+- [x] Create `commission-calculator.ts` + tests
+- [x] Create `clickbank-signature-verifier.ts` + tests
+- [x] Create `clickbank-postback-parser.ts`
+- [x] Create `conversion-attributor.ts` + tests
+- [x] Create `src/app/api/webhooks/clickbank/route.ts` + tests
+- [x] Add `notifyConversionEarned` helper to telegram notifications
+- [ ] Set CF Secret `CLICKBANK_INS_SECRET` (manual: `npx wrangler secret put CLICKBANK_INS_SECRET`)
 - [ ] Configure ClickBank vendor INS URL + secret in dashboard
-- [ ] `npm test` all green
-- [ ] `npm run build` 0 errors
+- [x] `npm test` all green (1486 pass)
+- [x] `npm run build` 0 errors
 - [ ] Deploy + SHA-match verify
 - [ ] Trigger ClickBank "Send Test INS" → verify D1 row appears
 - [ ] E2E: real click on M3 short-link → real ClickBank sale → verify attribution
