@@ -259,6 +259,18 @@ done
 
 ---
 
+---
+
+## Post-B2 Follow-Ups (2026-04-26)
+
+| Follow-Up | Scope | Files | Status | Date | Review |
+|-----------|-------|-------|--------|------|--------|
+| T2: JWT Nonces Migration | D1 schema migration (Supabase→D1) + callsite updates | migrations/0017-jwt-nonces.sql, src/lib/auth/jwt-nonce-storage.ts:155, jwt-nonce-tracker.ts:187,191 | ✅ CLOSED | 2026-04-26 | 9.5/10 |
+
+**T2 Impact:** Fixes silent replay-protection bypass when D1 cache misses (HIGH security). Schema forced by D1QueryChain.upsert() bare ON CONFLICT semantics. Tests 20/20 jwt-nonce + 1398/1398 full suite pass.
+
+---
+
 *Last Updated: April 26, 2026 09:15 (Phase 16 sync-back)*
 *Initiative Lead: Project Manager*
 *Status: Phase 17 Ready — Admin Dunning Batch Recommended*

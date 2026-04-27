@@ -894,6 +894,10 @@ await db.from('table').upsert(data);
 
 **Null Ordering:** No `nulls: 'last'` option on `.order()`. Order by column, then handle nulls in memory if needed.
 
+### D1 Migration Patterns (NEW — Post-0017)
+
+When using D1 upsert operations (`.upsert()` on D1QueryChain), ensure the target table has **exactly ONE UNIQUE/PRIMARY KEY constraint** that matches the upsert payload fields. Bare `.upsert()` (without explicit conflict-resolution clause on D1) relies on schema-level uniqueness to disambiguate rows. Example: JWT nonce table (migration 0017) uses `nonce TEXT PRIMARY KEY` to enable upsert-by-nonce. If multiple unique constraints exist, D1QueryChain behavior is undefined; disambiguate at migration layer with explicit PK or functional index. Reference: `migrations/0017-jwt-nonces.sql`.
+
 ### Web Crypto Constants-Time Comparison
 
 `crypto.subtle.timingSafeEqual` does NOT exist on Cloudflare Workers. Implement constant-time comparison via XOR loop:

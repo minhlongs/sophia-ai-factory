@@ -387,7 +387,7 @@ describe('getNonceStats', () => {
     const { createServerClient } = await import('@/lib/db/client')
     const db = vi.mocked(createServerClient)()
 
-    // Production code: .from().select('id', {count: 'exact', head: true}).gte() / .lt()
+    // Production code: .from().select('nonce', {count: 'exact', head: true}).gte() / .lt()
     // .gte() and .lt() are the terminal calls that return promises
     vi.mocked(mockNonceFrom).mockReturnValue({
       select: vi.fn().mockReturnValue({
