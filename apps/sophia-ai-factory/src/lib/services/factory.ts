@@ -7,33 +7,43 @@ import { RealVoiceService } from "./real/voice-service";
 import { RealScriptService } from "./real/script-service";
 import { MockPaymentService } from "./mock/payment-service";
 import { RealPaymentService } from "./real/payment-service";
+import { MissingCredentialsError } from "./errors";
+import { logger } from "@/lib/utils/logger-utility";
+
+const isProd = process.env.NODE_ENV === 'production'
+const isExplicitMock = process.env.NEXT_PUBLIC_MOCK_AI_SERVICES === 'true'
 
 /**
- * Auto-enable mock mode when all AI service keys are absent.
- * Allows zero-config deployment without crashing on missing env vars.
+ * Per-service credential gate.
+ *
+ * Decision tree:
+ *   NEXT_PUBLIC_MOCK_AI_SERVICES=true  → false (mock allowed, test mode)
+ *   key present                        → true  (use real service)
+ *   NODE_ENV=production + key absent   → throws MissingCredentialsError
+ *   dev/staging + key absent           → false (mock fallback + warning)
  */
-function isMockMode(): boolean {
-  const autoMockMode =
-    !process.env.OPENROUTER_API_KEY &&
-    !process.env.HEYGEN_API_KEY &&
-    !process.env.ELEVENLABS_API_KEY;
-  return process.env.NEXT_PUBLIC_MOCK_AI_SERVICES === 'true' || autoMockMode;
+function requireKey(name: string): boolean {
+  if (isExplicitMock) return false
+  const value = process.env[name]?.trim(); if (value) return true
+  if (isProd) throw new MissingCredentialsError(name)
+  logger.warn(`[ServiceFactory] ${name} not set — falling back to mock service (dev/staging only)`)
+  return false
 }
 
 export class ServiceFactory {
   static getScriptService(): IScriptService {
-    return isMockMode() ? new MockScriptService() : new RealScriptService();
+    return requireKey('OPENROUTER_API_KEY') ? new RealScriptService() : new MockScriptService()
   }
 
   static getVoiceService(): IVoiceService {
-    return isMockMode() ? new MockVoiceService() : new RealVoiceService();
+    return requireKey('ELEVENLABS_API_KEY') ? new RealVoiceService() : new MockVoiceService()
   }
 
   static getVideoService(): IVideoService {
-    return isMockMode() ? new MockVideoService() : new RealVideoService();
+    return requireKey('HEYGEN_API_KEY') ? new RealVideoService() : new MockVideoService()
   }
 
   static getPaymentService(): IPaymentService {
-    return isMockMode() ? new MockPaymentService() : new RealPaymentService();
+    return requireKey('NOWPAYMENTS_API_KEY') ? new RealPaymentService() : new MockPaymentService()
   }
 }

@@ -1,5 +1,7 @@
+import { NonRetriableError } from 'inngest'
 import { inngest } from '@/lib/inngest/client'
 import { ServiceFactory } from '@/lib/services/factory'
+import { MissingCredentialsError } from '@/lib/services/errors'
 import { startVideoGeneration } from '@/lib/ai/video-generator'
 import { getD1Client } from '@/lib/db/client'
 import { OpenClawGateway } from '@/lib/gateway/openclaw-gateway'
@@ -9,6 +11,7 @@ import { TikTokChannelAdapter } from '@/lib/gateway/adapters/tiktok-channel-adap
 import { TelegramNotificationAdapter } from '@/lib/gateway/adapters/telegram-notification-adapter'
 import { resolveOrgId } from '@/lib/auth/resolve-org-id'
 import { updateCampaignStatus, notifyUserByTelegram } from './generate-campaign-db'
+import { notifyRefundRequired } from './generate-campaign-refund-notify'
 import { pollVideoStatus } from './generate-campaign-video-poller'
 
 const resumeEngine = new SmartResumeEngine()
@@ -46,7 +49,16 @@ export const generateCampaign = inngest.createFunction(
         return typedCampaign.script_content
       }
       await updateStatus('processing_script', 10)
-      const scriptService = ServiceFactory.getScriptService()
+      let scriptService
+      try {
+        scriptService = ServiceFactory.getScriptService()
+      } catch (err) {
+        if (err instanceof MissingCredentialsError) {
+          await notifyRefundRequired(userId, campaignId, err.key)
+          throw new NonRetriableError(`Missing AI credential: ${err.key}`, { cause: err })
+        }
+        throw err
+      }
       const resolvedOrgId = (await resolveOrgId(userId)) ?? userId
       const result = await scriptService.generateScript({ topic, audience, tier, orgId: resolvedOrgId, userId })
       await updateStatus('processing_script', 35, { script_content: result })
@@ -66,7 +78,16 @@ export const generateCampaign = inngest.createFunction(
       const fullNarration = scriptData.scenes.map(s => s.narration).join(' ')
       await updateStatus('processing_script', 45)
       if (!resume) await notifyUser(`📝 Script ready! Now generating voiceover...`)
-      const voiceService = ServiceFactory.getVoiceService()
+      let voiceService
+      try {
+        voiceService = ServiceFactory.getVoiceService()
+      } catch (err) {
+        if (err instanceof MissingCredentialsError) {
+          await notifyRefundRequired(userId, campaignId, err.key)
+          throw new NonRetriableError(`Missing AI credential: ${err.key}`, { cause: err })
+        }
+        throw err
+      }
       const voiceoverResult = await voiceService.generateVoiceover({ text: fullNarration, tier })
       await updateStatus('processing_script', 60, { audio_url: voiceoverResult.audio_url })
       await resumeEngine.checkpoint(campaignId, 'generate-voiceover')
@@ -76,8 +97,16 @@ export const generateCampaign = inngest.createFunction(
     const videoJobId = await step.run('start-video-generation', async () => {
       if (resume && resumeFrom === 'finalize') return null
       await updateStatus('processing_video', 70)
-      if (!resume) await notifyUser(`🎤 Voiceover ready! Now rendering video... (This may take a few minutes)`)
-      return await startVideoGeneration({ script, tier })
+      if (!resume) await notifyUser(`🎤 Voiceover ready! Now rendering video...`)
+      try {
+        return await startVideoGeneration({ script, tier })
+      } catch (err) {
+        if (err instanceof MissingCredentialsError) {
+          await notifyRefundRequired(userId, campaignId, err.key)
+          throw new NonRetriableError(`Missing AI credential: ${err.key}`, { cause: err })
+        }
+        throw err
+      }
     })
 
     const videoAssets = await step.run('poll-video-status', async () => {
