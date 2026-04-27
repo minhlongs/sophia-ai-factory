@@ -161,7 +161,7 @@ src/app/api/v1/overage/[tenantId]/route.test.ts
 
 ## Dependencies
 
-- `src/lib/raas-gateway-enhanced.ts` - JWT validation
+- `src/lib/security/jwt-validator.ts` - JWT validation (was `raas-gateway-enhanced.ts`, refactored 2026-04)
 - `src/lib/quota/quota-enforcer.ts` - Quota status
 - `src/lib/billing/overage-billing-reconciler.ts` - Overage events
 - `src/lib/security/rate-limiter.ts` - Rate limiting
