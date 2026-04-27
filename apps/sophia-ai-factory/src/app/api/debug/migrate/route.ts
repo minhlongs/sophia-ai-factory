@@ -23,7 +23,7 @@ const MIGRATIONS = [
     status TEXT DEFAULT 'queued',
     progress INTEGER DEFAULT 0,
     template_id TEXT,
-    script TEXT,
+    script_content TEXT,
     video_url TEXT,
     thumbnail_url TEXT,
     platforms TEXT DEFAULT '[]',

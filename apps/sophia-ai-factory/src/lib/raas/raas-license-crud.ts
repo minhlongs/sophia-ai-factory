@@ -105,7 +105,7 @@ export async function getLicenses(params: {
     tier: license.tier as LicenseTier,
     createdAt: license.created_at,
     expiresAt: license.expires_at,
-    isRevoked: license.is_revoked,
+    isRevoked: !!license.is_revoked,
     revokedAt: license.revoked_at ?? undefined,
     validateCount: (license.metadata as { validateCount?: number })?.validateCount || 0,
     metadata: license.metadata,

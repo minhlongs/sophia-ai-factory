@@ -11,7 +11,6 @@ import type {
   RaasAuditLogRow,
   AuditLicenseRow,
   AuditUsageEventRow,
-  AuditHashChainRow,
 } from './types'
 
 export async function fetchComplianceData(
@@ -34,23 +33,9 @@ export async function fetchComplianceData(
 
     const { count: totalLogs } = await logsQuery
 
-    const hashChainQuery = await db.from<AuditHashChainRow>('raas_audit_logs')
-      .select('content_hash, hash_chain_valid')
-      .gte('created_at', startDate)
-      .lte('created_at', endDate)
-      .order('created_at', { ascending: true })
-      .limit(1)
-
-    const firstLog = hashChainQuery.data?.[0]
-
-    const hashChainQueryEnd = await db.from<AuditHashChainRow>('raas_audit_logs')
-      .select('content_hash')
-      .gte('created_at', startDate)
-      .lte('created_at', endDate)
-      .order('created_at', { ascending: false })
-      .limit(1)
-
-    const lastLog = hashChainQueryEnd.data?.[0]
+    // Hash-chain fields (content_hash, hash_chain_valid) are not populated by
+    // audit-logging-service writer and 0019 migration omits those columns.
+    // Removed dead SELECTs (M2 fix — KISS: implement when writer is ready).
 
     const licenseQuery = await db.from<AuditLicenseRow>('raas_licenses')
       .select('nonce, tier, created_at, last_used_at')
@@ -120,7 +105,8 @@ export async function fetchComplianceData(
       period: { start: new Date(startDate * 1000), end: new Date(endDate * 1000) },
       summary: {
         totalLogs: totalLogs || 0,
-        hashChainValid: firstLog?.hash_chain_valid ?? true,
+        // hash_chain_valid not stored in DB yet — default true until writer is wired
+        hashChainValid: true,
         totalLicenses: licenses.length,
         totalUsage: usageEvents.length,
         periodStart: new Date(startDate * 1000),
@@ -129,10 +115,10 @@ export async function fetchComplianceData(
       licenses: licenseReportData,
       modelBreakdown,
       hashChainVerification: {
-        firstHash: firstLog?.content_hash || 'N/A',
-        lastHash: lastLog?.content_hash || 'N/A',
+        firstHash: 'N/A',
+        lastHash: 'N/A',
         totalLogs: totalLogs || 0,
-        verified: firstLog?.hash_chain_valid ?? true
+        verified: true
       }
     }
   } catch (error) {

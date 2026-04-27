@@ -178,6 +178,25 @@ Both stale references resolved:
 
 ---
 
+## Sprint M Progress — First-Dollar Revenue Path (2026-04-27)
+
+| Sprint | Phase | Effort | Code Status | Deploy Status | Verified |
+|--------|-------|--------|-------------|---------------|----------|
+| M | M1 | 1d | ✅ code-shipped | ⏳ pending (secrets) | 2026-04-27 |
+
+**M1 Completion Summary:**
+- 3 D1 migrations (campaigns, campaign_checkpoints, raas_licenses) — CREATED + TESTED
+- 1 Telegram handler refactor (campaigns → D1) — COMPLETED
+- 1 test file (telegram-bot-campaign.test.ts) — 7 tests added
+- 4 fix-loop modifications post-code-review (9.6/10 APPROVED)
+- Tests: 1406/1406 PASS | TypeScript: 0 errors
+- **Deferred (user-required):** D1 remote migration apply + 8 CF Secrets via wrangler + smoke test
+- **Residual findings:** 2 is_revoked leak sites in admin/licenses + usage-kv-sync (non-blocking, tech debt post-M1)
+
+**Next:** Await user to run `wrangler secret put` × 8, then M1 smoke test validates Telegram /campaign → D1 writes.
+
+---
+
 ## Recommended Next Steps
 
 ### Phase 49 Complete ✅ (2026-04-27)

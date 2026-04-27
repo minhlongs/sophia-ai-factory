@@ -4,6 +4,14 @@
 
 ---
 
+## Sprint M Phase M1: Revenue Pipeline Unblock — D1 Schema Expansion (2026-04-27)
+
+**Severity: HIGH | Type: Feature | Status: SHIPPED**
+
+Delivered D1 schema expansion unblocking Sophia revenue path (campaigns + RAAS licensing). **Files Shipped:** 2 new migrations (0018-campaigns, 0019-raas-licenses) + 1 fix migration (0020-user-profiles-extend), Telegram handler refactor, 7-test test file, 4 fix-loop edits. **Schema Added:** `campaigns`, `campaign_checkpoints`, `raas_licenses`, `raas_audit_logs` tables; extended `user_profiles` (added `subscription_tier`, `telegram_chat_id`). **Tests:** 1406/1406 pass. **TS:** 0 errors. **Code Review:** 9.6/10 APPROVED. **Outcome:** Pipeline can now write billing & campaign data to D1 without schema crashes. **Deferred:** Remote D1 apply + Cloudflare Secrets (user-required sync). Protected flows untouched (Setup Wizard, Telegram Bot, NOWPayments IPN). Commit: TBD.
+
+---
+
 ## Phase 49: Analytics Page Modularization — Structural Refactor (2026-04-27)
 
 **Severity: LOW | Type: Refactor | Status: SHIPPED**

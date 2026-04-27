@@ -2,67 +2,109 @@
  * Telegram bot campaign command handlers
  *
  * Handles /campaign, /status, /results commands for campaign management.
+ * Uses D1 client exclusively — no Supabase dependency.
  */
 
 import { createServerClient } from '@/lib/db/client';
 import { inngest } from '@/lib/inngest/client';
 import { sendTelegramMessage } from './telegram-client';
-import { Database } from '@/lib/supabase/types';
 import { Tier } from '@/types';
 
-function getSupabase() {
+// -------------------------------------------------------------------------
+// Internal D1 row types (matches 0018-campaigns.sql schema)
+// -------------------------------------------------------------------------
+
+interface CampaignD1Row {
+  id: string;
+  user_id: string;
+  title: string;
+  topic: string | null;
+  audience: string | null;
+  status: string | null;
+  progress: number | null;
+  template_id: string | null;
+  script_content: string | null;
+  audio_url: string | null;
+  video_url: string | null;
+  thumbnail_url: string | null;
+  error_message: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface UserProfileD1Row {
+  user_id: string;
+  subscription_tier: 'BASIC' | 'PREMIUM' | 'ENTERPRISE' | 'MASTER' | null;
+  telegram_chat_id: string | null;
+}
+
+// -------------------------------------------------------------------------
+// Helpers
+// -------------------------------------------------------------------------
+
+function getDb() {
   return createServerClient();
 }
 
-// Helper to map Supabase subscription tier to App Tier
-function mapSubscriptionToTier(subTier: 'free' | 'pro' | 'enterprise' | null): Tier {
-  switch (subTier) {
-    case 'pro': return 'PREMIUM';
-    case 'enterprise': return 'ENTERPRISE';
-    case 'free':
+/**
+ * Map D1 subscription_tier value → app Tier enum.
+ * D1 stores UPPERCASE per project rule (BASIC|PREMIUM|ENTERPRISE|MASTER).
+ * Normalise input to UPPERCASE defensively in case of legacy lowercase rows.
+ */
+function mapSubscriptionToTier(subTier: string | null): Tier {
+  switch (subTier?.toUpperCase()) {
+    case 'PREMIUM': return 'PREMIUM';
+    case 'ENTERPRISE': return 'ENTERPRISE';
+    case 'MASTER': return 'MASTER';
+    case 'BASIC':
     default: return 'BASIC';
   }
 }
 
+// -------------------------------------------------------------------------
+// Command handlers
+// -------------------------------------------------------------------------
+
 export async function handleCampaign(chatId: string, topic: string) {
   if (!topic) {
-      await sendTelegramMessage(chatId, 'Please provide a topic. Usage: `/campaign <topic>`')
-      return
+    await sendTelegramMessage(chatId, 'Please provide a topic. Usage: `/campaign <topic>`')
+    return
   }
 
   try {
     // 1. Identify user from chatId
-    const { data: profileData, error } = await getSupabase()
+    const { data: profileData, error } = await getDb()
       .from('user_profiles')
       .select('user_id, subscription_tier')
       .eq('telegram_chat_id', chatId)
       .single()
 
-    const profile = profileData as { user_id: string; subscription_tier: 'free' | 'pro' | 'enterprise' | null } | null;
+    const profile = profileData as UserProfileD1Row | null;
 
     if (error || !profile) {
       await sendTelegramMessage(chatId, '❌ Account not linked. Please use `/email your@email.com` to link your account first.')
       return
     }
 
-    // 2. Create Campaign in DB
-    const campaignInsert: Database['public']['Tables']['campaigns']['Insert'] = {
-        user_id: profile.user_id,
-        title: topic,
-        topic: topic,
-        status: 'queued',
-        progress: 0,
-        audience: null,
-        error_message: null,
-        script_content: null,
-        video_url: null,
-        thumbnail_url: null,
-        template_id: null,
-        audio_url: null
+    // 2. Create Campaign in D1
+    const campaignInsert: Omit<CampaignD1Row, 'created_at' | 'updated_at'> = {
+      id: crypto.randomUUID(),
+      user_id: profile.user_id,
+      title: topic,
+      topic: topic,
+      status: 'queued',
+      progress: 0,
+      audience: null,
+      error_message: null,
+      script_content: null,
+      video_url: null,
+      thumbnail_url: null,
+      template_id: null,
+      audio_url: null,
     };
 
-    const { data: campaignData, error: createError } = await getSupabase().from('campaigns')
-      .insert(campaignInsert)
+    const { data: campaignData, error: createError } = await getDb().from('campaigns')
+      .insert(campaignInsert as unknown as Record<string, unknown>)
       .select()
       .single()
 
@@ -96,27 +138,27 @@ export async function handleCampaign(chatId: string, topic: string) {
 
 export async function handleStatus(chatId: string) {
   try {
-    const { data: profileData } = await getSupabase()
+    const { data: profileData } = await getDb()
       .from('user_profiles')
       .select('user_id')
       .eq('telegram_chat_id', chatId)
       .single()
 
-    const profile = profileData as unknown as { user_id: string } | null;
+    const profile = profileData as { user_id: string } | null;
 
     if (!profile) {
       await sendTelegramMessage(chatId, '❌ Account not linked. Please use /email to setup.')
       return
     }
 
-    const { data: campaignsData } = await getSupabase().from('campaigns')
+    const { data: campaignsData } = await getDb().from('campaigns')
       .select('*')
       .eq('user_id', profile.user_id)
       .in('status', ['queued', 'processing_script', 'processing_video'])
       .order('created_at', { ascending: false })
       .limit(5)
 
-    const campaigns = campaignsData as Database['public']['Tables']['campaigns']['Row'][] | null;
+    const campaigns = campaignsData as CampaignD1Row[] | null;
 
     if (!campaigns || campaigns.length === 0) {
       await sendTelegramMessage(chatId, 'ℹ️ No active campaigns running right now.')
@@ -128,7 +170,7 @@ export async function handleStatus(chatId: string) {
       const statusEmoji = c.status === 'queued' ? '⏳' : '⚙️'
       message += `${statusEmoji} *${c.title}*\n`
       message += `Status: ${c.status?.replace('_', ' ')}\n`
-      message += `Progress: ${c.progress}%\n\n`
+      message += `Progress: ${c.progress ?? 0}%\n\n`
     })
 
     await sendTelegramMessage(chatId, message)
@@ -140,27 +182,27 @@ export async function handleStatus(chatId: string) {
 
 export async function handleResults(chatId: string) {
   try {
-    const { data: profileData } = await getSupabase()
+    const { data: profileData } = await getDb()
       .from('user_profiles')
       .select('user_id')
       .eq('telegram_chat_id', chatId)
       .single()
 
-    const profile = profileData as unknown as { user_id: string } | null;
+    const profile = profileData as { user_id: string } | null;
 
     if (!profile) {
       await sendTelegramMessage(chatId, '❌ Account not linked.')
       return
     }
 
-    const { data: campaignsData } = await getSupabase().from('campaigns')
+    const { data: campaignsData } = await getDb().from('campaigns')
       .select('*')
       .eq('user_id', profile.user_id)
       .eq('status', 'completed')
       .order('updated_at', { ascending: false })
       .limit(5)
 
-    const campaigns = campaignsData as Database['public']['Tables']['campaigns']['Row'][] | null;
+    const campaigns = campaignsData as CampaignD1Row[] | null;
 
     if (!campaigns || campaigns.length === 0) {
       await sendTelegramMessage(chatId, 'ℹ️ No completed campaigns found.')
@@ -173,7 +215,7 @@ export async function handleResults(chatId: string) {
       if (c.video_url) {
         message += `[Watch Video](${c.video_url})\n`
       } else {
-         message += `(Video URL missing)\n`
+        message += `(Video URL missing)\n`
       }
       message += `Completed: ${new Date(c.updated_at).toLocaleDateString()}\n\n`
     })
