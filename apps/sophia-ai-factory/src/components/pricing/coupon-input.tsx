@@ -98,7 +98,7 @@ export function CouponInput({ tiers, onDiscountApplied, onDiscountCleared }: Cou
     onDiscountCleared();
   };
 
-  const isApplied = status === "success" && appliedCode;
+  const isApplied = status === "success" && !!appliedCode;
 
   return (
     <div className="mx-auto max-w-md mb-10">

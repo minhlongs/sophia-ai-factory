@@ -118,11 +118,11 @@ export async function fetchRevenueSnapshot(
   const { start, end, priorStart, priorEnd } = resolvePeriodBounds(period);
 
   // ── Current active licenses ──
-  let currentQuery: D1QueryChain<LicenseRow> = db
+  let currentQuery = db
     .from('raas_licenses')
     .select('tier, is_revoked, created_at')
     .eq('is_revoked', false)
-    .lte('created_at', end);
+    .lte('created_at', end) as unknown as D1QueryChain<LicenseRow>;
 
   if (orgId) {
     currentQuery = currentQuery.eq('created_by', orgId);

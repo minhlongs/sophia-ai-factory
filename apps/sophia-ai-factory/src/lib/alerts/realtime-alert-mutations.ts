@@ -10,7 +10,7 @@ export async function createRealtimeAlert(
   try {
     const db = createServerClient();
 
-    const { data, error } = await db
+    const { data: rawData, error } = await db
       .from('user_alerts')
       .insert({
         user_id: params.userId,
@@ -27,6 +27,7 @@ export async function createRealtimeAlert(
       })
       .select('id')
       .single();
+    const data = rawData as { id: string } | null;
 
     if (error || !data) {
       logger.error('[Realtime Alert] Failed to create alert', toError(error));

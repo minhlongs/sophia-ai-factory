@@ -72,7 +72,7 @@ export async function createEnrichedJwt(
       feature_limits: featureLimits,
     }
 
-    const token = await new SignJWT(payload)
+    const token = await new SignJWT(payload as unknown as Record<string, unknown>)
       .setProtectedHeader({ alg: JWT_CONFIG.algorithm })
       .setIssuedAt(now)
       .setExpirationTime(now + ttlSeconds)

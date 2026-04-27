@@ -31,7 +31,7 @@ export const queryKeys = {
   // Usage metrics
   usage: {
     all: ['usage'] as const,
-    list: (filters: { start: number; end: number; granularity?: string }) =>
+    list: (filters: { start: number; end: number; granularity?: string; service?: string }) =>
       [...queryKeys.usage.all, 'list', filters] as const,
     detail: (nonce: string) => [...queryKeys.usage.all, 'detail', nonce] as const,
   },

@@ -45,7 +45,7 @@ export async function getUserAlertHistory(
   try {
     const db = createServerClient();
 
-    const { data: alerts } = await db
+    const { data: rawAlerts } = await db
       .from('quota_alerts')
       .select('threshold, channel, sent_at, recipient')
       .eq('user_id', userId)
@@ -53,6 +53,7 @@ export async function getUserAlertHistory(
       .eq('sent', true)
       .order('sent_at', { ascending: false })
       .limit(limit);
+    const alerts = rawAlerts as { threshold: number; channel: string; sent_at: string; recipient: string }[] | null;
 
     return (alerts || []).map(a => ({
       threshold: a.threshold,
