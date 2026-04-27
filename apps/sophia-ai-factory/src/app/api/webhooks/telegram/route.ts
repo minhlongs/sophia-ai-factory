@@ -3,7 +3,6 @@ import {
   handleStart,
   handleHelp,
   handleEmail,
-  handleCampaign,
   handleStatus,
   handleResults,
   handleSubscribe,
@@ -14,6 +13,13 @@ import {
   handleTicket,
   withMiddleware,
 } from '@/lib/telegram/telegram-command-handlers'
+import {
+  handleCampaign as handleCampaignFsm,
+  handleFsmTextInput,
+  handleOfferCallback,
+  handleConfirmCommand,
+} from '@/lib/telegram/telegram-bot-campaign-handlers'
+import { TelegramFSM } from '@/lib/telegram/telegram-fsm-state-manager'
 import { createServerClient } from '@/lib/db/client'
 
 interface TelegramUpdate {
@@ -56,6 +62,11 @@ export async function POST(request: NextRequest) {
       const callbackData = body.callback_query.data
 
       if (chatId && callbackData) {
+        // Route offer_* callbacks to FSM before falling through to legacy handler
+        if (callbackData.startsWith('offer_')) {
+          await handleOfferCallback(chatId, callbackData)
+          return NextResponse.json({ ok: true })
+        }
         await withMiddleware(chatId, () => handleCallbackQuery(chatId, callbackData))
       }
       return NextResponse.json({ ok: true })
@@ -85,7 +96,11 @@ export async function POST(request: NextRequest) {
         await handleEmail(chatId, email)
       } else if (text.startsWith('/campaign')) {
         const topic = text.replace('/campaign', '').trim()
-        await handleCampaign(chatId, topic)
+        await handleCampaignFsm(chatId, topic)
+      } else if (text === '/confirm') {
+        await handleConfirmCommand(chatId)
+      } else if (text === '/cancel') {
+        await TelegramFSM.clearContext(chatId)
       } else if (text === '/status') {
         await handleStatus(chatId)
       } else if (text === '/results') {
@@ -109,7 +124,11 @@ export async function POST(request: NextRequest) {
       } else if (text.startsWith('/')) {
         await handleUnknown(chatId)
       } else {
-        await handleTextMessage(chatId, text)
+        // Try FSM text input first; fall through to legacy handler if not in FSM flow
+        const handledByFsm = await handleFsmTextInput(chatId, text)
+        if (!handledByFsm) {
+          await handleTextMessage(chatId, text)
+        }
       }
     })
 

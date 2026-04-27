@@ -8,6 +8,7 @@ import {
   generateMockScript,
   buildScriptUserPrompt,
   SCRIPT_SYSTEM_PROMPT,
+  type AffiliateOfferCta,
 } from './script-prompt-builders';
 
 export type { ScriptOutput } from './script-prompt-builders';
@@ -21,6 +22,8 @@ interface GenerateScriptInput {
   licenseNonce?: string;
   /** Tenant scope for LLM cache (Phase 4F). Empty/omitted → cache skipped. */
   orgId?: string;
+  /** Optional affiliate offer — injects CTA into last scene of generated script. */
+  affiliateOffer?: AffiliateOfferCta;
 }
 
 /**
@@ -28,7 +31,7 @@ interface GenerateScriptInput {
  * Falls back to mock if API key is not configured.
  */
 export async function generateScript(input: GenerateScriptInput) {
-  const { topic, audience, tier, userId, licenseKey, licenseNonce, orgId } = input;
+  const { topic, audience, tier, userId, licenseKey, licenseNonce, orgId, affiliateOffer } = input;
   const stopTimer = startTimer();
 
   const context = getUsageContext();
@@ -66,7 +69,7 @@ export async function generateScript(input: GenerateScriptInput) {
     const model = tier === 'ENTERPRISE' ? 'anthropic/claude-3.5-sonnet' : 'openai/gpt-4o-mini';
     const messages = [
       { role: 'system', content: SCRIPT_SYSTEM_PROMPT },
-      { role: 'user',   content: buildScriptUserPrompt(topic, audience) },
+      { role: 'user',   content: buildScriptUserPrompt(topic, audience, affiliateOffer) },
     ];
 
     const cached = await callWithCache(

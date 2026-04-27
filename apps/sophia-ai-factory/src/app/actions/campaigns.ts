@@ -6,8 +6,12 @@ import { createCampaignSchema } from "@/lib/campaigns/validation";
 import { revalidatePath } from "next/cache";
 import { tierGuard } from "@/lib/tier-guard";
 import { toError } from "@/lib/utils/to-error";
+import { getProgramById } from "@/lib/affiliates";
+import { generateShortCode } from "@/lib/affiliate-shortlink/short-code-generator";
+import { logger } from "@/lib/utils/logger-utility";
 
 export async function createCampaign(formData: FormData) {
+  const offerId = formData.get("offer_id") as string | null;
   const rawData = {
     title: formData.get("title") || formData.get("topic"),
     topic: formData.get("topic"),
@@ -98,6 +102,31 @@ export async function createCampaign(formData: FormData) {
       return { success: false, message: `Failed to create campaign: ${error.message || JSON.stringify(error)}` };
     }
 
+    // Insert affiliate offer selection if user picked one
+    if (offerId) {
+      const program = getProgramById(offerId);
+      if (program) {
+        for (let attempt = 0; attempt < 3; attempt++) {
+          const shortCode = generateShortCode();
+          const { error: offerError } = await db.from('affiliate_offers_selected').insert({
+            campaign_id: campaignId,
+            user_id: userId,
+            offer_id: program.id,
+            offer_name: program.name,
+            affiliate_link: program.link,
+            short_code: shortCode,
+            network: 'clickbank',
+            // TODO(M5): source actual commission % from network API — program.epc is EPC not commission rate
+            commission_rate: null,
+          });
+          if (!offerError) break;
+          if (attempt === 2) {
+            logger.warn('affiliate_offer_insert_failed', { campaignId, offerId });
+          }
+        }
+      }
+    }
+
     try {
       await sendCampaignCreatedEvent({
         campaignId,
@@ -115,5 +144,25 @@ export async function createCampaign(formData: FormData) {
 
   } catch (e) {
     return { success: false, message: `Error: ${toError(e).message}` };
+  }
+}
+
+/**
+ * Server Action: Fetch available affiliate programs for the current user.
+ * Used by campaign-form.tsx dropdown.
+ */
+export async function getOffersForUser() {
+  try {
+    const { getCurrentUser } = await import("@/lib/better-auth-session");
+    const user = await getCurrentUser();
+    if (!user) return [];
+
+    const { getUserTier } = await import("@/lib/db/get-user-tier");
+    const tier = await getUserTier(user.id);
+
+    const { getTopPrograms } = await import("@/lib/affiliates");
+    return getTopPrograms(5, tier);
+  } catch {
+    return [];
   }
 }

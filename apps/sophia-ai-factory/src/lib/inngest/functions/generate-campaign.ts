@@ -1,5 +1,6 @@
 import { NonRetriableError } from 'inngest'
 import { inngest } from '@/lib/inngest/client'
+import { logger } from '@/lib/utils/logger-utility'
 import { ServiceFactory } from '@/lib/services/factory'
 import { MissingCredentialsError } from '@/lib/services/errors'
 import { startVideoGeneration } from '@/lib/ai/video-generator'
@@ -24,6 +25,12 @@ function createGateway(): OpenClawGateway {
   return gateway
 }
 
+interface AffiliateOfferSelectedRow {
+  short_code: string;
+  offer_name: string;
+  affiliate_link: string;
+}
+
 export const generateCampaign = inngest.createFunction(
   { id: 'generate-campaign', retries: 3 },
   { event: 'campaign.created' },
@@ -38,6 +45,25 @@ export const generateCampaign = inngest.createFunction(
       await notifyUser(resume
         ? `🔄 **Sophia AI**: Resuming campaign for "${topic}" from ${resumeFrom} step...`
         : `🎬 **Sophia AI**: Starting campaign generation for "${topic}"...`)
+    })
+
+    // Load affiliate offer selection (if user picked one during campaign creation)
+    const affiliateOffer = await step.run('load-affiliate-offer', async () => {
+      try {
+        const db = await getD1Client()
+        const { data } = await db
+          .from('affiliate_offers_selected')
+          .select('short_code, offer_name, affiliate_link')
+          .eq('campaign_id', campaignId)
+          .single()
+        const row = data as AffiliateOfferSelectedRow | null
+        if (!row) return null
+        const shortUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network'}/r/${row.short_code}`
+        return { productName: row.offer_name, shortUrl }
+      } catch (error) {
+        logger.warn('[generate-campaign] failed to load affiliate offer for campaign', { campaignId, error: String(error) })
+        return null
+      }
     })
 
     const script = await step.run('generate-script', async () => {
@@ -60,7 +86,10 @@ export const generateCampaign = inngest.createFunction(
         throw err
       }
       const resolvedOrgId = (await resolveOrgId(userId)) ?? userId
-      const result = await scriptService.generateScript({ topic, audience, tier, orgId: resolvedOrgId, userId })
+      const result = await scriptService.generateScript({
+        topic, audience, tier, orgId: resolvedOrgId, userId,
+        affiliateOffer: affiliateOffer ?? undefined,
+      })
       await updateStatus('processing_script', 35, { script_content: result })
       await resumeEngine.checkpoint(campaignId, 'generate-script')
       return result
@@ -128,14 +157,18 @@ export const generateCampaign = inngest.createFunction(
     const distributionResult = await step.run('distribute-channels', async () => {
       const gateway = createGateway()
       const campaignTitle = topic || `Campaign ${campaignId}`
+      const baseDesc = `AI-generated video content for ${audience || 'general audience'}`
+      const description = affiliateOffer
+        ? `${baseDesc}\n\n👉 ${affiliateOffer.shortUrl}`
+        : baseDesc
       const payload = {
         campaignId, videoUrl: videoAssets.video_url, thumbnailUrl: videoAssets.thumbnail_url || undefined,
-        title: campaignTitle, description: `AI-generated video content for ${audience || 'general audience'}`,
+        title: campaignTitle, description,
         tags: ['sophia-ai', 'auto-generated', tier.toLowerCase()],
       }
       const result = await gateway.distribute(payload)
       if (!result.allSucceeded) {
-        const healed = await gateway.selfHeal({ ...payload, description: `AI-generated video for ${audience || 'general audience'}` }, result)
+        const healed = await gateway.selfHeal({ ...payload, description }, result)
         await resumeEngine.checkpoint(campaignId, 'distribute-channels', { allSucceeded: healed.allSucceeded, channelCount: healed.results.length })
         return healed
       }

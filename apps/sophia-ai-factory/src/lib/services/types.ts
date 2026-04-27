@@ -2,6 +2,12 @@ import { Tier } from "@/types";
 
 // --- Script Service Types ---
 
+/** Affiliate offer CTA to inject into script prompt */
+export interface AffiliateOfferCta {
+  productName: string;
+  shortUrl: string;
+}
+
 export interface GenerateScriptInput {
   topic: string;
   audience: string;
@@ -10,6 +16,8 @@ export interface GenerateScriptInput {
   orgId?: string;
   /** Owner userId for BYOK key resolution (Phase 7B). */
   userId?: string;
+  /** Optional affiliate offer — injects CTA into last scene of generated script. */
+  affiliateOffer?: AffiliateOfferCta;
 }
 
 export interface ScriptScene {

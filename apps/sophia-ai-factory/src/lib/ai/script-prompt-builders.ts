@@ -20,10 +20,25 @@ export interface ScriptOutput {
 export const SCRIPT_SYSTEM_PROMPT =
   `You are an expert video script writer specializing in affiliate marketing content. Create engaging, conversion-focused scripts that hook viewers immediately and build desire for the product.`;
 
+/** Optional affiliate offer to inject as CTA into the script */
+export interface AffiliateOfferCta {
+  productName: string;
+  shortUrl: string;
+}
+
 /**
  * Build the user prompt for script generation.
+ * If affiliateOffer is provided, injects a CTA line into the last scene instructions.
  */
-export function buildScriptUserPrompt(topic: string, audience: string): string {
+export function buildScriptUserPrompt(
+  topic: string,
+  audience: string,
+  affiliateOffer?: AffiliateOfferCta
+): string {
+  const ctaLine = affiliateOffer
+    ? `\n- End scene must include CTA: "Get ${affiliateOffer.productName} now at ${affiliateOffer.shortUrl}"`
+    : '';
+
   return `Create a video script for promoting a product about "${topic}" to ${audience}.
 
 Requirements:
@@ -31,7 +46,7 @@ Requirements:
 - 3-5 scenes total
 - Each scene should have clear visual description and narration
 - Total duration: 15-30 seconds
-- Focus on benefits and transformation
+- Focus on benefits and transformation${ctaLine}
 
 Return ONLY valid JSON in this exact format:
 {
