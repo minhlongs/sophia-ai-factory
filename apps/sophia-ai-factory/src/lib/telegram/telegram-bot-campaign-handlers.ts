@@ -3,12 +3,19 @@
  *
  * Handles /campaign, /status, /results commands for campaign management.
  * Uses D1 client exclusively — no Supabase dependency.
+ * /campaign now uses FSM multi-step flow (topic → audience → offer → confirm).
  */
 
 import { createServerClient } from '@/lib/db/client';
-import { inngest } from '@/lib/inngest/client';
 import { sendTelegramMessage } from './telegram-client';
-import { Tier } from '@/types';
+import { TelegramFSM, BotState } from './telegram-fsm-state-manager';
+import {
+  startCampaignFsm,
+  handleTopicInput,
+  handleAudienceInput,
+  handleOfferSelection,
+  handleCampaignConfirm,
+} from './telegram-bot-campaign-fsm';
 
 // -------------------------------------------------------------------------
 // Internal D1 row types (matches 0018-campaigns.sql schema)
@@ -46,93 +53,58 @@ function getDb() {
   return createServerClient();
 }
 
-/**
- * Map D1 subscription_tier value → app Tier enum.
- * D1 stores UPPERCASE per project rule (BASIC|PREMIUM|ENTERPRISE|MASTER).
- * Normalise input to UPPERCASE defensively in case of legacy lowercase rows.
- */
-function mapSubscriptionToTier(subTier: string | null): Tier {
-  switch (subTier?.toUpperCase()) {
-    case 'PREMIUM': return 'PREMIUM';
-    case 'ENTERPRISE': return 'ENTERPRISE';
-    case 'MASTER': return 'MASTER';
-    case 'BASIC':
-    default: return 'BASIC';
-  }
-}
-
 // -------------------------------------------------------------------------
 // Command handlers
 // -------------------------------------------------------------------------
 
-export async function handleCampaign(chatId: string, topic: string) {
-  if (!topic) {
-    await sendTelegramMessage(chatId, 'Please provide a topic. Usage: `/campaign <topic>`')
-    return
-  }
-
+/**
+ * Handle /campaign command — starts multi-step FSM flow (topic → audience → offer → confirm).
+ */
+export async function handleCampaign(chatId: string, _topic?: string) {
   try {
-    // 1. Identify user from chatId
-    const { data: profileData, error } = await getDb()
-      .from('user_profiles')
-      .select('user_id, subscription_tier')
-      .eq('telegram_chat_id', chatId)
-      .single()
-
-    const profile = profileData as UserProfileD1Row | null;
-
-    if (error || !profile) {
-      await sendTelegramMessage(chatId, '❌ Account not linked. Please use `/email your@email.com` to link your account first.')
-      return
-    }
-
-    // 2. Create Campaign in D1
-    const campaignInsert: Omit<CampaignD1Row, 'created_at' | 'updated_at'> = {
-      id: crypto.randomUUID(),
-      user_id: profile.user_id,
-      title: topic,
-      topic: topic,
-      status: 'queued',
-      progress: 0,
-      audience: null,
-      error_message: null,
-      script_content: null,
-      video_url: null,
-      thumbnail_url: null,
-      template_id: null,
-      audio_url: null,
-    };
-
-    const { data: campaignData, error: createError } = await getDb().from('campaigns')
-      .insert(campaignInsert as unknown as Record<string, unknown>)
-      .select()
-      .single()
-
-    const campaign = campaignData as { id: string } | null;
-
-    if (createError || !campaign) {
-      await sendTelegramMessage(chatId, '❌ Failed to create campaign. Please try again.')
-      return
-    }
-
-    // 3. Trigger Inngest Event
-    const tier = mapSubscriptionToTier(profile.subscription_tier)
-
-    await inngest.send({
-      name: "campaign.created",
-      data: {
-        campaignId: campaign.id,
-        userId: profile.user_id,
-        topic: topic,
-        audience: "General",
-        tier: tier
-      }
-    })
-
-    await sendTelegramMessage(chatId, `🚀 *Campaign Started!*\n\nTopic: ${topic}\nID: \`${campaign.id.slice(0, 8)}\`\n\nI will notify you when it's ready. Check progress with /status.`)
-
+    await startCampaignFsm(chatId);
   } catch {
-    await sendTelegramMessage(chatId, '❌ An unexpected error occurred.')
+    await sendTelegramMessage(chatId, '❌ An unexpected error occurred.');
+  }
+}
+
+/**
+ * Handle incoming text messages for FSM-driven campaign flow.
+ * Called from the Telegram webhook handler for non-command messages.
+ */
+export async function handleFsmTextInput(chatId: string, text: string): Promise<boolean> {
+  const context = await TelegramFSM.getContext(chatId);
+  if (!context) return false;
+
+  switch (context.state) {
+    case BotState.AWAITING_CAMPAIGN_TOPIC:
+      await handleTopicInput(chatId, text);
+      return true;
+    case BotState.AWAITING_CONFIRMATION: // reused for audience step
+      await handleAudienceInput(chatId, text);
+      return true;
+    default:
+      return false;
+  }
+}
+
+/**
+ * Handle callback_query for offer selection buttons.
+ */
+export async function handleOfferCallback(chatId: string, callbackData: string): Promise<boolean> {
+  if (!callbackData.startsWith('offer_')) return false;
+  await handleOfferSelection(chatId, callbackData);
+  return true;
+}
+
+/**
+ * Handle /confirm command from user.
+ */
+export async function handleConfirmCommand(chatId: string): Promise<void> {
+  try {
+    await handleCampaignConfirm(chatId);
+  } catch {
+    await sendTelegramMessage(chatId, '❌ An unexpected error occurred.');
   }
 }
 

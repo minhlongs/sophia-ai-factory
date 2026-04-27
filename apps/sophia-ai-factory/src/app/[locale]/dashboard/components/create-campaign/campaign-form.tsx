@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Sparkles } from "lucide-react";
 import { CampaignTemplate } from "@/lib/templates/campaign-templates";
 import { UpgradeBanner } from "@/components/UpgradeBanner";
-import { Tier } from "@/types";
+import { AffiliateProgram, Tier } from "@/types";
 import { FormEvent } from "react";
 import { useTranslations } from 'next-intl';
 
@@ -22,6 +22,11 @@ interface CampaignFormProps {
   fieldErrors?: Record<string, string>;
   upgradeRequired: { required: boolean; tier: Tier };
   onChangeTemplate: () => void;
+  /** Available affiliate programs to select from */
+  affiliatePrograms?: AffiliateProgram[];
+  /** Currently selected offer ID */
+  selectedOfferId?: string;
+  setSelectedOfferId?: (id: string) => void;
 }
 
 export function CampaignForm({
@@ -35,7 +40,10 @@ export function CampaignForm({
   error,
   fieldErrors = {},
   upgradeRequired,
-  onChangeTemplate
+  onChangeTemplate,
+  affiliatePrograms = [],
+  selectedOfferId = '',
+  setSelectedOfferId,
 }: CampaignFormProps) {
   const t = useTranslations('campaign.customization');
   const tActions = useTranslations('campaign.actions');
@@ -121,6 +129,34 @@ export function CampaignForm({
         )}
       </div>
 
+      {affiliatePrograms.length > 0 && (
+        <div className="space-y-2">
+          <label htmlFor="offer_id" className="block text-sm font-medium text-foreground">
+            Affiliate Offer
+          </label>
+          <select
+            id="offer_id"
+            name="offer_id"
+            value={selectedOfferId}
+            onChange={(e) => setSelectedOfferId?.(e.target.value)}
+            required
+            className="w-full px-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:outline-none bg-background text-foreground"
+          >
+            <option value="" disabled>Select an affiliate offer...</option>
+            {affiliatePrograms.map((program) => (
+              <option key={program.id} value={program.id}>
+                {program.name} — {program.commission}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-muted-foreground">
+            A CTA for this offer will be included in your video.
+          </p>
+          {/* Hidden field for server action */}
+          <input type="hidden" name="offer_id" value={selectedOfferId} />
+        </div>
+      )}
+
       <div className="space-y-2">
         <label className="block text-sm font-medium text-foreground">
           {t('target_platforms')}
@@ -186,7 +222,7 @@ export function CampaignForm({
 
         <Button
           type="submit"
-          disabled={loading}
+          disabled={loading || (affiliatePrograms.length > 0 && !selectedOfferId)}
           className="w-full sm:w-auto min-w-[150px]"
         >
           {loading ? (

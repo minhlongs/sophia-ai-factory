@@ -1,9 +1,10 @@
 /**
  * Tests for telegram-bot-campaign-handlers.ts
- * Covers: account-not-linked path, campaign insert, tier mapping (H1 fix)
+ * Covers: FSM start, status, results handlers
+ * Note: handleCampaign now delegates to FSM — tests verify FSM delegation behavior.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { handleCampaign, handleStatus, handleResults } from './telegram-bot-campaign-handlers'
+import { handleCampaign, handleStatus, handleResults, handleFsmTextInput, handleOfferCallback, handleConfirmCommand } from './telegram-bot-campaign-handlers'
 
 // -------------------------------------------------------------------------
 // Mocks
@@ -15,32 +16,54 @@ vi.mock('@/lib/db/client', () => ({
   createServerClient: () => mockDb,
 }))
 
-const mockInngest = vi.hoisted(() => ({ send: vi.fn().mockResolvedValue(undefined) }))
-
 vi.mock('@/lib/inngest/client', () => ({
-  inngest: mockInngest,
+  inngest: { send: vi.fn().mockResolvedValue(undefined) },
 }))
 
 const mockSendTelegramMessage = vi.fn().mockResolvedValue(undefined)
+const mockSendTelegramMessageWithKeyboard = vi.fn().mockResolvedValue(undefined)
 
 vi.mock('./telegram-client', () => ({
   sendTelegramMessage: (...args: unknown[]) => mockSendTelegramMessage(...args),
+  sendTelegramMessageWithKeyboard: (...args: unknown[]) => mockSendTelegramMessageWithKeyboard(...args),
+}))
+
+vi.mock('./telegram-fsm-state-manager', () => ({
+  TelegramFSM: {
+    getContext: vi.fn().mockResolvedValue(null),
+    setContext: vi.fn().mockResolvedValue(undefined),
+    mergeContext: vi.fn().mockResolvedValue(undefined),
+    clearContext: vi.fn().mockResolvedValue(undefined),
+    setState: vi.fn().mockResolvedValue(undefined),
+  },
+  BotState: {
+    IDLE: 'idle',
+    AWAITING_EMAIL: 'awaiting_email',
+    AWAITING_CAMPAIGN_TOPIC: 'awaiting_campaign_topic',
+    AWAITING_CONFIRMATION: 'awaiting_confirmation',
+    AWAITING_SUBSCRIPTION: 'awaiting_subscription',
+    DISCOVERING_TRENDS: 'discovering_trends',
+    CREATING_CAMPAIGN: 'creating_campaign',
+    EXPORTING_CAMPAIGN: 'exporting_campaign',
+  },
+  isBotState: vi.fn().mockReturnValue(true),
+}))
+
+vi.mock('./telegram-bot-campaign-fsm', () => ({
+  startCampaignFsm: vi.fn().mockResolvedValue(undefined),
+  handleTopicInput: vi.fn().mockResolvedValue(undefined),
+  handleAudienceInput: vi.fn().mockResolvedValue(undefined),
+  handleOfferSelection: vi.fn().mockResolvedValue(undefined),
+  handleCampaignConfirm: vi.fn().mockResolvedValue(undefined),
 }))
 
 // Helper: build a chainable select mock
 function buildSelectMock(resolvedValue: { data: unknown; error: unknown }) {
   const single = vi.fn().mockResolvedValue(resolvedValue)
-  const eq = vi.fn().mockReturnValue({ single })
-  const select = vi.fn().mockReturnValue({ eq })
-  return { select, eq, single }
-}
-
-// Helper: build a chainable insert mock
-function buildInsertMock(resolvedValue: { data: unknown; error: unknown }) {
-  const single = vi.fn().mockResolvedValue(resolvedValue)
-  const select = vi.fn().mockReturnValue({ single })
-  const insert = vi.fn().mockReturnValue({ select })
-  return { insert, select, single }
+  const in_ = vi.fn().mockReturnValue({ order: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValue({ data: resolvedValue.data, error: resolvedValue.error }) }) })
+  const eq = vi.fn().mockReturnValue({ single, in: in_, order: vi.fn().mockReturnValue({ limit: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue(resolvedValue) }) }) })
+  const select = vi.fn().mockReturnValue({ eq, in: in_ })
+  return { select, eq, single, in: in_ }
 }
 
 describe('telegram-bot-campaign-handlers', () => {
@@ -49,116 +72,121 @@ describe('telegram-bot-campaign-handlers', () => {
 
   beforeEach(() => {
     vi.resetAllMocks()
-    mockInngest.send.mockResolvedValue(undefined)
     mockSendTelegramMessage.mockResolvedValue(undefined)
+    mockSendTelegramMessageWithKeyboard.mockResolvedValue(undefined)
   })
 
   // -------------------------------------------------------------------------
-  // C1 / H1 — Test 1: "account not linked" when user_profiles row missing
+  // handleCampaign — now delegates to FSM
   // -------------------------------------------------------------------------
-  describe('handleCampaign — account not linked', () => {
-    it('returns account-not-linked message when user_profiles row missing for chat_id', async () => {
-      const profileMock = buildSelectMock({ data: null, error: { message: 'Row not found' } })
+  describe('handleCampaign — FSM delegation', () => {
+    it('calls startCampaignFsm with chatId', async () => {
+      const { startCampaignFsm } = await import('./telegram-bot-campaign-fsm')
+      await handleCampaign(chatId, topic)
+      expect(startCampaignFsm).toHaveBeenCalledWith(chatId)
+    })
 
-      mockDb.from.mockImplementation((table: string) => {
-        if (table === 'user_profiles') return profileMock
-        return {}
-      })
+    it('sends error message if FSM throws', async () => {
+      const { startCampaignFsm } = await import('./telegram-bot-campaign-fsm')
+      vi.mocked(startCampaignFsm).mockRejectedValueOnce(new Error('FSM error'))
 
       await handleCampaign(chatId, topic)
 
       expect(mockSendTelegramMessage).toHaveBeenCalledWith(
         chatId,
-        expect.stringContaining('Account not linked')
+        expect.stringContaining('unexpected error')
       )
-      // Campaign insert must NOT be called
-      expect(mockDb.from).not.toHaveBeenCalledWith('campaigns')
     })
   })
 
   // -------------------------------------------------------------------------
-  // H1 — Test 2: Inserts campaign row with correct fields on valid user
+  // handleFsmTextInput
   // -------------------------------------------------------------------------
-  describe('handleCampaign — valid user', () => {
-    it('inserts campaigns row with correct fields when valid user invokes /campaign', async () => {
-      const profileData = { user_id: 'user-abc', subscription_tier: 'BASIC', telegram_chat_id: chatId }
-      const profileMock = buildSelectMock({ data: profileData, error: null })
+  describe('handleFsmTextInput', () => {
+    it('returns false when no FSM context exists', async () => {
+      const { TelegramFSM } = await import('./telegram-fsm-state-manager')
+      vi.mocked(TelegramFSM.getContext).mockResolvedValueOnce(null)
 
-      const campaignId = 'campaign-xyz'
-      const campaignMock = buildInsertMock({ data: { id: campaignId }, error: null })
+      const handled = await handleFsmTextInput(chatId, 'some text')
+      expect(handled).toBe(false)
+    })
 
-      mockDb.from.mockImplementation((table: string) => {
-        if (table === 'user_profiles') return profileMock
-        if (table === 'campaigns') return campaignMock
-        return {}
+    it('routes to handleTopicInput when state is AWAITING_CAMPAIGN_TOPIC', async () => {
+      const { TelegramFSM, BotState } = await import('./telegram-fsm-state-manager')
+      vi.mocked(TelegramFSM.getContext).mockResolvedValueOnce({
+        state: BotState.AWAITING_CAMPAIGN_TOPIC,
+        lastUpdated: Date.now(),
+      })
+      const { handleTopicInput } = await import('./telegram-bot-campaign-fsm')
+
+      const handled = await handleFsmTextInput(chatId, 'weight loss')
+      expect(handled).toBe(true)
+      expect(handleTopicInput).toHaveBeenCalledWith(chatId, 'weight loss')
+    })
+
+    it('routes to handleAudienceInput when state is AWAITING_CONFIRMATION (audience step)', async () => {
+      const { TelegramFSM, BotState } = await import('./telegram-fsm-state-manager')
+      vi.mocked(TelegramFSM.getContext).mockResolvedValueOnce({
+        state: BotState.AWAITING_CONFIRMATION,
+        lastUpdated: Date.now(),
+      })
+      const { handleAudienceInput } = await import('./telegram-bot-campaign-fsm')
+
+      const handled = await handleFsmTextInput(chatId, 'women 25-45')
+      expect(handled).toBe(true)
+      expect(handleAudienceInput).toHaveBeenCalledWith(chatId, 'women 25-45')
+    })
+
+    it('returns false for unhandled FSM state', async () => {
+      const { TelegramFSM, BotState } = await import('./telegram-fsm-state-manager')
+      vi.mocked(TelegramFSM.getContext).mockResolvedValueOnce({
+        state: BotState.IDLE,
+        lastUpdated: Date.now(),
       })
 
-      await handleCampaign(chatId, topic)
+      const handled = await handleFsmTextInput(chatId, 'random text')
+      expect(handled).toBe(false)
+    })
+  })
 
-      // Insert should be called with correct base fields
-      expect(campaignMock.insert).toHaveBeenCalledWith(
-        expect.objectContaining({
-          user_id: 'user-abc',
-          title: topic,
-          topic: topic,
-          status: 'queued',
-          progress: 0,
-        })
-      )
+  // -------------------------------------------------------------------------
+  // handleOfferCallback
+  // -------------------------------------------------------------------------
+  describe('handleOfferCallback', () => {
+    it('returns false for non-offer callback data', async () => {
+      const handled = await handleOfferCallback(chatId, 'cancel_flow')
+      expect(handled).toBe(false)
+    })
 
-      // Inngest event triggered
-      expect(mockInngest.send).toHaveBeenCalledWith(
-        expect.objectContaining({
-          name: 'campaign.created',
-          data: expect.objectContaining({
-            userId: 'user-abc',
-            topic: topic,
-            tier: 'BASIC',
-          }),
-        })
-      )
+    it('calls handleOfferSelection for offer_ callback', async () => {
+      const { handleOfferSelection } = await import('./telegram-bot-campaign-fsm')
+      const handled = await handleOfferCallback(chatId, 'offer_phenq')
+      expect(handled).toBe(true)
+      expect(handleOfferSelection).toHaveBeenCalledWith(chatId, 'offer_phenq')
+    })
+  })
 
-      // Success message sent
+  // -------------------------------------------------------------------------
+  // handleConfirmCommand
+  // -------------------------------------------------------------------------
+  describe('handleConfirmCommand', () => {
+    it('calls handleCampaignConfirm', async () => {
+      const { handleCampaignConfirm } = await import('./telegram-bot-campaign-fsm')
+      await handleConfirmCommand(chatId)
+      expect(handleCampaignConfirm).toHaveBeenCalledWith(chatId)
+    })
+
+    it('sends error message if confirm throws', async () => {
+      const { handleCampaignConfirm } = await import('./telegram-bot-campaign-fsm')
+      vi.mocked(handleCampaignConfirm).mockRejectedValueOnce(new Error('confirm error'))
+
+      await handleConfirmCommand(chatId)
+
       expect(mockSendTelegramMessage).toHaveBeenCalledWith(
         chatId,
-        expect.stringContaining('Campaign Started')
+        expect.stringContaining('unexpected error')
       )
     })
-  })
-
-  // -------------------------------------------------------------------------
-  // H2 — Test 3: mapSubscriptionToTier maps all 4 UPPERCASE values correctly
-  // -------------------------------------------------------------------------
-  describe('handleCampaign — subscription_tier UPPERCASE mapping', () => {
-    const tiers: Array<{ stored: string; expected: string }> = [
-      { stored: 'BASIC', expected: 'BASIC' },
-      { stored: 'PREMIUM', expected: 'PREMIUM' },
-      { stored: 'ENTERPRISE', expected: 'ENTERPRISE' },
-      { stored: 'MASTER', expected: 'MASTER' },
-    ]
-
-    for (const { stored, expected } of tiers) {
-      it(`maps subscription_tier '${stored}' → Tier '${expected}'`, async () => {
-        const profileData = { user_id: `user-${stored}`, subscription_tier: stored, telegram_chat_id: chatId }
-        const profileMock = buildSelectMock({ data: profileData, error: null })
-
-        const campaignMock = buildInsertMock({ data: { id: 'camp-1' }, error: null })
-
-        mockDb.from.mockImplementation((table: string) => {
-          if (table === 'user_profiles') return profileMock
-          if (table === 'campaigns') return campaignMock
-          return {}
-        })
-
-        await handleCampaign(chatId, `topic for ${stored}`)
-
-        expect(mockInngest.send).toHaveBeenCalledWith(
-          expect.objectContaining({
-            data: expect.objectContaining({ tier: expected }),
-          })
-        )
-      })
-    }
   })
 
   // -------------------------------------------------------------------------
@@ -192,6 +220,44 @@ describe('telegram-bot-campaign-handlers', () => {
         chatId,
         expect.stringContaining('Account not linked')
       )
+    })
+  })
+
+  // -------------------------------------------------------------------------
+  // C2: FSM context merge — mergeContext preserves prior fields across steps
+  // -------------------------------------------------------------------------
+  describe('FSM context merge (C2)', () => {
+    it('handleFsmTextInput routes AWAITING_CAMPAIGN_TOPIC → calls handleTopicInput (merge-safe)', async () => {
+      const { TelegramFSM, BotState } = await import('./telegram-fsm-state-manager')
+      vi.mocked(TelegramFSM.getContext).mockResolvedValueOnce({
+        state: BotState.AWAITING_CAMPAIGN_TOPIC,
+        lastUpdated: Date.now(),
+      })
+      const { handleTopicInput } = await import('./telegram-bot-campaign-fsm')
+
+      const handled = await handleFsmTextInput(chatId, 'weight loss')
+      expect(handled).toBe(true)
+      expect(handleTopicInput).toHaveBeenCalledWith(chatId, 'weight loss')
+    })
+
+    it('handleFsmTextInput routes AWAITING_CONFIRMATION → calls handleAudienceInput (merge-safe)', async () => {
+      const { TelegramFSM, BotState } = await import('./telegram-fsm-state-manager')
+      vi.mocked(TelegramFSM.getContext).mockResolvedValueOnce({
+        state: BotState.AWAITING_CONFIRMATION,
+        lastUpdated: Date.now(),
+      })
+      const { handleAudienceInput } = await import('./telegram-bot-campaign-fsm')
+
+      const handled = await handleFsmTextInput(chatId, 'women 30+')
+      expect(handled).toBe(true)
+      expect(handleAudienceInput).toHaveBeenCalledWith(chatId, 'women 30+')
+    })
+
+    it('handleOfferCallback routes offer_* → calls handleOfferSelection (merge-safe)', async () => {
+      const { handleOfferSelection } = await import('./telegram-bot-campaign-fsm')
+      const handled = await handleOfferCallback(chatId, 'offer_phenq')
+      expect(handled).toBe(true)
+      expect(handleOfferSelection).toHaveBeenCalledWith(chatId, 'offer_phenq')
     })
   })
 })

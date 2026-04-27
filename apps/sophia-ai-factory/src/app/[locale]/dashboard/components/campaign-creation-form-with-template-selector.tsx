@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createCampaign } from "@/app/actions/campaigns";
+import { createCampaign, getOffersForUser } from "@/app/actions/campaigns";
 import { createCampaignSchema } from "@/lib/campaigns/validation";
 import { CampaignTemplate, applyTemplateDefaults } from "@/lib/templates/campaign-templates";
-import { Tier } from "@/types";
+import { AffiliateProgram, Tier } from "@/types";
 import { TemplateSelector } from "./create-campaign/template-selector";
 import { CampaignForm } from "./create-campaign/campaign-form";
 import { useTranslations } from 'next-intl';
@@ -22,6 +22,12 @@ export function CreateProjectFormWithTemplates({ templates }: CreateProjectFormP
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [upgradeRequired, setUpgradeRequired] = useState<{ required: boolean; tier: Tier }>({ required: false, tier: "BASIC" });
+  const [affiliatePrograms, setAffiliatePrograms] = useState<AffiliateProgram[]>([]);
+  const [selectedOfferId, setSelectedOfferId] = useState('');
+
+  useEffect(() => {
+    getOffersForUser().then(setAffiliatePrograms).catch(() => setAffiliatePrograms([]));
+  }, []);
 
   // Pre-fill form with template defaults when template selected
   const [formData, setFormData] = useState({
@@ -121,6 +127,9 @@ export function CreateProjectFormWithTemplates({ templates }: CreateProjectFormP
           fieldErrors={fieldErrors}
           upgradeRequired={upgradeRequired}
           onChangeTemplate={() => setSelectedTemplate(null)}
+          affiliatePrograms={affiliatePrograms}
+          selectedOfferId={selectedOfferId}
+          setSelectedOfferId={setSelectedOfferId}
         />
       )}
     </div>

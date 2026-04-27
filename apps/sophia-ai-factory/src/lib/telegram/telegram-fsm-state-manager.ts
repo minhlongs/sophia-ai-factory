@@ -115,6 +115,15 @@ export class TelegramFSM {
     }
   }
 
+  /**
+   * Merge partial context into existing session — prevents overwriting prior fields.
+   * Use instead of setContext when only updating some keys (e.g., per FSM step).
+   */
+  static async mergeContext(chatId: string, partial: Partial<UserContext>): Promise<void> {
+    const prev = await this.getContext(chatId)
+    await this.setContext(chatId, { ...prev, ...partial })
+  }
+
   static async setState(chatId: string, state: BotState): Promise<void> {
     await this.setContext(chatId, { state })
   }
