@@ -224,8 +224,17 @@ Timeline UI Shows Progress: PLAN → EXECUTE → TEST → COMPLETED
 ```
 
 ### D1 Tables
+
+#### Core Tables
 - **workflows**: id, org_id, mission_id, parent_mission_id, status, plan_prompt, current_step, step_result, error_message, created_at, updated_at, completed_at
 - **Reuses** `missions.parent_mission_id` for hierarchical relationships
+
+#### Revenue Path Tables (Phase M1)
+- **campaigns**: id, user_id, name, status, created_at, updated_at
+- **campaign_checkpoints**: id, campaign_id, checkpoint_name, status, result, created_at
+- **raas_licenses**: id, tenant_id, subscription_tier, license_key, issued_at, expires_at, status
+- **raas_audit_logs**: id, tenant_id, action, resource_id, actor, timestamp
+- **user_profiles (extended)**: Added `subscription_tier` (TEXT), `telegram_chat_id` (TEXT) for billing & bot linkage
 
 ### API Endpoints (Protected Routes - Auth Required)
 
