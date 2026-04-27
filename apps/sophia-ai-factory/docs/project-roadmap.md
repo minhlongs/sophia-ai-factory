@@ -1,8 +1,8 @@
 # Project Roadmap
 
 **Project Name:** Sophia AI Video Factory
-**Current Version:** 1.13.0 (Multi-Tenant AI Agent Factory Infrastructure)
-**Last Updated:** 2026-04-25
+**Current Version:** 1.14.8 (B2 TypeScript Cleanup Complete + Sprint M Revenue Path Code-Shipped)
+**Last Updated:** 2026-04-27
 
 ## 📅 Roadmap Overview
 
@@ -217,6 +217,48 @@
   - [x] Signal events for agent lifecycle (startup, shutdown, error recovery)
 - [x] **Testing**: 1394 tests pass (0 failures)
 - [x] **Production**: HTTP 200, commit e6a180d8
+
+### ✅ Phase 12: Sprint M — First-Dollar Revenue Path (Code-Shipped - 2026-04-27)
+**Goal:** Complete affiliate monetization pipeline from product discovery to payout settlement.
+**Status:** CODE-SHIPPED (5 commits) | Migrations applied to codebase | Deploy pending (remote D1 + Cloudflare Secrets)
+- [x] **Phase M1: Revenue Pipeline Unblock**
+  - [x] D1 migrations 0018-campaigns, 0019-raas-licenses, 0020-user-profiles-extend
+  - [x] Campaigns table with checkpoint tracking
+  - [x] Tests: 1406/1406 pass | Review: 9.6/10
+  
+- [x] **Phase M2: Kill ServiceFactory Auto-Mock Fraud**
+  - [x] MissingCredentialsError + ServiceFactory.requireKey() enforcement
+  - [x] Bilingual VI+EN refund notifications
+  - [x] Tests: 1408/1408 pass | Review: 9.5/10
+
+- [x] **Phase M3: Affiliate Link Injection**
+  - [x] D1 migration 0021-affiliate-offers-selected + affiliate_clicks
+  - [x] /api/r/[code] short-link endpoint (100/min rate limit)
+  - [x] Telegram FSM offer picker + web dropdown offer selector
+  - [x] Script CTA injection with affiliate URL
+  - [x] Tests: 1416/1416 pass | Review: 9.4/10
+
+- [x] **Phase M4: ClickBank Conversion Attribution**
+  - [x] D1 migration 0022-affiliate-conversions (unique receipt+event_type)
+  - [x] /api/webhooks/clickbank with HMAC-SHA1 signature verification
+  - [x] 70/30 commission split (70% user, 30% Sophia)
+  - [x] 1000/min rate limit per IP, TEST events marked untrackable
+  - [x] Tests: 1416/1416 pass | Review: 9.5/10
+
+- [x] **Phase M5: User Wallet + Manual Payout Dashboard**
+  - [x] D1 migrations 0023-user-wallets, payouts, user-payout-settings
+  - [x] Hourly wallet rebuild cron (aggregates conversions with 60-day clearance)
+  - [x] Daily clearance-promotion cron (pending→available)
+  - [x] /api/user/wallet (session auth) + /api/admin/payouts/* (admin role)
+  - [x] Dashboard pages /dashboard/wallet + /admin/payouts
+  - [x] Atomic UPDATE-RETURNING with reconciliation revert pattern
+  - [x] Telegram notifications on payout approval
+  - [x] Tests: 1564/1564 pass (+151) | Review: 9.3/10
+
+- [x] **Protected Flows Validation**: Setup Wizard, Telegram Bot (@Sophia_Bbot), NOWPayments IPN — all GREEN
+- [x] **Test Summary**: 1413 → 1564 tests (+151, 100% pass rate)
+- [x] **Type Safety**: 0 TypeScript errors
+- [x] **Deploy Status**: Code complete; awaiting remote D1 apply + 9 Cloudflare Secrets
 
 ## 🔧 Tech Debt Elimination Program (2026-04-19 → 2026-04-20)
 

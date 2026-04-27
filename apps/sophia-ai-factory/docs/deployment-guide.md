@@ -44,35 +44,114 @@ The fastest way to run Sophia AI Factory is locally.
 
    *The Wizard provides direct links to get these keys.*
 
-## 2. Production Deployment (Vercel)
+## 1.5 Sprint M Revenue Path Deployment Requirements (NEW)
 
-Deploying to the cloud allows you to access your factory from anywhere.
+Before deploying Sprint M (first-dollar revenue engine), ensure all prerequisites are met. This section is required for ClickBank integration + wallet settlement.
+
+### Prerequisites
+1. **D1 Migrations Applied** (remote database)
+   - Migration 0018-campaigns
+   - Migration 0019-raas-licenses
+   - Migration 0020-user-profiles-extend
+   - Migration 0021-affiliate-offers-selected
+   - Migration 0022-affiliate-conversions
+   - Migration 0023-user-wallets+payouts+user-payout-settings
+   ```bash
+   npx wrangler d1 migrations apply sophia-raas-db --remote
+   ```
+
+2. **Cloudflare Secrets Set** (9 required)
+   ```bash
+   npx wrangler secret put OPENROUTER_API_KEY --env production
+   npx wrangler secret put ELEVENLABS_API_KEY --env production
+   npx wrangler secret put HEYGEN_API_KEY --env production
+   npx wrangler secret put NOWPAYMENTS_API_KEY --env production
+   npx wrangler secret put NOWPAYMENTS_IPN_SECRET --env production
+   npx wrangler secret put TELEGRAM_BOT_TOKEN --env production
+   npx wrangler secret put INNGEST_EVENT_API_BASE_URL --env production
+   npx wrangler secret put INNGEST_EVENT_KEY --env production
+   npx wrangler secret put CLICKBANK_INS_SECRET --env production
+   npx wrangler secret put CRON_SECRET --env production
+   ```
+
+3. **ClickBank Vendor Configuration**
+   - Set Instant Notification Service (INS) URL in ClickBank vendor dashboard:
+     ```
+     https://sophia.agencyos.network/api/webhooks/clickbank
+     ```
+   - Verify webhook secret matches `CLICKBANK_INS_SECRET` env var
+
+4. **Cron Triggers Enabled** (already in wrangler.toml, requires deploy to activate)
+   - `0 * * * *` (hourly): Wallet rebuild
+   - `0 0 * * *` (daily): Clearance promotion
+
+### Deployment Steps
+1. Re-enable GitHub Actions workflow (currently disabled to prevent premature deploy)
+2. Apply D1 migrations (see above)
+3. Set all 9 Cloudflare secrets
+4. Configure ClickBank vendor INS URL
+5. `git push origin main` → GitHub Actions tests & deploy → verify via `/api/version` SHA match
+
+### Post-Deploy Smoke Tests
+```bash
+# Test Telegram campaign creation
+/campaign "Sample Topic"
+# → Check D1: SELECT COUNT(*) FROM campaigns
+
+# Test ClickBank webhook (ask vendor to send test INS)
+# → Check D1: SELECT * FROM affiliate_conversions
+# → Check wallet: SELECT * FROM user_wallets WHERE balance_available > 0
+
+# Test payout dashboard
+# → Admin: /admin/payouts → mark one as paid
+# → User should receive Telegram notification
+```
+
+### Rollback Plan
+If issues arise post-deploy:
+1. Disable GitHub Actions (prevent auto-deploys)
+2. Rollback D1 migrations (restore to 0017):
+   ```bash
+   npx wrangler d1 migrations rollback sophia-raas-db --remote
+   ```
+3. Clear Cloudflare Secrets (optional)
+4. Git revert affected commits
+5. Redeploy after fixes
+
+---
+
+## 2. Production Deployment (Cloudflare Workers)
+
+Sophia AI Factory deploys to **Cloudflare Workers** (not Vercel). GitHub Actions automatically builds, tests, and deploys on `git push origin main`.
 
 ### Step 1: Push to GitHub
-Ensure your code is committed and pushed to a GitHub repository.
+Ensure your code is committed and pushed to `origin main`.
 
-### Step 2: Import to Vercel
-1. Log in to Vercel.
-2. Click **"Add New..."** -> **"Project"**.
-3. Import your `sophia-ai-factory` repository.
+### Step 2: GitHub Actions (Automatic)
+The workflow **Tests & Deploy** runs automatically:
+1. **Lint & Build & Test** job: Verifies code quality
+2. **Deploy to Cloudflare Workers** job: Builds OpenNext worker + applies D1 migrations + deploys
 
-### Step 3: Deployment Configuration
-- **Framework Preset**: Next.js (Automatic)
-- **Root Directory**: `apps/sophia-ai-factory` (if in a monorepo) or root.
-- **Build Command**: `npm run build`
+### Step 3: Verify Deployment
+```bash
+# Check CI/CD status
+gh run list --repo longtho638-jpg/sophia-ai-factory -L 1
 
-**Environment Variables**:
-For the initial deployment, **you do NOT need to set variables**. Deploying with empty variables will trigger the Setup Wizard in production, allowing you to configure it via the UI (note: in production, the Wizard will give you a list of variables to paste into Vercel settings manually for security).
+# Verify production health
+curl -s https://sophia.agencyos.network/api/version
+# Should output: { shortSha: "abc12345", deployedAt: "...", opennextVersion: "..." }
 
-### Step 4: Post-Deployment Setup
-1. Visit your deployed URL (e.g., `https://sophia-factory.vercel.app`).
-2. Complete the Setup Wizard.
-3. Since Vercel is read-only, the Wizard cannot write the `.env` file for you.
-   - It will generate a **Configuration Snippet**.
-   - Copy this snippet.
-   - Go to Vercel Dashboard -> Settings -> Environment Variables.
-   - Paste the variables and Save.
-   - **Redeploy** your project for changes to take effect.
+# Verify commit SHA matches
+LOCAL_SHA=$(git rev-parse HEAD | cut -c1-8)
+LIVE_SHA=$(curl -s https://sophia.agencyos.network/api/version | grep -o '"shortSha":"[^"]*"' | cut -d'"' -f4)
+echo "Local: $LOCAL_SHA  Live: $LIVE_SHA"
+```
+
+### Step 4: Configure Secrets & D1 Migrations
+After first deploy, follow **Sprint M Revenue Path Deployment Requirements** section above to:
+1. Apply D1 migrations
+2. Set Cloudflare Secrets
+3. Configure ClickBank vendor INS URL
 
 ### Step 5: Production Setup Wizard (CLI)
 

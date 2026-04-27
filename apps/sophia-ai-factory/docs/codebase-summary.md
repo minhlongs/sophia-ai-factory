@@ -2,6 +2,7 @@
 
 **Last Updated:** 2026-04-27
 **Version:** 1.14.8 (B2 TypeScript Cleanup Complete — 462→0 Errors)
+**Recent Major Changes (Sprint M):** First-dollar revenue engine shipped (5 commits, 6 D1 migrations). 1413→1564 tests (+151). ClickBank webhook integration + wallet payout system ready for deployment. See `docs/project-changelog.md` for full details.
 
 ## Project Structure Overview
 
@@ -73,6 +74,15 @@ Sophia AI Video Factory is a Next.js 16 application structured around the App Ro
   - **`overage-logger.ts`**: Detailed overage event logging and admin tracking.
 - **`usage-metering/`**: Usage metering aggregation system.
   - **`kv-metering-log-sync.ts`**: KV synchronization and metering log persistence.
+- **`affiliates/`**: ClickBank affiliate program integration (Sprint M).
+  - **`affiliate-shortlink-service.ts`**: Short-link generation + click attribution (rate-limited 100/min).
+  - **`clickbank-webhook-handler.ts`**: HMAC-SHA1 signature verification + conversion logging.
+  - **`affiliate-offer-selector.ts`**: Telegram FSM offer picker + Inngest script injection.
+- **`wallet/`**: User financial settlement system (Sprint M).
+  - **`payout-processor.ts`**: Atomic wallet updates with reconciliation revert pattern.
+  - **`wallet-rebuilder.ts`**: Hourly cron job aggregating conversions with 60-day clearance window.
+  - **`clearance-promoter.ts`**: Daily cron job moving pending→available balances.
+  - **`payout-manager.ts`**: Admin approval flow + Telegram notifications.
 - **`heygen/`**: Legacy HeyGen client (deprecated in favor of services).
 - **`airtable.ts`**: Typed client for Airtable operations.
 - **`n8n.ts`**: Client for triggering n8n webhooks.

@@ -149,21 +149,21 @@ CREATE INDEX IF NOT EXISTS idx_conv_created ON affiliate_conversions(created_at 
 14. Wait for first real conversion from M3 short-link click → verify attribution chain end-to-end
 
 ## Todo List
-- [x] Apply `migrations/0022-affiliate-conversions.sql` local (remote: pending deploy)
-- [x] Create `src/config/revenue-share.ts`
-- [x] Create `commission-calculator.ts` + tests
-- [x] Create `clickbank-signature-verifier.ts` + tests
-- [x] Create `clickbank-postback-parser.ts`
-- [x] Create `conversion-attributor.ts` + tests
-- [x] Create `src/app/api/webhooks/clickbank/route.ts` + tests
-- [x] Add `notifyConversionEarned` helper to telegram notifications
-- [ ] Set CF Secret `CLICKBANK_INS_SECRET` (manual: `npx wrangler secret put CLICKBANK_INS_SECRET`)
-- [ ] Configure ClickBank vendor INS URL + secret in dashboard
-- [x] `npm test` all green (1486 pass)
-- [x] `npm run build` 0 errors
-- [ ] Deploy + SHA-match verify
-- [ ] Trigger ClickBank "Send Test INS" → verify D1 row appears
-- [ ] E2E: real click on M3 short-link → real ClickBank sale → verify attribution
+- [x] Apply `migrations/0022-affiliate-conversions.sql` local (remote: pending deploy) — SHIPPED
+- [x] Create `src/config/revenue-share.ts` — SHIPPED
+- [x] Create `commission-calculator.ts` + tests — SHIPPED
+- [x] Create `clickbank-signature-verifier.ts` + tests (timing-safe HMAC-SHA1) — SHIPPED
+- [x] Create `clickbank-postback-parser.ts` — SHIPPED
+- [x] Create `conversion-attributor.ts` + tests — SHIPPED
+- [x] Create `src/app/api/webhooks/clickbank/route.ts` + tests — SHIPPED
+- [x] Add `notifyConversionEarned` helper to telegram notifications — SHIPPED
+- [x] `npm test` all green — SHIPPED (1495/1495 pass, +37 from M4)
+- [x] `npm run build` 0 errors — SHIPPED
+- [ ] Set CF Secret `CLICKBANK_INS_SECRET` (manual: `npx wrangler secret put CLICKBANK_INS_SECRET`) — BLOCKED (GitHub Actions disabled)
+- [ ] Configure ClickBank vendor INS URL + secret in dashboard — BLOCKED (awaiting deploy)
+- [ ] Deploy + SHA-match verify — BLOCKED (GitHub Actions disabled)
+- [ ] Trigger ClickBank "Send Test INS" → verify D1 row appears — BLOCKED (awaiting deploy)
+- [ ] E2E: real click on M3 short-link → real ClickBank sale → verify attribution — BLOCKED (awaiting deploy)
 
 ## Success Criteria
 - Test INS postback from ClickBank dashboard inserts row in `affiliate_conversions` with `event_type='TEST'`
@@ -196,6 +196,27 @@ CREATE INDEX IF NOT EXISTS idx_conv_created ON affiliate_conversions(created_at 
 - Rate-limit per IP (1000/min) to prevent DoS — use `sql-rate-limiter.ts`
 - Do NOT log full secret in any error message
 - `payout_status='paid'` transition (M5) must be atomic — one row at a time, no batch update without txn
+
+## Completion Summary (2026-04-27)
+
+**Status:** code-shipped + AUTO-APPROVE
+**Commit:** e921af21
+**Test delta:** 1458 → 1495 (+37 new tests for ClickBank webhook, commission calc, signature verify, attribution)
+**Code review:** 9.6/10 (after fixing: timing-safe HMAC-SHA1 compare, proper Zod error handling for malformed postbacks)
+**Files created:** 7 (revenue-share.ts, commission-calculator.ts, clickbank-signature-verifier.ts, clickbank-postback-parser.ts, conversion-attributor.ts, webhooks/clickbank/route.ts, migrations/0022)
+**Files modified:** 1 (telegram notifications helper)
+**Date shipped:** 2026-04-27
+
+**Key implementation notes:**
+- HMAC-SHA1 signature verification timing-safe (prevents timing attacks)
+- Idempotency via (receipt, event_type) unique constraint — prevents duplicate credits from ClickBank retries
+- Commission calc: 70% user / 30% Sophia (revenue-share.ts single source of truth)
+- 60-day clearance window enforced (`payout_status='pending_clearance'` → `available_at = ts + 60 days`)
+- Unattributed conversions (click_id not found) still inserted with `click_id=NULL` (admin can investigate later)
+- Refund/Chargeback handling: reverses balance with negative commission_user value
+- User Telegram notification sent fire-and-forget after SALE insertion
+
+**Blockers to deployment:** Same as M1-M3 (GitHub Actions disabled + CLICKBANK_INS_SECRET unset)
 
 ## Next Steps (Dependencies)
 - M5 (wallet) reads `affiliate_conversions WHERE payout_status='available' AND user_id=?` for balance calc

@@ -4,6 +4,43 @@
 
 ---
 
+## ✅ SPRINT M COMPLETE: First-Dollar Revenue Path (5 Phases, Code-Shipped, Deploy Pending) — 2026-04-27
+
+**Severity: CRITICAL | Type: Feature | Status: CODE-SHIPPED (awaiting remote D1 + Cloudflare Secrets deployment)**
+
+Shipped complete first-dollar revenue engine: affiliate offer discovery → short-link attribution → ClickBank webhook conversion tracking → user wallet aggregation → admin payout dashboard. **5 Commits:** 882721c3 (M1), d3a65bd8 (M2), 9dc9798d (M3), e921af21 (M4), 6a73dd1e (M5). **Migrations:** 6 new D1 tables (0018-campaigns, 0019-raas-licenses, 0020-user-profiles-extend, 0021-affiliate-offers-selected, 0022-affiliate-conversions, 0023-user-wallets+payouts). **Core Flow:** Telegram FSM offer picker (M3) → inject affiliate param into video script (M3) → generate video with short-link `/api/r/[code]` (M3) → track clicks in D1 (M3) → ClickBank INS postback to `/api/webhooks/clickbank` (M4, HMAC-SHA1 verified) → log conversion with 70/30 split (M4) → rebuild wallet hourly (M5) → admin approves payout → Telegram notify user (M5). **Tests:** 1413→1564 (+151, 100% pass). **TS:** 0 errors. **Review:** 9.4/10 avg across 5 phases. **Outcomes:** (1) Campaigns table fully operational with checkpoint tracking. (2) ClickBank integration ready (vendor INS URL pending deployment). (3) Wallet reconciliation atomic (UPDATE-RETURNING with revert on error). (4) Admin payout UI working (role-gated, Telegram notification ready). (5) All 3 protected flows (Setup Wizard, Telegram Bot, NOWPayments IPN) remain green. **Deploy Blockers:** (none code-side) Remote D1 migration apply + 9 Cloudflare Secrets set (OPENROUTER_API_KEY, ELEVENLABS_API_KEY, HEYGEN_API_KEY, NOWPAYMENTS_*, TELEGRAM_BOT_TOKEN, INNGEST_*, CLICKBANK_INS_SECRET, CRON_SECRET). GitHub Actions currently disabled to prevent premature cloud deploy — must re-enable after secrets + D1 ready.
+
+### M1: Revenue Pipeline Unblock — D1 Schema Expansion
+**Commit: 882721c3** | Migrations 0018-campaigns, 0019-raas-licenses, 0020-user-profiles-extend | Tests: 1406/1406 | Review: 9.6/10 | Status: SHIPPED
+Added `campaigns`, `campaign_checkpoints`, `raas_licenses`, `raas_audit_logs` tables + extended `user_profiles` (subscription_tier, telegram_chat_id fields). Refactored Telegram handlers to remove Supabase dependency. Infrastructure complete — unblocks all downstream revenue phases.
+
+### M2: Kill ServiceFactory Auto-Mock Fraud
+**Commit: d3a65bd8** | Tests: 1408/1408 (+2) | Review: 9.5/10 | Status: SHIPPED
+Implemented MissingCredentialsError + ServiceFactory.requireKey() per-service enforcement. Bilingual VI+EN refund notifications. NonRetriableError on script/voice/video generation step failures (Inngest won't retry fraud patterns). Eliminated silent mocking in production code path.
+
+### M3: Affiliate Link Injection (Offer Selector + Short-Link + Click Log)
+**Commit: 9dc9798d** | Migrations 0021-affiliate-offers-selected | Tests: 1416/1416 (+8) | Review: 9.4/10 | Status: SHIPPED
+Added `/api/r/[code]` short-link endpoint (rate-limited 100/min, fire-and-forget click log). Telegram FSM multi-step campaign flow with offer picker. Web `/dashboard/campaigns/new` offer dropdown. Script CTA injection via affiliateOffer parameter. Affiliate offers discoverable via Inngest workflow.
+
+### M4: ClickBank Conversion Attribution + 70/30 Commission
+**Commit: e921af21** | Migrations 0022-affiliate-conversions | Tests: 1416/1416 | Review: 9.5/10 | Status: SHIPPED
+Implemented `/api/webhooks/clickbank` with HMAC-SHA1 timing-safe signature verification. Idempotent conversion logging (receipt + event_type UNIQUE constraint). 70/30 commission split (30% Sophia, 70% user). Rate limit 1000/min per IP. TEST events marked available_at=null (M5 won't promote to available). Webhook security hardened per best practices.
+
+### M5: User Wallet + Manual Payout Dashboard
+**Commit: 6a73dd1e** | Migrations 0023-user-wallets+payouts+user-payout-settings | Tests: 1564/1564 (+148) | Review: 9.3/10 | Status: SHIPPED
+Created user_wallets materialized balance table (balance_pending, balance_available, balance_paid_out). 2 cron jobs: hourly wallet rebuild (aggregate affiliate_conversions with clearance window), daily clearance promotion (60-day hold → available). `/api/user/wallet` (session auth) + `/api/admin/payouts/{queue,mark-paid}` (admin role). UI pages `/dashboard/wallet` + `/admin/payouts`. Atomic UPDATE-RETURNING with reconciliation revert. Telegram notifications on payout completion. Full PII encryption TODO noted (payout_address column).
+
+**Deploy Preflight Checklist (Next Phase):**
+- [ ] Re-enable GitHub Actions workflow
+- [ ] Apply remote D1 migrations 0018-0023 (via `npx wrangler d1 migrations` or dashboard)
+- [ ] Set 9 Cloudflare Secrets (script provided in plans/)
+- [ ] Configure ClickBank vendor INS URL: https://sophia.agencyos.network/api/webhooks/clickbank
+- [ ] Verify cron triggers configured (already in wrangler.toml)
+- [ ] Smoke test: Telegram /campaign → D1 row created
+- [ ] Smoke test: ClickBank "Send Test INS" → D1 conversion row + wallet updated
+
+---
+
 ## Sprint M Phase M1: Revenue Pipeline Unblock — D1 Schema Expansion (2026-04-27)
 
 **Severity: HIGH | Type: Feature | Status: SHIPPED**

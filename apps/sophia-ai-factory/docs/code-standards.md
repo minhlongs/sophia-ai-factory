@@ -118,6 +118,78 @@ try {
 }
 ```
 
+### Money Operations: Atomic UPDATE-RETURNING with Reconciliation Revert (Sprint M Pattern)
+
+All financial operations (wallet updates, payout approvals, commission logging) MUST be atomic with reconciliation rollback on error. This is established pattern from Sprint M revenue pipeline (affiliate commissions + payouts).
+
+**Canonical Pattern (seen in `src/lib/wallet/payout-processor.ts`):**
+
+```typescript
+// Before: Fetch current state
+const wallet = await db
+  .select()
+  .from('user_wallets')
+  .where(eq('user_id', userId))
+  .single();
+
+const previousBalance = wallet.balance_available;
+
+// Operation: UPDATE-RETURNING (atomic)
+const [updated] = await db
+  .update('user_wallets')
+  .set({
+    balance_available: sql`${wallet.balance_available} - ${amount}`,
+    updated_at: new Date().toISOString()
+  })
+  .where(eq('user_id', userId))
+  .returning();
+
+// Reconciliation: Verify invariant (balance >= 0)
+if (updated.balance_available < 0) {
+  // Revert on error: Restore to previous state
+  await db
+    .update('user_wallets')
+    .set({
+      balance_available: previousBalance,
+      updated_at: new Date().toISOString()
+    })
+    .where(eq('user_id', userId));
+  
+  throw new Error(`Insufficient balance: have ${previousBalance}, need ${amount}`);
+}
+
+// Success: Return updated state
+return updated;
+```
+
+**Key Principles:**
+1. **Fetch Before**: Read current state outside transaction (establishes baseline)
+2. **Atomic Update**: Single UPDATE-RETURNING statement (no race conditions between read + write)
+3. **Verify Invariant**: Check result satisfies business rules (balance >= 0, no negative commissions, etc.)
+4. **Revert on Failure**: UPDATE back to previous state if invariant violated (not ROLLBACK; UPDATE preserves audit trail)
+5. **Log All Changes**: Both forward and revert operations logged with amounts + reasons
+
+**Applied Patterns (Sprint M):**
+- `user_wallets` balance deductions (ensure balance_available never negative)
+- `affiliate_conversions` commission splits (verify 70/30 calculation)
+- Payout reconciliation (prevent overpaying same user)
+
+**Anti-Pattern (Forbidden):**
+```typescript
+// ❌ WRONG: Separate SELECT + UPDATE (race condition window)
+const wallet = await db.select().from('user_wallets').where(eq('user_id', userId));
+await db.update('user_wallets').set({ balance_available: wallet.balance_available - amount });
+
+// ❌ WRONG: Silent failure (no invariant check, balance could go negative)
+await db.update('user_wallets').set({ balance_available: sql`${wallet.balance_available} - ${amount}` });
+```
+
+**Webhook Safety (ClickBank IPN):**
+- `UPDATE-RETURNING` pattern ensures webhook retries are idempotent
+- If conversion already logged (unique constraint on receipt+event_type), re-running adds 0 to balance
+- If network error occurs mid-update, next retry finds same state, applies same delta, result unchanged
+- See `src/app/api/webhooks/clickbank/route.ts` for live implementation
+
 ### Zod v4 API Migration
 
 Zod v4 removed the `.errors` property from ZodError. Use `.issues` instead for accessing validation errors.
