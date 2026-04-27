@@ -10,6 +10,16 @@ PROD_URL="https://sophia.agencyos.network"
 GITHUB_REPO="longtho638-jpg/sophia-ai-factory"
 ```
 
+## Deploy Verification (MANDATORY for git-manager / any agent reporting GREEN)
+
+**MUST READ:** `apps/sophia-ai-factory/.claude/rules/sophia-deploy-verify.md`
+
+Hard rules:
+- Workflow `Tests & Deploy` có 2 jobs — TẤT CẢ phải success (không chỉ check `gh run list -L 1`)
+- Verify deploy SHA via `curl -s https://sophia.agencyos.network/api/version` — phải khớp `git rev-parse HEAD | cut -c1-8`
+- HTTP 200 KHÔNG đủ — có thể là deploy CŨ. Phải SHA match.
+- Báo cáo "Vercel auto-deployed" = SAI 100% (project là Cloudflare Workers, không có vercel.json)
+
 ## Commands
 
 ```bash
