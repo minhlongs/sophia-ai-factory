@@ -45,7 +45,7 @@ async function setCircuitState(
   const kv = getKvClient()
   if (kv) {
     try {
-      await kv.set(key, state, { expirationTtl: ttlSeconds })
+      await kv.set(key, state, { ex: ttlSeconds })
     } catch (error) {
       logger.error('[Circuit Breaker] Redis write error', toError(error))
     }

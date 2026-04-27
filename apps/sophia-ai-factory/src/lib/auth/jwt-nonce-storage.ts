@@ -118,15 +118,13 @@ export async function upsertNonceInDb(
 
     const { error } = await db
       .from('jwt_nonces')
-      .insert({
+      .upsert({
         nonce,
         user_id: userId,
         issued_at: now,
         expires_at: Math.floor(expiresAt),
         used_at: now,
-      })
-      .onConflict('nonce')
-      .update({ used_at: now });
+      });
 
     if (error) {
       logger.error('[JWT Nonce] Failed to mark nonce as used', toError(error));

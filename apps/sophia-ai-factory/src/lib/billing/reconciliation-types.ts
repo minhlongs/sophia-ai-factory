@@ -91,6 +91,7 @@ export interface ReconciliationAlert {
     expectedCredits?: number;
     actualCredits?: number;
     errorMessage?: string;
+    description?: string;
   };
   timestamp: number;
   reportId?: string;

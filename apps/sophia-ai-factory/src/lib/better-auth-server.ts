@@ -27,7 +27,11 @@ function getD1(): D1Database {
   throw new Error('D1 database binding not available');
 }
 
-let _auth: ReturnType<typeof betterAuth> | null = null;
+// Use `any` here to escape Better Auth's deeply-nested generic inference. The
+// public surface (`getAuth()` return + `getCurrentUser()` consumers) re-narrows
+// at call sites via the better-auth-session helper.
+type AuthInstance = ReturnType<typeof betterAuth>;
+let _auth: AuthInstance | null = null;
 
 /**
  * Get the Better Auth instance (lazy singleton per isolate).
@@ -40,6 +44,10 @@ export function getAuth() {
   const secret = process.env.BETTER_AUTH_SECRET || process.env.JWT_SECRET;
   if (!secret) throw new Error('BETTER_AUTH_SECRET or JWT_SECRET must be set');
 
+  // Better Auth's deep generic inference produces a narrower Auth<...> than
+  // the default `Auth<BetterAuthOptions>` carried by `ReturnType<typeof betterAuth>`.
+  // Two structurally-equivalent Prettify types appear in the diagnostic, so we
+  // cast to the parent type to break the inference loop.
   _auth = betterAuth({
     database: d1,
     secret,
@@ -122,7 +130,7 @@ export function getAuth() {
         },
       },
     },
-  });
+  }) as unknown as AuthInstance;
 
   return _auth;
 }

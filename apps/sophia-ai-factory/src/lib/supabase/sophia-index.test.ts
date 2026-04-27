@@ -26,6 +26,7 @@ describe('sophiaIndex', () => {
     eq: ReturnType<typeof vi.fn>;
     gte: ReturnType<typeof vi.fn>;
     textSearch: ReturnType<typeof vi.fn>;
+    ilike: ReturnType<typeof vi.fn>;
     single: ReturnType<typeof vi.fn>;
     then: (resolve: (value: unknown) => unknown) => Promise<unknown>;
   }
@@ -37,6 +38,7 @@ describe('sophiaIndex', () => {
       eq: vi.fn().mockReturnThis(),
       gte: vi.fn().mockReturnThis(),
       textSearch: vi.fn().mockReturnThis(),
+      ilike: vi.fn().mockReturnThis(),
       single: vi.fn().mockReturnThis(),
       then: (resolve: (value: unknown) => unknown) => Promise.resolve(result).then(resolve)
     }
@@ -46,7 +48,7 @@ describe('sophiaIndex', () => {
   describe('getTop50', () => {
     it('should query top 50 products ordered by sps_score', async () => {
       const mockBuilder = createMockBuilder()
-      vi.mocked(supabase.from).mockReturnValue(mockBuilder)
+      vi.mocked(supabase.from).mockReturnValue(mockBuilder as unknown as ReturnType<typeof supabase.from>)
 
       await sophiaIndex.getTop50()
 
@@ -58,7 +60,7 @@ describe('sophiaIndex', () => {
 
     it('should apply filters if provided', async () => {
       const mockBuilder = createMockBuilder()
-      vi.mocked(supabase.from).mockReturnValue(mockBuilder)
+      vi.mocked(supabase.from).mockReturnValue(mockBuilder as unknown as ReturnType<typeof supabase.from>)
 
       await sophiaIndex.getTop50({
         category: 1,
@@ -75,11 +77,11 @@ describe('sophiaIndex', () => {
   describe('search', () => {
     it('should search products by title', async () => {
       const mockBuilder = createMockBuilder()
-      vi.mocked(supabase.from).mockReturnValue(mockBuilder)
+      vi.mocked(supabase.from).mockReturnValue(mockBuilder as unknown as ReturnType<typeof supabase.from>)
 
       await sophiaIndex.search('keto')
 
-      expect(mockBuilder.textSearch).toHaveBeenCalledWith('title', 'keto')
+      expect(mockBuilder.ilike).toHaveBeenCalledWith('title', '%keto%')
       expect(mockBuilder.limit).toHaveBeenCalledWith(20)
     })
   })
@@ -87,7 +89,7 @@ describe('sophiaIndex', () => {
   describe('getById', () => {
     it('should get product by id', async () => {
       const mockBuilder = createMockBuilder({ data: {}, error: null })
-      vi.mocked(supabase.from).mockReturnValue(mockBuilder)
+      vi.mocked(supabase.from).mockReturnValue(mockBuilder as unknown as ReturnType<typeof supabase.from>)
 
       await sophiaIndex.getById('123')
 
@@ -99,7 +101,7 @@ describe('sophiaIndex', () => {
   describe('getCategories', () => {
     it('should get all categories ordered by name', async () => {
       const mockBuilder = createMockBuilder()
-      vi.mocked(supabase.from).mockReturnValue(mockBuilder)
+      vi.mocked(supabase.from).mockReturnValue(mockBuilder as unknown as ReturnType<typeof supabase.from>)
 
       await sophiaIndex.getCategories()
 

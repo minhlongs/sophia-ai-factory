@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
     // Step 6: For non-admin users, filter utilization to only their licenses
     if (!isAdmin) {
       const { createAdminClient } = await import('@/lib/supabase/admin');
-      const supabase = createAdminClient();
+      const supabase = await createAdminClient();
 
       // Get all licenses owned by this user
       interface LicenseRow {

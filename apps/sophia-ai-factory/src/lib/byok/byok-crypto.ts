@@ -50,7 +50,7 @@ async function importMasterKey(): Promise<CryptoKey> {
   }
   return crypto.subtle.importKey(
     'raw',
-    bytes,
+    bytes as BufferSource,
     { name: ALGORITHM, length: KEY_LEN_BITS },
     false,
     ['encrypt', 'decrypt'],

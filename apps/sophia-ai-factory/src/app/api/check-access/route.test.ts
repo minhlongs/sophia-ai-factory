@@ -20,7 +20,7 @@ vi.mock('@/lib/better-auth-session', () => ({
 }));
 vi.mock('@/lib/db/get-user-tier', () => ({
     getUserTier: vi.fn(),
-}), { virtual: true });
+}));
 
 // Mock NextResponse
 vi.mock('next/server', async (importOriginal) => {

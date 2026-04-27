@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerClient } from "@/lib/db/client";
 import { UNIFIED_TIERS } from "@/config/tiers";
 import type { Tier } from "@/types";
@@ -78,24 +77,18 @@ export const POST = withRateLimit(async function POST(request: Request) {
       }
     }
 
-    const supabaseAdmin = createAdminClient();
-    const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(
-      email,
-      { data: { tier } }
+    // NOTE: Supabase Auth admin.inviteUserByEmail removed in Better Auth + D1
+    // migration. Re-implement via Better Auth invite flow when product needs it.
+    return NextResponse.json(
+      {
+        success: false,
+        message:
+          "Admin invite is temporarily disabled — pending Better Auth invite implementation",
+        email,
+        tier,
+      },
+      { status: 501 }
     );
-
-    if (error) {
-      return NextResponse.json(
-        { success: false, message: error.message },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      message: `Invitation sent to ${email} with ${tier} tier`,
-      userId: data.user.id,
-    });
   } catch {
     return NextResponse.json(
       { success: false, message: "Invalid request body" },

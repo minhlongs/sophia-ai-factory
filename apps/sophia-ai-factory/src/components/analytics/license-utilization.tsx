@@ -44,7 +44,7 @@ interface ChartDataPoint {
 
 function CustomTooltip({ active, payload }: { active?: boolean; payload?: unknown[] }) {
   if (active && payload && payload.length) {
-    const data = payload[0].payload as ChartDataPoint;
+    const data = (payload[0] as { payload: ChartDataPoint }).payload;
     const formatCredits = (num: number) => {
       if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
       if (num >= 1000) return `${(num / 1000).toFixed(0)}K`;

@@ -149,15 +149,12 @@ export async function updateUserProfile(data: UserProfileFormValues) {
     // Upsert profile
     await db
       .from('user_profiles')
-      .upsert(
-        {
-          user_id: user.id,
-          settings: JSON.stringify(settings),
-          api_keys: JSON.stringify(newEncryptedKeys),
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'user_id' },
-      );
+      .upsert({
+        user_id: user.id,
+        settings: JSON.stringify(settings),
+        api_keys: JSON.stringify(newEncryptedKeys),
+        updated_at: new Date().toISOString(),
+      });
 
     revalidatePath('/settings');
     return { success: true };

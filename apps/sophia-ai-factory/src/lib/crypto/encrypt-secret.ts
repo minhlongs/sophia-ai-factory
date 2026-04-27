@@ -56,7 +56,7 @@ async function loadKey(envOverride?: string): Promise<CryptoKey> {
   }
   return globalThis.crypto.subtle.importKey(
     'raw',
-    raw,
+    raw as BufferSource,
     { name: 'AES-GCM' },
     false,
     ['encrypt', 'decrypt'],

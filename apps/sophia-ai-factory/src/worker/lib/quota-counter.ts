@@ -187,7 +187,7 @@ export async function getQuotaSummary(
         current,
         limit,
         resetDate: getResetDate(),
-        lastUpdated: key.metadata?.lastUpdated || Date.now()
+        lastUpdated: (key.metadata as { lastUpdated?: number } | undefined)?.lastUpdated || Date.now()
       };
     }
   }

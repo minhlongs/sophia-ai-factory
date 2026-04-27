@@ -82,7 +82,7 @@ export async function POST(
 
   try {
     const { id: nonce } = await params
-    const body = await request.json().catch(() => ({}))
+    const body = (await request.json().catch(() => ({}))) as { reason?: string }
     const { reason } = body
 
     if (!nonce) {

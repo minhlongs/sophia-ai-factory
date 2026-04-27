@@ -128,7 +128,7 @@ export async function GET(
     // Step 6: Format response
     const formattedResponse = formatQuotaResponse(
       quotaStatus.usage,
-      quotaStatus.limits,
+      { ...quotaStatus.limits, tier: typedLicense.tier },
       typedLicense.tier,
       quotaStatus.polarSynced,
       quotaStatus.lastPolarSync

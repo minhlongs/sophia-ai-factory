@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
       .from('user_alerts')
       .select('*', { count: 'exact' })
       .eq('user_id', user.id)
-      .order('created_at', { ascending: false, nulls: 'last' })
+      .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
     // Apply filters

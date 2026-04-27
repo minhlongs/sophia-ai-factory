@@ -80,7 +80,7 @@ export function DunningStatusBanner({
   }
 
   return (
-    <Alert variant={config.variant} className="mb-6">
+    <Alert variant={config.variant === 'destructive' ? 'destructive' : 'default'} className="mb-6">
       {config.icon}
       <AlertTitle>{config.title}</AlertTitle>
       <AlertDescription className="mt-2">

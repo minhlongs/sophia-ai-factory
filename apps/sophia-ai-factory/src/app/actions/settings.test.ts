@@ -186,8 +186,7 @@ describe('Settings Server Actions', () => {
           settings: expect.any(String),
           api_keys: expect.any(String),
           updated_at: expect.any(String)
-        }),
-        expect.any(Object)
+        })
       );
 
       expect(revalidatePath).toHaveBeenCalledWith('/settings');

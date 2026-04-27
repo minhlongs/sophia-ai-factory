@@ -115,7 +115,7 @@ export async function syncUsageEventsToKv(
           reconciledWithGateway: false,
         }
 
-        await kv.put(kvKey, JSON.stringify(entry), { expirationTtl: config.ttlSeconds })
+        await kv.set(kvKey, entry, { ex: config.ttlSeconds })
         result.eventsSynced++
         logger.debug('[KV Metering Sync] Event synced', { eventId: row.id, kvKey })
       } catch (error) {

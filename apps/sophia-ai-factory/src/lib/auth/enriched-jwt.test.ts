@@ -221,7 +221,7 @@ describe('createEnrichedJwt', () => {
     const result = await createEnrichedJwt('user-123', 'test-nonce', customTtl)
 
     expect(result).toBeDefined()
-    expect(result?.payload.exp - result?.payload.iat).toBe(customTtl)
+    expect(result!.payload.exp! - result!.payload.iat!).toBe(customTtl)
   })
 })
 
@@ -342,7 +342,7 @@ describe('extractQuotaFromJwt', () => {
       },
     }
 
-    const result = extractQuotaFromJwt(payload)
+    const result = extractQuotaFromJwt(payload as unknown as Parameters<typeof extractQuotaFromJwt>[0])
 
     expect(result).toEqual({
       tier: 'PREMIUM',
