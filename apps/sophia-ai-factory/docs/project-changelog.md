@@ -1,6 +1,14 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-27 | **Current Version:** 1.14.8
+**Last Updated:** 2026-04-28 | **Current Version:** 1.14.9
+
+---
+
+## v1.14.9 — Phase 1 Video Pipeline: Script Generation API — 2026-04-28
+
+**Severity: MEDIUM | Type: Feature | Status: SHIPPED**
+
+Exposed existing `generateScript()` engine via `POST /api/scripts/generate` for user-facing video creation pipeline. Auth via Better Auth session cookie, tier resolved server-side via `getUserTier(userId)` from D1 (defense in depth — client-supplied `tier` ignored). Zod-validated body (`topic`, `audience`, `durationSec`). Model routing exposed through new `selectModelForTier(tier)` SSOT export (ENTERPRISE → `anthropic/claude-3.5-sonnet`, others → `openai/gpt-4o-mini`) so route metadata accurately reflects which model executed. Returns ephemeral `requestId` (no D1 persistence yet — videos table schema deferred to Phase 3). **Tests:** 8 new vitest cases covering 401/400/402/500 paths + tier escalation defense + ENTERPRISE model routing. Total: 1572/1572 pass. **Build:** 0 TS errors, 10.1s. **Plan:** `plans/260428-0117-video-pipeline-content-factory/` (Phase 2: Avatar/Voice UI; Phase 3: Gallery + D1 persistence; Phase 4: Remotion render — optional).
 
 ---
 
