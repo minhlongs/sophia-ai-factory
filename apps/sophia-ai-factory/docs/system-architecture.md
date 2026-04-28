@@ -373,6 +373,7 @@ User Wallet (/dashboard/wallet)
 | Route | Method | Auth | Rate Limit | Purpose |
 |-------|--------|------|-----------|---------|
 | `/api/r/[code]` | GET | none | 100/min | Short-link redirect with click logging |
+| `/api/scripts/generate` | POST | session (Better Auth) | default | Generate video script via OpenRouter — tier-gated (BASIC min), model selected by `selectModelForTier()` (ENTERPRISE → claude-3.5-sonnet, else → gpt-4o-mini). Returns ephemeral `requestId`, no D1 persistence yet. |
 | `/api/webhooks/clickbank` | POST | HMAC-SHA1 | 1000/min per IP | ClickBank conversion postback |
 | `/api/user/wallet` | GET | session | default | View user's wallet balances |
 | `/api/admin/payouts/queue` | GET | admin | default | List pending payouts (next 30 days) |

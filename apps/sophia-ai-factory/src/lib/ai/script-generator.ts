@@ -13,6 +13,10 @@ import {
 
 export type { ScriptOutput } from './script-prompt-builders';
 
+export function selectModelForTier(tier: Tier): string {
+  return tier === 'ENTERPRISE' ? 'anthropic/claude-3.5-sonnet' : 'openai/gpt-4o-mini';
+}
+
 interface GenerateScriptInput {
   topic: string;
   audience: string;
@@ -66,7 +70,7 @@ export async function generateScript(input: GenerateScriptInput) {
   }
 
   try {
-    const model = tier === 'ENTERPRISE' ? 'anthropic/claude-3.5-sonnet' : 'openai/gpt-4o-mini';
+    const model = selectModelForTier(tier);
     const messages = [
       { role: 'system', content: SCRIPT_SYSTEM_PROMPT },
       { role: 'user',   content: buildScriptUserPrompt(topic, audience, affiliateOffer) },
