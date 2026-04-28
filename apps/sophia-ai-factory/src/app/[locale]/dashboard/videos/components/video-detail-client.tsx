@@ -26,21 +26,31 @@ interface HeygenStatus {
 }
 
 const POLL_INTERVAL_MS = 5000;
+const MAX_CONSECUTIVE_ERRORS = 5;
 
 export function VideoDetailClient({ video: initial }: { video: VideoRow }) {
   const [video, setVideo] = useState<VideoRow>(initial);
+  const [pollError, setPollError] = useState<string | null>(null);
 
   useEffect(() => {
     if (video.status !== "processing") return;
     let cancelled = false;
+    let errorCount = 0;
+    let timer: ReturnType<typeof setInterval> | null = null;
+    const stop = () => {
+      if (timer) clearInterval(timer);
+      timer = null;
+    };
     const tick = async () => {
       try {
         const res = await fetch(
           `/api/heygen/status/${encodeURIComponent(video.heygen_job_id)}`
         );
-        if (!res.ok) return;
+        if (!res.ok) throw new Error(`status ${res.status}`);
         const s = (await res.json()) as HeygenStatus;
-        if (cancelled || !s?.status) return;
+        if (cancelled) return;
+        errorCount = 0;
+        if (!s?.status) return;
         if (s.status === "completed" || s.status === "failed") {
           setVideo((prev) => ({
             ...prev,
@@ -51,16 +61,25 @@ export function VideoDetailClient({ video: initial }: { video: VideoRow }) {
               typeof s.duration === "number" ? s.duration : prev.duration_sec,
             error: s.error ?? prev.error,
           }));
+          stop();
         }
       } catch {
-        // swallow — keep polling
+        errorCount += 1;
+        if (errorCount >= MAX_CONSECUTIVE_ERRORS) {
+          if (!cancelled) {
+            setPollError(
+              "Could not reach render service. Refresh to retry."
+            );
+          }
+          stop();
+        }
       }
     };
-    const t = setInterval(tick, POLL_INTERVAL_MS);
+    timer = setInterval(tick, POLL_INTERVAL_MS);
     void tick();
     return () => {
       cancelled = true;
-      clearInterval(t);
+      stop();
     };
   }, [video.status, video.heygen_job_id]);
 
@@ -82,8 +101,14 @@ export function VideoDetailClient({ video: initial }: { video: VideoRow }) {
             )}
           </div>
         ) : (
-          <div className="w-full h-full flex items-center justify-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" /> Rendering...
+          <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-sm text-muted-foreground p-4 text-center">
+            {pollError ? (
+              <p className="text-destructive">{pollError}</p>
+            ) : (
+              <span className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" /> Rendering...
+              </span>
+            )}
           </div>
         )}
       </div>

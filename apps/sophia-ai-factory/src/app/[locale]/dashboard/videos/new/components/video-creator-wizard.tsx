@@ -15,8 +15,23 @@ export interface ScriptContent {
 
 type Step = "script" | "assets" | "render";
 
+export interface ScriptDraft {
+  topic: string;
+  audience: string;
+  durationSec: number;
+  content: ScriptContent | null;
+}
+
+const EMPTY_DRAFT: ScriptDraft = {
+  topic: "",
+  audience: "",
+  durationSec: 30,
+  content: null,
+};
+
 export function VideoCreatorWizard() {
   const [step, setStep] = useState<Step>("script");
+  const [draft, setDraft] = useState<ScriptDraft>(EMPTY_DRAFT);
   const [script, setScript] = useState<ScriptContent | null>(null);
   const [avatarId, setAvatarId] = useState<string>("");
   const [voiceId, setVoiceId] = useState<string>("");
@@ -26,6 +41,7 @@ export function VideoCreatorWizard() {
 
   const handleScriptDone = (content: ScriptContent) => {
     setScript(content);
+    setDraft((d) => ({ ...d, content }));
     setStep("assets");
   };
 
@@ -67,7 +83,9 @@ export function VideoCreatorWizard() {
         ))}
       </ol>
 
-      {step === "script" && <ScriptStep onDone={handleScriptDone} />}
+      {step === "script" && (
+        <ScriptStep draft={draft} onDraftChange={setDraft} onDone={handleScriptDone} />
+      )}
 
       {step === "assets" && script && (
         <div className="space-y-4">
@@ -79,7 +97,13 @@ export function VideoCreatorWizard() {
           />
           {error && <p className="text-sm text-destructive">{error}</p>}
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setStep("script")}>Back</Button>
+            <Button
+              variant="outline"
+              onClick={() => setStep("script")}
+              disabled={submitting}
+            >
+              Back
+            </Button>
             <Button
               onClick={handleCreateVideo}
               disabled={!avatarId || !voiceId || submitting}

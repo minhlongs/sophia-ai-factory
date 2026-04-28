@@ -1,11 +1,18 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/better-auth-session";
+import { localizedHref } from "@/lib/i18n/localized-href";
 import { VideoGallery } from "./components/video-gallery";
 
-export default async function VideosGalleryPage() {
+export default async function VideosGalleryPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
+
+  const { locale } = await params;
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -17,13 +24,13 @@ export default async function VideosGalleryPage() {
           </p>
         </div>
         <Link
-          href="/dashboard/videos/new"
+          href={localizedHref(locale, "/dashboard/videos/new")}
           className="rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:opacity-90"
         >
           New Video
         </Link>
       </header>
-      <VideoGallery />
+      <VideoGallery locale={locale} />
     </div>
   );
 }

@@ -31,12 +31,23 @@ export async function GET(
       );
     }
 
+    const db = createServerClient();
+    const { data: ownership } = await db
+      .from("videos")
+      .select("user_id")
+      .eq("heygen_job_id", id)
+      .maybeSingle();
+
+    const owner = (ownership as { user_id?: string } | null)?.user_id;
+    if (owner && owner !== user.id) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
     const videoService = ServiceFactory.getVideoService();
     const status = (await videoService.getVideoStatus(id)) as HeygenStatus;
 
-    if (status?.status && TERMINAL.has(status.status)) {
+    if (status?.status && TERMINAL.has(status.status) && owner === user.id) {
       try {
-        const db = createServerClient();
         await db
           .from("videos")
           .update({

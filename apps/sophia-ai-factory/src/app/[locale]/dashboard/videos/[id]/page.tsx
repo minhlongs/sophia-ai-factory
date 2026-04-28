@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/better-auth-session";
 import { createServerClient } from "@/lib/db/client";
+import { localizedHref } from "@/lib/i18n/localized-href";
 import { VideoDetailClient } from "../components/video-detail-client";
 
 interface VideoRow {
@@ -27,7 +28,7 @@ export default async function VideoDetailPage({
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  const { id } = await params;
+  const { id, locale } = await params;
   const db = createServerClient();
   const { data } = await db
     .from("videos")
@@ -46,7 +47,7 @@ export default async function VideoDetailPage({
       <header className="flex items-center justify-between">
         <div>
           <Link
-            href="/dashboard/videos"
+            href={localizedHref(locale, "/dashboard/videos")}
             className="text-sm text-muted-foreground hover:text-foreground"
           >
             ← Back to gallery

@@ -22,7 +22,9 @@ vi.mock('@/lib/db/client', () => {
     const chain: Record<string, unknown> = {};
     chain.insert = vi.fn(() => Promise.resolve({ data: null, error: null }));
     chain.update = vi.fn(() => chain);
+    chain.select = vi.fn(() => chain);
     chain.eq = vi.fn(() => chain);
+    chain.maybeSingle = vi.fn(() => Promise.resolve({ data: null, error: null }));
     chain.then = (
       onfulfilled: (v: { data: null; error: null }) => unknown
     ) => Promise.resolve({ data: null, error: null }).then(onfulfilled);
