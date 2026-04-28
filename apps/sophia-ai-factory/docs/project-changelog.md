@@ -1,6 +1,27 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-28 | **Current Version:** 1.14.11
+**Last Updated:** 2026-04-28 | **Current Version:** 1.14.12
+
+---
+
+## v1.14.12 — 2026-04-28 (Video Pipeline GO LIVE)
+
+**Status:** ✅ Production live — `4234abfb` deployed via manual wrangler bypass.
+
+### Shipped
+- `/api/heygen/create-video` writes `videos` row (best-effort) on submission
+- `/api/heygen/status/[id]` updates row on terminal state (completed/failed)
+- `/dashboard/videos/[id]` server detail page with 5s client polling
+- `createVideoSchema` accepts optional `scriptRequestId` for audit linkage
+
+### Operational
+- D1 migration `0024-videos.sql` applied to remote (table + 3 indexes)
+- Worker secrets updated: `COMMIT_SHA`, `DEPLOYED_AT`, `DEPLOY_BRANCH`
+- `/api/version` confirms `shortSha=4234abfb` matches local
+- Smoke tests: `/api/videos` 401 ✅, `/` 200 ✅, `/dashboard/videos` 307 (login redirect) ✅
+
+### Bypass note
+GitHub Actions disabled at user level (`longtho638-jpg`) — `HTTP 422`. Deployed directly via `npm run deploy` until user clears block at github.com/settings/billing.
 
 ---
 
