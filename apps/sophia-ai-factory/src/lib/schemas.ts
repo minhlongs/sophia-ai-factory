@@ -46,6 +46,7 @@ export const createVideoSchema = z.object({
   voiceId: z.string().min(1, "Voice ID is required"),
   script: z.string().min(1, "Script is required"),
   title: z.string().optional(),
+  scriptRequestId: z.string().optional(),
 });
 
 export const setupConfigSchema = z.object({

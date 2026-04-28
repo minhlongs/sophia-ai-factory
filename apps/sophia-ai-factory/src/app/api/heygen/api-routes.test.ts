@@ -16,6 +16,25 @@ vi.mock('@/lib/services/factory', () => ({
   },
 }));
 
+// Mock D1 client — INSERT/UPDATE side-effect should not affect status
+vi.mock('@/lib/db/client', () => {
+  const buildChain = () => {
+    const chain: Record<string, unknown> = {};
+    chain.insert = vi.fn(() => Promise.resolve({ data: null, error: null }));
+    chain.update = vi.fn(() => chain);
+    chain.eq = vi.fn(() => chain);
+    chain.then = (
+      onfulfilled: (v: { data: null; error: null }) => unknown
+    ) => Promise.resolve({ data: null, error: null }).then(onfulfilled);
+    return chain;
+  };
+  return {
+    createServerClient: vi.fn(() => ({
+      from: vi.fn(() => buildChain()),
+    })),
+  };
+});
+
 import { getCurrentUser } from '@/lib/better-auth-session';
 import { ServiceFactory } from '@/lib/services/factory';
 
