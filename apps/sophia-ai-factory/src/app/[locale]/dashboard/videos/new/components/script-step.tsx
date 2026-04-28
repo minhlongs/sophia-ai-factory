@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { ScriptContent, ScriptDraft } from "./video-creator-wizard";
 
 interface ScriptStepProps {
@@ -16,6 +17,7 @@ interface ScriptStepProps {
 }
 
 export function ScriptStep({ draft, onDraftChange, onDone }: ScriptStepProps) {
+  const t = useTranslations("dashboard.videos");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -55,29 +57,29 @@ export function ScriptStep({ draft, onDraftChange, onDone }: ScriptStepProps) {
   return (
     <form onSubmit={handleGenerate} className="space-y-4">
       <div>
-        <Label htmlFor="topic">Topic</Label>
+        <Label htmlFor="topic">{t("script.topic")}</Label>
         <Input
           id="topic"
           value={topic}
           onChange={(e) => update("topic", e.target.value)}
-          placeholder="e.g. AI productivity tools"
+          placeholder={t("script.placeholderTopic")}
           required
           maxLength={500}
         />
       </div>
       <div>
-        <Label htmlFor="audience">Audience</Label>
+        <Label htmlFor="audience">{t("script.audience")}</Label>
         <Input
           id="audience"
           value={audience}
           onChange={(e) => update("audience", e.target.value)}
-          placeholder="e.g. solo founders & marketers"
+          placeholder={t("script.placeholderAudience")}
           required
           maxLength={300}
         />
       </div>
       <div>
-        <Label htmlFor="duration">Duration (seconds)</Label>
+        <Label htmlFor="duration">{t("script.duration")}</Label>
         <Input
           id="duration"
           type="number"
@@ -91,20 +93,28 @@ export function ScriptStep({ draft, onDraftChange, onDone }: ScriptStepProps) {
 
       {content && (
         <div className="rounded border p-4 space-y-3 bg-muted/40">
-          <p><span className="font-medium">Hook:</span> {content.hook}</p>
-          <p><span className="font-medium">Body:</span> {content.body}</p>
-          <p><span className="font-medium">CTA:</span> {content.cta}</p>
+          <p><span className="font-medium">{t("script.hook")}:</span> {content.hook}</p>
+          <p><span className="font-medium">{t("script.body")}:</span> {content.body}</p>
+          <p><span className="font-medium">{t("script.cta")}:</span> {content.cta}</p>
         </div>
       )}
 
       <div className="flex gap-2">
-        <Button type="submit" disabled={loading || !topic || !audience}>
-          {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {content ? "Regenerate" : "Generate Script"}
+        <Button
+          type="submit"
+          disabled={loading || !topic || !audience}
+          className="min-h-[44px]"
+        >
+          {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />}
+          {content ? t("script.regenerate") : t("script.generate")}
         </Button>
         {content && (
-          <Button type="button" onClick={() => onDone(content)}>
-            Use This Script →
+          <Button
+            type="button"
+            onClick={() => onDone(content)}
+            className="min-h-[44px]"
+          >
+            {t("script.useScript")}
           </Button>
         )}
       </div>

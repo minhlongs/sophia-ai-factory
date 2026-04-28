@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { getCurrentUser } from "@/lib/better-auth-session";
 import { createServerClient } from "@/lib/db/client";
 import { localizedHref } from "@/lib/i18n/localized-href";
@@ -26,9 +27,10 @@ export default async function VideoDetailPage({
   params: Promise<{ id: string; locale: string }>;
 }) {
   const user = await getCurrentUser();
-  if (!user) redirect("/login");
-
   const { id, locale } = await params;
+  if (!user) redirect(localizedHref(locale, "/login"));
+
+  const t = await getTranslations("dashboard.videos");
   const db = createServerClient();
   const { data } = await db
     .from("videos")
@@ -50,10 +52,10 @@ export default async function VideoDetailPage({
             href={localizedHref(locale, "/dashboard/videos")}
             className="text-sm text-muted-foreground hover:text-foreground"
           >
-            ← Back to gallery
+            {t("backToGallery")}
           </Link>
           <h1 className="text-2xl font-semibold mt-1">
-            {video.title ?? "Untitled"}
+            {video.title ?? t("untitled")}
           </h1>
         </div>
       </header>

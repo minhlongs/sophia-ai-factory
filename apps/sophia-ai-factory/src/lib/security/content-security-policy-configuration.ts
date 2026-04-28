@@ -7,6 +7,8 @@ export const cspConfig = {
   // Chỉ cho phép scripts từ self và Next.js chunks
   scriptSrc: [
     "'self'",
+    // TODO(audit B4): Replace 'unsafe-inline' with nonce-based CSP — requires
+    // Next.js middleware nonce injection. Tracked in go-live audit (2026-04-28).
     "'unsafe-inline'", // Required for Next.js App Router hydration scripts
     ...(process.env.NODE_ENV === 'production'
       ? []
@@ -38,7 +40,8 @@ export const cspConfig = {
   // API connections: restricted to known domains
   connectSrc: [
     "'self'",
-    'https://*.supabase.co',
+    // supabase.co removed — project migrated to D1 (2026-04-28, go-live audit T4)
+    // Supabase exceptions (OAuth callbacks, admin invite) are server-side only, no browser connect needed
     // polar.sh removed — Polar rejected this product (2026-03-23)
     'https://api.heygen.com',
     'https://api.openai.com',

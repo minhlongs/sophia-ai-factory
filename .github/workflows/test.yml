@@ -14,10 +14,10 @@ jobs:
         working-directory: apps/sophia-ai-factory
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
           node-version: '20'
 
@@ -26,14 +26,12 @@ jobs:
 
       - name: Lint
         run: npx next lint
-        continue-on-error: true
 
       - name: Build
         run: npm run build
 
       - name: Test
         run: npm test
-        continue-on-error: true
 
       - name: Security audit (production deps only)
         run: npm audit --audit-level=high --omit=dev
@@ -46,10 +44,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
           node-version: '20'
 

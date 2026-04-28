@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface VideoRow {
   id: string;
@@ -29,6 +30,7 @@ const POLL_INTERVAL_MS = 5000;
 const MAX_CONSECUTIVE_ERRORS = 5;
 
 export function VideoDetailClient({ video: initial }: { video: VideoRow }) {
+  const t = useTranslations("dashboard.videos");
   const [video, setVideo] = useState<VideoRow>(initial);
   const [pollError, setPollError] = useState<string | null>(null);
 
@@ -66,11 +68,7 @@ export function VideoDetailClient({ video: initial }: { video: VideoRow }) {
       } catch {
         errorCount += 1;
         if (errorCount >= MAX_CONSECUTIVE_ERRORS) {
-          if (!cancelled) {
-            setPollError(
-              "Could not reach render service. Refresh to retry."
-            );
-          }
+          if (!cancelled) setPollError(t("pollError"));
           stop();
         }
       }
@@ -81,7 +79,7 @@ export function VideoDetailClient({ video: initial }: { video: VideoRow }) {
       cancelled = true;
       stop();
     };
-  }, [video.status, video.heygen_job_id]);
+  }, [video.status, video.heygen_job_id, t]);
 
   return (
     <div className="space-y-4">
@@ -95,7 +93,7 @@ export function VideoDetailClient({ video: initial }: { video: VideoRow }) {
           />
         ) : video.status === "failed" ? (
           <div className="w-full h-full flex flex-col items-center justify-center text-sm text-destructive p-4 text-center">
-            <p className="font-medium">Render failed</p>
+            <p className="font-medium">{t("renderFailed")}</p>
             {video.error && (
               <p className="text-xs mt-1 opacity-80">{video.error}</p>
             )}
@@ -106,7 +104,8 @@ export function VideoDetailClient({ video: initial }: { video: VideoRow }) {
               <p className="text-destructive">{pollError}</p>
             ) : (
               <span className="flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" /> Rendering...
+                <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" />
+                {t("rendering")}
               </span>
             )}
           </div>
@@ -115,21 +114,21 @@ export function VideoDetailClient({ video: initial }: { video: VideoRow }) {
 
       <dl className="grid grid-cols-2 gap-4 text-sm">
         <div>
-          <dt className="text-muted-foreground">Status</dt>
+          <dt className="text-muted-foreground">{t("status")}</dt>
           <dd className="font-medium capitalize">{video.status}</dd>
         </div>
         <div>
-          <dt className="text-muted-foreground">Duration</dt>
+          <dt className="text-muted-foreground">{t("duration")}</dt>
           <dd>
             {video.duration_sec ? `${video.duration_sec}s` : "—"}
           </dd>
         </div>
         <div>
-          <dt className="text-muted-foreground">HeyGen Job</dt>
+          <dt className="text-muted-foreground">{t("heygenJob")}</dt>
           <dd className="font-mono text-xs">{video.heygen_job_id}</dd>
         </div>
         <div>
-          <dt className="text-muted-foreground">Created</dt>
+          <dt className="text-muted-foreground">{t("created")}</dt>
           <dd>{new Date(video.created_at * 1000).toLocaleString()}</dd>
         </div>
       </dl>
@@ -140,16 +139,16 @@ export function VideoDetailClient({ video: initial }: { video: VideoRow }) {
             href={video.video_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-md border px-4 py-2 text-sm hover:bg-accent"
+            className="rounded-md border px-4 py-2 text-sm hover:bg-accent min-h-[44px] inline-flex items-center"
           >
-            Open in new tab
+            {t("openInNewTab")}
           </a>
           <a
             href={video.video_url}
             download
-            className="rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm hover:opacity-90"
+            className="rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm hover:opacity-90 min-h-[44px] inline-flex items-center"
           >
-            Download
+            {t("download")}
           </a>
         </div>
       )}

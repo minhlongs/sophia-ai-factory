@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { localizedHref } from "@/lib/i18n/localized-href";
 
 interface VideoItem {
@@ -22,6 +24,7 @@ interface VideosResponse {
 }
 
 export function VideoGallery({ locale }: { locale?: string }) {
+  const t = useTranslations("dashboard.videos");
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -48,7 +51,8 @@ export function VideoGallery({ locale }: { locale?: string }) {
   if (loading) {
     return (
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin" /> Loading videos...
+        <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" />
+        {t("loading")}
       </div>
     );
   }
@@ -58,14 +62,12 @@ export function VideoGallery({ locale }: { locale?: string }) {
   if (videos.length === 0) {
     return (
       <div className="rounded border border-dashed p-12 text-center space-y-2">
-        <p className="text-sm text-muted-foreground">
-          No videos yet. Create your first one.
-        </p>
+        <p className="text-sm text-muted-foreground">{t("empty")}</p>
         <Link
           href={localizedHref(locale, "/dashboard/videos/new")}
           className="text-sm text-primary underline-offset-4 hover:underline"
         >
-          New Video →
+          {t("newVideoLink")}
         </Link>
       </div>
     );
@@ -81,6 +83,7 @@ export function VideoGallery({ locale }: { locale?: string }) {
 }
 
 function VideoCard({ video, locale }: { video: VideoItem; locale?: string }) {
+  const t = useTranslations("dashboard.videos");
   const created = new Date(video.created_at * 1000).toLocaleDateString();
   return (
     <Link
@@ -89,14 +92,18 @@ function VideoCard({ video, locale }: { video: VideoItem; locale?: string }) {
     >
       <div className="aspect-video bg-muted relative">
         {video.thumbnail_url ? (
-          <img
+          <Image
             src={video.thumbnail_url}
-            alt={video.title ?? "Video thumbnail"}
+            alt={video.title ?? t("untitled")}
+            width={400}
+            height={225}
+            loading="lazy"
+            unoptimized
             className="w-full h-full object-cover"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
-            {video.status === "processing" ? "Rendering..." : "No preview"}
+            {video.status === "processing" ? t("rendering") : t("noPreview")}
           </div>
         )}
         <span
@@ -109,7 +116,7 @@ function VideoCard({ video, locale }: { video: VideoItem; locale?: string }) {
       </div>
       <div className="p-3 space-y-1">
         <p className="text-sm font-medium truncate">
-          {video.title ?? "Untitled"}
+          {video.title ?? t("untitled")}
         </p>
         <p className="text-xs text-muted-foreground">{created}</p>
       </div>

@@ -1,7 +1,57 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-04-25 (B2 TypeScript Cleanup Phase 2 + Phase 1 + Dead-Code Cleanup + Analytics Query Type Safety + Billing Modularization)
+> **Last Updated:** 2026-04-28 (Go-Live Audit Phase 01 Tier-1: CI Hardening, Auth Gates, i18n, A11y, CDN Caching, DB Backup)
+
+---
+
+## [2026-04-28] Go-Live Audit Phase 01 (Tier-1) — Production Hardening & Security Gates (SHIPPED)
+
+### Summary
+Tier-1 go-live audit fixes shipped across CI/CD, backend auth, frontend i18n/a11y, and ops infrastructure. 12 backend modules + 15 frontend modules updated. 4 new API endpoints hardened with auth gates. New coupon redemption table tracks per-user limits. Videos route i18n + a11y complete (50 translation keys, min-h-[44px] touch targets, focus rings, `<Image>` optimization). CI/CD strengthened: SHA-pinned actions, test failures unignored. Static assets now immutable (Cache-Control: max-age=31536000). Backup: D1 now syncs to R2 off-site. Full audit report: `plans/reports/audit-260428-0253-go-live-100.md`. Tests: 1362/1362 ✅. Production HTTP 200 ✅.
+
+### Categories
+
+**CI Hardening:**
+- `.github/workflows/test.yml` — Removed `continue-on-error: true`, SHA-pinned all GH Actions
+- `.github/workflows/d1-backup.yml` — Added R2 off-site backup step
+
+**Backend Auth Gates (8 routes):**
+- `src/app/api/coupons/apply/route.ts` — Added auth check + per-user redemption limit
+- `src/app/api/setup/save/route.ts` — Added auth check
+- `src/app/api/errors/report/route.ts` — Added optional auth, 1KB cap, CRLF strip, IP rate limit
+- `src/app/api/realtime/alerts/route.ts` — Added CRON_SECRET Bearer gate
+- Migration `0025-coupon-redemptions.sql` — NEW: tracks `(user_id, coupon_code)` UNIQUE constraint
+
+**CDN & Caching:**
+- `src/next.config.ts` — Immutable Cache-Control for `/_next/static/*` (31536000s)
+- `src/lib/security/content-security-policy-configuration.ts` — Removed stale `supabase.co` references
+
+**Frontend i18n + A11y (15 files):**
+- `messages/{en,vi}.json` — Added `dashboard.videos` (50 keys) + `dashboard.errors` (10 keys)
+- `src/app/[locale]/dashboard/videos/**/*.tsx` (9 files) — i18n + a11y: aria-pressed, focus rings, min-h-[44px], `<Image>` unoptimized
+- `src/app/[locale]/dashboard/error.tsx` — i18n + locale-aware redirect, removed console.error
+- NEW: `error.tsx`, `loading.tsx`, `[id]/not-found.tsx` (3 files)
+
+**Tests Added:**
+- `src/app/api/coupons/apply/route.test.ts` (NEW) — auth gate tests
+- `src/app/api/setup/save/route.test.ts` (NEW) — auth gate tests
+
+### Files Modified (20 Total)
+Backend: 8 | Frontend: 12 | Tests: 2 | Migrations: 1
+
+### Metrics
+- **Scope:** 20 files, 1 new migration, 3 new test files
+- **Auth Fixes:** 4 endpoints hardened
+- **Bilingual:** 60 new translation keys, videos route 100% covered
+- **A11y:** 9 video components + 3 fallback pages (touch targets, focus, semantics)
+- **Backup:** D1 → R2 off-site sync enabled
+- **Test Coverage:** 1362/1362 pass (100%)
+- **Build:** ✅ 0 TS errors
+- **Production:** ✅ HTTP 200
+
+### Audit Reference
+Full findings & compliance checklist: `plans/reports/audit-260428-0253-go-live-100.md`
 
 ---
 

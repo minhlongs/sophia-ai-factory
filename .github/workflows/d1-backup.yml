@@ -9,9 +9,9 @@ jobs:
   backup:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
           node-version: '20'
 
@@ -23,8 +23,21 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           DATE=$(date +%Y%m%d)
+          echo "DATE=${DATE}" >> "$GITHUB_ENV"
           wrangler d1 export sophia-raas-db --remote --output "backup-${DATE}.sql"
           echo "Backup created: backup-${DATE}.sql ($(wc -c < backup-${DATE}.sql) bytes)"
+
+      # Off-site: upload to R2 bucket sophia-backups (one-time setup: wrangler r2 bucket create sophia-backups)
+      - name: Upload backup to R2 (off-site)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        # continue-on-error: artifact upload (below) is the primary; R2 is additional off-site copy
+        continue-on-error: true
+        run: |
+          wrangler r2 object put "sophia-backups/d1-backup-${DATE}.sql" \
+            --file "backup-${DATE}.sql"
+          echo "R2 upload complete: sophia-backups/d1-backup-${DATE}.sql"
 
       - name: Upload backup artifact
         uses: actions/upload-artifact@v4

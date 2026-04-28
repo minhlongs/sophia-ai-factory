@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { ScriptStep } from "./script-step";
 import { AssetPicker } from "./asset-picker";
 import { RenderStatus } from "./render-status";
@@ -29,13 +30,16 @@ const EMPTY_DRAFT: ScriptDraft = {
   content: null,
 };
 
+const STEPS: Step[] = ["script", "assets", "render"];
+
 export function VideoCreatorWizard() {
+  const t = useTranslations("dashboard.videos");
   const [step, setStep] = useState<Step>("script");
   const [draft, setDraft] = useState<ScriptDraft>(EMPTY_DRAFT);
   const [script, setScript] = useState<ScriptContent | null>(null);
   const [avatarId, setAvatarId] = useState<string>("");
   const [voiceId, setVoiceId] = useState<string>("");
-  const [videoId, setVideoId] = useState<string>("");
+  const [videoId, setVideoId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -70,15 +74,22 @@ export function VideoCreatorWizard() {
     }
   };
 
+  const stepLabel = (s: Step): string => {
+    if (s === "script") return t("steps.script");
+    if (s === "assets") return t("steps.assets");
+    return t("steps.render");
+  };
+
   return (
     <div className="space-y-6">
       <ol className="flex gap-2 text-sm font-medium" aria-label="Progress">
-        {(["script", "assets", "render"] as Step[]).map((s, i) => (
+        {STEPS.map((s, i) => (
           <li
             key={s}
+            aria-current={step === s ? "step" : undefined}
             className={`px-3 py-1 rounded ${step === s ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
           >
-            {i + 1}. {s.charAt(0).toUpperCase() + s.slice(1)}
+            {i + 1}. {stepLabel(s)}
           </li>
         ))}
       </ol>
@@ -101,15 +112,17 @@ export function VideoCreatorWizard() {
               variant="outline"
               onClick={() => setStep("script")}
               disabled={submitting}
+              className="min-h-[44px]"
             >
-              Back
+              {t("actions.back")}
             </Button>
             <Button
               onClick={handleCreateVideo}
               disabled={!avatarId || !voiceId || submitting}
+              className="min-h-[44px]"
             >
-              {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create Video
+              {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />}
+              {t("actions.create")}
             </Button>
           </div>
         </div>
