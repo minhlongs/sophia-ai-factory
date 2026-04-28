@@ -1,6 +1,14 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-28 | **Current Version:** 1.14.10
+**Last Updated:** 2026-04-28 | **Current Version:** 1.14.11
+
+---
+
+## v1.14.11 — Phase 3 Video Pipeline: D1 Gallery + Persistence — 2026-04-28
+
+**Severity: MEDIUM | Type: Feature | Status: SHIPPED (CI verify pending)**
+
+Persistence and gallery for the video pipeline. New D1 table `videos` (migration `0024-videos.sql`) with 3 indexes (user+created DESC, heygen_job_id, partial-status for `processing` rows). Two read endpoints: `GET /api/videos` (paginated list, zod-validated `limit` 1-100 + `offset`, scoped to `user.id`) and `GET /api/videos/[id]` (detail with auth + ownership check returning 401/403/404 distinctly). Frontend gallery at `/[locale]/dashboard/videos/page.tsx` (server component + redirect-to-login) with client `VideoGallery` component rendering thumbnail cards, status badges (processing/completed/failed), empty state CTA, and date formatting. **Tests:** 8 new vitest cases (4 list + 4 detail) covering auth, validation, db error, ownership defense — 1582/1582 total pass. **Build:** 0 TS errors, 10.1s. **Note:** `/api/heygen/create-video` does not yet INSERT to `videos` table — gallery shows empty until writer hook added (tracked as plan open question #4). Detail route page `/dashboard/videos/[id]` not yet built (open question #5). **Plan:** `plans/260428-0117-video-pipeline-content-factory/` Phase 3 SHIPPED.
 
 ---
 
