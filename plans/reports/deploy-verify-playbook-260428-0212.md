@@ -89,13 +89,16 @@ npx wrangler rollback --name sophia-ai-factory \
 ## Status
 
 - **Code-side:** ✅ ready (build + tests green, migration drafted)
-- **Operational:** ⏸ user-action required:
-  1. Confirm GitHub Actions enabled at repo level (was disabled per Sprint M changelog)
+- **Operational ROOT CAUSE (2026-04-28 02:27):** GitHub returns `HTTP 422: Actions has been disabled for this user.` on `gh workflow run test.yml`.
+  - Repo-level Actions: ✅ enabled (`gh api .../actions/permissions` → `{enabled: true, allowed_actions: "all"}`)
+  - User-level Actions: ❌ DISABLED for `longtho638-jpg` (account-wide block)
+  - Effect: workflows show `state=active` but `total_count=0` runs ever, no push triggers anything
+- **Operational user-action required:**
+  1. **PRIMARY BLOCKER:** Visit https://github.com/settings/billing → check Actions spending limit / minutes. If account flagged, contact GitHub Support.
   2. Configure 9 Cloudflare Secrets above
   3. Apply migrations 0018-0024 to remote D1
-  4. `git push origin main` → run verify sequence above
+  4. After Actions re-enabled at user level: `git push --allow-empty -m "trigger CI"` → verify sequence above
 
 ## Open Questions
 
-- Whether Sprint M changelog "Actions disabled" comment is still current (workflows now show `active`).
 - Whether D1 migrations 0018-0023 already applied to remote (need `wrangler d1 migrations list sophia-raas-db --remote`).

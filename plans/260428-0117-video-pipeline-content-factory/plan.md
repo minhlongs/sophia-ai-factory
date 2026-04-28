@@ -1,6 +1,6 @@
 # Video Pipeline Content Factory — Plan
 
-**Created:** 2026-04-28 | **Status:** Phase 1+2+3 SHIPPED (deploy verify pending), Phase 4 optional
+**Created:** 2026-04-28 | **Status:** Phase 1+2+3 + persistence wire-up SHIPPED (commit `2531a8bb`); deploy blocked on user-level Actions, Phase 4 optional
 
 ## Goal
 
@@ -32,7 +32,11 @@ User-facing video creation pipeline (script → avatar/voice → render → gall
 - Frontend `/dashboard/videos` — server component + client `VideoGallery` (loading/error/empty states + status badges).
 - Tests: 8 cases (4 list, 4 detail) — auth, validation, db error, ownership defense.
 - Files: `migrations/0024-videos.sql`, `src/app/api/videos/route.ts(.test.ts)`, `src/app/api/videos/[id]/route.ts(.test.ts)`, `src/app/[locale]/dashboard/videos/page.tsx`, `components/video-gallery.tsx`.
-- **Note:** `/api/heygen/create-video` does NOT yet write to `videos` table — gallery currently empty until insert hook added (follow-up).
+- **Update 2026-04-28 02:27:** Persistence wire-up SHIPPED in `2531a8bb`:
+  - `/api/heygen/create-video` INSERTs videos row (best-effort) after HeyGen submission
+  - `/api/heygen/status/[id]` UPDATEs videos row on terminal state (completed/failed)
+  - `/dashboard/videos/[id]` server detail page + 5s client polling until terminal
+  - `createVideoSchema` accepts optional `scriptRequestId` for audit linkage
 
 ### Phase 4 — Remotion Render (optional, deferred)
 - Self-hosted alternative to HeyGen for ENTERPRISE+ tier (cost reduction).
@@ -51,8 +55,9 @@ User-facing video creation pipeline (script → avatar/voice → render → gall
 1. Tier credit consumption: should script generation deduct from monthly campaign quota or be metered separately?
 2. Script persistence: persist all generated scripts (audit trail) or only those tied to videos?
 3. Rate limiting: add `withRateLimit` wrapper to script endpoint? (currently unbounded per-user)
-4. **Phase 3 follow-up:** wire `/api/heygen/create-video` to INSERT into `videos` table on success (currently gallery shows empty because no writer exists).
-5. Detail page route `/dashboard/videos/[id]` not yet created — gallery cards link there but page is 404 until built.
+4. ~~Phase 3 follow-up: wire create-video to INSERT~~ ✅ shipped `2531a8bb`
+5. ~~Detail page route `/dashboard/videos/[id]`~~ ✅ shipped `2531a8bb`
+6. **OPERATIONAL BLOCKER:** GitHub Actions disabled at user level (`longtho638-jpg`) — `HTTP 422: Actions has been disabled for this user`. User must check https://github.com/settings/billing.
 
 ## Reports
 
