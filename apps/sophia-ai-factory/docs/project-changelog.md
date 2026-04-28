@@ -1,6 +1,14 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-28 | **Current Version:** 1.14.9
+**Last Updated:** 2026-04-28 | **Current Version:** 1.14.10
+
+---
+
+## v1.14.10 — Phase 2 Video Pipeline: Avatar/Voice Wizard UI — 2026-04-28
+
+**Severity: MEDIUM | Type: Feature | Status: SHIPPED (deploy deferred — CI Actions disabled)**
+
+User-facing 3-step wizard at `/[locale]/dashboard/videos/new` for creating videos end-to-end: (1) Script step calls `/api/scripts/generate` (Phase 1) with topic/audience/durationSec, displays hook/body/CTA preview with regenerate option. (2) Assets step fetches `/api/heygen/avatars` + `/api/heygen/voices` in parallel, shows avatar grid (preview images) + voice list selectors with active-state highlighting. (3) Render step POSTs concatenated script to `/api/heygen/create-video`, polls `/api/heygen/status/[id]` every 5s, displays inline `<video>` player on completion or destructive banner on failure. Components split into 4 files (`video-creator-wizard.tsx`, `script-step.tsx`, `asset-picker.tsx`, `render-status.tsx`) per 200-LOC rule. Auth-gated via Better Auth (`getCurrentUser` redirect to `/login` if missing). **Tests:** 2 smoke cases (1574/1574 total pass). **Build:** 0 TS errors, 10.1s. **Plan:** `plans/260428-0117-video-pipeline-content-factory/`. Phase 3 (D1 `videos` table + gallery) + Phase 4 (Remotion render — optional) remain pending.
 
 ---
 
