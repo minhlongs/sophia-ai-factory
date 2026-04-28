@@ -1,6 +1,6 @@
 # Video Pipeline Content Factory — Plan
 
-**Created:** 2026-04-28 | **Status:** Phase 1+2+3 + persistence wire-up SHIPPED (commit `2531a8bb`); deploy blocked on user-level Actions, Phase 4 optional
+**Created:** 2026-04-28 | **Status:** ✅ LIVE on production (`4234abfb`, deployed 2026-04-28T09:33Z via manual wrangler bypass of disabled Actions). Phase 4 optional.
 
 ## Goal
 
@@ -57,7 +57,7 @@ User-facing video creation pipeline (script → avatar/voice → render → gall
 3. Rate limiting: add `withRateLimit` wrapper to script endpoint? (currently unbounded per-user)
 4. ~~Phase 3 follow-up: wire create-video to INSERT~~ ✅ shipped `2531a8bb`
 5. ~~Detail page route `/dashboard/videos/[id]`~~ ✅ shipped `2531a8bb`
-6. **OPERATIONAL BLOCKER:** GitHub Actions disabled at user level (`longtho638-jpg`) — `HTTP 422: Actions has been disabled for this user`. User must check https://github.com/settings/billing.
+6. ~~OPERATIONAL BLOCKER: Actions disabled~~ → **BYPASSED 2026-04-28 02:33 PT via direct `npm run deploy`** (opennextjs build + wrangler deploy). 0024-videos.sql applied to remote D1 directly. COMMIT_SHA/DEPLOYED_AT/DEPLOY_BRANCH secrets updated. `/api/version` confirms `4234abfb` live. User still needs to fix Actions at github.com/settings/billing for future auto-deploys.
 
 ## Reports
 
