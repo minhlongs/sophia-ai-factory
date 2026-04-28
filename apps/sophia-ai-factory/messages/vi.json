@@ -621,6 +621,85 @@
       "api_key_hint": "Liên hệ hỗ trợ để tạo API key",
       "endpoints": "Các Endpoint Có Sẵn"
     },
+    "videos": {
+      "title": "Video Của Tôi",
+      "subtitle": "Video đã tạo từ các chiến dịch Sophia của bạn",
+      "newVideo": "Tạo Video Mới",
+      "backToGallery": "← Quay lại danh sách",
+      "untitled": "Chưa đặt tên",
+      "loading": "Đang tải video...",
+      "empty": "Chưa có video nào. Hãy tạo video đầu tiên.",
+      "newVideoLink": "Tạo Video →",
+      "rendering": "Đang render...",
+      "noPreview": "Chưa có ảnh xem trước",
+      "pollError": "Không thể kết nối dịch vụ render. Tải lại trang để thử lại.",
+      "renderFailed": "Render thất bại",
+      "status": "Trạng thái",
+      "duration": "Thời lượng",
+      "heygenJob": "HeyGen Job",
+      "created": "Ngày tạo",
+      "openInNewTab": "Mở trong tab mới",
+      "download": "Tải xuống",
+      "create": {
+        "title": "Tạo Video",
+        "subtitle": "Tạo video AI: viết kịch bản → chọn avatar & giọng nói → render."
+      },
+      "steps": {
+        "script": "Kịch Bản",
+        "assets": "Tài Nguyên",
+        "render": "Render"
+      },
+      "script": {
+        "topic": "Chủ đề",
+        "audience": "Đối tượng",
+        "duration": "Thời lượng (giây)",
+        "placeholderTopic": "vd: công cụ AI tăng năng suất",
+        "placeholderAudience": "vd: founder và marketer cá nhân",
+        "generate": "Tạo Kịch Bản",
+        "regenerate": "Tạo Lại",
+        "useScript": "Dùng Kịch Bản Này →",
+        "hook": "Hook",
+        "body": "Nội dung",
+        "cta": "CTA"
+      },
+      "asset": {
+        "loading": "Đang tải avatar & giọng nói...",
+        "chooseAvatar": "Chọn Avatar",
+        "chooseVoice": "Chọn Giọng Nói"
+      },
+      "render": {
+        "initializing": "Đang khởi tạo render...",
+        "ready": "Video đã sẵn sàng",
+        "failed": "Render thất bại",
+        "rendering": "Đang render..."
+      },
+      "actions": {
+        "back": "Quay lại",
+        "create": "Tạo Video"
+      },
+      "errors": {
+        "title": "Lỗi trang Video",
+        "description": "Đã xảy ra lỗi khi tải video của bạn.",
+        "retry": "Thử Lại"
+      },
+      "notFound": {
+        "title": "Không tìm thấy video",
+        "description": "Video này không tồn tại hoặc bạn không có quyền truy cập.",
+        "backToGallery": "Quay lại danh sách"
+      }
+    },
+    "errors": {
+      "authExpired": "Phiên đăng nhập hết hạn",
+      "authExpiredDesc": "Vui lòng đăng nhập lại.",
+      "network": "Lỗi kết nối",
+      "networkDesc": "Kiểm tra kết nối internet hoặc thử lại.",
+      "db": "Lỗi cơ sở dữ liệu",
+      "dbDesc": "Hệ thống đang bảo trì. Thử lại sau vài giây.",
+      "unknown": "Đã xảy ra lỗi",
+      "unknownDesc": "Thử lại hoặc quay về trang chủ.",
+      "retry": "Thử lại",
+      "goLogin": "Đăng nhập"
+    },
     "crossSell": {
       "raas_title": "Mở Khoá Tự Động Hoá Kinh Doanh AI",
       "raas_desc": "Tạo đề xuất, tìm kiếm khách hàng và chạy email tự động — tất cả bằng lệnh AI.",

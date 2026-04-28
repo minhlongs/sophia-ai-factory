@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { VideoStatus } from "@/lib/services/types";
 
 interface RenderStatusProps {
@@ -12,6 +13,7 @@ const POLL_INTERVAL_MS = 5000;
 const TERMINAL: VideoStatus["status"][] = ["completed", "failed"];
 
 export function RenderStatus({ videoId }: RenderStatusProps) {
+  const t = useTranslations("dashboard.videos");
   const [status, setStatus] = useState<VideoStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,12 +44,20 @@ export function RenderStatus({ videoId }: RenderStatusProps) {
   }, [videoId]);
 
   if (error) return <p className="text-sm text-destructive">{error}</p>;
-  if (!status) return <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Initializing render...</div>;
+
+  if (!status) {
+    return (
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" />
+        {t("render.initializing")}
+      </div>
+    );
+  }
 
   if (status.status === "completed" && status.video_url) {
     return (
       <div className="space-y-3">
-        <h3 className="font-medium">Video ready</h3>
+        <h3 className="font-medium">{t("render.ready")}</h3>
         <video src={status.video_url} controls className="w-full rounded border" />
         <p className="text-xs text-muted-foreground">Video ID: {videoId}</p>
       </div>
@@ -57,7 +67,7 @@ export function RenderStatus({ videoId }: RenderStatusProps) {
   if (status.status === "failed") {
     return (
       <div className="rounded border border-destructive p-4 space-y-2">
-        <p className="font-medium text-destructive">Render failed</p>
+        <p className="font-medium text-destructive">{t("render.failed")}</p>
         {status.error && <p className="text-sm">{status.error}</p>}
         <p className="text-xs text-muted-foreground">Video ID: {videoId}</p>
       </div>
@@ -66,8 +76,8 @@ export function RenderStatus({ videoId }: RenderStatusProps) {
 
   return (
     <div className="flex items-center gap-2 text-sm">
-      <Loader2 className="h-4 w-4 animate-spin" />
-      Rendering... ({status.status})
+      <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" />
+      {t("render.rendering")} ({status.status})
       <span className="ml-auto text-xs text-muted-foreground">{videoId}</span>
     </div>
   );

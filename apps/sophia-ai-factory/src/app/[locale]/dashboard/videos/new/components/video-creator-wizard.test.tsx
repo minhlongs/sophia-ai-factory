@@ -3,6 +3,30 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { VideoCreatorWizard } from "./video-creator-wizard";
 
+vi.mock("next-intl", () => ({
+  useTranslations: () => (key: string) => {
+    const map: Record<string, string> = {
+      "steps.script": "Script",
+      "steps.assets": "Assets",
+      "steps.render": "Render",
+      "script.topic": "Topic",
+      "script.audience": "Audience",
+      "script.duration": "Duration (seconds)",
+      "script.placeholderTopic": "e.g. AI productivity tools",
+      "script.placeholderAudience": "e.g. solo founders & marketers",
+      "script.generate": "Generate Script",
+      "script.regenerate": "Regenerate",
+      "script.useScript": "Use This Script →",
+      "script.hook": "Hook",
+      "script.body": "Body",
+      "script.cta": "CTA",
+      "actions.back": "Back",
+      "actions.create": "Create Video",
+    };
+    return map[key] ?? key;
+  },
+}));
+
 vi.mock("@/components/ui/button", () => ({
   Button: ({ children, ...props }: React.ComponentProps<"button">) => (
     <button {...props}>{children}</button>

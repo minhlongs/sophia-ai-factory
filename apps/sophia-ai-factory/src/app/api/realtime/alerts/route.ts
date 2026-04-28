@@ -7,6 +7,7 @@
  *
  * This endpoint is called once on server startup to initialize
  * real-time alert monitoring for the RaaS Gateway.
+ * Requires Bearer CRON_SECRET — cron/internal calls only.
  *
  * @module api/realtime/alerts
  */
@@ -24,14 +25,24 @@ let realtimeUnsubscribe: (() => Promise<void>) | null = null;
 let violationsUnsubscribe: (() => Promise<void>) | null = null;
 let isInitialized = false;
 
+function verifyCronSecret(request: NextRequest): boolean {
+  if (process.env.NODE_ENV === 'development') return true;
+  const secret = process.env.CRON_SECRET;
+  if (!secret) return false;
+  const auth = request.headers.get('authorization');
+  return auth === `Bearer ${secret}`;
+}
+
 /**
  * GET /api/realtime/alerts
- * Initialize realtime alert subscriptions
- * Returns subscription status
+ * Initialize realtime alert subscriptions (cron-only)
  */
 export async function GET(request: NextRequest) {
+  if (!verifyCronSecret(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
-    // Check if already initialized
     if (isInitialized) {
       return NextResponse.json({
         status: 'active',
@@ -39,11 +50,9 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Initialize usage events subscription
     const usageUnsubscribe = await subscribeToUsageEvents();
     realtimeUnsubscribe = usageUnsubscribe;
 
-    // Initialize violations subscription
     const violationsUnsub = await subscribeToViolations();
     violationsUnsubscribe = violationsUnsub;
 
@@ -66,24 +75,28 @@ export async function GET(request: NextRequest) {
         error: 'Failed to initialize realtime subscriptions',
         message: error instanceof Error ? error.message : 'Unknown error',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 /**
  * POST /api/realtime/alerts
- * Manually trigger subscription initialization
+ * Manually trigger subscription initialization (cron-only)
  */
-export async function POST() {
-  return GET(new NextRequest('http://localhost/api/realtime/alerts'));
+export async function POST(request: NextRequest) {
+  return GET(request);
 }
 
 /**
  * DELETE /api/realtime/alerts
- * Cleanup subscriptions (for graceful shutdown)
+ * Cleanup subscriptions (cron-only — for graceful shutdown)
  */
-export async function DELETE() {
+export async function DELETE(request: NextRequest) {
+  if (!verifyCronSecret(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     if (realtimeUnsubscribe) {
       await realtimeUnsubscribe();
@@ -102,7 +115,7 @@ export async function DELETE() {
     logger.error('[Realtime Alerts API] Cleanup error', toError(error));
     return NextResponse.json(
       { error: 'Failed to cleanup subscriptions' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -621,6 +621,85 @@
       "api_key_hint": "Contact support to generate your API key",
       "endpoints": "Available Endpoints"
     },
+    "videos": {
+      "title": "My Videos",
+      "subtitle": "Generated videos from your Sophia campaigns",
+      "newVideo": "New Video",
+      "backToGallery": "← Back to gallery",
+      "untitled": "Untitled",
+      "loading": "Loading videos...",
+      "empty": "No videos yet. Create your first one.",
+      "newVideoLink": "New Video →",
+      "rendering": "Rendering...",
+      "noPreview": "No preview",
+      "pollError": "Could not reach render service. Refresh to retry.",
+      "renderFailed": "Render failed",
+      "status": "Status",
+      "duration": "Duration",
+      "heygenJob": "HeyGen Job",
+      "created": "Created",
+      "openInNewTab": "Open in new tab",
+      "download": "Download",
+      "create": {
+        "title": "Create Video",
+        "subtitle": "Generate an AI video: write script → pick avatar & voice → render."
+      },
+      "steps": {
+        "script": "Script",
+        "assets": "Assets",
+        "render": "Render"
+      },
+      "script": {
+        "topic": "Topic",
+        "audience": "Audience",
+        "duration": "Duration (seconds)",
+        "placeholderTopic": "e.g. AI productivity tools",
+        "placeholderAudience": "e.g. solo founders & marketers",
+        "generate": "Generate Script",
+        "regenerate": "Regenerate",
+        "useScript": "Use This Script →",
+        "hook": "Hook",
+        "body": "Body",
+        "cta": "CTA"
+      },
+      "asset": {
+        "loading": "Loading avatars & voices...",
+        "chooseAvatar": "Choose Avatar",
+        "chooseVoice": "Choose Voice"
+      },
+      "render": {
+        "initializing": "Initializing render...",
+        "ready": "Video ready",
+        "failed": "Render failed",
+        "rendering": "Rendering..."
+      },
+      "actions": {
+        "back": "Back",
+        "create": "Create Video"
+      },
+      "errors": {
+        "title": "Videos Error",
+        "description": "Something went wrong loading your videos.",
+        "retry": "Try Again"
+      },
+      "notFound": {
+        "title": "Video Not Found",
+        "description": "This video does not exist or you don't have access.",
+        "backToGallery": "Back to Gallery"
+      }
+    },
+    "errors": {
+      "authExpired": "Session expired",
+      "authExpiredDesc": "Please sign in again.",
+      "network": "Connection error",
+      "networkDesc": "Check your internet connection or try again.",
+      "db": "Database error",
+      "dbDesc": "System is under maintenance. Try again in a few seconds.",
+      "unknown": "An error occurred",
+      "unknownDesc": "Try again or return to home.",
+      "retry": "Retry",
+      "goLogin": "Sign In"
+    },
     "crossSell": {
       "raas_title": "Unlock AI Business Automation",
       "raas_desc": "Generate proposals, find leads, and run email campaigns — all with AI commands.",

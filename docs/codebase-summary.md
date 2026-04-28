@@ -1,7 +1,7 @@
 # Codebase Summary — Sophia AI Factory
 
 > Comprehensive overview of the Sophia AI Factory codebase structure, patterns, and architectural decisions.
-> **Last Updated:** 2026-04-25 (Tech Debt Phase 30: Analytics Query Type Safety + Billing Modularization)
+> **Last Updated:** 2026-04-28 (Go-Live Audit Phase 01 Tier-1: Auth Gates, i18n, A11y, Coupon Redemptions)
 
 **Production URL:** https://sophia.agencyos.network
 **Tech Stack:** Next.js 15.5 + Cloudflare Workers + D1 SQLite + Better Auth v1.6.2 + Better Stack + PostHog
@@ -213,7 +213,8 @@ usage_logs       → id, org_id, feature, mcu_used, timestamp
 
 ### Billing Tables
 ```
-billing_settings → org_id, tier, nowpayments_order_id, status
+billing_settings   → org_id, tier, nowpayments_order_id, status
+coupon_redemptions → user_id, coupon_code, redeemed_at (UNIQUE per user/code, migration 0025)
 ```
 
 ### Better Auth Tables (Auto-generated)
@@ -245,6 +246,14 @@ better_auth_verifications        → id, identifier, value, expires_at
 | `/api/raas/missions` | GET/POST | Mission CRUD |
 | `/api/raas/keys` | GET/POST | API key management |
 | `/api/proposals/generate` | POST | AI proposal generation (MCU billable) |
+| `/api/coupons/apply` | POST | Redeem coupon (auth gate, per-user limit via migration 0025) |
+| `/api/setup/save` | POST | Setup wizard save (auth gate) |
+
+### Internal/Ops Routes
+| Route | Method | Purpose |
+|-------|--------|---------|
+| `/api/errors/report` | POST | Error reporting (optional auth, 1KB cap, IP rate limit) |
+| `/api/realtime/alerts` | GET | Realtime alerts (CRON_SECRET Bearer gate) |
 
 ### RaaS External API (Bearer Token)
 | Route | Method | Purpose |
