@@ -1,6 +1,6 @@
 # Video Pipeline Content Factory — Plan
 
-**Created:** 2026-04-28 | **Status:** Phase 1 SHIPPED, Phase 2-4 pending
+**Created:** 2026-04-28 | **Status:** Phase 1+2 SHIPPED (deploy deferred), Phase 3-4 pending
 
 ## Goal
 
@@ -14,11 +14,15 @@ User-facing video creation pipeline (script → avatar/voice → render → gall
 - Tests: 8 cases (401/400/402/500 + tier escalation defense + ENTERPRISE model routing).
 - Files: `src/app/api/scripts/generate/route.ts`, `route.test.ts`, `src/lib/ai/script-generator.ts` (added `selectModelForTier`).
 
-### Phase 2 — Avatar/Voice UI (pending)
-- Frontend page `/dashboard/videos/new` — script input → preview → "Generate" CTA.
-- Reuse existing avatar picker from Setup Wizard.
-- POST to `/api/scripts/generate` then queue HeyGen render.
-- **Blockers:** HEYGEN_API_KEY production secret verification.
+### ✅ Phase 2 — Avatar/Voice UI (SHIPPED 2026-04-28)
+- Frontend page `/[locale]/dashboard/videos/new` — 3-step wizard (Script → Assets → Render).
+- Components split per 200-LOC rule: `video-creator-wizard.tsx`, `script-step.tsx`, `asset-picker.tsx`, `render-status.tsx`.
+- Step 1 calls `/api/scripts/generate` (Phase 1).
+- Step 2 fetches `/api/heygen/avatars` + `/api/heygen/voices` in parallel; grid + list selectors.
+- Step 3 POSTs `/api/heygen/create-video` with concatenated script (hook + body + cta), then polls `/api/heygen/status/[id]` every 5s until terminal.
+- Smoke test: 2 vitest cases (initial render, progress indicator).
+- Files: `src/app/[locale]/dashboard/videos/new/page.tsx`, `components/video-creator-wizard.tsx` + 3 sibling components + 1 test.
+- **Blockers (production):** HEYGEN_API_KEY production secret + Cloudflare Actions re-enable.
 
 ### Phase 3 — Gallery + D1 Persistence (pending)
 - New D1 table `videos` (id, user_id, script_request_id, heygen_job_id, status, video_url, thumbnail_url, created_at).
