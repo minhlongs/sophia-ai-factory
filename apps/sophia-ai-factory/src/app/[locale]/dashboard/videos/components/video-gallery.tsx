@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
+import { localizedHref } from "@/lib/i18n/localized-href";
 
 interface VideoItem {
   id: string;
@@ -20,7 +21,7 @@ interface VideosResponse {
   pagination: { limit: number; offset: number; count: number };
 }
 
-export function VideoGallery() {
+export function VideoGallery({ locale }: { locale?: string }) {
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -61,7 +62,7 @@ export function VideoGallery() {
           No videos yet. Create your first one.
         </p>
         <Link
-          href="/dashboard/videos/new"
+          href={localizedHref(locale, "/dashboard/videos/new")}
           className="text-sm text-primary underline-offset-4 hover:underline"
         >
           New Video →
@@ -73,18 +74,18 @@ export function VideoGallery() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {videos.map((v) => (
-        <VideoCard key={v.id} video={v} />
+        <VideoCard key={v.id} video={v} locale={locale} />
       ))}
     </div>
   );
 }
 
-function VideoCard({ video }: { video: VideoItem }) {
+function VideoCard({ video, locale }: { video: VideoItem; locale?: string }) {
   const created = new Date(video.created_at * 1000).toLocaleDateString();
   return (
     <Link
-      href={`/dashboard/videos/${video.id}`}
-      className="block rounded border overflow-hidden hover:border-primary transition"
+      href={localizedHref(locale, `/dashboard/videos/${video.id}`)}
+      className="block rounded border overflow-hidden hover:border-primary transition cursor-pointer"
     >
       <div className="aspect-video bg-muted relative">
         {video.thumbnail_url ? (

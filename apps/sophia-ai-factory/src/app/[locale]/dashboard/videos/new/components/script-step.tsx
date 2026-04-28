@@ -5,19 +5,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
-import type { ScriptContent } from "./video-creator-wizard";
+import type { ScriptContent, ScriptDraft } from "./video-creator-wizard";
 
 interface ScriptStepProps {
+  draft: ScriptDraft;
+  onDraftChange: (
+    updater: ScriptDraft | ((prev: ScriptDraft) => ScriptDraft),
+  ) => void;
   onDone: (content: ScriptContent) => void;
 }
 
-export function ScriptStep({ onDone }: ScriptStepProps) {
-  const [topic, setTopic] = useState("");
-  const [audience, setAudience] = useState("");
-  const [durationSec, setDurationSec] = useState(30);
-  const [content, setContent] = useState<ScriptContent | null>(null);
+export function ScriptStep({ draft, onDraftChange, onDone }: ScriptStepProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const update = <K extends keyof ScriptDraft>(key: K, value: ScriptDraft[K]) => {
+    onDraftChange((prev) => ({ ...prev, [key]: value }));
+  };
 
   const handleGenerate = async (e: FormEvent) => {
     e.preventDefault();
@@ -27,20 +31,26 @@ export function ScriptStep({ onDone }: ScriptStepProps) {
       const res = await fetch("/api/scripts/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic, audience, durationSec }),
+        body: JSON.stringify({
+          topic: draft.topic,
+          audience: draft.audience,
+          durationSec: draft.durationSec,
+        }),
       });
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(data.error ?? `Script generation failed (${res.status})`);
       }
       const data = (await res.json()) as { content: ScriptContent };
-      setContent(data.content);
+      update("content", data.content);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unknown error");
     } finally {
       setLoading(false);
     }
   };
+
+  const { topic, audience, durationSec, content } = draft;
 
   return (
     <form onSubmit={handleGenerate} className="space-y-4">
@@ -49,7 +59,7 @@ export function ScriptStep({ onDone }: ScriptStepProps) {
         <Input
           id="topic"
           value={topic}
-          onChange={(e) => setTopic(e.target.value)}
+          onChange={(e) => update("topic", e.target.value)}
           placeholder="e.g. AI productivity tools"
           required
           maxLength={500}
@@ -60,7 +70,7 @@ export function ScriptStep({ onDone }: ScriptStepProps) {
         <Input
           id="audience"
           value={audience}
-          onChange={(e) => setAudience(e.target.value)}
+          onChange={(e) => update("audience", e.target.value)}
           placeholder="e.g. solo founders & marketers"
           required
           maxLength={300}
@@ -72,7 +82,7 @@ export function ScriptStep({ onDone }: ScriptStepProps) {
           id="duration"
           type="number"
           value={durationSec}
-          onChange={(e) => setDurationSec(Number(e.target.value))}
+          onChange={(e) => update("durationSec", Number(e.target.value))}
           min={10}
           max={300}
         />
