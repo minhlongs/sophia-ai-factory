@@ -1,8 +1,18 @@
 # Project Roadmap
 
 **Project Name:** Sophia AI Video Factory
-**Current Version:** 1.14.15 (TIER-2 Security & Observability Overhaul SHIPPED)
-**Last Updated:** 2026-04-28
+**Current Version:** 1.14.16 (Video Go-Live + HeyGen Webhook)
+**Last Updated:** 2026-04-29
+
+## 🔮 Q3 Candidate: HyperFrames Composition Layer
+
+**Source:** https://github.com/heygen-com/hyperframes (Apache 2.0, HTML→video).
+
+**Use case:** intro/outro overlays, lower-thirds, animated captions, data charts wrapping around HeyGen avatar core.
+
+**Decision:** evaluate after current go-live stabilizes. Requires separate render service (Docker on Fly.io / Cloud Run) — Cloudflare Workers cannot host Puppeteer + FFmpeg. Sophia would call render service via REST and composite outputs.
+
+**Out of scope for v1.14.x.**
 
 ## 📅 Roadmap Overview
 
