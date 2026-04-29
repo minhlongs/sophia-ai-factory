@@ -6,12 +6,16 @@
  *   - D1 ok  → push heartbeat (BS shows green)
  *   - D1 fail → SKIP heartbeat (silence triggers BS missed-heartbeat alert) + push fatal log
  *
+ * Observability: records run result to cron_run_log via run-tracker (migration 0026).
+ * Idempotency: skips execution if run within last 5 minutes.
+ *
  * TODO: future migration to CF scheduled() handler removes HTTP exposure.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { pushHeartbeat, pushFatalLog } from '@/lib/telemetry/better-stack-client';
 import { getErrorMessage } from '@/lib/utils/to-error';
+import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,6 +44,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   return handler(request);
 }
 
+const CRON_NAME = 'heartbeat';
+/** Idempotency window: skip if ran within last 5 minutes */
+const IDEMPOTENCY_WINDOW_MS = 5 * 60 * 1000;
+
 async function handler(request: NextRequest): Promise<NextResponse> {
   // RED-TEAM #3: verify CRON_SECRET
   const cronSecret = process.env.CRON_SECRET;
@@ -59,12 +67,19 @@ async function handler(request: NextRequest): Promise<NextResponse> {
   const db = (globalThis as unknown as Env).DB;
 
   if (db) {
+    // Idempotency: skip if recently run to prevent double-execution
+    const alreadyRan = await wasRecentlyRun(db as D1Database, CRON_NAME, IDEMPOTENCY_WINDOW_MS);
+    if (alreadyRan) {
+      return NextResponse.json({ ok: true, skipped: true, reason: 'recently_run' }, { status: 200 });
+    }
+
     try {
       await db.prepare('SELECT 1').first();
     } catch (d1Err) {
       const errMsg = getErrorMessage(d1Err);
       // D1 unavailable: push fatal log, SKIP heartbeat (silence = BS missed-heartbeat alert)
       await pushFatalLog('D1_UNAVAILABLE', errMsg, bsConfig);
+      await recordCronRun(db as D1Database, CRON_NAME, 'failure', errMsg);
       return NextResponse.json(
         { ok: false, reason: 'D1_UNAVAILABLE — heartbeat skipped' },
         { status: 200 }
@@ -72,8 +87,20 @@ async function handler(request: NextRequest): Promise<NextResponse> {
     }
   }
 
-  // D1 healthy: confirm liveness to Better Stack
-  await pushHeartbeat(heartbeatUrl);
+  try {
+    // D1 healthy: confirm liveness to Better Stack
+    await pushHeartbeat(heartbeatUrl);
 
-  return NextResponse.json({ ok: true, ts: new Date().toISOString() });
+    if (db) {
+      await recordCronRun(db as D1Database, CRON_NAME, 'success');
+    }
+
+    return NextResponse.json({ ok: true, ts: new Date().toISOString() });
+  } catch (err) {
+    const errMsg = getErrorMessage(err);
+    if (db) {
+      await recordCronRun(db as D1Database, CRON_NAME, 'failure', errMsg);
+    }
+    return NextResponse.json({ ok: false, reason: errMsg }, { status: 500 });
+  }
 }

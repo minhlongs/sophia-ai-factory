@@ -596,6 +596,19 @@ system-health page (/dashboard/system-health)
 
 ---
 
+## Operations & Disaster Recovery
+
+See [`docs/disaster-recovery.md`](./disaster-recovery.md) for RTO/RPO definitions, backup procedures, and recovery runbooks:
+
+- **RTO (Recovery Time Objective):** 4 hours
+- **RPO (Recovery Point Objective):** 24 hours
+- **Automated backups:** D1 exports via `scripts/dr/d1-snapshot.sh` (daily 02:00 UTC)
+- **Recovery scripts:** `scripts/dr/restore-from-snapshot.sh` (dry-run safe by default)
+- **Components covered:** D1 database, R2 cache, KV namespace, Worker code
+- **Quarterly DR drills:** First Tuesday of each quarter
+
+---
+
 ## Scalability Considerations
 - **Frontend**: Stateless, deployable to Vercel Edge/Serverless.
 - **Backend**: n8n can be self-hosted or cloud-hosted; scales independently.
