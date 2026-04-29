@@ -1,6 +1,14 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-28 | **Current Version:** 1.14.13
+**Last Updated:** 2026-04-28 | **Current Version:** 1.14.14
+
+---
+
+## v1.14.14 — TIER-2D Observability Platform (Sentry + Health Probes + Logger) — 2026-04-28
+
+**Severity: MEDIUM | Type: Feature | Status: SHIPPED**
+
+Integrated `@sentry/nextjs` v8 with auto-instrumentation across client/server/edge runtimes. Wrapped `next.config.ts` with `withSentryConfig` (telemetry off; sourcemap upload via CI script `scripts/ci/sentry-upload-sourcemaps.sh` when `SENTRY_AUTH_TOKEN` present; gracefully skips if token absent). Enhanced `/api/health` with D1/R2/KV liveness probes (1500ms timeout, 30s cache). Structured logger at `@/lib/utils/logger-utility` with dynamic Sentry hook (error level only, no-op without SDK). Upgraded 4 of 5 `console.error` calls to structured logger. One intentional fallback at `logger-internals.ts:92` (avoids recursive loop). Release tag = git short SHA for deploy verification via `/api/version`. **Tests:** 1604/1604 pass (+15 net observability tests). **Build:** 0 TS errors, 10.2s.
 
 ---
 

@@ -570,6 +570,32 @@ system-health page (/dashboard/system-health)
 
 ---
 
+## Observability & Error Tracking (TIER-2D — 2026-04-28)
+
+### Sentry Integration
+- **SDK**: `@sentry/nextjs` v8 with `instrumentation.ts` (Next.js 15+ pattern)
+- **Auto-instrumentation**: Client, Server, Edge runtime handlers configured via `withSentryConfig()` wrapper in `next.config.ts`
+- **PII Filtering**: `beforeSend` hook strips sensitive fields (token, secret, password, key, auth keys, credit card)
+- **4xx Filtering**: HTTP 4xx errors dropped (not actionable)
+- **Sampling**: 10% traces in prod / 100% in dev; replays on errors at 10% prod to minimize data ingest
+- **Release Tracking**: Release tag = git short SHA (matches `/api/version` shortSha) for precise deploy correlation
+- **Source Maps**: Client maps auto-uploaded by Sentry plugin; server+edge maps from `.open-next/` via CLI script `scripts/ci/sentry-upload-sourcemaps.sh`
+
+### Health Monitoring
+- **Endpoint**: `GET /api/health` — service liveness with structured response
+- **Probes**: D1 (test query), R2 (object exists), KV (key-value read) — 1500ms timeout per probe
+- **Caching**: 30s response cache to prevent thundering herd
+- **Response Schema**: `{ ok: boolean, db: {ok, latency}, r2: {ok, latency}, kv: {ok, latency}, sha: string, deployedAt: ISO8601, latencyMs: number }`
+
+### Structured Logging
+- **Module**: `@/lib/utils/logger-utility` — Sentry-aware logger
+- **Dynamic Hook**: Auto-detects Sentry SDK presence; forwards `error` level to Sentry (graceful no-op if SDK absent)
+- **Signature**: `logger.error(message, {error?, ...metadata}?, requestId?)` — object form preferred
+- **Fallback**: Legacy form `logger.error(message, error, metadata, requestId)` still supported
+- **Production Safety**: One intentional `console.error` fallback at `logger-internals.ts:92` to prevent recursive logging
+
+---
+
 ## Scalability Considerations
 - **Frontend**: Stateless, deployable to Vercel Edge/Serverless.
 - **Backend**: n8n can be self-hosted or cloud-hosted; scales independently.

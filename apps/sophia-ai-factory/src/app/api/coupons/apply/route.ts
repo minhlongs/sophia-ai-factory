@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/better-auth-session';
 import { createServerClient } from '@/lib/db/client';
 import { z } from 'zod';
+import { logger } from '@/lib/utils/logger-utility';
 
 const applySchema = z.object({
   code: z.string().optional(),
@@ -118,7 +119,7 @@ export async function POST(request: NextRequest) {
       error: '',
     });
   } catch (err) {
-    console.error('[coupons/apply] error:', err);
+    logger.error('[coupons/apply] error', err instanceof Error ? err : new Error(String(err)));
     return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
   }
 }

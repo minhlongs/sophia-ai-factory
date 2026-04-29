@@ -7,5 +7,9 @@ export interface ServiceHealth {
 export interface HealthResponse {
   status: 'healthy' | 'degraded' | 'unhealthy';
   timestamp: string;
+  /** Short commit SHA from COMMIT_SHA env (injected by wrangler-set-build-vars.sh) */
+  sha?: string;
+  /** ISO timestamp of deploy from DEPLOYED_AT env */
+  deployedAt?: string;
   services: Record<string, ServiceHealth>;
 }

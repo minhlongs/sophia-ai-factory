@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 import createNextIntlPlugin from 'next-intl/plugin';
 import withBundleAnalyzer from '@next/bundle-analyzer';
 import withPWAInit from '@ducanh2912/next-pwa';
+import { withSentryConfig } from '@sentry/nextjs';
 import { buildCSPHeader } from './src/lib/security/content-security-policy-configuration';
 
 const withNextIntl = createNextIntlPlugin('./src/i18n.ts');
@@ -99,4 +100,19 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withPWA(withAnalyzer(withNextIntl(nextConfig)));
+const composedConfig = withPWA(withAnalyzer(withNextIntl(nextConfig)));
+
+export default withSentryConfig(composedConfig, {
+  // Sentry build-time options
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  // Don't print Sentry logs during build (reduce CI noise)
+  silent: true,
+  // Keep source maps out of client bundle — upload to Sentry then strip
+  hideSourceMaps: true,
+  // Upload wider set of client-side source maps
+  widenClientFileUpload: true,
+  // Disable telemetry in CI builds; Sentry v8 auto-skips plugin in dev
+  telemetry: false,
+});

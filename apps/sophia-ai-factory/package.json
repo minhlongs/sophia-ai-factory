@@ -23,8 +23,9 @@
     "worker:dev": "wrangler dev",
     "worker:deploy": "wrangler deploy",
     "worker:typecheck": "tsc --noEmit --project tsconfig.worker.json",
-    "deploy": "npx @opennextjs/cloudflare build && wrangler deploy",
-    "deploy:build": "npx @opennextjs/cloudflare build"
+    "deploy": "npx @opennextjs/cloudflare build && npm run sentry:upload; wrangler deploy",
+    "deploy:build": "npx @opennextjs/cloudflare build",
+    "sentry:upload": "bash scripts/ci/sentry-upload-sourcemaps.sh"
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",
@@ -40,6 +41,7 @@
     "@radix-ui/react-switch": "^1.2.6",
     "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-tooltip": "^1.2.8",
+    "@sentry/nextjs": "^8.55.2",
     "@swc/helpers": "^0.5.18",
     "@tanstack/react-query": "^5.90.20",
     "@upstash/redis": "^1.36.2",
@@ -85,6 +87,7 @@
     "@cloudflare/workers-types": "^4.20250204.0",
     "@next/bundle-analyzer": "^16.1.6",
     "@playwright/test": "^1.58.1",
+    "@sentry/cli": "^3.4.1",
     "@tailwindcss/postcss": "^4",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.2",

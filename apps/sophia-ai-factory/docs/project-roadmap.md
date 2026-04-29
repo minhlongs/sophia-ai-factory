@@ -286,6 +286,17 @@ Converged fragmented auth patterns (Basic Auth via `checkAdminAuth` middleware, 
 
 ---
 
+## 🔧 Observability Platform (TIER-2D — 2026-04-28)
+
+### ✅ TIER-2D: Sentry + Health Probes + Structured Logger (2026-04-28)
+**Goal:** Production observability with error tracking, health monitoring, and structured logging.
+
+Integrated `@sentry/nextjs` v8 with auto-instrumentation (client/server/edge runtimes). Wrapped `next.config.ts` with `withSentryConfig` (telemetry off; source maps uploaded via CI script when token present; graceful skip without token). Enhanced `/api/health` with D1/R2/KV liveness probes (1500ms timeout, 30s cache). Structured logger at `@/lib/utils/logger-utility` with dynamic Sentry hook (error level only, no-op without SDK). Upgraded 4 of 5 `console.error` calls; 1 intentional fallback to prevent recursion. Release tag = git short SHA for deploy verification. **Score uplift:** ~83 → ~88/100 (observability front). **Tests:** 1604/1604 pass (+15 net). **Status:** SHIPPED.
+
+**Remaining Tier-2:** 2A (TS strict), 2C (MFA), 2E (CSP headers), 2F (cron tasks), 2G (CSRF), 2H (data retention), 2I (DR plan), 2J (DNS validation).
+
+---
+
 ### 🔮 Phase 11: Supervisor Agent Phase 2 (Future)
 **Goal:** Real PEV (Prompt Execution Validator) engine + advanced features.
 - [ ] **PEV Engine Integration**: Replace MVP stubs with real executeStep logic

@@ -7,6 +7,7 @@
  */
 
 import type { EnrichmentLog } from './enrichment-logger-types';
+import { logger } from '@/lib/utils/logger-utility';
 
 /** Subset of Cloudflare Worker Env bindings used by the log queue */
 interface LogQueueEnv {
@@ -67,13 +68,13 @@ export async function flushLogs(queue: LogQueue, env: LogQueueEnv): Promise<void
     });
 
     if (!response.ok) {
-      console.error('[Enrichment Logger] Flush failed:', response.status);
+      logger.error('[Enrichment Logger] Flush failed', { status: response.status });
       if (queue.logs.length < queue.maxBatchSize * 2) {
         queue.logs.unshift(...logsToFlush);
       }
     }
   } catch (error) {
-    console.error('[Enrichment Logger] Flush error:', error instanceof Error ? error.message : error);
+    logger.error('[Enrichment Logger] Flush error', error instanceof Error ? error : new Error(String(error)));
     if (queue.logs.length < queue.maxBatchSize * 2) {
       queue.logs.unshift(...logsToFlush);
     }

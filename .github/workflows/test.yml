@@ -45,6 +45,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          fetch-depth: 0  # Full history needed for sentry-cli set-commits --auto
 
       - name: Setup Node.js
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
@@ -58,6 +60,16 @@ jobs:
       - name: Build for Cloudflare (opennext)
         run: npx opennextjs-cloudflare build
         working-directory: apps/sophia-ai-factory
+
+      - name: Upload source maps to Sentry
+        run: npm run sentry:upload
+        working-directory: apps/sophia-ai-factory
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+          SENTRY_RELEASE: ${{ github.sha }}
+        continue-on-error: true
 
       - name: Install root deps (for wrangler)
         run: npm install --legacy-peer-deps

@@ -89,7 +89,11 @@ export const log = (
 
   switch (level) {
     case 'error':
-      console.error(formatted);
+      console.error(formatted); // LEGIT FALLBACK — do not replace
+      // Breadcrumb to Sentry on error level (non-blocking, SDK may be absent)
+      if (error) {
+        captureToSentry(error, entry.metadata).catch(() => { /* no-op */ });
+      }
       break;
     case 'warn':
       console.warn(formatted);
@@ -101,6 +105,29 @@ export const log = (
       console.log(formatted);
   }
 };
+
+// Module-level cache so dynamic import runs once per module lifetime
+let _sentryModule: { captureException: (err: unknown, ctx?: unknown) => void } | null = null;
+let _sentryLoadAttempted = false;
+
+async function captureToSentry(
+  error: Error,
+  metadata?: Record<string, unknown>
+): Promise<void> {
+  if (_sentryLoadAttempted && !_sentryModule) return; // SDK absent, skip
+  try {
+    if (!_sentryLoadAttempted) {
+      _sentryLoadAttempted = true;
+      // Dynamic import prevents circular dep (Sentry -> logger -> Sentry)
+      const sentry = await import('@sentry/nextjs');
+      // Narrow shape to only what we use — full module has 230+ exports
+      _sentryModule = { captureException: sentry.captureException };
+    }
+    _sentryModule?.captureException(error, { extra: metadata });
+  } catch {
+    _sentryModule = null; // mark as unavailable
+  }
+}
 
 export function resolveErrorArgs(
   arg2: Error | Record<string, unknown> | undefined,
