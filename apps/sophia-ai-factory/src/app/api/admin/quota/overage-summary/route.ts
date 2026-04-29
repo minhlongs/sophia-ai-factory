@@ -17,18 +17,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import { toError } from '@/lib/utils/to-error';
+import { requireAdmin } from '@/lib/auth/require-admin';
 import type { OverageEventRow } from '@/lib/supabase/types';
 
 export async function GET(req: NextRequest) {
-  const adminAuth = req.headers.get('x-admin-key');
-
-  // Admin authentication
-  if (!adminAuth || adminAuth !== process.env.ADMIN_API_KEY) {
-    return NextResponse.json(
-      { error: 'Unauthorized - Admin API key required' },
-      { status: 401 }
-    );
-  }
+  const auth = await requireAdmin(req);
+  if (auth instanceof NextResponse) return auth;
 
   try {
     const searchParams = req.nextUrl.searchParams;

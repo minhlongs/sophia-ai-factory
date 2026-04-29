@@ -9,7 +9,7 @@
 | Phase | Title | Status | Score Lift |
 |-------|-------|--------|-----------|
 | 01 | Tier-1 Quick Wins | ✅ Completed (2026-04-28) | +13 → ~80/100 |
-| 02 | Tier-2 Backlog (multi-sprint) | ⬜ Planned | +20 → ~100/100 |
+| 02 | Tier-2 Backlog (multi-sprint) | 🟡 Partial — TIER-2B done (2026-04-28), others deferred | +3 (TIER-2B) → ~83/100 |
 
 ## Phase 01 Result (2026-04-28)
 
@@ -40,13 +40,16 @@
 
 **Owner files:** see `phase-01-tier1-quick-wins.md`.
 
-## Phase 02 — Tier-2 Backlog (deferred, multi-sprint)
+## Phase 02 — Tier-2 Backlog (deferred, multi-sprint) — TIER-2B Completed 2026-04-28
 
-**Estimate:** 6-8 weeks (3-4 sprints).
+**Estimate:** 6-8 weeks (3-4 sprints) for remaining items.
 
-**Scope:**
+**Completed (2026-04-28):**
+- ✅ **TIER-2B** — Admin auth unification: 33 routes → single `requireAdmin()` helper
+  - Related: `plans/260428-2107-tier2b-admin-auth-unify/` | Reports: `tier2b-implement-260428-2107.md`, `tester-tier2b-260428-2107.md`, `code-review-tier2b-260428-2107.md`
+
+**Remaining Scope (deferred):**
 - B2 — fix 462 TS errors masked by `ignoreBuildErrors: true` (biggest single ticket; 2 sprints)
-- B3 full — unify admin auth (single `requireAdmin()` via Better Auth + RBAC), delete `ADMIN_USER/PASS` paths
 - MFA — Better Auth two-factor plugin spike + admin enforcement
 - Observability — Sentry SDK + source maps + APM dashboards
 - CSP — nonce-based migration, drop `'unsafe-inline'`

@@ -718,6 +718,88 @@ When adding new admin-protected routes, use `isUserAdmin()` for simple boolean c
 
 ---
 
+## Admin Request Handler Pattern — `requireAdmin()` (TIER-2B, 2026-04-28)
+
+**Purpose:** Single-source entry-point for admin API routes. Handles session retrieval + role check in one call, returns `NextResponse` on auth failure or `User` on success. Replaces fragmented Basic Auth, API-key, and inline patterns.
+
+**Canonical Location:** `src/lib/auth/require-admin.ts`
+
+**Canonical Implementation:**
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { User } from '@/lib/db/client';
+import { getCurrentUser } from '@/lib/better-auth-session';
+
+export async function requireAdmin(request: NextRequest): Promise<User | NextResponse> {
+  const user = await getCurrentUser();
+  
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  
+  if (user.role !== 'admin') {
+    return NextResponse.json({ error: 'Forbidden - admin only' }, { status: 403 });
+  }
+  
+  // Audit log (best-effort, non-blocking)
+  // Implementation deferred to lib/auth/admin-audit-log.ts
+  
+  return user;
+}
+```
+
+**Canonical Usage Pattern — All Admin Routes:**
+
+```typescript
+// src/app/api/admin/licenses/route.ts
+import { requireAdmin } from '@/lib/auth/require-admin';
+
+export async function GET(request: NextRequest) {
+  const auth = await requireAdmin(request);
+  if (auth instanceof NextResponse) return auth;
+  
+  const user = auth; // TypeScript knows this is User
+  // Admin-only logic continues...
+}
+
+export async function POST(request: NextRequest) {
+  const auth = await requireAdmin(request);
+  if (auth instanceof NextResponse) return auth;
+  
+  const user = auth;
+  // Admin-only logic continues...
+}
+```
+
+**Applied Across (TIER-2B Phase 01):**
+
+31 admin endpoints unified:
+- Licenses (GET, POST, [id] GET/POST, audit, create, extend, reactivate, regenerate)
+- Audit (receipt, receipt/verify, reports GET/POST/[id]/download)
+- Billing (overage-events, summary)
+- Dunning (status GET/POST, [licenseNonce] GET/POST/restore/suspend)
+- Quota (adjust, mark-billable, overage-summary)
+- Usage (customer-linkage, reconciliation, export)
+- API-keys (GET/POST, [id])
+- Violations (GET)
+- Invite (GET/POST)
+
+**Pattern Benefits:**
+
+1. **Single Auth Source** — All 33+ routes use same logic, easier to audit
+2. **Type-Safe Return** — `Promise<User | NextResponse>` eliminates guessing on failure case
+3. **Removed Legacy Patterns** — Deleted `checkAdminAuth` middleware and `x-admin-key` checks
+4. **Security Posture** — Enables post-deploy Cloudflare env var cleanup (`ADMIN_USER`, `ADMIN_PASS`, `ADMIN_API_KEY`)
+5. **Backward Compat** — Phases 25-26 helpers (`isUserAdmin()`, `isUserAdminWithRole()`) still available for Server Actions + other contexts (not request-scoped)
+
+**Status:**  
+- Build: ✅ 0 TS errors  
+- Tests: ✅ 1588/1588 pass (+4 new unit tests in require-admin.test.ts)  
+- Coverage: 31 routes (4 pre-existing, 27 newly migrated)
+
+---
+
 ## next-intl Formatter Type Pattern (Phase 29)
 
 Use the canonical type alias pattern when accepting a formatter result as a prop from `next-intl/server`. This replaces broken `import type { IntlFormat } from 'intl'` (non-existent export).

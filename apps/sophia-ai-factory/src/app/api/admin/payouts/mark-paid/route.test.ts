@@ -69,11 +69,11 @@ describe('POST /api/admin/payouts/mark-paid', () => {
     expect(res.status).toBe(401);
   });
 
-  it('returns 401 when user is not admin', async () => {
+  it('returns 403 when user is not admin', async () => {
     mockGetCurrentUserFromHeaders.mockResolvedValue({ id: 'user-1', email: 'user@test.com', role: 'user' } as any);
 
     const res = await POST(makeRequest());
-    expect(res.status).toBe(401);
+    expect(res.status).toBe(403);
   });
 
   it('returns 422 for invalid body (missing reference)', async () => {

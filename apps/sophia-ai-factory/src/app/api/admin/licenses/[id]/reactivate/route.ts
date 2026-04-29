@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getLicenseByNonce } from '@/lib/raas-audit'
-import { checkAdminAuth } from '../../middleware'
+import { requireAdmin } from '@/lib/auth/require-admin'
 import { logger } from '@/lib/utils/logger-utility'
 import { toError } from '@/lib/utils/to-error'
 import { createServerClient } from '@/lib/db/client'
@@ -24,9 +24,8 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  // Check admin authentication
-  const authError = checkAdminAuth(request)
-  if (authError) return authError
+  const auth = await requireAdmin(request);
+  if (auth instanceof NextResponse) return auth;
 
   try {
     const { id: nonce } = await params

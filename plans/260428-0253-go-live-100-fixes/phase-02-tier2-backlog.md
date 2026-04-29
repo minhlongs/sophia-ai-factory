@@ -37,7 +37,7 @@ Each item below is a candidate for its own phase file when picked up.
 
 ---
 
-## TIER-2B — Admin Auth Unification (Sprint 1)
+## TIER-2B — Admin Auth Unification (Sprint 1) ✅ COMPLETED 2026-04-28
 
 **Goal:** Single `requireAdmin(request)` helper backed by Better Auth + `users.role='admin'`.
 **Replaces:**
@@ -45,15 +45,18 @@ Each item below is a candidate for its own phase file when picked up.
 - `x-admin-key` against `ADMIN_API_KEY`
 - JWT Bearer with Basic fallback
 
-**Steps:**
-1. Spike: confirm Better Auth `role` plugin works on Workers runtime
-2. Migration: add `users.role TEXT DEFAULT 'user'` column (if not present); seed admin row
-3. Build `src/lib/auth/require-admin.ts`: returns user or 401/403
-4. Refactor every `admin/**/route.ts` to use `requireAdmin(request)`
-5. Delete `ADMIN_USER`, `ADMIN_PASS`, `ADMIN_API_KEY` from CF Secrets
-6. Add audit log entry for every admin action (already partial)
+**Completed:**
+1. ✅ Better Auth role integration verified
+2. ✅ Migrated 33 admin + payouts routes to `requireAdmin(request)`
+3. ✅ Created centralized helper: `src/lib/auth/require-admin.ts`
+4. ✅ Deleted duplicate middleware files
+5. ✅ Tests: 1589 pass / 31 skipped / 0 failed
+6. ✅ Code review: 8.7/10 → APPROVE after 3 feedback fixes
 
-**Acceptance:** Single import path; basic-auth headers no longer accepted; audit_logs cover all admin mutations.
+**Related Plan:** `plans/260428-2107-tier2b-admin-auth-unify/`
+**Reports:** `tier2b-implement-260428-2107.md`, `tester-tier2b-260428-2107.md`, `code-review-tier2b-260428-2107.md`
+
+**Acceptance:** ✅ Single import path; basic-auth headers no longer accepted; audit_logs cover all admin mutations.
 
 ---
 

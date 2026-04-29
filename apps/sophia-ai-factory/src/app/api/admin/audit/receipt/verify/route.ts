@@ -16,7 +16,7 @@ import {
   parseReceipt
 } from '@/lib/audit/compliance-receipt'
 import type { ComplianceReceipt } from '@/lib/audit/compliance-receipt'
-import { checkAdminAuth } from '@/app/api/admin/licenses/middleware'
+import { requireAdmin } from '@/lib/auth/require-admin'
 import { logger } from '@/lib/utils/logger-utility'
 import { z } from 'zod'
 import { rateLimit } from '@/lib/security/rate-limiter'
@@ -36,9 +36,8 @@ const verifyReceiptSchema = z.object({
  * Body: { receiptJson: string } OR { receiptId: string, signature: string }
  */
 export async function POST(request: NextRequest) {
-  // Check admin authentication
-  const authError = checkAdminAuth(request)
-  if (authError) return authError
+  const auth = await requireAdmin(request);
+  if (auth instanceof NextResponse) return auth;
 
   // Rate limiting: 200 requests per minute per IP (verification is cheaper)
   const ip = request.headers.get('x-forwarded-for') || 'unknown'

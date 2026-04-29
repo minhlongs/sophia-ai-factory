@@ -3,55 +3,21 @@
  *
  * DELETE /api/admin/api-keys/[id] - Revoke/delete an API key
  *
- * Requires admin authentication
+ * Requires admin authentication via Better Auth session + role check
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@/lib/utils/logger-utility'
 import { toError } from '@/lib/utils/to-error'
+import { requireAdmin } from '@/lib/auth/require-admin'
 
 import {
   revokeApiKey,
   deleteApiKey,
-  validateApiKey,
 } from '@/lib/security/api-key-validator'
-import { validateJwt } from '@/lib/security/jwt-validator'
 import { logApiKeyRevocation } from '@/lib/audit/audit-query-logger'
 
 export const dynamic = 'force-dynamic'
-
-/**
- * Check admin authorization via Basic Auth or JWT
- * Returns user ID if authorized, null otherwise
- */
-async function getAuthorizedUserId(request: NextRequest): Promise<string | null> {
-  // Try JWT first (Authorization: Bearer <token>)
-  const authHeader = request.headers.get('authorization')
-  if (authHeader?.startsWith('Bearer ')) {
-    const jwtResult = await validateJwt(authHeader)
-    if (jwtResult.valid) {
-      return jwtResult.payload?.sub || null
-    }
-  }
-
-  // Fallback to Basic Auth
-  const basicAuth = authHeader
-  if (basicAuth) {
-    try {
-      const authValue = basicAuth.split(' ')[1]
-      const [user, pwd] = atob(authValue).split(':')
-      const validUser = process.env.ADMIN_USER
-      const validPass = process.env.ADMIN_PASS
-      if (user === validUser && pwd === validPass) {
-        return 'admin-basic-auth'
-      }
-    } catch {
-      // Invalid basic auth format
-    }
-  }
-
-  return null
-}
 
 /**
  * DELETE /api/admin/api-keys/[id]
@@ -65,14 +31,9 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const userId = await getAuthorizedUserId(request)
-
-  if (!userId) {
-    return NextResponse.json(
-      { error: 'Unauthorized' },
-      { status: 401 }
-    )
-  }
+  const auth = await requireAdmin(request);
+  if (auth instanceof NextResponse) return auth;
+  const userId = auth.user.id;
 
   const keyId = (await params).id
 

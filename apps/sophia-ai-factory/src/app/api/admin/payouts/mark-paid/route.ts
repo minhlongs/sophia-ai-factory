@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUserFromHeaders } from '@/lib/better-auth-session';
+import { requireAdmin } from '@/lib/auth/require-admin';
 import { logger } from '@/lib/utils/logger-utility';
 import { toError } from '@/lib/utils/to-error';
 import { MarkPaidSchema } from '@/lib/wallet/payout-validators';
@@ -16,12 +16,9 @@ import { notifyPayoutSent } from '@/lib/wallet/payout-telegram-notify';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
-  const adminUser = await getCurrentUserFromHeaders(req.headers);
-  if (!adminUser || adminUser.role !== 'admin') {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const adminId = adminUser.id;
+  const auth = await requireAdmin(req);
+  if (auth instanceof NextResponse) return auth;
+  const adminId = auth.user.id;
 
   let body: unknown;
   try {

@@ -12,7 +12,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import { toError } from '@/lib/utils/to-error';
-import { checkAdminAuth } from '../../middleware';
+import { requireAdmin } from '@/lib/auth/require-admin';
 import { z } from 'zod';
 import { suspendLicense, restoreLicense } from '@/lib/billing/dunning-workflow';
 import {
@@ -27,9 +27,10 @@ import {
  * GET /api/admin/dunning/status
  */
 export async function GET(req: NextRequest) {
+  const auth = await requireAdmin(req);
+  if (auth instanceof NextResponse) return auth;
+
   try {
-    const authError = checkAdminAuth(req);
-    if (authError) return authError;
 
     const searchParams = req.nextUrl.searchParams;
     const params = dunningListSchema.parse(Object.fromEntries(searchParams));
@@ -85,9 +86,10 @@ export async function GET(req: NextRequest) {
  * Manual suspend/restore license
  */
 export async function POST(req: NextRequest) {
+  const auth = await requireAdmin(req);
+  if (auth instanceof NextResponse) return auth;
+
   try {
-    const authError = checkAdminAuth(req);
-    if (authError) return authError;
 
     const body = await req.json();
     const parsed = dunningActionSchema.parse(body);

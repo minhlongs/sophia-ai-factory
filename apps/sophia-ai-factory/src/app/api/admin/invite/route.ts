@@ -1,31 +1,13 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/db/client";
 import { UNIFIED_TIERS } from "@/config/tiers";
 import type { Tier } from "@/types";
 import { withRateLimit } from '@/middleware/rate-limit-wrapper';
+import { requireAdmin } from '@/lib/auth/require-admin';
 
 export const dynamic = "force-dynamic";
 
 const VALID_TIERS: Tier[] = ["BASIC", "PREMIUM", "ENTERPRISE", "MASTER"];
-
-/**
- * Validate admin Basic Auth from request headers.
- */
-function isAdminAuthorized(request: Request): boolean {
-  const basicAuth = request.headers.get("authorization");
-  if (!basicAuth) return false;
-
-  try {
-    const authValue = basicAuth.split(" ")[1];
-    const [user, pwd] = atob(authValue).split(":");
-    const validUser = process.env.ADMIN_USER;
-    const validPass = process.env.ADMIN_PASS;
-    if (!validUser || !validPass) return false;
-    return user === validUser && pwd === validPass;
-  } catch {
-    return false;
-  }
-}
 
 /**
  * POST /api/admin/invite
@@ -33,13 +15,9 @@ function isAdminAuthorized(request: Request): boolean {
  * Invites a user via Supabase Auth admin API with tier metadata.
  */
 // Wrap handler with rate limiting (20 requests per minute for admin endpoints)
-export const POST = withRateLimit(async function POST(request: Request) {
-  if (!isAdminAuthorized(request)) {
-    return NextResponse.json(
-      { success: false, message: "Unauthorized" },
-      { status: 401 }
-    );
-  }
+export const POST = withRateLimit(async function POST(request: NextRequest) {
+  const auth = await requireAdmin(request);
+  if (auth instanceof NextResponse) return auth;
 
   try {
     const body = await request.json();

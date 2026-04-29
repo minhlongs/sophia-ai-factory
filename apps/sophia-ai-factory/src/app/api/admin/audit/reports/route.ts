@@ -9,7 +9,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { checkAdminAuth } from '@/app/api/admin/licenses/middleware'
+import { requireAdmin } from '@/lib/auth/require-admin'
 import { rateLimit } from '@/lib/security/rate-limiter'
 import { logger } from '@/lib/utils/logger-utility'
 import { z } from 'zod'
@@ -41,9 +41,9 @@ const scheduleReportSchema = z.object({
 
 // GET /api/admin/audit/reports
 export async function GET(request: NextRequest) {
-  // Check admin authentication
-  const authError = checkAdminAuth(request)
-  if (authError) return authError
+  const auth = await requireAdmin(request);
+  if (auth instanceof NextResponse) return auth;
+  const adminId = `admin-${auth.user.id}`;
 
   // Rate limiting
   const ip = request.headers.get('x-forwarded-for') || 'unknown'
@@ -57,10 +57,6 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Extract admin ID from auth header
-    const basicAuth = request.headers.get('authorization')
-    const adminId = basicAuth ? `admin-${Buffer.from(basicAuth.split(' ')[1], 'base64').toString('utf-8').split(':')[0]}` : 'unknown'
-
     // Get all scheduled reports
     const reports = await getScheduledReports(adminId)
 
@@ -88,9 +84,8 @@ export async function GET(request: NextRequest) {
 
 // POST /api/admin/audit/reports
 export async function POST(request: NextRequest) {
-  // Check admin authentication
-  const authError = checkAdminAuth(request)
-  if (authError) return authError
+  const auth = await requireAdmin(request);
+  if (auth instanceof NextResponse) return auth;
 
   // Rate limiting
   const ip = request.headers.get('x-forwarded-for') || 'unknown'
@@ -107,10 +102,7 @@ export async function POST(request: NextRequest) {
     // Parse request body
     const body = await request.json()
     const validatedData = scheduleReportSchema.parse(body)
-
-    // Extract admin ID from auth header for createdBy
-    const basicAuth = request.headers.get('authorization')
-    const adminUser = basicAuth ? Buffer.from(basicAuth.split(' ')[1], 'base64').toString('utf-8').split(':')[0] : 'unknown'
+    const adminUser = auth.user.email ?? auth.user.id;
 
     // Schedule the report
     const scheduledReport = await scheduleReport({

@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUserFromHeaders } from '@/lib/better-auth-session';
+import { requireAdmin } from '@/lib/auth/require-admin';
 import { logger } from '@/lib/utils/logger-utility';
 import { toError } from '@/lib/utils/to-error';
 import { QueueQuerySchema, MIN_PAYOUT_USD } from '@/lib/wallet/payout-validators';
@@ -30,10 +30,8 @@ function getD1Binding(): D1Database {
 }
 
 export async function GET(req: NextRequest) {
-  const user = await getCurrentUserFromHeaders(req.headers);
-  if (!user || user.role !== 'admin') {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const auth = await requireAdmin(req);
+  if (auth instanceof NextResponse) return auth;
 
   try {
     const rawParams = Object.fromEntries(req.nextUrl.searchParams.entries());

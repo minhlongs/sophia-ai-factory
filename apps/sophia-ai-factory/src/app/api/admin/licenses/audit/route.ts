@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuditLogs } from '@/lib/raas-audit'
-import { checkAdminAuth } from '../middleware'
+import { requireAdmin } from '@/lib/auth/require-admin'
 import { logger } from '@/lib/utils/logger-utility'
 import type { AuditAction, RaasAuditLogFilters } from '@/lib/raas-schema'
 import { z } from 'zod'
@@ -36,9 +36,8 @@ function getNinetyDaysAgoTimestamp(): number {
  * Note: Logs retained for 30 days only
  */
 export async function GET(request: NextRequest) {
-  // Check admin authentication
-  const authError = checkAdminAuth(request)
-  if (authError) return authError
+  const auth = await requireAdmin(request);
+  if (auth instanceof NextResponse) return auth;
 
   try {
     const searchParams = request.nextUrl.searchParams

@@ -277,6 +277,13 @@ Resolved Phase 5 nits (env-validation loop merge, provision HTTP codes) + elimin
 ### ✅ Phase 6: Logger Ergonomics + BotState Validation + Rate Limiter Observability (2026-04-20)
 Delivered 3 quick wins: (1) new `logger.error()` overload with `{error?, ...metadata}` object form (backward-compatible); (2) `isBotState()` type guard + D1 state validation; (3) fail-open rate-limiter metrics emission. Tests: 1297/1297 (100% pass). Status: COMPLETE.
 
+## 🔧 Admin Authentication Unification (TIER-2B — 2026-04-28)
+
+### ✅ TIER-2B: Admin Auth Unification (2026-04-28)
+**Goal:** Single-source admin authentication across 33+ API routes.
+
+Converged fragmented auth patterns (Basic Auth via `checkAdminAuth` middleware, `x-admin-key` header, inline `isAdminAuthorized` checks) to unified `requireAdmin()` helper backed by Better Auth session + D1 role check. **Architecture:** New `src/lib/auth/require-admin.ts` (31 LOC) wraps session retrieval + role verification, returns `NextResponse` on unauthorized or `User` on success. Audit logging via `admin-audit-log.ts` (46 LOC). **Routes Unified:** 31 admin endpoints (licenses, audit, billing, dunning, quota, violations, api-keys, usage, invite) + 2 middleware files deleted. **Security posture lift:** Eliminates env-var dependencies (`ADMIN_USER`, `ADMIN_PASS`, `ADMIN_API_KEY`). **Tests:** 4 new unit tests (require-admin.test.ts), 1588/1588 pass (+4). **Build:** 0 TS errors. Status: SHIPPED.
+
 ---
 
 ### 🔮 Phase 11: Supervisor Agent Phase 2 (Future)

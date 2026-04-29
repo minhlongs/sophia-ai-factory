@@ -12,7 +12,7 @@ import {
   logLicenseCreation
 } from '@/lib/raas-audit'
 import { generateLicenseKey, generateMasterKey } from '@/lib/raas-key-generator'
-import { checkAdminAuth } from '../../middleware'
+import { requireAdmin } from '@/lib/auth/require-admin'
 import { logger } from '@/lib/utils/logger-utility'
 import { Tier, TierLowercase } from '@/types'
 import { createHash } from 'crypto'
@@ -25,9 +25,8 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  // Check admin authentication
-  const authError = checkAdminAuth(request)
-  if (authError) return authError
+  const auth = await requireAdmin(request);
+  if (auth instanceof NextResponse) return auth;
 
   try {
     const { id: oldLicenseNonce } = await params

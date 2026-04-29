@@ -4,34 +4,16 @@
  * Audit and fix licenses missing Polar/Stripe customer IDs
  * Required for usage metering and billing reconciliation
  *
- * Authentication: Basic Auth (ADMIN_USER / ADMIN_PASS)
+ * Authentication: Better Auth session + role === 'admin'
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import { toError } from '@/lib/utils/to-error';
+import { requireAdmin } from '@/lib/auth/require-admin';
 import { customerLinkageRequestSchema } from '@/lib/validation/services';
 import type { RaasLicenseUpdate } from '@/lib/supabase/types';
-
-/**
- * Verify admin Basic Auth credentials
- */
-function isAdminAuthorized(request: NextRequest): boolean {
-  const basicAuth = request.headers.get('authorization');
-  if (!basicAuth) return false;
-
-  try {
-    const authValue = basicAuth.split(' ')[1];
-    const [user, pwd] = atob(authValue).split(':');
-    const validUser = process.env.ADMIN_USER;
-    const validPass = process.env.ADMIN_PASS;
-    if (!validUser || !validPass) return false;
-    return user === validUser && pwd === validPass;
-  } catch {
-    return false;
-  }
-}
 
 /**
  * GET /api/admin/usage/customer-linkage
@@ -40,12 +22,8 @@ function isAdminAuthorized(request: NextRequest): boolean {
  * Returns count and list of licenses without Polar/Stripe customer IDs
  */
 export async function GET(request: NextRequest) {
-  if (!isAdminAuthorized(request)) {
-    return NextResponse.json(
-      { error: 'Unauthorized. Admin Basic Auth required.' },
-      { status: 401, headers: { 'WWW-Authenticate': 'Basic realm="Admin"' } }
-    );
-  }
+  const auth = await requireAdmin(request);
+  if (auth instanceof NextResponse) return auth;
 
   try {
     const db = createServerClient();
@@ -130,12 +108,8 @@ export async function GET(request: NextRequest) {
  * Body: { license_nonce, polar_customer_id?, stripe_customer_id? }
  */
 export async function POST(request: NextRequest) {
-  if (!isAdminAuthorized(request)) {
-    return NextResponse.json(
-      { error: 'Unauthorized. Admin Basic Auth required.' },
-      { status: 401, headers: { 'WWW-Authenticate': 'Basic realm="Admin"' } }
-    );
-  }
+  const auth = await requireAdmin(request);
+  if (auth instanceof NextResponse) return auth;
 
   try {
     // Parse and validate request body with Zod

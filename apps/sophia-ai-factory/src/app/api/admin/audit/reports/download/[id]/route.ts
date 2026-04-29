@@ -8,7 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { checkAdminAuth } from '@/app/api/admin/licenses/middleware'
+import { requireAdmin } from '@/lib/auth/require-admin'
 import { rateLimit } from '@/lib/security/rate-limiter'
 import { logger } from '@/lib/utils/logger-utility'
 import { downloadStoredReport } from '@/lib/audit/report-delivery'
@@ -20,9 +20,8 @@ interface RouteParams {
 
 // GET /api/admin/audit/reports/download/[id]
 export async function GET(request: NextRequest, { params }: RouteParams) {
-  // Check admin authentication
-  const authError = checkAdminAuth(request)
-  if (authError) return authError
+  const auth = await requireAdmin(request);
+  if (auth instanceof NextResponse) return auth;
 
   // Rate limiting
   const ip = request.headers.get('x-forwarded-for') || 'unknown'

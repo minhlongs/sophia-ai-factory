@@ -7,24 +7,23 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/db/client'
-import { getCurrentUser } from '@/lib/better-auth-session'
 import { logger } from '@/lib/utils/logger-utility'
 import { toError } from '@/lib/utils/to-error'
-import { checkAdminAuth } from '../middleware'
+import { requireAdmin } from '@/lib/auth/require-admin'
 import { z } from 'zod'
 import { violationActionSchema } from './violations-schemas'
 
 export { GET } from './violations-get-handler'
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAdmin(req);
+  if (auth instanceof NextResponse) return auth;
+  const currentUserId = auth.user.id;
+
   try {
-    const authError = checkAdminAuth(req)
-    if (authError) return authError
 
     const body = await req.json()
     const parsed = violationActionSchema.parse(body)
-    const currentUser = await getCurrentUser()
-    const currentUserId = currentUser?.id
     const db = createServerClient()
 
     if (parsed.action === 'resolve') {
