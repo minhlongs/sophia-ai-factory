@@ -72,11 +72,12 @@ describe('sentry-options', () => {
     const fakeEvent = {
       extra: { authToken: 'secret', userId: '123' },
     };
-    const result = opts.beforeSend?.(fakeEvent as Parameters<NonNullable<typeof opts.beforeSend>>[0], {});
+    const result = opts.beforeSend?.(fakeEvent as unknown as Parameters<NonNullable<typeof opts.beforeSend>>[0], {});
     expect(result).not.toBeNull();
-    if (result && result.extra) {
-      expect(result.extra.authToken).toBe('[Filtered]');
-      expect(result.extra.userId).toBe('123');
+    const resultWithExtra = result as { extra?: Record<string, unknown> } | null;
+    if (resultWithExtra && resultWithExtra.extra) {
+      expect(resultWithExtra.extra.authToken).toBe('[Filtered]');
+      expect(resultWithExtra.extra.userId).toBe('123');
     }
   });
 });

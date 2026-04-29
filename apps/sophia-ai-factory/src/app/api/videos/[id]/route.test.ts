@@ -28,8 +28,8 @@ function buildDbStub(result: { data?: unknown; error?: unknown }) {
 const mockUser = {
   id: "u1",
   email: "a@b.c",
-  full_name: null,
-  avatar_url: null,
+  full_name: undefined,
+  avatar_url: undefined,
   role: "user",
 };
 

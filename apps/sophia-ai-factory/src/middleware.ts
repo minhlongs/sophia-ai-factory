@@ -16,12 +16,34 @@ import {
   csrfForbiddenResponse,
   CSRF_COOKIE_NAME,
 } from './lib/security/csrf'
+import { buildCSPHeader } from './lib/security/content-security-policy-configuration'
+import { CSP_NONCE_HEADER } from './lib/security/get-csp-nonce'
+
+/**
+ * Generate a cryptographically random nonce for this request.
+ * Uses Web Crypto API — compatible with Edge runtime (no node:crypto needed).
+ */
+function generateNonce(): string {
+  const bytes = new Uint8Array(16)
+  crypto.getRandomValues(bytes)
+  return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('')
+}
 
 const intlMiddleware = createMiddleware({
   locales: ['en', 'vi'],
   defaultLocale: 'en',
   localePrefix: 'as-needed',
 })
+
+/**
+ * Attach the per-request CSP nonce header to a response and forward the nonce
+ * to Server Components via the x-csp-nonce request header clone.
+ */
+function attachCspHeaders(response: NextResponse, nonce: string): void {
+  response.headers.set('Content-Security-Policy', buildCSPHeader(nonce))
+  // Forward nonce downstream so Server Components can read it via getCspNonce()
+  response.headers.set(CSP_NONCE_HEADER, nonce)
+}
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -30,6 +52,16 @@ export async function proxy(request: NextRequest) {
 
   if (isInternalOrStatic(pathname)) return NextResponse.next()
   if (request.method === 'OPTIONS') return handleCorsPrelight(origin)
+
+  // Generate a fresh nonce for every HTML-bearing request.
+  // API routes and static assets don't need a nonce but get a strict CSP too.
+  const nonce = generateNonce()
+
+  // Mutate the *incoming* request headers so Server Components see the nonce
+  // when they call getCspNonce() → headers().get('x-csp-nonce').
+  // NextResponse.next({ request: { headers } }) clones the request headers.
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set(CSP_NONCE_HEADER, nonce)
 
   // CSRF protection — double-submit cookie pattern
   if (requiresCsrfCheck(pathname, request.method)) {
@@ -59,7 +91,11 @@ export async function proxy(request: NextRequest) {
 
   if (pathname.startsWith('/admin') || pathname.includes('/admin/')) {
     if (pathname === '/api/auth') return NextResponse.next()
-    if (isAdminAuthorized(request)) return intlMiddleware(request)
+    if (isAdminAuthorized(request)) {
+      const res = intlMiddleware(request)
+      attachCspHeaders(res as NextResponse, nonce)
+      return res
+    }
     const url = request.nextUrl.clone()
     url.pathname = '/api/auth'
     return NextResponse.rewrite(url)
@@ -75,13 +111,21 @@ export async function proxy(request: NextRequest) {
     } catch {
       return NextResponse.redirect(new URL('/login', request.url))
     }
-    return intlMiddleware(request)
+    const dashRes = NextResponse.next({ request: { headers: requestHeaders } })
+    const intlRes = intlMiddleware(request)
+    // Copy intl headers (locale cookies, etc.) into our nonce-aware response
+    intlRes.headers.forEach((value, key) => {
+      dashRes.headers.set(key, value)
+    })
+    attachCspHeaders(dashRes, nonce)
+    if (needsCsrfSeed) setCsrfCookie(dashRes, generateCsrfToken())
+    return dashRes
   }
 
   if (pathname.startsWith('/auth/callback')) return NextResponse.next()
 
   if (pathname.startsWith('/api') || pathname.startsWith('/setup-wizard')) {
-    const response = NextResponse.next()
+    const response = NextResponse.next({ request: { headers: requestHeaders } })
     const responseTimeMs = Date.now() - startTime
     response.headers.set('X-Response-Time-Ms', String(responseTimeMs))
 
@@ -106,12 +150,19 @@ export async function proxy(request: NextRequest) {
       logger.error('[Proxy] Failed to emit success usage event', err)
     })
 
+    attachCspHeaders(response, nonce)
     if (needsCsrfSeed) setCsrfCookie(response, generateCsrfToken())
     return response
   }
 
-  const finalResponse = applyCorsHeaders(intlMiddleware(request), origin)
-  if (needsCsrfSeed) setCsrfCookie(finalResponse as NextResponse, generateCsrfToken())
+  const finalResponse = NextResponse.next({ request: { headers: requestHeaders } })
+  const intlFinalRes = applyCorsHeaders(intlMiddleware(request), origin)
+  // Merge intl + cors headers
+  ;(intlFinalRes as NextResponse).headers.forEach((value, key) => {
+    finalResponse.headers.set(key, value)
+  })
+  attachCspHeaders(finalResponse, nonce)
+  if (needsCsrfSeed) setCsrfCookie(finalResponse, generateCsrfToken())
   return finalResponse
 }
 

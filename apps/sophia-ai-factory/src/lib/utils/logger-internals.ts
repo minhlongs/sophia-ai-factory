@@ -107,7 +107,7 @@ export const log = (
 };
 
 // Module-level cache so dynamic import runs once per module lifetime
-let _sentryModule: { captureException: (err: unknown, ctx?: unknown) => void } | null = null;
+let _sentryModule: { captureException: (err: unknown, ctx?: Record<string, unknown>) => unknown } | null = null;
 let _sentryLoadAttempted = false;
 
 async function captureToSentry(

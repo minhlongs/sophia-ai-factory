@@ -45,7 +45,7 @@ const mockUser = {
   id: "user-abc",
   email: "test@example.com",
   full_name: "Test User",
-  avatar_url: null,
+  avatar_url: undefined,
   role: "user",
 };
 

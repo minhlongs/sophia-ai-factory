@@ -11,6 +11,7 @@ import { MockModeIndicator } from "@/components/dev/mock-mode-indicator";
 import { ErrorReporter } from "@/components/providers/error-reporter";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
+import { getCspNonce } from '@/lib/security/get-csp-nonce';
 
 // JSON-LD schema — explicit type to avoid TypeScript stack overflow
 const JSONLD_SCHEMA: Record<string, unknown> = {
@@ -119,6 +120,7 @@ export default async function RootLayout({
 }>) {
   const { locale } = await params;
   const messages = await getMessages();
+  const nonce = await getCspNonce();
 
   return (
     <html lang={locale} className="dark">
@@ -132,6 +134,7 @@ export default async function RootLayout({
         <link rel="dns-prefetch" href="https://api.nowpayments.io" />
         <script
           type="application/ld+json"
+          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(JSONLD_SCHEMA),
           }}

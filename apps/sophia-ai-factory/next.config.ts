@@ -3,7 +3,8 @@ import createNextIntlPlugin from 'next-intl/plugin';
 import withBundleAnalyzer from '@next/bundle-analyzer';
 import withPWAInit from '@ducanh2912/next-pwa';
 import { withSentryConfig } from '@sentry/nextjs';
-import { buildCSPHeader } from './src/lib/security/content-security-policy-configuration';
+// CSP is now injected per-request by middleware (nonce-based).
+// buildCSPHeader import intentionally removed from next.config.ts.
 
 const withNextIntl = createNextIntlPlugin('./src/i18n.ts');
 
@@ -22,8 +23,8 @@ const nextConfig: NextConfig = {
   reactCompiler: true,
   serverExternalPackages: ['redis', 'ioredis'],
   typescript: {
-    // Tech-debt: ~462 TS errors masked here; scheduled for split-PR cleanup (see audit B2).
-    ignoreBuildErrors: true,
+    // All TS errors resolved — ignoreBuildErrors removed (TIER-2A).
+    ignoreBuildErrors: false,
   },
   images: {
     formats: ['image/avif', 'image/webp'],
@@ -86,10 +87,8 @@ const nextConfig: NextConfig = {
             key: 'Referrer-Policy',
             value: 'origin-when-cross-origin'
           },
-          {
-            key: 'Content-Security-Policy',
-            value: buildCSPHeader()
-          },
+          // Content-Security-Policy is set per-request by middleware (nonce-based).
+          // Removed from static headers — middleware is the single source of truth.
           {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=()'

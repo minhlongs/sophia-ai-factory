@@ -39,8 +39,8 @@ describe("GET /api/videos", () => {
     mockedGetCurrentUser.mockResolvedValue({
       id: "u1",
       email: "a@b.c",
-      full_name: null,
-      avatar_url: null,
+      full_name: undefined,
+      avatar_url: undefined,
       role: "user",
     });
     const res = await GET(
@@ -53,8 +53,8 @@ describe("GET /api/videos", () => {
     mockedGetCurrentUser.mockResolvedValue({
       id: "u1",
       email: "a@b.c",
-      full_name: null,
-      avatar_url: null,
+      full_name: undefined,
+      avatar_url: undefined,
       role: "user",
     });
     const stub = buildDbStub({
@@ -89,8 +89,8 @@ describe("GET /api/videos", () => {
     mockedGetCurrentUser.mockResolvedValue({
       id: "u1",
       email: "a@b.c",
-      full_name: null,
-      avatar_url: null,
+      full_name: undefined,
+      avatar_url: undefined,
       role: "user",
     });
     mockedCreateServerClient.mockReturnValue(
