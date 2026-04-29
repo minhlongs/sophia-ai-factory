@@ -1,9 +1,17 @@
 /**
- * Sentry server-side initialization — runs on Cloudflare Workers via OpenNext.
- * No profiling integration (CF Workers runtime does not support Node profiler).
- * https://docs.sentry.io/platforms/javascript/guides/nextjs/
+ * Sentry server-side configuration
+ * Next.js App Router — server components, API routes, Server Actions
  */
 import * as Sentry from '@sentry/nextjs';
-import { buildServerOptions } from '@/lib/observability/sentry-options';
 
-Sentry.init(buildServerOptions());
+Sentry.init({
+  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+
+  // Performance monitoring
+  tracesSampleRate: 0.1,
+
+  // Only enable in production
+  enabled: process.env.NODE_ENV === 'production',
+
+  debug: false,
+});

@@ -7,6 +7,7 @@ import { config } from 'dotenv';
 config({ path: '.env.test' });
 
 export default defineConfig({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   plugins: [react() as any],
   test: {
     environment: 'jsdom',

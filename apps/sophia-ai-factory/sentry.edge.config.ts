@@ -1,9 +1,17 @@
 /**
- * Sentry edge runtime initialization — middleware + edge route handlers.
- * Minimal integrations only (no fs/path, CF Workers edge compatible).
- * https://docs.sentry.io/platforms/javascript/guides/nextjs/
+ * Sentry edge runtime configuration
+ * Next.js App Router — middleware, edge API routes
  */
 import * as Sentry from '@sentry/nextjs';
-import { buildEdgeOptions } from '@/lib/observability/sentry-options';
 
-Sentry.init(buildEdgeOptions());
+Sentry.init({
+  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+
+  // Performance monitoring (lower rate for edge)
+  tracesSampleRate: 0.05,
+
+  // Only enable in production
+  enabled: process.env.NODE_ENV === 'production',
+
+  debug: false,
+});
