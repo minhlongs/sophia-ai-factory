@@ -609,6 +609,41 @@ See [`docs/disaster-recovery.md`](./disaster-recovery.md) for RTO/RPO definition
 
 ---
 
+## Infrastructure Hardening
+
+**Full documentation:** [`docs/infra-hardening.md`](./infra-hardening.md)
+
+### DNS Security (Cloudflare)
+- **Domain**: `sophia.agencyos.network` (proxied via orange cloud)
+- **CAA Records**: Restrict SSL issuance to LetsEncrypt only
+- **DNSSEC**: Enabled with chain validation
+- **Email Auth**: SPF/DKIM/DMARC configured for outgoing mail
+
+### R2 Bucket Lifecycle
+- **Bucket**: `sophia-ai-factory-opennext-cache` (Next.js incremental static regeneration cache)
+- **Retention**: Auto-delete cache objects after 30 days (regeneratable, no data loss)
+- **Health Checks**: Rotate test files every 7 days
+
+### GitHub Secrets Management
+- **Repository**: `longtho638-jpg/sophia-ai-factory`
+- **Secrets**: 8 critical secrets (API tokens, encryption keys, webhook secrets)
+- **Rotation**: 90-day tokens (API keys), 180-day keys (encryption), static identifiers (org slugs)
+- **Audit Scripts**: Bilingual scripts in `scripts/infra/` for DNS, R2, and secrets auditing
+
+### Audit & Verification Scripts
+```bash
+# DNS audit — validates A, AAAA, CAA, MX, TXT, NS, DNSSEC
+scripts/infra/audit-dns.sh
+
+# R2 lifecycle — verifies cache expiration rules
+scripts/infra/audit-r2-lifecycle.sh
+
+# GitHub secrets — compares actual vs required secrets
+scripts/infra/audit-github-secrets.sh
+```
+
+---
+
 ## Scalability Considerations
 - **Frontend**: Stateless, deployable to Vercel Edge/Serverless.
 - **Backend**: n8n can be self-hosted or cloud-hosted; scales independently.
