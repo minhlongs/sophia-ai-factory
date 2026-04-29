@@ -1,6 +1,72 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-28 | **Current Version:** 1.14.14
+**Last Updated:** 2026-04-28 | **Current Version:** 1.14.15
+
+---
+
+## v1.14.15 — TIER-2 Security & Observability Overhaul (9 Sub-Phases) — 2026-04-28
+
+**Severity: HIGH | Type: Security | Status: SHIPPED**
+
+Comprehensive security + observability sprint: 4 implementation waves shipped TIER-2A through TIER-2J (type safety, auth audit, MFA, CSP nonce, CSRF, audit logging, cron tracking, disaster recovery, infrastructure hardening). **Waves:** (1) F+H+I (8672091d), (2) G+C+J (82d9c4e1), (3) E+A (9d2a9224), (4) B+fixes (4b5fa5c9). **Code Impact:** 45+ new files, 12+ modified, 4 D1 migrations (0026-cron, 0027-audit, 0028-mfa), 150+ new tests (1673/1673 pass). **Security:** CSRF double-submit, MFA TOTP + backup codes, CSP nonce injection, audit log for tier changes. **Type Safety:** 34 → 0 TS errors; `ignoreBuildErrors` removed. **Build:** 0 errors, 10.2s. **Production:** SHA 4b5fa5c9, HTTP 200, D1+R2+KV migrations applied. **Score Impact:** 88 → 94.5/100 (estimated pending TIER-2B critical route fixes).
+
+### TIER-2A: Type Safety (Wave 3)
+- 34 TS errors → 0 via casts, BigInt ES2020 target, explicit return types
+- `ignoreBuildErrors: false` enabled; build passes clean
+- Touched: test files, Sentry options, D1Client casts, middleware types
+
+### TIER-2B: API Auth Audit (Wave 4)
+- Audited 153 routes: 119 properly auth'd, 4 webhooks, 19 cron, 14 public, 15 gaps
+- Critical gaps identified: C1-C7 (sensitive mutations), H1-H6 (external cost), M1-M2 (info leak)
+- 5 routes gated with `require-admin` helper (admin auth unification)
+- Fixes: C1, C4, C5 protected; others deferred to next sprint
+
+### TIER-2C: MFA (Wave 2)
+- TOTP RFC 6238: 6-digit, 30s period, SHA1, issuer "Sophia AI Factory"
+- Backup codes: 8 unique XXXX-XXXX, SHA-256 hashed, shown once
+- Migrations: 0028-mfa-secrets.sql, routes (/setup, /verify, /disable), UI page
+- i18n: +20 keys (en.json, vi.json)
+- Security gap documented: TOTP secret unencrypted at app layer (D1 encrypts at infra)
+
+### TIER-2E: CSP Nonce (Wave 3)
+- Middleware generates nonce, injects header + `x-csp-nonce`
+- Server Components read via `getCspNonce()` helper
+- Fallback: `'unsafe-inline'` when nonce absent (static gen)
+- Removed: next.config.ts static CSP header
+- Impact: JSON-LD + Next.js runtime scripts protected; PostHog/Sentry verify browser
+
+### TIER-2F: Cron Tracking (Wave 1)
+- Migration 0026-cron-run-log.sql: 1 row per cron (upsert)
+- `recordCronRun(db, name, status, error?)` + idempotency window (5 min)
+- `wasRecentlyRun()` fail-open on DB error (never blocks cron)
+- Heartbeat wired; remaining 13 crons deferred
+
+### TIER-2G: CSRF Protection (Wave 2)
+- Double-submit: token in `csrf-token` cookie (SameSite=Strict, httpOnly=false)
+- Client echoes in `x-csrf-token` header; constant-time XOR compare
+- Bypass: GET/HEAD/OPTIONS, `/api/auth/*`, `/api/webhooks/*`, `/api/cron/*`
+- Caller sweep: 6 routes need header injection (tracked separately; enforcement deferred)
+
+### TIER-2H: Data Quality (Wave 1)
+- Migration 0027-data-quality-audit.sql: `audit_log` table + composite index
+- `recordAudit(db, table, rowId, action, before, after)` fire-and-forget
+- TierEnum + AuditActionSchema Zod validation
+- Wired: subscription activation (non-fatal catch); other ops TBD
+
+### TIER-2I: Disaster Recovery (Wave 1)
+- Docs: `docs/disaster-recovery.md` (272 lines, bilingual, RTO/RPO table)
+- 4 recovery scenarios: D1 corruption (30min), R2 failure (1h), code regression (15min), KV loss (2h)
+- Scripts: `d1-snapshot.sh`, `restore-from-snapshot.sh` (dry-run safe)
+- Quarterly drill cadence + roles matrix
+
+### TIER-2J: Infrastructure Hardening (Wave 2)
+- Docs: `docs/infra-hardening.md` (260 lines, bilingual, rotation schedule)
+- Audit scripts: `audit-dns.sh`, `audit-r2-lifecycle.sh`, `audit-github-secrets.sh` (dry-run safe)
+- Rotation: 90-day API tokens (CLOUDFLARE, SENTRY, NOWPAYMENTS, OPENROUTER)
+- Incident response: <5min leak detection, <30min redeployment
+
+**Plan:** `plans/260428-2219-tier2-remaining-eight/plan.md`  
+**Reports:** [tier2a](../plans/260428-2219-tier2-remaining-eight/reports/tier2a-implement.md), [tier2b-audit](../plans/260428-2219-tier2-remaining-eight/reports/tier2b-audit.md), [tier2b-fixes](../plans/260428-2219-tier2-remaining-eight/reports/tier2b-fixes.md), [tier2c](../plans/260428-2219-tier2-remaining-eight/reports/tier2c-implement.md), [tier2e](../plans/260428-2219-tier2-remaining-eight/reports/tier2e-implement.md), [tier2f](../plans/260428-2219-tier2-remaining-eight/reports/tier2f-implement.md), [tier2g](../plans/260428-2219-tier2-remaining-eight/reports/tier2g-implement.md), [tier2h](../plans/260428-2219-tier2-remaining-eight/reports/tier2h-implement.md), [tier2i](../plans/260428-2219-tier2-remaining-eight/reports/tier2i-docs.md), [tier2j](../plans/260428-2219-tier2-remaining-eight/reports/tier2j-docs.md)
 
 ---
 
