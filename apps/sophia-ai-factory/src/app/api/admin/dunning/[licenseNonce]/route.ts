@@ -6,9 +6,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/better-auth-session';
-import { isUserAdmin } from '@/lib/auth/is-user-admin';
-import { getDunningState, getDunningHistory, type DunningStateResult } from '@/lib/billing/dunning-workflow';
+import { requireAdmin } from '@/lib/auth/require-admin';
+import { getDunningState, getDunningHistory } from '@/lib/billing/dunning-workflow';
 import { logger } from '@/lib/utils/logger-utility';
 import { toError } from '@/lib/utils/to-error';
 
@@ -16,18 +15,10 @@ export async function GET(
   req: NextRequest,
   { params }: { params: { licenseNonce: string } }
 ) {
+  const auth = await requireAdmin(req);
+  if (auth instanceof NextResponse) return auth;
+
   try {
-    // Check admin auth
-    const user = await getCurrentUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Check admin role
-    if (!(await isUserAdmin(user))) {
-      return NextResponse.json({ error: 'Forbidden - admin only' }, { status: 403 });
-    }
 
     // Get dunning state
     const dunningState = await getDunningState(params.licenseNonce);

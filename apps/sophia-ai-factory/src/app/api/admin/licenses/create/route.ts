@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateLicenseKey } from '@/lib/raas-key-generator'
 import { createLicense, logLicenseCreation } from '@/lib/raas-audit'
-import { checkAdminAuth } from '../middleware'
+import { requireAdmin } from '@/lib/auth/require-admin'
 import { logger } from '@/lib/utils/logger-utility'
 import { Tier, TierLowercase } from '@/types'
 import { createHash } from 'crypto'
@@ -29,9 +29,8 @@ const createLicenseSchema = z.object({
  * Body: { tier: string, expiresAt?: number (timestamp), metadata?: object, customerEmail?: string }
  */
 export async function POST(request: NextRequest) {
-  // Check admin authentication
-  const authError = checkAdminAuth(request)
-  if (authError) return authError
+  const auth = await requireAdmin(request);
+  if (auth instanceof NextResponse) return auth;
 
   try {
     const body = await request.json()

@@ -15,7 +15,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
-import { checkAdminAuth } from '../../licenses/middleware';
+import { requireAdmin } from '@/lib/auth/require-admin';
 import { parseTimestamp, parseLimit } from './reconciliation-types';
 import { queryUsageEvents, getLicenseInfo, queryBillingPeriods } from './reconciliation-db-queries';
 import {
@@ -35,8 +35,8 @@ import type { UsageEventWithStatus } from './reconciliation-types';
  * - analyze: perform reconciliation analysis (default: true)
  */
 export async function GET(request: NextRequest) {
-  const authError = checkAdminAuth(request);
-  if (authError) return authError;
+  const auth = await requireAdmin(request);
+  if (auth instanceof NextResponse) return auth;
 
   try {
     const searchParams = request.nextUrl.searchParams;

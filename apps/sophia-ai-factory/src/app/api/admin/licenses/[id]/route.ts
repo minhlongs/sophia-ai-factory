@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getLicenseByNonce, revokeLicense, logLicenseRevocation } from '@/lib/raas-audit'
-import { checkAdminAuth } from '../middleware'
+import { requireAdmin } from '@/lib/auth/require-admin'
 import { logger } from '@/lib/utils/logger-utility'
 
 /**
@@ -19,9 +19,8 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  // Check admin authentication
-  const authError = checkAdminAuth(request)
-  if (authError) return authError
+  const auth = await requireAdmin(request);
+  if (auth instanceof NextResponse) return auth;
 
   try {
     const { id: nonce } = await params
@@ -76,9 +75,8 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  // Check admin authentication
-  const authError = checkAdminAuth(request)
-  if (authError) return authError
+  const auth = await requireAdmin(request);
+  if (auth instanceof NextResponse) return auth;
 
   try {
     const { id: nonce } = await params

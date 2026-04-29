@@ -1,6 +1,14 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-28 | **Current Version:** 1.14.12
+**Last Updated:** 2026-04-28 | **Current Version:** 1.14.13
+
+---
+
+## v1.14.13 — TIER-2B Admin Auth Unification — 2026-04-28
+
+**Severity: MEDIUM | Type: Refactoring | Status: SHIPPED**
+
+Single-source admin authentication across 33+ API routes. Converged fragmented auth patterns (Basic Auth, API-key, inline checks) to unified `requireAdmin()` helper backed by Better Auth session + D1 role check. **Architecture:** New `src/lib/auth/require-admin.ts` (31 LOC) wraps session retrieval + role verification, returns `NextResponse` on unauthorized or `User` on success. Audit logging via `admin-audit-log.ts` (46 LOC). **Routes Unified:** 31 admin endpoints migrated (licenses, audit, billing, dunning, quota, violations, api-keys, usage, invite). **Deleted:** 2 middleware files (fragmented auth logic). **Security posture lift:** Eliminates env-var dependencies (`ADMIN_USER`, `ADMIN_PASS`, `ADMIN_API_KEY`) — post-deploy Cloudflare secrets cleanup pending. **Tests:** 4 new unit tests (require-admin.test.ts), 1588/1588 pass (delta +4). **Build:** 0 TS errors, 10s. **Plan:** `plans/260428-2107-tier2b-admin-auth-unify/`.
 
 ---
 

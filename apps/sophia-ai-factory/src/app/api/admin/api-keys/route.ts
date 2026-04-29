@@ -4,85 +4,31 @@
  * GET /api/admin/api-keys - List all API keys for current user
  * POST /api/admin/api-keys - Create new API key
  *
- * Requires admin authentication via Basic Auth or JWT
+ * Requires admin authentication via Better Auth session + role check
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { logger } from '@/lib/utils/logger-utility'
 import { toError, getErrorMessage } from '@/lib/utils/to-error'
+import { requireAdmin } from '@/lib/auth/require-admin'
 
 import {
   generateApiKey,
   getUserApiKeys,
-  validateApiKey,
 } from '@/lib/security/api-key-validator'
-import { validateJwt } from '@/lib/security/jwt-validator'
-import { logApiKeyCreation, logApiKeyValidationFailure } from '@/lib/audit/audit-query-logger'
+import { logApiKeyCreation } from '@/lib/audit/audit-query-logger'
 
 export const dynamic = 'force-dynamic'
-
-/**
- * Check admin authorization via Basic Auth or JWT
- * Returns user ID if authorized, null otherwise
- */
-async function getAuthorizedUserId(request: NextRequest): Promise<string | null> {
-  // Try JWT from Authorization header first (Bearer <token>)
-  const authHeader = request.headers.get('authorization')
-  if (authHeader?.startsWith('Bearer ')) {
-    const jwtResult = await validateJwt(authHeader)
-    if (jwtResult.valid) {
-      return jwtResult.payload?.sub || null
-    }
-  }
-
-  // Try Better Auth session cookie (dashboard users)
-  try {
-    const { getCurrentUserFromHeaders } = await import('@/lib/better-auth-session')
-    const user = await getCurrentUserFromHeaders(request.headers)
-    if (user) return user.id
-  } catch { /* Better Auth session check failed */ }
-
-  // Legacy: Try JWT from auth-token cookie
-  const cookieToken = request.cookies.get('auth-token')?.value
-  if (cookieToken) {
-    const jwtResult = await validateJwt(`Bearer ${cookieToken}`)
-    if (jwtResult.valid) {
-      return jwtResult.payload?.sub || null
-    }
-  }
-
-  // Fallback to Basic Auth
-  if (authHeader) {
-    try {
-      const authValue = authHeader.split(' ')[1]
-      const [user, pwd] = atob(authValue).split(':')
-      const validUser = process.env.ADMIN_USER
-      const validPass = process.env.ADMIN_PASS
-      if (user === validUser && pwd === validPass) {
-        return 'admin-basic-auth'
-      }
-    } catch {
-      // Invalid basic auth format
-    }
-  }
-
-  return null
-}
 
 /**
  * GET /api/admin/api-keys
  * List all API keys for the authenticated user
  */
 export async function GET(request: NextRequest) {
-  const userId = await getAuthorizedUserId(request)
-
-  if (!userId) {
-    return NextResponse.json(
-      { error: 'Unauthorized' },
-      { status: 401 }
-    )
-  }
+  const auth = await requireAdmin(request);
+  if (auth instanceof NextResponse) return auth;
+  const userId = auth.user.id;
 
   try {
     const apiKeys = await getUserApiKeys(userId)
@@ -128,14 +74,9 @@ const createApiKeyBodySchema = z.object({
  * - rateLimitPerMinute: number (optional, default 100)
  */
 export async function POST(request: NextRequest) {
-  const userId = await getAuthorizedUserId(request)
-
-  if (!userId) {
-    return NextResponse.json(
-      { error: 'Unauthorized' },
-      { status: 401 }
-    )
-  }
+  const auth = await requireAdmin(request);
+  if (auth instanceof NextResponse) return auth;
+  const userId = auth.user.id;
 
   try {
     let rawBody: unknown

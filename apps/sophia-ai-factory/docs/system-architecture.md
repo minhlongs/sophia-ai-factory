@@ -139,8 +139,10 @@ graph TD
   - **User Keys**: stored in Supabase `user_profiles` table, encrypted at rest using AES-256-GCM.
 
 ### Access Control
-- **Turnkey Mode**: Single-user (Personal) deployment. No login required by default (assumes local/protected network or Vercel Basic Auth).
-- **Admin Mode**: Optional Basic Auth middleware for public deployments.
+- **User Authentication**: Better Auth session (email/password + magic link) with D1 user profiles.
+- **Admin Authorization**: Unified via `requireAdmin()` helper (`@/lib/auth/require-admin`) backed by Better Auth session + D1 role check. All 33+ admin API routes converged to single auth source (Phase TIER-2B, 2026-04-28).
+- **Turnkey Mode**: Single-user (Personal) deployment. No login required by default (assumes local/protected network).
+- **Deprecated**: Basic Auth env vars (`ADMIN_USER`, `ADMIN_PASS`, `ADMIN_API_KEY`) removed from active API routes; Cloudflare secrets cleanup pending post-deploy.
 
 ### 7. Feature Gating & Tier Enforcement
 - **Philosophy**: "Secure by Design" - Enforcement happens at the API level, UI is just a reflection.

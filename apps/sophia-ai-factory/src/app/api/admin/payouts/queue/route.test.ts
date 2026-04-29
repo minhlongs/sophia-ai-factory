@@ -52,11 +52,11 @@ describe('GET /api/admin/payouts/queue', () => {
     expect(res.status).toBe(401);
   });
 
-  it('returns 401 when user is not admin', async () => {
+  it('returns 403 when user is not admin', async () => {
     mockGetCurrentUserFromHeaders.mockResolvedValue({ id: 'user-1', email: 'user@test.com', role: 'user' } as any);
 
     const res = await GET(makeRequest());
-    expect(res.status).toBe(401);
+    expect(res.status).toBe(403);
   });
 
   it('returns empty items array when no users are ready', async () => {

@@ -11,7 +11,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/db/client'
 import { generateReceipt, serializeReceipt } from '@/lib/audit/compliance-receipt'
-import { checkAdminAuth } from '@/app/api/admin/licenses/middleware'
+import { requireAdmin } from '@/lib/auth/require-admin'
 import { logger } from '@/lib/utils/logger-utility'
 import { z } from 'zod'
 import { rateLimit } from '@/lib/security/rate-limiter'
@@ -26,9 +26,8 @@ const receiptQuerySchema = z.object({
  * GET /api/admin/audit/receipt?logId=<uuid>
  */
 export async function GET(request: NextRequest) {
-  // Check admin authentication
-  const authError = checkAdminAuth(request)
-  if (authError) return authError
+  const auth = await requireAdmin(request);
+  if (auth instanceof NextResponse) return auth;
 
   // Rate limiting: 100 requests per minute per IP
   const ip = request.headers.get('x-forwarded-for') || 'unknown'

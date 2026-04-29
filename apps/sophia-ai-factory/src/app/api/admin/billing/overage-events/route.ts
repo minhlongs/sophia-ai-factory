@@ -14,7 +14,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import { toError } from '@/lib/utils/to-error';
-import { checkAdminAuth } from '../../middleware';
+import { requireAdmin } from '@/lib/auth/require-admin';
 import { z } from 'zod';
 import type { OverageEventRow } from '@/lib/billing/billing-types';
 
@@ -40,10 +40,10 @@ interface OverageEventRecord extends OverageEventRow {
 }
 
 export async function GET(req: NextRequest) {
+  const auth = await requireAdmin(req);
+  if (auth instanceof NextResponse) return auth;
+
   try {
-    // Check admin auth
-    const authError = checkAdminAuth(req);
-    if (authError) return authError;
 
     const searchParams = req.nextUrl.searchParams;
     const params = overageEventsSchema.parse(Object.fromEntries(searchParams));
