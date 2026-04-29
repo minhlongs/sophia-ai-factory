@@ -4,6 +4,23 @@
 **Current Version:** 1.14.16 (Video Go-Live + HeyGen Webhook)
 **Last Updated:** 2026-04-29
 
+## 🚨 Operations Blocker — GitHub Actions Disabled
+
+**Status (2026-04-29):** GitHub user `longtho638-jpg` has Actions disabled at the account level (HTTP 422: "Actions has been disabled for this user"). Total runs ever fired: 0.
+
+**Impact:** No CI/CD on push, no scheduled cron workflows, no D1 backups.
+
+**Side discovery:** All 14 cron triggers in `apps/sophia-ai-factory/wrangler.toml` are also dead — OpenNext-generated `worker.js` has no `scheduled` handler, so Cloudflare Cron events fire into the void. This pre-existed and is independent of the GH block.
+
+**Recommended actions (parallel):**
+1. Verify phone at github.com/settings/security (account verification).
+2. Email support@github.com requesting Actions reactivation.
+3. **Unblock cron NOW:** wire external cron (Upstash QStash free tier or UptimeRobot) to curl `/api/cron/video-status-sync`, `/api/cron/uptime-check`, `/api/cron/dunning`, etc. with Bearer `CRON_SECRET`.
+
+**Long-term:** evaluate Cloudflare-native secondary worker `sophia-cron-dispatcher` (with `scheduled()` handler + service binding to main worker) if GH reactivation is denied.
+
+Full debug report: `plans/reports/debugger-260429-0051-github-actions-blocked.md`.
+
 ## 🔮 Q3 Candidate: HyperFrames Composition Layer
 
 **Source:** https://github.com/heygen-com/hyperframes (Apache 2.0, HTML→video).
