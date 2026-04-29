@@ -100,7 +100,7 @@ describe('Internal Usage Query API - Access Control', () => {
   it('rejects request without x-internal-secret header', async () => {
     vi.stubGlobal('process', {
       env: {
-        INTERNAL_WEBHOOK_SECRET: 'test-secret',
+        INTERNAL_API_SECRET: 'test-secret',
       },
     });
 
@@ -114,7 +114,7 @@ describe('Internal Usage Query API - Access Control', () => {
   it('rejects request with invalid secret', async () => {
     vi.stubGlobal('process', {
       env: {
-        INTERNAL_WEBHOOK_SECRET: 'test-secret',
+        INTERNAL_API_SECRET: 'test-secret',
       },
     });
 
@@ -128,10 +128,10 @@ describe('Internal Usage Query API - Access Control', () => {
     expect((response.body as any).error).toContain('Unauthorized');
   });
 
-  it('rejects when INTERNAL_WEBHOOK_SECRET is not configured', async () => {
+  it('rejects when INTERNAL_API_SECRET is not configured or empty', async () => {
     vi.stubGlobal('process', {
       env: {
-        INTERNAL_WEBHOOK_SECRET: undefined,
+        INTERNAL_API_SECRET: undefined,
       },
     });
 
@@ -146,7 +146,7 @@ describe('Internal Usage Query API - Query Validation', () => {
   beforeEach(() => {
     vi.stubGlobal('process', {
       env: {
-        INTERNAL_WEBHOOK_SECRET: 'test-secret',
+        INTERNAL_API_SECRET: 'test-secret',
       },
     });
     mockSupabaseSingleResult = null;
@@ -249,7 +249,7 @@ describe('Internal Usage Query API - License Lookup', () => {
   beforeEach(() => {
     vi.stubGlobal('process', {
       env: {
-        INTERNAL_WEBHOOK_SECRET: 'test-secret',
+        INTERNAL_API_SECRET: 'test-secret',
       },
     });
   });
@@ -298,7 +298,7 @@ describe('Internal Usage Query API - Successful Queries', () => {
   beforeEach(() => {
     vi.stubGlobal('process', {
       env: {
-        INTERNAL_WEBHOOK_SECRET: 'test-secret',
+        INTERNAL_API_SECRET: 'test-secret',
       },
     });
 

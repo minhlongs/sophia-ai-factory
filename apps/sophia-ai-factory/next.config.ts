@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from 'node:path';
 import createNextIntlPlugin from 'next-intl/plugin';
 import withBundleAnalyzer from '@next/bundle-analyzer';
 import withPWAInit from '@ducanh2912/next-pwa';
@@ -20,6 +21,8 @@ const withPWA = withPWAInit({
 
 const nextConfig: NextConfig = {
   /* config options here */
+  output: 'standalone',
+  outputFileTracingRoot: path.resolve(__dirname),
   reactCompiler: true,
   serverExternalPackages: ['redis', 'ioredis'],
   typescript: {
