@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/utils/logger-utility';
 import { typeDefs } from './schema';
 import { resolvers } from '@/lib/analytics/graphql-resolvers';
+import { getCurrentUser } from '@/lib/better-auth-session';
 
 interface GraphQLExecutionResult {
   data?: unknown;
@@ -113,6 +114,14 @@ async function resolveQuery(
  */
 export async function POST(request: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ errors: [{ message: 'Unauthorized' }] }, { status: 401 });
+    }
+    if (user.role !== 'admin') {
+      return NextResponse.json({ errors: [{ message: 'Forbidden — admin only' }] }, { status: 403 });
+    }
+
     const body = (await request.json().catch(() => ({}))) as GraphQLQueryRequest;
     const { query, variables, operationName } = body;
 
@@ -157,7 +166,15 @@ export async function POST(request: NextRequest) {
 /**
  * GET handler for GraphQL endpoint (schema introspection hint)
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const user = await getCurrentUser();
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  if (user.role !== 'admin') {
+    return NextResponse.json({ error: 'Forbidden — admin only' }, { status: 403 });
+  }
+
   return NextResponse.json({
     message: 'Analytics GraphQL API',
     endpoint: 'POST /api/graphql/analytics',

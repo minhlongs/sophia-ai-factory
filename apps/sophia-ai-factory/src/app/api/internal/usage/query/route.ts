@@ -2,10 +2,10 @@
  * Internal Usage Query API
  *
  * GET /internal/usage/query — Query accumulated usage for webhook/billing systems.
- * Authentication: X-Internal-Secret header matching INTERNAL_WEBHOOK_SECRET.
+ * Authentication: x-internal-secret header matching INTERNAL_API_SECRET (via verifyInternalSecret).
  *
  * Sub-modules:
- *   usage-query-helpers.ts    — validateInternalSecret, calculateTotalsFromHourly, buildServiceBreakdown, buildFeatureBreakdown, calculateQuotaUsage
+ *   usage-query-helpers.ts    — calculateTotalsFromHourly, buildServiceBreakdown, buildFeatureBreakdown, calculateQuotaUsage
  *   usage-query-aggregator.ts — buildHourlyAggregation, buildDailyFromHourly
  *
  * @module api/internal/usage/query
@@ -15,8 +15,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import { toError } from '@/lib/utils/to-error';
+import { verifyInternalSecret } from '@/lib/security/verify-internal-secret';
 import {
-  validateInternalSecret,
   calculateTotalsFromHourly,
   buildServiceBreakdown,
   buildFeatureBreakdown,
@@ -52,7 +52,7 @@ interface RawUsageEventRow {
 
 export async function GET(request: NextRequest) {
   try {
-    if (!validateInternalSecret(request)) {
+    if (!verifyInternalSecret(request)) {
       return NextResponse.json(
         { error: 'Unauthorized - invalid or missing internal secret' },
         { status: 401 }

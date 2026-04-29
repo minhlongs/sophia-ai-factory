@@ -9,6 +9,7 @@ import { logger } from '@/lib/utils/logger-utility'
 import { toError } from '@/lib/utils/to-error'
 import { RaasGatewayClient } from '@/lib/raas-gateway-client'
 import { logAuditEvent } from '@/lib/audit/audit-logger'
+import { verifyInternalSecret } from '@/lib/security/verify-internal-secret'
 import type { SyncRequestBody, SyncResult } from './license-sync-types'
 import { RAAS_CONFIG } from './license-sync-types'
 import { syncFromDatabase, updateLicenseInDatabase, invalidateKvCache } from './license-sync-db'
@@ -42,6 +43,13 @@ async function syncFromGateway(licenseNonce: string, requestId: string): Promise
 
 export async function POST(request: NextRequest): Promise<NextResponse<SyncResult>> {
   const requestId = `sync-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+
+  if (!verifyInternalSecret(request)) {
+    return NextResponse.json(
+      { success: false, error: 'Unauthorized', syncSource: 'none', kvCacheInvalidated: false },
+      { status: 401 }
+    )
+  }
 
   try {
     const body = await request.json() as SyncRequestBody

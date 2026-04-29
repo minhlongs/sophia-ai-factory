@@ -3,12 +3,15 @@
  *
  * Query recent usage events for debugging
  * GET: Fetch recent events with optional filtering
+ *
+ * Security: admin-only in all environments.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import { toError } from '@/lib/utils/to-error';
+import { getCurrentUser } from '@/lib/better-auth-session';
 
 /**
  * GET: Query recent usage events
@@ -23,6 +26,14 @@ import { toError } from '@/lib/utils/to-error';
  */
 export async function GET(request: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    if (user.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden — admin only' }, { status: 403 });
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const licenseNonce = searchParams.get('license_nonce');
     const limit = parseInt(searchParams.get('limit') || '50');

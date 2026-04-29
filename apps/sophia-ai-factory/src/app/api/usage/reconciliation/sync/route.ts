@@ -18,6 +18,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/utils/logger-utility';
 import { toError } from '@/lib/utils/to-error';
+import { verifyInternalSecret } from '@/lib/security/verify-internal-secret';
 import {
   syncUsageEventsToKv,
   getSyncStats,
@@ -33,7 +34,11 @@ interface UsageReconciliationSyncRequest {
 /**
  * GET - Trigger sync and return statistics
  */
-export async function GET(): Promise<NextResponse> {
+export async function GET(request: NextRequest): Promise<NextResponse> {
+  if (!verifyInternalSecret(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   const requestId = `sync-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
   try {
@@ -87,6 +92,10 @@ export async function GET(): Promise<NextResponse> {
  * POST - Trigger sync with custom configuration
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  if (!verifyInternalSecret(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   const requestId = `sync-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
   try {

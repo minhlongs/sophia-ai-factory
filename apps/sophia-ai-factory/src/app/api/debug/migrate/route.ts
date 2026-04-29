@@ -1,9 +1,13 @@
 /**
  * GET /api/debug/migrate — Create missing D1 tables for dashboard features
  * TEMP endpoint — remove after migration complete
+ *
+ * Security: disabled in production. In non-production environments,
+ * requires x-internal-secret header matching INTERNAL_API_SECRET.
  */
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { toError } from '@/lib/utils/to-error';
+import { verifyInternalSecret } from '@/lib/security/verify-internal-secret';
 
 function getD1(): D1Database | null {
   const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
@@ -88,7 +92,15 @@ const MIGRATIONS = [
   )`,
 ];
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not Found' }, { status: 404 });
+  }
+
+  if (!verifyInternalSecret(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   const d1 = getD1();
   if (!d1) return NextResponse.json({ error: 'D1 not available' });
 
