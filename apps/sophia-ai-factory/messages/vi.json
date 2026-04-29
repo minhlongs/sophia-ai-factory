@@ -823,5 +823,29 @@
   "retry": "Retry",
   "script": "Script",
   "scene": "Scene",
-  "visual": "Visual"
+  "visual": "Visual",
+  "settings": {
+    "mfa": {
+      "title": "Xác Thực Hai Yếu Tố",
+      "subtitle": "Thêm lớp bảo mật cho tài khoản của bạn",
+      "status_enabled": "Đã bật",
+      "status_disabled": "Chưa bật",
+      "setup_title": "Cài Đặt Ứng Dụng Xác Thực",
+      "setup_description": "Quét mã QR bằng ứng dụng xác thực (Google Authenticator, Authy, v.v.)",
+      "code_label": "Mã 6 chữ số từ ứng dụng",
+      "code_placeholder": "123456",
+      "verify_button": "Xác minh & Kích hoạt",
+      "disable_title": "Tắt Xác Thực Hai Yếu Tố",
+      "disable_description": "Nhập mã xác thực hiện tại để tắt 2FA",
+      "disable_button": "Tắt 2FA",
+      "backup_codes_title": "Lưu Mã Dự Phòng",
+      "backup_codes_description": "Lưu các mã này ở nơi an toàn. Mỗi mã chỉ dùng được một lần và sẽ không hiển thị lại.",
+      "backup_codes_done": "Tôi đã lưu mã dự phòng",
+      "setup_button": "Cài đặt 2FA",
+      "error_invalid_code": "Mã không hợp lệ. Vui lòng thử lại.",
+      "error_generic": "Đã xảy ra lỗi. Vui lòng thử lại.",
+      "success_enabled": "Đã bật xác thực hai yếu tố",
+      "success_disabled": "Đã tắt xác thực hai yếu tố"
+    }
+  }
 }

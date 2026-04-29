@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { useCsrfToken } from '@/lib/security/use-csrf-token';
 
 interface MissionControlHeaderProps {
   onMissionCreated?: (missionId: string) => void;
@@ -22,6 +23,7 @@ export function MissionControlHeader({ onMissionCreated }: MissionControlHeaderP
   const [prompt, setPrompt] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const csrfHeaders = useCsrfToken();
 
   const handleSubmit = useCallback(async () => {
     const trimmed = prompt.trim();
@@ -30,7 +32,7 @@ export function MissionControlHeader({ onMissionCreated }: MissionControlHeaderP
     try {
       const res = await fetch('/api/raas/missions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...csrfHeaders },
         body: JSON.stringify({ prompt: trimmed, mode: 'nl' }),
       });
       if (res.ok) {
@@ -47,8 +49,8 @@ export function MissionControlHeader({ onMissionCreated }: MissionControlHeaderP
   }, [prompt, submitting, onMissionCreated]);
 
   const handlePauseAll = useCallback(async () => {
-    await fetch('/api/agents/pause', { method: 'POST' });
-  }, []);
+    await fetch('/api/agents/pause', { method: 'POST', headers: { ...csrfHeaders } });
+  }, [csrfHeaders]);
 
   const handleNewMission = useCallback(() => {
     textareaRef.current?.focus();

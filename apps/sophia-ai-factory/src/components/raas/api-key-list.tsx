@@ -10,6 +10,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type { ApiKeyInfo, UsageStats } from '@/types/raas';
+import { useCsrfToken } from '@/lib/security/use-csrf-token';
 
 function fmt(dateStr: string | null): string {
   if (!dateStr) return 'Never';
@@ -53,6 +54,7 @@ interface UsageResponse {
 
 export function ApiKeyList({ onCreateKey, refreshTrigger = 0 }: Props) {
   const t = useTranslations('dashboard.apiKeys');
+  const csrfHeaders = useCsrfToken();
   const [keys, setKeys] = useState<ApiKeyInfo[]>([]);
   const [stats, setStats] = useState<UsageStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -83,7 +85,7 @@ export function ApiKeyList({ onCreateKey, refreshTrigger = 0 }: Props) {
     setRevoking(id);
     setError(null);
     try {
-      const res = await fetch(`/api/admin/api-keys/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/api-keys/${id}`, { method: 'DELETE', headers: { ...csrfHeaders } });
       if (!res.ok) throw new Error('Failed to revoke');
       await load();
     } catch (e: unknown) {

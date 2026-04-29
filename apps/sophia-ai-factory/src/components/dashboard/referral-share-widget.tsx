@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Copy, Check, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useCsrfToken } from '@/lib/security/use-csrf-token';
 
 interface ReferralGenerateResponse {
   code?: string;
@@ -10,6 +11,7 @@ interface ReferralGenerateResponse {
 }
 
 export function ReferralShareWidget() {
+  const csrfHeaders = useCsrfToken();
   const [code, setCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -17,7 +19,7 @@ export function ReferralShareWidget() {
   async function generateCode() {
     setLoading(true);
     try {
-      const res = await fetch('/api/referral/generate', { method: 'POST' });
+      const res = await fetch('/api/referral/generate', { method: 'POST', headers: { ...csrfHeaders } });
       const data = (await res.json()) as ReferralGenerateResponse;
       if (data.code) setCode(data.code);
     } catch { /* ignore */ }

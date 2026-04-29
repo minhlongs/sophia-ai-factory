@@ -9,6 +9,7 @@ import { useState, useEffect } from 'react';
 import { logger } from '@/lib/utils/logger-utility';
 import { toError } from '@/lib/utils/to-error';
 import type { LicenseSummary, LicenseListResponse } from '@/lib/raas-schema';
+import { useCsrfToken } from '@/lib/security/use-csrf-token';
 
 export interface License {
   id: string;
@@ -33,6 +34,7 @@ interface ActionErrorResponse {
 }
 
 export function useLicenseListActions({ onRevoke, onExtend }: UseLicenseListActionsProps) {
+  const csrfHeaders = useCsrfToken();
   const [licenses, setLicenses] = useState<License[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -105,7 +107,7 @@ export function useLicenseListActions({ onRevoke, onExtend }: UseLicenseListActi
   const handleReactivate = async (id: string) => {
     if (!confirm(`Are you sure you want to reactivate license ${id}?`)) return;
     try {
-      const response = await fetch(`/api/admin/licenses/${id}/reactivate`, { method: 'POST' });
+      const response = await fetch(`/api/admin/licenses/${id}/reactivate`, { method: 'POST', headers: { ...csrfHeaders } });
       if (response.ok) {
         await fetchLicenses();
       } else {

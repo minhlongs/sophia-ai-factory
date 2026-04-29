@@ -10,6 +10,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Loader2 } from 'lucide-react';
 import { CopyBox, StatusBadge, type LocalModeStatus } from './local-mode-step-ui';
+import { useCsrfToken } from '@/lib/security/use-csrf-token';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -37,6 +38,7 @@ function checkEligibility(): boolean {
 // ── Main component ─────────────────────────────────────────────────────────────
 
 export function LocalModeStep() {
+  const csrfHeaders = useCsrfToken();
   const [uiStatus, setUiStatus] = useState<LocalModeStatus>('idle');
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -89,7 +91,7 @@ export function LocalModeStep() {
   // Disable Local Mode — DELETE /api/setup/local-mode/provision
   const handleDisable = async () => {
     try {
-      await fetch('/api/setup/local-mode/provision', { method: 'DELETE' });
+      await fetch('/api/setup/local-mode/provision', { method: 'DELETE', headers: { ...csrfHeaders } });
       setUiStatus('not-provisioned');
     } catch { /* ignore */ }
   };

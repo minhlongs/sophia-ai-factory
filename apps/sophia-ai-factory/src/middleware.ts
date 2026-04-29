@@ -8,6 +8,14 @@ import { logger } from './lib/utils/logger-utility'
 import { toError } from '@/lib/utils/to-error'
 import { isInternalOrStatic, pathnameWithoutLocale, isAdminAuthorized } from './middleware-helpers'
 import { handleApiRoute } from './middleware-api-handler'
+import {
+  generateCsrfToken,
+  setCsrfCookie,
+  verifyCsrfToken,
+  requiresCsrfCheck,
+  csrfForbiddenResponse,
+  CSRF_COOKIE_NAME,
+} from './lib/security/csrf'
 
 const intlMiddleware = createMiddleware({
   locales: ['en', 'vi'],
@@ -22,6 +30,17 @@ export async function proxy(request: NextRequest) {
 
   if (isInternalOrStatic(pathname)) return NextResponse.next()
   if (request.method === 'OPTIONS') return handleCorsPrelight(origin)
+
+  // CSRF protection — double-submit cookie pattern
+  if (requiresCsrfCheck(pathname, request.method)) {
+    if (!verifyCsrfToken(request)) return csrfForbiddenResponse()
+  }
+
+  // On safe GET requests: seed csrf-token cookie if absent so the client can
+  // read it and send it back on the next mutating request.
+  const needsCsrfSeed =
+    request.method === 'GET' &&
+    !request.cookies.has(CSRF_COOKIE_NAME)
 
   if (pathname.startsWith('/api')) {
     const blocked = await handleApiRoute(request, pathname, startTime)
@@ -87,10 +106,13 @@ export async function proxy(request: NextRequest) {
       logger.error('[Proxy] Failed to emit success usage event', err)
     })
 
+    if (needsCsrfSeed) setCsrfCookie(response, generateCsrfToken())
     return response
   }
 
-  return applyCorsHeaders(intlMiddleware(request), origin)
+  const finalResponse = applyCorsHeaders(intlMiddleware(request), origin)
+  if (needsCsrfSeed) setCsrfCookie(finalResponse as NextResponse, generateCsrfToken())
+  return finalResponse
 }
 
 export const middleware = proxy

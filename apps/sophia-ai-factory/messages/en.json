@@ -823,5 +823,29 @@
   "retry": "Retry",
   "script": "Script",
   "scene": "Scene",
-  "visual": "Visual"
+  "visual": "Visual",
+  "settings": {
+    "mfa": {
+      "title": "Two-Factor Authentication",
+      "subtitle": "Add an extra layer of security to your account",
+      "status_enabled": "Enabled",
+      "status_disabled": "Disabled",
+      "setup_title": "Set Up Authenticator",
+      "setup_description": "Scan the QR code with your authenticator app (Google Authenticator, Authy, etc.)",
+      "code_label": "6-digit code from your app",
+      "code_placeholder": "123456",
+      "verify_button": "Verify & Enable",
+      "disable_title": "Disable Two-Factor Authentication",
+      "disable_description": "Enter your current authentication code to disable MFA",
+      "disable_button": "Disable MFA",
+      "backup_codes_title": "Save Your Backup Codes",
+      "backup_codes_description": "Store these codes safely. Each can only be used once. They will not be shown again.",
+      "backup_codes_done": "I have saved my backup codes",
+      "setup_button": "Set Up 2FA",
+      "error_invalid_code": "Invalid code. Please try again.",
+      "error_generic": "Something went wrong. Please try again.",
+      "success_enabled": "Two-factor authentication enabled",
+      "success_disabled": "Two-factor authentication disabled"
+    }
+  }
 }

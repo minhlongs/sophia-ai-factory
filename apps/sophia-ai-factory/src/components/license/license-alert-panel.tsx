@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Bell } from 'lucide-react';
 import { LicenseAlertItem } from './license-alert-item';
 import type { UserAlert } from './license-alert-item';
+import { useCsrfToken } from '@/lib/security/use-csrf-token';
 
 interface AlertPanelProps {
   userId?: string;
@@ -22,6 +23,7 @@ interface AlertPanelProps {
 
 export function LicenseAlertPanel({ userId, licenseNonce, limit = 10 }: AlertPanelProps) {
   const queryClient = useQueryClient();
+  const csrfHeaders = useCsrfToken();
 
   const { data: alertsData, isLoading } = useQuery<{ alerts: UserAlert[]; count: number }>({
     queryKey: ['/api/alerts/history', userId, licenseNonce],
@@ -37,7 +39,7 @@ export function LicenseAlertPanel({ userId, licenseNonce, limit = 10 }: AlertPan
 
   const markReadMutation = useMutation({
     mutationFn: async (alertId: string) => {
-      const response = await fetch(`/api/alerts/${alertId}/read`, { method: 'POST' });
+      const response = await fetch(`/api/alerts/${alertId}/read`, { method: 'POST', headers: { ...csrfHeaders } });
       if (!response.ok) throw new Error('Failed to mark as read');
     },
     onSuccess: () => {
@@ -48,7 +50,7 @@ export function LicenseAlertPanel({ userId, licenseNonce, limit = 10 }: AlertPan
 
   const dismissMutation = useMutation({
     mutationFn: async (alertId: string) => {
-      const response = await fetch(`/api/alerts/${alertId}/dismiss`, { method: 'POST' });
+      const response = await fetch(`/api/alerts/${alertId}/dismiss`, { method: 'POST', headers: { ...csrfHeaders } });
       if (!response.ok) throw new Error('Failed to dismiss alert');
       return response.json();
     },
