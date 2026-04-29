@@ -1,16 +1,15 @@
 /**
  * Video Storage Service
  *
- * Downloads temporary HeyGen video URLs and uploads them to Supabase Storage
- * so they remain accessible after HeyGen's CDN links expire.
+ * Downloads temporary HeyGen video URLs and uploads them to Cloudflare R2.
+ * Falls back to the original HeyGen URL when R2 is unavailable (local dev, test).
  *
- * Bucket: 'campaign-videos' (must exist in Supabase Storage)
- * Path:   campaigns/{campaignId}/{timestamp}.mp4
+ * Bucket binding: VIDEO_BUCKET
+ * Key pattern:    campaigns/{campaignId}/{timestamp}.mp4
  */
 
-// TODO: storage not available in D1 client — needs Cloudflare R2 migration
-import { createServerClient } from '@/lib/db/client';
-import { logger } from "@/lib/utils/logger-utility";
+import { logger } from '@/lib/utils/logger-utility';
+import { getVideoBucket } from './r2-binding';
 
 export interface VideoStorageResult {
   permanentUrl: string;
@@ -19,78 +18,53 @@ export interface VideoStorageResult {
   sizeBytes: number;
 }
 
-const BUCKET = "campaign-videos";
-
-function getStorageClient() {
-  return createServerClient();
-}
-
 /**
- * Download a video from a HeyGen temporary URL and upload it to Supabase Storage.
- * If storage upload fails, falls back to returning the original HeyGen URL.
+ * Download a video from a HeyGen temporary URL and upload it to R2.
+ * If the R2 binding is unavailable or upload fails, falls back to
+ * returning the original HeyGen URL so the campaign is never blocked.
  */
 export async function downloadAndStore(
   heygenUrl: string,
   campaignId: string,
 ): Promise<VideoStorageResult> {
-  const storagePath = `campaigns/${campaignId}/${Date.now()}.mp4`;
+  const key = `campaigns/${campaignId}/${Date.now()}.mp4`;
 
-  try {
-    const response = await fetch(heygenUrl);
-    if (!response.ok) {
-      throw new Error(`Failed to download video: HTTP ${response.status}`);
-    }
+  const r2 = await getVideoBucket();
 
-    const blob = await response.blob();
-    const sizeBytes = blob.size;
-
-    const db = getStorageClient();
-    // TODO: supabase.storage not available in D1 client — needs Cloudflare R2 migration
-    const storage = (db as any).storage;
-    if (!storage) {
-      throw new Error("Storage not available in D1 client");
-    }
-
-    const { error: uploadError } = await storage
-      .from(BUCKET)
-      .upload(storagePath, blob, {
-        contentType: "video/mp4",
-        upsert: false,
-      });
-
-    if (uploadError) {
-      throw new Error(`Storage upload failed: ${uploadError.message}`);
-    }
-
-    const { data: publicUrlData } = storage
-      .from(BUCKET)
-      .getPublicUrl(storagePath);
-
-    logger.info("[VideoStorageService] Video stored successfully", {
+  if (!r2) {
+    logger.warn('[VideoStorageService] R2 binding unavailable — using HeyGen URL as fallback', {
       campaignId,
-      path: storagePath,
-      sizeBytes,
     });
-
-    return {
-      permanentUrl: publicUrlData.publicUrl,
-      bucket: BUCKET,
-      path: storagePath,
-      sizeBytes,
-    };
-  } catch (err) {
-    logger.error(
-      "[VideoStorageService] Failed to store video, falling back to HeyGen URL",
-      err instanceof Error ? err : undefined,
-      { campaignId, heygenUrl },
-    );
-
-    // Graceful fallback: return the original HeyGen URL so the campaign is not blocked
-    return {
-      permanentUrl: heygenUrl,
-      bucket: BUCKET,
-      path: storagePath,
-      sizeBytes: 0,
-    };
+    return { permanentUrl: heygenUrl, bucket: 'none', path: '', sizeBytes: 0 };
   }
+
+  const response = await fetch(heygenUrl);
+  if (!response.ok) {
+    throw new Error(`[VideoStorageService] Failed to download video: HTTP ${response.status}`);
+  }
+
+  const body = await response.arrayBuffer();
+  const sizeBytes = body.byteLength;
+
+  await r2.bucket.put(key, body, {
+    httpMetadata: { contentType: 'video/mp4' },
+  });
+
+  const permanentUrl = r2.publicBaseUrl
+    ? `${r2.publicBaseUrl}/${key}`
+    : heygenUrl;
+
+  logger.info('[VideoStorageService] Video stored in R2', {
+    campaignId,
+    key,
+    sizeBytes,
+    usingPublicUrl: r2.publicBaseUrl !== null,
+  });
+
+  return {
+    permanentUrl,
+    bucket: 'VIDEO_BUCKET',
+    path: key,
+    sizeBytes,
+  };
 }

@@ -113,7 +113,7 @@ describe('HeyGen API Routes', () => {
       const data = await response.json();
 
       expect(response.status).toBe(200);
-      expect(data).toEqual({ videoId: 'vid_123' });
+      expect(data).toEqual({ videoId: 'vid_123', status: 'processing' });
       expect(mockVideoService.createVideo).toHaveBeenCalledWith({
         avatarId: 'av1',
         voiceId: 'v1',
@@ -179,7 +179,7 @@ describe('HeyGen API Routes', () => {
       const data = await response.json();
 
       expect(response.status).toBe(200);
-      expect(data).toEqual(mockStatus);
+      expect(data).toEqual({ status: 'completed', video_url: 'http://url', thumbnail_url: null, duration_sec: null, error: null });
       expect(mockVideoService.getVideoStatus).toHaveBeenCalledWith('vid_123');
     });
 

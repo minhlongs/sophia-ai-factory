@@ -13,6 +13,13 @@ binding = "ASSETS"
 binding = "NEXT_INC_CACHE_R2_BUCKET"
 bucket_name = "sophia-ai-factory-opennext-cache"
 
+# Video storage (Phase 01 video go-live).
+# Bucket must exist: `wrangler r2 bucket create sophia-videos`.
+# Public URL: configure custom domain or R2.dev public access; export base URL via R2_PUBLIC_BASE_URL.
+[[r2_buckets]]
+binding = "VIDEO_BUCKET"
+bucket_name = "sophia-videos"
+
 [[d1_databases]]
 binding = "DB"
 database_name = "sophia-raas-db"
@@ -58,6 +65,8 @@ preview_id = "1f440b4e8566471d841aff66e90644ff"
 [vars]
 # NEXT_PUBLIC_MOCK_AI_SERVICES — set in .dev.vars for local dev only
 # Production uses real AI services (BYOK keys from customer)
+# R2_PUBLIC_BASE_URL — public base URL for VIDEO_BUCKET (e.g., https://videos.sophia.agencyos.network).
+# When unset, video storage falls back to original HeyGen CDN URL (volatile).
 
 # === P1-VARS-BEGIN ===
 # vars block managed by P1 — phase 1 CI/CD enforcement
