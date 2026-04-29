@@ -118,6 +118,13 @@ try {
 }
 ```
 
+### Logging Standard (Observability Tier-2D)
+- **Use `logger.error(...)` from `@/lib/utils/logger-utility`** (NOT `console.error`) for all production error handling
+- Logger auto-forwards `error` level to Sentry SDK when available (graceful no-op without SDK)
+- **Client-side exception**: React error boundaries use `Sentry.captureException(error)` directly for unhandled renders
+- **Internal fallback exception**: `logger-internals.ts:92` `console.error` intentional (avoids infinite recursion if logger itself fails)
+- Error context automatically includes: timestamp, requestId (if provided), structured metadata
+
 ### Money Operations: Atomic UPDATE-RETURNING with Reconciliation Revert (Sprint M Pattern)
 
 All financial operations (wallet updates, payout approvals, commission logging) MUST be atomic with reconciliation rollback on error. This is established pattern from Sprint M revenue pipeline (affiliate commissions + payouts).
