@@ -11,6 +11,7 @@ import { hashPassword, verifyPassword } from '@/lib/crypto/password-hash';
 import { sendEmail } from '@/lib/email/sender';
 import { getD1Client } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
+import { requireMfaIfEnabled, markSessionMfaPending } from '@/lib/auth/mfa/login-challenge';
 
 /** Resolve D1 binding from CF Workers context */
 function getD1(): D1Database {
@@ -95,6 +96,21 @@ export function getAuth() {
       }),
     ],
     databaseHooks: {
+      session: {
+        create: {
+          after: async (session) => {
+            try {
+              const { required } = await requireMfaIfEnabled(session.userId);
+              if (required) {
+                await markSessionMfaPending(session.id);
+              }
+            } catch (err) {
+              // Non-blocking — log but don't prevent session creation
+              logger.error('[databaseHook] MFA pending check failed', err instanceof Error ? err : new Error(String(err)));
+            }
+          },
+        },
+      },
       user: {
         create: {
           after: async (user) => {

@@ -11,8 +11,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/utils/logger-utility';
 import { toError } from '@/lib/utils/to-error';
+import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker';
 
 export const dynamic = 'force-dynamic';
+
+const CRON_NAME = 'clearance-promote';
+/** Daily — skip if ran within last 12 hours */
+const IDEMPOTENCY_WINDOW_MS = 12 * 60 * 60 * 1000;
 
 function getD1Binding(): D1Database {
   const env = (globalThis as unknown as { __env?: Record<string, unknown> }).__env;
@@ -44,8 +49,18 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  let db: D1Database;
   try {
-    const db = getD1Binding();
+    db = getD1Binding();
+  } catch {
+    return NextResponse.json({ error: 'D1 unavailable' }, { status: 500 });
+  }
+
+  if (await wasRecentlyRun(db, CRON_NAME, IDEMPOTENCY_WINDOW_MS)) {
+    return NextResponse.json({ ok: true, skipped: 'recent_run' });
+  }
+
+  try {
     const result = await db
       .prepare(
         `UPDATE affiliate_conversions
@@ -58,8 +73,11 @@ export async function GET(req: NextRequest) {
 
     const promoted = result.changes ?? 0;
     logger.info('[cron/clearance-promote] Done', { promoted });
+    await recordCronRun(db, CRON_NAME, 'success');
     return NextResponse.json({ ok: true, promoted });
   } catch (error) {
+    const msg = toError(error).message;
+    await recordCronRun(db, CRON_NAME, 'failure', msg);
     logger.error('[cron/clearance-promote] Failed', toError(error));
     return NextResponse.json({ error: 'Clearance promote failed' }, { status: 500 });
   }

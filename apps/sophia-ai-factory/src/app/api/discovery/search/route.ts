@@ -1,7 +1,13 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { sophiaIndex } from '@/lib/supabase/sophia-index'
+import { getCurrentUser } from '@/lib/better-auth-session'
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
+  const user = await getCurrentUser()
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   const { searchParams } = new URL(request.url)
   const q = searchParams.get('q')
 

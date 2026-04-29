@@ -14,17 +14,31 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import { toError } from '@/lib/utils/to-error';
+import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker';
 
 export const dynamic = 'force-dynamic';
+
+const CRON_NAME = 'scheduled-campaigns';
+/** Daily — skip if ran within last 12 hours */
+const IDEMPOTENCY_WINDOW_MS = 12 * 60 * 60 * 1000;
+
+function getD1(): D1Database | null {
+  try {
+    const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
+    if (env?.DB) return env.DB as D1Database;
+    const globalDb = (globalThis as Record<string, unknown>).__D1_DB as D1Database | undefined;
+    return globalDb ?? null;
+  } catch {
+    return null;
+  }
+}
 
 function verifyCronAuth(req: NextRequest): boolean {
   if (process.env.NODE_ENV === 'development') return true;
 
   const secret = process.env.CRON_SECRET;
-  // P2: Accept Authorization: Bearer <CRON_SECRET> (standard CF Workers cron pattern)
   if (secret && req.headers.get('authorization') === `Bearer ${secret}`) return true;
 
-  // Support both header-based (CF Workers) and query-param-based auth
   const headerSecret = req.headers.get('x-cron-secret');
   if (secret && headerSecret === secret) return true;
 
@@ -52,19 +66,23 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+  const d1 = getD1();
+
+  if (d1 && await wasRecentlyRun(d1, CRON_NAME, IDEMPOTENCY_WINDOW_MS)) {
+    return NextResponse.json({ ok: true, skipped: 'recent_run' });
+  }
+
+  const today = new Date().toISOString().split('T')[0];
 
   try {
     const db = createServerClient();
 
-    // Find active scheduled campaigns due today or earlier
     const { data: schedules, error: fetchError } = await db
       .from('scheduled_campaigns')
       .select('*')
       .eq('is_active', true)
       .lte('next_run_date', today);
 
-    // Graceful degradation — table may not exist yet
     if (fetchError) {
       const msg = fetchError.message ?? String(fetchError);
       if (
@@ -79,6 +97,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (!schedules || schedules.length === 0) {
+      if (d1) await recordCronRun(d1, CRON_NAME, 'success');
       return NextResponse.json({ success: true, created: 0, message: 'No scheduled campaigns due' });
     }
 
@@ -87,7 +106,6 @@ export async function GET(req: NextRequest) {
 
     for (const schedule of schedules as unknown as ScheduledCampaignRow[]) {
       try {
-        // Create campaign from schedule template
         const { error: insertError } = await db.from('campaigns').insert({
           user_id: schedule.user_id,
           title: `${schedule.topic} — ${today}`,
@@ -105,7 +123,6 @@ export async function GET(req: NextRequest) {
           continue;
         }
 
-        // Advance next_run_date by interval
         const nextDate = new Date();
         nextDate.setDate(nextDate.getDate() + (schedule.interval_days ?? 7));
 
@@ -128,6 +145,7 @@ export async function GET(req: NextRequest) {
     }
 
     logger.info(`[scheduled-campaigns] Done: created=${created} failures=${failures.length}`);
+    if (d1) await recordCronRun(d1, CRON_NAME, 'success');
 
     return NextResponse.json({
       success: true,
@@ -136,7 +154,9 @@ export async function GET(req: NextRequest) {
       failures: failures.length > 0 ? failures : undefined,
     });
   } catch (e) {
+    const message = toError(e).message;
     logger.error('[scheduled-campaigns] Cron failed', toError(e));
+    if (d1) await recordCronRun(d1, CRON_NAME, 'failure', message);
     return NextResponse.json({ error: 'Cron failed' }, { status: 500 });
   }
 }

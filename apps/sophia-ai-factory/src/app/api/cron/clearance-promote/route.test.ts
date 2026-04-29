@@ -73,11 +73,13 @@ describe('GET /api/cron/clearance-promote', () => {
 
     it('invokes D1 UPDATE query to promote clearance conversions', async () => {
       await GET(makeRequest({ authorization: 'Bearer test-secret' }));
-      expect(mockPrepare).toHaveBeenCalledOnce();
-      const sql = mockPrepare.mock.calls[0]?.[0] as string;
-      expect(sql).toContain('payout_status');
-      expect(sql).toContain('available');
-      expect(sql).toContain('pending_clearance');
+      // Route now calls prepare multiple times (idempotency check + UPDATE + run-tracker)
+      expect(mockPrepare).toHaveBeenCalled();
+      const sqls = mockPrepare.mock.calls.map((c) => c[0] as string);
+      const updateSql = sqls.find((s) => s.includes('payout_status'));
+      expect(updateSql).toBeDefined();
+      expect(updateSql).toContain('available');
+      expect(updateSql).toContain('pending_clearance');
     });
 
     it('returns promoted=0 when no conversions are ready', async () => {

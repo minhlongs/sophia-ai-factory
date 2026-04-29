@@ -27,8 +27,13 @@ import {
 import { callAnthropicWithByok, callOpenRouterWithByok } from './workflow-stepper-llm-executor'
 import { advanceOne } from './workflow-stepper-advance'
 import type { ActionRecord } from './workflow-stepper-advance'
+import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker'
 
 export const dynamic = 'force-dynamic'
+
+const CRON_NAME = 'workflow-stepper'
+/** Every 1 min — skip if ran within last 30 seconds */
+const IDEMPOTENCY_WINDOW_MS = 30 * 1000
 
 export type { OpenRouterChoice, OpenRouterResponse } from './workflow-stepper-runtime-utils'
 export type { LlmCallResult } from './workflow-stepper-llm-executor'
@@ -153,25 +158,36 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'D1 unavailable' }, { status: 500 })
   }
 
-  const { results: workflows } = await db
-    .prepare(
-      `SELECT id, org_id, prompt, status, final_result, error_message, created_at, updated_at
-       FROM workflows WHERE status IN ('queued','running') LIMIT 20`,
-    )
-    .all<WorkflowRow>()
-
-  const active = workflows ?? []
-  const actions: ActionRecord[] = []
-
-  for (const wf of active) {
-    try {
-      const record = await advanceOne(db, wf, executeStep)
-      actions.push(record)
-    } catch (err) {
-      logger.warn('[workflow-stepper] advanceOne failed', { workflowId: wf.id, err })
-      actions.push({ workflowId: wf.id, action: 'error' })
-    }
+  if (await wasRecentlyRun(db, CRON_NAME, IDEMPOTENCY_WINDOW_MS)) {
+    return NextResponse.json({ ok: true, skipped: 'recent_run' })
   }
 
-  return NextResponse.json({ processed: active.length, actions })
+  try {
+    const { results: workflows } = await db
+      .prepare(
+        `SELECT id, org_id, prompt, status, final_result, error_message, created_at, updated_at
+         FROM workflows WHERE status IN ('queued','running') LIMIT 20`,
+      )
+      .all<WorkflowRow>()
+
+    const active = workflows ?? []
+    const actions: ActionRecord[] = []
+
+    for (const wf of active) {
+      try {
+        const record = await advanceOne(db, wf, executeStep)
+        actions.push(record)
+      } catch (err) {
+        logger.warn('[workflow-stepper] advanceOne failed', { workflowId: wf.id, err })
+        actions.push({ workflowId: wf.id, action: 'error' })
+      }
+    }
+
+    await recordCronRun(db, CRON_NAME, 'success')
+    return NextResponse.json({ processed: active.length, actions })
+  } catch (err) {
+    const msg = getErrorMessage(err)
+    await recordCronRun(db, CRON_NAME, 'failure', msg)
+    throw err
+  }
 }

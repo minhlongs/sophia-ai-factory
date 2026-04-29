@@ -10,49 +10,51 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { runDailyRollup } from '@/lib/usage-metering/rollup-service';
 import { logger } from '@/lib/utils/logger-utility';
+import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker';
 
-/**
- * Verify cron authentication
- */
-function verifyCronAuth(request: NextRequest): boolean {
-  // Allow bypass in development
-  if (process.env.NODE_ENV === 'development') {
-    return true;
+const CRON_NAME = 'daily-rollup';
+/** Daily — skip if ran within last 12 hours */
+const IDEMPOTENCY_WINDOW_MS = 12 * 60 * 60 * 1000;
+
+function getD1(): D1Database | null {
+  try {
+    const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
+    if (env?.DB) return env.DB as D1Database;
+    const globalDb = (globalThis as Record<string, unknown>).__D1_DB as D1Database | undefined;
+    return globalDb ?? null;
+  } catch {
+    return null;
   }
+}
+
+function verifyCronAuth(request: NextRequest): boolean {
+  if (process.env.NODE_ENV === 'development') return true;
 
   const expectedSecret = process.env.CRON_SECRET;
-  // P2: Accept Authorization: Bearer <CRON_SECRET> (standard CF Workers cron pattern)
-  if (expectedSecret && request.headers.get('authorization') === `Bearer ${expectedSecret}`) {
-    return true;
-  }
+  if (expectedSecret && request.headers.get('authorization') === `Bearer ${expectedSecret}`) return true;
 
-  // Check for cron secret via x-cron-secret header
   const cronSecret = request.headers.get('x-cron-secret');
-  if (expectedSecret && cronSecret === expectedSecret) {
-    return true;
-  }
+  if (expectedSecret && cronSecret === expectedSecret) return true;
 
-  // Check for Cloudflare cron header
   const cfCron = request.headers.get('x-cf-cron');
-  if (cfCron === 'true') {
-    return true;
-  }
+  if (cfCron === 'true') return true;
 
   logger.warn('[Daily Rollup Cron] Unauthorized cron attempt');
   return false;
 }
 
 export async function GET(request: NextRequest) {
-  // Verify authentication
   if (!verifyCronAuth(request)) {
-    return NextResponse.json(
-      { error: 'Unauthorized' },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const db = getD1();
+
+  if (db && await wasRecentlyRun(db, CRON_NAME, IDEMPOTENCY_WINDOW_MS)) {
+    return NextResponse.json({ ok: true, skipped: 'recent_run' });
   }
 
   try {
-    // Get optional day_timestamp from query (for manual reprocessing)
     const searchParams = request.nextUrl.searchParams;
     const dayTimestampParam = searchParams.get('day_timestamp');
     const dayTimestamp = dayTimestampParam ? parseInt(dayTimestampParam, 10) : undefined;
@@ -61,14 +63,11 @@ export async function GET(request: NextRequest) {
       dayTimestamp: dayTimestamp ?? 'auto (yesterday)',
     });
 
-    // Run rollup
     const result = await runDailyRollup(dayTimestamp);
 
     if (result.success) {
-      logger.info('[Daily Rollup Cron] Complete', {
-        processed: result.processed,
-      });
-
+      logger.info('[Daily Rollup Cron] Complete', { processed: result.processed });
+      if (db) await recordCronRun(db, CRON_NAME, 'success');
       return NextResponse.json({
         success: true,
         processed: result.processed,
@@ -77,32 +76,17 @@ export async function GET(request: NextRequest) {
     } else {
       const errorMessage = result.error || 'Unknown error';
       logger.error('[Daily Rollup Cron] Failed', new Error(errorMessage));
-
-      return NextResponse.json(
-        {
-          success: false,
-          error: errorMessage,
-        },
-        { status: 500 }
-      );
+      if (db) await recordCronRun(db, CRON_NAME, 'failure', errorMessage);
+      return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     logger.error('[Daily Rollup Cron] Critical error', new Error(errorMessage));
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: errorMessage,
-      },
-      { status: 500 }
-    );
+    if (db) await recordCronRun(db, CRON_NAME, 'failure', errorMessage);
+    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
 }
 
-/**
- * POST handler - same as GET for compatibility
- */
 export async function POST(request: NextRequest) {
   return GET(request);
 }

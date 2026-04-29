@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { getCurrentUserFromHeaders } from '@/lib/better-auth-session'
 
 // Use Edge Runtime for low latency
 export const runtime = 'edge'
@@ -46,7 +47,12 @@ function isSafeUrl(urlString: string): boolean {
   }
 }
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
+  const user = await getCurrentUserFromHeaders(request.headers)
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   const { searchParams } = new URL(request.url)
   const targetUrl = searchParams.get('url')
 
