@@ -56,15 +56,17 @@ Before deploying Sprint M (first-dollar revenue engine), ensure all prerequisite
    - Migration 0021-affiliate-offers-selected
    - Migration 0022-affiliate-conversions
    - Migration 0023-user-wallets+payouts+user-payout-settings
+   - Migration 0030-video-r2-metadata (2026-04-29) — adds `r2_key`, `r2_size_bytes` columns to `videos` table
    ```bash
    npx wrangler d1 migrations apply sophia-raas-db --remote
    ```
 
-2. **Cloudflare Secrets Set** (9 required)
+2. **Cloudflare Secrets Set** (11 required)
    ```bash
    npx wrangler secret put OPENROUTER_API_KEY --env production
    npx wrangler secret put ELEVENLABS_API_KEY --env production
    npx wrangler secret put HEYGEN_API_KEY --env production
+   npx wrangler secret put HEYGEN_WEBHOOK_SECRET --env production
    npx wrangler secret put NOWPAYMENTS_API_KEY --env production
    npx wrangler secret put NOWPAYMENTS_IPN_SECRET --env production
    npx wrangler secret put TELEGRAM_BOT_TOKEN --env production
@@ -73,6 +75,13 @@ Before deploying Sprint M (first-dollar revenue engine), ensure all prerequisite
    npx wrangler secret put CLICKBANK_INS_SECRET --env production
    npx wrangler secret put CRON_SECRET --env production
    ```
+   
+   **New Video Webhook Secrets (2026-04-29)**:
+   - `HEYGEN_WEBHOOK_SECRET` — HeyGen webhook signature verification (HMAC-SHA256).
+   - `HEYGEN_API_KEY` — HeyGen API credential for video polling.
+   
+   **Optional Video CDN**:
+   - `R2_PUBLIC_BASE_URL` — Public CDN URL for R2 bucket (e.g., `https://videos.sophia.agencyos.network`). If omitted, uses R2 auth URLs.
 
 3. **ClickBank Vendor Configuration**
    - Set Instant Notification Service (INS) URL in ClickBank vendor dashboard:

@@ -1,8 +1,8 @@
 # Codebase Summary
 
-**Last Updated:** 2026-04-27
-**Version:** 1.14.8 (B2 TypeScript Cleanup Complete — 462→0 Errors)
-**Recent Major Changes (Sprint M):** First-dollar revenue engine shipped (5 commits, 6 D1 migrations). 1413→1564 tests (+151). ClickBank webhook integration + wallet payout system ready for deployment. See `docs/project-changelog.md` for full details.
+**Last Updated:** 2026-04-29
+**Version:** 1.14.9 (Video Go-Live Complete — R2 Storage + HeyGen Webhooks)
+**Recent Major Changes (Video Pipeline):** HeyGen webhook integration + R2 bucket storage live (2 commits: 0b12421, a2aa630). New routes: `POST /api/webhooks/heygen`, `GET /api/cron/video-status-sync`. Migration 0030 adds R2 metadata columns. Env secrets: `HEYGEN_WEBHOOK_SECRET`, `HEYGEN_API_KEY`. See `docs/project-changelog.md` for full details.
 
 ## Project Structure Overview
 
@@ -47,6 +47,8 @@ Sophia AI Video Factory is a Next.js 16 application structured around the App Ro
   - `/api/render-video`: Triggers n8n video workflow.
   - `/api/setup`: Endpoint for wizard configuration validation.
   - `/api/heygen/*`: Direct proxy endpoints for HeyGen API.
+  - `/api/webhooks/heygen`: HeyGen video completion webhook (HMAC-SHA256 verified, 2026-04-29).
+  - `/api/cron/video-status-sync`: 5-min polling cron for pending HeyGen video status (2026-04-29).
 - **`middleware.ts`**: Handles redirection logic.
   - Redirects unconfigured instances (missing `SETUP_COMPLETE` cookie/env) to `/setup-wizard`.
   - Protects `/admin` routes if configured.
@@ -83,6 +85,10 @@ Sophia AI Video Factory is a Next.js 16 application structured around the App Ro
   - **`wallet-rebuilder.ts`**: Hourly cron job aggregating conversions with 60-day clearance window.
   - **`clearance-promoter.ts`**: Daily cron job moving pending→available balances.
   - **`payout-manager.ts`**: Admin approval flow + Telegram notifications.
+- **`video/`**: HeyGen video storage + webhook integration (2026-04-29).
+  - **`r2-binding.ts`**: Cloudflare R2 bucket operations (`sophia-videos`).
+  - **`heygen-webhook-handler.ts`**: HMAC-SHA256 webhook signature verification + video ingest.
+  - **`video-status-sync.ts`**: Cron job (5-min polling) for pending HeyGen video status updates.
 - **`heygen/`**: Legacy HeyGen client (deprecated in favor of services).
 - **`airtable.ts`**: Typed client for Airtable operations.
 - **`n8n.ts`**: Client for triggering n8n webhooks.
@@ -117,6 +123,7 @@ Sophia AI Video Factory is a Next.js 16 application structured around the App Ro
   - `NEXT_PUBLIC_FEATURE_AFFILIATE_ENGINE`: Toggles affiliate tools.
 
 ## Recent Major Changes
+- **Video Go-Live: HeyGen Webhooks + R2 Storage (2026-04-29)**: Shipped `POST /api/webhooks/heygen` (HMAC-SHA256), `GET /api/cron/video-status-sync` (5-min polling), R2 binding `sophia-videos`. Migration 0030 adds `r2_key`, `r2_size_bytes` to `videos` table. New env secrets: `HEYGEN_WEBHOOK_SECRET`, `HEYGEN_API_KEY`. Optional `R2_PUBLIC_BASE_URL` for CDN. Commits 0b12421, a2aa630. Status response: `{status, video_url, thumbnail_url, duration_sec, error}`.
 - **Sprint M Phase M1: Revenue Pipeline Unblock (2026-04-27)**: D1 schema expansion for campaigns + RAAS licensing. Added tables: `campaigns`, `campaign_checkpoints`, `raas_licenses`, `raas_audit_logs`. Extended `user_profiles` with `subscription_tier` and `telegram_chat_id`. Migrations 0018-0019 (new) + 0020 (fix). Telegram handler refactor + 7-test suite. Tests: 1406/1406 pass. TS: 0 errors. Review: 9.6/10. Pipeline now writes to DB without crashes; remote apply deferred.
 - **Phase 49: Analytics Page Modularization (2026-04-27)**: Modularized analytics usage page (382L → 5 modules <200L each). New structure: page.tsx orchestrator + use-usage-analytics hook + 3 tab components. Zero behavioral change. Tests: 1397/1397 pass. TS: 0 errors. Review: 9.7/10.
 - **L1 Logger Noise Sweep (2026-04-27)**: Demoted 4 hot-path API logs to debug (quota, usage, usage/batch, overage endpoints). Removed 2 redundant per-request logs. Audit/security/billing logs untouched. Cost optimization via reduced Cloudflare Workers log egress, zero impact on operational visibility. Tests: 1398/1429 pass. TS: 0 errors. Review: 9.7/10.
