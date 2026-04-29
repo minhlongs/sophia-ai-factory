@@ -1,17 +1,27 @@
 /**
- * Sentry client-side initialization — loaded by @sentry/nextjs in browser bundle.
- * https://docs.sentry.io/platforms/javascript/guides/nextjs/
+ * Sentry client-side configuration
+ * Next.js App Router — client components
  */
 import * as Sentry from '@sentry/nextjs';
-import { buildClientOptions } from '@/lib/observability/sentry-options';
 
 Sentry.init({
-  ...buildClientOptions(),
-  // Session replay only on errors in production (privacy-first: maskAllText)
+  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+
+  // Replay integration for debugging sessions
   integrations: [
-    Sentry.replayIntegration({
-      maskAllText: true,
-      blockAllMedia: true,
-    }),
+    Sentry.replayIntegration(),
   ],
+
+  // Performance monitoring
+  tracesSampleRate: 0.1,
+
+  // Capture 10% of sessions for replay
+  replaysSessionSampleRate: 0.1,
+  // Capture 100% of sessions with errors
+  replaysOnErrorSampleRate: 1.0,
+
+  // Only enable in production
+  enabled: process.env.NODE_ENV === 'production',
+
+  debug: false,
 });
