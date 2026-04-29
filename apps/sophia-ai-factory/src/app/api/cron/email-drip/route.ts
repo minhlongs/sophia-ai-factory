@@ -11,8 +11,13 @@ import { createServerClient } from '@/lib/db/client';
 import { sendEmail } from '@/lib/email/sender';
 import { logger } from '@/lib/utils/logger-utility';
 import { toError } from '@/lib/utils/to-error';
+import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker';
 
 export const dynamic = 'force-dynamic';
+
+const CRON_NAME = 'email-drip';
+/** Daily — skip if ran within last 12 hours */
+const IDEMPOTENCY_WINDOW_MS = 12 * 60 * 60 * 1000;
 
 interface DripTemplate {
   daysSinceSignup: number;
@@ -36,11 +41,21 @@ interface BillingEventRow {
   id: string;
 }
 
+function getD1(): D1Database | null {
+  try {
+    const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
+    if (env?.DB) return env.DB as D1Database;
+    const globalDb = (globalThis as Record<string, unknown>).__D1_DB as D1Database | undefined;
+    return globalDb ?? null;
+  } catch {
+    return null;
+  }
+}
+
 function verifyCronAuth(req: NextRequest): boolean {
   const secret = process.env.CRON_SECRET;
-  if (!secret) return true; // no secret configured — allow in dev
+  if (!secret) return true;
 
-  // P2: Accept Authorization: Bearer <CRON_SECRET> (standard CF Workers cron pattern)
   if (req.headers.get('authorization') === `Bearer ${secret}`) return true;
 
   const token = req.nextUrl.searchParams.get('token');
@@ -49,7 +64,6 @@ function verifyCronAuth(req: NextRequest): boolean {
   const cronHeader = req.headers.get('x-cron-secret');
   if (cronHeader === secret) return true;
 
-  // Cloudflare Cron Trigger sets this header
   const cfCron = req.headers.get('x-cf-cron');
   if (cfCron === 'true') return true;
 
@@ -61,73 +75,83 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const d1 = getD1();
+
+  if (d1 && await wasRecentlyRun(d1, CRON_NAME, IDEMPOTENCY_WINDOW_MS)) {
+    return NextResponse.json({ ok: true, skipped: 'recent_run' });
+  }
+
   let sent = 0;
   const db = createServerClient();
 
-  for (const drip of DRIP_TEMPLATES) {
-    try {
-      const targetDate = new Date();
-      targetDate.setDate(targetDate.getDate() - drip.daysSinceSignup);
+  try {
+    for (const drip of DRIP_TEMPLATES) {
+      try {
+        const targetDate = new Date();
+        targetDate.setDate(targetDate.getDate() - drip.daysSinceSignup);
 
-      // ±12h window so once-daily cron doesn't miss users
-      const windowStart = new Date(targetDate.getTime() - 12 * 3600 * 1000).toISOString();
-      const windowEnd = new Date(targetDate.getTime() + 12 * 3600 * 1000).toISOString();
+        const windowStart = new Date(targetDate.getTime() - 12 * 3600 * 1000).toISOString();
+        const windowEnd = new Date(targetDate.getTime() + 12 * 3600 * 1000).toISOString();
 
-      const { data: users } = await db
-        .from('user')
-        .select('id, email, name')
-        .gte('created_at', windowStart)
-        .lte('created_at', windowEnd);
+        const { data: users } = await db
+          .from('user')
+          .select('id, email, name')
+          .gte('created_at', windowStart)
+          .lte('created_at', windowEnd);
 
-      if (!users || users.length === 0) continue;
+        if (!users || users.length === 0) continue;
 
-      for (const rawUser of users) {
-        const user = rawUser as unknown as UserRow;
-        try {
-          // Dedup — skip if already sent this drip to this user
-          const { data: existing } = await db
-            .from('billing_events')
-            .select('id')
-            .eq('event_type', drip.templateKey)
-            .eq('user_id', user.id)
-            .limit(1);
+        for (const rawUser of users) {
+          const user = rawUser as unknown as UserRow;
+          try {
+            const { data: existing } = await db
+              .from('billing_events')
+              .select('id')
+              .eq('event_type', drip.templateKey)
+              .eq('user_id', user.id)
+              .limit(1);
 
-          const existingRows = existing as BillingEventRow[] | null;
-          if (existingRows && existingRows.length > 0) continue;
+            const existingRows = existing as BillingEventRow[] | null;
+            if (existingRows && existingRows.length > 0) continue;
 
-          const displayName = user.name || 'bạn';
+            const displayName = user.name || 'bạn';
 
-          const result = await sendEmail({
-            to: user.email,
-            subject: drip.subject,
-            html: buildDripHtml(drip.templateKey, displayName),
-            tags: [{ name: 'type', value: drip.templateKey }],
-          });
+            const result = await sendEmail({
+              to: user.email,
+              subject: drip.subject,
+              html: buildDripHtml(drip.templateKey, displayName),
+              tags: [{ name: 'type', value: drip.templateKey }],
+            });
 
-          // Record sent regardless of success to prevent infinite retry on provider error
-          await db.from('billing_events').insert({
-            user_id: user.id,
-            event_type: drip.templateKey,
-            event_category: 'marketing',
-            event_data: { emailSent: result.success, provider: result.provider },
-          });
+            await db.from('billing_events').insert({
+              user_id: user.id,
+              event_type: drip.templateKey,
+              event_category: 'marketing',
+              event_data: { emailSent: result.success, provider: result.provider },
+            });
 
-          if (result.success) {
-            sent++;
-          } else {
-            logger.warn(`[email-drip] Send failed for user ${user.id}: ${result.error}`);
+            if (result.success) {
+              sent++;
+            } else {
+              logger.warn(`[email-drip] Send failed for user ${user.id}: ${result.error}`);
+            }
+          } catch (e) {
+            logger.error(`[email-drip] Failed for user ${user.id}`, toError(e));
           }
-        } catch (e) {
-          logger.error(`[email-drip] Failed for user ${user.id}`, toError(e));
         }
+      } catch (e) {
+        logger.error(`[email-drip] Drip ${drip.templateKey} query failed`, toError(e));
       }
-    } catch (e) {
-      logger.error(`[email-drip] Drip ${drip.templateKey} query failed`, toError(e));
     }
-  }
 
-  logger.info(`[email-drip] Completed. sent=${sent}`);
-  return NextResponse.json({ success: true, sent });
+    logger.info(`[email-drip] Completed. sent=${sent}`);
+    if (d1) await recordCronRun(d1, CRON_NAME, 'success');
+    return NextResponse.json({ success: true, sent });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    if (d1) await recordCronRun(d1, CRON_NAME, 'failure', message);
+    throw err;
+  }
 }
 
 function buildDripHtml(templateKey: string, name: string): string {

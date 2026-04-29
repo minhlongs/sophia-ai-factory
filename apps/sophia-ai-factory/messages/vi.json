@@ -847,5 +847,19 @@
       "success_enabled": "Đã bật xác thực hai yếu tố",
       "success_disabled": "Đã tắt xác thực hai yếu tố"
     }
+  },
+  "auth": {
+    "mfa_challenge": {
+      "title": "Xác Thực Hai Yếu Tố",
+      "subtitle": "Nhập mã 6 chữ số từ ứng dụng xác thực của bạn.",
+      "label_totp": "Mã xác thực (TOTP)",
+      "label_backup": "Mã dự phòng",
+      "submit": "Xác Nhận",
+      "verifying": "Đang xác nhận...",
+      "use_backup": "Dùng mã dự phòng",
+      "use_totp": "Dùng mã xác thực",
+      "error_invalid_code": "Mã không hợp lệ. Vui lòng thử lại.",
+      "error_generic": "Lỗi xác thực. Vui lòng thử lại."
+    }
   }
 }

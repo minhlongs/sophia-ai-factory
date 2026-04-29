@@ -18,6 +18,7 @@ import {
 } from './lib/security/csrf'
 import { buildCSPHeader } from './lib/security/content-security-policy-configuration'
 import { CSP_NONCE_HEADER } from './lib/security/get-csp-nonce'
+import { isSessionMfaPending } from './lib/auth/mfa/login-challenge'
 
 /**
  * Generate a cryptographically random nonce for this request.
@@ -102,12 +103,31 @@ export async function proxy(request: NextRequest) {
   }
 
   const cleanPath = pathnameWithoutLocale(pathname)
+
+  // MFA challenge paths are always allowed (pending or not) so the user can complete verification
+  const isMfaChallengePath =
+    cleanPath === '/auth/mfa-challenge' ||
+    pathname.startsWith('/api/auth/mfa/challenge')
+
   if (cleanPath.startsWith('/dashboard')) {
     try {
       const auth = getAuth()
       if (!auth) return NextResponse.redirect(new URL('/login', request.url))
       const session = await auth.api.getSession({ headers: request.headers })
       if (!session) return NextResponse.redirect(new URL('/login', request.url))
+
+      // Enforce MFA challenge: redirect to MFA page if session is pending
+      if (!isMfaChallengePath && session.session?.id) {
+        try {
+          const pending = await isSessionMfaPending(session.session.id)
+          if (pending) {
+            return NextResponse.redirect(new URL('/auth/mfa-challenge', request.url))
+          }
+        } catch (mfaErr) {
+          // Non-fatal — log and allow through to avoid locking out users on DB errors
+          logger.error('[Middleware] MFA pending check error', toError(mfaErr))
+        }
+      }
     } catch {
       return NextResponse.redirect(new URL('/login', request.url))
     }

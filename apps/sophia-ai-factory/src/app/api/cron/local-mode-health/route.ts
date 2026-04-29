@@ -13,8 +13,13 @@ import { decryptSecret } from '@/lib/crypto/encrypt-secret'
 import { track } from '@/lib/signals/track'
 import { D1Events } from '@/lib/signals/d1-event-types'
 import { logger } from '@/lib/utils/logger-utility'
+import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker'
 
 export const dynamic = 'force-dynamic'
+
+const CRON_NAME = 'local-mode-health'
+/** Every 15 min — skip if ran within last 5 minutes */
+const IDEMPOTENCY_WINDOW_MS = 5 * 60 * 1000
 
 /** FNV-1a 32-bit — fingerprints endpoint without storing raw URL */
 export function fnv1a(str: string): number {
@@ -126,5 +131,18 @@ async function handler(req: NextRequest): Promise<NextResponse> {
   if (!isAuthorised(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   let db: D1Database
   try { db = getDb() } catch { return NextResponse.json({ error: 'D1 unavailable' }, { status: 500 }) }
-  return NextResponse.json(await runHealthCheck(db, getDek()))
+
+  if (await wasRecentlyRun(db, CRON_NAME, IDEMPOTENCY_WINDOW_MS)) {
+    return NextResponse.json({ ok: true, skipped: 'recent_run' })
+  }
+
+  try {
+    const summary = await runHealthCheck(db, getDek())
+    await recordCronRun(db, CRON_NAME, 'success')
+    return NextResponse.json(summary)
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    await recordCronRun(db, CRON_NAME, 'failure', msg)
+    throw err
+  }
 }

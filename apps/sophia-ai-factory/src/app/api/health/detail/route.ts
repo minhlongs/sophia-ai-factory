@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getErrorMessage } from "@/lib/utils/to-error";
 
-// RED-TEAM #10: Requires INTROSPECT_TOKEN bearer — returns 401 otherwise.
+// Auth: Bearer METRICS_BEARER_TOKEN — constant-time compare, 401 otherwise.
 // Exposes binding statuses + cron last-run timestamps.
 
 interface CloudflareEnv {
   DB?: { prepare: (sql: string) => { first: () => Promise<unknown> } };
   NEXT_INC_CACHE_R2_BUCKET?: { head: (key: string) => Promise<unknown> };
   INTROSPECT_TOKEN?: string;
+  METRICS_BEARER_TOKEN?: string;
   COMMIT_SHA?: string;
   DEPLOYED_AT?: string;
 }
@@ -31,22 +32,35 @@ interface HealthDetailResponse {
   degraded: string[];
 }
 
+/** Constant-time compare — prevents timing-based token enumeration. */
+function timingSafeEqual(a: string, b: string): boolean {
+  const maxLen = Math.max(a.length, b.length);
+  let mismatch = a.length !== b.length ? 1 : 0;
+  for (let i = 0; i < maxLen; i++) {
+    mismatch |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
+  }
+  return mismatch === 0;
+}
+
 function getEnv(request: NextRequest): CloudflareEnv {
   const ctx = (request as NextRequest & { env?: CloudflareEnv }).env;
   return {
     DB: ctx?.DB,
     NEXT_INC_CACHE_R2_BUCKET: ctx?.NEXT_INC_CACHE_R2_BUCKET,
     INTROSPECT_TOKEN: ctx?.INTROSPECT_TOKEN ?? process.env.INTROSPECT_TOKEN,
+    METRICS_BEARER_TOKEN: ctx?.METRICS_BEARER_TOKEN ?? process.env.METRICS_BEARER_TOKEN,
     COMMIT_SHA: ctx?.COMMIT_SHA ?? process.env.COMMIT_SHA,
     DEPLOYED_AT: ctx?.DEPLOYED_AT ?? process.env.DEPLOYED_AT,
   };
 }
 
 function isAuthorized(request: NextRequest, env: CloudflareEnv): boolean {
-  const token = env.INTROSPECT_TOKEN;
+  // Prefer METRICS_BEARER_TOKEN; fall back to legacy INTROSPECT_TOKEN
+  const token = env.METRICS_BEARER_TOKEN ?? env.INTROSPECT_TOKEN;
   if (!token) return false;
   const auth = request.headers.get("authorization") ?? "";
-  return auth === `Bearer ${token}`;
+  const provided = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  return timingSafeEqual(provided, token);
 }
 
 async function checkD1(env: CloudflareEnv): Promise<SubsystemCheck> {

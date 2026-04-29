@@ -8,8 +8,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getJobStatus } from '@/lib/clients/muapi-media-client'
 import { logger } from '@/lib/utils/logger-utility'
+import { getCurrentUser } from '@/lib/better-auth-session'
 
 export async function GET(req: NextRequest) {
+  const user = await getCurrentUser()
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     const jobId = req.nextUrl.searchParams.get('id')
 

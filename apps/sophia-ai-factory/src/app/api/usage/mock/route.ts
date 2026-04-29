@@ -10,6 +10,7 @@ import { trackUsage, hashLicenseKey } from '@/lib/usage-metering';
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import { toError } from '@/lib/utils/to-error';
+import { verifyInternalSecret } from '@/lib/security/verify-internal-secret';
 
 const SERVICES = ['heygen', 'elevenlabs', 'openrouter'] as const;
 const ACTIONS = {
@@ -26,6 +27,11 @@ const ACTIONS = {
  * - license_nonce: License nonce to associate with events (required)
  */
 export async function GET(request: NextRequest) {
+  // Block in production; allow only with valid internal secret
+  if (process.env.NODE_ENV === 'production' && !verifyInternalSecret(request)) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const count = parseInt(searchParams.get('count') || '10');
@@ -116,7 +122,12 @@ export async function GET(request: NextRequest) {
 /**
  * DELETE: Clear mock data (for testing reset)
  */
-export async function DELETE() {
+export async function DELETE(request: NextRequest) {
+  // Block in production; allow only with valid internal secret
+  if (process.env.NODE_ENV === 'production' && !verifyInternalSecret(request)) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
   try {
     const db = createServerClient();
 

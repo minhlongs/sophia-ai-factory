@@ -1,6 +1,6 @@
 /**
  * Usage Export Cron Endpoint — GET /api/cron/usage-export
- * Schedule: 0 2 * * * (02:00 UTC daily)
+ * Schedule: 5 * * * * (hourly at :05)
  * @module app/api/cron/usage-export/route
  */
 
@@ -10,12 +10,34 @@ import { getErrorMessage } from '@/lib/utils/to-error'
 import { verifyCronAuth, getPreviousDayRange } from './cron-usage-export-helpers'
 import { getActiveLicenses } from './cron-usage-export-db'
 import { processLicenseExport } from './cron-usage-export-processor'
+import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker'
+
+const CRON_NAME = 'usage-export'
+/** Hourly — skip if ran within last 30 minutes */
+const IDEMPOTENCY_WINDOW_MS = 30 * 60 * 1000
+
+function getD1(): D1Database | null {
+  try {
+    const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env
+    if (env?.DB) return env.DB as D1Database
+    const globalDb = (globalThis as Record<string, unknown>).__D1_DB as D1Database | undefined
+    return globalDb ?? null
+  } catch {
+    return null
+  }
+}
 
 export async function GET(request: NextRequest) {
   const requestId = crypto.randomUUID()
   const startTime = Date.now()
 
   if (!verifyCronAuth(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const db = getD1()
+
+  if (db && await wasRecentlyRun(db, CRON_NAME, IDEMPOTENCY_WINDOW_MS)) {
+    return NextResponse.json({ ok: true, skipped: 'recent_run' })
+  }
 
   try {
     logger.info('[Usage Export Cron] Starting', { requestId })
@@ -29,6 +51,7 @@ export async function GET(request: NextRequest) {
     const activeLicenses = await getActiveLicenses()
     if (activeLicenses.length === 0) {
       logger.info('[Usage Export Cron] No active licenses found')
+      if (db) await recordCronRun(db, CRON_NAME, 'success')
       return NextResponse.json({ success: true, message: 'No active licenses to process', processed: 0, failed: 0, totalRecords: 0 })
     }
 
@@ -46,6 +69,8 @@ export async function GET(request: NextRequest) {
     const duration = Date.now() - startTime
     logger.info('[Usage Export Cron] Complete', { requestId, duration, totalLicenses: activeLicenses.length, successful: activeLicenses.length - failedCount, failed: failedCount, totalRecords })
 
+    if (db) await recordCronRun(db, CRON_NAME, failedCount > 0 ? 'failure' : 'success')
+
     return NextResponse.json({
       success: true,
       message: `Processed ${activeLicenses.length - failedCount}/${activeLicenses.length} licenses`,
@@ -55,6 +80,7 @@ export async function GET(request: NextRequest) {
     const errorMessage = getErrorMessage(error)
     const duration = Date.now() - startTime
     logger.error('[Usage Export Cron] Critical error', error instanceof Error ? error : new Error(String(error)), { requestId, duration })
+    if (db) await recordCronRun(db, CRON_NAME, 'failure', errorMessage)
     return NextResponse.json({ success: false, error: errorMessage, requestId }, { status: 500 })
   }
 }

@@ -5,7 +5,7 @@
  * - past_due + grace period expired → suspended
  * - delinquent + no retry in window → suspended
  *
- * Schedule: Daily via Cloudflare Cron Trigger
+ * Schedule: Daily via Cloudflare Cron Trigger (0 1 * * *)
  * Auth: x-cron-secret header or x-cf-cron: true
  */
 
@@ -14,12 +14,27 @@ import { createServerClient } from '@/lib/db/client';
 import { transitionDunningState } from '@/lib/billing/dunning/dunning-state-machine';
 import { logger } from '@/lib/utils/logger-utility';
 import { toError } from '@/lib/utils/to-error';
+import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker';
+
+const CRON_NAME = 'dunning-advance';
+/** Daily — skip if ran within last 12 hours */
+const IDEMPOTENCY_WINDOW_MS = 12 * 60 * 60 * 1000;
+
+function getD1(): D1Database | null {
+  try {
+    const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
+    if (env?.DB) return env.DB as D1Database;
+    const globalDb = (globalThis as Record<string, unknown>).__D1_DB as D1Database | undefined;
+    return globalDb ?? null;
+  } catch {
+    return null;
+  }
+}
 
 function verifyCronAuth(request: NextRequest): boolean {
   if (process.env.NODE_ENV === 'development') return true;
 
   const expectedSecret = process.env.CRON_SECRET;
-  // P2: Accept Authorization: Bearer <CRON_SECRET> (standard CF Workers cron pattern)
   if (expectedSecret && request.headers.get('authorization') === `Bearer ${expectedSecret}`) return true;
 
   const cronSecret = request.headers.get('x-cron-secret');
@@ -45,6 +60,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const d1 = getD1();
+
+  if (d1 && await wasRecentlyRun(d1, CRON_NAME, IDEMPOTENCY_WINDOW_MS)) {
+    return NextResponse.json({ ok: true, skipped: 'recent_run' });
+  }
+
   let advanced = 0;
   let errors = 0;
 
@@ -52,7 +73,6 @@ export async function GET(request: NextRequest) {
     const db = createServerClient();
     const now = new Date();
 
-    // Find past_due accounts whose grace period has expired
     const { data: pastDueRows } = await db
       .from('dunning_settings')
       .select('id, user_id, license_nonce, dunning_state, dunning_state_changed_at, grace_period_days')
@@ -65,7 +85,7 @@ export async function GET(request: NextRequest) {
           stateChangedAt.getTime() + row.grace_period_days * 24 * 60 * 60 * 1000
         );
 
-        if (graceEndsAt > now) continue; // Still within grace period
+        if (graceEndsAt > now) continue;
 
         logger.info('[DunningAdvance] Advancing past_due → suspended', {
           licenseNonce: row.license_nonce.slice(0, 8),
@@ -91,7 +111,6 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Find delinquent accounts with no pending retry scheduled (max retry exceeded)
     const { data: delinquentRows } = await db
       .from('dunning_settings')
       .select('id, user_id, license_nonce, dunning_state, dunning_state_changed_at, grace_period_days')
@@ -99,7 +118,6 @@ export async function GET(request: NextRequest) {
 
     for (const row of delinquentRows ?? []) {
       try {
-        // Check for a future retry attempt
         const { data: pendingRetry } = await db
           .from('dunning_attempts')
           .select('next_retry_at')
@@ -108,9 +126,8 @@ export async function GET(request: NextRequest) {
           .gt('next_retry_at', now.toISOString())
           .limit(1);
 
-        if (pendingRetry?.length) continue; // Has upcoming retry, skip
+        if (pendingRetry?.length) continue;
 
-        // No future retry — check delinquent for > grace_period_days since state change
         const stateChangedAt = new Date(row.dunning_state_changed_at);
         const delinquentFor = (now.getTime() - stateChangedAt.getTime()) / (1000 * 60 * 60 * 24);
 
@@ -141,10 +158,12 @@ export async function GET(request: NextRequest) {
     }
 
     logger.info('[DunningAdvance] Cron complete', { advanced, errors });
+    if (d1) await recordCronRun(d1, CRON_NAME, 'success');
     return NextResponse.json({ success: true, advanced, errors });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
     logger.error('[DunningAdvance] Critical error', new Error(message));
+    if (d1) await recordCronRun(d1, CRON_NAME, 'failure', message);
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

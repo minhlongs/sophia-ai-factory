@@ -12,8 +12,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { pushFatalLog } from '@/lib/telemetry/better-stack-client';
 import { resolveUserApiKey } from '@/lib/byok/resolve-user-api-key';
 import { getErrorMessage } from '@/lib/utils/to-error';
+import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker';
 
 export const dynamic = 'force-dynamic';
+
+const CRON_NAME = 'error-digest';
+/** Daily — skip if ran within last 12 hours */
+const IDEMPOTENCY_WINDOW_MS = 12 * 60 * 60 * 1000;
 
 interface ErrorRow {
   msg_class: string;
@@ -43,7 +48,6 @@ function verifyCronSecret(request: NextRequest): boolean {
 }
 
 async function callOpenRouter(fingerprints: ErrorRow[]): Promise<string> {
-  // Phase 8A: BYOK symmetry — library-consistent (cron has no userId → env fallback).
   const openRouterKey = await resolveUserApiKey(null, 'openrouter', process.env.OPENROUTER_API_KEY);
   if (!openRouterKey || !fingerprints.length) {
     return 'No errors in the past 24 hours.';
@@ -99,7 +103,7 @@ async function sendTelegram(message: string): Promise<void> {
   }
 }
 
-async function sendEmail(to: string, subject: string, body: string): Promise<void> {
+async function sendFounderEmail(to: string, subject: string, body: string): Promise<void> {
   const resendKey = process.env.RESEND_API_KEY;
   if (!resendKey) return;
   try {
@@ -146,6 +150,11 @@ async function handler(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ ok: false, reason: 'D1_UNAVAILABLE' }, { status: 200 });
   }
 
+  // Idempotency check — informational, not strict
+  if (await wasRecentlyRun(db as unknown as D1Database, CRON_NAME, IDEMPOTENCY_WINDOW_MS)) {
+    return NextResponse.json({ ok: true, skipped: 'recent_run' });
+  }
+
   // RED-TEAM #5: D1 query wrapped in try/catch
   let rows: ErrorRow[] = [];
   try {
@@ -163,8 +172,8 @@ async function handler(request: NextRequest): Promise<NextResponse> {
     rows = result.results ?? [];
   } catch (d1Err) {
     const errMsg = getErrorMessage(d1Err);
-    // RED-TEAM #5: push fatal directly to BS, skip digest
     await pushFatalLog('D1_UNAVAILABLE', errMsg, bsConfig);
+    await recordCronRun(db as unknown as D1Database, CRON_NAME, 'failure', errMsg);
     return NextResponse.json({ ok: false, reason: 'D1_UNAVAILABLE' }, { status: 200 });
   }
 
@@ -182,13 +191,15 @@ async function handler(request: NextRequest): Promise<NextResponse> {
 
   const founderEmail = process.env.FOUNDER_EMAIL ?? '';
   if (founderEmail) {
-    await sendEmail(
+    await sendFounderEmail(
       founderEmail,
       `[Sophia] Daily Error Digest — ${dateStr}`,
       report.replace(/\*/g, '')
     );
   }
   await sendTelegram(report);
+
+  await recordCronRun(db as unknown as D1Database, CRON_NAME, 'success');
 
   return NextResponse.json({
     ok: true,
