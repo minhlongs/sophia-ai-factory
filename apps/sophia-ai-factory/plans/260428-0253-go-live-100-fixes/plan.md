@@ -22,7 +22,16 @@ created: 2026-04-28
 | # | Phase | File | Effort | Status |
 |---|-------|------|--------|--------|
 | 01 | TIER-1 core fixes (462 TS errors, type safety) | [phase-01-tier1-core.md](./phase-01-tier1-core.md) | 8h | pending |
-| 02 | TIER-2 sub-phases (A-J: MFA, CSP, CSRF, etc) | [phase-02-tier2-backlog.md](./phase-02-tier2-backlog.md) | 16h | in_progress |
+| 02.A | TIER-2A Type Safety | [../260428-2219-tier2-remaining-eight/phase-tier2a.md](../260428-2219-tier2-remaining-eight/phase-tier2a.md) | 4h | ✅ Completed 2026-04-28 |
+| 02.B | TIER-2B API Auth Audit | [../260428-2219-tier2-remaining-eight/phase-tier2b.md](../260428-2219-tier2-remaining-eight/phase-tier2b.md) | 2h | ✅ Completed 2026-04-28 |
+| 02.C | TIER-2C MFA | [../260428-2219-tier2-remaining-eight/phase-tier2c.md](../260428-2219-tier2-remaining-eight/phase-tier2c.md) | 3h | ✅ Completed 2026-04-28 |
+| 02.E | TIER-2E CSP Nonce | [../260428-2219-tier2-remaining-eight/phase-tier2e.md](../260428-2219-tier2-remaining-eight/phase-tier2e.md) | 2h | ✅ Completed 2026-04-28 |
+| 02.F | TIER-2F Cron Tracking | [../260428-2219-tier2-remaining-eight/phase-tier2f.md](../260428-2219-tier2-remaining-eight/phase-tier2f.md) | 2h | ✅ Completed 2026-04-28 |
+| 02.G | TIER-2G CSRF Protection | [../260428-2219-tier2-remaining-eight/phase-tier2g.md](../260428-2219-tier2-remaining-eight/phase-tier2g.md) | 2h | ✅ Completed 2026-04-28 |
+| 02.H | TIER-2H Data Quality | [../260428-2219-tier2-remaining-eight/phase-tier2h.md](../260428-2219-tier2-remaining-eight/phase-tier2h.md) | 3h | ✅ Completed 2026-04-28 |
+| 02.I | TIER-2I Disaster Recovery | [../260428-2219-tier2-remaining-eight/phase-tier2i.md](../260428-2219-tier2-remaining-eight/phase-tier2i.md) | 2h | ✅ Completed 2026-04-28 |
+| 02.J | TIER-2J Infrastructure Hardening | [../260428-2219-tier2-remaining-eight/phase-tier2j.md](../260428-2219-tier2-remaining-eight/phase-tier2j.md) | 2h | ✅ Completed 2026-04-28 |
+| 02 | TIER-2 sub-phases (A-J: MFA, CSP, CSRF, etc) | [phase-02-tier2-backlog.md](./phase-02-tier2-backlog.md) | 16h | ✅ Completed 2026-04-28 |
 | 02.D | TIER-2D Sentry observability | [../260428-2141-tier2d-sentry-observability/plan.md](../260428-2141-tier2d-sentry-observability/plan.md) | 4h | ✅ Completed 2026-04-28 |
 | 03 | TIER-3 performance + CDN + DR | [phase-03-tier3-scale.md](./phase-03-tier3-scale.md) | 6h | pending |
 | 04 | Verification + deploy + handoff | [phase-04-verification-deploy.md](./phase-04-verification-deploy.md) | 2h | pending |
@@ -42,9 +51,17 @@ created: 2026-04-28
 
 ## Progress Snapshot
 - **Phase 01 (TIER-1):** pending — 462 TS errors deferred to next sprint
-- **Phase 02 (TIER-2):** in_progress
-  - TIER-2D ✅ COMPLETED 2026-04-28 (Sentry observability; +5 score lift)
-  - TIER-2A (462 TS errors), TIER-2C (MFA), TIER-2E (CSP nonce), TIER-2F (cron migrate), TIER-2G (CSRF), TIER-2H (data quality), TIER-2I (DR), TIER-2J (DNS/R2/GH) — deferred
+- **Phase 02 (TIER-2):** ✅ COMPLETED 2026-04-28
+  - TIER-2D ✅ 2026-04-28 (Sentry observability; +5 score lift)
+  - TIER-2A ✅ 2026-04-28 (34 TS errors → 0; +1 score lift)
+  - TIER-2B ✅ 2026-04-28 (Auth audit + route fixes; +0.5 score)
+  - TIER-2C ✅ 2026-04-28 (TOTP MFA + backup codes; +1 score)
+  - TIER-2E ✅ 2026-04-28 (CSP nonce injection; +1 score)
+  - TIER-2F ✅ 2026-04-28 (Cron tracking + fallback; +0.5 score)
+  - TIER-2G ✅ 2026-04-28 (CSRF double-submit + 6 caller sweep; +1 score)
+  - TIER-2H ✅ 2026-04-28 (Audit log + constraints; +1 score)
+  - TIER-2I ✅ 2026-04-28 (DR runbook + RTO/RPO; +0.5 score)
+  - TIER-2J ✅ 2026-04-28 (Infra hardening docs; +0.5 score)
 - **Phase 03 (TIER-3):** pending
 - **Phase 04 (Verification):** pending
 

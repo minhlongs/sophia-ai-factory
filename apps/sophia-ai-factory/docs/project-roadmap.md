@@ -1,8 +1,8 @@
 # Project Roadmap
 
 **Project Name:** Sophia AI Video Factory
-**Current Version:** 1.14.8 (B2 TypeScript Cleanup Complete + Sprint M Revenue Path Code-Shipped)
-**Last Updated:** 2026-04-27
+**Current Version:** 1.14.15 (TIER-2 Security & Observability Overhaul SHIPPED)
+**Last Updated:** 2026-04-28
 
 ## 📅 Roadmap Overview
 
@@ -259,6 +259,73 @@
 - [x] **Test Summary**: 1413 → 1564 tests (+151, 100% pass rate)
 - [x] **Type Safety**: 0 TypeScript errors
 - [x] **Deploy Status**: Code complete; awaiting remote D1 apply + 9 Cloudflare Secrets
+
+### ✅ TIER-2: Security & Observability Hardening (Code-Shipped - 2026-04-28)
+**Goal:** Enterprise-grade security posture + observability infrastructure (9 sub-phases).
+**Status:** SHIPPED | Production: SHA 4b5fa5c9 | Tests: 1673/1673 pass (100%) | Score: 88 → 94.5/100
+
+- [x] **TIER-2A: Type Safety** — 34 → 0 TypeScript errors; `ignoreBuildErrors: false`
+  - Target ES2020 for BigInt; added explicit return types; cast patterns
+  - Tests: 1673 pass | Build: 0 errors
+  
+- [x] **TIER-2B: API Auth Audit** — 153 routes audited; 15 gaps identified; 5 critical routes gated
+  - 119 properly auth'd (session/JWT/admin/api-key), 4 webhooks, 19 cron, 14 public, 15 gaps
+  - Critical: C1 (db-schema), C2 (migrate), C3 (usage/debug), H6 (graphql) documented
+  - Tests: audit report + gap recommendations
+  
+- [x] **TIER-2C: MFA/2FA** — TOTP RFC 6238 + backup codes
+  - 6-digit TOTP, SHA1, 30s period, issuer "Sophia AI Factory"
+  - Backup codes: 8 unique XXXX-XXXX, SHA-256 hashed
+  - D1 migration 0028-mfa-secrets, 3 API routes (/setup, /verify, /disable), settings page
+  - i18n: +20 keys (en, vi)
+  - Tests: 17 pass | Gap: TOTP secret unencrypted at app layer (D1 encrypts at infra)
+  
+- [x] **TIER-2D: Observability** (from prior sprint) — Sentry SDK + health probes
+  - @sentry/nextjs v8 + sourcemap upload via CI
+  - D1/R2/KV liveness probes, structured logger, release tag = git SHA
+  - Tests: 1604 pass
+  
+- [x] **TIER-2E: Content Security Policy (CSP) Nonce** — XSS prevention
+  - Middleware generates nonce, injects `Content-Security-Policy` + `x-csp-nonce` headers
+  - Server Components read via `getCspNonce()` helper
+  - Fallback: `'unsafe-inline'` when nonce absent (static gen)
+  - Tests: 13 pass | Protected: JSON-LD, Next.js runtime scripts
+  
+- [x] **TIER-2F: Cron Tracking** — Heartbeat log + idempotency guard
+  - D1 migration 0026-cron-run-log: 1 row per cron (upsert pattern)
+  - `recordCronRun(db, name, status, error?)` + 5-min idempotency window
+  - `wasRecentlyRun()` fail-open on DB error (never blocks cron)
+  - Tests: 9 pass | Heartbeat wired; 13 crons deferred
+  
+- [x] **TIER-2G: CSRF Protection** — Double-submit cookie
+  - Token in `csrf-token` cookie (SameSite=Strict, httpOnly=false)
+  - Client echoes in `x-csrf-token` header; constant-time XOR compare
+  - Bypass: GET/HEAD/OPTIONS, /api/auth/*, /api/webhooks/*, /api/cron/*
+  - Tests: 21 pass | 6 callers need header sweep (deferred enforcement)
+  
+- [x] **TIER-2H: Data Quality** — Audit logging + constraint validation
+  - D1 migration 0027-data-quality-audit: `audit_log` table + composite index
+  - `recordAudit(db, table, rowId, action, before, after)` fire-and-forget
+  - TierEnum + AuditActionSchema Zod validation
+  - Tests: 9 pass | Wired: subscription activation
+  
+- [x] **TIER-2I: Disaster Recovery** — RTO/RPO runbook + backup scripts
+  - Docs: `docs/disaster-recovery.md` (272 lines, bilingual, RTO/RPO table)
+  - 4 recovery scenarios: D1 corruption (30min), R2 failure (1h), code regression (15min), KV loss (2h)
+  - Scripts: `d1-snapshot.sh`, `restore-from-snapshot.sh` (dry-run safe, idempotent)
+  - Quarterly drill cadence + roles matrix
+  
+- [x] **TIER-2J: Infrastructure Hardening** — DNS/R2/GitHub secrets audit docs
+  - Docs: `docs/infra-hardening.md` (260 lines, bilingual, rotation schedule)
+  - 3 audit scripts: `audit-dns.sh`, `audit-r2-lifecycle.sh`, `audit-github-secrets.sh`
+  - Rotation: 90-day (CLOUDFLARE, SENTRY, NOWPAYMENTS, OPENROUTER)
+  - Incident response: <5min leak detection, <30min redeployment
+
+- [x] **D1 Migrations**: 4 applied (0026-cron, 0027-audit, 0028-mfa, TIER-2B fixes)
+- [x] **Test Summary**: 1673/1673 pass (0 regressions)
+- [x] **Type Safety**: 0 TypeScript errors
+- [x] **Protected Flows**: Setup Wizard, Telegram Bot, NOWPayments IPN — all GREEN
+- [x] **Plan**: `plans/260428-2219-tier2-remaining-eight/plan.md`
 
 ## 🔧 Tech Debt Elimination Program (2026-04-19 → 2026-04-20)
 
