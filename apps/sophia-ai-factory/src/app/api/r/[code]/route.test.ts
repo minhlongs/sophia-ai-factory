@@ -35,7 +35,7 @@ function makeRequest(path = '/api/r/abc123def', headers: Record<string, string> 
 describe('GET /api/r/[code]', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(createServerClient).mockReturnValue({ from: mockFrom } as ReturnType<typeof createServerClient>);
+    vi.mocked(createServerClient).mockReturnValue({ from: mockFrom } as unknown as ReturnType<typeof createServerClient>);
     mockFrom.mockReturnValue({ select: mockSelect });
     mockSelect.mockReturnValue({ eq: mockEq });
     mockEq.mockReturnValue({ single: mockSingle });

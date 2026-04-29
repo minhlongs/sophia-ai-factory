@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/better-auth-session';
-import { createServerClient } from '@/lib/db/client';
+import { getD1Raw } from '@/lib/db/client';
 import { z } from 'zod';
 import { logger } from '@/lib/utils/logger-utility';
 
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check per-user redemption in D1
-    const db = createServerClient();
+    const db = await getD1Raw();
     const existing = await db
       .prepare('SELECT id FROM coupon_redemptions WHERE user_id = ? AND coupon_code = ? LIMIT 1')
       .bind(user.id, code)

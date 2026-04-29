@@ -7,8 +7,15 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { recordCronRun, wasRecentlyRun, getCronHealth } from './run-tracker';
 
 // ── D1 mock factory ────────────────────────────────────────────────────
-function makeD1Mock(overrides?: Partial<ReturnType<typeof basePrepare>>) {
-  function basePrepare() {
+type BasePrepareResult = {
+  bind: ReturnType<typeof vi.fn>;
+  first: ReturnType<typeof vi.fn>;
+  all: ReturnType<typeof vi.fn>;
+  run: ReturnType<typeof vi.fn>;
+};
+
+function makeD1Mock(overrides?: Partial<BasePrepareResult>) {
+  function basePrepare(): BasePrepareResult {
     return {
       bind: vi.fn().mockReturnThis(),
       first: vi.fn().mockResolvedValue(null),

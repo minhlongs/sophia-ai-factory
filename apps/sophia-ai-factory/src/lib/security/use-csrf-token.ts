@@ -30,7 +30,7 @@ function readCookie(name: string): string | undefined {
  * Returns an empty object if the cookie is not present (e.g. SSR context).
  */
 export function useCsrfToken(): Record<string, string> {
-  return useMemo(() => {
+  return useMemo((): Record<string, string> => {
     const token = readCookie(CSRF_COOKIE_NAME)
     if (!token) return {}
     return { [CSRF_HEADER_NAME]: token }

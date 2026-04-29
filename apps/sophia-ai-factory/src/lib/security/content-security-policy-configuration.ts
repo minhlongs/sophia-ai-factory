@@ -1,18 +1,16 @@
 /**
  * Content Security Policy Configuration
- * Strict CSP để chống XSS attacks
+ * Nonce-based CSP to prevent XSS — replaces 'unsafe-inline' for script-src.
+ * Style-src keeps 'unsafe-inline' (required by Tailwind dynamic class generation).
  */
 
 export const cspConfig = {
-  // Chỉ cho phép scripts từ self và Next.js chunks
+  // script-src: base list WITHOUT 'unsafe-inline' — nonce added per-request in middleware
   scriptSrc: [
     "'self'",
-    // TODO(audit B4): Replace 'unsafe-inline' with nonce-based CSP — requires
-    // Next.js middleware nonce injection. Tracked in go-live audit (2026-04-28).
-    "'unsafe-inline'", // Required for Next.js App Router hydration scripts
     ...(process.env.NODE_ENV === 'production'
       ? []
-      : ["'unsafe-eval'"]), // Dev mode needs unsafe-eval for HMR
+      : ["'unsafe-eval'"]), // Dev mode HMR requires eval
   ],
 
   // Styles: self + inline (Tailwind requires)
@@ -78,13 +76,27 @@ export const cspConfig = {
 };
 
 /**
- * Build CSP header string
+ * Build CSP header string.
+ *
+ * @param nonce - Per-request nonce hex string (32 chars). When provided, it is
+ *   added to script-src as `'nonce-{nonce}'` and 'unsafe-inline' is omitted.
+ *   When absent (e.g. build-time static headers call), falls back to
+ *   'unsafe-inline' so the static header remains functional until middleware
+ *   overrides it for HTML responses.
+ *
+ * NOTE: next.config.ts no longer sets a Content-Security-Policy header.
+ *   Middleware owns all CSP injection at runtime. buildCSPHeader() is kept
+ *   exported for tests and future static-asset headers if needed.
  */
-export function buildCSPHeader(): string {
+export function buildCSPHeader(nonce?: string): string {
+  const scriptSrcValues = nonce
+    ? [...cspConfig.scriptSrc, `'nonce-${nonce}'`]
+    : [...cspConfig.scriptSrc, "'unsafe-inline'"];
+
   const directives = [
     `default-src ${cspConfig.defaultSrc.join(' ')}`,
     `img-src ${cspConfig.imgSrc.join(' ')}`,
-    `script-src ${cspConfig.scriptSrc.join(' ')}`,
+    `script-src ${scriptSrcValues.join(' ')}`,
     `style-src ${cspConfig.styleSrc.join(' ')}`,
     `font-src ${cspConfig.fontSrc.join(' ')}`,
     `connect-src ${cspConfig.connectSrc.join(' ')}`,

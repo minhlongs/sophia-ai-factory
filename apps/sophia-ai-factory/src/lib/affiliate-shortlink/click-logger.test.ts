@@ -33,7 +33,7 @@ const mockDb = { from: mockFrom };
 describe('logClick', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(createServerClient).mockReturnValue(mockDb as ReturnType<typeof createServerClient>);
+    vi.mocked(createServerClient).mockReturnValue(mockDb as unknown as ReturnType<typeof createServerClient>);
     mockFrom.mockReturnValue({ insert: mockInsert });
     mockInsert.mockResolvedValue({ error: null });
   });
