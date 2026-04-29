@@ -1,0 +1,123 @@
+# Sophia AI Factory — GitLab CI/CD
+# Replaces GitHub Actions test.yml. Secrets configured in Settings → CI/CD → Variables.
+#
+# Required CI/CD variables (Settings → CI/CD → Variables):
+#   CLOUDFLARE_API_TOKEN  (masked, protected)
+#   CLOUDFLARE_ACCOUNT_ID (masked, protected)
+#   SENTRY_AUTH_TOKEN     (masked, protected)
+#   SENTRY_ORG            (plain)
+#   SENTRY_PROJECT        (plain)
+#   CRON_SECRET           (masked, protected) — only needed if using scheduled pipelines
+#
+# Cron scheduling: KEEP CRON OUT OF GITLAB. GitLab free tier = 400 CI minutes/month;
+# every-5-min schedule alone = 8640 runs/month. Use external service (Upstash QStash,
+# UptimeRobot, EasyCron) to curl /api/cron/* endpoints. See docs/gitlab-migration.md.
+
+stages:
+  - quality
+  - deploy
+
+default:
+  image: node:20
+  cache:
+    key:
+      files:
+        - apps/sophia-ai-factory/package-lock.json
+    paths:
+      - apps/sophia-ai-factory/node_modules/
+      - .npm-cache/
+
+variables:
+  npm_config_cache: $CI_PROJECT_DIR/.npm-cache
+  WORKING_DIR: apps/sophia-ai-factory
+
+# ─────────────────────────────────────────────
+# Quality stage — runs on every push + MR
+# ─────────────────────────────────────────────
+quality:
+  stage: quality
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" || $CI_PIPELINE_SOURCE == "merge_request_event"
+  before_script:
+    - cd $WORKING_DIR
+    - npm install --legacy-peer-deps
+  script:
+    - npx next lint
+    - npm run build
+    - npm test
+    - npm audit --audit-level=high --omit=dev || true
+  artifacts:
+    when: always
+    paths:
+      - $WORKING_DIR/.next/
+      - $WORKING_DIR/coverage/
+    expire_in: 1 day
+
+# ─────────────────────────────────────────────
+# Deploy stage — only on push to main
+# ─────────────────────────────────────────────
+deploy:
+  stage: deploy
+  needs:
+    - quality
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"
+  before_script:
+    - cd $WORKING_DIR
+    - npm install --legacy-peer-deps
+  script:
+    # OpenNext build for Cloudflare Workers
+    - npx opennextjs-cloudflare build
+
+    # Sentry source maps (non-blocking)
+    - |
+      if [ -n "$SENTRY_AUTH_TOKEN" ]; then
+        SENTRY_RELEASE=$CI_COMMIT_SHA npm run sentry:upload || true
+      else
+        echo "Sentry skip (SENTRY_AUTH_TOKEN unset)"
+      fi
+
+    # Root-level deps for wrangler scripts
+    - cd $CI_PROJECT_DIR && npm install --legacy-peer-deps && cd $WORKING_DIR
+
+    # Inject build metadata as CF Worker secrets
+    - bash $CI_PROJECT_DIR/scripts/ci/wrangler-set-build-vars.sh || bash scripts/ci/wrangler-set-build-vars.sh
+
+    # Migration guard (block on pending D1 migrations)
+    - bash $CI_PROJECT_DIR/scripts/ci/migration-guard.sh || bash scripts/ci/migration-guard.sh
+
+    # Deploy via wrangler
+    - npx wrangler@4.80.0 deploy
+  environment:
+    name: production
+    url: https://sophia.agencyos.network
+  variables:
+    CLOUDFLARE_API_TOKEN: $CLOUDFLARE_API_TOKEN
+    CLOUDFLARE_ACCOUNT_ID: $CLOUDFLARE_ACCOUNT_ID
+    SENTRY_AUTH_TOKEN: $SENTRY_AUTH_TOKEN
+    SENTRY_ORG: $SENTRY_ORG
+    SENTRY_PROJECT: $SENTRY_PROJECT
+    SENTRY_RELEASE: $CI_COMMIT_SHA
+
+# ─────────────────────────────────────────────
+# Optional: D1 Backup (scheduled pipelines only)
+# ─────────────────────────────────────────────
+# Configure in Settings → CI/CD → Schedules:
+#   Cron: 0 2 * * *  (daily 2 AM UTC)
+#   Variable: CRON_TYPE=d1-backup
+d1_backup:
+  stage: quality
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $CRON_TYPE == "d1-backup"
+  script:
+    - npm install -g wrangler@4.80.0
+    - DATE=$(date +%Y%m%d)
+    - npx wrangler d1 export sophia-raas-db --remote --output "backup-${DATE}.sql"
+    - npx wrangler r2 object put "sophia-backups/d1-backup-${DATE}.sql" --file "backup-${DATE}.sql" || true
+  artifacts:
+    paths:
+      - backup-*.sql
+    expire_in: 30 days
+  variables:
+    CLOUDFLARE_API_TOKEN: $CLOUDFLARE_API_TOKEN
+    CLOUDFLARE_ACCOUNT_ID: $CLOUDFLARE_ACCOUNT_ID
