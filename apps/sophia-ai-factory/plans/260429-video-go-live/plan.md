@@ -8,11 +8,11 @@
 
 | # | Phase | Status | Owner |
 |---|---|---|---|
-| 01 | R2-backed video storage (replace broken Supabase) | pending | fullstack-developer |
-| 02 | Server-side video status sync cron (5min) | pending | fullstack-developer |
-| 03 | Reliable D1 persistence + error surfacing | pending | fullstack-developer |
-| 04 | Wire wrangler.toml cron + migration | pending | main |
-| 05 | Build + test + deploy + verify GREEN | pending | tester+main |
+| 01 | R2-backed video storage (replace broken Supabase) | completed | fullstack-developer |
+| 02 | Server-side video status sync cron (5min) | completed | fullstack-developer |
+| 03 | Reliable D1 persistence + error surfacing | completed | fullstack-developer |
+| 04 | Wire wrangler.toml cron + migration | completed | main |
+| 05 | Build + test + deploy + verify GREEN | completed | tester+main |
 
 ## Dependencies
 

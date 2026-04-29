@@ -1,6 +1,21 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-28 | **Current Version:** 1.14.15
+**Last Updated:** 2026-04-29 | **Current Version:** 1.14.16
+
+---
+
+## v1.14.16 — Video Go-Live: Auto-Sync + Webhook Receiver (2026-04-29)
+
+**Severity: FEATURE | Type: Core Video Automation | Status: SHIPPED**
+
+End-to-end automated video creation pipeline: R2-backed persistent storage, 5-minute server-side HeyGen status polling, reliable D1 persistence, HMAC-SHA256 webhook receiver, error surfacing. Deployment: opennext worker + Cloudflare cron. Hyperframes deferred to Q3 (incompatible with Workers edge runtime). **Code:** 2 commits (0b124219 + a2aa6302), migration 0030 (r2_key, r2_size_bytes), 3 new routes (/api/cron/video-status-sync, /api/heygen/{create-video,status}, /api/webhooks/heygen). **Production:** SHA a2aa6302, HTTP 200, all endpoints verified.
+
+### Highlights
+- **R2 Storage:** Replaced Supabase legacy; videos persist with key + size metadata (migration 0030)
+- **Cron Sync:** `/api/cron/video-status-sync` polls pending HeyGen jobs every 5 minutes (wrangler.toml trigger)
+- **Webhook Receiver:** `/api/webhooks/heygen` validates HMAC-SHA256, updates D1 on job completion
+- **Error Handling:** Structured error responses; logs surface invalid API keys, network timeouts, quota exhaustion
+- **Roadmap:** Hyperframes video evaluation deferred Q3 (deployment model incompatible with Cloudflare Workers serverless)
 
 ---
 

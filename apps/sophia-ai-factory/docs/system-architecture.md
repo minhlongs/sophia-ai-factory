@@ -99,22 +99,18 @@ graph TD
   - `voice-generator.json`: Text-to-Speech generation.
   - `publish-workflow.json`: Final publishing steps.
 
-### 5. Payment Infrastructure (NOWPayments)
-- **Role**: Payment processing for tier subscriptions via USDT TRC20 cryptocurrency.
-- **Provider**: NOWPayments.io (Polar rejected this product for "wellness/health" classification)
-- **Backup**: PayOS (payos.vn) for Vietnam domestic payments
-- **Flow**:
-  1. **Tier Selection**: User selects BASIC/PREMIUM/ENTERPRISE/MASTER tier.
-  2. **Checkout**: App generates NOWPayments invoice link (pre-created invoice IDs in dashboard).
-  3. **Payment**: User completes crypto payment via NOWPayments hosted page.
-  4. **Webhook**: NOWPayments sends IPN (Instant Payment Notification) → `/api/webhooks/nowpayments`
-  5. **Fulfillment**: IPN handler verifies HMAC-SHA512 signature, updates `subscription_tier` + `period_end`
-- **Security**:
-  - HMAC-SHA512 signature verification on `x-nowpayments-sig` header
-  - Order ID format: `sophia_{orgId}_{timestamp}` enables idempotency tracking
-  - No payment data stored in application database
-  - IPN secret managed via `NOWPAYMENTS_IPN_SECRET` environment variable
-  - Invoice IDs (TIER → Invoice ID mapping) stored in `nowpayments-client.ts`
+### 5. Payment & Media Infrastructure
+- **Payments**: NOWPayments.io (crypto USDT TRC20) for tier subscriptions.
+  - **Flow**: Tier selection → Invoice link → Payment → HMAC-SHA512 IPN webhook → tier activation.
+  - **Security**: HMAC-SHA512 on `x-nowpayments-sig`, Order ID format `sophia_{orgId}_{timestamp}`.
+  - **Secrets**: `NOWPAYMENTS_IPN_SECRET` (Cloudflare env).
+- **Media Storage**: Cloudflare R2 bucket `sophia-videos` for HeyGen video outputs.
+  - **Webhook**: `POST /api/webhooks/heygen` (HMAC-SHA256 verified).
+  - **Secrets**: `HEYGEN_WEBHOOK_SECRET`, `HEYGEN_API_KEY` (Cloudflare env).
+  - **Sync Cron**: `GET /api/cron/video-status-sync` (5-min polling fallback).
+  - **Metadata**: D1 columns `r2_key`, `r2_size_bytes` track stored videos.
+  - **Public URL**: Optional `R2_PUBLIC_BASE_URL` env var for direct CDN access.
+- **Backup Payment**: PayOS (payos.vn) for Vietnam domestic.
 
 ### 6. Mobile Command Center (Telegram)
 - **Role**: Remote interface for campaign management.
@@ -192,13 +188,19 @@ graph TD
 3. **Submission**: App calls `POST /api/heygen/create-video` directly.
 4. **Processing (Async)**:
    - HeyGen API accepts job, returns `video_id`.
-   - App stores `video_id` in Supabase/Airtable.
-5. **Polling**:
-   - Client polls `GET /api/heygen/status/[id]`.
-   - UI shows real-time progress bar (Queued -> Processing -> Completed).
-6. **Completion**:
-   - Status becomes `completed`.
-   - Video URL is displayed for playback/download.
+   - App stores `video_id` + migration 0030 R2 metadata (`r2_key`, `r2_size_bytes`) in D1.
+5. **Webhook Ingest**:
+   - HeyGen POSTs completion event to `POST /api/webhooks/heygen` (HMAC-SHA256 verified).
+   - Handler fetches video from R2 bucket `sophia-videos`, updates status + URLs.
+6. **Status Polling** (fallback):
+   - Cron `GET /api/cron/video-status-sync` runs every 5 min, polls pending HeyGen jobs.
+   - Updates D1 + fetches video if ready.
+7. **Response Structure**:
+   - Status route returns: `{status, video_url, thumbnail_url, duration_sec, error}`.
+   - Error codes: `MISSING_KEY`, `DB_FAILED`.
+8. **Storage**:
+   - Video stored in Cloudflare R2 `sophia-videos` bucket.
+   - Public URL via `R2_PUBLIC_BASE_URL` env var (optional, defaults to R2 auth URL).
 
 ## Supervisor Agent (2026-04-17 MVP)
 
