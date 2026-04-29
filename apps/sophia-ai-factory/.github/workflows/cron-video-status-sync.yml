@@ -1,0 +1,19 @@
+name: Video Status Sync
+
+on:
+  schedule:
+    # Every 5 minutes — poll pending HeyGen jobs to terminal state.
+    - cron: '*/5 * * * *'
+  workflow_dispatch: {}
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger video status sync
+        run: |
+          curl -fsS \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            "https://sophia.agencyos.network/api/cron/video-status-sync" \
+            || echo "::warning::video-status-sync curl failed (non-blocking)"

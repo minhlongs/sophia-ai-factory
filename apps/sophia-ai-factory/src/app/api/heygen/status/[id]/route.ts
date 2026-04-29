@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { ServiceFactory } from "@/lib/services/factory";
 import { getCurrentUser } from "@/lib/better-auth-session";
 import { createServerClient } from "@/lib/db/client";
+import { logger } from "@/lib/utils/logger-utility";
 
 interface HeygenStatus {
   status?: string;
@@ -9,6 +10,14 @@ interface HeygenStatus {
   thumbnail_url?: string | null;
   duration?: number | null;
   error?: string | null;
+}
+
+interface StatusResponse {
+  status: string | undefined;
+  video_url: string | null;
+  thumbnail_url: string | null;
+  duration_sec: number | null;
+  error: string | null;
 }
 
 const TERMINAL = new Set(["completed", "failed"]);
@@ -44,30 +53,54 @@ export async function GET(
     }
 
     const videoService = ServiceFactory.getVideoService();
-    const status = (await videoService.getVideoStatus(id)) as HeygenStatus;
+    const raw = (await videoService.getVideoStatus(id)) as HeygenStatus;
 
-    if (status?.status && TERMINAL.has(status.status) && owner === user.id) {
+    // Coerce HeyGen error responses to terminal 'failed' status before persisting.
+    const effectiveStatus =
+      raw?.error && raw.status && !TERMINAL.has(raw.status)
+        ? "failed"
+        : raw?.status;
+
+    const response: StatusResponse = {
+      status: effectiveStatus,
+      video_url: raw?.video_url ?? null,
+      thumbnail_url: raw?.thumbnail_url ?? null,
+      duration_sec:
+        typeof raw?.duration === "number" ? raw.duration : null,
+      error: raw?.error ?? null,
+    };
+
+    if (effectiveStatus && TERMINAL.has(effectiveStatus) && owner === user.id) {
       try {
         await db
           .from("videos")
           .update({
-            status: status.status,
-            video_url: status.video_url ?? null,
-            thumbnail_url: status.thumbnail_url ?? null,
-            duration_sec:
-              typeof status.duration === "number" ? status.duration : null,
-            error: status.error ?? null,
+            status: effectiveStatus,
+            video_url: response.video_url,
+            thumbnail_url: response.thumbnail_url,
+            duration_sec: response.duration_sec,
+            error: response.error,
             updated_at: new Date().toISOString(),
           })
           .eq("heygen_job_id", id)
           .eq("user_id", user.id);
-      } catch {
-        // best-effort — status fetch must still succeed
+        logger.info(
+          "[status] Terminal state persisted to D1",
+          { heygenJobId: id, status: effectiveStatus, userId: user.id }
+        );
+      } catch (dbErr) {
+        // Log but don't fail the request — client still gets the status.
+        logger.error(
+          "[status] D1 UPDATE failed for terminal state",
+          dbErr instanceof Error ? dbErr : undefined,
+          { heygenJobId: id, status: effectiveStatus, userId: user.id }
+        );
       }
     }
 
-    return NextResponse.json(status);
-  } catch {
+    return NextResponse.json(response);
+  } catch (err) {
+    logger.error("[status] Unhandled error", err instanceof Error ? err : undefined);
     return NextResponse.json(
       { error: "Failed to fetch video status" },
       { status: 500 }
