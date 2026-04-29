@@ -151,6 +151,14 @@ export async function getD1Client(): Promise<D1Client> {
 }
 
 /**
+ * Get raw D1Database binding (async).
+ * Use this when you need the binding directly (e.g., for audit helpers).
+ */
+export async function getD1Raw(): Promise<D1Database> {
+  return getD1Async();
+}
+
+/**
  * Compatibility shim for createAuthClient(token).
  * @deprecated Use getCurrentUser() from '@/lib/better-auth-session' instead.
  */

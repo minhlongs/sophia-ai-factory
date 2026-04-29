@@ -6,6 +6,8 @@
 import { getTierByInvoiceId } from '@/lib/clients/nowpayments-client'
 import { logger } from '@/lib/utils/logger-utility'
 import { UNIFIED_TIERS } from '@/config/tiers'
+import { getD1Raw } from '@/lib/db/client'
+import { recordAudit } from '@/lib/db/audit/audit-log'
 import type { Tier } from '@/types'
 import type { NowPaymentsIpnPayload } from './nowpayments-ipn-handlers'
 import { getDb, parseUserIdFromOrderId } from './nowpayments-ipn-db'
@@ -46,6 +48,18 @@ export async function handleFinished(ipn: NowPaymentsIpnPayload): Promise<void> 
       await db.from('subscriptions').insert({ org_id: newOrg.id, plan: tier.toLowerCase(), status: 'active', current_period_start: new Date().toISOString(), current_period_end: periodEnd })
     }
   }
+
+  // Audit trail — record tier activation event
+  try {
+    const d1 = await getD1Raw()
+    await recordAudit(d1, {
+      tableName: 'subscriptions',
+      rowId: (orgId as string | undefined) ?? userId,
+      action: 'update',
+      actorId: userId,
+      after: { tier, plan: tier.toLowerCase(), status: 'active', periodEnd, paymentId: ipn.payment_id },
+    })
+  } catch { /* non-fatal */ }
 
   logger.info('[NOWPayments] Payment finished — subscription activated', { userId, orgId, tier, isLifetime, periodEnd, paymentId: ipn.payment_id })
 }
