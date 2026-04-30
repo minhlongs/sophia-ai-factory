@@ -1,8 +1,8 @@
 # Codebase Summary
 
 **Last Updated:** 2026-04-29
-**Version:** 1.14.9 (Video Go-Live Complete — R2 Storage + HeyGen Webhooks)
-**Recent Major Changes (Video Pipeline):** HeyGen webhook integration + R2 bucket storage live (2 commits: 0b12421, a2aa630). New routes: `POST /api/webhooks/heygen`, `GET /api/cron/video-status-sync`. Migration 0030 adds R2 metadata columns. Env secrets: `HEYGEN_WEBHOOK_SECRET`, `HEYGEN_API_KEY`. See `docs/project-changelog.md` for full details.
+**Version:** 1.14.18 (Go-Live Hardening: BYOK + Tier-Gate + Wizard Auth)
+**Recent Major Changes:** 14 P0/P1 fixes shipped (SHA 4ecbe7a8): BYOK provider enum aligned (muapi + anthropic added, heygen UI-removed), tier-gate on `/api/heygen/create-video` (BASIC→402), setup wizard auth check + wizard_done cookie redirect, webhook fallback (503→200), 5-min HeyGen avatars/voices cache. Zod field validation on all API inputs. 1731/1762 tests pass. See `docs/project-changelog.md` for full details.
 
 ## Project Structure Overview
 

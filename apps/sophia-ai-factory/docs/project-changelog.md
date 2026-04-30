@@ -1,6 +1,42 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-29 | **Current Version:** 1.14.17
+**Last Updated:** 2026-04-29 | **Current Version:** 1.14.18
+
+---
+
+## v1.14.18 — Go-Live Hardening: BYOK + Video Gen + Setup Wizard (2026-04-29)
+
+**Severity: P0/P1 FIXES | Type: Stability + Security | Status: SHIPPED (SHA 4ecbe7a8)**
+
+3-agent coordinated fix wave addressing 14 ship-blockers across BYOK admin, video generation tier-gating, and setup wizard auth flow. Followed by 2 code-review refinements (wizard cookie redirect, webhook fallback). Deploy fix: `/setup-wizard` force-dynamic export for edge rendering.
+
+### P0 Fixes Shipped
+- **BYOK Admin Provider Enum:** Aligned `ByokProvider` union (heygen kept DB-compatible, removed from admin UI). Added muapi + anthropic as user-settable. Rate-limit rule: `/api/user/byok/*` → admin tier (20 req/min) before catch-all.
+- **Video Tier Gate:** `/api/heygen/create-video` returns 402 + `/pricing` redirect for BASIC/unauthenticated users. Protects PREMIUM+.
+- **Setup Wizard Auth:** Layout-level `getCurrentUser()` check redirects unauthenticated → `/login?redirect=/setup-wizard`. Post-signup redirect: `wizard_done` cookie set by `/api/setup/save`, middleware checks on `/dashboard`.
+- **Provider Key Validation:** Zod superRefine per-provider regex (openrouter, anthropic, muapi, elevenlabs, d-id). Field-level error messages surface invalid formats.
+
+### P1 Fixes (Code Review Follow-up)
+- **Webhook 503 → 200 Fallback:** `/api/webhooks/heygen` missing secret returns 200 + log warn instead of 503 (prevents HeyGen retry-storm).
+- **Existing-User Wizard Cookie:** Middleware now checks `listUserApiKeyProviders()` on first `/dashboard` hit; if user has openrouter/anthropic, sets `wizard_done` cookie → redirect `/dashboard` (avoids existing user force-reroute UX regression).
+
+### Deploy Fix
+- `/setup-wizard/layout.tsx` force-dynamic export (was static → 500 on redirect) + auth check integrated.
+
+### Caching + Performance
+- HeyGen avatars/voices module-level 5-min cache (CF Workers isolate-bound) + `_resetCacheForTest` helper for test isolation.
+
+### Test Coverage
+- 1731/1762 tests pass (+16 vs baseline 1715), all 4 tiers covered (BASIC blocked, PREMIUM/ENTERPRISE/MASTER allowed).
+- 0 TS errors, Zod field validation tested.
+
+### Known Deferments
+- **Quota Enforcement:** Video credit-deducting deferred (requires schema decision: credit-deduct vs separate counter; credit system needs licenseNonce unavailable in session-auth path).
+- **heygen DB Cleanup:** Orphan `heygen` rows in `user_api_keys` may exist for pre-migration users; can be cleaned via optional migration or marked deprecated.
+
+### Production
+- Build: 0 errors, tests clean. Deploy: SHA 4ecbe7a8 HTTP 200.
+- Verified: tier-gate responses, webhook 200 paths, cookie lifecycle, field validation errors.
 
 ---
 
