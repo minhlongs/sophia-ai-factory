@@ -32,6 +32,9 @@ type Events = {
   "video.composed": VideoJobPayload;
   "video.uploaded": VideoJobPayload;
   "video.published": VideoJobPayload;
+  // Publishing pipeline events (Phase 10)
+  "publish.scheduled": VideoJobPayload;
+  "publish.token.refresh": { data: Record<string, never> };
 };
 
 // Create a client to send and receive events
