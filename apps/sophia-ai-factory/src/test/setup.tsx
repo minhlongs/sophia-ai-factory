@@ -18,13 +18,17 @@ process.env.HEALTH_CHECK_SECRET = 'test-health-secret';
 process.env.NEXT_PUBLIC_APP_URL = 'http://localhost:3000';
 process.env.NEXT_PUBLIC_IS_CONFIGURED = 'true';
 
-// ── Cloudflare KV Mock ─────────────────────────────────────────────────
+// ── Cloudflare KV Mock (functional in-memory store) ───────────────────
+// Uses a real Map so rateLimitGate and other KV-backed code works correctly in tests.
+const _kvStore = new Map<string, string>();
 const kvMock = {
-  get: vi.fn().mockResolvedValue(null),
-  put: vi.fn().mockResolvedValue(undefined),
-  delete: vi.fn().mockResolvedValue(undefined),
+  get: vi.fn(async (key: string) => _kvStore.get(key) ?? null),
+  put: vi.fn(async (key: string, value: string) => { _kvStore.set(key, value); }),
+  delete: vi.fn(async (key: string) => { _kvStore.delete(key); }),
   list: vi.fn().mockResolvedValue({ keys: [], list_complete: true }),
 };
+// Expose store reset helper for beforeEach usage in tests
+(globalThis as any).__kvStore = _kvStore;
 (globalThis as any).KV_KV = kvMock;
 
 // ── Cloudflare D1 Mock ─────────────────────────────────────────────────

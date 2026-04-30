@@ -66,6 +66,8 @@ describe('checkVideoQuota', () => {
 
   beforeEach(() => {
     originalEnv = (globalThis as unknown as Record<string, unknown>).__env as Record<string, unknown>;
+    // Clear functional KV mock store so KV cache doesn't leak between tests
+    (globalThis as unknown as { __kvStore?: Map<string, string> }).__kvStore?.clear();
   });
 
   afterEach(() => {

@@ -24,6 +24,8 @@ describe.sequential('rateLimitGate', () => {
 
   beforeEach(() => {
     _clearMemoryBuckets();
+    // Clear functional KV mock store (set up in src/test/setup.tsx)
+    (globalThis as unknown as { __kvStore?: Map<string, string> }).__kvStore?.clear();
   });
 
   it('allows requests within limit', async () => {
