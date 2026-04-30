@@ -1,6 +1,6 @@
 # Phase 13 — Revenue Split + Payouts
 
-## Status: PENDING (after Phase 12)
+## Status: ✅ DONE 2026-04-30 (sha df22a4f7 — fixed C1-C3+H1-H3 from round-1 review)
 
 ## Goal
 Commission ledger + NOWPayments USDT auto-payout + 14-day clawback window.

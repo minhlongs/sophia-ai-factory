@@ -1,6 +1,6 @@
 # Phase 09 — Affiliate Offer Engine
 
-## Status: PENDING (after Phase 8)
+## Status: ✅ DONE 2026-04-30
 
 ## Goal
 Multi-network offer fetcher + Shlink-style cloaking + revenue tracking.

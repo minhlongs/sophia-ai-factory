@@ -1,6 +1,6 @@
 # Phase 07 — Voice + TTS Service
 
-## Status: PENDING (parallel after Phase 6)
+## Status: ✅ DONE 2026-04-30
 
 ## Goal
 Coqui XTTS Docker microservice + Cloudflare Worker proxy. MPL-2.0, free self-host.

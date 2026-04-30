@@ -1,6 +1,6 @@
 # Phase 11 — Tenant Isolation + Quota Tiers
 
-## Status: PENDING (after Phase 10)
+## Status: ✅ DONE 2026-04-30
 
 ## Goal
 Multi-tenant isolation + tiered quotas + cost ledger.

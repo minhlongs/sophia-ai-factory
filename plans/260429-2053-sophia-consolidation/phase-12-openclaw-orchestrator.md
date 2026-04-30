@@ -1,6 +1,6 @@
 # Phase 12 — OpenClaw Orchestrator
 
-## Status: PENDING (parallel with Phase 11)
+## Status: ✅ DONE 2026-04-30
 
 ## Goal
 Wire 10 OpenClaw primitives để vận hành video-gen + affiliate pipeline.

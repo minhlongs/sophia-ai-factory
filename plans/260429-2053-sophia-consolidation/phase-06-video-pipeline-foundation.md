@@ -1,6 +1,6 @@
 # Phase 06 — Video Pipeline Foundation
 
-## Status: PENDING (blocked by Phase 5 ✅, ready to start)
+## Status: ✅ DONE 2026-04-30
 
 ## Goal
 Wire D1 schema + FSM + Inngest queue + R2 storage cho video lifecycle.
