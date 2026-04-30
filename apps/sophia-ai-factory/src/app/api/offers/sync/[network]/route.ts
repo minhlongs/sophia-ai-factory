@@ -14,6 +14,7 @@ import { ClickBankProvider } from '@/lib/affiliates/providers/clickbank'
 import { AwinProvider } from '@/lib/affiliates/providers/awin'
 import { AmazonProvider } from '@/lib/affiliates/providers/amazon'
 import type { OfferProvider } from '@/lib/affiliates/provider-interface'
+import { getD1Raw } from '@/lib/db/client'
 import { logger } from '@/lib/utils/logger-utility'
 
 const PROVIDERS: Record<string, OfferProvider> = {
@@ -25,13 +26,6 @@ const PROVIDERS: Record<string, OfferProvider> = {
 }
 
 const GLOBAL_TENANT_ID = process.env.SOPHIA_TENANT_ID ?? 'sophia-global'
-
-function getD1(): D1Database | null {
-  const env = (globalThis as unknown as { __env?: Record<string, unknown> }).__env
-  if (env?.DB) return env.DB as D1Database
-  const g = (globalThis as Record<string, unknown>).__D1_DB as D1Database | undefined
-  return g ?? null
-}
 
 export async function POST(
   request: NextRequest,
@@ -50,7 +44,12 @@ export async function POST(
 
   try {
     const offers = await provider.listOffers({ limit: 50 })
-    const db = getD1()
+    let db: D1Database | null = null
+    try {
+      db = await getD1Raw()
+    } catch {
+      logger.warn('[offers-sync] D1 unavailable, returning offer list without persist', { network })
+    }
     const now = Math.floor(Date.now() / 1000)
     let synced = 0
 
