@@ -1,11 +1,14 @@
 /**
  * OAuth Token Refresher
  * Checks all active publishing_channels for tokens expiring within 1 hour.
- * Refreshes them using provider-specific OAuth clients.
- * Marks channels as 'disconnected' if refresh fails.
+ *
+ * C7: Row-lock via refreshing_at prevents concurrent cron runs from double-rotating.
+ * Stale lock threshold: 10 minutes (handles crashed workers).
+ *
+ * Instagram: uses FB long-lived token re-exchange (no refresh_token — HIGH fix).
  */
 
-import { getD1Client } from '@/lib/db/client';
+import { getD1Client, getD1Raw } from '@/lib/db/client';
 import { encryptToken, decryptToken } from './token-crypto';
 import { logger } from '@/lib/utils/logger-utility';
 import { refreshAccessToken as refreshTikTok } from '@/lib/tiktok/tiktok-token-manager';
@@ -13,84 +16,131 @@ import { refreshAccessToken as refreshYouTube } from '@/lib/youtube/youtube-oaut
 import type { PublishingChannel } from './publisher-interface';
 
 const ONE_HOUR_S = 3600;
+const LOCK_STALE_S = 600; // 10 minutes
 
-async function refreshInstagramToken(refreshToken: string): Promise<{ access_token: string; expires_in: number }> {
+/**
+ * Instagram: re-exchange current long-lived token for a fresh one (60 days).
+ * FB uses fb_exchange_token grant — no separate refresh_token concept.
+ */
+async function refreshInstagramLongLivedToken(
+  currentToken: string,
+): Promise<{ access_token: string; expires_in: number }> {
   const appId = process.env.INSTAGRAM_APP_ID;
   const appSecret = process.env.INSTAGRAM_APP_SECRET;
-
   if (!appId || !appSecret) {
     throw new Error('INSTAGRAM_APP_ID / INSTAGRAM_APP_SECRET not configured');
   }
-
   const res = await fetch(
-    `https://graph.facebook.com/oauth/access_token?grant_type=fb_exchange_token&client_id=${appId}&client_secret=${appSecret}&fb_exchange_token=${refreshToken}`,
+    `https://graph.facebook.com/oauth/access_token?grant_type=fb_exchange_token&client_id=${appId}&client_secret=${appSecret}&fb_exchange_token=${currentToken}`,
   );
-
-  if (!res.ok) throw new Error(`Instagram token refresh failed: ${res.status}`);
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new Error(`Instagram token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
+  }
   return res.json() as Promise<{ access_token: string; expires_in: number }>;
 }
 
 /**
- * Refresh a single channel's token.
+ * Acquire per-channel row-lock via D1 raw SQL (C7).
+ * D1QueryChain has no .or() — must use raw prepare().
+ */
+async function acquireRefreshLock(channelId: string, now: number): Promise<boolean> {
+  const staleBefore = now - LOCK_STALE_S;
+  const rawDb = await getD1Raw();
+  const result = await rawDb
+    .prepare(
+      'UPDATE publishing_channels SET refreshing_at = ? WHERE id = ? AND (refreshing_at IS NULL OR refreshing_at < ?)',
+    )
+    .bind(now, channelId, staleBefore)
+    .run();
+  return (result.meta?.changes ?? 0) === 1;
+}
+
+async function releaseRefreshLock(channelId: string): Promise<void> {
+  const rawDb = await getD1Raw();
+  await rawDb
+    .prepare('UPDATE publishing_channels SET refreshing_at = NULL WHERE id = ?')
+    .bind(channelId)
+    .run();
+}
+
+/**
+ * Refresh a single channel's token with row-lock.
  * Returns the new expiry timestamp (Unix seconds) or throws.
  */
 export async function refreshChannelToken(channel: PublishingChannel): Promise<number> {
   if (!channel.access_token) {
     throw new Error(`Channel ${channel.id} has no access_token to refresh`);
   }
-  const decrypted = decryptToken(channel.access_token);
-  const refreshToken = channel.refresh_token ? decryptToken(channel.refresh_token) : null;
 
-  let newAccessToken: string;
-  let expiresIn: number;
+  const now = Math.floor(Date.now() / 1000);
 
-  switch (channel.provider) {
-    case 'tiktok': {
-      if (!refreshToken) throw new Error('TikTok refresh token missing');
-      const r = await refreshTikTok(refreshToken);
-      newAccessToken = r.access_token;
-      expiresIn = r.expires_in;
-      break;
-    }
-    case 'youtube': {
-      if (!refreshToken) throw new Error('YouTube refresh token missing');
-      const r = await refreshYouTube(refreshToken);
-      newAccessToken = r.access_token;
-      expiresIn = r.expires_in;
-      break;
-    }
-    case 'instagram': {
-      const tokenToRefresh = refreshToken ?? decrypted;
-      const r = await refreshInstagramToken(tokenToRefresh);
-      newAccessToken = r.access_token;
-      expiresIn = r.expires_in;
-      break;
-    }
-    default:
-      throw new Error(`Unknown provider: ${channel.provider}`);
+  // Acquire row-lock (C7)
+  const locked = await acquireRefreshLock(channel.id, now);
+  if (!locked) {
+    logger.info('[TokenRefresher] Refresh lock held by another worker, skipping', { channelId: channel.id });
+    throw new Error(`Refresh lock held by another worker for channel ${channel.id}`);
   }
 
-  const newExpiresAt = Math.floor(Date.now() / 1000) + expiresIn;
-  const encrypted = encryptToken(newAccessToken);
+  try {
+    const decrypted = await decryptToken(channel.access_token);
+    const refreshToken = channel.refresh_token ? await decryptToken(channel.refresh_token) : null;
 
-  const db = await getD1Client();
-  await db
-    .from('publishing_channels')
-    .update({
-      access_token: encrypted,
-      expires_at: newExpiresAt,
-      updated_at: Math.floor(Date.now() / 1000),
-    })
-    .eq('id', channel.id);
+    let newAccessToken: string;
+    let expiresIn: number;
 
-  return newExpiresAt;
+    switch (channel.provider) {
+      case 'tiktok': {
+        if (!refreshToken) throw new Error('TikTok refresh token missing');
+        const r = await refreshTikTok(refreshToken);
+        newAccessToken = r.access_token;
+        expiresIn = r.expires_in;
+        break;
+      }
+      case 'youtube': {
+        if (!refreshToken) throw new Error('YouTube refresh token missing');
+        const r = await refreshYouTube(refreshToken);
+        newAccessToken = r.access_token;
+        expiresIn = r.expires_in;
+        break;
+      }
+      case 'instagram': {
+        // FB long-lived token re-exchange — no refresh_token concept
+        const r = await refreshInstagramLongLivedToken(decrypted);
+        newAccessToken = r.access_token;
+        expiresIn = r.expires_in;
+        break;
+      }
+      default:
+        throw new Error(`Unknown provider: ${channel.provider}`);
+    }
+
+    const newExpiresAt = Math.floor(Date.now() / 1000) + expiresIn;
+    const encrypted = await encryptToken(newAccessToken);
+
+    const db = await getD1Client();
+    await db
+      .from('publishing_channels')
+      .update({
+        access_token: encrypted,
+        expires_at: newExpiresAt,
+        updated_at: Math.floor(Date.now() / 1000),
+        refreshing_at: null, // release lock on success
+      })
+      .eq('id', channel.id);
+
+    return newExpiresAt;
+  } catch (err) {
+    await releaseRefreshLock(channel.id).catch(() => undefined);
+    throw err;
+  }
 }
 
 /**
- * Scan all active channels and refresh tokens expiring within 1 hour.
+ * Scan active channels and refresh tokens expiring within 1 hour.
  * Called by Inngest cron every 30 minutes.
  */
-export async function refreshExpiringTokens(): Promise<{ refreshed: number; failed: number }> {
+export async function refreshExpiringTokens(): Promise<{ refreshed: number; failed: number; skipped: number }> {
   const db = await getD1Client();
   const threshold = Math.floor(Date.now() / 1000) + ONE_HOUR_S;
 
@@ -103,6 +153,7 @@ export async function refreshExpiringTokens(): Promise<{ refreshed: number; fail
   const channels = (data ?? []) as unknown as PublishingChannel[];
   let refreshed = 0;
   let failed = 0;
+  let skipped = 0;
 
   for (const channel of channels) {
     try {
@@ -110,14 +161,19 @@ export async function refreshExpiringTokens(): Promise<{ refreshed: number; fail
       refreshed++;
       logger.info('[TokenRefresher] Refreshed token', { channelId: channel.id, provider: channel.provider });
     } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (message.includes('lock held by another worker')) {
+        skipped++;
+        continue;
+      }
       failed++;
-      logger.error('[TokenRefresher] Refresh failed — marking disconnected', err as Error, { channelId: channel.id });
+      logger.error('[TokenRefresher] Refresh failed — marking expired', err as Error, { channelId: channel.id });
       await db
         .from('publishing_channels')
-        .update({ status: 'disconnected', updated_at: Math.floor(Date.now() / 1000) })
+        .update({ status: 'expired', updated_at: Math.floor(Date.now() / 1000), refreshing_at: null })
         .eq('id', channel.id);
     }
   }
 
-  return { refreshed, failed };
+  return { refreshed, failed, skipped };
 }

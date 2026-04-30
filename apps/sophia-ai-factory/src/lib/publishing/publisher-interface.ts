@@ -1,10 +1,11 @@
 /**
  * Core interfaces for the multi-channel publisher pipeline.
- * All channel adapters implement the Publisher interface.
  */
 
 export type ChannelProvider = 'tiktok' | 'youtube' | 'instagram';
 export type PublishStatus = 'scheduled' | 'uploading' | 'processing' | 'live' | 'failed';
+/** Channel status — 'expired' consistently (not 'suspended') */
+export type ChannelStatus = 'active' | 'disconnected' | 'expired';
 
 export interface PublishMeta {
   caption: string;
@@ -39,7 +40,8 @@ export interface PublishingChannel {
   access_token: string | null;
   refresh_token: string | null;
   expires_at: number | null;
-  status: 'active' | 'disconnected' | 'expired';
+  status: ChannelStatus;
+  refreshing_at: number | null;
   created_at: number;
   updated_at: number;
 }
@@ -62,10 +64,11 @@ export interface PublishingJob {
   updated_at: number;
 }
 
-/** D1 row for publishing_results table */
+/** D1 row for publishing_results table — matches 20260503_publishing.sql (C2) */
 export interface PublishingResult {
   id: string;
   publishing_job_id: string;
+  tenant_id: string;
   channel_post_id: string;
   post_url: string | null;
   metrics_json: string | null;
