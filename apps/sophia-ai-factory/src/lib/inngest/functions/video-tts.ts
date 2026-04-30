@@ -21,7 +21,25 @@ interface VideoJobRow {
 }
 
 export const videoTTS = inngest.createFunction(
-  { id: 'video-tts', retries: 3 },
+  {
+    id: 'video-tts',
+    retries: 3,
+    // H1 fix: when retries exhausted, transition job to 'failed' so it doesn't get stuck in tts_pending
+    onFailure: async ({ event, error }) => {
+      const { jobId, tenantId } = (event.data.event.data ?? {}) as { jobId?: string; tenantId?: string };
+      if (!jobId || !tenantId) return;
+      const db = await getD1Client();
+      await db
+        .from('video_jobs')
+        .update({
+          status: 'failed' satisfies VideoJobStatus,
+          error_message: String(error?.message ?? error ?? 'TTS failed').slice(0, 500),
+          updated_at: Math.floor(Date.now() / 1000),
+        })
+        .eq('id', jobId)
+        .eq('tenant_id', tenantId);
+    },
+  },
   { event: 'video.script.ready' },
   async ({ event, step }) => {
     const { jobId, tenantId, userId } = event.data as {

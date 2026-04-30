@@ -41,8 +41,12 @@ function timingSafeCompare(a: string, b: string): boolean {
 function verifyInternalToken(request: NextRequest): boolean {
   const expected = process.env.COQUI_INTERNAL_TOKEN;
   if (!expected) {
-    // Dev fallback: allow through with warning
-    logger.warn('[TTS] COQUI_INTERNAL_TOKEN not set — running in dev mode');
+    // H2 fix: Only allow dev fallback in development; deny in production to avoid open relay
+    if (process.env.NODE_ENV === 'production') {
+      logger.warn('[TTS] COQUI_INTERNAL_TOKEN missing in production — denying request');
+      return false;
+    }
+    logger.warn('[TTS] COQUI_INTERNAL_TOKEN not set — dev mode only');
     return true;
   }
   const provided = request.headers.get('x-internal-token') ?? '';
@@ -101,9 +105,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const wavBuffer = Buffer.from(SILENT_WAV_B64, 'base64');
 
     const bucketRef = await getVideoBucket();
-    if (bucketRef) {
-      await uploadToR2({ bucket: bucketRef.bucket, key: r2Key, data: wavBuffer.buffer });
+    // H3 fix: refuse to claim r2Key if R2 unavailable — prevents silent 404 downstream
+    if (!bucketRef) {
+      return NextResponse.json(
+        { error: 'R2 bucket unavailable — cannot persist mock audio' },
+        { status: 503 },
+      );
     }
+    await uploadToR2({ bucket: bucketRef.bucket, key: r2Key, data: wavBuffer.buffer });
 
     return NextResponse.json({ r2Key, durationSec: 1, costUsd: 0, mock: true });
   }

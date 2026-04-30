@@ -183,7 +183,12 @@ describe('DELETE /api/voices/[id]', () => {
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser as unknown as Awaited<ReturnType<typeof getCurrentUser>>);
 
     const chain = buildChain({ data: { id: 'v1', tenant_id: 'tenant-1' }, error: null });
-    chain.delete.mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) });
+    // Match new chain: delete().eq(id).eq(tenant_id)
+    chain.delete.mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        eq: vi.fn().mockResolvedValue({ error: null }),
+      }),
+    });
 
     const req = new NextRequest('http://localhost/api/voices/v1', { method: 'DELETE' });
     const resp = await DELETE(req, { params: Promise.resolve({ id: 'v1' }) });
