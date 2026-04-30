@@ -20,9 +20,14 @@ const SERVICE = 'ProductAdvertisingAPI'
 
 /** AWS SigV4 signing helper for PA-API */
 async function hmacSha256(key: ArrayBuffer | Uint8Array, data: string): Promise<ArrayBuffer> {
+  // For Uint8Array, extract the exact slice using byteOffset so subarray() results sign
+  // the correct bytes (avoids the byteOffset bug from `key.buffer as ArrayBuffer`).
+  const keyBuf: BufferSource = key instanceof ArrayBuffer
+    ? key
+    : new Uint8Array(key.buffer instanceof ArrayBuffer ? key.buffer : (key.buffer as unknown as ArrayBuffer), key.byteOffset, key.byteLength)
   const keyMaterial = await crypto.subtle.importKey(
     'raw',
-    key instanceof ArrayBuffer ? key : key.buffer as ArrayBuffer,
+    keyBuf,
     { name: 'HMAC', hash: 'SHA-256' },
     false,
     ['sign']

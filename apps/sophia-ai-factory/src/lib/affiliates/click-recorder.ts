@@ -9,6 +9,7 @@
 
 import type { KVNamespace } from '@cloudflare/workers-types'
 import { logger } from '@/lib/utils/logger-utility'
+import { getD1Raw } from '@/lib/db/client'
 
 export interface ClickData {
   clickId: string
@@ -43,13 +44,6 @@ async function hashIp(ip: string): Promise<string> {
 function truncateUa(ua: string | null): string | null {
   if (!ua) return null
   return ua.slice(0, 120)
-}
-
-function getD1(): D1Database | null {
-  const env = (globalThis as unknown as { __env?: Record<string, unknown> }).__env
-  if (env?.DB) return env.DB as D1Database
-  const g = (globalThis as Record<string, unknown>).__D1_DB as D1Database | undefined
-  return g ?? null
 }
 
 function getKv(): KVNamespace | null {
@@ -101,8 +95,12 @@ export async function recordClick(data: ClickData): Promise<string> {
 
   // D1 write — analytics store
   const d1Write = (async () => {
-    const db = getD1()
-    if (!db) return
+    let db: D1Database
+    try {
+      db = await getD1Raw()
+    } catch {
+      return
+    }
     try {
       await db.prepare(
         `INSERT OR IGNORE INTO click_events

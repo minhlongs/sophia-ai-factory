@@ -32,7 +32,12 @@ export interface LLMRouteResult {
   tier: LLMTier;
 }
 
-// In-memory circuit breaker state (KV not available in all edge environments)
+// In-memory circuit breaker state.
+// KNOWN LIMITATION: Cloudflare Workers isolates are ephemeral — state resets per cold-start
+// and is NOT shared across replicas or regions. For durable circuit-breaker semantics,
+// move _circuitState to KV (keyed by region or a global key).
+// To disable the circuit breaker entirely (e.g. single-replica dev), set env var:
+//   DISABLE_LLM_CIRCUIT_BREAKER=true
 interface CircuitState {
   failures: number;
   openUntil: number; // epoch ms — 0 means closed
@@ -140,8 +145,9 @@ export async function routeLLM(
     return { text, model: maxModel, provider: 'claude', tier };
   }
 
-  // lite / standard → try Qwen first (unless circuit open)
-  if (!isCircuitOpen()) {
+  // lite / standard → try Qwen first (unless circuit open or disabled via env flag)
+  const circuitEnabled = process.env.DISABLE_LLM_CIRCUIT_BREAKER !== 'true';
+  if (!circuitEnabled || !isCircuitOpen()) {
     try {
       const text = await callQwen(prompt, qwenBaseUrl, qwenTimeoutMs);
       recordQwenSuccess();

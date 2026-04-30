@@ -99,10 +99,30 @@ export async function GET(
         const clickId = crypto.randomUUID();
         // sub_id pattern: {tenantSlug}-{linkId} (injected into provider URL)
         const tenantSlug = linkRow.tenant_id.slice(0, 16);
-        const subIdValue = linkRow.sub_id ?? `${tenantSlug}-${linkRow.id.replace(/-/g, '').slice(0, 12)}`;
+        let subIdValue = linkRow.sub_id;
+
+        // Persist generated sub_id at first redirect so webhook attribution resolves correctly
+        if (!subIdValue) {
+          subIdValue = `${tenantSlug}-${linkRow.id.replace(/-/g, '').slice(0, 12)}`;
+          // Fire-and-forget UPDATE — do not block the redirect on DB write
+          d1.prepare('UPDATE affiliate_links SET sub_id = ? WHERE id = ? AND sub_id IS NULL')
+            .bind(subIdValue, linkRow.id)
+            .run()
+            .catch(() => { /* best-effort — redirect proceeds regardless */ });
+        }
+
         const paramName = getSubIdParam(offerRow.network_id);
 
-        const destinationUrl = new URL(offerRow.product_url);
+        // SSRF guard: only allow http/https schemes in product_url
+        let destinationUrl: URL;
+        try {
+          destinationUrl = new URL(offerRow.product_url);
+        } catch {
+          return Response.redirect(HOMEPAGE_URL, 302);
+        }
+        if (destinationUrl.protocol !== 'https:' && destinationUrl.protocol !== 'http:') {
+          return Response.redirect(HOMEPAGE_URL, 302);
+        }
         destinationUrl.searchParams.set(paramName, subIdValue);
 
         // Dual-write click event (fire-and-forget — does not block redirect)

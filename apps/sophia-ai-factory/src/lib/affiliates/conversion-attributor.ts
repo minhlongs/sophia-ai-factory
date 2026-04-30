@@ -13,6 +13,7 @@
  */
 
 import { logger } from '@/lib/utils/logger-utility'
+import { getD1Raw } from '@/lib/db/client'
 
 export interface AttributionResult {
   clickId: string
@@ -43,14 +44,6 @@ interface LinkRow {
   user_id: string
 }
 
-/** Get raw D1Database binding from CF worker environment. */
-function getD1Binding(): D1Database | null {
-  const env = (globalThis as unknown as { __env?: Record<string, unknown> }).__env
-  if (env?.DB) return env.DB as D1Database
-
-  const globalDb = (globalThis as Record<string, unknown>).__D1_DB as D1Database | undefined
-  return globalDb ?? null
-}
 
 /**
  * Look up the click that generated this conversion via ClickBank cvendthru field.
@@ -64,8 +57,10 @@ export async function attributeClick(tid: string): Promise<AttributionResult | n
     return null
   }
 
-  const db = getD1Binding()
-  if (!db) {
+  let db: D1Database
+  try {
+    db = await getD1Raw()
+  } catch {
     logger.warn('[conversion-attributor] D1 binding not available')
     return null
   }
@@ -119,8 +114,10 @@ export async function attributeByNetwork(
     return null
   }
 
-  const db = getD1Binding()
-  if (!db) {
+  let db: D1Database
+  try {
+    db = await getD1Raw()
+  } catch {
     logger.warn('[conversion-attributor] D1 binding not available', { network })
     return null
   }
