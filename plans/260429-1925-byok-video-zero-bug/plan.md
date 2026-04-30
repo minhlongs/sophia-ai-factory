@@ -22,14 +22,19 @@
 
 ## Phase Map (with dependencies)
 
-| Phase | Description | Deps | Parallel Group |
-|-------|-------------|------|----------------|
-| 01 | Fix 4 TS errors + add missing deps (qrcode, otpauth) | — | Foundation |
-| 02A | ServiceFactory + clients accept `userId`, async resolve via `resolveUserApiKey` | 01 | Group A |
-| 02B | `/api/setup/save` persist keys + add HeyGen/MuAPI to wizard step 2 | 01 | Group A |
-| 04 | Add `*/5 * * * *` cron + wire `video-storage-service` to R2 copy | 01 | Group A |
-| 03 | Pass `userId` from API routes (`/api/heygen/create-video` etc.) to factory | 02A | Group B |
-| 05 | Tests + `tsc --noEmit` + `wrangler deploy` + browser smoke (Rule 13) | 02B+03+04 | Final |
+| Phase | Description | Status | Owner |
+|-------|-------------|--------|-------|
+| 01 | Fix 4 TS errors + add missing deps (qrcode, otpauth) | ✅ done | fullstack-developer |
+| 02A | ServiceFactory + clients accept `userId`, async resolve via `resolveUserApiKey` | ✅ done | fullstack-developer-byok |
+| 02B | `/api/setup/save` persist keys + add HeyGen/MuAPI to wizard step 2 | ✅ done | fullstack-developer-wizard |
+| 04 | Add `*/5 * * * *` cron + wire `video-storage-service` to R2 copy | ✅ done | fullstack-developer-cron |
+| 03 | Pass `userId` from API routes (`/api/heygen/create-video` etc.) to factory | ✅ done | fullstack-developer-routes |
+| 04b | Fix OpenNext Next.js 16 instrumentation.js bundling | ✅ done | debugger |
+| 05 | Tests + `tsc --noEmit` + `wrangler deploy` + production verify | ✅ done | main |
+
+**Final report:** [final-signoff-report.md](./final-signoff-report.md)
+**Production SHA:** ed13e406 (matches local HEAD)
+**Deployed:** 2026-04-30T02:54:27Z
 
 ## Key Constraints
 
