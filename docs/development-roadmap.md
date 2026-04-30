@@ -2,7 +2,7 @@
 
 > Product milestones and progress tracking (2026)
 
-**Last Updated:** 2026-04-25 (Phase 9: Analytics Dashboard Shipped — SSE realtime, revenue metrics, cohort analysis, tier adoption, 1362/1362 tests pass)
+**Last Updated:** 2026-04-30 (Phase 11: Auto Video Customer Handoff — post-purchase auto-gen onboarding video + email delivery, 1798/1798 tests pass)
 **Target:** $1M ARR, 100/100 a16z solo company score
 
 ---
@@ -307,6 +307,20 @@
   - Dashboard: `src/app/[locale]/(dashboard)/dashboard/analytics/page.tsx`
 - **Target:** Real-time dashboard for founder + tier adoption visibility
 
+### Phase 11: Auto Video Customer Handoff ✅ SHIPPED (2026-04-30)
+- **Status:** Production complete — post-purchase auto-gen onboarding video + email delivery
+- **Features:**
+  - **Pipeline Completion:** 4 Inngest stubs → real (OpenRouter script → Coqui TTS → HeyGen visual → R2 upload)
+  - **Purchase Trigger:** NOWPayments IPN → auto trigger onboarding video for ENTERPRISE/MASTER tiers
+  - **Delivery System:** HeyGen webhook → email notification + dashboard gallery (`is_onboarding = 1`)
+  - **DB Schema:** New `video_onboarding_events` table + `videos.is_onboarding` column (migration 0034)
+  - **Script Templates:** Vietnamese onboarding scripts per tier, HeyGen Anna_public avatar + standard voice
+  - **Email:** HTML template with Sophia branding, dashboard deep-link, non-blocking delivery
+- **Architecture:** `script(OpenRouter) → TTS(Coqui) → visual(HeyGen) → compose(skip) → upload(R2) → publish`
+- **Key Decision:** HeyGen replaces HunyuanVideo (already integrated, creates complete mp4); Remotion impossible on CF Workers
+- **Metrics:** 16 new tests, 1798/1798 total (100%), 0 type errors, code review approved
+- **Files:** `src/lib/video/onboarding-video.ts`, `src/lib/email/onboarding-emails.ts`, `src/app/api/webhooks/heygen/route.ts`, `src/lib/billing/nowpayments-ipn-subscription.ts`, `migrations/0034-video-onboarding-events.sql`, +6 more
+
 ### Phase 10: Multi-Language Support (Planned)
 - **Timeline:** June 2026
 - **Features:**
@@ -402,6 +416,7 @@
 | **2026-04-25** | **Tech Debt Phase 30: Analytics Query Type Safety + Billing Page Modularization (`:any` elimination, 440L→139L, 1362/1362 tests)** | **✅ COMPLETE** |
 | **2026-04-25** | **Build Fix: 8 Turbopack Errors Resolved (server re-exports, ssr:false in SC, vi.json translations)** | **✅ COMPLETE** |
 | **2026-04-28** | **Go-Live Audit Phase 01 (Tier-1): CI Hardening, Auth Gates, i18n, A11y, CDN, Backup** | **✅ SHIPPED** |
+| **2026-04-30** | **Phase 11: Auto Video Customer Handoff (post-purchase onboarding video + email, 1798 tests)** | **✅ SHIPPED** |
 | 2026-05-15 | Go-Live Audit Phase 02 (Tier-2): Load Testing, Error Budgets, Observability | 🔄 Planned |
 | 2026-06-01 | Multi-Language Support (Vietnamese) | 🔄 Planned |
 | 2026-07-01 | Telegram Bot Enhancement | 🔄 Planned |

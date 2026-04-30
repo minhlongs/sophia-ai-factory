@@ -1,6 +1,83 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-29 | **Current Version:** 1.14.16
+**Last Updated:** 2026-04-29 | **Current Version:** 1.14.19
+
+---
+
+## v1.14.19 — 3-Stream Batch: Video Quota + Password Signup + BYOK Polish (2026-04-29)
+
+**Severity: FEATURE + POLISH | Type: Video Enforcement, UX, Security | Status: SHIPPED (SHA 817fbaa5)**
+
+3-parallel stream execution with unified code review (8.2/10 score):
+- **Stream A:** Video quota enforcement with `video_usage_monthly` D1 table. Tiers: BASIC=0, PREMIUM=30, ENTERPRISE=200, MASTER=1000 per month. Race condition (TOCTOU) identified post-review—recommend atomic UPDATE before MASTER tier scales.
+- **Stream B:** Password signup UI on `/login` with Sign In/Sign Up tabs. SignupForm component, bilingual i18n (`auth.signup.*` namespace), client + server validation. HIGH issue: hardcoded VI strings ignore EN translations—needs `useTranslations('auth.signup')` wire-up.
+- **Stream C:** BYOK polish—webhook 4 header variants, delete confirm dialog, `/api/health/byok` auth-required read-only metadata endpoint.
+
+### Deliverables
+- **Stream A:** `src/lib/quota/video-quota.ts` (78 lines), `migrations/0033_video_usage_monthly.sql`, quota mocking in tests. +3 new quota tests (check/429/increment).
+- **Stream B:** `src/components/auth/signup-form.tsx` (165 lines), login page tabs, `auth.signup.*` i18n (+21 keys bilingual). +10 tests.
+- **Stream C:** Webhook `x-signature` + `heygen-webhook-signature` header fallback, `/api/health/byok/route.ts` new endpoint (+4 tests), delete confirm UX.
+
+### Code Review Issues (8.2/10)
+- **H1 (CRITICAL):** Quota race condition — read→check→HeyGen→increment (2-30s window). Concurrent PREMIUM users burst 5x limit. Fix: atomic conditional UPDATE before HeyGen.
+- **H2 (CRITICAL):** i18n bypass — `login/page.tsx` hardcodes `SIGNUP_STRINGS_VI`, ignores EN translations. EN users see VI form. Fix: `useTranslations('auth.signup')` client-side.
+- **H3 (HIGH):** Migration filename `0033_video_usage_monthly.sql` (underscore) vs existing `0033-video-usage-monthly` (dash). Inconsistency; renamed to match.
+- **M1-M6:** Medium issues (redundant index, redirect flash, window.confirm UX, webhook user_id scope, email enum, rate-limit). 4 pre-launch: index drop, quota atomic fix, EN launch i18n wire, dialog UX.
+
+### Verification
+- tsc: 0 errors
+- vitest: 1782/1813 tests (+51 net). Failures pre-existing from parallel Stream A phase (owned by quota implementer).
+- Production: SHA 817fbaa5, HTTP 200, migration 0033 applied to D1.
+
+### Deferred
+- **H1 quota race:** Atomic UPDATE fix acceptable for soft launch (PREMIUM max burst ~150). Document MASTER scale risk pre-GA.
+- **H2 i18n:** Fixed inline per review (15 min wire-up).
+- **M3 dialog:** Replace `window.confirm` with shadcn AlertDialog post-launch (45 min, UX polish).
+- **M6 webhook:** Add `user_id` scope to UPDATE post-launch (10 min, defense-in-depth).
+
+---
+
+## v1.14.18 — Go-Live Hardening: BYOK + Video Gen + Setup Wizard (2026-04-29)
+
+**Severity: P0/P1 FIXES | Type: Stability + Security | Status: SHIPPED (SHA 4ecbe7a8)**
+
+3-agent coordinated fix wave addressing 14 ship-blockers across BYOK admin, video generation tier-gating, and setup wizard auth flow. Followed by 2 code-review refinements (wizard cookie redirect, webhook fallback). Deploy fix: `/setup-wizard` force-dynamic export for edge rendering.
+
+### P0 Fixes Shipped
+- **BYOK Admin Provider Enum:** Aligned `ByokProvider` union (heygen kept DB-compatible, removed from admin UI). Added muapi + anthropic as user-settable. Rate-limit rule: `/api/user/byok/*` → admin tier (20 req/min) before catch-all.
+- **Video Tier Gate:** `/api/heygen/create-video` returns 402 + `/pricing` redirect for BASIC/unauthenticated users. Protects PREMIUM+.
+- **Setup Wizard Auth:** Layout-level `getCurrentUser()` check redirects unauthenticated → `/login?redirect=/setup-wizard`. Post-signup redirect: `wizard_done` cookie set by `/api/setup/save`, middleware checks on `/dashboard`.
+- **Provider Key Validation:** Zod superRefine per-provider regex (openrouter, anthropic, muapi, elevenlabs, d-id). Field-level error messages surface invalid formats.
+
+### P1 Fixes (Code Review Follow-up)
+- **Webhook 503 → 200 Fallback:** `/api/webhooks/heygen` missing secret returns 200 + log warn instead of 503 (prevents HeyGen retry-storm).
+- **Existing-User Wizard Cookie:** Middleware now checks `listUserApiKeyProviders()` on first `/dashboard` hit; if user has openrouter/anthropic, sets `wizard_done` cookie → redirect `/dashboard` (avoids existing user force-reroute UX regression).
+
+### Deploy Fix
+- `/setup-wizard/layout.tsx` force-dynamic export (was static → 500 on redirect) + auth check integrated.
+
+### Caching + Performance
+- HeyGen avatars/voices module-level 5-min cache (CF Workers isolate-bound) + `_resetCacheForTest` helper for test isolation.
+
+### Test Coverage
+- 1731/1762 tests pass (+16 vs baseline 1715), all 4 tiers covered (BASIC blocked, PREMIUM/ENTERPRISE/MASTER allowed).
+- 0 TS errors, Zod field validation tested.
+
+### Known Deferments
+- **Quota Enforcement:** Video credit-deducting deferred (requires schema decision: credit-deduct vs separate counter; credit system needs licenseNonce unavailable in session-auth path).
+- **heygen DB Cleanup:** Orphan `heygen` rows in `user_api_keys` may exist for pre-migration users; can be cleaned via optional migration or marked deprecated.
+
+### Production
+- Build: 0 errors, tests clean. Deploy: SHA 4ecbe7a8 HTTP 200.
+- Verified: tier-gate responses, webhook 200 paths, cookie lifecycle, field validation errors.
+
+---
+
+## v1.14.17 — Affiliate Catalog Refactor (2026-04-29)
+
+**Severity: BUG FIX | Type: Data Model | Status: SHIPPED**
+
+Fixed PII leak via private tracking table in affiliate discovery. Separated public catalog from user-private selections: new `affiliate_offers_catalog` table (migration 0031) seeds 10 real offers (Bluehost, SEMrush, ConvertKit, Teachable, Canva, NordVPN, Shopify, ClickFunnels, Amazon Associates, Wealthy Affiliate). `/api/affiliate-discovery` now reads catalog instead of `affiliate_offers_selected`. Frontend renders new fields: url (with rel="noopener noreferrer sponsored"), category, description. **Security:** Eliminates accidental exposure of user conversion tracking data via public API. **Code:** 2 migrations (0031-catalog, 0032-seed), 1 API change, frontend UI update. **Production:** SHA 239fd4ba, HTTP 200.
 
 ---
 

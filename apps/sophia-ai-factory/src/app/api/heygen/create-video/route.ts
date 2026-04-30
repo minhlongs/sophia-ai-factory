@@ -2,15 +2,37 @@ import { NextResponse } from "next/server";
 import { ServiceFactory } from "@/lib/services/factory";
 import { MissingCredentialsError } from "@/lib/services/errors";
 import { getCurrentUser } from "@/lib/better-auth-session";
+import { getUserTier } from "@/lib/db/get-user-tier";
 import { createServerClient } from "@/lib/db/client";
 import { createVideoSchema } from "@/lib/schemas";
 import { logger } from "@/lib/utils/logger-utility";
+import { checkVideoQuota, incrementVideoUsage } from "@/lib/quota/video-quota";
+
+const VIDEO_ALLOWED_TIERS = new Set(['PREMIUM', 'ENTERPRISE', 'MASTER']);
 
 export async function POST(req: Request) {
   try {
     const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // P0: Tier gate — only PREMIUM/ENTERPRISE/MASTER can create videos
+    const tier = await getUserTier(user.id);
+    if (!VIDEO_ALLOWED_TIERS.has(tier)) {
+      return NextResponse.json(
+        { error: "Video creation requires PREMIUM tier or higher", upgrade: "/pricing" },
+        { status: 402 }
+      );
+    }
+
+    // P1: Monthly quota check — prevent unlimited video generation via BYOK
+    const quota = await checkVideoQuota(user.id, tier);
+    if (!quota.allowed) {
+      return NextResponse.json(
+        { error: "quota_exceeded", limit: quota.limit, used: quota.used, resetAt: quota.resetAt },
+        { status: 429 }
+      );
     }
 
     const body = await req.json();
@@ -43,6 +65,18 @@ export async function POST(req: Request) {
         );
       }
       throw err;
+    }
+
+    // Increment quota counter AFTER successful HeyGen call (avoid charging on failures).
+    try {
+      await incrementVideoUsage(user.id);
+    } catch (quotaErr) {
+      logger.error(
+        "[create-video] Failed to increment video quota counter",
+        quotaErr instanceof Error ? quotaErr : undefined,
+        { heygenJobId, userId: user.id }
+      );
+      // Non-fatal — proceed so the user gets their video even if counter fails.
     }
 
     // Persist to D1 — failures are logged and surfaced to caller.

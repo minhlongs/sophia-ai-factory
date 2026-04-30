@@ -42,6 +42,37 @@ const nextConfig: NextConfig = {
       }
     ],
   },
+  async redirects() {
+    return [
+      // Auth aliases
+      { source: '/signup', destination: '/login', permanent: true },
+      { source: '/register', destination: '/login', permanent: false },
+      { source: '/sign-up', destination: '/login', permanent: false },
+      { source: '/signin', destination: '/login', permanent: false },
+      // Settings
+      { source: '/settings', destination: '/dashboard/settings', permanent: true },
+      { source: '/settings/security', destination: '/settings/security/mfa', permanent: false },
+      // Misc
+      { source: '/chat', destination: '/dashboard', permanent: false },
+      { source: '/templates', destination: '/dashboard/create', permanent: false },
+      { source: '/debug', destination: '/dashboard/system-health', permanent: false },
+      { source: '/app', destination: '/dashboard', permanent: false },
+      // Docs & help
+      { source: '/docs', destination: '/guide', permanent: false },
+      { source: '/support', destination: '/dashboard/support', permanent: false },
+      { source: '/faq', destination: '/guide/faq', permanent: false },
+      { source: '/help', destination: '/guide', permanent: false },
+      { source: '/guide/getting-started', destination: '/guide', permanent: false },
+      // Landing
+      { source: '/about', destination: '/', permanent: false },
+      { source: '/contact', destination: '/', permanent: false },
+      // System
+      { source: '/status', destination: '/api/health', permanent: false },
+      // Locale — redirect /en to root (default locale is en, served without prefix)
+      { source: '/en', destination: '/', permanent: true },
+      { source: '/en/:path*', destination: '/:path*', permanent: true },
+    ];
+  },
   async headers() {
     return [
       // Immutable cache for hashed static assets (CDN Layer 9)

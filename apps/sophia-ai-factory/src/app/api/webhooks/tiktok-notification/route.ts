@@ -14,7 +14,12 @@ import { logger } from '@/lib/utils/logger-utility';
 
 async function verifyTikTokSignature(request: Request, body: string): Promise<boolean> {
   const secret = process.env.TIKTOK_WEBHOOK_SECRET;
-  if (!secret) return true; // Dev/test: skip verification
+  // H6: fail-closed in production — accept unsigned only in dev/test
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') return false;
+    logger.warn('[tiktok-notification] TIKTOK_WEBHOOK_SECRET not set — skipping signature check (dev only)');
+    return true;
+  }
 
   const signature = request.headers.get('x-tiktok-signature') ?? '';
   if (!signature) return false;

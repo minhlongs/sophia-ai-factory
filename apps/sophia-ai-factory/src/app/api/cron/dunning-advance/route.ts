@@ -15,6 +15,7 @@ import { transitionDunningState } from '@/lib/billing/dunning/dunning-state-mach
 import { logger } from '@/lib/utils/logger-utility';
 import { toError } from '@/lib/utils/to-error';
 import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker';
+import { verifyCronAuth } from '@/lib/security/cron-auth';
 
 const CRON_NAME = 'dunning-advance';
 /** Daily — skip if ran within last 12 hours */
@@ -31,21 +32,6 @@ function getD1(): D1Database | null {
   }
 }
 
-function verifyCronAuth(request: NextRequest): boolean {
-  if (process.env.NODE_ENV === 'development') return true;
-
-  const expectedSecret = process.env.CRON_SECRET;
-  if (expectedSecret && request.headers.get('authorization') === `Bearer ${expectedSecret}`) return true;
-
-  const cronSecret = request.headers.get('x-cron-secret');
-  if (expectedSecret && cronSecret === expectedSecret) return true;
-
-  const cfCron = request.headers.get('x-cf-cron');
-  if (cfCron === 'true') return true;
-
-  return false;
-}
-
 interface DunningSettingsRow {
   id: string;
   user_id: string;
@@ -56,9 +42,8 @@ interface DunningSettingsRow {
 }
 
 export async function GET(request: NextRequest) {
-  if (!verifyCronAuth(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const authError = verifyCronAuth(request);
+  if (authError) return authError;
 
   const d1 = getD1();
 

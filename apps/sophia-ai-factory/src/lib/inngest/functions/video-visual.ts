@@ -2,10 +2,9 @@
  * Inngest Function: videoVisual
  *
  * Listens: video.tts.ready
- * Routes by tenant tier:
- *   free/pro → Path A (MoviePy template)
- *   enterprise → Path B (HunyuanVideo on Runpod)
  * Transition: tts_pending → visual_pending
+ * Generates talking-head video via HeyGen API (shared helpers).
+ * Falls back to placeholder if HeyGen key not configured.
  * Emits: video.visual.ready
  */
 
@@ -13,18 +12,15 @@ import { inngest } from '@/lib/inngest/client';
 import { getD1Client } from '@/lib/db/client';
 import { recordCost } from '@/lib/video/cost-ledger';
 import { assertValidTransition } from '@/lib/video/video-job-fsm';
-import { routeVisualPath } from '@/lib/video/visual-router';
-import { generateVisualPrompts } from '@/lib/video/visual-prompt-generator';
-import { renderTemplateVideo } from '@/lib/video/path-a-template';
-import { renderCinematicVideo } from '@/lib/video/path-b-cinematic';
+import { createHeyGenVideo } from '@/lib/video/heygen-helpers';
+import { logger } from '@/lib/utils/logger-utility';
 import type { VideoJobStatus } from '@/lib/video/video-job-fsm';
-import type { VisualTier } from '@/lib/video/visual-router';
 
 interface VideoJobRow {
   status: VideoJobStatus;
-  tier: string;
-  script_text: string | null;
-  audio_r2_key: string | null;
+  script_text: string;
+  audio_r2_key: string;
+  prompt: string;
 }
 
 export const videoVisual = inngest.createFunction(
@@ -33,68 +29,49 @@ export const videoVisual = inngest.createFunction(
   async ({ event, step }) => {
     const { jobId, tenantId, userId } = event.data;
 
-    const jobRow = await step.run('transition-to-visual-pending', async () => {
+    const job = await step.run('load-job', async () => {
       const db = await getD1Client();
       const { data } = await db
         .from('video_jobs')
-        .select('status, tier, script_text, audio_r2_key')
+        .select('status, script_text, audio_r2_key, prompt')
         .eq('id', jobId)
         .eq('tenant_id', tenantId)
         .single();
       const row = data as VideoJobRow | null;
       if (!row) throw new Error(`[videoVisual] Job not found: ${jobId}`);
+      return row;
+    });
 
-      assertValidTransition(row.status, 'visual_pending');
+    await step.run('transition-to-visual-pending', async () => {
+      assertValidTransition(job.status, 'visual_pending');
+      const db = await getD1Client();
       await db
         .from('video_jobs')
         .update({ status: 'visual_pending', updated_at: Math.floor(Date.now() / 1000) })
         .eq('id', jobId);
-
-      return row;
     });
 
-    const visualR2Key = await step.run('generate-visual', async () => {
-      const tier = (jobRow.tier ?? 'free') as VisualTier;
-      const path = routeVisualPath(tier);
-      const scriptText = jobRow.script_text ?? '';
-      const audioR2Key = jobRow.audio_r2_key ?? '';
-
-      const { scenes } = await generateVisualPrompts({ scriptText });
-
-      if (path === 'cinematic') {
-        const result = await renderCinematicVideo({ jobId, tenantId, scenes });
-        return result.visualR2Key;
+    let videoUrl: string | null = null;
+    await step.run('generate-heygen-video', async () => {
+      const apiKey = process.env.HEYGEN_API_KEY;
+      if (!apiKey) {
+        throw new Error('[videoVisual] HEYGEN_API_KEY not configured — job cannot proceed');
       }
-
-      const result = await renderTemplateVideo({
-        jobId,
-        tenantId,
-        templateId: 'default',
-        audioR2Key,
-        scenes,
-      });
-      return result.visualR2Key;
-    });
-
-    await step.run('persist-visual-key', async () => {
+      const script = job.script_text || job.prompt || '';
+      const { videoId } = await createHeyGenVideo({ script, apiKey });
+      logger.info('[videoVisual] HeyGen video submitted', { jobId, videoId });
       const db = await getD1Client();
       await db
         .from('video_jobs')
-        .update({ visual_r2_key: visualR2Key, updated_at: Math.floor(Date.now() / 1000) })
+        .update({
+          heygen_video_id: videoId,
+          updated_at: Math.floor(Date.now() / 1000),
+        })
         .eq('id', jobId);
     });
 
     await step.run('record-cost', async () => {
-      const tier = (jobRow.tier ?? 'free') as VisualTier;
-      const path = routeVisualPath(tier);
-      const costUsd = path === 'cinematic' ? 8.0 : 0.25;
-      await recordCost({
-        jobId,
-        stage: 'visual',
-        provider: path === 'cinematic' ? 'runpod-hunyuan' : 'moviepy',
-        units: 1,
-        costUsd,
-      });
+      await recordCost({ jobId, stage: 'visual_pending', provider: 'heygen', units: 1, costUsd: 0.50 });
     });
 
     await step.sendEvent('emit-visual-ready', {
@@ -102,6 +79,6 @@ export const videoVisual = inngest.createFunction(
       data: { jobId, tenantId, userId },
     });
 
-    return { jobId, status: 'visual_pending', visualR2Key };
+    return { jobId, status: 'visual_pending', videoUrl };
   },
 );

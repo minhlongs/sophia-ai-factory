@@ -6,7 +6,7 @@
  * Per-workflow try/catch: one bad workflow never kills the batch.
  *
  * Sub-modules:
- *   workflow-stepper-runtime-utils.ts — getDb, isAuthorised, isRealLlmEnabled, REAL_LLM_PROVIDERS, types
+ *   workflow-stepper-runtime-utils.ts — getDb, isRealLlmEnabled, REAL_LLM_PROVIDERS, types
  *   workflow-stepper-llm-executor.ts  — callAnthropicWithByok, callOpenRouterWithByok
  *   workflow-stepper-advance.ts       — advanceOne, ActionRecord
  *
@@ -21,13 +21,12 @@ import { getErrorMessage } from '@/lib/utils/to-error'
 import { route as routeLlm } from '@/lib/ai/llm-router'
 import { recordLlmCall } from '@/lib/telemetry/llm-trace'
 import type { WorkflowRow } from '@/lib/db/workflow-repository'
-import {
-  getDb, isAuthorised, isRealLlmEnabled, REAL_LLM_PROVIDERS,
-} from './workflow-stepper-runtime-utils'
+import { getDb, isRealLlmEnabled, REAL_LLM_PROVIDERS } from './workflow-stepper-runtime-utils'
 import { callAnthropicWithByok, callOpenRouterWithByok } from './workflow-stepper-llm-executor'
 import { advanceOne } from './workflow-stepper-advance'
 import type { ActionRecord } from './workflow-stepper-advance'
 import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker'
+import { verifyCronAuth } from '@/lib/security/cron-auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -147,9 +146,8 @@ export async function executeStep(
 }
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
-  if (!isAuthorised(req)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const authError = verifyCronAuth(req);
+  if (authError) return authError;
 
   let db: D1Database
   try {

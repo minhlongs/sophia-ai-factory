@@ -14,6 +14,7 @@ import { sendEmail } from '@/lib/email/sender';
 import { logger } from '@/lib/utils/logger-utility';
 import { toError } from '@/lib/utils/to-error';
 import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker';
+import { verifyCronAuth } from '@/lib/security/cron-auth';
 
 const CRON_NAME = 'subscription-reminders';
 /** Daily — skip if ran within last 12 hours */
@@ -33,19 +34,26 @@ function getD1(): D1Database | null {
   }
 }
 
-function verifyCronAuth(request: NextRequest): boolean {
-  if (process.env.NODE_ENV === 'development') return true;
+interface SubOrgRow {
+  org_id: string;
+  next_billing_at: string;
+  tier: string;
+  email: string;
+  name: string | null;
+}
 
-  const expectedSecret = process.env.CRON_SECRET;
-  if (expectedSecret && request.headers.get('authorization') === `Bearer ${expectedSecret}`) return true;
-
-  const cronSecret = request.headers.get('x-cron-secret');
-  if (expectedSecret && cronSecret === expectedSecret) return true;
-
-  const cfCron = request.headers.get('x-cf-cron');
-  if (cfCron === 'true') return true;
-
-  return false;
+async function getExpiringSubs(db: D1Database, days: number): Promise<SubOrgRow[]> {
+  const query = `
+    SELECT o.id as org_id, o.next_billing_at, o.active_tier as tier,
+           u.email, u.name
+    FROM orgs o
+    JOIN users u ON u.id = o.owner_id
+    WHERE o.next_billing_at IS NOT NULL
+      AND date(o.next_billing_at) = date('now', '+' || ? || ' days')
+    ORDER BY o.next_billing_at ASC
+  `;
+  const result = await db.prepare(query).bind(days).all<SubOrgRow>();
+  return result.results;
 }
 
 interface SubscriptionRow {
@@ -93,9 +101,8 @@ function buildRenewalReminderHtml(
 }
 
 export async function GET(request: NextRequest) {
-  if (!verifyCronAuth(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const authError = verifyCronAuth(request);
+  if (authError) return authError;
 
   const d1 = getD1();
 

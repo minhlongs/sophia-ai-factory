@@ -128,11 +128,30 @@ export async function proxy(request: NextRequest) {
           logger.error('[Middleware] MFA pending check error', toError(mfaErr))
         }
       }
+
+      // New-user onboarding: redirect to setup wizard if wizard not yet completed.
+      // Uses a cookie set by /api/setup/save on successful wizard completion.
+      // This avoids a DB call per request while ensuring new signups land in wizard.
+      const wizardDone = request.cookies.has('wizard_done')
+      if (!wizardDone && cleanPath === '/dashboard') {
+        return NextResponse.redirect(new URL('/setup-wizard', request.url))
+      }
     } catch {
       return NextResponse.redirect(new URL('/login', request.url))
     }
     const dashRes = NextResponse.next({ request: { headers: requestHeaders } })
     const intlRes = intlMiddleware(request)
+    const intlDashLoc = intlRes.headers.get('location')
+    // Honor locale redirects for dashboard paths too
+    if (intlDashLoc) {
+      const redirectRes = NextResponse.redirect(new URL(intlDashLoc, request.url))
+      intlRes.headers.forEach((value, key) => {
+        if (key.toLowerCase() !== 'location') redirectRes.headers.set(key, value)
+      })
+      attachCspHeaders(redirectRes, nonce)
+      if (needsCsrfSeed) setCsrfCookie(redirectRes, generateCsrfToken())
+      return redirectRes
+    }
     // Copy intl headers (locale cookies, etc.) into our nonce-aware response
     intlRes.headers.forEach((value, key) => {
       dashRes.headers.set(key, value)
@@ -176,7 +195,18 @@ export async function proxy(request: NextRequest) {
   }
 
   const finalResponse = NextResponse.next({ request: { headers: requestHeaders } })
-  const intlFinalRes = applyCorsHeaders(intlMiddleware(request), origin)
+  const intlFinalRes = intlMiddleware(request)
+  const intlLocation = intlFinalRes.headers.get('location')
+  // Honor locale redirects (e.g., / → /vi for Accept-Language: vi, /en → /)
+  if (intlLocation) {
+    const redirectRes = applyCorsHeaders(NextResponse.redirect(new URL(intlLocation, request.url)), origin)
+    intlFinalRes.headers.forEach((value, key) => {
+      if (key.toLowerCase() !== 'location') redirectRes.headers.set(key, value)
+    })
+    attachCspHeaders(redirectRes, nonce)
+    if (needsCsrfSeed) setCsrfCookie(redirectRes, generateCsrfToken())
+    return redirectRes
+  }
   // Merge intl + cors headers
   ;(intlFinalRes as NextResponse).headers.forEach((value, key) => {
     finalResponse.headers.set(key, value)

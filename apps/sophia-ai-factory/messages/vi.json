@@ -867,10 +867,10 @@
         "placeholder": "Basic ...",
         "help": "Lấy key tại studio.d-id.com/account-settings"
       },
-      "heygen": {
-        "label": "HeyGen API Key (Video AI)",
-        "placeholder": "NjY...",
-        "help": "Lấy key tại app.heygen.com/settings/api-keys"
+      "anthropic": {
+        "label": "Anthropic API Key (LLM)",
+        "placeholder": "sk-ant-...",
+        "help": "Lấy key tại console.anthropic.com/keys"
       },
       "muapi": {
         "label": "MuAPI Key (Âm Nhạc/Âm Thanh)",
@@ -880,6 +880,29 @@
     }
   },
   "auth": {
+    "signup": {
+      "tab": "Đăng Ký",
+      "signin_tab": "Đăng Nhập",
+      "title": "Tạo Tài Khoản",
+      "subtitle": "Tham gia Sophia AI — Nhà Máy Video & AI Tự Động",
+      "name_label": "Họ Tên",
+      "name_placeholder": "Tên của bạn",
+      "email_label": "Email",
+      "email_placeholder": "ban@example.com",
+      "password_label": "Mật khẩu",
+      "password_placeholder": "Tối thiểu 8 ký tự",
+      "confirm_label": "Xác Nhận Mật Khẩu",
+      "confirm_placeholder": "Nhập lại mật khẩu",
+      "submit": "Tạo Tài Khoản",
+      "submitting": "Đang tạo tài khoản...",
+      "success_title": "Tạo Tài Khoản Thành Công!",
+      "success_message": "Đang chuyển đến cài đặt ban đầu...",
+      "error_password_mismatch": "Mật khẩu không khớp",
+      "error_password_too_short": "Mật khẩu phải có ít nhất 8 ký tự",
+      "error_email_exists": "Email này đã được đăng ký. Hãy thử đăng nhập.",
+      "error_generic": "Đăng ký thất bại. Vui lòng thử lại.",
+      "have_account": "Đã có tài khoản?"
+    },
     "mfa_challenge": {
       "title": "Xác Thực Hai Yếu Tố",
       "subtitle": "Nhập mã 6 chữ số từ ứng dụng xác thực của bạn.",

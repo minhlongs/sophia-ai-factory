@@ -1,6 +1,7 @@
 /**
  * Basic rendering + interaction tests for ApiKeysStep.
  * Verifies all 5 provider fields render and verify callbacks fire correctly.
+ * Provider list: openrouter, anthropic, elevenlabs, d-id, muapi (heygen removed).
  */
 
 import React from 'react';
@@ -17,15 +18,15 @@ vi.mock('next-intl', () => ({
       'openrouter.label': 'OpenRouter API Key (LLM)',
       'openrouter.placeholder': 'sk-or-...',
       'openrouter.help': 'Get your key at openrouter.ai/keys',
+      'anthropic.label': 'Anthropic API Key (LLM)',
+      'anthropic.placeholder': 'sk-ant-...',
+      'anthropic.help': 'Get your key at console.anthropic.com/keys',
       'elevenlabs.label': 'ElevenLabs API Key (Voice)',
       'elevenlabs.placeholder': 'sk_...',
       'elevenlabs.help': 'Get your key at elevenlabs.io/subscription',
       'did.label': 'D-ID API Key (Avatar)',
       'did.placeholder': 'Basic ...',
       'did.help': 'Get your key at studio.d-id.com/account-settings',
-      'heygen.label': 'HeyGen API Key (AI Video)',
-      'heygen.placeholder': 'NjY...',
-      'heygen.help': 'Get your key at app.heygen.com/settings/api-keys',
       'muapi.label': 'MuAPI Key (Music/Audio)',
       'muapi.placeholder': 'mu_...',
       'muapi.help': 'Get your key at muapi.ai/dashboard/api-keys',
@@ -36,17 +37,17 @@ vi.mock('next-intl', () => ({
 
 const defaultConfig = {
   OPENROUTER_API_KEY: '',
+  ANTHROPIC_API_KEY: '',
   ELEVENLABS_API_KEY: '',
   DID_API_KEY: '',
-  HEYGEN_API_KEY: '',
   MUAPI_API_KEY: '',
 };
 
 const defaultStatus: Record<string, 'idle' | 'validating' | 'valid' | 'invalid'> = {
   OPENROUTER_API_KEY: 'idle',
+  ANTHROPIC_API_KEY: 'idle',
   ELEVENLABS_API_KEY: 'idle',
   DID_API_KEY: 'idle',
-  HEYGEN_API_KEY: 'idle',
   MUAPI_API_KEY: 'idle',
 };
 
@@ -83,13 +84,13 @@ describe('ApiKeysStep', () => {
       />
     );
     expect(screen.getByLabelText(/OpenRouter API Key/i)).toBeDefined();
+    expect(screen.getByLabelText(/Anthropic API Key/i)).toBeDefined();
     expect(screen.getByLabelText(/ElevenLabs API Key/i)).toBeDefined();
     expect(screen.getByLabelText(/D-ID API Key/i)).toBeDefined();
-    expect(screen.getByLabelText(/HeyGen API Key/i)).toBeDefined();
     expect(screen.getByLabelText(/MuAPI Key/i)).toBeDefined();
   });
 
-  it('renders the HeyGen field with correct label', () => {
+  it('does not render HeyGen field (removed from provider list)', () => {
     render(
       <ApiKeysStep
         config={defaultConfig}
@@ -99,10 +100,10 @@ describe('ApiKeysStep', () => {
         errors={{}}
       />
     );
-    expect(screen.getByLabelText(/HeyGen API Key/i)).toBeDefined();
+    expect(screen.queryByLabelText(/HeyGen/i)).toBeNull();
   });
 
-  it('calls updateConfig when user types in HeyGen field', () => {
+  it('renders the Anthropic field with correct label', () => {
     render(
       <ApiKeysStep
         config={defaultConfig}
@@ -112,13 +113,26 @@ describe('ApiKeysStep', () => {
         errors={{}}
       />
     );
-    const heygenInput = screen.getByLabelText(/HeyGen API Key/i);
-    fireEvent.change(heygenInput, { target: { value: 'test-heygen-key' } });
-    expect(mockUpdateConfig).toHaveBeenCalledWith('HEYGEN_API_KEY', 'test-heygen-key');
+    expect(screen.getByLabelText(/Anthropic API Key/i)).toBeDefined();
   });
 
-  it('calls verifyKey with heygen provider when verify button clicked', async () => {
-    const configWithKey = { ...defaultConfig, HEYGEN_API_KEY: 'test-key-123' };
+  it('calls updateConfig when user types in Anthropic field', () => {
+    render(
+      <ApiKeysStep
+        config={defaultConfig}
+        updateConfig={mockUpdateConfig}
+        verifyKey={mockVerifyKey}
+        status={defaultStatus}
+        errors={{}}
+      />
+    );
+    const anthropicInput = screen.getByLabelText(/Anthropic API Key/i);
+    fireEvent.change(anthropicInput, { target: { value: 'sk-ant-test-key' } });
+    expect(mockUpdateConfig).toHaveBeenCalledWith('ANTHROPIC_API_KEY', 'sk-ant-test-key');
+  });
+
+  it('calls verifyKey with anthropic provider when verify button clicked', async () => {
+    const configWithKey = { ...defaultConfig, ANTHROPIC_API_KEY: 'sk-ant-test-123' };
     render(
       <ApiKeysStep
         config={configWithKey}
@@ -129,19 +143,20 @@ describe('ApiKeysStep', () => {
       />
     );
 
-    // HeyGen is the 4th verify button (0-indexed: 3)
+    // Render order: openrouter(0), elevenlabs(1), did(2), anthropic(3), muapi(4)
     const verifyButtons = screen.getAllByText('Verify');
     expect(verifyButtons.length).toBe(5);
     fireEvent.click(verifyButtons[3]);
-    expect(mockVerifyKey).toHaveBeenCalledWith('heygen', 'HEYGEN_API_KEY', 'test-key-123');
+    expect(mockVerifyKey).toHaveBeenCalledWith('anthropic', 'ANTHROPIC_API_KEY', 'sk-ant-test-123');
   });
 
   it('calls verifyKey with correct provider for each field', async () => {
+    // Render order: openrouter(0), elevenlabs(1), did(2), anthropic(3), muapi(4)
     const configWithKeys = {
       OPENROUTER_API_KEY: 'key1',
       ELEVENLABS_API_KEY: 'key2',
       DID_API_KEY: 'key3',
-      HEYGEN_API_KEY: 'key4',
+      ANTHROPIC_API_KEY: 'key4',
       MUAPI_API_KEY: 'key5',
     };
     render(
@@ -167,7 +182,7 @@ describe('ApiKeysStep', () => {
     expect(mockVerifyKey).toHaveBeenCalledWith('d-id', 'DID_API_KEY', 'key3');
 
     fireEvent.click(verifyButtons[3]);
-    expect(mockVerifyKey).toHaveBeenCalledWith('heygen', 'HEYGEN_API_KEY', 'key4');
+    expect(mockVerifyKey).toHaveBeenCalledWith('anthropic', 'ANTHROPIC_API_KEY', 'key4');
 
     fireEvent.click(verifyButtons[4]);
     expect(mockVerifyKey).toHaveBeenCalledWith('muapi', 'MUAPI_API_KEY', 'key5');

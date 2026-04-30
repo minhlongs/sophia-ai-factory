@@ -14,7 +14,12 @@ import { logger } from '@/lib/utils/logger-utility';
 
 async function verifyHmac(request: Request, body: string): Promise<boolean> {
   const secret = process.env.YOUTUBE_WEBHOOK_SECRET;
-  if (!secret) return true; // Dev/test: skip verification
+  // H6: fail-closed in production — accept unsigned only in dev/test
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') return false;
+    logger.warn('[youtube-notification] YOUTUBE_WEBHOOK_SECRET not set — skipping signature check (dev only)');
+    return true;
+  }
 
   const signature = request.headers.get('x-hub-signature-256') ?? '';
   const key = await crypto.subtle.importKey(
