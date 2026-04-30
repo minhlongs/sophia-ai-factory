@@ -1,8 +1,9 @@
 /**
  * Payout Batcher — Inngest weekly Sunday cron
  *
- * Aggregates payable commissions per affiliate (≥$10 threshold),
- * creates payout_batch rows, and calls NOWPayments mass payout.
+ * Aggregates payable commissions per affiliate (≥$10 / 1000 cents threshold),
+ * claims rows atomically, creates payout_batch rows, calls NOWPayments.
+ * Rollback to 'payable' on failure — no silent double-pay.
  * Runs: 0 12 * * 0 (Sunday 12:00 UTC)
  *
  * @module payouts/payout-batcher
@@ -10,10 +11,18 @@
 
 import { inngest } from '@/lib/inngest/client'
 import { getD1Raw } from '@/lib/db/client'
-import { getPayableAggregates, getPayableLedgerIds, markLedgerPaid } from './commission-ledger'
+import { logger } from '@/lib/utils/logger-utility'
+import {
+  getPayableAggregates,
+  getPayableLedgerIds,
+  claimLedgerRows,
+  markLedgerPaid,
+  rollbackPayingRows,
+} from './commission-ledger'
 import { queueBatch } from './nowpayments-mass-payout'
+import { deterministicBatchId } from './commission-cents'
 
-const MIN_PAYOUT_USD = 10
+const MIN_PAYOUT_CENTS = 1000 // $10.00
 
 interface PayoutMethodRow {
   id: string
@@ -40,7 +49,7 @@ export const payoutBatcher = inngest.createFunction(
       return (result.results ?? []).map((r: { tenant_id: string }) => r.tenant_id)
     })
 
-    const results: { batchId: string; affiliateId: string; totalUsd: number }[] = []
+    const results: { batchId: string; affiliateId: string; totalCents: number }[] = []
 
     for (const tenantId of tenants) {
       const aggregates = await step.run(`aggregate-payable-${tenantId}`, async () => {
@@ -48,7 +57,7 @@ export const payoutBatcher = inngest.createFunction(
       })
 
       for (const agg of aggregates) {
-        if (agg.total_usd < MIN_PAYOUT_USD) continue
+        if (agg.total_cents < MIN_PAYOUT_CENTS) continue
 
         const method = await step.run(`fetch-payout-method-${agg.affiliate_id}`, async () => {
           const innerDb = await getD1Raw()
@@ -71,15 +80,33 @@ export const payoutBatcher = inngest.createFunction(
 
         if (ledgerIds.length === 0) continue
 
-        const batchId = `batch_${tenantId}_${agg.affiliate_id}_${Date.now()}`
+        // C3: deterministic batch_id — stable within ISO week, safe for Inngest retry
+        const batchId = await step.run(`gen-batch-id-${agg.affiliate_id}`, async () => {
+          return deterministicBatchId(tenantId, agg.affiliate_id, new Date())
+        })
+
         const now = Math.floor(Date.now() / 1000)
+
+        // C3: atomic claim — only rows not yet claimed are flipped to 'paying'
+        const claimed = await step.run(`claim-rows-${batchId}`, async () => {
+          return claimLedgerRows(ledgerIds, batchId)
+        })
+
+        if (claimed === 0) {
+          // All rows already claimed by a concurrent/retried invocation — skip
+          logger.warn('[PayoutBatcher] All rows already claimed, skipping duplicate', {
+            batchId,
+            affiliateId: agg.affiliate_id,
+          })
+          continue
+        }
 
         await step.run(`insert-batch-${batchId}`, async () => {
           const innerDb = await getD1Raw()
           await innerDb
             .prepare(
               `INSERT OR IGNORE INTO payout_batches
-               (id, tenant_id, affiliate_id, total_usd, ledger_count,
+               (id, tenant_id, affiliate_id, total_cents, ledger_count,
                 status, payment_method, network, recipient_addr_encrypted, created_at)
                VALUES (?,?,?,?,?,'queued',?,?,?,?)`,
             )
@@ -87,7 +114,7 @@ export const payoutBatcher = inngest.createFunction(
               batchId,
               tenantId,
               agg.affiliate_id,
-              agg.total_usd,
+              agg.total_cents,
               agg.row_count,
               method.method,
               method.network ?? 'TRC20',
@@ -98,15 +125,26 @@ export const payoutBatcher = inngest.createFunction(
         })
 
         const payoutResult = await step.run(`send-payout-${batchId}`, async () => {
-          return queueBatch({
-            batchId,
-            affiliateId: agg.affiliate_id,
-            totalUsd: agg.total_usd,
-            recipientAddrEncrypted: method.recipient_addr_encrypted,
-            network: method.network ?? 'TRC20',
-          })
+          try {
+            return await queueBatch({
+              batchId,
+              affiliateId: agg.affiliate_id,
+              totalCents: agg.total_cents,
+              recipientAddrEncrypted: method.recipient_addr_encrypted,
+              network: method.network ?? 'TRC20',
+            })
+          } catch (err) {
+            // C3: rollback on failure — flip paying → payable so next run retries
+            await rollbackPayingRows(batchId)
+            logger.error('[PayoutBatcher] Payout failed, rolled back', err instanceof Error ? err : new Error(String(err)), {
+              batchId,
+              affiliateId: agg.affiliate_id,
+            })
+            throw err
+          }
         })
 
+        // C3: only mark paid after NOWPayments confirms
         await step.run(`mark-paid-${batchId}`, async () => {
           await markLedgerPaid(ledgerIds, batchId)
         })
@@ -116,12 +154,12 @@ export const payoutBatcher = inngest.createFunction(
           data: {
             batchId,
             affiliateId: agg.affiliate_id,
-            totalUsd: agg.total_usd,
+            totalCents: agg.total_cents,
             externalPaymentId: payoutResult.externalPaymentId,
           },
         })
 
-        results.push({ batchId, affiliateId: agg.affiliate_id, totalUsd: agg.total_usd })
+        results.push({ batchId, affiliateId: agg.affiliate_id, totalCents: agg.total_cents })
       }
     }
 

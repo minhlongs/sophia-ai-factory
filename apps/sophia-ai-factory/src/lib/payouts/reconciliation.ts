@@ -1,8 +1,8 @@
 /**
  * Reconciliation — Inngest daily cron
  *
- * Compares sum of paid commission_ledger rows vs confirmed payout_batches.
- * Alerts if discrepancy > $1 (configurable via RECONCILE_ALERT_THRESHOLD_USD env).
+ * Compares sum of paid commission_ledger cents vs confirmed payout_batches cents.
+ * Alerts if discrepancy > threshold (default 100 cents / $1.00).
  * Runs: 0 4 * * * (04:00 UTC daily)
  *
  * @module payouts/reconciliation
@@ -11,14 +11,18 @@
 import { inngest } from '@/lib/inngest/client'
 import { getD1Raw } from '@/lib/db/client'
 import { logger } from '@/lib/utils/logger-utility'
+import { fromCents } from './commission-cents'
 
-const ALERT_THRESHOLD_USD = parseFloat(process.env.RECONCILE_ALERT_THRESHOLD_USD ?? '1')
+// Threshold in cents (default 100 = $1.00)
+const ALERT_THRESHOLD_CENTS = Math.round(
+  parseFloat(process.env.RECONCILE_ALERT_THRESHOLD_USD ?? '1') * 100,
+)
 
 interface ReconcileResult {
   tenantId: string
-  ledgerPaidTotal: number
-  batchConfirmedTotal: number
-  diff: number
+  ledgerPaidCents: number
+  batchConfirmedCents: number
+  diffCents: number
   alert: boolean
 }
 
@@ -27,7 +31,7 @@ async function reconcileTenant(tenantId: string): Promise<ReconcileResult> {
 
   const ledgerRow = await db
     .prepare(
-      `SELECT COALESCE(SUM(commission_usd), 0) AS total
+      `SELECT COALESCE(SUM(commission_cents - withheld_cents), 0) AS total
        FROM commission_ledger
        WHERE tenant_id = ? AND status = 'paid'`,
     )
@@ -36,23 +40,23 @@ async function reconcileTenant(tenantId: string): Promise<ReconcileResult> {
 
   const batchRow = await db
     .prepare(
-      `SELECT COALESCE(SUM(total_usd), 0) AS total
+      `SELECT COALESCE(SUM(total_cents), 0) AS total
        FROM payout_batches
        WHERE tenant_id = ? AND status = 'confirmed'`,
     )
     .bind(tenantId)
     .first<{ total: number }>()
 
-  const ledgerTotal = ledgerRow?.total ?? 0
-  const batchTotal = batchRow?.total ?? 0
-  const diff = Math.abs(ledgerTotal - batchTotal)
-  const alert = diff > ALERT_THRESHOLD_USD
+  const ledgerCents = ledgerRow?.total ?? 0
+  const batchCents = batchRow?.total ?? 0
+  const diffCents = Math.abs(ledgerCents - batchCents)
+  const alert = diffCents > ALERT_THRESHOLD_CENTS
 
   return {
     tenantId,
-    ledgerPaidTotal: ledgerTotal,
-    batchConfirmedTotal: batchTotal,
-    diff,
+    ledgerPaidCents: ledgerCents,
+    batchConfirmedCents: batchCents,
+    diffCents,
     alert,
   }
 }
@@ -85,26 +89,34 @@ export const reconciliationCron = inngest.createFunction(
       results.push(result)
 
       if (result.alert) {
-        logger.error('[Reconciliation] Discrepancy detected', new Error('Reconciliation mismatch'), {
-          tenantId: result.tenantId,
-          ledgerTotal: result.ledgerPaidTotal,
-          batchTotal: result.batchConfirmedTotal,
-          diff: result.diff,
-          threshold: ALERT_THRESHOLD_USD,
-        })
+        logger.error(
+          '[Reconciliation] Discrepancy detected',
+          new Error('Reconciliation mismatch'),
+          {
+            tenantId: result.tenantId,
+            ledgerTotalUsd: fromCents(result.ledgerPaidCents),
+            batchTotalUsd: fromCents(result.batchConfirmedCents),
+            diffUsd: fromCents(result.diffCents),
+            thresholdUsd: fromCents(ALERT_THRESHOLD_CENTS),
+          },
+        )
 
         await step.sendEvent(`alert-reconcile-${tenantId}`, {
           name: 'payout.reconcile.alert',
           data: {
             tenantId: result.tenantId,
-            ledgerTotal: result.ledgerPaidTotal,
-            batchTotal: result.batchConfirmedTotal,
-            diff: result.diff,
+            ledgerTotalCents: result.ledgerPaidCents,
+            batchTotalCents: result.batchConfirmedCents,
+            diffCents: result.diffCents,
           },
         })
       }
     }
 
-    return { checked: tenants.length, alerts: results.filter((r) => r.alert).length, results }
+    return {
+      checked: tenants.length,
+      alerts: results.filter((r) => r.alert).length,
+      results,
+    }
   },
 )

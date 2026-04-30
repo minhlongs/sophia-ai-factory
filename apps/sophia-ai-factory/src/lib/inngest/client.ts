@@ -39,7 +39,8 @@ type PayoutBatchedEvent = {
   data: {
     batchId: string;
     affiliateId: string;
-    totalUsd: number;
+    /** Payout amount in INTEGER cents (C1: no float drift) */
+    totalCents: number;
     externalPaymentId: string;
   };
 };
@@ -55,9 +56,10 @@ type PayoutConfirmedEvent = {
 type PayoutReconcileAlertEvent = {
   data: {
     tenantId: string;
-    ledgerTotal: number;
-    batchTotal: number;
-    diff: number;
+    /** All amounts in INTEGER cents (C1) */
+    ledgerTotalCents: number;
+    batchTotalCents: number;
+    diffCents: number;
   };
 };
 

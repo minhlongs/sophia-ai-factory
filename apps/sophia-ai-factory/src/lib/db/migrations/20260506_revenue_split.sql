@@ -1,5 +1,6 @@
 -- Migration 20260506: Revenue Split + Payouts (Phase 13) — D1 alias
 -- Alias of 0038-revenue-split.sql for date-based migration systems
+-- v2: INTEGER cents columns, VN PIT flag, clawback pattern (C1, H1, C2)
 
 CREATE TABLE IF NOT EXISTS commission_ledger (
   id TEXT PRIMARY KEY,
@@ -7,10 +8,12 @@ CREATE TABLE IF NOT EXISTS commission_ledger (
   affiliate_id TEXT NOT NULL,
   conversion_event_id TEXT NOT NULL,
   offer_id TEXT NOT NULL,
-  gross_amount_usd REAL NOT NULL,
+  gross_cents INTEGER NOT NULL,
   commission_pct REAL NOT NULL,
-  commission_usd REAL NOT NULL,
-  status TEXT CHECK(status IN ('pending','payable','paid','clawed_back','rejected')) NOT NULL,
+  commission_cents INTEGER NOT NULL,
+  withheld_cents INTEGER NOT NULL DEFAULT 0,
+  parent_conversion_id TEXT,
+  status TEXT CHECK(status IN ('pending','payable','paid','clawed_back','rejected','paying','clawback')) NOT NULL,
   payable_at INTEGER NOT NULL,
   paid_at INTEGER,
   payout_batch_id TEXT,
@@ -24,7 +27,7 @@ CREATE TABLE IF NOT EXISTS payout_batches (
   id TEXT PRIMARY KEY,
   tenant_id TEXT NOT NULL,
   affiliate_id TEXT NOT NULL,
-  total_usd REAL NOT NULL,
+  total_cents INTEGER NOT NULL,
   ledger_count INTEGER NOT NULL,
   status TEXT CHECK(status IN ('queued','sending','confirmed','failed')) NOT NULL,
   payment_method TEXT NOT NULL,
@@ -49,7 +52,15 @@ CREATE TABLE IF NOT EXISTS payout_methods (
   UNIQUE(tenant_id, affiliate_id, method, recipient_addr_encrypted)
 );
 
+CREATE TABLE IF NOT EXISTS tenant_settings (
+  tenant_id TEXT PRIMARY KEY,
+  vn_pit_enabled INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_ledger_tenant_status ON commission_ledger(tenant_id, status, payable_at);
 CREATE INDEX IF NOT EXISTS idx_ledger_affiliate ON commission_ledger(affiliate_id, status, payable_at);
+CREATE INDEX IF NOT EXISTS idx_ledger_parent ON commission_ledger(parent_conversion_id) WHERE parent_conversion_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_batch_affiliate ON payout_batches(affiliate_id, status, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_method_affiliate ON payout_methods(affiliate_id, is_default);

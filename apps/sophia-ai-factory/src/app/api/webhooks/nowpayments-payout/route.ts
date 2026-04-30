@@ -67,11 +67,12 @@ export async function POST(request: NextRequest) {
   const db = await getD1Raw()
   const now = Math.floor(Date.now() / 1000)
 
+  // H4: idempotent — do NOT overwrite finalized_at on IPN re-receipt
   await db
     .prepare(
       `UPDATE payout_batches
        SET status = 'confirmed', external_payment_id = ?, finalized_at = ?
-       WHERE id = ? AND status != 'confirmed'`,
+       WHERE id = ? AND finalized_at IS NULL`,
     )
     .bind(ipn.withdrawal_id, now, batchId)
     .run()
