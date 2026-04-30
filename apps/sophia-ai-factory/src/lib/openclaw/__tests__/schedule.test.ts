@@ -3,19 +3,22 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { scheduleAgent } from '../schedule';
 
-// Mock inngest client
-const mockSend = vi.fn().mockResolvedValue({ id: 'evt-123' });
+const { mockSend, mockAudit } = vi.hoisted(() => {
+  const mockSend = vi.fn().mockResolvedValue({ id: 'evt-123' });
+  const mockAudit = vi.fn().mockResolvedValue(undefined);
+  return { mockSend, mockAudit };
+});
+
 vi.mock('@/lib/inngest/client', () => ({
   inngest: { send: mockSend },
 }));
 
-// Mock audit
-const mockAudit = vi.fn().mockResolvedValue(undefined);
 vi.mock('../audit', () => ({
   audit: mockAudit,
 }));
+
+import { scheduleAgent } from '../schedule';
 
 describe('scheduleAgent', () => {
   beforeEach(() => {

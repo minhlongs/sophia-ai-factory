@@ -3,12 +3,14 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { audit } from '../audit';
 
-const mockRun = vi.fn().mockResolvedValue({ success: true });
-const mockBind = vi.fn().mockReturnThis();
-const mockPrepare = vi.fn().mockReturnValue({ bind: mockBind, run: mockRun });
-const mockAll = vi.fn().mockResolvedValue({ results: [] });
+const { mockRun, mockBind, mockPrepare, mockAll } = vi.hoisted(() => {
+  const mockRun = vi.fn().mockResolvedValue({ success: true });
+  const mockBind = vi.fn().mockReturnThis();
+  const mockPrepare = vi.fn().mockReturnValue({ bind: mockBind, run: mockRun });
+  const mockAll = vi.fn().mockResolvedValue({ results: [] });
+  return { mockRun, mockBind, mockPrepare, mockAll };
+});
 
 vi.mock('@/lib/db/client', () => ({
   getD1Raw: vi.fn().mockResolvedValue({
@@ -16,6 +18,8 @@ vi.mock('@/lib/db/client', () => ({
     all: mockAll,
   }),
 }));
+
+import { audit } from '../audit';
 
 describe('audit', () => {
   beforeEach(() => {

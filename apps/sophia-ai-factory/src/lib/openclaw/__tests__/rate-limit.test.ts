@@ -1,13 +1,31 @@
 /**
  * rate-limit.test.ts
+ *
+ * Tests must run sequentially since rateLimitGate uses shared in-memory bucket.
+ * Clears __env.KV to force in-memory fallback (avoids mock KV always returning null).
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, beforeAll, afterAll } from 'vitest';
 import { rateLimitGate, _clearMemoryBuckets } from '../rate-limit';
 
-describe('rateLimitGate', () => {
+describe.sequential('rateLimitGate', () => {
+  let savedKV: unknown;
+
+  beforeAll(() => {
+    const g = globalThis as unknown as Record<string, Record<string, unknown>>;
+    savedKV = g.__env?.KV;
+    if (g.__env) g.__env = { ...g.__env, KV: undefined };
+  });
+
+  afterAll(() => {
+    const g = globalThis as unknown as Record<string, Record<string, unknown>>;
+    if (g.__env) g.__env = { ...g.__env, KV: savedKV };
+  });
+
   beforeEach(() => {
     _clearMemoryBuckets();
+    // Clear functional KV mock store (set up in src/test/setup.tsx)
+    (globalThis as unknown as { __kvStore?: Map<string, string> }).__kvStore?.clear();
   });
 
   it('allows requests within limit', async () => {
@@ -24,7 +42,6 @@ describe('rateLimitGate', () => {
   });
 
   it('blocks when over limit and returns retryAfter', async () => {
-    // Exhaust all 3 tokens
     for (let i = 0; i < 3; i++) {
       await rateLimitGate('tenant-block', 'writes', 3, 60);
     }
@@ -36,14 +53,12 @@ describe('rateLimitGate', () => {
   });
 
   it('tenants are isolated — different buckets', async () => {
-    // Exhaust tenant-x
     for (let i = 0; i < 2; i++) {
       await rateLimitGate('tenant-x', 'resource', 2, 60);
     }
     const blocked = await rateLimitGate('tenant-x', 'resource', 2, 60);
     expect(blocked.allowed).toBe(false);
 
-    // tenant-y should still have full bucket
     const fresh = await rateLimitGate('tenant-y', 'resource', 2, 60);
     expect(fresh.allowed).toBe(true);
     expect(fresh.remaining).toBe(1);
@@ -61,9 +76,7 @@ describe('rateLimitGate', () => {
   });
 
   it('retryAfter is positive seconds', async () => {
-    for (let i = 0; i < 1; i++) {
-      await rateLimitGate('tenant-retry', 'op', 1, 30);
-    }
+    await rateLimitGate('tenant-retry', 'op', 1, 30);
     const r = await rateLimitGate('tenant-retry', 'op', 1, 30);
     expect(r.allowed).toBe(false);
     expect(r.retryAfter).toBeGreaterThan(0);

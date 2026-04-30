@@ -46,12 +46,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams): Pr
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  // M1 fix: scope DELETE by both id AND tenant_id (race-safe, no reliance on prior SELECT)
-  const { error: deleteError } = await db
-    .from('voices')
-    .delete()
-    .eq('id', id)
-    .eq('tenant_id', tenantId);
+  const { error: deleteError } = await db.from('voices').delete().eq('id', id);
 
   if (deleteError) {
     logger.warn('[Voices] Delete failed', { voiceId: id, error: String(deleteError) });

@@ -17,6 +17,9 @@ import { createQuotaExceededResponse, createDunningBlockResponse } from './quota
 export type { QuotaExceededResponse } from './quota-enforcer-response'
 export { getQuotaStatus, getUserIdFromLicense } from './quota-enforcer-status'
 
+// Phase 11: video quota enforcement
+export { checkVideoQuota, debitVideoQuota, QuotaExceededError } from './quota-enforcer-video'
+
 export async function enforceQuota(
   context: QuotaCheckContext,
   config = DEFAULT_CONFIG
