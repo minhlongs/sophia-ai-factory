@@ -48,7 +48,7 @@ export async function GET(
     const { data: resultData } = await db
       .from('publishing_results')
       .select('*')
-      .eq('job_id', jobId)
+      .eq('publishing_job_id', jobId)
       .maybeSingle();
 
     const result = resultData as PublishingResult | null;

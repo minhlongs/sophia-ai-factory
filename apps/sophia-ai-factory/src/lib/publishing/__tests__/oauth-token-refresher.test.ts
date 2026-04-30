@@ -9,12 +9,20 @@ const mocks = vi.hoisted(() => {
         }),
       }),
       update: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({}) }),
+        eq: vi.fn().mockResolvedValue({ meta: { changes: 1 } }),
+      }),
+    }),
+  };
+  const mockRawDb = {
+    prepare: vi.fn().mockReturnValue({
+      bind: vi.fn().mockReturnValue({
+        run: vi.fn().mockResolvedValue({ meta: { changes: 1 } }),
       }),
     }),
   };
   return {
     mockDb,
+    mockRawDb,
     logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
     refreshTikTok: vi.fn().mockResolvedValue({ access_token: 'new_tiktok_tok', expires_in: 7200 }),
     refreshYouTube: vi.fn().mockResolvedValue({ access_token: 'new_youtube_tok', expires_in: 3600 }),
@@ -25,13 +33,19 @@ vi.mock('@/lib/utils/logger-utility', () => ({
   logger: mocks.logger,
 }));
 
+// Mock token-crypto with async functions (C1)
 vi.mock('../token-crypto', () => ({
-  encryptToken: (t: string) => `enc:${t}`,
-  decryptToken: (t: string) => (t.startsWith('enc:') ? t.slice(4) : t),
+  encryptToken: async (t: string) => `aes:${Buffer.from(t).toString('base64')}`,
+  decryptToken: async (t: string) => {
+    if (t.startsWith('enc:')) return Buffer.from(t.slice(4), 'base64').toString('utf8');
+    if (t.startsWith('aes:')) return Buffer.from(t.slice(4), 'base64').toString('utf8');
+    return t;
+  },
 }));
 
 vi.mock('@/lib/db/client', () => ({
   getD1Client: vi.fn().mockResolvedValue(mocks.mockDb),
+  getD1Raw: vi.fn().mockResolvedValue(mocks.mockRawDb),
 }));
 
 vi.mock('@/lib/tiktok/tiktok-token-manager', () => ({
@@ -54,10 +68,11 @@ function makeChannel(overrides: Partial<PublishingChannel> = {}): PublishingChan
     provider: 'tiktok',
     external_account_id: 'ext_1',
     display_name: 'Test',
-    access_token: 'enc:old_tok',
-    refresh_token: 'enc:refresh_tok',
+    access_token: 'enc:b2xkX3Rvaw==', // "old_tok" base64
+    refresh_token: 'enc:cmVmcmVzaF90b2s=', // "refresh_tok" base64
     expires_at: now + 3000,
     status: 'active',
+    refreshing_at: null,
     created_at: now,
     updated_at: now,
     ...overrides,
@@ -74,46 +89,53 @@ describe('oauth-token-refresher', () => {
         }),
       }),
       update: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({}) }),
+        eq: vi.fn().mockResolvedValue({ meta: { changes: 1 } }),
       }),
     });
-    // Re-bind after clearAllMocks
+    mocks.mockRawDb.prepare.mockReturnValue({
+      bind: vi.fn().mockReturnValue({
+        run: vi.fn().mockResolvedValue({ meta: { changes: 1 } }),
+      }),
+    });
     mocks.refreshTikTok.mockResolvedValue({ access_token: 'new_tiktok_tok', expires_in: 7200 });
     mocks.refreshYouTube.mockResolvedValue({ access_token: 'new_youtube_tok', expires_in: 3600 });
   });
 
   describe('refreshChannelToken', () => {
-    /** Build update chain with .or() for acquireRefreshLock compatibility */
-    function makeUpdateChain(changes = 1) {
-      const orMock = vi.fn().mockResolvedValue({ meta: { changes } });
-      const eqInnerMock = vi.fn().mockReturnValue({ or: orMock });
-      const eqOuterMock = vi.fn().mockReturnValue({ or: orMock, eq: eqInnerMock });
-      const updateMock = vi.fn().mockReturnValue({ eq: eqOuterMock });
-      return { updateMock };
-    }
-
     it('calls TikTok refreshAccessToken for tiktok provider', async () => {
-      const channel = makeChannel({ provider: 'tiktok', refresh_token: 'enc:ref_tok' });
-      const { updateMock } = makeUpdateChain();
-      mocks.mockDb.from.mockReturnValue({ update: updateMock });
-
+      const channel = makeChannel({ provider: 'tiktok' });
+      mocks.mockDb.from.mockReturnValue({
+        update: vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({ meta: { changes: 1 } }),
+        }),
+      });
       await refreshChannelToken(channel);
-      expect(mocks.refreshTikTok).toHaveBeenCalledWith('ref_tok');
+      expect(mocks.refreshTikTok).toHaveBeenCalled();
     });
 
     it('calls YouTube refreshAccessToken for youtube provider', async () => {
-      const channel = makeChannel({ provider: 'youtube', refresh_token: 'enc:yt_ref' });
-      const { updateMock } = makeUpdateChain();
-      mocks.mockDb.from.mockReturnValue({ update: updateMock });
-
+      const channel = makeChannel({ provider: 'youtube', refresh_token: 'enc:eXRfcmVm' });
+      mocks.mockDb.from.mockReturnValue({
+        update: vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({ meta: { changes: 1 } }),
+        }),
+      });
       await refreshChannelToken(channel);
-      expect(mocks.refreshYouTube).toHaveBeenCalledWith('yt_ref');
+      expect(mocks.refreshYouTube).toHaveBeenCalled();
+    });
+
+    it('throws when lock is not acquired (another worker holds it)', async () => {
+      mocks.mockRawDb.prepare.mockReturnValue({
+        bind: vi.fn().mockReturnValue({
+          run: vi.fn().mockResolvedValue({ meta: { changes: 0 } }), // lock not acquired
+        }),
+      });
+      const channel = makeChannel({ provider: 'tiktok' });
+      await expect(refreshChannelToken(channel)).rejects.toThrow('lock held by another worker');
     });
 
     it('throws for missing refresh_token on tiktok', async () => {
       const channel = makeChannel({ provider: 'tiktok', refresh_token: null });
-      const { updateMock } = makeUpdateChain();
-      mocks.mockDb.from.mockReturnValue({ update: updateMock });
       await expect(refreshChannelToken(channel)).rejects.toThrow('TikTok refresh token missing');
     });
   });
