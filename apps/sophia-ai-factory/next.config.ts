@@ -69,6 +69,9 @@ const nextConfig: NextConfig = {
       { source: '/privacy', destination: '/', permanent: false },
       // System
       { source: '/status', destination: '/api/health', permanent: false },
+      // Locale — redirect /en to root (default locale is en, served without prefix)
+      { source: '/en', destination: '/', permanent: true },
+      { source: '/en/:path*', destination: '/:path*', permanent: true },
     ];
   },
   async headers() {
