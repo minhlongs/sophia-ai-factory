@@ -5,9 +5,9 @@ import { ApiKeyInput } from '../api-key-input';
 interface ApiKeysStepProps {
   config: {
     OPENROUTER_API_KEY: string;
+    ANTHROPIC_API_KEY: string;
     ELEVENLABS_API_KEY: string;
     DID_API_KEY: string;
-    HEYGEN_API_KEY: string;
     MUAPI_API_KEY: string;
   };
   updateConfig: (key: string, value: string) => void;
@@ -64,15 +64,15 @@ export function ApiKeysStep({ config, updateConfig, verifyKey, status, errors }:
       />
 
       <ApiKeyInput
-        id="heygen"
-        label={t('heygen.label')}
-        value={config.HEYGEN_API_KEY}
-        onChange={(v) => updateConfig('HEYGEN_API_KEY', v)}
-        onVerify={() => verifyKey('heygen', 'HEYGEN_API_KEY', config.HEYGEN_API_KEY)}
-        status={status.HEYGEN_API_KEY}
-        errorMessage={errors.HEYGEN_API_KEY}
-        placeholder={t('heygen.placeholder')}
-        helpText={t('heygen.help')}
+        id="anthropic"
+        label={t('anthropic.label')}
+        value={config.ANTHROPIC_API_KEY}
+        onChange={(v) => updateConfig('ANTHROPIC_API_KEY', v)}
+        onVerify={() => verifyKey('anthropic', 'ANTHROPIC_API_KEY', config.ANTHROPIC_API_KEY)}
+        status={status.ANTHROPIC_API_KEY}
+        errorMessage={errors.ANTHROPIC_API_KEY}
+        placeholder={t('anthropic.placeholder')}
+        helpText={t('anthropic.help')}
       />
 
       <ApiKeyInput

@@ -43,6 +43,7 @@ export const ENDPOINT_RULES: EndpointRateLimit[] = [
   { pattern: '/api/heygen/*', config: RATE_LIMITS.heygen, description: 'HeyGen integration endpoints' },
   { pattern: '/api/setup/*', config: RATE_LIMITS.setup, description: 'Setup wizard endpoints' },
   { pattern: '/api/checkout', config: RATE_LIMITS.checkout, description: 'Checkout endpoint' },
+  { pattern: '/api/user/byok/*', config: RATE_LIMITS.admin, description: 'BYOK key management' },
   { pattern: '/api/discovery/*', config: RATE_LIMITS.discovery, description: 'Discovery/search endpoints' },
   { pattern: '/api/*', config: RATE_LIMITS.api, description: 'General API endpoints' },
 ]

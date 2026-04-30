@@ -2,15 +2,27 @@ import { NextResponse } from "next/server";
 import { ServiceFactory } from "@/lib/services/factory";
 import { MissingCredentialsError } from "@/lib/services/errors";
 import { getCurrentUser } from "@/lib/better-auth-session";
+import { getUserTier } from "@/lib/db/get-user-tier";
 import { createServerClient } from "@/lib/db/client";
 import { createVideoSchema } from "@/lib/schemas";
 import { logger } from "@/lib/utils/logger-utility";
+
+const VIDEO_ALLOWED_TIERS = new Set(['PREMIUM', 'ENTERPRISE', 'MASTER']);
 
 export async function POST(req: Request) {
   try {
     const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // P0: Tier gate — only PREMIUM/ENTERPRISE/MASTER can create videos
+    const tier = await getUserTier(user.id);
+    if (!VIDEO_ALLOWED_TIERS.has(tier)) {
+      return NextResponse.json(
+        { error: "Video creation requires PREMIUM tier or higher", upgrade: "/pricing" },
+        { status: 402 }
+      );
     }
 
     const body = await req.json();

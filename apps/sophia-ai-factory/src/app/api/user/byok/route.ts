@@ -24,11 +24,24 @@ import { D1Events } from '@/lib/signals/d1-event-types'
 import { logger } from '@/lib/utils/logger-utility'
 import { getErrorMessage } from '@/lib/utils/to-error'
 
-const PROVIDERS = ['openrouter', 'anthropic', 'elevenlabs', 'd-id'] as const
+const PROVIDERS = ['openrouter', 'anthropic', 'elevenlabs', 'd-id', 'muapi'] as const
+
+const PROVIDER_KEY_RX: Record<string, RegExp> = {
+  openrouter: /^sk-or-v1-[A-Za-z0-9_-]{20,}$/,
+  anthropic:  /^sk-ant-[A-Za-z0-9_-]{20,}$/,
+  elevenlabs: /^[A-Za-z0-9_-]{20,}$/,
+  'd-id':     /^[A-Za-z0-9+/=:_-]{20,}$/,
+  muapi:      /^[A-Za-z0-9_-]{20,}$/,
+}
 
 const PostSchema = z.object({
   provider: z.enum(PROVIDERS),
   key:      z.string().min(10).max(500),
+}).superRefine((data, ctx) => {
+  const rx = PROVIDER_KEY_RX[data.provider]
+  if (rx && !rx.test(data.key)) {
+    ctx.addIssue({ code: 'custom', path: ['key'], message: `Invalid ${data.provider} key format` })
+  }
 })
 
 const DeleteSchema = z.object({
@@ -56,10 +69,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const parsed = PostSchema.safeParse(body)
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: 'Invalid request', details: parsed.error.flatten() },
-      { status: 400 },
-    )
+    const flat = parsed.error.flatten()
+    const fieldError = flat.fieldErrors.key?.[0] ?? flat.fieldErrors.provider?.[0] ?? 'Invalid request'
+    return NextResponse.json({ error: fieldError, details: flat }, { status: 400 })
   }
 
   const { provider, key } = parsed.data
@@ -94,10 +106,9 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
 
   const parsed = DeleteSchema.safeParse(body)
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: 'Invalid request', details: parsed.error.flatten() },
-      { status: 400 },
-    )
+    const flat = parsed.error.flatten()
+    const fieldError = flat.fieldErrors.provider?.[0] ?? 'Invalid request'
+    return NextResponse.json({ error: fieldError, details: flat }, { status: 400 })
   }
 
   const { provider } = parsed.data

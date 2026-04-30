@@ -10,13 +10,15 @@
 import { useState, useTransition } from 'react'
 import { KeyRound, Trash2, Check } from 'lucide-react'
 
-type Provider = 'openrouter' | 'anthropic' | 'elevenlabs' | 'd-id' | 'heygen' | 'muapi'
+export type UserSettableProvider = 'openrouter' | 'anthropic' | 'elevenlabs' | 'd-id' | 'muapi'
+type Provider = UserSettableProvider
 
 const PROVIDERS: { value: Provider; label: string; hint: string }[] = [
   { value: 'openrouter', label: 'OpenRouter',  hint: 'sk-or-v1-...'   },
-  { value: 'anthropic',  label: 'Anthropic',   hint: 'sk-ant-api03-...'},
-  { value: 'elevenlabs', label: 'ElevenLabs',  hint: 'xi-api-...'      },
+  { value: 'anthropic',  label: 'Anthropic',   hint: 'sk-ant-...'      },
+  { value: 'elevenlabs', label: 'ElevenLabs',  hint: '20+ char token'  },
   { value: 'd-id',       label: 'D-ID',        hint: 'Basic ...'       },
+  { value: 'muapi',      label: 'MuAPI',       hint: '20+ char token'  },
 ]
 
 interface ByokKeyFormProps {

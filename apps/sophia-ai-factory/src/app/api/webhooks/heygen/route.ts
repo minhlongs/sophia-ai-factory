@@ -61,8 +61,9 @@ function normalizeStatus(raw?: string): 'completed' | 'failed' | 'processing' {
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   if (!HEYGEN_WEBHOOK_SECRET) {
-    logger.error('[heygen-webhook] HEYGEN_WEBHOOK_SECRET not configured');
-    return NextResponse.json({ error: 'config_error' }, { status: 500 });
+    // Return 200 to avoid HeyGen retry storm. Cron polling handles status updates.
+    logger.warn('[heygen-webhook] HEYGEN_WEBHOOK_SECRET not configured — relying on cron polling');
+    return NextResponse.json({ ok: true, mode: 'cron-poll-fallback' });
   }
 
   const rawBody = await req.text();
