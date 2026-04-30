@@ -13,26 +13,39 @@
 import { redirect } from 'next/navigation'
 import { getCurrentUser } from '@/lib/better-auth-session'
 import { listUserApiKeyProviders } from '@/lib/byok/user-api-key-store'
-import { ByokKeyForm } from '@/components/byok/byok-key-form'
+import { ByokKeyForm, type UserSettableProvider } from '@/components/byok/byok-key-form'
 
 export const dynamic = 'force-dynamic'
+
+/** Providers user can manage in the admin UI (heygen is server-only). */
+const USER_SETTABLE: UserSettableProvider[] = ['openrouter', 'anthropic', 'elevenlabs', 'd-id', 'muapi']
 
 export default async function ByokPage() {
   const user = await getCurrentUser()
   if (!user) redirect('/auth/login')
 
-  const configured = await listUserApiKeyProviders(user.id)
+  const allConfigured = await listUserApiKeyProviders(user.id)
+  // Filter to only user-settable providers (exclude server-managed ones like heygen)
+  const configured = allConfigured.filter((p): p is UserSettableProvider =>
+    USER_SETTABLE.includes(p as UserSettableProvider),
+  )
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Provider API Keys / Khóa API Nhà Cung Cấp</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Store your own provider keys (OpenRouter, Anthropic, ElevenLabs, D-ID).
-          Keys are encrypted at rest and never shown again after save.
+          Store your own provider keys. Keys are encrypted at rest and never shown again after save.
           <br />
           Lưu khóa API riêng của bạn. Khóa được mã hóa và không hiển thị lại sau khi lưu.
         </p>
+        <ul className="mt-3 space-y-1 text-xs text-muted-foreground">
+          <li><span className="font-medium text-foreground">OpenRouter</span> — LLM models / Mô hình LLM <span className="text-orange-500">(required for workflows / bắt buộc cho workflows)</span></li>
+          <li><span className="font-medium text-foreground">Anthropic</span> — Claude models <span className="text-muted-foreground">(optional fallback / dự phòng tùy chọn)</span></li>
+          <li><span className="font-medium text-foreground">ElevenLabs</span> — Text-to-speech / Chuyển văn bản thành giọng nói <span className="text-orange-500">(required for audio)</span></li>
+          <li><span className="font-medium text-foreground">D-ID</span> — Avatar video / Video avatar <span className="text-orange-500">(required for video)</span></li>
+          <li><span className="font-medium text-foreground">MuAPI</span> — Background music / Nhạc nền <span className="text-muted-foreground">(optional / tùy chọn)</span></li>
+        </ul>
       </div>
 
       <ByokKeyForm configured={configured} />

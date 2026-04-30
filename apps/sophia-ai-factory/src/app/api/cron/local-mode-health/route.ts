@@ -14,6 +14,7 @@ import { track } from '@/lib/signals/track'
 import { D1Events } from '@/lib/signals/d1-event-types'
 import { logger } from '@/lib/utils/logger-utility'
 import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker'
+import { verifyCronAuth } from '@/lib/security/cron-auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -44,11 +45,6 @@ function getDb(): D1Database {
 function getDek(): string | undefined {
   const env = (globalThis as Record<string, unknown>).__env as Record<string, string | undefined> | undefined
   return env?.LOCAL_MODE_DEK ?? process.env.LOCAL_MODE_DEK
-}
-
-function isAuthorised(req: NextRequest): boolean {
-  const s = process.env.CRON_SECRET
-  return !s || req.headers.get('authorization') === `Bearer ${s}`
 }
 
 /** Ping one user's tunnel; mutates healthy/unhealthy counters and unhealthyIds. */
@@ -128,7 +124,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> { return hand
 export async function POST(req: NextRequest): Promise<NextResponse> { return handler(req) }
 
 async function handler(req: NextRequest): Promise<NextResponse> {
-  if (!isAuthorised(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const authError = verifyCronAuth(req);
+  if (authError) return authError;
   let db: D1Database
   try { db = getDb() } catch { return NextResponse.json({ error: 'D1 unavailable' }, { status: 500 }) }
 

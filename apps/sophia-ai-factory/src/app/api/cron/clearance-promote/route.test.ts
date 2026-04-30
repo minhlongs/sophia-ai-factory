@@ -93,14 +93,13 @@ describe('GET /api/cron/clearance-promote', () => {
     });
   });
 
-  describe('auth: CRON_SECRET unset (auth fails open)', () => {
-    it('returns 200 without any auth header when CRON_SECRET unset', async () => {
-      // CRON_SECRET not set — isAuthorised returns true (no secret = open)
+  describe('auth: CRON_SECRET unset (auth rejects)', () => {
+    it('returns 401 without any auth header when CRON_SECRET unset', async () => {
       vi.stubEnv('CRON_SECRET', '');
 
       const res = await GET(makeRequest());
-      expect(res.status).toBe(200);
-      expect(mockRun).toHaveBeenCalledOnce();
+      expect(res.status).toBe(401);
+      expect(mockRun).not.toHaveBeenCalled();
     });
   });
 

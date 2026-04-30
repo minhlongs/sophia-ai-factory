@@ -11,6 +11,7 @@ import { recordAudit } from '@/lib/db/audit/audit-log'
 import type { Tier } from '@/types'
 import type { NowPaymentsIpnPayload } from './nowpayments-ipn-handlers'
 import { getDb, parseUserIdFromOrderId } from './nowpayments-ipn-db'
+import { createOnboardingVideo, ONBOARDING_TIERS } from '@/lib/video/onboarding-video'
 
 export async function handleFinished(ipn: NowPaymentsIpnPayload): Promise<void> {
   const invoiceId = ipn.invoice_id
@@ -60,6 +61,25 @@ export async function handleFinished(ipn: NowPaymentsIpnPayload): Promise<void> 
       after: { tier, plan: tier.toLowerCase(), status: 'active', periodEnd, paymentId: ipn.payment_id },
     })
   } catch { /* non-fatal */ }
+
+  // Trigger onboarding video for Premium+/MASTER new purchases
+  if (ONBOARDING_TIERS.has(tier)) {
+    try {
+      const { data: userData } = await db.from('user').select('email').eq('id', userId).single()
+      const userEmail = (userData as { email?: string } | null)?.email ?? ''
+      if (userEmail) {
+        await createOnboardingVideo({
+          userId,
+          orgId: (orgId as string | undefined),
+          tier,
+          paymentId: ipn.payment_id,
+          userEmail,
+        })
+      }
+    } catch (err) {
+      logger.warn('[NOWPayments] Onboarding video trigger failed (non-fatal)', { userId, error: String(err) })
+    }
+  }
 
   logger.info('[NOWPayments] Payment finished — subscription activated', { userId, orgId, tier, isLifetime, periodEnd, paymentId: ipn.payment_id })
 }

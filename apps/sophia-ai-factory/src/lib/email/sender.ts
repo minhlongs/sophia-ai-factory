@@ -30,7 +30,7 @@ export async function sendEmail(params: EmailParams): Promise<EmailResult> {
   const from = params.from ?? process.env.EMAIL_FROM ?? 'Sophia AI <noreply@mekongmind.com>';
 
   if (!apiKey) {
-    return { success: true, messageId: `dry_${Date.now()}`, provider: 'dry-run' };
+    return { success: false, error: 'RESEND_API_KEY not configured', provider: 'dry-run' };
   }
 
   try {

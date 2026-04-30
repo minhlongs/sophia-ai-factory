@@ -3,7 +3,7 @@
  *
  * Listens: video.visual.ready
  * Transition: visual_pending → composing
- * Stub: no real composition yet (Phase 8).
+ * Pass-through: HeyGen already outputs complete video, no composition needed.
  * Emits: video.composed
  */
 
@@ -16,6 +16,7 @@ import type { VideoJobStatus } from '@/lib/video/video-job-fsm';
 
 interface VideoJobRow {
   status: VideoJobStatus;
+  visual_r2_key: string;
 }
 
 export const videoCompose = inngest.createFunction(
@@ -24,27 +25,33 @@ export const videoCompose = inngest.createFunction(
   async ({ event, step }) => {
     const { jobId, tenantId, userId } = event.data;
 
-    await step.run('transition-to-composing', async () => {
+    const job = await step.run('load-job', async () => {
       const db = await getD1Client();
       const { data } = await db
         .from('video_jobs')
-        .select('status')
+        .select('status, visual_r2_key')
         .eq('id', jobId)
         .eq('tenant_id', tenantId)
         .single();
       const row = data as VideoJobRow | null;
       if (!row) throw new Error(`[videoCompose] Job not found: ${jobId}`);
+      return row;
+    });
 
-      assertValidTransition(row.status, 'composing');
+    await step.run('transition-to-composing', async () => {
+      assertValidTransition(job.status, 'composing');
+      const db = await getD1Client();
       await db
         .from('video_jobs')
         .update({ status: 'composing', updated_at: Math.floor(Date.now() / 1000) })
         .eq('id', jobId);
     });
 
-    await step.run('stub-compose', async () => {
-      // Phase 8 will replace with Remotion/MoviePy composition
-      const finalKey = tenantScopedKey(tenantId, jobId, 'final.mp4');
+    await step.run('pass-through-compose', async () => {
+      // HeyGen outputs complete mp4 — pass visual_r2_key (URL) as final_r2_key
+      const finalKey = job.visual_r2_key.startsWith('http')
+        ? job.visual_r2_key
+        : tenantScopedKey(tenantId, jobId, 'final.mp4');
       const db = await getD1Client();
       await db
         .from('video_jobs')
@@ -53,7 +60,7 @@ export const videoCompose = inngest.createFunction(
     });
 
     await step.run('record-cost', async () => {
-      await recordCost({ jobId, stage: 'composing', provider: 'remotion', units: 0, costUsd: 0 });
+      await recordCost({ jobId, stage: 'composing', provider: 'internal', units: 0, costUsd: 0 });
     });
 
     await step.sendEvent('emit-composed', {

@@ -1,26 +1,33 @@
 /**
  * Conversion Attributor
  *
- * Resolves a ClickBank `cvendthru` (= truncated click_id tid) back to
- * campaign + user + offer context stored in affiliate_clicks.
+ * Resolves conversion signals back to campaign/user/offer context.
  *
- * M3 short-link redirect appends `tid = clickId.replace(/-/g,'').slice(0,24)`
- * so affiliate_clicks stores the FULL UUID click_id but ClickBank returns
- * only the first 24 hex chars (no dashes).
+ * Supports two attribution paths:
+ * 1. ClickBank (legacy): cvendthru tid → affiliate_clicks table
+ * 2. Multi-network (Phase 09): sub_id pattern `{tenantSlug}-{linkIdHex}` → affiliate_links table
  *
- * Match strategy (SQLite): WHERE substr(replace(click_id,'-',''),1,24) = ?
- * This avoids schema changes and uses parameterized bindings (safe from injection).
+ * Match strategies use parameterized SQLite bindings (safe from injection).
  *
  * @module affiliates/conversion-attributor
  */
 
 import { logger } from '@/lib/utils/logger-utility'
+import { getD1Raw } from '@/lib/db/client'
 
 export interface AttributionResult {
   clickId: string
   campaignId: string
   userId: string
   offerId: string
+}
+
+/** Phase 09 extended result includes tenant context */
+export interface NetworkAttributionResult {
+  linkId: string
+  tenantId: string
+  offerId: string
+  userId: string
 }
 
 interface ClickRow {
@@ -30,14 +37,13 @@ interface ClickRow {
   offer_id: string
 }
 
-/** Get raw D1Database binding from CF worker environment. */
-function getD1Binding(): D1Database | null {
-  const env = (globalThis as unknown as { __env?: Record<string, unknown> }).__env
-  if (env?.DB) return env.DB as D1Database
-
-  const globalDb = (globalThis as Record<string, unknown>).__D1_DB as D1Database | undefined
-  return globalDb ?? null
+interface LinkRow {
+  id: string
+  tenant_id: string
+  offer_id: string
+  user_id: string
 }
+
 
 /**
  * Look up the click that generated this conversion via ClickBank cvendthru field.
@@ -51,8 +57,10 @@ export async function attributeClick(tid: string): Promise<AttributionResult | n
     return null
   }
 
-  const db = getD1Binding()
-  if (!db) {
+  let db: D1Database
+  try {
+    db = await getD1Raw()
+  } catch {
     logger.warn('[conversion-attributor] D1 binding not available')
     return null
   }
@@ -81,6 +89,65 @@ export async function attributeClick(tid: string): Promise<AttributionResult | n
     }
   } catch (err) {
     logger.warn('[conversion-attributor] lookup error', {
+      error: err instanceof Error ? err.message : String(err),
+    })
+    return null
+  }
+}
+
+/**
+ * Multi-network attribution via sub_id.
+ *
+ * Dispatches based on network slug to look up the correct affiliate_links row.
+ * sub_id format: `{tenantSlug}-{linkIdHex}` (set at redirect time in Phase 09 cloak).
+ *
+ * @param network - Network slug (e.g. "tiktok-shop", "accesstrade", "awin", "amazon")
+ * @param subId - The sub_id / click_ref / tag value echoed back in postback
+ * @returns Attribution data or null
+ */
+export async function attributeByNetwork(
+  network: string,
+  subId: string
+): Promise<NetworkAttributionResult | null> {
+  if (!subId) {
+    logger.warn('[conversion-attributor] empty subId', { network })
+    return null
+  }
+
+  let db: D1Database
+  try {
+    db = await getD1Raw()
+  } catch {
+    logger.warn('[conversion-attributor] D1 binding not available', { network })
+    return null
+  }
+
+  try {
+    // All networks use the affiliate_links.sub_id column for lookup
+    const row = await db
+      .prepare(
+        `SELECT id, tenant_id, offer_id, user_id
+         FROM affiliate_links
+         WHERE sub_id = ?
+         LIMIT 1`
+      )
+      .bind(subId)
+      .first<LinkRow>()
+
+    if (!row) {
+      logger.info('[conversion-attributor] no link found', { network, subIdPrefix: subId.slice(0, 12) })
+      return null
+    }
+
+    return {
+      linkId: row.id,
+      tenantId: row.tenant_id,
+      offerId: row.offer_id,
+      userId: row.user_id,
+    }
+  } catch (err) {
+    logger.warn('[conversion-attributor] network lookup error', {
+      network,
       error: err instanceof Error ? err.message : String(err),
     })
     return null

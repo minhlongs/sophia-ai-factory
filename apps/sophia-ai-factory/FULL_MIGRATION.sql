@@ -1,3 +1,10 @@
+-- ============================================================================
+-- DEPRECATED: 2026-04-30
+-- This is HISTORICAL Supabase schema from Feb 2026.
+-- Production database is Cloudflare D1.
+-- DO NOT EXECUTE AGAINST D1 — use migrations/ directory for current schema.
+-- See: apps/sophia-ai-factory/migrations/ (0001–0034)
+-- ============================================================================
 -- Sophia Index: Core Database Schema
 -- Created: 2026-02-05
 -- Purpose: Affiliate product intelligence database for Auto-Discovery Engine

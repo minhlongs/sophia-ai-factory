@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
     // Fire-and-forget execute if internal secret configured
     const internalSecret = process.env.INTERNAL_API_SECRET;
     if (internalSecret && mission) {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network';
       fetch(`${baseUrl}/api/raas/execute`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-internal-secret': internalSecret },

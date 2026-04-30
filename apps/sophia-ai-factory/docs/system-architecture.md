@@ -61,9 +61,11 @@ graph TD
 ### 1. The Frontend (Next.js 16)
 - **Responsibility**: User Interface, Input Validation, Configuration Management.
 - **Key Modules**:
-  - `/setup-wizard`: A strictly guided flow to initialize the app.
+  - `/login`: Authentication page with Sign In (password + magic-link) and Sign Up (password form) tabs (v1.14.19). SignupForm component with client/server validation, Zod constraints (min 8 char password), bilingual i18n (`auth.signup.*` keys).
+  - `/setup-wizard`: Strictly guided onboarding flow (auth required, requires ≥1 LLM key). v1.14.18: Layout-level `getCurrentUser()` auth check, post-signup `wizard_done` cookie redirect, bilingual (VI+EN) finish step with retry button, anthropic + muapi added.
   - `/dashboard`: Main operational view.
   - `/api/*`: Serverless functions acting as proxy to external services.
+  - `/api/setup/*`: Wizard endpoints (verify keys, save config, manage `wizard_done` cookie lifecycle).
 - **Service Layer (New)**:
   - **Service Factory**: Centralized dependency injection pattern (`src/lib/services/factory.ts`).
   - **Abstraction**: Interfaces (`IVideoService`, `IVoiceService`, etc.) decouple logic from providers.
@@ -132,7 +134,12 @@ graph TD
 - **Server-Side**: All API requests are proxied through Next.js API Routes / Server Actions.
 - **Storage**:
   - **System Keys**: stored in `.env.local` (local) or Vercel Environment Variables.
-  - **User Keys**: stored in Supabase `user_profiles` table, encrypted at rest using AES-256-GCM.
+  - **User Keys (BYOK)**: D1 table `user_api_keys` (D1-based, replaces Supabase for user-settable providers).
+- **BYOK Provider Enum** (v1.14.18+):
+  - **User-Settable**: `openrouter`, `anthropic`, `elevenlabs`, `d-id`, `muapi` (+ admin-only `heygen` for backward compat, removed from UI).
+  - **Validation**: Zod superRefine per-provider regex (openrouter: `sk-or-v1-...`, anthropic: `sk-ant-api\d{2}-...`, muapi: `≥20 chars`, elevenlabs: `11_...`, d-id: format-check).
+  - **Rate-Limit**: `/api/user/byok/*` enforces admin tier (20 req/min) via middleware rule inserted before catch-all.
+  - **Admin Page** (`/dashboard/byok`): Bilingual provider feature matrix, edit/delete with error handling, field-level validation messages.
 
 ### Access Control
 - **User Authentication**: Better Auth session (email/password + magic link) with D1 user profiles.
@@ -182,25 +189,48 @@ graph TD
    - Audio generated, then Video.
    - Final URL updated in Airtable.
 
-### Enterprise Flow (Direct HeyGen Integration)
-1. **Initiation**: User selects "Premium Avatar" in Campaign Wizard.
-2. **Input**: Script Text, Avatar ID, Voice ID.
-3. **Submission**: App calls `POST /api/heygen/create-video` directly.
-4. **Processing (Async)**:
+### Enterprise Flow (Direct HeyGen Integration + Tier Gate)
+1. **Tier Enforcement**: `POST /api/heygen/create-video` checks `getUserTier(userId)`. BASIC users get 402 + `/pricing` redirect hint. PREMIUM+ allowed.
+2. **Initiation**: User selects "Premium Avatar" in Campaign Wizard.
+3. **Input**: Script Text, Avatar ID, Voice ID.
+4. **Submission**: App calls `POST /api/heygen/create-video` directly (auth required, tier validated).
+5. **Processing (Async)**:
    - HeyGen API accepts job, returns `video_id`.
    - App stores `video_id` + migration 0030 R2 metadata (`r2_key`, `r2_size_bytes`) in D1.
-5. **Webhook Ingest**:
+6. **Webhook Ingest**:
    - HeyGen POSTs completion event to `POST /api/webhooks/heygen` (HMAC-SHA256 verified).
+   - If `HEYGEN_WEBHOOK_SECRET` missing in prod, returns 200 + log warn (fallback mode, avoids retry-storm).
    - Handler fetches video from R2 bucket `sophia-videos`, updates status + URLs.
-6. **Status Polling** (fallback):
+7. **Caching** (Performance Optimization):
+   - `GET /api/heygen/avatars` and `GET /api/heygen/voices` use module-level 5-min cache (CF Workers isolate-bound).
+   - Global data (not per-user) allows safe caching. Reset helper `_resetCacheForTest` for test isolation.
+8. **Status Polling** (fallback):
    - Cron `GET /api/cron/video-status-sync` runs every 5 min, polls pending HeyGen jobs.
    - Updates D1 + fetches video if ready.
-7. **Response Structure**:
+9. **Response Structure**:
    - Status route returns: `{status, video_url, thumbnail_url, duration_sec, error}`.
    - Error codes: `MISSING_KEY`, `DB_FAILED`.
-8. **Storage**:
+10. **Storage**:
    - Video stored in Cloudflare R2 `sophia-videos` bucket.
    - Public URL via `R2_PUBLIC_BASE_URL` env var (optional, defaults to R2 auth URL).
+
+### Quota & Rate Limiting (v1.14.19+)
+
+**Video Quota Architecture**:
+- **Table**: `video_usage_monthly` (D1) — per-user monthly counter, keyed on `(user_id, year_month)`.
+- **Tier Limits**:
+  - BASIC: 0 (blocked at 402 before quota check)
+  - PREMIUM: 30 per month
+  - ENTERPRISE: 200 per month
+  - MASTER: 1000 per month
+- **Enforcement**: `POST /api/heygen/create-video` calls `checkVideoQuota(userId)` before submitting to HeyGen. Returns 429 (Too Many Requests) + metadata `{error, limit, used, resetAt}` if over limit.
+- **Increment**: Fire-and-forget counter increment post-HeyGen success (via `incrementVideoUsage(userId)`). Non-fatal if D1 write fails (logs but user still gets video).
+- **Known Issue (TOCTOU race)**: Concurrent requests from same user can all read count=29 simultaneously, all pass quota gate, then all increment to 30+ before D1 UPSERT completes. Recommend atomic `UPDATE … SET count = count + 1 WHERE count < limit RETURNING count` for MASTER tier scale (pre-GA fix).
+
+**Rate Limiting**:
+- **Global Default**: Middleware enforces 30 req/min per IP (via Cloudflare Workers rate-limit header).
+- **Admin Tier Rules**: `/api/user/byok/*` elevated to 20 req/min (admin operations).
+- **Public Endpoints**: `/api/affiliate-discovery` (200 req/min), `/api/webhooks/*` (10 req/min per signature).
 
 ## Supervisor Agent (2026-04-17 MVP)
 
@@ -339,9 +369,14 @@ User Wallet (/dashboard/wallet)
 ### D1 Tables
 
 **Core Tables (Revenue)**
-- **affiliate_offers_selected**: Records user's chosen affiliate product for a campaign
+- **affiliate_offers_catalog** (PUBLIC): System-wide catalog of affiliate offers (seedable, read-only for users)
+  - Columns: id, name, url, category, description, provider, created_at
+  - Purpose: Public discovery API source; separates catalog metadata from user-private tracking
+  - Seed: 10 real offers (Bluehost, SEMrush, ConvertKit, Teachable, Canva, NordVPN, Shopify, ClickFunnels, Amazon Associates, Wealthy Affiliate) — migration 0032
+
+- **affiliate_offers_selected** (PRIVATE): Records user's chosen affiliate product for a campaign
   - Columns: id, user_id, campaign_id, offer_id, offer_title, offer_url, created_at
-  - Purpose: Binding affiliate product choice to specific campaign (enables per-campaign attribution)
+  - Purpose: Binding affiliate product choice to specific campaign (enables per-campaign attribution); never exposed via public API
 
 - **affiliate_clicks**: Click event log (fire-and-forget, no rate limit on logging)
   - Columns: id, shortcode, user_id, offer_id, referrer, created_at

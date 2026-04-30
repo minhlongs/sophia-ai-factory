@@ -72,14 +72,14 @@ describe('GET /api/user/byok', () => {
     expect(res.status).toBe(401)
   })
 
-  it('200 with provider list when authed', async () => {
+  it('200 with provider list when authed (includes muapi)', async () => {
     mockGetCurrentUser.mockResolvedValue(USER)
-    mockList.mockResolvedValue(['openrouter', 'anthropic'])
+    mockList.mockResolvedValue(['openrouter', 'anthropic', 'muapi'])
 
     const res = await GET()
     expect(res.status).toBe(200)
     const json = (await res.json()) as { providers: string[] }
-    expect(json.providers).toEqual(['openrouter', 'anthropic'])
+    expect(json.providers).toEqual(['openrouter', 'anthropic', 'muapi'])
     expect(mockList).toHaveBeenCalledWith(USER?.id)
   })
 })
@@ -113,13 +113,56 @@ describe('POST /api/user/byok', () => {
     expect(mockTrack).not.toHaveBeenCalled()
   })
 
+  it('400 when openrouter key has invalid format', async () => {
+    mockGetCurrentUser.mockResolvedValue(USER)
+    const res = await POST(makeRequest('POST', { provider: 'openrouter', key: 'wrong-format-key-1234567890' }))
+    expect(res.status).toBe(400)
+    const json = (await res.json()) as { error: string }
+    expect(json.error).toBe('Invalid openrouter key format')
+    expect(mockSet).not.toHaveBeenCalled()
+    expect(mockTrack).not.toHaveBeenCalled()
+  })
+
+  it('200 when openrouter key has valid format (sk-or-v1-...)', async () => {
+    mockGetCurrentUser.mockResolvedValue(USER)
+    mockSet.mockResolvedValue(undefined)
+    const res = await POST(makeRequest('POST', {
+      provider: 'openrouter',
+      key: 'sk-or-v1-abcdefghijklmnopqrstuvwxyz1234567890',
+    }))
+    expect(res.status).toBe(200)
+    expect(mockSet).toHaveBeenCalledWith(
+      USER?.id,
+      'openrouter',
+      'sk-or-v1-abcdefghijklmnopqrstuvwxyz1234567890',
+    )
+  })
+
+  it('200 when muapi key is stored', async () => {
+    mockGetCurrentUser.mockResolvedValue(USER)
+    mockSet.mockResolvedValue(undefined)
+    const res = await POST(makeRequest('POST', {
+      provider: 'muapi',
+      key: 'muapi-valid-key-1234567890abcdef',
+    }))
+    expect(res.status).toBe(200)
+    expect(mockSet).toHaveBeenCalledWith(USER?.id, 'muapi', 'muapi-valid-key-1234567890abcdef')
+  })
+
+  it('400 when heygen provider is submitted (removed from enum)', async () => {
+    mockGetCurrentUser.mockResolvedValue(USER)
+    const res = await POST(makeRequest('POST', { provider: 'heygen', key: 'some-heygen-key-1234567890' }))
+    expect(res.status).toBe(400)
+    expect(mockSet).not.toHaveBeenCalled()
+  })
+
   it('500 when store throws — no audit emitted', async () => {
     mockGetCurrentUser.mockResolvedValue(USER)
     mockSet.mockRejectedValue(new Error('BYOK_D1_UNAVAILABLE'))
 
     const res = await POST(makeRequest('POST', {
       provider: 'openrouter',
-      key: 'sk-or-v1-validkey-1234567890',
+      key: 'sk-or-v1-validkey-12345678901234567890',
     }))
     expect(res.status).toBe(500)
     // Critical: failure path must NOT emit audit (audit implies success)

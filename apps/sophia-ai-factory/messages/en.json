@@ -867,10 +867,10 @@
         "placeholder": "Basic ...",
         "help": "Get your key at studio.d-id.com/account-settings"
       },
-      "heygen": {
-        "label": "HeyGen API Key (AI Video)",
-        "placeholder": "NjY...",
-        "help": "Get your key at app.heygen.com/settings/api-keys"
+      "anthropic": {
+        "label": "Anthropic API Key (LLM)",
+        "placeholder": "sk-ant-...",
+        "help": "Get your key at console.anthropic.com/keys"
       },
       "muapi": {
         "label": "MuAPI Key (Music/Audio)",
@@ -880,6 +880,29 @@
     }
   },
   "auth": {
+    "signup": {
+      "tab": "Sign Up",
+      "signin_tab": "Sign In",
+      "title": "Create Account",
+      "subtitle": "Join Sophia AI — Video & AI Automation Platform",
+      "name_label": "Full Name",
+      "name_placeholder": "Your name",
+      "email_label": "Email",
+      "email_placeholder": "you@example.com",
+      "password_label": "Password",
+      "password_placeholder": "Min 8 characters",
+      "confirm_label": "Confirm Password",
+      "confirm_placeholder": "Re-enter password",
+      "submit": "Create Account",
+      "submitting": "Creating account...",
+      "success_title": "Account Created!",
+      "success_message": "Redirecting to setup wizard...",
+      "error_password_mismatch": "Passwords do not match",
+      "error_password_too_short": "Password must be at least 8 characters",
+      "error_email_exists": "This email is already registered. Try signing in.",
+      "error_generic": "Signup failed. Please try again.",
+      "have_account": "Already have an account?"
+    },
     "mfa_challenge": {
       "title": "Two-Factor Authentication",
       "subtitle": "Enter the 6-digit code from your authenticator app.",

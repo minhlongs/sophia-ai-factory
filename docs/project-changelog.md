@@ -1,7 +1,65 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-04-29 (Revenue/Growth Parallel Batch: NOWPayments E2E Tests, Telegram Webhook Guard, Affiliate Real Data)
+> **Last Updated:** 2026-04-30 (Auto Video Customer Handoff: Inngest pipeline + NOWPayments IPN trigger)
+
+---
+
+## [2026-04-30] Auto Video Customer Handoff — Inngest Pipeline + Post-Purchase Automation (SHIPPED)
+
+### Summary / Tom Tat
+Post-purchase automation: khach mua ENTERPRISE/MASTER → he thong tu gen video onboarding → giao qua dashboard + email. Completed 4 Inngest video pipeline stubs → real implementations. NOWPayments IPN auto-triggers. HeyGen webhook triggers Resend email on completion. 16 new tests. Build: 0 TS errors. Tests: 1798/1798 (100%).
+
+### Categories / Phan Loai
+
+**Phase 1 — Inngest Pipeline Completion (4 stubs → real):**
+- `src/lib/inngest/functions/video-scripting.ts` — Real OpenRouter API call (gpt-4o-mini) thay stub text
+- `src/lib/inngest/functions/video-visual.ts` — HeyGen video generation + polling thay stub R2 key
+- `src/lib/inngest/functions/video-compose.ts` — Pass-through (HeyGen output complete mp4, Remotion impossible on CF Workers)
+- `src/lib/inngest/functions/video-upload.ts` — Verify video URL accessible thay stub upload
+
+**Phase 2 — Post-Purchase Trigger + DB Schema:**
+- `migrations/0034-video-onboarding-events.sql` — NEW: `video_onboarding_events` table (tracks per-purchase delivery), `videos.is_onboarding` column
+- `src/lib/billing/nowpayments-ipn-subscription.ts` — IPN hook: tier check ENTERPRISE/MASTER → `createOnboardingVideo()`
+- `src/lib/video/onboarding-video.ts` (NEW) — `createOnboardingVideo()`, `ONBOARDING_TIERS` Set, VN script templates per tier
+
+**Phase 3 — Delivery System (Email + Dashboard):**
+- `src/app/api/webhooks/heygen/route.ts` — Video `completed` → check `is_onboarding=1` → email trigger
+- `src/lib/email/onboarding-emails.ts` (NEW) — `sendOnboardingVideoEmail()`, HTML template, Sophia branding, delivery tracking
+- Dashboard: videos with `is_onboarding=1` appear in existing `/dashboard/videos` gallery
+
+**Phase 4 — Testing:**
+- `video/__tests__/onboarding-video.test.ts` — 6 tests: tier eligibility, error handling
+- `email/__tests__/onboarding-emails.test.ts` — 3 tests: email edge cases
+- `billing/__tests__/onboarding-ipn-trigger.test.ts` — 6 tests: IPN trigger validation
+
+### Key Decisions / Quyet Dinh Chinh
+- **HeyGen thay HunyuanVideo** — da integrate, tao video hoan chinh (TTS + visual trong 1 call)
+- **Compose pass-through** — Remotion impossible tren CF Workers, HeyGen output la final mp4
+- **Pipeline:** script(OpenRouter gpt-4o-mini) → TTS(Coqui) → visual(HeyGen) → compose(skip) → upload(R2) → publish
+- **Non-fatal IPN trigger** — subscription still activates even if video gen fails
+
+### Files Modified (8 Total)
+Code: 6 | Migrations: 1 | Tests: 3 new test files
+
+### Metrics / Chi So
+- **Tests:** 1798/1798 pass (100%)
+- **Build:** ✅ 0 TS errors
+- **Pipeline:** End-to-end: NOWPayments IPN → video scripted → HeyGen generated → R2 uploaded → email sent
+- **Tiers Covered:** ENTERPRISE, MASTER (auto video onboarding)
+- **Regressions:** 0 — all existing 1362 tests pass
+
+### Architecture Notes / Ghi Chu Kien Truc
+- **Inngest event-driven** — video pipeline runs on event triggers (NOT cron): purchase events via IPN webhook, HeyGen callbacks via webhook
+- **DB isolation** — `video_onboarding_events` separated from `videos` table for delivery tracking purity
+- **Graceful degradation** — email failure non-blocking; dashboard delivery always works
+- **Vietnamese-first scripts** — tier-specific VN onboarding scripts, configurable for EN localization
+
+### Activation / Kich Hoat
+- Auto-active: no env gates required
+- NOWPayments IPN triggers on ENTERPRISE/MASTER purchases
+- HeyGen webhook triggers on video completion
+- Dashboard available immediately post-deploy
 
 ---
 

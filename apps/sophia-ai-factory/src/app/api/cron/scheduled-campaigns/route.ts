@@ -15,6 +15,7 @@ import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import { toError } from '@/lib/utils/to-error';
 import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker';
+import { verifyCronAuth } from '@/lib/security/cron-auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,24 +34,6 @@ function getD1(): D1Database | null {
   }
 }
 
-function verifyCronAuth(req: NextRequest): boolean {
-  if (process.env.NODE_ENV === 'development') return true;
-
-  const secret = process.env.CRON_SECRET;
-  if (secret && req.headers.get('authorization') === `Bearer ${secret}`) return true;
-
-  const headerSecret = req.headers.get('x-cron-secret');
-  if (secret && headerSecret === secret) return true;
-
-  const cfCron = req.headers.get('x-cf-cron');
-  if (cfCron === 'true') return true;
-
-  const tokenParam = req.nextUrl.searchParams.get('token');
-  if (secret && tokenParam === secret) return true;
-
-  return false;
-}
-
 interface ScheduledCampaignRow {
   id: string;
   user_id: string;
@@ -62,9 +45,8 @@ interface ScheduledCampaignRow {
 }
 
 export async function GET(req: NextRequest) {
-  if (!verifyCronAuth(req)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const authError = verifyCronAuth(req);
+  if (authError) return authError;
 
   const d1 = getD1();
 

@@ -28,13 +28,6 @@ export function getDb(): D1Database {
   return db
 }
 
-/** Validate Bearer CRON_SECRET (dev: allow if no secret configured). */
-export function isAuthorised(req: NextRequest): boolean {
-  const secret = process.env.CRON_SECRET
-  if (!secret) return true
-  return req.headers.get('authorization') === `Bearer ${secret}`
-}
-
 /** Check if WORKFLOW_REAL_LLM_ENABLED=1 and OPENROUTER_API_KEY is set. */
 export function isRealLlmEnabled(): boolean {
   return (

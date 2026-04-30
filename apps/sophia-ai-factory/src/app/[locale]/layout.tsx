@@ -56,6 +56,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://sophia.agencyos.network"),
   title: "Sophia AI Video Factory - Automate Your Content Empire",
   description: "Turn content into empire. The ultimate AI video creation workflow with automated affiliate discovery, ROI calculator, and 3-tier pricing. Build, scale, and monetize your YouTube channels effortlessly.",
   keywords: [

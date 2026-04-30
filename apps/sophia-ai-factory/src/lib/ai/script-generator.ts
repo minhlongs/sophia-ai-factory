@@ -83,7 +83,7 @@ export async function generateScript(input: GenerateScriptInput) {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${apiKey}`,
-            'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+            'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network',
             'X-Title':      'Sophia AI Factory',
             'Content-Type': 'application/json',
           },

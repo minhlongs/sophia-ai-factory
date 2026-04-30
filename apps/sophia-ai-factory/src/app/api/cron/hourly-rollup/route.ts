@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { runHourlyRollup } from '@/lib/usage-metering/rollup-service';
 import { logger } from '@/lib/utils/logger-utility';
 import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker';
+import { verifyCronAuth } from '@/lib/security/cron-auth';
 
 const CRON_NAME = 'hourly-rollup';
 /** Hourly — skip if ran within last 30 minutes */
@@ -27,26 +28,9 @@ function getD1(): D1Database | null {
   }
 }
 
-function verifyCronAuth(request: NextRequest): boolean {
-  if (process.env.NODE_ENV === 'development') return true;
-
-  const expectedSecret = process.env.CRON_SECRET;
-  if (expectedSecret && request.headers.get('authorization') === `Bearer ${expectedSecret}`) return true;
-
-  const cronSecret = request.headers.get('x-cron-secret');
-  if (expectedSecret && cronSecret === expectedSecret) return true;
-
-  const cfCron = request.headers.get('x-cf-cron');
-  if (cfCron === 'true') return true;
-
-  logger.warn('[Hourly Rollup Cron] Unauthorized cron attempt');
-  return false;
-}
-
 export async function GET(request: NextRequest) {
-  if (!verifyCronAuth(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const authError = verifyCronAuth(request);
+  if (authError) return authError;
 
   const db = getD1();
 

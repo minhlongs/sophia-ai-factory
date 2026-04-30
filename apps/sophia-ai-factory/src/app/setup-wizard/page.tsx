@@ -28,23 +28,24 @@ export default function SetupWizardPage() {
   // Form State
   const [config, setConfig] = useState({
     OPENROUTER_API_KEY: '',
+    ANTHROPIC_API_KEY: '',
     ELEVENLABS_API_KEY: '',
     DID_API_KEY: '',
-    HEYGEN_API_KEY: '',
     MUAPI_API_KEY: '',
   });
 
   // Validation State
   const [status, setStatus] = useState<Record<string, 'idle' | 'validating' | 'valid' | 'invalid'>>({
     OPENROUTER_API_KEY: 'idle',
+    ANTHROPIC_API_KEY: 'idle',
     ELEVENLABS_API_KEY: 'idle',
     DID_API_KEY: 'idle',
-    HEYGEN_API_KEY: 'idle',
     MUAPI_API_KEY: 'idle',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveFailed, setSaveFailed] = useState(false);
 
   const updateConfig = (key: string, value: string) => {
     setConfig(prev => ({ ...prev, [key]: value }));
@@ -81,16 +82,20 @@ export default function SetupWizardPage() {
   };
 
   const handleNext = () => {
-    // Step 2: Allow proceeding even without all keys verified
-    // Users can add/change keys later in Dashboard → Settings
+    // Step 2: Require at least one LLM key (OpenRouter or Anthropic)
     if (step === 2) {
-      const hasAnyKey = Object.values(config).some(v => v.trim().length > 0);
       const hasInvalid = Object.values(status).some(v => v === 'invalid');
       if (hasInvalid) {
         alert("Có API key không hợp lệ. Vui lòng kiểm tra lại hoặc xóa key không đúng.");
         return;
       }
-      // Allow proceeding with no keys — user can add later in Settings
+      const hasLlmKey =
+        config.OPENROUTER_API_KEY.trim().length > 0 ||
+        config.ANTHROPIC_API_KEY.trim().length > 0;
+      if (!hasLlmKey) {
+        alert("Bạn cần nhập ít nhất một LLM key (OpenRouter hoặc Anthropic) để tiếp tục.");
+        return;
+      }
     }
 
     setStep(prev => prev + 1);
@@ -99,6 +104,7 @@ export default function SetupWizardPage() {
   const handleSave = async () => {
     setLoading(true);
     setSaveError(null);
+    setSaveFailed(false);
 
     try {
       const res = await fetch('/api/setup/save', {
@@ -113,9 +119,11 @@ export default function SetupWizardPage() {
         router.push(data.redirect || '/dashboard/settings');
       } else {
         setSaveError(data.message ?? 'Failed to save configuration.');
+        setSaveFailed(true);
       }
     } catch {
       setSaveError("Failed to save configuration.");
+      setSaveFailed(true);
     } finally {
       setLoading(false);
     }
@@ -154,7 +162,7 @@ export default function SetupWizardPage() {
 
             {step === 3 && <LocalModeStep />}
 
-            {step === 4 && <FinishStep saveError={saveError} />}
+            {step === 4 && <FinishStep saveError={saveError} saveFailed={saveFailed} onRetry={handleSave} />}
         </div>
 
         {/* Footer Actions */}
