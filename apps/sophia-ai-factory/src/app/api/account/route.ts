@@ -8,7 +8,7 @@
  * @module app/api/account/route
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/better-auth-session';
 import { getD1Raw } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
@@ -29,7 +29,7 @@ const DELETE_ORDER = [
 ] as const;
 
 export async function DELETE(request: NextRequest): Promise<NextResponse> {
-  const user = await getCurrentUser(request);
+  const user = await getCurrentUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

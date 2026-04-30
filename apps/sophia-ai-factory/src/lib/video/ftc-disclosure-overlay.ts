@@ -16,8 +16,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 // Lazy binding: allows test mocks to intercept promisify after module init
-let _execFileAsync: typeof execFileAsync | null = null;
 type ExecFileAsync = (cmd: string, args: string[]) => Promise<{ stdout: string; stderr: string }>;
+let _execFileAsync: ExecFileAsync | null = null;
 function getExecFileAsync(): ExecFileAsync {
   if (!_execFileAsync) _execFileAsync = promisify(execFile) as ExecFileAsync;
   return _execFileAsync as ExecFileAsync;
