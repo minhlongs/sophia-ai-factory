@@ -32,9 +32,12 @@
 | 04b | Fix OpenNext Next.js 16 instrumentation.js bundling | ✅ done | debugger |
 | 05 | Tests + `tsc --noEmit` + `wrangler deploy` + production verify | ✅ done | main |
 
-**Final report:** [final-signoff-report.md](./final-signoff-report.md)
+**Final report:** [final-signoff-report.md](./final-signoff-report.md) (96/100)
+**Go-live sign-off:** [final-signoff-100.md](./final-signoff-100.md) (100/100)
 **Production SHA:** ed13e406 (matches local HEAD)
 **Deployed:** 2026-04-30T02:54:27Z
+**CF Secrets armed:** 2026-04-30T03:42:43Z (BYOK_MASTER_KEY + 5 others)
+**Health status:** `healthy` (was `degraded`)
 
 ## Key Constraints
 
