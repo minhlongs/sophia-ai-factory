@@ -10,6 +10,8 @@ import {
   videoCompose,
   videoUpload,
   videoPublish,
+  publishExecute,
+  publishTokenRefreshCron,
 } from "@/lib/inngest/functions/index";
 
 export const { GET, POST, PUT } = serve({
@@ -25,5 +27,8 @@ export const { GET, POST, PUT } = serve({
     videoCompose,
     videoUpload,
     videoPublish,
+    // Publishing pipeline (Phase 10)
+    publishExecute,
+    publishTokenRefreshCron,
   ],
 });
