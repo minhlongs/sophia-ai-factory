@@ -21,10 +21,14 @@ export class TikTokPublisher implements Publisher {
       return `mock_tiktok_${Date.now()}`;
     }
 
+    // FTC compliance: prepend #ad disclosure if not already present
+    const rawCaption = meta.caption.startsWith('#ad ') ? meta.caption : `#ad ${meta.caption}`;
+    const title = rawCaption.slice(0, 150);
+
     const publishId = await publishVideo({
       accessToken: this.accessToken,
       videoUrl,
-      title: meta.caption.slice(0, 150),
+      title,
     });
     return publishId;
   }
