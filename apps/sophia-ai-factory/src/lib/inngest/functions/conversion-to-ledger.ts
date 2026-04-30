@@ -2,8 +2,8 @@
  * Conversion-to-Ledger Inngest Function
  *
  * Listens for `conversion.created` events emitted by Phase 9 affiliate webhooks.
- * Calculates commission and inserts a pending commission_ledger row.
- * Idempotent via UNIQUE(conversion_event_id).
+ * Calculates commission (with optional VN PIT 5% withholding) and inserts a
+ * pending commission_ledger row. Idempotent via UNIQUE(conversion_event_id).
  *
  * @module inngest/functions/conversion-to-ledger
  */
@@ -11,10 +11,12 @@
 import { inngest } from '@/lib/inngest/client'
 import { calculateCommission } from '@/lib/affiliates/commission-calculator'
 import { insertPendingLedger } from '@/lib/payouts/commission-ledger'
+import { toCents } from '@/lib/payouts/commission-cents'
 import { getD1Raw } from '@/lib/db/client'
 
 const CLAWBACK_WINDOW_DAYS = 14
 const SECONDS_PER_DAY = 86400
+const VN_PIT_RATE = 0.05
 
 interface ConversionRow {
   id: string
@@ -71,6 +73,16 @@ export const conversionToLedger = inngest.createFunction(
       return row?.tier ?? 'BASIC'
     })
 
+    // H1: check VN PIT flag for tenant
+    const vnPitEnabled = await step.run('fetch-tenant-vn-pit', async () => {
+      const db = await getD1Raw()
+      const row = await db
+        .prepare(`SELECT vn_pit_enabled FROM tenant_settings WHERE tenant_id = ? LIMIT 1`)
+        .bind(tenantId)
+        .first<{ vn_pit_enabled: number }>()
+      return (row?.vn_pit_enabled ?? 0) === 1
+    })
+
     const { commissionUsd, commissionPct } = await step.run('calculate-commission', async () => {
       return calculateCommission({
         grossAmountUsd: conversion.gross_amount_usd,
@@ -78,6 +90,10 @@ export const conversionToLedger = inngest.createFunction(
         tenantTier,
       })
     })
+
+    // H1: compute VN PIT withholding in cents (floor to avoid over-withholding)
+    const commissionCents = toCents(commissionUsd)
+    const withheldCents = vnPitEnabled ? Math.floor(commissionCents * VN_PIT_RATE) : 0
 
     const payableAt = conversion.attributed_at + CLAWBACK_WINDOW_DAYS * SECONDS_PER_DAY
     const ledgerId = `ldg_${conversionEventId}`
@@ -93,6 +109,7 @@ export const conversionToLedger = inngest.createFunction(
         commission_pct: commissionPct,
         commission_usd: commissionUsd,
         payable_at: payableAt,
+        withheld_cents: withheldCents,
       })
     })
 
@@ -100,6 +117,7 @@ export const conversionToLedger = inngest.createFunction(
       ledgerId,
       commissionUsd,
       commissionPct,
+      withheldCents,
       payableAt,
     }
   },

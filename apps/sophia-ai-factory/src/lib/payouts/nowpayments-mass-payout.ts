@@ -1,23 +1,26 @@
 /**
  * NOWPayments Mass Payout
  *
- * Loops single payouts at 5/sec rate limit.
+ * Sends single payouts at 5/sec rate limit.
  * Idempotent via payout_batches UNIQUE(id).
  * If NOWPAYMENTS_API_KEY not set → mock mode returns synthetic external_payment_id.
+ * Amounts stored as INTEGER cents; converted to USDT float at API boundary.
  *
  * @module payouts/nowpayments-mass-payout
  */
 
 import { getD1Raw } from '@/lib/db/client'
 import { decryptSecret } from '@/lib/crypto/encrypt-secret'
+import { fromCents, sanitizeErrorText } from './commission-cents'
+import { logger } from '@/lib/utils/logger-utility'
 
 const NOWPAYMENTS_API_BASE = 'https://api.nowpayments.io/v1'
-const RATE_LIMIT_MS = 200 // 5 requests/sec = 200ms between calls
+const RATE_LIMIT_MS = 200 // 5 requests/sec
 
 interface PayoutPayload {
   address: string
   currency: string
-  amount: number
+  amountUsdt: number
   ipn_callback_url: string
   extraId?: string
 }
@@ -50,7 +53,7 @@ async function sendSinglePayout(
         {
           address: payload.address,
           currency: 'usdttrc20',
-          amount: payload.amount,
+          amount: payload.amountUsdt,
           ipn_callback_url: payload.ipn_callback_url,
           extra_id: payload.extraId,
         },
@@ -59,8 +62,13 @@ async function sendSinglePayout(
   })
 
   if (!resp.ok) {
-    const errText = await resp.text()
-    throw new Error(`NOWPayments payout API error ${resp.status}: ${errText}`)
+    const rawErr = await resp.text()
+    // H3: sanitize before logging — strips addresses, keys
+    const safeErr = sanitizeErrorText(rawErr)
+    logger.error('[NOWPayments] Payout API error', new Error(safeErr), {
+      status: resp.status,
+    })
+    throw new Error(`NOWPayments payout API error ${resp.status}: ${safeErr}`)
   }
 
   const data = (await resp.json()) as { withdrawals?: WithdrawalResponse[] }
@@ -74,7 +82,8 @@ async function sendSinglePayout(
 export interface BatchQueueInput {
   batchId: string
   affiliateId: string
-  totalUsd: number
+  /** Payout amount in INTEGER cents */
+  totalCents: number
   recipientAddrEncrypted: string
   network: string
 }
@@ -83,6 +92,7 @@ export interface BatchQueueInput {
  * Queue and send a payout batch.
  * Decrypts recipient address and sends payout at 5/sec rate.
  * Idempotent: already-confirmed batches skip silently.
+ * Converts cents → USDT float at API call boundary.
  */
 export async function queueBatch(input: BatchQueueInput): Promise<{ externalPaymentId: string }> {
   const db = await getD1Raw()
@@ -114,16 +124,28 @@ export async function queueBatch(input: BatchQueueInput): Promise<{ externalPaym
     externalPaymentId = `mock_${input.batchId}_${now}`
     await sleep(RATE_LIMIT_MS)
   } else {
-    const plainAddr = await decryptSecret(input.recipientAddrEncrypted, process.env.PAYOUT_ENC_KEY)
+    const plainAddr = await decryptSecret(
+      input.recipientAddrEncrypted,
+      process.env.PAYOUT_ENC_KEY,
+    )
     const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/api/webhooks/nowpayments-payout`
 
-    externalPaymentId = await sendSinglePayout(apiKey, {
-      address: plainAddr,
-      currency: 'usdttrc20',
-      amount: input.totalUsd,
-      ipn_callback_url: callbackUrl,
-      extraId: input.batchId,
-    })
+    // C1: convert INTEGER cents → USDT float at API boundary
+    const amountUsdt = fromCents(input.totalCents)
+
+    try {
+      externalPaymentId = await sendSinglePayout(apiKey, {
+        address: plainAddr,
+        currency: 'usdttrc20',
+        amountUsdt,
+        ipn_callback_url: callbackUrl,
+        extraId: input.batchId,
+      })
+    } catch (err) {
+      // H3: sanitize error message before re-throw
+      const safeMsg = sanitizeErrorText(err instanceof Error ? err.message : String(err))
+      throw new Error(safeMsg)
+    }
     await sleep(RATE_LIMIT_MS)
   }
 

@@ -1,22 +1,36 @@
 /**
- * Clawback Handler
+ * Clawback Handler — negative-adjustment ledger row pattern
  *
- * Marks commission_ledger rows as clawed_back on refund.
- * Only affects pending/payable rows — paid rows are NOT reversed (requires admin override).
+ * Inserts a NEW row with commission_cents = -original.commission_cents.
+ * Never silently drops; always succeeds in writing the negative row.
+ * Net payout = SUM(positive rows) + SUM(clawback rows) where clawback has negative cents.
  *
  * @module payouts/clawback-handler
  */
 
 import { getD1Raw } from '@/lib/db/client'
+import { logger } from '@/lib/utils/logger-utility'
 
 export type ClawbackResult =
-  | { success: true; previousStatus: string }
+  | { success: true; previousStatus: string; clawbackRowId: string }
   | { success: false; reason: string }
+
+interface OriginalLedgerRow {
+  id: string
+  status: string
+  tenant_id: string
+  affiliate_id: string
+  offer_id: string
+  commission_cents: number
+  withheld_cents: number
+}
 
 /**
  * Handle refund/clawback for a conversion event.
- * Updates commission_ledger status to clawed_back if not already paid.
- * Idempotent: re-calling on already clawed_back row returns success.
+ *
+ * For already-paid rows: inserts a negative-adjustment 'clawback' status row.
+ * For pending/payable rows: inserts a negative row (net zeroes out before payout).
+ * Idempotent: re-calling when a clawback row already exists returns success.
  */
 export async function handleClawback(
   conversionEventId: string,
@@ -25,34 +39,81 @@ export async function handleClawback(
   const db = await getD1Raw()
   const now = Math.floor(Date.now() / 1000)
 
-  const row = await db
+  const original = await db
     .prepare(
-      `SELECT id, status FROM commission_ledger
-       WHERE conversion_event_id = ?`,
+      `SELECT id, status, tenant_id, affiliate_id, offer_id,
+              commission_cents, withheld_cents
+       FROM commission_ledger
+       WHERE conversion_event_id = ? AND (parent_conversion_id IS NULL OR parent_conversion_id = '')
+       ORDER BY created_at ASC
+       LIMIT 1`,
     )
     .bind(conversionEventId)
-    .first<{ id: string; status: string }>()
+    .first<OriginalLedgerRow>()
 
-  if (!row) {
+  if (!original) {
     return { success: false, reason: 'Ledger row not found for conversion_event_id' }
   }
 
-  if (row.status === 'clawed_back') {
-    return { success: true, previousStatus: 'clawed_back' }
+  // Check if clawback row already exists (idempotent).
+  const existing = await db
+    .prepare(
+      `SELECT id FROM commission_ledger
+       WHERE parent_conversion_id = ? AND status = 'clawback'`,
+    )
+    .bind(original.id)
+    .first<{ id: string }>()
+
+  if (existing) {
+    return { success: true, previousStatus: original.status, clawbackRowId: existing.id }
   }
 
-  if (row.status === 'paid') {
-    return { success: false, reason: 'Cannot clawback already-paid commission without admin override' }
-  }
+  // Insert negative-adjustment row regardless of original status.
+  const clawbackId = `clbk_${original.id}_${now}`
 
   await db
     .prepare(
-      `UPDATE commission_ledger
-       SET status = 'clawed_back', clawback_reason = ?, updated_at = ?
-       WHERE conversion_event_id = ? AND status IN ('pending','payable')`,
+      `INSERT OR IGNORE INTO commission_ledger
+       (id, tenant_id, affiliate_id, conversion_event_id, offer_id,
+        gross_cents, commission_pct, commission_cents, withheld_cents,
+        parent_conversion_id, status, payable_at, clawback_reason,
+        created_at, updated_at)
+       VALUES (?,?,?,?,?,0,0,?,0,?,'clawback',?,?,?,?)`,
     )
-    .bind(reason, now, conversionEventId)
+    .bind(
+      clawbackId,
+      original.tenant_id,
+      original.affiliate_id,
+      `${conversionEventId}_clawback`,
+      original.offer_id,
+      -original.commission_cents,  // negative to zero out net
+      original.id,                 // parent_conversion_id
+      now,                         // immediately payable (or subtracted from next batch)
+      reason,
+      now,
+      now,
+    )
     .run()
 
-  return { success: true, previousStatus: row.status }
+  // If tenant net goes negative after clawback, warn ops.
+  const netRow = await db
+    .prepare(
+      `SELECT SUM(commission_cents - withheld_cents) AS net_cents
+       FROM commission_ledger
+       WHERE tenant_id = ? AND affiliate_id = ? AND status IN ('payable','clawback')`,
+    )
+    .bind(original.tenant_id, original.affiliate_id)
+    .first<{ net_cents: number | null }>()
+
+  const netCents = netRow?.net_cents ?? 0
+  if (netCents < 0) {
+    logger.warn('[Clawback] Affiliate net balance went negative after clawback', {
+      affiliateId: original.affiliate_id,
+      tenantId: original.tenant_id,
+      netCents,
+      clawbackId,
+    })
+  }
+
+  return { success: true, previousStatus: original.status, clawbackRowId: clawbackId }
 }
