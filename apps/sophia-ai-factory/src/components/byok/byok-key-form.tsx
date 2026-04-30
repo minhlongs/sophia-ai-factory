@@ -62,6 +62,12 @@ export function ByokKeyForm({ configured: initialConfigured }: ByokKeyFormProps)
   }
 
   function handleClear(p: Provider) {
+    const label = PROVIDERS.find((x) => x.value === p)?.label ?? p
+    const confirmed = window.confirm(
+      `Xóa key ${label}? Bạn sẽ mất quyền sử dụng feature này.\nDelete ${label} key? You'll lose access to this feature.`,
+    )
+    if (!confirmed) return
+
     startTransition(async () => {
       setStatus(null)
       try {

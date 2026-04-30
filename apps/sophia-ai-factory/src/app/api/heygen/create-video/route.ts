@@ -6,6 +6,7 @@ import { getUserTier } from "@/lib/db/get-user-tier";
 import { createServerClient } from "@/lib/db/client";
 import { createVideoSchema } from "@/lib/schemas";
 import { logger } from "@/lib/utils/logger-utility";
+import { checkVideoQuota, incrementVideoUsage } from "@/lib/quota/video-quota";
 
 const VIDEO_ALLOWED_TIERS = new Set(['PREMIUM', 'ENTERPRISE', 'MASTER']);
 
@@ -22,6 +23,15 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { error: "Video creation requires PREMIUM tier or higher", upgrade: "/pricing" },
         { status: 402 }
+      );
+    }
+
+    // P1: Monthly quota check — prevent unlimited video generation via BYOK
+    const quota = await checkVideoQuota(user.id, tier);
+    if (!quota.allowed) {
+      return NextResponse.json(
+        { error: "quota_exceeded", limit: quota.limit, used: quota.used, resetAt: quota.resetAt },
+        { status: 429 }
       );
     }
 
@@ -55,6 +65,18 @@ export async function POST(req: Request) {
         );
       }
       throw err;
+    }
+
+    // Increment quota counter AFTER successful HeyGen call (avoid charging on failures).
+    try {
+      await incrementVideoUsage(user.id);
+    } catch (quotaErr) {
+      logger.error(
+        "[create-video] Failed to increment video quota counter",
+        quotaErr instanceof Error ? quotaErr : undefined,
+        { heygenJobId, userId: user.id }
+      );
+      // Non-fatal — proceed so the user gets their video even if counter fails.
     }
 
     // Persist to D1 — failures are logged and surfaced to caller.

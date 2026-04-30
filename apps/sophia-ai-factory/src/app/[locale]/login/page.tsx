@@ -1,16 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { Mail, Lock, ArrowLeft, Loader2, CheckCircle } from "lucide-react";
 import { authClient } from "@/lib/better-auth-client";
+import { SignupForm } from "@/components/auth/signup-form";
 
 type AuthMode = "password" | "magic";
+type PageTab = "signin" | "signup";
 
 /**
  * Login page — Better Auth client.
- * Supports password login and magic link (email OTP).
+ * Tabs: Sign In (password + magic link) | Sign Up (email + password).
  * Vietnamese UI, dark theme.
  */
 export default function LoginPage() {
@@ -18,12 +21,39 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const coupon = searchParams.get('coupon');
   const tier = searchParams.get('tier');
+  const tSignup = useTranslations("auth.signup");
+  const signupStrings = useMemo(() => ({
+    name_label: tSignup("name_label"),
+    name_placeholder: tSignup("name_placeholder"),
+    email_label: tSignup("email_label"),
+    email_placeholder: tSignup("email_placeholder"),
+    password_label: tSignup("password_label"),
+    password_placeholder: tSignup("password_placeholder"),
+    confirm_label: tSignup("confirm_label"),
+    confirm_placeholder: tSignup("confirm_placeholder"),
+    submit: tSignup("submit"),
+    submitting: tSignup("submitting"),
+    success_title: tSignup("success_title"),
+    success_message: tSignup("success_message"),
+    error_password_mismatch: tSignup("error_password_mismatch"),
+    error_password_too_short: tSignup("error_password_too_short"),
+    error_email_exists: tSignup("error_email_exists"),
+    error_generic: tSignup("error_generic"),
+  }), [tSignup]);
+  const [pageTab, setPageTab] = useState<PageTab>("signin");
   const [mode, setMode] = useState<AuthMode>("password");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [magicSent, setMagicSent] = useState(false);
+
+  function switchTab(tab: PageTab) {
+    setPageTab(tab);
+    setError(null);
+    setEmail("");
+    setPassword("");
+  }
 
   async function handlePasswordLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -42,7 +72,6 @@ export default function LoginPage() {
         return;
       }
 
-      // If coupon params present, activate after login
       if (coupon && tier) {
         window.location.href = `/api/coupons/activate-redirect?coupon=${coupon}&tier=${tier}`;
         return;
@@ -114,7 +143,9 @@ export default function LoginPage() {
       <div className="w-full max-w-md space-y-8">
         {/* Header */}
         <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Đăng Nhập</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">
+            {pageTab === "signin" ? "Đăng Nhập" : "Tạo Tài Khoản"}
+          </h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Sophia AI — Nhà Máy Video &amp; AI Tự Động
           </p>
@@ -122,126 +153,158 @@ export default function LoginPage() {
 
         {/* Card */}
         <div className="rounded-xl border border-border bg-card p-8 shadow-sm space-y-6">
-          {/* Mode toggle */}
+          {/* Page tab: Sign In | Sign Up */}
           <div className="flex rounded-lg border border-border overflow-hidden">
             <button
               type="button"
-              onClick={() => { setMode("password"); setError(null); }}
+              onClick={() => switchTab("signin")}
               className={`flex-1 py-2 text-sm font-medium transition-colors ${
-                mode === "password"
+                pageTab === "signin"
                   ? "bg-violet-600 text-white"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              Mật khẩu
+              Đăng Nhập
             </button>
             <button
               type="button"
-              onClick={() => { setMode("magic"); setError(null); }}
+              onClick={() => switchTab("signup")}
               className={`flex-1 py-2 text-sm font-medium transition-colors ${
-                mode === "magic"
+                pageTab === "signup"
                   ? "bg-violet-600 text-white"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              Magic Link
+              Đăng Ký
             </button>
           </div>
 
-          {/* Error */}
-          {error && (
-            <div className="rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400">
-              {error}
-            </div>
-          )}
-
-          {mode === "password" ? (
-            <form onSubmit={handlePasswordLogin} className="space-y-4">
-              <div className="space-y-1">
-                <label htmlFor="email" className="text-sm font-medium text-foreground">
-                  Email
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <input
-                    id="email"
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="ban@example.com"
-                    className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/50"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label htmlFor="password" className="text-sm font-medium text-foreground">
-                  Mật khẩu
-                </label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <input
-                    id="password"
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/50"
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-cyan-600 px-4 py-3 text-sm font-medium text-white hover:opacity-90 transition-opacity disabled:opacity-50"
-              >
-                {loading ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" /> Đang đăng nhập...</>
-                ) : (
-                  "Đăng Nhập"
-                )}
-              </button>
-            </form>
+          {pageTab === "signup" ? (
+            <SignupForm t={signupStrings} />
           ) : (
-            <form onSubmit={handleMagicLink} className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Nhập email để nhận link đăng nhập. Không cần mật khẩu.
-                <br />
-                <span className="text-violet-400">Chưa có tài khoản? Magic link sẽ tự động tạo cho bạn.</span>
-              </p>
-              <div className="space-y-1">
-                <label htmlFor="email-magic" className="text-sm font-medium text-foreground">
-                  Email
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <input
-                    id="email-magic"
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="ban@example.com"
-                    className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/50"
-                  />
-                </div>
+            <>
+              {/* Sign-in mode toggle: password | magic link */}
+              <div className="flex rounded-lg border border-border overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => { setMode("password"); setError(null); }}
+                  className={`flex-1 py-2 text-sm font-medium transition-colors ${
+                    mode === "password"
+                      ? "bg-violet-600/60 text-white"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Mật khẩu
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setMode("magic"); setError(null); }}
+                  className={`flex-1 py-2 text-sm font-medium transition-colors ${
+                    mode === "magic"
+                      ? "bg-violet-600/60 text-white"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Magic Link
+                </button>
               </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-cyan-600 px-4 py-3 text-sm font-medium text-white hover:opacity-90 transition-opacity disabled:opacity-50"
-              >
-                {loading ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" /> Đang gửi...</>
-                ) : (
-                  "Gửi Magic Link"
-                )}
-              </button>
-            </form>
+              {/* Error */}
+              {error && (
+                <div className="rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400">
+                  {error}
+                </div>
+              )}
+
+              {mode === "password" ? (
+                <form onSubmit={handlePasswordLogin} className="space-y-4">
+                  <div className="space-y-1">
+                    <label htmlFor="email" className="text-sm font-medium text-foreground">
+                      Email
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <input
+                        id="email"
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="ban@example.com"
+                        className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label htmlFor="password" className="text-sm font-medium text-foreground">
+                      Mật khẩu
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <input
+                        id="password"
+                        type="password"
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-cyan-600 px-4 py-3 text-sm font-medium text-white hover:opacity-90 transition-opacity disabled:opacity-50"
+                  >
+                    {loading ? (
+                      <><Loader2 className="w-4 h-4 animate-spin" /> Đang đăng nhập...</>
+                    ) : (
+                      "Đăng Nhập"
+                    )}
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleMagicLink} className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Nhập email để nhận link đăng nhập. Không cần mật khẩu.
+                    <br />
+                    <span className="text-violet-400">Chưa có tài khoản? Magic link sẽ tự động tạo cho bạn.</span>
+                  </p>
+                  <div className="space-y-1">
+                    <label htmlFor="email-magic" className="text-sm font-medium text-foreground">
+                      Email
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <input
+                        id="email-magic"
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="ban@example.com"
+                        className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-cyan-600 px-4 py-3 text-sm font-medium text-white hover:opacity-90 transition-opacity disabled:opacity-50"
+                  >
+                    {loading ? (
+                      <><Loader2 className="w-4 h-4 animate-spin" /> Đang gửi...</>
+                    ) : (
+                      "Gửi Magic Link"
+                    )}
+                  </button>
+                </form>
+              )}
+            </>
           )}
 
           {/* Divider */}
