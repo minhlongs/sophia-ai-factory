@@ -22,10 +22,10 @@ vi.mock('@/lib/services/factory', () => ({
   },
 }));
 
-// Mock video quota module — default to under-quota / successful increment
+// Mock video quota module — default to slot reserved / release no-op
 vi.mock('@/lib/quota/video-quota', () => ({
-  checkVideoQuota: vi.fn(),
-  incrementVideoUsage: vi.fn(),
+  reserveVideoSlot: vi.fn(),
+  releaseVideoSlot: vi.fn(),
 }));
 
 // Mock D1 client — INSERT/UPDATE side-effect should not affect status
@@ -53,7 +53,7 @@ vi.mock('@/lib/db/client', () => {
 import { getCurrentUser } from '@/lib/better-auth-session';
 import { getUserTier } from '@/lib/db/get-user-tier';
 import { ServiceFactory } from '@/lib/services/factory';
-import { checkVideoQuota, incrementVideoUsage } from '@/lib/quota/video-quota';
+import { reserveVideoSlot, releaseVideoSlot } from '@/lib/quota/video-quota';
 
 describe('HeyGen API Routes', () => {
   const mockVideoService = {
@@ -67,14 +67,14 @@ describe('HeyGen API Routes', () => {
     vi.mocked(ServiceFactory.getVideoService).mockResolvedValue(mockVideoService as never);
     vi.mocked(getCurrentUser).mockResolvedValue({ id: 'user-1', email: 'test@test.com' } as never);
     vi.mocked(getUserTier).mockResolvedValue('PREMIUM' as never);
-    // Default: user is under quota — tests that need quota exceeded override this.
-    vi.mocked(checkVideoQuota).mockResolvedValue({
-      allowed: true,
-      used: 5,
+    // Default: reservation succeeds — tests that need quota exceeded override this.
+    vi.mocked(reserveVideoSlot).mockResolvedValue({
+      reserved: true,
+      used: 6,
       limit: 30,
       resetAt: '2026-05-01T00:00:00.000Z',
     } as never);
-    vi.mocked(incrementVideoUsage).mockResolvedValue(undefined as never);
+    vi.mocked(releaseVideoSlot).mockResolvedValue(undefined as never);
   });
 
   afterEach(() => {
@@ -252,10 +252,10 @@ describe('HeyGen API Routes', () => {
 
     // ── Video Quota Tests ──────────────────────────────────────────────────────
 
-    it('quota: should succeed when user is under monthly limit', async () => {
-      vi.mocked(checkVideoQuota).mockResolvedValue({
-        allowed: true,
-        used: 10,
+    it('quota: reservation success creates the video and does not release', async () => {
+      vi.mocked(reserveVideoSlot).mockResolvedValue({
+        reserved: true,
+        used: 11,
         limit: 30,
         resetAt: '2026-05-01T00:00:00.000Z',
       } as never);
@@ -271,11 +271,14 @@ describe('HeyGen API Routes', () => {
 
       expect(response.status).toBe(200);
       expect(data).toEqual({ videoId: 'vid_quota_ok', status: 'processing' });
+      expect(reserveVideoSlot).toHaveBeenCalledTimes(1);
+      expect(reserveVideoSlot).toHaveBeenCalledWith('user-1', 'PREMIUM');
+      expect(releaseVideoSlot).not.toHaveBeenCalled();
     });
 
-    it('quota: should return 429 when user is at monthly limit', async () => {
-      vi.mocked(checkVideoQuota).mockResolvedValue({
-        allowed: false,
+    it('quota: returns 429 and does not call HeyGen when reservation fails', async () => {
+      vi.mocked(reserveVideoSlot).mockResolvedValue({
+        reserved: false,
         used: 30,
         limit: 30,
         resetAt: '2026-05-01T00:00:00.000Z',
@@ -294,18 +297,31 @@ describe('HeyGen API Routes', () => {
       expect(data.limit).toBe(30);
       expect(data.used).toBe(30);
       expect(data.resetAt).toBe('2026-05-01T00:00:00.000Z');
-      // HeyGen must NOT be called when quota is exceeded
       expect(mockVideoService.createVideo).not.toHaveBeenCalled();
+      expect(releaseVideoSlot).not.toHaveBeenCalled();
     });
 
-    it('quota: should increment usage counter only after successful video creation', async () => {
-      vi.mocked(checkVideoQuota).mockResolvedValue({
-        allowed: true,
-        used: 5,
-        limit: 30,
-        resetAt: '2026-05-01T00:00:00.000Z',
-      } as never);
-      mockVideoService.createVideo.mockResolvedValue('vid_increment_test');
+    it('quota: releases the slot when HeyGen rejects credentials', async () => {
+      const { MissingCredentialsError } = await import('@/lib/services/errors');
+      mockVideoService.createVideo.mockRejectedValue(new MissingCredentialsError('HEYGEN_API_KEY'));
+
+      const req = new NextRequest('http://localhost/api/heygen/create-video', {
+        method: 'POST',
+        body: JSON.stringify({ avatarId: 'av1', voiceId: 'v1', script: 'test script' }),
+      });
+
+      const response = await createVideo(req);
+      const data = await response.json() as Record<string, string>;
+
+      expect(response.status).toBe(503);
+      expect(data.code).toBe('MISSING_KEY');
+      expect(releaseVideoSlot).toHaveBeenCalledTimes(1);
+      expect(releaseVideoSlot).toHaveBeenCalledWith('user-1');
+    });
+
+    it('quota: releases the slot when HeyGen throws an unexpected error', async () => {
+      mockVideoService.createVideo.mockRejectedValue(new Error('upstream timeout'));
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       const req = new NextRequest('http://localhost/api/heygen/create-video', {
         method: 'POST',
@@ -314,10 +330,10 @@ describe('HeyGen API Routes', () => {
 
       const response = await createVideo(req);
 
-      expect(response.status).toBe(200);
-      // incrementVideoUsage must be called exactly once with the user id
-      expect(incrementVideoUsage).toHaveBeenCalledTimes(1);
-      expect(incrementVideoUsage).toHaveBeenCalledWith('user-1');
+      expect(response.status).toBe(500);
+      expect(releaseVideoSlot).toHaveBeenCalledTimes(1);
+      expect(releaseVideoSlot).toHaveBeenCalledWith('user-1');
+      consoleSpy.mockRestore();
     });
   });
 
