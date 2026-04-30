@@ -21,6 +21,7 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const coupon = searchParams.get('coupon');
   const tier = searchParams.get('tier');
+  const redirectTo = searchParams.get('redirect') || '/dashboard';
   const tSignup = useTranslations("auth.signup");
   const signupStrings = useMemo(() => ({
     name_label: tSignup("name_label"),
@@ -64,7 +65,7 @@ export default function LoginPage() {
       const { error: authError } = await authClient.signIn.email({
         email,
         password,
-        callbackURL: "/dashboard",
+        callbackURL: redirectTo,
       });
 
       if (authError) {
@@ -77,7 +78,7 @@ export default function LoginPage() {
         return;
       }
 
-      router.push("/dashboard");
+      router.push(redirectTo);
       router.refresh();
     } catch {
       setError("Lỗi kết nối. Vui lòng thử lại.");
@@ -94,7 +95,7 @@ export default function LoginPage() {
     try {
       const { error: authError } = await authClient.signIn.magicLink({
         email,
-        callbackURL: "/dashboard",
+        callbackURL: redirectTo,
       });
 
       if (authError) {
