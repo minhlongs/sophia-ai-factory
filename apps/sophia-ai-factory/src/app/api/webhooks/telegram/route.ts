@@ -39,8 +39,10 @@ interface TelegramUpdate {
  * Supports: text commands, callback queries (inline keyboards)
  */
 export async function POST(request: NextRequest) {
-  // Degrade silently when Telegram bot is not configured
+  // Degrade gracefully when Telegram bot is not configured
+  // Returns 200 to prevent Telegram retry-storm; logs warning for operator awareness
   if (!process.env.TELEGRAM_BOT_TOKEN) {
+    console.warn('[telegram-webhook] TELEGRAM_BOT_TOKEN is not set — bot is dormant. Run: wrangler secret put TELEGRAM_BOT_TOKEN')
     return NextResponse.json({ ok: true })
   }
 

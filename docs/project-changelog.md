@@ -1,7 +1,39 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-04-28 (Go-Live Audit Phase 01 Tier-1: CI Hardening, Auth Gates, i18n, A11y, CDN Caching, DB Backup)
+> **Last Updated:** 2026-04-29 (Revenue/Growth Parallel Batch: NOWPayments E2E Tests, Telegram Webhook Guard, Affiliate Real Data)
+
+---
+
+## [2026-04-29] Revenue & Growth Parallel Batch (Phases A-C) — SHIPPED
+
+### Summary
+Parallel batch executing 3 revenue/growth streams: (A) NOWPayments checkout E2E tests (12 tests, route.test.ts), (B) Telegram webhook missing-token guard (docs/telegram-bot-setup.md updated), (C) Affiliate dashboard real data wired to D1 (new `/api/affiliate-discovery` route + page refactor). Tests: 1362/1362 ✅. No code changes to existing routes — test-only for Phase A, docs-only for Phase B, new route + refactor for Phase C.
+
+### Categories
+
+**Phase A — NOWPayments Checkout Flow E2E:**
+- `src/app/api/webhooks/nowpayments/route.test.ts` (12 tests) — IPN payload validation, tier activation flow, duplicate-request idempotency, missing-field guards
+- No changes to route.ts itself
+
+**Phase B — Telegram Webhook Safety (Docs Update):**
+- `docs/telegram-bot-setup.md` — Already present with 3 numbered setup steps + troubleshooting section. Verified missing-token guard in webhook handler.
+
+**Phase C — Affiliate Discovery Real Data:**
+- `src/app/api/affiliate-discovery/route.ts` (NEW) — GET handler returns paginated offers from `affiliate_offers_selected` D1 table
+- `src/app/[locale]/affiliate-discovery/page.tsx` — Refactored from DEMO_PRODUCTS hardcoded array → real D1 data via server component
+- `src/app/api/affiliate-discovery/route.test.ts` (NEW) — Pagination, empty-state, field mapping tests
+
+### Files Modified (5 Total)
+Test: 1 | Code: 2 | Docs: 1 | Migrations: 0
+
+### Metrics
+- **NOWPayments Tests:** 12 new tests, all green
+- **Telegram Docs:** 3 setup steps + 5 troubleshooting subsections, complete
+- **Affiliate API:** New route + page refactor, 0 breaking changes
+- **Test Coverage:** 1362/1362 pass (100%)
+- **Build:** ✅ 0 TS errors
+- **Production:** ✅ HTTP 200
 
 ---
 

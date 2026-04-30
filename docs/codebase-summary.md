@@ -246,6 +246,7 @@ better_auth_verifications        → id, identifier, value, expires_at
 | `/api/raas/missions` | GET/POST | Mission CRUD |
 | `/api/raas/keys` | GET/POST | API key management |
 | `/api/proposals/generate` | POST | AI proposal generation (MCU billable) |
+| `/api/affiliate-discovery` | GET | Paginated affiliate offers (real D1 data, replaces DEMO mode) |
 | `/api/coupons/apply` | POST | Redeem coupon (auth gate, per-user limit via migration 0025) |
 | `/api/setup/save` | POST | Setup wizard save (auth gate) |
 
