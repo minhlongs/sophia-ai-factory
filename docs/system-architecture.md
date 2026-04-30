@@ -6,9 +6,16 @@
 **Production:** https://sophia.agencyos.network
 **Production Dashboard:** https://sophia.agencyos.network/dashboard
 
-### Recent Shipments (2026-04-30)
-- **Auto Video Customer Handoff (2026-04-30):** 4 Inngest video pipeline stubs → real (scripting via OpenRouter gpt-4o-mini, visual via HeyGen, compose pass-through, upload verify via R2). NOWPayments IPN auto-triggers HeyGen onboarding video for ENTERPRISE/MASTER purchase tiers. Resend email notification on video completion. New DB: `video_onboarding_events` table, `videos.is_onboarding` column. New modules: `lib/video/onboarding-video.ts`, `lib/email/onboarding-emails.ts`. Tests: 1798/1798 ✅.
-- **Revenue/Growth Parallel Batch (2026-04-29):** NOWPayments E2E tests + Telegram webhook guard + Affiliate real data
+### Recent Shipments (2026-04-30 Final)
+- **Phase 14 Launch Hardening (2026-04-30):** FTC `#ad` overlay (FFmpeg drawtext last 3s) + caption prefix in publishers + GDPR `/api/account/export` + DELETE + runbook (10 incidents tracked). Polar.sh removed from rate-limiter. Manual deploy fallback documented (CI Actions broken since 2026-04-27).
+- **Phase 13 Revenue Split (2026-04-30):** commission_ledger + 14-day clawback + payout_batches + NOWPayments USDT mass-payout (TRC20 preferred, ERC20 fallback) + reconciliation cron. Real affiliate network payouts live.
+- **Phase 12 OpenClaw (2026-04-30):** 10-primitive orchestrator (spawnAgentFleet, withTenant, onEvent, activateSkill, scheduleAgent, memory, mcp, enqueue, audit, rateLimitGate) on Claude SDK + Qwen 3 32B router + circuit breaker.
+- **Phase 11 Tenant Isolation (2026-04-30):** D1 Kysely tenant-scope plugin (auto-injects tenant_id) + tier quota enforcer (free/pro/enterprise) + storage tracker cron.
+- **Phase 10 Publishers (2026-04-30):** TikTok Shop, YouTube Data v3, Instagram Graph adapters with token crypto + per-channel quota + scheduler.
+- **Phase 9 Affiliate (2026-04-30):** 5 networks (TikTok Shop, AccessTrade, ClickBank, Awin, Amazon) with HMAC-verified webhooks + click recorder (ip_hash) + commission attribution.
+- **Phase 8 Visual (2026-04-30):** 2-path router (template via MoviePy + cinematic via HunyuanVideo on Runpod) + FFmpeg composer + subtitle generator.
+- **Phase 7 TTS (2026-04-30):** Coqui XTTS v2 service blueprint (Fly.io Docker) + `/api/internal/tts` proxy + voice CRUD.
+- **Phase 6 Video (2026-04-30):** FSM + Inngest functions (scripting/tts/visual/compose/upload/publish) + `video_jobs` D1 table + `/api/videos` endpoints.
 
 ### Earlier Shipments (2026-04-18)
 Rounds 4 + 5 + 6 + 7 + 8: 20+ major features shipped (LLM observability + async ops + signals + BYOK integration + user admin):
@@ -321,13 +328,20 @@ affiliate_content — id, org_id, type, title, content, status
 |-------|--------|---------|
 | `/api/org` | GET | Current org info |
 | `/api/billing/subscription` | GET | Subscription + MCU balance |
-| `/api/billing/checkout` | POST | Polar checkout session |
+| `/api/billing/checkout` | POST | NOWPayments/PayOS checkout session |
 | `/api/raas/missions` | GET/POST | Mission CRUD |
 | `/api/raas/keys` | GET/POST | API key management |
 | `/api/raas/usage` | GET | MCU usage stats |
 | `/api/proposals/generate` | POST | AI proposal (MCU billable) |
-| `/api/video/generate` | POST | Video generation (MCU billable) |
-| `/api/user/byok` | GET/POST/DELETE | User BYOK API key management (Phase 8C) |
+| `/api/videos/generate` | POST | Video generation (MCU billable, Phases 6-8) |
+| `/api/videos` | GET/POST | Video CRUD + Inngest status (Phase 6) |
+| `/api/affiliates/dashboard` | GET | Affiliate earnings + commission tracking (Phase 9) |
+| `/api/affiliates/networks` | GET | Available networks (TikTok Shop, Awin, ClickBank, AccessTrade, Amazon) (Phase 9) |
+| `/api/publishers/channels` | GET/POST | Social channel management (TikTok, YouTube, Instagram) (Phase 10) |
+| `/api/publishers/schedule` | POST | Schedule post across channels (Phase 10) |
+| `/api/account/export` | POST | GDPR data export (Phase 14) |
+| `/api/account/delete` | POST | GDPR account deletion (Phase 14) |
+| `/api/user/byok` | GET/POST/DELETE | User BYOK API key management (Phase 4-8) |
 
 ### RaaS External API (Bearer Token)
 | Route | Method | Purpose |
@@ -355,9 +369,17 @@ affiliate_content — id, org_id, type, title, content, status
 
 ## Autonomous Operations & Cron Jobs (2026-04-30)
 
-**Cloudflare Workers Cron Triggers:** 7 scheduled workflows for solopreneur autonomy
+**Cloudflare Workers Cron Triggers:** 7+ scheduled workflows for solopreneur autonomy
 
-**Inngest Event-Driven Pipeline:** Video generation runs on event triggers (not cron) — purchase events via IPN webhook, HeyGen callbacks via webhook. 4-step pipeline: scripting → visual → compose(skip) → upload.
+**Inngest Event-Driven Pipelines (Phases 6-8):** 
+- **Video Generation:** Script(OpenRouter gpt-4o-mini) → TTS(Coqui XTTS v2) → Visual(HeyGen or HunyuanVideo) → Compose(FFmpeg) → Upload(R2) → Publish (subscriber notification)
+- **Onboarding Video:** NOWPayments IPN (ENTERPRISE/MASTER) → HeyGen auto-gen → Email delivery via Resend → Dashboard gallery
+- **Affiliate Payouts (Phase 13):** Click events → commission calculation → 14-day clawback → NOWPayments USDT batch → reconciliation cron
+
+**Publisher Schedulers (Phase 10):**
+- **TikTok Shop:** Auto-publish with product sync + hashtag injection
+- **YouTube Data v3:** Playlist + analytics + scheduled premieres
+- **Instagram Graph:** Caption + media + scheduled post + story archival
 
 | Trigger | Frequency | Purpose | Implementation |
 |---------|-----------|---------|---|
@@ -368,8 +390,10 @@ affiliate_content — id, org_id, type, title, content, status
 | System Health Check | 5 minutes | Uptime monitoring (Telegram alerts) | `lib/crons/health-check.ts` |
 | Quota Evaluation | 1 hour | MCU limit warnings (email + Telegram) | `lib/alerts/quota/scheduler.ts` |
 | Usage Aggregation | 30 minutes | MCU rollup + balance updates | `lib/usage-metering/rollup.ts` |
-| **Video Pipeline** | Event-driven | Script(OpenRouter)→Visual(HeyGen)→Upload(R2) | `lib/inngest/functions/video-*.ts` |
-| **Onboarding Video** | IPN trigger | ENTERPRISE/MASTER purchase → auto video → email | `lib/video/onboarding-video.ts` |
+| **Video Pipeline** | Event-driven | 6-step: script → tts → visual → compose → upload → publish | `lib/inngest/functions/video-*.ts` |
+| **Onboarding Video** | IPN trigger | ENTERPRISE/MASTER purchase → auto video → email → dashboard | `lib/video/onboarding-video.ts` |
+| **Affiliate Payouts** | Daily | Commission aggregate → 14-day hold → batch payout to USDT | `lib/payouts/payout-batch-cron.ts` |
+| **Publisher Sync** | Hourly | Queue scheduled posts across 5 networks | `lib/publishers/scheduler-cron.ts` |
 
 **Configuration:** `wrangler.toml` defines triggers; each cron handler orchestrates async operations.
 

@@ -1,12 +1,12 @@
 # Codebase Summary — Sophia AI Factory
 
 > Comprehensive overview of the Sophia AI Factory codebase structure, patterns, and architectural decisions.
-> **Last Updated:** 2026-04-28 (Go-Live Audit Phase 01 Tier-1: Auth Gates, i18n, A11y, Coupon Redemptions)
+> **Last Updated:** 2026-04-30 (Phase 6-14 Shipped: Video Pipeline + Affiliate + Publishers + OpenClaw + Payouts + FTC Hardening)
 
 **Production URL:** https://sophia.agencyos.network
-**Tech Stack:** Next.js 15.5 + Cloudflare Workers + D1 SQLite + Better Auth v1.6.2 + Better Stack + PostHog
-**Test Status:** 1362/1362 passing (100%) | **Build:** < 10s, 0 TS errors | **Bundle:** < 500 KB gzipped
-**Shipped (2026-04-25):** Phase 9 Analytics (Real-time SSE, revenue metrics, cohort analysis, tier adoption, ~1,800 LOC, 6 lib modules, 7 components, 4 endpoints)
+**Tech Stack:** Next.js 16 + Cloudflare Workers + D1 SQLite + Better Auth v1.6.2 + Inngest + Better Stack + PostHog + NOWPayments
+**Test Status:** 1798/1798 passing (100%) | **Build:** < 10s, 0 TS errors | **Bundle:** < 500 KB gzipped
+**Phase 14 Complete (2026-04-30):** Launch Hardening (FTC #ad overlay, GDPR export/delete, runbook). Phases 6-13 shipped: Video pipeline (6-step Inngest), Affiliate networks (Phase 9), Publishers (Phase 10), OpenClaw (Phase 12), Revenue split (Phase 13).
 
 ---
 
@@ -95,18 +95,56 @@ apps/sophia-ai-factory/
 │   │   ├── campaigns/          # Campaign management (shared core logic)
 │   │   │   └── create-campaign-core.ts
 │   │   │
+│   │   ├── video/              # Video pipeline (Phases 6-8)
+│   │   │   ├── onboarding-video.ts         # Post-purchase auto-gen (ENTERPRISE/MASTER)
+│   │   │   ├── video-fsm.ts                # FSM state machine
+│   │   │   └── ...                         # Job tracking, manifest generation
+│   │   │
+│   │   ├── inngest/            # Event-driven orchestration (Phase 6)
+│   │   │   ├── functions/video-scripting.ts
+│   │   │   ├── functions/video-visual.ts
+│   │   │   ├── functions/video-upload.ts
+│   │   │   └── ...
+│   │   │
+│   │   ├── affiliates/         # Affiliate network integration (Phase 9)
+│   │   │   ├── networks/                   # 5 adapters (TikTok Shop, Awin, ClickBank, AccessTrade, Amazon)
+│   │   │   ├── commission-tracker.ts
+│   │   │   └── webhook-handlers.ts
+│   │   │
+│   │   ├── publishers/         # Social media publishing (Phase 10)
+│   │   │   ├── tiktok-shop-adapter.ts
+│   │   │   ├── youtube-data-adapter.ts
+│   │   │   ├── instagram-adapter.ts
+│   │   │   └── scheduler-cron.ts
+│   │   │
+│   │   ├── payouts/            # Revenue split & payouts (Phase 13)
+│   │   │   ├── commission-ledger.ts
+│   │   │   ├── payout-batch-cron.ts
+│   │   │   ├── nowpayments-usdt-mass-payout.ts
+│   │   │   └── reconciliation.ts
+│   │   │
+│   │   ├── openclaw/           # OpenClaw orchestrator (Phase 12)
+│   │   │   ├── agent-fleet-spawn.ts
+│   │   │   ├── circuit-breaker.ts
+│   │   │   └── skill-activation.ts
+│   │   │
+│   │   ├── email/              # Email delivery (expanded Phase 14)
+│   │   │   ├── onboarding-emails.ts        # Video completion notification
+│   │   │   ├── ...
+│   │   │   └── (gdpr/export-prepare.ts moved)
+│   │   │
 │   │   ├── gateway/            # OpenClaw integration, channel adapters
 │   │   ├── ingestion/          # Affiliate data ingestion (ClickBank, ShareASale)
 │   │   ├── intelligence/       # Affiliate scoring & normalization
 │   │   ├── discovery/          # Affiliate discovery algorithms
 │   │   ├── telegram/           # Telegram bot (handlers, FSM, rate limiting)
-│   │   ├── security/           # Auth, rate limiting, input validation
+│   │   ├── security/           # Auth, rate limiting, input validation (Phase 14: FTC overlay)
 │   │   ├── services/           # Factory pattern (real + mock implementations)
 │   │   ├── ai/                 # AI integrations (script generation, video, TTS)
-│   │   ├── clients/            # External API clients (NOWPayments, Upstash, Better Stack, PostHog)
+│   │   ├── clients/            # External API clients (NOWPayments, Upstash, Better Stack, PostHog, Inngest)
 │   │   ├── config/             # Environment & tier configuration
 │   │   ├── analytics/          # Dashboard analytics, ROI calculation
-│   │   ├── audit/              # Compliance, GDPR, audit logging
+│   │   ├── audit/              # Compliance, GDPR (Phase 14: /api/account/export + /delete), audit logging
 │   │   └── utils/              # Helper functions, validators, formatters
 │   │
 │   ├── components/             # React components (organized by feature)
@@ -225,6 +263,24 @@ better_auth_accounts             → id, user_id, account_id, provider, provider
 better_auth_verifications        → id, identifier, value, expires_at
 ```
 
+### Video Tables (Phases 6-8)
+```
+videos                   → id, org_id, user_id, title, r2_key, status, is_onboarding, created_at
+video_onboarding_events  → id, org_id, video_id, user_email, tier, delivery_status, created_at
+video_jobs               → id, org_id, status (queued/scripting/visual/compose/upload), job_data (JSON)
+```
+
+### Affiliate & Publisher Tables (Phases 9-10)
+```
+affiliate_networks       → id, name (TikTok Shop/Awin/ClickBank/AccessTrade/Amazon), webhook_verified_at
+affiliate_offers         → id, network_id, external_id, title, commission_rate, is_active
+affiliate_clicks         → id, offer_id, user_id, ip_hash, timestamp, attribution_window (14d clawback)
+commission_ledger        → id, click_id, amount, status (pending/clawed_back/paid), created_at
+payout_batches           → id, org_id, total_amount, currency (USDT), status, nowpayments_batch_id
+publisher_channels       → id, org_id, platform (tiktok/youtube/instagram), channel_id, token_encrypted
+scheduled_posts          → id, org_id, content, scheduled_at, channels_bitmap, status, published_at
+```
+
 ---
 
 ## API Routes
@@ -242,13 +298,21 @@ better_auth_verifications        → id, identifier, value, expires_at
 |-------|--------|---------|
 | `/api/org` | GET | Current org info |
 | `/api/billing/subscription` | GET | Subscription + MCU balance |
-| `/api/billing/checkout` | POST | Payment checkout session |
+| `/api/billing/checkout` | POST | NOWPayments/PayOS checkout |
 | `/api/raas/missions` | GET/POST | Mission CRUD |
 | `/api/raas/keys` | GET/POST | API key management |
-| `/api/proposals/generate` | POST | AI proposal generation (MCU billable) |
-| `/api/affiliate-discovery` | GET | Paginated affiliate offers (real D1 data, replaces DEMO mode) |
-| `/api/coupons/apply` | POST | Redeem coupon (auth gate, per-user limit via migration 0025) |
-| `/api/setup/save` | POST | Setup wizard save (auth gate) |
+| `/api/proposals/generate` | POST | AI proposal (MCU billable) |
+| `/api/videos/generate` | POST | Video generation (MCU billable, Phases 6-8) |
+| `/api/videos` | GET/POST | Video CRUD + Inngest status (Phase 6) |
+| `/api/affiliates/dashboard` | GET | Earnings + commission tracking (Phase 9) |
+| `/api/affiliates/networks` | GET | 5 networks (TikTok Shop, Awin, ClickBank, AccessTrade, Amazon) (Phase 9) |
+| `/api/publishers/channels` | GET/POST | Social channel management (Phase 10) |
+| `/api/publishers/schedule` | POST | Schedule post across channels (Phase 10) |
+| `/api/account/export` | POST | GDPR data export (Phase 14) |
+| `/api/account/delete` | POST | GDPR account deletion (Phase 14) |
+| `/api/affiliate-discovery` | GET | Paginated affiliate offers |
+| `/api/coupons/apply` | POST | Redeem coupon (per-user limit) |
+| `/api/setup/save` | POST | Setup wizard save |
 
 ### Internal/Ops Routes
 | Route | Method | Purpose |

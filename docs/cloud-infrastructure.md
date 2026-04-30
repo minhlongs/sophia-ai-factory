@@ -23,13 +23,27 @@ specs:
   regions: 300+ global edge locations
 ```
 
-**Deploy Flow:**
+**Deploy Flow (CI-Based):**
 1. `git push origin main` → GitHub Actions
 2. GitHub Actions runs tests (`npm test`, `npm audit`)
 3. On success: triggers Cloudflare Deploy action
 4. Builds Next.js: `npx opennextjs-cloudflare build`
 5. Publishes worker to `main` environment
 6. Auto-routes traffic to new deployment
+
+**Deploy Fallback (Manual, CI Broken Since 2026-04-27):**
+If GitHub Actions deploy fails or is unavailable:
+```bash
+cd /path/to/sophia-ai-factory
+npm run deploy:build
+npx wrangler deploy --name sophia-ai-factory
+
+# Set required secrets (one-time):
+npx wrangler secret put COMMIT_SHA --value "$(git rev-parse HEAD)"
+npx wrangler secret put DEPLOYED_AT --value "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+npx wrangler secret put DEPLOY_BRANCH --value "main"
+```
+Verify production: `curl https://sophia.agencyos.network/api/health`
 
 **Config:** `wrangler.toml`
 
