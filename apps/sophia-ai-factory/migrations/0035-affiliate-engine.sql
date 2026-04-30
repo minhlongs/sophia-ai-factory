@@ -71,5 +71,6 @@ CREATE TABLE IF NOT EXISTS conversion_events (
 
 CREATE INDEX IF NOT EXISTS idx_offers_tenant_niche ON affiliate_offers(tenant_id, niche, is_trending);
 CREATE INDEX IF NOT EXISTS idx_links_tenant_code ON affiliate_links(tenant_id, code);
+CREATE INDEX IF NOT EXISTS idx_affiliate_links_sub_id ON affiliate_links(sub_id) WHERE sub_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_click_tenant_link ON click_events(tenant_id, link_id, clicked_at DESC);
 CREATE INDEX IF NOT EXISTS idx_conv_tenant_status ON conversion_events(tenant_id, status, attributed_at DESC);

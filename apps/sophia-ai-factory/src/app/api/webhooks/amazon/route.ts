@@ -12,13 +12,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@/lib/utils/logger-utility'
-
-function getD1(): D1Database | null {
-  const env = (globalThis as unknown as { __env?: Record<string, unknown> }).__env
-  if (env?.DB) return env.DB as D1Database
-  const g = (globalThis as Record<string, unknown>).__D1_DB as D1Database | undefined
-  return g ?? null
-}
+import { getD1Raw } from '@/lib/db/client'
 
 async function verifyHmac(body: string, signature: string, secret: string): Promise<boolean> {
   if (!body || !signature || !secret) return false
@@ -78,21 +72,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const orderId = payload.order_id
   if (!orderId) return NextResponse.json({ ok: true, skipped: 'no_order_id' })
 
-  const db = getD1()
-  if (!db) {
+  let db: D1Database
+  try {
+    db = await getD1Raw()
+  } catch {
     logger.warn('[amazon-webhook] D1 unavailable')
     return NextResponse.json({ ok: true, skipped: 'db_unavailable' })
   }
 
-  // Idempotency
-  const existing = await db
-    .prepare('SELECT 1 FROM conversion_events WHERE network_transaction_id = ? LIMIT 1')
-    .bind(orderId)
-    .first<{ 1: number }>()
-
-  if (existing) return NextResponse.json({ ok: true, skipped: 'duplicate' })
-
-  // Lookup link by partner tag used as sub_id
+  // Lookup link by partner tag used as sub_id.
+  // LIMITATION: Amazon's `tag` is a shared Associates ID across all clicks from the same account.
+  // Per-click attribution requires a composite tag suffix (e.g. `${PARTNER_TAG}-${linkIdShort}`)
+  // appended at redirect time and stored as sub_id. Without that, we match the first link with
+  // this tag — cross-attribution is possible. TODO(phase-13): implement per-click tag suffix.
   const tag = payload.tag ?? ''
   const linkRow = tag
     ? await db.prepare('SELECT id, tenant_id FROM affiliate_links WHERE sub_id = ? LIMIT 1')
@@ -107,7 +99,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const now = Math.floor(Date.now() / 1000)
 
   try {
-    await db.prepare(
+    // Atomic idempotency: INSERT OR IGNORE + rows_written check (eliminates SELECT pre-check race)
+    const result = await db.prepare(
       `INSERT OR IGNORE INTO conversion_events
         (id, tenant_id, link_id, click_id, network_transaction_id,
          gross_amount_usd, commission_usd, status, attributed_at)
@@ -116,6 +109,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       crypto.randomUUID(), tenantId, linkId,
       orderId, grossAmount, commissionUsd, status, now
     ).run()
+    if (!result.meta.rows_written || result.meta.rows_written === 0) {
+      return NextResponse.json({ ok: true, skipped: 'duplicate' })
+    }
   } catch (err) {
     logger.warn('[amazon-webhook] insert error', { error: err instanceof Error ? err.message : String(err) })
   }
