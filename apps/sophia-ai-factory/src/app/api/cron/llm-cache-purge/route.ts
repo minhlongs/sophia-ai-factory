@@ -11,6 +11,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getErrorMessage } from '@/lib/utils/to-error'
 import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker'
+import { verifyCronAuth } from '@/lib/security/cron-auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -34,13 +35,6 @@ interface GlobalEnv {
   DB?: D1Binding
 }
 
-function verifyCronSecret(request: NextRequest): boolean {
-  if (process.env.NODE_ENV === 'development') return true
-  const secret = process.env.CRON_SECRET
-  if (!secret) return false
-  return request.headers.get('authorization') === `Bearer ${secret}`
-}
-
 async function purgeExpired(db: D1Binding): Promise<number> {
   const result = await db
     .prepare(`DELETE FROM llm_cache WHERE expires_at < datetime('now')`)
@@ -50,9 +44,8 @@ async function purgeExpired(db: D1Binding): Promise<number> {
 }
 
 async function handler(request: NextRequest): Promise<NextResponse> {
-  if (!verifyCronSecret(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const authError = verifyCronAuth(request);
+  if (authError) return authError;
 
   const db = (globalThis as unknown as GlobalEnv).DB
   if (!db) {

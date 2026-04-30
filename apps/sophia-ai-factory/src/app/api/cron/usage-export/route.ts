@@ -7,7 +7,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@/lib/utils/logger-utility'
 import { getErrorMessage } from '@/lib/utils/to-error'
-import { verifyCronAuth, getPreviousDayRange } from './cron-usage-export-helpers'
+import { getPreviousDayRange } from './cron-usage-export-helpers'
+import { verifyCronAuth } from '@/lib/security/cron-auth'
 import { getActiveLicenses } from './cron-usage-export-db'
 import { processLicenseExport } from './cron-usage-export-processor'
 import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker'
@@ -31,7 +32,8 @@ export async function GET(request: NextRequest) {
   const requestId = crypto.randomUUID()
   const startTime = Date.now()
 
-  if (!verifyCronAuth(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const authError = verifyCronAuth(request);
+  if (authError) return authError;
 
   const db = getD1()
 

@@ -16,6 +16,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { pushHeartbeat, pushFatalLog } from '@/lib/telemetry/better-stack-client';
 import { getErrorMessage } from '@/lib/utils/to-error';
 import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker';
+import { verifyCronAuth } from '@/lib/security/cron-auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,17 +24,9 @@ interface Env {
   DB?: {
     prepare: (sql: string) => { first: () => Promise<unknown> };
   };
-  CRON_SECRET?: string;
   BETTER_STACK_HEARTBEAT_URL?: string;
   BETTER_STACK_LOGS_TOKEN?: string;
   BETTER_STACK_INGESTING_HOST?: string;
-}
-
-function verifyCronSecret(request: NextRequest, cronSecret: string | undefined): boolean {
-  if (process.env.NODE_ENV === 'development') return true;
-  if (!cronSecret) return false;
-  const auth = request.headers.get('authorization');
-  return auth === `Bearer ${cronSecret}`;
 }
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
@@ -49,11 +42,8 @@ const CRON_NAME = 'heartbeat';
 const IDEMPOTENCY_WINDOW_MS = 5 * 60 * 1000;
 
 async function handler(request: NextRequest): Promise<NextResponse> {
-  // RED-TEAM #3: verify CRON_SECRET
-  const cronSecret = process.env.CRON_SECRET;
-  if (!verifyCronSecret(request, cronSecret)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const authError = verifyCronAuth(request);
+  if (authError) return authError;
 
   const bsConfig = {
     logsToken: process.env.BETTER_STACK_LOGS_TOKEN ?? '',
