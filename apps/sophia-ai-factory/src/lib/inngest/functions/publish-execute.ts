@@ -203,10 +203,12 @@ export const publishExecute = inngest.createFunction(
           const delayS = RETRY_DELAYS_S[retryCount - 1] ?? 1800;
           logger.warn('[publishExecute] Upload failed, scheduling retry', { jobId, retryCount, delayS });
           // C8: idempotency id per job + retry count
+          // H-NEW-1 fix: ts MUST be set or delayS is ignored (retry fires immediately)
           await inngest.send({
             id: `publish-${jobId}-retry-${retryCount}`,
             name: 'publish.scheduled',
             data: { jobId, tenantId, userId: event.data.userId, attempt: retryCount },
+            ts: Date.now() + delayS * 1000,
           });
         }
         return { skipped: false, jobId, status: nextStatus as 'failed' | 'scheduled', externalPostId: '', provider: '', error: errorMsg };
