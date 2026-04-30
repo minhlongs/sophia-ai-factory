@@ -62,11 +62,10 @@ const nextConfig: NextConfig = {
       { source: '/support', destination: '/dashboard/support', permanent: false },
       { source: '/faq', destination: '/guide/faq', permanent: false },
       { source: '/help', destination: '/guide', permanent: false },
+      { source: '/guide/getting-started', destination: '/guide', permanent: false },
       // Landing
       { source: '/about', destination: '/', permanent: false },
       { source: '/contact', destination: '/', permanent: false },
-      { source: '/terms', destination: '/', permanent: false },
-      { source: '/privacy', destination: '/', permanent: false },
       // System
       { source: '/status', destination: '/api/health', permanent: false },
       // Locale — redirect /en to root (default locale is en, served without prefix)
