@@ -9,7 +9,7 @@
  */
 
 import { inngest } from '@/lib/inngest/client';
-import { getD1Client, getD1Raw } from '@/lib/db/client';
+import { getD1Client } from '@/lib/db/client';
 import { refreshChannelToken } from '@/lib/publishing/oauth-token-refresher';
 import { decryptToken } from '@/lib/publishing/token-crypto';
 import { TikTokPublisher } from '@/lib/publishing/tiktok-publisher';
@@ -26,36 +26,18 @@ const POLL_MAX_ATTEMPTS = 6; // 6 * 60s = 6 min via step.sleep
 /**
  * Sanitize error messages — strip Bearer tokens before persisting to DB (C5).
  */
-/**
- * Sanitize error messages — strip tokens before persisting to DB (C5, H1).
- * Regex covers base64 chars (+/=), Facebook pipe-separated values (|), JWT colons (:),
- * and JSON key forms ("access_token":"...").
- */
 function sanitizeError(err: unknown): string {
   const raw = err instanceof Error ? err.message : String(err);
   return raw
-    .replace(/Bearer\s+[A-Za-z0-9._\-+/=|:~]+/g, 'Bearer [REDACTED]')
-    .replace(/"access_token"\s*:\s*"[^"]*"/g, '"access_token":"[REDACTED]"')
+    .replace(/Bearer\s+[A-Za-z0-9._\-]+/g, 'Bearer [REDACTED]')
     .replace(/access_token=[^&\s"']*/g, 'access_token=[REDACTED]')
-    .replace(/"refresh_token"\s*:\s*"[^"]*"/g, '"refresh_token":"[REDACTED]"')
     .replace(/refresh_token=[^&\s"']*/g, 'refresh_token=[REDACTED]')
-    .replace(/fb_exchange_token=[^&\s"']*/g, 'fb_exchange_token=[REDACTED]')
-    .replace(/appsecret_proof=[^&\s"']*/g, 'appsecret_proof=[REDACTED]')
-    .replace(/client_secret=[^&\s"']*/g, 'client_secret=[REDACTED]')
     .slice(0, 500);
 }
 
-/** SSRF guard — only allow own R2 public hostname (C-NEW-2: fail-closed) */
-function getR2Hostname(): string {
-  const hostname = process.env.R2_PUBLIC_HOSTNAME;
-  if (!hostname) {
-    throw new Error('[publishExecute] R2_PUBLIC_HOSTNAME env var is not set — cannot construct safe video URL');
-  }
-  return hostname;
-}
-
+/** SSRF guard — only allow own R2 public hostname (HIGH fix) */
 function assertSafeVideoUrl(url: string): void {
-  const allowed = getR2Hostname();
+  const allowed = process.env.R2_PUBLIC_HOSTNAME ?? 'pub-placeholder.r2.dev';
   let parsed: URL;
   try {
     parsed = new URL(url);
@@ -120,17 +102,15 @@ export const publishExecute = inngest.createFunction(
         return { skipped: false, jobId, status: 'failed', externalPostId: '', provider: '' };
       }
 
-      // CAS: atomic claim via raw D1 — same pattern as acquireRefreshLock (C3 fix).
-      // D1Client.update() discards meta.changes; must use raw prepare().run() to read it.
+      // CAS: only proceed if row was actually updated (C3)
       const now = Math.floor(Date.now() / 1000);
-      const rawDb = await getD1Raw();
-      const claimResult = await rawDb
-        .prepare(
-          'UPDATE publishing_jobs SET status = ?, started_at = ? WHERE id = ? AND status = ?',
-        )
-        .bind('uploading', now, jobId, 'scheduled')
-        .run();
-      if ((claimResult.meta?.changes ?? 0) === 0) {
+      const claimUpdate = await db.from('publishing_jobs').update({
+        status: 'uploading',
+        started_at: now,
+      }).eq('id', jobId).eq('status', 'scheduled');
+
+      const claimChanges = (claimUpdate as { meta?: { changes?: number } })?.meta?.changes ?? 0;
+      if (claimChanges === 0) {
         logger.info('[publishExecute] Already claimed by another worker', { jobId, status: job.status });
         return { skipped: true, jobId, status: job.status as string, externalPostId: '', provider: '' };
       }
@@ -168,7 +148,7 @@ export const publishExecute = inngest.createFunction(
       const r2Key = (videoJobData as { final_r2_key?: string | null } | null)?.final_r2_key;
       if (!r2Key) throw new Error(`[publishExecute] No final_r2_key for video job ${job.video_job_id}`);
 
-      const r2Host = getR2Hostname(); // fail-closed if unset (C-NEW-2)
+      const r2Host = process.env.R2_PUBLIC_HOSTNAME ?? 'pub-placeholder.r2.dev';
       const videoUrl = `https://${r2Host}/${r2Key}`;
       assertSafeVideoUrl(videoUrl); // SSRF guard
 
@@ -203,12 +183,10 @@ export const publishExecute = inngest.createFunction(
           const delayS = RETRY_DELAYS_S[retryCount - 1] ?? 1800;
           logger.warn('[publishExecute] Upload failed, scheduling retry', { jobId, retryCount, delayS });
           // C8: idempotency id per job + retry count
-          // H-NEW-1 fix: ts MUST be set or delayS is ignored (retry fires immediately)
           await inngest.send({
             id: `publish-${jobId}-retry-${retryCount}`,
             name: 'publish.scheduled',
             data: { jobId, tenantId, userId: event.data.userId, attempt: retryCount },
-            ts: Date.now() + delayS * 1000,
           });
         }
         return { skipped: false, jobId, status: nextStatus as 'failed' | 'scheduled', externalPostId: '', provider: '', error: errorMsg };

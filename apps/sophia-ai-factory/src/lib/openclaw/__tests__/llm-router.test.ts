@@ -1,5 +1,8 @@
 /**
  * llm-router.test.ts — Tests for LLM tier routing + circuit breaker
+ *
+ * Circuit breaker tests use describe.sequential to prevent shared state conflicts.
+ * qwenTimeoutMs: 10 used to minimize AbortController timer overlap between tests.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -10,8 +13,11 @@ import {
 } from '../llm-router';
 
 const FAKE_ANTHROPIC_KEY = 'test-anthropic-key';
+/** Short timeout to avoid AbortController timer interference between tests */
+const QWEN_TIMEOUT = 10;
+const QWEN_OPTS = { anthropicApiKey: FAKE_ANTHROPIC_KEY, qwenTimeoutMs: QWEN_TIMEOUT };
 
-describe('llm-router', () => {
+describe.sequential('llm-router', () => {
   beforeEach(() => {
     _resetCircuit();
     vi.restoreAllMocks();
@@ -19,6 +25,7 @@ describe('llm-router', () => {
 
   afterEach(() => {
     _resetCircuit();
+    vi.restoreAllMocks();
   });
 
   it('max tier calls Claude directly without Qwen', async () => {
@@ -36,7 +43,6 @@ describe('llm-router', () => {
     expect(result.provider).toBe('claude');
     expect(result.text).toBe('Claude response');
     expect(result.tier).toBe('max');
-    // Should call Anthropic API only
     expect(fetchSpy).toHaveBeenCalledTimes(1);
     expect(fetchSpy.mock.calls[0][0]).toContain('anthropic.com');
   });
@@ -52,6 +58,7 @@ describe('llm-router', () => {
     const result = await routeLLM('lite', 'test prompt', {
       qwenBaseUrl: 'http://localhost:11434',
       anthropicApiKey: FAKE_ANTHROPIC_KEY,
+      qwenTimeoutMs: QWEN_TIMEOUT,
     });
 
     expect(result.provider).toBe('qwen');
@@ -62,7 +69,7 @@ describe('llm-router', () => {
 
   it('lite tier falls back to Claude Haiku when Qwen is down', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch')
-      .mockRejectedValueOnce(new Error('ECONNREFUSED')) // Qwen down
+      .mockRejectedValueOnce(new Error('ECONNREFUSED'))
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({ content: [{ text: 'Haiku fallback' }] }),
@@ -72,7 +79,7 @@ describe('llm-router', () => {
 
     const result = await routeLLM('lite', 'test prompt', {
       qwenBaseUrl: 'http://localhost:11434',
-      anthropicApiKey: FAKE_ANTHROPIC_KEY,
+      ...QWEN_OPTS,
     });
 
     expect(result.provider).toBe('claude');
@@ -90,30 +97,23 @@ describe('llm-router', () => {
         ),
       );
 
-    const result = await routeLLM('standard', 'prompt', {
-      anthropicApiKey: FAKE_ANTHROPIC_KEY,
-    });
+    const result = await routeLLM('standard', 'prompt', QWEN_OPTS);
 
     expect(result.provider).toBe('claude');
   });
 
   it('circuit breaker opens after 3 consecutive Qwen failures', async () => {
     vi.spyOn(globalThis, 'fetch')
-      // 3 Qwen failures
       .mockRejectedValueOnce(new Error('fail1'))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ content: [{ text: 'haiku' }] }), { status: 200 }))
       .mockRejectedValueOnce(new Error('fail2'))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ content: [{ text: 'haiku' }] }), { status: 200 }))
       .mockRejectedValueOnce(new Error('fail3'))
-      // Claude fallbacks for all 3
-      .mockResolvedValue(
-        new Response(
-          JSON.stringify({ content: [{ text: 'haiku' }] }),
-          { status: 200 },
-        ),
-      );
+      .mockResolvedValue(new Response(JSON.stringify({ content: [{ text: 'haiku' }] }), { status: 200 }));
 
-    await routeLLM('lite', 'p1', { anthropicApiKey: FAKE_ANTHROPIC_KEY });
-    await routeLLM('lite', 'p2', { anthropicApiKey: FAKE_ANTHROPIC_KEY });
-    await routeLLM('lite', 'p3', { anthropicApiKey: FAKE_ANTHROPIC_KEY });
+    await routeLLM('lite', 'p1', QWEN_OPTS);
+    await routeLLM('lite', 'p2', QWEN_OPTS);
+    await routeLLM('lite', 'p3', QWEN_OPTS);
 
     const state = _getCircuitState();
     expect(state.failures).toBe(3);
@@ -124,21 +124,16 @@ describe('llm-router', () => {
     // Force circuit open
     vi.spyOn(globalThis, 'fetch')
       .mockRejectedValueOnce(new Error('f1'))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ content: [{ text: 'ok' }] }), { status: 200 }))
       .mockRejectedValueOnce(new Error('f2'))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ content: [{ text: 'ok' }] }), { status: 200 }))
       .mockRejectedValueOnce(new Error('f3'))
-      .mockResolvedValue(
-        new Response(
-          JSON.stringify({ content: [{ text: 'ok' }] }),
-          { status: 200 },
-        ),
-      );
+      .mockResolvedValue(new Response(JSON.stringify({ content: [{ text: 'ok' }] }), { status: 200 }));
 
-    // Trip circuit
     for (let i = 0; i < 3; i++) {
-      await routeLLM('lite', 'p', { anthropicApiKey: FAKE_ANTHROPIC_KEY });
+      await routeLLM('lite', 'p', QWEN_OPTS);
     }
 
-    // Reset mock to count fresh calls
     vi.restoreAllMocks();
     const freshFetch = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
       new Response(
@@ -147,33 +142,28 @@ describe('llm-router', () => {
       ),
     );
 
-    // Next call should skip Qwen entirely (circuit open)
-    const result = await routeLLM('lite', 'next', { anthropicApiKey: FAKE_ANTHROPIC_KEY });
+    const result = await routeLLM('lite', 'next', QWEN_OPTS);
     expect(result.provider).toBe('claude');
-    // Only 1 fetch (Claude), not 2 (Qwen + Claude)
     expect(freshFetch).toHaveBeenCalledTimes(1);
     expect(freshFetch.mock.calls[0][0]).toContain('anthropic.com');
   });
 
   it('circuit resets after window expires', async () => {
-    // Trip circuit
     vi.spyOn(globalThis, 'fetch')
       .mockRejectedValueOnce(new Error('f1'))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ content: [{ text: 'ok' }] }), { status: 200 }))
       .mockRejectedValueOnce(new Error('f2'))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ content: [{ text: 'ok' }] }), { status: 200 }))
       .mockRejectedValueOnce(new Error('f3'))
-      .mockResolvedValue(
-        new Response(JSON.stringify({ content: [{ text: 'ok' }] }), { status: 200 }),
-      );
+      .mockResolvedValue(new Response(JSON.stringify({ content: [{ text: 'ok' }] }), { status: 200 }));
 
     for (let i = 0; i < 3; i++) {
-      await routeLLM('lite', 'p', { anthropicApiKey: FAKE_ANTHROPIC_KEY });
+      await routeLLM('lite', 'p', QWEN_OPTS);
     }
 
-    // Manually expire the circuit
     const state = _getCircuitState();
     expect(state.openUntil).toBeGreaterThan(0);
 
-    // Reset manually (simulates time passing)
     _resetCircuit();
     const afterReset = _getCircuitState();
     expect(afterReset.openUntil).toBe(0);

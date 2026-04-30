@@ -36,7 +36,8 @@ export class YouTubePublisher implements Publisher {
     const contentType = videoRes.headers.get('content-type') ?? 'video/mp4';
 
     const hashtags = meta.hashtags.map(h => (h.startsWith('#') ? h : `#${h}`)).join(' ');
-    const description = `${meta.caption}\n\n${hashtags}${meta.productLink ? `\n\n${meta.productLink}` : ''}`;
+    const adCaption = meta.caption.startsWith('#ad ') ? meta.caption : `#ad ${meta.caption}`;
+        const description = `${adCaption}\n\n${hashtags}${meta.productLink ? `\n\n${meta.productLink}` : ''}`;
 
     const metadata = {
       snippet: {

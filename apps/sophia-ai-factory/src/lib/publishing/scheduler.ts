@@ -88,9 +88,7 @@ export async function schedulePublish(input: SchedulePublishInput): Promise<Sche
 
     jobIds.push(jobId);
 
-    // C8: idempotency id prevents double-fire on browser retries / network glitches
     await inngest.send({
-      id: `publish-${jobId}-attempt-0`,
       name: 'publish.scheduled',
       data: { jobId, tenantId, userId },
     });

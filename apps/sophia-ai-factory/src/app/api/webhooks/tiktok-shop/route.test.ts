@@ -34,9 +34,13 @@ type D1Mock = {
   _mockFirst?: ReturnType<typeof vi.fn>
 }
 
-function setD1Mock({ existingRow = null }: { existingRow?: unknown }) {
-  const mockRun = vi.fn().mockResolvedValue({ success: true })
-  const mockFirst = vi.fn().mockResolvedValue(existingRow)
+function setD1Mock({ isDuplicate = false }: { isDuplicate?: boolean } = {}) {
+  // rows_written=0 means INSERT OR IGNORE hit a duplicate constraint
+  const mockRun = vi.fn().mockResolvedValue({
+    success: true,
+    meta: { rows_written: isDuplicate ? 0 : 1 },
+  })
+  const mockFirst = vi.fn().mockResolvedValue(null)
   const mockBind = vi.fn().mockReturnValue({ run: mockRun, first: mockFirst })
   const d1Mock: D1Mock = { prepare: vi.fn().mockReturnValue({ bind: mockBind }), _mockRun: mockRun, _mockFirst: mockFirst }
   ;(globalThis as unknown as { __env: Record<string, unknown> }).__env.DB = d1Mock
@@ -47,7 +51,7 @@ describe('POST /api/webhooks/tiktok-shop', () => {
   beforeEach(() => {
     vi.stubEnv('TIKTOK_SHOP_WEBHOOK_SECRET', WEBHOOK_SECRET)
     vi.stubEnv('SOPHIA_TENANT_ID', 'sophia-global')
-    setD1Mock({ existingRow: null })
+    setD1Mock()
   })
 
   afterEach(() => {
@@ -74,12 +78,13 @@ describe('POST /api/webhooks/tiktok-shop', () => {
   })
 
   it('returns 200 with skipped:duplicate for replay', async () => {
-    const { mockRun } = setD1Mock({ existingRow: { 1: 1 } })
+    const { mockRun } = setD1Mock({ isDuplicate: true })
     const sig = await hmacSha256Hex(ORDER_PAYLOAD, WEBHOOK_SECRET)
     const res = await POST(makeRequest(ORDER_PAYLOAD, sig))
     expect(res.status).toBe(200)
     const body = await res.json() as { ok: boolean; skipped?: string }
     expect(body.skipped).toBe('duplicate')
-    expect(mockRun).not.toHaveBeenCalled()
+    // INSERT OR IGNORE is still called — dedup via rows_written=0
+    expect(mockRun).toHaveBeenCalled()
   })
 })

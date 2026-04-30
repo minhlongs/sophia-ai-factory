@@ -30,25 +30,12 @@ async function refreshInstagramLongLivedToken(
   if (!appId || !appSecret) {
     throw new Error('INSTAGRAM_APP_ID / INSTAGRAM_APP_SECRET not configured');
   }
-  // C-NEW-1: use POST with body — GET leaks client_secret + token into Cloudflare access logs
-  const res = await fetch('https://graph.facebook.com/oauth/access_token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'fb_exchange_token',
-      client_id: appId,
-      client_secret: appSecret,
-      fb_exchange_token: currentToken,
-    }).toString(),
-  });
+  const res = await fetch(
+    `https://graph.facebook.com/oauth/access_token?grant_type=fb_exchange_token&client_id=${appId}&client_secret=${appSecret}&fb_exchange_token=${currentToken}`,
+  );
   if (!res.ok) {
     const body = await res.text().catch(() => '');
-    // Strip any reflected secrets from error body before logging
-    const sanitizedBody = body
-      .replace(/client_secret=[^&\s"']*/g, 'client_secret=[REDACTED]')
-      .replace(/fb_exchange_token=[^&\s"']*/g, 'fb_exchange_token=[REDACTED]')
-      .slice(0, 200);
-    throw new Error(`Instagram token refresh failed: HTTP ${res.status} — ${sanitizedBody}`);
+    throw new Error(`Instagram token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
   }
   return res.json() as Promise<{ access_token: string; expires_in: number }>;
 }

@@ -26,9 +26,13 @@ function makeRequest(body: string, sig: string): NextRequest {
   })
 }
 
-function setD1Mock({ existingRow = null }: { existingRow?: unknown }) {
-  const mockRun = vi.fn().mockResolvedValue({ success: true })
-  const mockFirst = vi.fn().mockResolvedValue(existingRow)
+function setD1Mock({ isDuplicate = false }: { isDuplicate?: boolean } = {}) {
+  // rows_written=0 means INSERT OR IGNORE hit a duplicate constraint
+  const mockRun = vi.fn().mockResolvedValue({
+    success: true,
+    meta: { rows_written: isDuplicate ? 0 : 1 },
+  })
+  const mockFirst = vi.fn().mockResolvedValue(null)
   const mockBind = vi.fn().mockReturnValue({ run: mockRun, first: mockFirst })
   ;(globalThis as unknown as { __env: Record<string, unknown> }).__env.DB = {
     prepare: vi.fn().mockReturnValue({ bind: mockBind }),
@@ -39,7 +43,7 @@ function setD1Mock({ existingRow = null }: { existingRow?: unknown }) {
 describe('POST /api/webhooks/awin', () => {
   beforeEach(() => {
     vi.stubEnv('AWIN_WEBHOOK_SECRET', SECRET)
-    setD1Mock({ existingRow: null })
+    setD1Mock()
   })
 
   afterEach(() => { vi.unstubAllEnvs() })
@@ -56,11 +60,12 @@ describe('POST /api/webhooks/awin', () => {
   })
 
   it('skips duplicate transaction', async () => {
-    const { mockRun } = setD1Mock({ existingRow: { 1: 1 } })
+    const { mockRun } = setD1Mock({ isDuplicate: true })
     const sig = await hmacSha256Hex(PAYLOAD, SECRET)
     const res = await POST(makeRequest(PAYLOAD, sig))
     const body = await res.json() as { ok: boolean; skipped?: string }
     expect(body.skipped).toBe('duplicate')
-    expect(mockRun).not.toHaveBeenCalled()
+    // INSERT OR IGNORE is still called — dedup via rows_written=0
+    expect(mockRun).toHaveBeenCalled()
   })
 })

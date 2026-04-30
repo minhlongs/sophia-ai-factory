@@ -33,7 +33,8 @@ export class InstagramPublisher implements Publisher {
     }
 
     const hashtags = meta.hashtags.map(h => (h.startsWith('#') ? h : `#${h}`)).join(' ');
-    const caption = `${meta.caption}\n\n${hashtags}${meta.productLink ? `\n\n${meta.productLink}` : ''}`;
+    const adCaption = meta.caption.startsWith('#ad ') ? meta.caption : `#ad ${meta.caption}`;
+        const caption = `${adCaption}\n\n${hashtags}${meta.productLink ? `\n\n${meta.productLink}` : ''}`;
 
     // Step 1: Create media container
     const containerRes = await fetch(`${GRAPH_BASE}/${this.igUserId}/media`, {
