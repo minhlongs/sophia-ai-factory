@@ -1,8 +1,8 @@
 # Codebase Summary
 
-**Last Updated:** 2026-04-29
-**Version:** 1.14.19 (3-Stream Batch: Video Quota + Password Signup + BYOK Polish)
-**Recent Major Changes:** 3-parallel streams shipped (SHA 817fbaa5): (A) Video quota enforcement `video_usage_monthly` D1 table, tiers BASIC=0/PREMIUM=30/ENTERPRISE=200/MASTER=1000, +3 quota tests; (B) Password signup UI `/login` with Sign In/Sign Up tabs, SignupForm component, `auth.signup.*` i18n bilingual, +10 tests; (C) BYOK polish—webhook 4 header variants, `/api/health/byok` endpoint, delete confirm dialog. Code review 8.2/10: H1 quota TOCTOU race identified (atomic UPDATE rec.), H2 i18n bypass (useTranslations wire-up needed), H3 migration filename inconsistency fixed. 1782/1813 tests pass. See `docs/project-changelog.md` for full details.
+**Last Updated:** 2026-04-30
+**Version:** 1.14.20 (Go-Live Hardening Batch)
+**Recent Major Changes:** Go-live hardening batch (SHA e1f0861f): (A) `/settings` → 308 redirect to `/dashboard/settings` (was 404); (B) Cron auth centralized — `clearance-promote`, `wallet-rebuild`, `local-mode-health`, `workflow-stepper` all use `verifyCronAuth` from `lib/security/cron-auth.ts`; (C) Dead code purge — `verify-env.js` (Polar BANNED), `env-validation.ts` (D-ID discontinued); (D) localhost:3000 fallbacks removed from `video-tts.ts`, `script-generator.ts`, `raas/missions`; (E) `.env.production.example` — +20 required vars, −Polar; (F) CERTIFICATION.md regenerated at 90/100 go-live readiness. 1798 tests pass (31 skipped). See `docs/project-changelog.md` for full details.
 
 ## Project Structure Overview
 
@@ -124,6 +124,7 @@ Sophia AI Video Factory is a Next.js 16 application structured around the App Ro
   - `NEXT_PUBLIC_FEATURE_AFFILIATE_ENGINE`: Toggles affiliate tools.
 
 ## Recent Major Changes
+- **Go-Live Hardening Batch (2026-04-30)**: `/settings`→`/dashboard/settings` redirect fix. Cron auth centralized — `verifyCronAuth()` in `lib/security/cron-auth.ts` now used by `clearance-promote`, `wallet-rebuild`, `local-mode-health`, `workflow-stepper`, `uptime-check`. Dead code purge: `verify-env.js` (Polar BANNED), `env-validation.ts` (D-ID discontinued). localhost:3000 fallbacks removed. `.env.production.example` updated (+20 vars, −Polar). CERTIFICATION.md regenerated: 1798 tests pass, 31 skipped, 0 failed, 24.87% line coverage. All routes verified green.
 - **Video Go-Live: HeyGen Webhooks + R2 Storage (2026-04-29)**: Shipped `POST /api/webhooks/heygen` (HMAC-SHA256), `GET /api/cron/video-status-sync` (5-min polling), R2 binding `sophia-videos`. Migration 0030 adds `r2_key`, `r2_size_bytes` to `videos` table. New env secrets: `HEYGEN_WEBHOOK_SECRET`, `HEYGEN_API_KEY`. Optional `R2_PUBLIC_BASE_URL` for CDN. Commits 0b12421, a2aa630. Status response: `{status, video_url, thumbnail_url, duration_sec, error}`.
 - **Sprint M Phase M1: Revenue Pipeline Unblock (2026-04-27)**: D1 schema expansion for campaigns + RAAS licensing. Added tables: `campaigns`, `campaign_checkpoints`, `raas_licenses`, `raas_audit_logs`. Extended `user_profiles` with `subscription_tier` and `telegram_chat_id`. Migrations 0018-0019 (new) + 0020 (fix). Telegram handler refactor + 7-test suite. Tests: 1406/1406 pass. TS: 0 errors. Review: 9.6/10. Pipeline now writes to DB without crashes; remote apply deferred.
 - **Phase 49: Analytics Page Modularization (2026-04-27)**: Modularized analytics usage page (382L → 5 modules <200L each). New structure: page.tsx orchestrator + use-usage-analytics hook + 3 tab components. Zero behavioral change. Tests: 1397/1397 pass. TS: 0 errors. Review: 9.7/10.

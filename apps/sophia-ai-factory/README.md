@@ -9,7 +9,7 @@ Sophia is a turnkey solution that automates the entire lifecycle of "Faceless" Y
 ## 🌟 Features
 - **Auto-Discovery**: Scans Amazon/Clickbank for trending high-commission products.
 - **AI Scriptwriter**: Uses Claude/GPT-4 via OpenRouter to write viral scripts.
-- **Video Generation**: Integrates ElevenLabs (Voice) and D-ID (Avatar).
+- **Video Generation**: Integrates ElevenLabs (Voice) and HeyGen (AI Video).
 - **Turnkey Setup**: Built-in wizard configuration - no coding required.
 
 ## 🚀 Getting Started

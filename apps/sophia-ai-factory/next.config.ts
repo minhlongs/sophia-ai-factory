@@ -42,6 +42,14 @@ const nextConfig: NextConfig = {
       }
     ],
   },
+  async redirects() {
+    return [
+      { source: '/signup', destination: '/login', permanent: true },
+      { source: '/:locale/signup', destination: '/login', permanent: false },
+      { source: '/settings', destination: '/dashboard/settings', permanent: true },
+      { source: '/:locale/settings', destination: '/dashboard/settings', permanent: false },
+    ];
+  },
   async headers() {
     return [
       // Immutable cache for hashed static assets (CDN Layer 9)
