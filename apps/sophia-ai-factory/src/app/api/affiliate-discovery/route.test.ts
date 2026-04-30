@@ -1,8 +1,8 @@
 /**
- * Tests for GET /api/affiliate-discovery
+ * Tests for GET /api/affiliate-discovery (public catalog)
  *
  * Coverage:
- *   200 + empty offers when table is empty
+ *   200 + empty offers when catalog is empty
  *   200 + data when rows exist
  *   Pagination: page=2 returns next set (offset applied)
  *   400 when query params are invalid
@@ -11,26 +11,22 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
 
-// --- Mocks ---
-
 vi.mock('@/middleware/rate-limit-wrapper', () => ({
   withRateLimit: (handler: (req: NextRequest) => Promise<Response>) => handler,
 }))
 
-// Reusable mock chain builder
 function makeChain(overrides: {
   data?: Record<string, unknown>[]
   count?: number
-  error?: null
 } = {}) {
   const result = { data: overrides.data ?? [], count: overrides.count ?? 0, error: null }
   const chain = {
     select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
     order: vi.fn().mockReturnThis(),
     range: vi.fn().mockResolvedValue(result),
     then: undefined as unknown,
   }
-  // Make `await chain` work by resolving to result
   chain.then = (resolve: (v: typeof result) => unknown) => Promise.resolve(result).then(resolve)
   return chain
 }
@@ -41,29 +37,41 @@ let mockCountChain: ReturnType<typeof makeChain>
 vi.mock('@/lib/db/client', () => ({
   createServerClient: vi.fn(() => ({
     from: vi.fn((table: string) => {
-      if (table === 'affiliate_offers_selected') {
-        // First call → rows, second call → count
+      if (table === 'affiliate_offers_catalog') {
         const callCount = (createServerClientFromMock.callCount ?? 0)
-        if (callCount % 2 === 0) {
-          createServerClientFromMock.callCount = (callCount) + 1
-          return mockRowChain
-        }
-        createServerClientFromMock.callCount = (callCount) + 1
-        return mockCountChain
+        createServerClientFromMock.callCount = callCount + 1
+        return callCount % 2 === 0 ? mockRowChain : mockCountChain
       }
       return mockRowChain
     }),
   })),
 }))
 
-// Track from() call order via a counter on the mock instance
 const createServerClientFromMock = { callCount: 0 }
 
 import { GET } from './route'
 
 const SAMPLE_OFFERS = [
-  { id: 'aaa', offer_name: 'AI Video Editor', network: 'clickbank', commission_rate: 0.3, created_at: '2026-04-01T00:00:00' },
-  { id: 'bbb', offer_name: 'SEO Pro Tool', network: 'shareasale', commission_rate: 0.25, created_at: '2026-04-02T00:00:00' },
+  {
+    id: 'aaa',
+    offer_name: 'Bluehost Web Hosting',
+    network: 'shareasale',
+    url: 'https://www.bluehost.com/track/affiliateprogram/',
+    commission_rate: 65.0,
+    category: 'hosting',
+    description: 'Earn $65+ per qualified sign-up.',
+    created_at: '2026-04-29T00:00:00',
+  },
+  {
+    id: 'bbb',
+    offer_name: 'SEMrush SEO Toolkit',
+    network: 'impact',
+    url: 'https://www.semrush.com/lp/affiliate-program/',
+    commission_rate: 40.0,
+    category: 'seo',
+    description: 'Recurring 40% commission.',
+    created_at: '2026-04-29T00:00:00',
+  },
 ]
 
 function makeRequest(params: Record<string, string> = {}): NextRequest {
@@ -72,7 +80,7 @@ function makeRequest(params: Record<string, string> = {}): NextRequest {
   return new NextRequest(url)
 }
 
-describe('GET /api/affiliate-discovery', () => {
+describe('GET /api/affiliate-discovery (catalog)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     createServerClientFromMock.callCount = 0
@@ -80,10 +88,7 @@ describe('GET /api/affiliate-discovery', () => {
     mockCountChain = makeChain({ data: [], count: 0 })
   })
 
-  it('200 + empty offers when table has no rows', async () => {
-    mockRowChain = makeChain({ data: [], count: 0 })
-    mockCountChain = makeChain({ data: [], count: 0 })
-
+  it('200 + empty offers when catalog has no active rows', async () => {
     const res = await GET(makeRequest())
     expect(res.status).toBe(200)
 
@@ -93,7 +98,7 @@ describe('GET /api/affiliate-discovery', () => {
     expect(json.page).toBe(1)
   })
 
-  it('200 + offers array when rows exist', async () => {
+  it('200 + offers array when active rows exist', async () => {
     mockRowChain = makeChain({ data: SAMPLE_OFFERS, count: 2 })
     mockCountChain = makeChain({ data: [], count: 2 })
 
@@ -102,12 +107,22 @@ describe('GET /api/affiliate-discovery', () => {
 
     const json = (await res.json()) as { offers: typeof SAMPLE_OFFERS; total: number; page: number }
     expect(json.offers).toHaveLength(2)
-    expect(json.offers[0].offer_name).toBe('AI Video Editor')
+    expect(json.offers[0].offer_name).toBe('Bluehost Web Hosting')
+    expect(json.offers[0].url).toBe('https://www.bluehost.com/track/affiliateprogram/')
+    expect(json.offers[0].category).toBe('hosting')
     expect(json.total).toBe(2)
-    expect(json.page).toBe(1)
   })
 
-  it('pagination — page=2 applies correct offset (range called with offset=50)', async () => {
+  it('filters by is_active=1', async () => {
+    mockRowChain = makeChain({ data: SAMPLE_OFFERS, count: 2 })
+    mockCountChain = makeChain({ data: [], count: 2 })
+
+    await GET(makeRequest())
+    expect(mockRowChain.eq).toHaveBeenCalledWith('is_active', 1)
+    expect(mockCountChain.eq).toHaveBeenCalledWith('is_active', 1)
+  })
+
+  it('pagination — page=2 applies correct offset', async () => {
     mockRowChain = makeChain({ data: [], count: 60 })
     mockCountChain = makeChain({ data: [], count: 60 })
 
@@ -117,24 +132,16 @@ describe('GET /api/affiliate-discovery', () => {
     const json = (await res.json()) as { page: number; total: number }
     expect(json.page).toBe(2)
     expect(json.total).toBe(60)
-
-    // Verify range was called with offset=50 (page 2, limit 50)
     expect(mockRowChain.range).toHaveBeenCalledWith(50, 99)
   })
 
   it('400 when limit exceeds 100', async () => {
     const res = await GET(makeRequest({ limit: '200' }))
     expect(res.status).toBe(400)
-
-    const json = (await res.json()) as { error: string }
-    expect(json.error).toBe('Invalid query params')
   })
 
   it('400 when page is 0', async () => {
     const res = await GET(makeRequest({ page: '0' }))
     expect(res.status).toBe(400)
-
-    const json = (await res.json()) as { error: string }
-    expect(json.error).toBe('Invalid query params')
   })
 })

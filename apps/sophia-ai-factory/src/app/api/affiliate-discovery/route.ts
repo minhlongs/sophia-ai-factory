@@ -1,8 +1,8 @@
 /**
  * GET /api/affiliate-discovery
  *
- * Returns paginated affiliate offers from affiliate_offers_selected.
- * Public endpoint — rate limited 60 req/min.
+ * Returns paginated PUBLIC affiliate offers from affiliate_offers_catalog.
+ * Public endpoint — rate limited 60 req/min. Only active offers returned.
  *
  * Query params:
  *   page  — page number (default: 1, min: 1)
@@ -20,7 +20,10 @@ export interface AffiliateOffer {
   id: string
   offer_name: string
   network: string
+  url: string
   commission_rate: number | null
+  category: string | null
+  description: string | null
   created_at: string | null
 }
 
@@ -51,16 +54,17 @@ export const GET = withRateLimit(
     try {
       const db = createServerClient()
 
-      // Fetch rows and count in parallel
       const [rowsResult, countResult] = await Promise.all([
         db
-          .from('affiliate_offers_selected')
-          .select('id, offer_name, network, commission_rate, created_at')
+          .from('affiliate_offers_catalog')
+          .select('id, offer_name, network, url, commission_rate, category, description, created_at')
+          .eq('is_active', 1)
           .order('created_at', { ascending: false })
           .range(offset, offset + limit - 1),
         db
-          .from('affiliate_offers_selected')
-          .select('id', { count: 'exact', head: true }),
+          .from('affiliate_offers_catalog')
+          .select('id', { count: 'exact', head: true })
+          .eq('is_active', 1),
       ])
 
       const offers = (rowsResult.data ?? []) as unknown as AffiliateOffer[]
