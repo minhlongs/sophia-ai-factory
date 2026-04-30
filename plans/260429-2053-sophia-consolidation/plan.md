@@ -44,9 +44,9 @@ created: 2026-04-29
 
 | # | Phase | Status | File |
 |---|-------|--------|------|
-| 6 | Video Pipeline Foundation (D1 schema, FSM, Inngest, R2) | ✅ DONE | [phase-06-video-pipeline-foundation.md](phase-06-video-pipeline-foundation.md) |
-| 7 | Voice + TTS Service (Coqui XTTS Docker + CF Worker proxy) | ✅ DONE | [phase-07-voice-tts-service.md](phase-07-voice-tts-service.md) |
-| 8 | Visual Generator (Template + Cinematic 2-path routing) | ✅ DONE | [phase-08-visual-generator.md](phase-08-visual-generator.md) |
+| 6 | Video Pipeline Foundation (D1 schema, FSM, Inngest, R2) | pending | [phase-06-video-pipeline-foundation.md](phase-06-video-pipeline-foundation.md) |
+| 7 | Voice + TTS Service (Coqui XTTS Docker + CF Worker proxy) | pending | [phase-07-voice-tts-service.md](phase-07-voice-tts-service.md) |
+| 8 | Visual Generator (Template + Cinematic 2-path routing) | pending | [phase-08-visual-generator.md](phase-08-visual-generator.md) |
 
 ### C. Affiliate Engine (Phase 9-10)
 
@@ -59,7 +59,7 @@ created: 2026-04-29
 
 | # | Phase | Status | File |
 |---|-------|--------|------|
-| 11 | Tenant Isolation + Quota Tiers (RLS, video quotas, cost ledger) | ✅ DONE | [phase-11-tenant-isolation-quotas.md](phase-11-tenant-isolation-quotas.md) |
+| 11 | Tenant Isolation + Quota Tiers (RLS, video quotas, cost ledger) | pending | [phase-11-tenant-isolation-quotas.md](phase-11-tenant-isolation-quotas.md) |
 | 12 | OpenClaw Orchestrator (10 primitives wired) | pending | [phase-12-openclaw-orchestrator.md](phase-12-openclaw-orchestrator.md) |
 
 ### E. Revenue + Launch (Phase 13-14)

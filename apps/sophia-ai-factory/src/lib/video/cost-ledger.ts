@@ -8,9 +8,19 @@
 import { getD1Client } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 
+export type CostStage =
+  | 'scripting'
+  | 'tts'
+  | 'tts_pending'
+  | 'visual'
+  | 'compose'
+  | 'composing'
+  | 'upload'
+  | 'publish';
+
 export interface CostRecord {
   jobId: string;
-  stage: string;
+  stage: CostStage | string;
   provider: string;
   units: number;
   costUsd: number;
