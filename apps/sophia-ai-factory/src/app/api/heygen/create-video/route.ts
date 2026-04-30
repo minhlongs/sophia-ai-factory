@@ -6,7 +6,7 @@ import { getUserTier } from "@/lib/db/get-user-tier";
 import { createServerClient } from "@/lib/db/client";
 import { createVideoSchema } from "@/lib/schemas";
 import { logger } from "@/lib/utils/logger-utility";
-import { checkVideoQuota, incrementVideoUsage } from "@/lib/quota/video-quota";
+import { reserveVideoSlot, releaseVideoSlot } from "@/lib/quota/video-quota";
 
 const VIDEO_ALLOWED_TIERS = new Set(['PREMIUM', 'ENTERPRISE', 'MASTER']);
 
@@ -26,15 +26,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // P1: Monthly quota check — prevent unlimited video generation via BYOK
-    const quota = await checkVideoQuota(user.id, tier);
-    if (!quota.allowed) {
-      return NextResponse.json(
-        { error: "quota_exceeded", limit: quota.limit, used: quota.used, resetAt: quota.resetAt },
-        { status: 429 }
-      );
-    }
-
     const body = await req.json();
     const validation = createVideoSchema.safeParse(body);
     if (!validation.success) {
@@ -48,6 +39,16 @@ export async function POST(req: Request) {
       validation.data;
     const finalTitle = title || `Video for ${user.email}`;
 
+    // P1: Atomic monthly quota reservation — eliminates TOCTOU race so
+    // concurrent BYOK requests cannot burst past the tier limit.
+    const reservation = await reserveVideoSlot(user.id, tier);
+    if (!reservation.reserved) {
+      return NextResponse.json(
+        { error: "quota_exceeded", limit: reservation.limit, used: reservation.used, resetAt: reservation.resetAt },
+        { status: 429 }
+      );
+    }
+
     let heygenJobId: string;
     try {
       const videoService = await ServiceFactory.getVideoService(user.id);
@@ -58,6 +59,18 @@ export async function POST(req: Request) {
         title: finalTitle,
       });
     } catch (err) {
+      // HeyGen failed after we already reserved a slot — give it back so the
+      // user is not charged for a video that never existed.
+      try {
+        await releaseVideoSlot(user.id);
+      } catch (releaseErr) {
+        logger.error(
+          "[create-video] Failed to release video quota slot after HeyGen failure",
+          releaseErr instanceof Error ? releaseErr : undefined,
+          { userId: user.id }
+        );
+      }
+
       if (err instanceof MissingCredentialsError) {
         return NextResponse.json(
           { error: "video_service_unavailable", code: "MISSING_KEY" },
@@ -65,18 +78,6 @@ export async function POST(req: Request) {
         );
       }
       throw err;
-    }
-
-    // Increment quota counter AFTER successful HeyGen call (avoid charging on failures).
-    try {
-      await incrementVideoUsage(user.id);
-    } catch (quotaErr) {
-      logger.error(
-        "[create-video] Failed to increment video quota counter",
-        quotaErr instanceof Error ? quotaErr : undefined,
-        { heygenJobId, userId: user.id }
-      );
-      // Non-fatal — proceed so the user gets their video even if counter fails.
     }
 
     // Persist to D1 — failures are logged and surfaced to caller.
