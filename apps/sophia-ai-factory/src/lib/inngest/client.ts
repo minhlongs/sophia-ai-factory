@@ -21,6 +21,46 @@ type VideoJobPayload = {
   };
 };
 
+type ConversionCreatedEvent = {
+  data: {
+    conversionEventId: string;
+    tenantId: string;
+  };
+};
+
+type CommissionMaturedEvent = {
+  data: {
+    updatedCount: number;
+    promotedAt: number;
+  };
+};
+
+type PayoutBatchedEvent = {
+  data: {
+    batchId: string;
+    affiliateId: string;
+    totalUsd: number;
+    externalPaymentId: string;
+  };
+};
+
+type PayoutConfirmedEvent = {
+  data: {
+    batchId: string;
+    externalPaymentId: string;
+    confirmedAt: number;
+  };
+};
+
+type PayoutReconcileAlertEvent = {
+  data: {
+    tenantId: string;
+    ledgerTotal: number;
+    batchTotal: number;
+    diff: number;
+  };
+};
+
 type Events = {
   "campaign.created": CampaignCreatedEvent;
   "test/hello.world": { data: Record<string, unknown> };
@@ -32,6 +72,15 @@ type Events = {
   "video.composed": VideoJobPayload;
   "video.uploaded": VideoJobPayload;
   "video.published": VideoJobPayload;
+  // Publishing pipeline events (Phase 10)
+  "publish.scheduled": VideoJobPayload;
+  "publish.token.refresh": { data: Record<string, never> };
+  // Payout pipeline events (Phase 13)
+  "conversion.created": ConversionCreatedEvent;
+  "commission.matured": CommissionMaturedEvent;
+  "payout.batched": PayoutBatchedEvent;
+  "payout.confirmed": PayoutConfirmedEvent;
+  "payout.reconcile.alert": PayoutReconcileAlertEvent;
 };
 
 // Create a client to send and receive events

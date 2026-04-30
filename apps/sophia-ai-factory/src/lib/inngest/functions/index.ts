@@ -17,3 +17,9 @@ export { videoPublish } from './video-publish';
 export { publishExecute, publishTokenRefreshCron } from './publish-execute';
 // Affiliate offer sync cron (Phase 09)
 export { offerSyncCron } from '@/lib/affiliates/offer-sync-cron';
+
+// Payout pipeline functions (Phase 13)
+export { conversionToLedger } from './conversion-to-ledger';
+export { pendingPromoterCron } from '@/lib/payouts/pending-promoter-cron';
+export { payoutBatcher } from '@/lib/payouts/payout-batcher';
+export { reconciliationCron } from '@/lib/payouts/reconciliation';
