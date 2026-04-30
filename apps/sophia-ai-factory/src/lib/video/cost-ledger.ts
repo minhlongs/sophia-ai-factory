@@ -32,9 +32,15 @@ export async function recordCost(record: CostRecord): Promise<void> {
       .insert({ job_id: jobId, stage, provider, units, cost_usd: costUsd, recorded_at: recordedAt });
 
     // Increment cumulative cost_usd on the job row
+    const { data: existing } = await db
+      .from('video_jobs')
+      .select('cost_usd')
+      .eq('id', jobId)
+      .single();
+    const currentCost = (existing as { cost_usd?: number } | null)?.cost_usd ?? 0;
     await db
       .from('video_jobs')
-      .update({ cost_usd: costUsd, updated_at: Math.floor(Date.now() / 1000) })
+      .update({ cost_usd: currentCost + costUsd, updated_at: recordedAt })
       .eq('id', jobId);
   } catch (err) {
     logger.warn('[CostLedger] Failed to record cost', { jobId, stage, error: String(err) });
