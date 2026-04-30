@@ -27,7 +27,8 @@ function makeRequest(body: string, sig: string): NextRequest {
 }
 
 function setD1Mock({ existingRow = null }: { existingRow?: unknown }) {
-  const mockRun = vi.fn().mockResolvedValue({ success: true })
+  const rowsWritten = existingRow !== null ? 0 : 1
+  const mockRun = vi.fn().mockResolvedValue({ meta: { rows_written: rowsWritten } })
   const mockFirst = vi.fn().mockResolvedValue(existingRow)
   const mockBind = vi.fn().mockReturnValue({ run: mockRun, first: mockFirst })
   ;(globalThis as unknown as { __env: Record<string, unknown> }).__env.DB = {
@@ -59,11 +60,10 @@ describe('POST /api/webhooks/accesstrade', () => {
   })
 
   it('is idempotent: returns 200 skipped:duplicate on replay', async () => {
-    const { mockRun } = setD1Mock({ existingRow: { 1: 1 } })
+    setD1Mock({ existingRow: { 1: 1 } })
     const sig = await hmacSha256Hex(PAYLOAD, WEBHOOK_SECRET)
     const res = await POST(makeRequest(PAYLOAD, sig))
     const body = await res.json() as { ok: boolean; skipped?: string }
     expect(body.skipped).toBe('duplicate')
-    expect(mockRun).not.toHaveBeenCalled()
   })
 })

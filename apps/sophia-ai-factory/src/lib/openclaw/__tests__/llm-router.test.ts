@@ -105,14 +105,11 @@ describe.sequential('llm-router', () => {
   it('circuit breaker opens after 3 consecutive Qwen failures', async () => {
     vi.spyOn(globalThis, 'fetch')
       .mockRejectedValueOnce(new Error('fail1'))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ content: [{ text: 'haiku' }] }), { status: 200 }))
       .mockRejectedValueOnce(new Error('fail2'))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ content: [{ text: 'haiku' }] }), { status: 200 }))
       .mockRejectedValueOnce(new Error('fail3'))
-      .mockResolvedValue(
-        new Response(
-          JSON.stringify({ content: [{ text: 'haiku' }] }),
-          { status: 200 },
-        ),
-      );
+      .mockResolvedValue(new Response(JSON.stringify({ content: [{ text: 'haiku' }] }), { status: 200 }));
 
     await routeLLM('lite', 'p1', QWEN_OPTS);
     await routeLLM('lite', 'p2', QWEN_OPTS);
@@ -127,14 +124,11 @@ describe.sequential('llm-router', () => {
     // Force circuit open
     vi.spyOn(globalThis, 'fetch')
       .mockRejectedValueOnce(new Error('f1'))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ content: [{ text: 'ok' }] }), { status: 200 }))
       .mockRejectedValueOnce(new Error('f2'))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ content: [{ text: 'ok' }] }), { status: 200 }))
       .mockRejectedValueOnce(new Error('f3'))
-      .mockResolvedValue(
-        new Response(
-          JSON.stringify({ content: [{ text: 'ok' }] }),
-          { status: 200 },
-        ),
-      );
+      .mockResolvedValue(new Response(JSON.stringify({ content: [{ text: 'ok' }] }), { status: 200 }));
 
     for (let i = 0; i < 3; i++) {
       await routeLLM('lite', 'p', QWEN_OPTS);
@@ -157,11 +151,11 @@ describe.sequential('llm-router', () => {
   it('circuit resets after window expires', async () => {
     vi.spyOn(globalThis, 'fetch')
       .mockRejectedValueOnce(new Error('f1'))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ content: [{ text: 'ok' }] }), { status: 200 }))
       .mockRejectedValueOnce(new Error('f2'))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ content: [{ text: 'ok' }] }), { status: 200 }))
       .mockRejectedValueOnce(new Error('f3'))
-      .mockResolvedValue(
-        new Response(JSON.stringify({ content: [{ text: 'ok' }] }), { status: 200 }),
-      );
+      .mockResolvedValue(new Response(JSON.stringify({ content: [{ text: 'ok' }] }), { status: 200 }));
 
     for (let i = 0; i < 3; i++) {
       await routeLLM('lite', 'p', QWEN_OPTS);

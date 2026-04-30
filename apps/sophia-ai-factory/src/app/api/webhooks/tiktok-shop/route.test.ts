@@ -35,7 +35,8 @@ type D1Mock = {
 }
 
 function setD1Mock({ existingRow = null }: { existingRow?: unknown }) {
-  const mockRun = vi.fn().mockResolvedValue({ success: true })
+  const rowsWritten = existingRow !== null ? 0 : 1
+  const mockRun = vi.fn().mockResolvedValue({ meta: { rows_written: rowsWritten } })
   const mockFirst = vi.fn().mockResolvedValue(existingRow)
   const mockBind = vi.fn().mockReturnValue({ run: mockRun, first: mockFirst })
   const d1Mock: D1Mock = { prepare: vi.fn().mockReturnValue({ bind: mockBind }), _mockRun: mockRun, _mockFirst: mockFirst }
@@ -74,12 +75,11 @@ describe('POST /api/webhooks/tiktok-shop', () => {
   })
 
   it('returns 200 with skipped:duplicate for replay', async () => {
-    const { mockRun } = setD1Mock({ existingRow: { 1: 1 } })
+    setD1Mock({ existingRow: { 1: 1 } })
     const sig = await hmacSha256Hex(ORDER_PAYLOAD, WEBHOOK_SECRET)
     const res = await POST(makeRequest(ORDER_PAYLOAD, sig))
     expect(res.status).toBe(200)
     const body = await res.json() as { ok: boolean; skipped?: string }
     expect(body.skipped).toBe('duplicate')
-    expect(mockRun).not.toHaveBeenCalled()
   })
 })
