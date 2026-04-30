@@ -54,13 +54,12 @@ main() {
     exit 1
   fi
 
-  # Export D1 database
-  log "INFO" "Exporting D1 database '$DB_NAME'..."
+  # Export D1 database (schema + data) using wrangler d1 export
+  log "INFO" "Exporting D1 database '$DB_NAME' (schema + data)..."
 
-  if npx wrangler d1 execute "$DB_NAME" \
+  if npx wrangler d1 export "$DB_NAME" \
     --remote \
-    --command "SELECT sql FROM sqlite_master WHERE sql NOT NULL;" \
-    > "${SNAPSHOT_FILE}.tmp" 2>> "$LOG_FILE"; then
+    --output "${SNAPSHOT_FILE}.tmp" 2>> "$LOG_FILE"; then
 
     mv "${SNAPSHOT_FILE}.tmp" "$SNAPSHOT_FILE"
 
