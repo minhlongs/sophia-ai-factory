@@ -11,6 +11,7 @@ import { logger } from "@/lib/utils/logger-utility";
 import { DashboardStats } from "./components/dashboard-stats";
 import { OnboardingWelcomeBanner } from "./components/onboarding-welcome-banner";
 import { CrossSellBanner } from "@/components/dashboard/cross-sell-banner";
+import { QuotaUsageBar } from "@/components/dashboard/quota-usage-bar";
 import { Campaign } from "@/types";
 import { getTranslations } from 'next-intl/server';
 
@@ -109,6 +110,10 @@ export default async function DashboardPage() {
         activeCampaigns={activeCampaigns}
         completedCampaigns={completedCampaigns}
       />
+
+      {user?.id && totalCampaigns > 0 && (
+        <QuotaUsageBar used={totalCampaigns} total={50} label="Campaigns" />
+      )}
 
       <CampaignList initialCampaigns={campaigns} />
     </div>
