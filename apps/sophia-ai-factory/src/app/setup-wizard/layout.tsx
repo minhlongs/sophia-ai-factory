@@ -17,6 +17,9 @@ export const metadata: Metadata = {
   description: "Configure your AI Factory settings.",
 };
 
+// Layout reads session + D1 + cookies — must render per-request, never prerender.
+export const dynamic = "force-dynamic";
+
 export default async function SetupLayout({
   children,
 }: Readonly<{
