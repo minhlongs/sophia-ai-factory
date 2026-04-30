@@ -2,11 +2,15 @@
 
 > Sophia AI Factory — RaaS (Reasoning-as-a-Service) Platform with AI-Native CI/CD, Observability, & Signals
 
-**Last Updated:** 2026-04-20 (Phase 8: Telegram Handlers Type Safety + FSM/Rate-Limiter Review Nits)
+**Last Updated:** 2026-04-30 (Auto Video Customer Handoff: Inngest pipeline completion + NOWPayments IPN onboarding trigger)
 **Production:** https://sophia.agencyos.network
 **Production Dashboard:** https://sophia.agencyos.network/dashboard
 
-### Recent Shipments (2026-04-18)
+### Recent Shipments (2026-04-30)
+- **Auto Video Customer Handoff (2026-04-30):** 4 Inngest video pipeline stubs → real (scripting via OpenRouter gpt-4o-mini, visual via HeyGen, compose pass-through, upload verify via R2). NOWPayments IPN auto-triggers HeyGen onboarding video for ENTERPRISE/MASTER purchase tiers. Resend email notification on video completion. New DB: `video_onboarding_events` table, `videos.is_onboarding` column. New modules: `lib/video/onboarding-video.ts`, `lib/email/onboarding-emails.ts`. Tests: 1798/1798 ✅.
+- **Revenue/Growth Parallel Batch (2026-04-29):** NOWPayments E2E tests + Telegram webhook guard + Affiliate real data
+
+### Earlier Shipments (2026-04-18)
 Rounds 4 + 5 + 6 + 7 + 8: 20+ major features shipped (LLM observability + async ops + signals + BYOK integration + user admin):
 - **Round 8 - R8 Hygiene + User-Facing BYOK Admin (2026-04-18):** Phase 8A errorClass split in workflow-stepper + weekly-signals-digest + error-digest BYOK resolver symmetry + Phase 8C new `/api/user/byok` endpoint (GET/POST/DELETE key management) + `/dashboard/byok` SSR page with bilingual component + `BYOK_KEY_SET/BYOK_KEY_CLEARED` signal events = 11 new tests, user-facing BYOK admin ready
 - **Round 7 - R7 BYOK Wiring Completion (2026-04-18):** Phase 7A OpenRouter degrade-to-mock in workflow-stepper + Phase 7B script-generator BYOK resolver wire + Phase 7C niche-enhancer BYOK resolver wire = 6 new tests, all OpenRouter callers BYOK-integrated
@@ -50,7 +54,7 @@ graph TB
     SDLC -->|AI Agents| AF[".sophia-factory/"]
     
     D1 -->|Cache| R2["R2 Bucket"]
-    CF -->|External APIs| EXT["Anthropic<br/>Resend<br/>D-ID"]
+    CF -->|External APIs| EXT["Anthropic<br/>Resend<br/>D-ID<br/>HeyGen<br/>NOWPayments"]
 ```
 
 ---
@@ -144,7 +148,7 @@ graph TB
 | **Billing** | NOWPayments (primary) + PayOS (backup) | MCU credit system, webhooks |
 | **Email** | Resend | Magic link, notifications |
 | **AI** | Anthropic | Proposal generation |
-| **Video** | HeyGen | Video generation (optional) |
+| **Video** | HeyGen | Auto onboarding video (ENTERPRISE+) + on-demand generation |
 | **Domain** | sophia.agencyos.network | CF Workers Custom Domains |
 
 ---
@@ -221,6 +225,37 @@ D1: Credit MCU to org_balances
 /billing/success confirmation
 ```
 
+### Video Onboarding Pipeline (ENTERPRISE/MASTER Auto Handoff)
+```
+User completes NOWPayments purchase (ENTERPRISE/MASTER tier)
+  ↓
+POST /api/webhooks/nowpayments-ipn (IPN callback)
+  ↓
+D1: Activate subscription + check tier eligibility
+  ↓
+ONBOARDING_TIERS check → createOnboardingVideo()
+  ↓
+Inngest video pipeline triggers:
+  video-scripting (OpenRouter gpt-4o-mini) → video-visual (HeyGen) → video-upload (R2 verify)
+  ↓
+HeyGen webhook: POST /api/webhooks/heygen (video.completed)
+  ↓
+Check videos.is_onboarding=1 → update video_onboarding_events
+  ↓
+Resend: sendOnboardingVideoEmail() → email delivery status logged
+  ↓
+Dashboard: /dashboard/videos shows onboarding videos in gallery
+```
+
+### On-Demand Video Pipeline (Existing)
+```
+User requests video → POST /api/video/generate
+  ↓
+Inngest: video-scripting → video-visual → video-upload
+  ↓
+Video stored in D1 + R2, accessible via dashboard
+```
+
 ---
 
 ## Database Schema (D1)
@@ -248,6 +283,13 @@ export_jobs     — id, org_id, license_nonce, export_format, period_start/end, 
 ### Billing Tables
 ```
 billing_settings — org_id, tier, polar_subscription_id, polar_customer_id, status
+payment_events    — id, org_id, provider, amount, currency, status, metadata (NOWPayments IPN)
+```
+
+### Video Tables
+```
+videos                   — id, org_id, user_id, title, r2_key, status, is_onboarding, created_at
+video_onboarding_events  — id, org_id, video_id, user_email, tier, delivery_status, created_at
 ```
 
 ### Growth Tables
@@ -271,6 +313,8 @@ affiliate_content — id, org_id, type, title, content, status
 | `/api/auth/login` | POST | Password + magic link login |
 | `/api/auth/callback` | POST | Magic link verification |
 | `/api/webhooks/polar` | POST | Polar.sh payment events |
+| `/api/webhooks/nowpayments` | POST | NOWPayments IPN (subscription activation + onboarding trigger) |
+| `/api/webhooks/heygen` | POST | HeyGen video completion callback (email delivery trigger) |
 
 ### Protected (Auth Required)
 | Route | Method | Purpose |
@@ -309,9 +353,11 @@ affiliate_content — id, org_id, type, title, content, status
 
 ---
 
-## Autonomous Operations & Cron Jobs (2026-04-15)
+## Autonomous Operations & Cron Jobs (2026-04-30)
 
 **Cloudflare Workers Cron Triggers:** 7 scheduled workflows for solopreneur autonomy
+
+**Inngest Event-Driven Pipeline:** Video generation runs on event triggers (not cron) — purchase events via IPN webhook, HeyGen callbacks via webhook. 4-step pipeline: scripting → visual → compose(skip) → upload.
 
 | Trigger | Frequency | Purpose | Implementation |
 |---------|-----------|---------|---|
@@ -322,6 +368,8 @@ affiliate_content — id, org_id, type, title, content, status
 | System Health Check | 5 minutes | Uptime monitoring (Telegram alerts) | `lib/crons/health-check.ts` |
 | Quota Evaluation | 1 hour | MCU limit warnings (email + Telegram) | `lib/alerts/quota/scheduler.ts` |
 | Usage Aggregation | 30 minutes | MCU rollup + balance updates | `lib/usage-metering/rollup.ts` |
+| **Video Pipeline** | Event-driven | Script(OpenRouter)→Visual(HeyGen)→Upload(R2) | `lib/inngest/functions/video-*.ts` |
+| **Onboarding Video** | IPN trigger | ENTERPRISE/MASTER purchase → auto video → email | `lib/video/onboarding-video.ts` |
 
 **Configuration:** `wrangler.toml` defines triggers; each cron handler orchestrates async operations.
 
@@ -392,6 +440,7 @@ affiliate_content — id, org_id, type, title, content, status
 - **White-Label:** Restricted to MASTER tier only (config-enforced)
 
 **ENTERPRISE+ Features (PREMIUM/MASTER only):**
+- **Auto Video Onboarding:** ENTERPRISE/MASTER purchase → HeyGen onboarding video auto-generated + email delivery
 - **Custom Integrations:** `/api/user/integrations` endpoint gated to ENTERPRISE+ tiers
 - **API Access:** RaaS endpoints require PREMIUM+ tier
 - **Unlimited Resources:** Campaigns, team members, MCU (PREMIUM/MASTER tiers)
@@ -451,8 +500,8 @@ crons = ["*/5 * * * *"]
 |----------|---------|
 | `JWT_SECRET` | Auth token signing |
 | `ANTHROPIC_API_KEY` | AI proposal generation |
-| `OPENROUTER_API_KEY` | Multi-model AI |
-| `HEYGEN_API_KEY` | Video generation |
+| `OPENROUTER_API_KEY` | Multi-model AI + video scripting |
+| `HEYGEN_API_KEY` | Video generation (onboarding + on-demand) |
 | `RESEND_API_KEY` | Email delivery |
 | `POLAR_ACCESS_TOKEN` | Payment processing |
 | `POLAR_WEBHOOK_SECRET` | Webhook verification |
@@ -535,6 +584,8 @@ crons = ["*/5 * * * *"]
 | `aggregator.ts` | `lib/usage-metering/*` | 3 | tracker, rollup, integration |
 | `raas-audit.ts` | `lib/raas/*` | 4 | audit-logging, query-service, invoice, permissions |
 | **10 additional large files** | **lib/*** | **+35 modules** | **2026-04-15 modularization (commit 43213f6)** |
+| **Video Onboarding (new)** | `lib/video/onboarding-video.ts` | 1 | NOWPayments IPN → HeyGen video trigger |
+| **Email Delivery (new)** | `lib/email/onboarding-emails.ts` | 1 | Resend notification on video complete |
 | — | — | — | All individual modules < 200 LOC |
 
 ### Shared Utilities
