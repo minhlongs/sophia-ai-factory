@@ -181,12 +181,6 @@ export function getClientIdentifier(request: Request): string {
     return `apikey:${apiKey}`
   }
 
-  // Check for Polar API key
-  const polarKey = request.headers.get('x-polar-signature')
-  if (polarKey) {
-    return `polar:${polarKey}`
-  }
-
   // Fall back to IP address
   const forwardedFor = request.headers.get('x-forwarded-for')
   if (forwardedFor) {

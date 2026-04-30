@@ -62,12 +62,19 @@ export async function validateTrc20Address(addr: string): Promise<boolean> {
   return true
 }
 
+const ERC20_ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
+
 /**
- * Validate ERC20 address (EIP-55 checksum or plain hex).
- * Accepts both checksummed and lowercase/uppercase (no mixed case check for MVP).
+ * Validate ERC20 address format and reject the sentinel zero address.
+ * EIP-55 mixed-case checksumming is optional in Ethereum, so the regex matches
+ * the canonical 0x + 40-hex format. Final correctness is validated by NOWPayments
+ * and a 0.01 USDT pilot transfer per Phase 13 risk mitigation.
  */
 export function validateErc20Address(addr: string): boolean {
-  return /^0x[0-9a-fA-F]{40}$/.test(addr)
+  if (!addr || addr.length !== 42) return false
+  if (!/^0x[0-9a-fA-F]{40}$/.test(addr)) return false
+  if (addr.toLowerCase() === ERC20_ZERO_ADDRESS) return false
+  return true
 }
 
 export type UsdtMethod = 'usdt_trc20' | 'usdt_erc20'

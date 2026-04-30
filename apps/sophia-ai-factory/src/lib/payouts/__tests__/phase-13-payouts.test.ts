@@ -109,6 +109,11 @@ describe('USDT address validator', () => {
     const valid = validateErc20Address('742d35Cc6634C0532925a3b8D4C9b3A3e5f1D4e2')
     expect(valid).toBe(false)
   })
+
+  it('rejects ERC20 zero address', () => {
+    const valid = validateErc20Address('0x0000000000000000000000000000000000000000')
+    expect(valid).toBe(false)
+  })
 })
 
 // ────────────────────────────────────────────────────────────
