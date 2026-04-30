@@ -2,8 +2,9 @@
 
 > Product milestones and progress tracking (2026)
 
-**Last Updated:** 2026-04-30 (Phase 11: Auto Video Customer Handoff — post-purchase auto-gen onboarding video + email delivery, 1798/1798 tests pass)
+**Last Updated:** 2026-04-30 (Phases 6-14 COMPLETE: Video Pipeline, Affiliate Networks, Publishers, OpenClaw, Revenue Split, FTC Hardening, 1798/1798 tests pass)
 **Target:** $1M ARR, 100/100 a16z solo company score
+**Phases 6-14 Shipped (2026-04-30):** Video 6-step pipeline (Inngest) → TTS (Coqui v2) → Visual (HeyGen/HunyuanVideo) → Compose (FFmpeg) → Upload (R2) → Publish. Affiliate 5 networks (TikTok Shop/Awin/ClickBank/AccessTrade/Amazon) + commission tracking. Publishers (TikTok/YouTube/Instagram adapters) + scheduler cron. OpenClaw orchestrator (10 primitives). Revenue split (commission ledger + 14-day clawback + payout batches). FTC hardening (#ad overlay, GDPR export/delete, runbook).
 
 ---
 
@@ -416,7 +417,14 @@
 | **2026-04-25** | **Tech Debt Phase 30: Analytics Query Type Safety + Billing Page Modularization (`:any` elimination, 440L→139L, 1362/1362 tests)** | **✅ COMPLETE** |
 | **2026-04-25** | **Build Fix: 8 Turbopack Errors Resolved (server re-exports, ssr:false in SC, vi.json translations)** | **✅ COMPLETE** |
 | **2026-04-28** | **Go-Live Audit Phase 01 (Tier-1): CI Hardening, Auth Gates, i18n, A11y, CDN, Backup** | **✅ SHIPPED** |
-| **2026-04-30** | **Phase 11: Auto Video Customer Handoff (post-purchase onboarding video + email, 1798 tests)** | **✅ SHIPPED** |
+| **2026-04-30** | **Phase 6-8: Video Pipeline Complete (Inngest FSM, Coqui TTS, HeyGen visual, FFmpeg compose, R2 upload, 1798 tests)** | **✅ SHIPPED** |
+| **2026-04-30** | **Phase 9: Affiliate Network Integration (5 networks: TikTok Shop, Awin, ClickBank, AccessTrade, Amazon; HMAC webhooks, click tracking, commission ledger)** | **✅ SHIPPED** |
+| **2026-04-30** | **Phase 10: Publishers (TikTok Shop, YouTube Data v3, Instagram Graph adapters; token crypto, per-channel quota, scheduler cron)** | **✅ SHIPPED** |
+| **2026-04-30** | **Phase 11: Tenant Isolation (D1 Kysely plugin auto-injects tenant_id, tier quota enforcer, storage tracker cron)** | **✅ SHIPPED** |
+| **2026-04-30** | **Phase 12: OpenClaw Orchestrator (10 primitives: spawnAgentFleet, withTenant, onEvent, activateSkill, scheduleAgent, memory, mcp, enqueue, audit, rateLimitGate; Claude SDK + Qwen 3 32B router with circuit breaker)** | **✅ SHIPPED** |
+| **2026-04-30** | **Phase 13: Revenue Split (commission_ledger, 14-day clawback, payout_batches, NOWPayments USDT mass-payout, reconciliation cron)** | **✅ SHIPPED** |
+| **2026-04-30** | **Phase 14: Launch Hardening (FTC #ad overlay via FFmpeg, caption prefix in publishers, GDPR /api/account/export + DELETE, 10-incident runbook)** | **✅ SHIPPED** |
+| 2026-05-15 | Phase 15 (Deferred): Playwright E2E suite (12 scenarios), k6 load tests (smoke/steady/spike/soak/stress), Stripe Connect KYC, customer status page, Fly.io Coqui/MoviePy deploy, Runpod HunyuanVideo | 🔄 Backlog |
 | 2026-05-15 | Go-Live Audit Phase 02 (Tier-2): Load Testing, Error Budgets, Observability | 🔄 Planned |
 | 2026-06-01 | Multi-Language Support (Vietnamese) | 🔄 Planned |
 | 2026-07-01 | Telegram Bot Enhancement | 🔄 Planned |
