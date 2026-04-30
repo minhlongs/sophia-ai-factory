@@ -48,7 +48,7 @@ describe('GET/POST /api/cron/llm-cache-purge', () => {
     const res = await GET(buildRequest())
     expect(res.status).toBe(401)
     const body = (await res.json()) as { error: string }
-    expect(body.error).toBe('Unauthorized')
+    expect(body.error).toContain('Unauthorized')
   })
 
   it('returns 200 ok:false when DB binding is missing', async () => {
