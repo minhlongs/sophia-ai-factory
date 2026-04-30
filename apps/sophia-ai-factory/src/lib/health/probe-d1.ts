@@ -13,7 +13,9 @@ export interface ProbeResult {
 let cachedResult: ProbeResult | null = null;
 let cacheExpiry = 0;
 const CACHE_TTL_MS = 30_000;
-const TIMEOUT_MS = 1_500;
+// D1 cold-start can exceed 1500ms after worker idle. 3000ms tolerates cold start
+// without falsely flagging healthy bindings as down.
+const TIMEOUT_MS = 3_000;
 
 export async function probeD1(db: D1Database): Promise<ProbeResult> {
   const now = Date.now();
