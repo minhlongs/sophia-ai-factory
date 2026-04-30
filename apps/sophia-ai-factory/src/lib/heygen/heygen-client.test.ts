@@ -23,21 +23,18 @@ describe('HeyGenClient', () => {
       expect(client).toBeDefined();
     });
 
-    it('getHeyGenClient should return null if env var is missing', () => {
+    it('getHeyGenClient should return null if env var is missing', async () => {
       const originalEnv = process.env;
       process.env = { ...originalEnv, HEYGEN_API_KEY: '' };
-      expect(getHeyGenClient()).toBeNull();
+      const result = await getHeyGenClient();
+      expect(result).toBeNull();
       process.env = originalEnv;
     });
 
-    it('getHeyGenClient should return instance if env var is set', () => {
+    it('getHeyGenClient should return instance if env var is set', async () => {
       const originalEnv = process.env;
       process.env = { ...originalEnv, HEYGEN_API_KEY: 'test-key' };
-      // Reset singleton if possible, but it's a module level variable.
-      // Since we can't easily reset the module-level singleton in this test context without isolation,
-      // we'll verify it returns an object.
-      // Note: In a real scenario we might need to use vi.resetModules() or similar.
-      const instance = getHeyGenClient();
+      const instance = await getHeyGenClient();
       expect(instance).toBeDefined();
       process.env = originalEnv;
     });

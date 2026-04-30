@@ -30,6 +30,8 @@ export default function SetupWizardPage() {
     OPENROUTER_API_KEY: '',
     ELEVENLABS_API_KEY: '',
     DID_API_KEY: '',
+    HEYGEN_API_KEY: '',
+    MUAPI_API_KEY: '',
   });
 
   // Validation State
@@ -37,6 +39,8 @@ export default function SetupWizardPage() {
     OPENROUTER_API_KEY: 'idle',
     ELEVENLABS_API_KEY: 'idle',
     DID_API_KEY: 'idle',
+    HEYGEN_API_KEY: 'idle',
+    MUAPI_API_KEY: 'idle',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});

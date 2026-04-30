@@ -10,7 +10,7 @@
 import { useState, useTransition } from 'react'
 import { KeyRound, Trash2, Check } from 'lucide-react'
 
-type Provider = 'openrouter' | 'anthropic' | 'elevenlabs' | 'd-id'
+type Provider = 'openrouter' | 'anthropic' | 'elevenlabs' | 'd-id' | 'heygen' | 'muapi'
 
 const PROVIDERS: { value: Provider; label: string; hint: string }[] = [
   { value: 'openrouter', label: 'OpenRouter',  hint: 'sk-or-v1-...'   },

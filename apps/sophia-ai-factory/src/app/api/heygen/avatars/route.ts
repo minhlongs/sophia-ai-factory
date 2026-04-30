@@ -10,7 +10,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const videoService = ServiceFactory.getVideoService();
+    const videoService = await ServiceFactory.getVideoService(user.id);
     const avatars = await videoService.listAvatars();
     return NextResponse.json({ avatars });
   } catch {

@@ -5,7 +5,9 @@
  * Falls back to the original HeyGen URL when R2 is unavailable (local dev, test).
  *
  * Bucket binding: VIDEO_BUCKET
- * Key pattern:    campaigns/{campaignId}/{timestamp}.mp4
+ * Key patterns:
+ *   campaigns/{campaignId}/{timestamp}.mp4  — campaign flow (default)
+ *   videos/{userId}/{videoId}.mp4           — user video cron flow (r2Key override)
  */
 
 import { logger } from '@/lib/utils/logger-utility';
@@ -22,12 +24,17 @@ export interface VideoStorageResult {
  * Download a video from a HeyGen temporary URL and upload it to R2.
  * If the R2 binding is unavailable or upload fails, falls back to
  * returning the original HeyGen URL so the campaign is never blocked.
+ *
+ * @param heygenUrl  - Temporary HeyGen CDN URL to download
+ * @param campaignId - Campaign ID (used to build key when r2Key not supplied)
+ * @param r2Key      - Optional explicit R2 object key (e.g. "videos/{userId}/{videoId}.mp4")
  */
 export async function downloadAndStore(
   heygenUrl: string,
   campaignId: string,
+  r2Key?: string,
 ): Promise<VideoStorageResult> {
-  const key = `campaigns/${campaignId}/${Date.now()}.mp4`;
+  const key = r2Key ?? `campaigns/${campaignId}/${Date.now()}.mp4`;
 
   const r2 = await getVideoBucket();
 

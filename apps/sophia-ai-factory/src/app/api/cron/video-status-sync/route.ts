@@ -13,6 +13,7 @@ import { verifyCronAuth } from '@/lib/security/cron-auth';
 import { recordCronRun } from '@/lib/cron/run-tracker';
 import { getD1Raw } from '@/lib/db/client';
 import { getHeyGenClient } from '@/lib/heygen/heygen-client';
+import { downloadAndStore } from '@/lib/video/video-storage-service';
 import { logger } from '@/lib/utils/logger-utility';
 
 export const dynamic = 'force-dynamic';
@@ -60,7 +61,7 @@ export async function GET(req: NextRequest) {
     const pending = rows.results ?? [];
     summary.checked = pending.length;
 
-    const client = getHeyGenClient();
+    const client = await getHeyGenClient();
     if (!client) {
       logger.warn('[video-status-sync] HEYGEN_API_KEY missing — skipping poll');
       await recordCronRun(db, CRON_NAME, 'skipped', 'no_api_key');
@@ -88,6 +89,32 @@ export async function GET(req: NextRequest) {
         const status = await client.getVideoStatus(row.heygen_job_id);
 
         if (TERMINAL.has(status.status)) {
+          // Attempt to copy completed video to R2 for durable storage.
+          // On failure: log and keep HeyGen URL — never block the cron run.
+          let r2Key: string | null = null;
+          let r2SizeBytes: number | null = null;
+
+          if (status.status === 'completed' && status.video_url) {
+            try {
+              const storageKey = `videos/${row.user_id}/${row.id}.mp4`;
+              const stored = await downloadAndStore(
+                status.video_url,
+                row.id,
+                storageKey,
+              );
+              if (stored.path) {
+                r2Key = stored.path;
+                r2SizeBytes = stored.sizeBytes;
+              }
+            } catch (r2Err) {
+              logger.error(
+                '[video-status-sync] R2 copy failed — keeping HeyGen URL',
+                r2Err instanceof Error ? r2Err : undefined,
+                { videoId: row.id },
+              );
+            }
+          }
+
           await db
             .prepare(
               `UPDATE videos SET
@@ -95,14 +122,18 @@ export async function GET(req: NextRequest) {
                  video_url = ?2,
                  thumbnail_url = ?3,
                  error = ?4,
-                 updated_at = ?5
-               WHERE id = ?6`
+                 r2_key = ?5,
+                 r2_size_bytes = ?6,
+                 updated_at = ?7
+               WHERE id = ?8`
             )
             .bind(
               status.status,
               status.video_url ?? null,
               status.thumbnail_url ?? null,
               status.error ?? null,
+              r2Key,
+              r2SizeBytes,
               new Date().toISOString(),
               row.id
             )

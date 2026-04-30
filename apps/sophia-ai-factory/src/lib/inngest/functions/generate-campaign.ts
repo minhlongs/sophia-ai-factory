@@ -77,7 +77,7 @@ export const generateCampaign = inngest.createFunction(
       await updateStatus('processing_script', 10)
       let scriptService
       try {
-        scriptService = ServiceFactory.getScriptService()
+        scriptService = await ServiceFactory.getScriptService(userId)
       } catch (err) {
         if (err instanceof MissingCredentialsError) {
           await notifyRefundRequired(userId, campaignId, err.key)
@@ -109,7 +109,7 @@ export const generateCampaign = inngest.createFunction(
       if (!resume) await notifyUser(`📝 Script ready! Now generating voiceover...`)
       let voiceService
       try {
-        voiceService = ServiceFactory.getVoiceService()
+        voiceService = await ServiceFactory.getVoiceService(userId)
       } catch (err) {
         if (err instanceof MissingCredentialsError) {
           await notifyRefundRequired(userId, campaignId, err.key)
@@ -128,7 +128,7 @@ export const generateCampaign = inngest.createFunction(
       await updateStatus('processing_video', 70)
       if (!resume) await notifyUser(`🎤 Voiceover ready! Now rendering video...`)
       try {
-        return await startVideoGeneration({ script, tier })
+        return await startVideoGeneration({ script, tier, userId })
       } catch (err) {
         if (err instanceof MissingCredentialsError) {
           await notifyRefundRequired(userId, campaignId, err.key)

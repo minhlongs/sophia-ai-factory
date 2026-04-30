@@ -9,12 +9,15 @@ import { MockPaymentService } from "./mock/payment-service";
 import { RealPaymentService } from "./real/payment-service";
 import { MissingCredentialsError } from "./errors";
 import { logger } from "@/lib/utils/logger-utility";
+import { resolveUserApiKey } from "@/lib/byok/resolve-user-api-key";
+import { getUserApiKey } from "@/lib/byok/user-api-key-store";
+import { isByokEnabled } from "@/lib/byok/resolve-user-api-key";
 
 const isProd = process.env.NODE_ENV === 'production'
 const isExplicitMock = process.env.NEXT_PUBLIC_MOCK_AI_SERVICES === 'true'
 
 /**
- * Per-service credential gate.
+ * Per-service credential gate (sync, for env-only path).
  *
  * Decision tree:
  *   NEXT_PUBLIC_MOCK_AI_SERVICES=true  → false (mock allowed, test mode)
@@ -30,19 +33,89 @@ function requireKey(name: string): boolean {
   return false
 }
 
+/**
+ * Async credential gate for ByokProvider-registered providers (openrouter, elevenlabs, etc.).
+ * Resolves user key first; falls back to env. Returns null → mock.
+ */
+async function resolveKey(
+  envName: string,
+  provider: Parameters<typeof resolveUserApiKey>[1],
+  userId?: string,
+): Promise<string | null> {
+  if (isExplicitMock) return null
+  const envKey = process.env[envName]?.trim() || undefined
+  if (!userId) {
+    if (envKey) return envKey
+    if (isProd) throw new MissingCredentialsError(envName)
+    logger.warn(`[ServiceFactory] ${envName} not set — falling back to mock service (dev/staging only)`)
+    return null
+  }
+  const key = await resolveUserApiKey(userId, provider, envKey)
+  if (!key) {
+    if (isProd) throw new MissingCredentialsError(envName)
+    logger.warn(`[ServiceFactory] ${envName} not resolvable for user — falling back to mock service (dev/staging only)`)
+  }
+  return key
+}
+
+/**
+ * Async credential gate for 'heygen'.
+ * Resolution: user BYOK key (if BYOK enabled + userId given) → env fallback → null (mock).
+ */
+async function resolveHeygenKey(userId?: string): Promise<string | null> {
+  if (isExplicitMock) return null
+  const envKey = process.env['HEYGEN_API_KEY']?.trim() || null
+  if (!userId) {
+    if (envKey) return envKey
+    if (isProd) throw new MissingCredentialsError('HEYGEN_API_KEY')
+    logger.warn('[ServiceFactory] HEYGEN_API_KEY not set — falling back to mock service (dev/staging only)')
+    return null
+  }
+  if (isByokEnabled()) {
+    const userKey = await getUserApiKey(userId, 'heygen')
+    const key = userKey ?? envKey
+    if (!key) {
+      if (isProd) throw new MissingCredentialsError('HEYGEN_API_KEY')
+      logger.warn('[ServiceFactory] HEYGEN_API_KEY not resolvable for user — falling back to mock service (dev/staging only)')
+    }
+    return key
+  }
+  if (!envKey) {
+    if (isProd) throw new MissingCredentialsError('HEYGEN_API_KEY')
+    logger.warn('[ServiceFactory] HEYGEN_API_KEY not set — falling back to mock service (dev/staging only)')
+  }
+  return envKey
+}
+
 export class ServiceFactory {
-  static getScriptService(): IScriptService {
-    return requireKey('OPENROUTER_API_KEY') ? new RealScriptService() : new MockScriptService()
+  /**
+   * Returns a ScriptService resolved for the given user (BYOK) or env fallback.
+   * @param userId - optional; BYOK resolution attempted for 'openrouter' when provided
+   */
+  static async getScriptService(userId?: string): Promise<IScriptService> {
+    const key = await resolveKey('OPENROUTER_API_KEY', 'openrouter', userId)
+    return key ? new RealScriptService() : new MockScriptService()
   }
 
-  static getVoiceService(): IVoiceService {
-    return requireKey('ELEVENLABS_API_KEY') ? new RealVoiceService() : new MockVoiceService()
+  /**
+   * Returns a VoiceService resolved for the given user (BYOK) or env fallback.
+   * @param userId - optional; BYOK resolution attempted for 'elevenlabs' when provided
+   */
+  static async getVoiceService(userId?: string): Promise<IVoiceService> {
+    const key = await resolveKey('ELEVENLABS_API_KEY', 'elevenlabs', userId)
+    return key ? new RealVoiceService() : new MockVoiceService()
   }
 
-  static getVideoService(): IVideoService {
-    return requireKey('HEYGEN_API_KEY') ? new RealVideoService() : new MockVideoService()
+  /**
+   * Returns a VideoService resolved for the given user (BYOK/heygen) or env fallback.
+   * @param userId - optional; BYOK resolution attempted for 'heygen' when provided
+   */
+  static async getVideoService(userId?: string): Promise<IVideoService> {
+    const key = await resolveHeygenKey(userId)
+    return key ? new RealVideoService(userId) : new MockVideoService()
   }
 
+  /** Payment service — no BYOK (always env-driven, NOWPayments only). */
   static getPaymentService(): IPaymentService {
     return requireKey('NOWPAYMENTS_API_KEY') ? new RealPaymentService() : new MockPaymentService()
   }

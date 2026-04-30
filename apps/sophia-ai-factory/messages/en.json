@@ -848,6 +848,37 @@
       "success_disabled": "Two-factor authentication disabled"
     }
   },
+  "setupWizard": {
+    "apiKeys": {
+      "title": "AI Service Configuration",
+      "subtitle": "Enter API keys for the AI services powering Sophia.",
+      "openrouter": {
+        "label": "OpenRouter API Key (LLM)",
+        "placeholder": "sk-or-...",
+        "help": "Get your key at openrouter.ai/keys"
+      },
+      "elevenlabs": {
+        "label": "ElevenLabs API Key (Voice)",
+        "placeholder": "sk_...",
+        "help": "Get your key at elevenlabs.io/subscription"
+      },
+      "did": {
+        "label": "D-ID API Key (Avatar)",
+        "placeholder": "Basic ...",
+        "help": "Get your key at studio.d-id.com/account-settings"
+      },
+      "heygen": {
+        "label": "HeyGen API Key (AI Video)",
+        "placeholder": "NjY...",
+        "help": "Get your key at app.heygen.com/settings/api-keys"
+      },
+      "muapi": {
+        "label": "MuAPI Key (Music/Audio)",
+        "placeholder": "mu_...",
+        "help": "Get your key at muapi.ai/dashboard/api-keys"
+      }
+    }
+  },
   "auth": {
     "mfa_challenge": {
       "title": "Two-Factor Authentication",

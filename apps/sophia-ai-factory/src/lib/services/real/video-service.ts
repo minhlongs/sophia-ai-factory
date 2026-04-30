@@ -2,8 +2,14 @@ import { IVideoService, CreateVideoParams, VideoStatus, Avatar, Voice } from "..
 import { getHeyGenClient } from "@/lib/heygen/heygen-client";
 
 export class RealVideoService implements IVideoService {
+  private readonly userId?: string;
+
+  constructor(userId?: string) {
+    this.userId = userId;
+  }
+
   async createVideo(params: CreateVideoParams): Promise<string> {
-    const client = getHeyGenClient();
+    const client = await getHeyGenClient(this.userId);
     if (!client) {
       throw new Error("HeyGen Client not available (API Key missing)");
     }
@@ -11,7 +17,7 @@ export class RealVideoService implements IVideoService {
   }
 
   async getVideoStatus(videoId: string): Promise<VideoStatus> {
-    const client = getHeyGenClient();
+    const client = await getHeyGenClient(this.userId);
     if (!client) {
       throw new Error("HeyGen Client not available");
     }
@@ -27,17 +33,16 @@ export class RealVideoService implements IVideoService {
   }
 
   async listAvatars(): Promise<Avatar[]> {
-    const client = getHeyGenClient();
+    const client = await getHeyGenClient(this.userId);
     if (!client) return [];
     const avatars = await client.listAvatars();
-    // Map HeyGenAvatar to generic Avatar
     return avatars.map(a => ({
       ...a,
     }));
   }
 
   async listVoices(): Promise<Voice[]> {
-    const client = getHeyGenClient();
+    const client = await getHeyGenClient(this.userId);
     if (!client) return [];
     const voices = await client.listVoices();
     return voices.map(v => ({
