@@ -44,30 +44,30 @@ created: 2026-04-29
 
 | # | Phase | Status | File |
 |---|-------|--------|------|
-| 6 | Video Pipeline Foundation (D1 schema, FSM, Inngest, R2) | pending | [phase-06-video-pipeline-foundation.md](phase-06-video-pipeline-foundation.md) |
-| 7 | Voice + TTS Service (Coqui XTTS Docker + CF Worker proxy) | pending | [phase-07-voice-tts-service.md](phase-07-voice-tts-service.md) |
-| 8 | Visual Generator (Template + Cinematic 2-path routing) | pending | [phase-08-visual-generator.md](phase-08-visual-generator.md) |
+| 6 | Video Pipeline Foundation (D1 schema, FSM, Inngest, R2) | ✅ DONE 2026-04-30 | [phase-06-video-pipeline-foundation.md](phase-06-video-pipeline-foundation.md) |
+| 7 | Voice + TTS Service (Coqui XTTS Docker + CF Worker proxy) | ✅ DONE 2026-04-30 | [phase-07-voice-tts-service.md](phase-07-voice-tts-service.md) |
+| 8 | Visual Generator (Template + Cinematic 2-path routing) | ✅ DONE 2026-04-30 | [phase-08-visual-generator.md](phase-08-visual-generator.md) |
 
 ### C. Affiliate Engine (Phase 9-10)
 
 | # | Phase | Status | File |
 |---|-------|--------|------|
-| 9 | Affiliate Offer Engine (TikTok/AccessTrade/ClickBank/Awin/Amazon + Shlink-style cloak) | pending | [phase-09-affiliate-offer-engine.md](phase-09-affiliate-offer-engine.md) |
-| 10 | Multi-Channel Publisher (TikTok Shop/YT Shorts/IG Reels) | pending | [phase-10-multi-channel-publisher.md](phase-10-multi-channel-publisher.md) |
+| 9 | Affiliate Offer Engine (TikTok/AccessTrade/ClickBank/Awin/Amazon + Shlink-style cloak) | ✅ DONE 2026-04-30 | [phase-09-affiliate-offer-engine.md](phase-09-affiliate-offer-engine.md) |
+| 10 | Multi-Channel Publisher (TikTok Shop/YT Shorts/IG Reels) | ✅ DONE 2026-04-30 | [phase-10-multi-channel-publisher.md](phase-10-multi-channel-publisher.md) |
 
 ### D. Tenancy + Orchestration (Phase 11-12)
 
 | # | Phase | Status | File |
 |---|-------|--------|------|
-| 11 | Tenant Isolation + Quota Tiers (RLS, video quotas, cost ledger) | pending | [phase-11-tenant-isolation-quotas.md](phase-11-tenant-isolation-quotas.md) |
-| 12 | OpenClaw Orchestrator (10 primitives wired) | pending | [phase-12-openclaw-orchestrator.md](phase-12-openclaw-orchestrator.md) |
+| 11 | Tenant Isolation + Quota Tiers (RLS, video quotas, cost ledger) | ✅ DONE 2026-04-30 | [phase-11-tenant-isolation-quotas.md](phase-11-tenant-isolation-quotas.md) |
+| 12 | OpenClaw Orchestrator (10 primitives wired) | ✅ DONE 2026-04-30 | [phase-12-openclaw-orchestrator.md](phase-12-openclaw-orchestrator.md) |
 
 ### E. Revenue + Launch (Phase 13-14)
 
 | # | Phase | Status | File |
 |---|-------|--------|------|
-| 13 | Revenue Split + Payouts (commission ledger, NOWPayments USDT, 14d clawback) | pending | [phase-13-revenue-split-payouts.md](phase-13-revenue-split-payouts.md) |
-| 14 | Launch Hardening (E2E, k6, security, GDPR, FTC disclosure) | pending | [phase-14-launch-hardening.md](phase-14-launch-hardening.md) |
+| 13 | Revenue Split + Payouts (commission ledger, NOWPayments USDT, 14d clawback) | ✅ DONE 2026-04-30 (sha df22a4f7 — fixed C1-C3+H1-H3 from round-1 review) | [phase-13-revenue-split-payouts.md](phase-13-revenue-split-payouts.md) |
+| 14 | Launch Hardening (E2E, k6, security, GDPR, FTC disclosure) | ✅ DONE 2026-04-30 (PR #22, sha a30ea17e) | [phase-14-launch-hardening.md](phase-14-launch-hardening.md) |
 
 ---
 

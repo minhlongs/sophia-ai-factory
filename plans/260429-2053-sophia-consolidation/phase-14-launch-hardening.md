@@ -1,6 +1,6 @@
 # Phase 14 — Launch Hardening
 
-## Status: PENDING (final)
+## Status: ✅ DONE 2026-04-30 (PR #22, sha a30ea17e)
 
 ## Goal
 Production readiness: E2E tests, load test, security audit, compliance.

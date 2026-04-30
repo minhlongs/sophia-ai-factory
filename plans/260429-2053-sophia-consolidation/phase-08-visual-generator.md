@@ -1,6 +1,6 @@
 # Phase 08 — Visual Generator (Template + Cinematic 2-path)
 
-## Status: PENDING (parallel after Phase 6)
+## Status: ✅ DONE 2026-04-30
 
 ## Goal
 2-path routing: TEMPLATE (Remotion/MoviePy, $0.35-1.00) vs CINEMATIC (HunyuanVideo on Runpod, $5.50-16.55).
