@@ -18,7 +18,11 @@ const scheduleBodySchema = z.object({
   channels: z.array(z.string().min(1)).min(1, 'At least one channel required'),
   caption: z.string().min(1).max(2200),
   hashtags: z.array(z.string()).default([]),
-  productLink: z.string().url().optional(),
+  productLink: z
+    .string()
+    .url()
+    .refine((u) => /^https?:\/\//.test(u), { message: 'productLink must be https:// or http://' })
+    .optional(),
   scheduledAt: z.number().int().positive().optional(),
 });
 
