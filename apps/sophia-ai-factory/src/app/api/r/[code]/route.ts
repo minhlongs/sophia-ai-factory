@@ -5,6 +5,9 @@
  * Public endpoint — no auth required.
  * Runs on Cloudflare Workers edge for <50ms p95.
  *
+ * Extended (Phase 09): Lookup from affiliate_links table, record click_events
+ * with tenant_id + sub_id injection into provider URL.
+ *
  * @module app/api/r/[code]/route
  */
 
@@ -13,6 +16,7 @@ import { isValidShortCode } from '@/lib/affiliate-shortlink/short-code-generator
 import { logClick } from '@/lib/affiliate-shortlink/click-logger';
 import { createServerClient } from '@/lib/db/client';
 import { checkRateLimit } from '@/lib/telegram/sql-rate-limiter';
+import { recordClick } from '@/lib/affiliates/click-recorder';
 
 interface AffiliateOfferRow {
   campaign_id: string;
@@ -21,7 +25,36 @@ interface AffiliateOfferRow {
   affiliate_link: string;
 }
 
+/** affiliate_links row for Phase 09 offer engine */
+interface AffiliateLinkRow {
+  id: string;
+  tenant_id: string;
+  offer_id: string;
+  user_id: string;
+  code: string;
+  sub_id: string | null;
+}
+
+/** affiliate_offers row for Phase 09 */
+interface AffiliateOfferEngineRow {
+  id: string;
+  product_url: string;
+  network_id: string;
+}
+
 const HOMEPAGE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network';
+
+/** Provider-specific sub_id param name */
+function getSubIdParam(networkId: string): string {
+  switch (networkId) {
+    case 'tiktok-shop': return 'aff_sub';
+    case 'accesstrade': return 'utm_content';
+    case 'clickbank': return 'tid';
+    case 'awin': return 'clickref';
+    case 'amazon': return 'tag';
+    default: return 'sub_id';
+  }
+}
 
 export async function GET(
   request: NextRequest,
@@ -34,18 +67,62 @@ export async function GET(
     return Response.redirect(HOMEPAGE_URL, 302);
   }
 
-  // Extract click metadata from Cloudflare headers (used for both rate-limit key and click log)
+  // Extract click metadata from Cloudflare headers
   const ip = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for');
   const country = request.headers.get('cf-ipcountry');
   const userAgent = request.headers.get('user-agent');
   const referer = request.headers.get('referer');
 
-  // Rate limit per IP: 100 clicks/min — silently redirect on breach (don't expose 429 to share viewers)
+  // Rate limit per IP: 100 clicks/min
   const rateLimit = await checkRateLimit(`r:${ip ?? 'unknown'}`, 100, 60);
   if (!rateLimit.allowed) {
     return Response.redirect(HOMEPAGE_URL, 302);
   }
 
+  // Phase 09: try affiliate_links table first (new offer engine)
+  const rawDb = (globalThis as unknown as { __env?: Record<string, unknown> }).__env;
+  const d1 = rawDb?.DB as D1Database | undefined;
+
+  if (d1) {
+    const linkRow = await d1
+      .prepare('SELECT id, tenant_id, offer_id, user_id, code, sub_id FROM affiliate_links WHERE code = ? LIMIT 1')
+      .bind(code)
+      .first<AffiliateLinkRow>();
+
+    if (linkRow) {
+      const offerRow = await d1
+        .prepare('SELECT id, product_url, network_id FROM affiliate_offers WHERE id = ? LIMIT 1')
+        .bind(linkRow.offer_id)
+        .first<AffiliateOfferEngineRow>();
+
+      if (offerRow) {
+        const clickId = crypto.randomUUID();
+        // sub_id pattern: {tenantSlug}-{linkId} (injected into provider URL)
+        const tenantSlug = linkRow.tenant_id.slice(0, 16);
+        const subIdValue = linkRow.sub_id ?? `${tenantSlug}-${linkRow.id.replace(/-/g, '').slice(0, 12)}`;
+        const paramName = getSubIdParam(offerRow.network_id);
+
+        const destinationUrl = new URL(offerRow.product_url);
+        destinationUrl.searchParams.set(paramName, subIdValue);
+
+        // Dual-write click event (fire-and-forget — does not block redirect)
+        recordClick({
+          clickId,
+          tenantId: linkRow.tenant_id,
+          linkId: linkRow.id,
+          offerId: linkRow.offer_id,
+          ip,
+          userAgent,
+          referrer: referer,
+          country,
+        });
+
+        return Response.redirect(destinationUrl.toString(), 302);
+      }
+    }
+  }
+
+  // Fallback: legacy affiliate_offers_selected table (pre-Phase-09 campaigns)
   const db = createServerClient();
   const { data, error } = await db
     .from('affiliate_offers_selected')
