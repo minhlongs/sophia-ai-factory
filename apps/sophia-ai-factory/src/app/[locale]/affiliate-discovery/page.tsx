@@ -1,6 +1,6 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
-import { Search, TrendingUp, Star, ArrowRight, PackageOpen } from 'lucide-react'
+import { Search, TrendingUp, Star, ArrowRight, PackageOpen, ExternalLink } from 'lucide-react'
 import { createServerClient } from '@/lib/db/client'
 import type { AffiliateOffer } from '@/app/api/affiliate-discovery/route'
 
@@ -13,8 +13,9 @@ async function fetchOffers(): Promise<AffiliateOffer[]> {
   try {
     const db = createServerClient()
     const result = await db
-      .from('affiliate_offers_selected')
-      .select('id, offer_name, network, commission_rate, created_at')
+      .from('affiliate_offers_catalog')
+      .select('id, offer_name, network, url, commission_rate, category, description, created_at')
+      .eq('is_active', 1)
       .order('created_at', { ascending: false })
       .range(0, 49)
     return (result.data ?? []) as unknown as AffiliateOffer[]
@@ -25,7 +26,19 @@ async function fetchOffers(): Promise<AffiliateOffer[]> {
 
 function formatCommission(rate: number | null): string {
   if (rate === null) return '—'
-  return `${Math.round(rate * 100)}%`
+  return `${rate}%`
+}
+
+function networkBadge(network: string): string {
+  const map: Record<string, string> = {
+    clickbank: 'CB',
+    shareasale: 'SAS',
+    amazon: 'AMZ',
+    impact: 'IMP',
+    cj: 'CJ',
+    manual: 'M',
+  }
+  return map[network] ?? network.slice(0, 3).toUpperCase()
 }
 
 export default async function AffiliateDiscoveryPage() {
@@ -46,17 +59,29 @@ export default async function AffiliateDiscoveryPage() {
       {hasOffers ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-8">
           {offers.map((offer) => (
-            <div key={offer.id} className="rounded-xl border border-border/40 bg-card/50 p-5 space-y-3">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="font-semibold text-foreground text-sm">{offer.offer_name}</h3>
-                  <span className="text-xs text-muted-foreground capitalize">{offer.network}</span>
+            <a
+              key={offer.id}
+              href={offer.url}
+              target="_blank"
+              rel="noopener noreferrer sponsored"
+              className="group rounded-xl border border-border/40 bg-card/50 p-5 space-y-3 hover:border-violet-500/40 hover:bg-card/70 transition-colors"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-semibold text-foreground text-sm truncate">{offer.offer_name}</h3>
+                  <span className="text-xs text-muted-foreground capitalize">
+                    {offer.network}
+                    {offer.category ? ` · ${offer.category}` : ''}
+                  </span>
                 </div>
-                <div className="flex items-center gap-1 text-xs font-medium text-amber-400">
+                <div className="flex items-center gap-1 text-xs font-medium text-amber-400 shrink-0">
                   <Star className="w-3.5 h-3.5 fill-amber-400" />
-                  {offer.network === 'clickbank' ? 'CB' : offer.network.slice(0, 2).toUpperCase()}
+                  {networkBadge(offer.network)}
                 </div>
               </div>
+              {offer.description && (
+                <p className="text-xs text-muted-foreground line-clamp-2">{offer.description}</p>
+              )}
               <div className="flex items-center justify-between text-xs">
                 <span className="text-muted-foreground">
                   Hoa hồng:{' '}
@@ -64,12 +89,12 @@ export default async function AffiliateDiscoveryPage() {
                     {formatCommission(offer.commission_rate)}
                   </span>
                 </span>
-                <span className="flex items-center gap-1 text-emerald-400">
+                <span className="flex items-center gap-1 text-emerald-400 group-hover:text-violet-400">
                   <TrendingUp className="w-3 h-3" />
-                  Active
+                  <ExternalLink className="w-3 h-3" />
                 </span>
               </div>
-            </div>
+            </a>
           ))}
         </div>
       ) : (
@@ -88,7 +113,6 @@ export default async function AffiliateDiscoveryPage() {
         </div>
       )}
 
-      {/* CTA */}
       <div className="rounded-xl border border-violet-500/30 bg-violet-500/5 p-6 text-center space-y-3">
         <Search className="w-8 h-8 text-violet-400 mx-auto" />
         <h2 className="text-lg font-semibold text-foreground">Mở Khóa Sophia Index Đầy Đủ</h2>
