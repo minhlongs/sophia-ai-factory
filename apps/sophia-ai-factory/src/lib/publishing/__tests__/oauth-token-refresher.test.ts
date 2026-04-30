@@ -68,8 +68,8 @@ function makeChannel(overrides: Partial<PublishingChannel> = {}): PublishingChan
     provider: 'tiktok',
     external_account_id: 'ext_1',
     display_name: 'Test',
-    access_token: 'enc:b2xkX3Rvaw==', // "old_tok" base64
-    refresh_token: 'enc:cmVmcmVzaF90b2s=', // "refresh_tok" base64
+    access_token: 'enc:b2xkX3Rvaw==',
+    refresh_token: 'enc:cmVmcmVzaF90b2s=',
     expires_at: now + 3000,
     status: 'active',
     refreshing_at: null,
@@ -127,7 +127,7 @@ describe('oauth-token-refresher', () => {
     it('throws when lock is not acquired (another worker holds it)', async () => {
       mocks.mockRawDb.prepare.mockReturnValue({
         bind: vi.fn().mockReturnValue({
-          run: vi.fn().mockResolvedValue({ meta: { changes: 0 } }), // lock not acquired
+          run: vi.fn().mockResolvedValue({ meta: { changes: 0 } }),
         }),
       });
       const channel = makeChannel({ provider: 'tiktok' });
