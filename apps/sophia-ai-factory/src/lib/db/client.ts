@@ -96,7 +96,7 @@ class LazyQueryChain {
     this.table = table;
     this.getDb = getDb;
 
-    return new Proxy(this, {
+    const proxy: LazyQueryChain = new Proxy(this, {
       get(target, prop) {
         if (prop === 'then') {
           return (
@@ -114,10 +114,11 @@ class LazyQueryChain {
 
         return (...args: unknown[]) => {
           target.calls.push({ method: prop as string, args });
-          return target;
+          return proxy;
         };
       },
     }) as unknown as LazyQueryChain;
+    return proxy;
   }
 
   private async execute() {
