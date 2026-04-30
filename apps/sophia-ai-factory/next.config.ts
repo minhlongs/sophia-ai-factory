@@ -48,6 +48,9 @@ const nextConfig: NextConfig = {
       { source: '/:locale/signup', destination: '/login', permanent: false },
       { source: '/settings', destination: '/dashboard/settings', permanent: true },
       { source: '/:locale/settings', destination: '/dashboard/settings', permanent: false },
+      { source: '/settings/security', destination: '/settings/security/mfa', permanent: false },
+      { source: '/chat', destination: '/dashboard', permanent: false },
+      { source: '/templates', destination: '/dashboard/create', permanent: false },
     ];
   },
   async headers() {
