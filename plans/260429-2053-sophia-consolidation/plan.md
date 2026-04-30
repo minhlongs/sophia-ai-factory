@@ -52,15 +52,15 @@ created: 2026-04-29
 
 | # | Phase | Status | File |
 |---|-------|--------|------|
-| 9 | Affiliate Offer Engine (TikTok/AccessTrade/ClickBank/Awin/Amazon + Shlink-style cloak) | pending | [phase-09-affiliate-offer-engine.md](phase-09-affiliate-offer-engine.md) |
-| 10 | Multi-Channel Publisher (TikTok Shop/YT Shorts/IG Reels) | pending | [phase-10-multi-channel-publisher.md](phase-10-multi-channel-publisher.md) |
+| 9 | Affiliate Offer Engine (TikTok/AccessTrade/ClickBank/Awin/Amazon + Shlink-style cloak) | ✅ DONE 2026-04-30 (PR #20, sha fa729bd9) | [phase-09-affiliate-offer-engine.md](phase-09-affiliate-offer-engine.md) |
+| 10 | Multi-Channel Publisher (TikTok Shop/YT Shorts/IG Reels) | ✅ DONE 2026-04-30 (PR #21, sha bb1ad2b4) | [phase-10-multi-channel-publisher.md](phase-10-multi-channel-publisher.md) |
 
 ### D. Tenancy + Orchestration (Phase 11-12)
 
 | # | Phase | Status | File |
 |---|-------|--------|------|
 | 11 | Tenant Isolation + Quota Tiers (RLS, video quotas, cost ledger) | ✅ DONE | [phase-11-tenant-isolation-quotas.md](phase-11-tenant-isolation-quotas.md) |
-| 12 | OpenClaw Orchestrator (10 primitives wired) | pending | [phase-12-openclaw-orchestrator.md](phase-12-openclaw-orchestrator.md) |
+| 12 | OpenClaw Orchestrator (10 primitives wired) | ✅ DONE 2026-04-30 (PR #20) | [phase-12-openclaw-orchestrator.md](phase-12-openclaw-orchestrator.md) |
 
 ### E. Revenue + Launch (Phase 13-14)
 
