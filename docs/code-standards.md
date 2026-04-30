@@ -228,6 +228,15 @@ try {
 - All D1 queries scoped by `org_id`
 - LLM cache, usage events, audit logs all org-scoped
 - Single-user = single-org mapping (1-to-1 relationship in `users.org_id`)
+- D1 Kysely tenant-scope plugin auto-injects `tenant_id` on all queries (Phase 11+)
+
+### Compliance (Phase 14)
+- **FTC Compliance:** All user-generated video content must include `#ad` overlay (3-second text, FFmpeg drawtext) + caption prefix in publisher adapters
+- **GDPR Compliance:** 
+  - `/api/account/export` endpoint: exports user data (JSON), includes orgs + missions + usage + payments
+  - `/api/account/delete` endpoint: anonymizes user record, soft-deletes org + related data
+  - No PII in logs (Better Stack integration filters sensitive fields)
+- **Data Retention:** Audit logs retained 90 days minimum, backup retained 12 months
 
 ---
 
@@ -254,8 +263,14 @@ try {
 | 9 | Module types extraction | `src/lib/audit/types.ts` |
 | 10 | D1Response<T> generic | `src/lib/usage-metering/types.ts` (promoted Phase 12) |
 | 11 | Discriminated union narrowing | `src/lib/raas/raas-rate-limiter.ts` |
-| 12 | **insertTyped<R,T> helper (NEW)** | **`src/lib/db/insert-typed.ts`** |
-| 12 | **D1Response canonical location** | **`src/lib/db/types.ts`** |
+| 11 | Tenant isolation (D1 Kysely plugin) | `src/lib/db/tenant-scope-plugin.ts` |
+| 12 | insertTyped<R,T> helper | `src/lib/db/insert-typed.ts` |
+| 12 | D1Response canonical location | `src/lib/db/types.ts` |
+| 13 | Commission ledger append-only | `src/lib/affiliate/commission-ledger.ts` |
+| 13 | 14-day clawback window | `src/lib/affiliate/clawback-calculator.ts` |
+| 14 | **FTC #ad overlay (FFmpeg)** | **`src/lib/video/ftc-ad-overlay.ts`** |
+| 14 | **GDPR export helper** | **`src/lib/audit/gdpr-export.ts`** |
+| 14 | **GDPR delete helper** | **`src/lib/audit/gdpr-delete.ts`** |
 | - | Tier normalization | `src/lib/auth/normalize-tier.ts` |
 | - | BYOK encryption | `src/lib/byok/*` |
 | - | Org resolution | `src/lib/auth/resolve-org-id.ts` |
