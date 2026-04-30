@@ -79,6 +79,13 @@ After secrets propagated (5 consecutive probes, ~3 minutes):
 
 D1 latency 49–98ms across 5 probes — stable.
 
+**After D1 timeout fix (commit `91bf4e0b`):**
+- Probe #1 (cold): D1 up 939ms (would have failed at old 1500ms timeout)
+- Probe #2: D1 up 242ms
+- Probe #3: D1 up 53ms
+- Probe #4: D1 up 52ms
+→ Health stays consistently `healthy` across cold-start window.
+
 ### 3. Browser/Curl Smoke (no real keys needed)
 
 | Endpoint | Code | Verdict |
@@ -132,13 +139,13 @@ D1 latency 49–98ms across 5 probes — stable.
 
 ## Files Changed in This Session
 
-**No code changes.** All operations were:
+**1 code change** + ops:
+- `src/lib/health/probe-d1.ts` — bumped `TIMEOUT_MS` 1500ms → 3000ms (cold-start tolerance; 939ms cold start measured live)
 - Production secret provisioning (wrangler secret put × 6)
-- Health monitoring verification (curl × 5)
+- Health monitoring verification (curl × 9)
 - Endpoint smoke verification (curl × 13)
 - Backup file creation (`~/.sophia-secrets-backup/`)
-
-This session was pure go-live ops — no SHA change, production stays at `ed13e406`.
+- Deploy: commit `91bf4e0b`, Version `8c9ccd4b-6011-4e5e-857d-f4188889fc2e`
 
 ---
 
@@ -147,7 +154,7 @@ This session was pure go-live ops — no SHA change, production stays at `ed13e4
 - [x] Build: 0 errors (held from prior session)
 - [x] Tests: 1696 pass (held from prior session)
 - [x] Production HTTP: 200
-- [x] Deploy SHA Match: `/api/version` shortSha == local HEAD (`ed13e406`)
+- [x] Deploy SHA Match: `/api/version` shortSha == local HEAD (`91bf4e0b`)
 - [x] /api/health: `healthy` (was `degraded`)
 - [x] D1 binding: up, 49–98ms latency
 - [x] R2 binding: up, 135ms latency
