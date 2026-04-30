@@ -23,3 +23,6 @@ export { conversionToLedger } from './conversion-to-ledger';
 export { pendingPromoterCron } from '@/lib/payouts/pending-promoter-cron';
 export { payoutBatcher } from '@/lib/payouts/payout-batcher';
 export { reconciliationCron } from '@/lib/payouts/reconciliation';
+
+// Phase 11: storage tracker cron
+export { storageTrackerDaily } from '@/lib/quota/storage-tracker-cron';
