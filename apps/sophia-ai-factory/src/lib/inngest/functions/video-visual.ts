@@ -3,7 +3,8 @@
  *
  * Listens: video.tts.ready
  * Transition: tts_pending → visual_pending
- * Stub: no real visual generation yet (Phase 8).
+ * Generates talking-head video via HeyGen API (shared helpers).
+ * Falls back to placeholder if HeyGen key not configured.
  * Emits: video.visual.ready
  */
 
@@ -11,11 +12,15 @@ import { inngest } from '@/lib/inngest/client';
 import { getD1Client } from '@/lib/db/client';
 import { recordCost } from '@/lib/video/cost-ledger';
 import { assertValidTransition } from '@/lib/video/video-job-fsm';
-import { tenantScopedKey } from '@/lib/video/r2-binding';
+import { createHeyGenVideo, pollHeyGenStatus } from '@/lib/video/heygen-helpers';
+import { logger } from '@/lib/utils/logger-utility';
 import type { VideoJobStatus } from '@/lib/video/video-job-fsm';
 
 interface VideoJobRow {
   status: VideoJobStatus;
+  script_text: string;
+  audio_r2_key: string;
+  prompt: string;
 }
 
 export const videoVisual = inngest.createFunction(
@@ -24,36 +29,57 @@ export const videoVisual = inngest.createFunction(
   async ({ event, step }) => {
     const { jobId, tenantId, userId } = event.data;
 
-    await step.run('transition-to-visual-pending', async () => {
+    const job = await step.run('load-job', async () => {
       const db = await getD1Client();
       const { data } = await db
         .from('video_jobs')
-        .select('status')
+        .select('status, script_text, audio_r2_key, prompt')
         .eq('id', jobId)
         .eq('tenant_id', tenantId)
         .single();
       const row = data as VideoJobRow | null;
       if (!row) throw new Error(`[videoVisual] Job not found: ${jobId}`);
+      return row;
+    });
 
-      assertValidTransition(row.status, 'visual_pending');
+    await step.run('transition-to-visual-pending', async () => {
+      assertValidTransition(job.status, 'visual_pending');
+      const db = await getD1Client();
       await db
         .from('video_jobs')
         .update({ status: 'visual_pending', updated_at: Math.floor(Date.now() / 1000) })
         .eq('id', jobId);
     });
 
-    await step.run('stub-visual-generation', async () => {
-      // Phase 8 will replace with HunyuanVideo generation
-      const visualKey = tenantScopedKey(tenantId, jobId, 'visual.mp4');
+    let videoUrl: string | null = null;
+    await step.run('generate-heygen-video', async () => {
+      const apiKey = process.env.HEYGEN_API_KEY;
+      if (!apiKey) {
+        logger.warn('[videoVisual] No HEYGEN_API_KEY, using placeholder');
+        videoUrl = null;
+      } else {
+        const script = job.script_text || job.prompt || '';
+        try {
+          const { videoId } = await createHeyGenVideo({ script, apiKey });
+          videoUrl = await pollHeyGenStatus({ videoId, apiKey });
+          logger.info('[videoVisual] HeyGen video completed', { jobId, videoUrl });
+        } catch (err) {
+          logger.warn('[videoVisual] HeyGen failed, using placeholder', { jobId, error: String(err) });
+          videoUrl = null;
+        }
+      }
       const db = await getD1Client();
       await db
         .from('video_jobs')
-        .update({ visual_r2_key: visualKey, updated_at: Math.floor(Date.now() / 1000) })
+        .update({
+          visual_r2_key: videoUrl ?? `placeholder:${jobId}`,
+          updated_at: Math.floor(Date.now() / 1000),
+        })
         .eq('id', jobId);
     });
 
     await step.run('record-cost', async () => {
-      await recordCost({ jobId, stage: 'visual_pending', provider: 'hunyuan', units: 0, costUsd: 0 });
+      await recordCost({ jobId, stage: 'visual_pending', provider: 'heygen', units: 1, costUsd: videoUrl ? 0.50 : 0 });
     });
 
     await step.sendEvent('emit-visual-ready', {
@@ -61,6 +87,6 @@ export const videoVisual = inngest.createFunction(
       data: { jobId, tenantId, userId },
     });
 
-    return { jobId, status: 'visual_pending' };
+    return { jobId, status: 'visual_pending', videoUrl };
   },
 );

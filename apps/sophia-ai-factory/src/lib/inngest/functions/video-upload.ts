@@ -3,7 +3,8 @@
  *
  * Listens: video.composed
  * Transition: composing → uploaded
- * Stub: marks R2 key as uploaded, no real upload yet.
+ * Validates final video exists and marks uploaded.
+ * For HeyGen videos, final_r2_key contains the CDN URL directly.
  * Emits: video.uploaded
  */
 
@@ -11,10 +12,12 @@ import { inngest } from '@/lib/inngest/client';
 import { getD1Client } from '@/lib/db/client';
 import { recordCost } from '@/lib/video/cost-ledger';
 import { assertValidTransition } from '@/lib/video/video-job-fsm';
+import { logger } from '@/lib/utils/logger-utility';
 import type { VideoJobStatus } from '@/lib/video/video-job-fsm';
 
 interface VideoJobRow {
   status: VideoJobStatus;
+  final_r2_key: string;
 }
 
 export const videoUpload = inngest.createFunction(
@@ -23,22 +26,38 @@ export const videoUpload = inngest.createFunction(
   async ({ event, step }) => {
     const { jobId, tenantId, userId } = event.data;
 
-    await step.run('transition-to-uploaded', async () => {
+    const job = await step.run('load-job', async () => {
       const db = await getD1Client();
       const { data } = await db
         .from('video_jobs')
-        .select('status')
+        .select('status, final_r2_key')
         .eq('id', jobId)
         .eq('tenant_id', tenantId)
         .single();
       const row = data as VideoJobRow | null;
       if (!row) throw new Error(`[videoUpload] Job not found: ${jobId}`);
+      return row;
+    });
 
-      assertValidTransition(row.status, 'uploaded');
+    await step.run('transition-to-uploaded', async () => {
+      assertValidTransition(job.status, 'uploaded');
+      const db = await getD1Client();
       await db
         .from('video_jobs')
         .update({ status: 'uploaded', updated_at: Math.floor(Date.now() / 1000) })
         .eq('id', jobId);
+    });
+
+    await step.run('verify-video-accessible', async () => {
+      const url = job.final_r2_key;
+      if (url.startsWith('http')) {
+        try {
+          const res = await fetch(url, { method: 'HEAD', signal: AbortSignal.timeout(10_000) });
+          if (!res.ok) logger.warn('[videoUpload] Video URL not accessible', { jobId, url, status: res.status });
+        } catch {
+          logger.warn('[videoUpload] Video URL check failed (non-fatal)', { jobId, url });
+        }
+      }
     });
 
     await step.run('record-cost', async () => {

@@ -3,19 +3,16 @@
  *
  * Receives video status push events from HeyGen, verifies HMAC-SHA256
  * signature, and updates the corresponding `videos` row in D1.
+ * On completion of onboarding videos, triggers email delivery.
  *
  * Configure HeyGen dashboard webhook → POST https://sophia.agencyos.network/api/webhooks/heygen
  * Secret: env HEYGEN_WEBHOOK_SECRET (CF Worker secret).
- *
- * Note: HeyGen webhook payload schema is not publicly documented; this
- * handler accepts a flexible shape ({video_id, status, video_url, ...})
- * and ignores unknown event types. Always returns 200 after sig check
- * to prevent retry storms.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
+import { sendOnboardingVideoEmail } from '@/lib/email/onboarding-emails';
 
 const HEYGEN_WEBHOOK_SECRET = process.env.HEYGEN_WEBHOOK_SECRET;
 const TERMINAL = new Set(['completed', 'failed', 'success', 'error']);
@@ -117,7 +114,28 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         updated_at: new Date().toISOString(),
       })
       .eq('heygen_job_id', videoId);
+
     logger.info('[heygen-webhook] video updated', { videoId, status });
+
+    // On video completion, check if onboarding & send email
+    if (status === 'completed') {
+      try {
+        const { data: video } = await db.from('videos')
+          .select('id, user_id, is_onboarding').eq('heygen_job_id', videoId).single() as { data: { id: string; user_id: string; is_onboarding: number } | null };
+        if (video?.is_onboarding) {
+          // Update onboarding event status
+          await db.from('video_onboarding_events')
+            .update({ delivery_status: 'delivered', delivered_at: Math.floor(Date.now() / 1000), video_id: video.id })
+            .eq('video_id', video.id);
+          // Send email (non-blocking)
+          sendOnboardingVideoEmail(video.user_id, video.id, payload.video_url ?? undefined).catch(err => {
+            logger.warn('[heygen-webhook] Email send failed (non-fatal)', { videoId: video.id, error: String(err) });
+          });
+        }
+      } catch (err) {
+        logger.warn('[heygen-webhook] Onboarding delivery check failed (non-fatal)', { videoId, error: String(err) });
+      }
+    }
   } catch (err) {
     logger.error('[heygen-webhook] D1 update failed', err instanceof Error ? err : undefined, { videoId });
   }
