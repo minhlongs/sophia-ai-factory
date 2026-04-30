@@ -19,6 +19,7 @@ interface BucketState {
 
 // In-memory fallback (used when KV unavailable)
 const _memoryBuckets = new Map<string, BucketState>();
+const _memoryTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
 function getKV(): KVNamespace | null {
   const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
@@ -52,8 +53,14 @@ async function writeBucket(
     await kv.put(key, JSON.stringify(state), { expirationTtl: ttlSec });
   } else {
     _memoryBuckets.set(key, state);
-    // Self-expire from memory map
-    setTimeout(() => _memoryBuckets.delete(key), ttlSec * 1000);
+    // Self-expire from memory map — cancel any prior timer for this key
+    const existing = _memoryTimers.get(key);
+    if (existing) clearTimeout(existing);
+    const timer = setTimeout(() => {
+      _memoryBuckets.delete(key);
+      _memoryTimers.delete(key);
+    }, ttlSec * 1000);
+    _memoryTimers.set(key, timer);
   }
 }
 
@@ -92,7 +99,9 @@ export async function rateLimitGate(
   return { allowed: true, remaining: bucket.tokens };
 }
 
-/** Test helper: clear in-memory buckets */
+/** Test helper: clear in-memory buckets and cancel all timers */
 export function _clearMemoryBuckets(): void {
+  for (const timer of _memoryTimers.values()) clearTimeout(timer);
+  _memoryTimers.clear();
   _memoryBuckets.clear();
 }

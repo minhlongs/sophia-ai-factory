@@ -83,14 +83,19 @@ describe('oauth-token-refresher', () => {
   });
 
   describe('refreshChannelToken', () => {
+    /** Build update chain with .or() for acquireRefreshLock compatibility */
+    function makeUpdateChain(changes = 1) {
+      const orMock = vi.fn().mockResolvedValue({ meta: { changes } });
+      const eqInnerMock = vi.fn().mockReturnValue({ or: orMock });
+      const eqOuterMock = vi.fn().mockReturnValue({ or: orMock, eq: eqInnerMock });
+      const updateMock = vi.fn().mockReturnValue({ eq: eqOuterMock });
+      return { updateMock };
+    }
+
     it('calls TikTok refreshAccessToken for tiktok provider', async () => {
       const channel = makeChannel({ provider: 'tiktok', refresh_token: 'enc:ref_tok' });
-
-      mocks.mockDb.from.mockReturnValue({
-        update: vi.fn().mockReturnValue({
-          eq: vi.fn().mockResolvedValue({}),
-        }),
-      });
+      const { updateMock } = makeUpdateChain();
+      mocks.mockDb.from.mockReturnValue({ update: updateMock });
 
       await refreshChannelToken(channel);
       expect(mocks.refreshTikTok).toHaveBeenCalledWith('ref_tok');
@@ -98,12 +103,8 @@ describe('oauth-token-refresher', () => {
 
     it('calls YouTube refreshAccessToken for youtube provider', async () => {
       const channel = makeChannel({ provider: 'youtube', refresh_token: 'enc:yt_ref' });
-
-      mocks.mockDb.from.mockReturnValue({
-        update: vi.fn().mockReturnValue({
-          eq: vi.fn().mockResolvedValue({}),
-        }),
-      });
+      const { updateMock } = makeUpdateChain();
+      mocks.mockDb.from.mockReturnValue({ update: updateMock });
 
       await refreshChannelToken(channel);
       expect(mocks.refreshYouTube).toHaveBeenCalledWith('yt_ref');
@@ -111,6 +112,8 @@ describe('oauth-token-refresher', () => {
 
     it('throws for missing refresh_token on tiktok', async () => {
       const channel = makeChannel({ provider: 'tiktok', refresh_token: null });
+      const { updateMock } = makeUpdateChain();
+      mocks.mockDb.from.mockReturnValue({ update: updateMock });
       await expect(refreshChannelToken(channel)).rejects.toThrow('TikTok refresh token missing');
     });
   });
