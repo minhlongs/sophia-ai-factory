@@ -12,6 +12,10 @@ import {
   videoPublish,
   publishExecute,
   publishTokenRefreshCron,
+  conversionToLedger,
+  pendingPromoterCron,
+  payoutBatcher,
+  reconciliationCron,
 } from "@/lib/inngest/functions/index";
 
 export const { GET, POST, PUT } = serve({
@@ -30,5 +34,10 @@ export const { GET, POST, PUT } = serve({
     // Publishing pipeline (Phase 10)
     publishExecute,
     publishTokenRefreshCron,
+    // Payout pipeline (Phase 13)
+    conversionToLedger,
+    pendingPromoterCron,
+    payoutBatcher,
+    reconciliationCron,
   ],
 });
