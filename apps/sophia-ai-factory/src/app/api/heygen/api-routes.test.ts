@@ -49,7 +49,7 @@ describe('HeyGen API Routes', () => {
   };
 
   beforeEach(() => {
-    vi.mocked(ServiceFactory.getVideoService).mockReturnValue(mockVideoService as never);
+    vi.mocked(ServiceFactory.getVideoService).mockResolvedValue(mockVideoService as never);
 
     // Default: authenticated user for create-video tests
     vi.mocked(getCurrentUser).mockResolvedValue({ id: 'user-1', email: 'test@test.com' } as never);
@@ -123,9 +123,7 @@ describe('HeyGen API Routes', () => {
     });
 
     it('should return 500 if service unavailable', async () => {
-      vi.mocked(ServiceFactory.getVideoService).mockImplementation(() => {
-        throw new Error('No video service');
-      });
+      vi.mocked(ServiceFactory.getVideoService).mockRejectedValue(new Error('No video service'));
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       const req = new NextRequest('http://localhost', {
@@ -184,9 +182,7 @@ describe('HeyGen API Routes', () => {
     });
 
     it('should return 500 if service unavailable', async () => {
-      vi.mocked(ServiceFactory.getVideoService).mockImplementation(() => {
-        throw new Error('No video service');
-      });
+      vi.mocked(ServiceFactory.getVideoService).mockRejectedValue(new Error('No video service'));
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       const req = new NextRequest('http://localhost');

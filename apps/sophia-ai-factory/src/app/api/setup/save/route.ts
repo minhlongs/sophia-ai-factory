@@ -1,14 +1,15 @@
 /**
  * POST /api/setup/save
  *
- * Saves setup wizard config to user profile (Cloudflare D1).
- * CF Workers compatible — no filesystem access needed.
- * Keys are stored encrypted via the settings server action.
+ * Saves setup wizard API keys encrypted to `user_api_keys` D1 table.
+ * CF Workers compatible — no filesystem access.
  * Requires authentication.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/better-auth-session';
+import { setUserApiKey } from '@/lib/byok/user-api-key-store';
+import type { ByokProvider } from '@/lib/byok/user-api-key-store';
 import { z } from 'zod';
 
 const setupSaveSchema = z.object({
@@ -20,6 +21,15 @@ const setupSaveSchema = z.object({
     MUAPI_API_KEY: z.string().optional(),
   }),
 });
+
+/** Map Zod config field names → BYOK provider identifiers */
+const PROVIDER_MAP: Record<string, ByokProvider> = {
+  OPENROUTER_API_KEY: 'openrouter',
+  ELEVENLABS_API_KEY: 'elevenlabs',
+  DID_API_KEY: 'd-id',
+  HEYGEN_API_KEY: 'heygen',
+  MUAPI_API_KEY: 'muapi',
+};
 
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser();
@@ -38,19 +48,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // On Cloudflare Workers, we can't write to filesystem.
-    // Return success and instruct the UI to redirect to
-    // /dashboard/settings where users can save keys via the BYOK form.
-    // The setup wizard serves as a guided onboarding, not a config writer.
+    const { config } = parsed.data;
+    const saved: string[] = [];
+
+    for (const [field, provider] of Object.entries(PROVIDER_MAP)) {
+      const value = config[field as keyof typeof config];
+      if (value && value.trim().length > 0) {
+        await setUserApiKey(user.id, provider, value.trim());
+        saved.push(provider);
+      }
+    }
 
     return NextResponse.json({
       success: true,
-      message: 'Setup complete! Configure your API keys in Settings.',
+      message: 'API keys saved successfully.',
+      saved,
       redirect: '/dashboard/settings',
     });
-  } catch {
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Internal server error';
     return NextResponse.json(
-      { success: false, message: 'Internal server error' },
+      { success: false, message },
       { status: 500 },
     );
   }

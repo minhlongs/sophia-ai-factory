@@ -112,7 +112,7 @@ export default withSentryConfig(composedConfig, {
   // Don't print Sentry logs during build (reduce CI noise)
   silent: true,
   // Keep source maps out of client bundle — upload to Sentry then strip
-  hideSourceMaps: true,
+  sourcemaps: { disable: true },
   // Upload wider set of client-side source maps
   widenClientFileUpload: true,
   // Disable telemetry in CI builds; Sentry v8 auto-skips plugin in dev

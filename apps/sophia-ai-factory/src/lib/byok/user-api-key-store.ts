@@ -12,7 +12,7 @@
 import { getD1Raw } from '@/lib/auth/resolve-org-id'
 import { decryptApiKey, encryptApiKey } from './byok-crypto'
 
-export type ByokProvider = 'openrouter' | 'anthropic' | 'elevenlabs' | 'd-id'
+export type ByokProvider = 'openrouter' | 'anthropic' | 'elevenlabs' | 'd-id' | 'heygen' | 'muapi'
 
 interface KeyRow {
   encrypted_key: ArrayBuffer | Uint8Array

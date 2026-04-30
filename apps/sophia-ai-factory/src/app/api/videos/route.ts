@@ -45,9 +45,17 @@ export async function GET(req: Request) {
       );
     }
 
+    const r2Base = process.env.R2_PUBLIC_BASE_URL?.replace(/\/$/, '') ?? null;
+    const videos = (data ?? []).map((v: Record<string, unknown>) => {
+      if (r2Base && v.r2_key) {
+        return { ...v, video_url: `${r2Base}/${v.r2_key}` };
+      }
+      return v;
+    });
+
     return NextResponse.json({
-      videos: data ?? [],
-      pagination: { limit, offset, count: data?.length ?? 0 },
+      videos,
+      pagination: { limit, offset, count: videos.length },
     });
   } catch {
     return NextResponse.json({ error: "Internal error" }, { status: 500 });

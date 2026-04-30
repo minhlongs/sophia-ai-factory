@@ -5,6 +5,7 @@ import { VideoStatus } from "@/lib/services/types";
 interface GenerateVideoInput {
   script: unknown; // typed as ScriptOutput in practice
   tier: Tier;
+  userId?: string;
 }
 
 interface VideoOutput {
@@ -17,8 +18,8 @@ interface VideoOutput {
  * Returns a job ID (for HeyGen) or a mock ID.
  */
 export async function startVideoGeneration(input: GenerateVideoInput): Promise<string> {
-  const { script: rawScript } = input;
-  const videoService = ServiceFactory.getVideoService();
+  const { script: rawScript, userId } = input;
+  const videoService = await ServiceFactory.getVideoService(userId);
 
   // Extract narration from script
   const script = rawScript as { scenes: Array<{ narration: string }> };
@@ -40,8 +41,8 @@ export async function startVideoGeneration(input: GenerateVideoInput): Promise<s
  * Checks the status of a video generation job.
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export async function checkVideoGenerationStatus(jobId: string, _tier: Tier): Promise<{ status: 'processing' | 'completed' | 'failed'; output?: VideoOutput; error?: string }> {
-  const videoService = ServiceFactory.getVideoService();
+export async function checkVideoGenerationStatus(jobId: string, _tier: Tier, userId?: string): Promise<{ status: 'processing' | 'completed' | 'failed'; output?: VideoOutput; error?: string }> {
+  const videoService = await ServiceFactory.getVideoService(userId);
 
   try {
     const status: VideoStatus = await videoService.getVideoStatus(jobId);

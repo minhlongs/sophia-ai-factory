@@ -52,7 +52,7 @@ export async function GET(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const videoService = ServiceFactory.getVideoService();
+    const videoService = await ServiceFactory.getVideoService(user.id);
     const raw = (await videoService.getVideoStatus(id)) as HeygenStatus;
 
     // Coerce HeyGen error responses to terminal 'failed' status before persisting.

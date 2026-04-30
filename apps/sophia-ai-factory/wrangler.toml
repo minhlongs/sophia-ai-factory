@@ -36,6 +36,7 @@ binding = "IMAGES"
 [triggers]
 # Cron schedule:
 # "*/5 * * * *" — every 5 min → /api/cron/uptime-check (self-monitoring + Telegram alert)
+#                              → /api/cron/video-status-sync (poll pending HeyGen jobs; triggered via GH Actions cron-video-status-sync.yml)
 # "5 * * * *"  — hourly at :05 → /api/cron/usage-export (usage rollup)
 # "0 1 * * *"  — daily 01:00 UTC → /api/cron/dunning (dunning state machine)
 # "0 2 * * *"  — daily 02:00 UTC → /api/cron/reminders (subscription reminders)

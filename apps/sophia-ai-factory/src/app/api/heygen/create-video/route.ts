@@ -28,7 +28,7 @@ export async function POST(req: Request) {
 
     let heygenJobId: string;
     try {
-      const videoService = ServiceFactory.getVideoService();
+      const videoService = await ServiceFactory.getVideoService(user.id);
       heygenJobId = await videoService.createVideo({
         avatarId,
         voiceId,
