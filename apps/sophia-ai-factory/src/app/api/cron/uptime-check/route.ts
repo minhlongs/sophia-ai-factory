@@ -66,16 +66,9 @@ async function alertAdmin(message: string): Promise<void> {
   }
 }
 
-/** Validate cron request is from an authorised source. */
-function isAuthorised(req: NextRequest): boolean {
-  const authError = verifyCronAuth(req);
-  return authError === null;
-}
-
 export async function GET(req: NextRequest) {
-  if (!isAuthorised(req)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const authError = verifyCronAuth(req);
+  if (authError) return authError;
 
   const db = getD1();
 

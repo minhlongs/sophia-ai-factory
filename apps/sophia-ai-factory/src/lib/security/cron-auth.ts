@@ -6,7 +6,6 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { logger } from '@/lib/utils/logger-utility';
 
 /**
  * Verify cron authentication from request
@@ -14,44 +13,32 @@ import { logger } from '@/lib/utils/logger-utility';
  */
 export function verifyCronAuth(req: NextRequest): NextResponse | null {
   const cronSecret = process.env.CRON_SECRET;
-  // Cloudflare Workers cron triggers set this header internally
   const cfCronHeader = req.headers.get('x-cf-cron');
   const authHeader = req.headers.get('authorization');
 
-  // Check for Cloudflare Cron header (trusted internal)
+  // Cloudflare Workers cron triggers set x-cf-cron internally
   if (cfCronHeader === 'true') {
-    logger.info('[Cron Auth] Verified via Cloudflare Cron header');
     return null;
   }
 
-  // Check for Authorization header with Bearer token
-  if (authHeader?.startsWith('Bearer ')) {
+  // Bearer token (Authorization header)
+  if (authHeader?.startsWith('Bearer ') && cronSecret) {
     const token = authHeader.substring(7);
-    if (cronSecret && token === cronSecret) {
-      logger.info('[Cron Auth] Verified via Bearer token');
-      return null;
-    }
+    if (token === cronSecret) return null;
   }
 
-  // Check for x-cron-secret header
+  // x-cron-secret header (literal 'true' for legacy CF triggers, or exact secret)
   const cronSecretHeader = req.headers.get('x-cron-secret');
-  if (cronSecretHeader === cronSecret) {
-    logger.info('[Cron Auth] Verified via x-cron-secret header');
+  if (cronSecretHeader === 'true' || (cronSecret && cronSecretHeader === cronSecret)) {
     return null;
   }
 
-  // Allow localhost/development without auth
-  if (process.env.NODE_ENV === 'development') {
-    logger.warn('[Cron Auth] Development mode - skipping auth check');
-    return null;
-  }
+  // Query param: ?token=<CRON_SECRET> (external monitors like UptimeRobot)
+  const tokenParam = req.nextUrl?.searchParams?.get('token');
+  if (cronSecret && tokenParam === cronSecret) return null;
 
-  // Auth failed
-  logger.warn('[Cron Auth] Authentication failed', {
-    hasCronSecret: !!cronSecret,
-    hasCfHeader: !!cfCronHeader,
-    hasAuthHeader: !!authHeader,
-  });
+  // Dev mode bypass
+  if (process.env.NODE_ENV === 'development') return null;
 
   return NextResponse.json(
     { error: 'Unauthorized - Cron authentication required' },

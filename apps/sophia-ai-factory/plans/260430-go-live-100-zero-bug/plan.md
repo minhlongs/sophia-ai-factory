@@ -16,4 +16,6 @@
 | # | Phase | Status |
 |---|-------|--------|
 | 01 | Final 404 sweep + certification regen | ✅ DONE (2026-04-30) |
-| 02 | Build + test + deploy + smoke | pending |
+| 02 | Build + test + deploy + smoke | ✅ DONE (2026-04-30) |
+
+**Deploy:** v95b7d3b3 — all routes green, zero 404s, production verified.
