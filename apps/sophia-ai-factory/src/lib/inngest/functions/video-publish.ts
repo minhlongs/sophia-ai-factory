@@ -107,6 +107,7 @@ export const videoPublish = inngest.createFunction(
         dispatched.push(publishJobId);
 
         await inngest.send({
+          id: `publish-${publishJobId}-attempt-0`,
           name: 'publish.scheduled',
           data: { jobId: publishJobId, tenantId, userId },
         });
