@@ -44,13 +44,31 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // Auth aliases
       { source: '/signup', destination: '/login', permanent: true },
-      { source: '/:locale/signup', destination: '/login', permanent: false },
+      { source: '/register', destination: '/login', permanent: false },
+      { source: '/sign-up', destination: '/login', permanent: false },
+      { source: '/signin', destination: '/login', permanent: false },
+      // Settings
       { source: '/settings', destination: '/dashboard/settings', permanent: true },
-      { source: '/:locale/settings', destination: '/dashboard/settings', permanent: false },
       { source: '/settings/security', destination: '/settings/security/mfa', permanent: false },
+      // Misc
       { source: '/chat', destination: '/dashboard', permanent: false },
       { source: '/templates', destination: '/dashboard/create', permanent: false },
+      { source: '/debug', destination: '/dashboard/system-health', permanent: false },
+      { source: '/app', destination: '/dashboard', permanent: false },
+      // Docs & help
+      { source: '/docs', destination: '/guide', permanent: false },
+      { source: '/support', destination: '/dashboard/support', permanent: false },
+      { source: '/faq', destination: '/guide/faq', permanent: false },
+      { source: '/help', destination: '/guide', permanent: false },
+      // Landing
+      { source: '/about', destination: '/', permanent: false },
+      { source: '/contact', destination: '/', permanent: false },
+      { source: '/terms', destination: '/', permanent: false },
+      { source: '/privacy', destination: '/', permanent: false },
+      // System
+      { source: '/status', destination: '/api/health', permanent: false },
     ];
   },
   async headers() {
