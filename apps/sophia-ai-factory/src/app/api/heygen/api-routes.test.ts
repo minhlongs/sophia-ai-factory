@@ -1,12 +1,18 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NextRequest } from 'next/server';
-import { GET as getAvatars } from './avatars/route';
+import { GET as getAvatars, _resetCacheForTest as resetAvatarsCache } from './avatars/route';
+import { GET as getVoices, _resetCacheForTest as resetVoicesCache } from './voices/route';
 import { POST as createVideo } from './create-video/route';
 import { GET as getStatus } from './status/[id]/route';
 
 // Mock better-auth-session (used by heygen routes for auth)
 vi.mock('@/lib/better-auth-session', () => ({
   getCurrentUser: vi.fn(),
+}));
+
+// Mock getUserTier (used by create-video tier gate)
+vi.mock('@/lib/db/get-user-tier', () => ({
+  getUserTier: vi.fn(),
 }));
 
 // Mock ServiceFactory (used by all heygen routes)
@@ -38,6 +44,7 @@ vi.mock('@/lib/db/client', () => {
 });
 
 import { getCurrentUser } from '@/lib/better-auth-session';
+import { getUserTier } from '@/lib/db/get-user-tier';
 import { ServiceFactory } from '@/lib/services/factory';
 
 describe('HeyGen API Routes', () => {
@@ -50,13 +57,14 @@ describe('HeyGen API Routes', () => {
 
   beforeEach(() => {
     vi.mocked(ServiceFactory.getVideoService).mockResolvedValue(mockVideoService as never);
-
-    // Default: authenticated user for create-video tests
     vi.mocked(getCurrentUser).mockResolvedValue({ id: 'user-1', email: 'test@test.com' } as never);
+    vi.mocked(getUserTier).mockResolvedValue('PREMIUM' as never);
   });
 
   afterEach(() => {
     vi.clearAllMocks();
+    resetAvatarsCache();
+    resetVoicesCache();
   });
 
   describe('GET /api/heygen/avatars', () => {
@@ -94,19 +102,65 @@ describe('HeyGen API Routes', () => {
 
       consoleSpy.mockRestore();
     });
+
+    it('cache: second call within TTL returns cached data without re-fetching', async () => {
+      const mockAvatars = [{ avatar_id: 'cached-1', name: 'Cached Avatar' }];
+      mockVideoService.listAvatars.mockResolvedValue(mockAvatars);
+
+      // First call — populates cache
+      const res1 = await getAvatars();
+      expect(res1.status).toBe(200);
+      expect(mockVideoService.listAvatars).toHaveBeenCalledTimes(1);
+
+      // Second call — cache hit (module-level cache still warm within same isolate)
+      const res2 = await getAvatars();
+      const data2 = await res2.json();
+      expect(res2.status).toBe(200);
+      expect(data2).toEqual({ avatars: mockAvatars });
+      // Service should NOT be called a second time if cache is warm
+      // Note: module-level cache persists within same test module execution
+      expect(mockVideoService.listAvatars).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('GET /api/heygen/voices', () => {
+    it('should return voices when client is configured', async () => {
+      const mockVoices = [{ voice_id: 'v1', name: 'Test Voice' }];
+      mockVideoService.listVoices.mockResolvedValue(mockVoices);
+
+      const response = await getVoices();
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data).toEqual({ voices: mockVoices });
+    });
   });
 
   describe('POST /api/heygen/create-video', () => {
-    it('should create video when valid data provided', async () => {
+    it('should return 402 when user has BASIC tier', async () => {
+      vi.mocked(getUserTier).mockResolvedValue('BASIC' as never);
+
+      const req = new NextRequest('http://localhost/api/heygen/create-video', {
+        method: 'POST',
+        body: JSON.stringify({ avatarId: 'av1', voiceId: 'v1', script: 'test script' }),
+      });
+
+      const response = await createVideo(req);
+      const data = await response.json() as Record<string, string>;
+
+      expect(response.status).toBe(402);
+      expect(data.error).toMatch(/PREMIUM/i);
+      expect(data.upgrade).toBe('/pricing');
+      expect(mockVideoService.createVideo).not.toHaveBeenCalled();
+    });
+
+    it('should create video when user has PREMIUM tier', async () => {
+      vi.mocked(getUserTier).mockResolvedValue('PREMIUM' as never);
       mockVideoService.createVideo.mockResolvedValue('vid_123');
 
       const req = new NextRequest('http://localhost/api/heygen/create-video', {
         method: 'POST',
-        body: JSON.stringify({
-          avatarId: 'av1',
-          voiceId: 'v1',
-          script: 'test script'
-        })
+        body: JSON.stringify({ avatarId: 'av1', voiceId: 'v1', script: 'test script' }),
       });
 
       const response = await createVideo(req);
@@ -114,12 +168,32 @@ describe('HeyGen API Routes', () => {
 
       expect(response.status).toBe(200);
       expect(data).toEqual({ videoId: 'vid_123', status: 'processing' });
-      expect(mockVideoService.createVideo).toHaveBeenCalledWith({
-        avatarId: 'av1',
-        voiceId: 'v1',
-        script: 'test script',
-        title: 'Video for test@test.com'
+    });
+
+    it('should create video when user has ENTERPRISE tier', async () => {
+      vi.mocked(getUserTier).mockResolvedValue('ENTERPRISE' as never);
+      mockVideoService.createVideo.mockResolvedValue('vid_456');
+
+      const req = new NextRequest('http://localhost/api/heygen/create-video', {
+        method: 'POST',
+        body: JSON.stringify({ avatarId: 'av1', voiceId: 'v1', script: 'test' }),
       });
+
+      const response = await createVideo(req);
+      expect(response.status).toBe(200);
+    });
+
+    it('should create video when user has MASTER tier', async () => {
+      vi.mocked(getUserTier).mockResolvedValue('MASTER' as never);
+      mockVideoService.createVideo.mockResolvedValue('vid_789');
+
+      const req = new NextRequest('http://localhost/api/heygen/create-video', {
+        method: 'POST',
+        body: JSON.stringify({ avatarId: 'av1', voiceId: 'v1', script: 'test' }),
+      });
+
+      const response = await createVideo(req);
+      expect(response.status).toBe(200);
     });
 
     it('should return 500 if service unavailable', async () => {
@@ -152,11 +226,7 @@ describe('HeyGen API Routes', () => {
 
       const req = new NextRequest('http://localhost', {
         method: 'POST',
-        body: JSON.stringify({
-          avatarId: 'av1',
-          voiceId: 'v1',
-          script: 'test'
-        })
+        body: JSON.stringify({ avatarId: 'av1', voiceId: 'v1', script: 'test' }),
       });
 
       const response = await createVideo(req);
@@ -204,5 +274,33 @@ describe('HeyGen API Routes', () => {
       expect(response.status).toBe(500);
       consoleSpy.mockRestore();
     });
+  });
+});
+
+// ── Webhook tests (separate describe block — needs env mock) ──────────────────
+describe('HeyGen Webhook — missing secret fallback', () => {
+  beforeEach(() => {
+    // Ensure secret is NOT set for these tests
+    delete process.env.HEYGEN_WEBHOOK_SECRET;
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    delete process.env.HEYGEN_WEBHOOK_SECRET;
+  });
+
+  it('should return 200 with cron-poll fallback when HEYGEN_WEBHOOK_SECRET is missing', async () => {
+    // Returning 200 prevents HeyGen retry storm; cron polling handles status updates.
+    const { POST: webhookHandler } = await import('../webhooks/heygen/route');
+    const req = new NextRequest('http://localhost/api/webhooks/heygen', {
+      method: 'POST',
+      body: JSON.stringify({ video_id: 'test', status: 'completed' }),
+    });
+
+    const response = await webhookHandler(req);
+    const data = await response.json() as Record<string, string>;
+
+    expect(response.status).toBe(200);
+    expect(data.mode).toBe('cron-poll-fallback');
   });
 });

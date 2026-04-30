@@ -867,10 +867,10 @@
         "placeholder": "Basic ...",
         "help": "Get your key at studio.d-id.com/account-settings"
       },
-      "heygen": {
-        "label": "HeyGen API Key (AI Video)",
-        "placeholder": "NjY...",
-        "help": "Get your key at app.heygen.com/settings/api-keys"
+      "anthropic": {
+        "label": "Anthropic API Key (LLM)",
+        "placeholder": "sk-ant-...",
+        "help": "Get your key at console.anthropic.com/keys"
       },
       "muapi": {
         "label": "MuAPI Key (Music/Audio)",

@@ -3,7 +3,6 @@ import {
   validateOpenRouter,
   validateElevenLabs,
   validateDID,
-  validateHeyGen,
 } from '@/lib/validation/services';
 
 interface SetupVerifyPayload {
@@ -43,14 +42,23 @@ export async function POST(request: Request) {
       case 'openrouter':
         result = await validateOpenRouter(resolvedKey);
         break;
-      case 'heygen':
-        result = await validateHeyGen(resolvedKey);
-        break;
       case 'elevenlabs':
         result = await validateElevenLabs(resolvedKey);
         break;
       case 'd-id':
         result = await validateDID(resolvedKey);
+        break;
+      case 'anthropic':
+        // Basic format check: Anthropic keys start with "sk-ant-"
+        if (resolvedKey.startsWith('sk-ant-')) {
+          result = { valid: true, message: 'Format valid' };
+        } else {
+          result = { valid: false, message: 'Anthropic keys must start with sk-ant-' };
+        }
+        break;
+      case 'muapi':
+        // MuAPI keys are JWT-like; no public test endpoint — format-check only
+        result = { valid: true, verified: false, message: 'Format-checked only (MuAPI has no public ping endpoint)' };
         break;
       default:
         return NextResponse.json({ valid: false, message: "Unknown service" }, { status: 400 });

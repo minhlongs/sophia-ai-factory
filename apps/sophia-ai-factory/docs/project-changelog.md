@@ -1,6 +1,14 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-29 | **Current Version:** 1.14.16
+**Last Updated:** 2026-04-29 | **Current Version:** 1.14.17
+
+---
+
+## v1.14.17 — Affiliate Catalog Refactor (2026-04-29)
+
+**Severity: BUG FIX | Type: Data Model | Status: SHIPPED**
+
+Fixed PII leak via private tracking table in affiliate discovery. Separated public catalog from user-private selections: new `affiliate_offers_catalog` table (migration 0031) seeds 10 real offers (Bluehost, SEMrush, ConvertKit, Teachable, Canva, NordVPN, Shopify, ClickFunnels, Amazon Associates, Wealthy Affiliate). `/api/affiliate-discovery` now reads catalog instead of `affiliate_offers_selected`. Frontend renders new fields: url (with rel="noopener noreferrer sponsored"), category, description. **Security:** Eliminates accidental exposure of user conversion tracking data via public API. **Code:** 2 migrations (0031-catalog, 0032-seed), 1 API change, frontend UI update. **Production:** SHA 239fd4ba, HTTP 200.
 
 ---
 

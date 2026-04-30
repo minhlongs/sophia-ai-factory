@@ -76,10 +76,11 @@ Sophia AI Video Factory is a Next.js 16 application structured around the App Ro
   - **`overage-logger.ts`**: Detailed overage event logging and admin tracking.
 - **`usage-metering/`**: Usage metering aggregation system.
   - **`kv-metering-log-sync.ts`**: KV synchronization and metering log persistence.
-- **`affiliates/`**: ClickBank affiliate program integration (Sprint M).
+- **`affiliates/`**: ClickBank affiliate program integration (Sprint M). Two-table design (catalog public, selected private).
   - **`affiliate-shortlink-service.ts`**: Short-link generation + click attribution (rate-limited 100/min).
   - **`clickbank-webhook-handler.ts`**: HMAC-SHA1 signature verification + conversion logging.
   - **`affiliate-offer-selector.ts`**: Telegram FSM offer picker + Inngest script injection.
+  - **Data schema:** `affiliate_offers_catalog` (public: id, name, url, category, description, provider), `affiliate_offers_selected` (private: user's per-campaign choices).
 - **`wallet/`**: User financial settlement system (Sprint M).
   - **`payout-processor.ts`**: Atomic wallet updates with reconciliation revert pattern.
   - **`wallet-rebuilder.ts`**: Hourly cron job aggregating conversions with 60-day clearance window.

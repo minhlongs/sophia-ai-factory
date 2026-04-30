@@ -128,6 +128,14 @@ export async function proxy(request: NextRequest) {
           logger.error('[Middleware] MFA pending check error', toError(mfaErr))
         }
       }
+
+      // New-user onboarding: redirect to setup wizard if wizard not yet completed.
+      // Uses a cookie set by /api/setup/save on successful wizard completion.
+      // This avoids a DB call per request while ensuring new signups land in wizard.
+      const wizardDone = request.cookies.has('wizard_done')
+      if (!wizardDone && cleanPath === '/dashboard') {
+        return NextResponse.redirect(new URL('/setup-wizard', request.url))
+      }
     } catch {
       return NextResponse.redirect(new URL('/login', request.url))
     }

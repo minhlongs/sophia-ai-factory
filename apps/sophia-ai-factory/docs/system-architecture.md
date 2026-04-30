@@ -339,9 +339,14 @@ User Wallet (/dashboard/wallet)
 ### D1 Tables
 
 **Core Tables (Revenue)**
-- **affiliate_offers_selected**: Records user's chosen affiliate product for a campaign
+- **affiliate_offers_catalog** (PUBLIC): System-wide catalog of affiliate offers (seedable, read-only for users)
+  - Columns: id, name, url, category, description, provider, created_at
+  - Purpose: Public discovery API source; separates catalog metadata from user-private tracking
+  - Seed: 10 real offers (Bluehost, SEMrush, ConvertKit, Teachable, Canva, NordVPN, Shopify, ClickFunnels, Amazon Associates, Wealthy Affiliate) — migration 0032
+
+- **affiliate_offers_selected** (PRIVATE): Records user's chosen affiliate product for a campaign
   - Columns: id, user_id, campaign_id, offer_id, offer_title, offer_url, created_at
-  - Purpose: Binding affiliate product choice to specific campaign (enables per-campaign attribution)
+  - Purpose: Binding affiliate product choice to specific campaign (enables per-campaign attribution); never exposed via public API
 
 - **affiliate_clicks**: Click event log (fire-and-forget, no rate limit on logging)
   - Columns: id, shortcode, user_id, offer_id, referrer, created_at

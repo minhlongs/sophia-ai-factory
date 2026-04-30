@@ -867,10 +867,10 @@
         "placeholder": "Basic ...",
         "help": "Lấy key tại studio.d-id.com/account-settings"
       },
-      "heygen": {
-        "label": "HeyGen API Key (Video AI)",
-        "placeholder": "NjY...",
-        "help": "Lấy key tại app.heygen.com/settings/api-keys"
+      "anthropic": {
+        "label": "Anthropic API Key (LLM)",
+        "placeholder": "sk-ant-...",
+        "help": "Lấy key tại console.anthropic.com/keys"
       },
       "muapi": {
         "label": "MuAPI Key (Âm Nhạc/Âm Thanh)",
