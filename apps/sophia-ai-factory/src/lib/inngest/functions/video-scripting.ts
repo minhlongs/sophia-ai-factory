@@ -29,8 +29,7 @@ const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 async function callOpenRouter(prompt: string): Promise<string> {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
-    logger.warn('[videoScripting] No OPENROUTER_API_KEY, using fallback script');
-    return `[Fallback] Video script for: ${prompt}`;
+    throw new Error('[videoScripting] OPENROUTER_API_KEY not configured — job cannot proceed');
   }
   const res = await fetch(OPENROUTER_URL, {
     method: 'POST',

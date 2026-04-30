@@ -12,7 +12,7 @@ import { inngest } from '@/lib/inngest/client';
 import { getD1Client } from '@/lib/db/client';
 import { recordCost } from '@/lib/video/cost-ledger';
 import { assertValidTransition } from '@/lib/video/video-job-fsm';
-import { createHeyGenVideo, pollHeyGenStatus } from '@/lib/video/heygen-helpers';
+import { createHeyGenVideo } from '@/lib/video/heygen-helpers';
 import { logger } from '@/lib/utils/logger-utility';
 import type { VideoJobStatus } from '@/lib/video/video-job-fsm';
 
@@ -55,31 +55,23 @@ export const videoVisual = inngest.createFunction(
     await step.run('generate-heygen-video', async () => {
       const apiKey = process.env.HEYGEN_API_KEY;
       if (!apiKey) {
-        logger.warn('[videoVisual] No HEYGEN_API_KEY, using placeholder');
-        videoUrl = null;
-      } else {
-        const script = job.script_text || job.prompt || '';
-        try {
-          const { videoId } = await createHeyGenVideo({ script, apiKey });
-          videoUrl = await pollHeyGenStatus({ videoId, apiKey });
-          logger.info('[videoVisual] HeyGen video completed', { jobId, videoUrl });
-        } catch (err) {
-          logger.warn('[videoVisual] HeyGen failed, using placeholder', { jobId, error: String(err) });
-          videoUrl = null;
-        }
+        throw new Error('[videoVisual] HEYGEN_API_KEY not configured — job cannot proceed');
       }
+      const script = job.script_text || job.prompt || '';
+      const { videoId } = await createHeyGenVideo({ script, apiKey });
+      logger.info('[videoVisual] HeyGen video submitted', { jobId, videoId });
       const db = await getD1Client();
       await db
         .from('video_jobs')
         .update({
-          visual_r2_key: videoUrl ?? `placeholder:${jobId}`,
+          heygen_video_id: videoId,
           updated_at: Math.floor(Date.now() / 1000),
         })
         .eq('id', jobId);
     });
 
     await step.run('record-cost', async () => {
-      await recordCost({ jobId, stage: 'visual_pending', provider: 'heygen', units: 1, costUsd: videoUrl ? 0.50 : 0 });
+      await recordCost({ jobId, stage: 'visual_pending', provider: 'heygen', units: 1, costUsd: 0.50 });
     });
 
     await step.sendEvent('emit-visual-ready', {
