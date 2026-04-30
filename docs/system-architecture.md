@@ -7,15 +7,15 @@
 **Production Dashboard:** https://sophia.agencyos.network/dashboard
 
 ### Recent Shipments (2026-04-30 Final)
-- **Phase 14 Launch Hardening (2026-04-30):** FTC `#ad` overlay (FFmpeg drawtext last 3s) + caption prefix in publishers + GDPR `/api/account/export` + DELETE + runbook (10 incidents tracked). Polar.sh removed from rate-limiter. Manual deploy fallback documented (CI Actions broken since 2026-04-27).
-- **Phase 13 Revenue Split (2026-04-30):** commission_ledger + 14-day clawback + payout_batches + NOWPayments USDT mass-payout (TRC20 preferred, ERC20 fallback) + reconciliation cron. Real affiliate network payouts live.
-- **Phase 12 OpenClaw (2026-04-30):** 10-primitive orchestrator (spawnAgentFleet, withTenant, onEvent, activateSkill, scheduleAgent, memory, mcp, enqueue, audit, rateLimitGate) on Claude SDK + Qwen 3 32B router + circuit breaker.
-- **Phase 11 Tenant Isolation (2026-04-30):** D1 Kysely tenant-scope plugin (auto-injects tenant_id) + tier quota enforcer (free/pro/enterprise) + storage tracker cron.
-- **Phase 10 Publishers (2026-04-30):** TikTok Shop, YouTube Data v3, Instagram Graph adapters with token crypto + per-channel quota + scheduler.
-- **Phase 9 Affiliate (2026-04-30):** 5 networks (TikTok Shop, AccessTrade, ClickBank, Awin, Amazon) with HMAC-verified webhooks + click recorder (ip_hash) + commission attribution.
-- **Phase 8 Visual (2026-04-30):** 2-path router (template via MoviePy + cinematic via HunyuanVideo on Runpod) + FFmpeg composer + subtitle generator.
-- **Phase 7 TTS (2026-04-30):** Coqui XTTS v2 service blueprint (Fly.io Docker) + `/api/internal/tts` proxy + voice CRUD.
-- **Phase 6 Video (2026-04-30):** FSM + Inngest functions (scripting/tts/visual/compose/upload/publish) + `video_jobs` D1 table + `/api/videos` endpoints.
+- **Phase 14 Launch Hardening (2026-04-30):** FTC `#ad` overlay (FFmpeg drawtext, last 3s). Caption prefix in publisher adapters. GDPR `/api/account/export` + `/api/account/delete` endpoints. Runbook (10 incidents tracked, recovery procedures). Polar.sh removed from rate-limiter (single source of truth: NOWPayments only). CI workaround documented.
+- **Phase 13 Revenue Split (2026-04-30):** `commission_ledger` D1 table tracks affiliate clicks with 14-day clawback window. `payout_batches` orchestrates NOWPayments USDT mass-payout (TRC20 preferred, ERC20 fallback). Daily reconciliation cron. Real affiliate network payouts live.
+- **Phase 12 OpenClaw (2026-04-30):** 10-primitive orchestrator (spawnAgentFleet, withTenant, onEvent, activateSkill, scheduleAgent, memory, mcp, enqueue, audit, rateLimitGate) on Claude SDK. Qwen 3 32B router for inference. Circuit breaker for fault tolerance.
+- **Phase 11 Tenant Isolation (2026-04-30):** D1 Kysely tenant-scope plugin auto-injects `tenant_id`. Tier quota enforcer (free/pro/enterprise). Storage tracker cron (org_id scoped).
+- **Phase 10 Publishers (2026-04-30):** TikTok Shop, YouTube Data v3, Instagram Graph adapters. Token encryption (AES-GCM). Per-channel quota + scheduler cron.
+- **Phase 9 Affiliate (2026-04-30):** 5 networks (TikTok Shop, AccessTrade, ClickBank, Awin, Amazon). HMAC-verified webhooks. Click recorder (ip_hash). Commission attribution + tracking.
+- **Phase 8 Visual (2026-04-30):** 2-path router (template via MoviePy + cinematic via HunyuanVideo on Runpod). FFmpeg composer + subtitle generator.
+- **Phase 7 TTS (2026-04-30):** Coqui XTTS v2 service blueprint (Fly.io Docker). `/api/internal/tts` proxy. Voice CRUD.
+- **Phase 6 Video (2026-04-30):** FSM + Inngest functions (scripting/tts/visual/compose/upload/publish). `video_jobs` D1 table. `/api/videos` endpoints.
 
 ### Earlier Shipments (2026-04-18)
 Rounds 4 + 5 + 6 + 7 + 8: 20+ major features shipped (LLM observability + async ops + signals + BYOK integration + user admin):
@@ -371,14 +371,14 @@ affiliate_content — id, org_id, type, title, content, status
 
 **Cloudflare Workers Cron Triggers:** 7+ scheduled workflows for solopreneur autonomy
 
-**Inngest Event-Driven Pipelines (Phases 6-8):** 
-- **Video Generation:** Script(OpenRouter gpt-4o-mini) → TTS(Coqui XTTS v2) → Visual(HeyGen or HunyuanVideo) → Compose(FFmpeg) → Upload(R2) → Publish (subscriber notification)
-- **Onboarding Video:** NOWPayments IPN (ENTERPRISE/MASTER) → HeyGen auto-gen → Email delivery via Resend → Dashboard gallery
-- **Affiliate Payouts (Phase 13):** Click events → commission calculation → 14-day clawback → NOWPayments USDT batch → reconciliation cron
+**Inngest Event-Driven Pipelines (Phases 6-14):** 
+- **Video Generation:** Script (OpenRouter gpt-4o-mini) → TTS (Coqui XTTS v2) → Visual (HeyGen or HunyuanVideo) → Compose (FFmpeg + FTC #ad overlay) → Upload (R2) → Publish
+- **Onboarding Video:** NOWPayments IPN (ENTERPRISE/MASTER) → Inngest pipeline → Video auto-gen → Email delivery → Dashboard gallery
+- **Affiliate Payouts (Phase 13):** Click events → Commission calc → 14-day clawback window → NOWPayments USDT batch → Reconciliation cron
 
-**Publisher Schedulers (Phase 10):**
-- **TikTok Shop:** Auto-publish with product sync + hashtag injection
-- **YouTube Data v3:** Playlist + analytics + scheduled premieres
+**Publisher Schedulers (Phase 10-14):**
+- **TikTok Shop:** Auto-publish with product sync + hashtag injection + FTC caption
+- **YouTube Data v3:** Playlist management + analytics + scheduled premieres
 - **Instagram Graph:** Caption + media + scheduled post + story archival
 
 | Trigger | Frequency | Purpose | Implementation |
@@ -537,7 +537,7 @@ crons = ["*/5 * * * *"]
 ### CI/CD
 - **GitHub Actions:** `.github/workflows/test.yml` — lint + 205 tests
 - **Deploy:** `git push origin main` → GitHub Actions → CF Workers auto-deploy
-- **Build:** `npx opennextjs-cloudflare build` (from `apps/sophia-proposal/`)
+- **Build:** `npx opennextjs-cloudflare build` (from `apps/sophia-ai-factory/`)
 
 ### Known Workarounds
 - **Index route bug:** opennextjs-cloudflare returns 500 for `/`. Fixed via middleware rewrite `/` → `/landing`

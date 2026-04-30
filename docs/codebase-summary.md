@@ -1,12 +1,11 @@
 # Codebase Summary — Sophia AI Factory
 
 > Comprehensive overview of the Sophia AI Factory codebase structure, patterns, and architectural decisions.
-> **Last Updated:** 2026-04-30 (Phase 6-14 Shipped: Video Pipeline + Affiliate + Publishers + OpenClaw + Payouts + FTC Hardening)
+> **Last Updated:** 2026-04-30 (Phases 6-14 Complete: Video Pipeline, Affiliate Networks, OpenClaw Orchestrator, Revenue Split, FTC Hardening, 1798/1798 tests pass)
 
 **Production URL:** https://sophia.agencyos.network
-**Tech Stack:** Next.js 16 + Cloudflare Workers + D1 SQLite + Better Auth v1.6.2 + Inngest + Better Stack + PostHog + NOWPayments
-**Test Status:** 1798/1798 passing (100%) | **Build:** < 10s, 0 TS errors | **Bundle:** < 500 KB gzipped
-**Phase 14 Complete (2026-04-30):** Launch Hardening (FTC #ad overlay, GDPR export/delete, runbook). Phases 6-13 shipped: Video pipeline (6-step Inngest), Affiliate networks (Phase 9), Publishers (Phase 10), OpenClaw (Phase 12), Revenue split (Phase 13).
+**Git SHA:** df22a4f7 | **Tests:** 1798/1798 passing (100%) | **Build:** < 10s, 0 TS errors | **Bundle:** < 500 KB gzipped
+**Phase 11-14 Complete (2026-04-30):** Tenant isolation (D1 Kysely plugin) + Tier quotas + Storage tracker. Video pipeline (6-step Inngest: script/TTS/visual/compose/upload/publish). Affiliate networks (5 adapters: TikTok Shop, Awin, ClickBank, AccessTrade, Amazon). OpenClaw orchestrator (10 primitives on Claude SDK + Qwen 3). Revenue split (commission-ledger, 14-day clawback, NOWPayments USDT payout). FTC hardening (#ad overlay, GDPR export/delete).
 
 ---
 
@@ -42,7 +41,7 @@ Sophia AI Factory is a Reasoning-as-a-Service (RaaS) platform providing:
 ## Directory Structure
 
 ```
-apps/sophia-ai-factory/
+apps/sophia-ai-factory/  # Main Sophia AI Factory codebase (canon — deployed to sophia.agencyos.network)
 ├── src/
 │   ├── app/[locale]/           # Next.js pages (SSR + Server Components)
 │   │   ├── dashboard/          # Protected dashboard (missions, campaigns, analytics)
@@ -52,8 +51,8 @@ apps/sophia-ai-factory/
 │   │   └── api/                # API routes (auth, webhooks, RaaS endpoints)
 │   │
 │   ├── lib/
-│   │   ├── auth/               # Better Auth integration, JWT enrichment
-│   │   ├── db/                 # D1 client, query builders, type helpers
+│   │   ├── auth/               # Better Auth integration, session management
+│   │   ├── db/                 # D1 client, query builders, type helpers, insert-typed<R,T>
 │   │   │
 │   │   ├── billing/            # MCU billing, dunning, email campaigns
 │   │   │   ├── billing/        # Payment integration (NOWPayments, PayOS)
@@ -61,12 +60,9 @@ apps/sophia-ai-factory/
 │   │   │   └── email/          # Email templates & delivery (4 modules)
 │   │   │
 │   │   ├── alerts/             # Quota enforcement, alert delivery
-│   │   │   └── quota/          # Quota logic modularized (3 modules)
+│   │   │   └── quota/          # Quota logic (evaluator, scheduler, delivery)
 │   │   │
-│   │   ├── usage-metering/     # Real-time MCU tracking (3 modules)
-│   │   │   ├── tracker.ts      # Event collection & buffering
-│   │   │   ├── aggregator.ts   # Rollup & debit engine
-│   │   │   └── integration.ts  # Gateway instrumentation
+│   │   ├── usage-metering/     # Real-time MCU tracking (tracker, rollup, integration)
 │   │   │
 │   │   ├── raas/               # RaaS audit & operations (4 modules)
 │   │   │   ├── audit-logging-service.ts
@@ -74,77 +70,66 @@ apps/sophia-ai-factory/
 │   │   │   ├── raas-invoice-generator.ts
 │   │   │   └── raas-permission-checker.ts
 │   │   │
-│   │   ├── telemetry/          # Better Stack observability (P2) (3 modules)
+│   │   ├── telemetry/          # Better Stack observability (3 modules)
 │   │   │   ├── event-capture.ts        # Structured logging, tokenization
 │   │   │   ├── batch-delivery.ts       # Better Stack push + retry
 │   │   │   └── error-digest.ts         # Daily cron summary
 │   │   │
-│   │   ├── signals/            # Dual signals: PostHog + D1 ops telemetry (P3) (5 modules)
+│   │   ├── signals/            # PostHog + D1 ops telemetry (5 modules)
 │   │   │   ├── posthog-capture.ts      # Event buffering + PostHog flush
-│   │   │   ├── feature-flags.ts        # EXPERIMENT_KV A/B assignment
-│   │   │   ├── track.ts                # D1 signals_events append + helpers
+│   │   │   ├── feature-flags.ts        # A/B experiments via EXPERIMENT_KV
+│   │   │   ├── track.ts                # D1 signals_events append
 │   │   │   ├── variant-resolver.ts     # Percentage-based canary rollouts
-│   │   │   └── digest-generator.ts     # Weekly metrics email + GH Issue + Telegram TL;DR
+│   │   │   └── digest-generator.ts     # Weekly metrics email + GH Issue
 │   │   │
-│   │   ├── feature-flags/      # FNV-1a percentage rollouts (P3 extension)
-│   │   │   └── index.ts                # Canary gate for BYOK timeout, tier features
+│   │   ├── feature-flags/      # FNV-1a percentage rollouts
+│   │   │   └── index.ts                # Canary gate for tier features
 │   │   │
-│   │   ├── byok/               # Bring-Your-Own-Keys timeout wrapper (P3 extension)
-│   │   │   └── with-timeout.ts         # 25s AbortController, signals byok_call/byok_timeout
+│   │   ├── byok/               # Bring-Your-Own-Keys (AES-GCM encryption)
+│   │   │   └── with-timeout.ts         # 25s AbortController, signal timeout
 │   │   │
 │   │   ├── campaigns/          # Campaign management (shared core logic)
 │   │   │   └── create-campaign-core.ts
 │   │   │
-│   │   ├── video/              # Video pipeline (Phases 6-8)
-│   │   │   ├── onboarding-video.ts         # Post-purchase auto-gen (ENTERPRISE/MASTER)
-│   │   │   ├── video-fsm.ts                # FSM state machine
-│   │   │   └── ...                         # Job tracking, manifest generation
+│   │   ├── video/              # Video pipeline (Phases 6-8, Inngest FSM)
+│   │   │   ├── onboarding-video.ts     # Post-purchase auto-gen (ENTERPRISE+)
+│   │   │   ├── video-fsm.ts            # FSM state machine
+│   │   │   └── ...                     # Job tracking, manifest generation
 │   │   │
-│   │   ├── inngest/            # Event-driven orchestration (Phase 6)
-│   │   │   ├── functions/video-scripting.ts
-│   │   │   ├── functions/video-visual.ts
-│   │   │   ├── functions/video-upload.ts
+│   │   ├── inngest/            # Event-driven video orchestration (Phases 6-8)
+│   │   │   ├── functions/video-scripting.ts     # OpenRouter gpt-4o-mini → script
+│   │   │   ├── functions/video-visual.ts        # HeyGen/HunyuanVideo → visual
+│   │   │   ├── functions/video-upload.ts        # R2 storage + verify
 │   │   │   └── ...
 │   │   │
-│   │   ├── affiliates/         # Affiliate network integration (Phase 9)
-│   │   │   ├── networks/                   # 5 adapters (TikTok Shop, Awin, ClickBank, AccessTrade, Amazon)
+│   │   ├── affiliate/          # Affiliate network integration (Phase 9, 5 networks)
+│   │   │   ├── networks/                   # TikTok Shop, Awin, ClickBank, AccessTrade, Amazon
 │   │   │   ├── commission-tracker.ts
 │   │   │   └── webhook-handlers.ts
 │   │   │
-│   │   ├── publishers/         # Social media publishing (Phase 10)
-│   │   │   ├── tiktok-shop-adapter.ts
-│   │   │   ├── youtube-data-adapter.ts
-│   │   │   ├── instagram-adapter.ts
-│   │   │   └── scheduler-cron.ts
-│   │   │
-│   │   ├── payouts/            # Revenue split & payouts (Phase 13)
-│   │   │   ├── commission-ledger.ts
-│   │   │   ├── payout-batch-cron.ts
-│   │   │   ├── nowpayments-usdt-mass-payout.ts
-│   │   │   └── reconciliation.ts
-│   │   │
 │   │   ├── openclaw/           # OpenClaw orchestrator (Phase 12)
-│   │   │   ├── agent-fleet-spawn.ts
-│   │   │   ├── circuit-breaker.ts
-│   │   │   └── skill-activation.ts
+│   │   │   ├── agent-fleet-spawn.ts      # Spawn agents on Qwen 3 32B
+│   │   │   ├── circuit-breaker.ts        # Fault tolerance
+│   │   │   └── skill-activation.ts       # Dynamic skill loading
 │   │   │
-│   │   ├── email/              # Email delivery (expanded Phase 14)
-│   │   │   ├── onboarding-emails.ts        # Video completion notification
+│   │   ├── email/              # Email delivery (Phase 14 expansion)
+│   │   │   ├── onboarding-emails.ts      # Video completion notification
 │   │   │   ├── ...
-│   │   │   └── (gdpr/export-prepare.ts moved)
+│   │   │   └── gdpr-export.ts            # GDPR data export
 │   │   │
 │   │   ├── gateway/            # OpenClaw integration, channel adapters
 │   │   ├── ingestion/          # Affiliate data ingestion (ClickBank, ShareASale)
 │   │   ├── intelligence/       # Affiliate scoring & normalization
 │   │   ├── discovery/          # Affiliate discovery algorithms
-│   │   ├── telegram/           # Telegram bot (handlers, FSM, rate limiting)
-│   │   ├── security/           # Auth, rate limiting, input validation (Phase 14: FTC overlay)
+│   │   ├── telegram/           # Telegram bot (FSM, handlers, rate limiting)
+│   │   ├── security/           # Auth, rate limiting, input validation, FTC overlay
 │   │   ├── services/           # Factory pattern (real + mock implementations)
 │   │   ├── ai/                 # AI integrations (script generation, video, TTS)
-│   │   ├── clients/            # External API clients (NOWPayments, Upstash, Better Stack, PostHog, Inngest)
+│   │   ├── clients/            # External API clients (Inngest, Anthropic, etc.)
 │   │   ├── config/             # Environment & tier configuration
-│   │   ├── analytics/          # Dashboard analytics, ROI calculation
-│   │   ├── audit/              # Compliance, GDPR (Phase 14: /api/account/export + /delete), audit logging
+│   │   ├── analytics/          # Dashboard analytics, revenue tracking
+│   │   ├── audit/              # Compliance, GDPR export/delete, audit logging
+│   │   ├── monitoring/         # Admin monitoring queries & aggregates
 │   │   └── utils/              # Helper functions, validators, formatters
 │   │
 │   ├── components/             # React components (organized by feature)
@@ -156,7 +141,7 @@ apps/sophia-ai-factory/
 │   ├── 0002-payment-events.sql
 │   ├── 0003-better-auth.sql
 │   ├── 0004-usage-metering.sql
-│   └── 0005-signals-events.sql        # Append-only: tier_conversion, payment_*, agent_dispatch, api_rate_limit_hit, byok_*
+│   └── 0005-signals-events.sql        # Append-only events table
 │
 ├── .github/workflows/          # CI/CD enforcement gates (P1)
 │   ├── test.yml                # Tests + Deploy (lint/build/test → wrangler deploy + D1 migration-guard)
