@@ -70,6 +70,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const sig =
     req.headers.get('x-heygen-signature') ??
     req.headers.get('heygen-signature') ??
+    req.headers.get('x-signature') ??
+    req.headers.get('heygen-webhook-signature') ??
     '';
 
   if (!sig) {
@@ -87,6 +89,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   } catch {
     return NextResponse.json({ error: 'invalid_json' }, { status: 400 });
   }
+
+  // Log every event_type for observability, even unknown ones.
+  logger.info('[heygen-webhook] event_type=' + payload.event_type);
 
   const videoId = payload.video_id;
   if (!videoId) {

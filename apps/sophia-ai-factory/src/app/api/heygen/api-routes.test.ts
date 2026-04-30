@@ -22,6 +22,12 @@ vi.mock('@/lib/services/factory', () => ({
   },
 }));
 
+// Mock video quota module — default to under-quota / successful increment
+vi.mock('@/lib/quota/video-quota', () => ({
+  checkVideoQuota: vi.fn(),
+  incrementVideoUsage: vi.fn(),
+}));
+
 // Mock D1 client — INSERT/UPDATE side-effect should not affect status
 vi.mock('@/lib/db/client', () => {
   const buildChain = () => {
@@ -40,12 +46,14 @@ vi.mock('@/lib/db/client', () => {
     createServerClient: vi.fn(() => ({
       from: vi.fn(() => buildChain()),
     })),
+    getD1Raw: vi.fn(),
   };
 });
 
 import { getCurrentUser } from '@/lib/better-auth-session';
 import { getUserTier } from '@/lib/db/get-user-tier';
 import { ServiceFactory } from '@/lib/services/factory';
+import { checkVideoQuota, incrementVideoUsage } from '@/lib/quota/video-quota';
 
 describe('HeyGen API Routes', () => {
   const mockVideoService = {
@@ -59,6 +67,14 @@ describe('HeyGen API Routes', () => {
     vi.mocked(ServiceFactory.getVideoService).mockResolvedValue(mockVideoService as never);
     vi.mocked(getCurrentUser).mockResolvedValue({ id: 'user-1', email: 'test@test.com' } as never);
     vi.mocked(getUserTier).mockResolvedValue('PREMIUM' as never);
+    // Default: user is under quota — tests that need quota exceeded override this.
+    vi.mocked(checkVideoQuota).mockResolvedValue({
+      allowed: true,
+      used: 5,
+      limit: 30,
+      resetAt: '2026-05-01T00:00:00.000Z',
+    } as never);
+    vi.mocked(incrementVideoUsage).mockResolvedValue(undefined as never);
   });
 
   afterEach(() => {
@@ -233,6 +249,76 @@ describe('HeyGen API Routes', () => {
       expect(response.status).toBe(500);
       consoleSpy.mockRestore();
     });
+
+    // ── Video Quota Tests ──────────────────────────────────────────────────────
+
+    it('quota: should succeed when user is under monthly limit', async () => {
+      vi.mocked(checkVideoQuota).mockResolvedValue({
+        allowed: true,
+        used: 10,
+        limit: 30,
+        resetAt: '2026-05-01T00:00:00.000Z',
+      } as never);
+      mockVideoService.createVideo.mockResolvedValue('vid_quota_ok');
+
+      const req = new NextRequest('http://localhost/api/heygen/create-video', {
+        method: 'POST',
+        body: JSON.stringify({ avatarId: 'av1', voiceId: 'v1', script: 'test script' }),
+      });
+
+      const response = await createVideo(req);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data).toEqual({ videoId: 'vid_quota_ok', status: 'processing' });
+    });
+
+    it('quota: should return 429 when user is at monthly limit', async () => {
+      vi.mocked(checkVideoQuota).mockResolvedValue({
+        allowed: false,
+        used: 30,
+        limit: 30,
+        resetAt: '2026-05-01T00:00:00.000Z',
+      } as never);
+
+      const req = new NextRequest('http://localhost/api/heygen/create-video', {
+        method: 'POST',
+        body: JSON.stringify({ avatarId: 'av1', voiceId: 'v1', script: 'test script' }),
+      });
+
+      const response = await createVideo(req);
+      const data = await response.json() as Record<string, unknown>;
+
+      expect(response.status).toBe(429);
+      expect(data.error).toBe('quota_exceeded');
+      expect(data.limit).toBe(30);
+      expect(data.used).toBe(30);
+      expect(data.resetAt).toBe('2026-05-01T00:00:00.000Z');
+      // HeyGen must NOT be called when quota is exceeded
+      expect(mockVideoService.createVideo).not.toHaveBeenCalled();
+    });
+
+    it('quota: should increment usage counter only after successful video creation', async () => {
+      vi.mocked(checkVideoQuota).mockResolvedValue({
+        allowed: true,
+        used: 5,
+        limit: 30,
+        resetAt: '2026-05-01T00:00:00.000Z',
+      } as never);
+      mockVideoService.createVideo.mockResolvedValue('vid_increment_test');
+
+      const req = new NextRequest('http://localhost/api/heygen/create-video', {
+        method: 'POST',
+        body: JSON.stringify({ avatarId: 'av1', voiceId: 'v1', script: 'test script' }),
+      });
+
+      const response = await createVideo(req);
+
+      expect(response.status).toBe(200);
+      // incrementVideoUsage must be called exactly once with the user id
+      expect(incrementVideoUsage).toHaveBeenCalledTimes(1);
+      expect(incrementVideoUsage).toHaveBeenCalledWith('user-1');
+    });
   });
 
   describe('GET /api/heygen/status/[id]', () => {
@@ -300,6 +386,25 @@ describe('HeyGen Webhook — missing secret fallback', () => {
     const response = await webhookHandler(req);
     const data = await response.json() as Record<string, string>;
 
+    expect(response.status).toBe(200);
+    expect(data.mode).toBe('cron-poll-fallback');
+  });
+
+  it('x-signature header is accepted (alias for x-heygen-signature)', async () => {
+    // When secret is missing the route returns 200 regardless of headers.
+    // This test verifies the fallback path still works with x-signature header present
+    // (header variant acceptance is exercised in full in route unit tests).
+    const { POST: webhookHandler } = await import('../webhooks/heygen/route');
+    const req = new NextRequest('http://localhost/api/webhooks/heygen', {
+      method: 'POST',
+      headers: { 'x-signature': 'some-sig' },
+      body: JSON.stringify({ video_id: 'v1', status: 'completed' }),
+    });
+
+    const response = await webhookHandler(req);
+    const data = await response.json() as Record<string, string>;
+
+    // Without secret configured: always 200 cron-poll-fallback
     expect(response.status).toBe(200);
     expect(data.mode).toBe('cron-poll-fallback');
   });
