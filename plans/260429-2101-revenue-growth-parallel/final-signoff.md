@@ -84,8 +84,48 @@ status: APPROVED — 9.6/10 code review, 0 critical issues, ready for deploy
 - [x] `npx tsc --noEmit` → 0 errors
 - [x] Live curl checkout → 307 redirect verified
 - [x] code-reviewer 9.6/10 APPROVE
-- [ ] git commit + push (next)
-- [ ] wrangler deploy + production SHA verify (next)
+- [x] git commit + push (`66b3309f` Phase A/B/C, `82f14406` proxy fix)
+- [x] wrangler deploy + production SHA verify (`82f14406` matches local HEAD)
+- [x] Live smoke `/api/affiliate-discovery?limit=5` → `{"offers":[],"total":0,"page":1}`
+- [x] Live smoke `/api/checkout?tier=BASIC` → 307
+
+## Bonus Fix: LazyQueryChain Proxy Chain Bug
+
+Phase C live smoke caught a **latent production bug** in `src/lib/db/client.ts`:
+
+The `LazyQueryChain` Proxy's `get` trap was returning raw `target` after each
+method call instead of the Proxy reference. This broke ANY chained call after
+the first method on the lazy path (when sync D1 binding wasn't available at
+`createServerClient()` invocation time).
+
+```ts
+// BEFORE (broken):
+return (...args) => {
+  target.calls.push({ method: prop, args });
+  return target;  // raw — no proxy methods!
+};
+
+// AFTER (fixed):
+const proxy = new Proxy(this, { get(target, prop) {
+  ...
+  return (...args) => {
+    target.calls.push({ method: prop, args });
+    return proxy;  // ← proxy ref, chain continues
+  };
+}});
+return proxy;
+```
+
+**Affected routes (5 callers using long chains):**
+- `/api/affiliate-discovery/route.ts` (Phase C — caught the bug)
+- `/api/usage/debug/route.ts`
+- `/api/admin/billing/summary/billing-summary-query.ts`
+- `[locale]/(admin)/admin/users/page.tsx`
+- `app/actions/admin.ts`
+
+These routes likely failed silently or produced 401s before the chain executed. The fix unblocks them all.
+
+Commit: `82f14406`. Production live with proxy fix verified by `/api/affiliate-discovery` returning valid JSON.
 
 ---
 
