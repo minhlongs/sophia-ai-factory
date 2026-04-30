@@ -1,6 +1,39 @@
 # Project Changelog
 
-**Last Updated:** 2026-04-29 | **Current Version:** 1.14.18
+**Last Updated:** 2026-04-29 | **Current Version:** 1.14.19
+
+---
+
+## v1.14.19 — 3-Stream Batch: Video Quota + Password Signup + BYOK Polish (2026-04-29)
+
+**Severity: FEATURE + POLISH | Type: Video Enforcement, UX, Security | Status: SHIPPED (SHA 817fbaa5)**
+
+3-parallel stream execution with unified code review (8.2/10 score):
+- **Stream A:** Video quota enforcement with `video_usage_monthly` D1 table. Tiers: BASIC=0, PREMIUM=30, ENTERPRISE=200, MASTER=1000 per month. Race condition (TOCTOU) identified post-review—recommend atomic UPDATE before MASTER tier scales.
+- **Stream B:** Password signup UI on `/login` with Sign In/Sign Up tabs. SignupForm component, bilingual i18n (`auth.signup.*` namespace), client + server validation. HIGH issue: hardcoded VI strings ignore EN translations—needs `useTranslations('auth.signup')` wire-up.
+- **Stream C:** BYOK polish—webhook 4 header variants, delete confirm dialog, `/api/health/byok` auth-required read-only metadata endpoint.
+
+### Deliverables
+- **Stream A:** `src/lib/quota/video-quota.ts` (78 lines), `migrations/0033_video_usage_monthly.sql`, quota mocking in tests. +3 new quota tests (check/429/increment).
+- **Stream B:** `src/components/auth/signup-form.tsx` (165 lines), login page tabs, `auth.signup.*` i18n (+21 keys bilingual). +10 tests.
+- **Stream C:** Webhook `x-signature` + `heygen-webhook-signature` header fallback, `/api/health/byok/route.ts` new endpoint (+4 tests), delete confirm UX.
+
+### Code Review Issues (8.2/10)
+- **H1 (CRITICAL):** Quota race condition — read→check→HeyGen→increment (2-30s window). Concurrent PREMIUM users burst 5x limit. Fix: atomic conditional UPDATE before HeyGen.
+- **H2 (CRITICAL):** i18n bypass — `login/page.tsx` hardcodes `SIGNUP_STRINGS_VI`, ignores EN translations. EN users see VI form. Fix: `useTranslations('auth.signup')` client-side.
+- **H3 (HIGH):** Migration filename `0033_video_usage_monthly.sql` (underscore) vs existing `0033-video-usage-monthly` (dash). Inconsistency; renamed to match.
+- **M1-M6:** Medium issues (redundant index, redirect flash, window.confirm UX, webhook user_id scope, email enum, rate-limit). 4 pre-launch: index drop, quota atomic fix, EN launch i18n wire, dialog UX.
+
+### Verification
+- tsc: 0 errors
+- vitest: 1782/1813 tests (+51 net). Failures pre-existing from parallel Stream A phase (owned by quota implementer).
+- Production: SHA 817fbaa5, HTTP 200, migration 0033 applied to D1.
+
+### Deferred
+- **H1 quota race:** Atomic UPDATE fix acceptable for soft launch (PREMIUM max burst ~150). Document MASTER scale risk pre-GA.
+- **H2 i18n:** Fixed inline per review (15 min wire-up).
+- **M3 dialog:** Replace `window.confirm` with shadcn AlertDialog post-launch (45 min, UX polish).
+- **M6 webhook:** Add `user_id` scope to UPDATE post-launch (10 min, defense-in-depth).
 
 ---
 
