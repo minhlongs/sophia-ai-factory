@@ -13,6 +13,7 @@ import { logger } from '@/lib/utils/logger-utility';
 import { toError } from '@/lib/utils/to-error';
 import { rebuildAllWallets } from '@/lib/wallet/wallet-rebuilder';
 import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker';
+import { verifyCronAuth } from '@/lib/security/cron-auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,23 +32,10 @@ function getD1Binding(): D1Database | null {
   }
 }
 
-function isAuthorised(req: NextRequest): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return true;
-
-  if (req.headers.get('authorization') === `Bearer ${secret}`) return true;
-
-  const cronHeader =
-    req.headers.get('x-cron-secret') || req.headers.get('x-cf-cron');
-  const token = req.nextUrl.searchParams.get('token');
-
-  return token === secret || cronHeader === secret || cronHeader === 'true';
-}
 
 export async function GET(req: NextRequest) {
-  if (!isAuthorised(req)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const authError = verifyCronAuth(req);
+  if (authError) return authError;
 
   const db = getD1Binding();
 

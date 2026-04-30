@@ -18,6 +18,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/utils/logger-utility';
 import { toError, getErrorMessage } from '@/lib/utils/to-error';
 import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker';
+import { verifyCronAuth } from '@/lib/security/cron-auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -67,16 +68,8 @@ async function alertAdmin(message: string): Promise<void> {
 
 /** Validate cron request is from an authorised source. */
 function isAuthorised(req: NextRequest): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return true;
-
-  if (req.headers.get('authorization') === `Bearer ${secret}`) return true;
-
-  const token = req.nextUrl.searchParams.get('token');
-  const cronHeader =
-    req.headers.get('x-cron-secret') || req.headers.get('x-cf-cron');
-
-  return token === secret || cronHeader === secret || cronHeader === 'true';
+  const authError = verifyCronAuth(req);
+  return authError === null;
 }
 
 export async function GET(req: NextRequest) {

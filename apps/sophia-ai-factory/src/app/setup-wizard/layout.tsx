@@ -13,6 +13,7 @@ const geistSans = localFont({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network'),
   title: "Setup - Sophia AI Factory",
   description: "Configure your AI Factory settings.",
 };
