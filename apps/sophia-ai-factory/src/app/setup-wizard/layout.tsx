@@ -4,6 +4,8 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/better-auth-session";
 import { listUserApiKeyProviders } from "@/lib/byok/user-api-key-store";
+import { NextIntlClientProvider } from 'next-intl';
+import { getMessages } from 'next-intl/server';
 import "../globals.css";
 
 const geistSans = localFont({
@@ -32,7 +34,6 @@ export default async function SetupLayout({
   }
 
   // Existing users with LLM keys already configured: skip wizard, set cookie, send to dashboard.
-  // Prevents UX regression where pre-existing users (no wizard_done cookie) get forced through wizard.
   const providers = await listUserApiKeyProviders(user.id);
   const hasLlmKey = providers.includes("openrouter") || providers.includes("anthropic");
   if (hasLlmKey) {
@@ -47,13 +48,17 @@ export default async function SetupLayout({
     redirect("/dashboard");
   }
 
+  const messages = await getMessages();
+
   return (
     <html lang="en">
       <body className={`${geistSans.variable} antialiased`}>
-        <div className="min-h-screen bg-muted/50">
-          {/* No Navbar here - specialized layout for setup */}
-          {children}
-        </div>
+        <NextIntlClientProvider messages={messages} locale="en">
+          <div className="min-h-screen bg-muted/50">
+            {/* No Navbar here - specialized layout for setup */}
+            {children}
+          </div>
+        </NextIntlClientProvider>
       </body>
     </html>
   );
