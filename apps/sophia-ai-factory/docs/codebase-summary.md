@@ -1,8 +1,8 @@
 # Codebase Summary
 
 **Last Updated:** 2026-04-29
-**Version:** 1.14.18 (Go-Live Hardening: BYOK + Tier-Gate + Wizard Auth)
-**Recent Major Changes:** 14 P0/P1 fixes shipped (SHA 4ecbe7a8): BYOK provider enum aligned (muapi + anthropic added, heygen UI-removed), tier-gate on `/api/heygen/create-video` (BASIC→402), setup wizard auth check + wizard_done cookie redirect, webhook fallback (503→200), 5-min HeyGen avatars/voices cache. Zod field validation on all API inputs. 1731/1762 tests pass. See `docs/project-changelog.md` for full details.
+**Version:** 1.14.19 (3-Stream Batch: Video Quota + Password Signup + BYOK Polish)
+**Recent Major Changes:** 3-parallel streams shipped (SHA 817fbaa5): (A) Video quota enforcement `video_usage_monthly` D1 table, tiers BASIC=0/PREMIUM=30/ENTERPRISE=200/MASTER=1000, +3 quota tests; (B) Password signup UI `/login` with Sign In/Sign Up tabs, SignupForm component, `auth.signup.*` i18n bilingual, +10 tests; (C) BYOK polish—webhook 4 header variants, `/api/health/byok` endpoint, delete confirm dialog. Code review 8.2/10: H1 quota TOCTOU race identified (atomic UPDATE rec.), H2 i18n bypass (useTranslations wire-up needed), H3 migration filename inconsistency fixed. 1782/1813 tests pass. See `docs/project-changelog.md` for full details.
 
 ## Project Structure Overview
 

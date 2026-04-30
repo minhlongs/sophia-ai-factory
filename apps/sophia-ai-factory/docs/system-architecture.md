@@ -61,6 +61,7 @@ graph TD
 ### 1. The Frontend (Next.js 16)
 - **Responsibility**: User Interface, Input Validation, Configuration Management.
 - **Key Modules**:
+  - `/login`: Authentication page with Sign In (password + magic-link) and Sign Up (password form) tabs (v1.14.19). SignupForm component with client/server validation, Zod constraints (min 8 char password), bilingual i18n (`auth.signup.*` keys).
   - `/setup-wizard`: Strictly guided onboarding flow (auth required, requires ≥1 LLM key). v1.14.18: Layout-level `getCurrentUser()` auth check, post-signup `wizard_done` cookie redirect, bilingual (VI+EN) finish step with retry button, anthropic + muapi added.
   - `/dashboard`: Main operational view.
   - `/api/*`: Serverless functions acting as proxy to external services.
@@ -209,9 +210,27 @@ graph TD
 9. **Response Structure**:
    - Status route returns: `{status, video_url, thumbnail_url, duration_sec, error}`.
    - Error codes: `MISSING_KEY`, `DB_FAILED`.
-8. **Storage**:
+10. **Storage**:
    - Video stored in Cloudflare R2 `sophia-videos` bucket.
    - Public URL via `R2_PUBLIC_BASE_URL` env var (optional, defaults to R2 auth URL).
+
+### Quota & Rate Limiting (v1.14.19+)
+
+**Video Quota Architecture**:
+- **Table**: `video_usage_monthly` (D1) — per-user monthly counter, keyed on `(user_id, year_month)`.
+- **Tier Limits**:
+  - BASIC: 0 (blocked at 402 before quota check)
+  - PREMIUM: 30 per month
+  - ENTERPRISE: 200 per month
+  - MASTER: 1000 per month
+- **Enforcement**: `POST /api/heygen/create-video` calls `checkVideoQuota(userId)` before submitting to HeyGen. Returns 429 (Too Many Requests) + metadata `{error, limit, used, resetAt}` if over limit.
+- **Increment**: Fire-and-forget counter increment post-HeyGen success (via `incrementVideoUsage(userId)`). Non-fatal if D1 write fails (logs but user still gets video).
+- **Known Issue (TOCTOU race)**: Concurrent requests from same user can all read count=29 simultaneously, all pass quota gate, then all increment to 30+ before D1 UPSERT completes. Recommend atomic `UPDATE … SET count = count + 1 WHERE count < limit RETURNING count` for MASTER tier scale (pre-GA fix).
+
+**Rate Limiting**:
+- **Global Default**: Middleware enforces 30 req/min per IP (via Cloudflare Workers rate-limit header).
+- **Admin Tier Rules**: `/api/user/byok/*` elevated to 20 req/min (admin operations).
+- **Public Endpoints**: `/api/affiliate-discovery` (200 req/min), `/api/webhooks/*` (10 req/min per signature).
 
 ## Supervisor Agent (2026-04-17 MVP)
 
