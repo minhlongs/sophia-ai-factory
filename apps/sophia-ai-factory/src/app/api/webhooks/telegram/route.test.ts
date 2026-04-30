@@ -98,6 +98,17 @@ describe('Telegram Webhook Route', () => {
     })
   }
 
+  it('should return 200 ok when TELEGRAM_BOT_TOKEN is missing (no retry-storm)', async () => {
+    delete process.env.TELEGRAM_BOT_TOKEN
+    const req = createRequest({ message: { chat: { id: 123 }, text: '/start' } })
+    const res = await POST(req)
+    expect(res.status).toBe(200)
+    const json = await res.json()
+    expect(json).toEqual({ ok: true })
+    // No handler should have been called
+    expect(telegramHandlers.handleStart).not.toHaveBeenCalled()
+  })
+
   it('should return 401 if secret token is invalid', async () => {
     const req = createRequest({}, { 'X-Telegram-Bot-Api-Secret-Token': 'wrong-secret' })
     const res = await POST(req)
