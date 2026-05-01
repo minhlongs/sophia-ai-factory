@@ -54,3 +54,8 @@ public/workbox-*.js
 public/workbox-*.js.map
 public/swe-worker-*.js
 public/fallback-*.js
+
+# Playwright E2E artifacts
+/playwright-report/
+/test-results/
+/playwright/.cache/
