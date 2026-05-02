@@ -2,6 +2,7 @@ import { PricingSection } from "@/components/pricing/pricing-section";
 import { ProductionCostCalculator } from "@/app/components/sections/production-cost-calculator";
 import { OneTimeBundleCard } from "@/components/pricing/one-time-bundle-card";
 import { getTranslations } from "next-intl/server";
+import { isHeyGenHealthy } from "@/lib/health/heygen-health-check";
 
 export const metadata = {
   title: "Pricing - Sophia AI Factory",
@@ -9,7 +10,10 @@ export const metadata = {
 };
 
 export default async function PricingPage() {
-  const t = await getTranslations("pricing");
+  const [t, heygenHealthy] = await Promise.all([
+    getTranslations("pricing"),
+    isHeyGenHealthy().catch(() => false),
+  ]);
 
   return (
     <main id="main-content" className="min-h-screen bg-gradient-to-b from-black to-violet-950 pt-16">
@@ -32,7 +36,7 @@ export default async function PricingPage() {
 
       {/* One-Time Bundle — pay once, no monthly commitment */}
       <section className="mx-auto max-w-md px-6 pb-12 pt-4">
-        <OneTimeBundleCard />
+        <OneTimeBundleCard heygenHealthy={heygenHealthy} />
       </section>
 
       <ProductionCostCalculator />
