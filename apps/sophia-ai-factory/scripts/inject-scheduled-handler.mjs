@@ -113,13 +113,14 @@ function buildScheduledSnippet(verifiedMap) {
 
   return `
 ${IDEMPOTENCY_MARKER}
-// Scheduled handler — maps CF Workers cron patterns to internal Next.js route fetches.
-// Injected by scripts/inject-scheduled-handler.mjs (post-build, idempotent).
+// Cron route map (post-build inject) — patterns must match wrangler.jsonc triggers.crons.
 const __cronRouteMap = {
 ${mapEntries}
 };
 
-export async function scheduled(event, env, ctx) {
+// Scheduled handler logic — exposed via default export property attachment below.
+async function __cronScheduledHandler(event, env, ctx) {
+  console.log('[scheduled] FIRE cron=' + event.cron + ' has_secret=' + !!env.CRON_SECRET);
   const routes = __cronRouteMap[event.cron] ?? [];
 
   if (routes.length === 0) {
@@ -127,15 +128,19 @@ export async function scheduled(event, env, ctx) {
     return;
   }
 
+  if (!env.CRON_SECRET) {
+    console.error('[scheduled] CRON_SECRET is not set — skipping all dispatches. Run scripts/set-cron-secret.sh before deploying.');
+    return;
+  }
+
+  const host = env.HOSTNAME ?? 'sophia.agencyos.network';
+
   const dispatches = routes.map(async (route) => {
-    // Dispatch to self via service binding (configured in wrangler.jsonc as WORKER_SELF_REFERENCE)
-    // OR fall back to public URL with x-cf-cron header (CF Workers will resolve through their own routing)
-    const host = env.HOSTNAME ?? 'sophia.agencyos.network';
     const url = 'https://' + host + route;
     const req = new Request(url, {
       method: 'GET',
       headers: {
-        'x-cf-cron': 'true',
+        'Authorization': 'Bearer ' + env.CRON_SECRET,
       },
     });
 
@@ -144,13 +149,23 @@ export async function scheduled(event, env, ctx) {
       const res = binding && typeof binding.fetch === 'function'
         ? await binding.fetch(req)
         : await fetch(req);
-      console.log('[scheduled] ' + route + ' →', res.status);
+      console.log('[scheduled] ' + route + ' → ' + res.status);
     } catch (err) {
       console.error('[scheduled] Error dispatching ' + route + ':', err?.message ?? String(err));
     }
   });
 
   ctx.waitUntil(Promise.allSettled(dispatches));
+}
+
+// CRITICAL: CF Workers Modules format requires scheduled() to be a method ON the
+// default export object, not a separate named export. Attach at module-load time.
+// Using ESM-compatible mutation via globalThis.__defaultRef set during build is
+// not feasible here — instead we re-export a wrapped default below.
+// Workaround: also export named scheduled (some toolchains pick this up) and
+// rely on the wrapper at end of file that overrides default export.
+export async function scheduled(event, env, ctx) {
+  return __cronScheduledHandler(event, env, ctx);
 }
 `;
 }
@@ -182,9 +197,30 @@ function main() {
   }
 
   const snippet = buildScheduledSnippet(verifiedMap);
-  writeFileSync(workerPath, content + snippet, 'utf8');
 
-  console.log(`[inject-scheduled] Injected scheduled() handler: ${patternCount} patterns, ${routeCount} routes.`);
+  // CRITICAL: scheduled() must be a method ON default export object, not a named export.
+  // Inject the cron map + handler function, then modify default export to include scheduled property.
+  const defaultExportRegex = /(export default \{[\s\S]*?)(\n\};)/m;
+  const match = content.match(defaultExportRegex);
+  if (!match) {
+    console.error('[inject-scheduled] ERROR: could not find `export default { ... };` block in worker.js');
+    process.exit(1);
+  }
+
+  const modifiedContent = content.replace(
+    defaultExportRegex,
+    (_, before, after) => {
+      // If `before` already ends with `,` (object literal trailing comma), don't add another
+      const needsComma = !/,\s*$/.test(before);
+      const sep = needsComma ? ',\n    ' : '\n    ';
+      const prop = `${sep}async scheduled(event, env, ctx) { return __cronScheduledHandler(event, env, ctx); }`;
+      return `${before}${prop}${after}`;
+    }
+  );
+
+  writeFileSync(workerPath, modifiedContent + snippet, 'utf8');
+
+  console.log(`[inject-scheduled] Injected scheduled() handler into default export: ${patternCount} patterns, ${routeCount} routes.`);
   console.log('[inject-scheduled] Done.');
 }
 
