@@ -8,6 +8,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { handleOneTimeFinished, handleOneTimeRefunded } from '../nowpayments-ipn-one-time'
 import * as userPurchasesRepo from '@/lib/db/repositories/user-purchases-repo'
+import * as videosRepo from '@/lib/db/repositories/videos-repo'
 import * as fulfillment from '@/lib/fulfillment/one-time-fulfillment'
 import * as auditLog from '@/lib/db/audit/audit-log'
 import { logger } from '@/lib/utils/logger-utility'
@@ -16,6 +17,7 @@ import type { OneTimeSku } from '@/types'
 
 // Mock modules
 vi.mock('@/lib/db/repositories/user-purchases-repo')
+vi.mock('@/lib/db/repositories/videos-repo')
 vi.mock('@/lib/fulfillment/one-time-fulfillment')
 vi.mock('@/lib/db/audit/audit-log')
 vi.mock('@/lib/db/client', () => ({
@@ -144,7 +146,7 @@ describe('handleOneTimeFinished — purchase creation + fulfillment', () => {
     expect(userPurchasesRepo.insertPurchase).not.toHaveBeenCalled()
   })
 
-  it('fulfillment error is non-fatal: still succeeds after logging warn', async () => {
+  it('fulfillment error is non-fatal: still succeeds after logging error', async () => {
     const payload = buildIpnPayload()
     const purchaseId = 'purchase_123'
 
@@ -159,9 +161,10 @@ describe('handleOneTimeFinished — purchase creation + fulfillment', () => {
     // Should still reach markPaid
     expect(userPurchasesRepo.markPaid).toHaveBeenCalled()
 
-    // Fulfillment error logged as warn but doesn't propagate
-    expect(logger.warn).toHaveBeenCalledWith(
+    // Fulfillment error logged as error (F7: every catch must emit logger.error)
+    expect(logger.error).toHaveBeenCalledWith(
       expect.stringContaining('Fulfillment trigger failed'),
+      expect.anything(),
       expect.anything()
     )
   })
@@ -243,15 +246,31 @@ describe('handleOneTimeRefunded — purchase refund handling', () => {
     expect(userPurchasesRepo.markRefunded).toHaveBeenCalled()
   })
 
-  it('video access NOT revoked on refund (CEO decision)', async () => {
+  it('F10: video access IS revoked on refund when purchase found', async () => {
     const payload = buildIpnPayload({ payment_status: 'refunded' })
+    const purchaseId = 'purchase_xyz'
 
     vi.mocked(userPurchasesRepo.markRefunded).mockResolvedValue(undefined)
+    vi.mocked(userPurchasesRepo.getByPaymentId).mockResolvedValue({
+      id: purchaseId,
+      user_id: 'user1',
+      payment_id: payload.payment_id ?? '',
+      kind: 'one_time',
+      sku: 'STARTER_BUNDLE',
+      status: 'refunded',
+      amount_cents: 4900,
+      credits_total: 10,
+      credits_remaining: 0,
+      created_at: Math.floor(Date.now() / 1000),
+      updated_at: Math.floor(Date.now() / 1000),
+    })
+    vi.mocked(videosRepo.revokeAccessByPurchaseId).mockResolvedValue(undefined)
 
     await handleOneTimeRefunded(payload)
 
-    // Verify we don't call any video revocation function
-    // (this is implicit — there's no revokeVideoAccess call in the handler)
+    // Verify revokeAccessByPurchaseId was called with the correct purchaseId
+    expect(videosRepo.revokeAccessByPurchaseId).toHaveBeenCalledWith(purchaseId)
+    // Fulfillment trigger NOT called (refund path)
     expect(fulfillment.triggerOneTimeFulfillment).not.toHaveBeenCalled()
   })
 })

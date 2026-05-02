@@ -1,6 +1,10 @@
 /**
  * Logger Internals — formatting, log dispatch, and arg resolution.
  * Consumed by logger-utility.ts. Do not import from logger-utility.ts here.
+ *
+ * C2 fix: forwardToSentry is called fire-and-forget for error-level events
+ * that have no Error object (message-only). Events with an Error object
+ * are captured via captureToSentry (Sentry SDK captureException path).
  */
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
@@ -20,6 +24,8 @@ export interface LogEntry {
     hint?: unknown;
   };
 }
+
+import { forwardToSentry } from '@/lib/observability/sentry-forwarder';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 
@@ -90,9 +96,17 @@ export const log = (
   switch (level) {
     case 'error':
       console.error(formatted); // LEGIT FALLBACK — do not replace
-      // Breadcrumb to Sentry on error level (non-blocking, SDK may be absent)
       if (error) {
+        // SDK path: captureException with full stack trace
         captureToSentry(error, entry.metadata).catch(() => { /* no-op */ });
+      } else {
+        // C2: message-only errors (no Error object) → forwardToSentry HTTP forwarder
+        // fire-and-forget; never blocks caller
+        void forwardToSentry({
+          level: 'error',
+          message: entry.message,
+          extra: entry.metadata as Record<string, string> | undefined,
+        });
       }
       break;
     case 'warn':

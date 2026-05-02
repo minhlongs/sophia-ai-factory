@@ -1,0 +1,19 @@
+name: Fulfillment Reconciliation
+
+on:
+  schedule:
+    # Daily 06:00 UTC — detect paid purchases with no delivered video.
+    - cron: '0 6 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger fulfillment-reconcile cron
+        run: |
+          curl -fsS \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            "https://sophia.agencyos.network/api/cron/fulfillment-reconcile" \
+            || echo "::warning::fulfillment-reconcile curl failed (non-blocking)"

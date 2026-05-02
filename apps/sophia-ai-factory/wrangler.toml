@@ -53,6 +53,10 @@ crons = ["*/5 * * * *", "5 * * * *", "0 1 * * *", "0 2 * * *", "0 3 * * *", "0 4
 # === P3-CRONS-BEGIN ===
 # "0 6 * * 1" — Monday 06:00 UTC → /api/cron/weekly-signals-digest (PostHog signals digest)
 # === P3-CRONS-END ===
+# === P3-F8-CRONS-BEGIN ===
+# "0 6 * * *" — daily 06:00 UTC → /api/cron/fulfillment-reconcile (F8: daily orphan-purchase drift detection)
+#   Note: triggered via GitHub Actions (cron-fulfillment-reconcile.yml), not CF Worker trigger
+# === P3-F8-CRONS-END ===
 
 # === P3-KV-BEGIN ===
 # EXPERIMENT_KV: PostHog feature flag + A/B variant cache (60s TTL)
