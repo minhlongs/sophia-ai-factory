@@ -64,8 +64,14 @@
 	// === P2-CRONS-END ===
 	// === P3-CRONS-BEGIN ===
 	// "0 6 * * 1" — Monday 06:00 UTC → /api/cron/weekly-signals-digest
+	// === P01-CRONS-BEGIN ===
+	// NEW cron patterns added by plan 260502-0733-cron-infra-go-live:
+	// "*/2 * * * *"  — every 2 min  → /api/cron/fulfillment-retry
+	// "*/15 * * * *" — every 15 min → /api/cron/smoke-one-time
+	// "0 6 * * *"    — daily 06:00 UTC (all days) → /api/cron/fulfillment-reconcile
 	"triggers": {
-		"crons": ["*/5 * * * *", "5 * * * *", "0 1 * * *", "0 2 * * *", "0 3 * * *", "0 4 * * *", "0 6 * * 1"]
+		"crons": ["*/5 * * * *", "5 * * * *", "0 1 * * *", "0 2 * * *", "0 3 * * *", "0 4 * * *", "0 6 * * 1", "*/2 * * * *", "*/15 * * * *", "0 6 * * *"]
 	}
+	// === P01-CRONS-END ===
 	// === P3-CRONS-END ===
 }
