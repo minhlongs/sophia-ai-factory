@@ -1,0 +1,191 @@
+/**
+ * inject-scheduled-handler.mjs
+ *
+ * Post-build script: injects a `scheduled(event, env, ctx)` export into
+ * .open-next/worker.js so Cloudflare Workers cron triggers have a handler.
+ *
+ * OpenNext-Cloudflare 1.x does not emit scheduled() natively.
+ * This script appends idempotent glue code after the opennext build.
+ *
+ * Run: node scripts/inject-scheduled-handler.mjs
+ * Called automatically by the `deploy` and `deploy:build` npm scripts.
+ *
+ * Idempotent: running twice produces same output (guards with marker comment).
+ * Safe: if a mapped route file does not exist, the mapping is skipped.
+ * Error handling: catches per-route, never throws out of scheduled().
+ */
+
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const appRoot = join(__dirname, '..');
+
+const workerPath = join(appRoot, '.open-next', 'worker.js');
+const IDEMPOTENCY_MARKER = '/* __SCHEDULED_HANDLER_INJECTED__ */';
+
+// ---------------------------------------------------------------------------
+// Cron pattern → route(s) mapping.
+// Key: exact cron expression string (must match wrangler.jsonc triggers.crons).
+// Value: array of route path strings (relative to /api/).
+// Routes are verified below — missing routes are skipped with a warning.
+// ---------------------------------------------------------------------------
+const CRON_ROUTES = {
+  '*/5 * * * *': [
+    '/api/cron/uptime-check',
+    '/api/cron/video-status-sync',
+  ],
+  '5 * * * *': [
+    '/api/cron/usage-export',
+  ],
+  '0 1 * * *': [
+    '/api/cron/dunning-advance',
+  ],
+  '0 2 * * *': [
+    '/api/cron/subscription-reminders',
+  ],
+  '0 3 * * *': [
+    '/api/cron/scheduled-campaigns',
+  ],
+  '0 4 * * *': [
+    '/api/cron/email-drip',
+  ],
+  '0 6 * * 1': [
+    '/api/cron/weekly-signals-digest',
+  ],
+  // --- New cron routes added by plan 260502-0604-raas-fulfillment-zero-fail ---
+  '*/2 * * * *': [
+    '/api/cron/fulfillment-retry',
+  ],
+  '*/15 * * * *': [
+    '/api/cron/smoke-one-time',
+  ],
+  '0 6 * * *': [
+    '/api/cron/fulfillment-reconcile',
+  ],
+};
+
+// ---------------------------------------------------------------------------
+// Verify route files exist in the Next.js source tree before including.
+// Prevents stale mappings from causing runtime errors.
+// ---------------------------------------------------------------------------
+function routeExists(route) {
+  // Strip leading /api/cron/ to get dir name
+  const segments = route.replace(/^\/api\/cron\//, '');
+  const routeFile = join(appRoot, 'src', 'app', 'api', 'cron', segments, 'route.ts');
+  return existsSync(routeFile);
+}
+
+function buildVerifiedRouteMap() {
+  const verified = {};
+  for (const [pattern, routes] of Object.entries(CRON_ROUTES)) {
+    const live = [];
+    for (const route of routes) {
+      if (routeExists(route)) {
+        live.push(route);
+      } else {
+        console.warn(`[inject-scheduled] WARNING: route not found, skipping: ${route}`);
+      }
+    }
+    if (live.length > 0) {
+      verified[pattern] = live;
+    } else {
+      console.warn(`[inject-scheduled] WARNING: no live routes for pattern "${pattern}" — skipping`);
+    }
+  }
+  return verified;
+}
+
+// ---------------------------------------------------------------------------
+// Build the JS snippet to append to worker.js.
+// Uses the existing `default` export (fetch handler) to dispatch internal
+// requests. ctx.waitUntil() ensures fire-and-forget parallel dispatch.
+// ---------------------------------------------------------------------------
+function buildScheduledSnippet(verifiedMap) {
+  // Serialize the verified map as a JS object literal
+  const mapEntries = Object.entries(verifiedMap)
+    .map(([pattern, routes]) => {
+      const routeList = routes.map(r => JSON.stringify(r)).join(', ');
+      return `  ${JSON.stringify(pattern)}: [${routeList}]`;
+    })
+    .join(',\n');
+
+  return `
+${IDEMPOTENCY_MARKER}
+// Scheduled handler — maps CF Workers cron patterns to internal Next.js route fetches.
+// Injected by scripts/inject-scheduled-handler.mjs (post-build, idempotent).
+const __cronRouteMap = {
+${mapEntries}
+};
+
+export async function scheduled(event, env, ctx) {
+  const routes = __cronRouteMap[event.cron] ?? [];
+
+  if (routes.length === 0) {
+    console.log('[scheduled] No handler for cron pattern:', event.cron);
+    return;
+  }
+
+  const dispatches = routes.map(async (route) => {
+    // Dispatch to self via service binding (configured in wrangler.jsonc as WORKER_SELF_REFERENCE)
+    // OR fall back to public URL with x-cf-cron header (CF Workers will resolve through their own routing)
+    const host = env.HOSTNAME ?? 'sophia.agencyos.network';
+    const url = 'https://' + host + route;
+    const req = new Request(url, {
+      method: 'GET',
+      headers: {
+        'x-cf-cron': 'true',
+      },
+    });
+
+    try {
+      const binding = env.WORKER_SELF_REFERENCE;
+      const res = binding && typeof binding.fetch === 'function'
+        ? await binding.fetch(req)
+        : await fetch(req);
+      console.log('[scheduled] ' + route + ' →', res.status);
+    } catch (err) {
+      console.error('[scheduled] Error dispatching ' + route + ':', err?.message ?? String(err));
+    }
+  });
+
+  ctx.waitUntil(Promise.allSettled(dispatches));
+}
+`;
+}
+
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
+function main() {
+  if (!existsSync(workerPath)) {
+    console.error(`[inject-scheduled] ERROR: worker.js not found at ${workerPath}`);
+    console.error('[inject-scheduled] Run `npm run deploy:build` (next build + opennext build) first.');
+    process.exit(1);
+  }
+
+  const content = readFileSync(workerPath, 'utf8');
+
+  if (content.includes(IDEMPOTENCY_MARKER)) {
+    console.log('[inject-scheduled] Already injected — skipping (idempotent).');
+    return;
+  }
+
+  const verifiedMap = buildVerifiedRouteMap();
+  const patternCount = Object.keys(verifiedMap).length;
+  const routeCount = Object.values(verifiedMap).flat().length;
+
+  if (patternCount === 0) {
+    console.error('[inject-scheduled] ERROR: No valid cron route mappings — aborting.');
+    process.exit(1);
+  }
+
+  const snippet = buildScheduledSnippet(verifiedMap);
+  writeFileSync(workerPath, content + snippet, 'utf8');
+
+  console.log(`[inject-scheduled] Injected scheduled() handler: ${patternCount} patterns, ${routeCount} routes.`);
+  console.log('[inject-scheduled] Done.');
+}
+
+main();

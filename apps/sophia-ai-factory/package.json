@@ -23,8 +23,9 @@
     "worker:dev": "wrangler dev",
     "worker:deploy": "wrangler deploy",
     "worker:typecheck": "tsc --noEmit --project tsconfig.worker.json",
-    "deploy": "next build && node scripts/fix-instrumentation-standalone.mjs && npx @opennextjs/cloudflare build --skipNextBuild && wrangler deploy",
-    "deploy:build": "next build && node scripts/fix-instrumentation-standalone.mjs && npx @opennextjs/cloudflare build --skipNextBuild"
+    "deploy": "next build && node scripts/fix-instrumentation-standalone.mjs && npx @opennextjs/cloudflare build --skipNextBuild && node scripts/inject-scheduled-handler.mjs && wrangler deploy",
+    "deploy:build": "next build && node scripts/fix-instrumentation-standalone.mjs && npx @opennextjs/cloudflare build --skipNextBuild && node scripts/inject-scheduled-handler.mjs",
+    "deploy:full": "./scripts/deploy-with-sha.sh"
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",
