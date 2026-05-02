@@ -279,6 +279,66 @@ ON CONFLICT DO NOTHING;
 
 **Permanent Failure Trigger:** After 5 attempts → emit `videos.status = 'failed_permanent'` + compensation trigger
 
+### Post-Build Worker Patches Pattern (2026-05-02)
+**Purpose:** When opennext doesn't natively emit required Worker features (e.g., `scheduled()`), use idempotent post-build scripts under `scripts/inject-*.mjs` with marker comments for safety.
+
+**Location:** `scripts/inject-scheduled-handler.mjs`
+
+**Pattern:**
+```javascript
+// Idempotency marker (prevents duplicate injection if script runs twice)
+const MARKER = '// [INJECTED: scheduled-handler-2026-05-02]';
+if (workerCode.includes(MARKER)) {
+  console.log('Already injected, skipping...');
+  return;
+}
+
+// Patch `.open-next/worker.js` with scheduled export
+const scheduledHandler = `
+export default {
+  fetch(request, env, ctx) { /* existing handler */ },
+  scheduled(scheduledEvent, env, ctx) { /* cron dispatcher */ }
+};
+${MARKER}
+`;
+```
+
+**Benefits:**
+- Transparent to build system (runs after opennext-build)
+- Idempotent (safe to run multiple times)
+- Preserves all existing Worker handlers
+- No runtime overhead
+
+---
+
+### Self-Dispatch via Service Binding Pattern (2026-05-02)
+**Purpose:** Internal cron handlers need to invoke protected routes. Use service binding (`env.WORKER_SELF_REFERENCE.fetch()`) instead of global `fetch()` to avoid auth bypass.
+
+**Implementation:**
+```typescript
+// In scheduled handler:
+const req = new Request('https://self/api/cron/email-drip', {
+  method: 'POST',
+  headers: { 'x-cf-cron': 'true' },
+  // Service binding: no need for auth token
+  // CF internally routes to own Worker
+});
+const res = await env.WORKER_SELF_REFERENCE.fetch(req);
+```
+
+**wrangler.toml binding:**
+```toml
+[[services]]
+binding = "WORKER_SELF_REFERENCE"
+service = "sophia-ai-factory"
+# Routes to current Worker without external network call
+```
+
+**Benefits:**
+- Secure: cron routes verify `x-cf-cron: true` header (CF-internal guarantee)
+- Fast: no external network latency (local binding)
+- No auth token leakage (internal only)
+
 ---
 
 ## Security Standards
