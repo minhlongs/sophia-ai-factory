@@ -81,6 +81,10 @@ export interface OpsSnapshotResponse {
     recentFailures: number
     recentSuccesses: number
   }
+  outageNotifications: {
+    lastTriggeredAt: number | null
+    customersNotified24h: number
+  }
   generatedAt: string
 }
 
@@ -215,6 +219,27 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       recentSuccesses: cbStatus.recentSuccesses,
     }
 
+    // 7. Outage notifications — last trigger + count in last 24h
+    interface OutageEventRow {
+      cnt: number
+      latest_at: string | null
+    }
+    const outageResult = await db
+      .prepare(
+        `SELECT COUNT(*) AS cnt,
+                MAX(json_extract(event_data, '$.opened_at')) AS latest_at
+         FROM billing_events
+         WHERE event_type = 'outage_compensation'
+           AND created_at >= ?1`,
+      )
+      .bind(since24h)
+      .first<OutageEventRow>()
+
+    const outageNotifications = {
+      lastTriggeredAt: outageResult?.latest_at ? Number(outageResult.latest_at) : null,
+      customersNotified24h: outageResult?.cnt ?? 0,
+    }
+
     const snapshot: OpsSnapshotResponse = {
       version: { sha, deployedAt, opennextVersion },
       cronRuns,
@@ -223,6 +248,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       reconcile24h,
       heygenHealth,
       circuitBreaker,
+      outageNotifications,
       generatedAt,
     }
 
