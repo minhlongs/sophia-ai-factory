@@ -14,7 +14,8 @@ import {
   KeyRound,
   KeySquare,
   FileText,
-  GitBranch
+  GitBranch,
+  ShoppingBag
 } from "lucide-react";
 import { HealthIndicator } from "@/components/dashboard/health-indicator";
 import { MobileNav } from "@/components/ui/mobile-nav";
@@ -74,6 +75,13 @@ export default function DashboardLayout({
           >
             <Video className="w-5 h-5" />
             <span className="font-medium">{t('sidebar.my_videos')}</span>
+          </Link>
+          <Link
+            href="/dashboard/orders"
+            className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
+          >
+            <ShoppingBag className="w-5 h-5" />
+            <span className="font-medium">{t('sidebar.orders')}</span>
           </Link>
           <Link
             href="/dashboard/support"

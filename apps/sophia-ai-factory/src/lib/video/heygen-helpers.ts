@@ -21,19 +21,28 @@ export async function createHeyGenVideo(params: {
   apiKey: string;
   avatarId?: string;
   voiceId?: string;
+  /** Optional webhook callback URL. HeyGen will POST status events here. */
+  callbackUrl?: string;
 }): Promise<HeyGenCreateResult> {
-  const { script, title, apiKey, avatarId, voiceId } = params;
+  const { script, title, apiKey, avatarId, voiceId, callbackUrl } = params;
+
+  const bodyPayload: Record<string, unknown> = {
+    video_inputs: [{
+      character: { type: 'avatar', avatar_id: avatarId ?? DEFAULT_AVATAR_ID, avatar_style: 'normal' },
+      voice: { type: 'text', input_text: script, voice_id: voiceId ?? DEFAULT_VOICE_ID },
+    }],
+    dimension: VIDEO_DIMENSION,
+    title,
+  };
+
+  if (callbackUrl) {
+    bodyPayload.callback_url = callbackUrl;
+  }
+
   const res = await fetch(`${HEYGEN_API_URL}/video/generate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-Api-Key': apiKey },
-    body: JSON.stringify({
-      video_inputs: [{
-        character: { type: 'avatar', avatar_id: avatarId ?? DEFAULT_AVATAR_ID, avatar_style: 'normal' },
-        voice: { type: 'text', input_text: script, voice_id: voiceId ?? DEFAULT_VOICE_ID },
-      }],
-      dimension: VIDEO_DIMENSION,
-      title,
-    }),
+    body: JSON.stringify(bodyPayload),
     signal: AbortSignal.timeout(30_000),
   });
 

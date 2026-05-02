@@ -353,7 +353,8 @@
       "missions": "Missions",
       "api_keys": "API Keys",
       "proposals": "Proposals",
-      "workflows": "Workflows"
+      "workflows": "Workflows",
+      "orders": "My Orders"
     },
     "missions": {
       "page_title": "AI Missions",

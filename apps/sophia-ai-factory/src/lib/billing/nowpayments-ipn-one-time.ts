@@ -9,7 +9,8 @@
 import { logger } from '@/lib/utils/logger-utility'
 import { getD1Raw } from '@/lib/db/client'
 import { recordAudit } from '@/lib/db/audit/audit-log'
-import { insertPurchase, markPaid, markRefunded } from '@/lib/db/repositories/user-purchases-repo'
+import { insertPurchase, markPaid, markRefunded, getByPaymentId } from '@/lib/db/repositories/user-purchases-repo'
+import { revokeAccessByPurchaseId } from '@/lib/db/repositories/videos-repo'
 import { triggerOneTimeFulfillment } from '@/lib/fulfillment/one-time-fulfillment'
 import type { NowPaymentsIpnPayload } from './nowpayments-ipn-handlers'
 import { parseUserIdFromOrderId } from './nowpayments-ipn-db'
@@ -82,7 +83,12 @@ export async function handleOneTimeFinished(
         paymentId: ipn.payment_id,
       },
     })
-  } catch { /* non-fatal */ }
+  } catch (auditErr) {
+    logger.error('[IPN/OneTime] Audit record failed (non-fatal)', auditErr instanceof Error ? auditErr : undefined, {
+      userId,
+      purchaseId,
+    })
+  }
 
   logger.info('[IPN/OneTime] Purchase paid', {
     userId,
@@ -96,10 +102,9 @@ export async function handleOneTimeFinished(
   try {
     await triggerOneTimeFulfillment(userId, purchaseId, sku)
   } catch (err) {
-    logger.warn('[IPN/OneTime] Fulfillment trigger failed (non-fatal)', {
+    logger.error('[IPN/OneTime] Fulfillment trigger failed (non-fatal)', err instanceof Error ? err : undefined, {
       userId,
       purchaseId,
-      error: err instanceof Error ? err.message : String(err),
     })
   }
 }
@@ -108,7 +113,8 @@ export async function handleOneTimeFinished(
 
 /**
  * Handle one-time IPN `refunded` event.
- * Marks row refunded + zeros credits. Video access NOT revoked (CEO decision).
+ * Marks row refunded, zeros credits, and revokes access to all linked videos.
+ * Default policy: revoke video access regardless of render state (F10).
  */
 export async function handleOneTimeRefunded(
   ipn: NowPaymentsIpnPayload,
@@ -119,7 +125,29 @@ export async function handleOneTimeRefunded(
     return
   }
 
+  // Look up purchase id by payment_id before zeroing credits
+  const existingPurchase = await getByPaymentId(ipn.payment_id)
+  const purchaseId = existingPurchase?.id ?? null
+
   await markRefunded(ipn.payment_id)
+
+  // F10: Revoke video access for ALL videos linked to this purchase
+  if (purchaseId) {
+    try {
+      await revokeAccessByPurchaseId(purchaseId)
+      logger.info('[IPN/OneTime] Video access revoked for refunded purchase', {
+        userId,
+        purchaseId,
+        paymentId: ipn.payment_id,
+      })
+    } catch (revokeErr) {
+      logger.error('[IPN/OneTime] Video access revocation failed (non-fatal)', revokeErr instanceof Error ? revokeErr : undefined, {
+        userId,
+        purchaseId,
+        paymentId: ipn.payment_id,
+      })
+    }
+  }
 
   // Audit trail
   try {
@@ -129,12 +157,19 @@ export async function handleOneTimeRefunded(
       rowId: ipn.payment_id,
       action: 'update',
       actorId: userId,
-      after: { status: 'refunded', credits_remaining: 0, paymentId: ipn.payment_id },
+      after: { status: 'refunded', credits_remaining: 0, paymentId: ipn.payment_id, accessRevoked: true },
     })
-  } catch { /* non-fatal */ }
+  } catch (auditErr) {
+    logger.error('[IPN/OneTime] Refund audit failed (non-fatal)', auditErr instanceof Error ? auditErr : undefined, {
+      userId,
+      purchaseId,
+      paymentId: ipn.payment_id,
+    })
+  }
 
-  logger.info('[IPN/OneTime] Purchase refunded — credits zeroed', {
+  logger.info('[IPN/OneTime] Purchase refunded — credits zeroed, access revoked', {
     userId,
+    purchaseId,
     paymentId: ipn.payment_id,
   })
 }

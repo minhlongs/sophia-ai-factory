@@ -353,7 +353,8 @@
       "missions": "Nhiệm Vụ AI",
       "api_keys": "Khoá API",
       "proposals": "Đề Xuất",
-      "workflows": "Quy Trình"
+      "workflows": "Quy Trình",
+      "orders": "Đơn Hàng"
     },
     "missions": {
       "page_title": "Nhiệm Vụ AI",
