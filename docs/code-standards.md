@@ -214,6 +214,15 @@ try {
 - Avoid raw SQL in handlers; extract to `lib/<domain>/` helpers
 - Index critical paths: `org_id`, composite keys for multi-tenant isolation
 
+### One-Time vs Subscription SKU Pattern (2026-05-02)
+- **Single Source of Truth:** `ONE_TIME_SKUS = new Set(['STARTER_BUNDLE'])` defined in `lib/billing/ipn-constants.ts`
+- **Dispatcher:** NOWPayments IPN webhook checks `subscription_type` field (from Polar SKU metadata)
+- **Branching:** 
+  - If in `ONE_TIME_SKUS` → route to one-time handler (create `user_purchases` record)
+  - Else → route to subscription handler (create `billing_settings` + credit MCU)
+- **Idempotency:** One-time inserts use `UNIQUE(user_id, user_purchase_id)` constraint; duplicates rejected safely
+- **Schema:** `user_purchases(id, user_id, sku, video_credits, ttl_end, created_at)` isolated from `billing_settings`
+
 ---
 
 ## Security Standards

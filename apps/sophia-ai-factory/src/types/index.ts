@@ -107,6 +107,47 @@ export interface VideoRecord {
   createdAt: string;
 }
 
+// --- One-Time Purchase Types ---
+
+/** Discriminated kind for purchase classification */
+export type PurchaseKind = 'subscription' | 'one_time'
+
+/** One-Time SKU identifiers */
+export type OneTimeSkuId = 'STARTER_BUNDLE'
+
+/** Purchase status lifecycle */
+export type PurchaseStatus = 'pending' | 'paid' | 'refunded' | 'failed'
+
+/** Row shape for user_purchases table */
+export interface UserPurchase {
+  id: string
+  user_id: string
+  kind: PurchaseKind
+  sku: OneTimeSkuId | string
+  payment_id: string
+  invoice_id?: string | null
+  amount_cents: number
+  credits_total: number
+  credits_remaining: number
+  expires_at?: number | null
+  status: PurchaseStatus
+  created_at: number
+  paid_at?: number | null
+  refunded_at?: number | null
+  updated_at: number
+}
+
+/** One-Time SKU catalog entry */
+export interface OneTimeSku {
+  id: OneTimeSkuId
+  invoiceId: string
+  priceUsd: number
+  credits: number
+  ttlMonths: number
+  label_vi: string
+  label_en: string
+}
+
 // --- Campaign Automation Types (Supabase) ---
 
 export type CampaignStatus = 'draft' | 'queued' | 'processing_script' | 'processing_video' | 'completed' | 'failed';
