@@ -117,6 +117,11 @@ apps/sophia-ai-factory/  # Main Sophia AI Factory codebase (canon — deployed t
 │   │   ├── byok/               # Bring-Your-Own-Keys (AES-GCM encryption)
 │   │   │   └── with-timeout.ts         # 25s AbortController, signal timeout
 │   │   │
+│   │   ├── credentials/        # Per-user provider credentials (BYOK fulfillment, 2026-05-02)
+│   │   │   ├── encryption.ts           # AES-GCM-256 text-format enc/dec (Web Crypto, CF Workers)
+│   │   │   ├── user-credentials-repo.ts # CRUD over user_provider_credentials D1 table
+│   │   │   └── get-provider-key.ts     # Smart lookup: user key → platform fallback + source tag
+│   │   │
 │   │   ├── campaigns/          # Campaign management (shared core logic)
 │   │   │   └── create-campaign-core.ts
 │   │   │
