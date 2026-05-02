@@ -4,6 +4,8 @@
  */
 
 import { Tier } from '@/types'
+import { getOneTimeSkuByInvoiceId, ONE_TIME_INVOICE_IDS } from '@/config/one-time-skus'
+import type { OneTimeSku } from '@/types'
 
 export interface NowPaymentsTierConfig {
   tier: Tier
@@ -119,4 +121,47 @@ export function getTierByInvoiceId(invoiceId: string): NowPaymentsTierConfig | n
   return (
     Object.values(NOWPAYMENTS_TIERS).find(t => t.invoiceId === invoiceId) ?? null
   )
+}
+
+// ── One-time lookup ────────────────────────────────────────────────────────────
+
+export type InvoiceLookup =
+  | { kind: 'subscription'; tier: Tier; config: NowPaymentsTierConfig }
+  | { kind: 'one_time'; sku: OneTimeSku }
+  | null
+
+/**
+ * Lookup an invoice ID and return a discriminated union.
+ * Checks one_time SKUs first, then subscription tiers.
+ * Returns null if unknown.
+ */
+export function lookupInvoice(invoiceId: string): InvoiceLookup {
+  // One-time SKUs take priority — they are checked first to avoid collision risk
+  if (ONE_TIME_INVOICE_IDS.has(invoiceId)) {
+    const sku = getOneTimeSkuByInvoiceId(invoiceId)
+    if (sku) return { kind: 'one_time', sku }
+  }
+
+  const config = getTierByInvoiceId(invoiceId)
+  if (config) return { kind: 'subscription', tier: config.tier, config }
+
+  return null
+}
+
+/**
+ * Build NOWPayments checkout URL for a one-time SKU.
+ */
+export function createOneTimeInvoiceUrl(sku: OneTimeSku, userId: string): string {
+  const timestamp = Date.now()
+  const orderId = `sophia_${userId}_${timestamp}`
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network'
+
+  const params = new URLSearchParams({
+    iid: sku.invoiceId,
+    order_id: orderId,
+    success_url: `${appUrl}/payment-success?sku=${sku.id}&order_id=${orderId}`,
+    cancel_url: `${appUrl}/pricing`,
+  })
+
+  return `${NOWPAYMENTS_CHECKOUT_BASE}?${params.toString()}`
 }

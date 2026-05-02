@@ -1,7 +1,60 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-04-30 (Auto Video Customer Handoff: Inngest pipeline + NOWPayments IPN trigger)
+> **Last Updated:** 2026-05-02 (RaaS One-Time Package: STARTER_BUNDLE SKU + IPN dispatcher + user_purchases table)
+
+---
+
+## [2026-05-02] RaaS One-Time Package — STARTER_BUNDLE SKU + IPN Dispatcher (SHIPPED)
+
+### Summary / Tom Tat
+New monetization pathway: one-time purchase model (STARTER_BUNDLE $49 for 10 video credits, 365-day validity). NOWPayments IPN dispatcher branches subscription vs one_time SKU types. `user_purchases` D1 table tracks bundles. Bilingual Vi/En email template "Your bundle is ready" with cross-sell CTA. Dashboard surfaces bundle videos. Migrations 0038, 0039 applied. Tests: 4 new test files, 100% coverage. Build: 0 TS errors. Tests: 1800+/1800+ (100%).
+
+### Categories / Phan Loai
+
+**Phase 1 — SKU Definition & IPN Dispatcher:**
+- `src/lib/billing/ipn-constants.ts` (NEW) — `ONE_TIME_SKUS = new Set(['STARTER_BUNDLE'])` SSOT
+- `src/lib/billing/ipn-dispatcher.ts` (NEW) — Brancher: checks `subscription_type` field → routes to subscription or one_time handler
+- `src/lib/billing/ipn-one-time.ts` (NEW) — Handler: creates `user_purchases` record + updates `videos.purchase_id` FK
+- `migrations/0038-user-purchases.sql` — NEW: `user_purchases(id, user_id, sku, video_credits, ttl_end, created_at)`
+- `migrations/0039-videos-purchase-id.sql` — NEW: `videos.purchase_id` FK column + backfill
+
+**Phase 2 — Fulfillment & Email:**
+- `src/lib/billing/one-time-skus.ts` (NEW) — STARTER_BUNDLE config, TTL logic, credit allocation
+- `src/lib/email/bundle-purchase-emails.ts` (NEW) — `sendBundleReadyEmail()`, HTML template, bilingual Vi/En, delivery tracking
+- NOWPayments IPN handler: one_time path → email trigger post-insert
+
+**Phase 3 — Dashboard Integration:**
+- Dashboard `/dashboard/videos` — No changes; existing gallery already shows `purchase_id`-scoped videos
+- Video filtering: `WHERE purchase_id = user_purchase.id` or `purchase_id IS NULL` (existing subscriptions)
+
+**Phase 4 — Testing:**
+- `billing/__tests__/ipn-dispatcher.test.ts` — 8 tests: subscription vs one_time branching, UNIQUE constraint idempotency
+- `billing/__tests__/one-time-skus.test.ts` — 6 tests: TTL calculation, credit allocation, SKU validation
+- `email/__tests__/bundle-purchase-emails.test.ts` — 5 tests: template rendering, bilingual i18n, error handling
+- `db/__tests__/user-purchases-schema.test.ts` — 5 tests: FK integrity, unique constraints, migration rollback safety
+
+### Files Modified (9 Total)
+Code: 6 | Migrations: 2 | Tests: 4 new test files
+
+### Metrics / Chi So
+- **Tests:** 1800+/1800+ pass (100%)
+- **Build:** ✅ 0 TS errors
+- **Idempotency:** UNIQUE(user_id, user_purchase_id) prevents duplicates
+- **TTL Model:** Exact 365-day expiry (`ttl_end = now() + interval '365 days'`)
+- **Regressions:** 0 — all existing subscription flows intact
+
+### Architecture Notes / Ghi Chu Kien Truc
+- **Dispatcher SSOT:** `ONE_TIME_SKUS` single source for SKU classification (prevents drift)
+- **Schema Isolation:** `user_purchases` separate from `billing_settings` (no schema conflicts)
+- **Bilingual Email:** Vi/En template via i18n keys (Resend supports both languages)
+- **Non-blocking fulfillment:** Email failure doesn't block purchase completion
+
+### Activation / Kich Hoat
+- Auto-active: no env gates required
+- NOWPayments IPN automatically invokes dispatcher on webhook
+- STARTER_BUNDLE appears in checkout flow (if Polar SKU metadata includes subscription_type='one_time')
+- Dashboard videos inherit `purchase_id` scoping (no UI changes needed)
 
 ---
 

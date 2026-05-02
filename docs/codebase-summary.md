@@ -57,7 +57,11 @@ apps/sophia-ai-factory/  # Main Sophia AI Factory codebase (canon — deployed t
 │   │   ├── billing/            # MCU billing, dunning, email campaigns
 │   │   │   ├── billing/        # Payment integration (NOWPayments, PayOS)
 │   │   │   ├── dunning/        # Payment retry workflow (3 modules)
-│   │   │   └── email/          # Email templates & delivery (4 modules)
+│   │   │   ├── email/          # Email templates & delivery (4 modules)
+│   │   │   ├── ipn-dispatcher.ts         # IPN brancher: subscription vs one_time (NEW — 2026-05-02)
+│   │   │   ├── ipn-one-time.ts           # One-time SKU handler: user_purchases insert (NEW)
+│   │   │   ├── one-time-skus.ts          # SKU definitions + fullfillment logic (NEW)
+│   │   │   └── ipn-constants.ts          # ONE_TIME_SKUS SSOT (NEW)
 │   │   │
 │   │   ├── alerts/             # Quota enforcement, alert delivery
 │   │   │   └── quota/          # Quota logic (evaluator, scheduler, delivery)

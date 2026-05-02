@@ -2,9 +2,19 @@
 
 > Product milestones and progress tracking (2026)
 
-**Last Updated:** 2026-04-30 (Phases 6-14 COMPLETE: Video Pipeline, Affiliate Networks, Publishers, OpenClaw, Revenue Split, FTC Hardening, 1798/1798 tests pass)
+**Last Updated:** 2026-05-02 (RaaS One-Time Package COMPLETE: STARTER_BUNDLE $49/10 credits + IPN dispatcher + user_purchases table)
 **Target:** $1M ARR, 100/100 a16z solo company score
 **Phases 6-14 Shipped (2026-04-30):** Video 6-step pipeline (Inngest) → TTS (Coqui v2) → Visual (HeyGen/HunyuanVideo) → Compose (FFmpeg) → Upload (R2) → Publish. Affiliate 5 networks (TikTok Shop/Awin/ClickBank/AccessTrade/Amazon) + commission tracking. Publishers (TikTok/YouTube/Instagram adapters) + scheduler cron. OpenClaw orchestrator (10 primitives). Revenue split (commission ledger + 14-day clawback + payout batches). FTC hardening (#ad overlay, GDPR export/delete, runbook).
+
+---
+
+## Q2 2026: One-Time Package & Bundle Sales (Shipped 2026-05-02)
+
+| Phase | Status | Completion | Details |
+|-------|--------|-----------|---------|
+| **Q2-P15: RaaS One-Time SKU** | ✅ DONE | 2026-05-02 | STARTER_BUNDLE $49/10 video credits, 365d TTL, IPN dispatcher, user_purchases table, bilingual email |
+
+**Shipment Summary:** New SKU (STARTER_BUNDLE $49, 10 video credits, 12-month validity). One-time purchase pathway: NOWPayments IPN branching to subscription vs one_time handler. D1 schema: `user_purchases` table + `videos.purchase_id` FK. Email: bilingual Vi/En "Your bundle is ready" + cross-sell. Idempotency: UNIQUE constraint prevents duplicate purchases. Tests: 4 new test files + 100% coverage (migrations 0038, 0039 applied).
 
 ---
 

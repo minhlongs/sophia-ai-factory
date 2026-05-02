@@ -254,6 +254,27 @@ Resend: sendOnboardingVideoEmail() → email delivery status logged
 Dashboard: /dashboard/videos shows onboarding videos in gallery
 ```
 
+### One-Time Package Purchase Pipeline (NEW — 2026-05-02)
+```
+User selects STARTER_BUNDLE → /billing/checkout
+  ↓
+POST /api/webhooks/nowpayments-ipn (IPN callback from NOWPayments)
+  ↓
+Dispatcher branches on `ONE_TIME_SKUS` SSOT:
+  If subscription_type='subscription' → subscription handler (UNCHANGED)
+  If subscription_type='one_time' → one_time handler (NEW)
+  ↓
+One-Time Handler:
+  D1: Insert user_purchases record (video_credits, ttl_end=now+365d)
+  D1: Update videos.purchase_id FK (backfill user's bundle videos)
+  Idempotency: UNIQUE(user_id, user_purchase_id) on insert
+  ↓
+Resend: sendBundleReadyEmail() (bilingual Vi/En template)
+  Email includes: credit balance, video gallery link, cross-sell CTA
+  ↓
+Dashboard: /dashboard/videos surfaces bundle videos + remaining credits
+```
+
 ### On-Demand Video Pipeline (Existing)
 ```
 User requests video → POST /api/video/generate
@@ -295,8 +316,9 @@ payment_events    — id, org_id, provider, amount, currency, status, metadata (
 
 ### Video Tables
 ```
-videos                   — id, org_id, user_id, title, r2_key, status, is_onboarding, created_at
+videos                   — id, org_id, user_id, title, r2_key, status, is_onboarding, purchase_id (FK), created_at
 video_onboarding_events  — id, org_id, video_id, user_email, tier, delivery_status, created_at
+user_purchases           — id, user_id, sku (STARTER_BUNDLE), video_credits (10), ttl_end (365d), created_at (NEW — 2026-05-02)
 ```
 
 ### Growth Tables

@@ -11,10 +11,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyCronAuth } from '@/lib/security/cron-auth';
 import { recordCronRun } from '@/lib/cron/run-tracker';
-import { getD1Raw } from '@/lib/db/client';
+import { getD1Raw, createServerClient } from '@/lib/db/client';
 import { getHeyGenClient } from '@/lib/heygen/heygen-client';
 import { downloadAndStore } from '@/lib/video/video-storage-service';
 import { logger } from '@/lib/utils/logger-utility';
+import { sendOneTimeBundleReadyEmail } from '@/lib/billing/email/send-one-time-bundle-ready-email';
+import { getUserCredits } from '@/lib/db/get-user-credits';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,6 +30,8 @@ interface VideoRow {
   user_id: string;
   heygen_job_id: string;
   created_at: string;
+  /** Nullable — present for one-time bundle videos */
+  purchase_id?: string | null;
 }
 
 export async function GET(req: NextRequest) {
@@ -51,7 +55,7 @@ export async function GET(req: NextRequest) {
     // Fetch pending videos (cap at 50 per run to stay within CPU limits)
     const rows = await db
       .prepare(
-        `SELECT id, user_id, heygen_job_id, created_at
+        `SELECT id, user_id, heygen_job_id, created_at, purchase_id
          FROM videos
          WHERE status = 'processing'
          LIMIT 50`
@@ -139,6 +143,46 @@ export async function GET(req: NextRequest) {
             )
             .run();
           summary.terminal += 1;
+
+          // One-time bundle: send email when video completes
+          if (status.status === 'completed' && row.purchase_id) {
+            try {
+              const videoUrl = r2Key
+                ? `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network'}/dashboard/videos`
+                : (status.video_url ?? undefined)
+              const clientDb = createServerClient()
+              const { data: purchaseData } = await clientDb
+                .from('user_purchases')
+                .select('user_id, credits_remaining')
+                .eq('id', row.purchase_id)
+                .single()
+              const purchase = purchaseData as { user_id?: string; credits_remaining?: number } | null
+              const ownerUserId = purchase?.user_id ?? row.user_id
+              const { data: userData } = await clientDb
+                .from('user')
+                .select('email, locale')
+                .eq('id', ownerUserId)
+                .single()
+              const user = userData as { email?: string; locale?: string } | null
+              if (user?.email) {
+                const { creditsRemaining } = await getUserCredits(ownerUserId)
+                await sendOneTimeBundleReadyEmail({
+                  userEmail: user.email,
+                  userId: ownerUserId,
+                  purchaseId: row.purchase_id,
+                  creditsRemaining,
+                  videoUrl: videoUrl ?? null,
+                  locale: user.locale ?? 'vi',
+                })
+              }
+            } catch (emailErr) {
+              logger.warn('[video-status-sync] One-time bundle email failed (non-fatal)', {
+                videoId: row.id,
+                purchaseId: row.purchase_id,
+                error: emailErr instanceof Error ? emailErr.message : String(emailErr),
+              })
+            }
+          }
         }
       } catch (err) {
         summary.errors += 1;

@@ -1,5 +1,6 @@
 import { PricingSection } from "@/components/pricing/pricing-section";
 import { ProductionCostCalculator } from "@/app/components/sections/production-cost-calculator";
+import { OneTimeBundleCard } from "@/components/pricing/one-time-bundle-card";
 import { getTranslations } from "next-intl/server";
 
 export const metadata = {
@@ -28,6 +29,12 @@ export default async function PricingPage() {
       </div>
 
       <PricingSection />
+
+      {/* One-Time Bundle — pay once, no monthly commitment */}
+      <section className="mx-auto max-w-md px-6 pb-12 pt-4">
+        <OneTimeBundleCard />
+      </section>
+
       <ProductionCostCalculator />
     </main>
   );

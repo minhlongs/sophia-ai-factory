@@ -6,7 +6,8 @@
 
 import { logger } from '@/lib/utils/logger-utility'
 import { isPaymentProcessed, recordIpnEvent } from './nowpayments-ipn-db'
-import { handleFinished, handleRefunded, handleFailed } from './nowpayments-ipn-subscription'
+import { handleFailed } from './nowpayments-ipn-subscription'
+import { dispatchFinished, dispatchRefunded } from './nowpayments-ipn-dispatch'
 
 export interface NowPaymentsIpnPayload {
   payment_id: string
@@ -35,8 +36,8 @@ export async function processNowPaymentsIpn(
 
   try {
     switch (payment_status) {
-      case 'finished':      await handleFinished(ipn); break
-      case 'refunded':      await handleRefunded(ipn); break
+      case 'finished':      await dispatchFinished(ipn); break
+      case 'refunded':      await dispatchRefunded(ipn); break
       case 'failed':        await handleFailed(ipn); break
       case 'partially_paid': logger.info('[NOWPayments] Partial payment received — holding', { payment_id }); break
       case 'expired':        logger.info('[NOWPayments] Payment expired — no action', { payment_id }); break
