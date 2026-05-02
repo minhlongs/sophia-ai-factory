@@ -449,6 +449,40 @@ affiliate_content — id, org_id, type, title, content, status
 | **Affiliate Payouts** | Daily | Commission aggregate → 14-day hold → batch payout to USDT | `lib/payouts/payout-batch-cron.ts` |
 | **Publisher Sync** | Hourly | Queue scheduled posts across 5 networks | `lib/publishers/scheduler-cron.ts` |
 
+### Cron Infrastructure (2026-05-02)
+
+**Scheduled Handler Injection (Critical Fix)**
+Post-build hook injects Cloudflare Workers `scheduled()` export, fixing issue where opennextjs-cloudflare shipped no native scheduled support. Script `scripts/inject-scheduled-handler.mjs` runs after opennext-build, patching `.open-next/worker.js` with 10 cron patterns mapped to 11 routes.
+
+**Architecture:**
+- **10 Cron Patterns** in `wrangler.jsonc`: `*/5 * * * *`, `0 * * * *`, `0 0 * * 0`, etc.
+- **Dispatch:** Scheduled handler invokes internal routes via `env.WORKER_SELF_REFERENCE.fetch(req)` (service binding, no external HTTP)
+- **State Tracking:** `cron_run_log` D1 table records last execution timestamp per cron pattern (idempotency gate)
+- **Auth:** Internal CF triggers include `x-cf-cron: true` header; external monitors use `Bearer <CRON_SECRET>` (env var)
+
+**Build-Time Injection Details:**
+- Idempotent: marker comments prevent duplicate exports if script runs twice
+- Preserves existing Worker handlers (transparent patch)
+- No runtime overhead (scheduled() export resolved at build, not startup)
+
+**Cron Routes Supported (11 Total):**
+- `/api/cron/email-drip` (Day 1, 3, 7 campaigns)
+- `/api/cron/renewal-reminder` (7d pre-expiry)
+- `/api/cron/dunning-state-advance` (Failed payment retry)
+- `/api/cron/scheduled-campaigns` (Hourly distribution)
+- `/api/cron/health-check` (5min uptime monitor)
+- `/api/cron/quota-evaluation` (Hourly MCU warnings)
+- `/api/cron/usage-aggregation` (30min MCU rollup)
+- `/api/cron/fulfillment-retry` (2min video retry, exp backoff)
+- `/api/cron/synthetic-monitor` (15min alert checks)
+- `/api/cron/fulfillment-reconcile` (6am UTC daily reconciliation)
+- `/api/cron/publisher-sync` (Hourly scheduled posts)
+
+**Monitoring:**
+- `cron_run_log` prevents duplicate execution (last_run_at check)
+- Sentry integration logs execution errors (auto-escalation on repeated failures)
+- Dashboard admin panel surfaces cron health (execution lag, error rate, last run)
+
 **Configuration:** `wrangler.toml` defines triggers; each cron handler orchestrates async operations.
 
 **Benefits:**

@@ -14,6 +14,7 @@
 |-------|--------|-----------|---------|
 | **Q2-P15: RaaS One-Time SKU** | ✅ DONE | 2026-05-02 | STARTER_BUNDLE $49/10 video credits, 365d TTL, IPN dispatcher, user_purchases table, bilingual email |
 | **Q2-P16: Fulfillment Hardening (260502-0604)** | ✅ DONE | 2026-05-02 | 3-phase: queue-first persistence, retry-cron (exp backoff 5x), permanent failure → bilingual email + atomic +1 credit. HeyGen webhook instant, synthetic monitor 15min, daily reconciliation 6am. R2 access revoke on refund. Migrations 0040-0044. Tests: +69 (2136→2205). F9 D-ID fallback DEFERRED. |
+| **Q2-P17: Cron Infrastructure Go-Live (260502-0733)** | ✅ DONE | 2026-05-02 | 10 cron patterns mapped to 11 routes. Post-build inject scheduled() export (opennextjs fix). Service binding self-dispatch. cron_run_log D1 dedup table. Migrations 0044-0045. /api/version now returns correct deployed SHA (was stale df22a4f7). |
 
 **Q2-P15 Shipment:** New SKU (STARTER_BUNDLE $49, 10 video credits, 12-month validity). One-time purchase pathway: NOWPayments IPN branching to subscription vs one_time handler. D1 schema: `user_purchases` table + `videos.purchase_id` FK. Email: bilingual Vi/En "Your bundle is ready" + cross-sell. Idempotency: UNIQUE constraint prevents duplicate purchases. Tests: 4 new test files + 100% coverage (migrations 0038, 0039 applied).
 

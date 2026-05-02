@@ -167,7 +167,13 @@ apps/sophia-ai-factory/  # Main Sophia AI Factory codebase (canon — deployed t
 │   ├── 0002-payment-events.sql
 │   ├── 0003-better-auth.sql
 │   ├── 0004-usage-metering.sql
-│   └── 0005-signals-events.sql        # Append-only events table
+│   ├── 0005-signals-events.sql        # Append-only events table
+│   ├── 0044-cron-runs-table.sql       # cron_run_log for execution dedup (260502-0733)
+│   └── 0045-videos-is-onboarding.sql  # Restore is_onboarding (lost in 0043, 260502-0733)
+│
+├── scripts/                    # Build & deployment utilities
+│   ├── inject-scheduled-handler.mjs    # Post-build: injects CF Workers scheduled() export (260502-0733)
+│   └── deploy-with-sha.sh             # Deploy wrapper: sets COMMIT_SHA/DEPLOYED_AT/DEPLOY_BRANCH secrets (260502-0733)
 │
 ├── .github/workflows/          # CI/CD enforcement gates (P1)
 │   ├── test.yml                # Tests + Deploy (lint/build/test → wrangler deploy + D1 migration-guard)
