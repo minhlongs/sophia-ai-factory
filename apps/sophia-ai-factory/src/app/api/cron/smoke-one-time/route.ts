@@ -23,7 +23,7 @@ import { getD1Raw } from '@/lib/db/client'
 import { logger } from '@/lib/utils/logger-utility'
 import { getErrorMessage } from '@/lib/utils/to-error'
 import { triggerOneTimeFulfillment } from '@/lib/fulfillment/one-time-fulfillment'
-import { insertPurchase, markPaid } from '@/lib/db/repositories/user-purchases-repo'
+import { markPaid } from '@/lib/db/repositories/user-purchases-repo'
 import { cleanupSyntheticArtifacts } from '@/lib/monitoring/synthetic-cleanup'
 import { sendSlackAlert } from '@/lib/monitoring/slack-alert'
 
@@ -120,16 +120,21 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const now = Math.floor(Date.now() / 1000)
     const expiresAt = now + 365 * 24 * 60 * 60 // 1 year
 
-    const purchaseId = await insertPurchase({
-      userId: SYNTHETIC_USER_ID,
-      kind: 'one_time',
-      sku: 'STARTER_BUNDLE',
-      paymentId,
-      amountCents: 0,
-      creditsTotal: 1,
-      expiresAt,
-      status: 'pending',
-    })
+    // Raw D1 INSERT to bypass Supabase-compat layer quirks (smoke-only path)
+    const newId = (typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : `${Date.now()}_${Math.random()}`).replace(/-/g, '')
+    let purchaseId: string | null = null
+    try {
+      await db
+        .prepare(
+          `INSERT INTO user_purchases (id, user_id, kind, sku, payment_id, amount_cents, credits_total, credits_remaining, expires_at, status, created_at, updated_at)
+           VALUES (?, ?, 'one_time', 'STARTER_BUNDLE', ?, 0, 1, 1, ?, 'pending', ?, ?)`
+        )
+        .bind(newId, SYNTHETIC_USER_ID, paymentId, expiresAt, now, now)
+        .run()
+      purchaseId = newId
+    } catch (insertErr) {
+      logger.warn('[smoke-one-time] Raw D1 insert failed', { error: getErrorMessage(insertErr), paymentId })
+    }
 
     if (!purchaseId) {
       logger.warn('[smoke-one-time] Failed to insert synthetic purchase')
