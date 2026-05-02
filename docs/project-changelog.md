@@ -1,7 +1,45 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-05-02 (Go-Live Zero-Bug Hardening: cron auth hardened, HeyGen health gate, pricing CTA gate, checkout error toast, scheduled() default-export fix)
+> **Last Updated:** 2026-05-02 (BYOK end-to-end refactor: customer HeyGen/Resend/NOWPayments keys via user_provider_credentials)
+
+---
+
+## [2026-05-02] BYOK End-to-End Refactor — Customer Provider Keys (260502-1100 SHIPPED)
+
+**Summary:** Customers now use their own HeyGen/Resend/NOWPayments API keys for all real fulfillment. Platform keys remain only for synthetic monitor, health checks, and onboarding welcome videos.
+
+### New Files
+- `migrations/0046-user-provider-credentials.sql` — D1 table for encrypted provider creds
+- `src/lib/credentials/encryption.ts` — AES-GCM-256 text-format encryption (Web Crypto, CF Workers)
+- `src/lib/credentials/user-credentials-repo.ts` — CRUD over user_provider_credentials
+- `src/lib/credentials/get-provider-key.ts` — Smart provider key lookup with user/platform source
+- `src/app/api/setup-wizard/save-credentials/route.ts` — POST save HeyGen/Resend/NOWPayments keys
+- `src/app/api/setup-wizard/test-heygen/route.ts` — POST test HeyGen key (no persist)
+- `src/app/api/setup-wizard/test-resend/route.ts` — POST test Resend key (sends test email)
+- `src/app/api/setup-wizard/list-credentials/route.ts` — GET list saved provider hints
+- `src/app/setup-wizard/components/steps/provider-credentials-step.tsx` — Wizard UI step
+- `scripts/set-credentials-master-key.sh` — Operator key generation script
+
+### Modified Files
+- `src/lib/fulfillment/one-time-fulfillment.ts` — Use `getHeyGenKey({userId, fallbackToPlatform:false})`
+- `src/app/api/cron/fulfillment-retry/route.ts` — Per-row user key lookup in retry loop
+- `src/app/api/cron/video-status-sync/route.ts` — Per-row `getHeyGenClient(userId)` inside loop
+- `src/app/setup-wizard/page.tsx` — Added step 3 (Provider Credentials), save-credentials flow
+- `src/app/[locale]/pricing/page.tsx` — Gate One-Time Bundle CTA on user's HeyGen key configured
+
+### Unchanged (intentionally platform key)
+- `src/lib/health/heygen-health-check.ts` — Platform key (health endpoint)
+- `src/app/api/health/heygen/route.ts` — Platform key (health endpoint)
+- `src/lib/video/onboarding-video.ts` — Platform key (welcome video before purchase)
+- `src/app/api/cron/smoke-one-time/route.ts` — Platform key (synthetic monitor)
+
+### Tests
+- 23 new tests: encryption roundtrip, repo CRUD mocks, get-provider-key all paths, test-heygen route
+- All 2283 existing tests continue to pass
+
+### Follow-up Required
+- Set `CREDENTIALS_MASTER_KEY` via `scripts/set-credentials-master-key.sh` BEFORE first deploy
 
 ---
 

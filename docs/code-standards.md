@@ -487,4 +487,32 @@ Current status: **All current production code: 0 `:any` types** ✅
 
 ---
 
-_Last reviewed 2026-04-20 by code-reviewer | Standards enforced by pre-commit hooks + CI linting_
+## Per-User Provider Key Access Pattern (BYOK Fulfillment, 2026-05-02)
+
+When accessing HeyGen / Resend / NOWPayments keys in fulfillment code:
+
+```typescript
+// CORRECT — customer fulfillment (fallbackToPlatform: false)
+import { getHeyGenKey } from '@/lib/credentials/get-provider-key'
+const keyResult = await getHeyGenKey({ userId, fallbackToPlatform: false })
+if (!keyResult) { await recordAttempt(id, 'no_user_heygen_key'); return }
+const apiKey = keyResult.key  // keyResult.source === 'user'
+
+// CORRECT — transactional email (fallbackToPlatform: true by default)
+import { getResendKey } from '@/lib/credentials/get-provider-key'
+const resendResult = await getResendKey({ userId })
+
+// CORRECT — platform-only paths (health check, synthetic monitor, onboarding video)
+const apiKey = process.env.HEYGEN_API_KEY  // intentional — platform key only
+```
+
+Rules:
+- Customer video generation (`one-time-fulfillment`, `fulfillment-retry`): `fallbackToPlatform: false`
+- Health check, synthetic monitor (`smoke-one-time`), onboarding video: keep `process.env.HEYGEN_API_KEY`
+- NEVER read `process.env.HEYGEN_API_KEY` in customer fulfillment paths
+- `CREDENTIALS_MASTER_KEY` (64 hex chars) encrypts `user_provider_credentials` table
+- `BYOK_MASTER_KEY` (base64 32 bytes) encrypts `user_api_keys` table (LLM/media BYOK)
+
+---
+
+_Last reviewed 2026-05-02 by code-reviewer | Standards enforced by pre-commit hooks + CI linting_
