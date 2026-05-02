@@ -53,15 +53,25 @@ apps/sophia-ai-factory/  # Main Sophia AI Factory codebase (canon — deployed t
 │   ├── lib/
 │   │   ├── auth/               # Better Auth integration, session management
 │   │   ├── db/                 # D1 client, query builders, type helpers, insert-typed<R,T>
+│   │   │   └── repositories/
+│   │   │       └── videos-repo.ts        # Video CRUD with CAS variants (recordAttemptCAS, etc.)
 │   │   │
 │   │   ├── billing/            # MCU billing, dunning, email campaigns
 │   │   │   ├── billing/        # Payment integration (NOWPayments, PayOS)
 │   │   │   ├── dunning/        # Payment retry workflow (3 modules)
 │   │   │   ├── email/          # Email templates & delivery (4 modules)
-│   │   │   ├── ipn-dispatcher.ts         # IPN brancher: subscription vs one_time (NEW — 2026-05-02)
-│   │   │   ├── ipn-one-time.ts           # One-time SKU handler: user_purchases insert (NEW)
-│   │   │   ├── one-time-skus.ts          # SKU definitions + fullfillment logic (NEW)
-│   │   │   └── ipn-constants.ts          # ONE_TIME_SKUS SSOT (NEW)
+│   │   │   ├── ipn-dispatcher.ts         # IPN brancher: subscription vs one_time
+│   │   │   ├── ipn-one-time.ts           # One-time SKU handler: user_purchases insert
+│   │   │   ├── one-time-skus.ts          # SKU definitions + fulfillment logic
+│   │   │   ├── ipn-constants.ts          # ONE_TIME_SKUS SSOT
+│   │   │   └── compensation.ts           # Atomic credit grant (260502-0604 NEW)
+│   │   │
+│   │   ├── fulfillment/        # Video fulfillment hardening (260502-0604 NEW)
+│   │   │   ├── retry-backoff.ts          # Exponential backoff schedule (30s→1h, 5 attempts)
+│   │   │   └── complete-video-from-webhook.ts  # HeyGen webhook handler logic
+│   │   │
+│   │   ├── orders/             # Order query helpers (260502-0604 NEW)
+│   │   │   └── order-query.ts            # JOIN purchases × videos for /dashboard/orders
 │   │   │
 │   │   ├── alerts/             # Quota enforcement, alert delivery
 │   │   │   └── quota/          # Quota logic (evaluator, scheduler, delivery)
@@ -73,6 +83,18 @@ apps/sophia-ai-factory/  # Main Sophia AI Factory codebase (canon — deployed t
 │   │   │   ├── audit-query-service.ts
 │   │   │   ├── raas-invoice-generator.ts
 │   │   │   └── raas-permission-checker.ts
+│   │   │
+│   │   ├── monitoring/         # Admin monitoring & reconciliation (260502-0604)
+│   │   │   ├── sentry-forwarder.ts     # Sentry envelope HTTP fallback
+│   │   │   ├── reconcile-query.ts      # Daily reconciliation scan
+│   │   │   ├── synthetic-cleanup.ts    # Synthetic test-user cleanup
+│   │   │   └── slack-alert.ts          # Alert dispatcher (email-only for now)
+│   │   │
+│   │   ├── video/              # Video access control (260502-0604 expansion)
+│   │   │   └── video-access-control.ts # Auth + revocation gate for R2 streaming
+│   │   │
+│   │   ├── webhooks/           # Webhook verification (260502-0604)
+│   │   │   └── heygen-signature-verifier.ts # HMAC-SHA256 constant-time verification
 │   │   │
 │   │   ├── telemetry/          # Better Stack observability (3 modules)
 │   │   │   ├── event-capture.ts        # Structured logging, tokenization

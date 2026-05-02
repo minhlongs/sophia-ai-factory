@@ -8,13 +8,16 @@
 
 ---
 
-## Q2 2026: One-Time Package & Bundle Sales (Shipped 2026-05-02)
+## Q2 2026: One-Time Package & Fulfillment Hardening (Shipped 2026-05-02)
 
 | Phase | Status | Completion | Details |
 |-------|--------|-----------|---------|
 | **Q2-P15: RaaS One-Time SKU** | ✅ DONE | 2026-05-02 | STARTER_BUNDLE $49/10 video credits, 365d TTL, IPN dispatcher, user_purchases table, bilingual email |
+| **Q2-P16: Fulfillment Hardening (260502-0604)** | ✅ DONE | 2026-05-02 | 3-phase: queue-first persistence, retry-cron (exp backoff 5x), permanent failure → bilingual email + atomic +1 credit. HeyGen webhook instant, synthetic monitor 15min, daily reconciliation 6am. R2 access revoke on refund. Migrations 0040-0044. Tests: +69 (2136→2205). F9 D-ID fallback DEFERRED. |
 
-**Shipment Summary:** New SKU (STARTER_BUNDLE $49, 10 video credits, 12-month validity). One-time purchase pathway: NOWPayments IPN branching to subscription vs one_time handler. D1 schema: `user_purchases` table + `videos.purchase_id` FK. Email: bilingual Vi/En "Your bundle is ready" + cross-sell. Idempotency: UNIQUE constraint prevents duplicate purchases. Tests: 4 new test files + 100% coverage (migrations 0038, 0039 applied).
+**Q2-P15 Shipment:** New SKU (STARTER_BUNDLE $49, 10 video credits, 12-month validity). One-time purchase pathway: NOWPayments IPN branching to subscription vs one_time handler. D1 schema: `user_purchases` table + `videos.purchase_id` FK. Email: bilingual Vi/En "Your bundle is ready" + cross-sell. Idempotency: UNIQUE constraint prevents duplicate purchases. Tests: 4 new test files + 100% coverage (migrations 0038, 0039 applied).
+
+**Q2-P16 Shipment (Fulfillment Hardening):** Zero-fail delivery: (1) Queue-first state: videos.status='queued' BEFORE HeyGen API (prevents lost state); (2) Retry cron every 2min with exponential backoff (30s→1m→5m→15m→1h), 5 max attempts; (3) After 5 retries: failed_permanent → bilingual failed email + atomic +1 credit (UNIQUE index prevents double-grant). HeyGen webhook for instant updates (cron safety net). Synthetic monitor every 15min (alerts via logger + email). Daily 6am UTC reconciliation validates completion counts. R2 streaming route auth-gated (access revoked on refund). Migrations 0040-0044 (state cols, access_revoked, synthetic user, constraint relax, compensation unique). Tests: +69 (2136→2205 total). Build: 0 TS errors. F9 (D-ID circuit breaker) deferred pending account provision.
 
 ---
 
