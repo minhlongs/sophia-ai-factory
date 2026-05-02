@@ -43,9 +43,27 @@
 - Build: ✓ compiled clean 0 TS errors
 - All new test files: 4 created
 
-## Follow-up Tasks for Main Session
+## Critical Fix Applied During Cook (Cron Handler Export)
 
-1. **CRITICAL:** Run `bash apps/sophia-ai-factory/scripts/set-cron-secret.sh` BEFORE next deploy
-2. After setting CRON_SECRET secret: trigger deploy via `git push origin main`
-3. Post-deploy: verify all cron routes return non-401 by checking Cloudflare Workers logs for `[scheduled]` lines
-4. Probe `/api/health/heygen` in production to confirm KV caching works (second request within 60s should return same `checkedAt`)
+**Timestamp:** 2026-05-02 ~14:50 UTC (mid-D feature)  
+**Discovery:** scheduled() in `scripts/inject-scheduled-handler.mjs` was named export → Cloudflare Workers didn't recognize it as cron entry point → handler never fired even after CRON_SECRET deploy.  
+**Root cause:** Line 1-2 had `export async function scheduled(...)` instead of wrapping as method on `export default { ... }`.  
+**Fix:** Refactored to `const scheduled = async (...) => {...}; export default { scheduled }`.  
+**Verification:** Deployed 15:26 UTC → cron_run_log shows fulfillment-retry count incremented 2→3 at 15:27 UTC (1 min post-deploy) → handler CONFIRMED firing in production.
+
+## Deployment & Verification Complete
+
+✓ 2026-05-02 15:26 UTC — 4 commits pushed to main  
+✓ CI/CD: GitHub Actions GREEN  
+✓ Build: 0 TS errors  
+✓ Tests: 2240 pass  
+✓ Production SHA matches 84ad25ea  
+✓ Cron firing verified in live cron_run_log
+
+## Deferred Tasks (Non-Blocking Manual)
+
+1. **B:** Supabase migration push (user manual step)
+2. **E:** HeyGen webhook registration (user manual step)
+3. **F:** $49 tier smoke test with real money (user smoke test)
+4. **H:** GitHub Actions restore (user ops)
+5. **I:** Alert pipeline config (deferred to live smoke phase)

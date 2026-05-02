@@ -2,7 +2,7 @@
 
 > Sophia AI Factory — RaaS (Reasoning-as-a-Service) Platform with AI-Native CI/CD, Observability, & Signals
 
-**Last Updated:** 2026-04-30 (Auto Video Customer Handoff: Inngest pipeline completion + NOWPayments IPN onboarding trigger)
+**Last Updated:** 2026-05-02 (Go-Live Zero-Bug Hardening: HeyGen health gate, cron security, scheduled() default-export fix, +35 tests)
 **Production:** https://sophia.agencyos.network
 **Production Dashboard:** https://sophia.agencyos.network/dashboard
 
@@ -83,6 +83,26 @@ graph TB
 **Health Endpoints:**
 - `/api/version` — Returns git SHA + build info (auth-gated via INTROSPECT_TOKEN)
 - `/api/health/detail` — Full system status (auth-gated, PII-safe)
+
+---
+
+## Pre-Flight Health Gates (2026-05-02)
+
+**HeyGen Health Check for One-Time Bundles**
+
+Pricing page gates One-Time Bundle CTA when HeyGen is down to prevent customer paying for broken upstream.
+
+| Component | Details |
+|-----------|---------|
+| **Endpoint** | `/api/health/heygen` — GET, no auth required |
+| **Probe** | Calls HeyGen `/v2/voices` with 5s timeout |
+| **Cache** | EXPERIMENT_KV, 60s TTL (cost optimization) |
+| **Rate Limit** | 60 req/min per IP (fair-use burst) |
+| **Graceful Degradation** | Never 500s — returns `{ ok: false }` on timeout/error |
+| **Server-Side Helper** | `lib/health/heygen-health-check.ts` (direct KV-cached, RSC-optimized) |
+| **Page Gating** | `/app/[locale]/pricing/page.tsx` calls `isHeyGenHealthy()` → passes prop to `OneTimeBundleCard` |
+| **UX** | Disabled CTA + error toast (bilingual Vi/En) on checkout failure (401/400/429/500/503) |
+| **Case 401** | Shows login link (unauthenticated) |
 
 ---
 
@@ -458,12 +478,20 @@ Post-build hook injects Cloudflare Workers `scheduled()` export, fixing issue wh
 - **10 Cron Patterns** in `wrangler.jsonc`: `*/5 * * * *`, `0 * * * *`, `0 0 * * 0`, etc.
 - **Dispatch:** Scheduled handler invokes internal routes via `env.WORKER_SELF_REFERENCE.fetch(req)` (service binding, no external HTTP)
 - **State Tracking:** `cron_run_log` D1 table records last execution timestamp per cron pattern (idempotency gate)
-- **Auth:** Internal CF triggers include `x-cf-cron: true` header; external monitors use `Bearer <CRON_SECRET>` (env var)
+- **Auth (260502-0756 CRITICAL UPDATE):** 
+  - **Old (260502-0604):** Internal CF triggers included `x-cf-cron: true` header (SECURITY BYPASS)
+  - **New (260502-0756):** Removed x-cf-cron bypass; dispatch now uses `Authorization: Bearer <CRON_SECRET>` only (env var, required)
+  - **Migration:** Operator runs `bash scripts/set-cron-secret.sh` to generate 32-byte secret + set via `wrangler secret put`
+  - **Verification:** After deploy, cron fires within 1 minute (confirmed in cron_run_log fulfillment-retry increment)
 
 **Build-Time Injection Details:**
-- Idempotent: marker comments prevent duplicate exports if script runs twice
-- Preserves existing Worker handlers (transparent patch)
-- No runtime overhead (scheduled() export resolved at build, not startup)
+- **Idempotent:** marker comments prevent duplicate exports if script runs twice
+- **Preserves existing handlers:** transparent patch
+- **No runtime overhead:** scheduled() export resolved at build, not startup
+- **CF Workers Modules Format (260502-0756 CRITICAL FIX):** 
+  - **Old (failed):** `export async function scheduled(...)` (named export) — CF didn't recognize as entry point
+  - **New (working):** `export default { scheduled }` (method on default export) — CF correctly routes cron events
+  - **Why it matters:** CF Workers Modules format requires entry point as method on default export, not named function
 
 **Cron Routes Supported (11 Total):**
 - `/api/cron/email-drip` (Day 1, 3, 7 campaigns)
