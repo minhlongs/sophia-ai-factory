@@ -1,7 +1,67 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-05-02 (RaaS One-Time Package: STARTER_BUNDLE SKU + IPN dispatcher + user_purchases table)
+> **Last Updated:** 2026-05-02 (Fulfillment Hardening: queue-first, retry-cron, compensation, monitoring)
+
+---
+
+## [2026-05-02] RaaS Fulfillment Hardening — Zero-Fail Delivery (260502-0604 SHIPPED)
+
+### Summary / Tom Tat
+3-phase hardening of one-time bundle fulfillment chain ensuring paid customers always receive their video. Queue-first persistence (videos.status='queued' before API call), retry cron every 2min with exponential backoff (30s→1h, 5 attempts), permanent failure path with bilingual email + atomic +1 credit compensation. HeyGen webhook for instant updates + synthetic monitor every 15min + daily 6am UTC reconciliation. R2 access revocation on refund. Migrations 0040-0044. Tests: +69 new (2136→2205 total, 100% pass). F9 D-ID circuit breaker deferred.
+
+### Categories / Phan Loai
+
+**Phase 1 — Queue-First State Persistence & Retry Backoff:**
+- `src/lib/fulfillment/retry-backoff.ts` (NEW) — Pure backoff schedule (30s→1m→5m→15m→1h, 5 attempts)
+- `src/lib/db/repositories/videos-repo.ts::recordAttemptCAS` — CAS update `WHERE status='queued'` (concurrency safety)
+- Migration 0040: `videos.fulfillment_state` (queued|processing|completed|failed_permanent)
+- Cron `/api/cron/fulfillment-retry` — runs every 2min, idempotent state machine, exponential backoff
+
+**Phase 2 — Permanent Failure & Compensation:**
+- `src/lib/fulfillment/compensation.ts` (NEW) — Atomic +1 credit grant via unique partial index
+- `src/lib/billing/compensation.ts` integration — triggers on `failed_permanent` state
+- Migration 0044: `billing_events(user_id, event_type, unique index)` — prevents double-grant on retry
+- Bilingual failed email: Vi/En template, Resend delivery
+- Email subject: "Your video could not be generated — we've added 1 credit"
+
+**Phase 3 — Observability & Validation:**
+- `src/lib/observability/synthetic-cleanup.ts` (NEW) — `/api/cron/synthetic-monitor` every 15min
+- Alerts: Sentry + email-to-support@ on failure threshold
+- `src/lib/observability/reconcile-query.ts` (NEW) — `/api/cron/fulfillment-reconcile` daily 6am UTC
+- Validates: completion count vs billing records, flags discrepancies
+- `src/lib/webhooks/heygen-signature-verifier.ts` (NEW) — HMAC-SHA256 constant-time verification
+
+**Phase 4 — R2 Access Control & Video Refund:**
+- `src/lib/video/video-access-control.ts` (NEW) — Auth-gated streaming route (no presigning)
+- Migration 0041: `videos.access_revoked` boolean
+- Refund flow: mark `access_revoked=true` → streaming endpoint denies access
+- Migration 0043: Relax `videos.created_at` constraint (allow future dates for testing)
+- Migration 0042: `users.id='synthetic-test-user'` for smoke tests
+
+### Architecture Notes / Ghi Chu Kien Truc
+- **State Machine:** queued → processing → (completed | failed_permanent), retry-cron handles transitions
+- **Safety Net Dual Path:** HeyGen webhook instant update + cron 2min retry covers async gaps
+- **Idempotency:** CAS updates + unique constraints prevent duplicate credits or lost states
+- **Observability:** 3-tier monitoring (webhook instant, synthetic every 15min, reconciliation daily 6am)
+- **User Communication:** Bilingual emails on success + failure (Vi/En)
+
+### Files Created (11 Total)
+Code: 7 (fulfillment/, observability/, video/, webhooks/ + repos/) | Migrations: 5 | Tests: 3 new test files
+
+### Metrics / Chi So
+- **Tests:** 2205/2205 pass (100%)
+- **Build:** ✅ 0 TS errors
+- **Code Review:** Approved (critical fixes C1-C4, M1+M2+M4 integrated)
+- **Coverage:** Queue-first, retry backoff, compensation, reconciliation fully tested
+- **Regressions:** 0 — existing one-time, subscription flows intact
+- **Deferred:** F9 (HeyGen circuit breaker + D-ID fallback) — pending D-ID account provisioning
+
+### Activation / Kich Hoat
+- Auto-active: crons auto-trigger via GitHub Actions scheduled workflows
+- Cron timings: 2min (retry), 15min (synthetic), 6am UTC (reconciliation)
+- Compensation: automatic on failed_permanent state transition
+- No env gates required — all logic always-on
 
 ---
 

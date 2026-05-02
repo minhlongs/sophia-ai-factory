@@ -223,6 +223,62 @@ try {
 - **Idempotency:** One-time inserts use `UNIQUE(user_id, user_purchase_id)` constraint; duplicates rejected safely
 - **Schema:** `user_purchases(id, user_id, sku, video_credits, ttl_end, created_at)` isolated from `billing_settings`
 
+### CAS Updates for Concurrency-Safe State Transitions (2026-05-02)
+**Pattern:** Use `UPDATE … WHERE id=? AND status=<expected> RETURNING …` with rowsAffected check before side effects.
+
+**Purpose:** Prevent lost state transitions when cron and webhook both attempt status update simultaneously.
+
+**Example:** `lib/db/repositories/videos-repo.ts::recordAttemptCAS`
+```typescript
+const result = await db
+  .from<VideoRow>('videos')
+  .update({ status: 'processing', last_retry_at: new Date() })
+  .eq('id', videoId)
+  .eq('status', 'queued')  // Only proceed if currently queued
+  .select('id')
+  .single();
+
+const typed = result as unknown as D1Response<{ id: string }>;
+if (typed.error || !typed.data) {
+  return { ok: false, reason: 'CAS failed — not queued' };
+}
+// Side effect safe — transitioned atomically
+```
+
+### Atomic Compensation Grants Pattern (2026-05-02)
+**Pattern:** INSERT ON CONFLICT via unique partial index; only mutate balance if insert wins.
+
+**Purpose:** Prevent double-granting credits on retried compensation events.
+
+**Example Location:** `lib/billing/compensation.ts`
+```sql
+-- Create unique index on successful grants only
+CREATE UNIQUE INDEX idx_compensation_unique_per_user_event 
+ON billing_events(user_id, event_type)
+WHERE status = 'pending';
+
+-- Atomic insert: only one pending grant per event type per user
+INSERT INTO billing_events (user_id, event_type, amount, status)
+VALUES (?, ?, 1, 'pending')
+ON CONFLICT DO NOTHING;
+
+-- Check rowsAffected before crediting balance
+```
+
+### Cron-Driven Retry Pattern (2026-05-02)
+**Pattern:** Exponential backoff schedule (30s→1m→5m→15m→1h) with permanent failure path after max attempts.
+
+**Location:** `lib/fulfillment/retry-backoff.ts`
+
+**Backoff Schedule:**
+- Attempt 1: 30 seconds (immediate retry)
+- Attempt 2: 1 minute (quick recovery window)
+- Attempt 3: 5 minutes (provider issue detection)
+- Attempt 4: 15 minutes (extended grace period)
+- Attempt 5: 1 hour (final check before failure)
+
+**Permanent Failure Trigger:** After 5 attempts → emit `videos.status = 'failed_permanent'` + compensation trigger
+
 ---
 
 ## Security Standards

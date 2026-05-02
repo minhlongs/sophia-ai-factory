@@ -254,7 +254,9 @@ Resend: sendOnboardingVideoEmail() → email delivery status logged
 Dashboard: /dashboard/videos shows onboarding videos in gallery
 ```
 
-### One-Time Package Purchase Pipeline (NEW — 2026-05-02)
+### One-Time Package Purchase Pipeline (2026-05-02) + Fulfillment Hardening (260502-0604)
+
+#### One-Time Purchase Flow (Phases Q2-P15)
 ```
 User selects STARTER_BUNDLE → /billing/checkout
   ↓
@@ -262,18 +264,48 @@ POST /api/webhooks/nowpayments-ipn (IPN callback from NOWPayments)
   ↓
 Dispatcher branches on `ONE_TIME_SKUS` SSOT:
   If subscription_type='subscription' → subscription handler (UNCHANGED)
-  If subscription_type='one_time' → one_time handler (NEW)
+  If subscription_type='one_time' → one_time handler
   ↓
 One-Time Handler:
-  D1: Insert user_purchases record (video_credits, ttl_end=now+365d)
+  D1: Insert user_purchases record (video_credits=10, ttl_end=now+365d)
   D1: Update videos.purchase_id FK (backfill user's bundle videos)
-  Idempotency: UNIQUE(user_id, user_purchase_id) on insert
+  Idempotency: UNIQUE(user_id, user_purchase_id) prevents duplicates
   ↓
 Resend: sendBundleReadyEmail() (bilingual Vi/En template)
   Email includes: credit balance, video gallery link, cross-sell CTA
   ↓
 Dashboard: /dashboard/videos surfaces bundle videos + remaining credits
 ```
+
+#### Fulfillment Hardening (Phase 260502-0604 — Zero-Fail Delivery)
+
+**3-Phase Hardening Strategy:**
+1. **Queue-First Persistence** — `videos.status='queued'` inserted BEFORE HeyGen API call (prevents lost state)
+2. **Retry-Cron with Backoff** — `/api/cron/fulfillment-retry` runs every 2min, exponential backoff (30s→1m→5m→15m→1h), max 5 attempts
+3. **Permanent Failure Path** — After 5 retries exhausted: bilingual failed email + atomic +1 credit compensation via `billing_events` table (UNIQUE index prevents double-grants)
+
+**State Machine** — videos.status transitions:
+```
+queued → processing → completed | failed_permanent
+  ↑         ↓              ↓
+  └─── retry-cron ←─────┘
+       (2min, exp backoff)
+```
+
+**Supporting Infrastructure:**
+- **HeyGen Webhook Callback** — POST `/api/webhooks/heygen` updates status instantly (safety net: cron stays for async coverage)
+- **Synthetic Monitor Cron** — `/api/cron/synthetic-monitor` every 15min alerts on failures via Sentry + email
+- **Daily Reconciliation** — 6am UTC reconciliation scan (`/api/cron/fulfillment-reconcile`) validates completion counts vs billing records
+- **R2 Access Control** — Streaming route requires auth-gate (no presigning needed; video access revoked on refund)
+
+**DB Changes:**
+- Migration 0040: `videos.fulfillment_state` (queued|processing|completed|failed_permanent)
+- Migration 0041: `videos.access_revoked` boolean (R2 streaming gate)
+- Migration 0042: `users.id='synthetic-test-user'` for smoke tests
+- Migration 0043: Relax `videos.created_at` constraint (allow future dates for testing)
+- Migration 0044: `billing_events(user_id, event_type, unique index)` compensation atomic insert
+
+**Deferred (F9):** HeyGen circuit breaker + D-ID fallback pending D-ID account provisioning (Phase not shipped)
 
 ### On-Demand Video Pipeline (Existing)
 ```
