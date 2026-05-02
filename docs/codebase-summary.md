@@ -84,6 +84,9 @@ apps/sophia-ai-factory/  # Main Sophia AI Factory codebase (canon — deployed t
 │   │   │   ├── raas-invoice-generator.ts
 │   │   │   └── raas-permission-checker.ts
 │   │   │
+│   │   ├── health/             # Pre-flight health checks (260502-0756 NEW)
+│   │   │   └── heygen-health-check.ts  # Direct KV-cached HeyGen probe (RSC-safe)
+│   │   │
 │   │   ├── monitoring/         # Admin monitoring & reconciliation (260502-0604)
 │   │   │   ├── sentry-forwarder.ts     # Sentry envelope HTTP fallback
 │   │   │   ├── reconcile-query.ts      # Daily reconciliation scan
@@ -172,7 +175,8 @@ apps/sophia-ai-factory/  # Main Sophia AI Factory codebase (canon — deployed t
 │   └── 0045-videos-is-onboarding.sql  # Restore is_onboarding (lost in 0043, 260502-0733)
 │
 ├── scripts/                    # Build & deployment utilities
-│   ├── inject-scheduled-handler.mjs    # Post-build: injects CF Workers scheduled() export (260502-0733)
+│   ├── inject-scheduled-handler.mjs    # Post-build: injects CF Workers scheduled() default-export (260502-0756 FIX: CF Modules format)
+│   ├── set-cron-secret.sh             # Operator setup: generates 32-byte CRON_SECRET, sets via wrangler secret put (260502-0756 NEW)
 │   └── deploy-with-sha.sh             # Deploy wrapper: sets COMMIT_SHA/DEPLOYED_AT/DEPLOY_BRANCH secrets (260502-0733)
 │
 ├── .github/workflows/          # CI/CD enforcement gates (P1)

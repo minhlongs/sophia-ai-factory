@@ -284,6 +284,23 @@ ON CONFLICT DO NOTHING;
 
 **Location:** `scripts/inject-scheduled-handler.mjs`
 
+**Critical: CF Workers Modules Format (260502-0756)**
+
+Cloudflare Workers Modules format requires entry point handlers as **methods on default export**, NOT named exports.
+
+**❌ WRONG (will not fire):**
+```javascript
+export async function scheduled(event, env, ctx) { /* won't work */ }
+```
+
+**✅ CORRECT (will fire):**
+```javascript
+export default {
+  fetch(request, env, ctx) { /* existing handler */ },
+  scheduled(scheduledEvent, env, ctx) { /* cron dispatcher */ }
+};
+```
+
 **Pattern:**
 ```javascript
 // Idempotency marker (prevents duplicate injection if script runs twice)
@@ -294,6 +311,7 @@ if (workerCode.includes(MARKER)) {
 }
 
 // Patch `.open-next/worker.js` with scheduled export
+// MUST be method on default export (not named export)
 const scheduledHandler = `
 export default {
   fetch(request, env, ctx) { /* existing handler */ },
@@ -303,27 +321,55 @@ ${MARKER}
 `;
 ```
 
+**Verification (260502-0756 incident):**
+- Symptom: Cron never fires after deploy (cron_run_log unchanged)
+- Root cause: `export async function scheduled()` not recognized by CF (named export format)
+- Fix: Refactored to `export default { scheduled }` → cron fired within 1 minute post-deploy
+- Lesson: Always validate CF Workers Modules format in post-build scripts
+
 **Benefits:**
 - Transparent to build system (runs after opennext-build)
 - Idempotent (safe to run multiple times)
 - Preserves all existing Worker handlers
 - No runtime overhead
+- Correct CF Workers Modules format (method on default export)
 
 ---
 
-### Self-Dispatch via Service Binding Pattern (2026-05-02)
-**Purpose:** Internal cron handlers need to invoke protected routes. Use service binding (`env.WORKER_SELF_REFERENCE.fetch()`) instead of global `fetch()` to avoid auth bypass.
+### Self-Dispatch via Service Binding + Bearer CRON_SECRET Pattern (2026-05-02)
+**Purpose:** Internal cron handlers need to invoke protected routes. Use service binding (`env.WORKER_SELF_REFERENCE.fetch()`) with Bearer CRON_SECRET auth (not `x-cf-cron` header bypass).
 
-**Implementation:**
+**Hardened Implementation (260502-0756):**
 ```typescript
-// In scheduled handler:
+// In scripts/inject-scheduled-handler.mjs:
+const CRON_SECRET = env.CRON_SECRET; // Must be set via wrangler secret put
+if (!CRON_SECRET) {
+  console.error('CRON_SECRET not configured — cron dispatch disabled');
+  return;
+}
+
 const req = new Request('https://self/api/cron/email-drip', {
   method: 'POST',
-  headers: { 'x-cf-cron': 'true' },
-  // Service binding: no need for auth token
-  // CF internally routes to own Worker
+  headers: {
+    'Authorization': `Bearer ${CRON_SECRET}`, // REQUIRED (removed x-cf-cron bypass)
+  },
 });
 const res = await env.WORKER_SELF_REFERENCE.fetch(req);
+```
+
+**Cron Route Verification (lib/security/cron-auth.ts):**
+```typescript
+// All cron routes MUST call verifyCronAuth(request, env)
+export function verifyCronAuth(request: Request, env: Env): boolean {
+  const authHeader = request.headers.get('Authorization');
+  const token = authHeader?.replace('Bearer ', '');
+  return token === env.CRON_SECRET; // Exact match, no shortcuts
+}
+
+// Inside cron handler:
+if (!verifyCronAuth(request, env)) {
+  return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401 });
+}
 ```
 
 **wrangler.toml binding:**
@@ -334,10 +380,15 @@ service = "sophia-ai-factory"
 # Routes to current Worker without external network call
 ```
 
-**Benefits:**
-- Secure: cron routes verify `x-cf-cron: true` header (CF-internal guarantee)
-- Fast: no external network latency (local binding)
-- No auth token leakage (internal only)
+**Setup (Operator):**
+```bash
+bash scripts/set-cron-secret.sh  # Generates 32-byte random secret + sets via wrangler secret put
+```
+
+**Benefits (260502-0756):**
+- **Security:** Bearer token auth replaces CF-internal `x-cf-cron` bypass (no external caller can fake header)
+- **Fast:** service binding routes internally (no external latency)
+- **Auditable:** CRON_SECRET can be rotated; x-cf-cron could not
 
 ---
 

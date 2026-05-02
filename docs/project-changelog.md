@@ -1,7 +1,60 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-05-02 (Cron Infrastructure Go-Live: scheduled() injection, self-dispatch, 10 patterns)
+> **Last Updated:** 2026-05-02 (Go-Live Zero-Bug Hardening: cron auth hardened, HeyGen health gate, pricing CTA gate, checkout error toast, scheduled() default-export fix)
+
+---
+
+## [2026-05-02] Go-Live Zero-Bug Hardening (260502-0756 SHIPPED)
+
+### Summary / Tom Tat
+Security hardening + pre-flight health gates before announcing One-Time bundle to real customers. Four confidence gaps closed: (A) verifyCronAuth security hardened (x-cf-cron bypass removed, Bearer CRON_SECRET required), (C) HeyGen health check prevents customer paying for broken upstream, (D) Checkout error toast bilingual for failed one-time purchases, (G) failed_permanent UI polish. CRITICAL FIX: scheduled() must be method on default export per CF Workers Modules format (symptom: cron never fired until fixed). Tests: 2240 (+35 from 2205). Operator setup: `bash scripts/set-cron-secret.sh`. Cron firing verified post-deploy.
+
+### Categories / Phan Loai
+
+**Security A — verifyCronAuth Hardening (P0):**
+- Removed `x-cf-cron: true` header bypass (DoS/cost-bomb risk from external caller)
+- Replaced with `Authorization: Bearer <CRON_SECRET>` (env var, required, rotatable)
+- `scripts/inject-scheduled-handler.mjs` dispatch header changed to Bearer auth
+- `scripts/set-cron-secret.sh` (NEW) — operator generates 32-byte secret, sets via `wrangler secret put`
+- `src/lib/security/cron-auth.ts` updated: legacy x-cron-secret path now requires exact secret (no `'true'` shortcut)
+- Tests: P0 rejection tests added (external callers properly denied)
+
+**Health Gate C — HeyGen Pre-Flight Check (P0 UX):**
+- `src/app/api/health/heygen/route.ts` (NEW) — GET endpoint, pings HeyGen /v2/voices, 5s timeout
+- `src/lib/health/heygen-health-check.ts` (NEW) — Server-side helper for RSC (direct KV-cached, no HTTP roundtrip)
+- `/app/[locale]/pricing/page.tsx` — calls `isHeyGenHealthy()` server-side, passes prop to OneTimeBundleCard
+- Pricing page gates One-Time bundle CTA when HeyGen down (prevents customer paying for broken upstream)
+- Cache: EXPERIMENT_KV 60s TTL; rate-limited 60 req/min; never 500s (graceful degradation)
+
+**Error Toast D — Checkout Failure Handling (P1 UX):**
+- `src/components/pricing/one-time-bundle-card.tsx` — added `heygenHealthy` prop + disabled CTA
+- `handleBuy` reads response status → calls `errorMessageFor(status, body, lang)` helper (bilingual Vi/En)
+- Renders error `<p role="alert">` below CTA; 401 shows login link
+- Error cases: 401 (auth), 400 (validation), 429 (rate limit), 500 (server), 503 (service down)
+
+**UI Polish G — failed_permanent Order State (P2 UI):**
+- `src/app/[locale]/dashboard/orders/order-card.tsx` — red failure notice (❌ icon + bilingual title/subtitle)
+- Retry notice hidden when status='failed_permanent'; access revoked state clear
+- `mailto` subject fixed: uses `purchaseId` prop (was using `order.purchaseId`, wrong value)
+
+**CRITICAL FIX — CF Workers Modules Format (260502-0756):**
+- Symptom: Cron never fired after deploy (cron_run_log unchanged for 30 min)
+- Root cause: `scripts/inject-scheduled-handler.mjs` emitted `export async function scheduled()` (named export)
+  - CF Workers Modules format REQUIRES entry point as method on default export, not named function
+- Fix applied: Refactored to `export default { scheduled }` (method on default export)
+- Verification: Deploy 15:26 UTC → cron_run_log fulfillment-retry count incremented 2→3 at 15:27 UTC (1 min post-deploy)
+- Lesson: CF Workers Modules format validation critical for post-build injection scripts
+
+### Files Modified/Created (5 Total)
+Routes: 1 (`/api/health/heygen`, new) | Helpers: 1 (`heygen-health-check.ts`, new) | Components: 2 (pricing/one-time-bundle-card.tsx, order-card.tsx, modified) | Security: 1 (`cron-auth.ts`, modified) | Scripts: 1 (`set-cron-secret.sh`, new)
+
+### Metrics / Chi So
+- **Build:** ✅ 0 TS errors
+- **Tests:** 2240 pass (+35 from baseline: 8 heygen-health tests, 11 one-time-bundle tests, 13 order-card tests, 3 cron-auth tests)
+- **Cron Status:** Verified firing live (cron_run_log incremented 2026-05-02 15:27 UTC)
+- **Operator Setup:** Required `bash scripts/set-cron-secret.sh` before deploy (CRON_SECRET loaded in CF env)
+- **Production Status:** ✅ HTTP 200, all 4 phases verified, non-blocking manual tasks (B/E/F/H/I) deferred to live smoke phase
 
 ---
 
