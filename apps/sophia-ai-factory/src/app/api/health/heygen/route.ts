@@ -1,0 +1,123 @@
+/**
+ * GET /api/health/heygen
+ *
+ * Public health check for HeyGen provider availability.
+ * No auth required — used by pricing page to gate the One-Time Bundle CTA.
+ *
+ * Response: { healthy: boolean, providerStatus: 'ok' | 'degraded' | 'down', checkedAt: ISO, details?: string }
+ *
+ * Caching: result stored in EXPERIMENT_KV with key `health:heygen` for 60 seconds
+ * to avoid hammering HeyGen on every pricing page load.
+ * Falls back to a live check if KV is unavailable.
+ *
+ * Rate limited: 60 req/min per client (via withRateLimit).
+ *
+ * @module app/api/health/heygen/route
+ */
+
+import { NextRequest, NextResponse } from 'next/server';
+import { withRateLimit } from '@/middleware/rate-limit-wrapper';
+import type { KVNamespace } from '@cloudflare/workers-types';
+
+const KV_CACHE_KEY = 'health:heygen';
+const KV_CACHE_TTL_SECONDS = 60;
+const HEYGEN_PING_TIMEOUT_MS = 5_000;
+
+export interface HeyGenHealthResponse {
+  healthy: boolean;
+  providerStatus: 'ok' | 'degraded' | 'down';
+  checkedAt: string;
+  details?: string;
+}
+
+/**
+ * Performs a lightweight HeyGen API reachability check.
+ * Calls the /v2/voices?limit=1 endpoint (lightweight, no side effects).
+ * Returns the health result without throwing.
+ */
+async function pingHeyGen(apiKey: string): Promise<HeyGenHealthResponse> {
+  const checkedAt = new Date().toISOString();
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), HEYGEN_PING_TIMEOUT_MS);
+    let res: Response;
+    try {
+      res = await fetch('https://api.heygen.com/v2/voices?limit=1', {
+        method: 'GET',
+        headers: { 'X-Api-Key': apiKey, accept: 'application/json' },
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
+    if (res.ok || res.status === 401) {
+      // 401 means API reached but key may be scoped — service is up
+      return { healthy: true, providerStatus: 'ok', checkedAt };
+    }
+    if (res.status >= 500) {
+      return { healthy: false, providerStatus: 'down', checkedAt, details: `HeyGen returned ${res.status}` };
+    }
+    // 4xx other than 401: degraded (quota, etc.)
+    return { healthy: false, providerStatus: 'degraded', checkedAt, details: `HeyGen returned ${res.status}` };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    const isTimeout = msg.includes('abort') || msg.includes('timeout');
+    return {
+      healthy: false,
+      providerStatus: 'down',
+      checkedAt,
+      details: isTimeout ? 'HeyGen ping timed out after 5s' : `Network error: ${msg}`,
+    };
+  }
+}
+
+export const GET = withRateLimit(
+  async function GET(_req: NextRequest): Promise<NextResponse<HeyGenHealthResponse>> {
+    const apiKey = process.env.HEYGEN_API_KEY;
+
+    if (!apiKey) {
+      return NextResponse.json<HeyGenHealthResponse>({
+        healthy: false,
+        providerStatus: 'down',
+        checkedAt: new Date().toISOString(),
+        details: 'API key not configured',
+      });
+    }
+
+    // Try KV cache first
+    let kv: KVNamespace | null = null;
+    try {
+      const { getCloudflareContext } = await import('@opennextjs/cloudflare');
+      const cfCtx = await getCloudflareContext();
+      const env = cfCtx.env as Record<string, unknown>;
+      kv = (env.EXPERIMENT_KV as KVNamespace) ?? null;
+    } catch {
+      // Not running on CF Workers (local dev) — skip cache
+    }
+
+    if (kv) {
+      try {
+        const cached = await kv.get(KV_CACHE_KEY);
+        if (cached) {
+          const parsed = JSON.parse(cached) as HeyGenHealthResponse;
+          return NextResponse.json<HeyGenHealthResponse>(parsed);
+        }
+      } catch {
+        // Cache miss or parse error — fall through to live check
+      }
+    }
+
+    const result = await pingHeyGen(apiKey);
+
+    if (kv) {
+      try {
+        await kv.put(KV_CACHE_KEY, JSON.stringify(result), { expirationTtl: KV_CACHE_TTL_SECONDS });
+      } catch {
+        // Cache write failure is non-fatal
+      }
+    }
+
+    return NextResponse.json<HeyGenHealthResponse>(result);
+  },
+  { addHeaders: false, config: { intervalMs: 60_000, maxRequests: 60 } }
+);

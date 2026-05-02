@@ -102,11 +102,28 @@ export function OrderCard({ purchaseId, initialOrder, locale }: OrderCardProps) 
         </div>
       )}
 
+      {/* Permanent failure notice */}
+      {isPermanentFail && !isAccessRevoked && (
+        <div className="rounded-lg bg-red-950 border border-red-800 px-4 py-3 space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="text-lg leading-none" aria-hidden="true">❌</span>
+            <p className="text-sm font-semibold text-red-300">
+              {isVi ? 'Tạo video không thành công' : 'Video generation failed'}
+            </p>
+          </div>
+          <p className="text-xs text-red-400">
+            {isVi
+              ? 'Đội hỗ trợ đã được thông báo. 1 credit miễn phí đã được cộng vào tài khoản.'
+              : 'Our support team has been notified. 1 free credit has been added to your account.'}
+          </p>
+        </div>
+      )}
+
       {/* Timeline */}
       <OrderTimeline order={order} locale={locale} />
 
       {/* Retry notice */}
-      {(order.attemptCount ?? 0) > 0 && !isCompleted && (
+      {(order.attemptCount ?? 0) > 0 && !isCompleted && !isPermanentFail && (
         <p className="text-xs text-yellow-500">
           {isVi
             ? `Đã thử ${order.attemptCount}/5 lần`
@@ -128,7 +145,7 @@ export function OrderCard({ purchaseId, initialOrder, locale }: OrderCardProps) 
         )}
         {isPermanentFail && !isAccessRevoked && (
           <a
-            href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Video render failed: ' + order.purchaseId)}`}
+            href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Failed Order ' + purchaseId)}`}
             className="inline-block text-sm px-4 py-2 bg-red-900 hover:bg-red-800 text-red-100 rounded-lg transition-colors"
           >
             {isVi ? 'Liên hệ hỗ trợ' : 'Contact support'}

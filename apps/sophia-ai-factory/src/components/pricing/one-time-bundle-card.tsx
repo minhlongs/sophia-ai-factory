@@ -5,6 +5,10 @@
  * Bilingual (Vi/En) via next-intl useLocale.
  * Tone-matches existing pricing cards (Tailwind 4 classes).
  *
+ * Features:
+ * - HeyGen health gate: disables CTA with maintenance message when heygenHealthy=false
+ * - Error toast: shows localized error below CTA on checkout API failures
+ *
  * @module components/pricing/one-time-bundle-card
  */
 
@@ -21,6 +25,8 @@ interface OneTimeBundleCardProps {
   sku?: OneTimeSku;
   /** User id for order_id in checkout URL */
   userId?: string;
+  /** Whether HeyGen provider is currently healthy (from server-side pre-flight) */
+  heygenHealthy?: boolean;
 }
 
 function CheckIcon() {
@@ -70,27 +76,71 @@ const FEATURES: Record<"vi" | "en", string[]> = {
   ],
 };
 
-export function OneTimeBundleCard({ sku = STARTER, userId }: OneTimeBundleCardProps) {
+/** Produce a localized error message for a checkout API failure. */
+function errorMessageFor(
+  status: number,
+  serverError: string | undefined,
+  lang: "vi" | "en"
+): string {
+  if (status === 401) {
+    return lang === "vi"
+      ? "Bạn cần đăng nhập trước khi thanh toán"
+      : "Please log in to checkout";
+  }
+  if (status === 400) {
+    return lang === "vi"
+      ? "Yêu cầu không hợp lệ. Vui lòng tải lại trang"
+      : "Invalid request. Refresh and try again";
+  }
+  if (status === 429) {
+    return lang === "vi"
+      ? "Quá nhiều yêu cầu. Thử lại sau ít phút"
+      : "Too many requests. Try again in a few minutes";
+  }
+  // 500, 503, or any other
+  return lang === "vi"
+    ? `Hệ thống đang gặp sự cố. Thử lại sau${serverError ? ` (${serverError})` : ""}`
+    : `System error. Please try again later${serverError ? ` (${serverError})` : ""}`;
+}
+
+export function OneTimeBundleCard({
+  sku = STARTER,
+  userId,
+  heygenHealthy = true,
+}: OneTimeBundleCardProps) {
   const locale = useLocale() as "vi" | "en";
   const lang: "vi" | "en" = locale === "vi" ? "vi" : "en";
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const label = lang === "vi" ? sku.label_vi : sku.label_en;
   const features = FEATURES[lang];
 
   const handleBuy = async () => {
-    if (loading) return;
+    if (loading || !heygenHealthy) return;
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch("/api/payments/one-time-checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ skuId: sku.id, userId }),
       });
-      const data = (await res.json()) as { url?: string; error?: string };
+      if (!res.ok) {
+        const errorBody = await res.json().catch(() => ({})) as { error?: string };
+        setError(errorMessageFor(res.status, errorBody.error, lang));
+        return;
+      }
+      const data = (await res.json()) as { url?: string };
       if (data.url) {
         window.location.href = data.url;
       }
+    } catch {
+      setError(
+        lang === "vi"
+          ? "Không thể kết nối. Kiểm tra kết nối mạng và thử lại"
+          : "Network error. Check your connection and try again"
+      );
     } finally {
       setLoading(false);
     }
@@ -100,10 +150,22 @@ export function OneTimeBundleCard({ sku = STARTER, userId }: OneTimeBundleCardPr
   const title_en = "One-Time Bundle";
   const description_vi = "Mua credits, dùng khi cần — không ràng buộc hàng tháng";
   const description_en = "Buy credits, use when needed — no monthly commitment";
-  const cta_vi = loading ? "Đang xử lý..." : "Mua ngay";
-  const cta_en = loading ? "Processing..." : "Buy now";
   const badge_vi = "Trả một lần";
   const badge_en = "One-time";
+
+  const isDisabled = loading || !heygenHealthy;
+
+  const ctaLabel = () => {
+    if (!heygenHealthy) {
+      return lang === "vi"
+        ? "Đang bảo trì hệ thống — vui lòng quay lại sau"
+        : "Service temporarily unavailable — try again later";
+    }
+    if (loading) {
+      return lang === "vi" ? "Đang xử lý..." : "Processing...";
+    }
+    return lang === "vi" ? "Mua ngay" : "Buy now";
+  };
 
   return (
     <FadeInView
@@ -141,7 +203,7 @@ export function OneTimeBundleCard({ sku = STARTER, userId }: OneTimeBundleCardPr
       <div className="mt-6 flex-1">
         <p className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-emerald-400">
           <span aria-hidden="true">&#x1F4E6;</span>
-          {lang === "vi" ? label : label}
+          {label}
         </p>
         <ul className="space-y-2">
           {features.map((f) => (
@@ -153,12 +215,31 @@ export function OneTimeBundleCard({ sku = STARTER, userId }: OneTimeBundleCardPr
       {/* CTA */}
       <button
         onClick={handleBuy}
-        disabled={loading}
+        disabled={isDisabled}
         aria-label={lang === "vi" ? `Mua ${label}` : `Buy ${label}`}
         className="mt-8 w-full rounded-lg bg-emerald-500 py-3 font-semibold text-white transition-all duration-300 hover:bg-emerald-400 hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {lang === "vi" ? cta_vi : cta_en}
+        {ctaLabel()}
       </button>
+
+      {/* Error message */}
+      {error && (
+        <p
+          role="alert"
+          className="mt-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-center text-sm text-red-400"
+        >
+          {error}
+          {/* Login link for 401 errors */}
+          {error.includes("đăng nhập") || error.includes("log in") ? (
+            <a
+              href={`/${locale}/login?redirect=/${locale}/pricing`}
+              className="ml-1 underline hover:text-red-300"
+            >
+              {lang === "vi" ? "Đăng nhập" : "Login"}
+            </a>
+          ) : null}
+        </p>
+      )}
     </FadeInView>
   );
 }
