@@ -31,6 +31,7 @@ import {
 import { MAX_ATTEMPTS, isRetryDue } from '@/lib/fulfillment/retry-backoff'
 import { grantCompensationCredit } from '@/lib/fulfillment/compensation'
 import { sendBundleRenderFailedEmail, type SendBundleRenderFailedInput } from '@/lib/billing/email/send-bundle-render-failed-email'
+import { shouldDispatch, recordHeyGenAttempt } from '@/lib/fulfillment/circuit-breaker'
 
 export const dynamic = 'force-dynamic'
 
@@ -70,9 +71,17 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'db_unavailable' }, { status: 500 })
   }
 
-  const summary = { retried: 0, succeeded: 0, failed: 0, permanent: 0, skipped: 0 }
+  const summary = { retried: 0, succeeded: 0, failed: 0, permanent: 0, skipped: 0, circuitBlocked: 0 }
   const now = Math.floor(Date.now() / 1000)
   const apiKey = process.env.HEYGEN_API_KEY
+
+  // Check circuit breaker once per cron run — if open, skip all HeyGen attempts
+  const dispatch = await shouldDispatch()
+  if (!dispatch.allowed) {
+    logger.warn('[fulfillment-retry] Circuit breaker blocked entire cron run', { reason: dispatch.reason })
+    await recordCronRun(db, CRON_NAME, 'success')
+    return NextResponse.json({ ok: true, ...summary, circuitBlocked: -1 })
+  }
 
   try {
     const rows = await listQueuedForRetry(MAX_ATTEMPTS, BATCH_LIMIT)
@@ -103,6 +112,7 @@ export async function GET(req: NextRequest) {
       try {
         const { videoId: heygenJobId } = await createHeyGenVideo({ script, title, apiKey, callbackUrl })
         await markVideoProcessing(row.id, heygenJobId)
+        try { await recordHeyGenAttempt(true) } catch { /* non-fatal */ }
         summary.succeeded++
 
         logger.info('[fulfillment-retry] Retry succeeded', {
@@ -113,6 +123,7 @@ export async function GET(req: NextRequest) {
       } catch (err) {
         const errMsg = getErrorMessage(err)
         const nextAttemptCount = row.attempt_count + 1
+        try { await recordHeyGenAttempt(false) } catch { /* non-fatal */ }
 
         if (nextAttemptCount >= MAX_ATTEMPTS) {
           // M2 CAS: only the caller that wins the race sends email + compensation

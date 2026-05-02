@@ -25,6 +25,7 @@ import {
   recordAttemptCAS,
 } from '@/lib/db/repositories/videos-repo'
 import { MAX_ATTEMPTS } from '@/lib/fulfillment/retry-backoff'
+import { recordHeyGenAttempt } from '@/lib/fulfillment/circuit-breaker'
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -122,6 +123,9 @@ export async function completeVideoFromWebhook(data: HeyGenSuccessData): Promise
     .bind(row.id, videoUrl, thumbnailUrl ?? null, r2Key, r2SizeBytes, now)
     .run()
 
+  // Record HeyGen success so circuit breaker observes all outcomes
+  try { await recordHeyGenAttempt(true) } catch { /* non-fatal */ }
+
   logger.info('[WebhookComplete] Video marked completed', { videoId: row.id, heygenJobId })
 
   // Send ready email (only for one-time bundle purchases)
@@ -197,6 +201,9 @@ export async function failVideoFromWebhook(data: HeyGenFailData): Promise<void> 
 
   const errorText = errorMsg ?? 'webhook_fail'
   const nextAttemptCount = row.attempt_count + 1
+
+  // Record HeyGen failure so circuit breaker observes webhook-reported failures
+  try { await recordHeyGenAttempt(false) } catch { /* non-fatal */ }
 
   if (nextAttemptCount >= MAX_ATTEMPTS) {
     // CAS: only the winner of the race sends email + grants compensation
