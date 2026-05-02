@@ -15,18 +15,22 @@ import {
   KeySquare,
   FileText,
   GitBranch,
-  ShoppingBag
+  ShoppingBag,
+  Activity,
 } from "lucide-react";
 import { HealthIndicator } from "@/components/dashboard/health-indicator";
 import { MobileNav } from "@/components/ui/mobile-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { getCurrentUser } from "@/lib/better-auth-session";
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const t = useTranslations('dashboard');
+  const currentUser = await getCurrentUser();
+  const isAdmin = currentUser?.role === 'admin';
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -132,6 +136,15 @@ export default function DashboardLayout({
             <Code className="w-5 h-5" />
             <span className="font-medium">{t('sidebar.api_docs')}</span>
           </Link>
+          {isAdmin && (
+            <Link
+              href="/dashboard/admin/ops"
+              className="flex items-center gap-3 px-4 py-3 text-violet-400 hover:text-violet-300 rounded-lg hover:bg-violet-950/30 transition-colors"
+            >
+              <Activity className="w-5 h-5" />
+              <span className="font-medium">Ops Dashboard</span>
+            </Link>
+          )}
           <Link
             href="/dashboard/settings"
             className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"

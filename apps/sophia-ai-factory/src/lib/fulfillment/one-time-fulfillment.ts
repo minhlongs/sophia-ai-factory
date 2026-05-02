@@ -24,6 +24,7 @@ import {
   recordAttempt,
 } from '@/lib/db/repositories/videos-repo'
 import { sendBundleGeneratingEmail } from '@/lib/billing/email/send-bundle-generating-email'
+import { shouldDispatch, recordHeyGenAttempt } from '@/lib/fulfillment/circuit-breaker'
 import type { OneTimeSku } from '@/types'
 
 interface UserRow {
@@ -95,6 +96,18 @@ export async function triggerOneTimeFulfillment(
     })
   }
 
+  // Circuit breaker check — if open, leave row as 'queued' for retry cron
+  const dispatch = await shouldDispatch()
+  if (!dispatch.allowed) {
+    await recordAttempt(videoRowId, `circuit_open: ${dispatch.reason ?? 'unknown'}`)
+    logger.warn('[OneTimeFulfillment] Circuit breaker blocked HeyGen dispatch', {
+      videoRowId,
+      purchaseId,
+      reason: dispatch.reason,
+    })
+    return
+  }
+
   // First attempt — fail-soft, retry cron picks up if this fails
   const apiKey = process.env.HEYGEN_API_KEY
   if (!apiKey) {
@@ -115,6 +128,7 @@ export async function triggerOneTimeFulfillment(
   try {
     const { videoId: heygenJobId } = await createHeyGenVideo({ script, title, apiKey, callbackUrl })
     await markVideoProcessing(videoRowId, heygenJobId)
+    await recordHeyGenAttempt(true)
     logger.info('[OneTimeFulfillment] HeyGen video submitted', {
       userId,
       purchaseId,
@@ -123,7 +137,9 @@ export async function triggerOneTimeFulfillment(
     })
   } catch (err) {
     // Recoverable — leave status='queued', F2 retry cron will pick up
-    await recordAttempt(videoRowId, err instanceof Error ? err.message : String(err))
+    const errMsg = err instanceof Error ? err.message : String(err)
+    await recordAttempt(videoRowId, errMsg)
+    await recordHeyGenAttempt(false)
     logger.error('[OneTimeFulfillment] HeyGen call failed — queued for retry', err instanceof Error ? err : undefined, {
       userId,
       purchaseId,
