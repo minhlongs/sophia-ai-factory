@@ -3,6 +3,9 @@ import { ProductionCostCalculator } from "@/app/components/sections/production-c
 import { OneTimeBundleCard } from "@/components/pricing/one-time-bundle-card";
 import { getTranslations } from "next-intl/server";
 import { isHeyGenHealthy } from "@/lib/health/heygen-health-check";
+import { getCurrentUser } from "@/lib/better-auth-session";
+import { getUserCredential } from "@/lib/credentials/user-credentials-repo";
+import Link from "next/link";
 
 export const metadata = {
   title: "Pricing - Sophia AI Factory",
@@ -10,10 +13,16 @@ export const metadata = {
 };
 
 export default async function PricingPage() {
-  const [t, heygenHealthy] = await Promise.all([
+  const [t, heygenHealthy, user] = await Promise.all([
     getTranslations("pricing"),
     isHeyGenHealthy().catch(() => false),
+    getCurrentUser().catch(() => null),
   ]);
+
+  // Check if the logged-in user has configured their HeyGen key
+  const userHeyGenConfigured = user
+    ? Boolean(await getUserCredential(user.id, 'heygen').catch(() => null))
+    : false;
 
   return (
     <main id="main-content" className="min-h-screen bg-gradient-to-b from-black to-violet-950 pt-16">
@@ -36,7 +45,26 @@ export default async function PricingPage() {
 
       {/* One-Time Bundle — pay once, no monthly commitment */}
       <section className="mx-auto max-w-md px-6 pb-12 pt-4">
-        <OneTimeBundleCard heygenHealthy={heygenHealthy} />
+        {user && !userHeyGenConfigured ? (
+          /* Gate: user must configure HeyGen key before purchasing */
+          <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-6 text-center space-y-3">
+            <p className="text-sm font-medium text-amber-300">
+              Configure your HeyGen API key to unlock video generation bundles.
+              <br />
+              <span className="text-amber-400/80">
+                Vui lòng cấu hình HeyGen API key để mở khóa gói video.
+              </span>
+            </p>
+            <Link
+              href="/setup-wizard"
+              className="inline-block rounded-lg bg-amber-500 hover:bg-amber-400 text-black font-semibold px-5 py-2 text-sm transition-colors"
+            >
+              Configure HeyGen Key / Cấu hình HeyGen
+            </Link>
+          </div>
+        ) : (
+          <OneTimeBundleCard heygenHealthy={heygenHealthy} />
+        )}
       </section>
 
       <ProductionCostCalculator />

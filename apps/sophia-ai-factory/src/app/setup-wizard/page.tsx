@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { WizardStepper } from './components/wizard-stepper';
 import { ArrowRight, Save, Loader2 } from 'lucide-react';
@@ -8,9 +8,12 @@ import { SystemCheckStep } from './components/steps/system-check-step';
 import { ApiKeysStep } from './components/steps/api-keys-step';
 import { LocalModeStep } from '@/components/setup-wizard/local-mode-step';
 import { FinishStep } from './components/steps/finish-step';
+import { ProviderCredentialsStep, type ProviderConfig } from './components/steps/provider-credentials-step';
+import type { CredentialSummary } from '@/lib/credentials/user-credentials-repo';
 
 interface VerifyKeyResponse {
   valid?: boolean;
+  ok?: boolean;
   message?: string;
 }
 
@@ -25,7 +28,7 @@ export default function SetupWizardPage() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
 
-  // Form State
+  // Form State — LLM / media keys (existing)
   const [config, setConfig] = useState({
     OPENROUTER_API_KEY: '',
     ANTHROPIC_API_KEY: '',
@@ -34,6 +37,26 @@ export default function SetupWizardPage() {
     MUAPI_API_KEY: '',
   });
 
+  // Form State — provider credentials (new BYOK)
+  const [providerConfig, setProviderConfig] = useState<ProviderConfig>({
+    HEYGEN_API_KEY: '',
+    RESEND_API_KEY: '',
+    NOWPAYMENTS_API_KEY: '',
+  });
+
+  // Saved credentials from server (display hints)
+  const [savedCredentials, setSavedCredentials] = useState<CredentialSummary[]>([]);
+
+  // Fetch existing saved credentials on mount
+  useEffect(() => {
+    fetch('/api/setup-wizard/list-credentials')
+      .then((r) => r.json() as Promise<{ credentials?: CredentialSummary[] }>)
+      .then((data) => {
+        if (data.credentials) setSavedCredentials(data.credentials);
+      })
+      .catch(() => { /* non-fatal */ });
+  }, []);
+
   // Validation State
   const [status, setStatus] = useState<Record<string, 'idle' | 'validating' | 'valid' | 'invalid'>>({
     OPENROUTER_API_KEY: 'idle',
@@ -41,6 +64,9 @@ export default function SetupWizardPage() {
     ELEVENLABS_API_KEY: 'idle',
     DID_API_KEY: 'idle',
     MUAPI_API_KEY: 'idle',
+    HEYGEN_API_KEY: 'idle',
+    RESEND_API_KEY: 'idle',
+    NOWPAYMENTS_API_KEY: 'idle',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -49,7 +75,11 @@ export default function SetupWizardPage() {
 
   const updateConfig = (key: string, value: string) => {
     setConfig(prev => ({ ...prev, [key]: value }));
-    // Reset status on change
+    setStatus(prev => ({ ...prev, [key]: 'idle' }));
+  };
+
+  const updateProviderConfig = (key: keyof ProviderConfig, value: string) => {
+    setProviderConfig(prev => ({ ...prev, [key]: value }));
     setStatus(prev => ({ ...prev, [key]: 'idle' }));
   };
 
@@ -81,6 +111,45 @@ export default function SetupWizardPage() {
     }
   };
 
+  const testProviderKey = async (
+    provider: string,
+    fieldKey: keyof ProviderConfig,
+    value: string,
+  ): Promise<boolean> => {
+    if (!value.trim()) return false;
+    setStatus(prev => ({ ...prev, [fieldKey]: 'validating' }));
+    setErrors(prev => ({ ...prev, [fieldKey]: '' }));
+
+    const endpoint = provider === 'heygen'
+      ? '/api/setup-wizard/test-heygen'
+      : provider === 'resend'
+        ? '/api/setup-wizard/test-resend'
+        : null;
+
+    if (!endpoint) {
+      // NOWPayments: no test endpoint yet — mark valid on non-empty
+      setStatus(prev => ({ ...prev, [fieldKey]: value.trim() ? 'valid' : 'idle' }));
+      return Boolean(value.trim());
+    }
+
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ api_key: value }),
+      });
+      const data = (await res.json()) as VerifyKeyResponse;
+      const isOk = data.ok === true;
+      setStatus(prev => ({ ...prev, [fieldKey]: isOk ? 'valid' : 'invalid' }));
+      if (!isOk) setErrors(prev => ({ ...prev, [fieldKey]: data.message ?? 'Test failed' }));
+      return isOk;
+    } catch {
+      setStatus(prev => ({ ...prev, [fieldKey]: 'invalid' }));
+      setErrors(prev => ({ ...prev, [fieldKey]: 'Test request failed' }));
+      return false;
+    }
+  };
+
   const handleNext = () => {
     // Step 2: Require at least one LLM key (OpenRouter or Anthropic)
     if (step === 2) {
@@ -98,6 +167,19 @@ export default function SetupWizardPage() {
       }
     }
 
+    // Step 3 (Provider Credentials): HeyGen required; no saved hint = must enter key
+    if (step === 3) {
+      const heygenSaved = savedCredentials.find((c) => c.provider === 'heygen');
+      const heygenEntered = providerConfig.HEYGEN_API_KEY.trim().length > 0;
+      if (!heygenSaved && !heygenEntered) {
+        alert(
+          "HeyGen API key is required for video generation.\n" +
+          "Bắt buộc nhập HeyGen API key để tạo video.",
+        );
+        return;
+      }
+    }
+
     setStep(prev => prev + 1);
   };
 
@@ -107,20 +189,46 @@ export default function SetupWizardPage() {
     setSaveFailed(false);
 
     try {
-      const res = await fetch('/api/setup/save', {
+      // 1. Save LLM / media provider keys (existing flow)
+      const llmRes = await fetch('/api/setup/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ config })
       });
-
-      const data = (await res.json()) as SaveConfigResponse;
-
-      if (data.success) {
-        router.push(data.redirect || '/dashboard/settings');
-      } else {
-        setSaveError(data.message ?? 'Failed to save configuration.');
+      const llmData = (await llmRes.json()) as SaveConfigResponse;
+      if (!llmData.success) {
+        setSaveError(llmData.message ?? 'Failed to save API keys.');
         setSaveFailed(true);
+        return;
       }
+
+      // 2. Save provider credentials (HeyGen, Resend, NOWPayments) — only non-empty values
+      const credPayload: Record<string, string> = {};
+      if (providerConfig.HEYGEN_API_KEY.trim()) {
+        credPayload.heygen_api_key = providerConfig.HEYGEN_API_KEY.trim();
+      }
+      if (providerConfig.RESEND_API_KEY.trim()) {
+        credPayload.resend_api_key = providerConfig.RESEND_API_KEY.trim();
+      }
+      if (providerConfig.NOWPAYMENTS_API_KEY.trim()) {
+        credPayload.nowpayments_api_key = providerConfig.NOWPAYMENTS_API_KEY.trim();
+      }
+
+      if (Object.keys(credPayload).length > 0) {
+        const credRes = await fetch('/api/setup-wizard/save-credentials', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(credPayload),
+        });
+        const credData = (await credRes.json()) as SaveConfigResponse;
+        if (!credData.success) {
+          setSaveError(credData.message ?? 'Failed to save provider credentials.');
+          setSaveFailed(true);
+          return;
+        }
+      }
+
+      router.push(llmData.redirect || '/dashboard/settings');
     } catch {
       setSaveError("Failed to save configuration.");
       setSaveFailed(true);
@@ -142,7 +250,7 @@ export default function SetupWizardPage() {
         <div className="px-8">
             <WizardStepper
                 currentStep={step}
-                steps={["System", "AI Keys", "Local Mode", "Finish"]}
+                steps={["System", "AI Keys", "Providers", "Local Mode", "Finish"]}
             />
         </div>
 
@@ -160,14 +268,25 @@ export default function SetupWizardPage() {
               />
             )}
 
-            {step === 3 && <LocalModeStep />}
+            {step === 3 && (
+              <ProviderCredentialsStep
+                config={providerConfig}
+                updateConfig={updateProviderConfig}
+                status={status}
+                errors={errors}
+                onTestKey={testProviderKey}
+                savedCredentials={savedCredentials}
+              />
+            )}
 
-            {step === 4 && <FinishStep saveError={saveError} saveFailed={saveFailed} onRetry={handleSave} />}
+            {step === 4 && <LocalModeStep />}
+
+            {step === 5 && <FinishStep saveError={saveError} saveFailed={saveFailed} onRetry={handleSave} />}
         </div>
 
         {/* Footer Actions */}
         <div className="bg-muted/50 px-8 py-6 flex justify-between items-center border-t border-border">
-            {step > 1 && step < 4 && (
+            {step > 1 && step < 5 && (
                 <button
                     onClick={() => setStep(prev => prev - 1)}
                     className="text-muted-foreground hover:text-foreground font-medium px-4 py-2"
@@ -178,7 +297,7 @@ export default function SetupWizardPage() {
 
             {step === 1 && <div />} {/* Spacer */}
 
-            {step < 4 ? (
+            {step < 5 ? (
                 <button
                     onClick={handleNext}
                     className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors ml-auto"

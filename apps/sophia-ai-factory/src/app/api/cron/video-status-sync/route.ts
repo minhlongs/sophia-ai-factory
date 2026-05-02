@@ -123,13 +123,6 @@ export async function GET(req: NextRequest) {
     const pending = rows.results ?? [];
     summary.checked = pending.length;
 
-    const client = await getHeyGenClient();
-    if (!client) {
-      logger.warn('[video-status-sync] HEYGEN_API_KEY missing — skipping poll');
-      await recordCronRun(db, CRON_NAME, 'skipped', 'no_api_key');
-      return NextResponse.json({ skipped: true, reason: 'no_api_key' });
-    }
-
     const cutoff = Date.now() - TIMEOUT_MS;
 
     for (const row of pending) {
@@ -152,6 +145,17 @@ export async function GET(req: NextRequest) {
               .run();
           }
           summary.timedOut += 1;
+          continue;
+        }
+
+        // Per-row: user key first (one-time bundle), platform fallback for onboarding videos
+        const client = await getHeyGenClient(row.user_id);
+        if (!client) {
+          logger.warn('[video-status-sync] No HeyGen key for row — skipping', {
+            videoId: row.id,
+            userId: row.user_id,
+          });
+          summary.errors += 1;
           continue;
         }
 
