@@ -100,15 +100,17 @@ describe('GET /api/cron/video-status-sync', () => {
     expect(body.error).toBe('db_unavailable')
   })
 
-  it('returns skipped when HEYGEN_API_KEY missing', async () => {
-    const db = buildMockDb([])
+  it('returns ok with errors when user has no HeyGen key', async () => {
+    // Per-row BYOK: each row resolves its own key; null means skip that row
+    const db = buildMockDb([VIDEO_ROW])
     vi.mocked(getD1Raw).mockResolvedValueOnce(db as unknown as D1Database)
-    vi.mocked(getHeyGenClient).mockResolvedValueOnce(null)
+    vi.mocked(getHeyGenClient).mockResolvedValueOnce(null) // user has no key
 
     const res = await GET(buildRequest('Bearer test-secret'))
     expect(res.status).toBe(200)
-    const body = (await res.json()) as { skipped: boolean }
-    expect(body.skipped).toBe(true)
+    const body = (await res.json()) as { errors: number; checked: number }
+    expect(body.checked).toBe(1)
+    expect(body.errors).toBe(1)
   })
 
   it('does not update D1 when video is still processing', async () => {

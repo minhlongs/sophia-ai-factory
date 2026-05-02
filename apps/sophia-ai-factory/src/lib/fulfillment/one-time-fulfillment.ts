@@ -16,6 +16,7 @@
 import { logger } from '@/lib/utils/logger-utility'
 import { createServerClient } from '@/lib/db/client'
 import { createHeyGenVideo } from '@/lib/video/heygen-helpers'
+import { getHeyGenKey } from '@/lib/credentials/get-provider-key'
 import { getOneTimeWelcomeScript } from '@/lib/video/one-time-welcome-script'
 import {
   findByPurchaseId,
@@ -109,15 +110,18 @@ export async function triggerOneTimeFulfillment(
   }
 
   // First attempt — fail-soft, retry cron picks up if this fails
-  const apiKey = process.env.HEYGEN_API_KEY
-  if (!apiKey) {
-    await recordAttempt(videoRowId, 'no_api_key')
-    logger.warn('[OneTimeFulfillment] No HEYGEN_API_KEY — video queued for retry', {
+  // Customer fulfillment MUST use the customer's own HeyGen key (fallbackToPlatform: false)
+  const keyResult = await getHeyGenKey({ userId, fallbackToPlatform: false })
+  if (!keyResult) {
+    await recordAttempt(videoRowId, 'no_user_heygen_key')
+    logger.warn('[OneTimeFulfillment] No user HeyGen key — video queued for retry', {
       videoRowId,
       purchaseId,
+      userId,
     })
     return
   }
+  const apiKey = keyResult.key
 
   // Only register callback URL in production to avoid preview-deploy webhooks
   const callbackUrl =

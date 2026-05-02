@@ -20,6 +20,7 @@ import { verifyCronAuth } from '@/lib/security/cron-auth'
 import { recordCronRun } from '@/lib/cron/run-tracker'
 import { getD1Raw, createServerClient } from '@/lib/db/client'
 import { createHeyGenVideo } from '@/lib/video/heygen-helpers'
+import { getHeyGenKey } from '@/lib/credentials/get-provider-key'
 import { logger } from '@/lib/utils/logger-utility'
 import { getErrorMessage } from '@/lib/utils/to-error'
 import {
@@ -73,7 +74,6 @@ export async function GET(req: NextRequest) {
 
   const summary = { retried: 0, succeeded: 0, failed: 0, permanent: 0, skipped: 0, circuitBlocked: 0 }
   const now = Math.floor(Date.now() / 1000)
-  const apiKey = process.env.HEYGEN_API_KEY
 
   // Check circuit breaker once per cron run — if open, skip all HeyGen attempts
   const dispatch = await shouldDispatch()
@@ -95,12 +95,14 @@ export async function GET(req: NextRequest) {
 
       summary.retried++
 
-      // No API key — treat as failure but don't exhaust attempts
-      if (!apiKey) {
-        await recordAttemptCAS(row.id, 'no_api_key')
+      // Per-row: resolve this user's HeyGen key (customer must have own key)
+      const keyResult = await getHeyGenKey({ userId: row.user_id, fallbackToPlatform: false })
+      if (!keyResult) {
+        await recordAttemptCAS(row.id, 'no_user_heygen_key')
         summary.failed++
         continue
       }
+      const rowApiKey = keyResult.key
 
       const script = row.script ?? ''
       const title = `Welcome Bundle — ${row.id.slice(0, 8)}`
@@ -110,7 +112,7 @@ export async function GET(req: NextRequest) {
           : undefined
 
       try {
-        const { videoId: heygenJobId } = await createHeyGenVideo({ script, title, apiKey, callbackUrl })
+        const { videoId: heygenJobId } = await createHeyGenVideo({ script, title, apiKey: rowApiKey, callbackUrl })
         await markVideoProcessing(row.id, heygenJobId)
         try { await recordHeyGenAttempt(true) } catch { /* non-fatal */ }
         summary.succeeded++
