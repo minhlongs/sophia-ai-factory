@@ -38,7 +38,7 @@ async function findOrResolveUser(
   try {
     const db = await getD1Raw();
     const row = await db
-      .prepare(`SELECT id FROM users WHERE email = ?1 LIMIT 1`)
+      .prepare(`SELECT id FROM user WHERE email = ?1 LIMIT 1`)
       .bind(email)
       .first<{ id: string }>();
     return row?.id ?? null;

@@ -51,7 +51,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   // Check duplicate email
   const existing = await db
-    .prepare(`SELECT id FROM users WHERE email = ?1 LIMIT 1`)
+    .prepare(`SELECT id FROM user WHERE email = ?1 LIMIT 1`)
     .bind(body.ownerEmail)
     .first<{ id: string }>();
   if (existing) {

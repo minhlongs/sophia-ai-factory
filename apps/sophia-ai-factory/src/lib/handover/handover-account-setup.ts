@@ -15,22 +15,21 @@ function randomPassword(): string {
   return crypto.randomUUID().replace(/-/g, '').slice(0, 16);
 }
 
-/** Create a new user in D1. Returns userId or throws. */
+/** Create a new user in D1's Better Auth `user` table. Returns userId or throws. */
 export async function createCustomerUser(
   db: D1Database,
   email: string,
   fullName: string,
 ): Promise<string> {
   const userId = genId();
-  const tempPassword = randomPassword();
-  const nowSec = Math.floor(Date.now() / 1000);
+  const nowIso = new Date().toISOString();
 
   await db
     .prepare(
-      `INSERT INTO users (id, email, name, password, role, email_verified, created_at, updated_at)
-       VALUES (?1, ?2, ?3, ?4, 'customer', 1, ?5, ?5)`,
+      `INSERT INTO user (id, email, name, emailVerified, role, createdAt, updatedAt)
+       VALUES (?1, ?2, ?3, 1, 'customer', ?4, ?4)`,
     )
-    .bind(userId, email, fullName, tempPassword, nowSec)
+    .bind(userId, email, fullName, nowIso)
     .run();
 
   return userId;
