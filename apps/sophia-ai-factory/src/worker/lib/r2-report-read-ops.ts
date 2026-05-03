@@ -5,7 +5,7 @@
  * @module worker/r2-report-read-ops
  */
 
-import type { ReconciliationReport, R2ReportMetadata } from '@/lib/billing/reconciliation-types';
+import type { ReconciliationReport, R2ReportMetadata } from '@/seed/types/billing-contracts';
 import { logger } from '@/lib/utils/logger-utility';
 import { toError } from '@/lib/utils/to-error';
 

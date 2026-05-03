@@ -7,7 +7,7 @@
 
 import { createServerClient } from '@/lib/db/client';
 import { z } from 'zod';
-import type { DunningState } from '@/lib/billing/dunning-workflow';
+import type { DunningState } from '@/seed/types/billing-contracts';
 
 /**
  * Query params validation schema

@@ -14,7 +14,7 @@
  */
 
 import type { MeteringLogEntry } from '@/lib/usage-metering/kv-metering-log-sync';
-import type { Discrepancy, DiscrepancySeverity } from '@/lib/billing/reconciliation-types';
+import type { Discrepancy, DiscrepancySeverity } from '@/seed/types/billing-contracts';
 import { logger } from '@/lib/utils/logger-utility';
 
 /**

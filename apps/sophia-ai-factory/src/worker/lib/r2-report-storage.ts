@@ -7,7 +7,7 @@
  * @module worker/r2-report-storage
  */
 
-import type { ReconciliationReport } from '@/lib/billing/reconciliation-types';
+import type { ReconciliationReport } from '@/seed/types/billing-contracts';
 import { logger } from '@/lib/utils/logger-utility';
 import { toError } from '@/lib/utils/to-error';
 
@@ -18,7 +18,7 @@ export {
   getReportDownloadUrl,
 } from './r2-report-read-ops';
 
-export type { R2ReportMetadata } from '@/lib/billing/reconciliation-types';
+export type { R2ReportMetadata } from '@/seed/types/billing-contracts';
 
 /**
  * Store reconciliation report in R2.
