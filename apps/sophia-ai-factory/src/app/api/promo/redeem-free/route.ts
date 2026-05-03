@@ -13,6 +13,7 @@ import { validatePromoCode } from '@/lib/promo/promo-validator';
 import { getCurrentUserFromHeaders } from '@/lib/better-auth-session';
 import { withRateLimit } from '@/middleware/rate-limit-wrapper';
 import { getD1Raw } from '@/lib/db/client';
+import { createCustomerUser } from '@/lib/handover/handover-account-setup';
 import { logger } from '@/lib/utils/logger-utility';
 
 const redeemFreeSchema = z.object({
@@ -75,9 +76,23 @@ export const POST = withRateLimit(
         );
       }
 
-      const userId = await findOrResolveUser(request, email);
+      let userId = await findOrResolveUser(request, email);
+
+      // Auto-create user if not found — promo redeem flow accepts new customers
+      // (matches endpoint contract: "Creates user if not found, fires auto-handover")
       if (!userId) {
-        return NextResponse.json({ error: 'user_not_found', hint: 'Register first.' }, { status: 404 });
+        try {
+          const db = await getD1Raw();
+          const resolvedName = fullName?.trim() || email.split('@')[0];
+          userId = await createCustomerUser(db, email, resolvedName);
+          logger.info('[RedeemFree] Auto-created customer user', { userId, email });
+        } catch (err) {
+          logger.error('[RedeemFree] Auto-create user failed', err instanceof Error ? err : undefined);
+          return NextResponse.json(
+            { error: 'user_create_failed', hint: 'Email may already exist. Try logging in first.' },
+            { status: 500 },
+          );
+        }
       }
 
       // Full apply with userId (includes per-user limit check)
