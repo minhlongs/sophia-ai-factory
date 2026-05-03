@@ -7,7 +7,7 @@
 
 ## Overview
 - **Priority:** P1
-- **Status:** pending
+- **Status:** **COMPLETE** (PR #26, commit f4a5009b, merged main 2026-05-03)
 - **Effort:** 90m
 - **Description:** `git mv` all tree-classified files into `src/tree/`. Reuse codemod from Phase 03. Atomic commit.
 
@@ -76,14 +76,14 @@ src/
 
 ## Todo List
 
-- [ ] Split tree files into move/stay buckets
-- [ ] Snapshot routes
-- [ ] Execute moves
-- [ ] Run codemod
-- [ ] Verify routes unchanged
-- [ ] Build/test/lint pass
-- [ ] Smoke test routes
-- [ ] Commit
+- [x] Split tree files into move/stay buckets
+- [x] Snapshot routes (358 files)
+- [x] Execute moves (168 files via git mv)
+- [x] Run codemod (382 imports rewritten in 229 files + manual fixes for vi.mock/relative imports)
+- [x] Verify routes unchanged (diff = empty)
+- [x] Build/test/lint pass (0 errors, 2546/0 pass)
+- [x] Smoke test routes (N/A — no dev server, route diff confirmed)
+- [x] Commit (f4a5009b, PR #26)
 
 ## Success Criteria
 - `diff routes-before.txt routes-after.txt` empty
