@@ -6,9 +6,9 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GET } from './route';
-import { getCurrentUserFromHeaders } from '@/lib/better-auth-session';
+import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 
-vi.mock('@/lib/better-auth-session', () => ({
+vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUserFromHeaders: vi.fn(),
 }));
 

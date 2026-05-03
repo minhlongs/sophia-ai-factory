@@ -1,4 +1,4 @@
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/seed/components/ui/card";
 import { getAdminStats } from "@/app/actions/admin";
 import { Users, Package, TrendingUp, DollarSign } from "lucide-react";
 

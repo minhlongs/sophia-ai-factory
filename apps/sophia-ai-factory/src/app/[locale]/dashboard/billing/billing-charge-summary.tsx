@@ -1,6 +1,6 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/seed/components/ui/card';
 import { DollarSign, TrendingUp, CreditCard } from 'lucide-react';
 import type { UsageSummaryResponse } from './billing-page-types';
 

@@ -13,17 +13,17 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
+} from '@/seed/components/ui/dialog';
+import { Button } from '@/seed/components/ui/button';
+import { Label } from '@/seed/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+} from '@/seed/components/ui/select';
+import { Alert, AlertDescription } from '@/seed/components/ui/alert';
 import { CheckCircle2, Calendar } from 'lucide-react';
 
 interface LicenseExtendDialogProps {

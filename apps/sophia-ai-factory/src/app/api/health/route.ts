@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { redisHelpers } from '@/lib/clients/upstash-redis-client';
-import { probeD1, probeR2, probeKv, getBuildMetadata } from '@/lib/health';
+import { probeD1, probeR2, probeKv, getBuildMetadata } from '@/seed/health';
 import type { D1Database, R2Bucket, KVNamespace } from '@cloudflare/workers-types';
-import type { HealthResponse } from '@/types/health';
+import type { HealthResponse } from '@/seed/types/health';
 import { withRateLimit } from '@/middleware/rate-limit-wrapper';
 
 // Wrap handler with rate limiting (300 requests per minute for health checks)
@@ -17,7 +17,7 @@ export const GET = withRateLimit(async function GET(req: NextRequest) {
 
     if (!isAuthorized) {
       try {
-        const { getCurrentUserFromHeaders } = await import('@/lib/better-auth-session');
+        const { getCurrentUserFromHeaders } = await import('@/seed/auth/better-auth-session');
         const user = await getCurrentUserFromHeaders(req.headers);
         if (user) isAuthorized = true;
       } catch { /* session check failed */ }

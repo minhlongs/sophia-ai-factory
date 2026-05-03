@@ -29,7 +29,7 @@ const mocks = vi.hoisted(() => {
   };
 });
 
-vi.mock('@/lib/utils/logger-utility', () => ({
+vi.mock('@/seed/utils/logger-utility', () => ({
   logger: mocks.logger,
 }));
 
@@ -43,7 +43,7 @@ vi.mock('../token-crypto', () => ({
   },
 }));
 
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   getD1Client: vi.fn().mockResolvedValue(mocks.mockDb),
   getD1Raw: vi.fn().mockResolvedValue(mocks.mockRawDb),
 }));

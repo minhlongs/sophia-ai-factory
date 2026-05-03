@@ -1,4 +1,4 @@
-import { AffiliateProgram, Tier } from "@/types";
+import { AffiliateProgram, Tier } from "@/seed/types";
 import affiliateData from "@/data/affiliate-programs.json";
 
 /**

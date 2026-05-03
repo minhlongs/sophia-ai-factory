@@ -11,7 +11,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { McuBalanceWidget } from './mcu-balance-widget';
-import type { MissionStatus } from '@/types/raas';
+import type { MissionStatus } from '@/seed/types/raas';
 
 interface MissionRow {
   id: string;

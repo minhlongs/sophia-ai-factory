@@ -7,7 +7,7 @@
 
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
-import { getCurrentUser } from '@/lib/better-auth-session';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { listOfficialTemplates, listInstallationsForUser } from '@/lib/sop/sop-repo';
 import { SopGrid } from '@/components/sop/sop-grid';
 import { installSopAction } from './actions';

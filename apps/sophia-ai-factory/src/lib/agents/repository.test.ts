@@ -42,7 +42,7 @@ function makeDb(singleData: unknown = null, listData: unknown[] = []) {
   return { from: () => makeChain(singleData, listData) };
 }
 
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   createServerClient: vi.fn(),
 }));
 
@@ -52,7 +52,7 @@ describe('repository: getTeamByOrgId', () => {
   beforeEach(() => { vi.resetModules(); });
 
   it('returns mapped AgentTeam when row found', async () => {
-    const { createServerClient } = await import('@/lib/db/client');
+    const { createServerClient } = await import('@/seed/db/client');
     (createServerClient as ReturnType<typeof vi.fn>).mockReturnValue(makeDb(TEAM_ROW));
 
     const { getTeamByOrgId } = await import('./repository');
@@ -64,7 +64,7 @@ describe('repository: getTeamByOrgId', () => {
   });
 
   it('returns null when no row found', async () => {
-    const { createServerClient } = await import('@/lib/db/client');
+    const { createServerClient } = await import('@/seed/db/client');
     (createServerClient as ReturnType<typeof vi.fn>).mockReturnValue(makeDb(null));
 
     const { getTeamByOrgId } = await import('./repository');
@@ -77,7 +77,7 @@ describe('repository: getAgentById', () => {
   beforeEach(() => { vi.resetModules(); });
 
   it('maps agent row correctly', async () => {
-    const { createServerClient } = await import('@/lib/db/client');
+    const { createServerClient } = await import('@/seed/db/client');
     (createServerClient as ReturnType<typeof vi.fn>).mockReturnValue(makeDb(AGENT_ROW));
 
     const { getAgentById } = await import('./repository');
@@ -92,7 +92,7 @@ describe('repository: getTask', () => {
   beforeEach(() => { vi.resetModules(); });
 
   it('maps task row correctly', async () => {
-    const { createServerClient } = await import('@/lib/db/client');
+    const { createServerClient } = await import('@/seed/db/client');
     (createServerClient as ReturnType<typeof vi.fn>).mockReturnValue(makeDb(TASK_ROW));
 
     const { getTask } = await import('./repository');
@@ -107,7 +107,7 @@ describe('repository: listAgents', () => {
   beforeEach(() => { vi.resetModules(); });
 
   it('returns array of agents', async () => {
-    const { createServerClient } = await import('@/lib/db/client');
+    const { createServerClient } = await import('@/seed/db/client');
     (createServerClient as ReturnType<typeof vi.fn>).mockReturnValue(makeDb(null, [AGENT_ROW]));
 
     const { listAgents } = await import('./repository');
@@ -117,7 +117,7 @@ describe('repository: listAgents', () => {
   });
 
   it('returns empty array when no rows', async () => {
-    const { createServerClient } = await import('@/lib/db/client');
+    const { createServerClient } = await import('@/seed/db/client');
     (createServerClient as ReturnType<typeof vi.fn>).mockReturnValue(makeDb(null, []));
 
     const { listAgents } = await import('./repository');
@@ -130,7 +130,7 @@ describe('repository: appendLog', () => {
   beforeEach(() => { vi.resetModules(); });
 
   it('returns AgentLog on success', async () => {
-    const { createServerClient } = await import('@/lib/db/client');
+    const { createServerClient } = await import('@/seed/db/client');
     (createServerClient as ReturnType<typeof vi.fn>).mockReturnValue(makeDb(LOG_ROW));
 
     const { appendLog } = await import('./repository');

@@ -6,12 +6,12 @@ import { POST as createVideo } from './create-video/route';
 import { GET as getStatus } from './status/[id]/route';
 
 // Mock better-auth-session (used by heygen routes for auth)
-vi.mock('@/lib/better-auth-session', () => ({
+vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: vi.fn(),
 }));
 
 // Mock getUserTier (used by create-video tier gate)
-vi.mock('@/lib/db/get-user-tier', () => ({
+vi.mock('@/seed/db/get-user-tier', () => ({
   getUserTier: vi.fn(),
 }));
 
@@ -29,7 +29,7 @@ vi.mock('@/lib/quota/video-quota', () => ({
 }));
 
 // Mock D1 client — INSERT/UPDATE side-effect should not affect status
-vi.mock('@/lib/db/client', () => {
+vi.mock('@/seed/db/client', () => {
   const buildChain = () => {
     const chain: Record<string, unknown> = {};
     chain.insert = vi.fn(() => Promise.resolve({ data: null, error: null }));
@@ -50,8 +50,8 @@ vi.mock('@/lib/db/client', () => {
   };
 });
 
-import { getCurrentUser } from '@/lib/better-auth-session';
-import { getUserTier } from '@/lib/db/get-user-tier';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { getUserTier } from '@/seed/db/get-user-tier';
 import { ServiceFactory } from '@/lib/services/factory';
 import { reserveVideoSlot, releaseVideoSlot } from '@/lib/quota/video-quota';
 

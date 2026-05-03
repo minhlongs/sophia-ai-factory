@@ -48,7 +48,7 @@ vi.mock('@/lib/telegram/telegram-fsm-state-manager', () => ({
 }))
 
 // Mock D1 client (for /ticket userId lookup)
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   createServerClient: () => ({
     from: vi.fn().mockReturnValue({
       select: vi.fn().mockReturnValue({

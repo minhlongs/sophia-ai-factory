@@ -3,8 +3,8 @@
  * @module audit/cron-report-runner
  */
 
-import { logger } from '@/lib/utils/logger-utility'
-import { toError, getErrorMessage } from '@/lib/utils/to-error'
+import { logger } from '@/seed/utils/logger-utility'
+import { toError, getErrorMessage } from '@/seed/utils/to-error'
 import { getDueReports, updateNextRunAt, calculateNextRunAt, type ScheduledReport } from './report-scheduler'
 import { generateReport } from './pdf-report-generator'
 import { deliverReport, storeReport } from './report-delivery'

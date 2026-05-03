@@ -5,8 +5,8 @@
  * Prevents database saturation and enables retry logic
  */
 
-import { logger } from '@/lib/utils/logger-utility';
-import { getErrorMessage } from '@/lib/utils/to-error';
+import { logger } from '@/seed/utils/logger-utility';
+import { getErrorMessage } from '@/seed/utils/to-error';
 import type { UsageEventInput, IngestionResult } from './types';
 import { generateIdempotencyKey } from './idempotency';
 import { trackUsage } from './tracker';

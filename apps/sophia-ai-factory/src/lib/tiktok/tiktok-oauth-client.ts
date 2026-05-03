@@ -4,7 +4,7 @@
  * This file: video publish + user info API methods
  */
 
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 
 export type {
   TikTokTokenResponse,

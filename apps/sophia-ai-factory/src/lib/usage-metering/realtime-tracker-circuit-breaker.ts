@@ -3,8 +3,8 @@
  * @module usage-metering/realtime-tracker-circuit-breaker
  */
 
-import { logger } from '@/lib/utils/logger-utility'
-import { toError } from '@/lib/utils/to-error'
+import { logger } from '@/seed/utils/logger-utility'
+import { toError } from '@/seed/utils/to-error'
 import { getKvClient } from '@/lib/redis'
 import { logAuditEvent } from '@/lib/audit/audit-logger'
 import {

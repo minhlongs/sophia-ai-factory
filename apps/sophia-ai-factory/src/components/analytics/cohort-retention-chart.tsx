@@ -9,9 +9,9 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import type { CohortRetentionMatrix, CohortRow } from '@/types/analytics-cohort';
+import { Card, CardContent, CardHeader, CardTitle } from '@/seed/components/ui/card';
+import { Skeleton } from '@/seed/components/ui/skeleton';
+import type { CohortRetentionMatrix, CohortRow } from '@/seed/types/analytics-cohort';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

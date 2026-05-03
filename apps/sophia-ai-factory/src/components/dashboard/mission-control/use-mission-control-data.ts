@@ -5,7 +5,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import type { Tier } from '@/types';
+import type { Tier } from '@/seed/types';
 
 interface DayCount { date: string; count: number; }
 

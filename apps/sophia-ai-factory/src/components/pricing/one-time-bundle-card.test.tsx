@@ -14,14 +14,14 @@ vi.mock('next-intl', () => ({
 }));
 
 // Mock FadeInView to render children directly
-vi.mock('@/components/ui/fade-in-view', () => ({
+vi.mock('@/seed/components/ui/fade-in-view', () => ({
   FadeInView: ({ children, className }: { children: React.ReactNode; className?: string }) => (
     <div className={className}>{children}</div>
   ),
 }));
 
 // Mock SKU config
-vi.mock('@/config/one-time-skus', () => ({
+vi.mock('@/seed/config/one-time-skus', () => ({
   ONE_TIME_SKUS: {
     STARTER_BUNDLE: {
       id: 'starter_bundle',

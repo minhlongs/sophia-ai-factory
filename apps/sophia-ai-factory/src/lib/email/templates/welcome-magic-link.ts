@@ -4,7 +4,7 @@
  * @module lib/email/templates/welcome-magic-link
  */
 
-import type { Tier } from '@/types';
+import type { Tier } from '@/seed/types';
 import { htmlWrapper, ctaButton, magicLinkNote, htmlToText, BASE_URL } from './shared-layout';
 
 export interface WelcomeMagicLinkData {

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('@/lib/better-auth-session', () => ({
+vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: vi.fn(),
 }));
 
@@ -8,7 +8,7 @@ vi.mock('@/lib/byok/user-api-key-store', () => ({
   listUserApiKeyProviders: vi.fn(),
 }));
 
-import { getCurrentUser } from '@/lib/better-auth-session';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { listUserApiKeyProviders } from '@/lib/byok/user-api-key-store';
 import { GET } from './route';
 

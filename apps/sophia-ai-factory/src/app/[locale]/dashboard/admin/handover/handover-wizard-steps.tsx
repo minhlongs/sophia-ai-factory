@@ -12,7 +12,7 @@ import {
   AGENCY_SOP_MAP, TIER_SOP_COUNTS,
   type AgencyType, type CreateHandoverInput,
 } from '@/lib/handover/handover-types';
-import type { Tier } from '@/types';
+import type { Tier } from '@/seed/types';
 
 export interface FormState {
   agencyName: string;

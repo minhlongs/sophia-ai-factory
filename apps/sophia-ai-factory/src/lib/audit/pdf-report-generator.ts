@@ -7,8 +7,8 @@
  *   report-formatters.ts   — generateUsageCSV, generateComplianceJSON, formatBytes
  */
 
-import { logger } from '@/lib/utils/logger-utility'
-import { toError } from '@/lib/utils/to-error'
+import { logger } from '@/seed/utils/logger-utility'
+import { toError } from '@/seed/utils/to-error'
 import { generateComplianceHTML } from './report-html-template'
 import { generateUsageCSV, generateComplianceJSON, formatBytes } from './report-formatters'
 import type { ComplianceReportData } from './report-types'

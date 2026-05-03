@@ -1,15 +1,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { generateScript, renderVideo, getUserProjects } from './automation';
-import { createServerClient } from '@/lib/db/client';
-import { getCurrentUser } from '@/lib/better-auth-session';
+import { createServerClient } from '@/seed/db/client';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { revalidatePath } from 'next/cache';
 
 // Mock dependencies
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   createServerClient: vi.fn(),
 }));
 
-vi.mock('@/lib/better-auth-session', () => ({
+vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: vi.fn(),
 }));
 

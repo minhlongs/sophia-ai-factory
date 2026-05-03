@@ -9,9 +9,9 @@
 
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getCurrentUserFromHeaders } from '@/lib/better-auth-session';
+import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { schedulePublish } from '@/lib/publishing/scheduler';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 
 const scheduleBodySchema = z.object({
   videoJobId: z.string().uuid('videoJobId must be a valid UUID'),

@@ -5,8 +5,8 @@
  */
 
 import { NextRequest } from 'next/server';
-import { getCurrentUser } from '@/lib/better-auth-session';
-import { createServerClient } from '@/lib/db/client';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { createServerClient } from '@/seed/db/client';
 import type { AgentTaskRow } from '@/lib/agents/types';
 
 export const dynamic = 'force-dynamic';

@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent, CardHeader, CardTitle } from '@/seed/components/ui/card';
+import { Skeleton } from '@/seed/components/ui/skeleton';
 import {
   PieChart,
   Pie,

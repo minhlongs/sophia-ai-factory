@@ -5,7 +5,7 @@
  * Server component: fetches data from D1.
  */
 
-import { getCurrentUser } from '@/lib/better-auth-session';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { redirect } from 'next/navigation';
 import { getBalance, listTransactions } from '@/lib/mcu/credits-repo';
 import { COMMANDS } from '@/lib/missions/command-registry';

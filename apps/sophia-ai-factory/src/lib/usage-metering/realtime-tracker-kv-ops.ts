@@ -3,8 +3,8 @@
  * @module usage-metering/realtime-tracker-kv-ops
  */
 
-import { logger } from '@/lib/utils/logger-utility'
-import { toError } from '@/lib/utils/to-error'
+import { logger } from '@/seed/utils/logger-utility'
+import { toError } from '@/seed/utils/to-error'
 import { getKvClient } from '@/lib/redis'
 import type { RealTimeUsage } from './realtime-tracker-types'
 

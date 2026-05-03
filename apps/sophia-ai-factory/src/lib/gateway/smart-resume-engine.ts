@@ -21,7 +21,7 @@ import {
 } from "./pipeline-step-navigator";
 import type { PipelineStep } from "./pipeline-step-navigator";
 import type { Checkpoint } from "./gateway-types";
-import { logger } from "@/lib/utils/logger-utility";
+import { logger } from "@/seed/utils/logger-utility";
 
 export type { PipelineStep };
 

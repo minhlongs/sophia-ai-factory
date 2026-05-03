@@ -6,8 +6,8 @@
  */
 
 import { sha256 } from '@/lib/audit/crypto-utils';
-import { logger } from '@/lib/utils/logger-utility';
-import { getErrorMessage } from '@/lib/utils/to-error';
+import { logger } from '@/seed/utils/logger-utility';
+import { getErrorMessage } from '@/seed/utils/to-error';
 import type { UsageEventInput, IngestionResult } from './types';
 import { CREDIT_RULES } from './constants';
 import { generateIdempotencyKey } from './idempotency';

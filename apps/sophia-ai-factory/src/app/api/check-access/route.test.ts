@@ -3,8 +3,8 @@ import { GET } from './route';
 import { NextRequest } from 'next/server';
 import { tierGuard } from '@/lib/tier-guard';
 import { checkTierAccess } from '@/lib/features';
-import { getCurrentUserFromHeaders } from '@/lib/better-auth-session';
-import { getUserTier } from '@/lib/db/get-user-tier';
+import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
+import { getUserTier } from '@/seed/db/get-user-tier';
 
 // Type for mock NextResponse.json return value
 interface MockResponse {
@@ -15,10 +15,10 @@ interface MockResponse {
 // Mock dependencies
 vi.mock('@/lib/tier-guard');
 vi.mock('@/lib/features');
-vi.mock('@/lib/better-auth-session', () => ({
+vi.mock('@/seed/auth/better-auth-session', () => ({
     getCurrentUserFromHeaders: vi.fn(),
 }));
-vi.mock('@/lib/db/get-user-tier', () => ({
+vi.mock('@/seed/db/get-user-tier', () => ({
     getUserTier: vi.fn(),
 }));
 

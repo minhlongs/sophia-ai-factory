@@ -1,11 +1,11 @@
 "use server";
 
-import { getCurrentUser } from "@/lib/better-auth-session";
-import { createServerClient } from "@/lib/db/client";
-import { Tier } from "@/types";
+import { getCurrentUser } from "@/seed/auth/better-auth-session";
+import { createServerClient } from "@/seed/db/client";
+import { Tier } from "@/seed/types";
 import { revalidatePath } from "next/cache";
-import { logger } from "@/lib/utils/logger-utility";
-import { toError } from "@/lib/utils/to-error";
+import { logger } from "@/seed/utils/logger-utility";
+import { toError } from "@/seed/utils/to-error";
 
 async function getUser() {
   try {
@@ -34,7 +34,7 @@ export async function generateScript(formData: FormData) {
   }
 
   // Get actual user tier from D1
-  const { getUserTier } = await import("@/lib/db/get-user-tier");
+  const { getUserTier } = await import("@/seed/db/get-user-tier");
   const userTier: Tier = await getUserTier(user.id);
 
   try {

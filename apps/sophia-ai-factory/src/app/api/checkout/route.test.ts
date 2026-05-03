@@ -20,7 +20,7 @@ vi.mock('@/middleware/rate-limit-wrapper', () => ({
   withRateLimit: (handler: (req: NextRequest) => Promise<Response>) => handler,
 }));
 
-vi.mock('@/lib/better-auth-session', () => ({
+vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUserFromHeaders: vi.fn(),
 }));
 
@@ -38,7 +38,7 @@ vi.mock('@/lib/clients/nowpayments-client', () => ({
 }));
 
 import { GET, POST } from './route';
-import { getCurrentUserFromHeaders } from '@/lib/better-auth-session';
+import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { createInvoiceUrl } from '@/lib/clients/nowpayments-client';
 
 const mockGetUser = vi.mocked(getCurrentUserFromHeaders);

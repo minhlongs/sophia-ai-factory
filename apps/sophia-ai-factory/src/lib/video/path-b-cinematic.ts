@@ -8,7 +8,7 @@
 
 import { getVideoBucket, tenantScopedKey } from '@/lib/video/r2-binding';
 import { recordCost } from '@/lib/video/cost-ledger';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 import type { ScenePrompt } from '@/lib/video/visual-prompt-generator';
 
 export interface PathBInput {

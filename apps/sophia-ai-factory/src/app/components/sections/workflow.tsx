@@ -1,10 +1,10 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Container } from "@/components/ui/container";
-import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { SectionHeading } from "@/components/ui/section-heading";
-import { FadeInView } from "@/components/ui/fade-in-view";
+import { Container } from "@/seed/components/ui/container";
+import { Card, CardHeader, CardTitle, CardDescription } from "@/seed/components/ui/card";
+import { SectionHeading } from "@/seed/components/ui/section-heading";
+import { FadeInView } from "@/seed/components/ui/fade-in-view";
 import { ArrowRight } from "lucide-react";
 
 export function Workflow() {

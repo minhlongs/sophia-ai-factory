@@ -6,10 +6,10 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getCurrentUser } from '@/lib/better-auth-session'
-import { getWorkflow } from '@/lib/db/workflow-repository'
-import { logger } from '@/lib/utils/logger-utility'
-import { resolveOrgId } from '@/lib/auth/resolve-org-id'
+import { getCurrentUser } from '@/seed/auth/better-auth-session'
+import { getWorkflow } from '@/seed/db/workflow-repository'
+import { logger } from '@/seed/utils/logger-utility'
+import { resolveOrgId } from '@/seed/auth/resolve-org-id'
 
 export const dynamic = 'force-dynamic'
 

@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { ArrowRight, Lock } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { TIER_CONFIGS } from "@/config/tiers";
-import { Tier } from "@/types";
+import { Button } from "@/seed/components/ui/button";
+import { Card, CardContent } from "@/seed/components/ui/card";
+import { TIER_CONFIGS } from "@/seed/config/tiers";
+import { Tier } from "@/seed/types";
 
 interface UpgradeBannerProps {
   currentTier: Tier;

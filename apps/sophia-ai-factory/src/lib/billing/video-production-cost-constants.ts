@@ -7,7 +7,7 @@
  * @module billing/video-production-cost-constants
  */
 
-import type { Tier } from '@/types';
+import type { Tier } from '@/seed/types';
 
 /** Real API costs per video component (USD) */
 export const API_COSTS = {

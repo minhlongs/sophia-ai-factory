@@ -9,8 +9,8 @@
  * @module lib/webhooks/heygen-webhook-secret-resolver
  */
 
-import { logger } from '@/lib/utils/logger-utility'
-import { createServerClient } from '@/lib/db/client'
+import { logger } from '@/seed/utils/logger-utility'
+import { createServerClient } from '@/seed/db/client'
 import { getUserCredential } from '@/lib/credentials/user-credentials-repo'
 
 interface VideoOwnerRow {

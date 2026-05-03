@@ -14,11 +14,11 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createOneTimeInvoiceUrl } from '@/lib/clients/nowpayments-client';
-import { getOneTimeSkuById, ONE_TIME_SKUS } from '@/config/one-time-skus';
+import { getOneTimeSkuById, ONE_TIME_SKUS } from '@/seed/config/one-time-skus';
 import { withRateLimit } from '@/middleware/rate-limit-wrapper';
-import { getCurrentUserFromHeaders } from '@/lib/better-auth-session';
-import { createServerClient } from '@/lib/db/client';
-import { logger } from '@/lib/utils/logger-utility';
+import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
+import { createServerClient } from '@/seed/db/client';
+import { logger } from '@/seed/utils/logger-utility';
 
 /** 30 minutes — window for detecting duplicate pending purchases. */
 const DEDUPE_WINDOW_SECS = 30 * 60

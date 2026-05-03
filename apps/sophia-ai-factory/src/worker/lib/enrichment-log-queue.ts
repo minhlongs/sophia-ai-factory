@@ -7,7 +7,7 @@
  */
 
 import type { EnrichmentLog } from './enrichment-logger-types';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 
 /** Subset of Cloudflare Worker Env bindings used by the log queue */
 interface LogQueueEnv {

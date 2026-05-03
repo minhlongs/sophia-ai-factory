@@ -1,6 +1,6 @@
 "use client";
 
-import { ScrollReveal } from "@/components/ui/scroll-reveal";
+import { ScrollReveal } from "@/seed/components/ui/scroll-reveal";
 
 /** Feature card data — Vietnamese, dark-themed, Video Factory + RaaS focus */
 const features = [

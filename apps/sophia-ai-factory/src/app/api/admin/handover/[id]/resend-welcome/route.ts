@@ -6,15 +6,15 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth/require-admin';
-import { getD1Raw } from '@/lib/db/client';
+import { requireAdmin } from '@/seed/auth/require-admin';
+import { getD1Raw } from '@/seed/db/client';
 import { writeAuditLog } from '@/lib/admin/audit-log';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 import { createMagicLinkToken } from '@/lib/handover/handover-magic-link';
 import { sendWelcomeEmail } from '@/lib/handover/handover-email-service';
 import { generateHandoverDoc } from '@/lib/handover/handover-doc-generator';
 import type { CustomerHandoverRow, AgencyType } from '@/lib/handover/handover-types';
-import type { Tier } from '@/types';
+import type { Tier } from '@/seed/types';
 
 export const dynamic = 'force-dynamic';
 

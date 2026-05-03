@@ -14,7 +14,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 const TEST_HEX_KEY = 'b'.repeat(64)
 
 // Mock getD1Raw
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   getD1Raw: vi.fn(),
 }))
 
@@ -24,7 +24,7 @@ vi.mock('./encryption', () => ({
   decryptValue: vi.fn(async (enc: string) => enc.replace(/^enc:/, '')),
 }))
 
-import { getD1Raw } from '@/lib/db/client'
+import { getD1Raw } from '@/seed/db/client'
 
 describe('lib/credentials/user-credentials-repo', () => {
   beforeEach(() => {

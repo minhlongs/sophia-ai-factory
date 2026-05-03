@@ -4,9 +4,9 @@
  */
 
 import { checkVideoGenerationStatus } from '@/lib/ai/video-generator'
-import { logger } from '@/lib/utils/logger-utility'
-import { getErrorMessage } from '@/lib/utils/to-error'
-import { CampaignStatus, type Tier } from '@/types'
+import { logger } from '@/seed/utils/logger-utility'
+import { getErrorMessage } from '@/seed/utils/to-error'
+import { CampaignStatus, type Tier } from '@/seed/types'
 
 function isTransientError(err: unknown): boolean {
   if (!(err instanceof Error)) return false

@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { ServiceFactory } from "@/lib/services/factory";
 import { MissingCredentialsError } from "@/lib/services/errors";
-import { getCurrentUser } from "@/lib/better-auth-session";
-import { getUserTier } from "@/lib/db/get-user-tier";
-import { createServerClient } from "@/lib/db/client";
+import { getCurrentUser } from "@/seed/auth/better-auth-session";
+import { getUserTier } from "@/seed/db/get-user-tier";
+import { createServerClient } from "@/seed/db/client";
 import { createVideoSchema } from "@/lib/schemas";
-import { logger } from "@/lib/utils/logger-utility";
+import { logger } from "@/seed/utils/logger-utility";
 import { reserveVideoSlot, releaseVideoSlot } from "@/lib/quota/video-quota";
 
 const VIDEO_ALLOWED_TIERS = new Set(['PREMIUM', 'ENTERPRISE', 'MASTER']);

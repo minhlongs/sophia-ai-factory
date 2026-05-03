@@ -8,11 +8,11 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Input } from '@/components/ui/input';
-import type { LTVByTier, TierLTVRow } from '@/types/analytics-cohort';
-import type { Tier } from '@/types';
+import { Card, CardContent, CardHeader, CardTitle } from '@/seed/components/ui/card';
+import { Skeleton } from '@/seed/components/ui/skeleton';
+import { Input } from '@/seed/components/ui/input';
+import type { LTVByTier, TierLTVRow } from '@/seed/types/analytics-cohort';
+import type { Tier } from '@/seed/types';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 

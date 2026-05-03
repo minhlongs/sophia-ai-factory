@@ -11,11 +11,11 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent, CardHeader, CardTitle } from '@/seed/components/ui/card';
+import { Skeleton } from '@/seed/components/ui/skeleton';
 import { TrendingUp, TrendingDown, DollarSign, Users } from 'lucide-react';
 import { formatCurrency } from '@/lib/analytics/formatters';
-import type { RevenueSnapshot } from '@/types/analytics-revenue';
+import type { RevenueSnapshot } from '@/seed/types/analytics-revenue';
 
 // ── Props ───────────────────────────────────────────────────────────────────
 

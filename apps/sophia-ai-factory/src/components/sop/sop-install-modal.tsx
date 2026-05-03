@@ -11,8 +11,8 @@
 import { useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
 import { ChevronDown, ChevronUp, Clock } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/seed/components/ui/dialog';
+import { Button } from '@/seed/components/ui/button';
 import type { SopTemplateRow } from '@/lib/sop/sop-types';
 import { CRON_PRESETS } from '@/lib/sop/install-input-schema';
 import { CategoryBadge } from './category-badge';

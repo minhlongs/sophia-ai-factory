@@ -6,7 +6,7 @@
  * @module quota/quota-enforcer
  */
 
-import { logger } from '@/lib/utils/logger-utility'
+import { logger } from '@/seed/utils/logger-utility'
 import { checkQuotaWithOverage, DEFAULT_CONFIG } from './quota-checker'
 import type { QuotaCheckContext, EnhancedQuotaCheckResult } from './quota-checker'
 import { invalidateQuotaCache } from './quota-checker'

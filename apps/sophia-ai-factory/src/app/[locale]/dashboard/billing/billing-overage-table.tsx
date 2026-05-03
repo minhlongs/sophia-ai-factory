@@ -1,8 +1,8 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/seed/components/ui/card';
+import { Badge } from '@/seed/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/seed/components/ui/table';
 import { Zap, CreditCard, Calendar } from 'lucide-react';
 import type { UsageSummaryResponse } from './billing-page-types';
 

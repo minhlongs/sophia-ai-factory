@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { POST } from "./route";
 
-vi.mock("@/lib/better-auth-session", () => ({
+vi.mock("@/seed/auth/better-auth-session", () => ({
   getCurrentUser: vi.fn(),
 }));
 
-vi.mock("@/lib/db/get-user-tier", () => ({
+vi.mock("@/seed/db/get-user-tier", () => ({
   getUserTier: vi.fn(),
 }));
 
@@ -32,8 +32,8 @@ vi.mock("next/server", async (importOriginal) => {
   };
 });
 
-import { getCurrentUser } from "@/lib/better-auth-session";
-import { getUserTier } from "@/lib/db/get-user-tier";
+import { getCurrentUser } from "@/seed/auth/better-auth-session";
+import { getUserTier } from "@/seed/db/get-user-tier";
 import { generateScript } from "@/lib/ai/script-generator";
 
 interface MockResponse {

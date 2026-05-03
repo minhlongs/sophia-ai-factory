@@ -5,8 +5,8 @@
  * Quota progress bar + overage warning + feature entitlements + billing info
  */
 
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/seed/components/ui/progress';
+import { Badge } from '@/seed/components/ui/badge';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
 
 interface LicenseStatusUsageSectionProps {

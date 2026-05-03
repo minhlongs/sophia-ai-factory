@@ -5,7 +5,7 @@
  * StatusBadge, UsageProgress, and formatExpiration for LicenseMetricsTable rows
  */
 
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@/seed/components/ui/badge';
 import { AlertTriangle } from 'lucide-react';
 
 /** Color class for usage percentage */

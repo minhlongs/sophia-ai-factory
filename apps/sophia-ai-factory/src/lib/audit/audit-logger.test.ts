@@ -19,7 +19,7 @@ import {
 } from './audit-logger'
 
 // Mock logger for all tests
-vi.mock('@/lib/utils/logger-utility', () => ({
+vi.mock('@/seed/utils/logger-utility', () => ({
   logger: {
     info: vi.fn(),
     warn: vi.fn(),

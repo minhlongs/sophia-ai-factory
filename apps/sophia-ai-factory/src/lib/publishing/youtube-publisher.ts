@@ -5,7 +5,7 @@
  */
 
 import type { Publisher, PublishMeta, PublishStatus, MetricsJson } from './publisher-interface';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 
 const YOUTUBE_VIDEOS_URL = 'https://www.googleapis.com/youtube/v3/videos';
 function isMockMode(): boolean { return !process.env.YOUTUBE_CLIENT_ID; }

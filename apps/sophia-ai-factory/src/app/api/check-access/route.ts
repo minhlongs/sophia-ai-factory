@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { FeatureFlag, Tier } from "@/types";
+import { FeatureFlag, Tier } from "@/seed/types";
 import { checkTierAccess } from "@/lib/features";
 import { tierGuard, LimitType } from "@/lib/tier-guard";
-import { getUserTier } from "@/lib/db/get-user-tier";
-import { toError } from "@/lib/utils/to-error";
+import { getUserTier } from "@/seed/db/get-user-tier";
+import { toError } from "@/seed/utils/to-error";
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     let userId = "anonymous";
 
     try {
-      const { getCurrentUserFromHeaders } = await import("@/lib/better-auth-session");
+      const { getCurrentUserFromHeaders } = await import("@/seed/auth/better-auth-session");
       const user = await getCurrentUserFromHeaders(request.headers);
       if (user) {
         userId = user.id;

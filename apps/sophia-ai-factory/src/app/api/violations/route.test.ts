@@ -8,11 +8,11 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
 // Mock dependencies
-vi.mock('@/lib/better-auth-session', () => ({
+vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: vi.fn(),
 }));
 
-vi.mock('@/lib/db/get-user-tier', () => ({
+vi.mock('@/seed/db/get-user-tier', () => ({
   getUserTier: vi.fn().mockResolvedValue('BASIC'),
 }));
 
@@ -27,25 +27,25 @@ vi.mock('@/lib/analytics/queries', () => ({
   fetchViolationSummary: vi.fn(),
 }));
 
-vi.mock('@/lib/security/api-key-validator', () => ({
+vi.mock('@/seed/security/api-key-validator', () => ({
   validateApiKey: vi.fn(),
 }));
 
-vi.mock('@/lib/security/jwt-validator', () => ({
+vi.mock('@/seed/security/jwt-validator', () => ({
   validateJwt: vi.fn(),
 }));
 
-vi.mock('@/lib/security/rate-limiter', () => ({
+vi.mock('@/seed/security/rate-limiter', () => ({
   checkRateLimit: vi.fn(),
 }));
 
 import { GET } from './route';
-import { getCurrentUser } from '@/lib/better-auth-session';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { verifyLicenseAccess, getUserLicenseNonce, checkAdmin } from '@/lib/analytics/rbac';
 import { fetchViolations, fetchViolationSummary } from '@/lib/analytics/queries';
-import { validateApiKey } from '@/lib/security/api-key-validator';
-import { validateJwt } from '@/lib/security/jwt-validator';
-import { checkRateLimit } from '@/lib/security/rate-limiter';
+import { validateApiKey } from '@/seed/security/api-key-validator';
+import { validateJwt } from '@/seed/security/jwt-validator';
+import { checkRateLimit } from '@/seed/security/rate-limiter';
 
 /** Helper to type JSON responses in tests */
 async function getJson(response: Response): Promise<Record<string, unknown>> {

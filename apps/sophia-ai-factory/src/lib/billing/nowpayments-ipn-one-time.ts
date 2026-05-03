@@ -10,16 +10,16 @@
  * @module billing/nowpayments-ipn-one-time
  */
 
-import { logger } from '@/lib/utils/logger-utility'
-import { getD1Raw } from '@/lib/db/client'
-import { recordAudit } from '@/lib/db/audit/audit-log'
-import { insertPurchase, markPaid, markRefunded, getByPaymentId } from '@/lib/db/repositories/user-purchases-repo'
-import { revokeAccessByPurchaseId } from '@/lib/db/repositories/videos-repo'
+import { logger } from '@/seed/utils/logger-utility'
+import { getD1Raw } from '@/seed/db/client'
+import { recordAudit } from '@/seed/db/audit/audit-log'
+import { insertPurchase, markPaid, markRefunded, getByPaymentId } from '@/seed/db/repositories/user-purchases-repo'
+import { revokeAccessByPurchaseId } from '@/seed/db/repositories/videos-repo'
 import { triggerOneTimeFulfillment } from '@/lib/fulfillment/one-time-fulfillment'
 import { markUnderpaid, UNDERPAYMENT_THRESHOLD } from './nowpayments-ipn-underpaid'
 import type { NowPaymentsIpnPayload } from './nowpayments-ipn-handlers'
 import { parseUserIdFromOrderId, getDb } from './nowpayments-ipn-db'
-import type { OneTimeSku } from '@/types'
+import type { OneTimeSku } from '@/seed/types'
 import { triggerAutoHandover } from '@/lib/handover/auto-handover'
 
 // TTL helpers ────────────────────────────────────────────────────────────────

@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { FEATURE_FLAGS } from "@/config/flags";
-import type { FeatureFlag } from "@/types";
+import { Card, CardContent } from "@/seed/components/ui/card";
+import { Badge } from "@/seed/components/ui/badge";
+import { FEATURE_FLAGS } from "@/seed/config/flags";
+import type { FeatureFlag } from "@/seed/types";
 
 export default function FeatureFlagsPage() {
   const [flags, setFlags] = useState<Record<FeatureFlag, boolean>>(() => {

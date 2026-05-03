@@ -10,7 +10,7 @@
  * @module lib/credentials/user-credentials-repo
  */
 
-import { getD1Raw } from '@/lib/db/client'
+import { getD1Raw } from '@/seed/db/client'
 import { encryptValue, decryptValue } from './encryption'
 
 export type ProviderType = 'heygen' | 'heygen_webhook_secret' | 'resend' | 'nowpayments' | 'local_llm'

@@ -6,14 +6,14 @@
  * @module telegram/telegram-bot-campaign-fsm-confirm
  */
 
-import { createServerClient } from '@/lib/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { inngest } from '@/lib/inngest/client';
 import { generateShortCode } from '@/lib/affiliate-shortlink/short-code-generator';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 import { sendTelegramMessage } from './telegram-client';
 import { TelegramFSM } from './telegram-fsm-state-manager';
 import { mapTier, type CampaignFsmContext } from './telegram-bot-campaign-fsm-helpers';
-import type { AffiliateProgram } from '@/types';
+import type { AffiliateProgram } from '@/seed/types';
 
 /**
  * Performs D1 inserts (campaign + affiliate_offers_selected) and fires Inngest event.

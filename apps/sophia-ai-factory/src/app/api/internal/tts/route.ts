@@ -11,11 +11,11 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createServerClient } from '@/lib/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { getVideoBucket } from '@/lib/video/r2-binding';
 import { tenantScopedKey } from '@/lib/video/r2-binding';
 import { uploadToR2 } from '@/lib/video/r2-multipart-upload';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 
 // 1-second silent WAV (44 bytes: RIFF header + empty data chunk)
 const SILENT_WAV_B64 =

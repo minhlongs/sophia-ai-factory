@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { getCurrentUser } from "@/lib/better-auth-session";
+import { getCurrentUser } from "@/seed/auth/better-auth-session";
 import { localizedHref } from "@/lib/i18n/localized-href";
 import { VideoCreatorWizard } from "./components/video-creator-wizard";
 

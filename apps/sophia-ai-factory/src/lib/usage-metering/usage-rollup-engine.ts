@@ -7,9 +7,9 @@
  * @module usage-metering/usage-rollup-engine
  */
 
-import { createServerClient } from '@/lib/db/client';
-import { logger } from '@/lib/utils/logger-utility';
-import { UNIFIED_TIERS } from '@/config/tiers';
+import { createServerClient } from '@/seed/db/client';
+import { logger } from '@/seed/utils/logger-utility';
+import { UNIFIED_TIERS } from '@/seed/config/tiers';
 import { aggregateUsageEvents, buildHourlySummary, buildDailySummary } from './usage-event-collector';
 import type {
   QuotaLimit,
@@ -17,7 +17,7 @@ import type {
   HourlySummary,
   DailySummary,
 } from './types';
-import type { D1Response } from '@/lib/db/types';
+import type { D1Response } from '@/seed/db/types';
 
 /** Maximum date range for queries (90 days) — prevents expensive full-table scans */
 const MAX_DATE_RANGE_DAYS = 90;

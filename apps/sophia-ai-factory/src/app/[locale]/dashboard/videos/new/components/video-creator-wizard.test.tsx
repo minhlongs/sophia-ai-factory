@@ -27,17 +27,17 @@ vi.mock("next-intl", () => ({
   },
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@/seed/components/ui/button", () => ({
   Button: ({ children, ...props }: React.ComponentProps<"button">) => (
     <button {...props}>{children}</button>
   ),
 }));
 
-vi.mock("@/components/ui/input", () => ({
+vi.mock("@/seed/components/ui/input", () => ({
   Input: (props: React.ComponentProps<"input">) => <input {...props} />,
 }));
 
-vi.mock("@/components/ui/label", () => ({
+vi.mock("@/seed/components/ui/label", () => ({
   Label: ({ children, ...props }: React.ComponentProps<"label">) => (
     <label {...props}>{children}</label>
   ),

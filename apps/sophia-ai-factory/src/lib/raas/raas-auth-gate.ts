@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { logger } from '@/lib/utils/logger-utility'
+import { logger } from '@/seed/utils/logger-utility'
 import { logValidationWithReceipt } from '@/lib/audit/logger/audit-writer'
 import { serializeReceiptForHeader } from '@/lib/audit/logger/audit-query'
 import { extractLicenseKey, validateLicenseKey, createForbiddenResponse } from './raas-validation'

@@ -23,7 +23,7 @@ import {
 import type { UsageEventInput } from './types';
 
 // Mock Supabase admin client
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   createServerClient: () => ({
     from: vi.fn((table: string) => ({
       select: vi.fn(() => ({
@@ -41,7 +41,7 @@ vi.mock('@/lib/db/client', () => ({
 }));
 
 // Mock logger
-vi.mock('@/lib/utils/logger-utility', () => ({
+vi.mock('@/seed/utils/logger-utility', () => ({
   logger: {
     error: vi.fn(),
     warn: vi.fn(),

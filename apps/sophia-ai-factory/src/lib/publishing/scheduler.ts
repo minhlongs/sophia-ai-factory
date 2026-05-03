@@ -4,10 +4,10 @@
  * Called by POST /api/publish/schedule.
  */
 
-import { getD1Client } from '@/lib/db/client';
+import { getD1Client } from '@/seed/db/client';
 import { inngest } from '@/lib/inngest/client';
 import { consumeQuota } from './per-channel-quota';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 import type { PublishingChannel, ChannelProvider } from './publisher-interface';
 import { randomUUID } from 'crypto';
 

@@ -8,13 +8,13 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { getCurrentUser } from '@/lib/better-auth-session'
+import { getCurrentUser } from '@/seed/auth/better-auth-session'
 import { track } from '@/lib/signals/track'
 import { D1Events } from '@/lib/signals/d1-event-types'
-import { createWorkflow, listWorkflows } from '@/lib/db/workflow-repository'
-import { detectInjection } from '@/lib/security/prompt-guard'
-import { logger } from '@/lib/utils/logger-utility'
-import { resolveOrgId } from '@/lib/auth/resolve-org-id'
+import { createWorkflow, listWorkflows } from '@/seed/db/workflow-repository'
+import { detectInjection } from '@/seed/security/prompt-guard'
+import { logger } from '@/seed/utils/logger-utility'
+import { resolveOrgId } from '@/seed/auth/resolve-org-id'
 
 export const dynamic = 'force-dynamic'
 

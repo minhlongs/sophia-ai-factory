@@ -1,5 +1,5 @@
 import { scoreAllProducts } from '@/lib/intelligence/runner'
-import { toError } from '@/lib/utils/to-error'
+import { toError } from '@/seed/utils/to-error'
 import { NextResponse } from 'next/server'
 
 export const maxDuration = 300 // 5 minutes

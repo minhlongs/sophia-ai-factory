@@ -7,10 +7,10 @@ import {
   cacheHitRate,
   aggregateByokEvents,
 } from './monitoring-queries'
-import { createServerClient } from '@/lib/db/client'
+import { createServerClient } from '@/seed/db/client'
 import type { TraceRow } from '@/lib/admin/trace-aggregator'
 
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   createServerClient: vi.fn(),
 }))
 

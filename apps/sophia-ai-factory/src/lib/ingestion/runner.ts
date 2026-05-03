@@ -1,7 +1,7 @@
 import { ClickbankAdapter } from './adapters/clickbank-adapter'
 import { ShareasaleAdapter } from './adapters/shareasale-adapter'
 import type { IngestionResult } from './types'
-import { toError } from '@/lib/utils/to-error'
+import { toError } from '@/seed/utils/to-error'
 
 export async function runIngestion(networks: string[] = ['clickbank', 'shareasale']): Promise<Record<string, IngestionResult>> {
   const results: Record<string, IngestionResult> = {}

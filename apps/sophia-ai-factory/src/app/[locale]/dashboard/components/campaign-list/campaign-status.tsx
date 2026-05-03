@@ -1,4 +1,4 @@
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/seed/components/ui/badge";
 import { CheckCircle2, AlertCircle, Clock, Loader2, FileText } from "lucide-react";
 
 export function getStatusIcon(status: string) {

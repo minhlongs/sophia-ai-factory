@@ -6,16 +6,16 @@
  * @module lib/handover/auto-handover
  */
 
-import { getD1Raw } from '@/lib/db/client';
-import { logger } from '@/lib/utils/logger-utility';
-import { getErrorMessage } from '@/lib/utils/to-error';
+import { getD1Raw } from '@/seed/db/client';
+import { logger } from '@/seed/utils/logger-utility';
+import { getErrorMessage } from '@/seed/utils/to-error';
 import { createCustomerUser, upsertUserTier, preInstallSops, createHandoverRecord } from './handover-account-setup';
 import { createMagicLinkToken } from './handover-magic-link';
 import { sendTierUpgradeEmail } from './handover-email-service';
 import { enqueueWelcomeEmail } from '@/lib/outbox/email-outbox';
 import { AGENCY_SOP_MAP, TIER_SOP_COUNTS } from './handover-types';
 import type { AgencyType } from './handover-types';
-import type { Tier } from '@/types';
+import type { Tier } from '@/seed/types';
 
 export interface AutoHandoverOptions {
   paymentId: string;

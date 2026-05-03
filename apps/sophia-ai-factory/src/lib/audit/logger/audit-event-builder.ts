@@ -5,8 +5,8 @@
  * and defines all audit event parameter interfaces.
  */
 
-import { createServerClient } from '@/lib/db/client'
-import { insertTyped } from '@/lib/db/insert-typed'
+import { createServerClient } from '@/seed/db/client'
+import { insertTyped } from '@/seed/db/insert-typed'
 import type { RaasAuditLogInsert, RaasAuditLogRow } from '@/lib/supabase/types'
 
 /** Type helper for Supabase query results */

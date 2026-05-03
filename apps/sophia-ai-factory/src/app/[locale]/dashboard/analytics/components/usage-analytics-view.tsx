@@ -2,12 +2,12 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/seed/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/seed/components/ui/card';
+import { Button } from '@/seed/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/seed/components/ui/select';
 import { Download, Lock, RefreshCw } from 'lucide-react';
-import { Tier } from '@/types';
+import { Tier } from '@/seed/types';
 import { MetricsCards } from '@/components/analytics/metrics-cards';
 import { UsageChart, UsageMetric } from '@/components/analytics/usage-chart';
 import { ServiceBreakdownChart } from '@/components/analytics/service-breakdown';
@@ -20,8 +20,8 @@ import { ExportButton } from '@/components/analytics/export-button';
 import { getAnalyticsAccess } from '@/lib/analytics/rbac';
 import { downloadCsv } from '@/lib/analytics/export';
 import { DateRange } from 'react-day-picker';
-import { logger } from '@/lib/utils/logger-utility';
-import { toError } from '@/lib/utils/to-error';
+import { logger } from '@/seed/utils/logger-utility';
+import { toError } from '@/seed/utils/to-error';
 
 interface UsageAnalyticsViewProps {
   userTier: Tier;

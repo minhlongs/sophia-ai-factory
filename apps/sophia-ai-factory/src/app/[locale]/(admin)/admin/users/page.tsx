@@ -1,8 +1,8 @@
-import { getD1Client } from "@/lib/db/client";
-import { getCurrentUser } from "@/lib/better-auth-session";
+import { getD1Client } from "@/seed/db/client";
+import { getCurrentUser } from "@/seed/auth/better-auth-session";
 import { AdminUsersClient, type AdminUserRow } from "./admin-users-client";
 import { redirect } from "next/navigation";
-import { logger } from "@/lib/utils/logger-utility";
+import { logger } from "@/seed/utils/logger-utility";
 
 export const dynamic = "force-dynamic";
 

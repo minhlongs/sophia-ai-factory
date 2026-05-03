@@ -8,11 +8,11 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth/require-admin';
-import { VIDEO_TIER_CONFIG, toVideoTierKey } from '@/config/tiers/video-quota-tiers';
-import type { VideoTierKey } from '@/config/tiers/video-quota-tiers';
-import { logger } from '@/lib/utils/logger-utility';
-import { toError } from '@/lib/utils/to-error';
+import { requireAdmin } from '@/seed/auth/require-admin';
+import { VIDEO_TIER_CONFIG, toVideoTierKey } from '@/seed/config/tiers/video-quota-tiers';
+import type { VideoTierKey } from '@/seed/config/tiers/video-quota-tiers';
+import { logger } from '@/seed/utils/logger-utility';
+import { toError } from '@/seed/utils/to-error';
 
 function getD1(): D1Database | null {
   const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;

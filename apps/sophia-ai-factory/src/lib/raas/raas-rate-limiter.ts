@@ -6,17 +6,17 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { logger } from '@/lib/utils/logger-utility'
-import { toError, getErrorMessage } from '@/lib/utils/to-error'
+import { logger } from '@/seed/utils/logger-utility'
+import { toError, getErrorMessage } from '@/seed/utils/to-error'
 import { checkQuotaWithOverage, DEFAULT_CONFIG } from '@/lib/quota/quota-checker'
 import { enforceQuota } from '@/lib/quota/quota-enforcer'
-import { createServerClient } from '@/lib/db/client'
+import { createServerClient } from '@/seed/db/client'
 import { hasEmergencyBypass, recordCircuitFailure, recordCircuitSuccess } from '@/lib/usage-metering/realtime-tracker'
 import { logViolationAndAlert } from '@/lib/alerts/realtime-alert-service'
 import { sha256 } from '@/lib/audit/crypto-utils'
 import { serializeReceiptForHeader } from '@/lib/audit/logger/audit-query'
 import type { ComplianceReceipt } from '@/lib/audit/compliance-receipt'
-import type { Tier } from '@/types'
+import type { Tier } from '@/seed/types'
 import { buildQuotaExceededResponse, buildQuotaErrorResponse } from './raas-quota-response-builder'
 
 const VALID_TIERS: readonly Tier[] = ['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER'] as const

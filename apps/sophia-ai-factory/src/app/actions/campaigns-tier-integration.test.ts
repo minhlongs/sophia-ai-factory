@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createCampaign } from './campaigns';
 import { tierGuard } from '@/lib/tier-guard';
-import { getCurrentUser } from '@/lib/better-auth-session';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { inngest } from '@/lib/inngest/client';
 
 // Mock D1 client — replaces Supabase
@@ -55,12 +55,12 @@ const mocks = vi.hoisted(() => {
   return { insert: insertMock, select: selectMock, eq: eqMock, single: singleMock, from: fromMock };
 });
 
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   getD1Client: vi.fn().mockResolvedValue({ from: mocks.from }),
   createServerClient: vi.fn().mockReturnValue({ from: mocks.from }),
 }));
 
-vi.mock('@/lib/better-auth-session', () => ({
+vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: vi.fn(),
 }));
 

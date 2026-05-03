@@ -8,11 +8,11 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { addCredits } from '@/lib/mcu/credits-repo';
-import { UNIFIED_TIERS } from '@/config/tiers';
-import { logger } from '@/lib/utils/logger-utility';
-import { verifyCronAuth } from '@/lib/security/cron-auth';
+import { UNIFIED_TIERS } from '@/seed/config/tiers';
+import { logger } from '@/seed/utils/logger-utility';
+import { verifyCronAuth } from '@/seed/security/cron-auth';
 import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker';
 
 export const dynamic = 'force-dynamic';

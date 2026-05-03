@@ -6,8 +6,8 @@
 
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/seed/components/ui/card';
+import { Progress } from '@/seed/components/ui/progress';
 
 interface QuotaUsage {
   hourly: number;

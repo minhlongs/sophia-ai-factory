@@ -4,8 +4,8 @@
  * Access control utilities for analytics dashboard
  */
 
-import { Tier } from '@/types';
-import { getUserTier } from '@/lib/db/get-user-tier';
+import { Tier } from '@/seed/types';
+import { getUserTier } from '@/seed/db/get-user-tier';
 
 /**
  * Analytics feature access levels
@@ -108,7 +108,7 @@ export async function checkAdmin(userId: string): Promise<boolean> {
   }
 
   // Check for admin role in user profile
-  const { createServerClient } = await import('@/lib/db/client');
+  const { createServerClient } = await import('@/seed/db/client');
   const db = createServerClient();
 
   const { data: profile } = await db
@@ -134,7 +134,7 @@ export async function verifyLicenseAccess(
   }
 
   // Non-admin users can only access their own licenses
-  const { createServerClient } = await import('@/lib/db/client');
+  const { createServerClient } = await import('@/seed/db/client');
   const db = createServerClient();
 
   const { data: license } = await db
@@ -161,7 +161,7 @@ export async function verifyLicenseAccess(
  * Get user's own active license nonce
  */
 export async function getUserLicenseNonce(userId: string): Promise<string | null> {
-  const { createServerClient } = await import('@/lib/db/client');
+  const { createServerClient } = await import('@/seed/db/client');
   const db = createServerClient();
 
   const { data: license } = await db

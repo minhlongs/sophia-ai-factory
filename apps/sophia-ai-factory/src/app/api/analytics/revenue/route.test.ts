@@ -14,11 +14,11 @@ import { NextRequest } from 'next/server';
 
 // ── Mocks ───────────────────────────────────────────────────────────────────
 
-vi.mock('@/lib/better-auth-session', () => ({
+vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: vi.fn(),
 }));
 
-vi.mock('@/lib/db/get-user-tier', () => ({
+vi.mock('@/seed/db/get-user-tier', () => ({
   getUserTier: vi.fn(),
 }));
 
@@ -31,16 +31,16 @@ vi.mock('@/lib/analytics/queries/revenue-nowpayments', () => ({
   fetchRevenueSnapshot: vi.fn(),
 }));
 
-vi.mock('@/lib/utils/logger-utility', () => ({
+vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { info: vi.fn(), error: vi.fn() },
 }));
 
 import { GET } from './route';
-import { getCurrentUser } from '@/lib/better-auth-session';
-import { getUserTier } from '@/lib/db/get-user-tier';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { getUserTier } from '@/seed/db/get-user-tier';
 import { checkAdmin, canAccessRevenue } from '@/lib/analytics/rbac';
 import { fetchRevenueSnapshot } from '@/lib/analytics/queries/revenue-nowpayments';
-import type { RevenueSnapshot } from '@/types/analytics-revenue';
+import type { RevenueSnapshot } from '@/seed/types/analytics-revenue';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 

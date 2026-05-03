@@ -6,7 +6,7 @@
  * - <= 5MB: single PUT for simplicity
  */
 
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 
 const MULTIPART_THRESHOLD_BYTES = 5 * 1024 * 1024; // 5 MB
 

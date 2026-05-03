@@ -8,9 +8,9 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/seed/components/ui/card';
+import { Badge } from '@/seed/components/ui/badge';
+import { Button } from '@/seed/components/ui/button';
 import { Key, RefreshCw, AlertCircle } from 'lucide-react';
 import { LicenseStatusTierSection } from './license-status-tier-section';
 import { LicenseStatusUsageSection } from './license-status-usage-section';

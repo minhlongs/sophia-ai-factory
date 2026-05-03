@@ -13,11 +13,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+} from '@/seed/components/ui/dialog';
+import { Button } from '@/seed/components/ui/button';
+import { Textarea } from '@/seed/components/ui/textarea';
+import { Label } from '@/seed/components/ui/label';
+import { Alert, AlertDescription } from '@/seed/components/ui/alert';
 import { Ban, AlertTriangle } from 'lucide-react';
 
 interface LicenseRevokeDialogProps {

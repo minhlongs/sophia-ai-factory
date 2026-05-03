@@ -1,4 +1,4 @@
-import { createServerClient } from '@/lib/db/client'
+import { createServerClient } from '@/seed/db/client'
 import { scoringService } from './scoring'
 import type { ScorableProduct } from './types'
 import type { Database } from '@/lib/supabase/types'

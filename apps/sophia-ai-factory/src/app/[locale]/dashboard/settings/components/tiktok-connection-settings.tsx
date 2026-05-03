@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useState, useTransition } from 'react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/seed/components/ui/button';
 
 interface Integration {
   network_id: string;

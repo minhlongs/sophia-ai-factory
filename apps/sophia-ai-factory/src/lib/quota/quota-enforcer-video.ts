@@ -7,9 +7,9 @@
  * @module quota/quota-enforcer-video
  */
 
-import { logger } from '@/lib/utils/logger-utility';
-import { VIDEO_TIER_CONFIG, toVideoTierKey } from '@/config/tiers/video-quota-tiers';
-import type { VideoTierKey } from '@/config/tiers/video-quota-tiers';
+import { logger } from '@/seed/utils/logger-utility';
+import { VIDEO_TIER_CONFIG, toVideoTierKey } from '@/seed/config/tiers/video-quota-tiers';
+import type { VideoTierKey } from '@/seed/config/tiers/video-quota-tiers';
 
 /** HTTP 429 error thrown when video quota is exceeded */
 export class QuotaExceededError extends Error {

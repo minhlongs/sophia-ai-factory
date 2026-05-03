@@ -9,7 +9,7 @@
  * Plaintext keys never cross this module boundary in persisted form.
  */
 
-import { getD1Raw } from '@/lib/auth/resolve-org-id'
+import { getD1Raw } from '@/seed/auth/resolve-org-id'
 import { decryptApiKey, encryptApiKey } from './byok-crypto'
 
 /** All providers that can be stored in user_api_keys. 'heygen' is server-managed (not user-settable via admin UI). */

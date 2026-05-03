@@ -1,4 +1,4 @@
-import { createServerClient } from '@/lib/db/client'
+import { createServerClient } from '@/seed/db/client'
 import { UserContext, BotState } from './telegram-fsm-state-manager'
 
 /**

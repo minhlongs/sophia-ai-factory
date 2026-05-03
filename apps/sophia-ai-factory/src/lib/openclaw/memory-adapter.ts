@@ -6,7 +6,7 @@
  * All keys are tenant-scoped.
  */
 
-import { getD1Raw } from '@/lib/db/client';
+import { getD1Raw } from '@/seed/db/client';
 
 export type MemoryType = 'session' | 'long-term' | 'agent' | 'skill';
 

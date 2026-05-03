@@ -4,16 +4,16 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('@/lib/utils/logger-utility', () => ({
+vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 
-vi.mock('@/lib/utils/to-error', () => ({
+vi.mock('@/seed/utils/to-error', () => ({
   toError: (e: unknown) => (e instanceof Error ? e : new Error(String(e))),
 }));
 
 // Mock session-based auth
-vi.mock('@/lib/better-auth-session', () => ({
+vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUserFromHeaders: vi.fn(),
 }));
 
@@ -26,7 +26,7 @@ vi.mock('@/lib/wallet/payout-telegram-notify', () => ({
 }));
 
 import { POST } from './route';
-import { getCurrentUserFromHeaders } from '@/lib/better-auth-session';
+import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { markUserPaid } from '@/lib/wallet/payout-processor';
 import { notifyPayoutSent } from '@/lib/wallet/payout-telegram-notify';
 import { NextRequest } from 'next/server';

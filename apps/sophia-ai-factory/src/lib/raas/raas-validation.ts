@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { logger } from '@/lib/utils/logger-utility'
+import { logger } from '@/seed/utils/logger-utility'
 import { validateLicenseKey as validateWithHmac, ValidationResult } from '@/lib/raas-service'
 
 /**

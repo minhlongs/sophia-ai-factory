@@ -9,13 +9,13 @@
  */
 
 import { inngest } from '@/lib/inngest/client';
-import { getD1Client } from '@/lib/db/client';
+import { getD1Client } from '@/seed/db/client';
 import { refreshChannelToken } from '@/lib/publishing/oauth-token-refresher';
 import { decryptToken } from '@/lib/publishing/token-crypto';
 import { TikTokPublisher } from '@/lib/publishing/tiktok-publisher';
 import { YouTubePublisher } from '@/lib/publishing/youtube-publisher';
 import { InstagramPublisher } from '@/lib/publishing/instagram-publisher';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 import type { PublishingChannel, PublishingJob, Publisher } from '@/lib/publishing/publisher-interface';
 import { randomUUID } from 'crypto';
 

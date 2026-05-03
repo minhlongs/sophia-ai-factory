@@ -9,7 +9,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 const lastSubscriptionUpdate: { plan?: string } = {}
 const pendingOrderUpdates: Record<string, { status: string; payment_id: string }> = {}
 
-vi.mock('@/lib/db/client', () => {
+vi.mock('@/seed/db/client', () => {
   const mockDb = () => ({
     from: (table: string) => {
       const isOrgMembers = table === 'org_members'
@@ -63,7 +63,7 @@ vi.mock('@/lib/db/client', () => {
   }
 })
 
-vi.mock('@/lib/db/audit/audit-log', () => ({
+vi.mock('@/seed/db/audit/audit-log', () => ({
   recordAudit: vi.fn().mockResolvedValue(undefined),
 }))
 
@@ -130,7 +130,7 @@ vi.mock('@/lib/billing/nowpayments-ipn-db', () => ({
   parseUserIdFromOrderId: vi.fn(() => 'user123'),
 }))
 
-vi.mock('@/config/tiers', () => ({
+vi.mock('@/seed/config/tiers', () => ({
   UNIFIED_TIERS: {
     BASIC: { billingType: 'monthly', price: 199, mcuMonthly: 100 },
     PREMIUM: { billingType: 'monthly', price: 399, mcuMonthly: 300 },

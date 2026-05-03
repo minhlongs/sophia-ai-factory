@@ -8,7 +8,7 @@ import { RealScriptService } from "./real/script-service";
 import { MockPaymentService } from "./mock/payment-service";
 import { RealPaymentService } from "./real/payment-service";
 import { MissingCredentialsError } from "./errors";
-import { logger } from "@/lib/utils/logger-utility";
+import { logger } from "@/seed/utils/logger-utility";
 import { resolveUserApiKey } from "@/lib/byok/resolve-user-api-key";
 import { getUserApiKey } from "@/lib/byok/user-api-key-store";
 import { isByokEnabled } from "@/lib/byok/resolve-user-api-key";

@@ -7,10 +7,10 @@
 
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/seed/components/ui/card';
+import { Progress } from '@/seed/components/ui/progress';
+import { Badge } from '@/seed/components/ui/badge';
+import { Alert, AlertDescription } from '@/seed/components/ui/alert';
 import { Zap, TrendingUp, Calendar, AlertTriangle } from 'lucide-react';
 
 interface UsageSummaryCardProps {

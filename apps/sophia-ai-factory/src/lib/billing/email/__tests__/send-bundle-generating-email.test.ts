@@ -66,7 +66,7 @@ describe('buildBundleGeneratingEmail', () => {
 
 // ── Sender idempotency test (mocks DB only) ───────────────────────────────────
 
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   createServerClient: vi.fn(),
 }))
 
@@ -78,7 +78,7 @@ vi.mock('resend', () => ({
   },
 }))
 
-import { createServerClient } from '@/lib/db/client'
+import { createServerClient } from '@/seed/db/client'
 import { sendBundleGeneratingEmail } from '../send-bundle-generating-email'
 
 function makeDb(alreadySent: boolean) {

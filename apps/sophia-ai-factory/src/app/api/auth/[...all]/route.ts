@@ -6,11 +6,11 @@
  * precedence over this catch-all in Next.js routing.
  */
 
-import { getAuth } from '@/lib/better-auth-server';
+import { getAuth } from '@/seed/auth/better-auth-server';
 import { toNextJsHandler } from 'better-auth/next-js';
 import { NextResponse } from 'next/server';
-import { logger } from '@/lib/utils/logger-utility';
-import { toError } from '@/lib/utils/to-error';
+import { logger } from '@/seed/utils/logger-utility';
+import { toError } from '@/seed/utils/to-error';
 
 export const dynamic = 'force-dynamic';
 

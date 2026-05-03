@@ -14,12 +14,12 @@ import {
 import type { ScheduledReport } from './report-scheduler'
 
 // Mock Supabase admin client
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   createServerClient: vi.fn(),
 }))
 
 // Mock logger
-vi.mock('@/lib/utils/logger-utility', () => ({
+vi.mock('@/seed/utils/logger-utility', () => ({
   logger: {
     info: vi.fn(),
     warn: vi.fn(),
@@ -28,7 +28,7 @@ vi.mock('@/lib/utils/logger-utility', () => ({
 }))
 
 // Import after mocks
-import { createServerClient } from '@/lib/db/client'
+import { createServerClient } from '@/seed/db/client'
 
 describe('emailReport', () => {
   const originalEnv = process.env
@@ -50,7 +50,7 @@ describe('emailReport', () => {
     delete process.env.SMTP_PASSWORD
     delete process.env.SMTP_FROM
 
-    const logger = await import('@/lib/utils/logger-utility')
+    const logger = await import('@/seed/utils/logger-utility')
 
     await emailReport(
       ['admin@example.com'],
@@ -74,7 +74,7 @@ describe('emailReport', () => {
     process.env.SMTP_PASSWORD = 'password'
     process.env.SMTP_FROM = 'noreply@example.com'
 
-    const logger = await import('@/lib/utils/logger-utility')
+    const logger = await import('@/seed/utils/logger-utility')
 
     await emailReport(
       ['admin@example.com'],
@@ -154,7 +154,7 @@ describe('deliverReport', () => {
       createdBy: 'admin'
     }
 
-    const logger = await import('@/lib/utils/logger-utility')
+    const logger = await import('@/seed/utils/logger-utility')
 
     await deliverReport(mockReport, 'csv content')
 

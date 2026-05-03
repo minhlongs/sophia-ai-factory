@@ -6,8 +6,8 @@
  * stores in the videos table for dashboard display.
  */
 
-import { createServerClient } from '@/lib/db/client';
-import { logger } from '@/lib/utils/logger-utility';
+import { createServerClient } from '@/seed/db/client';
+import { logger } from '@/seed/utils/logger-utility';
 import { createHeyGenVideo } from '@/lib/video/heygen-helpers';
 
 const ONBOARDING_SCRIPTS: Record<string, { vi: string; en: string }> = {

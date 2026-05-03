@@ -5,11 +5,11 @@
  */
 
 import { getTierByInvoiceId } from '@/lib/clients/nowpayments-client'
-import { logger } from '@/lib/utils/logger-utility'
-import { UNIFIED_TIERS } from '@/config/tiers'
-import { getD1Raw } from '@/lib/db/client'
-import { recordAudit } from '@/lib/db/audit/audit-log'
-import type { Tier } from '@/types'
+import { logger } from '@/seed/utils/logger-utility'
+import { UNIFIED_TIERS } from '@/seed/config/tiers'
+import { getD1Raw } from '@/seed/db/client'
+import { recordAudit } from '@/seed/db/audit/audit-log'
+import type { Tier } from '@/seed/types'
 import type { NowPaymentsIpnPayload } from './nowpayments-ipn-handlers'
 import { getDb, parseUserIdFromOrderId } from './nowpayments-ipn-db'
 import { createOnboardingVideo, ONBOARDING_TIERS } from '@/lib/video/onboarding-video'

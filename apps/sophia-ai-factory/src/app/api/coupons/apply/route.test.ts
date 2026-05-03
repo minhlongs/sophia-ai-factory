@@ -9,11 +9,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
-vi.mock('@/lib/better-auth-session', () => ({
+vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: vi.fn(),
 }));
 
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   createServerClient: vi.fn(() => ({
     prepare: vi.fn(() => ({
       bind: vi.fn(),
@@ -22,7 +22,7 @@ vi.mock('@/lib/db/client', () => ({
 }));
 
 import { POST } from './route';
-import { getCurrentUser } from '@/lib/better-auth-session';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
 
 const mockGetCurrentUser = vi.mocked(getCurrentUser);
 

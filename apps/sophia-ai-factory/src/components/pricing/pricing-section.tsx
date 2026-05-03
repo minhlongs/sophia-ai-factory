@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import { FadeInView } from "@/components/ui/fade-in-view";
+import { FadeInView } from "@/seed/components/ui/fade-in-view";
 import { PricingCard, formatPrice } from "./pricing-card";
 import { usePricingData } from "./pricing-data";
 import { CouponInput, type PromoDiscount } from "./coupon-input";

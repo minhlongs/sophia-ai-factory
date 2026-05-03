@@ -5,7 +5,7 @@
 
 /// <reference types="@cloudflare/workers-types" />
 
-import { logger } from '@/lib/utils/logger-utility'
+import { logger } from '@/seed/utils/logger-utility'
 import { API_KEY_HEADER, BEARER_PREFIX } from './raas-auth-middleware-types'
 
 export function extractApiKey(request: Request): string | null {

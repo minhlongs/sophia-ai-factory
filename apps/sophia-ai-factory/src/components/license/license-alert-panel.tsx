@@ -8,12 +8,12 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/seed/components/ui/card';
+import { Badge } from '@/seed/components/ui/badge';
 import { Bell } from 'lucide-react';
 import { LicenseAlertItem } from './license-alert-item';
 import type { UserAlert } from './license-alert-item';
-import { useCsrfToken } from '@/lib/security/use-csrf-token';
+import { useCsrfToken } from '@/seed/security/use-csrf-token';
 
 interface AlertPanelProps {
   userId?: string;

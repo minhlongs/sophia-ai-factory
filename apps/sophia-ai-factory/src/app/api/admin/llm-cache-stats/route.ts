@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getCacheStats, cacheHitRate } from '@/lib/admin/monitoring-queries'
-import { getErrorMessage } from '@/lib/utils/to-error'
+import { getErrorMessage } from '@/seed/utils/to-error'
 
 export const dynamic = 'force-dynamic'
 

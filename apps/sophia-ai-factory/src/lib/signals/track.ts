@@ -8,8 +8,8 @@
  * SECURITY: props validated by Zod whitelist before insert — no PII / key material.
  */
 
-import { logger } from '@/lib/utils/logger-utility'
-import { getErrorMessage } from '@/lib/utils/to-error'
+import { logger } from '@/seed/utils/logger-utility'
+import { getErrorMessage } from '@/seed/utils/to-error'
 import { type D1EventType, schemaForEvent } from './d1-event-types'
 
 /** Get raw D1Database from CF runtime env (edge-compatible, no Node APIs) */

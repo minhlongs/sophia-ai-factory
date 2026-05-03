@@ -30,7 +30,7 @@ vi.mock('@/lib/usage-metering/context', () => ({
   getUsageContext: vi.fn().mockReturnValue(null),
 }))
 
-vi.mock('@/lib/utils/logger-utility', () => ({
+vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { warn: vi.fn(), info: vi.fn(), error: vi.fn() },
 }))
 

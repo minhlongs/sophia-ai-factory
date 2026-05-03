@@ -10,7 +10,7 @@
  */
 
 import { redirect } from 'next/navigation'
-import { getCurrentUser } from '@/lib/better-auth-session'
+import { getCurrentUser } from '@/seed/auth/better-auth-session'
 import { OpsSnapshotCard } from './ops-snapshot-card'
 import { Activity } from 'lucide-react'
 

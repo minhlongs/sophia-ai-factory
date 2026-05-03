@@ -14,12 +14,12 @@ import {
 } from '@/lib/audit/audit-query-logger'
 
 // Mock Supabase admin client
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   createServerClient: vi.fn(),
 }))
 
 // Mock logger
-vi.mock('@/lib/utils/logger-utility', () => ({
+vi.mock('@/seed/utils/logger-utility', () => ({
   logger: {
     info: vi.fn(),
     warn: vi.fn(),
@@ -29,7 +29,7 @@ vi.mock('@/lib/utils/logger-utility', () => ({
 }))
 
 // Import mocked modules after vi.mock
-import { createServerClient } from '@/lib/db/client'
+import { createServerClient } from '@/seed/db/client'
 
 describe('logAuditQuery', () => {
   let mockSupabase: any

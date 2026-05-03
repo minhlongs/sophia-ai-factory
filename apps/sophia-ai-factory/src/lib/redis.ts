@@ -1,5 +1,5 @@
 import { Redis } from '@upstash/redis'
-import { logger } from '@/lib/utils/logger-utility'
+import { logger } from '@/seed/utils/logger-utility'
 
 let _redis: Redis | null = null
 

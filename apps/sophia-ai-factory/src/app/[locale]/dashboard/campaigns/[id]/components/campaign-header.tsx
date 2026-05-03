@@ -1,8 +1,8 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/seed/components/ui/badge";
+import { Button } from "@/seed/components/ui/button";
 import { ArrowLeft, Calendar, Users, CheckCircle2, Clock, AlertCircle, Loader2, FileText } from "lucide-react";
 import Link from "next/link";
-import { Campaign } from "@/types";
+import { Campaign } from "@/seed/types";
 import type { getFormatter } from "next-intl/server";
 
 type IntlFormat = Awaited<ReturnType<typeof getFormatter>>;

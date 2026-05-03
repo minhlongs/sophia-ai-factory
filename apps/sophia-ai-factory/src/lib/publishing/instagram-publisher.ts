@@ -5,7 +5,7 @@
  */
 
 import type { Publisher, PublishMeta, PublishStatus, MetricsJson } from './publisher-interface';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 
 const GRAPH_API_VERSION = 'v19.0';
 const GRAPH_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`;

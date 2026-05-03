@@ -3,14 +3,14 @@
 import React from 'react';
 import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/seed/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Tier } from '@/types';
+} from '@/seed/components/ui/dropdown-menu';
+import { Tier } from '@/seed/types';
 
 export interface TierFilterProps {
   selectedTiers: Tier[];

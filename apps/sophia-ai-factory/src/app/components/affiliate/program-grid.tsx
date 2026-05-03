@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { AffiliateProgram } from "@/types";
+import { AffiliateProgram } from "@/seed/types";
 import { ProgramCard } from "./program-card";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/seed/components/ui/button";
 import { Search, SlidersHorizontal } from "lucide-react";
 
 interface ProgramGridProps {

@@ -12,7 +12,7 @@ import Link from 'next/link';
 import { Zap, Clock, Star } from 'lucide-react';
 import type { SopTemplateRow } from '@/lib/sop/sop-types';
 import { CategoryBadge } from './category-badge';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/seed/components/ui/button';
 
 interface SopCardProps {
   template: SopTemplateRow;

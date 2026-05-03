@@ -11,7 +11,7 @@
  * @module seed/types/billing-contracts
  */
 
-import type { Tier } from '@/types';
+import type { Tier } from '@/seed/types';
 
 // ── Overage event types ───────────────────────────────────────────────────────
 

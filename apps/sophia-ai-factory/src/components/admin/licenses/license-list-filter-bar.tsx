@@ -5,15 +5,15 @@
  * Search input + tier/status selects + refresh button
  */
 
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { Input } from '@/seed/components/ui/input';
+import { Button } from '@/seed/components/ui/button';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@/seed/components/ui/select';
 import { Search, Filter, RefreshCw } from 'lucide-react';
 
 interface LicenseListFilterBarProps {

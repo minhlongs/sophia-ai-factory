@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/better-auth-session';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { setUserApiKey } from '@/lib/byok/user-api-key-store';
 import type { ByokProvider } from '@/lib/byok/user-api-key-store';
 import { z } from 'zod';

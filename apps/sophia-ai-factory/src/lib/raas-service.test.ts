@@ -41,7 +41,7 @@ import {
   type Tier,
 } from './raas-service';
 import { redis } from './redis';
-import { logger } from './utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 
 // Type-safe mock access
 const mockRedis = redis as unknown;

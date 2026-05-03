@@ -9,7 +9,7 @@
 
 import { hashSensitiveData } from './audit-hashing'
 import type { RaasAuditLogRow } from '@/lib/supabase/types'
-import { logger } from '@/lib/utils/logger-utility'
+import { logger } from '@/seed/utils/logger-utility'
 import { redactDetailsPII } from './gdpr-redaction-pii-detection'
 
 // Re-export PII detection utilities (barrel)

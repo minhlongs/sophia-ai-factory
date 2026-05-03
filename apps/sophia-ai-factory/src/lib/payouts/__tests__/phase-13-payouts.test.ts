@@ -185,7 +185,7 @@ const mockFirst = vi.fn()
 const mockRun = vi.fn()
 const mockAll = vi.fn()
 
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   getD1Raw: async () => ({
     prepare: mockPrepare,
   }),

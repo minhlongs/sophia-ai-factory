@@ -6,17 +6,17 @@
  */
 
 import { useState, useEffect } from 'react';
-import { logger } from '@/lib/utils/logger-utility';
-import { toError } from '@/lib/utils/to-error';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { logger } from '@/seed/utils/logger-utility';
+import { toError } from '@/seed/utils/to-error';
+import { Card, CardHeader, CardTitle, CardContent } from '@/seed/components/ui/card';
+import { Button } from '@/seed/components/ui/button';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@/seed/components/ui/select';
 import {
   Table,
   TableBody,
@@ -24,7 +24,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from '@/seed/components/ui/table';
 import { FileText, Download, RefreshCw } from 'lucide-react';
 
 interface AuditLog {

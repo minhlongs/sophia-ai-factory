@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createCampaign } from "@/app/actions/campaigns";
 import { createCampaignSchema } from "@/lib/campaigns/validation";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/seed/components/ui/button";
 import { Loader2, Sparkles } from "lucide-react";
 
 export function CreateProjectForm() {

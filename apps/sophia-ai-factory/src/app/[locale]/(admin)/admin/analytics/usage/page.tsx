@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent } from '@/seed/components/ui/card';
+import { Button } from '@/seed/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/seed/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/seed/components/ui/tabs';
 import { RefreshCw, AlertTriangle } from 'lucide-react';
 import type { AnalyticsGranularity } from '@/lib/analytics/types';
 import { useUsageAnalytics } from './hooks/use-usage-analytics';

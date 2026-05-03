@@ -11,7 +11,7 @@ import { MockModeIndicator } from "@/components/dev/mock-mode-indicator";
 import { ErrorReporter } from "@/components/providers/error-reporter";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
-import { getCspNonce } from '@/lib/security/get-csp-nonce';
+import { getCspNonce } from '@/seed/security/get-csp-nonce';
 
 // JSON-LD schema — explicit type to avoid TypeScript stack overflow
 const JSONLD_SCHEMA: Record<string, unknown> = {

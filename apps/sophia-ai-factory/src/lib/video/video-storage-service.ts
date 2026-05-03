@@ -10,7 +10,7 @@
  *   videos/{userId}/{videoId}.mp4           — user video cron flow (r2Key override)
  */
 
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 import { getVideoBucket } from './r2-binding';
 
 export interface VideoStorageResult {

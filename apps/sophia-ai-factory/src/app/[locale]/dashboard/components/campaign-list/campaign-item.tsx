@@ -1,4 +1,4 @@
-import { Campaign } from "@/types";
+import { Campaign } from "@/seed/types";
 import { getStatusIcon } from "./campaign-status";
 import { useTranslations } from 'next-intl';
 import { useFormatter } from 'next-intl';

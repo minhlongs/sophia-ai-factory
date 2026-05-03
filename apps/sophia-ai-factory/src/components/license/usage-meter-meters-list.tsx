@@ -5,9 +5,9 @@
  * Renders the hourly/daily/monthly usage meter cards with progress bars and tooltips
  */
 
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Progress } from '@/seed/components/ui/progress';
+import { Badge } from '@/seed/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/seed/components/ui/tooltip';
 import { Clock, Zap, Calendar, AlertCircle } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { getStatusColor, getStatusBorderColor, formatNumber } from './usage-meter-helpers';

@@ -8,7 +8,7 @@
  * Server-side only — do NOT import from client components.
  */
 
-import { createServerClient } from '@/lib/db/client'
+import { createServerClient } from '@/seed/db/client'
 import {
   aggregateTraceStats,
   type TraceRow,

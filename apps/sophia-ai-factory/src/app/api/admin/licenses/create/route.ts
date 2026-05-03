@@ -6,9 +6,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateLicenseKey } from '@/lib/raas-key-generator'
 import { createLicense, logLicenseCreation } from '@/lib/raas-audit'
-import { requireAdmin } from '@/lib/auth/require-admin'
-import { logger } from '@/lib/utils/logger-utility'
-import { Tier, TierLowercase } from '@/types'
+import { requireAdmin } from '@/seed/auth/require-admin'
+import { logger } from '@/seed/utils/logger-utility'
+import { Tier, TierLowercase } from '@/seed/types'
 import { createHash } from 'crypto'
 import { z } from 'zod'
 

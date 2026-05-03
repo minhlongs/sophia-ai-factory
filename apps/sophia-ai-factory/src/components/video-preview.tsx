@@ -2,8 +2,8 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/seed/components/ui/card";
+import { Button } from "@/seed/components/ui/button";
 import { Loader2, Play, Download, AlertCircle } from "lucide-react";
 
 interface VideoPreviewProps {

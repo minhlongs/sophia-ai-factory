@@ -1,4 +1,4 @@
-import { Tier } from "@/types";
+import { Tier } from "@/seed/types";
 import { ServiceFactory } from "@/lib/services/factory";
 import { VideoStatus } from "@/lib/services/types";
 

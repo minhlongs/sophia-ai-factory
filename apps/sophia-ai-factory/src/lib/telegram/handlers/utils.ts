@@ -1,6 +1,6 @@
 import { bot } from '../telegram-bot-instance'
 import { toReplyMarkup } from '../telegram-keyboard-builder'
-import { logger } from '../../utils/logger-utility'
+import { logger } from '@/seed/utils/logger-utility'
 
 /**
  * Send a plain text message using Telegraf bot instance

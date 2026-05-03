@@ -6,8 +6,8 @@
  * @module telegram/telegram-bot-campaign-fsm-helpers
  */
 
-import { createServerClient } from '@/lib/db/client';
-import type { Tier } from '@/types';
+import { createServerClient } from '@/seed/db/client';
+import type { Tier } from '@/seed/types';
 import type { UserContext } from './telegram-fsm-state-manager';
 
 /** Extended context fields for campaign FSM */

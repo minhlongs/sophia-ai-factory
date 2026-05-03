@@ -4,9 +4,9 @@
  * @module billing/dunning/dunning-attempt-recorder
  */
 
-import { createServerClient } from '@/lib/db/client';
+import { createServerClient } from '@/seed/db/client';
 import type { DunningState } from './dunning-state-machine';
-import type { Tier } from '@/types';
+import type { Tier } from '@/seed/types';
 
 // -------------------------------------------------------------------------
 // Types

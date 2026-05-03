@@ -9,8 +9,8 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import type { ApiKeyInfo, UsageStats } from '@/types/raas';
-import { useCsrfToken } from '@/lib/security/use-csrf-token';
+import type { ApiKeyInfo, UsageStats } from '@/seed/types/raas';
+import { useCsrfToken } from '@/seed/security/use-csrf-token';
 
 function fmt(dateStr: string | null): string {
   if (!dateStr) return 'Never';

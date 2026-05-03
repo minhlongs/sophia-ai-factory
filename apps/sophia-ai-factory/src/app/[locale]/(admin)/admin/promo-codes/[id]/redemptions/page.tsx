@@ -4,9 +4,9 @@
  */
 
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/better-auth-session";
+import { getCurrentUser } from "@/seed/auth/better-auth-session";
 import { listRedemptionsByCode, getCodeByCode } from "@/lib/promo/promo-repo";
-import { getD1Raw } from "@/lib/db/client";
+import { getD1Raw } from "@/seed/db/client";
 import Link from "next/link";
 import { ArrowLeft, CheckCircle2, Clock, XCircle } from "lucide-react";
 

@@ -3,8 +3,8 @@
  * RED-TEAM #9: 60s TTL caps PostHog /decide/ calls to 1/user/minute
  */
 
-import { logger } from '@/lib/utils/logger-utility'
-import { getErrorMessage } from '@/lib/utils/to-error'
+import { logger } from '@/seed/utils/logger-utility'
+import { getErrorMessage } from '@/seed/utils/to-error'
 
 const POSTHOG_DECIDE_URL = 'https://us.i.posthog.com/decide/?v=3'
 const CACHE_TTL_SECONDS = 60

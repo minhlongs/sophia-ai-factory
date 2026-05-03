@@ -23,8 +23,8 @@ const mocks = vi.hoisted(() => {
   };
 });
 
-vi.mock('@/lib/utils/logger-utility', () => ({ logger: mocks.logger }));
-vi.mock('@/lib/db/client', () => ({ getD1Client: vi.fn().mockResolvedValue(mocks.db) }));
+vi.mock('@/seed/utils/logger-utility', () => ({ logger: mocks.logger }));
+vi.mock('@/seed/db/client', () => ({ getD1Client: vi.fn().mockResolvedValue(mocks.db) }));
 
 import { POST } from './route';
 

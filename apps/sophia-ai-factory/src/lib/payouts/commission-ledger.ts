@@ -7,7 +7,7 @@
  * @module payouts/commission-ledger
  */
 
-import { getD1Raw } from '@/lib/db/client'
+import { getD1Raw } from '@/seed/db/client'
 import { toCents, fromCents } from './commission-cents'
 
 export type LedgerStatus =

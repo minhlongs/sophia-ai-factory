@@ -7,10 +7,10 @@
 import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
 import { getTranslations } from 'next-intl/server';
-import { getCurrentUser } from '@/lib/better-auth-session';
-import { getUserTier } from '@/lib/db/get-user-tier';
-import { createServerClient } from '@/lib/db/client';
-import { TIER_CONFIG } from '@/config/tiers';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { getUserTier } from '@/seed/db/get-user-tier';
+import { createServerClient } from '@/seed/db/client';
+import { TIER_CONFIG } from '@/seed/config/tiers';
 import { AccountTabs } from './account-tabs';
 
 export const dynamic = 'force-dynamic';

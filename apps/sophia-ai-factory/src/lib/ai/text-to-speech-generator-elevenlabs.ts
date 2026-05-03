@@ -1,7 +1,7 @@
 // TODO: storage not available in D1 client — audio upload needs Cloudflare R2 migration
-import { logger } from '@/lib/utils/logger-utility';
-import { getErrorMessage } from '@/lib/utils/to-error';
-import { Tier } from '@/types';
+import { logger } from '@/seed/utils/logger-utility';
+import { getErrorMessage } from '@/seed/utils/to-error';
+import { Tier } from '@/seed/types';
 import { trackUsage, hashLicenseKey, calculateCredits, startTimer } from '@/lib/usage-metering';
 import { getUsageContext } from '@/lib/usage-metering/context';
 import {

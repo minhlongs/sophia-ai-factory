@@ -8,7 +8,7 @@
  * @module billing/nowpayments-ipn-dispatch
  */
 
-import { logger } from '@/lib/utils/logger-utility'
+import { logger } from '@/seed/utils/logger-utility'
 import { lookupInvoice } from '@/lib/clients/nowpayments-client'
 import { handleFinished, handleRefunded } from './nowpayments-ipn-subscription'
 import { handleOneTimeFinished, handleOneTimeRefunded } from './nowpayments-ipn-one-time'

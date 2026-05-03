@@ -16,19 +16,19 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyCronAuth } from '@/lib/security/cron-auth'
+import { verifyCronAuth } from '@/seed/security/cron-auth'
 import { recordCronRun } from '@/lib/cron/run-tracker'
-import { getD1Raw, createServerClient } from '@/lib/db/client'
+import { getD1Raw, createServerClient } from '@/seed/db/client'
 import { createHeyGenVideo } from '@/lib/video/heygen-helpers'
 import { getHeyGenKey } from '@/lib/credentials/get-provider-key'
-import { logger } from '@/lib/utils/logger-utility'
-import { getErrorMessage } from '@/lib/utils/to-error'
+import { logger } from '@/seed/utils/logger-utility'
+import { getErrorMessage } from '@/seed/utils/to-error'
 import {
   listQueuedForRetry,
   markVideoProcessing,
   recordAttemptCAS,
   markPermanentFailureCAS,
-} from '@/lib/db/repositories/videos-repo'
+} from '@/seed/db/repositories/videos-repo'
 import { MAX_ATTEMPTS, isRetryDue } from '@/lib/fulfillment/retry-backoff'
 import { grantCompensationCredit } from '@/lib/fulfillment/compensation'
 import { sendBundleRenderFailedEmail, type SendBundleRenderFailedInput } from '@/lib/billing/email/send-bundle-render-failed-email'

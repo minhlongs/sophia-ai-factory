@@ -9,8 +9,8 @@ import {
   extendLicense as extendLicenseService,
   logLicenseExtension
 } from '@/lib/raas-audit'
-import { requireAdmin } from '@/lib/auth/require-admin'
-import { logger } from '@/lib/utils/logger-utility'
+import { requireAdmin } from '@/seed/auth/require-admin'
+import { logger } from '@/seed/utils/logger-utility'
 import { z } from 'zod'
 
 /**

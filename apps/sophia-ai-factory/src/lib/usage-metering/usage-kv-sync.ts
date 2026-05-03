@@ -7,11 +7,11 @@
  * @module usage-metering/usage-kv-sync
  */
 
-import { createServerClient } from '@/lib/db/client';
-import { logger } from '@/lib/utils/logger-utility';
+import { createServerClient } from '@/seed/db/client';
+import { logger } from '@/seed/utils/logger-utility';
 import { checkQuota } from './usage-rollup-engine';
 import type { BatchUsageRecord, IngestionResult, BatchIngestionResponse, QuotaCheckResult, LicenseMetadataRow } from './types';
-import type { D1Response } from '@/lib/db/types';
+import type { D1Response } from '@/seed/db/types';
 
 /**
  * Validate a single batch usage record format

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { logger } from '@/lib/utils/logger-utility';
-import { getCurrentUser } from '@/lib/better-auth-session';
+import { logger } from '@/seed/utils/logger-utility';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
 
 const MAX_MESSAGE_LEN = 1024;
 

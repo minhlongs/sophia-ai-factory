@@ -25,7 +25,7 @@ vi.mock("next/navigation", () => ({
 
 // ── Mock better-auth-client ─────────────────────────────────────────────────
 
-vi.mock("@/lib/better-auth-client", () => ({
+vi.mock("@/seed/auth/better-auth-client", () => ({
   authClient: {
     signUp: { email: mockSignUpEmail },
   },

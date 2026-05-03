@@ -5,7 +5,7 @@
  * Handles mock fallback when COQUI_FLY_URL is absent.
  */
 
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 
 export interface TTSSynthesizeParams {
   text: string;

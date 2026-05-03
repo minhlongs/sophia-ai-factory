@@ -1,14 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { checkTierAccess, hasTierAccess, getAccessibleFeatures } from './features';
 
-vi.mock('@/config/flags', () => ({
+vi.mock('@/seed/config/flags', () => ({
   getFeatureFlag: vi.fn((flag: string) => {
     if (flag === 'enable_auto_update') return false;
     return true;
   }),
 }));
 
-vi.mock('@/config/tiers', () => ({
+vi.mock('@/seed/config/tiers', () => ({
   tierHasFeature: vi.fn((tier: string, feature: string) => {
     const tierFeatures: Record<string, string[]> = {
       BASIC: ['enable_affiliate_engine', 'enable_roi_calculator'],

@@ -5,7 +5,7 @@
  * with idempotency key checks to prevent duplicate processing.
  */
 
-import { createServerClient } from '@/lib/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { z } from 'zod';
 
 // Webhook event schema (shared between modules)

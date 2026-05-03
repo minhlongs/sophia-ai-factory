@@ -7,8 +7,8 @@
  * LIVE — requires OPENROUTER_API_KEY env var or user's own key.
  */
 
-import { createServerClient } from '@/lib/db/client';
-import { logger } from '@/lib/utils/logger-utility';
+import { createServerClient } from '@/seed/db/client';
+import { logger } from '@/seed/utils/logger-utility';
 import type { MissionHandlerResult, MissionContext } from './types';
 
 const PROPOSAL_SYSTEM_PROMPT = `You are an expert business proposal writer.

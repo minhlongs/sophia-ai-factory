@@ -10,7 +10,7 @@
 
 import { claimDueInstallations } from '../sop/sop-repo-installations';
 import { runSop } from '../sop/executor/sop-runner';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 
 const MAX_PER_TICK = 20;
 

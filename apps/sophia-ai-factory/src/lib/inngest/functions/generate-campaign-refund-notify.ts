@@ -6,7 +6,7 @@
  */
 
 import { notifyUserByTelegram, updateCampaignStatus } from './generate-campaign-db'
-import { logger } from '@/lib/utils/logger-utility'
+import { logger } from '@/seed/utils/logger-utility'
 
 const SUPPORT_HANDLE = '@sophia_support'
 

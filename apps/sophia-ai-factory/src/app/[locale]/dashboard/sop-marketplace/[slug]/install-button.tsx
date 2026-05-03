@@ -6,7 +6,7 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/seed/components/ui/button';
 import { SopInstallModal } from '@/components/sop/sop-install-modal';
 import type { SopTemplateRow } from '@/lib/sop/sop-types';
 

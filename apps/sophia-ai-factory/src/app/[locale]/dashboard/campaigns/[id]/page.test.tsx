@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import Page from './page';
-import { getCurrentUser } from '@/lib/better-auth-session';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
 
 // Mock modules
 vi.mock('next/navigation', () => ({
@@ -32,7 +32,7 @@ vi.mock('next/dynamic', () => ({
 }));
 
 // Mock Better Auth session and DB client
-vi.mock('@/lib/better-auth-session', () => ({
+vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: vi.fn(),
 }));
 
@@ -51,7 +51,7 @@ mockSelect.mockReturnValue({ eq: mockEq });
 // eq is called twice, both times should return an object with eq() method
 mockEq.mockReturnValue({ eq: mockEq, single: mockSingle });
 
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   getD1Client: vi.fn(async () => mockDb),
 }));
 

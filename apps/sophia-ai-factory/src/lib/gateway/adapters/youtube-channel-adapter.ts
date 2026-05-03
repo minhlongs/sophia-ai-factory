@@ -15,8 +15,8 @@ import {
   uploadVideo,
   refreshAccessToken,
 } from "@/lib/youtube/youtube-oauth-client";
-import { createServerClient } from '@/lib/db/client';
-import { logger } from "@/lib/utils/logger-utility";
+import { createServerClient } from '@/seed/db/client';
+import { logger } from "@/seed/utils/logger-utility";
 
 const CHANNEL_ID = "youtube";
 

@@ -7,7 +7,7 @@
  */
 
 import { inngest } from "@/lib/inngest/client";
-import type { Tier } from "@/types";
+import type { Tier } from "@/seed/types";
 
 export interface CampaignInsertData {
   id?: string;

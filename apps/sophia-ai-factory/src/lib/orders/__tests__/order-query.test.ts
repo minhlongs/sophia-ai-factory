@@ -22,12 +22,12 @@ function makeD1Mock(rows: unknown[]) {
   }
 }
 
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   getD1Raw: vi.fn(),
   createServerClient: vi.fn(),
 }))
 
-import { getD1Raw } from '@/lib/db/client'
+import { getD1Raw } from '@/seed/db/client'
 const mockedGetD1Raw = vi.mocked(getD1Raw)
 
 describe('getUserOrders', () => {

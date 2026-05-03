@@ -21,7 +21,7 @@ import {
   handleConfirmCommand,
 } from '@/lib/telegram/telegram-bot-campaign-handlers'
 import { TelegramFSM } from '@/lib/telegram/telegram-fsm-state-manager'
-import { createServerClient } from '@/lib/db/client'
+import { createServerClient } from '@/seed/db/client'
 
 interface TelegramUpdate {
   callback_query?: {

@@ -17,9 +17,9 @@
 
 import { useState, useEffect } from "react";
 import { useLocale } from "next-intl";
-import { FadeInView } from "@/components/ui/fade-in-view";
-import { ONE_TIME_SKUS } from "@/config/one-time-skus";
-import type { OneTimeSku } from "@/types";
+import { FadeInView } from "@/seed/components/ui/fade-in-view";
+import { ONE_TIME_SKUS } from "@/seed/config/one-time-skus";
+import type { OneTimeSku } from "@/seed/types";
 
 const STARTER = ONE_TIME_SKUS.STARTER_BUNDLE;
 const PENDING_KEY = "sophia_pending_purchase";

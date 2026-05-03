@@ -6,7 +6,7 @@
  */
 
 import { getBalance } from '@/lib/mcu/credits-repo';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 import type { MissionHandlerResult, MissionContext } from './types';
 
 interface D1Env {

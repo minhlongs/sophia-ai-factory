@@ -5,7 +5,7 @@
  * Polar.sh metered billing, and quota exceeded event reconciliation
  */
 
-import type { Tier } from '@/types';
+import type { Tier } from '@/seed/types';
 
 /**
  * Overage event from database

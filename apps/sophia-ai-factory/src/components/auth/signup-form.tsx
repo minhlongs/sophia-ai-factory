@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Mail, Lock, User, Loader2, CheckCircle } from "lucide-react";
-import { authClient } from "@/lib/better-auth-client";
+import { authClient } from "@/seed/auth/better-auth-client";
 
 interface SignupFormProps {
   /** i18n strings — caller passes from server component or static keys */

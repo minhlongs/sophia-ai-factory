@@ -5,9 +5,9 @@
  * Key is stored as SHA-256 hash in key_hash column.
  */
 
-import { createServerClient } from '@/lib/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { sha256 } from '@/lib/audit/crypto-utils';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 
 export interface ApiKeyAuthResult {
   valid: boolean;

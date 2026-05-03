@@ -3,10 +3,10 @@
  * @module api/license/sync/license-sync-db
  */
 
-import { createServerClient } from '@/lib/db/client'
+import { createServerClient } from '@/seed/db/client'
 import { getKvClient } from '@/lib/redis'
-import { logger } from '@/lib/utils/logger-utility'
-import { toError } from '@/lib/utils/to-error'
+import { logger } from '@/seed/utils/logger-utility'
+import { toError } from '@/seed/utils/to-error'
 import type { SyncResult } from './license-sync-types'
 
 export async function syncFromDatabase(licenseNonce: string): Promise<SyncResult> {

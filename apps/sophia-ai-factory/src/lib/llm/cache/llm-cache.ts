@@ -8,7 +8,7 @@
  * Purge job for expired rows → Phase 4E.3.
  */
 
-import { createServerClient } from '@/lib/db/client'
+import { createServerClient } from '@/seed/db/client'
 import {
   EMBEDDING_MODEL_ID,
   embedPrompt,

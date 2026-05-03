@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { FadeInView } from "@/components/ui/fade-in-view";
+import { FadeInView } from "@/seed/components/ui/fade-in-view";
 import { FeatureGroups } from "./pricing-data";
 
 export function formatPrice(cents: number, locale: string): string {

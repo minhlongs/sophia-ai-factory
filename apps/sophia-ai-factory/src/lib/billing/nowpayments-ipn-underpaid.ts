@@ -8,10 +8,10 @@
  * @module billing/nowpayments-ipn-underpaid
  */
 
-import { logger } from '@/lib/utils/logger-utility'
-import { getD1Raw } from '@/lib/db/client'
-import { recordAudit } from '@/lib/db/audit/audit-log'
-import type { OneTimeSku } from '@/types'
+import { logger } from '@/seed/utils/logger-utility'
+import { getD1Raw } from '@/seed/db/client'
+import { recordAudit } from '@/seed/db/audit/audit-log'
+import type { OneTimeSku } from '@/seed/types'
 
 /** 1% tolerance for crypto gas fees / exchange rounding. */
 export const UNDERPAYMENT_THRESHOLD = 0.99

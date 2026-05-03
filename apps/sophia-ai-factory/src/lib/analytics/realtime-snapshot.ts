@@ -4,9 +4,9 @@
  * Queries D1 for real-time analytics data to feed SSE stream
  */
 
-import { createServerClient } from '@/lib/db/client';
-import { logger } from '@/lib/utils/logger-utility';
-import type { RealtimeAnalyticsSnapshot } from '@/types/analytics-realtime';
+import { createServerClient } from '@/seed/db/client';
+import { logger } from '@/seed/utils/logger-utility';
+import type { RealtimeAnalyticsSnapshot } from '@/seed/types/analytics-realtime';
 
 const ACTIVE_USER_WINDOW_MINUTES = 15;
 const LAST_1H_SECONDS = 3600;

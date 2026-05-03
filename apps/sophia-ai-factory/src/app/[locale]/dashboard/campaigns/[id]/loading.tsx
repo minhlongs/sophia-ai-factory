@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@/seed/components/ui/skeleton";
 
 /** Skeleton matching campaign detail page: back link, header, video preview, script, sidebar */
 export default function Loading() {
