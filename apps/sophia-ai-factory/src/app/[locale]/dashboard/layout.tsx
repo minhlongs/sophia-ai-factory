@@ -214,6 +214,13 @@ export default async function DashboardLayout({
             </>
           )}
           <Link
+            href="/dashboard/account"
+            className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
+          >
+            <Settings className="w-5 h-5" />
+            <span className="font-medium">Account &amp; Billing</span>
+          </Link>
+          <Link
             href="/dashboard/settings"
             className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
           >

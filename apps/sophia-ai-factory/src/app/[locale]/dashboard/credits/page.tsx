@@ -9,6 +9,8 @@ import { getCurrentUser } from '@/lib/better-auth-session';
 import { redirect } from 'next/navigation';
 import { getBalance, listTransactions } from '@/lib/mcu/credits-repo';
 import { COMMANDS } from '@/lib/missions/command-registry';
+import { getTranslations } from 'next-intl/server';
+import { AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
@@ -17,9 +19,10 @@ export default async function CreditsPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/auth/login');
 
-  const [balance, transactions] = await Promise.all([
+  const [balance, transactions, t] = await Promise.all([
     getBalance(user.id),
     listTransactions(user.id, 20),
+    getTranslations('dashboard.credits_low_banner'),
   ]);
 
   const commandList = Object.entries(COMMANDS).map(([cmd, def]) => ({
@@ -58,17 +61,20 @@ export default async function CreditsPage() {
         </div>
       </div>
 
-      {/* Low balance CTA */}
-      {balance.credits_remaining < 100 && (
-        <div className="bg-warning/10 border border-warning/30 rounded-lg p-4 flex items-center justify-between">
-          <p className="text-sm text-warning-foreground">
-            Low MCU balance — upgrade your plan to get more credits
-          </p>
+      {/* Low balance banner (<10 MCU) */}
+      {balance.credits_remaining < 10 && (
+        <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-md border border-amber-300/50 dark:border-amber-700/40 shadow-lg rounded-xl p-4 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0" />
+            <p className="text-sm text-slate-700 dark:text-slate-300">
+              {t('message')}
+            </p>
+          </div>
           <Link
-            href="/dashboard/billing"
-            className="px-4 py-2 bg-primary text-primary-foreground text-sm rounded-lg hover:bg-primary/90"
+            href="/pricing"
+            className="cursor-pointer shrink-0 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg transition-colors duration-150"
           >
-            Upgrade Plan
+            {t('cta')}
           </Link>
         </div>
       )}

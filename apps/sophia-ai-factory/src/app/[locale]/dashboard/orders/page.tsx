@@ -7,6 +7,8 @@
  */
 
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 import { getCurrentUser } from '@/lib/better-auth-session'
 import { getUserOrders } from '@/lib/orders/order-query'
 import { OrderCard } from './order-card'
@@ -23,40 +25,43 @@ export const metadata = {
 
 export default async function OrdersPage({ params }: OrdersPageProps) {
   const { locale } = await params
+
+  const [t, user] = await Promise.all([
+    getTranslations('dashboard.orders_empty'),
+    getCurrentUser(),
+  ])
+  if (!user) redirect(`/${locale}/login`)
+
   const isVi = locale.startsWith('vi')
-
-  const user = await getCurrentUser()
-  if (!user) {
-    redirect(`/${locale}/login`)
-  }
-
   const orders = await getUserOrders(user.id)
 
   const title = isVi ? 'Đơn Hàng Của Tôi' : 'My Orders'
   const subtitle = isVi
     ? 'Theo dõi trạng thái video từ gói một lần của bạn'
     : 'Track your one-time bundle video render status'
-  const emptyText = isVi
-    ? 'Bạn chưa có đơn hàng nào. Hãy mua gói để bắt đầu!'
-    : 'No orders yet. Purchase a bundle to get started!'
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-zinc-100">{title}</h1>
-        <p className="text-sm text-zinc-400 mt-1">{subtitle}</p>
+        <h1 className="text-2xl font-bold text-foreground">{title}</h1>
+        <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
       </div>
 
       {orders.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <ShoppingBag className="w-12 h-12 text-zinc-600 mb-4" />
-          <p className="text-zinc-500">{emptyText}</p>
-          <a
+        <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-lg rounded-xl p-10 flex flex-col items-center gap-4 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/30">
+            <ShoppingBag className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+          </div>
+          <div>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">{t('title')}</h2>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{t('desc')}</p>
+          </div>
+          <Link
             href="/pricing"
-            className="mt-4 inline-block px-5 py-2 bg-violet-700 hover:bg-violet-600 text-white rounded-lg text-sm transition-colors"
+            className="cursor-pointer inline-flex items-center gap-2 px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm font-medium transition-colors duration-150"
           >
-            {isVi ? 'Xem gói giá' : 'View pricing'}
-          </a>
+            {t('cta')}
+          </Link>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2">
