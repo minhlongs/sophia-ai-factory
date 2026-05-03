@@ -11,6 +11,7 @@ import {
   handleUnknown,
   handleCallbackQuery,
   handleTicket,
+  handleMissions,
   withMiddleware,
 } from '@/lib/telegram/telegram-command-handlers'
 import {
@@ -107,6 +108,8 @@ export async function POST(request: NextRequest) {
         await handleStatus(chatId)
       } else if (text === '/results') {
         await handleResults(chatId)
+      } else if (text === '/missions') {
+        await handleMissions(chatId)
       } else if (text.startsWith('/ticket')) {
         const ticketText = text.replace('/ticket', '').trim()
         // Resolve userId from chat_id — fall back to empty string if not linked

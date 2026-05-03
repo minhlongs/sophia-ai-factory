@@ -14,6 +14,7 @@ export { handleResults } from './handlers/results-handler'
 export { handleCallbackQuery } from './handlers/callback-query-handler'
 export { handleTextMessage, handleUnknown } from './handlers/text-message-handler'
 export { handleTicket } from './handlers/ticket-handler'
+export { handleMissions } from './handlers/missions-handler'
 
 /**
  * Middleware wrapper - checks rate limit before executing handler
