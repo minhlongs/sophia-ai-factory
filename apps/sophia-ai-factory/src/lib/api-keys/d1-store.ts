@@ -121,7 +121,7 @@ export async function createApiKey(
 
   await db
     .prepare(
-      `INSERT INTO raas_api_keys (id, key_id, key_hash, owner_id, name, permissions, rate_limit_per_min, created_at)
+      `INSERT INTO raas_user_api_keys (id, key_id, key_hash, owner_id, name, permissions, rate_limit_per_min, created_at)
        VALUES (?1,?2,?3,?4,?5,?6,?7,?8)`,
     )
     .bind(id, keyId, keyHash, ownerId, name, JSON.stringify(permissions), rateLimitPerMin, now)
@@ -137,7 +137,7 @@ export async function listApiKeys(db: D1Database, ownerId: string): Promise<ApiK
     .prepare(
       `SELECT id, key_id, key_hash, owner_id, name, permissions, rate_limit_per_min,
               created_at, expires_at, revoked_at, last_used_at
-       FROM raas_api_keys WHERE owner_id = ?1 ORDER BY created_at DESC`,
+       FROM raas_user_api_keys WHERE owner_id = ?1 ORDER BY created_at DESC`,
     )
     .bind(ownerId)
     .all<D1ApiKeyRow>();
@@ -148,7 +148,7 @@ export async function listApiKeys(db: D1Database, ownerId: string): Promise<ApiK
 export async function revokeApiKey(db: D1Database, id: string, ownerId: string): Promise<boolean> {
   const now = Math.floor(Date.now() / 1000);
   const result = await db
-    .prepare(`UPDATE raas_api_keys SET revoked_at = ?1 WHERE id = ?2 AND owner_id = ?3 AND revoked_at IS NULL`)
+    .prepare(`UPDATE raas_user_api_keys SET revoked_at = ?1 WHERE id = ?2 AND owner_id = ?3 AND revoked_at IS NULL`)
     .bind(now, id, ownerId)
     .run();
   logger.info('[D1ApiKeys] Revoked key', { id, ownerId });
@@ -175,7 +175,7 @@ export async function verifyApiKey(db: D1Database, fullKey: string): Promise<Api
     .prepare(
       `SELECT id, key_id, key_hash, owner_id, name, permissions, rate_limit_per_min,
               created_at, expires_at, revoked_at, last_used_at
-       FROM raas_api_keys
+       FROM raas_user_api_keys
        WHERE key_hash = ?1 AND revoked_at IS NULL`,
     )
     .bind(hash)
@@ -186,7 +186,7 @@ export async function verifyApiKey(db: D1Database, fullKey: string): Promise<Api
   if (row.expires_at && row.expires_at < now) return null;
 
   // Update last_used_at (non-fatal)
-  db.prepare(`UPDATE raas_api_keys SET last_used_at = ?1 WHERE id = ?2`)
+  db.prepare(`UPDATE raas_user_api_keys SET last_used_at = ?1 WHERE id = ?2`)
     .bind(now, row.id).run().catch(() => {});
 
   return rowToInfo(row);
