@@ -19,6 +19,9 @@ export type AuditActionType =
   | 'pricing_override_set'
   | 'replay_ipn'
   | 'run_synthetic'
+  | 'mark_migration_applied'
+  | 'synthetic_ipn'
+  | 'heygen_webhook_registered'
 
 export async function writeAuditLog(params: {
   actorUserId: string

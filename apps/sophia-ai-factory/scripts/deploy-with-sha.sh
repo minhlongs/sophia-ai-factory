@@ -29,6 +29,10 @@ DEPLOY_BRANCH=$(git -C "$REPO_ROOT" rev-parse --abbrev-ref HEAD)
 echo "Deploying SHA $COMMIT_SHORT (branch: $DEPLOY_BRANCH)"
 echo "Deployed at: $DEPLOYED_AT"
 
+# ─── Step 0: Generate Supabase migrations manifest (baked into build) ────────
+echo "==> generate-supabase-migrations-manifest"
+node scripts/generate-supabase-migrations-manifest.mjs
+
 # ─── Step 1: Next.js build ───────────────────────────────────────────────────
 echo "==> npm run build"
 npm run build

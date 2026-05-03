@@ -21,6 +21,10 @@ import {
   Plug,
   Store,
   BookOpen,
+  Database,
+  FlaskConical,
+  Webhook,
+  ServerCog,
 } from "lucide-react";
 import { HealthIndicator } from "@/components/dashboard/health-indicator";
 import { MobileNav } from "@/components/ui/mobile-nav";
@@ -171,13 +175,43 @@ export default async function DashboardLayout({
             <span className="font-medium">{t('sidebar.api_docs')}</span>
           </Link>
           {isAdmin && (
-            <Link
-              href="/dashboard/admin/ops"
-              className="flex items-center gap-3 px-4 py-3 text-violet-400 hover:text-violet-300 rounded-lg hover:bg-violet-950/30 transition-colors"
-            >
-              <Activity className="w-5 h-5" />
-              <span className="font-medium">Ops Dashboard</span>
-            </Link>
+            <>
+              <Link
+                href="/dashboard/admin/ops"
+                className="flex items-center gap-3 px-4 py-3 text-violet-400 hover:text-violet-300 rounded-lg hover:bg-violet-950/30 transition-colors"
+              >
+                <Activity className="w-5 h-5" />
+                <span className="font-medium">Ops Dashboard</span>
+              </Link>
+              <Link
+                href="/dashboard/admin/migrations"
+                className="flex items-center gap-3 px-4 py-3 text-violet-400 hover:text-violet-300 rounded-lg hover:bg-violet-950/30 transition-colors"
+              >
+                <Database className="w-5 h-5" />
+                <span className="font-medium">Migrations</span>
+              </Link>
+              <Link
+                href="/dashboard/admin/e2e-smoke"
+                className="flex items-center gap-3 px-4 py-3 text-violet-400 hover:text-violet-300 rounded-lg hover:bg-violet-950/30 transition-colors"
+              >
+                <FlaskConical className="w-5 h-5" />
+                <span className="font-medium">E2E Smoke</span>
+              </Link>
+              <Link
+                href="/dashboard/admin/heygen-webhooks"
+                className="flex items-center gap-3 px-4 py-3 text-violet-400 hover:text-violet-300 rounded-lg hover:bg-violet-950/30 transition-colors"
+              >
+                <Webhook className="w-5 h-5" />
+                <span className="font-medium">HeyGen Webhooks</span>
+              </Link>
+              <Link
+                href="/dashboard/admin/deploy-status"
+                className="flex items-center gap-3 px-4 py-3 text-violet-400 hover:text-violet-300 rounded-lg hover:bg-violet-950/30 transition-colors"
+              >
+                <ServerCog className="w-5 h-5" />
+                <span className="font-medium">Deploy Status</span>
+              </Link>
+            </>
           )}
           <Link
             href="/dashboard/settings"
