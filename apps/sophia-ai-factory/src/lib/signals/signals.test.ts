@@ -172,7 +172,7 @@ describe('NOWPayments webhook: tier_upgraded emission', () => {
     const captureModule = await import('@/lib/signals/posthog-capture')
     const captureSpy = vi.spyOn(captureModule, 'captureTierUpgraded').mockResolvedValue(undefined)
 
-    const nowpaymentsClient = await import('@/lib/clients/nowpayments-client')
+    const nowpaymentsClient = await import('@/tree/clients/nowpayments-client')
     const verifySpy = vi.spyOn(nowpaymentsClient, 'verifyIpnSignature').mockResolvedValue(true)
 
     const ipnHandlers = await import('@/lib/billing/nowpayments-ipn-handlers')

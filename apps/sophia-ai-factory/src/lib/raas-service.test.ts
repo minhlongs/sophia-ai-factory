@@ -8,7 +8,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createHmac } from 'crypto';
-import { hmacSha256 } from './audit/crypto-utils';
+import { hmacSha256 } from '@/tree/audit/crypto-utils';
 
 // Mock Redis - must be defined inside vi.mock factory
 vi.mock('./redis', () => ({

@@ -3,7 +3,7 @@ import localFont from "next/font/local";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
-import { listUserApiKeyProviders } from "@/lib/byok/user-api-key-store";
+import { listUserApiKeyProviders } from "@/tree/byok/user-api-key-store";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { logger } from "@/seed/utils/logger-utility";

@@ -52,7 +52,7 @@ export async function createInstallation(
 
   // Stamp customer_first_sop_install_at so handover drop-off metrics work.
   // Idempotent + non-fatal — never blocks an install.
-  void import('@/lib/handover/handover-magic-link')
+  void import('@/tree/handover/handover-magic-link')
     .then((m) => m.markFirstSopInstall(input.userId))
     .catch(() => { /* swallow */ });
 

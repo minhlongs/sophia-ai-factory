@@ -4,7 +4,7 @@
  */
 
 import { getD1Client } from '@/seed/db/client'
-import { sendMessage as sendTelegramMessage } from '@/lib/telegram/handlers/utils'
+import { sendMessage as sendTelegramMessage } from '@/tree/telegram/handlers/utils'
 import { CampaignStatus } from '@/seed/types'
 
 export async function updateCampaignStatus(

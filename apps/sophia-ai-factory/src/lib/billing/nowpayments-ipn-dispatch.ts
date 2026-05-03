@@ -9,7 +9,7 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility'
-import { lookupInvoice } from '@/lib/clients/nowpayments-client'
+import { lookupInvoice } from '@/tree/clients/nowpayments-client'
 import { handleFinished, handleRefunded } from './nowpayments-ipn-subscription'
 import { handleOneTimeFinished, handleOneTimeRefunded } from './nowpayments-ipn-one-time'
 import type { NowPaymentsIpnPayload } from './nowpayments-ipn-handlers'

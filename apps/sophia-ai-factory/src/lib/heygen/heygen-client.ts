@@ -182,8 +182,8 @@ export class HeyGenClient {
   }
 }
 
-import { getUserApiKey } from '@/lib/byok/user-api-key-store';
-import { isByokEnabled } from '@/lib/byok/resolve-user-api-key';
+import { getUserApiKey } from '@/tree/byok/user-api-key-store';
+import { isByokEnabled } from '@/tree/byok/resolve-user-api-key';
 
 /**
  * Returns a HeyGenClient resolved via BYOK when possible.

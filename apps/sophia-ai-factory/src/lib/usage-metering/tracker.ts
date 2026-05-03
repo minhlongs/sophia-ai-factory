@@ -5,7 +5,7 @@
  * Re-exports DB helpers and credit utilities; orchestrates trackUsage.
  */
 
-import { sha256 } from '@/lib/audit/crypto-utils';
+import { sha256 } from '@/tree/audit/crypto-utils';
 import { logger } from '@/seed/utils/logger-utility';
 import { getErrorMessage } from '@/seed/utils/to-error';
 import type { UsageEventInput, IngestionResult } from './types';

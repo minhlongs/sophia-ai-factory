@@ -13,7 +13,7 @@ vi.mock('@/lib/llm/cache/call-with-cache', () => ({
   callWithCache: vi.fn(),
 }))
 
-vi.mock('@/lib/byok/resolve-user-api-key', () => ({
+vi.mock('@/tree/byok/resolve-user-api-key', () => ({
   resolveUserApiKey: vi.fn((_userId, _provider, envFallback) =>
     Promise.resolve(envFallback ?? null),
   ),
@@ -35,7 +35,7 @@ vi.mock('@/seed/utils/logger-utility', () => ({
 }))
 
 import { generateScript } from './script-generator'
-import { resolveUserApiKey } from '@/lib/byok/resolve-user-api-key'
+import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key'
 import { callWithCache } from '@/lib/llm/cache/call-with-cache'
 
 const mockResolveUserApiKey = vi.mocked(resolveUserApiKey)

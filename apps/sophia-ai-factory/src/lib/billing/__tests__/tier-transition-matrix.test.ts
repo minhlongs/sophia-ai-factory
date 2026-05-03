@@ -90,7 +90,7 @@ vi.mock('@/lib/video/onboarding-video', () => ({
   ONBOARDING_TIERS: new Set(['ENTERPRISE', 'MASTER']),
 }))
 
-vi.mock('@/lib/handover/auto-handover', () => ({
+vi.mock('@/tree/handover/auto-handover', () => ({
   triggerAutoHandover: vi.fn().mockResolvedValue(undefined),
 }))
 
@@ -103,7 +103,7 @@ vi.mock('@/lib/orders/pending-order-repo', () => ({
 
 vi.mock('@/lib/billing/email/receipt-email-sender', () => ({ sendReceiptEmail: vi.fn().mockResolvedValue(undefined) }))
 
-vi.mock('@/lib/clients/nowpayments-client', () => ({
+vi.mock('@/tree/clients/nowpayments-client', () => ({
   getTierByInvoiceId: vi.fn((invoiceId: string) => {
     const entry = Object.entries(TIER_INVOICE_MAP).find(([, id]) => id === invoiceId)
     if (!entry) return null

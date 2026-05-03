@@ -3,7 +3,7 @@ import { getErrorMessage } from '@/seed/utils/to-error';
 import { trackUsage, hashLicenseKey, calculateCredits, startTimer } from '@/lib/usage-metering';
 import { getUsageContext } from '@/lib/usage-metering/context';
 import { callWithCache } from '@/lib/llm/cache/call-with-cache';
-import { resolveUserApiKey } from '@/lib/byok/resolve-user-api-key';
+import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
 import {
   generateMockScript,
   buildScriptUserPrompt,
