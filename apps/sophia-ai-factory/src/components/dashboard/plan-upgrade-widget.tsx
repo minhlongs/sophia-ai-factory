@@ -1,32 +1,69 @@
 'use client';
 
 /**
- * PlanUpgradeWidget — shows current tier and upgrade options with NOWPayments checkout links.
- * Placed on the settings page next to the referral widget.
+ * PlanUpgradeWidget — shows current tier and upgrade options.
+ * Uses tracked POST /api/checkout instead of raw NOWPayments URLs.
+ * Displays period_end (renews date) and optional history link.
  */
 
+import { useState } from 'react';
 import { UNIFIED_TIERS } from '@/config/tiers';
-import { NOWPAYMENTS_TIERS } from '@/lib/clients/nowpayments-client';
 import type { Tier } from '@/types';
-import { Crown, ArrowUp } from 'lucide-react';
+import { Crown, ArrowUp, Loader2 } from 'lucide-react';
 
 interface Props {
   currentTier: Tier;
+  periodEnd?: string | null;
+  showHistoryLink?: boolean;
+}
+
+interface CheckoutResponse {
+  url?: string;
+  orderId?: string;
+  error?: string;
+  redirectTo?: string;
 }
 
 const TIER_ORDER: Tier[] = ['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER'];
 
-/** Build checkout URL from NOWPayments invoice ID (no order tracking — used for display links) */
-function getCheckoutUrl(tier: Tier): string {
-  const iid = NOWPAYMENTS_TIERS[tier]?.invoiceId;
-  if (!iid) return '/pricing';
-  return `https://nowpayments.io/payment/?iid=${iid}`;
-}
-
-export function PlanUpgradeWidget({ currentTier }: Props) {
+export function PlanUpgradeWidget({ currentTier, periodEnd, showHistoryLink }: Props) {
+  const [loading, setLoading] = useState<Tier | null>(null);
   const current = UNIFIED_TIERS[currentTier];
   const currentIdx = TIER_ORDER.indexOf(currentTier);
   const upgradeTiers = TIER_ORDER.filter((_, i) => i > currentIdx);
+
+  const handleUpgrade = async (tier: Tier) => {
+    setLoading(tier);
+    try {
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tier }),
+      });
+      const data = await res.json() as CheckoutResponse;
+
+      if (res.status === 401 && data.redirectTo) {
+        window.location.href = data.redirectTo;
+        return;
+      }
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert(data.error || 'Checkout failed. Please try again.');
+      }
+    } catch {
+      alert('Network error. Please try again.');
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  // Format period end date
+  const periodEndDisplay = periodEnd
+    ? (UNIFIED_TIERS[currentTier]?.billingType === 'lifetime'
+        ? 'Lifetime — never expires'
+        : `Renews ${new Date(periodEnd).toLocaleDateString('en-US', { dateStyle: 'medium' })}`)
+    : null;
 
   if (upgradeTiers.length === 0) {
     return (
@@ -38,6 +75,9 @@ export function PlanUpgradeWidget({ currentTier }: Props) {
         <p className="text-sm text-muted-foreground mt-1">
           Bạn đang sử dụng gói cao nhất. Cảm ơn bạn!
         </p>
+        {periodEndDisplay && (
+          <p className="text-xs text-muted-foreground mt-2">{periodEndDisplay}</p>
+        )}
       </div>
     );
   }
@@ -54,19 +94,22 @@ export function PlanUpgradeWidget({ currentTier }: Props) {
         <p className="text-sm text-muted-foreground mt-1">
           ${current.price}/{billingLabel} — {current.mcuMonthly.toLocaleString()} MCU/tháng
         </p>
+        {periodEndDisplay && (
+          <p className="text-xs text-muted-foreground mt-1">{periodEndDisplay}</p>
+        )}
       </div>
 
       <div className="grid gap-2">
         {upgradeTiers.map(tier => {
           const t = UNIFIED_TIERS[tier];
           const tierBillingLabel = t.billingType === 'lifetime' ? 'trọn đời' : 'tháng';
+          const isLoading = loading === tier;
           return (
-            <a
+            <button
               key={tier}
-              href={getCheckoutUrl(tier)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-between px-4 py-3 bg-muted/50 border border-border/50 rounded-lg hover:border-violet-500/40 hover:bg-violet-500/5 transition-colors"
+              onClick={() => handleUpgrade(tier)}
+              disabled={isLoading || loading !== null}
+              className="flex items-center justify-between px-4 py-3 bg-muted/50 border border-border/50 rounded-lg hover:border-violet-500/40 hover:bg-violet-500/5 transition-colors disabled:opacity-60 disabled:cursor-not-allowed text-left w-full"
             >
               <div>
                 <span className="font-medium text-foreground">{t.name}</span>
@@ -74,11 +117,25 @@ export function PlanUpgradeWidget({ currentTier }: Props) {
                   ${t.price}/{tierBillingLabel}
                 </span>
               </div>
-              <ArrowUp className="w-4 h-4 text-violet-400" />
-            </a>
+              {isLoading
+                ? <Loader2 className="w-4 h-4 text-violet-400 animate-spin" />
+                : <ArrowUp className="w-4 h-4 text-violet-400" />
+              }
+            </button>
           );
         })}
       </div>
+
+      {showHistoryLink && (
+        <p className="text-xs text-muted-foreground">
+          <a
+            href="/dashboard/orders"
+            className="text-violet-400 hover:text-violet-300 underline"
+          >
+            View past orders
+          </a>
+        </p>
+      )}
     </div>
   );
 }

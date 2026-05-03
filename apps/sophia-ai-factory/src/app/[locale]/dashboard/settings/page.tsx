@@ -6,6 +6,8 @@ import { getCurrentUser } from '@/lib/better-auth-session';
 import { getUserTier } from '@/lib/db/get-user-tier';
 import { ReferralShareWidget } from '@/components/dashboard/referral-share-widget';
 import { PlanUpgradeWidget } from '@/components/dashboard/plan-upgrade-widget';
+import { getSubscriptionPeriodEnd } from '@/lib/billing/subscription-expiry';
+import { countCompletedOrders } from '@/lib/orders/order-counts';
 
 const SettingsForm = dynamic(
   () => import('@/components/settings/settings-form').then(m => ({ default: m.SettingsForm })),
@@ -24,13 +26,23 @@ export default async function SettingsPage() {
   // or middleware should have redirected already.
 
   const currentTier = user ? await getUserTier(user.id) : 'BASIC';
+  const [periodEnd, completedOrderCount] = user
+    ? await Promise.all([
+        getSubscriptionPeriodEnd(user.id).catch(() => null),
+        countCompletedOrders(user.id).catch(() => 0),
+      ])
+    : [null, 0];
 
   return (
     <div className="container mx-auto max-w-4xl py-10 space-y-6">
       <Suspense fallback={<SettingsSkeleton />}>
         <SettingsForm defaultValues={profile} />
       </Suspense>
-      <PlanUpgradeWidget currentTier={currentTier} />
+      <PlanUpgradeWidget
+        currentTier={currentTier}
+        periodEnd={periodEnd}
+        showHistoryLink={completedOrderCount > 0}
+      />
       <ReferralShareWidget />
     </div>
   );
