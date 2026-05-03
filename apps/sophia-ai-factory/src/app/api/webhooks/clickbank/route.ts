@@ -16,7 +16,7 @@ import { parsePostback } from '@/lib/affiliates/clickbank-postback-parser'
 import { attributeClick } from '@/lib/affiliates/conversion-attributor'
 import { calcCommission } from '@/lib/affiliates/commission-calculator'
 import { notifyConversionEarned } from '@/lib/inngest/functions/generate-campaign-db'
-import { checkRateLimit } from '@/lib/telegram/sql-rate-limiter'
+import { checkRateLimit } from '@/tree/telegram/sql-rate-limiter'
 import { logger } from '@/seed/utils/logger-utility'
 
 /** Map canonical event type to payout status */

@@ -23,13 +23,13 @@ vi.mock('@/lib/actions/settings', () => ({
   encryptAndSaveSettings: vi.fn(),
 }));
 
-vi.mock('@/lib/byok/user-api-key-store', () => ({
+vi.mock('@/tree/byok/user-api-key-store', () => ({
   setUserApiKey: vi.fn().mockResolvedValue(undefined),
 }));
 
 import { POST } from './route';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { setUserApiKey } from '@/lib/byok/user-api-key-store';
+import { setUserApiKey } from '@/tree/byok/user-api-key-store';
 
 const mockGetCurrentUser = vi.mocked(getCurrentUser);
 const mockSetUserApiKey = vi.mocked(setUserApiKey);

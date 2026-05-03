@@ -12,7 +12,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/seed/auth/require-admin'
 import { rateLimit } from '@/seed/security/rate-limiter'
 import { logger } from '@/seed/utils/logger-utility'
-import { cancelScheduledReport, getDueReports } from '@/lib/audit/report-scheduler'
+import { cancelScheduledReport, getDueReports } from '@/tree/audit/report-scheduler'
 
 interface RouteParams {
   params: Promise<{ id: string }>

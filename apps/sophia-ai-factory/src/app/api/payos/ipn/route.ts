@@ -9,7 +9,7 @@ import { verifyPayOsSignature, payOsIpnSchema, FEATURE_PAYOS, parseUserIdFromPay
 import { logger } from '@/seed/utils/logger-utility'
 import { createServerClient } from '@/seed/db/client'
 import { getD1Raw } from '@/seed/db/client'
-import { getTierByInvoiceId } from '@/lib/clients/nowpayments-client'
+import { getTierByInvoiceId } from '@/tree/clients/nowpayments-client'
 import { UNIFIED_TIERS } from '@/seed/config/tiers'
 import { recordAudit } from '@/seed/db/audit/audit-log'
 import { markOrderCompleted, markOrderFailed } from '@/lib/orders/pending-order-repo'

@@ -1,5 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { createInvoiceUrl, NOWPAYMENTS_TIERS } from '@/lib/clients/nowpayments-client';
+import { createInvoiceUrl, NOWPAYMENTS_TIERS } from '@/tree/clients/nowpayments-client';
 import { checkoutSchema } from '@/lib/schemas';
 import { withRateLimit } from '@/middleware/rate-limit-wrapper';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';

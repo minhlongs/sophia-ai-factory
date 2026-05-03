@@ -3,7 +3,7 @@
  *
  * Reads llm_call_trace events from D1 signals_events (24h window),
  * computes in-memory aggregates via pure `aggregateTraceStats()` from
- * `@/lib/admin/trace-aggregator` (Phase 4M), returns JSON.
+ * `@/tree/admin/trace-aggregator` (Phase 4M), returns JSON.
  * CRON_SECRET-guarded. D1 failure → 200 ok:false.
  */
 
@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import {
   aggregateTraceStats,
   type TraceRow,
-} from '@/lib/admin/trace-aggregator'
+} from '@/tree/admin/trace-aggregator'
 import { getErrorMessage } from '@/seed/utils/to-error'
 
 export const dynamic = 'force-dynamic'

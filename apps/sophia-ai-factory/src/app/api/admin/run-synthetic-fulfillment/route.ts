@@ -16,7 +16,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { requireAdmin } from '@/seed/auth/require-admin'
-import { runSyntheticFulfillment } from '@/lib/admin/synthetic-fulfillment-runner'
+import { runSyntheticFulfillment } from '@/tree/admin/synthetic-fulfillment-runner'
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
 

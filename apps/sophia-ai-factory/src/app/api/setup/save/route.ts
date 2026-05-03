@@ -8,8 +8,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { setUserApiKey } from '@/lib/byok/user-api-key-store';
-import type { ByokProvider } from '@/lib/byok/user-api-key-store';
+import { setUserApiKey } from '@/tree/byok/user-api-key-store';
+import type { ByokProvider } from '@/tree/byok/user-api-key-store';
 import { z } from 'zod';
 
 const setupSaveSchema = z

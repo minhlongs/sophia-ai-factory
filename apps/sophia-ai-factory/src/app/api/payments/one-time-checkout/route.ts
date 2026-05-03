@@ -13,7 +13,7 @@
 
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createOneTimeInvoiceUrl } from '@/lib/clients/nowpayments-client';
+import { createOneTimeInvoiceUrl } from '@/tree/clients/nowpayments-client';
 import { getOneTimeSkuById, ONE_TIME_SKUS } from '@/seed/config/one-time-skus';
 import { withRateLimit } from '@/middleware/rate-limit-wrapper';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';

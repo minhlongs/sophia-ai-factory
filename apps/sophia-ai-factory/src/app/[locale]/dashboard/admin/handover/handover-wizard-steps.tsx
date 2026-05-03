@@ -11,7 +11,7 @@ import { Building2, User, Mail, Phone, Globe, Clock, Tag } from 'lucide-react';
 import {
   AGENCY_SOP_MAP, TIER_SOP_COUNTS,
   type AgencyType, type CreateHandoverInput,
-} from '@/lib/handover/handover-types';
+} from '@/tree/handover/handover-types';
 import type { Tier } from '@/seed/types';
 
 export interface FormState {

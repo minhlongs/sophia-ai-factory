@@ -24,7 +24,7 @@ import {
   getSyncStats,
   type KvMeteringLogConfig,
 } from '@/lib/usage-metering/kv-metering-log-sync';
-import { logAuditEvent } from '@/lib/audit/audit-logger';
+import { logAuditEvent } from '@/tree/audit/audit-logger';
 
 interface UsageReconciliationSyncRequest {
   timeRangeHours?: number;

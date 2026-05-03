@@ -18,7 +18,7 @@ import {
   clearUserApiKey,
   listUserApiKeyProviders,
   type ByokProvider,
-} from '@/lib/byok/user-api-key-store'
+} from '@/tree/byok/user-api-key-store'
 import { track } from '@/lib/signals/track'
 import { D1Events } from '@/lib/signals/d1-event-types'
 import { logger } from '@/seed/utils/logger-utility'

@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getJobStatus } from '@/lib/clients/muapi-media-client'
+import { getJobStatus } from '@/tree/clients/muapi-media-client'
 import { logger } from '@/seed/utils/logger-utility'
 import { getCurrentUser } from '@/seed/auth/better-auth-session'
 

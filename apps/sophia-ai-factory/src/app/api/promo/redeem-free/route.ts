@@ -13,7 +13,7 @@ import { validatePromoCode } from '@/lib/promo/promo-validator';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { withRateLimit } from '@/middleware/rate-limit-wrapper';
 import { getD1Raw } from '@/seed/db/client';
-import { createCustomerUser } from '@/lib/handover/handover-account-setup';
+import { createCustomerUser } from '@/tree/handover/handover-account-setup';
 import { logger } from '@/seed/utils/logger-utility';
 
 const redeemFreeSchema = z.object({

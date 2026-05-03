@@ -9,9 +9,9 @@
 import { NextRequest } from 'next/server'
 import { requireAdmin } from '@/seed/auth/require-admin'
 import { getD1Raw } from '@/seed/db/client'
-import { runFullAuditEager } from '@/lib/audit/zero-gap-runner'
-import { calculateAuditScore, countByStatus } from '@/lib/audit/audit-score-calculator'
-import type { AuditEnv } from '@/lib/audit/zero-gap-types'
+import { runFullAuditEager } from '@/tree/audit/zero-gap-runner'
+import { calculateAuditScore, countByStatus } from '@/tree/audit/audit-score-calculator'
+import type { AuditEnv } from '@/tree/audit/zero-gap-types'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'

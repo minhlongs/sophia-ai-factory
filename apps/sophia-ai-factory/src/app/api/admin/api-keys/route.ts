@@ -17,7 +17,7 @@ import {
   generateApiKey,
   getUserApiKeys,
 } from '@/seed/security/api-key-validator'
-import { logApiKeyCreation } from '@/lib/audit/audit-query-logger'
+import { logApiKeyCreation } from '@/tree/audit/audit-query-logger'
 
 export const dynamic = 'force-dynamic'
 

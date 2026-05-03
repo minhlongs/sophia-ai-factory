@@ -3,7 +3,7 @@ import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import { jwtVerify } from 'jose';
-import { sha256 } from '@/lib/audit/crypto-utils';
+import { sha256 } from '@/tree/audit/crypto-utils';
 
 /** Sanitize input — allow alphanumeric + limited punctuation, max 100 chars. */
 export function sanitizeInput(input: string | null | undefined): string | null {

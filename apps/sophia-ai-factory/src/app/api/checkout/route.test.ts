@@ -24,7 +24,7 @@ vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUserFromHeaders: vi.fn(),
 }));
 
-vi.mock('@/lib/clients/nowpayments-client', () => ({
+vi.mock('@/tree/clients/nowpayments-client', () => ({
   NOWPAYMENTS_TIERS: {
     BASIC: { tier: 'BASIC', invoiceId: '111', price: 199, currency: 'USD', name: 'Starter' },
     PREMIUM: { tier: 'PREMIUM', invoiceId: '222', price: 399, currency: 'USD', name: 'Growth' },
@@ -39,7 +39,7 @@ vi.mock('@/lib/clients/nowpayments-client', () => ({
 
 import { GET, POST } from './route';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { createInvoiceUrl } from '@/lib/clients/nowpayments-client';
+import { createInvoiceUrl } from '@/tree/clients/nowpayments-client';
 
 const mockGetUser = vi.mocked(getCurrentUserFromHeaders);
 const mockCreateInvoiceUrl = vi.mocked(createInvoiceUrl);

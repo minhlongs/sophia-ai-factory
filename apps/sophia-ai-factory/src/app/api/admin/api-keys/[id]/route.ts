@@ -15,7 +15,7 @@ import {
   revokeApiKey,
   deleteApiKey,
 } from '@/seed/security/api-key-validator'
-import { logApiKeyRevocation } from '@/lib/audit/audit-query-logger'
+import { logApiKeyRevocation } from '@/tree/audit/audit-query-logger'
 
 export const dynamic = 'force-dynamic'
 

@@ -25,7 +25,7 @@ vi.mock('@/lib/inngest/functions/generate-campaign-db', () => ({
   notifyConversionEarned: vi.fn(),
 }))
 
-vi.mock('@/lib/telegram/sql-rate-limiter', () => ({
+vi.mock('@/tree/telegram/sql-rate-limiter', () => ({
   checkRateLimit: vi.fn().mockResolvedValue({ allowed: true }),
 }))
 
@@ -39,7 +39,7 @@ import { parsePostback } from '@/lib/affiliates/clickbank-postback-parser'
 import { attributeClick } from '@/lib/affiliates/conversion-attributor'
 import { calcCommission } from '@/lib/affiliates/commission-calculator'
 import { notifyConversionEarned } from '@/lib/inngest/functions/generate-campaign-db'
-import { checkRateLimit } from '@/lib/telegram/sql-rate-limiter'
+import { checkRateLimit } from '@/tree/telegram/sql-rate-limiter'
 import { NextRequest } from 'next/server'
 
 // Mock D1 binding

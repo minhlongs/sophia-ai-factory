@@ -10,7 +10,7 @@ import { useState, useCallback } from 'react'
 import { Play, Loader2, Download } from 'lucide-react'
 import { AuditScoreCard } from './audit-score-card'
 import { AuditCheckRow } from './audit-check-row'
-import type { CheckResult } from '@/lib/audit/zero-gap-types'
+import type { CheckResult } from '@/tree/audit/zero-gap-types'
 
 type RunState = 'idle' | 'running' | 'done' | 'error'
 

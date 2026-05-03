@@ -7,11 +7,11 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { validateMagicLinkToken, consumeMagicLink } from '@/lib/handover/handover-magic-link';
+import { validateMagicLinkToken, consumeMagicLink } from '@/tree/handover/handover-magic-link';
 import { getD1Raw } from '@/seed/db/client';
 import { getAuth } from '@/seed/auth/better-auth-server';
 import { logger } from '@/seed/utils/logger-utility';
-import { writeAuditLog } from '@/lib/admin/audit-log';
+import { writeAuditLog } from '@/tree/admin/audit-log';
 import { signCookieValue, hashEmail } from '@/seed/auth/sign-cookie-value';
 import { checkRateLimit } from '@/middleware/rate-limit-wrapper';
 

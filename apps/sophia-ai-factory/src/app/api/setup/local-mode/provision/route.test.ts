@@ -19,7 +19,7 @@ vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUserFromHeaders: vi.fn(),
 }))
 
-vi.mock('@/lib/crypto/encrypt-secret', () => ({
+vi.mock('@/tree/crypto/encrypt-secret', () => ({
   encryptSecret: vi.fn(),
 }))
 
@@ -28,7 +28,7 @@ vi.mock('@/lib/signals/track', () => ({
 }))
 
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session'
-import { encryptSecret } from '@/lib/crypto/encrypt-secret'
+import { encryptSecret } from '@/tree/crypto/encrypt-secret'
 import { track } from '@/lib/signals/track'
 
 const mockGetCurrentUser = vi.mocked(getCurrentUserFromHeaders)

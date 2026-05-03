@@ -14,7 +14,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/seed/utils/logger-utility';
-import { logValidationWithReceipt } from '@/lib/audit/audit-logger';
+import { logValidationWithReceipt } from '@/tree/audit/audit-logger';
 import type { TenantIsolationResult } from './tenant-isolation-types';
 import { extractAgencyId } from './tenant-isolation-agency-extractor';
 import { extractResourceInfo } from './tenant-isolation-resource-resolver';
