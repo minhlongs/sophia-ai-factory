@@ -46,6 +46,22 @@ export async function installSopAction(formData: FormData): Promise<{ error?: st
   }
 
   const { slug, scheduleCron, enabled } = parsed.data;
+
+  // Parse configValues from form — may be absent for templates without config_schema
+  let configValues: Record<string, unknown> | undefined;
+  const configValuesRaw = formData.get('configValues');
+  if (configValuesRaw && typeof configValuesRaw === 'string') {
+    try {
+      configValues = JSON.parse(configValuesRaw) as Record<string, unknown>;
+    } catch { configValues = undefined; }
+  }
+
+  // Parse optional Markdown override from advanced section
+  const customizationsRaw = formData.get('customizations');
+  const playbookMdOverride = customizationsRaw && typeof customizationsRaw === 'string' && customizationsRaw.trim()
+    ? customizationsRaw.trim()
+    : undefined;
+
   const db = getD1();
   if (!db) return { error: 'Database unavailable' };
 
@@ -53,13 +69,17 @@ export async function installSopAction(formData: FormData): Promise<{ error?: st
   if (!template) return { error: 'Template not found' };
 
   const webhookSecret = generateWebhookSecret();
-  const customizations: SopCustomizations = { webhookSecret };
+  const customizations: SopCustomizations = {
+    webhookSecret,
+    ...(playbookMdOverride ? { playbook_md_override: playbookMdOverride } : {}),
+  };
 
   const installation = await createInstallation(db, {
     userId: user.id,
     templateId: template.id,
     scheduleCron: scheduleCron ?? undefined,
     customizations,
+    configValues,
   });
 
   if (!enabled) {

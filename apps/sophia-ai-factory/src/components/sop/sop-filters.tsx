@@ -25,9 +25,11 @@ const CATEGORIES: Array<{ value: Category; labelKey: string }> = [
   { value: 'content',   labelKey: 'content' },
   { value: 'leads',     labelKey: 'leads' },
   { value: 'email',     labelKey: 'email' },
+  { value: 'sales',     labelKey: 'sales' },
+  { value: 'social',    labelKey: 'social' },
   { value: 'analytics', labelKey: 'analytics' },
-  { value: 'proposals', labelKey: 'proposals' },
   { value: 'crisis',    labelKey: 'crisis' },
+  { value: 'proposals', labelKey: 'proposals' },
 ];
 
 export function SopFilters({ category, query, onCategoryChange, onQueryChange }: SopFiltersProps) {

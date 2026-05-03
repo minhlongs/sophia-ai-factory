@@ -1,8 +1,8 @@
 /**
  * SOP Argument Resolver
  *
- * Resolves `{{step_N.output.field}}` and `{{trigger.body.field}}` template
- * placeholders in step args using prior step results and trigger payload.
+ * Resolves `{{step_N.output.field}}`, `{{trigger.body.field}}`, and
+ * `{{config.field}}` template placeholders in step args.
  *
  * Simple regex-replace — no full template engine (KISS).
  */
@@ -19,22 +19,29 @@ function resolveValue(
   value: unknown,
   stepResults: StepResult[],
   triggerPayload: Record<string, unknown> | undefined,
+  configValues: Record<string, unknown> | undefined,
 ): unknown {
   if (typeof value !== 'string') return value;
 
   return value.replace(PLACEHOLDER_RE, (match, path: string) => {
-    const resolved = resolvePath(path.trim(), stepResults, triggerPayload);
+    const resolved = resolvePath(path.trim(), stepResults, triggerPayload, configValues);
     return resolved !== undefined ? String(resolved) : match;
   });
 }
 
-/** Resolve a dot-path like "step_1.output.foo" or "trigger.body.email" */
+/** Resolve a dot-path like "step_1.output.foo", "trigger.body.email", or "config.field" */
 function resolvePath(
   path: string,
   stepResults: StepResult[],
   triggerPayload: Record<string, unknown> | undefined,
+  configValues: Record<string, unknown> | undefined,
 ): unknown {
   const parts = path.split('.');
+
+  // {{config.field}} — from installation config_values
+  if (parts[0] === 'config') {
+    return getNestedValue(configValues ?? {}, parts.slice(1));
+  }
 
   if (parts[0] === 'trigger' && parts[1] === 'body') {
     return getNestedValue(triggerPayload ?? {}, parts.slice(2));
@@ -77,15 +84,18 @@ function getNestedValue(obj: Record<string, unknown>, segments: string[]): unkno
 /**
  * Resolve all template placeholders in step args.
  * Returns new args object with placeholders substituted.
+ *
+ * Supports: {{step_N.output.field}}, {{trigger.body.field}}, {{config.field}}
  */
 export function resolveArgs(
   args: Record<string, unknown>,
   stepResults: StepResult[],
   triggerPayload?: Record<string, unknown>,
+  configValues?: Record<string, unknown>,
 ): Record<string, unknown> {
   const resolved: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(args)) {
-    resolved[key] = resolveValue(value, stepResults, triggerPayload);
+    resolved[key] = resolveValue(value, stepResults, triggerPayload, configValues);
   }
   return resolved;
 }

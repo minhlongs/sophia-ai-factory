@@ -5,6 +5,9 @@
  * user_sop_installations, and sop_runs. All snake_case from DB, camelCase in app.
  */
 
+/** All supported SOP categories */
+export type SopCategory = 'content' | 'leads' | 'email' | 'analytics' | 'proposals' | 'crisis' | 'sales' | 'social';
+
 /** Row from sop_templates table */
 export interface SopTemplateRow {
   id: string;
@@ -13,7 +16,7 @@ export interface SopTemplateRow {
   name_en: string;
   description_vi: string;
   description_en: string;
-  category: 'content' | 'leads' | 'email' | 'analytics' | 'proposals' | 'crisis';
+  category: SopCategory;
   agents_yaml: string;
   playbook_md: string;
   output_schema: string;  // JSON string
@@ -24,6 +27,14 @@ export interface SopTemplateRow {
   status: 'draft' | 'published' | 'archived';
   created_at: number;
   updated_at: number;
+  /** JSON Schema for no-code config form */
+  config_schema: string | null;
+  /** JSON default values for config form */
+  config_defaults: string | null;
+  /** Minutes to set up (shown in UI) */
+  setup_time_minutes: number;
+  /** Whether to show in featured/hero section */
+  is_featured: 0 | 1;
 }
 
 /** Customizations stored as JSON in user_sop_installations.customizations */
@@ -46,6 +57,8 @@ export interface SopInstallationRow {
   next_run_at: number | null;
   run_count: number;
   created_at: number;
+  /** JSON object of customer's form config values */
+  config_values: string | null;
 }
 
 /** Row from sop_runs table */
@@ -69,6 +82,8 @@ export interface CreateInstallationInput {
   templateId: string;
   scheduleCron?: string;
   customizations?: SopCustomizations;
+  /** Config values from no-code form */
+  configValues?: Record<string, unknown>;
 }
 
 /** Fields that can be updated on a run */

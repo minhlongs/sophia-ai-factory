@@ -17,6 +17,8 @@ const enMessages = {
       analytics: 'Analytics',
       proposals: 'Proposals',
       crisis: 'Crisis PR',
+      sales: 'Sales',
+      social: 'Social Media',
     },
   },
 };
@@ -30,6 +32,8 @@ const viMessages = {
       analytics: 'Phân Tích',
       proposals: 'Đề Xuất',
       crisis: 'Xử Lý Khủng Hoảng',
+      sales: 'Bán Hàng',
+      social: 'Mạng Xã Hội',
     },
   },
 };
@@ -43,7 +47,7 @@ function wrapVi(ui: React.ReactNode) {
 }
 
 type Category = SopTemplateRow['category'];
-const categories: Category[] = ['content', 'leads', 'email', 'analytics', 'proposals', 'crisis'];
+const categories: Category[] = ['content', 'leads', 'email', 'analytics', 'proposals', 'crisis', 'sales', 'social'];
 
 describe('CategoryBadge', () => {
   for (const cat of categories) {

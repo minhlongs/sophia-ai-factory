@@ -20,6 +20,7 @@ export {
   advanceSchedule,
   deleteInstallation,
   claimDueInstallations,
+  updateConfigValues,
 } from './sop-repo-installations';
 
 export {
