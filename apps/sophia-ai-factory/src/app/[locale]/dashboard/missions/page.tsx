@@ -9,11 +9,11 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { MissionDashboard } from '@/components/raas/mission-dashboard';
-import { MissionLauncher } from '@/components/raas/mission-launcher';
-import { MissionControlHeader } from '@/components/missions/mission-control-header';
-import { AgentTeamPanel } from '@/components/missions/agent-team-panel';
-import { TaskFeed } from '@/components/missions/task-feed';
+import { MissionDashboard } from '@/forest/components/raas/mission-dashboard';
+import { MissionLauncher } from '@/forest/components/raas/mission-launcher';
+import { MissionControlHeader } from '@/forest/components/missions/mission-control-header';
+import { AgentTeamPanel } from '@/forest/components/missions/agent-team-panel';
+import { TaskFeed } from '@/forest/components/missions/task-feed';
 import { useRouter } from 'next/navigation';
 
 export default function MissionsPage() {

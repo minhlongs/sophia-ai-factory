@@ -21,7 +21,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/seed/db/client';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { isUserAdmin } from '@/seed/auth/is-user-admin';
-import { getUsageSummaryForPeriod } from '@/lib/usage-metering/export';
+import { getUsageSummaryForPeriod } from '@/forest/usage-metering/export';
 import {
   aggregateUsageForLicense,
   detectOverageEvents,

@@ -1,4 +1,4 @@
-import type { HourlySummary, DailySummary } from '@/lib/usage-metering/types';
+import type { HourlySummary, DailySummary } from '@/forest/usage-metering/types';
 
 interface RawUsageEvent {
   user_id: string;

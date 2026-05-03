@@ -8,7 +8,7 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility';
-import { dispatchMission } from '@/lib/missions/dispatcher';
+import { dispatchMission } from '@/forest/missions/dispatcher';
 import { getInstallation } from '../sop-repo-installations';
 import { getTemplateById } from '../sop-repo-templates';
 import { createRun, updateRunStatus, appendMissionId } from '../sop-repo-runs';

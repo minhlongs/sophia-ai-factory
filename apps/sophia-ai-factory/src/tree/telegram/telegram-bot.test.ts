@@ -40,7 +40,7 @@ vi.mock('@/seed/db/client', () => ({
 }))
 
 // Mock Inngest
-vi.mock('@/lib/inngest/client', () => ({
+vi.mock('@/forest/inngest/client', () => ({
   inngest: {
     send: vi.fn()
   }

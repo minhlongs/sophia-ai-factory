@@ -7,8 +7,8 @@
 
 import { Resend } from 'resend';
 import { logger } from '@/seed/utils/logger-utility';
-import { renderEmail } from '@/lib/email/render-email';
-import { SENDER_FROM } from '@/lib/email/templates/shared-layout';
+import { renderEmail } from '@/forest/email/render-email';
+import { SENDER_FROM } from '@/forest/email/templates/shared-layout';
 import type { Tier } from '@/seed/types';
 
 // ── Input types ───────────────────────────────────────────────────────────────

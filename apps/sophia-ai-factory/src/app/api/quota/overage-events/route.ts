@@ -10,7 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
-import { getUserOverageEvents, getOverageSummary } from '@/lib/quota/overage-logger';
+import { getUserOverageEvents, getOverageSummary } from '@/forest/quota/overage-logger';
 
 /**
  * GET /api/quota/overage-events

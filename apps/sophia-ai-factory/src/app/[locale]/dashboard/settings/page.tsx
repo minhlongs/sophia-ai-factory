@@ -4,13 +4,13 @@ import dynamic from 'next/dynamic';
 import { getUserProfile } from '@/app/actions/settings';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getUserTier } from '@/seed/db/get-user-tier';
-import { ReferralShareWidget } from '@/components/dashboard/referral-share-widget';
-import { PlanUpgradeWidget } from '@/components/dashboard/plan-upgrade-widget';
+import { ReferralShareWidget } from '@/forest/components/dashboard/referral-share-widget';
+import { PlanUpgradeWidget } from '@/forest/components/dashboard/plan-upgrade-widget';
 import { getSubscriptionPeriodEnd } from '@/lib/billing/subscription-expiry';
 import { countCompletedOrders } from '@/lib/orders/order-counts';
 
 const SettingsForm = dynamic(
-  () => import('@/components/settings/settings-form').then(m => ({ default: m.SettingsForm })),
+  () => import('@/forest/components/settings/settings-form').then(m => ({ default: m.SettingsForm })),
   { loading: () => <SettingsSkeleton /> }
 );
 

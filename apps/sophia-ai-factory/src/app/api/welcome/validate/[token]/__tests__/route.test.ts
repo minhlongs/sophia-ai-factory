@@ -44,7 +44,7 @@ vi.mock('@/seed/utils/logger-utility', () => ({
   },
 }));
 
-vi.mock('@/middleware/rate-limit-wrapper', () => ({
+vi.mock('@/forest/middleware/rate-limit-wrapper', () => ({
   checkRateLimit: vi.fn().mockReturnValue(null), // null = not rate-limited, pass through
 }));
 

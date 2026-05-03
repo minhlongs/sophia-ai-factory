@@ -16,7 +16,7 @@ import { NextRequest } from 'next/server';
 
 // --- Mocks ---
 
-vi.mock('@/middleware/rate-limit-wrapper', () => ({
+vi.mock('@/forest/middleware/rate-limit-wrapper', () => ({
   withRateLimit: (handler: (req: NextRequest) => Promise<Response>) => handler,
 }));
 

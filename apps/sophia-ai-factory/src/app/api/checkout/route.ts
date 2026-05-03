@@ -1,7 +1,7 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { createInvoiceUrl, NOWPAYMENTS_TIERS } from '@/tree/clients/nowpayments-client';
 import { checkoutSchema } from '@/lib/schemas';
-import { withRateLimit } from '@/middleware/rate-limit-wrapper';
+import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { validatePromoCode } from '@/lib/promo/promo-validator';
 import { recordRedemption, incrementUsedCount } from '@/lib/promo/promo-repo';

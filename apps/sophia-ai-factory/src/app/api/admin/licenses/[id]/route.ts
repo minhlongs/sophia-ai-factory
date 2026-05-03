@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getLicenseByNonce, revokeLicense, logLicenseRevocation } from '@/lib/raas-audit'
+import { getLicenseByNonce, revokeLicense, logLicenseRevocation } from '@/forest/raas-audit'
 import { requireAdmin } from '@/seed/auth/require-admin'
 import { logger } from '@/seed/utils/logger-utility'
 

@@ -4,7 +4,7 @@
  */
 
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports -- mekong-exempt: lib/auth allowed to import forest types
-import type { QuotaLimit } from '@/lib/usage-metering/types'
+import type { QuotaLimit } from '@/forest/usage-metering/types'
 
 export interface FeatureLimit {
   daily_limit?: number;

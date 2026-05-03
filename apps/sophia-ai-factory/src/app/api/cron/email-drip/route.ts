@@ -10,9 +10,9 @@ import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
-import { enqueueWelcomeEmail } from '@/lib/outbox/email-outbox';
-import { evaluateLifecycleEmails } from '@/lib/email/lifecycle-email-rules';
-import { computeWeekStats } from '@/lib/email/week-stats';
+import { enqueueWelcomeEmail } from '@/forest/outbox/email-outbox';
+import { evaluateLifecycleEmails } from '@/forest/email/lifecycle-email-rules';
+import { computeWeekStats } from '@/forest/email/week-stats';
 
 export const dynamic = 'force-dynamic';
 

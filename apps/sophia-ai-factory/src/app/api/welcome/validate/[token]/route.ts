@@ -13,7 +13,7 @@ import { getAuth } from '@/seed/auth/better-auth-server';
 import { logger } from '@/seed/utils/logger-utility';
 import { writeAuditLog } from '@/tree/admin/audit-log';
 import { signCookieValue, hashEmail } from '@/seed/auth/sign-cookie-value';
-import { checkRateLimit } from '@/middleware/rate-limit-wrapper';
+import { checkRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 
 export const dynamic = 'force-dynamic';
 

@@ -17,13 +17,13 @@
 
 import React, { useState, Suspense, lazy } from 'react';
 import { useTranslations } from 'next-intl';
-import { DateRangePicker } from '@/components/analytics/date-range-picker';
-import { TierAdoptionChart } from '@/components/analytics/tier-adoption-chart';
-import { RevenueCard } from '@/components/analytics/revenue-card';
+import { DateRangePicker } from '@/forest/components/analytics/date-range-picker';
+import { TierAdoptionChart } from '@/forest/components/analytics/tier-adoption-chart';
+import { RevenueCard } from '@/forest/components/analytics/revenue-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/seed/components/ui/card';
 import { Lock, BarChart3 } from 'lucide-react';
 import type { Campaign, Tier } from '@/seed/types';
-import type { ISODateRange } from '@/components/analytics/date-range-picker';
+import type { ISODateRange } from '@/forest/components/analytics/date-range-picker';
 import type { RevenueSnapshot } from '@/seed/types/analytics-revenue';
 
 // Lazy-load: no impact on initial analytics paint

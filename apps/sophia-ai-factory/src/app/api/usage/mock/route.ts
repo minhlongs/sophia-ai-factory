@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { trackUsage, hashLicenseKey } from '@/lib/usage-metering';
+import { trackUsage, hashLicenseKey } from '@/forest/usage-metering';
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';

@@ -23,7 +23,7 @@ import { generateHandoverDoc } from '@/tree/handover/handover-doc-generator';
 import { writeAuditLog } from '@/tree/admin/audit-log';
 import { hashEmail } from '@/seed/auth/sign-cookie-value';
 import { logger } from '@/seed/utils/logger-utility';
-import { checkRateLimit } from '@/middleware/rate-limit-wrapper';
+import { checkRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 import type { CustomerHandoverRow, AgencyType } from '@/tree/handover/handover-types';
 import type { Tier } from '@/seed/types';
 

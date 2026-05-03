@@ -21,7 +21,7 @@ vi.mock('@/lib/affiliates/commission-calculator', () => ({
   calcCommission: vi.fn(),
 }))
 
-vi.mock('@/lib/inngest/functions/generate-campaign-db', () => ({
+vi.mock('@/forest/inngest/functions/generate-campaign-db', () => ({
   notifyConversionEarned: vi.fn(),
 }))
 
@@ -38,7 +38,7 @@ import { verifyClickBankSignature } from '@/lib/affiliates/clickbank-signature-v
 import { parsePostback } from '@/lib/affiliates/clickbank-postback-parser'
 import { attributeClick } from '@/lib/affiliates/conversion-attributor'
 import { calcCommission } from '@/lib/affiliates/commission-calculator'
-import { notifyConversionEarned } from '@/lib/inngest/functions/generate-campaign-db'
+import { notifyConversionEarned } from '@/forest/inngest/functions/generate-campaign-db'
 import { checkRateLimit } from '@/tree/telegram/sql-rate-limiter'
 import { NextRequest } from 'next/server'
 

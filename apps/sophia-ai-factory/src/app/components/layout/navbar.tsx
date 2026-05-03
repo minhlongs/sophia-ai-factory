@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Button } from "@/seed/components/ui/button";
 import { cn } from "@/lib/utils";
-import { LanguageSwitcher } from "@/components/language-switcher";
+import { LanguageSwitcher } from "@/forest/components/language-switcher";
 
 export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);

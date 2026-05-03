@@ -1,7 +1,7 @@
 import { runIngestion } from '@/lib/ingestion/runner'
 import { NextResponse } from 'next/server'
 import { ingestionTriggerRequestSchema } from '@/lib/validation/services'
-import { withRateLimit } from '@/middleware/rate-limit-wrapper'
+import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper'
 import { toError } from '@/seed/utils/to-error'
 
 export const maxDuration = 300 // 5 minutes max duration for Cloudflare Workers

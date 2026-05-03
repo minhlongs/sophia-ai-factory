@@ -1,5 +1,5 @@
 import { D1Client } from '@/seed/db/d1-query-builder';
-import { QUOTA_LIMITS } from '@/lib/usage-metering/aggregator';
+import { QUOTA_LIMITS } from '@/forest/usage-metering/aggregator';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import type {

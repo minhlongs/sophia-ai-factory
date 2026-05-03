@@ -10,8 +10,8 @@ import {
   createLicense,
   logLicenseRevocation,
   logLicenseCreation
-} from '@/lib/raas-audit'
-import { generateLicenseKey, generateMasterKey } from '@/lib/raas-key-generator'
+} from '@/forest/raas-audit'
+import { generateLicenseKey, generateMasterKey } from '@/forest/raas-key-generator'
 import { requireAdmin } from '@/seed/auth/require-admin'
 import { logger } from '@/seed/utils/logger-utility'
 import { Tier, TierLowercase } from '@/seed/types'

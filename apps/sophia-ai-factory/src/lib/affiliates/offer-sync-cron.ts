@@ -8,7 +8,7 @@
  * @module affiliates/offer-sync-cron
  */
 
-import { inngest } from '@/lib/inngest/client'
+import { inngest } from '@/forest/inngest/client'
 import { TikTokShopProvider } from './providers/tiktok-shop'
 import { AccessTradeProvider } from './providers/accesstrade'
 import { ClickBankProvider } from './providers/clickbank'

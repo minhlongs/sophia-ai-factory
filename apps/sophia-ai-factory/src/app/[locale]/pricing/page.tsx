@@ -1,8 +1,8 @@
-import { PricingSection } from "@/components/pricing/pricing-section";
-import { PricingComparisonTable } from "@/components/pricing/pricing-comparison-table";
-import { PricingFaq } from "@/components/pricing/pricing-faq";
+import { PricingSection } from "@/forest/components/pricing/pricing-section";
+import { PricingComparisonTable } from "@/forest/components/pricing/pricing-comparison-table";
+import { PricingFaq } from "@/forest/components/pricing/pricing-faq";
 import { ProductionCostCalculator } from "@/app/components/sections/production-cost-calculator";
-import { OneTimeBundleCard } from "@/components/pricing/one-time-bundle-card";
+import { OneTimeBundleCard } from "@/forest/components/pricing/one-time-bundle-card";
 import { getTranslations } from "next-intl/server";
 import { isHeyGenHealthy } from "@/seed/health/heygen-health-check";
 import { getCurrentUser } from "@/seed/auth/better-auth-session";

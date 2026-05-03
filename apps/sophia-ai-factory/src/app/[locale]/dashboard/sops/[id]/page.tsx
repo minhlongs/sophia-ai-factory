@@ -10,7 +10,7 @@ import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getInstallation, getTemplateById } from '@/lib/sop/sop-repo';
-import { CategoryBadge } from '@/components/sop/category-badge';
+import { CategoryBadge } from '@/forest/components/sop/category-badge';
 import { SopDetailTabs } from './detail-tabs';
 import { runNowAction, savePlaybookAction, regenSecretAction, deleteInstallAction, saveConfigAction } from './actions';
 import { ArrowLeft } from 'lucide-react';
