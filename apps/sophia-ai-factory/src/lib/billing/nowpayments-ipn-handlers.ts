@@ -23,6 +23,8 @@ export interface NowPaymentsIpnPayload {
   actually_paid?: number
   outcome_amount?: number
   outcome_currency?: string
+  /** Customer email passed at invoice creation time — used for auto-handover. */
+  customer_email?: string
 }
 
 export async function processNowPaymentsIpn(

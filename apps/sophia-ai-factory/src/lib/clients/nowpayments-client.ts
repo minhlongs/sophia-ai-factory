@@ -53,9 +53,10 @@ export const NOWPAYMENTS_TIERS: Record<string, NowPaymentsTierConfig> = {
 const NOWPAYMENTS_CHECKOUT_BASE = 'https://nowpayments.io/payment'
 
 /**
- * Build NOWPayments invoice checkout URL with order_id for tracking
+ * Build NOWPayments invoice checkout URL with order_id for tracking.
+ * Pass customerEmail to embed it in success_url for IPN auto-handover lookup.
  */
-export function createInvoiceUrl(tierId: string, userId: string): string {
+export function createInvoiceUrl(tierId: string, userId: string, customerEmail?: string): string {
   const tierConfig = NOWPAYMENTS_TIERS[tierId]
   if (!tierConfig) {
     throw new Error(`Unknown tier: ${tierId}`)
@@ -66,10 +67,13 @@ export function createInvoiceUrl(tierId: string, userId: string): string {
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network'
 
+  const successParams = new URLSearchParams({ tier: tierId, order_id: orderId })
+  if (customerEmail) successParams.set('email', encodeURIComponent(customerEmail))
+
   const params = new URLSearchParams({
     iid: tierConfig.invoiceId,
     order_id: orderId,
-    success_url: `${appUrl}/payment-success?tier=${tierId}&order_id=${orderId}`,
+    success_url: `${appUrl}/payment-success?${successParams.toString()}`,
     cancel_url: `${appUrl}/pricing`,
   })
 
@@ -150,16 +154,20 @@ export function lookupInvoice(invoiceId: string): InvoiceLookup {
 
 /**
  * Build NOWPayments checkout URL for a one-time SKU.
+ * Pass customerEmail for IPN auto-handover lookup when user wasn't logged in.
  */
-export function createOneTimeInvoiceUrl(sku: OneTimeSku, userId: string): string {
+export function createOneTimeInvoiceUrl(sku: OneTimeSku, userId: string, customerEmail?: string): string {
   const timestamp = Date.now()
   const orderId = `sophia_${userId}_${timestamp}`
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network'
 
+  const successParams = new URLSearchParams({ sku: sku.id, order_id: orderId })
+  if (customerEmail) successParams.set('email', encodeURIComponent(customerEmail))
+
   const params = new URLSearchParams({
     iid: sku.invoiceId,
     order_id: orderId,
-    success_url: `${appUrl}/payment-success?sku=${sku.id}&order_id=${orderId}`,
+    success_url: `${appUrl}/payment-success?${successParams.toString()}`,
     cancel_url: `${appUrl}/pricing`,
   })
 

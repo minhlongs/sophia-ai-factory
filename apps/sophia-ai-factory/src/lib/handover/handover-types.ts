@@ -9,6 +9,8 @@ export type AgencyType = 'b2b_saas' | 'ecom' | 'content_creator' | 'service' | '
 
 export type HandoverStatus = 'pending' | 'active' | 'at_risk' | 'churned';
 
+export type HandoverSource = 'manual' | 'auto_payment' | 'auto_signup';
+
 /** Row from customer_handovers D1 table */
 export interface CustomerHandoverRow {
   id: string;
@@ -26,6 +28,8 @@ export interface CustomerHandoverRow {
   customer_first_sop_install_at: number | null;
   customer_first_run_at: number | null;
   status: HandoverStatus;
+  source: HandoverSource;
+  trigger_payment_id: string | null;
 }
 
 /** Input for creating a new handover */

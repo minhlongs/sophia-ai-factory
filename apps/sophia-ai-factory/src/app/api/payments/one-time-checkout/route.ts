@@ -26,6 +26,7 @@ const DEDUPE_WINDOW_SECS = 30 * 60
 const oneTimeCheckoutSchema = z.object({
   skuId: z.enum(Object.keys(ONE_TIME_SKUS) as [string, ...string[]]),
   userId: z.string().optional(),
+  customerEmail: z.string().email().optional(),
 });
 
 interface PendingPurchaseRow {
@@ -118,7 +119,7 @@ export const POST = withRateLimit(async function POST(request: Request) {
       return NextResponse.json({ url: existingUrl, deduplicated: true });
     }
 
-    const url = createOneTimeInvoiceUrl(sku, userId);
+    const url = createOneTimeInvoiceUrl(sku, userId, parsed.data.customerEmail);
     return NextResponse.json({ url });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';

@@ -9,8 +9,8 @@
 
 import { useState } from 'react';
 import useSWR from 'swr';
-import { CheckCircle2, Clock, RefreshCw, Send, ChevronDown, ChevronUp } from 'lucide-react';
-import type { CustomerHandoverRow, HandoverStatus } from '@/lib/handover/handover-types';
+import { CheckCircle2, Clock, RefreshCw, Send, ChevronDown, ChevronUp, Zap, User } from 'lucide-react';
+import type { CustomerHandoverRow, HandoverStatus, HandoverSource } from '@/lib/handover/handover-types';
 
 interface HandoverListResponse { handovers: CustomerHandoverRow[] }
 
@@ -22,6 +22,12 @@ const STATUS_BADGE: Record<HandoverStatus, string> = {
   active: 'bg-emerald-900/40 text-emerald-300 border-emerald-500/30',
   at_risk: 'bg-orange-900/40 text-orange-300 border-orange-500/30',
   churned: 'bg-red-900/40 text-red-300 border-red-500/30',
+};
+
+const SOURCE_CONFIG: Record<HandoverSource, { label: { vi: string; en: string }; style: string; icon: 'zap' | 'user' }> = {
+  auto_payment: { label: { vi: 'Tự động', en: 'Auto' }, style: 'bg-emerald-900/40 text-emerald-300 border-emerald-500/30', icon: 'zap' },
+  auto_signup:  { label: { vi: 'Tự đăng ký', en: 'Self-signup' }, style: 'bg-blue-900/40 text-blue-300 border-blue-500/30', icon: 'zap' },
+  manual:       { label: { vi: 'Thủ công', en: 'Manual' }, style: 'bg-zinc-800 text-zinc-400 border-zinc-600', icon: 'user' },
 };
 
 const STATUS_LABELS: Record<HandoverStatus, { vi: string; en: string }> = {
@@ -120,7 +126,7 @@ export function HandoverListClient({ locale }: Props) {
           <div key={h.id} className="rounded-xl border border-zinc-800 bg-white/[0.03] backdrop-blur-sm p-5">
             <div className="flex items-start justify-between gap-3 flex-wrap">
               <div className="space-y-0.5">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-semibold text-zinc-100">{h.agency_name}</span>
                   <span className={`px-2 py-0.5 rounded-full text-xs border font-medium ${STATUS_BADGE[h.status]}`}>
                     {isVi ? STATUS_LABELS[h.status].vi : STATUS_LABELS[h.status].en}
@@ -128,6 +134,14 @@ export function HandoverListClient({ locale }: Props) {
                   <span className="px-2 py-0.5 rounded-full text-xs bg-violet-900/40 text-violet-300 border border-violet-500/30">
                     {h.tier}
                   </span>
+                  {h.source && SOURCE_CONFIG[h.source] && (
+                    <span className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border font-medium ${SOURCE_CONFIG[h.source].style}`}>
+                      {SOURCE_CONFIG[h.source].icon === 'zap'
+                        ? <Zap size={10} />
+                        : <User size={10} />}
+                      {isVi ? SOURCE_CONFIG[h.source].label.vi : SOURCE_CONFIG[h.source].label.en}
+                    </span>
+                  )}
                 </div>
                 <div className="text-xs text-zinc-500">
                   {h.agency_type?.replace('_', ' ')} ·{' '}

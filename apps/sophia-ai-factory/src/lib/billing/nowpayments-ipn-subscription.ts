@@ -12,6 +12,7 @@ import type { Tier } from '@/types'
 import type { NowPaymentsIpnPayload } from './nowpayments-ipn-handlers'
 import { getDb, parseUserIdFromOrderId } from './nowpayments-ipn-db'
 import { createOnboardingVideo, ONBOARDING_TIERS } from '@/lib/video/onboarding-video'
+import { triggerAutoHandover } from '@/lib/handover/auto-handover'
 
 /** 1% tolerance for crypto gas fees / exchange rounding — same threshold as one-time handler. */
 const UNDERPAYMENT_THRESHOLD = 0.99
@@ -97,6 +98,31 @@ export async function handleFinished(ipn: NowPaymentsIpnPayload): Promise<void> 
     } catch (err) {
       logger.warn('[NOWPayments] Onboarding video trigger failed (non-fatal)', { userId, error: String(err) })
     }
+  }
+
+  // Auto-handover — non-fatal, runs after tier is already active
+  try {
+    const { data: userRow } = await db.from('user').select('email,name').eq('id', userId).single()
+    const userEmail = (userRow as { email?: string; name?: string } | null)?.email ?? ''
+    const userName = (userRow as { email?: string; name?: string } | null)?.name ?? undefined
+    if (userEmail) {
+      const d1 = await getD1Raw()
+      const purchaseCount = await d1
+        .prepare(`SELECT COUNT(*) as cnt FROM user_purchases WHERE user_id = ?1 AND status = 'paid'`)
+        .bind(userId)
+        .first<{ cnt: number }>()
+      const isFirstPurchase = (purchaseCount?.cnt ?? 0) <= 1
+      await triggerAutoHandover({
+        paymentId: ipn.payment_id,
+        userId,
+        email: userEmail,
+        fullName: userName,
+        tier,
+        isFirstPurchase,
+      })
+    }
+  } catch (err) {
+    logger.warn('[NOWPayments] Auto-handover failed (non-fatal)', { userId, error: String(err) })
   }
 
   logger.info('[NOWPayments] Payment finished — subscription activated', { userId, orgId, tier, isLifetime, periodEnd, paymentId: ipn.payment_id })
