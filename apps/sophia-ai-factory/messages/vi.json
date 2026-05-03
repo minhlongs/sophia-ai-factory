@@ -1240,5 +1240,49 @@
     "try_again": "Thử lại",
     "order_id_label": "Mã đơn hàng",
     "period_yearly_coming_soon": "Thanh toán theo năm chưa được hỗ trợ"
+  },
+  "onboardingFlow": {
+    "title": "Thiết lập Sophia AI",
+    "subtitle": "Hoàn thành 3 bước để sử dụng đầy đủ tính năng",
+    "step1": {
+      "title": "Kiểm tra kết nối",
+      "desc": "Đảm bảo kết nối đến Sophia AI hoạt động tốt."
+    },
+    "step2": {
+      "title": "Tạo API Key",
+      "desc": "Key này cho phép ứng dụng của bạn gọi Sophia AI API. Lưu lại ngay — chỉ hiển thị 1 lần.",
+      "saveWarning": "Key này sẽ không hiển thị lại. Hãy lưu vào nơi an toàn.",
+      "savedBtn": "Tôi đã lưu key này",
+      "generateBtn": "Tạo API Key",
+      "generating": "Đang tạo..."
+    },
+    "step3": {
+      "title": "Thực hiện cuộc gọi đầu tiên",
+      "desc": "Gửi tin nhắn đến Sophia AI và xem phản hồi trực tiếp.",
+      "sendBtn": "Gửi",
+      "sending": "Đang gửi...",
+      "continueBtn": "Tiếp tục →"
+    },
+    "completed": "Hoàn thành!",
+    "completedDesc": "Sophia AI đã sẵn sàng phục vụ bạn.",
+    "openDashboard": "Mở Dashboard"
+  },
+  "statusPage": {
+    "title": "Trạng thái Sophia AI Factory",
+    "operational": "Tất cả hệ thống hoạt động bình thường",
+    "degraded": "Hiệu suất giảm",
+    "uptime90d": "Uptime 90 ngày",
+    "pastIncidents": "Sự cố đã xử lý",
+    "noIncidents": "Không có sự cố trong 90 ngày qua.",
+    "incidentDuration": "Thời gian",
+    "postmortem": "Báo cáo sự cố"
+  },
+  "missionControl": {
+    "currentPlan": "Gói hiện tại",
+    "mcuQuota": "Hạn mức MCU",
+    "callsLast7d": "calls / 7 ngày",
+    "upgradeNow": "Nâng cấp ngay",
+    "exploreSops": "Khám phá SOP",
+    "renew": "Gia hạn"
   }
 }
