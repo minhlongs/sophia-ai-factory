@@ -23,5 +23,8 @@ Sophia is a turnkey solution that automates the entire lifecycle of "Faceless" Y
 ## 🛠 Developer Info
 Want to customize the code? Read [CONTRIBUTING.md](./CONTRIBUTING.md).
 
+## 🏗 Architecture / Kiến trúc
+Codebase follows the Mekong 4-layer model (`seed → tree → forest → land`) with one-way import direction enforced by ESLint — see [docs/system-architecture.md](./docs/system-architecture.md).
+
 ---
 *Built with Next.js 16, TypeScript, and Tailwind CSS 4.*

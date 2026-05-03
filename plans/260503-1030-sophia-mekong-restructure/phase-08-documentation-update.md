@@ -7,7 +7,7 @@
 
 ## Overview
 - **Priority:** P2
-- **Status:** pending
+- **Status:** COMPLETE (2026-05-03)
 - **Effort:** 30m
 - **Description:** Update bilingual VN+EN docs reflecting new directory layout, import direction, ESLint rule. Reference mekong heritage.
 
@@ -85,11 +85,11 @@ graph TB
 
 ## Todo List
 
-- [ ] Update system-architecture.md with diagram + bilingual sections
-- [ ] Update codebase-summary.md module map
-- [ ] Update README 1-line
-- [ ] Render check Mermaid
-- [ ] Commit
+- [x] Update system-architecture.md with diagram + bilingual sections
+- [x] Update codebase-summary.md module map
+- [x] Update README 1-line
+- [x] Render check Mermaid (syntax valid per Mermaid v11 graph TB with classDef)
+- [x] Commit
 
 ## Success Criteria
 - Both VN and EN sections present in system-architecture.md
