@@ -36,14 +36,15 @@ export async function createInstallation(
   const ts = nowSec();
   const customizationsJson = input.customizations ? JSON.stringify(input.customizations) : null;
   const scheduleCron = input.scheduleCron ?? null;
+  const configValuesJson = input.configValues ? JSON.stringify(input.configValues) : null;
 
   await db
     .prepare(
       `INSERT INTO user_sop_installations
-       (id, user_id, template_id, customizations, schedule_cron, enabled, last_run_at, next_run_at, run_count, created_at)
-       VALUES (?1, ?2, ?3, ?4, ?5, 1, NULL, NULL, 0, ?6)`,
+       (id, user_id, template_id, customizations, config_values, schedule_cron, enabled, last_run_at, next_run_at, run_count, created_at)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, 1, NULL, NULL, 0, ?7)`,
     )
-    .bind(id, input.userId, input.templateId, customizationsJson, scheduleCron, ts)
+    .bind(id, input.userId, input.templateId, customizationsJson, configValuesJson, scheduleCron, ts)
     .run();
 
   const row = await getInstallation(db, id);
@@ -60,6 +61,18 @@ export async function updateCustomizations(
   await db
     .prepare(`UPDATE user_sop_installations SET customizations = ?1 WHERE id = ?2`)
     .bind(JSON.stringify(customizations), id)
+    .run();
+}
+
+/** Update config_values JSON on an installation */
+export async function updateConfigValues(
+  db: D1Database,
+  id: string,
+  configValues: Record<string, unknown>,
+): Promise<void> {
+  await db
+    .prepare(`UPDATE user_sop_installations SET config_values = ?1 WHERE id = ?2`)
+    .bind(JSON.stringify(configValues), id)
     .run();
 }
 

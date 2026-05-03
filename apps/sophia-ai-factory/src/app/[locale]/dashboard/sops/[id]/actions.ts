@@ -12,7 +12,7 @@
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { getCurrentUser } from '@/lib/better-auth-session';
-import { getInstallation, deleteInstallation, updateCustomizations } from '@/lib/sop/sop-repo';
+import { getInstallation, deleteInstallation, updateCustomizations, updateConfigValues } from '@/lib/sop/sop-repo';
 import { generateWebhookSecret } from '@/lib/sop/webhook-hmac';
 import { customizationInputSchema } from '@/lib/sop/install-input-schema';
 import { runSop } from '@/lib/sop/executor/sop-runner';
@@ -111,6 +111,21 @@ export async function regenSecretAction(installationId: string): Promise<{ error
   await updateCustomizations(db, installationId, merged);
 
   return { webhookSecret: newSecret };
+}
+
+// ---------------------------------------------------------------------------
+// Save config values (no-code form on edit tab)
+// ---------------------------------------------------------------------------
+export async function saveConfigAction(
+  installationId: string,
+  configValues: Record<string, unknown>,
+): Promise<{ error?: string }> {
+  const r = await assertOwner(installationId);
+  if ('error' in r) return { error: r.error };
+
+  await updateConfigValues(r.db, installationId, configValues);
+  revalidatePath(`/dashboard/sops/${installationId}`);
+  return {};
 }
 
 // ---------------------------------------------------------------------------

@@ -927,13 +927,16 @@
       "filterAll": "Tất Cả Danh Mục",
       "searchPlaceholder": "Tìm kiếm SOP...",
       "noResults": "Không tìm thấy SOP phù hợp.",
-      "installed": "Đã cài đặt"
+      "installed": "Đã cài đặt",
+      "featuredTitle": "Playbook Nổi Bật"
     },
     "card": {
       "creditsPerRun": "{n} credit/lần chạy",
       "install": "Cài Đặt",
       "installed": "Đã Cài",
-      "viewDetails": "Xem Chi Tiết"
+      "viewDetails": "Xem Chi Tiết",
+      "featured": "Nổi Bật",
+      "setupTime": "Cài đặt {n} phút"
     },
     "detail": {
       "agentsTitle": "Agents",
@@ -944,6 +947,8 @@
     },
     "install": {
       "title": "Cài Đặt SOP",
+      "configureTitle": "Thiết Lập",
+      "setupTime": "Thời gian cài đặt: ~{n} phút",
       "schedule": "Lịch Chạy",
       "scheduleHourly": "Mỗi giờ",
       "scheduleDaily": "Hàng ngày lúc 9 giờ",
@@ -953,7 +958,10 @@
       "submit": "Cài Đặt",
       "submitting": "Đang cài đặt...",
       "success": "Cài đặt SOP thành công!",
-      "error": "Không thể cài đặt SOP. Vui lòng thử lại."
+      "error": "Không thể cài đặt SOP. Vui lòng thử lại.",
+      "advancedLabel": "Nâng Cao",
+      "advancedHelp": "Ghi đè playbook Markdown để tùy chỉnh từng bước (không bắt buộc)",
+      "customizationsPlaceholder": "# Playbook tùy chỉnh (Markdown)\n## Bước 1: ..."
     },
     "categories": {
       "content": "Nội Dung",
@@ -961,7 +969,9 @@
       "email": "Email",
       "analytics": "Phân Tích",
       "proposals": "Đề Xuất",
-      "crisis": "Xử Lý Khủng Hoảng"
+      "crisis": "Xử Lý Khủng Hoảng",
+      "sales": "Bán Hàng",
+      "social": "Mạng Xã Hội"
     },
     "list": {
       "title": "SOP Của Tôi",

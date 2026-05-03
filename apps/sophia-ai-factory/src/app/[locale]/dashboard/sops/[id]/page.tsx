@@ -12,7 +12,7 @@ import { getCurrentUser } from '@/lib/better-auth-session';
 import { getInstallation, getTemplateById } from '@/lib/sop/sop-repo';
 import { CategoryBadge } from '@/components/sop/category-badge';
 import { SopDetailTabs } from './detail-tabs';
-import { runNowAction, savePlaybookAction, regenSecretAction, deleteInstallAction } from './actions';
+import { runNowAction, savePlaybookAction, regenSecretAction, deleteInstallAction, saveConfigAction } from './actions';
 import { ArrowLeft } from 'lucide-react';
 import type { SopRunRow } from '@/lib/sop/sop-types';
 
@@ -89,9 +89,12 @@ export default async function SopDetailPage({ params }: Props) {
         playbookMd={playbookMd}
         installationId={id}
         locale={locale}
+        configSchema={template?.config_schema ?? null}
+        configDefaults={template?.config_defaults ?? null}
         onRunNow={() => runNowAction(id)}
         onDelete={() => deleteInstallAction(id)}
         onSavePlaybook={(v) => savePlaybookAction(id, v)}
+        onSaveConfig={(v) => saveConfigAction(id, v)}
         onRegenSecret={() => regenSecretAction(id)}
       />
     </div>

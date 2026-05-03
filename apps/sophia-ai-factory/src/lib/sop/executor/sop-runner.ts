@@ -103,6 +103,10 @@ export async function runSop(
     ? (JSON.parse(inst.customizations) as SopCustomizations)
     : {};
 
+  const configValues: Record<string, unknown> = inst.config_values
+    ? (JSON.parse(inst.config_values) as Record<string, unknown>)
+    : {};
+
   const agentsYaml = customizations.agents_yaml_override ?? tpl.agents_yaml;
   const playbookMd = customizations.playbook_md_override ?? tpl.playbook_md;
 
@@ -118,7 +122,7 @@ export async function runSop(
 
   try {
     for (const step of steps) {
-      const resolvedArgs = resolveArgs(step.args, stepResults, ctx.triggerPayload);
+      const resolvedArgs = resolveArgs(step.args, stepResults, ctx.triggerPayload, configValues);
       const missionId = await dispatchStep(db, inst.user_id, step.command, resolvedArgs);
 
       await appendMissionId(db, run.id, missionId);

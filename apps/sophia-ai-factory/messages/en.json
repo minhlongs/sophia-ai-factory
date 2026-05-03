@@ -927,13 +927,16 @@
       "filterAll": "All Categories",
       "searchPlaceholder": "Search SOPs...",
       "noResults": "No SOPs found matching your search.",
-      "installed": "Installed"
+      "installed": "Installed",
+      "featuredTitle": "Featured Playbooks"
     },
     "card": {
       "creditsPerRun": "{n} credits/run",
       "install": "Install",
       "installed": "Installed",
-      "viewDetails": "View Details"
+      "viewDetails": "View Details",
+      "featured": "Featured",
+      "setupTime": "Setup {n} min"
     },
     "detail": {
       "agentsTitle": "Agents",
@@ -944,6 +947,7 @@
     },
     "install": {
       "title": "Install SOP",
+      "configureTitle": "Configure Your Playbook",
       "schedule": "Run Schedule",
       "scheduleHourly": "Every hour",
       "scheduleDaily": "Daily 9 AM",
@@ -953,7 +957,11 @@
       "submit": "Install",
       "submitting": "Installing...",
       "success": "SOP installed successfully!",
-      "error": "Failed to install SOP. Please try again."
+      "error": "Failed to install SOP. Please try again.",
+      "setupTime": "Ready in {n} min",
+      "advancedLabel": "Advanced — Edit Markdown directly",
+      "advancedHelp": "For power users. Overrides the config form above. Use {{config.field}} to reference your form values.",
+      "customizationsPlaceholder": "Paste or write custom Markdown playbook..."
     },
     "categories": {
       "content": "Content",
@@ -961,7 +969,9 @@
       "email": "Email",
       "analytics": "Analytics",
       "proposals": "Proposals",
-      "crisis": "Crisis PR"
+      "crisis": "Crisis PR",
+      "sales": "Sales",
+      "social": "Social Media"
     },
     "list": {
       "title": "My SOPs",

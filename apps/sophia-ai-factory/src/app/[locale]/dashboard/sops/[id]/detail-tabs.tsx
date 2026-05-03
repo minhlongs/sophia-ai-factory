@@ -23,15 +23,19 @@ interface Props {
   playbookMd: string;
   installationId: string;
   locale: string;
+  configSchema: string | null;
+  configDefaults: string | null;
   onRunNow: () => Promise<{ error?: string }>;
   onDelete: () => Promise<{ error?: string }>;
   onSavePlaybook: (v: string) => Promise<{ error?: string }>;
+  onSaveConfig: (v: Record<string, unknown>) => Promise<{ error?: string }>;
   onRegenSecret: () => Promise<{ error?: string; webhookSecret?: string }>;
 }
 
 export function SopDetailTabs({
   installation, runs, playbookMd, installationId, locale,
-  onRunNow, onDelete, onSavePlaybook, onRegenSecret,
+  configSchema, configDefaults,
+  onRunNow, onDelete, onSavePlaybook, onSaveConfig, onRegenSecret,
 }: Props) {
   const t = useTranslations('sop.detail_page');
   const [activeTab, setActiveTab] = useState<TabKey>('overview');
@@ -76,7 +80,14 @@ export function SopDetailTabs({
           <InstallationRunsTab runs={runs} installationId={installationId} />
         )}
         {activeTab === 'edit' && (
-          <InstallationEditTab playbookMd={playbookMd} onSave={onSavePlaybook} />
+          <InstallationEditTab
+            playbookMd={playbookMd}
+            configSchema={configSchema}
+            configDefaults={configDefaults}
+            configValues={installation.config_values}
+            onSave={onSavePlaybook}
+            onSaveConfig={onSaveConfig}
+          />
         )}
         {activeTab === 'webhook' && (
           <InstallationWebhookTab installationId={installationId} onRegenSecret={onRegenSecret} />

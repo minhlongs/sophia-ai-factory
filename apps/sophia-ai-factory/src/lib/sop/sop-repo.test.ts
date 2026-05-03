@@ -78,6 +78,10 @@ function makeTemplate(overrides?: Partial<SopTemplateRow>): SopTemplateRow {
     status: 'published',
     created_at: 1000000,
     updated_at: 1000000,
+    config_schema: null,
+    config_defaults: null,
+    setup_time_minutes: 5,
+    is_featured: 0,
     ...overrides,
   };
 }
@@ -94,6 +98,7 @@ function makeInstallation(overrides?: Partial<SopInstallationRow>): SopInstallat
     next_run_at: 1000100,
     run_count: 0,
     created_at: 1000000,
+    config_values: null,
     ...overrides,
   };
 }

@@ -1,19 +1,22 @@
 'use client';
 
 /**
- * SopInstallModal — dialog to configure and install a SOP template.
+ * SopInstallModal — no-code form-based SOP installation dialog.
  *
- * Schedule preset chips (4 options) + enabled toggle.
- * Submits via Server Action installSopAction.
+ * Primary view: config form rendered from template.config_schema.
+ * Advanced section (collapsed): Markdown override textarea.
+ * Schedule presets + enabled toggle preserved from Phase 1.
  */
 
 import { useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
+import { ChevronDown, ChevronUp, Clock } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import type { SopTemplateRow } from '@/lib/sop/sop-types';
 import { CRON_PRESETS } from '@/lib/sop/install-input-schema';
 import { CategoryBadge } from './category-badge';
+import { SopConfigForm, parseConfigSchema } from './sop-config-form';
 
 interface Preset {
   key: keyof typeof CRON_PRESETS;
@@ -39,6 +42,9 @@ export function SopInstallModal({ template, locale, open, onClose, installAction
   const t = useTranslations('sop.install');
   const [selectedPreset, setSelectedPreset] = useState<keyof typeof CRON_PRESETS>('manual');
   const [enabled, setEnabled] = useState(true);
+  const [configValues, setConfigValues] = useState<Record<string, unknown>>({});
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [customizations, setCustomizations] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -47,6 +53,13 @@ export function SopInstallModal({ template, locale, open, onClose, installAction
   const isVi = locale.startsWith('vi');
   const name = isVi ? template.name_vi : template.name_en;
 
+  const { schema, defaults } = parseConfigSchema(template.config_schema, template.config_defaults);
+
+  // Initialize config values with defaults when template changes
+  function getEffectiveValues() {
+    return { ...defaults, ...configValues };
+  }
+
   function handleSubmit() {
     setError(null);
     const fd = new FormData();
@@ -54,6 +67,8 @@ export function SopInstallModal({ template, locale, open, onClose, installAction
     const cronValue = CRON_PRESETS[selectedPreset];
     if (cronValue) fd.set('scheduleCron', cronValue);
     fd.set('enabled', String(enabled));
+    fd.set('configValues', JSON.stringify(getEffectiveValues()));
+    if (customizations.trim()) fd.set('customizations', customizations.trim());
 
     startTransition(async () => {
       const result = await installAction(fd);
@@ -61,18 +76,37 @@ export function SopInstallModal({ template, locale, open, onClose, installAction
     });
   }
 
+  const hasConfigSchema = schema && schema.properties && Object.keys(schema.properties).length > 0;
+  const setupTime = template.setup_time_minutes ?? 5;
+
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 flex-wrap">
             {t('title')}
             <CategoryBadge category={template.category} />
+            <span className="flex items-center gap-1 text-xs text-muted-foreground font-normal ml-auto">
+              <Clock className="w-3 h-3" />
+              {t('setupTime', { n: setupTime })}
+            </span>
           </DialogTitle>
           <p className="text-sm text-muted-foreground pt-1">{name}</p>
         </DialogHeader>
 
         <div className="space-y-5">
+          {/* Config form — primary no-code input */}
+          {hasConfigSchema && (
+            <div>
+              <p className="text-sm font-medium text-foreground mb-3">{t('configureTitle')}</p>
+              <SopConfigForm
+                schema={schema}
+                values={getEffectiveValues()}
+                onChange={setConfigValues}
+              />
+            </div>
+          )}
+
           {/* Schedule presets */}
           <div>
             <p className="text-sm font-medium text-foreground mb-2">{t('schedule')}</p>
@@ -108,6 +142,30 @@ export function SopInstallModal({ template, locale, open, onClose, installAction
           </label>
 
           {error && <p className="text-sm text-red-400">{error}</p>}
+
+          {/* Advanced section — Markdown override */}
+          <div className="border border-border rounded-lg overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setAdvancedOpen(!advancedOpen)}
+              className="w-full flex items-center justify-between px-4 py-3 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
+            >
+              <span>{t('advancedLabel')}</span>
+              {advancedOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
+            {advancedOpen && (
+              <div className="px-4 pb-4 pt-2 border-t border-border">
+                <p className="text-xs text-muted-foreground mb-2">{t('advancedHelp')}</p>
+                <textarea
+                  value={customizations}
+                  onChange={(e) => setCustomizations(e.target.value)}
+                  placeholder={t('customizationsPlaceholder')}
+                  rows={6}
+                  className="w-full px-3 py-2 text-sm bg-zinc-900 border border-border rounded-lg text-foreground font-mono focus:outline-none focus:ring-1 focus:ring-violet-500 resize-none"
+                />
+              </div>
+            )}
+          </div>
         </div>
 
         <DialogFooter>
