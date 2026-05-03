@@ -3,6 +3,10 @@
  * Handles finished and refunded states for non-recurring SKUs.
  * Zero regression on subscription path — this file only handles one_time kind.
  *
+ * P0.4: Underpayment guard added to handleOneTimeFinished.
+ * If actually_paid < price_amount * 0.99, status is set to 'underpaid' and
+ * fulfillment is NOT triggered. See nowpayments-ipn-underpaid.ts for the handler.
+ *
  * @module billing/nowpayments-ipn-one-time
  */
 
@@ -12,6 +16,7 @@ import { recordAudit } from '@/lib/db/audit/audit-log'
 import { insertPurchase, markPaid, markRefunded, getByPaymentId } from '@/lib/db/repositories/user-purchases-repo'
 import { revokeAccessByPurchaseId } from '@/lib/db/repositories/videos-repo'
 import { triggerOneTimeFulfillment } from '@/lib/fulfillment/one-time-fulfillment'
+import { markUnderpaid, UNDERPAYMENT_THRESHOLD } from './nowpayments-ipn-underpaid'
 import type { NowPaymentsIpnPayload } from './nowpayments-ipn-handlers'
 import { parseUserIdFromOrderId } from './nowpayments-ipn-db'
 import type { OneTimeSku } from '@/types'
@@ -29,6 +34,7 @@ function addMonths(base: Date, months: number): Date {
 /**
  * Handle one-time IPN `finished` event.
  * Inserts user_purchases row (idempotent), marks paid, triggers fulfillment.
+ * Rejects underpayments — sets status='underpaid', skips fulfillment.
  */
 export async function handleOneTimeFinished(
   ipn: NowPaymentsIpnPayload,
@@ -38,6 +44,23 @@ export async function handleOneTimeFinished(
   if (!userId) {
     logger.warn('[IPN/OneTime] finished: cannot parse userId', { orderId: ipn.order_id, paymentId: ipn.payment_id })
     return
+  }
+
+  // P0.4: Underpayment guard — reject if actually_paid < price_amount * 0.99
+  const actuallyPaid = ipn.actually_paid
+  if (actuallyPaid !== undefined && actuallyPaid !== null) {
+    const required = ipn.price_amount * UNDERPAYMENT_THRESHOLD
+    if (actuallyPaid < required) {
+      logger.warn('[IPN/OneTime] Underpayment detected — not fulfilling', {
+        userId,
+        paymentId: ipn.payment_id,
+        priceAmount: ipn.price_amount,
+        actuallyPaid,
+        required,
+      })
+      await markUnderpaid(ipn.payment_id, userId, sku, actuallyPaid)
+      return
+    }
   }
 
   const expiresAt = Math.floor(addMonths(new Date(), sku.ttlMonths).getTime() / 1000)

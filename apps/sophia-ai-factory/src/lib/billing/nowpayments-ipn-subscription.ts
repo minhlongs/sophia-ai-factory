@@ -13,7 +13,25 @@ import type { NowPaymentsIpnPayload } from './nowpayments-ipn-handlers'
 import { getDb, parseUserIdFromOrderId } from './nowpayments-ipn-db'
 import { createOnboardingVideo, ONBOARDING_TIERS } from '@/lib/video/onboarding-video'
 
+/** 1% tolerance for crypto gas fees / exchange rounding — same threshold as one-time handler. */
+const UNDERPAYMENT_THRESHOLD = 0.99
+
 export async function handleFinished(ipn: NowPaymentsIpnPayload): Promise<void> {
+  // P0.4: Underpayment guard — reject if actually_paid < price_amount * 0.99
+  const actuallyPaid = ipn.actually_paid
+  if (actuallyPaid !== undefined && actuallyPaid !== null) {
+    const required = ipn.price_amount * UNDERPAYMENT_THRESHOLD
+    if (actuallyPaid < required) {
+      logger.warn('[NOWPayments] Subscription underpayment — not activating', {
+        paymentId: ipn.payment_id,
+        priceAmount: ipn.price_amount,
+        actuallyPaid,
+        required,
+      })
+      return
+    }
+  }
+
   const invoiceId = ipn.invoice_id
   if (!invoiceId) { logger.warn('[NOWPayments] finished: missing invoice_id', { paymentId: ipn.payment_id }); return }
 

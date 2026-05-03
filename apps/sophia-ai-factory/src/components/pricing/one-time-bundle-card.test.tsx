@@ -38,10 +38,13 @@ vi.mock('@/config/one-time-skus', () => ({
 describe('OneTimeBundleCard', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    // P0.5: clear sessionStorage so pending purchase banner never renders unexpectedly
+    sessionStorage.clear();
   });
 
   afterEach(() => {
     cleanup();
+    sessionStorage.clear();
   });
 
   describe('HeyGen health gate', () => {

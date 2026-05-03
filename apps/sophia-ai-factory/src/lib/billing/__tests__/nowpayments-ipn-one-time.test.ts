@@ -274,3 +274,72 @@ describe('handleOneTimeRefunded — purchase refund handling', () => {
     expect(fulfillment.triggerOneTimeFulfillment).not.toHaveBeenCalled()
   })
 })
+
+// P0.4: Underpayment guard tests
+describe('handleOneTimeFinished — underpayment guard (P0.4)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('rejects when actually_paid < price_amount * 0.99', async () => {
+    // $49 * 0.99 = $48.51 — $46.55 is underpaid
+    const payload = buildIpnPayload({ price_amount: 49, actually_paid: 46.55 })
+
+    await handleOneTimeFinished(payload, STARTER_SKU)
+
+    // Should NOT insert purchase or trigger fulfillment
+    expect(userPurchasesRepo.insertPurchase).not.toHaveBeenCalled()
+    expect(fulfillment.triggerOneTimeFulfillment).not.toHaveBeenCalled()
+
+    // Should log underpayment warning
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining('Underpayment detected'),
+      expect.anything()
+    )
+  })
+
+  it('accepts when actually_paid >= price_amount * 0.99 (within tolerance)', async () => {
+    // $49 * 0.99 = $48.51 — $48.60 is acceptable
+    const payload = buildIpnPayload({ price_amount: 49, actually_paid: 48.60 })
+    const purchaseId = 'purchase_ok'
+    vi.mocked(userPurchasesRepo.insertPurchase).mockResolvedValue(purchaseId)
+    vi.mocked(userPurchasesRepo.markPaid).mockResolvedValue(undefined)
+    vi.mocked(fulfillment.triggerOneTimeFulfillment).mockResolvedValue(undefined)
+
+    await handleOneTimeFinished(payload, STARTER_SKU)
+
+    expect(userPurchasesRepo.insertPurchase).toHaveBeenCalled()
+    expect(fulfillment.triggerOneTimeFulfillment).toHaveBeenCalled()
+  })
+
+  it('proceeds normally when actually_paid is undefined (no underpayment data)', async () => {
+    // NOWPayments may omit actually_paid for some payment methods
+    const payload = buildIpnPayload({ price_amount: 49 }) // no actually_paid
+    const purchaseId = 'purchase_normal'
+    vi.mocked(userPurchasesRepo.insertPurchase).mockResolvedValue(purchaseId)
+    vi.mocked(userPurchasesRepo.markPaid).mockResolvedValue(undefined)
+    vi.mocked(fulfillment.triggerOneTimeFulfillment).mockResolvedValue(undefined)
+
+    await handleOneTimeFinished(payload, STARTER_SKU)
+
+    expect(userPurchasesRepo.insertPurchase).toHaveBeenCalled()
+    expect(fulfillment.triggerOneTimeFulfillment).toHaveBeenCalled()
+  })
+
+  it('accepts exact payment (actually_paid === price_amount)', async () => {
+    const payload = buildIpnPayload({ price_amount: 49, actually_paid: 49 })
+    const purchaseId = 'purchase_exact'
+    vi.mocked(userPurchasesRepo.insertPurchase).mockResolvedValue(purchaseId)
+    vi.mocked(userPurchasesRepo.markPaid).mockResolvedValue(undefined)
+    vi.mocked(fulfillment.triggerOneTimeFulfillment).mockResolvedValue(undefined)
+
+    await handleOneTimeFinished(payload, STARTER_SKU)
+
+    expect(userPurchasesRepo.insertPurchase).toHaveBeenCalled()
+    expect(fulfillment.triggerOneTimeFulfillment).toHaveBeenCalled()
+  })
+})

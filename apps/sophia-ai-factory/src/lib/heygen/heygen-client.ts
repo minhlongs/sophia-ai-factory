@@ -212,13 +212,5 @@ export async function getHeyGenClient(userId?: string): Promise<HeyGenClient | n
   return new HeyGenClient(envKey);
 }
 
-/**
- * @deprecated Use getHeyGenClient(userId?) instead.
- * Kept for callers that haven't been migrated to Phase 03 yet.
- * TODO Phase 03: remove this shim once all callers pass userId.
- */
-export function getHeyGenClientSync(): HeyGenClient | null {
-  const apiKey = process.env.HEYGEN_API_KEY;
-  if (!apiKey) return null;
-  return new HeyGenClient(apiKey);
-}
+// getHeyGenClientSync removed — P0.3 fix.
+// All callers must use async getHeyGenClient({ userId }) to avoid platform key billing.
