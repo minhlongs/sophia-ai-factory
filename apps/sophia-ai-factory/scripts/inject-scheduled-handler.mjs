@@ -69,6 +69,11 @@ const CRON_ROUTES = {
   '0 0 1 * *': [
     '/api/cron/mcu-monthly-reset',
   ],
+  // Daily midnight UTC — clearance-promote + promo trial expiry
+  '0 0 * * *': [
+    '/api/cron/clearance-promote',
+    '/api/cron/promo-trial-expiry',
+  ],
 };
 
 // ---------------------------------------------------------------------------

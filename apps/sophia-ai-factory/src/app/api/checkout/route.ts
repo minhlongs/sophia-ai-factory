@@ -4,6 +4,9 @@ import { createInvoiceUrl, NOWPAYMENTS_TIERS } from '@/lib/clients/nowpayments-c
 import { checkoutSchema } from '@/lib/schemas';
 import { withRateLimit } from '@/middleware/rate-limit-wrapper';
 import { getCurrentUserFromHeaders } from '@/lib/better-auth-session';
+import { validatePromoCode } from '@/lib/promo/promo-validator';
+import { recordRedemption, incrementUsedCount } from '@/lib/promo/promo-repo';
+import { logger } from '@/lib/utils/logger-utility';
 
 /**
  * Extract user ID from Better Auth session headers.
@@ -53,6 +56,7 @@ export const GET = withRateLimit(async function GET(request: NextRequest) {
 const checkoutWithEmailSchema = z.object({
   tier: z.string(),
   customerEmail: z.string().email().optional(),
+  promoCode: z.string().optional(),
 });
 
 // POST handler — returns NOWPayments invoice URL for frontend redirect
@@ -70,6 +74,7 @@ export const POST = withRateLimit(async function POST(request: Request) {
 
     const emailParsed = checkoutWithEmailSchema.safeParse(body);
     const customerEmail = emailParsed.success ? emailParsed.data.customerEmail : undefined;
+    const promoCode = emailParsed.success ? emailParsed.data.promoCode : undefined;
 
     const { tier } = baseValidation.data;
 
@@ -87,6 +92,29 @@ export const POST = withRateLimit(async function POST(request: Request) {
         { status: 401 }
       );
     }
+
+    // Reserve promo code redemption if provided
+    if (promoCode) {
+      try {
+        const validation = await validatePromoCode(promoCode, { userId, tier });
+        if (validation.valid && (validation.discountType === 'percent_off' || validation.discountType === 'fixed_off')) {
+          await incrementUsedCount(validation.codeId);
+          await recordRedemption({
+            promoCcodeId: validation.codeId,
+            promoCode,
+            userId,
+            appliedToTier: tier,
+            discountAppliedCents: 0, // finalized on IPN
+            trialDaysGranted: 0,
+            status: 'reserved',
+          });
+          logger.info('[Checkout] Promo reserved', { promoCode, userId, tier });
+        }
+      } catch (err) {
+        logger.warn('[Checkout] Promo reservation failed (non-fatal)', { promoCode, error: err instanceof Error ? err.message : String(err) });
+      }
+    }
+
     const checkoutUrl = createInvoiceUrl(tier, userId, customerEmail);
 
     return NextResponse.json({ url: checkoutUrl });
