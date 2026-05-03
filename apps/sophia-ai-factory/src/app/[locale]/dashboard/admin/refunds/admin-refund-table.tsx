@@ -9,7 +9,7 @@
 
 import { useState } from 'react'
 import useSWR from 'swr'
-import type { RefundRequest } from '@/lib/refunds/refund-repo'
+import type { RefundRequest } from '@/land/refunds/refund-repo'
 
 interface RefundsResponse { refunds: RefundRequest[] }
 

@@ -12,7 +12,7 @@
 import { TelegramFSM, BotState } from '@/tree/telegram/telegram-fsm-state-manager';
 import { sendTelegramMessage, sendTelegramMessageWithKeyboard } from '@/tree/telegram/telegram-client';
 import { buildOfferKeyboard, formatOfferList, extractOfferIdFromCallback } from '@/tree/telegram/telegram-bot-offer-picker';
-import { getTopPrograms, getProgramById } from '@/lib/affiliates';
+import { getTopPrograms, getProgramById } from '@/land/affiliates';
 import { getUserProfile, mapTier, type CampaignFsmContext } from '@/tree/telegram/telegram-bot-campaign-fsm-helpers';
 import { insertCampaignWithOffer } from '@/tree/telegram/telegram-bot-campaign-fsm-confirm';
 

@@ -8,7 +8,7 @@
 
 'use client'
 
-import type { OrderTimelineRow } from '@/lib/orders/order-types'
+import type { OrderTimelineRow } from '@/land/orders/order-types'
 
 interface Step {
   key: string

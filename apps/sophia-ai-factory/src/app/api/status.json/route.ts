@@ -5,7 +5,7 @@
 
 import { NextResponse } from 'next/server';
 import { getD1Raw } from '@/seed/db/client';
-import { getActiveIncident, getRollup } from '@/lib/status/status-store';
+import { getActiveIncident, getRollup } from '@/land/status/status-store';
 
 export const dynamic = 'force-dynamic';
 

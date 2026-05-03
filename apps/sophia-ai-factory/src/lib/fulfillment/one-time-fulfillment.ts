@@ -24,7 +24,7 @@ import {
   markVideoProcessing,
   recordAttempt,
 } from '@/seed/db/repositories/videos-repo'
-import { sendBundleGeneratingEmail } from '@/lib/billing/email/send-bundle-generating-email'
+import { sendBundleGeneratingEmail } from '@/land/billing/email/send-bundle-generating-email'
 import { shouldDispatch, recordHeyGenAttempt } from '@/lib/fulfillment/circuit-breaker'
 import type { OneTimeSku } from '@/seed/types'
 

@@ -14,7 +14,7 @@ import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import { requireAdmin } from '@/seed/auth/require-admin';
 import { z } from 'zod';
-import { suspendLicense, restoreLicense } from '@/lib/billing/dunning-workflow';
+import { suspendLicense, restoreLicense } from '@/land/billing/dunning-workflow';
 import {
   dunningListSchema,
   dunningActionSchema,

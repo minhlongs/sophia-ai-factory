@@ -8,8 +8,8 @@
 
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { applyPromoCode } from '@/lib/promo/promo-applier';
-import { validatePromoCode } from '@/lib/promo/promo-validator';
+import { applyPromoCode } from '@/land/promo/promo-applier';
+import { validatePromoCode } from '@/land/promo/promo-validator';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 import { getD1Raw } from '@/seed/db/client';

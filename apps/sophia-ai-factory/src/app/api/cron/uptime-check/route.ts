@@ -19,8 +19,8 @@ import { logger } from '@/seed/utils/logger-utility';
 import { toError, getErrorMessage } from '@/seed/utils/to-error';
 import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
-import { recordCheck, getRecentChecks, getActiveIncident, openIncident, closeIncident } from '@/lib/status/status-store';
-import { evaluateIncidentAction } from '@/lib/status/incident-state-machine';
+import { recordCheck, getRecentChecks, getActiveIncident, openIncident, closeIncident } from '@/land/status/status-store';
+import { evaluateIncidentAction } from '@/land/status/incident-state-machine';
 
 export const dynamic = 'force-dynamic';
 
@@ -94,7 +94,7 @@ export async function GET(req: NextRequest) {
         await recordCheck(db, { ts: Math.floor(Date.now() / 1000), status: checkStatus, latencyMs: latency });
         const recentChecks = await getRecentChecks(db);
         const activeIncident = await getActiveIncident(db);
-        const typedChecks = recentChecks.map(c => ({ status: c.status as import('@/lib/status/incident-state-machine').CheckStatus }));
+        const typedChecks = recentChecks.map(c => ({ status: c.status as import('@/land/status/incident-state-machine').CheckStatus }));
         const action = evaluateIncidentAction(typedChecks, activeIncident?.id ?? null);
         if (action === 'open') {
           await openIncident(db, 'Service disruption detected', 'minor');
@@ -132,7 +132,7 @@ export async function GET(req: NextRequest) {
         await recordCheck(db, { ts: Math.floor(Date.now() / 1000), status: 'down', latencyMs: null, error: msg });
         const recentChecks = await getRecentChecks(db);
         const activeIncident = await getActiveIncident(db);
-        const typedChecks2 = recentChecks.map(c => ({ status: c.status as import('@/lib/status/incident-state-machine').CheckStatus }));
+        const typedChecks2 = recentChecks.map(c => ({ status: c.status as import('@/land/status/incident-state-machine').CheckStatus }));
         const action = evaluateIncidentAction(typedChecks2, activeIncident?.id ?? null);
         if (action === 'open') await openIncident(db, 'Service unreachable', 'major');
       } catch { /* non-fatal */ }

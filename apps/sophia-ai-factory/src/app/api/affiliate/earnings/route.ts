@@ -10,7 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/seed/auth/better-auth-session'
-import { getEarningsSummary } from '@/lib/payouts/commission-ledger'
+import { getEarningsSummary } from '@/land/payouts/commission-ledger'
 
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser()

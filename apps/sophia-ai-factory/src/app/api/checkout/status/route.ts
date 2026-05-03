@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { getOrderById } from '@/lib/orders/pending-order-repo'
+import { getOrderById } from '@/land/orders/pending-order-repo'
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper'
 
 const querySchema = z.object({

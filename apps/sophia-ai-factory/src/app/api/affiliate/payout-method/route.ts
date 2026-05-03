@@ -14,7 +14,7 @@ import { z } from 'zod'
 import { getCurrentUser } from '@/seed/auth/better-auth-session'
 import { getD1Raw } from '@/seed/db/client'
 import { encryptSecret } from '@/tree/crypto/encrypt-secret'
-import { validateUsdtAddress, type UsdtMethod } from '@/lib/payouts/usdt-addr-validator'
+import { validateUsdtAddress, type UsdtMethod } from '@/land/payouts/usdt-addr-validator'
 
 const PostSchema = z.object({
   method: z.enum(['usdt_trc20', 'usdt_erc20', 'bank_account']),

@@ -9,9 +9,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/seed/auth/require-admin';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
-import { MarkPaidSchema } from '@/lib/wallet/payout-validators';
-import { markUserPaid } from '@/lib/wallet/payout-processor';
-import { notifyPayoutSent } from '@/lib/wallet/payout-telegram-notify';
+import { MarkPaidSchema } from '@/land/wallet/payout-validators';
+import { markUserPaid } from '@/land/wallet/payout-processor';
+import { notifyPayoutSent } from '@/land/wallet/payout-telegram-notify';
 
 export const dynamic = 'force-dynamic';
 

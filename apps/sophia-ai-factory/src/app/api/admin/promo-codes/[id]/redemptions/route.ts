@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/seed/auth/require-admin';
-import { listRedemptionsByCode } from '@/lib/promo/promo-repo';
+import { listRedemptionsByCode } from '@/land/promo/promo-repo';
 
 export const dynamic = 'force-dynamic';
 

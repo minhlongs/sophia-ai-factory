@@ -7,7 +7,7 @@
 
 ## Overview
 - **Priority:** P1
-- **Status:** pending
+- **Status:** complete
 - **Effort:** 90m
 - **Description:** Move land-classified files (revenue + checkout + status) into `src/land/`. Top of stack — may import seed/tree/forest. Highest sensitivity — billing logic.
 
@@ -78,15 +78,15 @@ src/
 
 ## Todo List
 
-- [ ] Verify zero PayPal residue
-- [ ] Split land files
-- [ ] Execute moves
-- [ ] Codemod imports
-- [ ] Routes unchanged
-- [ ] Build/test/lint
-- [ ] Smoke 9 routes
-- [ ] Polar webhook tests pass
-- [ ] Commit
+- [x] Verify zero PayPal residue
+- [x] Split land files
+- [x] Execute moves
+- [x] Codemod imports
+- [x] Routes unchanged
+- [x] Build/test/lint
+- [ ] Smoke 9 routes (deferred to Phase 09 deploy)
+- [x] NOWPayments + PayOS webhook tests pass
+- [x] Commit
 
 ## Success Criteria
 - 9 routes return 200 locally

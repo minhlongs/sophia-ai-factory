@@ -6,7 +6,7 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
-import type { PromoCodeRow, DiscountType } from "@/lib/promo/promo-types";
+import type { PromoCodeRow, DiscountType } from "@/land/promo/promo-types";
 
 interface CreatePromoModalProps {
   onClose: () => void;

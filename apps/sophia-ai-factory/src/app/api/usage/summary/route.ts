@@ -27,7 +27,7 @@ import {
   detectOverageEvents,
   predictUsageForecast,
   calculateOverageEstimate,
-} from '@/lib/billing/usage-aggregator';
+} from '@/land/billing/usage-aggregator';
 import { logger } from '@/seed/utils/logger-utility';
 import { z } from 'zod';
 import type { Tier } from '@/seed/types';

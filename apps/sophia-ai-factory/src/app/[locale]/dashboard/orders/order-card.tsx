@@ -10,7 +10,7 @@
 
 import useSWR from 'swr'
 import { OrderTimeline } from './order-timeline'
-import type { OrderTimelineRow } from '@/lib/orders/order-types'
+import type { OrderTimelineRow } from '@/land/orders/order-types'
 
 const REFRESH_INTERVAL_MS = 30_000
 

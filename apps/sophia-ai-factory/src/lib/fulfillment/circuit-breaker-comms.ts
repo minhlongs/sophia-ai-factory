@@ -15,7 +15,7 @@
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
 import { createServerClient } from '@/seed/db/client'
-import { sendBundleOutageApologyEmail } from '@/lib/billing/email/send-bundle-outage-apology-email'
+import { sendBundleOutageApologyEmail } from '@/land/billing/email/send-bundle-outage-apology-email'
 
 const OUTAGE_COMPENSATION_KIND = 'outage_compensation'
 const EXTEND_DAYS = 7

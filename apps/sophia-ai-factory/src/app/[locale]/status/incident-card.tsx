@@ -4,7 +4,7 @@
  * @module app/status/incident-card
  */
 
-import type { StatusIncident } from '@/lib/status/status-store';
+import type { StatusIncident } from '@/land/status/status-store';
 
 interface IncidentCardProps {
   incident: StatusIncident;

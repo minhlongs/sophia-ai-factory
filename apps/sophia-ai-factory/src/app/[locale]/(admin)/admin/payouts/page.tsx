@@ -8,7 +8,7 @@
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { redirect } from 'next/navigation';
 import { logger } from '@/seed/utils/logger-utility';
-import { MIN_PAYOUT_USD } from '@/lib/wallet/payout-validators';
+import { MIN_PAYOUT_USD } from '@/land/wallet/payout-validators';
 import { PayoutRow } from './payout-row';
 
 export const dynamic = 'force-dynamic';
