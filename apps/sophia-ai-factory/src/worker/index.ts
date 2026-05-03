@@ -11,7 +11,7 @@ import {
   handleScheduledAlertCheck, handleAlertDispatchRequest, type AlertDispatcherConfig,
 } from './lib/realtime-alert-dispatcher'
 import { runMeteringReconciliation } from './lib/metering-reconciler-runner'
-import { logger } from '@/lib/utils/logger-utility'
+import { logger } from '@/seed/utils/logger-utility'
 import { handleQuotaCheck, handleProxyRequest, handleOverageWebhook } from './worker-handlers'
 
 export interface Env {

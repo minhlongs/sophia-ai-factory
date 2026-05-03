@@ -15,11 +15,11 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { getCurrentUserFromHeaders } from '@/lib/better-auth-session'
+import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session'
 import { encryptSecret } from '@/lib/crypto/encrypt-secret'
 import { track } from '@/lib/signals/track'
 import { D1Events } from '@/lib/signals/d1-event-types'
-import { logger } from '@/lib/utils/logger-utility'
+import { logger } from '@/seed/utils/logger-utility'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 

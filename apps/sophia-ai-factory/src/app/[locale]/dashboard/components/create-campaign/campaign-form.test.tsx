@@ -8,7 +8,7 @@ vi.mock('next-intl', () => ({
   useTranslations: () => (key: string) => key,
 }));
 
-vi.mock('@/components/ui/button', () => ({
+vi.mock('@/seed/components/ui/button', () => ({
   Button: ({ children, ...props }: React.ComponentProps<'button'>) => <button {...props}>{children}</button>,
 }));
 

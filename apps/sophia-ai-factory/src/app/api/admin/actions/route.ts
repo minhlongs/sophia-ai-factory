@@ -7,12 +7,12 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { requireAdmin } from '@/lib/auth/require-admin'
-import { TIER_DB_MAPPING } from '@/config/tiers'
-import { getD1Raw } from '@/lib/db/client'
+import { requireAdmin } from '@/seed/auth/require-admin'
+import { TIER_DB_MAPPING } from '@/seed/config/tiers'
+import { getD1Raw } from '@/seed/db/client'
 import { writeAuditLog } from '@/lib/admin/audit-log'
-import { logger } from '@/lib/utils/logger-utility'
-import { getErrorMessage } from '@/lib/utils/to-error'
+import { logger } from '@/seed/utils/logger-utility'
+import { getErrorMessage } from '@/seed/utils/to-error'
 
 export const dynamic = 'force-dynamic'
 

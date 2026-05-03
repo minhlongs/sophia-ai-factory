@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getErrorMessage } from "@/lib/utils/to-error";
+import { getErrorMessage } from "@/seed/utils/to-error";
 
 // Auth: Bearer METRICS_BEARER_TOKEN — constant-time compare, 401 otherwise.
 // Exposes binding statuses + cron last-run timestamps.

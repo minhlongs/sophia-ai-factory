@@ -6,10 +6,10 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { requireAdmin } from '@/lib/auth/require-admin'
+import { requireAdmin } from '@/seed/auth/require-admin'
 import { setSkuPrice } from '@/lib/config/pricing-resolver'
 import { writeAuditLog } from '@/lib/admin/audit-log'
-import { getErrorMessage } from '@/lib/utils/to-error'
+import { getErrorMessage } from '@/seed/utils/to-error'
 
 export const dynamic = 'force-dynamic'
 

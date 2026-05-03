@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { Copy, Check, Share2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useCsrfToken } from '@/lib/security/use-csrf-token';
+import { Button } from '@/seed/components/ui/button';
+import { useCsrfToken } from '@/seed/security/use-csrf-token';
 
 interface ReferralGenerateResponse {
   code?: string;

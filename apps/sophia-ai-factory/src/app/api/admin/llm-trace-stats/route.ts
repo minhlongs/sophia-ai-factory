@@ -12,7 +12,7 @@ import {
   aggregateTraceStats,
   type TraceRow,
 } from '@/lib/admin/trace-aggregator'
-import { getErrorMessage } from '@/lib/utils/to-error'
+import { getErrorMessage } from '@/seed/utils/to-error'
 
 export const dynamic = 'force-dynamic'
 

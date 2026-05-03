@@ -4,8 +4,8 @@
  * Export charts to PNG format using html2canvas
  */
 
-import { logger } from '@/lib/utils/logger-utility';
-import { toError } from '@/lib/utils/to-error';
+import { logger } from '@/seed/utils/logger-utility';
+import { toError } from '@/seed/utils/to-error';
 
 /**
  * Export a chart element to PNG

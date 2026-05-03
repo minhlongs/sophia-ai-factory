@@ -8,7 +8,7 @@
  * Ref: github.com/SamurAIGPT/Generative-Media-Skills
  */
 
-import { toError } from '@/lib/utils/to-error'
+import { toError } from '@/seed/utils/to-error'
 
 const MUAPI_BASE = 'https://api.muapi.ai/v1'
 

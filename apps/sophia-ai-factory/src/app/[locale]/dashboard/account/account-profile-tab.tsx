@@ -6,10 +6,10 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/seed/components/ui/button';
+import { Input } from '@/seed/components/ui/input';
+import { Label } from '@/seed/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/seed/components/ui/select';
 
 interface ProfileData {
   email: string;

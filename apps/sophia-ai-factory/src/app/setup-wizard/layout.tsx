@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/better-auth-session";
+import { getCurrentUser } from "@/seed/auth/better-auth-session";
 import { listUserApiKeyProviders } from "@/lib/byok/user-api-key-store";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
-import { logger } from "@/lib/utils/logger-utility";
+import { logger } from "@/seed/utils/logger-utility";
 import "../globals.css";
 
 const geistSans = localFont({

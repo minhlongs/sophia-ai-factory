@@ -5,9 +5,9 @@
  * Renders list of users with balance_available >= $50, with mark-paid form per row.
  */
 
-import { getCurrentUser } from '@/lib/better-auth-session';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { redirect } from 'next/navigation';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 import { MIN_PAYOUT_USD } from '@/lib/wallet/payout-validators';
 import { PayoutRow } from './payout-row';
 

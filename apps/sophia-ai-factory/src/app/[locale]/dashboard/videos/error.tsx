@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/seed/components/ui/button";
 
 export default function VideosError({
   reset,

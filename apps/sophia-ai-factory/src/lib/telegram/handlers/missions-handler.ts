@@ -4,7 +4,7 @@
  * Lists recent engine_missions for the user linked to this Telegram chat.
  */
 
-import { createServerClient } from '@/lib/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { sendMessage } from './utils';
 
 interface ProfileRow {

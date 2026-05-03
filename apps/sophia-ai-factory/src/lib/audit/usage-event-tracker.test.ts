@@ -17,7 +17,7 @@ import {
 } from './audit-hashing'
 
 // Mock Supabase admin client
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   createServerClient: vi.fn(() => ({
     from: vi.fn((table: string) => ({
       insert: vi.fn((data: unknown) => ({
@@ -38,7 +38,7 @@ vi.mock('@/lib/db/client', () => ({
 }))
 
 // Mock logger
-vi.mock('@/lib/utils/logger-utility', () => ({
+vi.mock('@/seed/utils/logger-utility', () => ({
   logger: {
     info: vi.fn(),
     error: vi.fn(),

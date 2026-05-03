@@ -7,7 +7,7 @@
  * Legacy callers that used `supabase` singleton are now re-routed to
  * the D1 server client (works in Node/Worker contexts, not browser).
  */
-import { createServerClient } from '@/lib/db/client';
+import { createServerClient } from '@/seed/db/client';
 
 /**
  * createClient() shim — throws a helpful error in browser context.

@@ -1,6 +1,6 @@
 
-import { Tier } from "@/types";
-import { getErrorMessage } from '@/lib/utils/to-error';
+import { Tier } from "@/seed/types";
+import { getErrorMessage } from '@/seed/utils/to-error';
 import { trackUsage, hashLicenseKey, calculateCredits, startTimer } from '@/lib/usage-metering';
 import { getUsageContext } from '@/lib/usage-metering/context';
 

@@ -6,8 +6,8 @@
  */
 
 import { z } from 'zod'
-import { FEATURE_PAYOS } from '@/config/flags'
-import type { Tier } from '@/types'
+import { FEATURE_PAYOS } from '@/seed/config/flags'
+import type { Tier } from '@/seed/types'
 
 // ── USD to VND conversion (pin via env, fallback to market rate) ──────────────
 const USD_TO_VND = Number(process.env.USD_TO_VND ?? '25000')

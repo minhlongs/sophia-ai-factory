@@ -4,10 +4,10 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/db/client'
-import { logger } from '@/lib/utils/logger-utility'
-import { toError } from '@/lib/utils/to-error'
-import { requireAdmin } from '@/lib/auth/require-admin'
+import { createServerClient } from '@/seed/db/client'
+import { logger } from '@/seed/utils/logger-utility'
+import { toError } from '@/seed/utils/to-error'
+import { requireAdmin } from '@/seed/auth/require-admin'
 import { z } from 'zod'
 import { violationsListSchema, type ViolationRow, type LicenseInfo, type UserInfo, type ViolationRecord } from './violations-schemas'
 

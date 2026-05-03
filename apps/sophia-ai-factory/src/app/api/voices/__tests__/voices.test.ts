@@ -12,7 +12,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
 // Mock getCurrentUser
-vi.mock('@/lib/better-auth-session', () => ({
+vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: vi.fn(),
 }));
 
@@ -21,7 +21,7 @@ const mockDbChain = {
   from: vi.fn(),
 };
 
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   createServerClient: vi.fn(() => mockDbChain),
 }));
 
@@ -35,9 +35,9 @@ vi.mock('@/lib/video/r2-multipart-upload', () => ({
   uploadToR2: vi.fn().mockResolvedValue('tenants/t1/voices/v1/ref.wav'),
 }));
 
-import { getCurrentUser } from '@/lib/better-auth-session';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getVideoBucket } from '@/lib/video/r2-binding';
-import { createServerClient } from '@/lib/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { POST, GET } from '../route';
 import { DELETE } from '../[id]/route';
 

@@ -7,7 +7,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   getD1Raw: vi.fn(),
 }));
 
@@ -18,7 +18,7 @@ import {
   markFirstSopInstall,
   generateToken,
 } from '../handover-magic-link';
-import { getD1Raw } from '@/lib/db/client';
+import { getD1Raw } from '@/seed/db/client';
 
 interface CapturedCall {
   sql: string;

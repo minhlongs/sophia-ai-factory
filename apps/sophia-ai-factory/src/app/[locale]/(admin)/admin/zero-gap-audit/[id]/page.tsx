@@ -7,8 +7,8 @@
 
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
-import { getCurrentUser } from '@/lib/better-auth-session'
-import { getD1Raw } from '@/lib/db/client'
+import { getCurrentUser } from '@/seed/auth/better-auth-session'
+import { getD1Raw } from '@/seed/db/client'
 import { ArrowLeft, ShieldCheck } from 'lucide-react'
 import { AuditScoreCard } from '@/components/audit/audit-score-card'
 import { AuditCheckRow } from '@/components/audit/audit-check-row'

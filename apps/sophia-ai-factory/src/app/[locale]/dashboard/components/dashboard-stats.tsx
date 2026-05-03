@@ -5,7 +5,7 @@ import { TrendingUp, Activity, CheckCircle2 } from "lucide-react";
 import { useTranslations } from 'next-intl';
 
 const AnimatedCounter = dynamic(
-  () => import("@/components/ui/animated-counter-with-framer-motion").then(mod => ({ default: mod.AnimatedCounter })),
+  () => import("@/seed/components/ui/animated-counter-with-framer-motion").then(mod => ({ default: mod.AnimatedCounter })),
   { ssr: false, loading: () => <span>0</span> }
 );
 

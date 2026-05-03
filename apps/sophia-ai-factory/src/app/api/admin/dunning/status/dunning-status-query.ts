@@ -5,7 +5,7 @@
  * including license info and user email joins.
  */
 
-import { createServerClient } from '@/lib/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { z } from 'zod';
 import type { DunningState } from '@/seed/types/billing-contracts';
 

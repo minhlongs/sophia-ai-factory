@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/db/client'
-import { getCurrentUser } from '@/lib/better-auth-session'
-import { getUserTier } from '@/lib/db/get-user-tier'
-import { UNIFIED_TIERS } from '@/config/tiers'
+import { createServerClient } from '@/seed/db/client'
+import { getCurrentUser } from '@/seed/auth/better-auth-session'
+import { getUserTier } from '@/seed/db/get-user-tier'
+import { UNIFIED_TIERS } from '@/seed/config/tiers'
 import { integrationSchema } from '@/lib/schemas'
 
 export async function POST(request: NextRequest) {

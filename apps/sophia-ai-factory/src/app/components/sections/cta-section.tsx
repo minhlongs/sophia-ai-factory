@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { ScrollReveal } from "@/components/ui/scroll-reveal";
+import { Button } from "@/seed/components/ui/button";
+import { ScrollReveal } from "@/seed/components/ui/scroll-reveal";
 
 /** Premium CTA section with glow orbs and dot pattern — dark themed */
 export function CtaSection() {

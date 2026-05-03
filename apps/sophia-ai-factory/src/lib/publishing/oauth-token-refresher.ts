@@ -8,9 +8,9 @@
  * Instagram: uses FB long-lived token re-exchange (no refresh_token — HIGH fix).
  */
 
-import { getD1Client, getD1Raw } from '@/lib/db/client';
+import { getD1Client, getD1Raw } from '@/seed/db/client';
 import { encryptToken, decryptToken } from './token-crypto';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 import { refreshAccessToken as refreshTikTok } from '@/lib/tiktok/tiktok-token-manager';
 import { refreshAccessToken as refreshYouTube } from '@/lib/youtube/youtube-oauth-client';
 import type { PublishingChannel } from './publisher-interface';

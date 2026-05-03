@@ -4,8 +4,8 @@
  * @module lib/handover/handover-account-setup
  */
 
-import { logger } from '@/lib/utils/logger-utility';
-import { getErrorMessage } from '@/lib/utils/to-error';
+import { logger } from '@/seed/utils/logger-utility';
+import { getErrorMessage } from '@/seed/utils/to-error';
 
 function genId(): string {
   return crypto.randomUUID().replace(/-/g, '');

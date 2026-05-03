@@ -8,7 +8,7 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import type { MissionStatus } from '@/types/raas';
+import type { MissionStatus } from '@/seed/types/raas';
 
 interface MissionData {
   id: string;

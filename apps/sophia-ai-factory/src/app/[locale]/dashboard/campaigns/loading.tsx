@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@/seed/components/ui/skeleton";
 
 /** Skeleton matching campaigns list page: header + campaign card rows */
 export default function Loading() {

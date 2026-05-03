@@ -6,9 +6,9 @@
 
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createServerClient } from "@/lib/db/client";
-import { getCurrentUserFromHeaders } from "@/lib/better-auth-session";
-import { logger } from "@/lib/utils/logger-utility";
+import { createServerClient } from "@/seed/db/client";
+import { getCurrentUserFromHeaders } from "@/seed/auth/better-auth-session";
+import { logger } from "@/seed/utils/logger-utility";
 
 const applyBodySchema = z.object({
   code: z.string().min(1, "code is required").max(32),

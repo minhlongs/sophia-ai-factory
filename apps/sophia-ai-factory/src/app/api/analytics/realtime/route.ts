@@ -8,7 +8,7 @@
  */
 
 import type { NextRequest } from 'next/server';
-import { getCurrentUser } from '@/lib/better-auth-session';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { checkAdmin } from '@/lib/analytics/rbac';
 import { fetchRealtimeSnapshot } from '@/lib/analytics/realtime-snapshot';
 import { createSSEStream } from '@/lib/analytics/sse-broadcaster';

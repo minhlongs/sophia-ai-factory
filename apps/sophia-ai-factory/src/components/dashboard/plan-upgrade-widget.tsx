@@ -7,8 +7,8 @@
  */
 
 import { useState } from 'react';
-import { UNIFIED_TIERS } from '@/config/tiers';
-import type { Tier } from '@/types';
+import { UNIFIED_TIERS } from '@/seed/config/tiers';
+import type { Tier } from '@/seed/types';
 import { Crown, ArrowUp, Loader2 } from 'lucide-react';
 
 interface Props {

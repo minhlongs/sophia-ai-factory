@@ -5,9 +5,9 @@
  * Inserts a video_jobs row and fires the initial Inngest event.
  */
 
-import { getD1Client } from '@/lib/db/client';
+import { getD1Client } from '@/seed/db/client';
 import { inngest } from '@/lib/inngest/client';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 import { checkVideoBudget, type RenderPath } from './cost-guardrail';
 
 export interface CreateVideoJobInput {

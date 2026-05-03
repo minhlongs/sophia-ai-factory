@@ -7,7 +7,7 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
-import { getCurrentUser } from '@/lib/better-auth-session';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { listInstallationsForUser, getTemplateById } from '@/lib/sop/sop-repo';
 import { InstallationListTable } from '@/components/sop/installation-list-table';
 import { BookOpen, Store } from 'lucide-react';

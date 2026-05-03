@@ -5,11 +5,11 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { logger } from '@/lib/utils/logger-utility'
-import { toError } from '@/lib/utils/to-error'
+import { logger } from '@/seed/utils/logger-utility'
+import { toError } from '@/seed/utils/to-error'
 import { RaasGatewayClient } from '@/lib/raas-gateway-client'
 import { logAuditEvent } from '@/lib/audit/audit-logger'
-import { verifyInternalSecret } from '@/lib/security/verify-internal-secret'
+import { verifyInternalSecret } from '@/seed/security/verify-internal-secret'
 import type { SyncRequestBody, SyncResult } from './license-sync-types'
 import { RAAS_CONFIG } from './license-sync-types'
 import { syncFromDatabase, updateLicenseInDatabase, invalidateKvCache } from './license-sync-db'

@@ -6,10 +6,10 @@
  */
 
 import { Resend } from 'resend';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 import { renderEmail } from '@/lib/email/render-email';
 import { SENDER_FROM } from '@/lib/email/templates/shared-layout';
-import type { Tier } from '@/types';
+import type { Tier } from '@/seed/types';
 
 // ── Input types ───────────────────────────────────────────────────────────────
 

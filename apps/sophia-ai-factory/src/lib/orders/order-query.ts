@@ -6,8 +6,8 @@
  * @module lib/orders/order-query
  */
 
-import { getD1Raw } from '@/lib/db/client'
-import { logger } from '@/lib/utils/logger-utility'
+import { getD1Raw } from '@/seed/db/client'
+import { logger } from '@/seed/utils/logger-utility'
 import type { OrderTimelineRow, VideoStatusType, PurchaseStatusType } from './order-types'
 
 /** Estimated render time in seconds (8 minutes for HeyGen) */

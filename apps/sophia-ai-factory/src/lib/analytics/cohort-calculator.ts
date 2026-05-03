@@ -8,8 +8,8 @@
  * NULL created_at → bucketed as "unknown" cohort (pre-migration users).
  */
 
-import { logger } from '@/lib/utils/logger-utility';
-import type { CohortRow, CohortRetentionMatrix } from '@/types/analytics-cohort';
+import { logger } from '@/seed/utils/logger-utility';
+import type { CohortRow, CohortRetentionMatrix } from '@/seed/types/analytics-cohort';
 
 // ── D1 row types ─────────────────────────────────────────────────────────────
 

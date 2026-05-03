@@ -15,7 +15,7 @@ import type {
 } from "./gateway-types";
 import { track } from "@/lib/signals/track";
 import { D1Events } from "@/lib/signals/d1-event-types";
-import { getErrorMessage } from "@/lib/utils/to-error";
+import { getErrorMessage } from "@/seed/utils/to-error";
 
 export type {
   CampaignOutput,

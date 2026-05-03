@@ -10,11 +10,11 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getCurrentUserFromHeaders } from '@/lib/better-auth-session';
-import { getUserOrganization } from '@/lib/db/auth';
-import { getD1Raw } from '@/lib/db/client';
+import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
+import { getUserOrganization } from '@/seed/db/auth';
+import { getD1Raw } from '@/seed/db/client';
 import { getOrgBranding, upsertOrgBranding } from '@/lib/branding/org-branding-repo';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 
 export const dynamic = 'force-dynamic';
 

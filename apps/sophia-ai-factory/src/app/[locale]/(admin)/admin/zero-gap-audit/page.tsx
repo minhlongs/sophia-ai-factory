@@ -6,8 +6,8 @@
  */
 
 import { redirect } from 'next/navigation'
-import { getCurrentUser } from '@/lib/better-auth-session'
-import { getD1Raw } from '@/lib/db/client'
+import { getCurrentUser } from '@/seed/auth/better-auth-session'
+import { getD1Raw } from '@/seed/db/client'
 import { ShieldCheck, History } from 'lucide-react'
 import { AuditRunnerButton } from '@/components/audit/audit-runner-button'
 import { AuditHistoryTable } from '@/components/audit/audit-history-table'

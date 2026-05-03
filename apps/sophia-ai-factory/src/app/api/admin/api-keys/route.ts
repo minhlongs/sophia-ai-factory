@@ -9,14 +9,14 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { logger } from '@/lib/utils/logger-utility'
-import { toError, getErrorMessage } from '@/lib/utils/to-error'
-import { requireAdmin } from '@/lib/auth/require-admin'
+import { logger } from '@/seed/utils/logger-utility'
+import { toError, getErrorMessage } from '@/seed/utils/to-error'
+import { requireAdmin } from '@/seed/auth/require-admin'
 
 import {
   generateApiKey,
   getUserApiKeys,
-} from '@/lib/security/api-key-validator'
+} from '@/seed/security/api-key-validator'
 import { logApiKeyCreation } from '@/lib/audit/audit-query-logger'
 
 export const dynamic = 'force-dynamic'

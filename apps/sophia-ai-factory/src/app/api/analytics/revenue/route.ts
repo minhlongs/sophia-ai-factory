@@ -16,11 +16,11 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getCurrentUser } from '@/lib/better-auth-session';
-import { getUserTier } from '@/lib/db/get-user-tier';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { getUserTier } from '@/seed/db/get-user-tier';
 import { checkAdmin, canAccessRevenue } from '@/lib/analytics/rbac';
 import { fetchRevenueSnapshot } from '@/lib/analytics/queries/revenue-nowpayments';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 
 export const runtime = 'edge';
 

@@ -7,7 +7,7 @@
 import { scrubPIIDeep } from './pii-scrubber';
 import { logger } from './logger';
 import { pushFatalLog } from './better-stack-client';
-import { getErrorMessage } from '@/lib/utils/to-error';
+import { getErrorMessage } from '@/seed/utils/to-error';
 
 export interface ErrorContext {
   route?: string;

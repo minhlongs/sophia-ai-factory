@@ -1,11 +1,11 @@
 'use server';
 
-import { getCurrentUser } from '@/lib/better-auth-session';
-import { createServerClient } from '@/lib/db/client';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { createServerClient } from '@/seed/db/client';
 import { revalidatePath } from 'next/cache';
 import { encrypt } from '@/utils/encryption';
 import { UserProfileFormValues, userProfileFormSchema } from '@/lib/schemas/settings';
-import { EncryptedApiKeys } from '@/types/user';
+import { EncryptedApiKeys } from '@/seed/types/user';
 
 /**
  * Fetch the current user's profile, including settings and masked API keys.

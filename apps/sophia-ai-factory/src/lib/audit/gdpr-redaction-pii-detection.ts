@@ -7,7 +7,7 @@
  * @module audit/gdpr-redaction-pii-detection
  */
 
-import { logger } from '@/lib/utils/logger-utility'
+import { logger } from '@/seed/utils/logger-utility'
 
 /**
  * PII pattern matchers for detection

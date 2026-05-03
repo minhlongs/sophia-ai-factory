@@ -3,9 +3,9 @@
  * Replaces Polar.sh for billing. Uses pre-created invoice IDs.
  */
 
-import { Tier } from '@/types'
-import { getOneTimeSkuByInvoiceId, ONE_TIME_INVOICE_IDS } from '@/config/one-time-skus'
-import type { OneTimeSku } from '@/types'
+import { Tier } from '@/seed/types'
+import { getOneTimeSkuByInvoiceId, ONE_TIME_INVOICE_IDS } from '@/seed/config/one-time-skus'
+import type { OneTimeSku } from '@/seed/types'
 
 export interface NowPaymentsTierConfig {
   tier: Tier

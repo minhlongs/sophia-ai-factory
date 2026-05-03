@@ -31,7 +31,7 @@ const BASE_INPUT = {
 // Mock createServerClient to use an in-memory store
 const orderStore = new Map<string, PendingOrder>()
 
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   createServerClient: () => ({
     from: (table: string) => {
       if (table !== 'pending_orders') throw new Error(`Unexpected table: ${table}`)

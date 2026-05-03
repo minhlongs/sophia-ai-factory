@@ -1,14 +1,14 @@
 "use server";
 
-import { getD1Client } from "@/lib/db/client";
+import { getD1Client } from "@/seed/db/client";
 import { sendCampaignCreatedEvent } from "@/lib/campaigns/create-campaign-core";
 import { createCampaignSchema } from "@/lib/campaigns/validation";
 import { revalidatePath } from "next/cache";
 import { tierGuard } from "@/lib/tier-guard";
-import { toError } from "@/lib/utils/to-error";
+import { toError } from "@/seed/utils/to-error";
 import { getProgramById } from "@/lib/affiliates";
 import { generateShortCode } from "@/lib/affiliate-shortlink/short-code-generator";
-import { logger } from "@/lib/utils/logger-utility";
+import { logger } from "@/seed/utils/logger-utility";
 
 export async function createCampaign(formData: FormData) {
   const offerId = formData.get("offer_id") as string | null;
@@ -31,7 +31,7 @@ export async function createCampaign(formData: FormData) {
 
   let userId: string | undefined;
   try {
-    const { getCurrentUser } = await import("@/lib/better-auth-session");
+    const { getCurrentUser } = await import("@/seed/auth/better-auth-session");
     const user = await getCurrentUser();
     if (user) userId = user.id;
   } catch { /* Auth session check failed */ }
@@ -55,11 +55,11 @@ export async function createCampaign(formData: FormData) {
     }
   }
 
-  const { getUserTier } = await import("@/lib/db/get-user-tier");
+  const { getUserTier } = await import("@/seed/db/get-user-tier");
   const tier = await getUserTier(userId);
 
   // TIER CHECK: Monthly campaign limit
-  const { UNIFIED_TIERS } = await import("@/config/tiers");
+  const { UNIFIED_TIERS } = await import("@/seed/config/tiers");
   const monthLimit = UNIFIED_TIERS[tier].campaignsPerMonth;
 
   if (monthLimit < 999) {
@@ -153,11 +153,11 @@ export async function createCampaign(formData: FormData) {
  */
 export async function getOffersForUser() {
   try {
-    const { getCurrentUser } = await import("@/lib/better-auth-session");
+    const { getCurrentUser } = await import("@/seed/auth/better-auth-session");
     const user = await getCurrentUser();
     if (!user) return [];
 
-    const { getUserTier } = await import("@/lib/db/get-user-tier");
+    const { getUserTier } = await import("@/seed/db/get-user-tier");
     const tier = await getUserTier(user.id);
 
     const { getTopPrograms } = await import("@/lib/affiliates");

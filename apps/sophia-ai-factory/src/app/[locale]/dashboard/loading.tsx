@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@/seed/components/ui/skeleton";
 
 /** Skeleton matching DashboardStats (3 stat cards) + CampaignList (campaign rows) */
 export default function Loading() {

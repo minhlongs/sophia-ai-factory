@@ -7,10 +7,10 @@
  * LIVE — requires HeyGen API key in user_provider_credentials.
  */
 
-import { createServerClient } from '@/lib/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { getHeyGenKey } from '@/lib/credentials/get-provider-key';
 import { createHeyGenVideo } from '@/lib/video/heygen-helpers';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 import type { MissionHandlerResult, MissionContext } from './types';
 
 export async function handle(ctx: MissionContext): Promise<MissionHandlerResult> {

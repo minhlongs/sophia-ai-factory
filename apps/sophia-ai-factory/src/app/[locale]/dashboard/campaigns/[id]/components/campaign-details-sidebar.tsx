@@ -1,5 +1,5 @@
-import { Badge } from "@/components/ui/badge";
-import { Campaign } from "@/types";
+import { Badge } from "@/seed/components/ui/badge";
+import { Campaign } from "@/seed/types";
 import type { getFormatter } from "next-intl/server";
 
 type IntlFormat = Awaited<ReturnType<typeof getFormatter>>;

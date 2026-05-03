@@ -1,15 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { GET } from "./route";
 
-vi.mock("@/lib/better-auth-session", () => ({
+vi.mock("@/seed/auth/better-auth-session", () => ({
   getCurrentUser: vi.fn(),
 }));
-vi.mock("@/lib/db/client", () => ({
+vi.mock("@/seed/db/client", () => ({
   createServerClient: vi.fn(),
 }));
 
-import { getCurrentUser } from "@/lib/better-auth-session";
-import { createServerClient } from "@/lib/db/client";
+import { getCurrentUser } from "@/seed/auth/better-auth-session";
+import { createServerClient } from "@/seed/db/client";
 
 const mockedGetCurrentUser = vi.mocked(getCurrentUser);
 const mockedCreateServerClient = vi.mocked(createServerClient);

@@ -14,7 +14,7 @@ import { ClickBankProvider } from '@/lib/affiliates/providers/clickbank'
 import { AwinProvider } from '@/lib/affiliates/providers/awin'
 import { AmazonProvider } from '@/lib/affiliates/providers/amazon'
 import type { OfferProvider } from '@/lib/affiliates/provider-interface'
-import { logger } from '@/lib/utils/logger-utility'
+import { logger } from '@/seed/utils/logger-utility'
 
 const PROVIDERS: Record<string, OfferProvider> = {
   'tiktok-shop': new TikTokShopProvider(),

@@ -8,7 +8,7 @@
  */
 
 import { inngest } from '@/lib/inngest/client';
-import { getD1Client } from '@/lib/db/client';
+import { getD1Client } from '@/seed/db/client';
 import { recordCost } from '@/lib/video/cost-ledger';
 import { assertValidTransition } from '@/lib/video/video-job-fsm';
 import { tenantScopedKey } from '@/lib/video/r2-binding';

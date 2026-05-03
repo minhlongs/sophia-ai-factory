@@ -20,7 +20,7 @@ vi.mock('@/lib/signals/track', () => ({
   track: vi.fn(),
 }))
 
-vi.mock('@/lib/utils/logger-utility', () => ({
+vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { warn: vi.fn(), info: vi.fn(), error: vi.fn() },
 }))
 
@@ -48,12 +48,12 @@ vi.mock('@/lib/byok/resolve-user-api-key', () => ({
 
 import { executeStep } from './route'
 import { callWithCache } from '@/lib/llm/cache/call-with-cache'
-import { logger } from '@/lib/utils/logger-utility'
+import { logger } from '@/seed/utils/logger-utility'
 import { recordLlmCall } from '@/lib/telemetry/llm-trace'
 import { route as routeLlm } from '@/lib/ai/llm-router'
 import { callAnthropic } from '@/lib/ai/anthropic-adapter'
 import { resolveUserApiKey } from '@/lib/byok/resolve-user-api-key'
-import type { WorkflowRow } from '@/lib/db/workflow-repository'
+import type { WorkflowRow } from '@/seed/db/workflow-repository'
 import type { RouteDecision } from '@/lib/ai/llm-router'
 
 const mockCallWithCache    = vi.mocked(callWithCache)

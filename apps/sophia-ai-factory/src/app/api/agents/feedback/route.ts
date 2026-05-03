@@ -14,10 +14,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getCurrentUser } from '@/lib/better-auth-session';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { track } from '@/lib/signals/track';
 import { D1Events } from '@/lib/signals/d1-event-types';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 
 export const runtime = 'edge';
 

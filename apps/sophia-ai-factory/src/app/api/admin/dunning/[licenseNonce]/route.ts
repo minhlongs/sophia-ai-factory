@@ -6,10 +6,10 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth/require-admin';
+import { requireAdmin } from '@/seed/auth/require-admin';
 import { getDunningState, getDunningHistory } from '@/lib/billing/dunning-workflow';
-import { logger } from '@/lib/utils/logger-utility';
-import { toError } from '@/lib/utils/to-error';
+import { logger } from '@/seed/utils/logger-utility';
+import { toError } from '@/seed/utils/to-error';
 
 export async function GET(
   req: NextRequest,

@@ -3,7 +3,7 @@
  * @module lib/handover/handover-types
  */
 
-import type { Tier } from '@/types';
+import type { Tier } from '@/seed/types';
 
 export type AgencyType = 'b2b_saas' | 'ecom' | 'content_creator' | 'service' | 'other';
 

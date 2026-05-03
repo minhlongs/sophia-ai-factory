@@ -1,8 +1,8 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
+import { Button } from '@/seed/components/ui/button';
+import { Label } from '@/seed/components/ui/label';
+import { Switch } from '@/seed/components/ui/switch';
 import {
   Card,
   CardContent,
@@ -10,7 +10,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
+} from '@/seed/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { UseFormReturn } from 'react-hook-form';
 import { UserProfileFormValues } from '@/lib/schemas/settings';

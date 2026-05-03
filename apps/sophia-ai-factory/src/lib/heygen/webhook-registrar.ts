@@ -6,7 +6,7 @@
  * @module lib/heygen/webhook-registrar
  */
 
-import { logger } from '@/lib/utils/logger-utility'
+import { logger } from '@/seed/utils/logger-utility'
 
 const HEYGEN_API_BASE = 'https://api.heygen.com'
 

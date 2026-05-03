@@ -3,18 +3,18 @@
 import React, { useState, useEffect } from 'react';
 import { Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Input } from '@/components/ui/input';
+import { Input } from '@/seed/components/ui/input';
 import {
   Command,
   CommandEmpty,
   CommandGroup,
   CommandItem,
   CommandList,
-} from '@/components/ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Button } from '@/components/ui/button';
-import { logger } from '@/lib/utils/logger-utility';
-import { toError } from '@/lib/utils/to-error';
+} from '@/seed/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/seed/components/ui/popover';
+import { Button } from '@/seed/components/ui/button';
+import { logger } from '@/seed/utils/logger-utility';
+import { toError } from '@/seed/utils/to-error';
 
 export interface Customer {
   id: string;

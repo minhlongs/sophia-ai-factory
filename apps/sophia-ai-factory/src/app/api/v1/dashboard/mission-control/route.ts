@@ -6,9 +6,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getCurrentUserFromHeaders } from '@/lib/better-auth-session';
-import { getUserTier } from '@/lib/db/get-user-tier';
-import { logger } from '@/lib/utils/logger-utility';
+import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
+import { getUserTier } from '@/seed/db/get-user-tier';
+import { logger } from '@/seed/utils/logger-utility';
 import { TIER_MCU_LIMITS } from '@/lib/handover/handover-types';
 
 export const dynamic = 'force-dynamic';

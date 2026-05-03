@@ -10,12 +10,12 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { transitionDunningState } from '@/lib/billing/dunning/dunning-state-machine';
-import { logger } from '@/lib/utils/logger-utility';
-import { toError } from '@/lib/utils/to-error';
+import { logger } from '@/seed/utils/logger-utility';
+import { toError } from '@/seed/utils/to-error';
 import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker';
-import { verifyCronAuth } from '@/lib/security/cron-auth';
+import { verifyCronAuth } from '@/seed/security/cron-auth';
 
 const CRON_NAME = 'dunning-advance';
 /** Daily — skip if ran within last 12 hours */

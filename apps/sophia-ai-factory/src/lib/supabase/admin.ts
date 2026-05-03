@@ -5,7 +5,7 @@
  * continue to work unchanged. D1 has no concept of service-role vs anon —
  * the same D1Client is returned for all server-side operations.
  */
-import { getD1Client } from '@/lib/db/client';
+import { getD1Client } from '@/seed/db/client';
 
 /**
  * Returns a D1Client with the same query API as the Supabase admin client.

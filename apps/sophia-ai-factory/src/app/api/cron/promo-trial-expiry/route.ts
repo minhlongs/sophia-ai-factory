@@ -8,9 +8,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getExpiredTrialUsers } from '@/lib/promo/promo-repo';
-import { verifyCronAuth } from '@/lib/security/cron-auth';
-import { logger } from '@/lib/utils/logger-utility';
-import { getD1Raw } from '@/lib/db/client';
+import { verifyCronAuth } from '@/seed/security/cron-auth';
+import { logger } from '@/seed/utils/logger-utility';
+import { getD1Raw } from '@/seed/db/client';
 import { Resend } from 'resend';
 
 const CRON_NAME = 'promo-trial-expiry';

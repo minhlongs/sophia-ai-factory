@@ -17,7 +17,7 @@ import { attributeClick } from '@/lib/affiliates/conversion-attributor'
 import { calcCommission } from '@/lib/affiliates/commission-calculator'
 import { notifyConversionEarned } from '@/lib/inngest/functions/generate-campaign-db'
 import { checkRateLimit } from '@/lib/telegram/sql-rate-limiter'
-import { logger } from '@/lib/utils/logger-utility'
+import { logger } from '@/seed/utils/logger-utility'
 
 /** Map canonical event type to payout status */
 function resolvePayout(

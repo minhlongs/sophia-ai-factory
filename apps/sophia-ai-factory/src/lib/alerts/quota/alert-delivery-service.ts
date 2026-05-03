@@ -6,9 +6,9 @@
  * @module alerts/quota/alert-delivery-service
  */
 
-import { createServerClient } from '@/lib/db/client';
-import { logger } from '@/lib/utils/logger-utility';
-import { toError, getErrorMessage } from '@/lib/utils/to-error';
+import { createServerClient } from '@/seed/db/client';
+import { logger } from '@/seed/utils/logger-utility';
+import { toError, getErrorMessage } from '@/seed/utils/to-error';
 import {
   getAlertTemplate,
   isRateLimited,

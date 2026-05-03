@@ -7,7 +7,7 @@
  * @module payouts/commission-ledger-mutations
  */
 
-import { getD1Raw } from '@/lib/db/client'
+import { getD1Raw } from '@/seed/db/client'
 
 /**
  * Atomic claim: flip payable rows → paying with batch_id (C3).

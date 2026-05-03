@@ -4,7 +4,7 @@
  * Handles /start, /help, /email commands for account linking and onboarding.
  */
 
-import { createServerClient } from '@/lib/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { sendTelegramMessage } from './telegram-client';
 import { Database, Json } from '@/lib/supabase/types';
 

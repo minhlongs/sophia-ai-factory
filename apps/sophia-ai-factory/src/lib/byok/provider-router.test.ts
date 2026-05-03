@@ -16,7 +16,7 @@ import { resolveLocalMekongdForUser } from './provider-router'
 
 // ── Mocks ──────────────────────────────────────────────────────────────────────
 
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   createServerClient: vi.fn(),
 }))
 
@@ -28,7 +28,7 @@ vi.mock('@/lib/crypto/encrypt-secret', () => ({
   decryptSecret: vi.fn(),
 }))
 
-import { createServerClient } from '@/lib/db/client'
+import { createServerClient } from '@/seed/db/client'
 import { isEnabled } from '@/lib/feature-flags'
 import { decryptSecret } from '@/lib/crypto/encrypt-secret'
 

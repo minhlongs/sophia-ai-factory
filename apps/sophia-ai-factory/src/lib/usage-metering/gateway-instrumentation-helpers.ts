@@ -4,7 +4,7 @@
  */
 
 import type { NextRequest } from 'next/server'
-import { logger } from '@/lib/utils/logger-utility'
+import { logger } from '@/seed/utils/logger-utility'
 import type { AiService } from './types'
 
 function parseLicenseKey(key: string): { licenseKey: string; licenseNonce: string | null; tier: string } {

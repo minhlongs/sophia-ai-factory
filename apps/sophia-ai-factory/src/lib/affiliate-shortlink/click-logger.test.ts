@@ -5,11 +5,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock dependencies before importing the module under test
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   createServerClient: vi.fn(),
 }));
 
-vi.mock('@/lib/utils/logger-utility', () => ({
+vi.mock('@/seed/utils/logger-utility', () => ({
   logger: {
     warn: vi.fn(),
     info: vi.fn(),
@@ -23,8 +23,8 @@ vi.mock('./ip-hash', () => ({
 }));
 
 import { logClick } from './click-logger';
-import { createServerClient } from '@/lib/db/client';
-import { logger } from '@/lib/utils/logger-utility';
+import { createServerClient } from '@/seed/db/client';
+import { logger } from '@/seed/utils/logger-utility';
 
 const mockInsert = vi.fn().mockResolvedValue({ error: null });
 const mockFrom = vi.fn().mockReturnValue({ insert: mockInsert });

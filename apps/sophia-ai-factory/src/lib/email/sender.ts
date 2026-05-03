@@ -6,7 +6,7 @@
  * Falls back to dry-run logging when key is not configured.
  */
 
-import { toError } from '@/lib/utils/to-error';
+import { toError } from '@/seed/utils/to-error';
 
 export interface EmailParams {
   to: string;

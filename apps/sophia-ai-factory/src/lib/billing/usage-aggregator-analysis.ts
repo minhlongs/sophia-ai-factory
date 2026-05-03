@@ -3,7 +3,7 @@
  * @module billing/usage-aggregator-analysis
  */
 
-import type { Tier } from '@/types'
+import type { Tier } from '@/seed/types'
 import { aggregateUsageForLicense } from './usage-aggregator-query'
 import type { UsageSummary, OverageDetected, UsageForecast } from './usage-aggregator-types'
 

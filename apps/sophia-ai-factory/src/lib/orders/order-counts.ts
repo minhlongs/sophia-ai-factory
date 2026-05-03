@@ -3,7 +3,7 @@
  * @module orders/order-counts
  */
 
-import { createServerClient } from '@/lib/db/client'
+import { createServerClient } from '@/seed/db/client'
 
 /**
  * Count completed orders for a user.

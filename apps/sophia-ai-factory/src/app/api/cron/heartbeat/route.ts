@@ -14,9 +14,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { pushHeartbeat, pushFatalLog } from '@/lib/telemetry/better-stack-client';
-import { getErrorMessage } from '@/lib/utils/to-error';
+import { getErrorMessage } from '@/seed/utils/to-error';
 import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker';
-import { verifyCronAuth } from '@/lib/security/cron-auth';
+import { verifyCronAuth } from '@/seed/security/cron-auth';
 
 export const dynamic = 'force-dynamic';
 

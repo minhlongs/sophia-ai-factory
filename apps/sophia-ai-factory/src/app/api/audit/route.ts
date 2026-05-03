@@ -17,12 +17,12 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { logger } from '@/lib/utils/logger-utility'
+import { logger } from '@/seed/utils/logger-utility'
 
 // Import security utilities
-import { validateApiKey } from '@/lib/security/api-key-validator'
-import { validateJwt } from '@/lib/security/jwt-validator'
-import { checkRateLimit, recordRequest } from '@/lib/security/rate-limiter'
+import { validateApiKey } from '@/seed/security/api-key-validator'
+import { validateJwt } from '@/seed/security/jwt-validator'
+import { checkRateLimit, recordRequest } from '@/seed/security/rate-limiter'
 
 // Import audit query logger
 import { logAuditQuery, queryAuditLogs } from '@/lib/audit/audit-query-logger'

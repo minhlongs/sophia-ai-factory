@@ -12,11 +12,11 @@
 
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getCurrentUserFromHeaders } from '@/lib/better-auth-session';
+import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { createVideoJob } from '@/lib/video/video-job-pipeline';
-import { logger } from '@/lib/utils/logger-utility';
-import { checkTierQuota } from '@/lib/auth/enforce-tier-quota';
-import { getUserTier } from '@/lib/db/get-user-tier';
+import { logger } from '@/seed/utils/logger-utility';
+import { checkTierQuota } from '@/seed/auth/enforce-tier-quota';
+import { getUserTier } from '@/seed/db/get-user-tier';
 
 const PREMIUM_TIERS = new Set(['PREMIUM', 'ENTERPRISE', 'MASTER']);
 

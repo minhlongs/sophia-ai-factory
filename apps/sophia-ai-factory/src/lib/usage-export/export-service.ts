@@ -8,7 +8,7 @@
  * @module usage-export/export-service
  */
 
-import { logger } from '../utils/logger-utility'
+import { logger } from '@/seed/utils/logger-utility'
 import type { UsageExportRecord, UsageExportSummary, UsageExportResponse, ExportFormat } from './types'
 import { formatAsCSV, formatSummaryAsCSV } from './csv-formatter'
 import { formatAsJSON, formatExportResponse, createJSONDownload } from './json-formatter'

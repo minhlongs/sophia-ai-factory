@@ -14,9 +14,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getD1Raw } from '@/lib/db/client';
-import { logger } from '@/lib/utils/logger-utility';
-import { verifyCronAuth } from '@/lib/security/cron-auth';
+import { getD1Raw } from '@/seed/db/client';
+import { logger } from '@/seed/utils/logger-utility';
+import { verifyCronAuth } from '@/seed/security/cron-auth';
 import { recordCronRun } from '@/lib/cron/run-tracker';
 
 export const dynamic = 'force-dynamic';

@@ -13,7 +13,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { createServerClient } from '@/lib/db/client'
+import { createServerClient } from '@/seed/db/client'
 import { withRateLimit } from '@/middleware/rate-limit-wrapper'
 
 export interface AffiliateOffer {

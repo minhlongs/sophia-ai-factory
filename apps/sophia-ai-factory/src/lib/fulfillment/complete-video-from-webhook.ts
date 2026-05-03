@@ -11,19 +11,19 @@
  * @module lib/fulfillment/complete-video-from-webhook
  */
 
-import { logger } from '@/lib/utils/logger-utility'
-import { getErrorMessage } from '@/lib/utils/to-error'
-import { getD1Raw, createServerClient } from '@/lib/db/client'
+import { logger } from '@/seed/utils/logger-utility'
+import { getErrorMessage } from '@/seed/utils/to-error'
+import { getD1Raw, createServerClient } from '@/seed/db/client'
 import { downloadAndStore } from '@/lib/video/video-storage-service'
 import { sendOneTimeBundleReadyEmail } from '@/lib/billing/email/send-one-time-bundle-ready-email'
-import { getUserCredits } from '@/lib/db/get-user-credits'
+import { getUserCredits } from '@/seed/db/get-user-credits'
 import { grantCompensationCredit } from '@/lib/fulfillment/compensation'
 import { sendBundleRenderFailedEmail } from '@/lib/billing/email/send-bundle-render-failed-email'
 import {
   findByHeygenJobId,
   markPermanentFailureCAS,
   recordAttemptCAS,
-} from '@/lib/db/repositories/videos-repo'
+} from '@/seed/db/repositories/videos-repo'
 import { MAX_ATTEMPTS } from '@/lib/fulfillment/retry-backoff'
 import { recordHeyGenAttempt } from '@/lib/fulfillment/circuit-breaker'
 

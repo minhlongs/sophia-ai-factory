@@ -1,9 +1,9 @@
 "use client";
 
-import { Campaign } from "@/types";
+import { Campaign } from "@/seed/types";
 import { useEffect, useCallback, useState } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/seed/components/ui/button";
 import { retryCampaign, resumeCampaign } from "@/app/actions/campaigns-retry-resume";
 import { useToast } from "@/hooks/use-toast";
 import { CampaignItem } from "./campaign-list/campaign-item";

@@ -6,7 +6,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { onEvent, emit, _clearHandlers } from '../event-bus';
 
 // Mock D1 for persistHook tests
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   getD1Raw: vi.fn().mockResolvedValue({
     prepare: vi.fn().mockReturnValue({
       bind: vi.fn().mockReturnThis(),

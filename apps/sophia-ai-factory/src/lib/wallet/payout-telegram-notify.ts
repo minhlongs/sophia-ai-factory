@@ -3,7 +3,7 @@
  * Fire-and-forget bilingual (VI+EN) notification to user when payout is sent.
  */
 
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 
 interface UserRow {
   telegram_chat_id: string | null;

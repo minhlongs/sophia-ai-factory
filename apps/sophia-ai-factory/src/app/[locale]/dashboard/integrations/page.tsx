@@ -5,9 +5,9 @@
  * Admin-hook: "Configure" links open setup wizard or show coming-soon modal.
  */
 
-import { getCurrentUser } from '@/lib/better-auth-session';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { redirect } from 'next/navigation';
-import { createServerClient } from '@/lib/db/client';
+import { createServerClient } from '@/seed/db/client';
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';

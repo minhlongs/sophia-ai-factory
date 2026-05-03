@@ -5,9 +5,9 @@
  */
 
 import { NextResponse } from "next/server";
-import { createServerClient } from "@/lib/db/client";
-import { getCurrentUserFromHeaders } from "@/lib/better-auth-session";
-import { logger } from "@/lib/utils/logger-utility";
+import { createServerClient } from "@/seed/db/client";
+import { getCurrentUserFromHeaders } from "@/seed/auth/better-auth-session";
+import { logger } from "@/seed/utils/logger-utility";
 
 /** Generate a short alphanumeric referral code */
 function generateCode(length = 8): string {

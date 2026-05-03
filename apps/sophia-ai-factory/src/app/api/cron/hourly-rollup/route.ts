@@ -9,9 +9,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { runHourlyRollup } from '@/lib/usage-metering/rollup-service';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker';
-import { verifyCronAuth } from '@/lib/security/cron-auth';
+import { verifyCronAuth } from '@/seed/security/cron-auth';
 
 const CRON_NAME = 'hourly-rollup';
 /** Hourly — skip if ran within last 30 minutes */

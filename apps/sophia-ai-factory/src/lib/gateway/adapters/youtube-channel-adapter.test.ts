@@ -8,16 +8,16 @@ vi.mock('@/lib/youtube/youtube-oauth-client', () => ({
   refreshAccessToken: vi.fn(),
 }))
 
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   createServerClient: vi.fn(),
 }))
 
-vi.mock('@/lib/utils/logger-utility', () => ({
+vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }))
 
 import { uploadVideo, refreshAccessToken } from '@/lib/youtube/youtube-oauth-client'
-import { createServerClient } from '@/lib/db/client'
+import { createServerClient } from '@/seed/db/client'
 
 const sampleContent: CampaignOutput = {
   campaignId: 'camp-001',

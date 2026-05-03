@@ -14,7 +14,7 @@
  * @module lib/fulfillment/circuit-breaker
  */
 
-import { logger } from '@/lib/utils/logger-utility'
+import { logger } from '@/seed/utils/logger-utility'
 import { sendSlackAlert } from '@/lib/monitoring/slack-alert'
 
 export type CircuitState = 'closed' | 'open' | 'half-open'

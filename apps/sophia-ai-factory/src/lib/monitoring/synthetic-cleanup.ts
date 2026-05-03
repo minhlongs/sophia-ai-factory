@@ -6,9 +6,9 @@
  * @module lib/monitoring/synthetic-cleanup
  */
 
-import { getD1Raw } from '@/lib/db/client'
-import { logger } from '@/lib/utils/logger-utility'
-import { getErrorMessage } from '@/lib/utils/to-error'
+import { getD1Raw } from '@/seed/db/client'
+import { logger } from '@/seed/utils/logger-utility'
+import { getErrorMessage } from '@/seed/utils/to-error'
 
 /**
  * Delete synthetic purchase + video rows by purchase ID.

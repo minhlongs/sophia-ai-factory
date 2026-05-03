@@ -4,8 +4,8 @@
  * LicenseAlertItem — single alert row rendering with icon, severity, and actions
  */
 
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/seed/components/ui/button';
+import { Badge } from '@/seed/components/ui/badge';
 import {
   AlertCircle, CheckCircle2, Clock, ShieldAlert, WifiOff, TrendingUp, CreditCard, X,
 } from 'lucide-react';

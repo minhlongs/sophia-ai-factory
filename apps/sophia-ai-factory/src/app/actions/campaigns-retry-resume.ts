@@ -8,10 +8,10 @@
  * @module app/actions/campaigns-retry-resume
  */
 
-import { getD1Client } from "@/lib/db/client";
+import { getD1Client } from "@/seed/db/client";
 import { sendCampaignCreatedEvent } from "@/lib/campaigns/create-campaign-core";
 import { revalidatePath } from "next/cache";
-import { Tier } from "@/types";
+import { Tier } from "@/seed/types";
 
 /** Map DB subscription_tier string to app Tier enum */
 function mapDbTierToTier(dbTier: string | null | undefined): Tier {

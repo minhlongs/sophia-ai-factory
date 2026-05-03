@@ -7,10 +7,10 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/better-auth-session';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getInstallation } from '@/lib/sop/sop-repo';
 import { runSop } from '@/lib/sop/executor/sop-runner';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 
 export const dynamic = 'force-dynamic';
 

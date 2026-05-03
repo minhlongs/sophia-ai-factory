@@ -10,7 +10,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Loader2 } from 'lucide-react';
 import { CopyBox, StatusBadge, type LocalModeStatus } from './local-mode-step-ui';
-import { useCsrfToken } from '@/lib/security/use-csrf-token';
+import { useCsrfToken } from '@/seed/security/use-csrf-token';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 

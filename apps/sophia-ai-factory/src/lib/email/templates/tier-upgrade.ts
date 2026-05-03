@@ -3,7 +3,7 @@
  * @module lib/email/templates/tier-upgrade
  */
 
-import type { Tier } from '@/types';
+import type { Tier } from '@/seed/types';
 import { htmlWrapper, ctaButton, htmlToText, BASE_URL } from './shared-layout';
 
 export interface TierUpgradeData {

@@ -12,7 +12,7 @@
  * to exceed tier quotas.
  */
 
-import { createServerClient, getD1Raw } from '@/lib/db/client';
+import { createServerClient, getD1Raw } from '@/seed/db/client';
 
 /** Monthly video quota by tier. BASIC gets 0 (blocked upstream by 402 gate). */
 export const VIDEO_QUOTA_BY_TIER: Record<string, number> = {

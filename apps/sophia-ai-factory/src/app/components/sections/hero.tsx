@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/seed/components/ui/button";
 import { TerminalPreview } from "@/app/components/ui/terminal-preview";
 
 const rotatingCommands = [

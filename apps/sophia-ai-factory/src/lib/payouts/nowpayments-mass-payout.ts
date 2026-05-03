@@ -9,10 +9,10 @@
  * @module payouts/nowpayments-mass-payout
  */
 
-import { getD1Raw } from '@/lib/db/client'
+import { getD1Raw } from '@/seed/db/client'
 import { decryptSecret } from '@/lib/crypto/encrypt-secret'
 import { fromCents, sanitizeErrorText } from './commission-cents'
-import { logger } from '@/lib/utils/logger-utility'
+import { logger } from '@/seed/utils/logger-utility'
 
 const NOWPAYMENTS_API_BASE = 'https://api.nowpayments.io/v1'
 const RATE_LIMIT_MS = 200 // 5 requests/sec

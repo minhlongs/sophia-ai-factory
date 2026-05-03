@@ -7,7 +7,7 @@
  * @module worker/kv-license-cache
  */
 
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 
 /**
  * License context cached in KV

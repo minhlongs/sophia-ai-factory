@@ -6,8 +6,8 @@
  * requires x-internal-secret header matching INTERNAL_API_SECRET.
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { toError } from '@/lib/utils/to-error';
-import { verifyInternalSecret } from '@/lib/security/verify-internal-secret';
+import { toError } from '@/seed/utils/to-error';
+import { verifyInternalSecret } from '@/seed/security/verify-internal-secret';
 
 function getD1(): D1Database | null {
   const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;

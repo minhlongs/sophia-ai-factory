@@ -5,8 +5,8 @@
  */
 
 import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/better-auth-session';
-import { getD1Raw } from '@/lib/db/client';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { getD1Raw } from '@/seed/db/client';
 import { OnboardingStepper } from './onboarding-stepper';
 
 export const dynamic = 'force-dynamic';

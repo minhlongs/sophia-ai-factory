@@ -1,7 +1,7 @@
 import dynamic from "next/dynamic";
 import { Hero } from "@/app/components/sections/hero";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ScrollReveal } from "@/components/ui/scroll-reveal";
+import { Skeleton } from "@/seed/components/ui/skeleton";
+import { ScrollReveal } from "@/seed/components/ui/scroll-reveal";
 import { StickyMobileCta } from "@/app/components/layout/sticky-mobile-cta";
 
 function SectionSkeleton({ height = "h-96" }: { height?: string }) {

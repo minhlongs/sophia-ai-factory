@@ -4,7 +4,7 @@
  * Uses D1 cron_run_log table (migration 0026).
  */
 
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 
 export type CronStatus = 'success' | 'failure' | 'skipped';
 

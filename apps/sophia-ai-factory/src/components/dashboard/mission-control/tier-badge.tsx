@@ -4,7 +4,7 @@
  * @module components/dashboard/mission-control/tier-badge
  */
 
-import type { Tier } from '@/types';
+import type { Tier } from '@/seed/types';
 
 const TIER_COLORS: Record<Tier, string> = {
   BASIC: 'bg-slate-700 text-slate-200 border-slate-600',

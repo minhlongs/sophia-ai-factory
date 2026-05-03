@@ -3,9 +3,9 @@
  * @module inngest/functions/generate-campaign-db
  */
 
-import { getD1Client } from '@/lib/db/client'
+import { getD1Client } from '@/seed/db/client'
 import { sendMessage as sendTelegramMessage } from '@/lib/telegram/handlers/utils'
-import { CampaignStatus } from '@/types'
+import { CampaignStatus } from '@/seed/types'
 
 export async function updateCampaignStatus(
   campaignId: string,

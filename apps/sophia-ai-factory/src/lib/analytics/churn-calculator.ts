@@ -8,8 +8,8 @@
  * "Active at start" approximated from raas_licenses count at period start.
  */
 
-import { logger } from '@/lib/utils/logger-utility';
-import type { ChurnEvent, ChurnTimeline, ChurnTimelinePoint } from '@/types/analytics-cohort';
+import { logger } from '@/seed/utils/logger-utility';
+import type { ChurnEvent, ChurnTimeline, ChurnTimelinePoint } from '@/seed/types/analytics-cohort';
 
 // ── Tier rank for downgrade detection ────────────────────────────────────────
 

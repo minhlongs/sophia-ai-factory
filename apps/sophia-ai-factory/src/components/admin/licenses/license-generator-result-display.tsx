@@ -6,10 +6,10 @@
  */
 
 import { useState } from 'react';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Label } from '@/seed/components/ui/label';
+import { Button } from '@/seed/components/ui/button';
+import { Badge } from '@/seed/components/ui/badge';
+import { Alert, AlertDescription } from '@/seed/components/ui/alert';
 import { Copy, Check, AlertTriangle } from 'lucide-react';
 import type { LicenseSummary } from '@/lib/raas-schema';
 import type { TierInfo } from './license-generator-form-fields';

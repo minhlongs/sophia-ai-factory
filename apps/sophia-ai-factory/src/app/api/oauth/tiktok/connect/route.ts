@@ -5,9 +5,9 @@
  */
 
 import { NextResponse } from 'next/server';
-import { getCurrentUserFromHeaders } from '@/lib/better-auth-session';
+import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { getAuthorizationUrl } from '@/lib/tiktok/tiktok-oauth-client';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 
 async function buildSignedState(userId: string): Promise<string> {
   const secret = process.env.OAUTH_STATE_SECRET;

@@ -12,7 +12,7 @@
  *                     best cosine wins if ≥ threshold
  */
 
-import { createServerClient } from '@/lib/db/client'
+import { createServerClient } from '@/seed/db/client'
 import type { CacheEntry, CacheKey } from './llm-cache'
 
 export const EMBEDDING_MODEL_ID            = '@cf/baai/bge-base-en-v1.5'

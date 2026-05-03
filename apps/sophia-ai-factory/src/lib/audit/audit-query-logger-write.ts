@@ -3,10 +3,10 @@
  * @module audit/audit-query-logger-write
  */
 
-import { createServerClient } from '@/lib/db/client'
-import { insertTyped } from '@/lib/db/insert-typed'
-import { logger } from '@/lib/utils/logger-utility'
-import { toError } from '@/lib/utils/to-error'
+import { createServerClient } from '@/seed/db/client'
+import { insertTyped } from '@/seed/db/insert-typed'
+import { logger } from '@/seed/utils/logger-utility'
+import { toError } from '@/seed/utils/to-error'
 import type { RaasAuditLogInsert, RaasAuditLogRow, Json } from '@/lib/supabase/types'
 import type { AuditQueryLogParams } from './audit-query-logger'
 

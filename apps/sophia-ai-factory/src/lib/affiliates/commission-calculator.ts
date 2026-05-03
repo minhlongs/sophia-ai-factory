@@ -8,7 +8,7 @@
  * @module affiliates/commission-calculator
  */
 
-import { USER_SHARE_PCT, SOPHIA_SHARE_PCT } from '@/config/revenue-share'
+import { USER_SHARE_PCT, SOPHIA_SHARE_PCT } from '@/seed/config/revenue-share'
 
 export interface CommissionSplit {
   /** User's share (70% of gross) — negative for refunds */

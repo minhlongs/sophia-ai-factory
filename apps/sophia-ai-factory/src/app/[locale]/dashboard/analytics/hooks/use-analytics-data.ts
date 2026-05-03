@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Campaign } from "@/types";
+import { Campaign } from "@/seed/types";
 
 export function useAnalyticsData(campaigns: Campaign[]) {
   // Calculate stats

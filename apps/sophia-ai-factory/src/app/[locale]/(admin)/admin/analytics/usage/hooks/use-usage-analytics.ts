@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { UsageMetrics, LicenseMetrics, AnalyticsGranularity } from '@/lib/analytics/types';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 
 export interface UseUsageAnalyticsResult {
   granularity: AnalyticsGranularity;

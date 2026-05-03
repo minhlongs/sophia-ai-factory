@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@/lib/db/client";
-import { UNIFIED_TIERS } from "@/config/tiers";
-import type { Tier } from "@/types";
+import { createServerClient } from "@/seed/db/client";
+import { UNIFIED_TIERS } from "@/seed/config/tiers";
+import type { Tier } from "@/seed/types";
 import { withRateLimit } from '@/middleware/rate-limit-wrapper';
-import { requireAdmin } from '@/lib/auth/require-admin';
+import { requireAdmin } from '@/seed/auth/require-admin';
 
 export const dynamic = "force-dynamic";
 

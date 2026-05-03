@@ -5,10 +5,10 @@
  * Named "campaign-queries" because licenses map to campaigns in the RaaS model.
  */
 
-import { createServerClient } from '@/lib/db/client';
-import type { D1QueryChain } from '@/lib/db/d1-query-chain';
-import { logger } from '@/lib/utils/logger-utility';
-import { toError } from '@/lib/utils/to-error';
+import { createServerClient } from '@/seed/db/client';
+import type { D1QueryChain } from '@/seed/db/d1-query-chain';
+import { logger } from '@/seed/utils/logger-utility';
+import { toError } from '@/seed/utils/to-error';
 import type { LicenseFilters, LicenseMetrics, LicenseUtilization } from '../types';
 import { QUOTA_LIMITS } from '@/lib/usage-metering/aggregator';
 

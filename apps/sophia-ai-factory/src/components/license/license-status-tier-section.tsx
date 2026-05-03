@@ -5,7 +5,7 @@
  * Shows tier badge + status indicator dot
  */
 
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@/seed/components/ui/badge';
 import { getTierVariant, getStatusColor, formatTier } from './license-status-helpers';
 
 interface LicenseStatusTierSectionProps {

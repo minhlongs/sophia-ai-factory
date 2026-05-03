@@ -4,8 +4,8 @@
  */
 
 import { getKvClient } from '@/lib/redis'
-import { logger } from '@/lib/utils/logger-utility'
-import { toError } from '@/lib/utils/to-error'
+import { logger } from '@/seed/utils/logger-utility'
+import { toError } from '@/seed/utils/to-error'
 import { DEFAULT_KV_METERING_LOG_CONFIG } from './kv-metering-log-sync-types'
 import type { MeteringLogEntry } from './kv-metering-log-sync-types'
 

@@ -6,8 +6,8 @@
  */
 
 import { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/seed/components/ui/card';
+import { Button } from '@/seed/components/ui/button';
 import { Key } from 'lucide-react';
 import { LicenseGeneratorFormFields, TIERS } from './license-generator-form-fields';
 import { LicenseGeneratorResultDisplay } from './license-generator-result-display';

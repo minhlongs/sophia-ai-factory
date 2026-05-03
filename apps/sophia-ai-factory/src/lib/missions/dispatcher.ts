@@ -8,11 +8,11 @@
  * Designed for use with Workers executionCtx.waitUntil().
  */
 
-import { createServerClient } from '@/lib/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { deductCredits } from '@/lib/mcu/credits-repo';
 import { getCommand } from './command-registry';
 import { fireMissionWebhook } from './fire-webhook';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 import type { MissionHandlerResult } from './handlers/types';
 
 // Lazy-load handlers to keep bundle splits clean

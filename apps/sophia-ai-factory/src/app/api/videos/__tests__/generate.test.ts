@@ -8,11 +8,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // --- Mocks ---
 
-vi.mock('@/lib/better-auth-session', () => ({
+vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUserFromHeaders: vi.fn(),
 }));
 
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   getD1Client: vi.fn(),
 }));
 
@@ -20,7 +20,7 @@ vi.mock('@/lib/video/video-job-pipeline', () => ({
   createVideoJob: vi.fn(),
 }));
 
-vi.mock('@/lib/utils/logger-utility', () => ({
+vi.mock('@/seed/utils/logger-utility', () => ({
   logger: {
     info: vi.fn(),
     warn: vi.fn(),
@@ -29,11 +29,11 @@ vi.mock('@/lib/utils/logger-utility', () => ({
 }));
 
 // P0.2: mock getUserTier and checkTierQuota
-vi.mock('@/lib/db/get-user-tier', () => ({
+vi.mock('@/seed/db/get-user-tier', () => ({
   getUserTier: vi.fn(),
 }));
 
-vi.mock('@/lib/auth/enforce-tier-quota', () => ({
+vi.mock('@/seed/auth/enforce-tier-quota', () => ({
   checkTierQuota: vi.fn(),
 }));
 
@@ -47,11 +47,11 @@ vi.mock('next/server', () => ({
 }));
 
 // Helpers
-import { getCurrentUserFromHeaders } from '@/lib/better-auth-session';
-import { getD1Client } from '@/lib/db/client';
+import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
+import { getD1Client } from '@/seed/db/client';
 import { createVideoJob } from '@/lib/video/video-job-pipeline';
-import { getUserTier } from '@/lib/db/get-user-tier';
-import { checkTierQuota } from '@/lib/auth/enforce-tier-quota';
+import { getUserTier } from '@/seed/db/get-user-tier';
+import { checkTierQuota } from '@/seed/auth/enforce-tier-quota';
 
 const mockGetCurrentUser = getCurrentUserFromHeaders as ReturnType<typeof vi.fn>;
 const mockGetD1Client = getD1Client as ReturnType<typeof vi.fn>;

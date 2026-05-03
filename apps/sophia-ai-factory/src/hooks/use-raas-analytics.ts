@@ -6,8 +6,8 @@
 
 import useSWR from 'swr'
 import { RaasGatewayClient, type RaasUsageMetrics, type BillingMetrics, type LicenseUtilization } from '@/lib/raas-gateway-client'
-import { logger } from '@/lib/utils/logger-utility'
-import { toError } from '@/lib/utils/to-error'
+import { logger } from '@/seed/utils/logger-utility'
+import { toError } from '@/seed/utils/to-error'
 
 const raasClient = new RaasGatewayClient({
   baseURL: process.env.NEXT_PUBLIC_RAAS_GATEWAY_URL || 'https://raas.agencyos.network',

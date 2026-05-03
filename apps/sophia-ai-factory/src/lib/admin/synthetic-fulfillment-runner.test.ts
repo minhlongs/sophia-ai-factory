@@ -11,12 +11,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // ── Module mocks ───────────────────────────────────────────────────────────────
 
-vi.mock('@/lib/db/repositories/user-purchases-repo', () => ({
+vi.mock('@/seed/db/repositories/user-purchases-repo', () => ({
   insertPurchase: vi.fn(),
   markPaid: vi.fn(),
 }))
 
-vi.mock('@/lib/db/repositories/videos-repo', () => ({
+vi.mock('@/seed/db/repositories/videos-repo', () => ({
   findByPurchaseId: vi.fn(),
 }))
 
@@ -24,7 +24,7 @@ vi.mock('@/lib/fulfillment/one-time-fulfillment', () => ({
   triggerOneTimeFulfillment: vi.fn(),
 }))
 
-vi.mock('@/lib/utils/logger-utility', () => ({
+vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }))
 
@@ -33,12 +33,12 @@ const mockD1PrepBind = vi.fn(() => ({ first: mockD1First }))
 const mockD1Prep = vi.fn(() => ({ bind: mockD1PrepBind }))
 const mockD1: D1Database = { prepare: mockD1Prep } as unknown as D1Database
 
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   getD1Raw: vi.fn(async () => mockD1),
 }))
 
-import { insertPurchase, markPaid } from '@/lib/db/repositories/user-purchases-repo'
-import { findByPurchaseId } from '@/lib/db/repositories/videos-repo'
+import { insertPurchase, markPaid } from '@/seed/db/repositories/user-purchases-repo'
+import { findByPurchaseId } from '@/seed/db/repositories/videos-repo'
 import { triggerOneTimeFulfillment } from '@/lib/fulfillment/one-time-fulfillment'
 import { runSyntheticFulfillment } from './synthetic-fulfillment-runner'
 

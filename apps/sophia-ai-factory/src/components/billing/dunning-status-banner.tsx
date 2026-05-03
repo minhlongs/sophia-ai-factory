@@ -7,9 +7,9 @@
 
 'use client';
 
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/seed/components/ui/alert';
+import { Button } from '@/seed/components/ui/button';
+import { Badge } from '@/seed/components/ui/badge';
 import { AlertTriangle, XCircle, Clock, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 

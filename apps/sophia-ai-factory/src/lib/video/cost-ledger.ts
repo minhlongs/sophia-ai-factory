@@ -5,8 +5,8 @@
  * the cumulative cost_usd on the video_jobs row.
  */
 
-import { getD1Client } from '@/lib/db/client';
-import { logger } from '@/lib/utils/logger-utility';
+import { getD1Client } from '@/seed/db/client';
+import { logger } from '@/seed/utils/logger-utility';
 
 export type CostStage =
   | 'scripting'

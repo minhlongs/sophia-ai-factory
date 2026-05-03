@@ -12,7 +12,7 @@ import {
 } from './right-to-erasure'
 
 // Mock Supabase admin client
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   createServerClient: () => ({
     from: vi.fn().mockReturnValue({
       select: vi.fn().mockReturnValue({
@@ -33,7 +33,7 @@ vi.mock('@/lib/db/client', () => ({
 }))
 
 // Mock logger
-vi.mock('@/lib/utils/logger-utility', () => ({
+vi.mock('@/seed/utils/logger-utility', () => ({
   logger: {
     info: vi.fn(),
     warn: vi.fn(),

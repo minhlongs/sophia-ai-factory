@@ -6,7 +6,7 @@
  * scoring from affiliate-ai-scorer.ts.
  */
 
-import type { AffiliateProgram } from "@/types";
+import type { AffiliateProgram } from "@/seed/types";
 import { withTimeout } from "@/lib/byok/with-timeout";
 import { callLocalMekongd } from "@/lib/byok/local-mekongd-adapter";
 import { resolveLocalMekongdForUser } from "@/lib/byok/provider-router";

@@ -4,7 +4,7 @@
  * @module app/status/page
  */
 
-import { getD1Raw } from '@/lib/db/client';
+import { getD1Raw } from '@/seed/db/client';
 import { getRollup, getActiveIncident, listResolvedIncidents } from '@/lib/status/status-store';
 import { UptimeGrid } from './uptime-grid';
 import { IncidentCard } from './incident-card';

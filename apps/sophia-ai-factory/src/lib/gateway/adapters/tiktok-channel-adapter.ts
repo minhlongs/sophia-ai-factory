@@ -14,7 +14,7 @@ import {
   publishVideo,
   checkPublishStatus,
 } from '@/lib/tiktok/tiktok-oauth-client';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 
 const CHANNEL_ID = 'tiktok';
 const POLL_INTERVAL_MS = 3000;

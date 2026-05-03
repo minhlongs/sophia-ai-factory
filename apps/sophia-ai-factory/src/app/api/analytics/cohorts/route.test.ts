@@ -10,7 +10,7 @@ import { describe, it, expect, vi } from 'vitest';
 // ── Top-level mocks (hoisted by Vitest) ───────────────────────────────────────
 // These mock the modules that the API route depends on for auth tests.
 
-vi.mock('@/lib/better-auth-session', () => ({
+vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: vi.fn(),
 }));
 
@@ -67,7 +67,7 @@ function makeD1(tables: Record<string, unknown[]>): D1Database {
 import { fetchCohortRetention } from '@/lib/analytics/cohort-calculator';
 import { fetchChurnTimeline } from '@/lib/analytics/churn-calculator';
 import { calculateLTVByTier } from '@/lib/analytics/ltv-calculator';
-import { getCurrentUser } from '@/lib/better-auth-session';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { checkAdmin } from '@/lib/analytics/rbac';
 
 // ── Cohort retention tests ────────────────────────────────────────────────────

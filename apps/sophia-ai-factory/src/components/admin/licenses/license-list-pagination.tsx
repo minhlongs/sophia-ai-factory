@@ -5,7 +5,7 @@
  * Previous/Next pagination controls with count summary
  */
 
-import { Button } from '@/components/ui/button';
+import { Button } from '@/seed/components/ui/button';
 
 interface LicenseListPaginationProps {
   page: number;

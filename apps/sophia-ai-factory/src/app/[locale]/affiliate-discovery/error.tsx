@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/seed/components/ui/button";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 
 export default function AffiliateDiscoveryError({

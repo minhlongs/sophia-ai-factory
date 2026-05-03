@@ -6,7 +6,7 @@
  */
 
 import { hmacSha256, timingSafeEqual } from './audit/crypto-utils';
-import { logger } from './utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 import { redis } from './redis';
 import {
   LICENSE_KEY_PATTERN,

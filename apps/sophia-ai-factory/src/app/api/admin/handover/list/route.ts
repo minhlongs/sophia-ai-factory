@@ -12,9 +12,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth/require-admin';
-import { getD1Raw } from '@/lib/db/client';
-import { logger } from '@/lib/utils/logger-utility';
+import { requireAdmin } from '@/seed/auth/require-admin';
+import { getD1Raw } from '@/seed/db/client';
+import { logger } from '@/seed/utils/logger-utility';
 
 export const dynamic = 'force-dynamic';
 

@@ -3,7 +3,7 @@
  * Uses createServerClient() sync pattern.
  */
 
-import { createServerClient } from '@/lib/db/client';
+import { createServerClient } from '@/seed/db/client';
 import type {
   AgentTeam, Agent, AgentTask, AgentLog,
   AgentTeamRow, AgentRow, AgentTaskRow, AgentLogRow,

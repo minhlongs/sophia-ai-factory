@@ -1,5 +1,5 @@
 import type { Discrepancy } from '@/seed/types/billing-contracts';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 import type { Env } from '../index';
 import type { AggregatedUsage, LicenseValidationResult } from './metering-reconciler-types';
 import { logErrorToKv } from './metering-reconciler-error-logger';

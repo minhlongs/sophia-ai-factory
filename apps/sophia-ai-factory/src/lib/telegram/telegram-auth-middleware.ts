@@ -1,7 +1,7 @@
-import { getUserTier } from '@/lib/db/get-user-tier'
-import { createServerClient } from '@/lib/db/client'
-import { Tier } from '@/types'
-import { logger } from '@/lib/utils/logger-utility'
+import { getUserTier } from '@/seed/db/get-user-tier'
+import { createServerClient } from '@/seed/db/client'
+import { Tier } from '@/seed/types'
+import { logger } from '@/seed/utils/logger-utility'
 
 /**
  * Auth middleware - verifies subscription tier before premium commands

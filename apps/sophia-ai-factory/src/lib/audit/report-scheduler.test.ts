@@ -11,12 +11,12 @@ import {
 } from './report-scheduler'
 
 // Mock Supabase admin client
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   createServerClient: vi.fn(),
 }))
 
 // Mock logger
-vi.mock('@/lib/utils/logger-utility', () => ({
+vi.mock('@/seed/utils/logger-utility', () => ({
   logger: {
     info: vi.fn(),
     warn: vi.fn(),
@@ -26,7 +26,7 @@ vi.mock('@/lib/utils/logger-utility', () => ({
 
 // Import after mocks
 import { scheduleReport, getScheduledReports, cancelScheduledReport, getDueReports, updateNextRunAt } from './report-scheduler'
-import { createServerClient } from '@/lib/db/client'
+import { createServerClient } from '@/seed/db/client'
 
 describe('calculateNextRunAt', () => {
   const baseTime = new Date('2026-03-08T12:00:00Z').getTime()

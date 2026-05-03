@@ -4,7 +4,7 @@
  * @module lib/handover/handover-tier-content
  */
 
-import type { Tier } from '@/types';
+import type { Tier } from '@/seed/types';
 
 export const TIER_PRICES: Record<Tier, string> = {
   BASIC: '$199/mo',

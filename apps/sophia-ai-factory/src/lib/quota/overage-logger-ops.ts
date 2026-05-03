@@ -3,9 +3,9 @@
  * @module quota/overage-logger-ops
  */
 
-import { createServerClient } from '@/lib/db/client'
-import { logger } from '@/lib/utils/logger-utility'
-import { toError } from '@/lib/utils/to-error'
+import { createServerClient } from '@/seed/db/client'
+import { logger } from '@/seed/utils/logger-utility'
+import { toError } from '@/seed/utils/to-error'
 import { getBuffer } from './overage-logger-buffer'
 import type { OverageEventInput } from './overage-logger-types'
 

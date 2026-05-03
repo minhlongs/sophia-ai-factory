@@ -4,7 +4,7 @@
  */
 
 import type { NextRequest } from 'next/server'
-import { logger } from '@/lib/utils/logger-utility'
+import { logger } from '@/seed/utils/logger-utility'
 import { trackUsage, calculateCredits, hashLicenseKey } from './tracker'
 import type { UsageEventInput, AiService } from './types'
 import { extractLicenseInfo, shouldExcludeTracking, getSamplingRate, determineServiceFromPath, determineActionFromPath } from './gateway-instrumentation-helpers'

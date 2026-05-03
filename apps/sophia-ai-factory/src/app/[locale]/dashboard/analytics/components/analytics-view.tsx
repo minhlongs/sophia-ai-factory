@@ -1,9 +1,9 @@
 "use client";
 
 import React from "react";
-import { Campaign, Tier } from "@/types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Campaign, Tier } from "@/seed/types";
+import { Card, CardContent, CardHeader, CardTitle } from "@/seed/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/seed/components/ui/tabs";
 import { BarChart3, CheckCircle2, Clock, Loader2, Lock, BarChart as BarChartIcon } from "lucide-react";
 import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';

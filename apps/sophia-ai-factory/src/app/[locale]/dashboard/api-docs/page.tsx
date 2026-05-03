@@ -1,9 +1,9 @@
 import React from "react";
-import { getCurrentUser } from "@/lib/better-auth-session";
-import { getUserTier } from "@/lib/db/get-user-tier";
-import { Tier } from "@/types";
+import { getCurrentUser } from "@/seed/auth/better-auth-session";
+import { getUserTier } from "@/seed/db/get-user-tier";
+import { Tier } from "@/seed/types";
 import { getTranslations } from "next-intl/server";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/seed/components/ui/card";
 import { Code, Key, Lock } from "lucide-react";
 import Link from "next/link";
 

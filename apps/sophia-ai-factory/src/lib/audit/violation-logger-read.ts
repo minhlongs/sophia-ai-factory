@@ -3,8 +3,8 @@
  * @module audit/violation-logger-read
  */
 
-import { createServerClient } from '@/lib/db/client'
-import { logger } from '@/lib/utils/logger-utility'
+import { createServerClient } from '@/seed/db/client'
+import { logger } from '@/seed/utils/logger-utility'
 import type { ViolationAuditRow, ViolationType, ViolationFilters, ViolationSummary } from './violation-logger-types'
 import { VALID_VIOLATION_TYPES } from './violation-logger-types'
 

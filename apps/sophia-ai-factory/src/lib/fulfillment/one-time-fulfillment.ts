@@ -13,8 +13,8 @@
  * @module lib/fulfillment/one-time-fulfillment
  */
 
-import { logger } from '@/lib/utils/logger-utility'
-import { createServerClient } from '@/lib/db/client'
+import { logger } from '@/seed/utils/logger-utility'
+import { createServerClient } from '@/seed/db/client'
 import { createHeyGenVideo } from '@/lib/video/heygen-helpers'
 import { getHeyGenKey } from '@/lib/credentials/get-provider-key'
 import { getOneTimeWelcomeScript } from '@/lib/video/one-time-welcome-script'
@@ -23,10 +23,10 @@ import {
   enqueueVideo,
   markVideoProcessing,
   recordAttempt,
-} from '@/lib/db/repositories/videos-repo'
+} from '@/seed/db/repositories/videos-repo'
 import { sendBundleGeneratingEmail } from '@/lib/billing/email/send-bundle-generating-email'
 import { shouldDispatch, recordHeyGenAttempt } from '@/lib/fulfillment/circuit-breaker'
-import type { OneTimeSku } from '@/types'
+import type { OneTimeSku } from '@/seed/types'
 
 interface UserRow {
   email?: string

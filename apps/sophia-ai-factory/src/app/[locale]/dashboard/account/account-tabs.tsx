@@ -5,7 +5,7 @@
  */
 
 import { useTranslations } from 'next-intl';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/seed/components/ui/tabs';
 import { AccountProfileTab } from './account-profile-tab';
 import { AccountSubscriptionTab } from './account-subscription-tab';
 import { AccountBillingTab } from './account-billing-tab';

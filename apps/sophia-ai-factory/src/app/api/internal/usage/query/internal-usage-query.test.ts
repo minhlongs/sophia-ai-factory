@@ -32,7 +32,7 @@ const mockSupabaseData = { data: null, error: null };
 let mockSupabaseSingleResult: any = null;
 let mockSupabaseQueryResult: any = { data: [], error: null };
 
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   createServerClient: () => ({
     from: vi.fn((table: string) => ({
       select: vi.fn((columns?: string) => {
@@ -75,7 +75,7 @@ vi.mock('@/lib/db/client', () => ({
 }));
 
 // Mock logger
-vi.mock('@/lib/utils/logger-utility', () => ({
+vi.mock('@/seed/utils/logger-utility', () => ({
   logger: {
     error: vi.fn(),
     warn: vi.fn(),

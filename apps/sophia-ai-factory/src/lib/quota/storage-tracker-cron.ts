@@ -10,7 +10,7 @@
  */
 
 import { inngest } from '@/lib/inngest/client';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 
 interface R2Env {
   NEXT_INC_CACHE_R2_BUCKET?: R2Bucket;

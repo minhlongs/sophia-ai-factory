@@ -13,7 +13,7 @@ vi.mock('@/lib/video/r2-binding', () => ({
   getVideoBucket: vi.fn(),
 }));
 
-vi.mock('@/lib/utils/logger-utility', () => ({
+vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 

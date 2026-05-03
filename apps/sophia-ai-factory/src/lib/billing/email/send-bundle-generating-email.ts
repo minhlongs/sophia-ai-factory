@@ -7,9 +7,9 @@
  */
 
 import { Resend } from 'resend'
-import { logger } from '@/lib/utils/logger-utility'
-import { getErrorMessage } from '@/lib/utils/to-error'
-import { createServerClient } from '@/lib/db/client'
+import { logger } from '@/seed/utils/logger-utility'
+import { getErrorMessage } from '@/seed/utils/to-error'
+import { createServerClient } from '@/seed/db/client'
 import {
   buildBundleGeneratingEmail,
   type BundleGeneratingContext,

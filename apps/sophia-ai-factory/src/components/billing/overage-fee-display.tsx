@@ -6,9 +6,9 @@
 
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/seed/components/ui/card';
 
-import { formatCurrency } from '@/lib/utils/currency';
+import { formatCurrency } from '@/seed/utils/currency';
 
 interface OverageFee {
   type: 'hourly_credits' | 'daily_credits' | 'monthly_credits' | 'daily_requests';

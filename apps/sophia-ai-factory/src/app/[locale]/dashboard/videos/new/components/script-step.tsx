@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/seed/components/ui/button";
+import { Input } from "@/seed/components/ui/input";
+import { Label } from "@/seed/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { ScriptContent, ScriptDraft } from "./video-creator-wizard";

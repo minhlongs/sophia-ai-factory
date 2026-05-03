@@ -3,7 +3,7 @@
  * Used by both Inngest pipeline (video-visual) and onboarding flow.
  */
 
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 
 export const HEYGEN_API_URL = 'https://api.heygen.com/v2';
 

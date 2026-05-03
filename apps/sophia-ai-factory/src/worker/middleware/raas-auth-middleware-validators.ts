@@ -5,9 +5,9 @@
 
 /// <reference types="@cloudflare/workers-types" />
 
-import { validateApiKey } from '../../lib/security/api-key-validator'
-import { validateJwt, extractEnrichedClaims } from '../../lib/security/jwt-validator'
-import { logger } from '@/lib/utils/logger-utility'
+import { validateApiKey } from '@/seed/security/api-key-validator'
+import { validateJwt, extractEnrichedClaims } from '@/seed/security/jwt-validator'
+import { logger } from '@/seed/utils/logger-utility'
 import { getLicenseContext, extractApiKey as extractApiKeyHeader, extractJwt } from './raas-auth-middleware-kv'
 import type { AuthContext, FeatureCheckResult } from './raas-auth-middleware-types'
 

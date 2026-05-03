@@ -6,10 +6,10 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/better-auth-session';
-import { getD1Raw } from '@/lib/db/client';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { getD1Raw } from '@/seed/db/client';
 import { z } from 'zod';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 
 const applySchema = z.object({
   code: z.string().optional(),

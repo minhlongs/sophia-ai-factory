@@ -9,12 +9,12 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createServerClient } from '@/lib/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { validateMissionApiKey } from '@/lib/missions/api-key-auth';
 import { isValidCommand, getCommand } from '@/lib/missions/command-registry';
 import { getBalance } from '@/lib/mcu/credits-repo';
 import { dispatchMission } from '@/lib/missions/dispatcher';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 
 export const dynamic = 'force-dynamic';
 

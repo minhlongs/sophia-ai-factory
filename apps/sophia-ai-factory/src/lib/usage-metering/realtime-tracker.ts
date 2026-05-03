@@ -11,8 +11,8 @@
  * @module usage-metering/realtime-tracker
  */
 
-import { logger } from '@/lib/utils/logger-utility'
-import { toError } from '@/lib/utils/to-error'
+import { logger } from '@/seed/utils/logger-utility'
+import { toError } from '@/seed/utils/to-error'
 
 export type { CircuitState, CircuitBreakerConfig, RealTimeUsage } from './realtime-tracker-types'
 export { recordCircuitFailure, recordCircuitSuccess, canPassCircuitBreaker } from './realtime-tracker-circuit-breaker'

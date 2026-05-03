@@ -38,8 +38,9 @@ Based on scout findings (1717 files, ~28 true violations, PR #23):
 | # | Phase | Effort | File | Status |
 |---|-------|--------|------|--------|
 | 01 | Scout + dependency analysis | 45m | [phase-01-scout-dependency-analysis.md](phase-01-scout-dependency-analysis.md) | pending |
-| 02 | TypeScript path alias setup | 30m | [phase-02-typescript-path-aliases.md](phase-02-typescript-path-aliases.md) | pending |
-| 03 | Move seed/ layer | 90m | [phase-03-move-seed-layer.md](phase-03-move-seed-layer.md) | pending |
+| 02 | TypeScript path alias setup | 30m | [phase-02-typescript-path-aliases.md](phase-02-typescript-path-aliases.md) | **COMPLETE** (commit 9cf59d29, PR #24, merged main) |
+| 02.5 | Pre-fix violations | 1h | (embedded in phase-02) | **COMPLETE** (same commit 9cf59d29) |
+| 03 | Move seed/ layer | 90m | [phase-03-move-seed-layer.md](phase-03-move-seed-layer.md) | **COMPLETE** (branch mekong-phase-03-move-seed, PR pending) |
 | 04 | Move tree/ layer | 90m | [phase-04-move-tree-layer.md](phase-04-move-tree-layer.md) | pending |
 | 05 | Move forest/ layer | 90m | [phase-05-move-forest-layer.md](phase-05-move-forest-layer.md) | pending |
 | 06 | Move land/ layer | 90m | [phase-06-move-land-layer.md](phase-06-move-land-layer.md) | pending |

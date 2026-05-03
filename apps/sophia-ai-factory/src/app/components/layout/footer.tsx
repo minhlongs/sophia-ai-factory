@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Container } from "@/components/ui/container";
+import { Container } from "@/seed/components/ui/container";
 
 const columns = [
   {

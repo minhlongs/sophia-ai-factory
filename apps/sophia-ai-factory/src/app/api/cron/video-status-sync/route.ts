@@ -13,16 +13,16 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyCronAuth } from '@/lib/security/cron-auth';
+import { verifyCronAuth } from '@/seed/security/cron-auth';
 import { recordCronRun } from '@/lib/cron/run-tracker';
-import { getD1Raw, createServerClient } from '@/lib/db/client';
+import { getD1Raw, createServerClient } from '@/seed/db/client';
 import { getHeyGenClient } from '@/lib/heygen/heygen-client';
 import { downloadAndStore } from '@/lib/video/video-storage-service';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 import { sendOneTimeBundleReadyEmail } from '@/lib/billing/email/send-one-time-bundle-ready-email';
 import { sendBundleRenderFailedEmail } from '@/lib/billing/email/send-bundle-render-failed-email';
 import { grantCompensationCredit } from '@/lib/fulfillment/compensation';
-import { getUserCredits } from '@/lib/db/get-user-credits';
+import { getUserCredits } from '@/seed/db/get-user-credits';
 
 export const dynamic = 'force-dynamic';
 

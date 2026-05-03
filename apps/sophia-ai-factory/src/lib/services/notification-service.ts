@@ -1,7 +1,7 @@
 import { bot } from '@/lib/telegram/telegram-bot-instance'
-import { Tier } from '@/types'
-import { logger } from '@/lib/utils/logger-utility'
-import { getErrorMessage } from '@/lib/utils/to-error'
+import { Tier } from '@/seed/types'
+import { logger } from '@/seed/utils/logger-utility'
+import { getErrorMessage } from '@/seed/utils/to-error'
 
 /**
  * Telegram notification service for subscription lifecycle events

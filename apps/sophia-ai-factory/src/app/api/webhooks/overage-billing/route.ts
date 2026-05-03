@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { verifySignature, verifyCloudflareSignature } from './overage-billing-signature-verifier';
 import {
   overageEventSchema,

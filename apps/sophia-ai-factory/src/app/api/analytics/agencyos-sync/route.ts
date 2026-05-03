@@ -6,9 +6,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/db/client'
-import { logger } from '@/lib/utils/logger-utility'
-import { verifyWebhookSignature } from '@/lib/security/webhook-validator'
+import { createServerClient } from '@/seed/db/client'
+import { logger } from '@/seed/utils/logger-utility'
+import { verifyWebhookSignature } from '@/seed/security/webhook-validator'
 import { fetchQuotaUsage, fetchOverageEvents, fetchTierHistory } from './agencyos-sync-data'
 
 interface AgencyOSQuotaReport {

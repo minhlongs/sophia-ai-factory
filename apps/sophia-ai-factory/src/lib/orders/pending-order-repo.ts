@@ -4,8 +4,8 @@
  * @module orders/pending-order-repo
  */
 
-import { createServerClient } from '@/lib/db/client'
-import { logger } from '@/lib/utils/logger-utility'
+import { createServerClient } from '@/seed/db/client'
+import { logger } from '@/seed/utils/logger-utility'
 import type { PendingOrder, PendingOrderInput } from './pending-order-types'
 
 function getDb() {

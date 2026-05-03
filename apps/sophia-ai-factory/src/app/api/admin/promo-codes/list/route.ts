@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth/require-admin';
+import { requireAdmin } from '@/seed/auth/require-admin';
 import { listAdminCodes } from '@/lib/promo/promo-repo';
 import type { ListAdminFilters, PromoCodeStatus, DiscountType } from '@/lib/promo/promo-types';
 

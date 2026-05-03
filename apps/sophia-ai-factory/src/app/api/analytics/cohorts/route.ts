@@ -19,13 +19,13 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getCurrentUser } from '@/lib/better-auth-session';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { checkAdmin } from '@/lib/analytics/rbac';
 import { fetchCohortRetention, getD1Database } from '@/lib/analytics/cohort-calculator';
 import { fetchChurnTimeline } from '@/lib/analytics/churn-calculator';
 import { calculateLTVByTier } from '@/lib/analytics/ltv-calculator';
-import { logger } from '@/lib/utils/logger-utility';
-import type { Tier } from '@/types';
+import { logger } from '@/seed/utils/logger-utility';
+import type { Tier } from '@/seed/types';
 
 export const runtime = 'edge';
 

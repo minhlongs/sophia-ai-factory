@@ -5,10 +5,10 @@
  * Usage and update events are in audit-writer-extended.ts.
  */
 
-import { createServerClient } from '@/lib/db/client'
+import { createServerClient } from '@/seed/db/client'
 import { generateReceipt } from '../compliance-receipt'
-import { logger } from '@/lib/utils/logger-utility'
-import { toError } from '@/lib/utils/to-error'
+import { logger } from '@/seed/utils/logger-utility'
+import { toError } from '@/seed/utils/to-error'
 import type { RaasAuditLogInsert, RaasAuditLogRow, Json } from '@/lib/supabase/types'
 import type { ComplianceReceipt } from '../compliance-receipt'
 import { insertAuditLog, updateReceiptSignature } from './audit-event-builder'

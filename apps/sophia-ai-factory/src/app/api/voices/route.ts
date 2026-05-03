@@ -10,11 +10,11 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getCurrentUser } from '@/lib/better-auth-session';
-import { createServerClient } from '@/lib/db/client';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { createServerClient } from '@/seed/db/client';
 import { getVideoBucket } from '@/lib/video/r2-binding';
 import { uploadToR2 } from '@/lib/video/r2-multipart-upload';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 
 const SUPPORTED_LANGUAGES = ['en', 'vi', 'es', 'fr', 'de', 'ja', 'ko', 'zh', 'pt', 'ru', 'ar', 'it', 'pl', 'nl', 'tr', 'cs'] as const;
 

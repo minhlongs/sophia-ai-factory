@@ -6,11 +6,11 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUserFromHeaders } from '@/lib/better-auth-session';
-import { getD1Client } from '@/lib/db/client';
+import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
+import { getD1Client } from '@/seed/db/client';
 import { encryptToken } from '@/lib/publishing/token-crypto';
 import { exchangeCodeForTokens, getUserInfo } from '@/lib/tiktok/tiktok-oauth-client';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 import { randomUUID } from 'crypto';
 
 const STATE_MAX_AGE_MS = 10 * 60 * 1000; // 10 minutes

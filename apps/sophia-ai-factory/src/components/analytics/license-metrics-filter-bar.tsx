@@ -5,14 +5,14 @@
  * Search input + tier select filter for LicenseMetricsTable
  */
 
-import { Input } from '@/components/ui/input';
+import { Input } from '@/seed/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@/seed/components/ui/select';
 import { Search, Filter } from 'lucide-react';
 
 interface LicenseMetricsFilterBarProps {

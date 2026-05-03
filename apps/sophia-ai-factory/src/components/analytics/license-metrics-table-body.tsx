@@ -5,8 +5,8 @@
  * Renders rows for the LicenseMetricsTable with usage/expiry/overage cells
  */
 
-import { TableBody, TableCell, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
+import { TableBody, TableCell, TableRow } from '@/seed/components/ui/table';
+import { Badge } from '@/seed/components/ui/badge';
 import { AlertTriangle } from 'lucide-react';
 import type { LicenseUtilization } from '@/lib/analytics/types';
 import { UsageProgress, StatusBadge, formatExpiration } from './license-metrics-cell-renderers';

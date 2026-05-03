@@ -5,7 +5,7 @@
  * Composition root: table hiển thị danh sách license keys với search, filter, pagination
  */
 
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/seed/components/ui/card';
 import {
   Table,
   TableBody,
@@ -13,7 +13,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from '@/seed/components/ui/table';
 import { Key } from 'lucide-react';
 import { LicenseRegenerateDialog } from './license-regenerate-dialog';
 import { LicenseRevokeDialog } from './license-revoke-dialog';

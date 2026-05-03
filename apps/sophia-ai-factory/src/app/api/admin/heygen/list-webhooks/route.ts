@@ -7,10 +7,10 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/auth/require-admin'
+import { requireAdmin } from '@/seed/auth/require-admin'
 import { getUserCredential } from '@/lib/credentials/user-credentials-repo'
 import { listHeyGenWebhooks } from '@/lib/heygen/webhook-registrar'
-import { getD1Raw } from '@/lib/db/client'
+import { getD1Raw } from '@/seed/db/client'
 
 export const dynamic = 'force-dynamic'
 

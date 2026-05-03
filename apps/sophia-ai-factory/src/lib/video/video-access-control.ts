@@ -17,8 +17,8 @@
  * @module lib/video/video-access-control
  */
 
-import { getD1Raw } from '@/lib/db/client'
-import { logger } from '@/lib/utils/logger-utility'
+import { getD1Raw } from '@/seed/db/client'
+import { logger } from '@/seed/utils/logger-utility'
 import { getVideoBucket } from './r2-binding'
 
 /** Metadata returned to the streaming route on success */

@@ -27,13 +27,13 @@ import {
   ServerCog,
 } from "lucide-react";
 import { HealthIndicator } from "@/components/dashboard/health-indicator";
-import { MobileNav } from "@/components/ui/mobile-nav";
+import { MobileNav } from "@/seed/components/ui/mobile-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { getCurrentUser } from "@/lib/better-auth-session";
+import { getCurrentUser } from "@/seed/auth/better-auth-session";
 import { AgentSidebar } from "@/components/agent-sidebar/agent-sidebar";
 import { CmdKPalette } from "@/components/cmd-k/cmd-k-palette";
 import { TrialBanner } from "./components/trial-banner";
-import { getD1Raw } from "@/lib/db/client";
+import { getD1Raw } from "@/seed/db/client";
 
 async function getUserTrialEndsAt(userId: string): Promise<number | null> {
   try {

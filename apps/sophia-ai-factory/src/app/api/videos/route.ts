@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getCurrentUser } from "@/lib/better-auth-session";
-import { createServerClient } from "@/lib/db/client";
+import { getCurrentUser } from "@/seed/auth/better-auth-session";
+import { createServerClient } from "@/seed/db/client";
 
 const listQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20),

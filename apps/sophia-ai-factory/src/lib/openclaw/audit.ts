@@ -8,7 +8,7 @@
  *   - actor defaults to 'system'
  */
 
-import { getD1Raw } from '@/lib/db/client';
+import { getD1Raw } from '@/seed/db/client';
 
 export interface AuditEntry {
   tenantId: string;

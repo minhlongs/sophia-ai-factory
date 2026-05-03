@@ -6,8 +6,8 @@
  */
 
 import { getResendKey } from '@/lib/credentials/get-provider-key';
-import { createServerClient } from '@/lib/db/client';
-import { logger } from '@/lib/utils/logger-utility';
+import { createServerClient } from '@/seed/db/client';
+import { logger } from '@/seed/utils/logger-utility';
 import type { MissionHandlerResult, MissionContext } from './types';
 
 interface UserRow {

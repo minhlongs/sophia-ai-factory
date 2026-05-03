@@ -3,9 +3,9 @@
  * @module quota/quota-enforcer-status
  */
 
-import { createServerClient } from '@/lib/db/client'
-import { logger } from '@/lib/utils/logger-utility'
-import { toError } from '@/lib/utils/to-error'
+import { createServerClient } from '@/seed/db/client'
+import { logger } from '@/seed/utils/logger-utility'
+import { toError } from '@/seed/utils/to-error'
 import { getEffectiveQuotaLimits } from './quota-checker'
 
 interface UsageEventRow { credits_used: number }

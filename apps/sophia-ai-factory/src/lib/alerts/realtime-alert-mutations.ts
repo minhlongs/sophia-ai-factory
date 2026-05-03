@@ -1,6 +1,6 @@
-import { createServerClient } from '@/lib/db/client';
-import { logger } from '@/lib/utils/logger-utility';
-import { toError } from '@/lib/utils/to-error';
+import { createServerClient } from '@/seed/db/client';
+import { logger } from '@/seed/utils/logger-utility';
+import { toError } from '@/seed/utils/to-error';
 import type { CreateAlertParams } from './realtime-alert-types';
 
 /** Create real-time alert for user. Returns alert ID or null on failure. */

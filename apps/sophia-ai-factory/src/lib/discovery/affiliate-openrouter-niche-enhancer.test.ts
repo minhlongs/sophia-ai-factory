@@ -9,7 +9,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import type { AffiliateProgram } from '@/types'
+import type { AffiliateProgram } from '@/seed/types'
 import { enhanceNicheScoreWithAI } from './affiliate-openrouter-niche-enhancer'
 
 vi.mock('@/lib/byok/local-mekongd-adapter', () => ({

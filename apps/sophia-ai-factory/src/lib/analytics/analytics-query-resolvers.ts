@@ -5,8 +5,8 @@
  * Consumed by graphql-resolvers.ts.
  */
 
-import { getCurrentUser } from '@/lib/better-auth-session';
-import { getUserTier } from '@/lib/db/get-user-tier';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { getUserTier } from '@/seed/db/get-user-tier';
 import { fetchUsageMetrics, fetchRevenueMetrics, fetchLicenseMetrics } from '@/lib/analytics/queries';
 import {
   checkAdmin,
@@ -134,7 +134,7 @@ export const AnalyticsResolvers = {
     const metrics = await fetchLicenseMetrics(filters);
 
     if (!user.isAdmin) {
-      const { createServerClient } = await import('@/lib/db/client');
+      const { createServerClient } = await import('@/seed/db/client');
       const db = createServerClient();
 
       const { data: userLicenses } = await db

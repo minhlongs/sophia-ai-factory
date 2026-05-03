@@ -2,14 +2,14 @@
 
 import { useLocale } from "next-intl";
 import { useRouter, usePathname } from "@/navigation";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/seed/components/ui/button";
 import { Globe } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/seed/components/ui/dropdown-menu";
 
 export function LanguageSwitcher() {
   const locale = useLocale();

@@ -2,14 +2,14 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { FadeInView } from "@/components/ui/fade-in-view";
+import { FadeInView } from "@/seed/components/ui/fade-in-view";
 import { getAllPrograms } from "@/lib/affiliates";
-import { Tier } from "@/types";
-import { TIER_CONFIGS } from "@/config/tiers";
+import { Tier } from "@/seed/types";
+import { TIER_CONFIGS } from "@/seed/config/tiers";
 import { Lock, ExternalLink, Star } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/seed/components/ui/badge";
+import { Button } from "@/seed/components/ui/button";
 
 export function AffiliateDiscovery() {
   const t = useTranslations('landing');

@@ -1,11 +1,11 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { AffiliateProgram } from "@/types";
+import { Card, CardContent } from "@/seed/components/ui/card";
+import { Badge } from "@/seed/components/ui/badge";
+import { Button } from "@/seed/components/ui/button";
+import { AffiliateProgram } from "@/seed/types";
 import { ExternalLink, TrendingUp, DollarSign } from "lucide-react";
-import { FadeInView } from "@/components/ui/fade-in-view";
+import { FadeInView } from "@/seed/components/ui/fade-in-view";
 
 interface ProgramCardProps {
   program: AffiliateProgram;

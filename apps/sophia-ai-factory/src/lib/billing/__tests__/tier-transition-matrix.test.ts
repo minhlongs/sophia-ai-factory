@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import type { Tier } from '@/types'
+import type { Tier } from '@/seed/types'
 
 const TIERS: Tier[] = ['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER']
 
@@ -27,7 +27,7 @@ const lastSubscriptionUpdate: { plan?: string; orgId?: string } = {}
 const batchStmtsSeen: string[] = []
 const pendingOrderUpdates: Record<string, { status: string; payment_id: string }> = {}
 
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   createServerClient: vi.fn(() => ({
     from: (table: string) => ({
       select: vi.fn(() => ({
@@ -81,7 +81,7 @@ vi.mock('@/lib/db/client', () => ({
   })),
 }))
 
-vi.mock('@/lib/db/audit/audit-log', () => ({
+vi.mock('@/seed/db/audit/audit-log', () => ({
   recordAudit: vi.fn().mockResolvedValue(undefined),
 }))
 
@@ -131,7 +131,7 @@ vi.mock('@/lib/billing/nowpayments-ipn-db', () => ({
   parseUserIdFromOrderId: vi.fn(() => 'user_matrix_123'),
 }))
 
-vi.mock('@/config/tiers', () => ({
+vi.mock('@/seed/config/tiers', () => ({
   UNIFIED_TIERS: {
     BASIC: { billingType: 'monthly', price: 199, mcuMonthly: 100 },
     PREMIUM: { billingType: 'monthly', price: 399, mcuMonthly: 300 },

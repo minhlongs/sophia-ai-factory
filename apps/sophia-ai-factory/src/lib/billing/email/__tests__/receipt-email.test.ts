@@ -51,7 +51,7 @@ describe('renderReceipt', () => {
 describe('sendReceiptEmail idempotency (skips when receipt_sent=1)', () => {
   const receiptSentMap = new Map<string, number>()
 
-  vi.mock('@/lib/db/client', () => ({
+  vi.mock('@/seed/db/client', () => ({
     createServerClient: () => ({
       from: () => ({
         select: vi.fn(() => ({

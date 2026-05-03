@@ -3,7 +3,7 @@
  * Handles auth URL generation and token exchange/refresh operations
  */
 
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 
 const TIKTOK_AUTH_URL = 'https://www.tiktok.com/v2/auth/authorize/';
 const TIKTOK_TOKEN_URL = 'https://open.tiktokapis.com/v2/oauth/token/';

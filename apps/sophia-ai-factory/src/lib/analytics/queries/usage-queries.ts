@@ -4,8 +4,8 @@
  * Fetches usage events and builds time-series / service breakdown metrics
  */
 
-import { createServerClient } from '@/lib/db/client';
-import { logger } from '@/lib/utils/logger-utility';
+import { createServerClient } from '@/seed/db/client';
+import { logger } from '@/seed/utils/logger-utility';
 import type { UsageFilters, UsageMetrics } from '../types';
 
 /** Maximum date range for queries (90 days) */

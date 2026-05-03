@@ -4,8 +4,8 @@
  * @module lib/promo/promo-repo
  */
 
-import { getD1Raw } from '@/lib/db/client';
-import { logger } from '@/lib/utils/logger-utility';
+import { getD1Raw } from '@/seed/db/client';
+import { logger } from '@/seed/utils/logger-utility';
 import type {
   PromoCodeRow,
   RedemptionRow,

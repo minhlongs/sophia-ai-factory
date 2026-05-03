@@ -6,7 +6,7 @@
  * @module lib/video/one-time-welcome-script
  */
 
-import type { OneTimeSku } from '@/types'
+import type { OneTimeSku } from '@/seed/types'
 
 const SCRIPTS: Record<string, { vi: string; en: string }> = {
   STARTER_BUNDLE: {

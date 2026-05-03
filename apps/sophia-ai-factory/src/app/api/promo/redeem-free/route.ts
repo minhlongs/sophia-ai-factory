@@ -10,11 +10,11 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { applyPromoCode } from '@/lib/promo/promo-applier';
 import { validatePromoCode } from '@/lib/promo/promo-validator';
-import { getCurrentUserFromHeaders } from '@/lib/better-auth-session';
+import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { withRateLimit } from '@/middleware/rate-limit-wrapper';
-import { getD1Raw } from '@/lib/db/client';
+import { getD1Raw } from '@/seed/db/client';
 import { createCustomerUser } from '@/lib/handover/handover-account-setup';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 
 const redeemFreeSchema = z.object({
   code: z.string().min(1).max(30),

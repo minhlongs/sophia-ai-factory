@@ -6,10 +6,10 @@
  */
 
 import { useState, useEffect } from 'react';
-import { logger } from '@/lib/utils/logger-utility';
-import { toError } from '@/lib/utils/to-error';
+import { logger } from '@/seed/utils/logger-utility';
+import { toError } from '@/seed/utils/to-error';
 import type { LicenseSummary, LicenseListResponse } from '@/lib/raas-schema';
-import { useCsrfToken } from '@/lib/security/use-csrf-token';
+import { useCsrfToken } from '@/seed/security/use-csrf-token';
 
 export interface License {
   id: string;

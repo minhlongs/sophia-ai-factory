@@ -12,8 +12,8 @@
 
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/seed/components/ui/card';
+import { Badge } from '@/seed/components/ui/badge';
 import { Bot, RefreshCw, AlertCircle } from 'lucide-react';
 import type { AgentPerformanceReport, AgentRoleMetrics, WindowOption } from '@/lib/analytics/agent-performance-resolver';
 

@@ -7,14 +7,14 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { logger } from '@/lib/utils/logger-utility'
-import { toError } from '@/lib/utils/to-error'
-import { requireAdmin } from '@/lib/auth/require-admin'
+import { logger } from '@/seed/utils/logger-utility'
+import { toError } from '@/seed/utils/to-error'
+import { requireAdmin } from '@/seed/auth/require-admin'
 
 import {
   revokeApiKey,
   deleteApiKey,
-} from '@/lib/security/api-key-validator'
+} from '@/seed/security/api-key-validator'
 import { logApiKeyRevocation } from '@/lib/audit/audit-query-logger'
 
 export const dynamic = 'force-dynamic'

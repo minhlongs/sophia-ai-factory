@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock DB client so tryGetRawDb always returns null -> memStore fallback
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   getD1Raw: vi.fn().mockRejectedValue(new Error('D1 not available in tests')),
   getD1Client: vi.fn().mockRejectedValue(new Error('D1 not available in tests')),
 }));
 
-vi.mock('@/lib/utils/logger-utility', () => ({
+vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
 }));
 

@@ -12,7 +12,7 @@ import { inngest } from '@/lib/inngest/client'
 import { calculateCommission } from '@/lib/affiliates/commission-calculator'
 import { insertPendingLedger } from '@/lib/payouts/commission-ledger'
 import { toCents } from '@/lib/payouts/commission-cents'
-import { getD1Raw } from '@/lib/db/client'
+import { getD1Raw } from '@/seed/db/client'
 
 const CLAWBACK_WINDOW_DAYS = 14
 const SECONDS_PER_DAY = 86400

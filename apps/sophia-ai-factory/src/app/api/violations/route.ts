@@ -11,7 +11,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 import { fetchViolations, fetchViolationSummary } from '@/lib/analytics/queries';
 import { violationsQuerySchema } from '@/lib/validation/services';
 import type { ViolationFilters } from '@/lib/analytics/types';

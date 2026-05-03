@@ -11,11 +11,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
-vi.mock('@/lib/better-auth-session', () => ({
+vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: vi.fn(),
 }));
 
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   createServerClient: vi.fn(),
 }));
 
@@ -28,7 +28,7 @@ vi.mock('@/lib/byok/user-api-key-store', () => ({
 }));
 
 import { POST } from './route';
-import { getCurrentUser } from '@/lib/better-auth-session';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { setUserApiKey } from '@/lib/byok/user-api-key-store';
 
 const mockGetCurrentUser = vi.mocked(getCurrentUser);

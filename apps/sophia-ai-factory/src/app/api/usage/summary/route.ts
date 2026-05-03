@@ -18,9 +18,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/db/client';
-import { getCurrentUser } from '@/lib/better-auth-session';
-import { isUserAdmin } from '@/lib/auth/is-user-admin';
+import { createServerClient } from '@/seed/db/client';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { isUserAdmin } from '@/seed/auth/is-user-admin';
 import { getUsageSummaryForPeriod } from '@/lib/usage-metering/export';
 import {
   aggregateUsageForLicense,
@@ -28,9 +28,9 @@ import {
   predictUsageForecast,
   calculateOverageEstimate,
 } from '@/lib/billing/usage-aggregator';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 import { z } from 'zod';
-import type { Tier } from '@/types';
+import type { Tier } from '@/seed/types';
 
 const summaryQuerySchema = z.object({
   period: z.enum(['current_month', 'last_month', 'last_7_days', 'last_30_days']).default('current_month'),

@@ -4,8 +4,8 @@
  * @module lib/api-keys/d1-store
  */
 
-import { logger } from '@/lib/utils/logger-utility';
-import type { Tier } from '@/types';
+import { logger } from '@/seed/utils/logger-utility';
+import type { Tier } from '@/seed/types';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 

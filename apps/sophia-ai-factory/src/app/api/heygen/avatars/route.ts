@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { ServiceFactory } from "@/lib/services/factory";
-import { getCurrentUser } from "@/lib/better-auth-session";
+import { getCurrentUser } from "@/seed/auth/better-auth-session";
 
 // Module-level cache — best-effort within Cloudflare isolate lifetime (~5 min)
 let AVATARS_CACHE: { data: unknown; expiresAt: number } | null = null;
