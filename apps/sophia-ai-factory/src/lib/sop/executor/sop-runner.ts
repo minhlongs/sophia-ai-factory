@@ -153,6 +153,12 @@ export async function runSop(
     });
     await advanceSchedule(db, inst.id, completedAt, nextCronAt(inst.schedule_cron));
 
+    // Stamp customer_first_run_at so handover drop-off metrics work.
+    // Idempotent + non-fatal — never blocks a successful run.
+    void import('@/lib/handover/handover-magic-link')
+      .then((m) => m.markFirstRun(inst.user_id))
+      .catch(() => { /* swallow */ });
+
     return { runId: run.id, status: 'succeeded', summary: aggregate };
 
   } catch (e) {

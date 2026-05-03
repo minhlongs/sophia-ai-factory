@@ -74,6 +74,10 @@ const CRON_ROUTES = {
     '/api/cron/clearance-promote',
     '/api/cron/promo-trial-expiry',
   ],
+  // Hourly — recompute handover status (active/at_risk/churned)
+  '7 * * * *': [
+    '/api/cron/handover-status-sync',
+  ],
 };
 
 // ---------------------------------------------------------------------------
