@@ -1,6 +1,12 @@
 import { FeatureFlag, Tier } from "@/types";
 
 /**
+ * PayOS VN payment method feature flag.
+ * Default false — enable only when PayOS integration is fully implemented.
+ */
+export const FEATURE_PAYOS = process.env.FEATURE_PAYOS === 'true';
+
+/**
  * Feature flag configuration
  * Supports environment variable overrides via NEXT_PUBLIC_FEATURE_*
  */
