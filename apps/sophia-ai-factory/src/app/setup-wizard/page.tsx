@@ -3,14 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { WizardStepper } from './components/wizard-stepper';
+import { WizardStepper } from '@/tree/components/setup-wizard/wizard-stepper';
 import { ArrowRight, Save, Loader2 } from 'lucide-react';
-import { SystemCheckStep } from './components/steps/system-check-step';
-import { ApiKeysStep } from './components/steps/api-keys-step';
+import { SystemCheckStep } from '@/tree/components/setup-wizard/steps/system-check-step';
+import { ApiKeysStep } from '@/tree/components/setup-wizard/steps/api-keys-step';
 import { LocalModeStep } from '@/components/setup-wizard/local-mode-step';
-import { FinishStep } from './components/steps/finish-step';
-import { ProviderCredentialsStep, type ProviderConfig } from './components/steps/provider-credentials-step';
-import type { CredentialSummary } from '@/lib/credentials/user-credentials-repo';
+import { FinishStep } from '@/tree/components/setup-wizard/steps/finish-step';
+import { ProviderCredentialsStep, type ProviderConfig } from '@/tree/components/setup-wizard/steps/provider-credentials-step';
+import type { CredentialSummary } from '@/tree/credentials/user-credentials-repo';
 
 interface VerifyKeyResponse {
   valid?: boolean;

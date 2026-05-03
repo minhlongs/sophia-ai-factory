@@ -9,11 +9,11 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { dispatchFinished, dispatchRefunded } from '../nowpayments-ipn-dispatch'
 import * as subscriptionHandler from '../nowpayments-ipn-subscription'
 import * as oneTimeHandler from '../nowpayments-ipn-one-time'
-import * as nowpaymentsClient from '@/lib/clients/nowpayments-client'
+import * as nowpaymentsClient from '@/tree/clients/nowpayments-client'
 import type { NowPaymentsIpnPayload } from '../nowpayments-ipn-handlers'
 
 // Mock modules
-vi.mock('@/lib/clients/nowpayments-client')
+vi.mock('@/tree/clients/nowpayments-client')
 vi.mock('../nowpayments-ipn-subscription')
 vi.mock('../nowpayments-ipn-one-time')
 

@@ -4,7 +4,7 @@
  * @module billing/nowpayments-ipn-subscription
  */
 
-import { getTierByInvoiceId } from '@/lib/clients/nowpayments-client'
+import { getTierByInvoiceId } from '@/tree/clients/nowpayments-client'
 import { logger } from '@/seed/utils/logger-utility'
 import { UNIFIED_TIERS } from '@/seed/config/tiers'
 import { getD1Raw } from '@/seed/db/client'
@@ -13,7 +13,7 @@ import type { Tier } from '@/seed/types'
 import type { NowPaymentsIpnPayload } from './nowpayments-ipn-handlers'
 import { getDb, parseUserIdFromOrderId } from './nowpayments-ipn-db'
 import { createOnboardingVideo, ONBOARDING_TIERS } from '@/lib/video/onboarding-video'
-import { triggerAutoHandover } from '@/lib/handover/auto-handover'
+import { triggerAutoHandover } from '@/tree/handover/auto-handover'
 import { markOrderCompleted, markOrderFailed } from '@/lib/orders/pending-order-repo'
 import { sendReceiptEmail } from './email/receipt-email-sender'
 

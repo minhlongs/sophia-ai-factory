@@ -12,25 +12,25 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import type { AffiliateProgram } from '@/seed/types'
 import { enhanceNicheScoreWithAI } from './affiliate-openrouter-niche-enhancer'
 
-vi.mock('@/lib/byok/local-mekongd-adapter', () => ({
+vi.mock('@/tree/byok/local-mekongd-adapter', () => ({
   callLocalMekongd: vi.fn(),
 }))
-vi.mock('@/lib/byok/with-timeout', () => ({
+vi.mock('@/tree/byok/with-timeout', () => ({
   withTimeout: vi.fn(),
 }))
-vi.mock('@/lib/byok/provider-router', () => ({
+vi.mock('@/tree/byok/provider-router', () => ({
   resolveLocalMekongdForUser: vi.fn(),
 }))
-vi.mock('@/lib/byok/resolve-user-api-key', () => ({
+vi.mock('@/tree/byok/resolve-user-api-key', () => ({
   resolveUserApiKey: vi.fn((_userId, _provider, envFallback) =>
     Promise.resolve(envFallback ?? null),
   ),
 }))
 
-import { callLocalMekongd } from '@/lib/byok/local-mekongd-adapter'
-import { withTimeout } from '@/lib/byok/with-timeout'
-import { resolveLocalMekongdForUser } from '@/lib/byok/provider-router'
-import { resolveUserApiKey } from '@/lib/byok/resolve-user-api-key'
+import { callLocalMekongd } from '@/tree/byok/local-mekongd-adapter'
+import { withTimeout } from '@/tree/byok/with-timeout'
+import { resolveLocalMekongdForUser } from '@/tree/byok/provider-router'
+import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key'
 
 const mockLocal = vi.mocked(callLocalMekongd)
 const mockOpenRouter = vi.mocked(withTimeout)

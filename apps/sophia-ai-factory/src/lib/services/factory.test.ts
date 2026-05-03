@@ -130,7 +130,7 @@ describe('ServiceFactory — credential gate', () => {
     delete process.env.OPENROUTER_API_KEY // no env fallback
 
     // Mock the BYOK resolver at module level
-    vi.doMock('@/lib/byok/resolve-user-api-key', () => ({
+    vi.doMock('@/tree/byok/resolve-user-api-key', () => ({
       resolveUserApiKey: vi.fn().mockResolvedValue('byok-user-key-123'),
     }))
 
@@ -148,7 +148,7 @@ describe('ServiceFactory — credential gate', () => {
     process.env.OPENROUTER_API_KEY = 'env-fallback-key'
 
     // Resolver returns env fallback (user has no stored key)
-    vi.doMock('@/lib/byok/resolve-user-api-key', () => ({
+    vi.doMock('@/tree/byok/resolve-user-api-key', () => ({
       resolveUserApiKey: vi.fn().mockResolvedValue('env-fallback-key'),
     }))
 
@@ -166,7 +166,7 @@ describe('ServiceFactory — credential gate', () => {
     delete process.env.OPENROUTER_API_KEY
 
     // Resolver returns null (no user key, no env fallback)
-    vi.doMock('@/lib/byok/resolve-user-api-key', () => ({
+    vi.doMock('@/tree/byok/resolve-user-api-key', () => ({
       resolveUserApiKey: vi.fn().mockResolvedValue(null),
     }))
 

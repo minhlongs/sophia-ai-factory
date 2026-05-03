@@ -155,7 +155,7 @@ export async function runSop(
 
     // Stamp customer_first_run_at so handover drop-off metrics work.
     // Idempotent + non-fatal — never blocks a successful run.
-    void import('@/lib/handover/handover-magic-link')
+    void import('@/tree/handover/handover-magic-link')
       .then((m) => m.markFirstRun(inst.user_id))
       .catch(() => { /* swallow */ });
 

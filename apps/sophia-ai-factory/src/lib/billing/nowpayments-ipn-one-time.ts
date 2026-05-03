@@ -20,7 +20,7 @@ import { markUnderpaid, UNDERPAYMENT_THRESHOLD } from './nowpayments-ipn-underpa
 import type { NowPaymentsIpnPayload } from './nowpayments-ipn-handlers'
 import { parseUserIdFromOrderId, getDb } from './nowpayments-ipn-db'
 import type { OneTimeSku } from '@/seed/types'
-import { triggerAutoHandover } from '@/lib/handover/auto-handover'
+import { triggerAutoHandover } from '@/tree/handover/auto-handover'
 
 // TTL helpers ────────────────────────────────────────────────────────────────
 

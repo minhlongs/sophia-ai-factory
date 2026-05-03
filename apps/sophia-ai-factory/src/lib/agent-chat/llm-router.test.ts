@@ -6,11 +6,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { resolveLlmRoute } from './llm-router';
 
-vi.mock('@/lib/credentials/user-credentials-repo', () => ({
+vi.mock('@/tree/credentials/user-credentials-repo', () => ({
   getUserCredential: vi.fn(),
 }));
 
-import { getUserCredential } from '@/lib/credentials/user-credentials-repo';
+import { getUserCredential } from '@/tree/credentials/user-credentials-repo';
 const mockGetCred = vi.mocked(getUserCredential);
 
 describe('resolveLlmRoute', () => {

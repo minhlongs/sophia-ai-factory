@@ -1,4 +1,4 @@
-import { bot } from '@/lib/telegram/telegram-bot-instance'
+import { bot } from '@/tree/telegram/telegram-bot-instance'
 import { Tier } from '@/seed/types'
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'

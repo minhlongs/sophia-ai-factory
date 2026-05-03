@@ -6,7 +6,7 @@
 import { logger } from '@/seed/utils/logger-utility'
 import { toError } from '@/seed/utils/to-error'
 import { getKvClient } from '@/lib/redis'
-import { logAuditEvent } from '@/lib/audit/audit-logger'
+import { logAuditEvent } from '@/tree/audit/audit-logger'
 import {
   DEFAULT_CIRCUIT_BREAKER,
 } from './realtime-tracker-types'

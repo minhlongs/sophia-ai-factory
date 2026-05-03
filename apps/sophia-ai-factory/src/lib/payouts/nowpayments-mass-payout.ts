@@ -10,7 +10,7 @@
  */
 
 import { getD1Raw } from '@/seed/db/client'
-import { decryptSecret } from '@/lib/crypto/encrypt-secret'
+import { decryptSecret } from '@/tree/crypto/encrypt-secret'
 import { fromCents, sanitizeErrorText } from './commission-cents'
 import { logger } from '@/seed/utils/logger-utility'
 

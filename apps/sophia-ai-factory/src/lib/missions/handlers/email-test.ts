@@ -5,7 +5,7 @@
  * LIVE — uses platform Resend key as fallback.
  */
 
-import { getResendKey } from '@/lib/credentials/get-provider-key';
+import { getResendKey } from '@/tree/credentials/get-provider-key';
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import type { MissionHandlerResult, MissionContext } from './types';

@@ -26,8 +26,8 @@ vi.mock('@/seed/db/client', () => ({
 }))
 
 // Mock crypto-utils
-vi.mock('@/lib/audit/crypto-utils', async () => {
-  const actual = await vi.importActual('@/lib/audit/crypto-utils')
+vi.mock('@/tree/audit/crypto-utils', async () => {
+  const actual = await vi.importActual('@/tree/audit/crypto-utils')
   return {
     ...(actual as Record<string, unknown>),
     hmacSha256: vi.fn((data: string, secret: string) => {
@@ -168,7 +168,7 @@ describe('checkApiKey', () => {
 
   it('should return valid result for existing key', async () => {
     // Setup hmacSha256 mock to return consistent hash for signature verification
-    const { hmacSha256, timingSafeEqual } = await import('@/lib/audit/crypto-utils')
+    const { hmacSha256, timingSafeEqual } = await import('@/tree/audit/crypto-utils')
     vi.mocked(hmacSha256).mockReturnValue('a'.repeat(64))
     vi.mocked(timingSafeEqual).mockReturnValue(true)
 
@@ -207,7 +207,7 @@ describe('checkApiKey', () => {
   })
 
   it('should return not-found for non-existent key', async () => {
-    const { hmacSha256, timingSafeEqual } = await import('@/lib/audit/crypto-utils')
+    const { hmacSha256, timingSafeEqual } = await import('@/tree/audit/crypto-utils')
     vi.mocked(hmacSha256).mockReturnValue('a'.repeat(64))
     vi.mocked(timingSafeEqual).mockReturnValue(true)
 
@@ -227,7 +227,7 @@ describe('checkApiKey', () => {
   })
 
   it('should return expired for expired key', async () => {
-    const { hmacSha256, timingSafeEqual } = await import('@/lib/audit/crypto-utils')
+    const { hmacSha256, timingSafeEqual } = await import('@/tree/audit/crypto-utils')
     vi.mocked(hmacSha256).mockReturnValue('a'.repeat(64))
     vi.mocked(timingSafeEqual).mockReturnValue(true)
 
@@ -260,7 +260,7 @@ describe('checkApiKey', () => {
   })
 
   it('should return revoked for revoked key', async () => {
-    const { hmacSha256, timingSafeEqual } = await import('@/lib/audit/crypto-utils')
+    const { hmacSha256, timingSafeEqual } = await import('@/tree/audit/crypto-utils')
     vi.mocked(hmacSha256).mockReturnValue('a'.repeat(64))
     vi.mocked(timingSafeEqual).mockReturnValue(true)
 
