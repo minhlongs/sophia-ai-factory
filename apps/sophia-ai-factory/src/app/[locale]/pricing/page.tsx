@@ -1,10 +1,13 @@
 import { PricingSection } from "@/components/pricing/pricing-section";
+import { PricingComparisonTable } from "@/components/pricing/pricing-comparison-table";
+import { PricingFaq } from "@/components/pricing/pricing-faq";
 import { ProductionCostCalculator } from "@/app/components/sections/production-cost-calculator";
 import { OneTimeBundleCard } from "@/components/pricing/one-time-bundle-card";
 import { getTranslations } from "next-intl/server";
 import { isHeyGenHealthy } from "@/lib/health/heygen-health-check";
 import { getCurrentUser } from "@/lib/better-auth-session";
 import { getUserCredential } from "@/lib/credentials/user-credentials-repo";
+import { getUserTier } from "@/lib/db/get-user-tier";
 import Link from "next/link";
 
 export const metadata = {
@@ -24,6 +27,8 @@ export default async function PricingPage() {
     ? Boolean(await getUserCredential(user.id, 'heygen').catch(() => null))
     : false;
 
+  const currentTier = user ? await getUserTier(user.id).catch(() => null) : null;
+
   return (
     <main id="main-content" className="min-h-screen bg-gradient-to-b from-black to-violet-950 pt-16">
       {/* Combined value messaging header */}
@@ -32,12 +37,29 @@ export default async function PricingPage() {
           <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-300">
             {t("combined_badge")}
           </div>
+          {currentTier && (
+            <div className="mb-3">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-xs font-medium text-green-300">
+                {t("current_plan_badge")}: {currentTier}
+              </span>
+            </div>
+          )}
           <h1 className="text-2xl font-bold text-foreground sm:text-3xl">
             {t("combined_title")}
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
             {t("combined_subtitle")}
           </p>
+          {user && (
+            <div className="mt-4">
+              <Link
+                href="/dashboard"
+                className="cursor-pointer text-xs text-violet-300 hover:text-violet-200 transition-colors duration-150"
+              >
+                &larr; {t("nav_dashboard")}
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 
@@ -57,7 +79,7 @@ export default async function PricingPage() {
             </p>
             <Link
               href="/setup-wizard"
-              className="inline-block rounded-lg bg-amber-500 hover:bg-amber-400 text-black font-semibold px-5 py-2 text-sm transition-colors"
+              className="cursor-pointer inline-block rounded-lg bg-amber-500 hover:bg-amber-400 text-black font-semibold px-5 py-2 text-sm transition-colors duration-150"
             >
               Configure HeyGen Key / Cấu hình HeyGen
             </Link>
@@ -67,7 +89,13 @@ export default async function PricingPage() {
         )}
       </section>
 
+      {/* Comparison table */}
+      <PricingComparisonTable currentTier={currentTier} />
+
       <ProductionCostCalculator />
+
+      {/* FAQ + Talk to Sales */}
+      <PricingFaq />
     </main>
   );
 }
