@@ -146,21 +146,23 @@ export async function POST(request: NextRequest, ctx: RouteParams): Promise<Next
     if (!secret) {
       logger.error('[Welcome/Consume] Missing BETTER_AUTH_SECRET — cannot sign session cookie');
     } else {
-      const baseUrl = process.env.BETTER_AUTH_URL
-        || process.env.NEXT_PUBLIC_APP_URL
-        || 'https://sophia.agencyos.network';
-      const isHttps = baseUrl.startsWith('https://');
-      const cookieName = `${isHttps ? '__Secure-' : ''}better-auth.session_token`;
+      // Must match better-auth-server.ts `useSecureCookies` logic exactly:
+      // useSecureCookies = process.env.NODE_ENV !== 'development'
+      // On Cloudflare Workers production, NODE_ENV is 'production' → __Secure- prefix.
+      const useSecureCookies = process.env.NODE_ENV !== 'development';
+      const cookieName = `${useSecureCookies ? '__Secure-' : ''}better-auth.session_token`;
       const signedValue = await signCookieValue(session.token, secret);
       const expires = new Date(session.expiresAt).toUTCString();
-      const cookieAttrs = [
+      const cookieAttrParts = [
         `${cookieName}=${signedValue}`,
         'Path=/',
         'HttpOnly',
-        'Secure',
         'SameSite=Lax',
         `Expires=${expires}`,
-      ].join('; ');
+      ];
+      // Only add Secure flag when using __Secure- prefix (matches useSecureCookies in better-auth-server.ts)
+      if (useSecureCookies) cookieAttrParts.splice(2, 0, 'Secure');
+      const cookieAttrs = cookieAttrParts.join('; ');
       response.headers.append('Set-Cookie', cookieAttrs);
       await writeAuditLog({
         actorUserId: handover.customer_user_id,
@@ -171,6 +173,8 @@ export async function POST(request: NextRequest, ctx: RouteParams): Promise<Next
       logger.info('[Welcome/Consume] Signed session cookie set', {
         handoverId: handover.id,
         userId: handover.customer_user_id,
+        cookieName,
+        useSecureCookies,
       });
     }
   } else {

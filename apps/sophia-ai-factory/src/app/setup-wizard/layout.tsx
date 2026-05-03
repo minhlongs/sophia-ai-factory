@@ -6,6 +6,7 @@ import { getCurrentUser } from "@/lib/better-auth-session";
 import { listUserApiKeyProviders } from "@/lib/byok/user-api-key-store";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
+import { logger } from "@/lib/utils/logger-utility";
 import "../globals.css";
 
 const geistSans = localFont({
@@ -30,6 +31,12 @@ export default async function SetupLayout({
 }>) {
   const user = await getCurrentUser();
   if (!user) {
+    const jar = await cookies();
+    const cookieNames = jar.getAll().map((c) => c.name);
+    logger.warn('[setup-wizard] no authenticated user — redirecting to login', {
+      cookieNames,
+      hasSessionCookie: cookieNames.some((n) => n.includes('better-auth') || n.includes('session')),
+    });
     redirect("/login?redirect=/setup-wizard");
   }
 

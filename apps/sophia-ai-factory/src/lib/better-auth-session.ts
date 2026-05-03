@@ -8,6 +8,7 @@
 
 import { getAuth } from './better-auth-server';
 import type { User } from '@/lib/db/client';
+import { logger } from '@/lib/utils/logger-utility';
 
 /**
  * Get the full Better Auth session (user + session metadata).
@@ -22,7 +23,11 @@ export async function getSession() {
       headers: await headers(),
     });
     return session;
-  } catch {
+  } catch (err) {
+    logger.error('[better-auth-session] getSession failed', err instanceof Error ? err : new Error(String(err)), {
+      errorName: err instanceof Error ? err.constructor.name : typeof err,
+      errorMessage: err instanceof Error ? err.message : String(err),
+    });
     return null;
   }
 }
@@ -66,7 +71,11 @@ export async function getCurrentUserFromHeaders(
       avatar_url: (session.user.image ?? undefined) as string | undefined,
       role: (user.role as string) ?? 'user',
     };
-  } catch {
+  } catch (err) {
+    logger.error('[better-auth-session] getCurrentUserFromHeaders failed', err instanceof Error ? err : new Error(String(err)), {
+      errorName: err instanceof Error ? err.constructor.name : typeof err,
+      errorMessage: err instanceof Error ? err.message : String(err),
+    });
     return null;
   }
 }
