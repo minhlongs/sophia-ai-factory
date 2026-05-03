@@ -140,7 +140,14 @@ export async function POST(request: NextRequest, { params }: RouteParams): Promi
     if (!secret) {
       logger.error('[Welcome/Consume] Missing BETTER_AUTH_SECRET — cannot sign session cookie');
     } else {
-      const cookieName = 'better-auth.session_token';
+      // Better Auth prepends `__Secure-` when the configured baseURL is https
+      // (production). Match that exact name or `auth.api.getSession()` won't
+      // find the cookie.
+      const baseUrl = process.env.BETTER_AUTH_URL
+        || process.env.NEXT_PUBLIC_APP_URL
+        || 'https://sophia.agencyos.network';
+      const isHttps = baseUrl.startsWith('https://');
+      const cookieName = `${isHttps ? '__Secure-' : ''}better-auth.session_token`;
       const signedValue = await signCookieValue(session.token, secret);
       const expires = new Date(session.expiresAt).toUTCString();
       const cookieAttrs = [
