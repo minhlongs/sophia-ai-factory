@@ -2,7 +2,7 @@
 
 > Product milestones and progress tracking (2026)
 
-**Last Updated:** 2026-05-02 (RaaS One-Time Package COMPLETE: STARTER_BUNDLE $49/10 credits + IPN dispatcher + user_purchases table)
+**Last Updated:** 2026-05-03 (Magic-link E2E PASS: setup-wizard cookie chain verified end-to-end, go-live unblocked)
 **Target:** $1M ARR, 100/100 a16z solo company score
 **Phases 6-14 Shipped (2026-04-30):** Video 6-step pipeline (Inngest) → TTS (Coqui v2) → Visual (HeyGen/HunyuanVideo) → Compose (FFmpeg) → Upload (R2) → Publish. Affiliate 5 networks (TikTok Shop/Awin/ClickBank/AccessTrade/Amazon) + commission tracking. Publishers (TikTok/YouTube/Instagram adapters) + scheduler cron. OpenClaw orchestrator (10 primitives). Revenue split (commission ledger + 14-day clawback + payout batches). FTC hardening (#ad overlay, GDPR export/delete, runbook).
 
@@ -16,6 +16,7 @@
 | **Q2-P16: Fulfillment Hardening (260502-0604)** | ✅ DONE | 2026-05-02 | 3-phase: queue-first persistence, retry-cron (exp backoff 5x), permanent failure → bilingual email + atomic +1 credit. HeyGen webhook instant, synthetic monitor 15min, daily reconciliation 6am. R2 access revoke on refund. Migrations 0040-0044. Tests: +69 (2136→2205). F9 D-ID fallback DEFERRED. |
 | **Q2-P17: Cron Infrastructure Go-Live (260502-0733)** | ✅ DONE | 2026-05-02 | 10 cron patterns mapped to 11 routes. Post-build inject scheduled() export (opennextjs fix). Service binding self-dispatch. cron_run_log D1 dedup table. Migrations 0044-0045. /api/version now returns correct deployed SHA (was stale df22a4f7). |
 | **Q2-P18: Go-Live Zero-Bug Hardening (260502-0756)** | ✅ DONE | 2026-05-02 | Security: verifyCronAuth hardened (removed x-cf-cron bypass, Bearer CRON_SECRET required). HeyGen health check `/api/health/heygen` (KV cached 60s, gates One-Time CTA on pricing page). Checkout error toast bilingual (Vi/En). `failed_permanent` UI polish in /dashboard/orders. CRITICAL FIX: scheduled() must be method on default export (CF Workers Modules format). Tests: 2205→2240 (+35). Operator setup: `bash scripts/set-cron-secret.sh`. Cron verified firing post-deploy (cron_run_log incremented). |
+| **Q2-P19: Magic-Link E2E Validation (260503-0830)** | ✅ DONE | 2026-05-03 | **BLOCKER RESOLVED.** Real magic-link click → `__Secure-better-auth.session_token` Set-Cookie (HttpOnly; Secure; SameSite=Lax) → `/setup-wizard` HTTP 200. 5 regression tests (Vitest) lock in cookie chain. Setup-wizard go-live UNBLOCKED. |
 
 **Q2-P15 Shipment:** New SKU (STARTER_BUNDLE $49, 10 video credits, 12-month validity). One-time purchase pathway: NOWPayments IPN branching to subscription vs one_time handler. D1 schema: `user_purchases` table + `videos.purchase_id` FK. Email: bilingual Vi/En "Your bundle is ready" + cross-sell. Idempotency: UNIQUE constraint prevents duplicate purchases. Tests: 4 new test files + 100% coverage (migrations 0038, 0039 applied).
 

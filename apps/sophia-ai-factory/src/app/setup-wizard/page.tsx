@@ -241,7 +241,7 @@ export default function SetupWizardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-muted/50 flex flex-col items-center py-12 px-4 sm:px-6 lg:px-8">
+    <div data-testid="setup-wizard-root" className="min-h-screen bg-muted/50 flex flex-col items-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl w-full bg-card rounded-2xl shadow-xl overflow-hidden border border-border">
         {/* Header */}
         <div className="bg-primary px-8 py-6 text-primary-foreground text-center">
