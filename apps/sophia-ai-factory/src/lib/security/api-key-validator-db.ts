@@ -4,6 +4,7 @@
  */
 
 import { createServerClient } from '@/lib/db/client'
+// eslint-disable-next-line @typescript-eslint/no-restricted-imports -- mekong-exempt: security validators need audit/crypto-utils (tree) for timing-safe comparisons
 import { timingSafeEqual } from '@/lib/audit/crypto-utils'
 import { logger } from '@/lib/utils/logger-utility'
 import { toError } from '@/lib/utils/to-error'
@@ -11,6 +12,7 @@ import {
   API_KEY_PREFIX, getApiKeySecret, generateKeyId, computeSignature,
 } from './api-key-validator-crypto'
 import type { ApiKeyRow, ApiKeyInfo, ValidationResult, GenerateApiKeyResult } from './api-key-validator-types'
+// eslint-disable-next-line @typescript-eslint/no-restricted-imports -- mekong-exempt: security validators need audit/crypto-utils (tree) for HMAC operations
 import { hmacSha256 } from '@/lib/audit/crypto-utils'
 
 export async function generateApiKey(

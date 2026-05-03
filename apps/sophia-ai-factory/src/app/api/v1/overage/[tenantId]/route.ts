@@ -29,7 +29,7 @@ import {
   type FormattedOverageEvent,
   type OverageTotals,
 } from '@/lib/overage/overage-formatter';
-import type { OverageEvent } from '@/lib/billing/billing-types';
+import type { OverageEvent } from '@/seed/types/billing-contracts';
 
 /**
  * GET handler for overage events

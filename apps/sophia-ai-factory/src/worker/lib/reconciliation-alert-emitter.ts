@@ -12,7 +12,7 @@
  * @module worker/reconciliation-alert-emitter
  */
 
-import type { ReconciliationAlert, Discrepancy } from '@/lib/billing/reconciliation-types';
+import type { ReconciliationAlert, Discrepancy } from '@/seed/types/billing-contracts';
 import { logger } from '@/lib/utils/logger-utility';
 import { toError } from '@/lib/utils/to-error';
 

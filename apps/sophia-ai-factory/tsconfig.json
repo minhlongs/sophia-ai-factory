@@ -23,9 +23,11 @@
       }
     ],
     "paths": {
-      "@/*": [
-        "./src/*"
-      ]
+      "@/*":        ["./src/*"],
+      "@/seed/*":   ["./src/seed/*"],
+      "@/tree/*":   ["./src/tree/*"],
+      "@/forest/*": ["./src/forest/*"],
+      "@/land/*":   ["./src/land/*"]
     }
   },
   "include": [

@@ -4,7 +4,7 @@
  */
 
 import type { EnhancedQuotaCheckResult, QuotaCheckContext } from './quota-checker'
-import type { DunningState } from '@/lib/billing/dunning-workflow'
+import type { DunningState } from '@/seed/types/billing-contracts'
 
 export interface QuotaExceededResponse {
   error: string

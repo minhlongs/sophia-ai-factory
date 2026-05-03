@@ -1,4 +1,4 @@
-import type { ReconciliationConfig } from '@/lib/billing/reconciliation-types';
+import type { ReconciliationConfig } from '@/seed/types/billing-contracts';
 
 export interface AggregatedUsage {
   licenseNonce: string;

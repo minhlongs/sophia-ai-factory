@@ -1,19 +1,27 @@
 /**
  * Tier configurations for Sophia AI Video Factory.
  * Pricing limits are sourced from unified-limits.ts.
- * Payment invoice IDs come from nowpayments-client.ts.
+ * Payment invoice IDs are inlined here (static NOWPayments invoice IDs,
+ * created once in NOWPayments dashboard — no runtime client needed).
  */
 
 import { Tier, TierConfig, FeatureFlag } from '@/types';
-import { NOWPAYMENTS_TIERS } from '@/lib/clients/nowpayments-client';
 import { UNIFIED_TIERS } from './unified-limits';
+
+/** NOWPayments pre-created invoice IDs (static, no runtime dependency needed) */
+const NOWPAYMENTS_INVOICE_IDS: Record<string, string> = {
+  BASIC: '5710519960',
+  PREMIUM: '4559269964',
+  ENTERPRISE: '6336799275',
+  MASTER: '5589879034',
+};
 
 export const TIER_CONFIGS: Record<Tier, TierConfig> = {
   BASIC: {
     name: UNIFIED_TIERS.BASIC.name,
     price: UNIFIED_TIERS.BASIC.price,
     priceDisplay: `$${UNIFIED_TIERS.BASIC.price}/mo`,
-    nowpaymentsInvoiceId: NOWPAYMENTS_TIERS.BASIC.invoiceId,
+    nowpaymentsInvoiceId: NOWPAYMENTS_INVOICE_IDS.BASIC,
     features: [
       'enable_affiliate_engine',
       'enable_roi_calculator',
@@ -30,7 +38,7 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
     name: UNIFIED_TIERS.PREMIUM.name,
     price: UNIFIED_TIERS.PREMIUM.price,
     priceDisplay: `$${UNIFIED_TIERS.PREMIUM.price}/mo`,
-    nowpaymentsInvoiceId: NOWPAYMENTS_TIERS.PREMIUM.invoiceId,
+    nowpaymentsInvoiceId: NOWPAYMENTS_INVOICE_IDS.PREMIUM,
     recommended: true,
     features: [
       'enable_affiliate_engine',
@@ -51,7 +59,7 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
     name: UNIFIED_TIERS.ENTERPRISE.name,
     price: UNIFIED_TIERS.ENTERPRISE.price,
     priceDisplay: `$${UNIFIED_TIERS.ENTERPRISE.price}/mo`,
-    nowpaymentsInvoiceId: NOWPAYMENTS_TIERS.ENTERPRISE.invoiceId,
+    nowpaymentsInvoiceId: NOWPAYMENTS_INVOICE_IDS.ENTERPRISE,
     features: [
       'enable_affiliate_engine',
       'enable_admin_dashboard',
@@ -75,7 +83,7 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
     name: UNIFIED_TIERS.MASTER.name,
     price: UNIFIED_TIERS.MASTER.price,
     priceDisplay: `$${UNIFIED_TIERS.MASTER.price}`,
-    nowpaymentsInvoiceId: NOWPAYMENTS_TIERS.MASTER.invoiceId,
+    nowpaymentsInvoiceId: NOWPAYMENTS_INVOICE_IDS.MASTER,
     features: [
       'enable_affiliate_engine',
       'enable_admin_dashboard',

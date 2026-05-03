@@ -9,7 +9,7 @@
  * @module overage/overage-formatter
  */
 
-import type { OverageEvent } from '@/lib/billing/billing-types';
+import type { OverageEvent } from '@/seed/types/billing-contracts';
 
 /**
  * Formatted overage event for API response
