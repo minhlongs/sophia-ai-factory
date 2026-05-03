@@ -40,7 +40,7 @@ deployed_sha: b4b281b6
 
 - **CI bypassed**: GitLab pipeline `2496286661` failed instantly due to "Identity verification is required in order to run CI jobs" (`ultimate_trial` plan still requires CC verification for shared runners). Direct wrangler deploy used as emergency path.
 - **OpenNext + Next 16 quirk**: `instrumentation.ts` causes `copyTracedFiles.js` to throw `File server/instrumentation.js does not exist`. Workaround: temporarily rename to `.disabled` for build, restore after. **Sentry runtime hook disabled in current build** — edge config still works. Permanent fix: track OpenNext issue or migrate to Next-native instrumentation client.
-- **Cookie chain fix unverified end-to-end**: cold curl returns 307 correctly; full validation requires real magic-link click. Phase 01 logging will surface H1/H2/H3 root cause if reject still occurs.
+- **Cookie chain fix VERIFIED end-to-end (2026-05-03)**: E2E validation plan [`plans/260503-0830-sophia-magic-link-e2e-validation/`](../260503-0830-sophia-magic-link-e2e-validation/plan.md) → **PASS**. Real magic-link click → `__Secure-better-auth.session_token` Set-Cookie confirmed → `/setup-wizard` HTTP 200 + wizard rendered. Verdict report: [`plans/reports/e2e-validation-260503-magic-link.md`](../reports/e2e-validation-260503-magic-link.md).
 
 ## Critical Dependencies
 

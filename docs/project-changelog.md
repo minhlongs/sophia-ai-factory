@@ -1,7 +1,32 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-05-02 (BYOK end-to-end refactor: customer HeyGen/Resend/NOWPayments keys via user_provider_credentials)
+> **Last Updated:** 2026-05-03 (Magic-link E2E validation: PASS — setup-wizard go-live unblocked)
+
+---
+
+## [2026-05-03] Magic-Link E2E Validation — Setup-Wizard Cookie Chain (260503-0830 VERIFIED)
+
+**Summary (vi):** Xác thực end-to-end magic-link → setup-wizard cookie chain. Verdict: PASS. Magic-link click → `__Secure-better-auth.session_token` Set-Cookie xác nhận → `/setup-wizard` HTTP 200 + wizard render thành công.
+
+**Summary (en):** End-to-end validated magic-link → setup-wizard cookie chain. Verdict: PASS. Real magic-link click produces `__Secure-better-auth.session_token` Set-Cookie → `/setup-wizard` returns HTTP 200 and wizard renders.
+
+### Evidence
+- Browser test: `plans/260503-0830-sophia-magic-link-e2e-validation/reports/` — PASS
+- Session cookie: `__Secure-better-auth.session_token; Path=/; HttpOnly; Secure; SameSite=Lax`
+- Final URL: `https://sophia.agencyos.network/setup-wizard` (200)
+- D1 cleanup: 0 rows remaining for test user
+
+### New Files
+- `apps/sophia-ai-factory/scripts/e2e/seed-magic-link.sh` — Idempotent seed script for PROD D1 E2E test data
+- `apps/sophia-ai-factory/scripts/e2e/cleanup-magic-link.sh` — Cleanup script for PROD D1 test rows
+- `apps/sophia-ai-factory/scripts/e2e/run-magic-link-browser-test.mjs` — Puppeteer browser automation for magic-link flow
+- `apps/sophia-ai-factory/scripts/e2e/capture-tail.sh` — wrangler tail capture for E2E log inspection
+- `apps/sophia-ai-factory/scripts/e2e/run-e2e-validation.sh` — Orchestrator for full E2E validation run
+- `apps/sophia-ai-factory/src/app/api/welcome/validate/[token]/__tests__/route.test.ts` — 5 regression tests for cookie chain
+
+### Modified Files
+- `apps/sophia-ai-factory/src/app/setup-wizard/page.tsx` — Added `data-testid="setup-wizard-root"` for E2E selector stability
 
 ---
 
