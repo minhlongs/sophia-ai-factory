@@ -102,16 +102,20 @@ export async function createHandoverRecord(
     tier: string;
     installedSops: string[];
     adminId: string;
+    source?: 'manual' | 'auto_payment' | 'auto_signup';
+    triggerPaymentId?: string | null;
   },
 ): Promise<string> {
   const handoverId = genId();
   const nowSec = Math.floor(Date.now() / 1000);
+  const source = params.source ?? 'manual';
+  const triggerPaymentId = params.triggerPaymentId ?? null;
 
   await db
     .prepare(
       `INSERT INTO customer_handovers
-       (id, customer_user_id, agency_name, agency_type, tier, starter_sops, created_by_admin_id, created_at, status)
-       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 'pending')`,
+       (id, customer_user_id, agency_name, agency_type, tier, starter_sops, created_by_admin_id, created_at, status, source, trigger_payment_id)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 'pending', ?9, ?10)`,
     )
     .bind(
       handoverId,
@@ -122,6 +126,8 @@ export async function createHandoverRecord(
       JSON.stringify(params.installedSops),
       params.adminId,
       nowSec,
+      source,
+      triggerPaymentId,
     )
     .run();
 

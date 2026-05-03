@@ -18,8 +18,9 @@ import { revokeAccessByPurchaseId } from '@/lib/db/repositories/videos-repo'
 import { triggerOneTimeFulfillment } from '@/lib/fulfillment/one-time-fulfillment'
 import { markUnderpaid, UNDERPAYMENT_THRESHOLD } from './nowpayments-ipn-underpaid'
 import type { NowPaymentsIpnPayload } from './nowpayments-ipn-handlers'
-import { parseUserIdFromOrderId } from './nowpayments-ipn-db'
+import { parseUserIdFromOrderId, getDb } from './nowpayments-ipn-db'
 import type { OneTimeSku } from '@/types'
+import { triggerAutoHandover } from '@/lib/handover/auto-handover'
 
 // TTL helpers ────────────────────────────────────────────────────────────────
 
@@ -120,6 +121,26 @@ export async function handleOneTimeFinished(
     credits: sku.credits,
     paymentId: ipn.payment_id,
   })
+
+  // Auto-handover for one-time bundle buyers — non-fatal
+  try {
+    const db = getDb()
+    const { data: userRow } = await db.from('user').select('email,name').eq('id', userId).single()
+    const userEmail = (userRow as { email?: string; name?: string } | null)?.email ?? ipn.customer_email ?? ''
+    const userName = (userRow as { email?: string; name?: string } | null)?.name ?? undefined
+    if (userEmail) {
+      await triggerAutoHandover({
+        paymentId: ipn.payment_id,
+        userId,
+        email: userEmail,
+        fullName: userName,
+        tier: 'BASIC', // one-time bundle maps to BASIC starter pack (3 SOPs)
+        isFirstPurchase: true,
+      })
+    }
+  } catch (err) {
+    logger.warn('[IPN/OneTime] Auto-handover failed (non-fatal)', { userId, error: String(err) })
+  }
 
   // Trigger fulfillment (video gen + email) — non-fatal
   try {

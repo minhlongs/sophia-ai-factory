@@ -1,4 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server';
+import { z } from 'zod';
 import { createInvoiceUrl, NOWPAYMENTS_TIERS } from '@/lib/clients/nowpayments-client';
 import { checkoutSchema } from '@/lib/schemas';
 import { withRateLimit } from '@/middleware/rate-limit-wrapper';
@@ -49,20 +50,28 @@ export const GET = withRateLimit(async function GET(request: NextRequest) {
   }
 }, { addHeaders: true, config: { intervalMs: 60000, maxRequests: 10 } });
 
+const checkoutWithEmailSchema = z.object({
+  tier: z.string(),
+  customerEmail: z.string().email().optional(),
+});
+
 // POST handler — returns NOWPayments invoice URL for frontend redirect
 export const POST = withRateLimit(async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    const validation = checkoutSchema.safeParse(body);
-    if (!validation.success) {
+    const baseValidation = checkoutSchema.safeParse(body);
+    if (!baseValidation.success) {
       return NextResponse.json(
-        { error: 'Invalid request', details: validation.error.flatten() },
+        { error: 'Invalid request', details: baseValidation.error.flatten() },
         { status: 400 }
       );
     }
 
-    const { tier } = validation.data;
+    const emailParsed = checkoutWithEmailSchema.safeParse(body);
+    const customerEmail = emailParsed.success ? emailParsed.data.customerEmail : undefined;
+
+    const { tier } = baseValidation.data;
 
     if (!NOWPAYMENTS_TIERS[tier]) {
       return NextResponse.json(
@@ -78,7 +87,7 @@ export const POST = withRateLimit(async function POST(request: Request) {
         { status: 401 }
       );
     }
-    const checkoutUrl = createInvoiceUrl(tier, userId);
+    const checkoutUrl = createInvoiceUrl(tier, userId, customerEmail);
 
     return NextResponse.json({ url: checkoutUrl });
   } catch (error) {
