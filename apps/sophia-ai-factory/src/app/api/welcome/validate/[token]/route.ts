@@ -56,6 +56,26 @@ export async function GET(_request: NextRequest, { params }: RouteParams): Promi
 }
 
 /**
+ * Sign a cookie value using the same scheme Better Auth/better-call uses:
+ * `${value}.${base64(HMAC-SHA256(value, secret))}`, then percent-encoded.
+ * This MUST stay in sync with better-call's `signCookieValue` (crypto.mjs)
+ * so `auth.api.getSession()` accepts the cookie we issue here.
+ */
+async function signCookieValue(value: string, secret: string): Promise<string> {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    enc.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  const sigBuf = await crypto.subtle.sign('HMAC', key, enc.encode(value));
+  const sig = btoa(String.fromCharCode(...new Uint8Array(sigBuf)));
+  return encodeURIComponent(`${value}.${sig}`);
+}
+
+/**
  * Create a Better Auth session for the handover customer user.
  * Returns the session token or null on failure.
  */
@@ -110,24 +130,33 @@ export async function POST(request: NextRequest, { params }: RouteParams): Promi
     redirectUrl: '/setup-wizard',
   });
 
-  // Create a real Better Auth session and attach it as a cookie so the
+  // Create a real Better Auth session and attach it as a SIGNED cookie so the
   // browser is authenticated when the welcome page redirects to /setup-wizard.
+  // Cookie value must be signed with BETTER_AUTH_SECRET — `auth.api.getSession()`
+  // verifies the HMAC signature and rejects raw tokens.
   const session = await createSessionForUser(handover.customer_user_id, request);
   if (session) {
-    // Better Auth session cookie name matches the configured basePath prefix.
-    // Default: "better-auth.session_token" with httpOnly + secure + sameSite=lax.
-    const cookieName = 'better-auth.session_token';
-    response.cookies.set(cookieName, session.token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'lax',
-      expires: new Date(session.expiresAt),
-      path: '/',
-    });
-    logger.info('[Welcome/Consume] Session cookie set', {
-      handoverId: handover.id,
-      userId: handover.customer_user_id,
-    });
+    const secret = process.env.BETTER_AUTH_SECRET || process.env.JWT_SECRET=REDACTED || '';
+    if (!secret) {
+      logger.error('[Welcome/Consume] Missing BETTER_AUTH_SECRET — cannot sign session cookie');
+    } else {
+      const cookieName = 'better-auth.session_token';
+      const signedValue = await signCookieValue(session.token, secret);
+      const expires = new Date(session.expiresAt).toUTCString();
+      const cookieAttrs = [
+        `${cookieName}=${signedValue}`,
+        'Path=/',
+        'HttpOnly',
+        'Secure',
+        'SameSite=Lax',
+        `Expires=${expires}`,
+      ].join('; ');
+      response.headers.append('Set-Cookie', cookieAttrs);
+      logger.info('[Welcome/Consume] Signed session cookie set', {
+        handoverId: handover.id,
+        userId: handover.customer_user_id,
+      });
+    }
   } else {
     // Non-fatal: log but still redirect. User may need to log in manually.
     logger.warn('[Welcome/Consume] Session not created — user will be redirected to /login', {
