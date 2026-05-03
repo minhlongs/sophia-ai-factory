@@ -19,6 +19,8 @@ import { logger } from '@/lib/utils/logger-utility';
 import { toError, getErrorMessage } from '@/lib/utils/to-error';
 import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker';
 import { verifyCronAuth } from '@/lib/security/cron-auth';
+import { recordCheck, getRecentChecks, getActiveIncident, openIncident, closeIncident } from '@/lib/status/status-store';
+import { evaluateIncidentAction } from '@/lib/status/incident-state-machine';
 
 export const dynamic = 'force-dynamic';
 
@@ -84,7 +86,29 @@ export async function GET(req: NextRequest) {
     const latency = Date.now() - start;
     const body = await res.json().catch(() => ({})) as { status?: string };
 
-    if (!res.ok || body.status === 'unhealthy') {
+    const checkStatus = (!res.ok || body.status === 'unhealthy') ? 'down'
+      : latency > LATENCY_WARN_MS ? 'degraded' : 'ok';
+
+    if (db) {
+      try {
+        await recordCheck(db, { ts: Math.floor(Date.now() / 1000), status: checkStatus, latencyMs: latency });
+        const recentChecks = await getRecentChecks(db);
+        const activeIncident = await getActiveIncident(db);
+        const typedChecks = recentChecks.map(c => ({ status: c.status as import('@/lib/status/incident-state-machine').CheckStatus }));
+        const action = evaluateIncidentAction(typedChecks, activeIncident?.id ?? null);
+        if (action === 'open') {
+          await openIncident(db, 'Service disruption detected', 'minor');
+          await alertAdmin(`⚠️ INCIDENT OPENED\nSophia appears to be down.\nHTTP ${res.status}`);
+        } else if (action === 'close' && activeIncident) {
+          await closeIncident(db, activeIncident.id);
+          await alertAdmin('✅ INCIDENT RESOLVED\nSophia is back to normal.');
+        }
+      } catch (statusErr) {
+        logger.warn('[uptime-check] Status record failed (non-fatal)', { error: getErrorMessage(statusErr) });
+      }
+    }
+
+    if (checkStatus === 'down') {
       await alertAdmin(
         `⚠️ SOPHIA DOWN\nHTTP ${res.status}\nLatency: ${latency}ms\nStatus: ${body.status ?? 'unknown'}`,
       );
@@ -92,20 +116,28 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ healthy: false, status: res.status, latency });
     }
 
-    if (latency > LATENCY_WARN_MS) {
-      await alertAdmin(
-        `🐌 SOPHIA SLOW\nLatency: ${latency}ms (threshold: ${LATENCY_WARN_MS}ms)`,
-      );
+    if (checkStatus === 'degraded') {
+      await alertAdmin(`🐌 SOPHIA SLOW\nLatency: ${latency}ms (threshold: ${LATENCY_WARN_MS}ms)`);
     }
 
     logger.info(`[uptime-check] OK — ${latency}ms`);
     if (db) await recordCronRun(db, CRON_NAME, 'success');
-    return NextResponse.json({ healthy: true, status: res.status, latency });
+    return NextResponse.json({ healthy: true, status: res.status, latency, checkStatus });
   } catch (e) {
     const msg = getErrorMessage(e);
     await alertAdmin(`🔴 SOPHIA UNREACHABLE\nError: ${msg}`);
     logger.error('[uptime-check] Health check failed', toError(e));
-    if (db) await recordCronRun(db, CRON_NAME, 'failure', msg);
+    if (db) {
+      try {
+        await recordCheck(db, { ts: Math.floor(Date.now() / 1000), status: 'down', latencyMs: null, error: msg });
+        const recentChecks = await getRecentChecks(db);
+        const activeIncident = await getActiveIncident(db);
+        const typedChecks2 = recentChecks.map(c => ({ status: c.status as import('@/lib/status/incident-state-machine').CheckStatus }));
+        const action = evaluateIncidentAction(typedChecks2, activeIncident?.id ?? null);
+        if (action === 'open') await openIncident(db, 'Service unreachable', 'major');
+      } catch { /* non-fatal */ }
+      await recordCronRun(db, CRON_NAME, 'failure', msg);
+    }
     return NextResponse.json({ healthy: false, error: msg });
   }
 }
