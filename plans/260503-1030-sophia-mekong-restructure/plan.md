@@ -15,6 +15,15 @@ Restructure `apps/sophia-ai-factory/src/` (1646 TS files, 102 lib subdirs) from 
 
 **Reference:** `~/mekong-cli/plans/260425-1850-solo-platform-restructure/` (4-phase complete).
 
+## Locked Architectural Decisions (2026-05-03 post-Phase-01 scout)
+
+Based on scout findings (1717 files, ~28 true violations, PR #23):
+
+1. ✅ **`components/ui/` stays in seed** — pure Tailwind primitives, zero domain imports. Mekong-aligned.
+2. ✅ **Extract billing types to `seed/types/billing-contracts.ts`** — fixes 56 forest→land violations by exposing contracts at seed layer. Adds ~1h to Phase 02.5.
+3. ✅ **`lib/auth/` cluster KEPT in seed** — including enriched-jwt et al. ESLint config will EXEMPT `lib/auth/*` from forest-import rule. ~4 acceptable violations.
+4. **New Phase 02.5 (pre-fix violations)** added between Phase 02 and Phase 03 — fixes ~28 true seed violations BEFORE any file moves. Gating.
+
 ## Layer Definitions (one-way: land → forest → tree → seed)
 
 | Layer | Purpose | Sophia Mapping (tentative) |
