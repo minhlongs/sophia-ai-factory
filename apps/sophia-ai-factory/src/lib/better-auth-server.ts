@@ -77,10 +77,15 @@ export function getAuth() {
       cookieCache: { enabled: true, maxAge: 5 * 60 },
     },
     advanced: {
+      // Force __Secure- prefix in production so cookie name is deterministic.
+      // Without useSecureCookies, Better Auth auto-detects from x-forwarded-proto
+      // which may be missing behind Cloudflare Workers, causing prefix mismatch.
+      useSecureCookies: process.env.NODE_ENV !== 'development',
       defaultCookieAttributes: {
         sameSite: 'lax',
-        secure: true,
+        secure: process.env.NODE_ENV !== 'development',
         httpOnly: true,
+        path: '/',
       },
     },
     plugins: [
