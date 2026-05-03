@@ -9,7 +9,9 @@ import { CouponInput, type PromoDiscount } from "./coupon-input";
 
 interface CheckoutResponse {
   url?: string;
+  orderId?: string;
   error?: string;
+  redirectTo?: string;
 }
 
 export function PricingSection() {
@@ -55,6 +57,11 @@ export function PricingSection() {
       });
 
       const data = (await response.json()) as CheckoutResponse;
+
+      if (response.status === 401 && data.redirectTo) {
+        window.location.href = data.redirectTo;
+        return;
+      }
 
       if (data.url) {
         window.location.href = data.url;
