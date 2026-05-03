@@ -1,11 +1,45 @@
 {
   "setupWizard": {
+    "apiKeys": {
+      "title": "AI Service Configuration",
+      "subtitle": "Enter API keys for the AI services powering Sophia.",
+      "openrouter": {
+        "label": "OpenRouter API Key (LLM)",
+        "placeholder": "sk-or-...",
+        "help": "Get your key at openrouter.ai/keys"
+      },
+      "elevenlabs": {
+        "label": "ElevenLabs API Key (Voice)",
+        "placeholder": "sk_...",
+        "help": "Get your key at elevenlabs.io/subscription"
+      },
+      "did": {
+        "label": "D-ID API Key (Avatar)",
+        "placeholder": "Basic ...",
+        "help": "Get your key at studio.d-id.com/account-settings"
+      },
+      "anthropic": {
+        "label": "Anthropic API Key (LLM)",
+        "placeholder": "sk-ant-...",
+        "help": "Get your key at console.anthropic.com/keys"
+      },
+      "muapi": {
+        "label": "MuAPI Key (Music/Audio)",
+        "placeholder": "mu_...",
+        "help": "Get your key at muapi.ai/dashboard/api-keys"
+      }
+    },
+    "alerts": {
+      "invalidKey": "Invalid API key — please double-check and try again",
+      "missingLlm": "At least one LLM key is required (OpenRouter or Anthropic)",
+      "missingHeygen": "HeyGen API key is required to continue"
+    },
     "header": {
-      "title": "Sophia Setup Wizard",
-      "subtitle": "Configure your AI Factory in minutes."
+      "title": "Sophia Setup Assistant",
+      "subtitle": "Complete the steps below to activate your AI platform"
     },
     "stepper": {
-      "system": "System",
+      "system": "System Check",
       "aiKeys": "AI Keys",
       "providers": "Providers",
       "localMode": "Local Mode",
@@ -13,16 +47,11 @@
     },
     "actions": {
       "back": "Back",
-      "next": "Next Step",
+      "next": "Continue",
       "saving": "Saving",
-      "launch": "Launch Sophia"
+      "launch": "Launch"
     },
-    "footer": "Sophia AI Factory • RaaS for Vietnam Agencies",
-    "alerts": {
-      "invalidKey": "Some API keys are invalid. Please review or remove the incorrect ones.",
-      "missingLlm": "At least one LLM key (OpenRouter or Anthropic) is required to continue.",
-      "missingHeygen": "HeyGen API key is required for video generation."
-    }
+    "footer": "Need help? Contact our support team"
   },
   "landing": {
     "nav": {
@@ -997,37 +1026,6 @@
       "error_generic": "Something went wrong. Please try again.",
       "success_enabled": "Two-factor authentication enabled",
       "success_disabled": "Two-factor authentication disabled"
-    }
-  },
-  "setupWizard": {
-    "apiKeys": {
-      "title": "AI Service Configuration",
-      "subtitle": "Enter API keys for the AI services powering Sophia.",
-      "openrouter": {
-        "label": "OpenRouter API Key (LLM)",
-        "placeholder": "sk-or-...",
-        "help": "Get your key at openrouter.ai/keys"
-      },
-      "elevenlabs": {
-        "label": "ElevenLabs API Key (Voice)",
-        "placeholder": "sk_...",
-        "help": "Get your key at elevenlabs.io/subscription"
-      },
-      "did": {
-        "label": "D-ID API Key (Avatar)",
-        "placeholder": "Basic ...",
-        "help": "Get your key at studio.d-id.com/account-settings"
-      },
-      "anthropic": {
-        "label": "Anthropic API Key (LLM)",
-        "placeholder": "sk-ant-...",
-        "help": "Get your key at console.anthropic.com/keys"
-      },
-      "muapi": {
-        "label": "MuAPI Key (Music/Audio)",
-        "placeholder": "mu_...",
-        "help": "Get your key at muapi.ai/dashboard/api-keys"
-      }
     }
   },
   "auth": {

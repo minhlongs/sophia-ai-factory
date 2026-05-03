@@ -1,28 +1,57 @@
 {
   "setupWizard": {
+    "apiKeys": {
+      "title": "Cấu Hình Dịch Vụ AI",
+      "subtitle": "Nhập các API key cho dịch vụ AI để kích hoạt Sophia.",
+      "openrouter": {
+        "label": "OpenRouter API Key (LLM)",
+        "placeholder": "sk-or-...",
+        "help": "Lấy key tại openrouter.ai/keys"
+      },
+      "elevenlabs": {
+        "label": "ElevenLabs API Key (Giọng Nói)",
+        "placeholder": "sk_...",
+        "help": "Lấy key tại elevenlabs.io/subscription"
+      },
+      "did": {
+        "label": "D-ID API Key (Avatar)",
+        "placeholder": "Basic ...",
+        "help": "Lấy key tại studio.d-id.com/account-settings"
+      },
+      "anthropic": {
+        "label": "Anthropic API Key (LLM)",
+        "placeholder": "sk-ant-...",
+        "help": "Lấy key tại console.anthropic.com/keys"
+      },
+      "muapi": {
+        "label": "MuAPI Key (Âm Nhạc/Âm Thanh)",
+        "placeholder": "mu_...",
+        "help": "Lấy key tại muapi.ai/dashboard/api-keys"
+      }
+    },
+    "alerts": {
+      "invalidKey": "Khoá API không hợp lệ — vui lòng kiểm tra lại",
+      "missingLlm": "Cần ít nhất một khoá LLM (OpenRouter hoặc Anthropic)",
+      "missingHeygen": "Cần khoá HeyGen để tiếp tục"
+    },
     "header": {
-      "title": "Khởi Tạo Sophia",
-      "subtitle": "Cấu hình AI Factory chỉ trong vài phút."
+      "title": "Trợ lý cài đặt Sophia",
+      "subtitle": "Hoàn tất các bước dưới đây để kích hoạt nền tảng AI của bạn"
     },
     "stepper": {
-      "system": "Hệ Thống",
-      "aiKeys": "Khóa AI",
-      "providers": "Nhà Cung Cấp",
-      "localMode": "Chế Độ Local",
-      "finish": "Hoàn Thành"
+      "system": "Kiểm tra hệ thống",
+      "aiKeys": "Khoá AI",
+      "providers": "Nhà cung cấp",
+      "localMode": "Chế độ cục bộ",
+      "finish": "Hoàn tất"
     },
     "actions": {
-      "back": "Quay Lại",
-      "next": "Bước Kế",
-      "saving": "Đang Lưu",
-      "launch": "Khởi Chạy Sophia"
+      "back": "Quay lại",
+      "next": "Tiếp tục",
+      "saving": "Đang lưu",
+      "launch": "Kích hoạt"
     },
-    "footer": "Sophia AI Factory • RaaS for Vietnam Agencies",
-    "alerts": {
-      "invalidKey": "Có API key không hợp lệ. Vui lòng kiểm tra lại hoặc xóa key không đúng.",
-      "missingLlm": "Bạn cần nhập ít nhất một LLM key (OpenRouter hoặc Anthropic) để tiếp tục.",
-      "missingHeygen": "Bắt buộc nhập HeyGen API key để tạo video."
-    }
+    "footer": "Cần hỗ trợ? Liên hệ đội ngũ của chúng tôi"
   },
   "landing": {
     "nav": {
@@ -997,37 +1026,6 @@
       "error_generic": "Đã xảy ra lỗi. Vui lòng thử lại.",
       "success_enabled": "Đã bật xác thực hai yếu tố",
       "success_disabled": "Đã tắt xác thực hai yếu tố"
-    }
-  },
-  "setupWizard": {
-    "apiKeys": {
-      "title": "Cấu Hình Dịch Vụ AI",
-      "subtitle": "Nhập các API key cho dịch vụ AI để kích hoạt Sophia.",
-      "openrouter": {
-        "label": "OpenRouter API Key (LLM)",
-        "placeholder": "sk-or-...",
-        "help": "Lấy key tại openrouter.ai/keys"
-      },
-      "elevenlabs": {
-        "label": "ElevenLabs API Key (Giọng Nói)",
-        "placeholder": "sk_...",
-        "help": "Lấy key tại elevenlabs.io/subscription"
-      },
-      "did": {
-        "label": "D-ID API Key (Avatar)",
-        "placeholder": "Basic ...",
-        "help": "Lấy key tại studio.d-id.com/account-settings"
-      },
-      "anthropic": {
-        "label": "Anthropic API Key (LLM)",
-        "placeholder": "sk-ant-...",
-        "help": "Lấy key tại console.anthropic.com/keys"
-      },
-      "muapi": {
-        "label": "MuAPI Key (Âm Nhạc/Âm Thanh)",
-        "placeholder": "mu_...",
-        "help": "Lấy key tại muapi.ai/dashboard/api-keys"
-      }
     }
   },
   "auth": {
