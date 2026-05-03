@@ -1221,5 +1221,24 @@
       "missions": "Recent Missions",
       "admin": "Admin"
     }
+  },
+  "checkout": {
+    "pending_title": "Confirming payment...",
+    "pending_desc": "Crypto confirmations take 2-5 min. Checking... ({attempt}/{max})",
+    "timeout_title": "Still processing...",
+    "timeout_desc": "The blockchain is confirming your transaction. We'll email you when it's done.",
+    "contact_support": "Contact support",
+    "failure_title": "Payment Unsuccessful",
+    "failure_desc": "We're sorry, your payment could not be completed. Don't worry — you can try again.",
+    "failure_reasons_title": "Common reasons",
+    "failure_reasons": [
+      "Insufficient payment amount (underpayment)",
+      "Transaction expired before confirmation",
+      "Amount doesn't match the invoice",
+      "Blockchain connection error"
+    ],
+    "try_again": "Try again",
+    "order_id_label": "Order ID",
+    "period_yearly_coming_soon": "Yearly billing not yet enabled"
   }
 }

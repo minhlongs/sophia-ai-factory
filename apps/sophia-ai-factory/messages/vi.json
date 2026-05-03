@@ -1221,5 +1221,24 @@
       "missions": "Nhiệm Vụ Gần Đây",
       "admin": "Quản Trị"
     }
+  },
+  "checkout": {
+    "pending_title": "Đang xác nhận thanh toán...",
+    "pending_desc": "Crypto mất 2-5 phút để xác nhận. Đang kiểm tra... ({attempt}/{max})",
+    "timeout_title": "Vẫn đang xử lý...",
+    "timeout_desc": "Blockchain đang xác nhận giao dịch của bạn. Chúng tôi sẽ gửi email khi hoàn tất.",
+    "contact_support": "Liên hệ hỗ trợ",
+    "failure_title": "Thanh toán không thành công",
+    "failure_desc": "Rất tiếc, thanh toán của bạn không thể hoàn tất. Đừng lo — bạn có thể thử lại.",
+    "failure_reasons_title": "Nguyên nhân phổ biến",
+    "failure_reasons": [
+      "Số tiền thanh toán không đủ (underpayment)",
+      "Giao dịch hết hạn trước khi xác nhận",
+      "Số tiền không khớp với hóa đơn",
+      "Lỗi kết nối blockchain"
+    ],
+    "try_again": "Thử lại",
+    "order_id_label": "Mã đơn hàng",
+    "period_yearly_coming_soon": "Thanh toán theo năm chưa được hỗ trợ"
   }
 }
