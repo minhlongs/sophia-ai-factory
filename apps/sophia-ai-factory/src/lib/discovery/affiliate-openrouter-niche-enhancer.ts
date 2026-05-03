@@ -7,10 +7,10 @@
  */
 
 import type { AffiliateProgram } from "@/seed/types";
-import { withTimeout } from "@/lib/byok/with-timeout";
-import { callLocalMekongd } from "@/lib/byok/local-mekongd-adapter";
-import { resolveLocalMekongdForUser } from "@/lib/byok/provider-router";
-import { resolveUserApiKey } from "@/lib/byok/resolve-user-api-key";
+import { withTimeout } from "@/tree/byok/with-timeout";
+import { callLocalMekongd } from "@/tree/byok/local-mekongd-adapter";
+import { resolveLocalMekongdForUser } from "@/tree/byok/provider-router";
+import { resolveUserApiKey } from "@/tree/byok/resolve-user-api-key";
 
 /** OpenRouter response shape for chat completions */
 interface OpenRouterChoice {

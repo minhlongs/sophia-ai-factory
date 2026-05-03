@@ -6,7 +6,7 @@
  */
 
 import { createServerClient } from '@/seed/db/client';
-import { sha256 } from '@/lib/audit/crypto-utils';
+import { sha256 } from '@/tree/audit/crypto-utils';
 import { logger } from '@/seed/utils/logger-utility';
 
 export interface ApiKeyAuthResult {

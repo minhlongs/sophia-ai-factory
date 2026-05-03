@@ -7,7 +7,7 @@
 
 import { logger } from '@/seed/utils/logger-utility';
 import { Tier } from '@/seed/types';
-import { withTimeout } from '@/lib/byok/with-timeout';
+import { withTimeout } from '@/tree/byok/with-timeout';
 
 /** Get default voice ID based on tier (ElevenLabs pre-made voice IDs) */
 export function getDefaultVoiceId(tier: Tier): string {

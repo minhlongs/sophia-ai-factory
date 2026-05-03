@@ -5,7 +5,7 @@
  * LIVE — requires Resend API key.
  */
 
-import { getResendKey } from '@/lib/credentials/get-provider-key';
+import { getResendKey } from '@/tree/credentials/get-provider-key';
 import { logger } from '@/seed/utils/logger-utility';
 import type { MissionHandlerResult, MissionContext } from './types';
 

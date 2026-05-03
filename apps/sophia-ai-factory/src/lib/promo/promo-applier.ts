@@ -6,7 +6,7 @@
 
 import { validatePromoCode } from './promo-validator';
 import { incrementUsedCount, recordRedemption, setUserTrialExpiry } from './promo-repo';
-import { triggerAutoHandover } from '@/lib/handover/auto-handover';
+import { triggerAutoHandover } from '@/tree/handover/auto-handover';
 import { logger } from '@/seed/utils/logger-utility';
 import type { ApplyOptions, ApplyResult } from './promo-types';
 import type { Tier } from '@/seed/types';

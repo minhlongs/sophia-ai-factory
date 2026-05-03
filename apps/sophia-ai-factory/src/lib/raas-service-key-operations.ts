@@ -5,7 +5,7 @@
  * revocation, and nonce generation.
  */
 
-import { hmacSha256, timingSafeEqual } from './audit/crypto-utils';
+import { hmacSha256, timingSafeEqual } from '@/tree/audit/crypto-utils';
 import { logger } from '@/seed/utils/logger-utility';
 import { redis } from './redis';
 import {

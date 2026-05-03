@@ -4,7 +4,7 @@
  * Generates and validates idempotency keys to prevent duplicate usage tracking
  */
 
-import { sha256 } from '@/lib/audit/crypto-utils';
+import { sha256 } from '@/tree/audit/crypto-utils';
 
 /**
  * Generate idempotency key from request context

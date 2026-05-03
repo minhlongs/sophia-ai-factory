@@ -1,5 +1,5 @@
 import { IPaymentService, CreateCheckoutParams, CheckoutSession } from "../types";
-import { createInvoiceUrl } from "@/lib/clients/nowpayments-client";
+import { createInvoiceUrl } from "@/tree/clients/nowpayments-client";
 import { getErrorMessage } from "@/seed/utils/to-error";
 
 export class RealPaymentService implements IPaymentService {

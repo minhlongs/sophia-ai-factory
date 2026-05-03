@@ -7,8 +7,8 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@/seed/utils/logger-utility'
-import { logValidationWithReceipt } from '@/lib/audit/logger/audit-writer'
-import { serializeReceiptForHeader } from '@/lib/audit/logger/audit-query'
+import { logValidationWithReceipt } from '@/tree/audit/logger/audit-writer'
+import { serializeReceiptForHeader } from '@/tree/audit/logger/audit-query'
 import { extractLicenseKey, validateLicenseKey, createForbiddenResponse } from './raas-validation'
 import { enforceRaasQuota } from './raas-rate-limiter'
 

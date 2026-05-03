@@ -7,7 +7,7 @@
  * @module lib/agent-chat/llm-router
  */
 
-import { getUserCredential } from '@/lib/credentials/user-credentials-repo';
+import { getUserCredential } from '@/tree/credentials/user-credentials-repo';
 import type { LlmRoute } from './types';
 
 const DEEPSEEK_BASE_URL = 'https://api.deepseek.com/v1';

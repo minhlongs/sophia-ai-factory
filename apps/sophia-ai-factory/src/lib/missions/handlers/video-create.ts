@@ -8,7 +8,7 @@
  */
 
 import { createServerClient } from '@/seed/db/client';
-import { getHeyGenKey } from '@/lib/credentials/get-provider-key';
+import { getHeyGenKey } from '@/tree/credentials/get-provider-key';
 import { createHeyGenVideo } from '@/lib/video/heygen-helpers';
 import { logger } from '@/seed/utils/logger-utility';
 import type { MissionHandlerResult, MissionContext } from './types';

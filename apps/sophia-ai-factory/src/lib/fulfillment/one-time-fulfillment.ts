@@ -16,7 +16,7 @@
 import { logger } from '@/seed/utils/logger-utility'
 import { createServerClient } from '@/seed/db/client'
 import { createHeyGenVideo } from '@/lib/video/heygen-helpers'
-import { getHeyGenKey } from '@/lib/credentials/get-provider-key'
+import { getHeyGenKey } from '@/tree/credentials/get-provider-key'
 import { getOneTimeWelcomeScript } from '@/lib/video/one-time-welcome-script'
 import {
   findByPurchaseId,
