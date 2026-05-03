@@ -16,6 +16,7 @@ import { DashboardSetupSteps } from './components/dashboard-setup-steps';
 import { DashboardReturningUser } from './components/dashboard-returning-user';
 import { OnboardingTourModal } from './components/onboarding-tour-modal';
 import { OnboardingStatusWidget } from './components/onboarding-status-widget';
+import { MissionControlWidget } from '@/components/dashboard/mission-control-widget';
 import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
@@ -102,6 +103,8 @@ export default async function DashboardPage() {
       {isFirstLogin && <OnboardingTourModal userId={user.id} />}
 
       <DashboardHeroGreeting name={user.full_name} tier={tierLabel} />
+      {/* Mission Control Widget — GAP3 composite hero */}
+      <MissionControlWidget isVi={isVi} />
       <OnboardingStatusWidget isVi={isVi} />
 
       {sopCount === 0 ? (
