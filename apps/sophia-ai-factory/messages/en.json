@@ -1240,5 +1240,49 @@
     "try_again": "Try again",
     "order_id_label": "Order ID",
     "period_yearly_coming_soon": "Yearly billing not yet enabled"
+  },
+  "onboardingFlow": {
+    "title": "Set up Sophia AI",
+    "subtitle": "Complete 3 steps to unlock full features",
+    "step1": {
+      "title": "Connectivity check",
+      "desc": "Verifying connection to Sophia AI servers."
+    },
+    "step2": {
+      "title": "Generate API Key",
+      "desc": "This key lets your app call the Sophia AI API. Save it now — shown only once.",
+      "saveWarning": "This key will not be shown again. Store it securely.",
+      "savedBtn": "I've saved this key",
+      "generateBtn": "Generate API Key",
+      "generating": "Generating..."
+    },
+    "step3": {
+      "title": "Make your first API call",
+      "desc": "Send a message to Sophia AI and see the live response.",
+      "sendBtn": "Send",
+      "sending": "Sending...",
+      "continueBtn": "Continue →"
+    },
+    "completed": "All done!",
+    "completedDesc": "Sophia AI is ready to serve you.",
+    "openDashboard": "Open Dashboard"
+  },
+  "statusPage": {
+    "title": "Sophia AI Factory Status",
+    "operational": "All Systems Operational",
+    "degraded": "Degraded Performance",
+    "uptime90d": "90-day uptime",
+    "pastIncidents": "Past Incidents",
+    "noIncidents": "No incidents in the past 90 days.",
+    "incidentDuration": "Duration",
+    "postmortem": "Post-mortem"
+  },
+  "missionControl": {
+    "currentPlan": "Current plan",
+    "mcuQuota": "MCU quota",
+    "callsLast7d": "calls / 7d",
+    "upgradeNow": "Upgrade now",
+    "exploreSops": "Explore SOPs",
+    "renew": "Renew"
   }
 }
