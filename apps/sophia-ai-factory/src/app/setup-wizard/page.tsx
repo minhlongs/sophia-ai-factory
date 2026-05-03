@@ -42,6 +42,7 @@ export default function SetupWizardPage() {
     HEYGEN_API_KEY: '',
     RESEND_API_KEY: '',
     NOWPAYMENTS_API_KEY: '',
+    HEYGEN_WEBHOOK_SECRET: '',
   });
 
   // Saved credentials from server (display hints)
@@ -212,6 +213,9 @@ export default function SetupWizardPage() {
       }
       if (providerConfig.NOWPAYMENTS_API_KEY.trim()) {
         credPayload.nowpayments_api_key = providerConfig.NOWPAYMENTS_API_KEY.trim();
+      }
+      if (providerConfig.HEYGEN_WEBHOOK_SECRET.trim()) {
+        credPayload.heygen_webhook_secret = providerConfig.HEYGEN_WEBHOOK_SECRET.trim();
       }
 
       if (Object.keys(credPayload).length > 0) {
