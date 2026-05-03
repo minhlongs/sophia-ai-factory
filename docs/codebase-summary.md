@@ -1,11 +1,11 @@
 # Codebase Summary — Sophia AI Factory
 
 > Comprehensive overview of the Sophia AI Factory codebase structure, patterns, and architectural decisions.
-> **Last Updated:** 2026-04-30 (Phases 6-14 Complete: Video Pipeline, Affiliate Networks, OpenClaw Orchestrator, Revenue Split, FTC Hardening, 1798/1798 tests pass)
+> **Last Updated:** 2026-05-03 (Go-Live Production Deploy: self-serve checkout, magic-link E2E, mission control handover, 2546/2546 tests pass)
 
-**Production URL:** https://sophia.agencyos.network
-**Git SHA:** df22a4f7 | **Tests:** 1798/1798 passing (100%) | **Build:** < 10s, 0 TS errors | **Bundle:** < 500 KB gzipped
-**Phase 11-14 Complete (2026-04-30):** Tenant isolation (D1 Kysely plugin) + Tier quotas + Storage tracker. Video pipeline (6-step Inngest: script/TTS/visual/compose/upload/publish). Affiliate networks (5 adapters: TikTok Shop, Awin, ClickBank, AccessTrade, Amazon). OpenClaw orchestrator (10 primitives on Claude SDK + Qwen 3). Revenue split (commission-ledger, 14-day clawback, NOWPayments USDT payout). FTC hardening (#ad overlay, GDPR export/delete).
+**Production URL:** https://sophia.agencyos.network (SHA 5b1f711f)
+**Git SHA:** 5b1f711f | **Tests:** 2546/2546 passing (100%, 31 skipped) | **Build:** < 10s, 0 TS errors | **Bundle:** < 500 KB gzipped
+**Go-Live Complete (2026-05-03):** GAP1 magic-link E2E validation PASS (setup-wizard cookie chain verified, 5 regression tests). GAP2 self-serve checkout (public /pricing monthly+yearly, NOWPayments invoice, PayOS VN QR, idempotent IPN, atomic D1 tier upgrade, bilingual receipt VAT 10%, period_end widget). GAP3 mission control handover (durable D1 email outbox, /onboarding 3-step resumable, D1 API keys, mission widget, /status page 90d uptime, D+1/D+7 emails). 9 smoke tests PASS, infrastructure production-ready.
 
 ---
 
@@ -146,10 +146,26 @@ apps/sophia-ai-factory/  # Main Sophia AI Factory codebase (canon — deployed t
 │   │   │   ├── circuit-breaker.ts        # Fault tolerance
 │   │   │   └── skill-activation.ts       # Dynamic skill loading
 │   │   │
-│   │   ├── email/              # Email delivery (Phase 14 expansion)
+│   │   ├── email/              # Email delivery (Phase 14 expansion + 2026-05-03)
 │   │   │   ├── onboarding-emails.ts      # Video completion notification
-│   │   │   ├── ...
+│   │   │   ├── receipt-email-template.ts # Bilingual receipt with VAT 10% (NEW 2026-05-03)
+│   │   │   ├── receipt-email-sender.ts   # Resend delivery (NEW 2026-05-03)
+│   │   │   ├── lifecycle/milestone-emailer.ts # D+1/D+7 emails (NEW 2026-05-03)
 │   │   │   └── gdpr-export.ts            # GDPR data export
+│   │   │
+│   │   ├── outbox/             # Durable email queue (NEW 2026-05-03)
+│   │   │   └── email-outbox-processor.ts # D1 batch processor + retry cron
+│   │   │
+│   │   ├── status/             # Public status page (NEW 2026-05-03)
+│   │   │   ├── rollup-calculator.ts      # Daily uptime aggregates
+│   │   │   └── incidents-query.ts        # Incident tracking
+│   │   │
+│   │   ├── payments/           # Payment processing (2026-05-03 expansion)
+│   │   │   ├── nowpayments-invoice-generator.ts # Invoice generation
+│   │   │   └── payos.ts                  # PayOS Vietnam checkout + QR (NEW)
+│   │   │
+│   │   ├── api-keys/           # RaaS API key storage (NEW 2026-05-03)
+│   │   │   └── d1-store.ts               # CRUD + encryption
 │   │   │
 │   │   ├── gateway/            # OpenClaw integration, channel adapters
 │   │   ├── ingestion/          # Affiliate data ingestion (ClickBank, ShareASale)
@@ -177,7 +193,10 @@ apps/sophia-ai-factory/  # Main Sophia AI Factory codebase (canon — deployed t
 │   ├── 0004-usage-metering.sql
 │   ├── 0005-signals-events.sql        # Append-only events table
 │   ├── 0044-cron-runs-table.sql       # cron_run_log for execution dedup (260502-0733)
-│   └── 0045-videos-is-onboarding.sql  # Restore is_onboarding (lost in 0043, 260502-0733)
+│   ├── 0045-videos-is-onboarding.sql  # Restore is_onboarding (lost in 0043, 260502-0733)
+│   ├── 0046-user-provider-credentials.sql # Per-user provider credentials (260502-1100)
+│   ├── 0047-self-serve-checkout.sql   # pending_orders, payos_events (NEW 2026-05-03)
+│   └── 0048-mission-control-handover.sql # email_outbox, api_keys, onboarding, status (NEW 2026-05-03)
 │
 ├── scripts/                    # Build & deployment utilities
 │   ├── inject-scheduled-handler.mjs    # Post-build: injects CF Workers scheduled() default-export (260502-0756 FIX: CF Modules format)
