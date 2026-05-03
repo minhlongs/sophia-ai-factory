@@ -10,7 +10,7 @@
 
 import { useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/seed/components/ui/button';
 import { Save, Eye, EyeOff } from 'lucide-react';
 import { SopPreview } from './sop-preview';
 

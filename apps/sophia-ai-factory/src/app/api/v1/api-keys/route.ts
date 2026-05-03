@@ -6,10 +6,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getCurrentUserFromHeaders } from '@/lib/better-auth-session';
-import { getUserTier } from '@/lib/db/get-user-tier';
+import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
+import { getUserTier } from '@/seed/db/get-user-tier';
 import { createApiKey, listApiKeys, tierToRateLimit } from '@/lib/api-keys/d1-store';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 
 export const dynamic = 'force-dynamic';
 

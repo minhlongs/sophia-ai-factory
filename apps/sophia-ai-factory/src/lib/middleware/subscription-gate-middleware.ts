@@ -1,6 +1,6 @@
-import { createServerClient } from '@/lib/db/client'
-import { Tier } from '@/types'
-import { TIER_CONFIG } from '@/config/tiers'
+import { createServerClient } from '@/seed/db/client'
+import { Tier } from '@/seed/types'
+import { TIER_CONFIG } from '@/seed/config/tiers'
 
 /**
  * Subscription gate middleware for API routes and bot commands

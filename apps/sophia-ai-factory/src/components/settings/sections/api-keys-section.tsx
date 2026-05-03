@@ -1,16 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Button } from '@/seed/components/ui/button';
+import { Input } from '@/seed/components/ui/input';
+import { Label } from '@/seed/components/ui/label';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
+} from '@/seed/components/ui/card';
 import { Eye, EyeOff, ExternalLink } from 'lucide-react';
 import { UseFormReturn } from 'react-hook-form';
 import { UserProfileFormValues } from '@/lib/schemas/settings';

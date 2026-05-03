@@ -5,7 +5,7 @@
  * Real implementation: wire to YouTube Data API v3 channels.list endpoint.
  */
 
-import { createServerClient } from '@/lib/db/client';
+import { createServerClient } from '@/seed/db/client';
 import type { MissionHandlerResult, MissionContext } from './types';
 
 interface CredRow {

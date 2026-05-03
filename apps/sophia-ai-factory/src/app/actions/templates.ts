@@ -1,6 +1,6 @@
 "use server";
 
-import { getD1Client } from "@/lib/db/client";
+import { getD1Client } from "@/seed/db/client";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { tierGuard } from "@/lib/tier-guard";

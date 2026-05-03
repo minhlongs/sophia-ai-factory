@@ -5,8 +5,8 @@
  * Edge Runtime compatible (no fs/path imports).
  */
 
-import { logger } from '@/lib/utils/logger-utility';
-import { getErrorMessage } from '@/lib/utils/to-error';
+import { logger } from '@/seed/utils/logger-utility';
+import { getErrorMessage } from '@/seed/utils/to-error';
 
 const DEBUG_ENABLED = process.env.DEBUG_USAGE_METERING === 'true';
 

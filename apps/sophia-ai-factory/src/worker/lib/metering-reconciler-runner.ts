@@ -31,8 +31,8 @@ import {
   emitCompletionAlert,
   DEFAULT_ALERT_EMITTER_CONFIG,
 } from './reconciliation-alert-emitter';
-import { logger } from '@/lib/utils/logger-utility';
-import { toError } from '@/lib/utils/to-error';
+import { logger } from '@/seed/utils/logger-utility';
+import { toError } from '@/seed/utils/to-error';
 import { CRON_RECONCILIATION_CONFIG } from './metering-reconciler-types';
 import { logErrorToSentry, logErrorToKv } from './metering-reconciler-error-logger';
 import {

@@ -2,9 +2,9 @@
  * Onboarding Video Email — delivery notification for completed onboarding videos
  */
 
-import { createServerClient } from '@/lib/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { sendEmail } from '@/lib/email/sender';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 
 const BRAND_COLOR = '#6750A4';
 

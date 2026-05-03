@@ -18,10 +18,10 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent, CardHeader, CardTitle } from '@/seed/components/ui/card';
+import { Skeleton } from '@/seed/components/ui/skeleton';
 import { useTranslations } from 'next-intl';
-import type { TierAdoptionChartRow } from '@/types/analytics-tier';
+import type { TierAdoptionChartRow } from '@/seed/types/analytics-tier';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 

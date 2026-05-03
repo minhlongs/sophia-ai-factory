@@ -12,14 +12,14 @@ vi.mock('@/lib/affiliate-shortlink/click-logger', () => ({
   logClick: vi.fn(),
 }));
 
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   createServerClient: vi.fn(),
 }));
 
 import { GET } from './route';
 import { isValidShortCode } from '@/lib/affiliate-shortlink/short-code-generator';
 import { logClick } from '@/lib/affiliate-shortlink/click-logger';
-import { createServerClient } from '@/lib/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { NextRequest } from 'next/server';
 
 const mockSingle = vi.fn();

@@ -3,8 +3,8 @@
  * @module api/cron/weekly-signals-digest/weekly-digest-delivery
  */
 
-import { logger } from '@/lib/utils/logger-utility'
-import { getErrorMessage } from '@/lib/utils/to-error'
+import { logger } from '@/seed/utils/logger-utility'
+import { getErrorMessage } from '@/seed/utils/to-error'
 
 export async function sendEmail(summary: string): Promise<void> {
   const resendKey = process.env.RESEND_API_KEY

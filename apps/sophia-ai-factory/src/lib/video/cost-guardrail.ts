@@ -14,7 +14,7 @@
  */
 
 import { getBalance } from '@/lib/mcu/credits-repo';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 
 export type RenderPath = 'path-a' | 'path-b' | 'template';
 

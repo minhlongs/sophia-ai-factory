@@ -1,5 +1,5 @@
 import { Inngest, EventSchemas } from "inngest";
-import { Tier } from "@/types";
+import { Tier } from "@/seed/types";
 
 type CampaignCreatedEvent = {
   data: {

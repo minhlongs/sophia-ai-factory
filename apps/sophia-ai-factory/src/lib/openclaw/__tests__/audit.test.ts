@@ -12,7 +12,7 @@ const { mockRun, mockBind, mockPrepare, mockAll } = vi.hoisted(() => {
   return { mockRun, mockBind, mockPrepare, mockAll };
 });
 
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   getD1Raw: vi.fn().mockResolvedValue({
     prepare: mockPrepare,
     all: mockAll,

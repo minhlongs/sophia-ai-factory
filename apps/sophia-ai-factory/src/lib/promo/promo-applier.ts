@@ -7,9 +7,9 @@
 import { validatePromoCode } from './promo-validator';
 import { incrementUsedCount, recordRedemption, setUserTrialExpiry } from './promo-repo';
 import { triggerAutoHandover } from '@/lib/handover/auto-handover';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 import type { ApplyOptions, ApplyResult } from './promo-types';
-import type { Tier } from '@/types';
+import type { Tier } from '@/seed/types';
 
 /** Tier price map in cents (used for fixed_off / percent_off calculations). */
 const TIER_PRICE_CENTS: Record<string, number> = {

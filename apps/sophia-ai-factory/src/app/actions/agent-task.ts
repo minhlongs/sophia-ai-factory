@@ -6,8 +6,8 @@
  */
 
 import { z } from 'zod';
-import { getCurrentUser } from '@/lib/better-auth-session';
-import { getUserTier } from '@/lib/db/get-user-tier';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { getUserTier } from '@/seed/db/get-user-tier';
 import { seedDefaultTeam } from '@/lib/agents/seed-default-team';
 import { createTask, listAgents, getTask } from '@/lib/agents/repository';
 import { runAgent } from '@/lib/agents/runner';

@@ -11,7 +11,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { pushFatalLog } from '@/lib/telemetry/better-stack-client';
 import { resolveUserApiKey } from '@/lib/byok/resolve-user-api-key';
-import { getErrorMessage } from '@/lib/utils/to-error';
+import { getErrorMessage } from '@/seed/utils/to-error';
 import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker';
 
 export const dynamic = 'force-dynamic';

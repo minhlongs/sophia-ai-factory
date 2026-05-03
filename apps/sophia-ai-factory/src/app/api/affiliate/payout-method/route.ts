@@ -11,8 +11,8 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { getCurrentUser } from '@/lib/better-auth-session'
-import { getD1Raw } from '@/lib/db/client'
+import { getCurrentUser } from '@/seed/auth/better-auth-session'
+import { getD1Raw } from '@/seed/db/client'
 import { encryptSecret } from '@/lib/crypto/encrypt-secret'
 import { validateUsdtAddress, type UsdtMethod } from '@/lib/payouts/usdt-addr-validator'
 

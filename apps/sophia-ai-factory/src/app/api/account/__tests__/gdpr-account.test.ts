@@ -14,15 +14,15 @@ const mocks = vi.hoisted(() => {
   return { mockGetCurrentUser, mockGetD1Raw };
 });
 
-vi.mock('@/lib/better-auth-session', () => ({
+vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: mocks.mockGetCurrentUser,
 }));
 
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   getD1Raw: mocks.mockGetD1Raw,
 }));
 
-vi.mock('@/lib/utils/logger-utility', () => ({
+vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { warn: vi.fn(), info: vi.fn(), error: vi.fn() },
 }));
 

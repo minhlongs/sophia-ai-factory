@@ -17,7 +17,7 @@ import {
   type AnthropicTool,
   type AnthropicToolUseBlock,
 } from './anthropic-adapter'
-import { toError } from '@/lib/utils/to-error'
+import { toError } from '@/seed/utils/to-error'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

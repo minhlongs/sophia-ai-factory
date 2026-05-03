@@ -7,7 +7,7 @@
 
 import { Check, Minus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { UNIFIED_TIERS } from '@/config/tiers';
+import { UNIFIED_TIERS } from '@/seed/config/tiers';
 
 interface PricingComparisonTableProps {
   currentTier?: string | null;

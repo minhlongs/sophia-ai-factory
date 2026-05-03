@@ -4,8 +4,8 @@
  */
 
 import { NextResponse } from 'next/server';
-import { getCurrentUserFromHeaders } from '@/lib/better-auth-session';
-import { logger } from '@/lib/utils/logger-utility';
+import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
+import { logger } from '@/seed/utils/logger-utility';
 
 const FACEBOOK_AUTH_URL = 'https://www.facebook.com/v19.0/dialog/oauth';
 

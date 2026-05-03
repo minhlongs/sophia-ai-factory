@@ -4,7 +4,7 @@
  * @module lib/outbox/email-outbox
  */
 
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 import { sendEmail } from '@/lib/email/sender';
 import { renderEmail, type TemplateKey, type TemplateDataMap } from '@/lib/email/render-email';
 import { SENDER_FROM } from '@/lib/email/templates/shared-layout';

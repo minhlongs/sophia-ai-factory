@@ -9,13 +9,13 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/auth/require-admin'
-import { getD1Raw } from '@/lib/db/client'
-import { getBuildMetadata } from '@/lib/health/build-metadata'
-import { isHeyGenHealthy } from '@/lib/health/heygen-health-check'
+import { requireAdmin } from '@/seed/auth/require-admin'
+import { getD1Raw } from '@/seed/db/client'
+import { getBuildMetadata } from '@/seed/health/build-metadata'
+import { isHeyGenHealthy } from '@/seed/health/heygen-health-check'
 import { getCircuitState } from '@/lib/fulfillment/circuit-breaker'
-import { logger } from '@/lib/utils/logger-utility'
-import { getErrorMessage } from '@/lib/utils/to-error'
+import { logger } from '@/seed/utils/logger-utility'
+import { getErrorMessage } from '@/seed/utils/to-error'
 
 export const dynamic = 'force-dynamic'
 

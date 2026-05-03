@@ -4,7 +4,7 @@
  * Validates threshold, updates conversions, inserts payout record.
  */
 
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 import { rebuildUserWallet } from './wallet-rebuilder';
 import { MIN_PAYOUT_USD, type PayoutMethod } from './payout-validators';
 

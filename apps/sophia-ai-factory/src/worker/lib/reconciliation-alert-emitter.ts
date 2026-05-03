@@ -13,8 +13,8 @@
  */
 
 import type { ReconciliationAlert, Discrepancy } from '@/seed/types/billing-contracts';
-import { logger } from '@/lib/utils/logger-utility';
-import { toError } from '@/lib/utils/to-error';
+import { logger } from '@/seed/utils/logger-utility';
+import { toError } from '@/seed/utils/to-error';
 
 /**
  * Alert emitter configuration

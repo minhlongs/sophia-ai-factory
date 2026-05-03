@@ -5,9 +5,9 @@
  * Must NOT import from alert-delivery-service.ts (prevents circular imports).
  */
 
-import { createServerClient } from '@/lib/db/client';
-import { logger } from '@/lib/utils/logger-utility';
-import { toError } from '@/lib/utils/to-error';
+import { createServerClient } from '@/seed/db/client';
+import { logger } from '@/seed/utils/logger-utility';
+import { toError } from '@/seed/utils/to-error';
 import { sendWebhookAlert, createQuotaThresholdPayload } from '@/lib/alerts/webhook-notification-service';
 import type { AlertTemplate, QuotaAlertContext } from './alert-rule-evaluator';
 

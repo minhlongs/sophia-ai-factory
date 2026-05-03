@@ -5,8 +5,8 @@
  */
 
 import { Resend } from 'resend'
-import { createServerClient } from '@/lib/db/client'
-import { logger } from '@/lib/utils/logger-utility'
+import { createServerClient } from '@/seed/db/client'
+import { logger } from '@/seed/utils/logger-utility'
 import { renderReceipt } from './receipt-email-template'
 import type { ReceiptInput } from './receipt-email-template'
 

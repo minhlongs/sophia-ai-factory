@@ -1,8 +1,8 @@
 "use client";
 
-import { Container } from "@/components/ui/container";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { SectionHeading } from "@/components/ui/section-heading";
+import { Container } from "@/seed/components/ui/container";
+import { Card, CardHeader, CardTitle, CardContent } from "@/seed/components/ui/card";
+import { SectionHeading } from "@/seed/components/ui/section-heading";
 import { useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
 

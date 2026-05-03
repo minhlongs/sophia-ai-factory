@@ -4,7 +4,7 @@
  * @module billing/nowpayments-ipn-handlers
  */
 
-import { logger } from '@/lib/utils/logger-utility'
+import { logger } from '@/seed/utils/logger-utility'
 import { isPaymentProcessed, recordIpnEvent } from './nowpayments-ipn-db'
 import { handleFailed } from './nowpayments-ipn-subscription'
 import { dispatchFinished, dispatchRefunded } from './nowpayments-ipn-dispatch'

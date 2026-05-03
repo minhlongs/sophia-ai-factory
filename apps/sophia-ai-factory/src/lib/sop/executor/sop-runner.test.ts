@@ -13,7 +13,7 @@ vi.mock('@/lib/missions/dispatcher', () => ({
   dispatchMission: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('@/lib/utils/logger-utility', () => ({
+vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { info: vi.fn(), error: vi.fn(), debug: vi.fn(), warn: vi.fn() },
 }));
 

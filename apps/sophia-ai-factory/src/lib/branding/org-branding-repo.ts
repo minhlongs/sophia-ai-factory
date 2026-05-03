@@ -10,8 +10,8 @@
  * @module lib/branding/org-branding-repo
  */
 
-import { logger } from '@/lib/utils/logger-utility';
-import type { Tier } from '@/types';
+import { logger } from '@/seed/utils/logger-utility';
+import type { Tier } from '@/seed/types';
 
 export type WatermarkPosition = 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
 export type WatermarkPolicy = 'always' | 'master_plus' | 'never';

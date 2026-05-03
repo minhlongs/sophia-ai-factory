@@ -11,13 +11,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // ── Mock deps ────────────────────────────────────────────────────────────────
 
-vi.mock('@/lib/db/repositories/videos-repo', () => ({
+vi.mock('@/seed/db/repositories/videos-repo', () => ({
   findByHeygenJobId: vi.fn(),
   markPermanentFailureCAS: vi.fn().mockResolvedValue(true),
   recordAttemptCAS: vi.fn().mockResolvedValue(2),
 }))
 
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   getD1Raw: vi.fn(),
   createServerClient: vi.fn(),
 }))
@@ -38,7 +38,7 @@ vi.mock('@/lib/fulfillment/compensation', () => ({
   grantCompensationCredit: vi.fn().mockResolvedValue(true),
 }))
 
-vi.mock('@/lib/db/get-user-credits', () => ({
+vi.mock('@/seed/db/get-user-credits', () => ({
   getUserCredits: vi.fn().mockResolvedValue({ creditsRemaining: 5, expiresAt: null }),
 }))
 
@@ -46,7 +46,7 @@ vi.mock('@/lib/fulfillment/retry-backoff', () => ({
   MAX_ATTEMPTS: 5,
 }))
 
-vi.mock('@/lib/utils/logger-utility', () => ({
+vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
 }))
 
@@ -54,8 +54,8 @@ import {
   findByHeygenJobId,
   markPermanentFailureCAS,
   recordAttemptCAS,
-} from '@/lib/db/repositories/videos-repo'
-import { getD1Raw, createServerClient } from '@/lib/db/client'
+} from '@/seed/db/repositories/videos-repo'
+import { getD1Raw, createServerClient } from '@/seed/db/client'
 import { sendOneTimeBundleReadyEmail } from '@/lib/billing/email/send-one-time-bundle-ready-email'
 import { sendBundleRenderFailedEmail } from '@/lib/billing/email/send-bundle-render-failed-email'
 import { grantCompensationCredit } from '@/lib/fulfillment/compensation'

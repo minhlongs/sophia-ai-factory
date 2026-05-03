@@ -14,8 +14,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { logger } from '@/lib/utils/logger-utility'
-import { createServerClient } from '@/lib/db/client'
+import { logger } from '@/seed/utils/logger-utility'
+import { createServerClient } from '@/seed/db/client'
 import { verifyHeyGenSignature } from '@/lib/webhooks/heygen-signature-verifier'
 import { resolveHeyGenWebhookSecret } from '@/lib/webhooks/heygen-webhook-secret-resolver'
 import {

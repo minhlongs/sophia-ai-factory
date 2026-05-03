@@ -8,8 +8,8 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/seed/components/ui/card';
+import { Progress } from '@/seed/components/ui/progress';
 import { TrendingUp, AlertCircle } from 'lucide-react';
 import { UsageMeterMetersList } from './usage-meter-meters-list';
 import { UsageMeterRateLimitSection } from './usage-meter-rate-limit-section';

@@ -9,7 +9,7 @@
 
 import { NextRequest } from 'next/server';
 import { validateMissionApiKey } from '@/lib/missions/api-key-auth';
-import { createServerClient } from '@/lib/db/client';
+import { createServerClient } from '@/seed/db/client';
 
 export const dynamic = 'force-dynamic';
 

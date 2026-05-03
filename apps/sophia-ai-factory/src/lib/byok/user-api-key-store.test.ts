@@ -9,7 +9,7 @@ import {
   clearUserApiKey,
   listUserApiKeyProviders,
 } from './user-api-key-store'
-import * as resolveOrg from '@/lib/auth/resolve-org-id'
+import * as resolveOrg from '@/seed/auth/resolve-org-id'
 
 const TEST_MASTER_KEY = 'QkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkI='
 

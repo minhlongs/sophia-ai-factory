@@ -13,13 +13,13 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { getCurrentUser } from '@/lib/better-auth-session'
+import { getCurrentUser } from '@/seed/auth/better-auth-session'
 import { enhanceNicheScoreWithAI } from '@/lib/discovery/affiliate-openrouter-niche-enhancer'
-import { logger } from '@/lib/utils/logger-utility'
-import { getErrorMessage } from '@/lib/utils/to-error'
+import { logger } from '@/seed/utils/logger-utility'
+import { getErrorMessage } from '@/seed/utils/to-error'
 import { track } from '@/lib/signals/track'
 import { D1Events } from '@/lib/signals/d1-event-types'
-import type { AffiliateProgram } from '@/types'
+import type { AffiliateProgram } from '@/seed/types'
 
 const ProgramSchema = z.object({
   id:       z.string().min(1),

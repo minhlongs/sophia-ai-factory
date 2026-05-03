@@ -10,8 +10,8 @@ import type { LicenseSummary } from '@/lib/raas-schema';
 import { LicenseGenerator } from '@/components/admin/licenses/license-generator';
 import { LicenseList } from '@/components/admin/licenses/license-list';
 import { AuditLogTable } from '@/components/admin/licenses/audit-log-table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { logger } from '@/lib/utils/logger-utility';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/seed/components/ui/tabs';
+import { logger } from '@/seed/utils/logger-utility';
 
 export default function LicensesAdminPage() {
   const [activeTab, setActiveTab] = useState('list');

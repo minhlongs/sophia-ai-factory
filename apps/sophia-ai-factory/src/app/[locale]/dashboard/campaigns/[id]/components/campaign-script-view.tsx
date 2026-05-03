@@ -1,5 +1,5 @@
 import { FileText } from "lucide-react";
-import { Campaign } from "@/types";
+import { Campaign } from "@/seed/types";
 import { ScriptOutput } from "@/lib/services/types";
 
 interface CampaignScriptViewProps {

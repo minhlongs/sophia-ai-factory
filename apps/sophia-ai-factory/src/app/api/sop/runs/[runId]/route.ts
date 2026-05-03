@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/better-auth-session';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getInstallation } from '@/lib/sop/sop-repo';
 import type { SopRunRow } from '@/lib/sop/sop-types';
 

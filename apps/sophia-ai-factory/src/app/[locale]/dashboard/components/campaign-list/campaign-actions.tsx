@@ -1,7 +1,7 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@/seed/components/ui/button";
 import { Loader2, Play, RotateCw, PlayCircle } from "lucide-react";
 import Link from "next/link";
-import { Campaign } from "@/types";
+import { Campaign } from "@/seed/types";
 import { getStatusBadge } from "./campaign-status";
 import { useTranslations } from 'next-intl';
 

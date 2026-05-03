@@ -8,8 +8,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getCurrentUser } from '@/lib/better-auth-session'
-import { getD1Raw } from '@/lib/db/client'
+import { getCurrentUser } from '@/seed/auth/better-auth-session'
+import { getD1Raw } from '@/seed/db/client'
 
 interface PayoutBatchPublic {
   id: string

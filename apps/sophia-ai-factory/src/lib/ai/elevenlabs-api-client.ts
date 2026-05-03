@@ -5,8 +5,8 @@
  * @module ai/elevenlabs-api-client
  */
 
-import { logger } from '@/lib/utils/logger-utility';
-import { Tier } from '@/types';
+import { logger } from '@/seed/utils/logger-utility';
+import { Tier } from '@/seed/types';
 import { withTimeout } from '@/lib/byok/with-timeout';
 
 /** Get default voice ID based on tier (ElevenLabs pre-made voice IDs) */

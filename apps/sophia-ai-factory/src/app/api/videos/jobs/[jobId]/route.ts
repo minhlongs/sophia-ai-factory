@@ -6,8 +6,8 @@
  */
 
 import { NextResponse } from 'next/server';
-import { getCurrentUserFromHeaders } from '@/lib/better-auth-session';
-import { getD1Client } from '@/lib/db/client';
+import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
+import { getD1Client } from '@/seed/db/client';
 import { getVideoBucket } from '@/lib/video/r2-binding';
 import type { VideoJobStatus } from '@/lib/video/video-job-fsm';
 

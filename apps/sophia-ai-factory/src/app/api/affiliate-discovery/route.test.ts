@@ -34,7 +34,7 @@ function makeChain(overrides: {
 let mockRowChain: ReturnType<typeof makeChain>
 let mockCountChain: ReturnType<typeof makeChain>
 
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   createServerClient: vi.fn(() => ({
     from: vi.fn((table: string) => {
       if (table === 'affiliate_offers_catalog') {

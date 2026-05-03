@@ -1,7 +1,7 @@
 import { TelegramFSM } from '../telegram-fsm-state-manager'
-import { createServerClient } from '@/lib/db/client'
+import { createServerClient } from '@/seed/db/client'
 import { sendMessage } from './utils'
-import { logger } from '../../utils/logger-utility'
+import { logger } from '@/seed/utils/logger-utility'
 
 const getSupabase = () => createServerClient()
 

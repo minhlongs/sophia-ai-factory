@@ -3,8 +3,8 @@
  * @module api/cron/weekly-signals-digest/weekly-digest-ai
  */
 
-import { logger } from '@/lib/utils/logger-utility'
-import { getErrorMessage } from '@/lib/utils/to-error'
+import { logger } from '@/seed/utils/logger-utility'
+import { getErrorMessage } from '@/seed/utils/to-error'
 import { lookupCache, writeCache, type CacheKey } from '@/lib/llm/cache/llm-cache'
 import { resolveUserApiKey } from '@/lib/byok/resolve-user-api-key'
 

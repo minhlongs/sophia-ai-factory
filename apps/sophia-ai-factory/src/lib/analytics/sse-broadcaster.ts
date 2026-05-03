@@ -4,7 +4,7 @@
  * Helpers for formatting and streaming Server-Sent Events for analytics
  */
 
-import type { RealtimeAnalyticsSnapshot, RealtimeSSEEventType } from '@/types/analytics-realtime';
+import type { RealtimeAnalyticsSnapshot, RealtimeSSEEventType } from '@/seed/types/analytics-realtime';
 
 /** Interval between snapshots in milliseconds */
 const SNAPSHOT_INTERVAL_MS = 10_000;

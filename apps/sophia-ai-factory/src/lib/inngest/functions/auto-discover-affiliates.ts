@@ -13,7 +13,7 @@ import {
   type AffiliateScore,
 } from "@/lib/discovery/affiliate-ai-scorer";
 import { sendMessage as sendTelegramMessage } from "@/lib/telegram/handlers/utils";
-import { createServerClient } from '@/lib/db/client';
+import { createServerClient } from '@/seed/db/client';
 
 /** Default niches to scan when no user-configured niches exist */
 const DEFAULT_NICHES = [

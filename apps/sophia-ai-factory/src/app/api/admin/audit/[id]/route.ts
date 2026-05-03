@@ -7,8 +7,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/auth/require-admin'
-import { getD1Raw } from '@/lib/db/client'
+import { requireAdmin } from '@/seed/auth/require-admin'
+import { getD1Raw } from '@/seed/db/client'
 import type { CheckResult } from '@/lib/audit/zero-gap-types'
 
 export const dynamic = 'force-dynamic'

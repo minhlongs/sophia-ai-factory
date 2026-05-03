@@ -1,10 +1,10 @@
-import { logger } from '@/lib/utils/logger-utility'
+import { logger } from '@/seed/utils/logger-utility'
 import { callWithCache } from '@/lib/llm/cache/call-with-cache'
 import { callAnthropic } from '@/lib/ai/anthropic-adapter'
-import { resolveOrgOwnerUserId } from '@/lib/auth/resolve-org-id'
+import { resolveOrgOwnerUserId } from '@/seed/auth/resolve-org-id'
 import { resolveUserApiKey } from '@/lib/byok/resolve-user-api-key'
 import type { CacheKey, CacheEntry } from '@/lib/llm/cache/llm-cache'
-import type { WorkflowRow } from '@/lib/db/workflow-repository'
+import type { WorkflowRow } from '@/seed/db/workflow-repository'
 import type { OpenRouterResponse } from './workflow-stepper-runtime-utils'
 
 export interface LlmCallResult {

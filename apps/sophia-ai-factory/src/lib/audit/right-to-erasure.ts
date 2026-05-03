@@ -4,9 +4,9 @@
  * @module audit/right-to-erasure
  */
 
-import { createServerClient } from '@/lib/db/client'
-import { logger } from '@/lib/utils/logger-utility'
-import { toError, getErrorMessage } from '@/lib/utils/to-error'
+import { createServerClient } from '@/seed/db/client'
+import { logger } from '@/seed/utils/logger-utility'
+import { toError, getErrorMessage } from '@/seed/utils/to-error'
 import { generateUserPseudonym, hashIpAddress } from './gdpr-redaction'
 import type { RaasAuditLogRow, AuditGdprErasureRow } from './types'
 import { canDeleteUserData } from './right-to-erasure-legal-hold'

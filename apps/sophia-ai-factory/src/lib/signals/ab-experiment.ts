@@ -4,8 +4,8 @@
  */
 
 import { flag } from './feature-flags'
-import { logger } from '@/lib/utils/logger-utility'
-import { getErrorMessage } from '@/lib/utils/to-error'
+import { logger } from '@/seed/utils/logger-utility'
+import { getErrorMessage } from '@/seed/utils/to-error'
 
 const COOKIE_MAX_AGE = 30 * 24 * 60 * 60 // 30 days
 

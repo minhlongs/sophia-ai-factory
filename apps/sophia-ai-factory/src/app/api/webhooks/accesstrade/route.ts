@@ -9,8 +9,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { logger } from '@/lib/utils/logger-utility'
-import { getD1Raw } from '@/lib/db/client'
+import { logger } from '@/seed/utils/logger-utility'
+import { getD1Raw } from '@/seed/db/client'
 
 async function verifyHmac(body: string, signature: string, secret: string): Promise<boolean> {
   if (!body || !signature || !secret) return false

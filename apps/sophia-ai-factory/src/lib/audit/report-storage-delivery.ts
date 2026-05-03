@@ -1,5 +1,5 @@
-import { logger } from '@/lib/utils/logger-utility'
-import { toError } from '@/lib/utils/to-error'
+import { logger } from '@/seed/utils/logger-utility'
+import { toError } from '@/seed/utils/to-error'
 import type {
   AuditComplianceReportStorageRow,
 } from './types'
@@ -29,7 +29,7 @@ export async function storeReport(
   content: Buffer | string,
   format: string
 ): Promise<string | null> {
-  const db = await import('@/lib/db/client').then((m) => m.createServerClient())
+  const db = await import('@/seed/db/client').then((m) => m.createServerClient())
   const storageBucket = process.env.REPORTS_STORAGE_BUCKET || 'compliance-reports'
 
   try {
@@ -72,7 +72,7 @@ export async function downloadStoredReport(
   reportId: string,
   format: string
 ): Promise<Buffer | null> {
-  const db = await import('@/lib/db/client').then((m) => m.createServerClient())
+  const db = await import('@/seed/db/client').then((m) => m.createServerClient())
   const storageBucket = process.env.REPORTS_STORAGE_BUCKET || 'compliance-reports'
 
   try {

@@ -4,7 +4,7 @@
  * Excludes TEST event_type from all balance calculations.
  */
 
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 
 interface WalletBalances {
   balance_pending: number;

@@ -6,8 +6,8 @@
  * Computes throughput capacity and ROI/ARR projections.
  */
 
-import type { Tier } from '@/types';
-import { UNIFIED_TIERS } from '@/config/tiers';
+import type { Tier } from '@/seed/types';
+import { UNIFIED_TIERS } from '@/seed/config/tiers';
 import {
   API_COSTS,
   MONTHLY_INFRA_COST,

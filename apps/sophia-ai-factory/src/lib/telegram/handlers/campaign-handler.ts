@@ -1,10 +1,10 @@
 import { TelegramFSM, BotState } from '../telegram-fsm-state-manager'
-import { createServerClient } from '@/lib/db/client'
+import { createServerClient } from '@/seed/db/client'
 import { inngest } from '@/lib/inngest/client'
-import { Tier } from '@/types'
+import { Tier } from '@/seed/types'
 import { backupSessionState } from '../telegram-state-backup-service'
 import { sendMessage } from './utils'
-import { logger } from '../../utils/logger-utility'
+import { logger } from '@/seed/utils/logger-utility'
 
 const getSupabase = () => createServerClient()
 

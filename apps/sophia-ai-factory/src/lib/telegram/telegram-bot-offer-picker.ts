@@ -7,7 +7,7 @@
  * @module telegram/telegram-bot-offer-picker
  */
 
-import { AffiliateProgram } from '@/types';
+import { AffiliateProgram } from '@/seed/types';
 import { InlineKeyboardMarkup } from './telegram-client';
 
 /**

@@ -1,7 +1,7 @@
 'use client';
 
 import { LicenseMetricsTable } from '@/components/analytics/LicenseMetricsTable';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/seed/components/ui/card';
 import type { LicenseMetrics } from '@/lib/analytics/types';
 
 interface LicenseTabProps {

@@ -9,8 +9,8 @@
  */
 
 import { NextResponse } from 'next/server';
-import { getD1Client } from '@/lib/db/client';
-import { logger } from '@/lib/utils/logger-utility';
+import { getD1Client } from '@/seed/db/client';
+import { logger } from '@/seed/utils/logger-utility';
 
 async function verifyHmac(request: Request, body: string): Promise<boolean> {
   const secret = process.env.YOUTUBE_WEBHOOK_SECRET;

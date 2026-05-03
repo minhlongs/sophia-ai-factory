@@ -10,10 +10,10 @@
 
 import { fetchRevenueSnapshot } from '@/lib/analytics/queries/revenue-nowpayments';
 import { fetchChurnTimeline } from './churn-calculator';
-import { logger } from '@/lib/utils/logger-utility';
-import { TIER_CONFIGS } from '@/config/tiers';
-import type { Tier } from '@/types';
-import type { TierLTVRow, LTVByTier, CACOverrideMap } from '@/types/analytics-cohort';
+import { logger } from '@/seed/utils/logger-utility';
+import { TIER_CONFIGS } from '@/seed/config/tiers';
+import type { Tier } from '@/seed/types';
+import type { TierLTVRow, LTVByTier, CACOverrideMap } from '@/seed/types/analytics-cohort';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 

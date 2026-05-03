@@ -12,9 +12,9 @@ import {
   logLicenseCreation
 } from '@/lib/raas-audit'
 import { generateLicenseKey, generateMasterKey } from '@/lib/raas-key-generator'
-import { requireAdmin } from '@/lib/auth/require-admin'
-import { logger } from '@/lib/utils/logger-utility'
-import { Tier, TierLowercase } from '@/types'
+import { requireAdmin } from '@/seed/auth/require-admin'
+import { logger } from '@/seed/utils/logger-utility'
+import { Tier, TierLowercase } from '@/seed/types'
 import { createHash } from 'crypto'
 
 /**

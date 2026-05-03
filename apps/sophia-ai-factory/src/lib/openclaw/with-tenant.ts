@@ -6,7 +6,7 @@
  * Provides runAsTenant() helper for callback-scoped tenant context.
  */
 
-import { getD1Raw } from '@/lib/db/client';
+import { getD1Raw } from '@/seed/db/client';
 
 /** Immutable tenant context attached to every agent operation. */
 export interface TenantContext {

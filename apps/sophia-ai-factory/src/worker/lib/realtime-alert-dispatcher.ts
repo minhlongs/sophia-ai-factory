@@ -5,8 +5,8 @@
  */
 
 import { ExecutionContext } from '@cloudflare/workers-types'
-import { logger } from '@/lib/utils/logger-utility'
-import { toError } from '@/lib/utils/to-error'
+import { logger } from '@/seed/utils/logger-utility'
+import { toError } from '@/seed/utils/to-error'
 import { handleUsageEvent, type UsageEvent } from './realtime-alert-dispatcher-event-handler'
 
 export interface AlertDispatcherConfig {

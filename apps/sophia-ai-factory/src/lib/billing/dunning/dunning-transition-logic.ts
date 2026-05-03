@@ -7,7 +7,7 @@
  * @module billing/dunning/dunning-transition-logic
  */
 
-import type { Tier } from '@/types';
+import type { Tier } from '@/seed/types';
 
 // -------------------------------------------------------------------------
 // Types (re-exported for consumers)

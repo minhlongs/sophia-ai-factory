@@ -16,10 +16,10 @@ import {
   parseReceipt
 } from '@/lib/audit/compliance-receipt'
 import type { ComplianceReceipt } from '@/lib/audit/compliance-receipt'
-import { requireAdmin } from '@/lib/auth/require-admin'
-import { logger } from '@/lib/utils/logger-utility'
+import { requireAdmin } from '@/seed/auth/require-admin'
+import { logger } from '@/seed/utils/logger-utility'
 import { z } from 'zod'
-import { rateLimit } from '@/lib/security/rate-limiter'
+import { rateLimit } from '@/seed/security/rate-limiter'
 
 // Request body validation schema
 const verifyReceiptSchema = z.object({

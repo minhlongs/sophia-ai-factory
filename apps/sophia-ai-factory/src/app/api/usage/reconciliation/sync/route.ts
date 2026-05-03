@@ -16,9 +16,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { logger } from '@/lib/utils/logger-utility';
-import { toError } from '@/lib/utils/to-error';
-import { verifyInternalSecret } from '@/lib/security/verify-internal-secret';
+import { logger } from '@/seed/utils/logger-utility';
+import { toError } from '@/seed/utils/to-error';
+import { verifyInternalSecret } from '@/seed/security/verify-internal-secret';
 import {
   syncUsageEventsToKv,
   getSyncStats,

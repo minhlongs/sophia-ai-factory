@@ -1,4 +1,4 @@
-import { Tier } from "@/types";
+import { Tier } from "@/seed/types";
 
 // --- Script Service Types ---
 

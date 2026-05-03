@@ -8,11 +8,11 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { validateMagicLinkToken, consumeMagicLink } from '@/lib/handover/handover-magic-link';
-import { getD1Raw } from '@/lib/db/client';
-import { getAuth } from '@/lib/better-auth-server';
-import { logger } from '@/lib/utils/logger-utility';
+import { getD1Raw } from '@/seed/db/client';
+import { getAuth } from '@/seed/auth/better-auth-server';
+import { logger } from '@/seed/utils/logger-utility';
 import { writeAuditLog } from '@/lib/admin/audit-log';
-import { signCookieValue, hashEmail } from '@/lib/auth/sign-cookie-value';
+import { signCookieValue, hashEmail } from '@/seed/auth/sign-cookie-value';
 import { checkRateLimit } from '@/middleware/rate-limit-wrapper';
 
 export const dynamic = 'force-dynamic';

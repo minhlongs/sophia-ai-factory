@@ -3,7 +3,7 @@
  * @module validation/services
  */
 
-import { getErrorMessage } from '@/lib/utils/to-error'
+import { getErrorMessage } from '@/seed/utils/to-error'
 import type { ValidationResult } from './services-schemas'
 
 export * from './services-schemas'

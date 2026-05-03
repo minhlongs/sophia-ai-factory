@@ -7,7 +7,7 @@
  */
 
 import type { ChannelProvider } from './publisher-interface';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 
 export const DAILY_QUOTAS: Record<ChannelProvider, number> = {
   tiktok: 30,
@@ -40,7 +40,7 @@ export interface QuotaCheckResult {
 
 async function tryGetRawDb(): Promise<D1Database | null> {
   try {
-    const { getD1Raw } = await import('@/lib/db/client');
+    const { getD1Raw } = await import('@/seed/db/client');
     return await getD1Raw();
   } catch {
     return null;

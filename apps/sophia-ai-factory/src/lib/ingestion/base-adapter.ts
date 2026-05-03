@@ -1,4 +1,4 @@
-import { createServerClient } from '@/lib/db/client'
+import { createServerClient } from '@/seed/db/client'
 import type { IngestionAdapter, IngestionResult, RawProduct } from './types'
 import type { Database, Json } from '@/lib/supabase/types'
 import Bottleneck from 'bottleneck'

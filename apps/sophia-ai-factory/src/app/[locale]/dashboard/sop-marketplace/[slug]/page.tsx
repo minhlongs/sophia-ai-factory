@@ -8,7 +8,7 @@
 import { notFound, redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
-import { getCurrentUser } from '@/lib/better-auth-session';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getTemplateBySlug, listInstallationsForUser } from '@/lib/sop/sop-repo';
 import { SopPreview } from '@/components/sop/sop-preview';
 import { CategoryBadge } from '@/components/sop/category-badge';

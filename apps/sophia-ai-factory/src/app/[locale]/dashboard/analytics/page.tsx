@@ -1,14 +1,14 @@
 import React from "react";
 import dynamic from "next/dynamic";
-import { getD1Client } from "@/lib/db/client";
-import { getCurrentUser } from "@/lib/better-auth-session";
-import { getUserTier } from "@/lib/db/get-user-tier";
+import { getD1Client } from "@/seed/db/client";
+import { getCurrentUser } from "@/seed/auth/better-auth-session";
+import { getUserTier } from "@/seed/db/get-user-tier";
 import { checkAdmin, canAccessRevenue } from "@/lib/analytics/rbac";
-import { Campaign, Tier } from "@/types";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Campaign, Tier } from "@/seed/types";
+import { Skeleton } from "@/seed/components/ui/skeleton";
 import { getTranslations } from 'next-intl/server';
 import { redirect } from "next/navigation";
-import type { RevenueSnapshot } from "@/types/analytics-revenue";
+import type { RevenueSnapshot } from "@/seed/types/analytics-revenue";
 
 // ── Dynamic imports ──────────────────────────────────────────────────────────
 

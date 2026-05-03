@@ -4,7 +4,7 @@
  * @module lib/handover/handover-doc-generator
  */
 
-import type { Tier } from '@/types';
+import type { Tier } from '@/seed/types';
 import type { AgencyType } from './handover-types';
 import { TIER_MCU_LIMITS } from './handover-types';
 import { TIER_PRICES, TIER_FEATURES, TIER_SUPPORT_SLA, TIER_CONCURRENT_RUNS } from './handover-tier-content';

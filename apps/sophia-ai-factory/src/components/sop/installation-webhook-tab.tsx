@@ -6,7 +6,7 @@
 
 import { useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/seed/components/ui/button';
 import { Copy, RefreshCw, Check } from 'lucide-react';
 
 const PROD_BASE = 'https://sophia.agencyos.network';

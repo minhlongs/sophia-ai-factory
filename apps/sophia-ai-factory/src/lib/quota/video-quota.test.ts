@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // Mock the D1 client surface — both query-builder and raw prepare access.
-vi.mock('@/lib/db/client', () => {
+vi.mock('@/seed/db/client', () => {
   const buildChain = () => {
     const chain: Record<string, unknown> = {};
     chain.select = vi.fn(() => chain);
@@ -16,7 +16,7 @@ vi.mock('@/lib/db/client', () => {
   };
 });
 
-import { createServerClient, getD1Raw } from '@/lib/db/client';
+import { createServerClient, getD1Raw } from '@/seed/db/client';
 import {
   VIDEO_QUOTA_BY_TIER,
   reserveVideoSlot,

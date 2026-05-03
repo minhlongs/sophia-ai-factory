@@ -8,12 +8,12 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
-import { getCurrentUser } from '@/lib/better-auth-session'
+import { getCurrentUser } from '@/seed/auth/better-auth-session'
 import { WorkflowTimeline } from '@/components/workflows/workflow-timeline'
 import { WORKFLOW_LABELS, STATUS_LABELS } from '@/lib/workflows/workflow-labels'
 import type { StepRowData } from '@/components/workflows/workflow-step-row'
-import { getWorkflow } from '@/lib/db/workflow-repository'
-import { resolveOrgId } from '@/lib/auth/resolve-org-id'
+import { getWorkflow } from '@/seed/db/workflow-repository'
+import { resolveOrgId } from '@/seed/auth/resolve-org-id'
 
 interface Props {
   params: Promise<{ id: string; locale: string }>

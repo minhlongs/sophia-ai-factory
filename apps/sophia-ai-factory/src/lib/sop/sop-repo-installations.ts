@@ -3,7 +3,7 @@
  * CRUD for user_sop_installations: create, toggle, schedule, claim, delete.
  */
 
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 import type { SopInstallationRow, CreateInstallationInput, SopCustomizations } from './sop-types';
 
 function nowSec(): number { return Math.floor(Date.now() / 1000); }

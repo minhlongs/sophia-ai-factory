@@ -1,5 +1,5 @@
 import { sophiaIndex } from '@/lib/supabase/sophia-index'
-import { toError } from '@/lib/utils/to-error'
+import { toError } from '@/seed/utils/to-error'
 import { NextResponse } from 'next/server'
 
 export async function GET() {

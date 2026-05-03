@@ -6,11 +6,11 @@
  * and usage event insertion.
  */
 
-import { createServerClient } from '@/lib/db/client';
-import { logger } from '@/lib/utils/logger-utility';
-import { insertTyped } from '@/lib/db/insert-typed';
+import { createServerClient } from '@/seed/db/client';
+import { logger } from '@/seed/utils/logger-utility';
+import { insertTyped } from '@/seed/db/insert-typed';
 import type { UsageEventInput, IngestionResult } from './types';
-import type { D1Response } from '@/lib/db/types';
+import type { D1Response } from '@/seed/db/types';
 import type { RaasLicense } from '@/lib/raas-schema';
 
 /**

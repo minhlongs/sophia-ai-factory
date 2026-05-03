@@ -1,8 +1,8 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { FadeInView } from "@/components/ui/fade-in-view";
+import { Card } from "@/seed/components/ui/card";
+import { Badge } from "@/seed/components/ui/badge";
+import { FadeInView } from "@/seed/components/ui/fade-in-view";
 
 interface FilterSidebarProps {
   categories: string[];

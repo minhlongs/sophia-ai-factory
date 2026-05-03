@@ -4,7 +4,7 @@
  * AgentStatusBadge — displays agent status with appropriate variant
  */
 
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@/seed/components/ui/badge';
 import type { AgentStatus } from '@/app/api/agents/list/route';
 
 interface AgentStatusBadgeProps {

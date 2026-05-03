@@ -3,8 +3,8 @@
  * Upsert + runner live in daily-rollup.ts
  */
 
-import { createServerClient } from '@/lib/db/client';
-import { logger } from '@/lib/utils/logger-utility';
+import { createServerClient } from '@/seed/db/client';
+import { logger } from '@/seed/utils/logger-utility';
 import type { DailySummaryRecord, ServiceBreakdownItem, HourlySummaryRow } from './rollup-utils';
 import { calcAvgResponseTime } from './rollup-utils';
 

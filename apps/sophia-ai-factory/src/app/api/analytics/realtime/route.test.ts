@@ -8,7 +8,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
 // Mock dependencies before importing route
-vi.mock('@/lib/better-auth-session', () => ({
+vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: vi.fn(),
 }));
 
@@ -25,7 +25,7 @@ vi.mock('@/lib/analytics/sse-broadcaster', () => ({
 }));
 
 import { GET } from './route';
-import { getCurrentUser } from '@/lib/better-auth-session';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { checkAdmin } from '@/lib/analytics/rbac';
 import { fetchRealtimeSnapshot } from '@/lib/analytics/realtime-snapshot';
 import { createSSEStream } from '@/lib/analytics/sse-broadcaster';

@@ -15,7 +15,7 @@ import { NextRequest } from 'next/server'
 
 // ── Mocks ──────────────────────────────────────────────────────────────────────
 
-vi.mock('@/lib/better-auth-session', () => ({
+vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUserFromHeaders: vi.fn(),
 }))
 
@@ -27,7 +27,7 @@ vi.mock('@/lib/signals/track', () => ({
   track: vi.fn(),
 }))
 
-import { getCurrentUserFromHeaders } from '@/lib/better-auth-session'
+import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session'
 import { encryptSecret } from '@/lib/crypto/encrypt-secret'
 import { track } from '@/lib/signals/track'
 

@@ -20,8 +20,8 @@
  */
 
 import { createHmac, randomBytes } from 'crypto';
-import { Tier, TierLowercase } from '@/types';
-import { getErrorMessage } from '@/lib/utils/to-error';
+import { Tier, TierLowercase } from '@/seed/types';
+import { getErrorMessage } from '@/seed/utils/to-error';
 
 /**
  * Generate license key với HMAC-SHA256 signature

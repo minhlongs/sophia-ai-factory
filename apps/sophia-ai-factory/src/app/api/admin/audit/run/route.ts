@@ -7,8 +7,8 @@
  */
 
 import { NextRequest } from 'next/server'
-import { requireAdmin } from '@/lib/auth/require-admin'
-import { getD1Raw } from '@/lib/db/client'
+import { requireAdmin } from '@/seed/auth/require-admin'
+import { getD1Raw } from '@/seed/db/client'
 import { runFullAuditEager } from '@/lib/audit/zero-gap-runner'
 import { calculateAuditScore, countByStatus } from '@/lib/audit/audit-score-calculator'
 import type { AuditEnv } from '@/lib/audit/zero-gap-types'

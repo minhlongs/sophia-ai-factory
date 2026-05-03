@@ -7,7 +7,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/seed/components/ui/button';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
 
 interface SubscriptionTabProps {

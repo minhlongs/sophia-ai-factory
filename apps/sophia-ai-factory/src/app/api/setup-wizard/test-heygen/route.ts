@@ -10,7 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { getCurrentUser } from '@/lib/better-auth-session'
+import { getCurrentUser } from '@/seed/auth/better-auth-session'
 
 const HEYGEN_TEST_URL = 'https://api.heygen.com/v2/voices?limit=1'
 const PING_TIMEOUT_MS = 8_000

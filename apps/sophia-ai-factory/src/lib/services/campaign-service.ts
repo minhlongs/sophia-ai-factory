@@ -1,5 +1,5 @@
-import { createServerClient } from '@/lib/db/client';
-import { Campaign } from "@/types";
+import { createServerClient } from '@/seed/db/client';
+import { Campaign } from "@/seed/types";
 
 export const campaignService = {
   async getCampaigns(userId: string) {

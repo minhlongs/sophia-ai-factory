@@ -14,7 +14,7 @@ import { NextRequest } from 'next/server';
 
 // ── Mocks ───────────────────────────────────────────────────────────────────
 
-vi.mock('@/lib/better-auth-session', () => ({
+vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: vi.fn(),
 }));
 
@@ -22,18 +22,18 @@ vi.mock('@/lib/analytics/rbac', () => ({
   checkAdmin: vi.fn(),
 }));
 
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   createServerClient: vi.fn(),
 }));
 
-vi.mock('@/lib/utils/logger-utility', () => ({
+vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { info: vi.fn(), error: vi.fn() },
 }));
 
 import { GET } from './route';
-import { getCurrentUser } from '@/lib/better-auth-session';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { checkAdmin } from '@/lib/analytics/rbac';
-import { createServerClient } from '@/lib/db/client';
+import { createServerClient } from '@/seed/db/client';
 
 const mockGetCurrentUser = vi.mocked(getCurrentUser);
 const mockCheckAdmin = vi.mocked(checkAdmin);

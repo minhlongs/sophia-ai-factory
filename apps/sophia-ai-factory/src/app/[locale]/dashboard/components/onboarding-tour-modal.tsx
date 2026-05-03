@@ -9,7 +9,7 @@
 import { useState, useEffect } from 'react';
 import { X, ChevronRight, ChevronLeft } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/seed/components/ui/button';
 
 interface OnboardingTourModalProps {
   userId: string;

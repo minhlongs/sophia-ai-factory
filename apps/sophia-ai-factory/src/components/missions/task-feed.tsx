@@ -6,8 +6,8 @@
 
 import { useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/seed/components/ui/card';
+import { Badge } from '@/seed/components/ui/badge';
 import { useAgentStream } from '@/hooks/use-agent-stream';
 import type { AgentEvent } from '@/hooks/use-agent-stream';
 

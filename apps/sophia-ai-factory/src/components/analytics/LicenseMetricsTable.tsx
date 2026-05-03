@@ -11,7 +11,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from '@/seed/components/ui/table';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 import type { LicenseUtilization } from '@/lib/analytics/types';
 import { LicenseMetricsFilterBar } from './license-metrics-filter-bar';

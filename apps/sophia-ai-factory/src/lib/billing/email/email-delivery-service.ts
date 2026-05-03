@@ -8,8 +8,8 @@
  */
 
 import { Resend } from 'resend';
-import { logger } from '@/lib/utils/logger-utility';
-import { toError, getErrorMessage } from '@/lib/utils/to-error';
+import { logger } from '@/seed/utils/logger-utility';
+import { toError, getErrorMessage } from '@/seed/utils/to-error';
 import { buildHtmlTemplate, buildTextTemplate, getEmailSubject } from './email-template-builder';
 import { logEmailDelivery } from './email-tracking-service';
 import type { EmailTemplateType, BillingEmailContext } from './types';

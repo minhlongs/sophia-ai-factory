@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { QUOTA_LIMITS } from '@/lib/usage-metering/aggregator';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 import type { HourlySummary, DailySummary } from '@/lib/usage-metering/types';
 
 /** Validate X-Internal-Secret header against INTERNAL_WEBHOOK_SECRET env var. */

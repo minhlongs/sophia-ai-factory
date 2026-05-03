@@ -6,13 +6,13 @@
 
 'use client';
 
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@/seed/components/ui/badge';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
+} from '@/seed/components/ui/tooltip';
 
 export type PaymentStatusType = 'active' | 'past_due' | 'dunning' | 'cancelled' | 'expired' | 'unknown';
 

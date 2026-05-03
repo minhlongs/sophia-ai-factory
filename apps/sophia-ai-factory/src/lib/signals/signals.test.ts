@@ -56,7 +56,7 @@ describe('auth-helper: requireAuth', () => {
 
   it('(b) rejects unauthenticated request → 401', async () => {
     // No bearer, no session → 401
-    const sessionModule = await import('@/lib/better-auth-session')
+    const sessionModule = await import('@/seed/auth/better-auth-session')
     const spy = vi.spyOn(sessionModule, 'getCurrentUserFromHeaders').mockResolvedValue(null)
 
     const { requireAuth } = await import('./auth-helper')
@@ -80,7 +80,7 @@ describe('auth-helper: requireAuth', () => {
   it('(d) accepts valid Better Auth session via direct requireAuth logic', async () => {
     // Test the session branch directly by calling requireAuth with no bearer
     // and injecting a real-like session via spying on getCurrentUserFromHeaders
-    const sessionModule = await import('@/lib/better-auth-session')
+    const sessionModule = await import('@/seed/auth/better-auth-session')
     const spy = vi.spyOn(sessionModule, 'getCurrentUserFromHeaders').mockResolvedValue({
       id: 'user-123',
       email: 'test@example.com',

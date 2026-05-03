@@ -8,11 +8,11 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/auth/require-admin'
-import { rateLimit } from '@/lib/security/rate-limiter'
-import { logger } from '@/lib/utils/logger-utility'
+import { requireAdmin } from '@/seed/auth/require-admin'
+import { rateLimit } from '@/seed/security/rate-limiter'
+import { logger } from '@/seed/utils/logger-utility'
 import { downloadStoredReport } from '@/lib/audit/report-delivery'
-import { createServerClient } from '@/lib/db/client'
+import { createServerClient } from '@/seed/db/client'
 
 interface RouteParams {
   params: Promise<{ id: string }>

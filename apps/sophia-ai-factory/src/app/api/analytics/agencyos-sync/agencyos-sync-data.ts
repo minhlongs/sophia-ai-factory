@@ -3,7 +3,7 @@
  * @module api/analytics/agencyos-sync/agencyos-sync-data
  */
 
-import { createServerClient } from '@/lib/db/client'
+import { createServerClient } from '@/seed/db/client'
 
 export async function fetchQuotaUsage(licenseNonce: string, startDate: number, endDate: number): Promise<{ totalCreditsUsed: number; hourlyCredits: number; dailyCredits: number; monthlyCredits: number; requestCount: number }> {
   const db = createServerClient()

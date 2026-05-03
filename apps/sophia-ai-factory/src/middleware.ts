@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import createMiddleware from 'next-intl/middleware'
-import { getAuth } from './lib/better-auth-server'
-import { applyCorsHeaders, handleCorsPrelight } from './lib/security/cors-security-configuration'
+import { getAuth } from '@/seed/auth/better-auth-server'
+import { applyCorsHeaders, handleCorsPrelight } from '@/seed/security/cors-security-configuration'
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports -- mekong-exempt: middleware needs usage-metering for request-level tracking
 import { emitUsageEvent } from './lib/usage-metering'
-import { logger } from './lib/utils/logger-utility'
-import { toError } from '@/lib/utils/to-error'
+import { logger } from '@/seed/utils/logger-utility'
+import { toError } from '@/seed/utils/to-error'
 import { isInternalOrStatic, pathnameWithoutLocale, isAdminAuthorized } from './middleware-helpers'
 import { handleApiRoute } from './middleware-api-handler'
 import {
@@ -16,10 +16,10 @@ import {
   requiresCsrfCheck,
   csrfForbiddenResponse,
   CSRF_COOKIE_NAME,
-} from './lib/security/csrf'
-import { buildCSPHeader } from './lib/security/content-security-policy-configuration'
-import { CSP_NONCE_HEADER } from './lib/security/get-csp-nonce'
-import { isSessionMfaPending } from './lib/auth/mfa/login-challenge'
+} from '@/seed/security/csrf'
+import { buildCSPHeader } from '@/seed/security/content-security-policy-configuration'
+import { CSP_NONCE_HEADER } from '@/seed/security/get-csp-nonce'
+import { isSessionMfaPending } from '@/seed/auth/mfa/login-challenge'
 
 /**
  * Generate a cryptographically random nonce for this request.

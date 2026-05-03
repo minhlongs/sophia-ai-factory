@@ -6,7 +6,7 @@
 
 import type { Publisher, PublishMeta, PublishStatus, MetricsJson } from './publisher-interface';
 import { publishVideo, checkPublishStatus } from '@/lib/tiktok/tiktok-oauth-client';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 
 function isMockMode(): boolean {
   return !process.env.TIKTOK_CLIENT_KEY;

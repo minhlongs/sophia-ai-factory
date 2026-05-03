@@ -9,12 +9,12 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/db/client'
+import { createServerClient } from '@/seed/db/client'
 import { generateReceipt, serializeReceipt } from '@/lib/audit/compliance-receipt'
-import { requireAdmin } from '@/lib/auth/require-admin'
-import { logger } from '@/lib/utils/logger-utility'
+import { requireAdmin } from '@/seed/auth/require-admin'
+import { logger } from '@/seed/utils/logger-utility'
 import { z } from 'zod'
-import { rateLimit } from '@/lib/security/rate-limiter'
+import { rateLimit } from '@/seed/security/rate-limiter'
 import type { RaasAuditLogRow } from '@/lib/supabase/types'
 
 // Query params validation schema

@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardHeader, CardTitle, CardContent } from "@/seed/components/ui/card";
+import { Badge } from "@/seed/components/ui/badge";
 import { getAllPrograms } from "@/lib/affiliates";
 import { ExternalLink, Search } from "lucide-react";
 

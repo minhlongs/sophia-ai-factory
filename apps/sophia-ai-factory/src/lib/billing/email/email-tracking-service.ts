@@ -7,7 +7,7 @@
  * @module billing/email/email-tracking-service
  */
 
-import { createServerClient } from '@/lib/db/client';
+import { createServerClient } from '@/seed/db/client';
 import type { EmailTemplateType, BillingEmailContext } from './types';
 
 /**

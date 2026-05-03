@@ -5,7 +5,7 @@
 
 import { describe, it, expect } from 'vitest'
 import { computeNext, type NextAction } from './compute-next'
-import type { WorkflowRow, StepMissionRow } from '@/lib/db/workflow-repository'
+import type { WorkflowRow, StepMissionRow } from '@/seed/db/workflow-repository'
 
 // ── Test fixtures ─────────────────────────────────────────────────────────────
 

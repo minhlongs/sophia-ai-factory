@@ -1,6 +1,6 @@
-import { Tier, FeatureFlag, AccessCheck } from "@/types";
-import { tierHasFeature } from "@/config/tiers";
-import { getFeatureFlag } from "@/config/flags";
+import { Tier, FeatureFlag, AccessCheck } from "@/seed/types";
+import { tierHasFeature } from "@/seed/config/tiers";
+import { getFeatureFlag } from "@/seed/config/flags";
 
 /**
  * Feature access control - checks if a tier has access to a feature

@@ -12,9 +12,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { decryptSecret } from '@/lib/crypto/encrypt-secret'
 import { track } from '@/lib/signals/track'
 import { D1Events } from '@/lib/signals/d1-event-types'
-import { logger } from '@/lib/utils/logger-utility'
+import { logger } from '@/seed/utils/logger-utility'
 import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker'
-import { verifyCronAuth } from '@/lib/security/cron-auth'
+import { verifyCronAuth } from '@/seed/security/cron-auth'
 
 export const dynamic = 'force-dynamic'
 

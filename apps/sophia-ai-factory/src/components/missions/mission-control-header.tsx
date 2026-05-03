@@ -8,10 +8,10 @@
 import { useState, useRef, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { useCsrfToken } from '@/lib/security/use-csrf-token';
+import { Card, CardContent, CardHeader, CardTitle } from '@/seed/components/ui/card';
+import { Textarea } from '@/seed/components/ui/textarea';
+import { Button } from '@/seed/components/ui/button';
+import { useCsrfToken } from '@/seed/security/use-csrf-token';
 
 interface MissionControlHeaderProps {
   onMissionCreated?: (missionId: string) => void;

@@ -16,7 +16,7 @@ import { NextRequest } from 'next/server'
 
 // ---- module mocks (must be hoisted before any import of mocked module) ----
 
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   getD1Raw: vi.fn(),
 }))
 
@@ -32,7 +32,7 @@ vi.mock('@/lib/cron/run-tracker', () => ({
   recordCronRun: vi.fn().mockResolvedValue(undefined),
 }))
 
-vi.mock('@/lib/utils/logger-utility', () => ({
+vi.mock('@/seed/utils/logger-utility', () => ({
   logger: {
     info: vi.fn(),
     warn: vi.fn(),
@@ -41,7 +41,7 @@ vi.mock('@/lib/utils/logger-utility', () => ({
 }))
 
 import { GET } from './route'
-import { getD1Raw } from '@/lib/db/client'
+import { getD1Raw } from '@/seed/db/client'
 import { getHeyGenClient } from '@/lib/heygen/heygen-client'
 import { downloadAndStore } from '@/lib/video/video-storage-service'
 

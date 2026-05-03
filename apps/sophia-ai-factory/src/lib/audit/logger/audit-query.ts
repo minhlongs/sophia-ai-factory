@@ -6,9 +6,9 @@
  */
 
 import { parseReceipt } from '../compliance-receipt'
-import { logger } from '@/lib/utils/logger-utility'
-import { toError } from '@/lib/utils/to-error'
-import { createServerClient } from '@/lib/db/client'
+import { logger } from '@/seed/utils/logger-utility'
+import { toError } from '@/seed/utils/to-error'
+import { createServerClient } from '@/seed/db/client'
 import type { ComplianceReceipt } from '../compliance-receipt'
 import type { Json } from '@/lib/supabase/types'
 import { insertAuditLog } from './audit-event-builder'

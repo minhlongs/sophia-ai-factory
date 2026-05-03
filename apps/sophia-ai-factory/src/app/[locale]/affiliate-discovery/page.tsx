@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { Search, TrendingUp, Star, ArrowRight, PackageOpen, ExternalLink } from 'lucide-react'
-import { createServerClient } from '@/lib/db/client'
+import { createServerClient } from '@/seed/db/client'
 import type { AffiliateOffer } from '@/app/api/affiliate-discovery/route'
 
 export const metadata: Metadata = {

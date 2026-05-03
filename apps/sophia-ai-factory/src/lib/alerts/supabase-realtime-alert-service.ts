@@ -7,9 +7,9 @@
  * @module alerts/supabase-realtime-alert-service
  */
 
-import { getD1Client } from '@/lib/db/client';
-import { logger } from '@/lib/utils/logger-utility';
-import { toError } from '@/lib/utils/to-error';
+import { getD1Client } from '@/seed/db/client';
+import { logger } from '@/seed/utils/logger-utility';
+import { toError } from '@/seed/utils/to-error';
 import { triggerUsageThresholdAlert } from '@/lib/alerts/realtime-alert-service';
 import {
   checkThresholds,

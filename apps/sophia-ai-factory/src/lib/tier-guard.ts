@@ -1,6 +1,6 @@
-import { Tier } from "@/types";
-import { getTierConfig, UNIFIED_TIERS, type UnifiedTierLimits } from "@/config/tiers";
-import { getUserTier } from "@/lib/db/get-user-tier";
+import { Tier } from "@/seed/types";
+import { getTierConfig, UNIFIED_TIERS, type UnifiedTierLimits } from "@/seed/config/tiers";
+import { getUserTier } from "@/seed/db/get-user-tier";
 import { templateService } from "@/lib/services/template-service";
 
 export type LimitType =

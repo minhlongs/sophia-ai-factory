@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Mock D1 client before importing runner
 const mockFrom = vi.fn()
-vi.mock('@/lib/db/client', () => {
+vi.mock('@/seed/db/client', () => {
   return {
     createServerClient: vi.fn(() => ({
       from: mockFrom,
@@ -22,7 +22,7 @@ vi.mock('./scoring', () => ({
 }))
 
 import { runScoringBatch, scoreAllProducts } from './runner'
-import { createServerClient } from '@/lib/db/client'
+import { createServerClient } from '@/seed/db/client'
 import { scoringService } from './scoring'
 
 interface MockProduct {

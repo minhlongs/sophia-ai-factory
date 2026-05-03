@@ -1,6 +1,6 @@
 import { IPaymentService, CreateCheckoutParams, CheckoutSession } from "../types";
 import { createInvoiceUrl } from "@/lib/clients/nowpayments-client";
-import { getErrorMessage } from "@/lib/utils/to-error";
+import { getErrorMessage } from "@/seed/utils/to-error";
 
 export class RealPaymentService implements IPaymentService {
   async createCheckoutSession(params: CreateCheckoutParams): Promise<CheckoutSession> {

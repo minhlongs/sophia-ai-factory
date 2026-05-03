@@ -5,7 +5,7 @@
  * Consumed by affiliate-ai-scorer.ts.
  */
 
-import type { AffiliateProgram } from "@/types";
+import type { AffiliateProgram } from "@/seed/types";
 
 /** Score result component breakdown */
 export interface ScoringComponents {

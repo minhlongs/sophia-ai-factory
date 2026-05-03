@@ -7,12 +7,12 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/better-auth-session';
-import { getUserTier } from '@/lib/db/get-user-tier';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { getUserTier } from '@/seed/db/get-user-tier';
 import { verifyLicenseAccess, getUserLicenseNonce, checkAdmin } from '@/lib/analytics/rbac';
-import { validateApiKey } from '@/lib/security/api-key-validator';
-import { validateJwt } from '@/lib/security/jwt-validator';
-import { checkRateLimit } from '@/lib/security/rate-limiter';
+import { validateApiKey } from '@/seed/security/api-key-validator';
+import { validateJwt } from '@/seed/security/jwt-validator';
+import { checkRateLimit } from '@/seed/security/rate-limiter';
 
 export interface AuthResult {
   userId: string;

@@ -5,15 +5,15 @@
  * Single row for the license table with tier/status badges and actions dropdown
  */
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { TableCell, TableRow } from '@/components/ui/table';
+import { Badge } from '@/seed/components/ui/badge';
+import { Button } from '@/seed/components/ui/button';
+import { TableCell, TableRow } from '@/seed/components/ui/table';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from '@/seed/components/ui/dropdown-menu';
 import {
   MoreHorizontal,
   Eye,

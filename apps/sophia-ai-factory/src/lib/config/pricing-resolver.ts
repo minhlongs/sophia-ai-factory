@@ -6,9 +6,9 @@
  * @module lib/config/pricing-resolver
  */
 
-import { getD1Raw } from '@/lib/db/client'
-import { ONE_TIME_SKUS } from '@/config/one-time-skus'
-import { logger } from '@/lib/utils/logger-utility'
+import { getD1Raw } from '@/seed/db/client'
+import { ONE_TIME_SKUS } from '@/seed/config/one-time-skus'
+import { logger } from '@/seed/utils/logger-utility'
 
 interface PricingOverrideRow {
   sku: string

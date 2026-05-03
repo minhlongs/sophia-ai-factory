@@ -8,12 +8,12 @@
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
   DialogDescription, DialogFooter, DialogTrigger, DialogClose,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
+} from '@/seed/components/ui/dialog';
+import { Button } from '@/seed/components/ui/button';
+import { Input } from '@/seed/components/ui/input';
+import { Label } from '@/seed/components/ui/label';
+import { Alert, AlertDescription } from '@/seed/components/ui/alert';
+import { Badge } from '@/seed/components/ui/badge';
 import { Key, RefreshCw, AlertTriangle, Copy, Check, ShieldAlert } from 'lucide-react';
 import { LicenseSummary } from '@/lib/raas-schema';
 import { useLicenseRegenerate, RegenerateCallbackData } from './use-license-regenerate';

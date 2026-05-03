@@ -16,16 +16,16 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getD1Raw } from '@/lib/db/client';
+import { getD1Raw } from '@/seed/db/client';
 import { createMagicLinkToken } from '@/lib/handover/handover-magic-link';
 import { sendAutoHandoverWelcomeEmail, sendWelcomeEmail } from '@/lib/handover/handover-email-service';
 import { generateHandoverDoc } from '@/lib/handover/handover-doc-generator';
 import { writeAuditLog } from '@/lib/admin/audit-log';
-import { hashEmail } from '@/lib/auth/sign-cookie-value';
-import { logger } from '@/lib/utils/logger-utility';
+import { hashEmail } from '@/seed/auth/sign-cookie-value';
+import { logger } from '@/seed/utils/logger-utility';
 import { checkRateLimit } from '@/middleware/rate-limit-wrapper';
 import type { CustomerHandoverRow, AgencyType } from '@/lib/handover/handover-types';
-import type { Tier } from '@/types';
+import type { Tier } from '@/seed/types';
 
 export const dynamic = 'force-dynamic';
 

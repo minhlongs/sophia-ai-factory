@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { VIDEO_TIER_CONFIG } from '@/config/tiers/video-quota-tiers';
+import { VIDEO_TIER_CONFIG } from '@/seed/config/tiers/video-quota-tiers';
 
 // ── Helper: Mock D1 DB ────────────────────────────────────────────────────────
 
@@ -162,13 +162,13 @@ describe('storage tracker upsert', () => {
 
 describe('admin route auth guard (structural)', () => {
   it('requireAdmin returns NextResponse with 403 for non-admin', async () => {
-    vi.mock('@/lib/auth/require-admin', () => ({
+    vi.mock('@/seed/auth/require-admin', () => ({
       requireAdmin: vi.fn().mockResolvedValue(
         { status: 403, body: { error: 'Forbidden: admin role required' } }
       ),
     }));
 
-    const { requireAdmin } = await import('@/lib/auth/require-admin');
+    const { requireAdmin } = await import('@/seed/auth/require-admin');
     const result = await requireAdmin({} as Request);
     // In real Next.js this would be instanceof NextResponse; here check status
     expect((result as { status: number }).status).toBe(403);

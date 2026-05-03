@@ -18,7 +18,7 @@ import { z } from 'zod';
 import { getInstallation } from '@/lib/sop/sop-repo-installations';
 import { verifySignature } from '@/lib/sop/webhook-hmac';
 import { runSop } from '@/lib/sop/executor/sop-runner';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 import type { SopCustomizations } from '@/lib/sop/sop-types';
 
 export const dynamic = 'force-dynamic';

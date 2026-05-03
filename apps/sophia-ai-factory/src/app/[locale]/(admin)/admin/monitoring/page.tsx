@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/better-auth-session";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getCurrentUser } from "@/seed/auth/better-auth-session";
+import { Card, CardContent, CardHeader, CardTitle } from "@/seed/components/ui/card";
 import { Activity, AlertTriangle, Database, Workflow, Gauge, Cpu } from "lucide-react";
 import {
   getCacheStats,

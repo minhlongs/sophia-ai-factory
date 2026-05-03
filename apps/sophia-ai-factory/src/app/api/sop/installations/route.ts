@@ -5,7 +5,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/better-auth-session';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { listInstallationsForUser } from '@/lib/sop/sop-repo';
 
 export const dynamic = 'force-dynamic';

@@ -4,8 +4,8 @@
  */
 
 import crypto from 'crypto'
-import { logger } from '@/lib/utils/logger-utility'
-import { toError, getErrorMessage } from '@/lib/utils/to-error'
+import { logger } from '@/seed/utils/logger-utility'
+import { toError, getErrorMessage } from '@/seed/utils/to-error'
 import { triggerWebhookFailedAlert } from '@/lib/alerts/realtime-alert-service'
 import { generateWebhookSignature } from './webhook-notification-signature'
 import type { WebhookPayload, WebhookDeliveryResult } from './webhook-notification-types'

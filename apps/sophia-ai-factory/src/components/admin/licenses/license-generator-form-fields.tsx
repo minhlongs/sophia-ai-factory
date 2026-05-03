@@ -5,16 +5,16 @@
  * Customer email, tier select, expiration date, duration, metadata inputs
  */
 
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
+import { Input } from '@/seed/components/ui/input';
+import { Label } from '@/seed/components/ui/label';
+import { Badge } from '@/seed/components/ui/badge';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@/seed/components/ui/select';
 import { Calendar } from 'lucide-react';
 
 export interface TierInfo {

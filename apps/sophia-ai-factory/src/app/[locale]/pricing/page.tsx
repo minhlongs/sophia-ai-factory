@@ -4,10 +4,10 @@ import { PricingFaq } from "@/components/pricing/pricing-faq";
 import { ProductionCostCalculator } from "@/app/components/sections/production-cost-calculator";
 import { OneTimeBundleCard } from "@/components/pricing/one-time-bundle-card";
 import { getTranslations } from "next-intl/server";
-import { isHeyGenHealthy } from "@/lib/health/heygen-health-check";
-import { getCurrentUser } from "@/lib/better-auth-session";
+import { isHeyGenHealthy } from "@/seed/health/heygen-health-check";
+import { getCurrentUser } from "@/seed/auth/better-auth-session";
 import { getUserCredential } from "@/lib/credentials/user-credentials-repo";
-import { getUserTier } from "@/lib/db/get-user-tier";
+import { getUserTier } from "@/seed/db/get-user-tier";
 import Link from "next/link";
 
 export const metadata = {

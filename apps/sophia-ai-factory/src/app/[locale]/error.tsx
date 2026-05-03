@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import * as Sentry from '@sentry/nextjs';
-import { Button } from "@/components/ui/button";
+import { Button } from "@/seed/components/ui/button";
 import { AlertTriangle, RefreshCw, Home, Wifi, LogIn, Server } from "lucide-react";
 
 function classifyError(error: Error): {

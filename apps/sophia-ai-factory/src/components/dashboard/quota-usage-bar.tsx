@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import Link from "next/link";
 import { BarChart3, ArrowUpRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/seed/components/ui/button";
 
 interface QuotaUsageBarProps {
   /** Labels: used, total */

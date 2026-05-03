@@ -6,10 +6,10 @@
  */
 
 import { NextResponse } from 'next/server';
-import { getCurrentUserFromHeaders } from '@/lib/better-auth-session';
-import { getD1Client } from '@/lib/db/client';
+import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
+import { getD1Client } from '@/seed/db/client';
 import type { PublishingJob, PublishingResult } from '@/lib/publishing/publisher-interface';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 
 export async function GET(
   request: Request,

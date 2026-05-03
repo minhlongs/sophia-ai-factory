@@ -6,7 +6,7 @@
  * /campaign now uses FSM multi-step flow (topic → audience → offer → confirm).
  */
 
-import { createServerClient } from '@/lib/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { sendTelegramMessage } from './telegram-client';
 import { TelegramFSM, BotState } from './telegram-fsm-state-manager';
 import {

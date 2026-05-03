@@ -14,9 +14,9 @@ import {
   SUPPORTED_MODELS,
   type MediaType,
 } from '@/lib/clients/muapi-media-client'
-import { toError } from '@/lib/utils/to-error'
-import { getCurrentUser } from '@/lib/better-auth-session'
-import { getUserTier } from '@/lib/db/get-user-tier'
+import { toError } from '@/seed/utils/to-error'
+import { getCurrentUser } from '@/seed/auth/better-auth-session'
+import { getUserTier } from '@/seed/db/get-user-tier'
 
 const generateSchema = z.object({
   type: z.enum(['image', 'video', 'audio']),

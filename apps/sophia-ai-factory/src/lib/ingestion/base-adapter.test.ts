@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Mock D1 client before importing
 const mockFrom = vi.fn()
-vi.mock('@/lib/db/client', () => {
+vi.mock('@/seed/db/client', () => {
   return {
     createServerClient: vi.fn(() => ({
       from: mockFrom,
@@ -23,7 +23,7 @@ vi.mock('bottleneck', () => {
 
 import { BaseAdapter } from './base-adapter'
 import type { RawProduct } from './types'
-import { createServerClient } from '@/lib/db/client'
+import { createServerClient } from '@/seed/db/client'
 
 // Concrete test implementation of the abstract BaseAdapter
 class TestAdapter extends BaseAdapter {

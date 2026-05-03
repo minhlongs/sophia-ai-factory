@@ -7,9 +7,9 @@ import {
   writeCache,
   type CacheKey,
 } from './llm-cache'
-import { createServerClient } from '@/lib/db/client'
+import { createServerClient } from '@/seed/db/client'
 
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   createServerClient: vi.fn(),
 }))
 

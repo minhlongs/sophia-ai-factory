@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createServerClient } from "@/lib/db/client";
-import { logger } from "@/lib/utils/logger-utility";
-import { toError } from "@/lib/utils/to-error";
+import { createServerClient } from "@/seed/db/client";
+import { logger } from "@/seed/utils/logger-utility";
+import { toError } from "@/seed/utils/to-error";
 import { sendCampaignCreatedEvent } from "@/lib/campaigns/create-campaign-core";
 
 // POST /api/v1/campaigns/create
@@ -90,8 +90,8 @@ export async function POST(request: Request): Promise<NextResponse> {
     const { script, title, userId } = parsed.data;
 
     // TIER CHECK: Monthly campaign limit
-    const { getUserTier } = await import("@/lib/db/get-user-tier");
-    const { UNIFIED_TIERS } = await import("@/config/tiers");
+    const { getUserTier } = await import("@/seed/db/get-user-tier");
+    const { UNIFIED_TIERS } = await import("@/seed/config/tiers");
     const tier = await getUserTier(userId);
     const monthLimit = UNIFIED_TIERS[tier].campaignsPerMonth;
 

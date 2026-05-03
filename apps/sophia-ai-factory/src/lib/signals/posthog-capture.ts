@@ -4,8 +4,8 @@
  * Fire-and-forget friendly: resolves quickly, errors silently logged
  */
 
-import { logger } from '@/lib/utils/logger-utility'
-import { getErrorMessage } from '@/lib/utils/to-error'
+import { logger } from '@/seed/utils/logger-utility'
+import { getErrorMessage } from '@/seed/utils/to-error'
 import { isServerOnly, validateEventProps, type EventName, Events } from './event-types'
 
 const POSTHOG_ENDPOINT = 'https://us.i.posthog.com/i/v0/e/'

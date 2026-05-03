@@ -16,7 +16,7 @@ vi.mock('@/lib/handover/handover-magic-link', () => ({
   consumeMagicLink: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   getD1Raw: vi.fn().mockResolvedValue({
     prepare: vi.fn().mockReturnValue({
       bind: vi.fn().mockReturnValue({
@@ -27,7 +27,7 @@ vi.mock('@/lib/db/client', () => ({
   }),
 }));
 
-vi.mock('@/lib/better-auth-server', () => ({
+vi.mock('@/seed/auth/better-auth-server', () => ({
   getAuth: vi.fn(),
 }));
 
@@ -35,7 +35,7 @@ vi.mock('@/lib/admin/audit-log', () => ({
   writeAuditLog: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('@/lib/utils/logger-utility', () => ({
+vi.mock('@/seed/utils/logger-utility', () => ({
   logger: {
     info: vi.fn(),
     warn: vi.fn(),
@@ -51,9 +51,9 @@ vi.mock('@/middleware/rate-limit-wrapper', () => ({
 // Import after mocks
 import { POST } from '../route';
 import { validateMagicLinkToken, consumeMagicLink } from '@/lib/handover/handover-magic-link';
-import { getAuth } from '@/lib/better-auth-server';
-import { logger } from '@/lib/utils/logger-utility';
-import { signCookieValue } from '@/lib/auth/sign-cookie-value';
+import { getAuth } from '@/seed/auth/better-auth-server';
+import { logger } from '@/seed/utils/logger-utility';
+import { signCookieValue } from '@/seed/auth/sign-cookie-value';
 import type { CustomerHandoverRow } from '@/lib/handover/handover-types';
 
 // ---------------------------------------------------------------------------

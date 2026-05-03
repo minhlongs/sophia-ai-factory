@@ -4,7 +4,7 @@
  * Returns structured result or a 401 Response — caller must check with instanceof Response
  */
 
-import { getCurrentUserFromHeaders } from '@/lib/better-auth-session'
+import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session'
 import { NextRequest } from 'next/server'
 
 export type AuthResult =

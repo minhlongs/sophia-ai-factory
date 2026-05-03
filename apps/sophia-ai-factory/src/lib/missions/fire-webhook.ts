@@ -6,9 +6,9 @@
  * Signing secret stored as provider='sophia_webhook_secret' in user_provider_credentials.
  */
 
-import { createServerClient } from '@/lib/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { hmacSha256 } from '@/lib/audit/crypto-utils';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 
 interface MissionRow {
   id: string;

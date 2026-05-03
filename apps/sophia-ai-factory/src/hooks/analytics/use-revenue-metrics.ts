@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/query-client';
 import { RaasGatewayClient, type BillingMetrics } from '@/lib/raas-gateway-client';
-import { logger } from '@/lib/utils/logger-utility';
-import { toError } from '@/lib/utils/to-error';
+import { logger } from '@/seed/utils/logger-utility';
+import { toError } from '@/seed/utils/to-error';
 
 // RaaS Gateway client instance (singleton)
 const raasClient = new RaasGatewayClient({

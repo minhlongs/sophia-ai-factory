@@ -8,7 +8,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // ── Mocks ────────────────────────────────────────────────────────────────────
 
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   getD1Raw: vi.fn(),
 }))
 
@@ -16,12 +16,12 @@ vi.mock('@/lib/video/r2-binding', () => ({
   getVideoBucket: vi.fn(),
 }))
 
-vi.mock('@/lib/utils/logger-utility', () => ({
+vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
 }))
 
 import { authorizeVideoAccess } from '../video-access-control'
-import { getD1Raw } from '@/lib/db/client'
+import { getD1Raw } from '@/seed/db/client'
 import { getVideoBucket } from '@/lib/video/r2-binding'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────

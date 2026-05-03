@@ -7,12 +7,12 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUserFromHeaders } from '@/lib/better-auth-session';
+import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import {
   generateTotpSecret,
   generateOtpauthUri,
-} from '@/lib/auth/mfa/totp-service';
-import { createServerClient } from '@/lib/db/client';
+} from '@/seed/auth/mfa/totp-service';
+import { createServerClient } from '@/seed/db/client';
 
 export const dynamic = 'force-dynamic';
 

@@ -6,7 +6,7 @@
  */
 
 import { getResendKey } from '@/lib/credentials/get-provider-key';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 import type { MissionHandlerResult, MissionContext } from './types';
 
 export async function handle(ctx: MissionContext): Promise<MissionHandlerResult> {

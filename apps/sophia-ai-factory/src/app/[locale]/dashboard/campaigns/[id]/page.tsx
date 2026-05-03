@@ -1,10 +1,10 @@
-import { getD1Client } from "@/lib/db/client";
-import { getCurrentUser } from "@/lib/better-auth-session";
-import { logger } from "@/lib/utils/logger-utility";
+import { getD1Client } from "@/seed/db/client";
+import { getCurrentUser } from "@/seed/auth/better-auth-session";
+import { logger } from "@/seed/utils/logger-utility";
 import { notFound, redirect } from "next/navigation";
 import dynamic from "next/dynamic";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Campaign } from "@/types";
+import { Skeleton } from "@/seed/components/ui/skeleton";
+import { Campaign } from "@/seed/types";
 import { getTranslations, getFormatter } from 'next-intl/server';
 import { CampaignHeader } from "./components/campaign-header";
 import { CampaignDetailsSidebar } from "./components/campaign-details-sidebar";

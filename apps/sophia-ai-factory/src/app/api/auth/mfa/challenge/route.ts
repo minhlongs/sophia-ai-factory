@@ -10,10 +10,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getAuth } from '@/lib/better-auth-server';
-import { createServerClient } from '@/lib/db/client';
-import { verifyTotp, verifyBackupCode, consumeBackupCode } from '@/lib/auth/mfa/totp-service';
-import { clearSessionMfaPending } from '@/lib/auth/mfa/login-challenge';
+import { getAuth } from '@/seed/auth/better-auth-server';
+import { createServerClient } from '@/seed/db/client';
+import { verifyTotp, verifyBackupCode, consumeBackupCode } from '@/seed/auth/mfa/totp-service';
+import { clearSessionMfaPending } from '@/seed/auth/mfa/login-challenge';
 
 export const dynamic = 'force-dynamic';
 

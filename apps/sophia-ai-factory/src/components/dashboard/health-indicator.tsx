@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { AlertCircle, CheckCircle } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import type { HealthResponse } from '@/types/health';
+import type { HealthResponse } from '@/seed/types/health';
 
 export function HealthIndicator() {
   const { data: health, isLoading, isError } = useQuery<HealthResponse>({

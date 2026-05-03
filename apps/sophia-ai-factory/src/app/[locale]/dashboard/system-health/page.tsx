@@ -15,7 +15,7 @@ import {
   RefreshCw,
   Cpu
 } from 'lucide-react';
-import type { HealthResponse, ServiceHealth } from '@/types/health';
+import type { HealthResponse, ServiceHealth } from '@/seed/types/health';
 
 const ServiceIcon = ({ name }: { name: string }) => {
   switch (name) {

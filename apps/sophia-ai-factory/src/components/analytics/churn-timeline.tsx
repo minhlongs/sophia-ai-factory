@@ -18,9 +18,9 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import type { ChurnTimeline as ChurnTimelineData } from '@/types/analytics-cohort';
+import { Card, CardContent, CardHeader, CardTitle } from '@/seed/components/ui/card';
+import { Skeleton } from '@/seed/components/ui/skeleton';
+import type { ChurnTimeline as ChurnTimelineData } from '@/seed/types/analytics-cohort';
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 

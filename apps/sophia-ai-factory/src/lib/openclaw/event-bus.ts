@@ -8,7 +8,7 @@
  *   - In-memory dispatch for low-latency same-request events
  */
 
-import { getD1Raw } from '@/lib/db/client';
+import { getD1Raw } from '@/seed/db/client';
 
 export type EventHandler<T = unknown> = (payload: T, tenantId: string) => Promise<void> | void;
 

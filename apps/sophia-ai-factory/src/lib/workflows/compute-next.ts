@@ -5,7 +5,7 @@
  * Deterministic, unit-testable without D1.
  */
 
-import type { WorkflowRow, StepMissionRow } from '@/lib/db/workflow-repository'
+import type { WorkflowRow, StepMissionRow } from '@/seed/db/workflow-repository'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

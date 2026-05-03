@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Download, FileJson, FileSpreadsheet, Filter, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/seed/components/ui/button";
 import { exportCampaigns, ExportFormat } from "@/app/actions/campaign-export-actions";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslations } from 'next-intl';

@@ -1,7 +1,7 @@
 import { track } from '@/lib/signals/track'
 import { D1Events } from '@/lib/signals/d1-event-types'
 import { computeNext } from '@/lib/workflows/compute-next'
-import type { WorkflowRow, StepMissionRow } from '@/lib/db/workflow-repository'
+import type { WorkflowRow, StepMissionRow } from '@/seed/db/workflow-repository'
 
 export interface ActionRecord {
   workflowId: string

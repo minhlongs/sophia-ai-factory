@@ -15,7 +15,7 @@ import { ClickBankProvider } from './providers/clickbank'
 import { AwinProvider } from './providers/awin'
 import { AmazonProvider } from './providers/amazon'
 import type { AffiliateOffer, OfferProvider } from './provider-interface'
-import { logger } from '@/lib/utils/logger-utility'
+import { logger } from '@/seed/utils/logger-utility'
 
 /** D1 binding accessor */
 function getD1(): D1Database | null {

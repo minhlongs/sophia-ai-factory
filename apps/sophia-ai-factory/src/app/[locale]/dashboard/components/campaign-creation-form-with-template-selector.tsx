@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { createCampaign, getOffersForUser } from "@/app/actions/campaigns";
 import { createCampaignSchema } from "@/lib/campaigns/validation";
 import { CampaignTemplate, applyTemplateDefaults } from "@/lib/templates/campaign-templates";
-import { AffiliateProgram, Tier } from "@/types";
+import { AffiliateProgram, Tier } from "@/seed/types";
 import { TemplateSelector } from "./create-campaign/template-selector";
 import { CampaignForm } from "./create-campaign/campaign-form";
 import { useTranslations } from 'next-intl';

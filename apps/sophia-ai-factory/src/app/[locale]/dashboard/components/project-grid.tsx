@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { ScriptRecord } from "@/types";
+import { ScriptRecord } from "@/seed/types";
 import { ProjectCard } from "./project-card";
 import { useRouter } from "next/navigation";
 

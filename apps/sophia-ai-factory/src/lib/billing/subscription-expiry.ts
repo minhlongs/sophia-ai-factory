@@ -4,7 +4,7 @@
  * @module billing/subscription-expiry
  */
 
-import { createServerClient } from '@/lib/db/client'
+import { createServerClient } from '@/seed/db/client'
 
 /**
  * Get subscription period_end for a user's org.

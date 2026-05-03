@@ -20,7 +20,7 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from '@/components/ui/command';
+} from '@/seed/components/ui/command';
 import { useCmdKActions } from './use-cmd-k-actions';
 import type { ActionGroup } from './cmd-k-action-types';
 import { toast } from 'sonner';

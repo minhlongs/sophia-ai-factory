@@ -12,9 +12,9 @@ const mocks = vi.hoisted(() => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
 }));
 
-vi.mock('@/lib/utils/logger-utility', () => ({ logger: mocks.logger }));
+vi.mock('@/seed/utils/logger-utility', () => ({ logger: mocks.logger }));
 vi.mock('@/lib/publishing/scheduler', () => ({ schedulePublish: mocks.schedulePublish }));
-vi.mock('@/lib/better-auth-session', () => ({ getCurrentUserFromHeaders: mocks.getCurrentUserFromHeaders }));
+vi.mock('@/seed/auth/better-auth-session', () => ({ getCurrentUserFromHeaders: mocks.getCurrentUserFromHeaders }));
 
 import { POST } from '@/app/api/publish/schedule/route';
 

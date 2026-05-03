@@ -8,7 +8,7 @@
  * augment niche matching with semantic analysis via OpenRouter.
  */
 
-import type { AffiliateProgram } from "@/types";
+import type { AffiliateProgram } from "@/seed/types";
 import {
   computeComponents,
   computeWeightedScore,

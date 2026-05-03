@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { Mail, Lock, ArrowLeft, Loader2, CheckCircle } from "lucide-react";
-import { authClient } from "@/lib/better-auth-client";
+import { authClient } from "@/seed/auth/better-auth-client";
 import { SignupForm } from "@/components/auth/signup-form";
 
 type AuthMode = "password" | "magic";

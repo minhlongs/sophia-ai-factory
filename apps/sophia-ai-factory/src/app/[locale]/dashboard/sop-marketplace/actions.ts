@@ -9,7 +9,7 @@
  */
 
 import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/better-auth-session';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getTemplateBySlug, createInstallation, setEnabled, deleteInstallation, getInstallation } from '@/lib/sop/sop-repo';
 import { generateWebhookSecret } from '@/lib/sop/webhook-hmac';
 import { installInputSchema } from '@/lib/sop/install-input-schema';

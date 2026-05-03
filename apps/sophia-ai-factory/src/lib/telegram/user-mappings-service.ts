@@ -3,8 +3,8 @@
  * CRUD operations for telegram_user_mappings table
  */
 
-import { createServerClient } from '@/lib/db/client'
-import { logger } from '@/lib/utils/logger-utility'
+import { createServerClient } from '@/seed/db/client'
+import { logger } from '@/seed/utils/logger-utility'
 
 export interface TelegramUserMapping {
   id: string

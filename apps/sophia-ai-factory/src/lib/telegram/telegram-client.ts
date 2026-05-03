@@ -1,4 +1,4 @@
-import { getErrorMessage } from '@/lib/utils/to-error';
+import { getErrorMessage } from '@/seed/utils/to-error';
 
 export async function setTelegramWebhook() {
   const botToken = process.env.TELEGRAM_BOT_TOKEN;

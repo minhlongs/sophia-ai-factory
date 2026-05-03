@@ -14,7 +14,7 @@
 
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
-import { getCurrentUser } from '@/lib/better-auth-session';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { resolveLlmRoute } from '@/lib/agent-chat/llm-router';
 import { formatStream, serializeSseEvent, openAiStreamToChunks } from '@/lib/agent-chat/stream-formatter';
 import { buildSystemPrompt } from '@/lib/agent-chat/system-prompt';

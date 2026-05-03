@@ -3,7 +3,7 @@
  * @module billing/usage-aggregator-types
  */
 
-import type { Tier } from '@/types'
+import type { Tier } from '@/seed/types'
 
 export interface UsageSummary {
   userId: string

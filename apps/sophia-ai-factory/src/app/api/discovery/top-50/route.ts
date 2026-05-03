@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sophiaIndex } from '@/lib/supabase/sophia-index'
-import { getCurrentUser } from '@/lib/better-auth-session'
+import { getCurrentUser } from '@/seed/auth/better-auth-session'
 
 export const revalidate = 3600 // Cache for 1 hour (ISR)
 

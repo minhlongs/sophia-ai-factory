@@ -1,11 +1,11 @@
 "use client";
 
-import { Container } from "@/components/ui/container";
-import { Card } from "@/components/ui/card";
-import { SectionHeading } from "@/components/ui/section-heading";
+import { Container } from "@/seed/components/ui/container";
+import { Card } from "@/seed/components/ui/card";
+import { SectionHeading } from "@/seed/components/ui/section-heading";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { FadeInView } from "@/components/ui/fade-in-view";
+import { FadeInView } from "@/seed/components/ui/fade-in-view";
 import { ChevronDown } from "lucide-react";
 
 export function FAQ() {

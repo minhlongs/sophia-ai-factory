@@ -7,11 +7,11 @@
  * @module audit/usage-event-tracker
  */
 
-import { createServerClient } from '@/lib/db/client'
-import { insertTyped } from '@/lib/db/insert-typed'
+import { createServerClient } from '@/seed/db/client'
+import { insertTyped } from '@/seed/db/insert-typed'
 import { hashIpAddress, generateUserPseudonym } from './audit-hashing'
-import { logger } from '@/lib/utils/logger-utility'
-import { toError } from '@/lib/utils/to-error'
+import { logger } from '@/seed/utils/logger-utility'
+import { toError } from '@/seed/utils/to-error'
 import type { RaasAuditLogInsert, RaasAuditLogRow } from '@/lib/supabase/types'
 
 /**

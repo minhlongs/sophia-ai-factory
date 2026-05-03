@@ -8,7 +8,7 @@
 
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { getVideoBucket } from '@/lib/video/r2-binding';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 
 export interface GenerateSubtitlesInput {
   audioR2Key: string;

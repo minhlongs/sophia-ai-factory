@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
-import { createServerClient } from '@/lib/db/client';
-import { logger } from '@/lib/utils/logger-utility';
-import { toError } from '@/lib/utils/to-error';
+import { createServerClient } from '@/seed/db/client';
+import { logger } from '@/seed/utils/logger-utility';
+import { toError } from '@/seed/utils/to-error';
 import { jwtVerify } from 'jose';
 import { sha256 } from '@/lib/audit/crypto-utils';
 

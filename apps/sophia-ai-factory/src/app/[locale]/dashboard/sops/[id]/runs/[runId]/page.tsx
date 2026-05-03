@@ -8,7 +8,7 @@
 import { notFound, redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
-import { getCurrentUser } from '@/lib/better-auth-session';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getInstallation } from '@/lib/sop/sop-repo';
 import { SopRunTimeline } from '@/components/sop/sop-run-timeline';
 import { RunStatusBadge } from '@/components/sop/run-status-badge';

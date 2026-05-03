@@ -2,11 +2,11 @@
 // Persistence (D1 videos table) is deferred to a future phase.
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getCurrentUser } from "@/lib/better-auth-session";
-import { getUserTier } from "@/lib/db/get-user-tier";
+import { getCurrentUser } from "@/seed/auth/better-auth-session";
+import { getUserTier } from "@/seed/db/get-user-tier";
 import { generateScript, selectModelForTier } from "@/lib/ai/script-generator";
-import { logger } from "@/lib/utils/logger-utility";
-import type { Tier } from "@/types";
+import { logger } from "@/seed/utils/logger-utility";
+import type { Tier } from "@/seed/types";
 
 const TIER_RANK: Record<Tier, number> = {
   BASIC: 0,

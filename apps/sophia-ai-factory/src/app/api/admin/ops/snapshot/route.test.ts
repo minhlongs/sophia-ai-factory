@@ -9,7 +9,7 @@ import { NextRequest } from 'next/server'
 
 // ── Auth mock ──────────────────────────────────────────────────────────────────
 
-vi.mock('@/lib/auth/require-admin', () => ({
+vi.mock('@/seed/auth/require-admin', () => ({
   requireAdmin: vi.fn(),
 }))
 
@@ -20,13 +20,13 @@ const mockD1First = vi.fn()
 const mockD1PrepBind = vi.fn(() => ({ all: mockD1All, first: mockD1First }))
 const mockD1Prep = vi.fn(() => ({ bind: mockD1PrepBind, all: mockD1All, first: mockD1First }))
 
-vi.mock('@/lib/db/client', () => ({
+vi.mock('@/seed/db/client', () => ({
   getD1Raw: vi.fn(async () => ({ prepare: mockD1Prep })),
 }))
 
 // ── Health / CB mocks ──────────────────────────────────────────────────────────
 
-vi.mock('@/lib/health/heygen-health-check', () => ({
+vi.mock('@/seed/health/heygen-health-check', () => ({
   isHeyGenHealthy: vi.fn(async () => true),
 }))
 
@@ -38,15 +38,15 @@ vi.mock('@/lib/fulfillment/circuit-breaker', () => ({
   })),
 }))
 
-vi.mock('@/lib/health/build-metadata', () => ({
+vi.mock('@/seed/health/build-metadata', () => ({
   getBuildMetadata: vi.fn(() => ({ sha: 'abc12345', deployedAt: '2026-05-02T08:00:00Z' })),
 }))
 
-vi.mock('@/lib/utils/logger-utility', () => ({
+vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }))
 
-import { requireAdmin } from '@/lib/auth/require-admin'
+import { requireAdmin } from '@/seed/auth/require-admin'
 import { GET } from './route'
 import { NextResponse } from 'next/server'
 
@@ -86,7 +86,7 @@ describe('GET /api/admin/ops/snapshot', () => {
 
   it('returns 503 when D1 is unavailable', async () => {
     mockRequireAdmin.mockResolvedValue({ user: ADMIN_USER })
-    const { getD1Raw } = await import('@/lib/db/client')
+    const { getD1Raw } = await import('@/seed/db/client')
     vi.mocked(getD1Raw).mockRejectedValueOnce(new Error('D1 unavailable'))
 
     const res = await GET(buildRequest())

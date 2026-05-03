@@ -5,12 +5,12 @@
  */
 
 import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/better-auth-session';
-import { createServerClient } from '@/lib/db/client';
-import { getUserTier } from '@/lib/db/get-user-tier';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { createServerClient } from '@/seed/db/client';
+import { getUserTier } from '@/seed/db/get-user-tier';
 import { getBalance } from '@/lib/mcu/credits-repo';
-import { logger } from '@/lib/utils/logger-utility';
-import { TIER_CONFIG } from '@/config/tiers';
+import { logger } from '@/seed/utils/logger-utility';
+import { TIER_CONFIG } from '@/seed/config/tiers';
 import { DashboardHeroGreeting } from './components/dashboard-hero-greeting';
 import { DashboardSetupSteps } from './components/dashboard-setup-steps';
 import { DashboardReturningUser } from './components/dashboard-returning-user';

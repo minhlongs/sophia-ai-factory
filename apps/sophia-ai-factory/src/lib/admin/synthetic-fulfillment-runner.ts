@@ -9,16 +9,16 @@
  * @module lib/admin/synthetic-fulfillment-runner
  */
 
-import { logger } from '@/lib/utils/logger-utility'
-import { getD1Raw } from '@/lib/db/client'
+import { logger } from '@/seed/utils/logger-utility'
+import { getD1Raw } from '@/seed/db/client'
 import {
   insertPurchase,
   markPaid,
-} from '@/lib/db/repositories/user-purchases-repo'
-import { findByPurchaseId } from '@/lib/db/repositories/videos-repo'
+} from '@/seed/db/repositories/user-purchases-repo'
+import { findByPurchaseId } from '@/seed/db/repositories/videos-repo'
 import { triggerOneTimeFulfillment } from '@/lib/fulfillment/one-time-fulfillment'
-import { ONE_TIME_SKUS } from '@/config/one-time-skus'
-import type { OneTimeSkuId } from '@/types'
+import { ONE_TIME_SKUS } from '@/seed/config/one-time-skus'
+import type { OneTimeSkuId } from '@/seed/types'
 
 const POLL_INTERVAL_MS = 3_000
 const DEFAULT_TIMEOUT_MS = 60_000

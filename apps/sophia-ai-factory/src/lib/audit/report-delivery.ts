@@ -6,8 +6,8 @@
  *   report-storage-delivery.ts — storeReport, downloadStoredReport
  */
 
-import { logger } from '@/lib/utils/logger-utility'
-import { toError, getErrorMessage } from '@/lib/utils/to-error'
+import { logger } from '@/seed/utils/logger-utility'
+import { toError, getErrorMessage } from '@/seed/utils/to-error'
 import { emailReport } from './report-email-delivery'
 import { storeReport, downloadStoredReport } from './report-storage-delivery'
 import type { ScheduledReport } from './report-scheduler'
@@ -83,7 +83,7 @@ export async function getGeneratedReports(
   adminId: string,
   limit: number = 50
 ): Promise<ReportMetadata[]> {
-  const db = await import('@/lib/db/client').then((m) => m.createServerClient())
+  const db = await import('@/seed/db/client').then((m) => m.createServerClient())
 
   try {
     const result = await db.from<AuditComplianceReportRow>('compliance_reports')

@@ -13,7 +13,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { logger } from '@/lib/utils/logger-utility';
+import { logger } from '@/seed/utils/logger-utility';
 import { logValidationWithReceipt } from '@/lib/audit/audit-logger';
 import type { TenantIsolationResult } from './tenant-isolation-types';
 import { extractAgencyId } from './tenant-isolation-agency-extractor';

@@ -11,11 +11,11 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/db/client';
-import { logger } from '@/lib/utils/logger-utility';
-import { toError } from '@/lib/utils/to-error';
+import { createServerClient } from '@/seed/db/client';
+import { logger } from '@/seed/utils/logger-utility';
+import { toError } from '@/seed/utils/to-error';
 import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker';
-import { verifyCronAuth } from '@/lib/security/cron-auth';
+import { verifyCronAuth } from '@/seed/security/cron-auth';
 
 export const dynamic = 'force-dynamic';
 

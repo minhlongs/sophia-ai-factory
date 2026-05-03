@@ -17,7 +17,7 @@ vi.mock('@/lib/tiktok/tiktok-oauth-client', () => ({
   checkPublishStatus: mocks.checkPublishStatus,
 }));
 
-vi.mock('@/lib/utils/logger-utility', () => ({
+vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { warn: vi.fn(), info: vi.fn(), error: vi.fn() },
 }));
 

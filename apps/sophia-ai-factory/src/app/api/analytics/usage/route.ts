@@ -16,9 +16,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/better-auth-session';
-import { getUserTier } from '@/lib/db/get-user-tier';
-import { logger } from '@/lib/utils/logger-utility';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { getUserTier } from '@/seed/db/get-user-tier';
+import { logger } from '@/seed/utils/logger-utility';
 import { fetchUsageMetrics } from '@/lib/analytics/queries';
 import { verifyLicenseAccess, getUserLicenseNonce, checkAdmin } from '@/lib/analytics/rbac';
 import { analyticsUsageQuerySchema } from '@/lib/validation/services';

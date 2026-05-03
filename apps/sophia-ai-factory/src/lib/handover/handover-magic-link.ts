@@ -4,8 +4,8 @@
  * @module lib/handover/handover-magic-link
  */
 
-import { getD1Raw } from '@/lib/db/client';
-import { logger } from '@/lib/utils/logger-utility';
+import { getD1Raw } from '@/seed/db/client';
+import { logger } from '@/seed/utils/logger-utility';
 import type { CustomerHandoverRow } from './handover-types';
 
 const DEFAULT_TOKEN_TTL_HOURS = 24;

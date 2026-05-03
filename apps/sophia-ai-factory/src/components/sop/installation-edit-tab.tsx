@@ -13,7 +13,7 @@ import { useTranslations } from 'next-intl';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { SopConfigForm, parseConfigSchema } from './sop-config-form';
 import { PlaybookMarkdownEditor } from './playbook-markdown-editor';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/seed/components/ui/button';
 
 interface Props {
   playbookMd: string;

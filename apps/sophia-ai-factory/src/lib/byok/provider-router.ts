@@ -17,10 +17,10 @@
  */
 
 import { z } from 'zod'
-import { createServerClient } from '@/lib/db/client'
+import { createServerClient } from '@/seed/db/client'
 import { isEnabled } from '@/lib/feature-flags'
 import { decryptSecret } from '@/lib/crypto/encrypt-secret'
-import { logger } from '@/lib/utils/logger-utility'
+import { logger } from '@/seed/utils/logger-utility'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
