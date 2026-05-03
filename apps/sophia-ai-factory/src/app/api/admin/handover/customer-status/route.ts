@@ -1,0 +1,60 @@
+/**
+ * GET /api/admin/handover/customer-status
+ * Returns current user's handover record (if any) for the onboarding banner.
+ * No admin required — authenticated user fetches their own handover.
+ *
+ * @module app/api/admin/handover/customer-status/route
+ */
+
+import { NextRequest, NextResponse } from 'next/server';
+import { getCurrentUserFromHeaders } from '@/lib/better-auth-session';
+import { getD1Raw } from '@/lib/db/client';
+import { logger } from '@/lib/utils/logger-utility';
+import type { CustomerHandoverRow } from '@/lib/handover/handover-types';
+
+export const dynamic = 'force-dynamic';
+
+export async function GET(request: NextRequest): Promise<NextResponse> {
+  const user = await getCurrentUserFromHeaders(request.headers);
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const db = await getD1Raw();
+    const row = await db
+      .prepare(
+        `SELECT id, agency_name, tier, customer_first_login_at,
+                customer_first_sop_install_at, customer_first_run_at, status
+         FROM customer_handovers
+         WHERE customer_user_id = ?1
+         ORDER BY created_at DESC
+         LIMIT 1`,
+      )
+      .bind(user.id)
+      .first<Pick<
+        CustomerHandoverRow,
+        'id' | 'agency_name' | 'tier' | 'customer_first_login_at' |
+        'customer_first_sop_install_at' | 'customer_first_run_at' | 'status'
+      >>();
+
+    if (!row) {
+      return NextResponse.json({ handover: null });
+    }
+
+    return NextResponse.json({
+      handover: {
+        handoverId: row.id,
+        agencyName: row.agency_name,
+        tier: row.tier,
+        firstLoginAt: row.customer_first_login_at,
+        firstSopInstallAt: row.customer_first_sop_install_at,
+        firstRunAt: row.customer_first_run_at,
+        status: row.status,
+      },
+    });
+  } catch (err) {
+    logger.error('[HandoverStatus] Query failed', err instanceof Error ? err : undefined);
+    return NextResponse.json({ handover: null });
+  }
+}

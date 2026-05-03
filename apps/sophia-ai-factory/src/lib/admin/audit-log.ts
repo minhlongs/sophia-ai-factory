@@ -22,6 +22,9 @@ export type AuditActionType =
   | 'mark_migration_applied'
   | 'synthetic_ipn'
   | 'heygen_webhook_registered'
+  | 'customer_handover_created'
+  | 'customer_handover_resent'
+  | 'customer_handover_status_changed'
 
 export async function writeAuditLog(params: {
   actorUserId: string
