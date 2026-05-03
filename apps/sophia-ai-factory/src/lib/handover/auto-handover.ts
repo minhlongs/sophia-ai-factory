@@ -194,7 +194,7 @@ export async function triggerAutoHandover(opts: AutoHandoverOptions): Promise<Au
   try {
     const token = await createMagicLinkToken(handoverId);
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network';
-    magicLink = `${appUrl}/handover/activate?token=${token}`;
+    magicLink = `${appUrl}/${locale}/welcome/${token}`;
   } catch (err) {
     logger.warn('[AutoHandover] Magic link generation failed (non-fatal)', { error: getErrorMessage(err) });
   }

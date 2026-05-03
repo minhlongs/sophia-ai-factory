@@ -176,6 +176,6 @@ describe('triggerAutoHandover', () => {
     });
 
     expect(result.magicLink).toContain('tok_magic999');
-    expect(result.magicLink).toContain('/handover/activate');
+    expect(result.magicLink).toContain('/welcome/');
   });
 });
