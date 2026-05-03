@@ -1,12 +1,15 @@
 # Codebase Summary
 
-**Last Updated:** 2026-04-30
+**Last Updated:** 2026-05-03
 **Version:** 1.14.20 (Go-Live Hardening Batch)
 **Recent Major Changes:** Go-live hardening batch (SHA e1f0861f): (A) `/settings` → 308 redirect to `/dashboard/settings` (was 404); (B) Cron auth centralized — `clearance-promote`, `wallet-rebuild`, `local-mode-health`, `workflow-stepper` all use `verifyCronAuth` from `lib/security/cron-auth.ts`; (C) Dead code purge — `verify-env.js` (Polar BANNED), `env-validation.ts` (D-ID discontinued); (D) localhost:3000 fallbacks removed from `video-tts.ts`, `script-generator.ts`, `raas/missions`; (E) `.env.production.example` — +20 required vars, −Polar; (F) CERTIFICATION.md regenerated at 90/100 go-live readiness. 1798 tests pass (31 skipped). See `docs/project-changelog.md` for full details.
 
 ## Project Structure Overview
 
 Sophia AI Video Factory is a Next.js 16 application structured around the App Router. It integrates with Airtable (data), n8n (automation), and various AI providers (OpenRouter, ElevenLabs, D-ID).
+
+<!-- Tiếng Việt: Cấu trúc thư mục đã được tái cấu trúc theo mô hình Mekong 4 tầng kể từ 2026-05-03. -->
+<!-- EN: Directory layout restructured into Mekong 4-layer model as of 2026-05-03. See docs/system-architecture.md for layer rules. -->
 
 ```
 .
@@ -17,12 +20,55 @@ Sophia AI Video Factory is a Next.js 16 application structured around the App Ro
 │   ├── public/                # Static assets
 │   ├── scripts/               # Utility scripts (setup, verification)
 │   ├── workflows/             # n8n workflow JSON exports
-│   └── src/                   # Source code
-│       ├── app/               # Next.js App Router pages
-│       ├── config/            # Configuration and feature flags
-│       ├── data/              # Static JSON data (affiliate programs)
-│       ├── lib/               # Shared utilities (Airtable, API clients)
-│       └── types/             # TypeScript definitions
+│   └── src/                   # Source code (Mekong 4-layer architecture)
+│       ├── seed/              # Layer 1 — infra primitives (no domain)
+│       │   ├── db/            # D1 database client + queries
+│       │   ├── utils/         # Shared utilities (to-error, formatters)
+│       │   ├── security/      # API key validation, cron auth, HMAC
+│       │   ├── types/         # Shared TypeScript interfaces + contracts
+│       │   ├── config/        # Feature flags, tier config, environment
+│       │   ├── auth/          # Better Auth server, JWT enrichment
+│       │   ├── health/        # Health check endpoints
+│       │   └── components/ui/ # Pure Tailwind primitives (shadcn/ui)
+│       ├── tree/              # Layer 2 — single-tenant CEO ops
+│       │   ├── admin/         # Admin panel components
+│       │   ├── audit/         # Audit log writer
+│       │   ├── byok/          # Bring-Your-Own-Key management
+│       │   ├── clients/       # External API client wrappers
+│       │   ├── credentials/   # Encrypted credential storage
+│       │   ├── crypto/        # Encryption utilities
+│       │   ├── gateway/       # External API gateway + circuit breaker
+│       │   ├── handover/      # CEO handover report generation
+│       │   └── telegram/      # Telegram bot + FSM campaign handlers
+│       ├── forest/            # Layer 3 — multi-tenant SaaS plumbing
+│       │   ├── agents/        # Agent runner + task queue + logger
+│       │   ├── api-keys/      # API key CRUD + rotation
+│       │   ├── components/    # SaaS UI components (pricing, quota)
+│       │   ├── email/         # Email rendering + delivery
+│       │   ├── hooks/         # Shared React hooks
+│       │   ├── inngest/       # Inngest event functions
+│       │   ├── middleware/    # Tenant isolation middleware
+│       │   ├── missions/      # Mission control UI
+│       │   ├── onboarding/    # Welcome + tenant setup flows
+│       │   ├── outbox/        # Reliable email outbox (D1-backed)
+│       │   ├── quota/         # Quota checker + enforcer
+│       │   ├── usage-metering/# Usage event collector + KV sync
+│       │   └── worker/        # Cloudflare Worker entry + metering reconciler
+│       ├── land/              # Layer 4 — revenue + governance (top layer)
+│       │   ├── affiliates/    # Affiliate program catalog + shortlinks
+│       │   ├── billing/       # Billing email, dunning, invoices
+│       │   ├── checkout/      # Checkout page + payment initiation
+│       │   ├── orders/        # Order management
+│       │   ├── payments/      # NOWPayments IPN + PayOS handlers
+│       │   ├── payouts/       # Payout processor + wallet rebuilder
+│       │   ├── promo/         # Promo codes + discounts
+│       │   ├── refunds/       # Refund handling
+│       │   ├── status/        # Public status page
+│       │   └── wallet/        # User financial settlement
+│       ├── app/               # Next.js App Router (route files, orchestration)
+│       ├── lib/               # Legacy lib/ — being migrated to layers above
+│       ├── middleware.ts      # Next.js middleware (root — uses seed/auth)
+│       └── instrumentation.ts # Sentry hook (root)
 ```
 
 ## Key Directories & Files

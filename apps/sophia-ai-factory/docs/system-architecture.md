@@ -686,3 +686,75 @@ scripts/infra/audit-github-secrets.sh
 - **Backend**: n8n can be self-hosted or cloud-hosted; scales independently.
 - **Database**: Airtable has rate limits (5 requests/sec), suitable for SMB/Personal use. Future upgrade path: Supabase.
 - **Supervisor Agent**: Cloudflare Workers cron (*/1 min) scales horizontally; D1 SQLite suitable for <100K workflows/org.
+
+---
+
+## Kiến Trúc 4 Tầng Mekong / Mekong 4-Layer Architecture (2026-05-03)
+
+<!-- Tiếng Việt -->
+**Tổng quan (VN):** Kể từ ngày 2026-05-03, mã nguồn `src/` được tổ chức thành 4 tầng độc lập theo mô hình Mekong. Chiều phụ thuộc chỉ đi xuống (một chiều): `land → forest → tree → seed`. Không có tầng nào được import từ tầng trên nó. Quy tắc này được thực thi tự động bởi ESLint (`eslint.config.mjs`). Một số file được miễn trừ (xem mục Exemptions bên dưới) vì lý do kiến trúc đã được ghi chép trong kế hoạch.
+
+**Overview (EN):** As of 2026-05-03, `src/` is organized into 4 independent layers following the Mekong model. Dependency direction is strictly one-way downward: `land → forest → tree → seed`. No layer may import from a layer above it. This rule is automatically enforced by ESLint (`eslint.config.mjs`). A documented set of files are exempted due to architectural constraints captured in the plan.
+
+```mermaid
+graph TB
+  Land["land/<br/>Revenue + Governance<br/>billing • payments • status • pricing"]
+  Forest["forest/<br/>Multi-Tenant SaaS Plumbing<br/>outbox • api-keys • email • quota • tenant-iso"]
+  Tree["tree/<br/>Single-Tenant CEO Ops<br/>setup-wizard • handover • telegram • admin"]
+  Seed["seed/<br/>Infra Primitives<br/>db • utils • types • config • base-agent • better-auth"]
+
+  Land --> Forest
+  Forest --> Tree
+  Tree --> Seed
+  Land -.-> Tree
+  Land -.-> Seed
+  Forest -.-> Seed
+
+  classDef land fill:#fee,stroke:#c00
+  classDef forest fill:#efe,stroke:#0a0
+  classDef tree fill:#eef,stroke:#00c
+  classDef seed fill:#fef,stroke:#a0a
+  class Land land
+  class Forest forest
+  class Tree tree
+  class Seed seed
+```
+
+_Solid arrows = primary dependency chain. Dashed arrows = allowed skip-layer imports (e.g., land → seed for infra types)._
+
+### Layer Responsibilities / Trách nhiệm mỗi tầng
+
+| Layer | Tầng | Purpose | Sample Modules | NOT Allowed |
+|-------|------|---------|---------------|-------------|
+| **seed/** | Hạ tầng nguyên thủy | Infra primitives — no business domain. Used by all layers. | `db/`, `utils/`, `types/`, `config/`, `auth/`, `security/`, `health/`, `components/ui/` | Import `tree/`, `forest/`, or `land/` |
+| **tree/** | Vận hành CEO đơn tenant | Single-tenant CEO-facing ops. Admin panel, Telegram bot, handover reports. | `admin/`, `audit/`, `byok/`, `crypto/`, `gateway/`, `handover/`, `telegram/` | Import `forest/` or `land/` |
+| **forest/** | Hạ tầng SaaS đa tenant | Multi-tenant SaaS plumbing. Agents, email delivery, API key management, quotas. | `agents/`, `api-keys/`, `email/`, `outbox/`, `onboarding/`, `quota/`, `usage-metering/`, `middleware/`, `worker/`, `inngest/`, `missions/` | Import `land/` |
+| **land/** | Doanh thu + quản trị | Revenue & governance. Billing, payments, status pages, affiliate programs. | `billing/`, `payments/`, `status/`, `affiliates/`, `orders/`, `payouts/`, `promo/`, `refunds/`, `wallet/` | (top layer — no restriction) |
+
+### Import Direction Rule / Quy Tắc Hướng Import
+
+```
+land/   ──▶  forest/  ──▶  tree/  ──▶  seed/
+                │                        ▲
+                └────────────────────────┘  (direct skip allowed)
+```
+
+- **Forbidden (sẽ bị ESLint báo lỗi):**
+  - `seed/` importing `@/tree`, `@/forest`, or `@/land`
+  - `tree/` importing `@/forest` or `@/land`
+  - `forest/` importing `@/land`
+- **Allowed exceptions (được miễn trừ trong eslint.config.mjs):**
+  - `src/app/**` — App Router route files orchestrate all layers (top-level orchestration)
+  - Auth cluster: `seed/auth/enriched-jwt*.ts`, `seed/auth/enforce-tier-quota.ts`, `seed/auth/better-auth-server.ts`
+  - Security cluster: `seed/security/api-key-validator-*.ts`
+  - Handover: `tree/handover/auto-handover.ts`, `tree/handover/handover-email-service.ts`
+  - Telegram: `tree/telegram/telegram-bot-campaign-*.ts`, `tree/telegram/handlers/campaign-handler.ts`
+  - Inngest: `forest/inngest/functions/auto-discover-affiliates.ts`, `forest/inngest/functions/conversion-to-ledger.ts`
+  - Quota: `forest/quota/quota-enforcer.ts`
+  - Pricing UI: `forest/components/pricing/coupon-input.tsx`
+
+### ESLint Enforcement / Thực thi ESLint
+
+Layer boundaries are enforced via `no-restricted-imports` in `apps/sophia-ai-factory/eslint.config.mjs` (Phase 07 — 2026-05-03). Run `npm run lint` to verify. Zero new violations expected in non-exempt files.
+
+**Related:** Scout report (`plans/260503-1030-sophia-mekong-restructure/`), PRs #23–#28 (layer moves), PR #29 (this phase — ESLint + docs).
