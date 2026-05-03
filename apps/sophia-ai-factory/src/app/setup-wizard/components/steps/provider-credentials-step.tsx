@@ -20,6 +20,7 @@ export interface ProviderConfig {
   HEYGEN_API_KEY: string
   RESEND_API_KEY: string
   NOWPAYMENTS_API_KEY: string
+  HEYGEN_WEBHOOK_SECRET: string
 }
 
 interface ProviderCredentialsStepProps {
@@ -85,6 +86,44 @@ export function ProviderCredentialsStep({
           helpText="Your HeyGen API key for video generation. Get it from app.heygen.com → Account → API. / Khóa HeyGen để tạo video."
         />
         <SavedHint hint={getSaved('heygen')?.display_hint ?? null} />
+
+        {/* HeyGen Webhook callout */}
+        <div className="mt-3 rounded-lg border border-sky-900/50 bg-sky-950/30 p-4 space-y-3">
+          <p className="text-sm font-semibold text-sky-300">
+            🔗 Connect HeyGen Webhook (Optional but Recommended) / Kết nối HeyGen Webhook (Khuyến nghị)
+          </p>
+          <ol className="text-xs text-zinc-400 space-y-1.5 list-none">
+            <li>1. Open HeyGen → <span className="text-zinc-300">app.heygen.com</span> → Account → API → Webhooks</li>
+            <li>2. Add this URL / Thêm URL này:</li>
+            <li>
+              <span className="flex items-center gap-2">
+                <code className="flex-1 bg-zinc-900 text-emerald-400 rounded px-2 py-1 text-xs font-mono select-all">
+                  https://sophia.agencyos.network/api/webhooks/heygen
+                </code>
+                <button
+                  type="button"
+                  onClick={() => navigator.clipboard.writeText('https://sophia.agencyos.network/api/webhooks/heygen')}
+                  className="shrink-0 text-xs px-2 py-1 bg-zinc-700 hover:bg-zinc-600 text-zinc-200 rounded transition-colors"
+                >
+                  Copy
+                </button>
+              </span>
+            </li>
+            <li>3. Copy the signing secret HeyGen shows you / Sao chép secret mà HeyGen hiển thị</li>
+            <li>4. Paste below / Dán vào bên dưới</li>
+          </ol>
+          <ApiKeyInput
+            id="heygen_webhook_secret"
+            label="HeyGen Webhook Secret (Optional)"
+            value={config.HEYGEN_WEBHOOK_SECRET ?? ''}
+            onChange={(v) => updateConfig('HEYGEN_WEBHOOK_SECRET', v)}
+            onVerify={async () => true}
+            status="idle"
+            errorMessage=""
+            placeholder="HeyGen webhook signing secret..."
+            helpText="Paste the signing secret from HeyGen webhook settings. / Dán secret từ cài đặt webhook HeyGen."
+          />
+        </div>
       </div>
 
       {/* Resend — optional */}
