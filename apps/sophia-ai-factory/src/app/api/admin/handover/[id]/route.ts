@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAdmin } from '@/seed/auth/require-admin';
 import { getD1Raw } from '@/seed/db/client';
-import { writeAuditLog } from '@/lib/admin/audit-log';
+import { writeAuditLog } from '@/tree/admin/audit-log';
 import { logger } from '@/seed/utils/logger-utility';
 import { getErrorMessage } from '@/seed/utils/to-error';
 

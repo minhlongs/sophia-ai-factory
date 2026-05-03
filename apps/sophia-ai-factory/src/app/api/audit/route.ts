@@ -25,7 +25,7 @@ import { validateJwt } from '@/seed/security/jwt-validator'
 import { checkRateLimit, recordRequest } from '@/seed/security/rate-limiter'
 
 // Import audit query logger
-import { logAuditQuery, queryAuditLogs } from '@/lib/audit/audit-query-logger'
+import { logAuditQuery, queryAuditLogs } from '@/tree/audit/audit-query-logger'
 
 export const dynamic = 'force-dynamic'
 

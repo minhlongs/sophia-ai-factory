@@ -6,7 +6,7 @@ import { getUserTier } from "@/seed/db/get-user-tier";
 import { createServerClient } from "@/seed/db/client";
 import { createVideoSchema } from "@/lib/schemas";
 import { logger } from "@/seed/utils/logger-utility";
-import { reserveVideoSlot, releaseVideoSlot } from "@/lib/quota/video-quota";
+import { reserveVideoSlot, releaseVideoSlot } from "@/forest/quota/video-quota";
 
 const VIDEO_ALLOWED_TIERS = new Set(['PREMIUM', 'ENTERPRISE', 'MASTER']);
 

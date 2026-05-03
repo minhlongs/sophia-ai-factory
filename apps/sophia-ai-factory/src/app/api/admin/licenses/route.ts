@@ -4,10 +4,10 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getLicenses } from '@/lib/raas-audit'
+import { getLicenses } from '@/forest/raas-audit'
 import { requireAdmin } from '@/seed/auth/require-admin'
 import { logger } from '@/seed/utils/logger-utility'
-import type { LicenseTier } from '@/lib/raas-schema'
+import type { LicenseTier } from '@/forest/raas-schema'
 import { z } from 'zod'
 
 /**

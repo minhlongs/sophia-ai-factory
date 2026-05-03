@@ -10,7 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/seed/db/client'
-import { generateReceipt, serializeReceipt } from '@/lib/audit/compliance-receipt'
+import { generateReceipt, serializeReceipt } from '@/tree/audit/compliance-receipt'
 import { requireAdmin } from '@/seed/auth/require-admin'
 import { logger } from '@/seed/utils/logger-utility'
 import { z } from 'zod'

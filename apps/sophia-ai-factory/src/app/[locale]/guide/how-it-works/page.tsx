@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { ArrowRight, User, Brain, Mic, Video, ArrowDown } from "lucide-react";
-import { GuideCallout } from "@/components/guide/guide-callout";
-import { GuideFeatureGrid, GuideFeatureItem } from "@/components/guide/guide-feature-grid";
+import { GuideCallout } from "@/forest/components/guide/guide-callout";
+import { GuideFeatureGrid, GuideFeatureItem } from "@/forest/components/guide/guide-feature-grid";
 import Link from "next/link";
 
 export const metadata: Metadata = {

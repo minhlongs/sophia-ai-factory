@@ -10,7 +10,7 @@ import { z } from 'zod'
 import { requireAdmin } from '@/seed/auth/require-admin'
 import { TIER_DB_MAPPING } from '@/seed/config/tiers'
 import { getD1Raw } from '@/seed/db/client'
-import { writeAuditLog } from '@/lib/admin/audit-log'
+import { writeAuditLog } from '@/tree/admin/audit-log'
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
 

@@ -8,9 +8,9 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { ProposalGenerateForm, type ProposalFormData } from '@/components/proposals/proposal-generate-form';
-import { ProposalGenerateActions } from '@/components/proposals/proposal-generate-actions';
-import { ProposalEditor } from '@/components/proposals/proposal-editor';
+import { ProposalGenerateForm, type ProposalFormData } from '@/forest/components/proposals/proposal-generate-form';
+import { ProposalGenerateActions } from '@/forest/components/proposals/proposal-generate-actions';
+import { ProposalEditor } from '@/forest/components/proposals/proposal-editor';
 
 const INITIAL_FORM: ProposalFormData = {
   clientName: '',

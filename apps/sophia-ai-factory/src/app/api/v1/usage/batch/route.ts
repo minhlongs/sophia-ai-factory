@@ -28,9 +28,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
-import { batchIngestUsage } from '@/lib/usage-metering/aggregator';
+import { batchIngestUsage } from '@/forest/usage-metering/aggregator';
 import { batchIngestionRequestSchema } from '@/lib/validation/services';
-import type { BatchUsageRecord, ApiKeyRecord } from '@/lib/usage-metering/types';
+import type { BatchUsageRecord, ApiKeyRecord } from '@/forest/usage-metering/types';
 import type { D1Response } from '@/seed/db/types';
 
 /**

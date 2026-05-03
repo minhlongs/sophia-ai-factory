@@ -8,10 +8,10 @@
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getUserTier } from '@/seed/db/get-user-tier';
-import { seedDefaultTeam } from '@/lib/agents/seed-default-team';
-import { createTask, listAgents, getTask } from '@/lib/agents/repository';
-import { runAgent } from '@/lib/agents/runner';
-import type { AgentTask } from '@/lib/agents/types';
+import { seedDefaultTeam } from '@/forest/agents/seed-default-team';
+import { createTask, listAgents, getTask } from '@/forest/agents/repository';
+import { runAgent } from '@/forest/agents/runner';
+import type { AgentTask } from '@/forest/agents/types';
 
 const CreateAgentTaskSchema = z.object({
   agentId: z.string().min(1).optional(),

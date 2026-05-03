@@ -4,8 +4,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { generateLicenseKey } from '@/lib/raas-key-generator'
-import { createLicense, logLicenseCreation } from '@/lib/raas-audit'
+import { generateLicenseKey } from '@/forest/raas-key-generator'
+import { createLicense, logLicenseCreation } from '@/forest/raas-audit'
 import { requireAdmin } from '@/seed/auth/require-admin'
 import { logger } from '@/seed/utils/logger-utility'
 import { Tier, TierLowercase } from '@/seed/types'

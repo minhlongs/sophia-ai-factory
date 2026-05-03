@@ -7,8 +7,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { NextRequest } from 'next/server'
 import { GET } from './route'
-import { aggregateTraceStats } from '@/lib/admin/trace-aggregator'
-import type { TraceRow } from '@/lib/admin/trace-aggregator'
+import { aggregateTraceStats } from '@/tree/admin/trace-aggregator'
+import type { TraceRow } from '@/tree/admin/trace-aggregator'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyIpnSignature } from '@/lib/clients/nowpayments-client'
+import { verifyIpnSignature } from '@/tree/clients/nowpayments-client'
 import { processNowPaymentsIpn } from '@/lib/billing/nowpayments-ipn-handlers'
 import { ipnPayloadSchema } from '@/lib/billing/ipn-payload-schema'
 import { logger } from '@/seed/utils/logger-utility'

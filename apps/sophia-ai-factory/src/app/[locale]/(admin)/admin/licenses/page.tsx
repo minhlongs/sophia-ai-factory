@@ -6,10 +6,10 @@
  */
 
 import { useState } from 'react';
-import type { LicenseSummary } from '@/lib/raas-schema';
-import { LicenseGenerator } from '@/components/admin/licenses/license-generator';
-import { LicenseList } from '@/components/admin/licenses/license-list';
-import { AuditLogTable } from '@/components/admin/licenses/audit-log-table';
+import type { LicenseSummary } from '@/forest/raas-schema';
+import { LicenseGenerator } from '@/forest/components/admin/licenses/license-generator';
+import { LicenseList } from '@/forest/components/admin/licenses/license-list';
+import { AuditLogTable } from '@/forest/components/admin/licenses/audit-log-table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/seed/components/ui/tabs';
 import { logger } from '@/seed/utils/logger-utility';
 

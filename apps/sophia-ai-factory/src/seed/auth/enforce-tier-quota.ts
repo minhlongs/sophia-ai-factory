@@ -15,7 +15,7 @@
 
 import { getUserTier } from '@/seed/db/get-user-tier'
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports -- mekong-exempt: lib/auth allowed to import forest types
-import { checkVideoQuota, VIDEO_QUOTA_BY_TIER } from '@/lib/quota/video-quota'
+import { checkVideoQuota, VIDEO_QUOTA_BY_TIER } from '@/forest/quota/video-quota'
 
 export interface TierQuotaResult {
   allowed: boolean

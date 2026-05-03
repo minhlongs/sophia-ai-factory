@@ -10,7 +10,7 @@ const { mockSend, mockAudit } = vi.hoisted(() => {
   return { mockSend, mockAudit };
 });
 
-vi.mock('@/lib/inngest/client', () => ({
+vi.mock('@/forest/inngest/client', () => ({
   inngest: { send: mockSend },
 }));
 

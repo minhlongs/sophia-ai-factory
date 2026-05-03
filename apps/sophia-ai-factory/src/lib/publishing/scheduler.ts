@@ -5,7 +5,7 @@
  */
 
 import { getD1Client } from '@/seed/db/client';
-import { inngest } from '@/lib/inngest/client';
+import { inngest } from '@/forest/inngest/client';
 import { consumeQuota } from './per-channel-quota';
 import { logger } from '@/seed/utils/logger-utility';
 import type { PublishingChannel, ChannelProvider } from './publisher-interface';

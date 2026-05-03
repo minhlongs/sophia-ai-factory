@@ -9,7 +9,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock dispatchMission before imports
-vi.mock('@/lib/missions/dispatcher', () => ({
+vi.mock('@/forest/missions/dispatcher', () => ({
   dispatchMission: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -131,7 +131,7 @@ describe('runSop', () => {
   });
 
   it('dispatches mission for each step', async () => {
-    const { dispatchMission } = await import('@/lib/missions/dispatcher');
+    const { dispatchMission } = await import('@/forest/missions/dispatcher');
     const db = buildTestDb({});
 
     await runSop(db as unknown as D1Database, baseCtx);

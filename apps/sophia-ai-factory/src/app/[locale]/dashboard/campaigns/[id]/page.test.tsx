@@ -16,7 +16,7 @@ vi.mock('next/link', () => ({
 }));
 
 // Mock VideoPreview component
-vi.mock('@/components/video-preview', () => ({
+vi.mock('@/forest/components/video-preview', () => ({
   VideoPreview: ({ status }: { status: string }) => <div data-testid="video-preview">{status}</div>,
 }));
 

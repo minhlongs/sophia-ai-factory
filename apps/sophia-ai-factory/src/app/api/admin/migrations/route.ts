@@ -11,7 +11,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/seed/auth/require-admin'
 import { getD1Raw } from '@/seed/db/client'
-import { SUPABASE_MIGRATIONS_MANIFEST } from '@/lib/admin/supabase-migrations-manifest'
+import { SUPABASE_MIGRATIONS_MANIFEST } from '@/tree/admin/supabase-migrations-manifest'
 
 export const dynamic = 'force-dynamic'
 

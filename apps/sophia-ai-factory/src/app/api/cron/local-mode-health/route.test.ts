@@ -12,7 +12,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 // ── Module-level mocks (hoisted before any import) ────────────────────────────
 
-vi.mock('@/lib/crypto/encrypt-secret', () => ({
+vi.mock('@/tree/crypto/encrypt-secret', () => ({
   decryptSecret: vi.fn(),
 }))
 
@@ -27,7 +27,7 @@ vi.mock('@/seed/utils/logger-utility', () => ({
 // ── Imports after mocks ───────────────────────────────────────────────────────
 
 import { runHealthCheck } from './route'
-import { decryptSecret } from '@/lib/crypto/encrypt-secret'
+import { decryptSecret } from '@/tree/crypto/encrypt-secret'
 import { track } from '@/lib/signals/track'
 import { D1Events } from '@/lib/signals/d1-event-types'
 

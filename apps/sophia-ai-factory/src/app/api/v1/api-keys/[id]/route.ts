@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { revokeApiKey } from '@/lib/api-keys/d1-store';
+import { revokeApiKey } from '@/forest/api-keys/d1-store';
 import { logger } from '@/seed/utils/logger-utility';
 
 export const dynamic = 'force-dynamic';

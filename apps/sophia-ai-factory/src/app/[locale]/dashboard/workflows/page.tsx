@@ -10,8 +10,8 @@
 import { useState, useEffect } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
 import Link from 'next/link'
-import { WorkflowList, type WorkflowListItem } from '@/components/workflows/workflow-list'
-import { CreateWorkflowForm } from '@/components/workflows/create-workflow-form'
+import { WorkflowList, type WorkflowListItem } from '@/forest/components/workflows/workflow-list'
+import { CreateWorkflowForm } from '@/forest/components/workflows/create-workflow-form'
 import { WORKFLOW_LABELS } from '@/lib/workflows/workflow-labels'
 
 export default function WorkflowsPage() {

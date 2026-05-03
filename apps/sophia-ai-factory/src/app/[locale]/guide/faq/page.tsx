@@ -1,6 +1,6 @@
 import { Metadata } from "next";
-import { GuideAccordionFaq, FaqItem } from "@/components/guide/guide-accordion-faq";
-import { GuideCallout } from "@/components/guide/guide-callout";
+import { GuideAccordionFaq, FaqItem } from "@/forest/components/guide/guide-accordion-faq";
+import { GuideCallout } from "@/forest/components/guide/guide-callout";
 
 export const metadata: Metadata = {
   title: "Câu Hỏi Thường Gặp — Hướng Dẫn Sophia AI Factory",

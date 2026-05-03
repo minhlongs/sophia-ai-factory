@@ -21,7 +21,7 @@ vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: vi.fn(),
 }))
 
-vi.mock('@/lib/byok/user-api-key-store', () => ({
+vi.mock('@/tree/byok/user-api-key-store', () => ({
   setUserApiKey:            vi.fn(),
   clearUserApiKey:          vi.fn(),
   listUserApiKeyProviders:  vi.fn(),
@@ -41,7 +41,7 @@ import {
   setUserApiKey,
   clearUserApiKey,
   listUserApiKeyProviders,
-} from '@/lib/byok/user-api-key-store'
+} from '@/tree/byok/user-api-key-store'
 import { track } from '@/lib/signals/track'
 import { D1Events } from '@/lib/signals/d1-event-types'
 

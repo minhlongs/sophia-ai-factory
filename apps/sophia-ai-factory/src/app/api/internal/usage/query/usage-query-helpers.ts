@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
-import { QUOTA_LIMITS } from '@/lib/usage-metering/aggregator';
+import { QUOTA_LIMITS } from '@/forest/usage-metering/aggregator';
 import { logger } from '@/seed/utils/logger-utility';
-import type { HourlySummary, DailySummary } from '@/lib/usage-metering/types';
+import type { HourlySummary, DailySummary } from '@/forest/usage-metering/types';
 
 /** Validate X-Internal-Secret header against INTERNAL_WEBHOOK_SECRET env var. */
 export function validateInternalSecret(request: NextRequest): boolean {

@@ -9,7 +9,7 @@
 
 import { useState } from 'react';
 import { ChevronRight, ChevronLeft, Send, Loader2, Check } from 'lucide-react';
-import { AGENCY_SOP_MAP, TIER_SOP_COUNTS, type AgencyType, type CreateHandoverInput } from '@/lib/handover/handover-types';
+import { AGENCY_SOP_MAP, TIER_SOP_COUNTS, type AgencyType, type CreateHandoverInput } from '@/tree/handover/handover-types';
 import type { Tier } from '@/seed/types';
 import {
   Step1CustomerInfo, Step2StarterPack, Step3Configuration,

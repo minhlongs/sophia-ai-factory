@@ -16,7 +16,7 @@ import { DashboardSetupSteps } from './components/dashboard-setup-steps';
 import { DashboardReturningUser } from './components/dashboard-returning-user';
 import { OnboardingTourModal } from './components/onboarding-tour-modal';
 import { OnboardingStatusWidget } from './components/onboarding-status-widget';
-import { MissionControlWidget } from '@/components/dashboard/mission-control-widget';
+import { MissionControlWidget } from '@/forest/components/dashboard/mission-control-widget';
 import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';

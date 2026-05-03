@@ -1,4 +1,4 @@
-import { QUOTA_LIMITS } from '@/lib/usage-metering/aggregator';
+import { QUOTA_LIMITS } from '@/forest/usage-metering/aggregator';
 import type {
   SupabaseUsageEvent,
   UsageEventWithStatus,

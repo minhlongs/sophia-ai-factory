@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/seed/auth/require-admin'
 import { rateLimit } from '@/seed/security/rate-limiter'
 import { logger } from '@/seed/utils/logger-utility'
-import { downloadStoredReport } from '@/lib/audit/report-delivery'
+import { downloadStoredReport } from '@/tree/audit/report-delivery'
 import { createServerClient } from '@/seed/db/client'
 
 interface RouteParams {

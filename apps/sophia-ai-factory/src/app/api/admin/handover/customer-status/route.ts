@@ -10,7 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { getD1Raw } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
-import type { CustomerHandoverRow } from '@/lib/handover/handover-types';
+import type { CustomerHandoverRow } from '@/tree/handover/handover-types';
 
 export const dynamic = 'force-dynamic';
 

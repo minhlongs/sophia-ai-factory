@@ -4,7 +4,7 @@
  */
 
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports -- mekong-exempt: security validators need audit/crypto-utils (tree) for HMAC operations
-import { hmacSha256 } from '@/lib/audit/crypto-utils'
+import { hmacSha256 } from '@/tree/audit/crypto-utils'
 import { logger } from '@/seed/utils/logger-utility'
 
 export const API_KEY_PREFIX = 'mk_'

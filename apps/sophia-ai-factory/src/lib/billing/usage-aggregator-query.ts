@@ -7,7 +7,7 @@ import { createServerClient } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
 import { toError } from '@/seed/utils/to-error'
 import type { Tier } from '@/seed/types'
-import { QUOTA_LIMITS } from '@/lib/usage-metering/aggregator'
+import { QUOTA_LIMITS } from '@/forest/usage-metering/aggregator'
 import { getCurrentBillingPeriod } from './usage-aggregator-types'
 import type { UsageSummary } from './usage-aggregator-types'
 

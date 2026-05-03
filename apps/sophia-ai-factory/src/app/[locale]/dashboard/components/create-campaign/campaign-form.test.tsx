@@ -17,7 +17,7 @@ vi.mock('lucide-react', () => ({
   Sparkles: () => <div data-testid="sparkles" />,
 }));
 
-vi.mock('@/components/UpgradeBanner', () => ({
+vi.mock('@/forest/components/UpgradeBanner', () => ({
   UpgradeBanner: () => <div data-testid="upgrade-banner" />,
 }));
 

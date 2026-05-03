@@ -11,7 +11,7 @@ import { NextRequest } from 'next/server';
 
 // --- Mocks (must be hoisted before any import of the module under test) ---
 
-vi.mock('@/lib/handover/handover-magic-link', () => ({
+vi.mock('@/tree/handover/handover-magic-link', () => ({
   validateMagicLinkToken: vi.fn(),
   consumeMagicLink: vi.fn().mockResolvedValue(undefined),
 }));
@@ -31,7 +31,7 @@ vi.mock('@/seed/auth/better-auth-server', () => ({
   getAuth: vi.fn(),
 }));
 
-vi.mock('@/lib/admin/audit-log', () => ({
+vi.mock('@/tree/admin/audit-log', () => ({
   writeAuditLog: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -44,17 +44,17 @@ vi.mock('@/seed/utils/logger-utility', () => ({
   },
 }));
 
-vi.mock('@/middleware/rate-limit-wrapper', () => ({
+vi.mock('@/forest/middleware/rate-limit-wrapper', () => ({
   checkRateLimit: vi.fn().mockReturnValue(null), // null = not rate-limited, pass through
 }));
 
 // Import after mocks
 import { POST } from '../route';
-import { validateMagicLinkToken, consumeMagicLink } from '@/lib/handover/handover-magic-link';
+import { validateMagicLinkToken, consumeMagicLink } from '@/tree/handover/handover-magic-link';
 import { getAuth } from '@/seed/auth/better-auth-server';
 import { logger } from '@/seed/utils/logger-utility';
 import { signCookieValue } from '@/seed/auth/sign-cookie-value';
-import type { CustomerHandoverRow } from '@/lib/handover/handover-types';
+import type { CustomerHandoverRow } from '@/tree/handover/handover-types';
 
 // ---------------------------------------------------------------------------
 // Helpers

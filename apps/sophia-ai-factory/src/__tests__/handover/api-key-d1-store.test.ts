@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { tierToRateLimit, KEY_PREFIX } from '@/lib/api-keys/d1-store';
+import { tierToRateLimit, KEY_PREFIX } from '@/forest/api-keys/d1-store';
 
 describe('tierToRateLimit', () => {
   it('BASIC = 100', () => expect(tierToRateLimit('BASIC')).toBe(100));

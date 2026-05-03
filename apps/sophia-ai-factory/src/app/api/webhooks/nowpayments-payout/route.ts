@@ -9,9 +9,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyIpnSignature } from '@/lib/clients/nowpayments-client'
+import { verifyIpnSignature } from '@/tree/clients/nowpayments-client'
 import { getD1Raw } from '@/seed/db/client'
-import { inngest } from '@/lib/inngest/client'
+import { inngest } from '@/forest/inngest/client'
 import { logger } from '@/seed/utils/logger-utility'
 
 const IPN_SECRET = process.env.NOWPAYMENTS_IPN_SECRET

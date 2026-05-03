@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { validateMissionApiKey } from '@/lib/missions/api-key-auth';
+import { validateMissionApiKey } from '@/forest/missions/api-key-auth';
 import { getBalance, listTransactions } from '@/lib/mcu/credits-repo';
 
 export const dynamic = 'force-dynamic';

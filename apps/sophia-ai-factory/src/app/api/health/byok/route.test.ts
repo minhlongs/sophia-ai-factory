@@ -4,12 +4,12 @@ vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: vi.fn(),
 }));
 
-vi.mock('@/lib/byok/user-api-key-store', () => ({
+vi.mock('@/tree/byok/user-api-key-store', () => ({
   listUserApiKeyProviders: vi.fn(),
 }));
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { listUserApiKeyProviders } from '@/lib/byok/user-api-key-store';
+import { listUserApiKeyProviders } from '@/tree/byok/user-api-key-store';
 import { GET } from './route';
 
 describe('GET /api/health/byok', () => {

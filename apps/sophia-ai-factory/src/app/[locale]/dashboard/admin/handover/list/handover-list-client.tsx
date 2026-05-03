@@ -11,7 +11,7 @@ import { useState } from 'react';
 import useSWR from 'swr';
 import { toast } from 'sonner';
 import { CheckCircle2, Clock, RefreshCw, Send, ChevronDown, ChevronUp, Zap, User, Inbox } from 'lucide-react';
-import type { CustomerHandoverRow, HandoverStatus, HandoverSource } from '@/lib/handover/handover-types';
+import type { CustomerHandoverRow, HandoverStatus, HandoverSource } from '@/tree/handover/handover-types';
 import { HandoverStatsPanel } from './handover-stats-panel';
 
 interface HandoverListResponse { handovers: CustomerHandoverRow[] }

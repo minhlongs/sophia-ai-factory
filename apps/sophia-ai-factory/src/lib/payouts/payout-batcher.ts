@@ -9,7 +9,7 @@
  * @module payouts/payout-batcher
  */
 
-import { inngest } from '@/lib/inngest/client'
+import { inngest } from '@/forest/inngest/client'
 import { getD1Raw } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
 import {

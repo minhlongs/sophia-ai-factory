@@ -1,8 +1,8 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Bot, MessageCircle } from "lucide-react";
-import { GuideStepCard } from "@/components/guide/guide-step-card";
-import { GuideCallout } from "@/components/guide/guide-callout";
+import { GuideStepCard } from "@/forest/components/guide/guide-step-card";
+import { GuideCallout } from "@/forest/components/guide/guide-callout";
 
 export const metadata: Metadata = {
   title: "Hướng Dẫn Bắt Đầu — Sophia AI Factory",

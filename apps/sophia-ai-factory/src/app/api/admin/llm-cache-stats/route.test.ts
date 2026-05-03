@@ -7,12 +7,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { NextRequest } from 'next/server'
 
-vi.mock('@/lib/admin/monitoring-queries', () => ({
+vi.mock('@/tree/admin/monitoring-queries', () => ({
   getCacheStats: vi.fn(),
   cacheHitRate:  vi.fn(),
 }))
 
-import { getCacheStats, cacheHitRate } from '@/lib/admin/monitoring-queries'
+import { getCacheStats, cacheHitRate } from '@/tree/admin/monitoring-queries'
 import { GET } from './route'
 
 const mockGetCacheStats = vi.mocked(getCacheStats)

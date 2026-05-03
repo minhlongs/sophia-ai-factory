@@ -92,7 +92,7 @@ vi.mock('@/seed/db/client', () => ({
 }));
 
 // Mock quota checker
-vi.mock('@/lib/quota/quota-checker', () => ({
+vi.mock('@/forest/quota/quota-checker', () => ({
   getEffectiveQuotaLimits: async () => ({
     tier: 'PREMIUM',
     dailyCredits: 100,

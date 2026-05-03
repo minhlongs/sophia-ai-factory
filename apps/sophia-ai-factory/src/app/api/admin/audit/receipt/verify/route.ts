@@ -14,8 +14,8 @@ import {
   verifyReceipt,
   verifyReceiptDetailed,
   parseReceipt
-} from '@/lib/audit/compliance-receipt'
-import type { ComplianceReceipt } from '@/lib/audit/compliance-receipt'
+} from '@/tree/audit/compliance-receipt'
+import type { ComplianceReceipt } from '@/tree/audit/compliance-receipt'
 import { requireAdmin } from '@/seed/auth/require-admin'
 import { logger } from '@/seed/utils/logger-utility'
 import { z } from 'zod'

@@ -10,8 +10,8 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/seed/auth/better-auth-session'
-import { listUserProviders } from '@/lib/credentials/user-credentials-repo'
-import type { CredentialSummary } from '@/lib/credentials/user-credentials-repo'
+import { listUserProviders } from '@/tree/credentials/user-credentials-repo'
+import type { CredentialSummary } from '@/tree/credentials/user-credentials-repo'
 
 export interface ListCredentialsResponse {
   credentials: CredentialSummary[]

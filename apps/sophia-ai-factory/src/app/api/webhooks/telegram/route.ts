@@ -13,14 +13,14 @@ import {
   handleTicket,
   handleMissions,
   withMiddleware,
-} from '@/lib/telegram/telegram-command-handlers'
+} from '@/tree/telegram/telegram-command-handlers'
 import {
   handleCampaign as handleCampaignFsm,
   handleFsmTextInput,
   handleOfferCallback,
   handleConfirmCommand,
-} from '@/lib/telegram/telegram-bot-campaign-handlers'
-import { TelegramFSM } from '@/lib/telegram/telegram-fsm-state-manager'
+} from '@/tree/telegram/telegram-bot-campaign-handlers'
+import { TelegramFSM } from '@/tree/telegram/telegram-fsm-state-manager'
 import { createServerClient } from '@/seed/db/client'
 
 interface TelegramUpdate {

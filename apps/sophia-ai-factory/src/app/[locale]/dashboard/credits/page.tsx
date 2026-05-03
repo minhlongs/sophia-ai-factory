@@ -8,7 +8,7 @@
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { redirect } from 'next/navigation';
 import { getBalance, listTransactions } from '@/lib/mcu/credits-repo';
-import { COMMANDS } from '@/lib/missions/command-registry';
+import { COMMANDS } from '@/forest/missions/command-registry';
 import { getTranslations } from 'next-intl/server';
 import { AlertTriangle } from 'lucide-react';
 import Link from 'next/link';

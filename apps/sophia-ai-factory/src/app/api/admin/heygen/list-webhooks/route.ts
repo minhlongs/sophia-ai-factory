@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/seed/auth/require-admin'
-import { getUserCredential } from '@/lib/credentials/user-credentials-repo'
+import { getUserCredential } from '@/tree/credentials/user-credentials-repo'
 import { listHeyGenWebhooks } from '@/lib/heygen/webhook-registrar'
 import { getD1Raw } from '@/seed/db/client'
 

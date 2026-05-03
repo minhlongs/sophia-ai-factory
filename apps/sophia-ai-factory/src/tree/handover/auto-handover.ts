@@ -12,7 +12,7 @@ import { getErrorMessage } from '@/seed/utils/to-error';
 import { createCustomerUser, upsertUserTier, preInstallSops, createHandoverRecord } from '@/tree/handover/handover-account-setup';
 import { createMagicLinkToken } from '@/tree/handover/handover-magic-link';
 import { sendTierUpgradeEmail } from '@/tree/handover/handover-email-service';
-import { enqueueWelcomeEmail } from '@/lib/outbox/email-outbox';
+import { enqueueWelcomeEmail } from '@/forest/outbox/email-outbox';
 import { AGENCY_SOP_MAP, TIER_SOP_COUNTS } from '@/tree/handover/handover-types';
 import type { AgencyType } from '@/tree/handover/handover-types';
 import type { Tier } from '@/seed/types';

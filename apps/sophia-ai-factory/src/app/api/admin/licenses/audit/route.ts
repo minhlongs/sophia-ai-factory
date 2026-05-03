@@ -4,10 +4,10 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuditLogs } from '@/lib/raas-audit'
+import { getAuditLogs } from '@/forest/raas-audit'
 import { requireAdmin } from '@/seed/auth/require-admin'
 import { logger } from '@/seed/utils/logger-utility'
-import type { AuditAction, RaasAuditLogFilters } from '@/lib/raas-schema'
+import type { AuditAction, RaasAuditLogFilters } from '@/forest/raas-schema'
 import { z } from 'zod'
 
 /**

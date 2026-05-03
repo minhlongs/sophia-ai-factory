@@ -22,11 +22,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/seed/db/client';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { batchIngestUsage } from '@/lib/usage-metering/aggregator';
+import { batchIngestUsage } from '@/forest/usage-metering/aggregator';
 import { logger } from '@/seed/utils/logger-utility';
 import { z } from 'zod';
-import type { BatchUsageRecord } from '@/lib/usage-metering/types';
-import { withRateLimit } from '@/middleware/rate-limit-wrapper';
+import type { BatchUsageRecord } from '@/forest/usage-metering/types';
+import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 
 /**
  * Zod schema for single usage record
