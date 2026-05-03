@@ -32,15 +32,36 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { getCurrentUser } from "@/lib/better-auth-session";
 import { AgentSidebar } from "@/components/agent-sidebar/agent-sidebar";
 import { CmdKPalette } from "@/components/cmd-k/cmd-k-palette";
+import { TrialBanner } from "./components/trial-banner";
+import { getD1Raw } from "@/lib/db/client";
+
+async function getUserTrialEndsAt(userId: string): Promise<number | null> {
+  try {
+    const db = await getD1Raw();
+    const row = await db
+      .prepare(`SELECT trial_ends_at FROM subscriptions WHERE user_id = ?1 LIMIT 1`)
+      .bind(userId)
+      .first<{ trial_ends_at: number | null }>();
+    return row?.trial_ends_at ?? null;
+  } catch {
+    return null;
+  }
+}
 
 export default async function DashboardLayout({
   children,
+  params,
 }: {
   children: React.ReactNode;
+  params: Promise<{ locale: string }>;
 }) {
   const t = useTranslations('dashboard');
+  const { locale } = await params;
   const currentUser = await getCurrentUser();
   const isAdmin = currentUser?.role === 'admin';
+  const trialEndsAt = currentUser ? await getUserTrialEndsAt(currentUser.id) : null;
+  const nowSec = Math.floor(Date.now() / 1000);
+  const showTrialBanner = trialEndsAt !== null && trialEndsAt > nowSec;
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -249,6 +270,11 @@ export default async function DashboardLayout({
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
+        {/* Trial banner — shown above content when user has active trial */}
+        {showTrialBanner && (
+          <TrialBanner trialEndsAt={trialEndsAt!} locale={locale} />
+        )}
+
         {/* Mobile Header (visible only on small screens) */}
         <header className="h-16 bg-card border-b border-border md:hidden flex items-center justify-between px-4">
           <span className="font-bold text-lg text-foreground">{t('header.title')}</span>

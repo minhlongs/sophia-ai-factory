@@ -13,6 +13,9 @@ interface PaymentSuccessPageProps {
     sku?: string;
     order_id?: string;
     email?: string;
+    via?: string;
+    code?: string;
+    trial_days?: string;
   }>;
 }
 
@@ -34,6 +37,9 @@ export default async function PaymentSuccessPage({
   const orderId = sp.order_id ?? "";
   const rawEmail = sp.email ? decodeURIComponent(sp.email) : "";
   const maskedEmail = rawEmail ? maskEmail(rawEmail) : "";
+  const viaPromo = sp.via === "promo";
+  const promoCode = sp.code ?? "";
+  const trialDays = sp.trial_days ? parseInt(sp.trial_days) : 0;
 
   const tierNames: Record<string, string> = {
     BASIC: isVi ? "Starter (199$/tháng)" : "Starter ($199/mo)",
@@ -69,12 +75,24 @@ export default async function PaymentSuccessPage({
           </div>
 
           <h1 className="mb-2 text-2xl font-bold text-white">
-            {isVi ? "Thanh toán xác nhận!" : "Payment Confirmed!"}
+            {viaPromo
+              ? isVi ? "Mã ưu đãi đã kích hoạt!" : "Promo Code Activated!"
+              : isVi ? "Thanh toán xác nhận!" : "Payment Confirmed!"}
           </h1>
+
+          {viaPromo && promoCode && (
+            <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1 text-xs font-mono font-semibold text-violet-300">
+              {promoCode}
+            </div>
+          )}
 
           <p className="mb-1 text-zinc-400 text-sm">
             {isVi ? "Gói" : "Plan"}:{" "}
-            <span className="font-semibold text-emerald-400">{tierName}</span>
+            <span className="font-semibold text-emerald-400">
+              {trialDays > 0
+                ? isVi ? `Dùng thử ${trialDays} ngày` : `${trialDays}-day free trial`
+                : tierName}
+            </span>
           </p>
 
           {maskedEmail && (

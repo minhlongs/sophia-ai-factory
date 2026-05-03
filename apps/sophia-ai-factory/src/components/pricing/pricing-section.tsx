@@ -5,21 +5,7 @@ import { useTranslations, useLocale } from "next-intl";
 import { FadeInView } from "@/components/ui/fade-in-view";
 import { PricingCard, formatPrice } from "./pricing-card";
 import { usePricingData } from "./pricing-data";
-import { CouponInput } from "./coupon-input";
-
-interface TierDiscount {
-  tier: string;
-  discountPercent: number;
-  originalPrice: number;
-  finalPrice: number;
-  checkoutUrl?: string | null;
-}
-
-interface CouponActivateResponse {
-  success?: boolean;
-  mcuBonus?: number;
-  error?: string;
-}
+import { CouponInput, type PromoDiscount } from "./coupon-input";
 
 interface CheckoutResponse {
   url?: string;
@@ -28,63 +14,44 @@ interface CheckoutResponse {
 
 export function PricingSection() {
   const [loading, setLoading] = useState<string | null>(null);
-  const [discounts, setDiscounts] = useState<Map<string, TierDiscount>>(new Map());
+  const [appliedDiscount, setAppliedDiscount] = useState<PromoDiscount | null>(null);
   const t = useTranslations("landing");
   const locale = useLocale();
   const { PRICING_TIERS, MASTER_TIER } = usePricingData();
 
-  const allTiers = [...PRICING_TIERS.map((p) => p.tier), MASTER_TIER.tier];
-
-  const handleDiscountApplied = (applied: TierDiscount[]) => {
-    const map = new Map<string, TierDiscount>();
-    applied.forEach((d) => map.set(d.tier, d));
-    setDiscounts(map);
+  const handleDiscountApplied = (discount: PromoDiscount) => {
+    setAppliedDiscount(discount);
   };
 
-  const handleDiscountCleared = () => setDiscounts(new Map());
+  const handleDiscountCleared = () => setAppliedDiscount(null);
+
+  /** Calculate discounted price in cents for a tier */
+  function getDiscountedCents(basePriceCents: number): number | undefined {
+    if (!appliedDiscount) return undefined;
+    if (appliedDiscount.appliesToTier && appliedDiscount.discountType !== "free_trial" && appliedDiscount.discountType !== "free_full") {
+      return undefined;
+    }
+    if (appliedDiscount.discountType === "percent_off") {
+      return Math.max(0, Math.round(basePriceCents * (1 - appliedDiscount.discountValue / 100)));
+    }
+    if (appliedDiscount.discountType === "fixed_off") {
+      return Math.max(0, basePriceCents - appliedDiscount.discountValue);
+    }
+    return undefined;
+  }
 
   const handleSelectTier = async (tier: string) => {
-    const discount = discounts.get(tier);
-
-    // 100% off — activate coupon directly
-    if (discount && discount.finalPrice === 0) {
-      setLoading(tier);
-      try {
-        const res = await fetch("/api/coupons/activate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ coupon: "FREE50", tier }),
-        });
-        const data = (await res.json()) as CouponActivateResponse;
-        if (data.success) {
-          window.location.href = `/dashboard?activated=${tier}&bonus=${data.mcuBonus}`;
-        } else if (res.status === 401) {
-          // Not logged in → login first, then activate
-          window.location.href = `/${locale}/login?coupon=FREE50&tier=${tier}&free=1`;
-        } else {
-          alert(data.error || "Activation failed");
-        }
-      } catch {
-        window.location.href = `/${locale}/login?coupon=FREE50&tier=${tier}&free=1`;
-      } finally {
-        setLoading(null);
-      }
-      return;
-    }
-
-    // Coupon with discounted checkout URL — redirect directly
-    if (discount?.checkoutUrl) {
-      window.location.href = discount.checkoutUrl;
-      return;
-    }
-
-    // Normal checkout (no coupon)
     setLoading(tier);
     try {
+      const body: Record<string, unknown> = { tier };
+      if (appliedDiscount && (appliedDiscount.discountType === "percent_off" || appliedDiscount.discountType === "fixed_off")) {
+        body.promoCode = appliedDiscount.code;
+      }
+
       const response = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tier }),
+        body: JSON.stringify(body),
       });
 
       const data = (await response.json()) as CheckoutResponse;
@@ -113,10 +80,9 @@ export function PricingSection() {
           </p>
         </div>
 
-        {/* Coupon input */}
+        {/* Promo code input */}
         <div className="mt-8">
           <CouponInput
-            tiers={allTiers}
             onDiscountApplied={handleDiscountApplied}
             onDiscountCleared={handleDiscountCleared}
           />
@@ -124,7 +90,8 @@ export function PricingSection() {
 
         <div className="mt-4 grid gap-8 md:grid-cols-3">
           {PRICING_TIERS.map((pricing) => {
-            const discount = discounts.get(pricing.tier);
+            const baseCents = pricing.monthlyPrice;
+            const discountedCents = getDiscountedCents(baseCents);
             return (
               <PricingCard
                 key={pricing.tier}
@@ -138,7 +105,7 @@ export function PricingSection() {
                 loading={loading === pricing.tier}
                 locale={locale}
                 selected={loading === pricing.tier}
-                discountedPriceCents={discount ? Math.round(discount.finalPrice * 100) : undefined}
+                discountedPriceCents={discountedCents}
               />
             );
           })}
@@ -159,10 +126,10 @@ export function PricingSection() {
                 </p>
                 <div className="mt-6">
                   <div className="flex items-baseline gap-2">
-                    {discounts.has(MASTER_TIER.tier) ? (
+                    {appliedDiscount && getDiscountedCents(MASTER_TIER.price) !== undefined ? (
                       <>
                         <span className="text-4xl font-bold text-emerald-400">
-                          {formatPrice(Math.round((discounts.get(MASTER_TIER.tier)?.finalPrice ?? 0) * 100), locale)}
+                          {formatPrice(getDiscountedCents(MASTER_TIER.price)!, locale)}
                         </span>
                         <span className="text-2xl line-through text-muted-foreground/60">
                           {formatPrice(MASTER_TIER.price, locale)}
@@ -187,7 +154,7 @@ export function PricingSection() {
                   aria-checked={loading === MASTER_TIER.tier}
                   onClick={() => handleSelectTier(MASTER_TIER.tier)}
                   disabled={loading === MASTER_TIER.tier}
-                  aria-label={`${loading === MASTER_TIER.tier ? 'Processing' : 'Get started with'} ${MASTER_TIER.name} plan`}
+                  aria-label={`${loading === MASTER_TIER.tier ? "Processing" : "Get started with"} ${MASTER_TIER.name} plan`}
                   className="mt-8 w-full md:w-auto rounded-lg bg-gradient-to-r from-primary to-purple-600 px-10 py-4 font-bold text-white text-lg shadow-lg hover:opacity-90 hover:scale-[1.02] transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {loading === MASTER_TIER.tier ? t("pricing.processing") : t("pricing.master.cta")}
