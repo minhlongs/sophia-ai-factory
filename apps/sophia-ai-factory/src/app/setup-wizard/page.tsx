@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { WizardStepper } from './components/wizard-stepper';
 import { ArrowRight, Save, Loader2 } from 'lucide-react';
 import { SystemCheckStep } from './components/steps/system-check-step';
@@ -25,6 +26,7 @@ interface SaveConfigResponse {
 
 export default function SetupWizardPage() {
   const router = useRouter();
+  const t = useTranslations('setupWizard');
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
 
@@ -156,14 +158,14 @@ export default function SetupWizardPage() {
     if (step === 2) {
       const hasInvalid = Object.values(status).some(v => v === 'invalid');
       if (hasInvalid) {
-        alert("Có API key không hợp lệ. Vui lòng kiểm tra lại hoặc xóa key không đúng.");
+        alert(t('alerts.invalidKey'));
         return;
       }
       const hasLlmKey =
         config.OPENROUTER_API_KEY.trim().length > 0 ||
         config.ANTHROPIC_API_KEY.trim().length > 0;
       if (!hasLlmKey) {
-        alert("Bạn cần nhập ít nhất một LLM key (OpenRouter hoặc Anthropic) để tiếp tục.");
+        alert(t('alerts.missingLlm'));
         return;
       }
     }
@@ -173,10 +175,7 @@ export default function SetupWizardPage() {
       const heygenSaved = savedCredentials.find((c) => c.provider === 'heygen');
       const heygenEntered = providerConfig.HEYGEN_API_KEY.trim().length > 0;
       if (!heygenSaved && !heygenEntered) {
-        alert(
-          "HeyGen API key is required for video generation.\n" +
-          "Bắt buộc nhập HeyGen API key để tạo video.",
-        );
+        alert(t('alerts.missingHeygen'));
         return;
       }
     }
@@ -246,15 +245,21 @@ export default function SetupWizardPage() {
       <div className="max-w-2xl w-full bg-card rounded-2xl shadow-xl overflow-hidden border border-border">
         {/* Header */}
         <div className="bg-primary px-8 py-6 text-primary-foreground text-center">
-            <h1 className="text-3xl font-bold">Sophia Setup Wizard</h1>
-            <p className="mt-2 text-primary-foreground/80">Configure your AI Factory in minutes.</p>
+            <h1 className="text-3xl font-bold">{t('header.title')}</h1>
+            <p className="mt-2 text-primary-foreground/80">{t('header.subtitle')}</p>
         </div>
 
         {/* Stepper */}
         <div className="px-8">
             <WizardStepper
                 currentStep={step}
-                steps={["System", "AI Keys", "Providers", "Local Mode", "Finish"]}
+                steps={[
+                    t('stepper.system'),
+                    t('stepper.aiKeys'),
+                    t('stepper.providers'),
+                    t('stepper.localMode'),
+                    t('stepper.finish'),
+                ]}
             />
         </div>
 
@@ -295,7 +300,7 @@ export default function SetupWizardPage() {
                     onClick={() => setStep(prev => prev - 1)}
                     className="text-muted-foreground hover:text-foreground font-medium px-4 py-2"
                 >
-                    Back
+                    {t('actions.back')}
                 </button>
             )}
 
@@ -306,7 +311,7 @@ export default function SetupWizardPage() {
                     onClick={handleNext}
                     className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors ml-auto"
                 >
-                    Next Step <ArrowRight className="w-4 h-4" />
+                    {t('actions.next')} <ArrowRight className="w-4 h-4" />
                 </button>
             ) : (
                 <button
@@ -315,16 +320,16 @@ export default function SetupWizardPage() {
                     className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-bold flex items-center gap-2 transition-transform hover:scale-105 ml-auto w-full justify-center sm:w-auto"
                 >
                     {loading ? (
-                        <>Saving <Loader2 className="w-4 h-4 animate-spin" /></>
+                        <>{t('actions.saving')} <Loader2 className="w-4 h-4 animate-spin" /></>
                     ) : (
-                        <>Launch Sophia <Save className="w-4 h-4" /></>
+                        <>{t('actions.launch')} <Save className="w-4 h-4" /></>
                     )}
                 </button>
             )}
         </div>
       </div>
 
-      <p className="mt-8 text-muted-foreground text-sm">Sophia AI Factory v1.0 • Powered by Mekong CLI</p>
+      <p className="mt-8 text-muted-foreground text-sm">{t('footer')}</p>
     </div>
   );
 }

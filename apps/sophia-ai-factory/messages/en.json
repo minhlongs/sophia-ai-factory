@@ -1,4 +1,29 @@
 {
+  "setupWizard": {
+    "header": {
+      "title": "Sophia Setup Wizard",
+      "subtitle": "Configure your AI Factory in minutes."
+    },
+    "stepper": {
+      "system": "System",
+      "aiKeys": "AI Keys",
+      "providers": "Providers",
+      "localMode": "Local Mode",
+      "finish": "Finish"
+    },
+    "actions": {
+      "back": "Back",
+      "next": "Next Step",
+      "saving": "Saving",
+      "launch": "Launch Sophia"
+    },
+    "footer": "Sophia AI Factory • RaaS for Vietnam Agencies",
+    "alerts": {
+      "invalidKey": "Some API keys are invalid. Please review or remove the incorrect ones.",
+      "missingLlm": "At least one LLM key (OpenRouter or Anthropic) is required to continue.",
+      "missingHeygen": "HeyGen API key is required for video generation."
+    }
+  },
   "landing": {
     "nav": {
       "raas": "AI Automation",
