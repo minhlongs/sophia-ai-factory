@@ -7,7 +7,7 @@
 
 ## Overview
 - **Priority:** P1
-- **Status:** pending
+- **Status:** COMPLETE (2026-05-03)
 - **Effort:** 30m
 - **Description:** Add ESLint rule to forbid upward imports (e.g., seed importing tree/forest/land). Rule formalizes layered architecture so future PRs can't break it.
 
@@ -70,12 +70,12 @@
 
 ## Todo List
 
-- [ ] Choose plugin
-- [ ] Edit eslint.config.mjs
-- [ ] Run lint
-- [ ] Fix any straggler violations
-- [ ] Re-run lint until clean
-- [ ] Commit
+- [x] Choose plugin — used built-in `no-restricted-imports` (no new dep, KISS)
+- [x] Edit eslint.config.mjs — 3 layer blocks + exemptions per LOCKED DECISIONS
+- [x] Run lint — 0 new `no-restricted-imports` errors
+- [x] Fix any straggler violations — all handled by exemption overrides
+- [x] Re-run lint until clean — confirmed 0 layer violations
+- [x] Commit
 
 ## Success Criteria
 - `npm run lint` exits 0

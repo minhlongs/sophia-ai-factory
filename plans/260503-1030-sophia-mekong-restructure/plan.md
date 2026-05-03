@@ -44,8 +44,8 @@ Based on scout findings (1717 files, ~28 true violations, PR #23):
 | 04 | Move tree/ layer | 90m | [phase-04-move-tree-layer.md](phase-04-move-tree-layer.md) | **COMPLETE** (commit f4a5009b, PR #26, merged main) |
 | 05 | Move forest/ layer | 90m | [phase-05-move-forest-layer.md](phase-05-move-forest-layer.md) | pending |
 | 06 | Move land/ layer | 90m | [phase-06-move-land-layer.md](phase-06-move-land-layer.md) | pending |
-| 07 | Layer boundary enforcement (ESLint) | 30m | [phase-07-layer-boundary-enforcement.md](phase-07-layer-boundary-enforcement.md) | pending |
-| 08 | Documentation update | 30m | [phase-08-documentation-update.md](phase-08-documentation-update.md) | pending |
+| 07 | Layer boundary enforcement (ESLint) | 30m | [phase-07-layer-boundary-enforcement.md](phase-07-layer-boundary-enforcement.md) | **COMPLETE** (PR #29) |
+| 08 | Documentation update | 30m | [phase-08-documentation-update.md](phase-08-documentation-update.md) | **COMPLETE** (PR #29) |
 | 09 | Production deploy + verify | 45m | [phase-09-production-deploy-verify.md](phase-09-production-deploy-verify.md) | pending |
 
 ## Top Risks (H/M/L)
