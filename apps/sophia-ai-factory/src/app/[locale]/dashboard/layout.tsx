@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import Link from "next/link";
 import { useTranslations } from 'next-intl';
 import {
@@ -19,11 +19,15 @@ import {
   Activity,
   Coins,
   Plug,
+  Store,
+  BookOpen,
 } from "lucide-react";
 import { HealthIndicator } from "@/components/dashboard/health-indicator";
 import { MobileNav } from "@/components/ui/mobile-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { getCurrentUser } from "@/lib/better-auth-session";
+import { AgentSidebar } from "@/components/agent-sidebar/agent-sidebar";
+import { CmdKPalette } from "@/components/cmd-k/cmd-k-palette";
 
 export default async function DashboardLayout({
   children,
@@ -146,6 +150,20 @@ export default async function DashboardLayout({
             <span className="font-medium">{t('sidebar.workflows')}</span>
           </Link>
           <Link
+            href="/dashboard/sop-marketplace"
+            className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
+          >
+            <Store className="w-5 h-5" />
+            <span className="font-medium">{t('sidebar.sop_marketplace')}</span>
+          </Link>
+          <Link
+            href="/dashboard/sops"
+            className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
+          >
+            <BookOpen className="w-5 h-5" />
+            <span className="font-medium">{t('sidebar.my_sops')}</span>
+          </Link>
+          <Link
             href="/dashboard/api-docs"
             className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
           >
@@ -203,6 +221,16 @@ export default async function DashboardLayout({
 
       {/* Mobile Navigation */}
       <MobileNav />
+
+      {/* Agent Sidebar — right-rail chat (lazy, client-side) */}
+      <Suspense fallback={null}>
+        <AgentSidebar />
+      </Suspense>
+
+      {/* Cmd+K Command Palette — global shortcut */}
+      <Suspense fallback={null}>
+        <CmdKPalette isAdmin={isAdmin} />
+      </Suspense>
     </div>
   );
 }

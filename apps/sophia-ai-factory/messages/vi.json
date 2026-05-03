@@ -354,7 +354,9 @@
       "api_keys": "Khoá API",
       "proposals": "Đề Xuất",
       "workflows": "Quy Trình",
-      "orders": "Đơn Hàng"
+      "orders": "Đơn Hàng",
+      "sop_marketplace": "Kho SOP",
+      "my_sops": "SOP Của Tôi"
     },
     "missions": {
       "page_title": "Nhiệm Vụ AI",
@@ -915,6 +917,151 @@
       "use_totp": "Dùng mã xác thực",
       "error_invalid_code": "Mã không hợp lệ. Vui lòng thử lại.",
       "error_generic": "Lỗi xác thực. Vui lòng thử lại."
+    }
+  },
+  "sop": {
+    "marketplace": {
+      "title": "Kho SOP",
+      "subtitle": "Tự động hóa quy trình agency với các playbook đã được kiểm chứng",
+      "filterCategory": "Lọc theo danh mục",
+      "filterAll": "Tất Cả Danh Mục",
+      "searchPlaceholder": "Tìm kiếm SOP...",
+      "noResults": "Không tìm thấy SOP phù hợp.",
+      "installed": "Đã cài đặt"
+    },
+    "card": {
+      "creditsPerRun": "{n} credit/lần chạy",
+      "install": "Cài Đặt",
+      "installed": "Đã Cài",
+      "viewDetails": "Xem Chi Tiết"
+    },
+    "detail": {
+      "agentsTitle": "Agents",
+      "playbookTitle": "Playbook",
+      "outputTitle": "Sơ Đồ Đầu Ra",
+      "back": "Quay Lại Kho SOP",
+      "installNow": "Cài Đặt SOP Này"
+    },
+    "install": {
+      "title": "Cài Đặt SOP",
+      "schedule": "Lịch Chạy",
+      "scheduleHourly": "Mỗi giờ",
+      "scheduleDaily": "Hàng ngày lúc 9 giờ",
+      "scheduleWeekly": "Thứ Hai hàng tuần lúc 9 giờ",
+      "scheduleManual": "Chỉ chạy thủ công",
+      "enable": "Kích hoạt ngay sau khi cài",
+      "submit": "Cài Đặt",
+      "submitting": "Đang cài đặt...",
+      "success": "Cài đặt SOP thành công!",
+      "error": "Không thể cài đặt SOP. Vui lòng thử lại."
+    },
+    "categories": {
+      "content": "Nội Dung",
+      "leads": "Khách Hàng",
+      "email": "Email",
+      "analytics": "Phân Tích",
+      "proposals": "Đề Xuất",
+      "crisis": "Xử Lý Khủng Hoảng"
+    },
+    "list": {
+      "title": "SOP Của Tôi",
+      "subtitle": "Quản lý các SOP automation đã cài đặt",
+      "empty": "Chưa cài đặt SOP nào.",
+      "emptyAction": "Duyệt Kho SOP",
+      "name": "Tên",
+      "category": "Danh Mục",
+      "schedule": "Lịch",
+      "lastRun": "Lần Chạy Cuối",
+      "runCount": "Số Lần Chạy",
+      "enabled": "Kích Hoạt",
+      "actions": "Thao Tác",
+      "viewDetail": "Xem",
+      "runNow": "Chạy Ngay",
+      "delete": "Xóa",
+      "manual": "Thủ công"
+    },
+    "detail_page": {
+      "overview": "Tổng Quan",
+      "runs": "Lịch Sử Chạy",
+      "edit": "Sửa Playbook",
+      "webhook": "Webhook",
+      "schedule": "Lịch Chạy",
+      "nextRun": "Lần Chạy Tiếp",
+      "lastRun": "Lần Chạy Cuối",
+      "runCount": "Tổng Số Lần Chạy",
+      "status": "Trạng Thái",
+      "enabled": "Đang Kích Hoạt",
+      "disabled": "Đã Tắt",
+      "runNow": "Chạy Ngay",
+      "running": "Đang chạy...",
+      "delete": "Xóa Cài Đặt",
+      "deleteConfirm": "Bạn có chắc không? Hành động này không thể hoàn tác.",
+      "deleteConfirmYes": "Có, Xóa",
+      "deleteConfirmNo": "Hủy",
+      "never": "Chưa bao giờ",
+      "notScheduled": "Không có lịch"
+    },
+    "run": {
+      "trigger": "Kích Hoạt Bởi",
+      "status": "Trạng Thái",
+      "started": "Bắt Đầu",
+      "completed": "Hoàn Thành",
+      "duration": "Thời Gian",
+      "missions": "Missions",
+      "viewMission": "Xem Mission",
+      "noMissions": "Không có mission nào cho lần chạy này.",
+      "manual": "Thủ công",
+      "webhook": "Webhook",
+      "cron": "Theo Lịch",
+      "queued": "Đang Chờ",
+      "running": "Đang Chạy",
+      "succeeded": "Thành Công",
+      "failed": "Thất Bại",
+      "partial": "Một Phần",
+      "backToSops": "Quay Lại SOPs",
+      "backToRuns": "Quay Lại Lịch Sử",
+      "title": "Chi Tiết Lần Chạy"
+    },
+    "edit": {
+      "title": "Sửa Playbook",
+      "save": "Lưu Thay Đổi",
+      "saving": "Đang lưu...",
+      "saved": "Đã lưu!",
+      "error": "Lưu thất bại. Vui lòng thử lại.",
+      "helpText": "Chỉnh sửa Markdown playbook. Thay đổi áp dụng cho các lần chạy tiếp theo."
+    },
+    "webhook": {
+      "title": "Tích Hợp Webhook",
+      "url": "URL Kích Hoạt",
+      "copy": "Sao Chép URL",
+      "copied": "Đã sao chép!",
+      "regen": "Tạo Secret Mới",
+      "regenConfirm": "Hành động này sẽ vô hiệu hóa các chữ ký cũ. Tiếp tục?",
+      "regenSuccess": "Secret mới đã được tạo. Hãy cập nhật bên gửi webhook.",
+      "urlHelp": "POST đến URL này kèm chữ ký HMAC để kích hoạt SOP."
+    }
+  },
+  "agentChat": {
+    "title": "Sophia Assistant",
+    "placeholder": "Hỏi Sophia...",
+    "showWork": "Xem Quá Trình",
+    "hideWork": "Ẩn Quá Trình",
+    "newChat": "Cuộc trò chuyện mới",
+    "collapse": "Thu gọn",
+    "expand": "Mở Sophia Assistant",
+    "sessionNote": "Chỉ lưu trong phiên — không lưu vĩnh viễn"
+  },
+  "cmdK": {
+    "placeholder": "Nhập lệnh hoặc tìm kiếm...",
+    "noResults": "Không tìm thấy kết quả.",
+    "openMarketplace": "Mở Kho SOP",
+    "adminOps": "Mở Bảng Vận Hành",
+    "showQueueDepth": "Xem Độ Sâu Hàng Đợi",
+    "groups": {
+      "pages": "Trang",
+      "sops": "SOP",
+      "missions": "Nhiệm Vụ Gần Đây",
+      "admin": "Quản Trị"
     }
   }
 }

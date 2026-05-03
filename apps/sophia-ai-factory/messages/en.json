@@ -354,7 +354,9 @@
       "api_keys": "API Keys",
       "proposals": "Proposals",
       "workflows": "Workflows",
-      "orders": "My Orders"
+      "orders": "My Orders",
+      "sop_marketplace": "SOP Marketplace",
+      "my_sops": "My SOPs"
     },
     "missions": {
       "page_title": "AI Missions",
@@ -915,6 +917,151 @@
       "use_totp": "Use authenticator code",
       "error_invalid_code": "Invalid code. Please try again.",
       "error_generic": "Verification error. Please try again."
+    }
+  },
+  "sop": {
+    "marketplace": {
+      "title": "SOP Marketplace",
+      "subtitle": "Automate your agency workflows with battle-tested playbooks",
+      "filterCategory": "Filter by category",
+      "filterAll": "All Categories",
+      "searchPlaceholder": "Search SOPs...",
+      "noResults": "No SOPs found matching your search.",
+      "installed": "Installed"
+    },
+    "card": {
+      "creditsPerRun": "{n} credits/run",
+      "install": "Install",
+      "installed": "Installed",
+      "viewDetails": "View Details"
+    },
+    "detail": {
+      "agentsTitle": "Agents",
+      "playbookTitle": "Playbook",
+      "outputTitle": "Output Schema",
+      "back": "Back to Marketplace",
+      "installNow": "Install This SOP"
+    },
+    "install": {
+      "title": "Install SOP",
+      "schedule": "Run Schedule",
+      "scheduleHourly": "Every hour",
+      "scheduleDaily": "Daily 9 AM",
+      "scheduleWeekly": "Weekly Monday 9 AM",
+      "scheduleManual": "Manual only",
+      "enable": "Enable immediately after install",
+      "submit": "Install",
+      "submitting": "Installing...",
+      "success": "SOP installed successfully!",
+      "error": "Failed to install SOP. Please try again."
+    },
+    "categories": {
+      "content": "Content",
+      "leads": "Leads",
+      "email": "Email",
+      "analytics": "Analytics",
+      "proposals": "Proposals",
+      "crisis": "Crisis PR"
+    },
+    "list": {
+      "title": "My SOPs",
+      "subtitle": "Manage your installed SOP automations",
+      "empty": "No SOPs installed yet.",
+      "emptyAction": "Browse Marketplace",
+      "name": "Name",
+      "category": "Category",
+      "schedule": "Schedule",
+      "lastRun": "Last Run",
+      "runCount": "Runs",
+      "enabled": "Enabled",
+      "actions": "Actions",
+      "viewDetail": "View",
+      "runNow": "Run Now",
+      "delete": "Delete",
+      "manual": "Manual"
+    },
+    "detail_page": {
+      "overview": "Overview",
+      "runs": "Run History",
+      "edit": "Edit Playbook",
+      "webhook": "Webhook",
+      "schedule": "Schedule",
+      "nextRun": "Next Run",
+      "lastRun": "Last Run",
+      "runCount": "Total Runs",
+      "status": "Status",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "runNow": "Run Now",
+      "running": "Running...",
+      "delete": "Delete Installation",
+      "deleteConfirm": "Are you sure? This cannot be undone.",
+      "deleteConfirmYes": "Yes, Delete",
+      "deleteConfirmNo": "Cancel",
+      "never": "Never",
+      "notScheduled": "Not scheduled"
+    },
+    "run": {
+      "trigger": "Trigger",
+      "status": "Status",
+      "started": "Started",
+      "completed": "Completed",
+      "duration": "Duration",
+      "missions": "Missions",
+      "viewMission": "View Mission",
+      "noMissions": "No missions recorded for this run.",
+      "manual": "Manual",
+      "webhook": "Webhook",
+      "cron": "Scheduled",
+      "queued": "Queued",
+      "running": "Running",
+      "succeeded": "Succeeded",
+      "failed": "Failed",
+      "partial": "Partial",
+      "backToSops": "Back to SOPs",
+      "backToRuns": "Back to Runs",
+      "title": "Run Details"
+    },
+    "edit": {
+      "title": "Edit Playbook",
+      "save": "Save Changes",
+      "saving": "Saving...",
+      "saved": "Saved!",
+      "error": "Failed to save. Please try again.",
+      "helpText": "Edit the Markdown playbook. Changes apply to all future runs."
+    },
+    "webhook": {
+      "title": "Webhook Integration",
+      "url": "Trigger URL",
+      "copy": "Copy URL",
+      "copied": "Copied!",
+      "regen": "Regenerate Secret",
+      "regenConfirm": "This will invalidate existing signatures. Continue?",
+      "regenSuccess": "New secret generated. Update your webhook sender.",
+      "urlHelp": "POST to this URL with HMAC signature to trigger this SOP."
+    }
+  },
+  "agentChat": {
+    "title": "Sophia Assistant",
+    "placeholder": "Ask Sophia...",
+    "showWork": "Show Work",
+    "hideWork": "Hide Work",
+    "newChat": "New chat",
+    "collapse": "Collapse",
+    "expand": "Open Sophia Assistant",
+    "sessionNote": "Session only — not saved"
+  },
+  "cmdK": {
+    "placeholder": "Type a command or search...",
+    "noResults": "No results found.",
+    "openMarketplace": "Open SOP Marketplace",
+    "adminOps": "Open Ops Dashboard",
+    "showQueueDepth": "Show Queue Depth",
+    "groups": {
+      "pages": "Pages",
+      "sops": "SOPs",
+      "missions": "Recent Missions",
+      "admin": "Admin"
     }
   }
 }
