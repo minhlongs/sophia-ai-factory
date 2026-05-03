@@ -5,7 +5,8 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyIpnSignature } from '@/lib/clients/nowpayments-client'
-import { processNowPaymentsIpn, type NowPaymentsIpnPayload } from '@/lib/billing/nowpayments-ipn-handlers'
+import { processNowPaymentsIpn } from '@/lib/billing/nowpayments-ipn-handlers'
+import { ipnPayloadSchema } from '@/lib/billing/ipn-payload-schema'
 import { logger } from '@/lib/utils/logger-utility'
 import { captureTierUpgraded } from '@/lib/signals/posthog-capture'
 import { track } from '@/lib/signals/track'
@@ -34,17 +35,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
-  // Parse IPN payload
-  let ipn: NowPaymentsIpnPayload
+  // Parse and validate IPN payload with Zod
+  let parsed: ReturnType<typeof ipnPayloadSchema.safeParse>
   try {
-    ipn = JSON.parse(rawBody) as NowPaymentsIpnPayload
+    const raw = JSON.parse(rawBody) as unknown
+    parsed = ipnPayloadSchema.safeParse(raw)
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  if (!ipn.payment_id || !ipn.payment_status) {
-    return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+  if (!parsed.success) {
+    logger.warn('[NOWPayments Webhook] Invalid payload shape', { errors: parsed.error.flatten() })
+    return NextResponse.json({ error: 'Invalid payload', details: parsed.error.flatten() }, { status: 400 })
   }
+
+  const ipn = parsed.data
 
   // Process the IPN event
   const result = await processNowPaymentsIpn(ipn)
