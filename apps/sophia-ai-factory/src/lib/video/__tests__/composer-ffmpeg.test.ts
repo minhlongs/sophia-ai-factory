@@ -23,19 +23,33 @@ import { composeFinalVideo } from '../composer-ffmpeg';
 import { getVideoBucket } from '@/lib/video/r2-binding';
 import { recordCost } from '@/lib/video/cost-ledger';
 import type { R2BucketRef } from '@/lib/video/r2-binding';
+import { resetBreaker } from '@/lib/video/circuit-breaker';
 
 const mockPut = vi.fn().mockResolvedValue(undefined);
 const mockBucketRef = { bucket: { put: mockPut }, publicBaseUrl: null } as unknown as R2BucketRef;
+
+/** Build a minimal Response-like mock with Headers support so composer can read X-Sophia-* */
+function mockOkResponse(bytes: ArrayBuffer, headerEntries: Record<string, string> = {}): Response {
+  const headers = new Headers(headerEntries);
+  return {
+    ok: true,
+    headers,
+    arrayBuffer: () => Promise.resolve(bytes),
+  } as unknown as Response;
+}
 
 describe('composeFinalVideo', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(getVideoBucket).mockResolvedValue(mockBucketRef);
     delete process.env.MOVIEPY_FLY_URL;
+    // Breaker is module-singleton state — reset between tests to avoid leakage.
+    resetBreaker('moviepy-fly');
   });
 
   afterEach(() => {
     delete process.env.MOVIEPY_FLY_URL;
+    resetBreaker('moviepy-fly');
   });
 
   it('returns stub final mp4 and writes to R2 when service not configured', async () => {
@@ -58,10 +72,7 @@ describe('composeFinalVideo', () => {
   it('calls /compose endpoint when MOVIEPY_FLY_URL set', async () => {
     process.env.MOVIEPY_FLY_URL = 'http://moviepy.test';
     const mockBytes = new ArrayBuffer(300);
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      arrayBuffer: () => Promise.resolve(mockBytes),
-    } as unknown as Response);
+    global.fetch = vi.fn().mockResolvedValue(mockOkResponse(mockBytes));
 
     const result = await composeFinalVideo({
       jobId: 'job-2',
@@ -93,6 +104,6 @@ describe('composeFinalVideo', () => {
         audioR2Key: 'audio.wav',
         visualR2Key: 'visual.mp4',
       }),
-    ).rejects.toThrow('MoviePy compose failed');
+    ).rejects.toThrow(/MoviePy.*compose failed/);
   });
 });

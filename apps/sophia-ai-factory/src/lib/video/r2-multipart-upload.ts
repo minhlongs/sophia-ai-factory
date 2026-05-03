@@ -15,30 +15,44 @@ export interface UploadToR2Params {
   key: string;
   data: ArrayBuffer;
   contentType?: string;
+  /**
+   * Cache-Control header. Defaults to 1-year immutable when the key contains
+   * a content hash, otherwise omitted. Override for signed/preview assets.
+   */
+  cacheControl?: string;
 }
+
+/** Default Cache-Control for hashed/immutable assets (final video, poster). */
+export const IMMUTABLE_CACHE_CONTROL = 'public, max-age=31536000, immutable';
 
 /**
  * Upload data to R2 using multipart for large files, single PUT for small.
  * Returns the final R2 key on success.
  */
 export async function uploadToR2(params: UploadToR2Params): Promise<string> {
-  const { bucket, key, data, contentType = 'audio/wav' } = params;
+  const { bucket, key, data, contentType = 'audio/wav', cacheControl } = params;
 
   if (data.byteLength > MULTIPART_THRESHOLD_BYTES) {
-    return uploadMultipart({ bucket, key, data, contentType });
+    return uploadMultipart({ bucket, key, data, contentType, cacheControl });
   }
 
-  await bucket.put(key, data, { httpMetadata: { contentType } });
+  const httpMetadata: R2HTTPMetadata = { contentType };
+  if (cacheControl) httpMetadata.cacheControl = cacheControl;
+
+  await bucket.put(key, data, { httpMetadata });
   logger.info('[R2Upload] Single PUT complete', { key, bytes: data.byteLength });
   return key;
 }
 
-async function uploadMultipart(params: Required<UploadToR2Params>): Promise<string> {
-  const { bucket, key, data, contentType } = params;
+async function uploadMultipart(params: Required<Omit<UploadToR2Params, 'cacheControl'>> & { cacheControl?: string }): Promise<string> {
+  const { bucket, key, data, contentType, cacheControl } = params;
   const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunks (R2 minimum)
 
+  const httpMetadata: R2HTTPMetadata = { contentType };
+  if (cacheControl) httpMetadata.cacheControl = cacheControl;
+
   const multipart = await bucket.createMultipartUpload(key, {
-    httpMetadata: { contentType },
+    httpMetadata,
   });
 
   const parts: R2UploadedPart[] = [];
