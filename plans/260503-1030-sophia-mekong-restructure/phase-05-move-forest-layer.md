@@ -7,7 +7,7 @@
 
 ## Overview
 - **Priority:** P1
-- **Status:** pending
+- **Status:** complete (PR #27, merge sha fc7682e5, 2026-05-03)
 - **Effort:** 90m
 - **Description:** Move forest-classified files (multi-tenant plumbing) into `src/forest/`. Same pattern as Phase 03/04.
 
@@ -82,14 +82,14 @@ src/
 
 ## Todo List
 
-- [ ] Split forest files
-- [ ] Verify middleware.ts dependencies
-- [ ] Execute moves
-- [ ] Codemod imports
-- [ ] Routes unchanged check
-- [ ] Build/test/lint
-- [ ] Smoke routes + middleware
-- [ ] Commit
+- [x] Split forest files
+- [x] Verify middleware.ts dependencies
+- [x] Execute moves
+- [x] Codemod imports
+- [x] Routes unchanged check
+- [x] Build/test/lint
+- [x] Smoke routes + middleware
+- [x] Commit
 
 ## Success Criteria
 - Routes unchanged
