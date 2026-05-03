@@ -5,7 +5,7 @@
  * Encryption/decryption via lib/credentials/encryption (AES-GCM-256).
  * Plaintext keys never escape this module in persisted form.
  *
- * Providers: 'heygen' | 'resend' | 'nowpayments'
+ * Providers: 'heygen' | 'heygen_webhook_secret' | 'resend' | 'nowpayments'
  *
  * @module lib/credentials/user-credentials-repo
  */
@@ -13,7 +13,7 @@
 import { getD1Raw } from '@/lib/db/client'
 import { encryptValue, decryptValue } from './encryption'
 
-export type ProviderType = 'heygen' | 'resend' | 'nowpayments'
+export type ProviderType = 'heygen' | 'heygen_webhook_secret' | 'resend' | 'nowpayments'
 
 export interface CredentialSummary {
   provider: ProviderType

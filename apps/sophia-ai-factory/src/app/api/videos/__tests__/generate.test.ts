@@ -1,7 +1,7 @@
 /**
  * Tests for POST /api/videos/generate
  *
- * Covers: 401 unauthenticated, 403 cross-tenant, 429 quota, 201 success.
+ * Covers: 401 unauthenticated, 402 BASIC tier, 429 quota, 201 success.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -28,9 +28,18 @@ vi.mock('@/lib/utils/logger-utility', () => ({
   },
 }));
 
+// P0.2: mock getUserTier and checkTierQuota
+vi.mock('@/lib/db/get-user-tier', () => ({
+  getUserTier: vi.fn(),
+}));
+
+vi.mock('@/lib/auth/enforce-tier-quota', () => ({
+  checkTierQuota: vi.fn(),
+}));
+
 vi.mock('next/server', () => ({
   NextResponse: {
-    json: (data: unknown, init?: { status?: number }) => ({
+    json: (data: unknown, init?: { status?: number; headers?: Record<string, string> }) => ({
       status: init?.status ?? 200,
       body: data,
     }),
@@ -41,10 +50,14 @@ vi.mock('next/server', () => ({
 import { getCurrentUserFromHeaders } from '@/lib/better-auth-session';
 import { getD1Client } from '@/lib/db/client';
 import { createVideoJob } from '@/lib/video/video-job-pipeline';
+import { getUserTier } from '@/lib/db/get-user-tier';
+import { checkTierQuota } from '@/lib/auth/enforce-tier-quota';
 
 const mockGetCurrentUser = getCurrentUserFromHeaders as ReturnType<typeof vi.fn>;
 const mockGetD1Client = getD1Client as ReturnType<typeof vi.fn>;
 const mockCreateVideoJob = createVideoJob as ReturnType<typeof vi.fn>;
+const mockGetUserTier = getUserTier as ReturnType<typeof vi.fn>;
+const mockCheckTierQuota = checkTierQuota as ReturnType<typeof vi.fn>;
 
 function makeRequest(body: unknown): Request {
   return {
@@ -65,9 +78,27 @@ function makeD1WithCount(count: number) {
   };
 }
 
+const ALLOWED_QUOTA = {
+  allowed: true,
+  used: 5,
+  limit: 30,
+  resetsAt: new Date(Date.now() + 86400000).toISOString(),
+}
+
+const EXCEEDED_QUOTA = {
+  allowed: false,
+  used: 30,
+  limit: 30,
+  resetsAt: new Date(Date.now() + 86400000).toISOString(),
+  reason: 'Monthly video limit of 30 reached for tier PREMIUM.',
+}
+
 describe('POST /api/videos/generate', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default: PREMIUM user with quota available
+    mockGetUserTier.mockResolvedValue('PREMIUM');
+    mockCheckTierQuota.mockResolvedValue(ALLOWED_QUOTA);
   });
 
   it('returns 401 when not authenticated', async () => {
@@ -87,9 +118,19 @@ describe('POST /api/videos/generate', () => {
     expect(res.status).toBe(400);
   });
 
+  it('returns 402 for BASIC tier users (video gen requires PREMIUM+)', async () => {
+    mockGetCurrentUser.mockResolvedValue({ id: 'user-basic', email: 'basic@b.com' });
+    mockGetUserTier.mockResolvedValue('BASIC');
+
+    const { POST } = await import('../generate/route');
+    const res = await POST(makeRequest({ prompt: 'video about cats' }));
+    expect(res.status).toBe(402);
+  });
+
   it('returns 429 when quota is exceeded', async () => {
     mockGetCurrentUser.mockResolvedValue({ id: 'user-quota', email: 'q@b.com' });
-    mockGetD1Client.mockResolvedValue(makeD1WithCount(100)); // exactly at limit
+    mockGetUserTier.mockResolvedValue('PREMIUM');
+    mockCheckTierQuota.mockResolvedValue(EXCEEDED_QUOTA);
 
     const { POST } = await import('../generate/route');
     const res = await POST(makeRequest({ prompt: 'video about cats' }));

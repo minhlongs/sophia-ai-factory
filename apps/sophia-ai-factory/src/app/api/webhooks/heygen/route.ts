@@ -5,17 +5,19 @@
  *  1. avatar_video.success / avatar_video.fail  — fulfillment state machine (F4)
  *  2. Normalised status field (completed / failed) — legacy onboarding video delivery
  *
- * Public endpoint. Requires HMAC-SHA256 signature verification via
- * HEYGEN_WEBHOOK_SECRET (CF Worker secret). Returns 200 with fallback
- * mode when secret is not configured so HeyGen does not storm-retry.
+ * Public endpoint. Requires HMAC-SHA256 signature verification.
  *
- * Configure HeyGen dashboard webhook → POST https://sophia.agencyos.network/api/webhooks/heygen
+ * P0.1 fix: per-customer webhook secret resolution via
+ * lib/webhooks/heygen-webhook-secret-resolver.ts
+ *
+ * @module app/api/webhooks/heygen
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@/lib/utils/logger-utility'
 import { createServerClient } from '@/lib/db/client'
 import { verifyHeyGenSignature } from '@/lib/webhooks/heygen-signature-verifier'
+import { resolveHeyGenWebhookSecret } from '@/lib/webhooks/heygen-webhook-secret-resolver'
 import {
   completeVideoFromWebhook,
   failVideoFromWebhook,
@@ -31,7 +33,6 @@ export const dynamic = 'force-dynamic'
 interface HeyGenWebhookPayload {
   event_type?: string
   event_data?: Record<string, unknown>
-  // Legacy flat-structure fields
   video_id?: string
   status?: string
   video_url?: string
@@ -51,16 +52,14 @@ function normalizeStatus(raw?: string): 'completed' | 'failed' | 'processing' {
 }
 
 function resolveVideoId(payload: HeyGenWebhookPayload): string | undefined {
-  // New event_data envelope
   if (payload.event_data && typeof payload.event_data === 'object') {
     const d = payload.event_data as Record<string, unknown>
     if (typeof d.video_id === 'string') return d.video_id
   }
-  // Legacy flat structure
   return payload.video_id
 }
 
-// ── Onboarding delivery side-effect (preserved from prior implementation) ──
+// ── Onboarding delivery ────────────────────────────────────────────────────
 
 async function handleOnboardingDelivery(
   heygenVideoId: string,
@@ -102,17 +101,28 @@ async function handleOnboardingDelivery(
 // ── Route handler ──────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  const secret = process.env.HEYGEN_WEBHOOK_SECRET
+  const rawBody = await req.text()
+
+  let payload: HeyGenWebhookPayload
+  try {
+    payload = JSON.parse(rawBody) as HeyGenWebhookPayload
+  } catch {
+    return NextResponse.json({ error: 'invalid_json' }, { status: 400 })
+  }
+
+  const heygenJobId = resolveVideoId(payload)
+
+  // Resolve per-customer secret first (falls back to platform secret or null)
+  const secret = await resolveHeyGenWebhookSecret(heygenJobId)
 
   if (!secret) {
     // Return 200 to suppress HeyGen retry storm. Cron polling handles fallback.
-    logger.warn('[heygen-webhook] HEYGEN_WEBHOOK_SECRET not configured — cron-poll fallback active')
+    logger.warn('[heygen-webhook] No webhook secret configured — cron-poll fallback active', {
+      heygenJobId,
+    })
     return NextResponse.json({ ok: true, mode: 'cron-poll-fallback' })
   }
 
-  const rawBody = await req.text()
-
-  // HeyGen may send signature under various header names
   const sig =
     req.headers.get('signature') ??
     req.headers.get('x-heygen-signature') ??
@@ -126,19 +136,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const valid = await verifyHeyGenSignature(rawBody, sig, secret)
   if (!valid) {
-    logger.warn('[heygen-webhook] Invalid signature')
+    logger.warn('[heygen-webhook] Invalid signature', { heygenJobId })
     return NextResponse.json({ error: 'invalid_signature' }, { status: 401 })
   }
 
-  let payload: HeyGenWebhookPayload
-  try {
-    payload = JSON.parse(rawBody) as HeyGenWebhookPayload
-  } catch {
-    return NextResponse.json({ error: 'invalid_json' }, { status: 400 })
-  }
-
   const eventType = payload.event_type ?? ''
-  logger.info('[heygen-webhook] Received event', { event_type: eventType })
+  logger.info('[heygen-webhook] Received event', { event_type: eventType, heygenJobId })
 
   // ── Fulfillment state machine events (F4) ─────────────────────────────────
   if (eventType === 'avatar_video.success') {
@@ -163,10 +166,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ ok: true })
   }
 
-  // ── Legacy / unrecognised event types (200 ack, no mutation) ─────────────
-  // Keep backward-compat with flat-structure status events (onboarding flow)
-  const videoId = resolveVideoId(payload)
-  if (!videoId) {
+  // ── Legacy flat-structure events ──────────────────────────────────────────
+  if (!heygenJobId) {
     logger.info('[heygen-webhook] No video_id — ignoring unknown event', { event_type: eventType })
     return NextResponse.json({ ok: true, ignored: 'no_video_id' })
   }
@@ -176,7 +177,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ ok: true, ignored: 'non_terminal' })
   }
 
-  // Update legacy status in D1 directly (onboarding video flow)
   try {
     const db = createServerClient()
     await db
@@ -189,16 +189,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         error: payload.error ?? null,
         updated_at: new Date().toISOString(),
       })
-      .eq('heygen_job_id', videoId)
+      .eq('heygen_job_id', heygenJobId)
 
-    logger.info('[heygen-webhook] Legacy status update', { videoId, status })
+    logger.info('[heygen-webhook] Legacy status update', { heygenJobId, status })
 
     if (status === 'completed') {
-      await handleOnboardingDelivery(videoId, payload.video_url)
+      await handleOnboardingDelivery(heygenJobId, payload.video_url)
     }
   } catch (err) {
     logger.error('[heygen-webhook] D1 update failed', err instanceof Error ? err : undefined, {
-      videoId,
+      heygenJobId,
     })
   }
 

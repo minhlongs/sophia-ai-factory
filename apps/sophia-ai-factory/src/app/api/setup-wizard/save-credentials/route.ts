@@ -16,6 +16,7 @@ import type { ProviderType } from '@/lib/credentials/user-credentials-repo'
 
 const saveCredentialsSchema = z.object({
   heygen_api_key: z.string().trim().optional(),
+  heygen_webhook_secret: z.string().trim().optional(),
   resend_api_key: z.string().trim().optional(),
   nowpayments_api_key: z.string().trim().optional(),
   nowpayments_ipn_secret: z.string().trim().optional(),
@@ -42,10 +43,16 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const { heygen_api_key, resend_api_key, nowpayments_api_key } = parsed.data
+  const {
+    heygen_api_key,
+    heygen_webhook_secret,
+    resend_api_key,
+    nowpayments_api_key,
+  } = parsed.data
 
   const saves: Array<{ provider: ProviderType; key: string }> = []
   if (heygen_api_key) saves.push({ provider: 'heygen', key: heygen_api_key })
+  if (heygen_webhook_secret) saves.push({ provider: 'heygen_webhook_secret', key: heygen_webhook_secret })
   if (resend_api_key) saves.push({ provider: 'resend', key: resend_api_key })
   if (nowpayments_api_key) saves.push({ provider: 'nowpayments', key: nowpayments_api_key })
 

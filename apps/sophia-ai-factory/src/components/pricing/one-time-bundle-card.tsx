@@ -8,17 +8,28 @@
  * Features:
  * - HeyGen health gate: disables CTA with maintenance message when heygenHealthy=false
  * - Error toast: shows localized error below CTA on checkout API failures
+ * - P0.5: Pending purchase guard — sessionStorage flag prevents double-click invoices.
+ *   On mount, checks for sophia_pending_purchase key (< 30 min); if present, shows
+ *   "complete or cancel" banner with link to the pending NOWPayments URL.
  *
  * @module components/pricing/one-time-bundle-card
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocale } from "next-intl";
 import { FadeInView } from "@/components/ui/fade-in-view";
 import { ONE_TIME_SKUS } from "@/config/one-time-skus";
 import type { OneTimeSku } from "@/types";
 
 const STARTER = ONE_TIME_SKUS.STARTER_BUNDLE;
+const PENDING_KEY = "sophia_pending_purchase";
+const PENDING_TTL_MS = 30 * 60 * 1000; // 30 minutes
+
+interface PendingPurchase {
+  paymentUrl: string
+  createdAt: number
+  skuId: string
+}
 
 interface OneTimeBundleCardProps {
   /** Override SKU — defaults to STARTER_BUNDLE */
@@ -103,6 +114,41 @@ function errorMessageFor(
     : `System error. Please try again later${serverError ? ` (${serverError})` : ""}`;
 }
 
+/** Read pending purchase from sessionStorage; returns null if expired or absent. */
+function readPendingPurchase(): PendingPurchase | null {
+  try {
+    const raw = sessionStorage.getItem(PENDING_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as PendingPurchase
+    if (Date.now() - parsed.createdAt > PENDING_TTL_MS) {
+      sessionStorage.removeItem(PENDING_KEY)
+      return null
+    }
+    return parsed
+  } catch {
+    return null
+  }
+}
+
+/** Store pending purchase in sessionStorage. */
+function writePendingPurchase(paymentUrl: string, skuId: string): void {
+  try {
+    const data: PendingPurchase = { paymentUrl, skuId, createdAt: Date.now() }
+    sessionStorage.setItem(PENDING_KEY, JSON.stringify(data))
+  } catch {
+    // sessionStorage not available (SSR, private mode) — non-fatal
+  }
+}
+
+/** Clear pending purchase from sessionStorage. */
+function clearPendingPurchase(): void {
+  try {
+    sessionStorage.removeItem(PENDING_KEY)
+  } catch {
+    // non-fatal
+  }
+}
+
 export function OneTimeBundleCard({
   sku = STARTER,
   userId,
@@ -112,12 +158,26 @@ export function OneTimeBundleCard({
   const lang: "vi" | "en" = locale === "vi" ? "vi" : "en";
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pendingPurchase, setPendingPurchase] = useState<PendingPurchase | null>(null);
 
   const label = lang === "vi" ? sku.label_vi : sku.label_en;
   const features = FEATURES[lang];
 
+  // P0.5: On mount, check for unexpired pending purchase in sessionStorage
+  useEffect(() => {
+    setPendingPurchase(readPendingPurchase())
+  }, []);
+
   const handleBuy = async () => {
     if (loading || !heygenHealthy) return;
+
+    // P0.5: If there's a pending purchase for this SKU, redirect to it instead
+    const existing = readPendingPurchase()
+    if (existing && existing.skuId === sku.id) {
+      window.location.href = existing.paymentUrl
+      return
+    }
+
     setLoading(true);
     setError(null);
     try {
@@ -133,6 +193,8 @@ export function OneTimeBundleCard({
       }
       const data = (await res.json()) as { url?: string };
       if (data.url) {
+        // P0.5: Store pending purchase before redirecting
+        writePendingPurchase(data.url, sku.id)
         window.location.href = data.url;
       }
     } catch {
@@ -145,6 +207,11 @@ export function OneTimeBundleCard({
       setLoading(false);
     }
   };
+
+  const handleClearPending = () => {
+    clearPendingPurchase()
+    setPendingPurchase(null)
+  }
 
   const title_vi = "Gói Mua Lẻ";
   const title_en = "One-Time Bundle";
@@ -211,6 +278,39 @@ export function OneTimeBundleCard({
           ))}
         </ul>
       </div>
+
+      {/* P0.5: Pending purchase banner */}
+      {pendingPurchase && pendingPurchase.skuId === sku.id && (
+        <div
+          role="status"
+          className="mt-6 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-300"
+        >
+          <p className="font-semibold">
+            {lang === "vi"
+              ? "Bạn có giao dịch chưa hoàn thành"
+              : "You have a pending purchase"}
+          </p>
+          <p className="mt-1 text-xs text-amber-400/80">
+            {lang === "vi"
+              ? "Hoàn tất thanh toán hoặc hủy để mua mới."
+              : "Complete payment or cancel to start a new one."}
+          </p>
+          <div className="mt-2 flex gap-2">
+            <a
+              href={pendingPurchase.paymentUrl}
+              className="rounded bg-amber-500/20 px-3 py-1 text-xs font-semibold text-amber-300 hover:bg-amber-500/30"
+            >
+              {lang === "vi" ? "Tiếp tục thanh toán" : "Continue payment"}
+            </a>
+            <button
+              onClick={handleClearPending}
+              className="rounded bg-transparent px-3 py-1 text-xs text-amber-400/60 hover:text-amber-400"
+            >
+              {lang === "vi" ? "Hủy & mua mới" : "Cancel & buy new"}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* CTA */}
       <button
