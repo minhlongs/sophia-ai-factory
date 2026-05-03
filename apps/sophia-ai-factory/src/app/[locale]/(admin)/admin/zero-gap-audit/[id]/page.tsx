@@ -10,9 +10,9 @@ import Link from 'next/link'
 import { getCurrentUser } from '@/seed/auth/better-auth-session'
 import { getD1Raw } from '@/seed/db/client'
 import { ArrowLeft, ShieldCheck } from 'lucide-react'
-import { AuditScoreCard } from '@/components/audit/audit-score-card'
-import { AuditCheckRow } from '@/components/audit/audit-check-row'
-import type { CheckResult } from '@/lib/audit/zero-gap-types'
+import { AuditScoreCard } from '@/forest/components/audit/audit-score-card'
+import { AuditCheckRow } from '@/forest/components/audit/audit-check-row'
+import type { CheckResult } from '@/tree/audit/zero-gap-types'
 
 export const dynamic = 'force-dynamic'
 

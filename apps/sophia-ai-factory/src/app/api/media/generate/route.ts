@@ -13,7 +13,7 @@ import {
   isModelSupported,
   SUPPORTED_MODELS,
   type MediaType,
-} from '@/lib/clients/muapi-media-client'
+} from '@/tree/clients/muapi-media-client'
 import { toError } from '@/seed/utils/to-error'
 import { getCurrentUser } from '@/seed/auth/better-auth-session'
 import { getUserTier } from '@/seed/db/get-user-tier'

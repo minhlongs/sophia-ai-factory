@@ -23,7 +23,7 @@ vi.mock('@/lib/services/factory', () => ({
 }));
 
 // Mock video quota module — default to slot reserved / release no-op
-vi.mock('@/lib/quota/video-quota', () => ({
+vi.mock('@/forest/quota/video-quota', () => ({
   reserveVideoSlot: vi.fn(),
   releaseVideoSlot: vi.fn(),
 }));
@@ -53,7 +53,7 @@ vi.mock('@/seed/db/client', () => {
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getUserTier } from '@/seed/db/get-user-tier';
 import { ServiceFactory } from '@/lib/services/factory';
-import { reserveVideoSlot, releaseVideoSlot } from '@/lib/quota/video-quota';
+import { reserveVideoSlot, releaseVideoSlot } from '@/forest/quota/video-quota';
 
 describe('HeyGen API Routes', () => {
   const mockVideoService = {

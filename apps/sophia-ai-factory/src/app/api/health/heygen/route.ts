@@ -16,7 +16,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { withRateLimit } from '@/middleware/rate-limit-wrapper';
+import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 import type { KVNamespace } from '@cloudflare/workers-types';
 
 const KV_CACHE_KEY = 'health:heygen';

@@ -4,7 +4,7 @@
  * Thin wrapper around MissionDetail component.
  */
 
-import { MissionDetail } from '@/components/raas/mission-detail';
+import { MissionDetail } from '@/forest/components/raas/mission-detail';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 

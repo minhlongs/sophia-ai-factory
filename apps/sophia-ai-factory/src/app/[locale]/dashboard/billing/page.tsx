@@ -2,9 +2,9 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { use } from 'react';
-import { FullUsageSummary } from '@/components/billing/usage-summary-card';
-import { DunningStatusBanner } from '@/components/billing/dunning-status-banner';
-import { QuotaGaugeList } from '@/components/analytics/QuotaGauge';
+import { FullUsageSummary } from '@/forest/components/billing/usage-summary-card';
+import { DunningStatusBanner } from '@/forest/components/billing/dunning-status-banner';
+import { QuotaGaugeList } from '@/forest/components/analytics/QuotaGauge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/seed/components/ui/card';
 import { Button } from '@/seed/components/ui/button';
 import { AlertCircle, CreditCard, Download } from 'lucide-react';

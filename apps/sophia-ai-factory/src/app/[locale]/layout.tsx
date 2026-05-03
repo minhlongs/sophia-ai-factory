@@ -3,12 +3,12 @@ import dynamic from "next/dynamic";
 import localFont from "next/font/local";
 import "../globals.css";
 import { Navbar } from "@/app/components/layout/navbar";
-import { QueryProvider } from "@/components/providers/query-provider";
-import { PostHogProvider } from "@/components/posthog-provider";
+import { QueryProvider } from "@/forest/components/providers/query-provider";
+import { PostHogProvider } from "@/forest/components/posthog-provider";
 
-import { ThemeProvider } from "@/components/providers/theme-provider";
-import { MockModeIndicator } from "@/components/dev/mock-mode-indicator";
-import { ErrorReporter } from "@/components/providers/error-reporter";
+import { ThemeProvider } from "@/forest/components/providers/theme-provider";
+import { MockModeIndicator } from "@/forest/components/dev/mock-mode-indicator";
+import { ErrorReporter } from "@/forest/components/providers/error-reporter";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { getCspNonce } from '@/seed/security/get-csp-nonce';
@@ -40,7 +40,7 @@ const Toaster = dynamic(
   () => import("sonner").then(m => ({ default: m.Toaster }))
 );
 const FloatingHelpButton = dynamic(
-  () => import("@/components/guide/floating-help-button").then(m => ({ default: m.FloatingHelpButton }))
+  () => import("@/forest/components/guide/floating-help-button").then(m => ({ default: m.FloatingHelpButton }))
 );
 
 const geistSans = localFont({

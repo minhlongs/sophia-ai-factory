@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { getUserTier } from '@/seed/db/get-user-tier';
-import { rotateApiKey, tierToRateLimit } from '@/lib/api-keys/d1-store';
+import { rotateApiKey, tierToRateLimit } from '@/forest/api-keys/d1-store';
 import { logger } from '@/seed/utils/logger-utility';
 
 export const dynamic = 'force-dynamic';

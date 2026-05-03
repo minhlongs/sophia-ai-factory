@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { renderEmail } from '@/lib/email/render-email';
+import { renderEmail } from '@/forest/email/render-email';
 
 describe('renderEmail', () => {
   it('welcome-magic-link vi: returns html, text, subject', () => {

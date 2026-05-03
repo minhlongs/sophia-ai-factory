@@ -8,8 +8,8 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { ApiKeyList } from '@/components/raas/api-key-list';
-import { ApiKeyCreateModal, ApiKeyShowModal } from '@/components/raas/api-key-create-modal';
+import { ApiKeyList } from '@/forest/components/raas/api-key-list';
+import { ApiKeyCreateModal, ApiKeyShowModal } from '@/forest/components/raas/api-key-create-modal';
 
 export default function ApiKeysPage() {
   const t = useTranslations('dashboard.apiKeys');

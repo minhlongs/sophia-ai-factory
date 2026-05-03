@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getOrderById } from '@/lib/orders/pending-order-repo'
-import { withRateLimit } from '@/middleware/rate-limit-wrapper'
+import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper'
 
 const querySchema = z.object({
   orderId: z.string().regex(/^sophia_/, 'orderId must start with sophia_'),

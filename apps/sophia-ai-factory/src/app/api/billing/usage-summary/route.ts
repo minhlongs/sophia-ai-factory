@@ -10,8 +10,8 @@ import { createServerClient } from '@/seed/db/client';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
-import { getOverageSummary } from '@/lib/quota/overage-logger';
-import { getQuotaStatus } from '@/lib/quota/quota-checker';
+import { getOverageSummary } from '@/forest/quota/overage-logger';
+import { getQuotaStatus } from '@/forest/quota/quota-checker';
 import { PRICING_TIERS } from '@/lib/billing/billing-types';
 
 interface UsageSummaryLicenseRow {

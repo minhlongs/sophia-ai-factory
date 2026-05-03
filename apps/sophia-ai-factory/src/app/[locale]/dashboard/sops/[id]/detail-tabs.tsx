@@ -10,10 +10,10 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type { SopInstallationRow, SopRunRow } from '@/lib/sop/sop-types';
-import { InstallationOverviewTab } from '@/components/sop/installation-overview-tab';
-import { InstallationRunsTab } from '@/components/sop/installation-runs-tab';
-import { InstallationEditTab } from '@/components/sop/installation-edit-tab';
-import { InstallationWebhookTab } from '@/components/sop/installation-webhook-tab';
+import { InstallationOverviewTab } from '@/forest/components/sop/installation-overview-tab';
+import { InstallationRunsTab } from '@/forest/components/sop/installation-runs-tab';
+import { InstallationEditTab } from '@/forest/components/sop/installation-edit-tab';
+import { InstallationWebhookTab } from '@/forest/components/sop/installation-webhook-tab';
 
 type TabKey = 'overview' | 'runs' | 'edit' | 'webhook';
 

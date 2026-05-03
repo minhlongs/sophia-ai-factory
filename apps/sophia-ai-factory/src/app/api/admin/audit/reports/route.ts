@@ -20,7 +20,7 @@ import {
   type ReportFormat,
   type ReportFrequency,
   type ReportFilters
-} from '@/lib/audit/report-scheduler'
+} from '@/tree/audit/report-scheduler'
 
 // Request body validation schema
 const scheduleReportSchema = z.object({

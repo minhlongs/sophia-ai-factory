@@ -61,7 +61,7 @@ const SocialProof = dynamic(
   { loading: () => <SectionSkeleton height="h-64" /> }
 );
 const PricingSection = dynamic(
-  () => import("@/components/pricing/pricing-section").then(m => ({ default: m.PricingSection })),
+  () => import("@/forest/components/pricing/pricing-section").then(m => ({ default: m.PricingSection })),
   { loading: () => <PricingSkeleton /> }
 );
 const AffiliateDiscovery = dynamic(

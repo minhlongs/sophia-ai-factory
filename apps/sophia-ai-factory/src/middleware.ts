@@ -4,7 +4,7 @@ import createMiddleware from 'next-intl/middleware'
 import { getAuth } from '@/seed/auth/better-auth-server'
 import { applyCorsHeaders, handleCorsPrelight } from '@/seed/security/cors-security-configuration'
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports -- mekong-exempt: middleware needs usage-metering for request-level tracking
-import { emitUsageEvent } from './lib/usage-metering'
+import { emitUsageEvent } from '@/forest/usage-metering'
 import { logger } from '@/seed/utils/logger-utility'
 import { toError } from '@/seed/utils/to-error'
 import { isInternalOrStatic, pathnameWithoutLocale, isAdminAuthorized } from './middleware-helpers'

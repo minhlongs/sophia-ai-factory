@@ -26,12 +26,12 @@ import {
   Webhook,
   ServerCog,
 } from "lucide-react";
-import { HealthIndicator } from "@/components/dashboard/health-indicator";
+import { HealthIndicator } from "@/forest/components/dashboard/health-indicator";
 import { MobileNav } from "@/seed/components/ui/mobile-nav";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ThemeToggle } from "@/forest/components/theme-toggle";
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
-import { AgentSidebar } from "@/components/agent-sidebar/agent-sidebar";
-import { CmdKPalette } from "@/components/cmd-k/cmd-k-palette";
+import { AgentSidebar } from "@/forest/components/agent-sidebar/agent-sidebar";
+import { CmdKPalette } from "@/forest/components/cmd-k/cmd-k-palette";
 import { TrialBanner } from "./components/trial-banner";
 import { getD1Raw } from "@/seed/db/client";
 

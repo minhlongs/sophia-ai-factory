@@ -1,6 +1,6 @@
 import { Metadata } from "next";
-import { GuideCommandCard } from "@/components/guide/guide-command-card";
-import { GuideCallout } from "@/components/guide/guide-callout";
+import { GuideCommandCard } from "@/forest/components/guide/guide-command-card";
+import { GuideCallout } from "@/forest/components/guide/guide-callout";
 
 export const metadata: Metadata = {
   title: "Lệnh Telegram Bot — Hướng Dẫn Sophia AI Factory",

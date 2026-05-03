@@ -15,9 +15,9 @@ import { SignJWT, jwtVerify } from 'jose'
 import { logger } from '@/seed/utils/logger-utility'
 import { toError } from '@/seed/utils/to-error'
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports -- mekong-exempt: lib/auth allowed to import forest types
-import { getEffectiveQuotaLimits } from '@/lib/quota/quota-checker'
+import { getEffectiveQuotaLimits } from '@/forest/quota/quota-checker'
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports -- mekong-exempt: lib/auth allowed to import forest types
-import type { QuotaLimit } from '@/lib/usage-metering/types'
+import type { QuotaLimit } from '@/forest/usage-metering/types'
 
 export type { FeatureLimit, EnrichedJwtPayload, EnrichedJwtClaims, LicenseContext } from './enriched-jwt-types'
 export { getDefaultEntitlements } from './enriched-jwt-entitlements'

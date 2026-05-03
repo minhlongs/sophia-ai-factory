@@ -9,7 +9,7 @@ import { triggerAutoHandover } from '@/tree/handover/auto-handover';
 import * as accountSetup from '@/tree/handover/handover-account-setup';
 import * as magicLink from '@/tree/handover/handover-magic-link';
 import * as emailService from '@/tree/handover/handover-email-service';
-import * as emailOutbox from '@/lib/outbox/email-outbox';
+import * as emailOutbox from '@/forest/outbox/email-outbox';
 
 // ── Shared mock state ──────────────────────────────────────────────────────────
 
@@ -49,7 +49,7 @@ vi.mock('../handover-email-service', () => ({
   sendTierUpgradeEmail: vi.fn(),
 }));
 
-vi.mock('@/lib/outbox/email-outbox', () => ({
+vi.mock('@/forest/outbox/email-outbox', () => ({
   enqueueWelcomeEmail: vi.fn().mockResolvedValue(undefined),
 }));
 

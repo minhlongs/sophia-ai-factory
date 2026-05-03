@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { LayoutDashboard, PlusCircle, ListVideo, BarChart3, Settings, Key, CreditCard, Search } from "lucide-react";
-import { GuideFeatureGrid, GuideFeatureItem } from "@/components/guide/guide-feature-grid";
-import { GuideCallout } from "@/components/guide/guide-callout";
+import { GuideFeatureGrid, GuideFeatureItem } from "@/forest/components/guide/guide-feature-grid";
+import { GuideCallout } from "@/forest/components/guide/guide-callout";
 
 export const metadata: Metadata = {
   title: "Hướng Dẫn Màn Hình A-Z — Hướng Dẫn Sophia AI Factory",

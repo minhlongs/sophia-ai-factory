@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { CheckCircle, Mail, KeyRound, PlayCircle, BarChart3 } from "lucide-react";
 import { getOrderById } from "@/lib/orders/pending-order-repo";
-import { PaymentStatusPoller } from "@/components/checkout/payment-status-poller";
+import { PaymentStatusPoller } from "@/forest/components/checkout/payment-status-poller";
 
 export const metadata: Metadata = {
   title: "Payment Confirmed — Sophia AI Factory",

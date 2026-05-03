@@ -8,7 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { runHourlyRollup } from '@/lib/usage-metering/rollup-service';
+import { runHourlyRollup } from '@/forest/usage-metering/rollup-service';
 import { logger } from '@/seed/utils/logger-utility';
 import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker';
 import { verifyCronAuth } from '@/seed/security/cron-auth';

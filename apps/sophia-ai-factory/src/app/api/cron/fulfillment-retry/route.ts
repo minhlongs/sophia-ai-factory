@@ -20,7 +20,7 @@ import { verifyCronAuth } from '@/seed/security/cron-auth'
 import { recordCronRun } from '@/lib/cron/run-tracker'
 import { getD1Raw, createServerClient } from '@/seed/db/client'
 import { createHeyGenVideo } from '@/lib/video/heygen-helpers'
-import { getHeyGenKey } from '@/lib/credentials/get-provider-key'
+import { getHeyGenKey } from '@/tree/credentials/get-provider-key'
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
 import {

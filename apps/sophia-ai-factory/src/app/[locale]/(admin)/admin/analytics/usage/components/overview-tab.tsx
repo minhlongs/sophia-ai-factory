@@ -1,7 +1,7 @@
 'use client';
 
-import { UsageChart } from '@/components/analytics/UsageChart';
-import { QuotaGaugeList } from '@/components/analytics/QuotaGauge';
+import { UsageChart } from '@/forest/components/analytics/UsageChart';
+import { QuotaGaugeList } from '@/forest/components/analytics/QuotaGauge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/seed/components/ui/card';
 import { TrendingUp, AlertTriangle, Zap } from 'lucide-react';
 import type { UsageMetrics, LicenseMetrics, AnalyticsGranularity } from '@/lib/analytics/types';

@@ -1,9 +1,9 @@
 import { Metadata } from "next";
 import { Brain, Mic, Video, Database, CreditCard, Bot } from "lucide-react";
-import { GuideStepCard } from "@/components/guide/guide-step-card";
-import { GuideCallout } from "@/components/guide/guide-callout";
-import { GuideFeatureGrid, GuideFeatureItem } from "@/components/guide/guide-feature-grid";
-import { YouTubeEmbed } from "@/components/guide/youtube-embed";
+import { GuideStepCard } from "@/forest/components/guide/guide-step-card";
+import { GuideCallout } from "@/forest/components/guide/guide-callout";
+import { GuideFeatureGrid, GuideFeatureItem } from "@/forest/components/guide/guide-feature-grid";
+import { YouTubeEmbed } from "@/forest/components/guide/youtube-embed";
 
 export const metadata: Metadata = {
   title: "Tích Hợp Dịch Vụ — Hướng Dẫn Sophia AI Factory",

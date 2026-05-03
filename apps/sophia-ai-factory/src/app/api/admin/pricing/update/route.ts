@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { requireAdmin } from '@/seed/auth/require-admin'
 import { setSkuPrice } from '@/lib/config/pricing-resolver'
-import { writeAuditLog } from '@/lib/admin/audit-log'
+import { writeAuditLog } from '@/tree/admin/audit-log'
 import { getErrorMessage } from '@/seed/utils/to-error'
 
 export const dynamic = 'force-dynamic'

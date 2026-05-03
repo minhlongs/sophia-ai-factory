@@ -1,5 +1,5 @@
 import { serve } from "inngest/next";
-import { inngest } from "@/lib/inngest/client";
+import { inngest } from "@/forest/inngest/client";
 import {
   helloWorld,
   generateCampaign,
@@ -16,7 +16,7 @@ import {
   pendingPromoterCron,
   payoutBatcher,
   reconciliationCron,
-} from "@/lib/inngest/functions/index";
+} from "@/forest/inngest/functions/index";
 
 export const { GET, POST, PUT } = serve({
   client: inngest,

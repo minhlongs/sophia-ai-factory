@@ -9,7 +9,7 @@
 
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { listUserApiKeyProviders } from '@/lib/byok/user-api-key-store';
+import { listUserApiKeyProviders } from '@/tree/byok/user-api-key-store';
 
 export async function GET(): Promise<NextResponse> {
   const user = await getCurrentUser();

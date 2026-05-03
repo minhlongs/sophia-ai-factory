@@ -9,7 +9,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { decryptSecret } from '@/lib/crypto/encrypt-secret'
+import { decryptSecret } from '@/tree/crypto/encrypt-secret'
 import { track } from '@/lib/signals/track'
 import { D1Events } from '@/lib/signals/d1-event-types'
 import { logger } from '@/seed/utils/logger-utility'

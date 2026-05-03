@@ -8,7 +8,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { validatePromoCode } from '@/lib/promo/promo-validator';
-import { withRateLimit } from '@/middleware/rate-limit-wrapper';
+import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 
 const validateSchema = z.object({
   code: z.string().min(1).max(30),

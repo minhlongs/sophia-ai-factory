@@ -12,8 +12,8 @@
 
 import { redirect } from 'next/navigation'
 import { getCurrentUser } from '@/seed/auth/better-auth-session'
-import { listUserApiKeyProviders } from '@/lib/byok/user-api-key-store'
-import { ByokKeyForm, type UserSettableProvider } from '@/components/byok/byok-key-form'
+import { listUserApiKeyProviders } from '@/tree/byok/user-api-key-store'
+import { ByokKeyForm, type UserSettableProvider } from '@/forest/components/byok/byok-key-form'
 
 export const dynamic = 'force-dynamic'
 

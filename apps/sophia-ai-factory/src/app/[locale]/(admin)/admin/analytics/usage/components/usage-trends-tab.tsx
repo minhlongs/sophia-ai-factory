@@ -1,7 +1,7 @@
 'use client';
 
-import { UsageChart } from '@/components/analytics/UsageChart';
-import { ErrorRateChart } from '@/components/analytics/ErrorRateChart';
+import { UsageChart } from '@/forest/components/analytics/UsageChart';
+import { ErrorRateChart } from '@/forest/components/analytics/ErrorRateChart';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/seed/components/ui/card';
 import type { UsageMetrics, AnalyticsGranularity } from '@/lib/analytics/types';
 

@@ -21,7 +21,7 @@ vi.mock('@/lib/orders/pending-order-repo', () => ({
   getOrderById: vi.fn(async (orderId: string) => mockOrders[orderId] ?? null),
 }))
 
-vi.mock('@/middleware/rate-limit-wrapper', () => ({
+vi.mock('@/forest/middleware/rate-limit-wrapper', () => ({
   withRateLimit: vi.fn((fn: (...args: unknown[]) => unknown) => fn),
 }))
 

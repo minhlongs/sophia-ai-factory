@@ -26,7 +26,7 @@ vi.mock('@/lib/usage-metering', () => ({
   startTimer:       vi.fn().mockReturnValue(() => 5),
 }))
 
-vi.mock('@/lib/usage-metering/context', () => ({
+vi.mock('@/forest/usage-metering/context', () => ({
   getUsageContext: vi.fn().mockReturnValue(null),
 }))
 

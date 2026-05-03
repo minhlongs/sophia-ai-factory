@@ -11,7 +11,7 @@ vi.mock('@opennextjs/cloudflare', () => ({
 }));
 
 // Mock rate-limit wrapper to pass through the handler directly
-vi.mock('@/middleware/rate-limit-wrapper', () => ({
+vi.mock('@/forest/middleware/rate-limit-wrapper', () => ({
   withRateLimit: (handler: (req: unknown) => Promise<unknown>) => handler,
 }));
 

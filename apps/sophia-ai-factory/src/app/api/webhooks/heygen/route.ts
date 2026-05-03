@@ -24,7 +24,7 @@ import {
   type HeyGenSuccessData,
   type HeyGenFailData,
 } from '@/lib/fulfillment/complete-video-from-webhook'
-import { sendOnboardingVideoEmail } from '@/lib/email/onboarding-emails'
+import { sendOnboardingVideoEmail } from '@/forest/email/onboarding-emails'
 
 export const dynamic = 'force-dynamic'
 

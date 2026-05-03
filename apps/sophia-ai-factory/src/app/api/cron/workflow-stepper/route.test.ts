@@ -37,7 +37,7 @@ vi.mock('@/lib/ai/anthropic-adapter', () => ({
   callAnthropic: vi.fn(),
 }))
 
-vi.mock('@/lib/byok/resolve-user-api-key', () => ({
+vi.mock('@/tree/byok/resolve-user-api-key', () => ({
   // Default: pass-through env fallback (matches BYOK-off real behavior).
   resolveUserApiKey: vi.fn((_userId, _provider, envFallback) =>
     Promise.resolve(envFallback ?? null),
@@ -52,7 +52,7 @@ import { logger } from '@/seed/utils/logger-utility'
 import { recordLlmCall } from '@/lib/telemetry/llm-trace'
 import { route as routeLlm } from '@/lib/ai/llm-router'
 import { callAnthropic } from '@/lib/ai/anthropic-adapter'
-import { resolveUserApiKey } from '@/lib/byok/resolve-user-api-key'
+import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key'
 import type { WorkflowRow } from '@/seed/db/workflow-repository'
 import type { RouteDecision } from '@/lib/ai/llm-router'
 

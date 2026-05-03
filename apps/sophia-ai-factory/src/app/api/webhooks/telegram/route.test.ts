@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { POST } from './route'
 import { NextRequest } from 'next/server'
-import * as telegramHandlers from '@/lib/telegram/telegram-command-handlers'
-import * as campaignHandlers from '@/lib/telegram/telegram-bot-campaign-handlers'
-import * as fsmStateManager from '@/lib/telegram/telegram-fsm-state-manager'
+import * as telegramHandlers from '@/tree/telegram/telegram-command-handlers'
+import * as campaignHandlers from '@/tree/telegram/telegram-bot-campaign-handlers'
+import * as fsmStateManager from '@/tree/telegram/telegram-fsm-state-manager'
 
 // Mock legacy telegram command handlers
-vi.mock('@/lib/telegram/telegram-command-handlers', () => ({
+vi.mock('@/tree/telegram/telegram-command-handlers', () => ({
   handleStart: vi.fn(),
   handleHelp: vi.fn(),
   handleEmail: vi.fn(),
@@ -22,7 +22,7 @@ vi.mock('@/lib/telegram/telegram-command-handlers', () => ({
 }))
 
 // Mock FSM campaign handlers (new wiring — C1 fix)
-vi.mock('@/lib/telegram/telegram-bot-campaign-handlers', () => ({
+vi.mock('@/tree/telegram/telegram-bot-campaign-handlers', () => ({
   handleCampaign: vi.fn(),
   handleFsmTextInput: vi.fn().mockResolvedValue(false),
   handleOfferCallback: vi.fn().mockResolvedValue(false),
@@ -30,7 +30,7 @@ vi.mock('@/lib/telegram/telegram-bot-campaign-handlers', () => ({
 }))
 
 // Mock FSM state manager (clearContext for /cancel)
-vi.mock('@/lib/telegram/telegram-fsm-state-manager', () => ({
+vi.mock('@/tree/telegram/telegram-fsm-state-manager', () => ({
   TelegramFSM: {
     clearContext: vi.fn().mockResolvedValue(undefined),
     getContext: vi.fn().mockResolvedValue(null),

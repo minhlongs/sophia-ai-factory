@@ -11,7 +11,7 @@ import { CampaignDetailsSidebar } from "./components/campaign-details-sidebar";
 import { CampaignScriptView } from "./components/campaign-script-view";
 
 const VideoPreview = dynamic(
-  () => import("@/components/video-preview").then(m => ({ default: m.VideoPreview })),
+  () => import("@/forest/components/video-preview").then(m => ({ default: m.VideoPreview })),
   {
     loading: () => (
       <div className="w-full max-w-2xl mx-auto">

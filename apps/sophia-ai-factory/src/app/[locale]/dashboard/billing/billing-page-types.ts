@@ -1,4 +1,4 @@
-import type { DunningState } from '@/components/billing/dunning-status-banner';
+import type { DunningState } from '@/forest/components/billing/dunning-status-banner';
 
 export interface UsageSummaryResponse {
   period: { start: number; end: number };

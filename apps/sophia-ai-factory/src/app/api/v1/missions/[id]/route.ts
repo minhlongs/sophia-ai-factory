@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/seed/db/client';
-import { validateMissionApiKey } from '@/lib/missions/api-key-auth';
+import { validateMissionApiKey } from '@/forest/missions/api-key-auth';
 
 export const dynamic = 'force-dynamic';
 

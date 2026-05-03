@@ -1,8 +1,8 @@
 
 import { Tier } from "@/seed/types";
 import { getErrorMessage } from '@/seed/utils/to-error';
-import { trackUsage, hashLicenseKey, calculateCredits, startTimer } from '@/lib/usage-metering';
-import { getUsageContext } from '@/lib/usage-metering/context';
+import { trackUsage, hashLicenseKey, calculateCredits, startTimer } from '@/forest/usage-metering';
+import { getUsageContext } from '@/forest/usage-metering/context';
 
 const HEYGEN_API_URL = "https://api.heygen.com/v2";
 

@@ -15,7 +15,7 @@ import { NextRequest } from 'next/server';
 import { isValidShortCode } from '@/lib/affiliate-shortlink/short-code-generator';
 import { logClick } from '@/lib/affiliate-shortlink/click-logger';
 import { createServerClient } from '@/seed/db/client';
-import { checkRateLimit } from '@/lib/telegram/sql-rate-limiter';
+import { checkRateLimit } from '@/tree/telegram/sql-rate-limiter';
 import { recordClick } from '@/lib/affiliates/click-recorder';
 
 interface AffiliateOfferRow {

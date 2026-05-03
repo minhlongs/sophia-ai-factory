@@ -10,10 +10,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createServerClient } from '@/seed/db/client';
-import { validateMissionApiKey } from '@/lib/missions/api-key-auth';
-import { isValidCommand, getCommand } from '@/lib/missions/command-registry';
+import { validateMissionApiKey } from '@/forest/missions/api-key-auth';
+import { isValidCommand, getCommand } from '@/forest/missions/command-registry';
 import { getBalance } from '@/lib/mcu/credits-repo';
-import { dispatchMission } from '@/lib/missions/dispatcher';
+import { dispatchMission } from '@/forest/missions/dispatcher';
 import { logger } from '@/seed/utils/logger-utility';
 
 export const dynamic = 'force-dynamic';
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (!isValidCommand(command)) {
     return NextResponse.json({
       error: `Unknown command: ${command}`,
-      available_commands: Object.keys((await import('@/lib/missions/command-registry')).COMMANDS),
+      available_commands: Object.keys((await import('@/forest/missions/command-registry')).COMMANDS),
     }, { status: 400 });
   }
 

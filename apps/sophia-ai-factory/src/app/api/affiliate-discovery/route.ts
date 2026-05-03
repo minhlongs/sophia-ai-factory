@@ -14,7 +14,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createServerClient } from '@/seed/db/client'
-import { withRateLimit } from '@/middleware/rate-limit-wrapper'
+import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper'
 
 export interface AffiliateOffer {
   id: string

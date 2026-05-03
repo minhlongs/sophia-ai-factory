@@ -8,7 +8,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Bot, CheckCircle, AlertCircle, Clock } from 'lucide-react';
-import type { AgentHealthSummary, AgentRoleHealth } from '@/lib/agents/agent-health-resolver';
+import type { AgentHealthSummary, AgentRoleHealth } from '@/forest/agents/agent-health-resolver';
 
 function SuccessRateBadge({ rate }: { rate: number }) {
   const pct = Math.round(rate * 100);

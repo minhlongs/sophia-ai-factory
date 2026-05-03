@@ -1,7 +1,7 @@
 import { Button } from "@/seed/components/ui/button";
 import { Loader2, Sparkles } from "lucide-react";
 import { CampaignTemplate } from "@/lib/templates/campaign-templates";
-import { UpgradeBanner } from "@/components/UpgradeBanner";
+import { UpgradeBanner } from "@/forest/components/UpgradeBanner";
 import { AffiliateProgram, Tier } from "@/seed/types";
 import { FormEvent } from "react";
 import { useTranslations } from 'next-intl';

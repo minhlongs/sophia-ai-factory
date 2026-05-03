@@ -55,7 +55,7 @@ vi.mock('@/seed/utils/logger-utility', () => ({
 }))
 
 // Mock quota checker
-vi.mock('@/lib/quota/quota-checker', () => ({
+vi.mock('@/forest/quota/quota-checker', () => ({
   getEffectiveQuotaLimits: vi.fn(),
 }))
 
@@ -139,7 +139,7 @@ describe('createEnrichedJwt', () => {
   })
 
   it('should create enriched JWT with all claims', async () => {
-    const { getEffectiveQuotaLimits } = await import('@/lib/quota/quota-checker')
+    const { getEffectiveQuotaLimits } = await import('@/forest/quota/quota-checker')
 
     mockSingle
       .mockResolvedValueOnce({ // First call: license context
@@ -190,7 +190,7 @@ describe('createEnrichedJwt', () => {
   })
 
   it('should use custom TTL when provided', async () => {
-    const { getEffectiveQuotaLimits } = await import('@/lib/quota/quota-checker')
+    const { getEffectiveQuotaLimits } = await import('@/forest/quota/quota-checker')
 
     mockSingle
       .mockResolvedValueOnce({
@@ -441,7 +441,7 @@ describe('refreshJwtIfExpired', () => {
     const expiredToken = `${header}.${payload}.${signature}`
 
     // Mock createEnrichedJwt to return a new token
-    const { getEffectiveQuotaLimits } = await import('@/lib/quota/quota-checker')
+    const { getEffectiveQuotaLimits } = await import('@/forest/quota/quota-checker')
 
     mockSingle
       .mockResolvedValueOnce({

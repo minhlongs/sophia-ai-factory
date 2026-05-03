@@ -9,7 +9,7 @@ import {
   getTraceStats,
   cacheHitRate,
   type TraceStats,
-} from "@/lib/admin/monitoring-queries";
+} from "@/tree/admin/monitoring-queries";
 
 export const dynamic = "force-dynamic";
 
