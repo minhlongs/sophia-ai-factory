@@ -50,12 +50,19 @@ export default async function SetupLayout({
     redirect("/dashboard");
   }
 
-  const messages = await getMessages();
+  // /setup-wizard sits outside the [locale] segment, so next-intl's request
+  // middleware never tags the request with a locale. Without an explicit locale
+  // here, getMessages() throws notFound() and Next renders a 404. Read the
+  // user's preferred locale from the cookie set by /vi or /en routes (or
+  // default to 'vi' for our predominantly-Vietnamese customer base).
+  const jar = await cookies();
+  const locale = jar.get("NEXT_LOCALE")?.value === "en" ? "en" : "vi";
+  const messages = await getMessages({ locale });
 
   return (
-    <html lang="en">
+    <html lang={locale}>
       <body className={`${geistSans.variable} antialiased`}>
-        <NextIntlClientProvider messages={messages} locale="en">
+        <NextIntlClientProvider messages={messages} locale={locale}>
           <div className="min-h-screen bg-muted/50">
             {/* No Navbar here - specialized layout for setup */}
             {children}
