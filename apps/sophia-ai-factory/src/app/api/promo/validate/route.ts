@@ -7,7 +7,7 @@
 
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { validatePromoCode } from '@/lib/promo/promo-validator';
+import { validatePromoCode } from '@/land/promo/promo-validator';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 
 const validateSchema = z.object({

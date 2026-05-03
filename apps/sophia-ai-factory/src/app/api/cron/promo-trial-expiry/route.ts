@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getExpiredTrialUsers } from '@/lib/promo/promo-repo';
+import { getExpiredTrialUsers } from '@/land/promo/promo-repo';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
 import { logger } from '@/seed/utils/logger-utility';
 import { getD1Raw } from '@/seed/db/client';

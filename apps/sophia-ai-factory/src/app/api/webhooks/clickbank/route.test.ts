@@ -5,19 +5,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Mock all dependencies before imports
-vi.mock('@/lib/affiliates/clickbank-signature-verifier', () => ({
+vi.mock('@/land/affiliates/clickbank-signature-verifier', () => ({
   verifyClickBankSignature: vi.fn(),
 }))
 
-vi.mock('@/lib/affiliates/clickbank-postback-parser', () => ({
+vi.mock('@/land/affiliates/clickbank-postback-parser', () => ({
   parsePostback: vi.fn(),
 }))
 
-vi.mock('@/lib/affiliates/conversion-attributor', () => ({
+vi.mock('@/land/affiliates/conversion-attributor', () => ({
   attributeClick: vi.fn(),
 }))
 
-vi.mock('@/lib/affiliates/commission-calculator', () => ({
+vi.mock('@/land/affiliates/commission-calculator', () => ({
   calcCommission: vi.fn(),
 }))
 
@@ -34,10 +34,10 @@ vi.mock('@/seed/utils/logger-utility', () => ({
 }))
 
 import { POST } from './route'
-import { verifyClickBankSignature } from '@/lib/affiliates/clickbank-signature-verifier'
-import { parsePostback } from '@/lib/affiliates/clickbank-postback-parser'
-import { attributeClick } from '@/lib/affiliates/conversion-attributor'
-import { calcCommission } from '@/lib/affiliates/commission-calculator'
+import { verifyClickBankSignature } from '@/land/affiliates/clickbank-signature-verifier'
+import { parsePostback } from '@/land/affiliates/clickbank-postback-parser'
+import { attributeClick } from '@/land/affiliates/conversion-attributor'
+import { calcCommission } from '@/land/affiliates/commission-calculator'
 import { notifyConversionEarned } from '@/forest/inngest/functions/generate-campaign-db'
 import { checkRateLimit } from '@/tree/telegram/sql-rate-limiter'
 import { NextRequest } from 'next/server'

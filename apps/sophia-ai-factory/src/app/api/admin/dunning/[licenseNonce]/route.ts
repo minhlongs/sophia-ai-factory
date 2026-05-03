@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/seed/auth/require-admin';
-import { getDunningState, getDunningHistory } from '@/lib/billing/dunning-workflow';
+import { getDunningState, getDunningHistory } from '@/land/billing/dunning-workflow';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 

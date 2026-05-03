@@ -5,7 +5,7 @@
 
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
-import { listAdminCodes } from "@/lib/promo/promo-repo";
+import { listAdminCodes } from "@/land/promo/promo-repo";
 import { PromoCodesClient } from "./promo-codes-client";
 
 export const dynamic = "force-dynamic";

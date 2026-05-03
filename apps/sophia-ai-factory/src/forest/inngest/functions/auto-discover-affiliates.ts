@@ -7,7 +7,7 @@
  */
 
 import { inngest } from "@/forest/inngest/client";
-import { getAllPrograms, getCategories } from "@/lib/affiliates";
+import { getAllPrograms, getCategories } from "@/land/affiliates";
 import {
   scoreAffiliates,
   type AffiliateScore,

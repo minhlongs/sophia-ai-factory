@@ -175,7 +175,7 @@ describe('NOWPayments webhook: tier_upgraded emission', () => {
     const nowpaymentsClient = await import('@/tree/clients/nowpayments-client')
     const verifySpy = vi.spyOn(nowpaymentsClient, 'verifyIpnSignature').mockResolvedValue(true)
 
-    const ipnHandlers = await import('@/lib/billing/nowpayments-ipn-handlers')
+    const ipnHandlers = await import('@/land/billing/nowpayments-ipn-handlers')
     const processSpy = vi.spyOn(ipnHandlers, 'processNowPaymentsIpn').mockResolvedValue({ success: true, message: 'ok' })
 
     vi.stubEnv('NOWPAYMENTS_IPN_SECRET', 'test-secret')

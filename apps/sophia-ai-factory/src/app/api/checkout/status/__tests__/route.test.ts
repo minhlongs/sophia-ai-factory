@@ -17,7 +17,7 @@ const mockOrders: Record<string, { order_id: string; status: string; tier: strin
   },
 }
 
-vi.mock('@/lib/orders/pending-order-repo', () => ({
+vi.mock('@/land/orders/pending-order-repo', () => ({
   getOrderById: vi.fn(async (orderId: string) => mockOrders[orderId] ?? null),
 }))
 

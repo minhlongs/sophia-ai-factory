@@ -12,7 +12,7 @@ import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import { getOverageSummary } from '@/forest/quota/overage-logger';
 import { getQuotaStatus } from '@/forest/quota/quota-checker';
-import { PRICING_TIERS } from '@/lib/billing/billing-types';
+import { PRICING_TIERS } from '@/land/billing/billing-types';
 
 interface UsageSummaryLicenseRow {
   nonce: string;

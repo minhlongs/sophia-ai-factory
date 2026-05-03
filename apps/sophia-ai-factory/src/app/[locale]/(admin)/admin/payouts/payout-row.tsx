@@ -6,7 +6,7 @@
  */
 
 import { useState } from "react";
-import { MIN_PAYOUT_USD } from "@/lib/wallet/payout-validators";
+import { MIN_PAYOUT_USD } from "@/land/wallet/payout-validators";
 
 interface QueueItem {
   user_id: string;

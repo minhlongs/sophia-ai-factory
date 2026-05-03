@@ -8,12 +8,12 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { TikTokShopProvider } from '@/lib/affiliates/providers/tiktok-shop'
-import { AccessTradeProvider } from '@/lib/affiliates/providers/accesstrade'
-import { ClickBankProvider } from '@/lib/affiliates/providers/clickbank'
-import { AwinProvider } from '@/lib/affiliates/providers/awin'
-import { AmazonProvider } from '@/lib/affiliates/providers/amazon'
-import type { OfferProvider } from '@/lib/affiliates/provider-interface'
+import { TikTokShopProvider } from '@/land/affiliates/providers/tiktok-shop'
+import { AccessTradeProvider } from '@/land/affiliates/providers/accesstrade'
+import { ClickBankProvider } from '@/land/affiliates/providers/clickbank'
+import { AwinProvider } from '@/land/affiliates/providers/awin'
+import { AmazonProvider } from '@/land/affiliates/providers/amazon'
+import type { OfferProvider } from '@/land/affiliates/provider-interface'
 import { logger } from '@/seed/utils/logger-utility'
 
 const PROVIDERS: Record<string, OfferProvider> = {

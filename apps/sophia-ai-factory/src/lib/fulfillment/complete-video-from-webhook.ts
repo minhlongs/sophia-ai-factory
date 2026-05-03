@@ -15,10 +15,10 @@ import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
 import { getD1Raw, createServerClient } from '@/seed/db/client'
 import { downloadAndStore } from '@/lib/video/video-storage-service'
-import { sendOneTimeBundleReadyEmail } from '@/lib/billing/email/send-one-time-bundle-ready-email'
+import { sendOneTimeBundleReadyEmail } from '@/land/billing/email/send-one-time-bundle-ready-email'
 import { getUserCredits } from '@/seed/db/get-user-credits'
 import { grantCompensationCredit } from '@/lib/fulfillment/compensation'
-import { sendBundleRenderFailedEmail } from '@/lib/billing/email/send-bundle-render-failed-email'
+import { sendBundleRenderFailedEmail } from '@/land/billing/email/send-bundle-render-failed-email'
 import {
   findByHeygenJobId,
   markPermanentFailureCAS,

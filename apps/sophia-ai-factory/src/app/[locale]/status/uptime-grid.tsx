@@ -4,7 +4,7 @@
  * @module app/status/uptime-grid
  */
 
-import type { DayRollup } from '@/lib/status/status-store';
+import type { DayRollup } from '@/land/status/status-store';
 
 interface UptimeGridProps {
   rollup: DayRollup[];

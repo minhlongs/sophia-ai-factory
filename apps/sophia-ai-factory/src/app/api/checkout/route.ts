@@ -3,12 +3,12 @@ import { createInvoiceUrl, NOWPAYMENTS_TIERS } from '@/tree/clients/nowpayments-
 import { checkoutSchema } from '@/lib/schemas';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { validatePromoCode } from '@/lib/promo/promo-validator';
-import { recordRedemption, incrementUsedCount } from '@/lib/promo/promo-repo';
+import { validatePromoCode } from '@/land/promo/promo-validator';
+import { recordRedemption, incrementUsedCount } from '@/land/promo/promo-repo';
 import { logger } from '@/seed/utils/logger-utility';
-import { writeOrder } from '@/lib/orders/pending-order-repo';
-import { derivePeriod, assertPeriodAllowed, assertPaymentMethodAllowed } from '@/lib/checkout/checkout-validators';
-import type { PendingOrderPeriod, PaymentMethod } from '@/lib/orders/pending-order-types';
+import { writeOrder } from '@/land/orders/pending-order-repo';
+import { derivePeriod, assertPeriodAllowed, assertPaymentMethodAllowed } from '@/land/checkout/checkout-validators';
+import type { PendingOrderPeriod, PaymentMethod } from '@/land/orders/pending-order-types';
 
 /**
  * Extract user ID from Better Auth session headers.

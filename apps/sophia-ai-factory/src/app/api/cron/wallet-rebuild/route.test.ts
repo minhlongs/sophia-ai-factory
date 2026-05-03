@@ -12,12 +12,12 @@ vi.mock('@/seed/utils/to-error', () => ({
   toError: (e: unknown) => (e instanceof Error ? e : new Error(String(e))),
 }));
 
-vi.mock('@/lib/wallet/wallet-rebuilder', () => ({
+vi.mock('@/land/wallet/wallet-rebuilder', () => ({
   rebuildAllWallets: vi.fn(),
 }));
 
 import { GET } from './route';
-import { rebuildAllWallets } from '@/lib/wallet/wallet-rebuilder';
+import { rebuildAllWallets } from '@/land/wallet/wallet-rebuilder';
 import { NextRequest } from 'next/server';
 
 const mockRebuildAllWallets = vi.mocked(rebuildAllWallets);

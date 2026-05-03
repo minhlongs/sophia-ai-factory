@@ -11,7 +11,7 @@ import { checkQuotaWithOverage, DEFAULT_CONFIG } from './quota-checker'
 import type { QuotaCheckContext, EnhancedQuotaCheckResult } from './quota-checker'
 import { invalidateQuotaCache } from './quota-checker'
 import { invalidateRealTimeCache } from '@/forest/usage-metering/realtime-tracker'
-import { canAccessApi } from '@/lib/billing/dunning-workflow'
+import { canAccessApi } from '@/land/billing/dunning-workflow'
 import { createQuotaExceededResponse, createDunningBlockResponse } from './quota-enforcer-response'
 
 export type { QuotaExceededResponse } from './quota-enforcer-response'

@@ -26,11 +26,11 @@ vi.mock('@/lib/video/video-storage-service', () => ({
   downloadAndStore: vi.fn().mockResolvedValue({ path: 'videos/u1/v1.mp4', sizeBytes: 1024, permanentUrl: '', bucket: 'test' }),
 }))
 
-vi.mock('@/lib/billing/email/send-one-time-bundle-ready-email', () => ({
+vi.mock('@/land/billing/email/send-one-time-bundle-ready-email', () => ({
   sendOneTimeBundleReadyEmail: vi.fn().mockResolvedValue({ success: true }),
 }))
 
-vi.mock('@/lib/billing/email/send-bundle-render-failed-email', () => ({
+vi.mock('@/land/billing/email/send-bundle-render-failed-email', () => ({
   sendBundleRenderFailedEmail: vi.fn().mockResolvedValue({ success: true }),
 }))
 
@@ -56,8 +56,8 @@ import {
   recordAttemptCAS,
 } from '@/seed/db/repositories/videos-repo'
 import { getD1Raw, createServerClient } from '@/seed/db/client'
-import { sendOneTimeBundleReadyEmail } from '@/lib/billing/email/send-one-time-bundle-ready-email'
-import { sendBundleRenderFailedEmail } from '@/lib/billing/email/send-bundle-render-failed-email'
+import { sendOneTimeBundleReadyEmail } from '@/land/billing/email/send-one-time-bundle-ready-email'
+import { sendBundleRenderFailedEmail } from '@/land/billing/email/send-bundle-render-failed-email'
 import { grantCompensationCredit } from '@/lib/fulfillment/compensation'
 import { completeVideoFromWebhook, failVideoFromWebhook } from '../complete-video-from-webhook'
 

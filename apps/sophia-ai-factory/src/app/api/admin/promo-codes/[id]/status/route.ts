@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAdmin } from '@/seed/auth/require-admin';
-import { updateCodeStatus } from '@/lib/promo/promo-repo';
+import { updateCodeStatus } from '@/land/promo/promo-repo';
 
 export const dynamic = 'force-dynamic';
 
