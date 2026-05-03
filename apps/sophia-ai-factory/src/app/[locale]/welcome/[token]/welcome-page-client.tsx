@@ -39,8 +39,10 @@ export function WelcomePageClient({ token, isVi, locale }: Props) {
   async function handleGetStarted() {
     setStarted(true);
     try {
-      await fetch(`/api/welcome/validate/${token}`, { method: 'POST' });
-    } finally {
+      const res = await fetch(`/api/welcome/validate/${token}`, { method: 'POST' });
+      const data = await res.json() as { redirectUrl?: string };
+      window.location.href = data.redirectUrl ?? `/${locale}/dashboard`;
+    } catch {
       window.location.href = `/${locale}/dashboard`;
     }
   }
