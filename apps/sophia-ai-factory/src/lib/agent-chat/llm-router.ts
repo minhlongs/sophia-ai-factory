@@ -1,0 +1,62 @@
+/**
+ * Agent Chat — LLM Route Resolver
+ *
+ * Priority: local_llm BYO cred → DeepSeek cloud R1 → Anthropic Claude fallback.
+ * Returns LlmRoute with provider/baseUrl/apiKey/model ready for OpenAI-compat API call.
+ *
+ * @module lib/agent-chat/llm-router
+ */
+
+import { getUserCredential } from '@/lib/credentials/user-credentials-repo';
+import type { LlmRoute } from './types';
+
+const DEEPSEEK_BASE_URL = 'https://api.deepseek.com/v1';
+const ANTHROPIC_BASE_URL = 'https://api.anthropic.com/v1';
+
+/**
+ * Resolve which LLM backend to use for a given user.
+ * Throws 'NO_LLM_CONFIGURED' if no provider is available.
+ */
+export async function resolveLlmRoute(userId: string): Promise<LlmRoute> {
+  // 1 — BYO local LLM (stored as JSON: {url, apiKey?, model?})
+  const localRaw = await getUserCredential(userId, 'local_llm');
+  if (localRaw) {
+    try {
+      const parsed = JSON.parse(localRaw) as { url?: string; apiKey?: string; model?: string };
+      if (parsed.url) {
+        return {
+          provider: 'local',
+          baseUrl: parsed.url.replace(/\/$/, ''),
+          apiKey: parsed.apiKey ?? 'ollama',
+          model: parsed.model ?? 'deepseek-r1:32b',
+        };
+      }
+    } catch {
+      // malformed — fall through
+    }
+  }
+
+  // 2 — DeepSeek cloud R1
+  const deepseekKey = process.env.DEEPSEEK_API_KEY;
+  if (deepseekKey) {
+    return {
+      provider: 'deepseek',
+      baseUrl: DEEPSEEK_BASE_URL,
+      apiKey: deepseekKey,
+      model: 'deepseek-reasoner',
+    };
+  }
+
+  // 3 — Anthropic Claude fallback
+  const anthropicKey = process.env.ANTHROPIC_API_KEY;
+  if (anthropicKey) {
+    return {
+      provider: 'anthropic',
+      baseUrl: ANTHROPIC_BASE_URL,
+      apiKey: anthropicKey,
+      model: 'claude-3-5-sonnet-20241022',
+    };
+  }
+
+  throw new Error('NO_LLM_CONFIGURED');
+}

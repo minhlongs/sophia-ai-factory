@@ -35,6 +35,7 @@ const CRON_ROUTES = {
   '*/5 * * * *': [
     '/api/cron/uptime-check',
     '/api/cron/video-status-sync',
+    '/api/cron/sop-scheduler',
   ],
   '5 * * * *': [
     '/api/cron/usage-export',

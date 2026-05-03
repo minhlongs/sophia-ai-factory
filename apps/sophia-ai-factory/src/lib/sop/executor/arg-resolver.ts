@@ -1,0 +1,91 @@
+/**
+ * SOP Argument Resolver
+ *
+ * Resolves `{{step_N.output.field}}` and `{{trigger.body.field}}` template
+ * placeholders in step args using prior step results and trigger payload.
+ *
+ * Simple regex-replace — no full template engine (KISS).
+ */
+
+import type { StepResult } from './types';
+
+const PLACEHOLDER_RE = /\{\{([^}]+)\}\}/g;
+
+/**
+ * Resolve template placeholders in a single value.
+ * Returns the value unchanged if no placeholders, or placeholder path not found.
+ */
+function resolveValue(
+  value: unknown,
+  stepResults: StepResult[],
+  triggerPayload: Record<string, unknown> | undefined,
+): unknown {
+  if (typeof value !== 'string') return value;
+
+  return value.replace(PLACEHOLDER_RE, (match, path: string) => {
+    const resolved = resolvePath(path.trim(), stepResults, triggerPayload);
+    return resolved !== undefined ? String(resolved) : match;
+  });
+}
+
+/** Resolve a dot-path like "step_1.output.foo" or "trigger.body.email" */
+function resolvePath(
+  path: string,
+  stepResults: StepResult[],
+  triggerPayload: Record<string, unknown> | undefined,
+): unknown {
+  const parts = path.split('.');
+
+  if (parts[0] === 'trigger' && parts[1] === 'body') {
+    return getNestedValue(triggerPayload ?? {}, parts.slice(2));
+  }
+
+  // step_N.output.field
+  const stepMatch = /^step_(\d+)$/.exec(parts[0]);
+  if (stepMatch) {
+    const stepOrder = parseInt(stepMatch[1], 10);
+    const result = stepResults.find(r => r.order === stepOrder);
+    if (!result) return undefined;
+
+    // Expect parts[1] === 'output'
+    if (parts[1] !== 'output') return undefined;
+    return getNestedValue(result.output, parts.slice(2));
+  }
+
+  return undefined;
+}
+
+/** Traverse an object by path segments */
+function getNestedValue(obj: Record<string, unknown>, segments: string[]): unknown {
+  let current: unknown = obj;
+  for (const seg of segments) {
+    if (!current || typeof current !== 'object') return undefined;
+    // Array index: "topics[0]" → "topics", 0
+    const arrayMatch = /^(\w+)\[(\d+)\]$/.exec(seg);
+    if (arrayMatch) {
+      const [, key, idx] = arrayMatch;
+      const arr = (current as Record<string, unknown>)[key];
+      if (!Array.isArray(arr)) return undefined;
+      current = arr[parseInt(idx, 10)];
+    } else {
+      current = (current as Record<string, unknown>)[seg];
+    }
+  }
+  return current;
+}
+
+/**
+ * Resolve all template placeholders in step args.
+ * Returns new args object with placeholders substituted.
+ */
+export function resolveArgs(
+  args: Record<string, unknown>,
+  stepResults: StepResult[],
+  triggerPayload?: Record<string, unknown>,
+): Record<string, unknown> {
+  const resolved: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(args)) {
+    resolved[key] = resolveValue(value, stepResults, triggerPayload);
+  }
+  return resolved;
+}
