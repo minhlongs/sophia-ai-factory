@@ -192,7 +192,7 @@ export async function triggerAutoHandover(opts: AutoHandoverOptions): Promise<Au
   // Generate magic link
   let magicLink: string | null = null;
   try {
-    const token = await createMagicLinkToken(handoverId);
+    const token = await createMagicLinkToken(handoverId, { source: 'auto_signup' });
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network';
     magicLink = `${appUrl}/${locale}/welcome/${token}`;
   } catch (err) {

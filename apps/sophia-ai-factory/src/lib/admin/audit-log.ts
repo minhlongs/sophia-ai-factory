@@ -25,6 +25,9 @@ export type AuditActionType =
   | 'customer_handover_created'
   | 'customer_handover_resent'
   | 'customer_handover_status_changed'
+  | 'customer_handover_consumed'
+  | 'customer_handover_session_created'
+  | 'customer_handover_self_resend'
 
 export async function writeAuditLog(params: {
   actorUserId: string

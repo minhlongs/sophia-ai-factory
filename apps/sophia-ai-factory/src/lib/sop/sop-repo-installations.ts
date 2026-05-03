@@ -49,6 +49,13 @@ export async function createInstallation(
 
   const row = await getInstallation(db, id);
   if (!row) throw new Error(`createInstallation: row not found after insert: ${id}`);
+
+  // Stamp customer_first_sop_install_at so handover drop-off metrics work.
+  // Idempotent + non-fatal — never blocks an install.
+  void import('@/lib/handover/handover-magic-link')
+    .then((m) => m.markFirstSopInstall(input.userId))
+    .catch(() => { /* swallow */ });
+
   return row;
 }
 

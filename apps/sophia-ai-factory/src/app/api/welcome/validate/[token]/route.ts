@@ -1,7 +1,7 @@
 /**
  * GET /api/welcome/validate/[token]
  * Validates magic link token and returns handover data for welcome page.
- * POST: consumes token (marks first login) + creates Better Auth session.
+ * POST: consumes token (marks first login, invalidates token) + creates Better Auth session.
  *
  * @module app/api/welcome/validate/[token]/route
  */
@@ -11,7 +11,9 @@ import { validateMagicLinkToken, consumeMagicLink } from '@/lib/handover/handove
 import { getD1Raw } from '@/lib/db/client';
 import { getAuth } from '@/lib/better-auth-server';
 import { logger } from '@/lib/utils/logger-utility';
-import type { CustomerHandoverRow } from '@/lib/handover/handover-types';
+import { writeAuditLog } from '@/lib/admin/audit-log';
+import { signCookieValue, hashEmail } from '@/lib/auth/sign-cookie-value';
+import { checkRateLimit } from '@/middleware/rate-limit-wrapper';
 
 export const dynamic = 'force-dynamic';
 
@@ -56,26 +58,6 @@ export async function GET(_request: NextRequest, { params }: RouteParams): Promi
 }
 
 /**
- * Sign a cookie value using the same scheme Better Auth/better-call uses:
- * `${value}.${base64(HMAC-SHA256(value, secret))}`, then percent-encoded.
- * This MUST stay in sync with better-call's `signCookieValue` (crypto.mjs)
- * so `auth.api.getSession()` accepts the cookie we issue here.
- */
-async function signCookieValue(value: string, secret: string): Promise<string> {
-  const enc = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    'raw',
-    enc.encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign'],
-  );
-  const sigBuf = await crypto.subtle.sign('HMAC', key, enc.encode(value));
-  const sig = btoa(String.fromCharCode(...new Uint8Array(sigBuf)));
-  return encodeURIComponent(`${value}.${sig}`);
-}
-
-/**
  * Create a Better Auth session for the handover customer user.
  * Returns the session token or null on failure.
  */
@@ -85,9 +67,6 @@ async function createSessionForUser(
 ): Promise<{ token: string; expiresAt: Date } | null> {
   try {
     const auth = getAuth();
-    // Better Auth v1.x exposes $context as a promise resolving to the internal auth context.
-    // internalAdapter.createSession(userId, request) persists a session row in D1 and
-    // returns { id, token, userId, expiresAt, ... }.
     const ctx = await (auth as unknown as { $context: Promise<{
       internalAdapter: {
         createSession: (
@@ -109,8 +88,20 @@ async function createSessionForUser(
   }
 }
 
-export async function POST(request: NextRequest, { params }: RouteParams): Promise<NextResponse> {
-  const { token } = await params;
+/**
+ * POST — consume magic link, mint Better Auth session.
+ * Rate-limited 10 req/min/IP as defence-in-depth against token brute-force.
+ * Token space is 64 hex chars so brute-force is statistically infeasible,
+ * but cheap rate limiting blocks scripted abuse.
+ */
+export async function POST(request: NextRequest, ctx: RouteParams): Promise<NextResponse> {
+  const rateLimited = checkRateLimit(request, {
+    config: { intervalMs: 60_000, maxRequests: 10 },
+    addHeaders: true,
+  });
+  if (rateLimited) return rateLimited;
+
+  const { token } = await ctx.params;
 
   const handover = await validateMagicLinkToken(token);
   if (!handover) {
@@ -120,8 +111,27 @@ export async function POST(request: NextRequest, { params }: RouteParams): Promi
     );
   }
 
-  // Consume token first (single-use enforcement) — even if session creation fails
+  // Consume token first (single-use enforcement) — clears magic_link_token
+  // so a captured link cannot mint additional sessions.
   await consumeMagicLink(handover.id);
+
+  // Look up customer email for audit log (hashed for PII protection)
+  let emailHash: string | null = null;
+  try {
+    const db = await getD1Raw();
+    const u = await db
+      .prepare(`SELECT email FROM user WHERE id = ?1 LIMIT 1`)
+      .bind(handover.customer_user_id)
+      .first<{ email: string }>();
+    if (u?.email) emailHash = await hashEmail(u.email);
+  } catch { /* non-fatal */ }
+
+  await writeAuditLog({
+    actorUserId: handover.customer_user_id,
+    actionType: 'customer_handover_consumed',
+    targetUserId: handover.customer_user_id,
+    payload: { handoverId: handover.id, emailHash, source: handover.source },
+  });
 
   logger.info('[Welcome/Consume] Magic link consumed', { handoverId: handover.id });
 
@@ -130,19 +140,12 @@ export async function POST(request: NextRequest, { params }: RouteParams): Promi
     redirectUrl: '/setup-wizard',
   });
 
-  // Create a real Better Auth session and attach it as a SIGNED cookie so the
-  // browser is authenticated when the welcome page redirects to /setup-wizard.
-  // Cookie value must be signed with BETTER_AUTH_SECRET — `auth.api.getSession()`
-  // verifies the HMAC signature and rejects raw tokens.
   const session = await createSessionForUser(handover.customer_user_id, request);
   if (session) {
     const secret = process.env.BETTER_AUTH_SECRET || process.env.JWT_SECRET || '';
     if (!secret) {
       logger.error('[Welcome/Consume] Missing BETTER_AUTH_SECRET — cannot sign session cookie');
     } else {
-      // Better Auth prepends `__Secure-` when the configured baseURL is https
-      // (production). Match that exact name or `auth.api.getSession()` won't
-      // find the cookie.
       const baseUrl = process.env.BETTER_AUTH_URL
         || process.env.NEXT_PUBLIC_APP_URL
         || 'https://sophia.agencyos.network';
@@ -159,13 +162,18 @@ export async function POST(request: NextRequest, { params }: RouteParams): Promi
         `Expires=${expires}`,
       ].join('; ');
       response.headers.append('Set-Cookie', cookieAttrs);
+      await writeAuditLog({
+        actorUserId: handover.customer_user_id,
+        actionType: 'customer_handover_session_created',
+        targetUserId: handover.customer_user_id,
+        payload: { handoverId: handover.id, expiresAt: session.expiresAt },
+      });
       logger.info('[Welcome/Consume] Signed session cookie set', {
         handoverId: handover.id,
         userId: handover.customer_user_id,
       });
     }
   } else {
-    // Non-fatal: log but still redirect. User may need to log in manually.
     logger.warn('[Welcome/Consume] Session not created — user will be redirected to /login', {
       handoverId: handover.id,
     });
@@ -173,3 +181,4 @@ export async function POST(request: NextRequest, { params }: RouteParams): Promi
 
   return response;
 }
+

@@ -8,18 +8,30 @@ import { getD1Raw } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';
 import type { CustomerHandoverRow } from './handover-types';
 
-const TOKEN_TTL_HOURS = 24;
+const DEFAULT_TOKEN_TTL_HOURS = 24;
+const AUTO_SIGNUP_TOKEN_TTL_HOURS = 72;
 
 /** Generate a new random token (no JWT needed — stored in DB) */
 export function generateToken(): string {
   return crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
 }
 
-/** Attach a new magic link token to an existing handover row */
-export async function createMagicLinkToken(handoverId: string): Promise<string> {
+/**
+ * Attach a new magic link token to an existing handover row.
+ * Auto-signup handovers (FREE100, payment) get a longer 72h window —
+ * VIP partners often miss the email for a day.
+ */
+export async function createMagicLinkToken(
+  handoverId: string,
+  opts?: { ttlHours?: number; source?: string },
+): Promise<string> {
   const db = await getD1Raw();
   const token = generateToken();
-  const expiresAt = Math.floor(Date.now() / 1000) + TOKEN_TTL_HOURS * 3600;
+  const ttl = opts?.ttlHours
+    ?? (opts?.source === 'auto_signup' || opts?.source === 'auto_payment'
+      ? AUTO_SIGNUP_TOKEN_TTL_HOURS
+      : DEFAULT_TOKEN_TTL_HOURS);
+  const expiresAt = Math.floor(Date.now() / 1000) + ttl * 3600;
 
   await db
     .prepare(
@@ -56,7 +68,11 @@ export async function validateMagicLinkToken(
   }
 }
 
-/** Consume magic link — mark first login if not already set */
+/**
+ * Consume magic link — mark first login AND invalidate the token to enforce
+ * single-use semantics. Without clearing the token, an attacker who captures
+ * the link still has 24-72h to mint additional sessions.
+ */
 export async function consumeMagicLink(handoverId: string): Promise<void> {
   const db = await getD1Raw();
   const now = Math.floor(Date.now() / 1000);
@@ -64,9 +80,57 @@ export async function consumeMagicLink(handoverId: string): Promise<void> {
   await db
     .prepare(
       `UPDATE customer_handovers
-       SET customer_first_login_at = COALESCE(customer_first_login_at, ?1)
+       SET customer_first_login_at = COALESCE(customer_first_login_at, ?1),
+           magic_link_token = NULL,
+           magic_link_expires_at = NULL
        WHERE id = ?2`,
     )
     .bind(now, handoverId)
     .run();
+}
+
+/**
+ * Stamp customer_first_run_at exactly once. Idempotent — subsequent calls
+ * are no-ops thanks to COALESCE. Call from anywhere a customer runs a SOP.
+ */
+export async function markFirstRun(customerUserId: string): Promise<void> {
+  try {
+    const db = await getD1Raw();
+    const now = Math.floor(Date.now() / 1000);
+    await db
+      .prepare(
+        `UPDATE customer_handovers
+         SET customer_first_run_at = COALESCE(customer_first_run_at, ?1)
+         WHERE customer_user_id = ?2`,
+      )
+      .bind(now, customerUserId)
+      .run();
+  } catch (err) {
+    // Non-fatal — should never block a SOP run
+    logger.warn('[MagicLink] markFirstRun failed', {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
+
+/**
+ * Stamp customer_first_sop_install_at exactly once for a customer.
+ */
+export async function markFirstSopInstall(customerUserId: string): Promise<void> {
+  try {
+    const db = await getD1Raw();
+    const now = Math.floor(Date.now() / 1000);
+    await db
+      .prepare(
+        `UPDATE customer_handovers
+         SET customer_first_sop_install_at = COALESCE(customer_first_sop_install_at, ?1)
+         WHERE customer_user_id = ?2`,
+      )
+      .bind(now, customerUserId)
+      .run();
+  } catch (err) {
+    logger.warn('[MagicLink] markFirstSopInstall failed', {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
 }
