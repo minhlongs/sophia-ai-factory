@@ -115,7 +115,7 @@ describe('POST /api/setup/save', () => {
     expect(json.saved).toContain('anthropic');
   });
 
-  it('sets wizard_done cookie on success', async () => {
+  it('sets per-user wizard_done cookie on success', async () => {
     mockGetCurrentUser.mockResolvedValue(MOCK_USER as never);
     mockSetUserApiKey.mockResolvedValue(undefined);
     const res = await POST(
@@ -125,6 +125,7 @@ describe('POST /api/setup/save', () => {
     );
     expect(res.status).toBe(200);
     const setCookieHeader = res.headers.get('set-cookie');
-    expect(setCookieHeader).toContain('wizard_done=1');
+    // Per-user cookie name uses first 12 chars of the user id
+    expect(setCookieHeader).toContain(`wizard_done_${MOCK_USER.id.slice(0, 12)}=1`);
   });
 });
