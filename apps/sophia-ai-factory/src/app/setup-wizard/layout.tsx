@@ -38,7 +38,9 @@ export default async function SetupLayout({
   const hasLlmKey = providers.includes("openrouter") || providers.includes("anthropic");
   if (hasLlmKey) {
     const jar = await cookies();
-    jar.set("wizard_done", "1", {
+    // Per-user cookie name keeps wizard state scoped to the current user so
+    // multiple users on the same browser don't bypass each other's onboarding.
+    jar.set(`wizard_done_${user.id.slice(0, 12)}`, "1", {
       httpOnly: true,
       secure: true,
       sameSite: "lax",

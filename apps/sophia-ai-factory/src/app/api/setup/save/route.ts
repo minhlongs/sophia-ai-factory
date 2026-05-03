@@ -78,9 +78,10 @@ export async function POST(request: NextRequest) {
     });
 
     // Mark wizard completed so middleware skips the new-user redirect on /dashboard.
-    // Using headers.append instead of cookies.set for Edge runtime compatibility.
+    // Cookie name is per-user (`wizard_done_<uid12>`) — middleware reads the same shape.
+    const uid12 = user.id.slice(0, 12);
     const cookieFlags = [
-      'wizard_done=1',
+      `wizard_done_${uid12}=1`,
       'Path=/',
       'HttpOnly',
       'SameSite=Lax',

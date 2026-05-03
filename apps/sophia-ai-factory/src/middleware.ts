@@ -86,8 +86,6 @@ export async function proxy(request: NextRequest) {
     if (cleanedForSetup.startsWith('/dashboard') || cleanedForSetup.startsWith('/admin')) {
       return NextResponse.redirect(new URL('/setup-wizard', request.url))
     }
-  } else if (pathname.startsWith('/setup-wizard')) {
-    return NextResponse.redirect(new URL('/', request.url))
   }
 
   if (pathname.startsWith('/admin') || pathname.includes('/admin/')) {
@@ -130,9 +128,10 @@ export async function proxy(request: NextRequest) {
       }
 
       // New-user onboarding: redirect to setup wizard if wizard not yet completed.
-      // Uses a cookie set by /api/setup/save on successful wizard completion.
-      // This avoids a DB call per request while ensuring new signups land in wizard.
-      const wizardDone = request.cookies.has('wizard_done')
+      // Cookie is per-user (`wizard_done_<uid12>`) so multiple users on the same
+      // browser don't share completion state. Set by /api/setup/save on success.
+      const uid12 = (session.user?.id ?? '').slice(0, 12)
+      const wizardDone = uid12 ? request.cookies.has(`wizard_done_${uid12}`) : false
       if (!wizardDone && cleanPath === '/dashboard') {
         return NextResponse.redirect(new URL('/setup-wizard', request.url))
       }
