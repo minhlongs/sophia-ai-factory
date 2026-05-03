@@ -1,4 +1,29 @@
 {
+  "setupWizard": {
+    "header": {
+      "title": "Khởi Tạo Sophia",
+      "subtitle": "Cấu hình AI Factory chỉ trong vài phút."
+    },
+    "stepper": {
+      "system": "Hệ Thống",
+      "aiKeys": "Khóa AI",
+      "providers": "Nhà Cung Cấp",
+      "localMode": "Chế Độ Local",
+      "finish": "Hoàn Thành"
+    },
+    "actions": {
+      "back": "Quay Lại",
+      "next": "Bước Kế",
+      "saving": "Đang Lưu",
+      "launch": "Khởi Chạy Sophia"
+    },
+    "footer": "Sophia AI Factory • RaaS for Vietnam Agencies",
+    "alerts": {
+      "invalidKey": "Có API key không hợp lệ. Vui lòng kiểm tra lại hoặc xóa key không đúng.",
+      "missingLlm": "Bạn cần nhập ít nhất một LLM key (OpenRouter hoặc Anthropic) để tiếp tục.",
+      "missingHeygen": "Bắt buộc nhập HeyGen API key để tạo video."
+    }
+  },
   "landing": {
     "nav": {
       "raas": "AI Automation",

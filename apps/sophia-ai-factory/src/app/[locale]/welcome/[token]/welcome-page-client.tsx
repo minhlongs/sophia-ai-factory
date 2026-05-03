@@ -8,7 +8,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Loader2, Video, Zap } from 'lucide-react';
+import { Loader2, Video, Zap, AlertTriangle, Mail, CheckCircle2 } from 'lucide-react';
 import { buildOnboardingSteps, StepCard, type WelcomeData } from './welcome-onboarding-steps';
 
 interface Props { token: string; isVi: boolean; locale: string }
@@ -56,20 +56,7 @@ export function WelcomePageClient({ token, isVi, locale }: Props) {
   }
 
   if (error || !data) {
-    return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4">
-        <div className="max-w-md text-center space-y-4">
-          <div className="w-16 h-16 rounded-full bg-red-900/30 border border-red-500/40 flex items-center justify-center mx-auto">
-            <span className="text-2xl">⚠️</span>
-          </div>
-          <h1 className="text-xl font-bold text-zinc-100">{isVi ? 'Link Không Hợp Lệ' : 'Invalid Link'}</h1>
-          <p className="text-zinc-400 text-sm">{error ?? (isVi ? 'Link đã hết hạn hoặc đã được sử dụng.' : 'This link has expired or been used.')}</p>
-          <a href={`/${locale}/login`} className="inline-block px-6 py-2 rounded-lg bg-violet-600 text-white text-sm font-medium hover:bg-violet-500 transition-colors">
-            {isVi ? 'Đến trang đăng nhập' : 'Go to Login'}
-          </a>
-        </div>
-      </div>
-    );
+    return <InvalidLinkView locale={locale} isVi={isVi} message={error} />;
   }
 
   const steps = buildOnboardingSteps(data, locale);
@@ -126,6 +113,142 @@ export function WelcomePageClient({ token, isVi, locale }: Props) {
           <p className="text-xs text-zinc-600 mt-3">
             {isVi ? 'Link này chỉ dùng 1 lần. Sau khi nhấn, bạn sẽ được chuyển đến dashboard.' : "One-time link. After clicking, you'll be redirected to your dashboard."}
           </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Invalid / expired magic link view with built-in self-resend form.
+ * Calls /api/welcome/resend so the customer can recover without admin help.
+ */
+function InvalidLinkView({
+  locale,
+  isVi,
+  message,
+}: {
+  locale: string;
+  isVi: boolean;
+  message: string | null;
+}) {
+  const [email, setEmail] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [resendError, setResendError] = useState<string | null>(null);
+
+  async function handleResend(e: React.FormEvent) {
+    e.preventDefault();
+    setSubmitting(true);
+    setResendError(null);
+    try {
+      const res = await fetch('/api/welcome/resend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+      });
+      if (res.status === 429) {
+        setResendError(
+          isVi
+            ? 'Anh/chị đã yêu cầu quá nhanh. Thử lại sau 1 giờ.'
+            : 'Too many requests. Please try again in an hour.',
+        );
+        return;
+      }
+      if (!res.ok) {
+        setResendError(isVi ? 'Có lỗi xảy ra.' : 'Something went wrong.');
+        return;
+      }
+      setSent(true);
+    } catch {
+      setResendError(isVi ? 'Lỗi kết nối.' : 'Connection error.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (sent) {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4">
+        <div className="max-w-md w-full text-center space-y-4">
+          <div className="w-16 h-16 rounded-full bg-emerald-900/30 border border-emerald-500/40 flex items-center justify-center mx-auto">
+            <CheckCircle2 size={28} className="text-emerald-300" />
+          </div>
+          <h1 className="text-xl font-bold text-zinc-100">
+            {isVi ? 'Đã gửi link mới' : 'New link sent'}
+          </h1>
+          <p className="text-zinc-400 text-sm">
+            {isVi
+              ? 'Nếu email tồn tại trong hệ thống, anh/chị sẽ nhận link đăng nhập mới trong vài phút.'
+              : "If that email is in our system, you'll receive a new sign-in link in a few minutes."}
+          </p>
+          <a
+            href={`/${locale}`}
+            className="inline-block px-6 py-2 rounded-lg bg-violet-600 text-white text-sm font-medium hover:bg-violet-500 transition-colors"
+          >
+            {isVi ? 'Về trang chủ' : 'Back to home'}
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4">
+      <div className="max-w-md w-full">
+        <div className="bg-zinc-900/80 backdrop-blur border border-red-500/30 rounded-2xl p-8 space-y-5">
+          <div className="text-center space-y-2">
+            <div className="w-14 h-14 rounded-full bg-red-900/30 border border-red-500/40 flex items-center justify-center mx-auto">
+              <AlertTriangle size={26} className="text-red-300" />
+            </div>
+            <h1 className="text-xl font-bold text-zinc-100">
+              {isVi ? 'Link không hợp lệ' : 'Invalid Link'}
+            </h1>
+            <p className="text-sm text-zinc-400">
+              {message ?? (isVi ? 'Link đã hết hạn hoặc đã được sử dụng.' : 'This link has expired or been used.')}
+            </p>
+          </div>
+
+          <div className="border-t border-zinc-800 pt-5 space-y-3">
+            <p className="text-sm text-zinc-300 text-center">
+              {isVi ? 'Nhập email để nhận link mới' : 'Enter your email to get a new link'}
+            </p>
+            <form onSubmit={handleResend} className="space-y-3">
+              <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-zinc-950 border border-zinc-800 focus-within:border-violet-500">
+                <Mail size={16} className="text-zinc-500 flex-shrink-0" />
+                <input
+                  type="email"
+                  required
+                  autoComplete="email"
+                  placeholder="email@congty.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="flex-1 bg-transparent text-white placeholder-zinc-600 focus:outline-none text-sm"
+                  maxLength={200}
+                />
+              </div>
+
+              {resendError && (
+                <p className="text-xs text-red-300 text-center">{resendError}</p>
+              )}
+
+              <button
+                type="submit"
+                disabled={submitting || !email}
+                className="w-full px-4 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+              >
+                {submitting ? <Loader2 size={16} className="animate-spin" /> : null}
+                {isVi ? 'Gửi link mới' : 'Send new link'}
+              </button>
+            </form>
+          </div>
+
+          <a
+            href={`/${locale}/login`}
+            className="block text-center text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+          >
+            {isVi ? 'Hoặc đăng nhập bằng tài khoản đã có' : 'Or sign in with existing account'}
+          </a>
         </div>
       </div>
     </div>

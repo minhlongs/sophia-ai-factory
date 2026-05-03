@@ -15,6 +15,8 @@ import { DashboardHeroGreeting } from './components/dashboard-hero-greeting';
 import { DashboardSetupSteps } from './components/dashboard-setup-steps';
 import { DashboardReturningUser } from './components/dashboard-returning-user';
 import { OnboardingTourModal } from './components/onboarding-tour-modal';
+import { OnboardingStatusWidget } from './components/onboarding-status-widget';
+import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
@@ -92,12 +94,15 @@ export default async function DashboardPage() {
   }
 
   const tierLabel = TIER_CONFIG[tier]?.label ?? tier;
+  const jar = await cookies();
+  const isVi = jar.get('NEXT_LOCALE')?.value !== 'en';
 
   return (
     <div className="space-y-6">
       {isFirstLogin && <OnboardingTourModal userId={user.id} />}
 
       <DashboardHeroGreeting name={user.full_name} tier={tierLabel} />
+      <OnboardingStatusWidget isVi={isVi} />
 
       {sopCount === 0 ? (
         <DashboardSetupSteps hasApiKeys={hasApiKeys} sopCount={sopCount} />

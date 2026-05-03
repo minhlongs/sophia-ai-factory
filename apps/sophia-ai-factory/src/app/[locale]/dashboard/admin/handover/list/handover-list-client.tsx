@@ -9,8 +9,10 @@
 
 import { useState } from 'react';
 import useSWR from 'swr';
-import { CheckCircle2, Clock, RefreshCw, Send, ChevronDown, ChevronUp, Zap, User } from 'lucide-react';
+import { toast } from 'sonner';
+import { CheckCircle2, Clock, RefreshCw, Send, ChevronDown, ChevronUp, Zap, User, Inbox } from 'lucide-react';
 import type { CustomerHandoverRow, HandoverStatus, HandoverSource } from '@/lib/handover/handover-types';
+import { HandoverStatsPanel } from './handover-stats-panel';
 
 interface HandoverListResponse { handovers: CustomerHandoverRow[] }
 
@@ -65,12 +67,19 @@ export function HandoverListClient({ locale }: Props) {
   async function updateStatus(id: string, status: HandoverStatus) {
     setActionLoading(`${id}-status`);
     try {
-      await fetch(`/api/admin/handover/${id}`, {
+      const res = await fetch(`/api/admin/handover/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
       });
-      await mutate();
+      if (res.ok) {
+        toast.success(isVi ? 'Đã cập nhật trạng thái' : 'Status updated');
+        await mutate();
+      } else {
+        toast.error(isVi ? 'Không cập nhật được' : 'Status update failed');
+      }
+    } catch {
+      toast.error(isVi ? 'Lỗi kết nối' : 'Connection error');
     } finally {
       setActionLoading(null);
     }
@@ -79,8 +88,16 @@ export function HandoverListClient({ locale }: Props) {
   async function resendWelcome(id: string) {
     setActionLoading(`${id}-resend`);
     try {
-      await fetch(`/api/admin/handover/${id}/resend-welcome`, { method: 'POST' });
+      const res = await fetch(`/api/admin/handover/${id}/resend-welcome`, { method: 'POST' });
+      const data = (await res.json().catch(() => ({}))) as { emailSent?: boolean };
+      if (res.ok && data.emailSent !== false) {
+        toast.success(isVi ? 'Đã gửi lại link' : 'Welcome link resent');
+      } else {
+        toast.error(isVi ? 'Gửi không thành công' : 'Resend failed');
+      }
       await mutate();
+    } catch {
+      toast.error(isVi ? 'Lỗi kết nối' : 'Connection error');
     } finally {
       setActionLoading(null);
     }
@@ -96,6 +113,8 @@ export function HandoverListClient({ locale }: Props) {
 
   return (
     <div className="space-y-4">
+      <HandoverStatsPanel isVi={isVi} />
+
       {/* Filter */}
       <div className="flex items-center gap-2 flex-wrap">
         {(['all', 'pending', 'active', 'at_risk', 'churned'] as const).map((s) => (
@@ -113,8 +132,22 @@ export function HandoverListClient({ locale }: Props) {
       </div>
 
       {handovers.length === 0 && (
-        <div className="text-zinc-500 text-sm py-12 text-center">
-          {isVi ? 'Không có bàn giao nào.' : 'No handovers found.'}
+        <div className="rounded-xl border border-dashed border-zinc-700 bg-zinc-900/30 py-12 px-6 text-center">
+          <Inbox size={32} className="mx-auto text-zinc-600 mb-3" />
+          <p className="text-zinc-300 text-sm font-medium mb-1">
+            {isVi
+              ? statusFilter === 'all'
+                ? 'Chưa có bàn giao nào'
+                : 'Không có bàn giao trong trạng thái này'
+              : statusFilter === 'all'
+                ? 'No handovers yet'
+                : 'No handovers in this status'}
+          </p>
+          <p className="text-zinc-500 text-xs">
+            {isVi
+              ? 'Khi customer redeem FREE100 hoặc admin tạo handover, sẽ xuất hiện ở đây.'
+              : 'Once customers redeem FREE100 or admin creates a handover, it will appear here.'}
+          </p>
         </div>
       )}
 
