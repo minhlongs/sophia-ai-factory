@@ -8,17 +8,35 @@
 import { getD1Client } from '@/lib/db/client';
 import { inngest } from '@/lib/inngest/client';
 import { logger } from '@/lib/utils/logger-utility';
+import { checkVideoBudget, type RenderPath } from './cost-guardrail';
 
 export interface CreateVideoJobInput {
   tenantId: string;
   userId: string;
   prompt: string;
   tier: string;
+  /**
+   * Render path to budget against. Defaults to 'path-a' (cheaper) so callers
+   * who don't yet declare the path get a reasonable lower-bound check.
+   */
+  path?: RenderPath;
 }
 
 export interface CreateVideoJobResult {
   jobId: string;
   status: 'queued';
+}
+
+/** Thrown when a user lacks credits for the requested render path. */
+export class InsufficientCreditsError extends Error {
+  constructor(
+    public readonly estimatedCredits: number,
+    public readonly creditsRemaining: number,
+    message: string,
+  ) {
+    super(message);
+    this.name = 'InsufficientCreditsError';
+  }
 }
 
 /**
@@ -28,7 +46,22 @@ export interface CreateVideoJobResult {
 export async function createVideoJob(
   input: CreateVideoJobInput,
 ): Promise<CreateVideoJobResult> {
-  const { tenantId, userId, prompt, tier } = input;
+  const { tenantId, userId, prompt, tier, path = 'path-a' } = input;
+
+  // Cost guardrail: deny BEFORE any upstream call (HeyGen, fly, etc.)
+  // so we never bill an unfunded user. Soft-fail balance lookup → deny.
+  const budget = await checkVideoBudget(userId, path);
+  if (!budget.allowed) {
+    logger.warn('[VideoJobPipeline] Job rejected — insufficient credits', {
+      userId, path, creditsRemaining: budget.creditsRemaining,
+    });
+    throw new InsufficientCreditsError(
+      budget.estimatedCredits,
+      budget.creditsRemaining,
+      budget.hint ?? 'Insufficient credits.',
+    );
+  }
+
   const jobId = crypto.randomUUID();
   const now = Math.floor(Date.now() / 1000);
 
