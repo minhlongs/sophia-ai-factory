@@ -17,6 +17,8 @@ import {
   GitBranch,
   ShoppingBag,
   Activity,
+  Coins,
+  Plug,
 } from "lucide-react";
 import { HealthIndicator } from "@/components/dashboard/health-indicator";
 import { MobileNav } from "@/components/ui/mobile-nav";
@@ -100,6 +102,20 @@ export default async function DashboardLayout({
           >
             <Rocket className="w-5 h-5" />
             <span className="font-medium">{t('sidebar.missions')}</span>
+          </Link>
+          <Link
+            href="/dashboard/credits"
+            className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
+          >
+            <Coins className="w-5 h-5" />
+            <span className="font-medium">MCU Credits</span>
+          </Link>
+          <Link
+            href="/dashboard/integrations"
+            className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
+          >
+            <Plug className="w-5 h-5" />
+            <span className="font-medium">Integrations</span>
           </Link>
           <Link
             href="/dashboard/api-keys"

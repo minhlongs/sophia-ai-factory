@@ -64,6 +64,10 @@ const CRON_ROUTES = {
   '0 6 * * *': [
     '/api/cron/fulfillment-reconcile',
   ],
+  // MCU monthly reset — 1st of month at midnight UTC
+  '0 0 1 * *': [
+    '/api/cron/mcu-monthly-reset',
+  ],
 };
 
 // ---------------------------------------------------------------------------
