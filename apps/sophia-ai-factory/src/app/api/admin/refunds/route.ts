@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/seed/auth/require-admin'
-import { listPendingRefunds } from '@/lib/refunds/refund-repo'
+import { listPendingRefunds } from '@/land/refunds/refund-repo'
 import { logger } from '@/seed/utils/logger-utility'
 
 export const dynamic = 'force-dynamic'

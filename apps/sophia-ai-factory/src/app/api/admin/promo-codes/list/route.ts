@@ -7,8 +7,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/seed/auth/require-admin';
-import { listAdminCodes } from '@/lib/promo/promo-repo';
-import type { ListAdminFilters, PromoCodeStatus, DiscountType } from '@/lib/promo/promo-types';
+import { listAdminCodes } from '@/land/promo/promo-repo';
+import type { ListAdminFilters, PromoCodeStatus, DiscountType } from '@/land/promo/promo-types';
 
 export const dynamic = 'force-dynamic';
 

@@ -5,8 +5,8 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyIpnSignature } from '@/tree/clients/nowpayments-client'
-import { processNowPaymentsIpn } from '@/lib/billing/nowpayments-ipn-handlers'
-import { ipnPayloadSchema } from '@/lib/billing/ipn-payload-schema'
+import { processNowPaymentsIpn } from '@/land/billing/nowpayments-ipn-handlers'
+import { ipnPayloadSchema } from '@/land/billing/ipn-payload-schema'
 import { logger } from '@/seed/utils/logger-utility'
 import { captureTierUpgraded } from '@/lib/signals/posthog-capture'
 import { track } from '@/lib/signals/track'

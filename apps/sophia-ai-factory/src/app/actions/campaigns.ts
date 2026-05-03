@@ -6,7 +6,7 @@ import { createCampaignSchema } from "@/lib/campaigns/validation";
 import { revalidatePath } from "next/cache";
 import { tierGuard } from "@/lib/tier-guard";
 import { toError } from "@/seed/utils/to-error";
-import { getProgramById } from "@/lib/affiliates";
+import { getProgramById } from "@/land/affiliates";
 import { generateShortCode } from "@/lib/affiliate-shortlink/short-code-generator";
 import { logger } from "@/seed/utils/logger-utility";
 
@@ -160,7 +160,7 @@ export async function getOffersForUser() {
     const { getUserTier } = await import("@/seed/db/get-user-tier");
     const tier = await getUserTier(user.id);
 
-    const { getTopPrograms } = await import("@/lib/affiliates");
+    const { getTopPrograms } = await import("@/land/affiliates");
     return getTopPrograms(5, tier);
   } catch {
     return [];

@@ -19,8 +19,8 @@ import { getD1Raw, createServerClient } from '@/seed/db/client';
 import { getHeyGenClient } from '@/lib/heygen/heygen-client';
 import { downloadAndStore } from '@/lib/video/video-storage-service';
 import { logger } from '@/seed/utils/logger-utility';
-import { sendOneTimeBundleReadyEmail } from '@/lib/billing/email/send-one-time-bundle-ready-email';
-import { sendBundleRenderFailedEmail } from '@/lib/billing/email/send-bundle-render-failed-email';
+import { sendOneTimeBundleReadyEmail } from '@/land/billing/email/send-one-time-bundle-ready-email';
+import { sendBundleRenderFailedEmail } from '@/land/billing/email/send-bundle-render-failed-email';
 import { grantCompensationCredit } from '@/lib/fulfillment/compensation';
 import { getUserCredits } from '@/seed/db/get-user-credits';
 

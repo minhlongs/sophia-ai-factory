@@ -8,10 +8,10 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { calculateCommission } from '@/lib/affiliates/commission-calculator'
-import { validateTrc20Address, validateErc20Address } from '@/lib/payouts/usdt-addr-validator'
-import { handleClawback } from '@/lib/payouts/clawback-handler'
-import { toCents, fromCents, sanitizeErrorText, deterministicBatchId } from '@/lib/payouts/commission-cents'
+import { calculateCommission } from '@/land/affiliates/commission-calculator'
+import { validateTrc20Address, validateErc20Address } from '@/land/payouts/usdt-addr-validator'
+import { handleClawback } from '@/land/payouts/clawback-handler'
+import { toCents, fromCents, sanitizeErrorText, deterministicBatchId } from '@/land/payouts/commission-cents'
 
 // ────────────────────────────────────────────────────────────
 // 1. Commission Calculator — tier-aware multiplier

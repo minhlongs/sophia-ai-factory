@@ -11,7 +11,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/seed/db/client';
-import { transitionDunningState } from '@/lib/billing/dunning/dunning-state-machine';
+import { transitionDunningState } from '@/land/billing/dunning/dunning-state-machine';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker';

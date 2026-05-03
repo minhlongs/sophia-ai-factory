@@ -16,7 +16,7 @@ import { isValidShortCode } from '@/lib/affiliate-shortlink/short-code-generator
 import { logClick } from '@/lib/affiliate-shortlink/click-logger';
 import { createServerClient } from '@/seed/db/client';
 import { checkRateLimit } from '@/tree/telegram/sql-rate-limiter';
-import { recordClick } from '@/lib/affiliates/click-recorder';
+import { recordClick } from '@/land/affiliates/click-recorder';
 
 interface AffiliateOfferRow {
   campaign_id: string;

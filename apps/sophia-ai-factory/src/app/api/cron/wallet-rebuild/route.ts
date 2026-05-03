@@ -11,7 +11,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
-import { rebuildAllWallets } from '@/lib/wallet/wallet-rebuilder';
+import { rebuildAllWallets } from '@/land/wallet/wallet-rebuilder';
 import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
 

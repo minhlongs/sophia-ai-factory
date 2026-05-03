@@ -31,7 +31,7 @@ import {
 } from '@/seed/db/repositories/videos-repo'
 import { MAX_ATTEMPTS, isRetryDue } from '@/lib/fulfillment/retry-backoff'
 import { grantCompensationCredit } from '@/lib/fulfillment/compensation'
-import { sendBundleRenderFailedEmail, type SendBundleRenderFailedInput } from '@/lib/billing/email/send-bundle-render-failed-email'
+import { sendBundleRenderFailedEmail, type SendBundleRenderFailedInput } from '@/land/billing/email/send-bundle-render-failed-email'
 import { shouldDispatch, recordHeyGenAttempt } from '@/lib/fulfillment/circuit-breaker'
 
 export const dynamic = 'force-dynamic'

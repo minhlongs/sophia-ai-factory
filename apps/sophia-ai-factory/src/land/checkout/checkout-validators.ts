@@ -4,7 +4,7 @@
  * @module checkout/checkout-validators
  */
 
-import type { PendingOrderPeriod, PaymentMethod } from '@/lib/orders/pending-order-types'
+import type { PendingOrderPeriod, PaymentMethod } from '@/land/orders/pending-order-types'
 
 /**
  * Derive default billing period for a tier.

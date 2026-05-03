@@ -7,8 +7,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session'
-import { createPayOsInvoice, FEATURE_PAYOS } from '@/lib/payments/payos'
-import { writeOrder } from '@/lib/orders/pending-order-repo'
+import { createPayOsInvoice, FEATURE_PAYOS } from '@/land/payments/payos'
+import { writeOrder } from '@/land/orders/pending-order-repo'
 import { logger } from '@/seed/utils/logger-utility'
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper'
 
@@ -66,7 +66,7 @@ export const POST = withRateLimit(async function POST(request: NextRequest) {
 
     // Write pending order for tracking
     try {
-      const { getPayOsTierConfig } = await import('@/lib/payments/payos')
+      const { getPayOsTierConfig } = await import('@/land/payments/payos')
       const config = getPayOsTierConfig(tier)
       await writeOrder({
         order_id: orderId,

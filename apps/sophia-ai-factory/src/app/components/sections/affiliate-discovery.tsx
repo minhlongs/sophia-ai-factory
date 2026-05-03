@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { FadeInView } from "@/seed/components/ui/fade-in-view";
-import { getAllPrograms } from "@/lib/affiliates";
+import { getAllPrograms } from "@/land/affiliates";
 import { Tier } from "@/seed/types";
 import { TIER_CONFIGS } from "@/seed/config/tiers";
 import { Lock, ExternalLink, Star } from "lucide-react";

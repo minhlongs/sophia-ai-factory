@@ -11,10 +11,10 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyClickBankSignature } from '@/lib/affiliates/clickbank-signature-verifier'
-import { parsePostback } from '@/lib/affiliates/clickbank-postback-parser'
-import { attributeClick } from '@/lib/affiliates/conversion-attributor'
-import { calcCommission } from '@/lib/affiliates/commission-calculator'
+import { verifyClickBankSignature } from '@/land/affiliates/clickbank-signature-verifier'
+import { parsePostback } from '@/land/affiliates/clickbank-postback-parser'
+import { attributeClick } from '@/land/affiliates/conversion-attributor'
+import { calcCommission } from '@/land/affiliates/commission-calculator'
 import { notifyConversionEarned } from '@/forest/inngest/functions/generate-campaign-db'
 import { checkRateLimit } from '@/tree/telegram/sql-rate-limiter'
 import { logger } from '@/seed/utils/logger-utility'

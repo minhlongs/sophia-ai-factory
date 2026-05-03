@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { CheckCircle, Mail, KeyRound, PlayCircle, BarChart3 } from "lucide-react";
-import { getOrderById } from "@/lib/orders/pending-order-repo";
+import { getOrderById } from "@/land/orders/pending-order-repo";
 import { PaymentStatusPoller } from "@/forest/components/checkout/payment-status-poller";
 
 export const metadata: Metadata = {

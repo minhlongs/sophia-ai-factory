@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/seed/components/ui/card";
 import { SectionHeading } from "@/seed/components/ui/section-heading";
 import { useState, useMemo, useCallback } from "react";
 import { UNIFIED_TIERS } from "@/seed/config/tiers";
-import { calculateCostBreakdown, API_COSTS, INFRA_COSTS } from "@/lib/billing/video-production-cost-engine";
+import { calculateCostBreakdown, API_COSTS, INFRA_COSTS } from "@/land/billing/video-production-cost-engine";
 import type { Tier } from "@/seed/types";
 import { SliderInput, CostRow, MetricCard, fmt, fmtUSD } from "./production-cost-calculator-parts";
 

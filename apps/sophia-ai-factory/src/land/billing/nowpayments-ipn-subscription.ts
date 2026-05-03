@@ -14,7 +14,7 @@ import type { NowPaymentsIpnPayload } from './nowpayments-ipn-handlers'
 import { getDb, parseUserIdFromOrderId } from './nowpayments-ipn-db'
 import { createOnboardingVideo, ONBOARDING_TIERS } from '@/lib/video/onboarding-video'
 import { triggerAutoHandover } from '@/tree/handover/auto-handover'
-import { markOrderCompleted, markOrderFailed } from '@/lib/orders/pending-order-repo'
+import { markOrderCompleted, markOrderFailed } from '@/land/orders/pending-order-repo'
 import { sendReceiptEmail } from './email/receipt-email-sender'
 
 /** 1% tolerance for crypto gas fees / exchange rounding */

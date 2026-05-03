@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/seed/components/ui/card";
 import { Badge } from "@/seed/components/ui/badge";
-import { getAllPrograms } from "@/lib/affiliates";
+import { getAllPrograms } from "@/land/affiliates";
 import { ExternalLink, Search } from "lucide-react";
 
 export default function AffiliatesPage() {

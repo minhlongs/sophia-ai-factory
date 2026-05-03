@@ -76,14 +76,14 @@ vi.mock('@/tree/handover/auto-handover', () => ({
   triggerAutoHandover: vi.fn().mockResolvedValue(undefined),
 }))
 
-vi.mock('@/lib/orders/pending-order-repo', () => ({
+vi.mock('@/land/orders/pending-order-repo', () => ({
   markOrderCompleted: vi.fn(async (orderId: string, paymentId: string) => {
     pendingOrderUpdates[orderId] = { status: 'completed', payment_id: paymentId }
   }),
   markOrderFailed: vi.fn(),
 }))
 
-vi.mock('@/lib/billing/email/receipt-email-sender', () => ({
+vi.mock('@/land/billing/email/receipt-email-sender', () => ({
   sendReceiptEmail: vi.fn().mockResolvedValue(undefined),
 }))
 
@@ -100,7 +100,7 @@ vi.mock('@/tree/clients/nowpayments-client', () => ({
   }),
 }))
 
-vi.mock('@/lib/billing/nowpayments-ipn-db', () => ({
+vi.mock('@/land/billing/nowpayments-ipn-db', () => ({
   getDb: vi.fn(() => ({
     from: (table: string) => {
       const isOrgMembers = table === 'org_members'

@@ -5,10 +5,10 @@
  */
 
 import { getD1Raw } from '@/seed/db/client';
-import { getRollup, getActiveIncident, listResolvedIncidents } from '@/lib/status/status-store';
+import { getRollup, getActiveIncident, listResolvedIncidents } from '@/land/status/status-store';
 import { UptimeGrid } from './uptime-grid';
 import { IncidentCard } from './incident-card';
-import type { DayRollup, StatusIncident } from '@/lib/status/status-store';
+import type { DayRollup, StatusIncident } from '@/land/status/status-store';
 
 export const revalidate = 60;
 export const dynamic = 'force-static';

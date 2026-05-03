@@ -9,7 +9,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getTrendingOffers } from '@/lib/affiliates/trending-discovery'
+import { getTrendingOffers } from '@/land/affiliates/trending-discovery'
 import { z } from 'zod'
 
 const QuerySchema = z.object({

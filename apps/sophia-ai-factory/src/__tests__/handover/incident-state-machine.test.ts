@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { evaluateIncidentAction } from '@/lib/status/incident-state-machine';
+import { evaluateIncidentAction } from '@/land/status/incident-state-machine';
 
 describe('evaluateIncidentAction', () => {
   it('opens incident after 3 consecutive failures with no active incident', () => {

@@ -17,18 +17,18 @@ vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUserFromHeaders: vi.fn(),
 }));
 
-vi.mock('@/lib/wallet/payout-processor', () => ({
+vi.mock('@/land/wallet/payout-processor', () => ({
   markUserPaid: vi.fn(),
 }));
 
-vi.mock('@/lib/wallet/payout-telegram-notify', () => ({
+vi.mock('@/land/wallet/payout-telegram-notify', () => ({
   notifyPayoutSent: vi.fn().mockResolvedValue(undefined),
 }));
 
 import { POST } from './route';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { markUserPaid } from '@/lib/wallet/payout-processor';
-import { notifyPayoutSent } from '@/lib/wallet/payout-telegram-notify';
+import { markUserPaid } from '@/land/wallet/payout-processor';
+import { notifyPayoutSent } from '@/land/wallet/payout-telegram-notify';
 import { NextRequest } from 'next/server';
 
 const mockGetCurrentUserFromHeaders = vi.mocked(getCurrentUserFromHeaders);

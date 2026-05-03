@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useTranslations } from "next-intl";
-import type { ValidateResult } from "@/lib/promo/promo-types";
+import type { ValidateResult } from "@/land/promo/promo-types";
 
 export interface PromoDiscount {
   code: string;

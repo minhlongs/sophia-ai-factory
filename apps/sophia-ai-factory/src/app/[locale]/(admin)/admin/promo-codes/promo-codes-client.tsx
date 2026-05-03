@@ -7,7 +7,7 @@
 import { useState } from "react";
 import { Tag, Plus, CheckCircle2, XCircle, Copy, ExternalLink } from "lucide-react";
 import Link from "next/link";
-import type { PromoCodeRow, DiscountType } from "@/lib/promo/promo-types";
+import type { PromoCodeRow, DiscountType } from "@/land/promo/promo-types";
 import { CreatePromoModal } from "./create-promo-modal";
 
 interface PromoCodesClientProps {
