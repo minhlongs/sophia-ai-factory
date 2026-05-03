@@ -11,7 +11,8 @@ import { logger } from '@/lib/utils/logger-utility';
 import { getErrorMessage } from '@/lib/utils/to-error';
 import { createCustomerUser, upsertUserTier, preInstallSops, createHandoverRecord } from './handover-account-setup';
 import { createMagicLinkToken } from './handover-magic-link';
-import { sendAutoHandoverWelcomeEmail, sendTierUpgradeEmail } from './handover-email-service';
+import { sendTierUpgradeEmail } from './handover-email-service';
+import { enqueueWelcomeEmail } from '@/lib/outbox/email-outbox';
 import { AGENCY_SOP_MAP, TIER_SOP_COUNTS } from './handover-types';
 import type { AgencyType } from './handover-types';
 import type { Tier } from '@/types';
@@ -199,24 +200,21 @@ export async function triggerAutoHandover(opts: AutoHandoverOptions): Promise<Au
     logger.warn('[AutoHandover] Magic link generation failed (non-fatal)', { error: getErrorMessage(err) });
   }
 
-  // Send welcome email
+  // Enqueue welcome email (durable — outbox flush cron retries up to 5x)
   try {
-    await sendAutoHandoverWelcomeEmail({
+    await enqueueWelcomeEmail(db, {
+      paymentId,
       toEmail: email,
-      ownerFullName: fullName,
-      tier,
-      locale,
-      magicLinkUrl: magicLink ?? `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network'}/login`,
+      template: 'welcome-magic-link',
+      payload: {
+        ownerFullName: fullName,
+        tier,
+        locale,
+        magicLinkUrl: magicLink ?? `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network'}/login`,
+      },
     });
-
-    // Mark email sent
-    const nowSec = Math.floor(Date.now() / 1000);
-    await db
-      .prepare(`UPDATE customer_handovers SET welcome_email_sent_at = ?1 WHERE id = ?2`)
-      .bind(nowSec, handoverId)
-      .run();
   } catch (err) {
-    logger.warn('[AutoHandover] Welcome email failed (non-fatal)', { error: getErrorMessage(err) });
+    logger.warn('[AutoHandover] Welcome email enqueue failed (non-fatal)', { error: getErrorMessage(err) });
   }
 
   logger.info('[AutoHandover] Handover complete', {

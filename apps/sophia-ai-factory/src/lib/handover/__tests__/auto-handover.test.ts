@@ -9,6 +9,7 @@ import { triggerAutoHandover } from '../auto-handover';
 import * as accountSetup from '../handover-account-setup';
 import * as magicLink from '../handover-magic-link';
 import * as emailService from '../handover-email-service';
+import * as emailOutbox from '@/lib/outbox/email-outbox';
 
 // ── Shared mock state ──────────────────────────────────────────────────────────
 
@@ -48,6 +49,10 @@ vi.mock('../handover-email-service', () => ({
   sendTierUpgradeEmail: vi.fn(),
 }));
 
+vi.mock('@/lib/outbox/email-outbox', () => ({
+  enqueueWelcomeEmail: vi.fn().mockResolvedValue(undefined),
+}));
+
 import { getD1Raw } from '@/lib/db/client';
 
 // ── Helper ─────────────────────────────────────────────────────────────────────
@@ -78,6 +83,7 @@ describe('triggerAutoHandover', () => {
     vi.mocked(magicLink.createMagicLinkToken).mockResolvedValue('tok_abc123');
     vi.mocked(emailService.sendAutoHandoverWelcomeEmail).mockResolvedValue(undefined);
     vi.mocked(emailService.sendTierUpgradeEmail).mockResolvedValue(undefined);
+    vi.mocked(emailOutbox.enqueueWelcomeEmail).mockResolvedValue(undefined);
   });
 
   it('skips on duplicate paymentId (idempotency)', async () => {
@@ -120,7 +126,7 @@ describe('triggerAutoHandover', () => {
     expect(result.isNewCustomer).toBe(true);
     expect(result.handoverId).toBe('handover-abc');
     expect(result.skipped).toBe(false);
-    expect(emailService.sendAutoHandoverWelcomeEmail).toHaveBeenCalledOnce();
+    expect(emailOutbox.enqueueWelcomeEmail).toHaveBeenCalledOnce();
   });
 
   it('sends tier-upgrade email for existing customer second purchase', async () => {
@@ -142,7 +148,7 @@ describe('triggerAutoHandover', () => {
     expect(result.skipped).toBe(false);
     expect(result.handoverId).toBe('existing-hov');
     expect(emailService.sendTierUpgradeEmail).toHaveBeenCalledOnce();
-    expect(emailService.sendAutoHandoverWelcomeEmail).not.toHaveBeenCalled();
+    expect(emailOutbox.enqueueWelcomeEmail).not.toHaveBeenCalled();
     expect(accountSetup.createHandoverRecord).not.toHaveBeenCalled();
   });
 
