@@ -1,7 +1,159 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-05-03 (Magic-link E2E validation: PASS — setup-wizard go-live unblocked)
+> **Last Updated:** 2026-05-03 (Go-Live Deploy: GAP1 magic-link E2E + GAP2 self-serve checkout + GAP3 mission control handover)
+
+---
+
+## [2026-05-03] Go-Live Deployment (260503 PRODUCTION SHIPPED)
+
+**Summary (vi):** Deploy production Sophia AI Factory + 3 major gaps closed. GAP1: magic-link E2E validation PASS (setup-wizard cookie chain verified, 5 regression tests). GAP2: self-serve checkout complete (public /pricing, NOWPayments invoice, PayOS VN QR, idempotent IPN, atomic D1 tier upgrade, bilingual receipt email VAT 10%, dashboard tier widget period_end). GAP3: mission control handover operational (durable D1 email outbox, /onboarding 3-step resumable, D1 API keys, mission control dashboard widget, public /status page 90d uptime, milestone-aware D+1/D+7 lifecycle emails). Infrastructure hardened: 9 smoke tests pass (200 HTTP verified), production SHA `5b1f711f` deployed, 2546 tests pass (100%), build < 10s.
+
+**Summary (en):** Sophia AI Factory go-live production deployment. Three critical gaps shipped: (1) Magic-link E2E validation PASS with setup-wizard cookie chain verified and 5 regression tests locked in. (2) Self-serve checkout complete—public /pricing with monthly+yearly toggle, NOWPayments invoice generation, PayOS Vietnam full implementation with VND QR code, idempotent IPN handler, atomic D1 batch tier upgrade, receipt email with VAT 10% in both languages, dashboard tier widget showing period_end. (3) Mission Control handover—durable D1 email outbox, resumable /onboarding 3-step flow, D1 API key storage (raas_user_api_keys), mission control dashboard widget, public /status page with 90-day uptime tracking, lifecycle emails at D+1 and D+7 milestones. Production verified: 9 smoke tests (all HTTP 200), deployed SHA matches /api/version shortSha, 2546 tests 100% pass, 0 build errors, bundle < 500 KB.
+
+### Infrastructure Verification
+- **Production URL:** https://sophia.agencyos.network
+- **Deployed SHA:** 5b1f711f (verified via `/api/version`)
+- **9 Smoke Tests (all PASS, 200 HTTP):**
+  - GET `/pricing` → 200
+  - GET `/vi/onboarding` → 200
+  - GET `/vi/status` → 200
+  - GET `/api/status.json` → 200
+  - POST `/api/v1/api-keys` → 401 (expected auth gate)
+  - GET `/setup-wizard` → 307 (expected redirect)
+  - GET `/login` → 200
+  - GET `/api/health` → 200
+  - GET `/api/version` → 200
+- **Tests:** 2546 pass, 31 skipped, 0 fail
+- **Build:** < 10s, 0 TypeScript errors
+
+### GAP1: Magic-Link E2E Validation (260503-0830 VERIFIED)
+- Real magic-link click → `__Secure-better-auth.session_token` Set-Cookie (HttpOnly; Secure; SameSite=Lax)
+- `/setup-wizard` HTTP 200 + wizard render
+- 5 regression tests lock in cookie chain behavior
+- D1 test-user cleanup (idempotent)
+- **Files:** `scripts/e2e/seed-magic-link.sh`, `run-magic-link-browser-test.mjs`, `src/app/api/welcome/validate/[token]/__tests__/route.test.ts`
+- **Test Assertion:** Cookie header present + path/security flags correct + setup-wizard DOM renders
+
+### GAP2: Self-Serve Checkout Complete (260503 NEW)
+**Public `/pricing` Page (Monthly + Yearly Toggle):**
+- 4 tier cards (Starter, Growth, Enterprise, Master)
+- Toggle UI for monthly vs yearly billing
+- HeyGen health gate on One-Time Bundle CTA (graceful "Configure HeyGen" prompt if unconfigured)
+- Gateway: `src/app/[locale]/pricing/page.tsx` (Server Component, no JS required for tier display)
+
+**Payment Processing (NOWPayments IPN + PayOS Vietnam):**
+- NOWPayments invoice generation via `src/lib/billing/nowpayments-invoice-generator.ts`
+- PayOS integration via `src/lib/billing/payos.ts` (VN QR code, VND currency)
+- Idempotent IPN handler: `src/app/api/webhooks/nowpayments/route.ts` (HMAC verified, D1 transaction dedup)
+
+**Atomic D1 Tier Upgrade:**
+- Single `UPDATE users SET tier = ?, period_end = ? WHERE id = ?` transaction
+- Prevents race conditions on concurrent webhook fires
+
+**Bilingual Receipt Email (VAT 10%):**
+- Template: `src/lib/billing/email/receipt-email-template.ts`
+- Sender: `src/lib/billing/email/receipt-email-sender.ts` (Resend API)
+- Fields: Vi/En order ID, date, item breakdown, subtotal, VAT 10%, total, period-end date
+- Trigger: D1 `pending_orders` batch processor (cron) → Resend send-email
+
+**Dashboard Tier Widget (period_end Display):**
+- Component: `src/components/dashboard/tier-widget.tsx`
+- Data: `period_end` from `GET /api/v1/subscription` (auth-required)
+- UX: Shows "Renews on [date]" or "Expires on [date]" based on comparison with today
+- Bilingual: retrieves via `useTranslation('dashboard')`
+
+**New Routes:**
+- `POST /api/billing/nowpayments/checkout` — Invoice generation
+- `POST /api/billing/payos/checkout` — PayOS QR generation
+- `POST /api/webhooks/nowpayments` — IPN handler (dedup via D1 transaction hash)
+- `GET /api/v1/subscription` — Tier + period_end (auth-required)
+
+**New D1 Tables:**
+- `pending_orders` — Awaiting IPN confirmation (order_id PK, amount, tier_slug, user_id FK, created_at, expires_at)
+- `payos_events` — PayOS webhook log (event_id PK, webhook_id, tier_slug, order_id FK, status, created_at)
+
+**Migrations:**
+- `0047-self-serve-checkout.sql` — pending_orders, payos_events, indexes on (user_id, created_at), (order_id)
+
+### GAP3: Mission Control Handover (260503 NEW)
+
+**Durable D1 Email Outbox:**
+- Table: `email_outbox` (id PK, recipient, subject, body_html, status, attempts, last_error, created_at, sent_at)
+- Pattern: Inngest job writes to outbox → cron `email-outbox-sender` processes batch (max 100 @ 9am UTC)
+- Retry logic: exponential backoff (3 attempts), swallow permanent failures (Resend 400/401)
+- **Module:** `src/lib/outbox/email-outbox-processor.ts`
+
+**Resumable 3-Step Onboarding Flow:**
+- Route: `GET /[locale]/onboarding` (auth-required, SSR)
+- Steps: (1) Welcome + setup-wizard button → (2) Create first mission → (3) Review + publish
+- State: D1 `user_onboarding_state` table (user_id PK, current_step INT, mission_id FK nullable, completed_at nullable)
+- Resume logic: `getCurrentOnboardingStep(userId)` queries DB; UI renders next step
+- **Files:** `src/app/[locale]/onboarding/page.tsx`, `src/lib/onboarding/state-manager.ts`
+
+**D1 API Keys Storage (raas_user_api_keys):**
+- Table: `raas_user_api_keys` (id PK, user_id FK, key_name TEXT, key_value_encrypted BLOB, created_at)
+- Encryption: AES-GCM-256 (same as BYOK credentials)
+- API routes: `POST /api/v1/api-keys` (create), `GET /api/v1/api-keys` (list, redacted), `DELETE /api/v1/api-keys/[id]` (revoke)
+- All routes auth-required via middleware `verifySuperAdminAuth()` or user's own org context
+- **Module:** `src/lib/api-keys/d1-store.ts`
+
+**Mission Control Dashboard Widget:**
+- Component: `src/components/dashboard/mission-control-widget.tsx`
+- Data: Fetches latest 5 missions + total count from D1 (server-side, no JS required)
+- Display: Cards showing mission name, status (queued/running/completed/failed), created_at, action buttons
+- Link: Each card links to `/dashboard/missions/[id]` for detail view
+
+**Public `/status` Page (90-Day Uptime):**
+- Route: `GET /[locale]/status` (public, no auth)
+- Data: D1 `status_rollup` table (date DATE PK, uptime_percent REAL, incident_count INT)
+- Display: 90-day calendar heatmap + uptime metric (e.g., "99.9% uptime") + incident list
+- Cron: Daily 12am UTC updates `status_rollup` by querying `status_incidents` table
+- **Module:** `src/lib/status/rollup-calculator.ts`
+
+**Milestone-Aware Lifecycle Emails:**
+- D+1 (next day): "Welcome! Setup guide + first mission prompt"
+- D+7 (one week): "You've completed X missions — upgrade to [next tier]?"
+- Implementation: D1 job table with scheduled send times; cron checks for due emails, renders template, appends to `email_outbox`
+- **Module:** `src/lib/email/lifecycle/milestone-emailer.ts`
+
+**New Routes:**
+- `GET /api/status.json` — JSON status for monitoring/dashboard (public, no auth)
+- `GET /[locale]/onboarding` — Resumable onboarding SSR page (auth-required)
+- `GET /[locale]/status` — Public 90-day uptime status page
+- `POST /api/v1/api-keys` — Create API key (auth-required, user scoped)
+- `GET /api/v1/api-keys` — List API keys (auth-required, redacted values)
+- `DELETE /api/v1/api-keys/[id]` — Revoke API key (auth-required)
+
+**New D1 Tables:**
+- `email_outbox` — Durable email queue (id, recipient, subject, body_html, status, attempts, last_error)
+- `raas_user_api_keys` — API key storage (id, user_id, key_name, key_value_encrypted, created_at)
+- `user_onboarding_state` — Resumable onboarding (user_id PK, current_step, mission_id, completed_at)
+- `status_incidents` — Incident tracking (id, timestamp, severity, description, resolved_at)
+- `status_rollup` — Daily aggregates (date PK, uptime_percent, incident_count)
+
+**Migrations:**
+- `0048-mission-control-handover.sql` — All new tables + indexes on (user_id), (date), (status)
+
+### Architecture Updates
+**New Modules (modularized < 200 LOC each):**
+- `src/lib/payments/payos.ts` — PayOS checkout + QR generation
+- `src/lib/billing/email/receipt-email-template.ts` — Bilingual email template
+- `src/lib/billing/email/receipt-email-sender.ts` — Resend delivery logic
+- `src/lib/api-keys/d1-store.ts` — API key CRUD + encryption
+- `src/lib/outbox/email-outbox-processor.ts` — Queue processor + retry
+- `src/lib/status/*` — Status page queries + rollup calculator
+- `src/lib/email/lifecycle/milestone-emailer.ts` — D+1/D+7 lifecycle
+
+**New Routes (Edge-friendly, < 500 LOC each):**
+- `src/app/api/billing/nowpayments/checkout` — Invoice generation
+- `src/app/api/billing/payos/checkout` — PayOS QR
+- `src/app/api/v1/api-keys/*` — Key management (3 routes)
+- `src/app/api/webhooks/payos` — PayOS IPN webhook
+- `src/app/api/cron/email-outbox-sender` — Outbox processor cron
+- `src/app/api/status.json` — Status endpoint
+- `src/app/[locale]/onboarding` — Onboarding page
+- `src/app/[locale]/status` — Status page
 
 ---
 

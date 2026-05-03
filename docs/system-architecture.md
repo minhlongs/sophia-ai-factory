@@ -2,9 +2,10 @@
 
 > Sophia AI Factory — RaaS (Reasoning-as-a-Service) Platform with AI-Native CI/CD, Observability, & Signals
 
-**Last Updated:** 2026-05-02 (Go-Live Zero-Bug Hardening: HeyGen health gate, cron security, scheduled() default-export fix, +35 tests)
-**Production:** https://sophia.agencyos.network
+**Last Updated:** 2026-05-03 (Go-Live Production Deploy: self-serve checkout, mission control handover, magic-link E2E validation, new tables/routes)
+**Production:** https://sophia.agencyos.network (SHA 5b1f711f)
 **Production Dashboard:** https://sophia.agencyos.network/dashboard
+**Status Page:** https://sophia.agencyos.network/status (90-day uptime tracking)
 
 ### Recent Shipments (2026-04-30 Final)
 - **Phase 14 Launch Hardening (2026-04-30):** FTC `#ad` overlay (FFmpeg drawtext, last 3s). Caption prefix in publisher adapters. GDPR `/api/account/export` + `/api/account/delete` endpoints. Runbook (10 incidents tracked, recovery procedures). Polar.sh removed from rate-limiter (single source of truth: NOWPayments only). CI workaround documented.
@@ -365,6 +366,8 @@ export_jobs     — id, org_id, license_nonce, export_format, period_start/end, 
 ```
 billing_settings — org_id, tier, polar_subscription_id, polar_customer_id, status
 payment_events    — id, org_id, provider, amount, currency, status, metadata (NOWPayments IPN)
+pending_orders    — order_id (PK), amount, tier_slug, user_id (FK), created_at, expires_at (NEW — 2026-05-03, self-serve checkout)
+payos_events      — event_id (PK), webhook_id, tier_slug, order_id (FK), status, created_at (NEW — 2026-05-03, PayOS webhook log)
 ```
 
 ### Video Tables
@@ -372,6 +375,15 @@ payment_events    — id, org_id, provider, amount, currency, status, metadata (
 videos                   — id, org_id, user_id, title, r2_key, status, is_onboarding, purchase_id (FK), created_at
 video_onboarding_events  — id, org_id, video_id, user_email, tier, delivery_status, created_at
 user_purchases           — id, user_id, sku (STARTER_BUNDLE), video_credits (10), ttl_end (365d), created_at (NEW — 2026-05-02)
+```
+
+### Operations Tables (NEW — 2026-05-03, Go-Live)
+```
+email_outbox             — id (PK), recipient, subject, body_html, status (queued/sent/failed), attempts, last_error, created_at, sent_at (durable email queue)
+raas_user_api_keys       — id (PK), user_id (FK), key_name, key_value_encrypted (AES-GCM), created_at (RaaS API key storage)
+user_onboarding_state    — user_id (PK), current_step (INT), mission_id (FK nullable), completed_at (nullable, resumable onboarding)
+status_incidents         — id (PK), timestamp, severity, description, resolved_at (incident tracking)
+status_rollup            — date (DATE PK), uptime_percent (REAL), incident_count (INT, daily aggregates for /status page)
 ```
 
 ### Growth Tables
@@ -389,6 +401,12 @@ affiliate_content — id, org_id, type, title, content, status
 | Route | Method | Purpose |
 |-------|--------|---------|
 | `/api/health` | GET | Health check |
+| `/api/version` | GET | Deployed SHA + build info |
+| `/api/status.json` | GET | Status JSON (uptime, incidents) (NEW 2026-05-03) |
+| `/api/health/heygen` | GET | HeyGen health check (gates One-Time CTA) (NEW 2026-05-03) |
+| `/[locale]/status` | GET | Public 90-day uptime status page (NEW 2026-05-03) |
+| `/[locale]/pricing` | GET | Public pricing page with monthly+yearly toggle (NEW 2026-05-03) |
+| `/[locale]/onboarding` | GET | Resumable 3-step onboarding (auth-required, NEW 2026-05-03) |
 | `/api/v1/demo` | POST | Quick demo preview (rate limited) |
 | `/api/v1/demo-requests` | POST | Demo booking |
 | `/api/auth/signup` | POST | User registration |
@@ -396,6 +414,7 @@ affiliate_content — id, org_id, type, title, content, status
 | `/api/auth/callback` | POST | Magic link verification |
 | `/api/webhooks/polar` | POST | Polar.sh payment events |
 | `/api/webhooks/nowpayments` | POST | NOWPayments IPN (subscription activation + onboarding trigger) |
+| `/api/webhooks/payos` | POST | PayOS webhook (VN payment events) (NEW 2026-05-03) |
 | `/api/webhooks/heygen` | POST | HeyGen video completion callback (email delivery trigger) |
 
 ### Protected (Auth Required)
@@ -404,6 +423,10 @@ affiliate_content — id, org_id, type, title, content, status
 | `/api/org` | GET | Current org info |
 | `/api/billing/subscription` | GET | Subscription + MCU balance |
 | `/api/billing/checkout` | POST | NOWPayments/PayOS checkout session |
+| `/api/billing/nowpayments/checkout` | POST | Invoice generation (self-serve, NEW 2026-05-03) |
+| `/api/billing/payos/checkout` | POST | PayOS QR generation VN (NEW 2026-05-03) |
+| `/api/v1/subscription` | GET | Tier + period_end display (NEW 2026-05-03) |
+| `/api/v1/api-keys` | GET/POST/DELETE | RaaS API key management (NEW 2026-05-03) |
 | `/api/raas/missions` | GET/POST | Mission CRUD |
 | `/api/raas/keys` | GET/POST | API key management |
 | `/api/raas/usage` | GET | MCU usage stats |
