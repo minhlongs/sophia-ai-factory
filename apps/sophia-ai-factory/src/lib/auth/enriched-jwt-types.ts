@@ -3,6 +3,7 @@
  * @module auth/enriched-jwt-types
  */
 
+// eslint-disable-next-line @typescript-eslint/no-restricted-imports -- mekong-exempt: lib/auth allowed to import forest types
 import type { QuotaLimit } from '@/lib/usage-metering/types'
 
 export interface FeatureLimit {

@@ -46,6 +46,10 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      '@/seed': path.resolve(__dirname, './src/seed'),
+      '@/tree': path.resolve(__dirname, './src/tree'),
+      '@/forest': path.resolve(__dirname, './src/forest'),
+      '@/land': path.resolve(__dirname, './src/land'),
     },
   },
   // Define globals for tests

@@ -7,7 +7,9 @@
 
 import { betterAuth } from 'better-auth';
 import { magicLink } from 'better-auth/plugins';
+// eslint-disable-next-line @typescript-eslint/no-restricted-imports -- mekong-exempt: better-auth bootstrap needs crypto/password-hash (tree) for password operations
 import { hashPassword, verifyPassword } from '@/lib/crypto/password-hash';
+// eslint-disable-next-line @typescript-eslint/no-restricted-imports -- mekong-exempt: better-auth bootstrap needs email/sender (forest) for magic-link delivery
 import { sendEmail } from '@/lib/email/sender';
 import { getD1Client } from '@/lib/db/client';
 import { logger } from '@/lib/utils/logger-utility';

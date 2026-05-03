@@ -21,7 +21,7 @@ import type {
   ReconciliationReport,
   ReconciliationConfig,
   ReconciliationResult,
-} from '@/lib/billing/reconciliation-types';
+} from '@/seed/types/billing-contracts';
 import {
   storeReconciliationReport,
   cleanupOldReports,

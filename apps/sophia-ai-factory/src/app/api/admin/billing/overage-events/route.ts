@@ -16,7 +16,7 @@ import { logger } from '@/lib/utils/logger-utility';
 import { toError } from '@/lib/utils/to-error';
 import { requireAdmin } from '@/lib/auth/require-admin';
 import { z } from 'zod';
-import type { OverageEventRow } from '@/lib/billing/billing-types';
+import type { OverageEventRow } from '@/seed/types/billing-contracts';
 
 /**
  * Query params validation schema
