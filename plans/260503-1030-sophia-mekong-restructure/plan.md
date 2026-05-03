@@ -1,7 +1,7 @@
 ---
 title: "Sophia AI Factory: Mekong 4-Layer Restructure"
 description: "Migrate apps/sophia-ai-factory/src/* into seed/tree/forest/land layered architecture with strict one-way import direction."
-status: pending
+status: completed
 priority: P2
 effort: 7h
 branch: main
@@ -46,7 +46,7 @@ Based on scout findings (1717 files, ~28 true violations, PR #23):
 | 06 | Move land/ layer | 90m | [phase-06-move-land-layer.md](phase-06-move-land-layer.md) | pending |
 | 07 | Layer boundary enforcement (ESLint) | 30m | [phase-07-layer-boundary-enforcement.md](phase-07-layer-boundary-enforcement.md) | **COMPLETE** (PR #29) |
 | 08 | Documentation update | 30m | [phase-08-documentation-update.md](phase-08-documentation-update.md) | **COMPLETE** (PR #29) |
-| 09 | Production deploy + verify | 45m | [phase-09-production-deploy-verify.md](phase-09-production-deploy-verify.md) | pending |
+| 09 | Production deploy + verify | 45m | [phase-09-production-deploy-verify.md](phase-09-production-deploy-verify.md) | **COMPLETE** (Wrangler 7862606b, SHA ba3af5a8, 9/9 smoke PASS) |
 
 ## Top Risks (H/M/L)
 
