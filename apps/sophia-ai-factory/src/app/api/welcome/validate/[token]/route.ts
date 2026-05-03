@@ -28,7 +28,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams): Promi
   try {
     const db = await getD1Raw();
     const userRow = await db
-      .prepare(`SELECT email, name FROM users WHERE id = ?1 LIMIT 1`)
+      .prepare(`SELECT email, name FROM user WHERE id = ?1 LIMIT 1`)
       .bind(handover.customer_user_id)
       .first<{ email: string; name: string }>();
 
