@@ -92,6 +92,17 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      // CDN cache for public marketing pages (s-maxage=60, stale-while-revalidate=600).
+      // Auth-gated routes (/dashboard/*, /auth/*, /onboarding/*, /welcome/*) keep Cloudflare default no-store.
+      {
+        source: '/(|en|vi)(|/pricing|/guide|/guide/:path*|/blog|/blog/:path*|/privacy|/terms|/status|/affiliate-discovery)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, s-maxage=60, stale-while-revalidate=600',
+          },
+        ],
+      },
       {
         source: '/:path*',
         headers: [

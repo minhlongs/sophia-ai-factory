@@ -75,7 +75,14 @@
         "tools": "Công Cụ AI",
         "videos": "Video Đã Tạo",
         "automation": "Tự Động Hóa"
-      }
+      },
+      "badge": "✨ AI-Powered Creation",
+      "cmd_prefix": "Try:",
+      "cmd_suffix": "→",
+      "trust_uptime": "99.99% Uptime",
+      "trust_response": "<50ms Response",
+      "trust_security": "SOC 2 Certified",
+      "trust_edge": "Edge Deployed"
     },
     "workflow": {
       "title": "Nhà Máy Nội Dung Tự Động Của Bạn",

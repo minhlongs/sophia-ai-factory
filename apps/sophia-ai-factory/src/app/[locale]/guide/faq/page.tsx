@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { GuideAccordionFaq, FaqItem } from "@/forest/components/guide/guide-accordion-faq";
 import { GuideCallout } from "@/forest/components/guide/guide-callout";
+import { buildFAQPageSchema, buildBreadcrumbSchema, BREADCRUMBS } from "@/lib/seo/schema-org";
 
 export const metadata: Metadata = {
   title: "Câu Hỏi Thường Gặp — Hướng Dẫn Sophia AI Factory",
@@ -83,9 +84,30 @@ const dateFaqs: FaqItem[] = [
   },
 ];
 
+const ALL_GUIDE_FAQS: FaqItem[] = [
+  ...generalFaqs,
+  ...paymentFaqs,
+  ...technicalFaqs,
+  ...dateFaqs,
+];
+
+const guideFaqSchema = buildFAQPageSchema(
+  ALL_GUIDE_FAQS.map(({ question, answer }) => ({ q: question, a: answer }))
+);
+const guideBreadcrumb = buildBreadcrumbSchema(BREADCRUMBS.guideFaq);
+
 export default function FAQGuidePage() {
   return (
     <div className="max-w-3xl space-y-10">
+      {/* Structured data — FAQPage + BreadcrumbList */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(guideFaqSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(guideBreadcrumb) }}
+      />
       {/* Hero */}
       <div>
         <h1 className="text-3xl font-bold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent mb-3">

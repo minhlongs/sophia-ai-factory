@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Button } from "@/seed/components/ui/button";
 import { TerminalPreview } from "@/app/components/ui/terminal-preview";
 
@@ -51,6 +52,8 @@ function TypingRotator() {
 }
 
 export function Hero() {
+  const t = useTranslations("landing.hero");
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background pt-16">
       {/* Animated gradient orbs */}
@@ -90,7 +93,7 @@ export function Hero() {
             }}
           >
             <span className="w-2 h-2 rounded-full bg-green-400 animate-glow-pulse" />
-            Video Factory + AI Automation
+            {t("badge")}
           </div>
 
           {/* Headline */}
@@ -98,15 +101,15 @@ export function Hero() {
             className="text-5xl md:text-6xl lg:text-[4.5rem] font-extrabold mb-4 tracking-tight leading-[1.08] animate-fade-in-up text-foreground"
             style={{ animationDelay: "0.1s" }}
           >
-            Tự Động Hóa Nội Dung
-            <span className="block text-gradient mt-1">Một Nền Tảng</span>
+            {t("title_1")}
+            <span className="block text-gradient mt-1">{t("title_2")}</span>
           </h1>
 
           {/* Dynamic command display */}
           <div className="mb-8 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
-            <span className="text-muted-foreground text-lg">Chạy </span>
+            <span className="text-muted-foreground text-lg">{t("cmd_prefix")} </span>
             <TypingRotator />
-            <span className="text-muted-foreground text-lg"> trong vài giây</span>
+            <span className="text-muted-foreground text-lg"> {t("cmd_suffix")}</span>
           </div>
 
           {/* Subtitle */}
@@ -114,8 +117,7 @@ export function Hero() {
             className="text-base md:text-lg text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed animate-fade-in-up"
             style={{ animationDelay: "0.3s" }}
           >
-            Tạo video AI, tìm kiếm lead, gửi chiến dịch — tất cả tự động hóa.
-            Triển khai AI missions qua API với giá minh bạch theo MCU credits.
+            {t("subtitle")}
           </p>
 
           {/* CTAs */}
@@ -125,7 +127,7 @@ export function Hero() {
           >
             <Link href="/dashboard">
               <Button variant="glow" size="lg" className="glow-primary rounded-full px-8 text-base w-full sm:w-auto">
-                Bắt Đầu Miễn Phí
+                {t("cta_start")}
               </Button>
             </Link>
             <Button
@@ -136,7 +138,7 @@ export function Hero() {
                 document.getElementById("features")?.scrollIntoView({ behavior: "smooth", block: "start" });
               }}
             >
-              Tìm Hiểu Thêm
+              {t("cta_demo")}
             </Button>
           </div>
 
@@ -152,19 +154,19 @@ export function Hero() {
           >
             <span className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-green-400/60" />
-              99.9% Uptime SLA
+              {t("trust_uptime")}
             </span>
             <span className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full" style={{ background: "var(--neon-cyan)", opacity: 0.7 }} />
-              Phản Hồi Dưới 2 Giây
+              {t("trust_response")}
             </span>
             <span className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-amber-400/60" />
-              Bảo Mật Doanh Nghiệp
+              {t("trust_security")}
             </span>
             <span className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full" style={{ background: "var(--neon-purple)", opacity: 0.8 }} />
-              250+ Edge Nodes
+              {t("trust_edge")}
             </span>
           </div>
         </div>
