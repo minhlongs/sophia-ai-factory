@@ -12,6 +12,7 @@ import { ErrorReporter } from "@/forest/components/providers/error-reporter";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { getCspNonce } from '@/seed/security/get-csp-nonce';
+import { buildOrganizationSchema } from '@/lib/seo/schema-org';
 
 // JSON-LD schema — explicit type to avoid TypeScript stack overflow
 const JSONLD_SCHEMA: Record<string, unknown> = {
@@ -58,17 +59,7 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   metadataBase: new URL("https://sophia.agencyos.network"),
   title: "Sophia AI Video Factory - Automate Your Content Empire",
-  description: "Turn content into empire. The ultimate AI video creation workflow with automated affiliate discovery, ROI calculator, and 3-tier pricing. Build, scale, and monetize your YouTube channels effortlessly.",
-  keywords: [
-    "AI video creation",
-    "YouTube automation",
-    "affiliate marketing",
-    "content automation",
-    "video factory",
-    "AI content",
-    "no-code tools",
-    "ROI calculator",
-  ],
+  description: "Sophia: AI video factory + USDT payouts for global creators. 9 affiliate networks, 6 channels (YT/TikTok/IG/Pinterest/LinkedIn/Zalo). From $199.",
   manifest: "/manifest.json",
   authors: [{ name: "Sophia AI Factory" }],
   appleWebApp: {
@@ -97,6 +88,7 @@ export const metadata: Metadata = {
     languages: {
       "en": "https://sophia.agencyos.network/en",
       "vi": "https://sophia.agencyos.network/vi",
+      "x-default": "https://sophia.agencyos.network/en",
     },
   },
   robots: {
@@ -129,7 +121,7 @@ export default async function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap"
         />
         <link rel="preconnect" href="https://api.nowpayments.io" />
         <link rel="dns-prefetch" href="https://api.nowpayments.io" />
@@ -138,6 +130,13 @@ export default async function RootLayout({
           nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(JSONLD_SCHEMA),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          nonce={nonce}
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(buildOrganizationSchema()),
           }}
         />
       </head>

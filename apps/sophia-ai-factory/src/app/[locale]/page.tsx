@@ -1,8 +1,10 @@
 import dynamic from "next/dynamic";
+import { getTranslations } from "next-intl/server";
 import { Hero } from "@/app/components/sections/hero";
 import { Skeleton } from "@/seed/components/ui/skeleton";
 import { ScrollReveal } from "@/seed/components/ui/scroll-reveal";
 import { StickyMobileCta } from "@/app/components/layout/sticky-mobile-cta";
+import { buildFAQPageSchema } from "@/lib/seo/schema-org";
 
 function SectionSkeleton({ height = "h-96" }: { height?: string }) {
   return (
@@ -85,9 +87,24 @@ const Footer = dynamic(
   { loading: () => <Skeleton className="h-48 w-full" /> }
 );
 
-export default function Home() {
+const FAQ_KEYS = ['quality', 'copyright', 'time', 'skills', 'support', 'money', 'tiers', 'refund'] as const;
+
+export default async function Home() {
+  const t = await getTranslations('landing');
+  const faqSchema = buildFAQPageSchema(
+    FAQ_KEYS.map(key => ({
+      q: t(`faq.items.${key}.question`),
+      a: t(`faq.items.${key}.answer`),
+    }))
+  );
+
   return (
     <main id="main-content">
+      {/* FAQPage structured data — matches landing FAQ section */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
       {/* Hero has its own FadeInView — no ScrollReveal needed */}
       <Hero />
       <ScrollReveal delay={0}>

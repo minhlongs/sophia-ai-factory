@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import React, { Suspense } from "react";
 import Link from "next/link";
 import { useTranslations } from 'next-intl';
@@ -34,6 +35,10 @@ import { AgentSidebar } from "@/forest/components/agent-sidebar/agent-sidebar";
 import { CmdKPalette } from "@/forest/components/cmd-k/cmd-k-palette";
 import { TrialBanner } from "./components/trial-banner";
 import { getD1Raw } from "@/seed/db/client";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 async function getUserTrialEndsAt(userId: string): Promise<number | null> {
   try {

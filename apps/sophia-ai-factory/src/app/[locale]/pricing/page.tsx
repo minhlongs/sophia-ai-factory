@@ -9,6 +9,7 @@ import { getCurrentUser } from "@/seed/auth/better-auth-session";
 import { getUserCredential } from "@/tree/credentials/user-credentials-repo";
 import { getUserTier } from "@/seed/db/get-user-tier";
 import Link from "next/link";
+import { buildAllProductSchemas, buildBreadcrumbSchema, BREADCRUMBS } from "@/lib/seo/schema-org";
 
 export const metadata = {
   title: "Pricing - Sophia AI Factory",
@@ -29,8 +30,23 @@ export default async function PricingPage() {
 
   const currentTier = user ? await getUserTier(user.id).catch(() => null) : null;
 
+  const productSchemas = buildAllProductSchemas();
+  const breadcrumbSchema = buildBreadcrumbSchema(BREADCRUMBS.pricing);
+
   return (
     <main id="main-content" className="min-h-screen bg-gradient-to-b from-black to-violet-950 pt-16">
+      {/* Structured data — 4x Product schemas + BreadcrumbList */}
+      {productSchemas.map((schema, i) => (
+        <script
+          key={i}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+        />
+      ))}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
       {/* Combined value messaging header */}
       <div className="border-b border-white/5 bg-gradient-to-r from-violet-900/30 to-blue-900/30 px-6 py-8 text-center">
         <div className="mx-auto max-w-3xl">

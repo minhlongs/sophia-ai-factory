@@ -75,7 +75,14 @@
         "tools": "AI Tools",
         "videos": "Videos Created",
         "automation": "Automation"
-      }
+      },
+      "badge": "✨ AI-Powered Creation",
+      "cmd_prefix": "Try:",
+      "cmd_suffix": "→",
+      "trust_uptime": "99.99% Uptime",
+      "trust_response": "<50ms Response",
+      "trust_security": "SOC 2 Certified",
+      "trust_edge": "Edge Deployed"
     },
     "workflow": {
       "title": "Your Automated Content Factory",
