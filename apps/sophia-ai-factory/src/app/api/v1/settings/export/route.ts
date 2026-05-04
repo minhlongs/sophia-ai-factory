@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { registry } from '@/lib/tenant-settings';
+import { bulkExport } from '@/lib/tenant-settings/registry';
 import { logger } from '@/seed/utils/logger-utility';
 
 export const runtime = 'edge';
@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
   if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
   try {
-    const settings = await registry.bulkExport(db, user.id);
+    const settings = await bulkExport(db, user.id);
     const timestamp = new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-');
     const filename = `sophia-tenant-${user.id.slice(0, 8)}-settings-${timestamp}.json`;
 

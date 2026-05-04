@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { registry } from '@/lib/tenant-settings';
+import { listAll } from '@/lib/tenant-settings/registry';
 import { logger } from '@/seed/utils/logger-utility';
 
 export const runtime = 'edge';
@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
   if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
   try {
-    const settings = await registry.listAll(db, user.id);
+    const settings = await listAll(db, user.id);
     return NextResponse.json({ settings });
   } catch (err) {
     logger.error('[settings] GET all failed', err instanceof Error ? err : undefined);
