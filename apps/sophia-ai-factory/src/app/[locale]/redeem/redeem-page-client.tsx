@@ -202,33 +202,37 @@ function SuccessView({
           </h1>
           <p className="text-sm text-zinc-400 mb-6">
             {isVi
-              ? 'Anh/chị kiểm tra email — chúng tôi vừa gửi link đăng nhập.'
-              : 'Check your inbox — we just sent you a sign-in link.'}
+              ? 'Tài khoản đã sẵn sàng. Nhấn nút bên dưới để vào dashboard.'
+              : 'Your account is ready. Click below to enter your dashboard.'}
           </p>
 
-          <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-zinc-950 border border-zinc-800 mb-4">
-            <Mail size={16} className="text-zinc-500 flex-shrink-0" />
-            <span className="text-sm text-zinc-300 truncate">{email}</span>
-          </div>
-
-          {magicLink && (
-            <details className="text-left mb-4">
-              <summary className="text-xs text-zinc-500 cursor-pointer hover:text-zinc-300">
-                {isVi ? 'Không nhận được email? Mở link trực tiếp' : "Didn't get the email? Open link directly"}
-              </summary>
-              <a
-                href={magicLink}
-                className="block mt-2 px-3 py-2 rounded-lg bg-violet-950/40 border border-violet-500/30 text-violet-300 text-xs break-all hover:bg-violet-900/40 transition-colors"
-              >
-                {magicLink}
-              </a>
-            </details>
+          {magicLink ? (
+            <a
+              href={magicLink}
+              className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white font-semibold text-base shadow-lg shadow-violet-900/30 transition-all focus-visible:ring-2 focus-visible:ring-violet-500/50 focus-visible:outline-none mb-4"
+            >
+              {isVi ? 'Bắt đầu ngay' : 'Get Started'}
+              <ArrowRight size={18} />
+            </a>
+          ) : (
+            <p className="text-sm text-amber-300 mb-4">
+              {isVi
+                ? 'Link đã được tạo nhưng tạm thời không hiển thị. Vui lòng kiểm tra email hoặc liên hệ hỗ trợ.'
+                : 'Link generated but not displayed. Please check your email or contact support.'}
+            </p>
           )}
+
+          <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-zinc-950 border border-zinc-800 mb-3">
+            <Mail size={16} className="text-zinc-500 flex-shrink-0" />
+            <span className="text-sm text-zinc-300 truncate">
+              {isVi ? 'Bản sao đã gửi tới ' : 'A copy was emailed to '}{email}
+            </span>
+          </div>
 
           <p className="text-xs text-zinc-600">
             {isVi
-              ? 'Link có hiệu lực trong 72 giờ. Nếu cần gửi lại, ghé /welcome/resend.'
-              : 'The link is valid for 72 hours. To resend, visit /welcome/resend.'}
+              ? 'Link có hiệu lực trong 72 giờ và chỉ dùng được 1 lần.'
+              : 'The link is valid for 72 hours and is single-use.'}
           </p>
         </div>
       </div>
