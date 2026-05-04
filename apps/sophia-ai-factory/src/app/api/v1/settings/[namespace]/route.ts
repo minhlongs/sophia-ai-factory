@@ -17,7 +17,6 @@ import { validatorFor } from '@/lib/tenant-settings/namespace-validators';
 import type { SettingsNamespace } from '@/lib/tenant-settings';
 import { logger } from '@/seed/utils/logger-utility';
 
-export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 
 function getD1(): D1Database | null {

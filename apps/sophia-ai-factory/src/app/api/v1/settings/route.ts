@@ -10,7 +10,6 @@ import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { listAll } from '@/lib/tenant-settings/registry';
 import { logger } from '@/seed/utils/logger-utility';
 
-export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 
 function getD1(): D1Database | null {
