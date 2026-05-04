@@ -2,12 +2,13 @@
 
 /**
  * Welcome page onboarding steps configuration and step components.
+ * Steps are PURELY informational — no CTAs (token not yet consumed at this stage).
  * Extracted from welcome-page-client for file size compliance.
  *
  * @module app/[locale]/welcome/[token]/welcome-onboarding-steps
  */
 
-import { CheckCircle2, Circle, ArrowRight, Key, BarChart3, Settings, Zap } from 'lucide-react';
+import { CheckCircle2, Circle, Key, BarChart3, Settings, Zap } from 'lucide-react';
 
 export interface WelcomeData {
   handoverId: string;
@@ -30,13 +31,10 @@ export interface OnboardingStep {
   titleEn: string;
   descVi: string;
   descEn: string;
-  ctaLabel?: string;
-  ctaHref?: string;
   done: boolean;
 }
 
-export function buildOnboardingSteps(data: WelcomeData, locale: string): OnboardingStep[] {
-  const isVi = locale.startsWith('vi');
+export function buildOnboardingSteps(data: WelcomeData, _locale: string): OnboardingStep[] {
   return [
     {
       id: 1,
@@ -54,8 +52,6 @@ export function buildOnboardingSteps(data: WelcomeData, locale: string): Onboard
       titleEn: 'Configure API Keys',
       descVi: 'Thêm HeyGen API key và Resend API key trong trang Setup Wizard.',
       descEn: 'Add your HeyGen API key and Resend API key in the Setup Wizard.',
-      ctaLabel: isVi ? 'Mở Setup Wizard' : 'Open Setup Wizard',
-      ctaHref: `/${locale}/setup-wizard`,
       done: false,
     },
     {
@@ -65,8 +61,6 @@ export function buildOnboardingSteps(data: WelcomeData, locale: string): Onboard
       titleEn: 'Verify HeyGen',
       descVi: 'Kiểm tra kết nối HeyGen trong Settings → Integrations.',
       descEn: 'Test HeyGen connection in Settings → Integrations.',
-      ctaLabel: isVi ? 'Kiểm tra ngay' : 'Test Now',
-      ctaHref: `/${locale}/dashboard/byok`,
       done: false,
     },
     {
@@ -76,8 +70,6 @@ export function buildOnboardingSteps(data: WelcomeData, locale: string): Onboard
       titleEn: 'Run First SOP',
       descVi: `${data.installedSops.length > 0 ? `${data.installedSops.length} SOPs đã cài sẵn. ` : ''}Kích hoạt và chạy một SOP ngay bây giờ.`,
       descEn: `${data.installedSops.length > 0 ? `${data.installedSops.length} SOPs pre-installed. ` : ''}Enable and run a SOP now.`,
-      ctaLabel: isVi ? 'Đến trang SOPs' : 'Go to SOPs',
-      ctaHref: `/${locale}/dashboard/sops`,
       done: !!data.firstRunAt,
     },
     {
@@ -87,8 +79,6 @@ export function buildOnboardingSteps(data: WelcomeData, locale: string): Onboard
       titleEn: 'Watch Results',
       descVi: 'Xem videos đã tạo, số liệu hiệu suất và MCU usage trong Dashboard.',
       descEn: 'See generated videos, performance metrics, and MCU usage in your Dashboard.',
-      ctaLabel: isVi ? 'Đến Dashboard' : 'Go to Dashboard',
-      ctaHref: `/${locale}/dashboard`,
       done: !!(data.firstRunAt && data.firstSopInstallAt),
     },
   ];
@@ -111,11 +101,6 @@ export function StepCard({ step, isVi }: StepCardProps) {
             <span className="text-xs text-zinc-600 shrink-0">{isVi ? 'Bước' : 'Step'} {step.id}</span>
           </div>
           <p className="text-sm text-zinc-400 mt-1">{isVi ? step.descVi : step.descEn}</p>
-          {!step.done && step.ctaLabel && step.ctaHref && (
-            <a href={step.ctaHref} className="inline-flex items-center gap-1.5 mt-3 text-sm text-violet-400 hover:text-violet-300 font-medium transition-colors focus-visible:ring-2 focus-visible:ring-violet-500/50 focus-visible:outline-none rounded">
-              {step.ctaLabel}<ArrowRight aria-hidden="true" size={14} />
-            </a>
-          )}
         </div>
       </div>
     </div>
