@@ -113,13 +113,13 @@ describe('sendBundleGeneratingEmail', () => {
   })
 
   it('returns { success: true, alreadySent: true } when billing_events record exists', async () => {
-    vi.mocked(createServerClient).mockReturnValue(makeDb(true) as ReturnType<typeof createServerClient>)
+    vi.mocked(createServerClient).mockReturnValue(makeDb(true) as unknown as ReturnType<typeof createServerClient>)
     const result = await sendBundleGeneratingEmail(testCtx)
     expect(result).toMatchObject({ success: true, alreadySent: true })
   })
 
   it('returns { success: true } and logs audit event on first send', async () => {
-    vi.mocked(createServerClient).mockReturnValue(makeDb(false) as ReturnType<typeof createServerClient>)
+    vi.mocked(createServerClient).mockReturnValue(makeDb(false) as unknown as ReturnType<typeof createServerClient>)
     const result = await sendBundleGeneratingEmail(testCtx)
     expect(result.success).toBe(true)
     expect(result.alreadySent).toBeUndefined()

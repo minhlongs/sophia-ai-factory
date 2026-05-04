@@ -82,3 +82,34 @@ After every `git push`, verify:
 1. **CI/CD:** `gh run list -L 1` → `conclusion: success`
 2. **Deploy:** `curl -sI "$PROD_URL" | head -3` → HTTP 200
 3. **Report:** Build/Tests/CI/CD/Production status lines required
+
+## ⚠️ GitHub Actions BLOCKED (since 2026-05-03)
+
+**Status:** Account `longtho638-jpg` has Actions disabled at user level.
+- Repo perms `enabled: true` ✅
+- Workflow `Tests & Deploy` `active` ✅
+- BUT: `gh workflow run` returns HTTP 422: *"Actions has been disabled for this user"*
+- `gh run list` returns 0 results — pushes do NOT trigger CI
+
+**Diagnosis path:**
+- Token has `gist, read:org, repo, workflow` scopes
+- billing API needs `user` scope (not granted) → cannot inspect billing programmatically
+- Most likely cause: free-tier minutes exhausted OR account flagged for abuse review
+- Resolution requires user action: check https://github.com/settings/billing or contact support
+
+**Workaround (in use until resolved):**
+
+Manual deploy via wrangler — exception per `~/.claude/rules/binh-phap-cicd.md` (CI account-blocked, not broken):
+
+```bash
+cd apps/sophia-ai-factory
+npm run deploy:full   # builds OpenNext, injects SHA, wrangler deploy
+# then verify SHA match per sophia-deploy-verify.md
+```
+
+**For D1 migrations** (CI normally applies):
+```bash
+npx wrangler d1 execute sophia-raas-db --file=migrations/<NNNN>.sql --remote
+```
+
+**Recent successful manual deploys:** `d84f3a6e` (2026-05-03), `e53c7dd2`, `aafd1ba4`.

@@ -102,7 +102,7 @@ function mockCreateSession(
         createSession: vi.fn().mockResolvedValue(result),
       },
     }),
-  } as ReturnType<typeof getAuth>);
+  } as unknown as ReturnType<typeof getAuth>);
 }
 
 // ---------------------------------------------------------------------------

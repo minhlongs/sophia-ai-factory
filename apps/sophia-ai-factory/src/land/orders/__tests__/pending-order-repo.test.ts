@@ -44,7 +44,7 @@ vi.mock('@/seed/db/client', () => ({
         select: vi.fn(() => ({
           eq: (col: string, val: string) => ({
             single: async () => {
-              const row = [...orderStore.values()].find(r => (r as Record<string, unknown>)[col] === val)
+              const row = [...orderStore.values()].find(r => (r as unknown as Record<string, unknown>)[col] === val)
               return { data: row ?? null, error: null }
             },
             order: () => ({

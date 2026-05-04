@@ -11,6 +11,7 @@ import * as subscriptionHandler from '../nowpayments-ipn-subscription'
 import * as oneTimeHandler from '../nowpayments-ipn-one-time'
 import * as nowpaymentsClient from '@/tree/clients/nowpayments-client'
 import type { NowPaymentsIpnPayload } from '../nowpayments-ipn-handlers'
+import type { OneTimeSku } from '@/seed/types'
 
 // Mock modules
 vi.mock('@/tree/clients/nowpayments-client')
@@ -130,7 +131,7 @@ describe('dispatchFinished — subscription + one-time routing', () => {
 
   it('case 9: STARTER_BUNDLE one_time finished → one-time handler', async () => {
     const payload = buildIpnPayload({ invoice_id: '7810429001' })
-    const sku = {
+    const sku: OneTimeSku = {
       id: 'STARTER_BUNDLE',
       invoiceId: '7810429001',
       priceUsd: 49,
@@ -195,7 +196,7 @@ describe('dispatchFinished — subscription + one-time routing', () => {
 
   it('case 14: missing payment_id → still processes', async () => {
     const payload = buildIpnPayload({ invoice_id: '7810429001', payment_id: '' })
-    const sku = {
+    const sku: OneTimeSku = {
       id: 'STARTER_BUNDLE',
       invoiceId: '7810429001',
       priceUsd: 49,
@@ -220,7 +221,7 @@ describe('dispatchFinished — subscription + one-time routing', () => {
       invoice_id: '7810429001',
       payment_status: 'failed' as any,
     })
-    const sku = {
+    const sku: OneTimeSku = {
       id: 'STARTER_BUNDLE',
       invoiceId: '7810429001',
       priceUsd: 49,
@@ -244,7 +245,7 @@ describe('dispatchFinished — subscription + one-time routing', () => {
       invoice_id: '7810429001',
       payment_status: 'expired' as any,
     })
-    const sku = {
+    const sku: OneTimeSku = {
       id: 'STARTER_BUNDLE',
       invoiceId: '7810429001',
       priceUsd: 49,
@@ -377,7 +378,7 @@ describe('dispatchRefunded — subscription + one-time refund routing', () => {
       invoice_id: '7810429001',
       payment_status: 'refunded',
     })
-    const sku = {
+    const sku: OneTimeSku = {
       id: 'STARTER_BUNDLE',
       invoiceId: '7810429001',
       priceUsd: 49,
