@@ -86,12 +86,12 @@ export function LicenseListTableRow({
         </Badge>
       </TableCell>
       <TableCell className="text-sm text-muted-foreground">
-        {new Date(license.createdAt * 1000).toLocaleDateString()}
+        {new Date(license.createdAt * 1000).toLocaleDateString('en-US', { dateStyle: 'medium' })}
       </TableCell>
       <TableCell className="text-sm text-muted-foreground">
         {!license.expiresAt
           ? 'Perpetual'
-          : new Date(license.expiresAt * 1000).toLocaleDateString()}
+          : new Date(license.expiresAt * 1000).toLocaleDateString('en-US', { dateStyle: 'medium' })}
       </TableCell>
       <TableCell className="text-sm text-foreground">
         {license.validateCount}

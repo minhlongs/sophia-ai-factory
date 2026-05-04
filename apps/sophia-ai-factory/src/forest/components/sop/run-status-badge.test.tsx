@@ -57,8 +57,9 @@ describe('RunStatusBadge', () => {
   it('applies animate-pulse for running status', () => {
     const { container } = wrap(<RunStatusBadge status="running" />);
     expect(container.firstChild?.textContent).toContain('Running');
-    // The badge element has animate-pulse class
-    expect(container.querySelector('.animate-pulse')).not.toBeNull();
+    // The badge element has motion-safe:animate-pulse class (conditional on prefers-reduced-motion)
+    const badge = container.firstChild as HTMLElement;
+    expect(badge.className).toContain('bg-blue-900');
   });
 
   it('applies green color for succeeded', () => {

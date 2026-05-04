@@ -122,7 +122,7 @@ export function AuditRunnerButton() {
         >
           {state === 'running' ? (
             <>
-              <Loader2 className="w-5 h-5 animate-spin" />
+              <Loader2 className="w-5 h-5 motion-safe:animate-spin" />
               Running Audit... {progress}%
             </>
           ) : (

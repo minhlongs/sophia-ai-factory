@@ -73,7 +73,7 @@ export function SopRunTimeline({ initialRun }: SopRunTimelineProps) {
     <div className="space-y-4">
       <div className="flex items-center gap-3">
         <RunStatusBadge status={run.status} />
-        {!isTerminal && <Loader2 className="w-4 h-4 animate-spin text-blue-400" />}
+        {!isTerminal && <Loader2 className="w-4 h-4 motion-safe:animate-spin text-blue-400" />}
       </div>
 
       {steps.length === 0 ? (

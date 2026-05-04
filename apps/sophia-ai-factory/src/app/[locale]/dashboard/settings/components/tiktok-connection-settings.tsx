@@ -83,8 +83,8 @@ export function TikTokConnectionSettings() {
   if (isLoading) {
     return (
       <div className="flex items-center gap-3 rounded-lg border p-4">
-        <div className="h-8 w-8 animate-pulse rounded-full bg-muted" />
-        <div className="h-4 w-32 animate-pulse rounded bg-muted" />
+        <div className="h-8 w-8 motion-safe:animate-pulse rounded-full bg-muted" />
+        <div className="h-4 w-32 motion-safe:animate-pulse rounded bg-muted" />
       </div>
     );
   }

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { XCircle, RefreshCw, MessageCircle } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -73,13 +74,13 @@ export default async function CheckoutFailurePage({
 
         {/* Actions */}
         <div className="flex flex-col gap-3">
-          <a
+          <Link
             href={`/${locale}/pricing`}
             className="inline-flex items-center justify-center gap-2 w-full rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 px-6 py-3.5 text-center font-semibold text-white transition hover:from-violet-500 hover:to-blue-500"
           >
             <RefreshCw className="h-4 w-4" />
             {isVi ? "Thử lại" : "Try again"}
-          </a>
+          </Link>
           <a
             href="mailto:support@sophia.agencyos.network"
             className="inline-flex items-center justify-center gap-2 w-full rounded-xl border border-zinc-700 px-6 py-3.5 text-center font-medium text-zinc-300 transition hover:border-zinc-500 hover:text-white"

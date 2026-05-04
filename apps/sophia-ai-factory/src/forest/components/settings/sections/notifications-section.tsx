@@ -88,7 +88,7 @@ export function NotificationsSection({ form, isPending }: NotificationsSectionPr
       </CardContent>
       <CardFooter>
         <Button type="submit" disabled={isPending}>
-          {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {isPending && <Loader2 className="mr-2 h-4 w-4 motion-safe:animate-spin" />}
           Save Changes
         </Button>
       </CardFooter>

@@ -60,7 +60,7 @@ export function ExportButton({
       className={cn(className)}
     >
       {loading || isExporting ? (
-        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+        <Loader2 className="w-4 h-4 mr-2 motion-safe:animate-spin" />
       ) : (
         <Download className="w-4 h-4 mr-2" />
       )}

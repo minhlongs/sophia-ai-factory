@@ -31,7 +31,7 @@ export function CampaignHeader({ campaign, t, tStatus, format }: CampaignHeaderP
       case 'failed': return <AlertCircle className="w-4 h-4 mr-1" />;
       case 'queued': return <Clock className="w-4 h-4 mr-1" />;
       case 'draft': return <FileText className="w-4 h-4 mr-1" />;
-      default: return <Loader2 className="w-4 h-4 mr-1 animate-spin" />;
+      default: return <Loader2 className="w-4 h-4 mr-1 motion-safe:animate-spin" />;
     }
   };
 

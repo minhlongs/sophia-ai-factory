@@ -90,7 +90,7 @@ function AnimatedTerminal() {
             {line.text}
             {/* Blinking cursor on last visible line */}
             {i === visibleCount - 1 && visibleCount < TERMINAL_LINES.length && (
-              <span className="inline-block w-2 h-4 bg-green-400 ml-0.5 animate-pulse align-text-bottom" />
+              <span className="inline-block w-2 h-4 bg-green-400 ml-0.5 motion-safe:animate-pulse align-text-bottom" />
             )}
           </div>
         ))}

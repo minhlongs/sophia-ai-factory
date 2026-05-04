@@ -13,8 +13,8 @@ import { BillingOverageTable } from './billing-overage-table';
 import { BillingPaymentHistory } from './billing-payment-history';
 import type { UsageSummaryResponse, DunningStatusResponse } from './billing-page-types';
 
-const formatCurrency = (cents: number) =>
-  new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cents / 100);
+const formatCurrency = (cents: number, locale = 'en-US') =>
+  new Intl.NumberFormat(locale, { style: 'currency', currency: 'USD' }).format(cents / 100);
 
 const getStatusFromPct = (pct: number): 'ok' | 'warning' | 'critical' | 'overage' => {
   if (pct >= 100) return 'overage';
@@ -27,7 +27,7 @@ function BillingSpinner() {
   return (
     <div className="flex items-center justify-center p-8">
       <div className="space-y-4">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
+        <div className="motion-safe:animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
         <p className="text-muted-foreground">Đang tải dữ liệu thanh toán...</p>
       </div>
     </div>
@@ -35,7 +35,7 @@ function BillingSpinner() {
 }
 
 export default function BillingPage({ params }: { params: Promise<{ locale: string }> }) {
-  const { locale: _locale } = use(params);
+  const { locale } = use(params);
 
   const { data: usageData, isLoading, error } = useQuery<UsageSummaryResponse>({
     queryKey: ['/api/billing/usage-summary'],
@@ -112,7 +112,7 @@ export default function BillingPage({ params }: { params: Promise<{ locale: stri
         />
       )}
 
-      <BillingChargeSummary data={usageData} formatCurrency={formatCurrency} />
+      <BillingChargeSummary data={usageData} formatCurrency={(c) => formatCurrency(c, locale)} />
 
       <div>
         <h2 className="text-xl font-semibold mb-4">Usage Breakdown</h2>
@@ -132,8 +132,8 @@ export default function BillingPage({ params }: { params: Promise<{ locale: stri
         </Card>
       </div>
 
-      <BillingOverageTable data={usageData} formatCurrency={formatCurrency} />
-      <BillingPaymentHistory data={usageData} formatCurrency={formatCurrency} />
+      <BillingOverageTable data={usageData} formatCurrency={(c) => formatCurrency(c, locale)} />
+      <BillingPaymentHistory data={usageData} formatCurrency={(c) => formatCurrency(c, locale)} />
     </div>
   );
 }

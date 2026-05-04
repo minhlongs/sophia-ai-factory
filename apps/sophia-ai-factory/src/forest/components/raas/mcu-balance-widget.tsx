@@ -47,7 +47,7 @@ export function McuBalanceWidget() {
     fetchUsage();
   }, []);
 
-  if (loading) return <div className="h-24 bg-muted animate-pulse rounded-xl" />;
+  if (loading) return <div className="h-24 bg-muted motion-safe:animate-pulse rounded-xl" />;
 
   const balance = data?.balance ?? 0;
   const used = data?.monthlyUsed ?? 0;
@@ -64,7 +64,7 @@ export function McuBalanceWidget() {
         </Link>
       </div>
 
-      <p className={`text-2xl font-bold ${low ? 'text-destructive' : 'text-foreground'}`}>
+      <p className={`text-2xl font-bold tabular-nums ${low ? 'text-destructive' : 'text-foreground'}`}>
         {balance.toLocaleString()}
         <span className="text-sm font-normal text-muted-foreground ml-1">MCU</span>
       </p>
@@ -76,7 +76,7 @@ export function McuBalanceWidget() {
       <div className="mt-3">
         <div className="flex justify-between text-xs text-muted-foreground mb-1">
           <span>{t('used_this_month')}</span>
-          <span>{used.toLocaleString()} / {limit.toLocaleString()}</span>
+          <span className="tabular-nums">{used.toLocaleString()} / {limit.toLocaleString()}</span>
         </div>
         <div className="w-full bg-muted rounded-full h-2">
           <div

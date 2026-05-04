@@ -43,7 +43,7 @@ export function CampaignActions({ campaign, isRetrying, onRetry, onResume }: Cam
             className="flex items-center gap-2 h-8 text-xs sm:text-sm"
           >
             {isRetrying ? (
-              <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
+              <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 motion-safe:animate-spin" />
             ) : (
               <Play className="w-3 h-3 sm:w-4 sm:h-4" />
             )}
@@ -57,7 +57,7 @@ export function CampaignActions({ campaign, isRetrying, onRetry, onResume }: Cam
             className="flex items-center gap-2 h-8 text-xs sm:text-sm"
           >
             {isRetrying ? (
-              <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
+              <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 motion-safe:animate-spin" />
             ) : (
               <RotateCw className="w-3 h-3 sm:w-4 sm:h-4" />
             )}

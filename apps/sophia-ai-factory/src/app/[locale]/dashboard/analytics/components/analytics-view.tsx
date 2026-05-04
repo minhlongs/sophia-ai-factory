@@ -13,17 +13,17 @@ import { UsageAnalyticsView } from "./usage-analytics-view";
 // Lazy load chart components
 const StatusDistributionChart = dynamic(
   () => import('./charts').then(mod => mod.StatusDistributionChart),
-  { loading: () => <div className="h-[300px] w-full flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>, ssr: false }
+  { loading: () => <div className="h-[300px] w-full flex items-center justify-center"><Loader2 className="h-8 w-8 motion-safe:animate-spin text-muted-foreground" /></div>, ssr: false }
 );
 
 const CompletionTimeChart = dynamic(
   () => import('./charts').then(mod => mod.CompletionTimeChart),
-  { loading: () => <div className="h-[300px] w-full flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>, ssr: false }
+  { loading: () => <div className="h-[300px] w-full flex items-center justify-center"><Loader2 className="h-8 w-8 motion-safe:animate-spin text-muted-foreground" /></div>, ssr: false }
 );
 
 const CampaignsByTypeChart = dynamic(
   () => import('./charts').then(mod => mod.CampaignsByTypeChart),
-  { loading: () => <div className="h-[300px] w-full flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>, ssr: false }
+  { loading: () => <div className="h-[300px] w-full flex items-center justify-center"><Loader2 className="h-8 w-8 motion-safe:animate-spin text-muted-foreground" /></div>, ssr: false }
 );
 
 interface AnalyticsViewProps {

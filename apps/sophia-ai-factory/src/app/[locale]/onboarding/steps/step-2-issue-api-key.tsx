@@ -81,35 +81,35 @@ export function StepIssueApiKey({ locale, onComplete }: Props) {
         <button
           onClick={handleCreate}
           disabled={loading}
-          className="bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+          className="bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white font-semibold py-3 px-6 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-violet-500/50 focus-visible:outline-none"
         >
           {loading
-            ? (isVi ? 'Đang tạo...' : 'Generating...')
+            ? (isVi ? 'Đang tạo…' : 'Generating…')
             : (isVi ? 'Tạo API Key' : 'Generate API Key')}
         </button>
       )}
 
-      {error && <p className="mt-3 text-red-400 text-sm">{error}</p>}
+      {error && <p role="alert" aria-live="polite" className="mt-3 text-red-400 text-sm">{error}</p>}
 
       {keyData && !acknowledged && (
         <div className="mt-4">
-          <div className="bg-zinc-800 border border-zinc-700 rounded-lg p-4 font-mono text-sm text-emerald-300 break-all">
+          <div aria-live="polite" className="bg-zinc-800 border border-zinc-700 rounded-lg p-4 font-mono tabular-nums text-sm text-emerald-300 break-all">
             {keyData.fullKey}
           </div>
           <div className="flex gap-3 mt-3">
             <button
               onClick={handleCopy}
-              className="bg-zinc-700 hover:bg-zinc-600 text-white text-sm py-2 px-4 rounded-lg"
+              className="bg-zinc-700 hover:bg-zinc-600 text-white text-sm py-2 px-4 rounded-lg focus-visible:ring-2 focus-visible:ring-violet-500/50 focus-visible:outline-none"
             >
-              {copied ? '✓ Copied' : (isVi ? 'Sao chép' : 'Copy')}
+              <span aria-live="polite">{copied ? '✓ Copied' : (isVi ? 'Sao chép' : 'Copy')}</span>
             </button>
           </div>
           <p className="text-amber-400 text-xs mt-3">
-            {isVi ? '⚠ Key này sẽ không hiển thị lại. Hãy lưu vào nơi an toàn.' : '⚠ This key will not be shown again. Store it securely.'}
+            <span aria-hidden="true">⚠</span>{isVi ? ' Key này sẽ không hiển thị lại. Hãy lưu vào nơi an toàn.' : ' This key will not be shown again. Store it securely.'}
           </p>
           <button
             onClick={handleAcknowledge}
-            className="mt-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-6 rounded-lg"
+            className="mt-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-6 rounded-lg focus-visible:ring-2 focus-visible:ring-emerald-500/50 focus-visible:outline-none"
           >
             {isVi ? 'Tôi đã lưu key này' : 'I\'ve saved this key'}
           </button>

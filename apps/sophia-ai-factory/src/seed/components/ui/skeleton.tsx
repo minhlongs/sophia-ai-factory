@@ -9,7 +9,7 @@ function Skeleton({
     <div
       className={cn(
         "rounded-md",
-        shimmer ? "animate-shimmer" : "animate-pulse bg-muted",
+        shimmer ? "animate-shimmer" : "motion-safe:animate-pulse bg-muted",
         className
       )}
       {...props}

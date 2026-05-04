@@ -5,9 +5,10 @@
  *
  * Modal to create a new API key (name input + submit).
  * Displays the full key once after creation (show once warning).
+ * A11y: role=dialog, aria-modal, aria-labelledby, Escape to close, focus trap.
  */
 
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 
 interface Props {
@@ -27,6 +28,38 @@ export function ApiKeyCreateModal({ onCreated, onCancel }: Props) {
   const [name, setName] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const titleId = 'api-key-create-title';
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Escape key closes the modal
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') onCancel();
+    }
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [onCancel]);
+
+  // Focus trap: keep Tab/Shift+Tab inside dialog
+  const handleFocusTrap = useCallback((e: React.KeyboardEvent) => {
+    if (e.key !== 'Tab') return;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const focusable = Array.from(
+      dialog.querySelectorAll<HTMLElement>('button, input, [href], [tabindex]:not([tabindex="-1"])')
+    ).filter(el => !el.hasAttribute('disabled'));
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }, []);
 
   async function handleCreate() {
     if (!name.trim()) return;
@@ -49,13 +82,24 @@ export function ApiKeyCreateModal({ onCreated, onCancel }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-card rounded-2xl w-full max-w-md shadow-xl border border-border p-6 space-y-4">
-        <h2 className="text-lg font-semibold text-foreground">{t('create_key')}</h2>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      style={{ overscrollBehavior: 'contain' }}
+    >
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="bg-card rounded-2xl w-full max-w-md shadow-xl border border-border p-6 space-y-4"
+        onKeyDown={handleFocusTrap}
+      >
+        <h2 id={titleId} className="text-lg font-semibold text-foreground">{t('create_key')}</h2>
 
         <div>
           <label className="block text-sm font-medium text-foreground mb-1">{t('key_name')}</label>
           <input
+            ref={inputRef}
             type="text"
             value={name}
             onChange={e => setName(e.target.value)}
@@ -98,6 +142,35 @@ interface ShowKeyProps {
 export function ApiKeyShowModal({ apiKey, onDone }: ShowKeyProps) {
   const t = useTranslations('dashboard.apiKeys');
   const [copied, setCopied] = useState(false);
+  const showTitleId = 'api-key-show-title';
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') onDone();
+    }
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [onDone]);
+
+  const handleFocusTrap = useCallback((e: React.KeyboardEvent) => {
+    if (e.key !== 'Tab') return;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const focusable = Array.from(
+      dialog.querySelectorAll<HTMLElement>('button, [href], [tabindex]:not([tabindex="-1"])')
+    ).filter(el => !el.hasAttribute('disabled'));
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }, []);
 
   function handleCopy() {
     navigator.clipboard.writeText(apiKey).catch(() => {});
@@ -106,11 +179,21 @@ export function ApiKeyShowModal({ apiKey, onDone }: ShowKeyProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-card rounded-2xl w-full max-w-md shadow-xl border border-border p-6 space-y-4">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      style={{ overscrollBehavior: 'contain' }}
+    >
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={showTitleId}
+        className="bg-card rounded-2xl w-full max-w-md shadow-xl border border-border p-6 space-y-4"
+        onKeyDown={handleFocusTrap}
+      >
         <div className="flex items-center gap-2 text-amber-600">
-          <span className="material-symbols-outlined">warning</span>
-          <h2 className="text-lg font-semibold">{t('copy_now')}</h2>
+          <span className="material-symbols-outlined" aria-hidden="true">warning</span>
+          <h2 id={showTitleId} className="text-lg font-semibold">{t('copy_now')}</h2>
         </div>
 
         <p className="text-sm text-muted-foreground">{t('copy_warning')}</p>

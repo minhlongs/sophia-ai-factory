@@ -77,7 +77,7 @@ export function WorkflowTimeline({ workflowId, initialData, locale = 'en' }: Pro
           {statusLabel ? label(statusLabel) : data.status}
         </span>
         {isRunning && (
-          <span className="material-symbols-outlined text-base text-primary animate-spin">
+          <span className="material-symbols-outlined text-base text-primary motion-safe:animate-spin">
             progress_activity
           </span>
         )}

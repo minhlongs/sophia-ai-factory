@@ -74,7 +74,7 @@ export function InstallationWebhookTab({ installationId, onRegenSecret }: Props)
           disabled={isPending}
           className="text-amber-400 border-amber-800/50 hover:bg-amber-950/30"
         >
-          <RefreshCw className={`w-4 h-4 mr-2 ${isPending ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`w-4 h-4 mr-2 ${isPending ? 'motion-safe:animate-spin' : ''}`} />
           {t('regen')}
         </Button>
 

@@ -86,7 +86,7 @@ export function AgentFeedbackThumbs({ taskId, agentRole }: AgentFeedbackThumbsPr
           ].join(' ')}
         >
           {state === 'pending' && score === 1 ? (
-            <Loader2 size={14} className="animate-spin" />
+            <Loader2 size={14} className="motion-safe:animate-spin" />
           ) : (
             <ThumbsUp size={14} />
           )}
@@ -103,7 +103,7 @@ export function AgentFeedbackThumbs({ taskId, agentRole }: AgentFeedbackThumbsPr
           ].join(' ')}
         >
           {state === 'pending' && score === -1 ? (
-            <Loader2 size={14} className="animate-spin" />
+            <Loader2 size={14} className="motion-safe:animate-spin" />
           ) : (
             <ThumbsDown size={14} />
           )}

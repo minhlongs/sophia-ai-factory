@@ -84,7 +84,7 @@ export function HeyGenWebhooksClient({ locale }: Props) {
           disabled={loading}
           className="px-4 py-2 bg-violet-700 hover:bg-violet-600 disabled:opacity-50 text-white text-sm rounded-lg font-medium transition-colors"
         >
-          {loading ? '...' : isVi ? 'Đăng ký lại webhook' : 'Re-register Webhook'}
+          {loading ? '…' : isVi ? 'Đăng ký lại webhook' : 'Re-register Webhook'}
         </button>
         {regResult && (
           <div className={`rounded-lg border p-3 text-xs ${regResult.success ? 'border-emerald-800 bg-emerald-950/30 text-emerald-300' : 'border-red-800 bg-red-950/30 text-red-300'}`}>
@@ -113,7 +113,7 @@ export function HeyGenWebhooksClient({ locale }: Props) {
             disabled={loading || !userId.trim()}
             className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 disabled:opacity-50 text-white text-sm rounded-lg font-medium transition-colors"
           >
-            {loading ? '...' : isVi ? 'Tải' : 'Load'}
+            {loading ? '…' : isVi ? 'Tải' : 'Load'}
           </button>
         </div>
 

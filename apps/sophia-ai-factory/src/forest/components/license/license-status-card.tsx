@@ -55,13 +55,13 @@ export function LicenseStatusCard({ licenseNonce, compact = false }: LicenseStat
     return (
       <Card>
         <CardHeader>
-          <div className="animate-pulse space-y-2">
+          <div className="motion-safe:animate-pulse space-y-2">
             <div className="h-4 bg-muted rounded w-1/3" />
             <div className="h-3 bg-muted rounded w-1/4" />
           </div>
         </CardHeader>
         <CardContent>
-          <div className="animate-pulse space-y-4">
+          <div className="motion-safe:animate-pulse space-y-4">
             <div className="h-10 bg-muted rounded" />
             <div className="h-4 bg-muted rounded w-1/2" />
           </div>
@@ -119,7 +119,7 @@ export function LicenseStatusCard({ licenseNonce, compact = false }: LicenseStat
               onClick={() => refetch()}
               disabled={syncMutation.isPending}
             >
-              <RefreshCw className={`h-4 w-4 ${syncMutation.isPending ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`h-4 w-4 ${syncMutation.isPending ? 'motion-safe:animate-spin' : ''}`} />
             </Button>
           </div>
         </CardContent>
@@ -144,7 +144,7 @@ export function LicenseStatusCard({ licenseNonce, compact = false }: LicenseStat
             onClick={() => syncMutation.mutate()}
             disabled={syncMutation.isPending || license.status !== 'active'}
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${syncMutation.isPending ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-4 w-4 mr-2 ${syncMutation.isPending ? 'motion-safe:animate-spin' : ''}`} />
             Sync
           </Button>
         </div>

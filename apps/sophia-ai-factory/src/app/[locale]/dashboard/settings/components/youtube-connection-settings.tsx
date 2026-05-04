@@ -93,10 +93,10 @@ export function YouTubeConnectionSettings() {
   if (isLoading) {
     return (
       <div className="flex items-center gap-3 rounded-lg border p-4">
-        <div className="h-9 w-9 animate-pulse rounded-full bg-muted" />
+        <div className="h-9 w-9 motion-safe:animate-pulse rounded-full bg-muted" />
         <div className="space-y-1">
-          <div className="h-3 w-20 animate-pulse rounded bg-muted" />
-          <div className="h-3 w-28 animate-pulse rounded bg-muted" />
+          <div className="h-3 w-20 motion-safe:animate-pulse rounded bg-muted" />
+          <div className="h-3 w-28 motion-safe:animate-pulse rounded bg-muted" />
         </div>
       </div>
     );

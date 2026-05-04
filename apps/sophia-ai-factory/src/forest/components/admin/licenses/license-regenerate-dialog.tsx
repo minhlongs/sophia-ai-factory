@@ -122,7 +122,7 @@ export function LicenseRegenerateDialog({ licenseId: propLicenseId, onRegenerate
             className="bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] text-white font-semibold"
           >
             {loading ? (
-              <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Regenerating...</>
+              <><RefreshCw className="w-4 h-4 mr-2 motion-safe:animate-spin" />Regenerating…</>
             ) : (
               <><RefreshCw className="w-4 h-4 mr-2" />Regenerate Key</>
             )}

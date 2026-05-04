@@ -76,7 +76,7 @@ export function WorkflowStepRow({ step, locale = 'en' }: Props) {
 
           {/* Spinner for active steps */}
           {isRunning && (
-            <span className="material-symbols-outlined text-base text-primary animate-spin">
+            <span className="material-symbols-outlined text-base text-primary motion-safe:animate-spin">
               progress_activity
             </span>
           )}

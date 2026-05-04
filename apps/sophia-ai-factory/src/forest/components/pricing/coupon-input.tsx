@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import type { ValidateResult } from "@/land/promo/promo-types";
 
@@ -182,6 +182,37 @@ function FreeRedemptionModal({ modal, onClose, tLabel: t }: FreeRedemptionModalP
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
   const emailRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const freeTitleId = "free-redemption-modal-title";
+
+  // Escape key to close
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
+  // Focus trap
+  const handleFocusTrap = useCallback((e: React.KeyboardEvent) => {
+    if (e.key !== "Tab") return;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const focusable = Array.from(
+      dialog.querySelectorAll<HTMLElement>("button, input, [href], [tabindex]:not([tabindex=\"-1\"])")
+    ).filter(el => !el.hasAttribute("disabled"));
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -219,21 +250,30 @@ function FreeRedemptionModal({ modal, onClose, tLabel: t }: FreeRedemptionModalP
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+      style={{ overscrollBehavior: "contain" }}
+      onClick={onClose}
+    >
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={freeTitleId}
         className="w-full max-w-md rounded-2xl border border-emerald-500/20 bg-zinc-950/95 backdrop-blur-xl p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={handleFocusTrap}
       >
         {done ? (
           <div className="text-center space-y-3">
-            <div className="text-4xl">🎉</div>
-            <h3 className="text-lg font-bold text-white">Access Activated!</h3>
+            <div className="text-4xl" aria-hidden="true">🎉</div>
+            <h3 id={freeTitleId} className="text-lg font-bold text-white">Access Activated!</h3>
             <p className="text-sm text-zinc-400">Check your email for the magic login link.</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <h3 className="text-base font-bold text-white mb-1">
+              <h3 id={freeTitleId} className="text-base font-bold text-white mb-1">
                 {t("free_cta")} — <span className="text-emerald-400">{modal.code}</span>
               </h3>
               <p className="text-xs text-zinc-500">

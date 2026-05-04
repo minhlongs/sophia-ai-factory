@@ -72,7 +72,7 @@ export function ApiKeyInput({
         </button>
 
         <div className="absolute right-2 flex items-center gap-2">
-          {status === 'validating' && <Loader2 className="w-5 h-5 text-primary animate-spin" />}
+          {status === 'validating' && <Loader2 className="w-5 h-5 text-primary motion-safe:animate-spin" />}
           {status === 'valid' && <CheckCircle className="w-5 h-5 text-green-500" />}
           {status === 'invalid' && <XCircle className="w-5 h-5 text-destructive" />}
 

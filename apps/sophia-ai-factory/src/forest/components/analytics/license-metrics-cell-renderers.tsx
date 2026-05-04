@@ -80,5 +80,5 @@ export function formatExpiration(expiresAt: number | null): string {
   if (diffDays === 0) return 'Today';
   if (diffDays === 1) return 'Tomorrow';
   if (diffDays < 7) return `${diffDays} days`;
-  return date.toLocaleDateString('vi-VN');
+  return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(date);
 }

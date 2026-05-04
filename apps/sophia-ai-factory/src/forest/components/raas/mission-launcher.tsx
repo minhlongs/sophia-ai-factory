@@ -7,7 +7,7 @@
  * Checks MCU balance against tier limit from config/tiers.
  */
 
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 
@@ -56,6 +56,37 @@ export function MissionLauncher({ balance = 0, onClose, onSuccess }: Props) {
   const [params, setParams] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const titleId = 'mission-launcher-title';
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  // Escape key closes the modal
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose();
+    }
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [onClose]);
+
+  // Focus trap
+  const handleFocusTrap = useCallback((e: React.KeyboardEvent) => {
+    if (e.key !== 'Tab') return;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const focusable = Array.from(
+      dialog.querySelectorAll<HTMLElement>('button, input, a[href], [tabindex]:not([tabindex="-1"])')
+    ).filter(el => !el.hasAttribute('disabled'));
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }, []);
 
   const insufficient = selected ? balance < selected.mcu : false;
 
@@ -86,10 +117,20 @@ export function MissionLauncher({ balance = 0, onClose, onSuccess }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-card rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl border border-border">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      style={{ overscrollBehavior: 'contain' }}
+    >
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="bg-card rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl border border-border"
+        onKeyDown={handleFocusTrap}
+      >
         <div className="flex items-center justify-between p-5 border-b border-border">
-          <h2 className="text-lg font-semibold text-foreground">{t('launch_mission')}</h2>
+          <h2 id={titleId} className="text-lg font-semibold text-foreground">{t('launch_mission')}</h2>
           <button onClick={onClose} aria-label="Close" className="text-muted-foreground hover:text-foreground">
             <span className="material-symbols-outlined">close</span>
           </button>

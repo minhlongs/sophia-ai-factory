@@ -143,7 +143,7 @@ export function LocalModeStep() {
 
       {uiStatus === 'polling' && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="w-4 h-4 animate-spin" />
+          <Loader2 className="w-4 h-4 motion-safe:animate-spin" />
           Đang chờ installer hoàn tất… / Waiting for installer to complete…
         </div>
       )}

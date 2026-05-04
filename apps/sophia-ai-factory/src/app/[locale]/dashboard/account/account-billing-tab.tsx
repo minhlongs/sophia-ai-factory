@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/seed/components/ui/select';
 
 interface Purchase {
@@ -31,6 +31,7 @@ const STATUS_COLOR: Record<string, string> = {
 
 export function AccountBillingTab() {
   const t = useTranslations('account');
+  const locale = useLocale();
   const [filter, setFilter] = useState('all');
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,7 +52,7 @@ export function AccountBillingTab() {
   }, [filter, fetchHistory]);
 
   function formatAmount(cents: number) {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cents / 100);
+    return new Intl.NumberFormat(locale, { style: 'currency', currency: 'USD' }).format(cents / 100);
   }
 
   return (
@@ -71,7 +72,7 @@ export function AccountBillingTab() {
       </div>
 
       {loading ? (
-        <div className="py-10 text-center text-sm text-slate-500">Loading...</div>
+        <div className="py-10 text-center text-sm text-slate-500">Loading…</div>
       ) : purchases.length === 0 ? (
         <div className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">{t('billing_empty')}</div>
       ) : (
@@ -89,7 +90,7 @@ export function AccountBillingTab() {
               {purchases.map(p => (
                 <tr key={p.id} className="bg-white dark:bg-transparent hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors duration-150">
                   <td className="px-4 py-3 text-slate-700 dark:text-slate-300 whitespace-nowrap">
-                    {new Date(p.created_at * 1000).toLocaleDateString()}
+                    {new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(new Date(p.created_at * 1000))}
                   </td>
                   <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
                     {p.sku} <span className="text-xs text-slate-500">({p.kind})</span>

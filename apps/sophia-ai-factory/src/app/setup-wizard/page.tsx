@@ -320,7 +320,7 @@ export default function SetupWizardPage() {
                     className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-bold flex items-center gap-2 transition-transform hover:scale-105 ml-auto w-full justify-center sm:w-auto"
                 >
                     {loading ? (
-                        <>{t('actions.saving')} <Loader2 className="w-4 h-4 animate-spin" /></>
+                        <>{t('actions.saving')} <Loader2 className="w-4 h-4 motion-safe:animate-spin" /></>
                     ) : (
                         <>{t('actions.launch')} <Save className="w-4 h-4" /></>
                     )}

@@ -44,7 +44,7 @@ export function ChatMessageList({ messages, sending }: ChatMessageListProps) {
                 : 'bg-muted text-foreground'
             }`}
           >
-            {msg.content || (msg.role === 'assistant' && sending ? '...' : '')}
+            {msg.content || (msg.role === 'assistant' && sending ? '…' : '')}
           </div>
           {msg.role === 'assistant' && msg.reasoning && (
             <div className="w-full mt-0.5">

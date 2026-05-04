@@ -148,7 +148,7 @@ export function RedeemPageClient({ locale: _locale, isVi, initialCode }: Props) 
               className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               {submitting ? (
-                <Loader2 size={18} className="animate-spin" />
+                <Loader2 size={18} className="motion-safe:animate-spin" />
               ) : (
                 <>
                   {isVi ? 'Kích hoạt ngay' : 'Redeem now'}

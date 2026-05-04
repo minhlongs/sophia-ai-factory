@@ -49,7 +49,7 @@ export default async function StatusPage() {
         <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium mb-8 ${
           overallStatus === 'operational' ? 'bg-emerald-900/40 text-emerald-300 border border-emerald-700' : 'bg-amber-900/40 text-amber-300 border border-amber-700'
         }`}>
-          <span className={`w-2 h-2 rounded-full ${overallStatus === 'operational' ? 'bg-emerald-400' : 'bg-amber-400 animate-pulse'}`} />
+          <span className={`w-2 h-2 rounded-full ${overallStatus === 'operational' ? 'bg-emerald-400' : 'bg-amber-400 motion-safe:animate-pulse'}`} />
           {overallStatus === 'operational' ? 'All Systems Operational' : 'Degraded Performance'}
         </div>
 
@@ -62,7 +62,7 @@ export default async function StatusPage() {
                 <p className="font-semibold text-amber-300">{active.title}</p>
                 {active.description && <p className="text-amber-200/80 text-sm mt-1">{active.description}</p>}
                 <p className="text-amber-400/70 text-xs mt-2">
-                  Started {new Date(active.startedAt * 1000).toLocaleString()}
+                  Started {new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(active.startedAt * 1000))}
                 </p>
               </div>
             </div>

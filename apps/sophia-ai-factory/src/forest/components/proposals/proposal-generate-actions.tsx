@@ -44,7 +44,7 @@ export function ProposalGenerateActions({ formData, isGenerating, quality, onGen
         >
           {isGenerating ? (
             <>
-              <span className="material-symbols-outlined animate-spin text-base">progress_activity</span>
+              <span className="material-symbols-outlined motion-safe:animate-spin text-base">progress_activity</span>
               {t('generating')}
             </>
           ) : (

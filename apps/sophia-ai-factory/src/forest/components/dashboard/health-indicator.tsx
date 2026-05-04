@@ -53,7 +53,7 @@ export function HealthIndicator() {
         health?.status === 'healthy' ? 'bg-green-500' :
         health?.status === 'degraded' ? 'bg-yellow-500' :
         health?.status === 'unhealthy' ? 'bg-destructive' : 'bg-muted-foreground'
-      } animate-pulse`} />
+      } motion-safe:animate-pulse`} />
     </Link>
   );
 }

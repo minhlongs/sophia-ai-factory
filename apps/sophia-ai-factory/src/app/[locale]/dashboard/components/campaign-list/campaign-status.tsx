@@ -7,7 +7,7 @@ export function getStatusIcon(status: string) {
     case 'failed': return <AlertCircle className="w-5 h-5 text-destructive" />;
     case 'queued': return <Clock className="w-5 h-5 text-muted-foreground" />;
     case 'draft': return <FileText className="w-5 h-5 text-muted-foreground" />;
-    default: return <Loader2 className="w-5 h-5 text-primary animate-spin" />;
+    default: return <Loader2 className="w-5 h-5 text-primary motion-safe:animate-spin" />;
   }
 }
 

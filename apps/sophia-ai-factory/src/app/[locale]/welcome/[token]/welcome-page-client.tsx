@@ -50,7 +50,8 @@ export function WelcomePageClient({ token, isVi, locale }: Props) {
   if (loading) {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <Loader2 size={32} className="animate-spin text-violet-400" />
+        <Loader2 aria-hidden="true" size={32} className="animate-spin text-violet-400" />
+        <span className="sr-only">Loading…</span>
       </div>
     );
   }
@@ -69,7 +70,7 @@ export function WelcomePageClient({ token, isVi, locale }: Props) {
         <div className="absolute inset-0 bg-gradient-to-br from-violet-900/20 via-blue-900/10 to-transparent pointer-events-none" />
         <div className="max-w-2xl mx-auto px-6 pt-16 pb-12 text-center relative">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-500/20 border border-violet-500/40 text-violet-300 text-xs mb-6">
-            <Video size={12} />
+            <Video aria-hidden="true" size={12} />
             {isVi ? `Gói ${data.tier} đã kích hoạt` : `${data.tier} Plan Activated`}
           </div>
           <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">
@@ -105,9 +106,9 @@ export function WelcomePageClient({ token, isVi, locale }: Props) {
           <button
             onClick={() => void handleGetStarted()}
             disabled={started}
-            className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white font-semibold text-lg shadow-lg shadow-violet-900/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white font-semibold text-lg shadow-lg shadow-violet-900/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors transition-opacity focus-visible:ring-2 focus-visible:ring-violet-500/50 focus-visible:outline-none"
           >
-            {started ? <Loader2 size={20} className="animate-spin" /> : <Zap size={20} />}
+            {started ? <Loader2 aria-hidden="true" size={20} className="animate-spin" /> : <Zap aria-hidden="true" size={20} />}
             {isVi ? 'Bắt đầu ngay' : 'Get Started'}
           </button>
           <p className="text-xs text-zinc-600 mt-3">
@@ -170,9 +171,9 @@ function InvalidLinkView({
   if (sent) {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4">
-        <div className="max-w-md w-full text-center space-y-4">
+        <div aria-live="polite" className="max-w-md w-full text-center space-y-4">
           <div className="w-16 h-16 rounded-full bg-emerald-900/30 border border-emerald-500/40 flex items-center justify-center mx-auto">
-            <CheckCircle2 size={28} className="text-emerald-300" />
+            <CheckCircle2 aria-hidden="true" size={28} className="text-emerald-300" />
           </div>
           <h1 className="text-xl font-bold text-zinc-100">
             {isVi ? 'Đã gửi link mới' : 'New link sent'}
@@ -199,7 +200,7 @@ function InvalidLinkView({
         <div className="bg-zinc-900/80 backdrop-blur border border-red-500/30 rounded-2xl p-8 space-y-5">
           <div className="text-center space-y-2">
             <div className="w-14 h-14 rounded-full bg-red-900/30 border border-red-500/40 flex items-center justify-center mx-auto">
-              <AlertTriangle size={26} className="text-red-300" />
+              <AlertTriangle aria-hidden="true" size={26} className="text-red-300" />
             </div>
             <h1 className="text-xl font-bold text-zinc-100">
               {isVi ? 'Link không hợp lệ' : 'Invalid Link'}
@@ -214,12 +215,14 @@ function InvalidLinkView({
               {isVi ? 'Nhập email để nhận link mới' : 'Enter your email to get a new link'}
             </p>
             <form onSubmit={handleResend} className="space-y-3">
-              <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-zinc-950 border border-zinc-800 focus-within:border-violet-500">
-                <Mail size={16} className="text-zinc-500 flex-shrink-0" />
+              <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-zinc-950 border border-zinc-800 focus-within:border-violet-500 focus-within:ring-2 focus-within:ring-violet-500/40">
+                <Mail aria-hidden="true" size={16} className="text-zinc-500 flex-shrink-0" />
                 <input
                   type="email"
                   required
                   autoComplete="email"
+                  inputMode="email"
+                  spellCheck={false}
                   placeholder="email@congty.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -229,15 +232,15 @@ function InvalidLinkView({
               </div>
 
               {resendError && (
-                <p className="text-xs text-red-300 text-center">{resendError}</p>
+                <p role="alert" aria-live="polite" className="text-xs text-red-300 text-center">{resendError}</p>
               )}
 
               <button
                 type="submit"
-                disabled={submitting || !email}
-                className="w-full px-4 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                disabled={submitting}
+                className="w-full px-4 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-violet-500/50 focus-visible:outline-none"
               >
-                {submitting ? <Loader2 size={16} className="animate-spin" /> : null}
+                {submitting ? <Loader2 aria-hidden="true" size={16} className="animate-spin" /> : null}
                 {isVi ? 'Gửi link mới' : 'Send new link'}
               </button>
             </form>

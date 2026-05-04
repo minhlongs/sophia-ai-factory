@@ -113,7 +113,7 @@ export default function MfaPage() {
       <div className="rounded-xl border p-6 space-y-4">
         <div className="flex items-center justify-between">
           <span className="font-medium">Status</span>
-          <span className={`text-sm px-2 py-1 rounded-full ${mfaEnabled ? 'bg-green-100 text-green-700' : 'bg-muted text-muted-foreground'}`}>
+          <span aria-live="polite" className={`text-sm px-2 py-1 rounded-full ${mfaEnabled ? 'bg-green-100 text-green-700' : 'bg-muted text-muted-foreground'}`}>
             {mfaEnabled ? t('status_enabled') : t('status_disabled')}
           </span>
         </div>
@@ -123,9 +123,9 @@ export default function MfaPage() {
           <button
             onClick={handleSetup}
             disabled={loading}
-            className="w-full rounded-lg bg-primary text-primary-foreground py-2 px-4 font-medium hover:bg-primary/90 disabled:opacity-50"
+            className="w-full rounded-lg bg-primary text-primary-foreground py-2 px-4 font-medium hover:bg-primary/90 disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
           >
-            {loading ? '...' : t('setup_button')}
+            {loading ? 'Setting up…' : t('setup_button')}
           </button>
         )}
 
@@ -133,7 +133,7 @@ export default function MfaPage() {
         {status === 'idle' && mfaEnabled && (
           <button
             onClick={() => setStatus('disable')}
-            className="w-full rounded-lg border border-destructive text-destructive py-2 px-4 font-medium hover:bg-destructive/10"
+            className="w-full rounded-lg border border-destructive text-destructive py-2 px-4 font-medium hover:bg-destructive/10 focus-visible:ring-2 focus-visible:ring-destructive/50 focus-visible:outline-none"
           >
             {t('disable_button')}
           </button>
@@ -149,24 +149,27 @@ export default function MfaPage() {
             </div>
             <p className="text-xs text-center font-mono break-all text-muted-foreground">{setupData.secret}</p>
             <div className="space-y-2">
-              <label className="text-sm font-medium">{t('code_label')}</label>
+              <label htmlFor="mfa-setup-code" className="text-sm font-medium">{t('code_label')}</label>
               <input
+                id="mfa-setup-code"
                 type="text"
                 inputMode="numeric"
+                autoComplete="one-time-code"
+                spellCheck={false}
                 maxLength={6}
                 value={code}
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
                 placeholder={t('code_placeholder')}
-                className="w-full rounded-lg border px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full rounded-lg border px-3 py-2 text-sm font-mono tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               />
             </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error && <p role="alert" aria-live="polite" className="text-sm text-destructive">{error}</p>}
             <button
               onClick={handleVerify}
               disabled={loading || code.length !== 6}
-              className="w-full rounded-lg bg-primary text-primary-foreground py-2 px-4 font-medium hover:bg-primary/90 disabled:opacity-50"
+              className="w-full rounded-lg bg-primary text-primary-foreground py-2 px-4 font-medium hover:bg-primary/90 disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
             >
-              {loading ? '...' : t('verify_button')}
+              {loading ? 'Verifying…' : t('verify_button')}
             </button>
           </div>
         )}
@@ -185,7 +188,7 @@ export default function MfaPage() {
             </div>
             <button
               onClick={() => setStatus('idle')}
-              className="w-full rounded-lg bg-primary text-primary-foreground py-2 px-4 font-medium hover:bg-primary/90"
+              className="w-full rounded-lg bg-primary text-primary-foreground py-2 px-4 font-medium hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
             >
               {t('backup_codes_done')}
             </button>
@@ -198,31 +201,34 @@ export default function MfaPage() {
             <h2 className="font-semibold">{t('disable_title')}</h2>
             <p className="text-sm text-muted-foreground">{t('disable_description')}</p>
             <div className="space-y-2">
-              <label className="text-sm font-medium">{t('code_label')}</label>
+              <label htmlFor="mfa-disable-code" className="text-sm font-medium">{t('code_label')}</label>
               <input
+                id="mfa-disable-code"
                 type="text"
                 inputMode="numeric"
+                autoComplete="one-time-code"
+                spellCheck={false}
                 maxLength={6}
                 value={code}
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
                 placeholder={t('code_placeholder')}
-                className="w-full rounded-lg border px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full rounded-lg border px-3 py-2 text-sm font-mono tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               />
             </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error && <p role="alert" aria-live="polite" className="text-sm text-destructive">{error}</p>}
             <div className="flex gap-3">
               <button
                 onClick={() => { setStatus('idle'); setCode(''); setError(''); }}
-                className="flex-1 rounded-lg border py-2 px-4 font-medium hover:bg-muted"
+                className="flex-1 rounded-lg border py-2 px-4 font-medium hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDisable}
                 disabled={loading || code.length !== 6}
-                className="flex-1 rounded-lg bg-destructive text-destructive-foreground py-2 px-4 font-medium hover:bg-destructive/90 disabled:opacity-50"
+                className="flex-1 rounded-lg bg-destructive text-destructive-foreground py-2 px-4 font-medium hover:bg-destructive/90 disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-destructive/50 focus-visible:outline-none"
               >
-                {loading ? '...' : t('disable_button')}
+                {loading ? 'Disabling…' : t('disable_button')}
               </button>
             </div>
           </div>

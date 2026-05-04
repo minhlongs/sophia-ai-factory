@@ -81,6 +81,6 @@ export function StepConnectivityCheck({ locale, onComplete }: Props) {
 
 function SpinnerIcon() {
   return (
-    <div className="w-5 h-5 border-2 border-violet-400 border-t-transparent rounded-full animate-spin" />
+    <div className="w-5 h-5 border-2 border-violet-400 border-t-transparent rounded-full motion-safe:animate-spin" />
   );
 }

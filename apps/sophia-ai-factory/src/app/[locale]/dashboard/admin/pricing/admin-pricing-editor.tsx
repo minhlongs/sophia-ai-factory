@@ -107,7 +107,7 @@ export function AdminPricingEditor({ locale }: Props) {
                     disabled={saving === row.sku || !editValues[row.sku]}
                     className="px-3 py-1 bg-violet-700 hover:bg-violet-600 disabled:opacity-50 text-white text-xs rounded font-medium transition-colors"
                   >
-                    {saving === row.sku ? '...' : (isVi ? 'Lưu' : 'Save')}
+                    {saving === row.sku ? '…' : (isVi ? 'Lưu' : 'Save')}
                   </button>
                   {saveResult[row.sku] && (
                     <span className="text-xs text-emerald-400">{saveResult[row.sku]}</span>

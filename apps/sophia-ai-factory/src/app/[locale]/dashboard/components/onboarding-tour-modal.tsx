@@ -6,7 +6,7 @@
  * Persists dismissal to localStorage; calls API to mark complete on finish.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { X, ChevronRight, ChevronLeft } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/seed/components/ui/button';
@@ -24,15 +24,54 @@ export function OnboardingTourModal({ userId, onComplete }: OnboardingTourModalP
   const [visible, setVisible] = useState(false);
   const [step, setStep] = useState(1);
   const [completing, setCompleting] = useState(false);
+  const titleId = 'onboarding-tour-title';
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const dismissed = localStorage.getItem(STORAGE_KEY);
-    if (!dismissed) setVisible(true);
+    if (!dismissed) {
+      // Save the element that opened the modal so focus can return on close
+      triggerRef.current = document.activeElement as HTMLElement;
+      setVisible(true);
+    }
+  }, []);
+
+  // Escape key closes modal
+  useEffect(() => {
+    if (!visible) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') handleSkip();
+    }
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible]);
+
+  // Focus trap
+  const handleFocusTrap = useCallback((e: React.KeyboardEvent) => {
+    if (e.key !== 'Tab') return;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const focusable = Array.from(
+      dialog.querySelectorAll<HTMLElement>('button, [href], [tabindex]:not([tabindex="-1"])')
+    ).filter(el => !el.hasAttribute('disabled'));
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
   }, []);
 
   function handleSkip() {
     localStorage.setItem(STORAGE_KEY, '1');
     setVisible(false);
+    triggerRef.current?.focus();
   }
 
   async function handleFinish() {
@@ -49,6 +88,7 @@ export function OnboardingTourModal({ userId, onComplete }: OnboardingTourModalP
     localStorage.setItem(STORAGE_KEY, '1');
     setCompleting(false);
     setVisible(false);
+    triggerRef.current?.focus();
     onComplete?.();
   }
 
@@ -65,8 +105,18 @@ export function OnboardingTourModal({ userId, onComplete }: OnboardingTourModalP
   const current = steps[step - 1];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="relative w-full max-w-md bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-xl rounded-2xl p-6">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+      style={{ overscrollBehavior: 'contain' }}
+    >
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="relative w-full max-w-md bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-xl rounded-2xl p-6"
+        onKeyDown={handleFocusTrap}
+      >
         {/* Skip button */}
         <button
           onClick={handleSkip}
@@ -78,7 +128,7 @@ export function OnboardingTourModal({ userId, onComplete }: OnboardingTourModalP
 
         {/* Header */}
         <div className="mb-6">
-          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">{t('title')}</h2>
+          <h2 id={titleId} className="text-lg font-bold text-slate-900 dark:text-slate-100">{t('title')}</h2>
           <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{t('subtitle')}</p>
         </div>
 
