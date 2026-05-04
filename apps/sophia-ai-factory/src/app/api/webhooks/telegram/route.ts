@@ -22,6 +22,14 @@ import {
 } from '@/tree/telegram/telegram-bot-campaign-handlers'
 import { TelegramFSM } from '@/tree/telegram/telegram-fsm-state-manager'
 import { createServerClient } from '@/seed/db/client'
+import { sendTelegramMessage } from '@/tree/telegram/telegram-client'
+import {
+  isAllowed,
+  requestPairing,
+  approvePairing,
+  listPaired,
+  revokePairing,
+} from '@/lib/telegram/pairing'
 
 interface TelegramUpdate {
   callback_query?: {
@@ -30,7 +38,7 @@ interface TelegramUpdate {
   }
   message?: {
     text?: string
-    chat?: { id?: number | string }
+    chat?: { id?: number | string; first_name?: string }
   }
 }
 
@@ -38,6 +46,10 @@ interface TelegramUpdate {
  * Telegram Webhook Handler
  * Processes incoming updates from Telegram Bot API
  * Supports: text commands, callback queries (inline keyboards)
+ *
+ * DM Pairing gate: unknown senders receive a pairing code.
+ * Admin approves with /pair_approve <CODE>.
+ * See src/lib/telegram/pairing.ts for full flow.
  */
 export async function POST(request: NextRequest) {
   // Degrade gracefully when Telegram bot is not configured
@@ -82,7 +94,73 @@ export async function POST(request: NextRequest) {
     }
 
     const chatId = message.chat.id.toString()
+    const firstName = message.chat.first_name ?? ''
     const text = message.text.trim()
+    const adminChatId = process.env.TELEGRAM_ADMIN_CHAT_ID
+
+    // ── Admin-only pairing commands (processed before allowlist gate) ──────────
+    if (adminChatId && chatId === adminChatId) {
+      if (text.startsWith('/pair_approve')) {
+        const code = text.replace('/pair_approve', '').trim()
+        if (!code) {
+          await sendTelegramMessage(chatId, 'Usage: /pair\\_approve <CODE>')
+          return NextResponse.json({ ok: true })
+        }
+        const db = createServerClient()
+        const result = await approvePairing(db, code, chatId)
+        if (!result) {
+          await sendTelegramMessage(chatId, 'Code not found or expired.')
+          return NextResponse.json({ ok: true })
+        }
+        await sendTelegramMessage(chatId, `Approved. Chat \`${result.chatId}\` added.`)
+        await sendTelegramMessage(result.chatId, 'You have been approved! Send /start to begin.')
+        return NextResponse.json({ ok: true })
+      }
+
+      if (text === '/pair_list') {
+        const db = createServerClient()
+        const rows = await listPaired(db)
+        if (rows.length === 0) {
+          await sendTelegramMessage(chatId, 'No paired chats.')
+          return NextResponse.json({ ok: true })
+        }
+        const lines = rows.map(
+          (r) => `• \`${r.chat_id}\` ${r.first_name ?? '—'} (${r.paired_at.slice(0, 10)})`
+        )
+        await sendTelegramMessage(chatId, `*Paired chats:*\n${lines.join('\n')}`)
+        return NextResponse.json({ ok: true })
+      }
+
+      if (text.startsWith('/pair_revoke')) {
+        const targetId = text.replace('/pair_revoke', '').trim()
+        if (!targetId) {
+          await sendTelegramMessage(chatId, 'Usage: /pair\\_revoke <CHAT\\_ID>')
+          return NextResponse.json({ ok: true })
+        }
+        const db = createServerClient()
+        const removed = await revokePairing(db, targetId)
+        await sendTelegramMessage(
+          chatId,
+          removed ? `Revoked \`${targetId}\`.` : `Chat \`${targetId}\` not found.`
+        )
+        return NextResponse.json({ ok: true })
+      }
+    }
+
+    // ── DM pairing gate ────────────────────────────────────────────────────────
+    // Skip gate for admin and when TELEGRAM_ADMIN_CHAT_ID is not set (open mode)
+    if (adminChatId && chatId !== adminChatId) {
+      const db = createServerClient()
+      const allowed = await isAllowed(db, chatId)
+      if (!allowed) {
+        const { code } = await requestPairing(db, chatId, firstName)
+        await sendTelegramMessage(
+          chatId,
+          `Hi! To use Sophia bot, ask the admin to approve you.\n\nYour pairing code: \`${code}\`\n\n_Code expires in 15 minutes._`
+        )
+        return NextResponse.json({ ok: true })
+      }
+    }
 
     // Route commands through middleware (rate limiting)
     await withMiddleware(chatId, async () => {

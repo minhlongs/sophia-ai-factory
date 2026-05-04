@@ -15,6 +15,16 @@ import { createServerClient } from '@/seed/db/client';
 import { getVideoBucket } from '@/lib/video/r2-binding';
 import { uploadToR2 } from '@/lib/video/r2-multipart-upload';
 import { logger } from '@/seed/utils/logger-utility';
+import {
+  enforceFileSizeLimit,
+  enforceMimeAllowlist,
+  FileUploadPolicyError,
+} from '@/seed/security/file-upload-policy';
+
+/** 10 MB ceiling for reference audio — voices rarely exceed a few MB */
+const VOICE_MAX_BYTES = 10 * 1024 * 1024;
+/** Allowed audio MIME types for reference voice uploads */
+const VOICE_MIME_ALLOWLIST = ['audio/wav', 'audio/x-wav', 'audio/mpeg', 'audio/ogg', 'audio/webm', 'audio/mp4'] as const;
 
 const SUPPORTED_LANGUAGES = ['en', 'vi', 'es', 'fr', 'de', 'ja', 'ko', 'zh', 'pt', 'ru', 'ar', 'it', 'pl', 'nl', 'tr', 'cs'] as const;
 
@@ -38,6 +48,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   const tenantId = (user as unknown as { tenantId?: string }).tenantId ?? user.id;
+
+  // Policy: size ceiling (early reject before reading body)
+  try {
+    enforceFileSizeLimit(request, VOICE_MAX_BYTES);
+  } catch (err) {
+    if (err instanceof FileUploadPolicyError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
+    throw err;
+  }
 
   let formData: FormData;
   try {
@@ -66,12 +86,24 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'audio file is required' }, { status: 400 });
   }
 
+  // Policy: MIME allowlist — check declared type from the file entry
+  const declaredMime = audioFile instanceof File ? (audioFile.type || 'audio/wav') : 'audio/wav';
+  try {
+    enforceMimeAllowlist(declaredMime, VOICE_MIME_ALLOWLIST);
+  } catch (err) {
+    if (err instanceof FileUploadPolicyError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
+    throw err;
+  }
+
   const bucketRef = await getVideoBucket();
   if (!bucketRef) {
     return NextResponse.json({ error: 'Storage unavailable' }, { status: 503 });
   }
 
   const voiceId = randomId();
+  // Policy: hardcoded prefix — user controls nothing about the R2 key path
   const r2Key = `tenants/${tenantId}/voices/${voiceId}/ref.wav`;
 
   try {

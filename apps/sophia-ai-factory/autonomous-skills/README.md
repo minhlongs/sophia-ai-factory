@@ -1,6 +1,12 @@
-# OpenClaw Autonomous Skills - CHÚA CHÙM System
+# Autonomous Skills — CHÚA CHÙM System
 
 > **CHÚA CHÙM** = Autonomous AI agents running 24/7 without human intervention
+>
+> Note: previously named `openclaw/`. Renamed 2026-05-03 to disambiguate
+> from the public project at github.com/openclaw/openclaw (a personal AI
+> assistant gateway, unrelated to Sophia's video-factory pipeline). The
+> Sophia-internal orchestrator code at `src/lib/openclaw/` retains the
+> codename for now (Phase 12 commit history).
 
 ## 🚀 Quick Start
 
