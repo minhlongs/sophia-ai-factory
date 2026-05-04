@@ -40,6 +40,89 @@ async function refreshInstagramLongLivedToken(
   return res.json() as Promise<{ access_token: string; expires_in: number }>;
 }
 
+/** Pinterest: standard OAuth2 refresh_token grant */
+async function refreshPinterestToken(
+  refreshToken: string,
+): Promise<{ access_token: string; expires_in: number }> {
+  const clientId = process.env.PINTEREST_CLIENT_ID;
+  const clientSecret = process.env.PINTEREST_CLIENT_SECRET;
+  if (!clientId || !clientSecret) {
+    throw new Error('PINTEREST_CLIENT_ID / PINTEREST_CLIENT_SECRET not configured');
+  }
+  const credentials = btoa(`${clientId}:${clientSecret}`);
+  const res = await fetch('https://api.pinterest.com/v5/oauth/token', {
+    method: 'POST',
+    headers: {
+      Authorization: `Basic ${credentials}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({ grant_type: 'refresh_token', refresh_token: refreshToken }),
+  });
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new Error(`Pinterest token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
+  }
+  return res.json() as Promise<{ access_token: string; expires_in: number }>;
+}
+
+/** LinkedIn: standard OAuth2 refresh_token grant */
+async function refreshLinkedInToken(
+  refreshToken: string,
+): Promise<{ access_token: string; expires_in: number }> {
+  const clientId = process.env.LINKEDIN_CLIENT_ID;
+  const clientSecret = process.env.LINKEDIN_CLIENT_SECRET;
+  if (!clientId || !clientSecret) {
+    throw new Error('LINKEDIN_CLIENT_ID / LINKEDIN_CLIENT_SECRET not configured');
+  }
+  const res = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'refresh_token',
+      refresh_token: refreshToken,
+      client_id: clientId,
+      client_secret: clientSecret,
+    }),
+  });
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new Error(`LinkedIn token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
+  }
+  return res.json() as Promise<{ access_token: string; expires_in: number }>;
+}
+
+/** Zalo OA: standard OAuth2 refresh_token grant */
+async function refreshZaloToken(
+  refreshToken: string,
+): Promise<{ access_token: string; expires_in: number }> {
+  const appId = process.env.ZALO_APP_ID;
+  const appSecret = process.env.ZALO_APP_SECRET;
+  if (!appId || !appSecret) {
+    throw new Error('ZALO_APP_ID / ZALO_APP_SECRET not configured');
+  }
+  const res = await fetch('https://oauth.zaloapp.com/v4/oa/access_token', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      secret_key: appSecret,
+    },
+    body: new URLSearchParams({
+      app_id: appId,
+      grant_type: 'refresh_token',
+      refresh_token: refreshToken,
+    }),
+  });
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new Error(`Zalo token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
+  }
+  const data = (await res.json()) as { access_token?: string; expires_in?: number; error?: number; message?: string };
+  if (data.error && data.error !== 0) {
+    throw new Error(`Zalo token refresh error ${data.error}: ${data.message ?? 'unknown'}`);
+  }
+  return { access_token: data.access_token ?? '', expires_in: data.expires_in ?? 86400 };
+}
+
 /**
  * Acquire per-channel row-lock via D1 raw SQL (C7).
  * D1QueryChain has no .or() — must use raw prepare().
@@ -107,6 +190,27 @@ export async function refreshChannelToken(channel: PublishingChannel): Promise<n
       case 'instagram': {
         // FB long-lived token re-exchange — no refresh_token concept
         const r = await refreshInstagramLongLivedToken(decrypted);
+        newAccessToken = r.access_token;
+        expiresIn = r.expires_in;
+        break;
+      }
+      case 'pinterest': {
+        if (!refreshToken) throw new Error('Pinterest refresh token missing');
+        const r = await refreshPinterestToken(refreshToken);
+        newAccessToken = r.access_token;
+        expiresIn = r.expires_in;
+        break;
+      }
+      case 'linkedin': {
+        if (!refreshToken) throw new Error('LinkedIn refresh token missing');
+        const r = await refreshLinkedInToken(refreshToken);
+        newAccessToken = r.access_token;
+        expiresIn = r.expires_in;
+        break;
+      }
+      case 'zalo': {
+        if (!refreshToken) throw new Error('Zalo refresh token missing');
+        const r = await refreshZaloToken(refreshToken);
         newAccessToken = r.access_token;
         expiresIn = r.expires_in;
         break;
