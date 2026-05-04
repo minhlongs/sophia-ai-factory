@@ -27,6 +27,7 @@ import {
   Webhook,
   ServerCog,
 } from "lucide-react";
+import { ReplayTourLink } from "./components/replay-tour-link";
 import { HealthIndicator } from "@/forest/components/dashboard/health-indicator";
 import { MobileNav } from "@/seed/components/ui/mobile-nav";
 import { ThemeToggle } from "@/forest/components/theme-toggle";
@@ -262,6 +263,7 @@ export default async function DashboardLayout({
             <Settings className="w-5 h-5" />
             <span className="font-medium">{t('sidebar.settings')}</span>
           </Link>
+          <ReplayTourLink label={t('sidebar.replay_tour')} />
         </nav>
 
         <div className="p-4 border-t border-border space-y-2">

@@ -100,7 +100,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {isFirstLogin && <OnboardingTourModal userId={user.id} />}
+      <OnboardingTourModal userId={user.id} tier={tierLabel} />
 
       <DashboardHeroGreeting name={user.full_name} tier={tierLabel} />
       {/* Mission Control Widget — GAP3 composite hero */}
