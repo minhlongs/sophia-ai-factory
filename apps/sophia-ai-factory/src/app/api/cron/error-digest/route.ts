@@ -13,6 +13,7 @@ import { pushFatalLog } from '@/lib/telemetry/better-stack-client';
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
 import { getErrorMessage } from '@/seed/utils/to-error';
 import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker';
+import { emit } from '@/lib/webhooks/emitter';
 
 export const dynamic = 'force-dynamic';
 
@@ -181,6 +182,22 @@ async function handler(request: NextRequest): Promise<NextResponse> {
   const summary = await callOpenRouter(rows);
   const errorCount = rows.reduce((acc, r) => acc + r.c, 0);
   const dateStr = new Date().toISOString().slice(0, 10);
+
+  // Emit error.threshold webhook when total 24h error count exceeds threshold
+  const ERROR_THRESHOLD = 10;
+  if (errorCount > ERROR_THRESHOLD) {
+    const sampleErrors = rows.slice(0, 5).map(r => ({
+      message: r.msg_class,
+      timestamp: new Date().toISOString(),
+    }));
+    const severity = errorCount > 100 ? 'critical' : errorCount > 50 ? 'high' : 'medium';
+    emit({ DB: db as D1Database }, 'error.threshold', {
+      tenantId: 'system',
+      errorCount24h: errorCount,
+      severity,
+      sampleErrors,
+    }, 'system');
+  }
 
   const report =
     rows.length === 0

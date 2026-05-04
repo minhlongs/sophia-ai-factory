@@ -85,12 +85,12 @@ const INTEGRATIONS: Integration[] = [
   },
   {
     id: 'webhook',
-    name: 'Outbound Webhook',
-    description: 'Receive mission completion events via HMAC-signed POST requests',
+    name: 'Outbound Webhooks',
+    description: 'Receive mission completion, video, and payment events via HMAC-signed POST requests. Connect to Slack, Zapier, n8n, or your own server.',
     provider: 'sophia_webhook_secret',
     status: 'live',
     icon: 'webhook',
-    configureUrl: '/dashboard/settings',
+    configureUrl: '/dashboard/integrations/webhooks',
   },
 ];
 
