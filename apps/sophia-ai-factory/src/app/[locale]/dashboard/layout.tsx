@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import React, { Suspense } from "react";
 import Link from "next/link";
-import { useTranslations } from 'next-intl';
+import { getTranslations } from 'next-intl/server';
 import {
   LayoutDashboard,
   PlusCircle,
@@ -60,8 +60,8 @@ export default async function DashboardLayout({
   children: React.ReactNode;
   params: Promise<{ locale: string }>;
 }) {
-  const t = useTranslations('dashboard');
   const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'dashboard' });
   const currentUser = await getCurrentUser();
   const isAdmin = currentUser?.role === 'admin';
   const trialEndsAt = currentUser ? await getUserTrialEndsAt(currentUser.id) : null;
