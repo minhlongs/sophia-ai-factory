@@ -61,14 +61,13 @@ export function WelcomePageClient({ token, isVi, locale }: Props) {
   }
 
   const steps = buildOnboardingSteps(data, locale);
-  const completedCount = steps.filter((s) => s.done).length;
 
   return (
     <div className="min-h-screen bg-zinc-950">
       {/* Hero */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-violet-900/20 via-blue-900/10 to-transparent pointer-events-none" />
-        <div className="max-w-2xl mx-auto px-6 pt-16 pb-12 text-center relative">
+        <div className="max-w-2xl mx-auto px-6 pt-16 pb-10 text-center relative">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-500/20 border border-violet-500/40 text-violet-300 text-xs mb-6">
             <Video aria-hidden="true" size={12} />
             {isVi ? `Gói ${data.tier} đã kích hoạt` : `${data.tier} Plan Activated`}
@@ -78,31 +77,13 @@ export function WelcomePageClient({ token, isVi, locale }: Props) {
             <br />
             <span className="bg-gradient-to-r from-violet-400 to-blue-400 bg-clip-text text-transparent">{data.agencyName}</span>
           </h1>
-          <p className="text-zinc-400 text-lg max-w-md mx-auto">
+          <p className="text-zinc-400 text-lg max-w-md mx-auto mb-8">
             {isVi
-              ? 'Tài khoản của bạn đã sẵn sàng. Hoàn thành các bước bên dưới để bắt đầu tự động hóa marketing.'
-              : 'Your account is ready. Complete the steps below to start automating your marketing.'}
+              ? 'Tài khoản đã sẵn sàng. Nhấn nút bên dưới để vào Setup Wizard cấu hình API keys.'
+              : 'Your account is ready. Click below to enter the Setup Wizard and configure your API keys.'}
           </p>
-        </div>
-      </div>
 
-      {/* Progress */}
-      <div className="max-w-2xl mx-auto px-6 pb-4">
-        <div className="flex items-center justify-between text-sm text-zinc-400 mb-2">
-          <span>{isVi ? `${completedCount} trong ${steps.length} bước` : `${completedCount} of ${steps.length} steps`}</span>
-          <span className="text-violet-400 font-medium">{Math.round((completedCount / steps.length) * 100)}%</span>
-        </div>
-        <div className="h-1.5 rounded-full bg-zinc-800">
-          <div className="h-full rounded-full bg-gradient-to-r from-violet-600 to-blue-500 transition-all duration-500" style={{ width: `${(completedCount / steps.length) * 100}%` }} />
-        </div>
-      </div>
-
-      {/* Steps */}
-      <div className="max-w-2xl mx-auto px-6 pb-16 space-y-4">
-        {steps.map((s) => <StepCard key={s.id} step={s} isVi={isVi} />)}
-
-        {/* CTA */}
-        <div className="pt-4 text-center">
+          {/* Primary CTA — surfaced first, no fake progress bar */}
           <button
             onClick={() => void handleGetStarted()}
             disabled={started}
@@ -112,8 +93,18 @@ export function WelcomePageClient({ token, isVi, locale }: Props) {
             {isVi ? 'Bắt đầu ngay' : 'Get Started'}
           </button>
           <p className="text-xs text-zinc-600 mt-3">
-            {isVi ? 'Link này chỉ dùng 1 lần. Sau khi nhấn, bạn sẽ được chuyển đến dashboard.' : "One-time link. After clicking, you'll be redirected to your dashboard."}
+            {isVi ? 'Link này chỉ dùng 1 lần.' : 'This link is single-use.'}
           </p>
+        </div>
+      </div>
+
+      {/* Roadmap preview — informational, not a progress checklist */}
+      <div className="max-w-2xl mx-auto px-6 pb-16">
+        <h2 className="text-sm font-medium text-zinc-400 mb-4 text-center uppercase tracking-wider">
+          {isVi ? 'Lộ trình kích hoạt' : 'Activation Roadmap'}
+        </h2>
+        <div className="space-y-3">
+          {steps.map((s) => <StepCard key={s.id} step={s} isVi={isVi} />)}
         </div>
       </div>
     </div>
