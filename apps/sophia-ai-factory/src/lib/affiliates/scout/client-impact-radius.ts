@@ -1,6 +1,7 @@
 /**
  * Impact Radius network client stub.
  * Fetches from Impact Radius API when IMPACT_RADIUS_API_KEY is set.
+ * Accepts optional credentialsOverride for per-tenant BYOK (takes precedence over env).
  * Falls back to empty array with a logged warning if missing.
  * @module lib/affiliates/scout/client-impact-radius
  */
@@ -10,14 +11,20 @@ import { logger } from '@/seed/utils/logger-utility';
 
 type AffiliateRaw = Omit<Affiliate, 'id' | 'tenantId' | 'discoveredAt'>;
 
+/** Per-tenant credential override for Impact Radius */
+export interface ImpactRadiusOverride {
+  client_id: string;
+  client_secret: string;
+}
+
 const API_BASE = 'https://api.impact.com/Mediapartners';
 
 /** Impact Radius client — stub implementation. Real API wired when key present. */
 export const impactRadiusClient: NetworkClient = {
   network: 'impact_radius',
 
-  async fetch(env: ScoutEnv, _tenantId: string): Promise<AffiliateRaw[]> {
-    const apiKey = env.IMPACT_RADIUS_API_KEY;
+  async fetch(env: ScoutEnv, _tenantId: string, credentialsOverride?: Record<string, string>): Promise<AffiliateRaw[]> {
+    const apiKey = credentialsOverride?.['client_secret'] ?? env.IMPACT_RADIUS_API_KEY;
 
     if (!apiKey) {
       logger.warn('[affiliate-scout] IMPACT_RADIUS_API_KEY not set — skipping network');

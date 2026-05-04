@@ -410,7 +410,11 @@
       "workflows": "Quy Trình",
       "orders": "Đơn Hàng",
       "sop_marketplace": "Kho SOP",
-      "my_sops": "SOP Của Tôi"
+      "my_sops": "SOP Của Tôi",
+      "integrations": "Tích Hợp",
+      "byok": "Khóa Nhà Cung Cấp",
+      "webhooks": "Webhooks",
+      "credits": "MCU Credits"
     },
     "missions": {
       "page_title": "Nhiệm Vụ AI",
@@ -810,6 +814,29 @@
       "cta": "Mua Credits"
     },
     "integrations": {
+      "page_title": "Tích Hợp",
+      "page_subtitle": "Kết nối kênh, webhook, mạng affiliate và khóa API nhà cung cấp.",
+      "section_channels": "Kênh Đăng Tải",
+      "section_channels_desc": "Đăng nội dung trực tiếp lên các nền tảng mạng xã hội.",
+      "section_webhooks": "Webhooks",
+      "section_webhooks_desc": "Nhận sự kiện thời gian thực qua HTTP POST có ký HMAC.",
+      "section_affiliates": "Mạng Affiliate",
+      "section_affiliates_desc": "Theo dõi hoa hồng và khám phá chương trình đối tác.",
+      "section_byok": "Khóa Nhà Cung Cấp (BYOK)",
+      "section_byok_desc": "Dùng khóa API riêng cho LLM, giọng nói và nhà cung cấp avatar.",
+      "status_connected": "Đã kết nối",
+      "status_not_connected": "Chưa kết nối",
+      "status_action_needed": "Cần thao tác",
+      "btn_connect": "Kết nối",
+      "btn_reconfigure": "Cấu hình lại",
+      "btn_configure": "Cấu hình",
+      "btn_manage": "Quản lý",
+      "badge_new": "MỚI",
+      "badge_live": "live",
+      "badge_beta": "beta",
+      "badge_soon": "sắp ra",
+      "info_title": "Cách tích hợp hoạt động",
+      "info_body": "Mỗi tích hợp mở khóa các lệnh AI cụ thể. Khóa API của bạn được mã hóa và lưu trữ an toàn. Tích hợp BETA sử dụng dữ liệu mẫu trong khi tích hợp đầy đủ đang được phát triển.",
       "webhooks": {
         "page_title": "Webhooks",
         "page_subtitle": "Nhận sự kiện thời gian thực về server của bạn, Slack, Zapier hoặc n8n.",

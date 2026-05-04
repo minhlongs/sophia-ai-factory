@@ -410,7 +410,11 @@
       "workflows": "Workflows",
       "orders": "My Orders",
       "sop_marketplace": "SOP Marketplace",
-      "my_sops": "My SOPs"
+      "my_sops": "My SOPs",
+      "integrations": "Integrations",
+      "byok": "Provider Keys / BYOK",
+      "webhooks": "Webhooks",
+      "credits": "MCU Credits"
     },
     "missions": {
       "page_title": "AI Missions",
@@ -810,6 +814,29 @@
       "cta": "Buy Credits"
     },
     "integrations": {
+      "page_title": "Integrations",
+      "page_subtitle": "Connect channels, webhooks, affiliate networks, and provider keys.",
+      "section_channels": "Channels",
+      "section_channels_desc": "Publish content directly to social platforms.",
+      "section_webhooks": "Webhooks",
+      "section_webhooks_desc": "Receive real-time events via HMAC-signed HTTP POST.",
+      "section_affiliates": "Affiliate Networks",
+      "section_affiliates_desc": "Track commissions and discover partner programs.",
+      "section_byok": "Provider Keys (BYOK)",
+      "section_byok_desc": "Bring your own API keys for LLM, voice, and avatar providers.",
+      "status_connected": "Connected",
+      "status_not_connected": "Not connected",
+      "status_action_needed": "Action needed",
+      "btn_connect": "Connect",
+      "btn_reconfigure": "Reconfigure",
+      "btn_configure": "Configure",
+      "btn_manage": "Manage",
+      "badge_new": "NEW",
+      "badge_live": "live",
+      "badge_beta": "beta",
+      "badge_soon": "soon",
+      "info_title": "How integrations work",
+      "info_body": "Each integration unlocks specific AI commands. Your API keys are encrypted and stored securely. BETA integrations use stub data while full integration is in development.",
       "webhooks": {
         "page_title": "Webhooks",
         "page_subtitle": "Send real-time events to your own server, Slack, Zapier, or n8n.",

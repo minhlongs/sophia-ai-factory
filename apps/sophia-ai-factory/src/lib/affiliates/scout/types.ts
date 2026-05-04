@@ -46,6 +46,11 @@ export interface NetworkClient {
   /**
    * Fetch affiliates from the network.
    * Implementations should return [] and log warnings rather than throw.
+   * credentialsOverride: per-tenant BYOK takes precedence over env-level keys.
    */
-  fetch(env: ScoutEnv, tenantId: string): Promise<Omit<Affiliate, 'id' | 'tenantId' | 'discoveredAt'>[]>;
+  fetch(
+    env: ScoutEnv,
+    tenantId: string,
+    credentialsOverride?: Record<string, string>,
+  ): Promise<Omit<Affiliate, 'id' | 'tenantId' | 'discoveredAt'>[]>;
 }

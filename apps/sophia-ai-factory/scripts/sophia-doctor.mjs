@@ -285,6 +285,21 @@ async function checkBetterStack() {
 }
 
 // ---------------------------------------------------------------------------
+// 9b. CI/CD doctrine check
+// ---------------------------------------------------------------------------
+function checkCIDoctrine() {
+  const disabledWorkflow = resolve(ROOT, '../..', '.github/workflows/test.yml.disabled');
+  const activeWorkflow = resolve(ROOT, '../..', '.github/workflows/test.yml');
+  if (existsSync(disabledWorkflow) && !existsSync(activeWorkflow)) {
+    ok('CI: bypassed by design (CF-direct)', 'test.yml archived as .disabled — wrangler deploy is canonical');
+  } else if (existsSync(activeWorkflow)) {
+    warn('CI: test.yml is active', 'doctrine says CF-direct; if GH Actions still blocked, archive test.yml → test.yml.disabled');
+  } else {
+    warn('CI: workflow file not found', 'expected .github/workflows/test.yml.disabled for CF-direct doctrine');
+  }
+}
+
+// ---------------------------------------------------------------------------
 // 10. Git status
 // ---------------------------------------------------------------------------
 function checkGit() {
@@ -329,6 +344,7 @@ async function main() {
   checkMigrations();
   checkTypeScript();
   checkMCPWhitelist();
+  checkCIDoctrine();
   checkGit();
 
   // Async checks (parallel)

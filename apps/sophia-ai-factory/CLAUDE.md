@@ -1,7 +1,7 @@
 # Sophia AI Factory
 
 Next.js 16 App Router + React 19 + TypeScript + Tailwind CSS 4.
-Cloudflare Workers deployment via GitHub Actions.
+Cloudflare Workers deployment via wrangler CLI direct (CF-direct doctrine, effective 2026-05-03).
 
 ## Production
 
@@ -76,40 +76,43 @@ Giant files split into focused modules with barrel re-exports:
 - Server Actions for data mutations
 - Tier enum: `BASIC | PREMIUM | ENTERPRISE | MASTER` (uppercase)
 
+## Canonical Deploy Flow (CF-direct doctrine)
+
+```bash
+# Step 1: Build + inject SHA + deploy
+cd apps/sophia-ai-factory
+npm run deploy:full
+
+# Step 2: Apply any new D1 migrations (if migrations/ changed)
+bash scripts/apply-migrations.sh   # or: npm run deploy:migrations
+
+# Step 3: Verify SHA match
+curl -s https://sophia.agencyos.network/api/version | jq .shortSha
+# Must match: git rev-parse HEAD | cut -c1-8
+```
+
+**MUST READ for full verify sequence:** `apps/sophia-ai-factory/.claude/rules/sophia-deploy-verify.md`
+
+Hard rules:
+- SHA match is MANDATORY — HTTP 200 alone is not sufficient (may be stale deploy)
+- Run `npm run deploy:migrations` after any commit that adds files to `migrations/`
+- Do NOT use `gh run list` as deploy check — GitHub Actions is intentionally disabled
+
 ## Green Production Rule
 
-After every `git push`, verify:
-1. **CI/CD:** `gh run list -L 1` → `conclusion: success`
-2. **Deploy:** `curl -sI "$PROD_URL" | head -3` → HTTP 200
-3. **Report:** Build/Tests/CI/CD/Production status lines required
+After every `npm run deploy:full`, verify:
+1. **Deploy script:** exit code 0 (wrangler output shows success)
+2. **SHA match:** `curl -s $PROD_URL/api/version | jq .shortSha` == `git rev-parse HEAD | cut -c1-8`
+3. **HTTP:** `curl -sI "$PROD_URL" | head -3` → HTTP 200
+4. **Report:** Build/Tests/Deploy/SHA/Production status lines required
 
-## ⚠️ GitHub Actions BLOCKED (since 2026-05-03)
+## Historical Note: GitHub Actions (disabled by design since 2026-05-03)
 
-**Status:** Account `longtho638-jpg` has Actions disabled at user level.
-- Repo perms `enabled: true` ✅
-- Workflow `Tests & Deploy` `active` ✅
-- BUT: `gh workflow run` returns HTTP 422: *"Actions has been disabled for this user"*
-- `gh run list` returns 0 results — pushes do NOT trigger CI
+**Status:** Account `longtho638-jpg` had Actions disabled at user level (free-tier minutes exhausted or account review). Workflow `test.yml` archived as `.github/workflows/test.yml.disabled`.
 
-**Diagnosis path:**
-- Token has `gist, read:org, repo, workflow` scopes
-- billing API needs `user` scope (not granted) → cannot inspect billing programmatically
-- Most likely cause: free-tier minutes exhausted OR account flagged for abuse review
-- Resolution requires user action: check https://github.com/settings/billing or contact support
+The team evaluated this and decided to adopt CF-direct (wrangler CLI) as the permanent canonical deploy path rather than restore CI. This is faster, simpler, and removes the dependency on GitHub Actions availability.
 
-**Workaround (in use until resolved):**
+**Proof-of-path (5 successful manual deploys before doctrine change):**
+`d84f3a6e`, `e53c7dd2`, `aafd1ba4`, `0520585b`, `f418f3df`
 
-Manual deploy via wrangler — exception per `~/.claude/rules/binh-phap-cicd.md` (CI account-blocked, not broken):
-
-```bash
-cd apps/sophia-ai-factory
-npm run deploy:full   # builds OpenNext, injects SHA, wrangler deploy
-# then verify SHA match per sophia-deploy-verify.md
-```
-
-**For D1 migrations** (CI normally applies):
-```bash
-npx wrangler d1 execute sophia-raas-db --file=migrations/<NNNN>.sql --remote
-```
-
-**Recent successful manual deploys:** `d84f3a6e` (2026-05-03), `e53c7dd2`, `aafd1ba4`.
+To re-enable GitHub Actions CI in future: rename `.github/workflows/test.yml.disabled` back to `.github/workflows/test.yml`.

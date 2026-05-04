@@ -1,98 +1,19 @@
 /**
  * Dashboard Integrations Page — /dashboard/integrations
  *
- * Lists all available integrations with connection status.
- * Admin-hook: "Configure" links open setup wizard or show coming-soon modal.
+ * Card-based quickstart grouped by category:
+ *   Channels | Webhooks | Affiliate Networks | BYOK
+ * All categories are open to every authenticated user — no tier gating.
  */
 
+import React from 'react';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { redirect } from 'next/navigation';
 import { createServerClient } from '@/seed/db/client';
-import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
+import { IntegrationCard } from './integration-card';
 
 export const dynamic = 'force-dynamic';
-
-interface Integration {
-  id: string;
-  name: string;
-  description: string;
-  provider: string;
-  status: 'live' | 'beta' | 'coming_soon';
-  icon: string;
-  configureUrl?: string;
-  docUrl?: string;
-}
-
-const INTEGRATIONS: Integration[] = [
-  {
-    id: 'heygen',
-    name: 'HeyGen',
-    description: 'AI avatar video generation (video:create, video:status)',
-    provider: 'heygen',
-    status: 'live',
-    icon: 'videocam',
-    configureUrl: '/setup-wizard',
-  },
-  {
-    id: 'resend',
-    name: 'Resend',
-    description: 'Email campaigns and transactional emails (email:campaign, email:test)',
-    provider: 'resend',
-    status: 'live',
-    icon: 'email',
-    configureUrl: '/setup-wizard',
-  },
-  {
-    id: 'openrouter',
-    name: 'OpenRouter (LLM)',
-    description: 'AI proposal and content generation (proposal:create)',
-    provider: 'openrouter',
-    status: 'live',
-    icon: 'psychology',
-    configureUrl: '/setup-wizard',
-  },
-  {
-    id: 'apollo',
-    name: 'Apollo.io',
-    description: 'Lead discovery and enrichment (lead:find, lead:enrich, lead:export)',
-    provider: 'apollo',
-    status: 'beta',
-    icon: 'manage_search',
-  },
-  {
-    id: 'youtube',
-    name: 'YouTube',
-    description: 'Publish and manage YouTube videos (youtube:publish, youtube:list-channels)',
-    provider: 'youtube_oauth',
-    status: 'beta',
-    icon: 'smart_display',
-  },
-  {
-    id: 'elevenlabs',
-    name: 'ElevenLabs',
-    description: 'Voice cloning and text-to-speech (voice:clone)',
-    provider: 'elevenlabs',
-    status: 'beta',
-    icon: 'record_voice_over',
-  },
-  {
-    id: 'did',
-    name: 'D-ID',
-    description: 'AI avatar video alternative to HeyGen',
-    provider: 'did',
-    status: 'coming_soon',
-    icon: 'face',
-  },
-  {
-    id: 'webhook',
-    name: 'Outbound Webhooks',
-    description: 'Receive mission completion, video, and payment events via HMAC-signed POST requests. Connect to Slack, Zapier, n8n, or your own server.',
-    provider: 'sophia_webhook_secret',
-    status: 'live',
-    icon: 'webhook',
-    configureUrl: '/dashboard/integrations/webhooks',
-  },
-];
 
 interface CredRow {
   provider: string;
@@ -102,101 +23,86 @@ export default async function IntegrationsPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/auth/login');
 
-  const db = createServerClient();
+  const t = await getTranslations('dashboard.integrations');
 
-  // Fetch which providers are connected
+  const db = createServerClient();
   const { data: credentials } = await db
     .from('user_provider_credentials')
     .select('provider')
     .eq('user_id', user.id) as { data: CredRow[] | null; error: unknown };
 
-  const connectedProviders = new Set((credentials ?? []).map(c => c.provider));
-
-  const integrationsWithStatus = INTEGRATIONS.map(integration => ({
-    ...integration,
-    connected: connectedProviders.has(integration.provider),
-  }));
+  const connected = new Set((credentials ?? []).map((c) => c.provider));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Integrations</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Connect your API keys to unlock AI command capabilities
-        </p>
+        <h1 className="text-2xl font-bold text-foreground">{t('page_title')}</h1>
+        <p className="text-sm text-muted-foreground mt-1">{t('page_subtitle')}</p>
       </div>
 
-      {/* Integration Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {integrationsWithStatus.map(integration => (
-          <div
-            key={integration.id}
-            className={`bg-card border rounded-lg p-4 flex items-start gap-4 ${
-              integration.status === 'coming_soon' ? 'opacity-60' : ''
-            }`}
-          >
-            {/* Icon */}
-            <div className="flex-shrink-0 w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-              <span className="material-symbols-outlined text-primary text-xl">
-                {integration.icon}
-              </span>
-            </div>
+      {/* Channels */}
+      <Section title={t('section_channels')} desc={t('section_channels_desc')}>
+        <IntegrationCard name="YouTube" icon="smart_display" status="beta" isConnected={connected.has('youtube_oauth')} href="/dashboard/settings" t={t} />
+        <IntegrationCard name="TikTok" icon="videocam" status="beta" isConnected={connected.has('tiktok_oauth')} href="/dashboard/settings" t={t} />
+        <IntegrationCard name="Instagram" icon="photo_camera" status="beta" isConnected={connected.has('instagram_oauth')} href="/setup-wizard" t={t} />
+        <IntegrationCard name="Pinterest" icon="push_pin" status="coming_soon" isConnected={false} href="#" badge={t('badge_new')} t={t} />
+        <IntegrationCard name="LinkedIn" icon="work" status="coming_soon" isConnected={false} href="#" badge={t('badge_new')} t={t} />
+        <IntegrationCard name="Zalo" icon="chat" status="coming_soon" isConnected={false} href="#" badge={t('badge_new')} t={t} />
+      </Section>
 
-            {/* Content */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="font-medium text-sm">{integration.name}</h3>
-                <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                  integration.status === 'live'
-                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                    : integration.status === 'beta'
-                    ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                    : 'bg-muted text-muted-foreground'
-                }`}>
-                  {integration.status === 'coming_soon' ? 'Coming Soon' : integration.status}
-                </span>
-                {integration.connected && (
-                  <span className="text-xs px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                    Connected
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground">{integration.description}</p>
-            </div>
+      {/* Webhooks */}
+      <Section title={t('section_webhooks')} desc={t('section_webhooks_desc')}>
+        <IntegrationCard
+          name="Outbound Webhooks"
+          icon="webhook"
+          status="live"
+          isConnected={connected.has('sophia_webhook_secret')}
+          href="/dashboard/integrations/webhooks"
+          badge={t('badge_new')}
+          description="HMAC-signed POST to Slack, Zapier, n8n, or your own server."
+          t={t}
+        />
+      </Section>
 
-            {/* Action */}
-            <div className="flex-shrink-0">
-              {integration.configureUrl && integration.status !== 'coming_soon' ? (
-                <Link
-                  href={integration.configureUrl}
-                  className="text-xs px-3 py-1.5 border rounded-md hover:bg-muted transition-colors"
-                >
-                  {integration.connected ? 'Reconfigure' : 'Configure'}
-                </Link>
-              ) : integration.status === 'coming_soon' ? (
-                <span className="text-xs px-3 py-1.5 border rounded-md text-muted-foreground cursor-not-allowed">
-                  Soon
-                </span>
-              ) : (
-                <Link
-                  href="/setup-wizard"
-                  className="text-xs px-3 py-1.5 border rounded-md hover:bg-muted transition-colors"
-                >
-                  {integration.connected ? 'Reconfigure' : 'Connect'}
-                </Link>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
+      {/* Affiliate Networks */}
+      <Section title={t('section_affiliates')} desc={t('section_affiliates_desc')}>
+        <IntegrationCard name="Impact" icon="swap_horiz" status="beta" isConnected={connected.has('impact')} href="/setup-wizard" t={t} />
+        <IntegrationCard name="PartnerStack" icon="group_work" status="beta" isConnected={connected.has('partnerstack')} href="/setup-wizard" t={t} />
+        <IntegrationCard name="Binance Affiliate" icon="currency_bitcoin" status="coming_soon" isConnected={false} href="#" t={t} />
+        <IntegrationCard name="Bybit Affiliate" icon="show_chart" status="coming_soon" isConnected={false} href="#" t={t} />
+        <IntegrationCard name="Bitget Affiliate" icon="trending_up" status="coming_soon" isConnected={false} href="#" t={t} />
+        <IntegrationCard name="Coinbase Affiliate" icon="attach_money" status="coming_soon" isConnected={false} href="#" t={t} />
+      </Section>
 
-      {/* Info box */}
+      {/* BYOK */}
+      <Section title={t('section_byok')} desc={t('section_byok_desc')}>
+        <IntegrationCard name="OpenRouter (LLM)" icon="psychology" status="live" isConnected={connected.has('openrouter')} href="/dashboard/byok" t={t} />
+        <IntegrationCard name="ElevenLabs" icon="record_voice_over" status="live" isConnected={connected.has('elevenlabs')} href="/dashboard/byok" t={t} />
+        <IntegrationCard name="D-ID" icon="face" status="live" isConnected={connected.has('did')} href="/dashboard/byok" t={t} />
+      </Section>
+
+      {/* Info */}
       <div className="bg-muted/40 border rounded-lg p-4 text-sm text-muted-foreground">
-        <p className="font-medium text-foreground mb-1">How integrations work</p>
-        <p>Each integration unlocks specific AI commands. Your API keys are encrypted and stored securely.
-          BETA integrations use stub data while full integration is in development.</p>
+        <p className="font-medium text-foreground mb-1">{t('info_title')}</p>
+        <p>{t('info_body')}</p>
       </div>
     </div>
+  );
+}
+
+function Section({
+  title, desc, children,
+}: { title: string; desc: string; children: React.ReactNode }) {
+  return (
+    <section className="space-y-3">
+      <div>
+        <h2 className="text-base font-semibold">{title}</h2>
+        <p className="text-xs text-muted-foreground">{desc}</p>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {children}
+      </div>
+    </section>
   );
 }
