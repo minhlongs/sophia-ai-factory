@@ -146,10 +146,12 @@ export function UsageSummaryCard({
 /**
  * Usage Summary Grid - Renders all three period cards
  */
+type UsageStatus = 'ok' | 'warning' | 'critical' | 'overage';
+
 interface FullUsageSummaryProps {
-  hourly: { used: number; limit: number; percentage: number; status: string };
-  daily: { used: number; limit: number; percentage: number; status: string };
-  monthly: { used: number; limit: number; percentage: number; status: string; overage?: number };
+  hourly: { used: number; limit: number; percentage: number; status: UsageStatus };
+  daily: { used: number; limit: number; percentage: number; status: UsageStatus };
+  monthly: { used: number; limit: number; percentage: number; status: UsageStatus; overage?: number };
 }
 
 export function FullUsageSummary({ hourly, daily, monthly }: FullUsageSummaryProps) {
@@ -160,7 +162,7 @@ export function FullUsageSummary({ hourly, daily, monthly }: FullUsageSummaryPro
         used={hourly.used}
         limit={hourly.limit}
         percentage={hourly.percentage}
-        status={hourly.status as any}
+        status={hourly.status}
         period="hourly"
       />
       <UsageSummaryCard
@@ -168,7 +170,7 @@ export function FullUsageSummary({ hourly, daily, monthly }: FullUsageSummaryPro
         used={daily.used}
         limit={daily.limit}
         percentage={daily.percentage}
-        status={daily.status as any}
+        status={daily.status}
         period="daily"
       />
       <UsageSummaryCard
@@ -176,7 +178,7 @@ export function FullUsageSummary({ hourly, daily, monthly }: FullUsageSummaryPro
         used={monthly.used}
         limit={monthly.limit}
         percentage={monthly.percentage}
-        status={monthly.status as any}
+        status={monthly.status}
         period="monthly"
         overage={monthly.overage}
       />

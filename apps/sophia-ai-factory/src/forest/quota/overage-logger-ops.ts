@@ -11,8 +11,7 @@ import type { OverageEventInput } from './overage-logger-types'
 
 export async function logOverageEventImmediate(event: OverageEventInput): Promise<string | null> {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (createServerClient() as any)
+    const { data, error } = await createServerClient()
       .from('overage_events')
       .insert({ user_id: event.userId, license_nonce: event.licenseNonce, exceeded_type: event.exceededType, exceeded_limit: event.exceededLimit, exceeded_current: event.exceededCurrent, exceeded_by: event.exceededBy, requested_credits: event.requestedCredits, endpoint: event.endpoint, service_name: event.service, action: event.action, tier_at_exceeded: event.tier, ip_address: event.ipAddress, user_agent: event.userAgent, external_customer_id: event.externalCustomerId, billable: false })
       .select('id').single() as { data: { id: string } | null; error: unknown }
@@ -57,10 +56,9 @@ export async function getOverageSummary(licenseNonce: string, periodStart: numbe
 export async function markEventsAsBillable(eventIds: string[], pricePerCredit: number): Promise<number> {
   if (eventIds.length === 0) return 0
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (createServerClient() as any)
-      .from('overage_events').update({ billable: true } as any).in('id', eventIds)
-    if (error) { logger.error('[Overage Logger] Failed to mark events as billable', error); return 0 }
+    const { error } = await createServerClient()
+      .from('overage_events').update({ billable: true }).in('id', eventIds)
+    if (error) { logger.error('[Overage Logger] Failed to mark events as billable', toError(error)); return 0 }
     logger.info('[Overage Logger] Marked events as billable', { count: eventIds.length, pricePerCredit })
     return eventIds.length
   } catch (error) {

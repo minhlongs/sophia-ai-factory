@@ -122,7 +122,7 @@ export async function handlePaymentSuccess(context: PaymentSuccessContext): Prom
       amount, currency, payment_provider: paymentProvider,
       provider_event_id: providerChargeId, provider_charge_id: providerChargeId,
       processed: true, processed_at: new Date().toISOString(),
-    } as any);
+    });
 
     logger.info('[Dunning] Payment success handled', { licenseNonce: licenseNonce.slice(0, 8), amount, oldState });
     return getDunningState(licenseNonce);

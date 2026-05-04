@@ -12,8 +12,7 @@ import type { SyncResult } from './license-sync-types'
 export async function syncFromDatabase(licenseNonce: string): Promise<SyncResult> {
   const db = createServerClient()
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: license, error } = await (db as any)
+    const { data: license, error } = await db
       .from('raas_api_keys')
       .select('nonce, tier, status, expires_at, polar_customer_id, polar_subscription_status, feature_entitlements, dunning_state')
       .eq('nonce', licenseNonce)
@@ -51,10 +50,9 @@ export async function updateLicenseInDatabase(
     else if (gatewayLicense.expiresAt < now + 7 * 24 * 60 * 60 * 1000) status = 'expiring_soon'
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: updated, error } = await (db as any)
+  const { data: updated, error } = await db
     .from('raas_api_keys')
-    .upsert({ nonce: licenseNonce, tier: gatewayLicense.tier, status, expires_at: gatewayLicense.expiresAt ? new Date(gatewayLicense.expiresAt).toISOString() : null, updated_at: new Date().toISOString() }, { onConflict: 'nonce' })
+    .upsert({ nonce: licenseNonce, tier: gatewayLicense.tier, status, expires_at: gatewayLicense.expiresAt ? new Date(gatewayLicense.expiresAt).toISOString() : null, updated_at: new Date().toISOString() })
     .select('polar_customer_id, polar_subscription_status, feature_entitlements, dunning_state')
     .single() as { data: Record<string, unknown> | null; error: { message: string } | null }
 

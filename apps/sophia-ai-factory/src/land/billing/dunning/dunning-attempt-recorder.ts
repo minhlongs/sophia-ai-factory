@@ -87,7 +87,7 @@ export async function recordDunningAttempt(attempt: Omit<DunningAttemptRow, 'id'
       polar_order_id: attempt.polar_order_id,
       ...(attempt.ip_address && { ip_address: attempt.ip_address }),
       ...(attempt.user_agent && { user_agent: attempt.user_agent }),
-    } as any)
+    })
     .select('id')
     .single();
 
