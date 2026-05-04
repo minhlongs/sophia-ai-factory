@@ -14,6 +14,18 @@ import { resolveOrgId } from '@/seed/auth/resolve-org-id'
 import { updateCampaignStatus, notifyUserByTelegram } from './generate-campaign-db'
 import { notifyRefundRequired } from './generate-campaign-refund-notify'
 import { pollVideoStatus } from './generate-campaign-video-poller'
+import { emit } from '@/lib/webhooks/emitter'
+
+/** Resolve D1 binding for webhook emission (best-effort, no throw) */
+function getD1ForWebhooks(): D1Database | null {
+  try {
+    const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
+    if (env?.DB) return env.DB as D1Database;
+    const ctx = (globalThis as Record<symbol, { env?: Record<string, unknown> }>)[Symbol.for('__cloudflare-context__')];
+    if (ctx?.env?.DB) return ctx.env.DB as D1Database;
+    return null;
+  } catch { return null; }
+}
 
 const resumeEngine = new SmartResumeEngine()
 
@@ -185,6 +197,28 @@ export const generateCampaign = inngest.createFunction(
       await notifyUser(`✅ **Campaign Ready!**\nYour video for "${topic}" is ready.\n${statusLine}\n[Watch Video](${videoAssets.video_url})`)
       await resumeEngine.checkpoint(campaignId, 'finalize-campaign')
       await resumeEngine.clearCheckpoints(campaignId)
+
+      // Emit outbound webhook events (fire-and-forget, best-effort)
+      const db = getD1ForWebhooks();
+      if (db) {
+        const webhookEnv = { DB: db };
+        emit(webhookEnv, 'mission.completed', {
+          missionId: campaignId,
+          tenantId: userId,
+          status: 'completed',
+          videoUrl: videoAssets.video_url,
+          durationSec: null,
+          costUsd: null,
+        }, userId);
+        emit(webhookEnv, 'video.ready', {
+          videoId: videoAssets.video_url,
+          missionId: campaignId,
+          tenantId: userId,
+          r2Key: null,
+          publicUrl: videoAssets.video_url,
+          durationSec: null,
+        }, userId);
+      }
     })
 
     return { success: true, campaignId }
