@@ -97,6 +97,15 @@ async function countUserPurchases(db: D1Database, userId: string): Promise<numbe
 }
 
 /**
+ * Build a locale-aware URL path segment.
+ * Omit the locale prefix for the default locale ('en') to avoid middleware
+ * 307 redirects (localePrefix: 'as-needed' drops /en/ → /).
+ */
+function localePath(locale: string): string {
+  return locale === 'en' ? '' : `/${locale}`;
+}
+
+/**
  * Trigger auto-handover from payment IPN.
  * Non-fatal — wrap in try/catch at call site.
  */
@@ -190,12 +199,13 @@ export async function triggerAutoHandover(opts: AutoHandoverOptions): Promise<Au
     return { handoverId: null, isNewCustomer, magicLink: null, sopsInstalled: installedSops, skipped: true, skipReason: 'record_create_failed' };
   }
 
-  // Generate magic link
+  // Generate magic link — omit locale prefix for default locale ('en') to avoid
+  // middleware 307 redirect (localePrefix: 'as-needed' means /en/... → /).
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network';
   let magicLink: string | null = null;
   try {
     const token = await createMagicLinkToken(handoverId, { source: 'auto_signup' });
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network';
-    magicLink = `${appUrl}/${locale}/welcome/${token}`;
+    magicLink = `${appUrl}${localePath(locale)}/welcome/${token}`;
   } catch (err) {
     logger.warn('[AutoHandover] Magic link generation failed (non-fatal)', { error: getErrorMessage(err) });
   }
@@ -210,7 +220,7 @@ export async function triggerAutoHandover(opts: AutoHandoverOptions): Promise<Au
         ownerFullName: fullName,
         tier,
         locale,
-        magicLinkUrl: magicLink ?? `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network'}/login`,
+        magicLinkUrl: magicLink ?? `${appUrl}${localePath(locale)}/login`,
       },
     });
   } catch (err) {
