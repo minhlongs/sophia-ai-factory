@@ -72,7 +72,7 @@ export default function SystemHealthPage() {
   if (isLoading) {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" role="status" aria-label="Loading system health">
+        <div className="motion-safe:animate-spin rounded-full h-8 w-8 border-b-2 border-primary" role="status" aria-label="Loading system health">
           <span className="sr-only">Đang tải...</span>
         </div>
       </div>
@@ -108,7 +108,7 @@ export default function SystemHealthPage() {
           disabled={isRefetching}
           className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-muted-foreground bg-card border border-border rounded-lg hover:bg-muted focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
         >
-          <RefreshCw className={`w-4 h-4 ${isRefetching ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`w-4 h-4 ${isRefetching ? 'motion-safe:animate-spin' : ''}`} />
           Refresh
         </button>
       </div>

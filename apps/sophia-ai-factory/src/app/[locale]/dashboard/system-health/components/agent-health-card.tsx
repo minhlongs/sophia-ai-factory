@@ -84,7 +84,7 @@ export function AgentHealthCard() {
       <div className="bg-card rounded-xl border border-border shadow-sm p-6">
         {isLoading && (
           <div className="flex items-center justify-center h-24">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" role="status" aria-label="Loading agent health" />
+            <div className="motion-safe:animate-spin rounded-full h-6 w-6 border-b-2 border-primary" role="status" aria-label="Loading agent health" />
           </div>
         )}
 

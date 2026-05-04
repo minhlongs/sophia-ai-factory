@@ -71,7 +71,7 @@ export function OpsSnapshotCard({ locale }: Props) {
 
   if (isLoading) {
     return (
-      <div className="text-zinc-400 text-sm animate-pulse py-8 text-center">
+      <div className="text-zinc-400 text-sm motion-safe:animate-pulse py-8 text-center">
         {isVi ? 'Đang tải dữ liệu vận hành...' : 'Loading ops data...'}
       </div>
     )

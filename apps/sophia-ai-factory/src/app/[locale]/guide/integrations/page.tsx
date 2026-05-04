@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import Link from "next/link";
 import { Brain, Mic, Video, Database, CreditCard, Bot } from "lucide-react";
 import { GuideStepCard } from "@/forest/components/guide/guide-step-card";
 import { GuideCallout } from "@/forest/components/guide/guide-callout";
@@ -187,9 +188,9 @@ export default function IntegrationsGuidePage() {
         </h2>
         <GuideCallout variant="important">
           Xem hướng dẫn chi tiết tại trang{" "}
-          <a href="/guide/telegram" className="underline text-violet-300 hover:text-violet-200">
+          <Link href="/guide/telegram" className="underline text-violet-300 hover:text-violet-200">
             Kết Nối Telegram Bot
-          </a>{" "}
+          </Link>{" "}
           — tích hợp này cho phép tạo và theo dõi chiến dịch ngay trên điện thoại.
         </GuideCallout>
         <div className="space-y-3">

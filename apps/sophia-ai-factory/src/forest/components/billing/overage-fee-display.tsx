@@ -44,7 +44,7 @@ export function OverageFeeDisplay({
   };
 
   const periodLabel = periodStart && periodEnd
-    ? `${new Date(periodStart).toLocaleDateString()} - ${new Date(periodEnd).toLocaleDateString()}`
+    ? `${new Date(periodStart).toLocaleDateString('en-US', { dateStyle: 'medium' })} - ${new Date(periodEnd).toLocaleDateString('en-US', { dateStyle: 'medium' })}`
     : 'Current Period';
 
   return (

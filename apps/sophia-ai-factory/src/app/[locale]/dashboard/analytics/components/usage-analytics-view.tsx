@@ -213,7 +213,7 @@ export function UsageAnalyticsView({ userTier, userId }: UsageAnalyticsViewProps
               onClick={() => setAutoRefresh(!autoRefresh)}
               title={autoRefresh ? 'Auto-refresh ON (30s)' : 'Enable auto-refresh'}
             >
-              <RefreshCw className={`w-4 h-4 ${autoRefresh ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-4 h-4 ${autoRefresh ? 'motion-safe:animate-spin' : ''}`} />
             </Button>
           )}
 
@@ -224,7 +224,7 @@ export function UsageAnalyticsView({ userTier, userId }: UsageAnalyticsViewProps
             onClick={handleRefresh}
             disabled={usageLoading}
           >
-            <RefreshCw className={`w-4 h-4 ${usageLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${usageLoading ? 'motion-safe:animate-spin' : ''}`} />
           </Button>
 
           {/* Export Button */}

@@ -106,7 +106,7 @@ export function CreateWorkflowForm({ onCancel, locale = 'en' }: Props) {
           className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-60"
         >
           {isPending && (
-            <span className="material-symbols-outlined text-base animate-spin">
+            <span className="material-symbols-outlined text-base motion-safe:animate-spin">
               progress_activity
             </span>
           )}

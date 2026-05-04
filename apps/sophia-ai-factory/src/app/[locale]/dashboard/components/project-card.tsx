@@ -68,7 +68,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
             disabled={loading}
           >
             {loading ? (
-              <Loader2 className="w-3 h-3 mr-2 animate-spin" aria-hidden="true" />
+              <Loader2 className="w-3 h-3 mr-2 motion-safe:animate-spin" aria-hidden="true" />
             ) : (
               <Video className="w-3 h-3 mr-2" aria-hidden="true" />
             )}
@@ -92,7 +92,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
 
         {["draft", "video_queued", "voice_generating"].includes(project.status) && (
           <Button size="sm" variant="outline" className="w-full" disabled>
-            <RefreshCw className="w-3 h-3 mr-2 animate-spin" aria-hidden="true" />
+            <RefreshCw className="w-3 h-3 mr-2 motion-safe:animate-spin" aria-hidden="true" />
             Processing
           </Button>
         )}

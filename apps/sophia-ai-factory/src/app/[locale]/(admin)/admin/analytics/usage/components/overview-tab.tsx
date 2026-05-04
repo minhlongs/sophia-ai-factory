@@ -42,7 +42,8 @@ export function OverviewTab({ usageMetrics, licenseMetrics, granularity }: Overv
             <TrendingUp className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold tabular-nums">
+
               {usageMetrics?.summary.totalRequests.toLocaleString() || '0'}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
@@ -57,7 +58,8 @@ export function OverviewTab({ usageMetrics, licenseMetrics, granularity }: Overv
             <Zap className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold tabular-nums">
+
               {usageMetrics?.summary.totalCredits.toLocaleString() || '0'}
             </div>
             <p className="text-xs text-muted-foreground mt-1">Credits consumed</p>
@@ -70,7 +72,8 @@ export function OverviewTab({ usageMetrics, licenseMetrics, granularity }: Overv
             <AlertTriangle className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold tabular-nums">
+
               {usageMetrics?.summary.errorRate.toFixed(2) || '0.00'}%
             </div>
             <p className="text-xs text-muted-foreground mt-1">Failed requests</p>
@@ -82,7 +85,8 @@ export function OverviewTab({ usageMetrics, licenseMetrics, granularity }: Overv
             <CardTitle className="text-sm font-medium">Active Licenses</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold tabular-nums">
+
               {licenseMetrics?.total.toLocaleString() || '0'}
             </div>
             <p className="text-xs text-muted-foreground mt-1">

@@ -40,7 +40,7 @@ export function buildOnboardingSteps(data: WelcomeData, locale: string): Onboard
   return [
     {
       id: 1,
-      icon: <CheckCircle2 size={20} />,
+      icon: <CheckCircle2 aria-hidden="true" size={20} />,
       titleVi: 'Tài khoản đã tạo',
       titleEn: 'Account Created',
       descVi: 'Sophia đã tạo tài khoản cho bạn. Nhấn "Bắt đầu" bên dưới để vào dashboard.',
@@ -49,7 +49,7 @@ export function buildOnboardingSteps(data: WelcomeData, locale: string): Onboard
     },
     {
       id: 2,
-      icon: <Key size={20} />,
+      icon: <Key aria-hidden="true" size={20} />,
       titleVi: 'Cấu hình API Keys',
       titleEn: 'Configure API Keys',
       descVi: 'Thêm HeyGen API key và Resend API key trong trang Setup Wizard.',
@@ -60,7 +60,7 @@ export function buildOnboardingSteps(data: WelcomeData, locale: string): Onboard
     },
     {
       id: 3,
-      icon: <Settings size={20} />,
+      icon: <Settings aria-hidden="true" size={20} />,
       titleVi: 'Xác minh HeyGen',
       titleEn: 'Verify HeyGen',
       descVi: 'Kiểm tra kết nối HeyGen trong Settings → Integrations.',
@@ -71,7 +71,7 @@ export function buildOnboardingSteps(data: WelcomeData, locale: string): Onboard
     },
     {
       id: 4,
-      icon: <Zap size={20} />,
+      icon: <Zap aria-hidden="true" size={20} />,
       titleVi: 'Chạy SOP đầu tiên',
       titleEn: 'Run First SOP',
       descVi: `${data.installedSops.length > 0 ? `${data.installedSops.length} SOPs đã cài sẵn. ` : ''}Kích hoạt và chạy một SOP ngay bây giờ.`,
@@ -82,7 +82,7 @@ export function buildOnboardingSteps(data: WelcomeData, locale: string): Onboard
     },
     {
       id: 5,
-      icon: <BarChart3 size={20} />,
+      icon: <BarChart3 aria-hidden="true" size={20} />,
       titleVi: 'Theo dõi kết quả',
       titleEn: 'Watch Results',
       descVi: 'Xem videos đã tạo, số liệu hiệu suất và MCU usage trong Dashboard.',
@@ -98,22 +98,22 @@ interface StepCardProps { step: OnboardingStep; isVi: boolean }
 
 export function StepCard({ step, isVi }: StepCardProps) {
   return (
-    <div className={`rounded-2xl border p-5 transition-all ${step.done ? 'border-emerald-500/30 bg-emerald-900/10' : 'border-white/10 bg-white/[0.03] backdrop-blur-sm'}`}>
+    <div className={`rounded-2xl border p-5 transition-colors ${step.done ? 'border-emerald-500/30 bg-emerald-900/10' : 'border-white/10 bg-white/[0.03] backdrop-blur-sm'}`}>
       <div className="flex items-start gap-4">
         <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${step.done ? 'bg-emerald-500/20 text-emerald-400' : 'bg-zinc-800 text-zinc-500'}`}>
-          {step.done ? <CheckCircle2 size={20} /> : <Circle size={20} />}
+          {step.done ? <CheckCircle2 aria-hidden="true" size={20} /> : <Circle aria-hidden="true" size={20} />}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
             <h3 className={`font-semibold ${step.done ? 'text-emerald-300' : 'text-zinc-100'}`}>
               {isVi ? step.titleVi : step.titleEn}
             </h3>
-            <span className="text-xs text-zinc-600 shrink-0">Step {step.id}</span>
+            <span className="text-xs text-zinc-600 shrink-0">{isVi ? 'Bước' : 'Step'} {step.id}</span>
           </div>
           <p className="text-sm text-zinc-400 mt-1">{isVi ? step.descVi : step.descEn}</p>
           {!step.done && step.ctaLabel && step.ctaHref && (
-            <a href={step.ctaHref} className="inline-flex items-center gap-1.5 mt-3 text-sm text-violet-400 hover:text-violet-300 font-medium transition-colors">
-              {step.ctaLabel}<ArrowRight size={14} />
+            <a href={step.ctaHref} className="inline-flex items-center gap-1.5 mt-3 text-sm text-violet-400 hover:text-violet-300 font-medium transition-colors focus-visible:ring-2 focus-visible:ring-violet-500/50 focus-visible:outline-none rounded">
+              {step.ctaLabel}<ArrowRight aria-hidden="true" size={14} />
             </a>
           )}
         </div>

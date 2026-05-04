@@ -52,12 +52,12 @@ function SettingsSkeleton() {
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
-        <div className="h-8 w-32 animate-pulse rounded-md bg-muted" />
-        <div className="h-10 w-10 animate-pulse rounded-md bg-muted" />
+        <div className="h-8 w-32 motion-safe:animate-pulse rounded-md bg-muted" />
+        <div className="h-10 w-10 motion-safe:animate-pulse rounded-md bg-muted" />
       </div>
       <div className="space-y-6">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-64 w-full animate-pulse rounded-xl bg-muted" />
+          <div key={i} className="h-64 w-full motion-safe:animate-pulse rounded-xl bg-muted" />
         ))}
       </div>
     </div>

@@ -32,13 +32,13 @@ export function UsageMeter({ licenseNonce, compact = false, showRateLimit = true
     return (
       <Card>
         <CardHeader>
-          <div className="animate-pulse space-y-2">
+          <div className="motion-safe:animate-pulse space-y-2">
             <div className="h-4 bg-muted rounded w-1/3" />
             <div className="h-3 bg-muted rounded w-1/4" />
           </div>
         </CardHeader>
         <CardContent>
-          <div className="animate-pulse space-y-4">
+          <div className="motion-safe:animate-pulse space-y-4">
             {[1, 2, 3].map((i) => (
               <div key={i} className="h-12 bg-muted rounded" />
             ))}

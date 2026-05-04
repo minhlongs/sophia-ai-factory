@@ -7,6 +7,7 @@
  */
 
 import { useState } from 'react';
+import { useLocale } from 'next-intl';
 import { UNIFIED_TIERS } from '@/seed/config/tiers';
 import type { Tier } from '@/seed/types';
 import { Crown, ArrowUp, Loader2 } from 'lucide-react';
@@ -27,6 +28,7 @@ interface CheckoutResponse {
 const TIER_ORDER: Tier[] = ['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER'];
 
 export function PlanUpgradeWidget({ currentTier, periodEnd, showHistoryLink }: Props) {
+  const locale = useLocale();
   const [loading, setLoading] = useState<Tier | null>(null);
   const current = UNIFIED_TIERS[currentTier];
   const currentIdx = TIER_ORDER.indexOf(currentTier);
@@ -62,7 +64,7 @@ export function PlanUpgradeWidget({ currentTier, periodEnd, showHistoryLink }: P
   const periodEndDisplay = periodEnd
     ? (UNIFIED_TIERS[currentTier]?.billingType === 'lifetime'
         ? 'Lifetime — never expires'
-        : `Renews ${new Date(periodEnd).toLocaleDateString('en-US', { dateStyle: 'medium' })}`)
+        : `Renews ${new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(new Date(periodEnd))}`)
     : null;
 
   if (upgradeTiers.length === 0) {
@@ -118,7 +120,7 @@ export function PlanUpgradeWidget({ currentTier, periodEnd, showHistoryLink }: P
                 </span>
               </div>
               {isLoading
-                ? <Loader2 className="w-4 h-4 text-violet-400 animate-spin" />
+                ? <Loader2 className="w-4 h-4 text-violet-400 motion-safe:animate-spin" />
                 : <ArrowUp className="w-4 h-4 text-violet-400" />
               }
             </button>

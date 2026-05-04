@@ -41,7 +41,7 @@ export function MissionControlWidget({ isVi = false }: MissionControlWidgetProps
                 {isVi ? 'Hạn mức MCU' : 'MCU quota'}
               </span>
               <a href="/dashboard/usage" className="text-xs text-violet-400 hover:underline">
-                {data.quota.used.toLocaleString()} / {data.quota.total.toLocaleString()}
+                <span className="tabular-nums">{data.quota.used.toLocaleString()} / {data.quota.total.toLocaleString()}</span>
               </a>
             </div>
             <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden w-48 max-w-full">
@@ -72,7 +72,7 @@ export function MissionControlWidget({ isVi = false }: MissionControlWidgetProps
 
 function SkeletonCard() {
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 animate-pulse">
+    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 motion-safe:animate-pulse">
       <div className="flex gap-4">
         <div className="h-5 w-20 bg-zinc-800 rounded-full" />
         <div className="h-5 w-32 bg-zinc-800 rounded" />

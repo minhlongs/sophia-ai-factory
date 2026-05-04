@@ -112,7 +112,7 @@ export function MissionDashboard({ onLaunchMission }: Props) {
       <div className="bg-card rounded-xl border border-border p-4">
         <h3 className="text-sm font-semibold text-foreground mb-3">{t('history')}</h3>
         {loading ? (
-          <div className="space-y-2">{[1, 2, 3].map(i => <div key={i} className="h-10 bg-muted animate-pulse rounded" />)}</div>
+          <div className="space-y-2">{[1, 2, 3].map(i => <div key={i} className="h-10 bg-muted motion-safe:animate-pulse rounded" />)}</div>
         ) : history.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-6">{t('empty_history')}</p>
         ) : (

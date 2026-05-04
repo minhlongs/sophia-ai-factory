@@ -98,7 +98,7 @@ export function SignupForm({ t }: SignupFormProps) {
         </div>
         <p className="font-semibold text-foreground">{t.success_title}</p>
         <p className="text-sm text-muted-foreground">{t.success_message}</p>
-        <Loader2 className="w-4 h-4 animate-spin text-violet-400" />
+        <Loader2 className="w-4 h-4 motion-safe:animate-spin text-violet-400" />
       </div>
     );
   }
@@ -198,7 +198,7 @@ export function SignupForm({ t }: SignupFormProps) {
         className="w-full flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-cyan-600 px-4 py-3 text-sm font-medium text-white hover:opacity-90 transition-opacity disabled:opacity-50"
       >
         {loading ? (
-          <><Loader2 className="w-4 h-4 animate-spin" /> {t.submitting}</>
+          <><Loader2 className="w-4 h-4 motion-safe:animate-spin" /> {t.submitting}</>
         ) : (
           t.submit
         )}

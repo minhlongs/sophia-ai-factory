@@ -117,7 +117,7 @@ export default function LoginPage() {
         <div className="w-full max-w-md space-y-8 text-center">
           <div className="rounded-xl border border-border bg-card p-8 shadow-sm space-y-4">
             <div className="mx-auto w-14 h-14 rounded-full bg-green-500/10 flex items-center justify-center">
-              <CheckCircle className="w-7 h-7 text-green-400" />
+              <CheckCircle aria-hidden="true" className="w-7 h-7 text-green-400" />
             </div>
             <h2 className="text-lg font-semibold text-foreground">Kiểm Tra Email Của Bạn</h2>
             <p className="text-sm text-muted-foreground">
@@ -212,7 +212,7 @@ export default function LoginPage() {
 
               {/* Error */}
               {error && (
-                <div className="rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400">
+                <div role="alert" aria-live="polite" className="rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400">
                   {error}
                 </div>
               )}
@@ -224,15 +224,18 @@ export default function LoginPage() {
                       Email
                     </label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Mail aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <input
                         id="email"
                         type="email"
                         required
+                        autoComplete="email"
+                        inputMode="email"
+                        spellCheck={false}
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="ban@example.com"
-                        className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+                        className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50"
                       />
                     </div>
                   </div>
@@ -242,15 +245,16 @@ export default function LoginPage() {
                       Mật khẩu
                     </label>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Lock aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <input
                         id="password"
                         type="password"
                         required
+                        autoComplete="current-password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="••••••••"
-                        className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+                        className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50"
                       />
                     </div>
                   </div>
@@ -261,7 +265,7 @@ export default function LoginPage() {
                     className="w-full flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-cyan-600 px-4 py-3 text-sm font-medium text-white hover:opacity-90 transition-opacity disabled:opacity-50"
                   >
                     {loading ? (
-                      <><Loader2 className="w-4 h-4 animate-spin" /> Đang đăng nhập...</>
+                      <><Loader2 aria-hidden="true" className="w-4 h-4 animate-spin" /> Đang đăng nhập…</>
                     ) : (
                       "Đăng Nhập"
                     )}
@@ -279,15 +283,18 @@ export default function LoginPage() {
                       Email
                     </label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Mail aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <input
                         id="email-magic"
                         type="email"
                         required
+                        autoComplete="email"
+                        inputMode="email"
+                        spellCheck={false}
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="ban@example.com"
-                        className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+                        className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50"
                       />
                     </div>
                   </div>
@@ -298,7 +305,7 @@ export default function LoginPage() {
                     className="w-full flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-cyan-600 px-4 py-3 text-sm font-medium text-white hover:opacity-90 transition-opacity disabled:opacity-50"
                   >
                     {loading ? (
-                      <><Loader2 className="w-4 h-4 animate-spin" /> Đang gửi...</>
+                      <><Loader2 aria-hidden="true" className="w-4 h-4 animate-spin" /> Đang gửi…</>
                     ) : (
                       "Gửi Magic Link"
                     )}
@@ -332,7 +339,7 @@ export default function LoginPage() {
               href="mailto:support@agencyos.network"
               className="flex items-center justify-center gap-2 w-full rounded-lg border border-border px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
             >
-              <Mail className="w-4 h-4" />
+              <Mail aria-hidden="true" className="w-4 h-4" />
               support@agencyos.network
             </a>
           </div>
@@ -344,7 +351,7 @@ export default function LoginPage() {
             href="/"
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft aria-hidden="true" className="w-4 h-4" />
             Quay lại trang chủ
           </Link>
         </div>

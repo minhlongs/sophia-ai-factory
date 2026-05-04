@@ -70,7 +70,7 @@ export function VideoPreview({
             role="status"
             aria-live="polite"
           >
-            <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" aria-hidden="true" />
+            <Loader2 className="w-10 h-10 motion-safe:animate-spin text-primary mb-4" aria-hidden="true" />
             <p className="text-sm text-muted-foreground font-medium">
               {status === "processing_script" && "Writing script & generating voice..."}
               {status === "processing_video" && "Rendering video avatar..."}

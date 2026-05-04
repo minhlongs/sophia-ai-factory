@@ -86,35 +86,39 @@ export function StepFirstCallDemo({ locale, onComplete }: Props) {
         {isVi ? 'Gửi tin nhắn đến Sophia AI và xem phản hồi trực tiếp.' : 'Send a message to Sophia AI and see the live response.'}
       </p>
 
+      <label htmlFor="onboarding-demo-prompt" className="sr-only">
+        {isVi ? 'Lời nhắc demo' : 'Demo prompt'}
+      </label>
       <textarea
+        id="onboarding-demo-prompt"
         value={prompt}
         onChange={e => setPrompt(e.target.value)}
         rows={3}
-        className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm text-white resize-none focus:outline-none focus:border-violet-500"
+        className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm text-white resize-none focus-visible:outline-none focus-visible:border-violet-500 focus-visible:ring-2 focus-visible:ring-violet-500/40"
         disabled={streaming}
       />
 
       <button
         onClick={handleSubmit}
         disabled={streaming || !prompt.trim()}
-        className="mt-3 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white font-semibold py-2 px-6 rounded-lg"
+        className="mt-3 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white font-semibold py-2 px-6 rounded-lg focus-visible:ring-2 focus-visible:ring-violet-500/50 focus-visible:outline-none"
       >
-        {streaming ? (isVi ? 'Đang gửi...' : 'Sending...') : (isVi ? 'Gửi' : 'Send')}
+        {streaming ? (isVi ? 'Đang gửi…' : 'Sending…') : (isVi ? 'Gửi' : 'Send')}
       </button>
 
-      {error && <p className="mt-3 text-red-400 text-sm">{error}</p>}
+      {error && <p role="alert" aria-live="polite" className="mt-3 text-red-400 text-sm">{error}</p>}
 
       {response && (
-        <div className="mt-4 bg-zinc-800 border border-zinc-700 rounded-lg p-4 text-sm text-zinc-200 whitespace-pre-wrap min-h-16 max-h-48 overflow-y-auto">
+        <div aria-live="polite" className="mt-4 bg-zinc-800 border border-zinc-700 rounded-lg p-4 text-sm text-zinc-200 whitespace-pre-wrap min-h-16 max-h-48 overflow-y-auto">
           {response}
-          {streaming && <span className="animate-pulse ml-1">▋</span>}
+          {streaming && <span aria-hidden="true" className="motion-safe:animate-pulse ml-1">▋</span>}
         </div>
       )}
 
       {done && (
         <button
           onClick={onComplete}
-          className="mt-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-6 rounded-lg"
+          className="mt-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-6 rounded-lg focus-visible:ring-2 focus-visible:ring-emerald-500/50 focus-visible:outline-none"
         >
           {isVi ? 'Tiếp tục →' : 'Continue →'}
         </button>

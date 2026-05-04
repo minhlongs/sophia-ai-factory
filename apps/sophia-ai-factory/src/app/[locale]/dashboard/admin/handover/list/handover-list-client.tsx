@@ -105,7 +105,7 @@ export function HandoverListClient({ locale }: Props) {
 
   if (isLoading) {
     return (
-      <div className="text-zinc-500 text-sm py-12 text-center animate-pulse">
+      <div className="text-zinc-500 text-sm py-12 text-center motion-safe:animate-pulse">
         {isVi ? 'Đang tải...' : 'Loading...'}
       </div>
     );
@@ -195,7 +195,7 @@ export function HandoverListClient({ locale }: Props) {
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-700 text-zinc-300 text-xs hover:bg-zinc-800 disabled:opacity-50 transition-colors"
                 >
                   {actionLoading === `${h.id}-resend`
-                    ? <RefreshCw size={12} className="animate-spin" />
+                    ? <RefreshCw size={12} className="motion-safe:animate-spin" />
                     : <Send size={12} />}
                   {isVi ? 'Gửi lại' : 'Resend'}
                 </button>

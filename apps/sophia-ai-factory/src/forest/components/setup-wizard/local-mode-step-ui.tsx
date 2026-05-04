@@ -55,7 +55,7 @@ interface StatusBadgeProps { status: LocalModeStatus }
 export function StatusBadge({ status }: StatusBadgeProps) {
   const map: Record<LocalModeStatus, { icon: React.ReactNode; label: string; className: string }> = {
     idle: {
-      icon: <Loader2 className="w-4 h-4 animate-spin" />,
+      icon: <Loader2 className="w-4 h-4 motion-safe:animate-spin" />,
       label: 'Đang kiểm tra…',
       className: 'bg-muted text-muted-foreground',
     },
@@ -70,7 +70,7 @@ export function StatusBadge({ status }: StatusBadgeProps) {
       className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300',
     },
     polling: {
-      icon: <Loader2 className="w-4 h-4 animate-spin" />,
+      icon: <Loader2 className="w-4 h-4 motion-safe:animate-spin" />,
       label: 'Đang chờ cài đặt… / Waiting for installer…',
       className: 'bg-muted text-muted-foreground',
     },

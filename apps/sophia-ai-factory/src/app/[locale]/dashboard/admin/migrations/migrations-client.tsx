@@ -175,11 +175,17 @@ export function MigrationsClient({ locale }: Props) {
                   className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-violet-500"
                 />
                 <button
-                  onClick={() => markApplied(m.filename)}
+                  onClick={() => {
+                    const msg = isVi
+                      ? `Đánh dấu migration "${m.filename}" đã áp dụng? Hành động này sẽ thay đổi trạng thái schema.`
+                      : `Mark migration "${m.filename}" as applied? This changes schema state and cannot be easily undone.`;
+                    if (window.confirm(msg)) markApplied(m.filename);
+                  }}
                   disabled={markingFile === m.filename}
+                  aria-label={isVi ? `Đánh dấu migration ${m.filename} đã áp dụng` : `Mark migration ${m.filename} as applied`}
                   className="px-3 py-1.5 bg-violet-700 hover:bg-violet-600 disabled:opacity-50 text-white text-xs rounded-lg font-medium transition-colors shrink-0"
                 >
-                  {markingFile === m.filename ? '...' : (isVi ? 'Đánh dấu đã áp dụng' : 'Mark Applied')}
+                  {markingFile === m.filename ? (isVi ? 'Đang xử lý…' : 'Applying…') : (isVi ? 'Đánh dấu đã áp dụng' : 'Mark Applied')}
                 </button>
               </div>
             </div>

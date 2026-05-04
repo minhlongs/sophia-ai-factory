@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import Link from "next/link";
 import { GuideStepCard } from "@/forest/components/guide/guide-step-card";
 import { GuideCodeBlock } from "@/forest/components/guide/guide-code-block";
 import { GuideCallout } from "@/forest/components/guide/guide-callout";
@@ -134,7 +135,7 @@ export default function TelegramGuidePage() {
         <div className="space-y-1.5 text-sm text-muted-foreground">
           <div>Bot không phản hồi → nhập <span className="font-mono text-cyan-400 text-xs">/help</span> và đợi 30 giây</div>
           <div>Vẫn không được → Email: <span className="font-mono text-violet-400 text-xs">support@agencyos.network</span></div>
-          <div>Xem thêm → <a href="/guide/faq" className="text-cyan-400 hover:underline">Câu hỏi thường gặp</a></div>
+          <div>Xem thêm → <Link href="/guide/faq" className="text-cyan-400 hover:underline">Câu hỏi thường gặp</Link></div>
         </div>
       </div>
     </div>

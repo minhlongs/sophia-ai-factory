@@ -55,7 +55,7 @@ export function MissionDetail({ missionId }: Props) {
   }, [missionId]);
 
   if (loading) {
-    return <div className="space-y-4">{[1, 2, 3].map(i => <div key={i} className="h-24 bg-muted animate-pulse rounded-xl" />)}</div>;
+    return <div className="space-y-4">{[1, 2, 3].map(i => <div key={i} className="h-24 bg-muted motion-safe:animate-pulse rounded-xl" />)}</div>;
   }
   if (!mission) {
     return <p className="text-muted-foreground text-center py-12">{t('not_found')}</p>;

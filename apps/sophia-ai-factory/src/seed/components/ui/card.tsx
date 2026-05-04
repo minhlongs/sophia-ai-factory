@@ -18,7 +18,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
           "text-foreground"
         ],
         hover && [
-          "transition-all duration-300",
+          "transition-colors transition-shadow transition-transform duration-300 motion-reduce:transition-none",
           "hover:bg-white/10",
           "hover:border-white/20",
           "hover:shadow-[0_0_30px_rgba(0,240,255,0.2)]",
@@ -44,16 +44,21 @@ const CardHeader = React.forwardRef<
 ))
 CardHeader.displayName = "CardHeader"
 
-const CardTitle = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn("font-semibold leading-none tracking-tight", className)}
-    {...props}
-  />
-))
+type CardTitleAs = 'h2' | 'h3' | 'h4' | 'div';
+
+export interface CardTitleProps extends React.HTMLAttributes<HTMLHeadingElement> {
+  as?: CardTitleAs;
+}
+
+const CardTitle = React.forwardRef<HTMLHeadingElement, CardTitleProps>(
+  ({ className, as: Comp = 'h3', ...props }, ref) => (
+    <Comp
+      ref={ref as React.Ref<HTMLHeadingElement>}
+      className={cn("font-semibold leading-none tracking-tight", className)}
+      {...props}
+    />
+  )
+)
 CardTitle.displayName = "CardTitle"
 
 const CardDescription = React.forwardRef<

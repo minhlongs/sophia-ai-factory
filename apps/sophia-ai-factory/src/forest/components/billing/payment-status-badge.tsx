@@ -13,6 +13,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/seed/components/ui/tooltip';
+import { useLocale } from 'next-intl';
 
 export type PaymentStatusType = 'active' | 'past_due' | 'dunning' | 'cancelled' | 'expired' | 'unknown';
 
@@ -31,6 +32,7 @@ export function PaymentStatusBadge({
   dunningAttemptsRemaining,
   currency = 'USD',
 }: PaymentStatusBadgeProps) {
+  const locale = useLocale();
   const getStatusConfig = (status: PaymentStatusType) => {
     const configs: Record<PaymentStatusType, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; description: string }> = {
       active: {
@@ -42,14 +44,14 @@ export function PaymentStatusBadge({
         label: 'Past Due',
         variant: 'destructive',
         description: pastDueAmountCents
-          ? `Payment of ${formatCurrency(pastDueAmountCents, currency)} failed`
+          ? `Payment of ${formatCurrency(pastDueAmountCents, currency, locale)} failed`
           : 'Payment failed',
       },
       dunning: {
         label: 'Payment Failed',
         variant: 'destructive',
         description: nextRetryDate
-          ? `Next retry: ${new Date(nextRetryDate).toLocaleDateString()}`
+          ? `Next retry: ${new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(new Date(nextRetryDate))}`
           : 'Payment retry scheduled',
       },
       cancelled: {
@@ -79,7 +81,7 @@ export function PaymentStatusBadge({
       className="text-xs font-medium"
     >
       {status === 'dunning' && (
-        <span className="mr-1 animate-pulse">⚠️</span>
+        <span className="mr-1 motion-safe:animate-pulse">⚠️</span>
       )}
       {config.label}
     </Badge>
@@ -106,8 +108,8 @@ export function PaymentStatusBadge({
   );
 }
 
-function formatCurrency(cents: number, currency: string): string {
-  return new Intl.NumberFormat('en-US', {
+function formatCurrency(cents: number, currency: string, locale = 'en-US'): string {
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency,
   }).format(cents / 100);

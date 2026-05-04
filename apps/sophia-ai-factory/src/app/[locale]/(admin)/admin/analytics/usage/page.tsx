@@ -48,7 +48,7 @@ export default function UsageAnalyticsPage() {
             </SelectContent>
           </Select>
           <Button variant="outline" size="icon" onClick={refresh} disabled={isLoading}>
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'motion-safe:animate-spin' : ''}`} />
           </Button>
         </div>
       </div>

@@ -36,10 +36,10 @@ export function IncidentCard({ incident }: IncidentCardProps) {
         </span>
       </div>
       <div className="flex items-center gap-3 mt-1 text-xs text-zinc-500">
-        <span>{new Date(incident.startedAt * 1000).toLocaleDateString()}</span>
+        <span>{new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(new Date(incident.startedAt * 1000))}</span>
         <span>Duration: {durationLabel}</span>
         {incident.postmortemUrl && (
-          <a href={incident.postmortemUrl} className="text-violet-400 hover:underline" target="_blank" rel="noopener">
+          <a href={incident.postmortemUrl} className="text-violet-400 hover:underline" target="_blank" rel="noopener noreferrer">
             Post-mortem
           </a>
         )}

@@ -89,14 +89,26 @@ export function AdminRefundTable({ locale }: Props) {
               />
               <button
                 disabled={actionLoading === `${r.id}-approve`}
-                onClick={() => doAction(r.id, 'approve', { adminNotes: notesInputs[r.id] })}
+                aria-label={isVi ? `Chấp thuận hoàn tiền cho đơn ${r.purchase_id}` : `Approve refund for order ${r.purchase_id}`}
+                onClick={() => {
+                  const msg = isVi
+                    ? `Chấp thuận hoàn tiền $${((r.amount_cents ?? 0) / 100).toFixed(2)} USDT cho đơn ${r.purchase_id}? Hành động này không thể hoàn tác.`
+                    : `Approve refund of $${((r.amount_cents ?? 0) / 100).toFixed(2)} USDT for order ${r.purchase_id}? This cannot be undone.`;
+                  if (window.confirm(msg)) doAction(r.id, 'approve', { adminNotes: notesInputs[r.id] });
+                }}
                 className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white text-xs rounded font-medium disabled:opacity-50 transition-colors"
               >
                 {isVi ? 'Chấp thuận' : 'Approve'}
               </button>
               <button
                 disabled={actionLoading === `${r.id}-reject`}
-                onClick={() => doAction(r.id, 'reject', { adminNotes: notesInputs[r.id] })}
+                aria-label={isVi ? `Từ chối hoàn tiền cho đơn ${r.purchase_id}` : `Reject refund for order ${r.purchase_id}`}
+                onClick={() => {
+                  const msg = isVi
+                    ? `Từ chối yêu cầu hoàn tiền cho đơn ${r.purchase_id}? Hành động này không thể hoàn tác.`
+                    : `Reject refund request for order ${r.purchase_id}? This cannot be undone.`;
+                  if (window.confirm(msg)) doAction(r.id, 'reject', { adminNotes: notesInputs[r.id] });
+                }}
                 className="px-3 py-1.5 bg-red-700 hover:bg-red-600 text-white text-xs rounded font-medium disabled:opacity-50 transition-colors"
               >
                 {isVi ? 'Từ chối' : 'Reject'}
@@ -115,7 +127,13 @@ export function AdminRefundTable({ locale }: Props) {
               />
               <button
                 disabled={!txHashInputs[r.id] || actionLoading === `${r.id}-mark-refunded`}
-                onClick={() => doAction(r.id, 'mark-refunded', { tx_hash: txHashInputs[r.id] })}
+                aria-label={isVi ? `Đánh dấu đã hoàn tiền cho đơn ${r.purchase_id}` : `Mark order ${r.purchase_id} as refunded`}
+                onClick={() => {
+                  const msg = isVi
+                    ? `Đánh dấu đơn ${r.purchase_id} đã hoàn tiền với TX ${txHashInputs[r.id]}? Hành động này không thể hoàn tác.`
+                    : `Mark order ${r.purchase_id} as refunded with TX ${txHashInputs[r.id]}? This cannot be undone.`;
+                  if (window.confirm(msg)) doAction(r.id, 'mark-refunded', { tx_hash: txHashInputs[r.id] });
+                }}
                 className="px-3 py-1.5 bg-violet-700 hover:bg-violet-600 text-white text-xs rounded font-medium disabled:opacity-50 transition-colors"
               >
                 {isVi ? 'Đánh dấu đã hoàn tiền' : 'Mark as Refunded'}

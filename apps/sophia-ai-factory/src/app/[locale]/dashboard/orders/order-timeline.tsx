@@ -103,7 +103,7 @@ export function OrderTimeline({ order, locale }: OrderTimelineProps) {
                     : step.done
                     ? 'bg-green-800 text-green-300 border border-green-600'
                     : isCurrent
-                    ? 'bg-yellow-800 text-yellow-300 border border-yellow-600 animate-pulse'
+                    ? 'bg-yellow-800 text-yellow-300 border border-yellow-600 motion-safe:animate-pulse'
                     : 'bg-zinc-800 text-zinc-500 border border-zinc-700',
                 ].join(' ')}
               >

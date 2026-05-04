@@ -171,7 +171,7 @@ export function Hero() {
       </div>
 
       {/* Scroll indicator */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce-slow" aria-hidden="true">
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 motion-safe:animate-bounce-slow" aria-hidden="true">
         <div className="w-6 h-10 border-2 rounded-full flex items-start justify-center p-2" style={{ borderColor: "rgba(0,240,255,0.2)" }}>
           <div className="w-1 h-3 rounded-full" style={{ background: "rgba(0,240,255,0.4)" }} />
         </div>

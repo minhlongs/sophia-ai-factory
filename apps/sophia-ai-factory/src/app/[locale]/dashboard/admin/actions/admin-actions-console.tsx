@@ -84,7 +84,7 @@ export function AdminActionsConsole({ locale }: Props) {
       disabled={!!loading || disabled}
       className="px-4 py-2 bg-violet-700 hover:bg-violet-600 disabled:opacity-50 text-white text-sm rounded-lg font-medium transition-colors"
     >
-      {loading ? '...' : label}
+      {loading ? '…' : label}
     </button>
   )
 

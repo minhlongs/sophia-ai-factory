@@ -76,9 +76,9 @@ function QuotaGauge({
         />
       </div>
       <div className="flex justify-between text-sm">
-        <span className="text-muted-foreground">{used.toLocaleString()} used</span>
-        <span className="text-muted-foreground">{limit.toLocaleString()} limit</span>
-        <span className={`font-medium ${isCritical ? 'text-red-500' : isWarning ? 'text-amber-500' : ''}`}>
+        <span className="text-muted-foreground tabular-nums">{used.toLocaleString()} used</span>
+        <span className="text-muted-foreground tabular-nums">{limit.toLocaleString()} limit</span>
+        <span className={`font-medium tabular-nums ${isCritical ? 'text-red-500' : isWarning ? 'text-amber-500' : ''}`}>
           {percentage.toFixed(0)}%
         </span>
       </div>
@@ -123,7 +123,7 @@ export function QuotaUsageDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        <div className="motion-safe:animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
         <span className="ml-3 text-muted-foreground">Loading quota data...</span>
       </div>
     );

@@ -67,7 +67,7 @@ export function AccountSubscriptionTab({ tier, tierLabel, features }: Subscripti
               disabled={cancelling}
               className="cursor-pointer text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800/40 dark:hover:bg-red-900/10"
             >
-              {cancelling ? '...' : confirming ? t('sub_cancel_confirm').slice(0, 20) + '...' : t('sub_cancel')}
+              {cancelling ? '…' : confirming ? t('sub_cancel_confirm').slice(0, 20) + '…' : t('sub_cancel')}
             </Button>
           )}
         </div>

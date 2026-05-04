@@ -81,7 +81,9 @@ export function ApiKeyList({ onCreateKey, refreshTrigger = 0 }: Props) {
 
   useEffect(() => { load(); }, [refreshTrigger]);
 
-  async function handleRevoke(id: string) {
+  async function handleRevoke(id: string, keyName: string) {
+    const msg = `Revoke API key "${keyName}"? This will immediately invalidate the key and cannot be undone.`;
+    if (!window.confirm(msg)) return;
     setRevoking(id);
     setError(null);
     try {
@@ -177,11 +179,12 @@ export function ApiKeyList({ onCreateKey, refreshTrigger = 0 }: Props) {
                   <td className="px-4 py-3 text-right">
                     {k.is_active && (
                       <button
-                        onClick={() => handleRevoke(k.id)}
+                        onClick={() => handleRevoke(k.id, k.name)}
                         disabled={revoking === k.id}
+                        aria-label={`Revoke API key "${k.name}"`}
                         className="text-destructive hover:text-destructive/80 text-xs font-medium disabled:opacity-50"
                       >
-                        {revoking === k.id ? '...' : t('revoke')}
+                        {revoking === k.id ? 'Revoking…' : t('revoke')}
                       </button>
                     )}
                   </td>

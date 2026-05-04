@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { CheckCircle, Mail, KeyRound, PlayCircle, BarChart3 } from "lucide-react";
 import { getOrderById } from "@/land/orders/pending-order-repo";
 import { PaymentStatusPoller } from "@/forest/components/checkout/payment-status-poller";
@@ -167,18 +168,18 @@ export default async function PaymentSuccessPage({
         {/* Actions — only when confirmed */}
         {(orderStatus === 'completed' || !orderStatus) && (
           <div className="flex flex-col gap-3">
-            <a
+            <Link
               href={`/${locale}/dashboard`}
               className="inline-block w-full rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 px-6 py-3.5 text-center font-semibold text-white transition hover:from-violet-500 hover:to-blue-500 shadow-lg shadow-violet-500/20"
             >
               {isVi ? "Vào Dashboard" : "Go to Dashboard"}
-            </a>
-            <a
+            </Link>
+            <Link
               href={`/${locale}/dashboard/settings`}
               className="inline-block w-full rounded-xl border border-zinc-700 px-6 py-3.5 text-center font-medium text-zinc-300 transition hover:border-zinc-500 hover:text-white"
             >
               {isVi ? "Cài đặt API Keys" : "Configure API Keys"}
-            </a>
+            </Link>
           </div>
         )}
 

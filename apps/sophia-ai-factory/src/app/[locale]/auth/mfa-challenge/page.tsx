@@ -60,7 +60,7 @@ export default function MfaChallengePage() {
         {/* Header */}
         <div className="text-center">
           <div className="mx-auto mb-4 w-14 h-14 rounded-full bg-violet-500/10 flex items-center justify-center">
-            <ShieldCheck className="w-7 h-7 text-violet-400" />
+            <ShieldCheck aria-hidden="true" className="w-7 h-7 text-violet-400" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
             {t("title")}
@@ -71,7 +71,7 @@ export default function MfaChallengePage() {
         {/* Card */}
         <div className="rounded-xl border border-border bg-card p-8 shadow-sm space-y-6">
           {error && (
-            <div className="rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400">
+            <div role="alert" aria-live="polite" className="rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400">
               {error}
             </div>
           )}
@@ -85,30 +85,32 @@ export default function MfaChallengePage() {
                 {useBackup ? t("label_backup") : t("label_totp")}
               </label>
               <div className="relative">
-                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <KeyRound aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input
                   id="mfa-code"
                   type="text"
                   inputMode={useBackup ? "text" : "numeric"}
                   autoComplete="one-time-code"
+                  autoFocus
+                  spellCheck={false}
                   required
                   maxLength={maxLen}
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
                   placeholder={useBackup ? "XXXX-XXXX" : "000000"}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/50 tracking-widest text-center text-lg"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground tabular-nums focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50 tracking-widest text-center text-lg"
                 />
               </div>
             </div>
 
             <button
               type="submit"
-              disabled={loading || code.length < 6}
-              className="w-full flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-cyan-600 px-4 py-3 text-sm font-medium text-white hover:opacity-90 transition-opacity disabled:opacity-50"
+              disabled={loading || code.length < maxLen}
+              className="w-full flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-cyan-600 px-4 py-3 text-sm font-medium text-white hover:opacity-90 transition-opacity disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-violet-500/50 focus-visible:outline-none"
             >
               {loading ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 aria-hidden="true" className="w-4 h-4 animate-spin" />
                   {t("verifying")}
                 </>
               ) : (
@@ -126,7 +128,7 @@ export default function MfaChallengePage() {
                 setCode("");
                 setError(null);
               }}
-              className="text-sm text-violet-400 hover:text-violet-300 transition-colors"
+              className="text-sm text-violet-400 hover:text-violet-300 transition-colors focus-visible:ring-2 focus-visible:ring-violet-500/50 focus-visible:outline-none rounded"
             >
               {useBackup ? t("use_totp") : t("use_backup")}
             </button>

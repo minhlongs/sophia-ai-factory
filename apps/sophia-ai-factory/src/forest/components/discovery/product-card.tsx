@@ -1,14 +1,18 @@
+'use client'
+
 import { Product } from './types'
 import { GemBadge } from './gem-badge'
 import { TrendingUp } from 'lucide-react'
 import Image from 'next/image'
+import { useLocale } from 'next-intl'
 
 interface ProductCardProps {
   product: Product
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  const formattedPrice = new Intl.NumberFormat('en-US', {
+  const locale = useLocale()
+  const formattedPrice = new Intl.NumberFormat(locale, {
     style: 'currency',
     currency: 'USD',
   }).format(product.avg_earnings_usd || 0)

@@ -4,7 +4,7 @@
 
 export default function SopDetailLoading() {
   return (
-    <div className="space-y-6 animate-pulse max-w-4xl">
+    <div className="space-y-6 motion-safe:animate-pulse max-w-4xl">
       <div className="h-5 w-24 bg-zinc-800 rounded" />
       <div className="h-8 w-64 bg-zinc-800 rounded" />
       <div className="flex gap-2">
