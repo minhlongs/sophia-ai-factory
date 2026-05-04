@@ -51,7 +51,13 @@
       "saving": "Đang lưu",
       "launch": "Kích hoạt"
     },
-    "footer": "Cần hỗ trợ? Liên hệ đội ngũ của chúng tôi"
+    "footer": "Cần hỗ trợ? Liên hệ đội ngũ của chúng tôi",
+    "save": {
+      "retrying": "Đang thử lại ({attempt}/3)…",
+      "retryFailed": "Lưu thất bại sau 3 lần thử. Vui lòng cài đặt thủ công.",
+      "manualSetup": "Thiết lập thủ công trong Cài đặt",
+      "webhookWarning": "HeyGen webhook chưa đăng ký — video sẽ không nhận thông báo tự động."
+    }
   },
   "landing": {
     "nav": {
@@ -1422,5 +1428,13 @@
     "upgradeNow": "Nâng cấp ngay",
     "exploreSops": "Khám phá SOP",
     "renew": "Gia hạn"
+  },
+  "errors": {
+    "boundary": {
+      "title": "Đã xảy ra lỗi",
+      "message": "Đã có lỗi không mong muốn. Vui lòng thử lại.",
+      "retry": "Thử lại",
+      "home": "Về trang chủ"
+    }
   }
 }

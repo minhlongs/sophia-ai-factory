@@ -35,6 +35,20 @@ function checkEligibility(): boolean {
   return isMac && hasEnoughRam;
 }
 
+// ── Type guard — validates API response shape before applyPayload (B7) ─────────
+
+function isStatusPayload(v: unknown): v is StatusPayload {
+  if (!v || typeof v !== 'object') return false;
+  const obj = v as Record<string, unknown>;
+  return (
+    typeof obj['provisioned'] === 'boolean' &&
+    (obj['endpoint_hostname'] === null || typeof obj['endpoint_hostname'] === 'string') &&
+    (obj['last_health_at'] === null || typeof obj['last_health_at'] === 'string') &&
+    (obj['status'] === 'healthy' || obj['status'] === 'stale' ||
+     obj['status'] === 'failed' || obj['status'] === 'unknown')
+  );
+}
+
 // ── Main component ─────────────────────────────────────────────────────────────
 
 export function LocalModeStep() {
@@ -62,7 +76,9 @@ export function LocalModeStep() {
     try {
       const res = await fetch('/api/setup/local-mode/status');
       if (!res.ok) return;
-      applyPayload(await res.json() as StatusPayload, true);
+      const raw: unknown = await res.json();
+      if (!isStatusPayload(raw)) return;
+      applyPayload(raw, true);
     } catch { /* network error — keep polling */ }
   };
 
@@ -73,9 +89,10 @@ export function LocalModeStep() {
       try {
         const res = await fetch('/api/setup/local-mode/status');
         if (!res.ok) { setUiStatus('not-provisioned'); return; }
-        const data = await res.json() as StatusPayload;
-        if (!data.provisioned) { setUiStatus('not-provisioned'); return; }
-        applyPayload(data);
+        const raw: unknown = await res.json();
+        if (!isStatusPayload(raw)) { setUiStatus('not-provisioned'); return; }
+        if (!raw.provisioned) { setUiStatus('not-provisioned'); return; }
+        applyPayload(raw);
       } catch { setUiStatus('not-provisioned'); }
     })();
 
