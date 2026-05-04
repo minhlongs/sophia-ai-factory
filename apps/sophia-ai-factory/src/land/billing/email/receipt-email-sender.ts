@@ -9,6 +9,7 @@ import { createServerClient } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
 import { renderReceipt } from './receipt-email-template'
 import type { ReceiptInput } from './receipt-email-template'
+import { resolveEmailBranding, appendEmailFooter, buildLogoImgTag } from './tenant-branding-resolver'
 
 export type { ReceiptInput }
 
@@ -44,7 +45,7 @@ export async function sendReceiptEmail(input: ReceiptInput): Promise<void> {
     }
   } catch { /* no row yet — proceed */ }
 
-  const { subject, html, text } = renderReceipt(input)
+  const { subject, html: rawHtml, text } = renderReceipt(input)
   const resend = getResend()
 
   if (!resend) {
@@ -52,12 +53,28 @@ export async function sendReceiptEmail(input: ReceiptInput): Promise<void> {
     return
   }
 
-  const FROM = process.env.RESEND_FROM_EMAIL || 'noreply@sophia.agencyos.network'
+  // Additive branding: load tenant overrides, fall back to defaults if unavailable
+  const tenantBranding = await resolveEmailBranding(input.email).catch(() => ({
+    fromName: null, footerMarkdown: null, logoUrl: null,
+  }))
+
+  let finalHtml = rawHtml
+  if (tenantBranding.logoUrl) {
+    const logoTag = buildLogoImgTag(tenantBranding.logoUrl)
+    finalHtml = finalHtml.replace('<body', `<body`).replace(/(<body[^>]*>)/, `$1${logoTag}`)
+  }
+  finalHtml = appendEmailFooter(finalHtml, tenantBranding.footerMarkdown)
+
+  const FROM_DEFAULT = process.env.RESEND_FROM_EMAIL || 'noreply@sophia.agencyos.network'
+  const fromDisplay = tenantBranding.fromName
+    ? `${tenantBranding.fromName} <${FROM_DEFAULT}>`
+    : FROM_DEFAULT
+
   await resend.emails.send({
-    from: FROM,
+    from: fromDisplay,
     to: input.email,
     subject,
-    html,
+    html: finalHtml,
     text,
     tags: [{ name: 'type', value: 'receipt' }],
   })

@@ -124,9 +124,13 @@ describe('runAffiliateScout', () => {
     let callCount = 0;
     const stmt = {
       bind: vi.fn().mockReturnThis(),
+      // first() is called by getOrDefault (scoring/geo lookups) — return null (use defaults)
+      first: vi.fn().mockResolvedValue(null),
       run: vi.fn().mockImplementation(() => {
         callCount++;
-        if (callCount === 1) throw new Error('transient error');
+        // first 2 calls are getOrDefault queries (scoring + geo per-tenant), not inserts
+        // inserts start at callCount 3+
+        if (callCount === 3) throw new Error('transient error');
         return Promise.resolve({ meta: { changes: 1 } });
       }),
     };
@@ -135,7 +139,65 @@ describe('runAffiliateScout', () => {
 
     // Should not throw; errors are caught per-row
     const result = await runAffiliateScout(env, 'tenant-1', PASS_ALL_SCORES);
-    // 2 of 3 succeed
+    // 2 of 3 inserts succeed (1 threw, caught per-row)
     expect(result.discovered).toBe(2);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Tenant scoring override tests
+// ---------------------------------------------------------------------------
+
+describe('runAffiliateScout — per-tenant scoring overrides', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('caller-supplied threshold overrides tenant settings threshold', async () => {
+    // threshold:0 in scoringCtx → all 3 mock affiliates pass
+    const db = makeD1(1);
+    const env: ScoutEnv = { DB: db };
+    const result = await runAffiliateScout(env, 'tenant-1', { threshold: 0 });
+    expect(result.discovered).toBe(3);
+  });
+
+  it('high threshold from scoringCtx blocks all affiliates', async () => {
+    const db = makeD1(1);
+    const env: ScoutEnv = { DB: db };
+    const result = await runAffiliateScout(env, 'tenant-1', { threshold: 1.0 });
+    // No mock affiliate scores 1.0
+    expect(result.discovered).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Tenant geo override tests
+// ---------------------------------------------------------------------------
+
+describe('runAffiliateScout — per-tenant geo overrides', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('suppresses emit for geo-blocked country+category', async () => {
+    const db = makeD1(1);
+    const env: ScoutEnv = { DB: db };
+
+    // Pass threshold 0 so all affiliates qualify, then check geo suppression
+    await runAffiliateScout(env, 'tenant-1', { threshold: 0 }, 'US');
+
+    // emit is mocked globally via vi.mock — check call count is less than discovered
+    // (geo-blocked affiliates are inserted but not emitted)
+    const emitCalls = (emit as ReturnType<typeof vi.fn>).mock.calls.length;
+    // At least one should be blocked (mock affiliates have crypto/finance categories)
+    expect(emitCalls).toBeLessThan(3);
+  });
+
+  it('geo-gate does not fire when no tenantCountry supplied', async () => {
+    const db = makeD1(1);
+    const env: ScoutEnv = { DB: db };
+    await runAffiliateScout(env, 'tenant-1', { threshold: 0 });
+    // Without country, no geo-blocking — all 3 emitted
+    expect(emit).toHaveBeenCalledTimes(3);
   });
 });
