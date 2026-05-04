@@ -71,9 +71,15 @@ export function IntegrationCard({
         </div>
         <div className="flex-shrink-0">
           {isSoon ? (
-            <span className="text-xs px-3 py-1.5 border rounded-md text-muted-foreground cursor-not-allowed">
+            <button
+              type="button"
+              disabled
+              aria-disabled="true"
+              title="Coming soon / Sắp ra mắt"
+              className="text-xs px-3 py-1.5 border rounded-md text-muted-foreground cursor-not-allowed opacity-60"
+            >
               {t('badge_soon')}
-            </span>
+            </button>
           ) : (
             <Link
               href={href}

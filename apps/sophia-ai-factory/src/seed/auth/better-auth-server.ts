@@ -136,6 +136,12 @@ export function getAuth() {
               await db.from('org_balances').insert({
                 org_id: orgId, balance: 50,
               });
+              await db.from('subscriptions').insert({
+                id: crypto.randomUUID(),
+                org_id: orgId,
+                plan: 'basic',
+                status: 'active',
+              });
             } catch (err) {
               // Non-critical — org creation failure shouldn't block signup
               logger.error('[databaseHook] org creation failed', err instanceof Error ? err : new Error(String(err)));

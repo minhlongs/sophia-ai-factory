@@ -149,11 +149,16 @@ export function CampaignForm({
               </option>
             ))}
           </select>
-          <p className="text-xs text-muted-foreground">
-            A CTA for this offer will be included in your video.
-          </p>
-          {/* Hidden field for server action */}
-          <input type="hidden" name="offer_id" value={selectedOfferId} />
+          {!selectedOfferId && (
+            <p className="text-xs text-destructive">
+              Vui lòng chọn ưu đãi affiliate / Please select an affiliate offer
+            </p>
+          )}
+          {selectedOfferId && (
+            <p className="text-xs text-muted-foreground">
+              A CTA for this offer will be included in your video.
+            </p>
+          )}
         </div>
       )}
 
