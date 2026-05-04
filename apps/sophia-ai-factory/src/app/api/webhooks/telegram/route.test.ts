@@ -4,6 +4,7 @@ import { NextRequest } from 'next/server'
 import * as telegramHandlers from '@/tree/telegram/telegram-command-handlers'
 import * as campaignHandlers from '@/tree/telegram/telegram-bot-campaign-handlers'
 import * as fsmStateManager from '@/tree/telegram/telegram-fsm-state-manager'
+import * as pairingModule from '@/lib/telegram/pairing'
 
 // Mock legacy telegram command handlers
 vi.mock('@/tree/telegram/telegram-command-handlers', () => ({
@@ -47,17 +48,39 @@ vi.mock('@/tree/telegram/telegram-fsm-state-manager', () => ({
   isBotState: vi.fn().mockReturnValue(true),
 }))
 
-// Mock D1 client (for /ticket userId lookup)
+// Mock D1 client (for /ticket userId lookup and pairing)
 vi.mock('@/seed/db/client', () => ({
   createServerClient: () => ({
     from: vi.fn().mockReturnValue({
       select: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
           single: vi.fn().mockResolvedValue({ data: null, error: null }),
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
         }),
       }),
+      delete: vi.fn().mockReturnValue({
+        eq: vi.fn().mockResolvedValue({ data: null, error: null }),
+        lt: vi.fn().mockResolvedValue({ data: null, error: null }),
+      }),
+      upsert: vi.fn().mockResolvedValue({ data: null, error: null }),
     }),
   }),
+}))
+
+// Mock pairing module
+vi.mock('@/lib/telegram/pairing', () => ({
+  isAllowed: vi.fn().mockResolvedValue(true),
+  requestPairing: vi.fn().mockResolvedValue({ code: '123456' }),
+  approvePairing: vi.fn().mockResolvedValue({ chatId: '999' }),
+  listPaired: vi.fn().mockResolvedValue([]),
+  revokePairing: vi.fn().mockResolvedValue(true),
+}))
+
+// Mock sendTelegramMessage
+vi.mock('@/tree/telegram/telegram-client', () => ({
+  sendTelegramMessage: vi.fn().mockResolvedValue({ ok: true }),
+  sendTelegramMessageWithKeyboard: vi.fn().mockResolvedValue({ ok: true }),
+  setTelegramWebhook: vi.fn().mockResolvedValue({ ok: true }),
 }))
 
 describe('Telegram Webhook Route', () => {
@@ -67,12 +90,19 @@ describe('Telegram Webhook Route', () => {
     vi.resetAllMocks()
     process.env.TELEGRAM_BOT_TOKEN = 'test-bot-token'
     process.env.TELEGRAM_WEBHOOK_SECRET = secret
+    delete process.env.TELEGRAM_ADMIN_CHAT_ID
     // Restore withMiddleware implementation after resetAllMocks()
     vi.mocked(telegramHandlers.withMiddleware).mockImplementation(
       async (_chatId: string, handler: () => Promise<void>) => handler()
     )
     vi.mocked(campaignHandlers.handleFsmTextInput).mockResolvedValue(false)
     vi.mocked(campaignHandlers.handleOfferCallback).mockResolvedValue(false)
+    // Default: pairing gate allows all (isAllowed = true)
+    vi.mocked(pairingModule.isAllowed).mockResolvedValue(true)
+    vi.mocked(pairingModule.requestPairing).mockResolvedValue({ code: '123456' })
+    vi.mocked(pairingModule.approvePairing).mockResolvedValue({ chatId: '999' })
+    vi.mocked(pairingModule.listPaired).mockResolvedValue([])
+    vi.mocked(pairingModule.revokePairing).mockResolvedValue(true)
   })
 
   interface TelegramWebhookBody {
@@ -224,5 +254,112 @@ describe('Telegram Webhook Route', () => {
     await POST(req)
     expect(campaignHandlers.handleFsmTextInput).toHaveBeenCalledWith('123', 'hello bot')
     expect(telegramHandlers.handleTextMessage).toHaveBeenCalledWith('123', 'hello bot')
+  })
+})
+
+describe('Telegram Webhook Route — DM Pairing Gate', () => {
+  const secret = 'test-secret'
+  const ADMIN_ID = '999'
+
+  const createRequest = (body: Record<string, unknown>, headers: Record<string, string> = {}) =>
+    new NextRequest('http://localhost/api/webhooks/telegram', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Telegram-Bot-Api-Secret-Token': secret,
+        ...headers,
+      },
+      body: JSON.stringify(body),
+    })
+
+  beforeEach(() => {
+    vi.resetAllMocks()
+    process.env.TELEGRAM_BOT_TOKEN = 'test-bot-token'
+    process.env.TELEGRAM_WEBHOOK_SECRET = secret
+    process.env.TELEGRAM_ADMIN_CHAT_ID = ADMIN_ID
+    vi.mocked(telegramHandlers.withMiddleware).mockImplementation(
+      async (_chatId: string, handler: () => Promise<void>) => handler()
+    )
+    vi.mocked(campaignHandlers.handleFsmTextInput).mockResolvedValue(false)
+    vi.mocked(campaignHandlers.handleOfferCallback).mockResolvedValue(false)
+    vi.mocked(pairingModule.isAllowed).mockResolvedValue(true)
+    vi.mocked(pairingModule.requestPairing).mockResolvedValue({ code: '654321' })
+    vi.mocked(pairingModule.approvePairing).mockResolvedValue({ chatId: '555' })
+    vi.mocked(pairingModule.listPaired).mockResolvedValue([])
+    vi.mocked(pairingModule.revokePairing).mockResolvedValue(true)
+  })
+
+  it('blocks unknown sender and sends pairing code', async () => {
+    vi.mocked(pairingModule.isAllowed).mockResolvedValue(false)
+    const req = createRequest({ message: { chat: { id: 123, first_name: 'Bob' }, text: '/start' } })
+    await POST(req)
+    expect(pairingModule.requestPairing).toHaveBeenCalled()
+    // handleStart should NOT be called
+    expect(telegramHandlers.handleStart).not.toHaveBeenCalled()
+  })
+
+  it('allows paired sender through gate', async () => {
+    vi.mocked(pairingModule.isAllowed).mockResolvedValue(true)
+    const req = createRequest({ message: { chat: { id: 123 }, text: '/start' } })
+    await POST(req)
+    expect(telegramHandlers.handleStart).toHaveBeenCalledWith('123')
+  })
+
+  it('admin bypasses gate entirely', async () => {
+    // Even if isAllowed returns false, admin chat_id bypasses gate
+    vi.mocked(pairingModule.isAllowed).mockResolvedValue(false)
+    const req = createRequest({ message: { chat: { id: Number(ADMIN_ID) }, text: '/start' } })
+    await POST(req)
+    expect(telegramHandlers.handleStart).toHaveBeenCalledWith(ADMIN_ID)
+    // isAllowed should NOT be called for admin
+    expect(pairingModule.isAllowed).not.toHaveBeenCalled()
+  })
+
+  it('/pair_approve with valid code approves and notifies', async () => {
+    const { sendTelegramMessage } = await import('@/tree/telegram/telegram-client')
+    const req = createRequest({
+      message: { chat: { id: Number(ADMIN_ID) }, text: '/pair_approve 654321' },
+    })
+    await POST(req)
+    expect(pairingModule.approvePairing).toHaveBeenCalled()
+    expect(sendTelegramMessage).toHaveBeenCalledWith(ADMIN_ID, expect.stringContaining('Approved'))
+  })
+
+  it('/pair_approve with unknown code replies not-found', async () => {
+    vi.mocked(pairingModule.approvePairing).mockResolvedValue(null)
+    const { sendTelegramMessage } = await import('@/tree/telegram/telegram-client')
+    const req = createRequest({
+      message: { chat: { id: Number(ADMIN_ID) }, text: '/pair_approve 000000' },
+    })
+    await POST(req)
+    expect(sendTelegramMessage).toHaveBeenCalledWith(ADMIN_ID, expect.stringContaining('not found'))
+  })
+
+  it('/pair_list returns 200 and calls listPaired', async () => {
+    const req = createRequest({
+      message: { chat: { id: Number(ADMIN_ID) }, text: '/pair_list' },
+    })
+    const res = await POST(req)
+    expect(pairingModule.listPaired).toHaveBeenCalled()
+    expect(res.status).toBe(200)
+  })
+
+  it('/pair_revoke removes chat', async () => {
+    const req = createRequest({
+      message: { chat: { id: Number(ADMIN_ID) }, text: '/pair_revoke 555' },
+    })
+    await POST(req)
+    expect(pairingModule.revokePairing).toHaveBeenCalledWith(expect.anything(), '555')
+  })
+
+  it('non-admin /pair_approve is not handled as admin command', async () => {
+    vi.mocked(pairingModule.isAllowed).mockResolvedValue(true)
+    const req = createRequest({
+      message: { chat: { id: 123 }, text: '/pair_approve 654321' },
+    })
+    await POST(req)
+    // Should fall through to unknown command handler since 123 != ADMIN_ID
+    expect(pairingModule.approvePairing).not.toHaveBeenCalled()
+    expect(telegramHandlers.handleUnknown).toHaveBeenCalledWith('123')
   })
 })
