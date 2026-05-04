@@ -1,25 +1,43 @@
 "use client";
 
 /**
- * OnboardingTourModal — 5-step guided tour for first-time users.
- * Shown when users.onboarding_completed_at is null.
- * Persists dismissal to localStorage; calls API to mark complete on finish.
+ * OnboardingTourModal — 7-step RaaS-focused guided tour for first-time users.
+ * Shown on first visit (no onboarding_completed_at in DB) or via ?replayTour=1.
+ * Persists completion to localStorage + API on finish/action-nav.
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { X, ChevronRight, ChevronLeft } from 'lucide-react';
+import { X, ChevronRight, ChevronLeft, RotateCcw } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/seed/components/ui/button';
 
+interface StepConfig {
+  titleKey: string;
+  descKey: string;
+  actionKey?: string;
+  actionHref?: string;
+}
+
 interface OnboardingTourModalProps {
   userId: string;
+  tier?: string;
   onComplete?: () => void;
 }
 
 const STORAGE_KEY = 'sophia_tour_dismissed';
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 7;
 
-export function OnboardingTourModal({ userId, onComplete }: OnboardingTourModalProps) {
+const STEPS: StepConfig[] = [
+  { titleKey: 'step1_title', descKey: 'step1_desc' },
+  { titleKey: 'step2_title', descKey: 'step2_desc', actionKey: 'step2_action', actionHref: '/dashboard/byok' },
+  { titleKey: 'step3_title', descKey: 'step3_desc', actionKey: 'step3_action', actionHref: '/dashboard/sop-marketplace' },
+  { titleKey: 'step4_title', descKey: 'step4_desc', actionKey: 'step4_action', actionHref: '/dashboard/sops' },
+  { titleKey: 'step5_title', descKey: 'step5_desc', actionKey: 'step5_action', actionHref: '/dashboard/analytics' },
+  { titleKey: 'step6_title', descKey: 'step6_desc', actionKey: 'step6_action', actionHref: '/dashboard/credits' },
+  { titleKey: 'step7_title', descKey: 'step7_desc', actionKey: 'step7_action', actionHref: '/dashboard/support' },
+];
+
+export function OnboardingTourModal({ userId, tier, onComplete }: OnboardingTourModalProps) {
   const t = useTranslations('onboarding');
   const [visible, setVisible] = useState(false);
   const [step, setStep] = useState(1);
@@ -30,8 +48,8 @@ export function OnboardingTourModal({ userId, onComplete }: OnboardingTourModalP
 
   useEffect(() => {
     const dismissed = localStorage.getItem(STORAGE_KEY);
-    if (!dismissed) {
-      // Save the element that opened the modal so focus can return on close
+    const replay = new URLSearchParams(window.location.search).get('replayTour') === '1';
+    if (!dismissed || replay) {
       triggerRef.current = document.activeElement as HTMLElement;
       setVisible(true);
     }
@@ -83,7 +101,7 @@ export function OnboardingTourModal({ userId, onComplete }: OnboardingTourModalP
         body: JSON.stringify({ onboarding_completed: true, user_id: userId }),
       });
     } catch {
-      // non-critical — local storage still prevents re-show
+      // non-critical — localStorage still prevents re-show
     }
     localStorage.setItem(STORAGE_KEY, '1');
     setCompleting(false);
@@ -92,17 +110,16 @@ export function OnboardingTourModal({ userId, onComplete }: OnboardingTourModalP
     onComplete?.();
   }
 
+  async function handleActionNav(href: string) {
+    // Mark complete first, then navigate
+    await handleFinish();
+    window.location.href = href;
+  }
+
   if (!visible) return null;
 
-  const steps = [
-    { titleKey: 'step1_title' as const, descKey: 'step1_desc' as const },
-    { titleKey: 'step2_title' as const, descKey: 'step2_desc' as const },
-    { titleKey: 'step3_title' as const, descKey: 'step3_desc' as const },
-    { titleKey: 'step4_title' as const, descKey: 'step4_desc' as const },
-    { titleKey: 'step5_title' as const, descKey: 'step5_desc' as const },
-  ];
-
-  const current = steps[step - 1];
+  const current = STEPS[step - 1];
+  const isLast = step === TOTAL_STEPS;
 
   return (
     <div
@@ -127,35 +144,50 @@ export function OnboardingTourModal({ userId, onComplete }: OnboardingTourModalP
         </button>
 
         {/* Header */}
-        <div className="mb-6">
+        <div className="mb-5">
           <h2 id={titleId} className="text-lg font-bold text-slate-900 dark:text-slate-100">{t('title')}</h2>
           <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{t('subtitle')}</p>
         </div>
 
         {/* Progress dots */}
-        <div className="flex gap-1.5 mb-6">
-          {steps.map((_, i) => (
+        <div className="flex gap-1.5 mb-5">
+          {STEPS.map((_, i) => (
             <div
               key={i}
               className={`h-1.5 rounded-full transition-all duration-150 ${
-                i + 1 === step ? 'w-6 bg-blue-600' : 'w-1.5 bg-slate-300 dark:bg-slate-700'
+                i + 1 === step ? 'w-6 bg-violet-600' : 'w-1.5 bg-slate-300 dark:bg-slate-700'
               }`}
             />
           ))}
         </div>
 
         {/* Step content */}
-        <div className="min-h-[100px] mb-6">
-          <p className="text-xs font-medium text-blue-600 dark:text-blue-400 mb-2">
+        <div className="min-h-[90px] mb-4">
+          <p className="text-xs font-medium text-violet-600 dark:text-violet-400 mb-2">
             {t('progress', { current: step, total: TOTAL_STEPS })}
           </p>
           <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-2">
             {t(current.titleKey)}
           </h3>
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            {t(current.descKey)}
+            {step === 1
+              ? t('step1_desc', { tier: tier ?? 'BASIC' })
+              : t(current.descKey)}
           </p>
         </div>
+
+        {/* Action CTA — shown when step has an actionHref */}
+        {current.actionHref && current.actionKey && (
+          <div className="mb-4">
+            <button
+              onClick={() => handleActionNav(current.actionHref!)}
+              disabled={completing}
+              className="w-full cursor-pointer py-2 px-4 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-violet-600 to-blue-600 hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              {t(current.actionKey)}
+            </button>
+          </div>
+        )}
 
         {/* Navigation */}
         <div className="flex items-center justify-between">
@@ -177,7 +209,7 @@ export function OnboardingTourModal({ userId, onComplete }: OnboardingTourModalP
                 {t('back')}
               </Button>
             )}
-            {step < TOTAL_STEPS ? (
+            {!isLast ? (
               <Button
                 size="sm"
                 onClick={() => setStep(s => s + 1)}
@@ -202,3 +234,6 @@ export function OnboardingTourModal({ userId, onComplete }: OnboardingTourModalP
     </div>
   );
 }
+
+// Re-export RotateCcw for sidebar convenience (tree-shaken if unused)
+export { RotateCcw };
