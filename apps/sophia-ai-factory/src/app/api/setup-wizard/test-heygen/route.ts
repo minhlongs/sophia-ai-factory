@@ -22,20 +22,35 @@ const schema = z.object({
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser()
   if (!user) {
-    return NextResponse.json({ ok: false, message: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({
+      ok: false,
+      valid: false,
+      message: 'Unauthorized',
+      message_vi: 'Chưa xác thực',
+    }, { status: 401 })
   }
 
   let body: unknown
   try {
     body = await request.json()
   } catch {
-    return NextResponse.json({ ok: false, message: 'Invalid JSON' }, { status: 400 })
+    return NextResponse.json({
+      ok: false,
+      valid: false,
+      message: 'Invalid JSON',
+      message_vi: 'JSON không hợp lệ',
+    }, { status: 400 })
   }
 
   const parsed = schema.safeParse(body)
   if (!parsed.success) {
     return NextResponse.json(
-      { ok: false, message: parsed.error.issues[0]?.message ?? 'Validation error' },
+      {
+        ok: false,
+        valid: false,
+        message: parsed.error.issues[0]?.message ?? 'Validation error',
+        message_vi: 'Lỗi xác thực dữ liệu đầu vào',
+      },
       { status: 400 },
     )
   }
@@ -50,20 +65,40 @@ export async function POST(request: NextRequest) {
     })
 
     if (res.ok) {
-      return NextResponse.json({ ok: true, message: 'HeyGen key is valid' })
+      return NextResponse.json({
+        ok: true,
+        valid: true,
+        message: 'HeyGen key is valid',
+        message_vi: 'Khoá HeyGen hợp lệ',
+      })
     }
     if (res.status === 401) {
-      return NextResponse.json({ ok: false, message: 'Invalid HeyGen API key (401)' }, { status: 422 })
+      return NextResponse.json({
+        ok: false,
+        valid: false,
+        message: 'Invalid HeyGen API key (401)',
+        message_vi: 'Khoá HeyGen không hợp lệ (401)',
+      }, { status: 422 })
     }
     return NextResponse.json(
-      { ok: false, message: `HeyGen returned ${res.status}` },
+      {
+        ok: false,
+        valid: false,
+        message: `HeyGen returned ${res.status}`,
+        message_vi: `HeyGen trả về ${res.status}`,
+      },
       { status: 422 },
     )
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     const isTimeout = msg.includes('abort') || msg.includes('timeout') || msg.includes('TimeoutError')
     return NextResponse.json(
-      { ok: false, message: isTimeout ? 'HeyGen ping timed out' : `Network error: ${msg}` },
+      {
+        ok: false,
+        valid: false,
+        message: isTimeout ? 'HeyGen ping timed out' : `Network error: ${msg}`,
+        message_vi: isTimeout ? 'Kết nối HeyGen hết thời gian' : `Lỗi mạng: ${msg}`,
+      },
       { status: 502 },
     )
   }

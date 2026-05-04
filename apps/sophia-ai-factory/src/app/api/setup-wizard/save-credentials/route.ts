@@ -15,6 +15,7 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session'
 import { setUserCredential } from '@/tree/credentials/user-credentials-repo'
 import { registerHeyGenWebhook } from '@/lib/heygen/webhook-registrar'
 import { logger } from '@/seed/utils/logger-utility'
+import { getD1Raw } from '@/seed/db/client'
 import type { ProviderType } from '@/tree/credentials/user-credentials-repo'
 
 const SOPHIA_HEYGEN_WEBHOOK_URL = 'https://sophia.agencyos.network/api/webhooks/heygen'
@@ -65,23 +66,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, message: 'No credentials provided' }, { status: 400 })
   }
 
-  const errors: string[] = []
-  let webhookAutoRegistered = false
+  const credErrors: string[] = []
+  let webhookRegistered = false
 
   for (const { provider, key } of saves) {
     try {
       await setUserCredential(user.id, provider, key)
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
-      errors.push(`${provider}: ${msg}`)
+      credErrors.push(`${provider}: ${msg}`)
     }
   }
 
   // Auto-register HeyGen webhook when heygen_api_key is saved — fail-soft
-  if (heygen_api_key && !errors.some((e) => e.startsWith('heygen:'))) {
+  if (heygen_api_key && !credErrors.some((e) => e.startsWith('heygen:'))) {
     const regResult = await registerHeyGenWebhook(heygen_api_key, SOPHIA_HEYGEN_WEBHOOK_URL)
     if (regResult.success) {
-      webhookAutoRegistered = true
+      webhookRegistered = true
       // Auto-store the signing secret so customer never sees/touches it
       if (regResult.signingSecret) {
         try {
@@ -93,6 +94,8 @@ export async function POST(request: NextRequest) {
         }
       }
     } else {
+      // Non-blocking but surfaced to frontend via webhook_registered: false
+      credErrors.push(`webhook: ${regResult.error ?? 'HeyGen webhook registration failed'}`)
       logger.warn('[SaveCredentials] HeyGen auto-register failed (non-fatal)', {
         userId: user.id,
         error: regResult.error,
@@ -100,16 +103,31 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  if (errors.length > 0) {
+  if (credErrors.some((e) => !e.startsWith('webhook:'))) {
     return NextResponse.json(
-      { success: false, message: errors.join('; ') },
+      { success: false, message: credErrors.filter((e) => !e.startsWith('webhook:')).join('; ') },
       { status: 500 },
     )
   }
 
+  // Mark onboarding complete in DB (primary) — cookie fallback handled by /api/setup/save
+  try {
+    const db = await getD1Raw()
+    const nowSec = Math.floor(Date.now() / 1000)
+    await db
+      .prepare('UPDATE user_profiles SET onboarding_completed_at = ? WHERE user_id = ?')
+      .bind(nowSec, user.id)
+      .run()
+  } catch (dbErr) {
+    logger.warn('[SaveCredentials] Failed to set onboarding_completed_at', { error: dbErr })
+  }
+
+  const webhookErrors = credErrors.filter((e) => e.startsWith('webhook:'))
+
   return NextResponse.json({
     success: true,
     saved: saves.map((s) => s.provider),
-    webhookAutoRegistered,
+    webhook_registered: webhookRegistered,
+    ...(webhookErrors.length > 0 ? { errors: webhookErrors } : {}),
   })
 }

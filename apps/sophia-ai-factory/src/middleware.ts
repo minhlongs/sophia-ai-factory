@@ -9,6 +9,7 @@ import { logger } from '@/seed/utils/logger-utility'
 import { toError } from '@/seed/utils/to-error'
 import { isInternalOrStatic, pathnameWithoutLocale, isAdminAuthorized } from './middleware-helpers'
 import { handleApiRoute } from './middleware-api-handler'
+import { getD1Raw } from '@/seed/db/client'
 import {
   generateCsrfToken,
   setCsrfCookie,
@@ -129,12 +130,27 @@ export async function proxy(request: NextRequest) {
       }
 
       // New-user onboarding: redirect to setup wizard if wizard not yet completed.
-      // Cookie is per-user (`wizard_done_<uid12>`) so multiple users on the same
-      // browser don't share completion state. Set by /api/setup/save on success.
+      // Primary: check user_profiles.onboarding_completed_at in D1.
+      // Fallback: per-user cookie (`wizard_done_<uid12>`) for resilience on DB errors.
       const uid12 = (session.user?.id ?? '').slice(0, 12)
-      const wizardDone = uid12 ? request.cookies.has(`wizard_done_${uid12}`) : false
-      if (!wizardDone && cleanPath === '/dashboard') {
-        return NextResponse.redirect(new URL('/setup-wizard', request.url))
+      if (cleanPath === '/dashboard') {
+        let wizardDone = uid12 ? request.cookies.has(`wizard_done_${uid12}`) : false
+        if (!wizardDone && session.user?.id) {
+          try {
+            const db = await getD1Raw()
+            const row = await db
+              .prepare('SELECT onboarding_completed_at FROM user_profiles WHERE user_id = ? LIMIT 1')
+              .bind(session.user.id)
+              .first<{ onboarding_completed_at: number | null }>()
+            wizardDone = Boolean(row?.onboarding_completed_at)
+          } catch (dbErr) {
+            // Non-fatal — fall back to cookie value already set above
+            logger.warn('[Middleware] onboarding_completed_at lookup failed (cookie fallback)', toError(dbErr))
+          }
+        }
+        if (!wizardDone) {
+          return NextResponse.redirect(new URL('/setup-wizard', request.url))
+        }
       }
     } catch {
       return NextResponse.redirect(new URL('/login', request.url))

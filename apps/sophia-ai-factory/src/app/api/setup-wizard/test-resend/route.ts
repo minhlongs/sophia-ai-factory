@@ -19,20 +19,35 @@ const schema = z.object({
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser()
   if (!user) {
-    return NextResponse.json({ ok: false, message: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({
+      ok: false,
+      valid: false,
+      message: 'Unauthorized',
+      message_vi: 'Chưa xác thực',
+    }, { status: 401 })
   }
 
   let body: unknown
   try {
     body = await request.json()
   } catch {
-    return NextResponse.json({ ok: false, message: 'Invalid JSON' }, { status: 400 })
+    return NextResponse.json({
+      ok: false,
+      valid: false,
+      message: 'Invalid JSON',
+      message_vi: 'JSON không hợp lệ',
+    }, { status: 400 })
   }
 
   const parsed = schema.safeParse(body)
   if (!parsed.success) {
     return NextResponse.json(
-      { ok: false, message: parsed.error.issues[0]?.message ?? 'Validation error' },
+      {
+        ok: false,
+        valid: false,
+        message: parsed.error.issues[0]?.message ?? 'Validation error',
+        message_vi: 'Lỗi xác thực dữ liệu đầu vào',
+      },
       { status: 400 },
     )
   }
@@ -40,7 +55,12 @@ export async function POST(request: NextRequest) {
   const { api_key } = parsed.data
   const toEmail = user.email
   if (!toEmail) {
-    return NextResponse.json({ ok: false, message: 'No email on user account' }, { status: 422 })
+    return NextResponse.json({
+      ok: false,
+      valid: false,
+      message: 'No email on user account',
+      message_vi: 'Tài khoản không có địa chỉ email',
+    }, { status: 422 })
   }
 
   try {
@@ -60,18 +80,38 @@ export async function POST(request: NextRequest) {
     })
 
     if (res.ok) {
-      return NextResponse.json({ ok: true, message: `Test email sent to ${toEmail}` })
+      return NextResponse.json({
+        ok: true,
+        valid: true,
+        message: `Test email sent to ${toEmail}`,
+        message_vi: `Email kiểm tra đã gửi đến ${toEmail}`,
+      })
     }
     if (res.status === 401 || res.status === 403) {
-      return NextResponse.json({ ok: false, message: 'Invalid Resend API key' }, { status: 422 })
+      return NextResponse.json({
+        ok: false,
+        valid: false,
+        message: 'Invalid Resend API key',
+        message_vi: 'Khoá Resend API không hợp lệ',
+      }, { status: 422 })
     }
     const errText = await res.text().catch(() => '')
     return NextResponse.json(
-      { ok: false, message: `Resend returned ${res.status}: ${errText.slice(0, 100)}` },
+      {
+        ok: false,
+        valid: false,
+        message: `Resend returned ${res.status}: ${errText.slice(0, 100)}`,
+        message_vi: `Resend trả về ${res.status}`,
+      },
       { status: 422 },
     )
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
-    return NextResponse.json({ ok: false, message: `Network error: ${msg}` }, { status: 502 })
+    return NextResponse.json({
+      ok: false,
+      valid: false,
+      message: `Network error: ${msg}`,
+      message_vi: `Lỗi mạng: ${msg}`,
+    }, { status: 502 })
   }
 }

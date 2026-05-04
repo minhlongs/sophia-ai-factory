@@ -51,7 +51,13 @@
       "saving": "Saving",
       "launch": "Launch"
     },
-    "footer": "Need help? Contact our support team"
+    "footer": "Need help? Contact our support team",
+    "save": {
+      "retrying": "Retrying ({attempt}/3)…",
+      "retryFailed": "Save failed after 3 attempts. Please set up manually.",
+      "manualSetup": "Manual setup in Settings",
+      "webhookWarning": "HeyGen webhook not registered — videos won't receive auto-notifications."
+    }
   },
   "landing": {
     "nav": {
@@ -1422,5 +1428,13 @@
     "upgradeNow": "Upgrade now",
     "exploreSops": "Explore SOPs",
     "renew": "Renew"
+  },
+  "errors": {
+    "boundary": {
+      "title": "Something went wrong",
+      "message": "An unexpected error occurred. Please try again.",
+      "retry": "Try again",
+      "home": "Go home"
+    }
   }
 }

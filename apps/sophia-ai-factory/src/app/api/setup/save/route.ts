@@ -11,6 +11,8 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { setUserApiKey } from '@/tree/byok/user-api-key-store';
 import type { ByokProvider } from '@/tree/byok/user-api-key-store';
 import { z } from 'zod';
+import { getD1Raw } from '@/seed/db/client';
+import { logger } from '@/seed/utils/logger-utility';
 
 const setupSaveSchema = z
   .object({
@@ -68,6 +70,21 @@ export async function POST(request: NextRequest) {
         await setUserApiKey(user.id, provider, value.trim());
         saved.push(provider);
       }
+    }
+
+    // Mark onboarding complete in DB (primary) and cookie (fallback resilience)
+    try {
+      const db = await getD1Raw()
+      const nowSec = Math.floor(Date.now() / 1000)
+      await db
+        .prepare(
+          'UPDATE user_profiles SET onboarding_completed_at = ? WHERE user_id = ?',
+        )
+        .bind(nowSec, user.id)
+        .run()
+    } catch (dbErr) {
+      // Non-fatal — cookie fallback below ensures wizard gate is satisfied
+      logger.warn('[SetupSave] Failed to set onboarding_completed_at in DB', { error: dbErr })
     }
 
     const response = NextResponse.json({

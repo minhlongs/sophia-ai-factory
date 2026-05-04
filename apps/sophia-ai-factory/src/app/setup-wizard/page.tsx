@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { WizardStepper } from '@/tree/components/setup-wizard/wizard-stepper';
-import { ArrowRight, Save, Loader2 } from 'lucide-react';
+import { ArrowRight, Save, Loader2, AlertTriangle } from 'lucide-react';
 import { SystemCheckStep } from '@/tree/components/setup-wizard/steps/system-check-step';
 import { ApiKeysStep } from '@/tree/components/setup-wizard/steps/api-keys-step';
 import { LocalModeStep } from '@/forest/components/setup-wizard/local-mode-step';
@@ -12,45 +12,94 @@ import { FinishStep } from '@/tree/components/setup-wizard/steps/finish-step';
 import { ProviderCredentialsStep, type ProviderConfig } from '@/tree/components/setup-wizard/steps/provider-credentials-step';
 import type { CredentialSummary } from '@/tree/credentials/user-credentials-repo';
 
+/** Unified response type: supports both valid (verify) and ok (test-heygen/resend) — B8 */
 interface VerifyKeyResponse {
   valid?: boolean;
   ok?: boolean;
   message?: string;
+  message_vi?: string;
 }
 
 interface SaveConfigResponse {
   success?: boolean;
   redirect?: string;
   message?: string;
+  webhook_registered?: boolean;
+  errors?: string[];
+}
+
+// localStorage persistence key — B4
+// SECURITY: persist ONLY the step number, never raw API keys.
+// API keys are secrets — storing them in localStorage exposes to XSS, Chrome profile sync, disk forensics.
+const WIZARD_STORAGE_KEY = 'sophia-wizard-state-v2';
+
+interface PersistedWizardState {
+  step: number;
+}
+
+function loadPersistedState(): PersistedWizardState | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(WIZARD_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as unknown;
+    if (typeof parsed === 'object' && parsed !== null && 'step' in parsed && typeof (parsed as { step: unknown }).step === 'number') {
+      return { step: (parsed as { step: number }).step };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function clearPersistedState(): void {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem(WIZARD_STORAGE_KEY);
+    // Also clear legacy v1 key that may contain plaintext keys from earlier sessions
+    localStorage.removeItem('sophia-wizard-state-v1');
+  }
 }
 
 export default function SetupWizardPage() {
   const router = useRouter();
   const t = useTranslations('setupWizard');
+  const locale = useLocale();
+
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false); // B5
+  const [retryCount, setRetryCount] = useState(0); // B2
+  const [webhookWarning, setWebhookWarning] = useState(false); // B3
 
-  // Form State — LLM / media keys (existing)
-  const [config, setConfig] = useState({
+  const defaultConfig = {
     OPENROUTER_API_KEY: '',
     ANTHROPIC_API_KEY: '',
     ELEVENLABS_API_KEY: '',
     DID_API_KEY: '',
     MUAPI_API_KEY: '',
-  });
+  };
 
-  // Form State — provider credentials (new BYOK)
-  const [providerConfig, setProviderConfig] = useState<ProviderConfig>({
+  const defaultProviderConfig: ProviderConfig = {
     HEYGEN_API_KEY: '',
     RESEND_API_KEY: '',
     NOWPAYMENTS_API_KEY: '',
     HEYGEN_WEBHOOK_SECRET: '',
-  });
+  };
 
-  // Saved credentials from server (display hints)
+  const [config, setConfig] = useState(defaultConfig);
+  const [providerConfig, setProviderConfig] = useState<ProviderConfig>(defaultProviderConfig);
   const [savedCredentials, setSavedCredentials] = useState<CredentialSummary[]>([]);
 
-  // Fetch existing saved credentials on mount
+  // Hydrate from localStorage on mount — B4
+  // SECURITY: only restores step number; API keys are NEVER persisted.
+  // User must re-enter keys on refresh — accepted trade-off vs. localStorage secret leak.
+  useEffect(() => {
+    const persisted = loadPersistedState();
+    if (persisted) {
+      setStep(persisted.step);
+    }
+  }, []);
+
   useEffect(() => {
     fetch('/api/setup-wizard/list-credentials')
       .then((r) => r.json() as Promise<{ credentials?: CredentialSummary[] }>)
@@ -60,7 +109,6 @@ export default function SetupWizardPage() {
       .catch(() => { /* non-fatal */ });
   }, []);
 
-  // Validation State
   const [status, setStatus] = useState<Record<string, 'idle' | 'validating' | 'valid' | 'invalid'>>({
     OPENROUTER_API_KEY: 'idle',
     ANTHROPIC_API_KEY: 'idle',
@@ -76,6 +124,15 @@ export default function SetupWizardPage() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveFailed, setSaveFailed] = useState(false);
 
+  // Persist ONLY step number to localStorage — B4
+  // SECURITY: never persist config/providerConfig (contain raw API keys).
+  useEffect(() => {
+    try {
+      const state: PersistedWizardState = { step };
+      localStorage.setItem(WIZARD_STORAGE_KEY, JSON.stringify(state));
+    } catch { /* storage full — non-fatal */ }
+  }, [step]);
+
   const updateConfig = (key: string, value: string) => {
     setConfig(prev => ({ ...prev, [key]: value }));
     setStatus(prev => ({ ...prev, [key]: 'idle' }));
@@ -84,6 +141,12 @@ export default function SetupWizardPage() {
   const updateProviderConfig = (key: keyof ProviderConfig, value: string) => {
     setProviderConfig(prev => ({ ...prev, [key]: value }));
     setStatus(prev => ({ ...prev, [key]: 'idle' }));
+  };
+
+  // Pick locale-appropriate message from bilingual response — B6
+  const getLocalizedMessage = (data: VerifyKeyResponse): string => {
+    if (locale === 'vi' && data.message_vi) return data.message_vi;
+    return data.message ?? 'Test failed';
   };
 
   const verifyKey = async (service: string, keyName: string, keyValue: string, params?: unknown) => {
@@ -98,18 +161,25 @@ export default function SetupWizardPage() {
       });
 
       const data = (await res.json()) as VerifyKeyResponse;
-      const isValid = data.valid === true;
+      // B8: support both valid and ok fields
+      const isValid = data.valid === true || data.ok === true;
 
       if (isValid) {
         setStatus(prev => ({ ...prev, [keyName]: 'valid' }));
       } else {
         setStatus(prev => ({ ...prev, [keyName]: 'invalid' }));
-        setErrors(prev => ({ ...prev, [keyName]: data.message || 'Invalid key' }));
+        // B1: surface server error message
+        setErrors(prev => ({ ...prev, [keyName]: getLocalizedMessage(data) }));
       }
       return isValid;
     } catch {
       setStatus(prev => ({ ...prev, [keyName]: 'invalid' }));
-      setErrors(prev => ({ ...prev, [keyName]: 'Verification failed' }));
+      setErrors(prev => ({
+        ...prev,
+        [keyName]: locale === 'vi'
+          ? 'Xác minh thất bại — kiểm tra kết nối mạng'
+          : 'Verification failed — check network connection',
+      }));
       return false;
     }
   };
@@ -130,7 +200,6 @@ export default function SetupWizardPage() {
         : null;
 
     if (!endpoint) {
-      // NOWPayments: no test endpoint yet — mark valid on non-empty
       setStatus(prev => ({ ...prev, [fieldKey]: value.trim() ? 'valid' : 'idle' }));
       return Boolean(value.trim());
     }
@@ -142,19 +211,22 @@ export default function SetupWizardPage() {
         body: JSON.stringify({ api_key: value }),
       });
       const data = (await res.json()) as VerifyKeyResponse;
-      const isOk = data.ok === true;
+      // B8: support both ok and valid
+      const isOk = data.ok === true || data.valid === true;
       setStatus(prev => ({ ...prev, [fieldKey]: isOk ? 'valid' : 'invalid' }));
-      if (!isOk) setErrors(prev => ({ ...prev, [fieldKey]: data.message ?? 'Test failed' }));
+      if (!isOk) setErrors(prev => ({ ...prev, [fieldKey]: getLocalizedMessage(data) }));
       return isOk;
     } catch {
       setStatus(prev => ({ ...prev, [fieldKey]: 'invalid' }));
-      setErrors(prev => ({ ...prev, [fieldKey]: 'Test request failed' }));
+      setErrors(prev => ({
+        ...prev,
+        [fieldKey]: locale === 'vi' ? 'Yêu cầu kiểm tra thất bại' : 'Test request failed',
+      }));
       return false;
     }
   };
 
   const handleNext = () => {
-    // Step 2: Require at least one LLM key (OpenRouter or Anthropic)
     if (step === 2) {
       const hasInvalid = Object.values(status).some(v => v === 'invalid');
       if (hasInvalid) {
@@ -170,7 +242,6 @@ export default function SetupWizardPage() {
       }
     }
 
-    // Step 3 (Provider Credentials): HeyGen required; no saved hint = must enter key
     if (step === 3) {
       const heygenSaved = savedCredentials.find((c) => c.provider === 'heygen');
       const heygenEntered = providerConfig.HEYGEN_API_KEY.trim().length > 0;
@@ -180,16 +251,27 @@ export default function SetupWizardPage() {
       }
     }
 
-    setStep(prev => prev + 1);
+    // B5: show loader on Next button during transition
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setStep(prev => prev + 1);
+      setIsTransitioning(false);
+    }, 0);
   };
 
-  const handleSave = async () => {
+  // handleSave with retry logic — B2
+  const handleSave = useCallback(async (attempt = 1) => {
     setLoading(true);
     setSaveError(null);
     setSaveFailed(false);
+    if (attempt > 1) setRetryCount(attempt - 1);
+
+    // Exponential backoff before retry
+    if (attempt > 1) {
+      await new Promise(r => setTimeout(r, (attempt - 1) * 1000));
+    }
 
     try {
-      // 1. Save LLM / media provider keys (existing flow)
       const llmRes = await fetch('/api/setup/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -197,25 +279,28 @@ export default function SetupWizardPage() {
       });
       const llmData = (await llmRes.json()) as SaveConfigResponse;
       if (!llmData.success) {
-        setSaveError(llmData.message ?? 'Failed to save API keys.');
+        // B1: surface server error message
+        const msg = llmData.message
+          ?? (locale === 'vi' ? 'Không thể lưu khoá API.' : 'Failed to save API keys.');
+        if (attempt < 3) {
+          setSaveError(locale === 'vi'
+            ? `Đang thử lại (${attempt}/3)…`
+            : `Retrying (${attempt}/3)…`);
+          setLoading(false);
+          void handleSave(attempt + 1);
+          return;
+        }
+        setSaveError(msg);
         setSaveFailed(true);
+        setRetryCount(0);
         return;
       }
 
-      // 2. Save provider credentials (HeyGen, Resend, NOWPayments) — only non-empty values
       const credPayload: Record<string, string> = {};
-      if (providerConfig.HEYGEN_API_KEY.trim()) {
-        credPayload.heygen_api_key = providerConfig.HEYGEN_API_KEY.trim();
-      }
-      if (providerConfig.RESEND_API_KEY.trim()) {
-        credPayload.resend_api_key = providerConfig.RESEND_API_KEY.trim();
-      }
-      if (providerConfig.NOWPAYMENTS_API_KEY.trim()) {
-        credPayload.nowpayments_api_key = providerConfig.NOWPAYMENTS_API_KEY.trim();
-      }
-      if (providerConfig.HEYGEN_WEBHOOK_SECRET.trim()) {
-        credPayload.heygen_webhook_secret = providerConfig.HEYGEN_WEBHOOK_SECRET.trim();
-      }
+      if (providerConfig.HEYGEN_API_KEY.trim()) credPayload.heygen_api_key = providerConfig.HEYGEN_API_KEY.trim();
+      if (providerConfig.RESEND_API_KEY.trim()) credPayload.resend_api_key = providerConfig.RESEND_API_KEY.trim();
+      if (providerConfig.NOWPAYMENTS_API_KEY.trim()) credPayload.nowpayments_api_key = providerConfig.NOWPAYMENTS_API_KEY.trim();
+      if (providerConfig.HEYGEN_WEBHOOK_SECRET.trim()) credPayload.heygen_webhook_secret = providerConfig.HEYGEN_WEBHOOK_SECRET.trim();
 
       if (Object.keys(credPayload).length > 0) {
         const credRes = await fetch('/api/setup-wizard/save-credentials', {
@@ -225,31 +310,59 @@ export default function SetupWizardPage() {
         });
         const credData = (await credRes.json()) as SaveConfigResponse;
         if (!credData.success) {
-          setSaveError(credData.message ?? 'Failed to save provider credentials.');
+          const msg = credData.message
+            ?? (locale === 'vi' ? 'Không thể lưu thông tin nhà cung cấp.' : 'Failed to save provider credentials.');
+          if (attempt < 3) {
+            setSaveError(locale === 'vi'
+              ? `Đang thử lại (${attempt}/3)…`
+              : `Retrying (${attempt}/3)…`);
+            setLoading(false);
+            void handleSave(attempt + 1);
+            return;
+          }
+          setSaveError(msg);
           setSaveFailed(true);
+          setRetryCount(0);
           return;
+        }
+        // B3: surface webhook warning if not registered
+        if (credData.webhook_registered === false) {
+          setWebhookWarning(true);
         }
       }
 
+      // Success: clear persisted state — B4
+      clearPersistedState();
+      setRetryCount(0);
       router.push(llmData.redirect || '/dashboard/settings');
-    } catch {
-      setSaveError("Failed to save configuration.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (attempt < 3) {
+        setSaveError(locale === 'vi'
+          ? `Đang thử lại (${attempt}/3)…`
+          : `Retrying (${attempt}/3)…`);
+        setLoading(false);
+        void handleSave(attempt + 1);
+        return;
+      }
+      setSaveError(locale === 'vi'
+        ? `Lưu cấu hình thất bại: ${msg}`
+        : `Failed to save configuration: ${msg}`);
       setSaveFailed(true);
+      setRetryCount(0);
     } finally {
       setLoading(false);
     }
-  };
+  }, [config, providerConfig, locale, router]);
 
   return (
     <div data-testid="setup-wizard-root" className="min-h-screen bg-muted/50 flex flex-col items-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl w-full bg-card rounded-2xl shadow-xl overflow-hidden border border-border">
-        {/* Header */}
         <div className="bg-primary px-8 py-6 text-primary-foreground text-center">
             <h1 className="text-3xl font-bold">{t('header.title')}</h1>
             <p className="mt-2 text-primary-foreground/80">{t('header.subtitle')}</p>
         </div>
 
-        {/* Stepper */}
         <div className="px-8">
             <WizardStepper
                 currentStep={step}
@@ -263,7 +376,6 @@ export default function SetupWizardPage() {
             />
         </div>
 
-        {/* Content */}
         <div className="p-8 min-h-[400px]">
             {step === 1 && <SystemCheckStep />}
 
@@ -278,22 +390,51 @@ export default function SetupWizardPage() {
             )}
 
             {step === 3 && (
-              <ProviderCredentialsStep
-                config={providerConfig}
-                updateConfig={updateProviderConfig}
-                status={status}
-                errors={errors}
-                onTestKey={testProviderKey}
-                savedCredentials={savedCredentials}
-              />
+              <>
+                {/* B3: HeyGen webhook warning banner */}
+                {webhookWarning && (
+                  <div className="mb-4 flex items-start gap-2 rounded-lg border border-yellow-400 bg-yellow-50 dark:bg-yellow-900/10 p-3 text-sm text-yellow-800 dark:text-yellow-300">
+                    <AlertTriangle className="mt-0.5 w-4 h-4 shrink-0" />
+                    <span>{t('save.webhookWarning')}</span>
+                  </div>
+                )}
+                <ProviderCredentialsStep
+                  config={providerConfig}
+                  updateConfig={updateProviderConfig}
+                  status={status}
+                  errors={errors}
+                  onTestKey={testProviderKey}
+                  savedCredentials={savedCredentials}
+                />
+              </>
             )}
 
             {step === 4 && <LocalModeStep />}
 
-            {step === 5 && <FinishStep saveError={saveError} saveFailed={saveFailed} onRetry={handleSave} />}
+            {step === 5 && (
+              <>
+                {/* B2: retry status */}
+                {saveError && retryCount > 0 && (
+                  <div className="mb-4 rounded-lg border border-blue-400 bg-blue-50 dark:bg-blue-900/10 p-3 text-sm text-blue-800 dark:text-blue-300">
+                    {saveError}
+                  </div>
+                )}
+                {/* B2: after 3 fails, show manual setup link */}
+                {saveFailed && (
+                  <div className="mb-4 rounded-lg border border-red-400 bg-red-50 dark:bg-red-900/10 p-3 text-sm text-red-800 dark:text-red-300">
+                    <p className="font-medium">{saveError}</p>
+                    <p className="mt-2">
+                      <a href="/dashboard/settings" className="underline underline-offset-2 hover:opacity-80 font-medium">
+                        {t('save.manualSetup')}
+                      </a>
+                    </p>
+                  </div>
+                )}
+                <FinishStep saveError={saveFailed ? saveError : null} saveFailed={saveFailed} onRetry={() => void handleSave(1)} />
+              </>
+            )}
         </div>
 
-        {/* Footer Actions */}
         <div className="bg-muted/50 px-8 py-6 flex justify-between items-center border-t border-border">
             {step > 1 && step < 5 && (
                 <button
@@ -304,23 +445,37 @@ export default function SetupWizardPage() {
                 </button>
             )}
 
-            {step === 1 && <div />} {/* Spacer */}
+            {step === 1 && <div />}
 
             {step < 5 ? (
                 <button
                     onClick={handleNext}
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors ml-auto"
+                    disabled={isTransitioning}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors ml-auto disabled:opacity-70"
                 >
-                    {t('actions.next')} <ArrowRight className="w-4 h-4" />
+                    {/* B5: loader on Next when transitioning */}
+                    {isTransitioning ? (
+                        <Loader2 className="w-4 h-4 motion-safe:animate-spin" />
+                    ) : (
+                        <>{t('actions.next')} <ArrowRight className="w-4 h-4" /></>
+                    )}
                 </button>
             ) : (
                 <button
-                    onClick={handleSave}
+                    onClick={() => void handleSave(1)}
                     disabled={loading}
                     className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-bold flex items-center gap-2 transition-transform hover:scale-105 ml-auto w-full justify-center sm:w-auto"
                 >
                     {loading ? (
-                        <>{t('actions.saving')} <Loader2 className="w-4 h-4 motion-safe:animate-spin" /></>
+                        <>
+                          {retryCount > 0
+                            ? (locale === 'vi'
+                                ? `Đang thử lại (${retryCount}/3)…`
+                                : `Retrying (${retryCount}/3)…`)
+                            : t('actions.saving')
+                          }
+                          <Loader2 className="w-4 h-4 motion-safe:animate-spin" />
+                        </>
                     ) : (
                         <>{t('actions.launch')} <Save className="w-4 h-4" /></>
                     )}
