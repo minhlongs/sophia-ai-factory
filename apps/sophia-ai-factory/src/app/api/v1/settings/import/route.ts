@@ -6,13 +6,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import {
-  registry,
-  SETTINGS_NAMESPACES,
-  SettingsValidationError,
-} from '@/lib/tenant-settings';
+import { set } from '@/lib/tenant-settings/registry';
+import { SETTINGS_NAMESPACES, SettingsValidationError } from '@/lib/tenant-settings/types';
+import type { SettingsNamespace } from '@/lib/tenant-settings/types';
 import { validatorFor } from '@/lib/tenant-settings/namespace-validators';
-import type { SettingsNamespace } from '@/lib/tenant-settings';
 import { logger } from '@/seed/utils/logger-utility';
 
 export const runtime = 'edge';
@@ -57,7 +54,7 @@ export async function POST(req: NextRequest) {
     }
     const namespace = ns as SettingsNamespace;
     try {
-      await registry.set(db, user.id, namespace, value, validatorFor(namespace));
+      await set(db, user.id, namespace, value, validatorFor(namespace));
       imported++;
     } catch (err) {
       const msg =

@@ -11,7 +11,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { registry, SETTINGS_NAMESPACES, SettingsValidationError } from '@/lib/tenant-settings';
+import { getOrDefault, set, merge, deleteNamespace } from '@/lib/tenant-settings/registry';
+import { SETTINGS_NAMESPACES, SettingsValidationError } from '@/lib/tenant-settings/types';
 import { validatorFor } from '@/lib/tenant-settings/namespace-validators';
 import type { SettingsNamespace } from '@/lib/tenant-settings';
 import { logger } from '@/seed/utils/logger-utility';
@@ -53,7 +54,7 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
   if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
   try {
-    const value = await registry.getOrDefault(db, user.id, namespace);
+    const value = await getOrDefault(db, user.id, namespace);
     return NextResponse.json({ namespace, value });
   } catch (err) {
     logger.error(`[settings/${namespace}] GET failed`, err instanceof Error ? err : undefined);
@@ -78,7 +79,7 @@ export async function PUT(req: NextRequest, ctx: RouteCtx) {
   if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
   try {
-    await registry.set(db, user.id, namespace, body, validatorFor(namespace));
+    await set(db, user.id, namespace, body, validatorFor(namespace));
     return NextResponse.json({ namespace, updated: true });
   } catch (err) {
     if (err instanceof SettingsValidationError) {
@@ -106,7 +107,7 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
   if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
   try {
-    const merged = await registry.merge(
+    const merged = await merge(
       db,
       user.id,
       namespace,
@@ -134,7 +135,7 @@ export async function DELETE(req: NextRequest, ctx: RouteCtx) {
   if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
   try {
-    await registry.deleteNamespace(db, user.id, namespace);
+    await deleteNamespace(db, user.id, namespace);
     return NextResponse.json({ namespace, deleted: true });
   } catch (err) {
     logger.error(`[settings/${namespace}] DELETE failed`, err instanceof Error ? err : undefined);
