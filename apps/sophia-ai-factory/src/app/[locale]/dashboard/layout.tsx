@@ -137,14 +137,30 @@ export default async function DashboardLayout({
             className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
           >
             <Coins className="w-5 h-5" />
-            <span className="font-medium">MCU Credits</span>
+            <span className="font-medium">{t('sidebar.credits')}</span>
           </Link>
+          {/* Integrations section with subnav */}
           <Link
             href="/dashboard/integrations"
             className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
           >
             <Plug className="w-5 h-5" />
-            <span className="font-medium">Integrations</span>
+            <span className="font-medium">{t('sidebar.integrations')}</span>
+          </Link>
+          <Link
+            href="/dashboard/integrations/webhooks"
+            className="flex items-center gap-3 px-4 py-3 pl-10 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors text-sm"
+          >
+            <Webhook className="w-4 h-4" />
+            <span>{t('sidebar.webhooks')}</span>
+            <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400">NEW</span>
+          </Link>
+          <Link
+            href="/dashboard/byok"
+            className="flex items-center gap-3 px-4 py-3 pl-10 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors text-sm"
+          >
+            <KeySquare className="w-4 h-4" />
+            <span>{t('sidebar.byok')}</span>
           </Link>
           <Link
             href="/dashboard/api-keys"
@@ -152,13 +168,6 @@ export default async function DashboardLayout({
           >
             <KeyRound className="w-5 h-5" />
             <span className="font-medium">{t('sidebar.api_keys')}</span>
-          </Link>
-          <Link
-            href="/dashboard/byok"
-            className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
-          >
-            <KeySquare className="w-5 h-5" />
-            <span className="font-medium">Provider Keys / BYOK</span>
           </Link>
           <Link
             href="/dashboard/proposals"

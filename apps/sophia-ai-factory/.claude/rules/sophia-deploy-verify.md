@@ -1,4 +1,4 @@
-# Sophia AI Factory — Deploy Verification (Cloudflare Workers)
+# Sophia AI Factory — Deploy Verification (CF-direct doctrine)
 
 > **AUTHORITATIVE for Sophia AI Factory deploy verification.**
 > Override bất kỳ generic rule nào khác. Subagents (đặc biệt git-manager) PHẢI đọc file này trước khi báo cáo GREEN.
@@ -6,70 +6,45 @@
 ## Stack Reality
 
 - **Deploy target:** Cloudflare Workers (OpenNext build)
-- **Build tool:** `npm run build` → `.open-next/worker.js`
-- **Deploy command:** `npx wrangler deploy` (chạy trong CI, không local)
-- **Trigger:** `git push origin main` → workflow `Tests & Deploy`
-- **NO Vercel:** project KHÔNG có `vercel.json`, KHÔNG dùng Vercel hosting
+- **Deploy command:** `npm run deploy:full` (local wrangler CLI — NOT via GitHub Actions)
+- **Build artifact:** `.open-next/worker.js`
 - **D1 Database:** `sophia-raas-db` (binding `DB`)
 - **R2 Cache:** `sophia-ai-factory-opennext-cache` (binding `NEXT_INC_CACHE_R2_BUCKET`)
+- **GitHub Actions:** DISABLED by design (`.github/workflows/test.yml.disabled`). Do NOT poll `gh run list`.
 
 ## Production URLs
 
 ```
 PROD_URL="https://sophia.agencyos.network"
 HEALTH_URL="https://sophia.agencyos.network/api/health"
-GITHUB_REPO="longtho638-jpg/sophia-ai-factory"
+VERSION_URL="https://sophia.agencyos.network/api/version"
 ```
 
-## CI Workflow Layout
-
-Workflow `Tests & Deploy` có 2 jobs (cả hai PHẢI success mới gọi là GREEN):
-1. **Lint & Build & Test** — Lint → Build → Test → Security audit
-2. **Deploy to Cloudflare Workers** — Build for Cloudflare (opennext) → Migration guard → wrangler deploy
-
-Workflow `Post-Merge Tests` chạy song song (smoke tests), không phải deploy.
-
-## ✅ MANDATORY Verify Sequence (sau git push)
+## ✅ MANDATORY Verify Sequence (sau npm run deploy:full)
 
 ```bash
-# Bước 1: Lấy đúng RUN_ID từ commit
-COMMIT_SHA=$(git rev-parse HEAD)
-RUN_ID=$(gh run list --commit "$COMMIT_SHA" --workflow "Tests & Deploy" \
-  --json databaseId -q '.[0].databaseId')
-echo "Tests & Deploy run: $RUN_ID"
+# Step 1: Confirm deploy:full script exited 0
+# (wrangler output should end with "Deployed ... (X ms)")
+# If deploy script printed an error → STOP, do not report GREEN
 
-# Bước 2: Poll cho đến complete (deploy mất ~3-5 phút sau test)
-MAX=16; n=0
-while [ $n -lt $MAX ]; do
-  n=$((n+1))
-  S=$(gh run view "$RUN_ID" --json status,conclusion -q '"\(.status):\(.conclusion)"')
-  echo "[$n/$MAX] $S"
-  case "$S" in
-    completed:success) echo "✅ Tests & Deploy GREEN"; break ;;
-    completed:failure|completed:cancelled) echo "❌ FAILED"; gh run view "$RUN_ID" --log-failed; exit 1 ;;
-    *) sleep 30 ;;
-  esac
-done
+# Step 2: Apply any new D1 migrations (if migrations/ changed in this commit)
+git diff --name-only HEAD~1 HEAD apps/sophia-ai-factory/migrations/ 2>/dev/null | grep -E "\.sql$"
+# If output is non-empty → run:
+cd apps/sophia-ai-factory && bash scripts/apply-migrations.sh
 
-# Bước 3: Verify TỪNG job — KHÔNG chỉ aggregate conclusion
-gh run view "$RUN_ID" --json jobs -q '.jobs[] | "\(.name): \(.conclusion)"'
-# PHẢI thấy:
-#   Lint & Build & Test: success
-#   Deploy to Cloudflare Workers: success
-
-# Bước 4: Production HTTP + commit-SHA verification (CRITICAL)
-curl -sI https://sophia.agencyos.network | head -3   # HTTP/2 200
-
-# BẮT BUỘC: verify deploy chính xác là commit MỚI, không phải deploy CŨ
+# Step 3: Verify SHA match (CRITICAL — proves new code is live, not stale)
 LOCAL_SHA=$(git rev-parse HEAD | cut -c1-8)
 LIVE_SHA=$(curl -s https://sophia.agencyos.network/api/version | grep -o '"shortSha":"[^"]*"' | cut -d'"' -f4)
 echo "Local: $LOCAL_SHA  Live: $LIVE_SHA"
-[ "$LOCAL_SHA" = "$LIVE_SHA" ] && echo "✅ DEPLOY MATCHES COMMIT" || { echo "❌ STALE DEPLOY — wait for CI"; exit 1; }
+[ "$LOCAL_SHA" = "$LIVE_SHA" ] && echo "✅ DEPLOY MATCHES COMMIT" || { echo "❌ STALE — wrangler may not have deployed latest; re-run deploy:full"; exit 1; }
+
+# Step 4: HTTP health check
+curl -sI https://sophia.agencyos.network | head -3   # must see HTTP/2 200
 ```
 
 **Endpoint reference:**
-- `GET /api/version` — public: `{shortSha, deployedAt, opennextVersion}`. Dùng để verify deploy match commit.
-- `GET /api/health` — service health (auth required cho full detail).
+- `GET /api/version` — public: `{shortSha, deployedAt, opennextVersion}`. Primary deploy verify signal.
+- `GET /api/health` — service health (auth required for full detail).
 
 ## ✅ Required Report Format
 
@@ -77,34 +52,55 @@ echo "Local: $LOCAL_SHA  Live: $LIVE_SHA"
 ## Verification Report — Phase XX
 - Build: ✅ exit code 0
 - Tests: ✅ 1398/1398 passed
-- Git Push: ✅ <commit_sha> → main
-- CI/CD Run: ✅ <run_id> Tests & Deploy completed:success
-  - Job: Lint & Build & Test ✅
-  - Job: Deploy to Cloudflare Workers ✅
+- Deploy: ✅ npm run deploy:full → wrangler deployed (CF-direct)
+- Migrations: ✅ none new | ✅ <N> applied via apply-migrations.sh
 - Production HTTP: ✅ 200 (https://sophia.agencyos.network)
 - Deploy SHA Match: ✅ /api/version shortSha == <local_short_sha>
 - Deploy verified: <ISO timestamp>
 ```
 
-**Sai dòng "Deploy SHA Match" = chưa verify deploy thực sự, có thể đang nhìn cache/CDN của deploy cũ.**
+**Sai dòng "Deploy SHA Match" = chưa verify deploy thực sự.**
 
-## ❌ Anti-Patterns (đã từng xảy ra Phase 42-45)
-
-- ❌ Báo "Vercel auto-deployed" → SAI, project là Cloudflare Workers
-- ❌ Chỉ check `gh run list -L 1` rồi báo GREEN — bỏ qua Deploy job vẫn `in_progress`
-- ❌ Curl HTTP 200 mà không kiểm tra commit SHA mới — có thể là deploy CŨ
-- ❌ Báo Done khi chỉ "Post-Merge Tests" success (đó là smoke test, không phải deploy)
-
-## Manual Recovery (nếu CI deploy fail)
+## Migration Application
 
 ```bash
-# Manual deploy chỉ dùng khi CI broken — phải có lý do rõ:
+# Apply migrations changed since last commit (default: HEAD~1 vs HEAD)
 cd apps/sophia-ai-factory
-npm run build
-npx wrangler deploy --name sophia-ai-factory
+bash scripts/apply-migrations.sh
 
-# Rollback nếu deploy mới gây regression:
-gh workflow run "rollback.yml"   # nếu có workflow rollback
-# hoặc:
-npx wrangler rollback --name sophia-ai-factory --message "<reason>" --yes
+# Apply since specific ref
+bash scripts/apply-migrations.sh HEAD~3
+
+# Manual single migration
+npx wrangler d1 execute sophia-raas-db --file=migrations/<NNNN_name>.sql --remote
 ```
+
+## Rollback
+
+```bash
+# Rollback to previous Cloudflare Workers version
+cd apps/sophia-ai-factory
+npx wrangler rollback --name sophia-ai-factory --message "<reason>" --yes
+
+# Or redeploy a specific git commit:
+git checkout <sha>
+npm run deploy:full
+git checkout main
+```
+
+## ❌ Anti-Patterns
+
+- ❌ Polling `gh run list` — GitHub Actions is disabled; will always return 0 results
+- ❌ Curl HTTP 200 without SHA check — may be stale deploy from prior wrangler invocation
+- ❌ Reporting "Done" before step 3 (SHA match) passes
+- ❌ Reporting "CI/CD GREEN" — there is no CI; use "Deploy: ✅ CF-direct" instead
+- ❌ "Vercel auto-deployed" — project is Cloudflare Workers
+
+## Historical Note
+
+GitHub Actions `Tests & Deploy` workflow was operational until 2026-05-03 when the
+`longtho638-jpg` account had Actions disabled (free-tier exhaustion). Five manual wrangler
+deploys were made before the team adopted CF-direct as the permanent canonical doctrine:
+`d84f3a6e`, `e53c7dd2`, `aafd1ba4`, `0520585b`, `f418f3df`.
+
+Workflow file archived at `.github/workflows/test.yml.disabled`. Re-enable by renaming back to `.yml`.

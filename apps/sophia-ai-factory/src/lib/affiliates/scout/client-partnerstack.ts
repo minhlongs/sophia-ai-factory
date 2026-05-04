@@ -16,8 +16,8 @@ const API_BASE = 'https://api.partnerstack.com/api/v2';
 export const partnerstackClient: NetworkClient = {
   network: 'partnerstack',
 
-  async fetch(env: ScoutEnv, _tenantId: string): Promise<AffiliateRaw[]> {
-    const apiKey = env.PARTNERSTACK_API_KEY;
+  async fetch(env: ScoutEnv, _tenantId: string, credentialsOverride?: Record<string, string>): Promise<AffiliateRaw[]> {
+    const apiKey = credentialsOverride?.api_key ?? env.PARTNERSTACK_API_KEY;
 
     if (!apiKey) {
       logger.warn('[affiliate-scout] PARTNERSTACK_API_KEY not set — skipping network');

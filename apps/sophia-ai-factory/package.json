@@ -26,6 +26,9 @@
     "deploy": "next build && node scripts/fix-instrumentation-standalone.mjs && npx @opennextjs/cloudflare build --skipNextBuild && node scripts/inject-scheduled-handler.mjs && wrangler deploy",
     "deploy:build": "next build && node scripts/fix-instrumentation-standalone.mjs && npx @opennextjs/cloudflare build --skipNextBuild && node scripts/inject-scheduled-handler.mjs",
     "deploy:full": "./scripts/deploy-with-sha.sh",
+    "deploy:migrations": "bash scripts/apply-migrations.sh",
+    "deploy:verify": "node scripts/sophia-doctor.mjs",
+    "deploy:all": "npm run deploy:full && npm run deploy:migrations && npm run deploy:verify",
     "db:gen-sop-seed": "node scripts/generate-sop-seed-sql.mjs",
     "db:gen-sop-seed-v2": "node scripts/generate-sop-seed-sql-v2.mjs",
     "doctor": "node scripts/sophia-doctor.mjs"
