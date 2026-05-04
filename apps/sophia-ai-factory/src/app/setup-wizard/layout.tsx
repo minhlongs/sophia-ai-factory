@@ -40,21 +40,18 @@ export default async function SetupLayout({
     redirect("/login?redirect=/setup-wizard");
   }
 
-  // Existing users with LLM keys already configured: skip wizard, set cookie, send to dashboard.
-  const providers = await listUserApiKeyProviders(user.id);
-  const hasLlmKey = providers.includes("openrouter") || providers.includes("anthropic");
+  // Existing users with LLM keys already configured: skip wizard via route handler.
+  // Server Components cannot mutate cookies in Next.js 15+, so the cookie set
+  // and redirect both happen inside /api/setup/skip (a Route Handler).
+  let hasLlmKey = false;
+  try {
+    const providers = await listUserApiKeyProviders(user.id);
+    hasLlmKey = providers.includes("openrouter") || providers.includes("anthropic");
+  } catch (err) {
+    logger.error('[setup-wizard] listUserApiKeyProviders failed — rendering wizard', err instanceof Error ? err : undefined);
+  }
   if (hasLlmKey) {
-    const jar = await cookies();
-    // Per-user cookie name keeps wizard state scoped to the current user so
-    // multiple users on the same browser don't bypass each other's onboarding.
-    jar.set(`wizard_done_${user.id.slice(0, 12)}`, "1", {
-      httpOnly: true,
-      secure: true,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 365,
-    });
-    redirect("/dashboard");
+    redirect("/api/setup/skip");
   }
 
   // /setup-wizard sits outside the [locale] segment, so next-intl's request
