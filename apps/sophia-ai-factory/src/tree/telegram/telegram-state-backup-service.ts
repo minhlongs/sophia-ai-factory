@@ -21,7 +21,7 @@ export async function backupSessionState(
   event: CriticalEvent
 ): Promise<void> {
   try {
-    const db = createServerClient() as any
+    const db = createServerClient()
 
     const { error } = await db
       .from('user_sessions')
@@ -32,8 +32,7 @@ export async function backupSessionState(
           context_data: context,
           last_event: event,
           updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'telegram_chat_id' }
+        }
       )
 
     if (error) {
@@ -51,7 +50,7 @@ export async function restoreSessionState(
   chatId: string
 ): Promise<UserContext | null> {
   try {
-    const db = createServerClient() as any
+    const db = createServerClient()
 
     const { data, error } = await db
       .from('user_sessions')
@@ -62,7 +61,8 @@ export async function restoreSessionState(
     if (error || !data) return null
 
     // Check if backup is less than 7 days old
-    const backupAge = Date.now() - new Date(data.updated_at).getTime()
+    const updatedAt = typeof data.updated_at === 'string' || typeof data.updated_at === 'number' ? data.updated_at : 0
+    const backupAge = Date.now() - new Date(updatedAt).getTime()
     const sevenDays = 7 * 24 * 60 * 60 * 1000
 
     if (backupAge > sevenDays) {

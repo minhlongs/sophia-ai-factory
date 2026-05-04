@@ -27,16 +27,14 @@ export async function POST(req: NextRequest) {
     const db = createServerClient()
 
     if (parsed.action === 'resolve') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (db as any).from('violations').update({ resolved: true, resolved_at: new Date().toISOString(), resolved_by: currentUserId }).eq('id', parsed.violationId)
-      if (error) { logger.error('[Violations] Error resolving violation', error); return NextResponse.json({ error: 'Failed to resolve violation' }, { status: 500 }) }
+      const { error } = await db.from('violations').update({ resolved: true, resolved_at: new Date().toISOString(), resolved_by: currentUserId }).eq('id', parsed.violationId)
+      if (error) { logger.error('[Violations] Error resolving violation', toError(error)); return NextResponse.json({ error: 'Failed to resolve violation' }, { status: 500 }) }
       logger.info('[Violations] Violation resolved', { violationId: parsed.violationId, reason: parsed.reason, resolvedBy: currentUserId })
       return NextResponse.json({ success: true, action: 'resolve', violationId: parsed.violationId, resolvedAt: new Date().toISOString() })
     }
 
     if (parsed.action === 'escalate') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (db as any).from('violations').update({ metadata: { escalated: true, escalatedAt: new Date().toISOString(), reason: parsed.reason } }).eq('id', parsed.violationId)
+      await db.from('violations').update({ metadata: { escalated: true, escalatedAt: new Date().toISOString(), reason: parsed.reason } }).eq('id', parsed.violationId)
       logger.warn('[Violations] Violation escalated', { violationId: parsed.violationId, reason: parsed.reason })
       return NextResponse.json({ success: true, action: 'escalate', violationId: parsed.violationId, escalatedAt: new Date().toISOString() })
     }

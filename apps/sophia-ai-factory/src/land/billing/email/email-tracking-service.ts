@@ -57,5 +57,5 @@ export async function logEmailDelivery(
     email_sent_at: sent ? new Date().toISOString() : null,
     processed: true,
     processed_at: new Date().toISOString(),
-  } as any);
+  });
 }
