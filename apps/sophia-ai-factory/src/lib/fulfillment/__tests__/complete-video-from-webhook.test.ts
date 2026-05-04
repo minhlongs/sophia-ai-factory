@@ -128,7 +128,7 @@ describe('completeVideoFromWebhook', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(getD1Raw).mockResolvedValue(makeD1() as unknown as D1Database)
-    vi.mocked(createServerClient).mockReturnValue(makeDb() as ReturnType<typeof createServerClient>)
+    vi.mocked(createServerClient).mockReturnValue(makeDb() as unknown as ReturnType<typeof createServerClient>)
   })
 
   it('updates video to completed and sends ready email', async () => {
@@ -174,7 +174,7 @@ describe('completeVideoFromWebhook', () => {
     vi.mocked(findByHeygenJobId).mockResolvedValue(processingRow)
     // Override DB to return refunded purchase status
     vi.mocked(createServerClient).mockReturnValue(
-      makeDb({ email: 'u@test.com', locale: 'vi' }, 'refunded') as ReturnType<typeof createServerClient>,
+      makeDb({ email: 'u@test.com', locale: 'vi' }, 'refunded') as unknown as ReturnType<typeof createServerClient>,
     )
 
     await completeVideoFromWebhook({
@@ -193,7 +193,7 @@ describe('failVideoFromWebhook', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(getD1Raw).mockResolvedValue(makeD1() as unknown as D1Database)
-    vi.mocked(createServerClient).mockReturnValue(makeDb() as ReturnType<typeof createServerClient>)
+    vi.mocked(createServerClient).mockReturnValue(makeDb() as unknown as ReturnType<typeof createServerClient>)
     vi.mocked(markPermanentFailureCAS).mockResolvedValue(true)
     vi.mocked(recordAttemptCAS).mockResolvedValue(2)
   })

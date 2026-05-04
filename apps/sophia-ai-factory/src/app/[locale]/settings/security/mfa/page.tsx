@@ -221,14 +221,14 @@ export default function MfaPage() {
                 onClick={() => { setStatus('idle'); setCode(''); setError(''); }}
                 className="flex-1 rounded-lg border py-2 px-4 font-medium hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
               >
-                Cancel
+                {t('cancel')}
               </button>
               <button
                 onClick={handleDisable}
                 disabled={loading || code.length !== 6}
                 className="flex-1 rounded-lg bg-destructive text-destructive-foreground py-2 px-4 font-medium hover:bg-destructive/90 disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-destructive/50 focus-visible:outline-none"
               >
-                {loading ? 'Disabling…' : t('disable_button')}
+                {loading ? t('revoking') : t('disable_button')}
               </button>
             </div>
           </div>

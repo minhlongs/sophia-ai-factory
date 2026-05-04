@@ -1092,7 +1092,9 @@
       "error_invalid_code": "Mã không hợp lệ. Vui lòng thử lại.",
       "error_generic": "Đã xảy ra lỗi. Vui lòng thử lại.",
       "success_enabled": "Đã bật xác thực hai yếu tố",
-      "success_disabled": "Đã tắt xác thực hai yếu tố"
+      "success_disabled": "Đã tắt xác thực hai yếu tố",
+      "cancel": "Hủy",
+      "revoking": "Đang hủy…"
     }
   },
   "auth": {
