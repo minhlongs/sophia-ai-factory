@@ -9,13 +9,32 @@ import type { SettingsNamespace } from './types';
 
 // ---------- per-namespace schemas ----------
 
+const httpsUrlOrNull = z
+  .string()
+  .url()
+  .refine((v) => v.startsWith('https://'), { message: 'URL must use HTTPS' })
+  .nullable();
+
+const hexColorSchema = z
+  .string()
+  .regex(/^#[0-9a-fA-F]{6}$/, 'Must be a 6-digit hex colour, e.g. #7c3aed');
+
 export const BrandingSchema = z.object({
-  logoUrl: z.string().url().nullable(),
-  primaryColor: z
-    .string()
-    .regex(/^#[0-9a-fA-F]{6}$/, 'Must be a 6-digit hex colour, e.g. #7c3aed'),
-  welcomeMessage: z.string().max(500).nullable(),
+  logoUrl: httpsUrlOrNull,
+  primaryColor: hexColorSchema,
+  accentColor: hexColorSchema.nullable(),
+  welcomeMessage: z.string().max(2000).nullable(),
   customDomain: z.string().nullable(),
+  emailFromName: z.string().max(100).nullable(),
+  emailFooter: z.string().max(1000).nullable(),
+  faviconUrl: httpsUrlOrNull,
+  socialMeta: z
+    .object({
+      title: z.string().max(200).nullable(),
+      description: z.string().max(500).nullable(),
+      imageUrl: httpsUrlOrNull,
+    })
+    .nullable(),
 });
 
 export const ScoringSchema = z.object({
@@ -62,8 +81,36 @@ export const CronSchema = z.object({
   }),
 });
 
+export const ChannelTemplateSchema = z
+  .object({
+    titleTemplate: z.string().max(200).optional(),
+    captionTemplate: z.string().max(2200).optional(),
+    hashtagsTemplate: z.string().max(500).optional(),
+    ctaTemplate: z.string().max(500).optional(),
+  })
+  .partial();
+
 export const ChannelsSchema = z.object({
   defaultPlatforms: z.array(z.string()),
+  templates: z
+    .record(
+      z.enum(['youtube', 'tiktok', 'instagram', 'pinterest', 'linkedin', 'zalo']),
+      ChannelTemplateSchema,
+    )
+    .optional()
+    .default(() => ({} as Record<'youtube' | 'tiktok' | 'instagram' | 'pinterest' | 'linkedin' | 'zalo', z.infer<typeof ChannelTemplateSchema>>)),
+  preferTemplateOverAI: z.boolean().default(false),
+});
+
+export const McpCustomServerSchema = z.object({
+  name: z.string().min(1).max(64),
+  url: z.string().url().refine(u => u.startsWith('https://'), {
+    message: 'MCP server URL must use HTTPS',
+  }),
+  authType: z.enum(['none', 'bearer', 'header']),
+  authValue: z.string().optional(),
+  enabled: z.boolean().default(true),
+  description: z.string().max(500).optional(),
 });
 
 export const McpSchema = z.object({
@@ -74,6 +121,7 @@ export const McpSchema = z.object({
       url: z.string().url(),
     }),
   ),
+  customServers: z.array(McpCustomServerSchema).max(20).default([]),
 });
 
 export const WebhooksDefaultsSchema = z.object({

@@ -18,7 +18,10 @@ import { cjClient } from './client-cj';
 import { mockClient } from './client-mock';
 import { scoreAffiliate } from './scoring';
 import type { ScoringContext } from './scoring';
-import { isCategoryAllowed } from '@/seed/security/geo-gate';
+import { isCategoryAllowedForTenant, isCategoryAllowed } from '@/seed/security/geo-gate';
+import { getOrDefault } from '@/lib/tenant-settings/registry';
+import { DEFAULT_SCORING } from '@/lib/tenant-settings/defaults';
+import type { ScoringSettings } from '@/lib/tenant-settings/defaults';
 import { emit } from '@/lib/webhooks';
 import { logger } from '@/seed/utils/logger-utility';
 
@@ -31,10 +34,12 @@ export interface ScoutRunResult {
 
 /**
  * Run the affiliate scout for a single tenant.
+ * - Loads per-tenant scoring weights/threshold from tenant-settings (falls back to DEFAULT_SCORING).
  * - Calls all network clients whose credentials are present; falls back to mock.
  * - Scores each affiliate; skips insert if score < threshold (default 0.7).
  * - Inserts new qualifying affiliates (UNIQUE constraint prevents duplicates).
  * - Emits `affiliate.discovered` webhook for each new insert, unless geo-blocked.
+ *   Geo-gate uses per-tenant rules (additionalRules + removedRules from tenant-settings).
  */
 export async function runAffiliateScout(
   env: ScoutEnv,
@@ -47,6 +52,15 @@ export async function runAffiliateScout(
     logger.warn('[affiliate-scout] No D1 binding — aborting scout');
     return { discovered: 0, errors: [] };
   }
+
+  // Resolve per-tenant scoring settings, falling back to defaults.
+  // Caller-supplied scoringCtx weights take precedence over tenant settings.
+  const tenantScoring = await getOrDefault<ScoringSettings>(db, tenantId, 'scoring', DEFAULT_SCORING);
+  const effectiveScoringCtx: ScoringContext = {
+    weights: { ...tenantScoring.weights, ...scoringCtx?.weights },
+    threshold: scoringCtx?.threshold ?? tenantScoring.threshold,
+    ...scoringCtx,
+  };
 
   const hasAnyRealCred = Boolean(
     env.IMPACT_RADIUS_API_KEY || env.PARTNERSTACK_API_KEY || env.CJ_AFFILIATE_API_KEY,
@@ -91,8 +105,8 @@ export async function runAffiliateScout(
         ...raw,
       };
 
-      // Quality gate: skip low-quality offers before writing to DB
-      const scored = scoreAffiliate(affiliate, scoringCtx);
+      // Quality gate: skip low-quality offers using tenant-resolved scoring context
+      const scored = scoreAffiliate(affiliate, effectiveScoringCtx);
       if (!scored.passes) {
         logger.info(
           `[affiliate-scout] Skipping low-quality offer ${affiliate.externalId} (score ${scored.score})`,
@@ -105,13 +119,16 @@ export async function runAffiliateScout(
       if (inserted) {
         discovered++;
 
-        // Geo-gate: suppress event if tenant country blocks this category
+        // Geo-gate: suppress event using tenant-aware rules (per-tenant overrides applied)
         const category = affiliate.category ?? '';
-        if (tenantCountry && category && !isCategoryAllowed(tenantCountry, category)) {
-          logger.info(
-            `[affiliate-scout] Geo-blocked emit for ${affiliate.externalId} (country=${tenantCountry}, category=${category})`,
-          );
-          continue;
+        if (tenantCountry && category) {
+          const allowed = await isCategoryAllowedForTenant(db, tenantId, tenantCountry, category);
+          if (!allowed) {
+            logger.info(
+              `[affiliate-scout] Geo-blocked emit for ${affiliate.externalId} (country=${tenantCountry}, category=${category})`,
+            );
+            continue;
+          }
         }
 
         emit(
