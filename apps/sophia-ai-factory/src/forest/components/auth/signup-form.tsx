@@ -78,11 +78,8 @@ export function SignupForm({ t }: SignupFormProps) {
       }
 
       setSuccess(true);
-      // Brief delay so user sees the success message before redirect
-      setTimeout(() => {
-        router.push("/setup-wizard");
-        router.refresh();
-      }, 1200);
+      router.push("/setup-wizard");
+      router.refresh();
     } catch {
       setError(t.error_generic);
     } finally {

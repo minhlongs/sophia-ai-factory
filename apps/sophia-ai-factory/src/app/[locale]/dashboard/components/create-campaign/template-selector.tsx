@@ -11,6 +11,14 @@ interface TemplateSelectorProps {
 export function TemplateSelector({ templates, selectedTemplateId, onSelect }: TemplateSelectorProps) {
   const t = useTranslations('campaign.template_selection');
 
+  if (templates.length === 0) {
+    return (
+      <div className="py-12 text-center text-sm text-muted-foreground">
+        Không có mẫu nào / No templates available
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div>
