@@ -2,7 +2,12 @@
  * Affiliate Scout Writer
  *
  * Orchestrates all network clients, deduplicates via D1 UNIQUE constraint,
- * persists new affiliates, and emits `affiliate.discovered` webhook per new row.
+ * scores each affiliate (threshold 0.7 = "kèo thơm"), persists qualifying rows,
+ * and emits `affiliate.discovered` webhook per new qualifying row.
+ *
+ * Geo-gating: if tenant country is resolvable and category is geo-blocked,
+ * the `affiliate.discovered` event is suppressed for that tenant.
+ *
  * @module lib/affiliates/scout/writer
  */
 
@@ -11,6 +16,9 @@ import { impactRadiusClient } from './client-impact-radius';
 import { partnerstackClient } from './client-partnerstack';
 import { cjClient } from './client-cj';
 import { mockClient } from './client-mock';
+import { scoreAffiliate } from './scoring';
+import type { ScoringContext } from './scoring';
+import { isCategoryAllowed } from '@/seed/security/geo-gate';
 import { emit } from '@/lib/webhooks';
 import { logger } from '@/seed/utils/logger-utility';
 
@@ -24,12 +32,15 @@ export interface ScoutRunResult {
 /**
  * Run the affiliate scout for a single tenant.
  * - Calls all network clients whose credentials are present; falls back to mock.
- * - Inserts new affiliates (UNIQUE constraint prevents duplicates).
- * - Emits `affiliate.discovered` webhook for each new insert.
+ * - Scores each affiliate; skips insert if score < threshold (default 0.7).
+ * - Inserts new qualifying affiliates (UNIQUE constraint prevents duplicates).
+ * - Emits `affiliate.discovered` webhook for each new insert, unless geo-blocked.
  */
 export async function runAffiliateScout(
   env: ScoutEnv,
   tenantId: string,
+  scoringCtx?: ScoringContext,
+  tenantCountry?: string,
 ): Promise<ScoutRunResult> {
   const db = env.DB;
   if (!db) {
@@ -80,19 +91,44 @@ export async function runAffiliateScout(
         ...raw,
       };
 
-      const inserted = await upsertAffiliate(db, affiliate);
+      // Quality gate: skip low-quality offers before writing to DB
+      const scored = scoreAffiliate(affiliate, scoringCtx);
+      if (!scored.passes) {
+        logger.info(
+          `[affiliate-scout] Skipping low-quality offer ${affiliate.externalId} (score ${scored.score})`,
+        );
+        continue;
+      }
+
+      const inserted = await upsertAffiliate(db, affiliate, scored.score, scored.breakdown);
 
       if (inserted) {
         discovered++;
-        emit(env, 'affiliate.discovered', {
-          affiliateId: affiliate.id,
+
+        // Geo-gate: suppress event if tenant country blocks this category
+        const category = affiliate.category ?? '';
+        if (tenantCountry && category && !isCategoryAllowed(tenantCountry, category)) {
+          logger.info(
+            `[affiliate-scout] Geo-blocked emit for ${affiliate.externalId} (country=${tenantCountry}, category=${category})`,
+          );
+          continue;
+        }
+
+        emit(
+          env,
+          'affiliate.discovered',
+          {
+            affiliateId: affiliate.id,
+            tenantId,
+            network: affiliate.network,
+            externalId: affiliate.externalId,
+            productName: affiliate.productName,
+            commissionPct: affiliate.commissionPct ?? null,
+            commissionFlatUsd: affiliate.commissionFlatUsd ?? null,
+            score: scored.score,
+          },
           tenantId,
-          network: affiliate.network,
-          externalId: affiliate.externalId,
-          productName: affiliate.productName,
-          commissionPct: affiliate.commissionPct ?? null,
-          commissionFlatUsd: affiliate.commissionFlatUsd ?? null,
-        }, tenantId);
+        );
       }
     }
 
@@ -103,18 +139,24 @@ export async function runAffiliateScout(
 }
 
 /**
- * Insert affiliate into D1. Skips silently on UNIQUE violation (idempotent).
+ * Insert affiliate into D1 with quality score.
+ * Skips silently on UNIQUE violation (idempotent).
  * Returns true if a new row was inserted, false if it already existed.
  */
-async function upsertAffiliate(db: D1Database, aff: Affiliate): Promise<boolean> {
+async function upsertAffiliate(
+  db: D1Database,
+  aff: Affiliate,
+  score: number,
+  breakdown: Record<string, number>,
+): Promise<boolean> {
   try {
     const result = await db
       .prepare(
         `INSERT INTO discovered_affiliates
          (id, tenant_id, network, external_id, product_name, product_url,
           commission_pct, commission_flat_usd, category, description,
-          discovered_at, raw_payload)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          discovered_at, raw_payload, score, score_breakdown)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT(network, external_id) DO NOTHING`,
       )
       .bind(
@@ -130,6 +172,8 @@ async function upsertAffiliate(db: D1Database, aff: Affiliate): Promise<boolean>
         aff.description ?? null,
         aff.discoveredAt,
         aff.rawPayload ?? null,
+        score,
+        JSON.stringify(breakdown),
       )
       .run();
 

@@ -13,6 +13,9 @@ export const DAILY_QUOTAS: Record<ChannelProvider, number> = {
   tiktok: 30,
   youtube: 50,
   instagram: 25,
+  pinterest: 100,  // Pinterest API v5: generous quota for business accounts
+  linkedin: 10,    // LinkedIn Community Management API: strict 10/day per member
+  zalo: 20,        // Zalo OA API v3: 20 posts/day per OA
 };
 
 function todayUtc(): string {

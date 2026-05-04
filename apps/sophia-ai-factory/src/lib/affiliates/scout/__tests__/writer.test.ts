@@ -6,10 +6,15 @@
  * - Duplicate affiliates (ON CONFLICT DO NOTHING) are not re-emitted
  * - Mock client used when no real credentials in env
  * - Errors from individual clients do not abort entire run
+ *
+ * Note: scoringCtx with threshold:0 is passed to bypass quality gating in
+ * these unit tests — scoring behaviour is covered by scoring.test.ts.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ScoutEnv } from '../types';
+
+const PASS_ALL_SCORES = { threshold: 0 };
 
 // --- Mocks ---
 
@@ -75,7 +80,7 @@ describe('runAffiliateScout', () => {
     const db = makeD1(1); // every insert is new
     const env: ScoutEnv = { DB: db };
 
-    const result = await runAffiliateScout(env, 'tenant-1');
+    const result = await runAffiliateScout(env, 'tenant-1', PASS_ALL_SCORES);
     expect(result.discovered).toBe(3);
     expect(result.errors).toHaveLength(0);
   });
@@ -84,7 +89,7 @@ describe('runAffiliateScout', () => {
     const db = makeD1(1);
     const env: ScoutEnv = { DB: db };
 
-    await runAffiliateScout(env, 'tenant-abc');
+    await runAffiliateScout(env, 'tenant-abc', PASS_ALL_SCORES);
 
     expect(emit).toHaveBeenCalledTimes(3);
     const firstCall = (emit as ReturnType<typeof vi.fn>).mock.calls[0];
@@ -96,7 +101,7 @@ describe('runAffiliateScout', () => {
     const db = makeD1(0); // all rows already exist
     const env: ScoutEnv = { DB: db };
 
-    const result = await runAffiliateScout(env, 'tenant-1');
+    const result = await runAffiliateScout(env, 'tenant-1', PASS_ALL_SCORES);
     expect(result.discovered).toBe(0);
     expect(emit).not.toHaveBeenCalled();
   });
@@ -105,7 +110,7 @@ describe('runAffiliateScout', () => {
     const db = makeD1(1);
     const env: ScoutEnv = { DB: db };
 
-    await runAffiliateScout(env, 'tenant-x');
+    await runAffiliateScout(env, 'tenant-x', PASS_ALL_SCORES);
 
     const call = (emit as ReturnType<typeof vi.fn>).mock.calls[0];
     const data = call[2] as Record<string, unknown>;
@@ -129,7 +134,7 @@ describe('runAffiliateScout', () => {
     const env: ScoutEnv = { DB: db };
 
     // Should not throw; errors are caught per-row
-    const result = await runAffiliateScout(env, 'tenant-1');
+    const result = await runAffiliateScout(env, 'tenant-1', PASS_ALL_SCORES);
     // 2 of 3 succeed
     expect(result.discovered).toBe(2);
   });
