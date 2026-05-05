@@ -8,8 +8,9 @@
  */
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import { X, Zap, LayoutDashboard, Key, HeartHandshake } from 'lucide-react';
+import { X, Zap, LayoutDashboard, Key, HeartHandshake, ArrowRight } from 'lucide-react';
 
 const STORAGE_KEY = 'sophia.masterWelcomeDismissed';
 const STORAGE_VERSION = 'v1';
@@ -41,10 +42,10 @@ export function MasterWelcomeBanner() {
   if (!visible) return null;
 
   const features = [
-    { icon: Zap, key: 'affiliate' },
-    { icon: LayoutDashboard, key: 'admin' },
-    { icon: Key, key: 'api' },
-    { icon: HeartHandshake, key: 'support' },
+    { icon: Zap, key: 'affiliate', href: '/dashboard/wallet' },
+    { icon: LayoutDashboard, key: 'admin', href: '/dashboard/admin' },
+    { icon: Key, key: 'api', href: '/dashboard/byok' },
+    { icon: HeartHandshake, key: 'support', href: '/dashboard/support' },
   ] as const;
 
   return (
@@ -67,15 +68,18 @@ export function MasterWelcomeBanner() {
         <p className="text-sm text-muted-foreground mt-0.5">{t('subtitle')}</p>
       </div>
 
-      {/* Feature grid */}
+      {/* Feature grid — each card links to its feature surface */}
       <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {features.map(({ icon: Icon, key }) => (
-          <li
-            key={key}
-            className="flex items-center gap-2 rounded-lg bg-card border border-border px-3 py-2.5 text-sm text-foreground"
-          >
-            <Icon className="w-4 h-4 text-[var(--neon-cyan)] shrink-0" aria-hidden="true" />
-            <span>{t(`feature.${key}`)}</span>
+        {features.map(({ icon: Icon, key, href }) => (
+          <li key={key}>
+            <Link
+              href={href}
+              className="group flex items-center gap-2 rounded-lg bg-card border border-border hover:border-[var(--neon-cyan)]/50 hover:bg-[var(--neon-cyan)]/5 transition-colors px-3 py-2.5 text-sm text-foreground"
+            >
+              <Icon className="w-4 h-4 text-[var(--neon-cyan)] shrink-0" aria-hidden="true" />
+              <span className="flex-1">{t(`feature.${key}`)}</span>
+              <ArrowRight className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden="true" />
+            </Link>
           </li>
         ))}
       </ul>
