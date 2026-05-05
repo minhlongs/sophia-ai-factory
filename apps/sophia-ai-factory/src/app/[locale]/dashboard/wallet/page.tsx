@@ -6,6 +6,9 @@
  */
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { getUserTier } from '@/seed/db/get-user-tier';
+import { TierGateCard } from '@/seed/components/ui/tier-gate-card';
+import { getTranslations } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 import { logger } from '@/seed/utils/logger-utility';
 
@@ -95,6 +98,28 @@ async function fetchWalletData(userId: string): Promise<WalletData> {
 export default async function WalletPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
+
+  const t = await getTranslations('dashboard.wallet');
+  const tier = await getUserTier(user.id);
+
+  // Wallet (affiliate earnings/payouts) requires MASTER tier
+  if (tier !== 'MASTER') {
+    return (
+      <div>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-foreground mb-2">{t('gateTitle')}</h1>
+          <p className="text-muted-foreground">Your affiliate earnings and payout history</p>
+        </div>
+        <TierGateCard
+          requiredTier="MASTER"
+          currentTier={tier}
+          featureName={t('gateTitle')}
+        >
+          {null}
+        </TierGateCard>
+      </div>
+    );
+  }
 
   const data = await fetchWalletData(user.id);
 

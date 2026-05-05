@@ -18,6 +18,7 @@ import { DashboardFirstCampaignCta } from './components/dashboard-first-campaign
 import { OnboardingTourModal } from './components/onboarding-tour-modal';
 import { OnboardingStatusWidget } from './components/onboarding-status-widget';
 import { MissionControlWidget } from '@/forest/components/dashboard/mission-control-widget';
+import { MasterWelcomeBanner } from './components/master-welcome-banner';
 import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
@@ -104,6 +105,9 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       <OnboardingTourModal userId={user.id} tier={tierLabel} />
+
+      {/* MASTER welcome banner — client-side, auto-dismisses via localStorage */}
+      {tier === 'MASTER' && <MasterWelcomeBanner />}
 
       <DashboardHeroGreeting name={user.full_name} tier={tierLabel} />
       {/* Mission Control Widget — GAP3 composite hero */}

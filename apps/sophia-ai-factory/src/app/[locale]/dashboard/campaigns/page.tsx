@@ -4,8 +4,9 @@ import { logger } from "@/seed/utils/logger-utility";
 import dynamic from "next/dynamic";
 import { Button } from "@/seed/components/ui/button";
 import { Skeleton } from "@/seed/components/ui/skeleton";
+import { EmptyState } from "@/seed/components/ui/empty-state";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, Megaphone } from "lucide-react";
 import { Campaign } from "@/seed/types";
 import { CampaignExportControl } from "../components/campaign-export-control";
 import { getTranslations } from 'next-intl/server';
@@ -34,6 +35,7 @@ async function getAuthUserId(): Promise<string | null> {
 
 export default async function CampaignsPage() {
   const t = await getTranslations('dashboard');
+  const tEmpty = await getTranslations('dashboard.emptyState.campaigns');
   const userId = await getAuthUserId();
 
   let campaigns: Campaign[] = [];
@@ -74,7 +76,16 @@ export default async function CampaignsPage() {
         </div>
       </div>
 
-      <CampaignList initialCampaigns={campaigns} />
+      {campaigns.length === 0 ? (
+        <EmptyState
+          icon={Megaphone}
+          title={tEmpty('title')}
+          description={tEmpty('description')}
+          cta={{ label: tEmpty('cta'), href: '/dashboard/create' }}
+        />
+      ) : (
+        <CampaignList initialCampaigns={campaigns} />
+      )}
     </div>
   );
 }

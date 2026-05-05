@@ -36,6 +36,7 @@ import { AgentSidebar } from "@/forest/components/agent-sidebar/agent-sidebar";
 import { CmdKPalette } from "@/forest/components/cmd-k/cmd-k-palette";
 import { TrialBanner } from "./components/trial-banner";
 import { getD1Raw } from "@/seed/db/client";
+import { getUserTier } from "@/seed/db/get-user-tier";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -66,8 +67,16 @@ export default async function DashboardLayout({
   const currentUser = await getCurrentUser();
   const isAdmin = currentUser?.role === 'admin';
   const trialEndsAt = currentUser ? await getUserTrialEndsAt(currentUser.id) : null;
+  const userTier = currentUser ? await getUserTier(currentUser.id) : null;
   const nowSec = Math.floor(Date.now() / 1000);
-  const showTrialBanner = trialEndsAt !== null && trialEndsAt > nowSec;
+  // Only show trial banner for BASIC tier users within 7 days of trial expiry.
+  // MASTER users (e.g. FREE100 redeemers) have trial_ends_at set but should NOT see the banner.
+  const sevenDaysFromNow = nowSec + 7 * 86400;
+  const showTrialBanner =
+    userTier === 'BASIC' &&
+    trialEndsAt !== null &&
+    trialEndsAt > nowSec &&
+    trialEndsAt <= sevenDaysFromNow;
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -288,7 +297,7 @@ export default async function DashboardLayout({
       <div className="flex-1 flex flex-col">
         {/* Trial banner — shown above content when user has active trial */}
         {showTrialBanner && (
-          <TrialBanner trialEndsAt={trialEndsAt!} locale={locale} />
+          <TrialBanner trialEndsAt={trialEndsAt!} />
         )}
 
         {/* Mobile Header (visible only on small screens) */}

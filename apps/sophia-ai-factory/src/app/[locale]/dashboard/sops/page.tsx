@@ -5,11 +5,11 @@
  */
 
 import { redirect } from 'next/navigation';
-import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { listInstallationsForUser, getTemplateById } from '@/lib/sop/sop-repo';
 import { InstallationListTable } from '@/forest/components/sop/installation-list-table';
+import { EmptyState } from '@/seed/components/ui/empty-state';
 import { BookOpen, Store } from 'lucide-react';
 import type { SopInstallationRow, SopTemplateRow } from '@/lib/sop/sop-types';
 
@@ -34,9 +34,9 @@ interface InstallWithTemplate extends SopInstallationRow {
 
 export default async function SopsListPage({ params }: Props) {
   const { locale } = await params;
-  const [t, tDash] = await Promise.all([
+  const [t, tEmpty] = await Promise.all([
     getTranslations('sop.list'),
-    getTranslations('dashboard.sops'),
+    getTranslations('dashboard.emptyState.sops'),
   ]);
 
   const user = await getCurrentUser();
@@ -64,22 +64,12 @@ export default async function SopsListPage({ params }: Props) {
       </div>
 
       {withTemplates.length === 0 ? (
-        <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-lg rounded-xl p-10 flex flex-col items-center gap-4 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-900/30">
-            <Store className="w-5 h-5 text-violet-600 dark:text-violet-400" />
-          </div>
-          <div>
-            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">{tDash('empty_title')}</h2>
-            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{tDash('empty_desc')}</p>
-          </div>
-          <Link
-            href="/dashboard/sop-marketplace"
-            className="cursor-pointer inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors duration-150"
-          >
-            <Store className="w-4 h-4" />
-            {tDash('empty_cta')}
-          </Link>
-        </div>
+        <EmptyState
+          icon={Store}
+          title={tEmpty('title')}
+          description={tEmpty('description')}
+          cta={{ label: tEmpty('cta'), href: '/dashboard/sop-marketplace' }}
+        />
       ) : (
         <InstallationListTable installations={withTemplates} locale={locale} />
       )}
