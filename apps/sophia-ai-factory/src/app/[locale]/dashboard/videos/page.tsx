@@ -4,6 +4,18 @@ import { getTranslations } from "next-intl/server";
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
 import { localizedHref } from "@/lib/i18n/localized-href";
 import { VideoGallery } from "./components/video-gallery";
+import { EmptyState } from "@/seed/components/ui/empty-state";
+import { Video } from "lucide-react";
+
+function getD1(): D1Database | null {
+  try {
+    const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
+    if (env?.DB) return env.DB as D1Database;
+    const ctx = (globalThis as Record<symbol, { env?: Record<string, unknown> }>)[Symbol.for('__cloudflare-context__')];
+    if (ctx?.env?.DB) return ctx.env.DB as D1Database;
+    return null;
+  } catch { return null; }
+}
 
 export default async function VideosGalleryPage({
   params,
@@ -14,7 +26,25 @@ export default async function VideosGalleryPage({
   const { locale } = await params;
   if (!user) redirect(localizedHref(locale, "/login"));
 
-  const t = await getTranslations("dashboard.videos");
+  const [t, tEmpty] = await Promise.all([
+    getTranslations("dashboard.videos"),
+    getTranslations("dashboard.emptyState.videos"),
+  ]);
+
+  // Pre-fetch count to decide empty state at SSR level
+  let videoCount = -1; // -1 = unknown (D1 unavailable) — fall back to VideoGallery
+  const d1 = getD1();
+  if (d1) {
+    try {
+      const row = await d1
+        .prepare('SELECT COUNT(*) as cnt FROM videos WHERE user_id = ?')
+        .bind(user.id)
+        .first<{ cnt: number }>();
+      videoCount = row?.cnt ?? 0;
+    } catch {
+      // D1 unavailable — let VideoGallery handle it
+    }
+  }
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -30,7 +60,20 @@ export default async function VideosGalleryPage({
           {t("newVideo")}
         </Link>
       </header>
-      <VideoGallery locale={locale} />
+
+      {videoCount === 0 ? (
+        <EmptyState
+          icon={Video}
+          title={tEmpty("title")}
+          description={tEmpty("description")}
+          cta={{
+            label: tEmpty("cta"),
+            href: localizedHref(locale, "/dashboard/videos/new"),
+          }}
+        />
+      ) : (
+        <VideoGallery locale={locale} />
+      )}
     </div>
   );
 }

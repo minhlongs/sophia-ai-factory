@@ -12,10 +12,13 @@ import { useTranslations, useLocale } from 'next-intl'
 import Link from 'next/link'
 import { WorkflowList, type WorkflowListItem } from '@/forest/components/workflows/workflow-list'
 import { CreateWorkflowForm } from '@/forest/components/workflows/create-workflow-form'
+import { EmptyState } from '@/seed/components/ui/empty-state'
 import { WORKFLOW_LABELS } from '@/lib/workflows/workflow-labels'
+import { GitBranch } from 'lucide-react'
 
 export default function WorkflowsPage() {
   const t = useTranslations('dashboard.sidebar')
+  const tEmpty = useTranslations('dashboard.emptyState.workflows')
   const locale = useLocale()
   const [showModal, setShowModal] = useState(false)
   const [workflows, setWorkflows] = useState<WorkflowListItem[]>([])
@@ -62,6 +65,12 @@ export default function WorkflowsPage() {
             <div key={i} className="h-14 bg-muted motion-safe:animate-pulse rounded-xl" />
           ))}
         </div>
+      ) : workflows.length === 0 ? (
+        <EmptyState
+          icon={GitBranch}
+          title={tEmpty('title')}
+          description={tEmpty('description')}
+        />
       ) : (
         <WorkflowList workflows={workflows} locale={locale} />
       )}

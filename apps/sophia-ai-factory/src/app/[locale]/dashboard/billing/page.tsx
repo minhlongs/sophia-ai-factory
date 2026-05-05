@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { use } from 'react';
+import { useTranslations } from 'next-intl';
 import { FullUsageSummary } from '@/forest/components/billing/usage-summary-card';
 import { DunningStatusBanner } from '@/forest/components/billing/dunning-status-banner';
 import { QuotaGaugeList } from '@/forest/components/analytics/QuotaGauge';
@@ -36,6 +37,7 @@ function BillingSpinner() {
 
 export default function BillingPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = use(params);
+  const t = useTranslations('dashboard.billing');
 
   const { data: usageData, isLoading, error } = useQuery<UsageSummaryResponse>({
     queryKey: ['/api/billing/usage-summary'],
@@ -85,7 +87,7 @@ export default function BillingPage({ params }: { params: Promise<{ locale: stri
   };
   const quotaData = [
     { label: 'API Calls', used: usageData.usage.apiCalls, limit: usageData.limits.apiCalls },
-    { label: 'Video Generations', used: usageData.usage.videoGenerations, limit: usageData.limits.videoGenerations },
+    { label: t('videoGenerationsLabel'), used: usageData.usage.videoGenerations, limit: usageData.limits.videoGenerations },
     { label: 'Storage (MB)', used: usageData.usage.storage, limit: usageData.limits.storage },
   ];
 

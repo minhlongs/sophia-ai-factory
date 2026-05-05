@@ -676,7 +676,17 @@
       "auto_refresh_on": "Tự động làm mới BẬT (30s)",
       "auto_refresh_off": "Tự động làm mới TẮT",
       "date_range_placeholder": "Chọn khoảng thời gian",
-      "tier_adoption_title": "Biểu Đồ Phân Bổ Gói Dịch Vụ"
+      "tier_adoption_title": "Biểu Đồ Phân Bổ Gói Dịch Vụ",
+      "gateTitle": "Phân Tích Doanh Thu"
+    },
+    "trialBanner": {
+      "title": "Gói dùng thử của bạn hết hạn vào ngày mai! Nâng cấp ngay để giữ tính năng →",
+      "description": "Dùng thử miễn phí: còn {count} ngày. Nâng cấp để giữ tính năng →",
+      "cta": "→",
+      "daysLeft": "Còn {count} ngày"
+    },
+    "billing": {
+      "videoGenerationsLabel": "Số Video Tạo Ra"
     },
     "support": {
       "title": "Hỗ Trợ",
@@ -923,6 +933,48 @@
       "createCta": "Tạo campaign",
       "templatesCta": "Xem template",
       "docsCta": "Đọc hướng dẫn"
+    },
+    "tierGate": {
+      "title": "Tính Năng Bị Khoá",
+      "description": "Tính năng này không khả dụng trên gói hiện tại của bạn. Nâng cấp để mở khoá.",
+      "upgradeCTA": "Nâng cấp lên {tier}",
+      "lockedFeature": "Tính Năng Bị Khoá"
+    },
+    "emptyState": {
+      "campaigns": {
+        "title": "Chưa Có Chiến Dịch",
+        "description": "Tạo chiến dịch video tự động đầu tiên để bắt đầu phát triển kênh của bạn.",
+        "cta": "Tạo Chiến Dịch"
+      },
+      "videos": {
+        "title": "Chưa Có Video",
+        "description": "Tạo video AI đầu tiên để xem tại đây.",
+        "cta": "Tạo Video"
+      },
+      "sops": {
+        "title": "Chưa Có SOP Nào",
+        "description": "Duyệt marketplace để tìm quy trình tự động hoá cho agency của bạn.",
+        "cta": "Duyệt Marketplace"
+      },
+      "workflows": {
+        "title": "Chưa Có Quy Trình",
+        "description": "Tạo quy trình đầu tiên để tự động hoá các tác vụ nhiều bước.",
+        "cta": "Quy Trình Mới"
+      }
+    },
+    "masterWelcome": {
+      "title": "Chào Mừng Đến Với Gói MASTER",
+      "subtitle": "Bạn đã có quyền truy cập đầy đủ mọi tính năng của Sophia. Đây là những gì đã được mở khoá:",
+      "feature": {
+        "affiliate": "Công Cụ Affiliate",
+        "admin": "Bảng Quản Trị",
+        "api": "Truy Cập API",
+        "support": "Hỗ Trợ Ưu Tiên"
+      },
+      "dismiss": "Đóng"
+    },
+    "wallet": {
+      "gateTitle": "Ví Affiliate"
     }
   },
   "account": {

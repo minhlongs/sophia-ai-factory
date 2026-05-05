@@ -676,7 +676,17 @@
       "auto_refresh_on": "Auto-refresh ON (30s)",
       "auto_refresh_off": "Auto-refresh OFF",
       "date_range_placeholder": "Date range placeholder",
-      "tier_adoption_title": "Tier adoption title"
+      "tier_adoption_title": "Tier adoption title",
+      "gateTitle": "Revenue Analytics"
+    },
+    "trialBanner": {
+      "title": "Your trial expires tomorrow! Upgrade now to keep access →",
+      "description": "Free trial: {count} day{count, plural, one {} other {s}} remaining. Upgrade to keep features →",
+      "cta": "→",
+      "daysLeft": "{count} day{count, plural, one {} other {s}} left"
+    },
+    "billing": {
+      "videoGenerationsLabel": "Video Generations"
     },
     "support": {
       "title": "Support",
@@ -923,6 +933,48 @@
       "createCta": "Create campaign",
       "templatesCta": "Browse templates",
       "docsCta": "Read docs"
+    },
+    "tierGate": {
+      "title": "Feature Locked",
+      "description": "This feature is not available on your current plan. Upgrade to unlock it.",
+      "upgradeCTA": "Upgrade to {tier}",
+      "lockedFeature": "Locked Feature"
+    },
+    "emptyState": {
+      "campaigns": {
+        "title": "No Campaigns Yet",
+        "description": "Create your first automated video campaign to start growing your channel.",
+        "cta": "Create Campaign"
+      },
+      "videos": {
+        "title": "No Videos Yet",
+        "description": "Generate your first AI video to see it here.",
+        "cta": "Create Video"
+      },
+      "sops": {
+        "title": "No SOPs Installed",
+        "description": "Browse the marketplace to find automation playbooks for your agency.",
+        "cta": "Browse Marketplace"
+      },
+      "workflows": {
+        "title": "No Workflows Yet",
+        "description": "Create your first workflow to automate multi-step tasks.",
+        "cta": "New Workflow"
+      }
+    },
+    "masterWelcome": {
+      "title": "Welcome to MASTER Tier",
+      "subtitle": "You now have access to all Sophia features. Here is what is unlocked:",
+      "feature": {
+        "affiliate": "Affiliate Engine",
+        "admin": "Admin Dashboard",
+        "api": "API Access",
+        "support": "Priority Support"
+      },
+      "dismiss": "Dismiss"
+    },
+    "wallet": {
+      "gateTitle": "Affiliate Wallet"
     }
   },
   "account": {

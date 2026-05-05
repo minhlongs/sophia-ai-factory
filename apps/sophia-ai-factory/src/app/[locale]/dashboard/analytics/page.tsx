@@ -6,6 +6,7 @@ import { getUserTier } from "@/seed/db/get-user-tier";
 import { checkAdmin, canAccessRevenue } from "@/lib/analytics/rbac";
 import { Campaign, Tier } from "@/seed/types";
 import { Skeleton } from "@/seed/components/ui/skeleton";
+import { TierGateCard } from "@/seed/components/ui/tier-gate-card";
 import { getTranslations } from 'next-intl/server';
 import { redirect } from "next/navigation";
 import type { RevenueSnapshot } from "@/seed/types/analytics-revenue";
@@ -90,6 +91,7 @@ export default async function AnalyticsPage() {
   }
 
   const initialRevenue = await fetchInitialRevenue(userId, userTier, isAdmin);
+  const hasRevenueAccess = canAccessRevenue(userTier, isAdmin);
 
   return (
     <div className="space-y-8">
@@ -108,6 +110,17 @@ export default async function AnalyticsPage() {
         initialRevenue={initialRevenue}
         AnalyticsViewComponent={AnalyticsView}
       />
+
+      {/* Revenue section gate: show upsell when non-ENTERPRISE/MASTER */}
+      {!hasRevenueAccess && (
+        <TierGateCard
+          requiredTier="ENTERPRISE"
+          currentTier={userTier}
+          featureName={t('gateTitle')}
+        >
+          {null}
+        </TierGateCard>
+      )}
     </div>
   );
 }

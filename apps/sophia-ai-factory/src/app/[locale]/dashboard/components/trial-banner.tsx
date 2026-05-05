@@ -1,21 +1,23 @@
 "use client";
 
 /**
- * Free trial countdown banner shown on dashboard for users with active trials.
- * Auto-hides when trial_ends_at has passed. Shows urgency 1 day before expiry.
+ * Free trial countdown banner for BASIC tier users nearing trial expiry.
+ * Only rendered when layout.tsx decides showTrialBanner === true.
+ * Uses next-intl for all UI strings.
  */
 
 import { useMemo } from "react";
 import Link from "next/link";
+import { useLocale, useTranslations } from "next-intl";
 
 interface TrialBannerProps {
   /** Unix timestamp (seconds) when trial ends */
   trialEndsAt: number;
-  locale: string;
 }
 
-export function TrialBanner({ trialEndsAt, locale }: TrialBannerProps) {
-  const isVi = locale.startsWith("vi");
+export function TrialBanner({ trialEndsAt }: TrialBannerProps) {
+  const t = useTranslations("dashboard.trialBanner");
+  const locale = useLocale();
   const nowSec = Math.floor(Date.now() / 1000);
 
   const daysLeft = useMemo(() => {
@@ -29,12 +31,8 @@ export function TrialBanner({ trialEndsAt, locale }: TrialBannerProps) {
   const isUrgent = daysLeft <= 1;
 
   const text = isUrgent
-    ? isVi
-      ? "Trial của bạn hết hạn vào ngày mai! Nâng cấp ngay để giữ tính năng →"
-      : "Your trial expires tomorrow! Upgrade now to keep access →"
-    : isVi
-      ? `Dùng thử miễn phí: còn ${daysLeft} ngày. Nâng cấp để giữ tính năng →`
-      : `Free trial: ${daysLeft} day${daysLeft !== 1 ? "s" : ""} remaining. Upgrade to keep features →`;
+    ? t("title")
+    : t("description", { count: daysLeft });
 
   return (
     <div
@@ -51,6 +49,7 @@ export function TrialBanner({ trialEndsAt, locale }: TrialBannerProps) {
         {isUrgent && <span>⚠️</span>}
         {!isUrgent && <span>⏳</span>}
         {text}
+        <span>{t("cta")}</span>
       </Link>
     </div>
   );
