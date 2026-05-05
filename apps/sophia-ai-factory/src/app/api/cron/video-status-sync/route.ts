@@ -23,6 +23,7 @@ import { sendOneTimeBundleReadyEmail } from '@/land/billing/email/send-one-time-
 import { sendBundleRenderFailedEmail } from '@/land/billing/email/send-bundle-render-failed-email';
 import { grantCompensationCredit } from '@/lib/fulfillment/compensation';
 import { getUserCredits } from '@/seed/db/get-user-credits';
+import { deleteR2VideoArtifacts } from '@/lib/r2/video-cleanup';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,6 +41,8 @@ interface VideoRow {
   purchase_id?: string | null;
   /** Locale for email templates */
   locale?: string | null;
+  /** R2 object key — set when video was already stored to R2 before failure */
+  r2_key?: string | null;
 }
 
 /** Fetch user info from Better Auth's 'user' table */
@@ -80,6 +83,12 @@ async function handleOneBundlePermanentFailure(
   })
 
   const purchaseId = row.purchase_id!
+
+  // Clean up any R2 artifacts before granting compensation
+  if (row.r2_key) {
+    await deleteR2VideoArtifacts(row.r2_key);
+  }
+
   await grantCompensationCredit(purchaseId, reason)
 
   const userInfo = await fetchUserInfo(row.user_id)
@@ -113,7 +122,7 @@ export async function GET(req: NextRequest) {
     // Fetch pending videos (cap at 50 per run to stay within CPU limits)
     const rows = await db
       .prepare(
-        `SELECT id, user_id, heygen_job_id, created_at, purchase_id, locale
+        `SELECT id, user_id, heygen_job_id, created_at, purchase_id, locale, r2_key
          FROM videos
          WHERE status = 'processing'
          LIMIT 50`

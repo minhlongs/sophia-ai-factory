@@ -63,9 +63,22 @@ type PayoutReconcileAlertEvent = {
   };
 };
 
+type UrlRevenueVideoRequestedEvent = {
+  data: {
+    jobId: string;
+    tenantId: string;
+    prompt: string;
+    locale: string;
+    channel: string;
+    trackingLink?: string;
+  };
+};
+
 type Events = {
   "campaign.created": CampaignCreatedEvent;
   "test/hello.world": { data: Record<string, unknown> };
+  // URL-to-Revenue pipeline events (Master tier)
+  "url_revenue.video.requested": UrlRevenueVideoRequestedEvent;
   // Video pipeline events (Phase 06)
   "video.requested": VideoJobPayload;
   "video.script.ready": VideoJobPayload;

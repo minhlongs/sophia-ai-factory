@@ -8,6 +8,7 @@
 import { logger } from '@/seed/utils/logger-utility';
 import { Tier } from '@/seed/types';
 import { withTimeout } from '@/tree/byok/with-timeout';
+import { uploadAudioToR2 } from '@/lib/r2/audio-upload';
 
 /** Get default voice ID based on tier (ElevenLabs pre-made voice IDs) */
 export function getDefaultVoiceId(tier: Tier): string {
@@ -21,14 +22,20 @@ export function getDefaultVoiceId(tier: Tier): string {
 }
 
 /**
- * Upload audio buffer to Supabase Storage and return the public URL.
- * Falls back to a data URI when Supabase/R2 is not configured.
- * TODO: migrate to Cloudflare R2 — storage not available in D1 client.
+ * Upload audio buffer to Cloudflare R2 and return the public URL.
+ * Falls back to a data URI when R2 is unavailable or R2_PUBLIC_BASE_URL not set.
+ *
+ * Key pattern: audio/{userId}/{videoId}/{uuid}.mp3
+ * Pass userId and videoId via the options parameter when available.
  */
-export async function uploadAudioToStorage(audioData: Uint8Array): Promise<string> {
-  logger.warn('[ElevenLabs] Storage not available in D1 client, returning data URI for audio');
-  const base64 = Buffer.from(audioData).toString('base64');
-  return `data:audio/mpeg;base64,${base64}`;
+export async function uploadAudioToStorage(
+  audioData: Uint8Array,
+  opts?: { userId?: string; videoId?: string },
+): Promise<string> {
+  const userId = opts?.userId ?? 'unknown';
+  const videoId = opts?.videoId ?? 'unknown';
+  const key = `audio/${userId}/${videoId}/${crypto.randomUUID()}.mp3`;
+  return uploadAudioToR2(audioData.buffer as ArrayBuffer, 'audio/mpeg', key);
 }
 
 export interface VoiceoverOutput {

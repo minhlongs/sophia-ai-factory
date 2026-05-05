@@ -16,6 +16,7 @@ import {
   pendingPromoterCron,
   payoutBatcher,
   reconciliationCron,
+  urlRevenueVideoHandler,
 } from "@/forest/inngest/functions/index";
 
 export const { GET, POST, PUT } = serve({
@@ -39,5 +40,7 @@ export const { GET, POST, PUT } = serve({
     pendingPromoterCron,
     payoutBatcher,
     reconciliationCron,
+    // URL-to-Revenue (Phase 3 wiring)
+    urlRevenueVideoHandler,
   ],
 });
