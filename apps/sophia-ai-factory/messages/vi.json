@@ -916,6 +916,13 @@
         "docs_retry_2": "Khoảng cách: 30s → 2m → 10m → 1h → 6h",
         "docs_retry_3": "Sau 5 lần thất bại, giao hàng được đánh dấu dead-letter."
       }
+    },
+    "firstCampaign": {
+      "title": "Bắt đầu chiến dịch đầu tiên",
+      "description": "Tài khoản của bạn đã sẵn sàng. Chọn một hành động để bắt đầu.",
+      "createCta": "Tạo campaign",
+      "templatesCta": "Xem template",
+      "docsCta": "Đọc hướng dẫn"
     }
   },
   "account": {
@@ -1448,5 +1455,32 @@
       "retry": "Thử lại",
       "home": "Về trang chủ"
     }
+  },
+  "header": {
+    "brand": "Brand",
+    "title": "Title"
+  },
+  "sidebar": {
+    "overview": "Overview",
+    "new_project": "New project",
+    "campaigns": "Campaigns",
+    "analytics": "Analytics",
+    "my_videos": "My videos",
+    "orders": "Orders",
+    "support": "Support",
+    "missions": "Missions",
+    "credits": "Credits",
+    "integrations": "Integrations",
+    "webhooks": "Webhooks",
+    "byok": "Byok",
+    "api_keys": "Api keys",
+    "proposals": "Proposals",
+    "workflows": "Workflows",
+    "sop_marketplace": "Sop marketplace",
+    "my_sops": "My sops",
+    "api_docs": "Api docs",
+    "settings": "Settings",
+    "replay_tour": "Replay tour",
+    "sign_out": "Sign out"
   }
 }

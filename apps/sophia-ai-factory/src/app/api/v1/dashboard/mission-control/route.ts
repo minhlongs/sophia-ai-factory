@@ -43,7 +43,25 @@ export async function GET(req: NextRequest) {
   if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
   try {
-    const tier = await getUserTier(user.id);
+    let tier = await getUserTier(user.id);
+
+    // Fallback: stale tier cache → query subscriptions directly
+    if (!tier) {
+      interface SubRow { tier: string }
+      const subRow = await db
+        .prepare('SELECT tier FROM subscriptions WHERE user_id = ?1 AND status = \'active\' ORDER BY created_at DESC LIMIT 1')
+        .bind(user.id)
+        .first<SubRow>()
+        .catch(() => null);
+      if (subRow?.tier) {
+        tier = subRow.tier as typeof tier;
+        logger.warn('[MissionControl] getUserTier returned null; resolved from subscriptions table', { userId: user.id, tier });
+      } else {
+        logger.warn('[MissionControl] Tier fallback hit BASIC — both getUserTier and subscriptions returned null', { userId: user.id });
+        tier = 'BASIC';
+      }
+    }
+
     const quotaTotal = TIER_MCU_LIMITS[tier] ?? 1000;
 
     // Quota used: sum of MCU events last 30d

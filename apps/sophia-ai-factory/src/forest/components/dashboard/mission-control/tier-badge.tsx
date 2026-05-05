@@ -5,6 +5,7 @@
  */
 
 import type { Tier } from '@/seed/types';
+import { TIER_CONFIG } from '@/seed/config/tiers';
 
 const TIER_COLORS: Record<Tier, string> = {
   BASIC: 'bg-slate-700 text-slate-200 border-slate-600',
@@ -20,13 +21,14 @@ interface TierBadgeProps {
 
 export function TierBadge({ tier, href }: TierBadgeProps) {
   const classes = `inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold border ${TIER_COLORS[tier] ?? TIER_COLORS.BASIC} cursor-default`;
+  const label = TIER_CONFIG[tier]?.label ?? tier;
 
   if (href) {
     return (
       <a href={href} className={classes}>
-        {tier}
+        {label}
       </a>
     );
   }
-  return <span className={classes}>{tier}</span>;
+  return <span className={classes}>{label}</span>;
 }
