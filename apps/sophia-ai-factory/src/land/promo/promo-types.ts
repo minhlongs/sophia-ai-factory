@@ -57,7 +57,7 @@ export type ValidateResult =
     }
   | {
       valid: false;
-      reason: 'expired' | 'max_uses' | 'wrong_tier' | 'wrong_sku' | 'user_limit' | 'not_found' | 'not_started';
+      reason: 'expired' | 'max_uses' | 'wrong_tier' | 'wrong_sku' | 'user_limit' | 'already_redeemed' | 'not_found' | 'not_started';
     };
 
 export interface ApplyOptions {

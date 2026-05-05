@@ -35,6 +35,8 @@ export interface AutoHandoverResult {
   sopsInstalled: string[];
   skipped: boolean;
   skipReason?: string;
+  /** Set when magic link generation or handover failed — surface to caller/client. */
+  error?: string;
 }
 
 /** Derive starter SOP slugs from tier + agencyType, capped to tier limit. */
@@ -149,8 +151,8 @@ export async function triggerAutoHandover(opts: AutoHandoverOptions): Promise<Au
     }
   }
 
-  // Upsert tier
-  await upsertUserTier(db, userId, tier);
+  // Upsert tier (ensureCustomerOrg inside — org_id NOT NULL satisfied)
+  await upsertUserTier(db, userId, tier, email);
 
   // Check existing handover
   const existingHandoverId = await getExistingHandoverId(db, userId);
@@ -203,11 +205,13 @@ export async function triggerAutoHandover(opts: AutoHandoverOptions): Promise<Au
   // middleware 307 redirect (localePrefix: 'as-needed' means /en/... → /).
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network';
   let magicLink: string | null = null;
+  let magicLinkError: string | undefined;
   try {
     const token = await createMagicLinkToken(handoverId, { source: 'auto_signup' });
     magicLink = `${appUrl}${localePath(locale)}/welcome/${token}`;
   } catch (err) {
-    logger.warn('[AutoHandover] Magic link generation failed (non-fatal)', { error: getErrorMessage(err) });
+    magicLinkError = getErrorMessage(err);
+    logger.warn('[AutoHandover] Magic link generation failed (non-fatal)', { error: magicLinkError });
   }
 
   // Enqueue welcome email (durable — outbox flush cron retries up to 5x)
@@ -236,5 +240,12 @@ export async function triggerAutoHandover(opts: AutoHandoverOptions): Promise<Au
     paymentId,
   });
 
-  return { handoverId, isNewCustomer, magicLink, sopsInstalled: installedSops, skipped: false };
+  return {
+    handoverId,
+    isNewCustomer,
+    magicLink,
+    sopsInstalled: installedSops,
+    skipped: false,
+    error: magicLinkError,
+  };
 }

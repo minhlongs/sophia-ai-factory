@@ -67,7 +67,7 @@ export async function validatePromoCode(
   if (opts.userId) {
     const userCount = await getRedemptionCount(row.id, opts.userId);
     if (userCount >= row.max_uses_per_user) {
-      return { valid: false, reason: 'user_limit' };
+      return { valid: false, reason: 'already_redeemed' };
     }
   }
 
