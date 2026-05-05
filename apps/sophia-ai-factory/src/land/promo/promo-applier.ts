@@ -64,7 +64,10 @@ export async function applyPromoCode(opts: ApplyOptions): Promise<ApplyResult> {
   let handoverId: string | null = null;
   let magicLink: string | null = null;
 
-  // For free tiers, fire auto-handover immediately
+  // For free tiers, fire auto-handover immediately.
+  // Saga: handover MUST succeed before recording the redemption. If it fails,
+  // throw so the caller can retry without polluting promo_codes.used_count.
+  // (Historical drift cause — see plans/reports/cleanup-260505-0546-orphan-free100.md.)
   if (discountType === 'free_trial' || discountType === 'free_full') {
     const promoPaymentId = `promo_${code.toUpperCase()}_${userId}_${Date.now()}`;
 
@@ -83,14 +86,14 @@ export async function applyPromoCode(opts: ApplyOptions): Promise<ApplyResult> {
       handoverId = result.handoverId;
       magicLink = result.magicLink;
     } catch (err) {
-      logger.warn('[PromoApplier] Auto-handover failed (non-fatal)', {
+      logger.error('[PromoApplier] Auto-handover failed for free tier', err instanceof Error ? err : new Error(String(err)), {
         code,
         userId,
-        error: err instanceof Error ? err.message : String(err),
       });
+      throw new Error(`Promo redemption failed: handover could not be created. Please try again.`);
     }
 
-    // Set trial expiry for free_trial
+    // Set trial expiry for free_trial (only after successful handover)
     if (discountType === 'free_trial' && trialDaysGranted > 0) {
       const trialEndsAt = Math.floor(Date.now() / 1000) + trialDaysGranted * 86400;
       await setUserTrialExpiry(userId, trialEndsAt);
