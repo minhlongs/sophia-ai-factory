@@ -5,10 +5,10 @@
  */
 
 import { validatePromoCode } from './promo-validator';
-import { incrementUsedCount, recordRedemption, setUserTrialExpiry } from './promo-repo';
+import { incrementAndRecord, setUserTrialExpiry } from './promo-repo';
 import { triggerAutoHandover } from '@/tree/handover/auto-handover';
 import { logger } from '@/seed/utils/logger-utility';
-import type { ApplyOptions, ApplyResult } from './promo-types';
+import type { ApplyOptions, ApplyResult, RedemptionStatus } from './promo-types';
 import type { Tier } from '@/seed/types';
 
 /** Tier price map in cents (used for fixed_off / percent_off calculations). */
@@ -61,9 +61,6 @@ export async function applyPromoCode(opts: ApplyOptions): Promise<ApplyResult> {
 
   const discountAppliedCents = originalAmountCents - discountedAmountCents;
 
-  // Increment usage count
-  await incrementUsedCount(codeId);
-
   let handoverId: string | null = null;
   let magicLink: string | null = null;
 
@@ -100,9 +97,12 @@ export async function applyPromoCode(opts: ApplyOptions): Promise<ApplyResult> {
     }
   }
 
-  // Record redemption
-  const redemption = await recordRedemption({
-    promoCcodeId: codeId,
+  const redemptionStatus: RedemptionStatus =
+    discountType === 'percent_off' || discountType === 'fixed_off' ? 'reserved' : 'redeemed';
+
+  // Atomic: increment used_count + insert redemption row via D1 batch
+  const redemption = await incrementAndRecord({
+    codeId,
     promoCode: code,
     userId,
     email,
@@ -111,7 +111,7 @@ export async function applyPromoCode(opts: ApplyOptions): Promise<ApplyResult> {
     discountAppliedCents,
     trialDaysGranted,
     handoverId: handoverId ?? undefined,
-    status: (discountType === 'percent_off' || discountType === 'fixed_off') ? 'reserved' : 'redeemed',
+    status: redemptionStatus,
   });
 
   logger.info('[PromoApplier] Code applied', {

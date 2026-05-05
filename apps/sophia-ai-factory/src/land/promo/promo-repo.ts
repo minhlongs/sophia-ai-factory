@@ -37,6 +37,75 @@ export async function incrementUsedCount(codeId: string): Promise<void> {
     .run();
 }
 
+/**
+ * Atomically increment used_count AND insert redemption row via D1 batch.
+ * D1 batch executes both statements in a single round-trip, preventing
+ * double-increment on concurrent requests (no partial state if one fails).
+ */
+export async function incrementAndRecord(input: {
+  codeId: string;
+  promoCode: string;
+  userId: string;
+  email?: string;
+  appliedToTier?: string;
+  appliedToSku?: string;
+  discountAppliedCents: number;
+  trialDaysGranted: number;
+  paymentId?: string;
+  handoverId?: string;
+  status?: RedemptionStatus;
+}): Promise<RedemptionRow> {
+  const db = await getD1Raw();
+  const id = genId();
+  const nowSec = Math.floor(Date.now() / 1000);
+  const status = input.status ?? 'redeemed';
+
+  const incrementStmt = db
+    .prepare(`UPDATE promo_codes SET used_count = used_count + 1 WHERE id = ?1`)
+    .bind(input.codeId);
+
+  const insertStmt = db
+    .prepare(
+      `INSERT INTO promo_code_redemptions
+       (id, promo_code_id, promo_code, user_id, email, applied_to_tier, applied_to_sku,
+        discount_applied_cents, trial_days_granted, redeemed_at, payment_id, handover_id, status)
+       VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13)`,
+    )
+    .bind(
+      id,
+      input.codeId,
+      input.promoCode.toUpperCase(),
+      input.userId,
+      input.email ?? null,
+      input.appliedToTier ?? null,
+      input.appliedToSku ?? null,
+      input.discountAppliedCents,
+      input.trialDaysGranted,
+      nowSec,
+      input.paymentId ?? null,
+      input.handoverId ?? null,
+      status,
+    );
+
+  await db.batch([incrementStmt, insertStmt]);
+
+  return {
+    id,
+    promo_code_id: input.codeId,
+    promo_code: input.promoCode.toUpperCase(),
+    user_id: input.userId,
+    email: input.email ?? null,
+    applied_to_tier: input.appliedToTier ?? null,
+    applied_to_sku: input.appliedToSku ?? null,
+    discount_applied_cents: input.discountAppliedCents,
+    trial_days_granted: input.trialDaysGranted,
+    redeemed_at: nowSec,
+    payment_id: input.paymentId ?? null,
+    handover_id: input.handoverId ?? null,
+    status,
+  };
+}
+
 /** Count how many times a user has redeemed a specific promo code (non-reverted). */
 export async function getRedemptionCount(codeId: string, userId: string): Promise<number> {
   const db = await getD1Raw();

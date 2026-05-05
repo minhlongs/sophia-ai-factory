@@ -22,6 +22,8 @@ interface RedeemSuccess {
   magicLink?: string | null;
   handoverId?: string;
   trialDaysGranted?: number;
+  /** Set when handover succeeded but magic link generation failed */
+  handoverError?: string;
 }
 
 interface RedeemError {
@@ -75,7 +77,13 @@ export function RedeemPageClient({ locale: _locale, isVi, initialCode }: Props) 
 
   if (success) {
     return (
-      <SuccessView locale={_locale} isVi={isVi} email={email} magicLink={success.magicLink ?? null} />
+      <SuccessView
+        locale={_locale}
+        isVi={isVi}
+        email={email}
+        magicLink={success.magicLink ?? null}
+        handoverError={success.handoverError}
+      />
     );
   }
 
@@ -183,11 +191,13 @@ function SuccessView({
   isVi,
   email,
   magicLink,
+  handoverError,
 }: {
   locale: string;
   isVi: boolean;
   email: string;
   magicLink: string | null;
+  handoverError?: string;
 }) {
   return (
     <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4 py-12">
@@ -214,6 +224,21 @@ function SuccessView({
               {isVi ? 'Bắt đầu ngay' : 'Get Started'}
               <ArrowRight size={18} />
             </a>
+          ) : handoverError ? (
+            <div className="mb-4 px-4 py-3 rounded-lg bg-amber-950/30 border border-amber-500/30 text-left">
+              <p className="text-sm text-amber-300 mb-3">
+                {isVi
+                  ? 'Liên kết kích hoạt chưa được tạo. Vui lòng liên hệ hỗ trợ để nhận link đăng nhập.'
+                  : 'Activation link not generated. Please contact support to receive your sign-in link.'}
+              </p>
+              <a
+                href="mailto:support@sophia.agencyos.network"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-600/20 border border-amber-500/30 text-amber-200 text-sm font-medium hover:bg-amber-600/30 transition-colors"
+              >
+                <Mail size={14} />
+                support@sophia.agencyos.network
+              </a>
+            </div>
           ) : (
             <p className="text-sm text-amber-300 mb-4">
               {isVi

@@ -35,23 +35,87 @@ export async function createCustomerUser(
   return userId;
 }
 
-/** Upsert subscription tier for a user. */
+/**
+ * Idempotent: ensure a personal "customer org" exists for this user.
+ * org_id NOT NULL constraint requires every subscription row has an org.
+ * Creates: organizations + org_members (owner) + org_balances.
+ * Returns the org id.
+ */
+export async function ensureCustomerOrg(
+  db: D1Database,
+  userId: string,
+  email: string,
+): Promise<string> {
+  const slug = `customer-${userId.slice(0, 8)}`;
+
+  // Check existing
+  const existing = await db
+    .prepare(`SELECT id FROM organizations WHERE slug = ?1 LIMIT 1`)
+    .bind(slug)
+    .first<{ id: string }>();
+  if (existing) return existing.id;
+
+  // Create org
+  const orgId = genId();
+  const nowSec = Math.floor(Date.now() / 1000);
+  const displayName = email.split('@')[0];
+
+  await db
+    .prepare(
+      `INSERT INTO organizations (id, name, slug, created_at, updated_at)
+       VALUES (?1, ?2, ?3, ?4, ?4)`,
+    )
+    .bind(orgId, displayName, slug, nowSec)
+    .run();
+
+  // Add as owner member
+  await db
+    .prepare(
+      `INSERT OR IGNORE INTO org_members (id, org_id, user_id, role, created_at)
+       VALUES (?1, ?2, ?3, 'owner', ?4)`,
+    )
+    .bind(genId(), orgId, userId, nowSec)
+    .run();
+
+  // Create org_balances row. Schema: id, org_id, balance, updated_at (REAL balance, not cents).
+  try {
+    await db
+      .prepare(
+        `INSERT OR IGNORE INTO org_balances (id, org_id, balance, updated_at)
+         VALUES (?1, ?2, 0, ?3)`,
+      )
+      .bind(genId(), orgId, nowSec)
+      .run();
+  } catch (err) {
+    logger.warn(
+      '[HandoverSetup] org_balances insert failed (non-fatal)',
+      err instanceof Error ? err : undefined,
+    );
+  }
+
+  return orgId;
+}
+
+/** Upsert subscription tier for a user. Ensures org exists first (org_id NOT NULL). */
 export async function upsertUserTier(
   db: D1Database,
   userId: string,
   tier: string,
+  email = '',
 ): Promise<void> {
   const nowSec = Math.floor(Date.now() / 1000);
   try {
+    const orgId = await ensureCustomerOrg(db, userId, email || userId);
     await db
       .prepare(
-        `INSERT OR REPLACE INTO subscriptions (user_id, tier, status, created_at, updated_at)
-         VALUES (?1, ?2, 'active', ?3, ?3)`,
+        `INSERT OR REPLACE INTO subscriptions (id, org_id, user_id, tier, status, created_at, updated_at)
+         VALUES (?1, ?2, ?3, ?4, 'active', ?5, ?5)`,
       )
-      .bind(userId, tier, nowSec)
+      .bind(genId(), orgId, userId, tier.toUpperCase(), nowSec)
       .run();
   } catch (err) {
     logger.error('[HandoverSetup] Subscription upsert failed', err instanceof Error ? err : undefined);
+    throw new Error(`[HandoverSetup] upsertUserTier failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 
