@@ -916,6 +916,13 @@
         "docs_retry_2": "Backoff: 30s → 2m → 10m → 1h → 6h",
         "docs_retry_3": "After 5 failures, delivery is marked dead-letter."
       }
+    },
+    "firstCampaign": {
+      "title": "Start your first campaign",
+      "description": "Your account is ready. Choose an action to get started.",
+      "createCta": "Create campaign",
+      "templatesCta": "Browse templates",
+      "docsCta": "Read docs"
     }
   },
   "account": {
@@ -1448,5 +1455,32 @@
       "retry": "Try again",
       "home": "Go home"
     }
+  },
+  "header": {
+    "brand": "Brand",
+    "title": "Title"
+  },
+  "sidebar": {
+    "overview": "Overview",
+    "new_project": "New project",
+    "campaigns": "Campaigns",
+    "analytics": "Analytics",
+    "my_videos": "My videos",
+    "orders": "Orders",
+    "support": "Support",
+    "missions": "Missions",
+    "credits": "Credits",
+    "integrations": "Integrations",
+    "webhooks": "Webhooks",
+    "byok": "Byok",
+    "api_keys": "Api keys",
+    "proposals": "Proposals",
+    "workflows": "Workflows",
+    "sop_marketplace": "Sop marketplace",
+    "my_sops": "My sops",
+    "api_docs": "Api docs",
+    "settings": "Settings",
+    "replay_tour": "Replay tour",
+    "sign_out": "Sign out"
   }
 }

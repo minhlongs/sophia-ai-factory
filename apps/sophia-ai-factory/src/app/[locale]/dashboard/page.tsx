@@ -14,6 +14,7 @@ import { TIER_CONFIG } from '@/seed/config/tiers';
 import { DashboardHeroGreeting } from './components/dashboard-hero-greeting';
 import { DashboardSetupSteps } from './components/dashboard-setup-steps';
 import { DashboardReturningUser } from './components/dashboard-returning-user';
+import { DashboardFirstCampaignCta } from './components/dashboard-first-campaign-cta';
 import { OnboardingTourModal } from './components/onboarding-tour-modal';
 import { OnboardingStatusWidget } from './components/onboarding-status-widget';
 import { MissionControlWidget } from '@/forest/components/dashboard/mission-control-widget';
@@ -66,7 +67,9 @@ export default async function DashboardPage() {
     } catch { return {}; }
   })();
   const hasApiKeys = Object.keys(apiKeys).length > 0;
-  const isFirstLogin = !profile?.onboarding_completed_at;
+  // showFirstTimeSteps: only for truly new users (no onboarding completion timestamp)
+  // MASTER users who redeemed FREE100 may have no BYOK keys but onboarding IS done
+  const showFirstTimeSteps = !profile?.onboarding_completed_at;
 
   // Fetch SOP installations
   let sopCount = 0;
@@ -107,8 +110,11 @@ export default async function DashboardPage() {
       <MissionControlWidget isVi={isVi} />
       <OnboardingStatusWidget isVi={isVi} />
 
-      {sopCount === 0 ? (
+      {showFirstTimeSteps && sopCount === 0 ? (
         <DashboardSetupSteps hasApiKeys={hasApiKeys} sopCount={sopCount} />
+      ) : sopCount === 0 ? (
+        // Onboarding done but no SOPs installed yet — show quick-action CTA
+        <DashboardFirstCampaignCta />
       ) : (
         <DashboardReturningUser
           sopCount={sopCount}
