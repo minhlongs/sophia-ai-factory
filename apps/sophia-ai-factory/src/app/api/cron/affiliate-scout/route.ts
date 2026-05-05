@@ -32,7 +32,6 @@ const PREMIUM_PLANS = ['premium', 'enterprise', 'master'] as const;
 
 interface TenantRow {
   org_id: string;
-  last_run_at: number | null;
 }
 
 function getD1Binding(): D1Database | null {
@@ -106,17 +105,19 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   let tenantsErrored = 0;
 
   try {
-    // Fetch all orgs with PREMIUM or above active subscription
+    // Fetch all orgs with PREMIUM or above active subscription.
+    // D1-level org_id filter: explicit WHERE org_id IS NOT NULL ensures
+    // only rows with a valid tenant scope are processed.
     const placeholders = PREMIUM_PLANS.map(() => '?').join(', ');
     const rows = await d1
       .prepare(
         `SELECT DISTINCT org_id FROM subscriptions
-         WHERE status = 'active' AND plan IN (${placeholders})`,
+         WHERE org_id IS NOT NULL AND status = 'active' AND plan IN (${placeholders})`,
       )
       .bind(...PREMIUM_PLANS)
       .all<TenantRow>();
 
-    const tenants = rows.results ?? [];
+    const tenants = (rows.results ?? []).filter(r => r.org_id);
 
     logger.info(`[affiliate-scout] Running for ${tenants.length} PREMIUM+ tenants`);
 
