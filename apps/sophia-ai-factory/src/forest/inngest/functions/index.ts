@@ -28,3 +28,6 @@ export { reconciliationCron } from '@/land/payouts/reconciliation';
 
 // Phase 11: storage tracker cron
 export { storageTrackerDaily } from '@/forest/quota/storage-tracker-cron';
+
+// Master tier: URL-to-Revenue video pipeline
+export { urlRevenueVideoHandler } from './url-revenue-video-handler';
