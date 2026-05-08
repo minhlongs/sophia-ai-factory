@@ -43,6 +43,7 @@ export default function ProposalsPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [quality, setQuality] = useState<QualityResult | null>(null);
   const [generatedContent, setGeneratedContent] = useState<Record<string, string> | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   function handleFieldChange(field: keyof ProposalFormData, value: string) {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -51,6 +52,7 @@ export default function ProposalsPage() {
   async function handleGenerate(data: ProposalFormData) {
     setIsGenerating(true);
     setQuality(null);
+    setErrorMessage(null);
     try {
       const res = await fetch('/api/proposals', {
         method: 'POST',
@@ -62,13 +64,13 @@ export default function ProposalsPage() {
           deliverables: data.deliverables.split('\n').filter(Boolean),
         }),
       });
-      const result = (await res.json()) as ProposalApiResponse;
-      if (!res.ok) throw new Error(result.error || 'Failed to generate proposal');
+      const result = (await res.json().catch(() => ({}))) as ProposalApiResponse;
+      if (!res.ok) throw new Error(result.error || `Request failed (${res.status})`);
       setQuality({ score: result.quality?.score ?? 80, passed: result.quality?.passed ?? true });
       setGeneratedContent(result.proposal ?? {});
     } catch (err) {
-      // Surface error in quality display
       setQuality({ score: 0, passed: false });
+      setErrorMessage(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setIsGenerating(false);
     }
@@ -99,6 +101,15 @@ export default function ProposalsPage() {
             quality={quality}
             onGenerate={handleGenerate}
           />
+          {errorMessage && (
+            <div
+              role="alert"
+              className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+            >
+              <p className="font-medium">Failed to generate proposal</p>
+              <p className="mt-1 text-xs opacity-90">{errorMessage}</p>
+            </div>
+          )}
         </div>
 
         {/* Right: editor */}

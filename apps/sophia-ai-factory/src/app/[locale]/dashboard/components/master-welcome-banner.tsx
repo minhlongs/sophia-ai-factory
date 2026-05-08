@@ -10,7 +10,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import { X, Zap, LayoutDashboard, Key, HeartHandshake, ArrowRight } from 'lucide-react';
+import { X, Zap, BarChart3, Key, HeartHandshake, ArrowRight } from 'lucide-react';
 
 const STORAGE_KEY = 'sophia.masterWelcomeDismissed';
 const STORAGE_VERSION = 'v1';
@@ -43,7 +43,7 @@ export function MasterWelcomeBanner() {
 
   const features = [
     { icon: Zap, key: 'affiliate', href: '/dashboard/wallet' },
-    { icon: LayoutDashboard, key: 'admin', href: '/dashboard/admin' },
+    { icon: BarChart3, key: 'analytics', href: '/dashboard/analytics' },
     { icon: Key, key: 'api', href: '/dashboard/byok' },
     { icon: HeartHandshake, key: 'support', href: '/dashboard/support' },
   ] as const;
