@@ -88,6 +88,18 @@ export default async function DashboardLayout({
               {t('header.brand')}
             </span>
           </Link>
+          {userTier && (
+            <span
+              className={`mt-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                userTier === 'MASTER'
+                  ? 'bg-gradient-to-r from-violet-500/20 to-cyan-500/20 text-[var(--neon-cyan)] ring-1 ring-[var(--neon-cyan)]/40'
+                  : 'bg-muted text-muted-foreground ring-1 ring-border'
+              }`}
+              aria-label={t('sidebar.tierBadge', { tier: userTier })}
+            >
+              {userTier}
+            </span>
+          )}
         </div>
 
         <nav aria-label="Dashboard sidebar" className="flex-1 p-4 space-y-1">
@@ -276,12 +288,14 @@ export default async function DashboardLayout({
         </nav>
 
         <div className="p-4 border-t border-border space-y-2">
-          <Link
-            href="/pricing"
-            className="flex items-center gap-2 px-4 py-2 text-sm bg-gradient-to-r from-violet-500 to-cyan-500 text-white rounded-lg hover:opacity-90 transition-opacity"
-          >
-            Nâng Cấp Gói
-          </Link>
+          {userTier && userTier !== 'MASTER' && (
+            <Link
+              href="/pricing"
+              className="flex items-center gap-2 px-4 py-2 text-sm bg-gradient-to-r from-violet-500 to-cyan-500 text-white rounded-lg hover:opacity-90 transition-opacity"
+            >
+              {t('sidebar.upgradePlan')}
+            </Link>
+          )}
           <HealthIndicator />
           <Link
             href="/"

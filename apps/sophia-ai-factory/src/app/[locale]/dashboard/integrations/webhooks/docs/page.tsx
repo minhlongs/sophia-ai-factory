@@ -124,7 +124,7 @@ app.post('/webhook', (req, res) => {
     return res.status(401).send('Invalid signature');
   }
   const event = JSON.parse(raw);
-  console.log('Received event:', event.event);
+  // Process event in your application (queue, db, etc.)
   res.status(200).send('OK');
 });`;
 

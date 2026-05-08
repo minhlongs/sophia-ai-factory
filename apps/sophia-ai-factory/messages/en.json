@@ -428,7 +428,9 @@
       "byok": "Provider Keys / BYOK",
       "webhooks": "Webhooks",
       "credits": "MCU Credits",
-      "replay_tour": "Replay Tour"
+      "replay_tour": "Replay Tour",
+      "upgradePlan": "Upgrade Plan",
+      "tierBadge": "Current plan: {tier}"
     },
     "missions": {
       "page_title": "AI Missions",

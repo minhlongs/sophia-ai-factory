@@ -428,7 +428,9 @@
       "byok": "Khóa Nhà Cung Cấp",
       "webhooks": "Webhooks",
       "credits": "MCU Credits",
-      "replay_tour": "Xem lại Tour"
+      "replay_tour": "Xem lại Tour",
+      "upgradePlan": "Nâng Cấp Gói",
+      "tierBadge": "Gói hiện tại: {tier}"
     },
     "missions": {
       "page_title": "Nhiệm Vụ AI",

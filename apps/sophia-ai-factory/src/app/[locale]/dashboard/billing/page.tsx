@@ -100,7 +100,9 @@ export default function BillingPage({ params }: { params: Promise<{ locale: stri
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm"><Download className="h-4 w-4 mr-2" />Export</Button>
-          <Button size="sm"><CreditCard className="h-4 w-4 mr-2" />Upgrade Plan</Button>
+          {usageData.license.tier !== 'MASTER' && (
+            <Button size="sm"><CreditCard className="h-4 w-4 mr-2" />Upgrade Plan</Button>
+          )}
         </div>
       </div>
 
