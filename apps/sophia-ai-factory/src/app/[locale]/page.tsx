@@ -5,6 +5,12 @@ import { Skeleton } from "@/seed/components/ui/skeleton";
 import { ScrollReveal } from "@/seed/components/ui/scroll-reveal";
 import { StickyMobileCta } from "@/app/components/layout/sticky-mobile-cta";
 import { buildFAQPageSchema } from "@/lib/seo/schema-org";
+import { buildHomeMetadata } from "./home-metadata";
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  return buildHomeMetadata(locale);
+}
 
 function SectionSkeleton({ height = "h-96" }: { height?: string }) {
   return (

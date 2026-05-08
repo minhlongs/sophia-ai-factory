@@ -1,4 +1,14 @@
 {
+  "seo": {
+    "home": {
+      "title": "Sophia AI Factory — Tự Động Hóa Video, Affiliate & Doanh Thu",
+      "description": "Tạo video AI, khám phá ưu đãi affiliate, đăng đa kênh. Thanh toán USDT. Bắt đầu miễn phí trong vài phút."
+    },
+    "login": {
+      "title": "Đăng Nhập · Sophia AI Factory",
+      "description": "Truy cập bảng điều khiển Sophia AI Factory. Đăng nhập bằng email + mật khẩu hoặc magic link."
+    }
+  },
   "setupWizard": {
     "apiKeys": {
       "title": "Cấu Hình Dịch Vụ AI",
@@ -76,6 +86,7 @@
       "title_2": "Một Nền Tảng — Vô Hạn Quy Mô",
       "subtitle": "Tạo video, tìm lead, gửi chiến dịch — tất cả tự động hóa bằng AI.",
       "cta_start": "Bắt Đầu Miễn Phí",
+      "cta_have_code": "Tôi có mã quà tặng",
       "cta_demo": "Tìm Hiểu Thêm",
       "stats": {
         "tools": "Công Cụ AI",
@@ -973,10 +984,28 @@
         "api": "Truy Cập API",
         "support": "Hỗ Trợ Ưu Tiên"
       },
+      "expiresAt": "Quyền MASTER của bạn có hiệu lực đến {date}.",
       "dismiss": "Đóng"
     },
     "wallet": {
-      "gateTitle": "Ví Affiliate"
+      "gateTitle": "Ví Affiliate",
+      "title": "Ví Của Tôi",
+      "subtitle": "Thu nhập affiliate và lịch sử thanh toán",
+      "balancePending": "Chờ Xác Nhận",
+      "balancePendingHint": "Giữ 60 ngày",
+      "balanceAvailable": "Sẵn Sàng Rút",
+      "balanceAvailableHint": "Tối thiểu $50 USD",
+      "balancePaidOut": "Đã Thanh Toán",
+      "balancePaidOutHint": "Tổng cộng",
+      "transactionsTitle": "Giao Dịch Gần Đây",
+      "emptyTitle": "Chưa có giao dịch",
+      "emptyHint": "Kết nối affiliate network để bắt đầu kiếm hoa hồng từ mỗi conversion.",
+      "emptyCta": "Kết nối affiliate network",
+      "thDate": "Ngày",
+      "thType": "Loại",
+      "thGross": "Tổng",
+      "thYourCut": "Phần Của Bạn",
+      "thStatus": "Trạng Thái"
     }
   },
   "account": {

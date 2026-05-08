@@ -72,14 +72,15 @@ export default async function DashboardPage() {
   // MASTER users who redeemed FREE100 may have no BYOK keys but onboarding IS done
   const showFirstTimeSteps = !profile?.onboarding_completed_at;
 
-  // Fetch SOP installations
+  // Fetch SOP installations + trial expiry (used by MasterWelcomeBanner)
   let sopCount = 0;
   let recentRuns: SopRunRow[] = [];
   let videosThisMonth = 0;
+  let trialEndsAt: number | null = null;
 
   if (d1) {
     try {
-      const [instResult, runsResult, videosResult] = await Promise.all([
+      const [instResult, runsResult, videosResult, trialResult] = await Promise.all([
         d1.prepare('SELECT COUNT(*) as cnt FROM user_sop_installations WHERE user_id = ?').bind(user.id).first<{ cnt: number }>(),
         d1.prepare(`SELECT r.id, r.status, r.created_at, r.installation_id
           FROM sop_runs r
@@ -89,10 +90,14 @@ export default async function DashboardPage() {
         d1.prepare(`SELECT COUNT(*) as cnt FROM campaigns
           WHERE user_id = ? AND created_at >= strftime('%s','now','-30 days')`)
           .bind(user.id).first<{ cnt: number }>(),
+        d1.prepare(`SELECT trial_ends_at FROM subscriptions
+          WHERE user_id = ?1 ORDER BY updated_at DESC LIMIT 1`)
+          .bind(user.id).first<{ trial_ends_at: number | null }>(),
       ]);
       sopCount = instResult?.cnt ?? 0;
       recentRuns = runsResult.results ?? [];
       videosThisMonth = videosResult?.cnt ?? 0;
+      trialEndsAt = trialResult?.trial_ends_at ?? null;
     } catch (e) {
       logger.error('[dashboard] D1 query failed', e instanceof Error ? e : new Error(String(e)));
     }
@@ -107,7 +112,7 @@ export default async function DashboardPage() {
       <OnboardingTourModal userId={user.id} tier={tierLabel} />
 
       {/* MASTER welcome banner — client-side, auto-dismisses via localStorage */}
-      {tier === 'MASTER' && <MasterWelcomeBanner />}
+      {tier === 'MASTER' && <MasterWelcomeBanner trialEndsAt={trialEndsAt} />}
 
       <DashboardHeroGreeting name={user.full_name} tier={tierLabel} />
       {/* Mission Control Widget — GAP3 composite hero */}

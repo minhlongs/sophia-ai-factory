@@ -9,14 +9,20 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { X, Zap, BarChart3, Key, HeartHandshake, ArrowRight } from 'lucide-react';
 
 const STORAGE_KEY = 'sophia.masterWelcomeDismissed';
 const STORAGE_VERSION = 'v1';
 
-export function MasterWelcomeBanner() {
+interface MasterWelcomeBannerProps {
+  /** Unix timestamp (seconds). When set, banner shows "valid until DATE" line. */
+  trialEndsAt?: number | null;
+}
+
+export function MasterWelcomeBanner({ trialEndsAt }: MasterWelcomeBannerProps = {}) {
   const t = useTranslations('dashboard.masterWelcome');
+  const locale = useLocale();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -66,6 +72,17 @@ export function MasterWelcomeBanner() {
       <div className="mb-4">
         <h2 className="text-lg font-bold text-foreground">{t('title')}</h2>
         <p className="text-sm text-muted-foreground mt-0.5">{t('subtitle')}</p>
+        {trialEndsAt && trialEndsAt > Math.floor(Date.now() / 1000) && (
+          <p className="text-xs text-[var(--neon-cyan)] mt-2 font-medium">
+            {t('expiresAt', {
+              date: new Intl.DateTimeFormat(locale === 'vi' ? 'vi-VN' : 'en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              }).format(new Date(trialEndsAt * 1000)),
+            })}
+          </p>
+        )}
       </div>
 
       {/* Feature grid — each card links to its feature surface */}
