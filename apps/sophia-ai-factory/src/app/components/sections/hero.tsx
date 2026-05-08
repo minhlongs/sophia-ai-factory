@@ -130,6 +130,11 @@ export function Hero() {
                 {t("cta_start")}
               </Button>
             </Link>
+            <Link href="/redeem">
+              <Button variant="outline" size="lg" className="rounded-full px-8 text-base w-full sm:w-auto">
+                {t("cta_have_code")}
+              </Button>
+            </Link>
             <Button
               variant="outline"
               size="lg"

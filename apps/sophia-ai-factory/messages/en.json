@@ -1,4 +1,14 @@
 {
+  "seo": {
+    "home": {
+      "title": "Sophia AI Factory — Automate Video, Affiliate & Revenue",
+      "description": "Create AI videos, discover affiliate offers, publish across channels. Crypto/USDT payouts. Start free in minutes."
+    },
+    "login": {
+      "title": "Sign In · Sophia AI Factory",
+      "description": "Access your Sophia AI Factory dashboard. Sign in with email + password or magic link."
+    }
+  },
   "setupWizard": {
     "apiKeys": {
       "title": "AI Service Configuration",
@@ -76,6 +86,7 @@
       "title_2": "One Platform — Infinite Scale",
       "subtitle": "Create videos, generate leads, send campaigns — all automated with AI.",
       "cta_start": "Start Free",
+      "cta_have_code": "I have a code",
       "cta_demo": "Learn More",
       "stats": {
         "tools": "AI Tools",
@@ -973,10 +984,28 @@
         "api": "API Access",
         "support": "Priority Support"
       },
+      "expiresAt": "Your MASTER access is valid until {date}.",
       "dismiss": "Dismiss"
     },
     "wallet": {
-      "gateTitle": "Affiliate Wallet"
+      "gateTitle": "Affiliate Wallet",
+      "title": "My Wallet",
+      "subtitle": "Your affiliate earnings and payout history",
+      "balancePending": "Pending Clearance",
+      "balancePendingHint": "60-day hold window",
+      "balanceAvailable": "Available for Payout",
+      "balanceAvailableHint": "Min. payout $50 USD",
+      "balancePaidOut": "Total Paid Out",
+      "balancePaidOutHint": "Lifetime earnings",
+      "transactionsTitle": "Recent Transactions",
+      "emptyTitle": "No transactions yet",
+      "emptyHint": "Connect an affiliate network to start earning commissions on every conversion.",
+      "emptyCta": "Connect affiliate network",
+      "thDate": "Date",
+      "thType": "Type",
+      "thGross": "Gross",
+      "thYourCut": "Your Cut",
+      "thStatus": "Status"
     }
   },
   "account": {

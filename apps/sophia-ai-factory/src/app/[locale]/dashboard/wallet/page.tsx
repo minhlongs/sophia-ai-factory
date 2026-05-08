@@ -110,7 +110,7 @@ export default async function WalletPage() {
       <div>
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">{t('gateTitle')}</h1>
-          <p className="text-muted-foreground">Your affiliate earnings and payout history</p>
+          <p className="text-muted-foreground">{t('subtitle')}</p>
         </div>
         <TierGateCard
           requiredTier="MASTER"
@@ -128,62 +128,60 @@ export default async function WalletPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground mb-2">My Wallet</h1>
-        <p className="text-muted-foreground">Your affiliate earnings and payout history</p>
+        <h1 className="text-3xl font-bold text-foreground mb-2">{t('title')}</h1>
+        <p className="text-muted-foreground">{t('subtitle')}</p>
       </div>
 
       {/* Balance Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-card border border-border rounded-xl p-6">
           <p className="text-xs text-muted-foreground uppercase font-semibold mb-1">
-            Pending Clearance
+            {t('balancePending')}
           </p>
           <p className="text-3xl font-bold text-yellow-400">
             ${data.balance_pending.toFixed(2)}
           </p>
-          <p className="text-xs text-muted-foreground mt-2">60-day hold window</p>
+          <p className="text-xs text-muted-foreground mt-2">{t('balancePendingHint')}</p>
         </div>
 
         <div className="bg-card border border-[var(--neon-cyan)]/30 rounded-xl p-6">
           <p className="text-xs text-muted-foreground uppercase font-semibold mb-1">
-            Available for Payout
+            {t('balanceAvailable')}
           </p>
           <p className="text-3xl font-bold text-[var(--neon-cyan)]">
             ${data.balance_available.toFixed(2)}
           </p>
-          <p className="text-xs text-muted-foreground mt-2">Min. payout $50 USD</p>
+          <p className="text-xs text-muted-foreground mt-2">{t('balanceAvailableHint')}</p>
         </div>
 
         <div className="bg-card border border-border rounded-xl p-6">
           <p className="text-xs text-muted-foreground uppercase font-semibold mb-1">
-            Total Paid Out
+            {t('balancePaidOut')}
           </p>
           <p className="text-3xl font-bold text-foreground">
             ${data.balance_paid_out.toFixed(2)}
           </p>
-          <p className="text-xs text-muted-foreground mt-2">Lifetime earnings</p>
+          <p className="text-xs text-muted-foreground mt-2">{t('balancePaidOutHint')}</p>
         </div>
       </div>
 
       {/* Recent Transactions */}
       <div className="bg-card border border-border rounded-xl overflow-hidden">
         <div className="p-4 border-b border-border">
-          <h2 className="text-lg font-semibold text-foreground">Recent Transactions</h2>
+          <h2 className="text-lg font-semibold text-foreground">{t('transactionsTitle')}</h2>
         </div>
 
         {data.recent_conversions.length === 0 ? (
           <div className="p-12 text-center space-y-4">
             <div>
-              <p className="text-foreground font-medium">No transactions yet</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Connect an affiliate network to start earning commissions on every conversion.
-              </p>
+              <p className="text-foreground font-medium">{t('emptyTitle')}</p>
+              <p className="text-sm text-muted-foreground mt-1">{t('emptyHint')}</p>
             </div>
             <Link
               href="/dashboard/integrations/affiliate-networks"
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-[var(--neon-cyan)]/20 to-[var(--neon-purple)]/20 border border-[var(--neon-cyan)]/40 text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10 transition-colors text-sm font-medium"
             >
-              Connect affiliate network
+              {t('emptyCta')}
               <ArrowRight className="w-4 h-4" aria-hidden="true" />
             </Link>
           </div>
@@ -192,11 +190,11 @@ export default async function WalletPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase">Date</th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase">Type</th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase">Gross</th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase">Your Cut</th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase">Status</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase">{t('thDate')}</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase">{t('thType')}</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase">{t('thGross')}</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase">{t('thYourCut')}</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase">{t('thStatus')}</th>
                 </tr>
               </thead>
               <tbody>
