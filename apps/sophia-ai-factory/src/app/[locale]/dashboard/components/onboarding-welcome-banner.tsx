@@ -49,7 +49,7 @@ export function OnboardingWelcomeBanner() {
       </button>
 
       <div className="flex items-center gap-2 mb-3">
-        <span className="text-lg">🚀</span>
+        <span className="text-lg" aria-hidden="true">🚀</span>
         <h3 className="text-lg font-semibold text-foreground">
           Welcome to Sophia AI Factory!
         </h3>

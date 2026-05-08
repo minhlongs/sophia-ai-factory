@@ -46,8 +46,8 @@ export function TrialBanner({ trialEndsAt }: TrialBannerProps) {
         href={`/${locale}/pricing`}
         className="inline-flex items-center gap-2 hover:underline"
       >
-        {isUrgent && <span>⚠️</span>}
-        {!isUrgent && <span>⏳</span>}
+        {isUrgent && <span aria-hidden="true">⚠️</span>}
+        {!isUrgent && <span aria-hidden="true">⏳</span>}
         {text}
         <span>{t("cta")}</span>
       </Link>

@@ -46,7 +46,7 @@ export function DashboardFirstCampaignCta() {
           <Card key={key} className="bg-slate-800/60 border-slate-700 hover:border-slate-500 transition-colors">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-slate-200 flex items-center gap-2">
-                <span>{icon}</span>
+                <span aria-hidden="true">{icon}</span>
                 {t(titleKey)}
               </CardTitle>
             </CardHeader>

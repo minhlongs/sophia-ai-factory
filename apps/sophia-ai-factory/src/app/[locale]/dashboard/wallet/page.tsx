@@ -10,6 +10,8 @@ import { getUserTier } from '@/seed/db/get-user-tier';
 import { TierGateCard } from '@/seed/components/ui/tier-gate-card';
 import { getTranslations } from 'next-intl/server';
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
+import { ArrowRight } from 'lucide-react';
 import { logger } from '@/seed/utils/logger-utility';
 
 export const dynamic = 'force-dynamic';
@@ -170,11 +172,20 @@ export default async function WalletPage() {
         </div>
 
         {data.recent_conversions.length === 0 ? (
-          <div className="p-12 text-center">
-            <p className="text-muted-foreground">No transactions yet</p>
-            <p className="text-sm text-muted-foreground mt-1">
-              Earnings appear here after your first conversion
-            </p>
+          <div className="p-12 text-center space-y-4">
+            <div>
+              <p className="text-foreground font-medium">No transactions yet</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Connect an affiliate network to start earning commissions on every conversion.
+              </p>
+            </div>
+            <Link
+              href="/dashboard/integrations/affiliate-networks"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-[var(--neon-cyan)]/20 to-[var(--neon-purple)]/20 border border-[var(--neon-cyan)]/40 text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10 transition-colors text-sm font-medium"
+            >
+              Connect affiliate network
+              <ArrowRight className="w-4 h-4" aria-hidden="true" />
+            </Link>
           </div>
         ) : (
           <div className="overflow-x-auto">
