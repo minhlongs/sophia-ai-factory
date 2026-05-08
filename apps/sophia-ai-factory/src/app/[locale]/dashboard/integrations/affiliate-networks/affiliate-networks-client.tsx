@@ -5,7 +5,7 @@
  */
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 
 type NetworkStatus = 'active' | 'invalid' | 'rate_limited';
 
@@ -98,6 +98,17 @@ const NETWORK_META: Record<string, { label: string; icon: string; fields: FieldD
 
 const NETWORK_ORDER = Object.keys(NETWORK_META);
 
+type Notification = { type: 'success' | 'error'; message: string };
+
+async function readErrorBody(res: Response): Promise<string> {
+  try {
+    const data = (await res.json()) as { error?: string };
+    return data.error ?? `Request failed (${res.status})`;
+  } catch {
+    return `Request failed (${res.status})`;
+  }
+}
+
 export default function AffiliateNetworksClient() {
   const [networks, setNetworks] = useState<NetworkInfo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -106,18 +117,31 @@ export default function AffiliateNetworksClient() {
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<Record<string, { valid: boolean; error?: string }>>({});
+  const [notification, setNotification] = useState<Notification | null>(null);
+  const notifyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const notify = useCallback((n: Notification) => {
+    if (notifyTimerRef.current) clearTimeout(notifyTimerRef.current);
+    setNotification(n);
+    notifyTimerRef.current = setTimeout(() => setNotification(null), 4000);
+  }, []);
+
+  useEffect(() => () => {
+    if (notifyTimerRef.current) clearTimeout(notifyTimerRef.current);
+  }, []);
 
   const fetchNetworks = useCallback(async () => {
     try {
       const res = await fetch('/api/v1/integrations/affiliate-networks');
-      const data = await res.json() as { networks: NetworkInfo[] };
+      if (!res.ok) throw new Error(await readErrorBody(res));
+      const data = (await res.json()) as { networks: NetworkInfo[] };
       setNetworks(data.networks ?? []);
-    } catch {
-      // silently fail — user sees disconnected state
+    } catch (err) {
+      notify({ type: 'error', message: err instanceof Error ? err.message : 'Failed to load networks' });
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [notify]);
 
   useEffect(() => { void fetchNetworks(); }, [fetchNetworks]);
 
@@ -129,11 +153,13 @@ export default function AffiliateNetworksClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ network, payload: formValues }),
       });
-      if (res.ok) {
-        setActiveModal(null);
-        setFormValues({});
-        await fetchNetworks();
-      }
+      if (!res.ok) throw new Error(await readErrorBody(res));
+      setActiveModal(null);
+      setFormValues({});
+      await fetchNetworks();
+      notify({ type: 'success', message: `${NETWORK_META[network]?.label ?? network} credentials saved.` });
+    } catch (err) {
+      notify({ type: 'error', message: err instanceof Error ? err.message : 'Failed to save credentials' });
     } finally {
       setSaving(false);
     }
@@ -141,17 +167,31 @@ export default function AffiliateNetworksClient() {
 
   async function handleDelete(network: string) {
     if (!confirm(`Remove ${NETWORK_META[network]?.label ?? network} credentials?`)) return;
-    await fetch(`/api/v1/integrations/affiliate-networks/${network}`, { method: 'DELETE' });
-    await fetchNetworks();
+    try {
+      const res = await fetch(`/api/v1/integrations/affiliate-networks/${network}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error(await readErrorBody(res));
+      await fetchNetworks();
+      notify({ type: 'success', message: `${NETWORK_META[network]?.label ?? network} credentials removed.` });
+    } catch (err) {
+      notify({ type: 'error', message: err instanceof Error ? err.message : 'Failed to remove credentials' });
+    }
   }
 
   async function handleTest(network: string) {
     setTesting(network);
     try {
       const res = await fetch(`/api/v1/integrations/affiliate-networks/${network}/validate`, { method: 'POST' });
-      const data = await res.json() as { valid: boolean; error?: string };
+      if (!res.ok) throw new Error(await readErrorBody(res));
+      const data = (await res.json()) as { valid: boolean; error?: string };
       setTestResult(prev => ({ ...prev, [network]: data }));
       await fetchNetworks();
+      notify(
+        data.valid
+          ? { type: 'success', message: `${NETWORK_META[network]?.label ?? network} credentials valid.` }
+          : { type: 'error', message: data.error ?? 'Credentials invalid' },
+      );
+    } catch (err) {
+      notify({ type: 'error', message: err instanceof Error ? err.message : 'Failed to validate credentials' });
     } finally {
       setTesting(null);
     }
@@ -171,6 +211,20 @@ export default function AffiliateNetworksClient() {
 
   return (
     <div className="space-y-6">
+      {notification && (
+        <div
+          role={notification.type === 'error' ? 'alert' : 'status'}
+          aria-live={notification.type === 'error' ? 'assertive' : 'polite'}
+          className={`rounded-lg border px-4 py-3 text-sm ${
+            notification.type === 'success'
+              ? 'border-green-500/40 bg-green-500/10 text-green-700 dark:text-green-300'
+              : 'border-destructive/40 bg-destructive/10 text-destructive'
+          }`}
+        >
+          {notification.message}
+        </div>
+      )}
+
       <div>
         <h1 className="text-2xl font-bold text-foreground">Affiliate Networks</h1>
         <p className="text-sm text-muted-foreground mt-1">
