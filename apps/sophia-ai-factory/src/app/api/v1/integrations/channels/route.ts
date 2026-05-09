@@ -10,7 +10,7 @@ import { logger } from '@/seed/utils/logger-utility';
 export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 
-const SUPPORTED_PROVIDERS = ['youtube','tiktok','instagram','pinterest','linkedin','zalo'];
+const SUPPORTED_PROVIDERS = ['youtube','tiktok','instagram','pinterest','linkedin','zalo','facebook','twitter'];
 
 function getD1(): D1Database | null {
   try {

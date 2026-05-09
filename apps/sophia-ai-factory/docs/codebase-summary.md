@@ -1,8 +1,8 @@
 # Codebase Summary
 
-**Last Updated:** 2026-05-03
-**Version:** 1.14.20 (Go-Live Hardening Batch)
-**Recent Major Changes:** Go-live hardening batch (SHA e1f0861f): (A) `/settings` → 308 redirect to `/dashboard/settings` (was 404); (B) Cron auth centralized — `clearance-promote`, `wallet-rebuild`, `local-mode-health`, `workflow-stepper` all use `verifyCronAuth` from `lib/security/cron-auth.ts`; (C) Dead code purge — `verify-env.js` (Polar BANNED), `env-validation.ts` (D-ID discontinued); (D) localhost:3000 fallbacks removed from `video-tts.ts`, `script-generator.ts`, `raas/missions`; (E) `.env.production.example` — +20 required vars, −Polar; (F) CERTIFICATION.md regenerated at 90/100 go-live readiness. 1798 tests pass (31 skipped). See `docs/project-changelog.md` for full details.
+**Last Updated:** 2026-05-08
+**Version:** 1.14.21 (Phase 1: Facebook + X/Twitter publishers + Sentry DSN wiring)
+**Recent Major Changes:** Phase 1 shipped (2026-05-08): (A) Native publishers extended 6→8: facebook + twitter/X added to tiktok/youtube/instagram/pinterest/linkedin/zalo. (B) New OAuth routes: `/api/oauth/facebook/{connect,callback}` + `/api/oauth/twitter/{connect,callback}`. (C) New publishers: `src/lib/publishing/facebook-publisher.ts` (Graph API v21 /video_reels), `twitter-publisher.ts` (chunked /2/media/upload + tweet). (D) Migration 0090 extends publishing_channels.provider CHECK. (E) Sentry DSN smoke route `/api/dev/sentry-test` (admin-gated). (F) `/api/health` reports `sentry.configured` flag. 2810/2810 tests pass. See `docs/project-changelog.md` for full details.
 
 ## Project Structure Overview
 

@@ -13,6 +13,7 @@ import { encryptToken, decryptToken } from './token-crypto';
 import { logger } from '@/seed/utils/logger-utility';
 import { refreshAccessToken as refreshTikTok } from '@/lib/tiktok/tiktok-token-manager';
 import { refreshAccessToken as refreshYouTube } from '@/lib/youtube/youtube-oauth-client';
+import { refreshAccessToken as refreshTwitter } from './twitter-oauth-client';
 import type { PublishingChannel } from './publisher-interface';
 
 const ONE_HOUR_S = 3600;
@@ -171,6 +172,7 @@ export async function refreshChannelToken(channel: PublishingChannel): Promise<n
 
     let newAccessToken: string;
     let expiresIn: number;
+    let rotatedRefreshToken: string | null = null;
 
     switch (channel.provider) {
       case 'tiktok': {
@@ -215,6 +217,22 @@ export async function refreshChannelToken(channel: PublishingChannel): Promise<n
         expiresIn = r.expires_in;
         break;
       }
+      case 'facebook': {
+        // Page Access Tokens don't expire when derived from long-lived user token.
+        // No-op refresh: keep existing token, return synthetic 1-year window.
+        newAccessToken = decrypted;
+        expiresIn = 365 * 24 * 3600;
+        break;
+      }
+      case 'twitter': {
+        if (!refreshToken) throw new Error('Twitter refresh token missing');
+        const r = await refreshTwitter(refreshToken);
+        newAccessToken = r.access_token;
+        expiresIn = r.expires_in;
+        // X rotates refresh_token — persist new value when present.
+        if (r.refresh_token) rotatedRefreshToken = r.refresh_token;
+        break;
+      }
       default:
         throw new Error(`Unknown provider: ${channel.provider}`);
     }
@@ -222,15 +240,20 @@ export async function refreshChannelToken(channel: PublishingChannel): Promise<n
     const newExpiresAt = Math.floor(Date.now() / 1000) + expiresIn;
     const encrypted = await encryptToken(newAccessToken);
 
+    const updatePatch: Record<string, unknown> = {
+      access_token: encrypted,
+      expires_at: newExpiresAt,
+      updated_at: Math.floor(Date.now() / 1000),
+      refreshing_at: null,
+    };
+    if (rotatedRefreshToken !== null) {
+      updatePatch.refresh_token = await encryptToken(rotatedRefreshToken);
+    }
+
     const db = await getD1Client();
     await db
       .from('publishing_channels')
-      .update({
-        access_token: encrypted,
-        expires_at: newExpiresAt,
-        updated_at: Math.floor(Date.now() / 1000),
-        refreshing_at: null, // release lock on success
-      })
+      .update(updatePatch)
       .eq('id', channel.id);
 
     return newExpiresAt;

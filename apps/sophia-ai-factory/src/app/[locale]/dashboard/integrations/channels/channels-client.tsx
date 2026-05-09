@@ -45,6 +45,16 @@ const CHANNEL_META: Record<string, { label: string; icon: string; connectPath: s
     icon: 'chat',
     connectPath: '/api/oauth/zalo',
   },
+  facebook: {
+    label: 'Facebook',
+    icon: 'thumb_up',
+    connectPath: '/api/oauth/facebook/connect',
+  },
+  twitter: {
+    label: 'X (Twitter)',
+    icon: 'tag',
+    connectPath: '/api/oauth/twitter/connect',
+  },
 };
 
 const CHANNEL_ORDER = Object.keys(CHANNEL_META);

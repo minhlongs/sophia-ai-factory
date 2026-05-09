@@ -15,6 +15,8 @@ import { decryptToken } from '@/lib/publishing/token-crypto';
 import { TikTokPublisher } from '@/lib/publishing/tiktok-publisher';
 import { YouTubePublisher } from '@/lib/publishing/youtube-publisher';
 import { InstagramPublisher } from '@/lib/publishing/instagram-publisher';
+import { FacebookPublisher } from '@/lib/publishing/facebook-publisher';
+import { TwitterPublisher } from '@/lib/publishing/twitter-publisher';
 import { logger } from '@/seed/utils/logger-utility';
 import type { PublishingChannel, PublishingJob, Publisher } from '@/lib/publishing/publisher-interface';
 import { randomUUID } from 'crypto';
@@ -57,14 +59,24 @@ function buildPublisher(channel: Pick<PublishingChannel, 'provider' | 'external_
       return new YouTubePublisher(accessToken);
     case 'instagram':
       return new InstagramPublisher(accessToken, channel.external_account_id);
+    case 'facebook':
+      return new FacebookPublisher(accessToken, channel.external_account_id);
+    case 'twitter':
+      return new TwitterPublisher(accessToken);
     default:
       throw new Error(`Unknown provider: ${channel.provider}`);
   }
 }
 
-function buildPostUrl(provider: string, externalPostId: string): string {
+function buildPostUrl(provider: string, externalPostId: string, externalAccountId?: string): string {
   if (provider === 'youtube') return `https://www.youtube.com/watch?v=${externalPostId}`;
   if (provider === 'tiktok') return `https://www.tiktok.com/video/${externalPostId}`;
+  if (provider === 'facebook') {
+    return externalAccountId
+      ? `https://www.facebook.com/${externalAccountId}/videos/${externalPostId}`
+      : `https://www.facebook.com/watch/?v=${externalPostId}`;
+  }
+  if (provider === 'twitter') return `https://twitter.com/i/status/${externalPostId}`;
   return `https://www.instagram.com/p/${externalPostId}`;
 }
 
@@ -247,6 +259,7 @@ export const publishExecute = inngest.createFunction(
       }).eq('id', jobId);
 
       let metricsJson: string | null = null;
+      let externalAccountIdForUrl: string | undefined;
       if (finalStatus === 'live') {
         try {
           const { data: chData } = await db
@@ -257,6 +270,7 @@ export const publishExecute = inngest.createFunction(
             .single();
           const ch = chData as Pick<PublishingChannel, 'provider' | 'access_token' | 'external_account_id'> | null;
           if (ch?.access_token) {
+            externalAccountIdForUrl = ch.external_account_id;
             const tok = await decryptToken(ch.access_token);
             const pub = buildPublisher(ch, tok);
             const metrics = await pub.getMetrics(externalPostId);
@@ -267,7 +281,7 @@ export const publishExecute = inngest.createFunction(
         }
       }
 
-      const postUrl = finalStatus === 'live' ? buildPostUrl(provider, externalPostId) : null;
+      const postUrl = finalStatus === 'live' ? buildPostUrl(provider, externalPostId, externalAccountIdForUrl) : null;
 
       // C2: column names match SQL schema
       await db.from('publishing_results').insert({

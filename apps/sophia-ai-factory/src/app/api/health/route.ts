@@ -130,6 +130,7 @@ export const GET = withRateLimit(async function GET(req: NextRequest) {
         { key: 'ELEVENLABS_API_KEY', name: 'elevenlabs' },
         { key: 'HEYGEN_API_KEY', name: 'heygen' },
         { key: 'TELEGRAM_BOT_TOKEN', name: 'telegram' },
+        { key: 'NEXT_PUBLIC_SENTRY_DSN', name: 'sentry' },
       ]) {
         healthStatus.services[name] = { status: process.env[key] ? 'configured' : 'missing_config' };
       }
