@@ -33,7 +33,7 @@ export default async function AccountPage({ params }: Props) {
   const t = await getTranslations('account');
 
   const user = await getCurrentUser();
-  if (!user) redirect('/auth/login');
+  if (!user) redirect('/login');
 
   const [tier, profileResult] = await Promise.all([
     getUserTier(user.id),

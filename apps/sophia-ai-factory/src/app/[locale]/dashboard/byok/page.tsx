@@ -22,7 +22,7 @@ const USER_SETTABLE: UserSettableProvider[] = ['openrouter', 'anthropic', 'eleve
 
 export default async function ByokPage() {
   const user = await getCurrentUser()
-  if (!user) redirect('/auth/login')
+  if (!user) redirect('/login')
 
   const allConfigured = await listUserApiKeyProviders(user.id)
   // Filter to only user-settable providers (exclude server-managed ones like heygen)

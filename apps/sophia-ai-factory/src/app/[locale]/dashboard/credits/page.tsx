@@ -17,11 +17,12 @@ export const dynamic = 'force-dynamic';
 
 export default async function CreditsPage() {
   const user = await getCurrentUser();
-  if (!user) redirect('/auth/login');
+  if (!user) redirect('/login');
 
-  const [balance, transactions, t] = await Promise.all([
+  const [balance, transactions, t, tBanner] = await Promise.all([
     getBalance(user.id),
     listTransactions(user.id, 20),
+    getTranslations('dashboard.credits'),
     getTranslations('dashboard.credits_low_banner'),
   ]);
 
@@ -36,26 +37,24 @@ export default async function CreditsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-foreground">MCU Credits</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Model Compute Units (MCU) power your AI commands
-        </p>
+        <h1 className="text-2xl font-bold text-foreground">{t('title')}</h1>
+        <p className="text-sm text-muted-foreground mt-1">{t('subtitle')}</p>
       </div>
 
       {/* Balance Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-card border rounded-lg p-4">
-          <p className="text-xs text-muted-foreground mb-1">Available</p>
+          <p className="text-xs text-muted-foreground mb-1">{t('available')}</p>
           <p className="text-3xl font-bold text-primary">{balance.credits_remaining.toLocaleString()}</p>
           <p className="text-xs text-muted-foreground mt-1">MCU</p>
         </div>
         <div className="bg-card border rounded-lg p-4">
-          <p className="text-xs text-muted-foreground mb-1">Total Purchased</p>
+          <p className="text-xs text-muted-foreground mb-1">{t('totalPurchased')}</p>
           <p className="text-3xl font-bold">{balance.credits_total_purchased.toLocaleString()}</p>
           <p className="text-xs text-muted-foreground mt-1">MCU</p>
         </div>
         <div className="bg-card border rounded-lg p-4">
-          <p className="text-xs text-muted-foreground mb-1">Total Used</p>
+          <p className="text-xs text-muted-foreground mb-1">{t('totalUsed')}</p>
           <p className="text-3xl font-bold">{balance.credits_total_used.toLocaleString()}</p>
           <p className="text-xs text-muted-foreground mt-1">MCU</p>
         </div>
@@ -67,14 +66,14 @@ export default async function CreditsPage() {
           <div className="flex items-center gap-3">
             <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0" />
             <p className="text-sm text-slate-700 dark:text-slate-300">
-              {t('message')}
+              {tBanner('message')}
             </p>
           </div>
           <Link
             href="/pricing"
             className="cursor-pointer shrink-0 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg transition-colors duration-150"
           >
-            {t('cta')}
+            {tBanner('cta')}
           </Link>
         </div>
       )}
@@ -82,8 +81,8 @@ export default async function CreditsPage() {
       {/* Command Pricing Table */}
       <div className="bg-card border rounded-lg">
         <div className="p-4 border-b">
-          <h2 className="font-semibold">Command Pricing</h2>
-          <p className="text-xs text-muted-foreground mt-1">MCU cost per AI command execution</p>
+          <h2 className="font-semibold">{t('pricingTitle')}</h2>
+          <p className="text-xs text-muted-foreground mt-1">{t('pricingSubtitle')}</p>
         </div>
         <div className="divide-y">
           {commandList.map(cmd => (
@@ -97,7 +96,7 @@ export default async function CreditsPage() {
                   {cmd.status}
                 </span>
                 <span className="text-sm font-medium w-16 text-right">
-                  {cmd.credits === 0 ? 'Free' : `${cmd.credits} MCU`}
+                  {cmd.credits === 0 ? t('free') : `${cmd.credits} MCU`}
                 </span>
               </div>
             </div>
@@ -108,10 +107,10 @@ export default async function CreditsPage() {
       {/* Transaction History */}
       <div className="bg-card border rounded-lg">
         <div className="p-4 border-b">
-          <h2 className="font-semibold">Recent Transactions</h2>
+          <h2 className="font-semibold">{t('transactionsTitle')}</h2>
         </div>
         {transactions.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-8">No transactions yet</p>
+          <p className="text-sm text-muted-foreground text-center py-8">{t('noTransactions')}</p>
         ) : (
           <div className="divide-y">
             {transactions.map(tx => (
@@ -120,7 +119,7 @@ export default async function CreditsPage() {
                   <p className="text-sm">{tx.reason.replace(/_/g, ' ')}</p>
                   {tx.mission_id && (
                     <Link href={`/dashboard/missions/${tx.mission_id}`} className="text-xs text-muted-foreground hover:text-foreground">
-                      Mission {tx.mission_id.slice(0, 8)}
+                      {t('missionPrefix')} {tx.mission_id.slice(0, 8)}
                     </Link>
                   )}
                 </div>

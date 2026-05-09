@@ -21,7 +21,7 @@ interface CredRow {
 
 export default async function IntegrationsPage() {
   const user = await getCurrentUser();
-  if (!user) redirect('/auth/login');
+  if (!user) redirect('/login');
 
   const t = await getTranslations('dashboard.integrations');
 

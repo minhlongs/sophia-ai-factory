@@ -566,7 +566,13 @@
       "section_proposedSolution": "Proposed Solution",
       "section_timeline": "Timeline",
       "section_investment": "Investment",
-      "section_nextSteps": "Next Steps"
+      "section_nextSteps": "Next Steps",
+      "beta_badge": "Beta",
+      "beta_notice": "Proposal generation is in beta. Output may need manual review before sending to clients.",
+      "errors": {
+        "generic": "Failed to generate proposal",
+        "unknown": "Unknown error"
+      }
     },
     "header": {
       "title": "Sophia Dashboard",
@@ -778,7 +784,9 @@
       "errors": {
         "title": "Videos Error",
         "description": "Something went wrong loading your videos.",
-        "retry": "Try Again"
+        "retry": "Try Again",
+        "unknown": "Unknown error. Please try again.",
+        "missing_heygen_key": "Video service is not yet configured by the operator. Please contact support."
       },
       "notFound": {
         "title": "Video Not Found",
@@ -849,6 +857,19 @@
     "credits_low_banner": {
       "message": "You have fewer than 10 MCU credits — top up to keep automations running",
       "cta": "Buy Credits"
+    },
+    "credits": {
+      "title": "MCU Credits",
+      "subtitle": "Model Compute Units (MCU) power your AI commands",
+      "available": "Available",
+      "totalPurchased": "Total Purchased",
+      "totalUsed": "Total Used",
+      "pricingTitle": "Command Pricing",
+      "pricingSubtitle": "MCU cost per AI command execution",
+      "free": "Free",
+      "transactionsTitle": "Recent Transactions",
+      "noTransactions": "No transactions yet",
+      "missionPrefix": "Mission"
     },
     "integrations": {
       "page_title": "Integrations",

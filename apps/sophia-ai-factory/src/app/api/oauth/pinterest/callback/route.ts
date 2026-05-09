@@ -131,6 +131,28 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Missing Pinterest user ID' }, { status: 502 });
   }
 
+  // Pinterest publishes Pins to a *board*, not the user. Fetch first board so
+  // publish-execute can use external_account_id directly as board_id (KISS:
+  // multi-board picker UI deferred). Without this step, publish jobs fail 4xx.
+  const boardsRes = await fetch('https://api.pinterest.com/v5/boards?page_size=1', {
+    headers: { Authorization: `Bearer ${tokenData.access_token}` },
+  });
+  if (!boardsRes.ok) {
+    logger.error('[Pinterest Callback] Boards fetch failed', new Error(`HTTP ${boardsRes.status}`));
+    return NextResponse.redirect(
+      `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/integrations/channels?error=pinterest_no_boards`,
+    );
+  }
+  const boardsData = (await boardsRes.json()) as { items?: Array<{ id: string; name: string }> };
+  const firstBoard = boardsData.items?.[0];
+  if (!firstBoard) {
+    return NextResponse.redirect(
+      `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/integrations/channels?error=pinterest_no_boards`,
+    );
+  }
+  const boardId = firstBoard.id;
+  const boardName = firstBoard.name;
+
   const now = Math.floor(Date.now() / 1000);
   const encryptedAccess = await encryptToken(tokenData.access_token);
   const encryptedRefresh = tokenData.refresh_token ? await encryptToken(tokenData.refresh_token) : null;
@@ -140,12 +162,16 @@ export async function GET(request: NextRequest) {
   const db = await getD1Client();
   const tenantId = user.id;
 
+  const displayName = meData.username
+    ? `${meData.username} · ${boardName}`
+    : `${meData.id} · ${boardName}`;
+
   const { data: existing } = await db
     .from('publishing_channels')
     .select('id')
     .eq('tenant_id', tenantId)
     .eq('provider', 'pinterest')
-    .eq('external_account_id', meData.id)
+    .eq('external_account_id', boardId)
     .single();
 
   if (existing) {
@@ -156,7 +182,7 @@ export async function GET(request: NextRequest) {
         refresh_token: encryptedRefresh,
         expires_at: expiresAt,
         status: 'active',
-        display_name: meData.username ?? meData.id,
+        display_name: displayName,
         updated_at: now,
       })
       .eq('id', (existing as { id: string }).id);
@@ -166,8 +192,8 @@ export async function GET(request: NextRequest) {
       tenant_id: tenantId,
       user_id: user.id,
       provider: 'pinterest',
-      external_account_id: meData.id,
-      display_name: meData.username ?? meData.id,
+      external_account_id: boardId,
+      display_name: displayName,
       access_token: encryptedAccess,
       refresh_token: encryptedRefresh,
       expires_at: expiresAt,
@@ -177,6 +203,6 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  logger.info('[Pinterest Callback] Channel connected', { userId: user.id, pinterestId: meData.id });
+  logger.info('[Pinterest Callback] Channel connected', { userId: user.id, pinterestUserId: meData.id, boardId });
   return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/channels?connected=pinterest`);
 }

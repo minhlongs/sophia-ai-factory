@@ -70,7 +70,7 @@ export default function ProposalsPage() {
       setGeneratedContent(result.proposal ?? {});
     } catch (err) {
       setQuality({ score: 0, passed: false });
-      setErrorMessage(err instanceof Error ? err.message : 'Unknown error');
+      setErrorMessage(err instanceof Error ? err.message : t('errors.unknown'));
     } finally {
       setIsGenerating(false);
     }
@@ -84,8 +84,19 @@ export default function ProposalsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">{t('page_title')}</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-foreground">{t('page_title')}</h1>
+          <span className="rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 text-xs font-medium px-2 py-0.5">
+            {t('beta_badge')}
+          </span>
+        </div>
         <p className="text-sm text-muted-foreground mt-1">{t('page_subtitle')}</p>
+        <div
+          role="status"
+          className="mt-3 rounded-lg border border-amber-300/40 bg-amber-50 dark:bg-amber-900/20 px-4 py-3 text-sm text-amber-900 dark:text-amber-200"
+        >
+          {t('beta_notice')}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -106,7 +117,7 @@ export default function ProposalsPage() {
               role="alert"
               className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive"
             >
-              <p className="font-medium">Failed to generate proposal</p>
+              <p className="font-medium">{t('errors.generic')}</p>
               <p className="mt-1 text-xs opacity-90">{errorMessage}</p>
             </div>
           )}

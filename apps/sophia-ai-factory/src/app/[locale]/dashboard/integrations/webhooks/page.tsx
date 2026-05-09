@@ -36,7 +36,7 @@ function getD1ServerSide(): D1Database | null {
 
 export default async function WebhooksPage() {
   const user = await getCurrentUser();
-  if (!user) redirect('/auth/login');
+  if (!user) redirect('/login');
 
   const t = await getTranslations('dashboard.integrations.webhooks');
   const endpoints = await fetchWebhooks(user.id);
