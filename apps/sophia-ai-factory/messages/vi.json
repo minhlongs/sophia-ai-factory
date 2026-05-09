@@ -780,10 +780,26 @@
         "graceEnds": "Hết hạn ân hạn: {date}",
         "failedPayments": "{count} lần thanh toán thất bại",
         "reasonLabel": "Lý do:",
-        "current": { "title": "Tài Khoản Đang Hoạt Động", "description": "Gói đăng ký của bạn đang hoạt động và đã thanh toán đầy đủ.", "action": "" },
-        "past_due": { "title": "Thanh Toán Quá Hạn", "description": "Một khoản thanh toán gần đây thất bại. Dịch vụ sẽ bị tạm ngưng nếu không xử lý.", "action": "Thanh Toán Ngay" },
-        "delinquent": { "title": "Tài Khoản Nợ Quá Hạn", "description": "Phát hiện nhiều lần thanh toán thất bại. Tạm ngưng dịch vụ sắp xảy ra.", "action": "Khôi Phục Dịch Vụ" },
-        "suspended": { "title": "Dịch Vụ Đã Tạm Ngưng", "description": "Truy cập API đã bị tạm ngưng do chưa thanh toán.", "action": "Khôi Phục Dịch Vụ" }
+        "current": {
+          "title": "Tài Khoản Đang Hoạt Động",
+          "description": "Gói đăng ký của bạn đang hoạt động và đã thanh toán đầy đủ.",
+          "action": ""
+        },
+        "past_due": {
+          "title": "Thanh Toán Quá Hạn",
+          "description": "Một khoản thanh toán gần đây thất bại. Dịch vụ sẽ bị tạm ngưng nếu không xử lý.",
+          "action": "Thanh Toán Ngay"
+        },
+        "delinquent": {
+          "title": "Tài Khoản Nợ Quá Hạn",
+          "description": "Phát hiện nhiều lần thanh toán thất bại. Tạm ngưng dịch vụ sắp xảy ra.",
+          "action": "Khôi Phục Dịch Vụ"
+        },
+        "suspended": {
+          "title": "Dịch Vụ Đã Tạm Ngưng",
+          "description": "Truy cập API đã bị tạm ngưng do chưa thanh toán.",
+          "action": "Khôi Phục Dịch Vụ"
+        }
       }
     },
     "support": {
@@ -830,7 +846,14 @@
       "steps": {
         "script": "Kịch Bản",
         "assets": "Tài Nguyên",
-        "render": "Render"
+        "render": "Render",
+        "parse": "Phân tích",
+        "tts": "Lồng tiếng",
+        "video": "Tạo video",
+        "poll": "Đang xử lý",
+        "download": "Tải xuống",
+        "mux": "Ghép âm/hình",
+        "done": "Hoàn thành"
       },
       "script": {
         "topic": "Chủ đề",
@@ -871,6 +894,21 @@
         "title": "Không tìm thấy video",
         "description": "Video này không tồn tại hoặc bạn không có quyền truy cập.",
         "backToGallery": "Quay lại danh sách"
+      },
+      "generate": {
+        "subtitle": "Tạo video AI chỉ bằng một prompt text đơn giản.",
+        "promptLabel": "Mô tả video của bạn",
+        "promptPlaceholder": "Ví dụ: Tạo một TikTok ngắn về công cụ AI để nâng cao năng suất làm việc cho solo founders",
+        "missionCreated": "Bắt đầu tạo video",
+        "styleLabel": "Phong cách",
+        "styleCasual": "Bình thường",
+        "styleCinematic": "Điện ảnh",
+        "styleEducational": "Giáo dục",
+        "languageLabel": "Ngôn ngữ",
+        "languageEn": "English",
+        "languageVi": "Tiếng Việt",
+        "submitting": "Đang tạo...",
+        "submit": "Tạo Video"
       }
     },
     "errors": {
@@ -1106,6 +1144,22 @@
       "thGross": "Tổng",
       "thYourCut": "Phần Của Bạn",
       "thStatus": "Trạng Thái"
+    },
+    "onboarding": {
+      "page_title": "Bắt Đầu Với Sophia AI Factory",
+      "page_subtitle": "Hoàn thành 3 bước nhanh để tạo video tự động đầu tiên của bạn.",
+      "progress": "{completed} trong {total} bước đã hoàn thành",
+      "skip": "Bỏ qua hướng dẫn",
+      "go_to_dashboard": "Đến Dashboard",
+      "step1_title": "Tạo Video AI Đầu Tiên",
+      "step1_desc": "Tạo video avatar AI ngắn từ một đoạn text prompt. Không cần kỹ năng kỹ thuật.",
+      "step1_cta": "Tạo Video",
+      "step2_title": "Kết Nối Kênh Phân Phối",
+      "step2_desc": "Liên kết TikTok, YouTube, Instagram hoặc Telegram để video của bạn tự động tiếp cận khán giả.",
+      "step2_cta": "Kết Nối Kênh",
+      "step3_title": "Đăng Video Đầu Tiên",
+      "step3_desc": "Phân phối video lên tất cả kênh đã kết nối chỉ với một cú click.",
+      "step3_cta": "Xem Videos"
     }
   },
   "account": {
@@ -1301,7 +1355,15 @@
   "audience": "Audience",
   "general": "General",
   "template": "Template",
-  "status": "Status",
+  "status": {
+    "title": "Trạng Thái Sophia AI Factory",
+    "operational": "Tất Cả Hệ Thống Hoạt Động",
+    "degraded": "Hiệu Suất Suy Giảm",
+    "uptime90d": "Uptime 90 ngày",
+    "noData": "Không có dữ liệu",
+    "pastIncidents": "Sự Cố Đã Xử Lý",
+    "startedAt": "Bắt đầu {date}"
+  },
   "progress": "Progress",
   "system_info": "System info",
   "id": "Id",
@@ -1741,15 +1803,6 @@
     "settings": "Settings",
     "replay_tour": "Replay tour",
     "sign_out": "Sign out"
-  },
-  "status": {
-    "title": "Trạng Thái Sophia AI Factory",
-    "operational": "Tất Cả Hệ Thống Hoạt Động",
-    "degraded": "Hiệu Suất Suy Giảm",
-    "uptime90d": "Uptime 90 ngày",
-    "noData": "Không có dữ liệu",
-    "pastIncidents": "Sự Cố Đã Xử Lý",
-    "startedAt": "Bắt đầu {date}"
   },
   "privacy": {
     "meta_title": "Chính Sách Bảo Mật - Sophia AI Factory",

@@ -5,7 +5,8 @@
  * New playbooks live in seeds/playbooks/{category}/*.ts
  */
 
-// --- Playbook imports: content (8) ---
+// --- Playbook imports: content (9) ---
+import * as videoGenerationStarter from './playbooks/content/video-generation-starter';
 import * as dailyTiktok3x from './playbooks/content/daily-tiktok-3x';
 import * as weeklyYoutubeLongform from './playbooks/content/weekly-youtube-longform';
 import * as dailyInstagramReels from './playbooks/content/daily-instagram-reels';
@@ -73,7 +74,8 @@ export interface SopSeedEntry {
 }
 
 export const SOP_SEEDS: SopSeedEntry[] = [
-  // Content (8)
+  // Content (9)
+  videoGenerationStarter.template,
   dailyTiktok3x.template,
   weeklyYoutubeLongform.template,
   dailyInstagramReels.template,
