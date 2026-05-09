@@ -75,6 +75,13 @@ preview_id = "1f440b4e8566471d841aff66e90644ff"
 # R2_PUBLIC_BASE_URL — public base URL for VIDEO_BUCKET (e.g., https://videos.sophia.agencyos.network).
 # When unset, video storage falls back to original HeyGen CDN URL (volatile).
 
+# === WAVE17-DISTRIBUTE-BEGIN ===
+# Unlocked Wave 17 Phase 03 (2026-05-09). Phases 01+02 (publishing_jobs + assertSafeVideoUrl) live.
+# NOTE: NEXT_PUBLIC_* vars are baked at build time via deploy-with-sha.sh export, not read from wrangler [vars] at runtime.
+# This entry documents the flag value in source; the actual bake happens via the export in deploy-with-sha.sh.
+NEXT_PUBLIC_DISTRIBUTE_ENABLED = "1"
+# === WAVE17-DISTRIBUTE-END ===
+
 # === P1-VARS-BEGIN ===
 # vars block managed by P1 — phase 1 CI/CD enforcement
 # COMMIT_SHA and DEPLOYED_AT are injected as CF Secrets (not vars) via wrangler-set-build-vars.sh

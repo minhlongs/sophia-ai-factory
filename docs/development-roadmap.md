@@ -2,7 +2,7 @@
 
 > Product milestones and progress tracking (2026)
 
-**Last Updated:** 2026-05-09 LATER (Wave 17 Phase 02 done; flag flip next)
+**Last Updated:** 2026-05-09 EVENING (Wave 17 P0 chain complete: 01+02+03; smoke pending CEO)
 **Target:** $1M ARR, 100/100 a16z solo company score
 **Go-Live Shipped (2026-05-03):** Production deployment https://sophia.agencyos.network (SHA 5b1f711f). GAP1: Magic-link E2E validation PASS (setup-wizard cookie chain verified, 5 regression tests). GAP2: Self-serve checkout (public /pricing monthly+yearly, NOWPayments invoice, PayOS VN QR, idempotent IPN, atomic D1 tier upgrade, bilingual receipt email VAT 10%, dashboard period_end). GAP3: Mission control handover (durable D1 email outbox, /onboarding 3-step resumable, D1 API keys, mission control widget, public /status page 90d uptime, D+1/D+7 lifecycle emails). Infrastructure: 9 smoke tests PASS (200 HTTP), 2546 tests 100% pass, build < 10s, 0 TS errors.
 
@@ -14,14 +14,14 @@
 |-------|--------|-----------|---------|
 | **W17-P01: Pipeline Bridge** | ✅ DONE | 2026-05-09 | FREE100 path inserts videos row at Inngest completion + getCanonicalVideoUrl helper. Unblocks distribution for AI-prompt videos. |
 | **W17-P02: publishing_jobs Wiring** | ✅ DONE | 2026-05-09 | publishExecute lookup migrated from video_jobs.final_r2_key → getCanonicalVideoUrl. OAuth + Telegram branches both use Phase 01 helper. SSRF guard preserved. 15 new tests. |
-| **W17-P03: Flip Distribute Flag** | ⏳ PENDING | — | NEXT_PUBLIC_DISTRIBUTE_ENABLED=1 + smoke test + rollback runbook. Depends W17-P02. |
+| **W17-P03: Flip Distribute Flag** | ✅ DONE (smoke pending) | 2026-05-09 | Flag baked at build time via deploy-with-sha.sh export. wrangler.toml [vars] documents source-of-truth. Distribute button now live. E2E smoke test pending CEO. |
 | **W17-P04: UNIQUE Telegram Pairing** | ✅ DONE | 2026-05-09 | Migration 0100 dedup + UNIQUE INDEX on paired_by. |
 | **W17-P05: Canonical D1 Swap** | ⏳ PENDING | — | distribute route raw D1 binding → createServerClient. |
 | **W17-P06: API-key Error Taxonomy** | ✅ DONE | 2026-05-09 | Discriminated union 401/403/503 + Sentry auth.error_type tag. |
 | **W17-P07: HeyGen Route Cleanup** | ⏳ PENDING | — | Delete deprecated /api/heygen/create-video + legacy wizard. |
 | **W17-P08: E2E Playwright** | ⏳ PENDING | — | FREE100 flow tests (may split as Wave 18). |
 
-**Verification (2026-05-09 phase 02):** 3060/3060 tests pass (was 3045 batch 1, +15 net). 0 TS errors, 0 i18n missing, build exit 0. Code review 9.6/10 APPROVE. Phase 01 + 02 + 04 + 06 shipped; Phase 03 (flag flip) unblocked.
+**Verification (2026-05-09 phase 03):** Build bake confirmed via 0 occurrences of NEXT_PUBLIC_DISTRIBUTE_ENABLED in built bundle. Wave 17 progress 5/8.
 
 ---
 
