@@ -123,6 +123,8 @@ export default function SetupWizardPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveFailed, setSaveFailed] = useState(false);
+  // Inline banner for "next" gate failures (replaces native alert() — UX hostile on mobile).
+  const [nextError, setNextError] = useState<string | null>(null);
 
   // Persist ONLY step number to localStorage — B4
   // SECURITY: never persist config/providerConfig (contain raw API keys).
@@ -227,17 +229,18 @@ export default function SetupWizardPage() {
   };
 
   const handleNext = () => {
+    setNextError(null);
     if (step === 2) {
       const hasInvalid = Object.values(status).some(v => v === 'invalid');
       if (hasInvalid) {
-        alert(t('alerts.invalidKey'));
+        setNextError(t('alerts.invalidKey'));
         return;
       }
       const hasLlmKey =
         config.OPENROUTER_API_KEY.trim().length > 0 ||
         config.ANTHROPIC_API_KEY.trim().length > 0;
       if (!hasLlmKey) {
-        alert(t('alerts.missingLlm'));
+        setNextError(t('alerts.missingLlm'));
         return;
       }
     }
@@ -246,7 +249,7 @@ export default function SetupWizardPage() {
       const heygenSaved = savedCredentials.find((c) => c.provider === 'heygen');
       const heygenEntered = providerConfig.HEYGEN_API_KEY.trim().length > 0;
       if (!heygenSaved && !heygenEntered) {
-        alert(t('alerts.missingHeygen'));
+        setNextError(t('alerts.missingHeygen'));
         return;
       }
     }
@@ -438,7 +441,7 @@ export default function SetupWizardPage() {
         <div className="bg-muted/50 px-8 py-6 flex justify-between items-center border-t border-border">
             {step > 1 && step < 5 && (
                 <button
-                    onClick={() => setStep(prev => prev - 1)}
+                    onClick={() => { setNextError(null); setStep(prev => prev - 1); }}
                     className="text-muted-foreground hover:text-foreground font-medium px-4 py-2"
                 >
                     {t('actions.back')}
@@ -446,6 +449,16 @@ export default function SetupWizardPage() {
             )}
 
             {step === 1 && <div />}
+
+            {nextError && (
+              <div
+                role="alert"
+                className="ml-auto mr-3 flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive max-w-xs"
+              >
+                <AlertTriangle className="mt-0.5 w-4 h-4 shrink-0" />
+                <span>{nextError}</span>
+              </div>
+            )}
 
             {step < 5 ? (
                 <button

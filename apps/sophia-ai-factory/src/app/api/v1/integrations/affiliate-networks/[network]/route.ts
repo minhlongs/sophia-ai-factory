@@ -32,9 +32,18 @@ const VALID_NETWORKS = new Set<string>([
 
 type Params = { params: Promise<{ network: string }> };
 
+async function safeGetUser(req: NextRequest) {
+  try {
+    return await getCurrentUserFromHeaders(req.headers);
+  } catch (err) {
+    logger.warn('[affiliate-networks] auth lookup threw', { err: err instanceof Error ? err.message : String(err) });
+    return null;
+  }
+}
+
 export async function GET(req: NextRequest, { params }: Params) {
   const { network } = await params;
-  const user = await getCurrentUserFromHeaders(req.headers);
+  const user = await safeGetUser(req);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   if (!VALID_NETWORKS.has(network))
     return NextResponse.json({ error: 'Unknown network' }, { status: 404 });
@@ -59,7 +68,7 @@ export async function GET(req: NextRequest, { params }: Params) {
 
 export async function DELETE(req: NextRequest, { params }: Params) {
   const { network } = await params;
-  const user = await getCurrentUserFromHeaders(req.headers);
+  const user = await safeGetUser(req);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   if (!VALID_NETWORKS.has(network))
     return NextResponse.json({ error: 'Unknown network' }, { status: 404 });

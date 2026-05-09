@@ -1,6 +1,14 @@
 # Project Changelog
 
-**Last Updated:** 2026-05-08 | **Current Version:** 1.14.22
+**Last Updated:** 2026-05-08 | **Current Version:** 1.14.23
+
+---
+
+## v1.14.23 — Wave 3 Dashboard Polish: Routing + i18n + Billing Link (2026-05-08)
+
+**Severity: P0/P1 POLISH | Type: UX + Routing + Localization | Status: SHIPPED**
+
+8-fix dashboard polish wave addressing setup-wizard routing, billing link, i18n coverage, and loading states. (F-1) Setup wizard moved into [locale] routing (VI users now reach `/vi/setup-wizard` correctly). (F-2) Mission-control-widget link fix: `/dashboard/usage` → `/dashboard/billing` (corrects quota upsell). (F-3) v1 integrations APIs unauth 500 → 401 (proper auth-required response). (F-4) Mission detail PEV stage i18n (3 keys). (F-5) Billing page i18n sweep (10 keys). (F-6) Telegram guide bilingual server component (33 keys per locale). (F-7) Setup wizard alert() → inline banner (UX polish). (F-8) AgentTeamPanel loading i18n (2 keys). **Tests:** 2810/2810 all pass. **Build:** 0 TS errors, <2min. **Verification:** All routing, i18n, and UX flows verified bilingual (VI/EN).
 
 ---
 

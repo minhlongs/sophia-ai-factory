@@ -1,8 +1,8 @@
 # Codebase Summary
 
 **Last Updated:** 2026-05-08
-**Version:** 1.14.22 (Wave 2: Dashboard auth fix + publishers fully wired + i18n polish)
-**Recent Major Changes:** Wave 2 shipped (2026-05-08): (A) Dashboard 9-page path fix `/auth/login` → `/login`. (B) Publishers fully wired: Pinterest, LinkedIn (URN format), Zalo callbacks now live in publish-execute.ts. All 8 publishers connected (TikTok, YouTube, Instagram, Pinterest, LinkedIn, Zalo, Facebook, Twitter/X). (C) i18n: Proposals beta badge, Credits page 8 keys, Video creator friendly errors, Proposals errors. (D) Admin invite 501 workaround + stale TODO removed. 2810/2810 tests pass, 0 TS errors. Publisher pipeline complete. See `docs/project-changelog.md` for full details.
+**Version:** 1.14.23 (Wave 3: Setup wizard routing + billing link + i18n + loading states)
+**Recent Major Changes:** Wave 3 shipped (2026-05-08): (A) Setup wizard locale routing fix (VI/EN bilingual access). (B) Mission-control billing link corrected (usage → billing). (C) v1 integrations auth errors (500 → 401). (D) Mission detail + billing + telegram + agent panel i18n coverage (50+ keys). (E) Setup wizard UX polish (alert → banner). 2810/2810 tests pass, 0 TS errors. Dashboard bilingual UX complete. See `docs/project-changelog.md` for full details.
 
 ## Project Structure Overview
 
