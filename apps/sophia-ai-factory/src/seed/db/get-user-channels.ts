@@ -60,7 +60,9 @@ export async function getUserChannels(
     status: r.status as ChannelStatus,
   }));
 
-  // Append Telegram pairings (paired_by = userId is the user who paired their DM/channel)
+  // Append Telegram pairings (paired_by = userId is the user who paired their DM/channel).
+  // Migration 0100 adds UNIQUE(paired_by) — at most 1 row per user.
+  // Using .all() returns 0 or 1 rows; callers see Telegram alongside OAuth channels.
   const { results: telegramRows } = await db
     .prepare(`SELECT chat_id, first_name FROM telegram_paired_chats WHERE paired_by = ?`)
     .bind(userId)

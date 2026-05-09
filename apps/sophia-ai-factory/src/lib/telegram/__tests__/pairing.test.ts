@@ -68,21 +68,21 @@ function makeDb(overrides: Record<string, unknown> = {}): D1Client {
       upsert: async (data: Record<string, unknown>) => {
         isUpsert = true
         upsertData = data
-        const idx = store[table].findIndex((r) => r[Object.keys(data)[0]] === data[Object.keys(data)[0]])
-        if (idx >= 0) {
-          store[table][idx] = { ...store[table][idx], ...data }
+
+        // Simulate UNIQUE(chat_id [PK]) + UNIQUE(paired_by) conflict semantics
+        // (mirrors migration 0100 which adds UNIQUE(paired_by) to telegram_paired_chats).
+        // ON CONFLICT DO UPDATE SET: if any unique key matches an existing row, merge data in.
+        const existsByPk = store[table].findIndex((r) => data['chat_id'] !== undefined && r['chat_id'] === data['chat_id'])
+        const existsByPairedBy = table === 'telegram_paired_chats'
+          ? store[table].findIndex((r) => data['paired_by'] !== undefined && r['paired_by'] === data['paired_by'])
+          : -1
+
+        const conflictIdx = existsByPk >= 0 ? existsByPk : existsByPairedBy
+        if (conflictIdx >= 0) {
+          // Merge: update all columns (matches ON CONFLICT DO UPDATE SET col = excluded.col)
+          store[table][conflictIdx] = { ...store[table][conflictIdx], ...data }
         } else {
           store[table].push({ ...data })
-        }
-        // Also handle primary key (chat_id) dedup
-        const key = 'chat_id'
-        if (data[key] !== undefined) {
-          // Remove duplicates keeping last
-          const seen = new Set<unknown>()
-          store[table] = store[table].reduceRight<Record<string, unknown>[]>((acc, r) => {
-            if (!seen.has(r[key])) { seen.add(r[key]); acc.unshift(r) }
-            return acc
-          }, [])
         }
         return { data: upsertData, error: null }
       },
@@ -219,5 +219,73 @@ describe('revokePairing', () => {
     await approvePairing(db, code, 'admin', 'Eve')
     expect(await revokePairing(db, '222')).toBe(true)
     expect(await isAllowed(db, '222')).toBe(false)
+  })
+})
+
+// ── UNIQUE(paired_by) constraint tests (migration 0100) ───────────────────────
+//
+// These tests verify the upsert/ON CONFLICT behavior after the unique index is
+// added. In production D1, ON CONFLICT DO UPDATE SET handles both cases below.
+
+describe('double-pair / UNIQUE(paired_by) enforcement', () => {
+  it('re-pairing same user to a new chat_id replaces the old pairing (upsert wins)', async () => {
+    const db = makeDb()
+
+    // First pairing: user_A pairs chat '100'
+    const { code: code1 } = await requestPairing(db, '100', 'Frank')
+    await approvePairing(db, code1, 'user_A', 'Frank')
+    expect(await isAllowed(db, '100')).toBe(true)
+
+    // Second pairing: same user_A pairs a different chat '200'
+    const { code: code2 } = await requestPairing(db, '200', 'Frank')
+    await approvePairing(db, code2, 'user_A', 'Frank')
+
+    // New chat should be allowed, old chat should NOT remain active
+    expect(await isAllowed(db, '200')).toBe(true)
+
+    // listPaired should show exactly 1 row for user_A (no duplicates)
+    const rows = await listPaired(db)
+    const userARows = rows.filter((r) => r.paired_by === 'user_A')
+    expect(userARows).toHaveLength(1)
+    expect(userARows[0].chat_id).toBe('200')
+  })
+
+  it('re-pairing same user keeps only the newest chat_id — old chat_id is gone', async () => {
+    const db = makeDb()
+
+    const { code: c1 } = await requestPairing(db, '300', 'Grace')
+    await approvePairing(db, c1, 'user_B', 'Grace')
+
+    const { code: c2 } = await requestPairing(db, '400', 'Grace')
+    await approvePairing(db, c2, 'user_B', 'Grace')
+
+    const rows = await listPaired(db)
+    const userBRows = rows.filter((r) => r.paired_by === 'user_B')
+    expect(userBRows).toHaveLength(1)
+    expect(userBRows[0].chat_id).toBe('400')
+    // old chat_id no longer in paired list
+    expect(rows.some((r) => r.chat_id === '300')).toBe(false)
+  })
+
+  it('two different users each get their own pairing (no interference)', async () => {
+    const db = makeDb()
+
+    const { code: ca } = await requestPairing(db, '500', 'Hana')
+    await approvePairing(db, ca, 'user_C', 'Hana')
+
+    const { code: cb } = await requestPairing(db, '600', 'Ivan')
+    await approvePairing(db, cb, 'user_D', 'Ivan')
+
+    const rows = await listPaired(db)
+    expect(rows.some((r) => r.paired_by === 'user_C' && r.chat_id === '500')).toBe(true)
+    expect(rows.some((r) => r.paired_by === 'user_D' && r.chat_id === '600')).toBe(true)
+  })
+
+  it('single-pair insert works without conflict', async () => {
+    const db = makeDb()
+    const { code } = await requestPairing(db, '700', 'Jane')
+    const result = await approvePairing(db, code, 'user_E', 'Jane')
+    expect(result).toEqual({ chatId: '700' })
+    expect(await isAllowed(db, '700')).toBe(true)
   })
 })

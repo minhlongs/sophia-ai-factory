@@ -24,6 +24,4 @@ SET onboarding_completed_at = COALESCE(
   CAST(strftime('%s', 'now') AS INTEGER) * 1000
 )
 WHERE onboarding_completed_at IS NULL
-  AND user_id IN (
-    SELECT user_id FROM user_tiers WHERE tier = 'MASTER'
-  );
+  AND subscription_tier = 'MASTER';

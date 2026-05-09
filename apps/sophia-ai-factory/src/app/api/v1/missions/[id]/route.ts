@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/seed/db/client';
-import { validateMissionApiKey } from '@/forest/missions/api-key-auth';
+import { validateMissionApiKey, apiKeyAuthErrorResponse } from '@/forest/missions/api-key-auth';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 
 export const dynamic = 'force-dynamic';
@@ -40,7 +40,7 @@ export async function GET(
       r.headers.get('x-api-key'),
     );
     if (!auth.valid) {
-      return NextResponse.json({ error: auth.error }, { status: 401 });
+      return apiKeyAuthErrorResponse(auth);
     }
     const userId = auth.userId!;
 

@@ -126,7 +126,12 @@ export async function approvePairing(
     return null
   }
 
-  // Insert into allowlist
+  // Upsert into allowlist.
+  // After migration 0100 telegram_paired_chats has UNIQUE(paired_by).
+  // ON CONFLICT DO UPDATE SET handles two cases:
+  //   1. Same paired_by, different chat_id → updates chat_id/first_name/paired_at (re-pair).
+  //   2. Same chat_id (PK) → updates first_name/paired_at/paired_by (admin re-approve).
+  // In both cases the newest pairing wins, which matches user intent.
   await db.from('telegram_paired_chats').upsert({
     chat_id: row.chat_id,
     first_name: firstName ?? null,

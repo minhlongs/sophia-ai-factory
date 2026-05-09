@@ -10,7 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createServerClient } from '@/seed/db/client';
-import { validateMissionApiKey } from '@/forest/missions/api-key-auth';
+import { validateMissionApiKey, apiKeyAuthErrorResponse } from '@/forest/missions/api-key-auth';
 import { isValidCommand, getCommand } from '@/forest/missions/command-registry';
 import { getBalance } from '@/lib/mcu/credits-repo';
 import { dispatchMission } from '@/forest/missions/dispatcher';
@@ -40,7 +40,7 @@ export const POST = withRateLimit(async function POST(request: NextRequest): Pro
     request.headers.get('x-api-key'),
   );
   if (!auth.valid) {
-    return NextResponse.json({ error: auth.error }, { status: 401 });
+    return apiKeyAuthErrorResponse(auth);
   }
   const userId = auth.userId!;
 
@@ -121,7 +121,7 @@ export const GET = withRateLimit(async function GET(request: NextRequest): Promi
     request.headers.get('x-api-key'),
   );
   if (!auth.valid) {
-    return NextResponse.json({ error: auth.error }, { status: 401 });
+    return apiKeyAuthErrorResponse(auth);
   }
   const userId = auth.userId!;
 

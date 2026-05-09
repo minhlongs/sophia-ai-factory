@@ -133,7 +133,8 @@ export async function POST(
       }
     }
 
-    // For Telegram: look up paired chat from telegram_paired_chats WHERE paired_by = user.id
+    // For Telegram: look up paired chat from telegram_paired_chats WHERE paired_by = user.id.
+    // LIMIT 1 is defensive; migration 0100 adds UNIQUE(paired_by) so at most 1 row exists.
     // Rate limit: max 5 Telegram distribute requests per minute (enforced by outer withRateLimit).
     if (hasTelegram) {
       const tgRow = await db
