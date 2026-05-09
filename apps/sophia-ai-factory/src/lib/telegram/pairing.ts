@@ -33,7 +33,12 @@ export interface PendingPairing {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function generate6DigitCode(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString()
+  // CSPRNG via Web Crypto — Math.random is predictable in V8 isolates and
+  // 6-digit codes already have a small (1M) keyspace. Use cryptographically
+  // strong randomness even though /pair_approve is admin-gated (defense-in-depth).
+  const buf = new Uint32Array(1)
+  crypto.getRandomValues(buf)
+  return (100000 + (buf[0] % 900000)).toString()
 }
 
 function nowIso(): string {

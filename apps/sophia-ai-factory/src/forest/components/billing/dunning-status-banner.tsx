@@ -7,6 +7,7 @@
 
 'use client';
 
+import { useTranslations, useLocale } from 'next-intl';
 import { Alert, AlertDescription, AlertTitle } from '@/seed/components/ui/alert';
 import { Button } from '@/seed/components/ui/button';
 import { Badge } from '@/seed/components/ui/badge';
@@ -23,46 +24,22 @@ interface DunningStatusBannerProps {
   allowed: boolean;
 }
 
-const DUNNING_CONFIG: Record<DunningState, {
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  variant: 'destructive' | 'warning' | 'info' | 'success';
-  showAction: boolean;
-  actionLabel: string;
-}> = {
-  current: {
-    title: 'Account in Good Standing',
-    description: 'Your subscription is active and up to date.',
-    icon: <CheckCircle className="h-5 w-5 text-green-600" />,
-    variant: 'success',
-    showAction: false,
-    actionLabel: '',
-  },
-  past_due: {
-    title: 'Payment Past Due',
-    description: 'A recent payment failed. Your service will be suspended if not resolved.',
-    icon: <AlertTriangle className="h-5 w-5 text-yellow-600" />,
-    variant: 'warning',
-    showAction: true,
-    actionLabel: 'Pay Now',
-  },
-  delinquent: {
-    title: 'Account Delinquent',
-    description: 'Multiple payment failures detected. Service suspension is imminent.',
-    icon: <Clock className="h-5 w-5 text-orange-600" />,
-    variant: 'destructive',
-    showAction: true,
-    actionLabel: 'Restore Service',
-  },
-  suspended: {
-    title: 'Service Suspended',
-    description: 'Your API access has been suspended due to non-payment.',
-    icon: <XCircle className="h-5 w-5 text-red-600" />,
-    variant: 'destructive',
-    showAction: true,
-    actionLabel: 'Restore Service',
-  },
+const DUNNING_VARIANT: Record<DunningState, 'destructive' | 'warning' | 'info' | 'success'> = {
+  current: 'success',
+  past_due: 'warning',
+  delinquent: 'destructive',
+  suspended: 'destructive',
+};
+
+const DUNNING_ICON: Record<DunningState, React.ReactNode> = {
+  current: <CheckCircle className="h-5 w-5 text-green-600" />,
+  past_due: <AlertTriangle className="h-5 w-5 text-yellow-600" />,
+  delinquent: <Clock className="h-5 w-5 text-orange-600" />,
+  suspended: <XCircle className="h-5 w-5 text-red-600" />,
+};
+
+const DUNNING_SHOW_ACTION: Record<DunningState, boolean> = {
+  current: false, past_due: true, delinquent: true, suspended: true,
 };
 
 export function DunningStatusBanner({
@@ -72,48 +49,50 @@ export function DunningStatusBanner({
   blockReason,
   allowed,
 }: DunningStatusBannerProps) {
-  const config = DUNNING_CONFIG[state];
+  const t = useTranslations('dashboard.billing.dunning');
+  const locale = useLocale();
+  const dateLocale = locale === 'vi' ? 'vi-VN' : 'en-US';
 
-  // Don't show banner if account is current
   if (state === 'current' || !allowed) {
     return null;
   }
 
+  const variant = DUNNING_VARIANT[state];
+  const icon = DUNNING_ICON[state];
+  const showAction = DUNNING_SHOW_ACTION[state];
+
   return (
-    <Alert variant={config.variant === 'destructive' ? 'destructive' : 'default'} className="mb-6">
-      {config.icon}
-      <AlertTitle>{config.title}</AlertTitle>
+    <Alert variant={variant === 'destructive' ? 'destructive' : 'default'} className="mb-6">
+      {icon}
+      <AlertTitle>{t(`${state}.title`)}</AlertTitle>
       <AlertDescription className="mt-2">
         <div className="space-y-2">
-          <p>{config.description}</p>
+          <p>{t(`${state}.description`)}</p>
 
           {gracePeriodEndsAt && state === 'past_due' && (
             <p className="text-sm text-muted-foreground">
-              Grace period ends:{' '}
-              <strong>{new Date(gracePeriodEndsAt).toLocaleDateString()}</strong>
+              {t('graceEnds', { date: new Date(gracePeriodEndsAt).toLocaleDateString(dateLocale) })}
             </p>
           )}
 
           {failedPaymentCount !== undefined && failedPaymentCount > 0 && (
             <div className="flex items-center gap-2">
               <Badge variant="secondary">
-                {failedPaymentCount} failed payment{failedPaymentCount > 1 ? 's' : ''}
+                {t('failedPayments', { count: failedPaymentCount })}
               </Badge>
             </div>
           )}
 
           {blockReason && (
             <p className="text-sm text-muted-foreground">
-              Reason: {blockReason}
+              {t('reasonLabel')} {blockReason}
             </p>
           )}
 
-          {config.showAction && (
+          {showAction && (
             <div className="mt-4">
               <Button asChild>
-                <Link href="/dashboard/billing/payment">
-                  {config.actionLabel}
-                </Link>
+                <Link href="/dashboard/billing/payment">{t(`${state}.action`)}</Link>
               </Button>
             </div>
           )}

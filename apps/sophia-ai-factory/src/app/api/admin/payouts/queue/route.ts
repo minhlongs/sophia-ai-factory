@@ -46,6 +46,9 @@ export async function GET(req: NextRequest) {
     const { limit, cursor } = parseResult.data;
     const db = getD1Binding();
 
+    // Fix Round-10 F-5: cursor was on user_id while ORDER BY was balance —
+    // resulted in skipped/duplicated rows across pages. Use compound cursor
+    // (balance, user_id) to keep the same ORDER tuple monotone.
     let sql = `
       SELECT user_id, balance_available, balance_pending, currency, last_rebuilt_at
       FROM user_wallets
@@ -53,10 +56,15 @@ export async function GET(req: NextRequest) {
     const binds: (string | number)[] = [MIN_PAYOUT_USD];
 
     if (cursor) {
-      sql += ` AND user_id > ?`;
-      binds.push(cursor);
+      // Cursor format: "<balance>:<user_id>".
+      const [cBal, cUid] = String(cursor).split(':');
+      const cBalNum = Number(cBal);
+      if (Number.isFinite(cBalNum) && cUid) {
+        sql += ` AND (balance_available < ? OR (balance_available = ? AND user_id > ?))`;
+        binds.push(cBalNum, cBalNum, cUid);
+      }
     }
-    sql += ` ORDER BY balance_available DESC LIMIT ?`;
+    sql += ` ORDER BY balance_available DESC, user_id ASC LIMIT ?`;
     binds.push(limit);
 
     const { results } = await db
@@ -65,7 +73,10 @@ export async function GET(req: NextRequest) {
       .all<QueueRow>();
 
     const rows = results ?? [];
-    const nextCursor = rows.length === limit ? (rows[rows.length - 1]?.user_id ?? null) : null;
+    const last = rows[rows.length - 1];
+    const nextCursor = rows.length === limit && last
+      ? `${last.balance_available}:${last.user_id}`
+      : null;
 
     logger.info('[admin/payouts/queue] Fetched queue', { count: rows.length });
     return NextResponse.json({ items: rows, next_cursor: nextCursor, min_payout_usd: MIN_PAYOUT_USD });
