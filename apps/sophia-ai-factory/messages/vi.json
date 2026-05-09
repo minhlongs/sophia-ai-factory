@@ -931,7 +931,13 @@
           "someChannelsFailed": "Một số kênh không thể lên lịch"
         },
         "cta": "Phân phối",
-        "comingSoon": "Sắp ra mắt"
+        "comingSoon": "Sắp ra mắt",
+        "telegram": {
+          "label": "Telegram",
+          "chatLabel": "Telegram (@{name})",
+          "channelLabel": "Telegram (kênh: {title})",
+          "notPaired": "Chưa ghép nối. Nhắn tin @Sophia_Bbot để ghép nối."
+        }
       }
     },
     "errors": {

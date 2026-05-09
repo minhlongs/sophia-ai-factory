@@ -125,8 +125,9 @@ describe('schedulePublish', () => {
     type PrepMock = { mock: { results: Array<{ value: { bind: { mock: { calls: unknown[][] } } } }> } };
     const prepareMock = db.prepare as unknown as PrepMock;
     const args = prepareMock.mock.results[0].value.bind.mock.calls[0];
-    // Bind args order: id, tenantId, videoId, channelId, caption, scheduled_at, created_at
-    const scheduledAt = args[5] as number;
+    // Bind args order (migration 0099 adds provider at index 4):
+    //   id(0), tenantId(1), videoId(2), channelId(3), provider(4), caption(5), scheduled_at(6), created_at(7)
+    const scheduledAt = args[6] as number;
     expect(scheduledAt).toBeGreaterThanOrEqual(before);
     expect(scheduledAt).toBeLessThanOrEqual(after);
   });
@@ -145,7 +146,9 @@ describe('schedulePublish', () => {
     type PrepMock = { mock: { results: Array<{ value: { bind: { mock: { calls: unknown[][] } } } }> } };
     const prepareMock = db.prepare as unknown as PrepMock;
     const args = prepareMock.mock.results[0].value.bind.mock.calls[0];
-    const scheduledAt = args[5] as number;
+    // Bind args order (migration 0099 adds provider at index 4):
+    //   id(0), tenantId(1), videoId(2), channelId(3), provider(4), caption(5), scheduled_at(6), created_at(7)
+    const scheduledAt = args[6] as number;
     expect(scheduledAt).toBe(futureTs);
   });
 });

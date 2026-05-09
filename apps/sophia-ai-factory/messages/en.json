@@ -931,7 +931,13 @@
           "someChannelsFailed": "Some channels failed to schedule"
         },
         "cta": "Distribute",
-        "comingSoon": "Coming soon"
+        "comingSoon": "Coming soon",
+        "telegram": {
+          "label": "Telegram",
+          "chatLabel": "Telegram (@{name})",
+          "channelLabel": "Telegram (channel: {title})",
+          "notPaired": "Not paired. Start @Sophia_Bbot to pair."
+        }
       }
     },
     "errors": {

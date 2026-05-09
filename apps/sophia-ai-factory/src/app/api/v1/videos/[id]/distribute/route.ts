@@ -26,14 +26,16 @@ import type { ChannelProvider } from '@/lib/publishing/publisher-interface';
 export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 
-// 12 providers matching ChannelProvider type and publishing_channels CHECK constraint (0094)
+// 13 providers: 12 OAuth providers (publishing_channels) + 'telegram' (telegram_paired_chats).
+// Telegram is a special-case: channel_id resolved from telegram_paired_chats.chat_id,
+// not from publishing_channels. See Option A comment below.
 const CHANNEL_PROVIDERS: [ChannelProvider, ...ChannelProvider[]] = [
   'tiktok', 'youtube', 'instagram', 'pinterest', 'linkedin', 'zalo',
-  'facebook', 'twitter', 'threads', 'reddit', 'bluesky', 'mastodon',
+  'facebook', 'twitter', 'threads', 'reddit', 'bluesky', 'mastodon', 'telegram',
 ];
 
 const distributeSchema = z.object({
-  channelProviders: z.array(z.enum(CHANNEL_PROVIDERS)).min(1).max(12),
+  channelProviders: z.array(z.enum(CHANNEL_PROVIDERS)).min(1).max(CHANNEL_PROVIDERS.length),
   caption: z.string().max(2200).optional(),
   /** Unix epoch seconds; clamped to [now, now+30days] */
   scheduledAt: z.number().int().positive().optional(),
@@ -105,18 +107,52 @@ export async function POST(
     if (!videoRow) return NextResponse.json({ error: 'Video not found' }, { status: 404 });
     if (videoRow.user_id !== user.id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-    // Look up channel ids for each requested provider (only active channels)
-    const placeholders = channelProviders.map(() => '?').join(',');
-    const { results: channelRows } = await db
-      .prepare(
-        `SELECT id, provider FROM publishing_channels
-         WHERE user_id = ? AND provider IN (${placeholders}) AND status = 'active'
-         ORDER BY provider ASC`,
-      )
-      .bind(user.id, ...channelProviders)
-      .all<{ id: string; provider: string }>();
+    // Separate Telegram from OAuth providers.
+    // Option A: Telegram is special-cased — channel_id resolved from telegram_paired_chats,
+    // not publishing_channels. publishing_jobs.channel_id stores chat_id as surrogate
+    // (valid since D1/SQLite has no FK enforcement on that column).
+    const oauthProviders = channelProviders.filter((p) => p !== 'telegram');
+    const hasTelegram = channelProviders.includes('telegram');
 
-    const channelMap = new Map((channelRows ?? []).map((r) => [r.provider, r.id]));
+    // Build channel map for OAuth providers (publishing_channels lookup)
+    const channelMap = new Map<string, string>();
+
+    if (oauthProviders.length > 0) {
+      const placeholders = oauthProviders.map(() => '?').join(',');
+      const { results: channelRows } = await db
+        .prepare(
+          `SELECT id, provider FROM publishing_channels
+           WHERE user_id = ? AND provider IN (${placeholders}) AND status = 'active'
+           ORDER BY provider ASC`,
+        )
+        .bind(user.id, ...oauthProviders)
+        .all<{ id: string; provider: string }>();
+
+      for (const r of (channelRows ?? [])) {
+        channelMap.set(r.provider, r.id);
+      }
+    }
+
+    // For Telegram: look up paired chat from telegram_paired_chats WHERE paired_by = user.id
+    // Rate limit: max 5 Telegram distribute requests per minute (enforced by outer withRateLimit).
+    if (hasTelegram) {
+      const tgRow = await db
+        .prepare(
+          `SELECT chat_id FROM telegram_paired_chats WHERE paired_by = ? LIMIT 1`,
+        )
+        .bind(user.id)
+        .first<{ chat_id: string }>();
+
+      if (!tgRow) {
+        return NextResponse.json(
+          { error: 'Some channels are not connected', missingProviders: ['telegram'] },
+          { status: 422 },
+        );
+      }
+      // Use chat_id as surrogate channel_id for Telegram
+      channelMap.set('telegram', tgRow.chat_id);
+    }
+
     const missingProviders = channelProviders.filter((p) => !channelMap.has(p));
     if (missingProviders.length > 0) {
       return NextResponse.json(
@@ -139,6 +175,8 @@ export async function POST(
           userId: user.id,
           caption,
           scheduledAt: resolvedScheduledAt,
+          // Pass provider so publishExecute can dispatch the Telegram code path
+          provider,
         });
         jobIds.push(jobId);
       } catch (err) {
