@@ -321,10 +321,12 @@ export const publishExecute = inngest.createFunction(
   },
 );
 
-/** Token refresh cron — every 30 minutes */
+// Token refresh cron — runs hourly. Round-11 F-PC-2: was every 30 minutes
+// (48/day) which mostly did zero work since refresh window is 1h. Hourly
+// cuts 50% wasted Inngest steps + D1 selects without changing safety margin.
 export const publishTokenRefreshCron = inngest.createFunction(
   { id: 'publish-token-refresh-cron', retries: 1 },
-  { cron: '*/30 * * * *' },
+  { cron: '0 * * * *' },
   async ({ step }) => {
     return step.run('refresh-expiring-tokens', async () => {
       const { refreshExpiringTokens } = await import('@/lib/publishing/oauth-token-refresher');

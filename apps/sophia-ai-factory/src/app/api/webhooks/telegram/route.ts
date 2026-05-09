@@ -55,7 +55,9 @@ export async function POST(request: NextRequest) {
   // Degrade gracefully when Telegram bot is not configured
   // Returns 200 to prevent Telegram retry-storm; logs warning for operator awareness
   if (!process.env.TELEGRAM_BOT_TOKEN) {
-    console.warn('[telegram-webhook] TELEGRAM_BOT_TOKEN is not set — bot is dormant. Run: wrangler secret put TELEGRAM_BOT_TOKEN')
+    // Use structured logger so this is sampled by Workers Logs cost controls.
+    const { logger } = await import('@/seed/utils/logger-utility')
+    logger.warn('[telegram-webhook] TELEGRAM_BOT_TOKEN is not set — bot is dormant')
     return NextResponse.json({ ok: true })
   }
 
