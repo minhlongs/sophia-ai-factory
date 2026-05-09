@@ -1,8 +1,8 @@
 # Codebase Summary
 
 **Last Updated:** 2026-05-08
-**Version:** 1.14.23 (Wave 3: Setup wizard routing + billing link + i18n + loading states)
-**Recent Major Changes:** Wave 3 shipped (2026-05-08): (A) Setup wizard locale routing fix (VI/EN bilingual access). (B) Mission-control billing link corrected (usage → billing). (C) v1 integrations auth errors (500 → 401). (D) Mission detail + billing + telegram + agent panel i18n coverage (50+ keys). (E) Setup wizard UX polish (alert → banner). 2810/2810 tests pass, 0 TS errors. Dashboard bilingual UX complete. See `docs/project-changelog.md` for full details.
+**Version:** 1.14.24 (Wave 4: Admin tier + settings bilingual + mission retry + localization)
+**Recent Major Changes:** Wave 4 shipped (2026-05-08): (A) Admin users tier via DB `getUserTier()` (not hardcoded). (B) Settings 4 sections bilingual (~30 keys). (C) Mission retry endpoint + UX CTA. (D) Locale-aware date formatting + onboarding tour preservation. 2810/2810 tests pass, 0 TS errors, 9.4/10 code quality. See `docs/project-changelog.md` for details.
 
 ## Project Structure Overview
 

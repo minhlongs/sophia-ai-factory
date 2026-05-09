@@ -496,6 +496,10 @@
         "verifying": "Đang Kiểm Tra",
         "completed": "Hoàn Tất"
       },
+      "retry": "Thử lại nhiệm vụ",
+      "retrying": "Đang thử lại…",
+      "retry_error": "Không thể bắt đầu thử lại. Vui lòng thử lại.",
+      "contact_support": "Liên hệ hỗ trợ",
       "page_title": "Nhiệm Vụ AI",
       "page_subtitle": "Khởi chạy và theo dõi các tác vụ AI tự động",
       "new_mission": "Nhiệm Vụ Mới",
@@ -1300,6 +1304,53 @@
   "scene": "Scene",
   "visual": "Visual",
   "settings": {
+    "profile": {
+      "title": "Hồ Sơ",
+      "subtitle": "Quản lý thông tin hồ sơ công khai của bạn.",
+      "fullName": "Họ Và Tên",
+      "fullNamePlaceholder": "Nguyễn Văn A",
+      "email": "Email",
+      "emailManagedNote": "Email được quản lý qua nhà cung cấp đăng nhập và không thể thay đổi tại đây."
+    },
+    "appearance": {
+      "title": "Giao Diện",
+      "subtitle": "Tuỳ chỉnh giao diện bảng điều khiển.",
+      "themeLabel": "Chế Độ Hiển Thị",
+      "themeAriaLabel": "Tuỳ chọn chủ đề",
+      "themeLight": "Sáng",
+      "themeDark": "Tối",
+      "themeSystem": "Theo hệ thống",
+      "themeHelp": "Chọn chủ đề ưa thích cho bảng điều khiển."
+    },
+    "notifications": {
+      "title": "Thông Báo",
+      "subtitle": "Chọn loại cập nhật bạn muốn nhận.",
+      "marketingTitle": "Email Tiếp Thị",
+      "marketingDesc": "Nhận email về tính năng và khuyến mãi mới.",
+      "securityTitle": "Cảnh Báo Bảo Mật",
+      "securityDesc": "Nhận thông báo về hoạt động đáng ngờ trên tài khoản.",
+      "telegramTitle": "Tích Hợp Telegram",
+      "telegramDesc": "Nhận thông báo qua bot Telegram.",
+      "saveButton": "Lưu Thay Đổi"
+    },
+    "apiKeys": {
+      "title": "API Keys",
+      "subtitle": "Nhập API key của bạn. Key được mã hóa an toàn. Để trống nếu muốn giữ nguyên key hiện tại.",
+      "openaiDesc": "Trí tuệ nhân tạo cho nội dung văn bản",
+      "anthropicDesc": "AI cao cấp cho phân tích và sáng tạo",
+      "elevenlabsDesc": "Tạo giọng nói AI tự nhiên cho video",
+      "heygenDesc": "Tạo video AI với avatar ảo",
+      "muapiDesc": "Tạo ảnh, video, nhạc AI (Midjourney, Kling, Suno)",
+      "openaiHelp": "Lấy key tại OpenRouter",
+      "anthropicHelp": "Lấy key tại Anthropic",
+      "elevenlabsHelp": "Lấy key tại ElevenLabs",
+      "heygenHelp": "Lấy key tại HeyGen",
+      "muapiHelp": "Lấy key tại MuAPI",
+      "showAriaShow": "Hiện {label} key",
+      "showAriaHide": "Ẩn {label} key",
+      "securityNoteLabel": "Bảo mật:",
+      "securityNoteBody": "Key được mã hóa AES-256 trước khi lưu. Chỉ bạn mới có thể sử dụng key của mình. Không ai trong hệ thống có thể đọc key gốc."
+    },
     "mfa": {
       "title": "Xác Thực Hai Yếu Tố",
       "subtitle": "Thêm lớp bảo mật cho tài khoản của bạn",

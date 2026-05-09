@@ -2,6 +2,9 @@
  * Dynamic sitemap for SEO — sophia.agencyos.network
  * Next.js generates /sitemap.xml from this file.
  * Excludes auth-gated routes (dashboard, auth, onboarding, welcome, redeem, checkout, payment-success).
+ * Blog posts (POSTS array in /blog/page.tsx) redirect via href to existing guide pages,
+ * so no per-post canonical URLs to expose. Add per-post entries here only when a
+ * standalone /blog/[slug] route exists.
  */
 
 import type { MetadataRoute } from 'next';

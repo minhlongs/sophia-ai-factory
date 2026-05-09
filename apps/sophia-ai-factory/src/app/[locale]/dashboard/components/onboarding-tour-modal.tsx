@@ -8,7 +8,8 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { X, ChevronRight, ChevronLeft, RotateCcw } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/seed/components/ui/button';
 
 interface StepConfig {
@@ -39,6 +40,8 @@ const STEPS: StepConfig[] = [
 
 export function OnboardingTourModal({ userId, tier, onComplete }: OnboardingTourModalProps) {
   const t = useTranslations('onboarding');
+  const router = useRouter();
+  const locale = useLocale();
   const [visible, setVisible] = useState(false);
   const [step, setStep] = useState(1);
   const [completing, setCompleting] = useState(false);
@@ -111,9 +114,10 @@ export function OnboardingTourModal({ userId, tier, onComplete }: OnboardingTour
   }
 
   async function handleActionNav(href: string) {
-    // Mark complete first, then navigate
+    // Mark complete first, then SPA-navigate via router so locale prefix is preserved.
     await handleFinish();
-    window.location.href = href;
+    const localized = locale && locale !== 'en' && href.startsWith('/') ? `/${locale}${href}` : href;
+    router.push(localized);
   }
 
   if (!visible) return null;

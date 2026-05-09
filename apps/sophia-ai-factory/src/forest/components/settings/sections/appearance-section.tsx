@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Label } from '@/seed/components/ui/label';
 import {
   Card,
@@ -16,21 +17,20 @@ interface AppearanceSectionProps {
 }
 
 export function AppearanceSection({ form }: AppearanceSectionProps) {
+  const t = useTranslations('settings.appearance');
   const { watch, setValue } = form;
   const theme = watch('settings.theme');
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Appearance</CardTitle>
-        <CardDescription>
-          Customize the look and feel of the dashboard.
-        </CardDescription>
+        <CardTitle>{t('title')}</CardTitle>
+        <CardDescription>{t('subtitle')}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
-          <Label>Theme Preference</Label>
-          <div className="grid grid-cols-3 gap-4" role="radiogroup" aria-label="Theme preference">
+          <Label>{t('themeLabel')}</Label>
+          <div className="grid grid-cols-3 gap-4" role="radiogroup" aria-label={t('themeAriaLabel')}>
             <button
               type="button"
               role="radio"
@@ -46,7 +46,7 @@ export function AppearanceSection({ form }: AppearanceSectionProps) {
             >
               <div className="flex items-center gap-2">
                 <div className="h-4 w-4 rounded-full border border-primary bg-[#ffffff]" aria-hidden="true" />
-                <span className="font-medium">Light</span>
+                <span className="font-medium">{t('themeLight')}</span>
               </div>
             </button>
             <button
@@ -64,7 +64,7 @@ export function AppearanceSection({ form }: AppearanceSectionProps) {
             >
               <div className="flex items-center gap-2">
                 <div className="h-4 w-4 rounded-full border border-primary bg-[#09090b]" aria-hidden="true" />
-                <span className="font-medium">Dark</span>
+                <span className="font-medium">{t('themeDark')}</span>
               </div>
             </button>
             <button
@@ -84,13 +84,11 @@ export function AppearanceSection({ form }: AppearanceSectionProps) {
                 <div className="flex h-4 w-4 items-center justify-center rounded-full border border-primary bg-transparent" aria-hidden="true">
                   <span className="text-[10px] font-bold">A</span>
                 </div>
-                <span className="font-medium">System</span>
+                <span className="font-medium">{t('themeSystem')}</span>
               </div>
             </button>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Select your preferred theme for the dashboard.
-          </p>
+          <p className="text-sm text-muted-foreground">{t('themeHelp')}</p>
         </div>
       </CardContent>
     </Card>
