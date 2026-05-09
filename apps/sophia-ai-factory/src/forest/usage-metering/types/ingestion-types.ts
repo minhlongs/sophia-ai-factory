@@ -29,6 +29,13 @@ export interface BatchUsageRecord {
   action: string;
   status: 'success' | 'error';
   response_time_ms: number | null;
+  /**
+   * Round-10 F-2: optional client-supplied UUID for idempotent retries.
+   * Forward-compatible field; full DB-level dedup (UNIQUE constraint on
+   * usage_events.external_id) is queued for Phase-2 schema migration.
+   * Until migration lands, server treats event_id as advisory only.
+   */
+  event_id?: string;
 }
 
 /** Single record ingestion result */

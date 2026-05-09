@@ -22,6 +22,10 @@ export const batchUsageRecordSchema = z.object({
   action: z.string().min(1, "action is required"),
   status: z.enum(['success', 'error']),
   response_time_ms: z.number().nonnegative().nullable(),
+  // Round-10 F-2: optional client-supplied UUID for idempotent retries.
+  // Currently advisory; DB-level UNIQUE on usage_events.external_id is
+  // queued for Phase-2 migration.
+  event_id: z.string().uuid().optional(),
 })
 
 export const batchIngestionRequestSchema = z.object({

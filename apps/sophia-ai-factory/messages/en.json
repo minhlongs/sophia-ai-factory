@@ -774,7 +774,16 @@
       "usageBreakdown": "Usage Breakdown",
       "quotaSection": "Quota Usage",
       "quotaCardTitle": "Resource Consumption",
-      "quotaCardSubtitle": "Visual chart of resource usage"
+      "quotaCardSubtitle": "Visual chart of resource usage",
+      "dunning": {
+        "graceEnds": "Grace period ends: {date}",
+        "failedPayments": "{count} failed payments",
+        "reasonLabel": "Reason:",
+        "current": { "title": "Account in Good Standing", "description": "Your subscription is active and up to date.", "action": "" },
+        "past_due": { "title": "Payment Past Due", "description": "A recent payment failed. Your service will be suspended if not resolved.", "action": "Pay Now" },
+        "delinquent": { "title": "Account Delinquent", "description": "Multiple payment failures detected. Service suspension is imminent.", "action": "Restore Service" },
+        "suspended": { "title": "Service Suspended", "description": "Your API access has been suspended due to non-payment.", "action": "Restore Service" }
+      }
     },
     "support": {
       "title": "Support",

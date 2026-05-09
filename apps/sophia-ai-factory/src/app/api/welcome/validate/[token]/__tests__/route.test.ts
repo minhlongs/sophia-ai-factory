@@ -115,7 +115,7 @@ describe('POST /api/welcome/validate/[token]', () => {
     vi.unstubAllEnvs();
     // Default: valid handover + working session
     vi.mocked(validateMagicLinkToken).mockResolvedValue(FAKE_HANDOVER);
-    vi.mocked(consumeMagicLink).mockResolvedValue(undefined);
+    vi.mocked(consumeMagicLink).mockResolvedValue(true);
     mockCreateSession({ token: FAKE_SESSION_TOKEN, expiresAt: FAKE_EXPIRES_AT });
   });
 

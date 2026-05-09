@@ -72,21 +72,28 @@ export async function validateMagicLinkToken(
  * Consume magic link — mark first login AND invalidate the token to enforce
  * single-use semantics. Without clearing the token, an attacker who captures
  * the link still has 24-72h to mint additional sessions.
+ *
+ * Returns true when this caller WON the consume race (was the actual single
+ * use). Two concurrent consumes for the same handoverId would otherwise both
+ * pass validate-then-update; gating on the magic_link_token = ?2 condition
+ * means only the first writer's UPDATE has changes>0 — the loser must abort.
  */
-export async function consumeMagicLink(handoverId: string): Promise<void> {
+export async function consumeMagicLink(handoverId: string, token: string): Promise<boolean> {
   const db = await getD1Raw();
   const now = Math.floor(Date.now() / 1000);
 
-  await db
+  const result = await db
     .prepare(
       `UPDATE customer_handovers
        SET customer_first_login_at = COALESCE(customer_first_login_at, ?1),
            magic_link_token = NULL,
            magic_link_expires_at = NULL
-       WHERE id = ?2`,
+       WHERE id = ?2 AND magic_link_token = ?3`,
     )
-    .bind(now, handoverId)
+    .bind(now, handoverId, token)
     .run();
+
+  return (result.meta?.changes ?? 0) > 0;
 }
 
 /**

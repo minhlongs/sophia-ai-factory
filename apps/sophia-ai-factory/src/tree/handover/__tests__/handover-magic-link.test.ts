@@ -109,7 +109,7 @@ describe('consumeMagicLink (P0: single-use enforcement)', () => {
     const captured: CapturedCall[] = [];
     vi.mocked(getD1Raw).mockResolvedValue(makeDbCapturing(captured));
 
-    await consumeMagicLink('h-1');
+    await consumeMagicLink('h-1', 'token-xyz');
 
     expect(captured).toHaveLength(1);
     expect(captured[0].sql).toContain('magic_link_token = NULL');
@@ -122,7 +122,7 @@ describe('consumeMagicLink (P0: single-use enforcement)', () => {
     const captured: CapturedCall[] = [];
     vi.mocked(getD1Raw).mockResolvedValue(makeDbCapturing(captured));
 
-    await consumeMagicLink('h-1');
+    await consumeMagicLink('h-1', 'token-xyz');
 
     expect(captured[0].sql).toContain('COALESCE(customer_first_login_at');
   });

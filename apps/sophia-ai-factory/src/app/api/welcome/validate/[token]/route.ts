@@ -111,9 +111,16 @@ export async function POST(request: NextRequest, ctx: RouteParams): Promise<Next
     );
   }
 
-  // Consume token first (single-use enforcement) — clears magic_link_token
-  // so a captured link cannot mint additional sessions.
-  await consumeMagicLink(handover.id);
+  // Consume token first (single-use enforcement) — clears magic_link_token.
+  // Pass token in for race-safe single-write: only the first concurrent caller
+  // sees changes>0; the loser bails with 410 instead of minting a duplicate session.
+  const consumed = await consumeMagicLink(handover.id, token);
+  if (!consumed) {
+    return NextResponse.json(
+      { error: 'Link đã được sử dụng / Magic link already consumed' },
+      { status: 410 },
+    );
+  }
 
   // Look up customer email for audit log (hashed for PII protection)
   let emailHash: string | null = null;

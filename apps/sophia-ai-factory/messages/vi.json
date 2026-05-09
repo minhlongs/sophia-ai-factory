@@ -774,7 +774,16 @@
       "usageBreakdown": "Chi Tiết Sử Dụng",
       "quotaSection": "Sử Dụng Hạn Mức",
       "quotaCardTitle": "Mức Dùng Tài Nguyên",
-      "quotaCardSubtitle": "Biểu đồ trực quan mức tiêu thụ tài nguyên"
+      "quotaCardSubtitle": "Biểu đồ trực quan mức tiêu thụ tài nguyên",
+      "dunning": {
+        "graceEnds": "Hết hạn ân hạn: {date}",
+        "failedPayments": "{count} lần thanh toán thất bại",
+        "reasonLabel": "Lý do:",
+        "current": { "title": "Tài Khoản Đang Hoạt Động", "description": "Gói đăng ký của bạn đang hoạt động và đã thanh toán đầy đủ.", "action": "" },
+        "past_due": { "title": "Thanh Toán Quá Hạn", "description": "Một khoản thanh toán gần đây thất bại. Dịch vụ sẽ bị tạm ngưng nếu không xử lý.", "action": "Thanh Toán Ngay" },
+        "delinquent": { "title": "Tài Khoản Nợ Quá Hạn", "description": "Phát hiện nhiều lần thanh toán thất bại. Tạm ngưng dịch vụ sắp xảy ra.", "action": "Khôi Phục Dịch Vụ" },
+        "suspended": { "title": "Dịch Vụ Đã Tạm Ngưng", "description": "Truy cập API đã bị tạm ngưng do chưa thanh toán.", "action": "Khôi Phục Dịch Vụ" }
+      }
     },
     "support": {
       "title": "Hỗ Trợ",
