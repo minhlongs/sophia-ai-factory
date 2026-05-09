@@ -44,7 +44,7 @@ function getD1Binding(): D1Database | null {
 }
 
 interface UserTierRow {
-  id: string;
+  user_id: string;
   tier: string;
 }
 
@@ -63,10 +63,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   let errorCount = 0;
 
   try {
-    // Fetch all users with active subscriptions
+    // Fetch all users with active subscriptions.
+    // Real schema (migrations 0001+0086): table is `subscriptions`, FK = user_id.
     const { data: users } = await db
-      .from('user_subscriptions')
-      .select('id, tier')
+      .from('subscriptions')
+      .select('user_id, tier')
       .eq('status', 'active') as { data: UserTierRow[] | null; error: unknown };
 
     const activeUsers = users ?? [];
@@ -81,13 +82,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
         if (monthlyMcu <= 0) continue;
 
-        await addCredits(user.id, monthlyMcu, 'monthly_subscription_reset', {
+        await addCredits(user.user_id, monthlyMcu, 'monthly_subscription_reset', {
           tier: tierKey,
           month: new Date().toISOString().slice(0, 7),
         });
         processedCount++;
       } catch (err) {
-        logger.error('[mcu-monthly-reset] Error processing user', { userId: user.id, err });
+        logger.error('[mcu-monthly-reset] Error processing user', { userId: user.user_id, err });
         errorCount++;
       }
     }

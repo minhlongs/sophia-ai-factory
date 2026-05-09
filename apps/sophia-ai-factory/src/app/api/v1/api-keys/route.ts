@@ -10,6 +10,7 @@ import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { getUserTier } from '@/seed/db/get-user-tier';
 import { createApiKey, listApiKeys, tierToRateLimit } from '@/forest/api-keys/d1-store';
 import { logger } from '@/seed/utils/logger-utility';
+import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,7 +45,8 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function POST(req: NextRequest) {
+// Cap key creation at 5/min per session to prevent hostile creation spam.
+export const POST = withRateLimit(async function POST(req: NextRequest) {
   const user = await getCurrentUserFromHeaders(req.headers);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -66,4 +68,4 @@ export async function POST(req: NextRequest) {
     logger.error('[ApiKeys] Create failed', err instanceof Error ? err : undefined);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
-}
+}, { addHeaders: true, config: { intervalMs: 60_000, maxRequests: 5 } });

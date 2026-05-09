@@ -1,8 +1,8 @@
 # Codebase Summary
 
 **Last Updated:** 2026-05-08
-**Version:** 1.14.25 (Wave 5: Cron registration + webhook timestamp + rate limiting + i18n + dashboard agents + SOP API + RBAC + CSP)
-**Recent Major Changes:** Wave 5 shipped (2026-05-08): (F-1) Inngest 2 missing crons registered + 6 corrected to event-based dispatch. (F-2) **BREAKING:** Webhook timestamp enforcement + signature format change (`${timestamp}.${body}`). (F-3) Tier-aware rate limiting on 4 v1 hottest routes. (F-4) /status bilingual i18n. (F-5) /dashboard/agents NEW page. (F-6) /api/v1/sops REST NEW. (F-7) /api/admin/users PATCH NEW with RBAC. (F-8) CSP + worker-src blob:. 2810/2810 tests pass, 0 TS errors, 9.4/10 code quality. See `docs/project-changelog.md` for BREAKING change details and migration window.
+**Version:** 1.14.26 (Wave 6: MCU monthly reset fix + agent-chat credit pre-deduct + API key rate limit + magic-link i18n + auth subscription insert + FREE100 verification)
+**Recent Major Changes:** Wave 6 shipped (2026-05-08): (F-1) **P0 CRITICAL** MCU monthly reset cron fixed — users now receive correct tier-based monthly credits (BASIC=100, PREMIUM=500, ENTERPRISE=2000, MASTER=10000). (F-2) **P0 CRITICAL** Agent-chat SSE pre-deducts credit BEFORE LLM call to prevent cost-bomb; compensating transaction refunds on failure. (F-3) POST /api/v1/api-keys rate-limited 5 req/min per user. (F-4) Magic-link login bilingual (EN+VI). (F-5) Better-Auth subscription insert now includes user_id + tier='BASIC'. (F-6) FREE100 redeem requires emailVerified to block bot farming. 2810/2810 tests pass, 0 TS errors, 9.5/10 code quality. See `docs/project-changelog.md` for full details.
 
 ## Project Structure Overview
 

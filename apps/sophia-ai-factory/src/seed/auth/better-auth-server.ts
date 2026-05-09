@@ -93,9 +93,11 @@ export function getAuth() {
     plugins: [
       magicLink({
         sendMagicLink: async ({ email, url }) => {
+          // Better-Auth callback doesn't expose locale; ship a bilingual template
+          // (EN heading + VI subheading) so users in either locale recognize it.
           await sendEmail({
             to: email,
-            subject: 'Sign in to Sophia AI Factory',
+            subject: 'Sign in to Sophia AI Factory · Đăng nhập Sophia AI',
             html: buildMagicLinkHtml(url),
           });
         },
@@ -136,10 +138,14 @@ export function getAuth() {
               await db.from('org_balances').insert({
                 org_id: orgId, balance: 50,
               });
+              // Migration 0086 added user_id + tier columns. Insert both so
+              // getUserTier(user_id) works directly without falling back to org lookup.
               await db.from('subscriptions').insert({
                 id: crypto.randomUUID(),
+                user_id: user.id,
                 org_id: orgId,
                 plan: 'basic',
+                tier: 'BASIC',
                 status: 'active',
               });
             } catch (err) {
@@ -186,11 +192,16 @@ function buildMagicLinkHtml(rawUrl: string): string {
   const url = rawUrl.startsWith('https://') || rawUrl.startsWith('http://localhost')
     ? rawUrl.replace(/"/g, '&quot;').replace(/</g, '&lt;')
     : '#';
+  // Bilingual template: EN block + VI block. Subject mirrors both languages.
   return `<!DOCTYPE html><html><head><meta charset="utf-8"></head>
 <body style="font-family:-apple-system,sans-serif;line-height:1.6;max-width:600px;margin:0 auto;padding:24px;">
-  <h2 style="color:#6750A4">Đăng nhập Sophia AI</h2>
-  <p>Nhấn nút bên dưới để đăng nhập. Link có hiệu lực trong 15 phút.</p>
-  <a href="${url}" style="display:inline-block;background:#6750A4;color:white;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:600;margin:16px 0;">Đăng Nhập</a>
+  <h2 style="color:#6750A4">Sign in to Sophia AI Factory</h2>
+  <p>Click the button below to sign in. The link is valid for 15 minutes.</p>
+  <a href="${url}" style="display:inline-block;background:#6750A4;color:white;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:600;margin:16px 0;">Sign In · Đăng Nhập</a>
+  <p style="font-size:13px;color:#666;">If you did not request this email, please ignore it.</p>
+  <hr style="border:none;border-top:1px solid #eee;margin:20px 0;" />
+  <h3 style="color:#6750A4;margin-bottom:8px;">Đăng nhập Sophia AI</h3>
+  <p>Nhấn nút bên trên để đăng nhập. Link có hiệu lực trong 15 phút.</p>
   <p style="font-size:13px;color:#666;">Nếu bạn không yêu cầu email này, vui lòng bỏ qua.</p>
 </body></html>`;
 }

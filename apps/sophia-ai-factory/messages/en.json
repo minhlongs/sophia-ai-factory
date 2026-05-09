@@ -1333,6 +1333,35 @@
       "telegramDesc": "Receive notifications via Telegram bot.",
       "saveButton": "Save Changes"
     },
+    "apiKeysPage": {
+      "title": "API Keys (v1)",
+      "subtitle": "Manage public API keys for /api/v1/* endpoints. Keys are shown in full only once at creation.",
+      "keyNameLabel": "Key name",
+      "keyNamePlaceholder": "e.g. Production server, Staging webhook",
+      "createButton": "Create key",
+      "creatingButton": "Creating…",
+      "thName": "Name",
+      "thPrefix": "Prefix",
+      "thLastUsed": "Last used",
+      "thActions": "Actions",
+      "rotateAction": "Rotate",
+      "revokeAction": "Revoke",
+      "loading": "Loading…",
+      "emptyState": "No API keys yet. Create one above.",
+      "neverUsed": "Never used",
+      "confirmRotate": "Rotating creates a new secret. Old key stops working immediately. Continue?",
+      "confirmRevoke": "Revoking the key is permanent. Continue?",
+      "revealedTitle": "API key created",
+      "revealedSubtitle": "Copy this key now — it will not be shown again.",
+      "copyButton": "Copy",
+      "dismissButton": "Dismiss",
+      "errors": {
+        "list": "Could not load keys",
+        "create": "Could not create key",
+        "rotate": "Could not rotate key",
+        "revoke": "Could not revoke key"
+      }
+    },
     "apiKeys": {
       "title": "API Keys",
       "subtitle": "Enter your API keys. Keys are encrypted at rest. Leave blank to keep existing keys.",
