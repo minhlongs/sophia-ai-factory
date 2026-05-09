@@ -22,7 +22,9 @@ const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])
  * - /api/webhooks/* — auth via signature (NOWPayments, Telegram IPN)
  * - /api/cron/*   — Cloudflare Workers internal triggers
  */
-const CSRF_BYPASS_PREFIXES = ['/api/auth/', '/api/webhooks/', '/api/cron/']
+// CSP violation reports are POSTed by the browser without a CSRF token —
+// the request is browser-initiated, not user form-initiated. Bypass.
+const CSRF_BYPASS_PREFIXES = ['/api/auth/', '/api/webhooks/', '/api/cron/', '/api/csp-report']
 
 /**
  * Generate a 32-byte random hex token using Web Crypto (edge-compatible).
