@@ -1,13 +1,18 @@
 /**
  * API Key Authentication for /api/v1/missions
  *
- * Validates the Authorization: Bearer <key> header against raas_api_keys table.
- * Key is stored as SHA-256 hash in key_hash column.
+ * Primary path: validates Authorization: Bearer <key> or x-api-key header
+ * against raas_api_keys table (SHA-256 hash comparison). Used by external API clients.
+ *
+ * Fallback path: session cookie auth via getCurrentUser(). Used by browser
+ * clients (e.g. RenderProgress EventSource) that cannot send custom headers.
+ * Ownership check is enforced separately by the route (mission.user_id === userId).
  */
 
 import { createServerClient } from '@/seed/db/client';
 import { sha256 } from '@/tree/audit/crypto-utils';
 import { logger } from '@/seed/utils/logger-utility';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
 
 export interface ApiKeyAuthResult {
   valid: boolean;
@@ -22,6 +27,7 @@ interface ApiKeyRow {
 
 /**
  * Validate API key from Authorization header or x-api-key header.
+ * If neither header is present, falls back to Better Auth session cookie.
  * Returns userId if valid, error message if not.
  */
 export async function validateMissionApiKey(
@@ -36,8 +42,18 @@ export async function validateMissionApiKey(
     rawKey = xApiKey.trim();
   }
 
+  // No API key headers present — fall back to session cookie (browser EventSource path).
+  // Browser EventSource cannot send custom headers; Better Auth cookie is sent automatically.
   if (!rawKey) {
-    return { valid: false, error: 'Missing API key. Provide Authorization: Bearer <key> header.' };
+    try {
+      const user = await getCurrentUser();
+      if (user) {
+        return { valid: true, userId: user.id };
+      }
+    } catch (err) {
+      logger.error('[ApiKeyAuth] Session fallback error', err instanceof Error ? err : new Error(String(err)));
+    }
+    return { valid: false, error: 'Missing API key. Provide Authorization: Bearer <key> header or authenticate via session.' };
   }
 
   try {

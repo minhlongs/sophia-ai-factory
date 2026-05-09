@@ -1,7 +1,45 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-05-03 (Go-Live Deploy: GAP1 magic-link E2E + GAP2 self-serve checkout + GAP3 mission control handover)
+> **Last Updated:** 2026-05-09 (Wave 16: FREE100 video generation rewire + onboarding flow)
+
+---
+
+## [2026-05-09] Wave 16 — FREE100 RaaS Dashboard Full-Flow (Phases 01 + 04)
+
+**Summary (vi):** Khép kín FREE100 (MASTER tier) end-to-end UX. Phase 01 (P0.1): rewrite `/dashboard/videos/new` từ HeyGen sang Inngest `videoGenerate` workflow + SSE live progress (parse/tts/video/poll/download/mux/done) + native video player. Phase 04 (P1.2): `/dashboard/onboarding` 3-step guided flow cho MASTER tier (BYOK setup giữ nguyên cho PREMIUM/ENTERPRISE), auto-install SOP `video-generation-starter`, migration 0098 backfill `onboarding_completed_at` cho existing MASTER users (julianday TEXT→unix-ms). Phases 02 (Distribution UI) + 03 (Telegram channel) deferred. 4 critical bugs caught + fixed during code review: engine_missions schema (`params` not `tenant_id`/`input`), SSE auth (Better Auth cookie fallback for browser EventSource), migration column case (`createdAt`), i18n missing keys.
+
+**Summary (en):** Closed end-to-end UX gap for FREE100 (MASTER tier). Phase 01 rewires video generation UI from deprecated HeyGen path to Inngest `videoGenerate` workflow with SSE live progress consumer and native HTML5 video player. Phase 04 ships `/dashboard/onboarding` 3-step guided flow (BYOK preserved for PREMIUM/ENTERPRISE), auto-installs starter SOP template on user creation via auto-handover, and adds D1 migration 0098 to backfill `onboarding_completed_at` for existing MASTER users. Phases 02 (Distribution UI) + 03 (Telegram channel) deferred. Code review caught 4 critical bugs: `engine_missions` schema mismatch (`params` JSON not `tenant_id`/`input`), SSE auth incompatibility with browser EventSource (added Better Auth cookie fallback to `validateMissionApiKey`), migration column case (`"user"."createdAt"` + ISO TEXT → unix-ms via julianday), missing i18n keys (`dashboard.videos.steps.{parse,tts,video,poll,download,mux,done}`).
+
+### Phase 01 — Video Generation Rewire (HeyGen → Inngest + SSE)
+- New Server Action: `src/app/actions/video-generate-action.ts` (Zod, auth, atomic `reserveVideoSlot`, D1 insert, Inngest emit, slot release on insert error)
+- New forest helper: `src/forest/missions/emit-video-generate.ts` (typed `inngest.send('video/generate.requested')`)
+- New components: `ai-prompt-form.tsx`, `render-progress.tsx` (SSE consumer with `statusRef`), `video-player.tsx`
+- HeyGen route untouched (Wave 17 cleanup)
+- 13 unit tests (action incl. DB_ERROR + quota-release + form)
+
+### Phase 04 — FREE100 (MASTER) Onboarding
+- New route `/dashboard/onboarding` — 3-step status, auto-completes when all done
+- Dashboard MASTER redirect: `tier === 'MASTER' && !onboarding_completed_at` → onboarding
+- New SOP template: `src/lib/sop/seeds/playbooks/content/video-generation-starter.ts`
+- New helper: `src/tree/handover/install-starter-sop.ts` (idempotent, non-blocking)
+- New Server Action: `complete-onboarding-action.ts` (inspects `updateError`)
+- D1 migration `0098-backfill-master-onboarding.sql`
+- 7 unit tests
+
+### Bugfixes during review (post-implementation, all 4 critical resolved)
+- Bug 1: `engine_missions` insert columns (`tenant_id`/`input` → `params` JSON)
+- Bug 2: SSE auth — `validateMissionApiKey` session-cookie fallback for browser EventSource
+- Bug 3: Migration 0098 ISO→unix-ms via `(julianday("createdAt") - 2440587.5) * 86400000`
+- Bug 4: i18n keys added in en.json + vi.json
+- M1 quota leak / M3 stale closure / M4 updateError check / M5 redundant revalidatePath
+
+### Verification
+- 2981/2981 tests pass; 0 TS errors; build exit 0; i18n validator: 0 missing keys
+- Plan files synced: `plans/260509-0839-raas-dashboard-wave16/`
+
+### Deferred (Wave 17)
+- Phase 02 Distribution UI + API; Phase 03 Telegram auto-post; E2E Playwright; HeyGen cleanup; M6 pre-existing API-key DB error swallow
 
 ---
 

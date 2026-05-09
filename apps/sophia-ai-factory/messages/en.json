@@ -780,10 +780,26 @@
         "graceEnds": "Grace period ends: {date}",
         "failedPayments": "{count} failed payments",
         "reasonLabel": "Reason:",
-        "current": { "title": "Account in Good Standing", "description": "Your subscription is active and up to date.", "action": "" },
-        "past_due": { "title": "Payment Past Due", "description": "A recent payment failed. Your service will be suspended if not resolved.", "action": "Pay Now" },
-        "delinquent": { "title": "Account Delinquent", "description": "Multiple payment failures detected. Service suspension is imminent.", "action": "Restore Service" },
-        "suspended": { "title": "Service Suspended", "description": "Your API access has been suspended due to non-payment.", "action": "Restore Service" }
+        "current": {
+          "title": "Account in Good Standing",
+          "description": "Your subscription is active and up to date.",
+          "action": ""
+        },
+        "past_due": {
+          "title": "Payment Past Due",
+          "description": "A recent payment failed. Your service will be suspended if not resolved.",
+          "action": "Pay Now"
+        },
+        "delinquent": {
+          "title": "Account Delinquent",
+          "description": "Multiple payment failures detected. Service suspension is imminent.",
+          "action": "Restore Service"
+        },
+        "suspended": {
+          "title": "Service Suspended",
+          "description": "Your API access has been suspended due to non-payment.",
+          "action": "Restore Service"
+        }
       }
     },
     "support": {
@@ -830,7 +846,14 @@
       "steps": {
         "script": "Script",
         "assets": "Assets",
-        "render": "Render"
+        "render": "Render",
+        "parse": "Parsing",
+        "tts": "Voiceover",
+        "video": "Video",
+        "poll": "Polling",
+        "download": "Downloading",
+        "mux": "Muxing",
+        "done": "Done"
       },
       "script": {
         "topic": "Topic",
@@ -871,6 +894,21 @@
         "title": "Video Not Found",
         "description": "This video does not exist or you don't have access.",
         "backToGallery": "Back to Gallery"
+      },
+      "generate": {
+        "subtitle": "Generate an AI video with a simple text prompt.",
+        "promptLabel": "Describe your video",
+        "promptPlaceholder": "E.g., Create a short TikTok about AI productivity tools for solo founders",
+        "missionCreated": "Video generation started",
+        "styleLabel": "Style",
+        "styleCasual": "Casual",
+        "styleCinematic": "Cinematic",
+        "styleEducational": "Educational",
+        "languageLabel": "Language",
+        "languageEn": "English",
+        "languageVi": "Vietnamese",
+        "submitting": "Generating...",
+        "submit": "Generate Video"
       }
     },
     "errors": {
@@ -1106,6 +1144,22 @@
       "thGross": "Gross",
       "thYourCut": "Your Cut",
       "thStatus": "Status"
+    },
+    "onboarding": {
+      "page_title": "Get Started with Sophia AI Factory",
+      "page_subtitle": "Complete 3 quick steps to unlock your first automated video.",
+      "progress": "{completed} of {total} steps completed",
+      "skip": "Skip onboarding",
+      "go_to_dashboard": "Go to Dashboard",
+      "step1_title": "Create Your First AI Video",
+      "step1_desc": "Generate a short AI avatar video using a text prompt. No skills required.",
+      "step1_cta": "Create Video",
+      "step2_title": "Connect a Distribution Channel",
+      "step2_desc": "Link TikTok, YouTube, Instagram or Telegram so your videos reach an audience automatically.",
+      "step2_cta": "Connect Channel",
+      "step3_title": "Publish Your First Video",
+      "step3_desc": "Distribute your video to all connected channels with one click.",
+      "step3_cta": "View Videos"
     }
   },
   "account": {
@@ -1301,7 +1355,15 @@
   "audience": "Audience",
   "general": "General",
   "template": "Template",
-  "status": "Status",
+  "status": {
+    "title": "Sophia AI Factory Status",
+    "operational": "All Systems Operational",
+    "degraded": "Degraded Performance",
+    "uptime90d": "90-day uptime",
+    "noData": "No data",
+    "pastIncidents": "Past Incidents",
+    "startedAt": "Started {date}"
+  },
   "progress": "Progress",
   "system_info": "System info",
   "id": "Id",
@@ -1741,15 +1803,6 @@
     "settings": "Settings",
     "replay_tour": "Replay tour",
     "sign_out": "Sign out"
-  },
-  "status": {
-    "title": "Sophia AI Factory Status",
-    "operational": "All Systems Operational",
-    "degraded": "Degraded Performance",
-    "uptime90d": "90-day uptime",
-    "noData": "No data",
-    "pastIncidents": "Past Incidents",
-    "startedAt": "Started {date}"
   },
   "privacy": {
     "meta_title": "Privacy Policy - Sophia AI Factory",

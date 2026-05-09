@@ -14,6 +14,7 @@ import { createMagicLinkToken } from '@/tree/handover/handover-magic-link';
 import { sendTierUpgradeEmail } from '@/tree/handover/handover-email-service';
 import { enqueueWelcomeEmail } from '@/forest/outbox/email-outbox';
 import { AGENCY_SOP_MAP, TIER_SOP_COUNTS } from '@/tree/handover/handover-types';
+import { installStarterSop } from '@/tree/handover/install-starter-sop';
 import type { AgencyType } from '@/tree/handover/handover-types';
 import type { Tier } from '@/seed/types';
 
@@ -148,6 +149,13 @@ export async function triggerAutoHandover(opts: AutoHandoverOptions): Promise<Au
     } catch (err) {
       logger.error('[AutoHandover] createCustomerUser failed', err instanceof Error ? err : undefined);
       return { handoverId: null, isNewCustomer: false, magicLink: null, sopsInstalled: [], skipped: true, skipReason: 'user_create_failed' };
+    }
+
+    // Auto-install starter SOP for MASTER-tier (FREE100) new users — non-blocking
+    if (tier === 'MASTER') {
+      installStarterSop(db, userId).catch((err) =>
+        logger.warn('[AutoHandover] installStarterSop failed (non-fatal)', { error: String(err) }),
+      );
     }
   }
 

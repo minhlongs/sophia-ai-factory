@@ -67,6 +67,12 @@ export default async function DashboardPage() {
   ]);
 
   const profile = profileResult.data as ProfileRow | null;
+
+  // MASTER-tier FREE100 users: redirect to guided onboarding until completed
+  if (tier === 'MASTER' && !profile?.onboarding_completed_at) {
+    redirect('/dashboard/onboarding');
+  }
+
   const apiKeys = (() => {
     try {
       const raw = profile?.api_keys;
