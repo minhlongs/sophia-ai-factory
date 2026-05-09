@@ -14,6 +14,7 @@ import {
   hashBackupCodesToJson,
 } from '@/seed/auth/mfa/totp-service';
 import { createServerClient } from '@/seed/db/client';
+import { decryptToken } from '@/lib/publishing/token-crypto';
 
 export const dynamic = 'force-dynamic';
 
@@ -51,7 +52,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'MFA already active' }, { status: 409 });
   }
 
-  const valid = verifyTotp(row.data.totp_secret_enc as string, parsed.data.code);
+  // Decrypt secret before verify (handles both new aes:* and legacy plaintext rows).
+  const secretPlain = await decryptToken(row.data.totp_secret_enc as string);
+  const valid = verifyTotp(secretPlain, parsed.data.code);
   if (!valid) {
     return NextResponse.json({ error: 'Invalid TOTP code' }, { status: 422 });
   }

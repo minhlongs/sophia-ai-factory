@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
+import { globalRateLimiter, getClientIdentifier, createRateLimitResponse } from '@/forest/middleware/rate-limiter';
 import { logger } from '@/seed/utils/logger-utility';
 
 export const dynamic = 'force-dynamic';
@@ -26,6 +27,12 @@ function getD1(): D1Database | null {
 export async function POST(req: NextRequest, { params }: RouteParams) {
   const user = await getCurrentUserFromHeaders(req.headers);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  // Cap test fires at 5/min per session — endpoint can be used as outbound
+  // probe / DoS amplifier. SSRF protection lives in sender.ts (must block
+  // private CIDR + 169.254.169.254). Defense-in-depth.
+  const rl = globalRateLimiter.checkLimit(getClientIdentifier(req), { intervalMs: 60_000, maxRequests: 5 });
+  if (!rl.allowed) return createRateLimitResponse(rl);
 
   const { id } = await params;
   const db = getD1();

@@ -10,6 +10,7 @@ import { z } from 'zod';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { verifyTotp } from '@/seed/auth/mfa/totp-service';
 import { createServerClient } from '@/seed/db/client';
+import { decryptToken } from '@/lib/publishing/token-crypto';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,7 +44,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'MFA not active' }, { status: 404 });
   }
 
-  const valid = verifyTotp(row.data.totp_secret_enc as string, parsed.data.code);
+  const secretPlain = await decryptToken(row.data.totp_secret_enc as string);
+  const valid = verifyTotp(secretPlain, parsed.data.code);
   if (!valid) {
     return NextResponse.json({ error: 'Invalid TOTP code' }, { status: 422 });
   }

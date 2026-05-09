@@ -32,6 +32,7 @@ import { batchIngestUsage } from '@/forest/usage-metering/aggregator';
 import { batchIngestionRequestSchema } from '@/lib/validation/services';
 import type { BatchUsageRecord, ApiKeyRecord } from '@/forest/usage-metering/types';
 import type { D1Response } from '@/seed/db/types';
+import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 
 /**
  * Validate API key and return associated user info
@@ -78,7 +79,10 @@ async function validateApiKey(apiKey: string | null): Promise<{
   }
 }
 
-export async function POST(request: NextRequest) {
+// Cap batch ingestion at 10 calls/minute per client (each call may carry up to
+// 1000 events). Heaviest write surface in /v1; without this an attacker holding
+// a leaked key can saturate D1 + quota counters.
+export const POST = withRateLimit(async function POST(request: NextRequest) {
   const requestId = `batch_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
 
   try {
@@ -176,7 +180,7 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+}, { addHeaders: true, config: { intervalMs: 60_000, maxRequests: 10 } });
 
 export async function OPTIONS(request: NextRequest) {
   return new NextResponse(null, {

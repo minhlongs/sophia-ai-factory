@@ -15,7 +15,17 @@ export const dynamic = 'force-dynamic';
 
 const POLL_INTERVAL_MS = 2000;
 const MAX_DURATION_MS = 5 * 60 * 1000;
+const HEARTBEAT_INTERVAL_MS = 15_000;
 const TERMINAL_STATUSES = new Set(['succeeded', 'failed', 'cancelled']);
+
+function safeParseResult(raw: string | null): unknown {
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return { _parse_error: true, raw: raw.slice(0, 200) };
+  }
+}
 
 interface MissionRow {
   id: string;
@@ -53,14 +63,21 @@ export async function GET(
   const stream = new ReadableStream({
     async start(controller) {
       const db = createServerClient();
+      let lastHeartbeat = Date.now();
 
-      // Send initial connected event
       controller.enqueue(encoder.encode(sseMessage('connected', { mission_id: id })));
 
       while (Date.now() - startTime < MAX_DURATION_MS) {
         await new Promise(res => setTimeout(res, POLL_INTERVAL_MS));
-
         if (request.signal.aborted) break;
+
+        // Heartbeat ping every HEARTBEAT_INTERVAL_MS so client EventSource
+        // knows the stream is alive even when no status changes occur.
+        const now = Date.now();
+        if (now - lastHeartbeat >= HEARTBEAT_INTERVAL_MS) {
+          controller.enqueue(encoder.encode(sseMessage('ping', { ts: now })));
+          lastHeartbeat = now;
+        }
 
         try {
           const { data } = await db
@@ -71,7 +88,7 @@ export async function GET(
             .single() as { data: MissionRow | null; error: unknown };
 
           if (!data) {
-            controller.enqueue(encoder.encode(sseMessage('error', { message: 'Mission not found' })));
+            controller.enqueue(encoder.encode(sseMessage('error', { code: 'not_found', message: 'Mission not found' })));
             break;
           }
 
@@ -79,7 +96,7 @@ export async function GET(
             id: data.id,
             command: data.command,
             status: data.status,
-            result: data.result ? JSON.parse(data.result) : null,
+            result: safeParseResult(data.result),
             error: data.error,
             credits_used: data.credits_used,
             updated_at: data.updated_at,
@@ -90,12 +107,16 @@ export async function GET(
             controller.enqueue(encoder.encode(sseMessage('done', { status: data.status })));
             break;
           }
-        } catch {
-          // DB error — keep polling
+        } catch (err) {
+          // Surface transient errors instead of silent swallow — client can
+          // decide to reconnect or surface UX. We continue polling.
+          controller.enqueue(encoder.encode(sseMessage('error', {
+            code: 'db_transient',
+            message: err instanceof Error ? err.message.slice(0, 200) : 'db error',
+          })));
         }
       }
 
-      // Timeout event
       if (Date.now() - startTime >= MAX_DURATION_MS) {
         controller.enqueue(encoder.encode(sseMessage('timeout', { message: 'Stream closed after 5 minutes' })));
       }

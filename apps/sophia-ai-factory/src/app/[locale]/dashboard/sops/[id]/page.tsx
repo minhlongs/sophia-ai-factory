@@ -83,6 +83,12 @@ export default async function SopDetailPage({ params }: Props) {
         </div>
       </div>
 
+      {/*
+        Pre-bind installationId to each server action so the arrow-wrapper does
+        not cross the RSC→Client boundary (Next.js 16 forbids passing non-
+        serializable closures). bind() returns a server-action-compatible
+        reference because the actions file is `'use server'`.
+      */}
       <SopDetailTabs
         installation={installation}
         runs={runs}
@@ -91,11 +97,11 @@ export default async function SopDetailPage({ params }: Props) {
         locale={locale}
         configSchema={template?.config_schema ?? null}
         configDefaults={template?.config_defaults ?? null}
-        onRunNow={() => runNowAction(id)}
-        onDelete={() => deleteInstallAction(id)}
-        onSavePlaybook={(v) => savePlaybookAction(id, v)}
-        onSaveConfig={(v) => saveConfigAction(id, v)}
-        onRegenSecret={() => regenSecretAction(id)}
+        onRunNow={runNowAction.bind(null, id)}
+        onDelete={deleteInstallAction.bind(null, id)}
+        onSavePlaybook={savePlaybookAction.bind(null, id)}
+        onSaveConfig={saveConfigAction.bind(null, id)}
+        onRegenSecret={regenSecretAction.bind(null, id)}
       />
     </div>
   );
