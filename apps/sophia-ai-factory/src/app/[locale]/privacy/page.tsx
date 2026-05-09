@@ -1,5 +1,7 @@
 import { getTranslations } from "next-intl/server";
 
+export const revalidate = 60;
+
 export const metadata = {
   title: "Privacy Policy - Sophia AI Factory",
   description: "How Sophia AI Factory collects, uses, and protects your data.",

@@ -5,6 +5,7 @@
  */
 
 import { redirect } from 'next/navigation';
+import nextDynamic from 'next/dynamic';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { createServerClient } from '@/seed/db/client';
 import { getUserTier } from '@/seed/db/get-user-tier';
@@ -15,10 +16,16 @@ import { DashboardHeroGreeting } from './components/dashboard-hero-greeting';
 import { DashboardSetupSteps } from './components/dashboard-setup-steps';
 import { DashboardReturningUser } from './components/dashboard-returning-user';
 import { DashboardFirstCampaignCta } from './components/dashboard-first-campaign-cta';
-import { OnboardingTourModal } from './components/onboarding-tour-modal';
+// Round-11 F-PC-4: split heavy on-demand modal+banner+widget out of initial bundle.
+// Onboarding tour is 243 LOC; only renders on first-time MASTER session.
+const OnboardingTourModal = nextDynamic(() =>
+  import('./components/onboarding-tour-modal').then(m => ({ default: m.OnboardingTourModal })),
+);
+const MasterWelcomeBanner = nextDynamic(() =>
+  import('./components/master-welcome-banner').then(m => ({ default: m.MasterWelcomeBanner })),
+);
 import { OnboardingStatusWidget } from './components/onboarding-status-widget';
 import { MissionControlWidget } from '@/forest/components/dashboard/mission-control-widget';
-import { MasterWelcomeBanner } from './components/master-welcome-banner';
 import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';

@@ -1,5 +1,7 @@
 import { getTranslations } from "next-intl/server";
 
+export const revalidate = 60;
+
 export const metadata = {
   title: "Terms of Service - Sophia AI Factory",
   description: "Terms and conditions for using Sophia AI Factory — AI Video SaaS Platform.",
