@@ -86,8 +86,8 @@ describe('buildCSPHeader', () => {
     it('is a semicolon-separated string', () => {
       const header = buildCSPHeader()
       const parts = header.split('; ')
-      // 12 directives defined in cspConfig
-      expect(parts.length).toBe(12)
+      // 13 directives defined in cspConfig (includes report-uri from Wave 5)
+      expect(parts.length).toBe(13)
     })
 
     it('nonce directive is well-formed hex string of 32 chars', () => {

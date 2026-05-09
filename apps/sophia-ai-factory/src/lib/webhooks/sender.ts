@@ -27,10 +27,14 @@ export async function sendWebhook(
 ): Promise<SendResult> {
   const deliveryId = crypto.randomUUID();
   const body = JSON.stringify(payload);
+  // Stripe-style replay protection: timestamp prefix in the signed payload.
+  // Receivers must reject deliveries where |now - timestamp| exceeds tolerance.
+  const timestamp = Math.floor(Date.now() / 1000).toString();
+  const signedPayload = `${timestamp}.${body}`;
 
   let signature: string;
   try {
-    signature = await sign(endpoint.secret ?? '', body);
+    signature = await sign(endpoint.secret ?? '', signedPayload);
   } catch (err) {
     return { success: false, error: `Signing failed: ${err instanceof Error ? err.message : String(err)}` };
   }
@@ -45,6 +49,7 @@ export async function sendWebhook(
       headers: {
         'Content-Type': 'application/json',
         'X-Sophia-Signature': signature,
+        'X-Sophia-Timestamp': timestamp,
         'X-Sophia-Event': event,
         'X-Sophia-Delivery': deliveryId,
       },

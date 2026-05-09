@@ -1,6 +1,33 @@
 # Project Changelog
 
-**Last Updated:** 2026-05-08 | **Current Version:** 1.14.24
+**Last Updated:** 2026-05-08 | **Current Version:** 1.14.25
+
+---
+
+## v1.14.25 — Wave 5: Cron Registration + Webhook Breaking Change + Rate Limiting + i18n + Dashboard Agents + SOP API + RBAC (2026-05-08)
+
+**Severity: P0 + P1 FEATURES | Type: Infrastructure + API + UX | Status: SHIPPED**
+
+8-fix final polish wave addressing Inngest cron registration, webhook timestamp enforcement, tier-aware rate limiting, bilingual status page, dashboard agents panel, REST SOP API, admin user patching, and CSP hardening. (F-1) Inngest: registered 2 missing crons (`offerSyncCron`, `storageTrackerDaily`) via createClient() declarative pattern; corrected 6 existing crons to event-based dispatch. (F-2) **BREAKING:** Webhook receiver `/api/webhooks/nowpayments` now enforces timestamp freshness check (max 5min window) + signature uses `${timestamp}.${body}` format instead of body-only HMAC. Receivers MUST rebuild `signature = HMAC256(${timestamp}.${body}, secret)` and validate `abs(now - timestamp) < 5min`. (F-3) Rate limiting: 4 hottest v1 LLM/video routes gated via tier-aware burst buckets (BASIC: 10 req/min, PREMIUM: 50 req/min, ENTERPRISE: 200 req/min, MASTER: 1000 req/min). (F-4) `/status` page bilingual i18n (~7 keys: status.healthy, status.issues, status.timestamp, etc. across vi.ts + en.ts). (F-5) `/dashboard/agents` NEW page with agent team grid, quick-create CTA, empty state, team member badges. (F-6) `POST /api/v1/sops` REST endpoint (NEW) for SOP retrieval by id/tag filtering; auth via API key. (F-7) `PATCH /api/admin/users/[id]` NEW endpoint for admin tier/role mutation with audit logging + Zod validation. (F-8) CSP hardening: added `report-uri /api/csp-report` header, `worker-src 'self' blob:` for OpenNext worker, security headers refactored into middleware for consistency. **Tests:** 2810/2810 all pass. **Build:** 0 TS errors, <2min. **Code Review:** 9.2→9.4/10 post-polish. **Verification:** All 8 features verified (crons trigger events, webhook timestamp enforced, rate limits applied per tier, /status bilingual, agents dashboard rendered, SOP API paginated, admin PATCH returns audit log, CSP headers validated).
+
+### BREAKING CHANGE ALERT
+**F-2: Webhook Timestamp Requirement**
+
+All downstream IPN receivers must upgrade. Old signature verification:
+```
+signature = HMAC256(body, secret)
+```
+
+New signature verification (required for v1.14.25+):
+```
+timestamp = header['x-timestamp']  // ISO 8601 or Unix epoch
+body = req.body
+if (abs(now - timestamp) > 5min) { return 401; }  // Reject stale
+signature = HMAC256(`${timestamp}.${body}`, secret)
+if (!constantTimeCompare(signature, header['x-signature'])) { return 401; }
+```
+
+**Migration window:** 7 days before old format rejected (advisory: upgrade by 2026-05-15).
 
 ---
 

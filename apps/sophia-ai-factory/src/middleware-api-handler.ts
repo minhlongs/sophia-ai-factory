@@ -28,6 +28,10 @@ export async function handleApiRoute(request: NextRequest, pathname: string, sta
     }
   }
 
+  // Tier-aware tighter limits live inside individual routes via @/forest/middleware/rate-limit-wrapper.
+  // The base IP-bucket here is the first line of defense for all `/api/*`; routes that incur LLM/video
+  // cost (agent-chat, missions POST, campaigns/create, factory/url-to-revenue) layer additional
+  // `withRateLimit` above this baseline to cap per-tenant per-tier abuse.
   const identifier = getClientIdentifier(request)
   let rateLimitConfig = RATE_LIMITS.api as typeof RATE_LIMITS.api | typeof RATE_LIMITS.auth | typeof RATE_LIMITS.webhook | typeof RATE_LIMITS.discovery
 

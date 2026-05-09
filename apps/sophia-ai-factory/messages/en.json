@@ -1702,5 +1702,14 @@
     "settings": "Settings",
     "replay_tour": "Replay tour",
     "sign_out": "Sign out"
+  },
+  "status": {
+    "title": "Sophia AI Factory Status",
+    "operational": "All Systems Operational",
+    "degraded": "Degraded Performance",
+    "uptime90d": "90-day uptime",
+    "noData": "No data",
+    "pastIncidents": "Past Incidents",
+    "startedAt": "Started {date}"
   }
 }

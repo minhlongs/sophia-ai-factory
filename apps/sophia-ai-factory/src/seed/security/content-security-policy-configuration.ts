@@ -56,8 +56,12 @@ export const cspConfig = {
     'https://www.youtube.com',
   ],
 
-  // Workers: self only
-  workerSrc: ["'self'"],
+  // Workers: self + blob: (OpenNext worker chunks load from blob URLs)
+  workerSrc: ["'self'", 'blob:'],
+
+  // Report-uri: where browsers POST CSP violation reports.
+  // /api/csp-report is a public lightweight logger.
+  reportUri: ['/api/csp-report'],
 
   // Frame ancestors: none (clickjacking protection)
   frameAncestors: ["'none'"],
@@ -106,6 +110,7 @@ export function buildCSPHeader(nonce?: string): string {
     `base-uri ${cspConfig.baseUri.join(' ')}`,
     `form-action ${cspConfig.formAction.join(' ')}`,
     `object-src ${cspConfig.objectSrc.join(' ')}`,
+    `report-uri ${cspConfig.reportUri.join(' ')}`,
   ];
 
   return directives.join('; ');

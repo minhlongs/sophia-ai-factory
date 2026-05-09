@@ -1702,5 +1702,14 @@
     "settings": "Settings",
     "replay_tour": "Replay tour",
     "sign_out": "Sign out"
+  },
+  "status": {
+    "title": "Trạng Thái Sophia AI Factory",
+    "operational": "Tất Cả Hệ Thống Hoạt Động",
+    "degraded": "Hiệu Suất Suy Giảm",
+    "uptime90d": "Uptime 90 ngày",
+    "noData": "Không có dữ liệu",
+    "pastIncidents": "Sự Cố Đã Xử Lý",
+    "startedAt": "Bắt đầu {date}"
   }
 }

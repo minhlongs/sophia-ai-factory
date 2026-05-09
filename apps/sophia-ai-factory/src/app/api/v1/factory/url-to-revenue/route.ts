@@ -12,6 +12,7 @@ import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { startUrlToRevenue } from '@/lib/factory/url-to-revenue';
 import { logger } from '@/seed/utils/logger-utility';
+import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,7 +26,9 @@ const RequestSchema = z.object({
   trackingId: z.string().optional(),
 });
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+// Tight tier-aware rate limit: video gen is expensive (Replicate/HeyGen costs).
+// 10/min hard ceiling protects from accidental loops; tier-config can lift higher.
+export const POST = withRateLimit(async function POST(request: NextRequest): Promise<NextResponse> {
   const user = await getCurrentUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -63,4 +66,4 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
     return NextResponse.json({ error: 'Failed to start job' }, { status: 500 });
   }
-}
+}, { addHeaders: true, config: { intervalMs: 60_000, maxRequests: 10 } });

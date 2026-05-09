@@ -17,6 +17,8 @@ import {
   payoutBatcher,
   reconciliationCron,
   urlRevenueVideoHandler,
+  offerSyncCron,
+  storageTrackerDaily,
 } from "@/forest/inngest/functions/index";
 
 export const { GET, POST, PUT } = serve({
@@ -42,5 +44,8 @@ export const { GET, POST, PUT } = serve({
     reconciliationCron,
     // URL-to-Revenue (Phase 3 wiring)
     urlRevenueVideoHandler,
+    // Cron jobs previously defined but missing from registration
+    offerSyncCron,
+    storageTrackerDaily,
   ],
 });
