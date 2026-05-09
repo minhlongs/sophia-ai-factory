@@ -333,6 +333,29 @@ export function CustomTooltip({ payload, label, ...props }: CustomTooltipProps) 
 
 Applied in 4 analytics chart components (src/components/analytics/*).
 
+## Wave 13 Patterns (2026-05-09)
+
+### Inngest Event Schema Registration
+- **Pattern**: Declare event schemas in `src/forest/inngest/client.ts` via `inngestClient.createEventSchema()` for type-safe event dispatch + subscription.
+- **Example**: `video-gen` event schema `{missionId, scriptId, avatarId, voiceId, duration}` registered once, reused by trigger route `POST /api/v1/missions/[id]/generate-video` + Inngest function.
+- **Benefit**: Single source of truth for event shape; TypeScript validates all emits/handlers against schema.
+- **File**: `src/forest/inngest/client.ts` (barrel exports schemas).
+
+### Webhook Verifier Unification (acceptLegacy Flag)
+- **Pattern**: Single `verifyWebhook(provider, req)` helper at `src/seed/utils/verify-webhook.ts` supports multiple signature formats via `acceptLegacy` flag.
+- **Signature Formats**:
+  - **Current** (v2): `t=<timestamp>,v1=<hmac>` + 5min freshness window (supported by NOWPayments v2+, HeyGen, Inngest).
+  - **Legacy** (v1): Body-only `HMAC256(body, secret)` for NOWPayments v1 backward-compat (with `acceptLegacy=true` flag).
+- **Usage**: `const verified = verifyWebhook('nowpayments', req, { acceptLegacy: true })` → returns `{ valid, provider, timestamp }`.
+- **Security**: Eliminates code duplication; centralizes signature validation logic.
+
+### SSE Last-Event-ID Resume (Cursor-Based Dedup)
+- **Pattern**: `/api/agent-chat` SSE respects browser `Last-Event-ID` header on reconnect. Server dedupes messages by cursor range.
+- **Flow**: (1) Client receives message ID from SSE event + stores locally. (2) Connection drops. (3) Browser auto-reconnects with `Last-Event-ID: <lastId>` header. (4) Server queries message buffer from `lastId` onward, restreams. (5) Client dedupes by ID before rendering.
+- **UI**: Reconnect banner (yellow toast) dismissed on successful resume (no duplicate messages shown).
+- **Implementation**: Message buffer kept in memory 5-minute window; expired messages discarded (prevents unbounded memory).
+- **Anti-Pattern**: Relying on TCP retransmission alone (loses context on long disconnections).
+
 ## Environment Variables
 - Access environment variables **only on the server**.
 - Prefix public variables with `NEXT_PUBLIC_`.

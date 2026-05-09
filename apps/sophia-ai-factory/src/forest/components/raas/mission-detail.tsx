@@ -4,12 +4,18 @@
  * Mission Detail
  *
  * Displays single mission: PEV pipeline status, execution log, result, MCU cost breakdown.
+ * Subscribes to SSE stream (/api/v1/missions/[id]/stream) for live status updates.
+ * EventSource handles Last-Event-ID reconnect automatically; we show a toast banner
+ * if the connection drops for >5 s.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { toBcp47 } from '@/lib/i18n/to-bcp47';
 import type { MissionStatus } from '@/seed/types/raas';
+
+const RECONNECT_TOAST_DELAY_MS = 5_000;
+const TERMINAL_STATUSES = new Set<string>(['succeeded', 'failed', 'cancelled', 'completed']);
 
 interface MissionData {
   id: string;
@@ -25,6 +31,17 @@ interface MissionData {
 
 interface MissionDetailResponse {
   mission?: MissionData;
+}
+
+// Shape of data in SSE 'status' events from /api/v1/missions/[id]/stream
+interface SseStatusPayload {
+  id: string;
+  status: string;
+  result: unknown;
+  error: string | null;
+  credits_used: number;
+  updated_at: number;
+  completed_at: number | null;
 }
 
 const PEV_STAGES: { key: MissionStatus; icon: string }[] = [
@@ -47,7 +64,12 @@ export function MissionDetail({ missionId }: Props) {
   const [loading, setLoading] = useState(true);
   const [retrying, setRetrying] = useState(false);
   const [retryError, setRetryError] = useState<string | null>(null);
+  const [reconnecting, setReconnecting] = useState(false);
 
+  // Ref for reconnect toast timer so we can clear it on reconnect
+  const disconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Initial fetch to populate the mission card quickly before SSE arrives
   useEffect(() => {
     fetch(`/api/raas/missions/${missionId}`)
       .then(r => r.json() as Promise<MissionDetailResponse | MissionData>)
@@ -58,6 +80,65 @@ export function MissionDetail({ missionId }: Props) {
       })
       .catch(() => setLoading(false));
   }, [missionId]);
+
+  // SSE subscription for live updates.
+  // EventSource sets Last-Event-ID header automatically on reconnect when the
+  // server emits `id:` lines — so reconnect dedup is handled server-side.
+  useEffect(() => {
+    // Only stream non-terminal missions
+    if (mission && TERMINAL_STATUSES.has(mission.status)) return;
+
+    const es = new EventSource(`/api/v1/missions/${missionId}/stream`);
+
+    function clearDisconnectTimer() {
+      if (disconnectTimerRef.current) {
+        clearTimeout(disconnectTimerRef.current);
+        disconnectTimerRef.current = null;
+      }
+    }
+
+    es.addEventListener('status', (e: MessageEvent<string>) => {
+      clearDisconnectTimer();
+      setReconnecting(false);
+      try {
+        const payload = JSON.parse(e.data) as SseStatusPayload;
+        setMission(prev => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            status: payload.status as MissionStatus,
+            mcu_cost: payload.credits_used ?? prev.mcu_cost,
+            completed_at: payload.completed_at
+              ? new Date(payload.completed_at).toISOString()
+              : prev.completed_at,
+          };
+        });
+      } catch {
+        // malformed SSE payload — ignore
+      }
+    });
+
+    es.addEventListener('done', () => {
+      clearDisconnectTimer();
+      setReconnecting(false);
+      es.close();
+    });
+
+    es.onerror = () => {
+      // Show reconnecting toast after delay — EventSource retries automatically
+      if (!disconnectTimerRef.current) {
+        disconnectTimerRef.current = setTimeout(() => {
+          setReconnecting(true);
+        }, RECONNECT_TOAST_DELAY_MS);
+      }
+    };
+
+    return () => {
+      clearDisconnectTimer();
+      es.close();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [missionId, loading]);
 
   if (loading) {
     return <div className="space-y-4">{[1, 2, 3].map(i => <div key={i} className="h-24 bg-muted motion-safe:animate-pulse rounded-xl" />)}</div>;
@@ -70,6 +151,14 @@ export function MissionDetail({ missionId }: Props) {
 
   return (
     <div className="space-y-6">
+      {/* Reconnecting toast */}
+      {reconnecting && (
+        <div role="status" aria-live="polite" className="flex items-center gap-2 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700 px-4 py-2 text-sm text-yellow-800 dark:text-yellow-300">
+          <span className="material-symbols-outlined text-base animate-spin">refresh</span>
+          {t('sse_reconnecting')}
+        </div>
+      )}
+
       {/* Header */}
       <div className="bg-card rounded-xl border border-border p-5">
         <h2 className="text-lg font-semibold text-foreground">{mission.title}</h2>

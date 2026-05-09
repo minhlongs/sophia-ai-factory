@@ -3,74 +3,69 @@
  *
  * Utility for verifying webhook signatures from external services.
  * Supports HMAC-SHA256 signature verification.
+ *
+ * Migrated (Wave 13 G-I3): inline HMAC replaced with unified verifyWebhook
+ * and signWebhook from lib/webhooks/signature. acceptLegacy=true for 1 release
+ * cycle (~14 days from Wave 13) to allow bare-hex callers to migrate.
+ *
+ * NOTE: Both functions are now async (Web Crypto API, edge-runtime safe).
  */
 
-import crypto from 'crypto';
+import { signWebhook, verifyWebhook } from '@/lib/webhooks/signature';
 
 /**
- * Verify HMAC-SHA256 webhook signature
+ * Verify HMAC-SHA256 webhook signature.
  *
- * @param signature - Webhook signature from header
- * @param timestamp - Timestamp from header
+ * Accepts:
+ *   - Unified header: `t=<unix>,v1=<hex>` (signature param only, timestamp ignored)
+ *   - Legacy split: `v1=<hex>` + separate timestamp param (reconstructed internally)
+ *   - Legacy bare-hex: 64-char hex (acceptLegacy=true)
+ *
+ * @param signature - Webhook signature from header (`v1=<hex>` or `t=<ts>,v1=<hex>`)
+ * @param timestamp - Timestamp string from header (used when signature is `v1=<hex>`)
  * @param secret - Webhook secret key
  * @param tolerance - Tolerance in seconds (default: 5 minutes)
  * @returns true if signature is valid
  */
-export function verifyWebhookSignature(
+export async function verifyWebhookSignature(
   signature: string,
   timestamp: string,
   secret: string,
   tolerance: number = 300
-): boolean {
-  try {
-    // Check timestamp freshness
-    const now = Math.floor(Date.now() / 1000);
-    const timestampNum = parseInt(timestamp, 10);
-
-    if (isNaN(timestampNum) || Math.abs(now - timestampNum) > tolerance) {
-      return false;
-    }
-
-    // Verify signature (format: v1=signature)
-    const [version, sig] = signature.split('=');
-    if (version !== 'v1' || !sig) {
-      return false;
-    }
-
-    // Create expected signature
-    const signedPayload = `${timestamp}.${sig}`;
-    const expectedSignature = crypto
-      .createHmac('sha256', secret)
-      .update(signedPayload)
-      .digest('hex');
-
-    // Constant-time comparison
-    return crypto.timingSafeEqual(
-      Buffer.from(sig, 'hex'),
-      Buffer.from(expectedSignature, 'hex')
-    );
-  } catch {
-    return false;
+): Promise<boolean> {
+  // Unified header path — delegate directly
+  if (signature.includes('t=') && signature.includes('v1=')) {
+    return verifyWebhook('', signature, secret, {
+      toleranceSec: tolerance,
+      acceptLegacy: true,
+    });
   }
+
+  // Legacy split-header path: reconstruct unified header
+  const ts = parseInt(timestamp, 10);
+  if (isNaN(ts)) return false;
+  const unifiedHeader = `t=${ts},${signature}`;
+  // body is unknown at this layer — pass empty string; HMAC was over `${ts}.${body}`
+  // Callers using split-header must migrate to verifyWebhook with full body.
+  return verifyWebhook('', unifiedHeader, secret, {
+    toleranceSec: tolerance,
+    acceptLegacy: true,
+  });
 }
 
 /**
- * Generate HMAC signature for webhook
+ * Generate HMAC signature for outbound webhook.
+ * Returns unified `t=<unix>,v1=<hex>` header string.
  *
- * @param payload - Webhook payload string
+ * @param payload - Webhook payload string (body)
  * @param secret - Webhook secret key
- * @returns Signature string (v1=...)
+ * @param timestamp - Unix seconds (defaults to now)
+ * @returns Unified signature header string
  */
-export function generateWebhookSignature(
+export async function generateWebhookSignature(
   payload: string,
   secret: string,
   timestamp: number = Math.floor(Date.now() / 1000)
-): string {
-  const signedPayload = `${timestamp}.${payload}`;
-  const signature = crypto
-    .createHmac('sha256', secret)
-    .update(signedPayload)
-    .digest('hex');
-
-  return `v1=${signature}`;
+): Promise<string> {
+  return signWebhook(payload, secret, timestamp);
 }

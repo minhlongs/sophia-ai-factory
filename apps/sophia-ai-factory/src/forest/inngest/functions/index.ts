@@ -31,3 +31,6 @@ export { storageTrackerDaily } from '@/forest/quota/storage-tracker-cron';
 
 // Master tier: URL-to-Revenue video pipeline
 export { urlRevenueVideoHandler } from './url-revenue-video-handler';
+
+// Wave 13 I2: Mission video generation
+export { videoGenerate } from './video-generate';

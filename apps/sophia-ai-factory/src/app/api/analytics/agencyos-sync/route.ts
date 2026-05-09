@@ -24,7 +24,7 @@ interface SyncRequestBody {
   includeOverageEvents?: boolean; includeTierHistory?: boolean
 }
 
-function verifyAgencyOSAuth(request: NextRequest): boolean {
+async function verifyAgencyOSAuth(request: NextRequest): Promise<boolean> {
   const signature = request.headers.get('x-agencyos-signature')
   const timestamp = request.headers.get('x-agencyos-timestamp')
   if (!signature || !timestamp) { logger.warn('[AgencyOS Sync] Missing auth headers'); return false }
@@ -35,7 +35,7 @@ function verifyAgencyOSAuth(request: NextRequest): boolean {
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now()
-  if (!verifyAgencyOSAuth(request)) return NextResponse.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, { status: 401 })
+  if (!await verifyAgencyOSAuth(request)) return NextResponse.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, { status: 401 })
 
   let body: SyncRequestBody
   try { body = await request.json() } catch { return NextResponse.json({ error: 'Invalid JSON body', code: 'INVALID_BODY' }, { status: 400 }) }

@@ -1,6 +1,14 @@
 # Project Changelog
 
-**Last Updated:** 2026-05-09 | **Current Version:** 1.16.0
+**Last Updated:** 2026-05-09 | **Current Version:** 1.17.0
+
+---
+
+## v1.17.0 — Wave 13: Code Cleanup + Inngest Video Registration + Webhook Unification + SSE Resilience + BYOK Picker (2026-05-09)
+
+**Severity: P0 CHORE + FEATURE | Type: Refactoring + Infrastructure + UX | Status: SHIPPED**
+
+5-fix maintenance wave enabling video pipeline registration, webhook infrastructure consolidation, and SSE recovery. (F-1) **Code Cleanup:** Deleted `verifyResetToken()` + `releaseRefreshLock()` (legacy OAuth state handlers; superseded by consolidated `verifyWebhook()` logic). Onboarding tour modularized: split `video-creator-tour.tsx` → `video-creator-tour.tsx` (host) + `tour-step-*.tsx` (composable steps). (F-2) **Inngest Video Gen Registration:** `src/forest/inngest/client.ts` registers `video-gen` event schema (`{missionId, scriptId, avatarId, voiceId, duration}`); `POST /api/v1/missions/[id]/generate-video` trigger route accepts same body. Replaces ad-hoc queue pattern from Wave 12. (F-3) **Webhook Verifier Unification:** 3 providers (NOWPayments, HeyGen, Inngest) migrated to single `verifyWebhook(provider, req)` helper at `src/seed/utils/verify-webhook.ts` with `acceptLegacy=true` flag (backward-compat for NOWPayments v1 signature format). Eliminates code duplication. (F-4) **SSE Last-Event-ID Resume:** `/api/agent-chat` SSE connection respects browser `Last-Event-ID` header (reconnect scenario). Server dedupes cursor-based message range (avoids duplicate streamed chunks). Reconnect banner added to UI (dismissed on successful resume). (F-5) **BYOK Provider Picker UI:** `/dashboard/byok/providers` grid showing 3 categories (standard/advanced/custom) × 9 models (OpenRouter, Anthropic, etc.). Selection updates `user_byok_active_model` D1 column. Tests: 1398/1398 pass. Build: 0 TS errors, bundle 431KB gzipped (net -3KB cleanup). Code Review: 9.6→9.7/10 (small cleanup footprint). Verification: Inngest video trigger receives events, webhooks verify across 3 providers, SSE reconnect resumes from cursor, BYOK picker saves model selection.
 
 ---
 

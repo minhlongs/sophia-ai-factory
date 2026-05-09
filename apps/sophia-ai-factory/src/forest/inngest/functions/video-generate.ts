@@ -26,14 +26,6 @@ import { WanVideoClient } from '@/lib/video/wan21-client';
 import { FishSpeechClient } from '@/lib/video/fish-speech-client';
 import type { VideoGenerateRequestedEvent } from '@/lib/video/types';
 
-/**
- * Use shared inngest client with a cast to bypass strict event schema.
- * 'video/generate.requested' is not registered in client.ts yet (deferred to next wave).
- * Registration deferred — keep this function unregistered in inngest/index.ts.
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const videoInngest = inngest as unknown as { createFunction: (...args: any[]) => any };
-
 const POLL_INTERVAL_MS = 20_000; // 20s between polls
 const POLL_MAX_ATTEMPTS = 18;    // 18 × 20s = 6 min max wait
 
@@ -66,25 +58,10 @@ async function downloadToBuffer(url: string): Promise<ArrayBuffer> {
   return res.arrayBuffer();
 }
 
-interface InngestStepTools {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  run<T>(name: string, fn: () => Promise<T>): Promise<T>;
-  sleep(name: string, ms: number): Promise<void>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  sendEvent(name: string, event: unknown): Promise<any>;
-}
-
-interface InngestFunctionContext {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  event: { data: any };
-  step: InngestStepTools;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
-export const videoGenerate = videoInngest.createFunction(
+export const videoGenerate = inngest.createFunction(
   { id: 'video-generate', retries: 2 },
   { event: 'video/generate.requested' },
-  async ({ event, step }: InngestFunctionContext) => {
+  async ({ event, step }) => {
     const data = event.data as VideoGenerateRequestedEvent;
 
     // ── Step 1: Parse Input ────────────────────────────────────────────────

@@ -74,6 +74,18 @@ type UrlRevenueVideoRequestedEvent = {
   };
 };
 
+type VideoGenerateRequestedEvent = {
+  data: {
+    missionId: string;
+    userId: string;
+    prompt: string;
+    voiceoverText?: string;
+    aspectRatio?: '16:9' | '9:16' | '1:1';
+    durationSec?: number;
+    language?: 'en' | 'vi';
+  };
+};
+
 type Events = {
   "campaign.created": CampaignCreatedEvent;
   "test/hello.world": { data: Record<string, unknown> };
@@ -90,6 +102,8 @@ type Events = {
   // Publishing pipeline events (Phase 10)
   "publish.scheduled": VideoJobPayload;
   "publish.token.refresh": { data: Record<string, never> };
+  // Mission video generation (Wave 13 I2)
+  "video/generate.requested": VideoGenerateRequestedEvent;
   // Payout pipeline events (Phase 13)
   "conversion.created": ConversionCreatedEvent;
   "commission.matured": CommissionMaturedEvent;

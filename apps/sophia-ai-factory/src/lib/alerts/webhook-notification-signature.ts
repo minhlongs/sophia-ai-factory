@@ -1,43 +1,62 @@
 /**
  * HMAC-SHA256 signature helpers for Webhook Notification Service
  * @module alerts/webhook-notification-signature
+ *
+ * Migrated (Wave 13 G-I3): inbound verify now delegates to unified
+ * verifyWebhook from lib/webhooks/signature. acceptLegacy=true for
+ * backwards compat during 1 release cycle (~14 days from Wave 13).
+ * Outbound generate uses signWebhook and returns the `t=<ts>,v1=<hex>` header.
  */
 
-import crypto from 'crypto'
+import { signWebhook, verifyWebhook } from '@/lib/webhooks/signature'
 import type { WebhookPayload } from './webhook-notification-types'
 
-export function generateWebhookSignature(
+/**
+ * Generate outbound signature header.
+ * Returns { signature: "t=<ts>,v1=<hex>", timestamp: ts }
+ */
+export async function generateWebhookSignature(
   payload: WebhookPayload,
   secret: string,
   timestamp?: number
-): { signature: string; timestamp: number } {
+): Promise<{ signature: string; timestamp: number }> {
   const ts = timestamp || Math.floor(Date.now() / 1000)
-  const signedPayload = `${ts}.${JSON.stringify(payload)}`
-  const signature = crypto.createHmac('sha256', secret).update(signedPayload).digest('hex')
-  return { signature: `v1=${signature}`, timestamp: ts }
+  const body = JSON.stringify(payload)
+  const signature = await signWebhook(body, secret, ts)
+  return { signature, timestamp: ts }
 }
 
-export function verifyWebhookSignature(
+/**
+ * Verify inbound webhook signature.
+ *
+ * Accepts either:
+ *   - New unified header: `t=<ts>,v1=<hex>` (signature param)
+ *   - Legacy split header: `v1=<hex>` + separate timestamp param
+ *
+ * For the legacy split case, reconstructs the unified header so that
+ * verifyWebhook can handle it transparently.
+ *
+ * acceptLegacy=true: bare-hex format also accepted.
+ */
+export async function verifyWebhookSignature(
   signature: string,
   payload: string,
   timestamp: number,
   secret: string,
   tolerance = 300
-): boolean {
-  try {
-    const now = Math.floor(Date.now() / 1000)
-    if (Math.abs(now - timestamp) > tolerance) return false
-
-    const [version, sig] = signature.split('=')
-    if (version !== 'v1' || !sig) return false
-
-    const expectedSignature = crypto
-      .createHmac('sha256', secret)
-      .update(`${timestamp}.${payload}`)
-      .digest('hex')
-
-    return crypto.timingSafeEqual(Buffer.from(sig, 'hex'), Buffer.from(expectedSignature, 'hex'))
-  } catch {
-    return false
+): Promise<boolean> {
+  // If caller already passes unified `t=...,v1=...` header, delegate directly
+  if (signature.includes('t=') && signature.includes('v1=')) {
+    return verifyWebhook(payload, signature, secret, {
+      toleranceSec: tolerance,
+      acceptLegacy: true,
+    })
   }
+
+  // Legacy split header: reconstruct unified format for verifyWebhook
+  const unifiedHeader = `t=${timestamp},${signature}`
+  return verifyWebhook(payload, unifiedHeader, secret, {
+    toleranceSec: tolerance,
+    acceptLegacy: true,
+  })
 }
