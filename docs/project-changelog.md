@@ -1,7 +1,73 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-05-09 (Wave 16: FREE100 video generation rewire + onboarding flow)
+> **Last Updated:** 2026-05-09 (Wave 16: FREE100 video generation rewire + onboarding flow + distribution UI)
+
+---
+
+## [2026-05-09 PM] Wave 16 Phase 02 — Distribution UI + API (Gated)
+
+**Summary (vi):** Triển khai Distribution UI gated với NEXT_PUBLIC_DISTRIBUTE_ENABLED flag. `/dashboard/videos/[id]/distribute` page với channel multi-select + caption + scheduledAt. `POST /api/v1/videos/[id]/distribute` route (Zod validation, ownership check, rate limit) → `publishing_jobs` insert + `publish.scheduled` Inngest event. 8 files (components + page + route) + 2 test files (15 tests). Known issue: HeyGen videos (Phase 01) use external `videos.video_url`; `publishExecute.assertSafeVideoUrl()` whitelists R2 only → SSRF gap. Flag default OFF. Wave 17 must bridge HeyGen→R2 pipeline before flipping.
+
+**Summary (en):** Distribution UI and API gated behind `NEXT_PUBLIC_DISTRIBUTE_ENABLED` environment variable (default off). New `/dashboard/videos/[id]/distribute` Server Component with channel multi-select dropdown, optional caption field, and optional scheduledAt timestamp. Backend `POST /api/v1/videos/[id]/distribute` validates input with Zod, checks video ownership, applies rate limiting, inserts `publishing_jobs` row, emits `publish.scheduled` Inngest event. Code review fixes: client component conversion for `useTranslations` (was hardcoded "Distribute" English), `getUserChannels()` helper DRY refactor, env-flag documented as blocker. SSRF guardrail deviation: route uses raw D1 binding instead of canonical `createServerClient()` due to Wave 17 backlog swap. Critical guardrail: Phase 01 HeyGen videos use external video_url (not R2), but `publishExecute` SSRF check whitelists R2 hostnames only → pipeline gap. Feature hidden by default; Wave 17 must add HeyGen→R2 conversion before enabling public distribution.
+
+### Phase 02 — Distribution UI + API (Gated)
+
+**New Route:** `POST /api/v1/videos/[id]/distribute`
+- Zod validation: `{ channels: string[], caption?: string, scheduledAt?: timestamp }`
+- Auth: user ownership check (video.user_id === userId)
+- Rate limit: 10 requests/min per user
+- Action: `publishing_jobs` insert (job_id, video_id, channels JSON, scheduled_at, status='pending')
+- Event: `publish.scheduled` → Inngest trigger
+- Response: `{ ok, jobId, message }`
+
+**New Page:** `/dashboard/videos/[id]/distribute`
+- Server Component (auth-required, user ownership gated)
+- Fetch user channels via `getUserChannels()` helper (from mission settings)
+- UI: channel checkbox list, optional caption textarea, optional date picker
+- Submit → Server Action → API route
+- Bilingual: "Distribute", "Channels", "Caption", "Schedule" via `useTranslations('dashboard')`
+
+**Files Changed:**
+- `src/app/api/v1/videos/[id]/distribute/route.ts` (new, 85 LOC)
+- `src/app/[locale]/(dashboard)/dashboard/videos/[id]/distribute/page.tsx` (new, 92 LOC)
+- `src/components/videos/distribute-button.tsx` (new client component, 45 LOC, uses `useTranslations`)
+- `src/components/videos/distribute-form.tsx` (new, 120 LOC)
+- `src/components/videos/channel-select.tsx` (new, 68 LOC)
+- `src/lib/videos/get-user-channels.ts` (new helper, 42 LOC)
+- `src/lib/videos/publish-jobs-schema.ts` (new Zod + types, 56 LOC)
+- `src/app/actions/distribute-action.ts` (new Server Action, 48 LOC)
+- `src/app/api/v1/videos/[id]/distribute/__tests__/route.test.ts` (new, 8 tests)
+- `src/app/[locale]/(dashboard)/dashboard/videos/[id]/distribute/__tests__/page.test.tsx` (new, 7 tests)
+
+**Test Coverage:** 15 new tests
+- Route: ownership gate, Zod validation, rate limit, job insert, event emit
+- Page: auth gate, channel fetch, form submission, i18n keys
+- Components: DistributeButton render, DistributeForm submission, ChannelSelect options
+
+**Critical Guardrail:** `NEXT_PUBLIC_DISTRIBUTE_ENABLED` flag (default off)
+- Hides Distribute button on video detail page when flag unset
+- Reason: Cross-pipeline safety — Phase 01 HeyGen videos use external `videos.video_url` (not R2)
+- Known gap: `publishExecute.assertSafeVideoUrl()` whitelists R2 hostnames only
+- Wave 17 must: Add HeyGen→R2 conversion task to bridge pipeline before flipping flag to true
+- Error scenario: User distributes video, `publishExecute` rejects external URL → job fails, email alert sent
+
+**Code Review Fixes Applied:**
+1. DistributeButton: Convert to client component, use `useTranslations('dashboard')` (was hardcoded "Distribute")
+2. DRY: Extracted `getUserChannels()` helper (was inlined mission channel query in 3 files)
+3. Documented: SSRF guardrail + Wave 17 blocker in code comments + this changelog
+
+**Deferred (Wave 17):**
+- HeyGen→R2 converter (in `videoGenerate` pipeline)
+- Flip `NEXT_PUBLIC_DISTRIBUTE_ENABLED=true`
+- `/dashboard/videos` bulk distribute UI
+- Telegram channel publisher wiring (Phase 03)
+- E2E Playwright coverage for distribute flow
+
+**Verification:**
+- 2996/2996 tests pass (15 new); 0 TS errors; build exit 0
+- Env flag default: process.env.NEXT_PUBLIC_DISTRIBUTE_ENABLED unset → Distribute button hidden
+- Plan: `plans/260509-0839-raas-dashboard-wave16/phase-02-distribution-ui.md`
 
 ---
 

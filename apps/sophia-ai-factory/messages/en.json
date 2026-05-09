@@ -909,6 +909,29 @@
         "languageVi": "Vietnamese",
         "submitting": "Generating...",
         "submit": "Generate Video"
+      },
+      "distribute": {
+        "title": "Distribute Video",
+        "subtitle": "Publish to your connected social channels",
+        "selectChannels": "Select Channels",
+        "caption": "Caption (optional)",
+        "captionPlaceholder": "Write a caption for your post...",
+        "scheduleAt": "Schedule (optional)",
+        "scheduleNow": "Send immediately",
+        "submit": "Distribute",
+        "submitting": "Distributing...",
+        "successToast": "Distribution started for {count} channel(s)",
+        "noChannels": "No connected channels. Connect channels in Integrations.",
+        "connectFirst": "Connect first",
+        "channelNotActive": "Channel not active",
+        "backToVideo": "← Back to video",
+        "errors": {
+          "noChannelSelected": "Select at least one channel",
+          "submitFailed": "Failed to start distribution. Please try again.",
+          "someChannelsFailed": "Some channels failed to schedule"
+        },
+        "cta": "Distribute",
+        "comingSoon": "Coming soon"
       }
     },
     "errors": {

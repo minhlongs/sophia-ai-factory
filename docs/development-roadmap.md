@@ -2,7 +2,7 @@
 
 > Product milestones and progress tracking (2026)
 
-**Last Updated:** 2026-05-09 (Wave 16: FREE100 video gen rewire + onboarding flow shipped — phases 01 + 04)
+**Last Updated:** 2026-05-09 (Wave 16: FREE100 video gen rewire + onboarding flow + distribution UI shipped — phases 01 + 04 + 02)
 **Target:** $1M ARR, 100/100 a16z solo company score
 **Go-Live Shipped (2026-05-03):** Production deployment https://sophia.agencyos.network (SHA 5b1f711f). GAP1: Magic-link E2E validation PASS (setup-wizard cookie chain verified, 5 regression tests). GAP2: Self-serve checkout (public /pricing monthly+yearly, NOWPayments invoice, PayOS VN QR, idempotent IPN, atomic D1 tier upgrade, bilingual receipt email VAT 10%, dashboard period_end). GAP3: Mission control handover (durable D1 email outbox, /onboarding 3-step resumable, D1 API keys, mission control widget, public /status page 90d uptime, D+1/D+7 lifecycle emails). Infrastructure: 9 smoke tests PASS (200 HTTP), 2546 tests 100% pass, build < 10s, 0 TS errors.
 
@@ -13,7 +13,7 @@
 | Phase | Status | Completion | Details |
 |-------|--------|-----------|---------|
 | **W16-P01: Video Gen Rewire** | ✅ DONE | 2026-05-09 | `/dashboard/videos/new` → Inngest `videoGenerate` + SSE live progress + native player. Drops HeyGen UI path (route deferred-cleanup Wave 17). |
-| **W16-P02: Distribution UI + API** | ⏳ PENDING | — | Multi-channel select + `/api/v1/videos/[id]/distribute` (Wave 17 candidate). |
+| **W16-P02: Distribution UI + API** | ✅ DONE (gated) | 2026-05-09 | Multi-channel select + `/api/v1/videos/[id]/distribute` (Zod + ownership check). Behind NEXT_PUBLIC_DISTRIBUTE_ENABLED env flag (default off). Wave 17 must bridge HeyGen→R2 pipeline before flipping flag. |
 | **W16-P03: Telegram Auto-Post** | ⏳ PENDING | — | Telegram as provider case inside existing `publishExecute` (KISS: no new Inngest fn). Depends W16-P02. |
 | **W16-P04: FREE100 Onboarding** | ✅ DONE | 2026-05-09 | `/dashboard/onboarding` 3-step flow for MASTER tier; auto-install starter SOP; D1 migration 0098 backfill. BYOK preserved for PREMIUM/ENTERPRISE. |
 
