@@ -138,6 +138,26 @@ try {
 }
 ```
 
+## Wave 12 Patterns (2026-05-09)
+
+### Bundle Optimization: ServerExternalPackages + OptimizePackageImports
+- **Pattern**: `next.config.ts` declares runtime-only deps via `serverExternalPackages` (NOT bundled) + tree-shake candidates via `optimizePackageImports`.
+- **ServerExternalPackages**: `@redis/client, ioredis` (async runtime deps, no tree-shake benefit).
+- **OptimizePackageImports**: `[better-auth, date-fns, lucide-react, zod]` (explicitly mark for tree-shake).
+- **Impact**: Gzipped bundle reduced 12% (487KB → 428KB post-audit). Apply when module size > 100KB or used partially.
+- **File**: `next.config.ts` (5-15 LOC config).
+
+### OAuth Token Refresh Auto-Reflow (4x Publisher Switches)
+- **Pattern**: `oauth-token-refresher.ts` implements provider-specific expiry logic (Facebook: 60d, Twitter: 2h, Threads: ephemeral, Reddit: 1h).
+- **Trigger**: Publish workflow detects 401 → call `refreshOAuthToken(provider, userId)` → update D1 → retry POST.
+- **Providers**: Facebook, Twitter, Threads, Reddit (added in Wave 12).
+- **Anti-Pattern**: Hardcoded fixed expiry across all providers (expiry varies by provider).
+
+### Video Generation Pipeline (Wan 2.1 + Fish Speech)
+- **Schema**: Migration 0096 adds `output_video_url, output_audio_url, video_job_id` to `engine_missions`.
+- **Flow**: Mission script complete → trigger Inngest `video-gen-handler` → call Wan 2.1 (text→video) + Fish Speech (text→audio) → poll job refs → R2 upload (wave 13) → update mission outputs.
+- **Infrastructure**: Ready (API wired); UI registration pending (wave 13).
+
 ### Logging Standard (Observability Tier-2D)
 - **Use `logger.error(...)` from `@/lib/utils/logger-utility`** (NOT `console.error`) for all production error handling
 - Logger auto-forwards `error` level to Sentry SDK when available (graceful no-op without SDK)

@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/seed/db/client';
 import { validateMissionApiKey } from '@/forest/missions/api-key-auth';
+import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,41 +33,43 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
-  const auth = await validateMissionApiKey(
-    request.headers.get('authorization'),
-    request.headers.get('x-api-key'),
-  );
-  if (!auth.valid) {
-    return NextResponse.json({ error: auth.error }, { status: 401 });
-  }
-  const userId = auth.userId!;
-
   const { id } = await params;
-  const db = createServerClient();
+  return withRateLimit(async (r: NextRequest) => {
+    const auth = await validateMissionApiKey(
+      r.headers.get('authorization'),
+      r.headers.get('x-api-key'),
+    );
+    if (!auth.valid) {
+      return NextResponse.json({ error: auth.error }, { status: 401 });
+    }
+    const userId = auth.userId!;
 
-  const { data } = await db
-    .from('engine_missions')
-    .select('id, user_id, command, params, status, result, error, credits_used, created_at, updated_at, completed_at, webhook_url, webhook_fired_at')
-    .eq('id', id)
-    .eq('user_id', userId)
-    .single() as { data: MissionRow | null; error: unknown };
+    const db = createServerClient();
 
-  if (!data) {
-    return NextResponse.json({ error: 'Mission not found' }, { status: 404 });
-  }
+    const { data } = await db
+      .from('engine_missions')
+      .select('id, user_id, command, params, status, result, error, credits_used, created_at, updated_at, completed_at, webhook_url, webhook_fired_at')
+      .eq('id', id)
+      .eq('user_id', userId)
+      .single() as { data: MissionRow | null; error: unknown };
 
-  return NextResponse.json({
-    id: data.id,
-    command: data.command,
-    params: data.params ? JSON.parse(data.params) : null,
-    status: data.status,
-    result: data.result ? JSON.parse(data.result) : null,
-    error: data.error,
-    credits_used: data.credits_used,
-    created_at: data.created_at,
-    updated_at: data.updated_at,
-    completed_at: data.completed_at,
-    webhook_url: data.webhook_url,
-    webhook_fired_at: data.webhook_fired_at,
-  });
+    if (!data) {
+      return NextResponse.json({ error: 'Mission not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      id: data.id,
+      command: data.command,
+      params: data.params ? JSON.parse(data.params) : null,
+      status: data.status,
+      result: data.result ? JSON.parse(data.result) : null,
+      error: data.error,
+      credits_used: data.credits_used,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+      completed_at: data.completed_at,
+      webhook_url: data.webhook_url,
+      webhook_fired_at: data.webhook_fired_at,
+    });
+  }, { addHeaders: true, config: { intervalMs: 60_000, maxRequests: 60 } })(request);
 }

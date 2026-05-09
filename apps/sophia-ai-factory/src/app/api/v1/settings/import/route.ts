@@ -11,6 +11,7 @@ import { SETTINGS_NAMESPACES, SettingsValidationError } from '@/lib/tenant-setti
 import type { SettingsNamespace } from '@/lib/tenant-settings/types';
 import { validatorFor } from '@/lib/tenant-settings/namespace-validators';
 import { logger } from '@/seed/utils/logger-utility';
+import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,7 +29,7 @@ function getD1(): D1Database | null {
   }
 }
 
-export async function POST(req: NextRequest) {
+export const POST = withRateLimit(async function POST(req: NextRequest) {
   const user = await getCurrentUserFromHeaders(req.headers);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -73,4 +74,4 @@ export async function POST(req: NextRequest) {
   });
 
   return NextResponse.json({ imported, errors: importErrors });
-}
+}, { addHeaders: true, config: { intervalMs: 60_000, maxRequests: 10 } });

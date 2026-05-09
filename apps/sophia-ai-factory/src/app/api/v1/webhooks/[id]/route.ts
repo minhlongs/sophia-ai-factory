@@ -10,6 +10,7 @@ import { z } from 'zod';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { getById, update, remove } from '@/lib/webhooks/registry';
 import { logger } from '@/seed/utils/logger-utility';
+import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 import type { WebhookEvent } from '@/lib/webhooks/types';
 
 export const dynamic = 'force-dynamic';
@@ -41,64 +42,70 @@ function getD1(): D1Database | null {
 }
 
 export async function GET(req: NextRequest, { params }: RouteParams) {
-  const user = await getCurrentUserFromHeaders(req.headers);
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  return withRateLimit(async (r: NextRequest) => {
+    const user = await getCurrentUserFromHeaders(r.headers);
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { id } = await params;
-  const db = getD1();
-  if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
+    const { id } = await params;
+    const db = getD1();
+    if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
-  try {
-    const endpoint = await getById(db, id, user.id);
-    if (!endpoint) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-    return NextResponse.json({ endpoint });
-  } catch (err) {
-    logger.error('[Webhooks] Get failed', err instanceof Error ? err : undefined);
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
-  }
+    try {
+      const endpoint = await getById(db, id, user.id);
+      if (!endpoint) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+      return NextResponse.json({ endpoint });
+    } catch (err) {
+      logger.error('[Webhooks] Get failed', err instanceof Error ? err : undefined);
+      return NextResponse.json({ error: 'Server error' }, { status: 500 });
+    }
+  }, { addHeaders: true, config: { intervalMs: 60_000, maxRequests: 60 } })(req);
 }
 
 export async function PATCH(req: NextRequest, { params }: RouteParams) {
-  const user = await getCurrentUserFromHeaders(req.headers);
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  return withRateLimit(async (r: NextRequest) => {
+    const user = await getCurrentUserFromHeaders(r.headers);
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { id } = await params;
-  const body = await req.json().catch(() => null);
-  const parsed = PatchSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 400 });
-  }
+    const { id } = await params;
+    const body = await r.json().catch(() => null);
+    const parsed = PatchSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 400 });
+    }
 
-  const db = getD1();
-  if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
+    const db = getD1();
+    if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
-  try {
-    const endpoint = await update(db, id, user.id, {
-      ...parsed.data,
-      events: parsed.data.events as WebhookEvent[] | undefined,
-    });
-    if (!endpoint) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-    return NextResponse.json({ endpoint });
-  } catch (err) {
-    logger.error('[Webhooks] Update failed', err instanceof Error ? err : undefined);
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
-  }
+    try {
+      const endpoint = await update(db, id, user.id, {
+        ...parsed.data,
+        events: parsed.data.events as WebhookEvent[] | undefined,
+      });
+      if (!endpoint) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+      return NextResponse.json({ endpoint });
+    } catch (err) {
+      logger.error('[Webhooks] Update failed', err instanceof Error ? err : undefined);
+      return NextResponse.json({ error: 'Server error' }, { status: 500 });
+    }
+  }, { addHeaders: true, config: { intervalMs: 60_000, maxRequests: 30 } })(req);
 }
 
 export async function DELETE(req: NextRequest, { params }: RouteParams) {
-  const user = await getCurrentUserFromHeaders(req.headers);
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  return withRateLimit(async (r: NextRequest) => {
+    const user = await getCurrentUserFromHeaders(r.headers);
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { id } = await params;
-  const db = getD1();
-  if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
+    const { id } = await params;
+    const db = getD1();
+    if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
-  try {
-    const deleted = await remove(db, id, user.id);
-    if (!deleted) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-    return new NextResponse(null, { status: 204 });
-  } catch (err) {
-    logger.error('[Webhooks] Delete failed', err instanceof Error ? err : undefined);
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
-  }
+    try {
+      const deleted = await remove(db, id, user.id);
+      if (!deleted) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+      return new NextResponse(null, { status: 204 });
+    } catch (err) {
+      logger.error('[Webhooks] Delete failed', err instanceof Error ? err : undefined);
+      return NextResponse.json({ error: 'Server error' }, { status: 500 });
+    }
+  }, { addHeaders: true, config: { intervalMs: 60_000, maxRequests: 30 } })(req);
 }

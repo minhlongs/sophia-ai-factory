@@ -62,11 +62,12 @@ Before deploying Sprint M (first-dollar revenue engine), ensure all prerequisite
    - Migration 0093-usage-events-external-id-unique (2026-05-09) — unique constraint on usage tracking
    - Migration 0094-publisher-add-distribution-platforms (2026-05-09) — adds distribution platform enum support
    - Migration 0095-password-reset-tokens-oauth-state-store (2026-05-09) — password reset tokens + OAuth state encryption (NEW in Wave 11)
+   - Migration 0096-engine-missions-video-output-fields (2026-05-09) — adds `output_video_url, output_audio_url, video_job_id` for Wave 12 video gen MVP
    ```bash
    npx wrangler d1 migrations apply sophia-raas-db --remote
    ```
 
-2. **Cloudflare Secrets Set** (11 required)
+2. **Cloudflare Secrets Set** (13 required — 2 new for Wave 12)
    ```bash
    npx wrangler secret put OPENROUTER_API_KEY --env production
    npx wrangler secret put ELEVENLABS_API_KEY --env production
@@ -79,6 +80,8 @@ Before deploying Sprint M (first-dollar revenue engine), ensure all prerequisite
    npx wrangler secret put INNGEST_EVENT_KEY --env production
    npx wrangler secret put CLICKBANK_INS_SECRET --env production
    npx wrangler secret put CRON_SECRET --env production
+   npx wrangler secret put WAN_API_KEY --env production
+   npx wrangler secret put FISH_SPEECH_API_KEY --env production
    ```
    
    **New Video Webhook Secrets (2026-04-29)**:

@@ -115,7 +115,7 @@ export const POST = withRateLimit(async function POST(request: NextRequest): Pro
   }, { status: 202 });
 }, { addHeaders: true, config: { intervalMs: 60_000, maxRequests: 30 } });
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+export const GET = withRateLimit(async function GET(request: NextRequest): Promise<NextResponse> {
   const auth = await validateMissionApiKey(
     request.headers.get('authorization'),
     request.headers.get('x-api-key'),
@@ -163,4 +163,4 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     has_more: hasMore,
     next_cursor: nextCursor,
   });
-}
+}, { addHeaders: true, config: { intervalMs: 60_000, maxRequests: 60 } });

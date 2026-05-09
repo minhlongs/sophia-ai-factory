@@ -9,10 +9,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateMissionApiKey } from '@/forest/missions/api-key-auth';
 import { getBalance, listTransactions } from '@/lib/mcu/credits-repo';
+import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+export const GET = withRateLimit(async function GET(request: NextRequest): Promise<NextResponse> {
   const auth = await validateMissionApiKey(
     request.headers.get('authorization'),
     request.headers.get('x-api-key'),
@@ -28,4 +29,4 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     ...balance,
     recent_transactions: transactions,
   });
-}
+}, { addHeaders: true, config: { intervalMs: 60_000, maxRequests: 60 } });

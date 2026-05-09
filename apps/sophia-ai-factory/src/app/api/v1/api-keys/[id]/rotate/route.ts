@@ -10,6 +10,7 @@ import { getUserTier } from '@/seed/db/get-user-tier';
 import { rotateApiKey, tierToRateLimit } from '@/forest/api-keys/d1-store';
 import { globalRateLimiter, getClientIdentifier, createRateLimitResponse } from '@/forest/middleware/rate-limiter';
 import { logger } from '@/seed/utils/logger-utility';
+import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,33 +33,35 @@ interface RouteParams {
 }
 
 export async function POST(req: NextRequest, { params }: RouteParams) {
-  const user = await getCurrentUserFromHeaders(req.headers);
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  // Cap rotate at 5/min per session (parallel with parent POST /api-keys cap).
-  const rl = globalRateLimiter.checkLimit(getClientIdentifier(req), { intervalMs: 60_000, maxRequests: 5 });
-  if (!rl.allowed) return createRateLimitResponse(rl);
-
   const { id } = await params;
-  if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
+  return withRateLimit(async (r: NextRequest) => {
+    const user = await getCurrentUserFromHeaders(r.headers);
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const body = await req.json().catch(() => ({}));
-  const parsed = RotateSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 400 });
-  }
+    // Cap rotate at 5/min per session (parallel with parent POST /api-keys cap).
+    const rl = globalRateLimiter.checkLimit(getClientIdentifier(r), { intervalMs: 60_000, maxRequests: 5 });
+    if (!rl.allowed) return createRateLimitResponse(rl);
 
-  const db = getD1();
-  if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
+    if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
 
-  try {
-    const tier = await getUserTier(user.id);
-    const rateLimit = tierToRateLimit(tier);
-    const result = await rotateApiKey(db, id, user.id, parsed.data.name ?? 'Rotated Key', rateLimit);
-    if (!result) return NextResponse.json({ error: 'Key not found or already revoked' }, { status: 404 });
-    return NextResponse.json(result, { status: 201 });
-  } catch (err) {
-    logger.error('[ApiKeys] Rotate failed', err instanceof Error ? err : undefined);
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
-  }
+    const body = await r.json().catch(() => ({}));
+    const parsed = RotateSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 400 });
+    }
+
+    const db = getD1();
+    if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
+
+    try {
+      const tier = await getUserTier(user.id);
+      const rateLimit = tierToRateLimit(tier);
+      const result = await rotateApiKey(db, id, user.id, parsed.data.name ?? 'Rotated Key', rateLimit);
+      if (!result) return NextResponse.json({ error: 'Key not found or already revoked' }, { status: 404 });
+      return NextResponse.json(result, { status: 201 });
+    } catch (err) {
+      logger.error('[ApiKeys] Rotate failed', err instanceof Error ? err : undefined);
+      return NextResponse.json({ error: 'Server error' }, { status: 500 });
+    }
+  }, { addHeaders: true, config: { intervalMs: 60_000, maxRequests: 5 } })(req);
 }

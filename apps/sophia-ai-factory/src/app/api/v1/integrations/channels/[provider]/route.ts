@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { logger } from '@/seed/utils/logger-utility';
+import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 
 export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
@@ -26,26 +27,28 @@ type Params = { params: Promise<{ provider: string }> };
 
 export async function DELETE(req: NextRequest, { params }: Params) {
   const { provider } = await params;
-  const user = await getCurrentUserFromHeaders(req.headers);
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!SUPPORTED_PROVIDERS.has(provider))
-    return NextResponse.json({ error: 'Unknown provider' }, { status: 404 });
+  return withRateLimit(async (r: NextRequest) => {
+    const user = await getCurrentUserFromHeaders(r.headers);
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!SUPPORTED_PROVIDERS.has(provider))
+      return NextResponse.json({ error: 'Unknown provider' }, { status: 404 });
 
-  const db = getD1();
-  if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
+    const db = getD1();
+    if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
-  try {
-    await db
-      .prepare(
-        `UPDATE publishing_channels SET status = 'disconnected', updated_at = ?
-         WHERE user_id = ? AND provider = ?`,
-      )
-      .bind(Math.floor(Date.now() / 1000), user.id, provider)
-      .run();
+    try {
+      await db
+        .prepare(
+          `UPDATE publishing_channels SET status = 'disconnected', updated_at = ?
+           WHERE user_id = ? AND provider = ?`,
+        )
+        .bind(Math.floor(Date.now() / 1000), user.id, provider)
+        .run();
 
-    return NextResponse.json({ success: true });
-  } catch (err) {
-    logger.error('[channels] DELETE failed', err instanceof Error ? err : undefined);
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
-  }
+      return NextResponse.json({ success: true });
+    } catch (err) {
+      logger.error('[channels] DELETE failed', err instanceof Error ? err : undefined);
+      return NextResponse.json({ error: 'Server error' }, { status: 500 });
+    }
+  }, { addHeaders: true, config: { intervalMs: 60_000, maxRequests: 30 } })(req);
 }

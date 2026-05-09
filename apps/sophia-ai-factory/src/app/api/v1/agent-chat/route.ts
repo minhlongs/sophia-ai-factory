@@ -12,7 +12,7 @@
  * @module app/api/v1/agent-chat
  */
 
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { resolveLlmRoute } from '@/lib/agent-chat/llm-router';
@@ -20,6 +20,7 @@ import { formatStream, serializeSseEvent, openAiStreamToChunks } from '@/lib/age
 import { buildSystemPrompt } from '@/lib/agent-chat/system-prompt';
 import { deductCredits, getBalance } from '@/lib/mcu/credits-repo';
 import type { ChatMessage, ChatContext, SseEvent } from '@/lib/agent-chat/types';
+import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,7 +46,8 @@ function emit(event: SseEvent): string {
   return serializeSseEvent(event);
 }
 
-export async function POST(request: NextRequest): Promise<Response> {
+// LLM call + credit deduction — expensive tier ceiling (10/min FREE, higher tiers).
+async function postHandler(request: NextRequest): Promise<Response> {
   // Auth check
   const user = await getCurrentUser();
   if (!user) {
@@ -160,3 +162,8 @@ export async function POST(request: NextRequest): Promise<Response> {
     },
   });
 }
+
+export const POST = withRateLimit(
+  postHandler as unknown as (request: NextRequest) => Promise<NextResponse>,
+  { addHeaders: true, config: { intervalMs: 60_000, maxRequests: 20 } },
+);

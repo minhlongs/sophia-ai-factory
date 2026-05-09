@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { resolveTenantMcpServers } from '@/lib/openclaw/mcp-gateway';
+import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,7 +28,7 @@ function getD1(): D1Database | null {
 
 const BodySchema = z.object({ name: z.string().min(1) });
 
-export async function POST(req: NextRequest) {
+export const POST = withRateLimit(async function POST(req: NextRequest) {
   const user = await getCurrentUserFromHeaders(req.headers);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -55,4 +56,4 @@ export async function POST(req: NextRequest) {
     const msg = err instanceof Error ? err.message : String(err);
     return NextResponse.json({ ok: false, name, error: msg });
   }
-}
+}, { addHeaders: true, config: { intervalMs: 60_000, maxRequests: 10 } });

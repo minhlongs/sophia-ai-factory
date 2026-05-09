@@ -26,6 +26,11 @@ const mocks = vi.hoisted(() => {
     logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
     refreshTikTok: vi.fn().mockResolvedValue({ access_token: 'new_tiktok_tok', expires_in: 7200 }),
     refreshYouTube: vi.fn().mockResolvedValue({ access_token: 'new_youtube_tok', expires_in: 3600 }),
+    // Wave 12 G1 — 4 new publishers
+    refreshThreadsToken: vi.fn().mockResolvedValue({ access_token: 'new_threads_tok', expires_in: 5184000 }),
+    refreshReddit: vi.fn().mockResolvedValue({ access_token: 'new_reddit_tok', expires_in: 3600 }),
+    refreshAtprotoSession: vi.fn().mockResolvedValue({ accessJwt: 'new_bsky_jwt', refreshJwt: 'new_bsky_refresh', did: 'did:plc:test' }),
+    parseMastodonAccountId: vi.fn().mockReturnValue({ instanceUrl: 'https://mastodon.social', accountId: 'testuser' }),
   };
 });
 
@@ -54,6 +59,22 @@ vi.mock('@/lib/tiktok/tiktok-token-manager', () => ({
 
 vi.mock('@/lib/youtube/youtube-oauth-client', () => ({
   refreshAccessToken: mocks.refreshYouTube,
+}));
+
+vi.mock('../threads-oauth-client', () => ({
+  refreshLongLivedToken: mocks.refreshThreadsToken,
+}));
+
+vi.mock('../reddit-oauth-client', () => ({
+  refreshAccessToken: mocks.refreshReddit,
+}));
+
+vi.mock('../bluesky', () => ({
+  refreshAtprotoSession: mocks.refreshAtprotoSession,
+}));
+
+vi.mock('../mastodon', () => ({
+  parseExternalAccountId: mocks.parseMastodonAccountId,
 }));
 
 import { refreshChannelToken, refreshExpiringTokens } from '../oauth-token-refresher';
@@ -99,6 +120,10 @@ describe('oauth-token-refresher', () => {
     });
     mocks.refreshTikTok.mockResolvedValue({ access_token: 'new_tiktok_tok', expires_in: 7200 });
     mocks.refreshYouTube.mockResolvedValue({ access_token: 'new_youtube_tok', expires_in: 3600 });
+    mocks.refreshThreadsToken.mockResolvedValue({ access_token: 'new_threads_tok', expires_in: 5184000 });
+    mocks.refreshReddit.mockResolvedValue({ access_token: 'new_reddit_tok', expires_in: 3600 });
+    mocks.refreshAtprotoSession.mockResolvedValue({ accessJwt: 'new_bsky_jwt', refreshJwt: 'new_bsky_refresh', did: 'did:plc:test' });
+    mocks.parseMastodonAccountId.mockReturnValue({ instanceUrl: 'https://mastodon.social', accountId: 'testuser' });
   });
 
   describe('refreshChannelToken', () => {
@@ -137,6 +162,63 @@ describe('oauth-token-refresher', () => {
     it('throws for missing refresh_token on tiktok', async () => {
       const channel = makeChannel({ provider: 'tiktok', refresh_token: null });
       await expect(refreshChannelToken(channel)).rejects.toThrow('TikTok refresh token missing');
+    });
+
+    // Wave 12 G1 — 4 new publisher refresh paths
+    it('refreshes Threads token via th_refresh_token grant', async () => {
+      const channel = makeChannel({ provider: 'threads', refresh_token: null });
+      mocks.mockDb.from.mockReturnValue({
+        update: vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({ meta: { changes: 1 } }),
+        }),
+      });
+      const newExpiry = await refreshChannelToken(channel);
+      expect(mocks.refreshThreadsToken).toHaveBeenCalled();
+      expect(newExpiry).toBeGreaterThan(Math.floor(Date.now() / 1000));
+    });
+
+    it('refreshes Reddit access token via refresh_token grant', async () => {
+      const channel = makeChannel({ provider: 'reddit', refresh_token: 'enc:cmVkZGl0X3JlZg==' });
+      mocks.mockDb.from.mockReturnValue({
+        update: vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({ meta: { changes: 1 } }),
+        }),
+      });
+      await refreshChannelToken(channel);
+      expect(mocks.refreshReddit).toHaveBeenCalled();
+    });
+
+    it('throws for missing refresh_token on Reddit', async () => {
+      const channel = makeChannel({ provider: 'reddit', refresh_token: null });
+      await expect(refreshChannelToken(channel)).rejects.toThrow('Reddit refresh token missing');
+    });
+
+    it('refreshes Bluesky via refreshAtprotoSession and persists rotated refreshJwt', async () => {
+      const channel = makeChannel({ provider: 'bluesky', refresh_token: 'enc:Ymx1ZXNreV9yZWY=' });
+      mocks.mockDb.from.mockReturnValue({
+        update: vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({ meta: { changes: 1 } }),
+        }),
+      });
+      await refreshChannelToken(channel);
+      expect(mocks.refreshAtprotoSession).toHaveBeenCalled();
+    });
+
+    it('throws for missing refreshJwt on Bluesky', async () => {
+      const channel = makeChannel({ provider: 'bluesky', refresh_token: null });
+      await expect(refreshChannelToken(channel)).rejects.toThrow('Bluesky refresh token (refreshJwt) missing');
+    });
+
+    it('treats Mastodon token as perpetual when no refresh_token present', async () => {
+      const channel = makeChannel({ provider: 'mastodon', refresh_token: null });
+      mocks.mockDb.from.mockReturnValue({
+        update: vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({ meta: { changes: 1 } }),
+        }),
+      });
+      const newExpiry = await refreshChannelToken(channel);
+      // Perpetual path: 1 year from now
+      expect(newExpiry).toBeGreaterThan(Math.floor(Date.now() / 1000) + 364 * 24 * 3600);
     });
   });
 

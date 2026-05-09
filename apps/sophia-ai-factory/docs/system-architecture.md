@@ -120,7 +120,7 @@ graph TD
   - **Publishers**: `src/lib/publishing/{threads,reddit,bluesky,mastodon,twitter-publisher,tiktok-publisher,youtube-publisher,facebook-publisher}.ts`
   - **OAuth Flow**: Dynamic scopes per provider; state encrypted server-side (migration 0095 `oauth_state_store` table)
   - **Webhook Security**: Unified format `t=<timestamp>,v1=<hmac>` (per-provider override support)
-  - **Token Crypto**: `src/lib/publishing/token-crypto.ts` handles encryption/decryption of OAuth payloads
+  - **Token Crypto**: `src/lib/publishing/token-crypto.ts` handles encryption/decryption of OAuth payloads (Wave 12: 4x refresh handlers for stale token auto-reflow)
   - **Quota Manager**: `src/lib/publishing/per-channel-quota.ts` enforces tier limits (BASIC: 1 channel, PREMIUM: 5, ENTERPRISE: unlimited)
 - **Key Providers** (Wave 11 additions):
   - **Threads**: AT Protocol compliance, ephemeral tokens
@@ -128,7 +128,17 @@ graph TD
   - **Bluesky**: PDS direct endpoint support
   - **Mastodon**: Instance-specific OAuth (user selects instance during setup)
 
-### 7. Mobile Command Center (Telegram)
+### 7. Video Generation Pipeline (Wave 12)
+- **Role**: Multi-model video synthesis (Replicate Wan 2.1 + fal.ai Fish Speech audio).
+- **Architecture**:
+  - **Models**: Wan 2.1 (text→video), Fish Speech (text→audio via fal.ai)
+  - **Storage**: Cloudflare R2 `sophia-ai-factory-opennext-cache` (video outputs) + D1 metadata tracking
+  - **Workflow**: Mission script complete → Inngest trigger `video-gen-handler` → API calls (Wan 2.1 + Fish Speech) → poll for job completion → R2 upload → D1 update
+  - **Schema**: Migration 0096 adds `output_video_url, output_audio_url, video_job_id` to `engine_missions` table
+  - **Status**: Infrastructure ready; UI registration planned (wave 13)
+  - **Rate Limiting**: All 37 v1 routes wrapped with `withRateLimit()` (tier-aware burst buckets)
+
+### 8. Mobile Command Center (Telegram)
 - **Role**: Remote interface for campaign management.
 - **Components**:
   - **Bot**: Registers webhooks with Telegram API.

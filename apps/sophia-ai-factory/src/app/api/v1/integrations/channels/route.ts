@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { logger } from '@/seed/utils/logger-utility';
+import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 
 export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
@@ -28,9 +29,7 @@ interface ChannelRow {
   status: string;
 }
 
-export async function GET(req: NextRequest) {
-  // Wrap auth in try/catch — getCurrentUserFromHeaders can throw if Better Auth
-  // session lookup hits a transient error; return 401 not 500 for unauth.
+export const GET = withRateLimit(async function GET(req: NextRequest) {
   let user: Awaited<ReturnType<typeof getCurrentUserFromHeaders>> | null = null;
   try {
     user = await getCurrentUserFromHeaders(req.headers);
@@ -70,4 +69,4 @@ export async function GET(req: NextRequest) {
     logger.error('[channels] GET failed', err instanceof Error ? err : undefined);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
-}
+}, { addHeaders: true, config: { intervalMs: 60_000, maxRequests: 60 } });

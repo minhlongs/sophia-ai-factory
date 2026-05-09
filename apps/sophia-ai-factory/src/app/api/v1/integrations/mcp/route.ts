@@ -18,6 +18,7 @@ import { resolveTenantMcpServers } from '@/lib/openclaw/mcp-gateway';
 import { McpCustomServerSchema } from '@/lib/tenant-settings/namespace-validators';
 import type { McpSettings, McpCustomServer } from '@/lib/tenant-settings/defaults';
 import { logger } from '@/seed/utils/logger-utility';
+import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,7 +47,7 @@ function redactAuthValue(server: McpCustomServer): Omit<McpCustomServer, 'authVa
 }
 
 /** GET — list all custom MCP servers for the tenant (authValues redacted) */
-export async function GET(req: NextRequest) {
+export const GET = withRateLimit(async function GET(req: NextRequest) {
   const user = await getCurrentUserFromHeaders(req.headers);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -57,13 +58,13 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     servers: (settings.customServers ?? []).map(redactAuthValue),
   });
-}
+}, { addHeaders: true, config: { intervalMs: 60_000, maxRequests: 60 } });
 
 const AddServerSchema = McpCustomServerSchema;
 const DeleteSchema = z.object({ name: z.string().min(1) });
 
 /** POST — add or update a custom MCP server */
-export async function POST(req: NextRequest) {
+export const POST = withRateLimit(async function POST(req: NextRequest) {
   const user = await getCurrentUserFromHeaders(req.headers);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -119,10 +120,10 @@ export async function POST(req: NextRequest) {
   logger.info('[integrations/mcp] server upserted', { userId: user.id, name: serverData.name });
 
   return NextResponse.json({ ok: true, name: serverData.name });
-}
+}, { addHeaders: true, config: { intervalMs: 60_000, maxRequests: 20 } });
 
 /** DELETE — remove a custom MCP server by name */
-export async function DELETE(req: NextRequest) {
+export const DELETE = withRateLimit(async function DELETE(req: NextRequest) {
   const user = await getCurrentUserFromHeaders(req.headers);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -143,7 +144,7 @@ export async function DELETE(req: NextRequest) {
   logger.info('[integrations/mcp] server deleted', { userId: user.id, name });
 
   return NextResponse.json({ ok: true, removed: name });
-}
+}, { addHeaders: true, config: { intervalMs: 60_000, maxRequests: 20 } });
 
 async function handleTest(
   _req: NextRequest,

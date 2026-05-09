@@ -24,7 +24,13 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   outputFileTracingRoot: path.resolve(__dirname),
   reactCompiler: true,
-  serverExternalPackages: ['redis', 'ioredis'],
+  // Wave 12 G1: move redis clients to runtime (not bundled), saves ~921 KB in CF worker bundle
+  serverExternalPackages: ['redis', 'ioredis', '@redis/client'],
+  experimental: {
+    // Tree-shake heavy deps — reduces bundle by removing unused exports
+    // zod added (Wave 12 G1 intent: deduplicate zod across chunks)
+    optimizePackageImports: ['better-auth', 'date-fns', 'lucide-react', 'zod'],
+  },
   typescript: {
     // All TS errors resolved — ignoreBuildErrors removed (TIER-2A).
     ignoreBuildErrors: false,
@@ -42,6 +48,9 @@ const nextConfig: NextConfig = {
       }
     ],
   },
+  // Wave 12 G1: zod tree-shaking via optimizePackageImports above.
+  // resolve.dedupe is not a valid webpack field — removed (was a no-op).
+  // Actual zod savings come from Next.js experimental.optimizePackageImports.
   async redirects() {
     return [
       // Auth aliases

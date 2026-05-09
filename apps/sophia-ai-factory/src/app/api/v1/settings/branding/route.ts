@@ -18,6 +18,7 @@ import { DEFAULT_BRANDING } from '@/lib/tenant-settings/defaults';
 import { BrandingSchema } from '@/lib/tenant-settings/namespace-validators';
 import { SettingsValidationError } from '@/lib/tenant-settings/types';
 import { logger } from '@/seed/utils/logger-utility';
+import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,7 +36,7 @@ function getD1(): D1Database | null {
   }
 }
 
-export async function GET(req: NextRequest): Promise<NextResponse> {
+export const GET = withRateLimit(async function GET(req: NextRequest): Promise<NextResponse> {
   const user = await getCurrentUserFromHeaders(req.headers);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -49,9 +50,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     logger.error('[settings/branding] GET failed', err instanceof Error ? err : undefined);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
-}
+}, { addHeaders: true, config: { intervalMs: 60_000, maxRequests: 60 } });
 
-export async function PATCH(req: NextRequest): Promise<NextResponse> {
+export const PATCH = withRateLimit(async function PATCH(req: NextRequest): Promise<NextResponse> {
   const user = await getCurrentUserFromHeaders(req.headers);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -79,4 +80,4 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
     logger.error('[settings/branding] PATCH failed', err instanceof Error ? err : undefined);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
-}
+}, { addHeaders: true, config: { intervalMs: 60_000, maxRequests: 30 } });

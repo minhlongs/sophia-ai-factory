@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { validateCredentials, AffiliateNetwork } from '@/lib/affiliates/credentials';
 import { logger } from '@/seed/utils/logger-utility';
+import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 
 export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
@@ -31,19 +32,21 @@ type Params = { params: Promise<{ network: string }> };
 
 export async function POST(req: NextRequest, { params }: Params) {
   const { network } = await params;
-  const user = await getCurrentUserFromHeaders(req.headers);
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!VALID_NETWORKS.has(network))
-    return NextResponse.json({ error: 'Unknown network' }, { status: 404 });
+  return withRateLimit(async (r: NextRequest) => {
+    const user = await getCurrentUserFromHeaders(r.headers);
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!VALID_NETWORKS.has(network))
+      return NextResponse.json({ error: 'Unknown network' }, { status: 404 });
 
-  const db = getD1();
-  if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
+    const db = getD1();
+    if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
-  try {
-    const result = await validateCredentials(db, user.id, network as AffiliateNetwork);
-    return NextResponse.json(result, { status: result.valid ? 200 : 422 });
-  } catch (err) {
-    logger.error('[affiliate-networks] validate failed', err instanceof Error ? err : undefined);
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
-  }
+    try {
+      const result = await validateCredentials(db, user.id, network as AffiliateNetwork);
+      return NextResponse.json(result, { status: result.valid ? 200 : 422 });
+    } catch (err) {
+      logger.error('[affiliate-networks] validate failed', err instanceof Error ? err : undefined);
+      return NextResponse.json({ error: 'Server error' }, { status: 500 });
+    }
+  }, { addHeaders: true, config: { intervalMs: 60_000, maxRequests: 10 } })(req);
 }
