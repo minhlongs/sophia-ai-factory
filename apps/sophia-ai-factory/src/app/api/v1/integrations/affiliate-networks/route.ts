@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { listNetworks, saveCredentials, AffiliateNetwork } from '@/lib/affiliates/credentials';
 import { logger } from '@/seed/utils/logger-utility';
+import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 
 export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
@@ -33,7 +34,7 @@ const UpsertSchema = z.object({
   payload: z.record(z.string(), z.string()),
 });
 
-export async function GET(req: NextRequest) {
+export const GET = withRateLimit(async function GET(req: NextRequest) {
   const user = await getCurrentUserFromHeaders(req.headers);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -57,9 +58,9 @@ export async function GET(req: NextRequest) {
     logger.error('[affiliate-networks] GET failed', err instanceof Error ? err : undefined);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
-}
+}, { addHeaders: true, config: { intervalMs: 60_000, maxRequests: 60 } });
 
-export async function POST(req: NextRequest) {
+export const POST = withRateLimit(async function POST(req: NextRequest) {
   const user = await getCurrentUserFromHeaders(req.headers);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -80,4 +81,4 @@ export async function POST(req: NextRequest) {
     logger.error('[affiliate-networks] POST failed', err instanceof Error ? err : undefined);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
-}
+}, { addHeaders: true, config: { intervalMs: 60_000, maxRequests: 20 } });

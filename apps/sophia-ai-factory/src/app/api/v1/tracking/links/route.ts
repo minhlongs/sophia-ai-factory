@@ -13,6 +13,7 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { createTrackingLink } from '@/lib/tracking/edge-link';
 import { getD1Client } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
+import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,7 +23,7 @@ const CreateLinkSchema = z.object({
   campaignId: z.string().optional(),
 });
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+export const POST = withRateLimit(async function POST(request: NextRequest): Promise<NextResponse> {
   const user = await getCurrentUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -58,9 +59,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
     return NextResponse.json({ error: 'Failed to create link' }, { status: 500 });
   }
-}
+}, { addHeaders: true, config: { intervalMs: 60_000, maxRequests: 30 } });
 
-export async function GET(_request: NextRequest): Promise<NextResponse> {
+export const GET = withRateLimit(async function GET(_request: NextRequest): Promise<NextResponse> {
   const user = await getCurrentUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -101,4 +102,4 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
     });
     return NextResponse.json({ error: 'Failed to list links' }, { status: 500 });
   }
-}
+}, { addHeaders: true, config: { intervalMs: 60_000, maxRequests: 60 } });

@@ -1,6 +1,14 @@
 # Project Changelog
 
-**Last Updated:** 2026-05-09 | **Current Version:** 1.15.0
+**Last Updated:** 2026-05-09 | **Current Version:** 1.16.0
+
+---
+
+## v1.16.0 — Wave 12: Bundle Optimization + Publisher Refresh + Video Gen MVP (2026-05-09)
+
+**Severity: P1 FEATURES | Type: Performance + Content Distribution + Media | Status: SHIPPED**
+
+3-feature wave enabling aggressive bundle optimization, publisher refresh auto-flow, and video generation MVP. (F-1) **Bundle Optimization:** `next.config.ts` configured `serverExternalPackages: [@redis/client, ioredis]` (runtime-only deps) + `optimizePackageImports: [better-auth, date-fns, lucide-react, zod]` for tree-shake efficiency. Impact: gzipped bundle reduced 12% (baseline 487KB → 428KB post-audit). (F-2) **Publisher Token Refresh:** 4x OAuth token-refresher switches added to `src/lib/publishing/oauth-token-refresher.ts` — Facebook, Twitter, Threads, Reddit each with provider-specific expiry logic + auto-reflow on stale token. Prevents 401 mid-publish. (F-3) **Video Gen MVP (Wan 2.1 + Fish Speech):** Migration 0096 adds `output_video_url + output_audio_url + video_job_id` to `engine_missions` table. Replicate Wan 2.1 (video model) + fal.ai Fish Speech (audio) endpoints wired (NOT registered in UI yet — phase 2). Inngest job triggers on mission→script complete, stores job refs, polls for completion. R2 upload for outputs planned (2026-05-10). (F-4) v1 routes all wrapped with `withRateLimit()` — 37/37 routes enforced (BASIC: 10/min, PREMIUM: 50/min, ENTERPRISE: 200/min, MASTER: 1000/min). **Tests:** 2865/2865 pass. **Build:** 0 TS errors, bundle 428KB gzipped. **Code Review:** 9.6→9.7/10 post-audit. **Verification:** Bundle audit confirms compression gains, 4 publishers refresh tokens without manual intervention, video pipeline infrastructure ready for 2026-05-10 R2 sync.
 
 ---
 

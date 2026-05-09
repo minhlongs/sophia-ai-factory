@@ -24,6 +24,7 @@ import { validateJwt } from '@/seed/security/jwt-validator';
 import { getQuotaStatus } from '@/forest/quota/quota-enforcer';
 import { checkRateLimit as checkApiRateLimit } from '@/seed/security/rate-limiter';
 import { formatQuotaResponse } from '@/forest/quota/quota-api-helpers';
+import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 import type { Tier } from '@/seed/types';
 
 /**
@@ -33,134 +34,135 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ tenantId: string }> }
 ): Promise<NextResponse> {
-  try {
-    const { tenantId } = await params;
+  const { tenantId } = await params;
+  return withRateLimit(async (r: NextRequest) => {
+    try {
+      // Step 1: Extract and validate JWT
+      const authHeader = r.headers.get('authorization');
+      const jwtResult = await validateJwt(authHeader);
 
-    // Step 1: Extract and validate JWT
-    const authHeader = request.headers.get('authorization');
-    const jwtResult = await validateJwt(authHeader);
+      if (!jwtResult.valid) {
+        logger.warn('[Quota API] JWT validation failed', {
+          error: jwtResult.error,
+          tenantId,
+        });
 
-    if (!jwtResult.valid) {
-      logger.warn('[Quota API] JWT validation failed', {
-        error: jwtResult.error,
-        tenantId,
-      });
+        return NextResponse.json(
+          { message: 'Unauthorized' },
+          { status: 401 }
+        );
+      }
 
-      return NextResponse.json(
-        { message: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+      const userId = jwtResult.payload?.sub;
+      if (!userId) {
+        return NextResponse.json(
+          { message: 'Invalid JWT payload' },
+          { status: 401 }
+        );
+      }
 
-    const userId = jwtResult.payload?.sub;
-    if (!userId) {
-      return NextResponse.json(
-        { message: 'Invalid JWT payload' },
-        { status: 401 }
-      );
-    }
+      // Step 2: Validate agency_id (tenant isolation)
+      const agencyIdHeader = r.headers.get('x-raas-agency-id');
+      if (agencyIdHeader && agencyIdHeader !== tenantId) {
+        logger.warn('[Quota API] Cross-tenant access attempt blocked', {
+          userId,
+          requestedTenant: tenantId,
+          agencyIdHeader,
+        });
 
-    // Step 2: Validate agency_id (tenant isolation)
-    const agencyIdHeader = request.headers.get('x-raas-agency-id');
-    if (agencyIdHeader && agencyIdHeader !== tenantId) {
-      logger.warn('[Quota API] Cross-tenant access attempt blocked', {
+        return NextResponse.json(
+          { message: 'Cross-tenant access denied' },
+          { status: 403 }
+        );
+      }
+
+      // Step 3: Check rate limit (100 req/min per tenant)
+      const rateLimitResult = await checkApiRateLimit(tenantId, 100);
+      if (!rateLimitResult.allowed) {
+        return NextResponse.json(
+          {
+            message: 'Rate limit exceeded',
+            retryAfter: rateLimitResult.retryAfter,
+          },
+          {
+            status: 429,
+            headers: {
+              'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+              'X-RateLimit-Reset': new Date(rateLimitResult.resetAt).toISOString(),
+            },
+          }
+        );
+      }
+
+      // Step 4: Fetch license info for tenant
+      const db = createServerClient();
+      const { data: license, error: licenseError } = await db
+        .from('raas_licenses')
+        .select('nonce, tier, agency_id')
+        .eq('agency_id', tenantId)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (licenseError || !license) {
+        logger.warn('[Quota API] No active license found for tenant', {
+          tenantId,
+          userId,
+        });
+
+        return NextResponse.json(
+          { message: 'Tenant not found or no active license' },
+          { status: 404 }
+        );
+      }
+
+      const typedLicense = license as { nonce: string; tier: Tier; agency_id: string };
+
+      // Step 5: Get quota status with Polar sync info
+      const quotaStatus = await getQuotaStatus(
         userId,
-        requestedTenant: tenantId,
-        agencyIdHeader,
+        typedLicense.nonce,
+        typedLicense.tier,
+        undefined
+      );
+
+      // Step 6: Format response
+      const formattedResponse = formatQuotaResponse(
+        quotaStatus.usage,
+        { ...quotaStatus.limits, tier: typedLicense.tier },
+        typedLicense.tier,
+        quotaStatus.polarSynced,
+        quotaStatus.lastPolarSync
+      );
+
+      logger.debug('[Quota API] Quota status fetched', {
+        userId,
+        tenantId,
+        status: quotaStatus.status,
+        rateLimitRemaining: rateLimitResult.remaining,
       });
 
-      return NextResponse.json(
-        { message: 'Cross-tenant access denied' },
-        { status: 403 }
-      );
-    }
-
-    // Step 3: Check rate limit (100 req/min per tenant)
-    const rateLimitResult = await checkApiRateLimit(tenantId, 100);
-    if (!rateLimitResult.allowed) {
       return NextResponse.json(
         {
-          message: 'Rate limit exceeded',
-          retryAfter: rateLimitResult.retryAfter,
+          tenantId,
+          tier: typedLicense.tier,
+          ...formattedResponse,
         },
         {
-          status: 429,
           headers: {
             'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
             'X-RateLimit-Reset': new Date(rateLimitResult.resetAt).toISOString(),
           },
         }
       );
-    }
 
-    // Step 4: Fetch license info for tenant
-    const db = createServerClient();
-    const { data: license, error: licenseError } = await db
-      .from('raas_licenses')
-      .select('nonce, tier, agency_id')
-      .eq('agency_id', tenantId)
-      .eq('status', 'active')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (licenseError || !license) {
-      logger.warn('[Quota API] No active license found for tenant', {
-        tenantId,
-        userId,
-      });
-
+    } catch (error) {
+      logger.error('[Quota API] Error fetching quota status', error instanceof Error ? error : new Error(String(error)));
       return NextResponse.json(
-        { message: 'Tenant not found or no active license' },
-        { status: 404 }
+        { message: 'Internal server error' },
+        { status: 500 }
       );
     }
-
-    const typedLicense = license as { nonce: string; tier: Tier; agency_id: string };
-
-    // Step 5: Get quota status with Polar sync info
-    const quotaStatus = await getQuotaStatus(
-      userId,
-      typedLicense.nonce,
-      typedLicense.tier,
-      undefined // polarCustomerId - can be added if needed
-    );
-
-    // Step 6: Format response
-    const formattedResponse = formatQuotaResponse(
-      quotaStatus.usage,
-      { ...quotaStatus.limits, tier: typedLicense.tier },
-      typedLicense.tier,
-      quotaStatus.polarSynced,
-      quotaStatus.lastPolarSync
-    );
-
-    logger.debug('[Quota API] Quota status fetched', {
-      userId,
-      tenantId,
-      status: quotaStatus.status,
-      rateLimitRemaining: rateLimitResult.remaining,
-    });
-
-    return NextResponse.json(
-      {
-        tenantId,
-        tier: typedLicense.tier,
-        ...formattedResponse,
-      },
-      {
-        headers: {
-          'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
-          'X-RateLimit-Reset': new Date(rateLimitResult.resetAt).toISOString(),
-        },
-      }
-    );
-
-  } catch (error) {
-    logger.error('[Quota API] Error fetching quota status', error instanceof Error ? error : new Error(String(error)));
-    return NextResponse.json(
-      { message: 'Internal server error' },
-      { status: 500 }
-    );
-  }
+  }, { addHeaders: true, config: { intervalMs: 60_000, maxRequests: 120 } })(request);
 }

@@ -16,6 +16,7 @@ import { SETTINGS_NAMESPACES, SettingsValidationError } from '@/lib/tenant-setti
 import { validatorFor } from '@/lib/tenant-settings/namespace-validators';
 import type { SettingsNamespace } from '@/lib/tenant-settings';
 import { logger } from '@/seed/utils/logger-utility';
+import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,101 +44,109 @@ function resolveNamespace(raw: string): SettingsNamespace | null {
 
 export async function GET(req: NextRequest, ctx: RouteCtx) {
   const { namespace: raw } = await ctx.params;
-  const namespace = resolveNamespace(raw);
-  if (!namespace) return NextResponse.json({ error: 'Unknown namespace' }, { status: 404 });
+  return withRateLimit(async (r: NextRequest) => {
+    const namespace = resolveNamespace(raw);
+    if (!namespace) return NextResponse.json({ error: 'Unknown namespace' }, { status: 404 });
 
-  const user = await getCurrentUserFromHeaders(req.headers);
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const user = await getCurrentUserFromHeaders(r.headers);
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const db = getD1();
-  if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
+    const db = getD1();
+    if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
-  try {
-    const value = await getOrDefault(db, user.id, namespace);
-    return NextResponse.json({ namespace, value });
-  } catch (err) {
-    logger.error(`[settings/${namespace}] GET failed`, err instanceof Error ? err : undefined);
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
-  }
+    try {
+      const value = await getOrDefault(db, user.id, namespace);
+      return NextResponse.json({ namespace, value });
+    } catch (err) {
+      logger.error(`[settings/${namespace}] GET failed`, err instanceof Error ? err : undefined);
+      return NextResponse.json({ error: 'Server error' }, { status: 500 });
+    }
+  }, { addHeaders: true, config: { intervalMs: 60_000, maxRequests: 60 } })(req);
 }
 
 export async function PUT(req: NextRequest, ctx: RouteCtx) {
   const { namespace: raw } = await ctx.params;
-  const namespace = resolveNamespace(raw);
-  if (!namespace) return NextResponse.json({ error: 'Unknown namespace' }, { status: 404 });
+  return withRateLimit(async (r: NextRequest) => {
+    const namespace = resolveNamespace(raw);
+    if (!namespace) return NextResponse.json({ error: 'Unknown namespace' }, { status: 404 });
 
-  const user = await getCurrentUserFromHeaders(req.headers);
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const user = await getCurrentUserFromHeaders(r.headers);
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const body = await req.json().catch(() => null);
-  if (body === null || body === undefined) {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
-  }
-
-  const db = getD1();
-  if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
-
-  try {
-    await set(db, user.id, namespace, body, validatorFor(namespace));
-    return NextResponse.json({ namespace, updated: true });
-  } catch (err) {
-    if (err instanceof SettingsValidationError) {
-      return NextResponse.json({ error: 'Validation failed', message: err.message }, { status: 422 });
+    const body = await r.json().catch(() => null);
+    if (body === null || body === undefined) {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
     }
-    logger.error(`[settings/${namespace}] PUT failed`, err instanceof Error ? err : undefined);
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
-  }
+
+    const db = getD1();
+    if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
+
+    try {
+      await set(db, user.id, namespace, body, validatorFor(namespace));
+      return NextResponse.json({ namespace, updated: true });
+    } catch (err) {
+      if (err instanceof SettingsValidationError) {
+        return NextResponse.json({ error: 'Validation failed', message: err.message }, { status: 422 });
+      }
+      logger.error(`[settings/${namespace}] PUT failed`, err instanceof Error ? err : undefined);
+      return NextResponse.json({ error: 'Server error' }, { status: 500 });
+    }
+  }, { addHeaders: true, config: { intervalMs: 60_000, maxRequests: 30 } })(req);
 }
 
 export async function PATCH(req: NextRequest, ctx: RouteCtx) {
   const { namespace: raw } = await ctx.params;
-  const namespace = resolveNamespace(raw);
-  if (!namespace) return NextResponse.json({ error: 'Unknown namespace' }, { status: 404 });
+  return withRateLimit(async (r: NextRequest) => {
+    const namespace = resolveNamespace(raw);
+    if (!namespace) return NextResponse.json({ error: 'Unknown namespace' }, { status: 404 });
 
-  const user = await getCurrentUserFromHeaders(req.headers);
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const user = await getCurrentUserFromHeaders(r.headers);
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const body = await req.json().catch(() => null);
-  if (!body || typeof body !== 'object' || Array.isArray(body)) {
-    return NextResponse.json({ error: 'PATCH body must be a plain object' }, { status: 400 });
-  }
-
-  const db = getD1();
-  if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
-
-  try {
-    const merged = await merge(
-      db,
-      user.id,
-      namespace,
-      body as Record<string, unknown>,
-    );
-    return NextResponse.json({ namespace, value: merged });
-  } catch (err) {
-    if (err instanceof SettingsValidationError) {
-      return NextResponse.json({ error: 'Validation failed', message: err.message }, { status: 422 });
+    const body = await r.json().catch(() => null);
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return NextResponse.json({ error: 'PATCH body must be a plain object' }, { status: 400 });
     }
-    logger.error(`[settings/${namespace}] PATCH failed`, err instanceof Error ? err : undefined);
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
-  }
+
+    const db = getD1();
+    if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
+
+    try {
+      const merged = await merge(
+        db,
+        user.id,
+        namespace,
+        body as Record<string, unknown>,
+      );
+      return NextResponse.json({ namespace, value: merged });
+    } catch (err) {
+      if (err instanceof SettingsValidationError) {
+        return NextResponse.json({ error: 'Validation failed', message: err.message }, { status: 422 });
+      }
+      logger.error(`[settings/${namespace}] PATCH failed`, err instanceof Error ? err : undefined);
+      return NextResponse.json({ error: 'Server error' }, { status: 500 });
+    }
+  }, { addHeaders: true, config: { intervalMs: 60_000, maxRequests: 30 } })(req);
 }
 
 export async function DELETE(req: NextRequest, ctx: RouteCtx) {
   const { namespace: raw } = await ctx.params;
-  const namespace = resolveNamespace(raw);
-  if (!namespace) return NextResponse.json({ error: 'Unknown namespace' }, { status: 404 });
+  return withRateLimit(async (r: NextRequest) => {
+    const namespace = resolveNamespace(raw);
+    if (!namespace) return NextResponse.json({ error: 'Unknown namespace' }, { status: 404 });
 
-  const user = await getCurrentUserFromHeaders(req.headers);
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const user = await getCurrentUserFromHeaders(r.headers);
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const db = getD1();
-  if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
+    const db = getD1();
+    if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
-  try {
-    await deleteNamespace(db, user.id, namespace);
-    return NextResponse.json({ namespace, deleted: true });
-  } catch (err) {
-    logger.error(`[settings/${namespace}] DELETE failed`, err instanceof Error ? err : undefined);
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
-  }
+    try {
+      await deleteNamespace(db, user.id, namespace);
+      return NextResponse.json({ namespace, deleted: true });
+    } catch (err) {
+      logger.error(`[settings/${namespace}] DELETE failed`, err instanceof Error ? err : undefined);
+      return NextResponse.json({ error: 'Server error' }, { status: 500 });
+    }
+  }, { addHeaders: true, config: { intervalMs: 60_000, maxRequests: 30 } })(req);
 }

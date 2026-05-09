@@ -14,6 +14,10 @@ import { logger } from '@/seed/utils/logger-utility';
 import { refreshAccessToken as refreshTikTok } from '@/lib/tiktok/tiktok-token-manager';
 import { refreshAccessToken as refreshYouTube } from '@/lib/youtube/youtube-oauth-client';
 import { refreshAccessToken as refreshTwitter } from './twitter-oauth-client';
+import { refreshLongLivedToken as refreshThreadsToken } from './threads-oauth-client';
+import { refreshAccessToken as refreshReddit } from './reddit-oauth-client';
+import { refreshAtprotoSession } from './bluesky';
+import { parseExternalAccountId as parseMastodonAccountId } from './mastodon';
 import type { PublishingChannel } from './publisher-interface';
 
 const ONE_HOUR_S = 3600;
@@ -233,6 +237,75 @@ export async function refreshChannelToken(channel: PublishingChannel): Promise<n
         if (r.refresh_token) rotatedRefreshToken = r.refresh_token;
         break;
       }
+      case 'threads': {
+        // Threads long-lived token re-exchange via th_refresh_token grant (60d TTL)
+        const r = await refreshThreadsToken(decrypted);
+        newAccessToken = r.access_token;
+        // Threads API returns expires_in in seconds; default 60d if absent
+        expiresIn = r.expires_in ?? 60 * 24 * 3600;
+        break;
+      }
+      case 'reddit': {
+        // Reddit permanent refresh_token — access tokens expire in 1h
+        if (!refreshToken) throw new Error('Reddit refresh token missing');
+        const r = await refreshReddit(refreshToken);
+        newAccessToken = r.access_token;
+        expiresIn = r.expires_in;
+        break;
+      }
+      case 'bluesky': {
+        // AT Protocol: use refreshJwt stored as refresh_token to get new accessJwt
+        if (!refreshToken) throw new Error('Bluesky refresh token (refreshJwt) missing');
+        const r = await refreshAtprotoSession(refreshToken);
+        newAccessToken = r.accessJwt;
+        // AT Protocol JWTs expire in ~2h; Bluesky API doesn't return explicit expires_in
+        expiresIn = 2 * 3600;
+        // refreshJwt rotates on each refresh — persist new value
+        if (r.refreshJwt !== refreshToken) rotatedRefreshToken = r.refreshJwt;
+        break;
+      }
+      case 'mastodon': {
+        // Mastodon: tokens rarely expire but support refresh_token grant per RFC 6749
+        // Instance URL is encoded in external_account_id as "<instanceUrl>|<accountId>"
+        if (!refreshToken) {
+          // No refresh_token — treat as perpetual token (most Mastodon instances)
+          newAccessToken = decrypted;
+          expiresIn = 365 * 24 * 3600;
+          break;
+        }
+        const { instanceUrl } = parseMastodonAccountId(channel.external_account_id);
+        const normalizedInstance = instanceUrl.replace(/\/$/, '');
+        const mastodonClientId = process.env.MASTODON_CLIENT_ID;
+        const mastodonClientSecret = process.env.MASTODON_CLIENT_SECRET;
+        if (!mastodonClientId || !mastodonClientSecret) {
+          // Credentials not configured — fall back to treating token as perpetual
+          newAccessToken = decrypted;
+          expiresIn = 365 * 24 * 3600;
+          break;
+        }
+        const res = await fetch(`${normalizedInstance}/oauth/token`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            client_id: mastodonClientId,
+            client_secret: mastodonClientSecret,
+            grant_type: 'refresh_token',
+            refresh_token: refreshToken,
+          }),
+        });
+        if (!res.ok) {
+          const body = await res.text().catch(() => '');
+          throw new Error(`Mastodon token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
+        }
+        const data = (await res.json()) as { access_token?: string; expires_in?: number; refresh_token?: string };
+        if (!data.access_token) throw new Error('Mastodon token refresh returned no access_token');
+        newAccessToken = data.access_token;
+        expiresIn = data.expires_in ?? 365 * 24 * 3600;
+        if (data.refresh_token && data.refresh_token !== refreshToken) {
+          rotatedRefreshToken = data.refresh_token;
+        }
+        break;
+      }
       default:
         throw new Error(`Unknown provider: ${channel.provider}`);
     }
@@ -258,7 +331,8 @@ export async function refreshChannelToken(channel: PublishingChannel): Promise<n
 
     return newExpiresAt;
   } catch (err) {
-    await releaseRefreshLock(channel.id).catch(() => undefined);
+    // M1: lock release omitted here — the loop-level catch (refreshExpiringTokens)
+    // already sets refreshing_at = null via status='expired' UPDATE, avoiding 2 NULL writes.
     throw err;
   }
 }

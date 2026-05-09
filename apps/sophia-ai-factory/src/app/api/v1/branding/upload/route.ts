@@ -24,6 +24,7 @@ import {
 } from '@/seed/security/file-upload-policy';
 import { getVideoBucket } from '@/lib/video/r2-binding';
 import { uploadToR2 } from '@/lib/video/r2-multipart-upload';
+import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 
 export const dynamic = 'force-dynamic';
 
@@ -103,7 +104,7 @@ function extFromMime(mime: string): string {
   return map[mime] ?? 'bin';
 }
 
-export async function POST(req: NextRequest): Promise<NextResponse> {
+async function postHandler(req: NextRequest): Promise<NextResponse> {
   const user = await getCurrentUserFromHeaders(req.headers);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -217,3 +218,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   return NextResponse.json({ url: publicUrl, kind: brandingKind });
 }
+
+// File upload — expensive (R2 write). Ceiling: 10/min.
+export const POST = withRateLimit(postHandler, {
+  addHeaders: true,
+  config: { intervalMs: 60_000, maxRequests: 10 },
+});
