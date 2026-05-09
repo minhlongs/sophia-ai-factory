@@ -5,6 +5,16 @@
 
 ---
 
+## [2026-05-09 EVENING] Wave 17 Phase 03 — Distribute Flag Flipped (P0 chain complete)
+
+**Summary (vi):** Phase 03 hoàn tất. Flag `NEXT_PUBLIC_DISTRIBUTE_ENABLED=1` baked vào build-time via `scripts/deploy-with-sha.sh` (export trước `next build`). Turbopack DCE xác nhận: 0 occurrences của env var name trong built bundles (literal "1" compiled → `true` branch). Distribution UI giờ visible cho TẤT CẢ FREE100 users trên `/dashboard/videos` + `/dashboard/videos/[id]`. Rollback path (~30s): `npx wrangler rollback --name sophia-ai-factory --message "wave17 phase 03 flag flip rollback" --yes`. **E2E smoke test pending CEO** (manual: sign-in + Telegram pairing + video create 60-180s + distribute + verify Telegram delivery + D1 rows).
+
+**Summary (en):** Phase 03 complete: `NEXT_PUBLIC_DISTRIBUTE_ENABLED=1` injected at build-time via `scripts/deploy-with-sha.sh` export before `next build`. Turbopack tree-shakes unused branches and substitutes literal "1" into client bundle. Build verification: 0 occurrences of env var name in compiled `.next/server/chunks/ssr/*.js` (DCE confirmed). Distribute button now visible to all FREE100 users on `/dashboard/videos` and single-video pages. Smoke test pending CEO approval (manual: sign-in, Telegram pairing, 60-180s video generation, distribute action, verify Telegram delivery + D1 publishing_jobs rows). Rollback ready (~30s with `wrangler rollback`). Wave 17 progress: 5 of 8 phases complete (P0 chain = 01+02+03 all live).
+
+**Verification (2026-05-09 phase 03):** Build bake confirmed—0 env var occurrences in built bundle. Distribute button live on production. Wave 17 P0 chain complete: Phases 01+02+03 shipped.
+
+---
+
 ## [2026-05-09 LATER] Wave 17 Phase 02 — publishExecute wired to videos table
 
 **Summary (vi):** Cấp độ 02 Wave 17 hoàn tất. `publishExecute` giờ resolve video URL qua helper `getCanonicalVideoUrl(videoId, userId)` từ Phase 01 cho CẢ hai nhánh: OAuth provider switch VÀ Telegram. Thay thế legacy `video_jobs.final_r2_key` lookups (cột Wave 16 Phase 02 bị misnaming — `publishing_jobs.video_job_id` thực tế chứa `videos.id`). Type error: `VideoNotFoundError`/`VideoUnauthorizedError` → mark job `failed`; `VideoNotMirroredError` → re-throw for Inngest retry (transient). `assertSafeVideoUrl` SSRF guard preserved. HeyGen backward compat verified. 15 new unit tests (all error paths + SSRF regression + happy paths). Code review: 9.6/10 APPROVE.
