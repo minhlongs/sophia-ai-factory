@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyPayOsSignature, payOsIpnSchema, FEATURE_PAYOS, parseUserIdFromPayOsDescription } from '@/land/payments/payos'
+import { verifyPayOsWebhook, payOsIpnSchema, FEATURE_PAYOS, parseUserIdFromPayOsDescription } from '@/land/payments/payos'
 import { logger } from '@/seed/utils/logger-utility'
 import { createServerClient } from '@/seed/db/client'
 import { getD1Raw } from '@/seed/db/client'
@@ -60,15 +60,24 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Configuration error' }, { status: 500 })
   }
 
-  let rawBody: unknown
+  // Read raw body BEFORE JSON.parse — required for HMAC verification
+  let rawBody: string
   try {
-    rawBody = await request.json()
+    rawBody = await request.text()
+  } catch {
+    return NextResponse.json({ error: 'Failed to read body' }, { status: 400 })
+  }
+
+  // Parse JSON after reading raw body string
+  let bodyJson: unknown
+  try {
+    bodyJson = JSON.parse(rawBody)
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
   // Validate payload shape
-  const parsed = payOsIpnSchema.safeParse(rawBody)
+  const parsed = payOsIpnSchema.safeParse(bodyJson)
   if (!parsed.success) {
     logger.warn('[PayOS IPN] Invalid payload shape', { errors: parsed.error.flatten() })
     return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
@@ -77,11 +86,11 @@ export async function POST(request: NextRequest) {
   const { data: ipnData, signature, success } = parsed.data
   const { orderCode, amount, description, paymentLinkId } = ipnData
 
-  // Verify HMAC-SHA256 signature
-  const isValid = await verifyPayOsSignature(ipnData, signature, PAYOS_CHECKSUM_KEY)
+  // Verify HMAC-SHA256 over raw body bytes (canonical sorted key=value from data object)
+  const isValid = await verifyPayOsWebhook(rawBody, signature, PAYOS_CHECKSUM_KEY)
   if (!isValid) {
     logger.warn('[PayOS IPN] Invalid signature', { orderCode })
-    return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
   }
 
   // Idempotency check
@@ -90,7 +99,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Record event as unprocessed (reserve row)
-  await recordPayOsEvent(orderCode, success ? 'PAID' : 'CANCELLED', rawBody, false)
+  await recordPayOsEvent(orderCode, success ? 'PAID' : 'CANCELLED', bodyJson, false)
 
   if (!success) {
     // Payment cancelled or failed — find order via description and mark failed
@@ -98,7 +107,7 @@ export async function POST(request: NextRequest) {
     if (orderId) {
       try { await markOrderFailed(orderId, 'payos_cancelled') } catch { /* non-fatal */ }
     }
-    await recordPayOsEvent(orderCode, 'CANCELLED', rawBody, true)
+    await recordPayOsEvent(orderCode, 'CANCELLED', bodyJson, true)
     logger.info('[PayOS IPN] Payment not successful', { orderCode, success })
     return NextResponse.json({ received: true })
   }
@@ -183,7 +192,7 @@ export async function POST(request: NextRequest) {
     })
   } catch { /* non-fatal */ }
 
-  await recordPayOsEvent(orderCode, 'PAID', rawBody, true)
+  await recordPayOsEvent(orderCode, 'PAID', bodyJson, true)
 
   logger.info('[PayOS IPN] Tier activated', { userId, orgId, tier, orderCode, amount })
   return NextResponse.json({ received: true })

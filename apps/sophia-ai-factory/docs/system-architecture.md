@@ -103,16 +103,18 @@ graph TD
 
 ### 5. Payment & Media Infrastructure
 - **Payments**: NOWPayments.io (crypto USDT TRC20) for tier subscriptions.
-  - **Flow**: Tier selection → Invoice link → Payment → HMAC-SHA512 IPN webhook → tier activation.
-  - **Security**: HMAC-SHA512 on `x-nowpayments-sig`, Order ID format `sophia_{orgId}_{timestamp}`.
-  - **Secrets**: `NOWPAYMENTS_IPN_SECRET` (Cloudflare env).
-- **Media Storage**: Cloudflare R2 bucket `sophia-videos` for HeyGen video outputs.
-  - **Webhook**: `POST /api/webhooks/heygen` (HMAC-SHA256 verified).
-  - **Secrets**: `HEYGEN_WEBHOOK_SECRET`, `HEYGEN_API_KEY` (Cloudflare env).
+  - **Flow**: Tier selection → Invoice link → Payment → HMAC webhook → tier activation.
+  - **Webhook Signature**: Inbound webhooks (NOWPayments, PayOS) unified via `verifyInboundWebhook()` helper (`src/lib/webhooks/signature.ts`).
+  - **Secrets**: `NOWPAYMENTS_IPN_SECRET`, `PAYOS_CHECKSUM_KEY` (Cloudflare env).
+- **Media Storage**: Cloudflare R2 bucket `sophia-videos` for HeyGen + muxed video outputs.
+  - **Webhook**: `POST /api/webhooks/heygen` (unified signature format: `t=<timestamp>,v1=<hmac>`).
+  - **Secrets**: `HEYGEN_WEBHOOK_SECRET`, `HEYGEN_API_KEY`, `CLOUDCONVERT_API_KEY` (Cloudflare env).
   - **Sync Cron**: `GET /api/cron/video-status-sync` (5-min polling fallback).
   - **Metadata**: D1 columns `r2_key`, `r2_size_bytes` track stored videos.
   - **Public URL**: Optional `R2_PUBLIC_BASE_URL` env var for direct CDN access.
+  - **FFmpeg Muxing** (Wave 15): Audio + video muxed via Cloudconvert REST API (`src/lib/video/ffmpeg-muxer.ts`). Fallback to dev stub MP4 if `CLOUDCONVERT_API_KEY` absent.
 - **Backup Payment**: PayOS (payos.vn) for Vietnam domestic.
+- **Webhook Security Note**: Outbound signature default flipped to `acceptLegacy=false` (Wave 15). Callers needing legacy bare-hex format must explicitly opt-in.
 
 ### 6. Distribution Publishers (Wave 11)
 - **Role**: Multi-platform video distribution (Threads, Reddit, Bluesky, Mastodon, Twitter, TikTok, YouTube, Facebook).

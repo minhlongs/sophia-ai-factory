@@ -10,6 +10,9 @@
  * (the old format produced by signer.ts `sign()`) for one release cycle.
  * Remove legacy branch after all endpoints have re-verified with new format.
  *
+ * Inbound provider support: verifyInboundWebhook handles 3rd-party providers
+ * (NOWPayments, PayOS) that use their own signature formats (not our t= format).
+ *
  * @module lib/webhooks/signature
  */
 
@@ -33,7 +36,7 @@ function parseHeader(header: string): { ts: number; v1: string } | null {
   return { ts, v1 };
 }
 
-function hexToBytes(hex: string): Uint8Array {
+export function hexToBytes(hex: string): Uint8Array {
   const out = new Uint8Array(Math.floor(hex.length / 2));
   for (let i = 0; i < out.length; i++) {
     out[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
@@ -41,14 +44,90 @@ function hexToBytes(hex: string): Uint8Array {
   return out;
 }
 
-async function importHmacKey(secret: string, usage: 'sign' | 'verify'): Promise<CryptoKey> {
+/** Timing-safe hex string comparison. Returns true iff a === b. */
+export function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  const ab = ENC.encode(a);
+  const bb = ENC.encode(b);
+  let diff = 0;
+  for (let i = 0; i < ab.length; i++) diff |= ab[i] ^ bb[i];
+  return diff === 0;
+}
+
+async function importHmacKey(
+  secret: string,
+  usage: 'sign' | 'verify',
+  hash: 'SHA-256' | 'SHA-512' = 'SHA-256',
+): Promise<CryptoKey> {
   return crypto.subtle.importKey(
     'raw',
     ENC.encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' },
+    { name: 'HMAC', hash },
     false,
     [usage],
   );
+}
+
+/**
+ * Compute HMAC hex for a given algorithm + message string.
+ * Used by inbound provider wrappers.
+ */
+export async function computeHmacHex(
+  message: string,
+  secret: string,
+  hash: 'SHA-256' | 'SHA-512',
+): Promise<string> {
+  const key = await importHmacKey(secret, 'sign', hash);
+  const buf = await crypto.subtle.sign('HMAC', key, ENC.encode(message));
+  return Array.from(new Uint8Array(buf))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+/**
+ * Options for verifyInboundWebhook — inbound 3rd-party provider signatures.
+ * These providers use their own hash algorithms and body canonicalization.
+ */
+export interface InboundVerifyOptions {
+  /**
+   * HMAC algorithm.
+   * - 'SHA-256' — default (e.g. PayOS)
+   * - 'SHA-512' — e.g. NOWPayments IPN
+   */
+  algo: 'SHA-256' | 'SHA-512';
+  /**
+   * Transform rawBody into the string to sign.
+   * Providers may require sorted-key JSON, canonical query strings, etc.
+   * Defaults to identity (sign rawBody as-is).
+   */
+  canonicalize?: (rawBody: string) => string;
+}
+
+/**
+ * Verify an inbound 3rd-party provider webhook signature.
+ *
+ * Unlike verifyWebhook (which handles our own t=ts,v1=hex format),
+ * this function handles raw HMAC signatures from external providers.
+ *
+ * @param rawBody   - Raw request body string (must be captured before JSON.parse)
+ * @param signature - Hex-encoded HMAC from provider's signature header
+ * @param secret    - Provider HMAC secret
+ * @param opts      - Algorithm + canonicalization options
+ * @returns true if valid, false on any error or mismatch
+ */
+export async function verifyInboundWebhook(
+  rawBody: string,
+  signature: string,
+  secret: string,
+  opts: InboundVerifyOptions,
+): Promise<boolean> {
+  try {
+    const message = opts.canonicalize ? opts.canonicalize(rawBody) : rawBody;
+    const computed = await computeHmacHex(message, secret, opts.algo);
+    return timingSafeEqual(computed, signature.toLowerCase());
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -76,7 +155,12 @@ export async function signWebhook(
 export interface VerifyOptions {
   /** Max age of signature in seconds. Default 300 (5 min). */
   toleranceSec?: number;
-  /** Accept legacy bare-hex signatures (no t= prefix). Default true. */
+  /**
+   * Accept legacy bare-hex signatures (no t= prefix). Default false.
+   *
+   * Legacy v0 signature support deprecated 2026-05-09.
+   * Pass acceptLegacy:true to opt back in (will be removed in 2026-06).
+   */
   acceptLegacy?: boolean;
 }
 
@@ -95,7 +179,7 @@ export async function verifyWebhook(
   secret: string,
   opts: VerifyOptions = {},
 ): Promise<boolean> {
-  const { toleranceSec = 300, acceptLegacy = true } = opts;
+  const { toleranceSec = 300, acceptLegacy = false } = opts;
 
   // ── New format: `t=<ts>,v1=<hex>` ──────────────────────────────────────
   if (signature.includes('t=') && signature.includes('v1=')) {
