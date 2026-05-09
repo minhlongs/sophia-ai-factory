@@ -412,7 +412,52 @@
         "telegram": "Bot Telegram"
       },
       "back_to_dashboard": "Quay Lại Bảng Điều Khiển",
-      "title": "Hướng Dẫn Sử Dụng"
+      "title": "Hướng Dẫn Sử Dụng",
+      "telegram": {
+        "metaTitle": "Telegram Bot — Hướng Dẫn Sophia AI Factory",
+        "metaDescription": "Cách sử dụng bot @Sophia_Bbot trên Telegram để tạo video",
+        "heroTitle": "Hướng Dẫn Telegram Bot",
+        "heroIntro": "Điều khiển Sophia từ điện thoại 24/7 qua bot <mono>@Sophia_Bbot</mono> trên Telegram.",
+        "setupTitle": "Thiết Lập Ban Đầu",
+        "step1": {
+          "title": "Cài Đặt Telegram",
+          "description": "Tải ứng dụng Telegram từ App Store (iPhone) hoặc Google Play (Android). Đăng ký bằng số điện thoại nếu chưa có tài khoản."
+        },
+        "step2": {
+          "title": "Tìm Bot Sophia",
+          "description": "Mở Telegram, nhấn biểu tượng kính lúp, tìm kiếm <mono>@Sophia_Bbot</mono> (chú ý chữ <strong>B</strong> viết hoa). Nhấn vào kết quả và nhấn <strong>START</strong>."
+        },
+        "step3": {
+          "title": "Liên Kết Tài Khoản",
+          "description": "Nhập lệnh <mono>/email</mono> kèm email bạn dùng để đăng ký Sophia. Bot sẽ gửi mã xác nhận 6 số về email — nhập mã đó vào Telegram."
+        },
+        "step4": {
+          "title": "Tạo Video Đầu Tiên",
+          "description": "Nhập <mono>/campaign</mono> kèm chủ đề video. Bot sẽ xử lý trong 2–5 phút và thông báo khi xong. Nhập <mono>/results</mono> để lấy link.",
+          "code": "/campaign Top 5 tai nghe không dây dưới 1 triệu"
+        },
+        "calloutTitle": "Lưu ý tên bot",
+        "calloutBody": "Tên đúng là <strong>@Sophia_Bbot</strong> — chữ <strong>B</strong> viết hoa. Tìm không ra? Vào trực tiếp: <mono>t.me/Sophia_Bbot</mono>",
+        "commandsTitle": "Danh Sách Lệnh",
+        "tableHeaderCmd": "Lệnh",
+        "tableHeaderDesc": "Chức Năng",
+        "table": {
+          "link": "Kết nối tài khoản Sophia với Telegram",
+          "campaign": "Tạo video mới từ chủ đề bạn nhập",
+          "status": "Xem trạng thái chiến dịch đang chạy",
+          "results": "Nhận link video đã hoàn thành",
+          "stop": "Tạm dừng chiến dịch đang xử lý",
+          "help": "Danh sách tất cả lệnh"
+        },
+        "tipsTitle": "Mẹo Sử Dụng",
+        "tip1": "Mô tả chủ đề càng cụ thể, video càng chất lượng. Thay vì <em>\"tai nghe\"</em>, hãy viết <em>\"Top 5 tai nghe không dây dưới 1 triệu tốt nhất 2024\"</em>.",
+        "tip2": "Bot hoạt động 24/7. Khi video xong, bot sẽ <strong>tự động thông báo</strong> cho bạn — không cần ngồi chờ.",
+        "supportTitle": "Cần Hỗ Trợ?",
+        "supportLine1": "Bot không phản hồi → nhập <mono>/help</mono> và đợi 30 giây",
+        "supportLine2": "Vẫn không được → Email: <mono>support@agencyos.network</mono>",
+        "supportSeeAlso": "Xem thêm",
+        "supportFaqLink": "Câu hỏi thường gặp"
+      }
     }
   },
   "dashboard": {
@@ -444,6 +489,13 @@
       "tierBadge": "Gói hiện tại: {tier}"
     },
     "missions": {
+      "pev_stage": {
+        "queued": "Đang Xếp Hàng",
+        "planning": "Đang Lập Kế Hoạch",
+        "executing": "Đang Thực Thi",
+        "verifying": "Đang Kiểm Tra",
+        "completed": "Hoàn Tất"
+      },
       "page_title": "Nhiệm Vụ AI",
       "page_subtitle": "Khởi chạy và theo dõi các tác vụ AI tự động",
       "new_mission": "Nhiệm Vụ Mới",
@@ -491,6 +543,7 @@
         "agent_working": "Đang làm",
         "agent_blocked": "Bị chặn",
         "agent_error": "Lỗi",
+        "agent_loading": "Đang tải agents...",
         "create_team_cta": "Tạo Đội AI",
         "no_agents": "Chưa có agent nào",
         "connected": "Đã kết nối",
@@ -705,7 +758,19 @@
       "daysLeft": "Còn {count} ngày"
     },
     "billing": {
-      "videoGenerationsLabel": "Số Video Tạo Ra"
+      "videoGenerationsLabel": "Số Video Tạo Ra",
+      "apiCallsLabel": "API Calls",
+      "storageLabel": "Lưu Trữ (MB)",
+      "loading": "Đang tải dữ liệu thanh toán...",
+      "loadError": "Không thể tải dữ liệu thanh toán. Vui lòng thử lại sau.",
+      "pageTitle": "Thanh Toán & Sử Dụng",
+      "pageSubtitle": "Theo dõi mức sử dụng, phí vượt hạn mức và trạng thái thanh toán",
+      "exportButton": "Xuất File",
+      "upgradeButton": "Nâng Cấp Gói",
+      "usageBreakdown": "Chi Tiết Sử Dụng",
+      "quotaSection": "Sử Dụng Hạn Mức",
+      "quotaCardTitle": "Mức Dùng Tài Nguyên",
+      "quotaCardSubtitle": "Biểu đồ trực quan mức tiêu thụ tài nguyên"
     },
     "support": {
       "title": "Hỗ Trợ",

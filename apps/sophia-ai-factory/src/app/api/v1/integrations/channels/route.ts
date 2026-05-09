@@ -29,7 +29,14 @@ interface ChannelRow {
 }
 
 export async function GET(req: NextRequest) {
-  const user = await getCurrentUserFromHeaders(req.headers);
+  // Wrap auth in try/catch — getCurrentUserFromHeaders can throw if Better Auth
+  // session lookup hits a transient error; return 401 not 500 for unauth.
+  let user: Awaited<ReturnType<typeof getCurrentUserFromHeaders>> | null = null;
+  try {
+    user = await getCurrentUserFromHeaders(req.headers);
+  } catch (err) {
+    logger.warn('[channels] auth lookup threw — treating as unauth', { err: err instanceof Error ? err.message : String(err) });
+  }
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const db = getD1();

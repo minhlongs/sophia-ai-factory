@@ -412,7 +412,52 @@
         "telegram": "Telegram Bot"
       },
       "back_to_dashboard": "Back to Dashboard",
-      "title": "User Guide"
+      "title": "User Guide",
+      "telegram": {
+        "metaTitle": "Telegram Bot — Sophia AI Factory Guide",
+        "metaDescription": "How to use the @Sophia_Bbot Telegram bot to create videos",
+        "heroTitle": "Telegram Bot Guide",
+        "heroIntro": "Control Sophia from your phone 24/7 via the <mono>@Sophia_Bbot</mono> Telegram bot.",
+        "setupTitle": "Initial Setup",
+        "step1": {
+          "title": "Install Telegram",
+          "description": "Download the Telegram app from the App Store (iPhone) or Google Play (Android). Sign up with your phone number if you don't have an account."
+        },
+        "step2": {
+          "title": "Find the Sophia Bot",
+          "description": "Open Telegram, tap the magnifying glass, and search for <mono>@Sophia_Bbot</mono> (note the capital <strong>B</strong>). Tap the result and press <strong>START</strong>."
+        },
+        "step3": {
+          "title": "Link Your Account",
+          "description": "Type the <mono>/email</mono> command followed by the email you used to sign up for Sophia. The bot will send a 6-digit code to your email — enter it in Telegram."
+        },
+        "step4": {
+          "title": "Create Your First Video",
+          "description": "Type <mono>/campaign</mono> followed by your video topic. The bot processes it in 2–5 minutes and notifies you when done. Type <mono>/results</mono> to get the link.",
+          "code": "/campaign Top 5 wireless earbuds under $50"
+        },
+        "calloutTitle": "Bot name reminder",
+        "calloutBody": "The exact name is <strong>@Sophia_Bbot</strong> — capital <strong>B</strong>. Can't find it? Open directly: <mono>t.me/Sophia_Bbot</mono>",
+        "commandsTitle": "Command List",
+        "tableHeaderCmd": "Command",
+        "tableHeaderDesc": "Function",
+        "table": {
+          "link": "Connect your Sophia account to Telegram",
+          "campaign": "Create a new video from a topic you provide",
+          "status": "Check the status of running campaigns",
+          "results": "Get links to completed videos",
+          "stop": "Pause a running campaign",
+          "help": "List all available commands"
+        },
+        "tipsTitle": "Tips",
+        "tip1": "The more specific the topic, the better the video. Instead of <em>\"earbuds\"</em>, write <em>\"Top 5 wireless earbuds under $50 in 2024\"</em>.",
+        "tip2": "The bot runs 24/7. When your video is ready, the bot will <strong>auto-notify</strong> you — no need to wait around.",
+        "supportTitle": "Need Help?",
+        "supportLine1": "Bot not responding → type <mono>/help</mono> and wait 30 seconds",
+        "supportLine2": "Still not working → Email: <mono>support@agencyos.network</mono>",
+        "supportSeeAlso": "See also",
+        "supportFaqLink": "Frequently Asked Questions"
+      }
     }
   },
   "dashboard": {
@@ -444,6 +489,13 @@
       "tierBadge": "Current plan: {tier}"
     },
     "missions": {
+      "pev_stage": {
+        "queued": "Queued",
+        "planning": "Planning",
+        "executing": "Executing",
+        "verifying": "Verifying",
+        "completed": "Completed"
+      },
       "page_title": "AI Missions",
       "page_subtitle": "Launch and monitor your automated AI tasks",
       "new_mission": "New Mission",
@@ -491,6 +543,7 @@
         "agent_working": "Working",
         "agent_blocked": "Blocked",
         "agent_error": "Error",
+        "agent_loading": "Loading agents...",
         "create_team_cta": "Create AI Team",
         "no_agents": "No agents provisioned yet",
         "connected": "Connected",
@@ -705,7 +758,19 @@
       "daysLeft": "{count} day{count, plural, one {} other {s}} left"
     },
     "billing": {
-      "videoGenerationsLabel": "Video Generations"
+      "videoGenerationsLabel": "Video Generations",
+      "apiCallsLabel": "API Calls",
+      "storageLabel": "Storage (MB)",
+      "loading": "Loading billing data...",
+      "loadError": "Could not load billing data. Please try again later.",
+      "pageTitle": "Billing & Usage",
+      "pageSubtitle": "Monitor your usage, overage charges, and billing status",
+      "exportButton": "Export",
+      "upgradeButton": "Upgrade Plan",
+      "usageBreakdown": "Usage Breakdown",
+      "quotaSection": "Quota Usage",
+      "quotaCardTitle": "Resource Consumption",
+      "quotaCardSubtitle": "Visual chart of resource usage"
     },
     "support": {
       "title": "Support",

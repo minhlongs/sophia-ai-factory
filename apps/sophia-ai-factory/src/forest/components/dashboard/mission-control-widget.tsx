@@ -40,7 +40,7 @@ export function MissionControlWidget({ isVi = false }: MissionControlWidgetProps
               <span className="text-xs text-zinc-400">
                 {isVi ? 'Hạn mức MCU' : 'MCU quota'}
               </span>
-              <a href="/dashboard/usage" className="text-xs text-violet-400 hover:underline">
+              <a href="/dashboard/billing" className="text-xs text-violet-400 hover:underline">
                 <span className="tabular-nums">{data.quota.used.toLocaleString()} / {data.quota.total.toLocaleString()}</span>
               </a>
             </div>

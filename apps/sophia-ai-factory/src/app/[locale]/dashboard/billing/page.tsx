@@ -24,12 +24,12 @@ const getStatusFromPct = (pct: number): 'ok' | 'warning' | 'critical' | 'overage
   return 'ok';
 };
 
-function BillingSpinner() {
+function BillingSpinner({ label }: { label: string }) {
   return (
     <div className="flex items-center justify-center p-8">
       <div className="space-y-4">
         <div className="motion-safe:animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
-        <p className="text-muted-foreground">Đang tải dữ liệu thanh toán...</p>
+        <p className="text-muted-foreground">{label}</p>
       </div>
     </div>
   );
@@ -50,20 +50,20 @@ export default function BillingPage({ params }: { params: Promise<{ locale: stri
     enabled: !!usageData?.license?.nonce,
   });
 
-  if (isLoading) return <BillingSpinner />;
+  if (isLoading) return <BillingSpinner label={t('loading')} />;
 
   if (error) {
     return (
       <div className="p-6">
         <div className="bg-destructive/15 border border-destructive text-destructive px-4 py-3 rounded-lg">
           <AlertCircle className="h-5 w-5 inline mr-2" />
-          Không thể tải dữ liệu thanh toán. Vui lòng thử lại sau.
+          {t('loadError')}
         </div>
       </div>
     );
   }
 
-  if (!usageData) return <BillingSpinner />;
+  if (!usageData) return <BillingSpinner label={t('loading')} />;
 
   const pct = usageData.percentages.apiCalls || 0;
   const hourlyUsage = {
@@ -86,22 +86,22 @@ export default function BillingPage({ params }: { params: Promise<{ locale: stri
     overage: usageData.overageEvents.totalCredits,
   };
   const quotaData = [
-    { label: 'API Calls', used: usageData.usage.apiCalls, limit: usageData.limits.apiCalls },
+    { label: t('apiCallsLabel'), used: usageData.usage.apiCalls, limit: usageData.limits.apiCalls },
     { label: t('videoGenerationsLabel'), used: usageData.usage.videoGenerations, limit: usageData.limits.videoGenerations },
-    { label: 'Storage (MB)', used: usageData.usage.storage, limit: usageData.limits.storage },
+    { label: t('storageLabel'), used: usageData.usage.storage, limit: usageData.limits.storage },
   ];
 
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Billing & Usage</h1>
-          <p className="text-muted-foreground mt-1">Monitor your usage, overage charges, and billing status</p>
+          <h1 className="text-3xl font-bold tracking-tight">{t('pageTitle')}</h1>
+          <p className="text-muted-foreground mt-1">{t('pageSubtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm"><Download className="h-4 w-4 mr-2" />Export</Button>
+          <Button variant="outline" size="sm"><Download className="h-4 w-4 mr-2" />{t('exportButton')}</Button>
           {usageData.license.tier !== 'MASTER' && (
-            <Button size="sm"><CreditCard className="h-4 w-4 mr-2" />Upgrade Plan</Button>
+            <Button size="sm"><CreditCard className="h-4 w-4 mr-2" />{t('upgradeButton')}</Button>
           )}
         </div>
       </div>
@@ -119,16 +119,16 @@ export default function BillingPage({ params }: { params: Promise<{ locale: stri
       <BillingChargeSummary data={usageData} formatCurrency={(c) => formatCurrency(c, locale)} />
 
       <div>
-        <h2 className="text-xl font-semibold mb-4">Usage Breakdown</h2>
+        <h2 className="text-xl font-semibold mb-4">{t('usageBreakdown')}</h2>
         <FullUsageSummary hourly={hourlyUsage} daily={dailyUsage} monthly={monthlyUsage} />
       </div>
 
       <div>
-        <h2 className="text-xl font-semibold mb-4">Sử Dụng Hạn Mức</h2>
+        <h2 className="text-xl font-semibold mb-4">{t('quotaSection')}</h2>
         <Card>
           <CardHeader>
-            <CardTitle>Mức Dùng Tài Nguyên</CardTitle>
-            <CardDescription>Biểu đồ trực quan mức tiêu thụ tài nguyên</CardDescription>
+            <CardTitle>{t('quotaCardTitle')}</CardTitle>
+            <CardDescription>{t('quotaCardSubtitle')}</CardDescription>
           </CardHeader>
           <CardContent>
             <QuotaGaugeList quotas={quotaData} columns={3} />

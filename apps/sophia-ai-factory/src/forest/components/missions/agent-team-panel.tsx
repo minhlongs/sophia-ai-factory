@@ -62,7 +62,7 @@ export function AgentTeamPanel() {
       </CardHeader>
       <CardContent className="space-y-3">
         {loading && (
-          <p className="text-xs text-muted-foreground">Loading agents...</p>
+          <p className="text-xs text-muted-foreground">{t('agent_loading')}</p>
         )}
 
         {!loading && agents.length === 0 && (

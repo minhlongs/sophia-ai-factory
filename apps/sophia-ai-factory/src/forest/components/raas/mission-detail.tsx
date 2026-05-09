@@ -26,12 +26,12 @@ interface MissionDetailResponse {
   mission?: MissionData;
 }
 
-const PEV_STAGES: { key: MissionStatus; label: string; icon: string }[] = [
-  { key: 'queued',    label: 'Queued',    icon: 'schedule' },
-  { key: 'planning',  label: 'Planning',  icon: 'psychology' },
-  { key: 'executing', label: 'Executing', icon: 'rocket_launch' },
-  { key: 'verifying', label: 'Verifying', icon: 'verified' },
-  { key: 'completed', label: 'Completed', icon: 'check_circle' },
+const PEV_STAGES: { key: MissionStatus; icon: string }[] = [
+  { key: 'queued',    icon: 'schedule' },
+  { key: 'planning',  icon: 'psychology' },
+  { key: 'executing', icon: 'rocket_launch' },
+  { key: 'verifying', icon: 'verified' },
+  { key: 'completed', icon: 'check_circle' },
 ];
 
 const STATUS_ORDER: MissionStatus[] = ['queued', 'planning', 'executing', 'verifying', 'completed'];
@@ -94,7 +94,7 @@ export function MissionDetail({ missionId }: Props) {
                     : 'bg-muted text-muted-foreground'
                   }`}>
                     <span className="material-symbols-outlined text-xl">{stage.icon}</span>
-                    <span className="text-xs font-medium">{stage.label}</span>
+                    <span className="text-xs font-medium">{t(`pev_stage.${stage.key}`)}</span>
                   </div>
                   {i < PEV_STAGES.length - 1 && (
                     <span className="text-muted-foreground material-symbols-outlined text-sm">chevron_right</span>
