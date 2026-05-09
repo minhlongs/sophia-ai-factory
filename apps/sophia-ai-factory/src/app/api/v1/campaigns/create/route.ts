@@ -1,9 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createServerClient } from "@/seed/db/client";
 import { logger } from "@/seed/utils/logger-utility";
 import { toError } from "@/seed/utils/to-error";
 import { sendCampaignCreatedEvent } from "@/lib/campaigns/create-campaign-core";
+import { withRateLimit } from "@/forest/middleware/rate-limit-wrapper";
 
 // POST /api/v1/campaigns/create
 // Headers: Authorization: Bearer <raas_api_key>
@@ -49,7 +50,9 @@ async function validateRaasApiKey(apiKey: string): Promise<boolean> {
   return true;
 }
 
-export async function POST(request: Request): Promise<NextResponse> {
+// Campaign create dispatches Inngest video pipeline (LLM + TTS + render costs).
+// 30/min ceiling — tier-config can lift higher.
+export const POST = withRateLimit(async function POST(request: NextRequest): Promise<NextResponse> {
   const requestId = crypto.randomUUID();
   const log = logger.withRequestId(requestId);
 
@@ -169,4 +172,4 @@ export async function POST(request: Request): Promise<NextResponse> {
     );
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-}
+}, { addHeaders: true, config: { intervalMs: 60_000, maxRequests: 30 } });

@@ -15,6 +15,7 @@ import { isValidCommand, getCommand } from '@/forest/missions/command-registry';
 import { getBalance } from '@/lib/mcu/credits-repo';
 import { dispatchMission } from '@/forest/missions/dispatcher';
 import { logger } from '@/seed/utils/logger-utility';
+import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,7 +32,9 @@ const ListQuerySchema = z.object({
   cursor: z.string().optional(),
 });
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+// Mission creation triggers Inngest pipeline (LLM + provider costs).
+// 30/min ceiling prevents runaway loops; tier-config can lift higher.
+export const POST = withRateLimit(async function POST(request: NextRequest): Promise<NextResponse> {
   const auth = await validateMissionApiKey(
     request.headers.get('authorization'),
     request.headers.get('x-api-key'),
@@ -110,7 +113,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     eta_seconds: 60,
     stream_url: `/api/v1/missions/${missionId}/stream`,
   }, { status: 202 });
-}
+}, { addHeaders: true, config: { intervalMs: 60_000, maxRequests: 30 } });
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const auth = await validateMissionApiKey(

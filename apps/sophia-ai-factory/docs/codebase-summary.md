@@ -1,8 +1,8 @@
 # Codebase Summary
 
 **Last Updated:** 2026-05-08
-**Version:** 1.14.24 (Wave 4: Admin tier + settings bilingual + mission retry + localization)
-**Recent Major Changes:** Wave 4 shipped (2026-05-08): (A) Admin users tier via DB `getUserTier()` (not hardcoded). (B) Settings 4 sections bilingual (~30 keys). (C) Mission retry endpoint + UX CTA. (D) Locale-aware date formatting + onboarding tour preservation. 2810/2810 tests pass, 0 TS errors, 9.4/10 code quality. See `docs/project-changelog.md` for details.
+**Version:** 1.14.25 (Wave 5: Cron registration + webhook timestamp + rate limiting + i18n + dashboard agents + SOP API + RBAC + CSP)
+**Recent Major Changes:** Wave 5 shipped (2026-05-08): (F-1) Inngest 2 missing crons registered + 6 corrected to event-based dispatch. (F-2) **BREAKING:** Webhook timestamp enforcement + signature format change (`${timestamp}.${body}`). (F-3) Tier-aware rate limiting on 4 v1 hottest routes. (F-4) /status bilingual i18n. (F-5) /dashboard/agents NEW page. (F-6) /api/v1/sops REST NEW. (F-7) /api/admin/users PATCH NEW with RBAC. (F-8) CSP + worker-src blob:. 2810/2810 tests pass, 0 TS errors, 9.4/10 code quality. See `docs/project-changelog.md` for BREAKING change details and migration window.
 
 ## Project Structure Overview
 
