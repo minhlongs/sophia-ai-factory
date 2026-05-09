@@ -18,6 +18,7 @@ export const PROVIDER_LABELS: Record<string, string> = {
   reddit: 'Reddit',
   bluesky: 'Bluesky',
   mastodon: 'Mastodon',
+  telegram: 'Telegram',
 };
 
 export const PUBLISH_STATUS_STYLES: Record<string, string> = {

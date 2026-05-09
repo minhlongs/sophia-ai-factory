@@ -1,7 +1,60 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-05-09 (Wave 16: FREE100 video generation rewire + onboarding flow + distribution UI)
+> **Last Updated:** 2026-05-09 EOD (Wave 16 COMPLETE: all 4 phases shipped)
+
+---
+
+## [2026-05-09 EOD] Wave 16 COMPLETE — Phase 03 Telegram + Phase 04 Hotfix
+
+**Summary (vi):** Khép kín Wave 16. Phase 03: Telegram Bot API `sendVideo` provider trong `publishExecute` (175 LOC, token masking, error taxonomy 429/401/403/network). Migration 0099 thêm `provider TEXT NOT NULL DEFAULT ''` vào `publishing_jobs` (one-shot, không idempotent). Phase 04 hotfix: `dashboard/onboarding/page.tsx:42` column rename `user_id` → `paired_by` trên query `telegram_paired_chats`. Cấp độ gated: `NEXT_PUBLIC_DISTRIBUTE_ENABLED` (default OFF). Wave 17 unlocks HeyGen→R2 pipeline, flip flag.
+
+**Summary (en):** Closed Wave 16. Phase 03: Telegram as provider inside `publishExecute` (synchronous Bot API `sendVideo`, 175 LOC, token masking, error taxonomy for 429/401/403/network with Inngest retry). Migration 0099 adds `provider` column to `publishing_jobs` (one-shot, non-idempotent — honest schema comment). Phase 04 hotfix: onboarding page query uses `paired_by` (was hardcoded `user_id`). Critical bugs caught + fixed: C1 telegram branch returned `'processing'` → polling overwrote `'live'` (fixed: returns `'live'` + early-exit guard). M1 Zod `max(12)` blocked 13th provider (fixed: `.max(CHANNEL_PROVIDERS.length)`). M2 migration comment honest about one-shot apply. Schema reality: `telegram_paired_chats` only has `chat_id|first_name|paired_at|paired_by` (URL pattern resolved from Bot API response at post-time). Feature gated by `NEXT_PUBLIC_DISTRIBUTE_ENABLED` (default OFF). Verification: 3018/3018 tests pass, 0 TS errors, build exit 0, 0 i18n missing. **Wave 16 fully shipped (phases 01 + 04 + 02 + 03 all live).**
+
+### Wave 16 Overview
+- **Phase 01 (2026-05-09 AM):** `/dashboard/videos/new` rewire — HeyGen → Inngest `videoGenerate` + SSE + native player. 13 tests.
+- **Phase 04 (2026-05-09 AM):** `/dashboard/onboarding` 3-step for MASTER tier; auto-install starter SOP; migration 0098 backfill. 7 tests.
+- **Phase 02 (2026-05-09 PM):** Distribution UI + API gated. 15 tests. NEXT_PUBLIC_DISTRIBUTE_ENABLED (default OFF).
+- **Phase 03 (2026-05-09 EOD):** Telegram Bot API provider. 22 tests (15 telegram-publisher + 7 C1 regression). Migration 0099. **Phase 04 hotfix bundled.**
+
+### Phase 03 — Telegram Auto-Post Channel (Gated)
+**New file:** `src/forest/publishing/providers/telegram-publisher.ts` (175 LOC)
+- Wrapper over Bot API `sendVideo` endpoint
+- Token masking for logs + error taxonomy (429/401/403/network all trigger Inngest retry)
+- URL builder for public/private/DM channels
+
+**New migration:** `0099-publishing-jobs-add-provider.sql`
+- Adds `provider TEXT NOT NULL DEFAULT ''` to `publishing_jobs`
+- Enables telegram dispatch path to bypass `publishing_channels` lookup
+- One-shot apply (not idempotent — comment is honest)
+
+**Modified:** `publish-execute.ts`
+- Telegram dispatch branch (synchronous Bot API, no polling)
+- Claim-result union extended with `status:'live'`
+- Early-exit guard updated (C1 fix: returns `'live'`, guards against polling overwrite)
+
+**Tests:** 22 new (15 telegram-publisher unit + 7 C1 regression for publish-execute early-exit)
+
+**Critical bugs fixed during review:**
+- **C1 CRITICAL:** Telegram branch returned `status:'processing'` → polling loop overwrote `'live'` with `'failed'` for every post. Fix: returns `'live'` + guard short-circuits on `'live'`.
+- **M1 MAJOR:** Zod `max(12)` blocked 13th provider (telegram). Fix: `.max(CHANNEL_PROVIDERS.length)` (=13).
+- **M2 MAJOR:** Migration comment false idempotency claim. Fix: honest one-shot comment.
+
+**Schema Note:** `telegram_paired_chats` contains only `chat_id|first_name|paired_at|paired_by` (no `is_channel`/`username`/`chat_title`). URL pattern resolved from Bot API response at post-time.
+
+### Phase 04 Hotfix
+**File:** `src/app/[locale]/dashboard/onboarding/page.tsx:42`
+- Column rename bug: query references `user_id` → should be `paired_by` on `telegram_paired_chats`
+- Pre-existing production bug from commit 5bcf1e09 (Phase 04 ship)
+- Cross-grepped 8 query sites; this was the only broken one
+
+**Verification:** 3018/3018 tests pass, 0 TS errors, build exit 0, 0 i18n missing.
+
+**Wave 17 Followup:**
+1. Bridge HeyGen→R2 video conversion pipeline
+2. Flip `NEXT_PUBLIC_DISTRIBUTE_ENABLED=true` (currently gated)
+3. Bulk distribute UI for `/dashboard/videos`
+4. E2E Playwright coverage for distribution + telegram flows
 
 ---
 

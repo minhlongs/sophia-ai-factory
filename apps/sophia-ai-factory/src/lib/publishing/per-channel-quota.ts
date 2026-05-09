@@ -22,6 +22,7 @@ export const DAILY_QUOTAS: Record<ChannelProvider, number> = {
   reddit: 10,      // Reddit API: conservative limit for link submissions
   bluesky: 100,    // AT Protocol: high limit, no hard published quota
   mastodon: 50,    // Mastodon: standard rate limit per instance
+  telegram: 300,   // Telegram Bot API: 30 msg/sec, generous daily cap (5/min enforced at route level)
 };
 
 function todayUtc(): string {

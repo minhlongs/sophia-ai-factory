@@ -24,6 +24,7 @@ import { ThreadsPublisher } from '@/lib/publishing/threads';
 import { RedditPublisher } from '@/lib/publishing/reddit';
 import { BlueskyPublisher } from '@/lib/publishing/bluesky';
 import { MastodonPublisher } from '@/lib/publishing/mastodon';
+import { publishToTelegram } from '@/forest/publishing/providers/telegram-publisher';
 import { logger } from '@/seed/utils/logger-utility';
 import type { PublishingChannel, PublishingJob, Publisher } from '@/lib/publishing/publisher-interface';
 import { randomUUID } from 'crypto';
@@ -119,7 +120,8 @@ function buildPostUrl(provider: string, externalPostId: string, externalAccountI
 type ClaimResult =
   | { skipped: true; jobId: string; status: string; externalPostId: ''; provider: '' }
   | { skipped: false; jobId: string; status: 'failed' | 'scheduled'; externalPostId: ''; provider: ''; error?: string }
-  | { skipped: false; jobId: string; status: 'processing'; externalPostId: string; provider: string };
+  | { skipped: false; jobId: string; status: 'processing'; externalPostId: string; provider: string }
+  | { skipped: false; jobId: string; status: 'live'; externalPostId: string; provider: string };
 
 export const publishExecute = inngest.createFunction(
   { id: 'publish-execute', retries: 0 },
@@ -162,6 +164,71 @@ export const publishExecute = inngest.createFunction(
         logger.info('[publishExecute] Already claimed by another worker', { jobId, status: job.status });
         return { skipped: true, jobId, status: job.status as string, externalPostId: '', provider: '' };
       }
+
+      // ── Telegram dispatch (Option A: special-case, bypasses publishing_channels) ──
+      // job.provider='telegram' is set by schedule-publish when distribute route submits
+      // a Telegram channel. channel_id stores telegram_paired_chats.chat_id as surrogate.
+      // NOTE: assertSafeVideoUrl() SSRF guard is still enforced before sending to Bot API.
+      // DO NOT remove or weaken the SSRF guard — that is Wave 17's job.
+      const jobProvider = job.provider ?? '';
+      if (jobProvider === 'telegram') {
+        const { data: videoJobData } = await db
+          .from('video_jobs')
+          .select('final_r2_key')
+          .eq('id', job.video_job_id)
+          .eq('tenant_id', tenantId)
+          .single();
+
+        const r2Key = (videoJobData as { final_r2_key?: string | null } | null)?.final_r2_key;
+        if (!r2Key) throw new Error(`[publishExecute/telegram] No final_r2_key for video job ${job.video_job_id}`);
+
+        const r2Host = process.env.R2_PUBLIC_HOSTNAME ?? 'pub-placeholder.r2.dev';
+        const videoUrl = `https://${r2Host}/${r2Key}`;
+        assertSafeVideoUrl(videoUrl); // SSRF guard — must stay (Wave 17 resolves R2 pipeline gap)
+
+        // Verify pairing still exists and belongs to this tenant (cross-user posting prevention)
+        const pairingRow = await db
+          .from('telegram_paired_chats')
+          .select('chat_id')
+          .eq('chat_id', job.channel_id)
+          .eq('paired_by', tenantId)
+          .maybeSingle();
+
+        if (!pairingRow?.data) {
+          throw new Error(
+            `[publishExecute/telegram] Pairing not found or revoked for chat_id ${job.channel_id}. ` +
+              'Re-pair via /start in @Sophia_Bbot.',
+          );
+        }
+
+        const { externalPostId: tgPostId, externalUrl } = await publishToTelegram({
+          jobId,
+          userId: tenantId,
+          videoUrl,
+          caption: job.caption ?? '',
+          chatId: job.channel_id,
+        });
+
+        // Telegram posts are synchronous — mark live immediately (no polling needed)
+        await db.from('publishing_jobs').update({
+          status: 'live',
+          finished_at: Math.floor(Date.now() / 1000),
+        }).eq('id', jobId);
+
+        await db.from('publishing_results').insert({
+          id: randomUUID(),
+          publishing_job_id: jobId,
+          tenant_id: tenantId,
+          channel_post_id: tgPostId,
+          post_url: externalUrl,
+          metrics_json: null,
+          published_at: Math.floor(Date.now() / 1000),
+        });
+
+        logger.info('[publishExecute/telegram] Posted and finalized', { jobId, chatId: job.channel_id, tgPostId });
+        return { skipped: false, jobId, status: 'live', externalPostId: tgPostId, provider: 'telegram' };
+      }
+      // ── End Telegram dispatch ──────────────────────────────────────────────────
 
       const { data: channelData } = await db
         .from('publishing_channels')
@@ -245,8 +312,8 @@ export const publishExecute = inngest.createFunction(
       return { skipped: false, jobId, status: 'processing', externalPostId, provider: channel.provider };
     });
 
-    // Exit early if upload didn't complete
-    if (claimResult.skipped || claimResult.status !== 'processing' || !claimResult.externalPostId) {
+    // Exit early if upload didn't complete OR Telegram already finalized (status='live')
+    if (claimResult.skipped || claimResult.status === 'live' || claimResult.status !== 'processing' || !claimResult.externalPostId) {
       return claimResult;
     }
 
