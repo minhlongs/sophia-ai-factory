@@ -138,24 +138,6 @@ export async function verifyPayOsWebhook(
   })
 }
 
-/**
- * @deprecated Use verifyPayOsWebhook(rawBody, signature, checksumKey) instead.
- * Kept for backwards compat — passes the data object through canonicalization.
- * Will be removed after all callers migrate to raw-body API.
- */
-export async function verifyPayOsSignature(
-  data: Record<string, unknown>,
-  signature: string,
-  checksumKey: string
-): Promise<boolean> {
-  // Re-serialize to raw JSON so verifyInboundWebhook can apply payOsCanonicalize
-  const syntheticRaw = JSON.stringify({ data })
-  return verifyInboundWebhook(syntheticRaw, signature, checksumKey, {
-    algo: 'SHA-256',
-    canonicalize: payOsCanonicalize,
-  })
-}
-
 // ── PayOS API client ──────────────────────────────────────────────────────────
 
 interface PayOsCreatePaymentResponse {

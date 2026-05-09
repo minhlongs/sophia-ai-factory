@@ -60,7 +60,9 @@ const BREADCRUMB_DATA_SAFELIST = new Set(['mission_id', 'event_cursor', 'resume_
  * - Always pass: category='error', first event per mission (tracked per second bucket)
  * - Drop: > MAX_SSE_PER_SECOND SSE breadcrumbs in the same 1-second bucket per mission
  */
-const SSE_SAMPLE_RATE = 0.1; // keep 1 in 10 SSE breadcrumbs
+// First event per 1-second window per mission always passes; events 2..10 sampled at 10%
+// (1-in-10); events 11+ in the same window are dropped. Errors always bypass sampling.
+const SSE_SAMPLE_RATE = 0.1;
 const MAX_SSE_PER_SECOND = 10; // absolute cap per mission per second
 
 interface SseBucket {
