@@ -75,7 +75,7 @@ Before deploying Sprint M (first-dollar revenue engine), ensure all prerequisite
    npx wrangler d1 migrations apply sophia-raas-db --remote
    ```
 
-2. **Cloudflare Secrets Set** (13 required — 2 new for Wave 12)
+2. **Cloudflare Secrets Set** (14 required — 3 new for Wave 12+15)
    ```bash
    npx wrangler secret put OPENROUTER_API_KEY --env production
    npx wrangler secret put ELEVENLABS_API_KEY --env production
@@ -90,11 +90,13 @@ Before deploying Sprint M (first-dollar revenue engine), ensure all prerequisite
    npx wrangler secret put CRON_SECRET --env production
    npx wrangler secret put WAN_API_KEY --env production
    npx wrangler secret put FISH_SPEECH_API_KEY --env production
+   npx wrangler secret put CLOUDCONVERT_API_KEY --env production
    ```
    
-   **New Video Webhook Secrets (2026-04-29)**:
+   **Video Pipeline Secrets**:
    - `HEYGEN_WEBHOOK_SECRET` — HeyGen webhook signature verification (HMAC-SHA256).
    - `HEYGEN_API_KEY` — HeyGen API credential for video polling.
+   - `CLOUDCONVERT_API_KEY` — Cloudconvert REST API key for FFmpeg muxing (video + audio). **If absent in production**, muxing falls back to dev stub MP4 — adequate for testing but not production-ready.
    
    **Optional Video CDN**:
    - `R2_PUBLIC_BASE_URL` — Public CDN URL for R2 bucket (e.g., `https://videos.sophia.agencyos.network`). If omitted, uses R2 auth URLs.

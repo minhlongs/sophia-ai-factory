@@ -6,6 +6,7 @@
 import { Tier } from '@/seed/types'
 import { getOneTimeSkuByInvoiceId, ONE_TIME_INVOICE_IDS } from '@/seed/config/one-time-skus'
 import type { OneTimeSku } from '@/seed/types'
+import { verifyInboundWebhook } from '@/lib/webhooks/signature'
 
 export interface NowPaymentsTierConfig {
   tier: Tier
@@ -81,41 +82,28 @@ export function createInvoiceUrl(tierId: string, userId: string, customerEmail?:
 }
 
 /**
- * Verify NOWPayments IPN signature using HMAC-SHA512
- * Signature is computed over sorted JSON keys of the request body
+ * NOWPayments canonicalization: parse JSON and re-stringify with sorted keys.
+ * This is NOWPayments IPN spec — signature covers JSON with keys in sorted order.
+ */
+function nowPaymentsCanonicalize(rawBody: string): string {
+  const parsed = JSON.parse(rawBody) as Record<string, unknown>
+  return JSON.stringify(parsed, Object.keys(parsed).sort())
+}
+
+/**
+ * Verify NOWPayments IPN signature using HMAC-SHA512.
+ * Signature is computed over sorted JSON keys of the request body.
+ * Uses unified verifyInboundWebhook with SHA-512 + nowpayments canonicalization.
  */
 export async function verifyIpnSignature(
   rawBody: string,
   signature: string,
   secret: string
 ): Promise<boolean> {
-  try {
-    const parsed = JSON.parse(rawBody) as Record<string, unknown>
-    const sorted = JSON.stringify(parsed, Object.keys(parsed).sort())
-    const enc = new TextEncoder()
-    const key = await crypto.subtle.importKey(
-      'raw',
-      enc.encode(secret),
-      { name: 'HMAC', hash: 'SHA-512' },
-      false,
-      ['sign']
-    )
-    const sig = await crypto.subtle.sign('HMAC', key, enc.encode(sorted))
-    const computed = Array.from(new Uint8Array(sig))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('')
-    // Timing-safe comparison to prevent signature brute-force.
-    // Web Crypto API doesn't expose timingSafeEqual on edge — use constant-time
-    // XOR loop over equal-length byte arrays instead.
-    if (computed.length !== signature.length) return false
-    const a = enc.encode(computed)
-    const b = enc.encode(signature)
-    let diff = 0
-    for (let i = 0; i < a.length; i++) diff |= a[i] ^ b[i]
-    return diff === 0
-  } catch {
-    return false
-  }
+  return verifyInboundWebhook(rawBody, signature, secret, {
+    algo: 'SHA-512',
+    canonicalize: nowPaymentsCanonicalize,
+  })
 }
 
 /**

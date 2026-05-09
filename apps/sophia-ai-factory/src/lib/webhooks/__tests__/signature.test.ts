@@ -1,12 +1,14 @@
 /**
  * Unit tests for unified webhook signature (signature.ts).
  * Covers: sign/verify roundtrip, skew tolerance, bad-sig reject,
- * legacy bare-hex compat, and backwards-compat opt-out.
+ * legacy bare-hex rejection (default=false since 2026-05-09),
+ * explicit acceptLegacy:true backwards-compat path,
+ * and verifyInboundWebhook for 3rd-party provider signatures.
  * @module lib/webhooks/__tests__/signature.test
  */
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { signWebhook, verifyWebhook } from '../signature';
+import { signWebhook, verifyWebhook, verifyInboundWebhook, computeHmacHex, timingSafeEqual } from '../signature';
 
 const SECRET = 'test-secret-12345';
 const BODY = JSON.stringify({ event: 'mission.completed', tenantId: 'abc' });
@@ -97,21 +99,114 @@ describe('verifyWebhook — legacy bare-hex compat', () => {
     return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
   }
 
-  it('accepts legacy bare-hex with acceptLegacy=true (default)', async () => {
+  // Default is now false — legacy rejected unless caller opts in explicitly.
+  it('rejects legacy bare-hex by default (acceptLegacy=false since 2026-05-09)', async () => {
     const legacySig = await legacySign(BODY, SECRET);
     const ok = await verifyWebhook(BODY, legacySig, SECRET);
+    expect(ok).toBe(false);
+  });
+
+  it('accepts legacy bare-hex when caller passes acceptLegacy:true explicitly', async () => {
+    const legacySig = await legacySign(BODY, SECRET);
+    const ok = await verifyWebhook(BODY, legacySig, SECRET, { acceptLegacy: true });
     expect(ok).toBe(true);
   });
 
-  it('rejects legacy bare-hex with acceptLegacy=false', async () => {
+  it('rejects legacy bare-hex with explicit acceptLegacy=false', async () => {
     const legacySig = await legacySign(BODY, SECRET);
     const ok = await verifyWebhook(BODY, legacySig, SECRET, { acceptLegacy: false });
     expect(ok).toBe(false);
   });
 
-  it('rejects tampered body in legacy mode', async () => {
+  it('rejects tampered body even with acceptLegacy:true', async () => {
     const legacySig = await legacySign(BODY, SECRET);
-    const ok = await verifyWebhook(BODY + ' ', legacySig, SECRET);
+    const ok = await verifyWebhook(BODY + ' ', legacySig, SECRET, { acceptLegacy: true });
     expect(ok).toBe(false);
+  });
+});
+
+// ── verifyInboundWebhook — 3rd-party provider signatures ────────────────────
+
+describe('verifyInboundWebhook — SHA-256 raw body', () => {
+  const secret = 'inbound-secret-256';
+
+  it('accepts valid SHA-256 signature over raw body', async () => {
+    const body = '{"amount":100,"currency":"VND"}';
+    const sig = await computeHmacHex(body, secret, 'SHA-256');
+    const ok = await verifyInboundWebhook(body, sig, secret, { algo: 'SHA-256' });
+    expect(ok).toBe(true);
+  });
+
+  it('rejects tampered body', async () => {
+    const body = '{"amount":100}';
+    const sig = await computeHmacHex(body, secret, 'SHA-256');
+    const ok = await verifyInboundWebhook('{"amount":999}', sig, secret, { algo: 'SHA-256' });
+    expect(ok).toBe(false);
+  });
+
+  it('rejects wrong secret', async () => {
+    const body = '{"event":"payment"}';
+    const sig = await computeHmacHex(body, secret, 'SHA-256');
+    const ok = await verifyInboundWebhook(body, sig, 'wrong-secret', { algo: 'SHA-256' });
+    expect(ok).toBe(false);
+  });
+});
+
+describe('verifyInboundWebhook — SHA-512 with canonicalization', () => {
+  const secret = 'inbound-secret-512';
+
+  function nowPaymentsCanonicalize(rawBody: string): string {
+    const parsed = JSON.parse(rawBody) as Record<string, unknown>;
+    return JSON.stringify(parsed, Object.keys(parsed).sort());
+  }
+
+  it('accepts valid SHA-512 signature over canonicalized body', async () => {
+    const rawBody = JSON.stringify({ z: 3, a: 1, m: 2 });
+    const canonical = nowPaymentsCanonicalize(rawBody);
+    const sig = await computeHmacHex(canonical, secret, 'SHA-512');
+    const ok = await verifyInboundWebhook(rawBody, sig, secret, {
+      algo: 'SHA-512',
+      canonicalize: nowPaymentsCanonicalize,
+    });
+    expect(ok).toBe(true);
+  });
+
+  it('rejects tampered body with SHA-512', async () => {
+    const rawBody = JSON.stringify({ payment_id: '123', status: 'finished' });
+    const canonical = nowPaymentsCanonicalize(rawBody);
+    const sig = await computeHmacHex(canonical, secret, 'SHA-512');
+    const tampered = JSON.stringify({ payment_id: '999', status: 'finished' });
+    const ok = await verifyInboundWebhook(tampered, sig, secret, {
+      algo: 'SHA-512',
+      canonicalize: nowPaymentsCanonicalize,
+    });
+    expect(ok).toBe(false);
+  });
+
+  it('is order-agnostic via canonicalization (different key order same result)', async () => {
+    const body1 = JSON.stringify({ b: 2, a: 1 });
+    const body2 = JSON.stringify({ a: 1, b: 2 });
+    const canonical = nowPaymentsCanonicalize(body1);
+    const sig = await computeHmacHex(canonical, secret, 'SHA-512');
+    // body2 has same data, different order — canonicalize must normalize it
+    const ok = await verifyInboundWebhook(body2, sig, secret, {
+      algo: 'SHA-512',
+      canonicalize: nowPaymentsCanonicalize,
+    });
+    expect(ok).toBe(true);
+  });
+});
+
+describe('timingSafeEqual', () => {
+  it('returns true for equal strings', () => {
+    expect(timingSafeEqual('abc123', 'abc123')).toBe(true);
+  });
+
+  it('returns false for different lengths', () => {
+    expect(timingSafeEqual('abc', 'abcd')).toBe(false);
+  });
+
+  it('returns false for same-length different content', () => {
+    expect(timingSafeEqual('abc', 'xyz')).toBe(false);
   });
 });

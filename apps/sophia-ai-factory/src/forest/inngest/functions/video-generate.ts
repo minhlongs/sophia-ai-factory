@@ -10,7 +10,7 @@
  *   3. generate-video — Wan 2.1 submit job
  *   4. poll-video-ready — sleep+poll until succeeded/failed
  *   5. download-video — fetch video URL → upload to R2
- *   6. mux-audio-video — STUB (defer FFmpeg mux to next wave)
+ *   6. mux-audio-video — Cloudconvert REST API → muxed final.mp4 in R2
  *   7. update-mission — mark engine_mission completed with output URLs
  *   8. emit-usage — log MCU cost via recordCost
  *
@@ -24,6 +24,7 @@ import { recordCost } from '@/lib/video/cost-ledger';
 import { logger } from '@/seed/utils/logger-utility';
 import { WanVideoClient } from '@/lib/video/wan21-client';
 import { FishSpeechClient } from '@/lib/video/fish-speech-client';
+import { muxVideoAudio } from '@/lib/video/ffmpeg-muxer';
 import type { VideoGenerateRequestedEvent } from '@/lib/video/types';
 
 const POLL_INTERVAL_MS = 20_000; // 20s between polls
@@ -139,17 +140,31 @@ export const videoGenerate = inngest.createFunction(
       logger.info('[videoGenerate] Video uploaded to R2', { videoR2Key });
     });
 
-    // ── Step 6: Mux Audio + Video (STUB) ─────────────────────────────────
-    await step.run('mux-audio-video', async () => {
-      // DEFERRED: FFmpeg muxing to next wave.
-      // Both files stored at:
-      //   audio: video-jobs/{missionId}/audio.mp3
-      //   video: video-jobs/{missionId}/video.mp4
-      // Mux task will combine into video-jobs/{missionId}/final.mp4
-      logger.info('[videoGenerate] mux-audio-video STUBBED — deferred to next wave', {
-        audioR2Key,
-        videoR2Key,
+    // ── Step 6: Mux Audio + Video via Cloudconvert ───────────────────────────
+    // Build public URLs for the R2 objects so Cloudconvert can download them.
+    // Falls back to R2 key strings when no public base URL is configured.
+    const muxOutputKey = `video-jobs/${missionId}/final.mp4`;
+
+    const muxed = await step.run('mux-audio-video', async () => {
+      const ref = await getVideoBucket();
+      const base = ref?.publicBaseUrl?.replace(/\/$/, '') ?? null;
+
+      const videoPublicUrl = base ? `${base}/${videoR2Key}` : videoR2Key;
+      const audioPublicUrl = base ? `${base}/${audioR2Key}` : audioR2Key;
+
+      const result = await muxVideoAudio({
+        videoUrl: videoPublicUrl,
+        audioUrl: audioPublicUrl,
+        outputKey: muxOutputKey,
       });
+
+      logger.info('[videoGenerate] mux-audio-video complete', {
+        missionId,
+        finalUrl: result.url,
+        durationMs: result.durationMs,
+      });
+
+      return result;
     });
 
     // ── Step 7: Update engine_mission ─────────────────────────────────────
@@ -160,13 +175,13 @@ export const videoGenerate = inngest.createFunction(
         .update({
           status: 'succeeded',
           result: JSON.stringify({
-            output_video_url: videoR2Key,
-            output_audio_url: audioR2Key,
+            output_video_url: muxed.url,
             audio_duration_sec: audioDurationSec,
           }),
           // Wave 12 H1: write dedicated columns (migration 0096) — not just JSON result
-          output_video_url: videoR2Key,
-          output_audio_url: audioR2Key,
+          output_video_url: muxed.url,
+          // Audio is now embedded in the muxed mp4 — clear the separate audio column
+          output_audio_url: null,
           video_job_id: wanJobId,
           completed_at: Math.floor(Date.now() / 1000),
           updated_at: Math.floor(Date.now() / 1000),
@@ -195,6 +210,7 @@ export const videoGenerate = inngest.createFunction(
       userId,
       audioR2Key,
       videoR2Key,
+      finalVideoUrl: muxed.url,
       status: 'succeeded',
     };
   },

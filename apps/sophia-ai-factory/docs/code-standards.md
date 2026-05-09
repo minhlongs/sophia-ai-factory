@@ -112,11 +112,17 @@ export function Button({ className, ...props }: ButtonProps) {
 - **Helpers**: `storeOauthState(provider, payload)` / `consumeOauthState(nonce)` in `src/lib/publishing/token-crypto.ts`.
 - **Expiry**: 10-minute window; consumed on first callback use.
 
-### Webhook Signature Validation (Unified Format)
-- **Format**: `t=<unix_timestamp_sec>,v1=<hmac_sha256_hex>`.
-- **Verification**: Parse header → compute `HMAC256(${timestamp}.${body}, secret)` → constant-time compare.
+### Webhook Signature Validation (Unified Format — Wave 15)
+- **Format**: `t=<unix_timestamp_sec>,v1=<hmac_sha256_hex>` (outbound default) + inbound provider wrappers.
+- **Outbound Signing** (default `acceptLegacy=false`):
+  - v1 = `HMAC256(hex, ${timestamp}.${body}, secret)`
+  - Bare-hex legacy format (`HMAC256(body, secret)`) no longer accepted unless explicitly `acceptLegacy=true`
+- **Inbound Verification** (3rd-party providers — Wave 15):
+  - `verifyInboundWebhook(provider, req, options)` handles NOWPayments IPN (HMAC-SHA512), PayOS (HMAC-SHA256), Inngest
+  - Each provider's canonicalization + hash algorithm specified in `InboundVerifyOptions`
+  - Centralizes signature logic in `src/lib/webhooks/signature.ts`
 - **Anti-Replay**: Reject if `abs(now - timestamp) > 5min` (configurable per publisher).
-- **Usage**: Distribution publishers, HeyGen, NOWPayments implement this format.
+- **Usage**: Distribution publishers, HeyGen, NOWPayments IPN, PayOS, Inngest events.
 
 **Logging Best Practices:**
 ```typescript

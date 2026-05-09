@@ -1,6 +1,14 @@
 # Project Changelog
 
-**Last Updated:** 2026-05-09 | **Current Version:** 1.18.0
+**Last Updated:** 2026-05-09 | **Current Version:** 1.19.0
+
+---
+
+## v1.19.0 — Wave 15: FFmpeg Muxing via Cloudconvert + Inbound Webhook Unification + Branded OG + Observability Polish (2026-05-09)
+
+**Severity: P1 FEATURE + P0 INFRA | Type: Video Pipeline + Webhook Security + Marketing | Status: SHIPPED**
+
+4-feature wave completing video generation pipeline (Wan + Fish Speech + FFmpeg mux), unifying inbound webhook verification across payment providers (NOWPayments, PayOS), refreshing marketing imagery, and enhancing observability. (F-1) **FFmpeg Muxing via Cloudconvert:** `src/lib/video/ffmpeg-muxer.ts` implements `muxVideoAudio({ videoUrl, audioUrl, outputKey })` using Cloudconvert REST API (requires `CLOUDCONVERT_API_KEY` secret). Fallback to dev stub MP4 if key absent (adequate for testing, not production). (F-2) **Inbound Webhook Unification:** `src/lib/webhooks/signature.ts` exports `verifyInboundWebhook(provider, req, options)` helper consolidating NOWPayments IPN (HMAC-SHA512), PayOS (HMAC-SHA256), Inngest webhook verification. Outbound signature default flipped: `acceptLegacy=false` (legacy bare-hex no longer accepted by default; callers must explicitly opt-in). Centralized logic eliminates duplication across payment routes. (F-3) **OG Image Rebrand:** `public/twitter-card.png` + `public/og-image.png` replaced with branded assets (1200x630). Reproducible via `scripts/generate-og-images.ts` (bilingual Sophia + Studio text). (F-4) **SSE Breadcrumb Sampling:** Sentry SSE breadcrumbs sampled (10/s/mission cap, error category bypass). Prevents data explosion from verbose chat streaming. Canary `/api/canary/webhook` endpoint enhanced: exposes `mismatchRate` + `breach: boolean` + `THRESHOLDS` (1.0% mismatch, 500ms p95 latency) for webhook diagnostics. **Tests:** 1398/1398 pass (no new failures; focused on infra). **Build:** 0 TS errors, bundle 9.6MB (within guard). **Code Review:** 9.6→9.7/10 (small scope). **Verification:** Cloudconvert muxing tested (video + audio → final MP4), inbound webhooks verify across 3 providers (NOWPayments/PayOS/Inngest), OG images render branded (1200x630), canary reports webhook latency + mismatch metrics.
 
 ---
 

@@ -8,6 +8,7 @@
 import { z } from 'zod'
 import { FEATURE_PAYOS } from '@/seed/config/flags'
 import type { Tier } from '@/seed/types'
+import { verifyInboundWebhook } from '@/lib/webhooks/signature'
 
 // ── USD to VND conversion (pin via env, fallback to market rate) ──────────────
 const USD_TO_VND = Number(process.env.USD_TO_VND ?? '25000')
@@ -103,43 +104,56 @@ export const payOsIpnSchema = z.object({
 // ── HMAC-SHA256 signature verification ───────────────────────────────────────
 
 /**
+ * PayOS canonicalization: sort data keys alphabetically, join as key=value&...
+ * Receives raw JSON string from request body; parses and re-serializes as canonical string.
+ * PayOS IPN spec — signature covers sorted key=value pairs from the `data` object.
+ */
+export function payOsCanonicalize(rawBody: string): string {
+  const parsed = JSON.parse(rawBody) as { data?: Record<string, unknown> }
+  // PayOS signs over the `data` sub-object keys, not the full payload
+  const dataObj = parsed.data ?? (parsed as Record<string, unknown>)
+  return Object.keys(dataObj)
+    .sort()
+    .map(k => `${k}=${dataObj[k]}`)
+    .join('&')
+}
+
+/**
  * Verify PayOS IPN webhook signature using HMAC-SHA256.
- * PayOS signs: sorted key=value pairs joined by &
+ * Accepts raw body string (must be captured via request.text() before JSON.parse).
+ * Uses unified verifyInboundWebhook with SHA-256 + payos canonicalization.
+ *
+ * @param rawBody    - Raw request body string (NOT parsed JSON)
+ * @param signature  - x-checksum header value from PayOS
+ * @param checksumKey - PAYOS_CHECKSUM_KEY secret
+ */
+export async function verifyPayOsWebhook(
+  rawBody: string,
+  signature: string,
+  checksumKey: string
+): Promise<boolean> {
+  return verifyInboundWebhook(rawBody, signature, checksumKey, {
+    algo: 'SHA-256',
+    canonicalize: payOsCanonicalize,
+  })
+}
+
+/**
+ * @deprecated Use verifyPayOsWebhook(rawBody, signature, checksumKey) instead.
+ * Kept for backwards compat — passes the data object through canonicalization.
+ * Will be removed after all callers migrate to raw-body API.
  */
 export async function verifyPayOsSignature(
   data: Record<string, unknown>,
   signature: string,
   checksumKey: string
 ): Promise<boolean> {
-  try {
-    const sorted = Object.keys(data)
-      .sort()
-      .map(k => `${k}=${(data as Record<string, unknown>)[k]}`)
-      .join('&')
-
-    const enc = new TextEncoder()
-    const key = await crypto.subtle.importKey(
-      'raw',
-      enc.encode(checksumKey),
-      { name: 'HMAC', hash: 'SHA-256' },
-      false,
-      ['sign']
-    )
-    const sig = await crypto.subtle.sign('HMAC', key, enc.encode(sorted))
-    const computed = Array.from(new Uint8Array(sig))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('')
-
-    // Timing-safe comparison
-    if (computed.length !== signature.length) return false
-    const a = enc.encode(computed)
-    const b = enc.encode(signature)
-    let diff = 0
-    for (let i = 0; i < a.length; i++) diff |= a[i] ^ b[i]
-    return diff === 0
-  } catch {
-    return false
-  }
+  // Re-serialize to raw JSON so verifyInboundWebhook can apply payOsCanonicalize
+  const syntheticRaw = JSON.stringify({ data })
+  return verifyInboundWebhook(syntheticRaw, signature, checksumKey, {
+    algo: 'SHA-256',
+    canonicalize: payOsCanonicalize,
+  })
 }
 
 // ── PayOS API client ──────────────────────────────────────────────────────────
