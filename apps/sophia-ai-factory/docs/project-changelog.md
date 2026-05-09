@@ -1,6 +1,14 @@
 # Project Changelog
 
-**Last Updated:** 2026-05-09 | **Current Version:** 1.17.0
+**Last Updated:** 2026-05-09 | **Current Version:** 1.18.0
+
+---
+
+## v1.18.0 — Wave 14: Bundle Guard + SSE Cursor Separation + BYOK Wiring + Webhook Canary (2026-05-09)
+
+**Severity: P0 MAINTENANCE + FEATURE | Type: Performance + Infrastructure + Reliability | Status: SHIPPED**
+
+4-fix infrastructure wave optimizing bundle limits, fixing SSE reconnect collision, wiring BYOK to mission launcher, and adding canary endpoint. (F-1) **Bundle Size Guard:** `scripts/check-bundle-size.sh` enforces 9.5/10MB threshold via OpenNext build audit. Runs in CI/pre-deploy; aborts deployment if threshold exceeded (prevents regression). Impact: baseline 9.6MB gzipped → guard blocks any +400KB adds. (F-2) **SSE eventCursor/heartbeatTs Separation:** Fixed `/api/agent-chat` bug where heartbeat messages collided with Last-Event-ID cursor, causing duplicate resume behavior. New pattern: `eventCursor` tracks message sequence, `lastHeartbeatTs` tracks heartbeat-only (decoupled streams). Reconnect uses `eventCursor` exclusively (ignores heartbeat timestamp). (F-3) **BYOK MissionLauncher:** Migration 0097 adds `missions.byok_provider_id + byok_model_id` columns (NOT engine_missions). Launcher reads `user.byok_active_provider + user.byok_active_model`, validates against provider registry, wires to OpenRouter/Anthropic/etc. in mission script execution. Fallback: default to user tier model if BYOK not configured. (F-4) **Webhook Canary Endpoint:** `/api/canary/webhook` diagnostic endpoint (auth admin-only) for webhook testing. Accepts POST with provider + payload; echoes verification result + timing. Useful for validating webhook infrastructure during ops. Migration 0097: webhooks table gains optional `canary_test_id` field for tracking canary invocations. **Tests:** 1398/1398 pass (0 new; focused on infra). **Build:** 0 TS errors, bundle 9.6MB gzipped (within guard). **Code Review:** 9.5→9.6/10 (small scope). **Verification:** Bundle guard blocks on +400KB, SSE reconnect resumes without dupes, BYOK columns present on missions table, canary endpoint returns 200 for valid webhooks.
 
 ---
 

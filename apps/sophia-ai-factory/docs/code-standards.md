@@ -333,6 +333,30 @@ export function CustomTooltip({ payload, label, ...props }: CustomTooltipProps) 
 
 Applied in 4 analytics chart components (src/components/analytics/*).
 
+## Wave 14 Patterns (2026-05-09)
+
+### Bundle Size Guard Script
+- **Location**: `scripts/check-bundle-size.sh` (runs in CI/pre-deploy)
+- **Threshold**: 9.5/10MB (gzipped OpenNext worker.js)
+- **Behavior**: Parses `npm run build` output, compares `.open-next/worker.js.gz` size. Aborts if exceeded.
+- **Usage**: `bash scripts/check-bundle-size.sh` (CI hooks automatically)
+- **Rationale**: Prevents Cloudflare Worker cold-start latency degradation from large bundles
+
+### SSE Cursor Separation (eventCursor vs lastHeartbeatTs)
+- **Pattern**: `/api/agent-chat` SSE stream maintains TWO independent cursors:
+  - `eventCursor` — incremented per user message (for Last-Event-ID resume)
+  - `lastHeartbeatTs` — timestamp of last heartbeat ping (for connection keepalive)
+- **Problem Solved**: Previous implementation conflated heartbeat messages with event cursor, causing duplicate message delivery on reconnect.
+- **Implementation**: Message buffer indexed by `eventCursor`; heartbeat uses separate timestamp. Reconnect handler queries from `Last-Event-ID` (ignores heartbeat timestamp).
+- **File**: `src/api/agent-chat/route.ts` (SSE handler) + `src/lib/agent-chat/sse-buffer.ts` (buffer logic)
+
+### BYOK Validation Pattern (Provider Registry)
+- **Schema**: `missions.byok_provider_id + byok_model_id` (migration 0097)
+- **Registry**: `@/lib/byok/provider-registry.ts` exports `validateProviderModel(providerId, modelId): boolean`
+- **Usage**: `POST /api/v1/missions` validates BYOK before launcher executes script
+- **Fallback**: If BYOK unconfigured, uses `selectModelForTier(user.tier)` (tier-based default)
+- **Security**: Secret rotation via `/api/user/byok/rotate-secrets` (admin-gated, audit logged)
+
 ## Wave 13 Patterns (2026-05-09)
 
 ### Inngest Event Schema Registration

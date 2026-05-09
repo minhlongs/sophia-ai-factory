@@ -75,13 +75,13 @@ export const metadata: Metadata = {
     alternateLocale: "vi_VN",
     siteName: "Sophia AI Factory",
     url: "https://sophia.agencyos.network",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Sophia AI Video Factory" }],
+    images: [{ url: "/twitter-card.png", width: 1200, height: 630, alt: "Sophia AI Video Factory" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Sophia AI Video Factory - Automate Your Content Empire",
-    description: "The ultimate AI video creation workflow. Build, scale, and monetize your YouTube channels with automation.",
-    images: ["/og-image.png"],
+    title: "Sophia AI Factory",
+    description: "Automated AI Video Creation Platform",
+    images: ["/twitter-card.png"],
   },
   alternates: {
     canonical: "https://sophia.agencyos.network",

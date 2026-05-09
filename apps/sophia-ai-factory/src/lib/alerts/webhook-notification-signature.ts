@@ -9,6 +9,7 @@
  */
 
 import { signWebhook, verifyWebhook } from '@/lib/webhooks/signature'
+import { logger } from '@/seed/utils/logger-utility'
 import type { WebhookPayload } from './webhook-notification-types'
 
 /**
@@ -47,6 +48,19 @@ export async function verifyWebhookSignature(
 ): Promise<boolean> {
   // If caller already passes unified `t=...,v1=...` header, delegate directly
   if (signature.includes('t=') && signature.includes('v1=')) {
+    return verifyWebhook(payload, signature, secret, {
+      toleranceSec: tolerance,
+      acceptLegacy: true,
+    })
+  }
+
+  // Legacy bare-hex format detected — emit monitoring event
+  if (/^[0-9a-f]{64}$/i.test(signature)) {
+    logger.warn('webhook_legacy_signature_used', {
+      event: 'webhook_legacy_signature_used',
+      sender: 'alerts/webhook-notification',
+      timestamp,
+    })
     return verifyWebhook(payload, signature, secret, {
       toleranceSec: tolerance,
       acceptLegacy: true,

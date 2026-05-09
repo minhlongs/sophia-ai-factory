@@ -10,6 +10,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { ByokProviderPicker, type ByokSelection } from '@/forest/components/byok/byok-provider-picker';
 
 interface TemplateParam {
   key: string;
@@ -52,10 +53,12 @@ interface MissionCreateResponse {
 
 export function MissionLauncher({ balance = 0, onClose, onSuccess }: Props) {
   const t = useTranslations('dashboard.missions');
+  const tByok = useTranslations('byok.picker');
   const [selected, setSelected] = useState<Template | null>(null);
   const [params, setParams] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [selectedModel, setSelectedModel] = useState<ByokSelection | null>(null);
   const titleId = 'mission-launcher-title';
   const dialogRef = useRef<HTMLDivElement>(null);
 
@@ -103,6 +106,7 @@ export function MissionLauncher({ balance = 0, onClose, onSuccess }: Props) {
           title: `${selected.name} — ${new Date().toLocaleDateString()}`,
           command: selected.id,
           params,
+          ...(selectedModel ? { model: { providerId: selectedModel.providerId, modelId: selectedModel.modelId } } : {}),
         }),
       });
       if (!res.ok) throw new Error(((await res.json()) as MissionCreateResponse).error || 'Failed');
@@ -179,6 +183,16 @@ export function MissionLauncher({ balance = 0, onClose, onSuccess }: Props) {
             <div className="flex items-center justify-between text-sm text-muted-foreground pt-1">
               <span>{t('balance')}: <strong className={insufficient ? 'text-destructive' : 'text-foreground'}>{balance} MCU</strong></span>
               <span>{t('cost')}: <strong>{selected.mcu} MCU</strong></span>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">
+                {tByok('placeholder_label')}
+              </label>
+              <ByokProviderPicker
+                value={selectedModel}
+                onSelect={setSelectedModel}
+              />
             </div>
 
             {error && <p className="text-sm text-destructive">{error}</p>}

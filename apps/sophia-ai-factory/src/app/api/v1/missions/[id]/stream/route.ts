@@ -9,13 +9,21 @@
  * On reconnect the browser sends `Last-Event-ID: <updated_at>` automatically
  * and we skip polling cycles until mission.updated_at > cursor.
  *
+ * Two separate variables prevent clock-skew dedup suppression (Wave-14 fix):
+ *   - eventCursor  — advances ONLY when a real DB status event is emitted.
+ *   - lastHeartbeatTs — advances on keepalive ticks; NEVER touches eventCursor.
+ * Heartbeat emits `:` comment line (no `id:`) per SSE spec so Last-Event-ID
+ * is never polluted by server-wall-clock timestamps.
+ *
  * Auth: Authorization: Bearer <api_key>
  */
 
+import * as Sentry from '@sentry/nextjs';
 import { NextRequest, NextResponse } from 'next/server';
 import { validateMissionApiKey } from '@/forest/missions/api-key-auth';
 import { createServerClient } from '@/seed/db/client';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
+import { logger } from '@/seed/utils/logger-utility';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,6 +62,11 @@ function sseMessage(event: string, data: unknown, cursor: number | null = null):
   return `${idLine}event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
 }
 
+/** SSE keepalive comment line — does NOT set Last-Event-ID (per SSE spec). */
+function sseHeartbeat(ts: number): string {
+  return `: ping ${ts}\n\n`;
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -80,90 +93,134 @@ export async function GET(
     const stream = new ReadableStream({
       async start(controller) {
         const db = createServerClient();
-        let lastHeartbeat = Date.now();
-        // Track cursor so we only emit events the client hasn't seen.
-        let emittedCursor = resumeCursor;
 
+        // ── Cursor separation (Wave-14 heartbeat-cursor fix) ───────────────
+        // eventCursor: advances ONLY when a real DB status event is emitted.
+        //   Used for SSE `id:` lines and reconnect dedup.
+        // lastHeartbeatTs: wall-clock of last keepalive tick.
+        //   NEVER written to eventCursor — prevents clock-skew dedup suppression.
+        let eventCursor = resumeCursor;
+        let lastHeartbeatTs = Date.now();
+        // ──────────────────────────────────────────────────────────────────
+
+        // Emit initial `id: 0` so EventSource can track from the start.
         controller.enqueue(encoder.encode(
-          sseMessage('connected', { mission_id: id, resume_cursor: resumeCursor }, null)
+          sseMessage('connected', { mission_id: id, resume_cursor: resumeCursor }, resumeCursor || 0)
         ));
 
-        while (Date.now() - startTime < MAX_DURATION_MS) {
-          await new Promise(res => setTimeout(res, POLL_INTERVAL_MS));
-          if (r.signal.aborted) break;
+        Sentry.addBreadcrumb({
+          category: 'sse',
+          message: `SSE connect mission=${id}`,
+          data: { mission_id: id, resume_cursor: resumeCursor },
+          level: 'info',
+        });
 
-          const now = Date.now();
-          if (now - lastHeartbeat >= HEARTBEAT_INTERVAL_MS) {
-            // Heartbeat uses current server time as cursor so client stays in sync
-            controller.enqueue(encoder.encode(sseMessage('ping', { ts: now }, now)));
-            lastHeartbeat = now;
-            emittedCursor = now;
-          }
+        const isReconnect = resumeCursor > 0;
+        if (isReconnect) {
+          Sentry.addBreadcrumb({
+            category: 'sse',
+            message: `SSE reconnect mission=${id}`,
+            data: { mission_id: id, resume_cursor: resumeCursor },
+            level: 'info',
+          });
+        }
 
-          try {
-            const { data } = await db
-              .from('engine_missions')
-              .select('id, command, status, result, error, credits_used, updated_at, completed_at')
-              .eq('id', id)
-              .eq('user_id', userId)
-              .single() as { data: MissionRow | null; error: unknown };
+        try {
+          while (Date.now() - startTime < MAX_DURATION_MS) {
+            await new Promise(res => setTimeout(res, POLL_INTERVAL_MS));
+            if (r.signal.aborted) break;
 
-            if (!data) {
-              controller.enqueue(encoder.encode(
-                sseMessage('error', { code: 'not_found', message: 'Mission not found' }, null)
-              ));
-              break;
+            const now = Date.now();
+
+            // Keepalive: heartbeat emits `:` comment line — does NOT set Last-Event-ID.
+            // lastHeartbeatTs advances; eventCursor is untouched.
+            if (now - lastHeartbeatTs >= HEARTBEAT_INTERVAL_MS) {
+              controller.enqueue(encoder.encode(sseHeartbeat(now)));
+              lastHeartbeatTs = now;
+              // eventCursor intentionally NOT updated here
             }
 
-            // Skip emission if client already saw this state (reconnect dedup).
-            // updated_at is 0/null on brand-new missions — emit those always.
-            const cursor = data.updated_at ?? 0;
-            if (cursor > 0 && cursor <= emittedCursor) {
-              // No state change since last emitted cursor — keep polling silently
-              if (TERMINAL_STATUSES.has(data.status)) {
-                // Terminal state already delivered before disconnect; send done again
+            try {
+              const { data } = await db
+                .from('engine_missions')
+                .select('id, command, status, result, error, credits_used, updated_at, completed_at')
+                .eq('id', id)
+                .eq('user_id', userId)
+                .single() as { data: MissionRow | null; error: unknown };
+
+              if (!data) {
                 controller.enqueue(encoder.encode(
-                  sseMessage('done', { status: data.status }, cursor)
+                  sseMessage('error', { code: 'not_found', message: 'Mission not found' }, null)
                 ));
                 break;
               }
-              continue;
+
+              // Dedup check: skip if client already saw this DB state.
+              // updated_at is 0/null on brand-new missions — emit those always.
+              // Comparison is against eventCursor ONLY (never polluted by heartbeat).
+              const dbCursor = data.updated_at ?? 0;
+              if (dbCursor > 0 && dbCursor <= eventCursor) {
+                // No new state since last emitted event — keep polling silently.
+                if (TERMINAL_STATUSES.has(data.status)) {
+                  // Terminal already delivered pre-disconnect; re-send done on reconnect.
+                  controller.enqueue(encoder.encode(
+                    sseMessage('done', { status: data.status }, dbCursor)
+                  ));
+                  break;
+                }
+                continue;
+              }
+
+              // Advance eventCursor to the real DB timestamp.
+              eventCursor = dbCursor > 0 ? dbCursor : now;
+
+              controller.enqueue(encoder.encode(sseMessage('status', {
+                id: data.id,
+                command: data.command,
+                status: data.status,
+                result: safeParseResult(data.result),
+                error: data.error,
+                credits_used: data.credits_used,
+                updated_at: data.updated_at,
+                completed_at: data.completed_at,
+              }, eventCursor)));
+
+              if (TERMINAL_STATUSES.has(data.status)) {
+                controller.enqueue(encoder.encode(
+                  sseMessage('done', { status: data.status }, eventCursor)
+                ));
+                break;
+              }
+            } catch (err) {
+              Sentry.addBreadcrumb({
+                category: 'sse',
+                message: `SSE db error mission=${id}`,
+                data: { mission_id: id, error: err instanceof Error ? err.message : String(err) },
+                level: 'error',
+              });
+              controller.enqueue(encoder.encode(sseMessage('error', {
+                code: 'db_transient',
+                message: err instanceof Error ? err.message.slice(0, 200) : 'db error',
+              }, null)));
             }
-
-            emittedCursor = cursor > 0 ? cursor : now;
-
-            controller.enqueue(encoder.encode(sseMessage('status', {
-              id: data.id,
-              command: data.command,
-              status: data.status,
-              result: safeParseResult(data.result),
-              error: data.error,
-              credits_used: data.credits_used,
-              updated_at: data.updated_at,
-              completed_at: data.completed_at,
-            }, emittedCursor)));
-
-            if (TERMINAL_STATUSES.has(data.status)) {
-              controller.enqueue(encoder.encode(
-                sseMessage('done', { status: data.status }, emittedCursor)
-              ));
-              break;
-            }
-          } catch (err) {
-            controller.enqueue(encoder.encode(sseMessage('error', {
-              code: 'db_transient',
-              message: err instanceof Error ? err.message.slice(0, 200) : 'db error',
-            }, null)));
           }
-        }
 
-        if (Date.now() - startTime >= MAX_DURATION_MS) {
-          controller.enqueue(encoder.encode(
-            sseMessage('timeout', { message: 'Stream closed after 5 minutes' }, null)
-          ));
+          if (Date.now() - startTime >= MAX_DURATION_MS) {
+            controller.enqueue(encoder.encode(
+              sseMessage('timeout', { message: 'Stream closed after 5 minutes' }, null)
+            ));
+          }
+        } finally {
+          // Log disconnect for downstream metrics (sse_disconnect event).
+          logger.info('sse_disconnect', { mission_id: id, event_cursor: eventCursor });
+          Sentry.addBreadcrumb({
+            category: 'sse',
+            message: `SSE disconnect mission=${id}`,
+            data: { mission_id: id, event_cursor: eventCursor },
+            level: 'info',
+          });
+          controller.close();
         }
-
-        controller.close();
       },
     });
 

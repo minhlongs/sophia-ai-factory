@@ -25,6 +25,13 @@ The fastest way to run Sophia AI Factory is locally.
    npm test
    ```
 
+2.5. **Check Bundle Size (Optional — Wave 14+)**
+   Prevent Cloudflare Worker cold-start latency from oversized bundles.
+   ```bash
+   bash scripts/check-bundle-size.sh
+   # Enforces 9.5/10MB threshold; aborts if exceeded
+   ```
+
 3. **Launch Application**
    ```bash
    npm run dev
@@ -63,6 +70,7 @@ Before deploying Sprint M (first-dollar revenue engine), ensure all prerequisite
    - Migration 0094-publisher-add-distribution-platforms (2026-05-09) — adds distribution platform enum support
    - Migration 0095-password-reset-tokens-oauth-state-store (2026-05-09) — password reset tokens + OAuth state encryption (NEW in Wave 11)
    - Migration 0096-engine-missions-video-output-fields (2026-05-09) — adds `output_video_url, output_audio_url, video_job_id` for Wave 12 video gen MVP
+   - Migration 0097-missions-byok-columns (2026-05-09) — adds `missions.byok_provider_id, byok_model_id` for Wave 14 BYOK launcher wiring
    ```bash
    npx wrangler d1 migrations apply sophia-raas-db --remote
    ```

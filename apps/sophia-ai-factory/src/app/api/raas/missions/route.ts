@@ -14,11 +14,17 @@ import { toError } from '@/seed/utils/to-error';
 
 export const dynamic = 'force-dynamic';
 
+const ModelSchema = z.object({
+  providerId: z.string().min(1).max(50),
+  modelId: z.string().min(1).max(100),
+});
+
 const CreateMissionSchema = z.discriminatedUnion('mode', [
   z.object({
     mode: z.literal('nl'),
     prompt: z.string().min(1).max(2000),
     priority: z.enum(['low', 'normal', 'high', 'urgent']).optional().default('normal'),
+    model: ModelSchema.optional(),
   }),
   z.object({
     mode: z.literal('template').optional(),
@@ -27,6 +33,7 @@ const CreateMissionSchema = z.discriminatedUnion('mode', [
     params: z.record(z.string(), z.unknown()).optional().default({}),
     priority: z.enum(['low', 'normal', 'high', 'urgent']).optional().default('normal'),
     description: z.string().max(500).optional(),
+    model: ModelSchema.optional(),
   }),
 ]);
 
@@ -37,6 +44,7 @@ const LegacyMissionSchema = z.object({
   params: z.record(z.string(), z.unknown()).optional().default({}),
   priority: z.enum(['low', 'normal', 'high', 'urgent']).optional().default('normal'),
   description: z.string().max(500).optional(),
+  model: ModelSchema.optional(),
 });
 
 export async function GET(request: NextRequest) {
@@ -99,9 +107,11 @@ export async function POST(request: NextRequest) {
     let params: Record<string, unknown>;
     let priority: string;
     let description: string | undefined;
+    let model: { providerId: string; modelId: string } | undefined;
 
     if (parsed.success) {
       const data = parsed.data;
+      model = data.model;
       if (data.mode === 'nl') {
         // NL mode: derive title and command from prompt
         title = data.prompt.slice(0, 100);
@@ -118,11 +128,34 @@ export async function POST(request: NextRequest) {
       }
     } else {
       const data = legacyParsed!.data!;
+      model = data.model;
       title = data.title;
       command = data.command;
       params = data.params ?? {};
       priority = data.priority ?? 'normal';
       description = data.description;
+    }
+
+    // BYOK validation: if model specified, check user has the provider configured
+    // Note: user_api_keys (D1) has no revoked_at column — no filter needed
+    if (model) {
+      const { data: keyRows, error: byokError } = await db
+        .from('user_api_keys')
+        .select('user_id')
+        .eq('user_id', user.id)
+        .eq('provider', model.providerId)
+        .limit(1);
+      if (byokError) {
+        logger.error('[POST /api/raas/missions] BYOK lookup failed', { event: 'byok_lookup_failed', error: String(byokError), userId: user.id, provider: model.providerId });
+        return new NextResponse(JSON.stringify({ error: 'BYOK lookup failed' }), { status: 500 });
+      }
+      const hasProvider = Array.isArray(keyRows) ? keyRows.length > 0 : keyRows !== null;
+      if (!hasProvider) {
+        return NextResponse.json(
+          { error: 'Provider not configured', provider: model.providerId },
+          { status: 400 },
+        );
+      }
     }
 
     const { data: mission, error } = await db
@@ -141,6 +174,8 @@ export async function POST(request: NextRequest) {
         max_retries: 3,
         retry_count: 0,
         is_sub_mission: false,
+        byok_provider_id: model?.providerId ?? null,
+        byok_model_id: model?.modelId ?? null,
       })
       .select()
       .single();

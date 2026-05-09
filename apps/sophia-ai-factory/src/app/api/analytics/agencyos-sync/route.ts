@@ -24,21 +24,24 @@ interface SyncRequestBody {
   includeOverageEvents?: boolean; includeTierHistory?: boolean
 }
 
-async function verifyAgencyOSAuth(request: NextRequest): Promise<boolean> {
+async function verifyAgencyOSAuth(request: NextRequest, body: string): Promise<boolean> {
   const signature = request.headers.get('x-agencyos-signature')
   const timestamp = request.headers.get('x-agencyos-timestamp')
   if (!signature || !timestamp) { logger.warn('[AgencyOS Sync] Missing auth headers'); return false }
   const secret = process.env.AGENCYOS_WEBHOOK_SECRET
   if (!secret) { logger.error('[AgencyOS Sync] AGENCYOS_WEBHOOK_SECRET not configured'); return false }
-  return verifyWebhookSignature(signature, timestamp, secret)
+  return verifyWebhookSignature(body, signature, timestamp, secret)
 }
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now()
-  if (!await verifyAgencyOSAuth(request)) return NextResponse.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, { status: 401 })
+  // Read raw body first so HMAC verification can sign over actual payload
+  let rawBody: string
+  try { rawBody = await request.text() } catch { return NextResponse.json({ error: 'Failed to read request body', code: 'INVALID_BODY' }, { status: 400 }) }
+  if (!await verifyAgencyOSAuth(request, rawBody)) return NextResponse.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, { status: 401 })
 
   let body: SyncRequestBody
-  try { body = await request.json() } catch { return NextResponse.json({ error: 'Invalid JSON body', code: 'INVALID_BODY' }, { status: 400 }) }
+  try { body = JSON.parse(rawBody) as SyncRequestBody } catch { return NextResponse.json({ error: 'Invalid JSON body', code: 'INVALID_BODY' }, { status: 400 }) }
 
   const { agencyId, startDate, endDate, includeOverageEvents, includeTierHistory } = body
   if (!agencyId || !startDate || !endDate) return NextResponse.json({ error: 'Missing required fields: agencyId, startDate, endDate', code: 'MISSING_FIELDS' }, { status: 400 })
