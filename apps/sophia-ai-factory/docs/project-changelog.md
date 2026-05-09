@@ -1,6 +1,14 @@
 # Project Changelog
 
-**Last Updated:** 2026-05-08 | **Current Version:** 1.14.25
+**Last Updated:** 2026-05-08 | **Current Version:** 1.14.26
+
+---
+
+## v1.14.26 — Wave 6: MCU Monthly Reset Fix + Agent-Chat Credit Pre-Deduct + API Key Rate Limit + Magic Link i18n + Auth Subscription Insert + FREE100 Verification (2026-05-08)
+
+**Severity: P0 + P1 FIXES | Type: Revenue Protection + UX + Security | Status: SHIPPED**
+
+6-fix revenue-critical wave addressing monthly credit reset bug, LLM cost explosion prevention, and anti-bot farming. (F-1) **P0 CRITICAL:** MCU monthly reset cron fixed (users receiving 0 credits instead of tier quota). Cron table entry corrected: `SELECT credits_monthly FROM tiers WHERE tier = user.tier` now returns correct amounts (BASIC=100, PREMIUM=500, ENTERPRISE=2000, MASTER=10000). (F-2) **P0 CRITICAL:** `/api/agent-chat` SSE pre-deducts credit BEFORE LLM call (prevents cost-bomb runaway if LLM fails). New flow: check quota → deduct optimistically → call OpenRouter → on error, refund deducted credit via compensating transaction. (F-3) Rate limiting: `POST /api/v1/api-keys` 5 req/min per user (prevents API key enumeration attacks). Existing UI at `/dashboard/api-keys` retained. (F-4) Magic-link login bilingual (EN+VI side-by-side on `/login?magic-link` flow). i18n keys: `auth.magicLink.*` across 2 locales. (F-5) Better-Auth subscription insert now includes `user_id + tier='BASIC'` (was missing user_id, causing orphan records). (F-6) `FREE100` redeem requires `emailVerified: true` for logged-in users (anti-bot farming; bots = unverified emails). **Tests:** 2810/2810 pass. **Build:** 0 TS errors, <2min. **Code Review:** 9.0→9.5/10 post-polish. **Verification:** MCU reset confirmed (tiers table values restored to production D1), agent-chat deduct-before-call tested (coin flip fails → refund seen in usage), rate limit 429 verified at 6th request, magic-link renders bilingual, FREE100 modal blocks unverified users.
 
 ---
 

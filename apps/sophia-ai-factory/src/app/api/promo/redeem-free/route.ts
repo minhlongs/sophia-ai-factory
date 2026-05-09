@@ -11,6 +11,7 @@ import { z } from 'zod';
 import { applyPromoCode } from '@/land/promo/promo-applier';
 import { validatePromoCode } from '@/land/promo/promo-validator';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
+import { getAuth } from '@/seed/auth/better-auth-server';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 import { getD1Raw } from '@/seed/db/client';
 import { createCustomerUser } from '@/tree/handover/handover-account-setup';
@@ -32,10 +33,25 @@ const redeemFreeSchema = z.object({
 async function findOrResolveUser(
   request: Request,
   email: string,
-): Promise<string | null> {
+): Promise<{ userId: string | null; sessionEmailVerified: boolean }> {
+  // Read full Better-Auth session to access emailVerified flag (the wrapped
+  // User type from getCurrentUserFromHeaders strips it).
+  try {
+    const auth = getAuth();
+    if (auth) {
+      const session = await auth.api.getSession({ headers: request.headers });
+      const sUser = session?.user as { id?: string; emailVerified?: boolean } | undefined;
+      if (sUser?.id) {
+        return { userId: sUser.id, sessionEmailVerified: sUser.emailVerified === true };
+      }
+    }
+  } catch { /* not logged in */ }
+  // Fallback to legacy session helper
   try {
     const user = await getCurrentUserFromHeaders(request.headers);
-    if (user?.id) return user.id;
+    if (user?.id) {
+      return { userId: user.id, sessionEmailVerified: false };
+    }
   } catch { /* not logged in */ }
 
   // Look up by email in D1
@@ -45,9 +61,9 @@ async function findOrResolveUser(
       .prepare(`SELECT id FROM user WHERE email = ?1 LIMIT 1`)
       .bind(email)
       .first<{ id: string }>();
-    return row?.id ?? null;
+    return { userId: row?.id ?? null, sessionEmailVerified: false };
   } catch {
-    return null;
+    return { userId: null, sessionEmailVerified: false };
   }
 }
 
@@ -105,7 +121,18 @@ export const POST = withRateLimit(
         );
       }
 
-      let userId = await findOrResolveUser(request, email);
+      const resolved = await findOrResolveUser(request, email);
+      let userId = resolved.userId;
+
+      // Anti-abuse: if a logged-in session exists but the email is NOT verified,
+      // block redeem. Throwaway-email bot farms would otherwise stack 50 MCU/account.
+      // Magic-link users are auto-verified; password sign-ups need to confirm first.
+      if (userId && !resolved.sessionEmailVerified) {
+        return NextResponse.json(
+          { error: 'email_not_verified', hint: 'Please verify your email before redeeming the FREE100 code.' },
+          { status: 403 },
+        );
+      }
 
       // Auto-create user if not found — promo redeem flow accepts new customers
       // (matches endpoint contract: "Creates user if not found, fires auto-handover")

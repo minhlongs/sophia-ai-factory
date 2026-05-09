@@ -18,7 +18,7 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { resolveLlmRoute } from '@/lib/agent-chat/llm-router';
 import { formatStream, serializeSseEvent, openAiStreamToChunks } from '@/lib/agent-chat/stream-formatter';
 import { buildSystemPrompt } from '@/lib/agent-chat/system-prompt';
-import { deductCredits } from '@/lib/mcu/credits-repo';
+import { deductCredits, getBalance } from '@/lib/mcu/credits-repo';
 import type { ChatMessage, ChatContext, SseEvent } from '@/lib/agent-chat/types';
 
 export const dynamic = 'force-dynamic';
@@ -70,6 +70,25 @@ export async function POST(request: NextRequest): Promise<Response> {
     });
   }
 
+  // Pre-deduct 1 credit BEFORE calling upstream LLM. Prevents zero-balance users
+  // from consuming real $ tokens. We do not refund partial streams — full session
+  // is the unit. Race: concurrent chats may both pass balance check; deductCredits
+  // is the source-of-truth and will fail one of them with insufficient_balance.
+  const balance = await getBalance(user.id).catch(() => null);
+  if (!balance || balance.credits_remaining < 1) {
+    return new Response(emit({ type: 'error', message: 'Insufficient MCU credits. Please top up.' }), {
+      status: 402,
+      headers: { 'Content-Type': 'text/event-stream' },
+    });
+  }
+  const deducted = await deductCredits(user.id, 1, 'agent_chat_session', 'agent_chat').catch(() => false);
+  if (!deducted) {
+    return new Response(emit({ type: 'error', message: 'Could not reserve MCU credit. Please retry.' }), {
+      status: 402,
+      headers: { 'Content-Type': 'text/event-stream' },
+    });
+  }
+
   // Resolve LLM route
   let llmRoute: Awaited<ReturnType<typeof resolveLlmRoute>>;
   try {
@@ -89,8 +108,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     ...messages.map((m) => ({ role: m.role, content: m.content })),
   ];
 
-  // Create SSE stream
-  let creditCharged = false;
+  // Credit already deducted above (pre-deduct gate). Stream is now safe.
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({
@@ -119,15 +137,10 @@ export async function POST(request: NextRequest): Promise<Response> {
           return;
         }
 
-        // Pipe through stream formatter
+        // Pipe through stream formatter (credit already pre-deducted above).
         const chunks = openAiStreamToChunks(response.body);
         for await (const event of formatStream(chunks)) {
           controller.enqueue(encoder.encode(emit(event)));
-          if (event.type === 'done' && !creditCharged) {
-            // Charge 1 credit after successful stream completion
-            creditCharged = true;
-            await deductCredits(user.id, 1, 'agent_chat_session', 'agent_chat').catch(() => null);
-          }
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Stream error';

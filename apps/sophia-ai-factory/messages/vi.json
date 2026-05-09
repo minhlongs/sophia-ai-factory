@@ -1333,6 +1333,35 @@
       "telegramDesc": "Nhận thông báo qua bot Telegram.",
       "saveButton": "Lưu Thay Đổi"
     },
+    "apiKeysPage": {
+      "title": "API Keys (v1)",
+      "subtitle": "Quản lý API key public cho /api/v1/*. Key chỉ hiển thị đầy đủ 1 lần khi tạo.",
+      "keyNameLabel": "Tên key",
+      "keyNamePlaceholder": "VD: Production server, Staging webhook",
+      "createButton": "Tạo key",
+      "creatingButton": "Đang tạo…",
+      "thName": "Tên",
+      "thPrefix": "Prefix",
+      "thLastUsed": "Lần dùng cuối",
+      "thActions": "Hành động",
+      "rotateAction": "Xoay key",
+      "revokeAction": "Thu hồi",
+      "loading": "Đang tải…",
+      "emptyState": "Chưa có API key. Tạo mới ở trên.",
+      "neverUsed": "Chưa dùng",
+      "confirmRotate": "Xoay key sẽ tạo secret mới. Key cũ ngừng hoạt động ngay. Tiếp tục?",
+      "confirmRevoke": "Thu hồi key là vĩnh viễn. Tiếp tục?",
+      "revealedTitle": "Đã tạo API key",
+      "revealedSubtitle": "Sao chép key ngay bây giờ — sẽ không hiển thị lại.",
+      "copyButton": "Sao chép",
+      "dismissButton": "Đóng",
+      "errors": {
+        "list": "Không thể tải danh sách key",
+        "create": "Không thể tạo key",
+        "rotate": "Không thể xoay key",
+        "revoke": "Không thể thu hồi key"
+      }
+    },
     "apiKeys": {
       "title": "API Keys",
       "subtitle": "Nhập API key của bạn. Key được mã hóa an toàn. Để trống nếu muốn giữ nguyên key hiện tại.",
