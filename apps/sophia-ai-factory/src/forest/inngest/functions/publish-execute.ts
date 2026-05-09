@@ -25,6 +25,12 @@ import { RedditPublisher } from '@/lib/publishing/reddit';
 import { BlueskyPublisher } from '@/lib/publishing/bluesky';
 import { MastodonPublisher } from '@/lib/publishing/mastodon';
 import { publishToTelegram } from '@/forest/publishing/providers/telegram-publisher';
+import {
+  getCanonicalVideoUrl,
+  VideoNotFoundError,
+  VideoUnauthorizedError,
+  VideoNotMirroredError,
+} from '@/lib/video/get-canonical-video-url';
 import { logger } from '@/seed/utils/logger-utility';
 import type { PublishingChannel, PublishingJob, Publisher } from '@/lib/publishing/publisher-interface';
 import { randomUUID } from 'crypto';
@@ -169,22 +175,40 @@ export const publishExecute = inngest.createFunction(
       // job.provider='telegram' is set by schedule-publish when distribute route submits
       // a Telegram channel. channel_id stores telegram_paired_chats.chat_id as surrogate.
       // NOTE: assertSafeVideoUrl() SSRF guard is still enforced before sending to Bot API.
-      // DO NOT remove or weaken the SSRF guard — that is Wave 17's job.
+      //
+      // Wave 17 Phase 02: video URL resolved via getCanonicalVideoUrl(job.video_job_id, tenantId).
+      // publishing_jobs.video_job_id column name is misleading — post Wave 16 Phase 02 it stores
+      // videos.id (not video_jobs.id). Column rename deferred to Wave 18 (KISS — no functional impact).
       const jobProvider = job.provider ?? '';
       if (jobProvider === 'telegram') {
-        const { data: videoJobData } = await db
-          .from('video_jobs')
-          .select('final_r2_key')
-          .eq('id', job.video_job_id)
-          .eq('tenant_id', tenantId)
-          .single();
-
-        const r2Key = (videoJobData as { final_r2_key?: string | null } | null)?.final_r2_key;
-        if (!r2Key) throw new Error(`[publishExecute/telegram] No final_r2_key for video job ${job.video_job_id}`);
-
-        const r2Host = process.env.R2_PUBLIC_HOSTNAME ?? 'pub-placeholder.r2.dev';
-        const videoUrl = `https://${r2Host}/${r2Key}`;
-        assertSafeVideoUrl(videoUrl); // SSRF guard — must stay (Wave 17 resolves R2 pipeline gap)
+        let videoUrl: string;
+        try {
+          videoUrl = await getCanonicalVideoUrl(job.video_job_id, tenantId);
+        } catch (urlErr) {
+          if (urlErr instanceof VideoNotFoundError) {
+            await db.from('publishing_jobs').update({
+              status: 'failed',
+              error: 'Video not found',
+              finished_at: Math.floor(Date.now() / 1000),
+            }).eq('id', jobId);
+            return { skipped: false, jobId, status: 'failed', externalPostId: '', provider: '' };
+          }
+          if (urlErr instanceof VideoUnauthorizedError) {
+            logger.warn('[publishExecute/telegram] Permission denied resolving video URL', { jobId, videoId: job.video_job_id, tenantId });
+            await db.from('publishing_jobs').update({
+              status: 'failed',
+              error: 'Permission denied',
+              finished_at: Math.floor(Date.now() / 1000),
+            }).eq('id', jobId);
+            return { skipped: false, jobId, status: 'failed', externalPostId: '', provider: '' };
+          }
+          if (urlErr instanceof VideoNotMirroredError) {
+            // Transient — re-throw so Inngest retries
+            throw urlErr;
+          }
+          throw urlErr;
+        }
+        assertSafeVideoUrl(videoUrl); // SSRF guard
 
         // Verify pairing still exists and belongs to this tenant (cross-user posting prevention)
         const pairingRow = await db
@@ -253,18 +277,36 @@ export const publishExecute = inngest.createFunction(
         }
       }
 
-      const { data: videoJobData } = await db
-        .from('video_jobs')
-        .select('final_r2_key')
-        .eq('id', job.video_job_id)
-        .eq('tenant_id', tenantId)
-        .single();
-
-      const r2Key = (videoJobData as { final_r2_key?: string | null } | null)?.final_r2_key;
-      if (!r2Key) throw new Error(`[publishExecute] No final_r2_key for video job ${job.video_job_id}`);
-
-      const r2Host = process.env.R2_PUBLIC_HOSTNAME ?? 'pub-placeholder.r2.dev';
-      const videoUrl = `https://${r2Host}/${r2Key}`;
+      // Wave 17 Phase 02: resolve video URL from videos table via canonical helper.
+      // publishing_jobs.video_job_id stores videos.id (post Wave 16 Phase 02).
+      // Column name is misleading but unchanged (KISS — Wave 18 cosmetic rename).
+      let videoUrl: string;
+      try {
+        videoUrl = await getCanonicalVideoUrl(job.video_job_id, tenantId);
+      } catch (urlErr) {
+        if (urlErr instanceof VideoNotFoundError) {
+          await db.from('publishing_jobs').update({
+            status: 'failed',
+            error: 'Video not found',
+            finished_at: Math.floor(Date.now() / 1000),
+          }).eq('id', jobId);
+          return { skipped: false, jobId, status: 'failed', externalPostId: '', provider: '' };
+        }
+        if (urlErr instanceof VideoUnauthorizedError) {
+          logger.warn('[publishExecute] Permission denied resolving video URL', { jobId, videoId: job.video_job_id, tenantId });
+          await db.from('publishing_jobs').update({
+            status: 'failed',
+            error: 'Permission denied',
+            finished_at: Math.floor(Date.now() / 1000),
+          }).eq('id', jobId);
+          return { skipped: false, jobId, status: 'failed', externalPostId: '', provider: '' };
+        }
+        if (urlErr instanceof VideoNotMirroredError) {
+          // Transient — re-throw so Inngest retries
+          throw urlErr;
+        }
+        throw urlErr;
+      }
       assertSafeVideoUrl(videoUrl); // SSRF guard
 
       if (!channel.access_token) {

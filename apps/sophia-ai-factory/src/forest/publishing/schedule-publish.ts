@@ -1,13 +1,13 @@
 /**
  * Forest orchestration helper: insert a publishing_jobs row + emit publish.scheduled event.
  *
- * Architecture note (2026-05-09, updated Wave 17 Phase 01):
- *   publishing_jobs.video_job_id stores either a video_jobs.id (Remotion path)
- *   or a videos.id (HeyGen + FREE100 AI-prompt path). Phase 02 will update
- *   publishExecute to resolve canonical R2 URL via getCanonicalVideoUrl(videoId)
- *   from the `videos` table, superseding the previous video_jobs-only lookup.
- *   HeyGen→R2 mirror is in place (complete-video-from-webhook.ts).
- *   FREE100→R2 propagation added in Wave 17 Phase 01 (video-generate.ts step 7b).
+ * Architecture note (2026-05-09, updated Wave 17 Phase 02):
+ *   publishing_jobs.video_job_id column name is misleading — post Wave 16 Phase 02 it
+ *   stores videos.id (not video_jobs.id). publishExecute resolves the canonical R2 URL
+ *   via getCanonicalVideoUrl(videoId, userId) from `src/lib/video/get-canonical-video-url.ts`.
+ *   Column rename to video_id deferred to Wave 18 (KISS — no functional impact).
+ *   HeyGen→R2 mirror: complete-video-from-webhook.ts.
+ *   FREE100→R2 propagation: video-generate.ts step 7b (Wave 17 Phase 01).
  *
  * Idempotency: caller passes through; let publishExecute CAS handle
  * duplicate jobs (KISS — no new unique-key migration).
