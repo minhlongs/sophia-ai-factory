@@ -4,6 +4,8 @@
  */
 
 export { sign, verify } from './signer';
+export { signWebhook, verifyWebhook } from './signature';
+export type { VerifyOptions } from './signature';
 export { nextRetryDelay, nextRetryAt, isDeadLetter, MAX_ATTEMPTS } from './retry';
 export { sendWebhook } from './sender';
 export {

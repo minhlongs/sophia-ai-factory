@@ -4,7 +4,7 @@
  * @module lib/webhooks/sender
  */
 
-import { sign } from './signer';
+import { signWebhook } from './signature';
 import type { WebhookEndpoint, WebhookEvent, WebhookPayload } from './types';
 
 const TIMEOUT_MS = 10_000;
@@ -27,14 +27,12 @@ export async function sendWebhook(
 ): Promise<SendResult> {
   const deliveryId = crypto.randomUUID();
   const body = JSON.stringify(payload);
-  // Stripe-style replay protection: timestamp prefix in the signed payload.
-  // Receivers must reject deliveries where |now - timestamp| exceeds tolerance.
-  const timestamp = Math.floor(Date.now() / 1000).toString();
-  const signedPayload = `${timestamp}.${body}`;
+  const timestamp = Math.floor(Date.now() / 1000);
 
+  // Unified `t=<ts>,v1=<hmac-hex>` format — see lib/webhooks/signature.ts
   let signature: string;
   try {
-    signature = await sign(endpoint.secret ?? '', signedPayload);
+    signature = await signWebhook(body, endpoint.secret ?? '', timestamp);
   } catch (err) {
     return { success: false, error: `Signing failed: ${err instanceof Error ? err.message : String(err)}` };
   }
@@ -49,7 +47,7 @@ export async function sendWebhook(
       headers: {
         'Content-Type': 'application/json',
         'X-Sophia-Signature': signature,
-        'X-Sophia-Timestamp': timestamp,
+        'X-Sophia-Timestamp': timestamp.toString(),
         'X-Sophia-Event': event,
         'X-Sophia-Delivery': deliveryId,
       },

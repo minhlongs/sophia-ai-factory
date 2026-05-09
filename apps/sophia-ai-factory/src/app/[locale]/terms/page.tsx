@@ -2,10 +2,13 @@ import { getTranslations } from "next-intl/server";
 
 export const revalidate = 60;
 
-export const metadata = {
-  title: "Terms of Service - Sophia AI Factory",
-  description: "Terms and conditions for using Sophia AI Factory — AI Video SaaS Platform.",
-};
+export async function generateMetadata() {
+  const t = await getTranslations("terms");
+  return {
+    title: t("meta_title"),
+    description: t("meta_description"),
+  };
+}
 
 export default async function TermsPage() {
   const t = await getTranslations("terms");
@@ -13,54 +16,37 @@ export default async function TermsPage() {
   return (
     <main id="main-content" className="min-h-screen bg-black pt-24 pb-16">
       <div className="mx-auto max-w-3xl px-6 space-y-8">
-        <h1 className="text-3xl font-bold text-foreground">Terms of Service</h1>
-        <p className="text-muted-foreground text-sm">Last updated: April 30, 2026</p>
+        <h1 className="text-3xl font-bold text-foreground">{t("title")}</h1>
+        <p className="text-muted-foreground text-sm">{t("last_updated")}</p>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold">1. Acceptance of Terms</h2>
-          <p className="text-muted-foreground">
-            By accessing or using Sophia AI Factory (&quot;the Service&quot;), you agree to be bound by these Terms of Service.
-            If you do not agree, do not use the Service.
-          </p>
+          <h2 className="text-xl font-semibold">{t("section1_title")}</h2>
+          <p className="text-muted-foreground">{t("section1_body")}</p>
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold">2. Subscription & Payments</h2>
-          <p className="text-muted-foreground">
-            The Service is offered on a subscription basis. Plans are billed monthly in USDT via NOWPayments.
-            You are responsible for maintaining accurate payment information. Failed payments may result in service suspension.
-          </p>
+          <h2 className="text-xl font-semibold">{t("section2_title")}</h2>
+          <p className="text-muted-foreground">{t("section2_body")}</p>
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold">3. Acceptable Use</h2>
-          <p className="text-muted-foreground">
-            You agree not to use the Service to create content that is illegal, harmful, or violates third-party rights.
-            Sophia AI Factory reserves the right to suspend accounts that violate these terms.
-          </p>
+          <h2 className="text-xl font-semibold">{t("section3_title")}</h2>
+          <p className="text-muted-foreground">{t("section3_body")}</p>
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold">4. Intellectual Property</h2>
-          <p className="text-muted-foreground">
-            Videos generated through the Service belong to you. The underlying AI models, platform code, and
-            infrastructure remain the property of Sophia AI Factory.
-          </p>
+          <h2 className="text-xl font-semibold">{t("section4_title")}</h2>
+          <p className="text-muted-foreground">{t("section4_body")}</p>
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold">5. Limitation of Liability</h2>
-          <p className="text-muted-foreground">
-            The Service is provided &quot;as is&quot; without warranties. Sophia AI Factory is not liable for
-            damages arising from the use of the Service, including video generation failures or service interruptions.
-          </p>
+          <h2 className="text-xl font-semibold">{t("section5_title")}</h2>
+          <p className="text-muted-foreground">{t("section5_body")}</p>
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold">6. Contact</h2>
-          <p className="text-muted-foreground">
-            For questions about these terms, contact us via Telegram @Sophia_Bbot or email support.
-          </p>
+          <h2 className="text-xl font-semibold">{t("section6_title")}</h2>
+          <p className="text-muted-foreground">{t("section6_body")}</p>
         </section>
       </div>
     </main>

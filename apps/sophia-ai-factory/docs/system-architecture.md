@@ -114,7 +114,21 @@ graph TD
   - **Public URL**: Optional `R2_PUBLIC_BASE_URL` env var for direct CDN access.
 - **Backup Payment**: PayOS (payos.vn) for Vietnam domestic.
 
-### 6. Mobile Command Center (Telegram)
+### 6. Distribution Publishers (Wave 11)
+- **Role**: Multi-platform video distribution (Threads, Reddit, Bluesky, Mastodon, Twitter, TikTok, YouTube, Facebook).
+- **Architecture**: 
+  - **Publishers**: `src/lib/publishing/{threads,reddit,bluesky,mastodon,twitter-publisher,tiktok-publisher,youtube-publisher,facebook-publisher}.ts`
+  - **OAuth Flow**: Dynamic scopes per provider; state encrypted server-side (migration 0095 `oauth_state_store` table)
+  - **Webhook Security**: Unified format `t=<timestamp>,v1=<hmac>` (per-provider override support)
+  - **Token Crypto**: `src/lib/publishing/token-crypto.ts` handles encryption/decryption of OAuth payloads
+  - **Quota Manager**: `src/lib/publishing/per-channel-quota.ts` enforces tier limits (BASIC: 1 channel, PREMIUM: 5, ENTERPRISE: unlimited)
+- **Key Providers** (Wave 11 additions):
+  - **Threads**: AT Protocol compliance, ephemeral tokens
+  - **Reddit**: OAuth2 with dynamic scope (read/write/manage subreddits)
+  - **Bluesky**: PDS direct endpoint support
+  - **Mastodon**: Instance-specific OAuth (user selects instance during setup)
+
+### 7. Mobile Command Center (Telegram)
 - **Role**: Remote interface for campaign management.
 - **Components**:
   - **Bot**: Registers webhooks with Telegram API.
@@ -143,6 +157,8 @@ graph TD
 
 ### Access Control
 - **User Authentication**: Better Auth session (email/password + magic link) with D1 user profiles.
+- **Password Reset** (Wave 11): One-time reset tokens (`password_reset_tokens` table, migration 0095). Flow: `signResetToken(userId)` → JTI in email → `consumeResetToken(token)` atomically marks used, prevents replay. Expires in 15min. Endpoint: `POST /api/auth/reset-password`.
+- **OAuth State Security** (Wave 11): Server-side encrypted state storage (`oauth_state_store` table, migration 0095) — clientSecret never exposed in URL. Helpers: `storeOauthState(provider, payload)` / `consumeOauthState(nonce)` in `src/lib/publishing/token-crypto.ts`. State expires in 10min.
 - **Admin Authorization**: Unified via `requireAdmin()` helper (`@/lib/auth/require-admin`) backed by Better Auth session + D1 role check. All 33+ admin API routes converged to single auth source (Phase TIER-2B, 2026-04-28).
 - **Turnkey Mode**: Single-user (Personal) deployment. No login required by default (assumes local/protected network).
 - **Deprecated**: Basic Auth env vars (`ADMIN_USER`, `ADMIN_PASS`, `ADMIN_API_KEY`) removed from active API routes; Cloudflare secrets cleanup pending post-deploy.

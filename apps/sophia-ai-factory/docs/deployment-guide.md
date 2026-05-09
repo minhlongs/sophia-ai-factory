@@ -57,6 +57,11 @@ Before deploying Sprint M (first-dollar revenue engine), ensure all prerequisite
    - Migration 0022-affiliate-conversions
    - Migration 0023-user-wallets+payouts+user-payout-settings
    - Migration 0030-video-r2-metadata (2026-04-29) — adds `r2_key`, `r2_size_bytes` columns to `videos` table
+   - Migration 0091-composite-indexes (2026-05-09) — performance optimization indexes
+   - Migration 0092-totp-secrets-encrypt-backfill (2026-05-09) — TOTP encryption
+   - Migration 0093-usage-events-external-id-unique (2026-05-09) — unique constraint on usage tracking
+   - Migration 0094-publisher-add-distribution-platforms (2026-05-09) — adds distribution platform enum support
+   - Migration 0095-password-reset-tokens-oauth-state-store (2026-05-09) — password reset tokens + OAuth state encryption (NEW in Wave 11)
    ```bash
    npx wrangler d1 migrations apply sophia-raas-db --remote
    ```

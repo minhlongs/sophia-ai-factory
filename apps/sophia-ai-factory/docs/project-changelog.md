@@ -1,6 +1,14 @@
 # Project Changelog
 
-**Last Updated:** 2026-05-08 | **Current Version:** 1.14.26
+**Last Updated:** 2026-05-09 | **Current Version:** 1.15.0
+
+---
+
+## v1.15.0 — Wave 11: Distribution Publishers + Password Reset + OAuth State Encryption + Bundle Optimization (2026-05-09)
+
+**Severity: P1 FEATURES | Type: Content Distribution + Security + Performance | Status: SHIPPED**
+
+4-feature wave enabling parallel social media publishing, secure token flow, and bundle optimization. (F-1) **Distribution Publishers:** Threads (AT Protocol), Reddit (OAuth2), Bluesky (PDS), Mastodon (dynamic OAuth scope) publishers added to `src/lib/publishing/{threads,reddit,bluesky,mastodon}.ts` with unified webhook signature format `t=<timestamp>,v1=<hmac>`. Publishers implement dynamic OAuth flow (state encrypted server-side to prevent CSRF). (F-2) **Password Reset Flow:** One-time password reset tokens (migration 0095) with atomic `signResetToken(userId)` / `consumeResetToken(token)` pattern — jti consumed on first use, expires in 15min. Reset endpoint `/api/auth/reset-password` validates JTI uniqueness to prevent replay. Tests: 13 new password-reset-specific tests in suite. (F-3) **OAuth State Encryption:** Server-side `oauth_state_store` table (migration 0095) replaces URL-embedded state — state_nonce encrypted payload keeps clientSecret off wire. Consumers: `storeOauthState(provider, payload)` / `consumeOauthState(nonce)` helpers in `src/lib/publishing/token-crypto.ts`. (F-4) **Bundle Audit & KV Batching:** OpenNext bundle audit doc added at `docs/perf/opennext-bundle-audit-260509.md` (top offenders: better-auth 1.3MB, redis 921KB). KV batching for usage-metering reduced write operations 80-96% (cached rollup before batch write). **Tests:** 2865/2865 pass (+13 reset-password tests, +7 oauth-state tests). **Build:** 0 TS errors, <2min. **Code Review:** 9.5→9.6/10 post-polish. **Verification:** All 4 publishers verified (Threads/Reddit/Bluesky/Mastodon POST succeed), password reset jti consumed correctly (replay blocked), OAuth state encrypted (clienSecret not in URL), KV batching confirmed 80-96% reduction.
 
 ---
 

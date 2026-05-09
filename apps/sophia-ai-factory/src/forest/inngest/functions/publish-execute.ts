@@ -20,6 +20,10 @@ import { TwitterPublisher } from '@/lib/publishing/twitter-publisher';
 import { PinterestPublisher } from '@/lib/publishing/pinterest-publisher';
 import { LinkedInPublisher } from '@/lib/publishing/linkedin-publisher';
 import { ZaloPublisher } from '@/lib/publishing/zalo-publisher';
+import { ThreadsPublisher } from '@/lib/publishing/threads';
+import { RedditPublisher } from '@/lib/publishing/reddit';
+import { BlueskyPublisher } from '@/lib/publishing/bluesky';
+import { MastodonPublisher } from '@/lib/publishing/mastodon';
 import { logger } from '@/seed/utils/logger-utility';
 import type { PublishingChannel, PublishingJob, Publisher } from '@/lib/publishing/publisher-interface';
 import { randomUUID } from 'crypto';
@@ -80,6 +84,18 @@ function buildPublisher(channel: Pick<PublishingChannel, 'provider' | 'external_
       );
     case 'zalo':
       return new ZaloPublisher(accessToken);
+    case 'threads':
+      // external_account_id stores the Threads user id (numeric string from Meta API).
+      return new ThreadsPublisher(accessToken, channel.external_account_id);
+    case 'reddit':
+      // external_account_id stores Reddit username (stored in callback for posting to u_<username>).
+      return new RedditPublisher(accessToken, channel.external_account_id);
+    case 'bluesky':
+      // external_account_id stores the AT Protocol DID (did:plc:xxx).
+      return new BlueskyPublisher(accessToken, channel.external_account_id);
+    case 'mastodon':
+      // external_account_id stores "<instanceUrl>|<accountId>" compound key.
+      return new MastodonPublisher(accessToken, channel.external_account_id);
     default:
       throw new Error(`Unknown provider: ${channel.provider}`);
   }
