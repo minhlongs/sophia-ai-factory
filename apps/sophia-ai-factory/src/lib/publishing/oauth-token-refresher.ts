@@ -144,14 +144,6 @@ async function acquireRefreshLock(channelId: string, now: number): Promise<boole
   return (result.meta?.changes ?? 0) === 1;
 }
 
-async function releaseRefreshLock(channelId: string): Promise<void> {
-  const rawDb = await getD1Raw();
-  await rawDb
-    .prepare('UPDATE publishing_channels SET refreshing_at = NULL WHERE id = ?')
-    .bind(channelId)
-    .run();
-}
-
 /**
  * Refresh a single channel's token with row-lock.
  * Returns the new expiry timestamp (Unix seconds) or throws.

@@ -10,9 +10,12 @@
  *   6. hashBackupCode() produces consistent SHA-256 hex
  *   7. verifyBackupCode() finds matching hashed code
  *   8. consumeBackupCode() removes the used code from stored JSON
+ *   9. verifyTotpWithLazyEncrypt() — encrypted secret → success, no DB update
+ *  10. verifyTotpWithLazyEncrypt() — plaintext secret (is_encrypted=0) → success + DB updated
+ *  11. verifyTotpWithLazyEncrypt() — bad code → false, no DB update
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import * as OTPAuth from 'otpauth';
 import {
   generateTotpSecret,
@@ -23,6 +26,9 @@ import {
   hashBackupCodesToJson,
   verifyBackupCode,
   consumeBackupCode,
+  verifyTotpWithLazyEncrypt,
+  type MfaSecretsEncRow,
+  type LazyEncryptDb,
 } from '@/seed/auth/mfa/totp-service';
 
 describe('generateTotpSecret', () => {
@@ -155,5 +161,83 @@ describe('consumeBackupCode', () => {
     const updated = consumeBackupCode(json, 1);
     const remaining: string[] = JSON.parse(updated);
     expect(remaining).toHaveLength(3);
+  });
+});
+
+// ── verifyTotpWithLazyEncrypt ─────────────────────────────────────────────────
+
+describe('verifyTotpWithLazyEncrypt', () => {
+  function makeCurrentCode(secret: string): string {
+    const totp = new OTPAuth.TOTP({
+      algorithm: 'SHA1',
+      digits: 6,
+      period: 30,
+      secret: OTPAuth.Secret.fromBase32(secret),
+    });
+    return totp.generate();
+  }
+
+  function makeDb(updateSpy: (v: Record<string, unknown>) => void): LazyEncryptDb {
+    return {
+      from: () => ({
+        update: (values: Record<string, unknown>) => ({
+          eq: async () => {
+            updateSpy(values);
+          },
+        }),
+      }),
+    };
+  }
+
+  it('case 9 — encrypted secret (is_encrypted=1) → success, no DB write', async () => {
+    const secret = generateTotpSecret();
+    const code = makeCurrentCode(secret);
+    const updateSpy = vi.fn();
+
+    const row: MfaSecretsEncRow = { totp_secret_enc: `aes:${secret}`, is_encrypted: 1 };
+    // decryptFn strips the `aes:` prefix for test purposes
+    const decryptFn = async (s: string) => s.replace(/^aes:/, '');
+    const encryptFn = async (s: string) => `aes:${s}`;
+    const db = makeDb(updateSpy);
+
+    const result = await verifyTotpWithLazyEncrypt(row, code, 'user-1', db, decryptFn, encryptFn);
+
+    expect(result).toBe(true);
+    expect(updateSpy).not.toHaveBeenCalled(); // already encrypted — no backfill
+  });
+
+  it('case 10 — plaintext secret (is_encrypted=0) → success + DB update triggered', async () => {
+    const secret = generateTotpSecret();
+    const code = makeCurrentCode(secret);
+    const updateSpy = vi.fn();
+
+    const row: MfaSecretsEncRow = { totp_secret_enc: secret, is_encrypted: 0 };
+    // decryptFn passes plaintext through (mirrors token-crypto behaviour)
+    const decryptFn = async (s: string) => s;
+    const encryptFn = async (s: string) => `aes:${s}`;
+    const db = makeDb(updateSpy);
+
+    const result = await verifyTotpWithLazyEncrypt(row, code, 'user-2', db, decryptFn, encryptFn);
+
+    expect(result).toBe(true);
+    expect(updateSpy).toHaveBeenCalledOnce();
+    const updateArg = updateSpy.mock.calls[0][0] as Record<string, unknown>;
+    expect(updateArg.totp_secret_enc).toBe(`aes:${secret}`);
+    expect(updateArg.is_encrypted).toBe(1);
+  });
+
+  it('case 11 — bad code → returns false, no DB update', async () => {
+    const secret = generateTotpSecret();
+    const updateSpy = vi.fn();
+
+    const row: MfaSecretsEncRow = { totp_secret_enc: secret, is_encrypted: 0 };
+    const decryptFn = async (s: string) => s;
+    const encryptFn = async (s: string) => `aes:${s}`;
+    const db = makeDb(updateSpy);
+
+    const result = await verifyTotpWithLazyEncrypt(row, '000000', 'user-3', db, decryptFn, encryptFn);
+
+    expect(result).toBe(false);
+    expect(updateSpy).not.toHaveBeenCalled(); // bad code → no backfill
   });
 });

@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { signResetToken, consumeResetToken, verifyResetToken } from '../reset-password-token';
+import { signResetToken, consumeResetToken } from '../reset-password-token';
 
 // ---- D1 mock helpers ----
 
@@ -150,7 +150,7 @@ describe('consumeResetToken — invalid inputs', () => {
   });
 });
 
-describe('verifyResetToken (deprecated — no DB)', () => {
+describe('consumeResetToken — additional coverage (migrated from verifyResetToken)', () => {
   const ORIG_ENV = { ...process.env };
 
   beforeEach(() => {
@@ -161,23 +161,21 @@ describe('verifyResetToken (deprecated — no DB)', () => {
     process.env = { ...ORIG_ENV };
   });
 
-  it('returns payload for valid token (signed via signResetToken)', async () => {
+  it('valid token returns userId (consume succeeds)', async () => {
     const signDb = makeD1(1);
     const token = await signResetToken('user-verify', signDb as never);
-    const payload = await verifyResetToken(token);
-    expect(payload).not.toBeNull();
-    expect(payload?.userId).toBe('user-verify');
-    expect(typeof payload?.jti).toBe('string');
-    expect(typeof payload?.exp).toBe('number');
+    const consumeDb = makeD1(1);
+    const userId = await consumeResetToken(token, consumeDb as never);
+    expect(userId).toBe('user-verify');
   });
 
   it('returns null for tampered payload', async () => {
     const signDb = makeD1(1);
     const token = await signResetToken('user-t2', signDb as never);
     const [payloadB64, sig] = token.split('.');
-    // Modify payload
     const badPayload = payloadB64 + 'X';
-    const result = await verifyResetToken(`${badPayload}.${sig}`);
+    const db = makeD1(1);
+    const result = await consumeResetToken(`${badPayload}.${sig}`, db as never);
     expect(result).toBeNull();
   });
 
@@ -187,7 +185,8 @@ describe('verifyResetToken (deprecated — no DB)', () => {
     const origNow = Date.now;
     Date.now = () => origNow() + 2 * 3600 * 1000;
     try {
-      const result = await verifyResetToken(token);
+      const db = makeD1(1);
+      const result = await consumeResetToken(token, db as never);
       expect(result).toBeNull();
     } finally {
       Date.now = origNow;

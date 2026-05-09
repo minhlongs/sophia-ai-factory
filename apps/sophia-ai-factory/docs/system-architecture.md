@@ -128,14 +128,14 @@ graph TD
   - **Bluesky**: PDS direct endpoint support
   - **Mastodon**: Instance-specific OAuth (user selects instance during setup)
 
-### 7. Video Generation Pipeline (Wave 12)
+### 7. Video Generation Pipeline (Wave 12+13)
 - **Role**: Multi-model video synthesis (Replicate Wan 2.1 + fal.ai Fish Speech audio).
 - **Architecture**:
   - **Models**: Wan 2.1 (text→video), Fish Speech (text→audio via fal.ai)
   - **Storage**: Cloudflare R2 `sophia-ai-factory-opennext-cache` (video outputs) + D1 metadata tracking
   - **Workflow**: Mission script complete → Inngest trigger `video-gen-handler` → API calls (Wan 2.1 + Fish Speech) → poll for job completion → R2 upload → D1 update
   - **Schema**: Migration 0096 adds `output_video_url, output_audio_url, video_job_id` to `engine_missions` table
-  - **Status**: Infrastructure ready; UI registration planned (wave 13)
+  - **Inngest Registration** (Wave 13): `src/forest/inngest/client.ts` registers `video-gen` event schema (`{missionId, scriptId, avatarId, voiceId, duration}`). Trigger endpoint: `POST /api/v1/missions/[id]/generate-video` (accepts same body, replaces ad-hoc queue pattern).
   - **Rate Limiting**: All 37 v1 routes wrapped with `withRateLimit()` (tier-aware burst buckets)
 
 ### 8. Mobile Command Center (Telegram)

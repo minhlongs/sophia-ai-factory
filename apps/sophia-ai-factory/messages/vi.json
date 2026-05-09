@@ -531,6 +531,7 @@
       "view_output": "Xem Đầu Ra",
       "mcu_breakdown": "Chi Tiết MCU",
       "total": "Tổng Cộng",
+      "sse_reconnecting": "Đang kết nối lại để cập nhật trực tiếp…",
       "control": {
         "title": "Trung Tâm Điều Hành",
         "subtitle": "Điều phối đội AI bằng ngôn ngữ tự nhiên",
@@ -1834,6 +1835,13 @@
     "saved": "Đã lưu key {provider}",
     "cleared": "Đã xóa key {provider}",
     "error_format": "Khóa quá ngắn — phải có ít nhất 10 ký tự.",
-    "network_error": "Lỗi mạng, thử lại"
+    "network_error": "Lỗi mạng, thử lại",
+    "picker": {
+      "placeholder": "Dùng model hệ thống (mặc định)",
+      "system_default": "Mặc định hệ thống — không dùng BYOK",
+      "aria_label": "Chọn nhà cung cấp và model",
+      "no_providers": "Chưa cấu hình BYOK — thêm khóa trong Cài đặt.",
+      "cost_preview": "~${input} đầu vào / ${output} đầu ra mỗi 1k token"
+    }
   }
 }

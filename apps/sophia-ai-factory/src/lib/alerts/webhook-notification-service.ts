@@ -31,7 +31,7 @@ export async function sendWebhookAlert(
     try {
       const headers: Record<string, string> = { 'Content-Type': 'application/json', 'User-Agent': 'Sophia-AI-Factory-Webhook/1.0' }
       if (secret) {
-        const { signature, timestamp } = generateWebhookSignature(payload, secret)
+        const { signature, timestamp } = await generateWebhookSignature(payload, secret)
         headers['X-Signature'] = signature
         headers['X-Timestamp'] = timestamp.toString()
       }

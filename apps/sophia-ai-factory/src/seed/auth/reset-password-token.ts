@@ -139,33 +139,3 @@ export async function consumeResetToken(
 
   return payload.userId;
 }
-
-/**
- * Verify and decode a reset token (HMAC + TTL only, no DB check).
- * @deprecated Use consumeResetToken for production flows to enforce one-time-use.
- */
-export async function verifyResetToken(token: string): Promise<ResetTokenPayload | null> {
-  const dot = token.lastIndexOf('.');
-  if (dot === -1) return null;
-
-  const payloadB64 = token.slice(0, dot);
-  const sig = token.slice(dot + 1);
-
-  const valid = await hmacVerify(payloadB64, sig, getSecret());
-  if (!valid) return null;
-
-  try {
-    const payload = JSON.parse(fromBase64Url(payloadB64)) as Partial<ResetTokenPayload>;
-    if (
-      typeof payload.userId !== 'string' ||
-      typeof payload.jti !== 'string' ||
-      typeof payload.exp !== 'number'
-    ) {
-      return null;
-    }
-    if (Math.floor(Date.now() / 1000) > payload.exp) return null;
-    return payload as ResetTokenPayload;
-  } catch {
-    return null;
-  }
-}

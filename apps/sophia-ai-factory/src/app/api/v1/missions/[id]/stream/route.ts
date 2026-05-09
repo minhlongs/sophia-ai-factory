@@ -1,8 +1,13 @@
 /**
  * /api/v1/missions/[id]/stream — SSE Stream for mission status
  *
- * Polls D1 every 2s, emits status events.
- * Closes stream on terminal state (succeeded/failed/cancelled) or after 5 min.
+ * Polls D1 every 2s, emits status events with `id:` cursor (SSE spec).
+ * Supports Last-Event-ID reconnect: resumes from updated_at cursor so the
+ * browser's native EventSource replay works without duplicate events.
+ *
+ * Cursor strategy: unix-ms timestamp from `updated_at` column.
+ * On reconnect the browser sends `Last-Event-ID: <updated_at>` automatically
+ * and we skip polling cycles until mission.updated_at > cursor.
  *
  * Auth: Authorization: Bearer <api_key>
  */
@@ -39,8 +44,14 @@ interface MissionRow {
   completed_at: number | null;
 }
 
-function sseMessage(event: string, data: unknown): string {
-  return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+/**
+ * Builds a full SSE message block with mandatory `id:` cursor line.
+ * The `id:` line is required for browser EventSource to set Last-Event-ID
+ * automatically on reconnect (per SSE spec §9.2.6).
+ */
+function sseMessage(event: string, data: unknown, cursor: number | null = null): string {
+  const idLine = cursor !== null ? `id: ${cursor}\n` : '';
+  return `${idLine}event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
 }
 
 export async function GET(
@@ -58,6 +69,11 @@ export async function GET(
     }
     const userId = auth.userId!;
 
+    // Parse Last-Event-ID for reconnect cursor (unix-ms timestamp).
+    // Value 0 means "start from beginning" (no prior events seen).
+    const lastEventIdHeader = r.headers.get('last-event-id');
+    const resumeCursor = lastEventIdHeader ? parseInt(lastEventIdHeader, 10) || 0 : 0;
+
     const encoder = new TextEncoder();
     const startTime = Date.now();
 
@@ -65,8 +81,12 @@ export async function GET(
       async start(controller) {
         const db = createServerClient();
         let lastHeartbeat = Date.now();
+        // Track cursor so we only emit events the client hasn't seen.
+        let emittedCursor = resumeCursor;
 
-        controller.enqueue(encoder.encode(sseMessage('connected', { mission_id: id })));
+        controller.enqueue(encoder.encode(
+          sseMessage('connected', { mission_id: id, resume_cursor: resumeCursor }, null)
+        ));
 
         while (Date.now() - startTime < MAX_DURATION_MS) {
           await new Promise(res => setTimeout(res, POLL_INTERVAL_MS));
@@ -74,8 +94,10 @@ export async function GET(
 
           const now = Date.now();
           if (now - lastHeartbeat >= HEARTBEAT_INTERVAL_MS) {
-            controller.enqueue(encoder.encode(sseMessage('ping', { ts: now })));
+            // Heartbeat uses current server time as cursor so client stays in sync
+            controller.enqueue(encoder.encode(sseMessage('ping', { ts: now }, now)));
             lastHeartbeat = now;
+            emittedCursor = now;
           }
 
           try {
@@ -87,9 +109,28 @@ export async function GET(
               .single() as { data: MissionRow | null; error: unknown };
 
             if (!data) {
-              controller.enqueue(encoder.encode(sseMessage('error', { code: 'not_found', message: 'Mission not found' })));
+              controller.enqueue(encoder.encode(
+                sseMessage('error', { code: 'not_found', message: 'Mission not found' }, null)
+              ));
               break;
             }
+
+            // Skip emission if client already saw this state (reconnect dedup).
+            // updated_at is 0/null on brand-new missions — emit those always.
+            const cursor = data.updated_at ?? 0;
+            if (cursor > 0 && cursor <= emittedCursor) {
+              // No state change since last emitted cursor — keep polling silently
+              if (TERMINAL_STATUSES.has(data.status)) {
+                // Terminal state already delivered before disconnect; send done again
+                controller.enqueue(encoder.encode(
+                  sseMessage('done', { status: data.status }, cursor)
+                ));
+                break;
+              }
+              continue;
+            }
+
+            emittedCursor = cursor > 0 ? cursor : now;
 
             controller.enqueue(encoder.encode(sseMessage('status', {
               id: data.id,
@@ -100,22 +141,26 @@ export async function GET(
               credits_used: data.credits_used,
               updated_at: data.updated_at,
               completed_at: data.completed_at,
-            })));
+            }, emittedCursor)));
 
             if (TERMINAL_STATUSES.has(data.status)) {
-              controller.enqueue(encoder.encode(sseMessage('done', { status: data.status })));
+              controller.enqueue(encoder.encode(
+                sseMessage('done', { status: data.status }, emittedCursor)
+              ));
               break;
             }
           } catch (err) {
             controller.enqueue(encoder.encode(sseMessage('error', {
               code: 'db_transient',
               message: err instanceof Error ? err.message.slice(0, 200) : 'db error',
-            })));
+            }, null)));
           }
         }
 
         if (Date.now() - startTime >= MAX_DURATION_MS) {
-          controller.enqueue(encoder.encode(sseMessage('timeout', { message: 'Stream closed after 5 minutes' })));
+          controller.enqueue(encoder.encode(
+            sseMessage('timeout', { message: 'Stream closed after 5 minutes' }, null)
+          ));
         }
 
         controller.close();

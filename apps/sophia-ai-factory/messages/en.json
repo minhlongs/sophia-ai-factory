@@ -531,6 +531,7 @@
       "view_output": "View Output",
       "mcu_breakdown": "MCU Cost Breakdown",
       "total": "Total",
+      "sse_reconnecting": "Reconnecting to live updates…",
       "control": {
         "title": "Mission Control",
         "subtitle": "Command your AI agent team with natural language",
@@ -1834,6 +1835,13 @@
     "saved": "Saved {provider} key",
     "cleared": "Cleared {provider} key",
     "error_format": "Key too short — must be at least 10 characters.",
-    "network_error": "Network error — try again"
+    "network_error": "Network error — try again",
+    "picker": {
+      "placeholder": "Use system model (default)",
+      "system_default": "System default — no BYOK",
+      "aria_label": "Select provider and model",
+      "no_providers": "No BYOK providers configured — add keys in Settings.",
+      "cost_preview": "~${input} input / ${output} output per 1k tokens"
+    }
   }
 }
