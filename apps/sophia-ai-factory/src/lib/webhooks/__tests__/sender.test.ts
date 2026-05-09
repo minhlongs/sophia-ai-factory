@@ -43,7 +43,8 @@ describe('sendWebhook', () => {
     const headers = requestInit.headers as Record<string, string>;
 
     expect(headers['X-Sophia-Signature']).toBeDefined();
-    expect(headers['X-Sophia-Signature']).toMatch(/^[0-9a-f]{64}$/);
+    // New format: t=<unix>,v1=<64-char-hex>
+    expect(headers['X-Sophia-Signature']).toMatch(/^t=\d+,v1=[0-9a-f]{64}$/);
   });
 
   it('includes X-Sophia-Event and X-Sophia-Delivery headers', async () => {

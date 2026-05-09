@@ -18,6 +18,10 @@ export const DAILY_QUOTAS: Record<ChannelProvider, number> = {
   zalo: 20,        // Zalo OA API v3: 20 posts/day per OA
   facebook: 25,    // Graph API Reels: 25/day per Page (matches IG)
   twitter: 50,     // X API v2 Free tier: 1500/month ≈ 50/day; Basic plan ↑
+  threads: 250,    // Threads API: generous quota for publishing
+  reddit: 10,      // Reddit API: conservative limit for link submissions
+  bluesky: 100,    // AT Protocol: high limit, no hard published quota
+  mastodon: 50,    // Mastodon: standard rate limit per instance
 };
 
 function todayUtc(): string {

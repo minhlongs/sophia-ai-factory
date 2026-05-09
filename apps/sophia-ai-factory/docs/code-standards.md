@@ -98,6 +98,26 @@ export function Button({ className, ...props }: ButtonProps) {
 - Return user-friendly error messages to the UI.
 - Use `toError()` from `@/lib/utils/to-error` to normalize thrown values into Error instances. `toError()` also recognizes Supabase `PostgrestError` shape — when given a `{ message: string, code?, details?, hint? }` object, it returns `new Error(message)` with `code`, `details`, and `hint` attached as own-properties for structured logging.
 
+## Wave 11 Patterns (2026-05-09)
+
+### Password Reset Token Flow
+- **Atomicity**: `signResetToken(userId)` creates D1 record with unique JTI; `consumeResetToken(token)` marks `used_at` in single transaction (prevents replay).
+- **Expiry**: 15-minute lifetime; cleanup job runs hourly via Inngest to purge expired tokens.
+- **Usage**: Endpoint `POST /api/auth/reset-password` validates JTI exists, not yet consumed, matches `expires_at`.
+- **File**: `src/lib/publishing/token-crypto.ts` (reusable crypto utilities).
+
+### OAuth State Encryption (Server-Side)
+- **Flow**: 1) Create random state_nonce → 2) Encrypt OAuth payload (provider, clientSecret, redirect_uri) → 3) Store in `oauth_state_store` → 4) Pass state_nonce to OAuth endpoint.
+- **Callback**: Receive state_nonce → decrypt payload from D1 → verify clientSecret matches (prevents CSRF/code-substitution).
+- **Helpers**: `storeOauthState(provider, payload)` / `consumeOauthState(nonce)` in `src/lib/publishing/token-crypto.ts`.
+- **Expiry**: 10-minute window; consumed on first callback use.
+
+### Webhook Signature Validation (Unified Format)
+- **Format**: `t=<unix_timestamp_sec>,v1=<hmac_sha256_hex>`.
+- **Verification**: Parse header → compute `HMAC256(${timestamp}.${body}, secret)` → constant-time compare.
+- **Anti-Replay**: Reject if `abs(now - timestamp) > 5min` (configurable per publisher).
+- **Usage**: Distribution publishers, HeyGen, NOWPayments implement this format.
+
 **Logging Best Practices:**
 ```typescript
 import { logger } from '@/lib/logger';
