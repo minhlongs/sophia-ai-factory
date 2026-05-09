@@ -57,9 +57,10 @@ export function buildClientOptions(): BrowserOptions {
     dsn: getDSN(),
     release: getRelease(),
     environment: getEnvironment(),
-    tracesSampleRate: isProd ? 0.1 : 1.0,
-    replaysSessionSampleRate: 0,
-    replaysOnErrorSampleRate: isProd ? 0.1 : 0,
+    // Round-11 F-PC-6 / Wave-10 Q2: free-tier-friendly sampling.
+    tracesSampleRate: isProd ? 0.02 : 1.0,
+    replaysSessionSampleRate: isProd ? 0.01 : 0,
+    replaysOnErrorSampleRate: isProd ? 1.0 : 0,
     ignoreErrors: IGNORE_ERRORS,
     beforeSend(event) {
       const statusCode = (event.contexts?.response as Record<string, unknown> | undefined)
@@ -76,7 +77,7 @@ export function buildServerOptions(): NodeOptions {
     dsn: getDSN(),
     release: getRelease(),
     environment: getEnvironment(),
-    tracesSampleRate: isProd ? 0.1 : 1.0,
+    tracesSampleRate: isProd ? 0.05 : 1.0,
     ignoreErrors: IGNORE_ERRORS,
     beforeSend(event) {
       const statusCode = (event.contexts?.response as Record<string, unknown> | undefined)
@@ -93,7 +94,7 @@ export function buildEdgeOptions(): EdgeOptions {
     dsn: getDSN(),
     release: getRelease(),
     environment: getEnvironment(),
-    tracesSampleRate: isProd ? 0.1 : 1.0,
+    tracesSampleRate: isProd ? 0.05 : 1.0,
     ignoreErrors: IGNORE_ERRORS,
     beforeSend(event) {
       const statusCode = (event.contexts?.response as Record<string, unknown> | undefined)

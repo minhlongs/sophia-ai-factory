@@ -8,6 +8,7 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
+import { toBcp47 } from '@/lib/i18n/to-bcp47';
 import type { MissionStatus } from '@/seed/types/raas';
 
 interface MissionData {
@@ -41,7 +42,7 @@ interface Props { missionId: string }
 export function MissionDetail({ missionId }: Props) {
   const t = useTranslations('dashboard.missions');
   const locale = useLocale();
-  const dateLocale = locale === 'vi' ? 'vi-VN' : 'en-US';
+  const dateLocale = toBcp47(locale);
   const [mission, setMission] = useState<MissionData | null>(null);
   const [loading, setLoading] = useState(true);
   const [retrying, setRetrying] = useState(false);

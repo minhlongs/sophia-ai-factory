@@ -10,6 +10,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
+import { toBcp47 } from '@/lib/i18n/to-bcp47';
 import { McuBalanceWidget } from './mcu-balance-widget';
 import type { MissionStatus } from '@/seed/types/raas';
 
@@ -48,7 +49,7 @@ interface Props {
 export function MissionDashboard({ onLaunchMission }: Props) {
   const t = useTranslations('dashboard.missions');
   const locale = useLocale();
-  const dateLocale = locale === 'vi' ? 'vi-VN' : 'en-US';
+  const dateLocale = toBcp47(locale);
   const [missions, setMissions] = useState<MissionRow[]>([]);
   const [loading, setLoading] = useState(true);
 
