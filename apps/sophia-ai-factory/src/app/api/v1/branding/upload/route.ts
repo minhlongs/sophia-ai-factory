@@ -29,11 +29,14 @@ export const dynamic = 'force-dynamic';
 
 const BRANDING_MAX_BYTES = 2 * 1024 * 1024; // 2 MB
 
+// SVG dropped from allowlist — can carry inline <script>/onload= → XSS when
+// served from R2 with image/svg+xml. Re-enable only after DOMPurify or strict
+// regex strip is wired in. PNG/JPG/WEBP cover all production logo/favicon
+// requirements.
 const IMAGE_MIME_ALLOWLIST = [
   'image/png',
   'image/jpeg',
   'image/webp',
-  'image/svg+xml',
 ] as const;
 
 const FAVICON_MIME_ALLOWLIST = [

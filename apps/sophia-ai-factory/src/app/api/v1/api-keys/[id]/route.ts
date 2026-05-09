@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { revokeApiKey } from '@/forest/api-keys/d1-store';
+import { globalRateLimiter, getClientIdentifier, createRateLimitResponse } from '@/forest/middleware/rate-limiter';
 import { logger } from '@/seed/utils/logger-utility';
 
 export const dynamic = 'force-dynamic';
@@ -27,6 +28,10 @@ interface RouteParams {
 export async function DELETE(req: NextRequest, { params }: RouteParams) {
   const user = await getCurrentUserFromHeaders(req.headers);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  // Cap revoke at 10/min — slower than create/rotate to allow batch cleanup.
+  const rl = globalRateLimiter.checkLimit(getClientIdentifier(req), { intervalMs: 60_000, maxRequests: 10 });
+  if (!rl.allowed) return createRateLimitResponse(rl);
 
   const { id } = await params;
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });

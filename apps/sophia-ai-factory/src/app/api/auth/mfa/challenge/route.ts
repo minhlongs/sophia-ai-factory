@@ -14,6 +14,7 @@ import { getAuth } from '@/seed/auth/better-auth-server';
 import { createServerClient } from '@/seed/db/client';
 import { verifyTotp, verifyBackupCode, consumeBackupCode } from '@/seed/auth/mfa/totp-service';
 import { clearSessionMfaPending } from '@/seed/auth/mfa/login-challenge';
+import { decryptToken } from '@/lib/publishing/token-crypto';
 
 export const dynamic = 'force-dynamic';
 
@@ -82,8 +83,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ ok: true });
   }
 
-  // TOTP 6-digit path
-  const valid = verifyTotp(row.totp_secret_enc, code);
+  // TOTP 6-digit path — decrypt at-rest secret first.
+  const secretPlain = await decryptToken(row.totp_secret_enc);
+  const valid = verifyTotp(secretPlain, code);
   if (!valid) {
     return NextResponse.json({ error: 'invalid_code' }, { status: 401 });
   }
