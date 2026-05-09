@@ -17,7 +17,7 @@ describe('sentry-options', () => {
     vi.stubEnv('NEXT_PUBLIC_SENTRY_DSN', 'https://test@sentry.io/123');
     const { buildClientOptions } = await import('./sentry-options');
     const opts = buildClientOptions();
-    expect(opts.tracesSampleRate).toBe(0.1);
+    expect(opts.tracesSampleRate).toBe(0.02);
     expect(opts.environment).toBe('production');
   });
 

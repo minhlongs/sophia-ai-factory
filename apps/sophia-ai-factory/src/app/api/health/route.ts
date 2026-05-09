@@ -146,7 +146,13 @@ export const GET = withRateLimit(async function GET(req: NextRequest) {
           ? 'Some services temporarily unavailable'
           : 'Service disruption detected';
       }
-      return NextResponse.json(pub, { status: healthStatus.status === 'unhealthy' ? 503 : 200 });
+      // Round-11 F-PC-9: cache unauth probe 10s — uptime-check + LB probes
+      // hit this every 30-60s; without cache each pays full D1+R2+KV latency.
+      // Authenticated path stays uncached (admin needs fresh signal).
+      return NextResponse.json(pub, {
+        status: healthStatus.status === 'unhealthy' ? 503 : 200,
+        headers: { 'Cache-Control': 'public, max-age=10, stale-while-revalidate=30' },
+      });
     }
 
     return NextResponse.json(healthStatus, { status: healthStatus.status === 'unhealthy' ? 503 : 200 });

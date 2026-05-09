@@ -1,17 +1,12 @@
 /**
- * Sentry edge runtime configuration
- * Next.js App Router — middleware, edge API routes
+ * Sentry edge runtime configuration — thin wrapper.
+ * Centralized options in lib/observability/sentry-options.ts.
  */
 import * as Sentry from '@sentry/nextjs';
+import { buildEdgeOptions } from '@/lib/observability/sentry-options';
 
 Sentry.init({
-  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-
-  // Performance monitoring (lower rate for edge)
-  tracesSampleRate: 0.05,
-
-  // Only enable in production
+  ...buildEdgeOptions(),
   enabled: process.env.NODE_ENV === 'production',
-
   debug: false,
 });
