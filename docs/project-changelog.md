@@ -1,7 +1,37 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-05-09 EOD (Wave 16 COMPLETE: all 4 phases shipped)
+> **Last Updated:** 2026-05-09 LATE (Wave 17 Batch 1: phases 01 + 04 + 06 shipped)
+
+---
+
+## [2026-05-09 LATE] Wave 17 Batch 1 — Phases 01 + 04 + 06
+
+**Summary (vi):** Triển khai 3 phases độc lập ship cùng lúc Wave 17. Phase 01: FREE100 path now inserts `videos` row tại Inngest `video-generate` completion (step 7b). New `getCanonicalVideoUrl(videoId, userId)` helper trả R2 public URL, passes SSRF guard. Phase 04: Migration 0100 adds UNIQUE(paired_by) on `telegram_paired_chats` (dedup keep-newest, handle-replay safe). Phase 06: `validateMissionApiKey` trả discriminated union `{valid:true,userId} | {valid:false,errorType}` với HTTP mapping 401/403/503 + Sentry tag. Verification: 3045/3045 tests (+27 net), 0 TS errors, 0 i18n missing, build exit 0.
+
+**Summary (en):** Three independent phases shipped together for coordinated CF deploy. Phase 01 (P0): FREE100 path inserts videos row at Inngest video-generate completion (Wave 16 latent gap—videos created via FREE100 weren't indexed + couldn't distribute). New `getCanonicalVideoUrl` helper returns R2 public URL matching SSRF whitelist. Phase 04 (P1): Migration 0100 dedup + UNIQUE INDEX on paired_by (handle-replay safe for upsert). Phase 06 (P1, M6 backlog): API-key error taxonomy (discriminated union 401/403/503 HTTP mapping + Sentry auth.error_type tag). Critical bugs fixed during code review: C1 `insertAiPromptVideo` used crypto.randomUUID()→duplicate on Inngest retry (fixed: missionId as deterministic id + return {videoId,alreadyExisted}). C2 Dead `result.error` check replaced with try/catch matching real D1 contract.
+
+### Phase 01 — Pipeline Bridge (P0)
+- New helper: `getCanonicalVideoUrl(videoId, userId)` → R2 public URL
+- FREE100 path: inserts `videos` row at step 7b (`Inngest video-generate` completion)
+- Schema: `videos.heygen_job_id` already nullable ✓
+- Bug C1 fix: `insertAiPromptVideo` now idempotent (missionId as id key)
+- Tests: +8 new
+
+### Phase 04 — UNIQUE(paired_by) Telegram Pairing (P1)
+- Migration 0100 (table-rebuild dedup, keep-newest)
+- Pairing route already used upsert → handles ON CONFLICT cleanly
+- Tests: +4 dual-pair regression
+- Fixes: M1 migration comment honest about one-shot; M2 pre-flight dedup audit
+
+### Phase 06 — API-Key Error Taxonomy (P1)
+- `validateMissionApiKey` returns: `{valid:true,userId} | {valid:false,errorType:'missing_credentials'|'invalid_key'|'inactive'|'db_unreachable'}`
+- HTTP mapping: 401 (bad key) / 403 (inactive) / 503 (DB unreachable)
+- Sentry tag: `auth.error_type` on every failure
+- 5 caller routes updated; cookie fallback preserved
+- Tests: +13 new
+
+**Verification (2026-05-09 batch 1):** 3045/3045 tests pass (+27 net), 0 TS errors, 0 i18n missing, build exit 0. 2 critical bugs caught during review (insertAiPromptVideo idempotency + D1 fictional error contract).
 
 ---
 

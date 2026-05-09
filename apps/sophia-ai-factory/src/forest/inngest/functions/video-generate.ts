@@ -25,6 +25,7 @@ import { logger } from '@/seed/utils/logger-utility';
 import { WanVideoClient } from '@/lib/video/wan21-client';
 import { FishSpeechClient } from '@/lib/video/fish-speech-client';
 import { muxVideoAudio } from '@/lib/video/ffmpeg-muxer';
+import { insertAiPromptVideo } from '@/seed/db/repositories/videos-repo';
 import type { VideoGenerateRequestedEvent } from '@/lib/video/types';
 
 const POLL_INTERVAL_MS = 20_000; // 20s between polls
@@ -189,6 +190,44 @@ export const videoGenerate = inngest.createFunction(
         .eq('id', missionId);
 
       logger.info('[videoGenerate] engine_mission updated to succeeded', { missionId });
+    });
+
+    // ── Step 7b: Insert videos row ────────────────────────────────────────
+    // Propagates the FREE100 completed video to the `videos` table so user
+    // gallery + distribute panel can find it. Wrapped in try-catch — a failure
+    // here must NOT fail the mission; the video is already on R2.
+    await step.run('insert-videos-row', async () => {
+      try {
+        const r2Host = process.env.R2_PUBLIC_HOSTNAME;
+        const videoUrl = r2Host
+          ? `https://${r2Host}/${muxOutputKey}`
+          : muxed.url;
+
+        const { videoId, alreadyExisted } = await insertAiPromptVideo({
+          userId: userId ?? tenantId,
+          missionId,
+          r2Key: muxOutputKey,
+          videoUrl,
+        });
+
+        if (alreadyExisted) {
+          logger.info('[videoGenerate] videos row already existed (Inngest retry — expected)', {
+            videoId,
+            missionId,
+          });
+        } else {
+          logger.info('[videoGenerate] videos row inserted', { videoId, missionId, r2Key: muxOutputKey });
+        }
+        return { videoId };
+      } catch (err) {
+        // Non-fatal: log and continue. Mission is already succeeded.
+        logger.error(
+          '[videoGenerate] insert-videos-row failed (non-fatal)',
+          err instanceof Error ? err : new Error(String(err)),
+          { missionId },
+        );
+        return { videoId: null };
+      }
     });
 
     // ── Step 8: Emit Usage ────────────────────────────────────────────────

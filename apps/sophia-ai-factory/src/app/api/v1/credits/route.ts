@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { validateMissionApiKey } from '@/forest/missions/api-key-auth';
+import { validateMissionApiKey, apiKeyAuthErrorResponse } from '@/forest/missions/api-key-auth';
 import { getBalance, listTransactions } from '@/lib/mcu/credits-repo';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 
@@ -19,7 +19,7 @@ export const GET = withRateLimit(async function GET(request: NextRequest): Promi
     request.headers.get('x-api-key'),
   );
   if (!auth.valid) {
-    return NextResponse.json({ error: auth.error }, { status: 401 });
+    return apiKeyAuthErrorResponse(auth);
   }
 
   const balance = await getBalance(auth.userId!);

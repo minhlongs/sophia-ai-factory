@@ -20,7 +20,7 @@
 
 import * as Sentry from '@sentry/nextjs';
 import { NextRequest, NextResponse } from 'next/server';
-import { validateMissionApiKey } from '@/forest/missions/api-key-auth';
+import { validateMissionApiKey, apiKeyAuthErrorResponse } from '@/forest/missions/api-key-auth';
 import { createServerClient } from '@/seed/db/client';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 import { logger } from '@/seed/utils/logger-utility';
@@ -78,7 +78,7 @@ export async function GET(
       r.headers.get('x-api-key'),
     );
     if (!auth.valid) {
-      return new NextResponse(JSON.stringify({ error: auth.error }), { status: 401 });
+      return apiKeyAuthErrorResponse(auth);
     }
     const userId = auth.userId!;
 

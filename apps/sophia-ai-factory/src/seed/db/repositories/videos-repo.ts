@@ -217,6 +217,75 @@ export async function revokeAccessByPurchaseId(purchaseId: string): Promise<void
     .run()
 }
 
+// ── AI-prompt video insert ──────────────────────────────────────────────────────
+
+export interface InsertAiPromptVideoInput {
+  /** Better-auth user.id */
+  userId: string;
+  /** engine_missions.id — used directly as videos.id for deterministic idempotency */
+  missionId: string;
+  /** R2 object key, e.g. "video-jobs/{missionId}/final.mp4" */
+  r2Key: string;
+  /** Public R2 URL (https://{R2_PUBLIC_HOSTNAME}/{r2Key}) */
+  videoUrl: string;
+  /** Optional display title; defaults to "AI Video" */
+  title?: string;
+}
+
+export interface InsertAiPromptVideoResult {
+  /** The videos.id (equals missionId). */
+  videoId: string;
+  /** True when the row already existed (Inngest retry path). */
+  alreadyExisted: boolean;
+}
+
+/**
+ * Insert a row in `videos` for a FREE100 AI-prompt video.
+ *
+ * Uses `provider='ai-prompt'`, `heygen_job_id=NULL` (nullable per migration 0089).
+ * Idempotent: videos.id = missionId (1:1). INSERT OR IGNORE on PK conflict is a genuine
+ * no-op. On Inngest retry, alreadyExisted=true is returned — caller should NOT throw.
+ *
+ * D1 throws on errors (no .error field on D1Result). Errors propagate to caller.
+ */
+export async function insertAiPromptVideo(
+  input: InsertAiPromptVideoInput,
+): Promise<InsertAiPromptVideoResult> {
+  const db = await getD1Raw()
+  const now = Math.floor(Date.now() / 1000)
+  // Use missionId directly as videos.id — deterministic, genuinely idempotent on PK
+  const videoId = input.missionId
+
+  try {
+    const result = await db
+      .prepare(
+        `INSERT OR IGNORE INTO videos
+           (id, user_id, title, status, video_url, r2_key,
+            provider, attempt_count, is_onboarding, created_at, updated_at)
+         VALUES (?1, ?2, ?3, 'completed', ?4, ?5, 'ai-prompt', 0, 0, ?6, ?6)`,
+      )
+      .bind(videoId, input.userId, input.title ?? 'AI Video', input.videoUrl, input.r2Key, now)
+      .run()
+
+    const alreadyExisted = (result.meta?.changes ?? 1) === 0
+
+    logger.info('[VideosRepo] insertAiPromptVideo', {
+      videoId,
+      missionId: input.missionId,
+      r2Key: input.r2Key,
+      alreadyExisted,
+    })
+
+    return { videoId, alreadyExisted }
+  } catch (dbErr) {
+    logger.error('[VideosRepo] insertAiPromptVideo D1 throw', {
+      missionId: input.missionId,
+      error: dbErr instanceof Error ? dbErr.message : String(dbErr),
+    })
+    throw dbErr
+  }
+}
+
 // ── Read operations ─────────────────────────────────────────────────────────────
 
 /**

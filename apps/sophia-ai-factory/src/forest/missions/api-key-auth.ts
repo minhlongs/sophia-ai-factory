@@ -7,17 +7,33 @@
  * Fallback path: session cookie auth via getCurrentUser(). Used by browser
  * clients (e.g. RenderProgress EventSource) that cannot send custom headers.
  * Ownership check is enforced separately by the route (mission.user_id === userId).
+ *
+ * Error taxonomy (M6):
+ *   invalid_key       → caller returns 401 (key not found in DB)
+ *   inactive          → caller returns 403 (key found but is_active=false)
+ *   db_unreachable    → caller returns 503 (DB threw exception)
+ *   missing_credentials → caller returns 401 (no key + no session)
  */
 
+import { NextResponse } from 'next/server';
 import { createServerClient } from '@/seed/db/client';
 import { sha256 } from '@/tree/audit/crypto-utils';
 import { logger } from '@/seed/utils/logger-utility';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { forwardToSentry } from '@/lib/observability/sentry-forwarder';
+
+export type ApiKeyAuthErrorType =
+  | 'missing_credentials'
+  | 'invalid_key'
+  | 'inactive'
+  | 'db_unreachable';
 
 export interface ApiKeyAuthResult {
   valid: boolean;
   userId?: string;
   error?: string;
+  /** Discriminates error category for HTTP status mapping at callers. */
+  errorType?: ApiKeyAuthErrorType;
 }
 
 interface ApiKeyRow {
@@ -28,7 +44,14 @@ interface ApiKeyRow {
 /**
  * Validate API key from Authorization header or x-api-key header.
  * If neither header is present, falls back to Better Auth session cookie.
- * Returns userId if valid, error message if not.
+ * Returns userId if valid, error message + errorType if not.
+ *
+ * HTTP status mapping:
+ *   invalid_key / missing_credentials → 401
+ *   inactive                          → 403
+ *   db_unreachable                    → 503
+ *
+ * Use apiKeyAuthErrorResponse(auth) to build a NextResponse automatically.
  */
 export async function validateMissionApiKey(
   authHeader: string | null,
@@ -53,7 +76,17 @@ export async function validateMissionApiKey(
     } catch (err) {
       logger.error('[ApiKeyAuth] Session fallback error', err instanceof Error ? err : new Error(String(err)));
     }
-    return { valid: false, error: 'Missing API key. Provide Authorization: Bearer <key> header or authenticate via session.' };
+    // Fire-and-forget Sentry tag for missing_credentials (low severity)
+    void forwardToSentry({
+      level: 'warning',
+      message: '[ApiKeyAuth] missing_credentials',
+      tags: { 'auth.error_type': 'missing_credentials' },
+    });
+    return {
+      valid: false,
+      error: 'Missing API key. Provide Authorization: Bearer <key> header or authenticate via session.',
+      errorType: 'missing_credentials',
+    };
   }
 
   try {
@@ -67,16 +100,49 @@ export async function validateMissionApiKey(
       .single() as { data: ApiKeyRow | null; error: unknown };
 
     if (!data) {
-      return { valid: false, error: 'Invalid API key' };
+      void forwardToSentry({
+        level: 'warning',
+        message: '[ApiKeyAuth] invalid_key',
+        tags: { 'auth.error_type': 'invalid_key' },
+      });
+      return { valid: false, error: 'Invalid API key', errorType: 'invalid_key' };
     }
 
     if (!data.is_active) {
-      return { valid: false, error: 'API key is inactive' };
+      void forwardToSentry({
+        level: 'warning',
+        message: '[ApiKeyAuth] inactive key',
+        tags: { 'auth.error_type': 'inactive' },
+      });
+      return { valid: false, error: 'API key is inactive', errorType: 'inactive' };
     }
 
     return { valid: true, userId: data.user_id };
   } catch (err) {
-    logger.error('[ApiKeyAuth] Validation error', err instanceof Error ? err : new Error(String(err)));
-    return { valid: false, error: 'Authentication error' };
+    const error = err instanceof Error ? err : new Error(String(err));
+    logger.error('[ApiKeyAuth] Validation error', error);
+    // Sentry tag: db_unreachable — operational issue, higher severity
+    void forwardToSentry({
+      level: 'error',
+      message: '[ApiKeyAuth] db_unreachable',
+      tags: { 'auth.error_type': 'db_unreachable' },
+      extra: { errorMessage: error.message },
+    });
+    return { valid: false, error: 'Authentication error', errorType: 'db_unreachable' };
   }
+}
+
+/**
+ * DRY helper: converts a failed ApiKeyAuthResult to a NextResponse with correct HTTP status.
+ *
+ *   invalid_key / missing_credentials → 401
+ *   inactive                          → 403
+ *   db_unreachable                    → 503
+ */
+export function apiKeyAuthErrorResponse(auth: ApiKeyAuthResult): NextResponse {
+  const status =
+    auth.errorType === 'db_unreachable' ? 503
+    : auth.errorType === 'inactive' ? 403
+    : 401;
+  return NextResponse.json({ error: auth.error ?? 'Auth failed' }, { status });
 }

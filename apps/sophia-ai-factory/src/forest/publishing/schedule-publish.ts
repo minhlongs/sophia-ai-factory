@@ -1,14 +1,13 @@
 /**
  * Forest orchestration helper: insert a publishing_jobs row + emit publish.scheduled event.
  *
- * Architecture note (2026-05-09):
- *   publishing_jobs.video_job_id is a FK to the Remotion video_jobs table.
- *   The HeyGen `videos` table is a separate pipeline. When called from the
- *   distribute-route for HeyGen videos, videoId = videos.id is stored in
- *   video_job_id as a loose reference. publishExecute will attempt a
- *   video_jobs lookup (and find nothing) — this is a known cross-pipeline
- *   gap to be resolved in Wave 17 with a proper video abstraction layer.
- *   The UI/API layer (Phase 02) is correct; full execution requires Wave 17.
+ * Architecture note (2026-05-09, updated Wave 17 Phase 01):
+ *   publishing_jobs.video_job_id stores either a video_jobs.id (Remotion path)
+ *   or a videos.id (HeyGen + FREE100 AI-prompt path). Phase 02 will update
+ *   publishExecute to resolve canonical R2 URL via getCanonicalVideoUrl(videoId)
+ *   from the `videos` table, superseding the previous video_jobs-only lookup.
+ *   HeyGen→R2 mirror is in place (complete-video-from-webhook.ts).
+ *   FREE100→R2 propagation added in Wave 17 Phase 01 (video-generate.ts step 7b).
  *
  * Idempotency: caller passes through; let publishExecute CAS handle
  * duplicate jobs (KISS — no new unique-key migration).
