@@ -715,6 +715,19 @@ scripts/infra/audit-github-secrets.sh
 
 ---
 
+## Bring-Your-Own-Key (BYOK) Architecture (Wave 14, 2026-05-09)
+
+**BYOK Columns Location:** Mission `byok_provider_id` + `byok_model_id` stored in `missions` table (NOT `engine_missions`). Wired via:
+- `user_byok_active_provider` (D1) → mission create flow resolves provider registry (OpenRouter, Anthropic, etc.)
+- `user_byok_active_model` (D1) → mission launcher selects model endpoint
+- Fallback: tier-default model if BYOK unconfigured
+- Validation: `@/lib/byok/provider-registry.ts` enforces provider/model pairing rules
+- Security: API key rotation via `/api/user/byok/rotate-secrets` (admin-gated, logs audit event)
+
+**Webhook Diagnostics:** `/api/canary/webhook` endpoint (POST, admin-only) for testing webhook infrastructure. Accepts `provider + signature + payload`; returns verification result + timing. Useful for ops validation during incidents.
+
+---
+
 ## Kiến Trúc 4 Tầng Mekong / Mekong 4-Layer Architecture (2026-05-03)
 
 <!-- Tiếng Việt -->

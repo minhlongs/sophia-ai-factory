@@ -1838,6 +1838,7 @@
     "network_error": "Lỗi mạng, thử lại",
     "picker": {
       "placeholder": "Dùng model hệ thống (mặc định)",
+      "placeholder_label": "Model AI (tùy chọn — dùng key của bạn)",
       "system_default": "Mặc định hệ thống — không dùng BYOK",
       "aria_label": "Chọn nhà cung cấp và model",
       "no_providers": "Chưa cấu hình BYOK — thêm khóa trong Cài đặt.",

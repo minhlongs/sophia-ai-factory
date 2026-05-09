@@ -31,7 +31,8 @@
     "deploy:all": "npm run deploy:full && npm run deploy:migrations && npm run deploy:verify",
     "db:gen-sop-seed": "node scripts/generate-sop-seed-sql.mjs",
     "db:gen-sop-seed-v2": "node scripts/generate-sop-seed-sql-v2.mjs",
-    "doctor": "node scripts/sophia-doctor.mjs"
+    "doctor": "node scripts/sophia-doctor.mjs",
+    "check:bundle-size": "bash scripts/check-bundle-size.sh"
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",

@@ -17,7 +17,7 @@ import { ChevronDown } from 'lucide-react';
 
 // ── Provider + model catalogue ──────────────────────────────────────────────
 
-export type ByokProviderId = 'anthropic' | 'openrouter' | 'openai';
+export type ByokProviderId = 'anthropic' | 'openrouter';
 
 export interface ByokModelOption {
   modelId: string;
@@ -39,21 +39,15 @@ const PROVIDER_MODELS: Record<ByokProviderId, ByokModelOption[]> = {
     { modelId: 'anthropic/claude-sonnet',  label: 'Claude Sonnet (via OpenRouter)', inputPer1k: 0.003, outputPer1k: 0.015 },
     { modelId: 'meta-llama/llama-3.1-8b', label: 'Llama 3.1 8B (via OpenRouter)',  inputPer1k: 0.0001, outputPer1k: 0.0001 },
   ],
-  openai: [
-    { modelId: 'gpt-4o',      label: 'GPT-4o',       inputPer1k: 0.005,   outputPer1k: 0.015 },
-    { modelId: 'gpt-4o-mini', label: 'GPT-4o Mini',  inputPer1k: 0.00015, outputPer1k: 0.0006 },
-    { modelId: 'o1-mini',     label: 'o1-mini',       inputPer1k: 0.003,   outputPer1k: 0.012 },
-  ],
 };
 
 const PROVIDER_LABELS: Record<ByokProviderId, string> = {
   anthropic:  'Anthropic',
   openrouter: 'OpenRouter',
-  openai:     'OpenAI',
 };
 
 // Providers user can configure that also have model options in this picker
-const PICKABLE_PROVIDERS: ByokProviderId[] = ['anthropic', 'openrouter', 'openai'];
+const PICKABLE_PROVIDERS: ByokProviderId[] = ['anthropic', 'openrouter'];
 
 // ── Types ───────────────────────────────────────────────────────────────────
 

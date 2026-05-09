@@ -14,6 +14,7 @@
  */
 
 import { signWebhook, verifyWebhook } from '@/lib/webhooks/signature';
+import { logger } from '@/seed/utils/logger-utility';
 
 /** Generate a random 32-byte webhook secret (hex-encoded) */
 export function generateWebhookSecret(): string {
@@ -47,6 +48,13 @@ export async function verifySignature(
   secret: string,
   toleranceSec = 300,
 ): Promise<boolean> {
+  // Legacy bare-hex format detected — emit monitoring event
+  if (/^[0-9a-f]{64}$/i.test(signatureHeader)) {
+    logger.warn('webhook_legacy_signature_used', {
+      event: 'webhook_legacy_signature_used',
+      sender: 'sop/webhook-hmac',
+    });
+  }
   return verifyWebhook(body, signatureHeader, secret, {
     toleranceSec,
     acceptLegacy: true,

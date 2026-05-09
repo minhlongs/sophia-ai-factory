@@ -30,6 +30,26 @@ const IGNORE_ERRORS: Array<string | RegExp> = [
   'Network request failed',
 ];
 
+/**
+ * Breadcrumb categories allowed to pass through beforeBreadcrumb.
+ * 'sse' is added for SSE stream connect/disconnect/error observability (Wave-14).
+ */
+const ALLOWED_BREADCRUMB_CATEGORIES = new Set([
+  'console',
+  'fetch',
+  'xhr',
+  'navigation',
+  'ui',
+  'http',
+  'sse',
+]);
+
+/**
+ * Breadcrumb data keys that must NOT be stripped even if they match PII patterns.
+ * 'mission_id' is safe — it is a UUID, not a secret.
+ */
+const BREADCRUMB_DATA_SAFELIST = new Set(['mission_id', 'event_cursor', 'resume_cursor']);
+
 /** Strip sensitive fields from events before send */
 function stripPii<T extends { request?: { data?: unknown }; extra?: Record<string, unknown> }>(
   event: T
@@ -44,6 +64,27 @@ function stripPii<T extends { request?: { data?: unknown }; extra?: Record<strin
     event.extra = sanitized;
   }
   return event;
+}
+
+/** Filter breadcrumbs: allow only known safe categories; strip PII except safelist keys. */
+export function buildBeforeBreadcrumb(
+  breadcrumb: { category?: string; data?: Record<string, unknown> },
+): typeof breadcrumb | null {
+  const category = breadcrumb.category ?? '';
+  if (category && !ALLOWED_BREADCRUMB_CATEGORIES.has(category)) return null;
+
+  if (breadcrumb.data) {
+    const sanitized = { ...breadcrumb.data };
+    for (const key of Object.keys(sanitized)) {
+      if (BREADCRUMB_DATA_SAFELIST.has(key)) continue;
+      if (/token|secret|password|key|auth/i.test(key)) {
+        sanitized[key] = '[Filtered]';
+      }
+    }
+    breadcrumb.data = sanitized;
+  }
+
+  return breadcrumb;
 }
 
 /** Skip 4xx client errors (not actionable in Sentry) */
@@ -62,6 +103,7 @@ export function buildClientOptions(): BrowserOptions {
     replaysSessionSampleRate: isProd ? 0.01 : 0,
     replaysOnErrorSampleRate: isProd ? 1.0 : 0,
     ignoreErrors: IGNORE_ERRORS,
+    beforeBreadcrumb: buildBeforeBreadcrumb,
     beforeSend(event) {
       const statusCode = (event.contexts?.response as Record<string, unknown> | undefined)
         ?.status_code as number | undefined;
@@ -79,6 +121,7 @@ export function buildServerOptions(): NodeOptions {
     environment: getEnvironment(),
     tracesSampleRate: isProd ? 0.05 : 1.0,
     ignoreErrors: IGNORE_ERRORS,
+    beforeBreadcrumb: buildBeforeBreadcrumb,
     beforeSend(event) {
       const statusCode = (event.contexts?.response as Record<string, unknown> | undefined)
         ?.status_code as number | undefined;
@@ -96,6 +139,7 @@ export function buildEdgeOptions(): EdgeOptions {
     environment: getEnvironment(),
     tracesSampleRate: isProd ? 0.05 : 1.0,
     ignoreErrors: IGNORE_ERRORS,
+    beforeBreadcrumb: buildBeforeBreadcrumb,
     beforeSend(event) {
       const statusCode = (event.contexts?.response as Record<string, unknown> | undefined)
         ?.status_code as number | undefined;

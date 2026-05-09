@@ -1838,6 +1838,7 @@
     "network_error": "Network error — try again",
     "picker": {
       "placeholder": "Use system model (default)",
+      "placeholder_label": "AI Model (optional — use your own key)",
       "system_default": "System default — no BYOK",
       "aria_label": "Select provider and model",
       "no_providers": "No BYOK providers configured — add keys in Settings.",

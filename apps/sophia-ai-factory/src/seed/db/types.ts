@@ -53,3 +53,23 @@ export type AgentLogDbRow = {
   payload: string
   created_at: string
 }
+
+// ── Engine Missions table row type (0052 columns) ─────────────────────
+// Note: BYOK columns (byok_provider_id, byok_model_id) were added to the
+// canonical `missions` table via migration 0097, NOT to engine_missions.
+
+export type EngineMissionDbRow = {
+  id: string
+  user_id: string
+  command: string
+  params: string | null
+  status: 'pending' | 'running' | 'succeeded' | 'failed' | 'cancelled'
+  result: string | null
+  error: string | null
+  credits_used: number
+  created_at: number
+  updated_at: number
+  completed_at: number | null
+  webhook_url: string | null
+  webhook_fired_at: number | null
+}
