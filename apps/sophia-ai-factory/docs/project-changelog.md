@@ -1,6 +1,49 @@
 # Project Changelog
 
-**Last Updated:** 2026-05-04 | **Current Version:** 1.14.20
+**Last Updated:** 2026-05-08 | **Current Version:** 1.14.21
+
+---
+
+## v1.14.21 — Phase 1: Facebook + X/Twitter Publishers + Sentry DSN Wiring (2026-05-08)
+
+**Severity: FEATURE | Type: Platform Expansion + Observability | Status: SHIPPED**
+
+Extended native publisher ecosystem from 6 → 8: added Facebook Graph API v21 and X/Twitter PKCE OAuth. Integrated Sentry DSN client initialization with smoke-test route. All 2810 tests passing.
+
+### Deliverables
+
+- **Facebook Publisher** (`src/lib/publishing/facebook-publisher.ts`): Graph API v21 single-call `/video_reels` endpoint. Accepts script, title, description, tags. Returns video URL + published_at timestamp.
+- **Twitter/X Publisher** (`src/lib/publishing/twitter-publisher.ts`): Chunked media upload (`/2/media/upload` with chunked=true) + tweet POST. Splits 280-char thread if script > limit. Returns tweet_id + thread URLs.
+- **OAuth Integration**:
+  - Facebook: `/api/oauth/facebook/connect` (redirect to FB login), `/api/oauth/facebook/callback` (auth code → access token). Scopes: `pages_manage_metadata, pages_read_engagement`.
+  - Twitter: `/api/oauth/twitter/connect` (PKCE code_challenge), `/api/oauth/twitter/callback` (code → token). Includes refresh-token rotation in `oauth-token-refresher.ts`.
+- **Schema**: Migration 0090 extends `publishing_channels.provider` CHECK constraint: `('tiktok', 'youtube', 'instagram', 'pinterest', 'linkedin', 'zalo', 'facebook', 'twitter')`.
+- **Registration**: Both publishers registered in `publish-execute.ts` factory + refresh-token handler + UI/API lists.
+- **Sentry DSN Wiring** (bonus Phase 3):
+  - `@sentry/nextjs` v8 client initialization via `NEXT_PUBLIC_SENTRY_DSN`.
+  - Dev-only smoke route: `GET /api/dev/sentry-test?token=<admin>` → sends test event to Sentry.
+  - `/api/health` reports `sentry.configured: boolean` flag.
+  - Server-side opt-in via `SENTRY_DSN` env (for edge function spans).
+
+### Tests & Quality
+
+- **Test coverage:** facebook-publisher.test.ts + twitter-publisher.test.ts (both comprehensive: auth, upload, thread chunking, error paths)
+- **Total:** 2810/2810 tests pass (was 2796 baseline)
+- **Code review:** 9.2/10 (per code-reviewer feedback)
+- **Build:** 0 TS errors, <2min compile
+- **Smoke:** `/api/oauth/facebook/connect`, `/api/oauth/twitter/connect`, `/api/dev/sentry-test` (admin-gated) all operational
+
+### Deployment
+
+- **Secrets (CF Workers)**: `FACEBOOK_APP_ID`, `FACEBOOK_APP_SECRET`, `TWITTER_CLIENT_ID`, `TWITTER_CLIENT_SECRET`, `NEXT_PUBLIC_SENTRY_DSN`
+- **D1 Migration:** 0090-publisher-add-facebook-twitter.sql (idempotent, applied)
+- **Build:** `npm run deploy:full` → SHA matches live (verified via `/api/version`)
+- **Production:** All 8 publishers live + Sentry dashboard wired
+
+### Known Gaps
+
+- Twitter rate limit (300 req/15min) not enforced client-side (soft limit acceptable for MVP)
+- Facebook audience targeting deferred (MVP: public posts only)
 
 ---
 

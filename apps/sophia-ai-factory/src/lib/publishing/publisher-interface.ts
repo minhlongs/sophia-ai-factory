@@ -2,7 +2,7 @@
  * Core interfaces for the multi-channel publisher pipeline.
  */
 
-export type ChannelProvider = 'tiktok' | 'youtube' | 'instagram' | 'pinterest' | 'linkedin' | 'zalo';
+export type ChannelProvider = 'tiktok' | 'youtube' | 'instagram' | 'pinterest' | 'linkedin' | 'zalo' | 'facebook' | 'twitter';
 export type PublishStatus = 'scheduled' | 'uploading' | 'processing' | 'live' | 'failed';
 /** Channel status — 'expired' consistently (not 'suspended') */
 export type ChannelStatus = 'active' | 'disconnected' | 'expired';
