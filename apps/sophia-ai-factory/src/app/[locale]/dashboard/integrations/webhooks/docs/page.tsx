@@ -162,7 +162,7 @@ curl -X POST https://your-server.com/webhook \\
 
 export default async function WebhooksDocsPage() {
   const user = await getCurrentUser();
-  if (!user) redirect('/auth/login');
+  if (!user) redirect('/login');
 
   const t = await getTranslations('dashboard.integrations.webhooks');
 

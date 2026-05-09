@@ -566,7 +566,13 @@
       "section_proposedSolution": "Giải Pháp Đề Xuất",
       "section_timeline": "Lịch Trình",
       "section_investment": "Đầu Tư",
-      "section_nextSteps": "Bước Tiếp Theo"
+      "section_nextSteps": "Bước Tiếp Theo",
+      "beta_badge": "Beta",
+      "beta_notice": "Trình tạo đề xuất đang ở giai đoạn beta. Kết quả có thể cần xem lại thủ công trước khi gửi cho khách hàng.",
+      "errors": {
+        "generic": "Tạo đề xuất thất bại",
+        "unknown": "Lỗi không xác định"
+      }
     },
     "header": {
       "title": "Bảng Điều Khiển Sophia",
@@ -778,7 +784,9 @@
       "errors": {
         "title": "Lỗi trang Video",
         "description": "Đã xảy ra lỗi khi tải video của bạn.",
-        "retry": "Thử Lại"
+        "retry": "Thử Lại",
+        "unknown": "Lỗi không xác định. Vui lòng thử lại.",
+        "missing_heygen_key": "Dịch vụ video chưa được cấu hình bởi quản trị viên. Vui lòng liên hệ hỗ trợ."
       },
       "notFound": {
         "title": "Không tìm thấy video",
@@ -849,6 +857,19 @@
     "credits_low_banner": {
       "message": "Bạn còn ít hơn 10 MCU — hãy nạp thêm để tiếp tục tự động hoá",
       "cta": "Mua Credits"
+    },
+    "credits": {
+      "title": "MCU Credits",
+      "subtitle": "Model Compute Units (MCU) cấp năng lượng cho các lệnh AI của bạn",
+      "available": "Khả dụng",
+      "totalPurchased": "Đã Mua",
+      "totalUsed": "Đã Dùng",
+      "pricingTitle": "Bảng Giá Lệnh",
+      "pricingSubtitle": "Chi phí MCU cho mỗi lần thực thi lệnh AI",
+      "free": "Miễn phí",
+      "transactionsTitle": "Giao Dịch Gần Đây",
+      "noTransactions": "Chưa có giao dịch",
+      "missionPrefix": "Mission"
     },
     "integrations": {
       "page_title": "Tích Hợp",

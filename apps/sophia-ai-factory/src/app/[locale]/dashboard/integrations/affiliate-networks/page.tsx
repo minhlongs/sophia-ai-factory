@@ -12,6 +12,6 @@ export const dynamic = 'force-dynamic';
 
 export default async function AffiliateNetworksPage() {
   const user = await getCurrentUser();
-  if (!user) redirect('/auth/login');
+  if (!user) redirect('/login');
   return <AffiliateNetworksClient />;
 }

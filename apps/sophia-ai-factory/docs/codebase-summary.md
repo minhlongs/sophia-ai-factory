@@ -1,8 +1,8 @@
 # Codebase Summary
 
 **Last Updated:** 2026-05-08
-**Version:** 1.14.21 (Phase 1: Facebook + X/Twitter publishers + Sentry DSN wiring)
-**Recent Major Changes:** Phase 1 shipped (2026-05-08): (A) Native publishers extended 6→8: facebook + twitter/X added to tiktok/youtube/instagram/pinterest/linkedin/zalo. (B) New OAuth routes: `/api/oauth/facebook/{connect,callback}` + `/api/oauth/twitter/{connect,callback}`. (C) New publishers: `src/lib/publishing/facebook-publisher.ts` (Graph API v21 /video_reels), `twitter-publisher.ts` (chunked /2/media/upload + tweet). (D) Migration 0090 extends publishing_channels.provider CHECK. (E) Sentry DSN smoke route `/api/dev/sentry-test` (admin-gated). (F) `/api/health` reports `sentry.configured` flag. 2810/2810 tests pass. See `docs/project-changelog.md` for full details.
+**Version:** 1.14.22 (Wave 2: Dashboard auth fix + publishers fully wired + i18n polish)
+**Recent Major Changes:** Wave 2 shipped (2026-05-08): (A) Dashboard 9-page path fix `/auth/login` → `/login`. (B) Publishers fully wired: Pinterest, LinkedIn (URN format), Zalo callbacks now live in publish-execute.ts. All 8 publishers connected (TikTok, YouTube, Instagram, Pinterest, LinkedIn, Zalo, Facebook, Twitter/X). (C) i18n: Proposals beta badge, Credits page 8 keys, Video creator friendly errors, Proposals errors. (D) Admin invite 501 workaround + stale TODO removed. 2810/2810 tests pass, 0 TS errors. Publisher pipeline complete. See `docs/project-changelog.md` for full details.
 
 ## Project Structure Overview
 

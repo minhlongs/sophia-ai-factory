@@ -55,13 +55,20 @@ export const POST = withRateLimit(async function POST(request: NextRequest) {
       }
     }
 
-    // NOTE: Supabase Auth admin.inviteUserByEmail removed in Better Auth + D1
-    // migration. Re-implement via Better Auth invite flow when product needs it.
+    // NOTE: Supabase Auth admin.inviteUserByEmail was removed in Better Auth + D1
+    // migration. Real Better Auth invite flow is tracked as a separate roadmap
+    // item. Until then, return a structured 501 with workaround guidance the
+    // operator UI can render as a friendly message instead of generic error.
     return NextResponse.json(
       {
         success: false,
+        code: "INVITE_NOT_IMPLEMENTED",
         message:
-          "Admin invite is temporarily disabled — pending Better Auth invite implementation",
+          "Admin invite via email is not yet implemented. Workaround: ask the user to sign up at /login, then promote their tier via /api/admin/users.",
+        workaround: {
+          step1: "User self-registers at /login (Google/email).",
+          step2: "Admin promotes tier via existing admin tools.",
+        },
         email,
         tier,
       },

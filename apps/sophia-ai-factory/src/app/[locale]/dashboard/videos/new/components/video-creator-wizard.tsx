@@ -61,14 +61,17 @@ export function VideoCreatorWizard() {
         body: JSON.stringify({ avatarId, voiceId, script: fullScript }),
       });
       if (!res.ok) {
-        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        const data = (await res.json().catch(() => ({}))) as { error?: string; code?: string };
+        if (data.code === "MISSING_KEY") {
+          throw new Error(t("errors.missing_heygen_key"));
+        }
         throw new Error(data.error ?? `Render request failed (${res.status})`);
       }
       const data = (await res.json()) as { videoId: string };
       setVideoId(data.videoId);
       setStep("render");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unknown error");
+      setError(e instanceof Error ? e.message : t("errors.unknown"));
     } finally {
       setSubmitting(false);
     }

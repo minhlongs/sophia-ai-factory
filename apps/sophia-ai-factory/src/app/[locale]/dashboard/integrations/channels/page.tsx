@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function ChannelsPage() {
   const user = await getCurrentUser();
-  if (!user) redirect('/auth/login');
+  if (!user) redirect('/login');
   // Channel status is fetched client-side to avoid D1 async complexity in RSC
   return <ChannelsClient userId={user.id} />;
 }

@@ -1,6 +1,14 @@
 # Project Changelog
 
-**Last Updated:** 2026-05-08 | **Current Version:** 1.14.21
+**Last Updated:** 2026-05-08 | **Current Version:** 1.14.22
+
+---
+
+## v1.14.22 — Wave 2 Surgical Sweep: Dashboard + Publishers + i18n Polish (2026-05-08)
+
+**Severity: P0/P1 FIXES | Type: UX + Integration | Status: SHIPPED**
+
+8-fix surgical wave addressing auth flow, multi-publisher wiring, and i18n coverage. (F-1) 9 dashboard pages: `/auth/login` → `/login` path redirect (session-expiry 404 fix). (F-2) 3 publishers wired in publish-execute.ts: Pinterest, LinkedIn, Zalo with corrected OAuth formats (LinkedIn URN fix, Pinterest board_id callback fix). (F-3) Proposals page beta badge + notice banner. (F-4) Credits page 8 i18n keys. (F-5) Video creator MISSING_KEY → friendly message. (F-6) Proposals error i18n. (F-7/F-8) Admin invite 501 workaround + stale TODO cleanup. **Tests:** 2810/2810 all pass. **Build:** 0 TS errors, <2min. **Verification:** All 8 publishers now connected → publisher pipeline complete (6→8 shipped v1.14.21, now confirms all wired).
 
 ---
 

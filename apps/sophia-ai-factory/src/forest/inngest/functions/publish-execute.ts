@@ -17,6 +17,9 @@ import { YouTubePublisher } from '@/lib/publishing/youtube-publisher';
 import { InstagramPublisher } from '@/lib/publishing/instagram-publisher';
 import { FacebookPublisher } from '@/lib/publishing/facebook-publisher';
 import { TwitterPublisher } from '@/lib/publishing/twitter-publisher';
+import { PinterestPublisher } from '@/lib/publishing/pinterest-publisher';
+import { LinkedInPublisher } from '@/lib/publishing/linkedin-publisher';
+import { ZaloPublisher } from '@/lib/publishing/zalo-publisher';
 import { logger } from '@/seed/utils/logger-utility';
 import type { PublishingChannel, PublishingJob, Publisher } from '@/lib/publishing/publisher-interface';
 import { randomUUID } from 'crypto';
@@ -63,6 +66,20 @@ function buildPublisher(channel: Pick<PublishingChannel, 'provider' | 'external_
       return new FacebookPublisher(accessToken, channel.external_account_id);
     case 'twitter':
       return new TwitterPublisher(accessToken);
+    case 'pinterest':
+      // external_account_id stores the user's default board id (set in OAuth callback).
+      return new PinterestPublisher(accessToken, channel.external_account_id);
+    case 'linkedin':
+      // LinkedIn /v2/posts requires URN format. Callback stores raw profile.id;
+      // wrap to URN at construction so callers don't need to know the API quirk.
+      return new LinkedInPublisher(
+        accessToken,
+        channel.external_account_id.startsWith('urn:li:')
+          ? channel.external_account_id
+          : `urn:li:person:${channel.external_account_id}`,
+      );
+    case 'zalo':
+      return new ZaloPublisher(accessToken);
     default:
       throw new Error(`Unknown provider: ${channel.provider}`);
   }
@@ -77,6 +94,9 @@ function buildPostUrl(provider: string, externalPostId: string, externalAccountI
       : `https://www.facebook.com/watch/?v=${externalPostId}`;
   }
   if (provider === 'twitter') return `https://twitter.com/i/status/${externalPostId}`;
+  if (provider === 'pinterest') return `https://www.pinterest.com/pin/${externalPostId}`;
+  if (provider === 'linkedin') return `https://www.linkedin.com/feed/update/${externalPostId}`;
+  if (provider === 'zalo') return `https://zalo.me/${externalPostId}`;
   return `https://www.instagram.com/p/${externalPostId}`;
 }
 

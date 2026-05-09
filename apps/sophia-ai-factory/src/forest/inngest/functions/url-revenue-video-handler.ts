@@ -6,10 +6,7 @@
  * and emitting video.requested — reuses videoScripting → videoTTS → … chain.
  *
  * Master-tier only feature. Requires INNGEST_EVENT_KEY in env.
- *
- * TODO (git-manager / infra): Register this function in src/app/api/inngest/route.ts
- * by importing urlRevenueVideoHandler from '@/forest/inngest/functions/index' and
- * adding it to the functions[] array in serve(). That file is owned by another agent.
+ * Registered in src/app/api/inngest/route.ts.
  */
 
 import { inngest } from '@/forest/inngest/client';

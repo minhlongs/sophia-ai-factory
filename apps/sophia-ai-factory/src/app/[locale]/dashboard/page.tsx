@@ -47,7 +47,7 @@ interface ProfileRow {
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
-  if (!user) redirect('/auth/login');
+  if (!user) redirect('/login');
 
   const db = createServerClient();
   const d1 = getD1();
