@@ -1,7 +1,17 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-05-09 LATE (Wave 17 Batch 1: phases 01 + 04 + 06 shipped)
+> **Last Updated:** 2026-05-09 LATER (Wave 17 Phase 02 done; flag flip next)
+
+---
+
+## [2026-05-09 LATER] Wave 17 Phase 02 — publishExecute wired to videos table
+
+**Summary (vi):** Cấp độ 02 Wave 17 hoàn tất. `publishExecute` giờ resolve video URL qua helper `getCanonicalVideoUrl(videoId, userId)` từ Phase 01 cho CẢ hai nhánh: OAuth provider switch VÀ Telegram. Thay thế legacy `video_jobs.final_r2_key` lookups (cột Wave 16 Phase 02 bị misnaming — `publishing_jobs.video_job_id` thực tế chứa `videos.id`). Type error: `VideoNotFoundError`/`VideoUnauthorizedError` → mark job `failed`; `VideoNotMirroredError` → re-throw for Inngest retry (transient). `assertSafeVideoUrl` SSRF guard preserved. HeyGen backward compat verified. 15 new unit tests (all error paths + SSRF regression + happy paths). Code review: 9.6/10 APPROVE.
+
+**Summary (en):** Phase 02 complete: `publishExecute` now resolves video URL via Phase 01's `getCanonicalVideoUrl` helper for both OAuth and Telegram branches, replacing legacy `video_jobs.final_r2_key` lookups. Typed error classification: `VideoNotFoundError`/`VideoUnauthorizedError` mark job failed; `VideoNotMirroredError` re-throws for Inngest retry (transient). SSRF guard `assertSafeVideoUrl` preserved at both call sites. HeyGen backward compatibility verified—both FREE100 (provider='ai-prompt') and HeyGen (provider='heygen') videos resolve identically once `videos.r2_key` populated. 15 new unit tests covering all error paths + SSRF regression + happy paths. Code review verdict: 9.6/10 APPROVE.
+
+**Verification (2026-05-09 phase 02):** 3060/3060 tests pass (was 3045 batch 1, +15 net). 0 TS errors, 0 i18n missing, build exit 0.
 
 ---
 

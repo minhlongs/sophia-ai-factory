@@ -9,8 +9,8 @@
  *   publishing_channels: status='active' indicates connected (not a boolean column)
  *   Ownership check: videos.user_id = current_user.id
  *   Idempotency: deferred to publishExecute CAS (KISS — no new unique-key migration)
- *   video_job_id stores videos.id (HeyGen pipeline); publishExecute R2 lookup is a
- *     cross-pipeline gap tracked for Wave 17.
+ *   video_job_id stores videos.id (canonical post Wave 17 Phase 02); publishExecute resolves
+ *     video URL via getCanonicalVideoUrl(videoId, userId) from the videos table.
  *
  * @module app/api/v1/videos/[id]/distribute/route
  */
