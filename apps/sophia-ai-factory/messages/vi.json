@@ -909,6 +909,29 @@
         "languageVi": "Tiếng Việt",
         "submitting": "Đang tạo...",
         "submit": "Tạo Video"
+      },
+      "distribute": {
+        "title": "Phân phối video",
+        "subtitle": "Đăng lên các kênh mạng xã hội đã kết nối",
+        "selectChannels": "Chọn kênh",
+        "caption": "Chú thích (không bắt buộc)",
+        "captionPlaceholder": "Viết chú thích cho bài đăng...",
+        "scheduleAt": "Lên lịch (không bắt buộc)",
+        "scheduleNow": "Gửi ngay",
+        "submit": "Phân phối",
+        "submitting": "Đang phân phối...",
+        "successToast": "Đã bắt đầu phân phối cho {count} kênh",
+        "noChannels": "Chưa có kênh nào được kết nối. Kết nối kênh trong phần Tích hợp.",
+        "connectFirst": "Kết nối trước",
+        "channelNotActive": "Kênh chưa hoạt động",
+        "backToVideo": "← Quay lại video",
+        "errors": {
+          "noChannelSelected": "Chọn ít nhất một kênh",
+          "submitFailed": "Không thể bắt đầu phân phối. Vui lòng thử lại.",
+          "someChannelsFailed": "Một số kênh không thể lên lịch"
+        },
+        "cta": "Phân phối",
+        "comingSoon": "Sắp ra mắt"
       }
     },
     "errors": {

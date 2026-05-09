@@ -5,6 +5,8 @@ import { getCurrentUser } from "@/seed/auth/better-auth-session";
 import { createServerClient } from "@/seed/db/client";
 import { localizedHref } from "@/lib/i18n/localized-href";
 import { VideoDetailClient } from "../components/video-detail-client";
+import { DistributeButton } from "../components/distribute-button";
+import { PublishingStatusBadges } from "../components/publishing-status-badges";
 
 interface VideoRow {
   id: string;
@@ -19,6 +21,14 @@ interface VideoRow {
   error: string | null;
   created_at: number;
   updated_at: string | null;
+}
+
+interface PublishJobRow {
+  id: string;
+  channel_id: string;
+  status: string;
+  provider: string;
+  scheduled_at: number | null;
 }
 
 export default async function VideoDetailPage({
@@ -44,6 +54,37 @@ export default async function VideoDetailPage({
   if (!video) notFound();
   if (video.user_id !== user.id) notFound();
 
+  // Load publishing jobs for this video (video_job_id stores videos.id by convention)
+  const { data: jobsData } = await db
+    .from("publishing_jobs")
+    .select("id, channel_id, status, scheduled_at")
+    .eq("video_job_id", id)
+    .eq("tenant_id", user.id);
+
+  // Join publishing_channels to get provider for each job
+  const jobRows = (jobsData as Omit<PublishJobRow, "provider">[] | null) ?? [];
+  const channelIds = [...new Set(jobRows.map((j) => j.channel_id))];
+  let publishJobs: PublishJobRow[] = [];
+
+  if (channelIds.length > 0) {
+    const { data: channelData } = await db
+      .from("publishing_channels")
+      .select("id, provider")
+      .in("id", channelIds);
+
+    const providerMap = new Map(
+      ((channelData as { id: string; provider: string }[] | null) ?? []).map(
+        (c) => [c.id, c.provider]
+      )
+    );
+    publishJobs = jobRows.map((j) => ({
+      ...j,
+      provider: providerMap.get(j.channel_id) ?? "unknown",
+    }));
+  }
+
+  const distributeHref = localizedHref(locale, `/dashboard/videos/${id}/distribute`);
+
   return (
     <div className="container mx-auto p-6 space-y-6 max-w-4xl">
       <header className="flex items-center justify-between">
@@ -58,8 +99,15 @@ export default async function VideoDetailPage({
             {video.title ?? t("untitled")}
           </h1>
         </div>
+        {video.status === "completed" && video.video_url &&
+          process.env.NEXT_PUBLIC_DISTRIBUTE_ENABLED === "1" && (
+          <DistributeButton href={distributeHref} />
+        )}
       </header>
       <VideoDetailClient video={video} />
+      {publishJobs.length > 0 && (
+        <PublishingStatusBadges jobs={publishJobs} />
+      )}
     </div>
   );
 }
