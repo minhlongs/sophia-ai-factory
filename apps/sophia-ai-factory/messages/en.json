@@ -496,6 +496,10 @@
         "verifying": "Verifying",
         "completed": "Completed"
       },
+      "retry": "Retry mission",
+      "retrying": "Retrying…",
+      "retry_error": "Could not start retry. Please try again.",
+      "contact_support": "Contact support",
       "page_title": "AI Missions",
       "page_subtitle": "Launch and monitor your automated AI tasks",
       "new_mission": "New Mission",
@@ -1300,6 +1304,53 @@
   "scene": "Scene",
   "visual": "Visual",
   "settings": {
+    "profile": {
+      "title": "Profile",
+      "subtitle": "Manage your public profile information.",
+      "fullName": "Full Name",
+      "fullNamePlaceholder": "John Doe",
+      "email": "Email",
+      "emailManagedNote": "Email address is managed via your authentication provider and cannot be changed here."
+    },
+    "appearance": {
+      "title": "Appearance",
+      "subtitle": "Customize the look and feel of the dashboard.",
+      "themeLabel": "Theme Preference",
+      "themeAriaLabel": "Theme preference",
+      "themeLight": "Light",
+      "themeDark": "Dark",
+      "themeSystem": "System",
+      "themeHelp": "Select your preferred theme for the dashboard."
+    },
+    "notifications": {
+      "title": "Notifications",
+      "subtitle": "Choose what updates you want to receive.",
+      "marketingTitle": "Marketing Emails",
+      "marketingDesc": "Receive emails about new features and promotions.",
+      "securityTitle": "Security Alerts",
+      "securityDesc": "Get notified about suspicious activity on your account.",
+      "telegramTitle": "Telegram Integration",
+      "telegramDesc": "Receive notifications via Telegram bot.",
+      "saveButton": "Save Changes"
+    },
+    "apiKeys": {
+      "title": "API Keys",
+      "subtitle": "Enter your API keys. Keys are encrypted at rest. Leave blank to keep existing keys.",
+      "openaiDesc": "AI for text content",
+      "anthropicDesc": "Premium AI for analysis and creativity",
+      "elevenlabsDesc": "Natural AI voice generation for videos",
+      "heygenDesc": "AI video creation with virtual avatars",
+      "muapiDesc": "Generate AI images, video, music (Midjourney, Kling, Suno)",
+      "openaiHelp": "Get key at OpenRouter",
+      "anthropicHelp": "Get key at Anthropic",
+      "elevenlabsHelp": "Get key at ElevenLabs",
+      "heygenHelp": "Get key at HeyGen",
+      "muapiHelp": "Get key at MuAPI",
+      "showAriaShow": "Show {label} key",
+      "showAriaHide": "Hide {label} key",
+      "securityNoteLabel": "Security:",
+      "securityNoteBody": "Keys are AES-256 encrypted before storage. Only you can use your key. No one in the system can read the original."
+    },
     "mfa": {
       "title": "Two-Factor Authentication",
       "subtitle": "Add an extra layer of security to your account",

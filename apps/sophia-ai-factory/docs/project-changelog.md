@@ -1,6 +1,14 @@
 # Project Changelog
 
-**Last Updated:** 2026-05-08 | **Current Version:** 1.14.23
+**Last Updated:** 2026-05-08 | **Current Version:** 1.14.24
+
+---
+
+## v1.14.24 — Wave 4 Admin Tier + Settings Polish + Mission Retry (2026-05-08)
+
+**Severity: P0 FEATURES | Type: Admin + UX Polish | Status: SHIPPED**
+
+4-fix final polish wave addressing admin user tier canonicalization, bilingual settings UI, mission retry UX, and localization completeness. (F-1) Admin users tier fetched from D1 via canonical `getUserTier()` function (was hardcoded BASIC); removed Basic Auth alert() → session cookie via `requireAdmin()` helper. (F-2) Settings page: 4 sections fully bilingual (account, api-keys, notifications, danger-zone) with ~30 i18n keys across 2 locales. (F-3) Mission detail: NEW endpoint `POST /api/raas/missions/[id]/retry` for mission re-execution; UI CTA button + fallback support link (mailto). (F-4) Onboarding tour locale prefix preserved across navigation; date formatting locale-aware (vi-VN/en-US patterns). (F-5) Sitemap comment clarification (canonical URL schema). **Tests:** 2810/2810 all pass. **Build:** 0 TS errors, <2min. **Code Review:** 8.6→9.4/10 post-polish. **Verification:** All admin flows verified (tier resolution, retry execution), settings bilingual (VI/EN), date formatting correct per locale.
 
 ---
 

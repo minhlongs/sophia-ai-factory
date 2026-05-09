@@ -1,5 +1,6 @@
 import { getD1Client } from "@/seed/db/client";
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
+import { getUserTier } from "@/seed/db/get-user-tier";
 import { AdminUsersClient, type AdminUserRow } from "./admin-users-client";
 import { redirect } from "next/navigation";
 import { logger } from "@/seed/utils/logger-utility";
@@ -27,10 +28,15 @@ export default async function AdminUsersPage() {
 
     if (error) logger.error("[admin/users] DB error", new Error(error.message));
     if (data) {
-      users = (data as Record<string, string>[]).map((u) => ({
+      const userRows = data as Record<string, string>[];
+      // Reuse canonical getUserTier (active filter + org fallback) per user.
+      // O(N) round-trips; acceptable for admin list (<1000 users typical).
+      const tiers = await Promise.all(userRows.map((u) => getUserTier(u.id)));
+
+      users = userRows.map((u, i) => ({
         id: u.id,
         email: u.email || "N/A",
-        tier: "BASIC",
+        tier: tiers[i] ?? 'BASIC',
         status: u.last_sign_in_at ? "active" : "invited",
         createdAt: u.created_at,
       }));

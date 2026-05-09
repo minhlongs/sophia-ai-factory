@@ -9,7 +9,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { McuBalanceWidget } from './mcu-balance-widget';
 import type { MissionStatus } from '@/seed/types/raas';
 
@@ -47,6 +47,8 @@ interface Props {
 
 export function MissionDashboard({ onLaunchMission }: Props) {
   const t = useTranslations('dashboard.missions');
+  const locale = useLocale();
+  const dateLocale = locale === 'vi' ? 'vi-VN' : 'en-US';
   const [missions, setMissions] = useState<MissionRow[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -96,7 +98,7 @@ export function MissionDashboard({ onLaunchMission }: Props) {
                 className="flex items-center justify-between p-3 rounded-lg hover:bg-muted border border-transparent hover:border-border transition-colors">
                 <div>
                   <p className="text-sm font-medium text-foreground">{m.title}</p>
-                  <p className="text-xs text-muted-foreground">{new Date(m.created_at).toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground">{new Date(m.created_at).toLocaleString(dateLocale)}</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-xs text-muted-foreground">{m.mcu_cost} MCU</span>

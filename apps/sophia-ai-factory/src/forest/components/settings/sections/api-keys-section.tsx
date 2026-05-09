@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/seed/components/ui/button';
 import { Input } from '@/seed/components/ui/input';
 import { Label } from '@/seed/components/ui/label';
@@ -24,56 +25,22 @@ interface ApiKeysSectionProps {
 interface KeyConfig {
   id: keyof UserProfileFormValues['apiKeys'];
   label: string;
-  description: string;
+  descKey: string;
+  helpKey: string;
   placeholder: string;
   helpUrl: string;
-  helpText: string;
 }
 
 const KEY_CONFIGS: KeyConfig[] = [
-  {
-    id: 'openai',
-    label: 'OpenAI / OpenRouter',
-    description: 'Trí tuệ nhân tạo cho nội dung văn bản',
-    placeholder: 'sk-...',
-    helpUrl: 'https://openrouter.ai/keys',
-    helpText: 'Lấy key tại OpenRouter',
-  },
-  {
-    id: 'anthropic',
-    label: 'Anthropic (Claude)',
-    description: 'AI cao cấp cho phân tích và sáng tạo',
-    placeholder: 'sk-ant-...',
-    helpUrl: 'https://console.anthropic.com/settings/keys',
-    helpText: 'Lấy key tại Anthropic',
-  },
-  {
-    id: 'elevenlabs',
-    label: 'ElevenLabs',
-    description: 'Tạo giọng nói AI tự nhiên cho video',
-    placeholder: 'xi-...',
-    helpUrl: 'https://elevenlabs.io/subscription',
-    helpText: 'Lấy key tại ElevenLabs',
-  },
-  {
-    id: 'heygen',
-    label: 'HeyGen',
-    description: 'Tạo video AI với avatar ảo',
-    placeholder: 'hg-...',
-    helpUrl: 'https://app.heygen.com/settings/api-keys',
-    helpText: 'Lấy key tại HeyGen',
-  },
-  {
-    id: 'muapi',
-    label: 'MuAPI (Media AI)',
-    description: 'Tạo ảnh, video, nhạc AI (Midjourney, Kling, Suno)',
-    placeholder: 'mu-...',
-    helpUrl: 'https://muapi.ai/dashboard',
-    helpText: 'Lấy key tại MuAPI',
-  },
+  { id: 'openai',     label: 'OpenAI / OpenRouter', descKey: 'openaiDesc',     helpKey: 'openaiHelp',     placeholder: 'sk-...',     helpUrl: 'https://openrouter.ai/keys' },
+  { id: 'anthropic',  label: 'Anthropic (Claude)',  descKey: 'anthropicDesc',  helpKey: 'anthropicHelp',  placeholder: 'sk-ant-...', helpUrl: 'https://console.anthropic.com/settings/keys' },
+  { id: 'elevenlabs', label: 'ElevenLabs',           descKey: 'elevenlabsDesc', helpKey: 'elevenlabsHelp', placeholder: 'xi-...',     helpUrl: 'https://elevenlabs.io/subscription' },
+  { id: 'heygen',     label: 'HeyGen',               descKey: 'heygenDesc',     helpKey: 'heygenHelp',     placeholder: 'hg-...',     helpUrl: 'https://app.heygen.com/settings/api-keys' },
+  { id: 'muapi',      label: 'MuAPI (Media AI)',     descKey: 'muapiDesc',      helpKey: 'muapiHelp',      placeholder: 'mu-...',     helpUrl: 'https://muapi.ai/dashboard' },
 ];
 
 export function ApiKeysSection({ form, isPending, defaultValues }: ApiKeysSectionProps) {
+  const t = useTranslations('settings.apiKeys');
   const { register } = form;
   const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
 
@@ -84,11 +51,8 @@ export function ApiKeysSection({ form, isPending, defaultValues }: ApiKeysSectio
   return (
     <Card>
       <CardHeader>
-        <CardTitle>API Keys</CardTitle>
-        <CardDescription>
-          Nhập API key của bạn. Key được mã hóa an toàn.
-          Để trống nếu muốn giữ nguyên key hiện tại.
-        </CardDescription>
+        <CardTitle>{t('title')}</CardTitle>
+        <CardDescription>{t('subtitle')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
         {KEY_CONFIGS.map((config) => (
@@ -103,11 +67,11 @@ export function ApiKeysSection({ form, isPending, defaultValues }: ApiKeysSectio
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 text-xs text-violet-400 hover:text-violet-300 transition-colors"
               >
-                {config.helpText}
+                {t(config.helpKey)}
                 <ExternalLink className="h-3 w-3" />
               </a>
             </div>
-            <p className="text-xs text-muted-foreground">{config.description}</p>
+            <p className="text-xs text-muted-foreground">{t(config.descKey)}</p>
             <div className="relative">
               <Input
                 id={config.id}
@@ -124,7 +88,9 @@ export function ApiKeysSection({ form, isPending, defaultValues }: ApiKeysSectio
                 size="sm"
                 className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                 onClick={() => toggleKeyVisibility(config.id)}
-                aria-label={showKeys[config.id] ? `Hide ${config.label} key` : `Show ${config.label} key`}
+                aria-label={showKeys[config.id]
+                  ? t('showAriaHide', { label: config.label })
+                  : t('showAriaShow', { label: config.label })}
               >
                 {showKeys[config.id] ? (
                   <EyeOff className="h-4 w-4 text-muted-foreground" />
@@ -138,8 +104,7 @@ export function ApiKeysSection({ form, isPending, defaultValues }: ApiKeysSectio
 
         <div className="rounded-lg bg-violet-500/5 border border-violet-500/10 px-4 py-3 mt-4">
           <p className="text-xs text-muted-foreground">
-            <strong className="text-foreground">Bảo mật:</strong> Key được mã hóa AES-256 trước khi lưu.
-            Chỉ bạn mới có thể sử dụng key của mình. Không ai trong hệ thống có thể đọc key gốc.
+            <strong className="text-foreground">{t('securityNoteLabel')}</strong> {t('securityNoteBody')}
           </p>
         </div>
       </CardContent>

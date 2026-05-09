@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import type { MissionStatus } from '@/seed/types/raas';
 
 interface MissionData {
@@ -40,8 +40,12 @@ interface Props { missionId: string }
 
 export function MissionDetail({ missionId }: Props) {
   const t = useTranslations('dashboard.missions');
+  const locale = useLocale();
+  const dateLocale = locale === 'vi' ? 'vi-VN' : 'en-US';
   const [mission, setMission] = useState<MissionData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [retrying, setRetrying] = useState(false);
+  const [retryError, setRetryError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`/api/raas/missions/${missionId}`)
@@ -69,7 +73,7 @@ export function MissionDetail({ missionId }: Props) {
       <div className="bg-card rounded-xl border border-border p-5">
         <h2 className="text-lg font-semibold text-foreground">{mission.title}</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          {t('started_at', { date: new Date(mission.created_at).toLocaleString() })}
+          {t('started_at', { date: new Date(mission.created_at).toLocaleString(dateLocale) })}
         </p>
       </div>
 
@@ -77,9 +81,46 @@ export function MissionDetail({ missionId }: Props) {
       <div className="bg-card rounded-xl border border-border p-5">
         <h3 className="text-sm font-semibold text-foreground mb-4">{t('pev_pipeline')}</h3>
         {mission.status === 'failed' ? (
-          <div className="flex items-center gap-2 text-destructive">
-            <span className="material-symbols-outlined">error</span>
-            <span className="font-medium">{t('mission_failed')}</span>
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 text-destructive">
+              <span className="material-symbols-outlined">error</span>
+              <span className="font-medium">{t('mission_failed')}</span>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                disabled={retrying}
+                onClick={async () => {
+                  setRetryError(null);
+                  setRetrying(true);
+                  try {
+                    const res = await fetch(`/api/raas/missions/${missionId}/retry`, { method: 'POST' });
+                    if (!res.ok) {
+                      const data = (await res.json().catch(() => ({}))) as { error?: string };
+                      throw new Error(data.error ?? `HTTP ${res.status}`);
+                    }
+                    window.location.reload();
+                  } catch (e) {
+                    setRetryError(e instanceof Error ? e.message : t('retry_error'));
+                  } finally {
+                    setRetrying(false);
+                  }
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 text-sm font-medium"
+              >
+                <span className="material-symbols-outlined text-base">refresh</span>
+                {retrying ? t('retrying') : t('retry')}
+              </button>
+              <a
+                href="mailto:support@agencyos.network"
+                className="text-xs text-muted-foreground hover:text-foreground underline"
+              >
+                {t('contact_support')}
+              </a>
+            </div>
+            {retryError && (
+              <p role="alert" className="text-xs text-destructive">{retryError}</p>
+            )}
           </div>
         ) : (
           <div className="flex items-center gap-1 overflow-x-auto pb-1">

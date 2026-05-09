@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Button } from '@/seed/components/ui/button';
 import { Label } from '@/seed/components/ui/label';
 import { Switch } from '@/seed/components/ui/switch';
@@ -21,6 +22,7 @@ interface NotificationsSectionProps {
 }
 
 export function NotificationsSection({ form, isPending }: NotificationsSectionProps) {
+  const t = useTranslations('settings.notifications');
   const { watch, setValue } = form;
 
   // Use watched values for switches
@@ -31,18 +33,14 @@ export function NotificationsSection({ form, isPending }: NotificationsSectionPr
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Notifications</CardTitle>
-        <CardDescription>
-          Choose what updates you want to receive.
-        </CardDescription>
+        <CardTitle>{t('title')}</CardTitle>
+        <CardDescription>{t('subtitle')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between rounded-lg border p-4">
           <div className="space-y-0.5">
-            <Label htmlFor="notif-marketing" className="text-base">Marketing Emails</Label>
-            <p className="text-sm text-muted-foreground">
-              Receive emails about new features and promotions.
-            </p>
+            <Label htmlFor="notif-marketing" className="text-base">{t('marketingTitle')}</Label>
+            <p className="text-sm text-muted-foreground">{t('marketingDesc')}</p>
           </div>
           <Switch
             id="notif-marketing"
@@ -55,10 +53,8 @@ export function NotificationsSection({ form, isPending }: NotificationsSectionPr
         </div>
         <div className="flex items-center justify-between rounded-lg border p-4">
           <div className="space-y-0.5">
-            <Label htmlFor="notif-security" className="text-base">Security Alerts</Label>
-            <p className="text-sm text-muted-foreground">
-              Get notified about suspicious activity on your account.
-            </p>
+            <Label htmlFor="notif-security" className="text-base">{t('securityTitle')}</Label>
+            <p className="text-sm text-muted-foreground">{t('securityDesc')}</p>
           </div>
           <Switch
             id="notif-security"
@@ -71,10 +67,8 @@ export function NotificationsSection({ form, isPending }: NotificationsSectionPr
         </div>
         <div className="flex items-center justify-between rounded-lg border p-4">
           <div className="space-y-0.5">
-            <Label htmlFor="notif-telegram" className="text-base">Telegram Integration</Label>
-            <p className="text-sm text-muted-foreground">
-              Receive notifications via Telegram bot.
-            </p>
+            <Label htmlFor="notif-telegram" className="text-base">{t('telegramTitle')}</Label>
+            <p className="text-sm text-muted-foreground">{t('telegramDesc')}</p>
           </div>
           <Switch
             id="notif-telegram"
@@ -89,7 +83,7 @@ export function NotificationsSection({ form, isPending }: NotificationsSectionPr
       <CardFooter>
         <Button type="submit" disabled={isPending}>
           {isPending && <Loader2 className="mr-2 h-4 w-4 motion-safe:animate-spin" />}
-          Save Changes
+          {t('saveButton')}
         </Button>
       </CardFooter>
     </Card>

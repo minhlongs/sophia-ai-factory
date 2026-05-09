@@ -68,12 +68,12 @@ export function AgentTeamPanel() {
         {!loading && agents.length === 0 && (
           <div className="text-center py-4 space-y-2">
             <p className="text-xs text-muted-foreground">{t('no_agents')}</p>
-            <button
-              className="text-xs text-primary underline"
-              onClick={() => { window.location.href = '/dashboard/settings'; }}
+            <a
+              className="inline-block text-xs text-primary underline"
+              href="mailto:support@agencyos.network?subject=Request%20Agent%20Team"
             >
               {t('create_team_cta')}
-            </button>
+            </a>
           </div>
         )}
 

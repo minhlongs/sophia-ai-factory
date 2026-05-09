@@ -39,13 +39,12 @@ export function AdminUsersClient({ initialUsers }: AdminUsersClientProps) {
     setFeedback("");
 
     try {
+      // Auth via session cookie (requireAdmin in /api/admin/invite).
+      // No prompt() Basic Auth — the route already verifies admin role server-side.
       const res = await fetch("/api/admin/invite", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization:
-            "Basic " + btoa(`${prompt("Admin user") || ""}:${prompt("Admin password") || ""}`),
-        },
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
         body: JSON.stringify({ email: inviteEmail, tier: inviteTier }),
       });
 
