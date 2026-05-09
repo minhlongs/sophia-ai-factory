@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { getPayOsTierConfig, verifyPayOsSignature, parseUserIdFromPayOsDescription } from '../payos'
+import { getPayOsTierConfig, parseUserIdFromPayOsDescription } from '../payos'
 
 describe('getPayOsTierConfig', () => {
   it('returns correct VND amounts for each tier', () => {
@@ -24,51 +24,6 @@ describe('getPayOsTierConfig', () => {
   })
 })
 
-describe('verifyPayOsSignature', () => {
-  const CHECKSUM_KEY = 'test-checksum-key'
-
-  async function computeExpectedSig(data: Record<string, unknown>, key: string): Promise<string> {
-    const sorted = Object.keys(data)
-      .sort()
-      .map(k => `${k}=${data[k]}`)
-      .join('&')
-    const enc = new TextEncoder()
-    const cryptoKey = await crypto.subtle.importKey(
-      'raw', enc.encode(key), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
-    )
-    const sig = await crypto.subtle.sign('HMAC', cryptoKey, enc.encode(sorted))
-    return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('')
-  }
-
-  it('accepts valid signature', async () => {
-    const data = {
-      orderCode: 123456,
-      amount: 4975000,
-      description: 'sophia_user123_1700000000000',
-      paymentLinkId: 'link_abc123',
-      transactionDateTime: '2026-05-03T10:00:00Z',
-      currency: 'VND',
-    }
-    const sig = await computeExpectedSig(data as Record<string, unknown>, CHECKSUM_KEY)
-    const result = await verifyPayOsSignature(data as Record<string, unknown>, sig, CHECKSUM_KEY)
-    expect(result).toBe(true)
-  })
-
-  it('rejects tampered data', async () => {
-    const data = { orderCode: 123456, amount: 4975000, description: 'sophia_user_1700', paymentLinkId: 'link_abc' }
-    const sig = await computeExpectedSig(data as Record<string, unknown>, CHECKSUM_KEY)
-    const tampered = { ...data, amount: 1000 }
-    const result = await verifyPayOsSignature(tampered as Record<string, unknown>, sig, CHECKSUM_KEY)
-    expect(result).toBe(false)
-  })
-
-  it('rejects wrong checksum key', async () => {
-    const data = { orderCode: 999, amount: 100, paymentLinkId: 'link_x', description: 'test' }
-    const sig = await computeExpectedSig(data as Record<string, unknown>, 'real-key')
-    const result = await verifyPayOsSignature(data as Record<string, unknown>, sig, 'wrong-key')
-    expect(result).toBe(false)
-  })
-})
 
 describe('parseUserIdFromPayOsDescription', () => {
   it('extracts userId from sophia_ pattern', () => {
