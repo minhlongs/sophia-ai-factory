@@ -12,6 +12,7 @@ export * from './commission-calculator';
 export * from './conversion-attributor';
 export * from './dashboard-stats';
 export * from './promo-library';
+export * from './leaderboard';
 export * from './offer-sync-cron';
 export * from './provider-interface';
 export * from './trending-discovery';
