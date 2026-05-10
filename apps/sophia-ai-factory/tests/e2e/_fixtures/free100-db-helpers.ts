@@ -114,12 +114,12 @@ export function ensureTablesExist(db: Database.Database): void {
     );
   `);
 
-  // publishing_jobs (migration 20260503_publishing + 0099 provider column)
+  // publishing_jobs (migration 20260503_publishing + 0099 provider + 0101 video_id rename)
   db.exec(`
     CREATE TABLE IF NOT EXISTS publishing_jobs (
       id TEXT PRIMARY KEY,
       tenant_id TEXT NOT NULL,
-      video_job_id TEXT NOT NULL,
+      video_id TEXT NOT NULL,
       channel_id TEXT NOT NULL,
       status TEXT NOT NULL DEFAULT 'scheduled',
       caption TEXT,

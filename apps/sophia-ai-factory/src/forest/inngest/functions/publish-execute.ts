@@ -222,14 +222,14 @@ export const publishExecute = inngest.createFunction(
       // a Telegram channel. channel_id stores telegram_paired_chats.chat_id as surrogate.
       // NOTE: assertSafeVideoUrl() SSRF guard is still enforced before sending to Bot API.
       //
-      // Wave 17 Phase 02: video URL resolved via getCanonicalVideoUrl(job.video_job_id, tenantId).
-      // publishing_jobs.video_job_id column name is misleading — post Wave 16 Phase 02 it stores
-      // videos.id (not video_jobs.id). Column rename deferred to Wave 18 (KISS — no functional impact).
+      // Wave 17 Phase 02: video URL resolved via getCanonicalVideoUrl(job.video_id, tenantId).
+      // publishing_jobs.video_id stores videos.id (renamed from video_job_id in Wave 20 Phase 05;
+      // see migration 0101). resolveVideoUrlOrFail handles canonical R2 lookup + SSRF guarding.
       const jobProvider = job.provider ?? '';
       if (jobProvider === 'telegram') {
         let videoUrl: string;
         try {
-          videoUrl = await resolveVideoUrlOrFail({ jobId, videoId: job.video_job_id, userId: tenantId, db, logTag: 'publishExecute/telegram' });
+          videoUrl = await resolveVideoUrlOrFail({ jobId, videoId: job.video_id, userId: tenantId, db, logTag: 'publishExecute/telegram' });
         } catch (urlErr) {
           if (urlErr instanceof VideoNotFoundError || urlErr instanceof VideoUnauthorizedError) {
             return { skipped: false, jobId, status: 'failed', externalPostId: '', provider: '' };
@@ -309,11 +309,11 @@ export const publishExecute = inngest.createFunction(
       }
 
       // Wave 17 Phase 02: resolve video URL from videos table via canonical helper.
-      // publishing_jobs.video_job_id stores videos.id (post Wave 16 Phase 02).
-      // Column name is misleading but unchanged (KISS — Wave 18 cosmetic rename).
+      // publishing_jobs.video_id stores videos.id (renamed from video_job_id in
+      // Wave 20 Phase 05; see migration 0101).
       let videoUrl: string;
       try {
-        videoUrl = await resolveVideoUrlOrFail({ jobId, videoId: job.video_job_id, userId: tenantId, db, logTag: 'publishExecute' });
+        videoUrl = await resolveVideoUrlOrFail({ jobId, videoId: job.video_id, userId: tenantId, db, logTag: 'publishExecute' });
       } catch (urlErr) {
         if (urlErr instanceof VideoNotFoundError || urlErr instanceof VideoUnauthorizedError) {
           return { skipped: false, jobId, status: 'failed', externalPostId: '', provider: '' };

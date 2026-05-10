@@ -1,11 +1,11 @@
 /**
  * Forest orchestration helper: insert a publishing_jobs row + emit publish.scheduled event.
  *
- * Architecture note (2026-05-09, updated Wave 17 Phase 02):
- *   publishing_jobs.video_job_id column name is misleading — post Wave 16 Phase 02 it
- *   stores videos.id (not video_jobs.id). publishExecute resolves the canonical R2 URL
- *   via getCanonicalVideoUrl(videoId, userId) from `src/lib/video/get-canonical-video-url.ts`.
- *   Column rename to video_id deferred to Wave 18 (KISS — no functional impact).
+ * Architecture note (2026-05-09, updated Wave 20 Phase 05):
+ *   publishing_jobs.video_id column stores videos.id (renamed from the misleading
+ *   video_job_id in Wave 20 Phase 05 — see migration 0101). publishExecute resolves
+ *   the canonical R2 URL via getCanonicalVideoUrl(videoId, userId) from
+ *   `src/lib/video/get-canonical-video-url.ts`.
  *   HeyGen→R2 mirror: complete-video-from-webhook.ts.
  *   FREE100→R2 propagation: video-generate.ts step 7b (Wave 17 Phase 01).
  *
@@ -60,8 +60,8 @@ export async function schedulePublish(
   const scheduled = scheduledAt ?? now;
 
   // Insert publishing_jobs row
-  // Columns from 20260503_publishing.sql + migration 0099 (provider column):
-  //   id, tenant_id, video_job_id, channel_id, provider, status, caption,
+  // Columns from 20260503_publishing.sql + migration 0099 (provider) + 0101 (video_id rename):
+  //   id, tenant_id, video_id, channel_id, provider, status, caption,
   //   hashtags_json, product_link, scheduled_at, started_at, finished_at,
   //   retry_count, error, created_at
   // provider='telegram' enables publishExecute to bypass publishing_channels lookup.
@@ -72,7 +72,7 @@ export async function schedulePublish(
     await db
       .prepare(
         `INSERT INTO publishing_jobs
-           (id, tenant_id, video_job_id, channel_id, provider, status, caption,
+           (id, tenant_id, video_id, channel_id, provider, status, caption,
             hashtags_json, product_link, scheduled_at, retry_count, created_at)
          VALUES (?, ?, ?, ?, ?, 'scheduled', ?, NULL, NULL, ?, 0, ?)`,
       )

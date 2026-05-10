@@ -90,7 +90,7 @@ export const videoPublish = inngest.createFunction(
         await db.from('publishing_jobs').insert({
           id: publishJobId,
           tenant_id: tenantId,
-          video_job_id: jobId,
+          video_id: jobId,
           channel_id: channel.id,
           status: 'scheduled',
           caption: `Published via Sophia AI Factory`,

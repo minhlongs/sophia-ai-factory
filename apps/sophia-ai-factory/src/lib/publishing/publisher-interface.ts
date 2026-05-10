@@ -50,7 +50,8 @@ export interface PublishingChannel {
 export interface PublishingJob {
   id: string;
   tenant_id: string;
-  video_job_id: string;
+  /** FK to videos.id (renamed from video_job_id in Wave 20 Phase 05). */
+  video_id: string;
   channel_id: string;
   provider: ChannelProvider;
   status: PublishStatus;

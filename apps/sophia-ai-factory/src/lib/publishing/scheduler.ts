@@ -72,7 +72,7 @@ export async function schedulePublish(input: SchedulePublishInput): Promise<Sche
     await db.from('publishing_jobs').insert({
       id: jobId,
       tenant_id: tenantId,
-      video_job_id: videoJobId,
+      video_id: videoJobId,
       channel_id: channel.id,
       status: 'scheduled',
       caption,

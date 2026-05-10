@@ -2,15 +2,15 @@
  * POST /api/v1/videos/[id]/distribute
  * Insert publishing_jobs rows for selected channels + emit publish.scheduled events.
  *
- * Schema audit (2026-05-09):
- *   publishing_jobs columns: id, tenant_id, video_job_id, channel_id, status,
+ * Schema audit (Wave 20 Phase 05):
+ *   publishing_jobs columns: id, tenant_id, video_id, channel_id, status,
  *     caption, hashtags_json, product_link, scheduled_at, started_at, finished_at,
  *     retry_count, error, created_at
  *   publishing_channels: status='active' indicates connected (not a boolean column)
  *   Ownership check: videos.user_id = current_user.id
  *   Idempotency: deferred to publishExecute CAS (KISS — no new unique-key migration)
- *   video_job_id stores videos.id (canonical post Wave 17 Phase 02); publishExecute resolves
- *     video URL via getCanonicalVideoUrl(videoId, userId) from the videos table.
+ *   video_id stores videos.id (renamed from video_job_id in migration 0101);
+ *     publishExecute resolves video URL via getCanonicalVideoUrl(videoId, userId).
  *
  * @module app/api/v1/videos/[id]/distribute/route
  */
