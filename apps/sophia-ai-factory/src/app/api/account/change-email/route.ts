@@ -93,18 +93,22 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     .bind(randomUUID(), identifier, value, expiresAt.toISOString(), now.toISOString(), now.toISOString())
     .run();
 
+  if (!process.env.NEXT_PUBLIC_APP_URL) {
+    logger.warn('[change-email] NEXT_PUBLIC_APP_URL not set; using fallback');
+  }
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network';
   const verifyUrl = `${baseUrl}/api/account/change-email/verify?token=${encodeURIComponent(token)}&userId=${encodeURIComponent(user.id)}`;
 
   try {
+    const html = buildChangeEmailHtml(verifyUrl, currentEmail, newEmail);
     await sendEmail({
       to: newEmail,
       subject: 'Confirm your new Sophia AI email · Xác nhận email mới',
-      html: buildChangeEmailHtml(verifyUrl, currentEmail, newEmail),
+      html,
       tags: [{ name: 'kind', value: 'email-change' }],
     });
   } catch (err) {
-    logger.error('[change-email] sendEmail failed', toError(err));
+    logger.error('[change-email] template/send failed', toError(err));
     return NextResponse.json({ error: 'Failed to send verification email' }, { status: 502 });
   }
 
@@ -112,10 +116,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 }
 
 function buildChangeEmailHtml(rawUrl: string, oldEmail: string, newEmail: string): string {
-  const url =
-    rawUrl.startsWith('https://') || rawUrl.startsWith('http://localhost')
-      ? rawUrl.replace(/"/g, '&quot;').replace(/</g, '&lt;')
-      : '#';
+  if (!rawUrl.startsWith('https://') && !rawUrl.startsWith('http://localhost')) {
+    throw new Error(`[change-email] Invalid email URL: ${rawUrl}`);
+  }
+  const url = rawUrl.replace(/"/g, '&quot;').replace(/</g, '&lt;');
   const safeOld = String(oldEmail).replace(/</g, '&lt;');
   const safeNew = String(newEmail).replace(/</g, '&lt;');
   return `<!DOCTYPE html><html><head><meta charset="utf-8"></head>

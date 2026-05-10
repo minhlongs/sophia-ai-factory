@@ -4,10 +4,10 @@
  */
 
 export function buildDeleteConfirmHtml(rawUrl: string, cooldownDays: number): string {
-  const url =
-    rawUrl.startsWith('https://') || rawUrl.startsWith('http://localhost')
-      ? rawUrl.replace(/"/g, '&quot;').replace(/</g, '&lt;')
-      : '#';
+  if (!rawUrl.startsWith('https://') && !rawUrl.startsWith('http://localhost')) {
+    throw new Error(`[delete-confirm] Invalid email URL: ${rawUrl}`);
+  }
+  const url = rawUrl.replace(/"/g, '&quot;').replace(/</g, '&lt;');
   return `<!DOCTYPE html><html><head><meta charset="utf-8"></head>
 <body style="font-family:-apple-system,sans-serif;line-height:1.6;max-width:600px;margin:0 auto;padding:24px;">
   <h2 style="color:#dc2626">Confirm account deletion</h2>
