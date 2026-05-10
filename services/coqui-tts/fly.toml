@@ -1,5 +1,8 @@
 app = "sophia-coqui-tts"
 primary_region = "sin"
+# Multi-region replication: enable additional regions via `fly regions add iad fra` after first deploy.
+# Latency-based routing is automatic once 2+ regions have healthy machines.
+# See services/README.md for the rollout procedure.
 
 [build]
   dockerfile = "Dockerfile"
