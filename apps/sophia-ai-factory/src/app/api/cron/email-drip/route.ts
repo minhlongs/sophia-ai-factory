@@ -11,8 +11,12 @@ import { toError } from '@/seed/utils/to-error';
 import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
 import { enqueueWelcomeEmail } from '@/forest/outbox/email-outbox';
-import { evaluateLifecycleEmails } from '@/forest/email/lifecycle-email-rules';
+import {
+  evaluateLifecycleEmails,
+  evaluateAffiliateLifecycleEmails,
+} from '@/forest/email/lifecycle-email-rules';
 import { computeWeekStats } from '@/forest/email/week-stats';
+import { getAffiliateClickStats } from '@/land/affiliates/dashboard-stats';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,6 +38,13 @@ interface UserRow {
   id: string;
   email: string;
   name: string | null;
+}
+
+interface AffiliateEnrollmentRow {
+  user_id: string;
+  code: string;
+  /** SQLite datetime('now') string — needs Date.parse to ms. */
+  created_at: string;
 }
 
 function getD1(): D1Database | null {
@@ -133,9 +144,83 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    logger.info(`[email-drip] Completed. enqueued=${enqueued}`);
+    // ── Affiliate lifecycle sweep (Day-1 tutorial + Day-7 case study) ───────
+    // Window slightly wider than evaluator gates so we don't miss boundary cases.
+    const affiliateWindowMs = 8 * 24 * 3600 * 1000;
+    const affiliates = await db
+      .prepare(
+        `SELECT user_id, code, created_at
+         FROM referral_codes
+         WHERE user_id IS NOT NULL
+           AND datetime(created_at) >= datetime('now', '-8 days')
+           AND datetime(created_at) <= datetime('now', '-12 hours')`,
+      )
+      .all<AffiliateEnrollmentRow>();
+
+    let affiliateEnqueued = 0;
+    for (const aff of affiliates.results ?? []) {
+      try {
+        const userRow = await db
+          .prepare(`SELECT id, email, name FROM user WHERE id = ?1 LIMIT 1`)
+          .bind(aff.user_id)
+          .first<UserRow>();
+        if (!userRow) continue;
+
+        const enrolledMs = Date.parse(aff.created_at);
+        if (Number.isNaN(enrolledMs)) continue;
+        if (now - enrolledMs > affiliateWindowMs) continue;
+
+        // Day-7 personalization stats — last 7 days, BASIC user is the affiliate.
+        const since7d = Math.floor((now - 7 * 24 * 3600 * 1000) / 1000);
+        const stats = await getAffiliateClickStats(
+          aff.user_id, aff.user_id, since7d, nowSec,
+        ).catch(() => null);
+
+        const decisions = evaluateAffiliateLifecycleEmails(
+          {
+            enrolledAt: enrolledMs,
+            ownerFullName: userRow.name ?? userRow.email.split('@')[0],
+            locale: 'en',
+            referralCode: aff.code,
+            totalClicks: stats?.totalClicks,
+            totalConversions: stats?.totalConversions,
+            pendingEarningsUsd: stats?.totalCommissionUsd,
+          },
+          now,
+        );
+
+        for (const decision of decisions) {
+          const existing = await db
+            .prepare(`SELECT 1 FROM lifecycle_email_log WHERE user_id = ?1 AND template = ?2 LIMIT 1`)
+            .bind(aff.user_id, decision.template)
+            .first<{ 1: number }>();
+          if (existing) continue;
+
+          const uniqueId = `lifecycle_${aff.user_id}_${decision.template}`;
+          await enqueueWelcomeEmail(db, {
+            paymentId: uniqueId,
+            toEmail: userRow.email,
+            template: decision.template as 'welcome-magic-link',
+            payload: decision.payload,
+          });
+
+          await db
+            .prepare(`INSERT OR IGNORE INTO lifecycle_email_log (user_id, template, sent_at) VALUES (?1,?2,?3)`)
+            .bind(aff.user_id, decision.template, nowSec)
+            .run();
+
+          affiliateEnqueued++;
+        }
+      } catch (e) {
+        logger.error(`[email-drip] Affiliate sweep failed for ${aff.user_id}`, toError(e));
+      }
+    }
+
+    logger.info(
+      `[email-drip] Completed. handover=${enqueued} affiliate=${affiliateEnqueued}`,
+    );
     await recordCronRun(db, CRON_NAME, 'success');
-    return NextResponse.json({ ok: true, enqueued });
+    return NextResponse.json({ ok: true, enqueued, affiliateEnqueued });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     await recordCronRun(db, CRON_NAME, 'failure', msg);
