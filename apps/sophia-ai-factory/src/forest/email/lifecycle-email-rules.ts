@@ -14,7 +14,9 @@ export type LifecycleTemplate =
   | 'onboarding-nudge'
   | 'first-week-summary'
   | 'activation-reminder'
-  | 'win-back';
+  | 'win-back'
+  | 'affiliate-day1-tutorial'
+  | 'affiliate-day7-case-study';
 
 export interface EmailDecision {
   template: LifecycleTemplate;
@@ -109,6 +111,66 @@ export function evaluateActivationReminderEmails(
         daysSinceSignup: Math.floor(daysSince),
       },
     });
+  }
+
+  return decisions;
+}
+
+// ─── Affiliate Lifecycle (Day 1 tutorial + Day 7 case study) ────────────────
+
+export interface AffiliateMilestones {
+  /** Enrollment timestamp — when referral code was generated. */
+  enrolledAt: number;
+  ownerFullName: string;
+  locale: string;
+  referralCode: string;
+  /** Optional Day-7 personalization stats — when omitted, case-study email skips the "your week 1" block. */
+  totalClicks?: number;
+  totalConversions?: number;
+  pendingEarningsUsd?: number;
+}
+
+/**
+ * Affiliate Day-1 first-link tutorial + Day-7 case study.
+ * No engagement gating beyond the time window — every enrolled affiliate gets both
+ * to maximize first-conversion velocity. Email-drip cron is responsible for
+ * idempotency (deduping per (user_id, template) pair).
+ */
+export function evaluateAffiliateLifecycleEmails(
+  milestones: AffiliateMilestones,
+  now: number = Date.now(),
+): EmailDecision[] {
+  const decisions: EmailDecision[] = [];
+  const daysSince = (now - milestones.enrolledAt) / DAY_MS;
+
+  if (daysSince >= 0.9 && daysSince < 2.0) {
+    decisions.push({
+      template: 'affiliate-day1-tutorial',
+      payload: {
+        ownerFullName: milestones.ownerFullName,
+        locale: milestones.locale,
+        referralCode: milestones.referralCode,
+      },
+    });
+  }
+
+  if (daysSince >= 6.9 && daysSince < 8.0) {
+    const payload: Record<string, unknown> = {
+      ownerFullName: milestones.ownerFullName,
+      locale: milestones.locale,
+    };
+    if (
+      typeof milestones.totalClicks === 'number' &&
+      typeof milestones.totalConversions === 'number' &&
+      typeof milestones.pendingEarningsUsd === 'number'
+    ) {
+      payload.stats = {
+        totalClicks: milestones.totalClicks,
+        totalConversions: milestones.totalConversions,
+        pendingEarningsUsd: milestones.pendingEarningsUsd,
+      };
+    }
+    decisions.push({ template: 'affiliate-day7-case-study', payload });
   }
 
   return decisions;

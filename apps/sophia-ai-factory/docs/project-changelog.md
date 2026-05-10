@@ -1,6 +1,14 @@
 # Project Changelog
 
-**Last Updated:** 2026-05-10 | **Current Version:** 1.22.3
+**Last Updated:** 2026-05-10 | **Current Version:** 1.22.4
+
+---
+
+## v1.22.4 — Phase 04: Affiliate lifecycle emails Day-1 & Day-7 (2026-05-10)
+
+**Severity: P2 FEATURE | Type: Email Automation | Status: SHIPPED**
+
+Day-1 and Day-7 affiliate tutorial/case-study onboarding emails added to lifecycle system. New templates: `affiliate-day1-tutorial` (intro guide), `affiliate-day7-case-study` (social proof). New evaluator: `evaluateAffiliateLifecycleEmails()` in `src/forest/email/lifecycle-email-rules.ts` extends `LifecycleTemplate` union (4→6). Reuses existing forest/email pattern; no new infra. **Tests:** 34/34 pass.
 
 ---
 
