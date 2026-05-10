@@ -15,6 +15,7 @@ import {
   evaluateLifecycleEmails,
   evaluateAffiliateLifecycleEmails,
   evaluateActivationReminderEmails,
+  evaluateWinBackEmails,
 } from '@/forest/email/lifecycle-email-rules';
 import { computeWeekStats } from '@/forest/email/week-stats';
 import { getAffiliateClickStats } from '@/land/affiliates/dashboard-stats';
@@ -58,6 +59,14 @@ interface ActivationCandidateRow {
   first_login_at: string | null;
   /** Min(video_jobs.created_at) — unix seconds, null if no video. */
   first_video_at: number | null;
+}
+
+interface CancelledSubscriptionRow {
+  user_id: string;
+  email: string;
+  name: string | null;
+  /** Cancellation timestamp = subscription.updated_at after status flipped to 'cancelled'. */
+  updated_at: string;
 }
 
 function getD1(): D1Database | null {
@@ -288,8 +297,68 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // ── Win-back sweep (Day-60 cancelled, no reactivation) ─────────────────
+    // Heuristic: a subscription currently `status='cancelled'` whose `updated_at`
+    // sits in the 59–61 day window is a clean cancellation that hasn't been
+    // reactivated (reactivation flips status back to 'active' + bumps updated_at).
+    const winBackCandidates = await db
+      .prepare(
+        `SELECT s.user_id, u.email, u.name, s.updated_at
+         FROM subscriptions s
+         JOIN user u ON u.id = s.user_id
+         WHERE s.status = 'cancelled'
+           AND s.user_id IS NOT NULL
+           AND datetime(s.updated_at) >= datetime('now', '-61 days')
+           AND datetime(s.updated_at) <= datetime('now', '-59 days', '-12 hours')`,
+      )
+      .all<CancelledSubscriptionRow>();
+
+    let winBackEnqueued = 0;
+    for (const row of winBackCandidates.results ?? []) {
+      try {
+        const cancelledMs = Date.parse(row.updated_at);
+        if (Number.isNaN(cancelledMs)) continue;
+
+        const decisions = evaluateWinBackEmails(
+          {
+            cancelledAt: cancelledMs,
+            cancelledAtIso: new Date(cancelledMs).toISOString().slice(0, 10),
+            reactivatedAt: null, // status='cancelled' filter implies not yet back
+            ownerFullName: row.name ?? row.email.split('@')[0],
+            locale: 'en',
+          },
+          now,
+        );
+
+        for (const decision of decisions) {
+          const existing = await db
+            .prepare(`SELECT 1 FROM lifecycle_email_log WHERE user_id = ?1 AND template = ?2 LIMIT 1`)
+            .bind(row.user_id, decision.template)
+            .first<{ 1: number }>();
+          if (existing) continue;
+
+          const uniqueId = `lifecycle_${row.user_id}_${decision.template}`;
+          await enqueueWelcomeEmail(db, {
+            paymentId: uniqueId,
+            toEmail: row.email,
+            template: decision.template as 'welcome-magic-link',
+            payload: decision.payload,
+          });
+
+          await db
+            .prepare(`INSERT OR IGNORE INTO lifecycle_email_log (user_id, template, sent_at) VALUES (?1,?2,?3)`)
+            .bind(row.user_id, decision.template, nowSec)
+            .run();
+
+          winBackEnqueued++;
+        }
+      } catch (e) {
+        logger.error(`[email-drip] Win-back sweep failed for ${row.user_id}`, toError(e));
+      }
+    }
+
     logger.info(
-      `[email-drip] Completed. handover=${enqueued} affiliate=${affiliateEnqueued} activation=${activationEnqueued}`,
+      `[email-drip] Completed. handover=${enqueued} affiliate=${affiliateEnqueued} activation=${activationEnqueued} winBack=${winBackEnqueued}`,
     );
     await recordCronRun(db, CRON_NAME, 'success');
     return NextResponse.json({
@@ -297,6 +366,7 @@ export async function GET(req: NextRequest) {
       enqueued,
       affiliateEnqueued,
       activationEnqueued,
+      winBackEnqueued,
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
