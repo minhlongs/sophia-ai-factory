@@ -14,6 +14,7 @@ import { enqueueWelcomeEmail } from '@/forest/outbox/email-outbox';
 import {
   evaluateLifecycleEmails,
   evaluateAffiliateLifecycleEmails,
+  evaluateActivationReminderEmails,
 } from '@/forest/email/lifecycle-email-rules';
 import { computeWeekStats } from '@/forest/email/week-stats';
 import { getAffiliateClickStats } from '@/land/affiliates/dashboard-stats';
@@ -45,6 +46,18 @@ interface AffiliateEnrollmentRow {
   code: string;
   /** SQLite datetime('now') string — needs Date.parse to ms. */
   created_at: string;
+}
+
+interface ActivationCandidateRow {
+  id: string;
+  email: string;
+  name: string | null;
+  /** SQLite datetime('now') string. */
+  createdAt: string;
+  /** Min(session.createdAt) — null if user never logged in. */
+  first_login_at: string | null;
+  /** Min(video_jobs.created_at) — unix seconds, null if no video. */
+  first_video_at: number | null;
 }
 
 function getD1(): D1Database | null {
@@ -216,11 +229,75 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // ── Activation reminder sweep (Day-3 if logged in but no first video) ───
+    // Window slightly wider than evaluator gates (2.9–4.0d) so boundary users aren't missed.
+    const activationCandidates = await db
+      .prepare(
+        `SELECT u.id, u.email, u.name, u.createdAt,
+                (SELECT MIN(s.createdAt) FROM session s WHERE s.userId = u.id) AS first_login_at,
+                (SELECT MIN(v.created_at) FROM video_jobs v WHERE v.user_id = u.id) AS first_video_at
+         FROM user u
+         WHERE datetime(u.createdAt) >= datetime('now', '-4 days', '-12 hours')
+           AND datetime(u.createdAt) <= datetime('now', '-2 days', '-12 hours')`,
+      )
+      .all<ActivationCandidateRow>();
+
+    let activationEnqueued = 0;
+    for (const cand of activationCandidates.results ?? []) {
+      try {
+        const signupMs = Date.parse(cand.createdAt);
+        if (Number.isNaN(signupMs)) continue;
+
+        const firstLoginMs = cand.first_login_at ? Date.parse(cand.first_login_at) : NaN;
+
+        const decisions = evaluateActivationReminderEmails(
+          {
+            signupAt: signupMs,
+            firstLoginAt: Number.isFinite(firstLoginMs) ? firstLoginMs : null,
+            firstVideoCreatedAt: cand.first_video_at ? cand.first_video_at * 1000 : null,
+            ownerFullName: cand.name ?? cand.email.split('@')[0],
+            locale: 'en',
+          },
+          now,
+        );
+
+        for (const decision of decisions) {
+          const existing = await db
+            .prepare(`SELECT 1 FROM lifecycle_email_log WHERE user_id = ?1 AND template = ?2 LIMIT 1`)
+            .bind(cand.id, decision.template)
+            .first<{ 1: number }>();
+          if (existing) continue;
+
+          const uniqueId = `lifecycle_${cand.id}_${decision.template}`;
+          await enqueueWelcomeEmail(db, {
+            paymentId: uniqueId,
+            toEmail: cand.email,
+            template: decision.template as 'welcome-magic-link',
+            payload: decision.payload,
+          });
+
+          await db
+            .prepare(`INSERT OR IGNORE INTO lifecycle_email_log (user_id, template, sent_at) VALUES (?1,?2,?3)`)
+            .bind(cand.id, decision.template, nowSec)
+            .run();
+
+          activationEnqueued++;
+        }
+      } catch (e) {
+        logger.error(`[email-drip] Activation sweep failed for ${cand.id}`, toError(e));
+      }
+    }
+
     logger.info(
-      `[email-drip] Completed. handover=${enqueued} affiliate=${affiliateEnqueued}`,
+      `[email-drip] Completed. handover=${enqueued} affiliate=${affiliateEnqueued} activation=${activationEnqueued}`,
     );
     await recordCronRun(db, CRON_NAME, 'success');
-    return NextResponse.json({ ok: true, enqueued, affiliateEnqueued });
+    return NextResponse.json({
+      ok: true,
+      enqueued,
+      affiliateEnqueued,
+      activationEnqueued,
+    });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     await recordCronRun(db, CRON_NAME, 'failure', msg);

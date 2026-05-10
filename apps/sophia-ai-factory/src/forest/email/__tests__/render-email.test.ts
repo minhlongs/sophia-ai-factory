@@ -10,9 +10,9 @@ import { renderEmail, type TemplateKey, type TemplateDataMap } from '../render-e
 const fixtures: { [K in TemplateKey]: TemplateDataMap[K] } = {
   'welcome-magic-link': {
     ownerFullName: 'Mai',
+    tier: 'BASIC',
     magicLinkUrl: 'https://example.com/magic',
     locale: 'en',
-    paymentId: 'pay_123',
   },
   'onboarding-nudge': {
     ownerFullName: 'Mai',
@@ -24,16 +24,14 @@ const fixtures: { [K in TemplateKey]: TemplateDataMap[K] } = {
     locale: 'en',
     stats: {
       totalCalls: 5,
-      mostUsedAgent: 'sophia',
-      lastActiveAt: Date.now(),
+      topSop: 'Sophia onboarding',
+      daysActive: 4,
     },
   },
   'tier-upgrade': {
     ownerFullName: 'Mai',
     locale: 'en',
-    fromTier: 'BASIC',
-    toTier: 'PREMIUM',
-    upgradeReason: 'usage limit hit',
+    newTier: 'PREMIUM',
   },
   'activation-reminder': {
     ownerFullName: 'Mai',
@@ -90,7 +88,6 @@ describe('renderEmail dispatcher', () => {
 
   it('throws on unknown template', () => {
     expect(() =>
-      // @ts-expect-error — exercising the exhaustive default branch.
       renderEmail('not-a-real-template' as TemplateKey, {} as never),
     ).toThrow(/Unknown email template/);
   });
