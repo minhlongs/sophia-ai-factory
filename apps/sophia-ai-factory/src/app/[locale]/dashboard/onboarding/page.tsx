@@ -13,6 +13,7 @@ import { getUserTier } from '@/seed/db/get-user-tier';
 import { logger } from '@/seed/utils/logger-utility';
 import { OnboardingSteps } from './components/onboarding-steps';
 import { SkipButton } from './components/skip-button';
+import { OnboardingErrorBanner } from './components/onboarding-error-banner';
 import { completeOnboardingAction } from '@/app/actions/complete-onboarding-action';
 
 export const dynamic = 'force-dynamic';
@@ -83,6 +84,7 @@ export default async function OnboardingPage({
   let step1Done = false;
   let step2Done = false;
   let step3Done = false;
+  let loadFailed = false;
 
   const d1 = getD1();
   if (d1) {
@@ -90,6 +92,7 @@ export default async function OnboardingPage({
       ({ step1Done, step2Done, step3Done } = await loadStepStatus(d1, user.id));
     } catch (e) {
       logger.error('[OnboardingPage] loadStepStatus failed', e instanceof Error ? e : new Error(String(e)));
+      loadFailed = true;
     }
   }
 
@@ -124,6 +127,9 @@ export default async function OnboardingPage({
           </div>
         </div>
       </div>
+
+      {/* Error banner when step status fails to load */}
+      {loadFailed && <OnboardingErrorBanner />}
 
       {/* Steps */}
       <OnboardingSteps

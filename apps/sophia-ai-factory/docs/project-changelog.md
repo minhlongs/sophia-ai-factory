@@ -4,6 +4,14 @@
 
 ---
 
+## v1.20.1 — Wave 19 Phase 03: FREE100 i18n + UX Batch (2026-05-09)
+
+**Severity: P0 POLISH | Type: Localization + UX | Status: SHIPPED**
+
+5-fix i18n parity + UX refinement wave completing bilingual coverage across video form, distribution, onboarding, and channels. (F-1) **i18n Keys +20:** Video generation form + distribute status + onboarding error banner + channels client; EN+VI parity verified. New `messages-parity` test guards future drift between locales (0 missing keys post-verify). (F-2) **Onboarding Error Banner (M9):** Retry UI on D1 failure with clear error message bilingual. (F-3) **Distribute Success/Error Toast (M6):** Toast notifications wired for publish-execute results (publish-success, publish-error toasts firing). (F-4) **Publishing Status Badges (M5):** All badge variants (draft, processing, published, failed) fully translated EN+VI. (F-5) **Channels Client (M10):** Provider list, connect flow, delete dialog 100% bilingual. **Tests:** 1401/1401 pass (no regression). **Build:** 0 TS errors, bundle on track. **Code Review:** 9.8/10 (i18n audit complete). **Verification:** All 4 components render bilingual, parity test confirms 0 missing keys, distribute toast fires post-publish.
+
+---
+
 ## v1.20.0 — Wave 19: Channel Provider Hardening + Auth Session Fix + Onboarding Query Refinement (2026-05-09)
 
 **Severity: P0 FIXES | Type: Correctness + Reliability | Status: SHIPPED**

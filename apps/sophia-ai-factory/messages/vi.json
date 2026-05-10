@@ -879,7 +879,8 @@
         "languageEn": "English",
         "languageVi": "Tiếng Việt",
         "submitting": "Đang tạo...",
-        "submit": "Tạo Video"
+        "submit": "Tạo Video",
+        "quotaExceeded": "Đã hết hạn ngạch video ({used}/{limit}). Reset {resetAt}."
       },
       "distribute": {
         "title": "Phân phối video",
@@ -908,7 +909,8 @@
           "chatLabel": "Telegram (@{name})",
           "channelLabel": "Telegram (kênh: {title})",
           "notPaired": "Chưa ghép nối. Nhắn tin @Sophia_Bbot để ghép nối."
-        }
+        },
+        "errorToast": "Phân phối thất bại. Vui lòng thử lại."
       }
     },
     "errors": {
@@ -1159,7 +1161,36 @@
       "step2_cta": "Kết Nối Kênh",
       "step3_title": "Đăng Video Đầu Tiên",
       "step3_desc": "Phân phối video lên tất cả kênh đã kết nối chỉ với một cú click.",
-      "step3_cta": "Xem Videos"
+      "step3_cta": "Xem Videos",
+      "errorBanner": {
+        "title": "Không thể tải tiến trình",
+        "description": "Có lỗi khi kiểm tra các bước. Vui lòng thử lại.",
+        "retryButton": "Thử lại"
+      }
+    },
+    "distribute": {
+      "status": {
+        "header": "Trạng thái phân phối",
+        "queued": "Đang chờ",
+        "processing": "Đang xử lý",
+        "live": "Đang phát",
+        "failed": "Thất bại",
+        "paused": "Tạm dừng",
+        "scheduled": "Đã lên lịch",
+        "uploading": "Đang tải lên"
+      }
+    },
+    "channels": {
+      "client": {
+        "loading": "Đang tải...",
+        "connected": "Đã kết nối",
+        "notConnected": "Chưa kết nối",
+        "disconnect": "Ngắt kết nối",
+        "confirmDisconnect": "Ngắt kết nối {provider}?",
+        "disconnecting": "Đang ngắt kết nối...",
+        "connectButton": "Kết nối",
+        "errorLoading": "Không tải được kênh. Vui lòng làm mới."
+      }
     }
   },
   "account": {

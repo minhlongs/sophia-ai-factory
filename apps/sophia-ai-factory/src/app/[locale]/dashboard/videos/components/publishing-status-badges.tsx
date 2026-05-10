@@ -5,6 +5,9 @@
  * @module app/[locale]/dashboard/videos/components/publishing-status-badges
  */
 
+'use client';
+
+import { useTranslations } from 'next-intl';
 import { PROVIDER_LABELS, PUBLISH_STATUS_STYLES } from '../[id]/distribute/channel-meta';
 
 interface PublishJob {
@@ -20,6 +23,8 @@ interface Props {
 }
 
 export function PublishingStatusBadges({ jobs }: Props) {
+  const t = useTranslations('dashboard.distribute.status');
+
   if (jobs.length === 0) return null;
 
   // Latest job per provider (jobs are returned in insertion order — take last per provider)
@@ -30,7 +35,7 @@ export function PublishingStatusBadges({ jobs }: Props) {
 
   return (
     <section>
-      <h2 className="text-sm font-medium mb-3 text-muted-foreground">Distribution Status</h2>
+      <h2 className="text-sm font-medium mb-3 text-muted-foreground">{t('header')}</h2>
       <div className="flex flex-wrap gap-2">
         {Array.from(latestByProvider.values()).map((job) => (
           <span
@@ -38,7 +43,7 @@ export function PublishingStatusBadges({ jobs }: Props) {
             className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${PUBLISH_STATUS_STYLES[job.status] ?? PUBLISH_STATUS_STYLES['scheduled']}`}
           >
             {PROVIDER_LABELS[job.provider] ?? job.provider}
-            <span className="capitalize">{job.status}</span>
+            <span>{t(job.status as Parameters<typeof t>[0], { defaultValue: job.status })}</span>
           </span>
         ))}
       </div>
