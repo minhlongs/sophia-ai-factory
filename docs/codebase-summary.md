@@ -353,8 +353,12 @@ scheduled_posts          → id, org_id, content, scheduled_at, channels_bitmap,
 | `/api/affiliates/networks` | GET | 5 networks (TikTok Shop, Awin, ClickBank, AccessTrade, Amazon) (Phase 9) |
 | `/api/publishers/channels` | GET/POST | Social channel management (Phase 10) |
 | `/api/publishers/schedule` | POST | Schedule post across channels (Phase 10) |
-| `/api/account/export` | POST | GDPR data export (Phase 14) |
-| `/api/account/delete` | POST | GDPR account deletion (Phase 14) |
+| `/api/account/export` | GET | GDPR data export (Phase 14; UI button added Wave 20 P04) |
+| `/api/account/change-email` | POST | Start email-change flow — token to verification table + email to NEW address (Wave 20 P04) |
+| `/api/account/change-email/verify` | GET | Finalize email change — UPDATE user.email + redirect (Wave 20 P04) |
+| `/api/account` | DELETE | GDPR account deletion (header `X-Confirm-Delete: DELETE_MY_ACCOUNT`; UI flow Wave 21) |
+| `/api/quota/status` | GET | Monthly credit usage for sidebar widget (Wave 20 P03 consumer) |
+| `/api/billing/usage-summary` | GET | Detailed billing/usage for `/dashboard/billing` |
 | `/api/affiliate-discovery` | GET | Paginated affiliate offers |
 | `/api/coupons/apply` | POST | Redeem coupon (per-user limit) |
 | `/api/setup/save` | POST | Setup wizard save |

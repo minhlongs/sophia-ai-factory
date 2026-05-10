@@ -7,6 +7,38 @@
 
 ---
 
+## Q2 2026: Wave 20 — Wave 19 Carry-overs + Schema Cleanup (Complete, 2026-05-10)
+
+| Phase | Status | Completion | Details |
+|-------|--------|-----------|---------|
+| **W20-P01: Telegram MarkdownV2** | ✅ DONE | 2026-05-10 | `escapeMarkdownV2()` helper + 31 unit tests (all 19 specials). Replaces strip approach so user-typed `*bold*` renders correctly. `parse_mode: 'MarkdownV2'` set on Bot-API payload. Commit `84906c44`. |
+| **W20-P02: Telegram Step Split + retry_after** | ✅ DONE | 2026-05-10 | `publishExecute` Telegram path split into 3 memoized `step.run` calls (claim → send → finalize). Inngest now retries only the failing step. `dispatchTelegramWithRetryHints` throws `RetryAfterError` on 429 to honor Telegram-supplied retry delay. Fixes "429 retry stuck on `skipped:true`" bug. Commit `9f051edd`. |
+| **W20-P03: Sidebar Quota Widget** | ✅ DONE | 2026-05-10 | `<SidebarQuotaWidget />` (99 LOC, 9 tests). Compact monthly-credits bar at sidebar bottom. MASTER tier shows ∞ icon. Click → `/dashboard/billing`. Hides on no-license. Commit `d07550aa`. |
+| **W20-P04: Account Self-Service** | ✅ DONE | 2026-05-10 | Editable email + "Update Email" → POST `/api/account/change-email` writes single-use token to Better Auth `verification` table, mails bilingual confirmation link to NEW address; GET `/verify` validates + UPDATEs `user.email`. Race-safe at verify time. "Export Data" wires existing GDPR export endpoint. Commit `1577e1e7`. **DELETE flow deferred to Wave 21.** |
+| **W20-P05: Schema Rename** | ✅ DONE | 2026-05-10 | `publishing_jobs.video_job_id → video_id` (10 source files + 2 test files swept). `engine_missions.video_job_id` intentionally untouched. Migration `0101` rewritten as idempotent CREATE during deploy (discovery: `publishing_jobs` table never applied to remote D1). Commit `33999bcd`. |
+
+**Verification (Wave 20 final):** 3129/3129 tests pass, 0 TS errors, build exit 0. All 5 phases SHA-verified GREEN against `https://sophia.agencyos.network`.
+
+**Last Updated:** 2026-05-10 (Wave 20 closed)
+
+---
+
+## Q2 2026: Wave 19 — FREE100 Hardening (Complete, 2026-05-09 → 2026-05-10)
+
+| Phase | Status | Completion | Details |
+|-------|--------|-----------|---------|
+| **W19-P01: P0 Correctness** | ✅ DONE | 2026-05-09 | C2 (D1 update return-value), C3 (CAS via meta.changes), C5 (token sanitize), C8 (idempotent Inngest event id). |
+| **W19-P02: Regression Tests** | ✅ DONE | 2026-05-09 | Test coverage for C1/C4/C6 guardrails. |
+| **W19-P03: i18n + UX State Batch (M4-M10)** | ✅ DONE | 2026-05-09 | Skeleton loaders, empty states, error toasts, retry buttons across 7 dashboard pages. |
+| **W19-P04: Distribute Status Polling (M1)** | ✅ DONE | 2026-05-09 | SSE-driven publish-status timeline with abort + retry UX. |
+| **W19-P05: Telegram Retry Helper (M2)** | ✅ DONE | 2026-05-09 | `dispatchTelegramWithRetryHints` classifies 4xx → NonRetriable, 429/5xx → retryable. |
+| **W19-P06: Sentry + Not-Found** | ✅ DONE | 2026-05-09 | Sentry capture in dashboard error boundary; `/dashboard/not-found` async server component. |
+| **W19-P07: env.example + Master Badge** | ✅ DONE | 2026-05-10 | `.env.example` documents ~50 env vars. Master tier lifetime badge in `/billing`. (7A/7B/7C/7F deferred to Wave 20.) |
+
+**Verification (Wave 19 final):** 3077/3077 tests pass.
+
+---
+
 ## Q2 2026: Wave 17 — Unlock Distribution + Harden + Cleanup (Substantively Complete, 2026-05-09)
 
 | Phase | Status | Completion | Details |
