@@ -183,26 +183,46 @@ describe('GET /api/account/change-email/verify', () => {
     expect(res.headers.get('location')).toContain('error=email-change-invalid');
   });
 
-  it('redirects to conflict when new email already taken at verify time', async () => {
+  it('redirects to conflict when conditional UPDATE finds 0 rows (race lost)', async () => {
+    // Wave 22 P02: another user claimed the email between request and verify.
+    // NOT EXISTS subquery fails → meta.changes === 0 → conflict redirect.
     const future = new Date(Date.now() + 60_000).toISOString();
+    const updateStmt = stmt({ run: { meta: { changes: 0 } } });
     const deleteStmt = stmt();
     mocks.mockGetD1Raw.mockResolvedValue(buildDb([
       stmt({ first: { id: 'v-1', value: 'new@example.com:tok-x', expiresAt: future } }),
-      stmt({ first: { id: 'other-user' } }), // race conflict
+      updateStmt,
       deleteStmt,
     ]));
     const res = await VERIFY_GET(makeReq('token=tok-x&userId=user-1'));
+    expect(res.headers.get('location')).toContain('error=email-change-conflict');
+    expect(updateStmt.run).toHaveBeenCalled();
+    expect(deleteStmt.run).toHaveBeenCalled();
+  });
+
+  it('redirects to conflict when conditional UPDATE finds 0 rows (stale userId)', async () => {
+    // Wave 22 P02: user row was deleted between request and verify.
+    // Same outcome as race-lost — meta.changes === 0.
+    const future = new Date(Date.now() + 60_000).toISOString();
+    const updateStmt = stmt({ run: { meta: { changes: 0 } } });
+    const deleteStmt = stmt();
+    mocks.mockGetD1Raw.mockResolvedValue(buildDb([
+      stmt({ first: { id: 'v-1', value: 'new@example.com:tok-x', expiresAt: future } }),
+      updateStmt,
+      deleteStmt,
+    ]));
+    const res = await VERIFY_GET(makeReq('token=tok-x&userId=ghost-user'));
     expect(res.headers.get('location')).toContain('error=email-change-conflict');
     expect(deleteStmt.run).toHaveBeenCalled();
   });
 
   it('happy path updates user.email and redirects success', async () => {
+    // Wave 22 P02: conditional UPDATE meta.changes === 1 → success.
     const future = new Date(Date.now() + 60_000).toISOString();
-    const updateStmt = stmt();
+    const updateStmt = stmt({ run: { meta: { changes: 1 } } });
     const deleteStmt = stmt();
     mocks.mockGetD1Raw.mockResolvedValue(buildDb([
       stmt({ first: { id: 'v-1', value: 'new@example.com:tok-x', expiresAt: future } }),
-      stmt({ first: null }), // no race conflict
       updateStmt,
       deleteStmt,
     ]));
@@ -211,5 +231,23 @@ describe('GET /api/account/change-email/verify', () => {
     expect(res.headers.get('location')).toContain('?ok=email-changed');
     expect(updateStmt.run).toHaveBeenCalled();
     expect(deleteStmt.run).toHaveBeenCalled();
+  });
+});
+
+describe('P03 — invalid email URL throws', () => {
+  it('returns 502 when NEXT_PUBLIC_APP_URL has invalid scheme', async () => {
+    process.env.NEXT_PUBLIC_APP_URL = 'ftp://bad-host';
+    mocks.mockGetD1Raw.mockResolvedValue(buildDb([
+      stmt({ first: null }),
+      stmt(),
+      stmt(),
+    ]));
+    const req = new NextRequest('http://localhost/api/account/change-email', {
+      method: 'POST',
+      body: JSON.stringify({ newEmail: 'new@example.com' }),
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(502);
+    process.env.NEXT_PUBLIC_APP_URL = 'https://sophia.test';
   });
 });

@@ -278,3 +278,20 @@ describe('GET /api/account/delete/status', () => {
     expect(body.state).toBe('cancelled');
   });
 });
+
+describe('Wave 22 P03 — invalid email URL throws', () => {
+  it('returns 502 + rolls back row when NEXT_PUBLIC_APP_URL has invalid scheme', async () => {
+    process.env.NEXT_PUBLIC_APP_URL = 'ftp://bad-host';
+    const { db, calls } = makeDb({ existingActive: null });
+    mocks.mockGetD1Raw.mockResolvedValue(db);
+    const req = new NextRequest('http://localhost/api/account/delete/request', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'request' }),
+      headers: { 'content-type': 'application/json' },
+    });
+    const res = await RequestPOST(req);
+    expect(res.status).toBe(502);
+    expect(calls.some((c) => c.sql.includes('DELETE FROM account_deletion_requests'))).toBe(true);
+    delete process.env.NEXT_PUBLIC_APP_URL;
+  });
+});

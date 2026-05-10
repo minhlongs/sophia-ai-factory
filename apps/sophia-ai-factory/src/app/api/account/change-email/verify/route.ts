@@ -18,8 +18,8 @@ interface VerificationRow {
   expiresAt: string;
 }
 
-interface UserIdRow {
-  id: string;
+interface UpdateMeta {
+  meta?: { changes?: number };
 }
 
 function failureRedirect(reason: string): NextResponse {
@@ -59,21 +59,26 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const storedToken = row.value.slice(sepIndex + 1);
   if (storedToken !== token) return failureRedirect('email-change-invalid');
 
-  // Race-safety: verify the new email isn't already claimed.
-  const existing = await db
-    .prepare(`SELECT id FROM user WHERE LOWER(email) = ? AND id != ? LIMIT 1`)
-    .bind(newEmail.toLowerCase(), userId)
-    .first<UserIdRow>();
-  if (existing) {
+  // Conditional UPDATE eliminates TOCTOU race. If another user claimed the
+  // email between request and verify, NOT EXISTS fails and meta.changes === 0.
+  const nowIso = new Date().toISOString();
+  const result = (await db
+    .prepare(
+      `UPDATE user
+       SET email = ?, updatedAt = ?
+       WHERE id = ?
+         AND NOT EXISTS (
+           SELECT 1 FROM user WHERE LOWER(email) = ? AND id != ?
+         )`,
+    )
+    .bind(newEmail, nowIso, userId, newEmail.toLowerCase(), userId)
+    .run()) as UpdateMeta;
+
+  const changes = result.meta?.changes ?? 0;
+  if (changes === 0) {
     await db.prepare(`DELETE FROM verification WHERE id = ?`).bind(row.id).run();
     return failureRedirect('email-change-conflict');
   }
-
-  const nowIso = new Date().toISOString();
-  await db
-    .prepare(`UPDATE user SET email = ?, updatedAt = ? WHERE id = ?`)
-    .bind(newEmail, nowIso, userId)
-    .run();
 
   await db.prepare(`DELETE FROM verification WHERE id = ?`).bind(row.id).run();
 

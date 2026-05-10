@@ -1,6 +1,14 @@
 # Project Changelog
 
-**Last Updated:** 2026-05-09 | **Current Version:** 1.20.2
+**Last Updated:** 2026-05-10 | **Current Version:** 1.22.1
+
+---
+
+## v1.22.1 — Wave 22 Batch 1: Security + Reliability sweep (2026-05-10)
+
+**Severity: P1 SECURITY + P2 UX + P3 PERF + P3 SOP | Type: Hardening | Status: SHIPPED**
+
+4-phase coordinated batch closing 4 of 8 Wave 22 backlog items (security blockers + quick wins). (P02) **TOCTOU email uniqueness fix:** Replaced separate SELECT-then-UPDATE in `change-email/verify` route with atomic conditional UPDATE using `NOT EXISTS` subquery; reads `meta.changes` to detect race-lost / stale-userId cases (0 changes → redirect `?error=email-change-conflict` + delete verification row). Eliminates last documented launch-blocker race per Wave 20 reviewer. (P03) **URL fallback throw + try/catch wrap:** `buildChangeEmailHtml` and `buildDeleteConfirmHtml` now throw on non-https/localhost URLs instead of silently emitting `#` dead links. Callers in `change-email/route.ts` and `delete/request/route.ts` wrap template-build inside existing try block; logs `template/send failed` and returns 502 on throw. Added env-warn log when `NEXT_PUBLIC_APP_URL` unset. (P04) **Composite index `publishing_jobs(provider, status)`:** New migration `0103-publishing-jobs-provider-status-index.sql` adds idempotent `CREATE INDEX IF NOT EXISTS idx_pub_jobs_provider_status`; pre-emptive scaling fix for Inngest token-refresh cron filtering by provider+status. Applied to remote D1 (1 row written = index created). (P08) **CEO production smoke SOP:** New `docs/sop-ceo-production-smoke.md` — bilingual VI+EN 5-step manual checklist (landing/wizard/Telegram/payment/version) for non-tech CEO post-deploy verification. Closes long-pending task #234. **Tests:** 3149/3149 pass (+3 new: race-lost rephrased, stale-userId NEW, P03 invalid-URL ×2). **Build:** 0 TS errors. **Code Review:** SHIP NOW (0 BLOCK, 1 WATCH non-blocking on P04 column order, 6 LOW deferred to W23). **Verification:** Migration applied + indexed; tests prove conditional UPDATE returns conflict on changes=0; template throws caught by 502 path. **Deferred to Wave 22 Batch 2-4:** P01 token hashing (HIGH SEC, blocks P07), P05 retry audit, P06 Inngest cron auto-finalize, P07 shared email component.
 
 ---
 

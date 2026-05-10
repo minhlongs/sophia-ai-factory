@@ -121,19 +121,23 @@ async function createRequest(
     .bind(userId, tenantId, requestedAt, scheduledAt, token, requestedAt)
     .run();
 
+  if (!process.env.NEXT_PUBLIC_APP_URL) {
+    logger.warn('[acct-delete] NEXT_PUBLIC_APP_URL not set; using fallback');
+  }
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network';
   const confirmUrl = `${baseUrl}/api/account/delete/confirm?token=${encodeURIComponent(token)}&userId=${encodeURIComponent(userId)}`;
 
   if (userEmail) {
     try {
+      const html = buildDeleteConfirmHtml(confirmUrl, COOLDOWN_DAYS);
       await sendEmail({
         to: userEmail,
         subject: 'Confirm account deletion · Xác nhận xoá tài khoản',
-        html: buildDeleteConfirmHtml(confirmUrl, COOLDOWN_DAYS),
+        html,
         tags: [{ name: 'kind', value: 'account-delete-confirm' }],
       });
     } catch (err) {
-      logger.error('[acct-delete] sendEmail failed', toError(err));
+      logger.error('[acct-delete] template/send failed', toError(err));
       // Roll back the row so user can retry
       await db
         .prepare(`DELETE FROM account_deletion_requests WHERE user_id = ?`)
