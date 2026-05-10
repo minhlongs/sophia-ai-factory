@@ -34,6 +34,7 @@ import { ThemeToggle } from "@/forest/components/theme-toggle";
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
 import { AgentSidebar } from "@/forest/components/agent-sidebar/agent-sidebar";
 import { CmdKPalette } from "@/forest/components/cmd-k/cmd-k-palette";
+import { SidebarQuotaWidget } from "@/forest/components/dashboard/sidebar-quota-widget";
 import { TrialBanner } from "./components/trial-banner";
 import { getD1Raw } from "@/seed/db/client";
 import { getUserTier } from "@/seed/db/get-user-tier";
@@ -289,6 +290,7 @@ export default async function DashboardLayout({
         </nav>
 
         <div className="p-4 border-t border-border space-y-2">
+          <SidebarQuotaWidget />
           {userTier && userTier !== 'MASTER' && (
             <Link
               href="/pricing"
