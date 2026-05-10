@@ -37,6 +37,7 @@ import { CmdKPalette } from "@/forest/components/cmd-k/cmd-k-palette";
 import { TrialBanner } from "./components/trial-banner";
 import { getD1Raw } from "@/seed/db/client";
 import { getUserTier } from "@/seed/db/get-user-tier";
+import { SignOutButton } from "@/seed/auth/sign-out-button";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -297,13 +298,7 @@ export default async function DashboardLayout({
             </Link>
           )}
           <HealthIndicator />
-          <Link
-            href="/"
-            className="flex items-center gap-3 px-4 py-3 text-destructive rounded-lg hover:bg-destructive/10 transition-colors w-full"
-          >
-            <LogOut className="w-5 h-5" />
-            <span className="font-medium">{t('sidebar.sign_out')}</span>
-          </Link>
+          <SignOutButton label={t('sidebar.sign_out')} />
         </div>
       </aside>
 

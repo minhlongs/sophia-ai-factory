@@ -50,6 +50,56 @@ describe('video-quota: tier table', () => {
       MASTER: 1000,
     });
   });
+
+  it('MASTER tier limit is exactly 1000 (regression lock)', () => {
+    expect(VIDEO_QUOTA_BY_TIER['MASTER']).toBe(1000);
+  });
+});
+
+describe('reserveVideoSlot — MASTER boundary', () => {
+  let prepareSpy: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    prepareSpy = vi.fn();
+    vi.mocked(getD1Raw).mockResolvedValue({ prepare: prepareSpy } as never);
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('1000th MASTER slot reserved=true (count reaches limit)', async () => {
+    const stub = makePrepared([{ count: 1000 }]);
+    prepareSpy.mockReturnValue(stub);
+
+    const result = await reserveVideoSlot('user-master', 'MASTER');
+
+    expect(result.reserved).toBe(true);
+    expect(result.used).toBe(1000);
+    expect(result.limit).toBe(1000);
+  });
+
+  it('1001st MASTER slot returns reserved=false (quota_exceeded)', async () => {
+    // Upsert WHERE predicate blocks at count >= limit → empty RETURNING
+    const stub = makePrepared([]);
+    prepareSpy.mockReturnValue(stub);
+
+    // readUsage fallback: simulate saturated count
+    const fromMock = vi.mocked(createServerClient)().from as ReturnType<typeof vi.fn>;
+    fromMock.mockImplementation(() => {
+      const chain: Record<string, unknown> = {};
+      chain.select = vi.fn(() => chain);
+      chain.eq = vi.fn(() => chain);
+      chain.maybeSingle = vi.fn(() => Promise.resolve({ data: { count: 1000 }, error: null }));
+      return chain;
+    });
+
+    const result = await reserveVideoSlot('user-master', 'MASTER');
+
+    expect(result.reserved).toBe(false);
+    expect(result.used).toBe(1000);
+    expect(result.limit).toBe(1000);
+  });
 });
 
 describe('reserveVideoSlot', () => {

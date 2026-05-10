@@ -15,6 +15,7 @@ import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { createServerClient } from '@/seed/db/client';
 import { revalidatePath } from 'next/cache';
+import type { QueryResult } from '@/seed/db/d1-query-types';
 
 const inputSchema = z.object({
   /** Optional — caller may pass 'skip' or 'complete' for telemetry; not stored. */
@@ -42,10 +43,10 @@ export async function completeOnboardingAction(
 
   try {
     const db = createServerClient();
-    const { error: updateError } = await db
+    const { error: updateError }: QueryResult<Record<string, unknown>[]> = await db
       .from('user_profiles')
       .update({ onboarding_completed_at: nowMs })
-      .eq('user_id', user.id) as { error: { message: string } | null };
+      .eq('user_id', user.id);
 
     if (updateError) {
       return { success: false, error: updateError.message };

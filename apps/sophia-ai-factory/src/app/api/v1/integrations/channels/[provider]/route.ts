@@ -7,11 +7,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { logger } from '@/seed/utils/logger-utility';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
+import { SUPPORTED_PROVIDERS, type SupportedProvider } from '@/seed/config/channels/supported-providers';
 
 export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 
-const SUPPORTED_PROVIDERS = new Set(['youtube','tiktok','instagram','pinterest','linkedin','zalo']);
+const ALLOWED_PROVIDERS = new Set<string>([...SUPPORTED_PROVIDERS]);
 
 function getD1(): D1Database | null {
   try {
@@ -30,7 +31,7 @@ export async function DELETE(req: NextRequest, { params }: Params) {
   return withRateLimit(async (r: NextRequest) => {
     const user = await getCurrentUserFromHeaders(r.headers);
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    if (!SUPPORTED_PROVIDERS.has(provider))
+    if (!ALLOWED_PROVIDERS.has(provider))
       return NextResponse.json({ error: 'Unknown provider' }, { status: 404 });
 
     const db = getD1();

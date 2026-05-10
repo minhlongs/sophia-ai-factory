@@ -30,17 +30,17 @@ function getD1(): D1Database | null {
 interface StepStatusRow { cnt: number }
 
 async function loadStepStatus(db: D1Database, userId: string) {
-  const [missions, channels, jobs] = await Promise.allSettled([
+  const [missions, channels, telegram, jobs] = await Promise.allSettled([
     db
       .prepare(`SELECT COUNT(*) as cnt FROM engine_missions WHERE user_id = ?1 AND status = 'succeeded'`)
       .bind(userId)
       .first<StepStatusRow>(),
     db
-      .prepare(
-        `SELECT COUNT(*) as cnt FROM publishing_channels WHERE user_id = ?1 AND status = 'active'
-         UNION ALL
-         SELECT COUNT(*) as cnt FROM telegram_paired_chats WHERE paired_by = ?1 LIMIT 1`,
-      )
+      .prepare(`SELECT COUNT(*) as cnt FROM publishing_channels WHERE user_id = ?1 AND status = 'active'`)
+      .bind(userId)
+      .first<StepStatusRow>(),
+    db
+      .prepare(`SELECT COUNT(*) as cnt FROM telegram_paired_chats WHERE paired_by = ?1`)
       .bind(userId)
       .first<StepStatusRow>(),
     db
@@ -51,7 +51,9 @@ async function loadStepStatus(db: D1Database, userId: string) {
   ]);
 
   const step1Done = (missions.status === 'fulfilled' ? (missions.value?.cnt ?? 0) : 0) > 0;
-  const step2Done = (channels.status === 'fulfilled' ? (channels.value?.cnt ?? 0) : 0) > 0;
+  const channelsCnt = channels.status === 'fulfilled' ? (channels.value?.cnt ?? 0) : 0;
+  const telegramCnt = telegram.status === 'fulfilled' ? (telegram.value?.cnt ?? 0) : 0;
+  const step2Done = channelsCnt > 0 || telegramCnt > 0;
   const step3Done = (jobs.status === 'fulfilled' ? (jobs.value?.cnt ?? 0) : 0) > 0;
 
   return { step1Done, step2Done, step3Done };
