@@ -18,6 +18,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
+import { createServerClient } from '@/seed/db/client';
 import { schedulePublish } from '@/forest/publishing/schedule-publish';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 import { logger } from '@/seed/utils/logger-utility';
@@ -41,27 +42,10 @@ const distributeSchema = z.object({
   scheduledAt: z.number().int().positive().optional(),
 });
 
-/**
- * Raw D1 binding accessor for this edge route.
- *
- * Wave 17 Phase 05 canonical D1 swap — DEFERRED to Wave 18. Reason:
- *   createServerClient() returns D1Client which does not expose the underlying D1Database.
- *   schedulePublish(db: D1Database, ...) requires a raw D1Database binding.
- *   Switching route queries to D1Client AND changing schedulePublish signature forces
- *   complete rewrite of schedule-publish.test.ts (5 tests, all coupled to raw .prepare()/.bind()
- *   mock chain) — total LOC churn exceeds 30-line KISS threshold.
- *   Wave 18 candidate: introduce D1Client.unwrap() accessor or change schedulePublish to
- *   accept D1Client and update tests together in a dedicated refactor phase.
- */
-function getD1(): D1Database | null {
-  try {
-    const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
-    if (env?.DB) return env.DB as D1Database;
-    const ctx = (globalThis as Record<symbol, { env?: Record<string, unknown> }>)[Symbol.for('__cloudflare-context__')];
-    if (ctx?.env?.DB) return ctx.env.DB as D1Database;
-    return null;
-  } catch { return null; }
-}
+// DB access: canonical createServerClient() throughout. schedulePublish
+// (forest/publishing) still takes raw D1Database; we bridge via
+// client.unwrap() at the single call site below. Future cleanup:
+// migrate schedulePublish to D1Client when its test mocks are updated.
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -100,8 +84,7 @@ export async function POST(
       ? Math.min(Math.max(scheduledAt, now), maxScheduled)
       : now;
 
-    const db = getD1();
-    if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
+    const db = createServerClient().unwrap();
 
     // Ownership check: verify video belongs to current user
     const videoRow = await db

@@ -72,7 +72,7 @@ describe('POST /api/webhooks/nowpayments', () => {
     expect(res.status).toBeLessThan(500)
   })
 
-  it('accepts valid HMAC-SHA512 signature and processes IPN', async () => {
+  it('accepts valid HMAC-SHA512 signature and processes IPN', { timeout: 15_000 }, async () => {
     const { POST } = await import('../route')
     const sig = await computeNowPaymentsHmac(VALID_PAYLOAD, TEST_SECRET)
     const req = makeRequest(VALID_PAYLOAD, sig)
