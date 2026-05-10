@@ -10,7 +10,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { NonRetriableError } from 'inngest';
+import { NonRetriableError, RetryAfterError } from 'inngest';
 import { dispatchTelegramWithRetryHints } from '../dispatch-with-retry-hints';
 import type { TelegramPublishInput } from '@/forest/publishing/providers/telegram-publisher';
 
@@ -61,7 +61,7 @@ describe('dispatchTelegramWithRetryHints', () => {
     expect(result.externalUrl).toBe('https://t.me/message/42');
   });
 
-  it('429 with body parameters.retry_after → plain Error with cause.retryAfterSec', async () => {
+  it('429 with body parameters.retry_after → RetryAfterError honoring body retry_after', async () => {
     mockTelegramResponse({
       status: 429,
       body: { ok: false, error_code: 429, parameters: { retry_after: 5 } },
@@ -75,15 +75,15 @@ describe('dispatchTelegramWithRetryHints', () => {
       caught = err as Error;
     }
 
-    expect(caught).toBeInstanceOf(Error);
+    expect(caught).toBeInstanceOf(RetryAfterError);
     expect(caught).not.toBeInstanceOf(NonRetriableError);
     const cause = (caught as Error & { cause?: { retryAfterSec?: number; status?: number } }).cause;
-    expect(cause?.retryAfterSec).toBe(5); // body parameters.retry_after wins
+    expect(cause?.retryAfterSec).toBe(5); // body parameters.retry_after wins over header
     expect(cause?.status).toBe(429);
     expect(caught?.message).toContain('Rate limited (429)');
   });
 
-  it('429 with header only → plain Error with cause.retryAfterSec from header', async () => {
+  it('429 with header only → RetryAfterError using header value', async () => {
     mockTelegramResponse({
       status: 429,
       body: 'plain text not json',
@@ -97,6 +97,7 @@ describe('dispatchTelegramWithRetryHints', () => {
       caught = err as Error;
     }
 
+    expect(caught).toBeInstanceOf(RetryAfterError);
     const cause = (caught as Error & { cause?: { retryAfterSec?: number } }).cause;
     expect(cause?.retryAfterSec).toBe(30);
   });
