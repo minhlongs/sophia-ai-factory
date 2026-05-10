@@ -1178,6 +1178,11 @@
         "paused": "Tạm dừng",
         "scheduled": "Đã lên lịch",
         "uploading": "Đang tải lên"
+      },
+      "statusPanel": {
+        "title": "Trạng thái phân phối",
+        "empty": "Chưa có tác vụ phân phối — gửi mẫu trên để bắt đầu.",
+        "attempts": "Số lần thử: {count}"
       }
     },
     "channels": {
