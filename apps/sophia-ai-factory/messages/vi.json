@@ -777,6 +777,8 @@
       "pageSubtitle": "Theo dõi mức sử dụng, phí vượt hạn mức và trạng thái thanh toán",
       "exportButton": "Xuất File",
       "upgradeButton": "Nâng Cấp Gói",
+      "lifetimeBadge": "Trọn đời",
+      "lifetimeBadgeTooltip": "Gói Master — không gia hạn, không hết hạn",
       "usageBreakdown": "Chi Tiết Sử Dụng",
       "quotaSection": "Sử Dụng Hạn Mức",
       "quotaCardTitle": "Mức Dùng Tài Nguyên",

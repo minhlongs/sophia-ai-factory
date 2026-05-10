@@ -777,6 +777,8 @@
       "pageSubtitle": "Monitor your usage, overage charges, and billing status",
       "exportButton": "Export",
       "upgradeButton": "Upgrade Plan",
+      "lifetimeBadge": "Lifetime",
+      "lifetimeBadgeTooltip": "Master tier — no renewal, no expiry",
       "usageBreakdown": "Usage Breakdown",
       "quotaSection": "Quota Usage",
       "quotaCardTitle": "Resource Consumption",

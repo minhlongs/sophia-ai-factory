@@ -8,7 +8,7 @@ import { DunningStatusBanner } from '@/forest/components/billing/dunning-status-
 import { QuotaGaugeList } from '@/forest/components/analytics/QuotaGauge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/seed/components/ui/card';
 import { Button } from '@/seed/components/ui/button';
-import { AlertCircle, CreditCard, Download } from 'lucide-react';
+import { AlertCircle, CreditCard, Download, Infinity as InfinityIcon } from 'lucide-react';
 import { BillingChargeSummary } from './billing-charge-summary';
 import { BillingOverageTable } from './billing-overage-table';
 import { BillingPaymentHistory } from './billing-payment-history';
@@ -94,9 +94,20 @@ export default function BillingPage({ params }: { params: Promise<{ locale: stri
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t('pageTitle')}</h1>
-          <p className="text-muted-foreground mt-1">{t('pageSubtitle')}</p>
+        <div className="flex items-center gap-3">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">{t('pageTitle')}</h1>
+            <p className="text-muted-foreground mt-1">{t('pageSubtitle')}</p>
+          </div>
+          {usageData.license.tier === 'MASTER' && (
+            <span
+              title={t('lifetimeBadgeTooltip')}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-500/15 to-yellow-500/15 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs font-semibold"
+            >
+              <InfinityIcon className="h-3.5 w-3.5" />
+              {t('lifetimeBadge')}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm"><Download className="h-4 w-4 mr-2" />{t('exportButton')}</Button>

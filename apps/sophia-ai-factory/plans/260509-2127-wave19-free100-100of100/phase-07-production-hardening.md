@@ -9,7 +9,7 @@
 
 - **Priority:** P2
 - **Effort:** 1d (full) or skippable
-- **Status:** pending
+- **Status:** ✅ PARTIAL (2026-05-09) — shipped 7E + 7D; 7A/7B/7C/7F deferred to Wave 20
 - **Description:** Polish items not blocking FREE100 happy path. Track each as independent sub-task; cherry-pick by value.
 
 ## Items (Independent, Parallelizable)
@@ -71,12 +71,30 @@ None.
 
 ## Todo List (per item)
 
-- [ ] 7A — MarkdownV2 escaper + tests
-- [ ] 7B — Account page Delete/Export/ChangeEmail actions
-- [ ] 7C — Quota usage widget
-- [ ] 7D — MASTER lifetime badge
-- [ ] 7E — `.env.example` complete
-- [ ] 7F — Telegram retry_after honoring
+- [ ] 7A — MarkdownV2 escaper + tests **(deferred to Wave 20 — UX nice-to-have, not blocker)**
+- [ ] 7B — Account page Delete/Export/ChangeEmail actions **(deferred — destructive, needs careful design + confirmation flow)**
+- [ ] 7C — Quota usage widget **(deferred — visibility nice-to-have)**
+- [x] 7D — MASTER lifetime badge in billing
+- [x] 7E — `.env.example` complete (~50 lines added)
+- [ ] 7F — Telegram retry_after honoring **(deferred — needs same CAS multi-step refactor as Phase 05 "true 429 retry"; tracked together)**
+
+## Completion Notes (2026-05-09)
+
+**Cherry-picked 2/6 items, code review 9/10 PASS, security PASS, 0 blockers.**
+
+**Files modified:** 4
+- `.env.example` — appended Core App, Better Auth, Inngest, NOWPayments, Telegram, AI providers, encryption keys, email, cron, feature flags sections. Only placeholders (no secrets). Notes warn D1/R2 via wrangler.toml + production secrets via `wrangler secret put`.
+- `src/app/[locale]/dashboard/billing/page.tsx` — added MASTER-only "Lifetime" pill badge next to page title (InfinityIcon + amber/yellow gradient + tooltip).
+- `messages/en.json` — `dashboard.billing.lifetimeBadge` + `lifetimeBadgeTooltip`
+- `messages/vi.json` — "Trọn đời" + "Gói Master — không gia hạn, không hết hạn"
+
+**Tests:** 3077/3077 pass (parity test catches i18n drift; no new tests since UI/doc only).
+
+**Wave 20 carry-overs (created from this phase):**
+- 7A MarkdownV2 escaping (UX polish)
+- 7B Account self-service Delete/Export/Change-Email (GDPR-leaning, needs design)
+- 7C Sidebar quota widget (visibility)
+- 7F Honor `retry_after` via `step.sleep` — bundle with Phase 05 "true 429 retry" CAS multi-step refactor.
 
 ## Success Criteria
 
