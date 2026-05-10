@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+import * as Sentry from "@sentry/nextjs";
 import { useLocale, useTranslations } from "next-intl";
 import { AlertTriangle, RefreshCw, LogIn, Wifi, Server } from "lucide-react";
 import { localizedHref } from "@/lib/i18n/localized-href";
@@ -32,6 +34,16 @@ export default function DashboardError({
   const locale = useLocale();
   const classified = classifyError(error);
   const Icon = classified.icon;
+
+  useEffect(() => {
+    try {
+      Sentry.captureException(error, {
+        tags: { digest: error.digest ?? "unknown", kind: classified.kind },
+      });
+    } catch {
+      // never let Sentry init failure cascade into a render crash
+    }
+  }, [error, classified.kind]);
 
   const titleKey = classified.kind === "auth" ? "authExpired"
     : classified.kind === "network" ? "network"
