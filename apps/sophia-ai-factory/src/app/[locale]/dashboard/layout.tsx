@@ -26,6 +26,8 @@ import {
   FlaskConical,
   Webhook,
   ServerCog,
+  Mic,
+  LayoutTemplate,
 } from "lucide-react";
 import { ReplayTourLink } from "./components/replay-tour-link";
 import { HealthIndicator } from "@/forest/components/dashboard/health-indicator";
@@ -139,6 +141,20 @@ export default async function DashboardLayout({
           >
             <Video className="w-5 h-5" />
             <span className="font-medium">{t('sidebar.my_videos')}</span>
+          </Link>
+          <Link
+            href="/dashboard/voices"
+            className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
+          >
+            <Mic className="w-5 h-5" />
+            <span className="font-medium">{t('sidebar.voices')}</span>
+          </Link>
+          <Link
+            href="/dashboard/templates"
+            className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
+          >
+            <LayoutTemplate className="w-5 h-5" />
+            <span className="font-medium">{t('sidebar.templates')}</span>
           </Link>
           <Link
             href="/dashboard/orders"
