@@ -1,21 +1,34 @@
--- Migration 0105: Stripe Connect Express linkage on user_payout_settings.
--- Adds columns needed to (a) onboard an affiliate via Stripe Connect Account Link,
--- (b) track KYC/charges_enabled state from account.updated webhooks, and
--- (c) split outbound payouts between USDT (existing) and fiat (Stripe Transfer).
+-- Migration 0105: Stripe Connect Express linkage — self-contained CREATE.
+--
+-- Why CREATE instead of ALTER:
+--   Remote D1 diverged from migration 0023's `user_payout_settings` schema (table
+--   was never applied — affiliate_payouts is the org-level table that exists instead).
+--   Original 0105 used ALTER which fails on remote with "no such table".
+--   This rewrite creates the table from scratch with the FULL superset of columns
+--   (original 0023 layout + 5 Stripe Connect cols), guarded by IF NOT EXISTS so it
+--   is idempotent on local D1 dev environments where 0023 may have been applied.
 --
 -- Design notes:
---   - Does NOT alter the `preferred_method` CHECK enum on user_payout_settings
---     (SQLite cannot alter CHECK in place; we keep stripe_connect orthogonal).
---   - Does NOT alter `payouts.method` CHECK either; Stripe transfers will write
---     method='other' with reference=<stripe_transfer_id> until a future migration
---     widens the enum.
---   - All new columns are NULL/0-default safe → backwards compatible.
+--   - `preferred_method` CHECK enum kept identical to 0023 — adding 'stripe_connect'
+--     would silently lock out the method until a constraint rewrite, so Stripe is
+--     tracked via the dedicated `stripe_*` columns instead (orthogonal to
+--     preferred_method which still routes USDT/bank).
+--   - `stripe_connect_events` is the webhook idempotency log (event.id is unique
+--     per Stripe webhook docs).
 
-ALTER TABLE user_payout_settings ADD COLUMN stripe_account_id TEXT;
-ALTER TABLE user_payout_settings ADD COLUMN stripe_account_status TEXT;       -- 'pending' | 'enabled' | 'restricted' | 'rejected'
-ALTER TABLE user_payout_settings ADD COLUMN stripe_payout_enabled INTEGER DEFAULT 0;  -- 1 once charges_enabled+payouts_enabled
-ALTER TABLE user_payout_settings ADD COLUMN stripe_onboarding_started_at TEXT;
-ALTER TABLE user_payout_settings ADD COLUMN stripe_last_event_at TEXT;
+CREATE TABLE IF NOT EXISTS user_payout_settings (
+  user_id TEXT PRIMARY KEY REFERENCES users(id),
+  preferred_method TEXT CHECK (preferred_method IN ('usdt_trc20','usdt_erc20','bank_transfer')),
+  payout_address TEXT,                     -- crypto wallet OR bank account; encrypt before WRITE (TODO M+1)
+  payout_address_verified INTEGER DEFAULT 0,
+  -- Stripe Connect Express columns (Phase 03)
+  stripe_account_id TEXT,
+  stripe_account_status TEXT,              -- 'pending' | 'enabled' | 'restricted' | 'rejected'
+  stripe_payout_enabled INTEGER DEFAULT 0, -- 1 once charges_enabled+payouts_enabled
+  stripe_onboarding_started_at TEXT,
+  stripe_last_event_at TEXT,
+  updated_at TEXT DEFAULT (datetime('now'))
+);
 
 CREATE INDEX IF NOT EXISTS idx_payout_settings_stripe_acct
   ON user_payout_settings(stripe_account_id)
