@@ -1,7 +1,21 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-05-09 NIGHT (Wave 17 substantively complete: 7/8 phases shipped; Phase 08 deferred Wave 18)
+> **Last Updated:** 2026-05-10 (Wave 18 Batch 1: orphan cleanup + handleVideoUrlError refactor + D1Client.unwrap() accessor shipped)
+
+---
+
+## [2026-05-10] Wave 18 Batch 1 — Cleanup Deferrals from Wave 17 Review (Commit Pending)
+
+**Summary (vi):** Ba cleanup dự kiến từ Wave 17 phases 05+07. (1) Xoá orphan component: `asset-picker.tsx` (53 LOC) + `render-status.tsx` (44 LOC) — wizard children không dùng sau Wave 17 Phase 07. (2) Trim orphan i18n keys: 24 keys per locale (`dashboard.videos.{script,asset,steps,render,actions,errors}.*` subtrees) từ en.json + vi.json — sibling keys được dùng (steps.{parse,tts,video,poll,download,mux,done}, render.failed) vẫn intact. (3) `D1Client.unwrap()` accessor: 1-method escape hatch trả `D1Database` private field (JSDoc cảnh báo use-sparingly). Behavior-preserving. `handleVideoUrlError` refactor: extract `resolveVideoUrlOrFail()` helper (81-112) dedup 22 LOC giữa OAuth + Telegram branches. Terminal errors update D1 status='failed' trước re-throw; VideoNotMirroredError re-throws (transient—Inngest retry); assertSafeVideoUrl preserved ở mỗi call site.
+
+**Summary (en):** Three surgical cleanups flagged by Wave 17 phase-05+07 review. (1) Orphan component deletion: `asset-picker.tsx` (53 LOC, unused wizard child) + `render-status.tsx` (44 LOC, same). Zero callers. (2) i18n key trim: 24 orphan keys per locale (en/vi) under `dashboard.videos.*` namespace—`script.*`, `asset.*`, `steps.{script,assets,render}`, `render.{initializing,ready,rendering}`, `actions.{back,create}`, `errors.missing_heygen_key`. Sibling keys preserved (`steps.{parse,tts,video,poll,download,mux,done}`, `render.failed`). Both JSON files still parse. (3) `D1Client.unwrap()` accessor: returns underlying `D1Database` from private field (JSDoc warns sparingly-use only). Zero call sites in this commit—Wave 18 future phase consumes for canonical D1 swap completion. (4) `handleVideoUrlError` refactor: extract `resolveVideoUrlOrFail()` helper (44 LOC) dedup 22 LOC OAuth+Telegram branches. Terminal errors atomically update D1 status='failed' before re-throw; VideoNotMirroredError re-throws (transient, Inngest retries); assertSafeVideoUrl guard preserved. Wave 16 C1 fix (telegram status='live' early-exit) preserved.
+
+**Code Review:** 9.6/10 AUTO-APPROVE (0 critical, 0 major, 2 cosmetic minors deferred).
+
+**Known Issue (Deferred):** `nowpayments HMAC SHA512` test flakes on cold-start (run 1: 5.1s > 5000ms vitest default; runs 2-5: ~4.6s). Pre-existing (commit a060be63). Fix: `{ timeout: 10000 }` decorator. Deferred to follow-up (avoid commit narrative muddle).
+
+**Verification (2026-05-10):** 3047/3047 tests pass, 0 TS errors, 0 i18n missing, build exit 0.
 
 ---
 

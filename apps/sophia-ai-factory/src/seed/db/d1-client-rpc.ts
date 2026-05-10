@@ -12,6 +12,16 @@ export class D1Client {
     this.db = db;
   }
 
+  /**
+   * Returns the underlying D1Database binding.
+   * Use sparingly — prefer the typed query methods on D1Client.
+   * Currently only consumed by code paths that bridge to legacy raw-D1
+   * helpers (e.g., schedule-publish.ts) pending full migration.
+   */
+  unwrap(): D1Database {
+    return this.db;
+  }
+
   from<T = Record<string, unknown>>(table: string): D1QueryChain<T> {
     return new D1QueryChain<T>(this.db, table);
   }

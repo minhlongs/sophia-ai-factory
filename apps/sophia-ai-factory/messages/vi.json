@@ -844,9 +844,6 @@
         "subtitle": "Tạo video AI: viết kịch bản → chọn avatar & giọng nói → render."
       },
       "steps": {
-        "script": "Kịch Bản",
-        "assets": "Tài Nguyên",
-        "render": "Render",
         "parse": "Phân tích",
         "tts": "Lồng tiếng",
         "video": "Tạo video",
@@ -855,40 +852,14 @@
         "mux": "Ghép âm/hình",
         "done": "Hoàn thành"
       },
-      "script": {
-        "topic": "Chủ đề",
-        "audience": "Đối tượng",
-        "duration": "Thời lượng (giây)",
-        "placeholderTopic": "vd: công cụ AI tăng năng suất",
-        "placeholderAudience": "vd: founder và marketer cá nhân",
-        "generate": "Tạo Kịch Bản",
-        "regenerate": "Tạo Lại",
-        "useScript": "Dùng Kịch Bản Này →",
-        "hook": "Hook",
-        "body": "Nội dung",
-        "cta": "CTA"
-      },
-      "asset": {
-        "loading": "Đang tải avatar & giọng nói...",
-        "chooseAvatar": "Chọn Avatar",
-        "chooseVoice": "Chọn Giọng Nói"
-      },
       "render": {
-        "initializing": "Đang khởi tạo render...",
-        "ready": "Video đã sẵn sàng",
-        "failed": "Render thất bại",
-        "rendering": "Đang render..."
-      },
-      "actions": {
-        "back": "Quay lại",
-        "create": "Tạo Video"
+        "failed": "Render thất bại"
       },
       "errors": {
         "title": "Lỗi trang Video",
         "description": "Đã xảy ra lỗi khi tải video của bạn.",
         "retry": "Thử Lại",
-        "unknown": "Lỗi không xác định. Vui lòng thử lại.",
-        "missing_heygen_key": "Dịch vụ video chưa được cấu hình bởi quản trị viên. Vui lòng liên hệ hỗ trợ."
+        "unknown": "Lỗi không xác định. Vui lòng thử lại."
       },
       "notFound": {
         "title": "Không tìm thấy video",
