@@ -486,7 +486,12 @@
       "credits": "MCU Credits",
       "replay_tour": "Replay Tour",
       "upgradePlan": "Upgrade Plan",
-      "tierBadge": "Current plan: {tier}"
+      "tierBadge": "Current plan: {tier}",
+      "quotaWidget": {
+        "title": "This Month",
+        "unlimited": "Unlimited",
+        "viewBilling": "View billing details"
+      }
     },
     "notFound": {
       "title": "Page Not Found",
