@@ -54,11 +54,12 @@ export default async function VideoDetailPage({
   if (!video) notFound();
   if (video.user_id !== user.id) notFound();
 
-  // Load publishing jobs for this video (video_job_id stores videos.id by convention)
+  // Load publishing jobs for this video (video_id = videos.id; renamed from
+  // video_job_id in Wave 20 Phase 05 / migration 0101).
   const { data: jobsData } = await db
     .from("publishing_jobs")
     .select("id, channel_id, status, scheduled_at")
-    .eq("video_job_id", id)
+    .eq("video_id", id)
     .eq("tenant_id", user.id);
 
   // Join publishing_channels to get provider for each job

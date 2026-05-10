@@ -83,12 +83,12 @@ export async function GET(
                 pj.error, pj.created_at AS updated_at
          FROM publishing_jobs pj
          JOIN publishing_channels pc ON pj.channel_id = pc.id
-         WHERE pc.user_id = ? AND pj.video_job_id = ?
+         WHERE pc.user_id = ? AND pj.video_id = ?
          UNION
          SELECT pj.id, pj.channel_id, pj.provider, pj.status, pj.retry_count,
                 pj.error, pj.created_at AS updated_at
          FROM publishing_jobs pj
-         WHERE pj.provider = 'telegram' AND pj.tenant_id = ? AND pj.video_job_id = ?
+         WHERE pj.provider = 'telegram' AND pj.tenant_id = ? AND pj.video_id = ?
          ORDER BY updated_at ASC`,
       )
       .bind(user.id, videoId, user.id, videoId)

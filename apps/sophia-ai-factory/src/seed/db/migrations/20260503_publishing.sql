@@ -26,7 +26,8 @@ CREATE TABLE IF NOT EXISTS publishing_channels (
 CREATE TABLE IF NOT EXISTS publishing_jobs (
   id TEXT PRIMARY KEY,
   tenant_id TEXT NOT NULL,
-  video_job_id TEXT NOT NULL,
+  -- video_id stores videos.id (renamed from video_job_id in Wave 20 Phase 05; see migration 0101)
+  video_id TEXT NOT NULL,
   channel_id TEXT NOT NULL,
   status TEXT NOT NULL CHECK(status IN ('scheduled','uploading','processing','live','failed')),
   caption TEXT,

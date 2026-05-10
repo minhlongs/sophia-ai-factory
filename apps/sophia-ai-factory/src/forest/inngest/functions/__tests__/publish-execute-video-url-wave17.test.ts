@@ -2,7 +2,7 @@
  * Wave 17 Phase 02 — publishExecute video URL resolution via getCanonicalVideoUrl.
  *
  * Verifies that publishExecute no longer queries video_jobs.final_r2_key but instead
- * delegates to getCanonicalVideoUrl(job.video_job_id, tenantId) for both:
+ * delegates to getCanonicalVideoUrl(job.video_id, tenantId) for both:
  *   1. Telegram branch
  *   2. OAuth (HeyGen) branch
  *
@@ -172,7 +172,7 @@ function makeTelegramJob(overrides: Partial<Record<string, unknown>> = {}) {
   return {
     id: JOB_ID,
     tenant_id: TENANT_ID,
-    video_job_id: VIDEO_ID,  // stores videos.id post Wave 16 Phase 02
+    video_id: VIDEO_ID,  // stores videos.id (renamed from video_job_id in Wave 20 Phase 05)
     channel_id: CHAT_ID,
     provider: 'telegram',
     status: 'scheduled',
@@ -188,7 +188,7 @@ function makeOAuthJob(overrides: Partial<Record<string, unknown>> = {}) {
   return {
     id: JOB_ID,
     tenant_id: TENANT_ID,
-    video_job_id: VIDEO_ID,
+    video_id: VIDEO_ID,
     channel_id: 'ch-youtube-001',
     provider: 'youtube',
     status: 'scheduled',
@@ -395,18 +395,18 @@ describe('Wave 17 Phase 02 — publishExecute video URL resolution', () => {
 
   // ── Column semantic verification ──────────────────────────────────────────
 
-  describe('video_job_id column semantic (Wave 16/17 bridge)', () => {
-    it('P02-S1: video_job_id stores videos.id — correct arg forwarded to getCanonicalVideoUrl', () => {
+  describe('video_id column semantic (Wave 16/17 bridge)', () => {
+    it('P02-S1: video_id stores videos.id — correct arg forwarded to getCanonicalVideoUrl', () => {
       const job = makeTelegramJob();
-      // Confirms: the column stores videos.id (misleading name, KISS, rename in Wave 18)
-      expect(job.video_job_id).toBe(VIDEO_ID);
+      // Confirms: the column stores videos.id (renamed video_job_id → video_id in Wave 20 Phase 05).
+      expect(job.video_id).toBe(VIDEO_ID);
     });
 
-    it('P02-S2: both Telegram and OAuth jobs carry the same video_job_id semantics', () => {
+    it('P02-S2: both Telegram and OAuth jobs carry the same video_id semantics', () => {
       const tgJob = makeTelegramJob();
       const oauthJob = makeOAuthJob();
-      expect(tgJob.video_job_id).toBe(VIDEO_ID);
-      expect(oauthJob.video_job_id).toBe(VIDEO_ID);
+      expect(tgJob.video_id).toBe(VIDEO_ID);
+      expect(oauthJob.video_id).toBe(VIDEO_ID);
     });
   });
 
