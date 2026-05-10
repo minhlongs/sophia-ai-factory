@@ -11,6 +11,7 @@ export * from './clickbank-signature-verifier';
 export * from './commission-calculator';
 export * from './conversion-attributor';
 export * from './dashboard-stats';
+export * from './promo-library';
 export * from './offer-sync-cron';
 export * from './provider-interface';
 export * from './trending-discovery';
