@@ -5,7 +5,7 @@
  * gets the right retry behavior from Inngest:
  *
  *  - Network error / fetch throw → plain Error (Inngest retries with default backoff)
- *  - HTTP 429 (rate limit)       → plain Error with `cause.retryAfterSec` (Inngest retries)
+ *  - HTTP 429 (rate limit)       → RetryAfterError(message, retryAfterSec) — Wave 20 Phase 02
  *  - HTTP 5xx                    → plain Error (Inngest retries)
  *  - HTTP 4xx (NOT 429)          → NonRetriableError (Inngest stops — invalid chat etc.)
  *
@@ -14,7 +14,7 @@
  * @module tree/telegram/dispatch-with-retry-hints
  */
 
-import { NonRetriableError } from 'inngest';
+import { NonRetriableError, RetryAfterError } from 'inngest';
 import {
   publishToTelegram,
   TelegramApiError,
@@ -22,6 +22,8 @@ import {
   type TelegramPublishResult,
 } from '@/forest/publishing/providers/telegram-publisher';
 import { logger } from '@/seed/utils/logger-utility';
+
+const DEFAULT_RETRY_AFTER_SEC = 60;
 
 /**
  * Wraps the publisher call and re-throws errors with Inngest retry hints.
@@ -35,19 +37,24 @@ export async function dispatchTelegramWithRetryHints(
     return await publishToTelegram(input);
   } catch (err) {
     if (err instanceof TelegramApiError) {
-      // 429: hint Inngest with retryAfterSec so future work can pass to step.sleep.
+      // 429: tell Inngest to wait Telegram-supplied retryAfterSec before next attempt.
+      // Wave 20 Phase 02: switched from plain Error → RetryAfterError so Inngest honors
+      // the bot-API-suggested delay instead of using default exponential backoff.
       if (err.status === 429) {
+        const retryAfterSec = err.retryAfterSec ?? DEFAULT_RETRY_AFTER_SEC;
         logger.warn('[telegram-dispatch] Rate limited, will retry', {
           jobId: input.jobId,
-          retryAfterSec: err.retryAfterSec,
+          retryAfterSec,
         });
-        const wrapped = new Error(err.message);
-        // cause carries the retry hint without changing the message string (preserves logs).
-        (wrapped as Error & { cause?: unknown }).cause = {
-          retryAfterSec: err.retryAfterSec,
+        // RetryAfterError accepts seconds (number) — Inngest converts to delay.
+        const retryErr = new RetryAfterError(err.message, retryAfterSec, { cause: err });
+        // Preserve diagnostic struct on `cause` for legacy callers/tests reading it.
+        (retryErr as Error & { cause?: unknown }).cause = {
+          retryAfterSec,
           status: 429,
+          original: err,
         };
-        throw wrapped;
+        throw retryErr;
       }
 
       // Other 4xx: invalid chat, bot kicked, payload rejected — do NOT retry.

@@ -173,7 +173,21 @@ type ClaimResult =
   | { skipped: true; jobId: string; status: string; externalPostId: ''; provider: '' }
   | { skipped: false; jobId: string; status: 'failed' | 'scheduled'; externalPostId: ''; provider: ''; error?: string }
   | { skipped: false; jobId: string; status: 'processing'; externalPostId: string; provider: string }
-  | { skipped: false; jobId: string; status: 'live'; externalPostId: string; provider: string };
+  | { skipped: false; jobId: string; status: 'live'; externalPostId: string; provider: string }
+  /**
+   * Wave 20 Phase 02: telegram path — CAS-claim succeeded inside step 1 but the
+   * actual Bot-API call lives in a separate `step.run('telegram-send', ...)` so
+   * Inngest can retry that step independently when 429/5xx hits.
+   * Step 1's memoized output prevents the CAS from re-running on retry.
+   */
+  | {
+      skipped: false;
+      jobId: string;
+      status: 'telegram-claimed';
+      provider: 'telegram';
+      externalPostId: '';
+      telegramPayload: { videoUrl: string; chatId: string; caption: string };
+    };
 
 export const publishExecute = inngest.createFunction(
   { id: 'publish-execute', retries: 0 },
@@ -217,14 +231,17 @@ export const publishExecute = inngest.createFunction(
         return { skipped: true, jobId, status: job.status as string, externalPostId: '', provider: '' };
       }
 
-      // ── Telegram dispatch (Option A: special-case, bypasses publishing_channels) ──
+      // ── Telegram claim (Wave 20 Phase 02) ─────────────────────────────────────
       // job.provider='telegram' is set by schedule-publish when distribute route submits
       // a Telegram channel. channel_id stores telegram_paired_chats.chat_id as surrogate.
-      // NOTE: assertSafeVideoUrl() SSRF guard is still enforced before sending to Bot API.
       //
-      // Wave 17 Phase 02: video URL resolved via getCanonicalVideoUrl(job.video_id, tenantId).
-      // publishing_jobs.video_id stores videos.id (renamed from video_job_id in Wave 20 Phase 05;
-      // see migration 0101). resolveVideoUrlOrFail handles canonical R2 lookup + SSRF guarding.
+      // Step 1 (here) ONLY does the idempotent prep work: CAS, video URL resolve,
+      // pairing check, SSRF guard. The actual Bot-API call + DB finalization happen
+      // in separate `step.run` calls below, so Inngest can retry the dispatch on
+      // 429/5xx without re-firing the CAS check (which would bail because status
+      // is already 'uploading').
+      //
+      // publishing_jobs.video_id stores videos.id (Wave 20 Phase 05 / migration 0101).
       const jobProvider = job.provider ?? '';
       if (jobProvider === 'telegram') {
         let videoUrl: string;
@@ -253,37 +270,17 @@ export const publishExecute = inngest.createFunction(
           );
         }
 
-        // Wave 19 Phase 05: dispatch via retry-aware helper.
-        // Helper classifies errors so Inngest step retries on 429/5xx/network,
-        // skips retry on 4xx (invalid chat, bot kicked, etc.).
-        const { externalPostId: tgPostId, externalUrl } = await dispatchTelegramWithRetryHints({
+        // Hand off to follow-up steps (telegram-send + telegram-finalize).
+        return {
+          skipped: false,
           jobId,
-          userId: tenantId,
-          videoUrl,
-          caption: job.caption ?? '',
-          chatId: job.channel_id,
-        });
-
-        // Telegram posts are synchronous — mark live immediately (no polling needed)
-        await db.from('publishing_jobs').update({
-          status: 'live',
-          finished_at: Math.floor(Date.now() / 1000),
-        }).eq('id', jobId);
-
-        await db.from('publishing_results').insert({
-          id: randomUUID(),
-          publishing_job_id: jobId,
-          tenant_id: tenantId,
-          channel_post_id: tgPostId,
-          post_url: externalUrl,
-          metrics_json: null,
-          published_at: Math.floor(Date.now() / 1000),
-        });
-
-        logger.info('[publishExecute/telegram] Posted and finalized', { jobId, chatId: job.channel_id, tgPostId });
-        return { skipped: false, jobId, status: 'live', externalPostId: tgPostId, provider: 'telegram' };
+          status: 'telegram-claimed',
+          provider: 'telegram',
+          externalPostId: '',
+          telegramPayload: { videoUrl, chatId: job.channel_id, caption: job.caption ?? '' },
+        };
       }
-      // ── End Telegram dispatch ──────────────────────────────────────────────────
+      // ── End Telegram claim ─────────────────────────────────────────────────────
 
       const { data: channelData } = await db
         .from('publishing_channels')
@@ -367,7 +364,62 @@ export const publishExecute = inngest.createFunction(
       return { skipped: false, jobId, status: 'processing', externalPostId, provider: channel.provider };
     });
 
-    // Exit early if upload didn't complete OR Telegram already finalized (status='live')
+    // ── Wave 20 Phase 02: Telegram dispatch as separate steps ────────────────
+    // Inngest memoizes step output, so the CAS-claim step (above) won't replay
+    // on retry — only the failing step does. Splitting send + finalize also
+    // prevents the rare "API succeeded → DB write failed → retry double-sends"
+    // failure mode (step 'telegram-send' result is memoized for finalize retry).
+    if (!claimResult.skipped && claimResult.status === 'telegram-claimed') {
+      const { videoUrl, chatId, caption } = claimResult.telegramPayload;
+
+      const sendResult = await step.run('telegram-send', async () => {
+        // Helper throws RetryAfterError on 429 (Inngest honors Telegram retry_after),
+        // NonRetriableError on 4xx, plain Error on 5xx/network.
+        return dispatchTelegramWithRetryHints({
+          jobId,
+          userId: tenantId,
+          videoUrl,
+          caption,
+          chatId,
+        });
+      });
+
+      await step.run('telegram-finalize', async () => {
+        const db = await getD1Client();
+        const finishedAt = Math.floor(Date.now() / 1000);
+
+        await db.from('publishing_jobs').update({
+          status: 'live',
+          finished_at: finishedAt,
+        }).eq('id', jobId);
+
+        await db.from('publishing_results').insert({
+          id: randomUUID(),
+          publishing_job_id: jobId,
+          tenant_id: tenantId,
+          channel_post_id: sendResult.externalPostId,
+          post_url: sendResult.externalUrl,
+          metrics_json: null,
+          published_at: finishedAt,
+        });
+
+        logger.info('[publishExecute/telegram] Posted and finalized', {
+          jobId,
+          chatId,
+          tgPostId: sendResult.externalPostId,
+        });
+      });
+
+      return {
+        skipped: false,
+        jobId,
+        status: 'live' as const,
+        externalPostId: sendResult.externalPostId,
+        provider: 'telegram',
+      };
+    }
+
+    // Exit early if upload didn't complete OR no further work needed
     if (claimResult.skipped || claimResult.status === 'live' || claimResult.status !== 'processing' || !claimResult.externalPostId) {
       return claimResult;
     }
