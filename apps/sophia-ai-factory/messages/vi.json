@@ -488,6 +488,11 @@
       "upgradePlan": "Nâng Cấp Gói",
       "tierBadge": "Gói hiện tại: {tier}"
     },
+    "notFound": {
+      "title": "Không tìm thấy trang",
+      "description": "Trang trong bảng điều khiển bạn đang tìm không tồn tại hoặc đã bị di chuyển.",
+      "back": "Quay lại Bảng điều khiển"
+    },
     "missions": {
       "pev_stage": {
         "queued": "Đang Xếp Hàng",

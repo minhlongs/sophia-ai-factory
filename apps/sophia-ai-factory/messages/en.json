@@ -488,6 +488,11 @@
       "upgradePlan": "Upgrade Plan",
       "tierBadge": "Current plan: {tier}"
     },
+    "notFound": {
+      "title": "Page Not Found",
+      "description": "The dashboard page you are looking for does not exist or has been moved.",
+      "back": "Back to Dashboard"
+    },
     "missions": {
       "pev_stage": {
         "queued": "Queued",
