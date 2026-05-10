@@ -7,11 +7,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { logger } from '@/seed/utils/logger-utility';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
+import { SUPPORTED_PROVIDERS } from '@/seed/config/channels/supported-providers';
 
 export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
-
-const SUPPORTED_PROVIDERS = ['youtube','tiktok','instagram','pinterest','linkedin','zalo','facebook','twitter'];
 
 function getD1(): D1Database | null {
   try {

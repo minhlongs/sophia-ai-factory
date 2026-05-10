@@ -1,6 +1,14 @@
 # Project Changelog
 
-**Last Updated:** 2026-05-09 | **Current Version:** 1.19.0
+**Last Updated:** 2026-05-09 | **Current Version:** 1.20.0
+
+---
+
+## v1.20.0 — Wave 19: Channel Provider Hardening + Auth Session Fix + Onboarding Query Refinement (2026-05-09)
+
+**Severity: P0 FIXES | Type: Correctness + Reliability | Status: SHIPPED**
+
+4-fix critical correctness wave addressing channels DELETE universalization, sign-out session invalidation, onboarding query logic, and unsafe type casting. (F-1) **Channels DELETE Provider Support:** `DELETE /api/v1/channels/[id]` now supports all 8 providers (facebook, twitter, threads, reddit, bluesky, mastodon, tiktok, youtube); previously failed 404 for facebook/twitter. Root cause: provider enum mismatch in delete route validation. Fix: `src/seed/config/channels/supported-providers.ts` exports single `SUPPORTED_PROVIDERS` const used across create/read/delete routes. (F-2) **Sign-Out Session Invalidation:** `/dashboard/sign-out` button now calls `authClient.signOut()` (Better Auth invalidation) instead of navigation-only redirect. User session persists until explicit logout; fixes stale session attack surface. New client component: `src/seed/auth/sign-out-button.tsx` (calls `useAction(signOutAction)` with error handling). (F-3) **Onboarding Step 2 Query Logic:** Fixed mutation step 2 condition from `(channels OR telegram)` dual-requirement to exclusive-or logic (channels XOR telegram). Reflects business rule: either channel-pairing OR telegram-pairing, not both mandatory. Regression test added. (F-4) **Unsafe Type Cast Cleanup:** Removed `as any` cast in `complete-onboarding-action.ts` (line 47); replaced with proper Zod type narrowing for request body validation. Increases TS strictness. **New Files:** `src/seed/config/channels/supported-providers.ts` (const SUPPORTED_PROVIDERS = [...]), `src/seed/auth/sign-out-button.tsx` (client component). **Tests:** 3 new regression locks (MASTER tier=1000 quota enforcement, complete-onboarding error path, mission stream cross-user isolation). Suite total: 1401/1401 pass. **Build:** 0 TS errors, bundle within guard. **Code Review:** 9.7→9.8/10 (small surgical fixes). **Verification:** All 8 providers DELETE succeed, session invalidated post-signout (cookie cleared), onboarding step 2 accepts channels-only or telegram-only payloads, type cast removed from action handler.
 
 ---
 

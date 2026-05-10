@@ -275,3 +275,34 @@ describe('SSE stream heartbeat-cursor separation (Wave-14)', () => {
     );
   }, 15000);
 });
+
+// ── Cross-user privilege guard (C6 regression lock) ───────────────────────────
+
+describe('SSE stream cross-user isolation (C6)', () => {
+  it('emits event: error code=not_found when mission belongs to different user', async () => {
+    vi.useFakeTimers();
+
+    // validateMissionApiKey returns userA — but DB query filters by user_id=userA
+    // and the mission belongs to userB → .single() returns null data
+    mockValidateKey.mockResolvedValue({ valid: true, userId: 'userA' });
+    mockDbFrom.mockImplementation(() => ({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: null, error: null }),
+    }));
+
+    const { GET } = await import('./route');
+    const req = new NextRequest('http://localhost/api/v1/missions/mission-b/stream', {
+      headers: { authorization: 'Bearer key' },
+    });
+    const responsePromise = GET(req, { params: Promise.resolve({ id: 'mission-b' }) });
+    await vi.advanceTimersByTimeAsync(2100);
+
+    const response = await responsePromise;
+    const body = await drain(response.body as ReadableStream<Uint8Array>);
+    vi.useRealTimers();
+
+    expect(body).toContain('event: error');
+    expect(body).toContain('"code":"not_found"');
+  }, 15000);
+});

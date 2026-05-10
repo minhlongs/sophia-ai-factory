@@ -27,7 +27,9 @@ Sophia AI Video Factory is a Next.js 16 application structured around the App Ro
 │       │   ├── security/      # API key validation, cron auth, HMAC
 │       │   ├── types/         # Shared TypeScript interfaces + contracts
 │       │   ├── config/        # Feature flags, tier config, environment
+│       │   │   └── channels/  # Supported channel providers (supported-providers.ts)
 │       │   ├── auth/          # Better Auth server, JWT enrichment
+│       │   │   └── sign-out-button.tsx # Client sign-out component
 │       │   ├── health/        # Health check endpoints
 │       │   └── components/ui/ # Pure Tailwind primitives (shadcn/ui)
 │       ├── tree/              # Layer 2 — single-tenant CEO ops
