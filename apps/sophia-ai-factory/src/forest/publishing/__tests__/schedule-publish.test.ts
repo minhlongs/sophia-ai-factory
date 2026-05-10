@@ -29,17 +29,20 @@ import { schedulePublish } from '../schedule-publish';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function makeD1(overrides?: { runError?: string; runSuccess?: boolean }): D1Database {
-  const runResult = {
-    success: overrides?.runSuccess ?? true,
-    error: overrides?.runError,
-    meta: { changes: 1, duration: 1, last_row_id: 1, rows_read: 0, rows_written: 1 },
-    results: [],
-  };
+function makeD1(overrides?: { runThrows?: string; runSuccess?: boolean }): D1Database {
+  // D1 throws on constraint violations — it does NOT return a .error field.
+  // runThrows simulates D1 throwing an Error (real contract, Wave 17 Batch 1 C2).
+  const runFn = overrides?.runThrows
+    ? vi.fn().mockRejectedValue(new Error(overrides.runThrows))
+    : vi.fn().mockResolvedValue({
+        success: overrides?.runSuccess ?? true,
+        meta: { changes: 1, duration: 1, last_row_id: 1, rows_read: 0, rows_written: 1 },
+        results: [],
+      });
   return {
     prepare: vi.fn().mockReturnValue({
       bind: vi.fn().mockReturnValue({
-        run: vi.fn().mockResolvedValue(runResult),
+        run: runFn,
         first: vi.fn(),
         all: vi.fn(),
       }),
@@ -95,8 +98,8 @@ describe('schedulePublish', () => {
     expect(bindArgs).toContain('Hello world caption');
   });
 
-  it('throws when D1 insert returns error field', async () => {
-    const db = makeD1({ runError: 'UNIQUE constraint failed' });
+  it('throws when D1 insert throws (e.g. UNIQUE constraint)', async () => {
+    const db = makeD1({ runThrows: 'UNIQUE constraint failed' });
 
     await expect(
       schedulePublish(db, {

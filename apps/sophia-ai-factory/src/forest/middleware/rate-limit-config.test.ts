@@ -153,7 +153,7 @@ describe('getRateLimitConfig', () => {
   });
 
   it('should match heygen endpoints', () => {
-    const config = getRateLimitConfig('/api/heygen/create-video');
+    const config = getRateLimitConfig('/api/heygen/avatars');
     expect(config).toEqual(RATE_LIMITS.heygen);
   });
 

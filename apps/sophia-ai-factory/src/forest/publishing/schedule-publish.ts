@@ -65,19 +65,23 @@ export async function schedulePublish(
   //   hashtags_json, product_link, scheduled_at, started_at, finished_at,
   //   retry_count, error, created_at
   // provider='telegram' enables publishExecute to bypass publishing_channels lookup.
-  const insertResult = await db
-    .prepare(
-      `INSERT INTO publishing_jobs
-         (id, tenant_id, video_job_id, channel_id, provider, status, caption,
-          hashtags_json, product_link, scheduled_at, retry_count, created_at)
-       VALUES (?, ?, ?, ?, ?, 'scheduled', ?, NULL, NULL, ?, 0, ?)`,
-    )
-    .bind(jobId, tenantId, videoId, channelId, provider, caption ?? null, scheduled, now)
-    .run();
-
-  if (insertResult.error) {
-    logger.error('[schedulePublish] D1 insert failed', new Error(insertResult.error), { jobId, channelId, videoId });
-    throw new Error(`[schedulePublish] Insert failed: ${insertResult.error}`);
+  //
+  // NOTE: D1 throws on constraint violations — it does NOT return a .error field on
+  // the D1Result object. The try/catch below is the correct D1 contract (Wave 17 Batch 1 C2).
+  try {
+    await db
+      .prepare(
+        `INSERT INTO publishing_jobs
+           (id, tenant_id, video_job_id, channel_id, provider, status, caption,
+            hashtags_json, product_link, scheduled_at, retry_count, created_at)
+         VALUES (?, ?, ?, ?, ?, 'scheduled', ?, NULL, NULL, ?, 0, ?)`,
+      )
+      .bind(jobId, tenantId, videoId, channelId, provider, caption ?? null, scheduled, now)
+      .run();
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    logger.error('[schedulePublish] D1 insert failed', err instanceof Error ? err : new Error(msg), { jobId, channelId, videoId });
+    throw new Error(`[schedulePublish] Insert failed: ${msg}`);
   }
 
   // Emit Inngest event — matches publish.scheduled schema in inngest client

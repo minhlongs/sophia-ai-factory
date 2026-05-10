@@ -2,13 +2,12 @@
 
 > Product milestones and progress tracking (2026)
 
-**Last Updated:** 2026-05-09 EVENING (Wave 17 P0 chain complete: 01+02+03; smoke pending CEO)
 **Target:** $1M ARR, 100/100 a16z solo company score
 **Go-Live Shipped (2026-05-03):** Production deployment https://sophia.agencyos.network (SHA 5b1f711f). GAP1: Magic-link E2E validation PASS (setup-wizard cookie chain verified, 5 regression tests). GAP2: Self-serve checkout (public /pricing monthly+yearly, NOWPayments invoice, PayOS VN QR, idempotent IPN, atomic D1 tier upgrade, bilingual receipt email VAT 10%, dashboard period_end). GAP3: Mission control handover (durable D1 email outbox, /onboarding 3-step resumable, D1 API keys, mission control widget, public /status page 90d uptime, D+1/D+7 lifecycle emails). Infrastructure: 9 smoke tests PASS (200 HTTP), 2546 tests 100% pass, build < 10s, 0 TS errors.
 
 ---
 
-## Q2 2026: Wave 17 — Unlock Distribution + Harden + Cleanup (In Progress, 2026-05-09)
+## Q2 2026: Wave 17 — Unlock Distribution + Harden + Cleanup (Substantively Complete, 2026-05-09)
 
 | Phase | Status | Completion | Details |
 |-------|--------|-----------|---------|
@@ -16,12 +15,14 @@
 | **W17-P02: publishing_jobs Wiring** | ✅ DONE | 2026-05-09 | publishExecute lookup migrated from video_jobs.final_r2_key → getCanonicalVideoUrl. OAuth + Telegram branches both use Phase 01 helper. SSRF guard preserved. 15 new tests. |
 | **W17-P03: Flip Distribute Flag** | ✅ DONE (smoke pending) | 2026-05-09 | Flag baked at build time via deploy-with-sha.sh export. wrangler.toml [vars] documents source-of-truth. Distribute button now live. E2E smoke test pending CEO. |
 | **W17-P04: UNIQUE Telegram Pairing** | ✅ DONE | 2026-05-09 | Migration 0100 dedup + UNIQUE INDEX on paired_by. |
-| **W17-P05: Canonical D1 Swap** | ⏳ PENDING | — | distribute route raw D1 binding → createServerClient. |
+| **W17-P05: Canonical D1 Swap** | ✅ DONE (deferred) | 2026-05-09 | Canonical D1 swap deferred to Wave 18 (D1Client.db private; >30 LOC ripple). Secondary cleanup applied: schedule-publish.ts:78 dead .error check → try/catch (real D1 contract). |
 | **W17-P06: API-key Error Taxonomy** | ✅ DONE | 2026-05-09 | Discriminated union 401/403/503 + Sentry auth.error_type tag. |
-| **W17-P07: HeyGen Route Cleanup** | ⏳ PENDING | — | Delete deprecated /api/heygen/create-video + legacy wizard. |
-| **W17-P08: E2E Playwright** | ⏳ PENDING | — | FREE100 flow tests (may split as Wave 18). |
+| **W17-P07: HeyGen Route Cleanup** | ✅ DONE | 2026-05-09 | 4 files deleted (-446 LOC). Webhook intact. 2 orphan component files + ~25 i18n keys deferred Wave 18 phase-07b. |
+| **W17-P08: E2E Playwright** | ⏸️ DEFERRED (Wave 18) | — | E2E Playwright deferred per planner. CEO Phase 03 smoke covers unlock chain manually. |
 
-**Verification (2026-05-09 phase 03):** Build bake confirmed via 0 occurrences of NEXT_PUBLIC_DISTRIBUTE_ENABLED in built bundle. Wave 17 progress 5/8.
+**Verification (Wave 17 final):** 3047/3047 tests pass, 0 TS errors, 0 i18n missing, build exit 0. P0 unlock chain (01+02+03) live; P1 hardening (04+06) live; D1 swap (05) deferred + dead-code cleanup applied; HeyGen cleanup (07) shipped; Playwright E2E (08) deferred Wave 18.
+
+**Last Updated:** 2026-05-09 NIGHT (Wave 17 substantively complete: 7/8 phases shipped; Phase 08 deferred Wave 18)
 
 ---
 

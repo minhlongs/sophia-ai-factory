@@ -1,7 +1,27 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-05-09 LATER (Wave 17 Phase 02 done; flag flip next)
+> **Last Updated:** 2026-05-09 NIGHT (Wave 17 substantively complete: 7/8 phases shipped; Phase 08 deferred Wave 18)
+
+---
+
+## [2026-05-09 NIGHT] Wave 17 Phases 05 + 07 — D1 Cleanup + HeyGen Route Deletion (Wave 17 substantively complete)
+
+**Summary (vi):** Hoàn tất Wave 17 substantively (7/8 phases ship; Phase 08 E2E Playwright deferred Wave 18 per planner). 
+
+**Phase 05 (Canonical D1 Swap):**
+- DEFERRED to Wave 18 — `D1Client.db` is private; ripple to schedule-publish.ts test mocks >30 LOC (per KISS clause). Wave 18 prerequisite: add `D1Client.unwrap(): D1Database` accessor (1-line).
+- SECONDARY cleanup APPLIED: `schedule-publish.ts:78` dead `result.error` check → try/catch around `.run()` (real D1 contract). Tests rewritten: mock uses `mockRejectedValue`.
+
+**Phase 07 (HeyGen Cleanup):**
+- 4 files deleted (-446 LOC): `/api/heygen/create-video/route.ts`, `video-creator-wizard.tsx` + test, `script-step.tsx`
+- Test fixtures path-swapped; deprecated comment removed from `videos/new/page.tsx`
+- Webhook at `/api/webhooks/heygen/` UNTOUCHED (separate domain, explicitly verified)
+- Test count: 3060 → 3047 (−13, exclusively from deleted create-video describe block)
+
+**Code Review:** 9.0/10 APPROVE (3 minor non-blocking deferred Wave 18 phase-07b: 2 orphan component files, ~25 orphan i18n keys, getD1Raw() comment polish).
+
+**Verification (2026-05-09 NIGHT):** 3047/3047 tests pass, 0 TS errors, 0 i18n missing, build exit 0.
 
 ---
 

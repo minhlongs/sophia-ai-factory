@@ -2,17 +2,11 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NextRequest } from 'next/server';
 import { GET as getAvatars, _resetCacheForTest as resetAvatarsCache } from './avatars/route';
 import { GET as getVoices, _resetCacheForTest as resetVoicesCache } from './voices/route';
-import { POST as createVideo } from './create-video/route';
 import { GET as getStatus } from './status/[id]/route';
 
 // Mock better-auth-session (used by heygen routes for auth)
 vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: vi.fn(),
-}));
-
-// Mock getUserTier (used by create-video tier gate)
-vi.mock('@/seed/db/get-user-tier', () => ({
-  getUserTier: vi.fn(),
 }));
 
 // Mock ServiceFactory (used by all heygen routes)
@@ -22,11 +16,6 @@ vi.mock('@/lib/services/factory', () => ({
   },
 }));
 
-// Mock video quota module — default to slot reserved / release no-op
-vi.mock('@/forest/quota/video-quota', () => ({
-  reserveVideoSlot: vi.fn(),
-  releaseVideoSlot: vi.fn(),
-}));
 
 // Mock D1 client — INSERT/UPDATE side-effect should not affect status
 vi.mock('@/seed/db/client', () => {
@@ -51,30 +40,18 @@ vi.mock('@/seed/db/client', () => {
 });
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
 import { ServiceFactory } from '@/lib/services/factory';
-import { reserveVideoSlot, releaseVideoSlot } from '@/forest/quota/video-quota';
 
 describe('HeyGen API Routes', () => {
   const mockVideoService = {
     listAvatars: vi.fn(),
     listVoices: vi.fn(),
-    createVideo: vi.fn(),
     getVideoStatus: vi.fn(),
   };
 
   beforeEach(() => {
     vi.mocked(ServiceFactory.getVideoService).mockResolvedValue(mockVideoService as never);
     vi.mocked(getCurrentUser).mockResolvedValue({ id: 'user-1', email: 'test@test.com' } as never);
-    vi.mocked(getUserTier).mockResolvedValue('PREMIUM' as never);
-    // Default: reservation succeeds — tests that need quota exceeded override this.
-    vi.mocked(reserveVideoSlot).mockResolvedValue({
-      reserved: true,
-      used: 6,
-      limit: 30,
-      resetAt: '2026-05-01T00:00:00.000Z',
-    } as never);
-    vi.mocked(releaseVideoSlot).mockResolvedValue(undefined as never);
   });
 
   afterEach(() => {
@@ -149,191 +126,6 @@ describe('HeyGen API Routes', () => {
 
       expect(response.status).toBe(200);
       expect(data).toEqual({ voices: mockVoices });
-    });
-  });
-
-  describe('POST /api/heygen/create-video', () => {
-    it('should return 402 when user has BASIC tier', async () => {
-      vi.mocked(getUserTier).mockResolvedValue('BASIC' as never);
-
-      const req = new NextRequest('http://localhost/api/heygen/create-video', {
-        method: 'POST',
-        body: JSON.stringify({ avatarId: 'av1', voiceId: 'v1', script: 'test script' }),
-      });
-
-      const response = await createVideo(req);
-      const data = await response.json() as Record<string, string>;
-
-      expect(response.status).toBe(402);
-      expect(data.error).toMatch(/PREMIUM/i);
-      expect(data.upgrade).toBe('/pricing');
-      expect(mockVideoService.createVideo).not.toHaveBeenCalled();
-    });
-
-    it('should create video when user has PREMIUM tier', async () => {
-      vi.mocked(getUserTier).mockResolvedValue('PREMIUM' as never);
-      mockVideoService.createVideo.mockResolvedValue('vid_123');
-
-      const req = new NextRequest('http://localhost/api/heygen/create-video', {
-        method: 'POST',
-        body: JSON.stringify({ avatarId: 'av1', voiceId: 'v1', script: 'test script' }),
-      });
-
-      const response = await createVideo(req);
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data).toEqual({ videoId: 'vid_123', status: 'processing' });
-    });
-
-    it('should create video when user has ENTERPRISE tier', async () => {
-      vi.mocked(getUserTier).mockResolvedValue('ENTERPRISE' as never);
-      mockVideoService.createVideo.mockResolvedValue('vid_456');
-
-      const req = new NextRequest('http://localhost/api/heygen/create-video', {
-        method: 'POST',
-        body: JSON.stringify({ avatarId: 'av1', voiceId: 'v1', script: 'test' }),
-      });
-
-      const response = await createVideo(req);
-      expect(response.status).toBe(200);
-    });
-
-    it('should create video when user has MASTER tier', async () => {
-      vi.mocked(getUserTier).mockResolvedValue('MASTER' as never);
-      mockVideoService.createVideo.mockResolvedValue('vid_789');
-
-      const req = new NextRequest('http://localhost/api/heygen/create-video', {
-        method: 'POST',
-        body: JSON.stringify({ avatarId: 'av1', voiceId: 'v1', script: 'test' }),
-      });
-
-      const response = await createVideo(req);
-      expect(response.status).toBe(200);
-    });
-
-    it('should return 500 if service unavailable', async () => {
-      vi.mocked(ServiceFactory.getVideoService).mockRejectedValue(new Error('No video service'));
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-      const req = new NextRequest('http://localhost', {
-        method: 'POST',
-        body: JSON.stringify({ avatarId: 'av1', voiceId: 'v1', script: 'test' })
-      });
-
-      const response = await createVideo(req);
-      expect(response.status).toBe(500);
-      consoleSpy.mockRestore();
-    });
-
-    it('should return 400 if required fields missing', async () => {
-      const req = new NextRequest('http://localhost', {
-        method: 'POST',
-        body: JSON.stringify({ avatarId: 'av1' }) // Missing voiceId and script
-      });
-
-      const response = await createVideo(req);
-      expect(response.status).toBe(400);
-    });
-
-    it('should handle errors', async () => {
-      mockVideoService.createVideo.mockRejectedValue(new Error('Failed'));
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-      const req = new NextRequest('http://localhost', {
-        method: 'POST',
-        body: JSON.stringify({ avatarId: 'av1', voiceId: 'v1', script: 'test' }),
-      });
-
-      const response = await createVideo(req);
-      expect(response.status).toBe(500);
-      consoleSpy.mockRestore();
-    });
-
-    // ── Video Quota Tests ──────────────────────────────────────────────────────
-
-    it('quota: reservation success creates the video and does not release', async () => {
-      vi.mocked(reserveVideoSlot).mockResolvedValue({
-        reserved: true,
-        used: 11,
-        limit: 30,
-        resetAt: '2026-05-01T00:00:00.000Z',
-      } as never);
-      mockVideoService.createVideo.mockResolvedValue('vid_quota_ok');
-
-      const req = new NextRequest('http://localhost/api/heygen/create-video', {
-        method: 'POST',
-        body: JSON.stringify({ avatarId: 'av1', voiceId: 'v1', script: 'test script' }),
-      });
-
-      const response = await createVideo(req);
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data).toEqual({ videoId: 'vid_quota_ok', status: 'processing' });
-      expect(reserveVideoSlot).toHaveBeenCalledTimes(1);
-      expect(reserveVideoSlot).toHaveBeenCalledWith('user-1', 'PREMIUM');
-      expect(releaseVideoSlot).not.toHaveBeenCalled();
-    });
-
-    it('quota: returns 429 and does not call HeyGen when reservation fails', async () => {
-      vi.mocked(reserveVideoSlot).mockResolvedValue({
-        reserved: false,
-        used: 30,
-        limit: 30,
-        resetAt: '2026-05-01T00:00:00.000Z',
-      } as never);
-
-      const req = new NextRequest('http://localhost/api/heygen/create-video', {
-        method: 'POST',
-        body: JSON.stringify({ avatarId: 'av1', voiceId: 'v1', script: 'test script' }),
-      });
-
-      const response = await createVideo(req);
-      const data = await response.json() as Record<string, unknown>;
-
-      expect(response.status).toBe(429);
-      expect(data.error).toBe('quota_exceeded');
-      expect(data.limit).toBe(30);
-      expect(data.used).toBe(30);
-      expect(data.resetAt).toBe('2026-05-01T00:00:00.000Z');
-      expect(mockVideoService.createVideo).not.toHaveBeenCalled();
-      expect(releaseVideoSlot).not.toHaveBeenCalled();
-    });
-
-    it('quota: releases the slot when HeyGen rejects credentials', async () => {
-      const { MissingCredentialsError } = await import('@/lib/services/errors');
-      mockVideoService.createVideo.mockRejectedValue(new MissingCredentialsError('HEYGEN_API_KEY'));
-
-      const req = new NextRequest('http://localhost/api/heygen/create-video', {
-        method: 'POST',
-        body: JSON.stringify({ avatarId: 'av1', voiceId: 'v1', script: 'test script' }),
-      });
-
-      const response = await createVideo(req);
-      const data = await response.json() as Record<string, string>;
-
-      expect(response.status).toBe(503);
-      expect(data.code).toBe('MISSING_KEY');
-      expect(releaseVideoSlot).toHaveBeenCalledTimes(1);
-      expect(releaseVideoSlot).toHaveBeenCalledWith('user-1');
-    });
-
-    it('quota: releases the slot when HeyGen throws an unexpected error', async () => {
-      mockVideoService.createVideo.mockRejectedValue(new Error('upstream timeout'));
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-      const req = new NextRequest('http://localhost/api/heygen/create-video', {
-        method: 'POST',
-        body: JSON.stringify({ avatarId: 'av1', voiceId: 'v1', script: 'test script' }),
-      });
-
-      const response = await createVideo(req);
-
-      expect(response.status).toBe(500);
-      expect(releaseVideoSlot).toHaveBeenCalledTimes(1);
-      expect(releaseVideoSlot).toHaveBeenCalledWith('user-1');
-      consoleSpy.mockRestore();
     });
   });
 
