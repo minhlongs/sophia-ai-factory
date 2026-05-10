@@ -1967,5 +1967,49 @@
       "no_providers": "Chưa cấu hình BYOK — thêm khóa trong Cài đặt.",
       "cost_preview": "~${input} đầu vào / ${output} đầu ra mỗi 1k token"
     }
+  },
+  "affiliateProgram": {
+    "meta": {
+      "title": "Trở Thành Affiliate Sophia — Hoa Hồng Định Kỳ",
+      "description": "Giới thiệu creator đến Sophia AI Factory và nhận 30% hoa hồng định kỳ. Thanh toán USDT hoặc fiat. Không yêu cầu tối thiểu."
+    },
+    "hero": {
+      "title": "Kiếm 30% Định Kỳ",
+      "subtitle": "Giới thiệu creator và doanh nghiệp đến Sophia AI Factory. Nhận tiền mỗi tháng khi họ còn đăng ký.",
+      "ctaPrimary": "Đăng Ký Affiliate",
+      "ctaSecondary": "Cách Hoạt Động"
+    },
+    "stats": {
+      "commission": "30% định kỳ",
+      "commissionLabel": "Tỷ lệ hoa hồng",
+      "payout": "USDT hoặc fiat",
+      "payoutLabel": "Phương thức thanh toán",
+      "cookie": "30 ngày",
+      "cookieLabel": "Cookie window"
+    },
+    "howItWorks": {
+      "title": "Cách Hoạt Động",
+      "step1Title": "1. Đăng ký",
+      "step1Desc": "Tạo tài khoản Sophia miễn phí — affiliate dùng chung login.",
+      "step2Title": "2. Lấy link",
+      "step2Desc": "Tạo mã giới thiệu duy nhất trên dashboard. Chia sẻ mọi nơi.",
+      "step3Title": "3. Nhận tiền",
+      "step3Desc": "Theo dõi chuyển đổi real-time. Nhận USDT (tức thì) hoặc USD qua Stripe Connect."
+    },
+    "features": {
+      "title": "Tại Sao Chọn Sophia",
+      "recurring": "Doanh thu định kỳ — nhận hàng tháng, không chỉ lần đầu",
+      "highEpc": "EPC cao — niche chuyển đổi tốt với sản phẩm AI video hot",
+      "transparent": "Theo dõi real-time — dashboard đầy đủ chuyển đổi + thanh toán",
+      "noMinimum": "Không tối thiểu — rút bất cứ lúc nào"
+    },
+    "cta": {
+      "title": "Sẵn sàng bắt đầu?",
+      "subtitle": "Đăng ký miễn phí, tạo link trong 2 phút.",
+      "button": "Bắt Đầu Kiếm Tiền"
+    },
+    "footer": {
+      "disclaimer": "Tỷ lệ hoa hồng và điều khoản có thể thay đổi. Xem chi tiết trong thỏa thuận affiliate."
+    }
   }
 }
