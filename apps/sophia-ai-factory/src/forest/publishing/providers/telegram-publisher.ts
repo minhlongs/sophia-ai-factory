@@ -44,6 +44,30 @@ export interface TelegramPublishResult {
 }
 
 /**
+ * Typed error thrown by `publishToTelegram` for classified API failures.
+ *
+ * Wave 19 Phase 05: lets `dispatchTelegramWithRetryHints` route 4xx → NonRetriable,
+ * 429 → retry-after-aware Inngest retry, 5xx → plain retry. Preserves the original
+ * message string so legacy `.toThrow('Rate limited (429)')` tests still pass.
+ */
+export class TelegramApiError extends Error {
+  /** HTTP status from Telegram API response. */
+  readonly status: number;
+  /** Telegram-suggested wait (seconds) before retry. Honors body `parameters.retry_after`, falls back to `Retry-After` header. */
+  readonly retryAfterSec: number | null;
+  /** Raw body snippet (first 200 chars) for diagnostics. */
+  readonly bodySnippet: string;
+
+  constructor(message: string, opts: { status: number; retryAfterSec?: number | null; bodySnippet?: string }) {
+    super(message);
+    this.name = 'TelegramApiError';
+    this.status = opts.status;
+    this.retryAfterSec = opts.retryAfterSec ?? null;
+    this.bodySnippet = opts.bodySnippet ?? '';
+  }
+}
+
+/**
  * Sanitize caption for plain text mode (no parse_mode set).
  * Strips control chars and truncates to 1024 chars.
  */
@@ -129,18 +153,32 @@ export async function publishToTelegram(
   }
 
   if (res.status === 429) {
-    // Rate limited — throw so Inngest retries with backoff
-    const retryAfter = res.headers.get('Retry-After') ?? '60';
-    throw new Error(
-      `[telegram-publisher] Rate limited (429). Retry-After: ${retryAfter}s. Token: ${maskToken(token)}`,
+    // Rate limited — prefer body `parameters.retry_after`, fall back to header.
+    const headerRetry = Number(res.headers.get('Retry-After') ?? '');
+    let bodyRetry: number | null = null;
+    let bodyText = '';
+    try {
+      bodyText = await res.text();
+      const parsed = JSON.parse(bodyText) as { parameters?: { retry_after?: number } };
+      if (typeof parsed?.parameters?.retry_after === 'number') {
+        bodyRetry = parsed.parameters.retry_after;
+      }
+    } catch {
+      // ignore parse failure
+    }
+    const retryAfterSec = bodyRetry ?? (Number.isFinite(headerRetry) ? headerRetry : 60);
+    throw new TelegramApiError(
+      `[telegram-publisher] Rate limited (429). Retry-After: ${retryAfterSec}s. Token: ${maskToken(token)}`,
+      { status: 429, retryAfterSec, bodySnippet: bodyText.slice(0, 200) },
     );
   }
 
   if (res.status === 401 || res.status === 403) {
     const body = await res.text().catch(() => '');
-    throw new Error(
+    throw new TelegramApiError(
       `[telegram-publisher] Auth error ${res.status} — token may be invalid or bot lacks admin rights in channel. ` +
         `Token: ${maskToken(token)}. Response: ${body.slice(0, 200)}`,
+      { status: res.status, bodySnippet: body.slice(0, 200) },
     );
   }
 
@@ -149,15 +187,17 @@ export async function publishToTelegram(
     data = (await res.json()) as TelegramSendVideoResponse;
   } catch {
     const body = await res.text().catch(() => '');
-    throw new Error(
+    throw new TelegramApiError(
       `[telegram-publisher] Failed to parse Telegram response (HTTP ${res.status}): ${body.slice(0, 200)}`,
+      { status: res.status, bodySnippet: body.slice(0, 200) },
     );
   }
 
   if (!data.ok || !data.result) {
-    throw new Error(
+    throw new TelegramApiError(
       `[telegram-publisher] Telegram API error: ${data.description ?? 'unknown'} ` +
         `(code ${data.error_code ?? res.status})`,
+      { status: data.error_code ?? res.status, bodySnippet: (data.description ?? '').slice(0, 200) },
     );
   }
 

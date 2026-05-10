@@ -24,7 +24,7 @@ import { ThreadsPublisher } from '@/lib/publishing/threads';
 import { RedditPublisher } from '@/lib/publishing/reddit';
 import { BlueskyPublisher } from '@/lib/publishing/bluesky';
 import { MastodonPublisher } from '@/lib/publishing/mastodon';
-import { publishToTelegram } from '@/forest/publishing/providers/telegram-publisher';
+import { dispatchTelegramWithRetryHints } from '@/tree/telegram/dispatch-with-retry-hints';
 import {
   getCanonicalVideoUrl,
   VideoNotFoundError,
@@ -253,7 +253,10 @@ export const publishExecute = inngest.createFunction(
           );
         }
 
-        const { externalPostId: tgPostId, externalUrl } = await publishToTelegram({
+        // Wave 19 Phase 05: dispatch via retry-aware helper.
+        // Helper classifies errors so Inngest step retries on 429/5xx/network,
+        // skips retry on 4xx (invalid chat, bot kicked, etc.).
+        const { externalPostId: tgPostId, externalUrl } = await dispatchTelegramWithRetryHints({
           jobId,
           userId: tenantId,
           videoUrl,
