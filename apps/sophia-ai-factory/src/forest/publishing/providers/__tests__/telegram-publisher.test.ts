@@ -250,7 +250,7 @@ describe('telegram-publisher', () => {
     expect((body.caption as string).length).toBeLessThanOrEqual(1024);
   });
 
-  it('caption MarkdownV2 special chars stripped', async () => {
+  it('caption MarkdownV2 specials escaped (Wave 20 Phase 01) + parse_mode set', async () => {
     mockOkResponse(
       makeTelegramResponse(true, {
         message_id: 1,
@@ -262,10 +262,11 @@ describe('telegram-publisher', () => {
 
     const body = JSON.parse(mockFetch.mock.calls[0][1].body as string) as Record<string, unknown>;
     const cap = body.caption as string;
-    expect(cap).not.toContain('*');
-    expect(cap).not.toContain('[');
-    expect(cap).not.toContain('~');
+    // Specials are now escaped with backslash, not stripped
+    expect(cap).toContain('\\*world\\*');
+    expect(cap).toContain('\\[link\\]');
+    expect(cap).toContain('\\~test\\~');
     expect(cap).toContain('Hello');
-    expect(cap).toContain('world');
+    expect(body.parse_mode).toBe('MarkdownV2');
   });
 });

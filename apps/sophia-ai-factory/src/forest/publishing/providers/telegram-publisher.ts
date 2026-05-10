@@ -18,10 +18,10 @@
 
 import { logger } from '@/seed/utils/logger-utility';
 import { getErrorMessage } from '@/seed/utils/to-error';
+import { escapeMarkdownV2, truncateMarkdownV2Safely } from '@/tree/telegram/format-markdown-v2';
 
 const TELEGRAM_API = 'https://api.telegram.org';
-/** Telegram MarkdownV2 special characters that must be escaped. */
-const TG_SPECIAL_CHARS = /[_*[\]()~`>#+\-=|{}.!\\]/g;
+const TELEGRAM_CAPTION_MAX = 1024;
 
 export interface TelegramPublishInput {
   /** publishing_jobs.id — for logging */
@@ -68,14 +68,15 @@ export class TelegramApiError extends Error {
 }
 
 /**
- * Sanitize caption for plain text mode (no parse_mode set).
- * Strips control chars and truncates to 1024 chars.
+ * Sanitize caption for MarkdownV2 mode.
+ *
+ * Wave 20 Phase 01 (7A): switched from strip-specials to backslash-escape so user
+ * captions render literally (period, brackets, exclamation no longer disappear).
+ * Future v2 may parse intentional formatting pairs; for now treat as plain text.
  */
 function sanitizeCaption(text: string): string {
-  // Remove Telegram MarkdownV2 special chars to avoid parse errors
-  // (we send without parse_mode so escaping is not required, but strip anyway)
-  const stripped = text.replace(TG_SPECIAL_CHARS, '').trim();
-  return stripped.slice(0, 1024);
+  const escaped = escapeMarkdownV2(text.trim());
+  return truncateMarkdownV2Safely(escaped, TELEGRAM_CAPTION_MAX);
 }
 
 /**
@@ -130,7 +131,7 @@ export async function publishToTelegram(
   const payload = {
     chat_id: chatId,
     video: videoUrl,
-    ...(safeCaption ? { caption: safeCaption } : {}),
+    ...(safeCaption ? { caption: safeCaption, parse_mode: 'MarkdownV2' as const } : {}),
     supports_streaming: true,
   };
 
