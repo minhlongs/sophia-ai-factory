@@ -21,6 +21,7 @@ import { getD1Raw } from '@/seed/db/client';
 import { sendEmail } from '@/forest/email/sender';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
+import { sha256Hex } from '@/seed/security/token-hash';
 
 const TOKEN_TTL_MS = 60 * 60 * 1000;
 
@@ -74,8 +75,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   const token = randomUUID();
+  const tokenHash = await sha256Hex(token);
   const identifier = `email-change:${user.id}`;
-  const value = `${newEmail}:${token}`;
+  // Wave 22 P01: store sha256(token) instead of raw token. Email URL still
+  // carries raw token; verify route hashes incoming and compares.
+  const value = `${newEmail}:${tokenHash}`;
   const now = new Date();
   const expiresAt = new Date(now.getTime() + TOKEN_TTL_MS);
 

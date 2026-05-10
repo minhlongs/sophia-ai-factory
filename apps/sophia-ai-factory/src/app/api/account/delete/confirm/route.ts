@@ -15,10 +15,12 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { getD1Raw } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
+import { sha256Hex, safeCompareHex } from '@/seed/security/token-hash';
 
 interface DeletionRow {
   user_id: string;
   confirmation_token: string;
+  confirmation_token_hash: string | null;
   confirmed_at: number | null;
   cancelled_at: number | null;
   scheduled_at: number;
@@ -49,7 +51,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   const row = await db
     .prepare(
-      `SELECT user_id, confirmation_token, confirmed_at, cancelled_at, scheduled_at
+      `SELECT user_id, confirmation_token, confirmation_token_hash,
+              confirmed_at, cancelled_at, scheduled_at
        FROM account_deletion_requests
        WHERE user_id = ?`,
     )
@@ -64,7 +67,20 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   if (row.confirmed_at !== null) {
     return redirectTo(req, '?ok=delete-confirmed');
   }
-  if (row.confirmation_token !== token) {
+
+  // Wave 22 P01: prefer hash column when populated; fall back to legacy raw
+  // compare for pre-W22 rows. Both paths use constant-time compare.
+  let tokenOk: boolean;
+  if (row.confirmation_token_hash) {
+    const incomingHash = await sha256Hex(token);
+    tokenOk = safeCompareHex(incomingHash, row.confirmation_token_hash);
+  } else {
+    tokenOk = safeCompareHex(token, row.confirmation_token);
+    if (tokenOk) {
+      logger.info('[acct-delete-confirm] legacy token format accepted', { userId });
+    }
+  }
+  if (!tokenOk) {
     return redirectTo(req, '?error=delete-confirm-invalid');
   }
 

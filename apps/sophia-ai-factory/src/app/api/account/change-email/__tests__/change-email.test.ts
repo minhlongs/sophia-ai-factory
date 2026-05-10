@@ -32,6 +32,7 @@ vi.mock('@/seed/utils/logger-utility', () => ({
 
 import { POST } from '../route';
 import { GET as VERIFY_GET } from '../verify/route';
+import { sha256Hex } from '@/seed/security/token-hash';
 
 interface PreparedStmt {
   first: Mock;
@@ -231,6 +232,36 @@ describe('GET /api/account/change-email/verify', () => {
     expect(res.headers.get('location')).toContain('?ok=email-changed');
     expect(updateStmt.run).toHaveBeenCalled();
     expect(deleteStmt.run).toHaveBeenCalled();
+  });
+});
+
+describe('Wave 22 P01 — sha256 hash token verification', () => {
+  function makeVerifyReq(qs: string) {
+    return new NextRequest(`http://localhost/api/account/change-email/verify?${qs}`);
+  }
+
+  it('accepts request when stored value contains sha256 hash matching incoming token', async () => {
+    const future = new Date(Date.now() + 60_000).toISOString();
+    const tokenHash = await sha256Hex('hashtest-token');
+    const updateStmt = stmt({ run: { meta: { changes: 1 } } });
+    mocks.mockGetD1Raw.mockResolvedValue(buildDb([
+      stmt({ first: { id: 'v-1', value: `new@example.com:${tokenHash}`, expiresAt: future } }),
+      updateStmt,
+      stmt(),
+    ]));
+    const res = await VERIFY_GET(makeVerifyReq('token=hashtest-token&userId=user-1'));
+    expect(res.headers.get('location')).toContain('?ok=email-changed');
+    expect(updateStmt.run).toHaveBeenCalled();
+  });
+
+  it('rejects when stored hash does not match hashed incoming token', async () => {
+    const future = new Date(Date.now() + 60_000).toISOString();
+    const wrongHash = await sha256Hex('different-token');
+    mocks.mockGetD1Raw.mockResolvedValue(buildDb([
+      stmt({ first: { id: 'v-1', value: `new@example.com:${wrongHash}`, expiresAt: future } }),
+    ]));
+    const res = await VERIFY_GET(makeVerifyReq('token=hashtest-token&userId=user-1'));
+    expect(res.headers.get('location')).toContain('error=email-change-invalid');
   });
 });
 
