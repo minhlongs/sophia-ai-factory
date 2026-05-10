@@ -10,7 +10,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR/.."
 
 echo "==> Checking for migrations changed since $REF..."
-MIGRATIONS=$(git diff --name-only "$REF" HEAD -- migrations/ 2>/dev/null | grep -E "\.sql$" || true)
+# --relative emits paths relative to CWD (apps/sophia-ai-factory/) so the
+# `[ -f "$m" ]` check + `wrangler --file=$m` resolve correctly. Without it,
+# git returns repo-root-relative paths (apps/sophia-ai-factory/migrations/...)
+# which double up after the `cd "$SCRIPT_DIR/.."` above.
+MIGRATIONS=$(git diff --name-only --relative "$REF" HEAD -- migrations/ 2>/dev/null | grep -E "\.sql$" || true)
 
 if [ -z "$MIGRATIONS" ]; then
   echo "No new migrations to apply."
