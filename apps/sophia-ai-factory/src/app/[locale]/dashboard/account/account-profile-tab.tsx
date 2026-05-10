@@ -16,6 +16,7 @@ import { Button } from '@/seed/components/ui/button';
 import { Input } from '@/seed/components/ui/input';
 import { Label } from '@/seed/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/seed/components/ui/select';
+import { AccountDangerZone } from './account-danger-zone';
 
 interface ProfileData {
   email: string;
@@ -203,6 +204,8 @@ export function AccountProfileTab({ initial }: AccountProfileTabProps) {
           {exporting ? t('export_pending') : t('export_btn')}
         </Button>
       </div>
+
+      <AccountDangerZone />
     </div>
   );
 }

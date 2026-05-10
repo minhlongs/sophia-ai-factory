@@ -1247,7 +1247,20 @@
     "billing_empty": "Chưa có lịch sử thanh toán",
     "billing_filter_all": "Tất cả",
     "billing_filter_30": "30 ngày qua",
-    "billing_filter_90": "90 ngày qua"
+    "billing_filter_90": "90 ngày qua",
+    "danger_section": "Vùng Nguy Hiểm",
+    "delete_description": "Xoá vĩnh viễn tài khoản và toàn bộ dữ liệu. Sau khi xác nhận qua email, bạn có 7 ngày để huỷ.",
+    "delete_btn": "Xoá Tài Khoản",
+    "delete_typed_label": "Gõ DELETE để mở khoá",
+    "delete_typed_word": "DELETE",
+    "delete_request_pending": "Đang gửi xác nhận…",
+    "delete_request_sent": "Kiểm tra email để nhận link xác nhận.",
+    "delete_status_pending": "Đang chờ xác nhận qua email. Kiểm tra hộp thư.",
+    "delete_status_confirmed": "Đã xác nhận — sẽ xoá vào {date}.",
+    "delete_status_cancelled": "Yêu cầu xoá đã huỷ.",
+    "delete_cancel_btn": "Huỷ Yêu Cầu Xoá",
+    "delete_cancel_pending": "Đang huỷ…",
+    "delete_error": "Không thể xử lý yêu cầu xoá. Vui lòng thử lại."
   },
   "onboarding": {
     "title": "Chào Mừng Đến Sophia AI Factory",

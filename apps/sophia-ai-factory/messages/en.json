@@ -1247,7 +1247,20 @@
     "billing_empty": "No billing history yet",
     "billing_filter_all": "All time",
     "billing_filter_30": "Last 30 days",
-    "billing_filter_90": "Last 90 days"
+    "billing_filter_90": "Last 90 days",
+    "danger_section": "Danger Zone",
+    "delete_description": "Permanently delete your account and all data. After confirming via email, you have 7 days to cancel.",
+    "delete_btn": "Delete Account",
+    "delete_typed_label": "Type DELETE to enable",
+    "delete_typed_word": "DELETE",
+    "delete_request_pending": "Sending confirmation…",
+    "delete_request_sent": "Check your email for the confirmation link.",
+    "delete_status_pending": "Awaiting email confirmation. Check your inbox.",
+    "delete_status_confirmed": "Confirmed — deletion scheduled for {date}.",
+    "delete_status_cancelled": "Deletion request cancelled.",
+    "delete_cancel_btn": "Cancel Deletion Request",
+    "delete_cancel_pending": "Cancelling…",
+    "delete_error": "Could not process deletion request. Please try again."
   },
   "onboarding": {
     "title": "Welcome to Sophia AI Factory",
