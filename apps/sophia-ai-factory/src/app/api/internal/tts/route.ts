@@ -16,6 +16,7 @@ import { getVideoBucket } from '@/lib/video/r2-binding';
 import { tenantScopedKey } from '@/lib/video/r2-binding';
 import { uploadToR2 } from '@/lib/video/r2-multipart-upload';
 import { logger } from '@/seed/utils/logger-utility';
+import { getVoicePreset } from '@/seed/voices/presets';
 
 // 1-second silent WAV (44 bytes: RIFF header + empty data chunk)
 const SILENT_WAV_B64 =
@@ -23,8 +24,11 @@ const SILENT_WAV_B64 =
 
 const bodySchema = z.object({
   text: z.string().min(1).max(10000),
+  /** Custom Coqui speaker reference (BYOV / ref-audio URL). Mutually exclusive with voicePresetId. */
   voiceId: z.string().optional(),
-  language: z.string().min(2).max(10).default('en'),
+  /** Stable preset ID from VOICE_PRESETS (e.g. 'alex-en-m'). Resolved server-side. */
+  voicePresetId: z.string().optional(),
+  language: z.string().min(2).max(10).optional(),
   tenantId: z.string().min(1),
   jobId: z.string().min(1),
 });
@@ -70,7 +74,22 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { text, voiceId, language, tenantId, jobId } = parsed.data;
+  const { text, voiceId, voicePresetId, language: rawLanguage, tenantId, jobId } = parsed.data;
+
+  // Resolve preset → coqui speaker + default language. Preset wins over raw voiceId.
+  let resolvedVoiceRef: string | null = voiceId ?? null;
+  let resolvedLanguage = rawLanguage ?? 'en';
+  if (voicePresetId) {
+    const preset = getVoicePreset(voicePresetId);
+    if (!preset) {
+      return NextResponse.json(
+        { error: `Unknown voicePresetId: ${voicePresetId}` },
+        { status: 400 },
+      );
+    }
+    resolvedVoiceRef = preset.coquiSpeaker;
+    if (!rawLanguage) resolvedLanguage = preset.language;
+  }
 
   // Idempotency: check if audio_r2_key already set
   const db = createServerClient();
@@ -113,7 +132,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const coquiResp = await fetch(`${coquiUrl}/synth`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, voice_ref_url: voiceId ?? null, language }),
+      body: JSON.stringify({ text, voice_ref_url: resolvedVoiceRef, language: resolvedLanguage }),
     });
 
     if (!coquiResp.ok) {
