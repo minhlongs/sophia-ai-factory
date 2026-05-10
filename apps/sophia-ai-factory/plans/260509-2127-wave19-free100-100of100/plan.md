@@ -40,7 +40,7 @@ This collapses Phase 02 (planned for unverified items) into a single test-covera
 | 04 | Distribute publish-status polling (M1) | P1 | 1d | ✅ done (commit pending) | — |
 | 05 | Telegram dispatch retry on 429/network (M2) | P1 | 0.5d | ✅ done (commit pending) | — |
 | 06 | Sentry wiring + error boundaries + 404 (M3, M7) | P1 | 0.5d | ✅ done (commit pending) | — |
-| 07 | Production hardening + nice-to-haves (defer-eligible) | P2 | 1d | pending | — |
+| 07 | Production hardening + nice-to-haves (defer-eligible) | P2 | 1d | ✅ partial (7E+7D shipped; 7A/7B/7C/7F → Wave 20) | — |
 
 **Total P0–P1 effort: 4d. Phase 07 adds 1d if executed.**
 
