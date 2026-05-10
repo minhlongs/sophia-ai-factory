@@ -38,7 +38,7 @@ This collapses Phase 02 (planned for unverified items) into a single test-covera
 | 02 | Verify-and-lock regression tests (C1, C4, C6 guardrails + cleanup) | P0 | 0.5d | ✅ done (commit pending) | 03 |
 | 03 | i18n + UX state batch (M4, M5, M6, M9, M10) | P1 | 1d | ✅ done (commit pending) | 04 |
 | 04 | Distribute publish-status polling (M1) | P1 | 1d | ✅ done (commit pending) | — |
-| 05 | Telegram dispatch retry on 429/network (M2) | P1 | 0.5d | pending | — |
+| 05 | Telegram dispatch retry on 429/network (M2) | P1 | 0.5d | ✅ done (commit pending) | — |
 | 06 | Sentry wiring + error boundaries + 404 (M3, M7) | P1 | 0.5d | pending | — |
 | 07 | Production hardening + nice-to-haves (defer-eligible) | P2 | 1d | pending | — |
 
