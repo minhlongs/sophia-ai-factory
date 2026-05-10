@@ -301,6 +301,13 @@ export default async function DashboardLayout({
                 <span className="font-medium">Storage Usage</span>
               </Link>
               <Link
+                href="/dashboard/admin/audit-log"
+                className="flex items-center gap-3 px-4 py-3 text-violet-400 hover:text-violet-300 rounded-lg hover:bg-violet-950/30 transition-colors"
+              >
+                <FileText className="w-5 h-5" />
+                <span className="font-medium">Audit Log</span>
+              </Link>
+              <Link
                 href="/dashboard/admin/migrations"
                 className="flex items-center gap-3 px-4 py-3 text-violet-400 hover:text-violet-300 rounded-lg hover:bg-violet-950/30 transition-colors"
               >
