@@ -1967,5 +1967,49 @@
       "no_providers": "No BYOK providers configured — add keys in Settings.",
       "cost_preview": "~${input} input / ${output} output per 1k tokens"
     }
+  },
+  "affiliateProgram": {
+    "meta": {
+      "title": "Become a Sophia Affiliate — Earn Recurring Commissions",
+      "description": "Refer creators to Sophia AI Factory and earn 30% recurring commission. USDT or fiat payouts. No minimum threshold."
+    },
+    "hero": {
+      "title": "Earn 30% Recurring",
+      "subtitle": "Refer creators and businesses to Sophia AI Factory. Get paid every month they stay subscribed.",
+      "ctaPrimary": "Become an Affiliate",
+      "ctaSecondary": "How It Works"
+    },
+    "stats": {
+      "commission": "30% recurring",
+      "commissionLabel": "Commission rate",
+      "payout": "USDT or fiat",
+      "payoutLabel": "Payout methods",
+      "cookie": "30 days",
+      "cookieLabel": "Cookie window"
+    },
+    "howItWorks": {
+      "title": "How It Works",
+      "step1Title": "1. Sign up",
+      "step1Desc": "Create your free Sophia account — affiliates use the same login.",
+      "step2Title": "2. Get your link",
+      "step2Desc": "Generate a unique referral code in your dashboard. Share it anywhere.",
+      "step3Title": "3. Earn",
+      "step3Desc": "Track conversions in real time. Get paid USDT (instant) or USD via Stripe Connect."
+    },
+    "features": {
+      "title": "Why Affiliate With Sophia",
+      "recurring": "Recurring revenue — earn every month, not just first sale",
+      "highEpc": "High EPC — converting niche with hot AI video product",
+      "transparent": "Real-time tracking — full conversion + payout dashboard",
+      "noMinimum": "No minimum threshold — withdraw anytime"
+    },
+    "cta": {
+      "title": "Ready to start?",
+      "subtitle": "Sign up free, generate your link in 2 minutes.",
+      "button": "Start Earning"
+    },
+    "footer": {
+      "disclaimer": "Commission rates and terms subject to change. See affiliate agreement for details."
+    }
   }
 }
