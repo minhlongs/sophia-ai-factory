@@ -22,7 +22,7 @@
 
 **Verification (Wave 17 final):** 3047/3047 tests pass, 0 TS errors, 0 i18n missing, build exit 0. P0 unlock chain (01+02+03) live; P1 hardening (04+06) live; D1 swap (05) deferred + dead-code cleanup applied; HeyGen cleanup (07) shipped; Playwright E2E (08) deferred Wave 18.
 
-**Last Updated:** 2026-05-09 NIGHT (Wave 17 substantively complete: 7/8 phases shipped; Phase 08 deferred Wave 18)
+**Last Updated:** 2026-05-10 (Wave 18 Batch 1: orphan cleanup + handleVideoUrlError refactor + D1Client.unwrap() accessor shipped)
 
 ---
 

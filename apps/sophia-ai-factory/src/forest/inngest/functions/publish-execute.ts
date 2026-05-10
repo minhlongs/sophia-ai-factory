@@ -65,6 +65,52 @@ function assertSafeVideoUrl(url: string): void {
   }
 }
 
+/**
+ * Resolves a canonical R2 video URL for a publishing job, mapping typed
+ * resolution errors to the publishing_jobs.status terminal state.
+ *
+ * - VideoNotFoundError    → update DB status=failed "Video not found", re-throw
+ * - VideoUnauthorizedError → Sentry warn + update DB status=failed "Permission denied", re-throw
+ * - VideoNotMirroredError → re-throw immediately (transient — Inngest retries)
+ * - Other errors          → re-throw
+ *
+ * Callers must wrap in try/catch: terminal errors (VideoNotFoundError /
+ * VideoUnauthorizedError) should be caught and converted to a `return` so the
+ * Inngest step emits a controlled ClaimResult rather than an unhandled throw.
+ */
+async function resolveVideoUrlOrFail(args: {
+  jobId: string;
+  videoId: string;
+  userId: string;
+  db: Awaited<ReturnType<typeof import('@/seed/db/client').getD1Client>>;
+  logTag: string;
+}): Promise<string> {
+  const { jobId, videoId, userId, db, logTag } = args;
+  try {
+    return await getCanonicalVideoUrl(videoId, userId);
+  } catch (err) {
+    if (err instanceof VideoNotMirroredError) throw err; // transient
+    if (err instanceof VideoNotFoundError) {
+      await db.from('publishing_jobs').update({
+        status: 'failed',
+        error: 'Video not found',
+        finished_at: Math.floor(Date.now() / 1000),
+      }).eq('id', jobId);
+      throw err;
+    }
+    if (err instanceof VideoUnauthorizedError) {
+      logger.warn(`[${logTag}] Permission denied resolving video URL`, { jobId, videoId, tenantId: userId });
+      await db.from('publishing_jobs').update({
+        status: 'failed',
+        error: 'Permission denied',
+        finished_at: Math.floor(Date.now() / 1000),
+      }).eq('id', jobId);
+      throw err;
+    }
+    throw err; // unknown — propagate
+  }
+}
+
 function buildPublisher(channel: Pick<PublishingChannel, 'provider' | 'external_account_id'>, accessToken: string): Publisher {
   switch (channel.provider) {
     case 'tiktok':
@@ -183,30 +229,12 @@ export const publishExecute = inngest.createFunction(
       if (jobProvider === 'telegram') {
         let videoUrl: string;
         try {
-          videoUrl = await getCanonicalVideoUrl(job.video_job_id, tenantId);
+          videoUrl = await resolveVideoUrlOrFail({ jobId, videoId: job.video_job_id, userId: tenantId, db, logTag: 'publishExecute/telegram' });
         } catch (urlErr) {
-          if (urlErr instanceof VideoNotFoundError) {
-            await db.from('publishing_jobs').update({
-              status: 'failed',
-              error: 'Video not found',
-              finished_at: Math.floor(Date.now() / 1000),
-            }).eq('id', jobId);
+          if (urlErr instanceof VideoNotFoundError || urlErr instanceof VideoUnauthorizedError) {
             return { skipped: false, jobId, status: 'failed', externalPostId: '', provider: '' };
           }
-          if (urlErr instanceof VideoUnauthorizedError) {
-            logger.warn('[publishExecute/telegram] Permission denied resolving video URL', { jobId, videoId: job.video_job_id, tenantId });
-            await db.from('publishing_jobs').update({
-              status: 'failed',
-              error: 'Permission denied',
-              finished_at: Math.floor(Date.now() / 1000),
-            }).eq('id', jobId);
-            return { skipped: false, jobId, status: 'failed', externalPostId: '', provider: '' };
-          }
-          if (urlErr instanceof VideoNotMirroredError) {
-            // Transient — re-throw so Inngest retries
-            throw urlErr;
-          }
-          throw urlErr;
+          throw urlErr; // VideoNotMirroredError (transient) + unknown
         }
         assertSafeVideoUrl(videoUrl); // SSRF guard
 
@@ -282,30 +310,12 @@ export const publishExecute = inngest.createFunction(
       // Column name is misleading but unchanged (KISS — Wave 18 cosmetic rename).
       let videoUrl: string;
       try {
-        videoUrl = await getCanonicalVideoUrl(job.video_job_id, tenantId);
+        videoUrl = await resolveVideoUrlOrFail({ jobId, videoId: job.video_job_id, userId: tenantId, db, logTag: 'publishExecute' });
       } catch (urlErr) {
-        if (urlErr instanceof VideoNotFoundError) {
-          await db.from('publishing_jobs').update({
-            status: 'failed',
-            error: 'Video not found',
-            finished_at: Math.floor(Date.now() / 1000),
-          }).eq('id', jobId);
+        if (urlErr instanceof VideoNotFoundError || urlErr instanceof VideoUnauthorizedError) {
           return { skipped: false, jobId, status: 'failed', externalPostId: '', provider: '' };
         }
-        if (urlErr instanceof VideoUnauthorizedError) {
-          logger.warn('[publishExecute] Permission denied resolving video URL', { jobId, videoId: job.video_job_id, tenantId });
-          await db.from('publishing_jobs').update({
-            status: 'failed',
-            error: 'Permission denied',
-            finished_at: Math.floor(Date.now() / 1000),
-          }).eq('id', jobId);
-          return { skipped: false, jobId, status: 'failed', externalPostId: '', provider: '' };
-        }
-        if (urlErr instanceof VideoNotMirroredError) {
-          // Transient — re-throw so Inngest retries
-          throw urlErr;
-        }
-        throw urlErr;
+        throw urlErr; // VideoNotMirroredError (transient) + unknown
       }
       assertSafeVideoUrl(videoUrl); // SSRF guard
 
