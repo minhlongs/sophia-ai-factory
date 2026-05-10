@@ -2,8 +2,11 @@
 phase: 01
 title: "Hash email confirmation tokens (sha256) — change-email + delete"
 priority: P1/HIGH/SECURITY
-status: pending
+status: complete
 effort_estimate: 2h
+effort_actual: ~50m
+completed: 2026-05-10
+migration: 0104-account-deletion-token-hash-column.sql
 dependencies: []
 ---
 

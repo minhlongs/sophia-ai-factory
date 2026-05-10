@@ -17,6 +17,7 @@ import { getD1Raw } from '@/seed/db/client';
 import { sendEmail } from '@/forest/email/sender';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
+import { sha256Hex } from '@/seed/security/token-hash';
 import { buildDeleteConfirmHtml } from './email-template';
 
 const COOLDOWN_DAYS = 7;
@@ -109,16 +110,20 @@ async function createRequest(
 
   const tenantId = userId; // tenantId mirrors userId for FREE100
   const token = randomUUID();
+  const tokenHash = await sha256Hex(token);
   const requestedAt = Math.floor(Date.now() / 1000);
   const scheduledAt = requestedAt + COOLDOWN_DAYS * 24 * 60 * 60;
 
+  // Wave 22 P01: persist sha256(token) only. Legacy `confirmation_token`
+  // column kept NOT NULL — write empty string sentinel; confirm route uses
+  // hash column when populated, falls back to legacy column for pre-W22 rows.
   await db
     .prepare(
       `INSERT OR REPLACE INTO account_deletion_requests
-       (user_id, tenant_id, requested_at, scheduled_at, confirmation_token, confirmed_at, cancelled_at, created_at)
-       VALUES (?, ?, ?, ?, ?, NULL, NULL, ?)`,
+       (user_id, tenant_id, requested_at, scheduled_at, confirmation_token, confirmation_token_hash, confirmed_at, cancelled_at, created_at)
+       VALUES (?, ?, ?, ?, '', ?, NULL, NULL, ?)`,
     )
-    .bind(userId, tenantId, requestedAt, scheduledAt, token, requestedAt)
+    .bind(userId, tenantId, requestedAt, scheduledAt, tokenHash, requestedAt)
     .run();
 
   if (!process.env.NEXT_PUBLIC_APP_URL) {

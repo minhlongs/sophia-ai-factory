@@ -1,6 +1,14 @@
 # Project Changelog
 
-**Last Updated:** 2026-05-10 | **Current Version:** 1.22.1
+**Last Updated:** 2026-05-10 | **Current Version:** 1.22.2
+
+---
+
+## v1.22.2 — Wave 22 Batch 2: sha256 hash email tokens (2026-05-10)
+
+**Severity: P1 SECURITY | Type: Hardening | Status: SHIPPED**
+
+1-phase security blocker closing W20 review finding #1 (plaintext token DB storage). (P01) **sha256 hash email confirmation tokens:** Replaced plaintext `randomUUID()` token storage with sha256(token) hex digest in DB; raw token only travels via email URL and is never persisted. New seed util `src/seed/security/token-hash.ts` exposes `sha256Hex(input)` (Web Crypto subtle.digest), `safeCompareHex(a,b)` (constant-time string equality), and `isHashedToken(s)` (64-char hex format detector). Migration `0104-account-deletion-token-hash-column.sql` adds `confirmation_token_hash TEXT` column + filtered index; legacy `confirmation_token` column kept (NOT NULL) for backward-compat read path during 1h TTL / 7d cooldown window of pre-deploy rows. **Routes updated (4):** `change-email/route.ts` writes hash into `verification.value` (replacing raw); `change-email/verify/route.ts` hashes incoming token + safe-compares against stored hash; `delete/request/route.ts` writes hash to new column + empty string sentinel to legacy column; `delete/confirm/route.ts` prefers hash column when populated, falls back to legacy raw compare for in-flight rows. Both verify paths log `legacy token format accepted` for observability. **Tests:** 3165/3165 pass (+16 new: 12 token-hash unit + 2 change-email hash-path + 2 delete hash-path). **Build:** 0 TS errors. **Verification:** Migration applied to remote D1 (2 rows written = column + index); D1 dump confirms hash format. **Wave 23 follow-up:** Drop legacy `confirmation_token` column from `account_deletion_requests` after 7d cooldown rows from pre-deploy expire. **Backward compat window:** All in-flight rows verify within 1h (change-email) or 7d (delete) TTL; legacy fallback fires only for pre-W22 rows.
 
 ---
 

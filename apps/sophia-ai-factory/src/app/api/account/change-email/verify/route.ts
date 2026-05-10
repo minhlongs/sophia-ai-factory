@@ -11,6 +11,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { getD1Raw } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
+import { sha256Hex, safeCompareHex, isHashedToken } from '@/seed/security/token-hash';
 
 interface VerificationRow {
   id: string;
@@ -57,7 +58,21 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   if (sepIndex < 0) return failureRedirect('email-change-invalid');
   const newEmail = row.value.slice(0, sepIndex);
   const storedToken = row.value.slice(sepIndex + 1);
-  if (storedToken !== token) return failureRedirect('email-change-invalid');
+
+  // Wave 22 P01: storedToken is sha256(token) for new rows; legacy in-flight
+  // rows (pre-deploy, ≤1h TTL) carry the raw UUID and fall through to raw
+  // safe-compare. Both paths use constant-time compare.
+  let tokenOk: boolean;
+  if (isHashedToken(storedToken)) {
+    const incomingHash = await sha256Hex(token);
+    tokenOk = safeCompareHex(incomingHash, storedToken);
+  } else {
+    tokenOk = safeCompareHex(token, storedToken);
+    if (tokenOk) {
+      logger.info('[change-email/verify] legacy token format accepted', { userId });
+    }
+  }
+  if (!tokenOk) return failureRedirect('email-change-invalid');
 
   // Conditional UPDATE eliminates TOCTOU race. If another user claimed the
   // email between request and verify, NOT EXISTS fails and meta.changes === 0.

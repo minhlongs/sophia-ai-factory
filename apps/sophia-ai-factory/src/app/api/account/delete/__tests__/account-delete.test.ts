@@ -30,10 +30,12 @@ vi.mock('@/seed/utils/logger-utility', () => ({
 import { POST as RequestPOST } from '../request/route';
 import { GET as ConfirmGET } from '../confirm/route';
 import { GET as StatusGET } from '../status/route';
+import { sha256Hex } from '@/seed/security/token-hash';
 
 interface PendingRow {
   user_id: string;
   confirmation_token: string;
+  confirmation_token_hash?: string | null;
   confirmed_at: number | null;
   cancelled_at: number | null;
   scheduled_at: number;
@@ -276,6 +278,50 @@ describe('GET /api/account/delete/status', () => {
     const res = await StatusGET();
     const body = await res.json() as { state: string };
     expect(body.state).toBe('cancelled');
+  });
+});
+
+describe('Wave 22 P01 — sha256 hash token verification', () => {
+  it('confirms when confirmation_token_hash matches sha256 of incoming token', async () => {
+    const tokenHash = await sha256Hex('mytoken');
+    const { db, calls } = makeDb({
+      rowForConfirm: {
+        user_id: 'user-1',
+        confirmation_token: '',
+        confirmation_token_hash: tokenHash,
+        confirmed_at: null,
+        cancelled_at: null,
+        scheduled_at: 9_999_999_999,
+      },
+    });
+    mocks.mockGetD1Raw.mockResolvedValue(db);
+    const req = new NextRequest(
+      'http://localhost/api/account/delete/confirm?token=mytoken&userId=user-1',
+    );
+    const res = await ConfirmGET(req);
+    expect(res.status).toBe(307);
+    expect(res.headers.get('location')).toContain('ok=delete-confirmed');
+    expect(calls.some((c) => c.sql.includes('SET confirmed_at'))).toBe(true);
+  });
+
+  it('rejects when confirmation_token_hash does not match sha256 of incoming token', async () => {
+    const wrongHash = await sha256Hex('different-token');
+    const { db } = makeDb({
+      rowForConfirm: {
+        user_id: 'user-1',
+        confirmation_token: '',
+        confirmation_token_hash: wrongHash,
+        confirmed_at: null,
+        cancelled_at: null,
+        scheduled_at: 9_999_999_999,
+      },
+    });
+    mocks.mockGetD1Raw.mockResolvedValue(db);
+    const req = new NextRequest(
+      'http://localhost/api/account/delete/confirm?token=mytoken&userId=user-1',
+    );
+    const res = await ConfirmGET(req);
+    expect(res.headers.get('location')).toContain('error=delete-confirm-invalid');
   });
 });
 

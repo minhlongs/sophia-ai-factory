@@ -1,7 +1,7 @@
 ---
 title: "Wave 22 — Security + Reliability Sweep"
 description: "Sweep 8 backlog items from Wave 20 code review + Wave 21 P02 design gaps: token hashing, TOCTOU fix, retry audit, auto-finalize cron, DRY refactor."
-status: in_progress (4/8 phases done — Batch 1 shipped)
+status: in_progress (5/8 phases done — Batch 1+2 shipped, P01/P02/P03/P04/P08)
 priority: P1+P2 mix
 effort: ~10.5h (8 phases)
 branch: main
@@ -19,7 +19,7 @@ Wave 20 review + Wave 21 P02 design surfaced 8 actionable items (2 HIGH security
 
 | Phase | Title | Priority | Effort | Status | Source |
 |---|---|---|---|---|---|
-| 01 | Hash email confirmation tokens (sha256) — change-email + delete | P1/HIGH/SECURITY | 2h | pending | W20 review #1 |
+| 01 | Hash email confirmation tokens (sha256) — change-email + delete | P1/HIGH/SECURITY | 2h | ✅ done (Batch 2) | W20 review #1 |
 | 02 | Fix TOCTOU race on email uniqueness via conditional UPDATE | P1/HIGH/SECURITY | 1.5h | ✅ done (Batch 1) | W20 review #2 |
 | 03 | Fix silent `#` URL fallback when NEXT_PUBLIC_APP_URL missing | P2/MED/UX | 0.5h | ✅ done (Batch 1) | W20 review #4 |
 | 04 | Add `(provider, status)` composite index on publishing_jobs | P3/LOW/PERF | 0.5h | ✅ done (Batch 1) | W20 review #5 |
