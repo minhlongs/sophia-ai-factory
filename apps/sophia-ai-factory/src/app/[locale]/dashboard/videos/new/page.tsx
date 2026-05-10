@@ -23,8 +23,6 @@ export default async function NewVideoPage({
         <h1 className="text-3xl font-bold">{t("create.title")}</h1>
         <p className="text-muted-foreground mt-2">{t("generate.subtitle")}</p>
       </header>
-      {/* AiPromptForm replaces the deprecated 3-step HeyGen wizard. */}
-      {/* @deprecated VideoCreatorWizard — Wave 17 cleanup */}
       <AiPromptForm />
     </div>
   );

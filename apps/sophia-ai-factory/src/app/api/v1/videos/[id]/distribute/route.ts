@@ -43,10 +43,15 @@ const distributeSchema = z.object({
 
 /**
  * Raw D1 binding accessor for this edge route.
- * Uses raw D1Database (not createServerClient/D1Client) because schedulePublish
- * and the ownership-check queries use D1's native .prepare()/.bind() API directly.
- * Canonical migration to createServerClient() deferred to Wave 17 when schedulePublish
- * signature is unified.
+ *
+ * Wave 17 Phase 05 canonical D1 swap — DEFERRED to Wave 18. Reason:
+ *   createServerClient() returns D1Client which does not expose the underlying D1Database.
+ *   schedulePublish(db: D1Database, ...) requires a raw D1Database binding.
+ *   Switching route queries to D1Client AND changing schedulePublish signature forces
+ *   complete rewrite of schedule-publish.test.ts (5 tests, all coupled to raw .prepare()/.bind()
+ *   mock chain) — total LOC churn exceeds 30-line KISS threshold.
+ *   Wave 18 candidate: introduce D1Client.unwrap() accessor or change schedulePublish to
+ *   accept D1Client and update tests together in a dedicated refactor phase.
  */
 function getD1(): D1Database | null {
   try {
