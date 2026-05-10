@@ -2,8 +2,10 @@
 phase: 06
 title: "Inngest cron auto-finalize delete after cooldown elapsed"
 priority: P2/MED/UX
-status: pending
+status: complete
 effort_estimate: 3h
+effort_actual: ~45m
+completed: 2026-05-10
 dependencies: [05]
 ---
 

@@ -2,8 +2,10 @@
 phase: 07
 title: "Extract shared <bilingual-cta-email> component (DRY)"
 priority: P3/LOW/REFACTOR
-status: pending
+status: complete
 effort_estimate: 1.5h
+effort_actual: ~25m
+completed: 2026-05-10
 dependencies: [01]
 ---
 

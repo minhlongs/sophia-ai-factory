@@ -18,21 +18,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getD1Raw } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
-
-/** Tables to cascade-delete in dependency order (dependents first) */
-const DELETE_ORDER = [
-  'audit_log',
-  'publishing_results',
-  'publishing_jobs',
-  'publishing_channels',
-  'payout_batches',
-  'commission_ledger',
-  'conversion_events',
-  'affiliate_links',
-  'video_jobs',
-  'sessions',
-  'users',
-] as const;
+import { cascadeDeleteAccount } from '@/land/account';
 
 interface CooldownRow {
   confirmed_at: number | null;
@@ -73,32 +59,7 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
     if (gate) return gate;
   }
 
-  const deleted: Record<string, number> = {};
-  let totalDeleted = 0;
-
-  for (const table of DELETE_ORDER) {
-    try {
-      const result = await db
-        .prepare(`DELETE FROM ${table} WHERE tenant_id = ?`)
-        .bind(tenantId)
-        .run();
-      const count = result.meta?.rows_written ?? 0;
-      deleted[table] = count;
-      totalDeleted += count;
-    } catch {
-      deleted[table] = 0;
-    }
-  }
-
-  // Clean up the cooldown row regardless of outcome.
-  try {
-    await db
-      .prepare(`DELETE FROM account_deletion_requests WHERE user_id = ?`)
-      .bind(user.id)
-      .run();
-  } catch {
-    /* non-fatal */
-  }
+  const { totalDeleted, byTable } = await cascadeDeleteAccount(db, user.id, tenantId);
 
   logger.info('[gdpr-delete] account data deleted', { tenantId, totalDeleted });
 
@@ -107,7 +68,7 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
     deletedAt: new Date().toISOString(),
     tenantId,
     totalRowsDeleted: totalDeleted,
-    byTable: deleted,
+    byTable,
   });
 }
 

@@ -177,8 +177,12 @@ type ClaimResult =
   /**
    * Wave 20 Phase 02: telegram path — CAS-claim succeeded inside step 1 but the
    * actual Bot-API call lives in a separate `step.run('telegram-send', ...)` so
-   * Inngest can retry that step independently when 429/5xx hits.
-   * Step 1's memoized output prevents the CAS from re-running on retry.
+   * NOTE (Wave 22 P05 audit): function-level `retries: 0` DISABLES retries
+   * including those triggered by RetryAfterError per Inngest docs. So 429
+   * from Telegram → permanent fail → user re-triggers manually via UI.
+   * Wave 23 will switch to retries: 2 + idempotent publishing_results insert
+   * (current `randomUUID()` insert is non-idempotent on retry — see audit
+   * report at plans/260510-0152-wave22.../reports/inngest-retry-audit-*.md).
    */
   | {
       skipped: false;

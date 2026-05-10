@@ -34,3 +34,6 @@ export { urlRevenueVideoHandler } from './url-revenue-video-handler';
 
 // Wave 13 I2: Mission video generation
 export { videoGenerate } from './video-generate';
+
+// Wave 22 P06: auto-finalize account deletion after 7d cooldown
+export { accountDeleteFinalizeCron } from './account-delete-finalize-cron';
