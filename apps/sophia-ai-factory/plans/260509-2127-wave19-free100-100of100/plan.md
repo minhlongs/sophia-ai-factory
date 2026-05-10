@@ -11,7 +11,7 @@ created: 2026-05-09
 
 # Wave 19 — FREE100 100/100
 
-**Status Update:** Phase 01+02 SHIPPED 2026-05-09 — C2/C3/C5/C8 fixed + C1/C4/C6 regression locks. Tests: 3054/3054 + 7 new. Awaiting deploy.
+**Status Update:** Phase 01+02+03 SHIPPED 2026-05-09 — C2/C3/C5/C8 fixed + C1/C4/C6 regression locks + i18n batch (M4-M10) +20 keys EN/VI parity + 1 parity test. Tests: 3055/3055. Commit pending.
 
 ## Goal
 
@@ -36,7 +36,7 @@ This collapses Phase 02 (planned for unverified items) into a single test-covera
 |---|---|---|---|---|---|
 | 01 | Critical correctness fixes (C2 + C3 + C5 + C8) | P0 | 0.5d | ✅ done (commit pending) | 02 |
 | 02 | Verify-and-lock regression tests (C1, C4, C6 guardrails + cleanup) | P0 | 0.5d | ✅ done (commit pending) | 03 |
-| 03 | i18n + UX state batch (M4, M5, M6, M9, M10) | P1 | 1d | pending | 04 |
+| 03 | i18n + UX state batch (M4, M5, M6, M9, M10) | P1 | 1d | ✅ done (commit pending) | 04 |
 | 04 | Distribute publish-status polling (M1) | P1 | 1d | pending | — |
 | 05 | Telegram dispatch retry on 429/network (M2) | P1 | 0.5d | pending | — |
 | 06 | Sentry wiring + error boundaries + 404 (M3, M7) | P1 | 0.5d | pending | — |

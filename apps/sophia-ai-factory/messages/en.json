@@ -879,7 +879,8 @@
         "languageEn": "English",
         "languageVi": "Vietnamese",
         "submitting": "Generating...",
-        "submit": "Generate Video"
+        "submit": "Generate Video",
+        "quotaExceeded": "Video quota exceeded ({used}/{limit} used). Resets {resetAt}."
       },
       "distribute": {
         "title": "Distribute Video",
@@ -908,7 +909,8 @@
           "chatLabel": "Telegram (@{name})",
           "channelLabel": "Telegram (channel: {title})",
           "notPaired": "Not paired. Start @Sophia_Bbot to pair."
-        }
+        },
+        "errorToast": "Distribution failed. Please try again."
       }
     },
     "errors": {
@@ -1159,7 +1161,36 @@
       "step2_cta": "Connect Channel",
       "step3_title": "Publish Your First Video",
       "step3_desc": "Distribute your video to all connected channels with one click.",
-      "step3_cta": "View Videos"
+      "step3_cta": "View Videos",
+      "errorBanner": {
+        "title": "Couldn't load progress",
+        "description": "We had trouble checking your steps. Please retry.",
+        "retryButton": "Retry"
+      }
+    },
+    "distribute": {
+      "status": {
+        "header": "Distribution Status",
+        "queued": "Queued",
+        "processing": "Processing",
+        "live": "Live",
+        "failed": "Failed",
+        "paused": "Paused",
+        "scheduled": "Scheduled",
+        "uploading": "Uploading"
+      }
+    },
+    "channels": {
+      "client": {
+        "loading": "Loading...",
+        "connected": "Connected",
+        "notConnected": "Not connected",
+        "disconnect": "Disconnect",
+        "confirmDisconnect": "Disconnect {provider}?",
+        "disconnecting": "Disconnecting...",
+        "connectButton": "Connect",
+        "errorLoading": "Failed to load channels. Please refresh."
+      }
     }
   },
   "account": {

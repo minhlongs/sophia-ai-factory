@@ -6,6 +6,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface ChannelInfo {
   provider: string;
@@ -60,17 +61,20 @@ const CHANNEL_META: Record<string, { label: string; icon: string; connectPath: s
 const CHANNEL_ORDER = Object.keys(CHANNEL_META);
 
 export default function ChannelsClient({ userId }: { userId: string }) {
+  const t = useTranslations('dashboard.channels.client');
   const [channels, setChannels] = useState<ChannelInfo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
 
   const fetchChannels = useCallback(async () => {
+    setFetchError(false);
     try {
       const res = await fetch('/api/v1/integrations/channels');
       if (!res.ok) throw new Error('fetch failed');
       const data = await res.json() as { channels: ChannelInfo[] };
       setChannels(data.channels ?? []);
     } catch {
-      // render disconnected state
+      setFetchError(true);
     } finally {
       setLoading(false);
     }
@@ -85,7 +89,8 @@ export default function ChannelsClient({ userId }: { userId: string }) {
   }, [fetchChannels]);
 
   async function handleDisconnect(provider: string) {
-    if (!confirm(`Disconnect ${CHANNEL_META[provider]?.label ?? provider}?`)) return;
+    const label = CHANNEL_META[provider]?.label ?? provider;
+    if (!confirm(t('confirmDisconnect', { provider: label }))) return;
     await fetch(`/api/v1/integrations/channels/${provider}`, { method: 'DELETE' });
     void fetchChannels();
   }
@@ -97,7 +102,16 @@ export default function ChannelsClient({ userId }: { userId: string }) {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-bold">Social Channels</h1>
-        <p className="text-muted-foreground text-sm">Loading...</p>
+        <p className="text-muted-foreground text-sm">{t('loading')}</p>
+      </div>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-2xl font-bold">Social Channels</h1>
+        <p className="text-sm text-destructive">{t('errorLoading')}</p>
       </div>
     );
   }
@@ -128,7 +142,7 @@ export default function ChannelsClient({ userId }: { userId: string }) {
                     ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                     : 'bg-muted text-muted-foreground'
                 }`}>
-                  {info.connected ? 'Connected' : 'Not connected'}
+                  {info.connected ? t('connected') : t('notConnected')}
                 </span>
               </div>
 
@@ -142,14 +156,14 @@ export default function ChannelsClient({ userId }: { userId: string }) {
                     href={meta.connectPath}
                     className="text-xs px-3 py-1.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
                   >
-                    Connect
+                    {t('connectButton')}
                   </a>
                 ) : (
                   <button
                     onClick={() => handleDisconnect(provider)}
                     className="text-xs px-3 py-1.5 border border-red-200 text-red-600 rounded-md hover:bg-red-50 transition-colors"
                   >
-                    Disconnect
+                    {t('disconnect')}
                   </button>
                 )}
               </div>

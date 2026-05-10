@@ -10,6 +10,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 import type { UserChannel } from '@/seed/db/get-user-channels';
 import { PROVIDER_LABELS } from './channel-meta';
 
@@ -82,11 +83,13 @@ export function DistributePanel({ videoId, channels }: Props) {
       }
 
       const count = data.jobIds?.length ?? selected.size;
+      toast.success(t('successToast', { count }));
       // Navigate back to video detail with success signal
       startTransition(() => {
         router.push(`/dashboard/videos/${videoId}?distributed=${count}`);
       });
     } catch {
+      toast.error(t('errorToast'));
       setError(t('errors.submitFailed'));
     } finally {
       setIsSubmitting(false);

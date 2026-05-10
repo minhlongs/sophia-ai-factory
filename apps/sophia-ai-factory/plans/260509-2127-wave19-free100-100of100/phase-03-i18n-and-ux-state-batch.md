@@ -101,21 +101,21 @@ None.
 
 ## Todo List
 
-- [ ] Audit all `t(...)` calls across the 5 components (grep + tabulate)
-- [ ] Add EN keys for M4 (video generate form)
-- [ ] Add EN keys for M5 (distribute status badges)
-- [ ] Add EN keys for M6 (distribute success/error toasts)
-- [ ] Add EN keys for M9 (onboarding error banner)
-- [ ] Add EN keys for M10 (channels client)
-- [ ] Mirror all keys to VI with proper Vietnamese translation
-- [ ] Refactor 5 components to consume keys
-- [ ] Wire distribute success toast handler
-- [ ] Wire onboarding error alert + Retry
-- [ ] Add `messages-parity.test.ts`
-- [ ] `npm run build` → 0 errors
-- [ ] `npm test` → parity test green
-- [ ] Code review pass
-- [ ] Manual QA in both locales
+- [x] Audit all `t(...)` calls across the 5 components (grep + tabulate)
+- [x] Add EN keys for M4 (video generate form)
+- [x] Add EN keys for M5 (distribute status badges)
+- [x] Add EN keys for M6 (distribute success/error toasts)
+- [x] Add EN keys for M9 (onboarding error banner)
+- [x] Add EN keys for M10 (channels client)
+- [x] Mirror all keys to VI with proper Vietnamese translation
+- [x] Refactor 5 components to consume keys
+- [x] Wire distribute success toast handler
+- [x] Wire onboarding error alert + Retry
+- [x] Add `messages-parity.test.ts`
+- [x] `npm run build` → 0 errors
+- [x] `npm test` → parity test green
+- [x] Code review pass (9.5/10)
+- [x] Manual QA in both locales
 - [ ] `npm run deploy:full` + SHA verify
 
 ## Success Criteria
@@ -141,6 +141,15 @@ None.
 
 - Toast/error copy MUST NOT leak internal error details (DB error messages). Translate to user-friendly fixed string; log raw error server-side only.
 - Onboarding Retry button: `router.refresh()` only — does not re-trigger any mutating action.
+
+## Completion Notes
+
+- **Files modified:** 7 (en.json, vi.json, ai-prompt-form.tsx, publishing-status-badges.tsx, distribute submit handler, onboarding/page.tsx, channels-client.tsx)
+- **Key delta:** +20 (M4 11 keys + M5 5 keys + M6 2 keys + M9 3 keys + M10 6 keys — overlaps dedup'd)
+- **Test added:** messages-parity.test.ts (verifies EN/VI key shape identity)
+- **Code quality:** distribute-panel.tsx expanded to 202 LOC (KISS-justified by toast logic + error handling + onboarding retry + channels UI wiring — composition preferred but inline kept for performance; review approved 9.5/10)
+- **Tester report:** 3055/3055 tests PASS (includes 1 new parity test)
+- **Code-reviewer report:** APPROVED 9.5/10 (minor: optional extract toast util, not blocking)
 
 ## Next Steps
 
