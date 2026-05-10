@@ -1178,6 +1178,11 @@
         "paused": "Paused",
         "scheduled": "Scheduled",
         "uploading": "Uploading"
+      },
+      "statusPanel": {
+        "title": "Distribution Status",
+        "empty": "No distribute jobs yet — submit above to start.",
+        "attempts": "Attempts: {count}"
       }
     },
     "channels": {

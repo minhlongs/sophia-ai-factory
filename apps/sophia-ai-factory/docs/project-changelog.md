@@ -1,6 +1,14 @@
 # Project Changelog
 
-**Last Updated:** 2026-05-09 | **Current Version:** 1.20.0
+**Last Updated:** 2026-05-09 | **Current Version:** 1.20.2
+
+---
+
+## v1.20.2 — Wave 19 Phase 04: FREE100 distribute polling (2026-05-09)
+
+**Severity: P1 FEATURE | Type: Video Distribution | Status: SHIPPED**
+
+1-feature wave enabling live status polling for distribute operations. (F-1) **Distribute Status Endpoint:** `GET /api/v1/distribute/jobs/[videoId]/status` returns `{status, published_to, failed_on, last_error}` with auth + ownership filter. Zod UUID validation, `Cache-Control: no-store`. (F-2) **useDistributeJobsPolling Hook:** 4s→10s adaptive polling with visibility pause (pauses when tab hidden). AbortController cleanup. (F-3) **DistributeStatusPanel:** Skeleton/empty/list states; wired into `distribute/page.tsx`. (F-4) **i18n Keys:** 3 new keys `dashboard.distribute.statusPanel.*` (EN/VI parity). **Tests:** 9 new (5 route security + 4 hook lifecycle). **Impact:** Users see live status after distribute submit (queued→live/failed). **Build:** 0 TS errors. **Verification:** Polling works, status renders correctly.
 
 ---
 

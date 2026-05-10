@@ -12,6 +12,7 @@ import { createServerClient, getD1Raw } from '@/seed/db/client';
 import { localizedHref } from '@/lib/i18n/localized-href';
 import { getUserChannels } from '@/seed/db/get-user-channels';
 import { DistributePanel } from './distribute-panel';
+import { DistributeStatusPanel } from '@/components/distribute/distribute-status-panel';
 
 interface VideoRow {
   id: string;
@@ -69,6 +70,7 @@ export default async function DistributePage({
         <p className="text-sm text-muted-foreground mt-1">{t('subtitle')}</p>
       </header>
       <DistributePanel videoId={videoId} channels={channels} />
+      <DistributeStatusPanel videoId={videoId} />
     </div>
   );
 }
