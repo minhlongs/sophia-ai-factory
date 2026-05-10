@@ -1,6 +1,14 @@
 # Project Changelog
 
-**Last Updated:** 2026-05-10 | **Current Version:** 1.22.2
+**Last Updated:** 2026-05-10 | **Current Version:** 1.22.3
+
+---
+
+## v1.22.3 — Wave 22 Batch 3: retry audit + auto-finalize cron + DRY email component (2026-05-10)
+
+**Severity: P2 RELIAB + P2 UX + P3 REFACTOR | Type: Hardening + DRY | Status: SHIPPED — Wave 22 COMPLETE 8/8**
+
+3-phase batch closing remaining Wave 22 backlog. (P05) **Inngest retry audit:** Documented finding via Inngest official docs that `retries: 0` disables ALL retries including those triggered by `RetryAfterError`. Only affected function is `publish-execute` (1 of 11). Existing inline comment was wrong; corrected with reference to W23 follow-up backlog. Decision: Option A (keep `retries: 0`) because changing requires idempotent `publishing_results` insert refactor (currently uses `randomUUID()` which would duplicate on retry); deferred to W23 with audit report at `plans/260510-0152-wave22-security-and-reliability/reports/inngest-retry-audit-2026-05-10.md`. (P06) **Inngest cron auto-finalize delete:** New `accountDeleteFinalizeCron` runs every 6 hours (`0 */6 * * *` UTC), scans `account_deletion_requests` for confirmed+elapsed+uncancelled rows, cascade-deletes via shared util, sends bilingual EN+VI deletion-complete email (best-effort). Eliminates need for users to re-confirm after 7-day cooldown. Cascade logic extracted to `src/land/account/cascade-delete.ts` (DRY: same util powers manual `DELETE /api/account`). Registered in Inngest serve route. (P07) **Shared bilingual CTA email component:** New `src/seed/email/bilingual-cta-template.ts` — pure function rendering EN+VI HTML email with optional CTA button + URL safety check + HTML escape. Refactored 3 existing email flows (`change-email/email-template.ts` extracted from route.ts; `delete/request/email-template.ts` rewritten as adapter; new `account-delete-finalize-email.ts` from P06 also uses it). Reduces email template maintenance to 1 source + 3 thin adapters. **Tests:** 3177/3177 pass (+12 new: 7 bilingual-cta-template + 5 cascade-delete unit tests). **Build:** 0 TS errors. **Verification:** Full test suite green, regression tests for /api/account preserved. **Wave 23 backlog:** Convert publish-execute to `retries: 2` with idempotent `publishing_results` insert (deterministic id = jobId or schema UNIQUE constraint).
 
 ---
 

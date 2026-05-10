@@ -19,6 +19,7 @@ import {
   urlRevenueVideoHandler,
   offerSyncCron,
   storageTrackerDaily,
+  accountDeleteFinalizeCron,
 } from "@/forest/inngest/functions/index";
 
 export const { GET, POST, PUT } = serve({
@@ -47,5 +48,7 @@ export const { GET, POST, PUT } = serve({
     // Cron jobs previously defined but missing from registration
     offerSyncCron,
     storageTrackerDaily,
+    // Wave 22 P06: auto-finalize account deletion after cooldown
+    accountDeleteFinalizeCron,
   ],
 });

@@ -22,6 +22,7 @@ import { sendEmail } from '@/forest/email/sender';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import { sha256Hex } from '@/seed/security/token-hash';
+import { buildChangeEmailHtml } from './email-template';
 
 const TOKEN_TTL_MS = 60 * 60 * 1000;
 
@@ -119,25 +120,3 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   return NextResponse.json({ ok: true, sentTo: newEmail });
 }
 
-function buildChangeEmailHtml(rawUrl: string, oldEmail: string, newEmail: string): string {
-  if (!rawUrl.startsWith('https://') && !rawUrl.startsWith('http://localhost')) {
-    throw new Error(`[change-email] Invalid email URL: ${rawUrl}`);
-  }
-  const url = rawUrl.replace(/"/g, '&quot;').replace(/</g, '&lt;');
-  const safeOld = String(oldEmail).replace(/</g, '&lt;');
-  const safeNew = String(newEmail).replace(/</g, '&lt;');
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"></head>
-<body style="font-family:-apple-system,sans-serif;line-height:1.6;max-width:600px;margin:0 auto;padding:24px;">
-  <h2 style="color:#6750A4">Confirm your new email</h2>
-  <p>You requested to change the email on your Sophia AI Factory account from
-     <strong>${safeOld}</strong> to <strong>${safeNew}</strong>.</p>
-  <p>Click the button below to confirm. The link is valid for 1 hour.</p>
-  <a href="${url}" style="display:inline-block;background:#6750A4;color:white;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:600;margin:16px 0;">Confirm new email · Xác nhận email mới</a>
-  <p style="font-size:13px;color:#666;">If you did not request this change, ignore this email — your account is unchanged.</p>
-  <hr style="border:none;border-top:1px solid #eee;margin:20px 0;" />
-  <h3 style="color:#6750A4;margin-bottom:8px;">Xác nhận email mới</h3>
-  <p>Bạn vừa yêu cầu đổi email tài khoản Sophia AI từ <strong>${safeOld}</strong> sang <strong>${safeNew}</strong>.</p>
-  <p>Nhấn nút phía trên để xác nhận. Link có hiệu lực trong 1 giờ.</p>
-  <p style="font-size:13px;color:#666;">Nếu bạn không yêu cầu, vui lòng bỏ qua — tài khoản không thay đổi.</p>
-</body></html>`;
-}

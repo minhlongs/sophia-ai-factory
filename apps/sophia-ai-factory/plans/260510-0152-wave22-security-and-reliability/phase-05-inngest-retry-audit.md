@@ -2,8 +2,12 @@
 phase: 05
 title: "Audit Inngest functions with retries: 0 — convert benign errors to RetryAfterError"
 priority: P2/MED/RELIAB
-status: pending
+status: complete
 effort_estimate: 1h
+effort_actual: ~25m
+completed: 2026-05-10
+outcome: Option A — keep retries:0 with corrected inline comment; W23 fix queued
+report: reports/inngest-retry-audit-2026-05-10.md
 dependencies: []
 ---
 
