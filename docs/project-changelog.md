@@ -1,7 +1,39 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-05-10 (Wave 18 Batch 1: orphan cleanup + handleVideoUrlError refactor + D1Client.unwrap() accessor shipped)
+> **Last Updated:** 2026-05-10 (Wave 20 closed: MarkdownV2 + step-split + retry_after + quota widget + account self-service + schema rename)
+
+---
+
+## [2026-05-10] Wave 20 — Telegram Polish + Account Self-Service + Schema Rename (5 phases shipped)
+
+**Summary (vi):** Đóng toàn bộ carry-overs từ Wave 19 (7A/7B/7C/7F) + dọn schema từ Wave 18. Năm phase ship trong 1 phiên: (1) `escapeMarkdownV2()` thay strip-specials trong Telegram caption — user gõ `*bold*` giờ render đúng định dạng (commit `84906c44`). (2) Telegram dispatch trong `publishExecute` chia 3 step.run (claim → send → finalize) + `dispatchTelegramWithRetryHints` ném `RetryAfterError` ở 429 — sửa được bug "429 retry stuck on `skipped:true`" (commit `9f051edd`). (3) `<SidebarQuotaWidget />` ở chân sidebar dashboard — hiển thị X/Y credits tháng này, MASTER tier hiện ∞ (commit `d07550aa`). (4) Account self-service: editable email + verification token qua bảng `verification` của Better Auth + Export Data button (commit `1577e1e7`); DELETE flow defer Wave 21 (legal/audit). (5) `publishing_jobs.video_job_id → video_id` rename — phát hiện table chưa từng được apply lên remote D1 nên migration `0101` đã chuyển sang idempotent CREATE đầy đủ (commit `33999bcd`).
+
+**Summary (en):** Five-phase batch closing Wave 19 carry-overs (7A/7B/7C/7F) + Wave 18 schema cleanup. (1) Telegram caption switched from strip-specials to `escapeMarkdownV2()` so user-typed `*bold*` now renders correctly via Bot API `parse_mode: 'MarkdownV2'`. New helper at `src/tree/telegram/format-markdown-v2.ts` (36 LOC, 31 tests covering all 19 specials). (2) `publishExecute` Telegram path re-architected into 3 memoized `step.run` calls (`claim-and-upload` → `telegram-send` → `telegram-finalize`) — Inngest now retries only the failing step instead of bailing on the CAS check. `dispatchTelegramWithRetryHints` switched 429 → `RetryAfterError(message, retryAfterSec)` so Inngest honors Telegram-supplied delay. (3) `SidebarQuotaWidget` (99 LOC, 9 tests) renders compact monthly-credits indicator at sidebar bottom; MASTER tier shows ∞, BASIC/PREMIUM/ENTERPRISE show progress bar with color thresholds; hides on no-license. (4) Profile tab: editable email + "Update Email" → POST `/api/account/change-email` writes single-use token to Better Auth `verification` table, mails bilingual confirmation link to NEW address; GET `/verify` validates + UPDATEs `user.email`. Race-safe at verify time. "Export Data" wires existing `/api/account/export` to download button. (5) `publishing_jobs.video_job_id` renamed to `video_id` across 10 source files + 2 test files; `engine_missions.video_job_id` intentionally untouched. Discovery during deploy: remote D1 lacked `publishing_jobs` table altogether — migration `0101` rewritten as idempotent CREATE (incl. `publishing_results`, `channel_quotas`, indexes).
+
+**Migration applied:** `0101-publishing-jobs-rename-video-job-id-to-video-id.sql` (creates `publishing_jobs` + `publishing_results` + `channel_quotas` + 4 indexes; idempotent).
+
+**Tests:** 3129/3129 pass (was 3077 pre-Wave-20, +52 new tests across 5 phases).
+
+**Verification:** All 5 phases SHA-verified GREEN against `https://sophia.agencyos.network` via CF-direct deploy. Production HTTP 200 confirmed after each commit.
+
+**Commits:** `84906c44` (P01) → `d07550aa` (P03) → `33999bcd` (P05 migration rewrite, also includes `661f065b` rename sweep) → `1577e1e7` (P04) → `9f051edd` (P02).
+
+---
+
+## [2026-05-09 → 2026-05-10] Wave 19 — FREE100 Hardening (7 phases)
+
+**Summary (vi):** Bảy phase củng cố FREE100 RaaS: P01 4 critical correctness fixes (C2 D1 update return-value, C3 CAS meta.changes, C5 token sanitize ở error logs, C8 Inngest event idempotency id); P02 regression tests cho C1/C4/C6 guardrails; P03 i18n + UX state batch (M4-M10) — empty-state, loading skeletons, error toasts; P04 distribute publish-status polling panel (M1) — SSE + retry/abort UX; P05 Telegram retry classification helper (M2) — `dispatchTelegramWithRetryHints` ném `NonRetriableError` cho 4xx, plain Error cho 5xx/network; P06 Sentry capture trong dashboard error boundary + `/dashboard/not-found` page; P07 `.env.example` populate + Master lifetime badge ở /billing.
+
+**Summary (en):** Seven-phase FREE100 hardening release. P01 critical correctness fixes: C2 trust D1 update return-value (no `.error` field check), C3 verify CAS via `meta.changes`, C5 sanitize Bearer/access_token from error messages before D1 persist, C8 idempotent Inngest event id `publish-${jobId}-retry-${n}`. P02 regression test suite for C1 (telegram status='live' early-exit), C4 (per-poll step.run with step.sleep 60s, no setTimeout), C6 atomic D1 quota. P03 i18n + UX state batch: skeleton loaders, empty states, success/error toasts, retry buttons across 7 dashboard pages. P04 distribute publish-status polling panel (M1): SSE-driven status timeline with abort + retry. P05 `dispatchTelegramWithRetryHints` helper wraps `publishToTelegram` with Inngest-aware retry hints (4xx→NonRetriable, 429→retryable with `cause.retryAfterSec`, 5xx→retryable). P06 Sentry `captureException` inside dashboard error boundary `useEffect`, plus `not-found.tsx` async server component for missing-route i18n. P07 `.env.example` documents all required env vars (~50 lines: bot tokens, AI provider keys, Better Auth, Inngest, NOWPayments, encryption keys, email, cron, feature flags); Master tier lifetime badge in `/billing` shows ∞ icon next to tier label.
+
+**Tests:** 3077/3077 pass (was ~3000 pre-Wave-19).
+
+---
+
+## [2026-05-10] Wave 18 Batch 2 — Canonical D1 Swap + HMAC Fix (Commit `complete canonical D1 swap`)
+
+**Summary:** Completed Wave 18 by (1) finishing canonical D1 swap in distribute route — replaced `getD1Client()` mixed with `createServerClient()` calls with single `D1Client.unwrap()` accessor pattern; (2) fixed pre-existing nowpayments HMAC SHA512 test flake (cold-start timeout) by adding `{ timeout: 10000 }` vitest decorator. Both deployed CF-direct.
 
 ---
 
