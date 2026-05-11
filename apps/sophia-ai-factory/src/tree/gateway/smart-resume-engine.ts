@@ -47,12 +47,13 @@ export class SmartResumeEngine {
 
     if (supabase) {
       try {
+        // Upsert relies on the table's UNIQUE constraint on (campaign_id, step);
+        // the prior `{ onConflict: 'campaign_id,step' }` second arg was a
+        // Supabase-only hint that D1 ignores — its bare `ON CONFLICT DO UPDATE`
+        // clause picks the constraint from the row shape.
         const { error } = await supabase
           .from("campaign_checkpoints")
-          .upsert(
-            { campaign_id: campaignId, step, completed_at: new Date().toISOString(), metadata: metadata ?? null },
-            { onConflict: "campaign_id,step" }
-          );
+          .upsert({ campaign_id: campaignId, step, completed_at: new Date().toISOString(), metadata: metadata ?? null });
         if (error) throw error;
         return;
       } catch (err) {
@@ -81,7 +82,7 @@ export class SmartResumeEngine {
           .limit(1);
         if (error) throw error;
         if (!data || data.length === 0) return null;
-        return rowToCheckpoint(data[0] as CheckpointRow);
+        return rowToCheckpoint(data[0] as unknown as CheckpointRow);
       } catch (err) {
         logger.error(`[SmartResumeEngine] Failed to retrieve last checkpoint for ${campaignId}, starting from beginning`, err instanceof Error ? err : undefined);
         return null;
@@ -140,7 +141,7 @@ export class SmartResumeEngine {
           .order("completed_at", { ascending: true });
         if (error) throw error;
         if (!data) return [];
-        return (data as CheckpointRow[]).map(rowToCheckpoint);
+        return (data as unknown as CheckpointRow[]).map(rowToCheckpoint);
       } catch (err) {
         logger.error(`[SmartResumeEngine] Failed to retrieve checkpoints for ${campaignId}`, err instanceof Error ? err : undefined);
       }
