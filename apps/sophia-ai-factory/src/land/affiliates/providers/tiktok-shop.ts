@@ -132,6 +132,8 @@ export class TikTokShopProvider implements OfferProvider {
   async getTrending(niche: string): Promise<AffiliateOffer[]> {
     if (!this.appKey || !this.appSecret) return mockOffers(true)
     const offers = await this.listOffers({ niche, limit: 50 })
-    return offers.map(o => ({ ...o, isTrending: true }))
+    // Object.assign avoids esbuild collapsing the spread+override into a
+    // duplicate-key literal (`isTrending:!1, isTrending:!0`) post-minification.
+    return offers.map(o => Object.assign({}, o, { isTrending: true }))
   }
 }

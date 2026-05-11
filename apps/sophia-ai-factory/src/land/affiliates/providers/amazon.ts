@@ -191,6 +191,7 @@ export class AmazonProvider implements OfferProvider {
 
   async getTrending(niche: string): Promise<AffiliateOffer[]> {
     const offers = await this.listOffers({ niche, limit: 10 })
-    return offers.map(o => ({ ...o, isTrending: true }))
+    // Object.assign avoids esbuild collapsing spread+override into a duplicate-key literal.
+    return offers.map(o => Object.assign({}, o, { isTrending: true }))
   }
 }

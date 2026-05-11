@@ -125,7 +125,9 @@ export class AccessTradeProvider implements OfferProvider {
   }
 
   async getTrending(niche: string): Promise<AffiliateOffer[]> {
-    if (!this.token) return mockOffers().map(o => ({ ...o, isTrending: true }))
+    // Object.assign avoids esbuild collapsing spread+override into a
+    // duplicate-key literal (`isTrending:!1, isTrending:!0`) post-minification.
+    if (!this.token) return mockOffers().map(o => Object.assign({}, o, { isTrending: true }))
     try {
       const params = new URLSearchParams({ category: niche, sort: 'trending', limit: '50' })
       const [productsRes, campaignsRes] = await Promise.allSettled([
@@ -135,15 +137,15 @@ export class AccessTradeProvider implements OfferProvider {
       const offers: AffiliateOffer[] = []
       if (productsRes.status === 'fulfilled' && productsRes.value.ok) {
         const json = await productsRes.value.json() as { data?: AccessTradeProduct[] }
-        offers.push(...(json.data ?? []).map(p => ({ ...mapProduct(p), isTrending: true })))
+        offers.push(...(json.data ?? []).map(p => Object.assign({}, mapProduct(p), { isTrending: true })))
       }
       if (campaignsRes.status === 'fulfilled' && campaignsRes.value.ok) {
         const json = await campaignsRes.value.json() as { data?: AccessTradeCampaign[] }
-        offers.push(...(json.data ?? []).map(c => ({ ...mapCampaign(c), isTrending: true })))
+        offers.push(...(json.data ?? []).map(c => Object.assign({}, mapCampaign(c), { isTrending: true })))
       }
-      return offers.length ? offers : mockOffers().map(o => ({ ...o, isTrending: true }))
+      return offers.length ? offers : mockOffers().map(o => Object.assign({}, o, { isTrending: true }))
     } catch {
-      return mockOffers().map(o => ({ ...o, isTrending: true }))
+      return mockOffers().map(o => Object.assign({}, o, { isTrending: true }))
     }
   }
 }
