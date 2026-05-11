@@ -17,6 +17,12 @@
 
 import { test, expect } from '@playwright/test';
 
+// Generous per-test timeout: API calls themselves return in <300ms, but when
+// Playwright spins up a fresh worker against a remote URL, worker+browser
+// bootup adds variable overhead. 60s gives headroom for the first wave of
+// workers on a busy laptop while still failing loud if the deploy stalls.
+test.describe.configure({ timeout: 60_000 });
+
 test.describe('Public API smoke tests', () => {
   test('GET /api/health returns 200 with status field', async ({ request }) => {
     const response = await request.get('/api/health');
