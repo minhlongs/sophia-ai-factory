@@ -13,6 +13,10 @@
 
 import { test, expect } from '@playwright/test';
 
+// See api-endpoints.spec.ts for rationale — 60s headroom absorbs worker bootup
+// jitter against a remote URL without masking real OAuth-route regressions.
+test.describe.configure({ timeout: 60_000 });
+
 const REDIRECT_CODES = [302, 307, 308];
 
 test.describe('OAuth connect — unauthenticated returns 401', () => {
