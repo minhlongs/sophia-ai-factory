@@ -6,35 +6,29 @@
  *
  * Coverage:
  * - /login page shows magic-link email form
- * - Authenticated user lands on /dashboard (via seeded session cookie)
- * - Onboarding page is accessible for authenticated users
+ * - Authenticated user lands on /dashboard (via real Better Auth session)
  * - Unauthenticated /dashboard/onboarding redirects to login
  *
  * NOTE: Full magic-link email flow (request email → click link → auto-login)
  * requires a real email delivery mock or test-mode SMTP stub, which isn't wired
  * in the local dev server. Instead we verify:
  *   (a) The magic-link form exists and accepts email input
- *   (b) Session-cookie injection lands the user on dashboard
+ *   (b) A real signed session reaches the dashboard (via auth-fixture)
  * This covers the auth entry point and the post-login destination.
  *
- * TODO: e2e harness blocker — full magic-link click flow needs either:
- *   - A test-only /api/auth/magic-link/test endpoint that returns the token
- *   - OR wrangler d1 execute --local to read token after request
- *   Run manually after adding one of those two seeding strategies.
+ * Auth strategy: the authenticated test below uses the shared auth fixture
+ * (`./_fixtures/auth-fixture`), which signs in via Better Auth's own
+ * `/api/auth/sign-in/email` endpoint and harvests the real signed cookie.
+ * Auto-skips per fixture defaults — see `./_fixtures/auth-fixture.ts`.
+ *
+ * The pre-fixture path (manual `seedTestUser` + cookie injection) was retired
+ * here on 2026-05-11: Better Auth validates the session token's signature on
+ * every request, so a directly-inserted SQLite row could never be accepted.
  */
 
-import { test, expect } from '@playwright/test';
-import { seedTestUser, tearDown } from './_fixtures/free100-fixtures';
-
-const TEST_EMAIL = `e2e-magic-link-${Date.now()}@test.invalid`;
+import { test, expect } from './_fixtures/auth-fixture';
 
 test.describe('FREE100 Magic-Link Auth', () => {
-  let userId: string;
-
-  test.afterAll(() => {
-    if (userId) tearDown(userId);
-  });
-
   test('/login shows magic-link email form', async ({ page }) => {
     await page.goto('/en/login');
     await expect(page.locator('input[type="email"]')).toBeVisible();
@@ -60,45 +54,12 @@ test.describe('FREE100 Magic-Link Auth', () => {
     await expect(body).toBeVisible();
   });
 
-  test('session-cookie auth lands on /dashboard', async ({ page, context }) => {
-    // Seed user + session directly in local D1
-    const seeded = seedTestUser({ email: TEST_EMAIL, tier: 'MASTER' });
-    userId = seeded.userId;
+  test('signed-in user reaches /dashboard without redirect', async ({ authenticatedPage }) => {
+    await authenticatedPage.goto('/en/dashboard', { waitUntil: 'domcontentloaded' });
+    const url = authenticatedPage.url();
 
-    // Inject session cookie (Better Auth cookie name in dev mode: no __Secure- prefix)
-    await context.addCookies([
-      {
-        name: 'better-auth.session_token',
-        value: seeded.sessionToken,
-        domain: 'localhost',
-        path: '/',
-        httpOnly: true,
-        secure: false,
-        sameSite: 'Lax',
-      },
-    ]);
-
-    // Navigate to dashboard — should NOT redirect to login
-    await page.goto('/en/dashboard', { waitUntil: 'networkidle' });
-    const url = page.url();
-    // Dashboard should render (may have nested path like /en/dashboard or /en/dashboard/videos)
-    // If auth is rejected the server redirects to /en/login
-    // We accept any dashboard path as success
-    const onDashboard = url.includes('/dashboard');
-    const onLogin = url.includes('/login');
-
-    if (onLogin) {
-      // TODO: e2e harness blocker — Better Auth session cookie validation
-      // requires the session token to be cryptographically signed with
-      // BETTER_AUTH_SECRET. Direct SQLite write alone is insufficient;
-      // the server re-validates the token against the secret on each request.
-      // To fix: use Better Auth's admin API to issue a session, or mock the
-      // auth middleware in test mode with NEXT_PUBLIC_MOCK_AUTH=true.
-      test.skip(true, 'Auth cookie validation requires signed token — manual run needed');
-      return;
-    }
-
-    expect(onDashboard).toBe(true);
+    expect(url, 'authenticated request should NOT redirect to /login').not.toMatch(/\/login/);
+    expect(url).toMatch(/\/dashboard/);
   });
 
   test('unauthenticated /dashboard/onboarding redirects to login', async ({ page }) => {
