@@ -161,4 +161,58 @@ describe('D1Client.upsert — array payload integration', () => {
       { network_id: 'cb', external_id: 'b', title: 'Second', score: 2 },
     ])
   })
+
+  it('rejects array > D1_BATCH_LIMIT (501) with BATCH_LIMIT_EXCEEDED code', async () => {
+    const fake = createFakeD1(SCHEMA)
+    const db = createClientFromBinding(fake as unknown as D1Database)
+
+    const rows = Array.from({ length: 501 }, (_, i) => ({
+      id: `cap-${i}`,
+      name: `Row${i}`,
+      price: i,
+    }))
+
+    const { data, error } = await db.from('products').upsert(rows)
+    expect(data).toBeNull()
+    expect(error?.code).toBe('BATCH_LIMIT_EXCEEDED')
+    expect(error?.message).toContain('501')
+    expect(error?.message).toContain('500')
+
+    // Confirm no rows leaked through — guard fails fast, doesn't half-execute.
+    const count = fake._db.prepare('SELECT COUNT(*) as c FROM products').get() as { c: number }
+    expect(count.c).toBe(0)
+  })
+
+  it('accepts exactly D1_BATCH_LIMIT (500) rows at the boundary', async () => {
+    const fake = createFakeD1(SCHEMA)
+    const db = createClientFromBinding(fake as unknown as D1Database)
+
+    const rows = Array.from({ length: 500 }, (_, i) => ({
+      id: `edge-${i}`,
+      name: `Row${i}`,
+      price: i,
+    }))
+
+    const { error } = await db.from('products').upsert(rows)
+    expect(error).toBeNull()
+
+    const count = fake._db.prepare('SELECT COUNT(*) as c FROM products').get() as { c: number }
+    expect(count.c).toBe(500)
+  })
+
+  it('insert path also enforces D1_BATCH_LIMIT', async () => {
+    const fake = createFakeD1(SCHEMA)
+    const db = createClientFromBinding(fake as unknown as D1Database)
+
+    const rows = Array.from({ length: 501 }, (_, i) => ({
+      id: `ins-${i}`,
+      name: `Row${i}`,
+      price: i,
+    }))
+
+    const { data, error } = await db.from('products').insert(rows)
+    expect(data).toBeNull()
+    expect(error?.code).toBe('BATCH_LIMIT_EXCEEDED')
+    expect(error?.message).toContain('insert')
+  })
 })
