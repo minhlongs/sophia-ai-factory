@@ -115,8 +115,8 @@ describe('validateJwt', () => {
         iss: 'https://test.supabase.co/auth/v1',
       },
       protectedHeader: { alg: 'RS256' },
-      key: {} as any,
-    } as any)
+      key: new Uint8Array(),
+    })
 
     const validToken = 'Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLTEyMyIsImlhdCI6MTIzLCJleHAiOjk5OX0.signature'
     const result = await validateJwt(validToken)
@@ -239,8 +239,8 @@ describe('extractUserIdFromJwt', () => {
         exp: 999,
       },
       protectedHeader: { alg: 'RS256' },
-      key: {} as any,
-    } as any)
+      key: new Uint8Array(),
+    })
 
     // Use properly formatted token (will be verified by mock)
     const result = await extractUserIdFromJwt('Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLTQ1NiIsImlhdCI6MTIzLCJleHAiOjk5OX0.signature')
@@ -266,8 +266,8 @@ describe('extractUserIdFromJwt', () => {
         // No sub claim
       },
       protectedHeader: { alg: 'RS256' },
-      key: {} as any,
-    } as any)
+      key: new Uint8Array(),
+    })
 
     const result = await extractUserIdFromJwt('Bearer token')
 
