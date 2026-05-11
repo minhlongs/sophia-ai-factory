@@ -62,13 +62,21 @@ export default async function AffiliateDashboardPage(): Promise<React.JSX.Elemen
           <h1 className="text-3xl font-bold mb-2">Affiliate Dashboard</h1>
           <p className="text-muted-foreground">Last 30 days · per-click and conversion performance.</p>
         </div>
-        <a
-          href="/api/affiliate/conversions/csv?limit=500"
-          className="inline-flex items-center gap-2 rounded-md border border-[var(--neon-cyan)]/40 bg-[var(--neon-cyan)]/10 px-4 py-2 text-sm font-medium text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/20 transition"
-          download
-        >
-          Export CSV
-        </a>
+        <div className="flex items-center gap-2">
+          <a
+            href="/dashboard/affiliate/payouts"
+            className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-muted/40 transition"
+          >
+            Payout methods
+          </a>
+          <a
+            href="/api/affiliate/conversions/csv?limit=500"
+            className="inline-flex items-center gap-2 rounded-md border border-[var(--neon-cyan)]/40 bg-[var(--neon-cyan)]/10 px-4 py-2 text-sm font-medium text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/20 transition"
+            download
+          >
+            Export CSV
+          </a>
+        </div>
       </header>
 
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
