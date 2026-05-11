@@ -31,16 +31,16 @@ test.describe('Alert API — unauthenticated returns 401', () => {
     expect(res.status()).toBe(401);
   });
 
-  test('GET /api/admin/audit returns 401/403 anon (admin-only)', async ({ request }) => {
-    const res = await request.get('/api/admin/audit');
-    expect([401, 403, ...REDIRECT_CODES]).toContain(res.status());
+  test('GET /api/admin/audit-log returns 401 anon (admin-only)', async ({ request }) => {
+    const res = await request.get('/api/admin/audit-log');
+    expect([401, 403]).toContain(res.status());
   });
 });
 
 test.describe('Admin alerts page navigation', () => {
-  test('/admin/audit redirects unauthenticated', async ({ page }) => {
-    const response = await page.goto('/en/admin/audit', { waitUntil: 'commit' });
-    expect(REDIRECT_CODES.concat([200, 403, 404])).toContain(response?.status() ?? 0);
+  test('/dashboard/admin/audit-log gates anon access', async ({ page }) => {
+    const response = await page.goto('/en/dashboard/admin/audit-log', { waitUntil: 'commit' });
+    expect(REDIRECT_CODES.concat([200, 401, 403, 404])).toContain(response?.status() ?? 0);
   });
 
   test('/dashboard/alerts loads or redirects (does not 500)', async ({ page }) => {
