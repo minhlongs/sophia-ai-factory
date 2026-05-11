@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withEdgeCache } from "@/seed/cache/edge-cache";
 
 // IMPORTANT: do NOT add `export const revalidate = N` here. The route reads
 // COMMIT_SHA / DEPLOYED_AT from the runtime env. `revalidate` opts the route
@@ -56,28 +57,31 @@ const PUBLIC_CACHE_HEADERS = {
   "Cache-Control": "public, max-age=30, s-maxage=60, stale-while-revalidate=120",
 } as const;
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+export async function GET(request: NextRequest): Promise<Response> {
   const env = getEnv(request);
 
-  const commitSha = env.COMMIT_SHA ?? "unknown";
-  const shortSha = commitSha.slice(0, 8);
-  const deployedAt = env.DEPLOYED_AT ?? new Date().toISOString();
-
-  const publicBody: PublicVersionResponse = {
-    shortSha,
-    deployedAt,
-    opennextVersion: OPENNEXT_VERSION,
-  };
-
+  // Authorized path: always fresh, never cached.
   if (isIntrospectAuthorized(request, env)) {
+    const commitSha = env.COMMIT_SHA ?? "unknown";
     const fullBody: FullVersionResponse = {
-      ...publicBody,
+      shortSha: commitSha.slice(0, 8),
+      deployedAt: env.DEPLOYED_AT ?? new Date().toISOString(),
+      opennextVersion: OPENNEXT_VERSION,
       commitSha,
       branch: env.DEPLOY_BRANCH ?? "unknown",
     };
-    // Admin probe stays uncached — fresh metadata on demand.
     return NextResponse.json(fullBody);
   }
 
-  return NextResponse.json(publicBody, { headers: PUBLIC_CACHE_HEADERS });
+  // Anonymous path: wrap with `caches.default` so CF edge serves repeat hits
+  // without invoking the Worker. Builder runs only on cache miss.
+  return withEdgeCache(request, 60, async () => {
+    const commitSha = env.COMMIT_SHA ?? "unknown";
+    const publicBody: PublicVersionResponse = {
+      shortSha: commitSha.slice(0, 8),
+      deployedAt: env.DEPLOYED_AT ?? new Date().toISOString(),
+      opennextVersion: OPENNEXT_VERSION,
+    };
+    return NextResponse.json(publicBody, { headers: PUBLIC_CACHE_HEADERS });
+  });
 }
