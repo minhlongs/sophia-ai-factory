@@ -69,9 +69,41 @@ describe('D1Client.upsert — array payload integration', () => {
       expect.objectContaining({ error: null }),
     )
 
+    // Count assertion proves INSERT actually executed — guards against a future
+    // execUpsert regression that silently no-ops (returns `error: null` without
+    // running SQL); the row count would expose that loophole.
+    const count = fake._db.prepare('SELECT COUNT(*) as c FROM products').get() as { c: number }
+    expect(count.c).toBe(2)
+
     const stored = fake._db.prepare('SELECT id, name FROM products WHERE id LIKE ?').all('col-check-%') as Array<{ id: string; name: string }>
     expect(stored).toHaveLength(2)
     expect(stored.map((r) => r.name).sort()).toEqual(['One', 'Two'])
+  })
+
+  it('empty array `[]` is a no-op (does not throw, persists nothing)', async () => {
+    const fake = createFakeD1(SCHEMA)
+    const db = createClientFromBinding(fake as unknown as D1Database)
+
+    const { error } = await db.from('products').upsert([])
+    expect(error).toBeNull()
+
+    const count = fake._db.prepare('SELECT COUNT(*) as c FROM products').get() as { c: number }
+    expect(count.c).toBe(0)
+  })
+
+  it('length-1 array stays an array (distinct from single-row payload return contract)', async () => {
+    const fake = createFakeD1(SCHEMA)
+    const db = createClientFromBinding(fake as unknown as D1Database)
+
+    const result = await db.from('products').upsert([
+      { id: 'len1', name: 'Solo-in-Array', price: 42 },
+    ])
+    expect(result.error).toBeNull()
+    expect(Array.isArray(result.data)).toBe(true)
+    expect(result.data).toHaveLength(1)
+
+    const row = fake._db.prepare('SELECT id, name, price FROM products WHERE id = ?').get('len1')
+    expect(row).toEqual({ id: 'len1', name: 'Solo-in-Array', price: 42 })
   })
 
   it('ON CONFLICT updates existing rows on second upsert', async () => {
