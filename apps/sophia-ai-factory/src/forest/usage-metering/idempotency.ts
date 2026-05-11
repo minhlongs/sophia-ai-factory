@@ -38,7 +38,7 @@ export function generateIdempotencyKey(event: {
  * @param key - Key to validate
  * @returns True if valid format
  */
-export function isValidIdempotencyKey(key: string): boolean {
+export function isValidIdempotencyKey(key: string | null | undefined): boolean {
   if (!key || typeof key !== 'string') {
     return false;
   }

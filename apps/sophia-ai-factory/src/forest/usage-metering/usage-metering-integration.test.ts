@@ -142,8 +142,8 @@ describe('Usage Metering - Idempotency', () => {
       expect(isValidIdempotencyKey('')).toBe(false);
       expect(isValidIdempotencyKey('invalid')).toBe(false);
       expect(isValidIdempotencyKey('prefix_test')).toBe(false);
-      expect(isValidIdempotencyKey(null as any)).toBe(false);
-      expect(isValidIdempotencyKey(undefined as any)).toBe(false);
+      expect(isValidIdempotencyKey(null)).toBe(false);
+      expect(isValidIdempotencyKey(undefined)).toBe(false);
     });
   });
 
