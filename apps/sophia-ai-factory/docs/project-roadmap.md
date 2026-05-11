@@ -1,12 +1,24 @@
 # Sophia AI Factory — Strategic Roadmap from Open-Source Distillation
 
-**Date:** 2026-04-30 | **Research:** 8 OSS projects, 6 monetization patterns, 7 orchestration patterns
+**Date:** 2026-04-30 | **Last Sync:** 2026-05-11 | **Research:** 8 OSS projects, 6 monetization patterns, 7 orchestration patterns
 
 ---
 
 ## Key Takeaway
 
 Sophia's architecture is already competitive. Gaps are in **monetization UX** (credit display, usage-pressure conversion) and **growth** (affiliate program). Video pipeline is solid — needs polish, not rebuild.
+
+---
+
+## Status Snapshot (2026-05-11)
+
+Wave 23 (2026-05-11) closes the GAP plan and ships test-infra + ops hardening — see `project-changelog.md` v1.23.0 for the per-commit map. Highlights mapped to the sprints below:
+
+- **Sprint 2 #4 Affiliate program** — `feat(payouts): route weekly batcher Stripe Connect vs USDT` + dual-rail `/dashboard/affiliate/payouts` UI shipped. Backbone live; full Dub.co-style referral dashboard still pending.
+- **Sprint 3 #9 Crypto payment** — NOWPayments USDT IPN webhook + payout-batcher live since v1.20.x; this wave repaired schema (cents canonical) and unflaked the IPN test.
+- **Operational maturity** — 3 retroactive postmortems (INC-2026-01/02/03) + 3 automated prevention guards (migration coverage, edge-runtime safety, PR template gates) raise the baseline for future waves.
+
+Sprint 1 conversion items + remaining Sprint 2/3 work intentionally not yet touched — pending fresh slice direction.
 
 ---
 
