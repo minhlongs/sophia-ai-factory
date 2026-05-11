@@ -111,16 +111,24 @@ export async function execUpdate(state: QueryState): Promise<QueryResult<unknown
 }
 
 export async function execUpsert(state: QueryState): Promise<QueryResult<unknown>> {
-  const row = state.payload as Record<string, unknown>
-  const cols = Object.keys(row)
-  const vals = cols.map((c) => serializeValue(row[c]))
-  const updateClauses = cols.filter((c) => c !== 'id').map((c) => `${c} = excluded.${c}`).join(', ')
-  await state.db.prepare(`INSERT INTO ${state.table} (${cols.join(', ')}) VALUES (${cols.map(() => '?').join(', ')}) ON CONFLICT DO UPDATE SET ${updateClauses}`).bind(...vals).run()
-  if (state.isSingle && row.id) {
-    const fetched = await state.db.prepare(`SELECT * FROM ${state.table} WHERE id = ?`).bind(row.id).first()
+  // Mirror execInsert's array-handling so bulk callers (e.g. ingestion
+  // adapters scoring batches) don't end up serialising an array's numeric
+  // index keys as column names. Each row is run as its own statement —
+  // good enough for the small (≤500) batches D1 sees today.
+  const rows = Array.isArray(state.payload) ? state.payload as Record<string, unknown>[] : [state.payload as Record<string, unknown>]
+  let lastRow: Record<string, unknown> = rows[0] ?? {}
+  for (const row of rows) {
+    const cols = Object.keys(row)
+    const vals = cols.map((c) => serializeValue(row[c]))
+    const updateClauses = cols.filter((c) => c !== 'id').map((c) => `${c} = excluded.${c}`).join(', ')
+    await state.db.prepare(`INSERT INTO ${state.table} (${cols.join(', ')}) VALUES (${cols.map(() => '?').join(', ')}) ON CONFLICT DO UPDATE SET ${updateClauses}`).bind(...vals).run()
+    lastRow = row
+  }
+  if (state.isSingle && lastRow.id) {
+    const fetched = await state.db.prepare(`SELECT * FROM ${state.table} WHERE id = ?`).bind(lastRow.id).first()
     return { data: parseJsonFields(fetched), error: null }
   }
-  return { data: row, error: null }
+  return { data: Array.isArray(state.payload) ? rows : lastRow, error: null }
 }
 
 export async function execDelete(state: QueryState): Promise<QueryResult<unknown>> {
