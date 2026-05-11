@@ -46,8 +46,11 @@ export function logFunctionCall<T extends (...args: unknown[]) => unknown>(
     return descriptor;
   }
 
-  // @ts-expect-error - TypeScript generic constraint limitation
-  descriptor.value = function (...args: unknown[]) {
+  // Cast at assignment because TS can't prove the generic T (an arbitrary
+  // function shape) is structurally compatible with our `(...args: unknown[])
+  // => unknown` wrapper, even though it always is at runtime. Two-step cast
+  // through `unknown` lands on T cleanly.
+  const wrapper = function (this: unknown, ...args: unknown[]) {
     if (!DEBUG_ENABLED) {
       return originalMethod.apply(this, args);
     }
@@ -81,6 +84,8 @@ export function logFunctionCall<T extends (...args: unknown[]) => unknown>(
       throw error;
     }
   };
+
+  descriptor.value = wrapper as unknown as T;
 
   return descriptor;
 }
