@@ -1,5 +1,9 @@
 /**
- * SDK Example: Run a full lead + email campaign pipeline
+ * SDK Example: Run a full lead + email campaign pipeline.
+ *
+ * @edge-runtime-allowed: standalone CLI example, not imported by app code
+ * or middleware. process.exit() runs only when this file is executed
+ * directly via `tsx src/sdk/examples/run-campaign.ts` (Node).
  */
 
 import { SophiaClient } from '../index';

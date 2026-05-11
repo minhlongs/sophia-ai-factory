@@ -66,7 +66,21 @@ export function getBuffer(): OverageEventBuffer {
   return globalBuffer
 }
 
-if (typeof process !== 'undefined' && process.on) {
+/**
+ * Register Node.js shutdown hooks for the overage buffer.
+ *
+ * Mirror of `usage-metering/batch-buffer.installShutdownHandlers()` —
+ * see that file's comment for the Edge Runtime rationale. Caller:
+ * `instrumentation.ts` under NEXT_RUNTIME==='nodejs'.
+ *
+ * @edge-runtime-allowed: process.on hooks are gated inside an exported
+ * function so the module bundles safely for Edge; only the Node entry
+ * (instrumentation.ts) actually invokes them.
+ */
+export function installShutdownHandlers(): void {
+  if (typeof process === 'undefined' || typeof process.on !== 'function') {
+    return
+  }
   process.on('SIGTERM', async () => { if (globalBuffer) await globalBuffer.destroy() })
   process.on('SIGINT', async () => { if (globalBuffer) await globalBuffer.destroy() })
 }

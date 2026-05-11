@@ -1,5 +1,10 @@
 /**
- * Cron Job Handler for Scheduled Reports
+ * Cron Job Handler for Scheduled Reports.
+ *
+ * @edge-runtime-allowed: process.exit() lives inside main() which only
+ * runs when this file is executed directly via require.main === module
+ * (Node CLI). The module's exported functions never call process.exit.
+ *
  * @module audit/cron-report-runner
  */
 

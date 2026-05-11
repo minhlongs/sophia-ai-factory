@@ -189,6 +189,10 @@ export const usageBuffer = new UsageBatchBuffer();
  * the middleware bundle (Edge) can import this module safely; the Node
  * runtime calls this from `instrumentation.ts` under the
  * `NEXT_RUNTIME === 'nodejs'` guard.
+ *
+ * @edge-runtime-allowed: process.on hooks are gated inside an exported
+ * function; only instrumentation.ts (Node-only) invokes it. See incident
+ * commit 58c7192b for the original bug.
  */
 export function installShutdownHandlers(): void {
   if (
