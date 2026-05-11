@@ -179,7 +179,7 @@ describe('Telegram Bot Handlers', () => {
     it('should set context and ask for confirmation', async () => {
       const testTopic = 'Eco gadgets';
 
-      (TelegramFSM.getContext as any).mockResolvedValue({ email: 'test@example.com', state: BotState.IDLE })
+      vi.mocked(TelegramFSM.getContext).mockResolvedValue({ email: 'test@example.com', state: BotState.IDLE, lastUpdated: Date.now() })
 
       await handleCampaign(chatId, testTopic)
 
@@ -196,7 +196,7 @@ describe('Telegram Bot Handlers', () => {
     })
 
     it('should handle missing email', async () => {
-      (TelegramFSM.getContext as any).mockResolvedValue(null)
+      vi.mocked(TelegramFSM.getContext).mockResolvedValue(null)
 
       await handleCampaign(chatId, 'topic')
 
@@ -212,7 +212,7 @@ describe('Telegram Bot Handlers', () => {
     it('should show active campaigns', async () => {
       const testUserId = 'user-1';
 
-      (TelegramFSM.getContext as any).mockResolvedValue({ email: 'test@example.com', state: BotState.IDLE })
+      vi.mocked(TelegramFSM.getContext).mockResolvedValue({ email: 'test@example.com', state: BotState.IDLE, lastUpdated: Date.now() })
 
       // Mock profile check
       const mockSelectProfile = vi.fn().mockReturnValue({
