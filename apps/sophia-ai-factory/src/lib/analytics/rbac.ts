@@ -112,10 +112,10 @@ export async function checkAdmin(userId: string): Promise<boolean> {
   const db = createServerClient();
 
   const { data: profile } = await db
-    .from('user_profiles')
+    .from<{ role: string | null }>('user_profiles')
     .select('role')
     .eq('user_id', userId)
-    .single() as any;
+    .single();
 
   return profile?.role === 'admin';
 }
@@ -138,10 +138,10 @@ export async function verifyLicenseAccess(
   const db = createServerClient();
 
   const { data: license } = await db
-    .from('raas_licenses')
+    .from<{ created_by: string | null }>('raas_licenses')
     .select('created_by')
     .eq('nonce', licenseNonce)
-    .single() as any;
+    .single();
 
   if (!license) {
     return { allowed: false, error: 'License not found' };
@@ -165,12 +165,12 @@ export async function getUserLicenseNonce(userId: string): Promise<string | null
   const db = createServerClient();
 
   const { data: license } = await db
-    .from('raas_licenses')
+    .from<{ nonce: string | null }>('raas_licenses')
     .select('nonce')
     .eq('created_by', userId)
     .eq('is_revoked', false)
     .order('created_at', { ascending: false })
-    .single() as any;
+    .single();
 
   return license?.nonce || null;
 }
