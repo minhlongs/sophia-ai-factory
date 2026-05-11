@@ -22,7 +22,7 @@ export interface NonceCache {
  * Cloudflare KV binding type
  */
 declare global {
-  // eslint-disable-next-line no-var
+   
   var KV_KV: {
     get: (key: string) => Promise<unknown>;
     set: (key: string, value: unknown, options?: { expirationTtl?: number }) => Promise<void>;

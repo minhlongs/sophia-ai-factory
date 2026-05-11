@@ -40,7 +40,7 @@ export async function startVideoGeneration(input: GenerateVideoInput): Promise<s
 /**
  * Checks the status of a video generation job.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 export async function checkVideoGenerationStatus(jobId: string, _tier: Tier, userId?: string): Promise<{ status: 'processing' | 'completed' | 'failed'; output?: VideoOutput; error?: string }> {
   const videoService = await ServiceFactory.getVideoService(userId);
 

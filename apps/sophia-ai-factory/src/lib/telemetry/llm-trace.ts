@@ -8,9 +8,9 @@
  * Both sinks are fire-and-forget — failures never block caller.
  */
 
-// eslint-disable-next-line @typescript-eslint/no-restricted-imports -- mekong-exempt: telemetry/llm-trace needs signals/track (forest) for LLM observability; telemetry will move to forest in Phase 05
+ 
 import { track } from '@/lib/signals/track'
-// eslint-disable-next-line @typescript-eslint/no-restricted-imports -- mekong-exempt: telemetry/llm-trace needs signals/d1-event-types (forest) for event typing
+ 
 import { D1Events } from '@/lib/signals/d1-event-types'
 import { sendToLangfuse } from './langfuse-client'
 
