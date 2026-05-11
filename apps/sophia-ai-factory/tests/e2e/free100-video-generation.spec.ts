@@ -6,53 +6,36 @@
  *
  * Coverage:
  * - /dashboard/videos/new renders the AiPromptForm (unauthenticated → redirect)
- * - SSE stream mock emits succeeded with a fake R2 URL within 5s
- * - VideoPlayer renders with the mocked R2 URL after SSE succeeded event
- * - Form fields (prompt, style, language) are present
+ * - AiPromptForm fields are present when authenticated (auth-fixture path)
+ * - SSE stream mock emits succeeded with a fake R2 URL within 5s (local-only)
+ * - VideoPlayer renders with the mocked R2 URL (blocked by Inngest dependency)
  *
- * Auth strategy: Direct session cookie injection into local D1.
+ * Auth strategy: only the authenticated form-render test (test 2) consumes
+ * the `authenticatedPage` fixture from `./_fixtures/auth-fixture`. Tests 1,
+ * 3, and 4 destructure `{ page }` so the fixture's auto-skip-when-password-
+ * unset does not apply — each guards itself (test 1 needs no auth, test 3
+ * has an isRemote guard, test 4 has internal skip on Inngest failure).
+ *
  * SSE strategy: page.route() intercepts /api/v1/missions/{id}/stream
  *   and returns a pre-built SSE body (Playwright fulfills synchronously;
  *   EventSource receives all events at once in rapid succession).
  *
- * NOTE: The generateVideoAction server action (video-generate-action.ts)
- * calls the Inngest client which is NOT available in local dev.
- * If the action returns an error (Inngest not running), the missionId is
- * never set, and RenderProgress never mounts — SSE mock won't be hit.
- *
- * TODO: e2e harness blocker — video generation form submit requires either:
- *   (a) E2E_INSTANT_VIDEO_GEN=true env flag wired into generateVideoAction
- *       to bypass Inngest and directly insert a completed engine_mission row
- *   (b) Mock of generateVideoAction at the module level via MSW / fetch mock
- *   Run manually after adding one of those two approaches.
- *
- * The SSE mock and VideoPlayer assertion tests below WILL pass if we can
- * get a missionId onto the page. They are written as conditional tests:
- * skip gracefully if the form submit fails due to Inngest unavailability.
+ * Known blockers (out of scope for this spec):
+ * - The SSE mock test uses `seedTestUser` (local D1 only) — kept on the legacy
+ *   path because it requires writing a session row into local SQLite for
+ *   `mockSseStreamWildcard` to bind. Already guarded against remote runs.
+ * - The full form-submit test depends on Inngest, which is not running in
+ *   local dev. Blocked pending an E2E_INSTANT_VIDEO_GEN flag in
+ *   generateVideoAction or an MSW/fetch-mock of the action.
  */
 
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect } from './_fixtures/auth-fixture';
+import { injectLocalAuthCookie } from './_fixtures/auth-helpers';
 import { seedTestUser, tearDown } from './_fixtures/free100-fixtures';
 import { mockSseStreamWildcard } from './_fixtures/sse-mock';
 
-const TEST_EMAIL = `e2e-video-gen-${Date.now()}@test.invalid`;
 const MOCK_VIDEO_URL =
   'https://pub-e2e-mock.r2.cloudflarestorage.com/e2e-videos/output.mp4';
-
-async function injectAuthCookie(page: Page, sessionToken: string): Promise<void> {
-  const ctx = page.context();
-  await ctx.addCookies([
-    {
-      name: 'better-auth.session_token',
-      value: sessionToken,
-      domain: 'localhost',
-      path: '/',
-      httpOnly: true,
-      secure: false,
-      sameSite: 'Lax',
-    },
-  ]);
-}
 
 test.describe('FREE100 Video Generation', () => {
   let userId: string;
@@ -68,28 +51,16 @@ test.describe('FREE100 Video Generation', () => {
     expect(url).toMatch(/login|\/en$|\/vi$|\/$|sign/i);
   });
 
-  test('AiPromptForm fields render: prompt textarea, style/language selects', async ({
-    page,
-  }) => {
-    const seeded = seedTestUser({ email: TEST_EMAIL, tier: 'MASTER' });
-    userId = seeded.userId;
-    await injectAuthCookie(page, seeded.sessionToken);
-
-    await page.goto('/en/dashboard/videos/new', { waitUntil: 'networkidle' });
-    const url = page.url();
-
-    if (url.includes('/login') || url.includes('/en') && !url.includes('/dashboard')) {
-      // TODO: e2e harness blocker — auth cookie not accepted (unsigned token)
-      // Once auth cookie injection is fixed, this will reach the form.
-      test.skip(true, 'Auth cookie validation requires signed token — manual run needed');
-      return;
-    }
+  test('AiPromptForm fields render when authenticated', async ({ authenticatedPage }) => {
+    await authenticatedPage.goto('/en/dashboard/videos/new', { waitUntil: 'domcontentloaded' });
+    const url = authenticatedPage.url();
+    expect(url, 'authenticated request should NOT redirect to /login').not.toMatch(/\/login/);
 
     // Form fields
-    await expect(page.locator('textarea[name="prompt"]')).toBeVisible();
-    await expect(page.locator('select[name="style"]')).toBeVisible();
-    await expect(page.locator('select[name="language"]')).toBeVisible();
-    await expect(page.locator('button[type="submit"]')).toBeVisible();
+    await expect(authenticatedPage.locator('textarea[name="prompt"]')).toBeVisible();
+    await expect(authenticatedPage.locator('select[name="style"]')).toBeVisible();
+    await expect(authenticatedPage.locator('select[name="language"]')).toBeVisible();
+    await expect(authenticatedPage.locator('button[type="submit"]')).toBeVisible();
   });
 
   test('SSE mock intercepts mission stream and emits succeeded', async ({ page }) => {
@@ -98,7 +69,7 @@ test.describe('FREE100 Video Generation', () => {
       'SSE mock test requires local D1 + dev server; skipped against remote prod.',
     );
     const seeded = seedTestUser({ email: `e2e-sse-mock-${Date.now()}@test.invalid`, tier: 'MASTER' });
-    await injectAuthCookie(page, seeded.sessionToken);
+    await injectLocalAuthCookie(page, seeded.sessionToken);
 
     // Install wildcard SSE mock BEFORE navigation
     await mockSseStreamWildcard(page, { videoUrl: MOCK_VIDEO_URL });
@@ -131,7 +102,7 @@ test.describe('FREE100 Video Generation', () => {
       tier: 'MASTER',
     });
     userId = seeded.userId;
-    await injectAuthCookie(page, seeded.sessionToken);
+    await injectLocalAuthCookie(page, seeded.sessionToken);
 
     // Install SSE mock before navigation
     await mockSseStreamWildcard(page, { videoUrl: MOCK_VIDEO_URL });

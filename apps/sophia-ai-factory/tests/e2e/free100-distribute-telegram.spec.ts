@@ -11,29 +11,15 @@
  * API-layer tests (401 guard) run immediately and pass.
  */
 
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import {
   seedTestUser,
   seedCompletedVideo,
   seedTelegramPairing,
   tearDown,
 } from './_fixtures/free100-fixtures';
+import { injectLocalAuthCookie } from './_fixtures/auth-helpers';
 import { mockTelegramBotApi } from './_fixtures/telegram-mock';
-
-async function injectAuthCookie(page: Page, sessionToken: string): Promise<void> {
-  const ctx = page.context();
-  await ctx.addCookies([
-    {
-      name: 'better-auth.session_token',
-      value: sessionToken,
-      domain: 'localhost',
-      path: '/',
-      httpOnly: true,
-      secure: false,
-      sameSite: 'Lax',
-    },
-  ]);
-}
 
 test.describe('FREE100 Distribute — API layer (no browser auth)', () => {
   test('POST /api/v1/videos/:id/distribute without auth rejects', async ({
@@ -116,7 +102,7 @@ test.describe('FREE100 Distribute — Full UI flow (requires signed auth)', () =
     seedTelegramPairing({ userId });
 
     await mockTelegramBotApi(page);
-    await injectAuthCookie(page, seeded.sessionToken);
+    await injectLocalAuthCookie(page, seeded.sessionToken);
 
     await page.goto(`/en/dashboard/videos/${videoId}/distribute`, {
       waitUntil: 'networkidle',
@@ -151,7 +137,7 @@ test.describe('FREE100 Distribute — Full UI flow (requires signed auth)', () =
     }
 
     await mockTelegramBotApi(page);
-    await injectAuthCookie(page, userId); // reuse userId as token placeholder
+    await injectLocalAuthCookie(page, userId); // reuse userId as token placeholder
 
     // Mock the distribute API to return success (so Telegram Bot API doesn't need
     // to be actually called through the server, only through page.route on client)

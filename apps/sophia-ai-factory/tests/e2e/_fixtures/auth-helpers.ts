@@ -11,12 +11,38 @@
  * for the one-time setup script (idempotent, run once per environment).
  */
 
-import { request as createRequestContext, type Cookie } from '@playwright/test'
+import { request as createRequestContext, type Cookie, type Page } from '@playwright/test'
 
 export interface SignInOptions {
   baseURL: string
   email: string
   password: string
+}
+
+/**
+ * Legacy local-dev helper: inject an unsigned Better-Auth cookie into a page.
+ *
+ * Use only when the test requires direct SQLite seeding (e.g. `seedTestUser`
+ * + `mockSseStreamWildcard`) and cannot use the `authenticatedPage` fixture.
+ * Production runs cannot honour this cookie because the server validates the
+ * signature on every request — tests that rely on it must guard themselves
+ * with `test.skip(isRemote, ...)`.
+ *
+ * Prefer `authenticatedPage` from `./auth-fixture.ts` for any new test that
+ * just needs to be signed in.
+ */
+export async function injectLocalAuthCookie(page: Page, sessionToken: string): Promise<void> {
+  await page.context().addCookies([
+    {
+      name: 'better-auth.session_token',
+      value: sessionToken,
+      domain: 'localhost',
+      path: '/',
+      httpOnly: true,
+      secure: false,
+      sameSite: 'Lax',
+    },
+  ])
 }
 
 export interface SignInResult {
