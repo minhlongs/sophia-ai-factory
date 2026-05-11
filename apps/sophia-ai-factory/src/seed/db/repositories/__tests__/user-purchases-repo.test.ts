@@ -5,7 +5,7 @@
  * @vitest
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
 import {
   insertPurchase,
   getByPaymentId,
@@ -31,9 +31,19 @@ vi.mock('@/seed/utils/logger-utility', () => ({
   },
 }))
 
+interface QueryBuilderMock {
+  select: Mock
+  insert: Mock
+  update: Mock
+  eq: Mock
+  order: Mock
+  gte: Mock
+  single: Mock
+}
+
 // Helper to create mock DB client with proper chaining
 function mockDbClient() {
-  const queryBuilder: any = {
+  const queryBuilder: QueryBuilderMock = {
     select: vi.fn(),
     insert: vi.fn(),
     update: vi.fn(),
@@ -56,7 +66,9 @@ function mockDbClient() {
     from: vi.fn().mockReturnValue(queryBuilder),
   }
 
-  vi.mocked(dbClient.createServerClient).mockReturnValue(client as any)
+  vi.mocked(dbClient.createServerClient).mockReturnValue(
+    client as unknown as ReturnType<typeof dbClient.createServerClient>,
+  )
   return { client, queryBuilder }
 }
 
