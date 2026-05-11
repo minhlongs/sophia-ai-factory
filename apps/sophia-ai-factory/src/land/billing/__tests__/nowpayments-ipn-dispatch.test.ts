@@ -219,7 +219,7 @@ describe('dispatchFinished — subscription + one-time routing', () => {
   it('case 15: payment_status=failed → no special handling (payload passed as-is)', async () => {
     const payload = buildIpnPayload({
       invoice_id: '7810429001',
-      payment_status: 'failed' as any,
+      payment_status: 'failed',
     })
     const sku: OneTimeSku = {
       id: 'STARTER_BUNDLE',
@@ -243,7 +243,7 @@ describe('dispatchFinished — subscription + one-time routing', () => {
   it('case 16: payment_status=expired → no special handling', async () => {
     const payload = buildIpnPayload({
       invoice_id: '7810429001',
-      payment_status: 'expired' as any,
+      payment_status: 'expired',
     })
     const sku: OneTimeSku = {
       id: 'STARTER_BUNDLE',
