@@ -35,7 +35,12 @@ export async function GET(req: NextRequest) {
     const { data: violationsData, error: violationsError, count } = await query
 
     if (violationsError) {
-      logger.error('[Violations] Error fetching violations', new Error(violationsError.message))
+      // Pass a plain object preserving both .message and .code — TS rejects
+      // QueryError directly because it has no index signature; the earlier
+      // `new Error(msg)` wrap satisfied the type-check but dropped .code,
+      // losing the only structured discriminator for transient vs permanent
+      // DB failures downstream.
+      logger.error('[Violations] Error fetching violations', { message: violationsError.message, code: violationsError.code })
       return NextResponse.json({ error: 'Failed to fetch violations' }, { status: 500 })
     }
 
