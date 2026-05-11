@@ -93,6 +93,10 @@ test.describe('FREE100 Video Generation', () => {
   });
 
   test('SSE mock intercepts mission stream and emits succeeded', async ({ page }) => {
+    test.skip(
+      !!process.env.PLAYWRIGHT_TEST_BASE_URL?.startsWith('https://'),
+      'SSE mock test requires local D1 + dev server; skipped against remote prod.',
+    );
     const seeded = seedTestUser({ email: `e2e-sse-mock-${Date.now()}@test.invalid`, tier: 'MASTER' });
     await injectAuthCookie(page, seeded.sessionToken);
 

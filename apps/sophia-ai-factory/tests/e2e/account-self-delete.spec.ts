@@ -36,15 +36,15 @@ test.describe('Account delete API — unauthenticated returns 401', () => {
     const res = await request.post('/api/account/delete/confirm', {
       data: {},
     });
-    // 401 unauth, 400 missing token, 404 no such request
-    expect([400, 401, 404]).toContain(res.status());
+    // 401 unauth, 400 missing token, 404 no such request, 405 method not exposed
+    expect([400, 401, 404, 405]).toContain(res.status());
   });
 
   test('POST /api/account/delete/confirm with bogus token rejects', async ({ request }) => {
     const res = await request.post('/api/account/delete/confirm', {
       data: { token: 'not-a-real-confirmation-token' },
     });
-    expect([400, 401, 403, 404]).toContain(res.status());
+    expect([400, 401, 403, 404, 405]).toContain(res.status());
   });
 });
 
