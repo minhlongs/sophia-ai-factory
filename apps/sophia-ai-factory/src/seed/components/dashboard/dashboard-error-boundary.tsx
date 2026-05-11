@@ -41,15 +41,20 @@ export default function DashboardError({
   const t = locale === 'vi' ? VI : EN;
   const { icon: Icon, kind, action } = classifyError(error);
 
-  if (process.env.NODE_ENV !== 'production' && error.digest) {
-    console.info('[error-boundary] digest:', error.digest);
-  }
+  // Dev-only: surface Next.js error.digest via a data-attribute so devs can
+  // grab it from the DOM without browser-console output (avoids pulling the
+  // server logger into the client bundle for a 1-line debug aid).
+  const devDigest = process.env.NODE_ENV !== 'production' ? error.digest : undefined;
 
   const title = kind === 'auth' ? t.auth : kind === 'network' ? t.network : kind === 'db' ? t.db : t.unknown;
   const desc = kind === 'auth' ? t.authDesc : kind === 'network' ? t.networkDesc : kind === 'db' ? t.dbDesc : t.unknownDesc;
 
   return (
-    <div role="alert" className="flex flex-col items-center justify-center min-h-[50vh] gap-5 px-4 text-center">
+    <div
+      role="alert"
+      data-error-digest={devDigest}
+      className="flex flex-col items-center justify-center min-h-[50vh] gap-5 px-4 text-center"
+    >
       <div className="p-3 rounded-full bg-destructive/10">
         <Icon className="w-8 h-8 text-destructive" />
       </div>

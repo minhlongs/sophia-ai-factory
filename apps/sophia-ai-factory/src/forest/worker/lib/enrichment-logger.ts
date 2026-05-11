@@ -14,6 +14,7 @@ import {
   hashIpSync,
   LOGGER_CONFIG,
 } from './enrichment-log-queue';
+import { logger } from '@/seed/utils/logger-utility';
 
 /** Subset of Cloudflare Worker Env bindings used by the enrichment logger */
 interface EnrichmentLoggerEnv {
@@ -48,7 +49,7 @@ export async function logEnrichmentDecision(
   }
 
   if (env.ENVIRONMENT === 'development') {
-    console.log('[Enrichment Logger] Decision logged:', {
+    logger.info('[Enrichment Logger] Decision logged', {
       licenseNonce: log.licenseNonce.slice(0, 8) + '...',
       tier: log.tier,
       cacheHit: log.cacheHit,
