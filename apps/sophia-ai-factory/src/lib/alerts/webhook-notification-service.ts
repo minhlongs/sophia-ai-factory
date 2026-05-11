@@ -8,9 +8,9 @@ import { logger } from '@/seed/utils/logger-utility'
 import { toError, getErrorMessage } from '@/seed/utils/to-error'
 import { triggerWebhookFailedAlert } from '@/lib/alerts/realtime-alert-service'
 import { generateWebhookSignature } from './webhook-notification-signature'
-import type { WebhookPayload, WebhookDeliveryResult } from './webhook-notification-types'
+import type { WebhookPayload, WebhookDeliveryResult, WebhookMetadata } from './webhook-notification-types'
 
-export type { WebhookEventType, WebhookPayload, WebhookDeliveryResult } from './webhook-notification-types'
+export type { WebhookEventType, WebhookPayload, WebhookDeliveryResult, WebhookMetadata } from './webhook-notification-types'
 export { generateWebhookSignature, verifyWebhookSignature } from './webhook-notification-signature'
 
 function sleep(ms: number): Promise<void> {
@@ -61,12 +61,10 @@ export async function sendWebhookAlert(
   return { success: false, attempts: maxRetries, error: lastError }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function createQuotaThresholdPayload(params: { userId: string; licenseNonce: string; threshold: number; percentage: number; limit: number; currentUsage: number; tier: 'BASIC' | 'PREMIUM' | 'ENTERPRISE' | 'MASTER'; exceededType: 'hourly_credits' | 'daily_credits' | 'monthly_credits' | 'daily_requests'; metadata?: Record<string, any> }): WebhookPayload {
+export function createQuotaThresholdPayload(params: { userId: string; licenseNonce: string; threshold: number; percentage: number; limit: number; currentUsage: number; tier: 'BASIC' | 'PREMIUM' | 'ENTERPRISE' | 'MASTER'; exceededType: 'hourly_credits' | 'daily_credits' | 'monthly_credits' | 'daily_requests'; metadata?: WebhookMetadata }): WebhookPayload {
   return { eventId: crypto.randomUUID(), event: 'quota.threshold', userId: params.userId, licenseNonce: params.licenseNonce, threshold: params.threshold, percentage: params.percentage, limit: params.limit, currentUsage: params.currentUsage, tier: params.tier, exceededType: params.exceededType, timestamp: new Date().toISOString(), metadata: params.metadata }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function createOverageDetectedPayload(params: { userId: string; licenseNonce: string; percentage: number; limit: number; currentUsage: number; overageAmount: number; overageFee: number; tier: 'BASIC' | 'PREMIUM' | 'ENTERPRISE' | 'MASTER'; exceededType: 'hourly_credits' | 'daily_credits' | 'monthly_credits' | 'daily_requests'; metadata?: Record<string, any> }): WebhookPayload {
+export function createOverageDetectedPayload(params: { userId: string; licenseNonce: string; percentage: number; limit: number; currentUsage: number; overageAmount: number; overageFee: number; tier: 'BASIC' | 'PREMIUM' | 'ENTERPRISE' | 'MASTER'; exceededType: 'hourly_credits' | 'daily_credits' | 'monthly_credits' | 'daily_requests'; metadata?: WebhookMetadata }): WebhookPayload {
   return { eventId: crypto.randomUUID(), event: 'overage.detected', userId: params.userId, licenseNonce: params.licenseNonce, percentage: params.percentage, limit: params.limit, currentUsage: params.currentUsage, tier: params.tier, exceededType: params.exceededType, timestamp: new Date().toISOString(), metadata: { overageAmount: params.overageAmount, overageFee: params.overageFee, ...params.metadata } }
 }

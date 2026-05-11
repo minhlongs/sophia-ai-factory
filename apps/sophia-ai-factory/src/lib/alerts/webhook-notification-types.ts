@@ -10,6 +10,13 @@ export type WebhookEventType =
   | 'subscription.expiring'
   | 'payment.failed'
 
+/**
+ * Arbitrary JSON-shaped payload attached to a webhook event. Use `unknown`
+ * (not `any`) so consumers must narrow before reading — caller-defined keys
+ * carry meaning per integration, not per static contract.
+ */
+export type WebhookMetadata = Record<string, unknown>
+
 export interface WebhookPayload {
   eventId: string
   event: WebhookEventType
@@ -22,8 +29,7 @@ export interface WebhookPayload {
   tier: 'BASIC' | 'PREMIUM' | 'ENTERPRISE' | 'MASTER'
   exceededType?: 'hourly_credits' | 'daily_credits' | 'monthly_credits' | 'daily_requests'
   timestamp: string
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  metadata?: Record<string, any>
+  metadata?: WebhookMetadata
 }
 
 export interface WebhookDeliveryResult {
