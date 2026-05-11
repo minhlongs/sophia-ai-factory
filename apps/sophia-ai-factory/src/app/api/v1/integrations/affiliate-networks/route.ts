@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { listNetworks, saveCredentials, AffiliateNetwork } from '@/lib/affiliates/credentials';
+import { listNetworks, saveCredentials, AffiliateNetwork, NetworkCredentialPayload } from '@/lib/affiliates/credentials';
 import { logger } from '@/seed/utils/logger-utility';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 
@@ -74,8 +74,13 @@ export const POST = withRateLimit(async function POST(req: NextRequest) {
   if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await saveCredentials(db, user.id, parsed.data.network, parsed.data.payload as any);
+    // Zod validates payload as Record<string, string> (loose shape); saveCredentials
+    // expects the strict per-network NetworkCredentialPayload[N]. The two-step cast
+    // bridges via `unknown` because the structural types don't overlap directly —
+    // upstream API contract is loose by design. Future: discriminated Zod schema
+    // per network would remove this bridge.
+    const network = parsed.data.network;
+    await saveCredentials(db, user.id, network, parsed.data.payload as unknown as NetworkCredentialPayload[typeof network]);
     return NextResponse.json({ success: true }, { status: 201 });
   } catch (err) {
     logger.error('[affiliate-networks] POST failed', err instanceof Error ? err : undefined);
