@@ -60,4 +60,16 @@ The Wizard will guide you through connecting your AI "Brains". You will need the
 
 ---
 
+## 👩‍💻 For Developers / Dành cho Lập trình viên
+
+If you are picking up the **codebase** (not just running the product), start here instead:
+
+→ **`apps/sophia-ai-factory/docs/contributor-handover.md`**
+
+Covers: 4-layer architecture, deploy doctrine (CF-direct), secret rotation, common pitfalls, day-1 setup, where-to-look-first map, key runbooks.
+
+Nếu bạn nhận bàn giao **mã nguồn** (không phải chỉ chạy sản phẩm), đọc tài liệu trên — bao gồm kiến trúc 4 tầng, quy trình deploy, xoay secret, lỗi thường gặp, setup ngày đầu.
+
+---
+
 *Powered by Mekong CLI*
