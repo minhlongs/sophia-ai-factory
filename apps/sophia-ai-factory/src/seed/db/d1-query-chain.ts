@@ -57,7 +57,7 @@ export class D1QueryChain<T = Record<string, unknown>> {
     return this;
   }
 
-  upsert(data: Record<string, unknown>): this {
+  upsert(data: Record<string, unknown> | Record<string, unknown>[]): this {
     this.operation = 'upsert';
     this.payload = data;
     return this;

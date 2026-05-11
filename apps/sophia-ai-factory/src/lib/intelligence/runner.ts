@@ -46,15 +46,14 @@ export async function runScoringBatch(limit: number = 1000, offset: number = 0) 
 
   // 3. Bulk update scores via upsert (ID + changed fields only)
 
-  // D1Client.upsert is declared `(data: Record<string, unknown>)` — single row
-  // — but the executor handles batched payloads via a single SQL statement.
-  // The prior code used `as any` to bypass; cast through `unknown` to make the
-  // shape-mismatch explicit until D1Client.upsert grows an array overload.
-  // The dropped `{ onConflict, ignoreDuplicates }` second arg was a Supabase-
-  // only hint that D1's bare `ON CONFLICT DO UPDATE` already supersedes.
+  // D1Client.upsert accepts an array of rows (each is run as its own
+  // INSERT ... ON CONFLICT DO UPDATE statement). The narrow cast erases the
+  // Supabase-generated table types only — the array shape is preserved. The
+  // dropped `{ onConflict, ignoreDuplicates }` second arg was a Supabase-only
+  // hint that D1's bare `ON CONFLICT DO UPDATE` already supersedes.
   const { error: updateError } = await db
     .from('affiliate_products')
-    .upsert(updates as unknown as Record<string, unknown>)
+    .upsert(updates as unknown as Record<string, unknown>[])
 
   if (updateError) {
     throw new Error(`Bulk update failed: ${updateError.message}`)

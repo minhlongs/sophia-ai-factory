@@ -98,6 +98,8 @@ describe('BaseAdapter.upsertProducts', () => {
         }),
       ]),
     )
+    // Lock arity so a future re-introduction of the dropped opts arg fails loud.
+    expect(upsertMock.mock.calls[0]).toHaveLength(1)
   })
 
   it('should handle optional fields with null defaults', async () => {
