@@ -191,7 +191,7 @@ describe('computeNext() — Rule 4: Unblock when prior step completed', () => {
     const action = computeNext(wf, missions)
 
     expect(action.action).toBe('unblock')
-    expect((action as any).nextMissionId).toBe('mission-2')
+    expect((action as Extract<NextAction, { nextMissionId: string }>).nextMissionId).toBe('mission-2')
     expect((action as Extract<NextAction, { reason: string }>).reason).toMatch(/Step 2 unblocked/)
   })
 
@@ -206,7 +206,7 @@ describe('computeNext() — Rule 4: Unblock when prior step completed', () => {
     const action = computeNext(wf, missions)
 
     expect(action.action).toBe('unblock')
-    expect((action as any).nextMissionId).toBe('mission-3')
+    expect((action as Extract<NextAction, { nextMissionId: string }>).nextMissionId).toBe('mission-3')
     expect((action as Extract<NextAction, { reason: string }>).reason).toMatch(/Step 3 unblocked/)
   })
 
@@ -249,7 +249,7 @@ describe('computeNext() — Rule 4: Unblock when prior step completed', () => {
     const action = computeNext(wf, missions)
 
     expect(action.action).toBe('unblock')
-    expect((action as any).nextMissionId).toBe('mission-2')
+    expect((action as Extract<NextAction, { nextMissionId: string }>).nextMissionId).toBe('mission-2')
   })
 })
 
@@ -267,7 +267,7 @@ describe('computeNext() — Rule 5: Execute lowest queued mission', () => {
     const action = computeNext(wf, missions)
 
     expect(action.action).toBe('execute')
-    expect((action as any).nextMissionId).toBe('mission-1')
+    expect((action as Extract<NextAction, { nextMissionId: string }>).nextMissionId).toBe('mission-1')
     expect((action as Extract<NextAction, { reason: string }>).reason).toMatch(/Execute step 1/)
   })
 
@@ -282,7 +282,7 @@ describe('computeNext() — Rule 5: Execute lowest queued mission', () => {
     const action = computeNext(wf, missions)
 
     expect(action.action).toBe('execute')
-    expect((action as any).nextMissionId).toBe('mission-2')
+    expect((action as Extract<NextAction, { nextMissionId: string }>).nextMissionId).toBe('mission-2')
   })
 
   it('should prioritize unblock over execute (Rule 4 before Rule 5)', () => {
@@ -297,7 +297,7 @@ describe('computeNext() — Rule 5: Execute lowest queued mission', () => {
 
     // Rule 4 (unblock) has priority over Rule 5 (execute)
     expect(action.action).toBe('unblock')
-    expect((action as any).nextMissionId).toBe('mission-2')
+    expect((action as Extract<NextAction, { nextMissionId: string }>).nextMissionId).toBe('mission-2')
   })
 })
 
@@ -356,7 +356,7 @@ describe('computeNext() — Sorting and params parsing', () => {
 
     // Should unblock step 2 (by order), not step 3
     expect(action.action).toBe('unblock')
-    expect((action as any).nextMissionId).toBe('mission-2')
+    expect((action as Extract<NextAction, { nextMissionId: string }>).nextMissionId).toBe('mission-2')
   })
 
   it('should handle malformed params gracefully', () => {
