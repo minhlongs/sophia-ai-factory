@@ -2,7 +2,9 @@
  * Payout Batcher — Inngest weekly Sunday cron
  *
  * Aggregates payable commissions per affiliate (≥$10 / 1000 cents threshold),
- * claims rows atomically, creates payout_batch rows, calls NOWPayments.
+ * claims rows atomically, creates payout_batch rows, dispatches via:
+ *   - Stripe Transfer (fiat USD) if affiliate has Stripe Connect enabled
+ *   - NOWPayments (USDT crypto) otherwise
  * Rollback to 'payable' on failure — no silent double-pay.
  * Runs: 0 12 * * 0 (Sunday 12:00 UTC)
  *
@@ -20,16 +22,12 @@ import {
   rollbackPayingRows,
 } from './commission-ledger'
 import { queueBatch } from './nowpayments-mass-payout'
+import { transferToConnectedAccount } from './stripe-connect'
+import { resolvePayoutMethod, type ResolvedPayoutMethod } from './resolve-payout-method'
 import { deterministicBatchId } from './commission-cents'
 
 const MIN_PAYOUT_CENTS = 1000 // $10.00
-
-interface PayoutMethodRow {
-  id: string
-  method: string
-  recipient_addr_encrypted: string
-  network: string
-}
+const STRIPE_RECIPIENT_PLACEHOLDER = 'stripe_connect' // recipient_addr_encrypted is NOT NULL; Stripe has no encrypted addr
 
 export const payoutBatcher = inngest.createFunction(
   {
@@ -49,7 +47,7 @@ export const payoutBatcher = inngest.createFunction(
       return (result.results ?? []).map((r: { tenant_id: string }) => r.tenant_id)
     })
 
-    const results: { batchId: string; affiliateId: string; totalCents: number }[] = []
+    const results: { batchId: string; affiliateId: string; totalCents: number; rail: 'stripe' | 'usdt' }[] = []
 
     for (const tenantId of tenants) {
       const aggregates = await step.run(`aggregate-payable-${tenantId}`, async () => {
@@ -59,17 +57,8 @@ export const payoutBatcher = inngest.createFunction(
       for (const agg of aggregates) {
         if (agg.total_cents < MIN_PAYOUT_CENTS) continue
 
-        const method = await step.run(`fetch-payout-method-${agg.affiliate_id}`, async () => {
-          const innerDb = await getD1Raw()
-          return innerDb
-            .prepare(
-              `SELECT id, method, recipient_addr_encrypted, network
-               FROM payout_methods
-               WHERE affiliate_id = ? AND tenant_id = ? AND is_default = 1
-               ORDER BY created_at DESC LIMIT 1`,
-            )
-            .bind(agg.affiliate_id, tenantId)
-            .first<PayoutMethodRow>()
+        const method = await step.run(`resolve-method-${agg.affiliate_id}`, async () => {
+          return resolvePayoutMethod(tenantId, agg.affiliate_id)
         })
 
         if (!method) continue
@@ -116,35 +105,30 @@ export const payoutBatcher = inngest.createFunction(
               agg.affiliate_id,
               agg.total_cents,
               agg.row_count,
-              method.method,
-              method.network ?? 'TRC20',
-              method.recipient_addr_encrypted,
+              method.kind === 'stripe' ? 'stripe_connect' : method.method,
+              method.kind === 'stripe' ? 'STRIPE' : method.network,
+              method.kind === 'stripe' ? STRIPE_RECIPIENT_PLACEHOLDER : method.recipientAddrEncrypted,
               now,
             )
             .run()
         })
 
-        const payoutResult = await step.run(`send-payout-${batchId}`, async () => {
+        const dispatch = await step.run(`send-payout-${batchId}`, async () => {
           try {
-            return await queueBatch({
-              batchId,
-              affiliateId: agg.affiliate_id,
-              totalCents: agg.total_cents,
-              recipientAddrEncrypted: method.recipient_addr_encrypted,
-              network: method.network ?? 'TRC20',
-            })
+            return await dispatchPayout(batchId, agg, method)
           } catch (err) {
             // C3: rollback on failure — flip paying → payable so next run retries
             await rollbackPayingRows(batchId)
             logger.error('[PayoutBatcher] Payout failed, rolled back', err instanceof Error ? err : new Error(String(err)), {
               batchId,
               affiliateId: agg.affiliate_id,
+              rail: method.kind,
             })
             throw err
           }
         })
 
-        // C3: only mark paid after NOWPayments confirms
+        // C3: only mark paid after rail confirms
         await step.run(`mark-paid-${batchId}`, async () => {
           await markLedgerPaid(ledgerIds, batchId)
         })
@@ -155,14 +139,47 @@ export const payoutBatcher = inngest.createFunction(
             batchId,
             affiliateId: agg.affiliate_id,
             totalCents: agg.total_cents,
-            externalPaymentId: payoutResult.externalPaymentId,
+            externalPaymentId: dispatch.externalPaymentId,
+            rail: method.kind,
           },
         })
 
-        results.push({ batchId, affiliateId: agg.affiliate_id, totalCents: agg.total_cents })
+        results.push({ batchId, affiliateId: agg.affiliate_id, totalCents: agg.total_cents, rail: method.kind })
       }
     }
 
     return { processed: results.length, batches: results }
   },
 )
+
+/**
+ * Dispatch payout via the resolved rail.
+ * Stripe Transfer uses batchId as idempotency key (NOWPayments uses extra_id internally).
+ */
+async function dispatchPayout(
+  batchId: string,
+  agg: { affiliate_id: string; total_cents: number },
+  method: ResolvedPayoutMethod,
+): Promise<{ externalPaymentId: string }> {
+  if (method.kind === 'stripe') {
+    const result = await transferToConnectedAccount({
+      destinationAccountId: method.stripeAccountId,
+      amountCents: agg.total_cents,
+      idempotencyKey: batchId,
+      description: `Sophia affiliate payout ${batchId}`,
+      metadata: {
+        batch_id: batchId,
+        affiliate_id: agg.affiliate_id,
+      },
+    })
+    return { externalPaymentId: result.transferId }
+  }
+
+  return queueBatch({
+    batchId,
+    affiliateId: agg.affiliate_id,
+    totalCents: agg.total_cents,
+    recipientAddrEncrypted: method.recipientAddrEncrypted,
+    network: method.network,
+  })
+}
