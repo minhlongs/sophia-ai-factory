@@ -90,7 +90,7 @@ describe('computeNext() — Rule 2: Any mission failed', () => {
 
     expect(action.action).toBe('fail')
     expect(action).toHaveProperty('reason')
-    expect((action as any).reason).toMatch(/Step 1/)
+    expect((action as Extract<NextAction, { reason: string }>).reason).toMatch(/Step 1/)
   })
 
   it('should return fail when middle mission fails', () => {
@@ -104,7 +104,7 @@ describe('computeNext() — Rule 2: Any mission failed', () => {
     const action = computeNext(wf, missions)
 
     expect(action.action).toBe('fail')
-    expect((action as any).reason).toMatch(/Step 2/)
+    expect((action as Extract<NextAction, { reason: string }>).reason).toMatch(/Step 2/)
   })
 
   it('should return fail when last mission fails', () => {
@@ -118,7 +118,7 @@ describe('computeNext() — Rule 2: Any mission failed', () => {
     const action = computeNext(wf, missions)
 
     expect(action.action).toBe('fail')
-    expect((action as any).reason).toMatch(/Step 3/)
+    expect((action as Extract<NextAction, { reason: string }>).reason).toMatch(/Step 3/)
   })
 
   it('should pick first failed mission even if multiple fail', () => {
@@ -132,7 +132,7 @@ describe('computeNext() — Rule 2: Any mission failed', () => {
     const action = computeNext(wf, missions)
 
     expect(action.action).toBe('fail')
-    expect((action as any).reason).toMatch(/Step 2/)
+    expect((action as Extract<NextAction, { reason: string }>).reason).toMatch(/Step 2/)
   })
 })
 
@@ -150,7 +150,7 @@ describe('computeNext() — Rule 3: All missions completed', () => {
     const action = computeNext(wf, missions)
 
     expect(action.action).toBe('complete')
-    expect((action as any).reason).toMatch(/All 3 steps completed/)
+    expect((action as Extract<NextAction, { reason: string }>).reason).toMatch(/All 3 steps completed/)
   })
 
   it('should return complete for single mission workflow', () => {
@@ -160,7 +160,7 @@ describe('computeNext() — Rule 3: All missions completed', () => {
     const action = computeNext(wf, missions)
 
     expect(action.action).toBe('complete')
-    expect((action as any).reason).toMatch(/All 1 steps completed/)
+    expect((action as Extract<NextAction, { reason: string }>).reason).toMatch(/All 1 steps completed/)
   })
 
   it('should reference last mission in complete reason', () => {
@@ -173,7 +173,7 @@ describe('computeNext() — Rule 3: All missions completed', () => {
 
     const action = computeNext(wf, missions)
 
-    expect((action as any).reason).toMatch(/mission-3/)
+    expect((action as Extract<NextAction, { reason: string }>).reason).toMatch(/mission-3/)
   })
 })
 
@@ -192,7 +192,7 @@ describe('computeNext() — Rule 4: Unblock when prior step completed', () => {
 
     expect(action.action).toBe('unblock')
     expect((action as any).nextMissionId).toBe('mission-2')
-    expect((action as any).reason).toMatch(/Step 2 unblocked/)
+    expect((action as Extract<NextAction, { reason: string }>).reason).toMatch(/Step 2 unblocked/)
   })
 
   it('should unblock step 3 when step 2 completed', () => {
@@ -207,7 +207,7 @@ describe('computeNext() — Rule 4: Unblock when prior step completed', () => {
 
     expect(action.action).toBe('unblock')
     expect((action as any).nextMissionId).toBe('mission-3')
-    expect((action as any).reason).toMatch(/Step 3 unblocked/)
+    expect((action as Extract<NextAction, { reason: string }>).reason).toMatch(/Step 3 unblocked/)
   })
 
   it('should not unblock step 1 (step 1 should never be blocked)', () => {
@@ -268,7 +268,7 @@ describe('computeNext() — Rule 5: Execute lowest queued mission', () => {
 
     expect(action.action).toBe('execute')
     expect((action as any).nextMissionId).toBe('mission-1')
-    expect((action as any).reason).toMatch(/Execute step 1/)
+    expect((action as Extract<NextAction, { reason: string }>).reason).toMatch(/Execute step 1/)
   })
 
   it('should execute only queued mission', () => {
