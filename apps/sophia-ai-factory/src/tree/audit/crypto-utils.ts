@@ -55,7 +55,7 @@ export interface HashChainVerificationResult {
  * @example
  * const hash = sha256('user-login-event')
  */
-export function sha256(data: string): string {
+export function sha256(data: string | null | undefined): string {
   if (!data || typeof data !== 'string') {
     throw new Error('Invalid input: data must be a non-empty string')
   }
