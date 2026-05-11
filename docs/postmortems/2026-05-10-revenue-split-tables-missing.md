@@ -83,7 +83,7 @@ Ba bảng nền tảng cho hệ thống chia hoa hồng affiliate (`commission_l
 
 | # | Action | Owner | Due | Type |
 |---|---|---|---|---|
-| 1 | Pre-commit/CI grep: every `CREATE TABLE` referenced from `src/(land\|forest)` must have a matching filename in `migrations/` | @longtho638 | 2026-05-25 | Prevent |
+| 1 | Pre-commit/CI grep: every `CREATE TABLE` referenced from `src/(land\|forest)` must have a matching filename in `migrations/` | @longtho638 | 2026-05-25 | Prevent ✅ done 2026-05-11 — `scripts/check-migration-coverage.sh` + `src/__tests__/migration-coverage-guard.test.ts` (vitest wrapper). Skips Postgres files via syntax heuristic. Passes cleanly on current tree. |
 | 2 | Phase reports MUST include `SELECT count(*) FROM <table>` runtime verification, not just `apply-migrations.sh exit 0` | @longtho638 | 2026-05-15 | Detect |
 | 3 | Add `-- DEPRECATED: superseded by migrations/0106 + 0085` header to `src/seed/db/migrations/0038-revenue-split.sql` to prevent future restore-by-accident | @longtho638 | 2026-05-15 | Prevent |
 | 4 | Sentry alert: Inngest `payout-batcher-weekly` non-zero error count → Slack | @longtho638 | 2026-06-01 | Detect |
