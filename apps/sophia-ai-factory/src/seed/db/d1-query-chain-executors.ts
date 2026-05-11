@@ -7,6 +7,15 @@ import { toError } from '@/seed/utils/to-error'
 import type { QueryResult, FilterOp, OrderSpec } from '@/seed/db/d1-query-types'
 import { parseJsonFields, serializeValue } from '@/seed/db/d1-query-utilities'
 
+/**
+ * Maximum rows accepted by execInsert/execUpsert in a single call.
+ * Beyond this, callers must chunk to avoid runaway sequential statements
+ * (each row is its own awaited prepare-bind-run, so 1000 rows = 1000 RTTs).
+ * Export so callers can pre-validate; matches the comment-of-record that
+ * was previously informational only.
+ */
+export const D1_BATCH_LIMIT = 500
+
 export interface QueryState {
   db: D1Database
   table: string
@@ -74,6 +83,9 @@ export async function execSelect<T>(state: QueryState): Promise<QueryResult<unkn
 
 export async function execInsert(state: QueryState): Promise<QueryResult<unknown>> {
   const rows = Array.isArray(state.payload) ? state.payload : [state.payload]
+  if (rows.length > D1_BATCH_LIMIT) {
+    return { data: null, error: { message: `Batch size ${rows.length} exceeds D1_BATCH_LIMIT (${D1_BATCH_LIMIT}); chunk the payload before calling insert()`, code: 'BATCH_LIMIT_EXCEEDED' } }
+  }
   const results: unknown[] = []
   for (const row of rows) {
     const cols = Object.keys(row)
@@ -113,9 +125,13 @@ export async function execUpdate(state: QueryState): Promise<QueryResult<unknown
 export async function execUpsert(state: QueryState): Promise<QueryResult<unknown>> {
   // Mirror execInsert's array-handling so bulk callers (e.g. ingestion
   // adapters scoring batches) don't end up serialising an array's numeric
-  // index keys as column names. Each row is run as its own statement —
-  // good enough for the small (≤500) batches D1 sees today.
+  // index keys as column names. Each row is run as its own statement;
+  // D1_BATCH_LIMIT caps the loop so accidental large payloads fail fast
+  // instead of saturating sequential RTTs.
   const rows = Array.isArray(state.payload) ? state.payload as Record<string, unknown>[] : [state.payload as Record<string, unknown>]
+  if (rows.length > D1_BATCH_LIMIT) {
+    return { data: null, error: { message: `Batch size ${rows.length} exceeds D1_BATCH_LIMIT (${D1_BATCH_LIMIT}); chunk the payload before calling upsert()`, code: 'BATCH_LIMIT_EXCEEDED' } }
+  }
   let lastRow: Record<string, unknown> = rows[0] ?? {}
   for (const row of rows) {
     const cols = Object.keys(row)
