@@ -1,5 +1,10 @@
 import dynamic from "next/dynamic";
 import { getTranslations } from "next-intl/server";
+
+// Marketing homepage — cache at the edge for 60s with stale-while-revalidate.
+// Translates to `Cache-Control: s-maxage=60, stale-while-revalidate=...` in Next 16.
+export const revalidate = 60;
+
 import { Hero } from "@/app/components/sections/hero";
 import { Skeleton } from "@/seed/components/ui/skeleton";
 import { ScrollReveal } from "@/seed/components/ui/scroll-reveal";

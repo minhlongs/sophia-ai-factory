@@ -7,6 +7,9 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 
+// Blog list is fully static — cache aggressively at the edge.
+export const revalidate = 300;
+
 export const metadata: Metadata = {
   title: 'Blog — Sophia AI Factory',
   description:
