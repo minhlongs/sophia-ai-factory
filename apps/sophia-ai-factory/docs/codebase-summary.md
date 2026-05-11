@@ -1,8 +1,36 @@
 # Codebase Summary
 
-**Last Updated:** 2026-05-08
-**Version:** 1.14.26 (Wave 6: MCU monthly reset fix + agent-chat credit pre-deduct + API key rate limit + magic-link i18n + auth subscription insert + FREE100 verification)
-**Recent Major Changes:** Wave 6 shipped (2026-05-08): (F-1) **P0 CRITICAL** MCU monthly reset cron fixed — users now receive correct tier-based monthly credits (BASIC=100, PREMIUM=500, ENTERPRISE=2000, MASTER=10000). (F-2) **P0 CRITICAL** Agent-chat SSE pre-deducts credit BEFORE LLM call to prevent cost-bomb; compensating transaction refunds on failure. (F-3) POST /api/v1/api-keys rate-limited 5 req/min per user. (F-4) Magic-link login bilingual (EN+VI). (F-5) Better-Auth subscription insert now includes user_id + tier='BASIC'. (F-6) FREE100 redeem requires emailVerified to block bot farming. 2810/2810 tests pass, 0 TS errors, 9.5/10 code quality. See `docs/project-changelog.md` for full details.
+**Last Updated:** 2026-05-11
+**Version:** 1.15.0 (Wave 7: Phase 03 payouts dual-rail + Phase 08 handover + 3 incident-driven prevention layers)
+
+**Wave 7 (2026-05-11)** — Phase 03 Stripe Connect KYC + GAP plan close-out:
+
+*Payouts (Phase 03 — ALL code complete, user-action gated for Stripe secrets):*
+- Migration 0106 restored 3 silent-failing tables (`commission_ledger`, `payout_batches`, `payout_methods`) on remote D1 — INC-2026-01 root cause was canonical-folder drift (commit `57024fa7`)
+- `payout-batcher` weekly cron now routes per affiliate: Stripe Transfer (fiat USD) when `user_payout_settings.stripe_payout_enabled=1`, else NOWPayments USDT (`17b4b6b5`). New `resolve-payout-method.ts`.
+- `/api/affiliate/payouts` schema mismatch fixed (`total_usd` column → `total_cents` storage, both exposed in JSON) — INC-2026-03 (`8762c26e`)
+- New `/dashboard/affiliate/payouts` UI with Stripe Connect onboard CTA + USDT methods CRUD (`06346316`)
+
+*Operational documentation:*
+- `docs/payout-operations-runbook.md` — dual-rail on-call playbook (6 incidents × triage + 4 rollback procedures)
+- `docs/load-testing-runbook.md` — Playwright E2E + k6 4-profile reference, baseline 100/106 green + k6 0% error / p95 3.46s
+- `docs/contributor-handover.md` — developer onboarding companion to `HANDOFF.md` (11 sections, 4-layer arch + deploy doctrine + 6 pitfalls + secret rotation matrix)
+- `docs/postmortems/` — 3 retroactive write-ups (INC-2026-01 schema drift, INC-2026-02 GitHub Actions disabled → CF-direct doctrine, INC-2026-03 cents/USD column drift)
+
+*Automated prevention layers (run on every `npm test`):*
+- `scripts/check-migration-coverage.sh` — every D1 `CREATE TABLE` in `src/**/*.sql` must have a canonical `migrations/` match. Postgres/Supabase SQL filtered via syntax heuristic. (`9b2dc173`)
+- `scripts/check-edge-runtime-safety.sh` — any `process.on/exit/kill/abort` in `src/**/*.ts` must be wrapped in an exported function plus `@edge-runtime-allowed` annotation. Caught 1 latent bug (`overage-logger-buffer.ts` had same broken pattern as `batch-buffer.ts`). (`644638b6`)
+- `.github/PULL_REQUEST_TEMPLATE.md` — codifies INC-2026-01/02/03 lessons as PR checklist gates (`9453b3ce`)
+
+*Phase 02 unblock:*
+- `tests/e2e/_fixtures/auth-{helpers,fixture}.ts` + `scripts/e2e-bootstrap-user.ts` — reusable Better Auth signin via Playwright. Auto-skip when `E2E_TEST_USER_PASSWORD` absent so default unauth runs stay green. (`81212344`)
+- Dev server boot fix: `process.on` hooks extracted to opt-in `installShutdownHandlers()` to satisfy Next.js Edge Runtime static analyzer (`58c7192b`)
+
+*Phase 05/08 closeout:*
+- Email-drip cron route gained smoke tests (auth gate, idempotent skip, sweep counts) — `3c57b8a8`
+- Dead SQL files (`0038-revenue-split.sql` + alias) carry explicit "DEPRECATED — DO NOT RESTORE" banner referencing the canonical replacement (`3d375d53`)
+
+**Wave 6 (2026-05-08)** — see `docs/project-changelog.md` for: MCU monthly reset cron fix, agent-chat credit pre-deduct, API key rate limit, magic-link i18n, FREE100 emailVerified gate.
 
 ## Project Structure Overview
 
