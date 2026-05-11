@@ -85,6 +85,9 @@ describe('BaseAdapter.upsertProducts', () => {
     expect(result.failed).toBe(0)
     expect(result.errors).toEqual([])
     expect(mockFrom).toHaveBeenCalledWith('affiliate_products')
+    // upsert is called with rows only — the Supabase-style 2nd arg
+    // ({ onConflict, ignoreDuplicates }) was always silently dropped by
+    // D1Client.upsert and the production code no longer passes it.
     expect(upsertMock).toHaveBeenCalledWith(
       expect.arrayContaining([
         expect.objectContaining({
@@ -94,7 +97,6 @@ describe('BaseAdapter.upsertProducts', () => {
           is_hidden_gem: false,
         }),
       ]),
-      { onConflict: 'network_id,external_id', ignoreDuplicates: false },
     )
   })
 
@@ -126,7 +128,6 @@ describe('BaseAdapter.upsertProducts', () => {
           category_id: null,
         }),
       ]),
-      expect.objectContaining({}),
     )
   })
 

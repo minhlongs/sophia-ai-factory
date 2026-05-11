@@ -49,7 +49,7 @@ export async function sendEmailAlert(
       template_subject: template.subject,
       sent: true,
       sent_at: new Date().toISOString(),
-    } as any);
+    });
 
     return true;
   } catch (error) {
@@ -96,7 +96,7 @@ export async function sendSmsAlert(
       template_body: template.smsBody,
       sent: true,
       sent_at: new Date().toISOString(),
-    } as any);
+    });
 
     return true;
   } catch (error) {
@@ -144,7 +144,7 @@ export async function sendWebhookAlertChannel(
       sent_at: result.success ? new Date().toISOString() : null,
       delivery_error: result.error || null,
       ip_address: context.ipAddress,
-    } as any);
+    });
 
     logger.info('[Quota Alert] Webhook alert sent', { userId, url: webhookUrl, success: result.success });
     return result.success;

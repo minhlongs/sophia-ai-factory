@@ -58,13 +58,15 @@ export abstract class BaseAdapter implements IngestionAdapter {
       }))
 
       const db = createServerClient()
+      // D1Client.upsert signature declares single-row, but the executor accepts
+      // batched payloads. Cast through `unknown` to surface the shape mismatch
+      // (vs the old `as any`) until the chain grows an array overload. Conflict
+      // target is the UNIQUE(network_id, external_id) constraint on the table;
+      // the dropped `{ onConflict, ignoreDuplicates }` Supabase hint had no
+      // effect under D1.
       const { error } = await db
         .from('affiliate_products')
-        // @ts-expect-error - Known Supabase typing limitation with upsert on tables with Json columns
-        .upsert(dbRows as unknown as Database['public']['Tables']['affiliate_products']['Insert'][], {
-          onConflict: 'network_id,external_id',
-          ignoreDuplicates: false
-        })
+        .upsert(dbRows as unknown as Record<string, unknown>)
 
       if (error) {
         result.failed += chunk.length
