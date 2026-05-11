@@ -1,4 +1,19 @@
--- Migration 0038: Revenue Split + Payouts (Phase 13)
+-- ============================================================================
+-- DEPRECATED — DO NOT RESTORE
+-- ============================================================================
+-- This file is kept ONLY as historical record. It was never applied to remote
+-- D1 because apply-migrations.sh does not walk src/seed/db/migrations/ (only
+-- the canonical migrations/ folder at the app root).
+--
+-- Production state for these tables (since 2026-05-10):
+--   commission_ledger, payout_batches, payout_methods → migrations/0106-revenue-split-tables.sql
+--   tenant_settings                                  → migrations/0085-tenant-settings.sql (namespaced JSON schema)
+--
+-- See:
+--   - docs/postmortems/2026-05-10-revenue-split-tables-missing.md (INC-2026-01)
+--   - scripts/check-migration-coverage.sh (automated guard against this drift)
+-- ============================================================================
+-- Migration 0038 (HISTORICAL): Revenue Split + Payouts (Phase 13)
 -- Tables: commission_ledger, payout_batches, payout_methods
 -- v2: Money columns stored as INTEGER cents to avoid float drift (C1).
 -- v2: Added withheld_cents (VN PIT 5%) and parent_conversion_id for clawback rows (H1, C2).

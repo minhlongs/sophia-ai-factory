@@ -1,4 +1,11 @@
--- Migration 20260506: Revenue Split + Payouts (Phase 13) — D1 alias
+-- ============================================================================
+-- DEPRECATED — DO NOT RESTORE
+-- ============================================================================
+-- Date-based alias of the equally-deprecated 0038-revenue-split.sql. Never
+-- applied to remote D1. Canonical replacement: migrations/0106-revenue-split-tables.sql.
+-- See docs/postmortems/2026-05-10-revenue-split-tables-missing.md (INC-2026-01).
+-- ============================================================================
+-- Migration 20260506 (HISTORICAL): Revenue Split + Payouts (Phase 13) — D1 alias
 -- Alias of 0038-revenue-split.sql for date-based migration systems
 -- v2: INTEGER cents columns, VN PIT flag, clawback pattern (C1, H1, C2)
 
