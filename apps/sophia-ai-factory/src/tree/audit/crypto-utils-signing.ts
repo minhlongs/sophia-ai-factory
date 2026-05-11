@@ -22,7 +22,7 @@ import type { AuditLogEntry, HashChainVerificationResult } from '@/tree/audit/cr
  * @example
  * const signature = hmacSha256('webhook-payload', 'super-secret-key-32-bytes')
  */
-export function hmacSha256(data: string, secret: string): string {
+export function hmacSha256(data: string, secret: string | null | undefined): string {
   if (!data || typeof data !== 'string') {
     throw new Error('Invalid input: data must be a non-empty string')
   }
@@ -46,7 +46,7 @@ export function hmacSha256(data: string, secret: string): string {
  * @example
  * const isValid = timingSafeEqual(computedSignature, receivedSignature)
  */
-export function timingSafeEqual(a: string, b: string): boolean {
+export function timingSafeEqual(a: string | null | undefined, b: string | null | undefined): boolean {
   if (!a || !b || typeof a !== 'string' || typeof b !== 'string') {
     return false
   }

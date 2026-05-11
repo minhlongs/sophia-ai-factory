@@ -52,15 +52,15 @@ describe('crypto-utils', () => {
     })
 
     it('should throw on null input', () => {
-      expect(() => sha256(null as any)).toThrow('Invalid input: data must be a non-empty string')
+      expect(() => sha256(null)).toThrow('Invalid input: data must be a non-empty string')
     })
 
     it('should throw on undefined input', () => {
-      expect(() => sha256(undefined as any)).toThrow('Invalid input: data must be a non-empty string')
+      expect(() => sha256(undefined)).toThrow('Invalid input: data must be a non-empty string')
     })
 
     it('should throw on non-string input (number)', () => {
-      expect(() => sha256(123 as any)).toThrow('Invalid input: data must be a non-empty string')
+      expect(() => sha256(123 as unknown as string)).toThrow('Invalid input: data must be a non-empty string')
     })
   })
 
@@ -97,7 +97,7 @@ describe('crypto-utils', () => {
     })
 
     it('should throw on null secret', () => {
-      expect(() => hmacSha256('data', null as any)).toThrow('Invalid input: secret must be a non-empty string')
+      expect(() => hmacSha256('data', null)).toThrow('Invalid input: secret must be a non-empty string')
     })
   })
 
@@ -136,8 +136,8 @@ describe('crypto-utils', () => {
     })
 
     it('should return false for null inputs', () => {
-      expect(timingSafeEqual(null as any, 'hash')).toBe(false)
-      expect(timingSafeEqual('hash', null as any)).toBe(false)
+      expect(timingSafeEqual(null, 'hash')).toBe(false)
+      expect(timingSafeEqual('hash', null)).toBe(false)
     })
   })
 
