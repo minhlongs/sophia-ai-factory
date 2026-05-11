@@ -252,6 +252,13 @@ export default async function DashboardLayout({
           {isAdmin && (
             <>
               <Link
+                href="/dashboard/admin"
+                className="flex items-center gap-3 px-4 py-3 text-violet-400 hover:text-violet-300 rounded-lg hover:bg-violet-950/30 transition-colors"
+              >
+                <LayoutDashboard className="w-5 h-5" />
+                <span className="font-medium">Admin Home</span>
+              </Link>
+              <Link
                 href="/dashboard/admin/ops"
                 className="flex items-center gap-3 px-4 py-3 text-violet-400 hover:text-violet-300 rounded-lg hover:bg-violet-950/30 transition-colors"
               >
