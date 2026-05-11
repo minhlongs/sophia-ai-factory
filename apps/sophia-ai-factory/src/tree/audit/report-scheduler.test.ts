@@ -7,6 +7,7 @@ import {
   calculateNextRunAt,
   validateFilters,
   type ReportFilters,
+  type ReportFrequency,
   type ScheduleReportInput
 } from '@/tree/audit/report-scheduler'
 
@@ -62,7 +63,7 @@ describe('calculateNextRunAt', () => {
   })
 
   it('throws error for invalid frequency', () => {
-    expect(() => calculateNextRunAt('invalid' as any, baseTime)).toThrow('Invalid frequency')
+    expect(() => calculateNextRunAt('invalid' as unknown as ReportFrequency, baseTime)).toThrow('Invalid frequency')
   })
 })
 
@@ -152,7 +153,7 @@ describe('scheduleReport', () => {
         created_at: Math.floor(Date.now() / 1000),
         created_by: 'admin'
       },
-      error: null as any
+      error: null
     }
 
     mockSingle.mockResolvedValue(mockSingleResult)
@@ -174,7 +175,7 @@ describe('scheduleReport', () => {
   it('throws error when database insert fails', async () => {
     const mockSingleResult = {
       data: null,
-      error: new Error('Database error') as any
+      error: new Error('Database error')
     }
 
     mockSingle.mockResolvedValue(mockSingleResult)
@@ -213,7 +214,7 @@ describe('getScheduledReports', () => {
   it('returns empty array when no reports exist', async () => {
     const mockResult = {
       data: [],
-      error: null as any
+      error: null
     }
     mockChain.order.mockResolvedValue(mockResult)
 
@@ -238,7 +239,7 @@ describe('getScheduledReports', () => {
 
     const mockResult = {
       data: mockData,
-      error: null as any
+      error: null
     }
     mockChain.order.mockResolvedValue(mockResult)
 
@@ -268,7 +269,7 @@ describe('cancelScheduledReport', () => {
   it('cancels a report successfully', async () => {
     const mockResult = {
       data: null,
-      error: null as any
+      error: null
     }
     mockChain.single.mockResolvedValue(mockResult)
 
@@ -296,7 +297,7 @@ describe('updateNextRunAt', () => {
   it('updates next run timestamp', async () => {
     const mockResult = {
       data: null,
-      error: null as any
+      error: null
     }
     mockChain.single.mockResolvedValue(mockResult)
 
