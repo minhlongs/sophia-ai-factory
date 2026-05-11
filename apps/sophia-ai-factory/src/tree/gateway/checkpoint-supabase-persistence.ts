@@ -6,6 +6,7 @@
  */
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { D1Client } from "@/seed/db/d1-query-builder";
 import type { Checkpoint } from "@/tree/gateway/gateway-types";
 
 /** Row shape returned from campaign_checkpoints table */
@@ -18,7 +19,7 @@ export interface CheckpointRow {
 }
 
 /** Get D1 client for checkpoint persistence, null if unavailable */
-export async function getCheckpointSupabase(): Promise<any | null> {
+export async function getCheckpointSupabase(): Promise<D1Client | null> {
   try {
     return await createAdminClient();
   } catch {
