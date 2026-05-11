@@ -112,9 +112,9 @@ See `docs/secret-rotation-runbook.md` for the full quarterly procedure.
 ## 6. Common pitfalls
 
 ### Schema drift between two folders
-`src/seed/db/migrations/` is **NOT** walked by `apply-migrations.sh` — only canonical `migrations/` is. If you add a SQL file in the wrong folder, prod D1 will be missing tables and code will silent-fail. (Real incident: tables `commission_ledger`, `payout_batches`, `payout_methods` were missing on remote for ~10 days. See `plans/reports/fix-260510-2310-migration-0105-schema-gap.md`.)
+`src/seed/db/migrations/` is **NOT** walked by `apply-migrations.sh` — only canonical `migrations/` is. If you add a SQL file in the wrong folder, prod D1 will be missing tables and code will silent-fail. (Real incident: tables `commission_ledger`, `payout_batches`, `payout_methods` were missing on remote for ~10 days. See `docs/postmortems/2026-05-10-revenue-split-tables-missing.md`.)
 
-**Guard:** every `CREATE TABLE` in code must have a matching file in `migrations/`. Pre-commit grep recommended.
+**Guard:** automated. `scripts/check-migration-coverage.sh` runs every `npm test` via `src/__tests__/migration-coverage-guard.test.ts`. It scans every `src/**/*.sql`, filters Postgres/Supabase files via syntax heuristic, and fails if any D1 `CREATE TABLE` lacks a canonical match in `migrations/`. Manual invocation: `bash scripts/check-migration-coverage.sh`.
 
 ### `createServerClient()` is synchronous
 Do **NOT** `await` it. `await createServerClient()` returns `undefined`. Reason: it just constructs an object holding the binding.
