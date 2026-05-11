@@ -58,3 +58,16 @@ export interface OfferProvider {
   /** Get trending offers for a niche */
   getTrending(niche: string): Promise<AffiliateOffer[]>
 }
+
+/**
+ * Mark an offer as trending without mutating the input.
+ *
+ * Uses Object.assign rather than spread+override because esbuild's minifier
+ * inlines callees that produce the offer literal, then collapses
+ * `{ ...inlined, isTrending: true }` into a single literal — yielding a
+ * `[duplicate-object-key]` warning on `isTrending`. Object.assign stays a
+ * runtime call and dodges the collapse.
+ */
+export function asTrending(offer: AffiliateOffer): AffiliateOffer {
+  return Object.assign({}, offer, { isTrending: true })
+}

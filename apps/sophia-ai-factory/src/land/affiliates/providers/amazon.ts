@@ -12,6 +12,7 @@
  */
 
 import type { OfferProvider, AffiliateOffer, ListOffersOpts } from '../provider-interface'
+import { asTrending } from '../provider-interface'
 
 const NETWORK_SLUG = 'amazon'
 const PA_API_HOST = 'webservices.amazon.com'
@@ -191,7 +192,6 @@ export class AmazonProvider implements OfferProvider {
 
   async getTrending(niche: string): Promise<AffiliateOffer[]> {
     const offers = await this.listOffers({ niche, limit: 10 })
-    // Object.assign avoids esbuild collapsing spread+override into a duplicate-key literal.
-    return offers.map(o => Object.assign({}, o, { isTrending: true }))
+    return offers.map(asTrending)
   }
 }
