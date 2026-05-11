@@ -148,22 +148,80 @@ To re-baseline from a CF-region client, run k6 from a Workers-region datacenter 
 
 ---
 
-## 4. Pre-deploy gate (deferred)
+## 4. Auth fixture (signed Better Auth sessions)
 
-The phase-02 plan called for wiring E2E as a pre-deploy gate in `npm run deploy:full`. Status: **deferred** until a reliable auth fixture lands. Rationale:
+Reusable Playwright fixture that performs real Better Auth sign-in via the
+`/api/auth/sign-in/email` endpoint, captures the Set-Cookie payload, and
+exposes it as the `authenticatedPage` test fixture. Lands 2026-05-11.
 
-- 6 positive-auth tests currently `.skip()` because they need a signed Better Auth session
-- Wiring the current 100-green-test set adds ~60s to every deploy with marginal benefit
-- The CF-direct deploy doctrine relies on `/api/version` SHA-match verification for catching deploy failures — already in place
+### Files
 
-When auth fixture lands, gate via:
+- `tests/e2e/_fixtures/auth-helpers.ts` — pure HTTP helpers (`signIn`, `signOut`)
+- `tests/e2e/_fixtures/auth-fixture.ts` — extends Playwright `test` with `authenticatedPage`
+- `tests/e2e/authenticated-smoke.spec.ts` — 2 smoke tests proving the fixture works
+- `scripts/e2e-bootstrap-user.ts` — one-shot user provisioner
+
+### One-time bootstrap (per environment)
 
 ```bash
-# Proposed addition to package.json scripts:
-"deploy:full": "playwright test --grep @smoke && build && wrangler deploy"
+# Local dev
+E2E_TEST_USER_PASSWORD='<strong-password>' \
+  npm run e2e:bootstrap-user
+
+# Production / preview
+PLAYWRIGHT_TEST_BASE_URL=https://sophia.agencyos.network \
+E2E_TEST_USER_PASSWORD='<strong-password>' \
+  npm run e2e:bootstrap-user
 ```
 
-Tracked in `~/plans/260510-0603-sophia-gap-plan/phase-02-e2e-load.md` todo list.
+Script is idempotent — if the user already exists, it verifies sign-in still works. Default email `e2e-master@sophia.test` (override via `E2E_TEST_USER_EMAIL`).
+
+### Running auth-gated tests
+
+```bash
+# After bootstrap, export password (store in 1Password, not in repo)
+export E2E_TEST_USER_PASSWORD='<the password used above>'
+
+# Run only the auth smoke spec
+npm run test:e2e -- authenticated-smoke
+
+# Or full suite — auth-gated tests now execute instead of skipping
+PLAYWRIGHT_TEST_BASE_URL=https://sophia.agencyos.network \
+  npm run test:e2e
+```
+
+### Authoring new auth-gated specs
+
+```ts
+import { test, expect } from './_fixtures/auth-fixture'
+
+test('only-logged-in users see dashboard', async ({ authenticatedPage }) => {
+  await authenticatedPage.goto('/dashboard')
+  await expect(authenticatedPage.locator('h1')).toContainText(/dashboard/i)
+})
+```
+
+**Auto-skip behavior:** if `E2E_TEST_USER_PASSWORD` is not set, all tests using
+the fixture skip cleanly with a clear reason — so the default unauthenticated
+run remains green.
+
+### Pre-deploy gate (still deferred)
+
+Wiring the auth fixture into `npm run deploy:full` is straightforward once the
+production user is bootstrapped + the password is available in CI/local
+secrets. Proposed wiring:
+
+```jsonc
+// package.json
+"deploy:full": "npm test && playwright test --grep @smoke && tsx scripts/deploy-with-sha.sh"
+```
+
+Held back from this slice to avoid adding ~60s + cookie persistence to every
+deploy without first migrating the existing 6 free100 skipped tests onto the
+fixture. The CF-direct doctrine `/api/version` SHA-match check remains the
+interim verify gate.
+
+Tracked in `~/plans/260510-0603-sophia-gap-plan/phase-02-e2e-load.md`.
 
 ---
 
