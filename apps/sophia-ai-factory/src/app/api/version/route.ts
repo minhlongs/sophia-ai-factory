@@ -41,6 +41,13 @@ function isIntrospectAuthorized(request: NextRequest, env: CloudflareEnv): boole
   return auth === `Bearer ${token}`;
 }
 
+// Public payload is deploy-stable for 60s — the only field that ever changes
+// between identical SHAs is `deployedAt`, and re-render cost outweighs the
+// staleness signal for the typical caller (uptime probes + load balancers).
+const PUBLIC_CACHE_HEADERS = {
+  "Cache-Control": "public, max-age=30, s-maxage=60, stale-while-revalidate=120",
+} as const;
+
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const env = getEnv(request);
 
@@ -60,8 +67,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       commitSha,
       branch: env.DEPLOY_BRANCH ?? "unknown",
     };
+    // Admin probe stays uncached — fresh metadata on demand.
     return NextResponse.json(fullBody);
   }
 
-  return NextResponse.json(publicBody);
+  return NextResponse.json(publicBody, { headers: PUBLIC_CACHE_HEADERS });
 }
