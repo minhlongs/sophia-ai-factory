@@ -69,7 +69,9 @@ export async function withEdgeCache(
     return fresh;
   }
 
-  const cached = await cache.match(request);
+  // Match against the same normalized key used by `put`.
+  const cacheKey = new Request(request.url, { method: 'GET' });
+  const cached = await cache.match(cacheKey);
   if (cached) {
     const hit = new Response(cached.body, cached);
     hit.headers.set('x-edge-cache', 'HIT');
@@ -86,11 +88,23 @@ export async function withEdgeCache(
   }
   fresh.headers.set('x-edge-cache', 'MISS');
 
-  // Clone before consuming the body via `put`. cache.put streams the body
-  // out, so we keep a copy for the caller.
-  const cachable = fresh.clone();
-  // Fire-and-forget — don't block response on cache write.
-  void cache.put(request, cachable);
+  // Build a sanitized cache entry: Next.js attaches Vary on rsc/router-state
+  // headers which curl never sends. The split cache keys cause every match
+  // to miss. We store a copy stripped of those Vary tokens + with a normalized
+  // GET request (no auth header) so subsequent anon hits land on the same key.
+  const cachable = new Response(await fresh.clone().arrayBuffer(), {
+    status: fresh.status,
+    headers: stripDynamicVary(fresh.headers),
+  });
+  // Reuse the same normalized key from match — fire-and-forget the put.
+  void cache.put(cacheKey, cachable);
 
   return fresh;
+}
+
+function stripDynamicVary(src: Headers): Headers {
+  const out = new Headers(src);
+  // Next.js app router emits these on every response; they explode the cache.
+  out.delete('vary');
+  return out;
 }
