@@ -135,8 +135,24 @@ Must read **raw body via `await req.text()`** BEFORE any JSON parse — otherwis
 
 Always use the namespaced JSON form. See `src/forest/inngest/functions/conversion-to-ledger.ts` for the read pattern.
 
-### `total_cents` vs `total_usd`
-Money in DB is **always INTEGER cents** (`commission_ledger.commission_cents`, `payout_batches.total_cents`). Convert at API boundary via `fromCents()` from `@/land/payouts/commission-cents`. Direct float math = drift.
+### `total_cents` vs `total_usd` (money column convention)
+The codebase uses **two coexisting conventions**, depending on which subsystem was written first:
+
+| Table | Column | Type | Convention | Source |
+|---|---|---|---|---|
+| `commission_ledger` | `commission_cents`, `withheld_cents`, `gross_cents` | INTEGER | **cents (new)** | migration 0106 |
+| `payout_batches` | `total_cents` | INTEGER | **cents (new)** | migration 0106 |
+| `user_purchases` | `amount_cents` | INTEGER | **cents (new)** | migration 0038/0047 |
+| `pricing_overrides` | `price_cents` | INTEGER | **cents (new)** | migration 0051 |
+| `conversion_events` | `gross_amount_usd`, `commission_usd` | REAL | **USD float (legacy)** | migration 0035 |
+| `affiliate_offers_catalog` | `commission_fixed_usd` | REAL | **USD float (legacy)** | migration 0035 |
+| `video_cost_log` | `cost_usd` | REAL | **USD float (legacy)** | migration 0031 |
+
+**Rule of thumb:**
+- **New tables** → always INTEGER cents. Convert at API boundary via `fromCents()` from `@/land/payouts/commission-cents`.
+- **Existing `*_usd` columns** (REAL float) → leave as-is; do NOT migrate without a clear win, as Inngest function `conversion-to-ledger.ts` already converts USD → cents at the cents-table boundary.
+- **API response shape** → may include BOTH for transitional periods (e.g. `/api/affiliate/payouts` returns `total_cents` + `total_usd`).
+- **NEVER** SELECT a `*_usd` column from a `*_cents`-only table (this was INC-2026-03). Audit 2026-05-11 confirmed `src/app/api/` is clean; future SQL routes touching money should be reviewed against this table.
 
 ---
 
