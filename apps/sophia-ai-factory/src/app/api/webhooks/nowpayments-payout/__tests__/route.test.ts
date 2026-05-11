@@ -8,6 +8,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
 
+// Short-circuit the dynamic `await import('@opennextjs/cloudflare')` inside
+// `getD1Async`. Without this mock, every `vi.resetModules()` in beforeEach
+// forces a fresh import of the package; when ~370 test files run in parallel,
+// filesystem contention can push that import past the 5s default test timeout
+// even though the test itself takes <1s. Mocking the import to reject sends
+// `getD1Async` straight to the `getD1Sync` fallback, which already returns
+// the globalThis D1 mock set up in src/test/setup.tsx.
+vi.mock('@opennextjs/cloudflare', () => ({
+  getCloudflareContext: vi.fn().mockRejectedValue(new Error('Not on CF')),
+}))
+
 const TEST_SECRET = 'test-payout-ipn-secret'
 
 /** Compute NOWPayments HMAC-SHA512: sorted JSON keys */
