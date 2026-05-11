@@ -6,7 +6,19 @@
 
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
+import type { Json } from '@/lib/supabase/types';
 import type { RevenuePeriod, RevenueMetrics } from '../types';
+
+// Local SELECT-shaped projections — narrower than full table rows because
+// the queries below pick only the columns needed for revenue rollups.
+type LicenseRevenueRow = { tier: string | null; created_at: number; metadata: Json | null }
+type PaymentEventRow = { event_type: string; payload: Json | null; created_at: string }
+
+// Narrowed shapes for metadata/payload JSON — we only read these fields,
+// so don't widen to full Polar/NOWPayments payload contracts here. The
+// `?? undefined` reads guard against `null`/missing keys at runtime.
+type LicenseMetadataShape = { mrr_usd?: number; subscription_amount?: number; is_subscription?: boolean }
+type PaymentPayloadShape = { amount?: { usd?: { amount?: number } } }
 
 /**
  * Resolve timestamp boundaries for a given revenue period
@@ -51,23 +63,26 @@ export async function fetchRevenueMetrics(period: RevenuePeriod): Promise<Revenu
 
   // Query raas_licenses table
   const { data: licenses, error } = await db
-    .from('raas_licenses')
+    .from<LicenseRevenueRow>('raas_licenses')
     .select('tier, created_at, metadata')
     .gte('created_at', startTimestamp)
-    .lte('created_at', endTimestamp) as any;
+    .lte('created_at', endTimestamp);
 
   if (error) {
-    logger.error('[Analytics] Failed to fetch licenses for revenue', error);
+    // Plain object preserves `.code` for downstream alert filtering — mirrors
+    // the violations-get-handler fix (commit 417330a4) where wrapping in
+    // `new Error(msg)` silently dropped the QueryError discriminator.
+    logger.error('[Analytics] Failed to fetch licenses for revenue', { message: error.message, code: error.code });
     throw new Error('Failed to fetch revenue data');
   }
 
   // Query payment_events for revenue trend
   const { data: paymentEvents } = await db
-    .from('payment_events')
+    .from<PaymentEventRow>('payment_events')
     .select('event_type, payload, created_at')
     .gte('created_at', new Date(startTimestamp * 1000).toISOString())
     .lte('created_at', new Date(endTimestamp * 1000).toISOString())
-    .eq('processed', true) as any;
+    .eq('processed', true);
 
   // Calculate MRR from active licenses
   const mrrByTier = new Map<string, { customers: number; revenue: number }>();
@@ -85,10 +100,15 @@ export async function fetchRevenueMetrics(period: RevenuePeriod): Promise<Revenu
       const entry = mrrByTier.get(tier) || { customers: 0, revenue: 0 };
       entry.customers += 1;
 
-      const metadata = license.metadata as any;
-      const mrr = metadata?.mrr_usd || metadata?.subscription_amount || 0;
+      // metadata is Json (string | number | boolean | null | object | array).
+      // Narrow to object-shape; reject primitives/arrays since revenue fields
+      // live under property keys only.
+      const metadata = (license.metadata && typeof license.metadata === 'object' && !Array.isArray(license.metadata)
+        ? license.metadata
+        : {}) as LicenseMetadataShape;
+      const mrr = metadata.mrr_usd ?? metadata.subscription_amount ?? 0;
 
-      if (metadata?.is_subscription) {
+      if (metadata.is_subscription) {
         entry.revenue += mrr;
         recurringRevenue += mrr;
       } else {
@@ -105,7 +125,11 @@ export async function fetchRevenueMetrics(period: RevenuePeriod): Promise<Revenu
   if (paymentEvents && paymentEvents.length > 0) {
     for (const event of paymentEvents) {
       const date = new Date(event.created_at).toISOString().split('T')[0];
-      const amount = (event.payload as any)?.amount?.usd?.amount || 0;
+      // Same Json-narrowing pattern as license.metadata above.
+      const payload = (event.payload && typeof event.payload === 'object' && !Array.isArray(event.payload)
+        ? event.payload
+        : {}) as PaymentPayloadShape;
+      const amount = payload.amount?.usd?.amount ?? 0;
       revenueByDate.set(date, (revenueByDate.get(date) || 0) + amount);
     }
   }
