@@ -11,6 +11,11 @@ import { getUserTier } from "@/seed/db/get-user-tier";
 import Link from "next/link";
 import { buildAllProductSchemas, buildBreadcrumbSchema, BREADCRUMBS } from "@/lib/seo/schema-org";
 
+// Pricing page — cache 60s at the edge. PricingSection reads HeyGen health
+// per request; we accept it may be 60s stale at peak. Calculator + FAQ are
+// pure-static and benefit most from caching.
+export const revalidate = 60;
+
 export const metadata = {
   title: "Pricing - Sophia AI Factory",
   description: "Video Factory + AI Automation — One Platform",
