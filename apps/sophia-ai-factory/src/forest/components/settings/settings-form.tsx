@@ -23,7 +23,8 @@ export function SettingsForm({ defaultValues }: SettingsFormProps) {
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<UserProfileFormValues>({
-    // @ts-ignore - Pre-existing Zod version mismatch (unrelated to RaaS migration)
+    // Zod version mismatch between zodResolver's Zod type and ours requires the
+    // two-step cast through `unknown` to land on react-hook-form's Resolver.
     resolver: zodResolver(userProfileFormSchema) as unknown as import('react-hook-form').Resolver<UserProfileFormValues>,
     defaultValues,
   });
