@@ -8,6 +8,19 @@ import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import type { UsageFilters, UsageMetrics } from '../types';
 
+// Local SELECT-shaped projection — only fields read by the aggregator below.
+// Narrower than the full UsageEventRow because '*' SELECT pulls many columns
+// the rollup doesn't touch (request_id, error_message, idempotency_key, etc.).
+type UsageEventProjection = {
+  created_at: number;
+  credits_used: number | null;
+  tokens_input: number | null;
+  tokens_output: number | null;
+  status_code: number | null;
+  service_name: string | null;
+  response_time_ms: number | null;
+}
+
 /** Maximum date range for queries (90 days) */
 const MAX_DATE_RANGE_DAYS = 90;
 
@@ -26,7 +39,7 @@ export async function fetchUsageMetrics(filters: UsageFilters): Promise<UsageMet
   }
 
   let query = db
-    .from('usage_events')
+    .from<UsageEventProjection>('usage_events')
     .select('*')
     .gte('created_at', filters.startTimestamp)
     .lte('created_at', filters.endTimestamp);
@@ -39,10 +52,13 @@ export async function fetchUsageMetrics(filters: UsageFilters): Promise<UsageMet
     query = query.eq('service_name', filters.service);
   }
 
-  const { data: events, error } = await query as any;
+  const { data: events, error } = await query;
 
   if (error) {
-    logger.error('[Analytics] Failed to fetch usage events', error);
+    // Plain object preserves `.code` for downstream alert filtering — mirrors
+    // revenue-queries fix (commit 4023b51f) where `error` typed as QueryError
+    // lacks the index signature logger.error expects.
+    logger.error('[Analytics] Failed to fetch usage events', { message: error.message, code: error.code });
     throw new Error('Failed to fetch usage data');
   }
 
