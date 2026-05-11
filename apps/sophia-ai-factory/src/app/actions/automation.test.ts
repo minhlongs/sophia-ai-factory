@@ -29,7 +29,7 @@ describe('Automation Server Actions', () => {
     single: vi.fn().mockReturnThis(),
     order: vi.fn().mockReturnThis(),
     limit: vi.fn().mockReturnThis(),
-    then: undefined as ((resolve: (value: any) => void, reject: (reason: any) => void) => Promise<any>) | undefined,
+    then: undefined as ((resolve: (value: unknown) => void, reject: (reason: unknown) => void) => Promise<unknown>) | undefined,
   };
 
   const mockDb = {
@@ -56,8 +56,7 @@ describe('Automation Server Actions', () => {
     // Default getCurrentUser response
     vi.mocked(getCurrentUser).mockResolvedValue(null);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    vi.mocked(createServerClient).mockReturnValue(mockDb as any);
+    vi.mocked(createServerClient).mockReturnValue(mockDb as unknown as ReturnType<typeof createServerClient>);
     process.env.N8N_WEBHOOK_GENERATE_SCRIPT = 'http://n8n.test/generate';
     process.env.N8N_WEBHOOK_RENDER_VIDEO = 'http://n8n.test/render';
   });
