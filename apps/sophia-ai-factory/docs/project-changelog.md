@@ -1,6 +1,32 @@
 # Project Changelog
 
-**Last Updated:** 2026-05-10 | **Current Version:** 1.22.4
+**Last Updated:** 2026-05-11 | **Current Version:** 1.23.0
+
+---
+
+## v1.23.0 — Wave 23: GAP close-out + test infra + ops hardening (2026-05-11)
+
+**Severity: P1 RELIAB + P1 INFRA + P2 DOCS | Type: GAP plan close-out + prevention + test infra | Status: SHIPPED — 21 commits**
+
+21-commit wave closing the open GAP plan (Phase 02/03/05/08), shipping 3 automated prevention guards, and overhauling E2E test infrastructure. Grouped by theme:
+
+**Phase 03 — Payouts close-out (4 commits):** (17b4b6b5) `payout-batcher` extended with `dispatchPayout(method)` helper that routes weekly batch sends to Stripe Connect Express (fiat) when `user_payout_settings.stripe_account_id` present, else falls back to NOWPayments USDT TRC20/ERC20. Stripe path uses `transferToConnectedAccount` with `idempotencyKey = batchId`. (06346316) New `/dashboard/affiliate/payouts` page with dual-rail picker UI — affiliate chooses Stripe (fiat KYC required) or crypto (USDT) and the resolver `land/payouts/resolve-payout-method.ts` consumes that preference. (8762c26e) Fix `/api/affiliate/payouts` SQL: SELECT `total_cents` (not `total_usd`), expose both via `fromCents()` mapper — fully resolves INC-2026-03 schema drift. (c8e093bc) New `docs/payout-operations-runbook.md` (267 lines) with 6 incident playbooks + rollback procedures.
+
+**Phase 08 — Ops documentation (4 commits):** (8bdeeb47) `docs/contributor-handover.md` (240 lines) — 11 sections: stack/4-layer arch/deploy doctrine/8-secret rotation matrix/6 pitfalls/day-1 setup/where-to-look-first map. HANDOFF.md gets pointer section. (c82962df) 3 retroactive postmortems (INC-2026-01 revenue-split tables, INC-2026-02 GitHub Actions disabled, INC-2026-03 cents/USD column drift) — bilingual EN+VN with 5-Whys. (ad2f5505) Money-columns canonical convention map closes INC-2026-03 audit. (3d375d53) DEPRECATED banners on dead 0038-revenue-split migration files pointing to canonical 0106.
+
+**Prevention guards (3 commits):** (9b2dc173) `scripts/check-migration-coverage.sh` — Postgres-aware D1 schema drift guard; CI integration prevents INC-2026-01 recurrence. (9453b3ce) `.github/PULL_REQUEST_TEMPLATE.md` (70 lines, 7 sections) gating PRs on INC-2026-01/02/03 lessons. (644638b6) `scripts/check-edge-runtime-safety.sh` + matching vitest guard `edge-runtime-safety-guard.test.ts` — banned-API detector with `@edge-runtime-allowed:` annotation system. Surfaced + fixed latent `overage-logger-buffer.ts` bug identical to the original 2026-05-11 dev-server boot failure.
+
+**Edge Runtime root fix (1 commit):** (58c7192b) `forest/usage-metering/batch-buffer.ts` — `process.on('beforeExit'/SIGTERM/SIGINT)` extracted from module top level to exported `installShutdownHandlers()` function; called from `instrumentation.ts` under `NEXT_RUNTIME === 'nodejs'` guard. Next.js Edge analyzer statically rejects literal `process.on(...)` at top level regardless of runtime guards.
+
+**E2E test infrastructure (3 commits):** (81212344) New `tests/e2e/_fixtures/auth-fixture.ts` + `auth-helpers.ts` provide `authenticatedPage` fixture that signs in via real `/api/auth/sign-in/email` and harvests the signed Better Auth cookie — auto-skips when `E2E_TEST_USER_PASSWORD` unset. New `scripts/e2e-bootstrap-user.ts` idempotent provisioner. New `authenticated-smoke.spec.ts` POC. (c4476b7a) Migrate `free100-magic-link.spec.ts` "session-cookie auth lands on /dashboard" test onto fixture; retires the broken `seedTestUser`+manual-cookie-injection path that could never satisfy Better Auth signature validation. (dba300ee) Extend POC to `free100-video-generation.spec.ts` (1 test migrated) + extract shared `injectLocalAuthCookie` helper from 2 duplicate copies into `auth-helpers.ts`.
+
+**Flake elimination (2 commits):** (6edfa244) `playwright.config.ts` caps workers to 4 when `isRemote` (https://) — Playwright worker+browser bootup at >=8 parallel workers on Mac exceeds the 30s test timeout before first API call. Verified 5/5 stable. (99c5977d) `vi.mock('@opennextjs/cloudflare')` in `nowpayments-payout/route.test.ts` short-circuits the dynamic-import-in-hot-path that `vi.resetModules()` re-triggers per test; under ~370 parallel test files, filesystem contention pushes the import past the 5s default timeout. Pattern matches existing `heygen/route.test.ts`. 3/3 full runs now stable at 3499/3499.
+
+**Schema repair + cron tests (2 commits):** (57024fa7) Restore `revenue_splits` + `partner_revenue_shares` tables in canonical 0106 migration; tenant_settings JSON refactor avoids per-feature column proliferation. (3c57b8a8) Smoke tests for email-drip cron route.
+
+**Docs sync (1 commit):** (4f11ebb1) `codebase-summary.md` Wave 7 consolidation section.
+
+**Tests:** 3499/3499 pass (3 consecutive runs post-99c5977d). **Build:** 0 TS errors. **Reviewers:** 9/10, 9.5/10, 8.5/10, 9.5/10 APPROVE across 5 review cycles. **Verification:** local stability matrix shown above; deploy doctrine unchanged (CF-direct, no GH Actions). **Follow-ups not in this wave:** distribute-telegram tests 4-5 compose (needs shared user between auth fixture + local-D1 seed), production user bootstrap for E2E auth fixture (user-action), Sentry signup + Slack webhook (user-action).
 
 ---
 
