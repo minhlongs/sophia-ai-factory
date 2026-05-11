@@ -73,14 +73,26 @@ export const conversionToLedger = inngest.createFunction(
       return row?.tier ?? 'BASIC'
     })
 
-    // H1: check VN PIT flag for tenant
+    // H1: check VN PIT flag for tenant.
+    // Reads the canonical namespaced tenant_settings schema (migration 0085):
+    // one row per (tenant_id, namespace) with a JSON `value` payload. Older 0038
+    // schema (`vn_pit_enabled` column on tenant_settings) was never deployed to
+    // remote D1, so this is the only working source of truth.
     const vnPitEnabled = await step.run('fetch-tenant-vn-pit', async () => {
       const db = await getD1Raw()
       const row = await db
-        .prepare(`SELECT vn_pit_enabled FROM tenant_settings WHERE tenant_id = ? LIMIT 1`)
+        .prepare(
+          `SELECT value FROM tenant_settings WHERE tenant_id = ? AND namespace = 'vn_pit' LIMIT 1`,
+        )
         .bind(tenantId)
-        .first<{ vn_pit_enabled: number }>()
-      return (row?.vn_pit_enabled ?? 0) === 1
+        .first<{ value: string }>()
+      if (!row?.value) return false
+      try {
+        const parsed = JSON.parse(row.value) as { enabled?: boolean }
+        return parsed.enabled === true
+      } catch {
+        return false
+      }
     })
 
     const { commissionUsd, commissionPct } = await step.run('calculate-commission', async () => {
