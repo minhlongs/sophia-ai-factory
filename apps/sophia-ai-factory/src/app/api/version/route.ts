@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
+// Route-level cache: response body served from R2 incremental cache for 60s
+// after first compute. Cache-Control header below advises downstream proxies
+// (browser, CF Cache Rules) of the same window.
+//
+// NOTE: only the public branch benefits — Next.js falls back to dynamic when
+// the response varies per request (the admin Bearer-gated path does).
+export const revalidate = 60;
+
 // RED-TEAM #10: Public response returns short SHA only.
 // Full SHA + branch + commitMsg gated behind INTROSPECT_TOKEN bearer.
 
