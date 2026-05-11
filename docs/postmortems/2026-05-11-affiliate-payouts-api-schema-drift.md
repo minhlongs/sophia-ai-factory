@@ -80,7 +80,7 @@
 |---|---|---|---|---|
 | 1 | Code review checklist: any new file SELECTing from a `*_cents` column → must convert via `fromCents()` at the boundary | @longtho638 | 2026-05-15 | Prevent |
 | 2 | Sweep all `app/api/` SELECT statements for `*_usd` columns against actual schema | @longtho638 | 2026-05-25 | Detect ✅ done 2026-05-11 — full audit performed. Findings: all current `*_usd` / `*_cents` references in `src/app/api/` correctly map to existing canonical columns. Money column convention now documented in `apps/sophia-ai-factory/docs/contributor-handover.md` §6.8. No additional orphans found beyond INC-2026-03. |
-| 3 | New API routes must ship with at least: auth gate + happy path + one error path unit tests | @longtho638 | 2026-05-15 | Prevent |
+| 3 | New API routes must ship with at least: auth gate + happy path + one error path unit tests | @longtho638 | 2026-05-15 | Prevent ✅ done 2026-05-11 — `.github/PULL_REQUEST_TEMPLATE.md` codifies the 3-test requirement as a PR checklist gate. Also covers INC-2026-01 (canonical migration folder + coverage guard) and CF-direct deploy verification format. |
 | 4 | Pitfall §6.7 "`total_cents` vs `total_usd`" added to `contributor-handover.md` | @longtho638 | 2026-05-11 | Mitigate (done) |
 
 ---
