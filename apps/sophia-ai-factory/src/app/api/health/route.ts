@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/seed/db/client';
-import { redisHelpers } from '@/tree/clients/upstash-redis-client';
-import { probeD1, probeR2, probeKv, getBuildMetadata } from '@/seed/health';
+import { getBuildMetadata } from '@/seed/health';
 import type { D1Database, R2Bucket, KVNamespace } from '@cloudflare/workers-types';
 import type { HealthResponse } from '@/seed/types/health';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 
-// Wrap handler with rate limiting (300 requests per minute for health checks)
+// Wrap handler with rate limiting (300 requests per minute for health checks).
+//
+// FAST-PATH for unauthenticated callers (uptime probes, LB checks, k6, public
+// status page): short-circuit BEFORE probing D1/R2/KV/Supabase/Redis. The
+// public response only needs to confirm the Worker is alive — deep service
+// probes pay 2-3s cold-start latency that the unauth caller never sees in
+// the response body anyway.
+//
+// Authenticated callers (admin debugging) still get the full probe sweep.
 export const GET = withRateLimit(async function GET(req: NextRequest) {
   try {
     const searchParams = req.nextUrl.searchParams;
@@ -24,6 +30,26 @@ export const GET = withRateLimit(async function GET(req: NextRequest) {
     }
 
     const { sha, deployedAt } = getBuildMetadata();
+
+    // ── FAST-PATH: anonymous probe returns immediately. ─────────────────
+    // Edge cache for 30s + SWR 60s so repeated uptime checks within the
+    // window don't even hit the Worker after the first request.
+    if (!isAuthorized) {
+      return NextResponse.json(
+        { status: 'healthy', timestamp: new Date().toISOString(), sha },
+        {
+          status: 200,
+          headers: {
+            'Cache-Control': 'public, max-age=30, s-maxage=30, stale-while-revalidate=60',
+          },
+        },
+      );
+    }
+
+    // ── AUTHORIZED PATH: full service probe sweep below. ────────────────
+    const { createServerClient } = await import('@/seed/db/client');
+    const { redisHelpers } = await import('@/tree/clients/upstash-redis-client');
+    const { probeD1, probeR2, probeKv } = await import('@/seed/health');
 
     const healthStatus: HealthResponse = {
       status: 'healthy',
@@ -136,26 +162,10 @@ export const GET = withRateLimit(async function GET(req: NextRequest) {
       }
     }
 
-    if (!isAuthorized) {
-      const pub: Record<string, unknown> = {
-        status: healthStatus.status,
-        timestamp: healthStatus.timestamp,
-      };
-      if (healthStatus.status !== 'healthy') {
-        pub.hint = healthStatus.status === 'degraded'
-          ? 'Some services temporarily unavailable'
-          : 'Service disruption detected';
-      }
-      // Round-11 F-PC-9: cache unauth probe 10s — uptime-check + LB probes
-      // hit this every 30-60s; without cache each pays full D1+R2+KV latency.
-      // Authenticated path stays uncached (admin needs fresh signal).
-      return NextResponse.json(pub, {
-        status: healthStatus.status === 'unhealthy' ? 503 : 200,
-        headers: { 'Cache-Control': 'public, max-age=10, stale-while-revalidate=30' },
-      });
-    }
-
-    return NextResponse.json(healthStatus, { status: healthStatus.status === 'unhealthy' ? 503 : 200 });
+    // Anonymous fast-path returned above; this is the authorized response.
+    return NextResponse.json(healthStatus, {
+      status: healthStatus.status === 'unhealthy' ? 503 : 200,
+    });
   } catch {
     return NextResponse.json({ status: 'unhealthy', error: 'Health check failed' }, { status: 500 });
   }
