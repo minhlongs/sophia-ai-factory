@@ -6,7 +6,9 @@ Archive of incident write-ups. Filing protocol: see `../postmortem-template.md`.
 
 | Date | ID | Severity | Title | Duration |
 |---|---|---|---|---|
-| _(none yet — first incident write-up will appear here)_ | | | | |
+| 2026-05-11 | [INC-2026-03](2026-05-11-affiliate-payouts-api-schema-drift.md) | P2 | `/api/affiliate/payouts` selected non-existent `total_usd` column | ~7h detection-to-fix |
+| 2026-05-10 | [INC-2026-01](2026-05-10-revenue-split-tables-missing.md) | P1 | 3 revenue-split tables never created on remote D1 (canonical migration folder drift) | ~13min (latent 10d) |
+| 2026-05-03 | [INC-2026-02](2026-05-03-github-actions-disabled-deploy-doctrine.md) | P1 | GitHub Actions disabled at account level → CF-direct deploy doctrine adopted | ~5h |
 
 ---
 
