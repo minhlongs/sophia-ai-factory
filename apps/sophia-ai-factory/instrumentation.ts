@@ -7,10 +7,14 @@ export async function register(): Promise<void> {
     await import('./sentry.server.config');
     // Install Node-only shutdown hooks for usage buffer flush.
     // Kept out of module-eval to avoid Edge Runtime static rejection.
-    const { installShutdownHandlers } = await import(
+    const usageMetering = await import(
       './src/forest/usage-metering/batch-buffer'
     );
-    installShutdownHandlers();
+    usageMetering.installShutdownHandlers();
+    const overage = await import(
+      './src/forest/quota/overage-logger-buffer'
+    );
+    overage.installShutdownHandlers();
   }
   if (process.env.NEXT_RUNTIME === 'edge') {
     await import('./sentry.edge.config');
