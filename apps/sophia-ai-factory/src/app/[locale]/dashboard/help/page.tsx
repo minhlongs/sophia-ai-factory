@@ -5,7 +5,7 @@
  * @module app/[locale]/dashboard/help/page
  */
 
-import { BookOpen, HelpCircle, AlertTriangle, MessageCircle, Compass } from 'lucide-react'
+import { BookOpen, HelpCircle, AlertTriangle, MessageCircle, Compass, Video, KeyRound, Send } from 'lucide-react'
 
 interface Props {
   params: Promise<{ locale: string }>
@@ -92,10 +92,30 @@ const RESOURCES_EN: ResourceCard[] = [
   },
 ]
 
+interface QuickAction {
+  href: string
+  icon: typeof Video
+  title: string
+  eta: string
+}
+
+const QUICK_VI: QuickAction[] = [
+  { href: '/dashboard/sop-marketplace', icon: Video, title: 'Tạo video đầu tiên', eta: '~5 phút' },
+  { href: '/dashboard/byok', icon: KeyRound, title: 'Cấu hình API keys', eta: '~3 phút' },
+  { href: '/dashboard/integrations', icon: Send, title: 'Kết nối Telegram', eta: '~30 giây' },
+]
+
+const QUICK_EN: QuickAction[] = [
+  { href: '/dashboard/sop-marketplace', icon: Video, title: 'Generate first video', eta: '~5 min' },
+  { href: '/dashboard/byok', icon: KeyRound, title: 'Configure API keys', eta: '~3 min' },
+  { href: '/dashboard/integrations', icon: Send, title: 'Connect Telegram', eta: '~30 sec' },
+]
+
 export default async function HelpIndexPage({ params }: Props) {
   const { locale } = await params
   const isVi = locale.startsWith('vi')
   const resources = isVi ? RESOURCES_VI : RESOURCES_EN
+  const quick = isVi ? QUICK_VI : QUICK_EN
 
   return (
     <div className="max-w-3xl space-y-8">
@@ -109,6 +129,34 @@ export default async function HelpIndexPage({ params }: Props) {
             : 'Self-serve first — most questions are already answered here.'}
         </p>
       </div>
+
+      <section className="space-y-3">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-violet-300">
+          {isVi ? 'Bắt đầu nhanh' : 'Quick start'}
+        </h2>
+        <div className="grid sm:grid-cols-3 gap-3">
+          {quick.map((q) => {
+            const Icon = q.icon
+            return (
+              <a
+                key={q.href}
+                href={q.href}
+                className="group p-4 rounded-xl border border-zinc-800 bg-gradient-to-br from-violet-950/30 to-zinc-900/50 hover:border-violet-500/60 hover:from-violet-900/40 transition-colors"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <Icon className="w-5 h-5 text-violet-300" aria-hidden="true" />
+                  <span className="text-[10px] uppercase tracking-wider text-violet-300/80">
+                    {q.eta}
+                  </span>
+                </div>
+                <p className="text-sm font-medium text-zinc-100 group-hover:text-white">
+                  {q.title}
+                </p>
+              </a>
+            )
+          })}
+        </div>
+      </section>
 
       <div className="grid sm:grid-cols-2 gap-4">
         {resources.map((r) => {
