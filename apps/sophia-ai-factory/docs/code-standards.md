@@ -418,3 +418,52 @@ This main document covers fundamentals; advanced patterns are documented separat
 - **Requirement**: Core business logic and server actions must have unit tests.
 - **Coverage**: Aim for high coverage on `src/lib` validation and utility functions.
 - **Reference**: See `docs/testing-guide.md` for detailed instructions.
+
+### Vitest Mock Patterns (Standardized)
+Tests use consistent mocking conventions across `tree/handover/`, `tree/audit/`, and `forest/*`:
+
+**1. Hoisted Mocks (Module-level)**
+```typescript
+import { vi, describe, it, expect } from 'vitest';
+
+const mockFetch = vi.hoisted(() => ({
+  get: vi.fn(),
+  post: vi.fn(),
+}));
+
+vi.mock('@/lib/http-client', () => ({ default: mockFetch }));
+
+describe('MyService', () => {
+  it('calls API', async () => {
+    mockFetch.get.mockResolvedValue({ status: 200 });
+    // test logic
+  });
+});
+```
+
+**2. Class Mocks (Constructor mocking)**
+```typescript
+const MockSDK = vi.hoisted(() => {
+  return class {
+    constructor() {
+      this.initialized = true;
+    }
+    async connect() { /* */ }
+  };
+});
+
+vi.mock('@/tree/sdk', () => ({ SDK: MockSDK }));
+```
+
+**3. Environment Stubs**
+```typescript
+vi.stubEnv('NODE_ENV', 'test');
+vi.stubEnv('DATABASE_URL', 'sqlite::memory:');
+```
+
+**4. File co-location**
+Tests live in `{filename}.test.ts` alongside source. Structure:
+- `src/tree/audit/receipt-generator.ts` → `src/tree/audit/receipt-generator.test.ts`
+- `src/tree/handover/migration-plan.ts` → `src/tree/handover/migration-plan.test.ts`
+
+Use vi.resetAllMocks() after each test for clean state.

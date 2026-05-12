@@ -218,6 +218,17 @@ Sophia AI Video Factory is a Next.js 16 application structured around the App Ro
 - **Affiliate Engine**: Added `src/data/affiliate-programs.json` and discovery UI.
 - **Testing Infrastructure**: Added Vitest configuration with unit and integration tests for core logic.
 
+## Test Coverage (Phase 14+)
+
+**Baseline (2026-04-30):** 1843 test files, 1812 pass (165 files, 31 tests skipped), 24.87% line coverage.
+
+**Current (2026-05-11):** ~2548 tests (+502 new) from tree/handover/ + tree/audit/ contract pinning tests. Mock patterns standardized:
+- `vi.hoisted()` for module-level fetch/SDK mocks
+- Class-constructor mocking for SDK initialization tests
+- `vi.stubEnv()` for environment isolation per test
+
+See `docs/testing-guide.md` and `docs/code-standards.md` (Testing Standards section) for detailed patterns.
+
 ## Tech Stack Details
 - **Framework**: Next.js 16.1.6
 - **Language**: TypeScript 5
