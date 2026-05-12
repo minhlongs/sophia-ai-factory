@@ -76,6 +76,11 @@ vi.mock('@/lib/telegram/pairing', () => ({
   revokePairing: vi.fn().mockResolvedValue(true),
 }))
 
+// Mock pairing token service (web→bot flow)
+vi.mock('@/tree/telegram/pairing-token-service', () => ({
+  consumePairingToken: vi.fn().mockResolvedValue(null),
+}))
+
 // Mock sendTelegramMessage
 vi.mock('@/tree/telegram/telegram-client', () => ({
   sendTelegramMessage: vi.fn().mockResolvedValue({ ok: true }),
@@ -361,5 +366,73 @@ describe('Telegram Webhook Route — DM Pairing Gate', () => {
     // Should fall through to unknown command handler since 123 != ADMIN_ID
     expect(pairingModule.approvePairing).not.toHaveBeenCalled()
     expect(telegramHandlers.handleUnknown).toHaveBeenCalledWith('123')
+  })
+})
+
+// ── Pairing token (web→bot) tests ─────────────────────────────────────────────
+
+describe('Telegram Webhook Route — /start <token> pairing', () => {
+  const secret = 'test-secret'
+
+  const createRequest = (body: Record<string, unknown>, headers: Record<string, string> = {}) => {
+    return new NextRequest('http://localhost/api/webhooks/telegram', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Telegram-Bot-Api-Secret-Token': secret,
+        ...headers,
+      },
+      body: JSON.stringify(body),
+    })
+  }
+
+  beforeEach(() => {
+    vi.resetAllMocks()
+    process.env.TELEGRAM_BOT_TOKEN = 'test-bot-token'
+    process.env.TELEGRAM_WEBHOOK_SECRET = secret
+    delete process.env.TELEGRAM_ADMIN_CHAT_ID
+    vi.mocked(telegramHandlers.withMiddleware).mockImplementation(
+      async (_chatId: string, handler: () => Promise<void>) => handler()
+    )
+    vi.mocked(campaignHandlers.handleFsmTextInput).mockResolvedValue(false)
+    vi.mocked(pairingModule.isAllowed).mockResolvedValue(true)
+  })
+
+  it('/start without token calls handleStart normally', async () => {
+    const { consumePairingToken } = await import('@/tree/telegram/pairing-token-service')
+    const req = createRequest({ message: { chat: { id: 111 }, text: '/start' } })
+    await POST(req)
+    expect(telegramHandlers.handleStart).toHaveBeenCalledWith('111')
+    expect(consumePairingToken).not.toHaveBeenCalled()
+  })
+
+  it('/start <valid-token> links chat and sends success message', async () => {
+    const { consumePairingToken } = await import('@/tree/telegram/pairing-token-service')
+    const { sendTelegramMessage } = await import('@/tree/telegram/telegram-client')
+    vi.mocked(consumePairingToken).mockResolvedValue({ userId: 'user-xyz' })
+
+    const req = createRequest({
+      message: { chat: { id: 222, first_name: 'Tân' }, text: '/start abc123token' },
+    })
+    await POST(req)
+
+    expect(consumePairingToken).toHaveBeenCalledWith(expect.anything(), 'abc123token')
+    expect(sendTelegramMessage).toHaveBeenCalledWith('222', expect.stringContaining('✅'))
+    expect(telegramHandlers.handleStart).not.toHaveBeenCalled()
+  })
+
+  it('/start <invalid-token> sends error message', async () => {
+    const { consumePairingToken } = await import('@/tree/telegram/pairing-token-service')
+    const { sendTelegramMessage } = await import('@/tree/telegram/telegram-client')
+    vi.mocked(consumePairingToken).mockResolvedValue(null)
+
+    const req = createRequest({
+      message: { chat: { id: 333 }, text: '/start badtoken00' },
+    })
+    await POST(req)
+
+    expect(consumePairingToken).toHaveBeenCalledWith(expect.anything(), 'badtoken00')
+    expect(sendTelegramMessage).toHaveBeenCalledWith('333', expect.stringContaining('❌'))
+    expect(telegramHandlers.handleStart).not.toHaveBeenCalled()
   })
 })
