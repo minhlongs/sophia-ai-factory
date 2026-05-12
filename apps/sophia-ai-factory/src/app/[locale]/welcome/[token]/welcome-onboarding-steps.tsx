@@ -5,9 +5,14 @@
  * Steps are PURELY informational — no CTAs (token not yet consumed at this stage).
  * Extracted from welcome-page-client for file size compliance.
  *
+ * Localisation: all step labels go through next-intl welcome.steps.* keys.
+ * `buildOnboardingSteps` returns translation keys + completion flags only — the
+ * `StepCard` component is responsible for rendering localized copy.
+ *
  * @module app/[locale]/welcome/[token]/welcome-onboarding-steps
  */
 
+import { useTranslations } from 'next-intl';
 import { CheckCircle2, Circle, Key, BarChart3, Settings, Zap } from 'lucide-react';
 
 export interface WelcomeData {
@@ -24,69 +29,73 @@ export interface WelcomeData {
   status: string;
 }
 
+type StepKey =
+  | 'accountCreated'
+  | 'configureKeys'
+  | 'verifyHeygen'
+  | 'firstSop'
+  | 'watchResults';
+
 export interface OnboardingStep {
   id: number;
+  /** i18n key under `welcome.steps.*` — drives title + description lookup. */
+  key: StepKey;
   icon: React.ReactNode;
-  titleVi: string;
-  titleEn: string;
-  descVi: string;
-  descEn: string;
+  /** Resolved at build time (depends on `WelcomeData`). */
   done: boolean;
+  /** Optional interpolation params for the description string. */
+  descParams?: { installedSopsCount: number };
 }
 
-export function buildOnboardingSteps(data: WelcomeData, _locale: string): OnboardingStep[] {
+export function buildOnboardingSteps(data: WelcomeData): OnboardingStep[] {
   return [
     {
       id: 1,
+      key: 'accountCreated',
       icon: <CheckCircle2 aria-hidden="true" size={20} />,
-      titleVi: 'Tài khoản đã tạo',
-      titleEn: 'Account Created',
-      descVi: 'Sophia đã tạo tài khoản cho bạn. Nhấn "Bắt đầu" bên dưới để vào dashboard.',
-      descEn: 'Sophia created your account. Click "Get Started" below to enter your dashboard.',
       done: true,
     },
     {
       id: 2,
+      key: 'configureKeys',
       icon: <Key aria-hidden="true" size={20} />,
-      titleVi: 'Cấu hình API Keys',
-      titleEn: 'Configure API Keys',
-      descVi: 'Thêm HeyGen API key và Resend API key trong trang Setup Wizard.',
-      descEn: 'Add your HeyGen API key and Resend API key in the Setup Wizard.',
       done: false,
     },
     {
       id: 3,
+      key: 'verifyHeygen',
       icon: <Settings aria-hidden="true" size={20} />,
-      titleVi: 'Xác minh HeyGen',
-      titleEn: 'Verify HeyGen',
-      descVi: 'Kiểm tra kết nối HeyGen trong Settings → Integrations.',
-      descEn: 'Test HeyGen connection in Settings → Integrations.',
       done: false,
     },
     {
       id: 4,
+      key: 'firstSop',
       icon: <Zap aria-hidden="true" size={20} />,
-      titleVi: 'Chạy SOP đầu tiên',
-      titleEn: 'Run First SOP',
-      descVi: `${data.installedSops.length > 0 ? `${data.installedSops.length} SOPs đã cài sẵn. ` : ''}Kích hoạt và chạy một SOP ngay bây giờ.`,
-      descEn: `${data.installedSops.length > 0 ? `${data.installedSops.length} SOPs pre-installed. ` : ''}Enable and run a SOP now.`,
       done: !!data.firstRunAt,
+      descParams: { installedSopsCount: data.installedSops.length },
     },
     {
       id: 5,
+      key: 'watchResults',
       icon: <BarChart3 aria-hidden="true" size={20} />,
-      titleVi: 'Theo dõi kết quả',
-      titleEn: 'Watch Results',
-      descVi: 'Xem videos đã tạo, số liệu hiệu suất và MCU usage trong Dashboard.',
-      descEn: 'See generated videos, performance metrics, and MCU usage in your Dashboard.',
       done: !!(data.firstRunAt && data.firstSopInstallAt),
     },
   ];
 }
 
-interface StepCardProps { step: OnboardingStep; isVi: boolean }
+interface StepCardProps { step: OnboardingStep }
 
-export function StepCard({ step, isVi }: StepCardProps) {
+export function StepCard({ step }: StepCardProps) {
+  const t = useTranslations('welcome');
+
+  // firstSop has a dynamic prefix derived from data.installedSops.length;
+  // every other step renders a single static "description" key.
+  const description = step.key === 'firstSop'
+    ? (step.descParams && step.descParams.installedSopsCount > 0
+        ? t('steps.firstSop.installedPrefix', { count: step.descParams.installedSopsCount })
+        : '') + t('steps.firstSop.callToAction')
+    : t(`steps.${step.key}.description`);
+
   return (
     <div className={`rounded-2xl border p-5 transition-colors ${step.done ? 'border-emerald-500/30 bg-emerald-900/10' : 'border-white/10 bg-white/[0.03] backdrop-blur-sm'}`}>
       <div className="flex items-start gap-4">
@@ -96,11 +105,11 @@ export function StepCard({ step, isVi }: StepCardProps) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
             <h3 className={`font-semibold ${step.done ? 'text-emerald-300' : 'text-zinc-100'}`}>
-              {isVi ? step.titleVi : step.titleEn}
+              {t(`steps.${step.key}.title`)}
             </h3>
-            <span className="text-xs text-zinc-600 shrink-0">{isVi ? 'Bước' : 'Step'} {step.id}</span>
+            <span className="text-xs text-zinc-600 shrink-0">{t('stepLabel')} {step.id}</span>
           </div>
-          <p className="text-sm text-zinc-400 mt-1">{isVi ? step.descVi : step.descEn}</p>
+          <p className="text-sm text-zinc-400 mt-1">{description}</p>
         </div>
       </div>
     </div>

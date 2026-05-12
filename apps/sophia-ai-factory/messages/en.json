@@ -2059,13 +2059,59 @@
     }
   },
   "welcome": {
+    "metadataTitle": "Welcome to Sophia AI",
+    "tierActivated": "{tier} Plan Activated",
+    "greeting": "Welcome,",
+    "summary": "Your account is ready. Click below to enter the Setup Wizard and configure your API keys.",
+    "getStarted": "Get Started",
+    "singleUseHint": "This link is single-use.",
+    "roadmapHeader": "Activation Roadmap",
+    "stepLabel": "Step",
+    "errors": {
+      "validateInvalid": "Link is invalid or expired.",
+      "validateConnection": "Connection error. Please try again."
+    },
     "telegram": {
       "title": "Connect Telegram",
       "description": "Get notifications + quick commands on Telegram. Type /campaign to create videos anytime.",
       "connectButton": "Open Telegram and connect",
-      "linkedSuccess": "✅ Telegram linked",
-      "errorTokenInvalid": "Pairing token invalid",
-      "errorTokenExpired": "Pairing token expired — click 'Connect Telegram' again"
+      "openedHint": "✅ Telegram opened — type /start to complete linking"
+    },
+    "steps": {
+      "accountCreated": {
+        "title": "Account Created",
+        "description": "Sophia created your account. Click \"Get Started\" below to enter your dashboard."
+      },
+      "configureKeys": {
+        "title": "Configure API Keys",
+        "description": "Add your HeyGen API key and Resend API key in the Setup Wizard."
+      },
+      "verifyHeygen": {
+        "title": "Verify HeyGen",
+        "description": "Test HeyGen connection in Settings → Integrations."
+      },
+      "firstSop": {
+        "title": "Run First SOP",
+        "installedPrefix": "{count} SOPs pre-installed. ",
+        "callToAction": "Enable and run a SOP now."
+      },
+      "watchResults": {
+        "title": "Watch Results",
+        "description": "See generated videos, performance metrics, and MCU usage in your Dashboard."
+      }
+    },
+    "invalid": {
+      "title": "Invalid Link",
+      "defaultMessage": "This link has expired or been used.",
+      "resendPrompt": "Enter your email to get a new link",
+      "submit": "Send new link",
+      "rateLimited": "Too many requests. Please try again in an hour.",
+      "genericError": "Something went wrong.",
+      "connectionError": "Connection error.",
+      "altLogin": "Or sign in with existing account",
+      "sentTitle": "New link sent",
+      "sentDescription": "If that email is in our system, you'll receive a new sign-in link in a few minutes.",
+      "backHome": "Back to home"
     }
   },
   "templates": {

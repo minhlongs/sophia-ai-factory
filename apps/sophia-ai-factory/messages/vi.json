@@ -2059,13 +2059,59 @@
     }
   },
   "welcome": {
+    "metadataTitle": "Chào mừng đến Sophia AI",
+    "tierActivated": "Gói {tier} đã kích hoạt",
+    "greeting": "Chào mừng,",
+    "summary": "Tài khoản đã sẵn sàng. Nhấn nút bên dưới để vào Setup Wizard cấu hình API keys.",
+    "getStarted": "Bắt đầu ngay",
+    "singleUseHint": "Link này chỉ dùng 1 lần.",
+    "roadmapHeader": "Lộ trình kích hoạt",
+    "stepLabel": "Bước",
+    "errors": {
+      "validateInvalid": "Link không hợp lệ hoặc đã hết hạn.",
+      "validateConnection": "Lỗi kết nối. Vui lòng thử lại."
+    },
     "telegram": {
       "title": "Kết nối Telegram",
       "description": "Nhận thông báo + lệnh nhanh ngay trên Telegram. Gõ /campaign để tạo video bất cứ lúc nào.",
       "connectButton": "Mở Telegram và kết nối",
-      "linkedSuccess": "✅ Đã kết nối Telegram",
-      "errorTokenInvalid": "Mã pairing không hợp lệ",
-      "errorTokenExpired": "Mã pairing hết hạn — bấm 'Kết nối Telegram' lại"
+      "openedHint": "✅ Đã mở Telegram — gõ /start để hoàn tất kết nối"
+    },
+    "steps": {
+      "accountCreated": {
+        "title": "Tài khoản đã tạo",
+        "description": "Sophia đã tạo tài khoản cho bạn. Nhấn \"Bắt đầu\" bên dưới để vào dashboard."
+      },
+      "configureKeys": {
+        "title": "Cấu hình API Keys",
+        "description": "Thêm HeyGen API key và Resend API key trong trang Setup Wizard."
+      },
+      "verifyHeygen": {
+        "title": "Xác minh HeyGen",
+        "description": "Kiểm tra kết nối HeyGen trong Settings → Integrations."
+      },
+      "firstSop": {
+        "title": "Chạy SOP đầu tiên",
+        "installedPrefix": "{count} SOPs đã cài sẵn. ",
+        "callToAction": "Kích hoạt và chạy một SOP ngay bây giờ."
+      },
+      "watchResults": {
+        "title": "Theo dõi kết quả",
+        "description": "Xem videos đã tạo, số liệu hiệu suất và MCU usage trong Dashboard."
+      }
+    },
+    "invalid": {
+      "title": "Link không hợp lệ",
+      "defaultMessage": "Link đã hết hạn hoặc đã được sử dụng.",
+      "resendPrompt": "Nhập email để nhận link mới",
+      "submit": "Gửi link mới",
+      "rateLimited": "Anh/chị đã yêu cầu quá nhanh. Thử lại sau 1 giờ.",
+      "genericError": "Có lỗi xảy ra.",
+      "connectionError": "Lỗi kết nối.",
+      "altLogin": "Hoặc đăng nhập bằng tài khoản đã có",
+      "sentTitle": "Đã gửi link mới",
+      "sentDescription": "Nếu email tồn tại trong hệ thống, anh/chị sẽ nhận link đăng nhập mới trong vài phút.",
+      "backHome": "Về trang chủ"
     }
   },
   "templates": {
