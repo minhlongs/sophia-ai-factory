@@ -16,9 +16,9 @@ interface AuditCheckRowProps {
 }
 
 function StatusIcon({ status }: { status: string }) {
-  if (status === 'pass') return <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
-  if (status === 'warn') return <AlertTriangle className="w-4 h-4 text-yellow-400 shrink-0" />
-  return <XCircle className="w-4 h-4 text-red-400 shrink-0" />
+  if (status === 'pass') return <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" aria-hidden="true" />
+  if (status === 'warn') return <AlertTriangle className="w-4 h-4 text-yellow-400 shrink-0" aria-hidden="true" />
+  return <XCircle className="w-4 h-4 text-red-400 shrink-0" aria-hidden="true" />
 }
 
 function statusBg(status: string): string {
@@ -43,9 +43,9 @@ export function AuditCheckRow({ check }: AuditCheckRowProps) {
           w:{check.weight} · {check.durationMs}ms
         </span>
         {expanded ? (
-          <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
+          <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" aria-hidden="true" />
         ) : (
-          <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+          <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" aria-hidden="true" />
         )}
       </button>
 

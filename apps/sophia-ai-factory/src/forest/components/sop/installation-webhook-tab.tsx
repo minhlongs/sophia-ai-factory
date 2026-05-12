@@ -60,7 +60,7 @@ export function InstallationWebhookTab({ installationId, onRegenSecret }: Props)
             {webhookUrl}
           </code>
           <Button size="sm" variant="outline" onClick={handleCopy}>
-            {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+            {copied ? <Check className="w-4 h-4 text-emerald-400" aria-hidden="true" /> : <Copy className="w-4 h-4" aria-hidden="true" />}
             <span className="ml-1.5">{copied ? t('copied') : t('copy')}</span>
           </Button>
         </div>

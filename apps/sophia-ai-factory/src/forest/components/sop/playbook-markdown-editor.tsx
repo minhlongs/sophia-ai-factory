@@ -50,7 +50,7 @@ export function PlaybookMarkdownEditor({ initialValue, onSave }: PlaybookMarkdow
           onClick={() => setPreview(!preview)}
           className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
-          {preview ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+          {preview ? <EyeOff className="w-3.5 h-3.5" aria-hidden="true" /> : <Eye className="w-3.5 h-3.5" aria-hidden="true" />}
           {preview ? 'Edit' : 'Preview'}
         </button>
       </div>
@@ -75,7 +75,7 @@ export function PlaybookMarkdownEditor({ initialValue, onSave }: PlaybookMarkdow
           disabled={isPending}
           className="bg-violet-700 hover:bg-violet-600"
         >
-          <Save className="w-4 h-4 mr-2" />
+          <Save className="w-4 h-4 mr-2" aria-hidden="true" />
           {isPending ? t('saving') : saved ? t('saved') : t('save')}
         </Button>
         {error && <p className="text-sm text-red-400">{error}</p>}

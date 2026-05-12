@@ -32,8 +32,8 @@ function SortIcon({ columnKey, sortKey, sortDirection }: {
 }) {
   if (sortKey !== columnKey) return null;
   return sortDirection === 'asc'
-    ? <ChevronUp className="w-4 h-4 ml-1" />
-    : <ChevronDown className="w-4 h-4 ml-1" />;
+    ? <ChevronUp className="w-4 h-4 ml-1" aria-hidden="true" />
+    : <ChevronDown className="w-4 h-4 ml-1" aria-hidden="true" />;
 }
 
 export function LicenseMetricsTable({ licenses, isLoading }: LicenseMetricsTableProps) {

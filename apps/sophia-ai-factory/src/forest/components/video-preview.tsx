@@ -121,7 +121,7 @@ export function VideoPreview({
                   onClick={handlePlay}
                   aria-label="Play video"
                 >
-                  <Play className="w-8 h-8" />
+                  <Play className="w-8 h-8" aria-hidden="true" />
                 </Button>
               </div>
             </div>

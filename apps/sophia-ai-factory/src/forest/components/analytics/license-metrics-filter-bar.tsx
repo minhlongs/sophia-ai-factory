@@ -37,7 +37,7 @@ export function LicenseMetricsFilterBar({
   return (
     <div className="flex gap-4 items-center">
       <div className="relative flex-1 max-w-sm">
-        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
         <Input
           placeholder="Search license nonce..."
           value={searchQuery}
@@ -46,7 +46,7 @@ export function LicenseMetricsFilterBar({
         />
       </div>
       <div className="flex items-center gap-2">
-        <Filter className="w-4 h-4 text-muted-foreground" />
+        <Filter className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
         <Select value={tierFilter} onValueChange={onTierChange}>
           <SelectTrigger className="w-[150px]">
             <SelectValue placeholder="All Tiers" />

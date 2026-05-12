@@ -71,7 +71,7 @@ export function PlanUpgradeWidget({ currentTier, periodEnd, showHistoryLink }: P
     return (
       <div className="bg-gradient-to-r from-amber-500/10 to-violet-500/10 border border-amber-500/30 rounded-xl p-5">
         <div className="flex items-center gap-2">
-          <Crown className="w-5 h-5 text-amber-400" />
+          <Crown className="w-5 h-5 text-amber-400" aria-hidden="true" />
           <span className="font-semibold text-foreground">Gói {current.name} — Cao Nhất</span>
         </div>
         <p className="text-sm text-muted-foreground mt-1">
@@ -90,7 +90,7 @@ export function PlanUpgradeWidget({ currentTier, periodEnd, showHistoryLink }: P
     <div className="bg-card border border-border rounded-xl p-5 space-y-4">
       <div>
         <div className="flex items-center gap-2">
-          <Crown className="w-5 h-5 text-violet-400" />
+          <Crown className="w-5 h-5 text-violet-400" aria-hidden="true" />
           <span className="font-semibold text-foreground">Gói Hiện Tại: {current.name}</span>
         </div>
         <p className="text-sm text-muted-foreground mt-1">
@@ -120,8 +120,8 @@ export function PlanUpgradeWidget({ currentTier, periodEnd, showHistoryLink }: P
                 </span>
               </div>
               {isLoading
-                ? <Loader2 className="w-4 h-4 text-violet-400 motion-safe:animate-spin" />
-                : <ArrowUp className="w-4 h-4 text-violet-400" />
+                ? <Loader2 className="w-4 h-4 text-violet-400 motion-safe:animate-spin" aria-hidden="true" />
+                : <ArrowUp className="w-4 h-4 text-violet-400" aria-hidden="true" />
               }
             </button>
           );

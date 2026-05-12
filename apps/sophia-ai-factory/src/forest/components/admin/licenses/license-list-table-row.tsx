@@ -99,22 +99,22 @@ export function LicenseListTableRow({
       <TableCell className="text-right">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="hover:bg-muted">
-              <MoreHorizontal className="w-4 h-4" />
+            <Button variant="ghost" size="icon" className="hover:bg-muted" aria-label="Open license actions menu">
+              <MoreHorizontal className="w-4 h-4" aria-hidden="true" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={() => onView?.(license.id)}>
-              <Eye className="w-4 h-4 mr-2" />
+              <Eye className="w-4 h-4 mr-2" aria-hidden="true" />
               View Details
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onRegenerateClick(license.id)}>
-              <RotateCcw className="w-4 h-4 mr-2" />
+              <RotateCcw className="w-4 h-4 mr-2" aria-hidden="true" />
               Regenerate
             </DropdownMenuItem>
             {!license.isRevoked && license.tier !== 'master' && (
               <DropdownMenuItem onClick={() => onExtendClick(license.id)}>
-                <Calendar className="w-4 h-4 mr-2" />
+                <Calendar className="w-4 h-4 mr-2" aria-hidden="true" />
                 Extend
               </DropdownMenuItem>
             )}
@@ -123,7 +123,7 @@ export function LicenseListTableRow({
                 onClick={() => onReactivate(license.id)}
                 className="text-green-400"
               >
-                <CheckCircle className="w-4 h-4 mr-2" />
+                <CheckCircle className="w-4 h-4 mr-2" aria-hidden="true" />
                 Reactivate
               </DropdownMenuItem>
             ) : (
@@ -131,7 +131,7 @@ export function LicenseListTableRow({
                 onClick={() => onRevokeClick(license.id)}
                 className="text-red-400"
               >
-                <Ban className="w-4 h-4 mr-2" />
+                <Ban className="w-4 h-4 mr-2" aria-hidden="true" />
                 Revoke
               </DropdownMenuItem>
             )}

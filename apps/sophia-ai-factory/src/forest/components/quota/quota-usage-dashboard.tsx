@@ -133,7 +133,7 @@ export function QuotaUsageDashboard() {
     return (
       <div className="rounded-lg border border-red-500/50 bg-red-500/10 p-4">
         <div className="flex items-center gap-3">
-          <AlertCircle className="w-5 h-5 text-red-500" />
+          <AlertCircle className="w-5 h-5 text-red-500" aria-hidden="true" />
           <div>
             <h3 className="font-semibold text-red-500">Error Loading Quota Data</h3>
             <p className="text-sm text-muted-foreground">{error || 'Unknown error'}</p>

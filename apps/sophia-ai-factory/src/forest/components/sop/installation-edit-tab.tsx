@@ -106,7 +106,7 @@ export function InstallationEditTab({
           className="w-full flex items-center justify-between px-5 py-3 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors bg-card"
         >
           <span>{ti('advancedLabel')}</span>
-          {advancedOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          {advancedOpen ? <ChevronUp className="w-4 h-4" aria-hidden="true" /> : <ChevronDown className="w-4 h-4" aria-hidden="true" />}
         </button>
 
         {advancedOpen && (

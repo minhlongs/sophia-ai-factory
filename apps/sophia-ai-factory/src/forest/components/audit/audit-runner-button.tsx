@@ -122,12 +122,12 @@ export function AuditRunnerButton() {
         >
           {state === 'running' ? (
             <>
-              <Loader2 className="w-5 h-5 motion-safe:animate-spin" />
+              <Loader2 className="w-5 h-5 motion-safe:animate-spin" aria-hidden="true" />
               Running Audit... {progress}%
             </>
           ) : (
             <>
-              <Play className="w-5 h-5" />
+              <Play className="w-5 h-5" aria-hidden="true" />
               Run Zero-GAP Audit
             </>
           )}
@@ -138,7 +138,7 @@ export function AuditRunnerButton() {
             onClick={downloadReport}
             className="inline-flex items-center gap-2 px-4 py-3 rounded-xl border border-white/20 hover:border-white/40 text-sm font-medium transition-colors"
           >
-            <Download className="w-4 h-4" />
+            <Download className="w-4 h-4" aria-hidden="true" />
             Download Report
           </button>
         )}

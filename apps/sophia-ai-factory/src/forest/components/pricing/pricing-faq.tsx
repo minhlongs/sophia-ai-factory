@@ -67,7 +67,7 @@ export function PricingFaq() {
           href="mailto:support@agencyos.network?subject=Enterprise Plan Inquiry"
           className="cursor-pointer inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-150"
         >
-          <Mail className="w-4 h-4" />
+          <Mail className="w-4 h-4" aria-hidden="true" />
           {t('talk_to_sales_cta')}
         </a>
       </section>

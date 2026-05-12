@@ -66,7 +66,7 @@ export function InstallationOverviewTab({ installation, onRunNow, onDelete }: Pr
           disabled={isPendingRun || !installation.enabled}
           className="bg-violet-700 hover:bg-violet-600"
         >
-          <Play className="w-4 h-4 mr-2" />
+          <Play className="w-4 h-4 mr-2" aria-hidden="true" />
           {isPendingRun ? t('running') : t('runNow')}
         </Button>
         <Button
@@ -75,7 +75,7 @@ export function InstallationOverviewTab({ installation, onRunNow, onDelete }: Pr
           disabled={isPendingDel}
           className="text-red-400 border-red-800/50 hover:bg-red-950/30"
         >
-          <Trash2 className="w-4 h-4 mr-2" />
+          <Trash2 className="w-4 h-4 mr-2" aria-hidden="true" />
           {t('delete')}
         </Button>
       </div>

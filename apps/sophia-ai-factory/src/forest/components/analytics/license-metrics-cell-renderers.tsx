@@ -47,7 +47,7 @@ export function StatusBadge({
   if (percentage >= 90) {
     return (
       <Badge variant="destructive" className="text-xs flex items-center gap-1">
-        <AlertTriangle className="w-3 h-3" />
+        <AlertTriangle className="w-3 h-3" aria-hidden="true" />
         Critical{overageCount > 0 && ` (${overageCount})`}
       </Badge>
     );
@@ -56,7 +56,7 @@ export function StatusBadge({
   if (percentage >= 75) {
     return (
       <Badge variant="secondary" className="text-xs bg-amber-500/20 text-amber-500 flex items-center gap-1">
-        <AlertTriangle className="w-3 h-3" />
+        <AlertTriangle className="w-3 h-3" aria-hidden="true" />
         Warning{overageCount > 0 && ` (${overageCount})`}
       </Badge>
     );

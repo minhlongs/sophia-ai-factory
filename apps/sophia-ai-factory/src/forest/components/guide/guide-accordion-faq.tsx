@@ -41,8 +41,8 @@ export function GuideAccordionFaq({ items, className }: GuideAccordionFaqProps) 
               </span>
               <span className="shrink-0">
                 {isOpen
-                  ? <Minus className="w-4 h-4 text-violet-400" />
-                  : <Plus className="w-4 h-4 text-muted-foreground" />
+                  ? <Minus className="w-4 h-4 text-violet-400" aria-hidden="true" />
+                  : <Plus className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
                 }
               </span>
             </button>

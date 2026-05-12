@@ -25,9 +25,9 @@ export function QuotaWarningBanner({ maxUsage }: QuotaWarningBannerProps) {
     >
       <div className="flex items-center gap-3">
         {isCritical ? (
-          <AlertTriangle className="w-5 h-5 text-red-500" />
+          <AlertTriangle className="w-5 h-5 text-red-500" aria-hidden="true" />
         ) : (
-          <AlertCircle className="w-5 h-5 text-amber-500" />
+          <AlertCircle className="w-5 h-5 text-amber-500" aria-hidden="true" />
         )}
         <div className="flex-1">
           <h3 className={`font-semibold ${isCritical ? 'text-red-500' : 'text-amber-500'}`}>

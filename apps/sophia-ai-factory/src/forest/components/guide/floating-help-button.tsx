@@ -50,7 +50,7 @@ export function FloatingHelpButton() {
         aria-expanded={isOpen}
         aria-controls="help-panel"
       >
-        {isOpen ? <X className="w-5 h-5" /> : <HelpCircle className="w-5 h-5" />}
+        {isOpen ? <X className="w-5 h-5" /> : <HelpCircle className="w-5 h-5" aria-hidden="true" />}
       </button>
     </div>
   );

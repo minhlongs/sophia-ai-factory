@@ -43,14 +43,14 @@ export function LicenseGeneratorResultDisplay({
     <div className="mt-6 space-y-4">
       {result.key ? (
         <Alert className="bg-green-500/10 border-green-500/30 text-green-400">
-          <Check className="w-5 h-5" />
+          <Check className="w-5 h-5" aria-hidden="true" />
           <AlertDescription>
             <strong>License Key Generated Successfully!</strong>
           </AlertDescription>
         </Alert>
       ) : (
         <Alert className="bg-red-500/10 border-red-500/30 text-red-400">
-          <AlertTriangle className="w-5 h-5" />
+          <AlertTriangle className="w-5 h-5" aria-hidden="true" />
           <AlertDescription>
             {result.warning}
           </AlertDescription>
@@ -61,7 +61,7 @@ export function LicenseGeneratorResultDisplay({
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label className="text-foreground flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-yellow-400" />
+              <AlertTriangle className="w-4 h-4 text-yellow-400" aria-hidden="true" />
               Copy Immediately!
             </Label>
             <Button
@@ -71,9 +71,9 @@ export function LicenseGeneratorResultDisplay({
               className="border-border hover:bg-muted"
             >
               {copied ? (
-                <Check className="w-4 h-4 text-green-400" />
+                <Check className="w-4 h-4 text-green-400" aria-hidden="true" />
               ) : (
-                <Copy className="w-4 h-4" />
+                <Copy className="w-4 h-4" aria-hidden="true" />
               )}
             </Button>
           </div>

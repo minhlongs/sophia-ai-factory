@@ -39,7 +39,7 @@ export function ApiKeyInput({
         </label>
         {helpText && (
           <div className="group relative">
-            <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+            <Info className="w-4 h-4 text-muted-foreground cursor-help" aria-hidden="true" />
             <div className="absolute right-0 bottom-6 w-64 p-2 bg-popover text-popover-foreground text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-border">
               {helpText}
             </div>
@@ -72,9 +72,9 @@ export function ApiKeyInput({
         </button>
 
         <div className="absolute right-2 flex items-center gap-2">
-          {status === 'validating' && <Loader2 className="w-5 h-5 text-primary motion-safe:animate-spin" />}
-          {status === 'valid' && <CheckCircle className="w-5 h-5 text-green-500" />}
-          {status === 'invalid' && <XCircle className="w-5 h-5 text-destructive" />}
+          {status === 'validating' && <Loader2 className="w-5 h-5 text-primary motion-safe:animate-spin" aria-hidden="true" />}
+          {status === 'valid' && <CheckCircle className="w-5 h-5 text-green-500" aria-hidden="true" />}
+          {status === 'invalid' && <XCircle className="w-5 h-5 text-destructive" aria-hidden="true" />}
 
           <button
             type="button"
