@@ -59,6 +59,24 @@ async function getUserTrialEndsAt(userId: string): Promise<number | null> {
   }
 }
 
+async function getRedeemedPromoCode(userId: string): Promise<string | null> {
+  try {
+    const db = await getD1Raw();
+    const row = await db
+      .prepare(
+        `SELECT promo_code FROM promo_code_redemptions
+         WHERE user_id = ?1
+         ORDER BY redeemed_at DESC
+         LIMIT 1`,
+      )
+      .bind(userId)
+      .first<{ promo_code: string }>();
+    return row?.promo_code ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export default async function DashboardLayout({
   children,
   params,
@@ -72,6 +90,8 @@ export default async function DashboardLayout({
   const isAdmin = currentUser?.role === 'admin';
   const trialEndsAt = currentUser ? await getUserTrialEndsAt(currentUser.id) : null;
   const userTier = currentUser ? await getUserTier(currentUser.id) : null;
+  const redeemedCode = currentUser ? await getRedeemedPromoCode(currentUser.id) : null;
+  const isVi = locale.startsWith('vi');
   const nowSec = Math.floor(Date.now() / 1000);
   // Only show trial banner for BASIC tier users within 7 days of trial expiry.
   // MASTER users (e.g. FREE100 redeemers) have trial_ends_at set but should NOT see the banner.
@@ -103,6 +123,15 @@ export default async function DashboardLayout({
             >
               {userTier}
             </span>
+          )}
+          {userTier === 'MASTER' && redeemedCode === 'FREE100' && (
+            <div
+              className="mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-medium bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/30"
+              aria-label={isVi ? 'Đã kích hoạt qua mã FREE100, truy cập trọn đời' : 'Activated via FREE100, lifetime access'}
+            >
+              <span aria-hidden="true">✦</span>
+              {isVi ? 'FREE100 · Trọn đời' : 'FREE100 · Lifetime'}
+            </div>
           )}
         </div>
 
