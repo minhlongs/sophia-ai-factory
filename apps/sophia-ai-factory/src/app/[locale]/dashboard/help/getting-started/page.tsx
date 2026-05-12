@@ -95,7 +95,7 @@ export default async function GettingStartedPage({ params }: Props) {
             className="flex gap-4 p-5 rounded-xl border border-zinc-800 bg-zinc-900/50 hover:border-zinc-700 transition-colors"
           >
             <div className="shrink-0 mt-0.5">
-              <CheckCircle className="w-5 h-5 text-violet-400" />
+              <CheckCircle className="w-5 h-5 text-violet-400" aria-hidden="true" />
             </div>
             <div className="space-y-1">
               <h2 className="text-sm font-semibold text-zinc-200">{step.title}</h2>
