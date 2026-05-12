@@ -468,9 +468,9 @@ export default function SetupWizardPage() {
                 >
                     {/* B5: loader on Next when transitioning */}
                     {isTransitioning ? (
-                        <Loader2 className="w-4 h-4 motion-safe:animate-spin" />
+                        <Loader2 className="w-4 h-4 motion-safe:animate-spin" aria-hidden="true" />
                     ) : (
-                        <>{t('actions.next')} <ArrowRight className="w-4 h-4" /></>
+                        <>{t('actions.next')} <ArrowRight className="w-4 h-4" aria-hidden="true" /></>
                     )}
                 </button>
             ) : (
@@ -487,10 +487,10 @@ export default function SetupWizardPage() {
                                 : `Retrying (${retryCount}/3)…`)
                             : t('actions.saving')
                           }
-                          <Loader2 className="w-4 h-4 motion-safe:animate-spin" />
+                          <Loader2 className="w-4 h-4 motion-safe:animate-spin" aria-hidden="true" />
                         </>
                     ) : (
-                        <>{t('actions.launch')} <Save className="w-4 h-4" /></>
+                        <>{t('actions.launch')} <Save className="w-4 h-4" aria-hidden="true" /></>
                     )}
                 </button>
             )}

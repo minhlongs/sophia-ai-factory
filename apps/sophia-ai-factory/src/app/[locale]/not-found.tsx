@@ -33,7 +33,7 @@ export default function NotFound() {
             size="lg"
             className="w-full sm:w-auto gap-2 bg-[var(--neon-purple)] hover:bg-[var(--neon-purple)]/80"
           >
-            <Home className="w-4 h-4" />
+            <Home className="w-4 h-4" aria-hidden="true" />
             Return Home
           </Button>
         </Link>
@@ -43,7 +43,7 @@ export default function NotFound() {
             size="lg"
             className="w-full sm:w-auto gap-2 border-white/20 hover:bg-white/10"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-4 h-4" aria-hidden="true" />
             Go to Dashboard
           </Button>
         </Link>

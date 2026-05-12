@@ -53,7 +53,7 @@ export default async function AffiliateLandingPage({ params }: PageProps) {
             className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-violet-500 to-cyan-500 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-shadow"
           >
             {t('hero.ctaPrimary')}
-            <ArrowRight className="w-4 h-4" />
+            <ArrowRight className="w-4 h-4" aria-hidden="true" />
           </Link>
           <Link
             href="#how-it-works"
@@ -67,17 +67,17 @@ export default async function AffiliateLandingPage({ params }: PageProps) {
       {/* Stats */}
       <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard
-          icon={<Coins className="w-6 h-6" />}
+          icon={<Coins className="w-6 h-6" aria-hidden="true" />}
           value={t('stats.commission')}
           label={t('stats.commissionLabel')}
         />
         <StatCard
-          icon={<Wallet className="w-6 h-6" />}
+          icon={<Wallet className="w-6 h-6" aria-hidden="true" />}
           value={t('stats.payout')}
           label={t('stats.payoutLabel')}
         />
         <StatCard
-          icon={<Cookie className="w-6 h-6" />}
+          icon={<Cookie className="w-6 h-6" aria-hidden="true" />}
           value={t('stats.cookie')}
           label={t('stats.cookieLabel')}
         />
@@ -115,7 +115,7 @@ export default async function AffiliateLandingPage({ params }: PageProps) {
           className="inline-flex items-center gap-2 bg-gradient-to-r from-violet-500 to-cyan-500 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-shadow"
         >
           {t('cta.button')}
-          <ArrowRight className="w-4 h-4" />
+          <ArrowRight className="w-4 h-4" aria-hidden="true" />
         </Link>
         <p className="text-xs text-muted-foreground pt-4 max-w-md mx-auto">{t('footer.disclaimer')}</p>
       </section>

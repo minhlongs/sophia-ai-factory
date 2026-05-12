@@ -85,7 +85,7 @@ export default function ScreensGuidePage() {
       {/* Page index */}
       <div>
         <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
-          <Search className="w-5 h-5 text-cyan-400" />
+          <Search className="w-5 h-5 text-cyan-400" aria-hidden="true" />
           Bản Đồ Trang
         </h2>
         <div className="border border-border/40 rounded-xl overflow-hidden">
