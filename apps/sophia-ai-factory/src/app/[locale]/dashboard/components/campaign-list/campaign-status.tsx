@@ -3,11 +3,11 @@ import { CheckCircle2, AlertCircle, Clock, Loader2, FileText } from "lucide-reac
 
 export function getStatusIcon(status: string) {
   switch (status) {
-    case 'completed': return <CheckCircle2 className="w-5 h-5 text-green-500" />;
-    case 'failed': return <AlertCircle className="w-5 h-5 text-destructive" />;
-    case 'queued': return <Clock className="w-5 h-5 text-muted-foreground" />;
-    case 'draft': return <FileText className="w-5 h-5 text-muted-foreground" />;
-    default: return <Loader2 className="w-5 h-5 text-primary motion-safe:animate-spin" />;
+    case 'completed': return <CheckCircle2 className="w-5 h-5 text-green-500" aria-hidden="true" />;
+    case 'failed': return <AlertCircle className="w-5 h-5 text-destructive" aria-hidden="true" />;
+    case 'queued': return <Clock className="w-5 h-5 text-muted-foreground" aria-hidden="true" />;
+    case 'draft': return <FileText className="w-5 h-5 text-muted-foreground" aria-hidden="true" />;
+    default: return <Loader2 className="w-5 h-5 text-primary motion-safe:animate-spin" aria-hidden="true" />;
   }
 }
 
