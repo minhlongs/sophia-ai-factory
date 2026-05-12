@@ -15,7 +15,7 @@ import { Loader2, Video, Zap, AlertTriangle, Mail, CheckCircle2, MessageCircle }
 import { buildOnboardingSteps, StepCard, type WelcomeData } from './welcome-onboarding-steps';
 import { generateTelegramPairingTokenAction } from '@/app/actions/generate-telegram-pairing-token';
 
-const BOT_USERNAME = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME ?? 'Sophia_Bbot';
+const BOT_USERNAME = (process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME ?? 'Sophia_Bbot').replace(/^@/, '').trim();
 
 interface Props { token: string; isVi: boolean; locale: string }
 
@@ -62,8 +62,8 @@ export function WelcomePageClient({ token, isVi, locale }: Props) {
       const botUrl = `https://t.me/${BOT_USERNAME}?start=${pairingToken}`;
       window.open(botUrl, '_blank', 'noopener,noreferrer');
       setTelegramLinked(true);
-    } catch {
-      // Silent fail — user can retry
+    } catch (err) {
+      console.error('[welcome] Telegram connect failed:', err);
     } finally {
       setTelegramLinking(false);
     }

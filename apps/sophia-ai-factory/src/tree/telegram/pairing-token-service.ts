@@ -80,7 +80,9 @@ export async function consumePairingToken(
   if (row.used_at !== null) return null
   if (row.expires_at < now) return null
 
-  // Mark as used
+  // TODO(toctou): SELECT-then-UPDATE has a narrow race window. Risk LOW because
+  // D1 is single-region/serialized + double-consume is idempotent (same userId).
+  // Future hardening: single SQL `UPDATE ... WHERE token=? AND used_at IS NULL RETURNING user_id`.
   await db
     .from('telegram_pairing_tokens')
     .upsert({ ...row, used_at: now })
