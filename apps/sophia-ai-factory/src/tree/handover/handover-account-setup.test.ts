@@ -57,13 +57,12 @@ function createMockD1(opts: MockD1Options = {}) {
         return bound
       },
       first: async <T,>(): Promise<T | null> => {
-        const hit = matchesAny(opts.firstResults)
-        if (!hit) return null
-        return (hit as { row: T | null }).row
+        const hit = matchesAny(opts.firstResults) as { row: T | null } | undefined
+        return hit ? hit.row : null
       },
       run: async () => {
-        const errHit = matchesAny(opts.runErrors)
-        if (errHit) throw (errHit as { err: Error }).err
+        const errHit = matchesAny(opts.runErrors) as { err: Error } | undefined
+        if (errHit) throw errHit.err
         return { success: true, meta: {} }
       },
     }
