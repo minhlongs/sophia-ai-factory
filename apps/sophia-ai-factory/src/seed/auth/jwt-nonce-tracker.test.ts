@@ -54,7 +54,7 @@ describe('checkJwtNonce', () => {
 
   afterEach(() => {
     // Reset KV_KV to undefined rather than deleting (property may be non-configurable from setup)
-    ;(globalThis as any).KV_KV = undefined
+    ;(globalThis as Record<string, unknown>).KV_KV = undefined
   })
 
   it('should return invalid for empty nonce', async () => {
@@ -83,7 +83,7 @@ describe('checkJwtNonce', () => {
           error: null,
         }),
       }),
-    } as any)
+    })
 
     const result = await checkJwtNonce('valid-nonce-12345')
 
@@ -120,7 +120,7 @@ describe('checkJwtNonce', () => {
   it('should fall back to DB when KV is unavailable', async () => {
     // Remove KV client
     // Reset KV_KV to undefined rather than deleting (property may be non-configurable from setup)
-    ;(globalThis as any).KV_KV = undefined
+    ;(globalThis as Record<string, unknown>).KV_KV = undefined
 
     const { createServerClient } = await import('@/seed/db/client')
     const db = vi.mocked(createServerClient)()
@@ -133,7 +133,7 @@ describe('checkJwtNonce', () => {
           error: null,
         }),
       }),
-    } as any)
+    })
 
     const result = await checkJwtNonce('db-fallback-nonce')
 
@@ -157,7 +157,7 @@ describe('checkJwtNonce', () => {
           error: null,
         }),
       }),
-    } as any)
+    })
 
     const result = await checkJwtNonce('used-nonce-12345')
 
@@ -167,7 +167,7 @@ describe('checkJwtNonce', () => {
 
   it('should fail open on database error', async () => {
     // Reset KV_KV to undefined rather than deleting (property may be non-configurable from setup)
-    ;(globalThis as any).KV_KV = undefined
+    ;(globalThis as Record<string, unknown>).KV_KV = undefined
 
     const { createServerClient } = await import('@/seed/db/client')
     const db = vi.mocked(createServerClient)()
@@ -177,7 +177,7 @@ describe('checkJwtNonce', () => {
       eq: vi.fn().mockReturnValue({
         single: vi.fn().mockRejectedValue(new Error('DB error')),
       }),
-    } as any)
+    })
 
     const result = await checkJwtNonce('error-nonce')
 
@@ -203,7 +203,7 @@ describe('markJwtNonceAsUsed', () => {
 
   afterEach(() => {
     // Reset KV_KV to undefined rather than deleting (property may be non-configurable from setup)
-    ;(globalThis as any).KV_KV = undefined
+    ;(globalThis as Record<string, unknown>).KV_KV = undefined
   })
 
   it('should mark nonce as used in both KV and DB', async () => {
@@ -214,7 +214,7 @@ describe('markJwtNonceAsUsed', () => {
 
     vi.mocked(mockNonceFrom).mockReturnValue({
       upsert: vi.fn().mockResolvedValue({ error: null }),
-    } as any)
+    })
 
     const now = Math.floor(Date.now() / 1000)
     const expiresAt = now + 3600
@@ -237,7 +237,7 @@ describe('markJwtNonceAsUsed', () => {
 
     vi.mocked(mockNonceFrom).mockReturnValue({
       upsert: vi.fn().mockResolvedValue({ error: null }),
-    } as any)
+    })
 
     const result = await markJwtNonceAsUsed('kv-fail-nonce', 'user-123', Date.now() + 3600)
 
@@ -252,7 +252,7 @@ describe('markJwtNonceAsUsed', () => {
 
     vi.mocked(mockNonceFrom).mockReturnValue({
       upsert: vi.fn().mockRejectedValue(new Error('DB error')),
-    } as any)
+    })
 
     const result = await markJwtNonceAsUsed('db-fail-nonce', 'user-123', Date.now() + 3600)
 
@@ -278,7 +278,7 @@ describe('preRegisterNonce', () => {
 
   afterEach(() => {
     // Reset KV_KV to undefined rather than deleting (property may be non-configurable from setup)
-    ;(globalThis as any).KV_KV = undefined
+    ;(globalThis as Record<string, unknown>).KV_KV = undefined
   })
 
   it('should pre-register nonce in KV cache', async () => {
@@ -299,7 +299,7 @@ describe('preRegisterNonce', () => {
 
   it('should return false when KV is unavailable', async () => {
     // Reset KV_KV to undefined rather than deleting (property may be non-configurable from setup)
-    ;(globalThis as any).KV_KV = undefined
+    ;(globalThis as Record<string, unknown>).KV_KV = undefined
 
     const result = await preRegisterNonce('no-kv-nonce', 'user-123', Date.now() + 3600)
 
@@ -333,7 +333,7 @@ describe('cleanupExpiredNonces', () => {
           }),
         }),
       }),
-    } as any)
+    })
 
     const result = await cleanupExpiredNonces()
 
@@ -350,7 +350,7 @@ describe('cleanupExpiredNonces', () => {
           select: vi.fn().mockRejectedValue(new Error('Cleanup error')),
         }),
       }),
-    } as any)
+    })
 
     const result = await cleanupExpiredNonces()
 
@@ -370,7 +370,7 @@ describe('cleanupExpiredNonces', () => {
           }),
         }),
       }),
-    } as any)
+    })
 
     const result = await cleanupExpiredNonces()
 
@@ -394,7 +394,7 @@ describe('getNonceStats', () => {
         gte: vi.fn().mockResolvedValue({ count: 150, error: null }),
         lt: vi.fn().mockResolvedValue({ count: 50, error: null }),
       }),
-    } as any)
+    })
 
     const result = await getNonceStats()
 
@@ -421,7 +421,7 @@ describe('getNonceStats', () => {
           error: null,
         }),
       }),
-    } as any)
+    })
 
     const result = await getNonceStats()
 
@@ -444,7 +444,7 @@ describe('getNonceStats', () => {
           error: null,
         }),
       }),
-    } as any)
+    })
 
     const result = await getNonceStats()
 
