@@ -4,6 +4,8 @@ import { generateProposalSchema } from '@/seed/validators/proposal';
 import { generateProposal } from '@/seed/ai/proposal-generator';
 import { checkProposalQuality } from '@/seed/ai/proposal-quality-check';
 import { SYSTEM_TEMPLATES } from '@/seed/ai/proposal-templates';
+import { getBalance, deductCredits } from '@/lib/mcu/credits-repo';
+import { getProposalCost } from '@/land/billing/proposal-mcu-cost-config';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 
@@ -47,6 +49,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const cost = getProposalCost('GENERATE');
+    const balance = await getBalance(user.id);
+    if (balance.credits_remaining < cost) {
+      return NextResponse.json(
+        {
+          error: 'Insufficient MCU credits',
+          code: 'INSUFFICIENT_BALANCE',
+          required: cost,
+          available: balance.credits_remaining,
+          upgrade_url: 'https://sophia.agencyos.network/dashboard/credits',
+        },
+        { status: 402 },
+      );
+    }
+
     const data = validated.data;
     const templateId = data.templateId ?? SYSTEM_TEMPLATES[0]!.id;
 
@@ -71,6 +88,15 @@ export async function POST(request: NextRequest) {
     });
 
     const quality = checkProposalQuality(generated);
+    const proposalRef = crypto.randomUUID();
+    const deducted = await deductCredits(user.id, cost, proposalRef, 'proposal_generation');
+    if (!deducted) {
+      logger.warn('[proposals] post-generation deduct failed — balance changed mid-flight', {
+        userId: user.id,
+        cost,
+        proposalRef,
+      });
+    }
 
     return NextResponse.json({
       success: true,
@@ -81,6 +107,8 @@ export async function POST(request: NextRequest) {
         feedback: quality.feedback,
       },
       metadata: generated.metadata,
+      mcuUsed: cost,
+      remainingBalance: Math.max(0, balance.credits_remaining - cost),
     });
   } catch (error) {
     logger.error('proposal generation failed', toError(error));
