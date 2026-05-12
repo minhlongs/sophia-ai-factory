@@ -28,8 +28,8 @@ const kvMock = {
   list: vi.fn().mockResolvedValue({ keys: [], list_complete: true }),
 };
 // Expose store reset helper for beforeEach usage in tests
-(globalThis as any).__kvStore = _kvStore;
-(globalThis as any).KV_KV = kvMock;
+(globalThis as Record<string, unknown>).__kvStore = _kvStore;
+(globalThis as Record<string, unknown>).KV_KV = kvMock;
 
 // ── Cloudflare D1 Mock ─────────────────────────────────────────────────
 // Must be a truthy object with .prepare() to satisfy getD1Sync() check.
@@ -44,7 +44,7 @@ const d1Mock = {
   batch: vi.fn().mockResolvedValue([]),
   exec: vi.fn().mockResolvedValue({ count: 0, duration: 0 }),
 };
-(globalThis as any).__env = { KV: kvMock, DB: d1Mock };
+(globalThis as Record<string, unknown>).__env = { KV: kvMock, DB: d1Mock };
 
 // ── Mock next/link ─────────────────────────────────────────────────────
 vi.mock('next/link', () => ({
@@ -96,7 +96,7 @@ class MockNextResponse extends Response {
 class NullSafeSearchParams extends URLSearchParams {
   get(name: string): string | null {
     const val = super.get(name);
-    return val === null ? undefined as any : val;
+    return val === null ? (undefined as unknown as null) : val;
   }
 }
 

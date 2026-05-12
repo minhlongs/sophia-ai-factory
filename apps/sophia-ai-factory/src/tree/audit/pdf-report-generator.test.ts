@@ -11,6 +11,7 @@ import {
   formatBytes,
   type ComplianceReportData
 } from '@/tree/audit/pdf-report-generator'
+import type { ReportFormat } from '@/tree/audit/report-scheduler-types'
 
 const mockReportData: ComplianceReportData = {
   reportId: 'test-report-uuid',
@@ -266,7 +267,7 @@ describe('generateReport', () => {
   })
 
   it('throws error for invalid format', () => {
-    expect(() => generateReport(mockReportData, 'invalid' as any)).toThrow()
+    expect(() => generateReport(mockReportData, 'invalid' as unknown as ReportFormat)).toThrow()
   })
 })
 

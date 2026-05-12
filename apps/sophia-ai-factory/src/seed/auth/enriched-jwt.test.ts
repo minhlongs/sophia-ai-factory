@@ -255,7 +255,7 @@ describe('verifyEnrichedJwt', () => {
         dunning_state: 'ok',
       },
       protectedHeader: { alg: 'HS256' },
-    } as any)
+    } as unknown as Awaited<ReturnType<typeof jwtVerify>>)
 
     const result = await verifyEnrichedJwt('valid-token')
 

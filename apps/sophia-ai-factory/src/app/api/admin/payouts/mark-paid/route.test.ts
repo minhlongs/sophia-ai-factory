@@ -33,7 +33,9 @@ import { NextRequest } from 'next/server';
 
 const mockGetCurrentUserFromHeaders = vi.mocked(getCurrentUserFromHeaders);
 
-const adminUser = { id: 'admin-user-abc123', email: 'admin@test.com', role: 'admin' };
+type SessionUser = NonNullable<Awaited<ReturnType<typeof getCurrentUserFromHeaders>>>
+
+const adminUser = { id: 'admin-user-abc123', email: 'admin@test.com', role: 'admin' } as unknown as SessionUser;
 
 // userId is 32-char hex (lower(hex(randomblob(16)))) — NOT UUID format
 const validBody = {
@@ -56,8 +58,7 @@ function makeRequest(body: unknown = validBody): NextRequest {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  mockGetCurrentUserFromHeaders.mockResolvedValue(adminUser as any);
+  mockGetCurrentUserFromHeaders.mockResolvedValue(adminUser);
   (markUserPaid as ReturnType<typeof vi.fn>).mockResolvedValue({ payoutId: 'payout-123' });
 });
 
@@ -70,7 +71,7 @@ describe('POST /api/admin/payouts/mark-paid', () => {
   });
 
   it('returns 403 when user is not admin', async () => {
-    mockGetCurrentUserFromHeaders.mockResolvedValue({ id: 'user-1', email: 'user@test.com', role: 'user' } as any);
+    mockGetCurrentUserFromHeaders.mockResolvedValue({ id: 'user-1', email: 'user@test.com', role: 'user' } as unknown as SessionUser);
 
     const res = await POST(makeRequest());
     expect(res.status).toBe(403);

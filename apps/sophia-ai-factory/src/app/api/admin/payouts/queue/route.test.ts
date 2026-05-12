@@ -23,7 +23,9 @@ import { NextRequest } from 'next/server';
 
 const mockGetCurrentUserFromHeaders = vi.mocked(getCurrentUserFromHeaders);
 
-const adminUser = { id: 'admin-user-id', email: 'admin@test.com', role: 'admin' };
+type SessionUser = NonNullable<Awaited<ReturnType<typeof getCurrentUserFromHeaders>>>
+
+const adminUser = { id: 'admin-user-id', email: 'admin@test.com', role: 'admin' } as unknown as SessionUser;
 
 const mockAll = vi.fn();
 const mockBind = vi.fn(() => ({ all: mockAll }));
@@ -40,8 +42,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   (globalThis as unknown as { __env: Record<string, unknown> }).__env = { DB: mockDb };
   mockAll.mockResolvedValue({ results: [] });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  mockGetCurrentUserFromHeaders.mockResolvedValue(adminUser as any);
+  mockGetCurrentUserFromHeaders.mockResolvedValue(adminUser);
 });
 
 describe('GET /api/admin/payouts/queue', () => {
@@ -53,7 +54,7 @@ describe('GET /api/admin/payouts/queue', () => {
   });
 
   it('returns 403 when user is not admin', async () => {
-    mockGetCurrentUserFromHeaders.mockResolvedValue({ id: 'user-1', email: 'user@test.com', role: 'user' } as any);
+    mockGetCurrentUserFromHeaders.mockResolvedValue({ id: 'user-1', email: 'user@test.com', role: 'user' } as unknown as SessionUser);
 
     const res = await GET(makeRequest());
     expect(res.status).toBe(403);
