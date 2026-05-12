@@ -52,6 +52,16 @@ async function getJson(response: Response): Promise<Record<string, unknown>> {
   return response.json() as Promise<Record<string, unknown>>;
 }
 
+/** Type-launder helper: vi.mocked() preserves strict signatures, partial mock
+ * objects fail tsc. This helper accepts any value while keeping mock identity. */
+type LooseMock = {
+  mockResolvedValue: (v: unknown) => void
+  mockResolvedValueOnce: (v: unknown) => void
+  mockReturnValue: (v: unknown) => void
+  mockImplementation: (impl: (...args: never[]) => unknown) => void
+}
+const mock = (fn: unknown): LooseMock => fn as unknown as LooseMock
+
 describe('Violations API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -59,8 +69,8 @@ describe('Violations API', () => {
 
   describe('Authentication', () => {
     it('should reject unauthenticated requests', async () => {
-      (validateJwt as any).mockResolvedValue({ valid: false });
-      (validateApiKey as any).mockResolvedValue({ valid: false });
+      mock(validateJwt).mockResolvedValue({ valid: false });
+      mock(validateApiKey).mockResolvedValue({ valid: false });
 
       const request = new NextRequest(new URL('http://localhost:3000/api/violations'));
       const response = await GET(request);
@@ -71,16 +81,16 @@ describe('Violations API', () => {
     });
 
     it('should accept valid JWT token', async () => {
-      (validateJwt as any).mockResolvedValue({
+      mock(validateJwt).mockResolvedValue({
         valid: true,
         payload: { sub: 'user-123' },
       });
-      (getCurrentUser as any).mockResolvedValue({ id: 'user-123', tier: 'BASIC' });
-      (checkAdmin as any).mockResolvedValue(false);
-      (checkRateLimit as any).mockResolvedValue({ allowed: true, remaining: 99 });
-      (getUserLicenseNonce as any).mockResolvedValue('license-abc');
-      (fetchViolations as any).mockResolvedValue({ violations: [], total: 0, hasMore: false });
-      (fetchViolationSummary as any).mockResolvedValue({
+      mock(getCurrentUser).mockResolvedValue({ id: 'user-123', tier: 'BASIC' });
+      mock(checkAdmin).mockResolvedValue(false);
+      mock(checkRateLimit).mockResolvedValue({ allowed: true, remaining: 99 });
+      mock(getUserLicenseNonce).mockResolvedValue('license-abc');
+      mock(fetchViolations).mockResolvedValue({ violations: [], total: 0, hasMore: false });
+      mock(fetchViolationSummary).mockResolvedValue({
         totalViolations: 0,
         byType: {},
         bySeverity: {},
@@ -102,14 +112,14 @@ describe('Violations API', () => {
     });
 
     it('should accept valid API key', async () => {
-      (validateJwt as any).mockResolvedValue({ valid: false });
-      (validateApiKey as any).mockResolvedValue({
+      mock(validateJwt).mockResolvedValue({ valid: false });
+      mock(validateApiKey).mockResolvedValue({
         valid: true,
         apiKey: { ownerId: 'user-456', keyId: 'key-789', rateLimitPerMinute: 100 },
       });
-      (checkRateLimit as any).mockResolvedValue({ allowed: true, remaining: 99 });
-      (fetchViolations as any).mockResolvedValue({ violations: [], total: 0, hasMore: false });
-      (fetchViolationSummary as any).mockResolvedValue({
+      mock(checkRateLimit).mockResolvedValue({ allowed: true, remaining: 99 });
+      mock(fetchViolations).mockResolvedValue({ violations: [], total: 0, hasMore: false });
+      mock(fetchViolationSummary).mockResolvedValue({
         totalViolations: 0,
         byType: {},
         bySeverity: {},
@@ -133,13 +143,13 @@ describe('Violations API', () => {
 
   describe('Rate Limiting', () => {
     it('should reject requests when rate limit exceeded', async () => {
-      (validateJwt as any).mockResolvedValue({
+      mock(validateJwt).mockResolvedValue({
         valid: true,
         payload: { sub: 'user-123' },
       });
-      (getCurrentUser as any).mockResolvedValue({ id: 'user-123', tier: 'BASIC' });
-      (checkAdmin as any).mockResolvedValue(false);
-      (checkRateLimit as any).mockResolvedValue({ allowed: false, retryAfter: 30 });
+      mock(getCurrentUser).mockResolvedValue({ id: 'user-123', tier: 'BASIC' });
+      mock(checkAdmin).mockResolvedValue(false);
+      mock(checkRateLimit).mockResolvedValue({ allowed: false, retryAfter: 30 });
 
       const request = new NextRequest(
         new URL('http://localhost:3000/api/violations'),
@@ -158,13 +168,13 @@ describe('Violations API', () => {
 
   describe('Query Validation', () => {
     beforeEach(() => {
-      (validateJwt as any).mockResolvedValue({
+      mock(validateJwt).mockResolvedValue({
         valid: true,
         payload: { sub: 'user-123' },
       });
-      (getCurrentUser as any).mockResolvedValue({ id: 'user-123', tier: 'BASIC' });
-      (checkAdmin as any).mockResolvedValue(false);
-      (checkRateLimit as any).mockResolvedValue({ allowed: true, remaining: 99 });
+      mock(getCurrentUser).mockResolvedValue({ id: 'user-123', tier: 'BASIC' });
+      mock(checkAdmin).mockResolvedValue(false);
+      mock(checkRateLimit).mockResolvedValue({ allowed: true, remaining: 99 });
     });
 
     it('should reject invalid severity values', async () => {
@@ -200,9 +210,9 @@ describe('Violations API', () => {
     });
 
     it('should cap limit to 100', async () => {
-      (getUserLicenseNonce as any).mockResolvedValue('license-abc');
-      (fetchViolations as any).mockResolvedValue({ violations: [], total: 0, hasMore: false });
-      (fetchViolationSummary as any).mockResolvedValue({
+      mock(getUserLicenseNonce).mockResolvedValue('license-abc');
+      mock(fetchViolations).mockResolvedValue({ violations: [], total: 0, hasMore: false });
+      mock(fetchViolationSummary).mockResolvedValue({
         totalViolations: 0,
         byType: {},
         bySeverity: {},
@@ -226,13 +236,13 @@ describe('Violations API', () => {
 
   describe('RBAC', () => {
     beforeEach(() => {
-      (validateJwt as any).mockResolvedValue({
+      mock(validateJwt).mockResolvedValue({
         valid: true,
         payload: { sub: 'user-123' },
       });
-      (getCurrentUser as any).mockResolvedValue({ id: 'user-123', tier: 'BASIC' });
-      (checkAdmin as any).mockResolvedValue(false);
-      (checkRateLimit as any).mockResolvedValue({ allowed: true, remaining: 99 });
+      mock(getCurrentUser).mockResolvedValue({ id: 'user-123', tier: 'BASIC' });
+      mock(checkAdmin).mockResolvedValue(false);
+      mock(checkRateLimit).mockResolvedValue({ allowed: true, remaining: 99 });
     });
 
     it('should reject users querying other users violations', async () => {
@@ -247,9 +257,9 @@ describe('Violations API', () => {
     });
 
     it('should auto-inject user license nonce if not provided', async () => {
-      (getUserLicenseNonce as any).mockResolvedValue('license-abc');
-      (fetchViolations as any).mockResolvedValue({ violations: [], total: 0, hasMore: false });
-      (fetchViolationSummary as any).mockResolvedValue({
+      mock(getUserLicenseNonce).mockResolvedValue('license-abc');
+      mock(fetchViolations).mockResolvedValue({ violations: [], total: 0, hasMore: false });
+      mock(fetchViolationSummary).mockResolvedValue({
         totalViolations: 0,
         byType: {},
         bySeverity: {},
@@ -273,9 +283,9 @@ describe('Violations API', () => {
     });
 
     it('should allow admins to query any user', async () => {
-      (checkAdmin as any).mockResolvedValue(true);
-      (fetchViolations as any).mockResolvedValue({ violations: [], total: 0, hasMore: false });
-      (fetchViolationSummary as any).mockResolvedValue({
+      mock(checkAdmin).mockResolvedValue(true);
+      mock(fetchViolations).mockResolvedValue({ violations: [], total: 0, hasMore: false });
+      mock(fetchViolationSummary).mockResolvedValue({
         totalViolations: 0,
         byType: {},
         bySeverity: {},
@@ -296,14 +306,14 @@ describe('Violations API', () => {
 
   describe('Response Format', () => {
     beforeEach(() => {
-      (validateJwt as any).mockResolvedValue({
+      mock(validateJwt).mockResolvedValue({
         valid: true,
         payload: { sub: 'user-123' },
       });
-      (getCurrentUser as any).mockResolvedValue({ id: 'user-123', tier: 'BASIC' });
-      (checkAdmin as any).mockResolvedValue(false);
-      (checkRateLimit as any).mockResolvedValue({ allowed: true, remaining: 99 });
-      (getUserLicenseNonce as any).mockResolvedValue('license-abc');
+      mock(getCurrentUser).mockResolvedValue({ id: 'user-123', tier: 'BASIC' });
+      mock(checkAdmin).mockResolvedValue(false);
+      mock(checkRateLimit).mockResolvedValue({ allowed: true, remaining: 99 });
+      mock(getUserLicenseNonce).mockResolvedValue('license-abc');
     });
 
     it('should return paginated violations with summary', async () => {
@@ -321,12 +331,12 @@ describe('Violations API', () => {
         },
       ];
 
-      (fetchViolations as any).mockResolvedValue({
+      mock(fetchViolations).mockResolvedValue({
         violations: mockViolations,
         total: 1,
         hasMore: false,
       });
-      (fetchViolationSummary as any).mockResolvedValue({
+      mock(fetchViolationSummary).mockResolvedValue({
         totalViolations: 1,
         byType: { quota_exceeded: 1 },
         bySeverity: { high: 1 },
