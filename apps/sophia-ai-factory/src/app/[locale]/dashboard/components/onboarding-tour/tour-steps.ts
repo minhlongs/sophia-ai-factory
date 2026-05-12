@@ -18,7 +18,7 @@ export const STEPS: StepConfig[] = [
   { titleKey: 'step2_title', descKey: 'step2_desc', actionKey: 'step2_action', actionHref: '/dashboard/byok' },
   { titleKey: 'step3_title', descKey: 'step3_desc', actionKey: 'step3_action', actionHref: '/dashboard/sop-marketplace' },
   { titleKey: 'step4_title', descKey: 'step4_desc', actionKey: 'step4_action', actionHref: '/dashboard/sops' },
-  { titleKey: 'step5_title', descKey: 'step5_desc', actionKey: 'step5_action', actionHref: '/dashboard/analytics' },
+  { titleKey: 'step5_title', descKey: 'step5_desc', actionKey: 'step5_action', actionHref: '/dashboard/integrations' },
   { titleKey: 'step6_title', descKey: 'step6_desc', actionKey: 'step6_action', actionHref: '/dashboard/credits' },
-  { titleKey: 'step7_title', descKey: 'step7_desc', actionKey: 'step7_action', actionHref: '/dashboard/support' },
+  { titleKey: 'step7_title', descKey: 'step7_desc', actionKey: 'step7_action', actionHref: '/dashboard/help' },
 ];
