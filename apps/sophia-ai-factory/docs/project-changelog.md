@@ -1,6 +1,32 @@
 # Project Changelog
 
-**Last Updated:** 2026-05-11 | **Current Version:** 1.23.0
+**Last Updated:** 2026-05-12 | **Current Version:** 1.24.0
+
+---
+
+## v1.24.0 — Non-tech VIP partner self-serve UX (8 waves: help center, onboarding, BYOK, FREE100, i18n, SOP, scripts) (2026-05-12)
+
+**Severity: P1 FEATURE + P2 DOCS + P3 TOOLING | Type: UX Polish + Partner Enablement | Status: SHIPPED — 8 commits**
+
+8-wave polish cycle enabling NON-TECH CEO self-service onboarding via Help Center, SOP callouts, BYOK surface, FREE100 provenance pill, and automated FREE100 analysis tooling. Cross-links: [founder-cheat-sheet](./handover/founder-cheat-sheet-260512.md), [partner-outreach-template](./handover/free100-partner-outreach-template-260512.md), [free100-distribution-tracker](./handover/free100-distribution-tracker-260512.md), [gap-analysis-report](../plans/reports/research-260512-0727-gap-analysis.md).
+
+**Wave 1 — Help Center (4422ef9a):** New `/help` pages: index (overview + Quick Start), FAQ (40+ bilingual entries), Troubleshooting (common errors). +3 pages (~700 LOC), +1 sidebar href for Help Center link.
+
+**Wave 2 — Onboarding tour (8ddc0b69):** Telegram pairing tour step refactored to point to new Help Center. `tour-steps.ts` (1-line update), `vi.json` + `en.json` (6 keys reworded for clarity).
+
+**Wave 3 — SOP Callout (31980da6):** First-time install hint banner on `/marketplace` (prompts: read SOP before install). First-SOP callout on `/sops` page (bilingual EN+VI). 2 page files (~50 LOC total).
+
+**Wave 4 — BYOK surface (2af113e3):** `ByokHelpTip` component surfaced on `/dashboard/byok` form (was setup-wizard only). 1 import + 3-line conditional render for FAQ context.
+
+**Wave 5 — FREE100 provenance pill (fa08db9a):** New `getRedeemedPromoCode()` helper in `layout.tsx`. MASTER tier badge now shows redeemed FREE100 promo code as provenance pill (sidebar). +29 LOC in layout component.
+
+**Wave 6 — Quick-start launcher (bbbc7d9e):** Help Center index gains Quick Start cards (3 cards with ETAs: Setup, Telegram, Video). +49 LOC bilingual const grid (EN+VI copy).
+
+**Wave 7 — Script tooling (f372fa89):** New `scripts/analyze-free100-redemptions.sh` (78-line bash founder tool, 5 D1 queries). Integrates with `docs/handover/free100-distribution-tracker-260512.md` (JULIANDAY query replaced inline). Enables real-time founder reporting on FREE100 redemption cohorts + attribution.
+
+**Wave 8 — i18n validator (bd0bfc62):** Script `scripts/validate-i18n-keys.mjs` enhanced (+80/-23 LOC). Now detects template-literal `t(\`...\${var}...\`)` patterns (dynamic prefixes). Closes Wave 1 M1 review residue: 9 dynamic prefixes found in production, all resolve cleanly. Validator prevents future dynamic-key bugs.
+
+**Tests:** 4078/4110 pass (32 skipped intentional, 0 fail). Translate validation runs as part of i18n CI. **Build:** 0 TS errors. **Deploy:** CF-direct (8 commits stacked, push 1×). **Verification:** Help Center + SOP + BYOK UX works EOL, Quick Start ETA cards visible, FREE100 provenance pill renders correctly, founder script successfully queries D1 free100 redemptions cohort. **Follow-ups:** Wave 1 M1 review observation (9 dynamic prefixes) — all resolve, no work needed. Sentry + Slack webhook (Wave 23 follow-up).
 
 ---
 
