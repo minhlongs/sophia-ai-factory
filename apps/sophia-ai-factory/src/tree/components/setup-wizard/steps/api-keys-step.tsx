@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslations } from 'next-intl';
 import { ApiKeyInput } from '@/tree/components/setup-wizard/api-key-input';
+import { ByokHelpTip } from '@/components/onboarding/byok-help-tip';
 
 interface ApiKeysStepProps {
   config: {
@@ -24,44 +25,53 @@ export function ApiKeysStep({ config, updateConfig, verifyKey, status, errors }:
       <h2 className="text-xl font-semibold text-foreground">{t('title')}</h2>
       <p className="text-muted-foreground text-sm">{t('subtitle')}</p>
 
-      <ApiKeyInput
-        id="openrouter"
-        label={t('openrouter.label')}
-        value={config.OPENROUTER_API_KEY}
-        onChange={(v) => updateConfig('OPENROUTER_API_KEY', v)}
-        onVerify={() => verifyKey('openrouter', 'OPENROUTER_API_KEY', config.OPENROUTER_API_KEY)}
-        status={status.OPENROUTER_API_KEY}
-        errorMessage={errors.OPENROUTER_API_KEY}
-        placeholder={t('openrouter.placeholder')}
-        required
-        helpText={t('openrouter.help')}
-      />
+      <div className="space-y-1">
+        <ApiKeyInput
+          id="openrouter"
+          label={t('openrouter.label')}
+          value={config.OPENROUTER_API_KEY}
+          onChange={(v) => updateConfig('OPENROUTER_API_KEY', v)}
+          onVerify={() => verifyKey('openrouter', 'OPENROUTER_API_KEY', config.OPENROUTER_API_KEY)}
+          status={status.OPENROUTER_API_KEY}
+          errorMessage={errors.OPENROUTER_API_KEY}
+          placeholder={t('openrouter.placeholder')}
+          required
+          helpText={t('openrouter.help')}
+        />
+        <ByokHelpTip provider="openrouter" />
+      </div>
 
-      <ApiKeyInput
-        id="elevenlabs"
-        label={t('elevenlabs.label')}
-        value={config.ELEVENLABS_API_KEY}
-        onChange={(v) => updateConfig('ELEVENLABS_API_KEY', v)}
-        onVerify={() => verifyKey('elevenlabs', 'ELEVENLABS_API_KEY', config.ELEVENLABS_API_KEY)}
-        status={status.ELEVENLABS_API_KEY}
-        errorMessage={errors.ELEVENLABS_API_KEY}
-        placeholder={t('elevenlabs.placeholder')}
-        required
-        helpText={t('elevenlabs.help')}
-      />
+      <div className="space-y-1">
+        <ApiKeyInput
+          id="elevenlabs"
+          label={t('elevenlabs.label')}
+          value={config.ELEVENLABS_API_KEY}
+          onChange={(v) => updateConfig('ELEVENLABS_API_KEY', v)}
+          onVerify={() => verifyKey('elevenlabs', 'ELEVENLABS_API_KEY', config.ELEVENLABS_API_KEY)}
+          status={status.ELEVENLABS_API_KEY}
+          errorMessage={errors.ELEVENLABS_API_KEY}
+          placeholder={t('elevenlabs.placeholder')}
+          required
+          helpText={t('elevenlabs.help')}
+        />
+        <ByokHelpTip provider="elevenlabs" />
+      </div>
 
-      <ApiKeyInput
-        id="did"
-        label={t('did.label')}
-        value={config.DID_API_KEY}
-        onChange={(v) => updateConfig('DID_API_KEY', v)}
-        onVerify={() => verifyKey('d-id', 'DID_API_KEY', config.DID_API_KEY)}
-        status={status.DID_API_KEY}
-        errorMessage={errors.DID_API_KEY}
-        placeholder={t('did.placeholder')}
-        required
-        helpText={t('did.help')}
-      />
+      <div className="space-y-1">
+        <ApiKeyInput
+          id="did"
+          label={t('did.label')}
+          value={config.DID_API_KEY}
+          onChange={(v) => updateConfig('DID_API_KEY', v)}
+          onVerify={() => verifyKey('d-id', 'DID_API_KEY', config.DID_API_KEY)}
+          status={status.DID_API_KEY}
+          errorMessage={errors.DID_API_KEY}
+          placeholder={t('did.placeholder')}
+          required
+          helpText={t('did.help')}
+        />
+        <ByokHelpTip provider="d-id" />
+      </div>
 
       <ApiKeyInput
         id="anthropic"

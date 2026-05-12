@@ -2057,5 +2057,20 @@
       "audit_note": "Onboarding tour có 7 bước đầy đủ (BYOK → SOP → Run → Analytics → MCU → Support). Coverage VƯỢT yêu cầu 6 bước beginner.",
       "step_distribute_hint": "Sau khi chạy SOP, bot tự động phân phối video lên các kênh đã kết nối."
     }
+  },
+  "welcome": {
+    "telegram": {
+      "title": "Kết nối Telegram",
+      "description": "Nhận thông báo + lệnh nhanh ngay trên Telegram. Gõ /campaign để tạo video bất cứ lúc nào.",
+      "connectButton": "Mở Telegram và kết nối",
+      "linkedSuccess": "✅ Đã kết nối Telegram",
+      "errorTokenInvalid": "Mã pairing không hợp lệ",
+      "errorTokenExpired": "Mã pairing hết hạn — bấm 'Kết nối Telegram' lại"
+    }
+  },
+  "templates": {
+    "beginnerTag": {
+      "label": "🌱 Khởi đầu"
+    }
   }
 }
