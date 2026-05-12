@@ -35,7 +35,7 @@ const StatusBadge = ({ status }: { status: ServiceHealth['status'] }) => {
     case 'configured':
       return (
         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200">
-          <CheckCircle className="w-3.5 h-3.5" />
+          <CheckCircle className="w-3.5 h-3.5" aria-hidden="true" />
           Operational
         </span>
       );
@@ -43,14 +43,14 @@ const StatusBadge = ({ status }: { status: ServiceHealth['status'] }) => {
     case 'missing_config':
       return (
         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200">
-          <AlertCircle className="w-3.5 h-3.5" />
+          <AlertCircle className="w-3.5 h-3.5" aria-hidden="true" />
           {status === 'missing_config' ? 'Missing Config' : 'Down'}
         </span>
       );
     default:
       return (
         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200">
-          <AlertCircle className="w-3.5 h-3.5" />
+          <AlertCircle className="w-3.5 h-3.5" aria-hidden="true" />
           Unknown
         </span>
       );
@@ -83,7 +83,7 @@ export default function SystemHealthPage() {
     return (
       <div className="p-6">
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 text-red-800 dark:text-red-200 flex items-center gap-3">
-          <AlertCircle className="w-5 h-5" />
+          <AlertCircle className="w-5 h-5" aria-hidden="true" />
           <p>Không thể tải trạng thái hệ thống. API có thể đang gián đoạn.</p>
           <button
             onClick={() => refetch()}
@@ -125,7 +125,7 @@ export default function SystemHealthPage() {
             health.status === 'degraded' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400' :
             'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
           }`}>
-            <Activity className="w-8 h-8" />
+            <Activity className="w-8 h-8" aria-hidden="true" />
           </div>
           <div>
             <h2 className={`text-lg font-semibold ${

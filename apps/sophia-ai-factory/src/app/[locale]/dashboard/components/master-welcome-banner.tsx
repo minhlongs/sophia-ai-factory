@@ -65,7 +65,7 @@ export function MasterWelcomeBanner({ trialEndsAt }: MasterWelcomeBannerProps = 
         aria-label={t('dismiss')}
         className="absolute top-3 right-3 text-muted-foreground hover:text-foreground transition-colors"
       >
-        <X className="w-4 h-4" />
+        <X className="w-4 h-4" aria-hidden="true" />
       </button>
 
       {/* Header */}

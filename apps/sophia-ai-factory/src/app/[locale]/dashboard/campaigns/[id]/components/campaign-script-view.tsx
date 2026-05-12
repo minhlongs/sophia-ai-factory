@@ -13,7 +13,7 @@ export function CampaignScriptView({ campaign, t }: CampaignScriptViewProps) {
   return (
     <div className="bg-card rounded-xl border border-border shadow-sm p-6">
       <h3 className="text-lg font-semibold mb-4 flex items-center text-foreground">
-        <FileText className="w-5 h-5 mr-2 text-primary" />
+        <FileText className="w-5 h-5 mr-2 text-primary" aria-hidden="true" />
         {t('script')}
       </h3>
       <div className="prose prose-sm max-w-none bg-muted p-4 rounded-lg dark:prose-invert">

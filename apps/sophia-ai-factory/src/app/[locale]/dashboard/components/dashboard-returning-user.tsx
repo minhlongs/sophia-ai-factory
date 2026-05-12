@@ -92,7 +92,7 @@ export async function DashboardReturningUser({
                 href={action.href}
                 className="cursor-pointer flex flex-col items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/40 p-3 hover:border-blue-300 dark:hover:border-blue-700 transition-colors duration-150 text-center"
               >
-                <Icon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                <Icon className="w-5 h-5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
                 <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{action.label}</span>
               </Link>
             );
@@ -105,7 +105,7 @@ export async function DashboardReturningUser({
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">{t('recent_runs')}</h2>
           <Link href="/dashboard/missions" className="cursor-pointer text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors duration-150 flex items-center gap-1">
-            {t('view_all_runs')} <ArrowRight className="w-3 h-3" />
+            {t('view_all_runs')} <ArrowRight className="w-3 h-3" aria-hidden="true" />
           </Link>
         </div>
         {recentRuns.length === 0 ? (

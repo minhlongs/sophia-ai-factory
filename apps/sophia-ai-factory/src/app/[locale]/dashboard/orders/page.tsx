@@ -50,7 +50,7 @@ export default async function OrdersPage({ params }: OrdersPageProps) {
       {orders.length === 0 ? (
         <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-lg rounded-xl p-10 flex flex-col items-center gap-4 text-center">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/30">
-            <ShoppingBag className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+            <ShoppingBag className="w-5 h-5 text-orange-600 dark:text-orange-400" aria-hidden="true" />
           </div>
           <div>
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">{t('title')}</h2>

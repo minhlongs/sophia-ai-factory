@@ -43,9 +43,9 @@ export function CampaignActions({ campaign, isRetrying, onRetry, onResume }: Cam
             className="flex items-center gap-2 h-8 text-xs sm:text-sm"
           >
             {isRetrying ? (
-              <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 motion-safe:animate-spin" />
+              <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 motion-safe:animate-spin" aria-hidden="true" />
             ) : (
-              <Play className="w-3 h-3 sm:w-4 sm:h-4" />
+              <Play className="w-3 h-3 sm:w-4 sm:h-4" aria-hidden="true" />
             )}
             {t('resume')}
           </Button>
@@ -57,9 +57,9 @@ export function CampaignActions({ campaign, isRetrying, onRetry, onResume }: Cam
             className="flex items-center gap-2 h-8 text-xs sm:text-sm"
           >
             {isRetrying ? (
-              <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 motion-safe:animate-spin" />
+              <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 motion-safe:animate-spin" aria-hidden="true" />
             ) : (
-              <RotateCw className="w-3 h-3 sm:w-4 sm:h-4" />
+              <RotateCw className="w-3 h-3 sm:w-4 sm:h-4" aria-hidden="true" />
             )}
             {t('retry')}
           </Button>
@@ -74,7 +74,7 @@ export function CampaignActions({ campaign, isRetrying, onRetry, onResume }: Cam
           aria-label={`${t('watch_video')}: ${campaign.title || campaign.topic}`}
           className="flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium text-xs sm:text-sm"
         >
-          <PlayCircle className="w-4 h-4" />
+          <PlayCircle className="w-4 h-4" aria-hidden="true" />
           {t('watch_video')}
         </a>
       )}

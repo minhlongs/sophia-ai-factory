@@ -38,7 +38,7 @@ export default async function ApiDocsPage() {
         <Card className="border-border">
           <CardContent className="pt-6">
             <div className="text-center space-y-4 py-8">
-              <Lock className="w-12 h-12 mx-auto text-muted-foreground" />
+              <Lock className="w-12 h-12 mx-auto text-muted-foreground" aria-hidden="true" />
               <h2 className="text-lg font-semibold text-foreground">
                 {t("upgrade_required")}
               </h2>
@@ -68,7 +68,7 @@ export default async function ApiDocsPage() {
       <Card className="border-border">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-foreground">
-            <Key className="w-5 h-5" />
+            <Key className="w-5 h-5" aria-hidden="true" />
             {t("api_key")}
           </CardTitle>
         </CardHeader>
@@ -87,7 +87,7 @@ export default async function ApiDocsPage() {
       <Card className="border-border">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-foreground">
-            <Code className="w-5 h-5" />
+            <Code className="w-5 h-5" aria-hidden="true" />
             {t("endpoints")}
           </CardTitle>
         </CardHeader>
