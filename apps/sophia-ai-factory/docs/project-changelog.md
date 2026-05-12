@@ -1,6 +1,14 @@
 # Project Changelog
 
-**Last Updated:** 2026-05-12 | **Current Version:** 1.24.0
+**Last Updated:** 2026-05-12 | **Current Version:** 1.25.0
+
+---
+
+## v1.25.0 — Consolidate proposal surfaces: delete backends, port generation into canonical (2026-05-12)
+
+**Severity: P1 CLEANUP + P2 FEATURE | Type: Monorepo consolidation | Status: SHIPPED — 3 commits**
+
+Net repo consolidation: **-11,089 LOC** (subtraction-heavy, code quality +1 canonical home). Remove `apps/sophia-backend` (FastAPI, 1003 LOC, never integrated) and `apps/sophia-proposal` (deprecated 459 files, 10,459 LOC). Port real proposal generation from `sophia-proposal` into canonical `src/seed/ai/` module set. (C1) **Remove backends:** `0f61a7f5` deletes `apps/sophia-backend/` (1003 LOC Python FastAPI module with auth/proposal routes, never integrated into Sophia). (C2) **Port proposal generation:** `a241a68e` adds `src/seed/ai/{proposal-generator.ts, proposal-quality-check.ts, proposal-templates.ts}` (645 new LOC) + `src/seed/validators/proposal.ts` (Zod schemas) + `src/app/api/proposals/route.ts` (full POST handler, REPLACED 27-LOC 501 stub). Reusable lib exports OpenRouter gateway (`openai/gpt-4o-mini`), same orchestration pattern as `forest/missions/handlers/proposal-create.ts`. Layer assignment: `seed/ai/` new subdirectory (foundational, importable by all layers per sophia-layer-architecture). (C3) **Remove deprecated app:** `2d54bbe9` deletes `apps/sophia-proposal/` (459 files, 10,459 LOC, ~8 months old, never prod-live). **Tests:** 4110/4110 pass. **Build:** 0 TS errors. **Deploy:** CF-direct (3 commits stacked, push 1×). **Verification:** Proposal POST handler active (tests POST /api/proposals with auth gate), generators library unit tests green, shared lib callable by missions handler + route handler. **SHA verified live:** `2d54bbe9`. **Deferred to follow-up:** MCU deduction in proposal route (canonical forest/usage-metering integration), mission handler refactor to use shared lib (different output contract, refactor deferred per YAGNI), proposal [id] CRUD endpoints.
 
 ---
 
