@@ -140,77 +140,77 @@ export default async function DashboardLayout({
             href="/dashboard"
             className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
           >
-            <LayoutDashboard className="w-5 h-5" />
+            <LayoutDashboard className="w-5 h-5" aria-hidden="true" />
             <span className="font-medium">{t('sidebar.overview')}</span>
           </Link>
           <Link
             href="/dashboard/create"
             className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
           >
-            <PlusCircle className="w-5 h-5" />
+            <PlusCircle className="w-5 h-5" aria-hidden="true" />
             <span className="font-medium">{t('sidebar.new_project')}</span>
           </Link>
           <Link
             href="/dashboard/campaigns"
             className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
           >
-            <LayoutDashboard className="w-5 h-5" />
+            <LayoutDashboard className="w-5 h-5" aria-hidden="true" />
             <span className="font-medium">{t('sidebar.campaigns')}</span>
           </Link>
           <Link
             href="/dashboard/analytics"
             className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
           >
-            <BarChart2 className="w-5 h-5" />
+            <BarChart2 className="w-5 h-5" aria-hidden="true" />
             <span className="font-medium">{t('sidebar.analytics')}</span>
           </Link>
           <Link
             href="/dashboard/campaigns"
             className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
           >
-            <Video className="w-5 h-5" />
+            <Video className="w-5 h-5" aria-hidden="true" />
             <span className="font-medium">{t('sidebar.my_videos')}</span>
           </Link>
           <Link
             href="/dashboard/voices"
             className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
           >
-            <Mic className="w-5 h-5" />
+            <Mic className="w-5 h-5" aria-hidden="true" />
             <span className="font-medium">{t('sidebar.voices')}</span>
           </Link>
           <Link
             href="/dashboard/templates"
             className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
           >
-            <LayoutTemplate className="w-5 h-5" />
+            <LayoutTemplate className="w-5 h-5" aria-hidden="true" />
             <span className="font-medium">{t('sidebar.templates')}</span>
           </Link>
           <Link
             href="/dashboard/orders"
             className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
           >
-            <ShoppingBag className="w-5 h-5" />
+            <ShoppingBag className="w-5 h-5" aria-hidden="true" />
             <span className="font-medium">{t('sidebar.orders')}</span>
           </Link>
           <Link
             href="/dashboard/help"
             className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
           >
-            <HelpCircle className="w-5 h-5" />
+            <HelpCircle className="w-5 h-5" aria-hidden="true" />
             <span className="font-medium">{t('sidebar.support')}</span>
           </Link>
           <Link
             href="/dashboard/missions"
             className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
           >
-            <Rocket className="w-5 h-5" />
+            <Rocket className="w-5 h-5" aria-hidden="true" />
             <span className="font-medium">{t('sidebar.missions')}</span>
           </Link>
           <Link
             href="/dashboard/credits"
             className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
           >
-            <Coins className="w-5 h-5" />
+            <Coins className="w-5 h-5" aria-hidden="true" />
             <span className="font-medium">{t('sidebar.credits')}</span>
           </Link>
           {/* Integrations section with subnav */}
@@ -218,14 +218,14 @@ export default async function DashboardLayout({
             href="/dashboard/integrations"
             className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
           >
-            <Plug className="w-5 h-5" />
+            <Plug className="w-5 h-5" aria-hidden="true" />
             <span className="font-medium">{t('sidebar.integrations')}</span>
           </Link>
           <Link
             href="/dashboard/integrations/webhooks"
             className="flex items-center gap-3 px-4 py-3 pl-10 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors text-sm"
           >
-            <Webhook className="w-4 h-4" />
+            <Webhook className="w-4 h-4" aria-hidden="true" />
             <span>{t('sidebar.webhooks')}</span>
             <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400">NEW</span>
           </Link>
@@ -233,49 +233,49 @@ export default async function DashboardLayout({
             href="/dashboard/byok"
             className="flex items-center gap-3 px-4 py-3 pl-10 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors text-sm"
           >
-            <KeySquare className="w-4 h-4" />
+            <KeySquare className="w-4 h-4" aria-hidden="true" />
             <span>{t('sidebar.byok')}</span>
           </Link>
           <Link
             href="/dashboard/api-keys"
             className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
           >
-            <KeyRound className="w-5 h-5" />
+            <KeyRound className="w-5 h-5" aria-hidden="true" />
             <span className="font-medium">{t('sidebar.api_keys')}</span>
           </Link>
           <Link
             href="/dashboard/proposals"
             className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
           >
-            <FileText className="w-5 h-5" />
+            <FileText className="w-5 h-5" aria-hidden="true" />
             <span className="font-medium">{t('sidebar.proposals')}</span>
           </Link>
           <Link
             href="/dashboard/workflows"
             className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
           >
-            <GitBranch className="w-5 h-5" />
+            <GitBranch className="w-5 h-5" aria-hidden="true" />
             <span className="font-medium">{t('sidebar.workflows')}</span>
           </Link>
           <Link
             href="/dashboard/sop-marketplace"
             className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
           >
-            <Store className="w-5 h-5" />
+            <Store className="w-5 h-5" aria-hidden="true" />
             <span className="font-medium">{t('sidebar.sop_marketplace')}</span>
           </Link>
           <Link
             href="/dashboard/sops"
             className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
           >
-            <BookOpen className="w-5 h-5" />
+            <BookOpen className="w-5 h-5" aria-hidden="true" />
             <span className="font-medium">{t('sidebar.my_sops')}</span>
           </Link>
           <Link
             href="/dashboard/api-docs"
             className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
           >
-            <Code className="w-5 h-5" />
+            <Code className="w-5 h-5" aria-hidden="true" />
             <span className="font-medium">{t('sidebar.api_docs')}</span>
           </Link>
           {isAdmin && (
@@ -284,112 +284,112 @@ export default async function DashboardLayout({
                 href="/dashboard/admin"
                 className="flex items-center gap-3 px-4 py-3 text-violet-400 hover:text-violet-300 rounded-lg hover:bg-violet-950/30 transition-colors"
               >
-                <LayoutDashboard className="w-5 h-5" />
+                <LayoutDashboard className="w-5 h-5" aria-hidden="true" />
                 <span className="font-medium">Admin Home</span>
               </Link>
               <Link
                 href="/dashboard/admin/ops"
                 className="flex items-center gap-3 px-4 py-3 text-violet-400 hover:text-violet-300 rounded-lg hover:bg-violet-950/30 transition-colors"
               >
-                <Activity className="w-5 h-5" />
+                <Activity className="w-5 h-5" aria-hidden="true" />
                 <span className="font-medium">Ops Dashboard</span>
               </Link>
               <Link
                 href="/dashboard/admin/funnel"
                 className="flex items-center gap-3 px-4 py-3 text-violet-400 hover:text-violet-300 rounded-lg hover:bg-violet-950/30 transition-colors"
               >
-                <BarChart2 className="w-5 h-5" />
+                <BarChart2 className="w-5 h-5" aria-hidden="true" />
                 <span className="font-medium">Activation Funnel</span>
               </Link>
               <Link
                 href="/dashboard/admin/crons"
                 className="flex items-center gap-3 px-4 py-3 text-violet-400 hover:text-violet-300 rounded-lg hover:bg-violet-950/30 transition-colors"
               >
-                <ServerCog className="w-5 h-5" />
+                <ServerCog className="w-5 h-5" aria-hidden="true" />
                 <span className="font-medium">Cron Monitor</span>
               </Link>
               <Link
                 href="/dashboard/admin/email-outbox"
                 className="flex items-center gap-3 px-4 py-3 text-violet-400 hover:text-violet-300 rounded-lg hover:bg-violet-950/30 transition-colors"
               >
-                <Webhook className="w-5 h-5" />
+                <Webhook className="w-5 h-5" aria-hidden="true" />
                 <span className="font-medium">Email Outbox</span>
               </Link>
               <Link
                 href="/dashboard/admin/affiliate-leaderboard"
                 className="flex items-center gap-3 px-4 py-3 text-violet-400 hover:text-violet-300 rounded-lg hover:bg-violet-950/30 transition-colors"
               >
-                <Coins className="w-5 h-5" />
+                <Coins className="w-5 h-5" aria-hidden="true" />
                 <span className="font-medium">Affiliate Leaderboard</span>
               </Link>
               <Link
                 href="/dashboard/admin/webhook-deliveries"
                 className="flex items-center gap-3 px-4 py-3 text-violet-400 hover:text-violet-300 rounded-lg hover:bg-violet-950/30 transition-colors"
               >
-                <Webhook className="w-5 h-5" />
+                <Webhook className="w-5 h-5" aria-hidden="true" />
                 <span className="font-medium">Webhook Deliveries</span>
               </Link>
               <Link
                 href="/dashboard/admin/storage"
                 className="flex items-center gap-3 px-4 py-3 text-violet-400 hover:text-violet-300 rounded-lg hover:bg-violet-950/30 transition-colors"
               >
-                <Database className="w-5 h-5" />
+                <Database className="w-5 h-5" aria-hidden="true" />
                 <span className="font-medium">Storage Usage</span>
               </Link>
               <Link
                 href="/dashboard/admin/audit-log"
                 className="flex items-center gap-3 px-4 py-3 text-violet-400 hover:text-violet-300 rounded-lg hover:bg-violet-950/30 transition-colors"
               >
-                <FileText className="w-5 h-5" />
+                <FileText className="w-5 h-5" aria-hidden="true" />
                 <span className="font-medium">Audit Log</span>
               </Link>
               <Link
                 href="/dashboard/admin/api-key-usage"
                 className="flex items-center gap-3 px-4 py-3 text-violet-400 hover:text-violet-300 rounded-lg hover:bg-violet-950/30 transition-colors"
               >
-                <KeyRound className="w-5 h-5" />
+                <KeyRound className="w-5 h-5" aria-hidden="true" />
                 <span className="font-medium">API Key Usage</span>
               </Link>
               <Link
                 href="/dashboard/admin/tenant-lookup"
                 className="flex items-center gap-3 px-4 py-3 text-violet-400 hover:text-violet-300 rounded-lg hover:bg-violet-950/30 transition-colors"
               >
-                <Activity className="w-5 h-5" />
+                <Activity className="w-5 h-5" aria-hidden="true" />
                 <span className="font-medium">Tenant Lookup</span>
               </Link>
               <Link
                 href="/dashboard/admin/cost"
                 className="flex items-center gap-3 px-4 py-3 text-violet-400 hover:text-violet-300 rounded-lg hover:bg-violet-950/30 transition-colors"
               >
-                <Coins className="w-5 h-5" />
+                <Coins className="w-5 h-5" aria-hidden="true" />
                 <span className="font-medium">Cost Dashboard</span>
               </Link>
               <Link
                 href="/dashboard/admin/migrations"
                 className="flex items-center gap-3 px-4 py-3 text-violet-400 hover:text-violet-300 rounded-lg hover:bg-violet-950/30 transition-colors"
               >
-                <Database className="w-5 h-5" />
+                <Database className="w-5 h-5" aria-hidden="true" />
                 <span className="font-medium">Migrations</span>
               </Link>
               <Link
                 href="/dashboard/admin/e2e-smoke"
                 className="flex items-center gap-3 px-4 py-3 text-violet-400 hover:text-violet-300 rounded-lg hover:bg-violet-950/30 transition-colors"
               >
-                <FlaskConical className="w-5 h-5" />
+                <FlaskConical className="w-5 h-5" aria-hidden="true" />
                 <span className="font-medium">E2E Smoke</span>
               </Link>
               <Link
                 href="/dashboard/admin/heygen-webhooks"
                 className="flex items-center gap-3 px-4 py-3 text-violet-400 hover:text-violet-300 rounded-lg hover:bg-violet-950/30 transition-colors"
               >
-                <Webhook className="w-5 h-5" />
+                <Webhook className="w-5 h-5" aria-hidden="true" />
                 <span className="font-medium">HeyGen Webhooks</span>
               </Link>
               <Link
                 href="/dashboard/admin/deploy-status"
                 className="flex items-center gap-3 px-4 py-3 text-violet-400 hover:text-violet-300 rounded-lg hover:bg-violet-950/30 transition-colors"
               >
-                <ServerCog className="w-5 h-5" />
+                <ServerCog className="w-5 h-5" aria-hidden="true" />
                 <span className="font-medium">Deploy Status</span>
               </Link>
             </>
@@ -398,14 +398,14 @@ export default async function DashboardLayout({
             href="/dashboard/account"
             className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
           >
-            <Settings className="w-5 h-5" />
+            <Settings className="w-5 h-5" aria-hidden="true" />
             <span className="font-medium">Account &amp; Billing</span>
           </Link>
           <Link
             href="/dashboard/settings"
             className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
           >
-            <Settings className="w-5 h-5" />
+            <Settings className="w-5 h-5" aria-hidden="true" />
             <span className="font-medium">{t('sidebar.settings')}</span>
           </Link>
           <ReplayTourLink label={t('sidebar.replay_tour')} />
