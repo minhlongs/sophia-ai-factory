@@ -17,6 +17,7 @@
     "pretest": "npm run i18n:validate",
     "test:e2e": "NEXT_PUBLIC_MOCK_AI_SERVICES=true playwright test",
     "test:smoke": "tsx scripts/smoke-test.ts",
+    "byok:screenshots": "tsx scripts/capture-byok-screenshots.ts",
     "e2e:bootstrap-user": "tsx scripts/e2e-bootstrap-user.ts",
     "test:load:steady": "k6 run tests/load/k6-steady.js",
     "test:load:spike": "k6 run tests/load/k6-spike.js",

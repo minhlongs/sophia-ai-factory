@@ -4,6 +4,19 @@
  * Style-src keeps 'unsafe-inline' (required by Tailwind dynamic class generation).
  */
 
+// Crisp.im live-chat widget allow-list. Enabled at build time when
+// NEXT_PUBLIC_CRISP_WEBSITE_ID is set, so it inlines cleanly via Next.js env replacement.
+const crispEnabled = Boolean(process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID);
+const crispScriptHosts = crispEnabled ? ['https://client.crisp.chat'] : [];
+const crispConnectHosts = crispEnabled
+  ? ['https://client.crisp.chat', 'wss://client.relay.crisp.chat']
+  : [];
+const crispImgHosts = crispEnabled
+  ? ['https://image.crisp.chat', 'https://storage.crisp.chat']
+  : [];
+const crispStyleHosts = crispEnabled ? ['https://client.crisp.chat'] : [];
+const crispFontHosts = crispEnabled ? ['https://client.crisp.chat'] : [];
+
 export const cspConfig = {
   // script-src: base list WITHOUT 'unsafe-inline' — nonce added per-request in middleware
   scriptSrc: [
@@ -11,6 +24,7 @@ export const cspConfig = {
     ...(process.env.NODE_ENV === 'production'
       ? []
       : ["'unsafe-eval'"]), // Dev mode HMR requires eval
+    ...crispScriptHosts,
   ],
 
   // Styles: self + inline (Tailwind requires)
@@ -18,6 +32,7 @@ export const cspConfig = {
     "'self'",
     "'unsafe-inline'", // Tailwind CSS requires this
     'https://fonts.googleapis.com',
+    ...crispStyleHosts,
   ],
 
   // Images: self + HTTPS + data URIs
@@ -26,6 +41,7 @@ export const cspConfig = {
     'https:',
     'data:',
     'blob:',
+    ...crispImgHosts,
   ],
 
   // Fonts: self + data URIs
@@ -33,6 +49,7 @@ export const cspConfig = {
     "'self'",
     'data:',
     'https://fonts.gstatic.com',
+    ...crispFontHosts,
   ],
 
   // API connections: restricted to known domains
@@ -48,6 +65,7 @@ export const cspConfig = {
     'https://api.inngest.com',
     'https://nowpayments.io',
     'https://api.nowpayments.io',
+    ...crispConnectHosts,
   ],
 
   // Frames: YouTube only
