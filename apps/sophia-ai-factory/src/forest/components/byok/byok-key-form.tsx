@@ -11,6 +11,7 @@
 import { useState, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
 import { KeyRound, Trash2, Check, Wifi, WifiOff, Loader2 } from 'lucide-react'
+import { ByokHelpTip } from '@/components/onboarding/byok-help-tip'
 
 export type UserSettableProvider = 'openrouter' | 'anthropic' | 'elevenlabs' | 'd-id' | 'muapi'
 type Provider = UserSettableProvider
@@ -248,6 +249,9 @@ export function ByokKeyForm({ configured: initialConfigured }: ByokKeyFormProps)
           <p id="byok-key-hint" className="text-xs text-muted-foreground">
             {t('key_hint')}
           </p>
+          {(provider === 'openrouter' || provider === 'elevenlabs' || provider === 'd-id') && (
+            <ByokHelpTip provider={provider} />
+          )}
         </div>
 
         <button
