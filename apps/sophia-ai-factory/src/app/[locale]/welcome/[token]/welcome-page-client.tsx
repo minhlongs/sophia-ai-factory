@@ -4,12 +4,18 @@
  * Welcome page client — validates magic link token, shows 5-step onboarding.
  * No auth required initially; token is consumed on "Get Started" click.
  *
+ * Includes "Connect Telegram" CTA that generates a pairing token and opens
+ * t.me/Sophia_Bbot?start=<token> in a new tab.
+ *
  * @module app/[locale]/welcome/[token]/welcome-page-client
  */
 
 import { useEffect, useState } from 'react';
-import { Loader2, Video, Zap, AlertTriangle, Mail, CheckCircle2 } from 'lucide-react';
+import { Loader2, Video, Zap, AlertTriangle, Mail, CheckCircle2, MessageCircle } from 'lucide-react';
 import { buildOnboardingSteps, StepCard, type WelcomeData } from './welcome-onboarding-steps';
+import { generateTelegramPairingTokenAction } from '@/app/actions/generate-telegram-pairing-token';
+
+const BOT_USERNAME = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME ?? 'Sophia_Bbot';
 
 interface Props { token: string; isVi: boolean; locale: string }
 
@@ -18,6 +24,8 @@ export function WelcomePageClient({ token, isVi, locale }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [started, setStarted] = useState(false);
+  const [telegramLinking, setTelegramLinking] = useState(false);
+  const [telegramLinked, setTelegramLinked] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -44,6 +52,20 @@ export function WelcomePageClient({ token, isVi, locale }: Props) {
       window.location.href = data.redirectUrl ?? `/${locale}/dashboard`;
     } catch {
       window.location.href = `/${locale}/dashboard`;
+    }
+  }
+
+  async function handleConnectTelegram() {
+    setTelegramLinking(true);
+    try {
+      const { token: pairingToken } = await generateTelegramPairingTokenAction();
+      const botUrl = `https://t.me/${BOT_USERNAME}?start=${pairingToken}`;
+      window.open(botUrl, '_blank', 'noopener,noreferrer');
+      setTelegramLinked(true);
+    } catch {
+      // Silent fail — user can retry
+    } finally {
+      setTelegramLinking(false);
     }
   }
 
@@ -95,6 +117,44 @@ export function WelcomePageClient({ token, isVi, locale }: Props) {
           <p className="text-xs text-zinc-600 mt-3">
             {isVi ? 'Link này chỉ dùng 1 lần.' : 'This link is single-use.'}
           </p>
+        </div>
+      </div>
+
+      {/* Telegram CTA */}
+      <div className="max-w-2xl mx-auto px-6 pb-8">
+        <div className="rounded-2xl border border-blue-500/30 bg-blue-900/10 p-5">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center shrink-0">
+              <MessageCircle aria-hidden="true" size={20} className="text-blue-300" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-zinc-100 mb-1">
+                {isVi ? 'Kết nối Telegram' : 'Connect Telegram'}
+              </h3>
+              <p className="text-sm text-zinc-400 mb-3">
+                {isVi
+                  ? 'Nhận thông báo + lệnh nhanh ngay trên Telegram. Gõ /campaign để tạo video bất cứ lúc nào.'
+                  : 'Get notifications + quick commands on Telegram. Type /campaign to create videos anytime.'}
+              </p>
+              {telegramLinked ? (
+                <div className="flex items-center gap-2 text-emerald-400 text-sm font-medium">
+                  <CheckCircle2 aria-hidden="true" size={16} />
+                  {isVi ? '✅ Đã mở Telegram — gõ /start để hoàn tất kết nối' : '✅ Telegram opened — type /start to complete linking'}
+                </div>
+              ) : (
+                <button
+                  onClick={() => void handleConnectTelegram()}
+                  disabled={telegramLinking}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:ring-2 focus-visible:ring-blue-500/50 focus-visible:outline-none"
+                >
+                  {telegramLinking
+                    ? <Loader2 aria-hidden="true" size={16} className="animate-spin" />
+                    : <MessageCircle aria-hidden="true" size={16} />}
+                  {isVi ? 'Mở Telegram và kết nối' : 'Open Telegram and connect'}
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 

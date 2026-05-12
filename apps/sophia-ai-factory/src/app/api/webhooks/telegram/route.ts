@@ -30,6 +30,7 @@ import {
   listPaired,
   revokePairing,
 } from '@/lib/telegram/pairing'
+import { consumePairingToken } from '@/tree/telegram/pairing-token-service'
 
 interface TelegramUpdate {
   callback_query?: {
@@ -166,7 +167,36 @@ export async function POST(request: NextRequest) {
 
     // Route commands through middleware (rate limiting)
     await withMiddleware(chatId, async () => {
-      if (text === '/start') {
+      if (text === '/start' || text.startsWith('/start ')) {
+        const pairingToken = text.startsWith('/start ') ? text.slice(7).trim() : ''
+        if (pairingToken) {
+          // Attempt web-account pairing via token
+          const db = createServerClient()
+          const result = await consumePairingToken(db, pairingToken)
+          if (!result) {
+            // Token invalid or expired
+            await sendTelegramMessage(
+              chatId,
+              '❌ Mã kết nối không hợp lệ hoặc đã hết hạn. Vui lòng bấm "Kết nối Telegram" lại trên trang web.\n\n' +
+              '❌ Pairing token is invalid or expired. Please click "Connect Telegram" again on the website.',
+            )
+            return
+          }
+          // Link chat_id to userId in telegram_paired_chats
+          const db2 = createServerClient()
+          await db2.from('telegram_paired_chats').upsert({
+            chat_id: chatId,
+            first_name: firstName || null,
+            paired_at: new Date().toISOString(),
+            paired_by: result.userId,
+          })
+          await sendTelegramMessage(
+            chatId,
+            `✅ Đã kết nối! Xin chào ${firstName || 'bạn'}. Gõ /campaign để bắt đầu tạo video.\n\n` +
+            `✅ Linked! Hi ${firstName || 'there'}. Type /campaign to start creating videos.`,
+          )
+          return
+        }
         await handleStart(chatId)
       } else if (text === '/help') {
         await handleHelp(chatId)

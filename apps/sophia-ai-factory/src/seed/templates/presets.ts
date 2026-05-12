@@ -41,6 +41,11 @@ export interface TemplatePreset {
   minTier: TemplateTier;
   /** Public preview path (relative to PROD_URL). */
   samplePath: string;
+  /**
+   * Beginner-friendly flag. Top 5 simplest templates marked true.
+   * UI may sort these to the top (e.g. ?beginnerFirst=true).
+   */
+  beginner?: boolean;
 }
 
 const TIER_ORDER: Record<TemplateTier, number> = {
@@ -73,6 +78,7 @@ export const TEMPLATE_PRESETS: readonly TemplatePreset[] = [
     transitionsJson: FADE,
     minTier: 'BASIC',
     samplePath: '/templates/edu-tutorial-16x9.mp4',
+    beginner: true,
   },
   {
     id: 'edu-explainer-16x9',
@@ -141,6 +147,7 @@ export const TEMPLATE_PRESETS: readonly TemplatePreset[] = [
     transitionsJson: HARDCUT,
     minTier: 'BASIC',
     samplePath: '/templates/mkt-promo-flash-9x16.mp4',
+    beginner: true,
   },
   {
     id: 'mkt-testimonial-16x9',
@@ -198,6 +205,7 @@ export const TEMPLATE_PRESETS: readonly TemplatePreset[] = [
     transitionsJson: HARDCUT,
     minTier: 'BASIC',
     samplePath: '/templates/social-hook-question-9x16.mp4',
+    beginner: true,
   },
   {
     id: 'social-story-arc-9x16',
@@ -220,6 +228,7 @@ export const TEMPLATE_PRESETS: readonly TemplatePreset[] = [
     transitionsJson: HARDCUT,
     minTier: 'BASIC',
     samplePath: '/templates/social-before-after-9x16.mp4',
+    beginner: true,
   },
   {
     id: 'social-poll-4x5',
@@ -244,6 +253,7 @@ export const TEMPLATE_PRESETS: readonly TemplatePreset[] = [
     transitionsJson: HARDCUT,
     minTier: 'BASIC',
     samplePath: '/templates/brand-intro-bumper-16x9.mp4',
+    beginner: true,
   },
   {
     id: 'brand-outro-cta-16x9',
@@ -294,6 +304,13 @@ export const TEMPLATE_PRESETS: readonly TemplatePreset[] = [
 /** O(n) lookup; registry is small. Returns undefined when ID not found. */
 export function getTemplatePreset(id: string): TemplatePreset | undefined {
   return TEMPLATE_PRESETS.find((preset) => preset.id === id);
+}
+
+/** Returns templates tagged beginner:true, sorted by durationSec ascending. */
+export function listBeginnerTemplates(): TemplatePreset[] {
+  return [...TEMPLATE_PRESETS]
+    .filter((preset) => preset.beginner === true)
+    .sort((a, b) => a.durationSec - b.durationSec);
 }
 
 export function canAccessTemplate(tier: TemplateTier, preset: TemplatePreset): boolean {
