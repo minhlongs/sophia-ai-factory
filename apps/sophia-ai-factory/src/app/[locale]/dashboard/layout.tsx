@@ -164,7 +164,7 @@ export default async function DashboardLayout({
             <span className="font-medium">{t('sidebar.orders')}</span>
           </Link>
           <Link
-            href="/dashboard/support"
+            href="/dashboard/help"
             className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
           >
             <HelpCircle className="w-5 h-5" />
