@@ -179,10 +179,13 @@ echo "https://hooks.slack.com/services/T123/B456/abc123def456xyz789" | npx wrang
 
 ### 3d. Verify Secrets Were Stored
 ```bash
-npx wrangler secret list
+npx wrangler secret list --name sophia-ai-factory
 ```
 
-You should see all 6 secrets in the list. ✅
+**Note:** wrangler output varies by version (JSON array or human table format).  
+You should see all 6 secrets listed: `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_DSN`, `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT`, `SLACK_OPS_WEBHOOK_URL`. ✅
+
+If any secret appears missing, re-run `npm run deploy:full` to sync.
 
 ---
 

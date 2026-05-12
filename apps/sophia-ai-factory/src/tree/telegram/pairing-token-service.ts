@@ -15,14 +15,6 @@ import type { D1Client } from '@/seed/db/d1-query-builder'
 
 const TOKEN_TTL_MS = 60 * 60 * 1000 // 1 hour
 
-export interface PairingTokenRow {
-  token: string
-  user_id: string
-  created_at: string
-  expires_at: string
-  used_at: string | null
-}
-
 function generateHexToken(): string {
   const buf = new Uint8Array(16)
   crypto.getRandomValues(buf)
@@ -59,33 +51,23 @@ export async function generatePairingToken(
 /**
  * Consume a pairing token.
  * Returns the userId if token is valid, not expired, and not yet used.
- * Marks token as used atomically on success.
+ *
+ * Atomic: a single `UPDATE … WHERE used_at IS NULL AND expires_at >= ? RETURNING user_id`
+ * statement marks the token used and returns the owner in one round-trip.
+ * Concurrent consumers race on the row lock; only one observes a row.
  */
 export async function consumePairingToken(
   db: D1Client,
   token: string,
 ): Promise<{ userId: string } | null> {
   const now = nowIso()
+  const result = await db
+    .unwrap()
+    .prepare(
+      'UPDATE telegram_pairing_tokens SET used_at = ? WHERE token = ? AND used_at IS NULL AND expires_at >= ? RETURNING user_id',
+    )
+    .bind(now, token, now)
+    .first<{ user_id: string }>()
 
-  const { data } = await db
-    .from('telegram_pairing_tokens')
-    .select('token, user_id, expires_at, used_at')
-    .eq('token', token)
-    .maybeSingle()
-
-  if (!data) return null
-
-  const row = data as unknown as PairingTokenRow
-
-  if (row.used_at !== null) return null
-  if (row.expires_at < now) return null
-
-  // TODO(toctou): SELECT-then-UPDATE has a narrow race window. Risk LOW because
-  // D1 is single-region/serialized + double-consume is idempotent (same userId).
-  // Future hardening: single SQL `UPDATE ... WHERE token=? AND used_at IS NULL RETURNING user_id`.
-  await db
-    .from('telegram_pairing_tokens')
-    .upsert({ ...row, used_at: now })
-
-  return { userId: row.user_id }
+  return result ? { userId: result.user_id } : null
 }

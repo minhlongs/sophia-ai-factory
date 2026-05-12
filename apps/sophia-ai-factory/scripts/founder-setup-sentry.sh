@@ -64,9 +64,28 @@ echo ""
 echo "▶ Pushing 6 secrets to Cloudflare Workers (sophia-ai-factory)..."
 echo ""
 
+EXPECTED_SECRETS=(
+  NEXT_PUBLIC_SENTRY_DSN
+  SENTRY_DSN
+  SENTRY_AUTH_TOKEN
+  SENTRY_ORG
+  SENTRY_PROJECT
+  SLACK_OPS_WEBHOOK_URL
+)
+PUSHED=()
+
 push_secret() {
   local name="$1" value="$2"
-  printf '%s' "$value" | npx wrangler secret put "$name" --name sophia-ai-factory >/dev/null
+  if ! printf '%s' "$value" | npx wrangler secret put "$name" --name sophia-ai-factory >/dev/null; then
+    echo "  ✗ $name FAILED" >&2
+    echo "" >&2
+    echo "[ERROR] wrangler secret put failed at: $name" >&2
+    echo "        Already pushed: ${PUSHED[*]:-(none)}" >&2
+    echo "        Inspect remote state: npx wrangler secret list --name sophia-ai-factory" >&2
+    echo "        Re-run this script after fixing wrangler auth / network." >&2
+    exit 1
+  fi
+  PUSHED+=("$name")
   echo "  ✓ $name"
 }
 
@@ -76,6 +95,29 @@ push_secret SENTRY_AUTH_TOKEN       "$AUTH_TOKEN"
 push_secret SENTRY_ORG              "$SENTRY_ORG"
 push_secret SENTRY_PROJECT          "$SENTRY_PROJECT"
 push_secret SLACK_OPS_WEBHOOK_URL   "$SLACK_URL"
+
+echo ""
+echo "▶ Verifying all 6 secrets are present on the Worker..."
+# Capture raw output (could be JSON array or human table depending on wrangler version).
+# Match each secret name without trimming punctuation — JSON: "name": "FOO"  // table: ─ FOO ─
+if ! REMOTE_LIST=$(npx wrangler secret list --name sophia-ai-factory 2>&1); then
+  echo "[ERROR] \`wrangler secret list\` failed — cannot verify remote state:" >&2
+  printf '%s\n' "$REMOTE_LIST" | sed 's/^/        /' >&2
+  exit 1
+fi
+MISSING=()
+for s in "${EXPECTED_SECRETS[@]}"; do
+  # Match JSON form  "name": "FOO"   OR   table cell containing FOO as whole word.
+  if ! grep -Eq "\"name\"[[:space:]]*:[[:space:]]*\"${s}\"|(^|[^A-Za-z0-9_])${s}([^A-Za-z0-9_]|$)" <<<"$REMOTE_LIST"; then
+    MISSING+=("$s")
+  fi
+done
+if [ "${#MISSING[@]}" -gt 0 ]; then
+  echo "[ERROR] Secrets pushed locally but NOT visible remotely: ${MISSING[*]}" >&2
+  echo "        Run \`npx wrangler secret list --name sophia-ai-factory\` and re-push manually." >&2
+  exit 1
+fi
+echo "  ✓ all 6 secrets confirmed on remote"
 
 echo ""
 echo "▶ Deploying via wrangler (CF-direct doctrine)..."

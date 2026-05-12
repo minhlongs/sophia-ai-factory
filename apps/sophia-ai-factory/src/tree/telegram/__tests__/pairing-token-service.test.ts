@@ -5,42 +5,36 @@ import type { D1Client } from '@/seed/db/d1-query-builder'
 // ── Minimal D1Client mock ─────────────────────────────────────────────────────
 
 function makeDb(): D1Client {
-  const store: Record<string, Record<string, unknown>> = {}
+  // Store rows keyed by token (the only access pattern in production).
+  const rows = new Map<string, Record<string, unknown>>()
+
+  // unwrap() returns a minimal D1Database mock implementing the
+  // `UPDATE … WHERE token=? AND used_at IS NULL AND expires_at >= ? RETURNING user_id`
+  // statement used by consumePairingToken().
+  const unwrap = () => ({
+    prepare: (_sql: string) => ({
+      bind: (now: string, token: string, _nowCheck: string) => ({
+        first: async <T = unknown>(): Promise<T | null> => {
+          const row = rows.get(token)
+          if (!row) return null
+          if (row.used_at !== null) return null
+          if ((row.expires_at as string) < now) return null
+          row.used_at = now
+          return { user_id: row.user_id } as unknown as T
+        },
+      }),
+    }),
+  })
 
   return {
-    from: (table: string) => {
-      const tableStore = store
-
-      let selectResult: Record<string, unknown> | null = null
-      let filterField = ''
-      let filterValue = ''
-
+    unwrap,
+    from: (_table: string) => {
       const chain = {
-        select: (_cols: string) => chain,
-        eq: (field: string, value: unknown) => {
-          filterField = field
-          filterValue = value as string
-          return chain
-        },
-        maybeSingle: async () => {
-          const key = `${table}:${filterField}:${filterValue}`
-          const directKey = Object.keys(tableStore).find(
-            (k) => k.startsWith(`${table}:${filterField}:`) && tableStore[k][filterField] === filterValue
-          )
-          const data = directKey ? tableStore[directKey] : null
-          selectResult = data
-          return { data, error: null }
-        },
         upsert: async (data: Record<string, unknown>) => {
-          // Use token or user_id as key
-          const keyField = 'token' in data ? 'token' : 'user_id'
-          const keyVal = data[keyField] as string
-          const storeKey = `${table}:${keyField}:${keyVal}`
-          tableStore[storeKey] = { ...data }
+          rows.set(data.token as string, { ...data })
           return { data, error: null }
         },
       }
-
       return chain as unknown as ReturnType<D1Client['from']>
     },
   } as unknown as D1Client

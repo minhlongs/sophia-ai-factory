@@ -9,11 +9,12 @@ import { betterAuth } from 'better-auth';
 import { magicLink } from 'better-auth/plugins';
  
 import { hashPassword, verifyPassword } from '@/tree/crypto/password-hash';
- 
+
 import { sendEmail } from '@/forest/email/sender';
 import { getD1Client } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { requireMfaIfEnabled, markSessionMfaPending } from '@/seed/auth/mfa/login-challenge';
+import { escapeHtml } from '@/seed/security/input-sanitization-utilities';
 
 /** Resolve D1 binding from CF Workers context */
 function getD1(): D1Database {
@@ -171,7 +172,8 @@ export function getAuth() {
 }
 
 function buildWelcomeHtml(nameOrEmail: string): string {
-  const name = nameOrEmail.includes('@') ? nameOrEmail.split('@')[0] : nameOrEmail;
+  const raw = nameOrEmail.includes('@') ? nameOrEmail.split('@')[0] : nameOrEmail;
+  const name = escapeHtml(raw);
   return `<!DOCTYPE html><html><head><meta charset="utf-8"></head>
 <body style="font-family:-apple-system,sans-serif;line-height:1.6;max-width:600px;margin:0 auto;padding:24px;">
   <h2 style="color:#6750A4">Welcome to Sophia AI Factory!</h2>
