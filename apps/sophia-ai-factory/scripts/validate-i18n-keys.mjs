@@ -46,32 +46,45 @@ function extractNamespace(content) {
 }
 
 /**
- * Extract translation keys from file content with namespace
+ * Extract translation keys from file content with namespace.
+ *
+ * Returns { keys, dynamicPrefixes }:
+ *   - keys: static t('foo.bar') calls (resolvable, must exist in vi.json)
+ *   - dynamicPrefixes: template-literal t(`foo.${x}.bar`) calls; we validate
+ *     the resolvable static prefix (text before the first `${`) as a partial
+ *     namespace path and surface any unresolved prefixes.
  */
 function extractKeys(content, filePath) {
   const keys = [];
+  const dynamicPrefixes = [];
   const namespace = extractNamespace(content);
 
-  // Match t('key') and t(`key`) syntax
-  const regex = /\bt\(['"`]([a-zA-Z0-9_.]+)['"`]\)/g;
+  // Static keys: t('key') / t("key") / t(`key`) with no interpolation
+  const staticRegex = /\bt\(['"`]([a-zA-Z0-9_.]+)['"`]\)/g;
   let match;
-  while ((match = regex.exec(content)) !== null) {
+  while ((match = staticRegex.exec(content)) !== null) {
     const lineNum = content.substring(0, match.index).split('\n').length;
     let key = match[1];
-
-    // Prepend namespace if present
-    if (namespace) {
-      key = `${namespace}.${key}`;
-    }
-
-    keys.push({
-      key,
-      file: filePath,
-      line: lineNum,
-      rawKey: match[1]
-    });
+    if (namespace) key = `${namespace}.${key}`;
+    keys.push({ key, file: filePath, line: lineNum, rawKey: match[1] });
   }
-  return keys;
+
+  // Dynamic keys: t(`...${...}...`) — extract static prefix before first ${
+  const dynamicRegex = /\bt\(`([^`]*?)\$\{[^}]+\}[^`]*`\)/g;
+  while ((match = dynamicRegex.exec(content)) !== null) {
+    const lineNum = content.substring(0, match.index).split('\n').length;
+    const rawPrefix = match[1];
+    // Skip when prefix is empty (e.g. t(`${entirelyDynamic}`)) — cannot validate
+    if (!rawPrefix) continue;
+    // Trim trailing dot for partial-path lookup (e.g. "steps." -> "steps")
+    const cleanPrefix = rawPrefix.endsWith('.') ? rawPrefix.slice(0, -1) : rawPrefix;
+    if (!cleanPrefix) continue;
+    let prefix = cleanPrefix;
+    if (namespace) prefix = `${namespace}.${prefix}`;
+    dynamicPrefixes.push({ prefix, file: filePath, line: lineNum, raw: match[0] });
+  }
+
+  return { keys, dynamicPrefixes };
 }
 
 /**
@@ -108,6 +121,7 @@ async function validate() {
 
   // Extract all keys from source files
   const allKeys = new Map(); // key -> [{file, line}]
+  const allDynamicPrefixes = new Map(); // prefix -> [{file, line}]
   const filesToScan = [
     join(SRC_DIR, '**/*.tsx'),
     join(SRC_DIR, '**/*.ts')
@@ -118,12 +132,14 @@ async function validate() {
     for await (const file of getFiles(SRC_DIR, regex)) {
       try {
         const content = await readFile(file, 'utf-8');
-        const keys = extractKeys(content, relative(ROOT, file));
+        const { keys, dynamicPrefixes } = extractKeys(content, relative(ROOT, file));
         for (const { key, file: f, line } of keys) {
-          if (!allKeys.has(key)) {
-            allKeys.set(key, []);
-          }
+          if (!allKeys.has(key)) allKeys.set(key, []);
           allKeys.get(key).push({ file: f, line });
+        }
+        for (const { prefix, file: f, line } of dynamicPrefixes) {
+          if (!allDynamicPrefixes.has(prefix)) allDynamicPrefixes.set(prefix, []);
+          allDynamicPrefixes.get(prefix).push({ file: f, line });
         }
       } catch (e) {
         // Skip unreadable files
@@ -151,16 +167,57 @@ async function validate() {
     usedRootKeys.add(rootKey);
   }
 
+  // Validate dynamic prefixes. Supports two shapes:
+  //   A) `parent.${var}.child` → static prefix ends with "." → parent must be object
+  //   B) `parent.literal_${var}` → static prefix ends with literal text → parent must
+  //      be object AND at least one child must start with that literal text.
+  const unresolvedPrefixes = [];
+  for (const [prefix, locations] of allDynamicPrefixes) {
+    const lastDot = prefix.lastIndexOf('.');
+    const parentPath = lastDot >= 0 ? prefix.slice(0, lastDot) : '';
+    const literalRemainder = lastDot >= 0 ? prefix.slice(lastDot + 1) : prefix;
+    const parent = parentPath ? getNestedValue(translations.vi, parentPath) : translations.vi;
+    const parentIsObject = parent !== undefined && typeof parent === 'object' && parent !== null;
+    if (!parentIsObject) {
+      unresolvedPrefixes.push({ prefix, locations });
+      continue;
+    }
+    if (literalRemainder === '') continue; // shape A satisfied (e.g. "steps.")
+    const hasMatchingChild = Object.keys(parent).some((k) => k.startsWith(literalRemainder));
+    if (!hasMatchingChild) unresolvedPrefixes.push({ prefix, locations });
+  }
+
   // Report results
   console.log('📊 Summary:');
   console.log(`   Total t() calls: ${totalKeys}`);
-  console.log(`   Unique keys: ${allKeys.size}`);
-  console.log(`   Missing keys: ${missingKeys.length}`);
+  console.log(`   Unique static keys: ${allKeys.size}`);
+  console.log(`   Dynamic key prefixes: ${allDynamicPrefixes.size}`);
+  console.log(`   Missing static keys: ${missingKeys.length}`);
+  console.log(`   Unresolved dynamic prefixes: ${unresolvedPrefixes.length}`);
   console.log();
 
-  if (missingKeys.length === 0) {
+  if (unresolvedPrefixes.length > 0) {
+    console.error('⚠️  Unresolved dynamic-key prefixes (parent path missing or not an object):\n');
+    for (const { prefix, locations } of unresolvedPrefixes) {
+      console.error(`   "${prefix}.*"`);
+      for (const loc of locations.slice(0, 3)) {
+        console.error(`      at ${loc.file}:${loc.line}`);
+      }
+      if (locations.length > 3) {
+        console.error(`      ... and ${locations.length - 3} more`);
+      }
+      console.error();
+    }
+  }
+
+  if (missingKeys.length === 0 && unresolvedPrefixes.length === 0) {
     console.log('✅ All translation keys found!\n');
     process.exit(0);
+  }
+
+  if (missingKeys.length === 0 && unresolvedPrefixes.length > 0) {
+    console.error('❌ Validation failed: unresolved dynamic prefixes detected.\n');
+    process.exit(1);
   }
 
   console.error('❌ Missing translation keys:\n');
