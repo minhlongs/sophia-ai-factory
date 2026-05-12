@@ -7,19 +7,24 @@
  * Includes "Connect Telegram" CTA that generates a pairing token and opens
  * t.me/Sophia_Bbot?start=<token> in a new tab.
  *
+ * Localisation: uses next-intl `useTranslations('welcome')`. Locale is still
+ * forwarded as a prop for href construction (back-to-home, login links).
+ *
  * @module app/[locale]/welcome/[token]/welcome-page-client
  */
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Loader2, Video, Zap, AlertTriangle, Mail, CheckCircle2, MessageCircle } from 'lucide-react';
 import { buildOnboardingSteps, StepCard, type WelcomeData } from './welcome-onboarding-steps';
 import { generateTelegramPairingTokenAction } from '@/app/actions/generate-telegram-pairing-token';
 
 const BOT_USERNAME = (process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME ?? 'Sophia_Bbot').replace(/^@/, '').trim();
 
-interface Props { token: string; isVi: boolean; locale: string }
+interface Props { token: string; locale: string }
 
-export function WelcomePageClient({ token, isVi, locale }: Props) {
+export function WelcomePageClient({ token, locale }: Props) {
+  const t = useTranslations('welcome');
   const [data, setData] = useState<WelcomeData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,17 +37,17 @@ export function WelcomePageClient({ token, isVi, locale }: Props) {
       try {
         const res = await fetch(`/api/welcome/validate/${token}`);
         if (!res.ok) {
-          setError(isVi ? 'Link không hợp lệ hoặc đã hết hạn.' : 'Link is invalid or expired.');
+          setError(t('errors.validateInvalid'));
           return;
         }
         setData(await res.json() as WelcomeData);
       } catch {
-        setError(isVi ? 'Lỗi kết nối. Vui lòng thử lại.' : 'Connection error. Please try again.');
+        setError(t('errors.validateConnection'));
       } finally {
         setLoading(false);
       }
     })();
-  }, [token, isVi]);
+  }, [token, t]);
 
   async function handleGetStarted() {
     setStarted(true);
@@ -79,10 +84,10 @@ export function WelcomePageClient({ token, isVi, locale }: Props) {
   }
 
   if (error || !data) {
-    return <InvalidLinkView locale={locale} isVi={isVi} message={error} />;
+    return <InvalidLinkView locale={locale} message={error} />;
   }
 
-  const steps = buildOnboardingSteps(data, locale);
+  const steps = buildOnboardingSteps(data);
 
   return (
     <div className="min-h-screen bg-zinc-950">
@@ -92,17 +97,15 @@ export function WelcomePageClient({ token, isVi, locale }: Props) {
         <div className="max-w-2xl mx-auto px-6 pt-16 pb-10 text-center relative">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-500/20 border border-violet-500/40 text-violet-300 text-xs mb-6">
             <Video aria-hidden="true" size={12} />
-            {isVi ? `Gói ${data.tier} đã kích hoạt` : `${data.tier} Plan Activated`}
+            {t('tierActivated', { tier: data.tier })}
           </div>
           <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">
-            {isVi ? `Chào mừng,` : `Welcome,`}
+            {t('greeting')}
             <br />
             <span className="bg-gradient-to-r from-violet-400 to-blue-400 bg-clip-text text-transparent">{data.agencyName}</span>
           </h1>
           <p className="text-zinc-400 text-lg max-w-md mx-auto mb-8">
-            {isVi
-              ? 'Tài khoản đã sẵn sàng. Nhấn nút bên dưới để vào Setup Wizard cấu hình API keys.'
-              : 'Your account is ready. Click below to enter the Setup Wizard and configure your API keys.'}
+            {t('summary')}
           </p>
 
           {/* Primary CTA — surfaced first, no fake progress bar */}
@@ -112,10 +115,10 @@ export function WelcomePageClient({ token, isVi, locale }: Props) {
             className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white font-semibold text-lg shadow-lg shadow-violet-900/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors transition-opacity focus-visible:ring-2 focus-visible:ring-violet-500/50 focus-visible:outline-none"
           >
             {started ? <Loader2 aria-hidden="true" size={20} className="animate-spin" /> : <Zap aria-hidden="true" size={20} />}
-            {isVi ? 'Bắt đầu ngay' : 'Get Started'}
+            {t('getStarted')}
           </button>
           <p className="text-xs text-zinc-600 mt-3">
-            {isVi ? 'Link này chỉ dùng 1 lần.' : 'This link is single-use.'}
+            {t('singleUseHint')}
           </p>
         </div>
       </div>
@@ -129,17 +132,15 @@ export function WelcomePageClient({ token, isVi, locale }: Props) {
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-zinc-100 mb-1">
-                {isVi ? 'Kết nối Telegram' : 'Connect Telegram'}
+                {t('telegram.title')}
               </h3>
               <p className="text-sm text-zinc-400 mb-3">
-                {isVi
-                  ? 'Nhận thông báo + lệnh nhanh ngay trên Telegram. Gõ /campaign để tạo video bất cứ lúc nào.'
-                  : 'Get notifications + quick commands on Telegram. Type /campaign to create videos anytime.'}
+                {t('telegram.description')}
               </p>
               {telegramLinked ? (
-                <div className="flex items-center gap-2 text-emerald-400 text-sm font-medium">
+                <div aria-live="polite" className="flex items-center gap-2 text-emerald-400 text-sm font-medium">
                   <CheckCircle2 aria-hidden="true" size={16} />
-                  {isVi ? '✅ Đã mở Telegram — gõ /start để hoàn tất kết nối' : '✅ Telegram opened — type /start to complete linking'}
+                  {t('telegram.openedHint')}
                 </div>
               ) : (
                 <button
@@ -150,7 +151,7 @@ export function WelcomePageClient({ token, isVi, locale }: Props) {
                   {telegramLinking
                     ? <Loader2 aria-hidden="true" size={16} className="animate-spin" />
                     : <MessageCircle aria-hidden="true" size={16} />}
-                  {isVi ? 'Mở Telegram và kết nối' : 'Open Telegram and connect'}
+                  {t('telegram.connectButton')}
                 </button>
               )}
             </div>
@@ -161,10 +162,10 @@ export function WelcomePageClient({ token, isVi, locale }: Props) {
       {/* Roadmap preview — informational, not a progress checklist */}
       <div className="max-w-2xl mx-auto px-6 pb-16">
         <h2 className="text-sm font-medium text-zinc-400 mb-4 text-center uppercase tracking-wider">
-          {isVi ? 'Lộ trình kích hoạt' : 'Activation Roadmap'}
+          {t('roadmapHeader')}
         </h2>
         <div className="space-y-3">
-          {steps.map((s) => <StepCard key={s.id} step={s} isVi={isVi} />)}
+          {steps.map((s) => <StepCard key={s.id} step={s} />)}
         </div>
       </div>
     </div>
@@ -177,13 +178,12 @@ export function WelcomePageClient({ token, isVi, locale }: Props) {
  */
 function InvalidLinkView({
   locale,
-  isVi,
   message,
 }: {
   locale: string;
-  isVi: boolean;
   message: string | null;
 }) {
+  const t = useTranslations('welcome');
   const [email, setEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [sent, setSent] = useState(false);
@@ -200,20 +200,16 @@ function InvalidLinkView({
         body: JSON.stringify({ email: email.trim().toLowerCase() }),
       });
       if (res.status === 429) {
-        setResendError(
-          isVi
-            ? 'Anh/chị đã yêu cầu quá nhanh. Thử lại sau 1 giờ.'
-            : 'Too many requests. Please try again in an hour.',
-        );
+        setResendError(t('invalid.rateLimited'));
         return;
       }
       if (!res.ok) {
-        setResendError(isVi ? 'Có lỗi xảy ra.' : 'Something went wrong.');
+        setResendError(t('invalid.genericError'));
         return;
       }
       setSent(true);
     } catch {
-      setResendError(isVi ? 'Lỗi kết nối.' : 'Connection error.');
+      setResendError(t('invalid.connectionError'));
     } finally {
       setSubmitting(false);
     }
@@ -227,18 +223,16 @@ function InvalidLinkView({
             <CheckCircle2 aria-hidden="true" size={28} className="text-emerald-300" />
           </div>
           <h1 className="text-xl font-bold text-zinc-100">
-            {isVi ? 'Đã gửi link mới' : 'New link sent'}
+            {t('invalid.sentTitle')}
           </h1>
           <p className="text-zinc-400 text-sm">
-            {isVi
-              ? 'Nếu email tồn tại trong hệ thống, anh/chị sẽ nhận link đăng nhập mới trong vài phút.'
-              : "If that email is in our system, you'll receive a new sign-in link in a few minutes."}
+            {t('invalid.sentDescription')}
           </p>
           <a
             href={`/${locale}`}
             className="inline-block px-6 py-2 rounded-lg bg-violet-600 text-white text-sm font-medium hover:bg-violet-500 transition-colors"
           >
-            {isVi ? 'Về trang chủ' : 'Back to home'}
+            {t('invalid.backHome')}
           </a>
         </div>
       </div>
@@ -254,16 +248,16 @@ function InvalidLinkView({
               <AlertTriangle aria-hidden="true" size={26} className="text-red-300" />
             </div>
             <h1 className="text-xl font-bold text-zinc-100">
-              {isVi ? 'Link không hợp lệ' : 'Invalid Link'}
+              {t('invalid.title')}
             </h1>
             <p className="text-sm text-zinc-400">
-              {message ?? (isVi ? 'Link đã hết hạn hoặc đã được sử dụng.' : 'This link has expired or been used.')}
+              {message ?? t('invalid.defaultMessage')}
             </p>
           </div>
 
           <div className="border-t border-zinc-800 pt-5 space-y-3">
             <p className="text-sm text-zinc-300 text-center">
-              {isVi ? 'Nhập email để nhận link mới' : 'Enter your email to get a new link'}
+              {t('invalid.resendPrompt')}
             </p>
             <form onSubmit={handleResend} className="space-y-3">
               <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-zinc-950 border border-zinc-800 focus-within:border-violet-500 focus-within:ring-2 focus-within:ring-violet-500/40">
@@ -292,7 +286,7 @@ function InvalidLinkView({
                 className="w-full px-4 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-violet-500/50 focus-visible:outline-none"
               >
                 {submitting ? <Loader2 aria-hidden="true" size={16} className="animate-spin" /> : null}
-                {isVi ? 'Gửi link mới' : 'Send new link'}
+                {t('invalid.submit')}
               </button>
             </form>
           </div>
@@ -301,7 +295,7 @@ function InvalidLinkView({
             href={`/${locale}/login`}
             className="block text-center text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
           >
-            {isVi ? 'Hoặc đăng nhập bằng tài khoản đã có' : 'Or sign in with existing account'}
+            {t('invalid.altLogin')}
           </a>
         </div>
       </div>
