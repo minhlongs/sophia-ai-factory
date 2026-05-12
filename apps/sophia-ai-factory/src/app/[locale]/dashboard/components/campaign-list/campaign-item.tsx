@@ -7,13 +7,21 @@ interface CampaignItemProps {
   campaign: Campaign;
 }
 
+const VALID_STATUSES = ['draft', 'queued', 'processing_script', 'processing_video', 'completed', 'failed'] as const;
+type StatusKey = typeof VALID_STATUSES[number];
+
 export function CampaignItem({ campaign }: CampaignItemProps) {
   const t = useTranslations('dashboard');
+  const tStatus = useTranslations('campaign.status');
   const format = useFormatter();
+
+  const statusLabel = VALID_STATUSES.includes(campaign.status as StatusKey)
+    ? tStatus(campaign.status as StatusKey)
+    : campaign.status.replace(/_/g, ' ');
 
   return (
     <div className="flex items-start gap-4">
-      <div className="mt-1">
+      <div className="mt-1" role="img" aria-label={statusLabel}>
         {getStatusIcon(campaign.status)}
       </div>
       <div>
