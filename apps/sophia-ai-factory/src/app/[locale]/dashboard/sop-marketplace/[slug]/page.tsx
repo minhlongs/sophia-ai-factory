@@ -76,7 +76,7 @@ export default async function SopDetailPage({ params }: Props) {
           </div>
           <p className="text-muted-foreground mt-2">{description}</p>
           <div className="flex items-center gap-1 mt-2 text-sm text-amber-400">
-            <Zap className="w-4 h-4" />
+            <Zap className="w-4 h-4" aria-hidden="true" />
             <span>{template.credits_per_run} credits/run</span>
           </div>
         </div>
