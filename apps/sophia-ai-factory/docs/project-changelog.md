@@ -1,6 +1,14 @@
 # Project Changelog
 
-**Last Updated:** 2026-05-12 | **Current Version:** 1.25.0
+**Last Updated:** 2026-05-12 | **Current Version:** 1.25.1
+
+---
+
+## v1.25.1 — MCU integration for /api/proposals (2026-05-12)
+
+**Severity: P2 FEATURE | Type: Billing integration | Status: SHIPPED — 1 commit (`8cd38f30`)**
+
+Closes deferred follow-up from v1.25.0 consolidation. Wire proposal generation into canonical MCU credit system. (C1) NEW `src/land/billing/proposal-mcu-cost-config.ts` — `PROPOSAL_MCU_COSTS.GENERATE = 5` (mirrors `video-mcu-cost-config.ts`, flat per-op). (C2) MOD `src/app/api/proposals/route.ts`: pre-check via `getBalance(userId)` → 402 `INSUFFICIENT_BALANCE` if `credits_remaining < cost`; post-success `deductCredits(userId, cost, crypto.randomUUID(), 'proposal_generation')` (atomic D1 `WHERE credits_remaining >= ?` race-safe); response includes `mcuUsed` + `remainingBalance`. (C3) NEW `src/app/api/proposals/route.test.ts` — 3 unit tests (401/402/200). **Tests:** 4081/4113 pass (+3). **Build:** 0 TS errors. **Code review:** 8.5/10 APPROVE. **Deploy:** CF-direct, SHA `8cd38f30`. **Deferred:** `respondInsufficientBalance()` DRY helper (5 routes share 402 pattern), `McuReason` enum, Sentry alert on deduct failures.
 
 ---
 
