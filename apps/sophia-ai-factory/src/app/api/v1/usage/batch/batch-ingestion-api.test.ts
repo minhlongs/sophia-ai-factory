@@ -10,7 +10,16 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import type { NextRequest } from 'next/server';
 import { POST } from '@/app/api/v1/usage/batch/route';
+
+type BatchResponseBody = {
+  code?: string
+  total?: number
+  accepted?: number
+  rejected?: number
+  requestId?: string
+}
 
 // Mock NextResponse
 vi.mock('next/server', () => ({
@@ -78,23 +87,23 @@ describe('Batch Usage Ingestion API - Authentication', () => {
     return {
       json: () => Promise.resolve(body),
       headers: new Headers(headers),
-    } as any;
+    } as unknown as NextRequest;
   };
 
   it('rejects request without API key', async () => {
     const request = createMockRequest({ events: [] });
-    const response = await POST(request as any);
+    const response = await POST(request);
 
     expect(response.status).toBe(401);
-    expect((response.body as any).code).toBe('AUTH_FAILED');
+    expect((response.body as unknown as BatchResponseBody).code).toBe('AUTH_FAILED');
   });
 
   it('rejects request with empty API key', async () => {
     const request = createMockRequest({ events: [] }, { 'x-api-key': '' });
-    const response = await POST(request as any);
+    const response = await POST(request);
 
     expect(response.status).toBe(401);
-    expect((response.body as any).code).toBe('AUTH_FAILED');
+    expect((response.body as unknown as BatchResponseBody).code).toBe('AUTH_FAILED');
   });
 });
 
@@ -103,35 +112,35 @@ describe('Batch Usage Ingestion API - Request Validation', () => {
     return {
       json: () => Promise.resolve(body),
       headers: new Headers({ 'x-api-key': 'test-api-key' }),
-    } as any;
+    } as unknown as NextRequest;
   };
 
   it('rejects invalid JSON body', async () => {
     const request = {
       json: () => Promise.reject(new Error('Invalid JSON')),
       headers: new Headers({ 'x-api-key': 'test-api-key' }),
-    } as any;
+    } as unknown as NextRequest;
 
-    const response = await POST(request as any);
+    const response = await POST(request);
 
     expect(response.status).toBe(400);
-    expect((response.body as any).code).toBe('INVALID_JSON');
+    expect((response.body as unknown as BatchResponseBody).code).toBe('INVALID_JSON');
   });
 
   it('rejects request without events array', async () => {
     const request = createAuthorizedRequest({ data: [] });
-    const response = await POST(request as any);
+    const response = await POST(request);
 
     expect(response.status).toBe(400);
-    expect((response.body as any).code).toBe('INVALID_REQUEST');
+    expect((response.body as unknown as BatchResponseBody).code).toBe('INVALID_REQUEST');
   });
 
   it('rejects empty events array', async () => {
     const request = createAuthorizedRequest({ events: [] });
-    const response = await POST(request as any);
+    const response = await POST(request);
 
     expect(response.status).toBe(400);
-    expect((response.body as any).code).toBe('INVALID_REQUEST');
+    expect((response.body as unknown as BatchResponseBody).code).toBe('INVALID_REQUEST');
   });
 
   it('rejects batch with more than 1000 events', async () => {
@@ -151,10 +160,10 @@ describe('Batch Usage Ingestion API - Request Validation', () => {
         response_time_ms: 100,
       }),
     });
-    const response = await POST(request as any);
+    const response = await POST(request);
 
     expect(response.status).toBe(400);
-    expect((response.body as any).code).toBe('INVALID_REQUEST');
+    expect((response.body as unknown as BatchResponseBody).code).toBe('INVALID_REQUEST');
   });
 });
 
@@ -163,7 +172,7 @@ describe('Batch Usage Ingestion API - Successful Processing', () => {
     return {
       json: () => Promise.resolve(body),
       headers: new Headers({ 'x-api-key': 'test-api-key' }),
-    } as any;
+    } as unknown as NextRequest;
   };
 
   beforeEach(() => {
@@ -215,11 +224,11 @@ describe('Batch Usage Ingestion API - Successful Processing', () => {
       ],
     });
 
-    const response = await POST(request as any);
+    const response = await POST(request);
 
     expect(response.status).toBe(200);
-    expect((response.body as any).total).toBe(2);
-    expect((response.body as any).accepted).toBe(2);
+    expect((response.body as unknown as BatchResponseBody).total).toBe(2);
+    expect((response.body as unknown as BatchResponseBody).accepted).toBe(2);
     expect(mockBatchIngestUsage).toHaveBeenCalled();
   });
 
@@ -253,12 +262,12 @@ describe('Batch Usage Ingestion API - Successful Processing', () => {
       }),
     });
 
-    const response = await POST(request as any);
+    const response = await POST(request);
 
     expect(response.status).toBe(200);
-    expect((response.body as any).total).toBe(3);
-    expect((response.body as any).accepted).toBe(2);
-    expect((response.body as any).rejected).toBe(1);
+    expect((response.body as unknown as BatchResponseBody).total).toBe(3);
+    expect((response.body as unknown as BatchResponseBody).accepted).toBe(2);
+    expect((response.body as unknown as BatchResponseBody).rejected).toBe(1);
   });
 
   it('normalizes tenant_id and license_nonce from auth context', async () => {
@@ -312,7 +321,7 @@ describe('Batch Usage Ingestion API - Error Handling', () => {
     return {
       json: () => Promise.resolve(body),
       headers: new Headers({ 'x-api-key': 'test-api-key' }),
-    } as any;
+    } as unknown as NextRequest;
   };
 
   it('handles critical errors gracefully', async () => {
@@ -337,10 +346,10 @@ describe('Batch Usage Ingestion API - Error Handling', () => {
       ],
     });
 
-    const response = await POST(request as any);
+    const response = await POST(request);
 
     expect(response.status).toBe(500);
-    expect((response.body as any).code).toBe('INTERNAL_ERROR');
-    expect((response.body as any).requestId).toBeDefined();
+    expect((response.body as unknown as BatchResponseBody).code).toBe('INTERNAL_ERROR');
+    expect((response.body as unknown as BatchResponseBody).requestId).toBeDefined();
   });
 });
