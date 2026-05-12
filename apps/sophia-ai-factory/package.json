@@ -13,6 +13,7 @@
     "verify": "./scripts/verify.sh",
     "verify:green": "./scripts/verify.sh",
     "test": "vitest",
+    "test:coverage": "vitest run --coverage",
     "pretest": "npm run i18n:validate",
     "test:e2e": "NEXT_PUBLIC_MOCK_AI_SERVICES=true playwright test",
     "test:smoke": "tsx scripts/smoke-test.ts",
