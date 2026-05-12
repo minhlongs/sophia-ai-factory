@@ -58,7 +58,7 @@ export default function DashboardError({
   return (
     <div role="alert" className="flex flex-col items-center justify-center min-h-[50vh] gap-5">
       <div className="p-3 rounded-full bg-destructive/10">
-        <Icon className="w-8 h-8 text-destructive" />
+        <Icon className="w-8 h-8 text-destructive" aria-hidden="true" />
       </div>
       <div className="text-center space-y-1">
         <h2 className="text-xl font-semibold text-foreground">{t(titleKey)}</h2>
@@ -70,7 +70,7 @@ export default function DashboardError({
             onClick={() => { window.location.href = localizedHref(locale, "/login"); }}
             className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:opacity-90 text-sm min-h-[44px]"
           >
-            <LogIn className="w-4 h-4" />
+            <LogIn className="w-4 h-4" aria-hidden="true" />
             {t("goLogin")}
           </button>
         ) : (
@@ -78,7 +78,7 @@ export default function DashboardError({
             onClick={reset}
             className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:opacity-90 text-sm min-h-[44px]"
           >
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw className="w-4 h-4" aria-hidden="true" />
             {t("retry")}
           </button>
         )}

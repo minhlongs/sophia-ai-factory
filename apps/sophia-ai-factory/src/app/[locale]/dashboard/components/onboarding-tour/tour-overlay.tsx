@@ -60,7 +60,7 @@ export function TourOverlay({
           className="absolute top-4 right-4 cursor-pointer p-1 rounded-md text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-colors duration-150"
           aria-label={t('skip')}
         >
-          <X className="w-4 h-4" />
+          <X className="w-4 h-4" aria-hidden="true" />
         </button>
 
         {/* Header */}
@@ -125,7 +125,7 @@ export function TourOverlay({
                 onClick={onBack}
                 className="cursor-pointer flex items-center gap-1"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="w-4 h-4" aria-hidden="true" />
                 {t('back')}
               </Button>
             )}
@@ -136,7 +136,7 @@ export function TourOverlay({
                 className="cursor-pointer flex items-center gap-1"
               >
                 {t('next')}
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-4 h-4" aria-hidden="true" />
               </Button>
             ) : (
               <Button

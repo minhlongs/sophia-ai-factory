@@ -45,7 +45,7 @@ export function OnboardingWelcomeBanner() {
         className="absolute top-3 right-3 p-1 rounded-md text-muted-foreground hover:text-foreground transition-colors"
         aria-label="Dismiss"
       >
-        <X className="w-4 h-4" />
+        <X className="w-4 h-4" aria-hidden="true" />
       </button>
 
       <div className="flex items-center gap-2 mb-3">
@@ -67,7 +67,7 @@ export function OnboardingWelcomeBanner() {
             className="flex items-center gap-3 rounded-lg border border-border/50 bg-background/50 p-3 hover:border-[var(--neon-cyan)]/50 transition-colors"
           >
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--neon-cyan)]/10 text-[var(--neon-cyan)]">
-              <step.icon className="w-4 h-4" />
+              <step.icon className="w-4 h-4" aria-hidden="true" />
             </div>
             <div>
               <div className="text-sm font-medium text-foreground">

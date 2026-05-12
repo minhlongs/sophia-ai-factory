@@ -232,12 +232,12 @@ export function CampaignForm({
         >
           {loading ? (
             <>
-              <Loader2 className="w-4 h-4 mr-2 motion-safe:animate-spin" />
+              <Loader2 className="w-4 h-4 mr-2 motion-safe:animate-spin" aria-hidden="true" />
               {tActions('creating')}
             </>
           ) : (
             <>
-              <Sparkles className="w-4 h-4 mr-2" />
+              <Sparkles className="w-4 h-4 mr-2" aria-hidden="true" />
               {tActions('create_campaign')}
             </>
           )}

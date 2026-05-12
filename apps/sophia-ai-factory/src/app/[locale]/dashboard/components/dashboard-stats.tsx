@@ -34,7 +34,7 @@ export function DashboardStats({
             </div>
           </div>
           <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
-            <TrendingUp className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            <TrendingUp className="w-6 h-6 text-blue-600 dark:text-blue-400" aria-hidden="true" />
           </div>
         </div>
       </div>
@@ -49,7 +49,7 @@ export function DashboardStats({
             </div>
           </div>
           <div className="w-12 h-12 bg-purple-50 dark:bg-purple-900/20 rounded-lg flex items-center justify-center">
-            <Activity className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+            <Activity className="w-6 h-6 text-purple-600 dark:text-purple-400" aria-hidden="true" />
           </div>
         </div>
       </div>
@@ -64,7 +64,7 @@ export function DashboardStats({
             </div>
           </div>
           <div className="w-12 h-12 bg-green-50 dark:bg-green-900/20 rounded-lg flex items-center justify-center">
-            <CheckCircle2 className="w-6 h-6 text-green-600 dark:text-green-400" />
+            <CheckCircle2 className="w-6 h-6 text-green-600 dark:text-green-400" aria-hidden="true" />
           </div>
         </div>
       </div>

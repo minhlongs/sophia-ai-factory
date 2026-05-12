@@ -109,7 +109,7 @@ export default async function SupportPage() {
       <Card className="border-border">
         <CardContent className="pt-6">
           <div className="text-center space-y-3">
-            <Mail className="w-8 h-8 mx-auto text-muted-foreground" />
+            <Mail className="w-8 h-8 mx-auto text-muted-foreground" aria-hidden="true" />
             <p className="text-sm text-muted-foreground">{t("contact_us")}</p>
             <a
               href="mailto:support@sophia.agencyos.network"

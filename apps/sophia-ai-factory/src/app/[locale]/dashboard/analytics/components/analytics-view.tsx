@@ -42,11 +42,11 @@ export function AnalyticsView({ campaigns, userTier, userId }: AnalyticsViewProp
       <Tabs defaultValue="usage" className="w-full">
         <TabsList className="grid w-full max-w-md grid-cols-2">
           <TabsTrigger value="usage" className="flex items-center gap-2">
-            <BarChartIcon className="w-4 h-4" />
+            <BarChartIcon className="w-4 h-4" aria-hidden="true" />
             {t('usage_tab')}
           </TabsTrigger>
           <TabsTrigger value="campaigns" className="flex items-center gap-2">
-            <BarChart3 className="w-4 h-4" />
+            <BarChart3 className="w-4 h-4" aria-hidden="true" />
             {t('campaigns_tab')}
           </TabsTrigger>
         </TabsList>

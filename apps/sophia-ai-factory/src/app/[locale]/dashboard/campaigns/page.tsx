@@ -69,7 +69,7 @@ export default async function CampaignsPage() {
           <CampaignExportControl />
           <Link href="/dashboard/create">
             <Button className="flex items-center gap-2">
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4" aria-hidden="true" />
               {t('buttons.new_campaign')}
             </Button>
           </Link>

@@ -15,7 +15,7 @@ function SuccessRateBadge({ rate }: { rate: number }) {
   if (pct >= 90) {
     return (
       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200">
-        <CheckCircle className="w-3 h-3" />
+        <CheckCircle className="w-3 h-3" aria-hidden="true" />
         {pct}%
       </span>
     );
@@ -23,14 +23,14 @@ function SuccessRateBadge({ rate }: { rate: number }) {
   if (pct >= 70) {
     return (
       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200">
-        <AlertCircle className="w-3 h-3" />
+        <AlertCircle className="w-3 h-3" aria-hidden="true" />
         {pct}%
       </span>
     );
   }
   return (
     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200">
-      <AlertCircle className="w-3 h-3" />
+      <AlertCircle className="w-3 h-3" aria-hidden="true" />
       {pct}%
     </span>
   );
@@ -47,7 +47,7 @@ function RoleRow({ role }: { role: AgentRoleHealth }) {
       <td className="py-2 text-xs text-muted-foreground text-right">
         {role.lastFailureAt ? (
           <span className="flex items-center justify-end gap-1">
-            <Clock className="w-3 h-3" />
+            <Clock className="w-3 h-3" aria-hidden="true" />
             {new Date(role.lastFailureAt).toLocaleTimeString()}
           </span>
         ) : (
@@ -90,7 +90,7 @@ export function AgentHealthCard() {
 
         {isError && (
           <div className="flex items-center gap-2 text-destructive text-sm">
-            <AlertCircle className="w-4 h-4" />
+            <AlertCircle className="w-4 h-4" aria-hidden="true" />
             <span>Không thể tải dữ liệu agent. Thử lại sau 30s.</span>
           </div>
         )}

@@ -67,7 +67,7 @@ export default async function SopDetailPage({ params }: Props) {
         href="/dashboard/sops"
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
-        <ArrowLeft className="w-4 h-4" />
+        <ArrowLeft className="w-4 h-4" aria-hidden="true" />
         {t('run.backToSops')}
       </Link>
 

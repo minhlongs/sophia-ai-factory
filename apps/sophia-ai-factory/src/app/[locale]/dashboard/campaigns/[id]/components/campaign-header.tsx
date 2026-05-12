@@ -27,11 +27,11 @@ export function CampaignHeader({ campaign, t, tStatus, format }: CampaignHeaderP
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'completed': return <CheckCircle2 className="w-4 h-4 mr-1" />;
-      case 'failed': return <AlertCircle className="w-4 h-4 mr-1" />;
-      case 'queued': return <Clock className="w-4 h-4 mr-1" />;
-      case 'draft': return <FileText className="w-4 h-4 mr-1" />;
-      default: return <Loader2 className="w-4 h-4 mr-1 motion-safe:animate-spin" />;
+      case 'completed': return <CheckCircle2 className="w-4 h-4 mr-1" aria-hidden="true" />;
+      case 'failed': return <AlertCircle className="w-4 h-4 mr-1" aria-hidden="true" />;
+      case 'queued': return <Clock className="w-4 h-4 mr-1" aria-hidden="true" />;
+      case 'draft': return <FileText className="w-4 h-4 mr-1" aria-hidden="true" />;
+      default: return <Loader2 className="w-4 h-4 mr-1 motion-safe:animate-spin" aria-hidden="true" />;
     }
   };
 
@@ -50,7 +50,7 @@ export function CampaignHeader({ campaign, t, tStatus, format }: CampaignHeaderP
         href="/dashboard/campaigns"
         className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
-        <ArrowLeft className="w-4 h-4 mr-1" />
+        <ArrowLeft className="w-4 h-4 mr-1" aria-hidden="true" />
         {t('back')}
       </Link>
 
@@ -65,12 +65,12 @@ export function CampaignHeader({ campaign, t, tStatus, format }: CampaignHeaderP
           </div>
           <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center">
-              <Calendar className="w-4 h-4 mr-1.5" />
+              <Calendar className="w-4 h-4 mr-1.5" aria-hidden="true" />
               {t('created')} {format.dateTime(new Date(campaign.created_at), { dateStyle: 'medium' })}
             </div>
             {campaign.audience && (
               <div className="flex items-center">
-                <Users className="w-4 h-4 mr-1.5" />
+                <Users className="w-4 h-4 mr-1.5" aria-hidden="true" />
                 {campaign.audience}
               </div>
             )}

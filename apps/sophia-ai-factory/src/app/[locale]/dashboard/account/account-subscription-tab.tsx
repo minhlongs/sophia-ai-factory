@@ -49,7 +49,7 @@ export function AccountSubscriptionTab({ tier, tierLabel, features }: Subscripti
         <div className="space-y-2">
           {features.map(feat => (
             <div key={feat} className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+              <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" aria-hidden="true" />
               <span className="text-sm text-slate-700 dark:text-slate-300">{feat}</span>
             </div>
           ))}
@@ -74,7 +74,7 @@ export function AccountSubscriptionTab({ tier, tierLabel, features }: Subscripti
 
         {confirming && !cancelled && (
           <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-800/40 dark:bg-amber-900/10 p-3">
-            <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+            <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" aria-hidden="true" />
             <p className="text-xs text-amber-700 dark:text-amber-300">{t('sub_cancel_confirm')}</p>
           </div>
         )}

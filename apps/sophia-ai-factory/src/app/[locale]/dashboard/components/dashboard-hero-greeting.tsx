@@ -21,7 +21,7 @@ export async function DashboardHeroGreeting({ name, tier }: DashboardHeroGreetin
   return (
     <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-lg rounded-xl p-6 flex items-center gap-4">
       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30 shrink-0">
-        <User2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+        <User2 className="w-5 h-5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
       </div>
       <div>
         <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">{greeting}</h1>

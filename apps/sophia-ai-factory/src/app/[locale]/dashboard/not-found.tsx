@@ -15,7 +15,7 @@ export default async function DashboardNotFound() {
   return (
     <div className="flex flex-col items-center justify-center min-h-[50vh] gap-5 p-8 text-center">
       <div className="p-3 rounded-full bg-muted">
-        <FileQuestion className="w-10 h-10 text-muted-foreground" />
+        <FileQuestion className="w-10 h-10 text-muted-foreground" aria-hidden="true" />
       </div>
       <div className="space-y-2 max-w-md">
         <h2 className="text-2xl font-semibold text-foreground">{t("title")}</h2>
@@ -25,7 +25,7 @@ export default async function DashboardNotFound() {
         href="/dashboard"
         className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:opacity-90 text-sm min-h-[44px]"
       >
-        <ArrowLeft className="w-4 h-4" />
+        <ArrowLeft className="w-4 h-4" aria-hidden="true" />
         {t("back")}
       </Link>
     </div>
