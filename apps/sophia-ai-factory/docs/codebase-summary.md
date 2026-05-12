@@ -1,7 +1,18 @@
 # Codebase Summary
 
-**Last Updated:** 2026-05-11
-**Version:** 1.15.0 (Wave 7: Phase 03 payouts dual-rail + Phase 08 handover + 3 incident-driven prevention layers)
+**Last Updated:** 2026-05-12
+**Version:** 1.16.0 (Wave 8: Proposal consolidation + Phase 03 payouts dual-rail + Phase 08 handover + prevention layers)
+
+**Wave 8 (2026-05-12)** — Consolidate proposal surfaces (monorepo cleanup):
+
+*Monorepo consolidation:*
+- Delete `apps/sophia-backend` (1003 LOC FastAPI, never integrated; commit `0f61a7f5`)
+- Port real proposal generation from `apps/sophia-proposal` into `src/seed/ai/` (645 new LOC modules: `proposal-generator.ts`, `proposal-quality-check.ts`, `proposal-templates.ts`, validators; commit `a241a68e`)
+- Delete `apps/sophia-proposal` (459 files, 10,459 LOC deprecated; commit `2d54bbe9`)
+- API route `POST /api/proposals` now ACTIVE (was 27-LOC 501 stub), uses shared lib + OpenRouter gateway
+- Layer: `seed/ai/` new canonical home for AI foundational primitives (importable by all layers)
+- Net LOC change: **-11,089** (repo consolidation)
+- Tests: 4110/4110 pass. Build: 0 TS errors. Deploy: CF-direct.
 
 **Wave 7 (2026-05-11)** — Phase 03 Stripe Connect KYC + GAP plan close-out:
 
@@ -50,6 +61,7 @@ Sophia AI Video Factory is a Next.js 16 application structured around the App Ro
 │   ├── workflows/             # n8n workflow JSON exports
 │   └── src/                   # Source code (Mekong 4-layer architecture)
 │       ├── seed/              # Layer 1 — infra primitives (no domain)
+│       │   ├── ai/            # AI foundational libs (proposal generator, quality check, templates)
 │       │   ├── db/            # D1 database client + queries
 │       │   ├── utils/         # Shared utilities (to-error, formatters)
 │       │   ├── security/      # API key validation, cron auth, HMAC
@@ -59,6 +71,7 @@ Sophia AI Video Factory is a Next.js 16 application structured around the App Ro
 │       │   ├── auth/          # Better Auth server, JWT enrichment
 │       │   │   └── sign-out-button.tsx # Client sign-out component
 │       │   ├── health/        # Health check endpoints
+│       │   ├── validators/    # Zod schemas (proposal, etc.)
 │       │   └── components/ui/ # Pure Tailwind primitives (shadcn/ui)
 │       ├── tree/              # Layer 2 — single-tenant CEO ops
 │       │   ├── admin/         # Admin panel components

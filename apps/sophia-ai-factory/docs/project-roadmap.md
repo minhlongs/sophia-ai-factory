@@ -12,6 +12,8 @@ Sophia's architecture is already competitive. Gaps are in **monetization UX** (c
 
 ## Status Snapshot (2026-05-12)
 
+Wave 25 (2026-05-12) **Consolidates proposal surfaces** — deleted `apps/sophia-backend` (FastAPI, 1003 LOC, never integrated) and `apps/sophia-proposal` (deprecated, 459 files, 10,459 LOC); ported real proposal generation into canonical `src/seed/ai/` module set (645 new LOC, OpenRouter gateway). Monorepo net **-11,089 LOC**. POST /api/proposals now ACTIVE.
+
 Wave 24 (2026-05-12) ships **FREE100 Distribution Readiness** — non-tech CEO can onboard end-to-end with zero founder touch until DNS/Resend/Sentry/Crisp setup. See `project-changelog.md` v1.24.0 for per-commit map.
 
 ### Wave 24 Deliverables (8 commits, ~5200 tests pass)
