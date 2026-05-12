@@ -10,7 +10,7 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { listInstallationsForUser, getTemplateById } from '@/lib/sop/sop-repo';
 import { InstallationListTable } from '@/forest/components/sop/installation-list-table';
 import { EmptyState } from '@/seed/components/ui/empty-state';
-import { BookOpen, Store } from 'lucide-react';
+import { BookOpen, Store, PartyPopper } from 'lucide-react';
 import type { SopInstallationRow, SopTemplateRow } from '@/lib/sop/sop-types';
 
 interface Props {
@@ -71,8 +71,30 @@ export default async function SopsListPage({ params }: Props) {
           cta={{ label: tEmpty('cta'), href: '/dashboard/sop-marketplace' }}
         />
       ) : (
-        <InstallationListTable installations={withTemplates} locale={locale} />
+        <>
+          {withTemplates.length === 1 && <FirstSopCallout locale={locale} />}
+          <InstallationListTable installations={withTemplates} locale={locale} />
+        </>
       )}
+    </div>
+  );
+}
+
+function FirstSopCallout({ locale }: { locale: string }) {
+  const isVi = locale.startsWith('vi');
+  return (
+    <div className="rounded-xl border border-emerald-500/30 bg-emerald-950/20 p-4 flex items-start gap-3">
+      <PartyPopper className="w-5 h-5 text-emerald-300 shrink-0 mt-0.5" aria-hidden="true" />
+      <div className="flex-1 space-y-1">
+        <h2 className="text-sm font-semibold text-emerald-100">
+          {isVi ? 'SOP đầu tiên đã cài đặt!' : 'First SOP installed!'}
+        </h2>
+        <p className="text-xs text-zinc-300 leading-relaxed">
+          {isVi
+            ? 'Bấm vào dòng SOP bên dưới → tab "Run" → nhập tham số → bấm Run. Video sẽ xuất hiện ở /dashboard/videos sau 2-5 phút.'
+            : 'Click the SOP row below → "Run" tab → enter parameters → click Run. Your video appears in /dashboard/videos in 2-5 minutes.'}
+        </p>
+      </div>
     </div>
   );
 }
