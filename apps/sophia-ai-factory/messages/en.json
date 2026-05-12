@@ -2057,5 +2057,20 @@
       "audit_note": "Onboarding tour has 7 complete steps (BYOK → SOP → Run → Analytics → MCU → Support). Coverage EXCEEDS the 6-step beginner requirement.",
       "step_distribute_hint": "After running a SOP, the bot auto-distributes the video to connected channels."
     }
+  },
+  "welcome": {
+    "telegram": {
+      "title": "Connect Telegram",
+      "description": "Get notifications + quick commands on Telegram. Type /campaign to create videos anytime.",
+      "connectButton": "Open Telegram and connect",
+      "linkedSuccess": "✅ Telegram linked",
+      "errorTokenInvalid": "Pairing token invalid",
+      "errorTokenExpired": "Pairing token expired — click 'Connect Telegram' again"
+    }
+  },
+  "templates": {
+    "beginnerTag": {
+      "label": "🌱 Beginner"
+    }
   }
 }
