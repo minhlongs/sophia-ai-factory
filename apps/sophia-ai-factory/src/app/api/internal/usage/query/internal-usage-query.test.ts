@@ -13,6 +13,19 @@ import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
 import { GET } from '@/app/api/internal/usage/query/route';
 import { NextRequest } from 'next/server';
 
+type QueryResponseBody = {
+  error?: string
+  tenantId?: string
+  licenseNonce?: string
+  totals?: unknown
+  byService?: unknown
+  rawEvents?: unknown
+  count?: number
+  tier?: string
+  period: { start: number; end: number }
+  quotaUsage: { hourlyLimit?: unknown; dailyLimit?: unknown; monthlyLimit?: unknown }
+}
+
 // Mock environment
 vi.mock('next/server', () => {
   const actual = vi.importActual('next/server');
@@ -108,7 +121,7 @@ describe('Internal Usage Query API - Access Control', () => {
     const response = await GET(request);
 
     expect(response.status).toBe(401);
-    expect((response.body as any).error).toContain('Unauthorized');
+    expect((response.body as unknown as QueryResponseBody).error).toContain('Unauthorized');
   });
 
   it('rejects request with invalid secret', async () => {
@@ -125,7 +138,7 @@ describe('Internal Usage Query API - Access Control', () => {
     const response = await GET(request);
 
     expect(response.status).toBe(401);
-    expect((response.body as any).error).toContain('Unauthorized');
+    expect((response.body as unknown as QueryResponseBody).error).toContain('Unauthorized');
   });
 
   it('rejects when INTERNAL_API_SECRET is not configured or empty', async () => {
@@ -174,7 +187,7 @@ describe('Internal Usage Query API - Query Validation', () => {
     const response = await GET(request);
 
     expect(response.status).toBe(400);
-    expect((response.body as any).error).toContain('Missing required param');
+    expect((response.body as unknown as QueryResponseBody).error).toContain('Missing required param');
   });
 
   it('rejects both license_nonce and external_customer_id together', async () => {
@@ -186,7 +199,7 @@ describe('Internal Usage Query API - Query Validation', () => {
     const response = await GET(request);
 
     expect(response.status).toBe(400);
-    expect((response.body as any).error).toContain('Cannot specify both');
+    expect((response.body as unknown as QueryResponseBody).error).toContain('Cannot specify both');
   });
 
   it('rejects invalid start timestamp', async () => {
@@ -198,7 +211,7 @@ describe('Internal Usage Query API - Query Validation', () => {
     const response = await GET(request);
 
     expect(response.status).toBe(400);
-    expect((response.body as any).error).toContain('Invalid start timestamp');
+    expect((response.body as unknown as QueryResponseBody).error).toContain('Invalid start timestamp');
   });
 
   it('rejects invalid end timestamp', async () => {
@@ -211,7 +224,7 @@ describe('Internal Usage Query API - Query Validation', () => {
     const response = await GET(request);
 
     expect(response.status).toBe(400);
-    expect((response.body as any).error).toContain('Invalid end timestamp');
+    expect((response.body as unknown as QueryResponseBody).error).toContain('Invalid end timestamp');
   });
 
   it('rejects start > end', async () => {
@@ -224,7 +237,7 @@ describe('Internal Usage Query API - Query Validation', () => {
     const response = await GET(request);
 
     expect(response.status).toBe(400);
-    expect((response.body as any).error).toBe('start must be before end');
+    expect((response.body as unknown as QueryResponseBody).error).toBe('start must be before end');
   });
 
   it('rejects date range > 90 days', async () => {
@@ -241,7 +254,7 @@ describe('Internal Usage Query API - Query Validation', () => {
     const response = await GET(request);
 
     expect(response.status).toBe(400);
-    expect((response.body as any).error).toContain('Date range exceeds maximum');
+    expect((response.body as unknown as QueryResponseBody).error).toContain('Date range exceeds maximum');
   });
 });
 
@@ -277,7 +290,7 @@ describe('Internal Usage Query API - License Lookup', () => {
     const response = await GET(request);
 
     expect(response.status).toBe(404);
-    expect((response.body as any).error).toContain('License not found');
+    expect((response.body as unknown as QueryResponseBody).error).toContain('License not found');
   });
 
   it('returns 404 for non-existent external customer', async () => {
@@ -290,7 +303,7 @@ describe('Internal Usage Query API - License Lookup', () => {
     const response = await GET(request);
 
     expect(response.status).toBe(404);
-    expect((response.body as any).error).toContain('No license found');
+    expect((response.body as unknown as QueryResponseBody).error).toContain('No license found');
   });
 });
 
@@ -337,10 +350,10 @@ describe('Internal Usage Query API - Successful Queries', () => {
     const response = await GET(request);
 
     expect(response.status).toBe(200);
-    expect((response.body as any).tenantId).toBe('user-123');
-    expect((response.body as any).licenseNonce).toBe('test-license');
-    expect((response.body as any).totals).toBeDefined();
-    expect((response.body as any).byService).toBeDefined();
+    expect((response.body as unknown as QueryResponseBody).tenantId).toBe('user-123');
+    expect((response.body as unknown as QueryResponseBody).licenseNonce).toBe('test-license');
+    expect((response.body as unknown as QueryResponseBody).totals).toBeDefined();
+    expect((response.body as unknown as QueryResponseBody).byService).toBeDefined();
   });
 
   it('returns raw format when requested', async () => {
@@ -352,8 +365,8 @@ describe('Internal Usage Query API - Successful Queries', () => {
     const response = await GET(request);
 
     expect(response.status).toBe(200);
-    expect((response.body as any).rawEvents).toBeDefined();
-    expect((response.body as any).count).toBeDefined();
+    expect((response.body as unknown as QueryResponseBody).rawEvents).toBeDefined();
+    expect((response.body as unknown as QueryResponseBody).count).toBeDefined();
   });
 
   it('uses default billing period when dates not provided', async () => {
@@ -364,9 +377,9 @@ describe('Internal Usage Query API - Successful Queries', () => {
     const response = await GET(request);
 
     expect(response.status).toBe(200);
-    expect((response.body as any).period).toBeDefined();
-    expect((response.body as any).period.start).toBeDefined();
-    expect((response.body as any).period.end).toBeDefined();
+    expect((response.body as unknown as QueryResponseBody).period).toBeDefined();
+    expect((response.body as unknown as QueryResponseBody).period.start).toBeDefined();
+    expect((response.body as unknown as QueryResponseBody).period.end).toBeDefined();
   });
 
   it('includes quota usage in response', async () => {
@@ -377,10 +390,10 @@ describe('Internal Usage Query API - Successful Queries', () => {
     const response = await GET(request);
 
     expect(response.status).toBe(200);
-    expect((response.body as any).quotaUsage).toBeDefined();
-    expect((response.body as any).quotaUsage.hourlyLimit).toBeDefined();
-    expect((response.body as any).quotaUsage.dailyLimit).toBeDefined();
-    expect((response.body as any).quotaUsage.monthlyLimit).toBeDefined();
+    expect((response.body as unknown as QueryResponseBody).quotaUsage).toBeDefined();
+    expect((response.body as unknown as QueryResponseBody).quotaUsage.hourlyLimit).toBeDefined();
+    expect((response.body as unknown as QueryResponseBody).quotaUsage.dailyLimit).toBeDefined();
+    expect((response.body as unknown as QueryResponseBody).quotaUsage.monthlyLimit).toBeDefined();
   });
 
   it('includes tier information from license', async () => {
@@ -391,6 +404,6 @@ describe('Internal Usage Query API - Successful Queries', () => {
     const response = await GET(request);
 
     expect(response.status).toBe(200);
-    expect((response.body as any).tier).toBe('PREMIUM');
+    expect((response.body as unknown as QueryResponseBody).tier).toBe('PREMIUM');
   });
 });
