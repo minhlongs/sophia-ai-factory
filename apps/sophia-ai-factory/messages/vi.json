@@ -1293,7 +1293,34 @@
     "step6_action": "Mua Credits",
     "step7_title": "Cần trợ giúp?",
     "step7_desc": "Hỗ trợ qua Telegram + email. Bấm 'Xem lại tour' trong sidebar để xem lại bất kỳ lúc nào.",
-    "step7_action": "Mở Support"
+    "step7_action": "Mở Support",
+    "byok": {
+      "help": {
+        "toggleShow": "Hướng dẫn lấy key",
+        "toggleHide": "Ẩn hướng dẫn",
+        "openrouter": {
+          "title": "Cách lấy OpenRouter API Key",
+          "step1": "Truy cập https://openrouter.ai/keys → đăng nhập bằng Google",
+          "step2": "Bấm \"Create Key\" → đặt tên \"sophia-ai-factory\"",
+          "step3": "Copy chuỗi bắt đầu bằng sk-or-v1-... rồi dán vào ô bên trên",
+          "signupUrl": "https://openrouter.ai/keys"
+        },
+        "elevenlabs": {
+          "title": "Cách lấy ElevenLabs API Key",
+          "step1": "Truy cập https://elevenlabs.io → đăng ký tài khoản miễn phí",
+          "step2": "Vào My Account → API Key → bấm \"Copy\"",
+          "step3": "Dán chuỗi key vào ô bên trên (bắt đầu bằng sk_...)",
+          "signupUrl": "https://elevenlabs.io/app/sign-up"
+        },
+        "dId": {
+          "title": "Cách lấy D-ID API Key",
+          "step1": "Truy cập https://studio.d-id.com → đăng ký / đăng nhập",
+          "step2": "Vào Account Settings → API → bấm \"Generate\"",
+          "step3": "Copy chuỗi Basic ... và dán nguyên vẹn vào ô bên trên",
+          "signupUrl": "https://studio.d-id.com/account-settings"
+        }
+      }
+    }
   },
   "pricing": {
     "nav_dashboard": "Bảng Điều Khiển",
@@ -1339,7 +1366,18 @@
     "faq_4_q": "Chấp nhận hình thức thanh toán nào?",
     "faq_4_a": "Chúng tôi chấp nhận USDT (crypto qua NOWPayments) và thanh toán nội địa Việt Nam qua PayOS.",
     "faq_5_q": "Điều gì xảy ra khi hết MCU?",
-    "faq_5_a": "Tự động hoá của bạn sẽ tạm dừng đến kỳ thanh toán tiếp theo hoặc đến khi bạn mua thêm MCU. Nâng cấp bất cứ lúc nào."
+    "faq_5_a": "Tự động hoá của bạn sẽ tạm dừng đến kỳ thanh toán tiếp theo hoặc đến khi bạn mua thêm MCU. Nâng cấp bất cứ lúc nào.",
+    "promo": {
+      "placeholder": "Nhập mã VIP (nếu có)",
+      "help_text": "Mã FREE100 dành cho đối tác chiến lược"
+    },
+    "error": {
+      "redemption_failed": "Kích hoạt thất bại. Vui lòng thử lại.",
+      "access_activated_title": "Đã kích hoạt truy cập!",
+      "access_activated_desc": "Vui lòng kiểm tra email để lấy liên kết đăng nhập một chạm.",
+      "free_trial_days": "Dùng thử miễn phí {days} ngày",
+      "free_full_label": "Truy cập miễn phí toàn bộ"
+    }
   },
   "campaign": {
     "template_selection": {
@@ -2012,6 +2050,12 @@
     },
     "footer": {
       "disclaimer": "Tỷ lệ hoa hồng và điều khoản có thể thay đổi. Xem chi tiết trong thỏa thuận affiliate."
+    }
+  },
+  "tour": {
+    "beginner": {
+      "audit_note": "Onboarding tour có 7 bước đầy đủ (BYOK → SOP → Run → Analytics → MCU → Support). Coverage VƯỢT yêu cầu 6 bước beginner.",
+      "step_distribute_hint": "Sau khi chạy SOP, bot tự động phân phối video lên các kênh đã kết nối."
     }
   }
 }

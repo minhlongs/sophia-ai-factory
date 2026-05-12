@@ -1293,7 +1293,34 @@
     "step6_action": "Buy Credits",
     "step7_title": "Need Help?",
     "step7_desc": "Reach support via Telegram + email. Click 'Replay Tour' in the sidebar to revisit anytime.",
-    "step7_action": "Open Support"
+    "step7_action": "Open Support",
+    "byok": {
+      "help": {
+        "toggleShow": "How to get this key",
+        "toggleHide": "Hide guide",
+        "openrouter": {
+          "title": "How to get your OpenRouter API Key",
+          "step1": "Go to https://openrouter.ai/keys → sign in with Google",
+          "step2": "Click \"Create Key\" → name it \"sophia-ai-factory\"",
+          "step3": "Copy the string starting with sk-or-v1-... and paste it above",
+          "signupUrl": "https://openrouter.ai/keys"
+        },
+        "elevenlabs": {
+          "title": "How to get your ElevenLabs API Key",
+          "step1": "Go to https://elevenlabs.io → create a free account",
+          "step2": "Navigate to My Account → API Key → click \"Copy\"",
+          "step3": "Paste the key string above (starts with sk_...)",
+          "signupUrl": "https://elevenlabs.io/app/sign-up"
+        },
+        "dId": {
+          "title": "How to get your D-ID API Key",
+          "step1": "Go to https://studio.d-id.com → register / sign in",
+          "step2": "Navigate to Account Settings → API → click \"Generate\"",
+          "step3": "Copy the full Basic ... string and paste it above as-is",
+          "signupUrl": "https://studio.d-id.com/account-settings"
+        }
+      }
+    }
   },
   "pricing": {
     "nav_dashboard": "Dashboard",
@@ -1339,7 +1366,18 @@
     "faq_4_q": "What payment methods do you accept?",
     "faq_4_a": "We accept USDT (crypto via NOWPayments) and Vietnam domestic payments via PayOS.",
     "faq_5_q": "What happens when I run out of MCU?",
-    "faq_5_a": "Your automations pause until the next billing cycle or until you purchase additional MCU. Upgrade anytime to get more."
+    "faq_5_a": "Your automations pause until the next billing cycle or until you purchase additional MCU. Upgrade anytime to get more.",
+    "promo": {
+      "placeholder": "Enter VIP code (optional)",
+      "help_text": "FREE100 is reserved for strategic partners"
+    },
+    "error": {
+      "redemption_failed": "Redemption failed. Please try again.",
+      "access_activated_title": "Access Activated!",
+      "access_activated_desc": "Check your email for the magic login link.",
+      "free_trial_days": "{days}-day free trial",
+      "free_full_label": "Full free access"
+    }
   },
   "campaign": {
     "template_selection": {
@@ -2012,6 +2050,12 @@
     },
     "footer": {
       "disclaimer": "Commission rates and terms subject to change. See affiliate agreement for details."
+    }
+  },
+  "tour": {
+    "beginner": {
+      "audit_note": "Onboarding tour has 7 complete steps (BYOK → SOP → Run → Analytics → MCU → Support). Coverage EXCEEDS the 6-step beginner requirement.",
+      "step_distribute_hint": "After running a SOP, the bot auto-distributes the video to connected channels."
     }
   }
 }

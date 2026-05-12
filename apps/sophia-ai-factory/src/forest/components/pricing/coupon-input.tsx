@@ -31,6 +31,7 @@ interface FreeModalState {
 
 export function CouponInput({ onDiscountApplied, onDiscountCleared, userId }: CouponInputProps) {
   const t = useTranslations("pricing.coupon");
+  const tPromo = useTranslations("pricing.promo");
   const [code, setCode] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
@@ -123,7 +124,7 @@ export function CouponInput({ onDiscountApplied, onDiscountCleared, userId }: Co
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase())}
             onKeyDown={(e) => e.key === "Enter" && !isApplied && handleApply()}
-            placeholder={t("placeholder")}
+            placeholder={tPromo("placeholder")}
             disabled={isApplied || status === "loading"}
             maxLength={32}
             className="flex-1 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-violet-500 disabled:opacity-60 uppercase tracking-widest"
@@ -156,6 +157,11 @@ export function CouponInput({ onDiscountApplied, onDiscountCleared, userId }: Co
             {message}
           </p>
         )}
+
+        {/* Help text — surfaces FREE100 partner guidance for non-tech users */}
+        <p className="mt-2 text-center text-[11px] text-muted-foreground/70">
+          {tPromo("help_text")}
+        </p>
       </div>
 
       {freeModal.open && (
@@ -176,6 +182,7 @@ interface FreeRedemptionModalProps {
 }
 
 function FreeRedemptionModal({ modal, onClose, tLabel: t }: FreeRedemptionModalProps) {
+  const tError = useTranslations("pricing.error");
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -234,7 +241,7 @@ function FreeRedemptionModal({ modal, onClose, tLabel: t }: FreeRedemptionModalP
 
       const data = await res.json() as { error?: string; magicLink?: string; success?: boolean };
       if (!res.ok || data.error) {
-        setError(data.error ?? "Redemption failed");
+        setError(data.error ?? tError("redemption_failed"));
         setSubmitting(false);
         return;
       }
@@ -267,8 +274,8 @@ function FreeRedemptionModal({ modal, onClose, tLabel: t }: FreeRedemptionModalP
         {done ? (
           <div className="text-center space-y-3">
             <div className="text-4xl" aria-hidden="true">🎉</div>
-            <h3 id={freeTitleId} className="text-lg font-bold text-white">Access Activated!</h3>
-            <p className="text-sm text-zinc-400">Check your email for the magic login link.</p>
+            <h3 id={freeTitleId} className="text-lg font-bold text-white">{tError("access_activated_title")}</h3>
+            <p className="text-sm text-zinc-400">{tError("access_activated_desc")}</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -278,8 +285,8 @@ function FreeRedemptionModal({ modal, onClose, tLabel: t }: FreeRedemptionModalP
               </h3>
               <p className="text-xs text-zinc-500">
                 {modal.discountType === "free_trial"
-                  ? `${modal.discountValue}-day free trial`
-                  : "Full free access"}
+                  ? tError("free_trial_days", { days: modal.discountValue })
+                  : tError("free_full_label")}
               </p>
             </div>
 
