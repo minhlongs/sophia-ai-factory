@@ -202,7 +202,7 @@ describe('storeReport', () => {
     }
     const mockSupabaseError = {
       storage: mockStorageError
-    } as any
+    } as unknown as ReturnType<typeof createServerClient>
     vi.mocked(createServerClient).mockReturnValue(mockSupabaseError)
 
     const url = await storeReport('report-uuid', Buffer.from('content'), 'pdf')
