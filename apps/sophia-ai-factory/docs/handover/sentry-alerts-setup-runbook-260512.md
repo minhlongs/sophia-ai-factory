@@ -231,6 +231,20 @@ Then hit: `https://sophia.agencyos.network/api/_debug/throw`
 npm run test:smoke
 ```
 
+**Option C (recommended — zero code, fastest):** Use Sentry CLI's `send-event` to ship a synthetic event directly to Sentry from your laptop:
+```bash
+cd apps/sophia-ai-factory
+export SENTRY_DSN="<paste DSN from Step 1>"
+export SENTRY_AUTH_TOKEN="<paste Auth Token from Step 1>"
+export SENTRY_ORG="sophia-ai-factory"
+export SENTRY_PROJECT="sophia-ai-factory"
+npx @sentry/cli send-event --message "FOUNDER SETUP TEST — verify pipeline $(date -u +%FT%TZ)" --level warning --tag "source:founder-setup"
+```
+- ✅ No code change, no deploy needed
+- ✅ Event reaches Sentry within 5 seconds
+- ✅ Works even if Worker secrets aren't deployed yet (uses local env)
+- ⚠️ Won't trigger Slack alert unless Sentry → Slack integration is wired (Step 2c). To force Slack alert end-to-end, use Option A or B.
+
 Wait 10 seconds.
 
 ### 5b. Verify Sentry Captured the Error
