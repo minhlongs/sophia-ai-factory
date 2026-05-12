@@ -39,7 +39,7 @@ export function OverviewTab({ usageMetrics, licenseMetrics, granularity }: Overv
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Requests</CardTitle>
-            <TrendingUp className="w-4 h-4 text-muted-foreground" />
+            <TrendingUp className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold tabular-nums">
@@ -55,7 +55,7 @@ export function OverviewTab({ usageMetrics, licenseMetrics, granularity }: Overv
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Credits</CardTitle>
-            <Zap className="w-4 h-4 text-muted-foreground" />
+            <Zap className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold tabular-nums">
@@ -69,7 +69,7 @@ export function OverviewTab({ usageMetrics, licenseMetrics, granularity }: Overv
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Error Rate</CardTitle>
-            <AlertTriangle className="w-4 h-4 text-muted-foreground" />
+            <AlertTriangle className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold tabular-nums">

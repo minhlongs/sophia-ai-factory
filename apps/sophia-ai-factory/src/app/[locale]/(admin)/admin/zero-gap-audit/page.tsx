@@ -55,7 +55,7 @@ export default async function ZeroGapAuditPage() {
       {/* Header */}
       <div className="flex items-start gap-4">
         <div className="p-3 rounded-xl bg-[var(--neon-cyan)]/10 border border-[var(--neon-cyan)]/20">
-          <ShieldCheck className="w-7 h-7 text-[var(--neon-cyan)]" />
+          <ShieldCheck className="w-7 h-7 text-[var(--neon-cyan)]" aria-hidden="true" />
         </div>
         <div>
           <h1 className="text-3xl font-black text-foreground">Zero-GAP Audit</h1>
@@ -72,15 +72,15 @@ export default async function ZeroGapAuditPage() {
       {/* Legend */}
       <div className="grid grid-cols-3 gap-4 p-4 rounded-xl bg-white/5 border border-white/10 text-sm">
         <div className="flex items-center gap-2">
-          <span className="w-3 h-3 rounded-full bg-green-500 shrink-0" />
+          <span className="w-3 h-3 rounded-full bg-green-500 shrink-0" aria-hidden="true" />
           <span className="text-foreground/80">≥90 = Green (Production Ready)</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="w-3 h-3 rounded-full bg-yellow-500 shrink-0" />
+          <span className="w-3 h-3 rounded-full bg-yellow-500 shrink-0" aria-hidden="true" />
           <span className="text-foreground/80">70–89 = Yellow (Some Gaps)</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="w-3 h-3 rounded-full bg-red-500 shrink-0" />
+          <span className="w-3 h-3 rounded-full bg-red-500 shrink-0" aria-hidden="true" />
           <span className="text-foreground/80">&lt;70 = Red (Blockers Found)</span>
         </div>
       </div>
@@ -94,7 +94,7 @@ export default async function ZeroGapAuditPage() {
       {/* Audit history */}
       <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm p-6">
         <div className="flex items-center gap-2 mb-4">
-          <History className="w-5 h-5 text-muted-foreground" />
+          <History className="w-5 h-5 text-muted-foreground" aria-hidden="true" />
           <h2 className="text-lg font-bold">Audit History / Lịch sử kiểm tra</h2>
         </div>
         <AuditHistoryTable runs={recentRuns} />

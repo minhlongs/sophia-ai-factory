@@ -148,7 +148,7 @@ export default async function AdminHomePage({ params }: PageProps): Promise<Reac
       ) : (
         <section className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 space-y-2">
           <h2 className="text-sm font-medium text-amber-200 flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4" />
+            <AlertTriangle className="w-4 h-4" aria-hidden="true" />
             Active alerts ({alerts.length})
           </h2>
           <ul className="flex flex-wrap gap-2">
@@ -272,7 +272,7 @@ function Panel({
     >
       <header className="flex items-center justify-between gap-3 mb-3">
         <div className="flex items-center gap-2">
-          <Icon className="w-5 h-5 text-violet-400" />
+          <Icon className="w-5 h-5 text-violet-400" aria-hidden="true" />
           <h2 className="font-semibold">{title}</h2>
         </div>
         <span className="text-[11px] text-muted-foreground">drill in →</span>
@@ -313,7 +313,7 @@ function QuickLink({
       href={href}
       className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm hover:border-foreground/40 transition"
     >
-      <Icon className="w-4 h-4 text-violet-400" />
+      <Icon className="w-4 h-4 text-violet-400" aria-hidden="true" />
       <span>{label}</span>
     </Link>
   );

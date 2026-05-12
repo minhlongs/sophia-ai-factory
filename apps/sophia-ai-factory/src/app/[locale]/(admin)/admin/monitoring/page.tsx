@@ -55,7 +55,7 @@ export default async function AdminMonitoringPage() {
           role="alert"
           className="mb-6 flex items-start gap-3 rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300"
         >
-          <AlertTriangle className="w-5 h-5 mt-0.5 shrink-0" />
+          <AlertTriangle className="w-5 h-5 mt-0.5 shrink-0" aria-hidden="true" />
           <div>
             <p className="font-semibold">D1 degraded — one or more queries failed.</p>
             <p className="text-red-300/80">
@@ -207,7 +207,7 @@ function LlmTraceSection({ stats }: LlmTraceSectionProps) {
   return (
     <div>
       <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
-        <Cpu className="w-5 h-5 text-[var(--neon-cyan)]" />
+        <Cpu className="w-5 h-5 text-[var(--neon-cyan)]" aria-hidden="true" />
         LLM Trace (24h)
       </h2>
 

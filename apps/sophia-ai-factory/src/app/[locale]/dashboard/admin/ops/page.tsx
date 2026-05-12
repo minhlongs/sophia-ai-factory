@@ -43,7 +43,7 @@ export default async function OpsPage({ params }: OpsPageProps) {
   return (
     <div className="space-y-6">
       <div className="flex items-start gap-3">
-        <Activity className="w-6 h-6 text-violet-400 mt-1 shrink-0" />
+        <Activity className="w-6 h-6 text-violet-400 mt-1 shrink-0" aria-hidden="true" />
         <div>
           <h1 className="text-2xl font-bold text-zinc-100">{title}</h1>
           <p className="text-sm text-zinc-400 mt-1">{subtitle}</p>

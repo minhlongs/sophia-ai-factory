@@ -63,7 +63,7 @@ export default async function StorageMonitorPage({ params }: PageProps): Promise
   return (
     <div className="space-y-6">
       <header className="flex items-start gap-3">
-        <Database className="w-6 h-6 text-violet-400 mt-1 shrink-0" />
+        <Database className="w-6 h-6 text-violet-400 mt-1 shrink-0" aria-hidden="true" />
         <div>
           <h1 className="text-2xl font-bold">R2 Storage Usage</h1>
           <p className="text-sm text-muted-foreground mt-1">

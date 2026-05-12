@@ -71,14 +71,14 @@ export default async function AuditDetailPage({
         href={`/${locale}/admin/zero-gap-audit`}
         className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
-        <ArrowLeft className="w-4 h-4" />
+        <ArrowLeft className="w-4 h-4" aria-hidden="true" />
         Back to Audit Dashboard
       </Link>
 
       {/* Header */}
       <div className="flex items-start gap-4">
         <div className="p-3 rounded-xl bg-[var(--neon-cyan)]/10 border border-[var(--neon-cyan)]/20">
-          <ShieldCheck className="w-7 h-7 text-[var(--neon-cyan)]" />
+          <ShieldCheck className="w-7 h-7 text-[var(--neon-cyan)]" aria-hidden="true" />
         </div>
         <div>
           <h1 className="text-2xl font-black text-foreground">Audit Run Detail</h1>

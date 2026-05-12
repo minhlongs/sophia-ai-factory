@@ -140,7 +140,7 @@ export default function AffiliatesPage() {
                         aria-label={`Open ${program.name} in new tab`}
                         className="text-muted-foreground hover:text-[var(--neon-cyan)] transition-colors"
                       >
-                        <ExternalLink className="w-4 h-4" />
+                        <ExternalLink className="w-4 h-4" aria-hidden="true" />
                       </button>
                     </td>
                   </tr>

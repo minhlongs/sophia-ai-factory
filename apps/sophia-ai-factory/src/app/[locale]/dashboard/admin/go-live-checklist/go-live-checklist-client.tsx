@@ -52,7 +52,7 @@ export function GoLiveChecklist({ locale }: Props) {
           onClick={() => mutate()}
           className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-200 transition-colors"
         >
-          <RefreshCw className="w-3 h-3" />
+          <RefreshCw className="w-3 h-3" aria-hidden="true" />
           {isVi ? 'Làm mới' : 'Refresh'}
         </button>
       </div>
@@ -65,8 +65,8 @@ export function GoLiveChecklist({ locale }: Props) {
           >
             <div className="shrink-0 mt-0.5">
               {check.pass
-                ? <CheckCircle className="w-4 h-4 text-emerald-400" />
-                : <XCircle className="w-4 h-4 text-red-400" />}
+                ? <CheckCircle className="w-4 h-4 text-emerald-400" aria-hidden="true" />
+                : <XCircle className="w-4 h-4 text-red-400" aria-hidden="true" />}
             </div>
             <div>
               <p className="text-sm text-zinc-200">{isVi ? check.label_vi : check.label_en}</p>
