@@ -57,7 +57,7 @@ export default function UsageAnalyticsPage() {
         <Card className="border-red-500/50 bg-red-500/10">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-red-500">
-              <AlertTriangle className="w-5 h-5" />
+              <AlertTriangle className="w-5 h-5" aria-hidden="true" />
               <span className="font-medium">Error loading data:</span>
               <span className="text-sm">{error}</span>
             </div>
