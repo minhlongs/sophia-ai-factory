@@ -43,11 +43,12 @@ beforeEach(() => {
 
 afterEach(() => {
   process.env = originalEnv
+  vi.unstubAllEnvs()
 })
 
 describe('getRedisClient', () => {
   it('throws in production when env vars are missing', async () => {
-    process.env.NODE_ENV = 'production'
+    vi.stubEnv('NODE_ENV', 'production')
     delete process.env.UPSTASH_REDIS_REST_URL
     delete process.env.UPSTASH_REDIS_REST_TOKEN
     const mod = await freshImport()
@@ -56,7 +57,7 @@ describe('getRedisClient', () => {
   })
 
   it('returns dummy client in non-production when env vars are missing', async () => {
-    process.env.NODE_ENV = 'development'
+    vi.stubEnv('NODE_ENV', 'development')
     delete process.env.UPSTASH_REDIS_REST_URL
     delete process.env.UPSTASH_REDIS_REST_TOKEN
     const mod = await freshImport()
