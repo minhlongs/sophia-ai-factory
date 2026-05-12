@@ -38,7 +38,7 @@ export function QuotaOverageEventsList({ overageEvents, summary }: QuotaOverageE
         <div className="rounded-lg border p-4">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold flex items-center gap-2">
-              <TrendingUp className="w-5 h-5" />
+              <TrendingUp className="w-5 h-5" aria-hidden="true" />
               Overage Summary (Today)
             </h3>
             <span className="text-sm text-muted-foreground">
@@ -107,7 +107,7 @@ export function QuotaOverageEventsList({ overageEvents, summary }: QuotaOverageE
         </div>
       ) : (
         <div className="rounded-lg border p-4 text-center">
-          <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
+          <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" aria-hidden="true" />
           <p className="font-medium">No overage events</p>
           <p className="text-sm text-muted-foreground">Your usage is within quota limits</p>
         </div>

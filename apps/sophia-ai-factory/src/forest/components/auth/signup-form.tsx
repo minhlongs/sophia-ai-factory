@@ -91,11 +91,11 @@ export function SignupForm({ t }: SignupFormProps) {
     return (
       <div className="flex flex-col items-center gap-4 py-6 text-center" data-testid="signup-success">
         <div className="w-14 h-14 rounded-full bg-green-500/10 flex items-center justify-center">
-          <CheckCircle className="w-7 h-7 text-green-400" />
+          <CheckCircle className="w-7 h-7 text-green-400" aria-hidden="true" />
         </div>
         <p className="font-semibold text-foreground">{t.success_title}</p>
         <p className="text-sm text-muted-foreground">{t.success_message}</p>
-        <Loader2 className="w-4 h-4 motion-safe:animate-spin text-violet-400" />
+        <Loader2 className="w-4 h-4 motion-safe:animate-spin text-violet-400" aria-hidden="true" />
       </div>
     );
   }
@@ -195,7 +195,7 @@ export function SignupForm({ t }: SignupFormProps) {
         className="w-full flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-cyan-600 px-4 py-3 text-sm font-medium text-white hover:opacity-90 transition-opacity disabled:opacity-50"
       >
         {loading ? (
-          <><Loader2 className="w-4 h-4 motion-safe:animate-spin" /> {t.submitting}</>
+          <><Loader2 className="w-4 h-4 motion-safe:animate-spin" aria-hidden="true" /> {t.submitting}</>
         ) : (
           t.submit
         )}

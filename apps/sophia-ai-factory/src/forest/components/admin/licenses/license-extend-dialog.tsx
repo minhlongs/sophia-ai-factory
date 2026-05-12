@@ -62,7 +62,7 @@ export function LicenseExtendDialog({ licenseId, onExtend, onClose }: LicenseExt
       <DialogContent className="sm:max-w-[500px] bg-card border-border">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-foreground">
-            <Calendar className="w-5 h-5 text-[var(--neon-cyan)]" />
+            <Calendar className="w-5 h-5 text-[var(--neon-cyan)]" aria-hidden="true" />
             Extend License Key
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
@@ -72,7 +72,7 @@ export function LicenseExtendDialog({ licenseId, onExtend, onClose }: LicenseExt
 
         <div className="space-y-4 py-4">
           <Alert className="bg-green-500/10 border-green-500/30 text-green-400">
-            <CheckCircle2 className="w-4 h-4" />
+            <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
             <AlertDescription>
               <strong>Extension Benefits:</strong> Customer retains access to all features for the extended period.
             </AlertDescription>

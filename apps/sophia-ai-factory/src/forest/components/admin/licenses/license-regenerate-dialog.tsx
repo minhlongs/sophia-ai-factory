@@ -33,7 +33,7 @@ export function LicenseRegenerateDialog({ licenseId: propLicenseId, onRegenerate
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="border-border hover:bg-muted">
-          <RefreshCw className="w-4 h-4 mr-2" />
+          <RefreshCw className="w-4 h-4 mr-2" aria-hidden="true" />
           Regenerate
         </Button>
       </DialogTrigger>
@@ -41,7 +41,7 @@ export function LicenseRegenerateDialog({ licenseId: propLicenseId, onRegenerate
       <DialogContent className="bg-card border-border max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-foreground">
-            <Key className="w-5 h-5 text-[var(--neon-cyan)]" />
+            <Key className="w-5 h-5 text-[var(--neon-cyan)]" aria-hidden="true" />
             Regenerate License Key
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
@@ -51,7 +51,7 @@ export function LicenseRegenerateDialog({ licenseId: propLicenseId, onRegenerate
 
         <div className="space-y-4 py-4">
           <Alert className="bg-yellow-500/10 border-yellow-500/30 text-yellow-400">
-            <AlertTriangle className="w-5 h-5" />
+            <AlertTriangle className="w-5 h-5" aria-hidden="true" />
             <AlertDescription>
               <strong>⚠️ Cảnh báo quan trọng:</strong>
               <ul className="mt-2 space-y-1 text-sm">
@@ -80,12 +80,12 @@ export function LicenseRegenerateDialog({ licenseId: propLicenseId, onRegenerate
             <div className="space-y-4">
               {result.newKey ? (
                 <Alert className="bg-green-500/10 border-green-500/30 text-green-400">
-                  <Check className="w-5 h-5" />
+                  <Check className="w-5 h-5" aria-hidden="true" />
                   <AlertDescription><strong>✅ License Regenerated Successfully!</strong></AlertDescription>
                 </Alert>
               ) : (
                 <Alert className="bg-red-500/10 border-red-500/30 text-red-400">
-                  <AlertTriangle className="w-5 h-5" />
+                  <AlertTriangle className="w-5 h-5" aria-hidden="true" />
                   <AlertDescription>{result.warning}</AlertDescription>
                 </Alert>
               )}
@@ -94,11 +94,11 @@ export function LicenseRegenerateDialog({ licenseId: propLicenseId, onRegenerate
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label className="text-foreground flex items-center gap-2">
-                      <ShieldAlert className="w-4 h-4 text-yellow-400" />
+                      <ShieldAlert className="w-4 h-4 text-yellow-400" aria-hidden="true" />
                       Copy New Key Immediately!
                     </Label>
                     <Button variant="outline" size="sm" onClick={handleCopy} className="border-border hover:bg-muted">
-                      {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+                      {copied ? <Check className="w-4 h-4 text-green-400" aria-hidden="true" /> : <Copy className="w-4 h-4" aria-hidden="true" />}
                     </Button>
                   </div>
                   <div className="p-3 bg-muted border border-border rounded-lg break-all font-mono text-xs text-foreground">
@@ -122,9 +122,9 @@ export function LicenseRegenerateDialog({ licenseId: propLicenseId, onRegenerate
             className="bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] text-white font-semibold"
           >
             {loading ? (
-              <><RefreshCw className="w-4 h-4 mr-2 motion-safe:animate-spin" />Regenerating…</>
+              <><RefreshCw className="w-4 h-4 mr-2 motion-safe:animate-spin" aria-hidden="true" />Regenerating…</>
             ) : (
-              <><RefreshCw className="w-4 h-4 mr-2" />Regenerate Key</>
+              <><RefreshCw className="w-4 h-4 mr-2" aria-hidden="true" />Regenerate Key</>
             )}
           </Button>
         </DialogFooter>

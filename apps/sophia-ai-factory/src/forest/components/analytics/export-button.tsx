@@ -60,9 +60,9 @@ export function ExportButton({
       className={cn(className)}
     >
       {loading || isExporting ? (
-        <Loader2 className="w-4 h-4 mr-2 motion-safe:animate-spin" />
+        <Loader2 className="w-4 h-4 mr-2 motion-safe:animate-spin" aria-hidden="true" />
       ) : (
-        <Download className="w-4 h-4 mr-2" />
+        <Download className="w-4 h-4 mr-2" aria-hidden="true" />
       )}
       {t('export_csv') || 'Export'}
     </Button>

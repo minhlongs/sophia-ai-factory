@@ -11,7 +11,7 @@ export function FinishStep({ saveError, saveFailed, onRetry }: FinishStepProps) 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300 text-center">
       <div className="mx-auto w-24 h-24 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mb-6">
-        <Check className="w-12 h-12 text-green-600 dark:text-green-400" />
+        <Check className="w-12 h-12 text-green-600 dark:text-green-400" aria-hidden="true" />
       </div>
 
       <div>
@@ -35,7 +35,7 @@ export function FinishStep({ saveError, saveFailed, onRetry }: FinishStepProps) 
               onClick={onRetry}
               className="mt-3 flex items-center gap-2 bg-destructive text-destructive-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-destructive/90 transition-colors"
             >
-              <RefreshCw className="w-4 h-4" />
+              <RefreshCw className="w-4 h-4" aria-hidden="true" />
               Thử lại / Retry
             </button>
           )}

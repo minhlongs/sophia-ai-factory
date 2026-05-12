@@ -65,7 +65,7 @@ export function AuditHistoryTable({ runs }: AuditHistoryTableProps) {
           {runs.map((run) => (
             <tr key={run.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
               <td className="px-4 py-3 flex items-center gap-2 text-foreground/80">
-                <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+                <Clock className="w-3.5 h-3.5 text-muted-foreground" aria-hidden="true" />
                 {formatDate(run.started_at)}
               </td>
               <td className={cn('px-4 py-3 text-center font-black text-lg tabular-nums', scoreColor(run.total_score))}>
@@ -84,7 +84,7 @@ export function AuditHistoryTable({ runs }: AuditHistoryTableProps) {
                   href={`/vi/admin/zero-gap-audit/${run.id}`}
                   className="inline-flex items-center gap-1 text-xs text-[var(--neon-cyan)] hover:underline"
                 >
-                  View <ExternalLink className="w-3 h-3" />
+                  View <ExternalLink className="w-3 h-3" aria-hidden="true" />
                 </Link>
               </td>
             </tr>

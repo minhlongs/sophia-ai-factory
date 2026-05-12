@@ -37,7 +37,7 @@ export function SopCard({ template, locale, alreadyInstalled, onInstallClick, fe
           <div className="flex items-center gap-2 mb-1">
             {isFeatured && (
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs rounded bg-amber-900/40 text-amber-300 border border-amber-700/50">
-                <Star className="w-2.5 h-2.5" />
+                <Star className="w-2.5 h-2.5" aria-hidden="true" />
                 {t('card.featured')}
               </span>
             )}
@@ -50,11 +50,11 @@ export function SopCard({ template, locale, alreadyInstalled, onInstallClick, fe
 
       <div className="flex items-center gap-3 text-xs text-muted-foreground">
         <span className="flex items-center gap-1">
-          <Zap className="w-3.5 h-3.5 text-amber-400" />
+          <Zap className="w-3.5 h-3.5 text-amber-400" aria-hidden="true" />
           {t('card.creditsPerRun', { n: template.credits_per_run })}
         </span>
         <span className="flex items-center gap-1">
-          <Clock className="w-3.5 h-3.5 text-violet-400" />
+          <Clock className="w-3.5 h-3.5 text-violet-400" aria-hidden="true" />
           {t('card.setupTime', { n: setupTime })}
         </span>
       </div>

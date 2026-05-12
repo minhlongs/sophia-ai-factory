@@ -58,7 +58,7 @@ export function LicenseMetricsTableBody({ licenses }: LicenseMetricsTableBodyPro
           <TableCell className="text-right">
             {license.overageCount ? (
               <div className="flex items-center justify-end gap-1">
-                <AlertTriangle className="w-3 h-3 text-amber-500" />
+                <AlertTriangle className="w-3 h-3 text-amber-500" aria-hidden="true" />
                 <span className="font-mono text-xs">
                   {license.overageCount}{license.billableCount ? ` (${license.billableCount} bl)` : ''}
                 </span>

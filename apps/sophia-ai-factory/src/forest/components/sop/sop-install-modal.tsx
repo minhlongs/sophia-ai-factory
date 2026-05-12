@@ -87,7 +87,7 @@ export function SopInstallModal({ template, locale, open, onClose, installAction
             {t('title')}
             <CategoryBadge category={template.category} />
             <span className="flex items-center gap-1 text-xs text-muted-foreground font-normal ml-auto">
-              <Clock className="w-3 h-3" />
+              <Clock className="w-3 h-3" aria-hidden="true" />
               {t('setupTime', { n: setupTime })}
             </span>
           </DialogTitle>
@@ -151,7 +151,7 @@ export function SopInstallModal({ template, locale, open, onClose, installAction
               className="w-full flex items-center justify-between px-4 py-3 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
             >
               <span>{t('advancedLabel')}</span>
-              {advancedOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              {advancedOpen ? <ChevronUp className="w-4 h-4" aria-hidden="true" /> : <ChevronDown className="w-4 h-4" aria-hidden="true" />}
             </button>
             {advancedOpen && (
               <div className="px-4 pb-4 pt-2 border-t border-border">

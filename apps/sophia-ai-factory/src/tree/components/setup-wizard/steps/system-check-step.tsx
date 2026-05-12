@@ -28,7 +28,7 @@ export function SystemCheckStep() {
         </div>
       </div>
       <div className="bg-blue-50 dark:bg-blue-900/10 p-4 rounded-lg text-sm text-blue-800 dark:text-blue-300 flex gap-2">
-        <AlertCircle className="w-5 h-5 flex-shrink-0" />
+        <AlertCircle className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
         <p>Bước tiếp theo: nhập API key cho dịch vụ AI. Bạn có thể bỏ qua và thêm sau trong Settings.</p>
       </div>
     </div>

@@ -130,7 +130,7 @@ export function LicenseGeneratorFormFields({
         <>
           <div>
             <Label className="text-foreground flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
+              <Calendar className="w-4 h-4" aria-hidden="true" />
               Expiration Date
             </Label>
             <Input

@@ -44,7 +44,7 @@ export function LicenseRevokeDialog({ licenseId, onRevoke, onClose }: LicenseRev
       <DialogContent className="sm:max-w-[500px] bg-card border-border">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-foreground">
-            <Ban className="w-5 h-5 text-red-400" />
+            <Ban className="w-5 h-5 text-red-400" aria-hidden="true" />
             Revoke License Key
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
@@ -54,7 +54,7 @@ export function LicenseRevokeDialog({ licenseId, onRevoke, onClose }: LicenseRev
 
         <div className="space-y-4 py-4">
           <Alert variant="destructive" className="bg-red-500/10 border-red-500/30 text-red-400">
-            <AlertTriangle className="w-4 h-4" />
+            <AlertTriangle className="w-4 h-4" aria-hidden="true" />
             <AlertDescription>
               <strong>Warning:</strong> This action cannot be undone. The license key will be permanently invalid.
             </AlertDescription>

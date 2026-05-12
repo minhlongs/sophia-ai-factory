@@ -49,7 +49,7 @@ export function LicenseList({ onRevoke, onView, onRegenerate, onExtend }: Licens
     <Card className="bg-card border-border shadow-sm">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-foreground">
-          <Key className="w-5 h-5 text-[var(--neon-cyan)]" />
+          <Key className="w-5 h-5 text-[var(--neon-cyan)]" aria-hidden="true" />
           License Keys ({total})
         </CardTitle>
       </CardHeader>

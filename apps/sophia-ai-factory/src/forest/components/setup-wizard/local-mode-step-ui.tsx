@@ -42,7 +42,7 @@ export function CopyBox({ text }: CopyBoxProps) {
         aria-label="Sao chép lệnh cài đặt / Copy install command"
         className="shrink-0 p-1.5 rounded hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
       >
-        {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-muted-foreground" />}
+        {copied ? <Check className="w-4 h-4 text-green-600" aria-hidden="true" /> : <Copy className="w-4 h-4 text-muted-foreground" aria-hidden="true" />}
       </button>
     </div>
   );
@@ -55,37 +55,37 @@ interface StatusBadgeProps { status: LocalModeStatus }
 export function StatusBadge({ status }: StatusBadgeProps) {
   const map: Record<LocalModeStatus, { icon: React.ReactNode; label: string; className: string }> = {
     idle: {
-      icon: <Loader2 className="w-4 h-4 motion-safe:animate-spin" />,
+      icon: <Loader2 className="w-4 h-4 motion-safe:animate-spin" aria-hidden="true" />,
       label: 'Đang kiểm tra…',
       className: 'bg-muted text-muted-foreground',
     },
     ineligible: {
-      icon: <XCircle className="w-4 h-4" />,
+      icon: <XCircle className="w-4 h-4" aria-hidden="true" />,
       label: 'Không tương thích / Ineligible',
       className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300',
     },
     'not-provisioned': {
-      icon: <AlertCircle className="w-4 h-4" />,
+      icon: <AlertCircle className="w-4 h-4" aria-hidden="true" />,
       label: 'Chưa cài đặt / Not installed',
       className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300',
     },
     polling: {
-      icon: <Loader2 className="w-4 h-4 motion-safe:animate-spin" />,
+      icon: <Loader2 className="w-4 h-4 motion-safe:animate-spin" aria-hidden="true" />,
       label: 'Đang chờ cài đặt… / Waiting for installer…',
       className: 'bg-muted text-muted-foreground',
     },
     'provisioned-healthy': {
-      icon: <CheckCircle className="w-4 h-4" />,
+      icon: <CheckCircle className="w-4 h-4" aria-hidden="true" />,
       label: 'Đang hoạt động / Healthy',
       className: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300',
     },
     'provisioned-stale': {
-      icon: <Clock className="w-4 h-4" />,
+      icon: <Clock className="w-4 h-4" aria-hidden="true" />,
       label: 'Chậm phản hồi / Stale',
       className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300',
     },
     'provisioned-failed': {
-      icon: <XCircle className="w-4 h-4" />,
+      icon: <XCircle className="w-4 h-4" aria-hidden="true" />,
       label: 'Lỗi kết nối / Failed',
       className: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300',
     },

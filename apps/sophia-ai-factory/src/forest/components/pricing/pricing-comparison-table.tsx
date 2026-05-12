@@ -36,8 +36,8 @@ function formatNum(n: number): string {
 }
 
 function Cell({ value }: { value: string | boolean }) {
-  if (value === true) return <Check className="w-4 h-4 text-green-500 mx-auto" />;
-  if (value === false) return <Minus className="w-4 h-4 text-slate-300 dark:text-slate-700 mx-auto" />;
+  if (value === true) return <Check className="w-4 h-4 text-green-500 mx-auto" role="img" aria-label="Included" />;
+  if (value === false) return <Minus className="w-4 h-4 text-slate-300 dark:text-slate-700 mx-auto" role="img" aria-label="Not included" />;
   return <span className="text-sm text-slate-700 dark:text-slate-300">{value}</span>;
 }
 

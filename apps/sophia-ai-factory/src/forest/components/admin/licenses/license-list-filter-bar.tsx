@@ -48,7 +48,7 @@ export function LicenseListFilterBar({
       </div>
       <Select value={tierFilter} onValueChange={onTierChange}>
         <SelectTrigger className="w-[150px] bg-muted border-border">
-          <Filter className="w-4 h-4 mr-2" />
+          <Filter className="w-4 h-4 mr-2" aria-hidden="true" />
           <SelectValue placeholder="All Tiers" />
         </SelectTrigger>
         <SelectContent>
@@ -74,9 +74,10 @@ export function LicenseListFilterBar({
         variant="outline"
         size="icon"
         onClick={onRefresh}
+        aria-label="Refresh license list"
         className="border-border hover:bg-muted"
       >
-        <RefreshCw className="w-4 h-4" />
+        <RefreshCw className="w-4 h-4" aria-hidden="true" />
       </Button>
     </div>
   );

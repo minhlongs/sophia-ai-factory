@@ -39,7 +39,7 @@ export function WizardStepper({ currentStep, steps }: WizardStepperProps) {
                 )}
               >
                 {isCompleted ? (
-                  <Check className="w-6 h-6" />
+                  <Check className="w-6 h-6" aria-hidden="true" />
                 ) : (
                   <span className="font-semibold">{stepNum}</span>
                 )}

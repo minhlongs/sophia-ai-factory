@@ -73,7 +73,7 @@ export function SopRunTimeline({ initialRun }: SopRunTimelineProps) {
     <div className="space-y-4">
       <div className="flex items-center gap-3">
         <RunStatusBadge status={run.status} />
-        {!isTerminal && <Loader2 className="w-4 h-4 motion-safe:animate-spin text-blue-400" />}
+        {!isTerminal && <Loader2 className="w-4 h-4 motion-safe:animate-spin text-blue-400" aria-hidden="true" />}
       </div>
 
       {steps.length === 0 ? (
@@ -95,7 +95,7 @@ export function SopRunTimeline({ initialRun }: SopRunTimelineProps) {
                   className="inline-flex items-center gap-1 text-xs text-violet-400 hover:text-violet-300 transition-colors shrink-0"
                 >
                   {t('viewMission')}
-                  <ExternalLink className="w-3 h-3" />
+                  <ExternalLink className="w-3 h-3" aria-hidden="true" />
                 </Link>
               </div>
             </li>
@@ -121,7 +121,7 @@ export function SopRunTimeline({ initialRun }: SopRunTimelineProps) {
       {run.error_message && (
         <div className="mt-2 p-3 bg-red-950/30 border border-red-800/50 rounded-lg">
           <div className="flex items-center gap-2 text-red-400 text-sm">
-            <XCircle className="w-4 h-4 shrink-0" />
+            <XCircle className="w-4 h-4 shrink-0" aria-hidden="true" />
             <span>{run.error_message}</span>
           </div>
         </div>

@@ -90,7 +90,7 @@ export function InstallationListTable({ installations, locale }: InstallationLis
                   <div className="flex items-center gap-2">
                     <Link href={`/dashboard/sops/${inst.id}`}>
                       <Button size="sm" variant="outline" className="h-7 px-2">
-                        <Eye className="w-3.5 h-3.5" />
+                        <Eye className="w-3.5 h-3.5" aria-hidden="true" />
                       </Button>
                     </Link>
                   </div>

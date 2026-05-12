@@ -124,7 +124,7 @@ export function AuditLogTable({ licenseId }: AuditLogTableProps) {
       <CardHeader>
         <CardTitle className="flex items-center justify-between text-foreground">
           <div className="flex items-center gap-2">
-            <FileText className="w-5 h-5 text-[var(--neon-cyan)]" />
+            <FileText className="w-5 h-5 text-[var(--neon-cyan)]" aria-hidden="true" />
             Audit Logs
           </div>
           <div className="flex gap-2">
@@ -134,16 +134,17 @@ export function AuditLogTable({ licenseId }: AuditLogTableProps) {
               onClick={handleExport}
               className="border-border hover:bg-muted"
             >
-              <Download className="w-4 h-4 mr-2" />
+              <Download className="w-4 h-4 mr-2" aria-hidden="true" />
               Export CSV
             </Button>
             <Button
               variant="outline"
               size="icon"
               onClick={fetchLogs}
+              aria-label="Refresh audit logs"
               className="border-border hover:bg-muted"
             >
-              <RefreshCw className="w-4 h-4" />
+              <RefreshCw className="w-4 h-4" aria-hidden="true" />
             </Button>
           </div>
         </CardTitle>

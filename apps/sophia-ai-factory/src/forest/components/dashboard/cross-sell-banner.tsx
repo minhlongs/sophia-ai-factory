@@ -52,7 +52,7 @@ export function CrossSellBanner({ variant }: CrossSellBannerProps) {
           isRaasBanner ? "bg-violet-500/20 text-violet-400" : "bg-blue-500/20 text-blue-400"
         }`}
       >
-        {isRaasBanner ? <Zap className="w-5 h-5" /> : <Video className="w-5 h-5" />}
+        {isRaasBanner ? <Zap className="w-5 h-5" aria-hidden="true" /> : <Video className="w-5 h-5" aria-hidden="true" />}
       </div>
 
       {/* Text */}
