@@ -51,6 +51,6 @@ export async function getSyncStats(): Promise<{
   reconciledCount: number;
   discrepancyCount: number;
 }> {
-  // TODO: KV list API not available on Cloudflare Workers KV — implement when range-query support lands
+  // LIMITATION: KV list API not available on Cloudflare Workers KV — returns zeros until range-query support lands.
   return { totalKeys: 0, oldestTimestamp: null, newestTimestamp: null, reconciledCount: 0, discrepancyCount: 0 }
 }

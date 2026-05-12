@@ -12,7 +12,7 @@
  *
  * NOTE: Inngest chaining relies on existing functions in src/forest/inngest/functions/
  * The video.requested event triggers videoScripting which already exists.
- * Render/upload/publish chain is also wired. See TODO below for gaps.
+ * Render/upload/publish chain is also wired.
  */
 
 import { randomUUID } from 'crypto';

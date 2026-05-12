@@ -5,7 +5,7 @@
  * CRON_SECRET-guarded. D1 failure → 200 ok:false (never page founder —
  * cache is best-effort; next day's run retries).
  *
- * Closes migration 0008 TODO: "purge job deferred to Phase 4E.3".
+ * Implements the Phase 4E.3 purge job specified by migration 0008.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
