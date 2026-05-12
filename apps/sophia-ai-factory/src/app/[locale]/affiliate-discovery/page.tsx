@@ -75,7 +75,7 @@ export default async function AffiliateDiscoveryPage() {
                   </span>
                 </div>
                 <div className="flex items-center gap-1 text-xs font-medium text-amber-400 shrink-0">
-                  <Star className="w-3.5 h-3.5 fill-amber-400" />
+                  <Star className="w-3.5 h-3.5 fill-amber-400" aria-hidden="true" />
                   {networkBadge(offer.network)}
                 </div>
               </div>
@@ -90,8 +90,8 @@ export default async function AffiliateDiscoveryPage() {
                   </span>
                 </span>
                 <span className="flex items-center gap-1 text-emerald-400 group-hover:text-violet-400">
-                  <TrendingUp className="w-3 h-3" />
-                  <ExternalLink className="w-3 h-3" />
+                  <TrendingUp className="w-3 h-3" aria-hidden="true" />
+                  <ExternalLink className="w-3 h-3" aria-hidden="true" />
                 </span>
               </div>
             </a>
@@ -99,7 +99,7 @@ export default async function AffiliateDiscoveryPage() {
         </div>
       ) : (
         <div className="rounded-xl border border-border/40 bg-card/30 p-12 text-center space-y-3 mb-8">
-          <PackageOpen className="w-10 h-10 text-muted-foreground mx-auto" />
+          <PackageOpen className="w-10 h-10 text-muted-foreground mx-auto" aria-hidden="true" />
           <h2 className="text-base font-semibold text-foreground">Chưa có sản phẩm nào</h2>
           <p className="text-sm text-muted-foreground">
             No offers yet — check back soon.
@@ -108,13 +108,13 @@ export default async function AffiliateDiscoveryPage() {
             href="/pricing"
             className="inline-flex items-center gap-1.5 rounded-lg border border-violet-500/40 px-4 py-2 text-sm font-medium text-violet-400 hover:bg-violet-500/10 transition-colors"
           >
-            Xem Bảng Giá <ArrowRight className="w-4 h-4" />
+            Xem Bảng Giá <ArrowRight className="w-4 h-4" aria-hidden="true" />
           </Link>
         </div>
       )}
 
       <div className="rounded-xl border border-violet-500/30 bg-violet-500/5 p-6 text-center space-y-3">
-        <Search className="w-8 h-8 text-violet-400 mx-auto" />
+        <Search className="w-8 h-8 text-violet-400 mx-auto" aria-hidden="true" />
         <h2 className="text-lg font-semibold text-foreground">Mở Khóa Sophia Index Đầy Đủ</h2>
         <p className="text-sm text-muted-foreground max-w-md mx-auto">
           Đăng ký gói Growth trở lên để truy cập toàn bộ cơ sở dữ liệu sản phẩm liên kết,
@@ -124,7 +124,7 @@ export default async function AffiliateDiscoveryPage() {
           href="/pricing"
           className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-cyan-600 px-5 py-2.5 text-sm font-medium text-white hover:opacity-90 transition-opacity"
         >
-          Xem Bảng Giá <ArrowRight className="w-4 h-4" />
+          Xem Bảng Giá <ArrowRight className="w-4 h-4" aria-hidden="true" />
         </Link>
       </div>
     </div>

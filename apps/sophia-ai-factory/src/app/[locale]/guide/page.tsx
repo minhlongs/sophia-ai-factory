@@ -96,11 +96,11 @@ export default function GuidePage() {
           description={
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <Bot className="w-3.5 h-3.5 text-cyan-400" />
+                <Bot className="w-3.5 h-3.5 text-cyan-400" aria-hidden="true" />
                 <span>Telegram: <span className="font-mono text-cyan-400 text-xs">@Sophia_Bbot</span></span>
               </div>
               <div className="flex items-center gap-2">
-                <MessageCircle className="w-3.5 h-3.5 text-violet-400" />
+                <MessageCircle className="w-3.5 h-3.5 text-violet-400" aria-hidden="true" />
                 <span>Email: <span className="font-mono text-violet-400 text-xs">support@agencyos.network</span></span>
               </div>
             </div>
@@ -124,7 +124,7 @@ export default function GuidePage() {
             >
               <div className="text-sm font-medium text-foreground group-hover:text-violet-300 transition-colors flex items-center gap-1.5">
                 {item.label}
-                <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden="true" />
               </div>
               <div className="text-xs text-muted-foreground mt-0.5">{item.desc}</div>
             </Link>

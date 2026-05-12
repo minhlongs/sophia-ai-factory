@@ -54,7 +54,7 @@ export default function CommandsGuidePage() {
       {commandCategories.map((cat) => (
         <div key={cat.label}>
           <h2 className="text-lg font-bold text-foreground mb-3 flex items-center gap-2">
-            <span className="w-1 h-5 rounded bg-gradient-to-b from-violet-500 to-cyan-500 inline-block" />
+            <span className="w-1 h-5 rounded bg-gradient-to-b from-violet-500 to-cyan-500 inline-block" aria-hidden="true" />
             {cat.label}
           </h2>
           <div className="space-y-3">

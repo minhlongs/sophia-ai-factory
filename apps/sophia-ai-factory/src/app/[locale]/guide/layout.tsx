@@ -69,7 +69,7 @@ export default function GuideLayout({ children }: { children: React.ReactNode })
               href="/dashboard"
               className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-cyan-400 transition-colors"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="w-4 h-4" aria-hidden="true" />
               {t("guide.back_to_dashboard")}
             </Link>
 

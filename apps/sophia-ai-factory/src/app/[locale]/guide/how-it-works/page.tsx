@@ -77,7 +77,7 @@ export default function HowItWorksPage() {
                   <span className="text-sm font-medium text-foreground">{step.label}</span>
                 </div>
                 {index < flowSteps.length - 1 && (
-                  <ArrowDown className="w-5 h-5 text-muted-foreground/40 my-1" />
+                  <ArrowDown className="w-5 h-5 text-muted-foreground/40 my-1" aria-hidden="true" />
                 )}
               </div>
             );
@@ -148,7 +148,7 @@ export default function HowItWorksPage() {
             className="group flex items-center justify-between gap-2 bg-card/50 border border-border/40 rounded-xl px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:border-border/70 transition-colors"
           >
             {item.label}
-            <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden="true" />
           </Link>
         ))}
       </div>

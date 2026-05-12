@@ -77,10 +77,10 @@ export default async function StatusPage({ params }: { params: Promise<{ locale:
           </div>
           <UptimeGrid rollup={rollup} />
           <div className="flex items-center gap-4 mt-3 text-xs text-zinc-500">
-            <span className="flex items-center gap-1"><span className="w-3 h-3 bg-emerald-600 rounded-sm inline-block" />≥99.5%</span>
-            <span className="flex items-center gap-1"><span className="w-3 h-3 bg-amber-600 rounded-sm inline-block" />95-99.5%</span>
-            <span className="flex items-center gap-1"><span className="w-3 h-3 bg-red-700 rounded-sm inline-block" />&lt;95%</span>
-            <span className="flex items-center gap-1"><span className="w-3 h-3 bg-zinc-700 rounded-sm inline-block" />{t('noData')}</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-3 bg-emerald-600 rounded-sm inline-block" aria-hidden="true" />≥99.5%</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-3 bg-amber-600 rounded-sm inline-block" aria-hidden="true" />95-99.5%</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-3 bg-red-700 rounded-sm inline-block" aria-hidden="true" />&lt;95%</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-3 bg-zinc-700 rounded-sm inline-block" aria-hidden="true" />{t('noData')}</span>
           </div>
         </div>
 

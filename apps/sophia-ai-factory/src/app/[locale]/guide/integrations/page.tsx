@@ -73,7 +73,7 @@ export default function IntegrationsGuidePage() {
       {/* OpenRouter */}
       <section className="space-y-4">
         <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-          <Brain className="w-5 h-5 text-cyan-400" /> OpenRouter — Não AI Viết Kịch Bản
+          <Brain className="w-5 h-5 text-cyan-400" aria-hidden="true" /> OpenRouter — Não AI Viết Kịch Bản
         </h2>
 
         <div className="grid sm:grid-cols-3 gap-3 text-sm">
@@ -104,7 +104,7 @@ export default function IntegrationsGuidePage() {
       {/* ElevenLabs */}
       <section className="space-y-4">
         <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-          <Mic className="w-5 h-5 text-blue-400" /> ElevenLabs — Giọng Nói AI
+          <Mic className="w-5 h-5 text-blue-400" aria-hidden="true" /> ElevenLabs — Giọng Nói AI
         </h2>
 
         <div className="grid sm:grid-cols-3 gap-3 text-sm">
@@ -134,7 +134,7 @@ export default function IntegrationsGuidePage() {
       {/* D-ID */}
       <section className="space-y-4">
         <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-          <Video className="w-5 h-5 text-violet-400" /> D-ID — Avatar Video AI
+          <Video className="w-5 h-5 text-violet-400" aria-hidden="true" /> D-ID — Avatar Video AI
         </h2>
 
         <div className="grid sm:grid-cols-3 gap-3 text-sm">
@@ -162,7 +162,7 @@ export default function IntegrationsGuidePage() {
       {/* Supabase */}
       <section className="space-y-4">
         <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-          <Database className="w-5 h-5 text-emerald-400" /> Cloudflare D1 — Cơ Sở Dữ Liệu
+          <Database className="w-5 h-5 text-emerald-400" aria-hidden="true" /> Cloudflare D1 — Cơ Sở Dữ Liệu
         </h2>
         <GuideCallout variant="info">
           Cơ sở dữ liệu được Sophia cấu hình sẵn trên Cloudflare D1 (edge database). Bạn không cần thiết lập gì thêm — dữ liệu của bạn
@@ -173,7 +173,7 @@ export default function IntegrationsGuidePage() {
       {/* NOWPayments */}
       <section className="space-y-4">
         <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-          <CreditCard className="w-5 h-5 text-amber-400" /> NOWPayments — Thanh Toán Crypto
+          <CreditCard className="w-5 h-5 text-amber-400" aria-hidden="true" /> NOWPayments — Thanh Toán Crypto
         </h2>
         <GuideCallout variant="tip">
           NOWPayments cho phép nhận USDT, BTC và nhiều loại tiền điện tử khác. Liên hệ hỗ trợ
@@ -184,7 +184,7 @@ export default function IntegrationsGuidePage() {
       {/* Telegram Bot */}
       <section className="space-y-4">
         <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-          <Bot className="w-5 h-5 text-sky-400" /> Telegram Bot — Điều Khiển Từ Xa
+          <Bot className="w-5 h-5 text-sky-400" aria-hidden="true" /> Telegram Bot — Điều Khiển Từ Xa
         </h2>
         <GuideCallout variant="important">
           Xem hướng dẫn chi tiết tại trang{" "}

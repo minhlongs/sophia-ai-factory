@@ -65,7 +65,7 @@ export default function Error({
   return (
     <div role="alert" className="flex flex-col items-center justify-center min-h-screen p-4 space-y-6 text-center">
       <div className="p-4 rounded-full bg-destructive/10">
-        <Icon className="w-10 h-10 text-destructive" />
+        <Icon className="w-10 h-10 text-destructive" aria-hidden="true" />
       </div>
       <div className="space-y-2 w-full max-w-md">
         <h1 className="text-2xl font-bold text-foreground">
@@ -81,7 +81,7 @@ export default function Error({
             onClick={() => (window.location.href = "/login")}
             className="flex items-center gap-2"
           >
-            <LogIn className="w-4 h-4" />
+            <LogIn className="w-4 h-4" aria-hidden="true" />
             Đăng nhập
           </Button>
         ) : (
@@ -90,7 +90,7 @@ export default function Error({
             variant="outline"
             className="flex items-center gap-2"
           >
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw className="w-4 h-4" aria-hidden="true" />
             Thử lại
           </Button>
         )}
@@ -99,7 +99,7 @@ export default function Error({
           variant="ghost"
           className="flex items-center gap-2"
         >
-          <Home className="w-4 h-4" />
+          <Home className="w-4 h-4" aria-hidden="true" />
           Về trang chủ
         </Button>
       </div>
