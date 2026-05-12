@@ -43,6 +43,9 @@ const Toaster = dynamic(
 const FloatingHelpButton = dynamic(
   () => import("@/forest/components/guide/floating-help-button").then(m => ({ default: m.FloatingHelpButton }))
 );
+const CrispWidget = dynamic(
+  () => import("@/forest/components/support/crisp-widget").then(m => ({ default: m.CrispWidget }))
+);
 
 const geistSans = localFont({
   src: "../fonts/GeistVF.woff2",
@@ -161,6 +164,7 @@ export default async function RootLayout({
               <FloatingHelpButton />
               <Toaster />
               <ErrorReporter />
+              <CrispWidget />
             </QueryProvider>
           </ThemeProvider>
         </NextIntlClientProvider>

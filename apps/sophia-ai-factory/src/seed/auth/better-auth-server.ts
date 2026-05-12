@@ -182,7 +182,8 @@ function buildWelcomeHtml(nameOrEmail: string): string {
     <li>Create your first AI video campaign</li>
     <li>Connect Telegram bot @Sophia_Bbot for mobile access</li>
   </ol>
-  <p>Need help? Reply to this email or message @Sophia_Bbot on Telegram.</p>
+  <p>Need help? Reply to this email, open the live-chat bubble on <a href="https://sophia.agencyos.network" style="color:#6750A4;">sophia.agencyos.network</a>, or message @Sophia_Bbot on Telegram.</p>
+  <p style="color:#444;">Cần hỗ trợ? Trả lời email này, mở ô chat ở góc phải trang web, hoặc nhắn @Sophia_Bbot trên Telegram.</p>
   <p style="font-size:13px;color:#666;">Sophia AI Factory — AI-powered video production platform</p>
 </body></html>`;
 }
