@@ -110,22 +110,16 @@ Action this week:
 
 ## Post-distribution analysis (when slots reach 45/50)
 
-Generate via D1 query:
+Run the one-shot script (already wired against actual schema in
+`migrations/0066-promo-codes.sql`):
 
 ```bash
-wrangler d1 execute sophia-raas-db --remote --command "
-  SELECT
-    DATE(used_at) as redeem_day,
-    COUNT(*) as redemptions,
-    AVG(JULIANDAY(used_at) - JULIANDAY(sent_at_estimate)) as avg_days_to_redeem
-  FROM promo_redemptions
-  WHERE code='FREE100'
-  GROUP BY DATE(used_at)
-  ORDER BY redeem_day;
-"
+bash scripts/analyze-free100-redemptions.sh
 ```
 
-(Adjust query against actual schema — `promo_redemptions` table may be named differently; check `migrations/0090-promo-codes-*.sql` or similar.)
+It prints 5 sections: slot usage · per-day count · day-of-week distribution ·
+tier breakdown · 10 most recent redemptions. Pass a different code as the
+first argument to analyze other promos: `bash scripts/analyze-free100-redemptions.sh BLACKFRIDAY`.
 
 Cross-reference with the tracker above to identify:
 - Highest-converting outreach template (A vs B)
