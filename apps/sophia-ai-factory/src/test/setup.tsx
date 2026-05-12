@@ -3,6 +3,7 @@
  * Mocks Next.js modules, env vars, and Cloudflare bindings
  */
 
+import * as React from 'react';
 import { vi } from 'vitest';
 
 // ── Environment Variables ──────────────────────────────────────────────
@@ -47,8 +48,12 @@ const d1Mock = {
 (globalThis as Record<string, unknown>).__env = { KV: kvMock, DB: d1Mock };
 
 // ── Mock next/link ─────────────────────────────────────────────────────
+type LinkProps = Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> & {
+  href?: string | (() => string);
+  children?: React.ReactNode;
+};
 vi.mock('next/link', () => ({
-  default: ({ children, href, ...props }: any) => {
+  default: ({ children, href, ...props }: LinkProps) => {
     const h = typeof href === 'function' ? href() : href;
     return <a href={h} {...props}>{children}</a>;
   },
@@ -56,7 +61,7 @@ vi.mock('next/link', () => ({
 
 // ── Mock next/image ────────────────────────────────────────────────────
 vi.mock('next/image', () => ({
-  default: ({ src, alt, ...props }: any) => {
+  default: ({ src, alt, ...props }: React.ImgHTMLAttributes<HTMLImageElement>) => {
     return <img src={src} alt={alt} {...props} />;
   },
 }));
@@ -77,7 +82,7 @@ vi.mock('next/navigation', () => ({
 // ── Mock next/server (NextResponse as proper class) ────────────────────
 class MockNextResponse extends Response {
   // Make instanceof checks work properly by returning MockNextResponse instances
-  static json(data: any, init?: ResponseInit) {
+  static json(data: unknown, init?: ResponseInit) {
     const headers = new Headers({ 'content-type': 'application/json', ...init?.headers });
     return new MockNextResponse(JSON.stringify(data), {
       ...init,
