@@ -375,6 +375,130 @@ Prevent surprise bills by configuring CF notification thresholds. Dashboard-only
 
 ---
 
+## SOP 14: Automated D1 Backup (Upstash QStash Cron)
+
+Daily D1 snapshots are produced by a Worker route `/api/cron/d1-backup` triggered by Upstash QStash since GitHub scheduled workflows are blocked at account level. Output lands in R2 bucket `sophia-backups` with 30-day auto-expiration.
+
+**Architecture (one-time operator setup):**
+
+```
+Upstash QStash (cron 0 3 * * * UTC)
+  └─► HTTP POST https://sophia.agencyos.network/api/cron/d1-backup
+      header: x-cron-secret: <CRON_SECRET>
+      └─► Worker route handler
+          ├─► verifyCronAuth() — rejects without secret
+          ├─► buildD1Dump(DB) — iterates user tables, INSERT statements
+          ├─► R2 PUT sophia-backups/d1-YYYY-MM-DD.sql
+          ├─► BetterStack heartbeat (if BACKUP_HEARTBEAT_URL set)
+          └─► cron_run_log row: status=success|failure
+```
+
+**Initial Setup Checklist (operator action — first deploy only):**
+
+- [ ] **Sign up Upstash** (free tier ≥500 requests/day enough for 1/day cron): https://console.upstash.com
+- [ ] Create QStash project; copy **QSTASH_TOKEN** (Bearer).
+- [ ] Set Worker secrets:
+  ```bash
+  cd apps/sophia-ai-factory
+  echo "<your-token>" | npx wrangler secret put QSTASH_TOKEN
+  # Optional: a dedicated heartbeat URL for backup monitor
+  echo "https://uptime.betterstack.com/api/v1/heartbeat/<id>" | npx wrangler secret put BACKUP_HEARTBEAT_URL
+  ```
+
+  > Note: The route currently authenticates via `CRON_SECRET` (existing
+  > infrastructure). QStash signing verification (`QSTASH_CURRENT_SIGNING_KEY`)
+  > is NOT wired in this iteration — add later if QStash compromise risk
+  > requires defense-in-depth on top of `CRON_SECRET`.
+- [ ] **Register schedule** via QStash API (or use script `scripts/dr/configure-upstash-qstash.sh`):
+  ```bash
+  curl -X POST "https://qstash.upstash.io/v2/schedules/https://sophia.agencyos.network/api/cron/d1-backup" \
+    -H "Authorization: Bearer $QSTASH_TOKEN" \
+    -H "Upstash-Cron: 0 3 * * *" \
+    -H "Upstash-Forward-x-cron-secret: $CRON_SECRET"
+  ```
+- [ ] Wait until next 03:00 UTC; verify R2 object exists:
+  ```bash
+  npx wrangler r2 object list sophia-backups | head
+  ```
+- [ ] Download + sample-grep latest dump to confirm valid SQL:
+  ```bash
+  KEY="d1-$(date -u +%Y-%m-%d).sql"
+  npx wrangler r2 object get "sophia-backups/${KEY}" --file=/tmp/dump.sql --remote
+  grep -c "^INSERT INTO" /tmp/dump.sql   # > 0 expected
+  ```
+
+**Monitoring:**
+- BetterStack heartbeat (if configured): no-ping for >36h triggers alert.
+- `cron_run_log` table: query `SELECT * FROM cron_run_log WHERE cron_name='d1-backup' ORDER BY last_run_at DESC LIMIT 5;`
+- R2 dashboard: object count should grow ~1/day; lifecycle removes after 30d.
+
+**Cross-refs:** SOP 11 (manual backup), §8 of `deployment-guide.md` (RPO=24h, RTO=4h), `src/app/api/cron/d1-backup/route.ts`, `src/forest/dr/d1-dump-builder.ts`.
+
+---
+
+## SOP 15: DR Drill (Quarterly)
+
+Restore-from-backup exercise. Establishes empirical RTO and validates SOP 11/14. Cadence: once per quarter (Q1=Feb, Q2=May, Q3=Aug, Q4=Nov).
+
+**Goal:** Restore latest R2 snapshot to a fresh D1 database, verify schema + row counts, document elapsed time vs RTO=4h target.
+
+**Procedure:**
+
+1. **Prepare** — pick latest R2 snapshot:
+   ```bash
+   KEY=$(npx wrangler r2 object list sophia-backups --prefix='d1-' | tail -1)
+   echo "Snapshot: $KEY"
+   npx wrangler r2 object get "sophia-backups/${KEY}" --file=/tmp/drill-dump.sql --remote
+   ```
+2. **Provision test database** — create new D1 (do NOT touch prod):
+   ```bash
+   npx wrangler d1 create sophia-raas-db-drill
+   # Note the new database_id; use it in subsequent commands
+   ```
+3. **Apply migrations** to the test DB via canonical script (overrides default DB name):
+   ```bash
+   DB_NAME=sophia-raas-db-drill bash scripts/apply-migrations.sh
+   ```
+4. **Restore dump** — wrap in `PRAGMA foreign_keys = OFF;` to handle alphabetical
+   dump order across FK boundaries (the dump-builder serializes tables in name
+   order, not FK dependency order):
+   ```bash
+   START=$(date +%s)
+   echo "PRAGMA foreign_keys = OFF;" | npx wrangler d1 execute sophia-raas-db-drill --remote
+   npx wrangler d1 execute sophia-raas-db-drill --file=/tmp/drill-dump.sql --remote
+   echo "PRAGMA foreign_keys = ON;" | npx wrangler d1 execute sophia-raas-db-drill --remote
+   END=$(date +%s)
+   echo "Restore elapsed: $((END - START))s"
+   ```
+5. **Verify row counts** — sample 3 tables:
+   ```bash
+   for T in user_profiles raas_licenses orders; do
+     PROD=$(npx wrangler d1 execute sophia-raas-db --command="SELECT COUNT(*) FROM $T" --json --remote 2>/dev/null | jq '.[0].results[0]."COUNT(*)"')
+     DRILL=$(npx wrangler d1 execute sophia-raas-db-drill --command="SELECT COUNT(*) FROM $T" --json --remote 2>/dev/null | jq '.[0].results[0]."COUNT(*)"')
+     echo "$T: prod=$PROD drill=$DRILL diff=$((PROD - DRILL))"
+   done
+   ```
+   Acceptance: `|prod - drill|` ≤ 1% per table (small drift OK due to live writes during dump).
+6. **Document outcome** — append to operator notebook:
+   ```
+   DATE: 2026-MM-DD
+   Drill snapshot: d1-YYYY-MM-DD.sql
+   Restore elapsed: Ns (= N/3600 hours)
+   Row count diffs: <table>=<diff>, ...
+   Issues encountered: <list or none>
+   Acceptance: PASS (RTO actual < 4h target) | FAIL
+   ```
+7. **Cleanup** — delete the test D1:
+   ```bash
+   npx wrangler d1 delete sophia-raas-db-drill
+   ```
+
+**Acceptance criteria:** Restore elapsed ≤ RTO target (4h). All sampled tables match within 1% row count tolerance. Document any deviations; update `deployment-guide.md §8` if RTO target needs adjustment.
+
+**Cross-refs:** SOP 11 (manual snapshot), SOP 14 (automated backup), §8 `deployment-guide.md`.
+
+---
+
 ## Cross-references
 
 | Doc | Purpose |
