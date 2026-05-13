@@ -33,6 +33,15 @@ database_name = "sophia-raas-db"
 database_id = "78bd1961-b62d-43bb-b551-0c5d7d389506"
 migrations_dir = "migrations"
 
+# OpenNext tag cache (Fullstack Phase 5 G11 — 2026-05-13).
+# Aliased to the same DB as `DB` binding to avoid a separate D1 instance;
+# OpenNext writes a `revalidations` table for revalidateTag()/revalidatePath().
+# Migration: migrations/0108-opennext-tag-cache.sql
+[[d1_databases]]
+binding = "NEXT_TAG_CACHE_D1"
+database_name = "sophia-raas-db"
+database_id = "78bd1961-b62d-43bb-b551-0c5d7d389506"
+
 [[services]]
 binding = "WORKER_SELF_REFERENCE"
 service = "sophia-ai-factory"

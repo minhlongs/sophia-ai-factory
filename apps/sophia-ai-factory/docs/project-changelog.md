@@ -1,6 +1,24 @@
 # Project Changelog
 
-**Last Updated:** 2026-05-13 | **Current Version:** 1.26.5
+**Last Updated:** 2026-05-13 | **Current Version:** 1.26.6
+
+---
+
+## v1.26.6 — Fullstack 91→92/100 Roadmap — Phase 5: tagCache upgrade + G9 doctrine (2026-05-13)
+
+**Severity: P1 INFRA | Type: ISR cache + schema doctrine | Status: SHIPPED — Phase 5 of 5 (FINAL)**
+
+Close 2 audit gaps (G9 polar_customer_id, G11 tagCache=dummy) from `plans/reports/debugger-260512-2058-fullstack-audit-rescore.md`. **Discovery during Phase 5 G9**: `wrangler d1 execute --remote SELECT name FROM sqlite_master WHERE name LIKE '%license%'` returned NO `raas_licenses` table — migration 0019 NEVER applied to production. Only 4 migrations are in the prod `d1_migrations` ledger (0001/0005/0006/0030). All 54 code refs to `polar_customer_id` are dead code against a non-existent table. **G9 decision: ACCEPT** rather than churn 54 files (YAGNI). (C1) **`docs/code-standards.md`** — added "Dead Code Acceptance — polar_customer_id" section documenting: production reality verification (live `d1 execute` evidence), rationale for non-action, going-forward rules (`externalCustomerId` for new code, migration 0019 immutable, follow-up gate if table ever activated). (C2) **G11 ACTUALLY APPLIED** — upgraded `tagCache: "dummy"` (no-op) to `d1NextTagCache` from `@opennextjs/cloudflare 1.19.5`. 20 Server Action `revalidateTag()` / `revalidatePath()` call sites (campaigns, settings, SOPs, onboarding) now flush real cache entries instead of being silent no-ops. (C3) **NEW `migrations/0108-opennext-tag-cache.sql`** — creates `revalidations(tag TEXT NOT NULL, revalidatedAt INTEGER NOT NULL, stale INTEGER NOT NULL, expire INTEGER, UNIQUE(tag) ON CONFLICT REPLACE)`. Per code review H2: NO explicit indexes — `UNIQUE(tag)` creates implicit index on tag (the only field adapter filters/sorts on per source review). (C4) **MOD `wrangler.toml`** — added second `[[d1_databases]]` block: binding `NEXT_TAG_CACHE_D1` aliased to same `database_id` as `DB` binding (saves a separate D1 instance). (C5) **MOD `open-next.config.ts`** — `import d1NextTagCache from '@opennextjs/cloudflare/overrides/tag-cache/d1-next-tag-cache'`; `tagCache: d1NextTagCache`. **Critical deploy ordering executed:** migration applied to remote D1 BEFORE deploy via direct `wrangler d1 execute --remote --file=migrations/0108-...`. Verified table exists in prod (`num_tables` 116→117, sqlite_master query returns the table). NO no-op window between deploy completion and migration apply (adapter would degrade gracefully even if reversed, but this is cleaner). **Gates:** G1 typecheck PASS (0 errors), G2 lint 0 errors + 421 warnings ≤ budget → exit 0 ✅, G3 test 4088/4120 PASS (32 skipped/flaky known-failures + 1 flaky `nowpayments-payout` timeout that passes isolated; matches baseline), G4 secrets PASS, G5 audit 0 HIGH. Build: 17.7s. **Code review:** 8.0/10 APPROVE_WITH_FIXES (`plans/reports/code-reviewer-260512-2300-phase5-schema-tech-debt.md`) — 2 CRITICAL (C1 git-staging, C2 deploy-ordering) FIXED inline, H2 redundant indexes FIXED inline. **Plan:** `plans/260512-2105-fullstack-100of100-roadmap/phase-05-schema-tech-debt.md`. **Score:** 91 → **92/100** (G9 accepted +0, G11 applied +1; below 93 projection but +1 was best achievable given G9 dead-code scope).
+
+**Operator action AFTER this deploy:**
+1. Verify `revalidations` table exists: `npx wrangler d1 execute sophia-raas-db --remote --command="SELECT name FROM sqlite_master WHERE name='revalidations';"` → returns one row ✅ (already done).
+2. Smoke-test tag invalidation: trigger any Server Action that calls `revalidateTag()` (e.g., toggle a setting at `/dashboard/settings`), then query `SELECT COUNT(*) FROM revalidations WHERE tag LIKE '%settings%';` → expect ≥1 row.
+
+**Follow-ups (discovered, low priority):**
+1. **Broader raas_licenses dead-code surface** — code review M1 flagged: ~20 files do `db.from('raas_licenses')` reads against the non-existent table. Phase 5 acceptance is scoped to `polar_customer_id` column only; the full table miss is a separate cleanup ticket (decision: activate the table OR refactor 20 files to read from `user_profiles.subscription_tier`).
+2. **revalidations table growth** — adapter writes rows monotonically per build-id rotation; no cleanup. Future: hourly cron purging `WHERE revalidatedAt < (strftime('%s','now') - 86400)`.
+3. **`@opennextjs/cloudflare` version pin** — currently `^1.19.5`; migration 0108 is coupled to v1.19 schema. Consider `~1.19.5` (patch-only) or exact-pin until v2.x stable to avoid silent schema drift.
+4. **G2 lint warning ratchet** — 421 baselined warnings (265 unused-vars autofixable). Future cleanup: `eslint --fix` + manual prefix `_` for legitimate unused params, then rebaseline downward.
 
 ---
 

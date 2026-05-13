@@ -499,3 +499,37 @@ const jwt = await createEnrichedJwt(userId, nonce, {}, quotaCheckerProvider);
 ```
 
 **Why:** Breaks circular dependencies while keeping seed layer domain-agnostic. Tests inject mock providers; production injects real implementations. See `src/seed/auth/enriched-jwt.ts` (v1.26.2) for reference.
+
+---
+
+## Dead Code Acceptance — `polar_customer_id`
+
+### Status
+
+The `polar_customer_id` column appears in `migrations/0019-raas-licenses.sql` line 22 and is referenced by ~54 code sites across `src/land/billing/`, `src/forest/quota/`, `src/forest/components/license/`, and `src/forest/usage-metering/`. **Polar.sh has rejected this product** (see `apps/sophia-ai-factory/CLAUDE.md`); NOWPayments is the primary payment provider.
+
+### Production reality (verified 2026-05-13 via `wrangler d1 execute --remote`)
+
+- `raas_licenses` table **does not exist in production** — migration 0019 never applied to remote D1
+- Only 4 migrations actually applied: 0001, 0005, 0006, 0030
+- Production tier resolution flows through `user_profiles.subscription_tier` (Better Auth + Supabase legacy), NOT through `raas_licenses`
+- All `polar_customer_id` code paths execute against a non-existent table → effectively dead code
+
+### Decision (Fullstack Phase 5 G9)
+
+**Accept the dead column.** Rationale:
+
+1. The column lives only in an unapplied migration file; production has no exposure
+2. Refactoring 54 code references for a never-executed path adds churn without value (YAGNI)
+3. Future RaaS license activation (if revived) would migrate from NOWPayments customer IDs, not Polar — a clean column rename can happen at that point
+
+### Rules going forward
+
+- ❌ Do NOT add new references to `polar_customer_id` in new code
+- ❌ Do NOT modify `migrations/0019-raas-licenses.sql` (existing migrations are immutable)
+- ✅ DO use neutral naming (`externalCustomerId` / `external_customer_id`) for any new license-related code
+- ✅ DO mark fields as `Polar (deprecated)` in UI components that surface them to admins (already the case in `license-status-usage-section.tsx`)
+
+If the `raas_licenses` table is ever activated in production, file a follow-up to either:
+(a) write a migration to rename `polar_customer_id` → `external_customer_id`, OR
+(b) DROP the column if no historical IDs need preservation.
