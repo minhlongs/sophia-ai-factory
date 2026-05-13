@@ -4,6 +4,14 @@
 
 ---
 
+## v1.26.7 — Phase 5 hotfix — revert d1NextTagCache (dual-binding unsupported) (2026-05-13)
+
+**Severity: P1 ROLLBACK | Type: Deploy fix | Status: SHIPPED**
+
+Deploy of v1.26.6 failed at `populateD1TagCache` step: OpenNext CLI errored `No D1 binding "NEXT_TAG_CACHE_D1" found!` because **wrangler does not allow aliasing a single `database_id` to two binding names** (verified via deploy crash — both `DB` and `NEXT_TAG_CACHE_D1` pointing at the same sophia-raas-db database_id was rejected). Reverted `tagCache: d1NextTagCache` → default `"dummy"` (no-op state); removed the second `[[d1_databases]]` block from wrangler.toml. Documented the limitation + future plan in `open-next.config.ts` comment (provision `sophia-tag-cache` separate D1 instance, then restore the binding + config). Migration `0108-opennext-tag-cache.sql` left applied (the `revalidations` table is harmless residual; will be used when tagCache flipped back on with proper D1). **Score impact:** revert wipes G11 +1, so net Phase 5 contribution: 0 (G9 acceptance unchanged). **Cumulative score:** 91/100 (NOT 92 as v1.26.6 claimed; Phase 5 contributed 0 due to G11 deploy failure). **Lesson learned:** dual-binding wrangler pattern is unsupported; document this in `docs/code-standards.md` for future ISR adapter evaluations.
+
+---
+
 ## v1.26.6 — Fullstack 91→92/100 Roadmap — Phase 5: tagCache upgrade + G9 doctrine (2026-05-13)
 
 **Severity: P1 INFRA | Type: ISR cache + schema doctrine | Status: SHIPPED — Phase 5 of 5 (FINAL)**
