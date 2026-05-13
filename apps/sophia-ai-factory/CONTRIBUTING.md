@@ -2,27 +2,49 @@
 
 This document is for developers who want to modify the source code. If you are a user, please see `HANDOFF.md`.
 
+> **📖 Canonical Developer SOPs:** [`docs/dev-sops.md`](./docs/dev-sops.md) — 10 SOPs covering setup, testing, routes, layers, deploy, git, debug, structure, CI gates, security.
+
 ## Tech Stack
 - **Framework**: Next.js 16.1.6 (App Router)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS 4
 - **State**: React Server Components + Client Hooks
+- **Deploy**: Cloudflare Workers via CF-direct (`npm run deploy:full`)
+- **DB**: Cloudflare D1 (`createServerClient()` from `@/lib/db/client`, sync)
+- **Auth**: Better Auth (`getCurrentUser()` from `@/lib/better-auth-session`)
+- **Payments**: NOWPayments (primary), PayOS (Vietnam backup). Polar.sh + PayPal BANNED.
 
-## Project Structure
-- `src/app`: App Router pages
-- `src/lib`: Utility functions and validators
-- `src/components`: Reusable UI components
-- `scripts`: CLI setup tools
+## Project Structure (4-Layer Architecture)
+
+```
+src/
+├── seed/    # Foundational primitives (types, config, db, auth, logger)
+├── tree/    # Domain reusable (byok, telegram, handover, audit)
+├── forest/  # Infra orchestrators (inngest, raas, quota, metering)
+├── land/    # Business workflows (billing, payouts, affiliates, promo)
+├── app/     # Next.js App Router (routes + api/)
+└── lib/     # Canonical aliases (better-auth-session, db/client) + legacy
+```
+
+Import direction: `seed ← tree ← forest ← land`. See [`.claude/rules/sophia-layer-architecture.md`](./.claude/rules/sophia-layer-architecture.md).
 
 ## Setup for Development
-1. Run `npm install`
-2. Run `npm run dev`
-3. Edit `src/app/page.tsx` for the dashboard.
+1. `npm install`
+2. `cp .dev.vars.example .dev.vars` (fill secrets)
+3. `npx wrangler login`
+4. `npm run dev` → http://localhost:3000
+5. `npm test -- --run` to verify
+
+Full setup: [SOP 1 in `docs/dev-sops.md`](./docs/dev-sops.md#sop-1-environment-setup).
 
 ## Code Standards
-- Use `kebab-case` for filenames.
-- Keep components under 200 lines.
-- Use `zod` for validation.
+- `kebab-case` filenames, < 200 lines per file
+- Zero `:any`, zero `console.log` in prod code
+- Zod validate ALL API inputs
+- Tier enum: `BASIC | PREMIUM | ENTERPRISE | MASTER` (uppercase)
+- **Banned imports:** `@/lib/auth`, `@/lib/subscription`, `@/lib/unified-tier-config`, `@/lib/tier-gate`
+
+Full standards: [`docs/code-standards.md`](./docs/code-standards.md) + [SOP 10 in dev-sops](./docs/dev-sops.md#sop-10-security-checklist).
 
 ## Environment Variables
 See `.env.example` (if available) or the Setup Wizard's output in `.env.local`.

@@ -17,14 +17,12 @@ export interface CreditRule {
   creditsPer1k?: number;
 }
 
-/** Quota limit configuration per tier */
-export interface QuotaLimit {
-  tier: string;
-  dailyCredits: number;
-  hourlyCredits: number;
-  dailyRequests: number;
-  monthlyCredits: number;
-}
+/**
+ * Quota limit configuration per tier.
+ * Canonical definition moved to `@/seed/types/quota-limit` (mekong layer rule).
+ * Re-exported here to preserve existing import sites in forest/land/test code.
+ */
+export type { QuotaLimit } from '@/seed/types/quota-limit';
 
 /** Quota check result */
 export interface QuotaCheckResult {

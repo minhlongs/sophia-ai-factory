@@ -1,7 +1,38 @@
 # Codebase Summary
 
 **Last Updated:** 2026-05-12
-**Version:** 1.16.0 (Wave 8: Proposal consolidation + Phase 03 payouts dual-rail + Phase 08 handover + prevention layers)
+**Version:** 1.26.2 (Wave 26: Mekong SOP Gap Bridge — unified SOPs + 5 CI gates + DI layer boundary enforcement)
+
+**Wave 26 (2026-05-12)** — Mekong SOP Gap Bridge (3 phases):
+
+**Phase 1 — Unified Developer SOPs** (docs/dev-sops.md, 277 LOC):
+- Created canonical SOP doc adapted from mekong-cli for sophia's stack (Next.js 16 + CF Workers + Better Auth + D1)
+- 10 sections: Environment Setup, Test Suite, Add API Route, Modify Layers, CF-direct Deploy, Git Workflow, Debug, Project Structure, CI Gates, Security Checklist
+- Cross-links existing runbooks (payout-operations, load-testing, contributor-handover)
+- CONTRIBUTING.md + README.md updated with dev-sops.md link
+
+**Phase 2 — 5 CI Enforcement Gates** (husky + npm scripts, 0 GitHub Actions changes):
+- **G1 typecheck:** `npm run ci:typecheck` (tsc --noEmit)
+- **G2 lint:** `npm run ci:lint` (eslint --max-warnings=0)
+- **G3 test:** `npm run ci:test` (vitest run)
+- **G4 secrets:** `npm run ci:secrets` (secretlint on src/)
+- **G5 audit:** `npm run ci:audit` (npm audit --audit-level=high)
+- Wired via `.husky/pre-commit` (lint-staged on TSX) + `.husky/pre-push` (full test + audit)
+- `npm run ci` chains all 5 gates sequentially
+- Pre-existing lint debt flagged: 275 errors + 368 warnings (baseline cleanup deferred to Wave 27)
+
+**Phase 3 — DI Inversion for seed→forest/tree Layer Boundary:**
+- NEW `src/seed/types/{quota-limit.ts, quota-provider.ts}` — canonical interfaces
+- MOD `src/seed/auth/enriched-jwt.ts` — `createEnrichedJwt()` accepts optional `quotaProvider?: QuotaProvider` DI param (defensive EMPTY_QUOTA fallback with logger.warn)
+- MOD `src/seed/auth/better-auth-server.ts` — removed static forest/tree imports, converted to lazy `await import(...)` in callbacks
+- ESLint `eslint.config.mjs` — removed 3 of 4 exemptions (`enriched-jwt`, `enriched-jwt-types`, `better-auth-server`); `enforce-tier-quota` still deferred
+- Result: `grep -rn "from ['\"]@/forest" src/seed/auth/` returns 0 results
+- Tests: 36/36 enriched-jwt tests passing, 0 new ESLint violations on fixed files
+
+**Follow-ups (low priority):**
+- Phase 4 PEV port deferred per YAGNI (sophia uses Inngest, no multi-step orchestration)
+- G2 lint baseline cleanup (275 errors) → Wave 27
+- `enforce-tier-quota.ts` exemption still deferred (security cluster work)
 
 **Wave 8 (2026-05-12)** — Consolidate proposal surfaces (monorepo cleanup):
 
@@ -241,6 +272,38 @@ Sophia AI Video Factory is a Next.js 16 application structured around the App Ro
 - `vi.stubEnv()` for environment isolation per test
 
 See `docs/testing-guide.md` and `docs/code-standards.md` (Testing Standards section) for detailed patterns.
+
+## Developer SOPs & CI Gates
+
+**Canonical onboarding:** See [`docs/dev-sops.md`](./dev-sops.md) (10 sections, 277 LOC). Unified developer handbook covering environment setup, test suite, adding API routes, modifying layers, CF-direct deploy, git workflow, debugging, project structure, CI gates, security checklist. Adapted from mekong-cli for sophia's stack.
+
+**5 Enforcement gates (Wave 26, Phase 2):**
+| Gate | Command | Description |
+|------|---------|---|
+| G1 | `npm run ci:typecheck` | TypeScript strict check (0 errors required) |
+| G2 | `npm run ci:lint` | ESLint (0 errors + warnings via --max-warnings=0) |
+| G3 | `npm run ci:test` | Vitest run (1398+ tests required to pass) |
+| G4 | `npm run ci:secrets` | secretlint on src/ (prevent credential leaks) |
+| G5 | `npm run ci:audit` | npm audit (high/critical vulns, non-blocking) |
+
+Run all gates: `npm run ci` (sequential chain). Integrated via `.husky/pre-commit` (lint-staged on TSX) + `.husky/pre-push` (full test + audit).
+
+**Setup:** `npm install` auto-initializes husky via `prepare` script. Git config scoped to `apps/sophia-ai-factory/.husky` (monorepo isolation).
+
+## Layer Architecture & DI Pattern
+
+**4-layer model** (seed → tree → forest → land): See [`docs/system-architecture.md`](./system-architecture.md) and [`.claude/rules/sophia-layer-architecture.md`](../.claude/rules/sophia-layer-architecture.md).
+
+**DI Pattern (Wave 26, Phase 3):** Eliminated 3 of 4 seed→forest hard dependencies via dependency injection:
+- **NEW `src/seed/types/quota-provider.ts`** — `QuotaProvider` interface (DI contract for quota lookup)
+- **MOD `src/seed/auth/enriched-jwt.ts`** — `createEnrichedJwt()` accepts optional `quotaProvider?: QuotaProvider` param; defensive EMPTY_QUOTA fallback with logger.warn if undefined
+- **MOD `src/seed/auth/better-auth-server.ts`** — Replaced static forest/tree imports with lazy `await import(...)` in Better Auth callbacks
+- **Result:** `grep -rn "from ['\"]@/forest" src/seed/auth/` now returns 0 results
+
+**Canonical patterns:**
+- Layer boundaries enforced by ESLint `no-restricted-imports` rule (`.eslintrc.mjs`)
+- Test fixtures inject DI providers via function params, not module-level mocks
+- Forward reference in dev-sops SOP 4 ("Modify Layers") documents DI pattern adoption
 
 ## Tech Stack Details
 - **Framework**: Next.js 16.1.6

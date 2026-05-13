@@ -21,7 +21,7 @@ Sophia is a turnkey solution that automates the entire lifecycle of "Faceless" Y
 3. Setup: Follow the Wizard at `http://localhost:3000`
 
 ## 🛠 Developer Info
-Want to customize the code? Read [CONTRIBUTING.md](./CONTRIBUTING.md).
+Want to customize the code? Start with [CONTRIBUTING.md](./CONTRIBUTING.md), then dive into [docs/dev-sops.md](./docs/dev-sops.md) — 10 canonical Developer SOPs (setup, testing, routes, deploy, debug, CI gates, security).
 
 ## 🏗 Architecture / Kiến trúc
 Codebase follows the Mekong 4-layer model (`seed → tree → forest → land`) with one-way import direction enforced by ESLint — see [docs/system-architecture.md](./docs/system-architecture.md).

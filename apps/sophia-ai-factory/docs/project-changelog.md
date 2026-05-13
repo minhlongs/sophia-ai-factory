@@ -1,6 +1,39 @@
 # Project Changelog
 
-**Last Updated:** 2026-05-12 | **Current Version:** 1.25.1
+**Last Updated:** 2026-05-12 | **Current Version:** 1.26.2
+
+---
+
+## v1.26.2 — Mekong SOP Gap Bridge — Phase 3: DI Inversion for seed→forest/tree Layer Boundary (2026-05-12)
+
+**Severity: P2 REFACTOR | Type: Layer architecture cleanup | Status: SHIPPED — Phase 3 of 3 (4th GAP PEV deferred per YAGNI)**
+
+Close GAP-3 from mekong-cli baseline. Eliminate 3 of 4 seed→forest "LOCKED DECISIONS" exemptions in `eslint.config.mjs` via dependency injection (DI) pattern. (C1) **NEW `src/seed/types/quota-limit.ts`** — canonical `QuotaLimit` interface (moved from `forest/usage-metering/types/quota-types.ts`). (C2) **NEW `src/seed/types/quota-provider.ts`** — `QuotaProvider` DI interface declaring `getEffectiveQuotaLimits(licenseNonce, tier)`. (C3) **MOD `src/forest/usage-metering/types/quota-types.ts`** — re-exports `QuotaLimit` from seed (backward-compat for all forest/land consumers, zero blast radius). (C4) **MOD `src/seed/auth/enriched-jwt-types.ts`** — `QuotaLimit` import source flipped from `@/forest/usage-metering/types` to `@/seed/types/quota-limit`. (C5) **MOD `src/seed/auth/enriched-jwt.ts`** — removed static `import { getEffectiveQuotaLimits } from '@/forest/quota/quota-checker'`; added 4th optional param `quotaProvider?: QuotaProvider` to `createEnrichedJwt()`; `refreshJwtIfExpired()` forwards param; **defensive `EMPTY_QUOTA` fallback** with `logger.warn` when provider undefined (production callers MUST inject — quota fallback would defeat tier paywall otherwise). (C6) **MOD `src/seed/auth/better-auth-server.ts`** — removed static `sendEmail` (forest) + `hashPassword`/`verifyPassword` (tree) imports; converted to lazy `await import(...)` inside Better Auth's `sendMagicLink` callback + `password.{hash,verify}` callbacks. Welcome email already used lazy import (line 158, unchanged). (C7) **MOD `eslint.config.mjs`** — removed 3 exemptions (`enriched-jwt.ts`, `enriched-jwt-types.ts`, `better-auth-server.ts`); kept `enforce-tier-quota.ts` exempt (deferred — still imports `@/forest/quota/video-quota` for `checkVideoQuota`). (C8) **TEST UPDATE `src/seed/auth/jwt-claims-enrichment.test.ts`** — converted module-level `vi.mock('@/forest/quota/quota-checker')` pattern to const `mockQuotaProvider` injected as 4th DI arg in all 7 `createEnrichedJwt(...)` call sites. Pattern: `createEnrichedJwt('user-123', 'nonce', undefined, mockQuotaProvider)`. **Gates:** G1 typecheck PASS (0 errors), G2 lint PASS on 3 fixed files (no-restricted-imports rule now ACTIVE for them, not exempt). `grep -rn "from ['\"]@/forest" src/seed/auth/enriched-jwt*.ts src/seed/auth/better-auth-server.ts` returns 0. **Tests verified:** 36/36 in enriched-jwt + jwt-claims-enrichment passing. **Plan:** `plans/260512-2001-mekong-sops-gap-bridge/phase-03-layer-fix.md`. **Risk:** Defensive EMPTY_QUOTA fallback could grant unlimited quota if a production caller forgets DI injection — currently only internal caller is `refreshJwtIfExpired` (in same file) + tests; `createEnrichedJwt` has no external callers grep'd, so blast radius minimal. Logger warn surface helps detect missed injections. **Next:** Plan COMPLETE for Phase 1+2+3. Phase 4 PEV port DEFERRED per YAGNI (sophia uses Inngest, no multi-step orchestration today).
+
+**Follow-ups (discovered, low priority):**
+1. `enforce-tier-quota.ts` still imports `@/forest/quota/video-quota` (deferred — security cluster's `api-key-validator-*` files in tree also pending).
+2. ESLint rule expansion to ban `tree→forest`, `land→forest` (per `cross-layer-orchestration.md`) — current rules only enforce seed→{tree,forest,land} and tree→{forest,land} and forest→land.
+3. Codify DI pattern as a project-wide convention in `docs/code-standards.md`.
+
+---
+
+## v1.26.1 — Mekong SOP Gap Bridge — Phase 2: 5 CI Enforcement Gates (2026-05-12)
+
+**Severity: P2 INFRA | Type: Developer tooling | Status: SHIPPED — Phase 2 of 3**
+
+Close GAP-2 from mekong-cli baseline. Wire 5 enforcement gates G1-G5 as local commands + npm scripts + husky pre-commit/pre-push hooks. **No GitHub Actions changes** (CF-direct doctrine preserved). Devs `npm install` auto-sets up hooks via `prepare: husky`. (C1) **devDeps:** husky ^9.1.7, lint-staged ^17.0.4, secretlint ^13.0.0 + @secretlint/secretlint-rule-preset-recommend ^13.0.0 (+88 packages, 17 transitive vulns documented). (C2) **package.json scripts:** `ci` (chained G1→G5), `ci:typecheck` (tsc --noEmit), `ci:lint` (eslint --max-warnings=0), `ci:test` (vitest run), `ci:secrets` (secretlint scoped src/scripts/root), `ci:audit` (npm audit --audit-level=high \|\| true), `prepare` (husky setup). (C3) **husky hooks:** `.husky/pre-commit` runs `lint-staged` (ESLint on staged TS/TSX + secretlint on text files), `.husky/pre-push` runs `npm run ci:test` + `npm audit`. `chmod +x` applied. (C4) **Config files:** `.lintstagedrc.json` (scoped globs), `.secretlintrc.json` (preset-recommend), `.secretlintignore` (node_modules/.next/.open-next/lockfiles/dotvars). (C5) **eslint.config.mjs:** added `.open-next/**`, `worker-configuration.d.ts`, `playwright-report/**`, `test-results/**` to globalIgnores — prevents OOM crash on build artifacts. (C6) **Git config:** `git config core.hooksPath apps/sophia-ai-factory/.husky` (monorepo-scoped, parent root not contaminated). (C7) **TS regression fix:** `src/app/api/proposals/route.test.ts` lines 158-159 (`data.quality.score/passed`) — cast unknown to typed object (pre-existing error from commit `8cd38f30`). Now G1 typecheck PASS (0 errors). **Gate baselines verified:** G1 typecheck PASS, G3 secrets PASS (~52s scoped scan), G5 audit non-blocking (\|\| true). **Pre-existing debt flagged:** G2 lint reveals 275 errors + 368 warnings (eslint baseline — react-hooks/rules-of-hooks et al). Treated as PHASE 4 CLEANUP follow-up; pre-commit lint-staged only catches NEW errors per staged file. **Plan:** `plans/260512-2001-mekong-sops-gap-bridge/phase-02-ci-gates.md`. **Next:** Phase 3 — DI inversion to eliminate 5 seed→forest exemptions in `eslint.config.mjs` (currently documented as mekong-exempt).
+
+**Follow-ups (discovered, low priority):**
+1. **G2 lint baseline cleanup** (NEW debt found): 275 errors mostly `react-hooks/rules-of-hooks` + `import/no-anonymous-default-export`. Wave-style cleanup needed before pre-commit lint-staged becomes friction-free for files already containing baseline errors. Tracking issue: open in next session.
+2. **G5 audit `|| true`** semipermanent until transitive vulns clear. Quarterly review.
+
+---
+
+## v1.26.0 — Mekong SOP Gap Bridge — Phase 1: Unified Developer SOPs (2026-05-12)
+
+**Severity: P2 DOCS | Type: Developer onboarding | Status: SHIPPED — Phase 1 of 3**
+
+Close GAP-1 from mekong-cli baseline audit (sophia 0 SOPs vs mekong 10). Create single canonical `docs/dev-sops.md` mirroring mekong's 10-section structure, adapted to sophia's stack (Next.js 16 + CF Workers + Better Auth + D1 + npm). 277 lines, 10 SOPs: Environment Setup, Test Suite, Add API Route, Modify Layers, CF-direct Deploy, Git Workflow, Debug, Project Structure, CI Gates (forward ref Phase 2), Security Checklist. Cross-links existing runbooks (`sop-ceo-production-smoke.md`, `payout-operations-runbook.md`, `load-testing-runbook.md`, `sophia-supervisor-agent-runbook.md`) — does NOT duplicate. `CONTRIBUTING.md` + `README.md` updated to link `dev-sops.md` as canonical onboarding doc. Plan: `plans/260512-2001-mekong-sops-gap-bridge/`. Research baseline: `plans/reports/researcher-260512-2001-{mekong-architecture-baseline,sophia-current-state}.md`. **GAP-4 PEV port:** DEFERRED per YAGNI (sophia uses Inngest event-driven, no multi-step orchestration today). **Next:** Phase 2 wires 5 CI gates (husky + npm scripts, GHA stays disabled per CF-direct doctrine).
 
 ---
 

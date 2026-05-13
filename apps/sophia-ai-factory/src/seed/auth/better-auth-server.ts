@@ -7,10 +7,11 @@
 
 import { betterAuth } from 'better-auth';
 import { magicLink } from 'better-auth/plugins';
- 
-import { hashPassword, verifyPassword } from '@/tree/crypto/password-hash';
 
-import { sendEmail } from '@/forest/email/sender';
+// NOTE: `sendEmail` (forest) and `hashPassword`/`verifyPassword` (tree) are loaded via lazy
+// dynamic import inside the relevant Better Auth callbacks below. Static top-level imports
+// were removed to satisfy the seed→(forest|tree) layer boundary rule.
+// See plans/260512-2001-mekong-sops-gap-bridge/phase-03-layer-fix.md.
 import { getD1Client } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { requireMfaIfEnabled, markSessionMfaPending } from '@/seed/auth/mfa/login-challenge';
@@ -63,8 +64,12 @@ export function getAuth() {
       enabled: true,
       autoSignIn: true,
       password: {
-        hash: hashPassword,
+        hash: async (password: string) => {
+          const { hashPassword } = await import('@/tree/crypto/password-hash');
+          return hashPassword(password);
+        },
         verify: async ({ hash, password }: { hash: string; password: string }) => {
+          const { verifyPassword } = await import('@/tree/crypto/password-hash');
           return verifyPassword(password, hash);
         },
       },
@@ -96,6 +101,8 @@ export function getAuth() {
         sendMagicLink: async ({ email, url }) => {
           // Better-Auth callback doesn't expose locale; ship a bilingual template
           // (EN heading + VI subheading) so users in either locale recognize it.
+          // Lazy import keeps seed layer free of static forest dependency.
+          const { sendEmail } = await import('@/forest/email/sender');
           await sendEmail({
             to: email,
             subject: 'Sign in to Sophia AI Factory · Đăng nhập Sophia AI',

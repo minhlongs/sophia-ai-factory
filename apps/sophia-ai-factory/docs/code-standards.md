@@ -467,3 +467,35 @@ Tests live in `{filename}.test.ts` alongside source. Structure:
 - `src/tree/handover/migration-plan.ts` → `src/tree/handover/migration-plan.test.ts`
 
 Use vi.resetAllMocks() after each test for clean state.
+
+## Layer Boundary — Dependency Injection Pattern (Wave 26)
+
+When seed layer needs functionality from tree/forest/land layers:
+
+1. **Define DI interface in seed:** `src/seed/types/quota-provider.ts`
+```typescript
+export interface QuotaProvider {
+  getEffectiveQuotaLimits(licenseNonce: string, tier: Tier): Promise<QuotaLimit>;
+}
+```
+
+2. **Add optional DI param to seed function:**
+```typescript
+export async function createEnrichedJwt(
+  userId: string,
+  nonce: string,
+  payload?: object,
+  quotaProvider?: QuotaProvider  // ← DI injection point
+): Promise<string> {
+  const limits = quotaProvider
+    ? await quotaProvider.getEffectiveQuotaLimits(...)
+    : EMPTY_QUOTA; // defensive fallback + logger.warn
+}
+```
+
+3. **Inject provider at call site (tree/forest/land):**
+```typescript
+const jwt = await createEnrichedJwt(userId, nonce, {}, quotaCheckerProvider);
+```
+
+**Why:** Breaks circular dependencies while keeping seed layer domain-agnostic. Tests inject mock providers; production injects real implementations. See `src/seed/auth/enriched-jwt.ts` (v1.26.2) for reference.
