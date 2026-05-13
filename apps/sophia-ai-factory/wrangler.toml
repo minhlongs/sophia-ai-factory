@@ -20,6 +20,13 @@ bucket_name = "sophia-ai-factory-opennext-cache"
 binding = "VIDEO_BUCKET"
 bucket_name = "sophia-videos"
 
+# Disaster recovery backups (Fullstack Phase 4 G1 — 2026-05-13).
+# D1 daily snapshots uploaded by /api/cron/d1-backup, triggered by external cron
+# (Upstash QStash). 30-day R2 lifecycle handles retention.
+[[r2_buckets]]
+binding = "BACKUPS_BUCKET"
+bucket_name = "sophia-backups"
+
 [[d1_databases]]
 binding = "DB"
 database_name = "sophia-raas-db"

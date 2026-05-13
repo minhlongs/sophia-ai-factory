@@ -1,6 +1,28 @@
 # Project Changelog
 
-**Last Updated:** 2026-05-13 | **Current Version:** 1.26.4
+**Last Updated:** 2026-05-13 | **Current Version:** 1.26.5
+
+---
+
+## v1.26.5 — Fullstack 87→91/100 Roadmap — Phase 4: Backup/DR Automation (2026-05-13)
+
+**Severity: P1 INFRA | Type: Disaster recovery + automation | Status: SHIPPED — Phase 4 of 5**
+
+Close 2 audit gaps (G1 D1-backup-0-runs-ever, G14 DR-drill-undefined) from `plans/reports/debugger-260512-2058-fullstack-audit-rescore.md`. **D1 backups move from blocked GH Actions onto Worker route + Upstash QStash external cron, staying inside CF-direct doctrine.** (C1) **NEW `src/forest/dr/d1-dump-builder.ts`** — pure function `buildD1Dump(db: D1Database): Promise<string>` serializes user tables to SQL INSERT statements. Handles NULL/numbers/strings/booleans/bigints/ArrayBuffer with `quoteIdent()` helper for identifiers containing `"`. Skips sqlite_* internal tables + `d1_migrations` (restore must apply migrations first). Hard cap MAX_ROWS_PER_TABLE=100k with `-- TRUNCATED` marker if exceeded. Inline note: alphabetical dump order, restore must wrap `PRAGMA foreign_keys = OFF;`. (C2) **NEW `src/forest/dr/d1-dump-builder.test.ts`** — 7 unit tests (sqlEscape edge cases + fixture-driven buildD1Dump). All pass. (C3) **NEW `src/app/api/cron/d1-backup/route.ts`** — POST/GET handler: verifyCronAuth → wasRecentlyRun (12h idempotency, skipped branch ALSO pings heartbeat + records `skipped` status) → buildD1Dump → MAX_DUMP_BYTES=50MiB size guard (Worker 128MiB ceiling + TextEncoder 2× buffer) → `BACKUPS_BUCKET.put('d1-YYYY-MM-DD.sql', bytes)` → BetterStack heartbeat → recordCronRun. Returns `{ok, objectKey, sizeBytes, durationMs}`. (C4) **NEW `scripts/dr/configure-upstash-qstash.sh`** — operator-action one-shot script invoking QStash API to register `0 3 * * *` schedule with x-cron-secret forwarding. (C5) **NEW SOP 14 `docs/dev-sops.md`** — Upstash QStash setup operator playbook: signup → token → wrangler secret put QSTASH_TOKEN → register schedule → verify R2 object exists. Note: QStash signing verification deferred (CRON_SECRET alone suffices for now). (C6) **NEW SOP 15 `docs/dev-sops.md`** — Quarterly DR drill procedure: download latest R2 dump → create test D1 (`sophia-raas-db-drill`) → apply migrations via canonical `scripts/apply-migrations.sh` → restore wrapped in `PRAGMA foreign_keys = OFF` → row-count diff vs prod (≤1% tolerance) → document RTO actual vs 4h target → cleanup. Cadence: Q1=Feb, Q2=May, Q3=Aug, Q4=Nov. (C7) **MOD `wrangler.toml`** — added `[[r2_buckets]]` block: binding `BACKUPS_BUCKET` → bucket `sophia-backups`. (C8) **R2 lifecycle external** — `wrangler r2 bucket lifecycle add sophia-backups --name delete-after-30d --expire-days 30` applied (rule confirmed via `wrangler r2 bucket lifecycle list`). (C9) **ARCHIVE `.github/workflows/d1-backup.yml`** → `d1-backup.yml.disabled` per CF-direct doctrine — GH scheduled workflows blocked at account level since 2026-05-03. **Gates:** G1 typecheck PASS (0 errors), G2 lint **0 errors + 421 warnings** ≤ budget → exit 0 ✅, G3 test 4087/4120 PASS (+6 from new dump-builder tests; same 1 flaky `nowpayments-payout` timeout — passes in isolation, not a regression), G4 secrets PASS, G5 audit 0 HIGH. **Code review:** 8.4/10 APPROVE_WITH_FIXES (`plans/reports/code-reviewer-260512-2240-phase4-backup-dr.md`) — 0 CRITICAL, 2 HIGH (BOTH fixed inline: H1 quoteIdent helper, H2 MAX_DUMP_BYTES size guard), 4 MEDIUM (M1+M2+M3 fixed inline, M4 cosmetic deferred). **Plan:** `plans/260512-2105-fullstack-100of100-roadmap/phase-04-backup-dr.md`. **Score:** 87 → 91/100. **Next:** Phase 5 schema cleanup (G9 polar_customer_id rename/drop, G11 tagCache eval) — 2h to reach 93+/100.
+
+**Operator next steps (NOT done by code — requires user action):**
+1. Sign up Upstash QStash, copy QSTASH_TOKEN.
+2. `echo "<token>" | npx wrangler secret put QSTASH_TOKEN`
+3. `QSTASH_TOKEN=... CRON_SECRET=... bash scripts/dr/configure-upstash-qstash.sh` to register schedule.
+4. After 03:00 UTC next day, verify `npx wrangler r2 object list sophia-backups --prefix='d1-'` returns ≥1 object.
+5. (Optional) Set `BACKUP_HEARTBEAT_URL` BetterStack secret for missed-run alerting.
+
+**Follow-ups (discovered, low priority):**
+1. **M4 cosmetic** — empty-table comment format inconsistent with row-count format. Cleanup on next touch.
+2. **FK-aware dump order** — current alphabetical order requires PRAGMA workaround in restore. Future: topo-sort tables by FK graph for cleaner restore.
+3. **Streaming/multipart R2 upload** — if D1 size grows past 50MiB dump, add streaming via R2's resumable upload API. MAX_DUMP_BYTES guard prevents silent OOM until then.
+4. **QStash signature verification** — defense-in-depth on top of CRON_SECRET. Wire `QSTASH_CURRENT_SIGNING_KEY` if QStash compromise concern materializes.
+5. **First DR drill scheduled Q2 (May 2026)** — operator should book a 4h window to run SOP 15 end-to-end.
 
 ---
 
