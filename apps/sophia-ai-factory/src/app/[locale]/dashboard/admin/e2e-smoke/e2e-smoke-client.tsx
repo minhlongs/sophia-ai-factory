@@ -8,6 +8,7 @@
  * @module app/[locale]/dashboard/admin/e2e-smoke/e2e-smoke-client
  */
 
+import Link from 'next/link'
 import { useState, useRef } from 'react'
 
 interface Props { locale: string }
@@ -223,12 +224,12 @@ export function E2ESmokeClient({ locale }: Props) {
             ))}
           </ol>
           {phase === 'completed' && (
-            <a
+            <Link
               href="/dashboard/orders"
               className="inline-block mt-2 text-xs text-violet-400 hover:text-violet-300 underline"
             >
               {isVi ? 'Xem đơn hàng' : 'View orders'}
-            </a>
+            </Link>
           )}
         </div>
       )}

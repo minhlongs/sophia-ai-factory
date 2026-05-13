@@ -4,6 +4,7 @@
  * @module components/dashboard/mission-control/tier-badge
  */
 
+import Link from 'next/link';
 import type { Tier } from '@/seed/types';
 import { TIER_CONFIG } from '@/seed/config/tiers';
 
@@ -25,9 +26,9 @@ export function TierBadge({ tier, href }: TierBadgeProps) {
 
   if (href) {
     return (
-      <a href={href} className={classes}>
+      <Link href={href} className={classes}>
         {label}
-      </a>
+      </Link>
     );
   }
   return <span className={classes}>{label}</span>;

@@ -5,6 +5,7 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility';
+import { toError } from '@/seed/utils/to-error';
 
 export type CronStatus = 'success' | 'failure' | 'skipped';
 
@@ -43,7 +44,7 @@ export async function recordCronRun(
       .bind(cronName, nowSec, status, errorVal)
       .run();
   } catch (err) {
-    logger.error('cron-run-tracker: recordCronRun failed', err as Error, { cronName, status });
+    logger.error('cron-run-tracker: recordCronRun failed', toError(err), { cronName, status });
   }
 }
 
@@ -70,7 +71,7 @@ export async function wasRecentlyRun(
 
     return row !== null;
   } catch (err) {
-    logger.error('cron-run-tracker: wasRecentlyRun failed', err as Error, { cronName });
+    logger.error('cron-run-tracker: wasRecentlyRun failed', toError(err), { cronName });
     // Fail open — don't block execution on DB errors
     return false;
   }
@@ -97,7 +98,7 @@ export async function getCronHealth(
 
     return row ?? null;
   } catch (err) {
-    logger.error('cron-run-tracker: getCronHealth failed', err as Error, { cronName });
+    logger.error('cron-run-tracker: getCronHealth failed', toError(err), { cronName });
     return null;
   }
 }

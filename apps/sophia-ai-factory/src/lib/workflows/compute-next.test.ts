@@ -401,12 +401,12 @@ describe('computeNext() — Sorting and params parsing', () => {
 
 describe('computeNext() — Full workflow lifecycle', () => {
   it('should step through 3-step workflow correctly', () => {
-    let missions = [
+    const missions = [
       newMission(1, 'queued'),
       newMission(2, 'blocked'),
       newMission(3, 'blocked'),
     ]
-    let wf = newWorkflow()
+    const wf = newWorkflow()
 
     // Step 1: execute first mission
     let action = computeNext(wf, missions)

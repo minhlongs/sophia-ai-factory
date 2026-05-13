@@ -7,6 +7,7 @@
  */
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useLocale } from 'next-intl';
 import { UNIFIED_TIERS } from '@/seed/config/tiers';
 import type { Tier } from '@/seed/types';
@@ -130,12 +131,12 @@ export function PlanUpgradeWidget({ currentTier, periodEnd, showHistoryLink }: P
 
       {showHistoryLink && (
         <p className="text-xs text-muted-foreground">
-          <a
+          <Link
             href="/dashboard/orders"
             className="text-violet-400 hover:text-violet-300 underline"
           >
             View past orders
-          </a>
+          </Link>
         </p>
       )}
     </div>

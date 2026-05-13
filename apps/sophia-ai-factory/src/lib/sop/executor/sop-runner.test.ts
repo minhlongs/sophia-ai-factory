@@ -162,13 +162,13 @@ describe('runSop', () => {
 
   it('returns partial status when step fails but prior steps succeeded', async () => {
     // Build db where mission poll returns failed after 1 successful step
-    let firstCallDone = false;
+    const firstCallDone = false;
     const db = buildTestDb({ missionStatus: 'succeeded' });
 
     // Override mission poll to fail on first call
     const stmtMock = db._stmt;
     const origFirst = stmtMock.first;
-    let pollCount = 0;
+    const pollCount = 0;
     stmtMock.first = vi.fn().mockImplementation(() => {
       const callCount = (stmtMock.first as ReturnType<typeof vi.fn>).mock.calls.length;
       // First 4 calls are for getInstallation, getTemplateById, createRun, appendMissionId

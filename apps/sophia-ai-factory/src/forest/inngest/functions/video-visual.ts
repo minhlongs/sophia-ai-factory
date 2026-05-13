@@ -51,7 +51,7 @@ export const videoVisual = inngest.createFunction(
         .eq('id', jobId);
     });
 
-    let videoUrl: string | null = null;
+    const videoUrl: string | null = null;
     await step.run('generate-heygen-video', async () => {
       const apiKey = process.env.HEYGEN_API_KEY;
       if (!apiKey) {

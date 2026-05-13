@@ -298,7 +298,7 @@ describe('Wave 17 Phase 02 — publishExecute video URL resolution', () => {
       mockGetCanonicalVideoUrl.mockRejectedValue(new VideoNotMirroredError(VIDEO_ID));
 
       let caughtType: string | null = null;
-      let jobMarkedFailed = false;
+      const jobMarkedFailed = false;
 
       try {
         await mockGetCanonicalVideoUrl(VIDEO_ID, TENANT_ID);

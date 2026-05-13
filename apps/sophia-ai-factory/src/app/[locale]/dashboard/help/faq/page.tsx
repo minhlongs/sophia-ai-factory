@@ -5,6 +5,7 @@
  * @module app/[locale]/dashboard/help/faq/page
  */
 
+import Link from 'next/link'
 import { HelpCircle } from 'lucide-react'
 
 interface Props {
@@ -267,12 +268,12 @@ export default async function FAQPage({ params }: Props) {
           {isVi
             ? 'Không thấy câu trả lời? Vào '
             : "Don't see your question? Visit "}
-          <a
+          <Link
             href="/dashboard/help/troubleshooting"
             className="text-violet-400 hover:underline"
           >
             {isVi ? 'Khắc phục sự cố' : 'Troubleshooting'}
-          </a>
+          </Link>
           {isVi ? ' hoặc email ' : ' or email '}
           <a
             href="mailto:support@sophia.agencyos.network"

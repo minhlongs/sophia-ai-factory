@@ -1,18 +1,17 @@
 #!/usr/bin/env sh
 # Sophia AI Factory pre-push gate
-# G2 lint (warn-only) + G3 test + G5 audit (high-severity only)
-# Bypass: git push --no-verify (DISCOURAGED)
+# G2 lint (FAIL mode — 0 errors enforced, warnings baselined at 421) + G3 test + G5 audit
+# Bypass: git push --no-verify (DISCOURAGED — escape hatch for emergency hotfixes only)
 set -e
 cd "$(git rev-parse --show-toplevel)/apps/sophia-ai-factory"
 
-# G2 lint — WARN MODE until Phase 3 code-quality sprint clears 274 errors.
-# Note: `set -e` above does NOT trip on `cmd || fallback` — POSIX explicitly
-# excludes the LHS of `||` from errexit. The `|| echo` tail therefore swallows
-# non-zero lint exits without aborting the push. To flip to fail mode, replace
-# the entire line with bare `npm run ci:lint` (drop the `|| echo`).
-# See plans/260512-2105-fullstack-100of100-roadmap/phase-01-ci-hardening.md.
-echo "[pre-push] G2 lint (warn mode — full suite)..."
-npm run ci:lint || echo "[pre-push] WARN: lint errors present (Phase 3 backlog) — not blocking push"
+# G2 lint — FAIL MODE (flipped from warn-only at end of Phase 3 on 2026-05-13).
+# `ci:lint` = `eslint --max-warnings=421` — 421 is the current baseline warning count
+# pinned to prevent regression. Any new warning OR any error blocks push.
+# To rebaseline (after intentional cleanup): re-run lint, count warnings, update
+# package.json `ci:lint` threshold downward (never upward without justification).
+echo "[pre-push] G2 lint (fail mode — full suite, baseline=421 warnings)..."
+npm run ci:lint
 
 echo "[pre-push] G3 test (vitest run)..."
 npm run ci:test

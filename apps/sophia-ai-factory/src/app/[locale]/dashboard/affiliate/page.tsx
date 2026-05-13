@@ -11,6 +11,7 @@
  */
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import {
   getAffiliateClickStats,
@@ -63,12 +64,13 @@ export default async function AffiliateDashboardPage(): Promise<React.JSX.Elemen
           <p className="text-muted-foreground">Last 30 days · per-click and conversion performance.</p>
         </div>
         <div className="flex items-center gap-2">
-          <a
+          <Link
             href="/dashboard/affiliate/payouts"
             className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-muted/40 transition"
           >
             Payout methods
-          </a>
+          </Link>
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- /api/* CSV download endpoint requires native anchor + download attribute, not a Next Link */}
           <a
             href="/api/affiliate/conversions/csv?limit=500"
             className="inline-flex items-center gap-2 rounded-md border border-[var(--neon-cyan)]/40 bg-[var(--neon-cyan)]/10 px-4 py-2 text-sm font-medium text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/20 transition"

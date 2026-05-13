@@ -20,8 +20,8 @@ function makeDb(overrides: Record<string, unknown> = {}): D1Client {
   const makeChain = (table: string) => {
     let rows = [...store[table]]
     let filterFn: (r: Record<string, unknown>) => boolean = () => true
-    let isSingle = false
-    let isMaybe = false
+    const isSingle = false
+    const isMaybe = false
     let isDelete = false
     let isUpsert = false
     let upsertData: Record<string, unknown> | null = null
