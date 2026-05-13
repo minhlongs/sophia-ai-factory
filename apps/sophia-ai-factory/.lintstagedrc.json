@@ -1,0 +1,8 @@
+{
+  "*.{ts,tsx}": [
+    "eslint --max-warnings=0"
+  ],
+  "*.{ts,tsx,js,mjs,cjs,json,md,toml,yaml,yml,sh}": [
+    "secretlint --secretlintignore .secretlintignore"
+  ]
+}

@@ -4,22 +4,20 @@
  * Tests for enriched JWT creation, verification, and claims extraction.
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   createEnrichedJwt,
   verifyEnrichedJwt,
   decodeEnrichedJwt,
   getLicenseContext,
   getDefaultEntitlements,
-  type EnrichedJwtPayload,
-  type FeatureLimit,
 } from '@/seed/auth/enriched-jwt';
 
 // Mock jose to avoid WebCrypto issues in JSDOM
 // Use regular function (not arrow) for SignJWT so `new SignJWT(payload)` works as constructor
 let mockTokenCounter = 0
 vi.mock('jose', () => ({
-  SignJWT: function MockSignJWT(payload: any) {
+  SignJWT: function MockSignJWT(payload: Record<string, unknown>) {
     const self = {
       _payload: payload,
       setProtectedHeader: function() { return self },
@@ -91,8 +89,9 @@ vi.mock('@/seed/db/client', () => ({
   }),
 }));
 
-// Mock quota checker
-vi.mock('@/forest/quota/quota-checker', () => ({
+// Mock quota provider for DI (post-Phase-3 mekong SOP bridge — createEnrichedJwt
+// now accepts QuotaProvider via DI instead of static forest import).
+const mockQuotaProvider = {
   getEffectiveQuotaLimits: async () => ({
     tier: 'PREMIUM',
     dailyCredits: 100,
@@ -100,7 +99,7 @@ vi.mock('@/forest/quota/quota-checker', () => ({
     dailyRequests: 500,
     monthlyCredits: 2000,
   }),
-}));
+};
 
 // Mock features
 vi.mock('@/lib/features', () => ({
@@ -152,7 +151,7 @@ describe('JWT Claims Enrichment Service', () => {
 
   describe('createEnrichedJwt', () => {
     it('should create enriched JWT with all required claims', async () => {
-      const result = await createEnrichedJwt('user-123', 'license-nonce-abc');
+      const result = await createEnrichedJwt('user-123', 'license-nonce-abc', undefined, mockQuotaProvider);
 
       expect(result).not.toBeNull();
       expect(result?.token).toBeDefined();
@@ -172,7 +171,7 @@ describe('JWT Claims Enrichment Service', () => {
     });
 
     it('should include quota limits in payload', async () => {
-      const result = await createEnrichedJwt('user-123', 'license-nonce-abc');
+      const result = await createEnrichedJwt('user-123', 'license-nonce-abc', undefined, mockQuotaProvider);
       const quota = result?.payload.quota;
 
       expect(quota).toBeDefined();
@@ -183,7 +182,7 @@ describe('JWT Claims Enrichment Service', () => {
     });
 
     it('should include feature limits based on tier', async () => {
-      const result = await createEnrichedJwt('user-123', 'license-nonce-abc');
+      const result = await createEnrichedJwt('user-123', 'license-nonce-abc', undefined, mockQuotaProvider);
       const limits = result?.payload.feature_limits;
 
       expect(limits).toBeDefined();
@@ -193,7 +192,7 @@ describe('JWT Claims Enrichment Service', () => {
     });
 
     it('should include JWT ID for replay prevention', async () => {
-      const result = await createEnrichedJwt('user-123', 'license-nonce-abc');
+      const result = await createEnrichedJwt('user-123', 'license-nonce-abc', undefined, mockQuotaProvider);
       expect(result?.payload.jti).toBeDefined();
       expect(result?.payload.jti?.length).toBeGreaterThan(0);
     });
@@ -203,7 +202,8 @@ describe('JWT Claims Enrichment Service', () => {
       const result = await createEnrichedJwt(
         'user-123',
         'license-nonce-abc',
-        ttlSeconds
+        ttlSeconds,
+        mockQuotaProvider,
       );
 
       const payload = result?.payload;
@@ -213,7 +213,7 @@ describe('JWT Claims Enrichment Service', () => {
 
   describe('verifyEnrichedJwt', () => {
     it('should verify valid enriched JWT', async () => {
-      const createResult = await createEnrichedJwt('user-123', 'license-nonce-abc');
+      const createResult = await createEnrichedJwt('user-123', 'license-nonce-abc', undefined, mockQuotaProvider);
       expect(createResult).not.toBeNull();
 
       const verifyResult = await verifyEnrichedJwt(createResult!.token);
@@ -240,7 +240,7 @@ describe('JWT Claims Enrichment Service', () => {
 
   describe('decodeEnrichedJwt', () => {
     it('should decode JWT without verification', async () => {
-      const createResult = await createEnrichedJwt('user-123', 'license-nonce-abc');
+      const createResult = await createEnrichedJwt('user-123', 'license-nonce-abc', undefined, mockQuotaProvider);
       const token = createResult!.token;
 
       const decoded = decodeEnrichedJwt(token);

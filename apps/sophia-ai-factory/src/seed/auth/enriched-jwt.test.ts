@@ -54,10 +54,12 @@ vi.mock('@/seed/utils/logger-utility', () => ({
   },
 }))
 
-// Mock quota checker
-vi.mock('@/forest/quota/quota-checker', () => ({
+// Quota DI mock — post-Phase-3 (mekong SOP bridge), createEnrichedJwt and
+// refreshJwtIfExpired accept a QuotaProvider via dependency injection instead of
+// a static forest import. Tests now inject this mock as the trailing param.
+const mockQuotaProvider = {
   getEffectiveQuotaLimits: vi.fn(),
-}))
+}
 
 // Mock environment variables
 const originalEnv = process.env
@@ -139,8 +141,6 @@ describe('createEnrichedJwt', () => {
   })
 
   it('should create enriched JWT with all claims', async () => {
-    const { getEffectiveQuotaLimits } = await import('@/forest/quota/quota-checker')
-
     mockSingle
       .mockResolvedValueOnce({ // First call: license context
         data: {
@@ -158,7 +158,7 @@ describe('createEnrichedJwt', () => {
         error: null,
       })
 
-    vi.mocked(getEffectiveQuotaLimits).mockResolvedValue({
+    mockQuotaProvider.getEffectiveQuotaLimits.mockResolvedValue({
       tier: 'PREMIUM',
       dailyCredits: 500,
       hourlyCredits: 100,
@@ -166,7 +166,7 @@ describe('createEnrichedJwt', () => {
       monthlyCredits: 10000,
     })
 
-    const result = await createEnrichedJwt('user-123', 'test-nonce')
+    const result = await createEnrichedJwt('user-123', 'test-nonce', undefined, mockQuotaProvider)
 
     expect(result).toBeDefined()
     expect(result?.token).toBe('mock-signed-jwt-token')
@@ -176,6 +176,9 @@ describe('createEnrichedJwt', () => {
     expect(result?.payload.agency_id).toBe('agency-123')
     expect(result?.payload.polar_customer_id).toBe('cus_abc123')
     expect(result?.payload.dunning_state).toBe('ok')
+    expect(result?.payload.quota.dailyCredits).toBe(500)
+    expect(result?.payload.quota.tier).toBe('PREMIUM')
+    expect(mockQuotaProvider.getEffectiveQuotaLimits).toHaveBeenCalledWith('test-nonce', 'PREMIUM')
   })
 
   it('should return null when license context fetch fails', async () => {
@@ -190,8 +193,6 @@ describe('createEnrichedJwt', () => {
   })
 
   it('should use custom TTL when provided', async () => {
-    const { getEffectiveQuotaLimits } = await import('@/forest/quota/quota-checker')
-
     mockSingle
       .mockResolvedValueOnce({
         data: {
@@ -209,7 +210,7 @@ describe('createEnrichedJwt', () => {
         error: null,
       })
 
-    vi.mocked(getEffectiveQuotaLimits).mockResolvedValue({
+    mockQuotaProvider.getEffectiveQuotaLimits.mockResolvedValue({
       tier: 'BASIC',
       dailyCredits: 100,
       hourlyCredits: 20,
@@ -218,10 +219,11 @@ describe('createEnrichedJwt', () => {
     })
 
     const customTtl = 7200 // 2 hours
-    const result = await createEnrichedJwt('user-123', 'test-nonce', customTtl)
+    const result = await createEnrichedJwt('user-123', 'test-nonce', customTtl, mockQuotaProvider)
 
     expect(result).toBeDefined()
     expect(result!.payload.exp! - result!.payload.iat!).toBe(customTtl)
+    expect(result?.payload.quota.dailyCredits).toBe(100)
   })
 })
 
@@ -440,9 +442,7 @@ describe('refreshJwtIfExpired', () => {
 
     const expiredToken = `${header}.${payload}.${signature}`
 
-    // Mock createEnrichedJwt to return a new token
-    const { getEffectiveQuotaLimits } = await import('@/forest/quota/quota-checker')
-
+    // Mock createEnrichedJwt to return a new token via injected DI provider
     mockSingle
       .mockResolvedValueOnce({
         data: {
@@ -460,7 +460,7 @@ describe('refreshJwtIfExpired', () => {
         error: null,
       })
 
-    vi.mocked(getEffectiveQuotaLimits).mockResolvedValue({
+    mockQuotaProvider.getEffectiveQuotaLimits.mockResolvedValue({
       tier: 'BASIC',
       dailyCredits: 100,
       hourlyCredits: 20,
@@ -468,7 +468,7 @@ describe('refreshJwtIfExpired', () => {
       monthlyCredits: 2000,
     })
 
-    const result = await refreshJwtIfExpired(expiredToken)
+    const result = await refreshJwtIfExpired(expiredToken, mockQuotaProvider)
 
     expect(result).toBe('mock-signed-jwt-token')
   })

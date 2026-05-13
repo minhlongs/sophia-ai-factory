@@ -4,7 +4,7 @@
  */
 
  
-import type { QuotaLimit } from '@/forest/usage-metering/types'
+import type { QuotaLimit } from '@/seed/types/quota-limit'
 
 export interface FeatureLimit {
   daily_limit?: number;

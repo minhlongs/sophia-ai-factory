@@ -155,8 +155,9 @@ describe('POST /api/proposals (MCU Integration)', () => {
       expect(data.mcuUsed).toBe(5);
       expect(data.remainingBalance).toBe(5); // 10 - 5
       expect(data.quality).toBeDefined();
-      expect(data.quality.score).toBe(85);
-      expect(data.quality.passed).toBe(true);
+      const quality = data.quality as { score: number; passed: boolean };
+      expect(quality.score).toBe(85);
+      expect(quality.passed).toBe(true);
       // Verify deductCredits was called with correct params
       expect(mockDeductCredits).toHaveBeenCalledWith(
         'user-123',

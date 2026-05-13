@@ -48,11 +48,9 @@ const eslintConfig = defineConfig([
   {
     files: ["src/seed/**/*.{ts,tsx}"],
     ignores: [
-      // Auth cluster — enriched JWT imports forest token types (mekong-exempt)
-      "src/seed/auth/enriched-jwt.ts",
-      "src/seed/auth/enriched-jwt-types.ts",
+      // enforce-tier-quota.ts still imports forest/quota/video-quota — Phase 3 follow-up
+      // (mekong SOP bridge plans/260512-2001-mekong-sops-gap-bridge — DI conversion deferred per planner scope).
       "src/seed/auth/enforce-tier-quota.ts",
-      "src/seed/auth/better-auth-server.ts",
       // Security cluster — api-key-validator imports tree audit/crypto-utils (mekong-exempt)
       "src/seed/security/api-key-validator-crypto.ts",
       "src/seed/security/api-key-validator-db.ts",
@@ -162,10 +160,14 @@ const eslintConfig = defineConfig([
 
   globalIgnores([
     ".next/**",
+    ".open-next/**",
     "out/**",
     "build/**",
     "next-env.d.ts",
     "coverage/**",
+    "worker-configuration.d.ts",
+    "playwright-report/**",
+    "test-results/**",
   ]),
 ]);
 
