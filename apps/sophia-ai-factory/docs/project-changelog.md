@@ -1,6 +1,21 @@
 # Project Changelog
 
-**Last Updated:** 2026-05-12 | **Current Version:** 1.26.2
+**Last Updated:** 2026-05-13 | **Current Version:** 1.26.3
+
+---
+
+## v1.26.3 — Fullstack 74→81/100 Roadmap — Phase 1+2: CI Hardening + DNS/Security (2026-05-13)
+
+**Severity: P1 INFRA | Type: Fullstack audit gap closure | Status: SHIPPED — Phase 1+2 of 5**
+
+Close 9 audit gaps (G2/G3/G6/G7/G8/G12/G13/G15/G19) from `plans/reports/debugger-260512-2058-fullstack-audit-rescore.md` baseline 74/100. Bumps Sophia to **81/100** (audit-projected post-Phase-2). (C1) **`scripts/deploy-with-sha.sh`** — added Step 5 calling `bash scripts/ci/sentry-upload-sourcemaps.sh` after wrangler deploy, guarded `|| echo "warn: ..."` (non-fatal: worker is already live; map upload failure must NOT roll back) — Phase 1 G3 closes Sentry source-map gap (was: prod errors minified since CF-direct cutover 2026-05-03). (C2) **`.husky/pre-push`** — added `npm run ci:lint` WARN-MODE call before existing `ci:test` + `npm audit`. Inline comment documents POSIX `set -e` excludes LHS of `||` from errexit. Flip-to-fail target: Phase 3 close (after 274 lint errors cleared) — Phase 1 G2 partial enforcement. (C3) **`docs/deployment-guide.md` §8 Disaster Recovery** — RPO=24h, RTO=4h, backup coverage table (D1/R2/code/secrets), recovery procedure 7-step high-level. (C4) **`docs/deployment-guide.md` §9 Email DNS** — SPF/DKIM/DMARC record table, sender address audit (4 in-code senders), `dig` verification commands, DMARC graduation plan (none→quarantine→reject). (C5) **`docs/dev-sops.md` SOP 11 Emergency D1 Backup** — manual snapshot procedure with prerequisites (R2 bucket check), 4-step upload, dry-run/--confirm restore semantics warning. (C6) **`docs/dev-sops.md` SOP 12 Sentry Alert Rules** — required-rules table (error-rate spike, new-issue, regression, perf), setup checklist (clarified `SENTRY_AUTH_TOKEN` is shell env, NOT wrangler secret). (C7) **`docs/dev-sops.md` SOP 13 CF Spend Alert** — dashboard setup checklist + review cadence + anti-patterns + budget-blown recovery procedure. (C8) **`package.json`** — added nested override `@opentelemetry/otlp-transformer > protobufjs: ^8.2.0` (was 8.0.1, HIGH vuln GHSA-66ff-xgx4-vchm code injection). Phase 2 G8 closes. **Outcomes: 0 HIGH npm vulns** (was 1), 2 moderate accepted (postcss transitive in Next.js — downgrade to v9.3.3 breaking change). (C9) **DNS changes via CF API** (Phase 1 G12 + Phase 2 G6): CAA `sophia.agencyos.network` → `0 issue "letsencrypt.org"` (restricts cert issuance to LE); TXT `sophia.agencyos.network` → `v=spf1 include:_spf.resend.com ~all` (softfail); TXT `_dmarc.sophia.agencyos.network` → `v=DMARC1; p=none; rua=mailto:dmarc-reports@sophia.agencyos.network; pct=100; adkim=r; aspf=r` (monitor mode). (C10) **R2 bucket provisioned:** `sophia-backups` (was missing — code reviewer caught — SOP 11 step 2 would have 404'd in real DR). (C11) **`plans/260512-2105-fullstack-100of100-roadmap/`** — full 5-phase plan: phase-01-ci-hardening, phase-02-dns-security, phase-03-code-quality-sprint, phase-04-backup-dr, phase-05-schema-tech-debt. **Gates:** G1 typecheck PASS (0 errors), G2 lint warn-only (274 errors pre-existing — Phase 3 backlog), G3 test PASS 4081/4113 (baseline match, 0 regression), G4 secrets PASS, G5 audit 0 HIGH (was 1). **Code review:** 8.7/10 APPROVE_WITH_FIXES (`plans/reports/code-reviewer-260512-2105-phase1-2-fullstack.md`) — all HIGH + MEDIUM fixes applied (R2 bucket provisioned, SOP 11 restore syntax corrected, snapshot filename fixed, SENTRY_AUTH_TOKEN labeling fixed, smoke script references corrected). **Plan:** `plans/260512-2105-fullstack-100of100-roadmap/plan.md`. **Audit baseline:** `plans/reports/debugger-260512-2058-fullstack-audit-rescore.md`. **Score projection:** 74 → 78 (Phase 1) → 81 (Phase 2). **Next:** Phase 3 code quality sprint (G16 layer violations, G5 a→Link codemod, G10 `:any` cleanup, G4 react-compiler triage) — ~8h.
+
+**Follow-ups (discovered, low priority):**
+1. Resend may need separate domain registration for `sophia.agencyos.network` if DKIM `d=` uses subdomain (currently relies on parent `agencyos.network` DKIM alignment).
+2. `mekongmind.com` sender (promo/trial expiry route) on separate zone — independent SPF/DKIM/DMARC tracked separately.
+3. DMARC `rua=` mailbox `dmarc-reports@sophia.agencyos.network` not yet provisioned — CF Email Routing decision pending before tightening to `p=quarantine`.
+4. G2 fail-mode flip remains gated on Phase 3 completion.
+5. `@grpc/proto-loader > protobufjs@7.5.7` left as-is (not in vuln range 8.0.0-8.0.1).
 
 ---
 

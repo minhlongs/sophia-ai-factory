@@ -1,10 +1,21 @@
 #!/usr/bin/env sh
 # Sophia AI Factory pre-push gate
-# G3 test + G5 audit (high-severity only)
+# G2 lint (warn-only) + G3 test + G5 audit (high-severity only)
 # Bypass: git push --no-verify (DISCOURAGED)
 set -e
 cd "$(git rev-parse --show-toplevel)/apps/sophia-ai-factory"
+
+# G2 lint — WARN MODE until Phase 3 code-quality sprint clears 274 errors.
+# Note: `set -e` above does NOT trip on `cmd || fallback` — POSIX explicitly
+# excludes the LHS of `||` from errexit. The `|| echo` tail therefore swallows
+# non-zero lint exits without aborting the push. To flip to fail mode, replace
+# the entire line with bare `npm run ci:lint` (drop the `|| echo`).
+# See plans/260512-2105-fullstack-100of100-roadmap/phase-01-ci-hardening.md.
+echo "[pre-push] G2 lint (warn mode — full suite)..."
+npm run ci:lint || echo "[pre-push] WARN: lint errors present (Phase 3 backlog) — not blocking push"
+
 echo "[pre-push] G3 test (vitest run)..."
 npm run ci:test
+
 echo "[pre-push] G5 audit (npm audit --audit-level=high)..."
 npm audit --audit-level=high || echo "[pre-push] WARN: high-severity transitive vulns present (non-blocking, see SOP 9)"

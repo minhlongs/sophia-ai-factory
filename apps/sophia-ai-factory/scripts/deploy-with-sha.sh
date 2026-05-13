@@ -63,6 +63,15 @@ echo "$DEPLOY_BRANCH" | npx wrangler secret put DEPLOY_BRANCH
 echo "==> wrangler deploy"
 npx wrangler deploy
 
+# ─── Step 5: Upload Sentry source maps (non-fatal) ──────────────────────────
+# Bakes symbolicated stack traces into prod errors. Script gracefully skips
+# when SENTRY_AUTH_TOKEN is unset. Failure here MUST NOT fail the deploy —
+# the worker is already live by this point.
+if [ -x scripts/ci/sentry-upload-sourcemaps.sh ]; then
+  echo "==> sentry-upload-sourcemaps"
+  bash scripts/ci/sentry-upload-sourcemaps.sh || echo "warn: sentry sourcemap upload failed (non-fatal)"
+fi
+
 echo ""
 echo "Deploy complete."
 echo "Verify: curl -s https://sophia.agencyos.network/api/version"
