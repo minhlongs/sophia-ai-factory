@@ -11,10 +11,14 @@
 
 import { defineCloudflareConfig } from "@opennextjs/cloudflare";
 import r2IncrementalCache from "@opennextjs/cloudflare/overrides/incremental-cache/r2-incremental-cache";
+import d1NextTagCache from "@opennextjs/cloudflare/overrides/tag-cache/d1-next-tag-cache";
 
 export default defineCloudflareConfig({
   incrementalCache: r2IncrementalCache,
-  // tagCache stays default ("dummy") — full tag invalidation needs
-  // d1-next-tag-cache which adds another table. Time-based revalidate covers
-  // our current needs.
+  // Real tag invalidation (Fullstack Phase 5 G11 — 2026-05-13).
+  // `revalidateTag()` / `revalidatePath()` from Server Actions now flush the
+  // matching cache entries instead of being no-ops. Backed by D1 binding
+  // NEXT_TAG_CACHE_D1 (aliased to sophia-raas-db); `revalidations` table
+  // created by migration 0108-opennext-tag-cache.sql.
+  tagCache: d1NextTagCache,
 });
