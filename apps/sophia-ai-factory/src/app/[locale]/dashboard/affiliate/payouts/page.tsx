@@ -11,6 +11,7 @@
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getD1Raw } from '@/seed/db/client';
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { StripeConnectCard } from './stripe-connect-card';
 import { UsdtMethodsSection, type UsdtMethodRow } from './usdt-methods-section';
@@ -57,12 +58,12 @@ export default async function AffiliatePayoutsPage(): Promise<React.JSX.Element>
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <header className="mb-8">
-        <a
+        <Link
           href="/dashboard/affiliate"
           className="text-sm text-muted-foreground hover:text-foreground mb-2 inline-block"
         >
           ← Back to dashboard
-        </a>
+        </Link>
         <h1 className="text-3xl font-bold mb-2">Payout Methods</h1>
         <p className="text-muted-foreground">
           Choose how you receive commissions. Stripe Connect (fiat USD) takes precedence when

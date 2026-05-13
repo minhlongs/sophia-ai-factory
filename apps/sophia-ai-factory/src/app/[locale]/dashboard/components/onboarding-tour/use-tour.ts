@@ -39,7 +39,6 @@ export function useTour({ userId, onComplete }: UseTourOptions) {
     }
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
   function handleSkip() {

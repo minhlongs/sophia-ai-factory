@@ -64,8 +64,8 @@ export async function GET(request: NextRequest) {
     }
 
     const now = Math.floor(Date.now() / 1000);
-    let startTimestamp = start;
-    let endTimestamp = end;
+    const startTimestamp = start;
+    const endTimestamp = end;
 
     // Validate date range
     if (startTimestamp > endTimestamp) {

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { WizardStepper } from '@/tree/components/setup-wizard/wizard-stepper';
@@ -427,9 +428,9 @@ export default function SetupWizardPage() {
                   <div className="mb-4 rounded-lg border border-red-400 bg-red-50 dark:bg-red-900/10 p-3 text-sm text-red-800 dark:text-red-300">
                     <p className="font-medium">{saveError}</p>
                     <p className="mt-2">
-                      <a href="/dashboard/settings" className="underline underline-offset-2 hover:opacity-80 font-medium">
+                      <Link href="/dashboard/settings" className="underline underline-offset-2 hover:opacity-80 font-medium">
                         {t('save.manualSetup')}
-                      </a>
+                      </Link>
                     </p>
                   </div>
                 )}

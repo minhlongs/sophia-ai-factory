@@ -66,6 +66,7 @@ export default async function OpsPage({ params }: OpsPageProps) {
           {isVi ? 'Hành động nhanh' : 'Quick Actions'}
         </h2>
         <div className="flex flex-wrap gap-2">
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- API endpoint, not navigation; admin shortcut. Refactor to <button onClick={fetch}> tracked separately. */}
           <a
             href="/api/admin/circuit-breaker/reset"
             data-method="POST"
@@ -73,6 +74,7 @@ export default async function OpsPage({ params }: OpsPageProps) {
           >
             {isVi ? 'Reset Circuit Breaker' : 'Reset Circuit Breaker'}
           </a>
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- API endpoint, not navigation; admin shortcut. Refactor to <button onClick={fetch}> tracked separately. */}
           <a
             href="/api/admin/run-synthetic-fulfillment"
             className="text-xs px-3 py-1.5 bg-violet-900/50 hover:bg-violet-800/60 text-violet-300 rounded-lg transition-colors"

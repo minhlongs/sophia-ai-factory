@@ -6,6 +6,7 @@
 
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
+import { toError } from '@/seed/utils/to-error';
 import type { RealtimeAnalyticsSnapshot } from '@/seed/types/analytics-realtime';
 
 const ACTIVE_USER_WINDOW_MINUTES = 15;
@@ -43,7 +44,7 @@ async function queryActiveUsers(db: ReturnType<typeof createServerClient>): Prom
     .gte('updated_at', since) as unknown as { data: RawCountRow[] | null; error: unknown };
 
   if (error) {
-    logger.warn('[Realtime Snapshot] Failed to query active users', error as Error);
+    logger.warn('[Realtime Snapshot] Failed to query active users', toError(error));
     return 0;
   }
 
@@ -63,7 +64,7 @@ async function queryCampaignsLast1h(db: ReturnType<typeof createServerClient>): 
     .gte('created_at', since) as unknown as { data: { id: string }[] | null; error: unknown };
 
   if (error) {
-    logger.warn('[Realtime Snapshot] Failed to query campaigns', error as Error);
+    logger.warn('[Realtime Snapshot] Failed to query campaigns', toError(error));
     return 0;
   }
 
@@ -81,7 +82,7 @@ async function queryApiCallsLast1h(db: ReturnType<typeof createServerClient>): P
     .gte('created_at', since) as unknown as { data: { id: string }[] | null; error: unknown };
 
   if (error) {
-    logger.warn('[Realtime Snapshot] Failed to query API calls', error as Error);
+    logger.warn('[Realtime Snapshot] Failed to query API calls', toError(error));
     return 0;
   }
 
@@ -115,7 +116,7 @@ async function queryTierDistribution(
     .select('tier') as unknown as { data: { tier: string }[] | null; error: unknown };
 
   if (error || !data) {
-    logger.warn('[Realtime Snapshot] Failed to query tier distribution', error as Error);
+    logger.warn('[Realtime Snapshot] Failed to query tier distribution', toError(error));
     return {};
   }
 

@@ -5,6 +5,7 @@
  * Critical/warning banner when quota usage is high
  */
 
+import Link from 'next/link';
 import { AlertCircle, AlertTriangle } from 'lucide-react';
 
 interface QuotaWarningBannerProps {
@@ -39,14 +40,14 @@ export function QuotaWarningBanner({ maxUsage }: QuotaWarningBannerProps) {
               : `You've used ${maxUsage.toFixed(0)}% of your quota. Consider upgrading.`}
           </p>
         </div>
-        <a
+        <Link
           href="/dashboard/billing"
           className={`px-4 py-2 rounded-md font-medium text-white ${
             isCritical ? 'bg-red-500 hover:bg-red-600' : 'bg-amber-500 hover:bg-amber-600'
           }`}
         >
           {isCritical ? 'Upgrade Now' : 'View Plans'}
-        </a>
+        </Link>
       </div>
     </div>
   );

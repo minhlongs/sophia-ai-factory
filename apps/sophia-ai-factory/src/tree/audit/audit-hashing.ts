@@ -7,7 +7,7 @@
  * @module audit/audit-hashing
  */
 
-import { createHash } from 'node:crypto'
+import { createHash, timingSafeEqual } from 'node:crypto'
 
 /**
  * Salt for hashing (from environment variable)
@@ -100,5 +100,5 @@ export function verifyHash(data: string, expectedHash: string): boolean {
     return false
   }
 
-  return require('node:crypto').timingSafeEqual(a, b)
+  return timingSafeEqual(a, b)
 }

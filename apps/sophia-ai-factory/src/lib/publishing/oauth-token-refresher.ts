@@ -11,6 +11,7 @@
 import { getD1Client, getD1Raw } from '@/seed/db/client';
 import { encryptToken, decryptToken } from './token-crypto';
 import { logger } from '@/seed/utils/logger-utility';
+import { toError } from '@/seed/utils/to-error';
 import { refreshAccessToken as refreshTikTok } from '@/lib/tiktok/tiktok-token-manager';
 import { refreshAccessToken as refreshYouTube } from '@/lib/youtube/youtube-oauth-client';
 import { refreshAccessToken as refreshTwitter } from './twitter-oauth-client';
@@ -360,7 +361,7 @@ export async function refreshExpiringTokens(): Promise<{ refreshed: number; fail
         continue;
       }
       failed++;
-      logger.error('[TokenRefresher] Refresh failed — marking expired', err as Error, { channelId: channel.id });
+      logger.error('[TokenRefresher] Refresh failed — marking expired', toError(err), { channelId: channel.id });
       await db
         .from('publishing_channels')
         .update({ status: 'expired', updated_at: Math.floor(Date.now() / 1000), refreshing_at: null })

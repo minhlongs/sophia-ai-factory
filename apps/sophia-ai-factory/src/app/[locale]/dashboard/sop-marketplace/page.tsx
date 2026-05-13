@@ -5,6 +5,7 @@
  * Renders SopGrid (client) for filtering + install modal.
  */
 
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
@@ -69,12 +70,12 @@ export default async function MarketplacePage({ params }: Props) {
                 ? '3 bước: (1) chọn template phù hợp dưới đây, (2) bấm Install, (3) vào /dashboard/sops bấm Run để tạo video đầu tiên. Mất ~5 phút.'
                 : '3 steps: (1) pick a template below, (2) click Install, (3) go to /dashboard/sops and click Run to generate your first video. ~5 minutes total.'}
             </p>
-            <a
+            <Link
               href="/dashboard/help/faq"
               className="inline-block mt-1 text-xs text-violet-300 hover:text-violet-200 underline"
             >
               {isVi ? 'Xem FAQ về SOPs →' : 'Read SOP FAQ →'}
-            </a>
+            </Link>
           </div>
         </div>
       )}

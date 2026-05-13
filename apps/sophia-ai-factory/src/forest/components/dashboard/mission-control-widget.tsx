@@ -5,6 +5,7 @@
  * @module components/dashboard/mission-control-widget
  */
 
+import Link from 'next/link';
 import { TierBadge } from './mission-control/tier-badge';
 import { RecentActivitySparkline } from './mission-control/recent-activity-sparkline';
 import { PrimaryCtaButton } from './mission-control/primary-cta';
@@ -40,9 +41,9 @@ export function MissionControlWidget({ isVi = false }: MissionControlWidgetProps
               <span className="text-xs text-zinc-400">
                 {isVi ? 'Hạn mức MCU' : 'MCU quota'}
               </span>
-              <a href="/dashboard/billing" className="text-xs text-violet-400 hover:underline">
+              <Link href="/dashboard/billing" className="text-xs text-violet-400 hover:underline">
                 <span className="tabular-nums">{data.quota.used.toLocaleString()} / {data.quota.total.toLocaleString()}</span>
-              </a>
+              </Link>
             </div>
             <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden w-48 max-w-full">
               <div
