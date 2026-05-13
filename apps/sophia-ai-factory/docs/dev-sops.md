@@ -257,6 +257,124 @@ GitHub Actions disabled by design 2026-05-03 (CF-direct doctrine). Gates run **l
 
 ---
 
+## SOP 11: Emergency D1 Backup
+
+Manual disaster-recovery procedure when scheduled backups have not run (e.g., external cron failure) or when an operator needs an immediate snapshot before risky migrations.
+
+**When to invoke:**
+- Pre-migration safety net (any `ALTER TABLE` or `DROP COLUMN` on production)
+- Suspected data corruption (capture state before mitigation)
+- Failed scheduled backup (Phase 4 G1 cron job missed window)
+- Quarterly DR drill (see `docs/deployment-guide.md` §8)
+
+**Prerequisites:**
+- R2 bucket `sophia-backups` provisioned (created 2026-05-12 — verify via `npx wrangler r2 bucket list | grep sophia-backups`)
+- `wrangler` authenticated (`npx wrangler whoami`)
+- Run from `apps/sophia-ai-factory/` working directory
+
+**Procedure:**
+
+```bash
+# Step 1 — Snapshot D1 to local sql file
+cd apps/sophia-ai-factory
+bash scripts/dr/d1-snapshot.sh
+# Output: backups/d1-YYYY-MM-DD-HHMMSS.sql
+
+# Step 2 — Upload to R2 sophia-backups bucket
+SNAPSHOT_FILE=$(ls -1t backups/d1-*.sql | head -1)
+DATE_KEY=$(date -u +%Y-%m-%d-%H%M%S)
+gzip -k "$SNAPSHOT_FILE"
+npx wrangler r2 object put "sophia-backups/d1/${DATE_KEY}.sql.gz" \
+  --file="${SNAPSHOT_FILE}.gz" --remote
+
+# Step 3 — Verify upload
+npx wrangler r2 object get "sophia-backups/d1/${DATE_KEY}.sql.gz" \
+  --file=/tmp/verify.sql.gz --remote
+gunzip -t /tmp/verify.sql.gz && echo "✅ snapshot valid"
+
+# Step 4 — Log to operator notebook
+echo "$(date -u +%FT%TZ) manual snapshot ${DATE_KEY}.sql.gz reason=<why>" \
+  >> docs/operator-notebook.log
+```
+
+**Restore (DR drill or recovery):**
+
+```bash
+# DRY-RUN (default — safe, no DB changes): validates snapshot + prints intended actions
+bash scripts/dr/restore-from-snapshot.sh
+# Or with explicit snapshot:
+bash scripts/dr/restore-from-snapshot.sh --snapshot backups/d1-YYYY-MM-DD-HHMMSS.sql
+
+# CONFIRM (executes restore — IRREVERSIBLE):
+bash scripts/dr/restore-from-snapshot.sh --snapshot backups/d1-YYYY-MM-DD-HHMMSS.sql --confirm
+```
+
+⚠️ Without `--confirm`, the script ALWAYS dry-runs. Reading "Restore completed" in dry-run output means nothing actually changed.
+
+**Verify recovery:**
+1. Smoke checklist: follow `docs/sop-ceo-production-smoke.md` step by step (manual runbook for non-tech operator).
+2. Programmatic smoke: `npm run test:smoke` (runs `scripts/smoke-test.ts`).
+3. Confirm SHA match per `.claude/rules/sophia-deploy-verify.md`.
+
+**Cross-refs:** RPO=24h / RTO=4h targets in `docs/deployment-guide.md` §8.
+
+---
+
+## SOP 12: Sentry Alert Rules
+
+Required Sentry issue-alert configuration for production observability. Configure once in Sentry dashboard; revisit quarterly.
+
+**Required Rules (dashboard → Alerts → Create Alert):**
+
+| Rule | Condition | Action | Cadence |
+|------|-----------|--------|---------|
+| **Error-rate spike** | `event.count` > 5 per 1-min window | Email/Slack on-call | Immediate |
+| **New issue first-seen** | `event.type = error AND issue.is_new = true` | Daily digest | 1×/day |
+| **High-severity regression** | Any issue reopened with `level:fatal` | Email on-call + ticket | Immediate |
+| **Performance degradation** | p95 transaction duration > 2s for 5min | Slack notification | Throttle 1×/hour |
+
+**Setup checklist:**
+- [ ] Confirm `SENTRY_AUTH_TOKEN` + `SENTRY_ORG` + `SENTRY_PROJECT` are exported in the deploy shell env (NOT wrangler secret — these are consumed by `@sentry/cli` at deploy time, before the worker runs). Operator should keep them in `~/.sophia-deploy.env` (gitignored) sourced before `npm run deploy:full`.
+- [ ] Verify after deploy: `grep -A2 'sentry-upload-sourcemaps' .open-next/ || curl -sI sentry.io` — script logs whether token was set
+- [ ] Confirm source maps uploaded (see `scripts/deploy-with-sha.sh` Step 5 — Phase 1 G3)
+- [ ] Dashboard owner: Sophia operator
+- [ ] Recipient channels documented in operator notebook
+- [ ] Tune false-positive rate after first 7 days of data
+
+**Cross-refs:** Source map upload baked into `scripts/deploy-with-sha.sh` step 5; configuration in `src/lib/observability/sentry-options.ts`.
+
+---
+
+## SOP 13: Cloudflare Spend Alert
+
+Prevent surprise bills by configuring CF notification thresholds. Dashboard-only — no API automation for billing alerts on standard plans.
+
+**Setup checklist:**
+- [ ] Dashboard → top-right account menu → **Notifications**
+- [ ] Click **Add** → category **Billing**
+- [ ] Choose alert type: *Subscription* (per-product spend) or *Anomaly* (unexpected spike)
+- [ ] Set threshold (suggested: $40/mo soft, $80/mo hard for solo-company baseline)
+- [ ] Recipient: ops email + Slack/PagerDuty webhook if available
+- [ ] Repeat for each paid service: Workers Paid, R2, D1 (if on paid tier)
+
+**Review cadence:**
+- Monthly: review last 30d spend vs threshold in dashboard
+- Quarterly: re-tune thresholds based on actual usage growth
+
+**Anti-patterns:**
+- ❌ Set threshold only on total account spend → masks per-service spikes
+- ❌ Disable alerts during traffic experiments → re-enable IMMEDIATELY after
+
+**Recovery if budget blown:**
+1. Identify spike service in Analytics → Workers/R2/D1
+2. Check Inngest job loops, recursive cron, or runaway egress
+3. Emergency: temporarily disable offending route via `wrangler tail` + redeploy with kill switch
+4. Post-mortem: file in operator notebook
+
+**Cross-refs:** `docs/deployment-guide.md` §1 (cost section); `.claude/rules/binh-phap-cicd.md` (CI/CD doctrine).
+
+---
+
 ## Cross-references
 
 | Doc | Purpose |

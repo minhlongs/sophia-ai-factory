@@ -288,3 +288,98 @@ NEXT_PUBLIC_MOCK_AI_SERVICES=true npm run dev
 - **Wizard Loops**: If you keep seeing the wizard after setup, check if `NEXT_PUBLIC_SETUP_COMPLETE=true` (or equivalent check in code) is persisting. In Vercel, ensure you Redeployed after setting env vars.
 - **API Errors**: Check the `Airtable` connection first. It is the most common point of failure. Ensure the `Base ID` is correct and the Token has `data.records:read` and `data.records:write` scopes.
 - **Build Failures**: Run `npm run lint` locally to catch TypeScript errors before pushing.
+
+## 8. Disaster Recovery — RPO / RTO
+
+Defines recovery targets for the Sophia AI Factory production stack.
+
+### Recovery Objectives
+
+| Objective | Target | Measure |
+|-----------|-------:|---------|
+| **RPO** (Recovery Point Objective) | **24 hours** | Daily D1 snapshot uploaded to R2 `sophia-backups` bucket |
+| **RTO** (Recovery Time Objective) | **4 hours** | Time from incident declaration to fully restored prod |
+| Backup verification | Monthly | Operator runs SOP 11 dry-run restore on staging D1 |
+| DR drill | Quarterly | End-to-end disaster recovery exercise |
+
+### Backup Coverage
+
+1. **D1 database** — `wrangler d1 export --remote` snapshot of `sophia-raas-db` (binding `DB`).
+   - Trigger: external cron (Upstash QStash) calling `/api/cron/d1-backup` (Phase 4 G1 pending)
+   - Storage: R2 bucket `sophia-backups`, key `d1/YYYY-MM-DD.sql.gz`
+2. **R2 buckets** — `opennext-cache` is regenerable; `sophia-videos` is user content (rely on CF cross-region replication).
+3. **Source code** — GitHub `longtho638-jpg/sophia-ai-factory` (with local mirror clones).
+4. **Secrets** — Operator notebook (encrypted) holds `wrangler secret list` export.
+
+### Recovery Procedure (High Level)
+
+1. Declare incident; pin oncall in operator channel.
+2. Identify last good backup in R2 `sophia-backups`.
+3. Provision restore target (new D1 database or wipe `sophia-raas-db`).
+4. Run `bash scripts/dr/restore-from-snapshot.sh <snapshot-key>` — see SOP 11 for full steps.
+5. Verify with smoke test: `bash scripts/sop-ceo-production-smoke.sh`.
+6. Re-deploy via `npm run deploy:full`, confirm SHA match.
+7. Post-incident: file root-cause review and update DR drill checklist.
+
+For step-by-step operator playbook: **SOP 11 — Emergency D1 Backup** in `dev-sops.md`.
+
+### Known Gaps
+
+- D1 backup automation pending Phase 4 (G1) — until then, manual trigger via SOP 11 required.
+- DR drill cadence not yet scheduled; first drill due 30 days after Phase 4 ship.
+
+## 9. Email DNS — SPF / DKIM / DMARC
+
+Required DNS records for Resend transactional email deliverability on `sophia.agencyos.network`.
+
+### Current Records (added 2026-05-12, Phase 2 G6)
+
+| Type | Name | Content | Purpose |
+|------|------|---------|---------|
+| TXT | `sophia.agencyos.network` | `v=spf1 include:_spf.resend.com ~all` | SPF — softfail unauthorized senders |
+| TXT | `_dmarc.sophia.agencyos.network` | `v=DMARC1; p=none; rua=mailto:dmarc-reports@sophia.agencyos.network; pct=100; adkim=r; aspf=r` | DMARC — monitor mode (relaxed alignment) |
+| TXT | `resend._domainkey.agencyos.network` | `p=MIGfM…` (Resend DKIM key on apex) | DKIM — signed via `d=agencyos.network`; covers sophia subdomain via organizational alignment |
+| CAA | `sophia.agencyos.network` | `0 issue "letsencrypt.org"` | Restrict TLS cert issuance to Let's Encrypt only (Phase 1 G12) |
+
+### Inherited from Parent Zone (`agencyos.network`)
+
+- `_dmarc.agencyos.network` → `v=DMARC1; p=none;` (covers sibling subdomains)
+- `resend._domainkey.agencyos.network` → DKIM public key (used when Resend signs with `d=agencyos.network`)
+
+### Sender Addresses in Code
+
+Confirmed senders in `src/`:
+- `billing@sophia.agencyos.network` — billing/refund/bundle emails (`land/billing/email/`)
+- `digest@sophia.agencyos.network` — weekly signals digest (`api/cron/weekly-signals-digest/`)
+- `noreply@sophia.agencyos.network` — error digest, transactional default
+- `noreply@mekongmind.com` — promo/trial expiry (legacy — separate domain auth)
+
+### Verification
+
+```bash
+# Verify SPF
+dig TXT sophia.agencyos.network +short | grep spf
+
+# Verify DMARC
+dig TXT _dmarc.sophia.agencyos.network +short
+
+# Verify DKIM (apex)
+dig TXT resend._domainkey.agencyos.network +short
+
+# Mail-tester.com — send to inbox they provide; score should be ≥9/10
+```
+
+### Graduation Plan
+
+| Phase | When | Action |
+|-------|------|--------|
+| Monitor (current) | Day 0 | `p=none` — collect DMARC reports for 14 days |
+| Quarantine | Day 14 | Change `_dmarc.sophia` policy to `p=quarantine; pct=25` |
+| Reject | Day 30 | Bump to `p=quarantine; pct=100` then `p=reject; pct=100` |
+
+DMARC reports land in mailbox `dmarc-reports@sophia.agencyos.network` — operator MUST configure mailbox or discard route before tightening policy.
+
+### Known Caveats
+
+- Resend may need separate domain registration for `sophia.agencyos.network` subdomain in their dashboard if DKIM `d=` tag uses subdomain. Currently we rely on parent-domain DKIM alignment (organizational domain match). Verify in Resend dashboard if DMARC fails persist after 14d monitoring.
+- `mekongmind.com` sender (promo/trial expiry) is on separate zone — needs independent SPF/DKIM/DMARC. Tracked separately.
