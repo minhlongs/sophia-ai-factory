@@ -60,8 +60,15 @@ echo "$DEPLOYED_AT" | npx wrangler secret put DEPLOYED_AT
 echo "$DEPLOY_BRANCH" | npx wrangler secret put DEPLOY_BRANCH
 
 # ─── Step 4: Deploy ─────────────────────────────────────────────────────────
+# IMPORTANT: explicit `--config wrangler.toml` is required for OpenNext's
+# deploy hook (wrangler auto-detects opennext projects and delegates to
+# `@opennextjs/cloudflare deploy`, which reads its OWN config via
+# retrieveCompiledConfig — without the flag it may miss bindings declared in
+# wrangler.toml such as NEXT_TAG_CACHE_D1, BACKUPS_BUCKET, VIDEO_BUCKET).
+# Verified Phase 5.1 (2026-05-13): without --config, populate-cache errors
+# "No D1 binding NEXT_TAG_CACHE_D1 found"; with --config, all bindings resolve.
 echo "==> wrangler deploy"
-npx wrangler deploy
+npx wrangler deploy --config wrangler.toml
 
 # ─── Step 5: Upload Sentry source maps (non-fatal) ──────────────────────────
 # Bakes symbolicated stack traces into prod errors. Script gracefully skips

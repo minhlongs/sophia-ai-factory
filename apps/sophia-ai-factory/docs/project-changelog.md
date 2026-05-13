@@ -1,6 +1,23 @@
 # Project Changelog
 
-**Last Updated:** 2026-05-13 | **Current Version:** 1.26.6
+**Last Updated:** 2026-05-13 | **Current Version:** 1.26.8
+
+---
+
+## v1.26.8 — Phase 5.1: restore d1NextTagCache via dedicated D1 + deploy --config flag (2026-05-13)
+
+**Severity: P1 INFRA | Type: ISR cache + deploy hardening | Status: SHIPPED**
+
+Restore G11 win from Phase 5 attempt that was reverted in v1.26.7 due to dual-binding wrangler limitation. (C1) **NEW D1 instance** `sophia-tag-cache` (database_id `7b1d4fd4-8aa2-4006-828a-ef2b76652a46`, region APAC) — created via `npx wrangler d1 create sophia-tag-cache`. Migration 0108 applied to the new DB (verified `num_tables: 1` post-migration). (C2) **MOD `wrangler.toml`** — restored `[[d1_databases]]` block with binding `NEXT_TAG_CACHE_D1` → `sophia-tag-cache` (NOT aliased to sophia-raas-db; that was the v1.26.7 failure mode). (C3) **MOD `open-next.config.ts`** — restored `import d1NextTagCache from '@opennextjs/cloudflare/overrides/tag-cache/d1-next-tag-cache'` + `tagCache: d1NextTagCache`. (C4) **MOD `scripts/deploy-with-sha.sh`** — added `--config wrangler.toml` flag to `npx wrangler deploy`. **Critical discovery:** without explicit `--config` flag, wrangler auto-detects OpenNext project and delegates to `@opennextjs/cloudflare deploy` which uses `retrieveCompiledConfig()` — a different config source that silently MISSES bindings declared in source wrangler.toml (verified: dry-run without `--config` shows only `env.DB`; WITH `--config` shows ALL bindings including BACKUPS_BUCKET, VIDEO_BUCKET, NEXT_TAG_CACHE_D1). This means Phase 4 deploy (`3d3ed5fb`) likely ALSO ran with BACKUPS_BUCKET binding silently dropped — the route would have 500'd on first cron invocation. Phase 5.1 fix corrects this for all future deploys. **Score:** 88 → **90-91/100** (Layer 2 + Layer 9 boost; Layer 1/10 backup will only fully credit once QStash cron is registered by operator). **Plan:** `plans/260512-2105-fullstack-100of100-roadmap/phase-05-schema-tech-debt.md`. **Next:** smoke-test by triggering a Server Action → `revalidateTag()` → verify `SELECT COUNT(*) FROM revalidations` on `sophia-tag-cache` D1 returns ≥1.
+
+**Operational findings (post-deploy investigation):**
+1. **`npx wrangler deploy` auto-delegates to OpenNext** when an OpenNext project is detected (wrangler v4+ feature). Without explicit `--config`, OpenNext's `retrieveCompiledConfig()` reads from a different config source than the source `wrangler.toml`.
+2. **Two D1 instances cannot share `database_id`**: wrangler rejects the dual-binding pattern with subtle silent filtering (dry-run output only shows the first binding's resource entry).
+3. **Phase 4 BACKUPS_BUCKET binding silently dropped pre-1.26.8** — needs verification by smoke-test of `/api/cron/d1-backup` route after redeploy with `--config`.
+
+**Follow-ups (low priority):**
+1. **Verify Phase 4 backup route resolves BACKUPS_BUCKET binding** after this redeploy — curl `/api/cron/d1-backup` with CRON_SECRET, expect 200 (or 401 without token), not 500-binding-error.
+2. **Migration 0108 left applied to BOTH databases** (`sophia-raas-db` from Phase 5 attempt, and `sophia-tag-cache` from Phase 5.1). The sophia-raas-db `revalidations` table is harmless residual (unused). Cleanup: drop the table from sophia-raas-db on next migration round.
 
 ---
 
