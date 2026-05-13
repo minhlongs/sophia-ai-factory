@@ -33,10 +33,15 @@ database_name = "sophia-raas-db"
 database_id = "78bd1961-b62d-43bb-b551-0c5d7d389506"
 migrations_dir = "migrations"
 
-# OpenNext tag cache (Fullstack Phase 5 G11) — REMOVED 2026-05-13.
-# Cannot alias the existing `DB` binding to a second name in wrangler;
-# d1NextTagCache requires a dedicated D1 instance. See open-next.config.ts
-# for follow-up plan (provision `sophia-tag-cache` D1 + restore binding).
+# OpenNext tag cache (Fullstack Phase 5.1 G11 — 2026-05-13).
+# Dedicated D1 instance `sophia-tag-cache` (NOT aliased to sophia-raas-db —
+# wrangler rejects duplicate database_id with different binding names; see
+# Phase 5 changelog v1.26.7). Backed by migration 0108-opennext-tag-cache.sql
+# (applied directly via `wrangler d1 execute --remote --file=...`).
+[[d1_databases]]
+binding = "NEXT_TAG_CACHE_D1"
+database_name = "sophia-tag-cache"
+database_id = "7b1d4fd4-8aa2-4006-828a-ef2b76652a46"
 
 [[services]]
 binding = "WORKER_SELF_REFERENCE"

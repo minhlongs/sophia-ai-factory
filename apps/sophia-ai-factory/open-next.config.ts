@@ -11,18 +11,16 @@
 
 import { defineCloudflareConfig } from "@opennextjs/cloudflare";
 import r2IncrementalCache from "@opennextjs/cloudflare/overrides/incremental-cache/r2-incremental-cache";
+import d1NextTagCache from "@opennextjs/cloudflare/overrides/tag-cache/d1-next-tag-cache";
 
 export default defineCloudflareConfig({
   incrementalCache: r2IncrementalCache,
-  // tagCache stays default ("dummy") — d1NextTagCache requires a SEPARATE D1
-  // instance bound as `NEXT_TAG_CACHE_D1`. Wrangler does NOT allow aliasing
-  // a single database_id to two bindings (verified Phase 5 attempt 2026-05-13:
-  // `populateD1TagCache` errored "No D1 binding NEXT_TAG_CACHE_D1 found!"
-  // when both bindings shared sophia-raas-db). Provisioning a second D1
-  // instance is out of scope for this phase — time-based ISR via s-maxage
-  // continues to cover marketing/dashboard freshness needs adequately.
-  // Migration `0108-opennext-tag-cache.sql` was applied to sophia-raas-db
-  // for the table (harmless residual; unused until tagCache flipped on).
-  // Future: create `sophia-tag-cache` D1, point NEXT_TAG_CACHE_D1 binding
-  // at it, restore `tagCache: d1NextTagCache` line.
+  // Real tag invalidation (Fullstack Phase 5.1 G11 — 2026-05-13).
+  // `revalidateTag()` / `revalidatePath()` from Server Actions now flush the
+  // matching cache entries instead of being no-ops. Backed by dedicated
+  // sophia-tag-cache D1 instance (binding NEXT_TAG_CACHE_D1 in wrangler.toml,
+  // table `revalidations` created by migration 0108-opennext-tag-cache.sql).
+  // The previous attempt aliasing sophia-raas-db to two binding names failed
+  // because wrangler rejects duplicate database_id with different bindings.
+  tagCache: d1NextTagCache,
 });
