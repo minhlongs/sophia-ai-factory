@@ -41,7 +41,7 @@
 - **Rotation:** Manual rotation via `npx wrangler secret put <NAME>` (90-day recommended)
 - **Audit:** List all secrets: `npx wrangler secret list` (shows names only, not values)
 - **Never in Code:** `.env` files added to `.gitignore`, documented in `.env.example` only
-- **Required Secrets:** JWT_SECRET=REDACTED, ANTHROPIC_API_KEY, RESEND_API_KEY, POLAR_ACCESS_TOKEN, HEYGEN_API_KEY, SENTRY_DSN, POLAR_WEBHOOK_SECRET
+- **Required Secrets:** JWT_SECRET=REDACTED, OPENROUTER_API_KEY, ELEVENLABS_API_KEY, RESEND_API_KEY, NOWPAYMENTS_API_KEY, NOWPAYMENTS_IPN_SECRET, HEYGEN_API_KEY, SENTRY_DSN
 
 ### Monitoring & Alerting
 - **Uptime Check:** Cron job runs `/api/health` every 5 minutes
@@ -142,9 +142,9 @@
    - Update CF Worker secret: `npx wrangler secret put ANTHROPIC_API_KEY`
    - Monitor usage dashboard for suspicious activity
 
-5. **If POLAR_WEBHOOK_SECRET compromised:**
-   - Regenerate in Polar.sh dashboard
-   - Update CF Worker secret: `npx wrangler secret put POLAR_WEBHOOK_SECRET`
+5. **If NOWPAYMENTS_IPN_SECRET compromised:**
+   - Regenerate the webhook secret in NOWPayments dashboard
+   - Update CF Worker secret: `npx wrangler secret put NOWPAYMENTS_IPN_SECRET`
    - Verify webhook signature verification still works
 
 6. **Audit & Monitor:**

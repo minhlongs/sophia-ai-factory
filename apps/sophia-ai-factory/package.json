@@ -7,7 +7,7 @@
     "dev:mock": "NEXT_PUBLIC_MOCK_AI_SERVICES=true next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
+    "lint": "NODE_OPTIONS=--max-old-space-size=12288 eslint",
     "type-check": "tsc --noEmit",
     "setup": "./scripts/setup.sh",
     "verify": "./scripts/verify.sh",

@@ -22,7 +22,7 @@ const columns = [
   {
     heading: "Liên Hệ",
     links: [
-      { label: "support@agencyos.network", href: "mailto:support@agencyos.network" },
+      { label: "support@mekongmind.com", href: "mailto:support@mekongmind.com" },
       { label: "@Sophia_Bbot (Telegram)", href: "https://t.me/Sophia_Bbot" },
       { label: "sophia.agencyos.network", href: "https://sophia.agencyos.network" },
     ],

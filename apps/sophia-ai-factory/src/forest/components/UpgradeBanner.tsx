@@ -22,7 +22,7 @@ export function UpgradeBanner({
 
   const requiredName = TIER_CONFIGS[requiredTier].name;
   const upgradeLabel = requiredTier === "ENTERPRISE" ? "Contact Sales" : `Upgrade to ${requiredName}`;
-  const upgradeLink = requiredTier === "ENTERPRISE" ? "mailto:support@sophia.agencyos.network" : "/pricing";
+  const upgradeLink = requiredTier === "ENTERPRISE" ? "mailto:support@mekongmind.com" : "/pricing";
 
   return (
     <Card className={`bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800 ${className}`}>

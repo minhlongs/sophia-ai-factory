@@ -45,7 +45,7 @@ describe('UpgradeBanner', () => {
 
     // Check if link goes to contact
     const link = screen.getByRole('link', { name: /Contact Sales/i });
-    expect(link.getAttribute('href')).toBe('mailto:support@sophia.agencyos.network');
+    expect(link.getAttribute('href')).toBe('mailto:support@mekongmind.com');
   });
 
   it('renders tier badge', () => {

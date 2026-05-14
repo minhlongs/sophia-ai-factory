@@ -73,7 +73,7 @@ export function StripeConnectCard(props: Props): React.JSX.Element {
 
   async function handleClick(): Promise<void> {
     if (variant === 'rejected') {
-      window.location.href = 'mailto:support@sophia.agencyos.network?subject=Stripe Connect KYC';
+      window.location.href = 'mailto:support@mekongmind.com?subject=Stripe Connect KYC';
       return;
     }
     setBusy(true);

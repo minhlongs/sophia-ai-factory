@@ -37,7 +37,7 @@ interface OrderCardProps {
   locale: string
 }
 
-const SUPPORT_EMAIL = 'support@sophia.agencyos.network'
+const SUPPORT_EMAIL = 'support@mekongmind.com'
 
 function skuLabel(sku: string): string {
   return sku

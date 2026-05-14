@@ -16,7 +16,7 @@ import {
   type RefundEmailCtx,
 } from './templates/refund-emails'
 
-const SUPPORT_FROM = 'Sophia AI <support@sophia.agencyos.network>'
+const SUPPORT_FROM = 'Sophia AI <support@mekongmind.com>'
 
 function getResend(): Resend | null {
   const key = process.env.RESEND_API_KEY
@@ -51,7 +51,7 @@ export async function sendRefundReceivedEmail(ctx: RefundEmailCtx): Promise<void
   await sendEmail(ctx.userEmail, subject, html, text, 'refund_received')
 
   // Also notify support
-  const adminEmail = process.env.SUPPORT_EMAIL ?? 'support@sophia.agencyos.network'
+  const adminEmail = process.env.SUPPORT_EMAIL ?? 'support@mekongmind.com'
   const adminCtx = { ...ctx, locale: 'en' }
   const admin = buildRefundReceivedEmail(adminCtx)
   const adminSubject = `[REFUND REQUEST] ${ctx.purchaseId} — ${ctx.userEmail}`

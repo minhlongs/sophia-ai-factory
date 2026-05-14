@@ -374,7 +374,7 @@
 ### Q29: Toi muon xoa tai khoan / I want to delete my account
 
 **Tieng Viet:**
-1. Lien he support@sophia.agency voi tieu de "Yeu cau xoa tai khoan"
+1. Lien he support@mekongmind.com voi tieu de "Yeu cau xoa tai khoan"
 2. Cung cap email dang ky
 3. Doi xac nhan trong 48 gio
 4. Tat ca du lieu se duoc xoa vinh vien
@@ -382,7 +382,7 @@
 > Luu y: Hanh dong nay khong the hoan tac. Hay tai video ve truoc khi xoa tai khoan.
 
 **English:**
-1. Contact support@sophia.agency with subject "Account deletion request"
+1. Contact support@mekongmind.com with subject "Account deletion request"
 2. Provide your registered email
 3. Wait for confirmation within 48 hours
 4. All data will be permanently deleted
@@ -398,15 +398,15 @@
 | Phuong thuc | Chi tiet |
 |---|---|
 | Telegram Bot | @Sophia_Bbot (nhap `/help`) |
-| Email | support@sophia.agency |
-| Ho tro uu tien | Goi PREMIUM va ENTERPRISE |
-| Ho tro 24/7 | Chi goi ENTERPRISE |
+| Email | support@mekongmind.com |
+| Ho tro uu tien | Growth (12h), Premium (4h), Master (2h trong cua so handover) |
+| Quan ly tai khoan / handover ky thuat | Premium co account manager; Master co kenh handover uu tien |
 
 **English:**
 
 | Method | Details |
 |---|---|
 | Telegram Bot | @Sophia_Bbot (type `/help`) |
-| Email | support@sophia.agency |
-| Priority support | PREMIUM and ENTERPRISE plans |
-| 24/7 support | ENTERPRISE plan only |
+| Email | support@mekongmind.com |
+| Priority support | Growth (12 business hours), Premium (4 hours), Master (2 business hours in handover window) |
+| Account management / technical handover | Premium includes an account manager; Master includes a priority handover channel |

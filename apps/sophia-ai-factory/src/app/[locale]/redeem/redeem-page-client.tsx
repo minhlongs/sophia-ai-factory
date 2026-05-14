@@ -232,11 +232,11 @@ function SuccessView({
                   : 'Activation link not generated. Please contact support to receive your sign-in link.'}
               </p>
               <a
-                href="mailto:support@sophia.agencyos.network"
+                href="mailto:support@mekongmind.com"
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-600/20 border border-amber-500/30 text-amber-200 text-sm font-medium hover:bg-amber-600/30 transition-colors"
               >
                 <Mail size={14} />
-                support@sophia.agencyos.network
+                support@mekongmind.com
               </a>
             </div>
           ) : (

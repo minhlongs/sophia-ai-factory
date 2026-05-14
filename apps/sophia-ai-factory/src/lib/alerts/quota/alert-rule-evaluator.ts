@@ -107,7 +107,7 @@ export function getAlertTemplate(context: QuotaAlertContext, channel: AlertChann
     } else {
       return {
         subject: `[Sophia AI] CRITICAL: Service Restricted - ${tierDisplay} Plan Limit Exceeded`,
-        body: `CRITICAL: Your ${tierDisplay} plan limit has been reached.\n\n${usageType}: ${currentUsage.toLocaleString()} / ${limit.toLocaleString()}\n\nUpgrade now: ${upgradeUrl}\nContact support: support@sophia.agencyos.network`,
+        body: `CRITICAL: Your ${tierDisplay} plan limit has been reached.\n\n${usageType}: ${currentUsage.toLocaleString()} / ${limit.toLocaleString()}\n\nUpgrade now: ${upgradeUrl}\nContact support: support@mekongmind.com`,
         htmlBody: buildEmailHtml100(),
       };
     }

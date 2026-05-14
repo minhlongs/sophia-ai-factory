@@ -119,8 +119,8 @@ export default async function GettingStartedPage({ params }: Props) {
           {isVi
             ? 'Liên hệ đội ngũ hỗ trợ qua email: '
             : 'Contact our support team via email: '}
-          <a href="mailto:support@sophia.agencyos.network" className="text-amber-400 hover:underline">
-            support@sophia.agencyos.network
+          <a href="mailto:support@mekongmind.com" className="text-amber-400 hover:underline">
+            support@mekongmind.com
           </a>
         </p>
       </div>

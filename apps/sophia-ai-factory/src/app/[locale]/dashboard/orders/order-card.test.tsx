@@ -87,7 +87,7 @@ describe('OrderCard', () => {
       const link = screen.getByRole('link', { name: /contact support/i });
       expect(link).toBeTruthy();
       expect(link.getAttribute('href')).toContain('purchase-abc-123');
-      expect(link.getAttribute('href')).toContain('support@sophia.agencyos.network');
+      expect(link.getAttribute('href')).toContain('support@mekongmind.com');
     });
 
     it('does NOT show Watch video button', () => {

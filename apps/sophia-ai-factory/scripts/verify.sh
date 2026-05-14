@@ -23,15 +23,8 @@ echo_success "i18n validation passed"
 
 # 1. Linting
 echo_step "1. Linting Codebase..."
-# npm run lint (Skipping for now as standard lint config might need tuning, trusting build/test for now)
-# actually let's run it if it exists
-# if npm run lint >/dev/null 2>&1; then
-#   npm run lint
-#   echo_success "Linting passed"
-# else
-#   echo -e "${YELLOW}⚠ Lint command failed or not found, skipping...${NC}"
-# fi
-echo -e "${YELLOW}⚠ Lint skipped temporarily for unblocking pipeline...${NC}"
+npm run lint
+echo_success "Linting passed"
 
 # 2. Type Checking
 echo_step "2. Verifying TypeScript Types..."

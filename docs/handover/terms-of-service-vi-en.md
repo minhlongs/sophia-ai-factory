@@ -41,7 +41,7 @@ Bạn chịu trách nhiệm:
 | **BASIC** | $199/tháng | 50 | 5,000 | Email + Telegram |
 | **PREMIUM** | $399/tháng | 200 | 20,000 | Priority Telegram |
 | **ENTERPRISE** | $799/tháng | Unlimited | 50,000 | Dedicated bot |
-| **MASTER** | $4,999/tháng | Unlimited | 500,000 | VIP + consulting |
+| **MASTER** | $4,999 một lần | Unlimited | 500,000 | VIP + consulting |
 
 ### 4. Quyền Sở Hữu Video
 

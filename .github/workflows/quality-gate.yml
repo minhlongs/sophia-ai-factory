@@ -38,7 +38,7 @@ jobs:
         run: npx tsc --noEmit
 
       - name: Gate 1b — ESLint
-        run: npx next lint
+        run: npm run lint
 
       - name: Gate 1c — Vitest with coverage
         run: npm test -- --coverage --reporter=junit --outputFile=test-results.xml

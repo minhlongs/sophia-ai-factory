@@ -34,7 +34,7 @@ const ISSUES_VI: Issue[] = [
     steps: [
       'Kiểm tra tab Spam / Junk / Quảng cáo',
       'Click "Move to Inbox" và "Not Spam"',
-      'Thêm support@sophia.agencyos.network vào danh bạ',
+      'Thêm support@mekongmind.com vào danh bạ',
       'Nếu vẫn không thấy sau 2 phút: vào /welcome/invalid để gửi lại',
     ],
     followUp: { href: '/welcome/invalid', label: 'Gửi lại magic link' },
@@ -93,7 +93,7 @@ const ISSUES_VI: Issue[] = [
       'Đợi 5 phút',
       'Refresh /dashboard/billing — kiểm tra Order Status',
       'Nếu sau 10 phút vẫn không active: kiểm tra email xác nhận từ NOWPayments',
-      'Forward email xác nhận cho support@sophia.agencyos.network',
+      'Forward email xác nhận cho support@mekongmind.com',
     ],
   },
   {
@@ -149,7 +149,7 @@ const ISSUES_EN: Issue[] = [
     steps: [
       'Check Spam / Junk / Promotions folder',
       'Click "Move to Inbox" and "Not Spam"',
-      'Add support@sophia.agencyos.network to contacts',
+      'Add support@mekongmind.com to contacts',
       'If still missing after 2 min: go to /welcome/invalid to resend',
     ],
     followUp: { href: '/welcome/invalid', label: 'Resend magic link' },
@@ -208,7 +208,7 @@ const ISSUES_EN: Issue[] = [
       'Wait 5 minutes',
       'Refresh /dashboard/billing — check Order Status',
       'After 10 minutes still inactive: check NOWPayments confirmation email',
-      'Forward the confirmation email to support@sophia.agencyos.network',
+      'Forward the confirmation email to support@mekongmind.com',
     ],
   },
   {
@@ -352,10 +352,10 @@ export default async function TroubleshootingPage({ params }: Props) {
             ? 'Sự cố của bạn không có trong danh sách? Email '
             : 'Issue not listed? Email '}
           <a
-            href="mailto:support@sophia.agencyos.network"
+            href="mailto:support@mekongmind.com"
             className="text-violet-400 hover:underline"
           >
-            support@sophia.agencyos.network
+            support@mekongmind.com
           </a>
           {isVi ? ' — phản hồi trong 1h.' : ' — replies within 1h.'}
         </p>

@@ -88,7 +88,7 @@ export function PaymentStatusPoller({ orderId, locale }: PaymentStatusPollerProp
             : 'The blockchain is confirming your transaction. We\'ll email you when it\'s done.'}
         </p>
         <a
-          href="mailto:support@sophia.agencyos.network"
+          href="mailto:support@mekongmind.com"
           className="mt-4 inline-block text-sm text-violet-400 hover:text-violet-300 underline"
         >
           {isVi ? 'Liên hệ hỗ trợ' : 'Contact support'}

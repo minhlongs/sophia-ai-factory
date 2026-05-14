@@ -95,11 +95,36 @@ For new requests or major changes:
 
 | Hang Muc / Item | Cam Ket / Commitment |
 |---|---|
-| **Uptime** | 99.5% (theo Vercel SLA / per Vercel SLA) |
-| **Sua loi thuong / Regular bug fix** | Tra loi trong 24h lam viec / 24h business hours response |
+| **Uptime** | 99.5% Sophia target on Cloudflare Workers |
+| **Sua loi thuong / Regular bug fix** | Tra loi theo goi dich vu / Response by plan tier |
 | **Loi nghiem trong / Critical bug (site down)** | Tra loi trong 4h / 4h response |
 | **Tinh nang moi / Feature requests** | Bao gia rieng / Separately quoted |
 | **Bao hanh / Warranty** | 30 ngay sau ban giao / 30 days post-handover |
+
+---
+
+## SLA Theo Goi / Plan-Based SLA
+
+| Goi / Plan | Kenh / Channels | Muc tieu tra loi / Response Target |
+|---|---|---|
+| **Starter (BASIC) - $199/mo** | Email, Telegram bot help | 24 business hours |
+| **Growth (PREMIUM) - $399/mo** | Priority email + Telegram | 12 business hours |
+| **Premium (ENTERPRISE) - $799/mo** | Priority email + Telegram + account manager | 4 business hours |
+| **Master - $4,999 one-time** | Priority technical handover channel | 2 business hours during handover window |
+
+Severity overrides plan SLA. P1 site-down incidents target 4 hours for all paid customers.
+
+---
+
+## Support Intake Status
+
+Interim channels before dedicated helpdesk launch:
+
+- Email: `support@mekongmind.com`
+- Telegram bot: `@Sophia_Bbot`
+- Internal owner: Founder/operator until a helpdesk provider is selected
+
+Before paid go-live, choose one system of record for support tickets (Crisp, Plain, Zendesk, or GitHub Issues private project) and document ownership in `docs/admin-ops/support-ticket-sop.md`.
 
 ---
 
@@ -114,7 +139,7 @@ Trong 30 ngay sau ban giao:
   - Loi do client thay doi code
   - Loi do thay doi API keys hoac cau hinh
   - Tinh nang moi ngoai pham vi ban giao
-  - Loi tu dich vu ben thu ba (Polar, Supabase, Vercel)
+  - Loi tu dich vu ben thu ba (Cloudflare, D1, NOWPayments, PayOS, HeyGen, ElevenLabs, MuAPI, OpenRouter, Resend)
 
 ### English
 
@@ -125,7 +150,7 @@ Within 30 days of handover:
   - Issues from client code changes
   - Issues from API key or configuration changes
   - New features outside handover scope
-  - Third-party service issues (Polar, Supabase, Vercel)
+  - Third-party service issues (Cloudflare, D1, NOWPayments, PayOS, HeyGen, ElevenLabs, MuAPI, OpenRouter, Resend)
 
 ---
 
@@ -137,3 +162,14 @@ Within 30 days of handover:
 | **P2 — Cao / High** | Tinh nang chinh bi loi / Core feature broken (checkout, login) | 24 gio lam viec / 24 business hours |
 | **P3 — Trung Binh / Medium** | Tinh nang phu bi loi / Minor feature issue | 48 gio lam viec / 48 business hours |
 | **P4 — Thap / Low** | Loi giao dien, chinh ta / UI bug, typo | Lich theo thoa thuan / Scheduled |
+
+---
+
+## Escalation Ownership
+
+| Area | Primary Owner | Escalation |
+|---|---|---|
+| Production app and API | Technical operator | Cloudflare dashboard, deploy logs, `docs/observability-runbook.md` |
+| Billing activation | Operations owner | NOWPayments/PayOS dashboards, `docs/admin-ops/payment-pricing-source-of-truth.md` |
+| Video generation providers | Technical operator | HeyGen, ElevenLabs, MuAPI, OpenRouter provider dashboards |
+| Customer communication | Support owner | Email/Telegram/helpdesk ticket record |

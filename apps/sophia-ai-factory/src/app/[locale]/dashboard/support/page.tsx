@@ -15,16 +15,16 @@ const SUPPORT_TIERS = [
   {
     tier: "BASIC" as Tier,
     icon: Mail,
-    responseTime: "48h",
-    channel: "Email",
+    responseTime: "24 business hours",
+    channel: "Email + Telegram",
     color: "text-muted-foreground",
     bgColor: "bg-muted/50",
   },
   {
     tier: "PREMIUM" as Tier,
     icon: Clock,
-    responseTime: "24h",
-    channel: "Priority Email",
+    responseTime: "12 business hours",
+    channel: "Priority Email + Telegram",
     color: "text-blue-500",
     bgColor: "bg-blue-500/10",
   },
@@ -32,15 +32,15 @@ const SUPPORT_TIERS = [
     tier: "ENTERPRISE" as Tier,
     icon: Star,
     responseTime: "4h",
-    channel: "Direct Founder Access",
+    channel: "Priority Email + Telegram + Account Manager",
     color: "text-purple-500",
     bgColor: "bg-purple-500/10",
   },
   {
     tier: "MASTER" as Tier,
     icon: Crown,
-    responseTime: "Instant",
-    channel: "VIP Forever",
+    responseTime: "2 business hours",
+    channel: "Priority technical handover channel",
     color: "text-amber-500",
     bgColor: "bg-amber-500/10",
   },
@@ -112,10 +112,10 @@ export default async function SupportPage() {
             <Mail className="w-8 h-8 mx-auto text-muted-foreground" aria-hidden="true" />
             <p className="text-sm text-muted-foreground">{t("contact_us")}</p>
             <a
-              href="mailto:support@sophia.agencyos.network"
+              href="mailto:support@mekongmind.com"
               className="inline-block text-primary hover:underline font-medium"
             >
-              support@sophia.agencyos.network
+              support@mekongmind.com
             </a>
           </div>
         </CardContent>

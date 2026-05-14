@@ -71,12 +71,13 @@ describe('buildOneTimeBundleReadyEmail — one-time bundle ready notification', 
         creditsRemaining: 10,
         locale: 'vi',
       }
+      const expectedPricingUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network'}/pricing`
 
       const email = buildOneTimeBundleReadyEmail(ctx)
 
       expect(email.html).toContain('Muốn tạo video không giới hạn')
       expect(email.html).toContain('pricing')
-      expect(email.html).toContain('sophia.agencyos.network')
+      expect(email.html).toContain(expectedPricingUrl)
     })
 
     it('HTML lang attribute is vi', () => {
@@ -266,8 +267,8 @@ describe('buildOneTimeBundleReadyEmail — one-time bundle ready notification', 
 
       const email = buildOneTimeBundleReadyEmail(ctx)
 
-      expect(email.text).toContain('support@sophia.agencyos.network')
-      expect(email.html).toContain('support@sophia.agencyos.network')
+      expect(email.text).toContain('support@mekongmind.com')
+      expect(email.html).toContain('support@mekongmind.com')
     })
 
     it('dashboard URL points to /dashboard/videos', () => {

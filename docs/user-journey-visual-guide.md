@@ -331,7 +331,7 @@ Create and manage videos **from your phone** via Telegram, no computer needed.
 
 | Kenh / Channel | Lien he / Contact |
 |---|---|
-| Email | support@sophia.agency |
+| Email | support@mekongmind.com |
 | Telegram | @Sophia_Bbot (`/help`) |
 | Tu van goi / Sales | sales@sophia.agency |
 

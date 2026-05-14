@@ -42,7 +42,7 @@ export function getEmailSubject(type: EmailTemplateType, context: BillingEmailCo
 export function buildTextTemplate(type: EmailTemplateType, context: BillingEmailContext, language: 'en' | 'vi'): string {
   const { amount, currency, failureReason, gracePeriodDays, suspensionDate, nextRetryDate } = context
   const tierDisplay = context.tier.charAt(0) + context.tier.slice(1).toLowerCase()
-  const supportEmail = 'support@sophia.agencyos.network'
+  const supportEmail = 'support@mekongmind.com'
   const amountStr = amount ? `${(amount / 100).toFixed(2)} ${currency?.toUpperCase() || 'USD'}` : 'N/A'
   const providerStr = context.paymentProvider?.toUpperCase() || 'N/A'
 

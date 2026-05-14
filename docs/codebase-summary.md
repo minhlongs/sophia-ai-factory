@@ -550,9 +550,9 @@ scheduled_posts          → id, org_id, content, scheduled_at, channels_bitmap,
 ```
 
 ### Build & Deploy
-- **Build:** `npx opennextjs-cloudflare build` (from project root)
+- **Build:** `npm run deploy:build` (runs `next build --webpack` then `@opennextjs/cloudflare build --skipNextBuild`)
 - **Deploy:** `git push origin main` → GitHub Actions → CF Workers auto-deploy
-- **CI/CD:** `.github/workflows/ci-cd.yml` — lint + test + deploy pipeline
+- **CI/CD:** `.github/workflows/test.yml` + `.github/workflows/quality-gate.yml` — lint, test, and deploy pipeline
 
 ---
 

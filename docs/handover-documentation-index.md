@@ -4,7 +4,7 @@
 > Sophia AI Video Factory — Complete Documentation Set
 > Bo Tai Lieu Day Du Cho Sophia AI Video Factory
 
-**Last Updated / Cap Nhat:** 2026-02-10
+**Last Updated / Cap Nhat:** 2026-05-13
 
 ---
 
@@ -22,6 +22,19 @@
 | 8 | [System Architecture](./system-architecture.md) | Kien truc he thong / Component diagram & data flow | Developers |
 | 9 | [Credentials Handover](./credentials-handover.md) | Thong tin dang nhap & quyen truy cap / Access checklist | CEO, Admin |
 | 10 | [Support Escalation](./support-escalation.md) | Ho tro & cam ket dich vu / Support tiers & SLA | CEO, All Users |
+
+---
+
+## Admin Ops Source of Truth / Nguon Su That Van Hanh
+
+| # | Document / Tai Lieu | Description / Mo Ta | Audience / Doi Tuong |
+|---|---|---|---|
+| 1 | [Admin Ops Activation Checklist](./admin-ops/activation-checklist.md) | Go-live evidence tracker | Founder, Ops |
+| 2 | [Payment & Pricing Source of Truth](./admin-ops/payment-pricing-source-of-truth.md) | Canonical billing and pricing rules | Founder, Sales, Ops |
+| 3 | [Support Ticket SOP](./admin-ops/support-ticket-sop.md) | Ticket lifecycle, severity, escalation | Ops, Support |
+| 4 | [Vendor Register](./admin-ops/vendor-register.md) | Production vendors, owners, secret locations | Founder, Ops |
+| 5 | [Compliance Obligation Register](./admin-ops/compliance-obligation-register.md) | Legal and policy obligations | Founder, Ops |
+| 6 | [First Customer Close SOP](./admin-ops/first-customer-close-sop.md) | Lead → payment → activation workflow | Founder, Sales, Ops |
 
 ---
 

@@ -336,11 +336,11 @@ export default function LoginPage() {
               Telegram Bot @Sophia_Bbot
             </a>
             <a
-              href="mailto:support@agencyos.network"
+              href="mailto:support@mekongmind.com"
               className="flex items-center justify-center gap-2 w-full rounded-lg border border-border px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
             >
               <Mail aria-hidden="true" className="w-4 h-4" />
-              support@agencyos.network
+              support@mekongmind.com
             </a>
           </div>
         </div>

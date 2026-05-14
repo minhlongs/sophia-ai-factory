@@ -182,14 +182,14 @@
 
 - Nhan nut **"Ho Tro"** o goc duoi ben phai Dashboard
 - Gui tin nhan qua Telegram bot: `@Sophia_Bbot`
-- Email: support@sophia.agency
+- Email: support@mekongmind.com
 - Xem them: [Cau Hoi Thuong Gap (FAQ)](./faq.md)
 
 ### English
 
 - Click the **"Support"** button at the bottom right of your Dashboard
 - Send a message via Telegram bot: `@Sophia_Bbot`
-- Email: support@sophia.agency
+- Email: support@mekongmind.com
 - See also: [Frequently Asked Questions (FAQ)](./faq.md)
 
 ---
