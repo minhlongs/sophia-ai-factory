@@ -276,10 +276,10 @@ export default async function FAQPage({ params }: Props) {
           </Link>
           {isVi ? ' hoặc email ' : ' or email '}
           <a
-            href="mailto:support@sophia.agencyos.network"
+            href="mailto:support@mekongmind.com"
             className="text-violet-400 hover:underline"
           >
-            support@sophia.agencyos.network
+            support@mekongmind.com
           </a>
         </p>
       </div>

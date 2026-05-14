@@ -23,7 +23,7 @@ describe('renderReceipt', () => {
     expect(subject).toContain('Growth')
     expect(html).toContain('$399.00 USD')
     expect(html).toContain('pay_abc1') // truncated paymentId
-    expect(text).toContain('support@sophia.agencyos.network')
+    expect(text).toContain('support@mekongmind.com')
   })
 
   it('renders Vietnamese subject and HTML', () => {

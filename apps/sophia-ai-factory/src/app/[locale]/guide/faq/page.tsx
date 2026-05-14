@@ -61,7 +61,7 @@ const technicalFaqs: FaqItem[] = [
   },
   {
     question: "Bot Telegram không trả lời?",
-    answer: "Kiểm tra đúng tên bot: @Sophia_Bbot (chữ B viết hoa). Đảm bảo bạn đã nhấn START trước đó. Thử gửi lại lệnh /help và đợi 30 giây. Nếu vẫn không phản hồi, liên hệ support@agencyos.network.",
+    answer: "Kiểm tra đúng tên bot: @Sophia_Bbot (chữ B viết hoa). Đảm bảo bạn đã nhấn START trước đó. Thử gửi lại lệnh /help và đợi 30 giây. Nếu vẫn không phản hồi, liên hệ support@mekongmind.com.",
   },
   {
     question: "Thanh toán bị lỗi hoặc không được ghi nhận?",
@@ -157,8 +157,9 @@ export default function FAQGuidePage() {
       <GuideCallout variant="info" title="Không tìm thấy câu trả lời?">
         Liên hệ hỗ trợ qua Telegram{" "}
         <strong className="text-foreground">@Sophia_Bbot</strong> hoặc email{" "}
-        <strong className="text-foreground">support@agencyos.network</strong>.
-        Gói Growth và Premium được hỗ trợ ưu tiên. Gói Master hỗ trợ VIP 24/7.
+        <strong className="text-foreground">support@mekongmind.com</strong>.
+        Starter phản hồi trong 24 giờ làm việc, Growth trong 12 giờ làm việc,
+        Premium trong 4 giờ, và Master trong 2 giờ trong cửa sổ handover ưu tiên.
       </GuideCallout>
     </div>
   );

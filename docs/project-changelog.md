@@ -1,7 +1,21 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-05-10 (Wave 20 closed: MarkdownV2 + step-split + retry_after + quota widget + account self-service + schema rename)
+> **Last Updated:** 2026-05-13 (Admin ops consistency batch: support/billing sync, admin-ops docs pack, release workflow corrections)
+
+---
+
+## [2026-05-13] Admin Ops Consistency Batch — Support/Billing Surface + Release Workflow Corrections
+
+**Summary (vi):** Đồng bộ lại toàn bộ lớp giao tiếp customer-facing quanh support, billing, handover. Chuẩn hóa contact thành `support@mekongmind.com` trên app, bot help flow, email templates, và handover docs. Dọn wording checkout cũ để tài liệu active dùng NOWPayments + PayOS. Thêm bộ `docs/admin-ops/` làm nguồn sự thật cho activation checklist, pricing/payment, support tickets, vendor register, compliance register, và first-customer close. Song song, sửa release workflow để gate chính trên `main` dùng `verify:green` và `deploy:build`, đồng thời khôi phục lint bên trong `verify.sh` sau khi main đã sạch lint.
+
+**Summary (en):** Customer-facing support, billing, and handover surfaces were re-aligned. The canonical support contact is now `support@mekongmind.com` across the app, Telegram help flow, billing/support emails, and active handover docs. Checkout/billing wording was normalized to NOWPayments + PayOS on active customer docs. A new `docs/admin-ops/` source-of-truth pack was added for activation, pricing/payment, support operations, vendors, compliance, and first-customer close. In parallel, the release workflow was corrected so the main deploy gate uses `verify:green` and `deploy:build`, with lint restored inside `verify.sh` now that `main` is lint-clean.
+
+**Key scope:**
+- Support contact sync across UI, guide/help pages, Telegram, billing emails, and handover docs
+- Admin ops docs pack: activation, pricing/payment, support SOP, vendors, compliance, first-customer close
+- Workflow correction: `test.yml` gate + `deploy:build`; `quality-gate.yml` continues using `npm run lint`
+- Billing/source-of-truth doc cleanup for NOWPayments + PayOS
 
 ---
 

@@ -202,7 +202,7 @@ export function MissionDetail({ missionId }: Props) {
                 {retrying ? t('retrying') : t('retry')}
               </button>
               <a
-                href="mailto:support@agencyos.network"
+                href="mailto:support@mekongmind.com"
                 className="text-xs text-muted-foreground hover:text-foreground underline"
               >
                 {t('contact_support')}

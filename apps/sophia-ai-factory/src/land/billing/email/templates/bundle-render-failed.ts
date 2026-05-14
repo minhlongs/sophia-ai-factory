@@ -7,7 +7,7 @@
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network'
 const DASHBOARD_URL = `${APP_URL}/dashboard/orders`
-const SUPPORT_EMAIL = 'support@sophia.agencyos.network'
+const SUPPORT_EMAIL = 'support@mekongmind.com'
 
 export interface BundleRenderFailedContext {
   userEmail?: string

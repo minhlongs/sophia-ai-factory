@@ -101,7 +101,7 @@ export default function GuidePage() {
               </div>
               <div className="flex items-center gap-2">
                 <MessageCircle className="w-3.5 h-3.5 text-violet-400" aria-hidden="true" />
-                <span>Email: <span className="font-mono text-violet-400 text-xs">support@agencyos.network</span></span>
+                <span>Email: <span className="font-mono text-violet-400 text-xs">support@mekongmind.com</span></span>
               </div>
             </div>
           }

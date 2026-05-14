@@ -116,7 +116,7 @@ export function buildEmailHtml100(): string {
       <p>Your API access has been blocked due to quota exceeded.</p>
     </div>
     <div style="text-align: center; margin: 30px 0;"><a href="${upgradeUrl}" class="button">⚡ Upgrade to Restore Access</a></div>
-    <p style="text-align: center; color: #6b7280;">Questions? Contact support@sophia.agencyos.network</p>
+    <p style="text-align: center; color: #6b7280;">Questions? Contact support@mekongmind.com</p>
   </div>
 </div></body></html>`;
 }

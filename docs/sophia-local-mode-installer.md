@@ -180,5 +180,5 @@ rm -f ~/.sophia-local-mode-provisioned
 
 **EN:** Attach `~/Library/Logs/mekongd.log` when contacting support.
 
-- Email: support@agencyos.network
+- Email: support@mekongmind.com
 - Sophia Dashboard → Help

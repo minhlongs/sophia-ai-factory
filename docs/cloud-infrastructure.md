@@ -27,7 +27,7 @@ specs:
 1. `git push origin main` → GitHub Actions
 2. GitHub Actions runs tests (`npm test`, `npm audit`)
 3. On success: triggers Cloudflare Deploy action
-4. Builds Next.js: `npx opennextjs-cloudflare build`
+4. Builds Next.js via `npm run deploy:build` (`next build --webpack` then `@opennextjs/cloudflare build --skipNextBuild`)
 5. Publishes worker to `main` environment
 6. Auto-routes traffic to new deployment
 
@@ -281,8 +281,11 @@ All secrets managed via `npx wrangler secret put <NAME>`:
 | `OPENROUTER_API_KEY` | Multi-model AI | As needed |
 | `HEYGEN_API_KEY` | Video generation | As needed |
 | `RESEND_API_KEY` | Email delivery | As needed |
-| `POLAR_ACCESS_TOKEN` | Payment processing | As needed |
-| `POLAR_WEBHOOK_SECRET` | Webhook verification | With access token |
+| `NOWPAYMENTS_API_KEY` | Payment processing | As needed |
+| `NOWPAYMENTS_IPN_SECRET` | Webhook verification | With API key rotation |
+| `PAYOS_CLIENT_ID` | Vietnam domestic payments | As needed |
+| `PAYOS_API_KEY` | Vietnam domestic payments | As needed |
+| `PAYOS_CHECKSUM_KEY` | PayOS callback verification | With API key rotation |
 | `SENTRY_DSN` | Error tracking | Permanent (public URL) |
 
 **Rotation Procedure:**

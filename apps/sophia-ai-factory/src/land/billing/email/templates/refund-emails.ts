@@ -5,7 +5,7 @@
  * @module lib/billing/email/templates/refund-emails
  */
 
-const SUPPORT_EMAIL = 'support@sophia.agencyos.network'
+const SUPPORT_EMAIL = 'support@mekongmind.com'
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network'
 
 export interface RefundEmailCtx {

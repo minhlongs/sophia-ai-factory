@@ -232,4 +232,4 @@
 | Gui `/help` trong Telegram | Type `/help` in Telegram |
 | Xem [Cau Hoi Thuong Gap](./faq.md) | See [FAQ](./faq.md) |
 | Xem [Xu Ly Su Co](./troubleshooting.md) | See [Troubleshooting](./troubleshooting.md) |
-| Email: support@sophia.agency | Email: support@sophia.agency |
+| Email: support@mekongmind.com | Email: support@mekongmind.com |

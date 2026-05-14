@@ -16,7 +16,7 @@ flowchart TD
 
     B -->|"Tao tai khoan xong<br/>Account created"| D["Thiet Lap / Setup Wizard<br/>/setup-wizard"]
 
-    C -->|"Chon Goi<br/>Choose Plan"| E["Thanh Toan / Polar.sh Checkout"]
+    C -->|"Chon Goi<br/>Choose Plan"| E["Thanh Toan / NOWPayments or PayOS Checkout"]
     E -->|"Thanh toan xong<br/>Payment done"| D
 
     D -->|"Hoan thanh 4 buoc<br/>Complete 4 steps"| F["Dashboard<br/>/dashboard"]

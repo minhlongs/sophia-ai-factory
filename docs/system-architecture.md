@@ -240,15 +240,15 @@ User retrieves via GET /api/v1/missions/[id]/result
 
 ### Billing Flow
 ```
-User selects tier → /billing/upgrade
+User selects tier → /pricing
   ↓
-POST /api/billing/checkout → Polar.sh checkout URL
+POST /api/checkout → NOWPayments invoice URL or PayOS checkout session
   ↓
-User pays via Polar.sh (credit card)
+User pays via NOWPayments (USDT/crypto) or PayOS (VietQR/bank transfer)
   ↓
-POST /api/webhooks/polar (signature verified)
+POST /api/webhooks/nowpayments or /api/webhooks/payos (signature verified)
   ↓
-D1: Update billing_settings (tier, polar_subscription_id)
+D1: Update billing state, pending order, and active tier
 D1: Credit MCU to org_balances
   ↓
 /billing/success confirmation
@@ -412,7 +412,7 @@ affiliate_content — id, org_id, type, title, content, status
 | `/api/auth/signup` | POST | User registration |
 | `/api/auth/login` | POST | Password + magic link login |
 | `/api/auth/callback` | POST | Magic link verification |
-| `/api/webhooks/polar` | POST | Polar.sh payment events |
+| `/api/checkout` | GET/POST | Self-serve checkout redirect + invoice creation |
 | `/api/webhooks/nowpayments` | POST | NOWPayments IPN (subscription activation + onboarding trigger) |
 | `/api/webhooks/payos` | POST | PayOS webhook (VN payment events) (NEW 2026-05-03) |
 | `/api/webhooks/heygen` | POST | HeyGen video completion callback (email delivery trigger) |
@@ -421,11 +421,10 @@ affiliate_content — id, org_id, type, title, content, status
 | Route | Method | Purpose |
 |-------|--------|---------|
 | `/api/org` | GET | Current org info |
-| `/api/billing/subscription` | GET | Subscription + MCU balance |
-| `/api/billing/checkout` | POST | NOWPayments/PayOS checkout session |
-| `/api/billing/nowpayments/checkout` | POST | Invoice generation (self-serve, NEW 2026-05-03) |
-| `/api/billing/payos/checkout` | POST | PayOS QR generation VN (NEW 2026-05-03) |
-| `/api/v1/subscription` | GET | Tier + period_end display (NEW 2026-05-03) |
+| `/api/billing/usage-summary` | GET | Usage + billing summary |
+| `/api/checkout` | POST | NOWPayments invoice or PayOS checkout session |
+| `/api/checkout/status` | GET | Pending checkout / order status polling |
+| `/api/user/cancel-subscription` | POST | User-initiated subscription cancel |
 | `/api/v1/api-keys` | GET/POST/DELETE | RaaS API key management (NEW 2026-05-03) |
 | `/api/raas/missions` | GET/POST | Mission CRUD |
 | `/api/raas/keys` | GET/POST | API key management |
@@ -667,17 +666,16 @@ crons = ["*/5 * * * *"]
 | `OPENROUTER_API_KEY` | Multi-model AI + video scripting |
 | `HEYGEN_API_KEY` | Video generation (onboarding + on-demand) |
 | `RESEND_API_KEY` | Email delivery |
-| `POLAR_ACCESS_TOKEN` | Payment processing |
-| `POLAR_WEBHOOK_SECRET` | Webhook verification |
-| `POLAR_PRODUCT_STARTER` | Polar product ID |
-| `POLAR_PRODUCT_GROWTH` | Polar product ID |
-| `POLAR_PRODUCT_PREMIUM` | Polar product ID |
-| `POLAR_PRODUCT_MASTER` | Polar product ID |
+| `NOWPAYMENTS_API_KEY` | Payment processing |
+| `NOWPAYMENTS_IPN_SECRET` | NOWPayments webhook verification |
+| `PAYOS_CLIENT_ID` | Vietnam domestic payments |
+| `PAYOS_API_KEY` | Vietnam domestic payments |
+| `PAYOS_CHECKSUM_KEY` | PayOS webhook/checksum verification |
 
 ### CI/CD
-- **GitHub Actions:** `.github/workflows/test.yml` — lint + 205 tests
+- **GitHub Actions:** `.github/workflows/test.yml` — `verify:green` gate + Cloudflare deploy
 - **Deploy:** `git push origin main` → GitHub Actions → CF Workers auto-deploy
-- **Build:** `npx opennextjs-cloudflare build` (from `apps/sophia-ai-factory/`)
+- **Build:** `npm run deploy:build` (Next build + OpenNext build + scheduled handler injection)
 
 ### Known Workarounds
 - **Index route bug:** opennextjs-cloudflare returns 500 for `/`. Fixed via middleware rewrite `/` → `/landing`

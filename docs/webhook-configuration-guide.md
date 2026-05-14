@@ -1,9 +1,13 @@
 ---
-title: Stripe & Polar Webhook Configuration Guide
-description: Complete guide for configuring Stripe and Polar.sh webhooks in development and production environments
+title: Legacy Stripe & Polar Webhook Configuration Guide
+description: Legacy reference for Stripe and Polar.sh webhooks. Sophia customer billing uses NOWPayments and PayOS.
 ---
 
 # Webhook Configuration Guide
+
+> Status: legacy reference only.
+>
+> Sophia production customer billing is NOWPayments + PayOS. Do not configure Polar for Sophia customer billing. Stripe may only be used for explicitly approved affiliate payout/KYC flows. Current go-live billing source of truth is `docs/admin-ops/payment-pricing-source-of-truth.md`.
 
 ## Environment Variables
 

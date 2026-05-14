@@ -10,7 +10,7 @@ import { Resend } from 'resend'
 import { logger } from '@/seed/utils/logger-utility'
 import type { ReconcileResult } from './reconcile-query'
 
-const SUPPORT_EMAIL = 'support@sophia.agencyos.network'
+const SUPPORT_EMAIL = 'support@mekongmind.com'
 const FROM_EMAIL = 'Sophia AI <ops@sophia.agencyos.network>'
 
 function getResend(): Resend | null {

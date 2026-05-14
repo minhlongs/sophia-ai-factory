@@ -27,7 +27,7 @@ npm run dev
 - **Bot**: Telegram (@Sophia_Bbot)
 - **AI Services**: HeyGen, ElevenLabs, MuAPI (100+ models), OpenRouter
 - **Auth**: Better Auth v1.6.2 with D1 Kysely adapter (email/password + magic link + org plugin)
-- **Deployment**: Cloudflare Workers via GitHub Actions
+- **Deployment**: Cloudflare Workers via GitHub Actions (`verify:green` gate on `main`, then deploy)
 - **Background Jobs**: Inngest
 - **i18n**: next-intl (Vietnamese + English)
 - **Styling**: Tailwind CSS 4
@@ -42,5 +42,5 @@ npm run dev
 ## Production
 
 - **URL**: https://sophia.agencyos.network
-- **CI/CD**: GitHub Actions → Cloudflare Workers auto-deploy
+- **CI/CD**: GitHub Actions → `verify:green` → Cloudflare Workers auto-deploy
 - **Tests**: 863 passing (Vitest)

@@ -199,10 +199,10 @@ export default async function HelpIndexPage({ params }: Props) {
             ? 'Nếu không tìm được câu trả lời, gửi email tới: '
             : 'If you cannot find an answer, email: '}
           <a
-            href="mailto:support@sophia.agencyos.network"
+            href="mailto:support@mekongmind.com"
             className="text-amber-400 hover:underline"
           >
-            support@sophia.agencyos.network
+            support@mekongmind.com
           </a>
         </p>
         <p className="text-xs text-zinc-500">

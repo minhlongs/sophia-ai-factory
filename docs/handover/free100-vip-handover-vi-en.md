@@ -61,7 +61,7 @@ Cách dùng:
 
 Toàn bộ tính năng MCU, BYOK, mission engine, 31 SOP playbooks unlock ngay.
 
-Mọi thắc mắc: support@agencyos.network
+Mọi thắc mắc: support@mekongmind.com
 ```
 
 **Email template (EN):**
@@ -84,7 +84,7 @@ Redemption:
 
 All MCU, BYOK, mission engine, and 31 SOP playbooks unlock instantly.
 
-Support: support@agencyos.network
+Support: support@mekongmind.com
 ```
 
 ### Bước 2: Customer Redeem (Tự động / Automated)

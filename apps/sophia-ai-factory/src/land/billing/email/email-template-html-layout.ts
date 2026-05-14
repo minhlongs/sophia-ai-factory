@@ -66,7 +66,7 @@ export function wrapHtmlTemplate(
       ${mainContent}
       <div style="text-align: center; margin: 25px 0;">${ctaButton}</div>
       <p style="margin-top: 25px; color: #6b7280; font-size: 14px;">
-        Need help? <a href="mailto:support@sophia.agencyos.network" style="color: ${color.accent};">support@sophia.agencyos.network</a>
+        Need help? <a href="mailto:support@mekongmind.com" style="color: ${color.accent};">support@mekongmind.com</a>
       </p>
     </div>
     <div class="footer"><p>© 2026 Sophia AI Factory. All rights reserved.</p><p>Sophia AI - AI Video Factory</p></div>

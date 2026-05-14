@@ -11,7 +11,7 @@
 
 Complete user journey: Landing → Signup → Onboarding → Dashboard → Billing → Features → API.
 
-**Stack:** Next.js 15.5 + Cloudflare Workers + D1 Database + Polar.sh Billing
+**Stack:** Next.js + Cloudflare Workers + D1 Database + NOWPayments + PayOS Billing
 
 ---
 
@@ -46,7 +46,7 @@ graph TD
     R --> S[queued → planning → executing → completed]
 
     N --> T[Select Tier]
-    T --> U[Polar.sh Checkout]
+    T --> U[NOWPayments or PayOS Checkout]
     U --> V[Webhook → Tier Activated]
     V --> W[MCU Credits Added]
 
@@ -113,9 +113,11 @@ Add external API keys for AI features:
 
 | Key | Service | Purpose |
 |-----|---------|---------|
-| ANTHROPIC_API_KEY | Anthropic | AI proposal generation |
-| RESEND_API_KEY | Resend | Email delivery |
-| HEYGEN_API_KEY | HeyGen | Video generation (optional) |
+| OPENROUTER_API_KEY | OpenRouter | Script and workflow generation |
+| ELEVENLABS_API_KEY | ElevenLabs | Voice generation |
+| HEYGEN_API_KEY | HeyGen | Avatar video generation |
+| MUAPI_API_KEY | MuAPI | Optional media generation |
+| RESEND_API_KEY | Resend | Optional email delivery |
 
 ### Navigation
 - `/dashboard` — Overview
@@ -140,16 +142,16 @@ Shows: current tier, MCU balance, usage chart, upgrade button
 
 | Tier | Price | MCU/month | Discount | Best For |
 |------|-------|-----------|----------|----------|
-| Starter | $49/mo | 500 | — | Solo consultants |
-| Growth | $149/mo | 2,000 | 10% | Small agencies |
-| Premium | $499/mo | 10,000 | 20% | Mid-size agencies |
-| Master | $999/mo | 25,000 | 30% | Enterprise teams |
+| Starter (BASIC) | $199/mo | Usage tracked in dashboard | — | Small businesses testing AI video |
+| Growth (PREMIUM) | $399/mo | Usage tracked in dashboard | — | Growing teams producing video weekly |
+| Premium (ENTERPRISE) | $799/mo | Usage tracked in dashboard | — | Agencies and enterprises needing automation/API |
+| Master | $4,999 one-time | Usage tracked by deployment | — | White-label/source-code handover |
 
 ### Checkout Flow
-1. Select tier → Polar.sh checkout (credit card)
-2. Payment processed → `POST /api/webhooks/polar`
-3. Webhook verifies signature → updates `billing_settings` in D1
-4. MCU credits allocated → `/billing/success` confirmation
+1. Select tier → choose NOWPayments (crypto/USDT) or PayOS (VietQR/bank transfer)
+2. Payment processed → `POST /api/webhooks/nowpayments` or PayOS callback flow
+3. Webhook verifies signature → updates subscription/license state in D1
+4. Account activates → `/payment-success` confirmation
 
 ---
 
@@ -256,4 +258,4 @@ curl -N https://sophia.agencyos.network/api/v1/missions/MISSION_ID/stream \
 | Page shows 500 | Check /status, report to support |
 | Forgot password | Use magic link login |
 
-**Support:** support@agencyos.network | **Status:** /status | **API Docs:** /docs/api
+**Support:** support@mekongmind.com | **Status:** /status | **API Docs:** /docs/api

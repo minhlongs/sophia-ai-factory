@@ -106,7 +106,7 @@ wrangler secret put FOUNDER_EMAIL --config apps/sophia-ai-factory/wrangler.toml
 ## Phase 5 — GH Branch Protection + First Smoke (5 min)
 
 1. https://github.com/longtho638-jpg/sophia-ai-factory/settings/branches → **Add rule** for `main`:
-   - ✅ Require status checks before merging: `post-merge-tests`, `Lint & Build & Test`
+   - ✅ Require status checks before merging: `post-merge-tests`, `Green Gate (verify:green)`, `Gate 1 — Validation (tsc + eslint + vitest)`
    - ✅ Require linear history (no merge commits)
    - ✅ Include administrators (you're solo, applies to founder too)
 

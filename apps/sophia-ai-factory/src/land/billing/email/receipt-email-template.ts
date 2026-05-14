@@ -101,7 +101,7 @@ export function renderReceipt(input: ReceiptInput): ReceiptOutput {
     <hr style="border:none;border-top:1px solid #333;margin:24px 0;">
     <p style="font-size:13px;color:#666;">
       ${isVi ? 'Cần hỗ trợ?' : 'Need help?'}
-      <a href="mailto:support@sophia.agencyos.network" style="color:#7c3aed;">support@sophia.agencyos.network</a>
+      <a href="mailto:support@mekongmind.com" style="color:#7c3aed;">support@mekongmind.com</a>
     </p>
     <p style="font-size:12px;color:#444;">Sophia AI Factory — AgencyOS</p>
   </div>
@@ -123,7 +123,7 @@ export function renderReceipt(input: ReceiptInput): ReceiptOutput {
     '',
     vatTextNotice,
     '',
-    `${isVi ? 'Hỗ trợ' : 'Support'}: support@sophia.agencyos.network`,
+    `${isVi ? 'Hỗ trợ' : 'Support'}: support@mekongmind.com`,
     'Sophia AI Factory — AgencyOS',
   ].join('\n')
 

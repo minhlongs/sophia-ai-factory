@@ -64,7 +64,7 @@ export function PricingFaq() {
         <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">{t('talk_to_sales')}</h2>
         <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">{t('talk_to_sales_desc')}</p>
         <a
-          href="mailto:support@agencyos.network?subject=Enterprise Plan Inquiry"
+          href="mailto:support@mekongmind.com?subject=Enterprise Plan Inquiry"
           className="cursor-pointer inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-150"
         >
           <Mail className="w-4 h-4" aria-hidden="true" />

@@ -82,7 +82,7 @@ export default async function CheckoutFailurePage({
             {isVi ? "Thử lại" : "Try again"}
           </Link>
           <a
-            href="mailto:support@sophia.agencyos.network"
+            href="mailto:support@mekongmind.com"
             className="inline-flex items-center justify-center gap-2 w-full rounded-xl border border-zinc-700 px-6 py-3.5 text-center font-medium text-zinc-300 transition hover:border-zinc-500 hover:text-white"
           >
             <MessageCircle className="h-4 w-4" />

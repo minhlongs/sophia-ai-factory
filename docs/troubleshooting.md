@@ -387,37 +387,40 @@
 
 ### Nguyen nhan / Cause
 
-- The het han hoac khong du so du / Card expired or insufficient funds
-- Ngan hang chan giao dich quoc te / Bank blocking international transactions
-- Thong tin the nhap sai / Incorrect card information
+- Vi USDT khong du so du hoac sai network / USDT wallet has insufficient funds or wrong network
+- Link thanh toan PayOS/VietQR het han / PayOS or VietQR payment link expired
+- Hoa don NOWPayments dang cho xac nhan blockchain / NOWPayments invoice still waiting for blockchain confirmation
+- Ma giao dich hoac so tien gui khong khop / Sent amount or transaction reference does not match the invoice
 
 ### Cach khac phuc / How to fix
 
 **Tieng Viet:**
 
-1. Kiem tra thong tin the:
-   - So the nhap dung
-   - Ngay het han chua qua
-   - Ma CVV (3 so mat sau the) nhap dung
-2. Kiem tra so du tai khoan ngan hang
-3. Goi ngan hang de:
-   - Mo giao dich quoc te (international transactions)
-   - Mo giao dich truc tuyen (online transactions)
-4. Thu the tin dung khac (Visa hoac Mastercard)
-5. Neu van khong duoc, lien he support@sophia.agency de duoc ho tro phuong thuc thanh toan khac
+1. Kiem tra ban dang dung dung phuong thuc:
+   - NOWPayments cho USDT/crypto
+   - PayOS cho VietQR/chuyen khoan ngan hang tai Viet Nam
+2. Neu dung NOWPayments:
+   - Kiem tra dung network va dung so tien tren hoa don
+   - Cho 2-5 phut de blockchain xac nhan giao dich
+3. Neu dung PayOS:
+   - Tao lai link thanh toan neu QR/link da het han
+   - Kiem tra noi dung chuyen khoan neu he thong yeu cau
+4. Vao lai `/pricing` hoac `/dashboard/billing` de tao hoa don moi neu hoa don cu da het han
+5. Neu sau 30 phut van chua kich hoat, lien he support@mekongmind.com kem ma giao dich hoac invoice ID
 
 **English:**
 
-1. Check your card details:
-   - Card number is correct
-   - Expiration date hasn't passed
-   - CVV code (3 digits on card back) is correct
-2. Check your bank account balance
-3. Call your bank to:
-   - Enable international transactions
-   - Enable online transactions
-4. Try a different credit card (Visa or Mastercard)
-5. If still not working, contact support@sophia.agency for alternative payment methods
+1. Confirm you are using the correct payment path:
+   - NOWPayments for USDT/crypto
+   - PayOS for VietQR or Vietnam bank transfer
+2. If you use NOWPayments:
+   - Verify the wallet network and exact invoice amount
+   - Wait 2-5 minutes for blockchain confirmation
+3. If you use PayOS:
+   - Regenerate the payment link if the QR or link expired
+   - Verify the transfer reference if one is required
+4. Return to `/pricing` or `/dashboard/billing` to create a fresh invoice if the old one expired
+5. If your account is still not activated after 30 minutes, contact support@mekongmind.com with the transaction ID or invoice ID
 
 ---
 
@@ -450,7 +453,7 @@
    - Thu lai sau 1 gio
 5. Neu van khong duoc sau nhieu lan thu:
    - Gui `/help` qua Telegram @Sophia_Bbot
-   - Gui email support@sophia.agency kem ten chien dich bi ket
+   - Gui email support@mekongmind.com kem ten chien dich bi ket
 
 **English:**
 
@@ -465,7 +468,7 @@
    - Try again after 1 hour
 5. If still not working after multiple attempts:
    - Send `/help` via Telegram @Sophia_Bbot
-   - Email support@sophia.agency with the stuck campaign name
+   - Email support@mekongmind.com with the stuck campaign name
 
 ---
 
@@ -474,9 +477,9 @@
 | Phuong thuc / Method | Chi tiet / Details | Thoi gian / Availability |
 |---|---|---|
 | Telegram Bot | @Sophia_Bbot (`/help`) | 24/7 (tu dong / automatic) |
-| Email | support@sophia.agency | Tra loi trong 24h / Reply within 24h |
-| Ho tro uu tien / Priority | Goi PREMIUM+ / PREMIUM+ plans | Tra loi trong 4h / Reply within 4h |
-| Hotline 24/7 | Chi goi ENTERPRISE / ENTERPRISE only | 24/7 |
+| Email | support@mekongmind.com | Tra loi trong 24h / Reply within 24h |
+| Ho tro uu tien / Priority | Growth, Premium, Master | Growth 12h, Premium 4h, Master 2h trong gio lam viec / business response |
+| Handover ky thuat / Technical handover | Chi goi Master / Master only | Kenh uu tien trong cua so handover / priority handover window |
 
 ---
 

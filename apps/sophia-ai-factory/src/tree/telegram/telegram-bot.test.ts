@@ -99,6 +99,11 @@ describe('Telegram Bot Handlers', () => {
         expect.stringContaining('Available Commands'),
         expect.any(Object)
       )
+      expect(bot.telegram.sendMessage).toHaveBeenCalledWith(
+        chatId,
+        expect.stringContaining('support@mekongmind.com'),
+        expect.any(Object)
+      )
     })
   })
 
@@ -313,4 +318,3 @@ describe('Telegram Bot Handlers', () => {
     })
   })
 })
-

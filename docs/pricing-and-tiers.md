@@ -80,7 +80,7 @@ The plan for businesses ready to scale video production across multiple channels
 - 3 YouTube Channels managed automatically
 - Unlimited Video Templates
 - Weekly automatic content updates
-- Priority support via email and Telegram (response within 4 hours)
+- Priority support via email and Telegram (response within 12 business hours)
 - Advanced Dashboard with detailed reports
 - Data export in CSV and PDF formats
 - Automatic video publishing to YouTube on schedule
@@ -125,7 +125,7 @@ The complete plan for businesses that want 100% automated video production.
 - Unlimited videos per month
 - Custom video templates with your branding
 - API access to integrate with your own systems
-- Dedicated 24/7 support (hotline + Telegram + email)
+- Priority support via email and Telegram (response within 4 hours)
 - Personal Account Manager
 - Advanced analytics reports
 - Priority video processing queue
@@ -159,7 +159,7 @@ The ultimate package — full system ownership with unlimited customization.
 - Full source code ownership
 - Unlimited customization
 - Installation and operation guidance
-- Priority technical support
+- Priority technical handover channel (response within 2 business hours during handover window)
 - No monthly fees — one-time payment only
 
 ---
@@ -174,7 +174,7 @@ The ultimate package — full system ownership with unlimited customization.
 | **Video moi thang / Videos per month** | 20 | 100 | Khong gioi han | Khong gioi han |
 | **Dashboard** | Co ban | Nang cao | Nang cao + Analytics | Toan quyen |
 | **Telegram Bot** | Co | Co | Co | Co |
-| **Ho tro / Support** | Email | Uu tien 4h | 24/7 + Account Manager | Uu tien ky thuat |
+| **Ho tro / Support** | Email 24h | Uu tien 12h | Uu tien 4h + Account Manager | Handover ky thuat 2h |
 | **Xuat du lieu / Data export** | Khong | CSV, PDF | CSV, PDF, API | Toan quyen |
 | **API Access** | Khong | Khong | Co | Co |
 | **Source Code** | Khong | Khong | Khong | Co |
@@ -188,8 +188,10 @@ The ultimate package — full system ownership with unlimited customization.
 1. Truy cap **trang chu** tai `https://sophia.agencyos.network`
 2. Cuon xuong phan **"Bang Gia"**
 3. Nhan nut **"Bat Dau"** ben canh goi ban muon
-4. Trang thanh toan se hien ra — nhap thong tin the tin dung
-5. Nhan **"Pay now"** (Thanh toan)
+4. Chon phuong thuc thanh toan:
+   - NOWPayments cho USDT/crypto
+   - PayOS cho VietQR/chuyen khoan ngan hang tai Viet Nam
+5. Xac nhan invoice hoac quet QR de thanh toan
 6. Tai khoan se duoc kich hoat **ngay lap tuc**
 7. Ban se nhan email xac nhan dang ky
 
@@ -198,8 +200,10 @@ The ultimate package — full system ownership with unlimited customization.
 1. Visit **homepage** at `https://sophia.agencyos.network`
 2. Scroll to **"Pricing"** section
 3. Click **"Get Started"** next to the plan you want
-4. Checkout page appears — enter your credit card or crypto details
-5. Click **"Pay now"**
+4. Choose your checkout method:
+   - NOWPayments for USDT/crypto
+   - PayOS for VietQR or Vietnam bank transfer
+5. Confirm the invoice or scan the QR code to pay
 6. Your account activates **immediately**
 7. You'll receive a confirmation email
 
@@ -213,7 +217,7 @@ The ultimate package — full system ownership with unlimited customization.
 Co. Ban co the huy goi bat ky luc nao. Goi se con hieu luc den het chu ky thanh toan hien tai.
 
 **Thanh toan bang gi?**
-Chung toi chap nhan the tin dung (Visa, Mastercard, American Express) va cryptocurrency (USDT) qua NOWPayments. Khach hang o Viet Nam co the thanh toan bang VietQR hoac chuyen khoan ngan hang qua PayOS.
+Chung toi chap nhan USDT/crypto qua NOWPayments. Khach hang o Viet Nam co the thanh toan bang VietQR hoac chuyen khoan ngan hang qua PayOS.
 
 **Co hoan tien khong?**
 Chung toi khong hoan tien cho thoi gian da su dung. Khi huy, ban van duoc su dung den het thang da thanh toan.
@@ -224,7 +228,7 @@ Chung toi khong hoan tien cho thoi gian da su dung. Khi huy, ban van duoc su dun
 Yes. You can cancel anytime. Your plan remains active until the end of your current billing cycle.
 
 **What payment methods do you accept?**
-We accept credit cards (Visa, Mastercard, American Express) and cryptocurrencies (USDT) via NOWPayments. Customers in Vietnam can pay using VietQR or bank transfer via PayOS.
+We accept USDT/crypto via NOWPayments. Customers in Vietnam can pay using VietQR or bank transfer via PayOS.
 
 **Do you offer refunds?**
 We don't refund for time already used. When you cancel, you keep access until the end of the paid month.

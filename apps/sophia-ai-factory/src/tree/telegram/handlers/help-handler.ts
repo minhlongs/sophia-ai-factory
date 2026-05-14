@@ -19,6 +19,6 @@ export async function handleHelp(chatId: string): Promise<void> {
 /results - View campaign results
 /ticket <mô tả> - Gửi yêu cầu hỗ trợ
 
-*Need support?* Contact us at support@sophia.ai`
+*Need support?* Contact us at support@mekongmind.com`
   )
 }

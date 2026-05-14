@@ -70,7 +70,7 @@ export function AgentTeamPanel() {
             <p className="text-xs text-muted-foreground">{t('no_agents')}</p>
             <a
               className="inline-block text-xs text-primary underline"
-              href="mailto:support@agencyos.network?subject=Request%20Agent%20Team"
+              href="mailto:support@mekongmind.com?subject=Request%20Agent%20Team"
             >
               {t('create_team_cta')}
             </a>

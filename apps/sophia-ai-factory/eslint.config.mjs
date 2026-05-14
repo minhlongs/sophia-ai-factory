@@ -192,6 +192,8 @@ const eslintConfig = defineConfig([
     ".open-next/**",
     "out/**",
     "build/**",
+    "public/sw.js",
+    "public/workbox-*.js",
     "next-env.d.ts",
     "coverage/**",
     "worker-configuration.d.ts",

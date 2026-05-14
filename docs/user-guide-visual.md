@@ -43,7 +43,7 @@ The introduction page for Sophia, sections stacked top to bottom:
 | **Hero** (dau trang / top) | Tieu de lon + loi gioi thieu Sophia + nut "Bat Dau" / Big title + Sophia intro + "Get Started" button |
 | **Workflow** | 4 buoc tao video: Kich ban > Giong noi > Avatar > Xuat ban / 4-step video flow: Script > Voice > Avatar > Publish |
 | **Features** | Cac tinh nang chinh cua Sophia / Key capabilities of Sophia |
-| **Pricing** | 3 goi: BASIC, PREMIUM, ENTERPRISE + nut "Chon Goi" / 3 plans with "Choose Plan" buttons |
+| **Pricing** | 4 goi: BASIC, PREMIUM, ENTERPRISE, MASTER + nut "Chon Goi" / 4 plans with "Choose Plan" buttons |
 | **Affiliate Discovery** | Tim san pham ban chay de quang ba / Find trending products to promote |
 | **ROI Calculator** | Tinh loi nhuan du kien / Estimate your potential profit |
 | **FAQ** | Cau hoi thuong gap / Frequently asked questions |
@@ -58,7 +58,7 @@ The introduction page for Sophia, sections stacked top to bottom:
 ### Sau khi bam > chuyen gi xay ra / After clicking > what happens
 
 - "Bat Dau" / "Get Started" > Chuyen den trang dang ky/dang nhap / Goes to sign up/login page
-- "Chon Goi" / "Choose Plan" > Chuyen den trang thanh toan Polar.sh / Goes to Polar.sh payment
+- "Chon Goi" / "Choose Plan" > Chuyen den checkout NOWPayments hoac PayOS / Goes to NOWPayments or PayOS checkout
 
 ---
 
@@ -71,24 +71,25 @@ The introduction page for Sophia, sections stacked top to bottom:
 | Phan / Section | Mo ta / Description |
 |---|---|
 | **Thanh dieu huong / Navbar** | Logo "Sophia AI Factory" ben trai + nut "Dashboard" ben phai / Logo on left + "Dashboard" button on right |
-| **Bang gia / Pricing cards** | 3 the goi dich vu xep ngang / 3 plan cards side by side |
+| **Bang gia / Pricing cards** | 4 the goi dich vu xep ngang / 4 plan cards side by side |
 
-**3 goi dich vu / 3 Plans:**
+**4 goi dich vu / 4 Plans:**
 
 | Goi / Plan | Gia / Price | Danh cho / Best for |
 |---|---|---|
 | **BASIC** | $199/thang / month | Doanh nghiep nho, thu nghiem / Small biz, testing |
 | **PREMIUM** | $399/thang / month | Dang phat trien, da kenh / Growing, multi-channel |
 | **ENTERPRISE** | $799/thang / month | DN lon, tu dong hoan toan / Large biz, full automation |
+| **MASTER** | $4,999 mot lan / one-time | Ban giao ma nguon, white-label, handover ky thuat / source handoff and white-label ownership |
 
 ### Ban can lam gi / What you need to do
 
-- So sanh 3 goi / Compare the 3 plans
+- So sanh 4 goi / Compare the 4 plans
 - Nhan **"Chon Goi" / "Choose Plan"** tren goi ban muon / Click on the plan you want
 
 ### Sau khi bam > chuyen gi xay ra / After clicking > what happens
 
-- "Chon Goi" > Chuyen den trang thanh toan Polar.sh / Goes to Polar.sh checkout
+- "Chon Goi" > Chuyen den checkout NOWPayments hoac PayOS / Goes to NOWPayments or PayOS checkout
 - "Dashboard" > Chuyen ve Dashboard / Goes to Dashboard
 
 ---
