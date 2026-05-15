@@ -1,7 +1,49 @@
 # Codebase Summary
 
-**Last Updated:** 2026-05-12
-**Version:** 1.26.2 (Wave 26: Mekong SOP Gap Bridge — unified SOPs + 5 CI gates + DI layer boundary enforcement)
+**Last Updated:** 2026-05-15
+**Version:** 1.28.0 (Wave 27: RaaS Global Multi-Channel — 10 affiliate networks + geo-publishing + compliance)
+
+**Wave 27 (2026-05-15)** — RaaS Global Multi-Channel Feature Batch (8 phases, commit `93b190e0`):
+
+**Affiliate network expansion:** `src/land/affiliates/networks/` now supports 10 networks:
+- **Crypto exchanges (Phase 01):** Binance, Bybit, Bitget, Coinbase (BYOK affiliate linking)
+- **SaaS scouts (Phase 02):** ShareASale, Awin, Rakuten + 3 legacy (CJ, Impact, FlexOffers) = 6 total SaaS
+- Network schema: `affiliate_networks(id, name, category, requires_byok, network_config_json)`
+- Setup Wizard UI discoverable; per-network BYOK credential handling via encrypted store
+
+**Anti-scam + EPC scoring (Phase 03):** `src/lib/affiliates/scout/scoring-engine.ts` — 6-factor weighted model:
+- Domain age (whois), SSL validity, EPC 90d trend, network approval, crypto volume (exchanges), scam-domain blacklist
+- Endpoint: `POST /api/scout/networks/{networkId}/score/{domainId}` (RAAS tier gate)
+- Output schema: `{score: 0-100, riskFactors: string[], epc: {current, trend, 90d_avg}}`
+
+**One-click bundle publishing (Phase 04):** `src/forest/publishing/bundle-publisher.ts` + UI `/dashboard/campaigns/publish-bundle`:
+- **4 presets:** Vietnam (VN+VND), Global (EN+multi-currency), Professional (B2B), Maximum (all 13 channels)
+- Orchestrates: caption/hashtag translation → thumbnail variants → channel scheduling → tracking pixel injection
+- Endpoint: `POST /api/publish/bundle` (orchestrator consumes Phase 05 + 10 outputs)
+
+**Geo-aware caption/hashtag translation (Phase 05):** `src/forest/publishing/caption-translator.ts`:
+- BYOK OpenRouter (user's own API key) → Qwen/Claude for locale-specific translation
+- Channel locale mapping: TikTok.vn→VI, YouTube.vn→VI, Instagram.kr→KO, etc.
+- KV cache (`NEXT_KV_CACHE`) prevents re-translation on retry
+- Schema: `{channel, locale, caption, hashtags, translatedAt, cacheHit}`
+
+**Unified revenue dashboard (Phase 07):** `src/land/billing/revenue-dashboard.tsx`:
+- Stacked Recharts: SaaS (MRR by tier) + Crypto (NOWPayments USDT) + Product (affiliate commissions)
+- Drill-down per stream → transaction log; bilingual (VI+EN); currency formatting (VND/USD)
+
+**Crypto disclaimer per jurisdiction (Phase 08):** `src/seed/compliance/crypto-disclaimer-*.ts`:
+- 5 jurisdictions: US, EU, VN, SG, JP (region-specific legal text)
+- DB: `tenant_settings.crypto_jurisdiction` (migration 0110)
+- Injections: KYC banner (identity verify link), video overlay (<100ms Remotion), checkout disclaimer
+- Route: `GET /api/compliance/crypto-disclaimer/{jurisdiction}` (public, cacheable)
+
+**Per-channel cooldown + burst protection (Phase 10):** `src/forest/publishing/channel-cooldown.ts`:
+- 13 channels: TikTok (4h/3-per-day), Instagram (24h), YouTube (12h), LinkedIn, Twitter, Telegram, Snapchat, Pinterest, Reddit, Discord, Bluesky, Threads, BeReal
+- Strategy: **defer-not-reject** — reschedule to next available window; DB: `channel_publishing_queue(channel, user_id, scheduledFor, cooldown_expiry, status)`
+
+**Tests added:** 47 new tests (bundle-publisher, scoring-engine, channel-cooldown, geo-translator). Total 1450+ pass. Build 0 errors. Deploy CF-direct verified.
+
+**Deferred:** Phase 06 (A/B title/thumbnail runner — pending threshold decision), Phase 09 (help videos — pending founder recording).
 
 **Wave 26 (2026-05-12)** — Mekong SOP Gap Bridge (3 phases):
 

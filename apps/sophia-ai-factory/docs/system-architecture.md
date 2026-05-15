@@ -350,6 +350,15 @@ Real PEV (Prompt Execution Validator) engine deferred to Phase 2.
 
 **Overview:** End-to-end first-dollar monetization system. Users discover affiliate products → generate videos with CTA links → track conversions → receive payouts. Powered by ClickBank affiliate webhooks + D1 settlement engine.
 
+**Wave 27 RaaS Global Multi-Channel Expansion (2026-05-15):** Feature batch adds:
+- **10 affiliate networks** (4 crypto exchanges + 6 SaaS scouts): Binance, Bybit, Bitget, Coinbase (crypto); ShareASale, Awin, Rakuten, CJ Affiliate, Impact, FlexOffers (SaaS)
+- **Anti-scam + EPC scoring** (`src/lib/affiliates/scout/scoring-engine.ts`) — 6-factor model (domain age, SSL validity, EPC trend, network approval, crypto volume, blacklist match) → risk score + EPC data
+- **One-click bundle publishing** (`src/forest/publishing/bundle-publisher.ts`) — 4 presets (Vietnam/Global/Professional/Maximum), orchestrates caption translation → thumbnails → channel scheduling → tracking pixel injection
+- **Geo-aware caption/hashtag translation** (`src/forest/publishing/caption-translator.ts`) — BYOK OpenRouter + per-channel locale mapping (TikTok.vn→VI, YouTube.kr→KO, etc.) + KV cache
+- **Unified revenue dashboard** (`src/land/billing/revenue-dashboard.tsx`) — stacked Recharts: SaaS MRR + crypto USDT payouts + affiliate commissions; bilingual; drill-down per stream
+- **Per-jurisdiction crypto disclaimer** (`src/seed/compliance/crypto-disclaimer-*.ts`) — 5 regions (US/EU/VN/SG/JP); KYC banner + video overlay + checkout disclaimer; migration 0110
+- **Per-channel cooldown + burst protection** (`src/forest/publishing/channel-cooldown.ts`) — 13 channels (TikTok 4h, Instagram 24h, YouTube 12h, LinkedIn, Twitter, Telegram, Snapchat, Pinterest, Reddit, Discord, Bluesky, Threads, BeReal); defer-not-reject strategy
+
 ### Architecture
 
 ```
@@ -431,6 +440,34 @@ User Wallet (/dashboard/wallet)
   - Columns: user_id (PK), preferred_method, payout_address (encrypted PII, TODO), verified_at
   - Purpose: Store user's payment destination; prevents typos on payout day
 
+**Wave 27 New Tables (RaaS Global Multi-Channel)**
+- **affiliate_networks** (PUBLIC): Master list of 10+ supported networks
+  - Columns: id (TEXT, primary), name, category (crypto|saas), network_config_json (TEXT), requires_byok (BOOLEAN), created_at, updated_at
+  - Seed data (Wave 27): Crypto (Binance, Bybit, Bitget, Coinbase) + SaaS (ShareASale, Awin, Rakuten, CJ Affiliate, Impact, FlexOffers)
+  - Purpose: Define available affiliate networks; BYOK flag controls credential requirement
+  - Example: `{id: 'binance', name: 'Binance', category: 'crypto', requires_byok: true, network_config_json: '{"apiKeyPattern": "sk-orapi-..."}', created_at: 1715784000}`
+
+- **user_affiliate_networks_byok** (PRIVATE): BYOK credentials per network per user
+  - Columns: id, user_id, network_id, encrypted_credentials (TEXT, encrypted via chacha20-poly1305), created_at, updated_at, verified_at
+  - Purpose: Store user's own API keys/affiliate account tokens for BYOK networks (one per user+network combo)
+  - Example: BYOK for Binance = user's own Binance affiliate account API key
+
+- **affiliate_scout_scores** (SEMI-PUBLIC): Computed scores from Phase 03 anti-scam engine
+  - Columns: id, network_id, domain, score (0-100), risk_factors (TEXT array), epc_current, epc_90d_avg, epc_trend, domain_age_days, ssl_valid, blacklist_match (BOOLEAN), created_at, cached_until
+  - Indexes: (network_id, domain), created_at
+  - Purpose: Cache scoring results to avoid re-computation; populated on-demand by `POST /api/scout/networks/{networkId}/score/{domainId}`
+  - TTL: cached_until = created_at + 7 days (refresh weekly)
+
+- **channel_publishing_queue** (PRIVATE): Per-channel deferred publishing with cooldown
+  - Columns: id, user_id, channel (VARCHAR), campaign_id, media_url, caption, hashtags, scheduled_for, cooldown_expiry, status (queued|published|failed), error_msg, created_at, published_at
+  - Indexes: (user_id, channel, status), scheduled_for
+  - Purpose: Respect per-channel cooldown (TikTok 4h, Instagram 24h, etc.); defer-not-reject strategy
+  - Example: Bundle publish to 13 channels enqueues 13 rows; cron respects cooldown_expiry before posting
+
+- **tenant_settings** (EXTENDED, per user): Row added in migration 0110
+  - New column: crypto_jurisdiction (TEXT, default 'US') — one of {US, EU, VN, SG, JP}
+  - Purpose: Control which crypto disclaimer + KYC requirement applies
+
 **Related Extended Tables**
 - **user_profiles**: Added `subscription_tier` (TEXT) and `telegram_chat_id` (TEXT) in migration 0020
   - Enables affiliate tier-gating (future: ENTERPRISE+ only) + Telegram notifications
@@ -446,6 +483,14 @@ User Wallet (/dashboard/wallet)
 | `/api/admin/payouts/queue` | GET | admin | default | List pending payouts (next 30 days) |
 | `/api/admin/payouts/mark-paid` | POST | admin | default | Mark payout as paid + notify user |
 | `/api/campaigns` | POST | session | default | Create new campaign (via Telegram FSM) |
+| `/api/scout/networks` | GET | session | RAAS tier-gated | List all 10 affiliate networks (Wave 27) with category, BYOK flag, config hints |
+| `/api/scout/networks/{networkId}/score/{domain}` | POST | session | RAAS tier-gated | Phase 03 anti-scam scoring — returns `{score, riskFactors, epc, domainAge, sslValid, blacklistMatch, cachedUntil}` |
+| `/api/user/affiliate-networks` | GET | session | default | List networks the user has BYOK credentials for |
+| `/api/user/affiliate-networks/{networkId}` | POST/DELETE | session | auth (strict) | Create/delete BYOK credential for network (encrypted storage, migration 0110) |
+| `/api/publish/bundle` | POST | session | RAAS tier-gated | Phase 04 one-click bundle publish — accepts `{preset, campaignId, caption, hashtags, channels}`, orchestrates translation + scheduling |
+| `/api/publish/channels/{channel}/cooldown` | GET | session | default | Query next available publish window for channel (TikTok 4h, Instagram 24h, etc.) |
+| `/api/compliance/crypto-disclaimer/{jurisdiction}` | GET | none | 200/min | Phase 08 jurisdiction-specific disclaimer text (US/EU/VN/SG/JP); public, cacheable |
+| `/api/revenue/dashboard` | GET | session | default | Unified dashboard: SaaS MRR + Crypto USDT + Affiliate commissions (stacked Recharts data) |
 
 ### Cron Jobs (Cloudflare Workers)
 
