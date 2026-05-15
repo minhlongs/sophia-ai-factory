@@ -2118,5 +2118,25 @@
     "beginnerTag": {
       "label": "🌱 Khởi đầu"
     }
+  },
+  "cryptoCompliance": {
+    "title": "Cài Đặt Tuân Thủ Crypto",
+    "subtitle": "Chọn khu vực pháp lý cho đối tượng mục tiêu của bạn khi chạy ưu đãi affiliate tiền điện tử. Điều này xác định nội dung tuyên bố từ chối trách nhiệm pháp lý và các kênh được phép sử dụng.",
+    "jurisdictionLabel": "Khu Vực Pháp Lý Đối Tượng Mục Tiêu",
+    "blockedTitle": "Quảng Bá Crypto Bị Chặn",
+    "blockedDescription": "Pháp luật Việt Nam nghiêm cấm quảng bá hoặc quảng cáo tài sản tiền điện tử. Ưu đãi affiliate tiền điện tử không thể được đăng lên bất kỳ kênh nào nhắm mục tiêu đến Việt Nam.",
+    "bannedChannelsTitle": "Các Kênh Bị Chặn Cho Crypto:",
+    "bannedChannelsNote": "Các kênh này chủ yếu phục vụ đối tượng Việt Nam và không thể sử dụng cho nội dung affiliate tiền điện tử bất kể khu vực pháp lý bạn đã khai báo.",
+    "previewTitle": "Xem Trước Tuyên Bố Từ Chối Trách Nhiệm (sẽ xuất hiện trong caption và video):",
+    "saving": "Đang lưu...",
+    "saved": "Đã lưu!",
+    "save": "Lưu Khu Vực Pháp Lý",
+    "disclaimerPreview": {
+      "US": "#ad | Tiền điện tử biến động cao. Kết quả quá khứ không đảm bảo tương lai. Không phải tư vấn tài chính.",
+      "EU": "#ad | Tài sản tiền điện tử mang tính đầu cơ. Vốn có thể bị mất. Không phải tư vấn tài chính. (MiCA EU)",
+      "VN": "[BỊ CHẶN: Quảng bá tiền điện tử bị cấm tại Việt Nam theo pháp luật]",
+      "SG": "#ad | Tiền điện tử rủi ro cao, có thể không phù hợp với nhà đầu tư cá nhân. (MAS PSN08)",
+      "JP": "#ad | Giao dịch tiền điện tử có rủi ro mất vốn. Chỉ sử dụng sàn đã đăng ký FSA tại Nhật Bản."
+    }
   }
 }
