@@ -111,7 +111,7 @@ export async function buildD1Dump(db: D1Database): Promise<string> {
       .all<Record<string, unknown>>();
     const rows = rowsResult.results ?? [];
     if (rows.length === 0) {
-      lines.push(`-- Table ${tableName}: empty`);
+      lines.push(`-- Table: ${tableName} (0 rows)`);
       lines.push('');
       continue;
     }
