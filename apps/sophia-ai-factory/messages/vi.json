@@ -924,7 +924,40 @@
           "channelLabel": "Telegram (kênh: {title})",
           "notPaired": "Chưa ghép nối. Nhắn tin @Sophia_Bbot để ghép nối."
         },
-        "errorToast": "Phân phối thất bại. Vui lòng thử lại."
+        "errorToast": "Phân phối thất bại. Vui lòng thử lại.",
+        "bundles": {
+          "title": "Gói đăng nhanh",
+          "subtitle": "Một chạm đăng lên nhóm kênh được thiết lập sẵn",
+          "vietnam": {
+            "label": "Gói Việt Nam",
+            "description": "Zalo + Facebook + Telegram"
+          },
+          "global": {
+            "label": "Gói Toàn cầu",
+            "description": "YouTube + TikTok + Instagram + Pinterest"
+          },
+          "professional": {
+            "label": "Gói Chuyên nghiệp",
+            "description": "LinkedIn + X (Twitter) + Threads"
+          },
+          "maximum": {
+            "label": "Tiếp cận tối đa",
+            "description": "Tất cả 13 kênh (tự lọc theo quy định vùng)"
+          },
+          "publishButton": "Đăng lên {label}",
+          "publishing": "Đang đăng...",
+          "successToast": "Đã lên lịch {count} kênh",
+          "partialToast": "{success} đã lên lịch, {skipped} bỏ qua, {failed} thất bại",
+          "allSkipped": "Tất cả kênh bị bỏ qua (chưa kết nối hoặc quy định tuân thủ)",
+          "channelResult": {
+            "success": "Đã lên lịch",
+            "skipped": "Bỏ qua",
+            "failed": "Thất bại",
+            "not_connected": "Chưa kết nối",
+            "crypto_banned": "Crypto không được phép trên kênh này",
+            "crypto_blocked": "Quảng cáo crypto bị chặn"
+          }
+        }
       }
     },
     "errors": {
@@ -1210,6 +1243,20 @@
         "connectButton": "Kết nối",
         "errorLoading": "Không tải được kênh. Vui lòng làm mới."
       }
+    },
+    "revenue": {
+      "unified_title": "Doanh Thu Tổng Hợp",
+      "total_this_month": "Tổng doanh thu tháng này",
+      "vertical_saas": "SaaS",
+      "vertical_crypto": "Crypto",
+      "vertical_product": "Sản phẩm",
+      "period_7d": "7 ngày",
+      "period_30d": "30 ngày",
+      "period_90d": "90 ngày",
+      "loading": "Đang tải dữ liệu doanh thu...",
+      "error": "Không tải được dữ liệu doanh thu",
+      "no_data": "Không có dữ liệu doanh thu trong kỳ này",
+      "tooltip_total": "Tổng"
     }
   },
   "account": {
