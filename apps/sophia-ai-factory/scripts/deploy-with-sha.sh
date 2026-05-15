@@ -19,6 +19,27 @@ REPO_ROOT="$(cd "$APP_DIR/../.." && pwd)"
 
 cd "$APP_DIR"
 
+# ─── Step 0: Push precondition (2026-05-15 — prevent prod/git divergence) ────
+# Reject deploy if local HEAD has commits not yet on origin/main. Latent divergence
+# is the root cause of incident 2026-05-13/15 where prod ran code that existed
+# only in the deployer's local reflog. See plans/260515-0830-gap-91to93/phase-01.
+# Emergency bypass: ALLOW_UNPUSHED_DEPLOY=1 npm run deploy:full
+if [ "${ALLOW_UNPUSHED_DEPLOY:-0}" != "1" ]; then
+  UNPUSHED=$(git -C "$REPO_ROOT" log origin/main..HEAD --oneline 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$UNPUSHED" != "0" ]; then
+    echo "❌ Refusing to deploy: $UNPUSHED commit(s) on HEAD but not on origin/main."
+    echo "Run: git push origin main && git push gitlab main"
+    echo "Emergency bypass: ALLOW_UNPUSHED_DEPLOY=1 npm run deploy:full"
+    exit 2
+  fi
+  if ! git -C "$REPO_ROOT" diff-index --quiet HEAD --; then
+    echo "❌ Refusing to deploy: uncommitted changes in working tree."
+    echo "Commit or stash first."
+    exit 2
+  fi
+  echo "✅ Push precondition: HEAD == origin/main, working tree clean"
+fi
+
 # Collect version metadata from git
 COMMIT_SHA=$(git -C "$REPO_ROOT" rev-parse HEAD)
 COMMIT_SHORT=$(echo "$COMMIT_SHA" | cut -c1-8)
