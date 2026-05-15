@@ -79,6 +79,11 @@ Giant files split into focused modules with barrel re-exports:
 ## Canonical Deploy Flow (CF-direct doctrine)
 
 ```bash
+# Step 0 (MANDATORY since 2026-05-15): push to origin before deploy
+# Prevents prod/git divergence (see plans/260515-0830-gap-91to93/phase-01)
+git push origin main
+git push gitlab main  # optional mirror
+
 # Step 1: Build + inject SHA + deploy
 cd apps/sophia-ai-factory
 npm run deploy:full
@@ -94,6 +99,7 @@ curl -s https://sophia.agencyos.network/api/version | jq .shortSha
 **MUST READ for full verify sequence:** `apps/sophia-ai-factory/.claude/rules/sophia-deploy-verify.md`
 
 Hard rules:
+- **Push BEFORE deploy** — `deploy-with-sha.sh` rejects with exit 2 if `git log origin/main..HEAD` is non-empty. Bypass only with `ALLOW_UNPUSHED_DEPLOY=1` for emergency hotfixes; document the reason in deploy log.
 - SHA match is MANDATORY — HTTP 200 alone is not sufficient (may be stale deploy)
 - Run `npm run deploy:migrations` after any commit that adds files to `migrations/`
 - Do NOT use `gh run list` as deploy check — GitHub Actions is intentionally disabled
