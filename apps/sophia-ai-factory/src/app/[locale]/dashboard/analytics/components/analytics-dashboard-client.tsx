@@ -3,8 +3,9 @@
 /**
  * AnalyticsDashboardClient — Client wrapper for the analytics dashboard.
  *
- * Manages global date range state and renders all Phase 9 analytics sections:
+ * Manages global date range state and renders all analytics sections:
  * - DateRangePicker (global state)
+ * - UnifiedRevenueChart (ENTERPRISE/MASTER/admin) — SaaS/Crypto/Product stacked area
  * - RevenueCard (ENTERPRISE/MASTER/admin)
  * - TierAdoptionChart (admin only)
  * - Existing AnalyticsView
@@ -12,7 +13,7 @@
  * Tier-gating:
  *   BASIC   — AnalyticsView only
  *   PREMIUM — AnalyticsView + RevenueCard (locked banner)
- *   ENTERPRISE/MASTER/admin — all sections
+ *   ENTERPRISE/MASTER/admin — all sections including UnifiedRevenueChart
  */
 
 import React, { useState, Suspense, lazy } from 'react';
@@ -20,6 +21,7 @@ import { useTranslations } from 'next-intl';
 import { DateRangePicker } from '@/forest/components/analytics/date-range-picker';
 import { TierAdoptionChart } from '@/forest/components/analytics/tier-adoption-chart';
 import { RevenueCard } from '@/forest/components/analytics/revenue-card';
+import { UnifiedRevenueChart } from '@/forest/components/analytics/unified-revenue-chart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/seed/components/ui/card';
 import { Lock, BarChart3 } from 'lucide-react';
 import type { Campaign, Tier } from '@/seed/types';
@@ -115,6 +117,11 @@ export function AnalyticsDashboardClient({
           </span>
         )}
       </div>
+
+      {/* Unified Revenue chart — ENTERPRISE+ / admin */}
+      {canViewRevenue ? (
+        <UnifiedRevenueChart />
+      ) : null}
 
       {/* Revenue overview — ENTERPRISE+ / admin */}
       {canViewRevenue ? (
