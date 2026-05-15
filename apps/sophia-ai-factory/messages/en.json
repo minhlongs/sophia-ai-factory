@@ -2118,5 +2118,25 @@
     "beginnerTag": {
       "label": "🌱 Beginner"
     }
+  },
+  "cryptoCompliance": {
+    "title": "Crypto Compliance Settings",
+    "subtitle": "Select your primary audience jurisdiction for crypto affiliate offers. This determines the required legal disclaimer text and which channels are permitted.",
+    "jurisdictionLabel": "Target Audience Jurisdiction",
+    "blockedTitle": "Crypto Promotion Blocked",
+    "blockedDescription": "Vietnam law prohibits promotion or advertising of cryptocurrency assets. Crypto affiliate offers cannot be published to any Vietnam-targeted channel.",
+    "bannedChannelsTitle": "Channels Blocked for Crypto:",
+    "bannedChannelsNote": "These channels reach a primarily Vietnamese audience and cannot be used for crypto affiliate content regardless of your declared jurisdiction.",
+    "previewTitle": "Disclaimer Preview (will appear in captions & videos):",
+    "saving": "Saving...",
+    "saved": "Saved!",
+    "save": "Save Jurisdiction",
+    "disclaimerPreview": {
+      "US": "#ad | Crypto is highly volatile. Past performance does not guarantee future results. Not financial advice.",
+      "EU": "#ad | Crypto-assets are speculative. Capital is at risk. Not financial advice. (MiCA EU 2023/1114)",
+      "VN": "[BLOCKED: Crypto promotion is prohibited in Vietnam by law]",
+      "SG": "#ad | DPT (crypto) is high-risk and may not suit retail investors. (MAS Notice PSN08)",
+      "JP": "#ad | Crypto trading involves risk of loss. Use only FSA-registered exchanges in Japan. (FSA JP)"
+    }
   }
 }
