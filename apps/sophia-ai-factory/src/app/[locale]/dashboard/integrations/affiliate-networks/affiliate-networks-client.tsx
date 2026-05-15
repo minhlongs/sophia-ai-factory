@@ -53,6 +53,21 @@ const NETWORK_META: Record<string, { label: string; icon: string; fields: FieldD
       { key: 'affiliate_id', label: 'Affiliate ID', placeholder: '123456' },
     ],
   },
+  awin_saas: {
+    label: 'Awin (SaaS)',
+    icon: 'hub',
+    fields: [
+      { key: 'api_token', label: 'API Token', placeholder: 'awin_...', secret: true },
+      { key: 'publisher_id', label: 'Publisher ID', placeholder: '12345' },
+    ],
+  },
+  rakuten: {
+    label: 'Rakuten Advertising',
+    icon: 'storefront',
+    fields: [
+      { key: 'api_token', label: 'API Token', placeholder: 'rak_...', secret: true },
+    ],
+  },
   clickbank: {
     label: 'ClickBank',
     icon: 'shopping_cart',

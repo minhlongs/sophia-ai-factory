@@ -15,6 +15,13 @@ import type { ScoutEnv, Affiliate, ScoutResult } from './types';
 import { impactRadiusClient } from './client-impact-radius';
 import { partnerstackClient } from './client-partnerstack';
 import { cjClient } from './client-cj';
+import { shareasaleClient } from './client-shareasale';
+import { awinSaasClient } from './client-awin';
+import { rakutenClient } from './client-rakuten';
+import { binanceClient } from './client-binance';
+import { bybitClient } from './client-bybit';
+import { bitgetClient } from './client-bitget';
+import { coinbaseClient } from './client-coinbase';
 import { mockClient } from './client-mock';
 import { scoreAffiliate } from './scoring';
 import type { ScoringContext } from './scoring';
@@ -25,7 +32,18 @@ import type { ScoringSettings } from '@/lib/tenant-settings/defaults';
 import { emit } from '@/lib/webhooks';
 import { logger } from '@/seed/utils/logger-utility';
 
-const ALL_CLIENTS = [impactRadiusClient, partnerstackClient, cjClient];
+const ALL_CLIENTS = [
+  impactRadiusClient,
+  partnerstackClient,
+  cjClient,
+  shareasaleClient,
+  awinSaasClient,
+  rakutenClient,
+  binanceClient,
+  bybitClient,
+  bitgetClient,
+  coinbaseClient,
+];
 
 export interface ScoutRunResult {
   discovered: number;
@@ -63,7 +81,14 @@ export async function runAffiliateScout(
   };
 
   const hasAnyRealCred = Boolean(
-    env.IMPACT_RADIUS_API_KEY || env.PARTNERSTACK_API_KEY || env.CJ_AFFILIATE_API_KEY,
+    env.IMPACT_RADIUS_API_KEY || env.PARTNERSTACK_API_KEY || env.CJ_AFFILIATE_API_KEY ||
+    env.SHAREASALE_TOKEN ||
+    env.AWIN_API_TOKEN ||
+    env.RAKUTEN_TOKEN ||
+    env.BINANCE_API_KEY ||
+    env.BYBIT_API_KEY ||
+    env.BITGET_API_KEY ||
+    env.COINBASE_API_KEY,
   );
 
   const clientsToUse = hasAnyRealCred ? ALL_CLIENTS : [mockClient];
