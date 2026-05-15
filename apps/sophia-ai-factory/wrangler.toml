@@ -115,3 +115,11 @@ NEXT_PUBLIC_DISTRIBUTE_ENABLED = "1"
 # === P3-KV-BEGIN ===
 # P3 appends KV namespace bindings here (EXPERIMENT_KV)
 # === P3-KV-END ===
+
+
+# === PHASE02-AFFILIATE-SCOUT-VARS-BEGIN ===
+# Phase 02 affiliate scout secrets — set via `wrangler secret put`:
+#   SHAREASALE_TOKEN, SHAREASALE_AFFILIATE_ID
+#   AWIN_API_TOKEN, AWIN_PUBLISHER_ID
+#   RAKUTEN_TOKEN
+# === PHASE02-AFFILIATE-SCOUT-VARS-END ===
