@@ -1,8 +1,9 @@
 # Phase 01 — DV-1 Production/Git Divergence Reconciliation
 
 **Priority:** P0 (blocks all future deploys)
-**Status:** pending
-**Effort:** 30min
+**Status:** completed 2026-05-15
+**Effort:** 30min (actual: ~25min)
+**Result:** prod SHA `17d59a43` == origin/main, divergence closed via cherry-pick + doctrine + guard. See changelog v1.27.0.
 
 ## Context
 

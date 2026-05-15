@@ -19,7 +19,7 @@ source: plans/reports/handover-260515-0830-gap-91to100.md §4
 
 | # | File | Scope | Effort | Score Δ | Cumulative | Status |
 |---|------|-------|--------|---------|------------|--------|
-| 1 | [phase-01-dv1-divergence.md](phase-01-dv1-divergence.md) | DV-1 prod/git reconciliation (P0) | 30min | 0 (unblocks) | 91/100 | pending |
+| 1 | [phase-01-dv1-divergence.md](phase-01-dv1-divergence.md) | DV-1 prod/git reconciliation (P0) | 30min | 0 (unblocks) | 91/100 | **completed 2026-05-15** |
 | 2 | [phase-02-dv2-flake-fix.md](phase-02-dv2-flake-fix.md) | DV-2/CN-1 writer.test.ts pollution | 1h | +0.5 | 91.5/100 | pending |
 | 3 | [phase-03-op1-qstash.md](phase-03-op1-qstash.md) | OP-1 register Upstash QStash cron | 15min* | +1 | 92.5/100 | blocked (needs QSTASH_TOKEN) |
 | 4 | [phase-04-op2-sentry.md](phase-04-op2-sentry.md) | OP-2 SENTRY_AUTH_TOKEN deploy export | 10min* | +1 | 93.5/100 | blocked (needs SENTRY_AUTH_TOKEN) |

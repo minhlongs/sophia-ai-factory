@@ -1,6 +1,25 @@
 # Project Changelog
 
-**Last Updated:** 2026-05-15 | **Current Version:** 1.26.9
+**Last Updated:** 2026-05-15 | **Current Version:** 1.27.0
+
+---
+
+## v1.27.0 — Phase 01 DV-1 prod/git divergence reconciliation (2026-05-15)
+
+**Severity: P0 INCIDENT-CLOSURE | Type: Doctrine + guard + cherry-pick | Status: SHIPPED**
+
+Closes the prod/git divergence root cause documented in `handover-260515-0830-gap-91to100.md` §0 and planned in `plans/260515-0830-gap-91to93/phase-01-dv1-divergence.md`.
+
+**Changes:**
+- **Cherry-picked `212b6960`** (feat scoring: anti-scam gate + EPC + crypto volume factors) from reflog onto current main as `cdff1ed0`. Resolved trivial Unicode comment conflict in `src/lib/affiliates/scout/types.ts` (preserved original `×/→/—` Unicode chars over ASCII variants).
+- **Compliance `9da5a1b7`** (Phase 08 per-jurisdiction crypto disclaimer + KYC) confirmed equivalent content already on origin under SHA `1a935b13` (parallel session re-committed). Cherry-pick skipped as redundant.
+- **NEW `scripts/deploy-with-sha.sh` Step 0 guard** — refuses to deploy if `git log origin/main..HEAD` is non-empty OR working tree has uncommitted changes. Emergency bypass: `ALLOW_UNPUSHED_DEPLOY=1 npm run deploy:full`. Prevents the root cause of incidents 2026-05-13 and 2026-05-15 where prod ran code that existed only in deployer's local reflog.
+- **MOD `apps/sophia-ai-factory/CLAUDE.md`** — added Step 0 doctrine (`git push origin main` before `npm run deploy:full`) and noted the guard's bypass env var.
+- **Redeploy** — production now reports SHA `17d59a43` matching origin HEAD. Health check `{"status":"healthy"}`, HTTP/2 200, /api/version SHA verified.
+
+**Score:** 91 → **91/100** (no functional code change — divergence was cosmetic SHA mismatch with equivalent content). The +0 score reflects honest accounting: prod was functionally fine, but the doctrine + guard close a P0 latent landmine that could have caused real data loss in future incidents.
+
+**Doctrine for future deploys:** every `npm run deploy:full` MUST be preceded by `git push origin main`. The script enforces this — bypass requires intentional env override + documented reason.
 
 ---
 
