@@ -3,9 +3,10 @@
  *
  * Responsibilities:
  *   1. Filter out crypto-banned channels (if offer.vertical === 'crypto')
- *   2. Inject mandatory crypto disclaimer into caption (per channel jurisdiction)
- *   3. Call the distribute API (/api/v1/videos/[id]/distribute) per channel
- *   4. Return per-channel result: success | skipped(banned) | failed
+ *   2. Geo-translate caption per channel locale (Phase 05 — BYOK OpenRouter)
+ *   3. Inject mandatory crypto disclaimer into caption (per channel jurisdiction)
+ *   4. Call the distribute API (/api/v1/videos/[id]/distribute) per channel
+ *   5. Return per-channel result: success | skipped(banned) | failed
  *
  * This module is called from the DistributePanel client component.
  * It is purely orchestration — no DB access.
@@ -18,6 +19,8 @@ import type { BundleId } from './bundle-definitions';
 import { getBundleChannels, CHANNEL_BUNDLES } from './bundle-definitions';
 import { injectCryptoDisclaimer } from './crypto-caption-injector';
 import { isChannelBannedForCrypto } from '@/seed/config/crypto-banned-channels';
+import { translateCaption } from '@/lib/i18n/caption-translator';
+import { getChannelCaptionRule } from '@/lib/i18n/channel-caption-rules';
 
 export type ChannelResultStatus = 'success' | 'skipped' | 'failed';
 
@@ -44,6 +47,16 @@ export interface BundlePublishInput {
   jurisdiction?: string;
   /** Locale for disclaimer text. Defaults to 'en'. */
   locale?: 'en' | 'vi';
+  /**
+   * User's BYOK OpenRouter API key for geo-translation.
+   * If absent, translation is skipped and original caption is used.
+   */
+  byokOpenRouterKey?: string;
+  /**
+   * Source language of the caption (BCP-47). Defaults to 'en'.
+   * Translation is skipped when targetLocale === sourceLocale.
+   */
+  captionSourceLocale?: string;
 }
 
 export interface BundlePublishResult {
@@ -73,6 +86,8 @@ export async function publishToBundle(input: BundlePublishInput): Promise<Bundle
     offerVertical,
     jurisdiction = 'US',
     locale = 'en',
+    byokOpenRouterKey,
+    captionSourceLocale = 'en',
   } = input;
 
   const isCrypto = offerVertical === 'crypto';
@@ -104,11 +119,36 @@ export async function publishToBundle(input: BundlePublishInput): Promise<Bundle
       continue;
     }
 
+    // --- Phase 05: Geo-translate caption per channel locale ---
+    // Translation runs BEFORE crypto disclaimer injection so disclaimer
+    // is appended to the already-localised caption (correct order).
+    const channelRule = getChannelCaptionRule(provider);
+    let channelCaption = caption;
+
+    if (channelRule.targetLocale !== captionSourceLocale && channelRule.targetLocale !== 'source') {
+      const translateResult = await translateCaption({
+        source: caption,
+        targetLocale: channelRule.targetLocale,
+        charCap: channelRule.charCap,
+        byokKey: byokOpenRouterKey,
+      });
+
+      if (translateResult.warning) {
+        console.warn(`[bundle-publisher] ${provider}: ${translateResult.warning}`);
+      }
+      channelCaption = translateResult.caption;
+    } else {
+      // Same locale — just enforce char cap, skip LLM call
+      channelCaption = channelRule.charCap > 0 && caption.length > channelRule.charCap
+        ? caption.slice(0, channelRule.charCap - 1) + '…'
+        : caption;
+    }
+
     // Inject crypto disclaimer into caption for allowed channels
-    let finalCaption = caption;
+    let finalCaption = channelCaption;
     if (isCrypto) {
       const injectionResult = injectCryptoDisclaimer({
-        caption,
+        caption: channelCaption,
         vertical: offerVertical,
         targetJurisdiction: jurisdiction,
         channelId: provider,
