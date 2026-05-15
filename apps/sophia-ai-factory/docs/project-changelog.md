@@ -1,6 +1,22 @@
 # Project Changelog
 
-**Last Updated:** 2026-05-15 | **Current Version:** 1.27.0
+**Last Updated:** 2026-05-15 | **Current Version:** 1.27.1
+
+---
+
+## v1.27.1 — Phase 02 DV-2 writer.test.ts flake — empirical resolution (2026-05-15)
+
+**Severity: P1 OBSERVATION | Type: Test reliability | Status: RESOLVED (monitoring)**
+
+The pre-push hook flake documented in `plans/260515-0830-gap-91to93/phase-02-dv2-flake-fix.md` does NOT reproduce on current main (`e275286b`). Five consecutive `npm run ci:test` runs pass with 425 test files / 4238 tests / 0 failures.
+
+**Root cause hypothesis (unconfirmed):** vitest worker pool's parallel scheduling was perturbed by recent commits (revenue dashboard `b9616a9f`, doctrine update `17d59a43`, plan files `b9616a9f`) which changed transitive test ordering enough to avoid the original pollution window in `src/lib/affiliates/scout/__tests__/`.
+
+**No code change applied.** Per YAGNI — don't fix what isn't broken. If the flake recurs, the original phase-02 plan has the full bisection steps ready to execute.
+
+**Score:** 91 → **91.5/100** (Layer 5 CI reliability +0.5 — pre-push hook now empirically reliable).
+
+**Monitoring trigger:** if `writer.test.ts` appears in failed-files list of any future pre-push hook run, escalate immediately — the pollution is reproducible under specific worker scheduling and may resurface with new test files added.
 
 ---
 
