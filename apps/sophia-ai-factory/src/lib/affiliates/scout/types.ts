@@ -38,17 +38,17 @@ export interface Affiliate {
   // --- Extended fields for scoring v2 ---
   /**
    * Earnings per click in USD.
-   * EPC = (commission x conversion_rate) / clicks.
-   * Absent -> treated as neutral (0.5 score).
+   * EPC = (commission × conversion_rate) / clicks.
+   * Absent → treated as neutral (0.5 score).
    */
   epc?: number;
   /**
    * 24h trading volume in USD for crypto exchange affiliates.
-   * Absent -> crypto volume factor skipped.
+   * Absent → crypto volume factor skipped.
    */
   cryptoVolumeUsd?: number;
   /**
-   * Whether the program requires KYC -- indicates legitimacy for crypto affiliates.
+   * Whether the program requires KYC — indicates legitimacy for crypto affiliates.
    */
   kycRequired?: boolean;
   /**
