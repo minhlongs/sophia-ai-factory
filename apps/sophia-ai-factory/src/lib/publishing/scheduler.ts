@@ -2,11 +2,17 @@
  * Publishing Scheduler
  * Creates publishing_jobs rows and dispatches Inngest events.
  * Called by POST /api/publish/schedule.
+ *
+ * Cooldown enforcement (Phase 10):
+ *   Before inserting each job, checkCooldown() is called.
+ *   If violated, the job is inserted with a deferred scheduled_at instead of rejecting.
+ *   This ensures account safety without losing the publish request.
  */
 
 import { getD1Client } from '@/seed/db/client';
 import { inngest } from '@/forest/inngest/client';
 import { consumeQuota } from './per-channel-quota';
+import { checkCooldown } from '@/forest/quota/channel-cooldown';
 import { logger } from '@/seed/utils/logger-utility';
 import type { PublishingChannel, ChannelProvider } from './publisher-interface';
 import { randomUUID } from 'crypto';
@@ -22,9 +28,18 @@ export interface SchedulePublishInput {
   scheduledAt: number; // Unix seconds
 }
 
+export interface DeferredChannel {
+  channelId: string;
+  provider: string;
+  deferredUntil: number;
+  reason: 'cooldown' | 'burst';
+}
+
 export interface SchedulePublishResult {
   jobIds: string[];
   quotaBlocked: Array<{ channelId: string; provider: string; retryAfter: number }>;
+  /** Jobs deferred due to cooldown/burst — still scheduled, but at a later time. */
+  deferred: DeferredChannel[];
 }
 
 /**
@@ -53,10 +68,11 @@ export async function schedulePublish(input: SchedulePublishInput): Promise<Sche
   const now = Math.floor(Date.now() / 1000);
   const jobIds: string[] = [];
   const quotaBlocked: SchedulePublishResult['quotaBlocked'] = [];
+  const deferred: SchedulePublishResult['deferred'] = [];
   const hashtagsJson = JSON.stringify(hashtags);
 
   for (const channel of validChannels) {
-    // Check per-channel quota
+    // Check per-channel quota (daily limit)
     const quota = await consumeQuota(channel.id, channel.provider as ChannelProvider);
     if (!quota.allowed) {
       quotaBlocked.push({
@@ -65,6 +81,31 @@ export async function schedulePublish(input: SchedulePublishInput): Promise<Sche
         retryAfter: quota.retryAfterSeconds,
       });
       continue;
+    }
+
+    // Cooldown + burst check — defer instead of reject
+    const provider = channel.provider as ChannelProvider;
+    const cooldown = await checkCooldown(tenantId, channel.id, provider, now);
+
+    // Effective scheduled time: honour requested scheduledAt, but push out if cooldown violated
+    let effectiveScheduledAt = scheduledAt;
+    if (!cooldown.allowed && cooldown.deferUntil !== undefined) {
+      // Defer: use max(requested, deferUntil)
+      effectiveScheduledAt = Math.max(scheduledAt, cooldown.deferUntil);
+      deferred.push({
+        channelId: channel.id,
+        provider: channel.provider,
+        deferredUntil: effectiveScheduledAt,
+        reason: cooldown.reason ?? 'cooldown',
+      });
+      logger.info('[Scheduler] Job deferred due to cooldown', {
+        channelId: channel.id,
+        provider: channel.provider,
+        reason: cooldown.reason,
+        originalScheduledAt: scheduledAt,
+        effectiveScheduledAt,
+        deferSeconds: cooldown.deferSeconds,
+      });
     }
 
     const jobId = randomUUID();
@@ -78,7 +119,7 @@ export async function schedulePublish(input: SchedulePublishInput): Promise<Sche
       caption,
       hashtags_json: hashtagsJson,
       product_link: productLink ?? null,
-      scheduled_at: scheduledAt,
+      scheduled_at: effectiveScheduledAt,
       started_at: null,
       finished_at: null,
       retry_count: 0,
@@ -93,8 +134,14 @@ export async function schedulePublish(input: SchedulePublishInput): Promise<Sche
       data: { jobId, tenantId, userId },
     });
 
-    logger.info('[Scheduler] Job created', { jobId, channelId: channel.id, provider: channel.provider });
+    logger.info('[Scheduler] Job created', {
+      jobId,
+      channelId: channel.id,
+      provider: channel.provider,
+      scheduledAt: effectiveScheduledAt,
+      deferred: !cooldown.allowed,
+    });
   }
 
-  return { jobIds, quotaBlocked };
+  return { jobIds, quotaBlocked, deferred };
 }

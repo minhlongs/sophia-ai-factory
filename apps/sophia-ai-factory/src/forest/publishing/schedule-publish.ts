@@ -12,12 +12,18 @@
  * Idempotency: caller passes through; let publishExecute CAS handle
  * duplicate jobs (KISS — no new unique-key migration).
  *
+ * Cooldown enforcement (Phase 10):
+ *   checkCooldown() is called before insert. If violated, scheduledAt is
+ *   deferred to deferUntil. The job is always created — never silently dropped.
+ *
  * @module forest/publishing/schedule-publish
  */
 
 import { randomUUID } from 'crypto';
 import { inngest } from '@/forest/inngest/client';
+import { checkCooldown } from '@/forest/quota/channel-cooldown';
 import { logger } from '@/seed/utils/logger-utility';
+import type { ChannelProvider } from '@/lib/publishing/publisher-interface';
 
 export interface SchedulePublishInput {
   /**
@@ -43,6 +49,10 @@ export interface SchedulePublishInput {
 
 export interface SchedulePublishResult {
   jobId: string;
+  /** Present when the job was deferred past the originally requested scheduledAt. */
+  deferredUntil?: number;
+  /** Reason for deferral (cooldown | burst); undefined if not deferred. */
+  deferReason?: 'cooldown' | 'burst';
 }
 
 /**
@@ -57,7 +67,47 @@ export async function schedulePublish(
   const { channelId, videoId, tenantId, userId, caption, scheduledAt, provider = '' } = input;
   const jobId = randomUUID();
   const now = Math.floor(Date.now() / 1000);
-  const scheduled = scheduledAt ?? now;
+  const requested = scheduledAt ?? now;
+
+  // Cooldown + burst check — defer instead of reject (Phase 10)
+  let scheduled = requested;
+  let deferredUntil: number | undefined;
+  let deferReason: 'cooldown' | 'burst' | undefined;
+
+  // Only check cooldown when provider is a known ChannelProvider
+  const KNOWN_PROVIDERS: ChannelProvider[] = [
+    'tiktok', 'youtube', 'instagram', 'pinterest', 'linkedin', 'zalo',
+    'facebook', 'twitter', 'threads', 'reddit', 'bluesky', 'mastodon', 'telegram',
+  ];
+  const typedProvider = KNOWN_PROVIDERS.includes(provider as ChannelProvider)
+    ? (provider as ChannelProvider)
+    : null;
+
+  if (typedProvider !== null) {
+    try {
+      const cooldown = await checkCooldown(tenantId, channelId, typedProvider, now);
+      if (!cooldown.allowed && cooldown.deferUntil !== undefined) {
+        scheduled = Math.max(requested, cooldown.deferUntil);
+        deferredUntil = scheduled;
+        deferReason = cooldown.reason;
+        logger.info('[schedulePublish] Cooldown deferred', {
+          channelId,
+          provider,
+          reason: cooldown.reason,
+          requested,
+          deferredUntil: scheduled,
+          deferSeconds: cooldown.deferSeconds,
+        });
+      }
+    } catch (cooldownErr) {
+      // Cooldown check failure is non-fatal — proceed with original scheduledAt
+      logger.warn('[schedulePublish] Cooldown check error (non-fatal)', {
+        channelId,
+        provider,
+        err: cooldownErr instanceof Error ? cooldownErr.message : String(cooldownErr),
+      });
+    }
+  }
 
   // Insert publishing_jobs row
   // Columns from 20260503_publishing.sql + migration 0099 (provider) + 0101 (video_id rename):
@@ -90,6 +140,11 @@ export async function schedulePublish(
     data: { jobId, tenantId, userId },
   });
 
-  logger.info('[schedulePublish] Job inserted and event emitted', { jobId, channelId, videoId });
-  return { jobId };
+  logger.info('[schedulePublish] Job inserted and event emitted', {
+    jobId, channelId, videoId,
+    deferred: deferredUntil !== undefined,
+    deferredUntil,
+    deferReason,
+  });
+  return { jobId, deferredUntil, deferReason };
 }
