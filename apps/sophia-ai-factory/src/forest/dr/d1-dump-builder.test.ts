@@ -97,7 +97,7 @@ describe('buildD1Dump', () => {
 
     const dump = await buildD1Dump(db);
 
-    expect(dump).toContain('-- Table empty_table: empty');
+    expect(dump).toContain('-- Table: empty_table (0 rows)');
     expect(dump).toContain('INSERT INTO "filled_table"');
     expect(dump).toContain('-- Tables: 2');
   });
