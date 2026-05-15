@@ -13,10 +13,15 @@ import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import type { UserChannel } from '@/seed/db/get-user-channels';
 import { PROVIDER_LABELS } from './channel-meta';
+import { BundleSelector } from '@/components/distribute/bundle-selector';
 
 interface Props {
   videoId: string;
   channels: UserChannel[];
+  /** Offer vertical — when 'crypto', bundle publisher enforces compliance rules. */
+  offerVertical?: string;
+  /** Audience jurisdiction for crypto rules. Defaults to 'US'. */
+  jurisdiction?: string;
 }
 
 interface DistributeResponse {
@@ -25,7 +30,7 @@ interface DistributeResponse {
   missingProviders?: string[];
 }
 
-export function DistributePanel({ videoId, channels }: Props) {
+export function DistributePanel({ videoId, channels, offerVertical, jurisdiction }: Props) {
   const t = useTranslations('dashboard.videos.distribute');
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -98,8 +103,27 @@ export function DistributePanel({ videoId, channels }: Props) {
 
   const busy = isSubmitting || isPending;
 
+  // Compute scheduledAt epoch once so BundleSelector and manual form share it
+  const scheduledAtEpochForBundle = scheduledAt
+    ? Math.floor(new Date(scheduledAt).getTime() / 1000)
+    : undefined;
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="space-y-8">
+      {/* Bundle presets — one-click publish */}
+      <BundleSelector
+        videoId={videoId}
+        channels={channels}
+        caption={caption}
+        scheduledAt={scheduledAtEpochForBundle}
+        offerVertical={offerVertical}
+        jurisdiction={jurisdiction}
+      />
+
+      <hr className="border-border" />
+
+      {/* Manual channel selection form */}
+      <form onSubmit={handleSubmit} className="space-y-6">
       {/* Channel selection */}
       <section>
         <h2 className="text-sm font-medium mb-3">{t('selectChannels')}</h2>
@@ -198,5 +222,6 @@ export function DistributePanel({ videoId, channels }: Props) {
         </button>
       </div>
     </form>
+    </div>
   );
 }
