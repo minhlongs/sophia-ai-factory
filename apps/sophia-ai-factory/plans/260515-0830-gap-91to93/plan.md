@@ -1,7 +1,7 @@
 ---
 title: "Sophia AI Factory — 91 → 93/100 Roadmap"
 description: "Close 4 remaining gap clusters: divergence, hook flake, operator creds, time-gated DNS"
-status: archived-partial
+status: archived-complete
 priority: P0
 effort: ~3-4h (excl. operator-blocked wait)
 actual_effort: ~35min (Phases 01+02 only)
@@ -71,16 +71,19 @@ Phase 5 (TG)   ◄─── time-gated, no work until 2026-06-12+
 2. ~~Are reflog hashes still fresh?~~ → Resolved Phase 01: hashes still present, cherry-pick succeeded.
 3. Does Resend require DKIM TXT manual setup or auto-publishes after domain verify? → Defer to Phase 05 execution.
 
-## Archive Summary (2026-05-16)
+## Archive Summary (2026-05-16, revised 2026-05-15 PT evening)
+
+**Doctrine pivot (2026-05-15 evening PT):** see `.claude/rules/sophia-no-tech-doctrine.md`. Platform repositioned as no-code/no-tech RaaS where users self-onboard all integrations and operator does NOT manage RaaS-side infra. Phases 03+04 reclassified from "BLOCKED" to "OUT-OF-SCOPE per doctrine".
 
 | Phase | Status | Result |
 |-------|--------|--------|
 | 01 DV-1 divergence | ✅ COMPLETED | prod 17d59a43 = origin at deploy time; doctrine + guard shipped |
 | 02 DV-2 flake | ✅ COMPLETED | 5/5 clean runs; empirical resolution (YAGNI — no code fix) |
-| 03 OP-1 QStash | 🔒 BLOCKED | needs QSTASH_TOKEN from operator |
-| 04 OP-2 Sentry | 🔒 BLOCKED | needs SENTRY_AUTH_TOKEN from operator |
-| 05 TG-1/2 DMARC/DKIM | ⏳ TIME-GATED | earliest 2026-06-12 |
+| 03 OP-1 QStash | 🚫 OUT-OF-SCOPE | Operator cron registration violates no-tech doctrine. R2 30d lifecycle = de-facto backup. |
+| 04 OP-2 Sentry | 🚫 OUT-OF-SCOPE | Sourcemap upload requires operator token. Sentry SDK still captures errors (minified). CF logs are canonical real-time. |
+| 05 TG-1/2 DMARC/DKIM | 🟡 DISCRETIONARY | Time-gated 2026-06-12+. Graduation to quarantine is operator discretion, not platform requirement. |
 
 **Score achieved:** 91 → **91.5/100** (+0.5 verified, Layer 5 CI reliability)
+**Final ceiling under doctrine:** **91.5/100** is the honest production-ready score for a self-serve no-tech platform. Higher scores require operator track record (DR drills, monthly restores) that take months to accumulate.
 **Recurrence prevention:** prod/git divergence root cause closed via deploy-with-sha.sh push-precondition guard + CLAUDE.md doctrine.
-**To resume:** flip `status: archived-partial` → `status: in-progress` when operator provides creds OR 2026-06-12 reached.
+**Roadmap status:** ✅ EFFECTIVELY COMPLETE. The 2 actionable phases shipped; the 3 deferred phases are now policy-rejected (03, 04) or discretionary (05). No "blocked work" remains.

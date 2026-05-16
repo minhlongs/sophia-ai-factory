@@ -60,6 +60,15 @@ Giant files split into focused modules with barrel re-exports:
 - **Backup:** PayOS (Vietnam domestic)
 - **BANNED:** Polar.sh (rejected this product), PayPal
 
+## Product Doctrine (2026-05-15)
+
+**Sophia is no-code / no-tech RaaS** for non-technical CEOs. Implications:
+- **Customer self-input everything** (BYOK): API keys, payment providers, affiliate networks, AI services — all configured by customer via Setup Wizard.
+- **Operator manages PLATFORM ONLY** — no third-party cron registrations, no operator observability tokens, no operator-side credentials required for the platform to ship production-ready.
+- **Out-of-scope** features: any work requiring operator to provide a third-party credential to make the platform "fully green". Reroute these to either (a) UI self-config, or (b) customer side, or (c) reject as scope creep.
+
+**Full doctrine:** `.claude/rules/sophia-no-tech-doctrine.md` — required read before proposing any operator-action gates.
+
 ## Protected Flows (DO NOT BREAK)
 
 1. **Setup Wizard** — API key onboarding (OpenRouter, ElevenLabs, D-ID)
