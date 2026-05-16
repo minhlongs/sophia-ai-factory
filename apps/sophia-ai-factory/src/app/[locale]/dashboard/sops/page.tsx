@@ -12,6 +12,7 @@ import { InstallationListTable } from '@/forest/components/sop/installation-list
 import { EmptyState } from '@/seed/components/ui/empty-state';
 import { BookOpen, Store, PartyPopper } from 'lucide-react';
 import type { SopInstallationRow, SopTemplateRow } from '@/lib/sop/sop-types';
+import { RouteHelpTooltip } from '@/components/help/route-help-tooltip';
 
 interface Props {
   params: Promise<{ locale: string }>;
@@ -57,8 +58,11 @@ export default async function SopsListPage({ params }: Props) {
     <div className="space-y-6">
       <div className="flex items-center gap-3">
         <BookOpen className="w-5 h-5 text-violet-400" aria-hidden="true" />
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">{t('title')}</h1>
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-foreground">{t('title')}</h1>
+            <RouteHelpTooltip locale={locale} routeKey="sops" />
+          </div>
           <p className="text-sm text-muted-foreground mt-0.5">{t('subtitle')}</p>
         </div>
       </div>

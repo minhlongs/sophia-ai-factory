@@ -1,11 +1,13 @@
 /**
- * /dashboard/help — Help center index. Lists all support resources.
+ * /dashboard/help — Help center index. Lists all support resources + video library.
  * Bilingual via const arrays matching the /help/getting-started pattern.
  *
  * @module app/[locale]/dashboard/help/page
  */
 
 import { BookOpen, HelpCircle, AlertTriangle, MessageCircle, Compass, Video, KeyRound, Send } from 'lucide-react'
+import { listAllHelpVideos } from '@/forest/help/help-video-store'
+import { HelpVideosLibrary } from './help-videos-library'
 
 interface Props {
   params: Promise<{ locale: string }>
@@ -117,8 +119,16 @@ export default async function HelpIndexPage({ params }: Props) {
   const resources = isVi ? RESOURCES_VI : RESOURCES_EN
   const quick = isVi ? QUICK_VI : QUICK_EN
 
+  // Fetch help videos (gracefully degrade if migration not yet applied)
+  let helpVideos: Awaited<ReturnType<typeof listAllHelpVideos>> = []
+  try {
+    helpVideos = await listAllHelpVideos()
+  } catch {
+    // Migration 0112 not applied yet — show library skeleton
+  }
+
   return (
-    <div className="max-w-3xl space-y-8">
+    <div className="max-w-5xl space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-zinc-100">
           {isVi ? 'Trung tâm trợ giúp' : 'Help Center'}
@@ -129,6 +139,29 @@ export default async function HelpIndexPage({ params }: Props) {
             : 'Self-serve first — most questions are already answered here.'}
         </p>
       </div>
+
+      {/* Video library — above FAQ/resources */}
+      <section className="space-y-4" id="videos">
+        <div>
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-violet-300">
+            {isVi ? 'Thư viện video hướng dẫn' : 'Tutorial video library'}
+          </h2>
+          <p className="text-xs text-zinc-500 mt-1">
+            {isVi
+              ? 'Nhà sáng lập đang ghi hình từng video. Video sắp ra mắt sẽ xuất hiện tại đây.'
+              : 'The founder is recording each video. Coming-soon videos will appear here as they go live.'}
+          </p>
+        </div>
+        {helpVideos.length > 0 ? (
+          <HelpVideosLibrary videos={helpVideos} locale={locale} />
+        ) : (
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-6 text-center">
+            <p className="text-sm text-zinc-400">
+              {isVi ? 'Video đang được chuẩn bị. Quay lại sau!' : 'Videos are being prepared. Check back soon!'}
+            </p>
+          </div>
+        )}
+      </section>
 
       <section className="space-y-3">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-violet-300">
