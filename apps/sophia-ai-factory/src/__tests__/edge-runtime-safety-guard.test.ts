@@ -15,9 +15,10 @@ const REPO_ROOT = resolve(__dirname, '..', '..')
 const SCRIPT = resolve(REPO_ROOT, 'scripts', 'check-edge-runtime-safety.sh')
 
 describe('edge runtime safety guard', () => {
-  // Script walks every .ts file under src/ — ~8s on a cold cache. 30s gives
-  // headroom for CI under contention.
-  it('no unannotated process.on/exit/kill calls in Edge-importable modules', { timeout: 30_000 }, () => {
+  // Script walks every .ts file under src/ — ~8s on a cold cache, 27s under
+  // parallel-worker contention on M1 16GB (2026-05-15). 90s headroom prevents
+  // flake when pre-push hook runs alongside other vitest workers.
+  it('no unannotated process.on/exit/kill calls in Edge-importable modules', { timeout: 90_000 }, () => {
     let output = ''
     let failed = false
     try {
