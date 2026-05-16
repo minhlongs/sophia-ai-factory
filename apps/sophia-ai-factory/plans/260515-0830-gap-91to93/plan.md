@@ -1,19 +1,25 @@
 ---
 title: "Sophia AI Factory — 91 → 93/100 Roadmap"
 description: "Close 4 remaining gap clusters: divergence, hook flake, operator creds, time-gated DNS"
-status: pending
+status: archived-partial
 priority: P0
 effort: ~3-4h (excl. operator-blocked wait)
+actual_effort: ~35min (Phases 01+02 only)
 branch: main
 tags: [fullstack, divergence, ci, dr, dns]
 created: 2026-05-15
+archived: 2026-05-16
+final_score: 91.5/100
 source: plans/reports/handover-260515-0830-gap-91to100.md §4
+final_handover: plans/reports/handover-260515-0930-v3-gap-91-5to94.md
 ---
 
-# Plan: Sophia AI Factory — 91 → 93+/100
+# Plan: Sophia AI Factory — 91 → 93+/100 [ARCHIVED PARTIAL]
+
+**Archive note (2026-05-16):** Phases 01 + 02 shipped. Phases 03-05 deferred indefinitely — Phase 03/04 blocked on user credentials (QSTASH_TOKEN, SENTRY_AUTH_TOKEN), Phase 05 time-gated to 2026-06-12+. Resume by reviving status from `archived-partial` → `pending` when creds available or date reached.
 
 **Verified baseline:** `f3775a8e..960dbfde` chain pushed both mirrors.
-**Production divergence:** prod `9da5a1b7` ≠ git origin `960dbfde` (DV-1 P0 blocker).
+**Production divergence (resolved):** Was prod `9da5a1b7` ≠ git origin `960dbfde`. Closed via Phase 01 cherry-pick + doctrine + guard + redeploy.
 
 ## Phase List
 
@@ -61,6 +67,20 @@ Phase 5 (TG)   ◄─── time-gated, no work until 2026-06-12+
 
 ## Unresolved Questions (do NOT block on these)
 
-1. Who owns parallel session that deployed `9da5a1b7`? Need coordination for Phase 1 Path A.
-2. Are reflog hashes still fresh (< 90d) for cherry-pick?
-3. Does Resend require DKIM TXT manual setup or auto-publishes after domain verify?
+1. ~~Who owns parallel session that deployed `9da5a1b7`?~~ → Resolved Phase 01: cherry-picked from reflog ourselves.
+2. ~~Are reflog hashes still fresh?~~ → Resolved Phase 01: hashes still present, cherry-pick succeeded.
+3. Does Resend require DKIM TXT manual setup or auto-publishes after domain verify? → Defer to Phase 05 execution.
+
+## Archive Summary (2026-05-16)
+
+| Phase | Status | Result |
+|-------|--------|--------|
+| 01 DV-1 divergence | ✅ COMPLETED | prod 17d59a43 = origin at deploy time; doctrine + guard shipped |
+| 02 DV-2 flake | ✅ COMPLETED | 5/5 clean runs; empirical resolution (YAGNI — no code fix) |
+| 03 OP-1 QStash | 🔒 BLOCKED | needs QSTASH_TOKEN from operator |
+| 04 OP-2 Sentry | 🔒 BLOCKED | needs SENTRY_AUTH_TOKEN from operator |
+| 05 TG-1/2 DMARC/DKIM | ⏳ TIME-GATED | earliest 2026-06-12 |
+
+**Score achieved:** 91 → **91.5/100** (+0.5 verified, Layer 5 CI reliability)
+**Recurrence prevention:** prod/git divergence root cause closed via deploy-with-sha.sh push-precondition guard + CLAUDE.md doctrine.
+**To resume:** flip `status: archived-partial` → `status: in-progress` when operator provides creds OR 2026-06-12 reached.
