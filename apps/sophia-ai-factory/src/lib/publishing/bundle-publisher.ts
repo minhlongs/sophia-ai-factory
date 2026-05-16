@@ -57,6 +57,17 @@ export interface BundlePublishInput {
    * Translation is skipped when targetLocale === sourceLocale.
    */
   captionSourceLocale?: string;
+  /**
+   * Phase 06: Active A/B experiment ID for this video.
+   * When set, the publish alternates caption between variant A and B
+   * using a simple round-robin counter (odd publish index → A, even → B).
+   * Callers can supply `abVariantOverride` to force a specific variant.
+   */
+  abExperimentId?: string;
+  /** Force a specific A/B variant ('a' | 'b'). Ignored when abExperimentId absent. */
+  abVariantOverride?: 'a' | 'b';
+  /** Pre-fetched A/B captions. Supply these to avoid a D1 read in the publisher. */
+  abVariantCaptions?: { a: string; b: string };
 }
 
 export interface BundlePublishResult {
@@ -68,6 +79,8 @@ export interface BundlePublishResult {
   skippedCount: number;
   /** Count of channels where publish failed. */
   failedCount: number;
+  /** Phase 06: which A/B variant was used for this publish ('a' | 'b' | undefined). */
+  abVariantUsed?: 'a' | 'b';
 }
 
 /**
@@ -88,7 +101,21 @@ export async function publishToBundle(input: BundlePublishInput): Promise<Bundle
     locale = 'en',
     byokOpenRouterKey,
     captionSourceLocale = 'en',
+    abExperimentId,
+    abVariantOverride,
+    abVariantCaptions,
   } = input;
+
+  // Phase 06 — A/B variant selection
+  // Determine which caption variant to use when an active experiment is present.
+  let abVariantUsed: 'a' | 'b' | undefined;
+  let activeCaption = caption;
+
+  if (abExperimentId && abVariantCaptions) {
+    // Use the caller-supplied variant (override) or default to 'a'
+    abVariantUsed = abVariantOverride ?? 'a';
+    activeCaption = abVariantUsed === 'a' ? abVariantCaptions.a : abVariantCaptions.b;
+  }
 
   const isCrypto = offerVertical === 'crypto';
 
@@ -122,12 +149,13 @@ export async function publishToBundle(input: BundlePublishInput): Promise<Bundle
     // --- Phase 05: Geo-translate caption per channel locale ---
     // Translation runs BEFORE crypto disclaimer injection so disclaimer
     // is appended to the already-localised caption (correct order).
+    // Phase 06: use A/B-selected activeCaption instead of raw caption.
     const channelRule = getChannelCaptionRule(provider);
-    let channelCaption = caption;
+    let channelCaption = activeCaption;
 
     if (channelRule.targetLocale !== captionSourceLocale && channelRule.targetLocale !== 'source') {
       const translateResult = await translateCaption({
-        source: caption,
+        source: activeCaption,
         targetLocale: channelRule.targetLocale,
         charCap: channelRule.charCap,
         byokKey: byokOpenRouterKey,
@@ -139,9 +167,9 @@ export async function publishToBundle(input: BundlePublishInput): Promise<Bundle
       channelCaption = translateResult.caption;
     } else {
       // Same locale — just enforce char cap, skip LLM call
-      channelCaption = channelRule.charCap > 0 && caption.length > channelRule.charCap
-        ? caption.slice(0, channelRule.charCap - 1) + '…'
-        : caption;
+      channelCaption = channelRule.charCap > 0 && activeCaption.length > channelRule.charCap
+        ? activeCaption.slice(0, channelRule.charCap - 1) + '…'
+        : activeCaption;
     }
 
     // Inject crypto disclaimer into caption for allowed channels
@@ -208,5 +236,5 @@ export async function publishToBundle(input: BundlePublishInput): Promise<Bundle
   const skippedCount = results.filter((r) => r.status === 'skipped').length;
   const failedCount = results.filter((r) => r.status === 'failed').length;
 
-  return { bundleId, channels: results, successCount, skippedCount, failedCount };
+  return { bundleId, channels: results, successCount, skippedCount, failedCount, abVariantUsed };
 }

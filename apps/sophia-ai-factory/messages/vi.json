@@ -2185,5 +2185,35 @@
       "SG": "#ad | Tiền điện tử rủi ro cao, có thể không phù hợp với nhà đầu tư cá nhân. (MAS PSN08)",
       "JP": "#ad | Giao dịch tiền điện tử có rủi ro mất vốn. Chỉ sử dụng sàn đã đăng ký FSA tại Nhật Bản."
     }
+  },
+  "experiments": {
+    "title": "Thử Nghiệm A/B",
+    "subtitle": "So sánh hai phiên bản tiêu đề và xem phiên bản nào nhận được nhiều click hơn.",
+    "empty": {
+      "title": "Chưa có thử nghiệm nào",
+      "description": "Đăng video với tính năng A/B để bắt đầu so sánh các biến thể tiêu đề."
+    },
+    "sections": {
+      "active": "Đang Chạy",
+      "decided": "Kết Quả"
+    },
+    "variant": {
+      "a": "Phiên Bản A",
+      "b": "Phiên Bản B"
+    },
+    "stats": {
+      "views": "lượt xem"
+    },
+    "status": {
+      "active": "Đang chạy",
+      "decided": "Đã chọn người thắng",
+      "no_winner": "Không có người thắng rõ ràng",
+      "expired": "Đã hết hạn"
+    },
+    "winner": {
+      "a": "Người thắng: Phiên Bản A ({delta} click nhiều hơn)",
+      "b": "Người thắng: Phiên Bản B ({delta} click nhiều hơn)",
+      "no_winner": "Không có người thắng rõ ràng sau 48 giờ — cả hai phiên bản tiếp tục chạy."
+    }
   }
 }
