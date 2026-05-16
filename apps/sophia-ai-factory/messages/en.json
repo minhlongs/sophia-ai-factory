@@ -2185,5 +2185,35 @@
       "SG": "#ad | DPT (crypto) is high-risk and may not suit retail investors. (MAS Notice PSN08)",
       "JP": "#ad | Crypto trading involves risk of loss. Use only FSA-registered exchanges in Japan. (FSA JP)"
     }
+  },
+  "experiments": {
+    "title": "A/B Experiments",
+    "subtitle": "Compare two title versions and see which one gets more clicks.",
+    "empty": {
+      "title": "No experiments yet",
+      "description": "Publish a video with A/B testing enabled to start comparing title variants."
+    },
+    "sections": {
+      "active": "Running Now",
+      "decided": "Results In"
+    },
+    "variant": {
+      "a": "Version A",
+      "b": "Version B"
+    },
+    "stats": {
+      "views": "views"
+    },
+    "status": {
+      "active": "Running",
+      "decided": "Winner picked",
+      "no_winner": "No clear winner",
+      "expired": "Expired"
+    },
+    "winner": {
+      "a": "Winner: Version A picked ({delta} more clicks)",
+      "b": "Winner: Version B picked ({delta} more clicks)",
+      "no_winner": "No clear winner after 48 hours — both versions kept running."
+    }
   }
 }
