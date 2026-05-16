@@ -144,6 +144,7 @@
   },
   "overrides": {
     "serialize-javascript": "^7.0.5",
+    "postcss": "^8.5.10",
     "@opentelemetry/otlp-transformer": {
       "protobufjs": "^8.2.0"
     }
