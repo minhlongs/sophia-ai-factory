@@ -1,6 +1,23 @@
 # Project Changelog
 
-**Last Updated:** 2026-05-15 | **Current Version:** 1.28.0
+**Last Updated:** 2026-05-15 | **Current Version:** 1.28.1
+
+---
+
+## v1.28.1 — Product doctrine: no-code/no-tech, operator manages PLATFORM-ONLY (2026-05-15 evening PT)
+
+**Severity: P0 DOCTRINE | Type: Product positioning + scope refinement | Status: SHIPPED**
+
+Codifies that **Sophia is no-code / no-tech RaaS** where users self-onboard all integrations via Setup Wizard. The operator manages only platform code + CF bindings — not third-party crons, observability tokens, or RaaS-side infrastructure.
+
+**Changes:**
+- **NEW `.claude/rules/sophia-no-tech-doctrine.md`** — authoritative doctrine, 5 forbidden anti-patterns, honest score ceiling.
+- **MOD `apps/sophia-ai-factory/CLAUDE.md`** — added "Product Doctrine" section before Protected Flows.
+- **MOD `plans/260515-0830-gap-91to93/plan.md`** — status `archived-partial` → `archived-complete`. Phases 03+04 reclassified `BLOCKED` → `OUT-OF-SCOPE` (operator infra violates doctrine). Phase 05 → `DISCRETIONARY`.
+
+**Score impact:** 91.5/100 is the **honest final ceiling** under this doctrine. Higher requires sustained operational track record (months).
+
+**No code change.** Pure positioning + scope adjustment. Prevents future cycles of asking users for operator-side credentials they shouldn't need to provide.
 
 ---
 
