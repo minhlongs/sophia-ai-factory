@@ -14,6 +14,8 @@ import { redirect } from 'next/navigation'
 import { getCurrentUser } from '@/seed/auth/better-auth-session'
 import { listUserApiKeyProviders } from '@/tree/byok/user-api-key-store'
 import { ByokKeyForm, type UserSettableProvider } from '@/forest/components/byok/byok-key-form'
+import { RouteHelpTooltip } from '@/components/help/route-help-tooltip'
+import { cookies } from 'next/headers'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,6 +26,9 @@ export default async function ByokPage() {
   const user = await getCurrentUser()
   if (!user) redirect('/login')
 
+  const jar = await cookies()
+  const locale = jar.get('NEXT_LOCALE')?.value === 'en' ? 'en' : 'vi'
+
   const allConfigured = await listUserApiKeyProviders(user.id)
   // Filter to only user-settable providers (exclude server-managed ones like heygen)
   const configured = allConfigured.filter((p): p is UserSettableProvider =>
@@ -33,7 +38,10 @@ export default async function ByokPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Provider API Keys / Khóa API Nhà Cung Cấp</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-foreground">Provider API Keys / Khóa API Nhà Cung Cấp</h1>
+          <RouteHelpTooltip locale={locale} routeKey="byok" />
+        </div>
         <p className="text-sm text-muted-foreground mt-1">
           Store your own provider keys. Keys are encrypted at rest and never shown again after save.
           <br />

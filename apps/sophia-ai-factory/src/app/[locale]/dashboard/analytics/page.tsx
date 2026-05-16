@@ -10,6 +10,8 @@ import { TierGateCard } from "@/seed/components/ui/tier-gate-card";
 import { getTranslations } from 'next-intl/server';
 import { redirect } from "next/navigation";
 import type { RevenueSnapshot } from "@/seed/types/analytics-revenue";
+import { RouteHelpTooltip } from "@/components/help/route-help-tooltip";
+import { headers } from "next/headers";
 
 // ── Dynamic imports ──────────────────────────────────────────────────────────
 
@@ -93,10 +95,17 @@ export default async function AnalyticsPage() {
   const initialRevenue = await fetchInitialRevenue(userId, userTier, isAdmin);
   const hasRevenueAccess = canAccessRevenue(userTier, isAdmin);
 
+  const hdrs = await headers();
+  const acceptLang = hdrs.get('accept-language') ?? '';
+  const locale = acceptLang.startsWith('vi') ? 'vi' : 'en';
+
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">{t('title')}</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-foreground">{t('title')}</h1>
+          <RouteHelpTooltip locale={locale} routeKey="analytics" />
+        </div>
         <p className="text-muted-foreground">
           {t('subtitle')}
         </p>

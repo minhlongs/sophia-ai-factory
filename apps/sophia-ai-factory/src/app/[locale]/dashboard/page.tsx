@@ -26,6 +26,7 @@ const MasterWelcomeBanner = nextDynamic(() =>
 );
 import { OnboardingStatusWidget } from './components/onboarding-status-widget';
 import { MissionControlWidget } from '@/forest/components/dashboard/mission-control-widget';
+import { RouteHelpTooltip } from '@/components/help/route-help-tooltip';
 import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
@@ -127,7 +128,10 @@ export default async function DashboardPage() {
       {/* MASTER welcome banner — client-side, auto-dismisses via localStorage */}
       {tier === 'MASTER' && <MasterWelcomeBanner trialEndsAt={trialEndsAt} />}
 
-      <DashboardHeroGreeting name={user.full_name} tier={tierLabel} />
+      <div className="flex items-center gap-2">
+        <DashboardHeroGreeting name={user.full_name} tier={tierLabel} />
+        <RouteHelpTooltip locale={isVi ? 'vi' : 'en'} routeKey="dashboard" />
+      </div>
       {/* Mission Control Widget — GAP3 composite hero */}
       <MissionControlWidget isVi={isVi} />
       <OnboardingStatusWidget isVi={isVi} />

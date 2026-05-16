@@ -12,12 +12,17 @@ import { COMMANDS } from '@/forest/missions/command-registry';
 import { getTranslations } from 'next-intl/server';
 import { AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
+import { RouteHelpTooltip } from '@/components/help/route-help-tooltip';
+import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
 export default async function CreditsPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
+
+  const jar = await cookies();
+  const locale = jar.get('NEXT_LOCALE')?.value === 'en' ? 'en' : 'vi';
 
   const [balance, transactions, t, tBanner] = await Promise.all([
     getBalance(user.id),
@@ -37,7 +42,10 @@ export default async function CreditsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-foreground">{t('title')}</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-foreground">{t('title')}</h1>
+          <RouteHelpTooltip locale={locale} routeKey="credits" />
+        </div>
         <p className="text-sm text-muted-foreground mt-1">{t('subtitle')}</p>
       </div>
 
