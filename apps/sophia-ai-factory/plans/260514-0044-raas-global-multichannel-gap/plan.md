@@ -1,12 +1,12 @@
 ---
 title: "RaaS Global Multi-Channel Gap"
-status: 8-of-10-complete
+status: complete
 shipped: 2026-05-15
-live_sha: 93b190e0
+live_sha: 5e377b50
 prod_url: https://sophia.agencyos.network
 ---
 
-# Plan: RaaS Global Multi-Channel Gap — Wave A + B + C (partial)
+# Plan: RaaS Global Multi-Channel Gap — Wave A + B + C COMPLETE
 
 North-star: non-tech CEO mua RaaS → Sophia auto-discover "kèo thơm" (SaaS + Crypto) liên tục → publish video AI sang 13 kênh → kiếm tiền toàn cầu.
 
@@ -19,10 +19,10 @@ North-star: non-tech CEO mua RaaS → Sophia auto-discover "kèo thơm" (SaaS + 
 | 03 | Anti-scam + EPC scoring (6-factor + blacklist) | `4abe195b` | ✅ shipped |
 | 04 | One-click bundle publish (4 presets) | `59fd56cf` | ✅ shipped |
 | 05 | Geo-translate caption per channel (BYOK + KV) | `93b190e0` | ✅ shipped |
-| 06 | A/B title+thumbnail runner | — | 🟡 deferred (need winner-threshold founder decision) |
+| 06 | A/B title+thumbnail runner (2× CTR rule + mig 0111) | `a3b1b853` | ✅ shipped |
 | 07 | Unified revenue dashboard (Recharts stacked) | `b9616a9f` | ✅ shipped |
 | 08 | Crypto disclaimer per jurisdiction (US/EU/VN/SG/JP) + mig 0110 | `1a935b13` | ✅ shipped |
-| 09 | Help videos library + per-route tooltips | — | 🟡 deferred (founder must record content) |
+| 09 | Help videos library + per-route tooltips + mig 0112 | `b84165d4` | ✅ shipped (skeleton; founder fills R2 content) |
 | 10 | Per-channel cooldown + burst protection (13 channels) | `ef9a32cf` | ✅ shipped |
 
 ## Production verification (2026-05-15)
@@ -33,10 +33,10 @@ North-star: non-tech CEO mua RaaS → Sophia auto-discover "kèo thơm" (SaaS + 
 - D1 migration 0110 (`tenant_settings.crypto_jurisdiction`) applied
 - Origin synced: pushed before each deploy per push-precondition rule
 
-## Deferred — Next Sprint
+## Follow-up — Founder action
 
-- **Phase 06 (A/B runner, 3d):** Default 2x CTR rule prepared; ship after founder confirms threshold + variant generation scope.
-- **Phase 09 (Help videos, 2d):** Skeleton library ready to ship empty; needs founder VN/EN content recording (or D-ID auto-gen budget decision).
+- **Phase 06:** Cron schedule `0 * * * *` for `/api/cron/ab-winner-picker` — wire into wrangler.toml dispatcher when cron-routing pattern verified. Route currently reachable via authenticated curl.
+- **Phase 09:** Founder records VN videos, uploads to R2 bucket, then `UPDATE help_videos SET r2_key=..., published=1 WHERE slug=...` per slug. 10 skeleton entries seeded.
 
 ## Success Criteria — Status
 
