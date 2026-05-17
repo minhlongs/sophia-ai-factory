@@ -179,13 +179,13 @@
           "description": "Viết và gửi chiến dịch email cá nhân hóa ở quy mô lớn. Tỷ lệ mở cao hơn với nội dung tối ưu AI."
         },
         "commands": {
-          "title": "17 Lệnh AI",
+          "title": "18 Lệnh AI",
           "description": "Bộ lệnh tự động hóa kinh doanh đầy đủ qua Telegram bot hoặc REST API. Không cần lập trình."
         }
       },
       "stats": {
         "stat1": {
-          "value": "17",
+          "value": "18",
           "label": "Lệnh AI"
         },
         "stat2": {
