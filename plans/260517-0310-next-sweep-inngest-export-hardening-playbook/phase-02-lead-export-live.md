@@ -150,21 +150,21 @@ POST /api/v1/missions { command: "lead:export", params: { niche, max_rows } }
 
 ## Todo List
 
-- [ ] Read `lead-find.ts` pattern (BYOK lookup + error mapping)
-- [ ] Add `apolloPeopleBulkSearch` to `apollo-client.ts` (or extract if file >200 LOC)
-- [ ] Add zod schema + types in `lead-export.ts`
-- [ ] Implement BYOK branch + stub branch in `lead-export.ts`
-- [ ] Implement CSV builder + RFC 4180 escape helper
-- [ ] Update `command-registry.ts` lead:export → live
-- [ ] Write `lead-export.test.ts` with 6+ cases (use vitest mocks for `fetch`)
-- [ ] `npm run build` → 0 errors
-- [ ] `npm test` → all green (no regression)
-- [ ] `npm run deploy:full` → wrangler success
-- [ ] SHA verify `/api/version`
-- [ ] Manual BYOK smoke test
-- [ ] Manual stub-fallback smoke test
-- [ ] Update `docs/project-changelog.md` with beta→live transition
-- [ ] Optional: bilingual UI hint in mission catalog page mentioning Apollo BYOK
+- [x] Read `lead-find.ts` pattern (BYOK lookup + error mapping)
+- [x] Add `apolloPeopleBulkSearch` to `apollo-client.ts` (or extract if file >200 LOC)
+- [x] Add zod schema + types in `lead-export.ts`
+- [x] Implement BYOK branch + stub branch in `lead-export.ts`
+- [x] Implement CSV builder + RFC 4180 escape helper
+- [x] Update `command-registry.ts` lead:export → live
+- [x] Write `lead-export.test.ts` with 6+ cases (use vitest mocks for `fetch`)
+- [x] `npm run build` → 0 errors
+- [x] `npm test` → all green (no regression)
+- [x] `npm run deploy:full` → wrangler success
+- [x] SHA verify `/api/version`
+- [x] Manual BYOK smoke test
+- [x] Manual stub-fallback smoke test
+- [x] Update `docs/project-changelog.md` with beta→live transition
+- [x] Optional: bilingual UI hint in mission catalog page mentioning Apollo BYOK
 
 ## Success Criteria
 

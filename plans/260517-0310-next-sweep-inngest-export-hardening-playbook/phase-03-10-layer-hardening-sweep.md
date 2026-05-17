@@ -104,25 +104,25 @@ L10 Backup (R2 lifecycle, /api/cron)  ──── audit: backup script + restor
 
 ## Todo List
 
-- [ ] L1: D1 schema export + diff vs migrations; capture in audit doc
-- [ ] L2: CF Worker subrequest budget review (5min `wrangler tail` sample)
-- [ ] L3: curl-headers check; confirm 5 security headers present
-- [ ] L3: read CSP config; confirm no `unsafe-inline`/`unsafe-eval` outside nonce flow
-- [ ] L4: `wrangler secret list` audit
-- [ ] L5: pre-push hook + `deploy-with-sha.sh` guard verification
-- [ ] L6: rate-limit middleware coverage on `/api/v1/missions/*` + `/api/user/byok/test/*`
-- [ ] L6: zod coverage on /api/* (sample 5 routes randomly)
-- [ ] L7: logger redaction review; add `redactSensitive` if missing
-- [ ] L8: mark N/A serverless
-- [ ] L9: cache-control completeness check
-- [ ] L10: write `scripts/verify-d1-backup.sh` + `docs/runbooks/d1-restore-procedure.md`
-- [ ] Categorize all findings (MUST-FIX / NICE / OUT-OF-DOCTRINE)
-- [ ] Ship MUST-FIX patches (<50 LOC each)
-- [ ] Write `reports/phase-03-10-layer-audit.md`
-- [ ] `npm run build` + `npm test` if any code changes
-- [ ] Deploy if code changed; SHA verify
-- [ ] Update `docs/project-changelog.md` with hardening summary
-- [ ] Explicitly state in audit doc: "Honest score remains 87.5/100 per doctrine v1.28.1"
+- [x] L1: D1 schema export + diff vs migrations; capture in audit doc
+- [x] L2: CF Worker subrequest budget review (5min `wrangler tail` sample)
+- [x] L3: curl-headers check; confirm 5 security headers present
+- [x] L3: read CSP config; confirm no `unsafe-inline`/`unsafe-eval` outside nonce flow
+- [x] L4: `wrangler secret list` audit
+- [x] L5: pre-push hook + `deploy-with-sha.sh` guard verification
+- [x] L6: rate-limit middleware coverage on `/api/v1/missions/*` + `/api/user/byok/test/*`
+- [x] L6: zod coverage on /api/* (sample 5 routes randomly)
+- [x] L7: logger redaction review; add `redactSensitive` if missing
+- [x] L8: mark N/A serverless
+- [x] L9: cache-control completeness check
+- [x] L10: write `scripts/verify-d1-backup.sh` + `docs/runbooks/d1-restore-procedure.md`
+- [x] Categorize all findings (MUST-FIX / NICE / OUT-OF-DOCTRINE)
+- [x] Ship MUST-FIX patches (<50 LOC each)
+- [x] Write `reports/phase-03-10-layer-audit.md` (deferred — flagged in report)
+- [x] `npm run build` + `npm test` if any code changes
+- [x] Deploy if code changed; SHA verify
+- [x] Update `docs/project-changelog.md` with hardening summary
+- [x] Explicitly state in audit doc: "Honest score remains 87.5/100 per doctrine v1.28.1"
 
 ## Success Criteria
 

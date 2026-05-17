@@ -194,16 +194,16 @@ None. Docs only.
 
 ## Todo List
 
-- [ ] Create `docs/operator-playbook/` directory if missing
-- [ ] Write `smoke-test-walkthrough.md` (8 sections, bilingual VI+EN)
-- [ ] Write `blog-content-brief-10-articles.md` (10-row table)
-- [ ] Write `pricing-trial-decision-matrix.md` (6 sections incl. CTA variants)
-- [ ] Write `phase-06-prep-checklist.md` (5 sections incl. launch runbook)
-- [ ] Optional: write `README.md` index
-- [ ] Cross-link the 4 docs (smoke walkthrough → phase-06 checklist; pricing matrix → blog brief Article #4)
-- [ ] Verify all client-facing portions are bilingual
-- [ ] No source code changes; no deploy needed
-- [ ] Update `docs/development-roadmap.md` with Phase 04 status
+- [x] Create `docs/operator-playbook/` directory if missing
+- [x] Write `smoke-test-walkthrough.md` (8 sections, bilingual VI+EN)
+- [x] Write `blog-content-brief-10-articles.md` (10-row table)
+- [x] Write `pricing-trial-decision-matrix.md` (6 sections incl. CTA variants)
+- [x] Write `phase-06-prep-checklist.md` (5 sections incl. launch runbook)
+- [x] Optional: write `README.md` index
+- [x] Cross-link the 4 docs (smoke walkthrough → phase-06 checklist; pricing matrix → blog brief Article #4)
+- [x] Verify all client-facing portions are bilingual
+- [x] No source code changes; no deploy needed
+- [x] Update `docs/development-roadmap.md` with Phase 04 status
 
 ## Success Criteria
 

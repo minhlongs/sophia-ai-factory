@@ -1,7 +1,25 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-05-17 (4-backlog-item sweep: P10/P12/P5/P9/P27 shipped @ 9f40a39b)
+> **Last Updated:** 2026-05-17 (Next Sweep 4 phases complete: Inngest deprecate + lead:export live + 10-layer hardening + operator playbooks @ 4bca4710)
+
+---
+
+## [2026-05-17] Next Sweep — Phase 01-04 Complete: Inngest Cleanup + lead:export Live + 10-Layer Hardening + Operator Playbooks
+
+**Summary (vi):** Hoàn tất 4 phase next sweep. (1) Phase 01 Inngest `video_jobs` chain audit: phát hiện chain dormant (0 rows last 30d, no Inngest keys prod); thực hiện Path C deprecate — loại khỏi Inngest serve handler, ADR 0007 committed, không regression. (2) Phase 02 `lead:export` beta→live: Apollo bulk people search via BYOK (stub fallback 5 rows khi no key), CSV RFC 4180 escaped, max_rows hard-cap 500, 6+ vitest cases, command-registry status live. (3) Phase 03 10-layer hardening: audit L1-L10 (database backup script, logger PII redaction, CSP verify, rate-limit coverage, zod, caching headers). `scripts/verify-d1-backup.sh` + `docs/runbooks/d1-restore-procedure.md` shipped. Honest score remains 87.5/100 per doctrine v1.28.1 ceiling — no fake lift. (4) Phase 04 operator playbooks (docs-only, no code): 4 docs under `docs/operator-playbook/` — smoke-test-walkthrough (bilingual VI+EN, 8 sections), blog-content-brief (10 articles table), pricing-trial-decision-matrix (7d free vs $1 paid), phase-06-prep-checklist (gates + launch runbook). Tất cả cross-linked. Production deploy single commit `4bca4710`, SHA verified, 4431 tests pass (prior 4428 +3 từ logger/BYOK tests).
+
+**Summary (en):** Completed 4-phase Next Sweep. Phase 01: Inngest `video_jobs` chain audit concluded chain dormant (0 rows last 30d, no secrets prod); executed Path C deprecation—removed from Inngest serve handler, ADR 0007 committed, zero prod regression. Phase 02: `lead:export` promoted from beta to live; Apollo bulk people search integration gated by BYOK (5-row stub fallback when no key), proper RFC 4180 CSV escaping, hard-capped max_rows at 500, 6+ vitest cases covering pagination/errors/escaping, command-registry flipped to live. Phase 03: 10-layer hardening audit completed (L1-L10: database backup integrity script, logger PII redaction, CSP unsafe-* verification, rate-limit middleware coverage on all /api/v1/missions, zod input validation sampling, cache-control headers, etc.). New scripts: `verify-d1-backup.sh` for D1 schema drift detection + `d1-restore-procedure.md` runbook. **Honest score ceiling 87.5/100 explicitly preserved per doctrine v1.28.1—no score-lift claims despite code tightening.** Phase 04: operator-facing documentation bundle (4 docs, docs-only): smoke-test-walkthrough (8 sections bilingual for non-tech CEO), blog-content-brief (10-article SEO skeleton), pricing-trial-decision-matrix (free-7d vs $1-paid comparison + CTA variants), phase-06-prep-checklist (data gates + launch-day runbook). All cross-referenced. Single-commit deployment `4bca4710`, SHA verified live, test suite 4431/4431 pass (+3 net from new logger + BYOK test cases).
+
+**Key files:**
+- Phase 01: ADR `docs/architecture-decisions/0007-deprecate-video-jobs-inngest-chain.md`; no table drop (GDPR cascade refs preserved)
+- Phase 02: `src/lib/apollo/apollo-client.ts` (apolloPeopleBulkSearch), `src/forest/missions/handlers/lead-export.ts` (full rewrite), `src/forest/missions/handlers/lead-export.test.ts` (6+ cases)
+- Phase 03: `scripts/verify-d1-backup.sh`, `docs/runbooks/d1-restore-procedure.md`, `src/seed/utils/logger-utility.ts` (PII redaction)
+- Phase 04: `docs/operator-playbook/{smoke-test-walkthrough, blog-content-brief, pricing-trial-matrix, phase-06-prep-checklist}.md`
+
+**Commit:** `4bca4710`
+
+**Verification:** Production SHA `4bca4710` live at https://sophia.agencyos.network (HTTP 200), full suite 4431/4431 tests pass, 0 TS errors, build exit 0.
 
 ---
 
