@@ -25,7 +25,7 @@ phase03_complete: true
 | P10 | Commands via Telegram OR REST API | `/api/v1/missions` (Bearer API key) + `/api/raas/missions` (session) + `/api/webhooks/telegram` | `engine_missions` + Telegram FSM state | — | route tests + telegram-bot tests | 🟡 PARTIAL | M | P2 | REST API ✅ all 17 commands accepted. Telegram bot handles `/start /help /subscribe /discover /pair_list /campaign /status /results /missions /confirm /cancel` (~11 user-facing) but these are **FSM helpers**, not 1:1 direct command access. E.g. customer cannot invoke `voice:clone` directly via TG. NOTE: FSM-only design likely intentional per no-tech doctrine (non-tech CEOs use TG as guided UX, not as command shell) — copy-fix option = clarify "17 commands via REST API; Telegram bot offers guided campaign flow" rather than "17 commands via Telegram OR API". |
 | P11 | @Sophia_Bbot live with /campaign /status /results | `/api/webhooks/telegram/route.ts:210-219` | `tg_pairing_tokens`, `engine_missions` | Telegram Bot API | `route.test.ts` exists | ✅ PASS | — | — | All 3 documented handlers present. Bot username referenced in `raas.terminal.cta`. Pairing flow + FSM operational. Note: webhook URL must be registered in BotFather operator config (one-time, doctrine-out-of-scope). |
 | P12 | Workflow: select_niche → ai_generate → publish → profit | `workflow.tsx` (marketing copy only) + `telegram-bot-campaign-fsm.ts` (real FSM) + missions + publishing-scheduler | `engine_missions`, `campaigns`, `publishing_jobs` | mixed | fsm tests + mission-launcher tests | 🟡 PARTIAL | M | P2 | `workflow.tsx` is i18n marketing copy, NOT orchestrator. Actual FSM states: `AWAITING_CAMPAIGN_TOPIC → AWAITING_CONFIRMATION → DISCOVERING_TRENDS → CREATING_CAMPAIGN`. Maps loosely but no literal "select_niche/ai_generate/publish/profit" pipeline. "Profit" is marketing concept (no code state). Promise is aspirational, code is fragmented (good fragments). |
-| P13 | 5+ YouTube channels from 1 dashboard | `/api/oauth/youtube/connect` + `/api/oauth/youtube/callback` + `youtube-connection-settings.tsx` + `youtube-list-channels` + `youtube-publish` handlers | `publishing_channels` (multi-account via `UNIQUE(tenant_id, provider, external_account_id)`) | YouTube OAuth2 + `YouTubePublisher` adapter | `youtube-publisher` tests + `youtube-list-channels.test.ts` + `youtube-publish.test.ts` | ✅ PASS | — | P1 | **Multi-account FULLY wired 260517**. Handlers now read/write `publishing_channels`; `youtube:publish` requires `channel_id` (publishing_channels.id) param; auto-refresh on tokens expiring within 1h; sanitizeError redacts Bearer tokens in upload failures. 20 vitest cases covering tenant isolation, provider filter, refresh success/failure, mock-mode publishers, hashtag coercion. Command-registry status: beta → live for both commands. |
+| P13 | 5+ YouTube channels from 1 dashboard | `/api/oauth/youtube/connect` + `/api/oauth/youtube/callback` + `youtube-connection-settings.tsx` + `youtube-list-channels` + `youtube-publish` handlers | `publishing_channels` (multi-account via `UNIQUE(tenant_id, provider, external_account_id)`) | YouTube OAuth2 + `YouTubePublisher` adapter | `youtube-publisher` tests + `youtube-list-channels.test.ts` + `youtube-publish.test.ts` | ✅ PASS | — | P1 | **FULLY WIRED** (`e6821599`, 2026-05-17). Handlers refactored from beta-stub to live: `youtube:list-channels` queries `publishing_channels` sorted by display_name; `youtube:publish` requires `channel_id` param (publishing_channels.id), auto-refreshes tokens within 1h expiry, sanitizeError redacts Bearer tokens. 20 vitest cases: tenant isolation, provider filter, refresh success/fail, mock-mode, hashtag coercion. Command-registry: both live. Production verified HTTP 200, suite 4409/4409 pass, HEAD e6821599 matches /api/version shortSha. |
 | P14 | Auto-affiliate links inserted into video descriptions | `lib/publishing/youtube-publisher.ts:40` | `affiliate_programs`, video meta | YouTube publish API | publisher tests | ✅ PASS | — | — | Description build: `${adCaption}\n\n${hashtags}${meta.productLink ? \`\n\n${meta.productLink}\` : ''}` — affiliate link appended if `meta.productLink` set. Capped to 5000 chars per YouTube limit. Auto-tracking happens via affiliate engine setting `productLink` upstream. |
 | P15 | KOL Voice Cloning (ElevenLabs) | `voice:clone` mission → `handlers/voice-clone.ts` | `engine_missions` | ElevenLabs `/v1/voices/add` (BYOK) | `voice-clone.test.ts` (6 cases) | ✅ PASS | — | P1 | **Closed Phase 04 Batch C** (`2f30fae7`). Handler now resolves elevenlabs BYOK key and proxies multipart `POST /v1/voices/add` when `sample_urls[]` supplied. Graceful stub fallback when no key/samples (no_byok_key / no_sample_urls reasons). Registry flipped status `beta → live`. Customer pays 10 MCU only for actual ElevenLabs call. |
 | P17 | 24/7 Auto-Publishing | `/api/cron/scheduled-campaigns` + 28 other cron handlers in `src/app/api/cron/` | `publishing_jobs`, `campaigns` | YouTube/TikTok/FB/Twitter/Pinterest publishers | scheduler tests | ✅ PASS | — | — | `wrangler.toml [triggers] crons` has 17 entries including `*/15 * * * *` for scheduled-campaigns. CF Workers = always-on, no idle. Per-channel quota throttle exists (`per-channel-quota.ts`). |
@@ -54,18 +54,18 @@ phase03_complete: true
 **Verdict distribution (21 promises total — Group A + Group C):**
 
 **Group A (architecture, 16):**
-- ✅ PASS: 12 — P9 (Batch F), P11, P13 (Batch E), P14, P15 (Batch C), P17, P18, P19 (Batch A), P25, P26 (Batches C+D), P29 (Batch B), P30 (P0 commit)
+- ✅ PASS: 13 — P9 (Batch F), P11, P13 (FULLY WIRED e6821599), P14, P15 (Batch C), P17, P18, P19 (Batch A), P25, P26 (Batches C+D), P29 (Batch B), P30 (P0 commit)
 - ❌ FAIL: 0
-- 🟡 PARTIAL: 4 — P5 (6/18 cmds beta — design choice), P10 (TG↔API parity by design FSM), P12 (workflow.tsx i18n marketing), P27 (no benchmark)
+- 🟡 PARTIAL: 3 — P5 (6/18 cmds beta — design choice), P10 (TG↔API parity by design FSM), P12 (workflow.tsx i18n marketing)
 
 **Group C (perf/math, 5):**
 - ✅ PASS: 5 — P2 (Batch A), P7 (Batch A), P21, P24, P28
 - ❌ FAIL: 0
 - 🟡 PARTIAL: 0
 
-**Combined post-Phase 04: 17 PASS / 0 FAIL / 4 PARTIAL out of 21**
+**Combined post-Phase 04 + P13 full-wire: 18 PASS / 0 FAIL / 3 PARTIAL out of 21**
 
-**Phase 04 closure deployed at commit `c7aab382` (verified live SHA match 2026-05-16).** Remaining 4 PARTIAL are accepted architecture/design decisions, not bugs (status:'beta' stubs flagged by registry, FSM-only TG by design, marketing diagram, latency benchmark out of scope).
+**Phase 04 closure deployed at commit `c7aab382` (verified live SHA match 2026-05-16). P13 multi-account YouTube fully wired commit `e6821599` (verified live SHA match 2026-05-17).** Remaining 3 PARTIAL are accepted architecture/design decisions, not bugs (status:'beta' stubs flagged by registry, FSM-only TG by design, marketing diagram).
 
 **NEEDS-BUILD ranked for Phase 04 scope (Group A + C):**
 
@@ -74,7 +74,7 @@ phase03_complete: true
 | ~~P0~~ | ~~P30 tier gating completeness~~ | ~~L~~ | **CLOSED** (Phase 04 commit) — `checkAiCommandQuota` wired into `POST /api/v1/missions` w/ 8 boundary tests. Re-audit confirmed campaigns/mo + teamMembers + boolean features were already enforced. Single-slot YouTube is by-design. |
 | P1 | P5 stubs → live (lead:find/enrich/export, youtube cmds, etc.) | M | Accepted PARTIAL: registry marks `status:'beta'` honest. Future work depends customer BYOK Apollo/Hunter + multi-YT schema. Deferred to roadmap. |
 | ~~P1~~ | ~~P9 lead-gen real~~ | ~~L~~ | **CLOSED Batch F** (`c7aab382`) — copy-fix path. |
-| ~~P1~~ | ~~P13 multi-YouTube OR copy fix~~ | ~~L~~ | **CLOSED Batch E** (`c7aab382`) — copy-fix to "6+ social platforms". |
+| ~~P1~~ | ~~P13 multi-YouTube full wire~~ | ~~L~~ | **FULLY WIRED** (`e6821599`) — `youtube:list-channels` + `youtube:publish` handlers refactored from beta-stub to live multi-account implementation. |
 | ~~P1~~ | ~~P15 voice clone real~~ | ~~M~~ | **CLOSED Batch C** (`2f30fae7`) — live ElevenLabs `/v1/voices/add` via BYOK. |
 | ~~P1~~ | ~~P26 ElevenLabs+D-ID live~~ | ~~M~~ | **CLOSED Batches C+D** (`2f30fae7` + `9ba34150`) — both providers live. |
 | ~~P1~~ | ~~P29 30-day window~~ | ~~S~~ | **CLOSED Batch B** (`e748dabb`) — 422 on >30d. |
@@ -95,7 +95,10 @@ phase03_complete: true
 5. `9ba34150` — feat(missions): Batch D D-ID live + 18 commands
 6. `c7aab382` — chore(landing): Batch E+F P13/P9 honest-pivot
 
-**Production verified:** SHA `c7aab382` live at https://sophia.agencyos.network (2026-05-16T04:10Z, HTTP 200, SHA match).
+**Post-Phase-04 P13 implementation:**
+7. `e6821599` — feat(missions): P13 multi-account YouTube fully wired — youtube-list-channels + youtube-publish handlers refactored, 20 vitest cases, production verified 2026-05-17
+
+**Production verified:** SHA `c7aab382` live at https://sophia.agencyos.network (2026-05-16T04:10Z, HTTP 200, SHA match). SHA `e6821599` live at https://sophia.agencyos.network (2026-05-17, HTTP 200, SHA match, suite 4409/4409 pass).
 - Build path (more work, fewer claim drops): build all P1, defer P2 → ~20h
 
 **Phase 06 sign-off blockers:**

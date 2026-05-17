@@ -18,6 +18,7 @@ Plan: `plans/260516-1948-raas-zero-bug-handover/` · Handover doc: `plans/report
 | **P02: Wiring Audit (Group A)** | ✅ DONE | 2026-05-16 | 16 promise rows traced through code/DB/API/tests. Matrix at `plans/reports/audit-260516-promise-wiring-matrix.md`. |
 | **P03: Perf + Math Verification (Group C)** | ✅ DONE | 2026-05-16 | TTFB measured (253ms median), AES-GCM-256 confirmed, ROI formula + pricing alignment verified. |
 | **P04: Wiring Fixes (P0/P1)** | ✅ DONE | 2026-05-16 | P30 aiCommands quota, P29 30-day refund window, P15 voice:clone live ElevenLabs, P26 D-ID `/talks` live (new `avatar:create-did` cmd, 17→18), 5 copy honest-pivots. Commits `c7e54084..c7aab382`. |
+| **P13: Multi-Account YouTube** | ✅ DONE | 2026-05-17 | `youtube:list-channels` + `youtube:publish` refactored from beta-stub to live multi-account implementation. Handlers read/write `publishing_channels`, auto-refresh tokens, sanitize errors. 20 vitest cases (tenant isolation, provider filter, refresh success/fail, mock-mode, hashtag). Command-registry: both live. Commit `e6821599`. Production verified HTTP 200, suite 4409/4409 pass. |
 | **P05: E2E Smoke Test** | ⏸ DEFERRED | — | Operator BYOK budget ~$30-100 pending; unit-test floor (31 new cases) covers logic gap. |
 | **P06: Final Handover Sign-Off** | ✅ DONE | 2026-05-16 | Bilingual handover doc shipped. Matrix close 17 PASS / 0 FAIL / 4 PARTIAL. Residual drift fix on Master tier `uptime_sla`. |
 

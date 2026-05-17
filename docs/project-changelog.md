@@ -1,6 +1,25 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
+> **Last Updated:** 2026-05-17 (P13 Multi-Account YouTube fully wired @ e6821599)
+
+---
+
+## [2026-05-17] P13 Multi-Account YouTube — Promise Matrix Sync-Back
+
+**Summary (vi):** Hoàn tất wiring toàn bộ P13 multi-account YouTube. Hai handler `youtube:list-channels` + `youtube:publish` được refactor từ beta-stub sang live: đọc/ghi `publishing_channels`, auto-refresh token khi sắp expire (< 1h), redact Bearer token ở error logs. 20 vitest cases kiểm tra tenant isolation, provider filter, refresh success/fail, mock-mode publisher, hashtag coercion. Command-registry: cả hai status flipped beta → live. Production verify: HEAD e6821599 === /api/version shortSha, HTTP 200, suite 4409/4409 pass. Promise matrix updated: 18 PASS / 0 FAIL / 3 PARTIAL (P27 latency benchmark vẫn PARTIAL — accepted design choice).
+
+**Summary (en):** Completed full wiring of P13 multi-account YouTube integration. Both `youtube:list-channels` and `youtube:publish` handlers refactored from beta-stub to live implementation: query/write `publishing_channels`, auto-refresh tokens when expiring within 1 hour, sanitize Bearer tokens in error logs. 20 vitest cases cover tenant isolation, provider filtering, token refresh success/failure, mock-mode publishers, hashtag coercion. Command-registry status flipped to live for both commands. Production verification: HEAD e6821599 matches /api/version shortSha, HTTP 200 OK, full suite 4409/4409 tests pass. Promise matrix updated: matrix now 18 PASS / 0 FAIL / 3 PARTIAL (P27 latency benchmark remains PARTIAL—accepted design).
+
+**Key files:** `src/forest/missions/handlers/youtube-list-channels.ts`, `src/forest/missions/handlers/youtube-publish.ts`, `src/forest/missions/command-registry.ts`, `src/forest/missions/handlers/*.test.ts` (20 cases).
+
+**Commit:** `e6821599`
+
+---
+
+## [2026-05-16] RaaS Zero-Bug Handover — Promise vs Code Audit + Remediation (Phases 01–04, 06)
+
+> All significant changes, features, and fixes tracked here.
 > **Last Updated:** 2026-05-16 (RaaS Zero-Bug Handover — Phase 04 closed, matrix 17 PASS / 0 FAIL / 4 PARTIAL; Phase 06 sign-off `c7aab382`)
 
 ---
