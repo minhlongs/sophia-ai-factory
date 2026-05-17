@@ -1,11 +1,15 @@
 ---
 title: "Phase 03 — Onboarding UX Hardening (Setup Wizard polish)"
 description: "Close handover §8 gotchas: ElevenLabs xi-api-key format validation, D-ID base64 hint, HeyGen async expectation."
-status: pending
+status: completed
 priority: P0
-effort: "4-6h"
+effort: "Actual ~1.5h (vs ~4-6h estimated — leveraged existing byok-key-form)"
 dependencies: []
 created: 2026-05-16
+completed: 2026-05-17
+deployed: 8601fe9a
+commits: [8601fe9a]
+notes: "Shipped validators lib + 23-case test + form integration + bilingual i18n. HeyGen async hint deferred — no specific blocker found in audit."
 ---
 
 # Phase 03 — Onboarding UX Hardening

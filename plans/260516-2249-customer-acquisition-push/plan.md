@@ -44,10 +44,10 @@ Sub-metrics:
 
 | # | Phase | Effort | Status | Depends |
 |---|-------|--------|--------|---------|
-| 01 | Tracking + Analytics Setup | M (~3-5h) | pending | — |
+| 01 | Tracking + Analytics Setup | M (~3-5h) | accepted-existing (funnel-stats.ts + /admin/funnel) | — |
 | 02 | Landing CRO + Trial Funnel | M (~5-8h) | pending | 01 |
-| 03 | Onboarding UX Hardening (Setup Wizard polish) | M (~4-6h) | pending | — |
-| 04 | Acquisition Channels (Affiliate + Content seed) | L (~8-12h) | pending | 01 |
+| 03 | Onboarding UX Hardening (Setup Wizard polish) | M (actual ~1.5h) | completed @ 8601fe9a | — |
+| 04 | Acquisition Channels (Affiliate + Content seed) | L (~8-12h) | partial (affiliateProgram i18n exists; needs route + ledger code) | 01 |
 | 05 | First 10 Customers (manual close + iteration) | XL (~ongoing) | pending | 02, 03, 04 |
 | 06 | Post-Acquisition Iteration + Scale Signal | M (~4-6h) | pending | 05 |
 
