@@ -1,9 +1,11 @@
 ---
 title: "RaaS Zero-Bug Handover — Promise vs Code Audit & Remediation"
 description: "Verify 30 homepage promises map to working code so customer can sign up → BYOK → run full RaaS loop zero bugs."
-status: in-progress
+status: completed
 priority: P0
-effort: "6-9h actual (phase 04 ~3-4h shipped; phases 05 deferred, 06 pending)"
+effort: "6-9h actual (phases 01-04 + 06 shipped, phase 05 deferred-pending-budget)"
+completed: 2026-05-16
+production_sha: c7aab382
 branch: main
 tags: [handover, audit, raas, no-tech-doctrine, byok]
 created: 2026-05-16
@@ -37,7 +39,7 @@ Customer lands on `sophia.agencyos.network` → signs up → enters own keys via
 | 03 | Perf Verification (Group C) | S (~1h) | completed @ audit-260516 (Group C rows + summary updated) | 01 |
 | 04 | Wiring Fixes (P0/P1 only) | Actual ~3-4h | completed @ c7aab382 | 02, 03 |
 | 05 | Smoke Test (operator BYOK $) | L (~4-6h wall) | deferred-pending-budget | 04 |
-| 06 | Final Handover Sign-Off | S (~30min) | pending | 04 (05 optional) |
+| 06 | Final Handover Sign-Off | S (~30min) | completed @ 2026-05-16 (handover doc + roadmap + changelog + residual drift fix) | 04 (05 optional) |
 
 ## Success Criteria
 
