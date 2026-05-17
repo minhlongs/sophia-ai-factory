@@ -72,13 +72,13 @@ export const COMMANDS: Record<string, CommandDefinition> = {
   },
   'youtube:publish': {
     credits: 3,
-    status: 'beta',
-    description: 'Publish video to YouTube (stub if no OAuth creds)',
+    status: 'live',
+    description: 'Publish video to a specific YouTube channel (multi-account; channel_id required)',
   },
   'youtube:list-channels': {
     credits: 0,
-    status: 'beta',
-    description: 'List connected YouTube channels',
+    status: 'live',
+    description: 'List all connected YouTube channels with their publishing_channels.id',
   },
   'voice:clone': {
     credits: 10,
