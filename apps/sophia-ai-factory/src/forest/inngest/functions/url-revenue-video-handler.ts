@@ -1,5 +1,6 @@
 /**
  * Inngest Function: urlRevenueVideoHandler
+ * @deprecated 2026-05-17 (ADR 0007) — removed from serve registration. `video_jobs` table was never applied to prod D1. File kept for test coverage + historical context.
  *
  * Listens: url_revenue.video.requested
  * Chains into the existing video pipeline by creating a video_jobs row

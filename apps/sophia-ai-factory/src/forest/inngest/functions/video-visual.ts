@@ -1,5 +1,6 @@
 /**
  * Inngest Function: videoVisual
+ * @deprecated 2026-05-17 (ADR 0007) — removed from serve registration. `video_jobs` table was never applied to prod D1. File kept for test coverage + historical context.
  *
  * Listens: video.tts.ready
  * Transition: tts_pending → visual_pending

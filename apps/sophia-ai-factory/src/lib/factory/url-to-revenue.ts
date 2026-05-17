@@ -1,25 +1,22 @@
 /**
  * URL-to-Revenue Orchestrator
  *
- * Sophia's moat feature: paste affiliate URL → generate localized video variants
- * → queue for render/publish → embed tracking link.
+ * Sophia's moat feature: paste affiliate URL → persist job + variants → embed tracking link.
  *
  * Architecture: orchestrator-only pattern.
  * - Extracts product info from URL
  * - Persists job + variants to D1
- * - Sends Inngest events to wire into existing video pipeline
- *   (video-scripting → video-tts → video-compose → video-upload → video-publish)
  *
- * NOTE: Inngest chaining relies on existing functions in src/forest/inngest/functions/
- * The video.requested event triggers videoScripting which already exists.
- * Render/upload/publish chain is also wired.
+ * NOTE (2026-05-17, ADR 0007): Video chain dispatch (Inngest video.requested → scripting → tts
+ * → compose → upload → publish) was deprecated because its underlying `video_jobs` table was
+ * never applied to prod D1. `dispatchVideoRequest` is now a no-op stub; video generation has
+ * moved to the HeyGen mission flow.
  */
 
 import { randomUUID } from 'crypto';
 import { getD1Client } from '@/seed/db/client';
 import { extractProductInfo } from './url-product-extractor';
 import { logger } from '@/seed/utils/logger-utility';
-import { inngest } from '@/forest/inngest/client';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -97,32 +94,16 @@ async function dispatchVideoRequested(params: {
   channel: Channel;
   trackingLink?: string;
 }): Promise<void> {
-  // INNGEST_EVENT_KEY must be set in production. If missing, dispatch is skipped (no crash).
-  // To enable: set INNGEST_EVENT_KEY + INNGEST_SIGNING_KEY in wrangler.toml / secrets.
-  const inngestConfigured = !!(process.env.INNGEST_EVENT_KEY && process.env.INNGEST_SIGNING_KEY);
-  if (!inngestConfigured) {
-    logger.warn('[url-to-revenue] INNGEST_EVENT_KEY not configured — dispatch skipped (no-op). ' +
-      'Set INNGEST_EVENT_KEY + INNGEST_SIGNING_KEY to enable video generation.');
-    return;
-  }
-
-  try {
-    await inngest.send({
-      name: 'url_revenue.video.requested',
-      data: params,
-    });
-    logger.info('[url-to-revenue] Dispatched url_revenue.video.requested', {
-      jobId: params.jobId,
-      locale: params.locale,
-      channel: params.channel,
-    });
-  } catch (err) {
-    // Non-fatal: job is already persisted in D1; event can be replayed manually.
-    logger.error('[url-to-revenue] Inngest send failed (non-fatal)', {
-      jobId: params.jobId,
-      error: err instanceof Error ? err.message : String(err),
-    });
-  }
+  // Deprecated 2026-05-17 (ADR 0007): the `url_revenue.video.requested` chain
+  // depended on the `video_jobs` table which was never applied to prod D1.
+  // The handler chain has been removed from Inngest serve registration.
+  // URL-to-Revenue jobs are still persisted in `url_to_revenue_jobs`; video
+  // generation is handled by HeyGen direct path (mission video:create).
+  logger.warn('[url-to-revenue] video dispatch deprecated — use HeyGen mission path', {
+    jobId: params.jobId,
+    locale: params.locale,
+    channel: params.channel,
+  });
 }
 
 // ---------------------------------------------------------------------------

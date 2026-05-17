@@ -1,5 +1,6 @@
 /**
  * Inngest Function: videoTTS
+ * @deprecated 2026-05-17 (ADR 0007) — removed from serve registration. `video_jobs` table was never applied to prod D1. File kept for test coverage + historical context.
  *
  * Listens: video.script.ready
  * Transition: scripting → tts_pending → (dispatches video.tts.ready)

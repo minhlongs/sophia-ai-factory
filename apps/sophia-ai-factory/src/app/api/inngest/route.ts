@@ -4,23 +4,22 @@ import {
   helloWorld,
   generateCampaign,
   autoDiscoverAffiliates,
-  videoScripting,
-  videoTTS,
-  videoVisual,
-  videoCompose,
-  videoUpload,
-  videoPublish,
   publishExecute,
   publishTokenRefreshCron,
   conversionToLedger,
   pendingPromoterCron,
   payoutBatcher,
   reconciliationCron,
-  urlRevenueVideoHandler,
   offerSyncCron,
   storageTrackerDaily,
   accountDeleteFinalizeCron,
 } from "@/forest/inngest/functions/index";
+
+// Deprecated handlers (Phase 06 video_jobs chain + URL-to-Revenue) removed from
+// serve registration on 2026-05-17 per ADR 0007: the underlying `video_jobs`
+// table was never applied to prod D1, so the chain has been silent-failing
+// since inception. Canonical video pipeline is HeyGen webhook → `videos`
+// table via `lib/fulfillment/complete-video-from-webhook.ts`.
 
 export const { GET, POST, PUT } = serve({
   client: inngest,
@@ -28,13 +27,6 @@ export const { GET, POST, PUT } = serve({
     helloWorld,
     generateCampaign,
     autoDiscoverAffiliates,
-    // Video pipeline (Phase 06)
-    videoScripting,
-    videoTTS,
-    videoVisual,
-    videoCompose,
-    videoUpload,
-    videoPublish,
     // Publishing pipeline (Phase 10)
     publishExecute,
     publishTokenRefreshCron,
@@ -43,8 +35,6 @@ export const { GET, POST, PUT } = serve({
     pendingPromoterCron,
     payoutBatcher,
     reconciliationCron,
-    // URL-to-Revenue (Phase 3 wiring)
-    urlRevenueVideoHandler,
     // Cron jobs previously defined but missing from registration
     offerSyncCron,
     storageTrackerDaily,

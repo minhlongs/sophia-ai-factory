@@ -26,8 +26,31 @@ export interface LogEntry {
 }
 
 import { forwardToSentry } from '@/lib/observability/sentry-forwarder';
+import { scrubPII, scrubPIIDeep } from '@/lib/telemetry/pii-scrubber';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
+
+/**
+ * Redact common secret-named keys before they leave the process boundary.
+ * Complements scrubPII (which catches value-shape patterns like sk-/eyJ/Bearer)
+ * by also masking keys that hold secrets even when the value happens to be
+ * a short string that wouldn't match a token regex.
+ *
+ * Applied alongside scrubPIIDeep — defence in depth for logger/Sentry emission.
+ */
+const SECRET_KEY_RE = /(?:^|_)(?:secret|password|passwd|token|api[_-]?key|cron[_-]?secret|auth[_-]?token|access[_-]?key|private[_-]?key|signing[_-]?key)(?:$|_)/i;
+function redactSecretKeys(value: unknown): unknown {
+  if (value === null || value === undefined) return value;
+  if (Array.isArray(value)) return value.map(redactSecretKeys);
+  if (typeof value === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      out[k] = SECRET_KEY_RE.test(k) ? '[REDACTED-KEY]' : redactSecretKeys(v);
+    }
+    return out;
+  }
+  return value;
+}
 
 export const formatLogEntry = (entry: LogEntry): string => {
   if (isDevelopment) {
@@ -71,23 +94,31 @@ export const log = (
   error?: Error,
   requestId?: string
 ): void => {
+  // Redact secret-named keys + value-shape PII patterns BEFORE building the log entry.
+  // Order matters: redactSecretKeys first masks key-named secrets, then scrubPIIDeep
+  // catches token shapes embedded in remaining string values.
+  const safeMetadata = metadata
+    ? (scrubPIIDeep(redactSecretKeys(metadata)) as Record<string, unknown>)
+    : undefined;
+  const safeMessage = scrubPII(message);
+
   const entry: LogEntry = {
     timestamp: new Date().toISOString(),
     level,
-    message,
+    message: safeMessage,
     requestId,
-    metadata,
+    metadata: safeMetadata,
   };
 
   if (error) {
     const errRecord = error as Error & { code?: unknown; details?: unknown; hint?: unknown };
     entry.error = {
       name: error.name,
-      message: error.message,
-      stack: error.stack,
+      message: scrubPII(error.message),
+      stack: error.stack ? scrubPII(error.stack) : undefined,
       ...(errRecord.code !== undefined && { code: errRecord.code }),
-      ...(errRecord.details !== undefined && { details: errRecord.details }),
-      ...(errRecord.hint !== undefined && { hint: errRecord.hint }),
+      ...(errRecord.details !== undefined && { details: scrubPIIDeep(errRecord.details) }),
+      ...(errRecord.hint !== undefined && { hint: scrubPIIDeep(errRecord.hint) }),
     };
   }
 
