@@ -3,7 +3,7 @@ title: "RaaS Zero-Bug Handover — Promise vs Code Audit & Remediation"
 description: "Verify 30 homepage promises map to working code so customer can sign up → BYOK → run full RaaS loop zero bugs."
 status: in-progress
 priority: P0
-effort: "6-10h (phases 02-06, smoke deferred)"
+effort: "6-9h actual (phase 04 ~3-4h shipped; phases 05 deferred, 06 pending)"
 branch: main
 tags: [handover, audit, raas, no-tech-doctrine, byok]
 created: 2026-05-16

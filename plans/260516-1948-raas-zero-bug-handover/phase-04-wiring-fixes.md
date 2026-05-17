@@ -110,17 +110,17 @@ Likely candidates — exact list determined by Phase 02 matrix output:
 
 ## Todo List
 
-- [ ] Extract P0/P1 NEEDS-BUILD items from matrix
-- [ ] Document P2 items in handover backlog
-- [ ] Order fixes by security → data → flow → feature
-- [ ] Implement + test + commit each fix
-- [ ] `npm run build` passes (final)
-- [ ] `npm test` passes (final)
-- [ ] `npm run deploy:full` succeeds
-- [ ] Production HTTP 200 verified
-- [ ] Production `/api/version` SHA matches commit
-- [ ] Matrix all NEEDS-BUILD rows → PASS (with commit links)
-- [ ] Final matrix commit
+- [x] Extract P0/P1 NEEDS-BUILD items from matrix
+- [x] Document P2 items in handover backlog
+- [x] Order fixes by security → data → flow → feature
+- [x] Implement + test + commit each fix
+- [x] `npm run build` passes (final)
+- [x] `npm test` passes (final)
+- [x] `npm run deploy:full` succeeds
+- [x] Production HTTP 200 verified
+- [x] Production `/api/version` SHA matches commit
+- [x] Matrix all NEEDS-BUILD rows → PASS (with commit links)
+- [x] Final matrix commit
 
 ## Success Criteria
 
