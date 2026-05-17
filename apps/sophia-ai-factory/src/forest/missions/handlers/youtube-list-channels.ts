@@ -1,48 +1,76 @@
 /**
  * Handler: youtube:list-channels
  *
- * BETA/STUB — lists YouTube channels if OAuth is connected.
- * Real implementation: wire to YouTube Data API v3 channels.list endpoint.
+ * Lists all YouTube channels the user has connected via OAuth.
+ * Reads from `publishing_channels` WHERE provider='youtube' AND tenant_id=userId.
+ *
+ * Multi-account aware (P13): one user can connect N YouTube channels, each
+ * stored as a separate publishing_channels row keyed by external_account_id.
+ *
+ * Returns:
+ *   - `channels[]` with `{ id, channel_id, title, status, expires_at }`
+ *     where `id` is the publishing_channels.id that callers pass back to
+ *     `youtube:publish` via `channel_id` param.
+ *   - When no channels are connected, returns empty list + upgrade_path string.
  */
 
 import { createServerClient } from '@/seed/db/client';
 import type { MissionHandlerResult, MissionContext } from './types';
 
-interface CredRow {
-  encrypted_value: string;
+interface ChannelRow {
+  id: string;
+  external_account_id: string;
+  display_name: string | null;
+  status: string;
+  expires_at: number | null;
+}
+
+interface ListedChannel {
+  id: string;
+  channel_id: string;
+  title: string;
+  status: string;
+  expires_at: number | null;
 }
 
 export async function handle(ctx: MissionContext): Promise<MissionHandlerResult> {
   const { userId } = ctx;
 
-  await new Promise(res => setTimeout(res, 2000));
-
   const db = createServerClient();
   const { data } = await db
-    .from('user_provider_credentials')
-    .select('encrypted_value')
-    .eq('user_id', userId)
-    .eq('provider', 'youtube_oauth')
-    .single() as { data: CredRow | null; error: unknown };
+    .from('publishing_channels')
+    .select('id, external_account_id, display_name, status, expires_at')
+    .eq('tenant_id', userId)
+    .eq('provider', 'youtube') as { data: ChannelRow[] | null; error: unknown };
 
-  if (!data) {
+  const rows = data ?? [];
+
+  if (rows.length === 0) {
     return {
       ok: true,
       data: {
         channels: [],
         total: 0,
-        is_stub: true,
-        upgrade_path: 'Connect YouTube OAuth credentials in Settings > Integrations to list your channels',
+        upgrade_path: 'Connect YouTube via Settings > Integrations > YouTube to enable publishing',
       },
     };
   }
 
+  const channels: ListedChannel[] = rows
+    .map((r) => ({
+      id: r.id,
+      channel_id: r.external_account_id,
+      title: r.display_name ?? 'YouTube Channel',
+      status: r.status,
+      expires_at: r.expires_at,
+    }))
+    .sort((a, b) => a.title.localeCompare(b.title));
+
   return {
     ok: true,
     data: {
-      channels: [{ id: 'PLACEHOLDER_CHANNEL_ID', title: 'My Channel', subscriber_count: 0 }],
-      total: 1,
-      note: 'YouTube OAuth connected — real channel list pending full implementation',
+      channels,
+      total: channels.length,
     },
   };
 }
