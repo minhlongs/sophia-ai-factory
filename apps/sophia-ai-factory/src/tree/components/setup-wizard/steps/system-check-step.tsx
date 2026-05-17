@@ -1,9 +1,11 @@
 import React from 'react';
 import { AlertCircle, Cloud, Check, Shield } from 'lucide-react';
+import { ByokDoctrineBanner } from '@/tree/components/setup-wizard/byok-doctrine-banner';
 
 export function SystemCheckStep() {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+      <ByokDoctrineBanner />
       <h2 className="text-xl font-semibold text-foreground">Kiểm Tra Hệ Thống</h2>
       <div className="grid gap-4">
         <div className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/10 rounded-lg border border-green-100 dark:border-green-900">

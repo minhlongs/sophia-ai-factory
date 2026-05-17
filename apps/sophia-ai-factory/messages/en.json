@@ -10,6 +10,17 @@
     }
   },
   "setupWizard": {
+    "doctrine": {
+      "aria_label": "Sophia BYOK doctrine reminder",
+      "title": "Before you start — 3 things you should know",
+      "subtitle": "Sophia is no-code, no-tech. You stay in control.",
+      "bullet_keys_title": "You own the keys",
+      "bullet_keys_body": "Every API key (AI, voice, avatar, payment) is yours. We never store or use them on our side.",
+      "bullet_platform_title": "We run the platform",
+      "bullet_platform_body": "Operator manages only the code + Cloudflare infrastructure. No operator-side third-party setup needed.",
+      "bullet_refund_title": "30-day refund",
+      "bullet_refund_body": "Try Sophia risk-free. If it's not for you, request a refund within 30 days of purchase."
+    },
     "apiKeys": {
       "title": "AI Service Configuration",
       "subtitle": "Enter API keys for the AI services powering Sophia.",
