@@ -1,11 +1,14 @@
 ---
-title: "Phase 05 — Smoke Test (Operator BYOK $)"
+title: "Phase 05 — Smoke Test (Operator BYOK $) — Full E2E"
 description: "Operator funds own keys, creates test account via Setup Wizard, runs full RaaS golden path, documents every issue."
-status: deferred-pending-budget
+status: active
 priority: P1
-effort: "4-6h wall-clock (incl waits)"
+effort: "~2-3h wall-clock execution (operator-driven)"
 dependencies: [phase-04-wiring-fixes]
 created: 2026-05-16
+activated: 2026-05-16
+post_handover: true
+notes: "Reactivated after handover def90421 — confirmatory smoke, not gate-blocking. Result will append to handover doc as evidence."
 ---
 
 # Phase 05 — Smoke Test (Operator BYOK $)
@@ -160,3 +163,163 @@ SQL: DELETE FROM users WHERE email LIKE 'test+audit@%' (CASCADE)
 - If smoke fails P0 → loop to Phase 04 with new issues, rerun Phase 05 after fix
 - If operator declines budget → Phase 06 proceeds, smoke marked `deferred-pending-budget` permanently in handover doc
 - Smoke report itself becomes a template for future quarterly handover-verification runs
+
+---
+
+## 🚀 Operator Runbook (2026-05-16 Activation)
+
+> **Doctrine note:** Operator dùng PERSONAL keys cho smoke, không phải platform keys.
+> Sau khi xong: cleanup SQL + deauth bot + xóa keys.
+> Báo cáo append vào `plans/reports/smoke-260516-test-account-run.md`.
+
+### A. Preflight (5 min)
+
+```bash
+# 1. Open new terminal for CF logs (keep visible during smoke)
+cd /Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory
+npx wrangler tail sophia-ai-factory --format pretty
+
+# 2. Verify production matches local
+LOCAL=$(git rev-parse HEAD | cut -c1-8)
+LIVE=$(curl -s https://sophia.agencyos.network/api/version | grep -o '"shortSha":"[^"]*"' | cut -d'"' -f4)
+echo "Local: $LOCAL  Live: $LIVE"  # MUST match (def90421)
+
+# 3. Prepare keys (do NOT paste into chat):
+#    - OpenRouter:   https://openrouter.ai/keys  (top up $5 if needed)
+#    - ElevenLabs:   https://elevenlabs.io/app/settings/api-keys (Starter plan or trial)
+#    - D-ID:         https://studio.d-id.com/account-settings/api-keys (trial = $5.99 credit)
+#    - HeyGen:       https://app.heygen.com/settings (Free or Creator $29/mo)
+#    - NOWPayments:  https://account.nowpayments.io/ (operator's wallet for USDT TX)
+```
+
+### B. Account + Setup Wizard (10 min)
+
+1. Browser → `https://sophia.agencyos.network/signup`
+2. Sign up as `test+audit-260516@<operator-email>` (use `+audit-260516` alias to filter cleanup)
+3. Complete Setup Wizard:
+   - **Step 1 — Profile:** Fill basic info
+   - **Step 2 — API Keys:** Paste OpenRouter, ElevenLabs (xi-api-key), D-ID (base64 key from dashboard, **NOT raw**), HeyGen
+   - **Step 3 — Telegram (optional):** Click "Connect @Sophia_Bbot" → `/start audit-260516` from your Telegram
+4. **Capture screenshot** of completed wizard
+5. **Document** any UX friction: confusing labels, missing validation, broken redirects → log to smoke report §UX-Friction
+
+### C. Tier Subscription (5 min, ~$5 USDT)
+
+```bash
+# Optional: subscribe BASIC tier via NOWPayments
+# Dashboard → Pricing → Starter $199 → NOWPayments invoice
+# Pay smallest amount possible (test mode USDT $5 minimum)
+# Wait for IPN → verify dashboard shows "BASIC active"
+```
+
+Skip this step if testing one-time MCU bundle instead.
+
+### D. Mission Tests (45 min, ~$10-30 BYOK spend)
+
+For each command below, run via dashboard UI **OR** REST API:
+
+```bash
+# Get API key from Settings → API Keys, export it
+export SOPHIA_API_KEY="sk-..."  # do NOT paste here, in operator's local terminal only
+
+# Helper
+sophia_mission () {
+  curl -s -X POST https://sophia.agencyos.network/api/v1/missions \
+    -H "Authorization: Bearer $SOPHIA_API_KEY" \
+    -H "Content-Type: application/json" \
+    -d "$1" | jq .
+}
+```
+
+| # | Command | Test payload | Expected | Critical? |
+|---|---------|--------------|----------|-----------|
+| 1 | `proposal:create` | `{"command":"proposal:create","params":{"niche":"SaaS"}}` | 202 + proposal text via OpenRouter | LLM smoke |
+| 2 | `proposal:list` | `{"command":"proposal:list","params":{}}` | 200 + proposal from #1 in list | DB smoke |
+| 3 | `email:test` | `{"command":"email:test","params":{"to":"<operator>"}}` | Test email arrives | Resend smoke |
+| 4 | `subtitle:generate` | (small audio sample) | SRT output | Whisper smoke |
+| 5 | `webhook:test` | `{"command":"webhook:test","params":{"url":"https://webhook.site/<your-id>"}}` | webhook.site shows ping | HTTPS out smoke |
+| 6 | `voice:clone` ⭐ | `{"command":"voice:clone","params":{"voice_name":"Audit","sample_urls":["https://<r2-url>/sample.mp3"]}}` | real ElevenLabs voice_id (NOT stub-voice-preview-001) | **NEW CODE** — most important |
+| 7 | `avatar:create-did` ⭐ | `{"command":"avatar:create-did","params":{"source_url":"https://<url>/portrait.png","script":"Hello from Sophia audit"}}` | real D-ID `talk_id`, poll_url works | **NEW CODE** — most important |
+| 8 | `video:create` | `{"command":"video:create","params":{"prompt":"Short demo"}}` | 202 + job_id; video appears in dashboard after 3-10min | HeyGen smoke |
+| 9 | `lead:find` | `{"command":"lead:find","params":{"niche":"agencies"}}` | 202 + `is_stub: true` (Apollo not BYOK yet) | confirms beta status |
+| 10 | `email:campaign` | `{"command":"email:campaign","params":{"subject":"Test","recipients":["<operator>"]}}` | Email delivered | Resend bulk smoke |
+| 11 | `analytics:report` | `{"command":"analytics:report","params":{}}` | Report with sequence #1-10 stats | Stats smoke |
+
+**Cycle 12: tier-gate hit-test (rate limit)**
+
+```bash
+# Verify aiCommands quota kicks in
+for i in {1..6}; do
+  sophia_mission '{"command":"proposal:create","params":{"niche":"Test"}}'
+done
+# Expected: 6th call returns HTTP 429 `Monthly AI command limit of 5 reached for tier BASIC`
+```
+
+**Cycle 13: refund-window test**
+
+```bash
+# Request refund on the BASIC purchase from Step C
+# Dashboard → Billing → Request Refund → fill wallet + reason
+# Expected: 201 with refundId
+# Try again: 409 already_requested
+# (cannot test 422 without 30-day-old purchase)
+```
+
+### E. Telegram FSM Test (15 min)
+
+1. Send `/campaign` to @Sophia_Bbot
+2. Walk through FSM: niche → confirm → discover trends → create
+3. Send `/status` — verify mission listed
+4. Send `/results` — verify outputs returned
+
+### F. Cleanup (10 min) — DO NOT SKIP
+
+```sql
+-- Run via wrangler d1 against sophia-raas-db remote
+-- Replace <USER_ID> with actual id from users table
+
+-- 1. Find user id
+SELECT id, email FROM users WHERE email LIKE '%+audit-260516@%';
+
+-- 2. Delete cascading
+DELETE FROM user_api_keys WHERE user_id = '<USER_ID>';
+DELETE FROM engine_missions WHERE user_id = '<USER_ID>';
+DELETE FROM campaigns WHERE user_id = '<USER_ID>';
+DELETE FROM user_purchases WHERE user_id = '<USER_ID>';
+DELETE FROM refund_requests WHERE user_id = '<USER_ID>';
+DELETE FROM subscriptions WHERE user_id = '<USER_ID>';
+DELETE FROM users WHERE id = '<USER_ID>';
+
+-- 3. Verify clean
+SELECT COUNT(*) FROM users WHERE email LIKE '%+audit-260516@%';  -- = 0
+```
+
+```bash
+# Deauth Telegram (from Telegram app)
+# /stop or block @Sophia_Bbot
+
+# Revoke API keys at:
+# - https://openrouter.ai/keys
+# - https://elevenlabs.io/app/settings/api-keys
+# - https://studio.d-id.com/account-settings/api-keys
+# - https://app.heygen.com/settings
+```
+
+### G. Report (15 min)
+
+Operator writes to `plans/reports/smoke-260516-test-account-run.md`:
+
+- Header: date, operator email (redacted to `<initials>@..`), total cost, total duration
+- §Mission results: 13-row table with PASS/FAIL per command + actual response snippets (redacted)
+- §UX friction: every confusing/broken thing seen, with severity (P0/P1/P2)
+- §Cleanup verification: counts after cleanup (must be 0)
+- §Verdict: GREEN / YELLOW / RED + recommendation
+- §Cost summary: per-provider $ spent + total
+
+Commit: `docs(smoke): operator E2E run 260516 — <verdict>`
+
+### H. Triage (if P0 found)
+
+- P0 = customer-blocker → reopen Phase 04, fix + new commit, push, redeploy, re-run failed test
+- P1/P2 → append to handover doc §8 Known Issues
+- All-green → mark Phase 05 status `completed` + update handover doc Smoke Test Status
