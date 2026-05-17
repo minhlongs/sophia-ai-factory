@@ -14,6 +14,7 @@ import { validateMissionApiKey, apiKeyAuthErrorResponse } from '@/forest/mission
 import { isValidCommand, getCommand } from '@/forest/missions/command-registry';
 import { getBalance } from '@/lib/mcu/credits-repo';
 import { dispatchMission } from '@/forest/missions/dispatcher';
+import { checkAiCommandQuota } from '@/seed/auth/enforce-ai-command-quota';
 import { logger } from '@/seed/utils/logger-utility';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 
@@ -66,6 +67,18 @@ export const POST = withRateLimit(async function POST(request: NextRequest): Pro
   }
 
   const commandDef = getCommand(command)!;
+
+  // Tier monthly AI command quota check (P30 tier-gate completeness)
+  const quota = await checkAiCommandQuota(userId);
+  if (!quota.allowed) {
+    return NextResponse.json({
+      error: quota.reason ?? 'AI command quota exceeded',
+      used: quota.used,
+      limit: quota.limit,
+      resets_at: quota.resetsAt,
+      upgrade_url: 'https://sophia.agencyos.network/pricing',
+    }, { status: 429 });
+  }
 
   // Credit check
   if (commandDef.credits > 0) {
