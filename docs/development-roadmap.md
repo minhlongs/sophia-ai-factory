@@ -2,9 +2,24 @@
 
 > Product milestones and progress tracking (2026)
 
-**Last Updated:** 2026-05-17 (P10/P12/P5/P9/P27 backlog sweep complete; 4428 tests pass; production SHA 9f40a39b verified)
+**Last Updated:** 2026-05-17 (Next Sweep complete: Phase 01 Inngest deprecate, Phase 02 lead:export live, Phase 03 10-layer hardening, Phase 04 operator playbooks; 4431 tests pass; production SHA 4bca4710 verified)
 **Target:** $1M ARR, 100/100 a16z solo company score
-**Go-Live Shipped (2026-05-03):** Production deployment https://sophia.agencyos.network (SHA 5b1f711f). GAP1: Magic-link E2E validation PASS (setup-wizard cookie chain verified, 5 regression tests). GAP2: Self-serve checkout (public /pricing monthly+yearly, NOWPayments invoice, PayOS VN QR, idempotent IPN, atomic D1 tier upgrade, bilingual receipt email VAT 10%, dashboard period_end). GAP3: Mission control handover (durable D1 email outbox, /onboarding 3-step resumable, D1 API keys, mission control widget, public /status page 90d uptime, D+1/D+7 lifecycle emails). Infrastructure: 9 smoke tests PASS (200 HTTP), 4428 tests 100% pass, build < 10s, 0 TS errors.
+**Go-Live Shipped (2026-05-03):** Production deployment https://sophia.agencyos.network (SHA 5b1f711f). GAP1: Magic-link E2E validation PASS (setup-wizard cookie chain verified, 5 regression tests). GAP2: Self-serve checkout (public /pricing monthly+yearly, NOWPayments invoice, PayOS VN QR, idempotent IPN, atomic D1 tier upgrade, bilingual receipt email VAT 10%, dashboard period_end). GAP3: Mission control handover (durable D1 email outbox, /onboarding 3-step resumable, D1 API keys, mission control widget, public /status page 90d uptime, D+1/D+7 lifecycle emails). Infrastructure: 9 smoke tests PASS (200 HTTP), 4431 tests 100% pass, build < 10s, 0 TS errors.
+
+---
+
+## Q2 2026: Next Sweep — Tech Debt + Export + Hardening + Operator Playbooks (Complete, 2026-05-17)
+
+Plan: `plans/260517-0310-next-sweep-inngest-export-hardening-playbook/` · Production SHA: `4bca4710`
+
+| Phase | Status | Completion | Details |
+|-------|--------|-----------|---------|
+| **P01: Inngest `video_jobs` Chain Deprecation** | ✅ DONE | 2026-05-17 | Audit confirmed chain dormant. Path C executed: removed from Inngest serve handler, ADR 0007 committed. No prod regression. Commit `4bca4710`. |
+| **P02: `lead:export` Mission Beta → Live** | ✅ DONE | 2026-05-17 | Apollo bulk integration via BYOK (stub fallback). CSV RFC 4180 escaped. 6+ vitest cases. Command-registry status flipped live. Commit `4bca4710`. |
+| **P03: 10-Layer Hardening Sweep** | ✅ DONE | 2026-05-17 | Per-layer audit (L1-L10) completed. Logger PII redaction + verify-d1-backup.sh shipped. Honest score preserved 87.5/100 per doctrine v1.28.1. Commit `4bca4710`. |
+| **P04: Operator Playbook Bundle** | ✅ DONE | 2026-05-17 | 4 docs under `docs/operator-playbook/`: smoke-test-walkthrough (bilingual), blog-content-brief (10 articles), pricing-trial-matrix, phase-06-prep-checklist. No code; published. |
+
+**Verification:** 4431/4431 tests pass (4431 vs prior 4428 = +3 from logger + BYOK tests), 0 TS errors, production SHA `4bca4710` live at https://sophia.agencyos.network (HTTP 200, verified).
 
 ---
 

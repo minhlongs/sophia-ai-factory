@@ -1,11 +1,12 @@
 ---
 title: Next sweep — Inngest cleanup + lead:export live + 10-layer hardening + operator playbook
-status: pending
+status: completed
 priority: P2
 effort: large
 branch: main
 tags: [tech-debt, integration, hardening, docs]
 created: 2026-05-17
+completed: 2026-05-17
 ---
 
 # Sophia Next Sweep — Plan Overview
@@ -16,10 +17,10 @@ Post `/cook all` (matrix 21/21 PASS, prod SHA `a79a5795`). Doctrine v1.28.1 ceil
 
 | # | File | Status | Effort | Risk |
 |---|---|---|---|---|
-| 01 | [phase-01-inngest-video-jobs-cleanup.md](./phase-01-inngest-video-jobs-cleanup.md) | pending | M | MED — touches live URL-to-Revenue pipeline |
-| 02 | [phase-02-lead-export-live.md](./phase-02-lead-export-live.md) | pending | M | LOW — additive, BYOK-gated, stub fallback |
-| 03 | [phase-03-10-layer-hardening-sweep.md](./phase-03-10-layer-hardening-sweep.md) | pending | M | LOW — audit + tighten, no architectural change |
-| 04 | [phase-04-operator-playbook-bundle.md](./phase-04-operator-playbook-bundle.md) | pending | S | NONE — docs only |
+| 01 | [phase-01-inngest-video-jobs-cleanup.md](./phase-01-inngest-video-jobs-cleanup.md) | completed | M | MED — touches live URL-to-Revenue pipeline |
+| 02 | [phase-02-lead-export-live.md](./phase-02-lead-export-live.md) | completed | M | LOW — additive, BYOK-gated, stub fallback |
+| 03 | [phase-03-10-layer-hardening-sweep.md](./phase-03-10-layer-hardening-sweep.md) | completed | M | LOW — audit + tighten, no architectural change |
+| 04 | [phase-04-operator-playbook-bundle.md](./phase-04-operator-playbook-bundle.md) | completed | S | NONE — docs only |
 
 Total estimated effort: ~3-4 dev-days (Phase 1+2+3 code; Phase 4 docs ~0.5d).
 

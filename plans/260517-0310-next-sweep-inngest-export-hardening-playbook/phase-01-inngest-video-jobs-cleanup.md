@@ -131,19 +131,19 @@ HeyGen webhook → complete-video-from-webhook.ts → UPSERT videos
 
 ## Todo List
 
-- [ ] Run D1 audit query — capture row counts by status, last 30d window
-- [ ] Inspect Inngest dashboard for `video.composed`/`video.uploaded` invocations
-- [ ] `npx wrangler secret list` → confirm INNGEST_EVENT_KEY state
-- [ ] Write `reports/phase-01-inngest-audit.md` with findings + selected path (A/B/C)
-- [ ] Implement chosen path (code changes scoped above)
-- [ ] Add env-guard tests (1 per file) covering missing INNGEST_EVENT_KEY no-op
-- [ ] `npm run build` → 0 errors
-- [ ] `npm test` → all green
-- [ ] `npm run deploy:full` → wrangler success
-- [ ] Verify SHA match (`/api/version` == local short SHA)
-- [ ] Smoke test: trigger one URL-to-Revenue job (or document why skipped if Path C)
-- [ ] If Path C: ADR committed; if Path A/B: env-guard logs visible in `wrangler tail`
-- [ ] Update `docs/development-roadmap.md` + `docs/project-changelog.md`
+- [x] Run D1 audit query — capture row counts by status, last 30d window
+- [x] Inspect Inngest dashboard for `video.composed`/`video.uploaded` invocations
+- [x] `npx wrangler secret list` → confirm INNGEST_EVENT_KEY state
+- [x] Write `reports/phase-01-inngest-audit.md` with findings + selected path (A/B/C)
+- [x] Implement chosen path (code changes scoped above)
+- [x] Add env-guard tests (1 per file) covering missing INNGEST_EVENT_KEY no-op
+- [x] `npm run build` → 0 errors
+- [x] `npm test` → all green
+- [x] `npm run deploy:full` → wrangler success
+- [x] Verify SHA match (`/api/version` == local short SHA)
+- [x] Smoke test: trigger one URL-to-Revenue job (or document why skipped if Path C)
+- [x] If Path C: ADR committed; if Path A/B: env-guard logs visible in `wrangler tail`
+- [x] Update `docs/development-roadmap.md` + `docs/project-changelog.md`
 
 ## Success Criteria
 
