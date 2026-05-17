@@ -11,10 +11,12 @@ interface StatItem {
   icon: string;
 }
 
+// Stats reframed 2026-05-16 per no-tech doctrine + honest-pivot:
+// uptime SLA claims downgraded to qualitative edge-availability framing.
 const stats: StatItem[] = [
   { value: 500, suffix: "+", label: "Missions Hoàn Thành", icon: "rocket_launch" },
   { value: 50, suffix: "+", label: "Agency Tin Dùng", icon: "groups" },
-  { value: 99.9, suffix: "%", label: "Uptime", icon: "check_circle" },
+  { value: 300, suffix: "+", label: "Edge PoPs Toàn Cầu", icon: "public" },
   { value: 2, prefix: "< ", suffix: "s", label: "Thời Gian Phản Hồi", icon: "speed" },
 ];
 
@@ -172,6 +174,9 @@ export function SocialProof() {
         </ScrollReveal>
 
         {/* Testimonials */}
+        {/* Composite disclosure (2026-05-16 honest pivot) — testimonials are
+            composite based on early user research and beta feedback rather
+            than verbatim quotes from named individuals. */}
         <div className="grid md:grid-cols-3 gap-5 max-w-5xl mx-auto">
           {testimonials.map((t, i) => (
             <ScrollReveal key={t.name} delay={i * 100}>
@@ -216,6 +221,11 @@ export function SocialProof() {
             </ScrollReveal>
           ))}
         </div>
+
+        {/* Honest disclosure */}
+        <p className="text-center text-xs text-muted-foreground mt-8 max-w-2xl mx-auto">
+          Lời chứng thực tổng hợp từ nghiên cứu người dùng và phản hồi beta.
+        </p>
       </div>
     </section>
   );

@@ -96,9 +96,9 @@
       "badge": "✨ AI-Powered Creation",
       "cmd_prefix": "Try:",
       "cmd_suffix": "→",
-      "trust_uptime": "99.99% Uptime",
+      "trust_uptime": "Hạ tầng edge tin cậy",
       "trust_response": "<50ms Response",
-      "trust_security": "SOC 2 Certified",
+      "trust_security": "Bảo mật Cloudflare",
       "trust_edge": "Edge Deployed"
     },
     "workflow": {
@@ -197,8 +197,8 @@
           "label": "Thực Thi Nhiệm Vụ"
         },
         "stat4": {
-          "value": "99.9%",
-          "label": "Uptime SLA"
+          "value": "Edge",
+          "label": "Khả Dụng Toàn Cầu"
         }
       },
       "terminal": {
@@ -235,9 +235,10 @@
       },
       "badges": {
         "secure": "Mã Hóa 256-bit",
-        "rated": "Đánh Giá 4.9/5",
-        "certified": "Tuân Thủ SOC 2"
-      }
+        "rated": "Giao Diện Song Ngữ",
+        "certified": "Hạ Tầng Cloudflare"
+      },
+      "testimonials_disclaimer": "Lời chứng thực tổng hợp từ nghiên cứu người dùng và phản hồi beta."
     },
     "pricing": {
       "title": "Chọn Gói Của Bạn",

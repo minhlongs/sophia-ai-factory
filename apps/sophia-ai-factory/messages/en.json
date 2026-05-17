@@ -96,9 +96,9 @@
       "badge": "✨ AI-Powered Creation",
       "cmd_prefix": "Try:",
       "cmd_suffix": "→",
-      "trust_uptime": "99.99% Uptime",
+      "trust_uptime": "Edge-deployed reliability",
       "trust_response": "<50ms Response",
-      "trust_security": "SOC 2 Certified",
+      "trust_security": "Edge-secured by Cloudflare",
       "trust_edge": "Edge Deployed"
     },
     "workflow": {
@@ -197,8 +197,8 @@
           "label": "Mission Execution"
         },
         "stat4": {
-          "value": "99.9%",
-          "label": "Uptime SLA"
+          "value": "Edge",
+          "label": "Global Availability"
         }
       },
       "terminal": {
@@ -235,9 +235,10 @@
       },
       "badges": {
         "secure": "256-bit Encrypted",
-        "rated": "4.9/5 Creator Rating",
-        "certified": "SOC 2 Compliant"
-      }
+        "rated": "Bilingual UI",
+        "certified": "Cloudflare-secured Infrastructure"
+      },
+      "testimonials_disclaimer": "Composite testimonials based on early user research and beta feedback."
     },
     "pricing": {
       "title": "Choose Your Plan",
