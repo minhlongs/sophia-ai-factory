@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 # Sophia AI Factory pre-push gate
-# G1 typecheck + G2 lint (FAIL mode — 0 errors enforced) + G3 test + G5 audit
+# G1 typecheck + G2 lint (FAIL mode) + G3 test + G4 secrets + G5 audit
 # Bypass: git push --no-verify (DISCOURAGED — escape hatch for emergency hotfixes only)
 set -e
 cd "$(git rev-parse --show-toplevel)/apps/sophia-ai-factory"
@@ -11,15 +11,20 @@ echo "[pre-push] G1 typecheck (tsc --noEmit)..."
 npm run ci:typecheck
 
 # G2 lint — FAIL MODE (flipped from warn-only at end of Phase 3 on 2026-05-13).
-# `ci:lint` = `eslint --max-warnings=421` — 421 is the current baseline warning count
-# pinned to prevent regression. Any new warning OR any error blocks push.
+# `ci:lint` = `eslint --max-warnings=340` — current baseline warning count (rebaselined
+# 2026-05-17 from stale 423). Any new warning OR any error blocks push.
 # To rebaseline (after intentional cleanup): re-run lint, count warnings, update
 # package.json `ci:lint` threshold downward (never upward without justification).
-echo "[pre-push] G2 lint (fail mode — full suite, baseline=421 warnings)..."
+echo "[pre-push] G2 lint (fail mode — full suite, baseline=340 warnings)..."
 npm run ci:lint
 
 echo "[pre-push] G3 test (vitest run)..."
 npm run ci:test
+
+# G4 secrets — secretlint on FULL src tree (not just staged). Catches secrets that
+# bypassed commit-time lint-staged (e.g., from --no-verify commits or stash pop).
+echo "[pre-push] G4 secrets (secretlint full tree)..."
+npm run ci:secrets
 
 echo "[pre-push] G5 audit (npm audit --audit-level=high)..."
 npm audit --audit-level=high || echo "[pre-push] WARN: high-severity transitive vulns present (non-blocking, see SOP 9)"
