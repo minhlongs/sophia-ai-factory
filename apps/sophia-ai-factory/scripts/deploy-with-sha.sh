@@ -19,6 +19,28 @@ REPO_ROOT="$(cd "$APP_DIR/../.." && pwd)"
 
 cd "$APP_DIR"
 
+# ─── Retry helper for transient CF API failures (502 Bad Gateway, etc) ───────
+# 3 attempts with exponential backoff (5s, 10s, 20s). Permanent errors
+# (auth, validation, etc) still fail on first attempt — only 5xx and network
+# errors merit retry. CF returned 502 Bad Gateway during `secret put` on
+# 2026-05-17 (commit c1528012 deploy), leaving deploy half-done. Retry
+# eliminates this class of transient failures.
+retry_cf() {
+  local label="$1"; shift
+  local attempt=1 max=3 delay=5
+  while [ $attempt -le $max ]; do
+    if "$@"; then return 0; fi
+    if [ $attempt -eq $max ]; then
+      echo "❌ $label failed after $max attempts — aborting deploy"
+      return 1
+    fi
+    echo "⚠️  $label failed (attempt $attempt/$max), retrying in ${delay}s..."
+    sleep "$delay"
+    attempt=$((attempt + 1))
+    delay=$((delay * 2))
+  done
+}
+
 # ─── Step 0: Push precondition (2026-05-15 — prevent prod/git divergence) ────
 # Reject deploy if local HEAD has commits not yet on origin/main. Latent divergence
 # is the root cause of incident 2026-05-13/15 where prod ran code that existed
@@ -76,9 +98,9 @@ node scripts/inject-scheduled-handler.mjs
 # Secrets are applied at Worker level; setting them before wrangler deploy
 # ensures the running worker sees the new values atomically.
 echo "==> Setting Worker secrets (COMMIT_SHA, DEPLOYED_AT, DEPLOY_BRANCH)"
-echo "$COMMIT_SHA" | npx wrangler secret put COMMIT_SHA
-echo "$DEPLOYED_AT" | npx wrangler secret put DEPLOYED_AT
-echo "$DEPLOY_BRANCH" | npx wrangler secret put DEPLOY_BRANCH
+retry_cf "secret put COMMIT_SHA"   bash -c "echo '$COMMIT_SHA' | npx wrangler secret put COMMIT_SHA"
+retry_cf "secret put DEPLOYED_AT"  bash -c "echo '$DEPLOYED_AT' | npx wrangler secret put DEPLOYED_AT"
+retry_cf "secret put DEPLOY_BRANCH" bash -c "echo '$DEPLOY_BRANCH' | npx wrangler secret put DEPLOY_BRANCH"
 
 # ─── Step 4: Deploy ─────────────────────────────────────────────────────────
 # IMPORTANT: explicit `--config wrangler.toml` is required for OpenNext's
@@ -89,7 +111,7 @@ echo "$DEPLOY_BRANCH" | npx wrangler secret put DEPLOY_BRANCH
 # Verified Phase 5.1 (2026-05-13): without --config, populate-cache errors
 # "No D1 binding NEXT_TAG_CACHE_D1 found"; with --config, all bindings resolve.
 echo "==> wrangler deploy"
-npx wrangler deploy --config wrangler.toml
+retry_cf "wrangler deploy" npx wrangler deploy --config wrangler.toml
 
 # ─── Step 5: Upload Sentry source maps (non-fatal) ──────────────────────────
 # Bakes symbolicated stack traces into prod errors. Script gracefully skips
