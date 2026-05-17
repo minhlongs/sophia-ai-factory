@@ -10,6 +10,17 @@
     }
   },
   "setupWizard": {
+    "doctrine": {
+      "aria_label": "Nhắc nhở doctrine BYOK của Sophia",
+      "title": "Trước khi bắt đầu — 3 điều bạn nên biết",
+      "subtitle": "Sophia là no-code, no-tech. Bạn nắm quyền điều khiển.",
+      "bullet_keys_title": "Bạn sở hữu các key",
+      "bullet_keys_body": "Mọi API key (AI, giọng nói, avatar, thanh toán) là của bạn. Chúng tôi không lưu trữ hay sử dụng phía mình.",
+      "bullet_platform_title": "Chúng tôi vận hành nền tảng",
+      "bullet_platform_body": "Operator chỉ quản lý code + hạ tầng Cloudflare. Không cần thiết lập bên thứ ba phía operator.",
+      "bullet_refund_title": "Hoàn tiền 30 ngày",
+      "bullet_refund_body": "Dùng Sophia không rủi ro. Nếu không phù hợp, yêu cầu hoàn tiền trong vòng 30 ngày sau khi mua."
+    },
     "apiKeys": {
       "title": "Cấu Hình Dịch Vụ AI",
       "subtitle": "Nhập các API key cho dịch vụ AI để kích hoạt Sophia.",
