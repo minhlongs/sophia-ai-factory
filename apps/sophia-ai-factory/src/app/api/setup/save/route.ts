@@ -22,6 +22,8 @@ const setupSaveSchema = z
       ELEVENLABS_API_KEY: z.string().optional(),
       DID_API_KEY: z.string().optional(),
       MUAPI_API_KEY: z.string().optional(),
+      APOLLO_API_KEY: z.string().optional(),
+      HUNTER_API_KEY: z.string().optional(),
     }),
   })
   .refine(
@@ -41,6 +43,8 @@ const PROVIDER_MAP: Record<string, ByokProvider> = {
   ELEVENLABS_API_KEY: 'elevenlabs',
   DID_API_KEY: 'd-id',
   MUAPI_API_KEY: 'muapi',
+  APOLLO_API_KEY: 'apollo',
+  HUNTER_API_KEY: 'hunter',
 };
 
 export async function POST(request: NextRequest) {

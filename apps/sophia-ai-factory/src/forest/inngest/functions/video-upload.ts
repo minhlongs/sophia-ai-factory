@@ -42,9 +42,11 @@ export const videoUpload = inngest.createFunction(
     await step.run('transition-to-uploaded', async () => {
       assertValidTransition(job.status, 'uploaded');
       const db = await getD1Client();
+      const now = Math.floor(Date.now() / 1000);
+      // completed_at is set ONCE on terminal transition (P27 honest benchmark — migration 0113).
       await db
         .from('video_jobs')
-        .update({ status: 'uploaded', updated_at: Math.floor(Date.now() / 1000) })
+        .update({ status: 'uploaded', updated_at: now, completed_at: now })
         .eq('id', jobId);
     });
 

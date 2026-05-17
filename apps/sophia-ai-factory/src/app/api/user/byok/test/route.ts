@@ -22,16 +22,16 @@ import { globalRateLimiter, getClientIdentifier, createRateLimitResponse } from 
 export const dynamic = 'force-dynamic';
 
 const Body = z.object({
-  provider: z.enum(['openrouter', 'anthropic', 'elevenlabs', 'd-id', 'muapi', 'apollo', 'hunter']),
+  provider: z.enum(['openrouter', 'anthropic', 'elevenlabs', 'd-id', 'muapi', 'apollo']),
 });
 
 interface TestUrlSpec {
-  /** Either a static URL or a builder that bakes the key into the query string. */
-  url: string | ((key: string) => string);
+  url: string;
   authHeader: (key: string) => Record<string, string>;
 }
 
-type TestableProvider = Exclude<ByokProvider, 'heygen'>;
+// Hunter excluded: ?api_key= leaks via wrangler tail logs. Validate via mission call instead.
+type TestableProvider = Exclude<ByokProvider, 'heygen' | 'hunter'>;
 
 const TEST_ENDPOINT: Record<TestableProvider, TestUrlSpec> = {
   openrouter: {
@@ -58,10 +58,9 @@ const TEST_ENDPOINT: Record<TestableProvider, TestUrlSpec> = {
     url: 'https://api.apollo.io/api/v1/auth/health',
     authHeader: (k) => ({ 'X-Api-Key': k }),
   },
-  hunter: {
-    url: (k) => `https://api.hunter.io/v2/account?api_key=${encodeURIComponent(k)}`,
-    authHeader: () => ({}),
-  },
+  // Hunter intentionally omitted: their endpoints require api_key as a query-string
+  // param which would leak the key into Cloudflare's outbound-fetch logs visible via
+  // `wrangler tail`. Validation happens on first /lead:enrich call instead.
 };
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -88,8 +87,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 8_000);
-    const targetUrl = typeof spec.url === 'function' ? spec.url(stored) : spec.url;
-    const res = await fetch(targetUrl, {
+    const res = await fetch(spec.url, {
       method: 'GET',
       headers: spec.authHeader(stored),
       signal: controller.signal,

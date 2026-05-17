@@ -107,8 +107,9 @@ interface D1Lite {
 
 /**
  * Query `video_jobs` for terminal rows in the window and compute the summary.
- * `updated_at - created_at` is the render duration; status filter ensures we
- * only count completed pipelines.
+ * `completed_at - created_at` is the render duration; `completed_at` is set
+ * exactly once on terminal status transition (migration 0113), so this is
+ * stable even when intermediate stages bump `updated_at`.
  */
 export async function computeVideoRenderBenchmark(
   db: D1Lite,
@@ -119,11 +120,12 @@ export async function computeVideoRenderBenchmark(
   const statusList = TERMINAL_STATUSES.map(() => '?').join(',');
   const tierFilter = params.tier ? ' AND tier = ?' : '';
   const sql = `
-    SELECT (updated_at - created_at) AS duration_seconds
+    SELECT (completed_at - created_at) AS duration_seconds
     FROM video_jobs
     WHERE status IN (${statusList})
       AND created_at >= ?
-      AND updated_at > created_at${tierFilter}
+      AND completed_at IS NOT NULL
+      AND completed_at > created_at${tierFilter}
   `;
   const binds: unknown[] = [...TERMINAL_STATUSES, since];
   if (params.tier) binds.push(params.tier);
