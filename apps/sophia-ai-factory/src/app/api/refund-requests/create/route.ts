@@ -28,7 +28,13 @@ interface PurchaseRow {
   payment_id: string
   amount_cents: number
   status: string
+  created_at: number
+  paid_at: number | null
 }
+
+/** Homepage promise — `landing.refund.window` claims 30-day money-back guarantee. */
+const REFUND_WINDOW_DAYS = 30
+const SECONDS_PER_DAY = 86_400
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const user = await getCurrentUserFromHeaders(request.headers)
@@ -45,12 +51,29 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Verify purchase ownership
     const db = await getD1Raw()
     const purchase = await db
-      .prepare(`SELECT id, user_id, payment_id, amount_cents, status FROM user_purchases WHERE id = ?1 AND kind = 'one_time'`)
+      .prepare(`SELECT id, user_id, payment_id, amount_cents, status, created_at, paid_at FROM user_purchases WHERE id = ?1 AND kind = 'one_time'`)
       .bind(body.purchaseId)
       .first<PurchaseRow>()
 
     if (!purchase || purchase.user_id !== user.id) {
       return NextResponse.json({ error: 'Purchase not found' }, { status: 404 })
+    }
+
+    // 30-day refund window enforcement (P29 — matches homepage `landing.refund.window` promise).
+    // Uses paid_at when present (real refund clock starts on settlement); falls back to created_at.
+    const purchaseEpochSec = purchase.paid_at ?? purchase.created_at
+    const nowEpochSec = Math.floor(Date.now() / 1000)
+    const daysSincePurchase = (nowEpochSec - purchaseEpochSec) / SECONDS_PER_DAY
+    if (daysSincePurchase > REFUND_WINDOW_DAYS) {
+      return NextResponse.json(
+        {
+          error: 'refund_window_expired',
+          message: `Refunds are available within ${REFUND_WINDOW_DAYS} days of purchase. This purchase is ${Math.floor(daysSincePurchase)} days old.`,
+          windowDays: REFUND_WINDOW_DAYS,
+          daysSincePurchase: Math.floor(daysSincePurchase),
+        },
+        { status: 422 },
+      )
     }
 
     // One refund per purchase
