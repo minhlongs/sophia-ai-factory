@@ -44,6 +44,7 @@ import {
 } from '@/tree/byok/user-api-key-store'
 import { track } from '@/lib/signals/track'
 import { D1Events } from '@/lib/signals/d1-event-types'
+import { globalRateLimiter } from '@/forest/middleware/rate-limiter'
 
 const mockGetCurrentUser = vi.mocked(getCurrentUser)
 const mockSet            = vi.mocked(setUserApiKey)
@@ -64,6 +65,7 @@ function makeRequest(method: string, body?: unknown): NextRequest {
 describe('GET /api/user/byok', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    globalRateLimiter.clear()
   })
 
   it('401 when no user session', async () => {
@@ -87,6 +89,7 @@ describe('GET /api/user/byok', () => {
 describe('POST /api/user/byok', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    globalRateLimiter.clear()
   })
 
   it('401 when no user session', async () => {
@@ -197,6 +200,7 @@ describe('POST /api/user/byok', () => {
 describe('DELETE /api/user/byok', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    globalRateLimiter.clear()
   })
 
   it('401 when no user session', async () => {

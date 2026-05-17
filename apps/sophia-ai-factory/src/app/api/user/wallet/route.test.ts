@@ -19,6 +19,7 @@ vi.mock('@/seed/utils/to-error', () => ({
 import { GET } from './route';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { NextRequest } from 'next/server';
+import { globalRateLimiter } from '@/forest/middleware/rate-limiter';
 
 const mockAll = vi.fn();
 const mockFirst = vi.fn();
@@ -32,6 +33,7 @@ function makeRequest(): NextRequest {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  globalRateLimiter.clear();
   (globalThis as unknown as { __env: Record<string, unknown> }).__env = { DB: mockDb };
   mockAll.mockResolvedValue({ results: [] });
   mockFirst.mockResolvedValue(null);

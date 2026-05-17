@@ -7,10 +7,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { createServerClient } from '@/seed/db/client';
+import { globalRateLimiter, createRateLimitResponse } from '@/forest/middleware/rate-limiter';
 
 export async function POST(req: NextRequest) {
   const user = await getCurrentUserFromHeaders(req.headers);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const rl = globalRateLimiter.checkLimit(`cancel-sub:${user.id}`, { intervalMs: 60_000, maxRequests: 5 });
+  if (!rl.allowed) return createRateLimitResponse(rl);
 
   const db = createServerClient();
   const { data: existing } = await db
