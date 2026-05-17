@@ -1,9 +1,9 @@
 ---
 title: "Customer Acquisition Push — First 10 Paying Customers"
 description: "Post-handover acquisition workstream. Sophia is READY (def90421, matrix 17/0/4). Goal: ship first 10 paying customers within 6 weeks via affiliate + content + Telegram-native channels."
-status: pending
+status: code-shipped-awaiting-operator
 priority: P1
-effort: "4-6 weeks wall (parallelizable phases 01-04)"
+effort: "Code work shipped ~3h actual; operator-driven phases (05-06) ongoing"
 branch: main
 tags: [acquisition, growth, raas, post-handover, no-tech-doctrine]
 created: 2026-05-16
@@ -45,11 +45,11 @@ Sub-metrics:
 | # | Phase | Effort | Status | Depends |
 |---|-------|--------|--------|---------|
 | 01 | Tracking + Analytics Setup | M (~3-5h) | accepted-existing (funnel-stats.ts + /admin/funnel) | — |
-| 02 | Landing CRO + Trial Funnel | M (~5-8h) | pending | 01 |
+| 02 | Landing CRO + Trial Funnel | M (~5-8h) | partial-completed @ 2930b8d8 (doctrine banner shipped; A/B + lifecycle infra accepted-existing; hero CTA variant deferred-pending-pricing-decision) | 01 |
 | 03 | Onboarding UX Hardening (Setup Wizard polish) | M (actual ~1.5h) | completed @ 8601fe9a | — |
-| 04 | Acquisition Channels (Affiliate + Content seed) | L (~8-12h) | partial (affiliateProgram i18n exists; needs route + ledger code) | 01 |
-| 05 | First 10 Customers (manual close + iteration) | XL (~ongoing) | pending | 02, 03, 04 |
-| 06 | Post-Acquisition Iteration + Scale Signal | M (~4-6h) | pending | 05 |
+| 04 | Acquisition Channels (Affiliate + Content seed) | L (~8-12h) | accepted-existing (15+ affiliate files + 20+ routes + /affiliate page + cron + payouts all live); blog content remains operator-written | 01 |
+| 05 | First 10 Customers (manual close + iteration) | XL (~ongoing) | pending — operator-driven outreach | 02, 03, 04 |
+| 06 | Post-Acquisition Iteration + Scale Signal | M (~4-6h) | pending — blocked by 05 | 05 |
 
 ## Success Criteria
 
