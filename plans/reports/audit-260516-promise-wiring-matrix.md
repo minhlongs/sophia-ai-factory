@@ -5,7 +5,9 @@ phase: 02
 status: complete
 input: plans/reports/brainstorm-260516-1948-video-gen-zero-bug-handover-promise-audit.md
 phase01_baseline: 4531f6d4
-verdict_summary: "16 promises audited — 5 PASS, 3 FAIL, 8 PARTIAL"
+verdict_summary: "21 promises audited (Group A + C) — 8 PASS, 4 FAIL, 9 PARTIAL"
+phase02_complete: true
+phase03_complete: true
 ---
 
 # Group A Promise → Code Wiring Matrix
@@ -35,16 +37,35 @@ verdict_summary: "16 promises audited — 5 PASS, 3 FAIL, 8 PARTIAL"
 | P29 | 30-day money-back refund | `/api/refund-requests` (customer) + `/api/admin/refunds` + `land/refunds/refund-repo.ts` + NOWPayments refund TX | `refund_requests` table | NOWPayments refund tx | refund-repo tests + admin refund table tests | 🟡 PARTIAL | S | P1 | End-to-end flow exists ✅: customer requests → admin reviews → refund TX → email notification. **MISSING: 30-day window enforcement** — `createRefundRequest` accepts any age. Customer could request refund after 90 days. Either enforce window in route handler or downgrade copy to "Subject to review". |
 | P30 | Tier gating: MCU + campaigns/mo + channels + AI commands + team | `enforce-tier-quota.ts` (video) + `mission-registry` credits + `UNIFIED_TIERS` config | `subscriptions`, `purchases.credits_remaining` | — | tier-quota tests | 🟡 PARTIAL | L | P0 | Enforced ✅: video monthly quota, MCU credits per mission. Config-only ⚠ (no runtime gate found): `team_members` limit, `ai_commands_per_month`, `youtube_channels` count, `campaigns_per_month`. Customer on BASIC tier could in theory connect 5 YouTube channels (UI doesn't block) or run unlimited commands once they have MCU credits. **Security boundary risk:** lower tier could consume PREMIUM-tier features by direct API call. |
 
+### Group C (Performance / Math) — Phase 03 Additions
+
+| # | Claim | Route | DB / Config | Ext API | Tests | Verdict | Effort | Pri | Notes |
+|---|-------|-------|-------------|---------|-------|---------|--------|-----|-------|
+| P2 | <50ms Response | CF edge (no route) | — | — | — | ❌ FAIL | S | P1 | curl x10 to prod 2026-05-16 from PT: min 166ms, **median 253ms**, max 2218ms. Claim is **5× off**. `hero.trust_response: "<50ms Response"` NOT touched in Phase 01 honest-pivot. Action: copy-fix in Phase 06 → "Edge response" or "<300ms typical". |
+| P7 | <60s Mission Execution | `/api/v1/missions` → `dispatcher.ts` → handler | `engine_missions.status` | provider mix | dispatcher tests | 🟡 PARTIAL | — | P2 | Async via Workers `waitUntil`. Stub handlers: 2000ms hardcoded delay ✅. Live LLM missions (proposal/email/analytics): ~5-30s typical OpenRouter call → fits `<60s`. **Exception:** `video:create` returns immediately with `job_id` but full HeyGen render is 3-10 min (status-sync cron polls). Claim "<60s execution" applies to mission **dispatch**, not video render completion. Acceptable IF copy clarifies. |
+| P21 | 256-bit Encrypted | — | env `CREDENTIALS_MASTER_KEY` (64 hex = 32 bytes) → `user_api_keys`/`user_provider_credentials` text col `<iv_b64>:<ciphertext_b64>` | Web Crypto API (CF Workers) | encryption tests | ✅ PASS | — | — | `src/tree/credentials/encryption.ts`: **AES-GCM-256**, 12-byte random IV, 16-byte auth tag baked into ciphertext, key from env. Both `CREDENTIALS_MASTER_KEY` (hex) and `BYOK_MASTER_KEY` (base64) supported. In-transit: TLS via CF edge (HSTS 2-year already enforced). 256-bit claim ✅ accurate. |
+| P24 | ROI math: $2 CPM + affiliate commissions | `production-cost-calculator.tsx:28,63` | client-side calc | — | calculator tests | ✅ PASS | — | — | `const AD_CPM = 2.0` + formula `adRevenue = (totalViews / 1000) * AD_CPM`. Disclaimer footer: "CPM $2/1K views \| Click-to-sale 5% \| Lead-to-deal 3%". Affiliate commissions tracked separately via `commission-calculator.ts`. Disclosure text correct. |
+| P28 | Pricing config match: $199 / $399 / $799 / $4999 + compare $9,588 | `seed/config/tiers/unified-limits.ts:51-106` | — | — | tier-config tests | ✅ PASS | — | — | Config: BASIC `price: 199`, GROWTH `price: 399`, PREMIUM `price: 799`, MASTER `price: 4999`. FAQ text matches ($199/$399/$799/mo). Master `compare_price: $9,588 = 799 × 12` ✓ math correct. Save 48% claim: `(9588-4999)/9588 = 47.87% ≈ 48%` ✓. No drift between landing copy and tier config. |
+
 ---
 
 ## Summary
 
-**Verdict distribution (16 promises):**
+**Verdict distribution (21 promises total — Group A + Group C):**
+
+**Group A (architecture, 16):**
 - ✅ PASS: 5 — P11 Telegram bot, P14 auto-affiliate inject, P17 24/7 cron, P18 caption translator, P25 SmartSuite+Shopify in DB
 - ❌ FAIL: 3 — P9 leads/<60s (claim wrong: "/day" not "/60s"), P13 5+ YouTube (UI single-account), P15 voice clone (full stub)
-- 🟡 PARTIAL: 8 — P5 (7/17 stubs), P10 (TG↔API parity broken for 14 of 17), P12 (workflow.tsx is i18n only), P19 (cron freq 4h not weekly), P26 (BYOK plumbed, ElevenLabs+D-ID not live), P27 (no benchmark), P29 (no 30-day window enforce), P30 (only video+MCU gated, not team/commands/channels)
+- 🟡 PARTIAL: 8 — P5 (6/17 stubs), P10 (TG↔API parity by design), P12 (workflow.tsx is i18n only), P19 (cron freq 4h not weekly), P26 (BYOK plumbed, ElevenLabs+D-ID not live), P27 (no benchmark), P29 (no 30-day window enforce), P30 (only video+MCU gated, not team/commands/channels)
 
-**NEEDS-BUILD ranked for Phase 04 scope:**
+**Group C (perf/math, 5):**
+- ✅ PASS: 3 — P21 AES-GCM-256, P24 ROI formula `$2 CPM`, P28 pricing config aligns with messages
+- ❌ FAIL: 1 — P2 `<50ms Response` (actual median 253ms, 5× off)
+- 🟡 PARTIAL: 1 — P7 `<60s Mission` (true for stubs+LLM missions, false for video render which is 3-10min — claim ambiguity)
+
+**Combined: 8 PASS / 4 FAIL / 9 PARTIAL out of 21**
+
+**NEEDS-BUILD ranked for Phase 04 scope (Group A + C):**
 
 | Pri | Promise | Effort | Action |
 |-----|---------|--------|--------|
@@ -55,10 +76,12 @@ verdict_summary: "16 promises audited — 5 PASS, 3 FAIL, 8 PARTIAL"
 | P1 | P15 voice clone real | M | ElevenLabs `/v1/voices/add` call with BYOK key (resolveUserApiKey + voice-clone.ts) |
 | P1 | P26 ElevenLabs+D-ID live | M | Same wiring path as P15 + D-ID `/talks` for avatar gen |
 | P1 | P29 30-day window | S | Add `created_at >= NOW - 30d` guard in `createRefundRequest` |
+| **P1** | **P2 `<50ms` → realistic** | S | Copy-fix `hero.trust_response: "<50ms Response"` → `"Edge response"` or `"<300ms typical"`. Already-shipped Phase 01 missed this key. |
 | P2 | P10 TG↔API parity | M | Expose 14 missing missions via Telegram bot OR document strict design (FSM only) |
 | P2 | P12 workflow doc | S | Either build literal `WorkflowOrchestrator` OR copy fix: 4-step diagram = customer journey (not code state) |
 | P2 | P19 cron weekly | S | Either change cron to `0 6 * * 1` OR copy fix to "auto-discovery every 4h" |
 | P2 | P27 video benchmark | S | Phase 03 stopwatch via test pipeline + claim adjustment |
+| P2 | P7 mission claim clarify | S | Copy-fix: "<60s mission **dispatch**" or "<60s for simple missions; video render 3-10min". |
 
 **Total estimated Phase 04 effort:**
 - P0 only (security gate): ~4-6h
