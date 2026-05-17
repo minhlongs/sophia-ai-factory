@@ -24,7 +24,7 @@ import { D1Events } from '@/lib/signals/d1-event-types'
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
 
-const PROVIDERS = ['openrouter', 'anthropic', 'elevenlabs', 'd-id', 'muapi'] as const
+const PROVIDERS = ['openrouter', 'anthropic', 'elevenlabs', 'd-id', 'muapi', 'apollo', 'hunter'] as const
 
 const PROVIDER_KEY_RX: Record<string, RegExp> = {
   openrouter: /^sk-or-v1-[A-Za-z0-9_-]{20,}$/,
@@ -32,6 +32,8 @@ const PROVIDER_KEY_RX: Record<string, RegExp> = {
   elevenlabs: /^[A-Za-z0-9_-]{20,}$/,
   'd-id':     /^[A-Za-z0-9+/=:_-]{20,}$/,
   muapi:      /^[A-Za-z0-9_-]{20,}$/,
+  apollo:     /^[A-Za-z0-9_-]{20,}$/,
+  hunter:     /^[A-Za-z0-9_-]{20,}$/,
 }
 
 const PostSchema = z.object({

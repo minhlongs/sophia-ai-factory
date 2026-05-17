@@ -16,7 +16,7 @@
  * Mirror of UserSettableProvider in byok-key-form. Kept inline so this lib
  * stays free of the 'use client' boundary and can run server-side too.
  */
-export type ValidatorProvider = 'openrouter' | 'anthropic' | 'elevenlabs' | 'd-id' | 'muapi'
+export type ValidatorProvider = 'openrouter' | 'anthropic' | 'elevenlabs' | 'd-id' | 'muapi' | 'apollo' | 'hunter'
 
 export interface ValidatorResult {
   /** True if the key passes provider-specific format checks. */

@@ -14,7 +14,7 @@ import { KeyRound, Trash2, Check, Wifi, WifiOff, Loader2 } from 'lucide-react'
 import { ByokHelpTip } from '@/components/onboarding/byok-help-tip'
 import { validateProviderKey } from '@/lib/byok/key-format-validators'
 
-export type UserSettableProvider = 'openrouter' | 'anthropic' | 'elevenlabs' | 'd-id' | 'muapi'
+export type UserSettableProvider = 'openrouter' | 'anthropic' | 'elevenlabs' | 'd-id' | 'muapi' | 'apollo' | 'hunter'
 type Provider = UserSettableProvider
 
 const PROVIDERS: { value: Provider; label: string; hint: string }[] = [
@@ -23,6 +23,8 @@ const PROVIDERS: { value: Provider; label: string; hint: string }[] = [
   { value: 'elevenlabs', label: 'ElevenLabs',  hint: '20+ char token'  },
   { value: 'd-id',       label: 'D-ID',        hint: 'Basic ...'       },
   { value: 'muapi',      label: 'MuAPI',       hint: '20+ char token'  },
+  { value: 'apollo',     label: 'Apollo.io',   hint: 'lead finder key' },
+  { value: 'hunter',     label: 'Hunter.io',   hint: 'email finder key' },
 ]
 
 /**
