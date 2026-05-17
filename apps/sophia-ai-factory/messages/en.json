@@ -2047,6 +2047,25 @@
     "cleared": "Cleared {provider} key",
     "error_format": "Key too short — must be at least 10 characters.",
     "network_error": "Network error — try again",
+    "validate": {
+      "too_short": "Key looks too short — paste the full key from your provider dashboard.",
+      "openrouter": {
+        "format": "OpenRouter keys start with sk-or- — copy yours at openrouter.ai/keys."
+      },
+      "anthropic": {
+        "format": "Anthropic keys start with sk-ant- — copy yours at console.anthropic.com."
+      },
+      "elevenlabs": {
+        "format": "ElevenLabs xi-api-key is a 20+ char alphanumeric token — find it under Profile → API Keys."
+      },
+      "did": {
+        "format": "D-ID expects either email:password (we'll auto-encode) or its base64-encoded form from the dashboard.",
+        "auto_encoded": "Detected raw email:password — auto-encoded to base64 for you."
+      },
+      "muapi": {
+        "format": "MuAPI keys are 20+ char alphanumeric tokens — find them in the MuAPI dashboard."
+      }
+    },
     "picker": {
       "placeholder": "Use system model (default)",
       "placeholder_label": "AI Model (optional — use your own key)",
