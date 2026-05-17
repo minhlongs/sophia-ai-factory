@@ -11,8 +11,8 @@ import { translateCaption } from './caption-translator'
 // Mock: @opennextjs/cloudflare (KV)
 // ---------------------------------------------------------------------------
 
-const mockKvGet = vi.fn<[string], Promise<string | null>>()
-const mockKvPut = vi.fn<[string, string, object?], Promise<void>>()
+const mockKvGet = vi.fn<(key: string) => Promise<string | null>>()
+const mockKvPut = vi.fn<(key: string, value: string, options?: object) => Promise<void>>()
 
 vi.mock('@opennextjs/cloudflare', () => ({
   getCloudflareContext: vi.fn().mockResolvedValue({
