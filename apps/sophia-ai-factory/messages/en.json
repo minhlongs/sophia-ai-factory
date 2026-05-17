@@ -97,7 +97,7 @@
       "cmd_prefix": "Try:",
       "cmd_suffix": "→",
       "trust_uptime": "Edge-deployed reliability",
-      "trust_response": "<50ms Response",
+      "trust_response": "Edge response",
       "trust_security": "Edge-secured by Cloudflare",
       "trust_edge": "Edge Deployed"
     },
@@ -159,7 +159,7 @@
           "badge": "Premium"
         }
       },
-      "highlight": "Premium tier unlocks API integrations with PartnerStack, Impact.com, and weekly auto-updates of affiliate programs."
+      "highlight": "Premium tier unlocks API integrations with PartnerStack, Impact.com, and auto-discovery of new affiliate programs every 4 hours."
     },
     "raas": {
       "title": "AI-Powered Business Automation",
@@ -194,7 +194,7 @@
         },
         "stat3": {
           "value": "< 60s",
-          "label": "Mission Execution"
+          "label": "Mission Dispatch"
         },
         "stat4": {
           "value": "Edge",
