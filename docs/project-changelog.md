@@ -1,7 +1,31 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-05-13 (Admin ops consistency batch: support/billing sync, admin-ops docs pack, release workflow corrections)
+> **Last Updated:** 2026-05-16 (RaaS Zero-Bug Handover — Phase 04 closed, matrix 17 PASS / 0 FAIL / 4 PARTIAL; Phase 06 sign-off `c7aab382`)
+
+---
+
+## [2026-05-16] RaaS Zero-Bug Handover — Promise vs Code Audit + Remediation (Phases 01–04, 06)
+
+**Summary (vi):** Hoàn tất kiểm tra zero-bug toàn diện cho luồng RaaS theo cam kết homepage. Trên 30 lời hứa từ trang chủ: matrix cuối 17/21 PASS / 0 FAIL / 4 PARTIAL (các PARTIAL còn lại là quyết định thiết kế đã chấp nhận). Bốn nhóm fix lớn: (1) honest-pivot copy cho SOC 2 / 99.99% uptime / 4.9 rating / testimonial named (Phase 01 `4531f6d4`); (2) closed P30 aiCommands monthly quota gate qua `enforce-ai-command-quota.ts` + HTTP 429 ở `/api/v1/missions` (`c7e54084`); (3) closed P29 30-day refund window enforcement (HTTP 422 past window) ở `/api/refund-requests/create` (`e748dabb`); (4) closed P15 + P26 — `voice:clone` live ElevenLabs `/v1/voices/add` via BYOK (`2f30fae7`) + new `avatar:create-did` command + `lib/did/did-client.ts` cho D-ID `/talks` live (`9ba34150`), bumped 17→18 commands. Năm copy honest-pivots cho P2 `<50ms`, P19 weekly cron, P7 mission claim, P13 5+ YouTube, P9 leads-in-60s. Production deploy CF-direct `c7aab382`, SHA verified, 4366 tests pass. Phase 05 smoke test defer-pending-budget.
+
+**Summary (en):** Completed comprehensive zero-bug audit of the RaaS customer flow against homepage promises. Of 30 claims, final matrix is 17/21 PASS / 0 FAIL / 4 PARTIAL (remaining PARTIAL items are accepted design decisions). Four major fix groups: (1) Phase 01 honest-pivot copy for SOC 2 / 99.99% uptime / 4.9 rating / named testimonials (`4531f6d4`); (2) closed P30 tier-gate completeness via new `enforce-ai-command-quota.ts` + HTTP 429 gate at `/api/v1/missions` (`c7e54084`); (3) closed P29 30-day refund window enforcement (HTTP 422 past window) at `/api/refund-requests/create` (`e748dabb`); (4) closed P15 + P26 — `voice:clone` now calls live ElevenLabs `/v1/voices/add` via BYOK (`2f30fae7`) + new `avatar:create-did` command + `lib/did/did-client.ts` for live D-ID `/talks` (`9ba34150`), bumping commands 17→18. Five copy honest-pivots for P2 `<50ms`, P19 weekly cron, P7 mission claim, P13 5+ YouTube channels, P9 leads-in-60s. Production deployed CF-direct at `c7aab382` (SHA match verified), 4366 tests pass. Phase 05 live smoke test deferred pending operator BYOK budget.
+
+**Key scope:**
+- Plan: `plans/260516-1948-raas-zero-bug-handover/` (6 phases, 04+06 shipped, 05 deferred)
+- Handover doc: `plans/reports/handover-260516-raas-zero-bug.md` (bilingual VN+EN, non-tech CEO audience, sign-off block with operator email + git SHA + 2026-05-16 date)
+- Promise matrix: `plans/reports/audit-260516-promise-wiring-matrix.md` (21 rows, 17 PASS / 0 FAIL / 4 PARTIAL)
+- New code: `src/seed/auth/enforce-ai-command-quota.ts`, `src/lib/did/did-client.ts`, `src/forest/missions/handlers/avatar-create-did.ts`
+- New mission command: `avatar:create-did` (status:'live', 8 MCU credits, BYOK D-ID required)
+- Updated handler: `src/forest/missions/handlers/voice-clone.ts` (stub → BYOK-aware live ElevenLabs)
+- Updated route: `src/app/api/refund-requests/create/route.ts` (30-day window enforce)
+- Updated routes: `src/app/api/v1/missions/route.ts` (aiCommands monthly gate)
+- New tests: 31 cases across 5 files
+- Doctrine reaffirmed: no-tech v1.28.1 — operator never holds 3rd-party creds; 100% customer-BYOK; NOWPayments-only; AES-GCM-256 at rest
+
+**Code review:** PASS 9.5/10 (independent code-reviewer subagent) — doctrine constraints verified, zero `:any`, zero banned imports, BYOK fail-safe paths confirmed.
+
+**Production:** `c7aab382` live at https://sophia.agencyos.network (HTTP 200, SHA match, 2026-05-16T04:10Z deploy).
 
 ---
 
