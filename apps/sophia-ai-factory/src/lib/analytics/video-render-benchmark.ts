@@ -11,7 +11,8 @@
  */
 
 const MIN_SAMPLES = 10;
-const TERMINAL_STATUSES = ['uploaded', 'published'] as const;
+// `videos.status` terminal value (queued -> processing -> completed | failed | failed_permanent).
+const TERMINAL_STATUS = 'completed';
 
 export interface BenchmarkParams {
   /** Look-back window in seconds. Defaults to 7 days. */
@@ -106,10 +107,15 @@ interface D1Lite {
 }
 
 /**
- * Query `video_jobs` for terminal rows in the window and compute the summary.
- * `completed_at - created_at` is the render duration; `completed_at` is set
- * exactly once on terminal status transition (migration 0113), so this is
- * stable even when intermediate stages bump `updated_at`.
+ * Query the production `videos` table for terminal rows in the window and
+ * compute the summary. `completed_at - created_at` is the render duration;
+ * `completed_at` is set exactly once on the 'completed' status transition
+ * (migration 0113), so this is stable even when intermediate stages bump
+ * `updated_at`.
+ *
+ * Note: the `videos` table doesn't have a `tier` column. The `tier` filter
+ * param is accepted for API parity but currently ignored at SQL level — left
+ * here so future schema can pick it up without a route signature change.
  */
 export async function computeVideoRenderBenchmark(
   db: D1Lite,
@@ -117,18 +123,15 @@ export async function computeVideoRenderBenchmark(
 ): Promise<BenchmarkSummary> {
   const windowSeconds = params.windowSeconds ?? 7 * 24 * 3600;
   const since = Math.floor(Date.now() / 1000) - windowSeconds;
-  const statusList = TERMINAL_STATUSES.map(() => '?').join(',');
-  const tierFilter = params.tier ? ' AND tier = ?' : '';
   const sql = `
     SELECT (completed_at - created_at) AS duration_seconds
-    FROM video_jobs
-    WHERE status IN (${statusList})
+    FROM videos
+    WHERE status = ?
       AND created_at >= ?
       AND completed_at IS NOT NULL
-      AND completed_at > created_at${tierFilter}
+      AND completed_at > created_at
   `;
-  const binds: unknown[] = [...TERMINAL_STATUSES, since];
-  if (params.tier) binds.push(params.tier);
+  const binds: unknown[] = [TERMINAL_STATUS, since];
 
   const { results } = await db.prepare(sql).bind(...binds).all<BenchmarkRow>();
   return summariseBenchmarkRows(results ?? [], params);

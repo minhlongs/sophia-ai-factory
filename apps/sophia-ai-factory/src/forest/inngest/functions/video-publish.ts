@@ -24,7 +24,6 @@ interface VideoJobRow {
   status: VideoJobStatus;
   prompt?: string;
   final_r2_key?: string | null;
-  completed_at?: number | null;
 }
 
 interface AutoPublishConfig {
@@ -44,7 +43,7 @@ export const videoPublish = inngest.createFunction(
       const db = await getD1Client();
       const { data } = await db
         .from('video_jobs')
-        .select('status, completed_at')
+        .select('status')
         .eq('id', jobId)
         .eq('tenant_id', tenantId)
         .single();
@@ -52,11 +51,9 @@ export const videoPublish = inngest.createFunction(
       if (!row) throw new Error(`[videoPublish] Job not found: ${jobId}`);
 
       assertValidTransition(row.status, 'published');
-      const now = Math.floor(Date.now() / 1000);
-      // completed_at: prefer existing (set in 'uploaded' transition) so re-publish keeps original timestamp.
       await db
         .from('video_jobs')
-        .update({ status: 'published', updated_at: now, completed_at: row.completed_at ?? now })
+        .update({ status: 'published', updated_at: Math.floor(Date.now() / 1000) })
         .eq('id', jobId);
     });
 
