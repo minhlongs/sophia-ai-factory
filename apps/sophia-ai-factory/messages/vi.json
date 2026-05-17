@@ -97,7 +97,7 @@
       "cmd_prefix": "Try:",
       "cmd_suffix": "→",
       "trust_uptime": "Hạ tầng edge tin cậy",
-      "trust_response": "<50ms Response",
+      "trust_response": "Phản hồi edge",
       "trust_security": "Bảo mật Cloudflare",
       "trust_edge": "Edge Deployed"
     },
@@ -159,7 +159,7 @@
           "badge": "Premium"
         }
       },
-      "highlight": "Gói Premium mở khóa tích hợp API với PartnerStack, Impact.com, và cập nhật tự động hàng tuần các chương trình liên kết."
+      "highlight": "Gói Premium mở khóa tích hợp API với PartnerStack, Impact.com, và tự động phát hiện chương trình liên kết mới mỗi 4 giờ."
     },
     "raas": {
       "title": "Tự Động Hóa Kinh Doanh Bằng AI",
@@ -194,7 +194,7 @@
         },
         "stat3": {
           "value": "< 60s",
-          "label": "Thực Thi Nhiệm Vụ"
+          "label": "Khởi Tạo Nhiệm Vụ"
         },
         "stat4": {
           "value": "Edge",
