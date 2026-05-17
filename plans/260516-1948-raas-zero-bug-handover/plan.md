@@ -34,7 +34,7 @@ Customer lands on `sophia.agencyos.network` → signs up → enters own keys via
 |---|-------|--------|--------|---------|
 | 01 | Copy Honest Pivot | S (~30min) | completed @ 4531f6d4 | — |
 | 02 | Wiring Audit (Group A static) | M (~2-3h) | completed @ audit-260516 | 01 |
-| 03 | Perf Verification (Group C) | S (~1h) | pending | 01 |
+| 03 | Perf Verification (Group C) | S (~1h) | completed @ audit-260516 (Group C rows + summary updated) | 01 |
 | 04 | Wiring Fixes (P0/P1 only) | Variable (~2-6h) | pending | 02, 03 |
 | 05 | Smoke Test (operator BYOK $) | L (~4-6h wall) | deferred-pending-budget | 04 |
 | 06 | Final Handover Sign-Off | S (~30min) | pending | 04 (05 optional) |
