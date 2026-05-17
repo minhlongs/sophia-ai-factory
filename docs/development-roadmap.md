@@ -2,9 +2,9 @@
 
 > Product milestones and progress tracking (2026)
 
-**Last Updated:** 2026-05-16 (RaaS Zero-Bug Handover — Phase 04 closed, matrix 17 PASS / 0 FAIL / 4 PARTIAL; Phase 06 sign-off `c7aab382`)
+**Last Updated:** 2026-05-17 (P10/P12/P5/P9/P27 backlog sweep complete; 4428 tests pass; production SHA 9f40a39b verified)
 **Target:** $1M ARR, 100/100 a16z solo company score
-**Go-Live Shipped (2026-05-03):** Production deployment https://sophia.agencyos.network (SHA 5b1f711f). GAP1: Magic-link E2E validation PASS (setup-wizard cookie chain verified, 5 regression tests). GAP2: Self-serve checkout (public /pricing monthly+yearly, NOWPayments invoice, PayOS VN QR, idempotent IPN, atomic D1 tier upgrade, bilingual receipt email VAT 10%, dashboard period_end). GAP3: Mission control handover (durable D1 email outbox, /onboarding 3-step resumable, D1 API keys, mission control widget, public /status page 90d uptime, D+1/D+7 lifecycle emails). Infrastructure: 9 smoke tests PASS (200 HTTP), 2546 tests 100% pass, build < 10s, 0 TS errors.
+**Go-Live Shipped (2026-05-03):** Production deployment https://sophia.agencyos.network (SHA 5b1f711f). GAP1: Magic-link E2E validation PASS (setup-wizard cookie chain verified, 5 regression tests). GAP2: Self-serve checkout (public /pricing monthly+yearly, NOWPayments invoice, PayOS VN QR, idempotent IPN, atomic D1 tier upgrade, bilingual receipt email VAT 10%, dashboard period_end). GAP3: Mission control handover (durable D1 email outbox, /onboarding 3-step resumable, D1 API keys, mission control widget, public /status page 90d uptime, D+1/D+7 lifecycle emails). Infrastructure: 9 smoke tests PASS (200 HTTP), 4428 tests 100% pass, build < 10s, 0 TS errors.
 
 ---
 
@@ -21,6 +21,10 @@ Plan: `plans/260516-1948-raas-zero-bug-handover/` · Handover doc: `plans/report
 | **P13: Multi-Account YouTube** | ✅ DONE | 2026-05-17 | `youtube:list-channels` + `youtube:publish` refactored from beta-stub to live multi-account implementation. Handlers read/write `publishing_channels`, auto-refresh tokens, sanitize errors. 20 vitest cases (tenant isolation, provider filter, refresh success/fail, mock-mode, hashtag). Command-registry: both live. Commit `e6821599`. Production verified HTTP 200, suite 4409/4409 pass. |
 | **P05: E2E Smoke Test** | ⏸ DEFERRED | — | Operator BYOK budget ~$30-100 pending; unit-test floor (31 new cases) covers logic gap. |
 | **P06: Final Handover Sign-Off** | ✅ DONE | 2026-05-16 | Bilingual handover doc shipped. Matrix close 17 PASS / 0 FAIL / 4 PARTIAL. Residual drift fix on Master tier `uptime_sla`. |
+| **P10: Telegram Command Surface** | ✅ DONE | 2026-05-17 | Honest-pivot clarification: "18 AI commands via REST API; Telegram bot offers guided campaign flow." Copy updated to reflect operator-guided model vs AI-autonomous. Commit `bd674ad8`. |
+| **P12: Workflow Diagram** | ✅ DONE | 2026-05-17 | Profit step renamed to "Track Revenue" for clarity. Diagram matches actual customer flow. Commit `b642b897`. |
+| **P05/P09: Apollo + Hunter Integration** | ✅ DONE | 2026-05-17 | `lead:find` + `lead:enrich` handlers BYOK-aware. ApolloClient + HunterClient extended via ByokProvider. 12 new test cases; tenant isolation verified. Commit `b642b897`. |
+| **P27: Video Render Benchmark** | ✅ DONE | 2026-05-17 | Migration 0113 adds `videos.completed_at`. New aggregator module + `/api/admin/video-render-benchmark` endpoint. 7 test cases. Initial commit targeted wrong table (video_jobs); fixed in `9f40a39b` to production `videos` table. |
 
 **Verification (RaaS Zero-Bug final):** 4366/4398 tests pass (32 skipped), 0 TS errors, build exit 0, production SHA match `c7aab382`. Code review PASS 9.5/10 (independent). No-tech doctrine v1.28.1 preserved end-to-end.
 
