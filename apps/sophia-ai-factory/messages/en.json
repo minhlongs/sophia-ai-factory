@@ -115,7 +115,7 @@
         },
         "publish": {
           "title": "Publish",
-          "description": "Auto-distribute to multiple YouTube channels"
+          "description": "Auto-distribute to multiple social platforms (YouTube, TikTok, IG, FB, Twitter, Pinterest)"
         },
         "profit": {
           "title": "Profit",
@@ -130,7 +130,7 @@
       "items": {
         "multi_channel": {
           "title": "Multi-Channel Distribution",
-          "description": "Manage 5+ YouTube channels from one dashboard. Scale your content empire effortlessly.",
+          "description": "Manage 6+ social platforms (YouTube, TikTok, IG, FB, Twitter, Pinterest) from one dashboard. Scale your content empire effortlessly.",
           "badge": "Growth"
         },
         "auto_affiliate": {
@@ -172,7 +172,7 @@
         },
         "lead": {
           "title": "Lead Generation",
-          "description": "Automatically find and qualify leads in any niche. Get 50 qualified prospects in under 60 seconds."
+          "description": "Automatically find and qualify prospects in any niche via integrated lead networks (BYOK Apollo / Hunter)."
         },
         "email": {
           "title": "Email Automation",

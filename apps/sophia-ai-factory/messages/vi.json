@@ -115,7 +115,7 @@
         },
         "publish": {
           "title": "Xuất Bản",
-          "description": "Tự động phân phối đến nhiều kênh YouTube"
+          "description": "Tự động phân phối đến nhiều nền tảng mạng xã hội (YouTube, TikTok, IG, FB, Twitter, Pinterest)"
         },
         "profit": {
           "title": "Thu Lợi",
@@ -130,7 +130,7 @@
       "items": {
         "multi_channel": {
           "title": "Phân Phối Đa Kênh",
-          "description": "Quản lý 5+ kênh YouTube từ một bảng điều khiển. Mở rộng đế chế nội dung dễ dàng.",
+          "description": "Quản lý 6+ nền tảng mạng xã hội (YouTube, TikTok, IG, FB, Twitter, Pinterest) từ một bảng điều khiển. Mở rộng đế chế nội dung dễ dàng.",
           "badge": "Growth"
         },
         "auto_affiliate": {
@@ -172,7 +172,7 @@
         },
         "lead": {
           "title": "Tạo Khách Hàng Tiềm Năng",
-          "description": "Tự động tìm kiếm và đánh giá khách hàng tiềm năng trong mọi ngành. 50 lead chất lượng trong 60 giây."
+          "description": "Tự động tìm kiếm và đánh giá khách hàng tiềm năng trong mọi ngành qua các mạng lưới tích hợp (BYOK Apollo / Hunter)."
         },
         "email": {
           "title": "Tự Động Hóa Email",
