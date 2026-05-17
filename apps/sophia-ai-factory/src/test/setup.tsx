@@ -4,7 +4,21 @@
  */
 
 import * as React from 'react';
-import { vi } from 'vitest';
+import { vi, beforeEach } from 'vitest';
+
+// Clear shared singletons before EVERY test across the suite.
+// Prevents flaky failures from cross-file state leaks — most notably
+// `globalRateLimiter` which is a module-level singleton: tests that
+// don't explicitly call .clear() can see entries from prior test files
+// and trip assertions like rate-limiter.test.ts line 242 (`allowed: true`).
+//
+// Dynamic import to avoid hoist-order issue: `rate-limiter.ts` imports
+// `next/server` which is mocked below — a top-level import would resolve
+// before the mock is wired.
+beforeEach(async () => {
+  const { globalRateLimiter } = await import('@/forest/middleware/rate-limiter');
+  globalRateLimiter.clear();
+});
 
 // ── Environment Variables ──────────────────────────────────────────────
 process.env.JWT_SECRET = 'test-jwt-secret-for-unit-tests-32chars!';
