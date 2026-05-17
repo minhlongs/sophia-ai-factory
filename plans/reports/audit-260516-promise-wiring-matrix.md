@@ -35,7 +35,7 @@ phase03_complete: true
 | P26 | OpenRouter + ElevenLabs + D-ID wired (BYOK) | `tree/byok/resolve-user-api-key.ts:24` + `tree/byok/user-api-key-store.ts:16` (ByokProvider type) | `user_api_keys` D1 (encrypted) | OpenRouter ✅ live, ElevenLabs ⚠ plumbed (stub only — see P15), D-ID ⚠ plumbed (no production handler) | `byok/with-timeout.test.ts` covers all 3 providers | 🟡 PARTIAL | M | P1 | BYOK plumbing complete for all 3 (Setup Wizard `api-keys-step.tsx:66-73`, `byok-key-form.tsx:23`, `user-api-key-store.ts:16`). **OpenRouter** live in `weekly-digest-ai.ts:46` + `caption-translator.ts`. **ElevenLabs** plumbed but reaches only P15 stub handler. **D-ID** plumbed in store + Setup Wizard but grep finds ZERO production `/talks` endpoint call. Avatar-gen for D-ID = absent. Strict "3-API wired": 1/3 fully live, 2/3 plumbed without integration. |
 | P27 | Video creation <40min total (5+10+3+15+5) | `lib/heygen/heygen-client.ts` + `cron/video-status-sync` poll every 5min | `videos` table | HeyGen API (real, with BYOK key) | heygen tests + render-status tests | 🟡 PARTIAL | S | P2 | No code-level latency assertion. HeyGen typical render reported 3-10 min by vendor; status-sync cron polls every 5 min so worst-case detection lag is +5 min. Pipeline conceptually fits sub-40-min window IF: (a) script gen <5 min via OpenRouter (depends on prompt), (b) HeyGen render <15 min (depends on length), (c) post-process <5 min. Promise is plausible but unmeasured. Build a stopwatch in Phase 03 perf to verify. |
 | P29 | 30-day money-back refund | `/api/refund-requests` (customer) + `/api/admin/refunds` + `land/refunds/refund-repo.ts` + NOWPayments refund TX | `refund_requests` table | NOWPayments refund tx | refund-repo tests + admin refund table tests | 🟡 PARTIAL | S | P1 | End-to-end flow exists ✅: customer requests → admin reviews → refund TX → email notification. **MISSING: 30-day window enforcement** — `createRefundRequest` accepts any age. Customer could request refund after 90 days. Either enforce window in route handler or downgrade copy to "Subject to review". |
-| P30 | Tier gating: MCU + campaigns/mo + channels + AI commands + team | `enforce-tier-quota.ts` (video) + `mission-registry` credits + `UNIFIED_TIERS` config | `subscriptions`, `purchases.credits_remaining` | — | tier-quota tests | 🟡 PARTIAL | L | P0 | Enforced ✅: video monthly quota, MCU credits per mission. Config-only ⚠ (no runtime gate found): `team_members` limit, `ai_commands_per_month`, `youtube_channels` count, `campaigns_per_month`. Customer on BASIC tier could in theory connect 5 YouTube channels (UI doesn't block) or run unlimited commands once they have MCU credits. **Security boundary risk:** lower tier could consume PREMIUM-tier features by direct API call. |
+| P30 | Tier gating: MCU + campaigns/mo + channels + AI commands + team | `enforce-tier-quota.ts` (video) + `enforce-ai-command-quota.ts` (mission count, Phase 04) + `app/actions/campaigns.ts:63` + `api/v1/campaigns/create/route.ts:99` + `api/admin/invite/route.ts:41` + `usage-rollup-engine.ts` (MCU) + `tier-guard.ts` (boolean features) | `subscriptions`, `engine_missions`, `campaigns`, `users` | — | `enforce-ai-command-quota.test.ts` (8 cases) + `enforce-tier-quota.test.ts` + `tier-guard.test.ts` | ✅ PASS | — | P0 | Re-audit revealed wider enforcement than initial sweep: video ✅, MCU ✅, campaignsPerMonth ✅ (already wired), teamMembers ✅ (already wired), apiAccess/webhooks/customIntegrations/whiteLabel ✅ via `checkTierFeature`. Phase 04 closed last gap: aiCommands monthly count via new `checkAiCommandQuota` gating `POST /api/v1/missions` (HTTP 429 on exceed). `youtubeChannels` enforced by-design via single-slot Supabase user_profiles storage (multi-channel table is roadmap item, documented in `tier-guard.ts:53-58`). **Closed by Phase 04 commit.** |
 
 ### Group C (Performance / Math) — Phase 03 Additions
 
@@ -54,22 +54,22 @@ phase03_complete: true
 **Verdict distribution (21 promises total — Group A + Group C):**
 
 **Group A (architecture, 16):**
-- ✅ PASS: 5 — P11 Telegram bot, P14 auto-affiliate inject, P17 24/7 cron, P18 caption translator, P25 SmartSuite+Shopify in DB
+- ✅ PASS: 6 — P11 Telegram bot, P14 auto-affiliate inject, P17 24/7 cron, P18 caption translator, P25 SmartSuite+Shopify in DB, **P30 tier gating (closed Phase 04)**
 - ❌ FAIL: 3 — P9 leads/<60s (claim wrong: "/day" not "/60s"), P13 5+ YouTube (UI single-account), P15 voice clone (full stub)
-- 🟡 PARTIAL: 8 — P5 (6/17 stubs), P10 (TG↔API parity by design), P12 (workflow.tsx is i18n only), P19 (cron freq 4h not weekly), P26 (BYOK plumbed, ElevenLabs+D-ID not live), P27 (no benchmark), P29 (no 30-day window enforce), P30 (only video+MCU gated, not team/commands/channels)
+- 🟡 PARTIAL: 7 — P5 (6/17 stubs), P10 (TG↔API parity by design), P12 (workflow.tsx is i18n only), P19 (cron freq 4h not weekly), P26 (BYOK plumbed, ElevenLabs+D-ID not live), P27 (no benchmark), P29 (no 30-day window enforce)
 
 **Group C (perf/math, 5):**
 - ✅ PASS: 3 — P21 AES-GCM-256, P24 ROI formula `$2 CPM`, P28 pricing config aligns with messages
 - ❌ FAIL: 1 — P2 `<50ms Response` (actual median 253ms, 5× off)
 - 🟡 PARTIAL: 1 — P7 `<60s Mission` (true for stubs+LLM missions, false for video render which is 3-10min — claim ambiguity)
 
-**Combined: 8 PASS / 4 FAIL / 9 PARTIAL out of 21**
+**Combined: 9 PASS / 4 FAIL / 8 PARTIAL out of 21** (Phase 04 advanced P30 → PASS)
 
 **NEEDS-BUILD ranked for Phase 04 scope (Group A + C):**
 
 | Pri | Promise | Effort | Action |
 |-----|---------|--------|--------|
-| **P0** | P30 tier gating completeness | L | Add runtime enforce for team_members, ai_commands_per_month, youtube_channels, campaigns_per_month — security boundary |
+| ~~P0~~ | ~~P30 tier gating completeness~~ | ~~L~~ | **CLOSED** (Phase 04 commit) — `checkAiCommandQuota` wired into `POST /api/v1/missions` w/ 8 boundary tests. Re-audit confirmed campaigns/mo + teamMembers + boolean features were already enforced. Single-slot YouTube is by-design. |
 | P1 | P5 stubs → live | M | Wire `lead:find/enrich/export` (Apollo+Hunter), `youtube:publish/list-channels` real (depends P13), `voice:clone` (depends P15) |
 | P1 | P9 lead-gen real | L | Implement Apollo.io BYOK + 50-leads-per-mission flow OR change copy to "qualified leads" + remove sub-60s |
 | P1 | P13 multi-YouTube OR copy fix | L | Either add multi-account YouTube OAuth schema OR change "5+ YouTube channels" → "5+ social platforms" (matches existing publishing_channels) |
