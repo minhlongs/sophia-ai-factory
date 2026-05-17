@@ -1,11 +1,14 @@
 ---
 title: "Phase 04 — Wiring Fixes (P0/P1 NEEDS-BUILD)"
 description: "Implement code fixes for NEEDS-BUILD items from Phase 02/03 matrix. Scope capped at P0/P1; P2 deferred to backlog."
-status: pending
+status: completed
 priority: P0
-effort: "Variable (~2-6h depending on Phase 02/03 findings)"
+effort: "Actual ~3-4h (1 P0 + 5 P1 + 5 copy-fixes + deploy)"
 dependencies: [phase-02-wiring-audit, phase-03-perf-verification]
 created: 2026-05-16
+completed: 2026-05-16
+deployed: c7aab382
+commits: [c7e54084, c36cefe7, e748dabb, 2f30fae7, 9ba34150, c7aab382]
 ---
 
 # Phase 04 — Wiring Fixes (P0/P1 NEEDS-BUILD)
