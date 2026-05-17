@@ -65,7 +65,7 @@ Sub-metrics:
 
 - Building paid ads infrastructure (defer — no-tech doctrine on ad platform setup)
 - Multi-account YouTube schema (P13 deferred backlog item — separate plan)
-- Apollo live integration (P5 / P9 deferred backlog — separate plan when customer requests)
+- ~~Apollo live integration (P5 / P9 deferred backlog — separate plan when customer requests)~~ **COMPLETED 2026-05-17 @ b642b897** — lead-gen integration live with BYOK-aware handlers
 - Enterprise sales motion (focus first 10 on self-serve BASIC/PREMIUM tiers)
 
 ## Risk Register

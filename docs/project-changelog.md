@@ -1,7 +1,25 @@
 # Project Changelog — Sophia AI Factory
 
 > All significant changes, features, and fixes tracked here.
-> **Last Updated:** 2026-05-17 (P13 Multi-Account YouTube fully wired @ e6821599)
+> **Last Updated:** 2026-05-17 (4-backlog-item sweep: P10/P12/P5/P9/P27 shipped @ 9f40a39b)
+
+---
+
+## [2026-05-17] 4-Backlog-Item Sweep — Telegram Copy + Workflow + Apollo/Hunter + Video Benchmark
+
+**Summary (vi):** Hoàn tất sweep 4 mục backlog deferred từ acquisition plan. P10 Telegram command surface được làm rõ: "18 AI commands qua REST API; Telegram bot hỗ trợ guided campaign flow" (thay vì tự động). P12 workflow diagram rename "profit" → "Track Revenue". P5/P9 Apollo + Hunter lead-gen integration wired: cả `lead:find` + `lead:enrich` handlers giờ BYOK-aware, ApolloClient + HunterClient extended qua ByokProvider, 12 test case mới, tenant isolation verified. P27 video render benchmark (migration 0113 + aggregator module + `/api/admin/video-render-benchmark` endpoint, 7 tests); initial commit phải fix vì target sai table (video_jobs → videos). Tất cả live ở production SHA `9f40a39b`, suite 4428/4428 pass, HTTP 200.
+
+**Summary (en):** Completed 4-backlog-item sweep deferred from customer-acquisition plan. P10 Telegram command surface clarified: "18 AI commands via REST API; Telegram bot offers guided campaign flow" (removed autonomous framing). P12 workflow diagram step renamed "profit" → "Track Revenue" for clarity. P5/P9 Apollo + Hunter lead-gen integration fully wired: `lead:find` + `lead:enrich` handlers now BYOK-aware, ApolloClient + HunterClient extended via ByokProvider, 12 new test cases, tenant isolation verified. P27 video render benchmark: migration 0113 adds `videos.completed_at`, new aggregator module, `/api/admin/video-render-benchmark` endpoint with 7 test cases; initial commit required fix (wrong table target—corrected in `9f40a39b` to production `videos` table). All 4 items live at production SHA `9f40a39b`, 4428/4428 tests pass, HTTP 200 verified.
+
+**Key files:**
+- P10: Homepage copy + Telegram docs clarified
+- P12: `docs/workflow-diagram.md` (profit → Track Revenue)
+- P5/P9: `src/lib/apollo-client.ts`, `src/lib/hunter-client.ts`, `src/lib/byok-provider.ts` (extended), handler tests
+- P27: `migrations/0113-add-videos-completed-at.sql`, `src/lib/aggregators/video-render-benchmark.ts`, `/api/admin/video-render-benchmark` route
+
+**Commits:** `bd674ad8` (P10 copy) → `b642b897` (P12 + P5/P9 Apollo/Hunter) → `9f40a39b` (P27 benchmark fix + final verification).
+
+**Verification:** Production SHA `9f40a39b` live at https://sophia.agencyos.network (HTTP 200), test suite 4428/4428 pass, `/api/version` shortSha match confirmed.
 
 ---
 
