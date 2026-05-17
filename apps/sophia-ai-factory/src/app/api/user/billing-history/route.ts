@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { createServerClient } from '@/seed/db/client';
+import { globalRateLimiter, createRateLimitResponse } from '@/forest/middleware/rate-limiter';
 
 interface PurchaseRow {
   id: string;
@@ -20,6 +21,9 @@ interface PurchaseRow {
 export async function GET(req: NextRequest) {
   const user = await getCurrentUserFromHeaders(req.headers);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const rl = globalRateLimiter.checkLimit(`billing-history:${user.id}`, { intervalMs: 60_000, maxRequests: 60 });
+  if (!rl.allowed) return createRateLimitResponse(rl);
 
   const { searchParams } = new URL(req.url);
   const filter = searchParams.get('filter') ?? 'all';

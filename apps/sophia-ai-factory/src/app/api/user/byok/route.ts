@@ -23,6 +23,7 @@ import { track } from '@/lib/signals/track'
 import { D1Events } from '@/lib/signals/d1-event-types'
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
+import { globalRateLimiter, createRateLimitResponse } from '@/forest/middleware/rate-limiter'
 
 const PROVIDERS = ['openrouter', 'anthropic', 'elevenlabs', 'd-id', 'muapi', 'apollo', 'hunter'] as const
 
@@ -54,6 +55,9 @@ export async function GET(): Promise<NextResponse> {
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const rl = globalRateLimiter.checkLimit(`byok:read:${user.id}`, { intervalMs: 60_000, maxRequests: 60 })
+  if (!rl.allowed) return createRateLimitResponse(rl)
+
   const providers = await listUserApiKeyProviders(user.id)
   return NextResponse.json({ providers })
 }
@@ -61,6 +65,9 @@ export async function GET(): Promise<NextResponse> {
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const rl = globalRateLimiter.checkLimit(`byok:write:${user.id}`, { intervalMs: 60_000, maxRequests: 20 })
+  if (!rl.allowed) return createRateLimitResponse(rl)
 
   let body: unknown
   try {
@@ -98,6 +105,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 export async function DELETE(request: NextRequest): Promise<NextResponse> {
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const rl = globalRateLimiter.checkLimit(`byok:delete:${user.id}`, { intervalMs: 60_000, maxRequests: 10 })
+  if (!rl.allowed) return createRateLimitResponse(rl)
 
   let body: unknown
   try {

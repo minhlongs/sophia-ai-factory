@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
+import { globalRateLimiter, createRateLimitResponse } from '@/forest/middleware/rate-limiter';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,6 +48,9 @@ export async function GET(_req: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const rl = globalRateLimiter.checkLimit(`wallet:read:${user.id}`, { intervalMs: 60_000, maxRequests: 60 });
+    if (!rl.allowed) return createRateLimitResponse(rl);
 
     const db = getD1Binding();
 

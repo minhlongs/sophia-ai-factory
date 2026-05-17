@@ -12,6 +12,7 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session'
 import { logger } from '@/seed/utils/logger-utility'
 import { toError } from '@/seed/utils/to-error'
 import { z } from 'zod'
+import { globalRateLimiter, createRateLimitResponse } from '@/forest/middleware/rate-limiter'
 
 /**
  * Query params validation schema
@@ -49,6 +50,10 @@ export async function GET(request: NextRequest) {
         { status: 401 }
       )
     }
+
+    const rl = globalRateLimiter.checkLimit(`audit-logs:${user.id}`, { intervalMs: 60_000, maxRequests: 60 })
+    if (!rl.allowed) return createRateLimitResponse(rl)
+
     const supabase = createServerClient()
 
     // Parse query parameters

@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { createServerClient } from '@/seed/db/client';
+import { globalRateLimiter, createRateLimitResponse } from '@/forest/middleware/rate-limiter';
 
 const PatchSchema = z.object({
   display_name: z.string().min(1).max(100).optional(),
@@ -18,6 +19,9 @@ const PatchSchema = z.object({
 export async function GET(req: NextRequest) {
   const user = await getCurrentUserFromHeaders(req.headers);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const rl = globalRateLimiter.checkLimit(`profile:read:${user.id}`, { intervalMs: 60_000, maxRequests: 60 });
+  if (!rl.allowed) return createRateLimitResponse(rl);
 
   const db = createServerClient();
   const { data } = await db
@@ -43,6 +47,9 @@ export async function GET(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   const user = await getCurrentUserFromHeaders(req.headers);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const rl = globalRateLimiter.checkLimit(`profile:write:${user.id}`, { intervalMs: 60_000, maxRequests: 20 });
+  if (!rl.allowed) return createRateLimitResponse(rl);
 
   const body: unknown = await req.json();
   const parsed = PatchSchema.safeParse(body);

@@ -4,6 +4,7 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session'
 import { getUserTier } from '@/seed/db/get-user-tier'
 import { UNIFIED_TIERS } from '@/seed/config/tiers'
 import { integrationSchema } from '@/lib/schemas'
+import { globalRateLimiter, createRateLimitResponse } from '@/forest/middleware/rate-limiter'
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,6 +12,9 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    const rl = globalRateLimiter.checkLimit(`integrations:write:${user.id}`, { intervalMs: 60_000, maxRequests: 20 })
+    if (!rl.allowed) return createRateLimitResponse(rl)
 
     // Custom integrations are gated to ENTERPRISE and MASTER tiers
     const tier = await getUserTier(user.id)
@@ -66,6 +70,9 @@ export async function GET() {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    const rl = globalRateLimiter.checkLimit(`integrations:read:${user.id}`, { intervalMs: 60_000, maxRequests: 60 })
+    if (!rl.allowed) return createRateLimitResponse(rl)
 
     // Custom integrations are gated to ENTERPRISE and MASTER tiers
     const tier = await getUserTier(user.id)
