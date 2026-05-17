@@ -100,3 +100,60 @@ export async function apolloPeopleSearch(
 
   return res.json() as Promise<ApolloSearchResponse>;
 }
+
+/** Request shape for bulk/paginated export. */
+export interface ApolloBulkSearchRequest {
+  /** Industry niche keyword — mapped to q_organization_industries. */
+  niche: string;
+  /** Maximum rows to return across all pages. Hard-capped at 500 by caller. */
+  maxRows: number;
+}
+
+/**
+ * Bulk-paginated Apollo people search.
+ * Loops pages (100/page) until `maxRows` collected or Apollo page exhausted.
+ * Throws `ApolloErrorResponse` on non-2xx HTTP.
+ */
+export async function apolloPeopleBulkSearch(
+  apiKey: string,
+  req: ApolloBulkSearchRequest,
+): Promise<ApolloPerson[]> {
+  const out: ApolloPerson[] = [];
+  const perPage = MAX_PAGE_SIZE;
+  const maxPages = Math.ceil(req.maxRows / perPage);
+
+  for (let page = 1; page <= maxPages; page++) {
+    const res = await fetch(`${APOLLO_BASE}${SEARCH_PATH}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache',
+        'X-Api-Key': apiKey,
+      },
+      body: JSON.stringify({
+        q_organization_industries: [req.niche],
+        page,
+        per_page: perPage,
+      }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      const err: ApolloErrorResponse = Object.assign(new Error(`Apollo HTTP ${res.status}`), {
+        code: `apollo_${res.status}`,
+        status: res.status,
+        message: text.slice(0, 500) || `Apollo HTTP ${res.status}`,
+      });
+      throw err;
+    }
+
+    const json = (await res.json()) as { people?: ApolloPerson[] };
+    const people = json.people ?? [];
+    out.push(...people);
+
+    if (people.length < perPage) break; // last page reached
+    if (out.length >= req.maxRows) break; // cap reached
+  }
+
+  return out.slice(0, req.maxRows);
+}

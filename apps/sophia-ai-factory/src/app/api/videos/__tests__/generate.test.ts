@@ -1,40 +1,16 @@
 /**
  * Tests for POST /api/videos/generate
  *
- * Covers: 401 unauthenticated, 402 BASIC tier, 429 quota, 201 success.
+ * Endpoint deprecated 2026-05-17 (ADR 0007). The legacy `video_jobs` Inngest
+ * chain was removed because its underlying D1 table was never applied to prod.
+ * Endpoint now returns HTTP 410 Gone for authenticated callers; 401 for unauth
+ * is preserved so the deprecation doesn't leak endpoint existence to probes.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// --- Mocks ---
-
 vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUserFromHeaders: vi.fn(),
-}));
-
-vi.mock('@/seed/db/client', () => ({
-  getD1Client: vi.fn(),
-}));
-
-vi.mock('@/lib/video/video-job-pipeline', () => ({
-  createVideoJob: vi.fn(),
-}));
-
-vi.mock('@/seed/utils/logger-utility', () => ({
-  logger: {
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  },
-}));
-
-// P0.2: mock getUserTier and checkTierQuota
-vi.mock('@/seed/db/get-user-tier', () => ({
-  getUserTier: vi.fn(),
-}));
-
-vi.mock('@/seed/auth/enforce-tier-quota', () => ({
-  checkTierQuota: vi.fn(),
 }));
 
 vi.mock('next/server', () => ({
@@ -46,121 +22,37 @@ vi.mock('next/server', () => ({
   },
 }));
 
-// Helpers
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { getD1Client } from '@/seed/db/client';
-import { createVideoJob } from '@/lib/video/video-job-pipeline';
-import { getUserTier } from '@/seed/db/get-user-tier';
-import { checkTierQuota } from '@/seed/auth/enforce-tier-quota';
 
 const mockGetCurrentUser = getCurrentUserFromHeaders as ReturnType<typeof vi.fn>;
-const mockGetD1Client = getD1Client as ReturnType<typeof vi.fn>;
-const mockCreateVideoJob = createVideoJob as ReturnType<typeof vi.fn>;
-const mockGetUserTier = getUserTier as ReturnType<typeof vi.fn>;
-const mockCheckTierQuota = checkTierQuota as ReturnType<typeof vi.fn>;
 
-function makeRequest(body: unknown): Request {
+function makeRequest(): Request {
   return {
     headers: new Headers({ 'content-type': 'application/json' }),
-    json: () => Promise.resolve(body),
+    json: () => Promise.resolve({}),
   } as unknown as Request;
 }
 
-function makeD1WithCount(count: number) {
-  const rows = Array.from({ length: count }, (_, i) => ({ id: `job-${i}` }));
-  return {
-    from: vi.fn().mockReturnValue({
-      select: vi.fn().mockReturnThis(),
-      insert: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      gte: vi.fn().mockResolvedValue({ data: rows, error: null }),
-    }),
-  };
-}
-
-const ALLOWED_QUOTA = {
-  allowed: true,
-  used: 5,
-  limit: 30,
-  resetsAt: new Date(Date.now() + 86400000).toISOString(),
-}
-
-const EXCEEDED_QUOTA = {
-  allowed: false,
-  used: 30,
-  limit: 30,
-  resetsAt: new Date(Date.now() + 86400000).toISOString(),
-  reason: 'Monthly video limit of 30 reached for tier PREMIUM.',
-}
-
-describe('POST /api/videos/generate', () => {
+describe('POST /api/videos/generate (deprecated, ADR 0007)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Default: PREMIUM user with quota available
-    mockGetUserTier.mockResolvedValue('PREMIUM');
-    mockCheckTierQuota.mockResolvedValue(ALLOWED_QUOTA);
   });
 
   it('returns 401 when not authenticated', async () => {
     mockGetCurrentUser.mockResolvedValue(null);
-
     const { POST } = await import('../generate/route');
-    const res = await POST(makeRequest({ prompt: 'test video' }));
+    const res = await POST(makeRequest());
     expect(res.status).toBe(401);
   });
 
-  it('returns 400 for missing prompt', async () => {
+  it('returns 410 Gone for authenticated callers with replacement hint', async () => {
     mockGetCurrentUser.mockResolvedValue({ id: 'user-1', email: 'a@b.com' });
-    mockGetD1Client.mockResolvedValue(makeD1WithCount(0));
-
     const { POST } = await import('../generate/route');
-    const res = await POST(makeRequest({}));
-    expect(res.status).toBe(400);
-  });
-
-  it('returns 402 for BASIC tier users (video gen requires PREMIUM+)', async () => {
-    mockGetCurrentUser.mockResolvedValue({ id: 'user-basic', email: 'basic@b.com' });
-    mockGetUserTier.mockResolvedValue('BASIC');
-
-    const { POST } = await import('../generate/route');
-    const res = await POST(makeRequest({ prompt: 'video about cats' }));
-    expect(res.status).toBe(402);
-  });
-
-  it('returns 429 when quota is exceeded', async () => {
-    mockGetCurrentUser.mockResolvedValue({ id: 'user-quota', email: 'q@b.com' });
-    mockGetUserTier.mockResolvedValue('PREMIUM');
-    mockCheckTierQuota.mockResolvedValue(EXCEEDED_QUOTA);
-
-    const { POST } = await import('../generate/route');
-    const res = await POST(makeRequest({ prompt: 'video about cats' }));
-    expect(res.status).toBe(429);
-  });
-
-  it('returns 201 with jobId when valid', async () => {
-    mockGetCurrentUser.mockResolvedValue({ id: 'user-ok', email: 'ok@b.com' });
-    mockGetD1Client.mockResolvedValue(makeD1WithCount(5));
-    mockCreateVideoJob.mockResolvedValue({ jobId: 'job-abc-123', status: 'queued' });
-
-    const { POST } = await import('../generate/route');
-    const res = await POST(makeRequest({ prompt: 'video about dogs' }));
-    expect(res.status).toBe(201);
-    const body = res.body as unknown as { jobId: string; status: string };
-    expect(body.jobId).toBe('job-abc-123');
-    expect(body.status).toBe('queued');
-  });
-
-  it('passes tenantId from session user id, not from body', async () => {
-    const userId = 'secure-tenant-99';
-    mockGetCurrentUser.mockResolvedValue({ id: userId, email: 'x@b.com' });
-    mockGetD1Client.mockResolvedValue(makeD1WithCount(0));
-    mockCreateVideoJob.mockResolvedValue({ jobId: 'job-xyz', status: 'queued' });
-
-    const { POST } = await import('../generate/route');
-    await POST(makeRequest({ prompt: 'secure prompt', tenantId: 'attacker-tenant' }));
-
-    expect(mockCreateVideoJob).toHaveBeenCalledWith(
-      expect.objectContaining({ tenantId: userId }),
-    );
+    const res = await POST(makeRequest());
+    expect(res.status).toBe(410);
+    const body = res.body as unknown as { error: string; replacement: string; adr: string };
+    expect(body.error).toBe('Endpoint deprecated.');
+    expect(body.replacement).toBe('/api/missions');
+    expect(body.adr).toBe('ADR-0007');
   });
 });

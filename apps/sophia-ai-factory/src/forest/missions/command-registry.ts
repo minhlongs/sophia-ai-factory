@@ -52,8 +52,8 @@ export const COMMANDS: Record<string, CommandDefinition> = {
   },
   'lead:export': {
     credits: 1,
-    status: 'beta',
-    description: 'Export leads as CSV (stub)',
+    status: 'live',
+    description: 'Export leads to CSV via Apollo.io bulk search (BYOK; stub fallback)',
   },
   'email:campaign': {
     credits: 5,

@@ -1,98 +1,31 @@
 /**
- * POST /api/videos/generate
+ * POST /api/videos/generate — DEPRECATED 2026-05-17 (ADR 0007).
  *
- * Auth: session cookie (Better Auth)
- * Body: { prompt: string, tier?: string }
- * Response: { jobId: string, status: 'queued' }
+ * The `video_jobs` table this endpoint wrote to was never applied to prod D1,
+ * so the legacy Phase 06 Inngest chain has been silent-failing since inception.
+ * The canonical video generation path is now the HeyGen mission flow
+ * (`video:create` mission → HeyGen webhook → `videos` table).
  *
- * P0.2: Server-side tier quota enforced via checkTierQuota.
- * Returns 429 with retry-after metadata when limit exceeded.
- * Guards: 401 unauthenticated, 402 BASIC tier (no video gen), 429 quota exceeded
+ * Returns HTTP 410 Gone with redirect hint. Auth check preserved so unauthenticated
+ * probes still get 401, not 410 (security through obscurity for unauth fingerprinting).
  */
 
 import { NextResponse } from 'next/server';
-import { z } from 'zod';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { createVideoJob } from '@/lib/video/video-job-pipeline';
-import { logger } from '@/seed/utils/logger-utility';
-import { checkTierQuota } from '@/seed/auth/enforce-tier-quota';
-import { getUserTier } from '@/seed/db/get-user-tier';
-
-const PREMIUM_TIERS = new Set(['PREMIUM', 'ENTERPRISE', 'MASTER']);
-
-const generateBodySchema = z.object({
-  prompt: z.string().min(1, 'prompt is required').max(2000),
-  tier: z.string().optional().default('free'),
-});
 
 export async function POST(request: Request): Promise<NextResponse> {
-  const requestId = crypto.randomUUID();
-
-  try {
-    const user = await getCurrentUserFromHeaders(request.headers);
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const body = await request.json().catch(() => null);
-    const parsed = generateBodySchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: 'Invalid request', details: parsed.error.flatten().fieldErrors },
-        { status: 400 },
-      );
-    }
-
-    const { prompt, tier } = parsed.data;
-    const tenantId = user.id;
-
-    // P0.2: Gate BASIC tier — video gen requires PREMIUM+
-    const userTier = await getUserTier(user.id);
-    if (!PREMIUM_TIERS.has(userTier)) {
-      return NextResponse.json(
-        {
-          error: 'Video generation requires PREMIUM tier or higher.',
-          upgrade: '/pricing',
-        },
-        { status: 402 },
-      );
-    }
-
-    // P0.2: Server-side monthly quota check
-    const quota = await checkTierQuota(user.id);
-    if (!quota.allowed) {
-      logger.warn('[videos/generate] quota exceeded', {
-        tenantId,
-        used: quota.used,
-        limit: quota.limit,
-        tier: userTier,
-      });
-      return NextResponse.json(
-        {
-          error: quota.reason ?? 'Monthly video limit reached. Upgrade your plan.',
-          used: quota.used,
-          limit: quota.limit,
-          resetsAt: quota.resetsAt,
-        },
-        {
-          status: 429,
-          headers: { 'Retry-After': String(secondsUntilReset(quota.resetsAt)) },
-        },
-      );
-    }
-
-    const result = await createVideoJob({ tenantId, userId: user.id, prompt, tier });
-
-    logger.info('[videos/generate] job created', { requestId, jobId: result.jobId, tenantId });
-
-    return NextResponse.json(result, { status: 201 });
-  } catch (err) {
-    logger.error('[videos/generate] unexpected error', err instanceof Error ? err : undefined, {}, requestId);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  const user = await getCurrentUserFromHeaders(request.headers);
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-}
 
-function secondsUntilReset(resetsAt: string): number {
-  const delta = Math.max(0, new Date(resetsAt).getTime() - Date.now())
-  return Math.ceil(delta / 1000)
+  return NextResponse.json(
+    {
+      error: 'Endpoint deprecated.',
+      message: 'Video generation has moved to the HeyGen mission flow. Use the `video:create` mission instead.',
+      replacement: '/api/missions',
+      adr: 'ADR-0007',
+    },
+    { status: 410 },
+  );
 }
