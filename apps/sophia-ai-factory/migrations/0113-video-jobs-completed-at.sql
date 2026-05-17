@@ -1,25 +1,29 @@
--- Migration 0113: video_jobs.completed_at for honest P27 render benchmark.
+-- Migration 0113: videos.completed_at for honest P27 render benchmark.
 --
--- The existing `updated_at` column is bumped at every intermediate stage
--- (scripting, tts, visual, compose) so terminal `updated_at - created_at`
--- conflates render duration with backfill / audit writes. A dedicated
--- `completed_at` column set ONCE at terminal status transition gives the
--- benchmark a stable signal.
+-- The `videos` table tracks the production video pipeline (queued -> processing
+-- -> completed | failed | failed_permanent). The existing `updated_at` column
+-- is TEXT (datetime string) and bumped at every intermediate write (webhook
+-- progress, r2 mirror, etc.), so terminal `updated_at - created_at` is unreliable.
 --
--- Backfill semantics: for pre-existing rows where status IN ('uploaded','published'),
--- copy `updated_at` into `completed_at` so historical p50/p95 still works
--- (with `low_confidence` flag honestly noting the mixed-source data).
+-- A dedicated `completed_at` INTEGER column set ONCE when status transitions
+-- to 'completed' gives the benchmark a stable signal.
+--
+-- Backfill semantics: for pre-existing rows where status='completed', copy
+-- `last_attempt_at` (already a unix epoch INTEGER) into `completed_at` so
+-- historical p50/p95 still works. Rows where last_attempt_at is NULL stay NULL
+-- (excluded from benchmark sample with low_confidence flag).
 --
 -- One-shot migration. Re-runs error with "duplicate column name" — expected.
 -- Apply via apply-migrations.sh exactly once.
 
-ALTER TABLE video_jobs ADD COLUMN completed_at INTEGER;
+ALTER TABLE videos ADD COLUMN completed_at INTEGER;
 
-UPDATE video_jobs
-SET completed_at = updated_at
-WHERE status IN ('uploaded', 'published')
-  AND completed_at IS NULL;
+UPDATE videos
+SET completed_at = last_attempt_at
+WHERE status = 'completed'
+  AND completed_at IS NULL
+  AND last_attempt_at IS NOT NULL;
 
-CREATE INDEX IF NOT EXISTS idx_video_jobs_completed_at
-  ON video_jobs(completed_at)
+CREATE INDEX IF NOT EXISTS idx_videos_completed_at
+  ON videos(completed_at)
   WHERE completed_at IS NOT NULL;

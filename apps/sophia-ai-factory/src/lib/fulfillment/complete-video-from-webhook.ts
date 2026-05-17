@@ -109,6 +109,10 @@ export async function completeVideoFromWebhook(data: HeyGenSuccessData): Promise
     })
   }
 
+  // completed_at is set ONCE on terminal transition (P27 honest benchmark — migration 0113).
+  // now is unix-epoch INTEGER; updated_at column happens to be TEXT, so we keep the existing
+  // datetime('now') default by binding `now` as INTEGER cast to TEXT via SQLite implicit conversion.
+  const nowEpoch = Math.floor(Date.now() / 1000)
   await d1
     .prepare(
       `UPDATE videos
@@ -117,10 +121,11 @@ export async function completeVideoFromWebhook(data: HeyGenSuccessData): Promise
            thumbnail_url = ?3,
            r2_key = ?4,
            r2_size_bytes = ?5,
-           updated_at = ?6
+           updated_at = ?6,
+           completed_at = COALESCE(completed_at, ?7)
        WHERE id = ?1`,
     )
-    .bind(row.id, videoUrl, thumbnailUrl ?? null, r2Key, r2SizeBytes, now)
+    .bind(row.id, videoUrl, thumbnailUrl ?? null, r2Key, r2SizeBytes, now, nowEpoch)
     .run()
 
   // Record HeyGen success so circuit breaker observes all outcomes
