@@ -220,18 +220,54 @@ START: "What's my primary growth goal?"
 
 ---
 
-## Operator Decision (Template)
+## Operator Decision (RESOLVED 2026-05-17)
 
-**Final choice: [FREE 7-DAY / $1 PAID / SPLIT TEST]**
+**Final choice: SPLIT TEST 50/50**
 
-**Reasoning:**  
-[Operator fills in: Why this choice? What's your growth focus?]
+**Scoring result (4-factor weighted matrix):**
+- Free 7d: 65 points
+- $1 trial: 70 points (narrow 8% win — effectively tied)
+- All 4 factors weighted HIGH = contradictory pulls (quick revenue + competitive edge pull to $1; max signups + risk-averse pull to free). No conviction direction.
 
-**Backup plan if conversion is low:**  
-[Operator fills in: If signups <10/week, what's pivot strategy?]
+**Reasoning:**
+Math too close to ship single variant confidently. Operator's audience may not match SaaS published benchmarks (5-20% free conversion, 25-50% paid). Data-driven decision via real signups > guess.
 
-**Review date:**  
-[Operator fills in: When will you measure results and decide?]
+**Implementation status:**
+- Decision: SPLIT TEST 50/50
+- Code work: DEFERRED until Phase 05 smoke test passes (tracked as task #153)
+- Estimated effort: ~6 hours dev (CTA variants + routing + cohort tracking + analytics)
+
+**Decision criteria for split test winner:**
+- Minimum 200 signups across both cohorts before evaluation
+- Measure: signup conversion rate, 7d-to-paid conversion, 30d churn
+- If one variant wins by >20% margin on weighted score → ship 100% traffic to winner
+- If margins within 20% → continue split, gather more data
+
+**Backup plan if total signups <10/week after launch:**
+Pivot signal — not a pricing problem. Issue is likely:
+- Landing copy weak (revisit value prop)
+- Traffic sources wrong (rethink ICP)
+- Product onboarding broken (smoke test catches this)
+
+Don't rebrand or rethink pricing until traffic sources prove healthy.
+
+**Review date:**
+- First measurement: Phase 06 launch + 30 days
+- Decision review: Phase 06 launch + 60 days (need 200 signups baseline)
+
+---
+
+## CTA Copy — Split Test Variants (Locked 2026-05-17)
+
+**Variant A (Free 7d cohort):**
+- **EN:** "Try Sophia free for 7 days — no card required"
+- **VN:** "Dùng thử Sophia miễn phí 7 ngày — không cần thẻ"
+
+**Variant B ($1 trial cohort):**
+- **EN:** "Start your $1 trial — full access for 7 days"
+- **VN:** "Bắt đầu chỉ với $1 — truy cập toàn bộ trong 7 ngày"
+
+Routing: 50/50 deterministic by user_id hash (sticky per session to prevent flicker).
 
 ---
 
