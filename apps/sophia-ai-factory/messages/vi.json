@@ -2047,6 +2047,25 @@
     "cleared": "Đã xóa key {provider}",
     "error_format": "Khóa quá ngắn — phải có ít nhất 10 ký tự.",
     "network_error": "Lỗi mạng, thử lại",
+    "validate": {
+      "too_short": "Key có vẻ quá ngắn — dán đầy đủ key từ bảng điều khiển nhà cung cấp.",
+      "openrouter": {
+        "format": "Key OpenRouter bắt đầu bằng sk-or- — lấy tại openrouter.ai/keys."
+      },
+      "anthropic": {
+        "format": "Key Anthropic bắt đầu bằng sk-ant- — lấy tại console.anthropic.com."
+      },
+      "elevenlabs": {
+        "format": "xi-api-key ElevenLabs là chuỗi 20+ ký tự chữ-số — tìm ở Profile → API Keys."
+      },
+      "did": {
+        "format": "D-ID nhận dạng email:password (tự encode giúp bạn) hoặc dạng base64 từ bảng điều khiển.",
+        "auto_encoded": "Phát hiện dạng email:password thô — đã tự động mã hóa base64 cho bạn."
+      },
+      "muapi": {
+        "format": "Key MuAPI là chuỗi 20+ ký tự chữ-số — tìm trong bảng điều khiển MuAPI."
+      }
+    },
     "picker": {
       "placeholder": "Dùng model hệ thống (mặc định)",
       "placeholder_label": "Model AI (tùy chọn — dùng key của bạn)",

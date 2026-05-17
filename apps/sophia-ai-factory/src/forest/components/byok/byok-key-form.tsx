@@ -8,10 +8,11 @@
  * "Test Connection" button calls /api/user/byok/test to verify stored key.
  */
 
-import { useState, useTransition } from 'react'
+import { useMemo, useState, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
 import { KeyRound, Trash2, Check, Wifi, WifiOff, Loader2 } from 'lucide-react'
 import { ByokHelpTip } from '@/components/onboarding/byok-help-tip'
+import { validateProviderKey } from '@/lib/byok/key-format-validators'
 
 export type UserSettableProvider = 'openrouter' | 'anthropic' | 'elevenlabs' | 'd-id' | 'muapi'
 type Provider = UserSettableProvider
@@ -23,6 +24,15 @@ const PROVIDERS: { value: Provider; label: string; hint: string }[] = [
   { value: 'd-id',       label: 'D-ID',        hint: 'Basic ...'       },
   { value: 'muapi',      label: 'MuAPI',       hint: '20+ char token'  },
 ]
+
+/**
+ * Strip the `byok.` namespace prefix because `useTranslations('byok')` is
+ * already scoped. Validator returns full path so it can be reused outside this
+ * component too.
+ */
+function stripNamespace(fullKey: string): string {
+  return fullKey.startsWith('byok.') ? fullKey.slice(5) : fullKey
+}
 
 interface ByokKeyFormProps {
   configured: Provider[]
@@ -45,12 +55,19 @@ export function ByokKeyForm({ configured: initialConfigured }: ByokKeyFormProps)
   const [testResults, setTestResults] = useState<Record<Provider, TestResult | null>>({} as Record<Provider, TestResult | null>)
   const [testingProvider, setTestingProvider] = useState<Provider | null>(null)
 
+  // Format validation runs on every keystroke so submit is disabled until valid.
+  // D-ID raw `email:password` paste is auto-encoded; we surface that via `validation.autoEncoded`.
+  const validation = useMemo(() => validateProviderKey(provider, keyValue), [provider, keyValue])
+
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    if (keyValue.trim().length < 10) {
-      setStatus(t('error_format'))
+    if (!validation.ok) {
+      setStatus(validation.errorKey ? t(stripNamespace(validation.errorKey)) : t('error_format'))
       return
     }
+
+    // For D-ID, if we auto-encoded the user's raw paste, submit the encoded form.
+    const submitKey = validation.autoEncoded ?? keyValue.trim()
 
     startTransition(async () => {
       setStatus(null)
@@ -58,7 +75,7 @@ export function ByokKeyForm({ configured: initialConfigured }: ByokKeyFormProps)
         const res = await fetch('/api/user/byok', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ provider, key: keyValue.trim() }),
+          body: JSON.stringify({ provider, key: submitKey }),
         })
         if (!res.ok) {
           const err = (await res.json().catch(() => ({ error: 'Unknown error' }))) as { error?: string }
@@ -249,6 +266,17 @@ export function ByokKeyForm({ configured: initialConfigured }: ByokKeyFormProps)
           <p id="byok-key-hint" className="text-xs text-muted-foreground">
             {t('key_hint')}
           </p>
+          {/* Inline format feedback — error or auto-encoded notice */}
+          {keyValue.trim().length > 0 && !validation.ok && validation.errorKey && (
+            <p className="text-xs text-red-400" role="alert" aria-live="polite">
+              {t(stripNamespace(validation.errorKey))}
+            </p>
+          )}
+          {validation.ok && validation.autoEncoded && (
+            <p className="text-xs text-amber-400" aria-live="polite">
+              {t('validate.did.auto_encoded')}
+            </p>
+          )}
           {(provider === 'openrouter' || provider === 'elevenlabs' || provider === 'd-id') && (
             <ByokHelpTip provider={provider} />
           )}
@@ -256,7 +284,7 @@ export function ByokKeyForm({ configured: initialConfigured }: ByokKeyFormProps)
 
         <button
           type="submit"
-          disabled={isPending || keyValue.trim().length < 10}
+          disabled={isPending || !validation.ok}
           className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isPending ? t('saving') : t('save_button')}
