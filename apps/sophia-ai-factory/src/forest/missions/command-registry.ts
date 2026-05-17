@@ -42,13 +42,13 @@ export const COMMANDS: Record<string, CommandDefinition> = {
   },
   'lead:find': {
     credits: 2,
-    status: 'beta',
-    description: 'Find leads matching a niche (stub — Apollo.io integration pending)',
+    status: 'live',
+    description: 'Find leads matching a niche via Apollo.io People Search (BYOK; stub fallback)',
   },
   'lead:enrich': {
     credits: 1,
-    status: 'beta',
-    description: 'Enrich lead data (stub — Hunter.io integration pending)',
+    status: 'live',
+    description: 'Enrich a lead via Hunter.io email-finder + verifier (BYOK; stub fallback)',
   },
   'lead:export': {
     credits: 1,

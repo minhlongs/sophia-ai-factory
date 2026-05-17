@@ -22,11 +22,12 @@ import { globalRateLimiter, getClientIdentifier, createRateLimitResponse } from 
 export const dynamic = 'force-dynamic';
 
 const Body = z.object({
-  provider: z.enum(['openrouter', 'anthropic', 'elevenlabs', 'd-id', 'muapi']),
+  provider: z.enum(['openrouter', 'anthropic', 'elevenlabs', 'd-id', 'muapi', 'apollo', 'hunter']),
 });
 
 interface TestUrlSpec {
-  url: string;
+  /** Either a static URL or a builder that bakes the key into the query string. */
+  url: string | ((key: string) => string);
   authHeader: (key: string) => Record<string, string>;
 }
 
@@ -52,6 +53,14 @@ const TEST_ENDPOINT: Record<TestableProvider, TestUrlSpec> = {
   muapi: {
     url: 'https://api.muapi.ai/v1/account',
     authHeader: (k) => ({ Authorization: `Bearer ${k}` }),
+  },
+  apollo: {
+    url: 'https://api.apollo.io/api/v1/auth/health',
+    authHeader: (k) => ({ 'X-Api-Key': k }),
+  },
+  hunter: {
+    url: (k) => `https://api.hunter.io/v2/account?api_key=${encodeURIComponent(k)}`,
+    authHeader: () => ({}),
   },
 };
 
@@ -79,7 +88,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 8_000);
-    const res = await fetch(spec.url, {
+    const targetUrl = typeof spec.url === 'function' ? spec.url(stored) : spec.url;
+    const res = await fetch(targetUrl, {
       method: 'GET',
       headers: spec.authHeader(stored),
       signal: controller.signal,

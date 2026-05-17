@@ -13,7 +13,7 @@ import { getD1Raw } from '@/seed/auth/resolve-org-id'
 import { decryptApiKey, encryptApiKey } from '@/tree/byok/byok-crypto'
 
 /** All providers that can be stored in user_api_keys. 'heygen' is server-managed (not user-settable via admin UI). */
-export type ByokProvider = 'openrouter' | 'anthropic' | 'elevenlabs' | 'd-id' | 'heygen' | 'muapi'
+export type ByokProvider = 'openrouter' | 'anthropic' | 'elevenlabs' | 'd-id' | 'heygen' | 'muapi' | 'apollo' | 'hunter'
 
 interface KeyRow {
   encrypted_key: ArrayBuffer | Uint8Array

@@ -129,8 +129,8 @@
           "description": "Tự động phân phối đến nhiều nền tảng mạng xã hội (YouTube, TikTok, IG, FB, Twitter, Pinterest)"
         },
         "profit": {
-          "title": "Thu Lợi",
-          "description": "Kiếm tiền từ quảng cáo và hoa hồng liên kết"
+          "title": "Theo Dõi Doanh Thu",
+          "description": "Theo dõi thu nhập từ các mạng affiliate (BYOK Apollo / PartnerStack / Impact)"
         }
       },
       "cta": "Tham gia cùng 1.000+ nhà sáng tạo đang xây dựng đế chế nội dung"
@@ -214,8 +214,8 @@
       },
       "terminal": {
         "title": "Xem Hoạt Động Thực Tế",
-        "subtitle": "Chạy nhiệm vụ AI qua Telegram hoặc API — đề xuất, lead, video và nhiều hơn nữa",
-        "cta": "Truy cập qua Telegram bot @Sophia_Bbot và REST API — không cần lập trình"
+        "subtitle": "18 lệnh AI qua REST API; Telegram bot có quy trình chiến dịch theo hướng dẫn",
+        "cta": "Truy cập qua Telegram bot @Sophia_Bbot (luồng hướng dẫn) và REST API (đầy đủ lệnh) — không cần lập trình"
       }
     },
     "social_proof": {

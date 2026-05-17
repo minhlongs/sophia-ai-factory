@@ -129,8 +129,8 @@
           "description": "Auto-distribute to multiple social platforms (YouTube, TikTok, IG, FB, Twitter, Pinterest)"
         },
         "profit": {
-          "title": "Profit",
-          "description": "Earn from ads and affiliate commissions"
+          "title": "Track Revenue",
+          "description": "Track earnings from affiliate networks (BYOK Apollo / PartnerStack / Impact)"
         }
       },
       "cta": "Join 1,000+ creators building their content empires"
@@ -214,8 +214,8 @@
       },
       "terminal": {
         "title": "See It in Action",
-        "subtitle": "Run AI missions via Telegram or API — proposals, leads, videos, and more",
-        "cta": "Available via Telegram bot @Sophia_Bbot and REST API — no code required"
+        "subtitle": "18 AI commands via REST API; Telegram bot offers a guided campaign flow",
+        "cta": "Available via Telegram bot @Sophia_Bbot (guided UX) and REST API (full command surface) — no code required"
       }
     },
     "social_proof": {
