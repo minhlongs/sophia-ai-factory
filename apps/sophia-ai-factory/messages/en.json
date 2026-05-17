@@ -179,13 +179,13 @@
           "description": "Write and send personalized email campaigns at scale. Higher open rates with AI-optimized copy."
         },
         "commands": {
-          "title": "17 AI Commands",
+          "title": "18 AI Commands",
           "description": "Full suite of business automation commands accessible via Telegram bot or REST API. No code required."
         }
       },
       "stats": {
         "stat1": {
-          "value": "17",
+          "value": "18",
           "label": "AI Commands"
         },
         "stat2": {

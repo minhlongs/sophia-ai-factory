@@ -32,6 +32,7 @@ async function loadHandler(command: string): Promise<((ctx: import('./handlers/t
       case 'youtube:publish': return (await import('./handlers/youtube-publish')).handle;
       case 'youtube:list-channels': return (await import('./handlers/youtube-list-channels')).handle;
       case 'voice:clone': return (await import('./handlers/voice-clone')).handle;
+      case 'avatar:create-did': return (await import('./handlers/avatar-create-did')).handle;
       case 'subtitle:generate': return (await import('./handlers/subtitle-generate')).handle;
       case 'campaign:run': return (await import('./handlers/campaign-run')).handle;
       case 'analytics:report': return (await import('./handlers/analytics-report')).handle;

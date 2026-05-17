@@ -1,5 +1,5 @@
 /**
- * Mission Command Registry — 17 AI Commands
+ * Mission Command Registry — 18 AI Commands
  *
  * Defines all commands available via POST /api/v1/missions.
  * Each entry specifies credit cost and live/beta status.
@@ -82,8 +82,13 @@ export const COMMANDS: Record<string, CommandDefinition> = {
   },
   'voice:clone': {
     credits: 10,
-    status: 'beta',
-    description: 'Clone a voice (stub — ElevenLabs integration pending)',
+    status: 'live',
+    description: 'Clone a voice via ElevenLabs Instant Voice Cloning (BYOK + sample_urls required)',
+  },
+  'avatar:create-did': {
+    credits: 8,
+    status: 'live',
+    description: 'Generate a talking avatar video via D-ID (BYOK D-ID key required)',
   },
   'subtitle:generate': {
     credits: 1,
