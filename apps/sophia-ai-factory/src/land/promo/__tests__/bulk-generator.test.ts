@@ -5,56 +5,82 @@ vi.mock("@/seed/db/client", () => ({
 }));
 
 vi.mock("../promo-repo", () => ({
-  createCode: vi.fn(),
   getCodeByCode: vi.fn(),
 }));
 
 import { getD1Raw } from "@/seed/db/client";
-import { createCode, getCodeByCode } from "../promo-repo";
-import { bulkGeneratePromoCodes } from "../bulk-generator";
-import type { PromoCodeRow } from "../promo-types";
+import { getCodeByCode } from "../promo-repo";
+import {
+  bulkGeneratePromoCodes,
+  BulkIdempotencyConflict,
+} from "../bulk-generator";
 
-function stubRow(code: string, id: string): PromoCodeRow {
-  return {
-    id,
-    code,
-    description: null,
-    discount_type: "free_full",
-    discount_value: 100,
-    applies_to_tier: "MASTER",
-    applies_to_sku: null,
-    max_uses: 1,
-    used_count: 0,
-    max_uses_per_user: 1,
-    valid_from: 0,
-    valid_until: null,
-    status: "active",
-    created_by_admin_id: "admin-1",
-    created_at: 0,
-    metadata: null,
+/**
+ * D1 mock that records prepare → bind → terminal-call invocations.
+ * Routes SELECT/INSERT statements distinctly so individual specs can stub
+ * the response of the collision-check SELECT or the idempotency SELECT.
+ */
+interface MockD1 {
+  prepare: ReturnType<typeof vi.fn>;
+  bind: ReturnType<typeof vi.fn>;
+  batch: ReturnType<typeof vi.fn>;
+  /** captured SQL of last prepare() */
+  lastSql: { value: string };
+  /** result returned by .all() — override per test */
+  allResult: { results: Array<{ code: string }> };
+  /** result returned by .first() — override per test */
+  firstResult: { payload: string } | null;
+}
+
+function buildD1Mock(): MockD1 {
+  const lastSql = { value: "" };
+  const allResult = { results: [] as Array<{ code: string }> };
+  let firstResult: { payload: string } | null = null;
+  const ctx = {
+    get firstResult() {
+      return firstResult;
+    },
+    set firstResult(v: { payload: string } | null) {
+      firstResult = v;
+    },
   };
-}
-
-function mockD1Raw() {
   const run = vi.fn().mockResolvedValue({});
-  const bind = vi.fn(() => ({ run }));
-  const prepare = vi.fn(() => ({ bind }));
-  vi.mocked(getD1Raw).mockResolvedValue({ prepare } as unknown as Awaited<ReturnType<typeof getD1Raw>>);
-  return { prepare, bind, run };
+  const all = vi.fn(async () => allResult);
+  const first = vi.fn(async () => ctx.firstResult);
+  const bind = vi.fn(() => ({ run, all, first }));
+  const prepare = vi.fn((sql: string) => {
+    lastSql.value = sql;
+    return { bind };
+  });
+  const batch = vi.fn().mockResolvedValue([]);
+  vi.mocked(getD1Raw).mockResolvedValue(
+    { prepare, batch } as unknown as Awaited<ReturnType<typeof getD1Raw>>,
+  );
+  return {
+    prepare,
+    bind,
+    batch,
+    lastSql,
+    allResult,
+    get firstResult() {
+      return firstResult;
+    },
+    set firstResult(v: { payload: string } | null) {
+      firstResult = v;
+    },
+  } as MockD1;
 }
 
-describe("bulkGeneratePromoCodes", () => {
+describe("bulkGeneratePromoCodes (Phase 03b)", () => {
+  let d1: MockD1;
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(getCodeByCode).mockResolvedValue(null);
-    let n = 0;
-    vi.mocked(createCode).mockImplementation(async (input) =>
-      stubRow(input.code, `id-${++n}`),
-    );
-    mockD1Raw();
+    d1 = buildD1Mock();
   });
 
-  it("generates N codes with FREE100-XXXXXXXX format", async () => {
+  it("generates N codes with FREE100-XXXXXXXX format (happy path)", async () => {
     const res = await bulkGeneratePromoCodes({
       baseCode: "FREE100",
       count: 5,
@@ -63,10 +89,12 @@ describe("bulkGeneratePromoCodes", () => {
     });
     expect(res.codes).toHaveLength(5);
     expect(res.promoCodeIds).toHaveLength(5);
-    res.codes.forEach((c) => {
-      expect(c).toMatch(/^FREE100-[A-Z2-7]{8}$/);
-    });
     expect(new Set(res.codes).size).toBe(5);
+    res.codes.forEach((c) => expect(c).toMatch(/^FREE100-[A-Z2-7]{8}$/));
+    expect(res.batchId).toMatch(/^bulk-\d+-[A-Z2-7]{6}$/);
+    expect(res.csv.split("\n")[0]).toBe(
+      '"code","tier","valid_until_unix","description"',
+    );
   });
 
   it("throws on count out of range", async () => {
@@ -88,57 +116,162 @@ describe("bulkGeneratePromoCodes", () => {
     ).rejects.toThrow(/count out of range/);
   });
 
-  it("retries on collision then succeeds", async () => {
-    const calls = vi.mocked(getCodeByCode);
-    calls
-      .mockResolvedValueOnce(stubRow("FREE100-COLLIDE1", "x"))
-      .mockResolvedValueOnce(stubRow("FREE100-COLLIDE2", "y"))
-      .mockResolvedValue(null);
+  it("regenerates colliding codes via single SELECT IN (...)", async () => {
+    // First SELECT call returns 1 collision; subsequent pass returns none.
+    let pass = 0;
+    d1.prepare.mockImplementation((sql: string) => {
+      d1.lastSql.value = sql;
+      return {
+        bind: (...args: unknown[]) => ({
+          run: vi.fn().mockResolvedValue({}),
+          all: vi.fn(async () => {
+            if (sql.includes("SELECT code FROM promo_codes")) {
+              pass++;
+              if (pass === 1) {
+                // Collide with the first candidate
+                return { results: [{ code: String(args[0]) }] };
+              }
+              return { results: [] };
+            }
+            return { results: [] };
+          }),
+          first: vi.fn(async () => null),
+        }),
+      };
+    });
+
     const res = await bulkGeneratePromoCodes({
       baseCode: "FREE100",
-      count: 1,
+      count: 3,
       tier: "MASTER",
       adminId: "admin-1",
     });
-    expect(res.codes).toHaveLength(1);
-    expect(calls).toHaveBeenCalledTimes(3);
+    expect(res.codes).toHaveLength(3);
+    expect(pass).toBeGreaterThanOrEqual(2); // at least 1 collision + 1 retry
   });
 
-  it("throws after collision retry exhaust", async () => {
-    vi.mocked(getCodeByCode).mockResolvedValue(stubRow("FREE100-X", "y"));
+  it("throws when collisions persist beyond retry budget", async () => {
+    // All SELECTs return every candidate as a collision
+    d1.prepare.mockImplementation((sql: string) => ({
+      bind: (...args: unknown[]) => ({
+        run: vi.fn().mockResolvedValue({}),
+        all: vi.fn(async () => {
+          if (sql.includes("SELECT code FROM promo_codes")) {
+            return { results: args.map((a) => ({ code: String(a) })) };
+          }
+          return { results: [] };
+        }),
+        first: vi.fn(async () => null),
+      }),
+    }));
     await expect(
       bulkGeneratePromoCodes({
         baseCode: "FREE100",
-        count: 1,
+        count: 2,
         tier: "MASTER",
         adminId: "admin-1",
       }),
     ).rejects.toThrow(/collision retry exhausted/);
   });
 
-  it("writes admin_audit_log row + returns batchId + CSV header", async () => {
-    const { prepare, bind, run } = mockD1Raw();
-    const res = await bulkGeneratePromoCodes({
+  it("inserts via db.batch() in chunks (no per-row .run())", async () => {
+    await bulkGeneratePromoCodes({
       baseCode: "FREE100",
-      count: 2,
+      count: 120,
       tier: "MASTER",
       adminId: "admin-1",
-      description: "spring-campaign",
     });
-    expect(res.batchId).toMatch(/^bulk-\d+-[A-Z2-7]{6}$/);
-    expect(prepare).toHaveBeenCalledWith(
-      expect.stringContaining("INSERT INTO admin_audit_log"),
+    // 120 codes / 50 per chunk = 3 batches (50+50+20)
+    expect(d1.batch).toHaveBeenCalledTimes(3);
+    const firstBatch = d1.batch.mock.calls[0][0] as unknown[];
+    expect(firstBatch).toHaveLength(50);
+    const lastBatch = d1.batch.mock.calls[2][0] as unknown[];
+    expect(lastBatch).toHaveLength(20);
+  });
+
+  it("writes admin_audit_log row with idempotencyKey field", async () => {
+    const res = await bulkGeneratePromoCodes({
+      baseCode: "FREE100",
+      count: 1,
+      tier: "MASTER",
+      adminId: "admin-1",
+      idempotencyKey: "test-key-abc",
+    });
+    expect(res.batchId).toBeTruthy();
+    // Find the audit_log INSERT bind() call — last bind invocation should carry the JSON payload
+    const auditBindCall = d1.bind.mock.calls.find((c) =>
+      typeof c[2] === "string" && (c[2] as string).includes('"idempotencyKey"'),
     );
-    expect(bind).toHaveBeenCalledWith(
-      "admin-1",
-      "promo_bulk_generate",
-      expect.stringContaining('"batchId"'),
-      expect.any(Number),
-    );
-    expect(run).toHaveBeenCalled();
-    expect(res.csv.split("\n")[0]).toBe(
-      '"code","tier","valid_until_unix","description"',
-    );
-    expect(res.csv.split("\n")).toHaveLength(3);
+    expect(auditBindCall).toBeTruthy();
+    expect(auditBindCall![2] as string).toContain('"test-key-abc"');
+  });
+
+  it("throws BulkIdempotencyConflict when prior key found within window", async () => {
+    // Idempotency lookup SELECT returns a prior row
+    d1.prepare.mockImplementation((sql: string) => ({
+      bind: () => ({
+        run: vi.fn().mockResolvedValue({}),
+        all: vi.fn(async () => ({ results: [] })),
+        first: vi.fn(async () => {
+          if (sql.includes("FROM admin_audit_log")) {
+            return {
+              payload: JSON.stringify({
+                batchId: "bulk-PRIOR-AAAAAA",
+                idempotencyKey: "dup-key",
+              }),
+            };
+          }
+          return null;
+        }),
+      }),
+    }));
+    await expect(
+      bulkGeneratePromoCodes({
+        baseCode: "FREE100",
+        count: 1,
+        tier: "MASTER",
+        adminId: "admin-1",
+        idempotencyKey: "dup-key",
+      }),
+    ).rejects.toBeInstanceOf(BulkIdempotencyConflict);
+    try {
+      await bulkGeneratePromoCodes({
+        baseCode: "FREE100",
+        count: 1,
+        tier: "MASTER",
+        adminId: "admin-1",
+        idempotencyKey: "dup-key",
+      });
+    } catch (err) {
+      expect((err as BulkIdempotencyConflict).priorBatchId).toBe(
+        "bulk-PRIOR-AAAAAA",
+      );
+    }
+  });
+
+  it("does NOT call idempotency SELECT when Idempotency-Key header omitted", async () => {
+    let auditLookupSeen = false;
+    d1.prepare.mockImplementation((sql: string) => {
+      if (
+        sql.includes("FROM admin_audit_log") &&
+        sql.includes("payload LIKE")
+      ) {
+        auditLookupSeen = true;
+      }
+      return {
+        bind: () => ({
+          run: vi.fn().mockResolvedValue({}),
+          all: vi.fn(async () => ({ results: [] })),
+          first: vi.fn(async () => null),
+        }),
+      };
+    });
+    await bulkGeneratePromoCodes({
+      baseCode: "FREE100",
+      count: 1,
+      tier: "MASTER",
+      adminId: "admin-1",
+    });
+    expect(auditLookupSeen).toBe(false);
   });
 });

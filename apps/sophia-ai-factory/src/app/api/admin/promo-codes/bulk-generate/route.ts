@@ -13,10 +13,15 @@
  *     description?: string (max 200 chars)
  *   }
  *
+ * Optional header:
+ *   Idempotency-Key: <opaque string>  — duplicate within 60s returns 409.
+ *
  * Response 200:
  *   { codes: string[], promoCodeIds: string[], csv: string, batchId, generatedAt }
  *
- * Errors: 400 (validation), 401 (no session), 403 (not admin), 429 (rate limit).
+ * Errors: 400 (validation), 401 (no session), 403 (not admin),
+ *         409 (idempotency conflict — prior batchId in body),
+ *         429 (rate limit), 500 (server error).
  *
  * @module app/api/admin/promo-codes/bulk-generate
  */
@@ -25,7 +30,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAdmin } from "@/seed/auth/require-admin";
 import { rateLimit } from "@/seed/security/rate-limiter";
-import { bulkGeneratePromoCodes } from "@/land/promo/bulk-generator";
+import {
+  bulkGeneratePromoCodes,
+  BulkIdempotencyConflict,
+} from "@/land/promo/bulk-generator";
 
 export const dynamic = "force-dynamic";
 
@@ -65,13 +73,25 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
+  const idempotencyKey = request.headers.get("Idempotency-Key") ?? undefined;
+
   try {
     const result = await bulkGeneratePromoCodes({
       ...parsed.data,
       adminId: admin.id,
+      idempotencyKey,
     });
     return NextResponse.json(result, { status: 200 });
   } catch (err) {
+    if (err instanceof BulkIdempotencyConflict) {
+      return NextResponse.json(
+        {
+          error: "Duplicate request within 60s window",
+          priorBatchId: err.priorBatchId,
+        },
+        { status: 409 },
+      );
+    }
     const msg = err instanceof Error ? err.message : "unknown error";
     return NextResponse.json(
       { error: "Bulk generation failed", reason: msg },
