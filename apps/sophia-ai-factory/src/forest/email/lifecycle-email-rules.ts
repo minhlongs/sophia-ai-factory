@@ -14,6 +14,8 @@ export type LifecycleTemplate =
   | 'onboarding-nudge'
   | 'first-week-summary'
   | 'activation-reminder'
+  | 'tools-nudge'
+  | 're-engagement-d14'
   | 'win-back'
   | 'affiliate-day1-tutorial'
   | 'affiliate-day7-case-study';
@@ -112,6 +114,89 @@ export function evaluateActivationReminderEmails(
       },
     });
   }
+
+  return decisions;
+}
+
+// ─── Tools Nudge (Day 4) ────────────────────────────────────────────────────
+
+export interface ToolsNudgeMilestones {
+  signupAt: number;             // ms
+  firstLoginAt: number | null;
+  firstVideoCreatedAt: number | null;
+  ownerFullName: string;
+  locale: string;
+}
+
+/**
+ * Day-4 tools-nudge: highlight 3 power features for users who already shipped
+ * their first video. Gates: signup ≥3.9d ago AND firstLogin AND firstVideo.
+ * Distinct from `activation-reminder` (D+3, NO first video).
+ */
+export function evaluateToolsNudgeEmails(
+  milestones: ToolsNudgeMilestones,
+  now: number = Date.now(),
+): EmailDecision[] {
+  const decisions: EmailDecision[] = [];
+  const daysSince = (now - milestones.signupAt) / DAY_MS;
+
+  if (
+    daysSince >= 3.9 &&
+    daysSince < 5.0 &&
+    milestones.firstLoginAt &&
+    milestones.firstVideoCreatedAt
+  ) {
+    decisions.push({
+      template: 'tools-nudge',
+      payload: {
+        ownerFullName: milestones.ownerFullName,
+        locale: milestones.locale,
+      },
+    });
+  }
+
+  return decisions;
+}
+
+// ─── Re-Engagement D+14 (active subscription, gone quiet) ───────────────────
+
+export interface ReEngagementD14Milestones {
+  signupAt: number;             // ms
+  /** Most recent meaningful activity (max of last login or last video). null if never active. */
+  lastActivityAt: number | null;
+  /** Required: only target users whose subscription is still active. */
+  subscriptionActive: boolean;
+  ownerFullName: string;
+  locale: string;
+}
+
+/**
+ * Day-14 re-engagement: still-paying users who went quiet for 7+ days.
+ * Gates: signup ≥13.9d ago AND subscription still active AND no activity for ≥7d.
+ * Distinct from `win-back` (D+60, targets CANCELLED users).
+ */
+export function evaluateReEngagementD14Emails(
+  milestones: ReEngagementD14Milestones,
+  now: number = Date.now(),
+): EmailDecision[] {
+  const decisions: EmailDecision[] = [];
+  if (!milestones.subscriptionActive) return decisions;
+
+  const daysSinceSignup = (now - milestones.signupAt) / DAY_MS;
+  if (daysSinceSignup < 13.9 || daysSinceSignup >= 15.0) return decisions;
+
+  const lastActivity = milestones.lastActivityAt ?? milestones.signupAt;
+  const daysSinceActivity = (now - lastActivity) / DAY_MS;
+  if (daysSinceActivity < 7) return decisions;
+
+  decisions.push({
+    template: 're-engagement-d14',
+    payload: {
+      ownerFullName: milestones.ownerFullName,
+      locale: milestones.locale,
+      daysSinceLastActivity: Math.floor(daysSinceActivity),
+    },
+  });
 
   return decisions;
 }

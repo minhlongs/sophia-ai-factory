@@ -15,6 +15,8 @@ import {
   evaluateLifecycleEmails,
   evaluateAffiliateLifecycleEmails,
   evaluateActivationReminderEmails,
+  evaluateToolsNudgeEmails,
+  evaluateReEngagementD14Emails,
   evaluateWinBackEmails,
 } from '@/forest/email/lifecycle-email-rules';
 import { computeWeekStats } from '@/forest/email/week-stats';
@@ -67,6 +69,19 @@ interface CancelledSubscriptionRow {
   name: string | null;
   /** Cancellation timestamp = subscription.updated_at after status flipped to 'cancelled'. */
   updated_at: string;
+}
+
+interface ReEngagementCandidateRow {
+  id: string;
+  email: string;
+  name: string | null;
+  /** SQLite datetime('now') string. */
+  createdAt: string;
+  last_login_at: string | null;
+  /** Unix seconds. */
+  last_video_at: number | null;
+  /** Latest subscription status; null if user never subscribed. */
+  sub_status: string | null;
 }
 
 function getD1(): D1Database | null {
@@ -297,6 +312,128 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // ── Tools-nudge sweep (Day-4 — active users who shipped first video) ────
+    const toolsNudgeCandidates = await db
+      .prepare(
+        `SELECT u.id, u.email, u.name, u.createdAt,
+                (SELECT MIN(s.createdAt) FROM session s WHERE s.userId = u.id) AS first_login_at,
+                (SELECT MIN(v.created_at) FROM video_jobs v WHERE v.user_id = u.id) AS first_video_at
+         FROM user u
+         WHERE datetime(u.createdAt) >= datetime('now', '-5 days', '-12 hours')
+           AND datetime(u.createdAt) <= datetime('now', '-3 days', '-12 hours')`,
+      )
+      .all<ActivationCandidateRow>();
+
+    let toolsNudgeEnqueued = 0;
+    for (const cand of toolsNudgeCandidates.results ?? []) {
+      try {
+        const signupMs = Date.parse(cand.createdAt);
+        if (Number.isNaN(signupMs)) continue;
+
+        const firstLoginMs = cand.first_login_at ? Date.parse(cand.first_login_at) : NaN;
+
+        const decisions = evaluateToolsNudgeEmails(
+          {
+            signupAt: signupMs,
+            firstLoginAt: Number.isFinite(firstLoginMs) ? firstLoginMs : null,
+            firstVideoCreatedAt: cand.first_video_at ? cand.first_video_at * 1000 : null,
+            ownerFullName: cand.name ?? cand.email.split('@')[0],
+            locale: 'en',
+          },
+          now,
+        );
+
+        for (const decision of decisions) {
+          const existing = await db
+            .prepare(`SELECT 1 FROM lifecycle_email_log WHERE user_id = ?1 AND template = ?2 LIMIT 1`)
+            .bind(cand.id, decision.template)
+            .first<{ 1: number }>();
+          if (existing) continue;
+
+          const uniqueId = `lifecycle_${cand.id}_${decision.template}`;
+          await enqueueWelcomeEmail(db, {
+            paymentId: uniqueId,
+            toEmail: cand.email,
+            template: decision.template as 'welcome-magic-link',
+            payload: decision.payload,
+          });
+
+          await db
+            .prepare(`INSERT OR IGNORE INTO lifecycle_email_log (user_id, template, sent_at) VALUES (?1,?2,?3)`)
+            .bind(cand.id, decision.template, nowSec)
+            .run();
+
+          toolsNudgeEnqueued++;
+        }
+      } catch (e) {
+        logger.error(`[email-drip] Tools-nudge sweep failed for ${cand.id}`, toError(e));
+      }
+    }
+
+    // ── Re-engagement D+14 sweep (active sub gone quiet 7d+) ────────────────
+    const reEngagementCandidates = await db
+      .prepare(
+        `SELECT u.id, u.email, u.name, u.createdAt,
+                (SELECT MAX(s.createdAt) FROM session s WHERE s.userId = u.id) AS last_login_at,
+                (SELECT MAX(v.created_at) FROM video_jobs v WHERE v.user_id = u.id) AS last_video_at,
+                (SELECT sub.status FROM subscriptions sub WHERE sub.user_id = u.id ORDER BY sub.updated_at DESC LIMIT 1) AS sub_status
+         FROM user u
+         WHERE datetime(u.createdAt) >= datetime('now', '-15 days')
+           AND datetime(u.createdAt) <= datetime('now', '-13 days', '-12 hours')`,
+      )
+      .all<ReEngagementCandidateRow>();
+
+    let reEngagementEnqueued = 0;
+    for (const cand of reEngagementCandidates.results ?? []) {
+      try {
+        const signupMs = Date.parse(cand.createdAt);
+        if (Number.isNaN(signupMs)) continue;
+
+        const lastLoginMs = cand.last_login_at ? Date.parse(cand.last_login_at) : NaN;
+        const lastVideoMs = cand.last_video_at ? cand.last_video_at * 1000 : NaN;
+        const lastActivityMs = Math.max(
+          Number.isFinite(lastLoginMs) ? lastLoginMs : 0,
+          Number.isFinite(lastVideoMs) ? lastVideoMs : 0,
+        );
+
+        const decisions = evaluateReEngagementD14Emails(
+          {
+            signupAt: signupMs,
+            lastActivityAt: lastActivityMs > 0 ? lastActivityMs : null,
+            subscriptionActive: cand.sub_status === 'active',
+            ownerFullName: cand.name ?? cand.email.split('@')[0],
+            locale: 'en',
+          },
+          now,
+        );
+
+        for (const decision of decisions) {
+          const existing = await db
+            .prepare(`SELECT 1 FROM lifecycle_email_log WHERE user_id = ?1 AND template = ?2 LIMIT 1`)
+            .bind(cand.id, decision.template)
+            .first<{ 1: number }>();
+          if (existing) continue;
+
+          const uniqueId = `lifecycle_${cand.id}_${decision.template}`;
+          await enqueueWelcomeEmail(db, {
+            paymentId: uniqueId,
+            toEmail: cand.email,
+            template: decision.template as 'welcome-magic-link',
+            payload: decision.payload,
+          });
+
+          await db
+            .prepare(`INSERT OR IGNORE INTO lifecycle_email_log (user_id, template, sent_at) VALUES (?1,?2,?3)`)
+            .bind(cand.id, decision.template, nowSec)
+            .run();
+
+          reEngagementEnqueued++;
+        }
+      } catch (e) {
+        logger.error(`[email-drip] Re-engagement sweep failed for ${cand.id}`, toError(e));
+      }
+    }
+
     // ── Win-back sweep (Day-60 cancelled, no reactivation) ─────────────────
     // Heuristic: a subscription currently `status='cancelled'` whose `updated_at`
     // sits in the 59–61 day window is a clean cancellation that hasn't been
@@ -358,7 +495,7 @@ export async function GET(req: NextRequest) {
     }
 
     logger.info(
-      `[email-drip] Completed. handover=${enqueued} affiliate=${affiliateEnqueued} activation=${activationEnqueued} winBack=${winBackEnqueued}`,
+      `[email-drip] Completed. handover=${enqueued} affiliate=${affiliateEnqueued} activation=${activationEnqueued} toolsNudge=${toolsNudgeEnqueued} reEngagement=${reEngagementEnqueued} winBack=${winBackEnqueued}`,
     );
     await recordCronRun(db, CRON_NAME, 'success');
     return NextResponse.json({
@@ -366,6 +503,8 @@ export async function GET(req: NextRequest) {
       enqueued,
       affiliateEnqueued,
       activationEnqueued,
+      toolsNudgeEnqueued,
+      reEngagementEnqueued,
       winBackEnqueued,
     });
   } catch (err) {
