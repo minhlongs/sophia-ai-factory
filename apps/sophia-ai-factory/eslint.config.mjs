@@ -162,6 +162,12 @@ const eslintConfig = defineConfig([
       // account-delete-finalize-cron orchestrates land/account cascade-delete on Inngest schedule
       // (mekong-exempt: forest → land orchestration per cross-layer-orchestration.md).
       "src/forest/inngest/functions/account-delete-finalize-cron.ts",
+      // forest/jobs — Inngest cron orchestrators that call land domain logic
+      // (mekong-exempt: forest → land orchestration per cross-layer-orchestration.md, M3 migration).
+      "src/forest/jobs/offer-sync-cron.ts",
+      "src/forest/jobs/payout-batcher.ts",
+      "src/forest/jobs/pending-promoter-cron.ts",
+      "src/forest/jobs/reconciliation.ts",
       // quota-enforcer checks billing limits (mekong-exempt)
       "src/forest/quota/quota-enforcer.ts",
       // pricing component reads land coupon/promo data (mekong-exempt: UI)
