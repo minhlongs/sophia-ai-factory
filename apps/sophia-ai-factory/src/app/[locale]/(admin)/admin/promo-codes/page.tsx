@@ -6,6 +6,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Layers } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
 import { listAdminCodes } from "@/land/promo/promo-repo";
 import { PromoCodesClient } from "./promo-codes-client";
@@ -16,16 +17,17 @@ export default async function AdminPromoCodesPage() {
   const user = await getCurrentUser();
   if (!user || user.role !== "admin") redirect("/dashboard");
 
-  const codes = await listAdminCodes({ limit: 100 }).catch(() => []);
+  const [t, codes] = await Promise.all([
+    getTranslations("admin.promoCodes"),
+    listAdminCodes({ limit: 100 }).catch(() => []),
+  ]);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Promo Codes</h1>
-          <p className="text-sm text-zinc-400 mt-1">
-            Manage discount and free trial codes for customer onboarding.
-          </p>
+          <h1 className="text-2xl font-bold text-white">{t("title")}</h1>
+          <p className="text-sm text-zinc-400 mt-1">{t("subtitle")}</p>
         </div>
         <Link
           href="/admin/promo-codes/bulk"
@@ -33,7 +35,7 @@ export default async function AdminPromoCodesPage() {
           className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-zinc-950 font-medium rounded-md transition"
         >
           <Layers className="w-4 h-4" />
-          Bulk Generate
+          {t("bulk.bulkButton")}
         </Link>
       </div>
 

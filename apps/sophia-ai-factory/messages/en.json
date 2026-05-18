@@ -1513,6 +1513,8 @@
       "active": "Active"
     },
     "promoCodes": {
+      "title": "Promo Codes",
+      "subtitle": "Manage discount and free trial codes",
       "bulk": {
         "pageTitle": "Bulk Generate Codes",
         "pageSubtitle": "Generate many FREE100-XXXX codes for a marketing campaign. Each code is single-use and grants the Master tier.",
@@ -1535,6 +1537,32 @@
         "codeTable": "Generated codes",
         "bulkButton": "Bulk Generate",
         "backToList": "Back to list"
+      },
+      "list": {
+        "searchPlaceholder": "Search by code (e.g. FREE100)…",
+        "filterStatusLabel": "Status",
+        "filterTierLabel": "Tier",
+        "filterStatusAll": "All",
+        "filterStatusActive": "Active",
+        "filterStatusDisabled": "Disabled",
+        "filterStatusExpired": "Expired",
+        "filterTierAll": "All tiers",
+        "pageLabel": "Page",
+        "pageOf": "of",
+        "prev": "Prev",
+        "next": "Next",
+        "noResults": "No codes match your filters",
+        "exportCsv": "Export full CSV",
+        "exporting": "Exporting…",
+        "resultsCount": "{count} codes",
+        "columnCode": "Code",
+        "columnTier": "Tier",
+        "columnStatus": "Status",
+        "columnUsed": "Used",
+        "columnMaxUses": "Max uses",
+        "columnExpires": "Expires",
+        "columnCreated": "Created",
+        "neverExpires": "Never"
       }
     }
   },
