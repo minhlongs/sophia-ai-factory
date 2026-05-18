@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 vi.mock("@/seed/auth/require-admin", () => ({
   requireAdmin: vi.fn(),
+  requireRecentAuth: vi.fn().mockResolvedValue({ ok: true }),
 }));
 
 vi.mock("@/seed/security/rate-limiter", () => ({
