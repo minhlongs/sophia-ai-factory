@@ -9,7 +9,7 @@
 
 ## Overview
 - **Priority:** P0 (compliance-grade requirement; score uplift)
-- **Status:** pending
+- **Status:** pending (unblocked 2026-05-18 via Phase 02 staging deploy)
 - **Duration:** ~1 day (D8)
 - **Brief:** Take fresh snapshot of PROD D1 → R2. Wipe staging D1. Restore from R2 snapshot to staging D1. Verify integrity. Measure wall-clock RTO + data-age RPO. Document procedure step-by-step.
 
