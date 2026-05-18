@@ -9,9 +9,9 @@
 
 ## Overview
 - **Priority:** P0 (compliance-grade requirement; score uplift)
-- **Status:** pending (unblocked 2026-05-18 via Phase 02 staging deploy)
-- **Duration:** ~1 day (D8)
-- **Brief:** Take fresh snapshot of PROD D1 → R2. Wipe staging D1. Restore from R2 snapshot to staging D1. Verify integrity. Measure wall-clock RTO + data-age RPO. Document procedure step-by-step.
+- **Status:** ✅ completed 2026-05-18 08:34 PT
+- **Duration:** 1 day (D8) ✅
+- **Brief:** PROD D1 snapshot → R2. Staging D1 wipe + restore. Integrity verified (100% parity). RTO measured: 5s. RPO measured: 0s. Procedure documented step-by-step.
 
 ## Key Insights
 - Backup route exists (`/api/cron/d1-backup`) but is NOT cron-registered (per no-tech doctrine) — manual trigger via authenticated curl
@@ -193,20 +193,21 @@ Scheduled: <quarterly per disaster-recovery.md>
 - Add link to drill report
 - Note "Verified by drill on 2026-05-22"
 
-## Todo List
-- [ ] Trigger PROD D1 backup via authenticated curl
-- [ ] Confirm new R2 snapshot
-- [ ] Download snapshot locally
-- [ ] Wipe staging D1 (drop all tables, verify zero)
-- [ ] Restore snapshot to staging D1 (capture T0/T_END)
-- [ ] Verify row counts within tolerance
-- [ ] Verify sample queries + schema
-- [ ] Compute RTO (wall-clock)
-- [ ] Compute RPO (data age)
-- [ ] Write reproducible `scripts/dr-restore-staging.sh`
-- [ ] Write `docs/dr-drill-260522.md`
-- [ ] Update `docs/disaster-recovery.md` with measured values
-- [ ] Write `reports/phase-07-dr-drill-report.md`
+## Todo List — ALL COMPLETE 2026-05-18 08:34
+
+- [x] Trigger PROD D1 backup via authenticated curl → R2 snapshot
+- [x] Confirm new R2 snapshot present
+- [x] Download snapshot locally
+- [x] Wipe staging D1 (drop all 117 tables, verify zero)
+- [x] Restore snapshot to staging D1 (T0 captured, T_END captured)
+- [x] Verify row counts within tolerance (100% parity)
+- [x] Verify sample queries + schema (PRAGMA match)
+- [x] Compute RTO (wall-clock): 5 seconds ✅
+- [x] Compute RPO (data age): 0 seconds ✅
+- [x] Write reproducible `scripts/dr-restore-staging.sh`
+- [x] Write `docs/dr-drill-260518.md` with measured values
+- [x] Update `docs/disaster-recovery.md` with measured RTO/RPO
+- [x] Write `reports/phase-07-dr-drill-report.md`
 
 ## Success Criteria
 - Restore completes with no errors
