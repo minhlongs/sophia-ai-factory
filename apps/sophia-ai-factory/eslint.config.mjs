@@ -74,7 +74,8 @@ const eslintConfig = defineConfig([
       // forest/auth/enforce-tier-quota (M4 migration). The re-export crosses
       // seed→forest boundary, allowed as a thin stub only.
       "src/seed/auth/enforce-tier-quota.ts",
-      // Security cluster — api-key-validator imports tree audit/crypto-utils (mekong-exempt)
+      // Security cluster — formerly imported tree audit/crypto-utils; fixed in M2
+      // (now imports from seed/security/crypto-utils). Stubs kept for safety.
       "src/seed/security/api-key-validator-crypto.ts",
       "src/seed/security/api-key-validator-db.ts",
       // Telemetry (if present)
