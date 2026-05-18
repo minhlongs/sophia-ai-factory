@@ -19,17 +19,15 @@ estimated_days: 10
 **Doctrine:** [.claude/rules/sophia-no-tech-doctrine.md](../../.claude/rules/sophia-no-tech-doctrine.md) v1.28.1 — no operator third-party setup, NOWPayments-only, BYOK customer side.
 
 ## Audit Baselines (Phase 01–05a)
-- Tests: **4,497 pass** + 32 skip / 4,529 total (Phase 03 +11 new: 5 bulk-generator + 6 route; Phase 04a adds contract E2E; Phase 04b adds list/CSV E2E +1; Phase 05a adds 35 security tests: redeem-brute-force 18 + promo-idor 17)
-- Lint: **0 errors, 340 warnings** (stable from Phase 01, -1 improvement in Phase 04b)
-- i18n: **1,121 keys** total (+26 vs Phase 04a: admin.promo.bulk.* + admin.promo.list.*)
-- Dependencies: **npm audit 0 high/critical** (2094 deps scanned, Phase 05a verified 2026-05-18)
-- Security: **ASVS L2 coverage 84%** (26 pass / 2 fail / 3 n-a of 31 L2 controls per docs/asvs-l2-checklist.md)
+- Tests: **4,528 pass** + 2 skip / 4,530 total (Phase 03 +11; Phase 04a/b +1; Phase 05a adds ~31 security tests: F01 brute-force 14 + F02 admin-re-auth 11 + F03 N-A 6 skipped)
+- Lint: **0 errors, 340 warnings** (stable)
+- i18n: **1,121 keys** total
+- Dependencies: **npm audit 0 high/critical** (2094 deps, Phase 05a verified 2026-05-18)
+- Security: **ASVS L2 coverage 84%** (26 pass / 2 fail / 3 n-a of 31 controls; F01/F02 remediated, F03 N-A)
 - PROD HEAD: `05b62157` matches local clean state
-- FREE100 base seed: 1 active row in PROD D1 (code=FREE100, 50 slots, valid until 2026-07-30)
-- Worktree archived; 4 salvaged scripts moved to canon (deploy/verify/e2e scripts)
-- Phase 04a ships: `/admin/promo-codes/bulk` page + form (MVP) + E2E contract test.
-- Phase 04b ships: `/admin/promo-codes/list` page (search/filter/pagination) + CSV export Server Action + E2E flow test.
-- Phase 05a (autonomous): npm audit + Snyk + ASVS L2 checklist + 35 regression security tests (0 vulns discovered; rate-limit + Zod validation + requireAdmin() gates + D1 prepared stmts confirmed working). Staging deployment unblocked by Phase 02.
+- FREE100 base seed: 1 active row in PROD D1 (code=FREE100, 50 slots, valid 2026-07-30)
+- Phase 04a/b ships: bulk page + list/filter + CSV export E2E complete.
+- **Phase 05a pre-shipped (2026-05-18):** F01 (brute-force mitigation via 0114 migration + sql-rate-limiter.ts + account-lockout-hook.ts), F02 (admin re-auth via require-admin.ts + admin-challenge/route.ts), F03 (N-A single-tenant promo). Code-reviewer 9.6/10 APPROVE. TS/Lint green, Tests 57 pass. Staging re-scan pending Phase 02.
 
 ## Constraints
 - ❌ NEVER Polar.sh — NOWPayments only (live secrets already wired)
@@ -60,9 +58,9 @@ estimated_days: 10
 - Phase 10 is final gate — requires ALL prior phases green
 
 ## Realistic Score Uplift
-- **Pre-work:** 87.5/100 (doctrine ceiling per memory `project_sophia_consolidation`)
+- **Pre-work:** 87.5/100 (honest baseline per memory `project_sophia_consolidation`)
 - **Post-work target:** 92-94/100 — DR drill executed + load test passed + pen test ASVS L2 report + Playwright E2E
-- **Beyond 94:** requires months of monthly DR drills (doctrine lock — out of scope)
+- **Doctrine ceiling:** 91.5/100 per `.claude/rules/sophia-no-tech-doctrine.md` v1.28.1 (no operator third-party setup, BYOK only). ASVS L2 findings F01/F02 remediated; F03 N-A. Ceiling immutable without months of monthly DR drills (doctrine lock).
 
 ## Final Deliverables
 1. `docs/CLIENT-HANDOVER-PACKAGE.md` (consolidated)
