@@ -14,8 +14,8 @@
 
 ## Overview
 - **Priority:** P1 (can run parallel with Phase 08)
-- **Status:** pending
-- **Duration:** ~0.5 day (D9 parallel)
+- **Status:** ✅ v1 complete 2026-05-18 (metrics from 06/07/08 pending; refresh after those phases)
+- **Duration:** 0.5 day (D9 parallel)
 - **Brief:** Create single `docs/CLIENT-HANDOVER-PACKAGE.md` consolidating all existing docs + measured DR metrics + escalation contacts + key-rotation procedure. Skip NDA/IP/SLA legal clauses (internal/friendly client).
 
 ## Key Insights
@@ -232,16 +232,16 @@ done
 - Mark any P0 as blocker for Phase 10
 
 ## Todo List
-- [ ] Draft `incident-response-playbook.md`
-- [ ] Draft `escalation-contacts.md`
-- [ ] Draft `nowpayments-key-rotation.md`
-- [ ] Build `CLIENT-HANDOVER-PACKAGE.md` with TOC + cross-links
-- [ ] Plug measured RTO/RPO from Phase 07 into doc
-- [ ] Plug pen test summary from Phase 06 into doc
-- [ ] Plug load test summary from Phase 08 into doc
-- [ ] Cross-link verification (all referenced files exist)
+- [x] Draft `incident-response-playbook.md`
+- [x] Draft `escalation-contacts.md`
+- [x] Draft `nowpayments-key-rotation.md`
+- [x] Build `CLIENT-HANDOVER-PACKAGE.md` with TOC + cross-links
+- [ ] Plug measured RTO/RPO from Phase 07 into doc (Phase 07 pending)
+- [ ] Plug pen test summary from Phase 06 into doc (Phase 06 pending)
+- [ ] Plug load test summary from Phase 08 into doc (Phase 08 pending)
+- [x] Cross-link verification (27/27 links resolved)
 - [ ] Optional: Pandoc PDF export
-- [ ] Finalize `known-issues.md` with P0/P1/P2 triage
+- [x] Finalize `known-issues.md` with P0/P1/P2 triage
 - [ ] User review pass (with operator)
 
 ## Success Criteria

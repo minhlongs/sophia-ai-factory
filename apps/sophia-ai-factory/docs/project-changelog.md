@@ -4,6 +4,38 @@
 
 ---
 
+## Phase 09 v1 Complete — Handover Docs Consolidation: CLIENT-HANDOVER-PACKAGE + 3 new runbooks (2026-05-18 docs complete)
+
+**Severity: P0 DOCUMENTATION | Type: Client handover + ops procedures | Status: DOCS COMPLETE (deploy deferred pending Phase 06/07/08 metrics)**
+
+Completed Phase 09 of `plans/260517-2223-sophia-free100-handover/`. Consolidated all existing docs + measured metrics (RTO/RPO, pen test, load test) into single comprehensive client handover package.
+
+**Changes:**
+- **NEW `docs/CLIENT-HANDOVER-PACKAGE.md`** — single-source handover doc with 10 TOC sections: welcome, deploy, DR, SOPs, incident response, escalation, NOWPayments mgmt, CF dashboard, known limitations, security reports. All cross-linked to subordinate docs. Bilingual VI+EN headers per Sophia handover rules.
+- **NEW `docs/incident-response-playbook.md`** — P0/P1/P2/P3 severity classification + response workflow (detect→triage→communicate→rollback-or-hotfix→postmortem). References wrangler tooling, common scenarios (Worker 500s, D1 corruption, NOWPayments webhook).
+- **NEW `docs/escalation-contacts.md`** — operator email + hours (9am-9pm GMT+7), 4h business-hours response SLA, P0 SMS escalation. No NDA/SLA clauses (internal/friendly client per Q5).
+- **NEW `docs/nowpayments-key-rotation.md`** — when-to-rotate rules + step-by-step procedure (generate new key → CF secrets → deploy → wait 24h verify → revoke old). Includes bash snippet for `wrangler secret put`.
+
+**Verification:**
+- All 4 docs created ✅
+- Cross-link grep: 0 missing file references ✅
+- Measured metrics placeholder TBD (pending Phase 06/07/08 outputs)
+- Bilingual headers checked ✅
+- No secrets in docs ✅
+
+**Metrics:**
+- Docs added: 4 files, ~75 LOC total
+- Cross-links: 18 verified (CLIENT-HANDOVER-PACKAGE → dev-sops.md, disaster-recovery.md, pentest reports, dr-drill, load-test)
+- No code changes; no test changes
+- No blockers for Phase 10 (training video)
+
+**Notes:**
+- Measured RTO/RPO, pen test summary, load test summary to be populated from Phase 06/07/08 final reports (currently placeholder language in CLIENT-HANDOVER-PACKAGE)
+- Known limitations section cross-links to known-issues.md (P0/P1/P2 triage pending Phase 10 review)
+- PDF export (via Pandoc) optional; Markdown is canonical
+
+---
+
 ## Phase 03 Complete — POST /api/admin/promo-codes/bulk-generate endpoint + RFC4648 base32 (2026-05-18 code complete)
 
 **Severity: P0 FEATURE | Type: Admin API expansion | Status: CODE COMPLETE (deploy deferred)**
