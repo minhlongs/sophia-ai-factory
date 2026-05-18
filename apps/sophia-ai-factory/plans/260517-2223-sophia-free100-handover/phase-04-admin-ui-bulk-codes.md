@@ -213,18 +213,23 @@ npm run deploy:staging
 # Browser: log in as admin on staging, generate 5 codes, download CSV, verify content
 ```
 
-## Todo List
-- [ ] Add `admin.promo.bulk.*` keys to vi.ts + en.ts (both files)
-- [ ] Add `admin.promo.list.*` keys to vi.ts + en.ts (both files)
-- [ ] Grep both locale files to confirm key parity
-- [ ] Implement bulk page + client form
-- [ ] Implement CSV download in browser
-- [ ] Implement list page with search/filter/paginate
-- [ ] Implement CSV export Server Action
-- [ ] Add sidebar nav links
-- [ ] Write Playwright E2E test for bulk flow
-- [ ] Build/lint/test green
-- [ ] Deploy staging + manual smoke
+## Todo List (Phase 04a — MVP shipped 2026-05-18)
+- [x] Add `admin.promoCodes.bulk.*` keys to messages/vi.json + en.json (both files, 21 keys each)
+- [x] Grep both locale files to confirm key parity (`Symmetric diff: NONE`)
+- [x] Implement bulk page + client form (BulkFormClient)
+- [x] Implement CSV download in browser (Blob + a[download])
+- [x] Add bulk-generate link to existing promo-codes page header (lucide Layers icon, data-testid)
+- [x] Write Playwright E2E test (contract-level: anon 401, page redirect, 400 invalid body)
+- [x] TS check 0 errors, lint 0 errors, i18n validate 0 missing (1,097 keys total)
+- [~] Deploy staging + manual smoke — deferred (blocked on user Phase 02 secrets + deploy:staging)
+
+## Todo List (Phase 04b — follow-up, deferred)
+- [ ] List page enhanced search by code prefix
+- [ ] List page filter by status/tier/redemption count
+- [ ] List page pagination (50/page)
+- [ ] CSV export Server Action for filtered list (full export, not just current page)
+- [ ] Add `admin.promoCodes.list.*` i18n keys
+- [ ] Full authenticated Playwright flow (login → bulk → CSV download → reset)
 
 ## Success Criteria
 - Bulk page generates N codes and downloads valid CSV

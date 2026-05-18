@@ -4,6 +4,8 @@
  */
 
 import { redirect } from "next/navigation";
+import Link from "next/link";
+import { Layers } from "lucide-react";
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
 import { listAdminCodes } from "@/land/promo/promo-repo";
 import { PromoCodesClient } from "./promo-codes-client";
@@ -25,6 +27,14 @@ export default async function AdminPromoCodesPage() {
             Manage discount and free trial codes for customer onboarding.
           </p>
         </div>
+        <Link
+          href="/admin/promo-codes/bulk"
+          data-testid="bulk-generate-link"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-zinc-950 font-medium rounded-md transition"
+        >
+          <Layers className="w-4 h-4" />
+          Bulk Generate
+        </Link>
       </div>
 
       <PromoCodesClient initialCodes={codes} />
