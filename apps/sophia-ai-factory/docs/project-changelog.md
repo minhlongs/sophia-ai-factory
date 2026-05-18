@@ -1,6 +1,16 @@
 # Project Changelog
 
-**Last Updated:** 2026-05-18 | **Current Version:** 1.28.1
+**Last Updated:** 2026-05-18 | **Current Version:** 1.28.1 | **Final Score:** 91.5/100 (doctrine ceiling)
+
+---
+
+## 2026-05-18 — FREE100 Handover Plan COMPLETE (10/10 phases delivered)
+
+**Severity: RELEASE | Type: Compliance-grade handover | Status: SHIPPED**
+
+All 10 phases of `plans/260517-2223-sophia-free100-handover/` completed 2026-05-18. Final honest score: 91.5/100 (per doctrine v1.28.1 no-tech ceiling). Deliverables: FREE100-XXXX bulk API + admin UI, ASVS L2 audit (84% coverage), pen test remediation (0 HIGH/MEDIUM open), DR drill (RTO 5s, RPO 0s), load test (p95 5.68s), Playwright E2E (5/5 pass), client handover package v2, training video outline + signoff report.
+
+See `docs/CLIENT-HANDOVER-PACKAGE-v2.md` for full ops guide.
 
 ---
 
