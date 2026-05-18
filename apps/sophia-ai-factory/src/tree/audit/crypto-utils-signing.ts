@@ -8,8 +8,8 @@
  */
 
 import type { RaasAuditLogRow } from '@/lib/supabase/types'
-import { sha256, computeContentHash } from '@/tree/audit/crypto-utils'
-import type { AuditLogEntry, HashChainVerificationResult } from '@/tree/audit/crypto-utils'
+import { sha256, computeContentHash } from '@/seed/security/crypto-utils'
+import type { AuditLogEntry, HashChainVerificationResult } from '@/seed/security/crypto-utils'
 
 /**
  * Compute HMAC-SHA256 signature for data signing

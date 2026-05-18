@@ -4,7 +4,7 @@
  */
 
  
-import { hmacSha256 } from '@/tree/audit/crypto-utils'
+import { hmacSha256 } from '@/seed/security/crypto-utils'
 import { logger } from '@/seed/utils/logger-utility'
 
 export const API_KEY_PREFIX = 'mk_'

@@ -9,53 +9,19 @@
 
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
-import { UNIFIED_TIERS } from '@/seed/config/tiers';
 import { aggregateUsageEvents, buildHourlySummary, buildDailySummary } from './usage-event-collector';
 import type {
-  QuotaLimit,
   QuotaCheckResult,
   HourlySummary,
   DailySummary,
 } from './types';
 import type { D1Response } from '@/seed/db/types';
+// Import from seed (canonical home) and re-export for back-compat
+import { QUOTA_LIMITS } from '@/seed/config/quota-limits';
+export { QUOTA_LIMITS };
 
 /** Maximum date range for queries (90 days) — prevents expensive full-table scans */
 const MAX_DATE_RANGE_DAYS = 90;
-
-/**
- * Quota limits by tier — monthly credits sourced from config/tiers.
- * Daily/hourly sub-limits derived proportionally.
- */
-export const QUOTA_LIMITS: Record<string, QuotaLimit> = {
-  BASIC: {
-    tier: 'BASIC',
-    dailyCredits: Math.ceil(UNIFIED_TIERS.BASIC.mcuMonthly / 30),
-    hourlyCredits: Math.ceil(UNIFIED_TIERS.BASIC.mcuMonthly / 30 / 5),
-    dailyRequests: 500,
-    monthlyCredits: UNIFIED_TIERS.BASIC.mcuMonthly,
-  },
-  PREMIUM: {
-    tier: 'PREMIUM',
-    dailyCredits: Math.ceil(UNIFIED_TIERS.PREMIUM.mcuMonthly / 30),
-    hourlyCredits: Math.ceil(UNIFIED_TIERS.PREMIUM.mcuMonthly / 30 / 5),
-    dailyRequests: 2500,
-    monthlyCredits: UNIFIED_TIERS.PREMIUM.mcuMonthly,
-  },
-  ENTERPRISE: {
-    tier: 'ENTERPRISE',
-    dailyCredits: Math.ceil(UNIFIED_TIERS.ENTERPRISE.mcuMonthly / 30),
-    hourlyCredits: Math.ceil(UNIFIED_TIERS.ENTERPRISE.mcuMonthly / 30 / 5),
-    dailyRequests: 10000,
-    monthlyCredits: UNIFIED_TIERS.ENTERPRISE.mcuMonthly,
-  },
-  MASTER: {
-    tier: 'MASTER',
-    dailyCredits: Math.ceil(UNIFIED_TIERS.MASTER.mcuMonthly / 30),
-    hourlyCredits: Math.ceil(UNIFIED_TIERS.MASTER.mcuMonthly / 30 / 5),
-    dailyRequests: 50000,
-    monthlyCredits: UNIFIED_TIERS.MASTER.mcuMonthly,
-  },
-};
 
 interface UsageDataRow { credits_used: number; }
 
