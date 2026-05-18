@@ -68,6 +68,9 @@ export function WelcomePageClient({ token, locale }: Props) {
       window.open(botUrl, '_blank', 'noopener,noreferrer');
       setTelegramLinked(true);
     } catch (err) {
+      // LEGIT CLIENT FALLBACK — surfaces error in browser DevTools so the user
+      // can share with support. Server-side logger unreachable from client.
+      // Same pattern as `seed/utils/logger-internals.ts`.
       console.error('[welcome] Telegram connect failed:', err);
     } finally {
       setTelegramLinking(false);
