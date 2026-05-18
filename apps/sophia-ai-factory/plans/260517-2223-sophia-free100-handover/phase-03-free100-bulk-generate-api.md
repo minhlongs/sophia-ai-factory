@@ -10,7 +10,7 @@
 
 ## Overview
 - **Priority:** P0 (blocker for admin UI in Phase 04)
-- **Status:** pending
+- **Status:** ✅ code complete 2026-05-18 (staging deploy deferred to Phase 02 user action)
 - **Duration:** ~1 day (D3)
 - **Brief:** Build thin `POST /api/admin/promo-codes/bulk-generate` that wraps existing `createPromoCode` from `promo-repo.ts` in a transaction. Generates N unique `FREE100-{8-char base32}` codes. Returns array + CSV.
 
@@ -202,15 +202,15 @@ curl -X POST "$STAGING_URL/api/admin/promo-codes/bulk-generate" \
 ```
 
 ## Todo List
-- [ ] Add `randomBase32` util in `src/seed/utils/`
-- [ ] Implement `bulk-generator.ts` in `src/land/promo/`
-- [ ] Export `bulkGeneratePromoCodes` from `src/land/promo/index.ts`
-- [ ] Implement route `bulk-generate/route.ts`
-- [ ] Write 4 unit tests for bulk-generator
-- [ ] Write 4 route tests
-- [ ] `pnpm build && pnpm lint && pnpm test` → green
-- [ ] Deploy staging + smoke test 3-code generation
-- [ ] No PROD deploy yet (gate at Phase 10 final sign-off)
+- [x] Add `randomBase32` util in `src/seed/utils/` — ✅ new file
+- [x] Implement `bulk-generator.ts` in `src/land/promo/` — ✅ new file
+- [x] Export `bulkGeneratePromoCodes` from `src/land/promo/index.ts` — ✅ modified
+- [x] Implement route `bulk-generate/route.ts` — ✅ new file
+- [x] Write 5 unit tests for bulk-generator — ✅ new file (happy path, boundaries, collision)
+- [x] Write 6 route tests — ✅ new file (auth, ratelimit, validation, happy path)
+- [x] `pnpm build && pnpm lint && pnpm test` → green — ✅ 4,457/4,457 pass, 0 errors, 340 warnings (baseline)
+- [ ] Deploy staging + smoke test 3-code generation — deferred (blocked: Phase 02 secrets/deploy pending)
+- [ ] No PROD deploy yet (gate at Phase 10 final sign-off) — deferred
 
 ## Success Criteria
 - All new tests pass

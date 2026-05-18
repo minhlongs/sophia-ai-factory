@@ -12,19 +12,19 @@ estimated_days: 10
 
 **Goal:** Ship compliance-grade FREE100-XXXX bulk codes + full pen test + DR drill + load test + client handover package. Push honest 10-layer score from 87.5/100 → 92-94/100 (doctrine ceiling locks higher).
 
-**Progress:** 1/10 phases (10%) — Phase 01 audit complete 2026-05-17.
+**Progress:** 2/10 phases (20%) — Phase 01 audit complete 2026-05-17; Phase 03 code complete 2026-05-18 (staging deploy deferred until Phase 02 user action).
 
 **Brainstorm:** [reports/brainstorm.md](reports/brainstorm.md)
 **Production:** https://sophia.agencyos.network (HEAD `05b62157`)
 **Doctrine:** [.claude/rules/sophia-no-tech-doctrine.md](../../.claude/rules/sophia-no-tech-doctrine.md) v1.28.1 — no operator third-party setup, NOWPayments-only, BYOK customer side.
 
-## Audit Baselines (Phase 01)
-- Tests: **4,446 pass** + 32 skip / 4,478 total (prior memory: 1,444 — stale)
-- Lint: **0 errors, 340 warnings** (prior: 423w — improved -83)
+## Audit Baselines (Phase 01–03)
+- Tests: **4,457 pass** + 32 skip / 4,489 total (Phase 03 +11 new: 5 bulk-generator + 6 route)
+- Lint: **0 errors, 340 warnings** (stable from Phase 01)
 - PROD HEAD: `05b62157` matches local clean state
 - FREE100 base seed: 1 active row in PROD D1 (code=FREE100, 50 slots, valid until 2026-07-30)
 - Worktree archived; 4 salvaged scripts moved to canon (deploy/verify/e2e scripts)
-- No blockers for Phase 02
+- Phase 03 unblocks Phase 04 (admin UI) immediately — API contract stable; staging code path live (staging deploy deferred to user Phase 02 action)
 
 ## Constraints
 - ❌ NEVER Polar.sh — NOWPayments only (live secrets already wired)
