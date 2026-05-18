@@ -10,7 +10,7 @@
 
 ## Overview
 - **Priority:** P0 (compliance-grade requirement)
-- **Status:** pending
+- **Status:** pending (unblocked 2026-05-18 via Phase 02 staging deploy)
 - **Duration:** ~1 day (D9)
 - **Brief:** k6 load tests on `/redeem` + `/dashboard` at 100 concurrent users. Playwright E2E covering FREE100-XXXX bulk-generate → redeem → magic-link → auto-signup → tier=master → Starter SOP installed → Telegram called. Manual browser Rule 13 verify on PROD for all 4 tier checkouts.
 

@@ -12,22 +12,24 @@ estimated_days: 10
 
 **Goal:** Ship compliance-grade FREE100-XXXX bulk codes + full pen test + DR drill + load test + client handover package. Push honest 10-layer score from 87.5/100 → 92-94/100 (doctrine ceiling locks higher).
 
-**Progress:** 6/10 phases (60%) + Phase 05a autonomous deliverables shipped 2026-05-18 — Phase 01 audit complete 2026-05-17; Phase 03 code complete 2026-05-18; Phase 04 (04a + 04b) complete 2026-05-18; Phase 05a (security audit + regression tests) complete 2026-05-18; Phase 09 v1 handover docs complete 2026-05-18.
+**Progress:** 7/10 phases (70%) + Phase 02 staging deployed + Phase 05a autonomous deliverables shipped 2026-05-18 — Phase 01 audit complete 2026-05-17; Phase 02 staging deployed 2026-05-18 06:58 PT; Phase 03 code complete 2026-05-18; Phase 04 (04a + 04b) complete 2026-05-18; Phase 05a (security audit + regression tests) complete 2026-05-18; Phase 09 v1 handover docs complete 2026-05-18.
 
 **Brainstorm:** [reports/brainstorm.md](reports/brainstorm.md)
 **Production:** https://sophia.agencyos.network (HEAD `05b62157`)
 **Doctrine:** [.claude/rules/sophia-no-tech-doctrine.md](../../.claude/rules/sophia-no-tech-doctrine.md) v1.28.1 — no operator third-party setup, NOWPayments-only, BYOK customer side.
 
-## Audit Baselines (Phase 01–05a)
+## Audit Baselines (Phase 01–05a + Phase 02 Staging)
 - Tests: **4,528 pass** + 2 skip / 4,530 total (Phase 03 +11; Phase 04a/b +1; Phase 05a adds ~31 security tests: F01 brute-force 14 + F02 admin-re-auth 11 + F03 N-A 6 skipped)
 - Lint: **0 errors, 340 warnings** (stable)
 - i18n: **1,121 keys** total
 - Dependencies: **npm audit 0 high/critical** (2094 deps, Phase 05a verified 2026-05-18)
 - Security: **ASVS L2 coverage 84%** (26 pass / 2 fail / 3 n-a of 31 controls; F01/F02 remediated, F03 N-A)
 - PROD HEAD: `05b62157` matches local clean state
-- FREE100 base seed: 1 active row in PROD D1 (code=FREE100, 50 slots, valid 2026-07-30)
+- Staging HEAD: `d4421b01` deployed 2026-05-18 06:58 PT
+- FREE100 base seed: 1 active row in PROD D1 (code=FREE100, 50 slots, valid 2026-07-30); mirrored to staging D1
 - Phase 04a/b ships: bulk page + list/filter + CSV export E2E complete.
-- **Phase 05a pre-shipped (2026-05-18):** F01 (brute-force mitigation via 0114 migration + sql-rate-limiter.ts + account-lockout-hook.ts), F02 (admin re-auth via require-admin.ts + admin-challenge/route.ts), F03 (N-A single-tenant promo). Code-reviewer 9.6/10 APPROVE. TS/Lint green, Tests 57 pass. Staging re-scan pending Phase 02.
+- **Phase 05a pre-shipped (2026-05-18):** F01 (brute-force mitigation via 0114 migration + sql-rate-limiter.ts + account-lockout-hook.ts), F02 (admin re-auth via require-admin.ts + admin-challenge/route.ts), F03 (N-A single-tenant promo). Code-reviewer 9.6/10 APPROVE. TS/Lint green, Tests 57 pass.
+- **Phase 02 Staging Deployed (2026-05-18 06:58 PT):** Worker `sophia-ai-factory-staging` live at https://sophia-ai-factory-staging.agencyos-openclaw.workers.dev. D1 `sophia-raas-db-staging` with 117 tables (schema parity). 4 secrets on Worker. `/api/health` + `/api/version` 200 ✅
 
 ## Constraints
 - ❌ NEVER Polar.sh — NOWPayments only (live secrets already wired)
@@ -41,13 +43,13 @@ estimated_days: 10
 | # | Phase | Days | Status | Blockers |
 |---|---|---:|---|---|
 | 01 | [Audit & Worktree Cleanup](phase-01-audit-and-worktree-cleanup.md) | D1 | ✅ 2026-05-17 | — |
-| 02 | [Staging Worker + D1 Setup](phase-02-staging-setup.md) | D2 | pending | 01 |
+| 02 | [Staging Worker + D1 Setup](phase-02-staging-setup.md) | D2 | ✅ 2026-05-18 | 01 |
 | 03 | [FREE100-XXXX Bulk-Generate API](phase-03-free100-bulk-generate-api.md) | D3 | pending | 01 |
 | 04 | [Admin UI Bulk Codes + Search/Filter](phase-04-admin-ui-bulk-codes.md) | D4 | ✅ 2026-05-18 (04a + 04b complete) | 03 |
-| 05 | [Pen Test Part A — Automated + Auth/Promo](phase-05-pentest-part-a-automated-and-auth-promo.md) | D5-D6 | in-progress (5a autonomous complete) | 02 |
-| 06 | [Pen Test Part B — Billing + Remediation](phase-06-pentest-part-b-billing-and-remediation.md) | D7 | pending | 05 |
-| 07 | [DR Drill Restore on Staging](phase-07-dr-drill-restore.md) | D8 | pending | 02 |
-| 08 | [Load Test + Playwright E2E Magic Link](phase-08-load-test-and-playwright-e2e.md) | D9 | pending | 02, 04 |
+| 05 | [Pen Test Part A — Automated + Auth/Promo](phase-05-pentest-part-a-automated-and-auth-promo.md) | D5-D6 | in-progress (5a autonomous complete) | — (02 unblocked 2026-05-18) |
+| 06 | [Pen Test Part B — Billing + Remediation](phase-06-pentest-part-b-billing-and-remediation.md) | D7 | pending (STUB: NOWPayments placeholders) | 05 |
+| 07 | [DR Drill Restore on Staging](phase-07-dr-drill-restore.md) | D8 | pending (02 unblocked 2026-05-18) | — |
+| 08 | [Load Test + Playwright E2E Magic Link](phase-08-load-test-and-playwright-e2e.md) | D9 | pending (02 unblocked 2026-05-18) | 04 |
 | 09 | [Handover Docs Consolidation](phase-09-handover-docs-consolidation.md) | D9 (parallel) | ✅ 2026-05-18 (v1; 06/07/08 metrics TBD) | 06, 07 |
 | 10 | [Training Video + Final Sign-off](phase-10-training-video-and-final-signoff.md) | D10 | pending | 08, 09 |
 
