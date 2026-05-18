@@ -6,9 +6,13 @@
 import { describe, it, expect } from 'vitest';
 import {
   evaluateActivationReminderEmails,
+  evaluateToolsNudgeEmails,
+  evaluateReEngagementD14Emails,
   evaluateWinBackEmails,
   evaluateAffiliateLifecycleEmails,
   type ActivationMilestones,
+  type ToolsNudgeMilestones,
+  type ReEngagementD14Milestones,
   type WinBackMilestones,
   type AffiliateMilestones,
 } from '@/forest/email/lifecycle-email-rules';
@@ -56,6 +60,96 @@ describe('evaluateActivationReminderEmails', () => {
       signupAt: NOW - 5 * DAY,
     };
     expect(evaluateActivationReminderEmails(m, NOW)).toHaveLength(0);
+  });
+});
+
+describe('evaluateToolsNudgeEmails', () => {
+  const base: ToolsNudgeMilestones = {
+    signupAt: NOW - 4 * DAY,
+    firstLoginAt: NOW - 3 * DAY,
+    firstVideoCreatedAt: NOW - 2 * DAY,
+    ownerFullName: 'Alex',
+    locale: 'en',
+  };
+
+  it('emits tools-nudge at Day 4 when user shipped first video', () => {
+    const decisions = evaluateToolsNudgeEmails(base, NOW);
+    expect(decisions).toHaveLength(1);
+    expect(decisions[0].template).toBe('tools-nudge');
+    expect(decisions[0].payload).toMatchObject({ ownerFullName: 'Alex', locale: 'en' });
+  });
+
+  it('skips when user never logged in', () => {
+    const m = { ...base, firstLoginAt: null };
+    expect(evaluateToolsNudgeEmails(m, NOW)).toHaveLength(0);
+  });
+
+  it('skips when user has no first video', () => {
+    const m = { ...base, firstVideoCreatedAt: null };
+    expect(evaluateToolsNudgeEmails(m, NOW)).toHaveLength(0);
+  });
+
+  it('skips before Day 3.9 (too early)', () => {
+    const m = { ...base, signupAt: NOW - 3 * DAY };
+    expect(evaluateToolsNudgeEmails(m, NOW)).toHaveLength(0);
+  });
+
+  it('skips after Day 5 (too late)', () => {
+    const m = { ...base, signupAt: NOW - 6 * DAY };
+    expect(evaluateToolsNudgeEmails(m, NOW)).toHaveLength(0);
+  });
+
+  it('emits VN payload when locale starts with vi', () => {
+    const decisions = evaluateToolsNudgeEmails({ ...base, locale: 'vi' }, NOW);
+    expect(decisions[0].payload).toMatchObject({ locale: 'vi' });
+  });
+});
+
+describe('evaluateReEngagementD14Emails', () => {
+  const base: ReEngagementD14Milestones = {
+    signupAt: NOW - 14 * DAY,
+    lastActivityAt: NOW - 8 * DAY,
+    subscriptionActive: true,
+    ownerFullName: 'Alex',
+    locale: 'en',
+  };
+
+  it('emits re-engagement at Day 14 when quiet ≥7d and active sub', () => {
+    const decisions = evaluateReEngagementD14Emails(base, NOW);
+    expect(decisions).toHaveLength(1);
+    expect(decisions[0].template).toBe('re-engagement-d14');
+    expect(decisions[0].payload).toMatchObject({
+      ownerFullName: 'Alex',
+      locale: 'en',
+      daysSinceLastActivity: 8,
+    });
+  });
+
+  it('skips if subscription not active', () => {
+    const m = { ...base, subscriptionActive: false };
+    expect(evaluateReEngagementD14Emails(m, NOW)).toHaveLength(0);
+  });
+
+  it('skips if active in last 7 days (quiet < 7d)', () => {
+    const m = { ...base, lastActivityAt: NOW - 3 * DAY };
+    expect(evaluateReEngagementD14Emails(m, NOW)).toHaveLength(0);
+  });
+
+  it('skips before Day 13.9 (too early)', () => {
+    const m = { ...base, signupAt: NOW - 13 * DAY };
+    expect(evaluateReEngagementD14Emails(m, NOW)).toHaveLength(0);
+  });
+
+  it('skips after Day 15 (too late)', () => {
+    const m = { ...base, signupAt: NOW - 16 * DAY };
+    expect(evaluateReEngagementD14Emails(m, NOW)).toHaveLength(0);
+  });
+
+  it('falls back to signupAt when lastActivityAt is null (user never active)', () => {
+    const m = { ...base, lastActivityAt: null };
+    const decisions = evaluateReEngagementD14Emails(m, NOW);
+    expect(decisions).toHaveLength(1);
+    expect(decisions[0].payload).toMatchObject({ daysSinceLastActivity: 14 });
   });
 });
 

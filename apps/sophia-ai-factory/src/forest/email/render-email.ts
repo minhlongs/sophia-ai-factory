@@ -15,6 +15,8 @@ import { renderOnboardingNudge, type OnboardingNudgeData } from './templates/onb
 import { renderFirstWeekSummary, type FirstWeekSummaryData } from './templates/first-week-summary';
 import { renderTierUpgrade, type TierUpgradeData } from './templates/tier-upgrade';
 import { renderActivationReminder, type ActivationReminderData } from './templates/activation-reminder';
+import { renderToolsNudge, type ToolsNudgeData } from './templates/tools-nudge';
+import { renderReEngagementD14, type ReEngagementD14Data } from './templates/re-engagement-d14';
 import { renderWinBack, type WinBackData } from './templates/win-back';
 import { renderAffiliateWelcome, type AffiliateWelcomeData } from './templates/affiliate-welcome';
 import { renderAffiliateDay1Tutorial, type AffiliateDay1Data } from './templates/affiliate-day1-tutorial';
@@ -26,6 +28,8 @@ export type TemplateKey =
   | 'first-week-summary'
   | 'tier-upgrade'
   | 'activation-reminder'
+  | 'tools-nudge'
+  | 're-engagement-d14'
   | 'win-back'
   | 'affiliate-welcome'
   | 'affiliate-day1-tutorial'
@@ -37,6 +41,8 @@ export type TemplateDataMap = {
   'first-week-summary': FirstWeekSummaryData;
   'tier-upgrade': TierUpgradeData;
   'activation-reminder': ActivationReminderData;
+  'tools-nudge': ToolsNudgeData;
+  're-engagement-d14': ReEngagementD14Data;
   'win-back': WinBackData;
   'affiliate-welcome': AffiliateWelcomeData;
   'affiliate-day1-tutorial': AffiliateDay1Data;
@@ -64,6 +70,10 @@ export function renderEmail<K extends TemplateKey>(
       return renderTierUpgrade(data as TierUpgradeData);
     case 'activation-reminder':
       return renderActivationReminder(data as ActivationReminderData);
+    case 'tools-nudge':
+      return renderToolsNudge(data as ToolsNudgeData);
+    case 're-engagement-d14':
+      return renderReEngagementD14(data as ReEngagementD14Data);
     case 'win-back':
       return renderWinBack(data as WinBackData);
     case 'affiliate-welcome':
