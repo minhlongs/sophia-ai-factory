@@ -21,6 +21,7 @@ import { injectCryptoDisclaimer } from './crypto-caption-injector';
 import { isChannelBannedForCrypto } from '@/seed/config/crypto-banned-channels';
 import { translateCaption } from '@/lib/i18n/caption-translator';
 import { getChannelCaptionRule } from '@/lib/i18n/channel-caption-rules';
+import { logger } from '@/seed/utils/logger-utility';
 
 export type ChannelResultStatus = 'success' | 'skipped' | 'failed';
 
@@ -162,7 +163,7 @@ export async function publishToBundle(input: BundlePublishInput): Promise<Bundle
       });
 
       if (translateResult.warning) {
-        console.warn(`[bundle-publisher] ${provider}: ${translateResult.warning}`);
+        logger.warn(`[bundle-publisher] ${provider}: ${translateResult.warning}`);
       }
       channelCaption = translateResult.caption;
     } else {

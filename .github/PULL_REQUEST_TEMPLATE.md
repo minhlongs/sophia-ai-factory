@@ -10,6 +10,17 @@ Required reading: apps/sophia-ai-factory/.claude/rules/sophia-deploy-verify.md
 
 -
 
+## Doctrine compliance (Sophia v1.28.1 — REJECT PRs that violate)
+
+- [ ] No Polar.sh code/config/docs added (Polar is REJECTED for this product)
+- [ ] No operator-side third-party setup gate introduced (BYOK pattern preserved)
+- [ ] Tier values are UPPERCASE (`BASIC | PREMIUM | ENTERPRISE | MASTER`)
+- [ ] No `:any` in production code; no `console.*` outside `seed/utils/logger-utility` + `sdk/examples/`
+- [ ] No banned imports (`@/lib/auth`, `@/lib/subscription`, `@/lib/unified-tier-config`, `@/lib/tier-gate`)
+- [ ] 4-layer arch direction respected (`seed → tree → forest → land`, never reverse — see `.claude/rules/cross-layer-orchestration.md`)
+- [ ] i18n keys exist in BOTH `messages/vi.json` AND `messages/en.json` (Rule 8)
+- [ ] Zod validation on all new API inputs
+
 ## Scope
 
 - [ ] **Code** — `src/**`

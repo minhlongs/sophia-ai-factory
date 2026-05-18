@@ -15,6 +15,7 @@
 
 import { z } from 'zod'
 import { withTimeout } from '@/tree/byok/with-timeout'
+import { logger } from '@/seed/utils/logger-utility'
 import { enforceCharCap } from './channel-caption-rules'
 
 // ---------------------------------------------------------------------------
@@ -149,7 +150,7 @@ Rules:
 
     if (!res.ok) {
       const err = (await res.json().catch(() => ({}))) as { error?: { message?: string } }
-      console.warn(
+      logger.warn(
         `[caption-translator] OpenRouter error ${res.status}: ${err.error?.message ?? 'unknown'}`,
       )
       return null
@@ -159,7 +160,7 @@ Rules:
     const text = data.choices?.[0]?.message?.content?.trim()
     return text ?? null
   } catch (err) {
-    console.warn(
+    logger.warn(
       `[caption-translator] OpenRouter call failed: ${err instanceof Error ? err.message : String(err)}`,
     )
     return null
@@ -221,7 +222,7 @@ export async function translateCaption(
         }
       }
     } catch (err) {
-      console.warn(`[caption-translator] KV get failed: ${err instanceof Error ? err.message : String(err)}`)
+      logger.warn(`[caption-translator] KV get failed: ${err instanceof Error ? err.message : String(err)}`)
       // Continue to LLM path
     }
   }
@@ -241,7 +242,7 @@ export async function translateCaption(
   // Write to KV cache (fire-and-forget; don't block publish on cache write failure)
   if (kv) {
     kv.put(cacheKey, translated, { expirationTtl: CACHE_TTL_SECONDS }).catch((err: unknown) => {
-      console.warn(`[caption-translator] KV put failed: ${err instanceof Error ? err.message : String(err)}`)
+      logger.warn(`[caption-translator] KV put failed: ${err instanceof Error ? err.message : String(err)}`)
     })
   }
 
