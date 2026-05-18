@@ -12,7 +12,7 @@ estimated_days: 10
 
 **Goal:** Ship compliance-grade FREE100-XXXX bulk codes + full pen test + DR drill + load test + client handover package. Push honest 10-layer score from 87.5/100 → 92-94/100 (doctrine ceiling locks higher).
 
-**Progress:** 3/10 phases (30%) — Phase 01 audit complete 2026-05-17; Phase 03 code complete 2026-05-18; Phase 04 MVP (04a) complete 2026-05-18 (04b enhancement deferred).
+**Progress:** 4/10 phases (40%) — Phase 01 audit complete 2026-05-17; Phase 03 code complete 2026-05-18; Phase 04 MVP (04a) complete 2026-05-18 (04b deferred); Phase 09 v1 handover docs complete 2026-05-18.
 
 **Brainstorm:** [reports/brainstorm.md](reports/brainstorm.md)
 **Production:** https://sophia.agencyos.network (HEAD `05b62157`)
@@ -47,7 +47,7 @@ estimated_days: 10
 | 06 | [Pen Test Part B — Billing + Remediation](phase-06-pentest-part-b-billing-and-remediation.md) | D7 | pending | 05 |
 | 07 | [DR Drill Restore on Staging](phase-07-dr-drill-restore.md) | D8 | pending | 02 |
 | 08 | [Load Test + Playwright E2E Magic Link](phase-08-load-test-and-playwright-e2e.md) | D9 | pending | 02, 04 |
-| 09 | [Handover Docs Consolidation](phase-09-handover-docs-consolidation.md) | D9 (parallel) | pending | 06, 07 |
+| 09 | [Handover Docs Consolidation](phase-09-handover-docs-consolidation.md) | D9 (parallel) | ✅ 2026-05-18 (v1; 06/07/08 metrics TBD) | 06, 07 |
 | 10 | [Training Video + Final Sign-off](phase-10-training-video-and-final-signoff.md) | D10 | pending | 08, 09 |
 
 ## Key Dependencies
