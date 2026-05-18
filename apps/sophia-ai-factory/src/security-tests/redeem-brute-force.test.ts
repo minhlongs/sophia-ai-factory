@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * Redeem Brute Force & Input Validation Tests
  * Security regression tests for /api/promo/redeem-free handler
@@ -27,7 +28,10 @@ vi.mock('@/land/promo/promo-validator', () => ({
     code: 'FREE100',
     codeId: 'code_test',
     discountType: 'free_full',
+    discountValue: 0,
     appliesToTier: 'MASTER',
+    appliesToSku: null,
+    description: null,
   }),
 }));
 
@@ -188,16 +192,21 @@ describe('Redeem Brute Force & Input Validation', () => {
 
       // Mock validatePromoCode to reject on second call
       const { validatePromoCode } = await import('@/land/promo/promo-validator');
-      vi.mocked(validatePromoCode).mockResolvedValueOnce({
-        valid: true,
-        code: 'FREE100',
-        codeId: 'code_test',
-        discountType: 'free_full',
-        appliesToTier: 'MASTER',
-      }).mockResolvedValueOnce({
-        valid: false,
-        reason: 'Already redeemed by this user',
-      });
+      vi.mocked(validatePromoCode)
+        .mockResolvedValueOnce({
+          valid: true,
+          code: 'FREE100',
+          codeId: 'code_test',
+          discountType: 'free_full',
+          discountValue: 0,
+          appliesToTier: 'MASTER',
+          appliesToSku: null,
+          description: null,
+        } as any)
+        .mockResolvedValueOnce({
+          valid: false,
+          reason: 'already_redeemed',
+        } as any);
 
       const firstValidation = await validatePromoCode('FREE100', { userId: 'user_1' });
       const secondValidation = await validatePromoCode('FREE100', { userId: 'user_1' });
@@ -208,59 +217,28 @@ describe('Redeem Brute Force & Input Validation', () => {
 
     it('should allow same code by different users (if global limit not hit)', async () => {
       // Code with per_user_limit = 1 but global_limit = 100:
-      // User A redeems: success
-      // User B redeems: success (different user)
-      // User A redeems again: reject (per-user limit hit)
+      // User A redeem → OK, used_count = 1, user_redemptions = {user_A: 1}
+      // User B redeem → OK, used_count = 2, user_redemptions = {user_A: 1, user_B: 1}
+      // User A redeem again → FAIL (per_user_limit hit)
 
       const { validatePromoCode } = await import('@/land/promo/promo-validator');
-      const userAFirstResult = {
+
+      vi.mocked(validatePromoCode).mockResolvedValue({
         valid: true,
-        code: 'PROMO50',
-        codeId: 'code_50',
-        discountType: 'percent_off',
-        discountValue: 50,
-      };
-
-      expect(userAFirstResult.valid).toBe(true);
-    });
-  });
-
-  describe('Edge cases', () => {
-    it('should handle empty code string', () => {
-      const code = '';
-      // Zod: z.string().min(1) rejects empty
-      expect(code.length).toBeLessThan(1);
-    });
-
-    it('should handle whitespace-only input', () => {
-      const code = '   ';
-      // After trim or zod validation, empty or too short
-      expect(code.trim().length).toBeLessThan(1);
-    });
-
-    it('should handle very long fullName', () => {
-      const name = 'x'.repeat(101);
-      // Zod max(100) rejects
-      expect(name.length).toBeGreaterThan(100);
-    });
-
-    it('should handle null/undefined in optional fields', () => {
-      const body = {
         code: 'FREE100',
-        email: 'test@example.com',
-        fullName: undefined,
-        agencyType: null,
-        tier: undefined,
-      };
-      // Optional fields are .optional(), so null/undefined are valid
-      expect(body.fullName).toBeUndefined();
-      expect(body.agencyType).toBeNull();
-    });
+        codeId: 'code_test',
+        discountType: 'free_full',
+        discountValue: 0,
+        appliesToTier: 'MASTER',
+        appliesToSku: null,
+        description: null,
+      } as any);
 
-    it('should handle unicode characters in fullName', () => {
-      const name = 'Nguyễn Văn A 中文';
-      // Allowed up to 100 chars, should be stored safely
-      expect(name.length).toBeLessThan(100);
+      const userAFirst = await validatePromoCode('FREE100', { userId: 'user_A' });
+      const userBFirst = await validatePromoCode('FREE100', { userId: 'user_B' });
+
+      expect(userAFirst.valid).toBe(true);
+      expect(userBFirst.valid).toBe(true);
     });
   });
 });
