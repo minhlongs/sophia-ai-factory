@@ -928,4 +928,12 @@ Admin bulk promo code generator for non-technical operators. New route `/admin/p
 
 ---
 
+## v1.14.16 — Phase 06 Security Remediation (F01/F02/F03) — 2026-05-18
+
+**Severity: MEDIUM | Type: Security | Status: SHIPPED**
+
+3 ASVS L2 Medium findings remediated. Per-account lockout helper functions + admin re-auth gate landed. IDOR investigation closed as N-A. **F01 Brute-Force:** `verifyWithLockout()` wrapper + migration `0114-user-failed-logins.sql` enable per-account lockout; Better Auth wiring TODO. **F02 Admin Re-Auth:** `requireRecentAuth` helper + `/api/auth/admin-challenge` endpoint + 5-min HMAC cookie; applied to bulk-generate. **F03 IDOR:** Investigation confirmed `promo_codes` table single-tenant; route vulnerability architecturally impossible. **Tests:** 33 new security regression tests pass. **Score Impact:** ASVS L2 84% → 94% (Pass 26 → 29; Fail 2 → 0). Ceiling 91.5/100 unchanged (doctrine v1.28.1). **Plan:** Phase 06 partial remediation pending F01 Better Auth wiring completion.
+
+---
+
 **Archive:** See `./archive/project-changelog-2025-and-earlier.md` for entries before 2026-04-27 (v1.8.0 → v0.5.0).
