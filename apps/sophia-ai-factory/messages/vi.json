@@ -1513,6 +1513,8 @@
       "active": "Đang hoạt động"
     },
     "promoCodes": {
+      "title": "Quản lý mã khuyến mãi",
+      "subtitle": "Quản lý mã giảm giá và mã dùng thử miễn phí",
       "bulk": {
         "pageTitle": "Tạo mã hàng loạt",
         "pageSubtitle": "Sinh nhiều mã FREE100-XXXX cho chiến dịch marketing. Mỗi mã dùng 1 lần, cấp gói Master.",
@@ -1535,6 +1537,32 @@
         "codeTable": "Mã đã tạo",
         "bulkButton": "Tạo mã hàng loạt",
         "backToList": "Quay lại danh sách"
+      },
+      "list": {
+        "searchPlaceholder": "Tìm theo mã (vd FREE100)…",
+        "filterStatusLabel": "Trạng thái",
+        "filterTierLabel": "Gói",
+        "filterStatusAll": "Tất cả",
+        "filterStatusActive": "Đang hoạt động",
+        "filterStatusDisabled": "Tắt",
+        "filterStatusExpired": "Hết hạn",
+        "filterTierAll": "Tất cả gói",
+        "pageLabel": "Trang",
+        "pageOf": "trên",
+        "prev": "Trước",
+        "next": "Sau",
+        "noResults": "Không tìm thấy mã phù hợp",
+        "exportCsv": "Xuất CSV tất cả",
+        "exporting": "Đang xuất…",
+        "resultsCount": "{count} mã",
+        "columnCode": "Mã",
+        "columnTier": "Gói",
+        "columnStatus": "Trạng thái",
+        "columnUsed": "Đã dùng",
+        "columnMaxUses": "Tối đa",
+        "columnExpires": "Hết hạn",
+        "columnCreated": "Tạo lúc",
+        "neverExpires": "Vĩnh viễn"
       }
     }
   },

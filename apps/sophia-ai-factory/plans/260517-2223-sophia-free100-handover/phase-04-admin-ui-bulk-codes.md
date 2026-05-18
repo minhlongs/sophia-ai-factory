@@ -10,7 +10,7 @@
 
 ## Overview
 - **Priority:** P0 (must exist for client to manage 1000-code campaign)
-- **Status:** pending
+- **Status:** ✅ COMPLETE 2026-05-18 (Phase 04a shipped 2026-05-18; Phase 04b shipped 2026-05-18)
 - **Duration:** ~1 day (D4)
 - **Brief:** Two new admin pages: `bulk` (generate + CSV) and `list` (search/filter/paginate). Both bilingual (VI primary, EN secondary). Server Actions for mutations per Sophia code standards.
 
@@ -223,13 +223,17 @@ npm run deploy:staging
 - [x] TS check 0 errors, lint 0 errors, i18n validate 0 missing (1,097 keys total)
 - [~] Deploy staging + manual smoke — deferred (blocked on user Phase 02 secrets + deploy:staging)
 
-## Todo List (Phase 04b — follow-up, deferred)
-- [ ] List page enhanced search by code prefix
-- [ ] List page filter by status/tier/redemption count
-- [ ] List page pagination (50/page)
-- [ ] CSV export Server Action for filtered list (full export, not just current page)
-- [ ] Add `admin.promoCodes.list.*` i18n keys
-- [ ] Full authenticated Playwright flow (login → bulk → CSV download → reset)
+## Todo List (Phase 04b — enhancements, shipped 2026-05-18)
+- [x] List page enhanced search by code prefix
+- [x] List page filter by status/tier/redemption count
+- [x] List page pagination (50/page, search params)
+- [x] CSV export Server Action for filtered list (cursor pagination, 10k row limit)
+- [x] Add `admin.promoCodes.list.*` i18n keys (24 keys: title, search, filter, export, page, noResults, etc.)
+- [x] Full authenticated Playwright flow (login → list → filter → CSV export via Server Action)
+- [x] File split: extracted csv-export-action.ts, list-table-client.tsx
+- [x] i18n sync 04a + 04b polish (vi.ts + en.ts parity verified; 1,121 keys total)
+- [x] Timezone handling (expiresAt parsed server-side as UTC, displayed per locale)
+- [x] TS check 0 errors, lint 340 warnings (-1 improvement)
 
 ## Success Criteria
 - Bulk page generates N codes and downloads valid CSV
