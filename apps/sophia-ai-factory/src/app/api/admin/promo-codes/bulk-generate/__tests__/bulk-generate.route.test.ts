@@ -9,13 +9,27 @@ vi.mock("@/seed/security/rate-limiter", () => ({
   rateLimit: vi.fn(),
 }));
 
-vi.mock("@/land/promo/bulk-generator", () => ({
-  bulkGeneratePromoCodes: vi.fn(),
-}));
+vi.mock("@/land/promo/bulk-generator", () => {
+  class BulkIdempotencyConflict extends Error {
+    readonly priorBatchId: string;
+    constructor(priorBatchId: string) {
+      super(`Duplicate request — prior batchId: ${priorBatchId}`);
+      this.name = "BulkIdempotencyConflict";
+      this.priorBatchId = priorBatchId;
+    }
+  }
+  return {
+    bulkGeneratePromoCodes: vi.fn(),
+    BulkIdempotencyConflict,
+  };
+});
 
 import { requireAdmin } from "@/seed/auth/require-admin";
 import { rateLimit } from "@/seed/security/rate-limiter";
-import { bulkGeneratePromoCodes } from "@/land/promo/bulk-generator";
+import {
+  bulkGeneratePromoCodes,
+  BulkIdempotencyConflict,
+} from "@/land/promo/bulk-generator";
 import { POST } from "../route";
 
 type ReqAuth = Awaited<ReturnType<typeof requireAdmin>>;
@@ -35,11 +49,14 @@ const STUB_RESULT: BulkResult = {
   generatedAt: 1_700_000_000_000,
 };
 
-function buildRequest(body: unknown): NextRequest {
+function buildRequest(
+  body: unknown,
+  extraHeaders: Record<string, string> = {},
+): NextRequest {
   return new NextRequest("http://localhost/api/admin/promo-codes/bulk-generate", {
     method: "POST",
     body: typeof body === "string" ? body : JSON.stringify(body),
-    headers: { "content-type": "application/json" },
+    headers: { "content-type": "application/json", ...extraHeaders },
   });
 }
 
@@ -113,7 +130,36 @@ describe("POST /api/admin/promo-codes/bulk-generate", () => {
       tier: "MASTER",
       description: "spring",
       adminId: "admin-1",
+      idempotencyKey: undefined,
     });
+  });
+
+  it("passes Idempotency-Key header through to generator", async () => {
+    const resp = await POST(
+      buildRequest(
+        { baseCode: "FREE100", count: 1, tier: "MASTER" },
+        { "Idempotency-Key": "client-abc-123" },
+      ),
+    );
+    expect(resp.status).toBe(200);
+    expect(bulkGeneratePromoCodes).toHaveBeenCalledWith(
+      expect.objectContaining({ idempotencyKey: "client-abc-123" }),
+    );
+  });
+
+  it("returns 409 with priorBatchId when BulkIdempotencyConflict thrown", async () => {
+    vi.mocked(bulkGeneratePromoCodes).mockRejectedValueOnce(
+      new BulkIdempotencyConflict("bulk-PRIOR-XX"),
+    );
+    const resp = await POST(
+      buildRequest(
+        { baseCode: "FREE100", count: 1, tier: "MASTER" },
+        { "Idempotency-Key": "dup-key" },
+      ),
+    );
+    expect(resp.status).toBe(409);
+    const json = (await resp.json()) as { priorBatchId?: string };
+    expect(json.priorBatchId).toBe("bulk-PRIOR-XX");
   });
 
   it("returns 500 when generator throws", async () => {

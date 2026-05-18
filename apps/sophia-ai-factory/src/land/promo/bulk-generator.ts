@@ -1,31 +1,24 @@
 /**
  * Bulk-generate per-user `FREE100-{8-char base32}` promo codes for marketing campaigns.
  *
- * Wraps existing `createCode` from promo-repo and adds:
- *   - cryptographically-random unique suffix per code
- *   - collision detection vs existing `promo_codes` rows (3-retry budget)
- *   - admin_audit_log row per batch (forensic trail)
- *   - CSV string suitable for direct download by admin UI
- *
- * Failure model (v1):
- *   D1 lacks multi-statement transactions in the JS API. If `createCode` fails
- *   midway (e.g. row 537/1000), prior 536 rows persist as `active` codes WITHOUT
- *   an audit_log row written (audit_log is appended only AFTER the loop). Blast
- *   radius bounded by: collision retry budget, count cap (1000), admin-only gate,
- *   rate-limit (5/admin/hour). Recovery: operator queries promo_codes by
- *   metadata.batchId prefix and disables the partial batch manually.
- *   Long-term fix: switch to `db.batch()` chunks (Phase 03b).
+ * Phase 03b improvements over v1:
+ *   - Single SELECT WHERE code IN (...) for collision check (was N round-trips)
+ *   - db.batch() INSERTs in chunks of 50 (was N sequential .run()s)
+ *   - Idempotency-Key support — duplicate request within 60s throws
+ *     `BulkIdempotencyConflict` with prior batchId
  *
  * @module land/promo/bulk-generator
  */
 
 import { getD1Raw } from "@/seed/db/client";
 import { randomBase32 } from "@/seed/utils/random-base32";
-import { createCode, getCodeByCode } from "./promo-repo";
+import { getCodeByCode } from "./promo-repo";
 import type { PromoCodeRow } from "./promo-types";
 
 const SUFFIX_LEN = 8;
-const COLLISION_RETRY = 3;
+const BATCH_CHUNK = 50;
+const IDEMPOTENCY_WINDOW_SEC = 60;
+const COLLISION_RETRY_BUDGET = 3;
 
 export interface BulkGenerateInput {
   baseCode: "FREE100";
@@ -38,6 +31,8 @@ export interface BulkGenerateInput {
   description?: string;
   /** Admin user id (from requireAdmin gate) — recorded in created_by_admin_id + audit log. */
   adminId: string;
+  /** Idempotency-Key header value — duplicate within 60s rejected with 409. */
+  idempotencyKey?: string;
 }
 
 export interface BulkGenerateResult {
@@ -46,6 +41,16 @@ export interface BulkGenerateResult {
   csv: string;
   batchId: string;
   generatedAt: number;
+}
+
+/** Thrown when an in-flight or recent duplicate request (same Idempotency-Key + admin) is found. */
+export class BulkIdempotencyConflict extends Error {
+  readonly priorBatchId: string;
+  constructor(priorBatchId: string) {
+    super(`Duplicate request — prior batchId: ${priorBatchId}`);
+    this.name = "BulkIdempotencyConflict";
+    this.priorBatchId = priorBatchId;
+  }
 }
 
 export async function bulkGeneratePromoCodes(
@@ -58,31 +63,27 @@ export async function bulkGeneratePromoCodes(
     throw new Error(`baseCode must be 'FREE100' (got ${input.baseCode})`);
   }
 
+  if (input.idempotencyKey) {
+    const prior = await findRecentIdempotentBatch(
+      input.adminId,
+      input.idempotencyKey,
+    );
+    if (prior) throw new BulkIdempotencyConflict(prior);
+  }
+
   const batchId = `bulk-${Date.now()}-${randomBase32(6)}`;
   const generatedAt = Date.now();
   const description = input.description ?? `Bulk ${batchId}`;
-  const codes: string[] = [];
-  const promoCodeIds: string[] = [];
 
-  for (let i = 0; i < input.count; i++) {
-    const code = await generateUniqueCode(input.baseCode);
-    const row: PromoCodeRow = await createCode(
-      {
-        code,
-        description,
-        discountType: "free_full",
-        discountValue: 100,
-        appliesToTier: input.tier,
-        maxUses: 1,
-        maxUsesPerUser: 1,
-        validUntil: input.validUntil,
-        metadata: { batchId },
-      },
-      input.adminId,
-    );
-    codes.push(code);
-    promoCodeIds.push(row.id);
-  }
+  const codes = await generateUniqueCodes(input.baseCode, input.count);
+  const promoCodeIds = await batchInsertCodes({
+    codes,
+    description,
+    appliesToTier: input.tier,
+    validUntil: input.validUntil,
+    adminId: input.adminId,
+    batchId,
+  });
 
   await writeAuditLog({
     adminId: input.adminId,
@@ -90,22 +91,134 @@ export async function bulkGeneratePromoCodes(
     count: input.count,
     tier: input.tier,
     validUntil: input.validUntil,
+    idempotencyKey: input.idempotencyKey,
   });
 
   const csv = buildCsv(codes, input.tier, input.validUntil, description);
-
   return { codes, promoCodeIds, csv, batchId, generatedAt };
 }
 
-async function generateUniqueCode(baseCode: string): Promise<string> {
-  for (let attempt = 0; attempt < COLLISION_RETRY; attempt++) {
-    const candidate = `${baseCode}-${randomBase32(SUFFIX_LEN)}`;
-    const existing = await getCodeByCode(candidate);
-    if (!existing) return candidate;
+/**
+ * Generate N unique codes. Uses a single SELECT WHERE code IN (?, ?, ...) to detect
+ * collisions in one round-trip. If any collide, regenerate just those and re-check
+ * (up to COLLISION_RETRY_BUDGET passes total).
+ */
+async function generateUniqueCodes(
+  baseCode: string,
+  count: number,
+): Promise<string[]> {
+  let candidates: string[] = makeCandidates(baseCode, count);
+  for (let pass = 0; pass < COLLISION_RETRY_BUDGET; pass++) {
+    const collisions = await findExistingCodes(candidates);
+    if (collisions.size === 0) return candidates;
+    // Replace collided positions with fresh candidates and retry
+    candidates = candidates.map((c) =>
+      collisions.has(c) ? `${baseCode}-${randomBase32(SUFFIX_LEN)}` : c,
+    );
   }
-  throw new Error(
-    `collision retry exhausted (${COLLISION_RETRY} attempts) for base '${baseCode}'`,
-  );
+  // Final check after last regeneration
+  const finalCollisions = await findExistingCodes(candidates);
+  if (finalCollisions.size > 0) {
+    throw new Error(
+      `collision retry exhausted (${COLLISION_RETRY_BUDGET} passes); ${finalCollisions.size} unresolvable collisions`,
+    );
+  }
+  return candidates;
+}
+
+function makeCandidates(baseCode: string, count: number): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  while (out.length < count) {
+    const c = `${baseCode}-${randomBase32(SUFFIX_LEN)}`;
+    if (seen.has(c)) continue; // intra-batch dedup (extremely rare at 40-bit entropy)
+    seen.add(c);
+    out.push(c);
+  }
+  return out;
+}
+
+/**
+ * Returns the set of `codes` that already exist in promo_codes.
+ * Falls back to per-code lookup if the IN-clause is unsupported in test env.
+ */
+async function findExistingCodes(codes: string[]): Promise<Set<string>> {
+  if (codes.length === 0) return new Set();
+  const db = await getD1Raw();
+  try {
+    const placeholders = codes.map((_, i) => `?${i + 1}`).join(",");
+    const stmt = db
+      .prepare(`SELECT code FROM promo_codes WHERE code IN (${placeholders})`)
+      .bind(...codes);
+    const result = await stmt.all<{ code: string }>();
+    const rows = result.results ?? [];
+    return new Set(rows.map((r) => r.code));
+  } catch {
+    // Fallback for environments without IN-clause support (mocked tests)
+    const hits = new Set<string>();
+    for (const c of codes) {
+      const row = await getCodeByCode(c);
+      if (row) hits.add(c);
+    }
+    return hits;
+  }
+}
+
+interface BatchInsertInput {
+  codes: string[];
+  description: string;
+  appliesToTier: string;
+  validUntil?: number;
+  adminId: string;
+  batchId: string;
+}
+
+/**
+ * Insert N codes into promo_codes via D1 batch in chunks of 50.
+ * Returns the generated ids in the same order as `input.codes`.
+ */
+async function batchInsertCodes(input: BatchInsertInput): Promise<string[]> {
+  const db = await getD1Raw();
+  const nowSec = Math.floor(Date.now() / 1000);
+  const metadata = JSON.stringify({ batchId: input.batchId });
+  const ids: string[] = input.codes.map(() => randomHexId(16));
+
+  const insertSql = `INSERT INTO promo_codes
+    (id, code, description, discount_type, discount_value, applies_to_tier, applies_to_sku,
+     max_uses, max_uses_per_user, valid_from, valid_until, status, created_by_admin_id, created_at, metadata)
+    VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,'active',?12,?13,?14)`;
+
+  for (let i = 0; i < input.codes.length; i += BATCH_CHUNK) {
+    const slice = input.codes.slice(i, i + BATCH_CHUNK);
+    const idSlice = ids.slice(i, i + BATCH_CHUNK);
+    const statements = slice.map((code, j) =>
+      db
+        .prepare(insertSql)
+        .bind(
+          idSlice[j],
+          code,
+          input.description,
+          "free_full",
+          100,
+          input.appliesToTier,
+          null,
+          1,
+          1,
+          nowSec,
+          input.validUntil ?? null,
+          input.adminId,
+          nowSec,
+          metadata,
+        ),
+    );
+    await db.batch(statements);
+  }
+  return ids;
+}
+
+function randomHexId(bytes: number): string {
+  const arr = crypto.getRandomValues(new Uint8Array(bytes));
+  return Array.from(arr, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 interface AuditPayload {
@@ -114,6 +227,7 @@ interface AuditPayload {
   count: number;
   tier: string;
   validUntil?: number;
+  idempotencyKey?: string;
 }
 
 async function writeAuditLog(p: AuditPayload): Promise<void> {
@@ -131,10 +245,42 @@ async function writeAuditLog(p: AuditPayload): Promise<void> {
         count: p.count,
         tier: p.tier,
         validUntil: p.validUntil ?? null,
+        idempotencyKey: p.idempotencyKey ?? null,
       }),
       Math.floor(Date.now() / 1000),
     )
     .run();
+}
+
+/**
+ * Look up an audit_log row for this admin + idempotency-key within the dedup window.
+ * Returns the prior batchId if found, else null.
+ */
+async function findRecentIdempotentBatch(
+  adminId: string,
+  idempotencyKey: string,
+): Promise<string | null> {
+  const db = await getD1Raw();
+  const cutoff = Math.floor(Date.now() / 1000) - IDEMPOTENCY_WINDOW_SEC;
+  // payload is JSON-encoded; SQLite LIKE on the key-quoted substring is enough
+  // (batchId differs per invocation but idempotencyKey is constant for a retry).
+  const needle = `%"idempotencyKey":"${idempotencyKey.replaceAll('"', '""')}"%`;
+  const stmt = db
+    .prepare(
+      `SELECT payload FROM admin_audit_log
+       WHERE actor_user_id = ?1 AND action_type = 'promo_bulk_generate'
+         AND created_at >= ?2 AND payload LIKE ?3
+       ORDER BY created_at DESC LIMIT 1`,
+    )
+    .bind(adminId, cutoff, needle);
+  const row = await stmt.first<{ payload: string }>();
+  if (!row) return null;
+  try {
+    const parsed = JSON.parse(row.payload) as { batchId?: string };
+    return parsed.batchId ?? null;
+  } catch {
+    return null;
+  }
 }
 
 function buildCsv(
@@ -152,3 +298,6 @@ function buildCsv(
   );
   return [header, ...rows].join("\n");
 }
+
+// Re-export PromoCodeRow for callers that consumed it from v1
+export type { PromoCodeRow };
