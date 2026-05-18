@@ -1511,6 +1511,31 @@
       "status": "Trạng thái",
       "invited": "Đã mời",
       "active": "Đang hoạt động"
+    },
+    "promoCodes": {
+      "bulk": {
+        "pageTitle": "Tạo mã hàng loạt",
+        "pageSubtitle": "Sinh nhiều mã FREE100-XXXX cho chiến dịch marketing. Mỗi mã dùng 1 lần, cấp gói Master.",
+        "countLabel": "Số lượng mã",
+        "countHelper": "Từ 1 đến 1000 mã/lần",
+        "descriptionLabel": "Mô tả chiến dịch",
+        "descriptionPlaceholder": "Ví dụ: ra mắt tháng 5",
+        "expiresLabel": "Ngày hết hạn (tuỳ chọn)",
+        "submit": "Tạo mã",
+        "submitting": "Đang tạo…",
+        "successHeading": "Đã tạo {count} mã thành công",
+        "downloadCsv": "Tải xuống CSV",
+        "copyAll": "Sao chép tất cả",
+        "copied": "Đã sao chép",
+        "reset": "Tạo lô mới",
+        "errorTitle": "Tạo mã thất bại",
+        "errorRateLimit": "Đã đạt giới hạn 5 lần/giờ. Thử lại sau.",
+        "errorAuth": "Không có quyền truy cập.",
+        "errorGeneric": "Lỗi không xác định. Vui lòng thử lại.",
+        "codeTable": "Mã đã tạo",
+        "bulkButton": "Tạo mã hàng loạt",
+        "backToList": "Quay lại danh sách"
+      }
     }
   },
   "common": {

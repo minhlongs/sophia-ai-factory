@@ -1511,6 +1511,31 @@
       "status": "Status",
       "invited": "Invited",
       "active": "Active"
+    },
+    "promoCodes": {
+      "bulk": {
+        "pageTitle": "Bulk Generate Codes",
+        "pageSubtitle": "Generate many FREE100-XXXX codes for a marketing campaign. Each code is single-use and grants the Master tier.",
+        "countLabel": "Number of codes",
+        "countHelper": "Between 1 and 1000 codes per request",
+        "descriptionLabel": "Campaign description",
+        "descriptionPlaceholder": "e.g. May launch",
+        "expiresLabel": "Expiry date (optional)",
+        "submit": "Generate",
+        "submitting": "Generating…",
+        "successHeading": "Generated {count} codes successfully",
+        "downloadCsv": "Download CSV",
+        "copyAll": "Copy all",
+        "copied": "Copied",
+        "reset": "Start new batch",
+        "errorTitle": "Generation failed",
+        "errorRateLimit": "Rate limit hit (5/hour). Try again later.",
+        "errorAuth": "Not authorized.",
+        "errorGeneric": "Unknown error. Please retry.",
+        "codeTable": "Generated codes",
+        "bulkButton": "Bulk Generate",
+        "backToList": "Back to list"
+      }
     }
   },
   "common": {

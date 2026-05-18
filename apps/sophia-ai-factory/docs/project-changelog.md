@@ -856,4 +856,12 @@ Exposed existing `generateScript()` engine via `POST /api/scripts/generate` for 
 
 ---
 
+## v1.14.15 — Phase 04a Admin Bulk Promo UI MVP — 2026-05-18
+
+**Severity: LOW | Type: Feature | Status: SHIPPED**
+
+Admin bulk promo code generator for non-technical operators. New route `/admin/promo-codes/bulk` (server component + client form) enables generating CSV batches of promotional codes with configurable tier, usage limit, expiration. **Architecture:** Server page wraps client `BulkFormClient` component (210 LOC, Zod validation, React forms). Form validates: tier (enum select), usageLimit (1-10000), expiresAt (future date). Submission POSTs to server action `generateBulkPromoCodes()`, streams CSV download on success. **i18n:** +21 keys under `admin.promoCodes.bulk.*` (vi.json, en.json — parity verified). **UI Integration:** Bulk Generate button added to existing admin list header `/admin/promo-codes/page.tsx`. **Tests:** 1 Playwright contract test (`admin-promo-bulk.spec.ts`) covers form submission + CSV download. **Metrics:** Tests 4,457/4,457 pass (zero regression), TypeScript 0 errors, i18n 1,097 unique keys (+19). **Build:** ESLint baseline (340 warnings = existing). **Plan:** `plans/260517-2223-sophia-free100-handover/phase-04a`.
+
+---
+
 **Archive:** See `./archive/project-changelog-2025-and-earlier.md` for entries before 2026-04-27 (v1.8.0 → v0.5.0).
