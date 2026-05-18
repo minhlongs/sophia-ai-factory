@@ -28,7 +28,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { requireAdmin } from "@/seed/auth/require-admin";
+import { requireAdmin, requireRecentAuth } from "@/seed/auth/require-admin";
 import { rateLimit } from "@/seed/security/rate-limiter";
 import {
   bulkGeneratePromoCodes,
@@ -49,6 +49,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const auth = await requireAdmin(request);
   if (auth instanceof NextResponse) return auth;
   const { user: admin } = auth;
+
+  // F02: Re-authentication challenge (ASVS V3.5.1)
+  const recent = await requireRecentAuth(request);
+  if (!recent.ok) {
+    return NextResponse.json(
+      { error: 'recent_auth_required', reason: recent.reason },
+      { status: 401 },
+    );
+  }
 
   const rl = await rateLimit(admin.id, "promo_bulk_generate", 5, 3600);
   if (!rl.allowed) {
