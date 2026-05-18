@@ -25,14 +25,26 @@ vi.mock('@/seed/db/client', () => ({
   createServerClient: () => mockSupabase,
 }))
 
-// Mock crypto-utils
-vi.mock('@/tree/audit/crypto-utils', async () => {
-  const actual = await vi.importActual('@/tree/audit/crypto-utils')
+// Mock crypto-utils — M2 migration: production code now imports from seed/security/crypto-utils.
+// Both mocks needed: seed (canonical) + tree (back-compat re-export) for any remaining importers.
+vi.mock('@/seed/security/crypto-utils', async () => {
+  const actual = await vi.importActual('@/seed/security/crypto-utils')
   return {
     ...(actual as Record<string, unknown>),
     hmacSha256: vi.fn((data: string, secret: string) => {
       // Return consistent 64-char hex hash for testing
       // The real function returns 64 chars (SHA256 = 32 bytes = 64 hex chars)
+      return 'a'.repeat(64)
+    }),
+    timingSafeEqual: vi.fn((a: string, b: string) => a === b),
+  }
+})
+// Keep tree back-compat mock for any test helpers using the old path
+vi.mock('@/tree/audit/crypto-utils', async () => {
+  const actual = await vi.importActual('@/tree/audit/crypto-utils')
+  return {
+    ...(actual as Record<string, unknown>),
+    hmacSha256: vi.fn((data: string, secret: string) => {
       return 'a'.repeat(64)
     }),
     timingSafeEqual: vi.fn((a: string, b: string) => a === b),
@@ -168,7 +180,7 @@ describe('checkApiKey', () => {
 
   it('should return valid result for existing key', async () => {
     // Setup hmacSha256 mock to return consistent hash for signature verification
-    const { hmacSha256, timingSafeEqual } = await import('@/tree/audit/crypto-utils')
+    const { hmacSha256, timingSafeEqual } = await import('@/seed/security/crypto-utils')
     vi.mocked(hmacSha256).mockReturnValue('a'.repeat(64))
     vi.mocked(timingSafeEqual).mockReturnValue(true)
 
@@ -207,7 +219,7 @@ describe('checkApiKey', () => {
   })
 
   it('should return not-found for non-existent key', async () => {
-    const { hmacSha256, timingSafeEqual } = await import('@/tree/audit/crypto-utils')
+    const { hmacSha256, timingSafeEqual } = await import('@/seed/security/crypto-utils')
     vi.mocked(hmacSha256).mockReturnValue('a'.repeat(64))
     vi.mocked(timingSafeEqual).mockReturnValue(true)
 
@@ -227,7 +239,7 @@ describe('checkApiKey', () => {
   })
 
   it('should return expired for expired key', async () => {
-    const { hmacSha256, timingSafeEqual } = await import('@/tree/audit/crypto-utils')
+    const { hmacSha256, timingSafeEqual } = await import('@/seed/security/crypto-utils')
     vi.mocked(hmacSha256).mockReturnValue('a'.repeat(64))
     vi.mocked(timingSafeEqual).mockReturnValue(true)
 
@@ -260,7 +272,7 @@ describe('checkApiKey', () => {
   })
 
   it('should return revoked for revoked key', async () => {
-    const { hmacSha256, timingSafeEqual } = await import('@/tree/audit/crypto-utils')
+    const { hmacSha256, timingSafeEqual } = await import('@/seed/security/crypto-utils')
     vi.mocked(hmacSha256).mockReturnValue('a'.repeat(64))
     vi.mocked(timingSafeEqual).mockReturnValue(true)
 
