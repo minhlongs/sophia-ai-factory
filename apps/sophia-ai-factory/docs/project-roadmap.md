@@ -10,7 +10,9 @@ Sophia's architecture is already competitive. Gaps are in **monetization UX** (c
 
 ---
 
-## Status Snapshot (2026-05-15)
+## Status Snapshot (2026-05-18)
+
+**Phase 05a (2026-05-18)** — **Security Audit + Regression Tests** — ASVS L2 desk-review (31 controls: 26 Pass / 2 Fail / 3 N-A = 84% score). 3 Medium findings (F01/F02/F03) logged; 35 new security regression tests (brute-force, IDOR, privilege escalation patterns). Zero HIGH/CRITICAL vulns. Phase 06 roadmap updated. FREE100 handover progression → CHECKPOINT.
 
 **Wave 27 (2026-05-15)** ships **RaaS Global Multi-Channel** — 8-phase feature batch adds 10 affiliate networks (4 crypto + 6 SaaS), anti-scam/EPC scoring, one-click bundle publishing with geo-aware caption translation, unified revenue dashboard, per-jurisdiction crypto compliance, and per-channel cooldown protection. Score: 91.5 → 93/100. All 47 new tests pass. Deploy CF-direct verified.
 
