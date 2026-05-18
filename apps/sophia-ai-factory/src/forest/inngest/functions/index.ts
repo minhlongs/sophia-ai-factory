@@ -18,13 +18,13 @@ export { videoPublish } from './video-publish';
 export { publishExecute, publishTokenRefreshCron } from './publish-execute';
 
 // Affiliate offer sync cron (Phase 09)
-export { offerSyncCron } from '@/land/affiliates/offer-sync-cron';
+export { offerSyncCron } from '@/forest/jobs/offer-sync-cron';
 
 // Payout pipeline functions (Phase 13)
 export { conversionToLedger } from './conversion-to-ledger';
-export { pendingPromoterCron } from '@/land/payouts/pending-promoter-cron';
-export { payoutBatcher } from '@/land/payouts/payout-batcher';
-export { reconciliationCron } from '@/land/payouts/reconciliation';
+export { pendingPromoterCron } from '@/forest/jobs/pending-promoter-cron';
+export { payoutBatcher } from '@/forest/jobs/payout-batcher';
+export { reconciliationCron } from '@/forest/jobs/reconciliation';
 
 // Phase 11: storage tracker cron
 export { storageTrackerDaily } from '@/forest/quota/storage-tracker-cron';
