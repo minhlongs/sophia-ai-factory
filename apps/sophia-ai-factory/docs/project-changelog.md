@@ -1,6 +1,32 @@
 # Project Changelog
 
-**Last Updated:** 2026-05-15 | **Current Version:** 1.28.1
+**Last Updated:** 2026-05-17 | **Current Version:** 1.28.1
+
+---
+
+## Phase 01 Audit Complete — Baseline verified, stale worktree archived, 4 scripts salvaged (2026-05-17 23:05 PT)
+
+**Severity: MAINTENANCE | Type: Audit + cleanup | Status: COMPLETE (no code changes)**
+
+Completed Phase 01 of `plans/260517-2223-sophia-free100-handover/`. Canonical worktree verified at HEAD `05b62157`, all gates green: 4,446 tests pass, 0 lint errors, FREE100 promo seed active in PROD D1, NOWPayments secrets wired.
+
+**Key findings (logged to `docs/known-issues.md`):**
+- P2: `OPENNEXT_VERSION` hardcoded `"1.17.3"` vs `^1.19.5` in package.json (cosmetic metadata issue)
+- P2: 7 stale `POLAR_*` secrets in CF Worker (doctrine v1.28.1 rejects Polar for Sophia — should purge after code scan)
+- P2: 2 nested `vi.mock` calls + 4 anonymous k6 exports (test hygiene warnings)
+- P3: Authenticated dashboard E2E smoke deferred to Phase 08
+
+**Salvaged from stale worktree** (4 files now untracked in canon):
+1. `scripts/deploy-full-verified.sh` (32 lines) — wrap `npm run deploy:full` with browser gate (future Phase 08+)
+2. `scripts/verify-production-deploy.sh` (42 lines) — verify Worker serves current commit via `/api/version` SHA match
+3. `scripts/e2e-go-live-user-gap.sh` (33 lines) — strict prod E2E gate script
+4. `tests/e2e/go-live-user-gap.spec.ts` (75 lines) — Playwright spec: Better Auth sign-in → dashboard → video form submission
+
+All 4 made executable. Useful for Phase 08 (Playwright E2E) + Phase 10 (final smoke).
+
+**Cleanup:**
+- Stale worktree `~/sophia-ai-factory` archived to `~/sophia-ai-factory.archived-260517/` with `.archived/STOP-DO-NOT-USE` marker.
+- No blockers for Phase 02 (staging worker setup).
 
 ---
 

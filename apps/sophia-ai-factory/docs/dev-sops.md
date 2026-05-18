@@ -128,6 +128,11 @@ LIVE=$(curl -s https://sophia.agencyos.network/api/version | jq -r .shortSha)
 curl -sI https://sophia.agencyos.network | head -3   # HTTP/2 200
 ```
 
+**Optional helper scripts (salvaged 2026-05-17):**
+- `scripts/deploy-full-verified.sh` — wraps `npm run deploy:full` with browser gate (future phases)
+- `scripts/verify-production-deploy.sh` — verify Worker serves current commit via `/api/version` SHA match
+- `tests/e2e/go-live-user-gap.spec.ts` — Playwright E2E: Better Auth → dashboard → video form
+
 **Anti-patterns:**
 - ❌ `gh run list` — GitHub Actions disabled 2026-05-03 (workflow archived `.disabled`)
 - ❌ "Vercel auto-deployed" — project is CF Workers, no `vercel.json`
