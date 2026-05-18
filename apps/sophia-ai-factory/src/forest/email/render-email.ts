@@ -15,6 +15,7 @@ import { renderOnboardingNudge, type OnboardingNudgeData } from './templates/onb
 import { renderFirstWeekSummary, type FirstWeekSummaryData } from './templates/first-week-summary';
 import { renderTierUpgrade, type TierUpgradeData } from './templates/tier-upgrade';
 import { renderActivationReminder, type ActivationReminderData } from './templates/activation-reminder';
+import { renderSetupComplete, type SetupCompleteData } from './templates/setup-complete';
 import { renderToolsNudge, type ToolsNudgeData } from './templates/tools-nudge';
 import { renderReEngagementD14, type ReEngagementD14Data } from './templates/re-engagement-d14';
 import { renderWinBack, type WinBackData } from './templates/win-back';
@@ -28,6 +29,7 @@ export type TemplateKey =
   | 'first-week-summary'
   | 'tier-upgrade'
   | 'activation-reminder'
+  | 'setup-complete'
   | 'tools-nudge'
   | 're-engagement-d14'
   | 'win-back'
@@ -41,6 +43,7 @@ export type TemplateDataMap = {
   'first-week-summary': FirstWeekSummaryData;
   'tier-upgrade': TierUpgradeData;
   'activation-reminder': ActivationReminderData;
+  'setup-complete': SetupCompleteData;
   'tools-nudge': ToolsNudgeData;
   're-engagement-d14': ReEngagementD14Data;
   'win-back': WinBackData;
@@ -70,6 +73,8 @@ export function renderEmail<K extends TemplateKey>(
       return renderTierUpgrade(data as TierUpgradeData);
     case 'activation-reminder':
       return renderActivationReminder(data as ActivationReminderData);
+    case 'setup-complete':
+      return renderSetupComplete(data as SetupCompleteData);
     case 'tools-nudge':
       return renderToolsNudge(data as ToolsNudgeData);
     case 're-engagement-d14':

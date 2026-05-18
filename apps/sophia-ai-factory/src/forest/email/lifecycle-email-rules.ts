@@ -14,6 +14,7 @@ export type LifecycleTemplate =
   | 'onboarding-nudge'
   | 'first-week-summary'
   | 'activation-reminder'
+  | 'setup-complete'
   | 'tools-nudge'
   | 're-engagement-d14'
   | 'win-back'

@@ -16,6 +16,7 @@ import { setUserCredential } from '@/tree/credentials/user-credentials-repo'
 import { registerHeyGenWebhook } from '@/lib/heygen/webhook-registrar'
 import { logger } from '@/seed/utils/logger-utility'
 import { getD1Raw } from '@/seed/db/client'
+import { enqueueWelcomeEmail } from '@/forest/outbox/email-outbox'
 import type { ProviderType } from '@/tree/credentials/user-credentials-repo'
 
 const SOPHIA_HEYGEN_WEBHOOK_URL = 'https://sophia.agencyos.network/api/webhooks/heygen'
@@ -118,6 +119,34 @@ export async function POST(request: NextRequest) {
       .prepare('UPDATE user_profiles SET onboarding_completed_at = ? WHERE user_id = ?')
       .bind(nowSec, user.id)
       .run()
+
+    // E2 setup-complete lifecycle email — fire ONCE per user (lifecycle_email_log dedup).
+    // Multiple save-credentials POSTs are safe; only the first inserts the log row + enqueues.
+    if (user.email) {
+      try {
+        const already = await db
+          .prepare('SELECT 1 FROM lifecycle_email_log WHERE user_id = ?1 AND template = ?2 LIMIT 1')
+          .bind(user.id, 'setup-complete')
+          .first<{ 1: number }>()
+        if (!already) {
+          const ownerName = user.full_name ?? user.email.split('@')[0]
+          await enqueueWelcomeEmail(db, {
+            paymentId: `lifecycle_${user.id}_setup-complete`,
+            toEmail: user.email,
+            template: 'setup-complete',
+            payload: { ownerFullName: ownerName, locale: 'en' },
+          })
+          await db
+            .prepare('INSERT OR IGNORE INTO lifecycle_email_log (user_id, template, sent_at) VALUES (?1,?2,?3)')
+            .bind(user.id, 'setup-complete', nowSec)
+            .run()
+        }
+      } catch (emailErr) {
+        logger.warn('[SaveCredentials] Failed to enqueue setup-complete email', {
+          error: emailErr instanceof Error ? emailErr.message : String(emailErr),
+        })
+      }
+    }
   } catch (dbErr) {
     logger.warn('[SaveCredentials] Failed to set onboarding_completed_at', { error: dbErr })
   }
