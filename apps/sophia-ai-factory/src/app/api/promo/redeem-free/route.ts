@@ -95,7 +95,12 @@ function buildMagicLinkEmail(opts: { magicLink: string; displayName: string; isV
 export const POST = withRateLimit(
   async function POST(request: Request) {
     try {
-      const body = await request.json();
+      let body: unknown;
+      try {
+        body = await request.json();
+      } catch {
+        return NextResponse.json({ error: 'invalid_json' }, { status: 400 });
+      }
       const parsed = redeemFreeSchema.safeParse(body);
 
       if (!parsed.success) {
