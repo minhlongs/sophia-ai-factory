@@ -129,16 +129,18 @@ curl -s "$STAGING_URL/api/version" | head -3       # expect shortSha match
 Include: URL, D1 name, R2 bucket, deploy command, secret rotation note, "DO NOT USE FOR REAL CUSTOMER DATA" banner.
 
 ## Todo List
-- [ ] Create staging D1 via `wrangler d1 create`
-- [ ] Create staging R2 bucket
-- [ ] Author `wrangler.staging.toml`
-- [ ] Apply all 113 migrations to staging D1
-- [ ] Set all required secrets on staging Worker
-- [ ] Write `scripts/deploy-staging.sh` + chmod +x
-- [ ] Add `deploy:staging` to package.json
-- [ ] Deploy staging Worker
-- [ ] Verify `/api/health` 200 + `/api/version` SHA match
-- [ ] Document in `docs/staging-environment.md`
+- [x] Create staging D1 via `wrangler d1 create` → `bf74b301-7bb4-441f-9960-c96244b82953`
+- [x] Create staging tag-cache D1 → `46da1446-adb4-4afc-8514-8a9daa63b92f`
+- [x] Create staging R2 buckets (`sophia-staging-cache`, `sophia-videos-staging`)
+- [x] Author `wrangler.staging.toml`
+- [x] Apply 116 migrations to staging D1 — 107/116 OK, 9 failed; **pivoted to PROD schema dump** (`wrangler d1 export --no-data` → drop staging tables → apply dump → 117 tables = PROD parity)
+- [x] Seed FREE100 in staging D1 (0067 + 0068 migrations applied directly)
+- [x] Write `scripts/deploy-staging.sh` + chmod +x
+- [x] Add `deploy:staging` to package.json
+- [x] Document in `docs/staging-environment.md`
+- [ ] **USER**: Set required secrets on staging Worker (interactive `wrangler secret put`)
+- [ ] **USER**: `npm run deploy:staging`
+- [ ] Verify staging `/api/health` 200 + `/api/version` SHA match (post user-deploy)
 
 ## Success Criteria
 - Staging Worker reachable at `*.workers.dev` URL with HTTP 200
