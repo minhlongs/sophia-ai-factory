@@ -1,0 +1,66 @@
+# Sophia AI Factory — STAGING worker
+# Phase 02 setup 2026-05-17 of plan 260517-2223-sophia-free100-handover/.
+# Deploy: bash scripts/deploy-staging.sh
+# URL: https://sophia-ai-factory-staging.agencyos-openclaw.workers.dev
+#
+# DELTAS vs wrangler.toml (PROD):
+#   - name swapped
+#   - D1 DB id swapped (sophia-raas-db-staging)
+#   - D1 tag cache id swapped (sophia-tag-cache-staging)
+#   - R2 NEXT_INC_CACHE bucket swapped (sophia-staging-cache)
+#   - R2 VIDEO_BUCKET swapped (sophia-videos-staging — empty)
+#   - R2 BACKUPS_BUCKET REMOVED (no cron in staging)
+#   - [triggers] crons REMOVED (no scheduled jobs in staging)
+#   - WORKER_SELF_REFERENCE swapped to staging name
+#   - [vars] ENVIRONMENT added
+#   - Custom route NOT configured (use workers.dev subdomain)
+name = "sophia-ai-factory-staging"
+main = ".open-next/worker.js"
+compatibility_date = "2026-03-17"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+
+[assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
+
+[[r2_buckets]]
+binding = "NEXT_INC_CACHE_R2_BUCKET"
+bucket_name = "sophia-staging-cache"
+
+[[r2_buckets]]
+binding = "VIDEO_BUCKET"
+bucket_name = "sophia-videos-staging"
+
+# BACKUPS_BUCKET intentionally omitted — staging does NOT run backup cron.
+
+[[d1_databases]]
+binding = "DB"
+database_name = "sophia-raas-db-staging"
+database_id = "bf74b301-7bb4-441f-9960-c96244b82953"
+migrations_dir = "migrations"
+
+[[d1_databases]]
+binding = "NEXT_TAG_CACHE_D1"
+database_name = "sophia-tag-cache-staging"
+database_id = "46da1446-adb4-4afc-8514-8a9daa63b92f"
+
+[[services]]
+binding = "WORKER_SELF_REFERENCE"
+service = "sophia-ai-factory-staging"
+
+[images]
+binding = "IMAGES"
+
+# Crons intentionally REMOVED for staging. Re-enable via [triggers] block
+# if a specific Phase requires testing scheduled jobs in staging.
+
+# Share PROD EXPERIMENT_KV (read-only A/B variants — safe to share).
+[[kv_namespaces]]
+binding = "EXPERIMENT_KV"
+id = "c3857792e4014334ba31b62b19d2f32a"
+preview_id = "1f440b4e8566471d841aff66e90644ff"
+
+[vars]
+ENVIRONMENT = "staging"
+NEXT_PUBLIC_DISTRIBUTE_ENABLED = "1"
+# COMMIT_SHA + DEPLOYED_AT are injected via deploy script as secrets, not vars.
