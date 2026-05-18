@@ -70,8 +70,9 @@ const eslintConfig = defineConfig([
   {
     files: ["src/seed/**/*.{ts,tsx}"],
     ignores: [
-      // enforce-tier-quota.ts still imports forest/quota/video-quota — Phase 3 follow-up
-      // (mekong SOP bridge plans/260512-2001-mekong-sops-gap-bridge — DI conversion deferred per planner scope).
+      // enforce-tier-quota.ts is now a back-compat re-export stub pointing to
+      // forest/auth/enforce-tier-quota (M4 migration). The re-export crosses
+      // seed→forest boundary, allowed as a thin stub only.
       "src/seed/auth/enforce-tier-quota.ts",
       // Security cluster — api-key-validator imports tree audit/crypto-utils (mekong-exempt)
       "src/seed/security/api-key-validator-crypto.ts",
