@@ -38,6 +38,10 @@ const fixtures: { [K in TemplateKey]: TemplateDataMap[K] } = {
     locale: 'en',
     daysSinceSignup: 3,
   },
+  'setup-complete': {
+    ownerFullName: 'Mai',
+    locale: 'en',
+  },
   'tools-nudge': {
     ownerFullName: 'Mai',
     locale: 'en',
@@ -81,6 +85,7 @@ const ALL_KEYS: TemplateKey[] = [
   'first-week-summary',
   'tier-upgrade',
   'activation-reminder',
+  'setup-complete',
   'tools-nudge',
   're-engagement-d14',
   'win-back',

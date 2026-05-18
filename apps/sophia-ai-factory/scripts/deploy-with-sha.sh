@@ -54,8 +54,15 @@ if [ "${ALLOW_UNPUSHED_DEPLOY:-0}" != "1" ]; then
     echo "Emergency bypass: ALLOW_UNPUSHED_DEPLOY=1 npm run deploy:full"
     exit 2
   fi
+  # Refresh git index before diff check — git caches stat info (mtime/size) per file
+  # and treats post-build artifacts with unchanged content as "modified" until the
+  # index is refreshed. Without this, a freshly-built tree (where Next.js/OpenNext
+  # touched files) reports false-positive uncommitted changes. Cheap (<1s), safe.
+  git -C "$REPO_ROOT" update-index --refresh > /dev/null 2>&1 || true
   if ! git -C "$REPO_ROOT" diff-index --quiet HEAD --; then
     echo "❌ Refusing to deploy: uncommitted changes in working tree."
+    echo "Affected files:"
+    git -C "$REPO_ROOT" diff-index --name-only HEAD -- | head -10
     echo "Commit or stash first."
     exit 2
   fi
