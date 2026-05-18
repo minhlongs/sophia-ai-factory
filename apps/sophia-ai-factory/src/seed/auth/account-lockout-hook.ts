@@ -39,7 +39,7 @@ import {
   resetFailedLogin,
   type AccountLockStatus,
   type D1Binding,
-} from '@/seed/security/sql-rate-limiter'
+} from '@/seed/security/account-lockout'
 import { logger } from '@/seed/utils/logger-utility'
 
 export type { AccountLockStatus }
