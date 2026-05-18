@@ -16,3 +16,8 @@ export {
   finalizeRedemption,
   getExpiredTrialUsers,
 } from './promo-repo';
+export { bulkGeneratePromoCodes } from './bulk-generator';
+export type {
+  BulkGenerateInput,
+  BulkGenerateResult,
+} from './bulk-generator';

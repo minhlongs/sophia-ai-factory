@@ -1,6 +1,33 @@
 # Project Changelog
 
-**Last Updated:** 2026-05-17 | **Current Version:** 1.28.1
+**Last Updated:** 2026-05-18 | **Current Version:** 1.28.1
+
+---
+
+## Phase 03 Complete — POST /api/admin/promo-codes/bulk-generate endpoint + RFC4648 base32 (2026-05-18 code complete)
+
+**Severity: P0 FEATURE | Type: Admin API expansion | Status: CODE COMPLETE (deploy deferred)**
+
+Completed Phase 03 of `plans/260517-2223-sophia-free100-handover/`. Implemented admin-only bulk promo code generator for marketing campaign distribution.
+
+**Changes:**
+- **NEW `src/seed/utils/random-base32.ts`** — RFC4648 base32 crypto-random helper (8-char collision-checked codes)
+- **NEW `src/land/promo/bulk-generator.ts`** — `bulkGeneratePromoCodes(input)` exported function: generates N unique FREE100-{base32} codes in transaction, returns { codes, promoCodeIds, csv, generatedAt, batchId }
+- **NEW `src/app/api/admin/promo-codes/bulk-generate/route.ts`** — POST endpoint, admin-gated, rate-limited 5/admin/hour, max 1000 codes/request
+- **MOD `src/land/promo/index.ts`** — exports new bulk-generator function + BulkGenerateInput/Result types
+- **TESTS:** 11 new unit + route tests covering happy path, boundary conditions (count 0, 1, 1001), collision retry, rate limit, auth gate
+
+**Metrics:**
+- Build: 0 errors, 0 new lint warnings
+- Tests: 4,457/4,457 pass (+11 from Phase 01 baseline 4,446)
+- Type safety: 0 `:any` types, Zod validation on all inputs
+- Audit log: batchId + count per bulk request for forensics
+
+**Notes:**
+- Max 1000 codes → batching for D1 write limits (not yet stress-tested at ceiling)
+- Idempotent retry support ready (Idempotency-Key header) but not implemented yet (Phase 04 scope)
+- CSV format: code, tier, expiresAt, description
+- Deploy deferred pending Phase 10 final sign-off (no PROD push yet)
 
 ---
 
