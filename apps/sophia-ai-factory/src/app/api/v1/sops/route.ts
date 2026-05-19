@@ -11,20 +11,11 @@ import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { listOfficialTemplates, getTemplateBySlug, createInstallation } from '@/lib/sop/sop-repo';
 import { generateWebhookSecret } from '@/lib/sop/webhook-hmac';
+import { getSopD1 } from '@/lib/sop/d1';
 import { logger } from '@/seed/utils/logger-utility';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 
 export const dynamic = 'force-dynamic';
-
-function getD1(): D1Database | null {
-  try {
-    const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
-    if (env?.DB) return env.DB as D1Database;
-    const ctx = (globalThis as Record<symbol, { env?: Record<string, unknown> }>)[Symbol.for('__cloudflare-context__')];
-    if (ctx?.env?.DB) return ctx.env.DB as D1Database;
-    return null;
-  } catch { return null; }
-}
 
 export const InstallSchema = z.object({
   slug: z.string().min(1).max(100),
@@ -42,7 +33,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const db = getD1();
+  const db = getSopD1();
   if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
   try {
@@ -58,7 +49,7 @@ export const POST = withRateLimit(async function POST(request: NextRequest): Pro
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const db = getD1();
+  const db = getSopD1();
   if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
   let body: unknown;

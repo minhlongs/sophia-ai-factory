@@ -9,19 +9,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getInstallation, setEnabled } from '@/lib/sop/sop-repo';
+import { getSopD1 } from '@/lib/sop/d1';
 
 export const dynamic = 'force-dynamic';
 
 const ToggleSchema = z.object({ enabled: z.boolean() });
-
-function getD1(): D1Database | null {
-  try {
-    const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
-    if (env?.DB) return env.DB as D1Database;
-    const globalDb = (globalThis as Record<string, unknown>).__D1_DB as D1Database | undefined;
-    return globalDb ?? null;
-  } catch { return null; }
-}
 
 export async function PATCH(
   request: NextRequest,
@@ -31,7 +23,7 @@ export async function PATCH(
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { id } = await params;
-  const db = getD1();
+  const db = getSopD1();
   if (!db) return NextResponse.json({ error: 'DB unavailable' }, { status: 500 });
 
   const inst = await getInstallation(db, id);
