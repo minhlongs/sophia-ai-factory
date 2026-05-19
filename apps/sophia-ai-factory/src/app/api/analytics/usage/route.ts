@@ -22,7 +22,22 @@ import { logger } from '@/seed/utils/logger-utility';
 import { fetchUsageMetrics } from '@/lib/analytics/queries';
 import { verifyLicenseAccess, getUserLicenseNonce, checkAdmin } from '@/lib/analytics/rbac';
 import { analyticsUsageQuerySchema } from '@/lib/validation/services';
-import type { UsageFilters, AnalyticsGranularity, AiService } from '@/lib/analytics/types';
+import type { UsageFilters, AnalyticsGranularity, AiService, UsageMetrics } from '@/lib/analytics/types';
+
+function emptyUsageMetrics(): UsageMetrics {
+  return {
+    summary: {
+      totalRequests: 0,
+      totalTokensInput: 0,
+      totalTokensOutput: 0,
+      totalCredits: 0,
+      avgResponseTimeMs: 0,
+      errorRate: 0,
+    },
+    timeSeries: [],
+    serviceBreakdown: [],
+  };
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -128,7 +143,15 @@ export async function GET(request: NextRequest) {
       service,
     };
 
-    const metrics = await fetchUsageMetrics(filters);
+    let metrics: UsageMetrics;
+    try {
+      metrics = await fetchUsageMetrics(filters);
+    } catch (error) {
+      logger.warn('[Analytics Usage] Returning empty metrics', {
+        reason: error instanceof Error ? error.message : String(error),
+      });
+      metrics = emptyUsageMetrics();
+    }
 
     logger.info('[Analytics Usage] Query complete', {
       totalRequests: metrics.summary.totalRequests,
@@ -158,9 +181,14 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(
-      { error: 'Failed to query usage data' },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      ...emptyUsageMetrics(),
+      metadata: {
+        queriedAt: new Date().toISOString(),
+        period: null,
+        granularity: 'hour',
+        service: null,
+      },
+    });
   }
 }
