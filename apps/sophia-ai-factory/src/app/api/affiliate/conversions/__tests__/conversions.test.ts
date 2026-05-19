@@ -5,15 +5,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
-vi.mock('@/seed/auth/better-auth-session', () => ({
-  getCurrentUser: vi.fn(),
+vi.mock('@/seed/auth/openclaw-token', () => ({
+  getCurrentUserOrOpenclawBearer: vi.fn(),
 }));
 
 vi.mock('@/land/affiliates/dashboard-stats', () => ({
   getRecentConversions: vi.fn(),
 }));
 
-import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { getCurrentUserOrOpenclawBearer as getCurrentUser } from '@/seed/auth/openclaw-token';
 import { getRecentConversions } from '@/land/affiliates/dashboard-stats';
 import { GET } from '../route';
 
