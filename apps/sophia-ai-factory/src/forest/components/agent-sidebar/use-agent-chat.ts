@@ -10,7 +10,7 @@
 
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import type { ChatMessage, SseEvent } from '@/lib/agent-chat/types';
 
 export interface UseAgentChatReturn {
@@ -40,6 +40,14 @@ export function useAgentChat(): UseAgentChatReturn {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+  // Abort any in-flight stream on unmount to prevent HTTP connection leak
+  // that would keep the document `load` event from firing.
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, []);
 
   const sendMessage = useCallback(async (content: string, currentPage?: string) => {
     if (!content.trim() || sending) return;
