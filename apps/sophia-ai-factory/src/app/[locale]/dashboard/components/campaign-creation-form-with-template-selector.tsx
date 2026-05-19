@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createCampaign, getOffersForUser } from "@/app/actions/campaigns";
+import { createCampaign } from "@/app/actions/campaigns";
 import { createCampaignSchema } from "@/lib/campaigns/validation";
 import { CampaignTemplate, applyTemplateDefaults } from "@/lib/templates/campaign-templates";
 import { AffiliateProgram, Tier } from "@/seed/types";
@@ -12,9 +12,10 @@ import { useTranslations } from 'next-intl';
 
 interface CreateProjectFormProps {
   templates: CampaignTemplate[];
+  affiliatePrograms: AffiliateProgram[];
 }
 
-export function CreateProjectFormWithTemplates({ templates }: CreateProjectFormProps) {
+export function CreateProjectFormWithTemplates({ templates, affiliatePrograms }: CreateProjectFormProps) {
   const router = useRouter();
   const t = useTranslations('campaign.errors');
   const [selectedTemplate, setSelectedTemplate] = useState<CampaignTemplate | null>(null);
@@ -22,12 +23,7 @@ export function CreateProjectFormWithTemplates({ templates }: CreateProjectFormP
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [upgradeRequired, setUpgradeRequired] = useState<{ required: boolean; tier: Tier }>({ required: false, tier: "BASIC" });
-  const [affiliatePrograms, setAffiliatePrograms] = useState<AffiliateProgram[]>([]);
   const [selectedOfferId, setSelectedOfferId] = useState('');
-
-  useEffect(() => {
-    getOffersForUser().then(setAffiliatePrograms).catch(() => setAffiliatePrograms([]));
-  }, []);
 
   // Pre-fill form with template defaults when template selected
   const [formData, setFormData] = useState({

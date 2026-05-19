@@ -19,6 +19,7 @@ interface Props {
 interface ApiKeysCreateResponse {
   error?: string;
   message?: string;
+  fullKey?: string;
   key?: { apiKey?: string };
   apiKey?: string;
 }
@@ -66,14 +67,14 @@ export function ApiKeyCreateModal({ onCreated, onCancel }: Props) {
     setSaving(true);
     setError(null);
     try {
-      const res = await fetch('/api/admin/api-keys', {
+      const res = await fetch('/api/v1/api-keys', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: name.trim(), permissions: ['audit:read', 'reports:download'] }),
       });
       const data = (await res.json()) as ApiKeysCreateResponse;
       if (!res.ok) throw new Error(data.error ?? data.message ?? `HTTP ${res.status}`);
-      onCreated(data.key?.apiKey ?? data.apiKey ?? '');
+      onCreated(data.fullKey ?? data.key?.apiKey ?? data.apiKey ?? '');
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed');
     } finally {

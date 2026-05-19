@@ -22,7 +22,17 @@ function encodeSSE(data: Record<string, unknown>): Uint8Array {
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser();
   if (!user) {
-    return new Response('Unauthorized', { status: 401 });
+    return new Response(
+      new TextEncoder().encode('data: {"type":"unauthenticated"}\n\ndata: {"type":"stream_end"}\n\n'),
+      {
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+          'X-Accel-Buffering': 'no',
+        },
+      }
+    );
   }
 
   const orgId = user.id;

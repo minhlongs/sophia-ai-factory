@@ -44,12 +44,41 @@ interface Props {
 }
 
 interface ApiKeysListResponse {
-  keys?: ApiKeyInfo[];
+  keys?: Array<ApiKeyInfo | D1ApiKeyInfo>;
   apiKeys?: ApiKeyInfo[];
 }
 
 interface UsageResponse {
   stats?: UsageStats;
+}
+
+interface D1ApiKeyInfo {
+  id: string;
+  keyId: string;
+  prefix: string;
+  name: string;
+  permissions: string[];
+  rateLimitPerMin: number;
+  createdAt: number;
+  expiresAt: number | null;
+  revokedAt: number | null;
+  lastUsedAt: number | null;
+}
+
+function normalizeKey(key: ApiKeyInfo | D1ApiKeyInfo): ApiKeyInfo {
+  if ('key_prefix' in key) return key;
+
+  return {
+    id: key.id,
+    name: key.name,
+    key_prefix: key.prefix,
+    permissions: key.permissions,
+    rate_limit_per_minute: key.rateLimitPerMin,
+    is_active: key.revokedAt === null,
+    last_used_at: key.lastUsedAt ? new Date(key.lastUsedAt * 1000).toISOString() : null,
+    created_at: new Date(key.createdAt * 1000).toISOString(),
+    expires_at: key.expiresAt ? new Date(key.expiresAt * 1000).toISOString() : null,
+  };
 }
 
 export function ApiKeyList({ onCreateKey, refreshTrigger = 0 }: Props) {
@@ -65,12 +94,12 @@ export function ApiKeyList({ onCreateKey, refreshTrigger = 0 }: Props) {
     setLoading(true);
     try {
       const [keysRes, usageRes] = await Promise.all([
-        fetch('/api/admin/api-keys'),
+        fetch('/api/v1/api-keys'),
         fetch('/api/raas/usage?days=30'),
       ]);
       const keysData = (await keysRes.json()) as ApiKeysListResponse;
       const usageData = (await usageRes.json()) as UsageResponse;
-      setKeys(keysData.keys ?? keysData.apiKeys ?? []);
+      setKeys((keysData.keys ?? keysData.apiKeys ?? []).map(normalizeKey));
       setStats(usageData.stats ?? null);
     } catch {
       setError('Failed to load data');
@@ -87,7 +116,7 @@ export function ApiKeyList({ onCreateKey, refreshTrigger = 0 }: Props) {
     setRevoking(id);
     setError(null);
     try {
-      const res = await fetch(`/api/admin/api-keys/${id}`, { method: 'DELETE', headers: { ...csrfHeaders } });
+      const res = await fetch(`/api/v1/api-keys/${id}`, { method: 'DELETE', headers: { ...csrfHeaders } });
       if (!res.ok) throw new Error('Failed to revoke');
       await load();
     } catch (e: unknown) {
