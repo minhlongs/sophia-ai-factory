@@ -95,8 +95,9 @@ export function CustomerSearch({
             size="sm"
             onClick={handleClear}
             className="h-auto p-1"
+            aria-label="Clear selection"
           >
-            <X className="h-4 w-4" />
+            <X className="h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
       ) : (

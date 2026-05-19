@@ -14,7 +14,7 @@ import { logger } from '@/seed/utils/logger-utility';
 
 interface R2Env {
   NEXT_INC_CACHE_R2_BUCKET?: R2Bucket;
-  VIDEO_R2_BUCKET?: R2Bucket;
+  VIDEO_BUCKET?: R2Bucket;
 }
 
 interface StorageBreakdown {
@@ -25,7 +25,7 @@ interface StorageBreakdown {
 /** Get R2 bucket binding from globalThis.__env */
 function getR2(): R2Bucket | null {
   const env = (globalThis as unknown as { __env?: R2Env }).__env;
-  return env?.VIDEO_R2_BUCKET ?? env?.NEXT_INC_CACHE_R2_BUCKET ?? null;
+  return env?.VIDEO_BUCKET ?? env?.NEXT_INC_CACHE_R2_BUCKET ?? null;
 }
 
 /** Get D1 binding */

@@ -1569,7 +1569,18 @@
   "common": {
     "loading": "Loading...",
     "error": "Error",
-    "success": "Success"
+    "success": "Success",
+    "close": "Close",
+    "expand": "Expand",
+    "collapse": "Collapse",
+    "delete": "Delete",
+    "edit": "Edit",
+    "refresh": "Refresh",
+    "menu": "Menu",
+    "search": "Search",
+    "copy": "Copy",
+    "more_options": "More options",
+    "clear": "Clear"
   },
   "title": "Title",
   "topic": "Topic",

@@ -115,8 +115,9 @@ export function HandoverOnboardingBanner({ userId, locale }: Props) {
       <button
         onClick={dismiss}
         className="shrink-0 p-1.5 rounded-lg text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-colors"
+        aria-label={isVi ? 'Đóng' : 'Close'}
       >
-        <X size={16} />
+        <X size={16} aria-hidden="true" />
       </button>
     </div>
   );

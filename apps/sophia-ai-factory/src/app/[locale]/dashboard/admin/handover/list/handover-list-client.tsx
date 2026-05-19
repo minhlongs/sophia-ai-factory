@@ -186,8 +186,10 @@ export function HandoverListClient({ locale }: Props) {
                 <button
                   onClick={() => setExpandedId(expanded ? null : h.id)}
                   className="p-1.5 rounded-lg border border-zinc-700 hover:bg-zinc-800 text-zinc-400 transition-colors"
+                  aria-label={expanded ? 'Collapse' : 'Expand'}
+                  aria-expanded={expanded}
                 >
-                  {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                  {expanded ? <ChevronUp size={14} aria-hidden="true" /> : <ChevronDown size={14} aria-hidden="true" />}
                 </button>
                 <button
                   onClick={() => void resendWelcome(h.id)}
