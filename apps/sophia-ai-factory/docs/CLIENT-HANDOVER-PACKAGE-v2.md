@@ -1,6 +1,27 @@
 # Sophia AI Factory — Client Handover Package v2
 # Gói Bàn Giao Khách Hàng — Sophia AI Factory v2
 
+> ## ⚠️ EXACT URL — KIỂM TRA KỸ KHI GÕ
+>
+> Canonical production URL is **EXACTLY** this — copy-paste, do not retype:
+>
+> ```
+> https://sophia.agencyos.network
+> ```
+>
+> Common typos that DO NOT work (registered nowhere):
+> - ❌ `sophia.agency.network` (missing `os`)
+> - ❌ `sophia.agencyos.com` (wrong TLD)
+> - ❌ `sophia-agencyos.network` (hyphen wrong)
+>
+> Verify the live site responds with HTTP 200 + SHA match:
+> ```bash
+> curl -s https://sophia.agencyos.network/api/version | jq .shortSha
+> # Expected: short SHA of latest git HEAD on main
+> ```
+>
+> If verifying fails on YOUR network: try mobile hotspot first (rule out ISP DNS cache) before opening incident. SSL handshake errors (`ERR_SSL_UNRECOGNIZED_NAME_ALERT`) usually mean a typo, not platform outage.
+
 > **Status:** Production live at https://sophia.agencyos.network
 > **Doctrine:** v1.28.1 — no-code/no-tech RaaS, BYOK customer-side, operator manages PLATFORM only
 > **Honest score ceiling:** **91.5/100** under doctrine v1.28.1 (NOT 100 — doctrine locks score ceiling; going beyond requires months operational track record with monthly DR drills)
