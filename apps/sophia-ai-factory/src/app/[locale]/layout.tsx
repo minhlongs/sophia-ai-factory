@@ -142,6 +142,12 @@ export default async function RootLayout({
             __html: JSON.stringify(buildOrganizationSchema()),
           }}
         />
+        <script
+          nonce={nonce}
+          dangerouslySetInnerHTML={{
+            __html: "window.__name=window.__name||function(fn){return fn;};",
+          }}
+        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
