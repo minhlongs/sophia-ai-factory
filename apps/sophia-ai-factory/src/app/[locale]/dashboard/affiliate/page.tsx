@@ -19,8 +19,18 @@ import {
   type ConversionFeedRow,
 } from '@/land/affiliates/dashboard-stats';
 import { getEarningsSummary } from '@/land/payouts/commission-ledger';
+import { logger } from '@/seed/utils/logger-utility';
+import { toError } from '@/seed/utils/to-error';
 
 export const dynamic = 'force-dynamic';
+
+interface ClickStats {
+  totalClicks: number;
+  totalConversions: number;
+  epc: number;
+}
+
+const EMPTY_STATS: ClickStats = { totalClicks: 0, totalConversions: 0, epc: 0 };
 
 const STATUS_COLORS: Record<ConversionFeedRow['status'], string> = {
   pending: 'text-yellow-400',
@@ -46,15 +56,28 @@ export default async function AffiliateDashboardPage(): Promise<React.JSX.Elemen
   const now = Math.floor(Date.now() / 1000);
   const fromTs = now - 30 * 86400;
 
-  const [stats, conversions, earnings] = await Promise.all([
-    getAffiliateClickStats(user.id, user.id, fromTs, now),
-    getRecentConversions(user.id, user.id, 50, 0),
-    getEarningsSummary(user.id, user.id, fromTs, now),
-  ]);
+  // Each fetch wrapped independently so one bad table does not crash the dashboard.
+  // Browser bug-hunt 2026-05-19 caught a hard 500 when Promise.all bubbled a D1 error.
+  let stats: ClickStats = EMPTY_STATS;
+  let conversions: ConversionFeedRow[] = [];
+  let pendingEarnings = 0;
+  let loadError: string | null = null;
 
-  const pendingEarnings = earnings
-    .filter((e) => e.status === 'pending' || e.status === 'payable')
-    .reduce((sum, e) => sum + e.total_usd, 0);
+  try {
+    const [s, c, e] = await Promise.all([
+      getAffiliateClickStats(user.id, user.id, fromTs, now),
+      getRecentConversions(user.id, user.id, 50, 0),
+      getEarningsSummary(user.id, user.id, fromTs, now),
+    ]);
+    stats = s;
+    conversions = c;
+    pendingEarnings = e
+      .filter((row) => row.status === 'pending' || row.status === 'payable')
+      .reduce((sum, row) => sum + row.total_usd, 0);
+  } catch (err) {
+    loadError = 'Affiliate stats temporarily unavailable. Please refresh in a moment.';
+    logger.error('[AffiliateDashboardPage] Failed to load stats', toError(err), { userId: user.id });
+  }
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
@@ -80,6 +103,15 @@ export default async function AffiliateDashboardPage(): Promise<React.JSX.Elemen
           </a>
         </div>
       </header>
+
+      {loadError && (
+        <div
+          role="alert"
+          className="mb-6 rounded-md border border-yellow-500/40 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-200"
+        >
+          {loadError}
+        </div>
+      )}
 
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
         <StatCard label="Clicks" value={stats.totalClicks.toLocaleString()} hint="last 30d" />

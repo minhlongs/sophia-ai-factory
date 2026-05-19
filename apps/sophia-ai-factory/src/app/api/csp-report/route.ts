@@ -8,7 +8,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/seed/utils/logger-utility';
 
-export const runtime = 'edge';
+// Note: do NOT pin runtime='edge' here. The logger dynamically imports
+// @sentry/nextjs which uses Node.js APIs unavailable at the Workers edge,
+// causing every CSP-report POST to crash with 500. Default Node runtime
+// keeps Sentry forwarding intact. Verified by browser bug-hunt 2026-05-19.
 export const dynamic = 'force-dynamic';
 
 const MAX_REPORT_BYTES = 16 * 1024; // 16KB cap mitigates DoS via large reports.
