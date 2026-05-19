@@ -156,6 +156,17 @@ export function getAuth() {
                 tier: 'BASIC',
                 status: 'active',
               });
+              // Auto-create user_profiles row (migration 0004). Without it,
+              // any `.single()` read on user_profiles throws for new BASIC
+              // users — broke /dashboard/analytics + admin checkAdmin until
+              // Phase 05 wrapped them defensively. Auto-INSERT at signup is
+              // the root-cause fix so other callers don't need their own
+              // null-handling boilerplate.
+              await db.from('user_profiles').insert({
+                user_id: user.id,
+                display_name: user.name || null,
+                subscription_tier: 'BASIC',
+              });
             } catch (err) {
               // Non-critical — org creation failure shouldn't block signup
               logger.error('[databaseHook] org creation failed', err instanceof Error ? err : new Error(String(err)));
