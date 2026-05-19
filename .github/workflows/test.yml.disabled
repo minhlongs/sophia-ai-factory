@@ -1,9 +1,3 @@
-# ARCHIVED — GitHub Actions disabled by design since 2026-05-03
-# Reason: account longtho638-jpg had Actions disabled (free-tier exhaustion).
-# Team adopted CF-direct (wrangler CLI) as canonical deploy path.
-# To re-enable: rename this file back to test.yml
-# Proof-of-path (5 successful wrangler deploys): d84f3a6e, e53c7dd2, aafd1ba4, 0520585b, f418f3df
-#
 name: Tests & Deploy
 
 on:
@@ -13,7 +7,7 @@ on:
 
 jobs:
   quality:
-    name: Lint & Build & Test
+    name: Green Gate (verify:green)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -30,18 +24,8 @@ jobs:
       - name: Install Dependencies
         run: npm install --legacy-peer-deps
 
-      - name: Lint
-        run: npx next lint
-
-      - name: Build
-        run: npm run build
-
-      - name: Test
-        run: npm test
-
-      - name: Security audit (production deps only)
-        run: npm audit --audit-level=high --omit=dev
-        continue-on-error: true
+      - name: Verify green pipeline
+        run: npm run verify:green
 
   deploy:
     name: Deploy to Cloudflare Workers
@@ -64,7 +48,7 @@ jobs:
         working-directory: apps/sophia-ai-factory
 
       - name: Build for Cloudflare (opennext)
-        run: npx opennextjs-cloudflare build
+        run: npm run deploy:build
         working-directory: apps/sophia-ai-factory
 
       - name: Upload source maps to Sentry
