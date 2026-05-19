@@ -285,6 +285,36 @@ Status updates will arrive from respective phase deliverables. Not handover-bloc
 
 ---
 
+## Pre-Handover Final Verification (2026-05-18) / Kiểm Toán Cuối Trước Bàn Giao
+
+> Bilingual audit reports closing out the handover. Confirms FREE100 → MASTER → handover chain works end-to-end before transferring control.
+
+### Audit Trail
+| Report | Verdict | Output |
+|---|---|---|
+| FREE100 → MASTER → handover chain (debugger) | ✅ READY | [plans/reports/debugger-260518-2341-free100-master-handover-audit.md](../plans/reports/debugger-260518-2341-free100-master-handover-audit.md) |
+| Zero-bug + doc readiness (researcher) | ✅ 88/100 GO | [plans/reports/researcher-260518-2341-handover-readiness-audit.md](../plans/reports/researcher-260518-2341-handover-readiness-audit.md) |
+
+### Live Production State (verified 06:42 UTC)
+- HTTP: 200 OK at `https://sophia.agencyos.network`
+- Deploy SHA: `8538d143` matches git HEAD (`/api/version` confirmed)
+- All 7 active crons `last_status='success'`; `smoke-one-time` synthetic-bypass fix shipped 06:32 UTC
+- FREE100 promo: 42 of 50 slots remaining, expires 2026-08-01
+- MASTER tier provisioning: 8 prior FREE100 handovers all set `tier='MASTER'` with `user_id` populated
+
+### Critical Gap Closed in This Cycle
+**Migration `0115-seed-video-generation-starter-sop.sql`** seeded the `video-generation-starter` template in prod D1 (id `sop_starter_video_generation_v1`, category `content`, bilingual playbook). Before this fix, `installStarterSop()` silently skipped because the row did not exist — every prior MASTER user received zero starter SOPs. Total `sop_templates` row count went 36 → 37.
+
+### Known Gaps for Next Batch (NOT handover blockers)
+1. **AGENCY_SOP_MAP slug mismatch** (`src/tree/handover/handover-types.ts`): several slugs (`lead-enrichment`, `mention-monitor`, `daily-tiktok`, `weekly-perf-report`, `abandoned-cart`, `evergreen-recycle`, `weekly-youtube`, `anomaly-alerts`) do not match the seeded slugs (`daily-lead-enrichment`, `mention-monitor-respond`, `daily-tiktok-3x`, `weekly-performance-report`, `abandoned-cart-recovery`, `evergreen-content-recycle`, `weekly-youtube-longform`, `daily-anomaly-alerts`). `preInstallSops` silently skips unmatched slugs. Impact: agency-type-specific pre-installs partially-empty for all tiers. Fix: rename slugs in `AGENCY_SOP_MAP` to match seeded ones (no migration needed).
+2. **1/8 prior FREE100 handover has no magic link token** — isolated, customer received support CTA fallback. No recurring pattern; likely transient D1 write failure.
+3. PDR `docs/project-overview-pdr.md` last refreshed 2026-04-28; reflects pre-Phase-09 stack. Operator may want to refresh on next major release.
+
+### Doctrine Reminder
+**91.5/100 ceiling is intentional.** Higher requires operational track record (months of DR drills + monthly restore tests). Doctrine v1.28.1 forbids operator-third-party setup as score path. See `.claude/rules/sophia-no-tech-doctrine.md`.
+
+---
+
 ## Sign-off / Xác Nhận Bàn Giao
 
 By accepting this package, the recipient acknowledges:
