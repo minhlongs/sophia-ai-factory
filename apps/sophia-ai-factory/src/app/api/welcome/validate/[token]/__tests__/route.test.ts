@@ -132,7 +132,8 @@ describe('POST /api/welcome/validate/[token]', () => {
     expect(response.status).toBe(200);
     const body = await response.json() as { success: boolean; redirectUrl: string };
     expect(body.success).toBe(true);
-    expect(body.redirectUrl).toBe('/setup-wizard');
+    // Canonical onboarding URL — locale defaults to 'en' when no body sent
+    expect(body.redirectUrl).toBe('/en/dashboard/onboarding');
 
     const setCookie = response.headers.get('set-cookie');
     expect(setCookie).not.toBeNull();

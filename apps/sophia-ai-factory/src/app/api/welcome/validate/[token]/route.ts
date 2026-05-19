@@ -88,11 +88,26 @@ async function createSessionForUser(
   }
 }
 
+/** Allowed locales — must match next-intl config in middleware.ts */
+const ALLOWED_LOCALES = ['en', 'vi'] as const;
+type AllowedLocale = (typeof ALLOWED_LOCALES)[number];
+
+function safeLocale(raw: unknown): AllowedLocale {
+  if (typeof raw === 'string' && (ALLOWED_LOCALES as readonly string[]).includes(raw)) {
+    return raw as AllowedLocale;
+  }
+  return 'en';
+}
+
 /**
  * POST — consume magic link, mint Better Auth session.
  * Rate-limited 10 req/min/IP as defence-in-depth against token brute-force.
  * Token space is 64 hex chars so brute-force is statistically infeasible,
  * but cheap rate limiting blocks scripted abuse.
+ *
+ * Accepts optional `{ locale }` in request body to build a locale-aware
+ * redirectUrl. Defaults to 'en' if absent or invalid. Whitelist-validated —
+ * never reflects arbitrary input back as a URL component.
  */
 export async function POST(request: NextRequest, ctx: RouteParams): Promise<NextResponse> {
   const rateLimited = checkRateLimit(request, {
@@ -102,6 +117,13 @@ export async function POST(request: NextRequest, ctx: RouteParams): Promise<Next
   if (rateLimited) return rateLimited;
 
   const { token } = await ctx.params;
+
+  // Parse optional locale from request body — explicit is safer than header sniffing.
+  let requestLocale: AllowedLocale = 'en';
+  try {
+    const body = await request.json() as Record<string, unknown>;
+    requestLocale = safeLocale(body.locale);
+  } catch { /* no body or non-JSON — use default */ }
 
   const handover = await validateMagicLinkToken(token);
   if (!handover) {
@@ -142,9 +164,16 @@ export async function POST(request: NextRequest, ctx: RouteParams): Promise<Next
 
   logger.info('[Welcome/Consume] Magic link consumed', { handoverId: handover.id });
 
+  // Build locale-aware redirect to canonical onboarding URL.
+  // /dashboard/onboarding is auth-gated (middleware redirects to /login if no session),
+  // so the session cookie MUST be set before the client navigates to this URL.
+  // The client uses window.location.href after fetch resolves, so the Set-Cookie
+  // header from this response will be stored by the browser before navigation.
+  const redirectUrl = `/${requestLocale}/dashboard/onboarding`;
+
   const response = NextResponse.json({
     success: true,
-    redirectUrl: '/setup-wizard',
+    redirectUrl,
   });
 
   const session = await createSessionForUser(handover.customer_user_id, request);
