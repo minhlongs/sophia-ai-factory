@@ -85,7 +85,10 @@ export async function proxy(request: NextRequest) {
   if (!isConfigured) {
     const cleanedForSetup = pathnameWithoutLocale(pathname)
     if (cleanedForSetup.startsWith('/dashboard') || cleanedForSetup.startsWith('/admin')) {
-      return NextResponse.redirect(new URL('/setup-wizard', request.url))
+      // Redirect to canonical onboarding URL (locale-free, intl middleware will add prefix).
+      // Previously redirected to /setup-wizard which fell through to marketing page — see
+      // plan 260519-0300-handover-funnel-critical-fixes/phase-02-setup-wizard-locale-routing.md.
+      return NextResponse.redirect(new URL('/dashboard/onboarding', request.url))
     }
   }
 
@@ -158,7 +161,11 @@ export async function proxy(request: NextRequest) {
 
   if (pathname.startsWith('/auth/callback')) return NextResponse.next()
 
-  if (pathname.startsWith('/api') || pathname.startsWith('/setup-wizard')) {
+  // /setup-wizard is no longer short-circuited here — it now redirects to
+  // /dashboard/onboarding via its page component, and must go through
+  // intlMiddleware to pick up locale + CSP nonce like any other page.
+  // See plan 260519-0300-handover-funnel-critical-fixes/phase-02-setup-wizard-locale-routing.md.
+  if (pathname.startsWith('/api')) {
     const response = NextResponse.next({ request: { headers: requestHeaders } })
     const responseTimeMs = Date.now() - startTime
     response.headers.set('X-Response-Time-Ms', String(responseTimeMs))
@@ -213,12 +220,12 @@ export async function proxy(request: NextRequest) {
 
 export const middleware = proxy
 
-// Note: `setup-wizard` was previously excluded from the matcher, which meant
-// middleware never ran on it and no CSP nonce was attached → React bootstrap
-// inline scripts triggered a CSP violation on every wizard pageview (verified
-// via Playwright trace 2026-05-19). The handler at line 199 already routes
-// `setup-wizard` correctly, so removing the exclusion lets it pick up nonce +
-// CSP headers like any other public page.
+// Note: `setup-wizard` was previously short-circuited in two places:
+// 1. Excluded from matcher → no CSP nonce (fixed 5e7b63d1).
+// 2. Handled in an API short-circuit → skipped intlMiddleware (fixed here).
+// Both are now removed. /setup-wizard is treated as a normal page, going
+// through intlMiddleware for locale rewrite + CSP nonce attachment. The
+// /setup-wizard page itself redirects to /dashboard/onboarding (canonical URL).
 export const config = {
   matcher: ['/((?!api|_next|_worker|auth/callback|.*\\..*).*)'],
 }
