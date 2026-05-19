@@ -9,7 +9,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/seed/db/client';
-import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { getCurrentUserOrOpenclawBearer } from '@/seed/auth/openclaw-token';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import { getQuotaStatus } from '@/forest/quota/quota-checker';
@@ -23,7 +23,7 @@ interface QuotaStatusLicenseRow {
 
 export async function GET(req: NextRequest) {
   try {
-    const user = await getCurrentUser();
+    const user = await getCurrentUserOrOpenclawBearer(req.headers);
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

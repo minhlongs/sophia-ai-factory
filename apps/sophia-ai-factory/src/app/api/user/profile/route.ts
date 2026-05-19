@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
+import { getCurrentUserOrOpenclawBearer } from '@/seed/auth/openclaw-token';
 import { createServerClient } from '@/seed/db/client';
 import { globalRateLimiter, createRateLimitResponse } from '@/forest/middleware/rate-limiter';
 
@@ -17,7 +17,7 @@ const PatchSchema = z.object({
 }).strict();
 
 export async function GET(req: NextRequest) {
-  const user = await getCurrentUserFromHeaders(req.headers);
+  const user = await getCurrentUserOrOpenclawBearer(req.headers);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const rl = globalRateLimiter.checkLimit(`profile:read:${user.id}`, { intervalMs: 60_000, maxRequests: 60 });
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const user = await getCurrentUserFromHeaders(req.headers);
+  const user = await getCurrentUserOrOpenclawBearer(req.headers);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const rl = globalRateLimiter.checkLimit(`profile:write:${user.id}`, { intervalMs: 60_000, maxRequests: 20 });
