@@ -176,7 +176,7 @@ export async function publishToBundle(input: BundlePublishInput): Promise<Bundle
     // Inject crypto disclaimer into caption for allowed channels
     let finalCaption = channelCaption;
     if (isCrypto) {
-      const injectionResult = injectCryptoDisclaimer({
+      const injectionResult = await injectCryptoDisclaimer({
         caption: channelCaption,
         vertical: offerVertical,
         targetJurisdiction: jurisdiction,

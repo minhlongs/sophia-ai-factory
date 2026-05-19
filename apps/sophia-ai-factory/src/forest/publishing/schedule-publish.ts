@@ -19,7 +19,6 @@
  * @module forest/publishing/schedule-publish
  */
 
-import { randomUUID } from 'crypto';
 import { inngest } from '@/forest/inngest/client';
 import { checkCooldown } from '@/forest/quota/channel-cooldown';
 import { logger } from '@/seed/utils/logger-utility';
@@ -65,7 +64,7 @@ export async function schedulePublish(
   input: SchedulePublishInput,
 ): Promise<SchedulePublishResult> {
   const { channelId, videoId, tenantId, userId, caption, scheduledAt, provider = '' } = input;
-  const jobId = randomUUID();
+  const jobId = crypto.randomUUID();
   const now = Math.floor(Date.now() / 1000);
   const requested = scheduledAt ?? now;
 
