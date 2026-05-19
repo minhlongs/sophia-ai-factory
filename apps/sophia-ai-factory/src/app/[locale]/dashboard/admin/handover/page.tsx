@@ -6,8 +6,7 @@
  * @module app/[locale]/dashboard/admin/handover/page
  */
 
-import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { requireMasterTier } from '@/seed/auth/require-master-tier';
 import { HandoverWizardClient } from './handover-wizard-client';
 
 interface Props { params: Promise<{ locale: string }> }
@@ -16,9 +15,7 @@ export const metadata = { title: 'Customer Handover Wizard | Admin | Sophia AI' 
 
 export default async function HandoverPage({ params }: Props) {
   const { locale } = await params;
-  const user = await getCurrentUser();
-  if (!user) redirect(`/${locale}/login`);
-  if (user.role !== 'admin') redirect(`/${locale}/dashboard`);
+  await requireMasterTier();
 
   const isVi = locale.startsWith('vi');
 

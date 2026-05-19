@@ -1,3 +1,4 @@
+// ops-internal EN-only per docs/code-standards.md#admin-i18n-policy
 /**
  * /dashboard/admin/actions — Admin manual actions console.
  * Admin-only. Bilingual Vi/En.
@@ -5,8 +6,7 @@
  * @module app/[locale]/dashboard/admin/actions/page
  */
 
-import { redirect } from 'next/navigation'
-import { getCurrentUser } from '@/seed/auth/better-auth-session'
+import { requireMasterTier } from '@/seed/auth/require-master-tier';
 import { AdminActionsConsole } from './admin-actions-console'
 
 interface Props {
@@ -17,9 +17,7 @@ export const metadata = { title: 'Admin Actions | Sophia AI' }
 
 export default async function AdminActionsPage({ params }: Props) {
   const { locale } = await params
-  const user = await getCurrentUser()
-  if (!user) redirect(`/${locale}/login`)
-  if (user.role !== 'admin') redirect(`/${locale}/dashboard`)
+  await requireMasterTier();
 
   const isVi = locale.startsWith('vi')
 

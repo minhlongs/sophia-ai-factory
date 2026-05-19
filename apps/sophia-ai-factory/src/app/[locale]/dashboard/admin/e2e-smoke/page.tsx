@@ -1,3 +1,4 @@
+// ops-internal EN-only per docs/code-standards.md#admin-i18n-policy
 /**
  * /dashboard/admin/e2e-smoke — End-to-end smoke test (admin only).
  * Hook E UI: synthetic IPN → fulfillment → email chain validation.
@@ -6,8 +7,7 @@
  * @module app/[locale]/dashboard/admin/e2e-smoke/page
  */
 
-import { redirect } from 'next/navigation'
-import { getCurrentUser } from '@/seed/auth/better-auth-session'
+import { requireMasterTier } from '@/seed/auth/require-master-tier';
 import { E2ESmokeClient } from './e2e-smoke-client'
 
 interface Props { params: Promise<{ locale: string }> }
@@ -16,9 +16,7 @@ export const metadata = { title: 'E2E Smoke Test | Admin | Sophia AI' }
 
 export default async function E2ESmokePage({ params }: Props) {
   const { locale } = await params
-  const user = await getCurrentUser()
-  if (!user) redirect(`/${locale}/login`)
-  if (user.role !== 'admin') redirect(`/${locale}/dashboard`)
+  await requireMasterTier();
 
   const isVi = locale.startsWith('vi')
 

@@ -1,3 +1,4 @@
+// ops-internal EN-only per docs/code-standards.md#admin-i18n-policy
 /**
  * /dashboard/admin/go-live-checklist — system readiness checklist (admin only).
  * Bilingual Vi/En.
@@ -5,8 +6,7 @@
  * @module app/[locale]/dashboard/admin/go-live-checklist/page
  */
 
-import { redirect } from 'next/navigation'
-import { getCurrentUser } from '@/seed/auth/better-auth-session'
+import { requireMasterTier } from '@/seed/auth/require-master-tier';
 import { GoLiveChecklist } from './go-live-checklist-client'
 
 interface Props {
@@ -17,9 +17,7 @@ export const metadata = { title: 'Go-Live Checklist | Admin | Sophia AI' }
 
 export default async function GoLiveChecklistPage({ params }: Props) {
   const { locale } = await params
-  const user = await getCurrentUser()
-  if (!user) redirect(`/${locale}/login`)
-  if (user.role !== 'admin') redirect(`/${locale}/dashboard`)
+  await requireMasterTier();
 
   const isVi = locale.startsWith('vi')
 

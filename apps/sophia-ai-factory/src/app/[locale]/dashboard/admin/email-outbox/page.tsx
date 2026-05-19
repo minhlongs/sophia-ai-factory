@@ -1,3 +1,4 @@
+// ops-internal EN-only per docs/code-standards.md#admin-i18n-policy
 /**
  * /dashboard/admin/email-outbox — Email outbox monitor (admin only).
  *
@@ -7,9 +8,8 @@
  * Data source: `getEmailOutboxSnapshot` from `@/land/observability/email-outbox-stats`.
  */
 
-import { redirect } from 'next/navigation';
 import { Inbox } from 'lucide-react';
-import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { requireMasterTier } from '@/seed/auth/require-master-tier';
 import {
   getEmailOutboxSnapshot,
   type OutboxRecentRow,
@@ -43,10 +43,8 @@ function totalsLookup(snapshot: OutboxSnapshot, status: OutboxStatus): number {
 }
 
 export default async function EmailOutboxPage({ params }: PageProps): Promise<React.JSX.Element> {
-  const { locale } = await params;
-  const user = await getCurrentUser();
-  if (!user) redirect(`/${locale}/login`);
-  if (user.role !== 'admin') redirect(`/${locale}/dashboard`);
+  await params;
+  await requireMasterTier();
 
   let snapshot: OutboxSnapshot | null = null;
   let queryError: string | null = null;

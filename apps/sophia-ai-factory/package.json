@@ -14,6 +14,7 @@
     "verify:green": "./scripts/verify.sh",
     "test": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:coverage:dashboard": "vitest run --coverage src/app/\\[locale\\]/dashboard",
     "pretest": "npm run i18n:validate",
     "test:e2e": "NEXT_PUBLIC_MOCK_AI_SERVICES=true playwright test",
     "test:smoke": "tsx scripts/smoke-test.ts",
@@ -106,6 +107,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.3",
     "@cloudflare/workers-types": "^4.20250204.0",
     "@next/bundle-analyzer": "^16.1.6",
     "@opennextjs/cloudflare": "^1.19.5",

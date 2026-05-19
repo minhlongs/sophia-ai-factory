@@ -1,3 +1,4 @@
+// ops-internal EN-only per docs/code-standards.md#admin-i18n-policy
 /**
  * /dashboard/admin/refunds — admin refund management page.
  * Lists all refund requests. Admin can approve/reject/mark-refunded.
@@ -5,8 +6,7 @@
  * @module app/[locale]/dashboard/admin/refunds/page
  */
 
-import { redirect } from 'next/navigation'
-import { getCurrentUser } from '@/seed/auth/better-auth-session'
+import { requireMasterTier } from '@/seed/auth/require-master-tier';
 import { AdminRefundTable } from './admin-refund-table'
 
 interface Props {
@@ -17,9 +17,7 @@ export const metadata = { title: 'Refund Management | Admin | Sophia AI' }
 
 export default async function AdminRefundsPage({ params }: Props) {
   const { locale } = await params
-  const user = await getCurrentUser()
-  if (!user) redirect(`/${locale}/login`)
-  if (user.role !== 'admin') redirect(`/${locale}/dashboard`)
+  await requireMasterTier();
 
   const isVi = locale.startsWith('vi')
 

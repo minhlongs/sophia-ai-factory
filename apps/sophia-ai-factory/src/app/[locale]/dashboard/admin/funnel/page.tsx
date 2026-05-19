@@ -1,3 +1,4 @@
+// ops-internal EN-only per docs/code-standards.md#admin-i18n-policy
 /**
  * /dashboard/admin/funnel — Activation funnel for admins.
  *
@@ -5,9 +6,8 @@
  * fetched in parallel. Each shows step counts + step-to-step conversion %.
  */
 
-import { redirect } from 'next/navigation';
 import { Activity } from 'lucide-react';
-import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { requireMasterTier } from '@/seed/auth/require-master-tier';
 import {
   getActivationFunnel,
   type ActivationFunnel,
@@ -26,10 +26,8 @@ function pct(ratio: number): string {
 }
 
 export default async function FunnelPage({ params }: PageProps): Promise<React.JSX.Element> {
-  const { locale } = await params;
-  const user = await getCurrentUser();
-  if (!user) redirect(`/${locale}/login`);
-  if (user.role !== 'admin') redirect(`/${locale}/dashboard`);
+  await params;
+  await requireMasterTier();
 
   const now = Math.floor(Date.now() / 1000);
   const [d30, d60, d90] = await Promise.all([

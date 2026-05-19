@@ -1,3 +1,4 @@
+// ops-internal EN-only per docs/code-standards.md#admin-i18n-policy
 /**
  * /dashboard/admin/storage — R2 storage usage monitor (admin only).
  *
@@ -9,9 +10,8 @@
  * `@/land/observability/storage-usage-stats`.
  */
 
-import { redirect } from 'next/navigation';
 import { Database } from 'lucide-react';
-import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { requireMasterTier } from '@/seed/auth/require-master-tier';
 import {
   getStorageSnapshot,
   type StorageSnapshot,
@@ -47,10 +47,8 @@ function fmtAge(ageSec: number): string {
 const STALE_BADGE = 'bg-amber-500/15 text-amber-300 border-amber-500/30';
 
 export default async function StorageMonitorPage({ params }: PageProps): Promise<React.JSX.Element> {
-  const { locale } = await params;
-  const user = await getCurrentUser();
-  if (!user) redirect(`/${locale}/login`);
-  if (user.role !== 'admin') redirect(`/${locale}/dashboard`);
+  await params;
+  await requireMasterTier();
 
   let snapshot: StorageSnapshot | null = null;
   let queryError: string | null = null;

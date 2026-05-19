@@ -1,54 +1,20 @@
 /**
- * API Keys Dashboard Page
+ * Dashboard API Keys Page — server gate
  *
- * Combines ApiKeyList + create/show modals.
+ * Auth-gates via getCurrentUser(); renders ApiKeysClient for authenticated users.
  */
 
-'use client';
+import { redirect } from 'next/navigation';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import ApiKeysClient from './api-keys-client';
 
-import { useState } from 'react';
-import { useTranslations } from 'next-intl';
-import { ApiKeyList } from '@/forest/components/raas/api-key-list';
-import { ApiKeyCreateModal, ApiKeyShowModal } from '@/forest/components/raas/api-key-create-modal';
+interface PageProps {
+  params: Promise<{ locale: string }>;
+}
 
-export default function ApiKeysPage() {
-  const t = useTranslations('dashboard.apiKeys');
-  const [showCreate, setShowCreate] = useState(false);
-  const [createdKey, setCreatedKey] = useState<string | null>(null);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-
-  function handleKeyCreated(key: string) {
-    setCreatedKey(key);
-    setShowCreate(false);
-    setRefreshTrigger(prev => prev + 1);
-  }
-
-  return (
-    <div className="space-y-6">
-      {/* Page header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">{t('page_title')}</h1>
-        <p className="text-sm text-muted-foreground mt-1">{t('page_subtitle')}</p>
-      </div>
-
-      <ApiKeyList
-        onCreateKey={() => setShowCreate(true)}
-        refreshTrigger={refreshTrigger}
-      />
-
-      {showCreate && (
-        <ApiKeyCreateModal
-          onCreated={handleKeyCreated}
-          onCancel={() => setShowCreate(false)}
-        />
-      )}
-
-      {createdKey && (
-        <ApiKeyShowModal
-          apiKey={createdKey}
-          onDone={() => setCreatedKey(null)}
-        />
-      )}
-    </div>
-  );
+export default async function ApiKeysPage({ params }: PageProps): Promise<React.JSX.Element> {
+  const { locale } = await params;
+  const user = await getCurrentUser();
+  if (!user) redirect(`/${locale}/login`);
+  return <ApiKeysClient />;
 }
