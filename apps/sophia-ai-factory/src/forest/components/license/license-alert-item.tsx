@@ -102,8 +102,9 @@ export function LicenseAlertItem({
               size="sm"
               onClick={() => onMarkRead(alert.id)}
               disabled={markReadPending}
+              aria-label="Mark as read"
             >
-              <CheckCircle2 className="h-4 w-4" />
+              <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
             </Button>
           )}
           <Button
@@ -111,8 +112,9 @@ export function LicenseAlertItem({
             size="sm"
             onClick={() => onDismiss(alert.id)}
             disabled={dismissPending}
+            aria-label="Dismiss alert"
           >
-            <X className="h-4 w-4" />
+            <X className="h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
       </div>

@@ -47,8 +47,8 @@ export default function UsageAnalyticsPage() {
               <SelectItem value="day">Daily</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size="icon" onClick={refresh} disabled={isLoading}>
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'motion-safe:animate-spin' : ''}`} />
+          <Button variant="outline" size="icon" onClick={refresh} disabled={isLoading} aria-label="Refresh">
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'motion-safe:animate-spin' : ''}`} aria-hidden="true" />
           </Button>
         </div>
       </div>

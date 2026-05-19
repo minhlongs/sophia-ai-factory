@@ -61,10 +61,12 @@ binding = "IMAGES"
 # "0 4 * * *"  — daily 04:00 UTC → /api/cron/email-drip (nurture drip on day 1, 3, 7 after signup)
 # "0 7 * * *"  — daily 07:00 UTC → /api/cron/llm-cache-purge (Phase 4E.3: expire-then-delete llm_cache rows)
 # "0 */4 * * *" — every 4 hours → /api/cron/affiliate-scout (PREMIUM+ affiliate network discovery)
-crons = ["*/5 * * * *", "5 * * * *", "0 1 * * *", "0 2 * * *", "0 3 * * *", "0 4 * * *", "0 5 * * *", "*/10 * * * *", "0 6 * * 1", "*/15 * * * *", "*/1 * * * *", "0 7 * * *", "0 0 * * *", "10 * * * *", "0 0 1 * *", "7 * * * *", "0 */4 * * *"]
+crons = ["*/2 * * * *", "*/5 * * * *", "5 * * * *", "0 1 * * *", "0 2 * * *", "0 3 * * *", "0 4 * * *", "0 5 * * *", "*/10 * * * *", "0 6 * * *", "0 6 * * 1", "*/15 * * * *", "0 7 * * *", "0 0 * * *", "10 * * * *", "0 0 1 * *", "7 * * * *", "0 */4 * * *"]
+# "*/2 * * * *"  — every 2 min  → /api/cron/fulfillment-retry (F3: retry queue, exp backoff; dead since 2026-05-02 commit a4d54d8d)
+# "0 6 * * *"   — daily 06:00 UTC → /api/cron/fulfillment-reconcile (F8: orphan-purchase drift detection; dead since 2026-05-02 commit a4d54d8d)
 # "0 0 1 * *" — 1st of month 00:00 UTC → /api/cron/mcu-monthly-reset (MCU credit monthly top-up)
 # "*/15 * * * *" — every 15 min → /api/cron/local-mode-health (Phase F: tunnel health check)
-# "*/1 * * * *"  — every 1 min  → /api/cron/workflow-stepper (Phase 03 Supervisor Agent)
+# REMOVED: "*/1 * * * *" — every 1 min orphan (workflow-stepper has no live handler in inject-scheduled-handler.mjs CRON_ROUTES; was burning invocations)
 # P2: "0 5 * * *" — daily 05:00 UTC → /api/cron/error-digest (D1 self-monitoring)
 # P2: "*/10 * * * *" — every 10min → /api/cron/heartbeat (Better Stack ping)
 # M5: "0 0 * * *" — daily midnight UTC → /api/cron/clearance-promote (promote pending_clearance → available)
@@ -74,7 +76,7 @@ crons = ["*/5 * * * *", "5 * * * *", "0 1 * * *", "0 2 * * *", "0 3 * * *", "0 4
 # === P3-CRONS-END ===
 # === P3-F8-CRONS-BEGIN ===
 # "0 6 * * *" — daily 06:00 UTC → /api/cron/fulfillment-reconcile (F8: daily orphan-purchase drift detection)
-#   Note: triggered via GitHub Actions (cron-fulfillment-reconcile.yml), not CF Worker trigger
+#   Note: now wired as CF Worker trigger (R1 fix 2026-05-18); GH Actions cron-fulfillment-reconcile.yml was dead since GH Actions disabled 2026-05-03)
 # === P3-F8-CRONS-END ===
 
 # === P3-KV-BEGIN ===

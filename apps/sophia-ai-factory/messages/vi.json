@@ -1569,7 +1569,18 @@
   "common": {
     "loading": "Đang Tải...",
     "error": "Lỗi",
-    "success": "Thành Công"
+    "success": "Thành Công",
+    "close": "Đóng",
+    "expand": "Mở rộng",
+    "collapse": "Thu gọn",
+    "delete": "Xóa",
+    "edit": "Sửa",
+    "refresh": "Tải lại",
+    "menu": "Menu",
+    "search": "Tìm kiếm",
+    "copy": "Sao chép",
+    "more_options": "Tùy chọn khác",
+    "clear": "Xóa"
   },
   "title": "Title",
   "topic": "Topic",
