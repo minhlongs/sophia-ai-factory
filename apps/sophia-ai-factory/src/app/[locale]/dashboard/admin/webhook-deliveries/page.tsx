@@ -1,3 +1,4 @@
+// ops-internal EN-only per docs/code-standards.md#admin-i18n-policy
 /**
  * /dashboard/admin/webhook-deliveries — Outbound webhook delivery monitor.
  *
@@ -8,9 +9,8 @@
  * `@/land/observability/webhook-delivery-stats`.
  */
 
-import { redirect } from 'next/navigation';
 import { Webhook } from 'lucide-react';
-import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { requireMasterTier } from '@/seed/auth/require-master-tier';
 import {
   getWebhookDeliverySnapshot,
   type WebhookAttemptRow,
@@ -47,10 +47,8 @@ function attemptTotal(snapshot: WebhookDeliverySnapshot, status: WebhookAttemptS
 }
 
 export default async function WebhookMonitorPage({ params }: PageProps): Promise<React.JSX.Element> {
-  const { locale } = await params;
-  const user = await getCurrentUser();
-  if (!user) redirect(`/${locale}/login`);
-  if (user.role !== 'admin') redirect(`/${locale}/dashboard`);
+  await params;
+  await requireMasterTier();
 
   let snapshot: WebhookDeliverySnapshot | null = null;
   let queryError: string | null = null;

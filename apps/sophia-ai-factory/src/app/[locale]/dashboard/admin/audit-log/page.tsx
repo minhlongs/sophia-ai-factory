@@ -1,3 +1,4 @@
+// ops-internal EN-only per docs/code-standards.md#admin-i18n-policy
 /**
  * /dashboard/admin/audit-log — Tenant audit trail viewer (admin only).
  *
@@ -6,10 +7,9 @@
  * shows the most frequent actions in the last 7 days for quick navigation.
  */
 
-import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { FileText } from 'lucide-react';
-import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { requireMasterTier } from '@/seed/auth/require-master-tier';
 import {
   searchAuditLog,
   getTopActions,
@@ -44,10 +44,8 @@ export default async function AuditLogPage({
   params,
   searchParams,
 }: PageProps): Promise<React.JSX.Element> {
-  const { locale } = await params;
-  const user = await getCurrentUser();
-  if (!user) redirect(`/${locale}/login`);
-  if (user.role !== 'admin') redirect(`/${locale}/dashboard`);
+  await params;
+  await requireMasterTier();
 
   const { tenantId, action } = await searchParams;
 

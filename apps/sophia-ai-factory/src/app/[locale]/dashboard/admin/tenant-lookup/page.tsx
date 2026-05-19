@@ -7,10 +7,9 @@
  * Data source: `getTenantSummary` from `@/land/observability/tenant-summary`.
  */
 
-import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { UserSearch } from 'lucide-react';
-import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { requireMasterTier } from '@/seed/auth/require-master-tier';
 import {
   getTenantSummary,
   type TenantSummary,
@@ -47,10 +46,8 @@ export default async function TenantLookupPage({
   params,
   searchParams,
 }: PageProps): Promise<React.JSX.Element> {
-  const { locale } = await params;
-  const user = await getCurrentUser();
-  if (!user) redirect(`/${locale}/login`);
-  if (user.role !== 'admin') redirect(`/${locale}/dashboard`);
+  await params;
+  await requireMasterTier();
 
   const { tenantId } = await searchParams;
   const trimmed = tenantId?.trim();

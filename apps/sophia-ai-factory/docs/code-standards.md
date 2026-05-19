@@ -533,3 +533,66 @@ The `polar_customer_id` column appears in `migrations/0019-raas-licenses.sql` li
 If the `raas_licenses` table is ever activated in production, file a follow-up to either:
 (a) write a migration to rename `polar_customer_id` → `external_customer_id`, OR
 (b) DROP the column if no historical IDs need preservation.
+
+## Help Page Anon Policy
+
+Routes `/dashboard/help`, `/dashboard/help/faq`, `/dashboard/help/getting-started`,
+and `/dashboard/help/troubleshooting` are **intentionally anon-accessible** (no auth gate).
+
+Rationale:
+- No PII rendered on help pages.
+- SEO benefit: search engines can index support content.
+- No operator credentials referenced.
+- Reduces friction for users who land on help links before re-authenticating.
+
+This is a deliberate product decision. Do NOT add `getCurrentUser()` gates to these routes
+unless the page starts rendering user-specific data.
+
+## Admin i18n Policy {#admin-i18n-policy}
+
+Admin pages under `/dashboard/admin/*` split into two categories:
+
+### Customer-touched admin pages (bilingual VI+EN required)
+
+Pages that operators may share in customer-support contexts or that surface customer data:
+- `admin/tenant-lookup`
+- `admin/handover`
+- `admin/handover/list`
+- `admin/pricing`
+
+These pages **must** use `useTranslations()` / `t()` for all UI strings. Keys go under
+`messages/vi.json` and `messages/en.json` in the `admin.customer-touched.*` namespace.
+
+### Ops-internal admin pages (EN-only allowed)
+
+Pages consumed exclusively by operators (engineers/ops team) where translation burden
+exceeds value:
+- `admin/webhook-deliveries`
+- `admin/email-outbox`
+- `admin/audit-log`
+- `admin/crons`
+- `admin/cost`
+- `admin/storage`
+- `admin/refunds`
+- `admin/deploy-status`
+- `admin/api-key-usage`
+- `admin/migrations`
+- `admin/heygen-webhooks`
+- `admin/go-live-checklist`
+- `admin/actions`
+- `admin/ops`
+- `admin/e2e-smoke`
+- `admin/funnel`
+- `admin/affiliate-leaderboard`
+
+These pages use English literals directly. Each file carries a top-level annotation comment:
+
+```
+// ops-internal EN-only per docs/code-standards.md#admin-i18n-policy
+```
+
+Note: `react/jsx-no-literals` is not configured in this project's ESLint config, so a plain
+comment annotation is used instead of an ESLint disable directive.
+
+Revocation criteria: if a page begins surfacing content to customers (e.g., exported to PDF
+for client reports), migrate that page to the customer-touched category and add `t()` calls.

@@ -1,3 +1,4 @@
+// ops-internal EN-only per docs/code-standards.md#admin-i18n-policy
 /**
  * /dashboard/admin/crons — Cron run monitor (admin only).
  *
@@ -7,9 +8,8 @@
  * Data source: `listCronRunSummaries` from `@/land/observability/cron-run-stats`.
  */
 
-import { redirect } from 'next/navigation';
 import { ServerCog } from 'lucide-react';
-import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { requireMasterTier } from '@/seed/auth/require-master-tier';
 import {
   listCronRunSummaries,
   type CronRunSummary,
@@ -36,10 +36,8 @@ function fmtAge(seconds: number): string {
 }
 
 export default async function CronMonitorPage({ params }: PageProps): Promise<React.JSX.Element> {
-  const { locale } = await params;
-  const user = await getCurrentUser();
-  if (!user) redirect(`/${locale}/login`);
-  if (user.role !== 'admin') redirect(`/${locale}/dashboard`);
+  await params;
+  await requireMasterTier();
 
   let crons: CronRunSummary[] = [];
   let queryError: string | null = null;

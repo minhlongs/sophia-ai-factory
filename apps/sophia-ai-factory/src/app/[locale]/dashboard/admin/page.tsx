@@ -14,13 +14,12 @@
  *   - getActivationFunnel         ./funnel
  */
 
-import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import {
   Activity, AlertTriangle, BarChart2, Coins, Database,
   Inbox, KeyRound, ServerCog, Webhook,
 } from 'lucide-react';
-import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { requireMasterTier } from '@/seed/auth/require-master-tier';
 import { listCronRunSummaries } from '@/land/observability/cron-run-stats';
 import { getEmailOutboxSnapshot } from '@/land/observability/email-outbox-stats';
 import { getWebhookDeliverySnapshot } from '@/land/observability/webhook-delivery-stats';
@@ -55,10 +54,8 @@ interface Alert {
 }
 
 export default async function AdminHomePage({ params }: PageProps): Promise<React.JSX.Element> {
-  const { locale } = await params;
-  const user = await getCurrentUser();
-  if (!user) redirect(`/${locale}/login`);
-  if (user.role !== 'admin') redirect(`/${locale}/dashboard`);
+  await params;
+  await requireMasterTier();
 
   const now = Math.floor(Date.now() / 1000);
   const fromTs = now - 30 * 86400;

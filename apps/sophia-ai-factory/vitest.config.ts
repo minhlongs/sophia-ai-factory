@@ -22,10 +22,21 @@ export default defineConfig({
     coverage: {
       reporter: ['text', 'json-summary', 'html'],
       thresholds: {
+        // Global thresholds remain at 0 — coverage gate is dashboard-scoped only.
+        // See plans/260518-1728-sophia-zero-bug-dashboard/reports/phase-01-baseline.json
+        // for observed baseline. Ratcheting to 65/50/60/65 happens in Phase 03 Track B.
         lines: 0,
         functions: 0,
         branches: 0,
         statements: 0,
+        // Dashboard regression guard — floor at observed baseline (2026-05-18 capture).
+        // DO NOT lower without revising plans/260518-1728-sophia-zero-bug-dashboard/.
+        'src/app/[locale]/dashboard/**': {
+          lines: 4,
+          branches: 4,
+          functions: 2,
+          statements: 3,
+        },
       },
       include: ['src/**/*.{ts,tsx}'],
       exclude: [

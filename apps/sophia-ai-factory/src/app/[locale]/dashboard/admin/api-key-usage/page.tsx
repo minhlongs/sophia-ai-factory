@@ -1,3 +1,4 @@
+// ops-internal EN-only per docs/code-standards.md#admin-i18n-policy
 /**
  * /dashboard/admin/api-key-usage — Per-key request volume + error rate + latency.
  *
@@ -6,9 +7,8 @@
  * + high-error keys (errorRate > 5%).
  */
 
-import { redirect } from 'next/navigation';
 import { KeyRound } from 'lucide-react';
-import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { requireMasterTier } from '@/seed/auth/require-master-tier';
 import {
   getApiKeyUsageStats,
   type ApiKeyUsageRow,
@@ -42,10 +42,8 @@ function fmtDate(iso: string | null): string {
 }
 
 export default async function ApiKeyUsagePage({ params }: PageProps): Promise<React.JSX.Element> {
-  const { locale } = await params;
-  const user = await getCurrentUser();
-  if (!user) redirect(`/${locale}/login`);
-  if (user.role !== 'admin') redirect(`/${locale}/dashboard`);
+  await params;
+  await requireMasterTier();
 
   const now = Math.floor(Date.now() / 1000);
   const fromTs = now - 30 * 86400;

@@ -19,6 +19,16 @@ vi.mock('@opennextjs/cloudflare', () => ({
   getCloudflareContext: vi.fn().mockRejectedValue(new Error('Not on CF')),
 }))
 
+// Mock the Inngest client. The valid-signature test path hits `inngest.send()`
+// at end of the route handler; without this mock, the SDK attempts a network
+// call to the local inngest dev server and hangs the test until 5s timeout
+// (intermittent — depends on whether the SDK chooses to retry vs reject).
+vi.mock('@/forest/inngest/client', () => ({
+  inngest: {
+    send: vi.fn().mockResolvedValue({ ids: ['test-event-id'] }),
+  },
+}))
+
 const TEST_SECRET = 'test-payout-ipn-secret'
 
 /** Compute NOWPayments HMAC-SHA512: sorted JSON keys */

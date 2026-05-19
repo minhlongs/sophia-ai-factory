@@ -1,3 +1,4 @@
+// ops-internal EN-only per docs/code-standards.md#admin-i18n-policy
 /**
  * /dashboard/admin/cost — Provider cost dashboard (admin only).
  *
@@ -10,10 +11,9 @@
  * Data source: `getCostSnapshot` from `@/land/observability/cost-snapshot`.
  */
 
-import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Coins } from 'lucide-react';
-import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { requireMasterTier } from '@/seed/auth/require-master-tier';
 import {
   getCostSnapshot,
   type CostSnapshot,
@@ -35,10 +35,8 @@ function pct(part: number, total: number): string {
 }
 
 export default async function CostDashboardPage({ params }: PageProps): Promise<React.JSX.Element> {
-  const { locale } = await params;
-  const user = await getCurrentUser();
-  if (!user) redirect(`/${locale}/login`);
-  if (user.role !== 'admin') redirect(`/${locale}/dashboard`);
+  await params;
+  await requireMasterTier();
 
   const now = Math.floor(Date.now() / 1000);
   const fromTs = now - 30 * 86400;

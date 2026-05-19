@@ -1,3 +1,4 @@
+// ops-internal EN-only per docs/code-standards.md#admin-i18n-policy
 /**
  * /dashboard/admin/heygen-webhooks — HeyGen webhook management (admin only).
  * Hook F UI: auto-register + debug listing.
@@ -6,8 +7,7 @@
  * @module app/[locale]/dashboard/admin/heygen-webhooks/page
  */
 
-import { redirect } from 'next/navigation'
-import { getCurrentUser } from '@/seed/auth/better-auth-session'
+import { requireMasterTier } from '@/seed/auth/require-master-tier';
 import { HeyGenWebhooksClient } from './heygen-webhooks-client'
 
 interface Props { params: Promise<{ locale: string }> }
@@ -16,9 +16,7 @@ export const metadata = { title: 'HeyGen Webhooks | Admin | Sophia AI' }
 
 export default async function HeyGenWebhooksPage({ params }: Props) {
   const { locale } = await params
-  const user = await getCurrentUser()
-  if (!user) redirect(`/${locale}/login`)
-  if (user.role !== 'admin') redirect(`/${locale}/dashboard`)
+  await requireMasterTier();
 
   const isVi = locale.startsWith('vi')
 

@@ -1,3 +1,4 @@
+// ops-internal EN-only per docs/code-standards.md#admin-i18n-policy
 /**
  * /dashboard/admin/affiliate-leaderboard — Top affiliates by performance metric.
  *
@@ -6,10 +7,9 @@
  * a known email/name; falls back to the ID when missing.
  */
 
-import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Trophy } from 'lucide-react';
-import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { requireMasterTier } from '@/seed/auth/require-master-tier';
 import {
   getTopAffiliates,
   type LeaderboardRow,
@@ -39,10 +39,8 @@ export default async function AffiliateLeaderboardPage({
   params,
   searchParams,
 }: PageProps): Promise<React.JSX.Element> {
-  const { locale } = await params;
-  const user = await getCurrentUser();
-  if (!user) redirect(`/${locale}/login`);
-  if (user.role !== 'admin') redirect(`/${locale}/dashboard`);
+  await params;
+  await requireMasterTier();
 
   const { sortBy: sortRaw } = await searchParams;
   const sortBy: LeaderboardSortBy = VALID_SORT.includes(sortRaw as LeaderboardSortBy)

@@ -22,6 +22,11 @@ npm run ci:lint
 
 echo "[pre-push] G3 test (vitest run)..."
 npm run ci:test
+# G3-NOTE (2026-05-18, Phase 01 zero-bug dashboard): vitest.config.ts now enforces
+# per-glob coverage thresholds on src/app/[locale]/dashboard/**. Current floor =
+# observed baseline (lines:4, branches:4, functions:2, statements:3). Phase 03
+# Track B ratchets these to 65/50/60/65 as new tests land. To run dashboard-only
+# coverage locally: `npm run test:coverage:dashboard`.
 
 # G4 secrets — secretlint on FULL src tree (not just staged). Catches secrets that
 # bypassed commit-time lint-staged (e.g., from --no-verify commits or stash pop).

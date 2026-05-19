@@ -5,8 +5,7 @@
  * @module app/[locale]/dashboard/admin/pricing/page
  */
 
-import { redirect } from 'next/navigation'
-import { getCurrentUser } from '@/seed/auth/better-auth-session'
+import { requireMasterTier } from '@/seed/auth/require-master-tier';
 import { AdminPricingEditor } from './admin-pricing-editor'
 
 interface Props {
@@ -17,9 +16,7 @@ export const metadata = { title: 'Pricing Overrides | Admin | Sophia AI' }
 
 export default async function AdminPricingPage({ params }: Props) {
   const { locale } = await params
-  const user = await getCurrentUser()
-  if (!user) redirect(`/${locale}/login`)
-  if (user.role !== 'admin') redirect(`/${locale}/dashboard`)
+  await requireMasterTier();
 
   const isVi = locale.startsWith('vi')
 

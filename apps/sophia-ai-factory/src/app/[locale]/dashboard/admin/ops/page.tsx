@@ -1,3 +1,4 @@
+// ops-internal EN-only per docs/code-standards.md#admin-i18n-policy
 /**
  * /dashboard/admin/ops — Ops visibility dashboard (admin only).
  *
@@ -9,8 +10,7 @@
  * @module app/[locale]/dashboard/admin/ops/page
  */
 
-import { redirect } from 'next/navigation'
-import { getCurrentUser } from '@/seed/auth/better-auth-session'
+import { requireMasterTier } from '@/seed/auth/require-master-tier';
 import { OpsSnapshotCard } from './ops-snapshot-card'
 import { Activity } from 'lucide-react'
 
@@ -27,13 +27,7 @@ export default async function OpsPage({ params }: OpsPageProps) {
   const { locale } = await params
   const isVi = locale.startsWith('vi')
 
-  const user = await getCurrentUser()
-  if (!user) {
-    redirect(`/${locale}/login`)
-  }
-  if (user.role !== 'admin') {
-    redirect(`/${locale}/dashboard`)
-  }
+  await requireMasterTier();
 
   const title = isVi ? 'Bảng Điều Khiển Vận Hành' : 'Ops Dashboard'
   const subtitle = isVi
