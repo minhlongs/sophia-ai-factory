@@ -38,7 +38,7 @@ export function AgentTeamPanel() {
 
   useEffect(() => {
     void fetchAgents();
-    const interval = setInterval(() => { void fetchAgents(); }, 5_000);
+    const interval = setInterval(() => { void fetchAgents(); }, 30_000); // throttled: was 5s, now 30s minimum
     return () => clearInterval(interval);
   }, [fetchAgents]);
 

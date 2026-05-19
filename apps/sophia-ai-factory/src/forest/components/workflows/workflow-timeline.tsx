@@ -11,7 +11,7 @@ import { WorkflowStepRow, type StepRowData } from './workflow-step-row'
 import { STATUS_LABELS, WORKFLOW_LABELS } from '@/lib/workflows/workflow-labels'
 
 const TERMINAL_STATUSES = new Set(['completed', 'failed'])
-const POLL_INTERVAL_MS = 3000
+const POLL_INTERVAL_MS = 30_000 // throttled from 3s to 30s minimum; workflow detail page only
 
 interface WorkflowDetail {
   id: string

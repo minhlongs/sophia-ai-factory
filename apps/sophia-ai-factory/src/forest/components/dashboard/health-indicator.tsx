@@ -14,7 +14,7 @@ export function HealthIndicator() {
       if (!res.ok) throw new Error('Failed to fetch health status');
       return res.json();
     },
-    refetchInterval: 30000, // Check every 30 seconds
+    refetchInterval: 60_000, // Check every 60 seconds — throttled to reduce layout-level network pressure
   });
 
   if (isLoading) return null;
