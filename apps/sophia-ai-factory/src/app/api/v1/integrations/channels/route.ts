@@ -9,7 +9,6 @@ import { logger } from '@/seed/utils/logger-utility';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 import { SUPPORTED_PROVIDERS } from '@/seed/config/channels/supported-providers';
 
-export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 
 function getD1(): D1Database | null {

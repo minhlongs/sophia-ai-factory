@@ -22,7 +22,6 @@ import { checkAdmin, canAccessRevenue } from '@/lib/analytics/rbac';
 import { fetchRevenueSnapshot } from '@/lib/analytics/queries/revenue-nowpayments';
 import { logger } from '@/seed/utils/logger-utility';
 
-export const runtime = 'edge';
 
 // ── Zod schema ──────────────────────────────────────────────────────────────
 

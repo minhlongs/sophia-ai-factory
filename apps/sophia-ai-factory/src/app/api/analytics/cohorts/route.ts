@@ -27,7 +27,6 @@ import { calculateLTVByTier } from '@/lib/analytics/ltv-calculator';
 import { logger } from '@/seed/utils/logger-utility';
 import type { Tier } from '@/seed/types';
 
-export const runtime = 'edge';
 
 // ── Zod validation ───────────────────────────────────────────────────────────
 

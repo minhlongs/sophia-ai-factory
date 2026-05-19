@@ -10,7 +10,6 @@ import { validateCredentials, AffiliateNetwork } from '@/lib/affiliates/credenti
 import { logger } from '@/seed/utils/logger-utility';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 
-export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 
 function getD1(): D1Database | null {

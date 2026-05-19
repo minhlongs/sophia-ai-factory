@@ -24,7 +24,6 @@ import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 import { logger } from '@/seed/utils/logger-utility';
 import type { ChannelProvider } from '@/lib/publishing/publisher-interface';
 
-export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 
 // 13 providers: 12 OAuth providers (publishing_channels) + 'telegram' (telegram_paired_chats).

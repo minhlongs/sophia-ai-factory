@@ -13,7 +13,6 @@ import { checkAdmin } from '@/lib/analytics/rbac';
 import { fetchRealtimeSnapshot } from '@/lib/analytics/realtime-snapshot';
 import { createSSEStream } from '@/lib/analytics/sse-broadcaster';
 
-export const runtime = 'edge';
 
 /** SSE response headers per spec */
 const SSE_HEADERS = {

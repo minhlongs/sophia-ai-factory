@@ -9,7 +9,6 @@ import { logger } from '@/seed/utils/logger-utility';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 import { SUPPORTED_PROVIDERS, type SupportedProvider } from '@/seed/config/channels/supported-providers';
 
-export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 
 const ALLOWED_PROVIDERS = new Set<string>([...SUPPORTED_PROVIDERS]);

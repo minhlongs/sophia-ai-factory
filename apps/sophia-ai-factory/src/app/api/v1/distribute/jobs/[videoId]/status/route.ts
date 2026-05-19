@@ -18,7 +18,6 @@ import { createServerClient } from '@/seed/db/client';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 import { logger } from '@/seed/utils/logger-utility';
 
-export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 
 const videoIdSchema = z.string().uuid();
