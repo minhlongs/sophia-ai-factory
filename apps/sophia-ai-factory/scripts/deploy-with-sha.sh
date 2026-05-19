@@ -131,8 +131,10 @@ fi
 # wrangler.toml such as NEXT_TAG_CACHE_D1, BACKUPS_BUCKET, VIDEO_BUCKET).
 # Verified Phase 5.1 (2026-05-13): without --config, populate-cache errors
 # "No D1 binding NEXT_TAG_CACHE_D1 found"; with --config, all bindings resolve.
-echo "==> wrangler deploy"
-retry_cf "wrangler deploy" npx wrangler deploy --config wrangler.toml
+echo "==> OpenNext Cloudflare deploy"
+# OpenNext 1.19+ deploys the generated worker from its adapter output.
+# Direct wrangler deploy still points at the legacy .open-next/worker.js path.
+retry_cf "opennext deploy" npx opennextjs-cloudflare deploy --config wrangler.toml
 
 # ─── Step 5: Upload Sentry source maps (non-fatal) ──────────────────────────
 # Bakes symbolicated stack traces into prod errors. Script gracefully skips

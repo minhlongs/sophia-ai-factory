@@ -7,15 +7,18 @@
  * @module lib/publishing/crypto-disclaimer-audit
  */
 
-import { createHash } from 'node:crypto';
-
 /**
  * Create a short SHA-256 hash (first 16 hex chars) of disclaimer text.
  * Used as a stable identifier in audit logs to prove which exact
  * disclaimer version was used at time of publish.
  */
-export function createDisclaimerHash(disclaimerText: string): string {
-  return createHash('sha256').update(disclaimerText, 'utf8').digest('hex').slice(0, 16);
+export async function createDisclaimerHash(disclaimerText: string): Promise<string> {
+  const bytes = new TextEncoder().encode(disclaimerText);
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('')
+    .slice(0, 16);
 }
 
 export interface CryptoPublishAuditEntry {

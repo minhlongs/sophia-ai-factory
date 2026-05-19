@@ -51,9 +51,9 @@ export interface CaptionInjectionResult {
  * Returns original caption unchanged if vertical is not crypto.
  * Throws if channel is banned for this jurisdiction (caller must handle block).
  */
-export function injectCryptoDisclaimer(
+export async function injectCryptoDisclaimer(
   input: CaptionInjectionInput,
-): CaptionInjectionResult {
+): Promise<CaptionInjectionResult> {
   const { caption, vertical, targetJurisdiction, channelId, locale = 'en' } = input;
 
   if (vertical !== 'crypto') {
@@ -97,7 +97,7 @@ export function injectCryptoDisclaimer(
   // Inject disclaimer
   const disclaimer = getDisclaimerForJurisdiction(targetJurisdiction);
   const disclaimerText = disclaimer.short[locale];
-  const disclaimerHash = createDisclaimerHash(disclaimerText);
+  const disclaimerHash = await createDisclaimerHash(disclaimerText);
 
   // Prepend disclaimer to caption (idempotent — check for existing)
   const alreadyInjected = caption.includes(disclaimerText.slice(0, 20));

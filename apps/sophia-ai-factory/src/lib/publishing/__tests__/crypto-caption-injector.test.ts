@@ -13,8 +13,8 @@ import { injectCryptoDisclaimer } from '../crypto-caption-injector';
 describe('injectCryptoDisclaimer', () => {
   beforeEach(() => { vi.clearAllMocks(); });
 
-  it('returns original caption untouched for non-crypto vertical', () => {
-    const result = injectCryptoDisclaimer({
+  it('returns original caption untouched for non-crypto vertical', async () => {
+    const result = await injectCryptoDisclaimer({
       caption: 'Buy this great product!',
       vertical: 'ecommerce',
       targetJurisdiction: 'US',
@@ -25,8 +25,8 @@ describe('injectCryptoDisclaimer', () => {
     expect(result.caption).toBe('Buy this great product!');
   });
 
-  it('blocks crypto content for VN jurisdiction', () => {
-    const result = injectCryptoDisclaimer({
+  it('blocks crypto content for VN jurisdiction', async () => {
+    const result = await injectCryptoDisclaimer({
       caption: 'Trade Bitcoin now!',
       vertical: 'crypto',
       targetJurisdiction: 'VN',
@@ -38,8 +38,8 @@ describe('injectCryptoDisclaimer', () => {
     expect(result.blockReason).toContain('Vietnam');
   });
 
-  it('blocks zalo channel for crypto regardless of jurisdiction', () => {
-    const result = injectCryptoDisclaimer({
+  it('blocks zalo channel for crypto regardless of jurisdiction', async () => {
+    const result = await injectCryptoDisclaimer({
       caption: 'Crypto offer here',
       vertical: 'crypto',
       targetJurisdiction: 'US',
@@ -49,8 +49,8 @@ describe('injectCryptoDisclaimer', () => {
     expect(result.blockReason).toContain('zalo');
   });
 
-  it('injects US disclaimer into caption for US jurisdiction', () => {
-    const result = injectCryptoDisclaimer({
+  it('injects US disclaimer into caption for US jurisdiction', async () => {
+    const result = await injectCryptoDisclaimer({
       caption: 'Great crypto opportunity!',
       vertical: 'crypto',
       targetJurisdiction: 'US',
@@ -64,8 +64,8 @@ describe('injectCryptoDisclaimer', () => {
     expect(result.disclaimerHash?.length).toBe(16);
   });
 
-  it('injects EU disclaimer with MiCA reference', () => {
-    const result = injectCryptoDisclaimer({
+  it('injects EU disclaimer with MiCA reference', async () => {
+    const result = await injectCryptoDisclaimer({
       caption: 'Invest in crypto!',
       vertical: 'crypto',
       targetJurisdiction: 'EU',
@@ -75,8 +75,8 @@ describe('injectCryptoDisclaimer', () => {
     expect(result.injected).toBe(true);
   });
 
-  it('injects Vietnamese-language disclaimer when locale=vi', () => {
-    const result = injectCryptoDisclaimer({
+  it('injects Vietnamese-language disclaimer when locale=vi', async () => {
+    const result = await injectCryptoDisclaimer({
       caption: 'Đầu tư crypto',
       vertical: 'crypto',
       targetJurisdiction: 'US',
@@ -86,14 +86,14 @@ describe('injectCryptoDisclaimer', () => {
     expect(result.caption).toContain('biến động cao');
   });
 
-  it('does not double-inject if disclaimer already present', () => {
-    const firstResult = injectCryptoDisclaimer({
+  it('does not double-inject if disclaimer already present', async () => {
+    const firstResult = await injectCryptoDisclaimer({
       caption: 'Crypto deal',
       vertical: 'crypto',
       targetJurisdiction: 'SG',
       channelId: 'tiktok',
     });
-    const secondResult = injectCryptoDisclaimer({
+    const secondResult = await injectCryptoDisclaimer({
       caption: firstResult.caption,
       vertical: 'crypto',
       targetJurisdiction: 'SG',
@@ -105,8 +105,8 @@ describe('injectCryptoDisclaimer', () => {
     expect(occurrences).toBe(1);
   });
 
-  it('uses SG disclaimer for Singapore jurisdiction', () => {
-    const result = injectCryptoDisclaimer({
+  it('uses SG disclaimer for Singapore jurisdiction', async () => {
+    const result = await injectCryptoDisclaimer({
       caption: 'DPT trading offer',
       vertical: 'crypto',
       targetJurisdiction: 'SG',
@@ -116,8 +116,8 @@ describe('injectCryptoDisclaimer', () => {
     expect(result.blocked).toBe(false);
   });
 
-  it('uses JP disclaimer for Japan jurisdiction', () => {
-    const result = injectCryptoDisclaimer({
+  it('uses JP disclaimer for Japan jurisdiction', async () => {
+    const result = await injectCryptoDisclaimer({
       caption: 'Crypto offer for Japan',
       vertical: 'crypto',
       targetJurisdiction: 'JP',
