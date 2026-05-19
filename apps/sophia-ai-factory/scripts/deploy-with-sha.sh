@@ -109,6 +109,20 @@ retry_cf "secret put COMMIT_SHA"   bash -c "echo '$COMMIT_SHA' | npx wrangler se
 retry_cf "secret put DEPLOYED_AT"  bash -c "echo '$DEPLOYED_AT' | npx wrangler secret put DEPLOYED_AT"
 retry_cf "secret put DEPLOY_BRANCH" bash -c "echo '$DEPLOY_BRANCH' | npx wrangler secret put DEPLOY_BRANCH"
 
+# ─── Step 3b: Pre-deploy E2E smoke (opt-in, Phase 03 Track C) ───────────────
+# Gate: RUN_PREDEPLOY_E2E=1 ./scripts/deploy-with-sha.sh
+# Runs the @smoke suite against a running local dev server (must be already up
+# on http://localhost:3000). Disabled by default so existing deploy flow is
+# unchanged for operators who have not started a local server.
+if [ "${RUN_PREDEPLOY_E2E:-0}" = "1" ]; then
+  echo "[deploy] Pre-deploy E2E smoke (localhost:3000)..."
+  PLAYWRIGHT_TEST_BASE_URL=http://localhost:3000 npx playwright test --grep "@smoke" || {
+    echo "[deploy] ❌ Pre-deploy smoke FAILED — aborting deploy"
+    exit 3
+  }
+  echo "[deploy] ✅ Pre-deploy smoke passed"
+fi
+
 # ─── Step 4: Deploy ─────────────────────────────────────────────────────────
 # IMPORTANT: explicit `--config wrangler.toml` is required for OpenNext's
 # deploy hook (wrangler auto-detects opennext projects and delegates to
@@ -132,3 +146,21 @@ fi
 echo ""
 echo "Deploy complete."
 echo "Verify: curl -s https://sophia.agencyos.network/api/version"
+
+# ─── Step 6: Post-deploy E2E smoke (opt-in, Phase 03 Track C) ───────────────
+# Gate: RUN_POSTDEPLOY_E2E=1 ./scripts/deploy-with-sha.sh
+# Runs the @smoke suite against PROD after the SHA already verified above.
+# SOPHIA_EXPECTED_SHA is passed so the version test asserts the exact new SHA.
+# If smoke fails the worker is live but smoke found a regression — operator
+# MUST decide rollback manually (see sophia-deploy-verify.md §Rollback).
+PROD_URL="${PROD_URL:-https://sophia.agencyos.network}"
+if [ "${RUN_POSTDEPLOY_E2E:-0}" = "1" ]; then
+  echo "[deploy] Post-deploy smoke vs $PROD_URL..."
+  LOCAL_SHA=$(git -C "$REPO_ROOT" rev-parse HEAD | cut -c1-8)
+  PLAYWRIGHT_TEST_BASE_URL="$PROD_URL" SOPHIA_EXPECTED_SHA="$LOCAL_SHA" \
+    npx playwright test --grep "@smoke" || {
+      echo "[deploy] ❌ Post-deploy smoke FAILED (DEPLOY MAY NEED ROLLBACK — see sophia-deploy-verify.md)"
+      exit 4
+    }
+  echo "[deploy] ✅ Post-deploy smoke passed"
+fi

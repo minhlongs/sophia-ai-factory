@@ -2,6 +2,14 @@
 # Sophia AI Factory pre-push gate
 # G1 typecheck + G2 lint (FAIL mode) + G3 test + G4 secrets + G5 audit
 # Bypass: git push --no-verify (DISCOURAGED — escape hatch for emergency hotfixes only)
+#
+# Phase 03 Track C (2026-05-18): smoke suite + contract tests wired.
+# - Smoke suite: tests/e2e/smoke/critical-paths.spec.ts (3 tests, @smoke tag)
+#   Run separately: PLAYWRIGHT_TEST_BASE_URL=<url> npx playwright test --grep "@smoke"
+#   Smoke is NOT in this hook (requires running server); it lives in deploy-with-sha.sh
+#   behind RUN_PREDEPLOY_E2E=1 (pre-deploy) and RUN_POSTDEPLOY_E2E=1 (post-deploy).
+# - Contract tests: src/app/api/health/__tests__/route.contract.test.ts (Zod shape tests)
+#   Included in G3 (npm run ci:test via vitest run).
 set -e
 cd "$(git rev-parse --show-toplevel)/apps/sophia-ai-factory"
 
