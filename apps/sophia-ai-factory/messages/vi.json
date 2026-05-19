@@ -778,7 +778,8 @@
       "auto_refresh_off": "Tự động làm mới TẮT",
       "date_range_placeholder": "Chọn khoảng thời gian",
       "tier_adoption_title": "Biểu Đồ Phân Bổ Gói Dịch Vụ",
-      "gateTitle": "Phân Tích Doanh Thu"
+      "gateTitle": "Phân Tích Doanh Thu",
+      "loadErrorBanner": "Không thể tải dữ liệu phân tích. Đang hiển thị chế độ giới hạn — vui lòng tải lại trang để thử lại."
     },
     "trialBanner": {
       "title": "Gói dùng thử của bạn hết hạn vào ngày mai! Nâng cấp ngay để giữ tính năng →",
@@ -2007,7 +2008,9 @@
       "title": "Đã xảy ra lỗi",
       "message": "Đã có lỗi không mong muốn. Vui lòng thử lại.",
       "retry": "Thử lại",
-      "home": "Về trang chủ"
+      "home": "Về trang chủ",
+      "support": "Liên hệ hỗ trợ",
+      "errorCode": "Mã lỗi"
     }
   },
   "header": {

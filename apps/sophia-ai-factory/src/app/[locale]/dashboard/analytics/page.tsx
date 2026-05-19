@@ -12,6 +12,8 @@ import { redirect } from "next/navigation";
 import type { RevenueSnapshot } from "@/seed/types/analytics-revenue";
 import { RouteHelpTooltip } from "@/components/help/route-help-tooltip";
 import { headers } from "next/headers";
+import { logger } from "@/seed/utils/logger-utility";
+import { toError } from "@/seed/utils/to-error";
 
 // ── Dynamic imports ──────────────────────────────────────────────────────────
 
@@ -74,10 +76,19 @@ export default async function AnalyticsPage() {
   }
 
   let campaigns: Campaign[] = [];
-  const [userTier, isAdmin]: [Tier, boolean] = await Promise.all([
-    getUserTier(user.id),
-    checkAdmin(user.id),
-  ]);
+  let userTier: Tier = 'BASIC';
+  let isAdmin = false;
+  let loadError: string | undefined;
+  try {
+    [userTier, isAdmin] = await Promise.all([
+      getUserTier(user.id),
+      checkAdmin(user.id),
+    ]);
+  } catch (err) {
+    loadError = toError(err).message;
+    logger.error('[Analytics] Failed to load tier/admin', toError(err));
+    // Defaults: BASIC tier + not admin — page still renders
+  }
   const userId = user.id;
 
   try {
@@ -110,6 +121,15 @@ export default async function AnalyticsPage() {
           {t('subtitle')}
         </p>
       </div>
+
+      {loadError && (
+        <div
+          role="alert"
+          className="rounded-md border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-yellow-800 dark:border-yellow-700 dark:bg-yellow-950 dark:text-yellow-200"
+        >
+          {t('loadErrorBanner')}
+        </div>
+      )}
 
       <AnalyticsDashboardClient
         campaigns={campaigns}
