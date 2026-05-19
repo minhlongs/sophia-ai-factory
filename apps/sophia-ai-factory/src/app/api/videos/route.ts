@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getCurrentUser } from "@/seed/auth/better-auth-session";
+import { getCurrentUserOrOpenclawBearer } from "@/seed/auth/openclaw-token";
 import { createServerClient } from "@/seed/db/client";
 
 const listQuerySchema = z.object({
@@ -10,7 +10,7 @@ const listQuerySchema = z.object({
 
 export async function GET(req: Request) {
   try {
-    const user = await getCurrentUser();
+    const user = await getCurrentUserOrOpenclawBearer(req.headers);
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

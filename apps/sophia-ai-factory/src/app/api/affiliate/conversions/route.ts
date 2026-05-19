@@ -8,11 +8,11 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { getCurrentUserOrOpenclawBearer } from '@/seed/auth/openclaw-token';
 import { getRecentConversions } from '@/land/affiliates/dashboard-stats';
 
 export async function GET(request: NextRequest) {
-  const user = await getCurrentUser();
+  const user = await getCurrentUserOrOpenclawBearer(request.headers);
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

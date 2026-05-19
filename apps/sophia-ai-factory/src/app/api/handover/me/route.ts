@@ -9,7 +9,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
+import { getCurrentUserOrOpenclawBearer } from '@/seed/auth/openclaw-token';
 import { getD1Raw } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import type { CustomerHandoverRow } from '@/tree/handover/handover-types';
@@ -17,7 +17,7 @@ import type { CustomerHandoverRow } from '@/tree/handover/handover-types';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
-  const user = await getCurrentUserFromHeaders(request.headers);
+  const user = await getCurrentUserOrOpenclawBearer(request.headers);
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
