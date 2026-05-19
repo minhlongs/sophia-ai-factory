@@ -251,6 +251,12 @@ export async function proxy(request: NextRequest) {
 
 export const middleware = proxy
 
+// Note: `setup-wizard` was previously excluded from the matcher, which meant
+// middleware never ran on it and no CSP nonce was attached → React bootstrap
+// inline scripts triggered a CSP violation on every wizard pageview (verified
+// via Playwright trace 2026-05-19). The handler at line 199 already routes
+// `setup-wizard` correctly, so removing the exclusion lets it pick up nonce +
+// CSP headers like any other public page.
 export const config = {
-  matcher: ['/((?!api|_next|_worker|setup-wizard|auth/callback|.*\\..*).*)'],
+  matcher: ['/((?!api|_next|_worker|auth/callback|.*\\..*).*)'],
 }
