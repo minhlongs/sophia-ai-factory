@@ -4,15 +4,17 @@ import { redirect } from "next/navigation";
  * /[locale]/auth/signup — canonical signup entry point.
  * Server-side redirect to /login?tab=signup, forwarding known query params.
  * Handles /en/auth/signup, /vi/auth/signup (and default locale without prefix).
+ *
+ * NOTE: Redirect target is locale-stripped (/login, not /en/login) to avoid
+ * a double-hop through next-intl `as-needed` which can lose query params.
+ * See /[locale]/signup/page.tsx for details.
  */
 export default async function AuthSignupPage({
-  params,
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const { locale } = await params;
   const sp = await searchParams;
 
   const query = new URLSearchParams({ tab: "signup" });
@@ -20,5 +22,5 @@ export default async function AuthSignupPage({
   if (typeof sp.tier === "string") query.set("tier", sp.tier);
   if (typeof sp.redirect === "string") query.set("redirect", sp.redirect);
 
-  redirect(`/${locale}/login?${query.toString()}`);
+  redirect(`/login?${query.toString()}`);
 }
