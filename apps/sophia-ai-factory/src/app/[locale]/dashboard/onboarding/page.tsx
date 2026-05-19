@@ -1,19 +1,22 @@
 /**
- * /dashboard/onboarding — server component.
+ * /dashboard/onboarding — canonical onboarding page (BYOK setup wizard).
  *
- * Shown to MASTER-tier (FREE100) users who haven't completed onboarding.
- * Loads step completion status from D1 and renders <OnboardingSteps />.
- * Auto-completes onboarding when all 3 steps are done.
+ * Replaces /setup-wizard as the single onboarding URL per plan
+ * 260519-0300-handover-funnel-critical-fixes/phase-02-setup-wizard-locale-routing.md.
+ *
+ * Auth gate: any authenticated user lands here (any tier).
+ * MASTER users who have completed all 3 post-activation milestones are
+ * auto-completed and redirected to /dashboard (protected flow preserved).
+ * All other authenticated users see the BYOK setup wizard.
+ *
+ * @module app/[locale]/dashboard/onboarding/page
  */
 
 import { redirect } from 'next/navigation';
-import { getTranslations } from 'next-intl/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getUserTier } from '@/seed/db/get-user-tier';
 import { logger } from '@/seed/utils/logger-utility';
-import { OnboardingSteps } from './components/onboarding-steps';
-import { SkipButton } from './components/skip-button';
-import { OnboardingErrorBanner } from './components/onboarding-error-banner';
+import { WizardClient } from './wizard-client';
 import { completeOnboardingAction } from '@/app/actions/complete-onboarding-action';
 
 export const dynamic = 'force-dynamic';
@@ -30,7 +33,7 @@ function getD1(): D1Database | null {
 
 interface StepStatusRow { cnt: number }
 
-async function loadStepStatus(db: D1Database, userId: string) {
+async function loadMasterStepStatus(db: D1Database, userId: string) {
   const [missions, channels, telegram, jobs] = await Promise.allSettled([
     db
       .prepare(`SELECT COUNT(*) as cnt FROM engine_missions WHERE user_id = ?1 AND status = 'succeeded'`)
@@ -60,88 +63,41 @@ async function loadStepStatus(db: D1Database, userId: string) {
   return { step1Done, step2Done, step3Done };
 }
 
-export default async function OnboardingPage({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}) {
+export default async function OnboardingPage(
+  _props?: { params?: Promise<{ locale: string }> },
+) {
   const user = await getCurrentUser();
   if (!user) {
     redirect('/login');
     return null;
   }
 
-  // Non-MASTER users should not be here — send to dashboard
+  // MASTER users who have completed all post-activation milestones are
+  // auto-completed and sent to dashboard. This preserves the protected flow
+  // (sophia-handover-rules.md: MASTER post-onboarding must not be re-prompted).
   const tier = await getUserTier(user.id);
-  if (tier !== 'MASTER') {
-    redirect('/dashboard');
-    return null;
-  }
-
-  const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: 'dashboard.onboarding' });
-
-  let step1Done = false;
-  let step2Done = false;
-  let step3Done = false;
-  let loadFailed = false;
-
-  const d1 = getD1();
-  if (d1) {
-    try {
-      ({ step1Done, step2Done, step3Done } = await loadStepStatus(d1, user.id));
-    } catch (e) {
-      logger.error('[OnboardingPage] loadStepStatus failed', e instanceof Error ? e : new Error(String(e)));
-      loadFailed = true;
+  if (tier === 'MASTER') {
+    const d1 = getD1();
+    if (d1) {
+      try {
+        const { step1Done, step2Done, step3Done } = await loadMasterStepStatus(d1, user.id);
+        if (step1Done && step2Done && step3Done) {
+          try {
+            await completeOnboardingAction({ reason: 'complete' });
+          } catch {
+            // non-fatal — redirect proceeds
+          }
+          redirect('/dashboard');
+          return null;
+        }
+      } catch (e) {
+        logger.error('[OnboardingPage] loadMasterStepStatus failed', e instanceof Error ? e : new Error(String(e)));
+        // non-fatal — fall through to wizard
+      }
     }
   }
 
-  const allDone = step1Done && step2Done && step3Done;
-
-  // Auto-complete when all steps are done (server-side, no redirect loop).
-  // redirect() invalidates cache automatically — no revalidatePath needed before redirect.
-  if (allDone) {
-    try {
-      await completeOnboardingAction({ reason: 'complete' });
-    } catch {
-      // non-fatal — redirect proceeds regardless
-    }
-    redirect('/dashboard');
-  }
-
-  const completedCount = [step1Done, step2Done, step3Done].filter(Boolean).length;
-
-  return (
-    <div className="max-w-2xl mx-auto py-10 px-4 space-y-8">
-      {/* Header */}
-      <div className="space-y-2">
-        <h1 className="text-2xl font-bold tracking-tight">{t('page_title')}</h1>
-        <p className="text-muted-foreground">{t('page_subtitle')}</p>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span>{t('progress', { completed: completedCount, total: 3 })}</span>
-          <div className="flex-1 h-1.5 rounded-full bg-secondary overflow-hidden">
-            <div
-              className="h-full bg-primary rounded-full transition-all"
-              style={{ width: `${Math.round((completedCount / 3) * 100)}%` }}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Error banner when step status fails to load */}
-      {loadFailed && <OnboardingErrorBanner />}
-
-      {/* Steps */}
-      <OnboardingSteps
-        step1Done={step1Done}
-        step2Done={step2Done}
-        step3Done={step3Done}
-      />
-
-      {/* Skip link */}
-      <div className="flex justify-center pt-4">
-        <SkipButton label={t('skip')} />
-      </div>
-    </div>
-  );
+  // All authenticated users (any tier, or MASTER with incomplete milestones)
+  // see the BYOK setup wizard.
+  return <WizardClient />;
 }

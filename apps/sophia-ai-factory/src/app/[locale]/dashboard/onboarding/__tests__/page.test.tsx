@@ -50,13 +50,15 @@ describe('OnboardingPage', () => {
     expect(mockRedirect).toHaveBeenCalledWith('/login');
   });
 
-  it('redirects to /dashboard when tier is not MASTER', async () => {
+  it('renders wizard for non-MASTER tier (canonical onboarding URL serves all tiers)', async () => {
     mockGetCurrentUser.mockResolvedValue({ id: 'user-1', email: 'test@test.com', full_name: 'Test User' } as never);
     mockGetUserTier.mockResolvedValue('PREMIUM');
 
-    await OnboardingPage({ params: Promise.resolve({ locale: 'en' }) });
+    const result = await OnboardingPage({ params: Promise.resolve({ locale: 'en' }) });
 
-    expect(mockRedirect).toHaveBeenCalledWith('/dashboard');
+    // Non-MASTER users see wizard, not redirected away — per phase-02 decision
+    expect(mockRedirect).not.toHaveBeenCalledWith('/dashboard');
+    expect(result).not.toBeNull();
   });
 
   it('renders without crashing for MASTER user with no D1 available', async () => {
