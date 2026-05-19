@@ -52,7 +52,13 @@ export function WelcomePageClient({ token, locale }: Props) {
   async function handleGetStarted() {
     setStarted(true);
     try {
-      const res = await fetch(`/api/welcome/validate/${token}`, { method: 'POST' });
+      // Send locale in body so the API can build a locale-aware redirectUrl
+      // without relying on Accept-Language header parsing (explicit > implicit).
+      const res = await fetch(`/api/welcome/validate/${token}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ locale }),
+      });
       const data = await res.json() as { redirectUrl?: string };
       window.location.href = data.redirectUrl ?? `/${locale}/dashboard`;
     } catch {
