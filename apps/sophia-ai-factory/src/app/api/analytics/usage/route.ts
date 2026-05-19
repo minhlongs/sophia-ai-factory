@@ -39,11 +39,11 @@ export async function GET(request: NextRequest) {
     // Step 2: Parse query params with Zod schema
     const searchParams = request.nextUrl.searchParams;
     const validation = analyticsUsageQuerySchema.safeParse({
-      license_nonce: searchParams.get('license_nonce'),
+      license_nonce: searchParams.get('license_nonce') ?? undefined,
       start: searchParams.get('start'),
       end: searchParams.get('end'),
-      granularity: searchParams.get('granularity'),
-      service: searchParams.get('service'),
+      granularity: searchParams.get('granularity') ?? undefined,
+      service: searchParams.get('service') ?? undefined,
     });
 
     if (!validation.success) {

@@ -4,6 +4,8 @@ import { templateService } from "@/lib/services/template-service";
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
 import { Skeleton } from "@/seed/components/ui/skeleton";
 import { getTranslations } from 'next-intl/server';
+import { getUserTier } from "@/seed/db/get-user-tier";
+import { getTopPrograms } from "@/land/affiliates";
 
 const CreateProjectFormWithTemplates = dynamic(
   () => import("../components/campaign-creation-form-with-template-selector").then(m => ({ default: m.CreateProjectFormWithTemplates })),
@@ -25,6 +27,8 @@ export default async function CreateProjectPage() {
   const user = await getCurrentUser();
 
   const templates = await templateService.getTemplates(user?.id);
+  const tier = user ? await getUserTier(user.id) : 'BASIC';
+  const affiliatePrograms = getTopPrograms(5, tier);
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
@@ -33,7 +37,7 @@ export default async function CreateProjectPage() {
         <p className="text-muted-foreground">{t('subtitle')}</p>
       </div>
 
-      <CreateProjectFormWithTemplates templates={templates} />
+      <CreateProjectFormWithTemplates templates={templates} affiliatePrograms={affiliatePrograms} />
     </div>
   );
 }
