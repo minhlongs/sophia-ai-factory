@@ -156,6 +156,7 @@ export default async function RootLayout({
             defaultTheme="dark"
             forcedTheme="dark"
             disableTransitionOnChange
+            nonce={nonce}
           >
             <QueryProvider>
               <Navbar />
