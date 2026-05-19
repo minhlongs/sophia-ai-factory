@@ -13,6 +13,7 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import { getQuotaStatus } from '@/forest/quota/quota-checker';
+import { QUOTA_LIMITS } from '@/forest/usage-metering/aggregator';
 
 interface QuotaStatusLicenseRow {
   nonce: string;
@@ -41,7 +42,20 @@ export async function GET(req: NextRequest) {
     const license = rawLicense as QuotaStatusLicenseRow | null;
 
     if (!license) {
-      return NextResponse.json({ error: 'No active license found' }, { status: 404 });
+      const limits = QUOTA_LIMITS.BASIC;
+
+      return NextResponse.json({
+        license: {
+          nonce: null,
+          tier: 'BASIC',
+        },
+        quota: {
+          usage: { hourly: 0, daily: 0, monthly: 0, requests: 0 },
+          limits,
+          percentages: { hourly: 0, daily: 0, monthly: 0 },
+          status: 'ok',
+        },
+      });
     }
 
     const quotaStatus = await getQuotaStatus(

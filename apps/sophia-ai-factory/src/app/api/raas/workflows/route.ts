@@ -11,7 +11,7 @@ import { z } from 'zod'
 import { getCurrentUser } from '@/seed/auth/better-auth-session'
 import { track } from '@/lib/signals/track'
 import { D1Events } from '@/lib/signals/d1-event-types'
-import { createWorkflow, listWorkflows } from '@/seed/db/workflow-repository'
+import { createWorkflow, listWorkflows, type WorkflowRow } from '@/seed/db/workflow-repository'
 import { detectInjection } from '@/seed/security/prompt-guard'
 import { logger } from '@/seed/utils/logger-utility'
 import { resolveOrgId } from '@/seed/auth/resolve-org-id'
@@ -123,7 +123,15 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const { searchParams } = new URL(request.url)
     const limit = Math.min(parseInt(searchParams.get('limit') ?? '20', 10), 100)
 
-    const workflows = await listWorkflows(orgId, limit)
+    let workflows: WorkflowRow[]
+    try {
+      workflows = await listWorkflows(orgId, limit)
+    } catch (err) {
+      logger.warn('[GET /api/raas/workflows] Returning empty list', {
+        reason: err instanceof Error ? err.message : String(err),
+      })
+      workflows = []
+    }
 
     return NextResponse.json({ workflows }, { status: 200 })
   } catch (err) {
