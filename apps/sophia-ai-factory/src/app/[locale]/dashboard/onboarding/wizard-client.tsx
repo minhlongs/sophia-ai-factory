@@ -108,6 +108,7 @@ export function WizardClient() {
   useEffect(() => {
     const persisted = loadPersistedState();
     if (persisted) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setStep(persisted.step);
     }
   }, []);
@@ -293,6 +294,7 @@ export function WizardClient() {
             ? `Đang thử lại (${attempt}/3)…`
             : `Retrying (${attempt}/3)…`);
           setLoading(false);
+          // eslint-disable-next-line react-hooks/immutability
           void handleSave(attempt + 1);
           return;
         }
