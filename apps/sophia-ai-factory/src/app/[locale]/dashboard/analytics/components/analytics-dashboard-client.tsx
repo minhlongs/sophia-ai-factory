@@ -24,6 +24,7 @@ import { RevenueCard } from '@/forest/components/analytics/revenue-card';
 import { UnifiedRevenueChart } from '@/forest/components/analytics/unified-revenue-chart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/seed/components/ui/card';
 import { Lock, BarChart3 } from 'lucide-react';
+import { AnalyticsView } from './analytics-view';
 import type { Campaign, Tier } from '@/seed/types';
 import type { ISODateRange } from '@/forest/components/analytics/date-range-picker';
 import type { RevenueSnapshot } from '@/seed/types/analytics-revenue';
@@ -75,11 +76,6 @@ export interface AnalyticsDashboardClientProps {
   userId: string;
   isAdmin: boolean;
   initialRevenue: RevenueSnapshot | null;
-  AnalyticsViewComponent: React.ComponentType<{
-    campaigns: Campaign[];
-    userTier: Tier;
-    userId: string;
-  }>;
 }
 
 // ── Main component ───────────────────────────────────────────────────────────
@@ -90,7 +86,6 @@ export function AnalyticsDashboardClient({
   userId,
   isAdmin,
   initialRevenue,
-  AnalyticsViewComponent,
 }: AnalyticsDashboardClientProps) {
   const t = useTranslations('dashboard.analytics');
   const [dateRange, setDateRange] = useState(defaultRange());
@@ -139,7 +134,7 @@ export function AnalyticsDashboardClient({
       )}
 
       {/* Existing campaign/usage analytics view */}
-      <AnalyticsViewComponent
+      <AnalyticsView
         campaigns={campaigns}
         userTier={userTier}
         userId={userId}
