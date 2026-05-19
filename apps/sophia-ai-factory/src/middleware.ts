@@ -112,6 +112,12 @@ export async function proxy(request: NextRequest) {
     cleanPath === '/auth/mfa-challenge' ||
     pathname.startsWith('/api/auth/mfa/challenge')
 
+  if (cleanPath === '/setup-wizard' || cleanPath.startsWith('/setup-wizard/')) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/dashboard/onboarding'
+    return NextResponse.redirect(url)
+  }
+
   if (cleanPath.startsWith('/dashboard')) {
     try {
       const auth = getAuth()

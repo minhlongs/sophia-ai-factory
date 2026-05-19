@@ -36,11 +36,6 @@ const AnalyticsDashboardClient = dynamic(
   }
 );
 
-// AnalyticsView is passed as a prop to preserve existing behaviour
-const AnalyticsView = dynamic(
-  () => import("./components/analytics-view").then(m => ({ default: m.AnalyticsView }))
-);
-
 // ── Metadata ─────────────────────────────────────────────────────────────────
 
 export const metadata = {
@@ -137,7 +132,6 @@ export default async function AnalyticsPage() {
         userId={userId}
         isAdmin={isAdmin}
         initialRevenue={initialRevenue}
-        AnalyticsViewComponent={AnalyticsView}
       />
 
       {/* Revenue section gate: show upsell when non-ENTERPRISE/MASTER */}
