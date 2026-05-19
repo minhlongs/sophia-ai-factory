@@ -22,6 +22,7 @@ export default function LoginPage() {
   const coupon = searchParams.get('coupon');
   const tier = searchParams.get('tier');
   const redirectTo = searchParams.get('redirect') || '/dashboard';
+  const tabParam = searchParams.get('tab');
   const tSignup = useTranslations("auth.signup");
   const signupStrings = useMemo(() => ({
     name_label: tSignup("name_label"),
@@ -41,7 +42,7 @@ export default function LoginPage() {
     error_email_exists: tSignup("error_email_exists"),
     error_generic: tSignup("error_generic"),
   }), [tSignup]);
-  const [pageTab, setPageTab] = useState<PageTab>("signin");
+  const [pageTab, setPageTab] = useState<PageTab>(tabParam === "signup" ? "signup" : "signin");
   const [mode, setMode] = useState<AuthMode>("password");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
