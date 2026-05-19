@@ -1,10 +1,10 @@
 ---
 title: "Sophia /dashboard Zero-Bug Harden (P0+P1+P3)"
 description: "Test pyramid + auth/admin gates + i18n hybrid across 71 dashboard pages — deferring 4-layer refactor and ops i18n."
-status: in_progress
+status: complete-pending-deploy
 priority: P1
 effort: 16d
-progress: "phase-01 + phase-02 complete (2026-05-18); phase-03 pending fresh session"
+progress: "phase-01 + phase-02 + phase-03 complete (2026-05-18); await deploy verify"
 branch: main
 tags: [sophia, dashboard, test-pyramid, security, a11y, visual-regression]
 created: 2026-05-18
@@ -15,8 +15,9 @@ last_updated: 2026-05-18
 
 **Plan ID:** 260518-1728-sophia-zero-bug-dashboard
 **Date:** 2026-05-18
-**Status:** pending
+**Status:** ✅ complete (2026-05-18)
 **Scope decision (user):** P0 + P1 + P3 only. Skip P2/P4/P5/P6/P7/P8 (see "Deferred" below).
+**Deliverables:** All 3 phases delivered (Track A/B/C). Awaiting post-deploy smoke + SHA verify per sophia-deploy-verify.md.
 
 ## Context
 
@@ -45,7 +46,7 @@ Full list: see `tech-stack-synthesis.md` section 9.
 |---|---|---:|---|---|
 | 01 | [Foundation primitives](./phase-01-foundation-primitives.md) | 2-3 d | ✅ complete (2026-05-18) | — |
 | 02 | [Security hardening](./phase-02-security-hardening.md) | 3-5 d | ✅ complete (2026-05-18) — i18n string migration deferred to next iteration | 01 |
-| 03 | [Test pyramid build-out](./phase-03-test-pyramid-buildout.md) | 11 d | pending — recommend fresh `/cook --auto` session | 01, 02 |
+| 03 | [Test pyramid build-out](./phase-03-test-pyramid-buildout.md) | 11 d | ✅ complete (2026-05-18) — Track A/B/C delivered; visual snapshot regen + coverage ratchet deferred | 01, 02 |
 
 Critical path: 01 → 02 → 03. Sub-tracks inside 03 (A/B/C) can parallelize.
 

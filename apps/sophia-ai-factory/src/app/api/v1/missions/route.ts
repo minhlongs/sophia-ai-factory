@@ -20,13 +20,13 @@ import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 
 export const dynamic = 'force-dynamic';
 
-const CreateMissionSchema = z.object({
+export const CreateMissionSchema = z.object({
   command: z.string().min(1).max(100),
   params: z.record(z.string(), z.unknown()).optional().default({}),
   webhook_url: z.string().url().optional(),
 });
 
-const ListQuerySchema = z.object({
+export const ListQuerySchema = z.object({
   status: z.string().optional(),
   command: z.string().optional(),
   limit: z.coerce.number().min(1).max(100).default(20),

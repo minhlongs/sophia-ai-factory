@@ -11,7 +11,7 @@ import { withRateLimit } from "@/forest/middleware/rate-limit-wrapper";
 // Body: { script, title?, avatar_id?, voice_id?, userId }
 // Response: { campaignId, status: 'queued' }
 
-const createCampaignBodySchema = z.object({
+export const createCampaignBodySchema = z.object({
   script: z.string().min(1, "script is required"),
   title: z.string().optional(),
   avatar_id: z.string().optional(),

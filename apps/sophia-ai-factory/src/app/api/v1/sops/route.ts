@@ -27,7 +27,7 @@ function getD1(): D1Database | null {
   } catch { return null; }
 }
 
-const InstallSchema = z.object({
+export const InstallSchema = z.object({
   slug: z.string().min(1).max(100),
   scheduleCron: z.string().max(100).optional(),
   enabled: z.boolean().optional().default(true),

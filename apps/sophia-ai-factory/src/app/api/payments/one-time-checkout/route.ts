@@ -23,7 +23,7 @@ import { logger } from '@/seed/utils/logger-utility';
 /** 30 minutes — window for detecting duplicate pending purchases. */
 const DEDUPE_WINDOW_SECS = 30 * 60
 
-const oneTimeCheckoutSchema = z.object({
+export const oneTimeCheckoutSchema = z.object({
   skuId: z.enum(Object.keys(ONE_TIME_SKUS) as [string, ...string[]]),
   userId: z.string().optional(),
   customerEmail: z.string().email().optional(),

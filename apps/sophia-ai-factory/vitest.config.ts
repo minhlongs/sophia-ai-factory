@@ -31,6 +31,10 @@ export default defineConfig({
         statements: 0,
         // Dashboard regression guard — floor at observed baseline (2026-05-18 capture).
         // DO NOT lower without revising plans/260518-1728-sophia-zero-bug-dashboard/.
+        // Ratcheting to 65/50/60/65 (lines/branches/functions/statements) is deferred to
+        // a future phase once new dashboard unit tests land (Track B Phase 03 intent).
+        // Contract tests in src/app/api/**/__tests__/*.contract.test.ts do NOT count toward
+        // dashboard surface coverage — they cover API route schemas, not dashboard components.
         'src/app/[locale]/dashboard/**': {
           lines: 4,
           branches: 4,
