@@ -8,6 +8,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
+import { fetchJson } from '@/seed/utils/fetch-json';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/seed/components/ui/card';
 import { Progress } from '@/seed/components/ui/progress';
 import { TrendingUp, AlertCircle } from 'lucide-react';
@@ -24,6 +25,7 @@ interface UsageMeterProps {
 export function UsageMeter({ licenseNonce, compact = false, showRateLimit = true }: UsageMeterProps) {
   const { data: usage, isLoading, error } = useQuery<UsageMeterData>({
     queryKey: ['/api/license/usage', licenseNonce],
+    queryFn: () => fetchJson<UsageMeterData>(`/api/license/usage?nonce=${encodeURIComponent(licenseNonce ?? '')}`),
     enabled: !!licenseNonce,
     refetchInterval: 30000,
   });

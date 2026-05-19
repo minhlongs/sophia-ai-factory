@@ -8,6 +8,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { fetchJson } from '@/seed/utils/fetch-json';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/seed/components/ui/card';
 import { Badge } from '@/seed/components/ui/badge';
 import { Button } from '@/seed/components/ui/button';
@@ -32,6 +33,7 @@ export function LicenseStatusCard({ licenseNonce, compact = false }: LicenseStat
 
   const { data: license, isLoading, error, refetch } = useQuery<LicenseStatus>({
     queryKey: ['/api/license/status', licenseNonce],
+    queryFn: () => fetchJson<LicenseStatus>(`/api/license/status?nonce=${encodeURIComponent(licenseNonce ?? '')}`),
     enabled: !!licenseNonce,
     refetchInterval: 30000,
   });
