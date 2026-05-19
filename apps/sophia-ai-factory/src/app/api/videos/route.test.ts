@@ -1,17 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { GET } from "./route";
 
-vi.mock("@/seed/auth/better-auth-session", () => ({
-  getCurrentUser: vi.fn(),
+vi.mock("@/seed/auth/openclaw-token", () => ({
+  getCurrentUserOrOpenclawBearer: vi.fn(),
 }));
 vi.mock("@/seed/db/client", () => ({
   createServerClient: vi.fn(),
 }));
 
-import { getCurrentUser } from "@/seed/auth/better-auth-session";
+import { getCurrentUserOrOpenclawBearer } from "@/seed/auth/openclaw-token";
 import { createServerClient } from "@/seed/db/client";
 
-const mockedGetCurrentUser = vi.mocked(getCurrentUser);
+const mockedGetCurrentUser = vi.mocked(getCurrentUserOrOpenclawBearer);
 const mockedCreateServerClient = vi.mocked(createServerClient);
 
 function buildDbStub(result: { data?: unknown[]; error?: unknown }) {
