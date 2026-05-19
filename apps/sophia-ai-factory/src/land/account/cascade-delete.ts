@@ -21,7 +21,7 @@ export const ACCOUNT_DELETE_ORDER = [
   'commission_ledger',
   'conversion_events',
   'affiliate_links',
-  'video_jobs',
+  'videos',
   'sessions',
   'users',
 ] as const;

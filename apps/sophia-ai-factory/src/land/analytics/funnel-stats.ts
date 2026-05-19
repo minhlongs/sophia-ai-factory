@@ -69,7 +69,7 @@ export async function getActivationFunnel(
     .prepare(
       `SELECT COUNT(*) AS n FROM "user" u
        WHERE ${cohortClause}
-         AND EXISTS (SELECT 1 FROM video_jobs v WHERE v.user_id = u.id)`,
+         AND EXISTS (SELECT 1 FROM videos v WHERE v.user_id = u.id)`,
     )
     .bind(fromIso, toIso)
     .first<{ n: number }>();
