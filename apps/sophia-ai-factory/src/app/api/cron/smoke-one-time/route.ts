@@ -26,11 +26,11 @@ import { triggerOneTimeFulfillment } from '@/lib/fulfillment/one-time-fulfillmen
 import { markPaid } from '@/seed/db/repositories/user-purchases-repo'
 import { cleanupSyntheticArtifacts } from '@/lib/monitoring/synthetic-cleanup'
 import { sendSlackAlert } from '@/lib/monitoring/slack-alert'
+import { SYNTHETIC_USER_ID } from '@/seed/config/synthetic-monitoring'
 
 export const dynamic = 'force-dynamic'
 
 const CRON_NAME = 'smoke-one-time'
-const SYNTHETIC_USER_ID = '00000000-0000-0000-0000-000000000001'
 /** Purchase older than this threshold without a completed video triggers an alert */
 const STALE_THRESHOLD_SEC = 10 * 60
 

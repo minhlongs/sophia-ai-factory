@@ -22,10 +22,12 @@ import {
   findByPurchaseId,
   enqueueVideo,
   markVideoProcessing,
+  markVideoCompletedSynthetic,
   recordAttempt,
 } from '@/seed/db/repositories/videos-repo'
 import { sendBundleGeneratingEmail } from '@/land/billing/email/send-bundle-generating-email'
 import { shouldDispatch, recordHeyGenAttempt } from '@/lib/fulfillment/circuit-breaker'
+import { isSyntheticMonitoringUser } from '@/seed/config/synthetic-monitoring'
 import type { OneTimeSku } from '@/seed/types'
 
 interface UserRow {
@@ -50,6 +52,35 @@ export async function triggerOneTimeFulfillment(
       videoId: existing.id,
       status: existing.status,
     })
+    return
+  }
+
+  // Synthetic monitoring bypass: smoke-one-time cron inserts a fake purchase to
+  // validate the chain end-to-end every 15 min. Real HeyGen call is impossible
+  // here (no customer key + no-tech doctrine forbids operator key), so we mark
+  // the video as completed synthetically. Smoke check at smoke-one-time/route.ts
+  // expects videos.status='completed' before STALE_THRESHOLD_SEC.
+  if (isSyntheticMonitoringUser(userId)) {
+    try {
+      const videoRowId = await enqueueVideo({
+        userId,
+        purchaseId,
+        title: `Synthetic Monitoring — ${sku.id}`,
+        script: 'synthetic-monitoring',
+        locale: 'en',
+      })
+      await markVideoCompletedSynthetic(videoRowId)
+      logger.info('[OneTimeFulfillment] Synthetic monitoring purchase fulfilled', {
+        userId,
+        purchaseId,
+        videoRowId,
+      })
+    } catch (err) {
+      logger.error('[OneTimeFulfillment] Synthetic monitoring enqueue failed', err instanceof Error ? err : undefined, {
+        userId,
+        purchaseId,
+      })
+    }
     return
   }
 

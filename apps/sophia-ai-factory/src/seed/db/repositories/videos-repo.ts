@@ -68,6 +68,32 @@ export async function enqueueVideo(input: EnqueueVideoInput): Promise<string> {
 }
 
 /**
+ * Mark video row as `'completed'` immediately, without HeyGen integration.
+ * Used by synthetic-monitoring fulfillment (smoke-one-time cron) where the
+ * goal is end-to-end chain validation, not actually producing a video.
+ *
+ * NOT for customer fulfillment — real videos must transition queued → processing
+ * → completed via HeyGen webhook (see complete-video-from-webhook.ts).
+ */
+export async function markVideoCompletedSynthetic(videoId: string): Promise<void> {
+  const db = await getD1Raw()
+  const now = Math.floor(Date.now() / 1000)
+
+  await db
+    .prepare(
+      `UPDATE videos
+       SET status = 'completed',
+           completed_at = ?2,
+           last_attempt_at = ?2,
+           last_error = NULL,
+           video_url = 'synthetic://monitoring/' || ?1
+       WHERE id = ?1`,
+    )
+    .bind(videoId, now)
+    .run()
+}
+
+/**
  * Transition video row to 'processing' after HeyGen accepted the job.
  * Sets heygen_job_id, increments attempt_count, records last_attempt_at.
  */
