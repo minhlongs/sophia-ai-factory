@@ -131,6 +131,26 @@ export async function proxy(request: NextRequest) {
         }
       }
 
+      // Sync MASTER tier gate for /dashboard/admin/* — prevents the layout-flash
+      // pattern that `requireMasterTier()` at page/layout level causes (parent
+      // dashboard layout streams as HTTP 200 before RSC redirect fires). Page-
+      // level `requireMasterTier()` calls remain as defense-in-depth.
+      if (cleanPath.startsWith('/dashboard/admin') && session.user?.id) {
+        try {
+          const { getUserTier } = await import('@/seed/db/get-user-tier')
+          const tier = await getUserTier(session.user.id)
+          if (tier !== 'MASTER') {
+            return NextResponse.redirect(new URL('/dashboard?error=admin_required', request.url))
+          }
+        } catch (tierErr) {
+          // On lookup failure, fail closed → deny admin access rather than
+          // leak a partial render. Page-level `requireMasterTier()` then
+          // re-checks if the redirect somehow escapes (defense-in-depth).
+          logger.error('[Middleware] Admin tier check failed', toError(tierErr))
+          return NextResponse.redirect(new URL('/dashboard?error=admin_required', request.url))
+        }
+      }
+
       // Dashboard itself owns first-run setup UX. Middleware only authenticates
       // here; forcing new BASIC users to /setup-wizard breaks dashboard home
       // and admin deny redirects.
