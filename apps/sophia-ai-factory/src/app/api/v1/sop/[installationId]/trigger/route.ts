@@ -19,20 +19,12 @@ import { verifySignature } from '@/lib/sop/webhook-hmac';
 import { runSop } from '@/lib/sop/executor/sop-runner';
 import { logger } from '@/seed/utils/logger-utility';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
+import { getSopD1 } from '@/lib/sop/d1';
 import type { SopCustomizations } from '@/lib/sop/sop-types';
 
 export const dynamic = 'force-dynamic';
 
 const MAX_BODY_BYTES = 64 * 1024;  // 64KB limit
-
-function getD1(): D1Database | null {
-  try {
-    const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
-    if (env?.DB) return env.DB as D1Database;
-    const globalDb = (globalThis as Record<string, unknown>).__D1_DB as D1Database | undefined;
-    return globalDb ?? null;
-  } catch { return null; }
-}
 
 export async function POST(
   request: NextRequest,
@@ -40,7 +32,7 @@ export async function POST(
 ): Promise<NextResponse> {
   const { installationId } = await params;
   return withRateLimit(async (r: NextRequest) => {
-    const db = getD1();
+    const db = getSopD1();
     if (!db) {
       return NextResponse.json({ error: 'DB unavailable' }, { status: 500 });
     }

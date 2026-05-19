@@ -11,18 +11,10 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getTemplateBySlug, createInstallation, setEnabled } from '@/lib/sop/sop-repo';
 import { generateWebhookSecret } from '@/lib/sop/webhook-hmac';
 import { installInputSchema } from '@/lib/sop/install-input-schema';
+import { getSopD1 } from '@/lib/sop/d1';
 import type { SopCustomizations } from '@/lib/sop/sop-types';
 
 export const dynamic = 'force-dynamic';
-
-function getD1(): D1Database | null {
-  try {
-    const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
-    if (env?.DB) return env.DB as D1Database;
-    const globalDb = (globalThis as Record<string, unknown>).__D1_DB as D1Database | undefined;
-    return globalDb ?? null;
-  } catch { return null; }
-}
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const user = await getCurrentUser();
@@ -41,7 +33,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   const { slug, scheduleCron, enabled } = parsed.data;
-  const db = getD1();
+  const db = getSopD1();
   if (!db) return NextResponse.json({ error: 'DB unavailable' }, { status: 500 });
 
   const template = await getTemplateBySlug(db, slug);
