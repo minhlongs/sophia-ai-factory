@@ -1,3 +1,10 @@
+# ARCHIVED — GitHub Actions disabled by design since 2026-05-03 (doctrine v1.28.1).
+# Reason: account longtho638-jpg had Actions disabled (free-tier exhaustion).
+# Team adopted CF-direct (wrangler CLI) as canonical deploy path.
+# To re-enable: rename this file back to test.yml AND restore Actions at account level.
+# Proof-of-path (5 successful wrangler deploys): d84f3a6e, e53c7dd2, aafd1ba4, 0520585b, f418f3df
+# Refactor 2026-05-15: pipeline simplified to `npm run verify:green` (kept here for ref).
+#
 name: Tests & Deploy
 
 on:
