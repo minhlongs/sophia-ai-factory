@@ -259,7 +259,7 @@ export async function GET(req: NextRequest) {
       .prepare(
         `SELECT u.id, u.email, u.name, u.createdAt,
                 (SELECT MIN(s.createdAt) FROM session s WHERE s.userId = u.id) AS first_login_at,
-                (SELECT MIN(v.created_at) FROM video_jobs v WHERE v.user_id = u.id) AS first_video_at
+                (SELECT MIN(v.created_at) FROM videos v WHERE v.user_id = u.id) AS first_video_at
          FROM user u
          WHERE datetime(u.createdAt) >= datetime('now', '-4 days', '-12 hours')
            AND datetime(u.createdAt) <= datetime('now', '-2 days', '-12 hours')`,
@@ -317,7 +317,7 @@ export async function GET(req: NextRequest) {
       .prepare(
         `SELECT u.id, u.email, u.name, u.createdAt,
                 (SELECT MIN(s.createdAt) FROM session s WHERE s.userId = u.id) AS first_login_at,
-                (SELECT MIN(v.created_at) FROM video_jobs v WHERE v.user_id = u.id) AS first_video_at
+                (SELECT MIN(v.created_at) FROM videos v WHERE v.user_id = u.id) AS first_video_at
          FROM user u
          WHERE datetime(u.createdAt) >= datetime('now', '-5 days', '-12 hours')
            AND datetime(u.createdAt) <= datetime('now', '-3 days', '-12 hours')`,
@@ -375,7 +375,7 @@ export async function GET(req: NextRequest) {
       .prepare(
         `SELECT u.id, u.email, u.name, u.createdAt,
                 (SELECT MAX(s.createdAt) FROM session s WHERE s.userId = u.id) AS last_login_at,
-                (SELECT MAX(v.created_at) FROM video_jobs v WHERE v.user_id = u.id) AS last_video_at,
+                (SELECT MAX(v.created_at) FROM videos v WHERE v.user_id = u.id) AS last_video_at,
                 (SELECT sub.status FROM subscriptions sub WHERE sub.user_id = u.id ORDER BY sub.updated_at DESC LIMIT 1) AS sub_status
          FROM user u
          WHERE datetime(u.createdAt) >= datetime('now', '-15 days')
