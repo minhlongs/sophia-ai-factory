@@ -20,6 +20,16 @@ export interface CommandDefinition {
 }
 
 export const COMMANDS: Record<string, CommandDefinition> = {
+  'ai:write': {
+    credits: 1,
+    status: 'live',
+    description: 'Generate SOP-ready scripts, captions, hashtags, and copy blocks',
+  },
+  'social:publish': {
+    credits: 1,
+    status: 'live',
+    description: 'Schedule a video or content asset to connected distribution channels',
+  },
   'video:create': {
     credits: 5,
     status: 'live',

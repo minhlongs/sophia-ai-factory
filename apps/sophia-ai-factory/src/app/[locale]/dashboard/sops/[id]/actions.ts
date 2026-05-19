@@ -16,6 +16,7 @@ import { getInstallation, deleteInstallation, updateCustomizations, updateConfig
 import { generateWebhookSecret } from '@/lib/sop/webhook-hmac';
 import { customizationInputSchema } from '@/lib/sop/install-input-schema';
 import { runSop } from '@/lib/sop/executor/sop-runner';
+import { createRun } from '@/lib/sop/sop-repo-runs';
 import { logger } from '@/seed/utils/logger-utility';
 import type { SopCustomizations } from '@/lib/sop/sop-types';
 
@@ -49,9 +50,11 @@ export async function runNowAction(installationId: string): Promise<{ error?: st
   const { db, inst, user } = r;
   if (!inst.enabled) return { error: 'Installation is disabled' };
 
+  const run = await createRun(db, installationId, 'manual');
+
   const runCtx = {
     installationId,
-    runId: '',
+    runId: run.id,
     userId: user.id,
     trigger: 'manual' as const,
     triggerPayload: {},

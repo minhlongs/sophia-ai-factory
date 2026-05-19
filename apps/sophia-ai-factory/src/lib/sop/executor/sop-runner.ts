@@ -78,6 +78,13 @@ async function dispatchStep(
   return missionId;
 }
 
+async function getRunById(db: D1Database, runId: string) {
+  return db
+    .prepare(`SELECT * FROM sop_runs WHERE id = ?1 LIMIT 1`)
+    .bind(runId)
+    .first<Awaited<ReturnType<typeof createRun>>>();
+}
+
 /** Compute next cron trigger time (simplified: null if no cron pattern) */
 function nextCronAt(cron: string | null): number | null {
   if (!cron) return null;
@@ -113,7 +120,11 @@ export async function runSop(
   parseAgentsYaml(agentsYaml);  // validate — throws on invalid
   const steps = parsePlaybook(playbookMd);
 
-  const run = await createRun(db, ctx.installationId, ctx.trigger);
+  const run = ctx.runId
+    ? await getRunById(db, ctx.runId)
+    : await createRun(db, ctx.installationId, ctx.trigger);
+
+  if (!run) throw new Error(`Run not found: ${ctx.runId}`);
 
   await updateRunStatus(db, run.id, { status: 'running', startedAt: nowSec() });
 

@@ -21,7 +21,27 @@ function resolveValue(
   triggerPayload: Record<string, unknown> | undefined,
   configValues: Record<string, unknown> | undefined,
 ): unknown {
+  if (Array.isArray(value)) {
+    return value.map((item) => resolveValue(item, stepResults, triggerPayload, configValues));
+  }
+
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([key, item]) => [
+        key,
+        resolveValue(item, stepResults, triggerPayload, configValues),
+      ]),
+    );
+  }
+
   if (typeof value !== 'string') return value;
+
+  const exact = /^\s*\{\{([^}]+)\}\}\s*$/.exec(value);
+  if (exact) {
+    const resolved = resolvePath(exact[1].trim(), stepResults, triggerPayload, configValues);
+    if (resolved === undefined) return value;
+    return resolved !== null && typeof resolved === 'object' ? resolved : String(resolved);
+  }
 
   return value.replace(PLACEHOLDER_RE, (match, path: string) => {
     const resolved = resolvePath(path.trim(), stepResults, triggerPayload, configValues);

@@ -69,6 +69,36 @@ describe('resolveArgs — config placeholder substitution', () => {
     expect(result.enabled).toBe('true');
   });
 
+  it('preserves array and object values for exact placeholders', () => {
+    const stepResults = [{
+      order: 1,
+      command: 'social:publish',
+      missionId: 'mid-1',
+      output: {
+        publishedChannels: ['youtube', 'tiktok'],
+        metadata: { scheduled: true },
+      },
+    }];
+
+    const args = {
+      channels: '{{step_1.output.publishedChannels}}',
+      metadata: '{{step_1.output.metadata}}',
+      nested: {
+        firstChannel: '{{step_1.output.publishedChannels[0]}}',
+        allChannels: '{{step_1.output.publishedChannels}}',
+      },
+    };
+
+    const result = resolveArgs(args, stepResults);
+
+    expect(result.channels).toEqual(['youtube', 'tiktok']);
+    expect(result.metadata).toEqual({ scheduled: true });
+    expect(result.nested).toEqual({
+      firstChannel: 'youtube',
+      allChannels: ['youtube', 'tiktok'],
+    });
+  });
+
   it('does not mutate the original args object', () => {
     const args = { field: '{{config.x}}' };
     const original = { ...args };
