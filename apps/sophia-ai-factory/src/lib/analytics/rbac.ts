@@ -108,16 +108,23 @@ export async function checkAdmin(userId: string): Promise<boolean> {
   }
 
   // Check for admin role in user profile
-  const { createServerClient } = await import('@/seed/db/client');
-  const db = createServerClient();
+  // Wrap in try/catch: BASIC users may not have a user_profiles row,
+  // and D1 .single() throws when no row is found.
+  try {
+    const { createServerClient } = await import('@/seed/db/client');
+    const db = createServerClient();
 
-  const { data: profile } = await db
-    .from<{ role: string | null }>('user_profiles')
-    .select('role')
-    .eq('user_id', userId)
-    .single();
+    const { data: profile } = await db
+      .from<{ role: string | null }>('user_profiles')
+      .select('role')
+      .eq('user_id', userId)
+      .single();
 
-  return profile?.role === 'admin';
+    return profile?.role === 'admin';
+  } catch {
+    // Missing row or D1 error — default to not admin (fail closed)
+    return false;
+  }
 }
 
 /**

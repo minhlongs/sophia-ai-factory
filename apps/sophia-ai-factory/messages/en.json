@@ -778,7 +778,8 @@
       "auto_refresh_off": "Auto-refresh OFF",
       "date_range_placeholder": "Date range placeholder",
       "tier_adoption_title": "Tier adoption title",
-      "gateTitle": "Revenue Analytics"
+      "gateTitle": "Revenue Analytics",
+      "loadErrorBanner": "Analytics data could not be loaded. Showing limited view — please refresh to retry."
     },
     "trialBanner": {
       "title": "Your trial expires tomorrow! Upgrade now to keep access →",
@@ -2007,7 +2008,9 @@
       "title": "Something went wrong",
       "message": "An unexpected error occurred. Please try again.",
       "retry": "Try again",
-      "home": "Go home"
+      "home": "Go home",
+      "support": "Contact support",
+      "errorCode": "Error code"
     }
   },
   "header": {
