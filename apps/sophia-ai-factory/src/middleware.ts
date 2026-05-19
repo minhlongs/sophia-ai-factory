@@ -9,6 +9,7 @@ import { logger } from '@/seed/utils/logger-utility'
 import { toError } from '@/seed/utils/to-error'
 import { isInternalOrStatic, pathnameWithoutLocale, isAdminAuthorized } from './middleware-helpers'
 import { handleApiRoute } from './middleware-api-handler'
+import { getD1Raw } from '@/seed/db/client'
 import {
   generateCsrfToken,
   setCsrfCookie,
@@ -20,7 +21,6 @@ import {
 import { buildCSPHeader } from '@/seed/security/content-security-policy-configuration'
 import { CSP_NONCE_HEADER } from '@/seed/security/get-csp-nonce'
 import { isSessionMfaPending } from '@/seed/auth/mfa/login-challenge'
-import { getUserTier } from '@/seed/db/get-user-tier'
 
 /**
  * Generate a cryptographically random nonce for this request.
@@ -138,8 +138,23 @@ export async function proxy(request: NextRequest) {
       // level `requireMasterTier()` calls remain as defense-in-depth.
       if (cleanPath.startsWith('/dashboard/admin') && session.user?.id) {
         try {
-          const tier = await getUserTier(session.user.id)
-          if (tier !== 'MASTER') {
+          // Inline D1 query — `getUserTier()` (from seed/db/get-user-tier.ts)
+          // reads D1 via globalThis.__env.DB which is undefined at the edge
+          // middleware runtime, silently falling back to 'BASIC' and locking
+          // legitimate MASTER users out of admin pages. `getD1Raw()` resolves
+          // the binding through the Cloudflare context which works here.
+          const db = await getD1Raw()
+          const row = await db
+            .prepare(
+              `SELECT tier, plan FROM subscriptions
+               WHERE user_id = ?1 AND status = 'active'
+               ORDER BY created_at DESC LIMIT 1`,
+            )
+            .bind(session.user.id)
+            .first<{ tier: string | null; plan: string | null }>()
+          const raw = row?.tier ?? row?.plan ?? null
+          const isMaster = raw === 'MASTER' || raw === 'master'
+          if (!isMaster) {
             return NextResponse.redirect(new URL('/dashboard?error=admin_required', request.url))
           }
         } catch (tierErr) {
