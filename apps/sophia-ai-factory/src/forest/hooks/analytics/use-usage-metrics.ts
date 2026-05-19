@@ -1,15 +1,17 @@
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/query-client';
-import { RaasGatewayClient, type RaasUsageMetrics } from '@/forest/raas-gateway-client';
-import { logger } from '@/seed/utils/logger-utility';
-import { toError } from '@/seed/utils/to-error';
+import type { RaasUsageMetrics } from '@/forest/raas-gateway-client';
 
-// RaaS Gateway client instance (singleton)
-const raasClient = new RaasGatewayClient({
-  baseURL: process.env.NEXT_PUBLIC_RAAS_GATEWAY_URL || 'https://raas.agencyos.network',
-  apiKey: process.env.NEXT_PUBLIC_RAAS_API_KEY || '',
-  timeout: 10000,
-});
+interface LocalUsageMetricsResponse {
+  summary?: {
+    totalRequests?: number;
+    totalCredits?: number;
+  };
+  timeSeries?: Array<{
+    timestamp: number;
+    credits: number;
+  }>;
+}
 
 export interface UsageMetricsOptions {
   start: number;
@@ -29,16 +31,38 @@ export function useUsageMetrics(options: UsageMetricsOptions) {
   return useQuery<RaasUsageMetrics | null, Error>({
     queryKey: queryKeys.usage.list({ start, end, granularity, service }),
     queryFn: async () => {
-      try {
-        return await raasClient.getUsageMetrics(start, end);
-      } catch (error) {
-        logger.error('[useUsageMetrics] Failed to fetch usage metrics', toError(error));
+      const params = new URLSearchParams({
+        start: String(start),
+        end: String(end),
+        granularity,
+      });
+
+      if (service) params.set('service', service);
+
+      const response = await fetch(`/api/analytics/usage?${params.toString()}`);
+      if (!response.ok) {
         return null;
       }
+
+      const data = await response.json() as LocalUsageMetricsResponse;
+      const quotaConsumption = (data.timeSeries ?? []).map((point) => ({
+        timestamp: point.timestamp,
+        used: point.credits,
+        limit: 0,
+        percentage: 0,
+      }));
+
+      return {
+        apiCallVolume: data.summary?.totalRequests ?? 0,
+        activeLicenses: 0,
+        costPerTenant: {},
+        quotaConsumption,
+        timestamp: Date.now(),
+      };
     },
     staleTime: 30 * 1000, // 30 seconds
     gcTime: 5 * 60 * 1000, // 5 minutes
     enabled,
-    retry: 2,
+    retry: 0,
   });
 }

@@ -19,6 +19,7 @@ import {
   resolveAgentPerformance,
   getD1RawForAnalytics,
   type WindowOption,
+  type AgentPerformanceReport,
 } from '@/lib/analytics/agent-performance-resolver';
 
 
@@ -28,6 +29,14 @@ const querySchema = z.object({
   window: z.enum(['24h', '7d']).default('24h'),
   role: z.string().min(1).optional(),
 });
+
+function emptyAgentPerformanceReport(window: WindowOption): AgentPerformanceReport {
+  return {
+    window,
+    generated_at: new Date().toISOString(),
+    roles: [],
+  };
+}
 
 // ── Handler ──────────────────────────────────────────────────────────────────
 
@@ -67,8 +76,16 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // org_id: use user.id as org scope (Sophia is single-tenant per user)
     const orgId = (user as Record<string, unknown>).orgId as string | undefined ?? user.id;
 
-    const db = getD1RawForAnalytics();
-    const report = await resolveAgentPerformance(db, orgId, win as WindowOption, role);
+    let report: AgentPerformanceReport;
+    try {
+      const db = getD1RawForAnalytics();
+      report = await resolveAgentPerformance(db, orgId, win as WindowOption, role);
+    } catch (error) {
+      logger.warn('[Analytics AgentPerformance] Returning empty report', {
+        reason: error instanceof Error ? error.message : String(error),
+      });
+      report = emptyAgentPerformanceReport(win as WindowOption);
+    }
 
     return NextResponse.json(report);
   } catch (error) {
