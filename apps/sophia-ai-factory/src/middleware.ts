@@ -20,6 +20,7 @@ import {
 import { buildCSPHeader } from '@/seed/security/content-security-policy-configuration'
 import { CSP_NONCE_HEADER } from '@/seed/security/get-csp-nonce'
 import { isSessionMfaPending } from '@/seed/auth/mfa/login-challenge'
+import { getUserTier } from '@/seed/db/get-user-tier'
 
 /**
  * Generate a cryptographically random nonce for this request.
@@ -137,7 +138,6 @@ export async function proxy(request: NextRequest) {
       // level `requireMasterTier()` calls remain as defense-in-depth.
       if (cleanPath.startsWith('/dashboard/admin') && session.user?.id) {
         try {
-          const { getUserTier } = await import('@/seed/db/get-user-tier')
           const tier = await getUserTier(session.user.id)
           if (tier !== 'MASTER') {
             return NextResponse.redirect(new URL('/dashboard?error=admin_required', request.url))
