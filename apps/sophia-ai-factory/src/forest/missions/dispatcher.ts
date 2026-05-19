@@ -19,6 +19,8 @@ import type { MissionHandlerResult } from './handlers/types';
 async function loadHandler(command: string): Promise<((ctx: import('./handlers/types').MissionContext) => Promise<MissionHandlerResult>) | null> {
   try {
     switch (command) {
+      case 'ai:write': return (await import('./handlers/ai-write')).handle;
+      case 'social:publish': return (await import('./handlers/social-publish')).handle;
       case 'video:create': return (await import('./handlers/video-create')).handle;
       case 'video:status': return (await import('./handlers/video-status')).handle;
       case 'proposal:create': return (await import('./handlers/proposal-create')).handle;

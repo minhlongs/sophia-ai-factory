@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getInstallation } from '@/lib/sop/sop-repo';
 import { runSop } from '@/lib/sop/executor/sop-runner';
+import { createRun } from '@/lib/sop/sop-repo-runs';
 import { logger } from '@/seed/utils/logger-utility';
 
 export const dynamic = 'force-dynamic';
@@ -39,9 +40,11 @@ export async function POST(
   if (inst.user_id !== user.id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   if (!inst.enabled) return NextResponse.json({ error: 'Installation is disabled' }, { status: 400 });
 
+  const run = await createRun(db, id, 'manual');
+
   const runCtx = {
     installationId: id,
-    runId: '',
+    runId: run.id,
     userId: user.id,
     trigger: 'manual' as const,
     triggerPayload: {},
@@ -55,5 +58,5 @@ export async function POST(
   });
 
   // Return immediately — client polls for completion
-  return NextResponse.json({ status: 'queued', installationId: id }, { status: 202 });
+  return NextResponse.json({ status: 'queued', installationId: id, runId: run.id }, { status: 202 });
 }

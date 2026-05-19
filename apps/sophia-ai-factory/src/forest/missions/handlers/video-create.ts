@@ -54,6 +54,7 @@ export async function handle(ctx: MissionContext): Promise<MissionHandlerResult>
     return {
       ok: true,
       data: {
+        videoId,
         video_id: videoId,
         heygen_video_id: result.videoId,
         status: 'processing',
