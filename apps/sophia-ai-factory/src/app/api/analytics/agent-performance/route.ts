@@ -21,7 +21,6 @@ import {
   type WindowOption,
 } from '@/lib/analytics/agent-performance-resolver';
 
-export const runtime = 'edge';
 
 // ── Validation ───────────────────────────────────────────────────────────────
 

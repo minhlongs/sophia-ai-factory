@@ -22,7 +22,6 @@ import { logger } from '@/seed/utils/logger-utility';
 import type { TierAdoptionPoint, TierAdoptionChartRow, TierAdoptionData } from '@/seed/types/analytics-tier';
 import type { Tier } from '@/seed/types';
 
-export const runtime = 'edge';
 
 // ── Validation ──────────────────────────────────────────────────────────────
 

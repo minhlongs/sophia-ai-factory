@@ -19,7 +19,6 @@ import { track } from '@/lib/signals/track';
 import { D1Events } from '@/lib/signals/d1-event-types';
 import { logger } from '@/seed/utils/logger-utility';
 
-export const runtime = 'edge';
 
 // ── Validation ───────────────────────────────────────────────────────────────
 

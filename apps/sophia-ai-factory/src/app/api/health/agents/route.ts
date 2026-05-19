@@ -8,7 +8,6 @@ import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { resolveAgentHealth } from '@/forest/agents/agent-health-resolver';
 
-export const runtime = 'edge';
 
 export async function GET(): Promise<NextResponse> {
   try {

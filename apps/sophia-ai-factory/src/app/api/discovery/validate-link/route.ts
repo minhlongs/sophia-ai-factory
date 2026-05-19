@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session'
 
 // Use Edge Runtime for low latency
-export const runtime = 'edge'
 
 /**
  * Validate that URL is a safe external HTTPS URL (prevent SSRF attacks).

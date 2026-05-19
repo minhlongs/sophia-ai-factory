@@ -22,7 +22,6 @@ import { checkAdmin, canAccessRevenue } from '@/lib/analytics/rbac';
 import { fetchUnifiedRevenue } from '@/lib/analytics/queries/revenue-unified-query';
 import { logger } from '@/seed/utils/logger-utility';
 
-export const runtime = 'edge';
 
 // ── Zod schema ────────────────────────────────────────────────────────────────
 
