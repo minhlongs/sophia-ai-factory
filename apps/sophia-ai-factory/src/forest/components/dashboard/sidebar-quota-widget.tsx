@@ -16,6 +16,7 @@
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { Infinity as InfinityIcon, BarChart3 } from 'lucide-react';
+import { fetchJson } from '@/seed/utils/fetch-json';
 import { useTranslations } from 'next-intl';
 
 interface QuotaStatusResponse {
@@ -34,6 +35,7 @@ export function SidebarQuotaWidget() {
   const t = useTranslations('dashboard.sidebar.quotaWidget');
   const { data, isLoading, isError } = useQuery<QuotaStatusResponse>({
     queryKey: ['/api/quota/status'],
+    queryFn: () => fetchJson<QuotaStatusResponse>('/api/quota/status'),
     retry: 0,
     staleTime: 60_000,
   });

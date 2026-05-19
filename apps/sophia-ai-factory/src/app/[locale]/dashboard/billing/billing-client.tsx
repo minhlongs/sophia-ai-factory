@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { use } from 'react';
 import { useTranslations } from 'next-intl';
+import { fetchJson } from '@/seed/utils/fetch-json';
 import { FullUsageSummary } from '@/forest/components/billing/usage-summary-card';
 import { DunningStatusBanner } from '@/forest/components/billing/dunning-status-banner';
 import { QuotaGaugeList } from '@/forest/components/analytics/QuotaGauge';
@@ -41,11 +42,13 @@ export default function BillingClient({ params }: { params: Promise<{ locale: st
 
   const { data: usageData, isLoading, error } = useQuery<UsageSummaryResponse>({
     queryKey: ['/api/billing/usage-summary'],
+    queryFn: () => fetchJson<UsageSummaryResponse>('/api/billing/usage-summary'),
     retry: 2,
   });
 
   const { data: dunningData } = useQuery<DunningStatusResponse>({
     queryKey: ['/api/quota/dunning-status'],
+    queryFn: () => fetchJson<DunningStatusResponse>('/api/quota/dunning-status'),
     retry: 1,
     enabled: !!usageData?.license?.nonce,
   });
