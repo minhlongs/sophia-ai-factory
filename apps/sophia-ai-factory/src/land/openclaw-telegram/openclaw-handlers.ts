@@ -31,6 +31,7 @@ import {
   callTranslateScript,
   callCloneVoice,
   callGenerateSeoScript,
+  callSchedulePublish,
 } from '@/land/openclaw-telegram/openclaw-bridge';
 
 const NOT_PAIRED_MSG =
@@ -338,6 +339,48 @@ export async function handleSeoScript(chatId: string, rawArg: string): Promise<v
       (coverageLine ? `_Coverage:_ ${coverageLine}\n` : '') +
       `\`\`\`\n${out.result.script}\n\`\`\`\n` +
       `📝 _Title ideas:_\n${out.result.suggestedTitles.map((t) => `• ${t}`).join('\n')}`,
+  );
+}
+
+/**
+ * /publish <videoId> <channelId> <ISO_DATE> [caption] — paired user only.
+ * Schedules a publishing_jobs row that the cron publisher consumes.
+ * Example: /publish v_abc c_yt 2026-06-01T09:00:00Z Watch the new launch
+ */
+export async function handleSchedulePublish(chatId: string, rawArg: string): Promise<void> {
+  const userId = await resolveUserIdFromChat(chatId);
+  if (!userId) {
+    await sendMessage(chatId, NOT_PAIRED_MSG);
+    return;
+  }
+  const parts = rawArg.trim().split(/\s+/);
+  if (parts.length < 3) {
+    await sendMessage(
+      chatId,
+      '❌ Cú pháp: `/publish <videoId> <channelId> <ISO_DATE> [caption]`\nVí dụ: `/publish v_abc c_yt 2026-06-01T09:00:00Z Launch day`',
+    );
+    return;
+  }
+  const [videoId, channelId, isoDate, ...captionParts] = parts;
+  const scheduledAt = Math.floor(new Date(isoDate).getTime() / 1000);
+  if (!Number.isFinite(scheduledAt) || scheduledAt <= 0) {
+    await sendMessage(chatId, `❌ ISO date không hợp lệ: \`${isoDate}\``);
+    return;
+  }
+  const out = await callSchedulePublish({
+    userId,
+    videoId,
+    channelId,
+    scheduledAt,
+    caption: captionParts.length > 0 ? captionParts.join(' ') : undefined,
+  });
+  if (!out.ok) {
+    await sendMessage(chatId, `❌ Schedule thất bại (\`${out.code}\`): ${out.message}`);
+    return;
+  }
+  await sendMessage(
+    chatId,
+    `📅 *Đã xếp lịch publish*\n• Job: \`${out.result.jobId}\`\n• Scheduled: ${new Date(out.result.scheduledAt * 1000).toISOString()}\n• Status: \`${out.result.status}\``,
   );
 }
 
