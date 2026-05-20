@@ -140,8 +140,8 @@
       "subtitle": "Powerful features designed for serious content creators",
       "items": {
         "multi_channel": {
-          "title": "YouTube-First Distribution",
-          "description": "Manage YouTube publishing from one dashboard today. Multi-platform expansion (TikTok, IG, FB) on the roadmap.",
+          "title": "Multi-Channel Distribution",
+          "description": "Register YouTube, TikTok, Instagram, Facebook, Twitter, LinkedIn, Pinterest, Threads, Reddit, Bluesky, Mastodon, or Zalo via /api/publish/channels with your own OAuth tokens (BYOK). The shared publisher cron handles delivery.",
           "badge": "Growth"
         },
         "auto_affiliate": {
