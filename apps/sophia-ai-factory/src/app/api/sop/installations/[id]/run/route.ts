@@ -12,6 +12,7 @@ import { getInstallation } from '@/lib/sop/sop-repo';
 import { runSop } from '@/lib/sop/executor/sop-runner';
 import { createRun } from '@/lib/sop/sop-repo-runs';
 import { getSopD1 } from '@/lib/sop/d1';
+import { waitUntilSopWork } from '@/lib/sop/wait-until';
 import { logger } from '@/seed/utils/logger-utility';
 
 export const dynamic = 'force-dynamic';
@@ -42,8 +43,8 @@ export async function POST(
     triggerPayload: {},
   };
 
-  // Fire-and-forget — return runId from async result once created
   const runPromise = runSop(db, runCtx);
+  waitUntilSopWork(runPromise);
 
   void runPromise.catch(err => {
     logger.error('[sop/run] async run error', err instanceof Error ? err : new Error(String(err)), { installationId: id });

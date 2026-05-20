@@ -20,6 +20,7 @@ import { runSop } from '@/lib/sop/executor/sop-runner';
 import { logger } from '@/seed/utils/logger-utility';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 import { getSopD1 } from '@/lib/sop/d1';
+import { waitUntilSopWork } from '@/lib/sop/wait-until';
 import type { SopCustomizations } from '@/lib/sop/sop-types';
 
 export const dynamic = 'force-dynamic';
@@ -95,7 +96,6 @@ export async function POST(
       try { triggerPayload = JSON.parse(bodyText) as Record<string, unknown>; } catch { /* plain body ok */ }
     }
 
-    // Async run via fire-and-forget (CF Workers: use waitUntil if ctx available)
     const runCtx = {
       installationId,
       runId: '',
@@ -104,7 +104,10 @@ export async function POST(
       triggerPayload,
     };
 
-    void runSop(db, runCtx).catch(err => {
+    const runPromise = runSop(db, runCtx);
+    waitUntilSopWork(runPromise);
+
+    void runPromise.catch(err => {
       logger.error('[trigger] async run error', err instanceof Error ? err : new Error(String(err)), { installationId });
     });
 
