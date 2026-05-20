@@ -27,6 +27,7 @@ import {
   callGetVideoStatus,
   callGetHandover,
   callRedeemFree100,
+  callEmbedAffiliateInDescription,
 } from '@/land/openclaw-telegram/openclaw-bridge';
 
 const NOT_PAIRED_MSG =
@@ -154,6 +155,39 @@ export async function handleHandover(chatId: string): Promise<void> {
       `• First login: ${fmt(h.firstLoginAt)}\n` +
       `• First SOP install: ${fmt(h.firstSopInstallAt)}\n` +
       `• First run: ${fmt(h.firstRunAt)}`,
+  );
+}
+
+/**
+ * /embed <videoId|"sample body text"> — paired user only.
+ * Builds an enriched video description by injecting the user's affiliate
+ * links. If the arg looks like a 16-32-char hex/uuid it's treated as a
+ * videoId; otherwise it is used directly as the body text.
+ */
+export async function handleEmbed(chatId: string, rawArg: string): Promise<void> {
+  const userId = await resolveUserIdFromChat(chatId);
+  if (!userId) {
+    await sendMessage(chatId, NOT_PAIRED_MSG);
+    return;
+  }
+  const arg = rawArg.trim();
+  const looksLikeId = /^[0-9a-f-]{16,40}$/i.test(arg);
+  const result = await callEmbedAffiliateInDescription({
+    userId,
+    ...(looksLikeId ? { videoId: arg } : { baseBody: arg || 'Watch the latest video on our channel.' }),
+  });
+  if (result.affiliateCount === 0) {
+    await sendMessage(
+      chatId,
+      '📭 *No affiliate links yet*\nVisit /dashboard/affiliate to create your first tracked link, then run /embed again.',
+    );
+    return;
+  }
+  // Reply preserves the description verbatim inside a fenced block so the
+  // user can copy-paste it straight into YouTube / TikTok / etc.
+  await sendMessage(
+    chatId,
+    `🔗 *Affiliate-embedded description* (${result.affiliateCount} link${result.affiliateCount === 1 ? '' : 's'}):\n\n\`\`\`\n${result.description}\n\`\`\``,
   );
 }
 
