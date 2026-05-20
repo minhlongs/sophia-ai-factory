@@ -47,6 +47,18 @@ vi.mock('@/land/publish/schedule-video-publish', () => ({
   },
 }));
 
+vi.mock('@/land/video/render-byok-video', () => ({
+  submitByokVideo: vi.fn(),
+  RenderByokVideoError: class extends Error {
+    code: 'BYOK_REQUIRED' | 'EMPTY_SCRIPT' | 'HEYGEN_SUBMIT_FAILED' | 'PERSIST_FAILED';
+    constructor(code: 'BYOK_REQUIRED' | 'EMPTY_SCRIPT' | 'HEYGEN_SUBMIT_FAILED' | 'PERSIST_FAILED', message: string) {
+      super(message);
+      this.code = code;
+      this.name = 'RenderByokVideoError';
+    }
+  },
+}));
+
 const mockRun = vi.fn().mockResolvedValue({});
 const mockBind = vi.fn(() => ({ run: mockRun }));
 const mockPrepare = vi.fn(() => ({ bind: mockBind }));
@@ -58,6 +70,7 @@ import { generateSeoScript, SeoScriptConfigurationError } from '@/land/scripts/g
 import { translateScript } from '@/land/i18n/translate-script';
 import { buildVideoDescription } from '@/land/affiliates/video-description-injector';
 import { schedulePublish, PublishConfigurationError } from '@/land/publish/schedule-video-publish';
+import { submitByokVideo, RenderByokVideoError } from '@/land/video/render-byok-video';
 import {
   runAutoVideoMission,
   AutoVideoMissionError,
@@ -67,6 +80,7 @@ const mockedGenerateSeoScript = vi.mocked(generateSeoScript);
 const mockedTranslateScript = vi.mocked(translateScript);
 const mockedBuildVideoDescription = vi.mocked(buildVideoDescription);
 const mockedSchedulePublish = vi.mocked(schedulePublish);
+const mockedSubmitByokVideo = vi.mocked(submitByokVideo);
 
 describe('runAutoVideoMission', () => {
   beforeEach(() => {
@@ -74,6 +88,10 @@ describe('runAutoVideoMission', () => {
     mockRun.mockResolvedValue({});
     mockBind.mockImplementation(() => ({ run: mockRun }));
     mockPrepare.mockImplementation(() => ({ bind: mockBind }));
+    // Default: HeyGen key absent — orchestrator soft-skips render step.
+    mockedSubmitByokVideo.mockRejectedValue(
+      new RenderByokVideoError('BYOK_REQUIRED', 'no key'),
+    );
   });
 
   it('chains script + description and returns mission row when no secondary lang / channel', async () => {
@@ -233,5 +251,72 @@ describe('runAutoVideoMission', () => {
     await expect(
       runAutoVideoMission({ userId: 'u', topic: 'x' }),
     ).rejects.toBeInstanceOf(AutoVideoMissionError);
+  });
+
+  it('submits HeyGen render when BYOK key is configured + threads videoId into schedule', async () => {
+    mockedGenerateSeoScript.mockResolvedValue({
+      script: '# T\n\nBody.',
+      suggestedTitles: ['Hello'],
+      seoScore: 75,
+      keywordCoverage: [],
+      wordCount: 120,
+      model: 'm',
+      source: 'user',
+    });
+    mockedBuildVideoDescription.mockResolvedValue({
+      description: 'd',
+      links: [],
+      affiliateCount: 0,
+      appliedNicheBoost: false,
+    });
+    mockedSubmitByokVideo.mockReset();
+    mockedSubmitByokVideo.mockResolvedValue({
+      videoId: 'vid_real',
+      heygenJobId: 'hg_job',
+      status: 'processing',
+    });
+    mockedSchedulePublish.mockResolvedValue({
+      jobId: 'job_xyz',
+      scheduledAt: 1234,
+      status: 'scheduled',
+    });
+
+    const result = await runAutoVideoMission({
+      userId: 'u',
+      topic: 't',
+      channelId: 'ch_yt',
+      scheduledAt: 1234,
+    });
+
+    expect(result.video).toEqual({ videoId: 'vid_real', heygenJobId: 'hg_job', status: 'processing' });
+    expect(result.publish?.jobId).toBe('job_xyz');
+    const scheduleCall = mockedSchedulePublish.mock.calls[0][0];
+    expect(scheduleCall.videoId).toBe('vid_real');
+  });
+
+  it('fails the mission with VIDEO_RENDER_FAILED on HeyGen submit error', async () => {
+    mockedGenerateSeoScript.mockResolvedValue({
+      script: 'body',
+      suggestedTitles: ['T'],
+      seoScore: 60,
+      keywordCoverage: [],
+      wordCount: 50,
+      model: 'm',
+      source: 'user',
+    });
+    mockedBuildVideoDescription.mockResolvedValue({
+      description: 'd',
+      links: [],
+      affiliateCount: 0,
+      appliedNicheBoost: false,
+    });
+    mockedSubmitByokVideo.mockReset();
+    mockedSubmitByokVideo.mockRejectedValue(
+      new RenderByokVideoError('HEYGEN_SUBMIT_FAILED', '402 payment required'),
+    );
+
+    await expect(
+      runAutoVideoMission({ userId: 'u', topic: 't' }),
+    ).rejects.toMatchObject({ code: 'VIDEO_RENDER_FAILED' });
   });
 });
