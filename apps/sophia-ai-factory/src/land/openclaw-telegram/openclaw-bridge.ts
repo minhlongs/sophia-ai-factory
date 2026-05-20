@@ -49,6 +49,11 @@ import {
   SeoScriptConfigurationError,
   type GenerateSeoScriptResult,
 } from '@/land/scripts/generate-seo-script';
+import {
+  schedulePublish,
+  PublishConfigurationError,
+  type SchedulePublishResult,
+} from '@/land/publish/schedule-video-publish';
 import { createCustomerUser } from '@/tree/handover/handover-account-setup';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
@@ -409,7 +414,36 @@ export async function callGenerateSeoScript(input: SeoScriptBridgeInput): Promis
   }
 }
 
-// ─── 11. sophia_redeem_free100 ───────────────────────────────────────────────
+// ─── 11. sophia_schedule_publish (homepage promise: 24/7 auto-publish) ───────
+
+export interface SchedulePublishBridgeInput {
+  userId: string;
+  videoId: string;
+  channelId: string;
+  scheduledAt: number;
+  caption?: string;
+  hashtags?: string[];
+}
+
+export type SchedulePublishBridgeResult =
+  | { ok: true; result: SchedulePublishResult }
+  | { ok: false; code: PublishConfigurationError['code'] | 'UPSTREAM_FAILED'; message: string };
+
+export async function callSchedulePublish(
+  input: SchedulePublishBridgeInput,
+): Promise<SchedulePublishBridgeResult> {
+  try {
+    const result = await schedulePublish(input);
+    return { ok: true, result };
+  } catch (err) {
+    if (err instanceof PublishConfigurationError) {
+      return { ok: false, code: err.code, message: err.message };
+    }
+    return { ok: false, code: 'UPSTREAM_FAILED', message: err instanceof Error ? err.message : 'unknown' };
+  }
+}
+
+// ─── 12. sophia_redeem_free100 ───────────────────────────────────────────────
 
 export interface RedeemFree100Input {
   code: string;

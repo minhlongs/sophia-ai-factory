@@ -31,6 +31,7 @@ export async function handleHelp(chatId: string): Promise<void> {
 /translate <toLang> <text> - Translate via your BYOK OpenRouter key
 /clone-voice <Name>|<urls> - Clone voice via your BYOK ElevenLabs key
 /seo-script <topic> [| kws] - Generate SEO-scored script (BYOK OpenRouter)
+/publish <videoId> <channelId> <ISO_DATE> [caption] - Schedule auto-publish
 /free100 <email> - Redeem FREE100 → MASTER magic-link
 
 *Need support?* Contact us at support@mekongmind.com`

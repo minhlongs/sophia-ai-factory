@@ -161,7 +161,7 @@
         },
         "auto_publish": {
           "title": "Tự Động Xuất Bản YouTube",
-          "description": "Lên lịch và xuất bản video lên YouTube theo cron. Bộ lên lịch đa nền tảng sẽ ra mắt cùng đợt mở rộng.",
+          "description": "Lên lịch và xuất bản video lên YouTube theo cron — live qua /api/publish/schedule và Telegram /publish. Các nền tảng khác mở khoá khi adapter sẵn sàng.",
           "badge": "Growth"
         },
         "global_reach": {

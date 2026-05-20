@@ -161,7 +161,7 @@
         },
         "auto_publish": {
           "title": "YouTube Auto-Publishing",
-          "description": "Schedule and publish videos to YouTube on cron. Additional platform schedulers coming with the multi-channel expansion.",
+          "description": "Schedule and publish videos to YouTube on cron — live via /api/publish/schedule and Telegram /publish. Other platforms unlock as adapters ship.",
           "badge": "Growth"
         },
         "global_reach": {
