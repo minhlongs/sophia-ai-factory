@@ -30,6 +30,7 @@ import {
   callEmbedAffiliateInDescription,
   callTranslateScript,
   callCloneVoice,
+  callGenerateSeoScript,
 } from '@/land/openclaw-telegram/openclaw-bridge';
 
 const NOT_PAIRED_MSG =
@@ -288,6 +289,55 @@ export async function handleCloneVoice(chatId: string, rawArg: string): Promise<
   await sendMessage(
     chatId,
     `🎙️ *Voice cloned*\n• Name: ${out.result.name}\n• Voice ID: \`${out.result.voiceId}\`\n• Samples: ${out.result.samplesUploaded}\n\nDùng voice_id này cho /video TTS calls.`,
+  );
+}
+
+/**
+ * /seo-script <topic> [| kw1, kw2, ...] — paired user only.
+ * Generates an SEO-scored script via the user's BYOK OpenRouter key.
+ * Optional pipe separates topic from comma-separated target keywords.
+ */
+export async function handleSeoScript(chatId: string, rawArg: string): Promise<void> {
+  const userId = await resolveUserIdFromChat(chatId);
+  if (!userId) {
+    await sendMessage(chatId, NOT_PAIRED_MSG);
+    return;
+  }
+  const arg = rawArg.trim();
+  if (arg.length === 0) {
+    await sendMessage(
+      chatId,
+      '❌ Cú pháp: `/seo-script <topic> [| kw1, kw2]` — ví dụ: `/seo-script affiliate marketing | passive income, byok`',
+    );
+    return;
+  }
+  const pipe = arg.indexOf('|');
+  const topic = pipe >= 0 ? arg.slice(0, pipe).trim() : arg;
+  const keywords =
+    pipe >= 0
+      ? arg.slice(pipe + 1).split(',').map((k) => k.trim()).filter((k) => k.length > 0)
+      : [];
+  const out = await callGenerateSeoScript({ userId, topic, keywords });
+  if (!out.ok) {
+    if (out.code === 'BYOK_REQUIRED') {
+      await sendMessage(
+        chatId,
+        '🔑 *Cần OpenRouter key*\nVào /dashboard/setup-wizard và nhập key OpenRouter để dùng /seo-script.',
+      );
+      return;
+    }
+    await sendMessage(chatId, `❌ SEO script thất bại (\`${out.code}\`): ${out.message}`);
+    return;
+  }
+  const coverageLine = out.result.keywordCoverage
+    .map((c) => `${c.keyword} ×${c.hits}`)
+    .join(', ');
+  await sendMessage(
+    chatId,
+    `🧠 *SEO Script* — score ${out.result.seoScore}/100 (${out.result.wordCount} words)\n` +
+      (coverageLine ? `_Coverage:_ ${coverageLine}\n` : '') +
+      `\`\`\`\n${out.result.script}\n\`\`\`\n` +
+      `📝 _Title ideas:_\n${out.result.suggestedTitles.map((t) => `• ${t}`).join('\n')}`,
   );
 }
 

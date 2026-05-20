@@ -44,6 +44,11 @@ import {
   VoiceCloneConfigurationError,
   type CloneVoiceResult,
 } from '@/land/voice/clone-voice';
+import {
+  generateSeoScript,
+  SeoScriptConfigurationError,
+  type GenerateSeoScriptResult,
+} from '@/land/scripts/generate-seo-script';
 import { createCustomerUser } from '@/tree/handover/handover-account-setup';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
@@ -379,7 +384,32 @@ export async function callCloneVoice(input: CloneVoiceBridgeInput): Promise<Clon
   }
 }
 
-// ─── 10. sophia_redeem_free100 ───────────────────────────────────────────────
+// ─── 10. sophia_generate_seo_script (homepage promise: AI script + SEO) ──────
+
+export interface SeoScriptBridgeInput {
+  userId: string;
+  topic: string;
+  keywords?: string[];
+  language?: 'en' | 'vi';
+}
+
+export type SeoScriptBridgeResult =
+  | { ok: true; result: GenerateSeoScriptResult }
+  | { ok: false; code: 'BYOK_REQUIRED' | 'EMPTY_TOPIC' | 'UPSTREAM_FAILED'; message: string };
+
+export async function callGenerateSeoScript(input: SeoScriptBridgeInput): Promise<SeoScriptBridgeResult> {
+  try {
+    const result = await generateSeoScript(input);
+    return { ok: true, result };
+  } catch (err) {
+    if (err instanceof SeoScriptConfigurationError) {
+      return { ok: false, code: err.code, message: err.message };
+    }
+    return { ok: false, code: 'UPSTREAM_FAILED', message: err instanceof Error ? err.message : 'unknown' };
+  }
+}
+
+// ─── 11. sophia_redeem_free100 ───────────────────────────────────────────────
 
 export interface RedeemFree100Input {
   code: string;

@@ -25,6 +25,7 @@ import {
   handleEmbed,
   handleTranslate,
   handleCloneVoice,
+  handleSeoScript,
 } from '@/land/openclaw-telegram/openclaw-handlers'
 import {
   handleCampaign as handleCampaignFsm,
@@ -270,6 +271,9 @@ export async function POST(request: NextRequest) {
       } else if (text.startsWith('/clone-voice')) {
         const arg = text.replace('/clone-voice', '').trim()
         await handleCloneVoice(chatId, arg)
+      } else if (text.startsWith('/seo-script')) {
+        const arg = text.replace('/seo-script', '').trim()
+        await handleSeoScript(chatId, arg)
       } else if (text.startsWith('/free100')) {
         const email = text.replace('/free100', '').trim()
         await handleFree100(chatId, email)

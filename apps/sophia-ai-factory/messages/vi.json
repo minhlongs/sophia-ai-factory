@@ -155,8 +155,8 @@
           "badge": "Growth"
         },
         "script_gen": {
-          "title": "Tạo Kịch Bản AI",
-          "description": "Tạo kịch bản hấp dẫn cho mọi ngách qua key OpenRouter / Anthropic của bạn (BYOK). Tinh chỉnh prompt riêng để tối ưu SEO.",
+          "title": "Tạo Kịch Bản AI (Có Chấm Điểm SEO)",
+          "description": "Tạo kịch bản qua key OpenRouter BYOK với chấm điểm SEO tích hợp — coverage keyword, cấu trúc heading, word-count band, title ideas. Live tại /api/scripts/seo và Telegram /seo-script.",
           "badge": "Starter"
         },
         "auto_publish": {

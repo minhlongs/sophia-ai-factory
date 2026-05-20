@@ -155,8 +155,8 @@
           "badge": "Growth"
         },
         "script_gen": {
-          "title": "AI Script Generation",
-          "description": "Generate engaging scripts for any niche via your OpenRouter / Anthropic key (BYOK). Refine with your own prompts for SEO.",
+          "title": "AI Script Generation (SEO-scored)",
+          "description": "Generate scripts via your BYOK OpenRouter key with built-in SEO scoring — keyword coverage, heading structure, length band, title ideas. Live at /api/scripts/seo and Telegram /seo-script.",
           "badge": "Starter"
         },
         "auto_publish": {
