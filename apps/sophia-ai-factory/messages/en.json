@@ -126,47 +126,47 @@
         },
         "publish": {
           "title": "Publish",
-          "description": "Auto-distribute to multiple social platforms (YouTube, TikTok, IG, FB, Twitter, Pinterest)"
+          "description": "Publish to YouTube today via HeyGen webhook. TikTok, Instagram, Facebook integrations on the roadmap."
         },
         "profit": {
           "title": "Track Revenue",
           "description": "Track earnings from affiliate networks (BYOK Apollo / PartnerStack / Impact)"
         }
       },
-      "cta": "Join 1,000+ creators building their content empires"
+      "cta": "Built for creators ready to ship today, not someday"
     },
     "features": {
       "title": "Everything You Need to Dominate",
       "subtitle": "Powerful features designed for serious content creators",
       "items": {
         "multi_channel": {
-          "title": "Multi-Channel Distribution",
-          "description": "Manage 6+ social platforms (YouTube, TikTok, IG, FB, Twitter, Pinterest) from one dashboard. Scale your content empire effortlessly.",
+          "title": "YouTube-First Distribution",
+          "description": "Manage YouTube publishing from one dashboard today. Multi-platform expansion (TikTok, IG, FB) on the roadmap.",
           "badge": "Growth"
         },
         "auto_affiliate": {
-          "title": "Auto-Affiliate Integration",
-          "description": "Automatically insert affiliate links into video descriptions with smart tracking.",
+          "title": "Affiliate Program Discovery",
+          "description": "Discover affiliate offers from PartnerStack, Impact.com, and Apollo. Manage your affiliate IDs to embed into video descriptions.",
           "badge": "Premium"
         },
         "voice_cloning": {
-          "title": "KOL Voice Cloning",
-          "description": "Clone your voice with AI. Sound like a pro in every video without recording.",
+          "title": "ElevenLabs Voice Integration",
+          "description": "Bring your own ElevenLabs key (BYOK) to drive video voice-overs with your chosen voice ID. Cloning is initiated through your ElevenLabs account.",
           "badge": "Growth"
         },
         "script_gen": {
           "title": "AI Script Generation",
-          "description": "Generate engaging scripts for any niche in seconds. SEO-optimized and conversion-focused.",
+          "description": "Generate engaging scripts for any niche via your OpenRouter / Anthropic key (BYOK). Refine with your own prompts for SEO.",
           "badge": "Starter"
         },
         "auto_publish": {
-          "title": "24/7 Auto-Publishing",
-          "description": "Schedule and publish videos automatically. Your content factory never sleeps.",
+          "title": "YouTube Auto-Publishing",
+          "description": "Schedule and publish videos to YouTube on cron. Additional platform schedulers coming with the multi-channel expansion.",
           "badge": "Growth"
         },
         "global_reach": {
-          "title": "Global Reach",
-          "description": "Translate and localize content for international audiences automatically.",
+          "title": "Bilingual Platform (EN/VI)",
+          "description": "Sophia ships with native English and Vietnamese throughout the platform. Translate scripts manually via your LLM key today; auto-translation pipeline on the roadmap.",
           "badge": "Premium"
         }
       },
@@ -174,7 +174,7 @@
     },
     "raas": {
       "title": "AI-Powered Business Automation",
-      "subtitle": "17 commands to automate proposals, lead generation, email campaigns, and video creation — all via Telegram or API",
+      "subtitle": "Core commands (video, proposal, lead, email, schedule) automate the funnel from Telegram or REST API.",
       "badge": "RaaS — Revenue as a Service",
       "features": {
         "proposal": {
@@ -190,18 +190,18 @@
           "description": "Write and send personalized email campaigns at scale. Higher open rates with AI-optimized copy."
         },
         "commands": {
-          "title": "18 AI Commands",
-          "description": "Full suite of business automation commands accessible via Telegram bot or REST API. No code required."
+          "title": "5 Core AI Commands",
+          "description": "Today: video, proposal, lead, email, schedule — all wired via Telegram bot or REST API. More commands shipping monthly."
         }
       },
       "stats": {
         "stat1": {
-          "value": "18",
-          "label": "AI Commands"
+          "value": "5+",
+          "label": "Core AI Commands"
         },
         "stat2": {
-          "value": "500+",
-          "label": "Proposals Generated"
+          "value": "5 Tools",
+          "label": "Via OpenClaw Bridge"
         },
         "stat3": {
           "value": "< 60s",
@@ -214,8 +214,8 @@
       },
       "terminal": {
         "title": "See It in Action",
-        "subtitle": "18 AI commands via REST API; Telegram bot offers a guided campaign flow",
-        "cta": "Available via Telegram bot @Sophia_Bbot (guided UX) and REST API (full command surface) — no code required"
+        "subtitle": "Core AI commands via REST API; Telegram bot offers a guided campaign flow",
+        "cta": "Available via Telegram bot @Sophia_Bbot (guided UX) and REST API — no code required. Demo output shown is illustrative; real render times vary by provider (typically 2–5 min)."
       }
     },
     "social_proof": {

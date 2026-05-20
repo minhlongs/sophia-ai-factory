@@ -14,21 +14,25 @@ interface TerminalLine {
   text: string;
 }
 
+// Demo lines are illustrative — actual response payloads vary by provider,
+// tier, and BYOK key state. Render times reflect realistic provider latency
+// (HeyGen ~60–120s, CloudConvert ~15–45s). See `landing.raas.terminal.cta`
+// for the user-facing disclaimer rendered below this terminal.
 const TERMINAL_LINES: TerminalLine[] = [
-  { type: "comment", text: "# Sophia RaaS — AI mission execution" },
+  { type: "comment", text: "# Sophia RaaS — core command surface (illustrative)" },
   { type: "command", text: "sophia proposal:create --client='Acme Corp'" },
-  { type: "response", text: '{"id":"msn_a1b2c3","status":"running","eta":12}' },
+  { type: "response", text: '{"id":"msn_a1b2c3","status":"queued","eta_seconds":45}' },
   { type: "empty", text: "" },
-  { type: "comment", text: "# Generate qualified leads automatically" },
+  { type: "comment", text: "# Generate qualified leads via your BYOK Apollo key" },
   { type: "command", text: "sophia lead:generate --niche='SaaS' --count=50" },
-  { type: "response", text: '{"leads":50,"qualified":37,"score":0.94}' },
+  { type: "response", text: '{"leads":50,"qualified":37,"source":"apollo:byok"}' },
   { type: "empty", text: "" },
-  { type: "comment", text: "# Create video content for your brand" },
+  { type: "comment", text: "# Create video — pipeline ~2–5 min via HeyGen + CloudConvert" },
   { type: "command", text: "sophia video:create --script='auto' --voice='en-US'" },
-  { type: "flag", text: "  → Rendering 1080p video... done in 8s" },
-  { type: "response", text: '{"url":"https://cdn.sophia.ai/v/out_9x8y.mp4"}' },
+  { type: "flag", text: "  → mission queued; track via /api/v1/missions/{id}/stream" },
+  { type: "response", text: '{"id":"vid_9x8y","status":"queued","provider":"heygen"}' },
   { type: "empty", text: "" },
-  { type: "comment", text: "# All 17 commands available via API + Telegram" },
+  { type: "comment", text: "# Core surface: video, proposal, lead, email, schedule" },
 ];
 
 const COLOR_MAP: Record<LineType, string> = {

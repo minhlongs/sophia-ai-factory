@@ -126,47 +126,47 @@
         },
         "publish": {
           "title": "Xuất Bản",
-          "description": "Tự động phân phối đến nhiều nền tảng mạng xã hội (YouTube, TikTok, IG, FB, Twitter, Pinterest)"
+          "description": "Xuất bản lên YouTube qua HeyGen webhook. Tích hợp TikTok, Instagram, Facebook đang trong lộ trình."
         },
         "profit": {
           "title": "Theo Dõi Doanh Thu",
           "description": "Theo dõi thu nhập từ các mạng affiliate (BYOK Apollo / PartnerStack / Impact)"
         }
       },
-      "cta": "Tham gia cùng 1.000+ nhà sáng tạo đang xây dựng đế chế nội dung"
+      "cta": "Dành cho nhà sáng tạo sẵn sàng ship hôm nay — không phải một ngày nào đó"
     },
     "features": {
       "title": "Mọi Thứ Bạn Cần Để Thống Trị",
       "subtitle": "Tính năng mạnh mẽ dành cho nhà sáng tạo nội dung chuyên nghiệp",
       "items": {
         "multi_channel": {
-          "title": "Phân Phối Đa Kênh",
-          "description": "Quản lý 6+ nền tảng mạng xã hội (YouTube, TikTok, IG, FB, Twitter, Pinterest) từ một bảng điều khiển. Mở rộng đế chế nội dung dễ dàng.",
+          "title": "Phân Phối YouTube-First",
+          "description": "Quản lý xuất bản YouTube từ một bảng điều khiển hôm nay. Mở rộng đa nền tảng (TikTok, IG, FB) trong lộ trình.",
           "badge": "Growth"
         },
         "auto_affiliate": {
-          "title": "Tích Hợp Liên Kết Tự Động",
-          "description": "Tự động chèn liên kết tiếp thị vào mô tả video với theo dõi thông minh.",
+          "title": "Khám Phá Chương Trình Affiliate",
+          "description": "Khám phá ưu đãi affiliate từ PartnerStack, Impact.com và Apollo. Quản lý ID affiliate của bạn để chèn vào mô tả video.",
           "badge": "Premium"
         },
         "voice_cloning": {
-          "title": "Nhân Bản Giọng Nói KOL",
-          "description": "Nhân bản giọng nói với AI. Nghe chuyên nghiệp trong mọi video mà không cần thu âm.",
+          "title": "Tích Hợp Giọng ElevenLabs",
+          "description": "Mang theo key ElevenLabs của bạn (BYOK) để tạo lồng tiếng video theo voice ID đã chọn. Việc nhân bản giọng thực hiện qua tài khoản ElevenLabs của bạn.",
           "badge": "Growth"
         },
         "script_gen": {
           "title": "Tạo Kịch Bản AI",
-          "description": "Tạo kịch bản hấp dẫn cho mọi ngách trong vài giây. Tối ưu SEO và tập trung chuyển đổi.",
+          "description": "Tạo kịch bản hấp dẫn cho mọi ngách qua key OpenRouter / Anthropic của bạn (BYOK). Tinh chỉnh prompt riêng để tối ưu SEO.",
           "badge": "Starter"
         },
         "auto_publish": {
-          "title": "Tự Động Xuất Bản 24/7",
-          "description": "Lên lịch và xuất bản video tự động. Nhà máy nội dung của bạn không bao giờ ngủ.",
+          "title": "Tự Động Xuất Bản YouTube",
+          "description": "Lên lịch và xuất bản video lên YouTube theo cron. Bộ lên lịch đa nền tảng sẽ ra mắt cùng đợt mở rộng.",
           "badge": "Growth"
         },
         "global_reach": {
-          "title": "Phủ Sóng Toàn Cầu",
-          "description": "Dịch và bản địa hóa nội dung cho khán giả quốc tế tự động.",
+          "title": "Nền Tảng Song Ngữ (EN/VI)",
+          "description": "Sophia tích hợp sẵn tiếng Anh và tiếng Việt trên toàn nền tảng. Hôm nay bạn dịch kịch bản thủ công qua LLM key của mình; pipeline tự dịch trong lộ trình.",
           "badge": "Premium"
         }
       },
@@ -174,7 +174,7 @@
     },
     "raas": {
       "title": "Tự Động Hóa Kinh Doanh Bằng AI",
-      "subtitle": "17 lệnh để tự động hóa đề xuất, tạo khách hàng tiềm năng, email marketing và sản xuất video — qua Telegram hoặc API",
+      "subtitle": "Bộ lệnh core (video, proposal, lead, email, schedule) tự động hoá funnel qua Telegram hoặc REST API.",
       "badge": "RaaS — Doanh Thu Dưới Dạng Dịch Vụ",
       "features": {
         "proposal": {
@@ -190,18 +190,18 @@
           "description": "Viết và gửi chiến dịch email cá nhân hóa ở quy mô lớn. Tỷ lệ mở cao hơn với nội dung tối ưu AI."
         },
         "commands": {
-          "title": "18 Lệnh AI",
-          "description": "Bộ lệnh tự động hóa kinh doanh đầy đủ qua Telegram bot hoặc REST API. Không cần lập trình."
+          "title": "5 Lệnh AI Core",
+          "description": "Hôm nay: video, proposal, lead, email, schedule — đầy đủ qua Telegram bot hoặc REST API. Thêm lệnh ship hằng tháng."
         }
       },
       "stats": {
         "stat1": {
-          "value": "18",
-          "label": "Lệnh AI"
+          "value": "5+",
+          "label": "Lệnh AI Core"
         },
         "stat2": {
-          "value": "500+",
-          "label": "Đề Xuất Đã Tạo"
+          "value": "5 Tool",
+          "label": "Qua OpenClaw Bridge"
         },
         "stat3": {
           "value": "< 60s",
@@ -214,8 +214,8 @@
       },
       "terminal": {
         "title": "Xem Hoạt Động Thực Tế",
-        "subtitle": "18 lệnh AI qua REST API; Telegram bot có quy trình chiến dịch theo hướng dẫn",
-        "cta": "Truy cập qua Telegram bot @Sophia_Bbot (luồng hướng dẫn) và REST API (đầy đủ lệnh) — không cần lập trình"
+        "subtitle": "Lệnh AI core qua REST API; Telegram bot có quy trình chiến dịch theo hướng dẫn",
+        "cta": "Truy cập qua Telegram bot @Sophia_Bbot (luồng hướng dẫn) và REST API — không cần lập trình. Output trong demo chỉ minh hoạ; thời gian render thực tế tuỳ provider (thường 2–5 phút)."
       }
     },
     "social_proof": {
