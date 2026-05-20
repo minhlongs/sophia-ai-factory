@@ -1,7 +1,7 @@
 /**
  * Inngest Function: videoGenerate
  *
- * NOT REGISTERED in inngest/index.ts — defer to next wave.
+ * Registered via `forest/inngest/functions/index.ts` (barrel re-export).
  *
  * Event: 'video/generate.requested'
  * Steps:
@@ -14,7 +14,9 @@
  *   7. update-mission — mark engine_mission completed with output URLs
  *   8. emit-usage — log MCU cost via recordCost
  *
- * Env vars required: WAN_API_KEY, FISH_SPEECH_API_KEY
+ * Operator env vars required: WAN_API_KEY, FISH_SPEECH_API_KEY, CLOUDCONVERT_API_KEY.
+ * If absent the upstream `generateVideoAction` short-circuits with
+ * AI_VIDEO_UNAVAILABLE so this function never runs without keys provisioned.
  */
 
 import { inngest } from '@/forest/inngest/client';
