@@ -11,14 +11,53 @@ interface StatItem {
   icon: string;
 }
 
-// Stats reframed 2026-05-16 per no-tech doctrine + honest-pivot:
-// uptime SLA claims downgraded to qualitative edge-availability framing.
-const stats: StatItem[] = [
+// Defaults shown on first paint. Replaced by live counters from
+// /api/stats/live (60s edge-cached) once mounted on the client — see
+// useLiveStats() below. The "+" suffix is preserved to flag that the
+// numbers are running totals.
+const FALLBACK_STATS: StatItem[] = [
   { value: 500, suffix: "+", label: "Missions Hoàn Thành", icon: "rocket_launch" },
   { value: 50, suffix: "+", label: "Agency Tin Dùng", icon: "groups" },
   { value: 300, suffix: "+", label: "Edge PoPs Toàn Cầu", icon: "public" },
   { value: 2, prefix: "< ", suffix: "s", label: "Thời Gian Phản Hồi", icon: "speed" },
 ];
+
+interface LiveStatsResponse {
+  missionsCompleted: number;
+  paidAgencies: number;
+  videosGenerated: number;
+}
+
+/**
+ * Pull the live counters once on mount. Read-only; never throws to the UI.
+ * Returns the active StatItem[] (fallback first, live overlay if reachable).
+ */
+function useLiveStats(): StatItem[] {
+  const [stats, setStats] = useState<StatItem[]>(FALLBACK_STATS);
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const res = await fetch("/api/stats/live", { cache: "no-store" });
+        if (!res.ok) return;
+        const data = (await res.json()) as LiveStatsResponse;
+        if (!active) return;
+        setStats((prev) => [
+          { ...prev[0], value: data.missionsCompleted },
+          { ...prev[1], value: data.paidAgencies },
+          prev[2],
+          prev[3],
+        ]);
+      } catch {
+        // intentional: degrade silently to FALLBACK_STATS
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+  return stats;
+}
 
 const testimonials = [
   {
@@ -96,6 +135,7 @@ function AnimatedCounter({
 }
 
 export function SocialProof() {
+  const stats = useLiveStats();
   return (
     <section className="py-28 relative overflow-hidden">
       {/* Background glows */}
