@@ -15,7 +15,7 @@ const features = [
   {
     icon: "videocam",
     title: "Video Factory",
-    description: "Tạo video AI chất lượng cao với D-ID, ElevenLabs voice cloning, auto-subtitle và đăng tải đa kênh.",
+    description: "Tạo video AI qua HeyGen + ElevenLabs (BYOK) với auto-subtitle. Hôm nay xuất bản YouTube; thêm kênh trong lộ trình.",
     highlight: "Video AI tự động",
     span: "",
     gradient: "from-purple-500/20 to-violet-500/10",
@@ -31,8 +31,8 @@ const features = [
   {
     icon: "api",
     title: "Developer-First API",
-    description: "RESTful API với real-time SSE streaming, webhook callbacks và TypeScript SDK. Tích hợp trong 5 phút.",
-    highlight: "Integrate in 5 minutes",
+    description: "RESTful API với real-time SSE streaming, webhook callbacks và TypeScript SDK. Sau khi cấu hình BYOK xong, viết 5 dòng code là chạy.",
+    highlight: "BYOK + 5 dòng code",
     span: "md:col-span-2",
     gradient: "from-green-500/20 to-emerald-500/10",
   },
