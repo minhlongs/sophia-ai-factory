@@ -63,6 +63,7 @@ binding = "IMAGES"
 # "0 */4 * * *" — every 4 hours → /api/cron/affiliate-scout (PREMIUM+ affiliate network discovery)
 crons = ["*/2 * * * *", "*/5 * * * *", "5 * * * *", "0 1 * * *", "0 2 * * *", "0 3 * * *", "0 4 * * *", "0 5 * * *", "*/10 * * * *", "0 6 * * *", "0 6 * * 1", "*/15 * * * *", "0 7 * * *", "0 0 * * *", "10 * * * *", "0 0 1 * *", "7 * * * *", "0 */4 * * *"]
 # "*/2 * * * *"  — every 2 min  → /api/cron/fulfillment-retry (F3: retry queue, exp backoff; dead since 2026-05-02 commit a4d54d8d)
+#                              → /api/cron/email-outbox-flush (drains welcome_email_outbox; closes FREE100 handover funnel)
 # "0 6 * * *"   — daily 06:00 UTC → /api/cron/fulfillment-reconcile (F8: orphan-purchase drift detection; dead since 2026-05-02 commit a4d54d8d)
 # "0 0 1 * *" — 1st of month 00:00 UTC → /api/cron/mcu-monthly-reset (MCU credit monthly top-up)
 # "*/15 * * * *" — every 15 min → /api/cron/local-mode-health (Phase F: tunnel health check)
