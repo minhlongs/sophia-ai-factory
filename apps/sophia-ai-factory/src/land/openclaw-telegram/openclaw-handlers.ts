@@ -29,6 +29,7 @@ import {
   callRedeemFree100,
   callEmbedAffiliateInDescription,
   callTranslateScript,
+  callCloneVoice,
 } from '@/land/openclaw-telegram/openclaw-bridge';
 
 const NOT_PAIRED_MSG =
@@ -239,6 +240,54 @@ export async function handleTranslate(chatId: string, rawArg: string): Promise<v
   await sendMessage(
     chatId,
     `🌐 *Translated → ${toLang}* (model \`${out.result.model.split('/').pop()}\`)\n\n\`\`\`\n${out.result.translated}\n\`\`\``,
+  );
+}
+
+/**
+ * /clone-voice <name>|<audioUrl1>[,audioUrl2,...] — paired user only.
+ * Uses the user's BYOK ElevenLabs key to register a cloned voice.
+ * Pipe (`|`) separates the name from the comma-separated audio URLs.
+ */
+export async function handleCloneVoice(chatId: string, rawArg: string): Promise<void> {
+  const userId = await resolveUserIdFromChat(chatId);
+  if (!userId) {
+    await sendMessage(chatId, NOT_PAIRED_MSG);
+    return;
+  }
+  const arg = rawArg.trim();
+  const pipe = arg.indexOf('|');
+  if (pipe < 1) {
+    await sendMessage(
+      chatId,
+      '❌ Cú pháp: `/clone-voice <Name>|<url1>[,url2,...]` — ví dụ: `/clone-voice Tho|https://r2.example/sample.mp3`',
+    );
+    return;
+  }
+  const name = arg.slice(0, pipe).trim();
+  const audioUrls = arg
+    .slice(pipe + 1)
+    .split(',')
+    .map((u) => u.trim())
+    .filter((u) => u.length > 0);
+  if (audioUrls.length === 0) {
+    await sendMessage(chatId, '❌ Cần ít nhất một URL audio sau dấu `|`.');
+    return;
+  }
+  const out = await callCloneVoice({ userId, name, audioUrls });
+  if (!out.ok) {
+    if (out.code === 'BYOK_REQUIRED') {
+      await sendMessage(
+        chatId,
+        '🔑 *Cần ElevenLabs key*\nVào /dashboard/setup-wizard và nhập key ElevenLabs để dùng /clone-voice.',
+      );
+      return;
+    }
+    await sendMessage(chatId, `❌ Clone voice thất bại (\`${out.code}\`): ${out.message}`);
+    return;
+  }
+  await sendMessage(
+    chatId,
+    `🎙️ *Voice cloned*\n• Name: ${out.result.name}\n• Voice ID: \`${out.result.voiceId}\`\n• Samples: ${out.result.samplesUploaded}\n\nDùng voice_id này cho /video TTS calls.`,
   );
 }
 

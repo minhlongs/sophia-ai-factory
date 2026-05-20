@@ -150,8 +150,8 @@
           "badge": "Premium"
         },
         "voice_cloning": {
-          "title": "Tích Hợp Giọng ElevenLabs",
-          "description": "Mang theo key ElevenLabs của bạn (BYOK) để tạo lồng tiếng video theo voice ID đã chọn. Việc nhân bản giọng thực hiện qua tài khoản ElevenLabs của bạn.",
+          "title": "Nhân Bản Giọng ElevenLabs",
+          "description": "Mang theo key ElevenLabs (BYOK). Nhân bản giọng một-phát-ra-voice-id qua /api/voice/clone và lệnh Telegram /clone-voice — đăng ký voice mới từ audio mẫu và dùng được ở mọi nơi.",
           "badge": "Growth"
         },
         "script_gen": {
