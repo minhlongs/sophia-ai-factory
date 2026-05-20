@@ -17,7 +17,17 @@ export async function handleHelp(chatId: string): Promise<void> {
 /campaign <topic> - Create new campaign
 /status - Check campaign status
 /results - View campaign results
+/missions - Recent missions
 /ticket <mô tả> - Gửi yêu cầu hỗ trợ
+
+🤖 *OpenClaw tool surface (100/100):*
+/version - Deploy SHA + timestamp
+/tier - Tài khoản + tier hiện tại
+/quota - Quota usage vs limits
+/affiliate - Affiliate stats
+/videos [processing|completed|failed] - Trạng thái video
+/handover - Onboarding milestones
+/free100 <email> - Redeem FREE100 → MASTER magic-link
 
 *Need support?* Contact us at support@mekongmind.com`
   )

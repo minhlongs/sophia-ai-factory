@@ -15,6 +15,15 @@ import {
   withMiddleware,
 } from '@/tree/telegram/telegram-command-handlers'
 import {
+  handleVersion,
+  handleTier,
+  handleQuota,
+  handleAffiliate,
+  handleVideos,
+  handleHandover,
+  handleFree100,
+} from '@/land/openclaw-telegram/openclaw-handlers'
+import {
   handleCampaign as handleCampaignFsm,
   handleFsmTextInput,
   handleOfferCallback,
@@ -220,6 +229,22 @@ export async function POST(request: NextRequest) {
         await handleResults(chatId)
       } else if (text === '/missions') {
         await handleMissions(chatId)
+      } else if (text === '/version') {
+        await handleVersion(chatId)
+      } else if (text === '/tier') {
+        await handleTier(chatId)
+      } else if (text === '/quota') {
+        await handleQuota(chatId)
+      } else if (text === '/affiliate') {
+        await handleAffiliate(chatId)
+      } else if (text === '/videos' || text.startsWith('/videos ')) {
+        const filter = text === '/videos' ? undefined : text.replace('/videos', '').trim()
+        await handleVideos(chatId, filter || undefined)
+      } else if (text === '/handover') {
+        await handleHandover(chatId)
+      } else if (text.startsWith('/free100')) {
+        const email = text.replace('/free100', '').trim()
+        await handleFree100(chatId, email)
       } else if (text.startsWith('/ticket')) {
         const ticketText = text.replace('/ticket', '').trim()
         // Resolve userId from chat_id — fall back to empty string if not linked
