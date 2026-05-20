@@ -32,7 +32,7 @@ export async function GET(req: Request) {
     const { data, error } = await db
       .from("videos")
       .select(
-        "id, title, status, video_url, thumbnail_url, duration_sec, heygen_job_id, created_at"
+        "id, title, status, video_url, thumbnail_url, duration_sec, heygen_job_id, r2_key, created_at"
       )
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
@@ -45,7 +45,12 @@ export async function GET(req: Request) {
       );
     }
 
-    const r2Base = process.env.R2_PUBLIC_BASE_URL?.replace(/\/$/, '') ?? null;
+    // Prefer R2_PUBLIC_BASE_URL (full URL); fall back to R2_PUBLIC_HOSTNAME
+    // (hostname-only, used by the AI-prompt Inngest pipeline). Either env
+    // produces stable public URLs that outlive HeyGen CDN signed links.
+    const r2BaseRaw = process.env.R2_PUBLIC_BASE_URL
+      ?? (process.env.R2_PUBLIC_HOSTNAME ? `https://${process.env.R2_PUBLIC_HOSTNAME}` : null);
+    const r2Base = r2BaseRaw?.replace(/\/$/, '') ?? null;
     const videos = (data ?? []).map((v: Record<string, unknown>) => {
       if (r2Base && v.r2_key) {
         return { ...v, video_url: `${r2Base}/${v.r2_key}` };

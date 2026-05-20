@@ -13,16 +13,35 @@ import { NextRequest } from 'next/server';
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
-const { mockGetCurrentUser, mockDbFrom, mockInngestSend } = vi.hoisted(() => ({
+const {
+  mockGetCurrentUser,
+  mockDbFrom,
+  mockInngestSend,
+  mockReserveVideoSlot,
+  mockReleaseVideoSlot,
+  mockGetUserTier,
+} = vi.hoisted(() => ({
   mockGetCurrentUser: vi.fn(),
   mockDbFrom: vi.fn(),
   mockInngestSend: vi.fn(),
+  mockReserveVideoSlot: vi.fn(),
+  mockReleaseVideoSlot: vi.fn(),
+  mockGetUserTier: vi.fn(),
 }));
 
 // ── Module mocks ──────────────────────────────────────────────────────────────
 
 vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: mockGetCurrentUser,
+}));
+
+vi.mock('@/seed/db/get-user-tier', () => ({
+  getUserTier: mockGetUserTier,
+}));
+
+vi.mock('@/forest/quota/video-quota', () => ({
+  reserveVideoSlot: mockReserveVideoSlot,
+  releaseVideoSlot: mockReleaseVideoSlot,
 }));
 
 vi.mock('@/forest/inngest/client', () => ({
@@ -81,6 +100,15 @@ describe('POST /api/v1/missions/[id]/generate-video', () => {
       error: null,
     });
 
+    mockGetUserTier.mockResolvedValue('MASTER');
+    mockReserveVideoSlot.mockResolvedValue({
+      reserved: true,
+      used: 1,
+      limit: 1000,
+      resetAt: '2026-06-01T00:00:00.000Z',
+    });
+    mockReleaseVideoSlot.mockResolvedValue(undefined);
+
     mockInngestSend.mockResolvedValue({ ids: ['inngest-job-001'] });
   });
 
@@ -127,6 +155,21 @@ describe('POST /api/v1/missions/[id]/generate-video', () => {
 
     expect(status).toBe(400);
     expect(json.error).toMatch(/validation failed/i);
+    expect(mockInngestSend).not.toHaveBeenCalled();
+  });
+
+  it('quota exceeded → 429 + no inngest event', async () => {
+    mockReserveVideoSlot.mockResolvedValue({
+      reserved: false,
+      used: 30,
+      limit: 30,
+      resetAt: '2026-06-01T00:00:00.000Z',
+    });
+
+    const { status, json } = await callPOST({ prompt: 'A product demo video' });
+
+    expect(status).toBe(429);
+    expect(json.code).toBe('QUOTA_EXCEEDED');
     expect(mockInngestSend).not.toHaveBeenCalled();
   });
 });

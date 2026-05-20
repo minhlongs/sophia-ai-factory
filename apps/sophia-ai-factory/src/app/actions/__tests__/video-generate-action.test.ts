@@ -8,7 +8,18 @@
  * - Creates mission row and emits event on success
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
+
+// The action now preflight-checks the operator-keyed AI pipeline. Set the keys
+// before importing the module so tests exercise the happy path; individual
+// tests can clear them to drive the AI_VIDEO_UNAVAILABLE branch.
+const ORIGINAL_ENV = { ...process.env };
+process.env.WAN_API_KEY = 'test-wan';
+process.env.FISH_SPEECH_API_KEY = 'test-fish';
+process.env.CLOUDCONVERT_API_KEY = 'test-cc';
+afterAll(() => {
+  process.env = ORIGINAL_ENV;
+});
 
 // ─── Mock dependencies ────────────────────────────────────────────────────────
 
@@ -84,6 +95,32 @@ describe('generateVideoAction', () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.code).toBe('UNAUTHENTICATED');
+    }
+  });
+
+  it('returns AI_VIDEO_UNAVAILABLE when operator pipeline keys are missing', async () => {
+    mockGetCurrentUser.mockResolvedValue({
+      id: 'user-1',
+      email: 'test@example.com',
+      role: 'user',
+    });
+    const saved = process.env.WAN_API_KEY;
+    delete process.env.WAN_API_KEY;
+
+    try {
+      const result = await generateVideoAction({
+        prompt: 'A beautiful sunset over the mountains',
+        style: 'cinematic',
+        language: 'en',
+      });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.code).toBe('AI_VIDEO_UNAVAILABLE');
+      }
+      // Must short-circuit before quota or DB
+      expect(mockReserveVideoSlot).not.toHaveBeenCalled();
+    } finally {
+      process.env.WAN_API_KEY = saved;
     }
   });
 
