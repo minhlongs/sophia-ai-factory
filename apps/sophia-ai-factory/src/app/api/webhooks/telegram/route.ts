@@ -22,6 +22,7 @@ import {
   handleVideos,
   handleHandover,
   handleFree100,
+  handleEmbed,
 } from '@/land/openclaw-telegram/openclaw-handlers'
 import {
   handleCampaign as handleCampaignFsm,
@@ -258,6 +259,9 @@ export async function POST(request: NextRequest) {
         await handleVideos(chatId, filter || undefined)
       } else if (text === '/handover') {
         await handleHandover(chatId)
+      } else if (text === '/embed' || text.startsWith('/embed ')) {
+        const arg = text === '/embed' ? '' : text.replace('/embed', '').trim()
+        await handleEmbed(chatId, arg)
       } else if (text.startsWith('/free100')) {
         const email = text.replace('/free100', '').trim()
         await handleFree100(chatId, email)

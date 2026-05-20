@@ -30,6 +30,10 @@ import type { CachedQuota } from '@/forest/quota/quota-checker-types';
 import { getRecentConversions } from '@/land/affiliates/dashboard-stats';
 import { applyPromoCode } from '@/land/promo/promo-applier';
 import { validatePromoCode } from '@/land/promo/promo-validator';
+import {
+  buildVideoDescription,
+  type VideoDescriptionResult,
+} from '@/land/affiliates/video-description-injector';
 import { createCustomerUser } from '@/tree/handover/handover-account-setup';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
@@ -263,7 +267,49 @@ export async function callGetHandover(userId: string): Promise<HandoverSummary |
   }
 }
 
-// ─── 7. sophia_redeem_free100 ────────────────────────────────────────────────
+// ─── 7. sophia_embed_affiliate (homepage promise algorithm) ──────────────────
+//
+// Delivers the "Affiliate Program Discovery — manage your affiliate IDs to
+// embed into video descriptions" promise. Pure composition of the user's
+// affiliate_links + a base body (auto-loaded from videos.title when a videoId
+// is supplied).
+
+export interface EmbedAffiliateInput {
+  userId: string;
+  videoId?: string;
+  baseBody?: string;
+  nicheHint?: string;
+  maxLinks?: number;
+}
+
+export async function callEmbedAffiliateInDescription(
+  input: EmbedAffiliateInput,
+): Promise<VideoDescriptionResult> {
+  let body = input.baseBody ?? '';
+  if (input.videoId) {
+    try {
+      const db = createServerClient();
+      const { data: video } = await db
+        .from('videos')
+        .select('title, user_id')
+        .eq('id', input.videoId)
+        .maybeSingle() as { data: { title: string | null; user_id: string } | null };
+      if (video && video.user_id === input.userId && video.title) {
+        body = video.title;
+      }
+    } catch (err) {
+      logger.warn('[openclaw-bridge] video lookup failed', toError(err), { videoId: input.videoId });
+    }
+  }
+  return buildVideoDescription({
+    userId: input.userId,
+    baseBody: body,
+    nicheHint: input.nicheHint,
+    maxLinks: input.maxLinks,
+  });
+}
+
+// ─── 8. sophia_redeem_free100 ────────────────────────────────────────────────
 
 export interface RedeemFree100Input {
   code: string;
