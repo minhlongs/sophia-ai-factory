@@ -31,8 +31,8 @@ const features = [
   {
     icon: "api",
     title: "Developer-First API",
-    description: "RESTful API với real-time SSE streaming, webhook callbacks và TypeScript SDK. Lấy snippet 5-dòng-chạy-được qua /api/sdk/quickstart?surface=all.",
-    highlight: "/api/sdk/quickstart",
+    description: "RESTful API với real-time SSE streaming, webhook callbacks. Tải SDK single-file qua `curl /api/sdk/typescript > sophia.ts` — type-safe wrappers cho cả 8 endpoints.",
+    highlight: "curl /api/sdk/typescript",
     span: "md:col-span-2",
     gradient: "from-green-500/20 to-emerald-500/10",
   },
