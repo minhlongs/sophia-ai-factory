@@ -58,6 +58,7 @@ const CRON_ROUTES = {
   // --- New cron routes added by plan 260502-0604-raas-fulfillment-zero-fail ---
   '*/2 * * * *': [
     '/api/cron/fulfillment-retry',
+    '/api/cron/email-outbox-flush',
   ],
   '*/15 * * * *': [
     '/api/cron/smoke-one-time',
