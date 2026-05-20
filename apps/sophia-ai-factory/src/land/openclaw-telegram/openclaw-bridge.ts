@@ -54,6 +54,12 @@ import {
   PublishConfigurationError,
   type SchedulePublishResult,
 } from '@/land/publish/schedule-video-publish';
+import {
+  runAutoVideoMission,
+  AutoVideoMissionError,
+  type AutoVideoMissionInput,
+  type AutoVideoMissionResult,
+} from '@/land/missions/auto-video-mission';
 import { createCustomerUser } from '@/tree/handover/handover-account-setup';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
@@ -438,6 +444,28 @@ export async function callSchedulePublish(
   } catch (err) {
     if (err instanceof PublishConfigurationError) {
       return { ok: false, code: err.code, message: err.message };
+    }
+    return { ok: false, code: 'UPSTREAM_FAILED', message: err instanceof Error ? err.message : 'unknown' };
+  }
+}
+
+// ─── 11b. sophia_run_auto_video — OpenClaw tự trị orchestrator ──────────────
+
+export type AutoVideoBridgeInput = Omit<AutoVideoMissionInput, 'userId'> & { userId: string };
+
+export type AutoVideoBridgeResult =
+  | { ok: true; result: AutoVideoMissionResult }
+  | { ok: false; code: AutoVideoMissionError['code'] | 'UPSTREAM_FAILED'; message: string; missionId?: string };
+
+export async function callRunAutoVideoMission(
+  input: AutoVideoBridgeInput,
+): Promise<AutoVideoBridgeResult> {
+  try {
+    const result = await runAutoVideoMission(input);
+    return { ok: true, result };
+  } catch (err) {
+    if (err instanceof AutoVideoMissionError) {
+      return { ok: false, code: err.code, message: err.message, missionId: err.missionId };
     }
     return { ok: false, code: 'UPSTREAM_FAILED', message: err instanceof Error ? err.message : 'unknown' };
   }
