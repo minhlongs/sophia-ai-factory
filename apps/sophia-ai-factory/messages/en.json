@@ -150,8 +150,8 @@
           "badge": "Premium"
         },
         "voice_cloning": {
-          "title": "ElevenLabs Voice Integration",
-          "description": "Bring your own ElevenLabs key (BYOK) to drive video voice-overs with your chosen voice ID. Cloning is initiated through your ElevenLabs account.",
+          "title": "ElevenLabs Voice Cloning",
+          "description": "Bring your own ElevenLabs key (BYOK). One-call voice cloning is live via /api/voice/clone and the Telegram /clone-voice command — register a new voice_id from your audio samples and use it everywhere.",
           "badge": "Growth"
         },
         "script_gen": {
