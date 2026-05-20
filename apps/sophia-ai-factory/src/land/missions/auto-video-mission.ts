@@ -19,6 +19,7 @@ import { generateSeoScript, SeoScriptConfigurationError } from '@/land/scripts/g
 import { translateScript, TranslateConfigurationError } from '@/land/i18n/translate-script';
 import { buildVideoDescription } from '@/land/affiliates/video-description-injector';
 import { schedulePublish, PublishConfigurationError } from '@/land/publish/schedule-video-publish';
+import { submitByokVideo, RenderByokVideoError } from '@/land/video/render-byok-video';
 import { getD1Raw } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
@@ -47,6 +48,8 @@ export interface AutoVideoMissionResult {
     secondary?: { language: 'en' | 'vi'; body: string };
   };
   description: { body: string; affiliateCount: number };
+  /** Present when the user has a HeyGen BYOK key configured. Render is async (status='processing'). */
+  video?: { videoId: string; heygenJobId: string; status: 'processing' };
   publish?: { jobId: string; scheduledAt: number };
   status: 'succeeded';
 }
@@ -58,6 +61,7 @@ export class AutoVideoMissionError extends Error {
     | 'SCRIPT_FAILED'
     | 'TRANSLATE_FAILED'
     | 'DESCRIPTION_FAILED'
+    | 'VIDEO_RENDER_FAILED'
     | 'SCHEDULE_FAILED'
     | 'PERSIST_FAILED';
   missionId?: string;
@@ -192,22 +196,42 @@ export async function runAutoVideoMission(
     throw new AutoVideoMissionError('DESCRIPTION_FAILED', msg, missionId);
   }
 
-  // Step 4: optional publish schedule — cycle 6
+  // Step 4: optional HeyGen render submit — cycle 11 (true tự trị)
+  // Soft-skip when the user has no HeyGen key: the platform still produces a
+  // script + description, and the customer can render later from the dashboard.
+  let videoResult: AutoVideoMissionResult['video'];
+  try {
+    const submit = await submitByokVideo({
+      userId: input.userId,
+      script: scriptResult.script,
+      title: scriptResult.suggestedTitles[0] ?? input.topic,
+    });
+    videoResult = { videoId: submit.videoId, heygenJobId: submit.heygenJobId, status: 'processing' };
+  } catch (err) {
+    if (err instanceof RenderByokVideoError && err.code === 'BYOK_REQUIRED') {
+      logger.info('[auto-video-mission] HeyGen render skipped (no BYOK key)', { missionId });
+    } else {
+      const msg = err instanceof Error ? err.message : 'video submit failed';
+      await markMissionFailed(missionId, 'VIDEO_RENDER_FAILED', msg);
+      throw new AutoVideoMissionError('VIDEO_RENDER_FAILED', msg, missionId);
+    }
+  }
+
+  // Step 5: optional publish schedule — cycle 6
+  // Use the real videos.id when render succeeded; else fall back to soft-fail behavior.
   let publishResult: AutoVideoMissionResult['publish'];
   if (input.channelId) {
     const scheduledAt = input.scheduledAt ?? Math.floor(Date.now() / 1000) + 3600;
     try {
       const sch = await schedulePublish({
         userId: input.userId,
-        videoId: missionId, // mission row doubles as the artifact ID until a real videos.id exists
+        videoId: videoResult?.videoId ?? missionId,
         channelId: input.channelId,
         scheduledAt,
         caption: scriptResult.suggestedTitles[0] ?? input.topic,
       });
       publishResult = { jobId: sch.jobId, scheduledAt: sch.scheduledAt };
     } catch (err) {
-      // schedulePublish may fail because the mission isn't in `videos` yet — treat as soft-fail
-      // (mission still useful as script + description); log + record but don't abort.
       const isMissingVideo = err instanceof PublishConfigurationError && err.code === 'VIDEO_NOT_FOUND';
       logger.warn('[auto-video-mission] schedule step skipped', {
         missionId,
@@ -229,6 +253,7 @@ export async function runAutoVideoMission(
       secondary,
     },
     description: { body: descriptionResult.description, affiliateCount: descriptionResult.affiliateCount },
+    video: videoResult,
     publish: publishResult,
     status: 'succeeded',
   };

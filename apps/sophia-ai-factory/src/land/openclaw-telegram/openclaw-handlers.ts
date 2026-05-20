@@ -474,6 +474,9 @@ export async function handleAutoVideo(chatId: string, rawArg: string): Promise<v
   const secondaryLine = r.script.secondary
     ? `\n🌐 Translated → \`${r.script.secondary.language}\` (${r.script.secondary.body.length} chars)`
     : '';
+  const videoLine = r.video
+    ? `\n🎬 HeyGen render started — video \`${r.video.videoId}\` (job \`${r.video.heygenJobId}\`, status: ${r.video.status})`
+    : '\n🎬 HeyGen render skipped — add your HeyGen key in Setup Wizard to enable.';
   await sendMessage(
     chatId,
     [
@@ -481,6 +484,7 @@ export async function handleAutoVideo(chatId: string, rawArg: string): Promise<v
       `• SEO score: *${r.script.primary.seoScore}/100*  (${r.script.primary.wordCount} words)`,
       `• Suggested titles:\n${titles}`,
       `• Affiliate links injected: *${r.description.affiliateCount}*`,
+      videoLine.trim(),
       secondaryLine.trim(),
       scheduleLine.trim(),
     ]
