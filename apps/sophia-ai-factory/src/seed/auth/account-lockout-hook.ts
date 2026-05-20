@@ -24,11 +24,11 @@
  * `{ hash, password }` — it does NOT provide the userId in that callback.
  * The userId is only available in `databaseHooks` after the fact.
  *
- * TODO: When Better Auth adds a `beforeSignIn` or `afterSignInFailed` hook
- * (tracked upstream), wire `checkAccountLock` there and call
- * `incrementFailedLogin` / `resetFailedLogin` in the appropriate callback.
- * Until then, lockout is enforced at the API layer by callers who have the
- * userId available (e.g., custom `/api/auth/sign-in` wrapper).
+ * Wired via API-layer wrapper at `src/app/api/auth/sign-in/email/route.ts`
+ * (pre-checks lock by email lookup, forwards to Better Auth, then inspects
+ * response: 401 → `incrementFailedLogin`, 2xx → `resetFailedLogin`).
+ * `verifyWithLockout` below remains available for any future custom path
+ * that has direct access to the password verify callback.
  *
  * The three exported functions are fully tested and production-ready.
  */
