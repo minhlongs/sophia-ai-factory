@@ -858,6 +858,11 @@
       "newVideoLink": "Tạo Video →",
       "rendering": "Đang render...",
       "noPreview": "Chưa có ảnh xem trước",
+      "statusLabel": {
+        "processing": "Đang xử lý",
+        "completed": "Sẵn sàng",
+        "failed": "Thất bại"
+      },
       "pollError": "Không thể kết nối dịch vụ render. Tải lại trang để thử lại.",
       "renderFailed": "Render thất bại",
       "status": "Trạng thái",

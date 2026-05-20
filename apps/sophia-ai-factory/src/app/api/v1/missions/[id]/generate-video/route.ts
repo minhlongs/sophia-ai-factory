@@ -11,9 +11,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { getUserTier } from '@/seed/db/get-user-tier';
 import { createServerClient } from '@/seed/db/client';
 import { inngest } from '@/forest/inngest/client';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
+import { reserveVideoSlot, releaseVideoSlot } from '@/forest/quota/video-quota';
 
 export const dynamic = 'force-dynamic';
 
@@ -87,21 +89,42 @@ export async function POST(
         );
       }
 
-      // ── Send Inngest event ────────────────────────────────────────────────
-      const { ids } = await inngest.send({
-        name: 'video/generate.requested',
-        data: {
-          missionId,
-          userId,
-          prompt: parsed.data.prompt,
-          voiceoverText: parsed.data.voiceoverText,
-          aspectRatio: parsed.data.aspectRatio,
-          durationSec: parsed.data.durationSec,
-          language: parsed.data.language,
-        },
-      });
+      // ── Quota gate (defense-in-depth) ────────────────────────────────────
+      // Parity with generateVideoAction — without this, an authenticated user
+      // could bypass server-action quota by POSTing directly to this route.
+      const tier = await getUserTier(userId);
+      const reservation = await reserveVideoSlot(userId, tier);
+      if (!reservation.reserved) {
+        return NextResponse.json(
+          {
+            error: `Video quota exceeded (${reservation.used}/${reservation.limit} used this month). Resets ${reservation.resetAt}.`,
+            code: 'QUOTA_EXCEEDED',
+          },
+          { status: 429 },
+        );
+      }
 
-      const jobId = ids[0] ?? null;
+      // ── Send Inngest event ────────────────────────────────────────────────
+      let jobId: string | null;
+      try {
+        const { ids } = await inngest.send({
+          name: 'video/generate.requested',
+          data: {
+            missionId,
+            userId,
+            prompt: parsed.data.prompt,
+            voiceoverText: parsed.data.voiceoverText,
+            aspectRatio: parsed.data.aspectRatio,
+            durationSec: parsed.data.durationSec,
+            language: parsed.data.language,
+          },
+        });
+        jobId = ids[0] ?? null;
+      } catch (err) {
+        // Release the slot we just reserved — the job never queued.
+        await releaseVideoSlot(userId).catch(() => undefined);
+        throw err;
+      }
 
       return NextResponse.json({ jobId, missionId, status: 'queued' }, { status: 202 });
     },

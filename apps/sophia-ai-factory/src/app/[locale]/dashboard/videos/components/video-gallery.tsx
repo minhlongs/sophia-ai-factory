@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { localizedHref } from "@/lib/i18n/localized-href";
 
@@ -49,10 +48,23 @@ export function VideoGallery({ locale }: { locale?: string }) {
   }, []);
 
   if (loading) {
+    // Skeleton grid mirrors the final card layout so the page reserves space
+    // and there is no CLS when the real videos arrive.
     return (
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" />
-        {t("loading")}
+      <div
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+        aria-busy="true"
+        aria-label={t("loading")}
+      >
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="rounded border overflow-hidden">
+            <div className="aspect-video bg-muted animate-pulse motion-reduce:animate-none" />
+            <div className="p-3 space-y-2">
+              <div className="h-4 w-3/4 rounded bg-muted animate-pulse motion-reduce:animate-none" />
+              <div className="h-3 w-1/3 rounded bg-muted/70 animate-pulse motion-reduce:animate-none" />
+            </div>
+          </div>
+        ))}
       </div>
     );
   }
@@ -111,7 +123,7 @@ function VideoCard({ video, locale }: { video: VideoItem; locale?: string }) {
             video.status
           )}`}
         >
-          {video.status}
+          {t(`statusLabel.${video.status}`)}
         </span>
       </div>
       <div className="p-3 space-y-1">
@@ -124,8 +136,12 @@ function VideoCard({ video, locale }: { video: VideoItem; locale?: string }) {
   );
 }
 
+// Dark theme is default — the prior `text-green-700` / `text-yellow-700` over
+// `bg-*-500/15` fell to ~3.8:1 contrast, below AA. Light/dark token pairs below
+// pass AA in both modes against the muted backdrop.
 function statusColor(status: VideoItem["status"]): string {
-  if (status === "completed") return "bg-green-500/15 text-green-700";
+  if (status === "completed")
+    return "bg-green-500/15 text-green-700 dark:text-green-300";
   if (status === "failed") return "bg-destructive/15 text-destructive";
-  return "bg-yellow-500/15 text-yellow-700";
+  return "bg-yellow-500/15 text-yellow-800 dark:text-yellow-200";
 }

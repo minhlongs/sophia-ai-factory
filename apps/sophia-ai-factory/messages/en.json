@@ -858,6 +858,11 @@
       "newVideoLink": "New Video →",
       "rendering": "Rendering...",
       "noPreview": "No preview",
+      "statusLabel": {
+        "processing": "Processing",
+        "completed": "Ready",
+        "failed": "Failed"
+      },
       "pollError": "Could not reach render service. Refresh to retry.",
       "renderFailed": "Render failed",
       "status": "Status",

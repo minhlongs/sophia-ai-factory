@@ -123,15 +123,29 @@ export function RenderProgress({ missionId, onRetry }: RenderProgressProps) {
   // ── In-progress ──────────────────────────────────────────────────────────
   const activeIdx = stepIndex(currentStep);
   const pct = Math.round((activeIdx / (STEP_ORDER.length - 1)) * 100);
+  // Before the first SSE step event arrives the percentage would be 0 and
+  // visually look frozen. Show an indeterminate shimmer instead so the user
+  // gets immediate feedback that the pipeline is alive.
+  const showIndeterminate = !currentStep && status === 'pending';
 
   return (
     <div className="flex flex-col gap-4">
       {/* Progress bar */}
-      <div className="h-2 rounded-full bg-muted overflow-hidden">
-        <div
-          className="h-full bg-primary transition-all duration-500"
-          style={{ width: `${Math.max(5, pct)}%` }}
-        />
+      <div
+        className="h-2 rounded-full bg-muted overflow-hidden"
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={showIndeterminate ? undefined : pct}
+      >
+        {showIndeterminate ? (
+          <div className="h-full w-1/3 bg-primary animate-pulse motion-reduce:animate-none" />
+        ) : (
+          <div
+            className="h-full bg-primary transition-all duration-500"
+            style={{ width: `${Math.max(5, pct)}%` }}
+          />
+        )}
       </div>
 
       {/* Step list */}

@@ -37,6 +37,21 @@ export type VideoGenerateResult =
 
 // ─── Action ──────────────────────────────────────────────────────────────────
 
+/**
+ * Preflight: the AI-prompt video pipeline (Wan + Fish + CloudConvert) is an
+ * operator-keyed feature. Per no-tech doctrine, the platform must NOT pretend
+ * to accept a job it cannot fulfill — that strands an `engine_missions` row in
+ * `pending`, consumes the user's video quota slot, and shows a stuck spinner.
+ * Bail out before quota reservation when the operator hasn't provisioned keys.
+ */
+function aiPromptPipelineConfigured(): boolean {
+  return Boolean(
+    process.env.WAN_API_KEY
+      && process.env.FISH_SPEECH_API_KEY
+      && process.env.CLOUDCONVERT_API_KEY,
+  );
+}
+
 export async function generateVideoAction(
   input: unknown,
 ): Promise<VideoGenerateResult> {
@@ -44,6 +59,16 @@ export async function generateVideoAction(
   const user = await getCurrentUser();
   if (!user) {
     return { success: false, error: 'Unauthorized', code: 'UNAUTHENTICATED' };
+  }
+
+  // Step 1b: Fail-fast if operator hasn't enabled the AI-prompt pipeline.
+  // Returns BEFORE reserving quota so the user doesn't lose a slot.
+  if (!aiPromptPipelineConfigured()) {
+    return {
+      success: false,
+      error: 'AI video studio is in operator preview. Please use the HeyGen mission flow or check back soon.',
+      code: 'AI_VIDEO_UNAVAILABLE',
+    };
   }
 
   // Step 2: Validate input

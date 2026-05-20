@@ -22,6 +22,8 @@ export function VideoPlayer({ src, missionId }: VideoPlayerProps) {
       <video
         src={src}
         controls
+        playsInline
+        preload="metadata"
         className="w-full rounded-lg border border-border shadow-sm"
         aria-label={t('create.title')}
       />
