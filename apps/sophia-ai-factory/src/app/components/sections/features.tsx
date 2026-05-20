@@ -31,8 +31,8 @@ const features = [
   {
     icon: "api",
     title: "Developer-First API",
-    description: "RESTful API với real-time SSE streaming, webhook callbacks và TypeScript SDK. Sau khi cấu hình BYOK xong, viết 5 dòng code là chạy.",
-    highlight: "BYOK + 5 dòng code",
+    description: "RESTful API với real-time SSE streaming, webhook callbacks và TypeScript SDK. Lấy snippet 5-dòng-chạy-được qua /api/sdk/quickstart?surface=all.",
+    highlight: "/api/sdk/quickstart",
     span: "md:col-span-2",
     gradient: "from-green-500/20 to-emerald-500/10",
   },

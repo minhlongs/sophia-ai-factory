@@ -140,8 +140,8 @@
       "subtitle": "Tính năng mạnh mẽ dành cho nhà sáng tạo nội dung chuyên nghiệp",
       "items": {
         "multi_channel": {
-          "title": "Phân Phối YouTube-First",
-          "description": "Quản lý xuất bản YouTube từ một bảng điều khiển hôm nay. Mở rộng đa nền tảng (TikTok, IG, FB) trong lộ trình.",
+          "title": "Phân Phối Đa Kênh",
+          "description": "Đăng ký YouTube, TikTok, Instagram, Facebook, Twitter, LinkedIn, Pinterest, Threads, Reddit, Bluesky, Mastodon hay Zalo qua /api/publish/channels bằng OAuth token của bạn (BYOK). Cron publisher chung sẽ xử lý phần phân phối.",
           "badge": "Growth"
         },
         "auto_affiliate": {
