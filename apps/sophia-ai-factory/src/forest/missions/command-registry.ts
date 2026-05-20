@@ -35,6 +35,11 @@ export const COMMANDS: Record<string, CommandDefinition> = {
     status: 'live',
     description: 'Create an AI avatar video via HeyGen',
   },
+  'video:create_heygen': {
+    credits: 5,
+    status: 'live',
+    description: 'Legacy alias for video:create via HeyGen',
+  },
   'video:status': {
     credits: 0,
     status: 'live',

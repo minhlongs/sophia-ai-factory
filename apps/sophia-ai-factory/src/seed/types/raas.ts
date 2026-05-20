@@ -30,6 +30,7 @@ export type MissionCategory =
 export type MissionCommand =
   | 'proposal:create'
   | 'video:create'
+  | 'video:create_heygen'
   | 'affiliate:generate'
   | 'affiliate:scrape'
   | 'content:blog'

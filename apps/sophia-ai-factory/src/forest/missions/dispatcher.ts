@@ -22,6 +22,7 @@ async function loadHandler(command: string): Promise<((ctx: import('./handlers/t
       case 'ai:write': return (await import('./handlers/ai-write')).handle;
       case 'social:publish': return (await import('./handlers/social-publish')).handle;
       case 'video:create': return (await import('./handlers/video-create')).handle;
+      case 'video:create_heygen': return (await import('./handlers/video-create')).handle;
       case 'video:status': return (await import('./handlers/video-status')).handle;
       case 'proposal:create': return (await import('./handlers/proposal-create')).handle;
       case 'proposal:list': return (await import('./handlers/proposal-list')).handle;
