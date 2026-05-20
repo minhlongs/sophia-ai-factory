@@ -81,6 +81,17 @@ vi.mock('@/tree/telegram/pairing-token-service', () => ({
   consumePairingToken: vi.fn().mockResolvedValue(null),
 }))
 
+// Mock OpenClaw handlers so we test the pre-gate routing, not their internals
+vi.mock('@/land/openclaw-telegram/openclaw-handlers', () => ({
+  handleVersion: vi.fn().mockResolvedValue(undefined),
+  handleTier: vi.fn().mockResolvedValue(undefined),
+  handleQuota: vi.fn().mockResolvedValue(undefined),
+  handleAffiliate: vi.fn().mockResolvedValue(undefined),
+  handleVideos: vi.fn().mockResolvedValue(undefined),
+  handleHandover: vi.fn().mockResolvedValue(undefined),
+  handleFree100: vi.fn().mockResolvedValue(undefined),
+}))
+
 // Mock sendTelegramMessage
 vi.mock('@/tree/telegram/telegram-client', () => ({
   sendTelegramMessage: vi.fn().mockResolvedValue({ ok: true }),
@@ -434,5 +445,46 @@ describe('Telegram Webhook Route — /start <token> pairing', () => {
     expect(consumePairingToken).toHaveBeenCalledWith(expect.anything(), 'badtoken00')
     expect(sendTelegramMessage).toHaveBeenCalledWith('333', expect.stringContaining('❌'))
     expect(telegramHandlers.handleStart).not.toHaveBeenCalled()
+  })
+
+  // ── Public OpenClaw commands bypass the pairing gate ───────────────────────
+
+  it('/version bypasses pairing gate when chat is not paired', async () => {
+    process.env.TELEGRAM_ADMIN_CHAT_ID = '777'
+    process.env.COMMIT_SHA = 'b6e5dfaf12'
+    vi.mocked(pairingModule.isAllowed).mockResolvedValue(false)
+    vi.mocked(pairingModule.requestPairing).mockResolvedValue({ code: 'X' })
+
+    const req = createRequest({ message: { chat: { id: 12345 }, text: '/version' } })
+    const res = await POST(req)
+
+    expect(res.status).toBe(200)
+    // No pairing prompt should have been sent — the gate was bypassed.
+    expect(pairingModule.requestPairing).not.toHaveBeenCalled()
+  })
+
+  it('/free100 bypasses pairing gate when chat is not paired', async () => {
+    process.env.TELEGRAM_ADMIN_CHAT_ID = '777'
+    vi.mocked(pairingModule.isAllowed).mockResolvedValue(false)
+    vi.mocked(pairingModule.requestPairing).mockResolvedValue({ code: 'X' })
+
+    const req = createRequest({
+      message: { chat: { id: 54321 }, text: '/free100 user@example.com' },
+    })
+    const res = await POST(req)
+
+    expect(res.status).toBe(200)
+    expect(pairingModule.requestPairing).not.toHaveBeenCalled()
+  })
+
+  it('/tier still requires pairing when chat is not paired', async () => {
+    process.env.TELEGRAM_ADMIN_CHAT_ID = '777'
+    vi.mocked(pairingModule.isAllowed).mockResolvedValue(false)
+    vi.mocked(pairingModule.requestPairing).mockResolvedValue({ code: 'Z' })
+
+    const req = createRequest({ message: { chat: { id: 67890 }, text: '/tier' } })
+    await POST(req)
+
+    expect(pairingModule.requestPairing).toHaveBeenCalledWith(expect.anything(), '67890', '')
   })
 })
