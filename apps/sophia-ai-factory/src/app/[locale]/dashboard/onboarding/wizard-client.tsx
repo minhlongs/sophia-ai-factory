@@ -25,6 +25,7 @@ import { LocalModeStep } from '@/forest/components/setup-wizard/local-mode-step'
 import { FinishStep } from '@/tree/components/setup-wizard/steps/finish-step';
 import { ProviderCredentialsStep, type ProviderConfig } from '@/tree/components/setup-wizard/steps/provider-credentials-step';
 import type { CredentialSummary } from '@/tree/credentials/user-credentials-repo';
+import { completeOnboardingAction } from '@/app/actions/complete-onboarding-action';
 
 /** Unified response type: supports both valid (verify) and ok (test-heygen/resend) */
 interface VerifyKeyResponse {
@@ -340,6 +341,18 @@ export function WizardClient() {
 
       clearPersistedState();
       setRetryCount(0);
+      // Flag onboarding complete so the user is no longer redirected from
+      // /dashboard → /dashboard/onboarding on every visit. The MASTER tier
+      // dashboard gate checks user_profiles.onboarding_completed_at; without
+      // this call the BYOK-complete user gets trapped in a redirect loop and
+      // can never reach the main dashboard. (Root cause of the 0/52 missions-
+      // run gap surfaced by audit 260520.)
+      try {
+        await completeOnboardingAction({ reason: 'complete' });
+      } catch {
+        // non-fatal: redirect still proceeds; the page-level auto-complete
+        // also covers this when the user later runs 3 milestones.
+      }
       router.push(llmData.redirect || '/dashboard/settings');
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
