@@ -13,9 +13,8 @@
 
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { createServerClient } from '@/seed/db/client';
+import { getD1Raw } from '@/seed/db/client';
 import { revalidatePath } from 'next/cache';
-import type { QueryResult } from '@/seed/db/d1-query-types';
 
 const inputSchema = z.object({
   /** Optional — caller may pass 'skip' or 'complete' for telemetry; not stored. */
@@ -42,15 +41,20 @@ export async function completeOnboardingAction(
   const nowMs = Date.now(); // INTEGER unix-ms to match migration 0062
 
   try {
-    const db = createServerClient();
-    const { error: updateError }: QueryResult<Record<string, unknown>[]> = await db
-      .from('user_profiles')
-      .update({ onboarding_completed_at: nowMs })
-      .eq('user_id', user.id);
-
-    if (updateError) {
-      return { success: false, error: updateError.message };
-    }
+    // UPSERT — many fresh MASTER FREE100 users have no user_profiles row yet
+    // (the BYOK setup wizard creates that row only when keys are saved). A
+    // plain UPDATE silently no-ops for those users and leaves them stuck in
+    // the /dashboard → /dashboard/onboarding redirect loop. Insert-on-conflict
+    // makes the flag durable regardless of prior profile state.
+    const db = await getD1Raw();
+    await db
+      .prepare(
+        `INSERT INTO user_profiles (user_id, onboarding_completed_at)
+         VALUES (?, ?)
+         ON CONFLICT(user_id) DO UPDATE SET onboarding_completed_at = excluded.onboarding_completed_at`,
+      )
+      .bind(user.id, nowMs)
+      .run();
 
     revalidatePath('/dashboard');
     revalidatePath('/dashboard/onboarding');
