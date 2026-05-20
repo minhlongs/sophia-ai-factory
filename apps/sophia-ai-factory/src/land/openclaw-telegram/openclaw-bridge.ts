@@ -34,6 +34,11 @@ import {
   buildVideoDescription,
   type VideoDescriptionResult,
 } from '@/land/affiliates/video-description-injector';
+import {
+  translateScript,
+  TranslateConfigurationError,
+  type TranslateScriptResult,
+} from '@/land/i18n/translate-script';
 import { createCustomerUser } from '@/tree/handover/handover-account-setup';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
@@ -309,7 +314,42 @@ export async function callEmbedAffiliateInDescription(
   });
 }
 
-// ─── 8. sophia_redeem_free100 ────────────────────────────────────────────────
+// ─── 8. sophia_translate_script (homepage promise: global reach via BYOK) ────
+
+export interface TranslateBridgeInput {
+  userId: string;
+  text: string;
+  fromLang: string;
+  toLang: string;
+  tone?: 'literal' | 'natural';
+}
+
+export interface TranslateBridgeResult {
+  ok: true;
+  result: TranslateScriptResult;
+}
+
+export interface TranslateBridgeError {
+  ok: false;
+  code: 'BYOK_REQUIRED' | 'EMPTY_TEXT' | 'UPSTREAM_FAILED';
+  message: string;
+}
+
+export async function callTranslateScript(
+  input: TranslateBridgeInput,
+): Promise<TranslateBridgeResult | TranslateBridgeError> {
+  try {
+    const result = await translateScript(input);
+    return { ok: true, result };
+  } catch (err) {
+    if (err instanceof TranslateConfigurationError) {
+      return { ok: false, code: err.code === 'EMPTY_TEXT' ? 'EMPTY_TEXT' : 'BYOK_REQUIRED', message: err.message };
+    }
+    return { ok: false, code: 'UPSTREAM_FAILED', message: err instanceof Error ? err.message : 'unknown' };
+  }
+}
+
+// ─── 9. sophia_redeem_free100 ────────────────────────────────────────────────
 
 export interface RedeemFree100Input {
   code: string;

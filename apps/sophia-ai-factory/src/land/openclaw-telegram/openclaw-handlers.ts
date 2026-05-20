@@ -28,6 +28,7 @@ import {
   callGetHandover,
   callRedeemFree100,
   callEmbedAffiliateInDescription,
+  callTranslateScript,
 } from '@/land/openclaw-telegram/openclaw-bridge';
 
 const NOT_PAIRED_MSG =
@@ -188,6 +189,56 @@ export async function handleEmbed(chatId: string, rawArg: string): Promise<void>
   await sendMessage(
     chatId,
     `🔗 *Affiliate-embedded description* (${result.affiliateCount} link${result.affiliateCount === 1 ? '' : 's'}):\n\n\`\`\`\n${result.description}\n\`\`\``,
+  );
+}
+
+/**
+ * /translate <toLang> <text> — paired user only.
+ * Uses the user's BYOK OpenRouter key to translate `text` to `toLang`.
+ * Source language is auto-detected by the LLM. Example:
+ *   /translate vi Hello world from Vietnam
+ */
+export async function handleTranslate(chatId: string, rawArg: string): Promise<void> {
+  const userId = await resolveUserIdFromChat(chatId);
+  if (!userId) {
+    await sendMessage(chatId, NOT_PAIRED_MSG);
+    return;
+  }
+  const arg = rawArg.trim();
+  const firstSpace = arg.indexOf(' ');
+  if (firstSpace < 2) {
+    await sendMessage(
+      chatId,
+      '❌ Cú pháp: `/translate <toLang> <text>` — ví dụ: `/translate vi Hello world`',
+    );
+    return;
+  }
+  const toLang = arg.slice(0, firstSpace).trim();
+  const text = arg.slice(firstSpace + 1).trim();
+  if (text.length === 0) {
+    await sendMessage(chatId, '❌ Text bị trống — đính kèm nội dung cần dịch sau ngôn ngữ đích.');
+    return;
+  }
+  const out = await callTranslateScript({
+    userId,
+    text,
+    fromLang: 'auto',
+    toLang,
+  });
+  if (!out.ok) {
+    if (out.code === 'BYOK_REQUIRED') {
+      await sendMessage(
+        chatId,
+        '🔑 *Cần OpenRouter key*\nVào /dashboard/setup-wizard và nhập key OpenRouter của bạn để dùng /translate.',
+      );
+      return;
+    }
+    await sendMessage(chatId, `❌ Translate thất bại: \`${out.message}\``);
+    return;
+  }
+  await sendMessage(
+    chatId,
+    `🌐 *Translated → ${toLang}* (model \`${out.result.model.split('/').pop()}\`)\n\n\`\`\`\n${out.result.translated}\n\`\`\``,
   );
 }
 
