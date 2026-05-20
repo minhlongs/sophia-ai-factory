@@ -28,6 +28,7 @@ export async function handleHelp(chatId: string): Promise<void> {
 /videos [processing|completed|failed] - Trạng thái video
 /handover - Onboarding milestones
 /embed <videoId|body> - Build affiliate-embedded video description
+/translate <toLang> <text> - Translate via your BYOK OpenRouter key
 /free100 <email> - Redeem FREE100 → MASTER magic-link
 
 *Need support?* Contact us at support@mekongmind.com`

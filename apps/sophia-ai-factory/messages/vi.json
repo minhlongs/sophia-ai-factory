@@ -165,8 +165,8 @@
           "badge": "Growth"
         },
         "global_reach": {
-          "title": "Nền Tảng Song Ngữ (EN/VI)",
-          "description": "Sophia tích hợp sẵn tiếng Anh và tiếng Việt trên toàn nền tảng. Hôm nay bạn dịch kịch bản thủ công qua LLM key của mình; pipeline tự dịch trong lộ trình.",
+          "title": "Nền Tảng Song Ngữ + Translate BYOK",
+          "description": "Sophia tích hợp sẵn tiếng Anh và tiếng Việt trên toàn nền tảng. Dịch kịch bản một-phát-ra-kết-quả qua /api/translate và lệnh Telegram /translate — chạy bằng key OpenRouter của riêng bạn (BYOK).",
           "badge": "Premium"
         }
       },

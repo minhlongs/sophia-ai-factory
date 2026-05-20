@@ -165,8 +165,8 @@
           "badge": "Growth"
         },
         "global_reach": {
-          "title": "Bilingual Platform (EN/VI)",
-          "description": "Sophia ships with native English and Vietnamese throughout the platform. Translate scripts manually via your LLM key today; auto-translation pipeline on the roadmap.",
+          "title": "Bilingual Platform + BYOK Translation",
+          "description": "Sophia ships with native English and Vietnamese throughout the platform. One-shot script translation is live via /api/translate and the Telegram /translate command — powered by your own OpenRouter key (BYOK).",
           "badge": "Premium"
         }
       },
