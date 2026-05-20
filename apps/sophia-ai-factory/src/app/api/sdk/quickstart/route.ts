@@ -68,6 +68,13 @@ const { missionsCompleted, paidAgencies, videosGenerated } = await res.json();`,
     ts: `const res = await fetch("${BASE}/api/publish/quick-schedule", { method: "POST", headers: { Authorization: \`Bearer \${token}\`, "Content-Type": "application/json" }, body: JSON.stringify({ videoId, channelId, scheduledAt: Math.floor(Date.now()/1000) + 3600 }) });
 const { jobId } = await res.json();`,
   },
+  {
+    surface: 'auto-video',
+    description: 'Run the full autonomous mission (script → translate → affiliate description → HeyGen render → schedule) in one call. Uses your BYOK OpenRouter + HeyGen keys.',
+    curl: `curl -X POST -H "Authorization: Bearer $SOPHIA_TOKEN" -H "Content-Type: application/json" -d '{"topic":"Fashion trends Q3 2026","keywords":["sustainable","tiktok"],"primaryLanguage":"en","secondaryLanguage":"vi","channelId":"<channelId>"}' "${BASE}/api/missions/auto-video"`,
+    ts: `const res = await fetch("${BASE}/api/missions/auto-video", { method: "POST", headers: { Authorization: \`Bearer \${token}\`, "Content-Type": "application/json" }, body: JSON.stringify({ topic: "Fashion trends Q3 2026", keywords: ["sustainable"], primaryLanguage: "en", secondaryLanguage: "vi" }) });
+const { missionId, script, description, video, publish } = await res.json();`,
+  },
 ];
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
