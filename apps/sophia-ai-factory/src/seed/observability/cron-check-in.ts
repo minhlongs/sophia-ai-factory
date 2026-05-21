@@ -31,7 +31,7 @@ export interface CronRunContext {
 }
 
 /** Shared monitor config sent with every check-in. */
-const MONITOR_CONFIG: Sentry.MonitorConfig = {
+const MONITOR_CONFIG: NonNullable<Parameters<typeof Sentry.captureCheckIn>[1]> = {
   schedule: {
     // Fallback schedule — operators configure the real schedule in the Sentry UI.
     // Sentry uses this only if no UI schedule exists yet for the monitor slug.
