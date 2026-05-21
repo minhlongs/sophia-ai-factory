@@ -236,3 +236,40 @@ Dispatched 5 parallel agents in worktree isolation; all merged to `master` and b
 
 **Doctrine ceiling held at 87.5/100. No lift planned this cycle.**
 
+
+---
+
+## Phase 4 Progress Addendum (2026-05-21 07:28 UTC)
+
+**Deploy verified GREEN:**
+- Local HEAD: `d706a7d8` (Sentry SDK v10 typedef fix)
+- Production `/api/version` shortSha: `d706a7d8` ✅
+- Production HTTP: 200 ✅
+- DeployedAt: `2026-05-21T07:08:42Z`
+- OpenNext: 1.17.3
+
+**Wave-1-6 + OG-002 + typedef fix all LIVE.**
+
+### Status updates since 2026-05-20 23:10
+
+| Item | Was | Now |
+|---|---|---|
+| OG-002 (cron heartbeat) | "wired top-3, 18 routes remaining" | **29/29 handlers wired** via commits `c22c2442` → `ddb9211a` → `d706a7d8`. CLOSED IN CODE. |
+| Type-fix `tagCronRoute` | `94498031` | Verified live in `d706a7d8`. |
+| Deploy + SHA-match (Phase 4 pre-launch) | blocking | **DONE** ✅ |
+
+### Week-1 P1 list — revised
+
+- ~~Remaining 15 cron routes wired to heartbeat~~ (DONE in code; awaits Sentry rule + alert config — operator action)
+- [ ] OG-009 prod DR drill scheduled (Q7 decision)
+- [ ] PG-004/005/006 product decisions documented or features removed
+
+### Still pre-launch blocking
+
+- [ ] Long answers Q1 (PG-001 refund policy)
+- [ ] Operator adds SPF TXT to mekongmind.com (CG-004 verify script ready)
+- [ ] Smoke test paying-customer flow on live prod (signup → wizard → NOWPayments USDT → tier activation → first campaign)
+
+### Doctrine
+
+Ceiling held at **87.5/100** per v1.28.1. No lift planned this cycle.
