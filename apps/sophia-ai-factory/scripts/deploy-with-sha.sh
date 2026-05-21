@@ -9,6 +9,16 @@
 #   - wrangler authenticated (npx wrangler whoami should succeed)
 #   - CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN env vars, or wrangler.toml auth
 #   - Must be run from apps/sophia-ai-factory/ directory or the script relocates automatically
+#
+# M1 16GB OOM escape hatches (production default = unset / 0):
+#   SKIP_PWA=1            Skip service-worker generation (next-pwa webpack plugin).
+#                         Cost: offline mode breaks. Only for local dev.
+#   SKIP_RC=1             Disable React Compiler. Cost: lose RC perf opts. Local dev only.
+#   SKIP_SENTRY_BUILD=1   Skip Sentry build-time wrap (no source-map upload).
+#                         Cost: prod stack traces remain minified. Doctrine allows it
+#                         (sourcemaps optional per sophia-no-tech-doctrine.md), but
+#                         next.config.ts logs a warning when set during NODE_ENV=production.
+#   ALLOW_UNPUSHED_DEPLOY=1   Bypass HEAD-vs-origin/main precondition. Emergency only.
 
 set -euo pipefail
 
@@ -82,6 +92,13 @@ echo "Deployed at: $DEPLOYED_AT"
 # ─── Step 0: Generate Supabase migrations manifest (baked into build) ────────
 echo "==> generate-supabase-migrations-manifest"
 node scripts/generate-supabase-migrations-manifest.mjs
+
+# ─── Step 0.5: TypeScript gate (replaces removed ignoreBuildErrors safety) ───
+# next.config.ts has `ignoreBuildErrors: true` to dodge an M1 16GB OOM during
+# Next's inner typecheck. We MUST run tsc --noEmit externally before next build
+# or type errors silently ship to prod. Non-negotiable since TIER-2A reversal.
+echo "==> npm run type-check (TS gate)"
+npm run type-check
 
 # ─── Step 1: Next.js build ───────────────────────────────────────────────────
 # NEXT_PUBLIC_* vars are baked into the client bundle at build time.
