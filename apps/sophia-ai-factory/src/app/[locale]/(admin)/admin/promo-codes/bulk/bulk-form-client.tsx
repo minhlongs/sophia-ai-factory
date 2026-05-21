@@ -11,6 +11,7 @@ import { useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
 import { BulkRequestForm, MIN_COUNT, MAX_COUNT } from "./bulk-request-form";
 import { BulkResultPanel } from "./bulk-result-panel";
+import { useReauth } from "@/components/admin/ReauthModal";
 
 interface BulkResult {
   codes: string[];
@@ -28,6 +29,7 @@ export function BulkFormClient() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<BulkResult | null>(null);
+  const { confirmed, ReauthModalElement } = useReauth();
 
   /**
    * Convert a YYYY-MM-DD date string (from the date picker) to a Unix timestamp
@@ -51,6 +53,11 @@ export function BulkFormClient() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    // ASVS V3.5.1: require re-authentication before destructive admin action.
+    const ok = await confirmed();
+    if (!ok) return;
+
     setLoading(true);
     setResult(null);
     try {
@@ -90,6 +97,7 @@ export function BulkFormClient() {
 
   return (
     <div className="space-y-6 max-w-3xl">
+      {ReauthModalElement}
       <div className="flex items-center justify-between">
         <div>
           <Link
