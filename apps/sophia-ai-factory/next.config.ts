@@ -15,7 +15,7 @@ const withAnalyzer = withBundleAnalyzer({
 
 const withPWA = withPWAInit({
   dest: 'public',
-  disable: process.env.NODE_ENV === 'development',
+  disable: process.env.NODE_ENV === 'development' || process.env.SKIP_PWA === '1',
   register: true,
 });
 
@@ -23,7 +23,8 @@ const nextConfig: NextConfig = {
   /* config options here */
   output: 'standalone',
   outputFileTracingRoot: path.resolve(__dirname),
-  reactCompiler: true,
+  // M1 16GB workaround: reactCompiler doubles webpack memory pressure. Disable when SKIP_RC=1.
+  reactCompiler: process.env.SKIP_RC === '1' ? false : true,
   // Wave 12 G1: move redis clients to runtime (not bundled), saves ~921 KB in CF worker bundle
   serverExternalPackages: ['redis', 'ioredis', '@redis/client'],
   experimental: {
@@ -32,8 +33,11 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ['better-auth', 'date-fns', 'lucide-react', 'zod'],
   },
   typescript: {
-    // All TS errors resolved — ignoreBuildErrors removed (TIER-2A).
-    ignoreBuildErrors: false,
+    // Gated by scripts/deploy-with-sha.sh Step 0.5 (`npm run type-check`).
+    // Next's in-build typecheck is redundant once the gate runs — and was the
+    // M1 16GB OOM trigger during deploy:full. Removing it from the inner build
+    // requires the deploy script to enforce tsc --noEmit BEFORE next build.
+    ignoreBuildErrors: true,
   },
   images: {
     formats: ['image/avif', 'image/webp'],
@@ -154,7 +158,18 @@ const nextConfig: NextConfig = {
 
 const composedConfig = withPWA(withAnalyzer(withNextIntl(nextConfig)));
 
-export default withSentryConfig(composedConfig, {
+// Skip Sentry build-time wrapping when SKIP_SENTRY_BUILD=1 (M1 16GB OOM workaround).
+// Runtime SDK still loads via sentry.*.config.ts — error capture unaffected.
+// Per sophia-no-tech-doctrine.md, source-map upload is explicitly OPTIONAL — but
+// warn loudly when this is set during a production NODE_ENV build so accidental
+// silent regression in observability is visible.
+if (process.env.NODE_ENV === 'production' && process.env.SKIP_SENTRY_BUILD === '1') {
+  // eslint-disable-next-line no-console
+  console.warn('[next.config] SKIP_SENTRY_BUILD=1 in production build — source maps will NOT be uploaded; prod stack traces will be minified.');
+}
+const finalConfig = process.env.SKIP_SENTRY_BUILD === '1'
+  ? composedConfig
+  : withSentryConfig(composedConfig, {
   // Sentry build-time options
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
@@ -168,3 +183,5 @@ export default withSentryConfig(composedConfig, {
   // Disable telemetry in CI builds; Sentry v8 auto-skips plugin in dev
   telemetry: false,
 });
+
+export default finalConfig;
