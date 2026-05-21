@@ -1,3 +1,7 @@
+<!-- CAAMP:START -->
+@AGENTS.md
+<!-- CAAMP:END -->
+
 # Sophia AI Factory Rules
 
 - Core stack: Next.js 16 + D1 (Cloudflare) + Better Auth + NOWPayments (crypto/USDT)

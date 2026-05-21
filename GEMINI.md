@@ -1,3 +1,7 @@
+<!-- CAAMP:START -->
+@AGENTS.md
+<!-- CAAMP:END -->
+
 # 📌 GIAO VIỆC CC CLI PROTOCOL (PHẢI ĐỌC TRƯỚC KHI GIAO VIỆC!)
 
 ## Two-Call Mandate - PHẢI TÁCH 2 BƯỚC
