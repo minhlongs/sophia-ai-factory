@@ -454,11 +454,13 @@
         "tableHeaderCmd": "Lệnh",
         "tableHeaderDesc": "Chức Năng",
         "table": {
-          "link": "Kết nối tài khoản Sophia với Telegram",
+          "start": "Khởi động bot — dùng `/start <pairing-token>` để liên kết tài khoản Sophia",
           "campaign": "Tạo video mới từ chủ đề bạn nhập",
           "status": "Xem trạng thái chiến dịch đang chạy",
           "results": "Nhận link video đã hoàn thành",
-          "stop": "Tạm dừng chiến dịch đang xử lý",
+          "cancel": "Hủy thao tác đang xử lý",
+          "tier": "Xem gói đăng ký hiện tại",
+          "quota": "Xem hạn mức còn lại trong tháng",
           "help": "Danh sách tất cả lệnh"
         },
         "tipsTitle": "Mẹo Sử Dụng",

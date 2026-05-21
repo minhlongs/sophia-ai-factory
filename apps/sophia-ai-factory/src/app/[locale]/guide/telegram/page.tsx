@@ -16,7 +16,9 @@ const BOT_COMMANDS = `/start
 /campaign
 /status
 /results
-/stop
+/cancel
+/tier
+/quota
 /help`;
 
 export default async function TelegramGuidePage({ params }: { params: Promise<{ locale: string }> }) {
@@ -24,11 +26,13 @@ export default async function TelegramGuidePage({ params }: { params: Promise<{ 
   const t = await getTranslations({ locale, namespace: "landing.guide.telegram" });
 
   const commandTable = [
-    { cmd: "/link", desc: t("table.link") },
+    { cmd: "/start", desc: t("table.start") },
     { cmd: "/campaign", desc: t("table.campaign") },
     { cmd: "/status", desc: t("table.status") },
     { cmd: "/results", desc: t("table.results") },
-    { cmd: "/stop", desc: t("table.stop") },
+    { cmd: "/cancel", desc: t("table.cancel") },
+    { cmd: "/tier", desc: t("table.tier") },
+    { cmd: "/quota", desc: t("table.quota") },
     { cmd: "/help", desc: t("table.help") },
   ];
 
