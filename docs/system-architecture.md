@@ -2,7 +2,7 @@
 
 > Sophia AI Factory — RaaS (Reasoning-as-a-Service) Platform with AI-Native CI/CD, Observability, & Signals
 
-**Last Updated:** 2026-05-03 (Go-Live Production Deploy: self-serve checkout, mission control handover, magic-link E2E validation, new tables/routes)
+**Last Updated:** 2026-05-20 (docs harness alignment — reflects shipped state 2026-05-17; CF-direct deploy doctrine, ASVS-L2 94%, doctrine ceiling 87.5/100)
 **Production:** https://sophia.agencyos.network (SHA 5b1f711f)
 **Production Dashboard:** https://sophia.agencyos.network/dashboard
 **Status Page:** https://sophia.agencyos.network/status (90-day uptime tracking)
@@ -67,23 +67,50 @@ graph TB
 
 ---
 
-## Layer 1: CI/CD & Enforcement Gates (2026-04-17)
+## Layer 1: CI/CD & Deploy Pipeline
 
-**5 Enforcement Gates** via GitHub Actions (`.github/workflows/`)
+**Doctrine ceiling: 87.5/100** (no-tech doctrine v1.28.1 — operator manages platform code only, no third-party creds required).
 
-| Gate | Trigger | Purpose | Action |
-|------|---------|---------|--------|
-| **Validation Gate** | Every push | Type safety, lint, format | Block non-conforming PRs |
-| **Security Gate** | Every push | SAST, npm audit, secret scan | Fail on vulnerabilities |
-| **Quality Gate** | Every push | Test coverage, mutation score | Require 80%+ coverage |
-| **Dependency Gate** | Every push | Outdated packages, SCA | Alert on breaking deps |
-| **Deployment Gate** | main only | Canary to 10% traffic | Rollback on error rate spike |
+### Deploy Pipeline (CF-direct doctrine, effective 2026-05-03)
 
-**Canary Rollout:** Wrangler versions deploy + Better Stack error monitoring auto-triggers rollback if error rate >2%.
+GitHub Actions is **DISABLED by design** since 2026-05-03 (account free-tier exhausted; team adopted CF-direct as permanent path). Workflow archived at `.github/workflows/test.yml.disabled`.
 
-**Health Endpoints:**
-- `/api/version` — Returns git SHA + build info (auth-gated via INTROSPECT_TOKEN)
-- `/api/health/detail` — Full system status (auth-gated, PII-safe)
+**Canonical deploy sequence:**
+
+```
+git push origin main
+  ↓
+cd apps/sophia-ai-factory && npm run deploy:full
+  (= next build + inject COMMIT_SHA/DEPLOYED_AT secrets + wrangler deploy)
+  ↓
+bash scripts/apply-migrations.sh  (if migrations/ changed)
+  ↓
+curl -s https://sophia.agencyos.network/api/version | jq .shortSha
+  (must match git rev-parse HEAD | cut -c1-8)
+  ↓
+curl -sI https://sophia.agencyos.network | head -1  (must be 200)
+```
+
+Push-before-deploy guard: `deploy-with-sha.sh` exits 2 if `git log origin/main..HEAD` is non-empty (prevents prod/git SHA divergence). Override: `ALLOW_UNPUSHED_DEPLOY=1`.
+
+**Rollback:** `npx wrangler rollback --name sophia-ai-factory` or redeploy a specific git SHA.
+
+**Pre-push quality gates (local enforcement):**
+- `npm run build` — 0 TS errors required
+- `npm test` — 4431/4431 tests must pass
+- `npm run lint` — ESLint clean
+
+### Cron Authentication
+
+All `/api/cron/*` routes require Bearer auth:
+```
+Authorization: Bearer ${CRON_SECRET}
+```
+`CRON_SECRET` is a 32-byte random value set via `wrangler secret put CRON_SECRET`. Requests without valid Bearer return HTTP 401. See `src/seed/auth/cron-auth.ts`.
+
+### Health Endpoints
+- `/api/version` — public: `{shortSha, deployedAt, opennextVersion}`. Primary deploy verify signal.
+- `/api/health` — service health (auth required for full detail)
 
 ---
 
@@ -774,3 +801,24 @@ crons = ["*/5 * * * *"]
 - Cloudflare D1 (SQLite) does not support Row Level Security (RLS) policies
 - **Mitigation:** App layer enforces ownership via explicit `WHERE user_id = ?` filters in all D1 queries
 - This is acceptable for multi-tenant SaaS (all users are authenticated, Better Auth session is verified)
+
+---
+
+## Doctrine Ceiling & Score
+
+**Honest 10-layer score: 87.5/100** (no-tech doctrine v1.28.1, locked 2026-05-17).
+
+| Layer | Score | Notes |
+|-------|------:|-------|
+| L1 Database | 7/10 | D1 + R2 lifecycle backup; no external cron |
+| L2 Server | 9/10 | tagCache wired, all bindings live |
+| L3 Networking | 9/10 | DMARC `p=none`; `p=quarantine` discretionary |
+| L4 Cloud | 9.5/10 | Cross-layer exemptions documented |
+| L5 CI/CD | 10/10 | Pre-push fail-mode + deploy guard active |
+| L6 Security | 9/10 | 0 HIGH vulns, ASVS-L2 29/31 (94%) |
+| L7 Monitoring | 8/10 | Sentry captures errors; sourcemaps optional |
+| L8 Containers | 10/10 | Serverless — N/A by audit framework |
+| L9 CDN | 9/10 | revalidateTag/Path live via tagCache D1 |
+| L10 Backup | 7/10 | Route + bucket + 30d lifecycle; no external cron |
+
+Raising above 87.5/100 requires months of DR drills + restore tests — not code changes. See `apps/sophia-ai-factory/.claude/rules/sophia-no-tech-doctrine.md`.
