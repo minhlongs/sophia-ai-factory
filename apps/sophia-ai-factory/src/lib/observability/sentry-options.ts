@@ -172,6 +172,28 @@ export function buildClientOptions(): BrowserOptions {
   };
 }
 
+/**
+ * Cron route tagging — OG-002 (Wave-4 infra).
+ *
+ * If the request URL matches /api/cron/<name>, tag the Sentry event with
+ * `cron_route: <name>` so alert rules can filter specifically for cron failures.
+ *
+ * Works by inspecting `event.request.url` which Next.js populates on the server.
+ * Safe to call on every event — returns event unmodified if URL does not match.
+ */
+const CRON_ROUTE_RE = /\/api\/cron\/([^/?#]+)/;
+
+function tagCronRoute<T extends { request?: { url?: string }; tags?: Record<string, string> }>(
+  event: T,
+): T {
+  const url = event.request?.url ?? '';
+  const match = CRON_ROUTE_RE.exec(url);
+  if (match) {
+    event.tags = { ...event.tags, cron_route: match[1] };
+  }
+  return event;
+}
+
 export function buildServerOptions(): NodeOptions {
   const isProd = getIsProd();
   return {
@@ -185,6 +207,8 @@ export function buildServerOptions(): NodeOptions {
       const statusCode = (event.contexts?.response as Record<string, unknown> | undefined)
         ?.status_code as number | undefined;
       if (should4xxBeDropped(statusCode)) return null;
+      // Tag cron route so Sentry alert rules can filter on cron_route dimension (OG-002)
+      tagCronRoute(event);
       return stripPii(event);
     },
   };
