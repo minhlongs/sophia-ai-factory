@@ -515,4 +515,36 @@ Rules:
 
 ---
 
-_Last reviewed 2026-05-02 by code-reviewer | Standards enforced by pre-commit hooks + CI linting_
+## Canonical Import Paths (post-consolidation 2026-04-14)
+
+These are the ONLY approved paths for core concerns. Use nothing else.
+
+| Concern | Canonical Import |
+|---------|----------------|
+| Auth session | `import { getCurrentUser } from '@/lib/better-auth-session'` |
+| Tier lookup | `import { getUserTier } from '@/lib/db/get-user-tier'` |
+| DB client (sync) | `import { createServerClient } from '@/lib/db/client'` — do NOT `await` |
+| Tier config | `import { TIER_CONFIGS, TIER_CONFIG } from '@/config/tiers'` |
+
+### BANNED Imports
+
+The following modules were deleted in 2026-04-14 consolidation. Any new import from these paths is a build error:
+
+```
+@/lib/auth              ← deleted (use @/lib/better-auth-session)
+@/lib/subscription      ← deleted (use @/lib/db/get-user-tier)
+@/lib/unified-tier-config ← deleted (use @/config/tiers)
+@/lib/tier-gate         ← deleted (use @/config/tiers + manual gate)
+```
+
+### Tier Enum
+
+Always uppercase. Never use aliases like `pro`, `enterprise`, `free`:
+
+```typescript
+type Tier = 'BASIC' | 'PREMIUM' | 'ENTERPRISE' | 'MASTER'
+```
+
+---
+
+_Last reviewed 2026-05-20 by docs harness alignment | Standards enforced by pre-commit hooks_
