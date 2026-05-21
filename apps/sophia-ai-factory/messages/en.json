@@ -454,11 +454,13 @@
         "tableHeaderCmd": "Command",
         "tableHeaderDesc": "Function",
         "table": {
-          "link": "Connect your Sophia account to Telegram",
+          "start": "Begin the bot — use `/start <pairing-token>` to link your Sophia account",
           "campaign": "Create a new video from a topic you provide",
           "status": "Check the status of running campaigns",
           "results": "Get links to completed videos",
-          "stop": "Pause a running campaign",
+          "cancel": "Cancel the in-progress action",
+          "tier": "Show your current subscription tier",
+          "quota": "Show remaining usage quota for the month",
           "help": "List all available commands"
         },
         "tipsTitle": "Tips",
