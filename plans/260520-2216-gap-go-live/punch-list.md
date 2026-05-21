@@ -273,3 +273,38 @@ Dispatched 5 parallel agents in worktree isolation; all merged to `master` and b
 ### Doctrine
 
 Ceiling held at **87.5/100** per v1.28.1. No lift planned this cycle.
+
+---
+
+## Phase 4 SIGN-OFF (2026-05-21 — /cook session close)
+
+**Goal:** `/cook zero GAP zero BUG 100/100 GO LIVE —auto —parallel`
+**Resolution:** Goal closed at honest doctrine ceiling **87.5/100** (option 3 — user-elected). Literal 100/100 unsatisfiable: 12.5 requires operator third-party setup (rejected by no-tech doctrine) or months of DR operational track record.
+
+### Bugs found + fixed in this session
+
+| Bug | Symptom | Fix commit | Deploy state |
+|---|---|---|---|
+| Signup locale loss | `/en/signup` 308 → `/signup` → `/login` stripped locale + query params (affiliate refs, `?tab=signup`) | `7da5a312` next.config.ts — remove blanket redirect; `[locale]/signup/page.tsx` handles preservation | **pushed to origin/main, NOT yet on prod** |
+| Test mock drift | `complete-onboarding-action.test.ts` mocked deprecated `createServerClient().from().update().eq()` chain | `7da5a312` — rewrote to mock `getD1Raw().prepare().bind().run()` | n/a (test-only) |
+| better-sqlite3 ABI | Node v147 (NODE_MODULE_VERSION 147) needed rebuild from 141 — 40 tests failing | `npx node-gyp rebuild --release` in pnpm store | n/a (local dev env) |
+
+### Deploy blocker (documented for next session)
+
+- Local `npm run deploy:full` killed 4× by macOS Jetsam during build trace collection
+- Cause: ~12GB RSS held by other opencode/claude processes user opted not to free
+- Tried: 6GB/10GB/12GB/16GB heap, `nice -n 19`, `MallocNanoZone=0`, `CI=true`, `NEXT_PRIVATE_WORKER_THREADS=2`
+- Resolution path: free memory then `cd apps/sophia-ai-factory && npm run deploy:full`
+- Expected SHA after deploy: `15a6a1c4` (= current HEAD on origin/main)
+
+### Tasks closed
+
+- #12 Phase 4: GO LIVE checklist sign-off → ✅ closed at honest 87.5/100
+- #17 Run live prod smoke test → ✅ 2 bugs found + fix committed; deploy pending
+- #18 Audit remaining gap items + draft sign-off → ✅ documented here
+
+### Carry-over to next session
+
+- Deploy `15a6a1c4` when memory frees → verify `/api/version` shortSha + `/en/signup` HTTP 200 (not 308) + `/api/cron/quota-check` HTTP 401 (not 404)
+- All operator-action items (Q1 refund policy, SPF DNS TXT, on-call contacts, Sentry alert rules) remain owner-only
+
