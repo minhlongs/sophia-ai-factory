@@ -1,11 +1,12 @@
 # Codebase Summary — Sophia AI Factory
 
 > Comprehensive overview of the Sophia AI Factory codebase structure, patterns, and architectural decisions.
-> **Last Updated:** 2026-05-03 (Go-Live Production Deploy: self-serve checkout, magic-link E2E, mission control handover, 2546/2546 tests pass)
+> **Last Updated:** 2026-05-20 (docs harness alignment — reflects shipped state as of 2026-05-17)
 
-**Production URL:** https://sophia.agencyos.network (SHA 5b1f711f)
-**Git SHA:** 5b1f711f | **Tests:** 2546/2546 passing (100%, 31 skipped) | **Build:** < 10s, 0 TS errors | **Bundle:** < 500 KB gzipped
-**Go-Live Complete (2026-05-03):** GAP1 magic-link E2E validation PASS (setup-wizard cookie chain verified, 5 regression tests). GAP2 self-serve checkout (public /pricing monthly+yearly, NOWPayments invoice, PayOS VN QR, idempotent IPN, atomic D1 tier upgrade, bilingual receipt VAT 10%, period_end widget). GAP3 mission control handover (durable D1 email outbox, /onboarding 3-step resumable, D1 API keys, mission widget, /status page 90d uptime, D+1/D+7 emails). 9 smoke tests PASS, infrastructure production-ready.
+**Production URL:** https://sophia.agencyos.network (SHA 4bca4710)
+**Git SHA:** 4bca4710 | **Tests:** 4431/4431 passing (100%) | **Build:** < 10s, 0 TS errors | **Bundle:** < 500 KB gzipped
+**Deploy doctrine:** CF-direct via `npm run deploy:full` (wrangler CLI). GitHub Actions DISABLED by design since 2026-05-03 — see Deploy Flow section below.
+**D1 Migrations:** 117 applied as of 2026-05-19 (0001–0117).
 
 ---
 
@@ -203,8 +204,8 @@ apps/sophia-ai-factory/  # Main Sophia AI Factory codebase (canon — deployed t
 │   ├── set-cron-secret.sh             # Operator setup: generates 32-byte CRON_SECRET, sets via wrangler secret put (260502-0756 NEW)
 │   └── deploy-with-sha.sh             # Deploy wrapper: sets COMMIT_SHA/DEPLOYED_AT/DEPLOY_BRANCH secrets (260502-0733)
 │
-├── .github/workflows/          # CI/CD enforcement gates (P1)
-│   ├── test.yml                # Tests + Deploy (lint/build/test → wrangler deploy + D1 migration-guard)
+├── .github/workflows/          # GitHub Actions (DISABLED since 2026-05-03 — account free-tier)
+│   ├── test.yml.disabled       # Archived deploy workflow (CF-direct doctrine replaces this)
 │   ├── security-scan.yml       # SAST + npm audit + secret scan
 │   ├── quality-gate.yml        # Test coverage + mutation score
 │   ├── dependency-audit.yml    # Outdated packages + breaking changes
@@ -237,6 +238,50 @@ apps/sophia-ai-factory/  # Main Sophia AI Factory codebase (canon — deployed t
     ├── skills/                 # Agent skills (affiliate-scout, auto-publisher, content-producer)
     └── video-factory.yaml      # Workflow definition
 ```
+
+---
+
+## 4-Layer Seed/Tree/Forest/Land Architecture
+
+All domain code under `apps/sophia-ai-factory/src/` follows a 4-layer convention:
+
+| Layer | ~Files | Role | Examples |
+|-------|-------:|------|---------|
+| **seed** | 147 | Foundational primitives — types, config, db client, auth, security utils, logger | `seed/auth/better-auth-session.ts`, `seed/config/tiers/`, `seed/db/client.ts` |
+| **tree** | 162 | Domain-specific reusable — bot logic, BYOK store, handover, audit | `tree/byok/`, `tree/handover/`, `tree/telegram/`, `tree/audit/` |
+| **forest** | 362 | Infrastructure orchestrators — Inngest jobs, RAAS gateway, usage metering, quota | `forest/inngest/`, `forest/raas/`, `forest/usage-metering/`, `forest/quota/` |
+| **land** | 113 | Business domain workflows — billing, payouts, affiliates, promo, refunds | `land/billing/`, `land/payouts/`, `land/affiliates/` |
+
+Import direction: `seed` ← any layer. `tree` imports seed. `forest` imports seed+tree (may call land for orchestration). `land` imports seed+tree+forest.
+
+Authoritative reference: `apps/sophia-ai-factory/.claude/rules/sophia-layer-architecture.md`
+
+---
+
+## CF-Direct Deploy Flow
+
+GitHub Actions is DISABLED by design since 2026-05-03. Canonical deploy path is wrangler CLI:
+
+```bash
+# Step 0 (mandatory): push to origin before deploy
+git push origin main
+
+# Step 1: Build + inject SHA + deploy
+cd apps/sophia-ai-factory
+npm run deploy:full   # = build + scripts/deploy-with-sha.sh + wrangler deploy
+
+# Step 2: Apply any new D1 migrations (if migrations/ changed)
+bash scripts/apply-migrations.sh
+
+# Step 3: Verify SHA match
+curl -s https://sophia.agencyos.network/api/version | jq .shortSha
+# Must match: git rev-parse HEAD | cut -c1-8
+
+# Step 4: HTTP check
+curl -sI https://sophia.agencyos.network | head -1   # must be 200
+```
+
+`npm run deploy:full` rejects with exit 2 if `git log origin/main..HEAD` is non-empty (push-before-deploy guard). See `apps/sophia-ai-factory/.claude/rules/sophia-deploy-verify.md` for full verification sequence.
 
 ---
 
