@@ -1,3 +1,9 @@
+<!-- CAAMP:START -->
+@~/.agents/AGENTS.md
+@.cleo/project-context.json
+# Run: cleo memory digest --brief
+<!-- CAAMP:END -->
+
 # AGENTS.md
 
 This file provides guidance to OpenCode when working with code in this repository.
@@ -41,7 +47,7 @@ Keep all important docs in `./docs` folder:
 ├── project-overview-pdr.md
 ├── code-standards.md
 ├── codebase-summary.md
-├── design-guidelines.md
+├── deployment-guide.md
 └── system-architecture.md
 ```
 

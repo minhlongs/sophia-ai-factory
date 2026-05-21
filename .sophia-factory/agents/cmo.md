@@ -106,7 +106,7 @@ JWTs, BYOK keys (sk-/GitHub/AWS/NOWPayments/ElevenLabs), Bearer tokens, emails,
 VN phones, webhook secrets via `scrub-pii.sh`. Self-review loop consumes weekly.
 
 ## References (do NOT duplicate content)
-- `docs/design-guidelines.md`
+- `docs/archive/design-guidelines-2026-03-27.md` (archived; see `docs/deployment-guide.md` for current product framing)
 - `docs/pricing-and-tiers.md`
 - `.sophia-factory/CLAUDE.specification.md` (for understanding feature before writing about it)
 - `.sophia-factory/templates/requirement.md` (for campaign briefs)
