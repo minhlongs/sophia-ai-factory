@@ -50,6 +50,33 @@ const paymentFaqs: FaqItem[] = [
   },
 ];
 
+const cryptoFaqs: FaqItem[] = [
+  {
+    question: "USDT là gì? Tôi mua ở đâu?",
+    answer: "USDT (Tether) là đồng tiền điện tử ổn định, 1 USDT ≈ 1 USD. Bạn có thể mua USDT trên các sàn lớn như Binance, OKX, hoặc qua sàn Việt Nam (Remitano, Coin68). Sau khi mua, gửi USDT vào ví cá nhân (ví dụ MetaMask, Trust Wallet) để dùng thanh toán.",
+  },
+  {
+    question: "Tôi nên chọn mạng (network) nào khi thanh toán?",
+    answer: "Khuyến nghị dùng mạng **TRC-20** (Tron) — phí gửi rẻ nhất (~$1) và xác nhận nhanh (1-2 phút). **BEP-20** (BNB Smart Chain) là lựa chọn tốt thứ hai. TRÁNH dùng ERC-20 (Ethereum) vì phí cao ($5-20). Khi tạo hóa đơn trên Sophia, chọn đúng mạng khớp với ví của bạn.",
+  },
+  {
+    question: "Giao dịch USDT mất bao lâu để xác nhận?",
+    answer: "TRC-20: 1-3 phút. BEP-20: 1-2 phút. ERC-20: 5-15 phút. Sophia tự động kiểm tra trạng thái mỗi vài phút qua NOWPayments. Gói đăng ký kích hoạt ngay khi blockchain xác nhận đủ block.",
+  },
+  {
+    question: "Tôi gửi nhầm mạng / nhầm địa chỉ thì sao?",
+    answer: "Nếu gửi nhầm mạng (ví dụ chọn TRC-20 nhưng gửi qua BEP-20): tiền có thể mất vĩnh viễn. Hãy LUÔN kiểm tra kỹ địa chỉ + network trước khi xác nhận. Nếu lỡ gửi nhầm, liên hệ ngay support@mekongmind.com với mã giao dịch — chúng tôi sẽ xem có thể truy lại không (không đảm bảo).",
+  },
+  {
+    question: "PayOS là gì? Tôi có dùng được không?",
+    answer: "PayOS là cổng thanh toán ngân hàng Việt Nam (chuyển khoản VND qua VietQR). Đây là phương án dự phòng cho khách Việt không quen crypto. Mở Setup Wizard → chọn 'PayOS' khi đăng ký gói. Lưu ý: PayOS yêu cầu Sophia kích hoạt trên tài khoản của bạn — liên hệ support nếu chưa thấy option.",
+  },
+  {
+    question: "Tôi không có kinh nghiệm crypto. Có cách nào dễ hơn không?",
+    answer: "Có 3 lựa chọn: (1) Chọn PayOS nếu bạn có tài khoản ngân hàng VN. (2) Nhờ người thân/bạn bè có ví crypto giúp gửi USDT. (3) Liên hệ support@mekongmind.com — đội Sophia có thể hỗ trợ thanh toán hộ qua chuyển khoản VND (Master tier).",
+  },
+];
+
 const technicalFaqs: FaqItem[] = [
   {
     question: "API Key có an toàn không?",
@@ -87,6 +114,7 @@ const dateFaqs: FaqItem[] = [
 const ALL_GUIDE_FAQS: FaqItem[] = [
   ...generalFaqs,
   ...paymentFaqs,
+  ...cryptoFaqs,
   ...technicalFaqs,
   ...dateFaqs,
 ];
@@ -134,6 +162,15 @@ export default function FAQGuidePage() {
           Thanh Toán & Gói Dịch Vụ
         </h2>
         <GuideAccordionFaq items={paymentFaqs} />
+      </div>
+
+      {/* Crypto / PayOS */}
+      <div>
+        <h2 className="text-lg font-bold text-foreground mb-3 flex items-center gap-2">
+          <span className="w-1 h-5 rounded bg-gradient-to-b from-violet-500 to-cyan-500 inline-block" aria-hidden="true" />
+          Thanh Toán Crypto & PayOS
+        </h2>
+        <GuideAccordionFaq items={cryptoFaqs} />
       </div>
 
       {/* Technical */}
