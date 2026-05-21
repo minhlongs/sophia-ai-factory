@@ -7,16 +7,17 @@
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getUserTier } from '@/seed/db/get-user-tier';
+import { getD1Raw } from '@/seed/db/client';
 import { TierGateCard } from '@/seed/components/ui/tier-gate-card';
 import { getTranslations } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, AlertTriangle } from 'lucide-react';
 import { logger } from '@/seed/utils/logger-utility';
 
 export const dynamic = 'force-dynamic';
 
-interface WalletData {
+interface WalletBalances {
   balance_pending: number;
   balance_available: number;
   balance_paid_out: number;
@@ -36,13 +37,9 @@ interface ConversionRow {
   created_at: string;
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  pending_clearance: 'Clearing',
-  available: 'Available',
-  paid: 'Paid',
-  reversed: 'Reversed',
-  unattributed: 'Unattributed',
-};
+type WalletResult =
+  | { kind: 'ok'; data: WalletBalances }
+  | { kind: 'error' };
 
 const STATUS_COLORS: Record<string, string> = {
   pending_clearance: 'text-yellow-400',
@@ -52,22 +49,14 @@ const STATUS_COLORS: Record<string, string> = {
   unattributed: 'text-muted-foreground',
 };
 
-function getD1Binding(): D1Database {
-  const env = (globalThis as unknown as { __env?: Record<string, unknown> }).__env;
-  if (env?.DB) return env.DB as D1Database;
-  const globalDb = (globalThis as Record<string, unknown>).__D1_DB as D1Database | undefined;
-  if (globalDb) return globalDb;
-  throw new Error('D1 database binding not available');
-}
-
-async function fetchWalletData(userId: string): Promise<WalletData> {
+async function fetchWalletData(userId: string): Promise<WalletResult> {
   try {
-    const db = getD1Binding();
+    const db = await getD1Raw();
 
     const wallet = await db
       .prepare(`SELECT * FROM user_wallets WHERE user_id = ?`)
       .bind(userId)
-      .first<Omit<WalletData, 'recent_conversions'>>();
+      .first<Omit<WalletBalances, 'recent_conversions'>>();
 
     const { results: recentConversions } = await db
       .prepare(
@@ -81,19 +70,22 @@ async function fetchWalletData(userId: string): Promise<WalletData> {
       .all<ConversionRow>();
 
     return {
-      balance_pending: wallet?.balance_pending ?? 0,
-      balance_available: wallet?.balance_available ?? 0,
-      balance_paid_out: wallet?.balance_paid_out ?? 0,
-      currency: wallet?.currency ?? 'USD',
-      last_rebuilt_at: wallet?.last_rebuilt_at ?? null,
-      recent_conversions: recentConversions ?? [],
+      kind: 'ok',
+      data: {
+        balance_pending: wallet?.balance_pending ?? 0,
+        balance_available: wallet?.balance_available ?? 0,
+        balance_paid_out: wallet?.balance_paid_out ?? 0,
+        currency: wallet?.currency ?? 'USD',
+        last_rebuilt_at: wallet?.last_rebuilt_at ?? null,
+        recent_conversions: recentConversions ?? [],
+      },
     };
   } catch (err) {
-    logger.error('[dashboard/wallet] Failed to fetch wallet data', err instanceof Error ? err : new Error(String(err)));
-    return {
-      balance_pending: 0, balance_available: 0, balance_paid_out: 0,
-      currency: 'USD', last_rebuilt_at: null, recent_conversions: [],
-    };
+    logger.error(
+      '[dashboard/wallet] Failed to fetch wallet data',
+      err instanceof Error ? err : new Error(String(err))
+    );
+    return { kind: 'error' };
   }
 }
 
@@ -123,7 +115,36 @@ export default async function WalletPage() {
     );
   }
 
-  const data = await fetchWalletData(user.id);
+  const result = await fetchWalletData(user.id);
+
+  if (result.kind === 'error') {
+    return (
+      <div>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-foreground mb-2">{t('title')}</h1>
+          <p className="text-muted-foreground">{t('subtitle')}</p>
+        </div>
+        <div
+          role="alert"
+          className="bg-card border border-red-500/30 rounded-xl p-6 flex items-start gap-3"
+        >
+          <AlertTriangle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" aria-hidden="true" />
+          <div className="flex-1">
+            <p className="font-semibold text-foreground">{t('errorTitle')}</p>
+            <p className="text-sm text-muted-foreground mt-1">{t('errorHint')}</p>
+          </div>
+          <Link
+            href="/dashboard/wallet"
+            className="px-3 py-1.5 rounded-lg border border-border text-sm hover:bg-muted/30 transition-colors"
+          >
+            {t('errorRetry')}
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const data = result.data;
 
   return (
     <div>
@@ -198,25 +219,34 @@ export default async function WalletPage() {
                 </tr>
               </thead>
               <tbody>
-                {data.recent_conversions.map((row) => (
-                  <tr key={row.id} className="border-b border-border hover:bg-muted/30 transition-colors">
-                    <td className="py-3 px-4 text-sm text-muted-foreground">
-                      {new Date(row.created_at).toLocaleDateString()}
-                    </td>
-                    <td className="py-3 px-4 text-sm text-foreground">{row.event_type}</td>
-                    <td className="py-3 px-4 text-sm text-foreground">
-                      ${row.gross_amount.toFixed(2)}
-                    </td>
-                    <td className="py-3 px-4 text-sm font-semibold text-[var(--neon-cyan)]">
-                      ${row.commission_user.toFixed(2)}
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className={`text-xs font-medium ${STATUS_COLORS[row.payout_status] ?? 'text-muted-foreground'}`}>
-                        {STATUS_LABELS[row.payout_status] ?? row.payout_status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                {data.recent_conversions.map((row) => {
+                  const statusKey = row.payout_status;
+                  let statusLabel: string;
+                  try {
+                    statusLabel = t(`status.${statusKey}` as never);
+                  } catch {
+                    statusLabel = statusKey;
+                  }
+                  return (
+                    <tr key={row.id} className="border-b border-border hover:bg-muted/30 transition-colors">
+                      <td className="py-3 px-4 text-sm text-muted-foreground">
+                        {new Date(row.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="py-3 px-4 text-sm text-foreground">{row.event_type}</td>
+                      <td className="py-3 px-4 text-sm text-foreground">
+                        ${row.gross_amount.toFixed(2)}
+                      </td>
+                      <td className="py-3 px-4 text-sm font-semibold text-[var(--neon-cyan)]">
+                        ${row.commission_user.toFixed(2)}
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={`text-xs font-medium ${STATUS_COLORS[statusKey] ?? 'text-muted-foreground'}`}>
+                          {statusLabel}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

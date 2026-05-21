@@ -1323,7 +1323,17 @@
       "thType": "Loại",
       "thGross": "Tổng",
       "thYourCut": "Phần Của Bạn",
-      "thStatus": "Trạng Thái"
+      "thStatus": "Trạng Thái",
+      "errorTitle": "Không tải được ví",
+      "errorHint": "Không kết nối được tới dịch vụ ví. Vui lòng thử lại sau ít phút.",
+      "errorRetry": "Thử lại",
+      "status": {
+        "pending_clearance": "Đang chờ",
+        "available": "Khả dụng",
+        "paid": "Đã thanh toán",
+        "reversed": "Đã hoàn",
+        "unattributed": "Chưa xác định"
+      }
     },
     "onboarding": {
       "page_title": "Bắt Đầu Với Sophia AI Factory",
@@ -1420,6 +1430,7 @@
     "sub_cancel": "Huỷ Đăng Ký",
     "sub_cancel_confirm": "Bạn có chắc muốn huỷ? Gói của bạn vẫn hoạt động đến hết kỳ thanh toán.",
     "sub_cancelled": "Yêu cầu huỷ đã được ghi nhận",
+    "sub_cancel_failed": "Không xử lý được yêu cầu huỷ. Vui lòng thử lại hoặc liên hệ hỗ trợ.",
     "billing_date": "Ngày",
     "billing_desc": "Mô Tả",
     "billing_amount": "Số Tiền",

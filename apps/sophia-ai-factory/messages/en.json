@@ -1323,7 +1323,17 @@
       "thType": "Type",
       "thGross": "Gross",
       "thYourCut": "Your Cut",
-      "thStatus": "Status"
+      "thStatus": "Status",
+      "errorTitle": "Unable to load wallet",
+      "errorHint": "We couldn't reach the wallet service. Please try again in a moment.",
+      "errorRetry": "Retry",
+      "status": {
+        "pending_clearance": "Clearing",
+        "available": "Available",
+        "paid": "Paid",
+        "reversed": "Reversed",
+        "unattributed": "Unattributed"
+      }
     },
     "onboarding": {
       "page_title": "Get Started with Sophia AI Factory",
@@ -1420,6 +1430,7 @@
     "sub_cancel": "Cancel Subscription",
     "sub_cancel_confirm": "Are you sure you want to cancel? Your plan remains active until the end of the billing period.",
     "sub_cancelled": "Cancellation requested",
+    "sub_cancel_failed": "Couldn't process cancellation. Please try again or contact support.",
     "billing_date": "Date",
     "billing_desc": "Description",
     "billing_amount": "Amount",

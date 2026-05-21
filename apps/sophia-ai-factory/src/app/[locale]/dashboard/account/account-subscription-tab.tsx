@@ -4,7 +4,7 @@
  * Subscription tab — current tier, limits, change plan, cancel.
  */
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/seed/components/ui/button';
@@ -21,19 +21,31 @@ export function AccountSubscriptionTab({ tier, tierLabel, features }: Subscripti
   const [cancelling, setCancelling] = useState(false);
   const [cancelled, setCancelled] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const busyRef = useRef(false);
 
   async function handleCancel() {
+    if (busyRef.current) return;
     if (!confirming) {
       setConfirming(true);
       return;
     }
+    busyRef.current = true;
     setCancelling(true);
+    setErrorMsg(null);
     try {
-      await fetch('/api/user/cancel-subscription', { method: 'POST' });
+      const res = await fetch('/api/user/cancel-subscription', { method: 'POST' });
+      if (!res.ok) {
+        setErrorMsg(t('sub_cancel_failed'));
+        return;
+      }
       setCancelled(true);
+    } catch {
+      setErrorMsg(t('sub_cancel_failed'));
     } finally {
       setCancelling(false);
       setConfirming(false);
+      busyRef.current = false;
     }
   }
 
@@ -81,6 +93,16 @@ export function AccountSubscriptionTab({ tier, tierLabel, features }: Subscripti
 
         {cancelled && (
           <p className="mt-3 text-sm text-green-600 dark:text-green-400">{t('sub_cancelled')}</p>
+        )}
+
+        {errorMsg && (
+          <div
+            role="alert"
+            className="mt-3 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 dark:border-red-800/40 dark:bg-red-900/10 p-3"
+          >
+            <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0 mt-0.5" aria-hidden="true" />
+            <p className="text-xs text-red-700 dark:text-red-300">{errorMsg}</p>
+          </div>
         )}
       </div>
     </div>
