@@ -14,6 +14,11 @@ import { UNIFIED_TIERS } from '@/seed/config/tiers';
 import { logger } from '@/seed/utils/logger-utility';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
 import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker';
+import {
+  startCronCheckIn,
+  finishCronCheckIn,
+  failCronCheckIn,
+} from '@/seed/observability/cron-check-in';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,9 +57,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const authError = verifyCronAuth(request);
   if (authError) return authError;
 
+  const cronCtx = startCronCheckIn(CRON_NAME);
   const d1 = getD1Binding();
 
   if (d1 && await wasRecentlyRun(d1, CRON_NAME, IDEMPOTENCY_WINDOW_MS)) {
+    finishCronCheckIn(cronCtx, CRON_NAME);
     return NextResponse.json({ skipped: true, reason: 'recently_run' });
   }
 
@@ -95,6 +102,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     if (d1) await recordCronRun(d1, CRON_NAME, 'success');
 
+    finishCronCheckIn(cronCtx, CRON_NAME);
     return NextResponse.json({
       ok: true,
       processed: processedCount,
@@ -104,6 +112,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   } catch (err) {
     logger.error('[mcu-monthly-reset] Fatal error', err instanceof Error ? err : new Error(String(err)));
     if (d1) await recordCronRun(d1, CRON_NAME, 'failure', String(err));
+    failCronCheckIn(cronCtx, CRON_NAME, err);
     return NextResponse.json({ error: 'Cron failed' }, { status: 500 });
   }
 }

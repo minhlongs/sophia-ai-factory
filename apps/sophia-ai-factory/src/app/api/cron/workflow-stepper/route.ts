@@ -27,6 +27,11 @@ import { advanceOne } from './workflow-stepper-advance'
 import type { ActionRecord } from './workflow-stepper-advance'
 import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker'
 import { verifyCronAuth } from '@/seed/security/cron-auth'
+import {
+  startCronCheckIn,
+  finishCronCheckIn,
+  failCronCheckIn,
+} from '@/seed/observability/cron-check-in'
 
 export const dynamic = 'force-dynamic'
 
@@ -149,14 +154,18 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const authError = verifyCronAuth(req);
   if (authError) return authError;
 
+  const cronCtx = startCronCheckIn(CRON_NAME)
+
   let db: D1Database
   try {
     db = getDb()
-  } catch {
+  } catch (err) {
+    failCronCheckIn(cronCtx, CRON_NAME, err)
     return NextResponse.json({ error: 'D1 unavailable' }, { status: 500 })
   }
 
   if (await wasRecentlyRun(db, CRON_NAME, IDEMPOTENCY_WINDOW_MS)) {
+    finishCronCheckIn(cronCtx, CRON_NAME)
     return NextResponse.json({ ok: true, skipped: 'recent_run' })
   }
 
@@ -182,10 +191,12 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     }
 
     await recordCronRun(db, CRON_NAME, 'success')
+    finishCronCheckIn(cronCtx, CRON_NAME)
     return NextResponse.json({ processed: active.length, actions })
   } catch (err) {
     const msg = getErrorMessage(err)
     await recordCronRun(db, CRON_NAME, 'failure', msg)
+    failCronCheckIn(cronCtx, CRON_NAME, err)
     throw err
   }
 }

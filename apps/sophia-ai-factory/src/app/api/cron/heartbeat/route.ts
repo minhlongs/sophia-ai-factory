@@ -17,6 +17,11 @@ import { pushHeartbeat, pushFatalLog } from '@/lib/telemetry/better-stack-client
 import { getErrorMessage } from '@/seed/utils/to-error';
 import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
+import {
+  startCronCheckIn,
+  finishCronCheckIn,
+  failCronCheckIn,
+} from '@/seed/observability/cron-check-in';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,6 +50,7 @@ async function handler(request: NextRequest): Promise<NextResponse> {
   const authError = verifyCronAuth(request);
   if (authError) return authError;
 
+  const cronCtx = startCronCheckIn(CRON_NAME);
   const bsConfig = {
     logsToken: process.env.BETTER_STACK_LOGS_TOKEN ?? '',
     ingestingHost: process.env.BETTER_STACK_INGESTING_HOST,
@@ -60,6 +66,7 @@ async function handler(request: NextRequest): Promise<NextResponse> {
     // Idempotency: skip if recently run to prevent double-execution
     const alreadyRan = await wasRecentlyRun(db as D1Database, CRON_NAME, IDEMPOTENCY_WINDOW_MS);
     if (alreadyRan) {
+      finishCronCheckIn(cronCtx, CRON_NAME);
       return NextResponse.json({ ok: true, skipped: true, reason: 'recently_run' }, { status: 200 });
     }
 
@@ -70,6 +77,7 @@ async function handler(request: NextRequest): Promise<NextResponse> {
       // D1 unavailable: push fatal log, SKIP heartbeat (silence = BS missed-heartbeat alert)
       await pushFatalLog('D1_UNAVAILABLE', errMsg, bsConfig);
       await recordCronRun(db as D1Database, CRON_NAME, 'failure', errMsg);
+      failCronCheckIn(cronCtx, CRON_NAME, d1Err);
       return NextResponse.json(
         { ok: false, reason: 'D1_UNAVAILABLE — heartbeat skipped' },
         { status: 200 }
@@ -85,12 +93,14 @@ async function handler(request: NextRequest): Promise<NextResponse> {
       await recordCronRun(db as D1Database, CRON_NAME, 'success');
     }
 
+    finishCronCheckIn(cronCtx, CRON_NAME);
     return NextResponse.json({ ok: true, ts: new Date().toISOString() });
   } catch (err) {
     const errMsg = getErrorMessage(err);
     if (db) {
       await recordCronRun(db as D1Database, CRON_NAME, 'failure', errMsg);
     }
+    failCronCheckIn(cronCtx, CRON_NAME, err);
     return NextResponse.json({ ok: false, reason: errMsg }, { status: 500 });
   }
 }

@@ -19,6 +19,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyCronAuth } from '@/seed/security/cron-auth'
 import { recordCronRun } from '@/lib/cron/run-tracker'
+import {
+  startCronCheckIn,
+  finishCronCheckIn,
+  failCronCheckIn,
+} from '@/seed/observability/cron-check-in'
 import { getD1Raw } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
@@ -54,11 +59,13 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const authError = verifyCronAuth(req)
   if (authError) return authError
 
+  const cronCtx = startCronCheckIn(CRON_NAME)
   let db: D1Database
   try {
     db = await getD1Raw()
   } catch (err) {
     logger.error('[smoke-one-time] D1 unavailable', err instanceof Error ? err : undefined)
+    failCronCheckIn(cronCtx, CRON_NAME, err)
     return NextResponse.json({ error: 'db_unavailable' }, { status: 500 })
   }
 
@@ -139,6 +146,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     if (!purchaseId) {
       logger.warn('[smoke-one-time] Failed to insert synthetic purchase')
       await recordCronRun(db, CRON_NAME, 'failure', 'insert_purchase_failed')
+      failCronCheckIn(cronCtx, CRON_NAME, new Error('insert_purchase_failed'))
       return NextResponse.json({ ok: false, error: 'insert_purchase_failed' }, { status: 500 })
     }
 
@@ -164,6 +172,12 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   }
 
   await recordCronRun(db, CRON_NAME, alertFired ? 'failure' : 'success')
+
+  if (alertFired) {
+    failCronCheckIn(cronCtx, CRON_NAME, new Error('synthetic fulfillment stale alert fired'))
+  } else {
+    finishCronCheckIn(cronCtx, CRON_NAME)
+  }
 
   return NextResponse.json({
     ok: !alertFired,

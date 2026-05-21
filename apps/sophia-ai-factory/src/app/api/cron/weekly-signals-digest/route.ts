@@ -10,6 +10,11 @@ import { requireCron } from '@/lib/signals/auth-helper'
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
 import {
+  startCronCheckIn,
+  finishCronCheckIn,
+  failCronCheckIn,
+} from '@/seed/observability/cron-check-in'
+import {
   querySignupStats,
   queryConversionsByTier,
   queryPaymentStats,
@@ -31,9 +36,11 @@ export async function GET(req: NextRequest) {
   const auth = await requireCron(req)
   if (auth instanceof Response) return auth
 
+  const cronCtx = startCronCheckIn(CRON_NAME)
   const db = getD1()
 
   if (db && await wasRecentlyRun(db, CRON_NAME, IDEMPOTENCY_WINDOW_MS)) {
+    finishCronCheckIn(cronCtx, CRON_NAME)
     return Response.json({ ok: true, skipped: 'recent_run' })
   }
 
@@ -89,10 +96,12 @@ export async function GET(req: NextRequest) {
 
     logger.info('[digest] Weekly signals digest sent')
     if (db) await recordCronRun(db, CRON_NAME, 'success')
+    finishCronCheckIn(cronCtx, CRON_NAME)
     return Response.json({ ok: true, eventCount: events.length, issue_url: issueUrl, telegram_ok: telegramOk, sources: ['posthog', 'd1'] })
   } catch (err) {
     const msg = getErrorMessage(err)
     if (db) await recordCronRun(db, CRON_NAME, 'failure', msg)
+    failCronCheckIn(cronCtx, CRON_NAME, err)
     throw err
   }
 }

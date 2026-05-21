@@ -23,6 +23,11 @@ import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
 import { runReconcileQueries } from '@/lib/monitoring/reconcile-query'
 import { sendReconcileAlert } from '@/lib/monitoring/reconcile-alert'
+import {
+  startCronCheckIn,
+  finishCronCheckIn,
+  failCronCheckIn,
+} from '@/seed/observability/cron-check-in'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,11 +41,13 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const authError = verifyCronAuth(req)
   if (authError) return authError
 
+  const cronCtx = startCronCheckIn(CRON_NAME)
   let db: D1Database
   try {
     db = await getD1Raw()
   } catch (err) {
     logger.error('[Reconcile] D1 unavailable', err instanceof Error ? err : undefined)
+    failCronCheckIn(cronCtx, CRON_NAME, err)
     return NextResponse.json({ error: 'db_unavailable' }, { status: 500 })
   }
 
@@ -82,11 +89,17 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     }
 
     await recordCronRun(db, CRON_NAME, result.orphanCount > 0 ? 'failure' : 'success')
+    if (result.orphanCount > 0) {
+      failCronCheckIn(cronCtx, CRON_NAME, new Error(`${result.orphanCount} orphan purchases detected`))
+    } else {
+      finishCronCheckIn(cronCtx, CRON_NAME)
+    }
     return NextResponse.json(summary)
   } catch (err) {
     const errMsg = getErrorMessage(err)
     logger.error('[Reconcile] Cron run failed', err instanceof Error ? err : undefined)
     await recordCronRun(db, CRON_NAME, 'failure', errMsg)
+    failCronCheckIn(cronCtx, CRON_NAME, err)
     return NextResponse.json({ ok: false, error: errMsg }, { status: 500 })
   }
 }
