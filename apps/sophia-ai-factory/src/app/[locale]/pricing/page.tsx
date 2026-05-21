@@ -3,6 +3,7 @@ import { PricingComparisonTable } from "@/forest/components/pricing/pricing-comp
 import { PricingFaq } from "@/forest/components/pricing/pricing-faq";
 import { ProductionCostCalculator } from "@/app/components/sections/production-cost-calculator";
 import { OneTimeBundleCard } from "@/forest/components/pricing/one-time-bundle-card";
+import { CryptoPaymentExplainer } from "@/forest/components/checkout/crypto-payment-explainer";
 import { getTranslations } from "next-intl/server";
 import { isHeyGenHealthy } from "@/seed/health/heygen-health-check";
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
@@ -85,6 +86,11 @@ export default async function PricingPage() {
       </div>
 
       <PricingSection />
+
+      {/* Crypto explainer — plain-language USDT guide for non-crypto Vietnamese users */}
+      <div className="mx-auto max-w-2xl px-6 pb-6">
+        <CryptoPaymentExplainer />
+      </div>
 
       {/* One-Time Bundle — pay once, no monthly commitment */}
       <section className="mx-auto max-w-md px-6 pb-12 pt-4">

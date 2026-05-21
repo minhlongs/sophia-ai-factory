@@ -13,7 +13,7 @@ import React, { useState } from 'react';
 import { ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
-export type ByokProvider = 'openrouter' | 'elevenlabs' | 'd-id';
+export type ByokProvider = 'openrouter' | 'elevenlabs' | 'd-id' | 'nowpayments';
 
 interface ByokHelpTipProps {
   provider: ByokProvider;
@@ -28,6 +28,7 @@ function providerKey(provider: ByokProvider): string {
 type HelpKeys = 'openrouter.title' | 'openrouter.step1' | 'openrouter.step2' | 'openrouter.step3' | 'openrouter.signupUrl'
   | 'elevenlabs.title' | 'elevenlabs.step1' | 'elevenlabs.step2' | 'elevenlabs.step3' | 'elevenlabs.signupUrl'
   | 'dId.title' | 'dId.step1' | 'dId.step2' | 'dId.step3' | 'dId.signupUrl'
+  | 'nowpayments.title' | 'nowpayments.step1' | 'nowpayments.step2' | 'nowpayments.step3' | 'nowpayments.signupUrl'
   | 'toggleShow' | 'toggleHide';
 
 export function ByokHelpTip({ provider }: ByokHelpTipProps) {
