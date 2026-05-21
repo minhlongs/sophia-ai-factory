@@ -1741,6 +1741,16 @@
     "more_options": "More options",
     "clear": "Clear"
   },
+  "notFoundPage": {
+    "heading": "Lost in the Digital Void?",
+    "description": "The page you are looking for has been moved, deleted, or possibly never existed in this dimension.",
+    "returnHome": "Return Home",
+    "goToDashboard": "Go to Dashboard",
+    "features": "Features",
+    "pricing": "Pricing",
+    "dashboard": "Dashboard",
+    "contactSupport": "Contact Support"
+  },
   "title": "Title",
   "topic": "Topic",
   "na": "Na",

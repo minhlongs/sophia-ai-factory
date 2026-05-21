@@ -1741,6 +1741,16 @@
     "more_options": "Tùy chọn khác",
     "clear": "Xóa"
   },
+  "notFoundPage": {
+    "heading": "Lạc vào khoảng không số?",
+    "description": "Trang bạn đang tìm đã bị di chuyển, xóa, hoặc chưa từng tồn tại.",
+    "returnHome": "Về Trang Chủ",
+    "goToDashboard": "Vào Bảng Điều Khiển",
+    "features": "Tính năng",
+    "pricing": "Bảng giá",
+    "dashboard": "Bảng điều khiển",
+    "contactSupport": "Liên hệ hỗ trợ"
+  },
   "title": "Title",
   "topic": "Topic",
   "na": "Na",
