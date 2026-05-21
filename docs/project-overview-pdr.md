@@ -2,10 +2,11 @@
 
 > **Product Development Requirements** document for Sophia AI Factory: A reasoning-as-a-service (RaaS) platform enabling autonomous solopreneurs to create, distribute, and monetize AI-generated content at scale.
 
-**Document Version:** Phase 14 Final (2026-04-30)
+**Document Version:** Phase 14+ (updated 2026-05-20)
 **Production URL:** https://sophia.agencyos.network
-**Git SHA:** df22a4f7 | **Tests:** 1798/1798 passing (100%)
+**Git SHA:** 4bca4710 | **Tests:** 4431/4431 passing (100%)
 **Target Metrics:** $1M ARR, 100/100 a16z solo company score, 50+ customers across 5 continents
+**Doctrine Ceiling:** 87.5/100 (no-tech doctrine v1.28.1 — see Deploy Doctrine below)
 
 ---
 
@@ -77,6 +78,12 @@ Sophia AI Factory is a no-code platform for solopreneurs to:
 - **Reconciliation:** Cron job validates incoming payments vs. ledger
 - **Currency:** USDT (TRC20 preferred, ERC20 fallback)
 - **Settlement:** Weekly (configurable)
+
+### 9. Tier System
+- **Tiers:** BASIC | PREMIUM | ENTERPRISE | MASTER (uppercase enum, no aliases)
+- **Tier config SSOT:** `@/config/tiers` (`TIER_CONFIGS`, `TIER_CONFIG` exports)
+- **Billing:** NOWPayments IPN webhook → atomic D1 tier upgrade → bilingual VAT receipt
+- **ASVS-L2 status:** 29/31 controls pass (94%) — see `apps/sophia-ai-factory/docs/asvs-l2-checklist.md`
 
 ### 6. Compliance & Data Protection (Phase 14 Complete)
 - **FTC Compliance:** #ad overlay on all videos (last 3 seconds)
@@ -153,7 +160,7 @@ Sophia AI Factory is a no-code platform for solopreneurs to:
 - **Why:** Zero-cost, globally distributed, no RLS needed (app-layer enforced)
 - **Schema:** 20+ tables (users, orgs, missions, videos, affiliate networks, payments, commissions)
 - **Tenant Isolation:** D1 Kysely tenant-scope plugin (auto-injects tenant_id on all queries)
-- **Migrations:** 8+ versioned SQL files (idempotent, IF NOT EXISTS guards)
+- **Migrations:** 117 versioned SQL files as of 2026-05-19 (0001–0117, idempotent, IF NOT EXISTS guards)
 
 ### Authentication
 - **Provider:** Better Auth v1.6.2 (D1 Kysely adapter)
@@ -163,9 +170,9 @@ Sophia AI Factory is a no-code platform for solopreneurs to:
 - **No RLS:** Cloudflare D1 lacks RLS; app enforces `WHERE org_id = ?` in all queries
 
 ### Payment
-- **Primary:** NOWPayments (USDT, global reach)
+- **Primary:** NOWPayments (USDT crypto — global reach, affiliate settlement)
 - **Backup:** PayOS (Vietnam domestic, VietQR)
-- **Why:** NOWPayments supports USDT payout (crucial for affiliate settlement)
+- **REJECTED:** Polar.sh — not used in Sophia. Do NOT add Polar integrations.
 - **Webhook:** HMAC signature verification, IPN callback triggers tier activation + onboarding video
 - **MCU System:** Monthly credits per tier, deducted per feature
 
@@ -190,6 +197,17 @@ Sophia AI Factory is a no-code platform for solopreneurs to:
 - **Provider:** Claude SDK (Anthropic) + Qwen 3 32B (localhost:11434 or Bailian API)
 - **Caching:** D1 LLM cache (SHA-256 exact-match, 24h TTL, org-scoped)
 - **Why:** Claude for structured reasoning; Qwen for high-volume local inference
+
+### Deploy Doctrine
+- **Method:** CF-direct via `npm run deploy:full` (wrangler CLI). No CI pipeline.
+- **GitHub Actions:** DISABLED by design since 2026-05-03 (account free-tier exhausted; team adopted CF-direct as permanent canonical path).
+- **Workflow file:** `.github/workflows/test.yml.disabled` (archived, not deleted).
+- **Deploy sequence:**
+  1. `git push origin main` (prevents prod/git divergence)
+  2. `cd apps/sophia-ai-factory && npm run deploy:full` (build + SHA inject + wrangler deploy)
+  3. Verify SHA: `curl -s https://sophia.agencyos.network/api/version | jq .shortSha` must match `git rev-parse HEAD | cut -c1-8`
+  4. HTTP check: `curl -sI https://sophia.agencyos.network | head -1` must return `200`
+- **Doctrine ceiling:** 87.5/100 (no-tech doctrine v1.28.1) — raising requires months of DR drills, not code changes.
 
 ---
 
