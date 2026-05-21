@@ -19,11 +19,12 @@ interface TierDef {
   popular?: boolean;
 }
 
-const TIERS: TierDef[] = [
-  { key: 'BASIC', label: 'Starter' },
-  { key: 'PREMIUM', label: 'Growth', popular: true },
-  { key: 'ENTERPRISE', label: 'Premium' },
-  { key: 'MASTER', label: 'Master' },
+// Tier label keys resolved via t() inside component to avoid stale closure
+const TIER_KEYS: TierDef[] = [
+  { key: 'BASIC', label: '' },
+  { key: 'PREMIUM', label: '', popular: true },
+  { key: 'ENTERPRISE', label: '' },
+  { key: 'MASTER', label: '' },
 ];
 
 interface FeatureRow {
@@ -41,45 +42,59 @@ function Cell({ value }: { value: string | boolean }) {
   return <span className="text-sm text-slate-700 dark:text-slate-300">{value}</span>;
 }
 
+const TIER_LABEL_KEYS: Record<TierDef['key'], 'table_tier_starter' | 'table_tier_growth' | 'table_tier_premium' | 'table_tier_master'> = {
+  BASIC: 'table_tier_starter',
+  PREMIUM: 'table_tier_growth',
+  ENTERPRISE: 'table_tier_premium',
+  MASTER: 'table_tier_master',
+};
+
 export function PricingComparisonTable({ currentTier }: PricingComparisonTableProps) {
   const t = useTranslations('pricing');
 
+  const TIERS: TierDef[] = TIER_KEYS.map((td) => ({
+    ...td,
+    label: t(TIER_LABEL_KEYS[td.key]),
+  }));
+
   const rows: FeatureRow[] = [
     {
-      label: 'MCU credits/mo',
+      label: t('row_mcu'),
       values: TIERS.map(({ key }) => formatNum(UNIFIED_TIERS[key].mcuMonthly)),
     },
     {
-      label: 'Campaigns/mo',
+      label: t('row_campaigns'),
       values: TIERS.map(({ key }) => formatNum(UNIFIED_TIERS[key].campaignsPerMonth)),
     },
     {
-      label: 'YouTube channels',
+      label: t('row_youtube'),
       values: TIERS.map(({ key }) => formatNum(UNIFIED_TIERS[key].youtubeChannels)),
     },
     {
-      label: 'Team members',
+      label: t('row_team'),
       values: TIERS.map(({ key }) => formatNum(UNIFIED_TIERS[key].teamMembers)),
     },
     {
-      label: 'API access',
+      label: t('row_api'),
       values: TIERS.map(({ key }) => UNIFIED_TIERS[key].apiAccess),
     },
     {
-      label: 'Webhooks',
+      label: t('row_webhooks'),
       values: TIERS.map(({ key }) => UNIFIED_TIERS[key].webhooks),
     },
     {
-      label: 'Custom integrations',
+      label: t('row_integrations'),
       values: TIERS.map(({ key }) => UNIFIED_TIERS[key].customIntegrations),
     },
     {
-      label: 'White-label license',
+      label: t('row_white_label'),
       values: TIERS.map(({ key }) => UNIFIED_TIERS[key].whiteLabel),
     },
     {
-      label: 'Billing',
-      values: TIERS.map(({ key }) => UNIFIED_TIERS[key].billingType === 'lifetime' ? 'One-time' : 'Monthly'),
+      label: t('row_billing'),
+      values: TIERS.map(({ key }) =>
+        UNIFIED_TIERS[key].billingType === 'lifetime' ? t('billing_one_time') : t('billing_monthly')
+      ),
     },
   ];
 

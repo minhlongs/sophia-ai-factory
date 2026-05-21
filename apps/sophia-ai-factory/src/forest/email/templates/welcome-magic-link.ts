@@ -30,9 +30,25 @@ export function renderWelcomeMagicLink(data: WelcomeMagicLinkData): { html: stri
     : `Thank you for purchasing the <strong>${data.tier}</strong> plan! Your <strong>${agencyName}</strong> account is ready.`;
   const ctaLabel = isVi ? 'Truy Cập Ngay' : 'Access Your Account';
   const nextLabel = isVi ? 'Bước tiếp theo:' : 'Next steps:';
+  const setupWizardUrl = `${BASE_URL}/setup-wizard`;
+  const setupWizardLinkLabel = isVi
+    ? `<a href="${setupWizardUrl}" style="color:#8b5cf6">Trợ lý cài đặt Sophia</a>`
+    : `<a href="${setupWizardUrl}" style="color:#8b5cf6">Sophia Setup Wizard</a>`;
   const steps = isVi
-    ? ['Click link → đặt mật khẩu', 'Hoàn thành onboarding 3 bước', 'Dashboard → SOPs → bật SOP đầu tiên', 'Run SOP → xem video tự tạo']
-    : ['Click link → set password', 'Complete the 3-step onboarding', 'Dashboard → SOPs → enable first SOP', 'Run SOP → watch video generate'];
+    ? [
+        'Click link bên trên → đăng nhập vào Sophia',
+        `Mở ${setupWizardLinkLabel} → thêm API keys AI (OpenRouter, ElevenLabs, D-ID) — mất ~10 phút`,
+        'Dashboard → SOPs → Enable → Run Now',
+        'Chiến dịch đầu tiên của bạn sẽ sẵn sàng trong 5–10 phút!',
+      ]
+    : [
+        'Click the link above → sign in to Sophia',
+        `Open ${setupWizardLinkLabel} → add your AI API keys (OpenRouter, ElevenLabs, D-ID) — takes ~10 min`,
+        'Dashboard → SOPs → Enable → Run Now',
+        'Your first campaign will be ready in 5–10 minutes!',
+      ];
+
+  const setupCtaLabel = isVi ? 'Bắt đầu cài đặt ngay' : 'Start Setup Wizard';
 
   const content = `
     <p style="margin:0 0 16px">${greeting}</p>
@@ -43,7 +59,8 @@ export function renderWelcomeMagicLink(data: WelcomeMagicLinkData): { html: stri
     <p style="font-size:13px;color:#a1a1aa;margin:0 0 8px"><strong>${nextLabel}</strong></p>
     <ol style="color:#d4d4d8;font-size:13px;padding-left:20px;margin:0 0 24px;line-height:2">
       ${steps.map(s => `<li>${s}</li>`).join('')}
-    </ol>`;
+    </ol>
+    ${ctaButton(setupCtaLabel, setupWizardUrl, 'linear-gradient(135deg,#7c3aed,#4f46e5)')}`;
 
   const html = htmlWrapper(
     content,

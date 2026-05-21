@@ -165,6 +165,31 @@ export default async function PaymentSuccessPage({
           </div>
         )}
 
+        {/* First-value moment — CTA banner */}
+        {(orderStatus === 'completed' || !orderStatus) && (
+          <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5 text-center">
+            <p className="text-sm text-emerald-300 mb-1">
+              {isVi
+                ? "Chiến dịch đầu tiên của bạn sẽ sẵn sàng trong"
+                : "Your first campaign will be ready in"}
+            </p>
+            <p className="text-2xl font-bold text-emerald-400 mb-3">
+              {isVi ? "5–10 phút" : "5–10 minutes"}
+            </p>
+            <p className="text-xs text-zinc-400 mb-4">
+              {isVi
+                ? "Thiết lập API keys → bật SOP đầu tiên → xem video AI của bạn"
+                : "Set up API keys → enable first SOP → watch your AI video generate"}
+            </p>
+            <Link
+              href={`/${locale}/setup-wizard`}
+              className="inline-block rounded-lg bg-emerald-600 hover:bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors duration-150"
+            >
+              {isVi ? "Bắt đầu cài đặt ngay →" : "Start Setup Wizard →"}
+            </Link>
+          </div>
+        )}
+
         {/* Actions — only when confirmed */}
         {(orderStatus === 'completed' || !orderStatus) && (
           <div className="flex flex-col gap-3">

@@ -14,6 +14,7 @@
 
 import React from 'react'
 import { ApiKeyInput } from '@/tree/components/setup-wizard/api-key-input'
+import { ByokHelpTip } from '@/components/onboarding/byok-help-tip'
 import type { CredentialSummary } from '@/tree/credentials/user-credentials-repo'
 
 export interface ProviderConfig {
@@ -165,6 +166,7 @@ export function ProviderCredentialsStep({
           placeholder="NOWPayments API key..."
           helpText="Optional. Platform's payment provider is shared. Only set if running your own NOWPayments account. / Tùy chọn. Nền tảng dùng chung tài khoản thanh toán. Chỉ cần nếu bạn chạy tài khoản NOWPayments riêng."
         />
+        <ByokHelpTip provider="nowpayments" />
         <SavedHint hint={getSaved('nowpayments')?.display_hint ?? null} />
       </div>
     </div>
