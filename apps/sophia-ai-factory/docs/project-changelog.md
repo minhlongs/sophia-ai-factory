@@ -1,6 +1,34 @@
 # Project Changelog
 
-**Last Updated:** 2026-05-18 | **Current Version:** 1.28.1 | **Final Score:** 91.5/100 (doctrine ceiling)
+**Last Updated:** 2026-05-20 | **Current Version:** 1.28.1 | **Honest Score:** 87.5/100 (doctrine ceiling per v1.28.1)
+
+---
+
+## 2026-05-20 — GAP GO-LIVE Punch-List execution (Phase 2-4 wave landing)
+
+**Severity: RELEASE BLOCKER | Type: Multi-wave GO-LIVE preparation | Status: 7/9 P0 CLOSED, gated on Long + operator action**
+
+Synthesized 5 parallel gap-audit reports (sections A-E) into prioritized punch-list at `plans/260520-2216-gap-go-live/punch-list.md`. Dispatched 5 parallel worktree-isolated agents covering security (Wave 1), customer i18n (Wave 2), billing UI (Wave 3), infra/ops (Wave 4), cron+quota+DR (Wave 6). All merged to master, build GREEN (181/181 pages compiled).
+
+**Closed P0 items:**
+- SG-001/003/004/005 — security lockout + admin re-auth modal + JSON 400 + 404 admin route
+- CG-001/002/003/008/009 — pricing i18n, crypto explainer, BYOK help, welcome VI, first-value banner
+- PG-002/003 — refund form + change-tier flow
+
+**Closed P1 items:**
+- OG-001/002/007 — postmortems dir, cron heartbeat scaffold, 8-secret rotation runbook
+- IG-001/002/005 — top-3 cron idempotency, D1 DR runbook, CF quota script
+
+**Follow-up work this date:**
+- `99b1bb10` feat(cron): `/api/cron/quota-check` route wires `runQuotaCheck()` for daily CF-quota alerts
+- `e1aec972` feat(i18n): bilingual 404 page (VI + EN) — Vietnamese CEO market polish (PG-009 partial)
+- `bcefad9b` fix(docs): reconcile telegram guide commands with handler (CG-007) — removed phantom `/stop` `/link`, added live `/start /cancel /tier /quota`
+
+**Still gated on Long product decisions (Wave 5):** PG-001 refund policy, PG-004 weekly auto-updates, PG-005 landing page, PG-006 account manager, OG-005 cost alert $, OG-009 DR drill timing, PayOS status, support mailbox, D1 region, quota thresholds, rollback doctrine clarification.
+
+**Operator action required (non-platform):** SPF DNS on mekongmind.com, fill on-call contacts in `cron-escalation-contacts.md`, configure Sentry alert rules per `cf-quota-response.md`, rebuild better-sqlite3 (`pnpm approve-builds`).
+
+**Doctrine ceiling unchanged at 87.5/100** per v1.28.1 — all closed work fits within ceiling.
 
 ---
 
