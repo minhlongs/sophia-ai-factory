@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
   const d1 = getD1();
 
   if (d1 && await wasRecentlyRun(d1, CRON_NAME, IDEMPOTENCY_WINDOW_MS)) {
-    return NextResponse.json({ ok: true, skipped: 'recent_run' });
+    return NextResponse.json({ status: 'ok', idempotent: true, skipped: 'recent_run' });
   }
 
   let advanced = 0;
@@ -144,12 +144,14 @@ export async function GET(request: NextRequest) {
 
     logger.info('[DunningAdvance] Cron complete', { advanced, errors });
     if (d1) await recordCronRun(d1, CRON_NAME, 'success');
-    return NextResponse.json({ success: true, advanced, errors });
+    return NextResponse.json({ status: 'ok', idempotent: false, advanced, errors });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
     logger.error('[DunningAdvance] Critical error', new Error(message));
     if (d1) await recordCronRun(d1, CRON_NAME, 'failure', message);
-    return NextResponse.json({ success: false, error: message }, { status: 500 });
+    // Never return 5xx on cron routes — CF retries on 5xx causing duplicate runs.
+    // Return 200 with status:'error' so the scheduler does not retry.
+    return NextResponse.json({ status: 'error', idempotent: false, error: message });
   }
 }
 
