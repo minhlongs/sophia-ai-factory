@@ -19,6 +19,18 @@
 #                         (sourcemaps optional per sophia-no-tech-doctrine.md), but
 #                         next.config.ts logs a warning when set during NODE_ENV=production.
 #   ALLOW_UNPUSHED_DEPLOY=1   Bypass HEAD-vs-origin/main precondition. Emergency only.
+#
+# Build engine note (2026-05-21):
+#   `npm run build` uses Turbopack, NOT webpack. This is forced by M1 16GB
+#   hardware — webpack's @vercel/nft trace collector OOM-kills during
+#   "Collecting build traces" on this codebase even with 14GB Node heap +
+#   SKIP_PWA + SKIP_RC + SKIP_SENTRY_BUILD. Tradeoff accepted: webpack-only
+#   plugins (@ducanh2912/next-pwa, @next/bundle-analyzer) are silently
+#   skipped by Turbopack. PWA service worker generation is NOT happening
+#   in this build pipeline — offline mode degraded. @sentry/nextjs v10
+#   supports Turbopack natively so source maps still upload when
+#   SKIP_SENTRY_BUILD is unset. To restore webpack: bigger build machine
+#   or re-enable GitHub Actions CI (.github/workflows/test.yml.disabled).
 
 set -euo pipefail
 
