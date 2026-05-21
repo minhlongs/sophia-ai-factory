@@ -183,7 +183,7 @@ export function buildClientOptions(): BrowserOptions {
  */
 const CRON_ROUTE_RE = /\/api\/cron\/([^/?#]+)/;
 
-function tagCronRoute<T extends { request?: { url?: string }; tags?: Record<string, string> }>(
+function tagCronRoute<T extends { request?: { url?: string }; tags?: Record<string, unknown> }>(
   event: T,
 ): T {
   const url = event.request?.url ?? '';
