@@ -53,11 +53,12 @@ const nextConfig: NextConfig = {
   // Actual zod savings come from Next.js experimental.optimizePackageImports.
   async redirects() {
     return [
-      // Auth aliases
-      { source: '/signup', destination: '/login', permanent: true },
-      { source: '/register', destination: '/login', permanent: false },
-      { source: '/sign-up', destination: '/login', permanent: false },
-      { source: '/signin', destination: '/login', permanent: false },
+      // Auth aliases — /signup intentionally NOT redirected: [locale]/signup/page.tsx
+      // handles it with query-param preservation (affiliate refs, tab=signup).
+      // A blanket next.config redirect strips locale AND query params.
+      { source: '/register', destination: '/login', permanent: false, locale: false },
+      { source: '/sign-up', destination: '/login', permanent: false, locale: false },
+      { source: '/signin', destination: '/login', permanent: false, locale: false },
       // Settings
       { source: '/settings', destination: '/dashboard/settings', permanent: true },
       { source: '/settings/security', destination: '/settings/security/mfa', permanent: false },

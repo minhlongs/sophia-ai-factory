@@ -6,9 +6,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 
-const { mockGetCurrentUser, mockDbFrom, mockRevalidatePath } = vi.hoisted(() => ({
+const { mockGetCurrentUser, mockRun, mockRevalidatePath } = vi.hoisted(() => ({
   mockGetCurrentUser: vi.fn(),
-  mockDbFrom: vi.fn(),
+  mockRun: vi.fn(),
   mockRevalidatePath: vi.fn(),
 }));
 
@@ -19,22 +19,19 @@ vi.mock('@/seed/auth/better-auth-session', () => ({
 }));
 
 vi.mock('@/seed/db/client', () => ({
-  createServerClient: () => ({ from: mockDbFrom }),
+  createServerClient: vi.fn(),
+  getD1Raw: vi.fn(async () => ({
+    prepare: (_sql: string) => ({
+      bind: (..._args: unknown[]) => ({
+        run: mockRun,
+      }),
+    }),
+  })),
 }));
 
 vi.mock('next/cache', () => ({
   revalidatePath: mockRevalidatePath,
 }));
-
-// ── Helpers ────────────────────────────────────────────────────────────────────
-
-function makeUpdateChain(errorResult: { message: string } | null) {
-  const chain: Record<string, unknown> = {};
-  const result = { data: errorResult ? null : [{ user_id: 'u1' }], error: errorResult };
-  chain.update = vi.fn(() => chain);
-  chain.eq = vi.fn(() => Promise.resolve(result));
-  return chain;
-}
 
 // ── Tests ──────────────────────────────────────────────────────────────────────
 
@@ -44,8 +41,8 @@ beforeEach(() => {
 });
 
 describe('completeOnboardingAction', () => {
-  it('returns { success: true } when D1 update returns no error', async () => {
-    mockDbFrom.mockReturnValue(makeUpdateChain(null));
+  it('returns { success: true } when D1 upsert resolves', async () => {
+    mockRun.mockResolvedValue({ success: true });
 
     const { completeOnboardingAction } = await import('../complete-onboarding-action');
     const result = await completeOnboardingAction({ reason: 'complete' });
@@ -53,10 +50,11 @@ describe('completeOnboardingAction', () => {
     expect(result.success).toBe(true);
     expect(result.error).toBeUndefined();
     expect(mockRevalidatePath).toHaveBeenCalledWith('/dashboard');
+    expect(mockRevalidatePath).toHaveBeenCalledWith('/dashboard/onboarding');
   });
 
-  it('returns { success: false, error } when D1 returns an error object', async () => {
-    mockDbFrom.mockReturnValue(makeUpdateChain({ message: 'simulated D1 error' }));
+  it('returns { success: false, error } when D1 throws', async () => {
+    mockRun.mockRejectedValue(new Error('simulated D1 error'));
 
     const { completeOnboardingAction } = await import('../complete-onboarding-action');
     const result = await completeOnboardingAction({ reason: 'skip' });
