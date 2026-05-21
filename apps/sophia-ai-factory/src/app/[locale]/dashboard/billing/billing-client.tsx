@@ -1,19 +1,23 @@
 'use client';
 
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { use } from 'react';
 import { useTranslations } from 'next-intl';
+import Link from 'next/link';
 import { fetchJson } from '@/seed/utils/fetch-json';
 import { FullUsageSummary } from '@/forest/components/billing/usage-summary-card';
 import { DunningStatusBanner } from '@/forest/components/billing/dunning-status-banner';
 import { QuotaGaugeList } from '@/forest/components/analytics/QuotaGauge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/seed/components/ui/card';
 import { Button } from '@/seed/components/ui/button';
-import { AlertCircle, CreditCard, Download, Infinity as InfinityIcon } from 'lucide-react';
+import { AlertCircle, CreditCard, Download, Infinity as InfinityIcon, RotateCcw, ArrowUpDown, XCircle } from 'lucide-react';
+import { CancelSubscriptionModal } from '@/components/billing/cancel-subscription-modal';
 import { BillingChargeSummary } from './billing-charge-summary';
 import { BillingOverageTable } from './billing-overage-table';
 import { BillingPaymentHistory } from './billing-payment-history';
 import type { UsageSummaryResponse, DunningStatusResponse } from './billing-page-types';
+import type { Tier } from '@/seed/types';
 
 const formatCurrency = (cents: number, locale = 'en-US') =>
   new Intl.NumberFormat(locale, { style: 'currency', currency: 'USD' }).format(cents / 100);
@@ -39,6 +43,7 @@ function BillingSpinner({ label }: { label: string }) {
 export default function BillingClient({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = use(params);
   const t = useTranslations('dashboard.billing');
+  const [cancelOpen, setCancelOpen] = useState(false);
 
   const { data: usageData, isLoading, error } = useQuery<UsageSummaryResponse>({
     queryKey: ['/api/billing/usage-summary'],
@@ -152,6 +157,70 @@ export default function BillingClient({ params }: { params: Promise<{ locale: st
 
       <BillingOverageTable data={usageData} formatCurrency={(c) => formatCurrency(c, locale)} />
       <BillingPaymentHistory data={usageData} formatCurrency={(c) => formatCurrency(c, locale)} />
+
+      {/* Self-serve billing actions */}
+      <div>
+        <h2 className="text-xl font-semibold mb-4">{t('selfServeTitle')}</h2>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Card>
+            <CardContent className="pt-5">
+              <div className="flex items-start gap-3">
+                <ArrowUpDown className="h-5 w-5 text-primary shrink-0 mt-0.5" aria-hidden="true" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm">{t('changeTierTitle')}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{t('changeTierDesc')}</p>
+                  <Link href="./billing/change-tier" className="mt-3 inline-block">
+                    <Button size="sm" variant="outline">{t('changeTierCta')}</Button>
+                  </Link>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-5">
+              <div className="flex items-start gap-3">
+                <RotateCcw className="h-5 w-5 text-primary shrink-0 mt-0.5" aria-hidden="true" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm">{t('refundTitle')}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{t('refundDesc')}</p>
+                  <Link href="./billing/refund" className="mt-3 inline-block">
+                    <Button size="sm" variant="outline">{t('refundCta')}</Button>
+                  </Link>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {usageData.license.tier !== 'MASTER' && (
+            <Card>
+              <CardContent className="pt-5">
+                <div className="flex items-start gap-3">
+                  <XCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" aria-hidden="true" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm">{t('cancelTitle')}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{t('cancelDesc')}</p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="mt-3 text-destructive border-destructive/30 hover:bg-destructive/5"
+                      onClick={() => setCancelOpen(true)}
+                    >
+                      {t('cancelCta')}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+
+      <CancelSubscriptionModal
+        open={cancelOpen}
+        onOpenChange={setCancelOpen}
+        currentTier={usageData.license.tier as Tier}
+      />
     </div>
   );
 }
