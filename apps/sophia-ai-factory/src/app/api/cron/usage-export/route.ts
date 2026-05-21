@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
   const db = getD1()
 
   if (db && await wasRecentlyRun(db, CRON_NAME, IDEMPOTENCY_WINDOW_MS)) {
-    return NextResponse.json({ ok: true, skipped: 'recent_run' })
+    return NextResponse.json({ status: 'ok', idempotent: true, skipped: 'recent_run' })
   }
 
   try {
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
     if (activeLicenses.length === 0) {
       logger.info('[Usage Export Cron] No active licenses found')
       if (db) await recordCronRun(db, CRON_NAME, 'success')
-      return NextResponse.json({ success: true, message: 'No active licenses to process', processed: 0, failed: 0, totalRecords: 0 })
+      return NextResponse.json({ status: 'ok', idempotent: false, message: 'No active licenses to process', processed: 0, failed: 0, totalRecords: 0 })
     }
 
     const results: Array<{ nonce: string; tier: string; success: boolean; recordCount: number; errorMessage?: string }> = []
@@ -74,7 +74,8 @@ export async function GET(request: NextRequest) {
     if (db) await recordCronRun(db, CRON_NAME, failedCount > 0 ? 'failure' : 'success')
 
     return NextResponse.json({
-      success: true,
+      status: 'ok',
+      idempotent: false,
       message: `Processed ${activeLicenses.length - failedCount}/${activeLicenses.length} licenses`,
       processed: activeLicenses.length - failedCount, failed: failedCount, totalRecords, duration, results,
     })
@@ -83,7 +84,8 @@ export async function GET(request: NextRequest) {
     const duration = Date.now() - startTime
     logger.error('[Usage Export Cron] Critical error', error instanceof Error ? error : new Error(String(error)), { requestId, duration })
     if (db) await recordCronRun(db, CRON_NAME, 'failure', errorMessage)
-    return NextResponse.json({ success: false, error: errorMessage, requestId }, { status: 500 })
+    // Never return 5xx on cron routes — CF retries on 5xx causing duplicate runs.
+    return NextResponse.json({ status: 'error', idempotent: false, error: errorMessage, requestId })
   }
 }
 
