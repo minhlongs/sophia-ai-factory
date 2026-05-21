@@ -17,7 +17,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyCronAuth } from '@/seed/security/cron-auth'
-import { recordCronRun } from '@/lib/cron/run-tracker'
+import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker'
 import { getD1Raw, createServerClient } from '@/seed/db/client'
 import { createHeyGenVideo } from '@/lib/video/heygen-helpers'
 import { getHeyGenKey } from '@/tree/credentials/get-provider-key'
@@ -38,6 +38,8 @@ export const dynamic = 'force-dynamic'
 
 const CRON_NAME = 'fulfillment-retry'
 const BATCH_LIMIT = 20
+/** Every-2-min cron — skip if ran within last 90 seconds (prevents duplicate runs on retry storms) */
+const IDEMPOTENCY_WINDOW_MS = 90 * 1000
 
 interface UserEmailRow {
   email?: string
@@ -69,7 +71,13 @@ export async function GET(req: NextRequest) {
     db = await getD1Raw()
   } catch (err) {
     logger.error('[fulfillment-retry] D1 unavailable', err instanceof Error ? err : undefined)
-    return NextResponse.json({ error: 'db_unavailable' }, { status: 500 })
+    // Never return 5xx on cron routes — CF retries on 5xx causing duplicate runs.
+    return NextResponse.json({ status: 'error', idempotent: false, error: 'db_unavailable' })
+  }
+
+  // Idempotency guard: skip if already ran within the last 90s (cron fires every 2 min).
+  if (await wasRecentlyRun(db, CRON_NAME, IDEMPOTENCY_WINDOW_MS)) {
+    return NextResponse.json({ status: 'ok', idempotent: true, skipped: 'recent_run' })
   }
 
   const summary = { retried: 0, succeeded: 0, failed: 0, permanent: 0, skipped: 0, circuitBlocked: 0 }
@@ -80,7 +88,7 @@ export async function GET(req: NextRequest) {
   if (!dispatch.allowed) {
     logger.warn('[fulfillment-retry] Circuit breaker blocked entire cron run', { reason: dispatch.reason })
     await recordCronRun(db, CRON_NAME, 'success')
-    return NextResponse.json({ ok: true, ...summary, circuitBlocked: -1 })
+    return NextResponse.json({ status: 'ok', idempotent: false, ...summary, circuitBlocked: -1 })
   }
 
   try {
@@ -179,11 +187,12 @@ export async function GET(req: NextRequest) {
     }
 
     await recordCronRun(db, CRON_NAME, 'success')
-    return NextResponse.json({ ok: true, ...summary })
+    return NextResponse.json({ status: 'ok', idempotent: false, ...summary })
   } catch (err) {
     const errMsg = getErrorMessage(err)
     logger.error('[fulfillment-retry] Cron run failed', err instanceof Error ? err : undefined)
     await recordCronRun(db, CRON_NAME, 'failure', errMsg)
-    return NextResponse.json({ ok: false, error: errMsg }, { status: 500 })
+    // Never return 5xx on cron routes — CF retries on 5xx causing duplicate runs.
+    return NextResponse.json({ status: 'error', idempotent: false, error: errMsg })
   }
 }
