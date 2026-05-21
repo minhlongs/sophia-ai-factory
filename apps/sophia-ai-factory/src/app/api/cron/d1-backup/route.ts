@@ -22,6 +22,11 @@ import { pushHeartbeat, pushFatalLog } from '@/lib/telemetry/better-stack-client
 import { getErrorMessage, toError } from '@/seed/utils/to-error';
 import { logger } from '@/seed/utils/logger-utility';
 import { buildD1Dump } from '@/forest/dr/d1-dump-builder';
+import {
+  startCronCheckIn,
+  finishCronCheckIn,
+  failCronCheckIn,
+} from '@/seed/observability/cron-check-in';
 
 export const dynamic = 'force-dynamic';
 
@@ -56,17 +61,20 @@ async function handler(request: NextRequest): Promise<NextResponse> {
   const authError = verifyCronAuth(request);
   if (authError) return authError;
 
+  const cronCtx = startCronCheckIn(CRON_NAME);
   const env = globalThis as unknown as Env;
   const db = env.DB;
   const bucket = env.BACKUPS_BUCKET;
 
   if (!db) {
+    failCronCheckIn(cronCtx, CRON_NAME, new Error('DB binding unavailable'));
     return NextResponse.json(
       { ok: false, reason: 'DB binding unavailable' },
       { status: 500 },
     );
   }
   if (!bucket) {
+    failCronCheckIn(cronCtx, CRON_NAME, new Error('BACKUPS_BUCKET binding unavailable'));
     return NextResponse.json(
       { ok: false, reason: 'BACKUPS_BUCKET binding unavailable' },
       { status: 500 },
@@ -89,6 +97,7 @@ async function handler(request: NextRequest): Promise<NextResponse> {
       await pushHeartbeat(heartbeatUrl).catch(() => {});
     }
     await recordCronRun(db, CRON_NAME, 'skipped');
+    finishCronCheckIn(cronCtx, CRON_NAME);
     return NextResponse.json({ ok: true, skipped: true, reason: 'recently_run' });
   }
   const dateKey = new Date().toISOString().slice(0, 10);
@@ -104,6 +113,7 @@ async function handler(request: NextRequest): Promise<NextResponse> {
       logger.error('[d1-backup] dump too large', new Error(msg), { sizeMb });
       await pushFatalLog('D1_BACKUP_TOO_LARGE', msg, bsConfig).catch(() => {});
       await recordCronRun(db, CRON_NAME, 'failure', msg);
+      failCronCheckIn(cronCtx, CRON_NAME, new Error(msg));
       return NextResponse.json({ ok: false, reason: msg }, { status: 500 });
     }
     await bucket.put(objectKey, bytes, {
@@ -130,6 +140,7 @@ async function handler(request: NextRequest): Promise<NextResponse> {
 
     await recordCronRun(db, CRON_NAME, 'success');
 
+    finishCronCheckIn(cronCtx, CRON_NAME);
     return NextResponse.json({
       ok: true,
       objectKey,
@@ -141,6 +152,7 @@ async function handler(request: NextRequest): Promise<NextResponse> {
     logger.error('[d1-backup] dump failed', toError(err), { objectKey });
     await pushFatalLog('D1_BACKUP_FAILED', errMsg, bsConfig).catch(() => {});
     await recordCronRun(db, CRON_NAME, 'failure', errMsg);
+    failCronCheckIn(cronCtx, CRON_NAME, err);
     return NextResponse.json({ ok: false, reason: errMsg }, { status: 500 });
   }
 }

@@ -14,6 +14,11 @@ import { toError } from '@/seed/utils/to-error';
 import { rebuildAllWallets } from '@/land/wallet/wallet-rebuilder';
 import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
+import {
+  startCronCheckIn,
+  finishCronCheckIn,
+  failCronCheckIn,
+} from '@/seed/observability/cron-check-in';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,9 +42,11 @@ export async function GET(req: NextRequest) {
   const authError = verifyCronAuth(req);
   if (authError) return authError;
 
+  const cronCtx = startCronCheckIn(CRON_NAME);
   const db = getD1Binding();
 
   if (db && await wasRecentlyRun(db, CRON_NAME, IDEMPOTENCY_WINDOW_MS)) {
+    finishCronCheckIn(cronCtx, CRON_NAME);
     return NextResponse.json({ ok: true, skipped: 'recent_run' });
   }
 
@@ -50,11 +57,13 @@ export async function GET(req: NextRequest) {
 
     logger.info('[cron/wallet-rebuild] Done', { ...result, elapsed });
     if (db) await recordCronRun(db, CRON_NAME, 'success');
+    finishCronCheckIn(cronCtx, CRON_NAME);
     return NextResponse.json({ ok: true, ...result, elapsed });
   } catch (error) {
     const msg = toError(error).message;
     logger.error('[cron/wallet-rebuild] Failed', toError(error));
     if (db) await recordCronRun(db, CRON_NAME, 'failure', msg);
+    failCronCheckIn(cronCtx, CRON_NAME, error);
     return NextResponse.json({ error: 'Wallet rebuild failed' }, { status: 500 });
   }
 }

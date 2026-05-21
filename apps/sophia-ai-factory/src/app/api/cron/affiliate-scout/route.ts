@@ -15,6 +15,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
 import { recordCronRun } from '@/lib/cron/run-tracker';
+import {
+  startCronCheckIn,
+  finishCronCheckIn,
+  failCronCheckIn,
+} from '@/seed/observability/cron-check-in';
 import { runAffiliateScout } from '@/lib/affiliates/scout';
 import { getOrDefault } from '@/lib/tenant-settings/registry';
 import { DEFAULT_CRON } from '@/lib/tenant-settings/defaults';
@@ -120,10 +125,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const authError = verifyCronAuth(request);
   if (authError) return authError;
 
+  const cronCtx = startCronCheckIn(CRON_NAME);
   const d1 = getD1Binding();
 
   if (!d1) {
     logger.warn('[affiliate-scout] No D1 binding available');
+    failCronCheckIn(cronCtx, CRON_NAME, new Error('no_d1'));
     return NextResponse.json({ ok: false, error: 'no_d1' }, { status: 503 });
   }
 
@@ -192,6 +199,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     await recordCronRun(d1, CRON_NAME, 'success');
 
+    finishCronCheckIn(cronCtx, CRON_NAME);
     return NextResponse.json({
       ok: true,
       tenantsProcessed,
@@ -207,6 +215,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       await recordCronRun(d1, CRON_NAME, 'failure', error.message).catch(() => {});
     }
 
+    failCronCheckIn(cronCtx, CRON_NAME, err);
     return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   }
 }

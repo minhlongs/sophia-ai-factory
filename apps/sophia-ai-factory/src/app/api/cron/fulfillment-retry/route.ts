@@ -18,6 +18,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyCronAuth } from '@/seed/security/cron-auth'
 import { recordCronRun } from '@/lib/cron/run-tracker'
+import {
+  startCronCheckIn,
+  finishCronCheckIn,
+  failCronCheckIn,
+} from '@/seed/observability/cron-check-in'
 import { getD1Raw, createServerClient } from '@/seed/db/client'
 import { createHeyGenVideo } from '@/lib/video/heygen-helpers'
 import { getHeyGenKey } from '@/tree/credentials/get-provider-key'
@@ -64,11 +69,13 @@ export async function GET(req: NextRequest) {
   const authError = verifyCronAuth(req)
   if (authError) return authError
 
+  const cronCtx = startCronCheckIn(CRON_NAME)
   let db: D1Database
   try {
     db = await getD1Raw()
   } catch (err) {
     logger.error('[fulfillment-retry] D1 unavailable', err instanceof Error ? err : undefined)
+    failCronCheckIn(cronCtx, CRON_NAME, err)
     return NextResponse.json({ error: 'db_unavailable' }, { status: 500 })
   }
 
@@ -80,6 +87,7 @@ export async function GET(req: NextRequest) {
   if (!dispatch.allowed) {
     logger.warn('[fulfillment-retry] Circuit breaker blocked entire cron run', { reason: dispatch.reason })
     await recordCronRun(db, CRON_NAME, 'success')
+    finishCronCheckIn(cronCtx, CRON_NAME)
     return NextResponse.json({ ok: true, ...summary, circuitBlocked: -1 })
   }
 
@@ -179,11 +187,13 @@ export async function GET(req: NextRequest) {
     }
 
     await recordCronRun(db, CRON_NAME, 'success')
+    finishCronCheckIn(cronCtx, CRON_NAME)
     return NextResponse.json({ ok: true, ...summary })
   } catch (err) {
     const errMsg = getErrorMessage(err)
     logger.error('[fulfillment-retry] Cron run failed', err instanceof Error ? err : undefined)
     await recordCronRun(db, CRON_NAME, 'failure', errMsg)
+    failCronCheckIn(cronCtx, CRON_NAME, err)
     return NextResponse.json({ ok: false, error: errMsg }, { status: 500 })
   }
 }

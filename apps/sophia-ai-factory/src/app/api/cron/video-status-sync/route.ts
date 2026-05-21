@@ -15,6 +15,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
 import { recordCronRun } from '@/lib/cron/run-tracker';
+import {
+  startCronCheckIn,
+  finishCronCheckIn,
+  failCronCheckIn,
+} from '@/seed/observability/cron-check-in';
 import { getD1Raw, createServerClient } from '@/seed/db/client';
 import { getHeyGenClient } from '@/lib/heygen/heygen-client';
 import { downloadAndStore } from '@/lib/video/video-storage-service';
@@ -108,6 +113,7 @@ export async function GET(req: NextRequest) {
   const authError = verifyCronAuth(req);
   if (authError) return authError;
 
+  const cronCtx = startCronCheckIn(CRON_NAME);
   const summary = { checked: 0, terminal: 0, timedOut: 0, errors: 0 };
 
   let db: D1Database | null = null;
@@ -115,6 +121,7 @@ export async function GET(req: NextRequest) {
     db = await getD1Raw();
   } catch (err) {
     logger.error('[video-status-sync] D1 unavailable', err instanceof Error ? err : undefined);
+    failCronCheckIn(cronCtx, CRON_NAME, err);
     return NextResponse.json({ error: 'db_unavailable' }, { status: 500 });
   }
 
@@ -295,11 +302,13 @@ export async function GET(req: NextRequest) {
     }
 
     await recordCronRun(db, CRON_NAME, 'success');
+    finishCronCheckIn(cronCtx, CRON_NAME);
     return NextResponse.json({ ok: true, ...summary });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'unknown';
     if (db) await recordCronRun(db, CRON_NAME, 'failure', msg);
     logger.error('[video-status-sync] fatal', err instanceof Error ? err : undefined);
+    failCronCheckIn(cronCtx, CRON_NAME, err);
     return NextResponse.json({ error: 'sync_failed' }, { status: 500 });
   }
 }

@@ -12,6 +12,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
 import { handleSopSchedulerTick } from '@/lib/cron/sop-scheduler';
 import { logger } from '@/seed/utils/logger-utility';
+import {
+  startCronCheckIn,
+  finishCronCheckIn,
+  failCronCheckIn,
+} from '@/seed/observability/cron-check-in';
+
+const CRON_NAME = 'sop-scheduler';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,19 +37,24 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const authError = verifyCronAuth(request);
   if (authError) return authError;
 
+  const cronCtx = startCronCheckIn(CRON_NAME);
+
   const db = getD1();
   if (!db) {
     logger.error('[cron/sop-scheduler] D1 binding not available');
+    failCronCheckIn(cronCtx, CRON_NAME, new Error('DB binding unavailable'));
     return NextResponse.json({ ok: false, error: 'DB binding unavailable' }, { status: 500 });
   }
 
   try {
     const { processed } = await handleSopSchedulerTick(db);
     logger.info('[cron/sop-scheduler] Complete', { processed });
+    finishCronCheckIn(cronCtx, CRON_NAME);
     return NextResponse.json({ ok: true, processed });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     logger.error('[cron/sop-scheduler] Fatal error', err instanceof Error ? err : new Error(msg));
+    failCronCheckIn(cronCtx, CRON_NAME, err);
     return NextResponse.json({ ok: false, error: msg }, { status: 500 });
   }
 }

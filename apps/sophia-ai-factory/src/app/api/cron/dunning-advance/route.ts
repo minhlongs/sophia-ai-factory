@@ -13,6 +13,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/seed/db/client';
 import { transitionDunningState } from '@/land/billing/dunning/dunning-state-machine';
 import { logger } from '@/seed/utils/logger-utility';
+import {
+  startCronCheckIn,
+  finishCronCheckIn,
+  failCronCheckIn,
+} from '@/seed/observability/cron-check-in';
 import { toError } from '@/seed/utils/to-error';
 import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
@@ -45,9 +50,11 @@ export async function GET(request: NextRequest) {
   const authError = verifyCronAuth(request);
   if (authError) return authError;
 
+  const cronCtx = startCronCheckIn(CRON_NAME);
   const d1 = getD1();
 
   if (d1 && await wasRecentlyRun(d1, CRON_NAME, IDEMPOTENCY_WINDOW_MS)) {
+    finishCronCheckIn(cronCtx, CRON_NAME);
     return NextResponse.json({ ok: true, skipped: 'recent_run' });
   }
 
@@ -144,11 +151,13 @@ export async function GET(request: NextRequest) {
 
     logger.info('[DunningAdvance] Cron complete', { advanced, errors });
     if (d1) await recordCronRun(d1, CRON_NAME, 'success');
+    finishCronCheckIn(cronCtx, CRON_NAME);
     return NextResponse.json({ success: true, advanced, errors });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
     logger.error('[DunningAdvance] Critical error', new Error(message));
     if (d1) await recordCronRun(d1, CRON_NAME, 'failure', message);
+    failCronCheckIn(cronCtx, CRON_NAME, err);
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }
