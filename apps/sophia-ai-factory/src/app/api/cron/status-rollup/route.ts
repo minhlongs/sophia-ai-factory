@@ -7,8 +7,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
 import { logger } from '@/seed/utils/logger-utility';
+import {
+  startCronCheckIn,
+  finishCronCheckIn,
+  failCronCheckIn,
+} from '@/seed/observability/cron-check-in';
 
 export const dynamic = 'force-dynamic';
+
+const CRON_NAME = 'status-rollup';
 
 function getD1(): D1Database | null {
   try {
@@ -24,8 +31,12 @@ export async function GET(req: NextRequest) {
   const authError = verifyCronAuth(req);
   if (authError) return authError;
 
+  const cronCtx = startCronCheckIn(CRON_NAME);
   const db = getD1();
-  if (!db) return NextResponse.json({ ok: false, error: 'D1 not available' }, { status: 503 });
+  if (!db) {
+    failCronCheckIn(cronCtx, CRON_NAME, new Error('D1 not available'));
+    return NextResponse.json({ ok: false, error: 'D1 not available' }, { status: 503 });
+  }
 
   try {
     // Aggregate yesterday's checks into rollup
@@ -49,10 +60,12 @@ export async function GET(req: NextRequest) {
       .run();
 
     logger.info('[status-rollup] Complete', { purged: purge.meta?.changes ?? 0 });
+    finishCronCheckIn(cronCtx, CRON_NAME);
     return NextResponse.json({ ok: true, purged: purge.meta?.changes ?? 0 });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     logger.error('[status-rollup] Failed', err instanceof Error ? err : new Error(msg));
+    failCronCheckIn(cronCtx, CRON_NAME, err);
     return NextResponse.json({ ok: false, error: msg }, { status: 500 });
   }
 }

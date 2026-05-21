@@ -17,9 +17,15 @@ import { verifyCronAuth } from '@/seed/security/cron-auth';
 import { logger } from '@/seed/utils/logger-utility';
 import { getActiveExperimentsOlderThan, markWinner } from '@/forest/ab/experiment-store';
 import { evaluateBatch } from '@/forest/ab/winner-picker';
+import {
+  startCronCheckIn,
+  finishCronCheckIn,
+  failCronCheckIn,
+} from '@/seed/observability/cron-check-in';
 
 export const dynamic = 'force-dynamic';
 
+const CRON_NAME = 'ab-winner-picker';
 const EVAL_WINDOW_HOURS = 24; // Minimum experiment age before evaluation
 
 const QuerySchema = z.object({
@@ -29,6 +35,8 @@ const QuerySchema = z.object({
 export async function GET(req: NextRequest): Promise<NextResponse> {
   const authError = verifyCronAuth(req);
   if (authError) return authError;
+
+  const cronCtx = startCronCheckIn(CRON_NAME);
 
   const { searchParams } = new URL(req.url);
   const query = QuerySchema.safeParse({
@@ -45,6 +53,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     });
 
     if (experiments.length === 0) {
+      finishCronCheckIn(cronCtx, CRON_NAME);
       return NextResponse.json({ evaluated: 0, decided: 0, decisions: [] });
     }
 
@@ -70,6 +79,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       });
     }
 
+    finishCronCheckIn(cronCtx, CRON_NAME);
     return NextResponse.json({
       evaluated: experiments.length,
       decided: decisions.length,
@@ -79,6 +89,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     logger.warn('[ab-winner-picker] cron error', { error: message });
+    failCronCheckIn(cronCtx, CRON_NAME, err);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

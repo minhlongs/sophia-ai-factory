@@ -12,6 +12,11 @@ import { verifyCronAuth } from '@/seed/security/cron-auth'
 import { getActiveLicenses } from './cron-usage-export-db'
 import { processLicenseExport } from './cron-usage-export-processor'
 import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker'
+import {
+  startCronCheckIn,
+  finishCronCheckIn,
+  failCronCheckIn,
+} from '@/seed/observability/cron-check-in'
 
 const CRON_NAME = 'usage-export'
 /** Hourly — skip if ran within last 30 minutes */
@@ -35,9 +40,11 @@ export async function GET(request: NextRequest) {
   const authError = verifyCronAuth(request);
   if (authError) return authError;
 
+  const cronCtx = startCronCheckIn(CRON_NAME)
   const db = getD1()
 
   if (db && await wasRecentlyRun(db, CRON_NAME, IDEMPOTENCY_WINDOW_MS)) {
+    finishCronCheckIn(cronCtx, CRON_NAME)
     return NextResponse.json({ status: 'ok', idempotent: true, skipped: 'recent_run' })
   }
 
@@ -73,6 +80,12 @@ export async function GET(request: NextRequest) {
 
     if (db) await recordCronRun(db, CRON_NAME, failedCount > 0 ? 'failure' : 'success')
 
+    if (failedCount > 0) {
+      failCronCheckIn(cronCtx, CRON_NAME, new Error(`${failedCount} license exports failed`))
+    } else {
+      finishCronCheckIn(cronCtx, CRON_NAME)
+    }
+
     return NextResponse.json({
       status: 'ok',
       idempotent: false,
@@ -84,7 +97,7 @@ export async function GET(request: NextRequest) {
     const duration = Date.now() - startTime
     logger.error('[Usage Export Cron] Critical error', error instanceof Error ? error : new Error(String(error)), { requestId, duration })
     if (db) await recordCronRun(db, CRON_NAME, 'failure', errorMessage)
-    // Never return 5xx on cron routes — CF retries on 5xx causing duplicate runs.
+    failCronCheckIn(cronCtx, CRON_NAME, error)
     return NextResponse.json({ status: 'error', idempotent: false, error: errorMessage, requestId })
   }
 }

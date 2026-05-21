@@ -10,6 +10,11 @@ import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
+import {
+  startCronCheckIn,
+  finishCronCheckIn,
+  failCronCheckIn,
+} from '@/seed/observability/cron-check-in';
 import { enqueueWelcomeEmail } from '@/forest/outbox/email-outbox';
 import {
   evaluateLifecycleEmails,
@@ -98,10 +103,15 @@ export async function GET(req: NextRequest) {
   const authError = verifyCronAuth(req);
   if (authError) return authError;
 
+  const cronCtx = startCronCheckIn(CRON_NAME);
   const db = getD1();
-  if (!db) return NextResponse.json({ ok: false, error: 'D1 not available' }, { status: 503 });
+  if (!db) {
+    failCronCheckIn(cronCtx, CRON_NAME, new Error('D1 not available'));
+    return NextResponse.json({ ok: false, error: 'D1 not available' }, { status: 503 });
+  }
 
   if (await wasRecentlyRun(db, CRON_NAME, IDEMPOTENCY_WINDOW_MS)) {
+    finishCronCheckIn(cronCtx, CRON_NAME);
     return NextResponse.json({ ok: true, skipped: 'recent_run' });
   }
 
@@ -498,6 +508,7 @@ export async function GET(req: NextRequest) {
       `[email-drip] Completed. handover=${enqueued} affiliate=${affiliateEnqueued} activation=${activationEnqueued} toolsNudge=${toolsNudgeEnqueued} reEngagement=${reEngagementEnqueued} winBack=${winBackEnqueued}`,
     );
     await recordCronRun(db, CRON_NAME, 'success');
+    finishCronCheckIn(cronCtx, CRON_NAME);
     return NextResponse.json({
       ok: true,
       enqueued,
@@ -510,6 +521,7 @@ export async function GET(req: NextRequest) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     await recordCronRun(db, CRON_NAME, 'failure', msg);
+    failCronCheckIn(cronCtx, CRON_NAME, err);
     return NextResponse.json({ ok: false, error: msg }, { status: 500 });
   }
 }

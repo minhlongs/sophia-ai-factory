@@ -12,6 +12,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getErrorMessage } from '@/seed/utils/to-error'
 import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker'
 import { verifyCronAuth } from '@/seed/security/cron-auth'
+import {
+  startCronCheckIn,
+  finishCronCheckIn,
+  failCronCheckIn,
+} from '@/seed/observability/cron-check-in'
 
 export const dynamic = 'force-dynamic'
 
@@ -47,18 +52,22 @@ async function handler(request: NextRequest): Promise<NextResponse> {
   const authError = verifyCronAuth(request);
   if (authError) return authError;
 
+  const cronCtx = startCronCheckIn(CRON_NAME);
   const db = (globalThis as unknown as GlobalEnv).DB
   if (!db) {
+    failCronCheckIn(cronCtx, CRON_NAME, new Error('D1_UNAVAILABLE'));
     return NextResponse.json({ ok: false, reason: 'D1_UNAVAILABLE' }, { status: 200 })
   }
 
   if (await wasRecentlyRun(db as unknown as D1Database, CRON_NAME, IDEMPOTENCY_WINDOW_MS)) {
+    finishCronCheckIn(cronCtx, CRON_NAME);
     return NextResponse.json({ ok: true, skipped: 'recent_run' })
   }
 
   try {
     const deleted = await purgeExpired(db)
     await recordCronRun(db as unknown as D1Database, CRON_NAME, 'success')
+    finishCronCheckIn(cronCtx, CRON_NAME);
     return NextResponse.json({
       ok:      true,
       deleted,
@@ -67,6 +76,7 @@ async function handler(request: NextRequest): Promise<NextResponse> {
   } catch (err) {
     const message = getErrorMessage(err)
     await recordCronRun(db as unknown as D1Database, CRON_NAME, 'failure', message)
+    failCronCheckIn(cronCtx, CRON_NAME, err);
     return NextResponse.json(
       { ok: false, reason: 'D1_ERROR', error: message },
       { status: 200 },
