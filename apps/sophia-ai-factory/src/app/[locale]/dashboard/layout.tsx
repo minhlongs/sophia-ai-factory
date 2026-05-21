@@ -87,14 +87,19 @@ export default async function DashboardLayout({
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'dashboard' });
   const currentUser = await getCurrentUser();
-  const trialEndsAt = currentUser ? await getUserTrialEndsAt(currentUser.id) : null;
-  const userTier = currentUser ? await getUserTier(currentUser.id) : null;
+  // Parallelize independent per-user lookups — each is an isolated D1 round-trip.
+  const [trialEndsAt, userTier, redeemedCode] = currentUser
+    ? await Promise.all([
+        getUserTrialEndsAt(currentUser.id),
+        getUserTier(currentUser.id),
+        getRedeemedPromoCode(currentUser.id),
+      ])
+    : [null, null, null];
   // Operator sidebar visibility — accept either Better Auth `role === 'admin'`
   // (legacy/manual elevation) OR `tier === 'MASTER'` (canonical handover signal,
   // e.g. FREE100 redemption). Aligns with middleware-level admin gate which
   // already uses tier=MASTER as the source of truth. See task #35 thread.
   const isAdmin = currentUser?.role === 'admin' || userTier === 'MASTER';
-  const redeemedCode = currentUser ? await getRedeemedPromoCode(currentUser.id) : null;
   const isVi = locale.startsWith('vi');
   const nowSec = Math.floor(Date.now() / 1000);
   // Only show trial banner for BASIC tier users within 7 days of trial expiry.
