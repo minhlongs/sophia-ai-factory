@@ -12,6 +12,11 @@ import { verifyCronAuth } from '@/seed/security/cron-auth';
 import { logger } from '@/seed/utils/logger-utility';
 import { getD1Raw } from '@/seed/db/client';
 import { Resend } from 'resend';
+import {
+  startCronCheckIn,
+  finishCronCheckIn,
+  failCronCheckIn,
+} from '@/seed/observability/cron-check-in';
 
 const CRON_NAME = 'promo-trial-expiry';
 
@@ -70,6 +75,7 @@ export async function GET(request: NextRequest) {
   const authError = verifyCronAuth(request);
   if (authError) return authError;
 
+  const cronCtx = startCronCheckIn(CRON_NAME);
   const nowSec = Math.floor(Date.now() / 1000);
   let processed = 0;
   let failed = 0;
@@ -92,9 +98,11 @@ export async function GET(request: NextRequest) {
     }
 
     logger.info(`[${CRON_NAME}] Done`, { processed, failed });
+    finishCronCheckIn(cronCtx, CRON_NAME);
     return NextResponse.json({ ok: true, processed, failed, cron: CRON_NAME });
   } catch (err) {
     logger.error(`[${CRON_NAME}] Fatal error`, err instanceof Error ? err : undefined);
+    failCronCheckIn(cronCtx, CRON_NAME, err);
     return NextResponse.json({ ok: false, error: err instanceof Error ? err.message : 'unknown' }, { status: 500 });
   }
 }

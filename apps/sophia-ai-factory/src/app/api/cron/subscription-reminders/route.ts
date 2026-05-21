@@ -15,6 +15,11 @@ import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
+import {
+  startCronCheckIn,
+  finishCronCheckIn,
+  failCronCheckIn,
+} from '@/seed/observability/cron-check-in';
 
 const CRON_NAME = 'subscription-reminders';
 /** Daily — skip if ran within last 12 hours */
@@ -104,9 +109,11 @@ export async function GET(request: NextRequest) {
   const authError = verifyCronAuth(request);
   if (authError) return authError;
 
+  const cronCtx = startCronCheckIn(CRON_NAME);
   const d1 = getD1();
 
   if (d1 && await wasRecentlyRun(d1, CRON_NAME, IDEMPOTENCY_WINDOW_MS)) {
+    finishCronCheckIn(cronCtx, CRON_NAME);
     return NextResponse.json({ ok: true, skipped: 'recent_run' });
   }
 
@@ -196,11 +203,13 @@ export async function GET(request: NextRequest) {
 
     logger.info('[RenewalReminder] Cron complete', { remindersSent, errors });
     if (d1) await recordCronRun(d1, CRON_NAME, 'success');
+    finishCronCheckIn(cronCtx, CRON_NAME);
     return NextResponse.json({ success: true, remindersSent, errors });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
     logger.error('[RenewalReminder] Critical error', new Error(message));
     if (d1) await recordCronRun(d1, CRON_NAME, 'failure', message);
+    failCronCheckIn(cronCtx, CRON_NAME, err);
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

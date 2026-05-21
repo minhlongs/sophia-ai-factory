@@ -13,6 +13,11 @@ import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
+import {
+  startCronCheckIn,
+  finishCronCheckIn,
+  failCronCheckIn,
+} from '@/seed/observability/cron-check-in';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,14 +42,18 @@ export async function GET(req: NextRequest) {
   const authError = verifyCronAuth(req);
   if (authError) return authError;
 
+  const cronCtx = startCronCheckIn(CRON_NAME);
+
   let db: D1Database;
   try {
     db = getD1Binding();
   } catch {
+    failCronCheckIn(cronCtx, CRON_NAME, new Error('D1 unavailable'));
     return NextResponse.json({ error: 'D1 unavailable' }, { status: 500 });
   }
 
   if (await wasRecentlyRun(db, CRON_NAME, IDEMPOTENCY_WINDOW_MS)) {
+    finishCronCheckIn(cronCtx, CRON_NAME);
     return NextResponse.json({ ok: true, skipped: 'recent_run' });
   }
 
@@ -62,11 +71,13 @@ export async function GET(req: NextRequest) {
     const promoted = result.changes ?? 0;
     logger.info('[cron/clearance-promote] Done', { promoted });
     await recordCronRun(db, CRON_NAME, 'success');
+    finishCronCheckIn(cronCtx, CRON_NAME);
     return NextResponse.json({ ok: true, promoted });
   } catch (error) {
     const msg = toError(error).message;
     await recordCronRun(db, CRON_NAME, 'failure', msg);
     logger.error('[cron/clearance-promote] Failed', toError(error));
+    failCronCheckIn(cronCtx, CRON_NAME, error);
     return NextResponse.json({ error: 'Clearance promote failed' }, { status: 500 });
   }
 }

@@ -21,6 +21,11 @@ import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
 import { recordCheck, getRecentChecks, getActiveIncident, openIncident, closeIncident } from '@/land/status/status-store';
 import { evaluateIncidentAction } from '@/land/status/incident-state-machine';
+import {
+  startCronCheckIn,
+  finishCronCheckIn,
+  failCronCheckIn,
+} from '@/seed/observability/cron-check-in';
 
 export const dynamic = 'force-dynamic';
 
@@ -72,9 +77,11 @@ export async function GET(req: NextRequest) {
   const authError = verifyCronAuth(req);
   if (authError) return authError;
 
+  const cronCtx = startCronCheckIn(CRON_NAME);
   const db = getD1();
 
   if (db && await wasRecentlyRun(db, CRON_NAME, IDEMPOTENCY_WINDOW_MS)) {
+    finishCronCheckIn(cronCtx, CRON_NAME);
     return NextResponse.json({ ok: true, skipped: 'recent_run' });
   }
 
@@ -113,6 +120,7 @@ export async function GET(req: NextRequest) {
         `⚠️ SOPHIA DOWN\nHTTP ${res.status}\nLatency: ${latency}ms\nStatus: ${body.status ?? 'unknown'}`,
       );
       if (db) await recordCronRun(db, CRON_NAME, 'failure', `HTTP ${res.status}`);
+      failCronCheckIn(cronCtx, CRON_NAME, new Error(`HTTP ${res.status} — service down`));
       return NextResponse.json({ healthy: false, status: res.status, latency });
     }
 
@@ -122,6 +130,7 @@ export async function GET(req: NextRequest) {
 
     logger.info(`[uptime-check] OK — ${latency}ms`);
     if (db) await recordCronRun(db, CRON_NAME, 'success');
+    finishCronCheckIn(cronCtx, CRON_NAME);
     return NextResponse.json({ healthy: true, status: res.status, latency, checkStatus });
   } catch (e) {
     const msg = getErrorMessage(e);
@@ -138,6 +147,7 @@ export async function GET(req: NextRequest) {
       } catch { /* non-fatal */ }
       await recordCronRun(db, CRON_NAME, 'failure', msg);
     }
+    failCronCheckIn(cronCtx, CRON_NAME, e);
     return NextResponse.json({ healthy: false, error: msg });
   }
 }

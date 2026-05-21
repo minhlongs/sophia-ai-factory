@@ -18,6 +18,11 @@ import { getD1Raw } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
 import { recordCronRun } from '@/lib/cron/run-tracker';
+import {
+  startCronCheckIn,
+  finishCronCheckIn,
+  failCronCheckIn,
+} from '@/seed/observability/cron-check-in';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,6 +49,7 @@ async function handler(request: NextRequest): Promise<NextResponse> {
   const authFail = verifyCronAuth(request);
   if (authFail) return authFail;
 
+  const cronCtx = startCronCheckIn(CRON_NAME);
   const startedAt = Date.now();
   const counts: UpdateCounts = { to_active: 0, to_at_risk: 0, to_churned: 0, unchanged: 0 };
   const db = await getD1Raw();
@@ -108,11 +114,13 @@ async function handler(request: NextRequest): Promise<NextResponse> {
 
     await recordCronRun(db, CRON_NAME, 'success');
     logger.info('[Cron/HandoverStatusSync] Done', { ...counts, durationMs: Date.now() - startedAt });
+    finishCronCheckIn(cronCtx, CRON_NAME);
     return NextResponse.json({ success: true, ...counts });
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
     logger.error('[Cron/HandoverStatusSync] FAILED', err instanceof Error ? err : undefined);
     await recordCronRun(db, CRON_NAME, 'failure', errMsg);
+    failCronCheckIn(cronCtx, CRON_NAME, err);
     return NextResponse.json({ success: false, error: errMsg }, { status: 500 });
   }
 }

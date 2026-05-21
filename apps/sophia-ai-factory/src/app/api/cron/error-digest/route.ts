@@ -14,6 +14,11 @@ import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
 import { getErrorMessage } from '@/seed/utils/to-error';
 import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker';
 import { emit } from '@/lib/webhooks/emitter';
+import {
+  startCronCheckIn,
+  finishCronCheckIn,
+  failCronCheckIn,
+} from '@/seed/observability/cron-check-in';
 
 export const dynamic = 'force-dynamic';
 
@@ -140,6 +145,7 @@ async function handler(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const cronCtx = startCronCheckIn(CRON_NAME);
   const bsConfig = {
     logsToken: process.env.BETTER_STACK_LOGS_TOKEN ?? '',
     ingestingHost: process.env.BETTER_STACK_INGESTING_HOST,
@@ -148,11 +154,13 @@ async function handler(request: NextRequest): Promise<NextResponse> {
   const db = (globalThis as unknown as GlobalEnv).DB;
   if (!db) {
     await pushFatalLog('D1_UNAVAILABLE', 'DB binding missing in error-digest', bsConfig);
+    failCronCheckIn(cronCtx, CRON_NAME, new Error('D1_UNAVAILABLE'));
     return NextResponse.json({ ok: false, reason: 'D1_UNAVAILABLE' }, { status: 200 });
   }
 
   // Idempotency check — informational, not strict
   if (await wasRecentlyRun(db as unknown as D1Database, CRON_NAME, IDEMPOTENCY_WINDOW_MS)) {
+    finishCronCheckIn(cronCtx, CRON_NAME);
     return NextResponse.json({ ok: true, skipped: 'recent_run' });
   }
 
@@ -175,6 +183,7 @@ async function handler(request: NextRequest): Promise<NextResponse> {
     const errMsg = getErrorMessage(d1Err);
     await pushFatalLog('D1_UNAVAILABLE', errMsg, bsConfig);
     await recordCronRun(db as unknown as D1Database, CRON_NAME, 'failure', errMsg);
+    failCronCheckIn(cronCtx, CRON_NAME, d1Err);
     return NextResponse.json({ ok: false, reason: 'D1_UNAVAILABLE' }, { status: 200 });
   }
 
@@ -218,6 +227,7 @@ async function handler(request: NextRequest): Promise<NextResponse> {
 
   await recordCronRun(db as unknown as D1Database, CRON_NAME, 'success');
 
+  finishCronCheckIn(cronCtx, CRON_NAME);
   return NextResponse.json({
     ok: true,
     ts: new Date().toISOString(),

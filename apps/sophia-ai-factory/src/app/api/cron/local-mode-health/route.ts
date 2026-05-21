@@ -15,6 +15,11 @@ import { D1Events } from '@/lib/signals/d1-event-types'
 import { logger } from '@/seed/utils/logger-utility'
 import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker'
 import { verifyCronAuth } from '@/seed/security/cron-auth'
+import {
+  startCronCheckIn,
+  finishCronCheckIn,
+  failCronCheckIn,
+} from '@/seed/observability/cron-check-in'
 
 export const dynamic = 'force-dynamic'
 
@@ -126,20 +131,29 @@ export async function POST(req: NextRequest): Promise<NextResponse> { return han
 async function handler(req: NextRequest): Promise<NextResponse> {
   const authError = verifyCronAuth(req);
   if (authError) return authError;
+  const cronCtx = startCronCheckIn(CRON_NAME);
   let db: D1Database
-  try { db = getDb() } catch { return NextResponse.json({ error: 'D1 unavailable' }, { status: 500 }) }
+  try {
+    db = getDb()
+  } catch {
+    failCronCheckIn(cronCtx, CRON_NAME, new Error('D1 unavailable'));
+    return NextResponse.json({ error: 'D1 unavailable' }, { status: 500 })
+  }
 
   if (await wasRecentlyRun(db, CRON_NAME, IDEMPOTENCY_WINDOW_MS)) {
+    finishCronCheckIn(cronCtx, CRON_NAME);
     return NextResponse.json({ ok: true, skipped: 'recent_run' })
   }
 
   try {
     const summary = await runHealthCheck(db, getDek())
     await recordCronRun(db, CRON_NAME, 'success')
+    finishCronCheckIn(cronCtx, CRON_NAME);
     return NextResponse.json(summary)
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     await recordCronRun(db, CRON_NAME, 'failure', msg)
+    failCronCheckIn(cronCtx, CRON_NAME, err);
     throw err
   }
 }
