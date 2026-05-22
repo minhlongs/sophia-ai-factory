@@ -2,14 +2,14 @@
  * POST /api/publish/schedule
  *
  * Schedule a video for multi-channel publishing.
- * Auth: session cookie (Better Auth)
+ * Auth: Bearer (OpenClaw plugin, scope: publish:write) OR session cookie
  * Body: { videoJobId, channels[], caption, hashtags, productLink?, scheduledAt }
  * Response: { jobIds, quotaBlocked }
  */
 
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
+import { getCurrentUserOrOpenClaw, isAuthError } from '@/seed/auth/get-current-user-or-openclaw';
 import { schedulePublish } from '@/lib/publishing/scheduler';
 import { logger } from '@/seed/utils/logger-utility';
 
@@ -28,10 +28,9 @@ const scheduleBodySchema = z.object({
 
 export async function POST(request: Request): Promise<NextResponse> {
   try {
-    const user = await getCurrentUserFromHeaders(request.headers);
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const auth = await getCurrentUserOrOpenClaw(request, { requiredScope: 'publish:write' });
+    if (isAuthError(auth)) return auth.toNextResponse();
+    const userId = auth.userId;
 
     const body = await request.json().catch(() => null);
     const parsed = scheduleBodySchema.safeParse(body);
@@ -45,13 +44,13 @@ export async function POST(request: Request): Promise<NextResponse> {
     const { videoJobId, channels, caption, hashtags, productLink, scheduledAt } = parsed.data;
 
     // tenantId = userId (Phase 11 introduces org tenants)
-    const tenantId = user.id;
+    const tenantId = userId;
     const now = Math.floor(Date.now() / 1000);
 
     const result = await schedulePublish({
       videoJobId,
       tenantId,
-      userId: user.id,
+      userId,
       channelIds: channels,
       caption,
       hashtags,
