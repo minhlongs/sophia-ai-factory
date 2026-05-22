@@ -17,6 +17,7 @@
  * @module land/voice/clone-voice
  */
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
+import { assertSafeAudioUrl } from '@/seed/security/assert-safe-audio-url';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 
@@ -80,6 +81,8 @@ interface ElevenLabsAddVoiceResponse {
 }
 
 async function fetchSample(url: string): Promise<{ blob: Blob; filename: string }> {
+  // SSRF guard: reject private IPs, loopback, link-local, non-http(s) schemes.
+  assertSafeAudioUrl(url);
   const res = await fetch(url);
   if (!res.ok) {
     throw new Error(`audio fetch ${url} returned ${res.status}`);

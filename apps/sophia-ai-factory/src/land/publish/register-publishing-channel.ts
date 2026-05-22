@@ -14,6 +14,7 @@
  * @module land/publish/register-publishing-channel
  */
 import { getD1Raw } from '@/seed/db/client';
+import { encryptToken } from '@/lib/publishing/token-crypto';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 
@@ -93,6 +94,10 @@ export async function registerPublishingChannel(
   const db = await getD1Raw();
   const nowSec = Math.floor(Date.now() / 1000);
 
+  // Encrypt tokens before any DB write so plaintext never touches the store.
+  const encryptedAccessToken = await encryptToken(input.accessToken);
+  const encryptedRefreshToken = input.refreshToken ? await encryptToken(input.refreshToken) : null;
+
   // Idempotency: re-register against the same (user, provider, accountId)
   // returns the existing row id instead of inserting a duplicate.
   const existing = await db
@@ -118,8 +123,8 @@ export async function registerPublishingChannel(
          WHERE id = ?6`,
       )
       .bind(
-        input.accessToken,
-        input.refreshToken ?? null,
+        encryptedAccessToken,
+        encryptedRefreshToken,
         input.expiresAt ?? null,
         input.displayName ?? null,
         nowSec,
@@ -151,8 +156,8 @@ export async function registerPublishingChannel(
         input.provider,
         input.externalAccountId,
         input.displayName ?? null,
-        input.accessToken,
-        input.refreshToken ?? null,
+        encryptedAccessToken,
+        encryptedRefreshToken,
         input.expiresAt ?? null,
         nowSec,
       )
