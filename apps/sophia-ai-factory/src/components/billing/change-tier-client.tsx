@@ -13,6 +13,7 @@
  */
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/seed/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/seed/components/ui/card';
@@ -180,11 +181,11 @@ export function ChangeTierClient({ currentTier }: Props) {
             <p className="font-semibold text-sm">{t('master_title')}</p>
             <p className="text-xs text-muted-foreground">{t('master_hint')}</p>
           </div>
-          <a href="/pricing" className="shrink-0">
+          <Link href="/pricing" className="shrink-0">
             <Button variant="outline" size="sm">
               {t('master_cta')} <ArrowUpRight className="ml-1 h-3.5 w-3.5" aria-hidden="true" />
             </Button>
-          </a>
+          </Link>
         </CardContent>
       </Card>
 

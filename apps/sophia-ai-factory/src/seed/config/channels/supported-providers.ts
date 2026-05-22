@@ -3,7 +3,7 @@
  * @module seed/config/channels/supported-providers
  */
 
-export const SUPPORTED_PROVIDERS = [
+export const OAUTH_CHANNEL_PROVIDERS = [
   'youtube',
   'tiktok',
   'instagram',
@@ -12,6 +12,18 @@ export const SUPPORTED_PROVIDERS = [
   'zalo',
   'facebook',
   'twitter',
+  'threads',
+  'reddit',
+  'bluesky',
+  'mastodon',
 ] as const;
 
-export type SupportedProvider = typeof SUPPORTED_PROVIDERS[number];
+export const SUPPORTED_PROVIDERS = OAUTH_CHANNEL_PROVIDERS;
+
+export const CHANNEL_STATUS_PROVIDERS = [
+  ...OAUTH_CHANNEL_PROVIDERS,
+  'telegram',
+] as const;
+
+export type SupportedProvider = typeof OAUTH_CHANNEL_PROVIDERS[number];
+export type ChannelStatusProvider = typeof CHANNEL_STATUS_PROVIDERS[number];

@@ -3,8 +3,8 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-vi.mock('@/tree/byok/resolve-user-api-key', () => ({
-  resolveUserApiKey: vi.fn(),
+vi.mock('@/tree/credentials/get-provider-key', () => ({
+  getHeyGenKey: vi.fn(),
 }));
 
 vi.mock('@/lib/video/heygen-helpers', () => ({
@@ -18,11 +18,11 @@ vi.mock('@/seed/db/client', () => ({
   getD1Raw: vi.fn(() => Promise.resolve({ prepare: mockPrepare })),
 }));
 
-import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
+import { getHeyGenKey } from '@/tree/credentials/get-provider-key';
 import { createHeyGenVideo } from '@/lib/video/heygen-helpers';
 import { submitByokVideo, RenderByokVideoError } from '@/land/video/render-byok-video';
 
-const mockedResolveUserApiKey = vi.mocked(resolveUserApiKey);
+const mockedGetHeyGenKey = vi.mocked(getHeyGenKey);
 const mockedCreateHeyGen = vi.mocked(createHeyGenVideo);
 
 describe('submitByokVideo', () => {
@@ -34,7 +34,7 @@ describe('submitByokVideo', () => {
   });
 
   it('submits to HeyGen + inserts videos row when key is present', async () => {
-    mockedResolveUserApiKey.mockResolvedValue('hg_key_abc');
+    mockedGetHeyGenKey.mockResolvedValue({ key: 'hg_key_abc', source: 'user' });
     mockedCreateHeyGen.mockResolvedValue({ videoId: 'hg_job_xyz' });
 
     const result = await submitByokVideo({
@@ -45,7 +45,13 @@ describe('submitByokVideo', () => {
 
     expect(result.status).toBe('processing');
     expect(result.heygenJobId).toBe('hg_job_xyz');
-    expect(result.videoId).toMatch(/^[0-9a-f]{32}$/);
+    expect(result.videoId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+    );
+    expect(mockedGetHeyGenKey).toHaveBeenCalledWith({
+      userId: 'u1',
+      fallbackToPlatform: false,
+    });
     expect(mockedCreateHeyGen).toHaveBeenCalledOnce();
     expect(mockPrepare).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO videos'),
@@ -53,7 +59,7 @@ describe('submitByokVideo', () => {
   });
 
   it('throws BYOK_REQUIRED when no HeyGen key is configured', async () => {
-    mockedResolveUserApiKey.mockResolvedValue(null);
+    mockedGetHeyGenKey.mockResolvedValue(null);
 
     await expect(
       submitByokVideo({ userId: 'u1', script: 'x' }),
@@ -69,7 +75,7 @@ describe('submitByokVideo', () => {
   });
 
   it('throws HEYGEN_SUBMIT_FAILED when HeyGen call rejects', async () => {
-    mockedResolveUserApiKey.mockResolvedValue('hg_key');
+    mockedGetHeyGenKey.mockResolvedValue({ key: 'hg_key', source: 'user' });
     mockedCreateHeyGen.mockRejectedValue(new Error('HeyGen createVideo 402: payment required'));
 
     await expect(
@@ -78,7 +84,7 @@ describe('submitByokVideo', () => {
   });
 
   it('throws PERSIST_FAILED when D1 insert fails', async () => {
-    mockedResolveUserApiKey.mockResolvedValue('hg_key');
+    mockedGetHeyGenKey.mockResolvedValue({ key: 'hg_key', source: 'user' });
     mockedCreateHeyGen.mockResolvedValue({ videoId: 'hg_job_xyz' });
     mockRun.mockRejectedValueOnce(new Error('D1 timeout'));
 

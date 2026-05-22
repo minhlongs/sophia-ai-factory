@@ -7,7 +7,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { logger } from '@/seed/utils/logger-utility';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
-import { SUPPORTED_PROVIDERS } from '@/seed/config/channels/supported-providers';
+import {
+  CHANNEL_STATUS_PROVIDERS,
+  OAUTH_CHANNEL_PROVIDERS,
+} from '@/seed/config/channels/supported-providers';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,6 +30,10 @@ interface ChannelRow {
   status: string;
 }
 
+interface TelegramRow {
+  first_name: string | null;
+}
+
 export const GET = withRateLimit(async function GET(req: NextRequest) {
   let user: Awaited<ReturnType<typeof getCurrentUserFromHeaders>> | null = null;
   try {
@@ -40,23 +47,43 @@ export const GET = withRateLimit(async function GET(req: NextRequest) {
   if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
   try {
-    const placeholders = SUPPORTED_PROVIDERS.map(() => '?').join(',');
+    const placeholders = OAUTH_CHANNEL_PROVIDERS.map(() => '?').join(',');
     const { results } = await db
       .prepare(
         `SELECT provider, display_name, status
          FROM publishing_channels
          WHERE user_id = ? AND provider IN (${placeholders})
-         GROUP BY provider`,
+         ORDER BY provider ASC, status = 'active' DESC, updated_at DESC`,
       )
-      .bind(user.id, ...SUPPORTED_PROVIDERS)
+      .bind(user.id, ...OAUTH_CHANNEL_PROVIDERS)
       .all<ChannelRow>();
 
-    const connectedMap = new Map((results ?? []).map(r => [r.provider, r]));
-    const channels = SUPPORTED_PROVIDERS.map(p => {
+    const connectedMap = new Map<string, ChannelRow>();
+    for (const row of results ?? []) {
+      if (!connectedMap.has(row.provider) || row.status === 'active') {
+        connectedMap.set(row.provider, row);
+      }
+    }
+
+    const telegram = await db
+      .prepare('SELECT first_name FROM telegram_paired_chats WHERE paired_by = ? LIMIT 1')
+      .bind(user.id)
+      .first<TelegramRow>();
+
+    const channels = CHANNEL_STATUS_PROVIDERS.map(p => {
+      if (p === 'telegram') {
+        return {
+          provider: p,
+          connected: Boolean(telegram),
+          display_name: telegram?.first_name ?? null,
+          status: telegram ? 'active' : null,
+        };
+      }
+
       const row = connectedMap.get(p);
       return {
         provider: p,
-        connected: !!row,
+        connected: row?.status === 'active',
         display_name: row?.display_name ?? null,
         status: row?.status ?? null,
       };

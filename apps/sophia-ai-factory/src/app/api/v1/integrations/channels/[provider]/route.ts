@@ -7,11 +7,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { logger } from '@/seed/utils/logger-utility';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
-import { SUPPORTED_PROVIDERS, type SupportedProvider } from '@/seed/config/channels/supported-providers';
+import { OAUTH_CHANNEL_PROVIDERS } from '@/seed/config/channels/supported-providers';
 
 export const dynamic = 'force-dynamic';
 
-const ALLOWED_PROVIDERS = new Set<string>([...SUPPORTED_PROVIDERS]);
+const ALLOWED_PROVIDERS = new Set<string>([...OAUTH_CHANNEL_PROVIDERS]);
 
 function getD1(): D1Database | null {
   try {

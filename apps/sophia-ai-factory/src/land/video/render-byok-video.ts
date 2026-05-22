@@ -10,7 +10,7 @@
  *
  * @module land/video/render-byok-video
  */
-import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
+import { getHeyGenKey } from '@/tree/credentials/get-provider-key';
 import { getD1Raw } from '@/seed/db/client';
 import { createHeyGenVideo } from '@/lib/video/heygen-helpers';
 import { logger } from '@/seed/utils/logger-utility';
@@ -44,9 +44,7 @@ export class RenderByokVideoError extends Error {
 }
 
 function newVideoId(): string {
-  const bytes = new Uint8Array(16);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  return crypto.randomUUID();
 }
 
 /** Submit a HeyGen render and persist a videos row. Returns immediately — does not poll. */
@@ -56,8 +54,8 @@ export async function submitByokVideo(
   const script = input.script?.trim() ?? '';
   if (!script) throw new RenderByokVideoError('EMPTY_SCRIPT', 'script is required');
 
-  const key = await resolveUserApiKey(input.userId, 'heygen');
-  if (!key) {
+  const keyResult = await getHeyGenKey({ userId: input.userId, fallbackToPlatform: false });
+  if (!keyResult) {
     throw new RenderByokVideoError(
       'BYOK_REQUIRED',
       'Add your HeyGen API key in Setup Wizard → Integrations to render videos.',
@@ -67,7 +65,7 @@ export async function submitByokVideo(
   let heygenJobId: string;
   try {
     const result = await createHeyGenVideo({
-      apiKey: key,
+      apiKey: keyResult.key,
       script,
       title: input.title,
       voiceId: input.voiceId,
