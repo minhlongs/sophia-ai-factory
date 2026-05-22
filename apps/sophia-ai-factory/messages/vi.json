@@ -2097,6 +2097,43 @@
       "regenConfirm": "Hành động này sẽ vô hiệu hóa các chữ ký cũ. Tiếp tục?",
       "regenSuccess": "Secret mới đã được tạo. Hãy cập nhật bên gửi webhook.",
       "urlHelp": "POST đến URL này kèm chữ ký HMAC để kích hoạt SOP."
+    },
+    "creator": {
+      "title": "Bảng điều khiển Creator",
+      "subtitle": "Tạo và bán SOP trên marketplace",
+      "newSop": "Tạo SOP mới",
+      "earnings": "Thu nhập",
+      "totalEarned": "Tổng thu nhập",
+      "pending": "Đang chờ",
+      "payable": "Có thể rút",
+      "paid": "Đã thanh toán",
+      "noSops": "Bạn chưa tạo SOP nào",
+      "sales": "Đơn bán",
+      "revenue": "Doanh thu",
+      "status": "Trạng thái",
+      "submitReview": "Xuất bản",
+      "formTitle": "Tạo SOP mới",
+      "nameEn": "Tên (Tiếng Anh)",
+      "nameVi": "Tên (Tiếng Việt)",
+      "descEn": "Mô tả (Tiếng Anh)",
+      "descVi": "Mô tả (Tiếng Việt)",
+      "category": "Danh mục",
+      "playbook": "Playbook (Markdown)",
+      "agents": "Agents (YAML)",
+      "configSchema": "Config Schema (JSON, tùy chọn)",
+      "price": "Giá (USD)",
+      "setupTime": "Thời gian cài đặt (phút)",
+      "credits": "Credits mỗi lần chạy",
+      "create": "Tạo SOP"
+    },
+    "community": {
+      "title": "SOP Cộng đồng",
+      "subtitle": "SOP được tạo bởi cộng đồng",
+      "buy": "Mua",
+      "purchased": "Đã mua",
+      "bySeller": "bởi",
+      "noListings": "Chưa có SOP cộng đồng",
+      "price": "Giá"
     }
   },
   "agentChat": {

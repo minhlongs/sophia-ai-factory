@@ -99,15 +99,18 @@ Canva               ✅ Design tool     ✅ Templates            ✅ Templates +
 - [x] Build passes, tsc clean
 - **Files:** `lib/sop/seeds/playbooks/`, `seed/config/tiers/`, `forest/components/sop/`, `messages/`
 
-### Phase 3: Marketplace + Creator Mode (Weeks 5-7)
-- [ ] D1 schema: `sop_marketplace_listings`, `sop_licenses`, `creator_payouts`
-- [ ] Creator SOP editor (MASTER tier only)
-- [ ] Marketplace browse/search/purchase flow
-- [ ] NOWPayments integration for SOP purchases (crypto)
-- [ ] PayOS integration for VN domestic purchases
-- [ ] 70/30 creator/platform commission split
-- [ ] Creator dashboard (sales, revenue, analytics)
-- **Files:** `apps/sophia-ai-factory/src/app/[locale]/(app)/marketplace/`
+### Phase 3: Marketplace + Creator Mode (Weeks 5-7) ✅ DONE
+- [x] D1 schema: `sop_listings`, `sop_licenses` (2 tables, 4 indexes)
+- [x] Creator SOP editor (MASTER tier only) — `/dashboard/sop-creator/new`
+- [x] Marketplace browse with community SOPs + purchase flow
+- [x] MVP purchase flow (real NOWPayments integration deferred to Phase 4)
+- [x] 70/30 creator/platform commission split via existing commission_ledger
+- [x] Creator dashboard (earnings summary, sales table) — `/dashboard/sop-creator`
+- [x] Marketplace repo: 13 new CRUD functions in `sop-repo-marketplace.ts`
+- [x] i18n: `sop.creator` + `sop.community` keys (en + vi)
+- [x] Build passes, tsc clean
+- [ ] PayOS integration for VN domestic — Phase 4+
+- **Files:** `lib/sop/sop-repo-marketplace.ts`, `land/sop-marketplace/`, `app/[locale]/dashboard/sop-creator/`, `app/[locale]/dashboard/sop-marketplace/`
 
 ### Phase 4: Affiliate + Growth Engine (Weeks 8-10)
 - [ ] D1 schema: `affiliate_links`, `affiliate_commissions`, `affiliate_payouts`

@@ -95,3 +95,61 @@ export interface UpdateRunFields {
   startedAt?: number;
   completedAt?: number;
 }
+
+/** Marketplace listing status */
+export type SopListingStatus = 'pending_review' | 'published' | 'rejected' | 'suspended';
+
+/** Payment status for SOP license */
+export type SopPaymentStatus = 'pending' | 'paid' | 'refunded';
+
+/** Row from sop_listings table */
+export interface SopListingRow {
+  id: string;
+  template_id: string;
+  price_cents: number;
+  currency: string;
+  preview_md: string | null;
+  demo_video_url: string | null;
+  tags: string | null;  // JSON array string
+  total_sales: number;
+  total_revenue_cents: number;
+  rating_avg: number;
+  rating_count: number;
+  status: SopListingStatus;
+  rejection_reason: string | null;
+  published_at: number | null;
+  created_at: number;
+  updated_at: number;
+}
+
+/** Row from sop_licenses table */
+export interface SopLicenseRow {
+  id: string;
+  user_id: string;
+  template_id: string;
+  listing_id: string;
+  price_cents: number;
+  payment_id: string | null;
+  payment_status: SopPaymentStatus;
+  purchased_at: number;
+  refunded_at: number | null;
+}
+
+/** Input for creating a new marketplace listing */
+export interface CreateListingInput {
+  templateId: string;
+  priceCents: number;
+  currency?: string;
+  previewMd?: string;
+  demoVideoUrl?: string;
+  tags?: string[];
+}
+
+/** Input for creating a purchase license */
+export interface CreateLicenseInput {
+  userId: string;
+  templateId: string;
+  listingId: string;
+  priceCents: number;
+  paymentId?: string;
+}

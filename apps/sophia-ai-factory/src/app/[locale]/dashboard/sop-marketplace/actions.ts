@@ -124,3 +124,62 @@ export async function deleteSopAction(installationId: string): Promise<{ error?:
   await deleteInstallation(db, installationId);
   redirect('/dashboard/sops');
 }
+
+// ---------------------------------------------------------------------------
+// Purchase community SOP (MVP: mark paid immediately — NOWPayments in Phase 4)
+// ---------------------------------------------------------------------------
+export async function purchaseSopAction(
+  templateId: string,
+): Promise<{ error?: string; checkoutUrl?: string }> {
+  const user = await getCurrentUser();
+  if (!user) return { error: 'Unauthorized' };
+
+  const db = getD1();
+  if (!db) return { error: 'Database unavailable' };
+
+  const {
+    getUserLicense,
+    getListingByTemplateId,
+    createLicense,
+    markLicensePaid,
+    incrementSales,
+    getTemplateById,
+  } = await import('@/lib/sop/sop-repo');
+  const { recordSopSaleCommission } = await import('@/land/sop-marketplace');
+
+  // Idempotency: bail if already purchased
+  const existingLicense = await getUserLicense(db, user.id, templateId);
+  if (existingLicense) return { error: 'Already purchased' };
+
+  const listing = await getListingByTemplateId(db, templateId);
+  if (!listing || listing.status !== 'published') return { error: 'Listing not available' };
+
+  // Create pending license row
+  const license = await createLicense(db, {
+    userId: user.id,
+    templateId,
+    listingId: listing.id,
+    priceCents: listing.price_cents,
+  });
+
+  const paymentId = `mvp_${license.id}`;
+
+  // Mark paid + update listing counters
+  await markLicensePaid(db, license.id, paymentId);
+  await incrementSales(db, listing.id, listing.price_cents);
+
+  // Record creator commission (70/30 split, 14-day hold)
+  const template = await getTemplateById(db, templateId);
+  if (template?.author_user_id) {
+    await recordSopSaleCommission(db, {
+      creatorId: template.author_user_id,
+      listingId: listing.id,
+      templateId,
+      licenseId: license.id,
+      priceCents: listing.price_cents,
+      paymentId,
+    });
+  }
+
+  return {};
+}
