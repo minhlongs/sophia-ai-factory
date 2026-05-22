@@ -86,6 +86,25 @@ type VideoGenerateRequestedEvent = {
   };
 };
 
+type SopExecutionRequestedEvent = {
+  data: {
+    executionId: string;
+    userId: string;
+    orgId: string;
+    sopTemplateId: string;
+    installationId?: string;
+    inputJson: string;
+  };
+};
+
+type SopStepCompletedEvent = {
+  data: {
+    executionId: string;
+    stepOrder: number;
+    result: Record<string, unknown>;
+  };
+};
+
 type Events = {
   "campaign.created": CampaignCreatedEvent;
   "test/hello.world": { data: Record<string, unknown> };
@@ -104,6 +123,9 @@ type Events = {
   "publish.token.refresh": { data: Record<string, never> };
   // Mission video generation (Wave 13 I2)
   "video/generate.requested": VideoGenerateRequestedEvent;
+  // Solo SOPs Platform (Phase 01)
+  "sop/execution.requested": SopExecutionRequestedEvent;
+  "sop/step.completed": SopStepCompletedEvent;
   // Payout pipeline events (Phase 13)
   "conversion.created": ConversionCreatedEvent;
   "commission.matured": CommissionMaturedEvent;

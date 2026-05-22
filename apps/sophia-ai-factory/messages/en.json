@@ -1981,7 +1981,8 @@
       "installed": "Installed",
       "viewDetails": "View Details",
       "featured": "Featured",
-      "setupTime": "Setup {n} min"
+      "setupTime": "Setup {n} min",
+      "upgradeTier": "Upgrade to install"
     },
     "detail": {
       "agentsTitle": "Agents",

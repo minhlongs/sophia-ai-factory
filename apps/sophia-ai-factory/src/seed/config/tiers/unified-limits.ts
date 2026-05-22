@@ -42,6 +42,8 @@ export interface UnifiedTierLimits {
   whiteLabel: boolean;
   /** Billing type: 'monthly' subscription or 'lifetime' one-time payment */
   billingType: 'monthly' | 'lifetime';
+  /** Max SOP installations allowed */
+  sopInstallLimit: number;
 }
 
 /** Canonical tier definitions used by all tier checks, quota logic, and pricing UI. */
@@ -62,6 +64,7 @@ export const UNIFIED_TIERS: Record<Tier, UnifiedTierLimits> = {
     customIntegrations: false,
     whiteLabel: false,
     billingType: 'monthly',
+    sopInstallLimit: 5,
   },
 
   PREMIUM: {
@@ -80,6 +83,7 @@ export const UNIFIED_TIERS: Record<Tier, UnifiedTierLimits> = {
     customIntegrations: false,
     whiteLabel: false,
     billingType: 'monthly',
+    sopInstallLimit: 15,
   },
 
   ENTERPRISE: {
@@ -98,6 +102,7 @@ export const UNIFIED_TIERS: Record<Tier, UnifiedTierLimits> = {
     customIntegrations: true,
     whiteLabel: false,
     billingType: 'monthly',
+    sopInstallLimit: 999,
   },
 
   MASTER: {
@@ -116,6 +121,7 @@ export const UNIFIED_TIERS: Record<Tier, UnifiedTierLimits> = {
     customIntegrations: true,
     whiteLabel: true,
     billingType: 'lifetime',
+    sopInstallLimit: 999,
   },
 } as const;
 
@@ -132,4 +138,9 @@ export function getMcuMonthlyLimit(tier: Tier): number {
 /** Get AI command quota for a tier. Returns 999 for effectively unlimited tiers. */
 export function getAiCommandLimit(tier: Tier): number {
   return UNIFIED_TIERS[tier].aiCommands;
+}
+
+/** Get max SOP installation count allowed for a tier. Defaults to 5 (BASIC) if tier unknown. */
+export function getSopInstallLimit(tier: Tier): number {
+  return UNIFIED_TIERS[tier]?.sopInstallLimit ?? 5;
 }

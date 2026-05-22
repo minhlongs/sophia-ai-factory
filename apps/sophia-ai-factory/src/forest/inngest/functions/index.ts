@@ -37,3 +37,6 @@ export { videoGenerate } from './video-generate';
 
 // Wave 22 P06: auto-finalize account deletion after 7d cooldown
 export { accountDeleteFinalizeCron } from './account-delete-finalize-cron';
+
+// SOP execution engine (Phase 01 Solo SOPs)
+export { sopExecute } from '@/forest/sops/sop-executor';
