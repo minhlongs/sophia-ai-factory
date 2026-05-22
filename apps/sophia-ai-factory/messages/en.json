@@ -2134,6 +2134,25 @@
       "bySeller": "by",
       "noListings": "No community SOPs available yet",
       "price": "Price"
+    },
+    "betaInvites": {
+      "title": "Beta Invites",
+      "description": "Manage beta creator invitation codes",
+      "createInvite": "Create Invite",
+      "email": "Email (optional)",
+      "maxUses": "Max Uses",
+      "expiresAt": "Expires At",
+      "code": "Invite Code",
+      "used": "Used",
+      "expires": "Expires",
+      "created": "Created",
+      "actions": "Actions",
+      "copy": "Copy Code",
+      "revoke": "Revoke",
+      "noInvites": "No invites yet",
+      "commissionOverride": "50% commission for 60 days",
+      "redeemed": "Redeemed",
+      "active": "Active"
     }
   },
   "agentChat": {
@@ -2567,5 +2586,13 @@
     "commissionBoost": "Commission Boost",
     "noChallenges": "No active challenges right now",
     "claimed": "Claimed"
+  },
+  "community": {
+    "joinCommunity": "Join the Community",
+    "telegramDescription": "Vietnamese creators community on Telegram",
+    "discordDescription": "English-speaking creators on Discord",
+    "joinTelegram": "Join Telegram",
+    "joinDiscord": "Join Discord",
+    "dismiss": "Dismiss"
   }
 }

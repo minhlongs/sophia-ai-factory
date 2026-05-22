@@ -2134,6 +2134,25 @@
       "bySeller": "bởi",
       "noListings": "Chưa có SOP cộng đồng",
       "price": "Giá"
+    },
+    "betaInvites": {
+      "title": "Lời mời Beta",
+      "description": "Quản lý mã mời nhà sáng tạo beta",
+      "createInvite": "Tạo Lời Mời",
+      "email": "Email (tùy chọn)",
+      "maxUses": "Số lần sử dụng tối đa",
+      "expiresAt": "Hết hạn",
+      "code": "Mã mời",
+      "used": "Đã dùng",
+      "expires": "Hết hạn",
+      "created": "Tạo lúc",
+      "actions": "Hành động",
+      "copy": "Sao chép mã",
+      "revoke": "Thu hồi",
+      "noInvites": "Chưa có lời mời nào",
+      "commissionOverride": "Hoa hồng 50% trong 60 ngày",
+      "redeemed": "Đã đổi",
+      "active": "Đang hoạt động"
     }
   },
   "agentChat": {
@@ -2567,5 +2586,13 @@
     "commissionBoost": "Tăng hoa hồng",
     "noChallenges": "Chưa có thử thách nào",
     "claimed": "Đã nhận"
+  },
+  "community": {
+    "joinCommunity": "Tham Gia Cộng Đồng",
+    "telegramDescription": "Cộng đồng nhà sáng tạo Việt Nam trên Telegram",
+    "discordDescription": "Cộng đồng nhà sáng tạo tiếng Anh trên Discord",
+    "joinTelegram": "Tham gia Telegram",
+    "joinDiscord": "Tham gia Discord",
+    "dismiss": "Ẩn"
   }
 }

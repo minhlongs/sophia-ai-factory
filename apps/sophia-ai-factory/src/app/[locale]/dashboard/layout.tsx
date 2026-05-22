@@ -38,6 +38,7 @@ import { AgentSidebar } from "@/forest/components/agent-sidebar/agent-sidebar";
 import { CmdKPalette } from "@/forest/components/cmd-k/cmd-k-palette";
 import { SidebarQuotaWidget } from "@/forest/components/dashboard/sidebar-quota-widget";
 import { TrialBanner } from "./components/trial-banner";
+import { CommunityCTABanner } from "@/forest/components/community-cta-banner";
 import { getD1Raw } from "@/seed/db/client";
 import { getUserTier } from "@/seed/db/get-user-tier";
 import { SignOutButton } from "@/seed/auth/sign-out-button";
@@ -441,6 +442,9 @@ export default async function DashboardLayout({
         {showTrialBanner && (
           <TrialBanner trialEndsAt={trialEndsAt!} />
         )}
+
+        {/* Community CTA — dismissible, client-side localStorage gate */}
+        <CommunityCTABanner />
 
         {/* Mobile Header (visible only on small screens) */}
         <header className="h-16 bg-card border-b border-border md:hidden flex items-center justify-between px-4">
