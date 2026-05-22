@@ -468,9 +468,11 @@ export async function handleAutoVideo(chatId: string, rawArg: string): Promise<v
     .slice(0, 3)
     .map((t, i) => `  ${i + 1}. ${t}`)
     .join('\n');
-  const scheduleLine = r.publish
+  const scheduleLine = r.publish && !('skipped' in r.publish)
     ? `\n📅 Scheduled \`${r.publish.jobId}\` at ${new Date(r.publish.scheduledAt * 1000).toISOString()}`
-    : '';
+    : r.publish && 'skipped' in r.publish
+      ? `\n📅 Publish skipped — no HeyGen key configured (add BYOK in Setup Wizard)`
+      : '';
   const secondaryLine = r.script.secondary
     ? `\n🌐 Translated → \`${r.script.secondary.language}\` (${r.script.secondary.body.length} chars)`
     : '';
