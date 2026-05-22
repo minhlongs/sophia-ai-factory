@@ -9,7 +9,23 @@ export {
   listOfficialTemplates,
   getTemplateBySlug,
   getTemplateById,
+  listMarketplaceTemplates,
+  listTemplatesByAuthor,
+  createTemplate,
 } from './sop-repo-templates';
+
+export {
+  getListingByTemplateId,
+  listPublishedListings,
+  createListing,
+  updateListingStatus,
+  incrementSales,
+  createLicense,
+  markLicensePaid,
+  getUserLicense,
+  listUserLicenses,
+  listCreatorSales,
+} from './sop-repo-marketplace';
 
 export {
   listInstallationsForUser,

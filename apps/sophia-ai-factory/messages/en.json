@@ -2097,6 +2097,43 @@
       "regenConfirm": "This will invalidate existing signatures. Continue?",
       "regenSuccess": "New secret generated. Update your webhook sender.",
       "urlHelp": "POST to this URL with HMAC signature to trigger this SOP."
+    },
+    "creator": {
+      "title": "Creator Dashboard",
+      "subtitle": "Create and sell SOPs on the marketplace",
+      "newSop": "Create New SOP",
+      "earnings": "Earnings",
+      "totalEarned": "Total Earned",
+      "pending": "Pending",
+      "payable": "Available",
+      "paid": "Paid Out",
+      "noSops": "You haven't created any SOPs yet",
+      "sales": "Sales",
+      "revenue": "Revenue",
+      "status": "Status",
+      "submitReview": "Publish",
+      "formTitle": "Create New SOP",
+      "nameEn": "Name (English)",
+      "nameVi": "Name (Vietnamese)",
+      "descEn": "Description (English)",
+      "descVi": "Description (Vietnamese)",
+      "category": "Category",
+      "playbook": "Playbook (Markdown)",
+      "agents": "Agents (YAML)",
+      "configSchema": "Config Schema (JSON, optional)",
+      "price": "Price (USD)",
+      "setupTime": "Setup Time (minutes)",
+      "credits": "Credits per Run",
+      "create": "Create SOP"
+    },
+    "community": {
+      "title": "Community SOPs",
+      "subtitle": "SOPs created by the community",
+      "buy": "Buy",
+      "purchased": "Purchased",
+      "bySeller": "by",
+      "noListings": "No community SOPs available yet",
+      "price": "Price"
     }
   },
   "agentChat": {
