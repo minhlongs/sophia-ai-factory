@@ -112,6 +112,17 @@ node scripts/generate-supabase-migrations-manifest.mjs
 echo "==> npm run type-check (TS gate)"
 npm run type-check
 
+# ─── Step 0.6: Test gate (Wave C C-7, 2026-05-22) ────────────────────────────
+# Run vitest suite before deploy. CF-direct doctrine removed GitHub Actions CI
+# as the test gate, leaving regressions only catchable manually. Skip with
+# SKIP_TESTS=1 for emergency hotfixes (documented in deploy log).
+if [ "${SKIP_TESTS:-0}" != "1" ]; then
+  echo "==> npm test (pre-deploy test gate)"
+  npm test
+else
+  echo "⚠️  SKIP_TESTS=1 — bypassing test gate (emergency hotfix)"
+fi
+
 # ─── Step 1: Next.js build ───────────────────────────────────────────────────
 # NEXT_PUBLIC_* vars are baked into the client bundle at build time.
 # Wave 17 Phase 03: flip distribute gate — set before next build so the literal "1"
@@ -177,6 +188,16 @@ fi
 echo ""
 echo "Deploy complete."
 echo "Verify: curl -s https://sophia.agencyos.network/api/version"
+
+# ─── Step 5.5: Mirror push to gitlab (non-fatal, Wave C P2-5, 2026-05-22) ────
+# Best-effort mirror. Local doctrine docs `git push gitlab main` as a manual
+# step; auto-pushing here removes operator drift. Non-fatal: a failed mirror
+# (network/auth) MUST NOT fail the deploy because the worker is already live.
+if git -C "$REPO_ROOT" remote get-url gitlab >/dev/null 2>&1; then
+  echo "==> git push gitlab $DEPLOY_BRANCH (non-fatal mirror)"
+  git -C "$REPO_ROOT" push gitlab "$DEPLOY_BRANCH" || \
+    echo "warn: gitlab mirror push failed (non-fatal; deploy already live)"
+fi
 
 # ─── Step 6: Post-deploy E2E smoke (opt-in, Phase 03 Track C) ───────────────
 # Gate: RUN_POSTDEPLOY_E2E=1 ./scripts/deploy-with-sha.sh

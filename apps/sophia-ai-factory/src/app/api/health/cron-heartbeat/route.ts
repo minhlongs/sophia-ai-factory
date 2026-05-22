@@ -32,6 +32,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as Sentry from '@sentry/nextjs';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
+import { logger } from '@/seed/utils/logger-utility';
 
 export const dynamic = 'force-dynamic';
 
@@ -101,7 +102,7 @@ function recordSentryCheckIn(
     );
 
     if (process.env.NODE_ENV !== 'production') {
-      console.log(`[cron-heartbeat] Sentry check-in recorded: ${monitorSlug} → ${status} (id: ${checkInId})`);
+      logger.info('[cron-heartbeat] Sentry check-in recorded', { monitorSlug, status, checkInId });
     }
   } catch {
     // Sentry SDK failure must never block the heartbeat response.
