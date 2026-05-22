@@ -228,6 +228,133 @@ describe('OpenClawGateway', () => {
       expect(result.results[0].success).toBe(false)
       expect(result.results[0].error).toContain('Channel not found or disabled')
     })
+
+    // F8 fix tests: parallel concurrency cap + aggregate result
+    it('F8: 10 channels with concurrency=5 run in ~2 batches, not 10 sequential', async () => {
+      // Each publish resolves immediately (no delay) — only verifying parallelism via call timing.
+      // We track max-concurrent inflight count.
+      let inflight = 0
+      let maxInflight = 0
+
+      const makeAdapter = (id: string): ChannelAdapter => ({
+        publish: vi.fn<(content: CampaignOutput) => Promise<PublishResult>>().mockImplementation(
+          () =>
+            new Promise<PublishResult>((resolve) => {
+              inflight++
+              maxInflight = Math.max(maxInflight, inflight)
+              // Resolve on next microtask
+              Promise.resolve().then(() => {
+                inflight--
+                resolve({ channelId: id, success: true })
+              })
+            }),
+        ),
+        getStatus: vi.fn<() => Promise<ChannelStatus>>().mockResolvedValue({ channelId: id, healthy: true, queueSize: 0 }),
+        healthCheck: vi.fn<() => Promise<boolean>>().mockResolvedValue(true),
+      })
+
+      const previousResult = {
+        campaignId: 'camp-001',
+        results: Array.from({ length: 10 }, (_, i) => ({
+          channelId: `ch${i}`,
+          success: false,
+          error: 'Timeout',
+        })),
+        allSucceeded: false,
+      }
+
+      for (let i = 0; i < 10; i++) {
+        gateway.registerChannel(createMockChannel(`ch${i}`, makeAdapter(`ch${i}`)))
+      }
+
+      const result = await gateway.selfHeal(sampleContent, previousResult)
+
+      // All 10 healed
+      expect(result.healed).toBe(10)
+      expect(result.failed).toBe(0)
+      expect(result.errors).toHaveLength(0)
+      expect(result.allSucceeded).toBe(true)
+      // Max inflight never exceeded 5 (concurrency cap)
+      expect(maxInflight).toBeLessThanOrEqual(5)
+      // At least 5 ran concurrently (not purely sequential)
+      expect(maxInflight).toBeGreaterThan(1)
+    })
+
+    it('F8: 1 channel fails all 3 attempts → aggregate healed=9, failed=1, no throw', async () => {
+      const failAdapter = createMockAdapter({
+        publish: vi.fn<(content: CampaignOutput) => Promise<PublishResult>>().mockRejectedValue(
+          new Error('Persistent failure'),
+        ),
+      })
+      const successAdapter = createMockAdapter({
+        publish: vi.fn<(content: CampaignOutput) => Promise<PublishResult>>().mockResolvedValue({
+          channelId: 'good',
+          success: true,
+        }),
+      })
+
+      for (let i = 0; i < 9; i++) {
+        gateway.registerChannel(createMockChannel(`good${i}`, createMockAdapter({
+          publish: vi.fn<(content: CampaignOutput) => Promise<PublishResult>>().mockResolvedValue({
+            channelId: `good${i}`,
+            success: true,
+          }),
+        })))
+      }
+      gateway.registerChannel(createMockChannel('bad', failAdapter))
+      void successAdapter // suppress unused warning
+
+      const previousResult = {
+        campaignId: 'camp-001',
+        results: [
+          ...Array.from({ length: 9 }, (_, i) => ({ channelId: `good${i}`, success: false, error: 'Timeout' })),
+          { channelId: 'bad', success: false, error: 'Timeout' },
+        ],
+        allSucceeded: false,
+      }
+
+      // Advance timers to cover bounded backoff delays (2 retries × 2s max = 4s)
+      const resultPromise = gateway.selfHeal(sampleContent, previousResult)
+      await vi.advanceTimersByTimeAsync(5000)
+      const result = await resultPromise
+
+      expect(result.healed).toBe(9)
+      expect(result.failed).toBe(1)
+      expect(result.errors).toHaveLength(1)
+      expect(result.errors[0]).toContain('Persistent failure')
+      expect(result.allSucceeded).toBe(false)
+    })
+
+    it('F8: all channels fail → returns aggregate with failed=N, no throw', async () => {
+      const numChannels = 3
+      for (let i = 0; i < numChannels; i++) {
+        gateway.registerChannel(createMockChannel(`ch${i}`, createMockAdapter({
+          publish: vi.fn<(content: CampaignOutput) => Promise<PublishResult>>().mockRejectedValue(
+            new Error(`Error ${i}`),
+          ),
+        })))
+      }
+
+      const previousResult = {
+        campaignId: 'camp-001',
+        results: Array.from({ length: numChannels }, (_, i) => ({
+          channelId: `ch${i}`,
+          success: false,
+          error: 'Prior error',
+        })),
+        allSucceeded: false,
+      }
+
+      const resultPromise = gateway.selfHeal(sampleContent, previousResult)
+      await vi.advanceTimersByTimeAsync(5000)
+      const result = await resultPromise
+
+      // Should NOT throw — returns aggregate
+      expect(result.healed).toBe(0)
+      expect(result.failed).toBe(numChannels)
+      expect(result.errors).toHaveLength(numChannels)
+      expect(result.allSucceeded).toBe(false)
+    })
   })
 
   describe('retry policy', () => {
