@@ -64,13 +64,21 @@ function resolveVideoId(payload: HeyGenWebhookPayload): string | undefined {
 async function handleOnboardingDelivery(
   heygenVideoId: string,
   videoUrl: string | undefined,
+  ownerUserId: string | null,
 ): Promise<void> {
+  if (!ownerUserId) {
+    // Without a resolved owner, we cannot safely scope the lookup —
+    // skip rather than risk cross-tenant write on a colliding job_id.
+    logger.warn('[heygen-webhook] Onboarding delivery skipped — no owner resolved', { heygenVideoId })
+    return
+  }
   try {
     const db = createServerClient()
     const { data: video } = await db
       .from('videos')
       .select('id, user_id, is_onboarding')
       .eq('heygen_job_id', heygenVideoId)
+      .eq('user_id', ownerUserId)
       .single() as { data: { id: string; user_id: string; is_onboarding: number } | null }
 
     if (video?.is_onboarding) {
@@ -112,8 +120,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const heygenJobId = resolveVideoId(payload)
 
-  // Resolve per-customer secret first (falls back to platform secret or null)
-  const secret = await resolveHeyGenWebhookSecret(heygenJobId)
+  // Resolve per-customer secret AND owner first (falls back to platform secret or null).
+  // ownerUserId scopes all subsequent D1 writes to prevent a malicious tenant
+  // forging a webhook for another tenant's heygen_job_id.
+  const { secret, ownerUserId, isUserScoped } = await resolveHeyGenWebhookSecret(heygenJobId)
 
   if (!secret) {
     // Return 200 to suppress HeyGen retry storm. Cron polling handles fallback.
@@ -153,7 +163,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       duration: typeof d.duration === 'number' ? d.duration : undefined,
     } as HeyGenSuccessData)
 
-    await handleOnboardingDelivery(String(d.video_id ?? ''), String(d.video_url ?? ''))
+    await handleOnboardingDelivery(String(d.video_id ?? ''), String(d.video_url ?? ''), ownerUserId)
     return NextResponse.json({ ok: true })
   }
 
@@ -177,9 +187,18 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ ok: true, ignored: 'non_terminal' })
   }
 
+  // Legacy update path: scope by (heygen_job_id, user_id) when owner resolved.
+  // If owner not resolved AND the verifying secret was platform-scoped, we can
+  // still update by job_id alone (transitional fallback). If the verified secret
+  // was user-scoped, ownerUserId is required.
+  if (isUserScoped && !ownerUserId) {
+    logger.warn('[heygen-webhook] User-scoped secret but no owner resolved — refusing update', { heygenJobId })
+    return NextResponse.json({ ok: true, ignored: 'no_owner' })
+  }
+
   try {
     const db = createServerClient()
-    await db
+    const update = db
       .from('videos')
       .update({
         status,
@@ -191,10 +210,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       })
       .eq('heygen_job_id', heygenJobId)
 
-    logger.info('[heygen-webhook] Legacy status update', { heygenJobId, status })
+    if (ownerUserId) {
+      await update.eq('user_id', ownerUserId)
+    } else {
+      await update
+    }
+
+    logger.info('[heygen-webhook] Legacy status update', { heygenJobId, status, ownerUserId })
 
     if (status === 'completed') {
-      await handleOnboardingDelivery(heygenJobId, payload.video_url)
+      await handleOnboardingDelivery(heygenJobId, payload.video_url, ownerUserId)
     }
   } catch (err) {
     logger.error('[heygen-webhook] D1 update failed', err instanceof Error ? err : undefined, {

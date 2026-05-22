@@ -9,6 +9,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createServerClient } from '@/seed/db/client';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { getUserTier } from '@/seed/db/get-user-tier';
+import { checkMissionQuota } from '@/forest/quota/mission-quota';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 
@@ -91,6 +93,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const db = createServerClient();
+
+    // Tier quota gate (defense-in-depth) — prevents endless mission creation
+    // by lower tiers exhausting platform compute.
+    const tier = await getUserTier(user.id);
+    const quota = await checkMissionQuota(user.id, tier, 'missions');
+    if (!quota.allowed) {
+      return NextResponse.json(
+        {
+          error: `Monthly mission quota exceeded (${quota.used}/${quota.limit}). Resets ${quota.resetAt}.`,
+          code: 'QUOTA_EXCEEDED',
+        },
+        { status: 429 },
+      );
+    }
 
     const body = await request.json() as unknown;
 

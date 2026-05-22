@@ -80,6 +80,38 @@ export async function markOrderFailed(orderId: string, reason?: string): Promise
 }
 
 /**
+ * Find an existing pending order for (user, tier, period, payment_method)
+ * created within `sinceMs` ago. Used to dedupe rapid double-clicks on
+ * the checkout button before the first invoice is paid or expired.
+ *
+ * Why: prevents the user from being charged twice for the same SKU during
+ * the NOWPayments invoice TTL window.
+ */
+export async function findActivePendingOrder(args: {
+  userId: string
+  tier: string
+  period: string
+  paymentMethod: string
+  sinceMs: number
+}): Promise<PendingOrder | null> {
+  const db = getDb()
+  const cutoffIso = new Date(Date.now() - args.sinceMs).toISOString()
+  const { data } = await db
+    .from('pending_orders')
+    .select('*')
+    .eq('user_id', args.userId)
+    .eq('tier', args.tier)
+    .eq('period', args.period)
+    .eq('payment_method', args.paymentMethod)
+    .eq('status', 'pending')
+    .gte('created_at', cutoffIso)
+    .order('created_at', { ascending: false })
+    .limit(1)
+  const rows = (data as PendingOrder[] | null) ?? []
+  return rows[0] ?? null
+}
+
+/**
  * List recent orders for a user (for audit / dashboard history link).
  * Default limit 10, sorted by created_at desc.
  */

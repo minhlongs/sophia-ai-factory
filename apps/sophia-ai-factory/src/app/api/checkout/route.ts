@@ -6,7 +6,7 @@ import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { validatePromoCode } from '@/land/promo/promo-validator';
 import { recordRedemption, incrementUsedCount } from '@/land/promo/promo-repo';
 import { logger } from '@/seed/utils/logger-utility';
-import { writeOrder } from '@/land/orders/pending-order-repo';
+import { writeOrder, findActivePendingOrder } from '@/land/orders/pending-order-repo';
 import { derivePeriod, assertPeriodAllowed, assertPaymentMethodAllowed } from '@/land/checkout/checkout-validators';
 import type { PendingOrderPeriod, PaymentMethod } from '@/land/orders/pending-order-types';
 
@@ -111,6 +111,38 @@ export const POST = withRateLimit(async function POST(request: Request) {
         { error: err instanceof Error ? err.message : 'Invalid period' },
         { status: 400 }
       );
+    }
+
+    // Dedupe: reuse an active pending order created within last 30 min
+    // for the same (user, tier, period, paymentMethod) to prevent double-pay
+    // on rapid checkout clicks. NOWPayments invoice URLs remain valid for
+    // hours so reusing one is safer than minting a new charge.
+    try {
+      const existing = await findActivePendingOrder({
+        userId,
+        tier,
+        period,
+        paymentMethod,
+        sinceMs: 30 * 60 * 1000,
+      });
+      if (existing?.invoice_url) {
+        logger.info('[Checkout] Reusing active pending order', {
+          orderId: existing.order_id,
+          userId,
+          tier,
+        });
+        return NextResponse.json({
+          url: existing.invoice_url,
+          orderId: existing.order_id,
+          deduped: true,
+        });
+      }
+    } catch (err) {
+      logger.warn('[Checkout] Dedupe lookup failed (non-fatal)', {
+        userId,
+        tier,
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
 
     // Reserve promo code redemption if provided
