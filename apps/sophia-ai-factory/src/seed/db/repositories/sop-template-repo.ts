@@ -1,5 +1,5 @@
 /**
- * SOP Template repository — typed CRUD for the `sop_templates` table.
+ * SOP Template repository — typed CRUD for the `sop_graph_templates` table.
  * Serializes/deserializes SOPGraph to/from graph_json TEXT column.
  * @module seed/db/repositories/sop-template-repo
  */
@@ -65,7 +65,7 @@ export async function createTemplate(params: {
 
   await db
     .prepare(
-      `INSERT INTO sop_templates
+      `INSERT INTO sop_graph_templates
          (id, name, description, graph_json, version, is_active,
           category, created_by, created_at, updated_at)
        VALUES (?1, ?2, ?3, ?4, 1, 1, ?5, ?6, ?7, ?7)`,
@@ -91,7 +91,7 @@ export async function getTemplate(id: string): Promise<SopTemplateRow | null> {
       .prepare(
         `SELECT id, name, description, graph_json, version, is_active,
                 category, created_by, created_at, updated_at
-         FROM sop_templates WHERE id = ?1`,
+         FROM sop_graph_templates WHERE id = ?1`,
       )
       .bind(id)
       .first<RawRow>();
@@ -124,7 +124,7 @@ export async function listTemplates(opts: {
     const result = await db
       .prepare(
         `SELECT id, name, description, version, is_active, category, created_by, updated_at
-         FROM sop_templates ${where} ORDER BY updated_at DESC LIMIT ?${idx}`,
+         FROM sop_graph_templates ${where} ORDER BY updated_at DESC LIMIT ?${idx}`,
       )
       .bind(...bindings)
       .all<Omit<RawRow, 'graph_json' | 'created_at'>>();
@@ -161,7 +161,7 @@ export async function updateTemplate(
 
   bindings.push(id);
   await db
-    .prepare(`UPDATE sop_templates SET ${sets.join(', ')} WHERE id = ?${idx}`)
+    .prepare(`UPDATE sop_graph_templates SET ${sets.join(', ')} WHERE id = ?${idx}`)
     .bind(...bindings)
     .run();
 
@@ -176,7 +176,7 @@ export async function deactivateTemplate(id: string): Promise<void> {
   const now = Math.floor(Date.now() / 1000);
 
   await db
-    .prepare(`UPDATE sop_templates SET is_active = 0, updated_at = ?2 WHERE id = ?1`)
+    .prepare(`UPDATE sop_graph_templates SET is_active = 0, updated_at = ?2 WHERE id = ?1`)
     .bind(id, now)
     .run();
 
