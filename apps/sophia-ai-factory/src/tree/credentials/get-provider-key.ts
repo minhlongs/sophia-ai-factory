@@ -75,6 +75,28 @@ export async function getResendKey(
 }
 
 /**
+ * Resolve Kling (fal.ai) API key.
+ * Default: fallbackToPlatform = false (customer fulfillment must use own key).
+ */
+export async function getKlingKey(
+  opts: GetKeyOptions = {},
+): Promise<ProviderKeyResult | null> {
+  const { userId, fallbackToPlatform = false } = opts
+
+  if (userId) {
+    const userKey = await getUserCredential(userId, 'kling')
+    if (userKey) return { key: userKey, source: 'user' }
+  }
+
+  if (fallbackToPlatform) {
+    const envKey = process.env.KLING_API_KEY
+    if (envKey) return { key: envKey, source: 'platform' }
+  }
+
+  return null
+}
+
+/**
  * Resolve NOWPayments API key.
  * Default: fallbackToPlatform = true (single payment provider for MVP).
  */
@@ -90,6 +112,59 @@ export async function getNowPaymentsKey(
 
   if (fallbackToPlatform) {
     const envKey = process.env.NOWPAYMENTS_API_KEY
+    if (envKey) return { key: envKey, source: 'platform' }
+  }
+
+  return null
+}
+
+/**
+ * Resolve AssemblyAI API key.
+ * Default: fallbackToPlatform = false (BYOK-required — customer must provide own key).
+ */
+export async function getAssemblyAIKey(
+  opts: GetKeyOptions = {},
+): Promise<ProviderKeyResult | null> {
+  const { userId, fallbackToPlatform = false } = opts
+
+  if (userId) {
+    const userKey = await getUserCredential(userId, 'assemblyai')
+    if (userKey) return { key: userKey, source: 'user' }
+  }
+
+  if (fallbackToPlatform) {
+    const envKey = process.env.ASSEMBLYAI_API_KEY
+    if (envKey) return { key: envKey, source: 'platform' }
+  }
+
+  return null
+}
+
+/**
+ * Resolve OpenAI API key for thumbnail generation (gpt-image-1).
+ *
+ * Resolution order:
+ *   1. User's stored 'openai' credential (BYOK — preferred)
+ *   2. User's stored 'openrouter' credential (can proxy OpenAI image gen)
+ *   3. Platform env OPENAI_API_KEY (only if fallbackToPlatform = true)
+ *
+ * Default: fallbackToPlatform = false (customer fulfillment must use own key).
+ */
+export async function getThumbnailKey(
+  opts: GetKeyOptions = {},
+): Promise<ProviderKeyResult | null> {
+  const { userId, fallbackToPlatform = false } = opts
+
+  if (userId) {
+    const openaiKey = await getUserCredential(userId, 'openai')
+    if (openaiKey) return { key: openaiKey, source: 'user' }
+
+    const openrouterKey = await getUserCredential(userId, 'openrouter')
+    if (openrouterKey) return { key: openrouterKey, source: 'user' }
+  }
+
+  if (fallbackToPlatform) {
+    const envKey = process.env.OPENAI_API_KEY
     if (envKey) return { key: envKey, source: 'platform' }
   }
 

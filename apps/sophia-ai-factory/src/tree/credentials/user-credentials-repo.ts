@@ -13,7 +13,7 @@
 import { getD1Raw } from '@/seed/db/client'
 import { encryptValue, decryptValue } from '@/tree/credentials/encryption'
 
-export type ProviderType = 'heygen' | 'heygen_webhook_secret' | 'resend' | 'nowpayments' | 'local_llm'
+export type ProviderType = 'heygen' | 'heygen_webhook_secret' | 'resend' | 'nowpayments' | 'local_llm' | 'kling' | 'assemblyai' | 'openai' | 'openrouter'
 
 export interface CredentialSummary {
   provider: ProviderType

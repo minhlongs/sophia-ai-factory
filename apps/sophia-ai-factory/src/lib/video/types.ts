@@ -73,6 +73,28 @@ export interface WanApiPrediction {
   error?: string;
 }
 
+// ─── Kling API shapes ────────────────────────────────────────────────────────
+
+export interface KlingApiInput {
+  prompt: string;
+  aspect_ratio?: string;
+  duration?: number;
+  negative_prompt?: string;
+}
+
+/** Response from fal.ai queue submit */
+export interface KlingApiResponse {
+  request_id: string;
+  status: string;
+}
+
+/** Response from fal.ai queue status poll */
+export interface KlingJobStatusResponse {
+  /** IN_QUEUE | IN_PROGRESS | COMPLETED | FAILED */
+  status: string;
+  error?: string;
+}
+
 // ─── Fish Speech API shapes ───────────────────────────────────────────────────
 
 export interface FishSpeechApiInput {

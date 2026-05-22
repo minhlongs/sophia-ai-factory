@@ -19,6 +19,23 @@ export const API_COSTS = {
   openrouter: { perScript: 0.03, monthlyFixed: 0 },
   /** D-ID Build (optional): ~$1.13/min */
   did: { perMinute: 1.13, monthlyFixed: 18 },
+  /** Kling 3.0 via fal.ai: ~$0.08/sec (between Wan and Sora pricing). Usage-based, no monthly fixed. */
+  kling: { perSecond: 0.08, monthlyFixed: 0 },
+  /** AssemblyAI Best tier: $0.0062/min of audio/video transcribed */
+  assemblyai: { perMinute: 0.0062, monthlyFixed: 0 },
+} as const;
+
+/**
+ * OpenAI gpt-image-1 thumbnail generation costs (USD per image).
+ * Pricing: https://openai.com/api/pricing
+ */
+export const THUMBNAIL_COSTS = {
+  /** HD quality, 1792x1024 (landscape, recommended for YouTube thumbnails) */
+  hdLandscape: 0.040,
+  /** HD quality, 1024x1024 (square) */
+  hdSquare: 0.040,
+  /** Standard quality, any supported size */
+  standard: 0.020,
 } as const;
 
 /** Cloud + infrastructure costs (USD/month) */
