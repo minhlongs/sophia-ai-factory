@@ -160,3 +160,27 @@ export type SopExecutionDbRow = {
   started_at: number;
   completed_at: number | null;
 };
+
+// ── Creator Memory table row type (migration 0128) ────────────────────────
+
+export type CreatorMemoryType = 'episodic' | 'semantic' | 'preference' | 'performance';
+
+export type CreatorMemoryDbRow = {
+  id: string;
+  user_id: string;
+  memory_type: CreatorMemoryType;
+  category: string;
+  content_json: string;
+  relevance_score: number;
+  source_execution_id: string | null;
+  /** Epoch ms. NULL = never expires. */
+  expires_at: number | null;
+  created_at: number;
+  updated_at: number;
+};
+
+/** Parsed profile: latest semantic + preference memories keyed by category. */
+export type CreatorProfile = {
+  semantic: Record<string, unknown>;
+  preferences: Record<string, unknown>;
+};
