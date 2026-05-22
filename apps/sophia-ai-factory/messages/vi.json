@@ -2532,5 +2532,40 @@
       "b": "Người thắng: Phiên Bản B ({delta} click nhiều hơn)",
       "no_winner": "Không có người thắng rõ ràng sau 48 giờ — cả hai phiên bản tiếp tục chạy."
     }
+  },
+  "leaderboard": {
+    "title": "Bảng xếp hạng",
+    "subtitle": "Creator và affiliate hàng đầu",
+    "topCreators": "Top Creator",
+    "topAffiliates": "Top Affiliate",
+    "rank": "Hạng",
+    "creator": "Creator",
+    "sopsPublished": "SOP",
+    "totalSales": "Đơn bán",
+    "revenue": "Doanh thu",
+    "affiliate": "Affiliate",
+    "clicks": "Lượt click",
+    "conversions": "Chuyển đổi",
+    "commission": "Hoa hồng",
+    "epc": "EPC",
+    "you": "(Bạn)",
+    "period7d": "7 Ngày",
+    "period30d": "30 Ngày",
+    "periodAll": "Tất cả",
+    "noData": "Chưa có dữ liệu"
+  },
+  "challenges": {
+    "title": "Thử thách",
+    "subtitle": "Hoàn thành thử thách để nhận thưởng",
+    "active": "Đang diễn ra",
+    "completed": "Hoàn thành",
+    "progress": "Tiến độ",
+    "reward": "Phần thưởng",
+    "daysLeft": "ngày còn lại",
+    "badge": "Huy hiệu",
+    "credits": "Credits",
+    "commissionBoost": "Tăng hoa hồng",
+    "noChallenges": "Chưa có thử thách nào",
+    "claimed": "Đã nhận"
   }
 }

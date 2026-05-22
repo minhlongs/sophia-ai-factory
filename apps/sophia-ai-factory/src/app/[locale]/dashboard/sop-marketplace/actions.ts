@@ -183,3 +183,19 @@ export async function purchaseSopAction(
 
   return {};
 }
+
+// ---------------------------------------------------------------------------
+// Generate affiliate link for a SOP template
+// ---------------------------------------------------------------------------
+export async function generateSopLinkAction(templateId: string): Promise<{ error?: string; code?: string; url?: string }> {
+  const user = await getCurrentUser();
+  if (!user) return { error: 'Unauthorized' };
+
+  const db = getD1();
+  if (!db) return { error: 'Database unavailable' };
+
+  const { generateSopAffiliateLink, buildSopReferralUrl } = await import('@/land/sop-marketplace');
+  const result = await generateSopAffiliateLink(db, user.id, templateId);
+
+  return { code: result.code, url: buildSopReferralUrl(result.code) };
+}
