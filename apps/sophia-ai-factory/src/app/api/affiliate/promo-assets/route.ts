@@ -12,10 +12,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getUserTier } from '@/seed/db/get-user-tier';
-import { listPromoAssetsForTier, type PromoLocale, type PromoTier } from '@/land/affiliates/promo-library';
+import { listPromoAssetsForTier, type PromoLocale, type PromoNiche, type PromoTier } from '@/land/affiliates/promo-library';
 import { logger } from '@/seed/utils/logger-utility';
 
 const VALID_TIERS: ReadonlyArray<PromoTier> = ['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER'];
+const VALID_NICHES: ReadonlyArray<PromoNiche> = ['creators', 'agency', 'coaches', 'dropshippers', 'universal', 'sop_marketplace'];
+
+function normaliseNiche(niche: string | null | undefined): PromoNiche | undefined {
+  if (!niche) return undefined;
+  const lower = niche.toLowerCase() as PromoNiche;
+  return VALID_NICHES.includes(lower) ? lower : undefined;
+}
 
 function normaliseTier(tier: string | null | undefined): PromoTier {
   if (!tier) return 'BASIC';
@@ -43,6 +50,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const locale: PromoLocale | undefined =
     localeParam === 'en' || localeParam === 'vi' ? localeParam : undefined;
 
-  const library = listPromoAssetsForTier(tier, locale);
-  return NextResponse.json({ tier, locale: locale ?? null, ...library });
+  const niche = normaliseNiche(searchParams.get('niche'));
+
+  const library = listPromoAssetsForTier(tier, locale, niche);
+  return NextResponse.json({ tier, locale: locale ?? null, niche: niche ?? null, ...library });
 }

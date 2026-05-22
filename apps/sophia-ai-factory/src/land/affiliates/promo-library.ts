@@ -14,6 +14,7 @@
  */
 
 export type PromoLocale = 'en' | 'vi';
+export type PromoNiche = 'creators' | 'agency' | 'coaches' | 'dropshippers' | 'universal' | 'sop_marketplace';
 export type PromoTier = 'BASIC' | 'PREMIUM' | 'ENTERPRISE' | 'MASTER';
 const TIER_RANK: Record<PromoTier, number> = {
   BASIC: 0,
@@ -24,10 +25,10 @@ const TIER_RANK: Record<PromoTier, number> = {
 
 export interface CopyTemplate {
   id: string;
-  niche: 'creators' | 'agency' | 'coaches' | 'dropshippers' | 'universal';
+  niche: PromoNiche;
   locale: PromoLocale;
-  channel: 'twitter' | 'linkedin' | 'instagram' | 'tiktok-caption';
-  /** Plain-text body. `{{REF_LINK}}` is replaced client-side with the affiliate's link. */
+  channel: 'twitter' | 'linkedin' | 'instagram' | 'tiktok-caption' | 'facebook' | 'reddit' | 'telegram';
+  /** Plain-text body. `{{REF_LINK}}` is replaced client-side with the affiliate's link. `{{SOP_NAME}}` is replaced with the SOP title. */
   body: string;
   minTier: PromoTier;
 }
@@ -39,6 +40,8 @@ export interface OutreachScript {
   subject?: string;
   body: string;
   minTier: PromoTier;
+  /** Niche tag used for optional category filtering. */
+  niche?: PromoNiche;
 }
 
 export interface BannerSpec {
@@ -125,6 +128,62 @@ export const COPY_TEMPLATES: readonly CopyTemplate[] = [
     body: 'Test 20 winning angles in a weekend. Sophia spits product videos in batches — you focus on creatives that print. {{REF_LINK}}',
     minTier: 'PREMIUM',
   },
+
+  // SOP Marketplace — BASIC tier (Twitter/X)
+  {
+    id: 'twitter-sop-marketplace-en',
+    niche: 'sop_marketplace',
+    locale: 'en',
+    channel: 'twitter',
+    body: 'Just listed "{{SOP_NAME}}" on Sophia AI Factory marketplace 🚀\n\nOperational playbooks that actually ship — grab it here: {{REF_LINK}}\n\n#SOP #AItools #Automation',
+    minTier: 'BASIC',
+  },
+  {
+    id: 'twitter-sop-marketplace-vi',
+    niche: 'sop_marketplace',
+    locale: 'vi',
+    channel: 'twitter',
+    body: 'Vừa đăng "{{SOP_NAME}}" lên Sophia AI Factory marketplace.\n\nSOP thực chiến, ai dùng AI để scale doanh thu là cần cái này: {{REF_LINK}}\n\n#SOP #AI #TựĐộngHóa',
+    minTier: 'BASIC',
+  },
+
+  // SOP Marketplace — BASIC tier (Facebook group)
+  {
+    id: 'facebook-sop-marketplace-en',
+    niche: 'sop_marketplace',
+    locale: 'en',
+    channel: 'facebook',
+    body: `Hey everyone 👋\n\nI just published a new SOP on Sophia AI Factory — "{{SOP_NAME}}".\n\nThis playbook covers exactly how I [brief outcome — e.g. "cut client onboarding from 3 days to 4 hours"]. It's plug-and-play: download, customise your details, run it.\n\nIf you've been building your own systems for this, save yourself the rework. Link: {{REF_LINK}}\n\nHappy to answer questions below!`,
+    minTier: 'BASIC',
+  },
+
+  // SOP Marketplace — PREMIUM tier (Reddit r/entrepreneur)
+  {
+    id: 'reddit-sop-marketplace-en',
+    niche: 'sop_marketplace',
+    locale: 'en',
+    channel: 'reddit',
+    body: `**I packaged 2 years of trial-and-error into a single SOP — sharing it on Sophia's marketplace**\n\nAfter running [your use-case] for two years I finally wrote down every decision point, tool, and failure mode into a single document: "{{SOP_NAME}}".\n\nIt covers:\n- [Key step 1]\n- [Key step 2]\n- [Key step 3]\n\nI put it in the Sophia AI Factory marketplace so it's versioned and easy to update. Not a free doc — priced it to filter for people who'll actually use it.\n\nFull details + preview: {{REF_LINK}}\n\nHappy to answer questions in comments.`,
+    minTier: 'PREMIUM',
+  },
+
+  // SOP Marketplace — BASIC tier (Telegram group)
+  {
+    id: 'telegram-sop-marketplace-en',
+    niche: 'sop_marketplace',
+    locale: 'en',
+    channel: 'telegram',
+    body: `📋 New SOP dropped: "{{SOP_NAME}}"\n\nIf you're still building this process from scratch, here's the shortcut 👇\n{{REF_LINK}}\n\nLive on Sophia AI Factory marketplace — instant download, plug-and-play.`,
+    minTier: 'BASIC',
+  },
+  {
+    id: 'telegram-sop-marketplace-vi',
+    niche: 'sop_marketplace',
+    locale: 'vi',
+    channel: 'telegram',
+    body: `📋 SOP mới vừa lên: "{{SOP_NAME}}"\n\nNếu bạn đang tự build quy trình này từ đầu — đây là phím tắt 👇\n{{REF_LINK}}\n\nĐã có trên Sophia AI Factory marketplace, tải về và dùng ngay.`,
+    minTier: 'BASIC',
+  },
 ];
 
 export const OUTREACH_SCRIPTS: readonly OutreachScript[] = [
@@ -149,6 +208,15 @@ export const OUTREACH_SCRIPTS: readonly OutreachScript[] = [
     channel: 'email',
     subject: 'Your daily content is the bottleneck — fix in 1 tool',
     body: `Hi {first_name},\n\nYou're a coach who lives or dies by daily content. Sophia turns a 5-min voice memo into a week of posts (script, visuals, captions, schedule). That alone is the unlock — but it also tracks which posts convert into discovery calls.\n\nI'm an affiliate so full transparency: {{REF_LINK}}. 14-day free trial, no card.\n\n— {sender_name}`,
+    minTier: 'PREMIUM',
+  },
+  {
+    id: 'email-sop-marketplace-beta-creator-en',
+    niche: 'sop_marketplace',
+    locale: 'en',
+    channel: 'email',
+    subject: 'Earn revenue from the SOPs you already have',
+    body: `Hi {first_name},\n\nI noticed you've been sharing frameworks / playbooks in [community / newsletter / course] — the kind of structured process docs that take real expertise to build.\n\nSophia AI Factory just launched a SOP marketplace where operators can publish and sell those exact documents. Beta creators get:\n- First-mover visibility on the platform\n- 70% revenue share per sale\n- No listing fees during beta\n\nYou'd list your SOP, set your price, and Sophia handles discovery, checkout, and delivery. Your affiliate link also earns commission on any tier upgrades buyers make after downloading: {{REF_LINK}}\n\nIf you have even one battle-tested playbook sitting in a Notion doc, it's worth 15 minutes to list it. Happy to walk you through the process.\n\n— {sender_name}`,
     minTier: 'PREMIUM',
   },
 ];
@@ -200,20 +268,24 @@ export interface PromoLibraryFiltered {
 /**
  * Filter the static registry to assets visible to a given tier.
  * Optional locale filter narrows copy templates + outreach scripts.
+ * Optional niche filter returns only templates for that niche (e.g. 'sop_marketplace').
  */
 export function listPromoAssetsForTier(
   tier: PromoTier,
   locale?: PromoLocale,
+  niche?: PromoNiche,
 ): PromoLibraryFiltered {
   const tierRank = TIER_RANK[tier];
   const matchTier = <T extends { minTier: PromoTier }>(asset: T): boolean =>
     TIER_RANK[asset.minTier] <= tierRank;
   const matchLocale = <T extends { locale: PromoLocale }>(asset: T): boolean =>
     !locale || asset.locale === locale;
+  const matchNiche = <T extends { niche?: PromoNiche }>(asset: T): boolean =>
+    !niche || asset.niche === niche;
 
   return {
-    copyTemplates: COPY_TEMPLATES.filter(matchTier).filter(matchLocale),
-    outreachScripts: OUTREACH_SCRIPTS.filter(matchTier).filter(matchLocale),
+    copyTemplates: COPY_TEMPLATES.filter(matchTier).filter(matchLocale).filter(matchNiche),
+    outreachScripts: OUTREACH_SCRIPTS.filter(matchTier).filter(matchLocale).filter(matchNiche),
     banners: BANNER_SPECS.filter(matchTier),
   };
 }
@@ -221,4 +293,16 @@ export function listPromoAssetsForTier(
 /** Substitute {{REF_LINK}} placeholder in a body string. */
 export function fillRefLink(body: string, refLink: string): string {
   return body.replaceAll('{{REF_LINK}}', refLink);
+}
+
+/**
+ * Substitute SOP marketplace placeholders in a body string.
+ * Replaces `{{REF_LINK}}` and `{{SOP_NAME}}` in a single pass.
+ */
+export function fillSopPlaceholders(
+  body: string,
+  refLink: string,
+  sopName: string,
+): string {
+  return body.replaceAll('{{REF_LINK}}', refLink).replaceAll('{{SOP_NAME}}', sopName);
 }

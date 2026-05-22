@@ -122,13 +122,13 @@ Canva               ✅ Design tool     ✅ Templates            ✅ Templates +
 - [x] Build passes, tsc clean
 - **Files:** `land/sop-marketplace/sop-affiliate-links.ts`, `forest/components/share/`, `app/[locale]/dashboard/leaderboard/`, `app/[locale]/dashboard/challenges/`, `app/ref/[code]/`
 
-### Phase 5: Distribution & Go-to-Market (Weeks 10-12)
-- [ ] ProductHunt launch preparation
-- [ ] YouTube channel: 4 tutorial videos (faceless channel SOP, UGC agency SOP, etc.)
-- [ ] TikTok: "SOP of the day" content format
-- [ ] Reddit: r/entrepreneur, r/YouTubers, r/SaaS posts
-- [ ] Recruit 10-20 beta creators (50% rev share first 2 months)
-- [ ] Telegram community setup (Vietnamese market)
+### Phase 5: Distribution & Go-to-Market (Weeks 10-12) ✅ CODE DONE
+- [x] Beta Creator Invite System — D1 migration, invite CRUD, admin page, 50% commission override
+- [x] SOP Marketplace Promo Assets — 7 templates (Twitter, FB, Reddit, Telegram, Email) + `?niche=sop_marketplace` filter
+- [x] Dashboard Community CTA — dismissible Telegram/Discord banner in dashboard layout
+- [x] Build passes, tsc clean
+- [ ] Marketing tasks (non-code): ProductHunt, YouTube, TikTok, Reddit, beta creator recruitment
+- **Files:** `land/sop-marketplace/beta-invites.ts`, `land/affiliates/promo-library.ts`, `forest/components/community-cta-banner.tsx`, `app/[locale]/dashboard/admin/invites/`
 
 ---
 
