@@ -21,7 +21,7 @@
 - [ ] Invite client to Cloudflare account
 - [ ] Cloudflare project: `sophia-ai-factory`
 - [ ] Workers domain: `sophia.agencyos.network`
-- [ ] Auto-deploy tu `main` branch hoat dong / Auto-deploy from `main` branch working (GitHub Actions)
+- [ ] CF-direct deploy access verified / Quyen deploy CF-direct da duoc kiem tra (`npm run deploy:full`)
 - [ ] D1 database access configured: `sophia-raas-db`
 
 **Note:** Migrated from Vercel to Cloudflare Workers 2026-03-24. See `cloud-infrastructure.md` for complete setup.
@@ -31,7 +31,7 @@
 - [ ] D1 database access cau hinh / D1 database access configured
 - [ ] Database name: `sophia-raas-db`
 - [ ] Daily automated backups enabled
-- [ ] Auth (Custom JWT - PBKDF2) hoat dong / Custom JWT auth working
+- [ ] Auth (Better Auth + D1 session cookies) hoat dong / Better Auth working
 - [ ] RLS policies not applicable (D1 = server-side, JWT-based permission model)
 
 ### 4. Payment Providers (2026-04-10 Update)

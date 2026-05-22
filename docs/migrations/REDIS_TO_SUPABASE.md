@@ -2,7 +2,9 @@
 
 > **Phase:** ROIaaS License System Migration
 > **Date:** 2026-03-06
-> **Status:** Complete (code) - Pending SQL execution
+> **Status:** Historical reference — not a current Sophia execution guide
+
+> **Current-state note (2026-05-21):** This guide predates Sophia's Cloudflare Workers/D1 deployment doctrine and references legacy Vercel URLs plus missing migration artifacts. Do not execute it as-is. For current database/deploy operations, use `docs/deployment-guide.md`, `docs/codebase-summary.md`, and `apps/sophia-ai-factory/migrations/`.
 
 ---
 
@@ -87,19 +89,19 @@ WHERE tablename IN ('raas_licenses', 'raas_audit_logs');
 
 ### Step 3: Test API Routes
 
-Deploy code changes and test each endpoint:
+Historical API test examples. If this migration is resurrected, update endpoints to the current production host before use:
 
 ```bash
 # Test GET /api/admin/licenses
 curl -H "Authorization: Basic $(echo 'admin:password' | base64)" \
-  https://sophia-ai-factory.vercel.app/api/admin/licenses
+  https://sophia.agencyos.network/api/admin/licenses
 
 # Test POST /api/admin/licenses/create
 curl -X POST \
   -H "Authorization: Basic $(echo 'admin:password' | base64)" \
   -H "Content-Type: application/json" \
   -d '{"tier":"basic","expiresAt":1893456000}' \
-  https://sophia-ai-factory.vercel.app/api/admin/licenses/create
+  https://sophia.agencyos.network/api/admin/licenses/create
 ```
 
 ### Step 4: Optional - Migrate Existing Redis Data
@@ -227,7 +229,7 @@ If you don't run migration, just start fresh - new licenses created via API will
 curl -X POST \
   -H "Authorization: Basic $ADMIN_AUTH" \
   -d '{"tier":"premium","expiresAt":1893456000}' \
-  https://sophia-ai-factory.vercel.app/api/admin/licenses/create
+  https://sophia.agencyos.network/api/admin/licenses/create
 ```
 
 Option 2: Clarify key requirement with users who report issues.
@@ -283,18 +285,19 @@ psql "$(npx supabase db url)" -c "SELECT COUNT(*) FROM raas_audit_logs"
 curl -X POST \
   -H "Authorization: Basic $ADMIN_AUTH" \
   -d '{"tier":"basic"}' \
-  https://sophia-ai-factory.vercel.app/api/admin/licenses/create
+  https://sophia.agencyos.network/api/admin/licenses/create
 
 # 3. Test license listing
 curl \
   -H "Authorization: Basic $ADMIN_AUTH" \
-  https://sophia-ai-factory.vercel.app/api/admin/licenses
+  https://sophia.agencyos.network/api/admin/licenses
 
 # 4. Test middleware validation
-curl -H "X-RaaS-License-Key: raas_basic_..." https://sophia-ai-factory.vercel.app/api/protected
+curl -H "X-RaaS-License-Key: raas_basic_..." https://sophia.agencyos.network/api/protected
 
 # 5. Verify no errors in logs
-# Check Vercel/production logs for RAAS-related errors
+# Check Cloudflare Worker logs for RAAS-related errors:
+# npx wrangler tail --name sophia-ai-factory
 ```
 
 ---
@@ -350,9 +353,10 @@ WHERE is_revoked = false
 ### Option A: Automated Script (Recommended)
 
 ```bash
-cd /Users/macbookprom1/mekong-cli/apps/sophia-ai-factory
-chmod +x scripts/deploy-raas-migration.sh
-./scripts/deploy-raas-migration.sh
+cd apps/sophia-ai-factory
+# Historical script no longer exists in the current repo:
+# scripts/deploy-raas-migration.sh
+# Rebuild a current migration plan before executing.
 ```
 
 The script will:
@@ -380,14 +384,15 @@ psql "$(npx supabase db url)" -c "SELECT COUNT(*) FROM raas_audit_logs;"
 # Step 4: Verify indexes
 psql "$(npx supabase db url)" -c "SELECT indexname FROM pg_indexes WHERE tablename IN ('raas_licenses', 'raas_audit_logs');"
 
-# Step 5: Deploy code
-git add .
-git commit -m "feat: deploy RaaS Supabase migration"
-git push origin main
+# Step 5: Current Sophia deploy doctrine, if new code/migrations are added
+cd apps/sophia-ai-factory
+npm run deploy:migrations
+npm run deploy:full
+curl -s https://sophia.agencyos.network/api/version
 
-# Step 6: Set Vercel env vars
-# Go to Vercel dashboard → Settings → Environment Variables
-# Add: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, RAAS_LICENSE_SECRET
+# Step 6: Set runtime secrets through Cloudflare Workers, not Vercel
+# npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY
+# npx wrangler secret put RAAS_LICENSE_SECRET
 ```
 
 ---
@@ -452,15 +457,15 @@ psql "$(npx supabase db url)" -c "SELECT 1;"
 
 ### Error: API returns 500 Internal Server Error
 
-**Nguyên nhân:** Environment variables chưa set trên Vercel
+**Nguyên nhân:** Runtime secrets chưa set trong Cloudflare Worker
 
 **Giải pháp:**
-1. Vào Vercel dashboard → Project → Settings → Environment Variables
-2. Thêm các biến:
+1. Vào terminal trong `apps/sophia-ai-factory`
+2. Thêm các secret:
    - `SUPABASE_URL` = https://your-project.supabase.co
    - `SUPABASE_SERVICE_ROLE_KEY` = your-key-here
    - `RAAS_LICENSE_SECRET` = your-32-char-secret
-3. Redeploy: https://vercel.com/dashboard/deployments → Redeploy
+3. Chạy `npm run deploy:full` và kiểm tra `/api/version`
 
 ### Error: "RESOURCE_EXHAUSTED" từ Supabase
 
@@ -558,7 +563,7 @@ RLS policies: 2
 
 ## 참고 (References)
 
-- **SQL Schema:** `docs/migrations/raas-licenses-schema.sql`
+- **SQL Schema:** historical artifact `docs/migrations/raas-licenses-schema.sql` (not present in current repo)
 - **TypeScript Types:** `src/lib/raas-schema.ts`
 - **Audit Service:** `src/lib/raas-audit.ts`
 - **Plan:** `plans/260306-0952-raas-redis-supabase-migration/plan.md`

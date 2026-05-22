@@ -46,8 +46,8 @@ graph TB
     APP["Application Layer"] --> SDLC["SDLC + Agent Factory"]
     APP --> SIGNALS["Signals & Feedback"]
     APP --> OBS["Observability"]
-    APP --> CICD["CI/CD & Enforcement"]
-    CICD -->|5 Gates| CF["Cloudflare Workers"]
+    APP --> DEPLOY["Deploy & Enforcement"]
+    DEPLOY -->|CF-direct verify| CF["Cloudflare Workers"]
     CF -->|Edge Deploy| APP
     
     APP -->|SSR| AUTH["Auth Layer"]
@@ -67,7 +67,7 @@ graph TB
 
 ---
 
-## Layer 1: CI/CD & Deploy Pipeline
+## Layer 1: Deploy Pipeline
 
 **Doctrine ceiling: 87.5/100** (no-tech doctrine v1.28.1 — operator manages platform code only, no third-party creds required).
 
@@ -96,9 +96,10 @@ Push-before-deploy guard: `deploy-with-sha.sh` exits 2 if `git log origin/main..
 **Rollback:** `npx wrangler rollback --name sophia-ai-factory` or redeploy a specific git SHA.
 
 **Pre-push quality gates (local enforcement):**
-- `npm run build` — 0 TS errors required
-- `npm test` — 4431/4431 tests must pass
-- `npm run lint` — ESLint clean
+- `npm run type-check` — TypeScript gate
+- `npm run build` — production build
+- `npm run ci:test` — current-count Vitest run
+- `npm run lint` — ESLint
 
 ### Cron Authentication
 
@@ -106,7 +107,7 @@ All `/api/cron/*` routes require Bearer auth:
 ```
 Authorization: Bearer ${CRON_SECRET}
 ```
-`CRON_SECRET` is a 32-byte random value set via `wrangler secret put CRON_SECRET`. Requests without valid Bearer return HTTP 401. See `src/seed/auth/cron-auth.ts`.
+`CRON_SECRET` is a 32-byte random value set via `wrangler secret put CRON_SECRET`. Requests without valid Bearer return HTTP 401. See `src/seed/security/cron-auth.ts`.
 
 ### Health Endpoints
 - `/api/version` — public: `{shortSha, deployedAt, opennextVersion}`. Primary deploy verify signal.
@@ -127,7 +128,7 @@ Pricing page gates One-Time Bundle CTA when HeyGen is down to prevent customer p
 | **Cache** | EXPERIMENT_KV, 60s TTL (cost optimization) |
 | **Rate Limit** | 60 req/min per IP (fair-use burst) |
 | **Graceful Degradation** | Never 500s — returns `{ ok: false }` on timeout/error |
-| **Server-Side Helper** | `lib/health/heygen-health-check.ts` (direct KV-cached, RSC-optimized) |
+| **Server-Side Helper** | `seed/health/heygen-health-check.ts` (direct KV-cached, RSC-optimized) |
 | **Page Gating** | `/app/[locale]/pricing/page.tsx` calls `isHeyGenHealthy()` → passes prop to `OneTimeBundleCard` |
 | **UX** | Disabled CTA + error toast (bilingual Vi/En) on checkout failure (401/400/429/500/503) |
 | **Case 401** | Shows login link (unauthenticated) |
@@ -191,14 +192,14 @@ Pricing page gates One-Time Bundle CTA when HeyGen is down to prevent customer p
 | Layer | Technology | Notes |
 |-------|-----------|-------|
 | **Runtime** | Cloudflare Workers | Edge compute, global |
-| **Framework** | Next.js 15.5 | App Router, SSR |
-| **Adapter** | opennextjs-cloudflare | Next.js → CF Workers |
+| **Framework** | Next.js 16 + React 19 | App Router, SSR |
+| **Adapter** | `@opennextjs/cloudflare` | Next.js → CF Workers |
 | **Database** | Cloudflare D1 | SQLite-based, `sophia-raas-db` |
 | **Cache** | Cloudflare R2 | `sophia-ai-factory-opennext-cache` |
 | **LLM Cache** | D1 (Org-Scoped) | Exact-match SHA-256 (Phase 4E) + optional semantic-similarity fallback via Workers AI embeddings (Phase 4E.2, `LLM_CACHE_SEMANTIC_ENABLED`, dark-launched; Phase 4E.2-TUNING: index widened to full 4 columns `(org_id, embedding_model, provider, model, created_at)` for range freshness queries); per-tenant isolation via `resolveOrgId()` + `getTenantContext()` helpers (Phase 4E H-1 → 4F.1 → 4F.2); `LLM_CACHE_STORE_PROMPT_TEXT=1` PII/GDPR gate (vectors always stored, text optional); `callWithCache()` wrapper wired into script-generator (Phase 4F); daily purge cron (Phase 4E.3); real LLM in workflow-stepper (Phase 4G, `WORKFLOW_REAL_LLM_ENABLED`); stats endpoints `/api/admin/llm-cache-stats` (Phase 4H) + `/api/admin/llm-trace-stats` (Phase 4I) |
 | **AI Streaming** | Anthropic SSE + Tool-Use | `parseAnthropicSse()` async generator + `AnthropicStreamEvent` discriminated union (Phase 4N); `callAnthropicStreamEvents` yields 7 event types (message_start, content_block_start/stop, text_delta, input_json_delta, message_delta, message_stop; Phase 4N-POLISH: added `parse_error` variant + try/finally reader cleanup for robust error handling); `callAnthropicStream` backward-compat text-only filter; `callAnthropicFull` for tool-use flows |
 | **Per-User API Keys (LLM/Media)** | D1 + AES-GCM Crypto | BYOK foundations (Phase 4G-BYOK): `user_api_keys` D1 table, AES-GCM-256 encryption (`byok-crypto.ts`), D1 store (`user-api-key-store.ts`), resolver with envFallback (`resolve-user-api-key.ts`); opt-in via `BYOK_ENABLED=1` + `BYOK_MASTER_KEY` (base64 32 bytes); Phase 4G-WIRE: fully integrated into workflow-stepper cron via `resolveOrgOwnerUserId()` helper for cron context bridge; per-user key resolution before Anthropic/OpenRouter live calls; env fallback when BYOK disabled |
-| **Per-User Provider Credentials (BYOK)** | D1 `user_provider_credentials` + AES-GCM | Full BYOK for fulfillment providers (2026-05-02): customers supply own HeyGen/Resend/NOWPayments keys via Setup Wizard. Encryption: `lib/credentials/encryption.ts` (Web Crypto AES-GCM-256, master key `CREDENTIALS_MASTER_KEY` hex or `BYOK_MASTER_KEY` b64 fallback, text format `<iv_b64>:<ct_b64>`). Repo: `lib/credentials/user-credentials-repo.ts` (D1 upsert, display_hint, last_used_at, status). Smart lookup: `lib/credentials/get-provider-key.ts` (user key → platform fallback, returns `{key, source}`). Fulfillment paths: `one-time-fulfillment.ts` + `fulfillment-retry` cron → `getHeyGenKey({userId, fallbackToPlatform:false})`. Platform key retained for: health check, synthetic monitor, onboarding video. API routes: `/api/setup-wizard/{save-credentials,test-heygen,test-resend,list-credentials}`. Pricing gate: unauthenticated or unconfigured users see "Configure HeyGen" prompt instead of One-Time Bundle CTA. |
+| **Per-User Provider Credentials (BYOK)** | D1 `user_provider_credentials` + AES-GCM | Full BYOK for fulfillment providers (2026-05-02): customers supply own HeyGen/Resend/NOWPayments keys via Setup Wizard. Encryption/repo/lookup live under `tree/credentials/*` (`encryption.ts`, `user-credentials-repo.ts`, `get-provider-key.ts`). Fulfillment paths: `one-time-fulfillment.ts` + `fulfillment-retry` cron → `getHeyGenKey({userId, fallbackToPlatform:false})`. Platform key retained for: health check, synthetic monitor, onboarding video. API routes: `/api/setup-wizard/{save-credentials,test-heygen,test-resend,list-credentials}`. Pricing gate: unauthenticated or unconfigured users see "Configure HeyGen" prompt instead of One-Time Bundle CTA. |
 | **AI Providers** | Anthropic + OpenRouter | Anthropic API adapter (Phase 4J) routes via `fetchFromAnthropicAPI()` when `ANTHROPIC_API_KEY` set; OpenRouter fallback via router (Phase 4C); cache reuse across both via `callWithCache()` |
 | **Auth** | Better Auth v1.6.2 (D1) | Email/password + magic link, org plugin, no RLS |
 | **Billing** | NOWPayments (primary) + PayOS (backup) | MCU credit system, webhooks |
@@ -210,6 +211,24 @@ Pricing page gates One-Time Bundle CTA when HeyGen is down to prevent customer p
 ---
 
 ## Data Flow
+
+### Current Verified Runtime Model (2026-05-22)
+
+| Subsystem | Entry Points | Flow | State | External Integrations | Confidence |
+|-----------|--------------|------|-------|-----------------------|------------|
+| Middleware/security | `src/middleware.ts`, `src/middleware-api-handler.ts` | Static/public bypass -> API gate or page auth -> Better Auth session -> CSRF/rate/tenant/usage checks -> route | Session cookie, D1 user/org/tier lookup | Better Auth, D1, usage metering | High |
+| Auth | `src/app/api/auth/[...all]/route.ts`, `src/seed/auth/better-auth-server.ts` | Better Auth handler -> D1 adapter -> email/password or magic link -> cookie -> `getCurrentUser()` | Better Auth D1 tables plus organization bootstrap rows | Resend | High |
+| Billing | `src/app/api/checkout/route.ts`, `src/app/api/webhooks/nowpayments/route.ts`, `src/land/billing/nowpayments-ipn-*.ts` | Checkout creates/records pending order -> NOWPayments invoice -> signed IPN -> idempotency -> subscription or one-time fulfillment branch | `pending_orders`, `subscriptions`, `org_balances`, `user_purchases`, audit rows | NOWPayments, Resend, HeyGen, Telegram/handover | High |
+| Mission engine | `src/app/api/v1/missions/route.ts`, `src/forest/missions/dispatcher.ts`, `src/land/missions/auto-video-mission.ts` | Bearer/session auth -> quota check -> `engine_missions` insert -> async dispatch -> result/status update | `engine_missions`, result tables, videos | HeyGen/BYOK, SEO/affiliate helpers, D1 | High |
+| Video generation | Canonical: `video:create` mission and `/api/missions/auto-video`. Deprecated: `/api/videos/generate` | Canonical flow writes mission/video state and relies on HeyGen webhook. Deprecated endpoint returns HTTP 410 per ADR 0007. | `videos`, `video_onboarding_events`, mission state | HeyGen, R2, Resend | High |
+| Background jobs | `src/app/api/inngest/route.ts` | Only functions listed in the `serve({ functions: [...] })` array are active. Folder exports alone are not runtime registration. | Inngest event state + D1 side effects | Inngest | High |
+| Scheduled jobs | `wrangler.toml`, `scripts/inject-scheduled-handler.mjs`, `src/app/api/cron/**` | Cloudflare schedule -> injected Worker `scheduled()` -> service binding fetch with `CRON_SECRET` -> cron route | `cron_run_log`, job-specific tables | Cloudflare Workers/D1/R2, external APIs per route | High |
+| Feature flags/signals | `src/lib/signals/*`, `src/lib/feature-flags/*` | Resolve variant/flag -> append D1/KV signal -> optional digest/PostHog flush | D1, `EXPERIMENT_KV` | PostHog, email/GitHub issues for digests | Medium |
+
+Confirmed hidden coupling:
+- `apps/sophia-ai-factory/wrangler.toml` has cron patterns not mapped by `CRON_ROUTES` in `scripts/inject-scheduled-handler.mjs`: `0 5`, `*/10`, `0 7`, `10 *`, `0 */4`. The routes likely intended by those patterns (`error-digest`, `heartbeat`, `llm-cache-purge`, `wallet-rebuild`, `affiliate-scout`) need verification before anyone claims cron coverage.
+- `src/forest/inngest/functions/index.ts` exports legacy video functions, but `src/app/api/inngest/route.ts` does not register the Phase 06 video chain. Runtime registration is the route file, not the export list.
+- Core imports are now `@/seed/auth/*`, `@/seed/db/*`, and `@/seed/config/tiers`; historical `@/lib/*` references are legacy compatibility or stale docs.
 
 ### Auth Flow (Better Auth with D1)
 ```
@@ -285,14 +304,15 @@ D1: Credit MCU to org_balances
 ```
 User completes NOWPayments purchase (ENTERPRISE/MASTER tier)
   ↓
-POST /api/webhooks/nowpayments-ipn (IPN callback)
+POST /api/webhooks/nowpayments (signed IPN callback)
   ↓
 D1: Activate subscription + check tier eligibility
   ↓
 ONBOARDING_TIERS check → createOnboardingVideo()
   ↓
-Inngest video pipeline triggers:
-  video-scripting (OpenRouter gpt-4o-mini) → video-visual (HeyGen) → video-upload (R2 verify)
+D1: Insert video_onboarding_events row before upstream work
+  ↓
+HeyGen: create avatar video directly through platform key
   ↓
 HeyGen webhook: POST /api/webhooks/heygen (video.completed)
   ↓
@@ -309,18 +329,18 @@ Dashboard: /dashboard/videos shows onboarding videos in gallery
 ```
 User selects STARTER_BUNDLE → /billing/checkout
   ↓
-POST /api/webhooks/nowpayments-ipn (IPN callback from NOWPayments)
+POST /api/webhooks/nowpayments (signed IPN callback from NOWPayments)
   ↓
-Dispatcher branches on `ONE_TIME_SKUS` SSOT:
-  If subscription_type='subscription' → subscription handler (UNCHANGED)
-  If subscription_type='one_time' → one_time handler
+Dispatcher branches by invoice/SKU mapping:
+  Known one-time invoice → one-time handler
+  Tier invoice → subscription handler
   ↓
 One-Time Handler:
   D1: Insert user_purchases record (video_credits=10, ttl_end=now+365d)
   D1: Update videos.purchase_id FK (backfill user's bundle videos)
   Idempotency: UNIQUE(user_id, user_purchase_id) prevents duplicates
   ↓
-Resend: sendBundleReadyEmail() (bilingual Vi/En template)
+Resend: sendOneTimeBundleReadyEmail() / related bundle emails (bilingual Vi/En templates)
   Email includes: credit balance, video gallery link, cross-sell CTA
   ↓
 Dashboard: /dashboard/videos surfaces bundle videos + remaining credits
@@ -356,13 +376,25 @@ queued → processing → completed | failed_permanent
 
 **Deferred (F9):** HeyGen circuit breaker + D-ID fallback pending D-ID account provisioning (Phase not shipped)
 
-### On-Demand Video Pipeline (Existing)
+### On-Demand Video Pipeline (Current vs Deprecated)
 ```
-User requests video → POST /api/video/generate
+Current:
+User/API creates mission with command `video:create`
   ↓
-Inngest: video-scripting → video-visual → video-upload
+POST /api/v1/missions or POST /api/missions/auto-video
+  ↓
+forest/missions/dispatcher.ts routes to mission handler
+  ↓
+HeyGen mission flow → HeyGen webhook → videos table
   ↓
 Video stored in D1 + R2, accessible via dashboard
+
+Deprecated:
+POST /api/videos/generate
+  ↓
+Auth preserved; authenticated callers receive HTTP 410 Gone
+  ↓
+Replacement hint: use the HeyGen mission flow (`video:create`)
 ```
 
 ---
@@ -391,9 +423,9 @@ export_jobs     — id, org_id, license_nonce, export_format, period_start/end, 
 
 ### Billing Tables
 ```
-billing_settings — org_id, tier, polar_subscription_id, polar_customer_id, status
+subscriptions     — org_id, plan, status, current_period_start/end
+pending_orders    — order_id (PK), amount, tier_slug, user_id (FK), provider, status, created_at, expires_at
 payment_events    — id, org_id, provider, amount, currency, status, metadata (NOWPayments IPN)
-pending_orders    — order_id (PK), amount, tier_slug, user_id (FK), created_at, expires_at (NEW — 2026-05-03, self-serve checkout)
 payos_events      — event_id (PK), webhook_id, tier_slug, order_id (FK), status, created_at (NEW — 2026-05-03, PayOS webhook log)
 ```
 
@@ -436,9 +468,7 @@ affiliate_content — id, org_id, type, title, content, status
 | `/[locale]/onboarding` | GET | Resumable 3-step onboarding (auth-required, NEW 2026-05-03) |
 | `/api/v1/demo` | POST | Quick demo preview (rate limited) |
 | `/api/v1/demo-requests` | POST | Demo booking |
-| `/api/auth/signup` | POST | User registration |
-| `/api/auth/login` | POST | Password + magic link login |
-| `/api/auth/callback` | POST | Magic link verification |
+| `/api/auth/[...all]` | GET/POST | Better Auth registration, login, magic link, callback, and session endpoints |
 | `/api/checkout` | GET/POST | Self-serve checkout redirect + invoice creation |
 | `/api/webhooks/nowpayments` | POST | NOWPayments IPN (subscription activation + onboarding trigger) |
 | `/api/webhooks/payos` | POST | PayOS webhook (VN payment events) (NEW 2026-05-03) |
@@ -457,7 +487,7 @@ affiliate_content — id, org_id, type, title, content, status
 | `/api/raas/keys` | GET/POST | API key management |
 | `/api/raas/usage` | GET | MCU usage stats |
 | `/api/proposals/generate` | POST | AI proposal (MCU billable) |
-| `/api/videos/generate` | POST | Video generation (MCU billable, Phases 6-8) |
+| `/api/videos/generate` | POST | Deprecated legacy video endpoint; authenticated callers receive HTTP 410 per ADR 0007 |
 | `/api/videos` | GET/POST | Video CRUD + Inngest status (Phase 6) |
 | `/api/affiliates/dashboard` | GET | Affiliate earnings + commission tracking (Phase 9) |
 | `/api/affiliates/networks` | GET | Available networks (TikTok Shop, Awin, ClickBank, AccessTrade, Amazon) (Phase 9) |
@@ -493,11 +523,12 @@ affiliate_content — id, org_id, type, title, content, status
 
 ## Autonomous Operations & Cron Jobs (2026-04-30)
 
-**Cloudflare Workers Cron Triggers:** 7+ scheduled workflows for solopreneur autonomy
+**Cloudflare Workers Cron Triggers:** Scheduled workflows are defined in `wrangler.toml`, but the active route map is the post-build `CRON_ROUTES` object in `scripts/inject-scheduled-handler.mjs`.
 
 **Inngest Event-Driven Pipelines (Phases 6-14):** 
-- **Video Generation:** Script (OpenRouter gpt-4o-mini) → TTS (Coqui XTTS v2) → Visual (HeyGen or HunyuanVideo) → Compose (FFmpeg + FTC #ad overlay) → Upload (R2) → Publish
-- **Onboarding Video:** NOWPayments IPN (ENTERPRISE/MASTER) → Inngest pipeline → Video auto-gen → Email delivery → Dashboard gallery
+- **Registered Functions Only:** Runtime functions are the explicit array in `src/app/api/inngest/route.ts`; exports from `src/forest/inngest/functions/index.ts` are not active unless listed there.
+- **Deprecated Video Chain:** The Phase 06 `video_jobs` Inngest chain is no longer registered per ADR 0007. Canonical on-demand video generation is the HeyGen mission flow (`video:create`).
+- **Onboarding Video:** NOWPayments IPN (ENTERPRISE/MASTER) → direct HeyGen onboarding video creation → HeyGen webhook → email delivery → dashboard gallery
 - **Affiliate Payouts (Phase 13):** Click events → Commission calc → 14-day clawback window → NOWPayments USDT batch → Reconciliation cron
 
 **Publisher Schedulers (Phase 10-14):**
@@ -522,10 +553,10 @@ affiliate_content — id, org_id, type, title, content, status
 ### Cron Infrastructure (2026-05-02)
 
 **Scheduled Handler Injection (Critical Fix)**
-Post-build hook injects Cloudflare Workers `scheduled()` export, fixing issue where opennextjs-cloudflare shipped no native scheduled support. Script `scripts/inject-scheduled-handler.mjs` runs after opennext-build, patching `.open-next/worker.js` with 10 cron patterns mapped to 11 routes.
+Post-build hook injects Cloudflare Workers `scheduled()` export, fixing issue where opennextjs-cloudflare shipped no native scheduled support. Script `scripts/inject-scheduled-handler.mjs` runs after opennext-build, patching `.open-next/worker.js` with the active cron pattern-to-route map.
 
 **Architecture:**
-- **10 Cron Patterns** in `wrangler.jsonc`: `*/5 * * * *`, `0 * * * *`, `0 0 * * 0`, etc.
+- **Cron patterns** in `apps/sophia-ai-factory/wrangler.toml`, with the live route map verified by `scripts/inject-scheduled-handler.mjs` at build time.
 - **Dispatch:** Scheduled handler invokes internal routes via `env.WORKER_SELF_REFERENCE.fetch(req)` (service binding, no external HTTP)
 - **State Tracking:** `cron_run_log` D1 table records last execution timestamp per cron pattern (idempotency gate)
 - **Auth (260502-0756 CRITICAL UPDATE):** 
@@ -543,18 +574,22 @@ Post-build hook injects Cloudflare Workers `scheduled()` export, fixing issue wh
   - **New (working):** `export default { scheduled }` (method on default export) — CF correctly routes cron events
   - **Why it matters:** CF Workers Modules format requires entry point as method on default export, not named function
 
-**Cron Routes Supported (11 Total):**
-- `/api/cron/email-drip` (Day 1, 3, 7 campaigns)
-- `/api/cron/renewal-reminder` (7d pre-expiry)
-- `/api/cron/dunning-state-advance` (Failed payment retry)
-- `/api/cron/scheduled-campaigns` (Hourly distribution)
-- `/api/cron/health-check` (5min uptime monitor)
-- `/api/cron/quota-evaluation` (Hourly MCU warnings)
-- `/api/cron/usage-aggregation` (30min MCU rollup)
-- `/api/cron/fulfillment-retry` (2min video retry, exp backoff)
-- `/api/cron/synthetic-monitor` (15min alert checks)
-- `/api/cron/fulfillment-reconcile` (6am UTC daily reconciliation)
-- `/api/cron/publisher-sync` (Hourly scheduled posts)
+**Cron Routes Supported by the injection script (verified 2026-05-22):**
+- `*/5 * * * *` → `/api/cron/uptime-check`, `/api/cron/video-status-sync`, `/api/cron/sop-scheduler`
+- `5 * * * *` → `/api/cron/usage-export`
+- `0 1 * * *` → `/api/cron/dunning-advance`
+- `0 2 * * *` → `/api/cron/subscription-reminders`
+- `0 3 * * *` → `/api/cron/scheduled-campaigns`
+- `0 4 * * *` → `/api/cron/email-drip`
+- `0 6 * * 1` → `/api/cron/weekly-signals-digest`
+- `*/2 * * * *` → `/api/cron/fulfillment-retry`, `/api/cron/email-outbox-flush`
+- `*/15 * * * *` → `/api/cron/smoke-one-time`
+- `0 6 * * *` → `/api/cron/fulfillment-reconcile`
+- `0 0 1 * *` → `/api/cron/mcu-monthly-reset`
+- `0 0 * * *` → `/api/cron/clearance-promote`, `/api/cron/promo-trial-expiry`
+- `7 * * * *` → `/api/cron/handover-status-sync`
+
+**Needs verification:** `wrangler.toml` also declares `0 5 * * *`, `*/10 * * * *`, `0 7 * * *`, `10 * * * *`, and `0 */4 * * *`, but these are not present in `CRON_ROUTES`. Do not claim `error-digest`, `heartbeat`, `llm-cache-purge`, `wallet-rebuild`, or `affiliate-scout` are scheduled until this is reconciled.
 
 **Monitoring:**
 - `cron_run_log` prevents duplicate execution (last_run_at check)
@@ -595,13 +630,16 @@ Post-build hook injects Cloudflare Workers `scheduled()` export, fixing issue wh
 
 **File:** `middleware.ts`
 
-1. **Index rewrite:** `/` → `/landing` (opennextjs-cloudflare index bug workaround)
-2. **Public route bypass:** Landing, auth, docs, blog, API v1
-3. **JWT validation:** Extract org_id from verified token
-4. **Protected API routes:** `/api/raas/*`, `/api/affiliate/*`, `/api/proposals/*`, `/api/video/*` require auth
-5. **MCU balance check:** For billable routes (`/api/proposals/*`, `/api/video/*`)
-6. **Auth redirect:** Unauthenticated page requests → `/login?redirect=PATH`
-7. **Security headers:** HSTS, CSP, X-Frame-Options, X-Content-Type-Options, Permissions-Policy
+1. **Static/internal bypass:** internal Next assets and static files skip middleware.
+2. **CORS preflight:** `OPTIONS` handled before auth.
+3. **Per-request CSP nonce:** generated and forwarded to Server Components through `x-csp-nonce`.
+4. **CSRF protection:** mutating requests use double-submit cookie validation.
+5. **API gate:** `/api/*` routes pass through `middleware-api-handler.ts` for tenant isolation, webhook version pinning, rate limits, RaaS gate, and usage events.
+6. **Configured gate:** if platform is not configured, dashboard/admin paths redirect to `/dashboard/onboarding`.
+7. **Admin gate:** `/admin` and dashboard admin paths require admin/basic auth and MASTER tier checks.
+8. **Dashboard auth:** Better Auth session required; pending MFA redirects to `/auth/mfa-challenge`.
+9. **i18n routing:** next-intl middleware applies locale redirects/cookies after app-specific gates.
+10. **Security headers:** CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Permissions-Policy.
 
 ---
 
@@ -611,10 +649,10 @@ Post-build hook injects Cloudflare Workers `scheduled()` export, fixing issue wh
 
 | Tier | Price | MCU/month | Discount | Special Features |
 |------|-------|-----------|----------|---|
-| Starter | $49/mo | 500 | — | 10 campaigns, 0 team members |
-| Growth | $149/mo | 2,000 | 10% | 50 campaigns, 5 team members |
-| Premium | $499/mo | 10,000 | 20% | ∞ campaigns, ∞ team members, API access |
-| Master | $999/mo | 25,000 | 30% | Lifetime (2099), white-label, all integrations |
+| BASIC / Starter | $199/mo | 1,000 | — | 10 campaigns, 1 team member, no API access |
+| PREMIUM / Growth | $399/mo | 5,000 | — | 50 campaigns, 5 team members, API + webhooks |
+| ENTERPRISE / Premium | $799/mo | 20,000 | — | Unlimited-style campaigns/team, custom integrations |
+| MASTER / Master | $4,999 lifetime | 100,000 | — | Lifetime (2099), white-label, all integrations |
 
 ### Tier Enforcement Gates (2026-04-15)
 
@@ -629,15 +667,15 @@ Post-build hook injects Cloudflare Workers `scheduled()` export, fixing issue wh
 - **Feature Access:** All enterprise features available without MCU deduction
 - **White-Label:** Restricted to MASTER tier only (config-enforced)
 
-**ENTERPRISE+ Features (PREMIUM/MASTER only):**
+**Higher-Tier Features:**
 - **Auto Video Onboarding:** ENTERPRISE/MASTER purchase → HeyGen onboarding video auto-generated + email delivery
 - **Custom Integrations:** `/api/user/integrations` endpoint gated to ENTERPRISE+ tiers
 - **API Access:** RaaS endpoints require PREMIUM+ tier
-- **Unlimited Resources:** Campaigns, team members, MCU (PREMIUM/MASTER tiers)
+- **Expanded Resources:** BASIC/PREMIUM/ENTERPRISE/MASTER map to 1k/5k/20k/100k monthly MCU; MASTER is lifetime billing.
 
 **Tier Gate Application:**
 - Campaign creation: DB check before insert (tier-based limits)
-- Team member invites: Count enforcement (0/5/∞/∞)
+- Team member invites: Count enforcement (1/5/∞/∞)
 - API key provisioning: Tier verification (via `normalizePlanToTier` safety wrapper)
 - Integration endpoints: ENTERPRISE+ gate enforcement
 
@@ -699,10 +737,11 @@ crons = ["*/5 * * * *"]
 | `PAYOS_API_KEY` | Vietnam domestic payments |
 | `PAYOS_CHECKSUM_KEY` | PayOS webhook/checksum verification |
 
-### CI/CD
-- **GitHub Actions:** `.github/workflows/test.yml` — `verify:green` gate + Cloudflare deploy
-- **Deploy:** `git push origin main` → GitHub Actions → CF Workers auto-deploy
-- **Build:** `npm run deploy:build` (Next build + OpenNext build + scheduled handler injection)
+### Deploy & Verification
+- **Canonical deploy:** `git push origin main`, then `cd apps/sophia-ai-factory && npm run deploy:full`
+- **Build:** `npm run build` (Turbopack) + OpenNext Cloudflare build + scheduled handler injection
+- **Deploy proof:** `/api/version` short SHA must match local `git rev-parse HEAD | cut -c1-8`; HTTP 200 alone is insufficient.
+- **GitHub Actions:** deploy workflow archived as `.github/workflows/test.yml.disabled`; do not use `gh run list` as production proof.
 
 ### Known Workarounds
 - **Index route bug:** opennextjs-cloudflare returns 500 for `/`. Fixed via middleware rewrite `/` → `/landing`
@@ -737,7 +776,7 @@ crons = ["*/5 * * * *"]
 - **Structured Logging:** JSON logger for all events (`lib/logger.ts`); `logger.error()` supports `{error?, ...metadata}` object form for backward compatibility
 - **Rate Limiter Metrics:** Fail-open branches emit `[metric] telegram_ratelimit_fail_open` with `reason: rpc_error|exception` — downstream log aggregator alerts on sustained spikes
 - **Uptime Check:** Cron job runs `/api/health` every 5 minutes for liveness monitoring
-- **D1 Backup:** Nightly automated backup via GitHub Actions to Cloudflare
+- **D1 Backup:** `/api/cron/d1-backup` dumps D1 to the `sophia-backups` R2 bucket; triggered by external scheduler because GitHub Actions is disabled for deploy.
 
 ### Compliance
 - **Data Protection:** D1 backups encrypted by Cloudflare
@@ -752,15 +791,15 @@ crons = ["*/5 * * * *"]
 - **Single Source:** Better Auth v1.6.2 with D1 Kysely adapter (no multiple auth systems)
 - **Deleted Files:** `lib/auth.ts`, `lib/subscription.ts`, `lib/db/auth-verify.ts`, `lib/clients/supabase-client.ts`
 - **Exceptions:** OAuth callbacks remain on Supabase (external provider requirement), admin invite uses Supabase
-- **Server Client:** All authenticated endpoints use `createServerClient()` from `@/lib/db/client` for D1 queries
+- **Server Client:** All authenticated endpoints use `createServerClient()` from `@/seed/db/client` for D1 queries
 
 ### DB Client Consolidation
 - **Migration Complete:** 112 files migrated from Supabase admin/server to D1 client
-- **Entry Point:** `@/lib/db/client` exports `createServerClient()` for D1 access
+- **Entry Point:** `@/seed/db/client` exports `createServerClient()` for D1 access
 - **Pattern:** All lib/ and app/api/ files use `createServerClient()` instead of Supabase clients
 
 ### Tier Logic Unification
-- **Single Source:** `config/tiers/tier-configs.ts` + `config/tiers/unified-limits.ts`
+- **Single Source:** `seed/config/tiers/tier-configs.ts` + `seed/config/tiers/unified-limits.ts`
 - **Deleted Files:** `lib/tier-gate.ts`, `lib/unified-tier-config.ts`
 - **Pattern:** Tier checks import from config, not dispersed utility files
 
@@ -783,19 +822,16 @@ crons = ["*/5 * * * *"]
 ## Migration Status (2026-04-14)
 
 ### Completed
-- **Architecture Consolidation:** Auth unified, DB client centralized, tier logic consolidated
-- **File Modularization:** 5 giant files split into 21 focused modules
+- **Architecture Consolidation:** Auth unified, D1 client centralized, tier logic consolidated
+- **File Modularization:** Large services split into focused modules under `seed/`, `tree/`, `forest/`, `land/`, and `lib/`
 - **Better Auth Framework:** v1.6.2 installed with D1 Kysely adapter
-- **Dashboard Server Components:** Migrated from custom JWT to Better Auth
-- **Server Actions:** All mutations use Better Auth session context
-- **Database:** Migration SQL applied (0003-better-auth.sql)
-- **Tests:** 859/863 tests passing (4 legacy auth component failures isolated)
+- **Dashboard Server Components:** Migrated to Better Auth session helpers
+- **Server Actions:** Mutations use authenticated session context
+- **Database:** 120 SQL migration files present under `apps/sophia-ai-factory/migrations/`
 
-### Pending (Future Task)
-- **Legacy Auth Removal:** Complete removal of old JWT code after final verification (Phase 7)
-- **API Routes Migration:** Verify all 58 API routes work with Better Auth session
-- **E2E Testing:** Full end-to-end flow validation (signup → magic link → dashboard access)
-- **Timeline:** Minimal follow-up needed; core migration complete
+### Current Verification Rule
+- Do not use the historical 859/863 or 863/863 counts as current evidence.
+- Current status must come from fresh `npm run build`, `npm run ci:test`, and targeted Playwright output.
 
 ### Why No RLS in D1
 - Cloudflare D1 (SQLite) does not support Row Level Security (RLS) policies

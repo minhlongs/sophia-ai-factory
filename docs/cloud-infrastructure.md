@@ -23,27 +23,24 @@ specs:
   regions: 300+ global edge locations
 ```
 
-**Deploy Flow (CI-Based):**
-1. `git push origin main` → GitHub Actions
-2. GitHub Actions runs tests (`npm test`, `npm audit`)
-3. On success: triggers Cloudflare Deploy action
-4. Builds Next.js via `npm run deploy:build` (`next build --webpack` then `@opennextjs/cloudflare build --skipNextBuild`)
-5. Publishes worker to `main` environment
-6. Auto-routes traffic to new deployment
+**Deploy Flow (CF-direct canonical since 2026-05-03):**
+1. Commit and push first: `git push origin main`.
+2. From the app package, run `npm run deploy:full`.
+3. The deploy wrapper runs type-check, Next.js Turbopack build, OpenNext build, scheduled-handler injection, SHA secret injection, and Cloudflare deploy.
+4. Verify `/api/version` short SHA matches `git rev-parse HEAD | cut -c1-8`.
+5. Verify production HTTP 200.
 
-**Deploy Fallback (Manual, CI Broken Since 2026-04-27):**
-If GitHub Actions deploy fails or is unavailable:
+GitHub Actions deploy is disabled by design. Do not report a deploy as green from `gh run list`.
+
 ```bash
-cd /path/to/sophia-ai-factory
-npm run deploy:build
-npx wrangler deploy --name sophia-ai-factory
+cd apps/sophia-ai-factory
+npm run deploy:full
 
-# Set required secrets (one-time):
-npx wrangler secret put COMMIT_SHA --value "$(git rev-parse HEAD)"
-npx wrangler secret put DEPLOYED_AT --value "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-npx wrangler secret put DEPLOY_BRANCH --value "main"
+LIVE_SHA=$(curl -s https://sophia.agencyos.network/api/version | jq -r .shortSha)
+LOCAL_SHA=$(git rev-parse HEAD | cut -c1-8)
+test "$LIVE_SHA" = "$LOCAL_SHA"
+curl -sI https://sophia.agencyos.network | head -3
 ```
-Verify production: `curl https://sophia.agencyos.network/api/health`
 
 **Config:** `wrangler.toml`
 
@@ -53,37 +50,50 @@ main = ".open-next/worker.js"
 compatibility_date = "2026-03-17"
 compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
 
+[[d1_databases]]
+binding = "DB"
+database_name = "sophia-raas-db"
+migrations_dir = "migrations"
+
+[[d1_databases]]
+binding = "NEXT_TAG_CACHE_D1"
+database_name = "sophia-tag-cache"
+
+[[r2_buckets]]
+binding = "NEXT_INC_CACHE_R2_BUCKET"
+bucket_name = "sophia-ai-factory-opennext-cache"
+
+[[r2_buckets]]
+binding = "VIDEO_BUCKET"
+bucket_name = "sophia-videos"
+
+[[r2_buckets]]
+binding = "BACKUPS_BUCKET"
+bucket_name = "sophia-backups"
+
+[images]
+binding = "IMAGES"
+
 [triggers]
-crons = ["*/5 * * * *"]  # Health check every 5 min
+crons = ["*/2 * * * *", "*/5 * * * *", "..."]  # 18 patterns as of 2026-05-21
 ```
 
 ### D1 Database
 
 **Service:** Cloudflare D1 (SQLite)
 
-```yaml
-id: 78bd1961-b62d-43bb-b551-0c5d7d389506
-name: sophia-raas-db
-type: SQLite
-region: SFO (US-West)
-tables: 44 (users, orgs, missions, billing, signals, rate_limits, export_jobs, etc.)
-size: ~50 MB (as of 2026-04-19)
-backup: Daily (automatic + manual export)
-replication: None (single-region)
+| Binding | Database | Purpose |
+|---|---|---|
+| `DB` | `sophia-raas-db` | Primary product database: auth, billing, handover, missions, usage, telemetry |
+| `NEXT_TAG_CACHE_D1` | `sophia-tag-cache` | OpenNext tag cache (`0108-opennext-tag-cache.sql`) |
+
+**Schema source:** `apps/sophia-ai-factory/migrations/` contains 120 SQL files as of 2026-05-21. Highest numbered migration: `0117-refresh-video-generation-starter-sop.sql`.
+
+**Table count:** do not hardcode. Verify with:
+
+```bash
+npx wrangler d1 execute sophia-raas-db --remote --command "SELECT COUNT(*) FROM sqlite_master WHERE type='table'"
 ```
-
-**Tables (44 total):**
-
-| Category | Tables |
-|----------|--------|
-| **Auth** | users, organizations, org_members, api_keys (Phase 4: D1 canonical schema) |
-| **Features** | missions, mission_results, usage_logs |
-| **Billing** | billing_settings, org_balances |
-| **Growth** | referral_codes, affiliates, affiliate_content |
-| **Content** | blog_posts (+ 5 hardcoded SEO posts) |
-| **Telemetry** | signals_events (append-only founder ops telemetry) |
-| **Operations** | rate_limits (atomic counter + window), export_jobs (cron tracking) |
-| **System** | migrations (schema history) |
 
 **Access:**
 - **From Workers:** Bound via `DB` binding in `wrangler.toml`
@@ -93,9 +103,9 @@ replication: None (single-region)
 
 **Migrations:**
 - Stored in `migrations/` (D1 SQLite)
-- Numbered: `0001-init.sql` → `0014-export-jobs.sql` (Phase 4 D1 tech debt closure)
-- Applied automatically on `wrangler d1 migrations apply`
-- **Phase 4 additions (0013–0014):** rate_limits atomic counter + export_jobs cron tracking (replaces Supabase legacy tables)
+- Numbered through `0117-*`, with a few legacy branch filenames retained.
+- Apply with `npm run deploy:migrations` or `bash scripts/apply-migrations.sh` from `apps/sophia-ai-factory/`.
+- Backup with `/api/cron/d1-backup` → R2 `sophia-backups`.
 
 **Founder Ops Telemetry (signals_events):**
 - **Purpose:** Append-only log for operational metrics (not product analytics)
@@ -103,22 +113,15 @@ replication: None (single-region)
 - **Writers:** `src/lib/signals/track.ts` (emitted during feature execution)
 - **Readers:** Weekly digest cron queries + exports to GH Issue + Telegram TL;DR
 
-### R2 Storage (Cache & Assets)
+### R2 Storage
 
 **Service:** Cloudflare R2 (S3-compatible object storage)
 
-```yaml
-bucket: sophia-ai-factory-opennext-cache
-region: US auto (geo-optimized)
-purpose: Next.js incremental static regeneration (ISR) cache
-retention: 30 days (TTL on cache objects)
-public: No (private bucket, accessed via CF Workers)
-```
-
-**Usage:**
-- Caches static assets generated at build time
-- ISR cache for dynamically-generated pages
-- Reduces rebuild latency on content changes
+| Binding | Bucket | Purpose |
+|---|---|---|
+| `NEXT_INC_CACHE_R2_BUCKET` | `sophia-ai-factory-opennext-cache` | OpenNext incremental cache |
+| `VIDEO_BUCKET` | `sophia-videos` | Generated/customer video storage |
+| `BACKUPS_BUCKET` | `sophia-backups` | D1 SQL dumps from `/api/cron/d1-backup`, 30-day lifecycle |
 
 ### DNS & Domain
 
@@ -137,7 +140,7 @@ ttl: 3600 (1 hour)
 ```
 
 **SSL/TLS:**
-- **Type:** Flexible (CF terminates SSL → origin uses HTTP)
+- **Type:** Cloudflare-managed TLS for Workers custom domain
 - **Protocol:** TLS 1.2+
 - **HSTS:** Enabled (max-age 31536000, includeSubDomains)
 - **Certificate:** Auto-renewed by Cloudflare
@@ -148,11 +151,11 @@ ttl: 3600 (1 hour)
 
 ### Layer 1: Database (D1) — 9/10
 
-- **Schema:** 44 tables, versioned migrations (0001-0014, Phase 4 tech debt closure)
-- **RLS:** Handled in application logic (JWT org_id checks)
-- **Backups:** Automatic daily + manual `npx wrangler d1 export`
+- **Schema:** 120 SQL migration files as of 2026-05-21; count tables from D1 before reporting.
+- **RLS:** D1 has no RLS; app enforces ownership through Better Auth session/org context and explicit query filters.
+- **Backups:** `/api/cron/d1-backup` writes daily SQL dumps to R2 `sophia-backups`; manual `npx wrangler d1 export` remains available.
 - **Disaster Recovery:** RPO 24h, RTO 4h (restore from D1 backup + git redeploy)
-- **Phase 4 Improvements:** rate_limits (atomic), export_jobs (cron), api_keys (D1 canonical schema with is_active/expires_at)
+- **Recent Improvements:** rate limits, cron run logging, API keys, wallet/payout tables, OpenNext tag cache.
 - **Gap:** Single-region only (no cross-region failover)
 
 ### Layer 2: Server (Workers) — 8/10
@@ -160,7 +163,7 @@ ttl: 3600 (1 hour)
 - **Hosting:** Cloudflare Workers (serverless, auto-scaling)
 - **Edge Functions:** All routes run on edge (no centralized data center)
 - **Cold Start:** < 100ms typical (negligible)
-- **Performance:** Build time 8-10s, bundle 400-500 KB (gzipped)
+- **Performance:** build is hardware-dependent; deploy wrapper uses Turbopack to avoid M1 webpack OOM.
 - **Availability:** 99.99% SLA
 
 ### Layer 3: Networking (DNS/SSL) — 8/10
@@ -179,21 +182,21 @@ ttl: 3600 (1 hour)
 - **Cost:** Metered per request + D1 usage (low for current load)
 - **Vendor Lock-in:** Medium (CF Workers, D1 are proprietary)
 
-### Layer 5: CI/CD — 9/10
+### Layer 5: Deploy & Release — 8/10
 
-- **Pipeline:** GitHub Actions (`.github/workflows/test.yml`)
-- **Triggers:** On push to main
-- **Steps:** Lint → Test (205 tests) → Audit → Deploy
-- **Deployment:** Automatic to Cloudflare Workers on green build
-- **Rollback:** Manual via `git revert + push` or `wrangler rollback`
+- **Pipeline:** CF-direct via `apps/sophia-ai-factory/scripts/deploy-with-sha.sh`
+- **Preconditions:** local HEAD pushed to `origin/main`; working tree clean
+- **Steps:** Type-check → Turbopack build → OpenNext build → SHA secret injection → Cloudflare deploy
+- **Verification:** `/api/version` SHA match + production HTTP 200
+- **Rollback:** Cloudflare Workers rollback or `git revert` followed by `npm run deploy:full`
 
 ### Layer 6: Security — 9/10
 
-- **Auth:** Custom JWT (PBKDF2 hashing, 7-day expiry)
+- **Auth:** Better Auth v1.6.2 with D1 Kysely adapter and session cookies
 - **Secrets:** Stored in CF Worker secrets (encrypted at rest)
 - **Tenant Isolation:** JWT org_id validation, no header switching
 - **XSS Prevention:** DOMPurify sanitization, CSP header
-- **Rate Limiting:** `/api/v1/demo` capped at 10 req/min per IP
+- **Rate Limiting:** route-level rate limiting + tier/quota enforcement on protected APIs
 - **Admin Enforcement:** Admin-only routes verify role='admin'
 
 ### Layer 7: Monitoring — 8/10
@@ -201,7 +204,7 @@ ttl: 3600 (1 hour)
 - **Error Tracking:** Sentry (client, server, edge)
 - **Structured Logging:** JSON logger (lib/logger.ts)
 - **Uptime Monitoring:** Cron-based `/api/health` check every 5 min
-- **Metrics:** GitHub Actions CI/CD metrics, Cloudflare analytics
+- **Metrics:** Cloudflare analytics, Sentry, PostHog, cron heartbeat routes
 - **Gap:** No real-time APM (response times per endpoint)
 
 ### Layer 8: Containers — N/A
@@ -219,7 +222,7 @@ ttl: 3600 (1 hour)
 
 ### Layer 10: Backup & DR — 8/10
 
-- **Database:** D1 daily backups, manual export via `wrangler d1 export`
+- **Database:** D1 daily SQL dumps to R2 plus manual export via `wrangler d1 export`
 - **Code:** Git repository (full history, branch protection)
 - **Secrets:** Encrypted in CF Worker secrets (no export, manual rotation)
 - **DR Plan:** Documented in `docs/disaster-recovery.md`
@@ -301,22 +304,24 @@ All secrets managed via `npx wrangler secret put <NAME>`:
 ## Deployment Checklist
 
 - [ ] Code committed to `main` branch
-- [ ] GitHub Actions passes tests & audit
-- [ ] CF Workers automatically deploys
+- [ ] Local gates pass (`npm run type-check`, `npm run build`, targeted tests)
+- [ ] `npm run deploy:full` exits 0
+- [ ] `/api/version` short SHA matches local HEAD
 - [ ] Verify health: `curl https://sophia.agencyos.network/api/health`
 - [ ] Check Sentry for errors (should be 0 new errors)
 - [ ] Monitor uptime cron logs
-- [ ] Verify D1 backup ran (check `.wrangler/migrations/applied`)
+- [ ] Verify D1 backup route/R2 object freshness: `npx wrangler r2 object list sophia-backups --prefix='d1-'`
 
 ---
 
 ## Troubleshooting
 
 ### Workers Not Deploying
-1. Check GitHub Actions status: `gh run list`
-2. Check Cloudflare dashboard for deploy errors
-3. Verify `wrangler.toml` syntax
-4. Check secret availability: `npx wrangler secret list`
+1. Read the `npm run deploy:full` failure output.
+2. Check Cloudflare dashboard for deploy errors.
+3. Verify `apps/sophia-ai-factory/wrangler.toml` syntax and bindings.
+4. Check secret availability: `npx wrangler secret list`.
+5. If the deploy wrapper refuses to run, push HEAD first or commit/stash local changes.
 
 ### D1 Query Failing
 1. Check connection: `npx wrangler d1 execute sophia-raas-db --remote --command "SELECT 1"`
@@ -330,4 +335,4 @@ All secrets managed via `npx wrangler secret put <NAME>`:
 
 ---
 
-**Last Updated:** 2026-03-26
+**Last Updated:** 2026-05-21

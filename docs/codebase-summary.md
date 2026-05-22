@@ -1,12 +1,12 @@
 # Codebase Summary — Sophia AI Factory
 
 > Comprehensive overview of the Sophia AI Factory codebase structure, patterns, and architectural decisions.
-> **Last Updated:** 2026-05-20 (docs harness alignment — reflects shipped state as of 2026-05-17)
+> **Last Updated:** 2026-05-21 (docs backfill scout — package/deploy facts checked against app code)
 
 **Production URL:** https://sophia.agencyos.network (SHA 4bca4710)
-**Git SHA:** 4bca4710 | **Tests:** 4431/4431 passing (100%) | **Build:** < 10s, 0 TS errors | **Bundle:** < 500 KB gzipped
+**Last full GREEN recorded:** SHA 4bca4710, 4431/4431 tests passing on 2026-05-17. Re-run local gates before any new deploy.
 **Deploy doctrine:** CF-direct via `npm run deploy:full` (wrangler CLI). GitHub Actions DISABLED by design since 2026-05-03 — see Deploy Flow section below.
-**D1 Migrations:** 117 applied as of 2026-05-19 (0001–0117).
+**D1 Migrations:** 120 SQL files in `apps/sophia-ai-factory/migrations/` as of 2026-05-21 (highest numbered migration: 0117).
 
 ---
 
@@ -26,8 +26,8 @@ Sophia AI Factory is a Reasoning-as-a-Service (RaaS) platform providing:
 | Layer | Technology | Purpose |
 |-------|-----------|---------|
 | **Runtime** | Cloudflare Workers | Edge compute, global distribution |
-| **Framework** | Next.js 15.5 (App Router) | Full-stack React application |
-| **Adapter** | opennextjs-cloudflare | Next.js → CF Workers bridge |
+| **Framework** | Next.js 16 + React 19 (App Router) | Full-stack React application |
+| **Adapter** | `@opennextjs/cloudflare` | Next.js → CF Workers bridge |
 | **Database** | Cloudflare D1 (SQLite) | Primary data store (sophia-raas-db) |
 | **Cache** | Cloudflare R2 + KV | Static assets + metering logs |
 | **Auth** | Better Auth v1.6.2 | Session-based auth (D1 backend) |
@@ -39,7 +39,35 @@ Sophia AI Factory is a Reasoning-as-a-Service (RaaS) platform providing:
 
 ---
 
+## Verified Repository Audit Map
+
+This map was checked against the working tree on 2026-05-22. Use it before trusting historical folder snapshots below.
+
+| Area | Overview | Entry Points | Dependencies | Runtime Role | Risk | Confidence |
+|------|----------|--------------|--------------|--------------|------|------------|
+| `apps/sophia-ai-factory/` | Canonical Sophia production app. Next.js 16 + React 19 compiled to Cloudflare Workers through OpenNext. | `src/middleware.ts`, `src/app/**`, `src/app/api/**`, `package.json`, `wrangler.toml` | Cloudflare D1/R2/KV/Images/Workers, Better Auth, NOWPayments, Resend, Telegram, HeyGen, Inngest | Serves product UI, API routes, auth, billing, missions, webhooks, cron dispatch | High: 2476 source files, many legacy `src/lib/*` modules still coexist with `seed/tree/forest/land` | High |
+| `apps/84tea/` | Secondary app in the monorepo. Not part of Sophia production deployment. | Its own app/package files | Next.js stack | Separate runtime if deployed independently | Medium: ownership and deploy status not documented in Sophia docs | Medium |
+| `services/` | Sidecar service blueprints for media workloads (`coqui-tts`, `moviepy-render`, `runpod-hunyuan`). | Docker/Fly/Runpod service files inside each service | Python/media runtimes, external hosting | Optional external providers for TTS/render/video generation | Medium: production connection points need operator verification | Medium |
+| `scripts/` | Root automation and diagnostics. App deploy scripts live under `apps/sophia-ai-factory/scripts/`. | Shell/TS scripts | GitHub/Cloudflare/local shell | Operator automation, verification, historical migration helpers | Medium: root scripts include legacy paths; verify before running | Medium |
+| `supabase/` | Legacy/shared Supabase migration artifacts. | `supabase/migrations/` | Supabase/Postgres | Historical or auxiliary; Sophia app production DB is D1 | High: easy to mistake as production schema source | High |
+| `apps/sophia-ai-factory/migrations/` | Canonical Cloudflare D1 migrations for Sophia. | `scripts/apply-migrations.sh`, Wrangler D1 migration commands | Cloudflare D1 | Production schema evolution | High: 120 SQL files; migration count must be rechecked before reports | High |
+| `apps/sophia-ai-factory/wrangler.toml` | Canonical Cloudflare Worker/D1/R2/KV/cron config. | `npm run deploy:full` | OpenNext Cloudflare + Wrangler | Production topology and scheduled trigger source | High: cron patterns drift from injected route map; see risks below | High |
+| Root `wrangler.jsonc` | Historical/narrower Worker config. | None verified for Sophia deploy | Cloudflare | Not canonical for Sophia app deployment | Medium: can mislead agents about bindings/crons | High |
+| `.github/workflows/` | Auxiliary scans/cron workflows. Deploy workflow is archived/disabled. | PR/manual schedules | GitHub Actions | Security/quality/backfill automation, not production deploy proof | Medium: do not use `gh run list` as deploy proof | High |
+| `.gitlab-ci.yml` | GitLab mirror/deploy automation file. | GitLab CI | Wrangler | Possible mirror path, but not canonical doctrine | Medium: needs operator confirmation before use | Medium |
+| `docs/` | Operator/cross-project docs. | README and topic docs | Human/agent readers | Onboarding, architecture, deployment, risks | Medium: historical sections still mention old paths/providers | High |
+| `apps/sophia-ai-factory/docs/` | App-internal engineering docs/runbooks. | launch, compliance, migration, checklist docs | Human/agent readers | Detailed Sophia implementation history and operations | Medium: some historical docs intentionally preserve old state | Medium |
+| `plans/` | Implementation/audit plans and reports. | `plans/*/plan.md` | Agent workflow | Work history, active audits, verification records | Low: high volume; active plan must be identified before edits | High |
+| `.claude/`, `.opencode/`, `.agent/`, `.sophia-factory/`, `.mekong/` | Agent orchestration and instruction layers. | AGENTS/CLAUDE/rule files, command files | Local agent CLIs | Controls future agent behavior and task routing | High: stale canonical paths here cause repeated wrong code changes | High |
+| `packages/` | No active root `packages/` directory found. | N/A | N/A | N/A | Low, but docs should not imply package workspace modules exist | High |
+
+Missing docs still worth clarifying: `apps/84tea` ownership/deploy status, sidecar service production connectivity, whether `.gitlab-ci.yml` is active or historical, and package-manager doctrine (`npm` scripts are canonical while pnpm lockfiles exist).
+
+---
+
 ## Directory Structure
+
+The detailed tree below is a high-level/historical navigation aid. For canonical runtime ownership and imports, prefer the verified audit map and the `seed/tree/forest/land` layer map in the next sections. In particular, do not infer auth/db/tier import paths from old `src/lib/*` entries.
 
 ```
 apps/sophia-ai-factory/  # Main Sophia AI Factory codebase (canon — deployed to sophia.agencyos.network)
@@ -49,7 +77,7 @@ apps/sophia-ai-factory/  # Main Sophia AI Factory codebase (canon — deployed t
 │   │   ├── (admin)/admin/      # Admin panel (tier provisioning, settings)
 │   │   ├── pricing/            # Public pricing page
 │   │   ├── login/              # Auth pages (login, signup, magic link)
-│   │   └── api/                # API routes (auth, webhooks, RaaS endpoints)
+│   ├── app/api/                # API routes (auth, webhooks, RaaS endpoints)
 │   │
 │   ├── lib/
 │   │   ├── auth/               # Better Auth integration, session management
@@ -126,16 +154,11 @@ apps/sophia-ai-factory/  # Main Sophia AI Factory codebase (canon — deployed t
 │   │   ├── campaigns/          # Campaign management (shared core logic)
 │   │   │   └── create-campaign-core.ts
 │   │   │
-│   │   ├── video/              # Video pipeline (Phases 6-8, Inngest FSM)
-│   │   │   ├── onboarding-video.ts     # Post-purchase auto-gen (ENTERPRISE+)
-│   │   │   ├── video-fsm.ts            # FSM state machine
-│   │   │   └── ...                     # Job tracking, manifest generation
+│   │   ├── video/              # Legacy + helper video modules; canonical on-demand video is mission `video:create`
+│   │   │   ├── onboarding-video.ts     # Post-purchase auto-gen (ENTERPRISE/MASTER)
+│   │   │   └── ...                     # Access, cost, URL, and deprecated job helpers
 │   │   │
-│   │   ├── inngest/            # Event-driven video orchestration (Phases 6-8)
-│   │   │   ├── functions/video-scripting.ts     # OpenRouter gpt-4o-mini → script
-│   │   │   ├── functions/video-visual.ts        # HeyGen/HunyuanVideo → visual
-│   │   │   ├── functions/video-upload.ts        # R2 storage + verify
-│   │   │   └── ...
+│   │   ├── inngest/            # Inngest helpers; only functions listed in app/api/inngest/route.ts are active
 │   │   │
 │   │   ├── affiliate/          # Affiliate network integration (Phase 9, 5 networks)
 │   │   │   ├── networks/                   # TikTok Shop, Awin, ClickBank, AccessTrade, Amazon
@@ -189,29 +212,24 @@ apps/sophia-ai-factory/  # Main Sophia AI Factory codebase (canon — deployed t
 │
 ├── migrations/                 # Database schema (D1 SQLite)
 │   ├── 0001-init.sql
-│   ├── 0002-payment-events.sql
-│   ├── 0003-better-auth.sql
-│   ├── 0004-usage-metering.sql
-│   ├── 0005-signals-events.sql        # Append-only events table
-│   ├── 0044-cron-runs-table.sql       # cron_run_log for execution dedup (260502-0733)
-│   ├── 0045-videos-is-onboarding.sql  # Restore is_onboarding (lost in 0043, 260502-0733)
-│   ├── 0046-user-provider-credentials.sql # Per-user provider credentials (260502-1100)
-│   ├── 0047-self-serve-checkout.sql   # pending_orders, payos_events (NEW 2026-05-03)
-│   └── 0048-mission-control-handover.sql # email_outbox, api_keys, onboarding, status (NEW 2026-05-03)
+│   ├── ...
+│   └── 0117-refresh-video-generation-starter-sop.sql
+│   # 120 SQL files present as of 2026-05-21; run `find migrations -name '*.sql'`
+│   # before claiming a current migration count.
 │
 ├── scripts/                    # Build & deployment utilities
 │   ├── inject-scheduled-handler.mjs    # Post-build: injects CF Workers scheduled() default-export (260502-0756 FIX: CF Modules format)
 │   ├── set-cron-secret.sh             # Operator setup: generates 32-byte CRON_SECRET, sets via wrangler secret put (260502-0756 NEW)
 │   └── deploy-with-sha.sh             # Deploy wrapper: sets COMMIT_SHA/DEPLOYED_AT/DEPLOY_BRANCH secrets (260502-0733)
 │
-├── .github/workflows/          # GitHub Actions (DISABLED since 2026-05-03 — account free-tier)
+├── .github/workflows/          # Auxiliary workflows; deploy workflow disabled since 2026-05-03
 │   ├── test.yml.disabled       # Archived deploy workflow (CF-direct doctrine replaces this)
 │   ├── security-scan.yml       # SAST + npm audit + secret scan
 │   ├── quality-gate.yml        # Test coverage + mutation score
 │   ├── dependency-audit.yml    # Outdated packages + breaking changes
 │   ├── canary-rollback.yml     # Manual rollback (workflow_dispatch only)
-│   ├── post-merge-tests.yml    # Final validation on main
-│   ├── d1-backup.yml           # Daily D1 export → R2
+│   ├── post-merge-tests.yml.disabled
+│   ├── d1-backup.yml.disabled  # D1 backup moved to `/api/cron/d1-backup` + R2
 │   └── agent-self-review.yml   # Weekly journal summary → GH Issue
 │
 ├── .sophia-factory/            # AI factory & SDLC (P4)
@@ -255,6 +273,55 @@ All domain code under `apps/sophia-ai-factory/src/` follows a 4-layer convention
 Import direction: `seed` ← any layer. `tree` imports seed. `forest` imports seed+tree (may call land for orchestration). `land` imports seed+tree+forest.
 
 Authoritative reference: `apps/sophia-ai-factory/.claude/rules/sophia-layer-architecture.md`
+
+---
+
+## Verified Runtime Entry Points
+
+| Subsystem | Overview | Entry Points | Runtime Flow | Dependencies | Risks | Confidence |
+|-----------|----------|--------------|--------------|--------------|-------|------------|
+| Request middleware | First gate for pages/API. Adds CSP nonce, CORS, CSRF, auth redirects, MFA checks, API usage events, tenant/rate gates. | `src/middleware.ts`, `src/middleware-api-handler.ts`, `src/middleware-helpers.ts` | Request -> static/public bypass -> API handler or page auth -> Better Auth session lookup -> admin/tier/MFA checks -> intl middleware/route handler | Better Auth, D1, usage metering, rate limiter | High: many security decisions happen before route code; middleware export is `proxy(request)`, not the older `middleware` name | High |
+| Auth | Better Auth D1-backed sessions with email/password and magic links. User create hook provisions org/member/balance/subscription/profile rows. | `src/app/api/auth/[...all]/route.ts`, `src/seed/auth/better-auth-server.ts`, `src/seed/auth/better-auth-session.ts` | Better Auth handler -> D1 adapter -> session cookie -> middleware/server components call `getCurrentUser()` | D1, Resend, Better Auth plugins | Medium: docs and rules historically referenced deleted `@/lib/*` paths | High |
+| Persistence | Cloudflare D1 is canonical production DB. `createServerClient()` is sync and resolves Worker bindings lazily when needed. | `src/seed/db/client.ts`, `src/seed/db/get-user-tier.ts`, `migrations/` | Route/server action -> D1 client -> query builder/raw D1 -> domain repository | D1 binding `DB`, migrations, query-chain helpers | High: Supabase shims still exist under `src/lib/supabase/*`; avoid treating Supabase as production DB source | High |
+| Tier/pricing | Uppercase tier enum drives limits, prices, feature gates, checkout mappings. | `src/seed/config/tiers/index.ts`, `tier-configs.ts`, `unified-limits.ts`, `one-time-skus.ts` | UI/API imports `UNIFIED_TIERS` or `TIER_CONFIGS`; checkout maps tier -> NOWPayments invoice | NOWPayments invoice IDs, D1 subscriptions/balances | High: many historical docs still contain old `$49/$149/$499/$999` prices | High |
+| Checkout/IPN billing | Self-serve checkout redirects to pre-created NOWPayments invoices; IPN activates subscription or one-time bundle. | `src/app/api/checkout/route.ts`, `src/tree/clients/nowpayments-client.ts`, `src/app/api/webhooks/nowpayments/route.ts`, `src/land/billing/nowpayments-ipn-*.ts` | Authenticated checkout -> pending order -> NOWPayments invoice -> signed IPN -> idempotency check -> subscription/user_purchase/balance/video fulfillment updates | NOWPayments, D1, Resend, HeyGen, handover | High: invoice IDs are code-owned constants; dashboard changes must stay in sync | High |
+| Mission engine | Bearer/session-accessible RaaS command dispatcher. `video:create` is the canonical on-demand video path. | `src/app/api/v1/missions/route.ts`, `src/forest/missions/dispatcher.ts`, `src/land/missions/auto-video-mission.ts` | Validate API key/session -> quota/balance check -> insert `engine_missions` -> dispatch handler -> persist result/status | D1, usage metering, HeyGen/BYOK, SEO/affiliate helpers | Medium: route returns before background dispatch completes; monitoring depends on mission status records | High |
+| Legacy video jobs | ADR 0007 deprecated the old `video_jobs` Inngest chain. | `src/app/api/videos/generate/route.ts`, `docs/architecture-decisions/0007-deprecate-video-jobs-inngest-chain.md` | Authenticated caller receives HTTP 410 with replacement hint | None active for new requests | High: `videoGenerate` still exists in exports and server action emitters, but `/api/inngest` does not register it | High |
+| Inngest | Event functions registered explicitly, not by folder export. | `src/app/api/inngest/route.ts`, `src/forest/inngest/functions/index.ts` | Inngest serve registers selected functions -> events trigger billing/publishing/storage jobs | Inngest, D1, external APIs | High: functions exported from index are not necessarily registered; check route list before assuming runtime coverage | High |
+| Cron/schedulers | Cloudflare scheduled handler is injected after OpenNext build and calls internal API routes through service binding. | `wrangler.toml`, `scripts/inject-scheduled-handler.mjs`, `src/app/api/cron/**` | CF cron pattern -> injected `scheduled()` -> `WORKER_SELF_REFERENCE.fetch()` with `CRON_SECRET` bearer -> route handler | Wrangler, Cloudflare Workers, D1 `cron_run_log`, CRON_SECRET | High: several `wrangler.toml` cron patterns are not mapped in `CRON_ROUTES` (`0 5`, `*/10`, `0 7`, `10 *`, `0 */4`) | High |
+| Feature flags/signals | Experiments and canaries resolve through KV/D1 helpers. | `src/lib/signals/*`, `src/lib/feature-flags/*`, `EXPERIMENT_KV` binding | Request/action -> resolver -> D1/KV event append -> PostHog/weekly digest where configured | EXPERIMENT_KV, PostHog, D1 | Medium: mixed `src/lib/*` namespace remains active for product analytics | Medium |
+| Env/config | Worker secrets and `.dev.vars` supply runtime credentials. App `.env.example` is best local template. | `apps/sophia-ai-factory/.env.example`, `.env.production.example`, `wrangler.toml`, `scripts/deploy-with-sha.sh` | Local/dev reads env -> deploy script sets build metadata secrets -> Worker runtime reads bindings/secrets | Wrangler secrets, Cloudflare bindings | High: `.env.production.example` and docs have some stale variable names; verify with code before provisioning | Medium |
+
+---
+
+## Gap & Risk Report
+
+### Confirmed Facts
+- Production deploy is CF-direct from `apps/sophia-ai-factory` through `npm run deploy:full`; GitHub deploy workflow is disabled by design.
+- Canonical production persistence is Cloudflare D1 (`sophia-raas-db`) with migrations under `apps/sophia-ai-factory/migrations/`.
+- Core imports for auth/db/tier are `@/seed/auth/*`, `@/seed/db/*`, and `@/seed/config/tiers`.
+- `/api/videos/generate` is deprecated and returns HTTP 410 for authenticated callers. The replacement is the HeyGen mission flow (`video:create`).
+- Runtime Inngest registration is controlled by `src/app/api/inngest/route.ts`, not by the function export index.
+- The Cloudflare cron route map is injected by `scripts/inject-scheduled-handler.mjs`; several `wrangler.toml` cron patterns currently have no mapping in `CRON_ROUTES`.
+
+### Inferred Behavior
+- Root `wrangler.jsonc`, root `.env.example`, and root package metadata are legacy/tooling context for Sophia, not deploy source of truth. This is inferred from the app deploy script, app `wrangler.toml`, and project deploy doctrine.
+- `src/lib/*` is still active for many feature modules, but it is no longer the canonical location for foundational primitives. New foundational code should go under `seed`, with domain code under `tree`, `forest`, or `land`.
+- GitLab CI may be a mirror or historical deploy path. It should not be used as canonical until an operator confirms it.
+
+### Operational Risks
+- **Cron drift (High):** `wrangler.toml` includes unmapped schedules. Missing scheduled execution can silently break monitoring, cache purge, wallet rebuild, or affiliate scout jobs.
+- **Video flow drift (High):** Legacy video Inngest code still exists and can be mistaken for active runtime. Check ADR 0007 and `/api/inngest/route.ts` before changing video generation.
+- **Env drift (High):** `.env.production.example`, `.env.example`, docs, and code use overlapping names. Provision secrets by grepping runtime code, not by copying one file blindly.
+- **Package-manager ambiguity (Medium):** pnpm lockfiles exist, but app scripts and deploy docs are npm-based.
+- **Docs history noise (Medium):** changelog and launch-history docs preserve old provider/path names. Treat them as historical unless a current doc or source file confirms the behavior.
+
+### Missing Information / Open Questions
+- What is the operational owner and deploy status of `apps/84tea/`?
+- Are `services/coqui-tts`, `services/moviepy-render`, and `services/runpod-hunyuan` connected to production, standby, or only retained as blueprints?
+- Is `.gitlab-ci.yml` active in any environment, or historical only?
+- Should npm remain the only documented runner, or should pnpm workspace files be formalized?
+- Should the unmapped `wrangler.toml` cron patterns be removed, or should `CRON_ROUTES` be expanded?
 
 ---
 
@@ -314,7 +381,7 @@ App layer enforces user_id/org_id ownership (no RLS needed)
 ```
 
 ### Client Library
-- **Path:** `src/lib/better-auth-client.ts`
+- **Path:** `src/seed/auth/better-auth-client.ts`
 - **Features:** Magic link provider, organization plugin setup
 - **Usage:** Imported in Server Components to get current user + org context
 
@@ -341,7 +408,9 @@ usage_logs       → id, org_id, feature, mcu_used, timestamp
 
 ### Billing Tables
 ```
-billing_settings   → org_id, tier, nowpayments_order_id, status
+subscriptions      → org_id, plan, status, current_period_start/end
+pending_orders     → order_id, tier_slug, amount, provider, status, payment_id, completed_at
+payment_events     → provider/payment status audit rows
 coupon_redemptions → user_id, coupon_code, redeemed_at (UNIQUE per user/code, migration 0025)
 ```
 
@@ -392,7 +461,7 @@ scheduled_posts          → id, org_id, content, scheduled_at, channels_bitmap,
 | `/api/raas/missions` | GET/POST | Mission CRUD |
 | `/api/raas/keys` | GET/POST | API key management |
 | `/api/proposals/generate` | POST | AI proposal (MCU billable) |
-| `/api/videos/generate` | POST | Video generation (MCU billable, Phases 6-8) |
+| `/api/videos/generate` | POST | Deprecated legacy video generation endpoint; returns HTTP 410 per ADR 0007. Use mission routes instead. |
 | `/api/videos` | GET/POST | Video CRUD + Inngest status (Phase 6) |
 | `/api/affiliates/dashboard` | GET | Earnings + commission tracking (Phase 9) |
 | `/api/affiliates/networks` | GET | 5 networks (TikTok Shop, Awin, ClickBank, AccessTrade, Amazon) (Phase 9) |
@@ -427,17 +496,17 @@ scheduled_posts          → id, org_id, content, scheduled_at, channels_bitmap,
 ## Key Patterns & Modules
 
 ### 1. Authentication (Better Auth)
-- **Files:** `lib/auth/*`, `lib/better-auth-client.ts`, `lib/better-auth-server.ts`
+- **Files:** `seed/auth/better-auth-client.ts`, `seed/auth/better-auth-server.ts`, `seed/auth/better-auth-session.ts`
 - **Pattern:** Better Auth handles session logic; app layer enforces org ownership
 - **No RLS:** D1 doesn't support RLS; all queries include `WHERE org_id = ?` filters
 
 ### 2. Database Client (D1 Consolidation)
-- **Single Entry Point:** `lib/db/client.ts` exports `createServerClient()`
+- **Single Entry Point:** `seed/db/client.ts` exports `createServerClient()`
 - **Migration Complete:** 112 files use centralized client instead of Supabase imports
 - **Pattern:** All authenticated DB access routes through one function
 
 ### 3. Tier Logic (Unified Config)
-- **Single Source:** `config/tiers/tier-configs.ts` + `config/tiers/unified-limits.ts`
+- **Single Source:** `seed/config/tiers/tier-configs.ts` + `seed/config/tiers/unified-limits.ts`
 - **Deleted Files:** `lib/tier-gate.ts`, `lib/unified-tier-config.ts`
 - **Pattern:** Tier checks import from config, not dispersed utilities
 
@@ -494,13 +563,13 @@ scheduled_posts          → id, org_id, content, scheduled_at, channels_bitmap,
 **Implementation:** 7 Cloudflare cron triggers in `wrangler.toml`, each handler fully async.
 
 ### 11. Tier Enforcement (2026-04-15)
-- **Tier Logic:** `config/tiers/tier-configs.ts` (single source of truth)
+- **Tier Logic:** `seed/config/tiers/tier-configs.ts` + `seed/config/tiers/unified-limits.ts` (single source of truth)
 - **Feature Gates:** `checkTierFeature(tier, feature) → boolean`
 - **MASTER Special:** Expiry 2099, all features unlimited, no MCU deductions
 - **Limits Enforced:**
   - Campaigns: 10/50/∞/∞ (Starter/Growth/Premium/Master)
-  - Team Members: 0/5/∞/∞
-  - API Access: Premium+ only
+  - Team Members: 1/5/∞/∞
+  - API Access: Growth+ (`PREMIUM` enum) only
   - Custom Integrations: Enterprise+ only
   - White-Label: Master only
 
@@ -534,11 +603,11 @@ scheduled_posts          → id, org_id, content, scheduled_at, channels_bitmap,
 **File:** `src/middleware.ts`
 
 1. **Index Rewrite:** `/` → `/landing` (opennextjs-cloudflare workaround)
-2. **Public Route Bypass:** Landing, auth, docs, blog, API v1
-3. **JWT/Session Validation:** Extract org_id from verified token
-4. **Protected API Routes:** `/api/raas/*`, `/api/affiliate/*` require auth
-5. **MCU Balance Check:** For billable routes (`/api/proposals/*`, `/api/video/*`)
-6. **Auth Redirect:** Unauthenticated page requests → `/login?redirect=PATH`
+2. **Static/Public Bypass:** Internal assets and public paths skip app gates
+3. **CSP + CSRF:** Fresh nonce per request; mutating requests use double-submit token validation
+4. **API Gate:** `/api/*` routes pass through tenant isolation, webhook pinning, rate limit, RaaS gate, and usage events
+5. **Dashboard Auth:** Better Auth session required; pending MFA redirects to challenge page
+6. **Admin Gate:** `/dashboard/admin/*` checks MASTER tier in middleware before streaming layout
 7. **Security Headers:** HSTS, CSP, X-Frame-Options, X-Content-Type-Options
 
 ---
@@ -547,10 +616,10 @@ scheduled_posts          → id, org_id, content, scheduled_at, channels_bitmap,
 
 | Tier | Price | MCU/month | Discount |
 |------|-------|-----------|----------|
-| Starter | $49/mo | 500 | — |
-| Growth | $149/mo | 2,000 | 10% |
-| Premium | $499/mo | 10,000 | 20% |
-| Master | $999/mo | 25,000 | 30% |
+| BASIC / Starter | $199/mo | 1,000 | — |
+| PREMIUM / Growth | $399/mo | 5,000 | — |
+| ENTERPRISE / Premium | $799/mo | 20,000 | — |
+| MASTER / Master | $4,999 lifetime | 100,000 | — |
 
 ### Feature Costs (MCU)
 | Feature | Cost |
@@ -568,70 +637,45 @@ scheduled_posts          → id, org_id, content, scheduled_at, channels_bitmap,
 
 ## Deployment
 
-### Cloudflare Workers Config (`wrangler.jsonc`)
-```jsonc
-{
-  "name": "sophia-ai-factory",
-  "main": ".open-next/worker.js",
-  "compatibility_date": "2026-03-17",
-  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
-  
-  "assets": {
-    "directory": ".open-next/assets",
-    "binding": "ASSETS"
-  },
-  
-  "d1_databases": [{
-    "binding": "DB",
-    "database_name": "sophia-raas-db",
-    "database_id": "78bd1961-b62d-43bb-b551-0c5d7d389506"
-  }],
-  
-  "r2_buckets": [{
-    "binding": "NEXT_INC_CACHE_R2_BUCKET",
-    "bucket_name": "sophia-ai-factory-opennext-cache"
-  }]
-}
+### Cloudflare Workers Config (`apps/sophia-ai-factory/wrangler.toml`)
+```toml
+name = "sophia-ai-factory"
+main = ".open-next/worker.js"
+compatibility_date = "2026-03-17"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "sophia-raas-db"
+database_id = "78bd1961-b62d-43bb-b551-0c5d7d389506"
+migrations_dir = "migrations"
+
+[[r2_buckets]]
+binding = "BACKUPS_BUCKET"
+bucket_name = "sophia-backups"
 ```
 
 ### Build & Deploy
-- **Build:** `npm run deploy:build` (runs `next build --webpack` then `@opennextjs/cloudflare build --skipNextBuild`)
-- **Deploy:** `git push origin main` → GitHub Actions → CF Workers auto-deploy
-- **CI/CD:** `.github/workflows/test.yml` + `.github/workflows/quality-gate.yml` — lint, test, and deploy pipeline
+- **Build:** `npm run build` uses Turbopack, then OpenNext builds the Cloudflare artifact.
+- **Deploy:** `git push origin main`, then `cd apps/sophia-ai-factory && npm run deploy:full`.
+- **Verification:** `/api/version` short SHA must match `git rev-parse HEAD | cut -c1-8`, then production HTTP must return 200.
+- **GitHub Actions:** deploy workflow is archived as `.github/workflows/test.yml.disabled`; do not use `gh run list` as deploy proof.
 
 ---
 
 ## Testing
 
-### Test Coverage (2026-04-15)
-- **Total Tests:** 863/863 passing (99.5%)
-- **E2E Smoke Tests:** 5 files, 35 tests validating critical journeys (commit c69ba13)
-- **Test Files:** Located alongside source files (`.test.ts` suffix)
-- **Categories:** Unit tests, integration tests, security tests, E2E smoke tests
-
-### E2E Smoke Test Suites (2026-04-15)
-| File | Purpose | Coverage |
-|------|---------|----------|
-| `smoke-auth.test.ts` | Signup → magic link → dashboard | Auth flow |
-| `smoke-billing.test.ts` | Tier selection → IPN webhook → balance | Payment flow |
-| `smoke-campaigns.test.ts` | Campaign creation → MCU check → scheduling | Campaign ops |
-| `smoke-raas-api.test.ts` | Bearer token → mission → async result | RaaS API |
-| `smoke-telegram.test.ts` | Bot commands → FSM → responses | Bot integration |
-
-### Key Unit Test Suites
-| File | Purpose |
-|------|---------|
-| `lib/audit/audit-logger.test.ts` | Compliance logging |
-| `lib/security/api-key-validator.test.ts` | API key validation |
-| `lib/security/jwt-validator.test.ts` | JWT verification |
-| `lib/gateway/openclaw-gateway.test.ts` | OpenClaw integration |
-| `lib/usage-metering/aggregator.test.ts` | MCU metering |
+### Test Coverage
+- **Last full GREEN recorded:** 4431/4431 tests on 2026-05-17.
+- **Current test surface:** 475 Vitest test files under `apps/sophia-ai-factory/src/`, plus Playwright E2E suites under `apps/sophia-ai-factory/tests/e2e/`.
+- **Categories:** Unit tests, route contract tests, integration tests, security tests, E2E smoke tests, load-test scripts.
+- **Rule:** Treat historical counts as snapshots. Re-run `npm run ci:test` before reporting a current count.
 
 ### Run Tests
 ```bash
-npm test                    # Run all tests
-npm run test:watch        # Watch mode
-npm run build && npm test  # Full pipeline
+npm run ci:test            # Current-count Vitest run
+npm run test:e2e           # Playwright E2E
+npm run build              # Production build
 ```
 
 ---
@@ -639,9 +683,8 @@ npm run build && npm test  # Full pipeline
 ## Known Issues & Technical Debt
 
 ### Accepted (Non-Critical)
-- **opennextjs-cloudflare Index Bug:** `/` returns 500; mitigated with middleware rewrite to `/landing`
-- **Peer Dependency Warning:** `npm install --legacy-peer-deps` required (wrangler v3 vs @opennextjs/cloudflare)
-- **Legacy Auth Components:** 4 tests failing (isolated, not blocking; cleanup pending in Phase 8)
+- Historical issues are tracked in `apps/sophia-ai-factory/docs/known-issues.md` and `docs/postmortems/`.
+- Do not copy old failing-test counts forward; current status must come from a fresh command run.
 
 ### Resolved
 - ~~Vercel vs CF Workers confusion~~ → Fully migrated to CF Workers
@@ -653,8 +696,8 @@ npm run build && npm test  # Full pipeline
 ## Performance & Monitoring
 
 ### Build Performance
-- **Build Time:** < 10s (optimized with tree-shaking)
-- **Bundle Size:** < 500 KB gzipped
+- **Build Time:** hardware-dependent; the 2026-05-20 docs-harness report recorded a successful app build in 32.2s.
+- **Bundle Size:** track with `npm run check:bundle-size`
 - **Cold Start:** Edge functions < 100ms
 
 ### Observability
@@ -671,10 +714,10 @@ npm run build && npm test  # Full pipeline
 ```bash
 npm install
 npm run dev           # Local Next.js dev server
-npm run db:push      # Apply migrations to D1
-npm test              # Run all tests
-npm run build        # Production build
-npm run lint         # Type checking + linting
+npm run deploy:migrations  # Apply D1 migrations when needed
+npm run ci:test       # Current-count Vitest run
+npm run build         # Production build
+npm run lint          # ESLint
 ```
 
 ### Environment Variables
@@ -692,14 +735,14 @@ See `.env.example` for required variables (JWT_SECRET, API keys, etc.)
 
 - **Architecture Decisions:** See `docs/system-architecture.md`
 - **Code Standards:** See `docs/code-standards.md`
-- **Project Roadmap:** See `docs/project-roadmap.md`
-- **Security Guidelines:** See `docs/security-hardening-implementation.md`
+- **Project Roadmap:** See `docs/development-roadmap.md`
+- **Security Guidelines:** See `apps/sophia-ai-factory/docs/security-hardening-implementation.md`
 - **Deployment Guide:** See `docs/deployment-guide.md`
 
 ---
 
 **Generated:** 2026-04-15
-**Codebase Version:** Post-Mega Session (Architecture + a16z 100/100)
-**Commits:** 27+ commits consolidating auth, DB client, tier logic; 15 giant files → 56+ modules
-**Test Coverage:** 863/863 passing (99.5%) | E2E smoke tests (5 files, 35 tests)
+**Backfilled:** 2026-05-21
+**Codebase Version:** Post-CF-direct doctrine, Next.js 16 app package
+**Validation Rule:** Use fresh `npm run build` / `npm run ci:test` output for current status.
 **Maintained By:** Documentation Team

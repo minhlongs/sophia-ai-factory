@@ -2,17 +2,17 @@
 
 **Audience:** Sophia founder + Mekong CLI maintainer
 **Purpose:** Document the deep architectural bridge between Sophia AI Factory (RaaS product) and Mekong CLI (developer framework).
-**Updated:** 2026-04-17
+**Updated:** 2026-05-21
 
 ---
 
 ## Why integrate?
 
-Sophia and Mekong CLI shipped the SAME 4 layers (CI/CD + Observability + Signals + SDLC) per a16z Solo Company doctrine. Instead of duplicating effort, they share canonical sources where possible.
+Sophia and Mekong CLI shipped the same 4 operational layers (deploy gates, observability, signals, SDLC) per a16z Solo Company doctrine. Instead of duplicating effort, they share canonical sources where possible.
 
 | Capability | Sophia's choice | Mekong CLI's choice | Bridge strategy |
 |---|---|---|---|
-| **CI/CD gates** | GH Actions (TS/Next.js) | GH Actions (Python) | Independent (different stacks) |
+| **Deploy gates** | CF-direct `npm run deploy:full` with SHA proof at `/api/version` | Mekong CI/CD is external; verify in Mekong repo before assuming current provider | Independent (different stacks) |
 | **Observability** | Better Stack (managed, $0) | OTel + Prometheus + Grafana (self-host) | Cross-link via `commit_sha` + `agent.invocation_id` |
 | **Signals/A/B** | PostHog Cloud (managed, $0) | SQLite local + future PostHog | Sophia's PostHog can ingest Mekong events when shipped |
 | **SDLC scaffold** | `.sophia-factory/CLAUDE.{spec,design,code,deploy}.md` | `.mekong/phases/CLAUDE.{spec,design,code,deploy}.md` | Sophia symlinks Mekong's phases (canonical) |
@@ -30,14 +30,14 @@ graph TB
     SS[/sophia slash command]
     SBS[Better Stack logs]
     SPH[PostHog signals]
-    SCI[GH Actions: 5 gates]
+    SCI[CF-direct deploy + SHA proof]
   end
 
   subgraph Mekong["Mekong CLI (developer framework)"]
     MS[.mekong/phases/CLAUDE.{spec,design,code,deploy}.md]
     MOG[OTel + Grafana stack]
     MSQ[SQLite signals at data/signals.sqlite]
-    MCI[GH Actions: 5 gates Python]
+    MCI[Mekong deploy gates, verify externally]
     MM[mekong CLI binary]
   end
 
@@ -114,7 +114,7 @@ Until then: Sophia's PostHog and Mekong's SQLite stay isolated.
 
 ### Use Mekong SDLC (`/mekong spec/design/code/deploy`) when
 - Building NEW feature with formal specification → design → code → deploy lifecycle
-- Need Mekong's CI/CD gates + observability for the change
+- Need Mekong's deploy gates + observability for the change
 - Cross-repo work (touches Mekong repo)
 
 ### Use both in sequence
@@ -132,8 +132,8 @@ Until then: Sophia's PostHog and Mekong's SQLite stay isolated.
 | Component | Version | Notes |
 |---|---|---|
 | Mekong CLI binary | v3.3.0+ | Verify: `mekong --version` |
-| Mekong CLI repo | PR #67+#68 merged 2026-04-17 | All 5 gates passing |
-| Sophia bridge | This doc + symlink + `/mekong` slash | Created 2026-04-17 |
+| Mekong CLI repo | PR #67+#68 merged 2026-04-17 | Historical note; re-verify current gates in Mekong repo before relying on it |
+| Sophia bridge | This doc + symlink + `/mekong` slash | Created 2026-04-17; deploy doctrine refreshed 2026-05-21 |
 | Mekong `.mekong/phases/` | Stable schema | Backward-compatible changes only |
 
 ---
@@ -156,7 +156,7 @@ Until then: Sophia's PostHog and Mekong's SQLite stay isolated.
 
 ---
 
-**Last verified:** 2026-04-17 08:35 ICT
+**Last verified:** 2026-04-17 08:35 ICT (historical bridge smoke); docs backfilled 2026-05-21
 **Sophia commit:** `b8e6dd9` (ClaudeKit agents wired)
 **Mekong commit:** `1dc02eb06` (PR #68 — gates green)
 **Author:** /cook claudekit deep + mekong-cli session

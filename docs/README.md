@@ -44,7 +44,10 @@ For engineering-internal content (compliance evidence, migration notes, load-tes
 | File | Description |
 |------|-------------|
 | [observability-runbook.md](observability-runbook.md) | Monitoring, logging, alerting |
-| [secret-rotation-runbook.md](secret-rotation-runbook.md) | Rotating Cloudflare secrets |
+| [runbooks/secret-rotation-runbook.md](runbooks/secret-rotation-runbook.md) | Canonical secret rotation runbook |
+| [runbooks/cron-escalation-contacts.md](runbooks/cron-escalation-contacts.md) | Cron failure escalation and schedule mapping |
+| [runbooks/email-dns-setup.md](runbooks/email-dns-setup.md) | Email DNS setup checklist |
+| [secret-rotation-runbook.md](secret-rotation-runbook.md) | Legacy partial runbook kept aligned pending archive |
 | [disaster-recovery.md](disaster-recovery.md) | DR plan and recovery procedures |
 | [sophia-activation-runbook.md](sophia-activation-runbook.md) | Platform activation steps |
 | [support-escalation.md](support-escalation.md) | Support escalation procedures |
@@ -69,7 +72,13 @@ For engineering-internal content (compliance evidence, migration notes, load-tes
 
 | Dir | Description |
 |-----|-------------|
-| [launch/](launch/) | Launch planning documents (drafts) |
+| [launch/](launch/) | Launch planning documents (drafts; may contain historical positioning copy) |
+
+### Historical Migration Notes
+
+| Dir | Description |
+|-----|-------------|
+| [migrations/](migrations/) | Historical Redis/Supabase migration notes. Do not execute as current Sophia deploy docs; use `deployment-guide.md` and `apps/sophia-ai-factory/migrations/` for live operations. |
 
 ### Roadmap & Changelog
 

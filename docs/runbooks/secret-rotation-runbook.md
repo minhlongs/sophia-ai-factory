@@ -1,7 +1,7 @@
 # Consolidated Secret Rotation Runbook — Sophia AI Factory
 
 **Gap:** OG-007 — Missing rotation procedures for 5+ secrets beyond NOWPAYMENTS_IPN_SECRET  
-**Last reviewed:** 2026-05-20  
+**Last reviewed:** 2026-05-21
 **Canonical location:** `docs/runbooks/secret-rotation-runbook.md`  
 **Supersedes:** `docs/secret-rotation-runbook.md` (partial — covers CRON_SECRET, INTROSPECT_TOKEN, WEBHOOK_SECRET, CLOUDFLARE_API_TOKEN, TELEGRAM_BOT_TOKEN, NOWPAYMENTS_IPN_SECRET)
 
@@ -12,7 +12,7 @@
 | Secret | Location | Rotation cadence | Owner | Blast radius |
 |--------|----------|-----------------|-------|-------------|
 | `NOWPAYMENTS_IPN_SECRET` | CF Secrets (Worker) | Annual / on compromise | Founder | Payment webhook unauth if wrong |
-| `CRON_SECRET` | CF Secrets + GH Secrets | Quarterly | Founder | All cron routes unauthenticated |
+| `CRON_SECRET` | CF Secrets (Worker); GH secret only for optional cron-smoke workflow | Quarterly | Founder | All cron routes unauthenticated |
 | `BETTER_AUTH_SECRET` | CF Secrets (Worker) | Annual / on compromise | Founder | All active sessions invalidated |
 | `TELEGRAM_BOT_TOKEN` | CF Secrets (Worker) | On compromise only | Founder | Telegram bot goes offline |
 | `INTERNAL_API_SECRET` | CF Secrets (Worker) | Quarterly | Founder | Internal agent→platform calls fail |
@@ -65,15 +65,18 @@ echo "New CRON_SECRET: $NEW_SECRET"
 # 2. Update CF Worker secret (instant effect on Workers runtime)
 echo "$NEW_SECRET" | wrangler secret put CRON_SECRET --name sophia-ai-factory
 
-# 3. Update GH Secret (used by any manually-triggered workflows)
-gh secret set CRON_SECRET --body "$NEW_SECRET" --repo longtho638-jpg/sophia-ai-factory
+# 3. If the optional GitHub cron-smoke workflow is enabled, update GH Secret too.
+# gh secret set CRON_SECRET --body "$NEW_SECRET" --repo longtho638-jpg/sophia-ai-factory
 
-# 4. Verify cron auth is working (run immediately after rotation):
+# 4. If Upstash QStash or another external scheduler calls protected cron routes,
+#    update the scheduler's Authorization bearer value before the next run.
+
+# 5. Verify cron auth is working (run immediately after rotation):
 curl -H "Authorization: Bearer $NEW_SECRET" \
   https://sophia.agencyos.network/api/cron/uptime-check
 # Expected: {"ok":true,...}
 
-# 5. Log rotation below
+# 6. Log rotation below
 ```
 
 **Verification:** Wait for next scheduled cron trigger (up to 10 min). Check `cron_run_log` table via `/api/admin/cron-run-log` for success entries.
@@ -204,7 +207,7 @@ If a secret is compromised:
 
 1. **Rotate immediately** — do not wait for off-peak window
 2. **Update CF Worker secret first** (takes effect within seconds)
-3. **Update GH Secrets** (if applicable)
+3. **Update auxiliary GH Secrets** only if the affected optional workflow is enabled
 4. **Monitor Sentry** for auth errors in the 5 minutes after rotation
 5. **File a postmortem** at `docs/postmortems/{YYYY-MM-DD}-secret-compromise.md`
 
@@ -220,7 +223,7 @@ curl -sI https://sophia.agencyos.network/api/health | head -3
 
 | Date | Secret | Rotated by | Reason |
 |------|--------|-----------|--------|
-| 2026-04-17 | CRON_SECRET, INTROSPECT_TOKEN, WEBHOOK_SECRET, CLOUDFLARE_API_TOKEN, TELEGRAM_BOT_TOKEN, NOWPAYMENTS_IPN_SECRET | Founder | Initial provisioning |
+| 2026-04-17 | CRON_SECRET, INTROSPECT_TOKEN, optional WEBHOOK_SECRET, optional CLOUDFLARE_API_TOKEN, TELEGRAM_BOT_TOKEN, NOWPAYMENTS_IPN_SECRET | Founder | Initial provisioning |
 | 2026-05-20 | INTERNAL_API_SECRET, BETTER_AUTH_SECRET | — | First documented (was missing from prior runbook) |
 
 ---
@@ -240,6 +243,6 @@ curl -sI https://sophia.agencyos.network/api/health | head -3
 
 ## Cross-references
 
-- `docs/secret-rotation-runbook.md` — partial prior runbook (CRON_SECRET, INTROSPECT_TOKEN, WEBHOOK_SECRET, CLOUDFLARE_API_TOKEN, TELEGRAM_BOT_TOKEN, NOWPAYMENTS_IPN_SECRET)
+- `docs/secret-rotation-runbook.md` — partial prior runbook; keep aligned until archived
 - `docs/runbooks/cron-escalation-contacts.md` — who to notify during rotation
 - `docs/postmortems/` — file postmortem if rotation was triggered by compromise

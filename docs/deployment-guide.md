@@ -13,7 +13,8 @@
 | Item | Requirement |
 |------|------------|
 | Node.js | v18+ |
-| pnpm | v8+ (`npm install -g pnpm`) |
+| npm | App scripts and deploy wrappers are npm-based |
+| pnpm | Lockfiles exist, but pnpm is not the documented deploy runner for Sophia |
 | Wrangler CLI | `npm install -g wrangler` (or use local `npx wrangler`) |
 | Cloudflare account | `wrangler login` authenticated |
 | D1 database | `sophia-raas-db` created and bound in `wrangler.toml` |
@@ -27,17 +28,18 @@
 # 1. Clone and install
 git clone https://github.com/longtho638-jpg/sophia-ai-factory.git
 cd sophia-ai-factory/apps/sophia-ai-factory
-pnpm install
+npm install
 
 # 2. Copy env template
-cp .dev.vars.example .dev.vars
+cp .env.example .dev.vars
 # Edit .dev.vars — add required secrets (see Secrets section below)
+# For production-oriented secret names, compare with .env.production.example.
 
 # 3. Apply D1 migrations locally
 npx wrangler d1 migrations apply sophia-raas-db --local
 
 # 4. Start dev server
-pnpm run dev   # http://localhost:3000
+npm run dev   # http://localhost:3000
 ```
 
 ---
@@ -103,7 +105,7 @@ git checkout main
 
 ## Cron Setup
 
-All scheduled endpoints are defined in `wrangler.toml` under `[triggers]`. They activate automatically on deploy — no external cron service required (no-tech doctrine).
+Most scheduled endpoints are defined in `wrangler.toml` under `[triggers]` and activate automatically on deploy. The D1 backup route is the exception: `/api/cron/d1-backup` is triggered by external scheduler (Upstash QStash) and writes SQL dumps to the R2 `sophia-backups` bucket.
 
 Cron routes require Bearer authentication:
 ```
@@ -118,10 +120,12 @@ echo "Generated: $CRON_SECRET"
 npx wrangler secret put CRON_SECRET
 ```
 
-Active cron jobs:
-- `0 * * * *` — Hourly: wallet rebuild, usage rollup
-- `0 0 * * *` — Daily: D1 backup to R2, clearance promotion, reconciliation
-- `0 9 * * 1` — Weekly: signals digest email
+Representative cron jobs:
+- `*/5 * * * *` — uptime, video status sync, SOP scheduler
+- `5 * * * *` — usage export
+- `0 0 * * *` — clearance promotion, promo trial expiry
+- `0 6 * * 1` — weekly signals digest
+- External scheduler — D1 backup to R2 via `/api/cron/d1-backup`
 
 ---
 
@@ -158,7 +162,7 @@ npx wrangler secret list
 
 ## D1 Migrations
 
-117 migrations applied as of 2026-05-19 (files `0001`–`0117` in `migrations/`).
+120 SQL migration files are present as of 2026-05-21 (highest numbered migration: `0117` in `migrations/`). Count files before reporting current status.
 
 ```bash
 # Apply all pending migrations to remote
@@ -190,7 +194,7 @@ https://sophia.agencyos.network/api/webhooks/nowpayments
 
 Tiers: `BASIC | PREMIUM | ENTERPRISE | MASTER` (uppercase only).
 
-Tier config SSOT: `apps/sophia-ai-factory/src/config/tiers/`. No changes to tier limits should be made outside this directory.
+Tier config SSOT: `apps/sophia-ai-factory/src/seed/config/tiers/`. No changes to tier limits should be made outside this directory.
 
 ---
 

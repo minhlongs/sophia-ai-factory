@@ -1,7 +1,7 @@
 # Cron Failure Escalation Contacts — Sophia AI Factory
 
 **Gap:** OG-002 — Cron failure alerting  
-**Last reviewed:** 2026-05-20  
+**Last reviewed:** 2026-05-21
 
 ---
 
@@ -15,27 +15,43 @@
 
 ## Cron Schedule Reference
 
-| Cron name | Schedule (UTC) | Expected max runtime | Blast radius if stuck |
-|-----------|---------------|---------------------|----------------------|
-| `dunning-advance` | Daily 01:00 | 10 min | Past-due accounts not suspended on time |
-| `email-drip` | Daily 04:00 | 15 min | Lifecycle emails delayed |
-| `email-outbox-flush` | Every 15 min | 5 min | Email queue backs up |
-| `fulfillment-retry` | Every 30 min | 5 min | Failed fulfillments not retried |
-| `fulfillment-reconcile` | Daily 02:00 | 10 min | Revenue reconciliation lag |
-| `heartbeat` | Every 10 min | 1 min | Better Stack silences → missed-heartbeat alert |
-| `usage-export` | Daily 03:00 | 15 min | Usage dashboard stale |
-| `hourly-rollup` | Every hour :05 | 5 min | Quota counters stale by up to 1h |
-| `daily-rollup` | Daily 00:30 | 10 min | Daily usage aggregates stale |
-| `subscription-reminders` | Daily 09:00 | 5 min | Renewal reminders missed |
-| `d1-backup` | Daily 06:00 | 15 min | Backup window missed |
-| `promo-trial-expiry` | Daily 08:00 | 5 min | Expired trials not reverted |
-| `scheduled-campaigns` | Every 15 min | 10 min | AI campaign generation delayed |
-| `workflow-stepper` | Every 5 min | 3 min | Workflow automation stalls |
-| `video-status-sync` | Every 30 min | 5 min | Video render status stale |
-| `wallet-rebuild` | Weekly Sunday 00:00 | 30 min | Affiliate wallet balances stale |
-| `weekly-signals-digest` | Weekly Monday 07:00 | 10 min | Weekly reports delayed |
-| `error-digest` | Daily 23:30 | 5 min | Error digest emails missed |
-| `mcu-monthly-reset` | 1st of month 00:00 | 10 min | Monthly usage counters not reset |
+Source of truth:
+- Cloudflare cron patterns: `apps/sophia-ai-factory/wrangler.toml` `[triggers].crons`
+- Runtime dispatch map: `apps/sophia-ai-factory/scripts/inject-scheduled-handler.mjs` `CRON_ROUTES`
+- External scheduler exception: `d1-backup` is triggered by Upstash QStash and writes R2 snapshots to `sophia-backups`
+
+If a cron pattern exists in `wrangler.toml` but is absent from `CRON_ROUTES`, Cloudflare will fire the scheduled event but the injected handler logs "No handler for cron pattern" and does not call a route.
+
+| Cron route | Schedule (UTC) | Trigger source | Expected max runtime | Blast radius if stuck |
+|-----------|---------------|----------------|---------------------|----------------------|
+| `fulfillment-retry` | Every 2 min | CF scheduled handler | 5 min | Failed fulfillments not retried |
+| `email-outbox-flush` | Every 2 min | CF scheduled handler | 5 min | Email queue backs up |
+| `uptime-check` | Every 5 min | CF scheduled handler | 1 min | Production outage alert delayed |
+| `video-status-sync` | Every 5 min | CF scheduled handler | 5 min | Video render status stale |
+| `sop-scheduler` | Every 5 min | CF scheduled handler | 3 min | SOP automation delayed |
+| `usage-export` | Hourly :05 | CF scheduled handler | 15 min | Usage dashboard stale |
+| `dunning-advance` | Daily 01:00 | CF scheduled handler | 10 min | Past-due accounts not suspended on time |
+| `subscription-reminders` | Daily 02:00 | CF scheduled handler | 5 min | Renewal reminders missed |
+| `scheduled-campaigns` | Daily 03:00 | CF scheduled handler | 10 min | AI campaign generation delayed |
+| `email-drip` | Daily 04:00 | CF scheduled handler | 15 min | Lifecycle emails delayed |
+| `fulfillment-reconcile` | Daily 06:00 | CF scheduled handler | 10 min | Revenue reconciliation lag |
+| `weekly-signals-digest` | Weekly Monday 06:00 | CF scheduled handler | 10 min | Weekly reports delayed |
+| `smoke-one-time` | Every 15 min | CF scheduled handler | 5 min | One-time bundle smoke signal delayed |
+| `clearance-promote` | Daily 00:00 | CF scheduled handler | 5 min | Pending clearance not released |
+| `promo-trial-expiry` | Daily 00:00 | CF scheduled handler | 5 min | Expired trials not reverted |
+| `mcu-monthly-reset` | 1st of month 00:00 | CF scheduled handler | 10 min | Monthly usage counters not reset |
+| `handover-status-sync` | Hourly :07 | CF scheduled handler | 5 min | Handover statuses stale |
+| `d1-backup` | External daily window | Upstash QStash -> route | 15 min | Backup window missed |
+
+Known schedule drift to verify before adding Sentry monitors:
+
+| Pattern in `wrangler.toml` | Commented route intent | Current risk |
+|----------------------------|------------------------|--------------|
+| `0 5 * * *` | `error-digest` | Pattern is not mapped in `CRON_ROUTES` |
+| `*/10 * * * *` | `heartbeat` | Pattern is not mapped in `CRON_ROUTES` |
+| `0 7 * * *` | `llm-cache-purge` | Pattern is not mapped in `CRON_ROUTES` |
+| `10 * * * *` | `wallet-rebuild` | Pattern is not mapped in `CRON_ROUTES` |
+| `0 */4 * * *` | `affiliate-scout` | Pattern is not mapped in `CRON_ROUTES` |
 
 ---
 
@@ -54,7 +70,7 @@
 
 ## Sentry Alert Configuration
 
-Sentry Cron Monitors must be created for each cron listed above. Two options:
+Sentry Cron Monitors must be created for each mapped route in the first table. Do not add production paging monitors for the schedule-drift rows until `CRON_ROUTES` maps them or a separate external scheduler owns them. Two options:
 
 ### Option A — Sentry UI (recommended for initial setup)
 
@@ -122,7 +138,8 @@ Sentry/Better Stack alert fires
           │       → Fix the root cause → re-trigger cron manually if needed
           │
           ├── No check-in at all → cron not running
-          │       → Check wrangler.jsonc cron schedules are deployed
+          │       → Check `apps/sophia-ai-factory/wrangler.toml` cron patterns are deployed
+          │       → Check `scripts/inject-scheduled-handler.mjs` maps the pattern to a live route
           │       → Check CF Workers logs: `wrangler tail --name sophia-ai-factory`
           │       → Check if CRON_SECRET is set: `wrangler secret list`
           │
@@ -138,7 +155,7 @@ Sentry/Better Stack alert fires
 |-------|----------|-----|
 | `dunning-advance` missed | P1 | Fix within 2h (financial impact) |
 | `fulfillment-retry` missed | P1 | Fix within 1h (customer activation blocked) |
-| `heartbeat` missed | P1 | Fix within 30 min (observability blind) |
+| `heartbeat` missed | P1 | Fix within 30 min after schedule mapping is restored (observability blind) |
 | `email-outbox-flush` missed | P2 | Fix within 4h |
 | `usage-export` missed | P2 | Fix within 8h |
 | Any other cron missed once | P2 | Fix within next business day |

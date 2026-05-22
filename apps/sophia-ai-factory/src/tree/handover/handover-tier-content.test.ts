@@ -9,6 +9,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   TIER_PRICES,
+  TIER_BILLING_TERMS,
   TIER_FEATURES,
   TIER_SUPPORT_SLA,
   TIER_CONCURRENT_RUNS,
@@ -25,10 +26,11 @@ describe('handover-tier-content', () => {
       }
     })
 
-    it('all prices are formatted as USD per month ($N/mo)', () => {
-      for (const tier of TIERS) {
+    it('formats monthly tiers as /mo and MASTER as one-time', () => {
+      for (const tier of ['BASIC', 'PREMIUM', 'ENTERPRISE'] as const) {
         expect(TIER_PRICES[tier]).toMatch(/^\$[\d,]+\/mo$/)
       }
+      expect(TIER_PRICES.MASTER).toBe('$4,999 one-time')
     })
 
     it('prices ascend across tiers (BASIC < PREMIUM < ENTERPRISE < MASTER)', () => {
@@ -40,6 +42,15 @@ describe('handover-tier-content', () => {
       expect(basic).toBeLessThan(premium)
       expect(premium).toBeLessThan(enterprise)
       expect(enterprise).toBeLessThan(master)
+    })
+  })
+
+  describe('TIER_BILLING_TERMS', () => {
+    it('uses monthly terms for subscription tiers and lifetime terms for MASTER', () => {
+      expect(TIER_BILLING_TERMS.BASIC).toBe('Monthly, auto-renew')
+      expect(TIER_BILLING_TERMS.PREMIUM).toBe('Monthly, auto-renew')
+      expect(TIER_BILLING_TERMS.ENTERPRISE).toBe('Monthly, auto-renew')
+      expect(TIER_BILLING_TERMS.MASTER).toBe('One-time, lifetime access')
     })
   })
 
@@ -100,7 +111,7 @@ describe('handover-tier-content', () => {
 
   describe('catalog completeness', () => {
     it('all four constants cover the same Tier set with no extra keys', () => {
-      const constants = [TIER_PRICES, TIER_FEATURES, TIER_SUPPORT_SLA, TIER_CONCURRENT_RUNS]
+      const constants = [TIER_PRICES, TIER_BILLING_TERMS, TIER_FEATURES, TIER_SUPPORT_SLA, TIER_CONCURRENT_RUNS]
       for (const c of constants) {
         const keys = Object.keys(c).sort()
         expect(keys).toEqual([...TIERS].sort())

@@ -24,7 +24,8 @@ Xin chào {{user_name}},
 Cảm ơn bạn đã chọn Sophia AI Factory! 🎬
 
 Chúng tôi rất vui khi bạn tham gia cộng đồng sáng tác video AI.
-Bạn đang sử dụng gói {{tier}} — có thể tạo tới [50/200/unlimited] video/tháng.
+Bạn đang sử dụng gói {{tier}} — hạn mức hiện tại nằm trong dashboard Billing:
+Starter 10 campaign/tháng + 1,000 MCU; Growth 50 campaign/tháng + 5,000 MCU; Premium unlimited campaign + 20,000 MCU; Master lifetime + 100,000 MCU.
 
 🚀 HỌC NHANH (5 PHÚT):
 
@@ -258,13 +259,14 @@ Xin chào {{user_name}},
 
 🚀 **NÂNG CẤP TIER = TIẾT KIỆM THÊM 60%**
 
-Bạn đang dùng {{tier}}. Nếu tạo >50 video/tháng, 
-nâng lên PREMIUM sẽ rẻ hơn:
+Bạn đang dùng {{tier}}. Nếu cần nhiều hơn hạn mức campaign/MCU hiện tại,
+nâng lên gói cao hơn sẽ rẻ hơn:
 
-| Tier Hiện Tại | Video/Tháng | Giá | Nên Upgrade? |
+| Tier Hiện Tại | Campaign/Tháng | MCU | Nên Upgrade? |
 |---|---|---|---|
-| **BASIC** | 50 | $199 | ➡️ PREMIUM ($399) nếu >100 videos |
-| **PREMIUM** | 200 | $399 | ➡️ ENTERPRISE ($799) nếu >300 videos |
+| **BASIC / Starter** | 10 | 1,000 | ➡️ Growth ($399) nếu cần >10 campaign |
+| **PREMIUM / Growth** | 50 | 5,000 | ➡️ Premium ($799) nếu cần >50 campaign |
+| **ENTERPRISE / Premium** | Unlimited | 20,000 | ➡️ Master nếu cần lifetime + white-label |
 
 ---
 
@@ -279,7 +281,7 @@ Nhập số video/tháng của bạn → lợi nhuận sẽ hiện ngay.
 ✨ **CHUYÊN BIỆT: MASTER TIER CHO AGENCY**
 
 Nếu bạn tạo 500+ video/tháng:
-- Tier MASTER = $4,999/tháng (unlimited videos)
+- Tier MASTER = $4,999 một lần (lifetime, unlimited campaigns)
 - Lợi nhuận: ~$30,000-50,000/tháng
 - Dedicated support + custom features
 
@@ -421,7 +423,8 @@ Hi {{user_name}},
 Thank you for choosing Sophia AI Factory! 🎬
 
 We're thrilled you're joining our AI video creator community.
-You're on the {{tier}} plan — can create up to [50/200/unlimited] videos/month.
+You're on the {{tier}} plan. Your current Billing dashboard shows the live limits:
+Starter 10 campaigns/month + 1,000 MCU; Growth 50 campaigns/month + 5,000 MCU; Premium unlimited campaigns + 20,000 MCU; Master lifetime + 100,000 MCU.
 
 🚀 QUICK START (5 MINUTES):
 
@@ -655,13 +658,14 @@ It's been 7 days on Sophia. Time to check your ROI! 💰
 
 🚀 **UPGRADE TIER = SAVE 60% MORE**
 
-You're on {{tier}}. If creating >50 videos/month, 
-upgrading to PREMIUM is cheaper:
+You're on {{tier}}. If you need more campaign/MCU capacity than your current limit,
+upgrading to the next tier is cheaper:
 
-| Current Tier | Videos/Month | Price | Upgrade to? |
+| Current Tier | Campaigns/Month | MCU | Upgrade to? |
 |---|---|---|---|
-| **BASIC** | 50 | $199 | ➡️ PREMIUM ($399) if >100 videos |
-| **PREMIUM** | 200 | $399 | ➡️ ENTERPRISE ($799) if >300 videos |
+| **BASIC / Starter** | 10 | 1,000 | ➡️ Growth ($399) if you need >10 campaigns |
+| **PREMIUM / Growth** | 50 | 5,000 | ➡️ Premium ($799) if you need >50 campaigns |
+| **ENTERPRISE / Premium** | Unlimited | 20,000 | ➡️ Master for lifetime + white-label |
 
 ---
 
@@ -676,7 +680,7 @@ Enter your videos/month → see profit instantly.
 ✨ **SPECIAL: MASTER TIER FOR AGENCIES**
 
 If you're creating 500+ videos/month:
-- MASTER tier = $4,999/month (unlimited videos)
+- MASTER tier = $4,999 one-time (lifetime, unlimited campaigns)
 - Profit: ~$30,000-50,000/month
 - Dedicated support + custom features
 

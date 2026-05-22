@@ -2,8 +2,10 @@
 
 > **Project:** RaaS License System
 > **Date:** 2026-03-06
-> **Status:** Pending Execution
+> **Status:** Historical reference — do not execute as a current Sophia runbook
 > **Owner:** DevOps / Backend Team
+
+> **Current-state note (2026-05-21):** This checklist predates the Cloudflare Workers/D1 deployment doctrine. It references legacy artifacts such as `docs/migrations/raas-licenses-schema.sql` and `scripts/deploy-raas-migration.sh` that are not present in the current repo. For current Sophia database/deploy operations, use `docs/deployment-guide.md`, `docs/codebase-summary.md`, and `apps/sophia-ai-factory/migrations/`.
 
 ---
 
@@ -55,7 +57,7 @@
 
 ### Files Review
 
-- [ ] **Read SQL schema**: `docs/migrations/raas-licenses-schema.sql`
+- [ ] **Read SQL schema**: historical artifact `docs/migrations/raas-licenses-schema.sql` (not present in current repo)
 - [ ] **Read migration guide**: `docs/migrations/REDIS_TO_SUPABASE.md`
 - [ ] **Review code changes**: `git diff main` (if applicable)
 
@@ -65,11 +67,7 @@
 
 ### Step 1: Run Deployment Script
 
-```bash
-cd /Users/macbookprom1/mekong-cli/apps/sophia-ai-factory
-chmod +x scripts/deploy-raas-migration.sh
-./scripts/deploy-raas-migration.sh
-```
+Historical script path: `scripts/deploy-raas-migration.sh` (not present in current repo). Do not execute this section without first rebuilding a current migration plan from the live codebase.
 
 **Expected output:**
 ```
@@ -94,7 +92,7 @@ If script fails, run manually:
 # Link project
 npx supabase link --project-ref YOUR_PROJECT_REF
 
-# Execute SQL
+# Execute SQL (historical artifact; file is not present in current repo)
 psql "$(npx supabase db url)" -f docs/migrations/raas-licenses-schema.sql
 
 # Verify tables
@@ -156,36 +154,25 @@ echo "Supabase count: $(psql "$(npx supabase db url)" -t -c "SELECT COUNT(*) FRO
   WHERE relname IN ('raas_licenses', 'raas_audit_logs');
   ```
 
-### Code Deployment
+### Code Deployment (Historical)
 
-- [ ] **Set environment variables on Vercel**
-  ```
-  SUPABASE_URL=https://your-project.supabase.co
-  SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-  RAAS_LICENSE_SECRET=your-32-char-secret
-  ```
+Do not use the original Vercel/GitHub Actions deployment checklist. Current Sophia deploy doctrine is:
 
-- [ ] **Deploy code**
-  ```bash
-  git add .
-  git commit -m "feat: deploy RaaS Supabase migration"
-  git push origin main
-  ```
+```bash
+cd apps/sophia-ai-factory
+npm run deploy:migrations   # when D1 migrations are needed
+npm run deploy:full         # build + OpenNext + CF Worker deploy + SHA injection
+curl -s https://sophia.agencyos.network/api/version
+```
 
-- [ ] **Wait for CI/CD**
-  - GitHub Actions: https://github.com/YOUR_REPO/actions
-  - Status must be GREEN
-
-- [ ] **Vercel deployment**
-  - Check: https://vercel.com/dashboard
-  - Status must be "Ready"
+`/api/version` must report the deployed commit short SHA. See `docs/deployment-guide.md`.
 
 ### API Testing
 
 - [ ] **Test license list**
   ```bash
   curl -H "Authorization: Basic $(echo 'admin:password' | base64)" \
-    https://sophia-ai-factory.vercel.app/api/admin/licenses
+    https://sophia.agencyos.network/api/admin/licenses
   ```
 
 - [ ] **Test license creation**
@@ -194,13 +181,13 @@ echo "Supabase count: $(psql "$(npx supabase db url)" -t -c "SELECT COUNT(*) FRO
     -H "Authorization: Basic $(echo 'admin:password' | base64)" \
     -H "Content-Type: application/json" \
     -d '{"tier":"basic","expiresAt":1893456000}' \
-    https://sophia-ai-factory.vercel.app/api/admin/licenses/create
+    https://sophia.agencyos.network/api/admin/licenses/create
   ```
 
 - [ ] **Test license validation**
   ```bash
   curl -H "X-RaaS-License-Key: raas_basic_xxxx" \
-    https://sophia-ai-factory.vercel.app/api/protected
+    https://sophia.agencyos.network/api/protected
   ```
 
 ### Audit Log Verification
@@ -250,15 +237,15 @@ npx tsx scripts/migrate-redis-to-supabase.ts
 **NOT RECOMMENDED** - Only if critical issues:
 
 ```bash
-# 1. Stop application (disable Vercel deployment)
+# 1. Stop application traffic or disable affected routes
 # 2. Drop Supabase tables
 psql "$(npx supabase db url)" -c "DROP TABLE raas_licenses CASCADE; DROP TABLE raas_audit_logs CASCADE;"
 
 # 3. Revert code to pre-migration commit
 git checkout COMMIT_HASH_BEFORE_MIGRATION
 
-# 4. Deploy reverted code
-git push origin main --force
+# 4. Deploy reverted code through current CF-direct deploy doctrine
+#    Never force-push main. Commit a revert, push, then run npm run deploy:full.
 
 # 5. Restore Redis connection in env vars
 # UPSTASH_REDIS_REST_URL=...
@@ -330,12 +317,12 @@ curl "$UPSTASH_REDIS_REST_URL/keys/license:*?token=$UPSTASH_REDIS_REST_TOKEN"
 
 ### Issue: API returns 500 errors
 
-**Cause:** Environment variables not set on Vercel
+**Cause:** Required environment variables/secrets are not set in the current runtime
 
 **Solution:**
-1. Go to Vercel dashboard → Project → Settings → Environment Variables
-2. Add missing variables
-3. Redeploy: https://vercel.com/dashboard/deployments → Redeploy
+1. Check required Worker secrets with `npx wrangler secret list`
+2. Add missing values with `npx wrangler secret put <NAME>`
+3. Re-run `cd apps/sophia-ai-factory && npm run deploy:full`
 
 ---
 
@@ -349,7 +336,7 @@ Migration is successful when ALL of these are true:
 - [ ] API route `/api/admin/licenses` returns 200 OK
 - [ ] License creation via API creates database row
 - [ ] License validation creates audit log entry
-- [ ] No errors in Vercel function logs
+- [ ] No related errors in Cloudflare Worker logs (`npx wrangler tail --name sophia-ai-factory`)
 - [ ] Production site loads without errors
 
 ---
@@ -357,7 +344,7 @@ Migration is successful when ALL of these are true:
 ## Contact & Support
 
 - **Migration Plan:** `plans/260306-0952-raas-redis-supabase-migration/plan.md`
-- **SQL Schema:** `docs/migrations/raas-licenses-schema.sql`
+- **SQL Schema:** historical artifact `docs/migrations/raas-licenses-schema.sql` (not present in current repo)
 - **Migration Guide:** `docs/migrations/REDIS_TO_SUPABASE.md`
 - **Code Review:** `plans/260306-0952-raas-redis-supabase-migration/reports/code-reviewer-260306-1014-migration-review.md`
 

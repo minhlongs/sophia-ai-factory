@@ -177,7 +177,7 @@ Plan: `plans/260516-1948-raas-zero-bug-handover/` · Handover doc: `plans/report
   - Admin dashboard (license list, audit log, tier override)
   - Tier upgrade modal with NOWPayments UI
   - Usage charts (Recharts monthly breakdown per feature)
-  - GitHub Actions → Cloudflare Pages auto-deploy + health check
+  - Historical: GitHub Actions → Cloudflare Pages auto-deploy + health check (superseded by CF-direct deploy doctrine on 2026-05-03)
 - **Metrics:** 1,122 LOC, 28 tests, < 10s build time
 
 ### Sophia Factory RaaS Solo Summary
@@ -347,7 +347,7 @@ Plan: `plans/260516-1948-raas-zero-bug-handover/` · Handover doc: `plans/report
   - POST/GET /api/raas/workflows + /api/cron/workflow-stepper
 - **Metrics:** 1,200 LOC (11 modules ≤200 each), 78 new tests (1054 total pass), 0 TS errors, bilingual UI
 - **Files:** migrations/0007-workflows.sql + supervisor-*.ts + workflow-*.ts + components + routes + runbook
-- **Deployment:** GH Actions green, CF Pages HTTP 200, prod E2E verified
+- **Historical deployment evidence at ship time:** GH Actions green, CF Pages HTTP 200, prod E2E verified. Superseded by CF-direct Worker deploy doctrine on 2026-05-03.
 
 ### Phase 8.9: SSE Parser + Semantic Cache + Tenant Helpers + BYOK Foundations ✅ SHIPPED (Round 5: Phase 4N + 4E.2 + 4F.2 + 4G-BYOK)
 - **Status:** Four parallel feature shipments live (2026-04-18)
@@ -488,7 +488,7 @@ Plan: `plans/260516-1948-raas-zero-bug-handover/` · Handover doc: `plans/report
 | Layer | Status | Completion | Details |
 |-------|--------|-----------|---------|
 | **Layer 1: Seed** | ✅ COMPLETE | 2026-04-14 | RaaS core: mission pipeline, D1 database, Better Auth, tier metering, NOWPayments |
-| **Layer 2: Tree** | ✅ COMPLETE | 2026-04-17 | Cloud infrastructure: Cloudflare Workers → D1 → R2, observability (Better Stack), signals (PostHog), CI/CD (GitHub Actions) |
+| **Layer 2: Tree** | ✅ COMPLETE | 2026-04-17 | Cloud infrastructure: Cloudflare Workers → D1 → R2, observability (Better Stack), signals (PostHog), CF-direct deploy doctrine |
 | **Layer 3: Forest** | ✅ COMPLETE | 2026-04-30 | Feature expansion: video pipeline (Inngest, Coqui, HeyGen), affiliate networks (5x), publishers (3x), tenant isolation, OpenClaw orchestrator, revenue split, FTC/GDPR |
 | **Layer 4: Land** | ✅ COMPLETE | 2026-05-03 | Production go-live: self-serve checkout (NOWPayments + PayOS), magic-link E2E validation, mission control handover, durable email outbox, API keys, status page, lifecycle emails |
 

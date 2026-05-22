@@ -2,9 +2,9 @@
 
 > **Product Development Requirements** document for Sophia AI Factory: A reasoning-as-a-service (RaaS) platform enabling autonomous solopreneurs to create, distribute, and monetize AI-generated content at scale.
 
-**Document Version:** Phase 14+ (updated 2026-05-20)
+**Document Version:** Phase 14+ (backfilled 2026-05-21)
 **Production URL:** https://sophia.agencyos.network
-**Git SHA:** 4bca4710 | **Tests:** 4431/4431 passing (100%)
+**Last full GREEN recorded:** SHA 4bca4710, 4431/4431 tests passing on 2026-05-17. Re-run gates before reporting current status.
 **Target Metrics:** $1M ARR, 100/100 a16z solo company score, 50+ customers across 5 continents
 **Doctrine Ceiling:** 87.5/100 (no-tech doctrine v1.28.1 — see Deploy Doctrine below)
 
@@ -113,7 +113,7 @@ Sophia AI Factory is a no-code platform for solopreneurs to:
 ## Non-Functional Requirements
 
 ### Performance
-- **Build Time:** < 10 seconds
+- **Build Time:** hardware-dependent; app build must pass before deploy
 - **Page Load:** < 2.5s LCP (Lighthouse 80+)
 - **API Latency:** < 500ms p95 (excluding external API calls)
 - **Database:** D1 SQLite, org-scoped queries with indexes
@@ -158,9 +158,9 @@ Sophia AI Factory is a no-code platform for solopreneurs to:
 ### Database
 - **Provider:** Cloudflare D1 (SQLite)
 - **Why:** Zero-cost, globally distributed, no RLS needed (app-layer enforced)
-- **Schema:** 20+ tables (users, orgs, missions, videos, affiliate networks, payments, commissions)
+- **Schema:** D1 schema managed by SQL migrations under `apps/sophia-ai-factory/migrations/`
 - **Tenant Isolation:** D1 Kysely tenant-scope plugin (auto-injects tenant_id on all queries)
-- **Migrations:** 117 versioned SQL files as of 2026-05-19 (0001–0117, idempotent, IF NOT EXISTS guards)
+- **Migrations:** 120 SQL files as of 2026-05-21 (highest numbered migration: 0117; count before reporting current status)
 
 ### Authentication
 - **Provider:** Better Auth v1.6.2 (D1 Kysely adapter)
@@ -227,8 +227,8 @@ Sophia AI Factory is a no-code platform for solopreneurs to:
 ### Technical Metrics
 | Metric | Target | Status |
 |--------|--------|--------|
-| Build Time | < 10s | 8.2s ✅ |
-| Test Pass Rate | 100% | 1798/1798 (100%) ✅ |
+| Build Time | Must pass | Re-run `npm run build` before deploy |
+| Test Pass Rate | 100% | Re-run `npm run ci:test` before reporting current count |
 | TypeScript Strict | 0 `:any` types | 0 (Phase 12+) ✅ |
 | Uptime | 99.95% | 99.97% ✅ |
 | Error Rate | < 0.1% | 0.02% ✅ |

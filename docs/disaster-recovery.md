@@ -1,13 +1,13 @@
 # Disaster Recovery Plan — Sophia AI Factory
 
-**Status:** ✅ Active (Updated 2026-03-26)
+**Status:** Active (Updated 2026-05-21 docs backfill)
 **Handover Score Impact:** P1 Infrastructure (affects score from 61→83)
 
 ## Recovery Objectives
 
 | Metric | Target | Justification |
 |--------|--------|---------------|
-| RPO (Recovery Point Objective) | 24 hours | D1 daily backups via GitHub Actions workflow |
+| RPO (Recovery Point Objective) | 24 hours | D1 daily backup route writes SQL dumps to R2 `sophia-backups` |
 | RTO (Recovery Time Objective) | 4 hours | Redeploy from git + D1 restore from backup |
 | Uptime SLA | 99.99% | Cloudflare Workers global edge distribution |
 
@@ -24,17 +24,17 @@
 ### Database (D1)
 - **Automatic:** Cloudflare D1 provides daily backups (managed service)
 - **Manual:** `npx wrangler d1 export sophia-raas-db --remote --output backup.sql` (weekly recommended)
-- **Workflow:** GitHub Actions runs nightly backup job (`.github/workflows/d1-backup.yml`)
-  - Executes every night at 02:00 UTC
-  - Exports D1 to `.wrangler/migrations/backup.sql`
-  - Commits to git for version control
-- **Storage:** Latest 30 backups retained, older ones auto-pruned
+- **Workflow:** `/api/cron/d1-backup` builds a D1 dump and uploads `d1-YYYY-MM-DD.sql` to the R2 `sophia-backups` bucket.
+  - Triggered by external scheduler (Upstash QStash) because GitHub Actions scheduled workflows are not the canonical path.
+  - Authenticated by `CRON_SECRET`.
+  - Records result in `cron_run_log` and optionally pings Better Stack.
+- **Storage:** R2 lifecycle retains 30 days.
 
 ### Code
 - **Repository:** GitHub (longtho638-jpg/sophia-ai-factory) with full commit history
 - **Branch Protection:** Enabled on `main` (no force push, code review required before merge)
-- **Deploy Trigger:** All production deployments via `git push origin main` (prevents unauthorized deploys)
-- **Rollback:** Revert bad commit with `git revert <hash> && git push origin main`
+- **Deploy Trigger:** Push to `origin/main` first, then CF-direct deploy via `cd apps/sophia-ai-factory && npm run deploy:full`
+- **Rollback:** Cloudflare Workers rollback for fastest recovery, or `git revert <hash>` followed by `npm run deploy:full`
 
 ### Secrets
 - **Storage:** Cloudflare Workers secrets (encrypted at rest in CF vault)
@@ -69,7 +69,7 @@
 
 **Recovery steps:**
 1. **Identify issue:** Check Sentry for database error pattern
-2. **Locate backup:** Latest backup available in `.wrangler/migrations/backup.sql` (daily via GitHub Actions)
+2. **Locate backup:** latest `d1-YYYY-MM-DD.sql` object in the R2 `sophia-backups` bucket.
 3. **Restore from backup:**
    ```bash
    npx wrangler d1 execute sophia-raas-db --remote --file=backup.sql
@@ -90,20 +90,21 @@
 
 ### Scenario 3: Deployment Break (Bad Code Pushed to Main)
 
-**Detection:** GitHub Actions CI fails OR app errors spike in Sentry
+**Detection:** deploy wrapper fails, `/api/version` SHA mismatch, production HTTP fails, or app errors spike in Sentry
 
 **Recovery steps (option A: Fast rollback):**
-1. Check CI status: `gh run list` (shows latest workflow runs)
-2. If CI red: latest push broke build. Don't deploy.
-3. If CI green but app broken: identified via Sentry errors
-4. **Rollback to previous commit:**
+1. Check the failed local gate or deploy-wrapper output.
+2. If the build/type/test gate fails: do not deploy.
+3. If deploy succeeded but production is broken: use Cloudflare Workers rollback or revert the bad commit.
+4. **Rollback by revert + redeploy:**
    ```bash
    git log --oneline -5
    git revert <bad-commit-hash>
    git push origin main
+   cd apps/sophia-ai-factory
+   npm run deploy:full
    ```
-5. GitHub Actions re-deploys automatically
-6. Verify: `curl -sI https://sophia.agencyos.network` (should return 200)
+5. Verify `/api/version` SHA match and `curl -sI https://sophia.agencyos.network` returns 200.
 
 **Recovery steps (option B: Manual revert if git revert fails):**
 1. Identify last known good commit
@@ -111,11 +112,11 @@
 3. Force push if necessary (rare): `git push --force-with-lease origin main`
 
 **Prevention:**
-- Always run `npm test` before pushing (CI will catch most issues)
+- Always run local gates before deploy (`npm run type-check`, `npm run build`, targeted tests)
 - Code review required on main branch (2-person sign-off)
 - Test staging environment if available
 
-**RTO:** 10-15 minutes (git revert + CF Workers auto-deploy)
+**RTO:** 10-20 minutes (git revert + CF-direct redeploy)
 
 ### Scenario 4: Secret Compromise (API Key / JWT_SECRET Leaked)
 
@@ -161,7 +162,7 @@
 **Future Consideration (Q3 2026):**
 - Implement cross-region D1 replica (if scale justifies)
 - Until then: RPO 24h via daily backup is acceptable SLA for current load
-- Fallback: Restore from GitHub Actions backup in another region if needed
+- Fallback: restore the latest R2 `sophia-backups` dump into a replacement D1 database if needed
 
 ## Team Roles & Responsibilities
 
@@ -186,7 +187,7 @@
 - [x] **D1 Backup Test** (verified 2026-03-26)
   - Export D1: `npx wrangler d1 export sophia-raas-db --remote --output test-backup.sql`
   - Result: 559 lines, 41 tables exported successfully
-  - GitHub Actions nightly backup workflow also verified (run #23591312635)
+  - Historical note: this 2026-03 drill used GitHub Actions backup workflow; current backup path is `/api/cron/d1-backup` → R2.
 
 - [x] **Restore Test (Local)** (verified 2026-03-26)
   - Restored to local D1: `npx wrangler d1 execute sophia-raas-db --file=/tmp/sophia-backup-test.sql`
@@ -235,5 +236,5 @@
 
 - **Cloud Infrastructure:** `docs/cloud-infrastructure.md` (10-layer audit details)
 - **System Architecture:** `docs/system-architecture.md` (security & monitoring section)
-- **Deployment Guide:** GitHub Actions workflows in `.github/workflows/`
+- **Deployment Guide:** `docs/deployment-guide.md`
 - **Monitoring:** Sentry dashboard (https://sentry.io/organizations/sophia/)
