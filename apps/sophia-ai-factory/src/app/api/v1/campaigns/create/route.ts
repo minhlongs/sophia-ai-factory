@@ -8,7 +8,9 @@ import { withRateLimit } from "@/forest/middleware/rate-limit-wrapper";
 
 // POST /api/v1/campaigns/create
 // Headers: Authorization: Bearer <raas_api_key>
-// Body: { script, title?, avatar_id?, voice_id?, userId }
+// Body: { script, title?, avatar_id?, voice_id?, userId? }
+// userId in body is IGNORED — identity is derived from the API key's owner (raas_licenses.user_id).
+// If body provides userId and it mismatches the key owner → 403.
 // Response: { campaignId, status: 'queued' }
 
 export const createCampaignBodySchema = z.object({
@@ -16,7 +18,9 @@ export const createCampaignBodySchema = z.object({
   title: z.string().optional(),
   avatar_id: z.string().optional(),
   voice_id: z.string().optional(),
-  userId: z.string().min(1, "userId is required"),
+  // userId is OPTIONAL in body — the authoritative userId comes from the API key's license record.
+  // Providing it is allowed only for forward-compatibility; any mismatch triggers a 403.
+  userId: z.string().optional(),
 });
 
 function extractBearerToken(authHeader: string | null): string | null {
@@ -24,30 +28,44 @@ function extractBearerToken(authHeader: string | null): string | null {
   return authHeader.slice(7).trim() || null;
 }
 
-async function validateRaasApiKey(apiKey: string): Promise<boolean> {
+interface RaasApiKeyValidationResult {
+  valid: boolean;
+  /** userId derived from the license record (raas_licenses.user_id). Null if key invalid. */
+  userId: string | null;
+  orgId?: string | null;
+}
+
+async function validateRaasApiKey(apiKey: string): Promise<RaasApiKeyValidationResult> {
   const db = createServerClient();
 
-  // Hash the incoming key for comparison
+  // Hash the incoming key for DB lookup
   const { createHash } = await import("crypto");
   const keyHash = createHash("sha256").update(apiKey).digest("hex");
 
   const { data: rawData, error } = await db
     .from("raas_licenses")
-    .select("id, is_revoked, expires_at")
+    .select("id, is_revoked, expires_at, user_id")
     .eq("key_hash", keyHash)
     .single();
-  const data = rawData as { id?: string; is_revoked?: boolean; expires_at?: number | null } | null;
+  const data = rawData as {
+    id?: string;
+    is_revoked?: boolean | number;
+    expires_at?: number | null;
+    user_id?: string | null;
+  } | null;
 
-  if (error || !data) return false;
-  if (data.is_revoked) return false;
+  if (error || !data) return { valid: false, userId: null };
+  // D1 stores BOOLEAN as INTEGER (1 = revoked)
+  if (data.is_revoked === true || data.is_revoked === 1) return { valid: false, userId: null };
 
-  // expires_at 0 = perpetual; null = perpetual
+  // expires_at 0/null = perpetual
   if (data.expires_at && data.expires_at > 0) {
     const nowSec = Math.floor(Date.now() / 1000);
-    if (nowSec > data.expires_at) return false;
+    if (nowSec > data.expires_at) return { valid: false, userId: null };
   }
 
-  return true;
+  const userId = data.user_id ?? null;
+  return { valid: true, userId };
 }
 
 // Campaign create dispatches Inngest video pipeline (LLM + TTS + render costs).
@@ -68,11 +86,21 @@ export const POST = withRateLimit(async function POST(request: NextRequest): Pro
       );
     }
 
-    const isValid = await validateRaasApiKey(apiKey);
-    if (!isValid) {
+    const keyResult = await validateRaasApiKey(apiKey);
+    if (!keyResult.valid) {
       log.warn("RaaS campaign create: invalid or expired API key");
       return NextResponse.json(
         { error: "Invalid or expired API key" },
+        { status: 401 }
+      );
+    }
+
+    // userId is bound to the API key — never trust body.userId as authoritative identity
+    const keyUserId = keyResult.userId;
+    if (!keyUserId) {
+      log.warn("RaaS campaign create: API key has no associated user");
+      return NextResponse.json(
+        { error: "API key is not bound to a user account" },
         { status: 403 }
       );
     }
@@ -90,7 +118,21 @@ export const POST = withRateLimit(async function POST(request: NextRequest): Pro
       );
     }
 
-    const { script, title, userId } = parsed.data;
+    // Impersonation guard: if caller explicitly provides a userId that differs from the key owner → 403
+    if (parsed.data.userId && parsed.data.userId !== keyUserId) {
+      log.warn("RaaS campaign create: userId in body mismatches key owner", {
+        bodyUserId: parsed.data.userId,
+        keyUserId,
+      });
+      return NextResponse.json(
+        { error: "userId in request body does not match the API key owner" },
+        { status: 403 }
+      );
+    }
+
+    // Always use the key-derived userId, never body.userId
+    const userId = keyUserId;
+    const { script, title } = parsed.data;
 
     // TIER CHECK: Monthly campaign limit
     const { getUserTier } = await import("@/seed/db/get-user-tier");

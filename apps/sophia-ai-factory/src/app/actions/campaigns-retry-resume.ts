@@ -9,6 +9,7 @@
  */
 
 import { getD1Client } from "@/seed/db/client";
+import { getCurrentUser } from "@/seed/auth/better-auth-session";
 import { sendCampaignCreatedEvent } from "@/lib/campaigns/create-campaign-core";
 import { revalidatePath } from "next/cache";
 import { Tier } from "@/seed/types";
@@ -26,6 +27,11 @@ function mapDbTierToTier(dbTier: string | null | undefined): Tier {
  */
 export async function retryCampaign(campaignId: string) {
   try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return { success: false, message: "Unauthorized" };
+    }
+
     const db = await getD1Client();
 
     const { data: campaign, error: fetchError } = await db
@@ -39,6 +45,10 @@ export async function retryCampaign(campaignId: string) {
     }
 
     const c = campaign as { id: string; status: string; user_id: string; topic: string; title: string; audience: string };
+
+    if (c.user_id !== currentUser.id) {
+      return { success: false, message: "Unauthorized" };
+    }
 
     if (c.status !== "failed") {
       return { success: false, message: "Only failed campaigns can be retried" };
@@ -84,6 +94,11 @@ export async function retryCampaign(campaignId: string) {
  */
 export async function resumeCampaign(campaignId: string) {
   try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return { success: false, message: "Unauthorized" };
+    }
+
     const db = await getD1Client();
 
     const { data: campaign, error: fetchError } = await db
@@ -100,6 +115,10 @@ export async function resumeCampaign(campaignId: string) {
       id: string; status: string; user_id: string; topic: string; title: string;
       audience: string; script: string | null; video_url: string | null;
     };
+
+    if (c.user_id !== currentUser.id) {
+      return { success: false, message: "Unauthorized" };
+    }
 
     if (c.status !== "failed") {
       return { success: false, message: "Only failed campaigns can be resumed" };
