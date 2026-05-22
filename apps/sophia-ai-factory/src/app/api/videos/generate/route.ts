@@ -11,13 +11,11 @@
  */
 
 import { NextResponse } from 'next/server';
-import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
+import { getCurrentUserOrOpenClaw, isAuthError } from '@/seed/auth/get-current-user-or-openclaw';
 
 export async function POST(request: Request): Promise<NextResponse> {
-  const user = await getCurrentUserFromHeaders(request.headers);
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const auth = await getCurrentUserOrOpenClaw(request, { requiredScope: 'video:write' });
+  if (isAuthError(auth)) return auth.toNextResponse();
 
   return NextResponse.json(
     {

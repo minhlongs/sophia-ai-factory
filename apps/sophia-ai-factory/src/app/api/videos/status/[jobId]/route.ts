@@ -6,7 +6,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
+import { getCurrentUserOrOpenClaw, isAuthError } from '@/seed/auth/get-current-user-or-openclaw';
 import { getD1Client } from '@/seed/db/client';
 import { STATUS_PROGRESS } from '@/lib/video/video-job-fsm';
 import type { VideoJobStatus } from '@/lib/video/video-job-fsm';
@@ -21,13 +21,11 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ jobId: string }> },
 ): Promise<NextResponse> {
-  const user = await getCurrentUserFromHeaders(request.headers);
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const auth = await getCurrentUserOrOpenClaw(request, { requiredScope: 'video:read' });
+  if (isAuthError(auth)) return auth.toNextResponse();
 
   const { jobId } = await params;
-  const tenantId = user.id;
+  const tenantId = auth.userId;
 
   const db = await getD1Client();
   const { data, error } = await db

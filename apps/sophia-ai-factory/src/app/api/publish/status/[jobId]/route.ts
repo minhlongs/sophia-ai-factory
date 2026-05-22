@@ -2,11 +2,11 @@
  * GET /api/publish/status/[jobId]
  *
  * Returns publishing job row + result (if available).
- * Auth: session cookie
+ * Auth: Bearer (OpenClaw plugin, scope: publish:read) OR session cookie
  */
 
 import { NextResponse } from 'next/server';
-import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
+import { getCurrentUserOrOpenClaw, isAuthError } from '@/seed/auth/get-current-user-or-openclaw';
 import { getD1Client } from '@/seed/db/client';
 import type { PublishingJob, PublishingResult } from '@/lib/publishing/publisher-interface';
 import { logger } from '@/seed/utils/logger-utility';
@@ -16,17 +16,15 @@ export async function GET(
   { params }: { params: Promise<{ jobId: string }> },
 ): Promise<NextResponse> {
   try {
-    const user = await getCurrentUserFromHeaders(request.headers);
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const auth = await getCurrentUserOrOpenClaw(request, { requiredScope: 'publish:read' });
+    if (isAuthError(auth)) return auth.toNextResponse();
 
     const { jobId } = await params;
     if (!jobId || typeof jobId !== 'string') {
       return NextResponse.json({ error: 'Invalid jobId' }, { status: 400 });
     }
 
-    const tenantId = user.id;
+    const tenantId = auth.userId;
     const db = await getD1Client();
 
     const { data: jobData } = await db
