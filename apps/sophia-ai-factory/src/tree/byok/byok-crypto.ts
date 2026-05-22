@@ -64,14 +64,15 @@ async function importMasterKey(): Promise<CryptoKey> {
  * Throws `ByokMissingMasterKeyError` / `ByokInvalidMasterKeyError` if
  * BYOK_MASTER_KEY is absent or malformed.
  */
-export async function encryptApiKey(plain: string): Promise<Uint8Array> {
+export async function encryptApiKey(plain: string, userId?: string): Promise<Uint8Array> {
   if (!plain) throw new Error('BYOK_ENCRYPT_EMPTY: plaintext is empty')
   const key = await importMasterKey()
   const iv  = crypto.getRandomValues(new Uint8Array(IV_BYTES))
   const pt  = new TextEncoder().encode(plain)
-  const ct  = new Uint8Array(
-    await crypto.subtle.encrypt({ name: ALGORITHM, iv }, key, pt),
-  )
+  const params: AesGcmParams = userId
+    ? { name: ALGORITHM, iv: iv as BufferSource, additionalData: new TextEncoder().encode(userId) as BufferSource }
+    : { name: ALGORITHM, iv: iv as BufferSource }
+  const ct  = new Uint8Array(await crypto.subtle.encrypt(params, key, pt))
   const packed = new Uint8Array(iv.length + ct.length)
   packed.set(iv, 0)
   packed.set(ct, iv.length)
@@ -79,17 +80,31 @@ export async function encryptApiKey(plain: string): Promise<Uint8Array> {
 }
 
 /**
- * Decrypt a packed `[iv][ciphertext+tag]` blob. Throws on tamper,
- * wrong master key, or malformed input.
+ * Decrypt a packed `[iv][ciphertext+tag]` blob. Tries AAD-bound decrypt
+ * (userId) first; falls back to legacy (no-AAD) ciphertext for rows
+ * written before V-2.1. Throws on tamper, wrong master key, or malformed
+ * input.
  */
-export async function decryptApiKey(packed: Uint8Array): Promise<string> {
+export async function decryptApiKey(packed: Uint8Array, userId?: string): Promise<string> {
   if (!packed || packed.length <= IV_BYTES) {
     throw new Error('BYOK_DECRYPT_MALFORMED: payload too short')
   }
   const key = await importMasterKey()
   const iv  = packed.slice(0, IV_BYTES)
   const ct  = packed.slice(IV_BYTES)
-  const pt  = await crypto.subtle.decrypt({ name: ALGORITHM, iv }, key, ct)
+  if (userId) {
+    try {
+      const pt = await crypto.subtle.decrypt(
+        { name: ALGORITHM, iv, additionalData: new TextEncoder().encode(userId) },
+        key,
+        ct,
+      )
+      return new TextDecoder().decode(pt)
+    } catch {
+      // fallthrough to legacy
+    }
+  }
+  const pt = await crypto.subtle.decrypt({ name: ALGORITHM, iv }, key, ct)
   return new TextDecoder().decode(pt)
 }
 

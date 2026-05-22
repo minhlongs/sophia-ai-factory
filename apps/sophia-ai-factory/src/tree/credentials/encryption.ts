@@ -69,29 +69,50 @@ async function importKey(): Promise<CryptoKey> {
 }
 
 /**
- * Encrypt a plaintext string.
+ * Encrypt a plaintext string with optional AAD (userId) binding.
  * Returns "<iv_b64>:<ciphertext_b64>" for storage in TEXT column.
+ * When userId provided, AES-GCM AAD binds ciphertext to that user — moving a
+ * row to another user's tuple causes decrypt to fail with auth-tag error.
  */
-export async function encryptValue(plaintext: string): Promise<string> {
+export async function encryptValue(plaintext: string, userId?: string): Promise<string> {
   if (!plaintext) throw new Error('encryptValue: plaintext is empty')
   const key = await importKey()
   const iv = crypto.getRandomValues(new Uint8Array(IV_BYTES))
   const pt = new TextEncoder().encode(plaintext)
-  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: ALGORITHM, iv }, key, pt))
+  const params: AesGcmParams = userId
+    ? { name: ALGORITHM, iv: iv as BufferSource, additionalData: new TextEncoder().encode(userId) as BufferSource }
+    : { name: ALGORITHM, iv: iv as BufferSource }
+  const ct = new Uint8Array(await crypto.subtle.encrypt(params, key, pt))
   return `${bytesToBase64(iv)}:${bytesToBase64(ct)}`
 }
 
 /**
  * Decrypt a "<iv_b64>:<ciphertext_b64>" string.
- * Throws on tamper, wrong key, or malformed input.
+ * Tries AAD-bound decrypt first when userId given; falls back to legacy
+ * (no-AAD) ciphertext for backward compatibility with rows written before
+ * V-2.1. Throws on tamper, wrong key, or malformed input.
  */
-export async function decryptValue(encrypted: string): Promise<string> {
+export async function decryptValue(encrypted: string, userId?: string): Promise<string> {
   const sep = encrypted.indexOf(':')
   if (sep === -1) throw new Error('decryptValue: malformed -- missing separator')
   const iv = base64ToBytes(encrypted.slice(0, sep))
   const ct = base64ToBytes(encrypted.slice(sep + 1))
   if (iv.length !== IV_BYTES) throw new Error(`decryptValue: iv must be ${IV_BYTES} bytes`)
   const key = await importKey()
-  const pt = await crypto.subtle.decrypt({ name: ALGORITHM, iv: iv as BufferSource }, key, ct.buffer as ArrayBuffer)
+  const ivBuf = iv as BufferSource
+  const ctBuf = ct.buffer as ArrayBuffer
+  if (userId) {
+    try {
+      const pt = await crypto.subtle.decrypt(
+        { name: ALGORITHM, iv: ivBuf, additionalData: new TextEncoder().encode(userId) as BufferSource },
+        key,
+        ctBuf,
+      )
+      return new TextDecoder().decode(pt)
+    } catch {
+      // fallthrough to legacy (no-AAD) decrypt
+    }
+  }
+  const pt = await crypto.subtle.decrypt({ name: ALGORITHM, iv: ivBuf }, key, ctBuf)
   return new TextDecoder().decode(pt)
 }

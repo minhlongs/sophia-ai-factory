@@ -68,7 +68,7 @@ export async function getUserCredential(
     if (!row?.encrypted_value) return null
     if (row.status !== 'active') return null
 
-    const plaintext = await decryptValue(row.encrypted_value)
+    const plaintext = await decryptValue(row.encrypted_value, userId)
 
     // Fire-and-forget last_used_at update
     d1.prepare(
@@ -100,7 +100,7 @@ export async function setUserCredential(
     throw new Error('setUserCredential: userId, provider and plaintext are required')
   }
   const d1 = await getD1Raw()
-  const encryptedValue = await encryptValue(plaintext)
+  const encryptedValue = await encryptValue(plaintext, userId)
   const displayHint = makeDisplayHint(plaintext)
   const now = Math.floor(Date.now() / 1000)
 
