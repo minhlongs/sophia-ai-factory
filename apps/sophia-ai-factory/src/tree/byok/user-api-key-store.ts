@@ -38,7 +38,7 @@ export async function setUserApiKey(
   const d1 = getD1Raw()
   if (!d1) throw new Error('BYOK_D1_UNAVAILABLE')
 
-  const encrypted = await encryptApiKey(plainKey)
+  const encrypted = await encryptApiKey(plainKey, userId)
 
   await d1
     .prepare(
@@ -79,7 +79,7 @@ export async function getUserApiKey(
       .first<KeyRow>()
 
     if (!row?.encrypted_key) return null
-    return await decryptApiKey(toBytes(row.encrypted_key))
+    return await decryptApiKey(toBytes(row.encrypted_key), userId)
   } catch {
     return null
   }

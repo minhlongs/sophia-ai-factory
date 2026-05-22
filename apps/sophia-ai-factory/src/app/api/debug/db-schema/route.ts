@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
   } catch (e) { users = { error: toError(e).message }; }
 
   let campaigns = null;
-  try { campaigns = await d1.prepare('SELECT id, user_id, title, status, created_at FROM campaigns ORDER BY created_at DESC LIMIT 10').all(); } catch (e) { campaigns = { error: toError(e).message }; }
+  try { campaigns = await d1.prepare('SELECT id, user_id, org_id, title, status, created_at FROM campaigns ORDER BY created_at DESC LIMIT 10').all(); } catch (e) { campaigns = { error: toError(e).message }; }
 
   let orgMembers = null;
   try { orgMembers = await d1.prepare('SELECT user_id, org_id, role FROM org_members LIMIT 20').all(); } catch (e) { orgMembers = { error: toError(e).message }; }
