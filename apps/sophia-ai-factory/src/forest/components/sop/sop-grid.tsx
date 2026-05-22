@@ -24,6 +24,10 @@ interface SopGridProps {
   installedTemplateIds: string[];
   locale: string;
   installAction: (formData: FormData) => Promise<{ error?: string }>;
+  /** Number of SOPs the user has already installed */
+  installCount?: number;
+  /** Max allowed by the user's tier (from getSopInstallLimit) */
+  sopInstallLimit?: number;
 }
 
 const ALL_CATEGORIES: SopCategory[] = ['content', 'leads', 'email', 'sales', 'social', 'analytics', 'crisis', 'proposals'];
@@ -34,12 +38,14 @@ function CategorySection({
   installedSet,
   locale,
   onInstallClick,
+  tierLocked,
 }: {
   category: SopCategory;
   templates: SopTemplateRow[];
   installedSet: Set<string>;
   locale: string;
   onInstallClick: (t: SopTemplateRow) => void;
+  tierLocked: boolean;
 }) {
   const t = useTranslations('sop.categories');
   if (templates.length === 0) return null;
@@ -60,6 +66,7 @@ function CategorySection({
             locale={locale}
             alreadyInstalled={installedSet.has(tpl.id)}
             onInstallClick={onInstallClick}
+            tierLocked={tierLocked && !installedSet.has(tpl.id)}
           />
         ))}
       </div>
@@ -67,13 +74,14 @@ function CategorySection({
   );
 }
 
-export function SopGrid({ templates, installedTemplateIds, locale, installAction }: SopGridProps) {
+export function SopGrid({ templates, installedTemplateIds, locale, installAction, installCount, sopInstallLimit }: SopGridProps) {
   const t = useTranslations('sop.marketplace');
   const [category, setCategory] = useState<CategoryFilter>('all');
   const [query, setQuery] = useState('');
   const [modalTemplate, setModalTemplate] = useState<SopTemplateRow | null>(null);
   const isVi = locale.startsWith('vi');
   const installedSet = useMemo(() => new Set(installedTemplateIds), [installedTemplateIds]);
+  const tierLocked = (installCount ?? 0) >= (sopInstallLimit ?? 999);
 
   const featured = useMemo(() => templates.filter(t => t.is_featured === 1), [templates]);
 
@@ -127,6 +135,7 @@ export function SopGrid({ templates, installedTemplateIds, locale, installAction
                 alreadyInstalled={installedSet.has(tpl.id)}
                 onInstallClick={setModalTemplate}
                 featured
+                tierLocked={tierLocked && !installedSet.has(tpl.id)}
               />
             ))}
           </div>
@@ -149,6 +158,7 @@ export function SopGrid({ templates, installedTemplateIds, locale, installAction
               installedSet={installedSet}
               locale={locale}
               onInstallClick={setModalTemplate}
+              tierLocked={tierLocked}
             />
           ))}
         </div>
@@ -162,6 +172,7 @@ export function SopGrid({ templates, installedTemplateIds, locale, installAction
               locale={locale}
               alreadyInstalled={installedSet.has(tpl.id)}
               onInstallClick={setModalTemplate}
+              tierLocked={tierLocked && !installedSet.has(tpl.id)}
             />
           ))}
         </div>

@@ -1,11 +1,11 @@
 /**
- * SOP Seed Registry — 31 official playbooks + 5 legacy seeds
+ * SOP Seed Registry — 36 official playbooks + 5 legacy seeds
  *
  * All entries exported as SOP_SEEDS for SQL generation.
  * New playbooks live in seeds/playbooks/{category}/*.ts
  */
 
-// --- Playbook imports: content (9) ---
+// --- Playbook imports: content (12) ---
 import * as videoGenerationStarter from './playbooks/content/video-generation-starter';
 import * as dailyTiktok3x from './playbooks/content/daily-tiktok-3x';
 import * as weeklyYoutubeLongform from './playbooks/content/weekly-youtube-longform';
@@ -15,6 +15,9 @@ import * as autoSubtitleTranslate from './playbooks/content/auto-subtitle-transl
 import * as voiceCloneNarration from './playbooks/content/voice-clone-narration';
 import * as brandedIntroOutro from './playbooks/content/branded-intro-outro';
 import * as evergreenContentRecycle from './playbooks/content/evergreen-content-recycle';
+import * as facelessYoutubeCashCow from './playbooks/content/faceless-youtube-cash-cow';
+import * as tiktokCreativityProgram from './playbooks/content/tiktok-creativity-program';
+import * as youtubeShortsMonetization from './playbooks/content/youtube-shorts-monetization';
 
 // --- Playbook imports: leads (5) ---
 import * as dailyLeadEnrichment from './playbooks/leads/daily-lead-enrichment';
@@ -30,11 +33,13 @@ import * as weeklyNewsletter from './playbooks/email/weekly-newsletter';
 import * as abandonedCartRecovery from './playbooks/email/abandoned-cart-recovery';
 import * as birthdayMilestone from './playbooks/email/birthday-milestone';
 
-// --- Playbook imports: sales (4) ---
+// --- Playbook imports: sales (6) ---
 import * as proposalAutoPilot from './playbooks/sales/proposal-auto-pilot';
 import * as quoteGenerator from './playbooks/sales/quote-generator';
 import * as postDemoFollowup from './playbooks/sales/post-demo-followup';
 import * as winLossAnalysis from './playbooks/sales/win-loss-analysis';
+import * as ugcCreatorAgency from './playbooks/sales/ugc-creator-agency';
+import * as aiAvatarVideoAgency from './playbooks/sales/ai-avatar-video-agency';
 
 // --- Playbook imports: social (4) ---
 import * as dailyLinkedinPost from './playbooks/social/daily-linkedin-post';
@@ -74,7 +79,7 @@ export interface SopSeedEntry {
 }
 
 export const SOP_SEEDS: SopSeedEntry[] = [
-  // Content (9)
+  // Content (12)
   videoGenerationStarter.template,
   dailyTiktok3x.template,
   weeklyYoutubeLongform.template,
@@ -84,6 +89,9 @@ export const SOP_SEEDS: SopSeedEntry[] = [
   voiceCloneNarration.template,
   brandedIntroOutro.template,
   evergreenContentRecycle.template,
+  facelessYoutubeCashCow.template,
+  tiktokCreativityProgram.template,
+  youtubeShortsMonetization.template,
 
   // Leads (5)
   dailyLeadEnrichment.template,
@@ -99,11 +107,13 @@ export const SOP_SEEDS: SopSeedEntry[] = [
   abandonedCartRecovery.template,
   birthdayMilestone.template,
 
-  // Sales (4)
+  // Sales (6)
   proposalAutoPilot.template,
   quoteGenerator.template,
   postDemoFollowup.template,
   winLossAnalysis.template,
+  ugcCreatorAgency.template,
+  aiAvatarVideoAgency.template,
 
   // Social (4)
   dailyLinkedinPost.template,

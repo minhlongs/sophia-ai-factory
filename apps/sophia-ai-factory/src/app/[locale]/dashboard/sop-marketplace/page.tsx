@@ -9,6 +9,8 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { getUserTier } from '@/seed/db/get-user-tier';
+import { getSopInstallLimit } from '@/seed/config/tiers';
 import { listOfficialTemplates, listInstallationsForUser } from '@/lib/sop/sop-repo';
 import { SopGrid } from '@/forest/components/sop/sop-grid';
 import { installSopAction } from './actions';
@@ -44,6 +46,9 @@ export default async function MarketplacePage({ params }: Props) {
   const templates = db ? await listOfficialTemplates(db) : [];
   const installations = db ? await listInstallationsForUser(db, user.id) : [];
   const installedTemplateIds = installations.map(i => i.template_id);
+
+  const tier = await getUserTier(user.id);
+  const sopLimit = getSopInstallLimit(tier);
 
   const isVi = locale.startsWith('vi');
   const isFirstTime = installations.length === 0;
@@ -85,6 +90,8 @@ export default async function MarketplacePage({ params }: Props) {
         installedTemplateIds={installedTemplateIds}
         locale={locale}
         installAction={installSopAction}
+        installCount={installations.length}
+        sopInstallLimit={sopLimit}
       />
     </div>
   );

@@ -1981,7 +1981,8 @@
       "installed": "Đã Cài",
       "viewDetails": "Xem Chi Tiết",
       "featured": "Nổi Bật",
-      "setupTime": "Cài đặt {n} phút"
+      "setupTime": "Cài đặt {n} phút",
+      "upgradeTier": "Nâng cấp để cài"
     },
     "detail": {
       "agentsTitle": "Agents",

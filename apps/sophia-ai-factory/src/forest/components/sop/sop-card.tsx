@@ -9,7 +9,7 @@
 
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { Zap, Clock, Star } from 'lucide-react';
+import { Zap, Clock, Star, Lock } from 'lucide-react';
 import type { SopTemplateRow } from '@/lib/sop/sop-types';
 import { CategoryBadge } from './category-badge';
 import { Button } from '@/seed/components/ui/button';
@@ -20,9 +20,11 @@ interface SopCardProps {
   alreadyInstalled: boolean;
   onInstallClick: (template: SopTemplateRow) => void;
   featured?: boolean;
+  /** True when user has hit their tier's install limit and has not yet installed this template */
+  tierLocked?: boolean;
 }
 
-export function SopCard({ template, locale, alreadyInstalled, onInstallClick, featured }: SopCardProps) {
+export function SopCard({ template, locale, alreadyInstalled, onInstallClick, featured, tierLocked }: SopCardProps) {
   const t = useTranslations('sop');
   const isVi = locale.startsWith('vi');
   const name = isVi ? template.name_vi : template.name_en;
@@ -70,6 +72,15 @@ export function SopCard({ template, locale, alreadyInstalled, onInstallClick, fe
           <span className="flex-1 text-center text-sm px-3 py-2 rounded-lg bg-zinc-800 text-zinc-500 cursor-not-allowed select-none">
             {t('card.installed')}
           </span>
+        ) : tierLocked ? (
+          <Link
+            href="/pricing"
+            className="flex-1 flex items-center justify-center gap-1.5 text-sm px-3 py-2 rounded-lg border border-amber-700/50 bg-amber-950/30 text-amber-300 hover:bg-amber-900/40 transition-colors"
+            title="Upgrade to install more SOPs"
+          >
+            <Lock className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+            {t('card.upgradeTier')}
+          </Link>
         ) : (
           <Button
             size="sm"

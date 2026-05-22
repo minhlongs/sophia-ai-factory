@@ -12,6 +12,7 @@ export {
   getUnifiedTierLimits,
   getMcuMonthlyLimit,
   getAiCommandLimit,
+  getSopInstallLimit,
 } from './unified-limits';
 
 export {
