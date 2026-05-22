@@ -32,3 +32,6 @@ export {
 export type {
   OverageEventInput,
 } from './overage-logger';
+
+export { checkMissionQuota, MISSION_QUOTA_BY_TIER } from './mission-quota';
+export type { MissionQuotaCheck } from './mission-quota';

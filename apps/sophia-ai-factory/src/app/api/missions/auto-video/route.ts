@@ -12,6 +12,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUserOrOpenclawBearer } from '@/seed/auth/openclaw-token';
+import { getUserTier } from '@/seed/db/get-user-tier';
+import { checkMissionQuota } from '@/forest/quota/mission-quota';
 import { runAutoVideoMission, AutoVideoMissionError } from '@/land/missions/auto-video-mission';
 
 const BodySchema = z.object({
@@ -37,6 +39,19 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   } catch (err) {
     const msg = err instanceof z.ZodError ? err.issues : 'invalid body';
     return NextResponse.json({ error: 'INVALID_INPUT', details: msg }, { status: 400 });
+  }
+
+  // Tier quota gate (defense-in-depth) — counts engine_missions this month.
+  const tier = await getUserTier(user.id);
+  const quota = await checkMissionQuota(user.id, tier, 'engine_missions');
+  if (!quota.allowed) {
+    return NextResponse.json(
+      {
+        error: `Monthly mission quota exceeded (${quota.used}/${quota.limit}). Resets ${quota.resetAt}.`,
+        code: 'QUOTA_EXCEEDED',
+      },
+      { status: 429 },
+    );
   }
 
   try {
