@@ -79,6 +79,10 @@ const CRON_ROUTES = {
   '7 * * * *': [
     '/api/cron/handover-status-sync',
   ],
+  // Daily 05:00 UTC — D1 database backup to R2 `sophia-backups` bucket (GAP-R1 fix 2026-05-22)
+  '0 5 * * *': [
+    '/api/cron/d1-backup',
+  ],
 };
 
 // ---------------------------------------------------------------------------

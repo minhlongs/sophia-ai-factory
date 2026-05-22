@@ -33,8 +33,6 @@ import {
 } from '@/lib/video/get-canonical-video-url';
 import { logger } from '@/seed/utils/logger-utility';
 import type { PublishingChannel, PublishingJob, Publisher } from '@/lib/publishing/publisher-interface';
-import { randomUUID } from 'crypto';
-
 const MAX_RETRIES = 3;
 const RETRY_DELAYS_S = [120, 600, 1800];
 const POLL_MAX_ATTEMPTS = 6; // 6 * 60s = 6 min via step.sleep
@@ -175,14 +173,15 @@ type ClaimResult =
   | { skipped: false; jobId: string; status: 'processing'; externalPostId: string; provider: string }
   | { skipped: false; jobId: string; status: 'live'; externalPostId: string; provider: string }
   /**
-   * Wave 20 Phase 02: telegram path — CAS-claim succeeded inside step 1 but the
-   * actual Bot-API call lives in a separate `step.run('telegram-send', ...)` so
-   * NOTE (Wave 22 P05 audit): function-level `retries: 0` DISABLES retries
-   * including those triggered by RetryAfterError per Inngest docs. So 429
-   * from Telegram → permanent fail → user re-triggers manually via UI.
-   * Wave 23 will switch to retries: 2 + idempotent publishing_results insert
-   * (current `randomUUID()` insert is non-idempotent on retry — see audit
-   * report at plans/260510-0152-wave22.../reports/inngest-retry-audit-*.md).
+   * Wave 23 P01 fix: retries raised to 3 (matches project standard for publish
+   * functions). publishing_results PKs now derived from event.id to be
+   * idempotent across Inngest replays — Inngest memoizes step output so the
+   * telegram-send step won't re-execute on finalize-step retries, but the DB
+   * insert PK must be stable to survive a replay of telegram-finalize itself.
+   *
+   * 429 path: dispatchTelegramWithRetryHints already throws RetryAfterError
+   * which Inngest honors. With retries: 3 those errors now actually trigger
+   * step-level retries instead of permanent-failing silently.
    */
   | {
       skipped: false;
@@ -194,7 +193,7 @@ type ClaimResult =
     };
 
 export const publishExecute = inngest.createFunction(
-  { id: 'publish-execute', retries: 0 },
+  { id: 'publish-execute', retries: 3 },
   { event: 'publish.scheduled' },
   async ({ event, step }) => {
     const { jobId, tenantId } = event.data as { jobId: string; tenantId: string; userId?: string; attempt?: number };
@@ -397,8 +396,13 @@ export const publishExecute = inngest.createFunction(
           finished_at: finishedAt,
         }).eq('id', jobId);
 
-        await db.from('publishing_results').insert({
-          id: randomUUID(),
+        // Deterministic PK: event.id + step name → idempotent across Inngest replays.
+        // Inngest memoizes telegram-send output, so sendResult is stable on finalize
+        // retries. Using a fixed PK means a replayed finalize step hits a unique
+        // constraint (not an error — we treat it as already-done and move on).
+        const resultId = `${event.id}:telegram-finalize`;
+        await db.from('publishing_results').upsert({
+          id: resultId,
           publishing_job_id: jobId,
           tenant_id: tenantId,
           channel_post_id: sendResult.externalPostId,
@@ -497,9 +501,11 @@ export const publishExecute = inngest.createFunction(
 
       const postUrl = finalStatus === 'live' ? buildPostUrl(provider, externalPostId, externalAccountIdForUrl) : null;
 
-      // C2: column names match SQL schema
-      await db.from('publishing_results').insert({
-        id: randomUUID(),
+      // C2: column names match SQL schema.
+      // Deterministic PK: event.id + 'finalize' — idempotent on Inngest step replay.
+      const resultId = `${event.id}:finalize`;
+      await db.from('publishing_results').upsert({
+        id: resultId,
         publishing_job_id: jobId,
         tenant_id: tenantId,
         channel_post_id: externalPostId,
