@@ -1,17 +1,17 @@
 /**
- * OpenClaw exchange token verifier.
+ * OpenClaw exchange token — verifier + revocation utilities.
  *
- * Companion to `POST /api/openclaw/exchange` (route.ts) which mints tokens of
- * shape:
- *   `${userId}.${expiresAt}.${base64url(HMAC_SHA256("userId.expiresAt", BETTER_AUTH_SECRET))}`
+ * Token format (v2 — includes JTI):
+ *   `${userId}.${expiresAt}.${jti}.${base64url(HMAC_SHA256("userId.expiresAt.jti", secret))}`
  *
- * Any API route that wants to accept "either browser session cookie OR
- * exchange-token Bearer header" can call `getCurrentUserOrOpenclawBearer()`
- * below.  Bearer is preferred — if both are present, Bearer wins.
+ * Changes from v1:
+ *   - JTI (UUID v4) embedded in payload → enables server-side revocation.
+ *   - Verifier checks `openclaw_revoked_tokens` table before accepting.
+ *   - `verifyOpenclawToken` now requires D1 access (async, one extra lookup).
  *
- * Stateless: no D1 row is read or written during verify.  Compromised tokens
- * remain valid until expiry; rotate `BETTER_AUTH_SECRET` to invalidate all
- * outstanding tokens at once.
+ * Revocation:
+ *   Call `revokeOpenclawToken(jti, reason)` to invalidate a specific token.
+ *   No endpoint yet — expose only when admin UI is built.
  *
  * @module seed/auth/openclaw-token
  */
@@ -21,30 +21,20 @@ import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import type { User } from '@/seed/db/client';
 
-interface OpenclawTokenParts {
-  userId: string;
-  expiresAt: number;
-  signature: string;
-  payload: string;
-}
+// ── Internal helpers ────────────────────────────────────────────────────────
 
-function parseOpenclawToken(raw: string): OpenclawTokenParts | null {
-  const parts = raw.split('.');
-  if (parts.length !== 3) return null;
-  const [userId, expiresAtStr, signature] = parts;
-  const expiresAt = Number(expiresAtStr);
-  if (!userId || !signature || !Number.isFinite(expiresAt) || expiresAt <= 0) {
-    return null;
+/** Constant-time string comparison — avoids timing oracle on signature. */
+function timingSafeEqualStrings(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) {
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
   }
-  return {
-    userId,
-    expiresAt,
-    signature,
-    payload: `${userId}.${expiresAtStr}`,
-  };
+  return diff === 0;
 }
 
-async function expectedSignature(payload: string, secret: string): Promise<string> {
+/** HMAC-SHA256 over `payload`, returns base64url (no padding). */
+export async function hmacBase64url(payload: string, secret: string): Promise<string> {
   const enc = new TextEncoder();
   const key = await crypto.subtle.importKey(
     'raw',
@@ -60,27 +50,60 @@ async function expectedSignature(payload: string, secret: string): Promise<strin
   return btoa(str).replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_');
 }
 
-/**
- * Constant-time string comparison.  Web Crypto does not expose timingSafeEqual,
- * so this is a manual loop over equal-length strings.  Returns false for
- * unequal lengths without leaking length info beyond what is already visible
- * to the caller (token shape is public).
- */
-function timingSafeEqualStrings(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  let diff = 0;
-  for (let i = 0; i < a.length; i++) {
-    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  }
-  return diff === 0;
+/** Generate a UUID v4 using Web Crypto (available in CF Workers + Node ≥ 19). */
+export function generateJti(): string {
+  return crypto.randomUUID();
 }
+
+interface OpenclawTokenParts {
+  userId: string;
+  expiresAt: number;
+  jti: string;
+  signature: string;
+  payload: string; // "userId.expiresAt.jti"
+}
+
+function parseOpenclawToken(raw: string): OpenclawTokenParts | null {
+  const parts = raw.split('.');
+  if (parts.length === 3) {
+    // v1 legacy token (no JTI) — reject; cannot revoke, force re-mint.
+    return null;
+  }
+  if (parts.length !== 4) return null;
+  const [userId, expiresAtStr, jti, signature] = parts;
+  const expiresAt = Number(expiresAtStr);
+  if (!userId || !expiresAtStr || !jti || !signature || !Number.isFinite(expiresAt) || expiresAt <= 0) {
+    return null;
+  }
+  return {
+    userId,
+    expiresAt,
+    jti,
+    signature,
+    payload: `${userId}.${expiresAtStr}.${jti}`,
+  };
+}
+
+// ── Public token API ────────────────────────────────────────────────────────
 
 export interface VerifiedOpenclawToken {
   userId: string;
   expiresAt: number;
+  jti: string;
 }
 
-/** Verify a raw token string.  Returns parts on success, null on failure. */
+/**
+ * Verify a raw v2 exchange token.
+ *
+ * Checks (in order):
+ *   1. Parse shape (4 parts)
+ *   2. Expiry (cheap, short-circuits before DB + HMAC)
+ *   3. HMAC signature
+ *   4. JTI revocation (D1 lookup)
+ *
+ * Returns null on any failure — callers must not distinguish the reason
+ * to avoid oracle attacks.
+ */
 export async function verifyOpenclawToken(raw: string): Promise<VerifiedOpenclawToken | null> {
   const secret = process.env.BETTER_AUTH_SECRET || process.env.JWT_SECRET=REDACTED || '';
   if (!secret) return null;
@@ -88,15 +111,47 @@ export async function verifyOpenclawToken(raw: string): Promise<VerifiedOpenclaw
   const parts = parseOpenclawToken(raw);
   if (!parts) return null;
 
-  // Expiry first — cheap and short-circuits before HMAC compute.
+  // Expiry first — cheap short-circuit.
   const nowSec = Math.floor(Date.now() / 1000);
   if (parts.expiresAt <= nowSec) return null;
 
-  const expected = await expectedSignature(parts.payload, secret);
+  // HMAC verification.
+  const expected = await hmacBase64url(parts.payload, secret);
   if (!timingSafeEqualStrings(expected, parts.signature)) return null;
 
-  return { userId: parts.userId, expiresAt: parts.expiresAt };
+  // JTI revocation check.
+  try {
+    const db = await getD1Raw();
+    const revoked = await db
+      .prepare('SELECT 1 FROM openclaw_revoked_tokens WHERE jti = ?1 LIMIT 1')
+      .bind(parts.jti)
+      .first<{ '1': number }>();
+    if (revoked) return null;
+  } catch (err) {
+    // If D1 is unavailable, fail closed — cannot verify revocation.
+    logger.error('[openclaw-token] revocation check failed', toError(err), { jti: parts.jti });
+    return null;
+  }
+
+  return { userId: parts.userId, expiresAt: parts.expiresAt, jti: parts.jti };
 }
+
+/**
+ * Revoke a specific token by JTI.
+ *
+ * No HTTP endpoint yet — call from admin scripts or server actions.
+ * When an endpoint is added it MUST be admin-only.
+ */
+export async function revokeOpenclawToken(jti: string, reason?: string): Promise<void> {
+  const db = await getD1Raw();
+  const nowSec = Math.floor(Date.now() / 1000);
+  await db
+    .prepare('INSERT OR IGNORE INTO openclaw_revoked_tokens (jti, revoked_at, reason) VALUES (?1, ?2, ?3)')
+    .bind(jti, nowSec, reason ?? null)
+    .run();
+}
+
+// ── Bearer extraction + combined auth helper ────────────────────────────────
 
 function extractBearer(headers: Headers): string | null {
   const raw = headers.get('authorization');
@@ -107,11 +162,10 @@ function extractBearer(headers: Headers): string | null {
 
 /**
  * Resolve the calling user from EITHER:
- *   1. `Authorization: Bearer <exchange_token>` (preferred when present)
- *   2. Better Auth session cookie (`__Secure-better-auth.session_token`)
+ *   1. `Authorization: Bearer <exchange_token>` (v2 with JTI, preferred)
+ *   2. Better Auth session cookie
  *
- * Returns null if neither path produces a valid user.  Routes that accept
- * OpenClaw plugin traffic should call this instead of `getCurrentUser()`.
+ * Returns null if neither path produces a valid user.
  */
 export async function getCurrentUserOrOpenclawBearer(headers: Headers): Promise<User | null> {
   const bearer = extractBearer(headers);
@@ -121,9 +175,17 @@ export async function getCurrentUserOrOpenclawBearer(headers: Headers): Promise<
       try {
         const db = await getD1Raw();
         const row = await db
-          .prepare('SELECT id, email, name, role, "emailVerified" AS email_verified FROM user WHERE id = ?1 LIMIT 1')
+          .prepare(
+            'SELECT id, email, name, role, "emailVerified" AS email_verified FROM user WHERE id = ?1 LIMIT 1',
+          )
           .bind(verified.userId)
-          .first<{ id: string; email: string; name: string | null; role: string | null; email_verified: number | null }>();
+          .first<{
+            id: string;
+            email: string;
+            name: string | null;
+            role: string | null;
+            email_verified: number | null;
+          }>();
         if (row) {
           return {
             id: row.id,
