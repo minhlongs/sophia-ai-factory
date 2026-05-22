@@ -161,7 +161,7 @@ describe('runAutoVideoMission', () => {
     expect(mockedTranslateScript).toHaveBeenCalledOnce();
   });
 
-  it('schedules publish when channelId is supplied', async () => {
+  it('schedules publish when channelId is supplied and HeyGen BYOK is configured', async () => {
     mockedGenerateSeoScript.mockResolvedValue({
       script: 'body',
       suggestedTitles: ['Hello world'],
@@ -176,6 +176,13 @@ describe('runAutoVideoMission', () => {
       links: [],
       affiliateCount: 0,
       appliedNicheBoost: false,
+    });
+    // HeyGen BYOK present — render succeeds with a real videoId
+    mockedSubmitByokVideo.mockReset();
+    mockedSubmitByokVideo.mockResolvedValue({
+      videoId: 'vid_real_byok',
+      heygenJobId: 'hg_job_1',
+      status: 'processing',
     });
     mockedSchedulePublish.mockResolvedValue({
       jobId: 'job_abc',
@@ -194,9 +201,11 @@ describe('runAutoVideoMission', () => {
     expect(mockedSchedulePublish).toHaveBeenCalledOnce();
     const arg = mockedSchedulePublish.mock.calls[0][0];
     expect(arg.caption).toBe('Hello world');
+    expect(arg.videoId).toBe('vid_real_byok');
   });
 
-  it('soft-fails publish when video row not yet created', async () => {
+  it('skips publish and surfaces no_byok reason when HeyGen key absent (F6 fix)', async () => {
+    // Default beforeEach: submitByokVideo rejects with BYOK_REQUIRED
     mockedGenerateSeoScript.mockResolvedValue({
       script: 'body',
       suggestedTitles: ['T'],
@@ -212,9 +221,6 @@ describe('runAutoVideoMission', () => {
       affiliateCount: 0,
       appliedNicheBoost: false,
     });
-    mockedSchedulePublish.mockRejectedValue(
-      new PublishConfigurationError('VIDEO_NOT_FOUND', 'no video row'),
-    );
 
     const result = await runAutoVideoMission({
       userId: 'u',
@@ -223,7 +229,10 @@ describe('runAutoVideoMission', () => {
     });
 
     expect(result.status).toBe('succeeded');
-    expect(result.publish).toBeUndefined();
+    // schedulePublish MUST NOT be called when there is no real videoId
+    expect(mockedSchedulePublish).not.toHaveBeenCalled();
+    // publish field surfaces the skip reason
+    expect(result.publish).toEqual({ skipped: true, reason: 'no_byok' });
   });
 
   it('rejects empty topic', async () => {
@@ -289,7 +298,9 @@ describe('runAutoVideoMission', () => {
     });
 
     expect(result.video).toEqual({ videoId: 'vid_real', heygenJobId: 'hg_job', status: 'processing' });
-    expect(result.publish?.jobId).toBe('job_xyz');
+    // Narrow union: this branch always has jobId (BYOK key present → schedulePublish succeeded)
+    const pub = result.publish as { jobId: string; scheduledAt: number } | undefined;
+    expect(pub?.jobId).toBe('job_xyz');
     const scheduleCall = mockedSchedulePublish.mock.calls[0][0];
     expect(scheduleCall.videoId).toBe('vid_real');
   });

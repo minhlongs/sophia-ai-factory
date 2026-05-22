@@ -1,26 +1,33 @@
 /**
  * Unit tests for schedulePublish — RBAC enforcement, schedule guard,
- * channel ownership via user_id or tenant_id, and successful insertion.
+ * channel ownership via user_id or tenant_id, successful insertion,
+ * and inngest event emission (F7 mạch-đứt fix).
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { mockFirst, mockRun, mockBind, mockPrepare, mockGetD1Raw } = vi.hoisted(() => {
+const { mockFirst, mockRun, mockBind, mockPrepare, mockGetD1Raw, mockInngestSend } = vi.hoisted(() => {
   const first = vi.fn();
   const run = vi.fn().mockResolvedValue({ success: true });
   const bind = vi.fn(() => ({ first, run }));
   const prepare = vi.fn(() => ({ bind }));
   const getD1Raw = vi.fn().mockResolvedValue({ prepare });
+  const inngestSend = vi.fn().mockResolvedValue(undefined);
   return {
     mockFirst: first,
     mockRun: run,
     mockBind: bind,
     mockPrepare: prepare,
     mockGetD1Raw: getD1Raw,
+    mockInngestSend: inngestSend,
   };
 });
 
 vi.mock('@/seed/db/client', () => ({
   getD1Raw: mockGetD1Raw,
+}));
+
+vi.mock('@/forest/inngest/client', () => ({
+  inngest: { send: mockInngestSend },
 }));
 
 import {
@@ -39,6 +46,7 @@ describe('schedulePublish', () => {
     mockBind.mockImplementation(() => ({ first: mockFirst, run: mockRun }));
     mockPrepare.mockImplementation(() => ({ bind: mockBind }));
     mockRun.mockResolvedValue({ success: true });
+    mockInngestSend.mockResolvedValue(undefined);
   });
 
   it('rejects missing videoId/channelId', async () => {
@@ -110,5 +118,35 @@ describe('schedulePublish', () => {
     // Verify the hashtags column got serialized JSON
     const lastBindCall = mockBind.mock.calls[mockBind.mock.calls.length - 1] as unknown[];
     expect(lastBindCall[5]).toBe('["ai","shorts"]');
+  });
+
+  it('emits publish.scheduled inngest event once after DB insert (F7 fix)', async () => {
+    mockFirst
+      .mockResolvedValueOnce({ id: 'v1', user_id: 'u1' })
+      .mockResolvedValueOnce({ id: 'c1', user_id: 'u1', tenant_id: null, provider: 'youtube' });
+    const result = await schedulePublish({
+      userId: 'u1',
+      videoId: 'v1',
+      channelId: 'c1',
+      scheduledAt: NOW + 3600,
+    });
+    expect(mockRun).toHaveBeenCalled();
+    expect(mockInngestSend).toHaveBeenCalledOnce();
+    const [sentEvent] = mockInngestSend.mock.calls[0] as [{ name: string; data: Record<string, string> }];
+    expect(sentEvent.name).toBe('publish.scheduled');
+    expect(sentEvent.data.jobId).toBe(result.jobId);
+    expect(sentEvent.data.tenantId).toBe('u1');
+    expect(sentEvent.data.userId).toBe('u1');
+  });
+
+  it('does NOT emit inngest event when DB insert fails', async () => {
+    mockFirst
+      .mockResolvedValueOnce({ id: 'v1', user_id: 'u1' })
+      .mockResolvedValueOnce({ id: 'c1', user_id: 'u1', tenant_id: null, provider: 'youtube' });
+    mockRun.mockRejectedValueOnce(new Error('D1 constraint'));
+    await expect(
+      schedulePublish({ userId: 'u1', videoId: 'v1', channelId: 'c1', scheduledAt: NOW + 60 }),
+    ).rejects.toThrow('D1 constraint');
+    expect(mockInngestSend).not.toHaveBeenCalled();
   });
 });

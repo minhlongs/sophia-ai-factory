@@ -50,7 +50,8 @@ export interface AutoVideoMissionResult {
   description: { body: string; affiliateCount: number };
   /** Present when the user has a HeyGen BYOK key configured. Render is async (status='processing'). */
   video?: { videoId: string; heygenJobId: string; status: 'processing' };
-  publish?: { jobId: string; scheduledAt: number };
+  /** Scheduled publish job, or skip record when publish was not possible. */
+  publish?: { jobId: string; scheduledAt: number } | { skipped: true; reason: 'no_byok' };
   status: 'succeeded';
 }
 
@@ -218,25 +219,34 @@ export async function runAutoVideoMission(
   }
 
   // Step 5: optional publish schedule — cycle 6
-  // Use the real videos.id when render succeeded; else fall back to soft-fail behavior.
+  // Only schedule when a real videoId (videos.id row) is available from the HeyGen render step.
+  // If the user has no HeyGen BYOK key, videoResult is undefined — we skip publish and surface
+  // the reason rather than passing missionId as a fake videoId (which would yield VIDEO_NOT_FOUND).
   let publishResult: AutoVideoMissionResult['publish'];
   if (input.channelId) {
-    const scheduledAt = input.scheduledAt ?? Math.floor(Date.now() / 1000) + 3600;
-    try {
-      const sch = await schedulePublish({
-        userId: input.userId,
-        videoId: videoResult?.videoId ?? missionId,
-        channelId: input.channelId,
-        scheduledAt,
-        caption: scriptResult.suggestedTitles[0] ?? input.topic,
-      });
-      publishResult = { jobId: sch.jobId, scheduledAt: sch.scheduledAt };
-    } catch (err) {
-      const isMissingVideo = err instanceof PublishConfigurationError && err.code === 'VIDEO_NOT_FOUND';
-      logger.warn('[auto-video-mission] schedule step skipped', {
-        missionId,
-        reason: isMissingVideo ? 'video_row_not_created_yet' : 'unknown',
-      });
+    const realVideoId = videoResult?.videoId;
+    if (!realVideoId) {
+      // Soft-skip: no video row yet because HeyGen BYOK was not configured.
+      logger.info('[auto-video-mission] publish skipped — no video row (no BYOK key)', { missionId });
+      publishResult = { skipped: true, reason: 'no_byok' };
+    } else {
+      const scheduledAt = input.scheduledAt ?? Math.floor(Date.now() / 1000) + 3600;
+      try {
+        const sch = await schedulePublish({
+          userId: input.userId,
+          videoId: realVideoId,
+          channelId: input.channelId,
+          scheduledAt,
+          caption: scriptResult.suggestedTitles[0] ?? input.topic,
+        });
+        publishResult = { jobId: sch.jobId, scheduledAt: sch.scheduledAt };
+      } catch (err) {
+        const isMissingVideo = err instanceof PublishConfigurationError && err.code === 'VIDEO_NOT_FOUND';
+        logger.warn('[auto-video-mission] schedule step failed', {
+          missionId,
+          reason: isMissingVideo ? 'video_row_not_created_yet' : 'unknown',
+        });
+      }
     }
   }
 
