@@ -2532,5 +2532,40 @@
       "b": "Winner: Version B picked ({delta} more clicks)",
       "no_winner": "No clear winner after 48 hours — both versions kept running."
     }
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "subtitle": "Top creators and affiliates",
+    "topCreators": "Top Creators",
+    "topAffiliates": "Top Affiliates",
+    "rank": "Rank",
+    "creator": "Creator",
+    "sopsPublished": "SOPs",
+    "totalSales": "Sales",
+    "revenue": "Revenue",
+    "affiliate": "Affiliate",
+    "clicks": "Clicks",
+    "conversions": "Conversions",
+    "commission": "Commission",
+    "epc": "EPC",
+    "you": "(You)",
+    "period7d": "7 Days",
+    "period30d": "30 Days",
+    "periodAll": "All Time",
+    "noData": "No data yet"
+  },
+  "challenges": {
+    "title": "Challenges",
+    "subtitle": "Complete challenges to earn rewards",
+    "active": "Active",
+    "completed": "Completed",
+    "progress": "Progress",
+    "reward": "Reward",
+    "daysLeft": "days left",
+    "badge": "Badge",
+    "credits": "Credits",
+    "commissionBoost": "Commission Boost",
+    "noChallenges": "No active challenges right now",
+    "claimed": "Claimed"
   }
 }

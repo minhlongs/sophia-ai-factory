@@ -153,3 +153,32 @@ export interface CreateLicenseInput {
   priceCents: number;
   paymentId?: string;
 }
+
+/** Row from sop_challenges table */
+export interface SopChallengeRow {
+  id: string;
+  title_en: string;
+  title_vi: string;
+  description_en: string | null;
+  description_vi: string | null;
+  goal_type: 'sop_runs' | 'sop_sales' | 'commission_earned' | 'sops_created';
+  goal_value: number;
+  reward_type: 'badge' | 'credits' | 'commission_boost';
+  reward_value: string;
+  starts_at: number;
+  ends_at: number;
+  status: 'upcoming' | 'active' | 'ended';
+  created_at: number;
+}
+
+/** Row from user_challenge_progress table */
+export interface UserChallengeProgressRow {
+  id: string;
+  user_id: string;
+  challenge_id: string;
+  current_value: number;
+  completed_at: number | null;
+  reward_claimed: 0 | 1;
+  created_at: number;
+  updated_at: number;
+}

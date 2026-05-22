@@ -112,14 +112,15 @@ Canva               ✅ Design tool     ✅ Templates            ✅ Templates +
 - [ ] PayOS integration for VN domestic — Phase 4+
 - **Files:** `lib/sop/sop-repo-marketplace.ts`, `land/sop-marketplace/`, `app/[locale]/dashboard/sop-creator/`, `app/[locale]/dashboard/sop-marketplace/`
 
-### Phase 4: Affiliate + Growth Engine (Weeks 8-10)
-- [ ] D1 schema: `affiliate_links`, `affiliate_commissions`, `affiliate_payouts`
-- [ ] Affiliate link generation (per-user referral codes)
-- [ ] 40% recurring commission tracking
-- [ ] Leaderboard (top creators, top affiliates)
-- [ ] Share results flow (SOP execution → social share with referral)
-- [ ] Monthly challenges ("Ship 10 videos in 30 days")
-- **Files:** `apps/sophia-ai-factory/src/forest/affiliate/`
+### Phase 4: Affiliate + Growth Engine (Weeks 8-10) ✅ DONE
+- [x] SOP affiliate link generation (reuses existing affiliate_links table with `offer_id=sop_{templateId}`)
+- [x] Share UI: ShareButtons (copy, X, FB, LinkedIn, Telegram) + ShareResultsCard
+- [x] User-facing leaderboard: top creators by SOP sales + top affiliates by commission
+- [x] Monthly challenges: D1 schema + CRUD + 3 seed challenges + progress page
+- [x] Referral landing page `/ref/[code]` with OG metadata, click tracking, ref cookie
+- [x] i18n: `leaderboard` + `challenges` keys (en + vi)
+- [x] Build passes, tsc clean
+- **Files:** `land/sop-marketplace/sop-affiliate-links.ts`, `forest/components/share/`, `app/[locale]/dashboard/leaderboard/`, `app/[locale]/dashboard/challenges/`, `app/ref/[code]/`
 
 ### Phase 5: Distribution & Go-to-Market (Weeks 10-12)
 - [ ] ProductHunt launch preparation
