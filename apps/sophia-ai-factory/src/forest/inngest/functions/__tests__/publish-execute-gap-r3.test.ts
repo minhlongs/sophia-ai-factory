@@ -132,6 +132,11 @@ function buildEvent(partial: Record<string, unknown> = {}) {
   };
 }
 
+type PublishExecuteHandler = (ctx: {
+  event: ReturnType<typeof buildEvent>;
+  step: ReturnType<typeof buildStep>;
+}) => Promise<unknown>;
+
 // ── R3-a: function-level retry config ────────────────────────────────────────
 
 describe('GAP-R3-a — publishExecute retry config', () => {
@@ -191,7 +196,7 @@ describe('GAP-R3-b — telegram-finalize uses deterministic result PK', () => {
   });
 
   it('telegram-finalize calls upsert with id = event.id + ":telegram-finalize"', async () => {
-    const handler = (publishExecute as unknown as { _handler: Function })._handler;
+    const handler = (publishExecute as unknown as { _handler: PublishExecuteHandler })._handler;
 
     const event = { id: EVENT_ID, name: 'publish.scheduled', data: { jobId: JOB_ID, tenantId: TENANT_ID } };
     const step = buildStep();
@@ -315,7 +320,7 @@ describe('GAP-R3-e — max retries exceeded → status=failed, no publishing_res
   });
 
   it('returns status=failed and does NOT insert publishing_results', async () => {
-    const handler = (publishExecute as unknown as { _handler: Function })._handler;
+    const handler = (publishExecute as unknown as { _handler: PublishExecuteHandler })._handler;
 
     const event = { id: EVENT_ID, name: 'publish.scheduled', data: { jobId: JOB_ID, tenantId: TENANT_ID } };
     const step = buildStep();

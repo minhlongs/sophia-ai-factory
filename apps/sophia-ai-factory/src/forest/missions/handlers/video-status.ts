@@ -12,7 +12,7 @@ interface VideoRow {
   id: string;
   title: string;
   status: string;
-  heygen_video_id: string | null;
+  heygen_job_id: string | null;
   video_url: string | null;
   created_at: string;
 }
@@ -28,7 +28,7 @@ export async function handle(ctx: MissionContext): Promise<MissionHandlerResult>
   const db = createServerClient();
   const { data } = await db
     .from('videos')
-    .select('id, title, status, heygen_video_id, video_url, created_at')
+    .select('id, title, status, heygen_job_id, video_url, created_at')
     .eq('id', videoId)
     .eq('user_id', userId)
     .single() as { data: VideoRow | null; error: unknown };
@@ -43,7 +43,8 @@ export async function handle(ctx: MissionContext): Promise<MissionHandlerResult>
       video_id: data.id,
       title: data.title,
       status: data.status,
-      heygen_video_id: data.heygen_video_id,
+      heygen_job_id: data.heygen_job_id,
+      heygen_video_id: data.heygen_job_id,
       video_url: data.video_url,
       created_at: data.created_at,
     },

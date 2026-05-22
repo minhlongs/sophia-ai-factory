@@ -48,7 +48,7 @@ export async function handle(ctx: MissionContext): Promise<MissionHandlerResult>
 
     await db
       .from('videos')
-      .update({ status: 'processing', heygen_video_id: result.videoId })
+      .update({ status: 'processing', heygen_job_id: result.videoId })
       .eq('id', videoId);
 
     return {
@@ -56,6 +56,7 @@ export async function handle(ctx: MissionContext): Promise<MissionHandlerResult>
       data: {
         videoId,
         video_id: videoId,
+        heygen_job_id: result.videoId,
         heygen_video_id: result.videoId,
         status: 'processing',
         title,
