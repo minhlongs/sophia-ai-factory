@@ -6,6 +6,11 @@
  * Usage:
  *   node .claude/scripts/validate-docs.cjs [docs-dir] [--src dir1,dir2]
  *
+ * Notes:
+ *   - Scans markdown recursively.
+ *   - Skips archive directories by default; archived docs are historical.
+ *   - Builds a one-time source index instead of grepping once per reference.
+ *
  * Checks:
  *   1. Code references - verify `functionName()` and `ClassName` exist
  *   2. Internal links - verify markdown links point to existing files
@@ -16,7 +21,6 @@
 
 const fs = require('fs');
 const path = require('path');
-const { spawnSync } = require('child_process');
 
 // Patterns
 const CODE_REF_PATTERN = /`([A-Za-z_][A-Za-z0-9_]*(?:\(\))?)`/g;
@@ -45,13 +49,30 @@ const IGNORE_ENV_PREFIXES = ['NODE_', 'PATH', 'HOME', 'USER', 'SHELL', 'TERM', '
 const IGNORE_ENV_VARS = new Set(['ARGUMENTS']);
 
 /**
- * Find all markdown files in directory.
+ * Find all markdown files in directory recursively.
  */
 function findMarkdownFiles(dir) {
   if (!fs.existsSync(dir)) return [];
-  return fs.readdirSync(dir)
-    .filter(f => f.endsWith('.md'))
-    .map(f => path.join(dir, f));
+
+  const files = [];
+  const ignoredDirs = new Set(['.git', 'node_modules', '.next', 'dist', 'build', 'archive']);
+
+  function walk(currentDir) {
+    for (const entry of fs.readdirSync(currentDir, { withFileTypes: true })) {
+      if (entry.isDirectory()) {
+        if (ignoredDirs.has(entry.name)) continue;
+        walk(path.join(currentDir, entry.name));
+        continue;
+      }
+
+      if (entry.isFile() && entry.name.endsWith('.md')) {
+        files.push(path.join(currentDir, entry.name));
+      }
+    }
+  }
+
+  walk(dir);
+  return files;
 }
 
 /**
@@ -66,6 +87,7 @@ function extractCodeRefs(content, filepath) {
     // Skip code blocks
     if (line.trim().startsWith('```')) return;
 
+    CODE_REF_PATTERN.lastIndex = 0;
     while ((match = CODE_REF_PATTERN.exec(line)) !== null) {
       const ref = match[1];
       // Filter out common terms
@@ -89,6 +111,7 @@ function extractLinks(content, filepath) {
   const lines = content.split('\n');
 
   lines.forEach((line, idx) => {
+    LINK_PATTERN.lastIndex = 0;
     while ((match = LINK_PATTERN.exec(line)) !== null) {
       const href = match[2];
       // Skip external links and anchors
@@ -112,6 +135,7 @@ function extractEnvVars(content, filepath) {
     // Skip code blocks
     if (line.trim().startsWith('```')) return;
 
+    ENV_PATTERN.lastIndex = 0;
     while ((match = ENV_PATTERN.exec(line)) !== null) {
       const envVar = match[1] || match[2];
       // Filter common system vars and template variables
@@ -125,34 +149,72 @@ function extractEnvVars(content, filepath) {
 }
 
 /**
- * Check if code reference exists in source directories.
+ * Escape a string for RegExp.
  */
-function checkCodeRefExists(ref, srcDirs) {
-  const name = ref.replace('()', '');
-  const patterns = [
-    `function ${name}`,
-    `const ${name}`,
-    `class ${name}`,
-    `def ${name}`,
-    `export.*${name}`,
-    `${name}:`  // object methods
-  ];
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
-  for (const srcDir of srcDirs) {
-    if (!fs.existsSync(srcDir)) continue;
-    for (const pattern of patterns) {
-      // Use spawnSync with args array to prevent command injection
-      const result = spawnSync('grep', ['-rl', pattern, srcDir], {
-        encoding: 'utf8',
-        stdio: ['pipe', 'pipe', 'pipe'],
-        timeout: 5000
-      });
-      if (result.status === 0 && result.stdout.trim()) {
-        return true;
+/**
+ * Build a single in-memory source index once. This avoids spawning grep for
+ * every doc reference, which is prohibitively slow on large docs sets.
+ */
+function buildSourceIndex(srcDirs) {
+  const ignoredDirs = new Set(['.git', 'node_modules', '.next', 'dist', 'build', 'coverage', 'worktrees']);
+  const allowedExtensions = new Set([
+    '.cjs', '.cts', '.js', '.jsx', '.mjs', '.mts', '.ts', '.tsx',
+    '.json', '.md', '.sh', '.sql', '.toml', '.yaml', '.yml'
+  ]);
+  const chunks = [];
+
+  function walk(currentPath) {
+    if (!fs.existsSync(currentPath)) return;
+
+    const stat = fs.statSync(currentPath);
+    if (stat.isDirectory()) {
+      const basename = path.basename(currentPath);
+      if (ignoredDirs.has(basename)) return;
+
+      for (const entry of fs.readdirSync(currentPath, { withFileTypes: true })) {
+        walk(path.join(currentPath, entry.name));
       }
+      return;
+    }
+
+    if (!stat.isFile()) return;
+    if (stat.size > 1024 * 1024) return;
+    if (!allowedExtensions.has(path.extname(currentPath))) return;
+
+    try {
+      chunks.push(fs.readFileSync(currentPath, 'utf8'));
+    } catch (err) {
+      // Skip unreadable files; validator is warn-only.
     }
   }
-  return false;
+
+  for (const srcDir of srcDirs) {
+    walk(srcDir);
+  }
+
+  return chunks.join('\n');
+}
+
+/**
+ * Check if code reference exists in source index.
+ */
+function checkCodeRefExists(ref, sourceIndex) {
+  const name = ref.replace('()', '');
+  const escaped = escapeRegExp(name);
+  const patterns = [
+    new RegExp(`\\bfunction\\s+${escaped}\\b`),
+    new RegExp(`\\b(?:const|let|var)\\s+${escaped}\\b`),
+    new RegExp(`\\bclass\\s+${escaped}\\b`),
+    new RegExp(`\\bdef\\s+${escaped}\\b`),
+    new RegExp(`\\bexport\\b[^\\n]{0,160}\\b${escaped}\\b`),
+    new RegExp(`\\b${escaped}\\s*:`)  // object methods
+  ];
+
+  return patterns.some(pattern => pattern.test(sourceIndex));
 }
 
 /**
@@ -168,16 +230,22 @@ function checkLinkExists(href, sourceFile) {
  * Load env vars from .env.example.
  */
 function loadEnvExample(projectRoot) {
-  const envPath = path.join(projectRoot, '.env.example');
-  if (!fs.existsSync(envPath)) return new Set();
-
-  const content = fs.readFileSync(envPath, 'utf8');
   const vars = new Set();
+  const envPaths = [
+    path.join(projectRoot, '.env.example'),
+    path.join(projectRoot, 'apps/sophia-ai-factory/.env.example'),
+    path.join(projectRoot, 'apps/sophia-ai-factory/.env.production.example')
+  ];
 
-  content.split('\n').forEach(line => {
-    const match = line.match(/^([A-Z][A-Z0-9_]+)=/);
-    if (match) vars.add(match[1]);
-  });
+  for (const envPath of envPaths) {
+    if (!fs.existsSync(envPath)) continue;
+
+    const content = fs.readFileSync(envPath, 'utf8');
+    content.split('\n').forEach(line => {
+      const match = line.match(/^([A-Z][A-Z0-9_]+)=/);
+      if (match) vars.add(match[1]);
+    });
+  }
 
   return vars;
 }
@@ -210,6 +278,7 @@ function validate(docsDir, srcDirs, projectRoot) {
   }
 
   const envExample = loadEnvExample(projectRoot);
+  const sourceIndex = buildSourceIndex(srcDirs);
 
   for (const filepath of mdFiles) {
     let content;
@@ -225,7 +294,7 @@ function validate(docsDir, srcDirs, projectRoot) {
     const codeRefs = extractCodeRefs(content, relPath);
     stats.codeRefsChecked += codeRefs.length;
     for (const { ref, file, line } of codeRefs) {
-      if (checkCodeRefExists(ref, srcDirs)) {
+      if (checkCodeRefExists(ref, sourceIndex)) {
         stats.codeRefsValid++;
       } else {
         issues.codeRefs.push({ ref, file, line });
@@ -315,7 +384,15 @@ function validate(docsDir, srcDirs, projectRoot) {
 function parseArgs(args) {
   const result = {
     docsDir: 'docs',
-    srcDirs: ['src', 'lib', 'app', 'scripts', '.claude']
+    srcDirs: [
+      'apps/sophia-ai-factory/src',
+      'apps/sophia-ai-factory/scripts',
+      'src',
+      'lib',
+      'app',
+      'scripts',
+      '.claude'
+    ]
   };
 
   for (let i = 0; i < args.length; i++) {

@@ -32,18 +32,18 @@ npm test         # Vitest (844+ tests)
 ## Architecture (post-consolidation 2026-04-14)
 
 ### Auth
-- **Single source:** `@/lib/better-auth-session` for `getCurrentUser()`
-- **Tier lookup:** `@/lib/db/get-user-tier` for `getUserTier(userId)`
+- **Single source:** `@/seed/auth/better-auth-session` for `getCurrentUser()`
+- **Tier lookup:** `@/seed/db/get-user-tier` for `getUserTier(userId)`
 - DELETED: `lib/auth.ts`, `lib/subscription.ts`, `lib/db/auth-verify.ts`, `lib/clients/`
 
 ### Database
-- **Primary:** Cloudflare D1 via `createServerClient()` from `@/lib/db/client`
+- **Primary:** Cloudflare D1 via `createServerClient()` from `@/seed/db/client`
 - `createServerClient()` is **synchronous** — do NOT `await` it
 - **Supabase exceptions (keep):** OAuth callbacks (tiktok, youtube), admin invite, checkpoint persistence
 - DELETED: direct `@/lib/supabase/admin` and `@/lib/supabase/server` imports (shims remain for exceptions)
 
 ### Tier Config
-- **Single source:** `@/config/tiers` (barrel re-exporting from `config/tiers/`)
+- **Single source:** `@/seed/config/tiers` (barrel re-exporting from `seed/config/tiers/`)
 - Exports: `TIER_CONFIGS`, `TIER_CONFIG`, `TIER_DB_MAPPING`, `DB_TIER_MAPPING`, `UNIFIED_TIERS`
 - DELETED: `lib/tier-gate.ts`, `lib/unified-tier-config.ts`
 

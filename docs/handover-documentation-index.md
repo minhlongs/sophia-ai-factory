@@ -4,7 +4,7 @@
 > Sophia AI Video Factory — Complete Documentation Set
 > Bo Tai Lieu Day Du Cho Sophia AI Video Factory
 
-**Last Updated / Cap Nhat:** 2026-05-13
+**Last Updated / Cap Nhat:** 2026-05-21
 
 ---
 
@@ -18,7 +18,7 @@
 | 4 | [Pricing & Tiers](./pricing-and-tiers.md) | Bang gia goi dich vu / Plan comparison ($199-$4,999) | CEO, Sales |
 | 5 | [FAQ](./faq.md) | Cau hoi thuong gap / Common questions | All Users |
 | 6 | [Troubleshooting](./troubleshooting.md) | Xu ly su co / Issue resolution | All Users |
-| 7 | [Design Guidelines](./design-guidelines.md) | Huong dan thiet ke / Visual identity | Developers |
+| 7 | [Deployment Guide](./deployment-guide.md) | Huong dan deploy CF-direct / Cloudflare deploy doctrine | Developers, Ops |
 | 8 | [System Architecture](./system-architecture.md) | Kien truc he thong / Component diagram & data flow | Developers |
 | 9 | [Credentials Handover](./credentials-handover.md) | Thong tin dang nhap & quyen truy cap / Access checklist | CEO, Admin |
 | 10 | [Support Escalation](./support-escalation.md) | Ho tro & cam ket dich vu / Support tiers & SLA | CEO, All Users |
@@ -126,10 +126,12 @@ sophia.agencyos.network
 | Feature | Starter ($199/mo) | Growth ($399/mo) | Premium ($799/mo) | Master ($4,999) |
 |---|---|---|---|---|
 | YouTube Channels | 1 | 3 | Unlimited | Unlimited |
-| Videos/month | 20 | 100 | Unlimited | Unlimited |
+| Campaigns/month | 10 | 50 | Unlimited | Unlimited |
+| MCU credits | 1,000/mo | 5,000/mo | 20,000/mo | 100,000 |
 | Templates | 5 | Unlimited | Unlimited + Custom | Unlimited + Custom |
-| Support | Email | Priority 4h | 24/7 + Account Manager | Priority Technical |
+| Support | Email 48h | Priority 24h | Priority 12h + Account Manager | Priority Technical 4h |
 | Data Export | No | CSV, PDF | CSV, PDF, API | Full Access |
+| API Access | No | Yes | Yes | Yes |
 | Source Code | No | No | No | Yes |
 
 ---
@@ -137,6 +139,6 @@ sophia.agencyos.network
 ## Support Contacts / Lien He Ho Tro
 
 - **Telegram Bot:** @Sophia_Bbot (type `/help`)
-- **Priority Support:** Growth and Premium plans
-- **24/7 Support:** Premium plan only
+- **Priority Support:** Growth, Premium, and Master plans
+- **Fastest SLA:** Master plan
 - **See:** [Support Escalation Guide](./support-escalation.md)

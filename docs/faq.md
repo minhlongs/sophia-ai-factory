@@ -168,14 +168,16 @@
 ### Q14: Toi co the tao bao nhieu chien dich? / How many campaigns can I create?
 
 **Tieng Viet:** Tuy thuoc vao goi dich vu cua ban:
-- BASIC: 20 video/thang
-- PREMIUM: 100 video/thang
-- ENTERPRISE: Khong gioi han
+- BASIC / Starter: 10 chien dich/thang, 1,000 MCU/thang
+- PREMIUM / Growth: 50 chien dich/thang, 5,000 MCU/thang
+- ENTERPRISE / Premium: Khong gioi han chien dich, 20,000 MCU/thang
+- MASTER: Khong gioi han chien dich, 100,000 MCU, thanh toan mot lan
 
 **English:** Depends on your plan:
-- BASIC: 20 videos/month
-- PREMIUM: 100 videos/month
-- ENTERPRISE: Unlimited
+- BASIC / Starter: 10 campaigns/month, 1,000 MCU/month
+- PREMIUM / Growth: 50 campaigns/month, 5,000 MCU/month
+- ENTERPRISE / Premium: Unlimited campaigns, 20,000 MCU/month
+- MASTER: Unlimited campaigns, 100,000 MCU, one-time payment
 
 > Xem chi tiet: [Bang Gia & Goi Dich Vu](./pricing-and-tiers.md)
 

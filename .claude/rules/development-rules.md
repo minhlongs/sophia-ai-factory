@@ -49,8 +49,8 @@
 - Tier enum: BASIC | PREMIUM | ENTERPRISE | MASTER (uppercase only)
 
 ## Canonical Import Paths (post-consolidation 2026-04-14)
-- Auth: `import { getCurrentUser } from '@/lib/better-auth-session'`
-- Tier: `import { getUserTier } from '@/lib/db/get-user-tier'`
-- DB: `import { createServerClient } from '@/lib/db/client'` (sync, no await)
-- Tier config: `import { TIER_CONFIGS, TIER_CONFIG } from '@/config/tiers'`
+- Auth: `import { getCurrentUser } from '@/seed/auth/better-auth-session'`
+- Tier: `import { getUserTier } from '@/seed/db/get-user-tier'`
+- DB: `import { createServerClient } from '@/seed/db/client'` (sync, no await)
+- Tier config: `import { TIER_CONFIGS, TIER_CONFIG } from '@/seed/config/tiers'`
 - BANNED imports: `@/lib/auth`, `@/lib/subscription`, `@/lib/unified-tier-config`, `@/lib/tier-gate`

@@ -7,10 +7,14 @@
 
 ## Tong Quan Goi Dich Vu / Plan Overview
 
+Current source of truth: `apps/sophia-ai-factory/src/seed/config/tiers/unified-limits.ts`.
+
 | | Starter (BASIC) | Growth (PREMIUM) | Premium (ENTERPRISE) | Master |
 |---|---|---|---|---|
 | **Gia / Price** | **$199/thang** | **$399/thang** | **$799/thang** | **$4,999 (mot lan)** |
 | | /month | /month | /month | one-time |
+| **Chien dich / Campaigns** | 10/thang | 50/thang | Khong gioi han | Khong gioi han |
+| **MCU credits** | 1,000/thang | 5,000/thang | 20,000/thang | 100,000 lifetime-tier allowance |
 
 ---
 
@@ -24,6 +28,8 @@ Goi danh cho doanh nghiep moi bat dau muon thu nghiem video AI.
 - 1 Landing Page (trang gioi thieu san pham)
 - 1 Kenh YouTube duoc quan ly tu dong
 - 5 Mau Video (template) co san
+- 10 chien dich video/thang
+- 1,000 MCU credits/thang
 - Ho tro qua email trong gio lam viec
 - Truy cap Dashboard co ban
 - Su dung Telegram Bot de tao video
@@ -41,6 +47,8 @@ The plan for businesses just getting started with AI video.
 - 1 Landing Page (product showcase page)
 - 1 YouTube Channel managed automatically
 - 5 Video Templates ready to use
+- 10 video campaigns per month
+- 1,000 MCU credits per month
 - Email support during business hours
 - Basic Dashboard access
 - Telegram Bot access for video creation
@@ -61,8 +69,11 @@ Goi danh cho doanh nghiep muon mo rong san xuat video tren nhieu kenh.
 **Ban duoc tat ca cua Starter, cong them:**
 - 3 Kenh YouTube duoc quan ly tu dong
 - Khong gioi han Mau Video (unlimited templates)
+- 50 chien dich video/thang
+- 5,000 MCU credits/thang
+- Truy cap API va webhooks
 - Cap nhat noi dung hang tuan tu dong (weekly auto-updates)
-- Ho tro uu tien qua email va Telegram (tra loi trong 4 gio)
+- Ho tro uu tien qua email va Telegram (SLA 24 gio)
 - Dashboard nang cao voi bao cao chi tiet
 - Xuat du lieu (export) dang CSV va PDF
 - Tu dong dang video len YouTube theo lich
@@ -79,8 +90,11 @@ The plan for businesses ready to scale video production across multiple channels
 **You get everything in Starter, plus:**
 - 3 YouTube Channels managed automatically
 - Unlimited Video Templates
+- 50 video campaigns per month
+- 5,000 MCU credits per month
+- API access and webhooks
 - Weekly automatic content updates
-- Priority support via email and Telegram (response within 12 business hours)
+- Priority support via email and Telegram (24-hour SLA)
 - Advanced Dashboard with detailed reports
 - Data export in CSV and PDF formats
 - Automatic video publishing to YouTube on schedule
@@ -101,10 +115,11 @@ Goi toan dien cho doanh nghiep muon tu dong hoa 100% quy trinh san xuat video.
 **Ban duoc tat ca cua Growth, cong them:**
 - Pipeline "Khong Can Thao Tac" (Zero Manual) — tu dong hoan toan tu A-Z
 - Khong gioi han kenh YouTube
-- Khong gioi han so luong video moi thang
+- Khong gioi han chien dich video moi thang
+- 20,000 MCU credits/thang
 - Mau video tuy chinh theo thuong hieu cua ban (custom branding)
 - Truy cap API de tich hop voi he thong cua ban
-- Ho tro chuyen dung 24/7 (hotline + Telegram + email)
+- Ho tro uu tien (SLA 12 gio)
 - Quan ly tai khoan ca nhan (Account Manager rieng)
 - Bao cao phan tich nang cao (analytics)
 - Uu tien hang doi xu ly video (priority queue)
@@ -122,10 +137,11 @@ The complete plan for businesses that want 100% automated video production.
 **You get everything in Growth, plus:**
 - "Zero Manual" Pipeline — fully automated from A to Z
 - Unlimited YouTube Channels
-- Unlimited videos per month
+- Unlimited video campaigns per month
+- 20,000 MCU credits per month
 - Custom video templates with your branding
 - API access to integrate with your own systems
-- Priority support via email and Telegram (response within 4 hours)
+- Priority support via email and Telegram (12-hour SLA)
 - Personal Account Manager
 - Advanced analytics reports
 - Priority video processing queue
@@ -146,9 +162,10 @@ Goi cao cap nhat — so huu toan bo he thong, tuy chinh khong gioi han.
 
 **Ban duoc tat ca cua Premium, cong them:**
 - Quyen so huu toan bo ma nguon (source code)
+- 100,000 MCU credits
 - Tuy chinh khong gioi han theo yeu cau
 - Huong dan cai dat va van hanh
-- Uu tien ho tro ky thuat
+- Ho tro ky thuat uu tien (SLA 4 gio)
 - Khong co phi hang thang — tra mot lan duy nhat
 
 ### English
@@ -157,9 +174,10 @@ The ultimate package — full system ownership with unlimited customization.
 
 **You get everything in Premium, plus:**
 - Full source code ownership
+- 100,000 MCU credits
 - Unlimited customization
 - Installation and operation guidance
-- Priority technical handover channel (response within 2 business hours during handover window)
+- Priority technical handover channel (4-hour SLA during handover window)
 - No monthly fees — one-time payment only
 
 ---
@@ -171,12 +189,13 @@ The ultimate package — full system ownership with unlimited customization.
 | **Gia / Price** | $199/thang | $399/thang | $799/thang | $4,999 mot lan |
 | **Kenh YouTube / YouTube Channels** | 1 | 3 | Khong gioi han | Khong gioi han |
 | **Mau Video / Video Templates** | 5 | Khong gioi han | Khong gioi han + Tuy chinh | Khong gioi han + Tuy chinh |
-| **Video moi thang / Videos per month** | 20 | 100 | Khong gioi han | Khong gioi han |
+| **Chien dich moi thang / Campaigns per month** | 10 | 50 | Khong gioi han | Khong gioi han |
+| **MCU credits** | 1,000/thang | 5,000/thang | 20,000/thang | 100,000 |
 | **Dashboard** | Co ban | Nang cao | Nang cao + Analytics | Toan quyen |
 | **Telegram Bot** | Co | Co | Co | Co |
-| **Ho tro / Support** | Email 24h | Uu tien 12h | Uu tien 4h + Account Manager | Handover ky thuat 2h |
+| **Ho tro / Support** | Email 48h | Uu tien 24h | Uu tien 12h + Account Manager | Handover ky thuat 4h |
 | **Xuat du lieu / Data export** | Khong | CSV, PDF | CSV, PDF, API | Toan quyen |
-| **API Access** | Khong | Khong | Co | Co |
+| **API Access** | Khong | Co | Co | Co |
 | **Source Code** | Khong | Khong | Khong | Co |
 
 ---

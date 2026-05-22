@@ -36,12 +36,12 @@ Bạn chịu trách nhiệm:
 
 ### 3. Cấp Độ Dịch Vụ (Tiers)
 
-| Tier | Giá | Video/Tháng | MCU Credits | Hỗ Trợ |
-|------|-----|-------------|------------|---------|
-| **BASIC** | $199/tháng | 50 | 5,000 | Email + Telegram |
-| **PREMIUM** | $399/tháng | 200 | 20,000 | Priority Telegram |
-| **ENTERPRISE** | $799/tháng | Unlimited | 50,000 | Dedicated bot |
-| **MASTER** | $4,999 một lần | Unlimited | 500,000 | VIP + consulting |
+| Tier | Giá | Chiến dịch/Tháng | MCU Credits | Hỗ Trợ |
+|------|-----|------------------|------------|---------|
+| **BASIC (Starter)** | $199/tháng | 10 | 1,000 | Email, SLA 48 giờ |
+| **PREMIUM (Growth)** | $399/tháng | 50 | 5,000 | Priority, SLA 24 giờ |
+| **ENTERPRISE (Premium)** | $799/tháng | Unlimited | 20,000 | Priority, SLA 12 giờ |
+| **MASTER** | $4,999 một lần | Unlimited | 100,000 | VIP, SLA 4 giờ |
 
 ### 4. Quyền Sở Hữu Video
 
@@ -132,12 +132,12 @@ You are responsible for:
 
 ### 3. Service Tiers
 
-| Tier | Price | Videos/Month | MCU Credits | Support |
-|------|-------|--------------|------------|----------|
-| **BASIC** | $199/mo | 50 | 5,000 | Email + Telegram |
-| **PREMIUM** | $399/mo | 200 | 20,000 | Priority Telegram |
-| **ENTERPRISE** | $799/mo | Unlimited | 50,000 | Dedicated bot |
-| **MASTER** | $4,999/mo | Unlimited | 500,000 | VIP + consulting |
+| Tier | Price | Campaigns/Month | MCU Credits | Support |
+|------|-------|-----------------|------------|----------|
+| **BASIC (Starter)** | $199/mo | 10 | 1,000 | Email, 48h SLA |
+| **PREMIUM (Growth)** | $399/mo | 50 | 5,000 | Priority, 24h SLA |
+| **ENTERPRISE (Premium)** | $799/mo | Unlimited | 20,000 | Priority, 12h SLA |
+| **MASTER** | $4,999 one-time | Unlimited | 100,000 | VIP, 4h SLA |
 
 ### 4. Video Ownership
 

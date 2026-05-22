@@ -18,11 +18,11 @@
 ### Canonical Pattern: D1Response<T> Generic
 **Purpose:** Type-safe wrapper for D1 query results that return `{ data: T | null; error: unknown }`.
 
-**Location:** `src/lib/db/types.ts` (canonical source since Phase 12).
+**Location:** `src/seed/db/types.ts` (canonical source since Phase 12; older changelog entries may still say `src/lib/db/types.ts`).
 
 **Usage:**
 ```typescript
-import { D1Response } from '@/lib/db/types';
+import { D1Response } from '@/seed/db/types';
 
 const result = await db.from('licenses').select().single();
 const typed = result as unknown as D1Response<LicenseRow>;
@@ -34,7 +34,7 @@ if (typed.error) {
 ### Canonical Pattern: insertTyped<R, T> Helper
 **Purpose:** Type-safe D1 insert wrapper that eliminates boilerplate `as unknown as Record<string, unknown>` casts on `.insert()` calls.
 
-**Location:** `src/lib/db/insert-typed.ts` (established Phase 12).
+**Location:** `src/seed/db/insert-typed.ts` (established Phase 12; moved into `seed` during layer consolidation).
 
 **Type Parameters:**
 - `<R>` — Result row type (e.g., `UsageEventRow`), flows through `.select().single()` chaining
@@ -52,8 +52,8 @@ const { data, error } = await db
 
 **Usage (Pattern ✅):**
 ```typescript
-import { insertTyped } from '@/lib/db/insert-typed';
-import { D1Response, UsageEventRow, UsageEventInsertable } from '@/lib/db/types';
+import { insertTyped } from '@/seed/db/insert-typed';
+import { D1Response, UsageEventRow, UsageEventInsertable } from '@/seed/db/types';
 
 // With helper — type-safe, chain preserves downstream typing:
 const result = await insertTyped<UsageEventRow, UsageEventInsertable>(
@@ -79,11 +79,11 @@ if (typed.error) {
 2. Domain-specific input/output contracts
 3. Reusable generic types (like `D1Response<T>`)
 
-**Established in:** `src/lib/audit/types.ts` (Phase 9), `src/lib/usage-metering/types.ts` (Phase 10)
+**Established in:** `src/tree/audit/types.ts` (Phase 9 lineage), `src/forest/usage-metering/types.ts` (Phase 10 lineage)
 
 **Example:**
 ```typescript
-// src/lib/usage-metering/types.ts
+// src/forest/usage-metering/types.ts
 export interface D1Response<T> { /* ... */ }
 export interface UsageEventInsertable { /* ... */ }
 export interface LicenseMetadataRow { /* ... */ }
@@ -94,7 +94,7 @@ export interface LicenseMetadataRow { /* ... */ }
 
 **Pattern:** Extract a helper function that returns the narrowed type, leveraging TypeScript control-flow analysis.
 
-**Location:** `src/lib/raas/raas-rate-limiter.ts` (established Phase 11)
+**Location:** `src/forest/raas/raas-rate-limiter.ts` (established Phase 11)
 
 **Anti-pattern (❌):**
 ```typescript
@@ -195,8 +195,8 @@ try {
 - Return errors consistently: `{ ok: boolean; error?: string; data?: T }`
 
 ### Tier-Based Gating
-- Import tier config from `@/config/tiers` (single source of truth)
-- Use `getUserTier()` helper from `@/lib/db/get-user-tier`
+- Import tier config from `@/seed/config/tiers` (single source of truth)
+- Use `getUserTier()` helper from `@/seed/db/get-user-tier`
 - Enforce quotas via `usage-metering` module (pre-flight check before action)
 - Return 429 (Too Many Requests) when quota exceeded
 
@@ -211,24 +211,24 @@ try {
 
 ### Query Patterns
 - Use `db.from<T>()` generics for type inference where possible
-- Avoid raw SQL in handlers; extract to `lib/<domain>/` helpers
+- Avoid raw SQL in handlers; extract to the owning layer (`seed`, `tree`, `forest`, `land`, or legacy `lib/<domain>/` where the domain still lives)
 - Index critical paths: `org_id`, composite keys for multi-tenant isolation
 
 ### One-Time vs Subscription SKU Pattern (2026-05-02)
-- **Single Source of Truth:** `ONE_TIME_SKUS = new Set(['STARTER_BUNDLE'])` defined in `lib/billing/ipn-constants.ts`
-- **Dispatcher:** NOWPayments IPN webhook checks `subscription_type` field (from Polar SKU metadata)
+- **Single Source of Truth:** `ONE_TIME_SKUS` and one-time invoice metadata are defined in `src/seed/config/one-time-skus.ts`
+- **Dispatcher:** NOWPayments IPN webhook branches on Sophia-owned checkout metadata / SKU mapping. Do not rely on Polar metadata; Polar is rejected for this product.
 - **Branching:** 
   - If in `ONE_TIME_SKUS` → route to one-time handler (create `user_purchases` record)
-  - Else → route to subscription handler (create `billing_settings` + credit MCU)
+  - Else → route to subscription handler (create/update `subscriptions` + credit MCU)
 - **Idempotency:** One-time inserts use `UNIQUE(user_id, user_purchase_id)` constraint; duplicates rejected safely
-- **Schema:** `user_purchases(id, user_id, sku, video_credits, ttl_end, created_at)` isolated from `billing_settings`
+- **Schema:** `user_purchases(id, user_id, sku, video_credits, ttl_end, created_at)` isolated from subscription state
 
 ### CAS Updates for Concurrency-Safe State Transitions (2026-05-02)
 **Pattern:** Use `UPDATE … WHERE id=? AND status=<expected> RETURNING …` with rowsAffected check before side effects.
 
 **Purpose:** Prevent lost state transitions when cron and webhook both attempt status update simultaneously.
 
-**Example:** `lib/db/repositories/videos-repo.ts::recordAttemptCAS`
+**Example:** `seed/db/repositories/videos-repo.ts::recordAttemptCAS`
 ```typescript
 const result = await db
   .from<VideoRow>('videos')
@@ -436,17 +436,17 @@ bash scripts/set-cron-secret.sh  # Generates 32-byte random secret + sets via wr
 
 | Phase | Pattern | Location |
 |-------|---------|----------|
-| 9 | Module types extraction | `src/lib/audit/types.ts` |
-| 10 | D1Response<T> generic | `src/lib/usage-metering/types.ts` (promoted Phase 12) |
-| 11 | Discriminated union narrowing | `src/lib/raas/raas-rate-limiter.ts` |
-| 11 | Tenant isolation (D1 Kysely plugin) | `src/lib/db/tenant-scope-plugin.ts` |
-| 12 | insertTyped<R,T> helper | `src/lib/db/insert-typed.ts` |
-| 12 | D1Response canonical location | `src/lib/db/types.ts` |
-| 13 | Commission ledger append-only | `src/lib/affiliate/commission-ledger.ts` |
-| 13 | 14-day clawback window | `src/lib/affiliate/clawback-calculator.ts` |
+| 9 | Module types extraction | `src/tree/audit/types.ts` |
+| 10 | D1Response<T> generic | `src/forest/usage-metering/types.ts` (promoted Phase 12) |
+| 11 | Discriminated union narrowing | `src/forest/raas/raas-rate-limiter.ts` |
+| 11 | Tenant isolation helper | `src/seed/db/with-tenant-scope.ts` |
+| 12 | insertTyped<R,T> helper | `src/seed/db/insert-typed.ts` |
+| 12 | D1Response canonical location | `src/seed/db/types.ts` |
+| 13 | Commission ledger append-only | `src/land/payouts/commission-ledger.ts` |
+| 13 | 14-day clawback window | `src/land/payouts/clawback-handler.ts` |
 | 14 | **FTC #ad overlay (FFmpeg)** | **`src/lib/video/ftc-ad-overlay.ts`** |
-| 14 | **GDPR export helper** | **`src/lib/audit/gdpr-export.ts`** |
-| 14 | **GDPR delete helper** | **`src/lib/audit/gdpr-delete.ts`** |
+| 14 | **GDPR account routes** | **`src/app/api/account/`** |
+| 14 | **GDPR redaction helpers** | **`src/tree/audit/gdpr-redaction.ts`** |
 | - | Tier normalization | `src/lib/auth/normalize-tier.ts` |
 | - | BYOK encryption | `src/lib/byok/*` |
 | - | Org resolution | `src/lib/auth/resolve-org-id.ts` |
@@ -472,7 +472,7 @@ bash scripts/set-cron-secret.sh  # Generates 32-byte random secret + sets via wr
 **Phases 5–12 cumulative:** 20 + 33 + 34 + 20 + 3 + 0 + 0 (no `:any` in P12) = **110+ `:any` eliminated** (Phases 5-12)
 
 **DB Helper Consolidation (Phase 12):**
-- ✅ D1Response<T> — 1 canonical export in `@/lib/db/types.ts`, 5 callers migrated
+- ✅ D1Response<T> — 1 canonical export in `@/seed/db/types.ts`, 5 callers migrated
 - ✅ insertTyped<R,T> helper — 10 call sites refactored, 0 remaining `as unknown as Record` on `.insert()`
 - ✅ FSM design decision documented — log-only no-writeback, ops thresholds (10/hr warn, 100/hr page)
 
@@ -493,13 +493,13 @@ When accessing HeyGen / Resend / NOWPayments keys in fulfillment code:
 
 ```typescript
 // CORRECT — customer fulfillment (fallbackToPlatform: false)
-import { getHeyGenKey } from '@/lib/credentials/get-provider-key'
+import { getHeyGenKey } from '@/tree/credentials/get-provider-key'
 const keyResult = await getHeyGenKey({ userId, fallbackToPlatform: false })
 if (!keyResult) { await recordAttempt(id, 'no_user_heygen_key'); return }
 const apiKey = keyResult.key  // keyResult.source === 'user'
 
 // CORRECT — transactional email (fallbackToPlatform: true by default)
-import { getResendKey } from '@/lib/credentials/get-provider-key'
+import { getResendKey } from '@/tree/credentials/get-provider-key'
 const resendResult = await getResendKey({ userId })
 
 // CORRECT — platform-only paths (health check, synthetic monitor, onboarding video)
@@ -521,20 +521,20 @@ These are the ONLY approved paths for core concerns. Use nothing else.
 
 | Concern | Canonical Import |
 |---------|----------------|
-| Auth session | `import { getCurrentUser } from '@/lib/better-auth-session'` |
-| Tier lookup | `import { getUserTier } from '@/lib/db/get-user-tier'` |
-| DB client (sync) | `import { createServerClient } from '@/lib/db/client'` — do NOT `await` |
-| Tier config | `import { TIER_CONFIGS, TIER_CONFIG } from '@/config/tiers'` |
+| Auth session | `import { getCurrentUser } from '@/seed/auth/better-auth-session'` |
+| Tier lookup | `import { getUserTier } from '@/seed/db/get-user-tier'` |
+| DB client (sync) | `import { createServerClient } from '@/seed/db/client'` — do NOT `await` |
+| Tier config | `import { TIER_CONFIGS, TIER_CONFIG } from '@/seed/config/tiers'` |
 
 ### BANNED Imports
 
 The following modules were deleted in 2026-04-14 consolidation. Any new import from these paths is a build error:
 
 ```
-@/lib/auth              ← deleted (use @/lib/better-auth-session)
-@/lib/subscription      ← deleted (use @/lib/db/get-user-tier)
-@/lib/unified-tier-config ← deleted (use @/config/tiers)
-@/lib/tier-gate         ← deleted (use @/config/tiers + manual gate)
+@/lib/auth                ← deleted (use @/seed/auth/better-auth-session)
+@/lib/subscription        ← deleted (use @/seed/db/get-user-tier)
+@/lib/unified-tier-config ← deleted (use @/seed/config/tiers)
+@/lib/tier-gate           ← deleted (use @/seed/config/tiers + manual gate)
 ```
 
 ### Tier Enum

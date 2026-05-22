@@ -1,43 +1,57 @@
 # Sophia Activation Runbook — Post-Deploy Provisioning
 
 **Audience:** Sophia founder (non-tech CEO)
-**Purpose:** Activate the 4 new layers (CI/CD, Observability, Signals, C-Level Agents) shipped 2026-04-17
-**Time:** ~30 minutes total (split into 5 sequential phases)
+**Purpose:** Activate deploy/version proof, observability, signals, and C-Level agents after CF-direct deploy
+**Time:** ~35 minutes total (split into 6 sequential phases)
 **Production URL:** https://sophia.agencyos.network
 
 ---
 
-## Production State Smoke Test (verified 2026-04-17 08:29 ICT)
+## Historical Production State Smoke Test (verified 2026-04-17 08:29 ICT)
+
+This table is historical activation evidence. Before go-live, rerun the smoke checks after `npm run deploy:full` and verify `/api/version` reports the deployed SHA.
 
 | Layer | Endpoint | Status | Note |
 |-------|----------|--------|------|
-| P1 CI/CD | `/api/version` | ✅ HTTP 200 | `shortSha=unknown` → set COMMIT_SHA secret |
-| P1 CI/CD | `/api/health/detail` | ✅ HTTP 401 | Auth gate working (Red Team #10) |
+| P1 Deploy/version | `/api/version` | ✅ HTTP 200 | `shortSha=unknown` was fixed by `scripts/deploy-with-sha.sh` secret injection |
+| P1 Deploy/version | `/api/health/detail` | ✅ HTTP 401 | Auth gate working (Red Team #10) |
 | P2 Observability | `/api/metrics` | ✅ HTTP 401 | CRON_SECRET gate (Red Team #3) |
 | P3 Signals | `/api/signals/track` | ✅ HTTP 401 | Auth gate working |
 | P3 Signals | `/api/signals/flag` | ✅ HTTP 401 | Auth gate working |
 | P4 Agents | `.sophia-factory/agents/cto.md` | ✅ valid | `tools:` + `allowed-paths` + `spawn-policy` set |
 
-**Diagnosis:** All 4 layers DEPLOYED + AUTH-GATED correctly. Need secrets to ACTIVATE.
+**Diagnosis:** All 4 layers were deployed and auth-gated in the 2026-04-17 smoke. Current deploy verification must use the CF-direct flow in `apps/sophia-ai-factory/scripts/deploy-with-sha.sh`.
 
 ---
 
-## Phase 1 — Provision GH Actions Secrets (5 min)
+## Phase 1 — Confirm CF-Direct Deploy Prereqs (5 min)
 
-[VN] Mở https://github.com/longtho638-jpg/sophia-ai-factory/settings/secrets/actions → **New repository secret** mỗi key dưới đây.
-[EN] Open the GH Secrets page → add each secret below.
+[VN] GitHub Actions deploy da tat theo doctrine hien tai. Truoc khi activate, confirm local wrangler auth + clean deploy gate.
+[EN] GitHub Actions deploy is disabled by current doctrine. Before activation, confirm local wrangler auth and clean deploy gates.
 
-| Secret Name | Value Source |
+```bash
+cd apps/sophia-ai-factory
+npx wrangler whoami
+git status --short
+git log origin/main..HEAD --oneline
+```
+
+Expected:
+- `wrangler whoami` shows the Cloudflare account.
+- `git status --short` is clean before deploy.
+- `git log origin/main..HEAD` is empty before deploy, unless emergency `ALLOW_UNPUSHED_DEPLOY=1` is explicitly approved.
+
+Optional GitHub secrets are needed only for auxiliary workflows such as manual canary rollback or cron smoke, not for the canonical production deploy.
+
+| Optional GH Secret | Used by | Value Source |
 |---|---|
-| `CLOUDFLARE_API_TOKEN` | https://dash.cloudflare.com/profile/api-tokens → "Edit Workers" template |
-| `CLOUDFLARE_ACCOUNT_ID` | `f691e83094f776311a1bfe3f8b126f1c` (founder's CF account) |
-| `INTROSPECT_TOKEN` | Generate: `openssl rand -base64 32` |
-| `WEBHOOK_SECRET` | Generate: `openssl rand -base64 32` |
-| `CRON_SECRET` | Generate: `openssl rand -base64 32` |
-| `TELEGRAM_BOT_TOKEN` | From @BotFather (existing) |
-| `TELEGRAM_CHAT_ID` | Existing — see credentials-handover.md |
+| `CLOUDFLARE_API_TOKEN` | `.github/workflows/canary-rollback.yml` | Cloudflare "Edit Workers" token |
+| `CLOUDFLARE_ACCOUNT_ID` | `.github/workflows/canary-rollback.yml` | Founder's Cloudflare account ID |
+| `CRON_SECRET` | `.github/workflows/cron-smoke-one-time.yml` | Same value as Worker secret if that workflow is used |
+| `TELEGRAM_BOT_TOKEN` | `.github/workflows/canary-rollback.yml` alert | From @BotFather |
+| `TELEGRAM_CHAT_ID` | `.github/workflows/canary-rollback.yml` alert | Existing ops chat ID |
 
-**Verify:** push a dummy commit → check Actions tab → P1 gates should now run instead of failing fast.
+**Verify:** canonical deploy still happens via `npm run deploy:full`, not GitHub Actions.
 
 ---
 
@@ -47,27 +61,29 @@
 [EN] Run from M1 Max terminal (after `wrangler login`):
 
 ```bash
-cd ~/sophia-ai-factory
-# Same values as GH Secrets above (use SAME tokens for INTROSPECT_TOKEN, CRON_SECRET)
-wrangler secret put COMMIT_SHA --config apps/sophia-ai-factory/wrangler.toml
-wrangler secret put INTROSPECT_TOKEN --config apps/sophia-ai-factory/wrangler.toml
-wrangler secret put CRON_SECRET --config apps/sophia-ai-factory/wrangler.toml
-wrangler secret put WEBHOOK_SECRET --config apps/sophia-ai-factory/wrangler.toml
+cd apps/sophia-ai-factory
+npx wrangler secret put INTROSPECT_TOKEN
+npx wrangler secret put CRON_SECRET
+npx wrangler secret put TELEGRAM_BOT_TOKEN
+npx wrangler secret put TELEGRAM_CHAT_ID
+npx wrangler secret put ADMIN_TELEGRAM_CHAT_ID
 ```
 
 Then platform-specific tokens (sign up first):
 ```bash
 # Better Stack — https://betterstack.com signup
-wrangler secret put BETTER_STACK_LOGS_TOKEN --config apps/sophia-ai-factory/wrangler.toml
-wrangler secret put BETTER_STACK_HEARTBEAT_URL --config apps/sophia-ai-factory/wrangler.toml
+npx wrangler secret put BETTER_STACK_LOGS_TOKEN
+npx wrangler secret put BETTER_STACK_HEARTBEAT_URL
 
 # PostHog — https://app.posthog.com signup
-wrangler secret put POSTHOG_PROJECT_KEY --config apps/sophia-ai-factory/wrangler.toml
-wrangler secret put POSTHOG_PERSONAL_API_KEY --config apps/sophia-ai-factory/wrangler.toml
+npx wrangler secret put POSTHOG_PROJECT_KEY
+npx wrangler secret put POSTHOG_PERSONAL_API_KEY
 
 # Founder email for digest
-wrangler secret put FOUNDER_EMAIL --config apps/sophia-ai-factory/wrangler.toml
+npx wrangler secret put FOUNDER_EMAIL
 ```
+
+Do not set `COMMIT_SHA`, `DEPLOYED_AT`, or `DEPLOY_BRANCH` manually during normal deploys. `npm run deploy:full` injects those Worker secrets from git.
 
 **Verify:** `curl -H "Authorization: Bearer <CRON_SECRET>" https://sophia.agencyos.network/api/metrics` → 200 OK.
 
@@ -82,13 +98,13 @@ wrangler secret put FOUNDER_EMAIL --config apps/sophia-ai-factory/wrangler.toml
 3. **Uptime** project → add 7 heartbeat monitors:
    - sophia-uptime-check, sophia-error-digest, sophia-heartbeat, sophia-usage-export, sophia-dunning, sophia-reminders, sophia-email-drip
    - Each gives a heartbeat URL → use first one as `BETTER_STACK_HEARTBEAT_URL`
-4. **Alert rule** for emergency rollback (manual-trigger workflow):
+   - Before relying on `sophia-error-digest` or `sophia-heartbeat`, verify `scripts/inject-scheduled-handler.mjs` maps their cron patterns; the 2026-05-21 docs pass found those patterns present in `wrangler.toml` but not mapped.
+4. **Alert rule** for emergency rollback:
    - Trigger: error rate > 1% over 5 min
-   - Action: webhook POST to `https://api.github.com/repos/longtho638-jpg/sophia-ai-factory/actions/workflows/canary-rollback.yml/dispatches`
-   - Header: `Authorization: Bearer <WEBHOOK_SECRET>`
-   - Body: `{"ref": "main"}`
+   - Canonical action: page the operator to run direct `wrangler rollback` from `apps/sophia-ai-factory`
+   - Optional auxiliary action: trigger `.github/workflows/canary-rollback.yml` if GitHub Actions secrets are provisioned
    - Note: 10/90 canary split was dropped 2026-04-17 (YAGNI pre-launch).
-     This workflow now does a direct rollback to the previous version when triggered.
+     Rollback is direct to the previous Worker version.
 
 ---
 
@@ -99,20 +115,21 @@ wrangler secret put FOUNDER_EMAIL --config apps/sophia-ai-factory/wrangler.toml
 3. **Settings → Project → Authorized URLs:** add `https://sophia.agencyos.network` (Red Team #11 — funnel poisoning protection)
 4. Copy **Project API Key** → `POSTHOG_PROJECT_KEY` and `NEXT_PUBLIC_POSTHOG_KEY`
 5. Settings → Personal API Keys → create read-only → `POSTHOG_PERSONAL_API_KEY`
-6. Re-deploy: `cd apps/sophia-ai-factory && npm run deploy`
+6. Re-deploy: `cd apps/sophia-ai-factory && npm run deploy:full`
 
 ---
 
-## Phase 5 — GH Branch Protection + First Smoke (5 min)
+## Phase 5 — First Smoke (5 min)
 
-1. https://github.com/longtho638-jpg/sophia-ai-factory/settings/branches → **Add rule** for `main`:
-   - ✅ Require status checks before merging: `post-merge-tests`, `Green Gate (verify:green)`, `Gate 1 — Validation (tsc + eslint + vitest)`
-   - ✅ Require linear history (no merge commits)
-   - ✅ Include administrators (you're solo, applies to founder too)
+1. Verify deployed version:
+```bash
+curl -s https://sophia.agencyos.network/api/version
+```
+Expected: `shortSha` matches `git rev-parse --short HEAD` from the commit deployed by `npm run deploy:full`.
 
 2. **Smoke test C-Level agent** (P4):
 ```bash
-cd ~/sophia-ai-factory
+cd /Users/macbook/projects/sophia-ai-factory
 mekong --agent .sophia-factory/agents/cto.md "audit security headers in middleware.ts" --bare
 ```
 Expected: agent reads middleware.ts, reports CSP/HSTS/X-Frame-Options state. If you see "tools: Read,Edit,Bash,Grep,Glob" loaded + analysis → P4 working.
@@ -132,13 +149,13 @@ Expected: 200 OK + event visible in PostHog dashboard within 60s.
 
 ```mermaid
 graph LR
-  P1[Phase 1: GH Secrets] --> P2[Phase 2: CF Secrets]
+  P1[Phase 1: Deploy prereqs] --> P2[Phase 2: CF Worker secrets]
   P2 --> P3[Phase 3: Better Stack]
   P3 --> P4[Phase 4: PostHog]
-  P4 --> P5[Phase 5: Branch Protection + Smoke]
+  P4 --> P5[Phase 5: First Smoke]
 ```
 
-**Why this order:** Each phase depends on tokens generated in the previous one. Skip = breakage.
+**Why this order:** runtime secrets must exist before smoke checks can prove current production.
 
 ---
 
@@ -146,11 +163,11 @@ graph LR
 
 | Symptom | Diagnosis | Fix |
 |---------|-----------|-----|
-| `/api/version` returns `shortSha:unknown` | COMMIT_SHA secret missing | Run `wrangler secret put COMMIT_SHA` with current `git rev-parse HEAD` |
-| `/api/metrics` returns 401 with correct token | CRON_SECRET mismatch CF vs GH | Re-set both with same value |
+| `/api/version` returns `shortSha:unknown` | Deploy wrapper did not inject build metadata | Re-run `cd apps/sophia-ai-factory && npm run deploy:full`; do not manually drift the secret except emergency |
+| `/api/metrics` returns 401 with correct token | CRON_SECRET mismatch or Worker secret not active | Re-set Worker `CRON_SECRET`, then retry |
 | Better Stack shows no logs after 10 min | Logger not flushing OR wrong token | Check Worker logs `wrangler tail` |
 | PostHog shows no events | NEXT_PUBLIC_POSTHOG_KEY missing OR Authorized URLs not set | Re-deploy + check PostHog Settings |
-| Canary rollback never fires | Better Stack alert rule webhook not configured | Re-do Phase 3 step 4 |
+| Canary rollback never fires | Optional GitHub workflow or Better Stack webhook not configured | Use direct `wrangler rollback`; then re-check optional workflow secrets |
 | C-Level agent says "tools:" empty | Agent file frontmatter parse error | Check `.sophia-factory/agents/<name>.md` line 8 |
 
 ---
@@ -158,19 +175,23 @@ graph LR
 ## Phase 6 — Ops Telemetry Activation (NEW, 2026-04-17)
 
 Ops telemetry uplift shipped 2026-04-17 (6 commits, D1 signals + feature-flags canary + BYOK timeout).
-To fully activate D1 signals digest → GH Issue + Telegram alerts, add 3 secrets to GH Actions:
+To activate D1 signals digest + Telegram alerts, set Worker secrets first:
 
 | Secret Name | Source |
 |---|---|
-| `OPENROUTER_API_KEY` | https://openrouter.ai/keys (for self-review summaries) |
-| `TELEGRAM_BOT_TOKEN` | From @BotFather (existing — already in Phase 1) |
-| `GITHUB_TOKEN_DIGEST` | New PAT w/ `repo` scope (for GH Issue digest posting) |
+| `OPENROUTER_API_KEY` | https://openrouter.ai/keys (platform fallback; customers can use BYOK) |
+| `TELEGRAM_BOT_TOKEN` | From @BotFather (existing — already in Phase 2) |
+| `TELEGRAM_CHAT_ID` | Ops/digest chat |
 
-After adding these 3 secrets:
 ```bash
-cd ~/sophia-ai-factory && git push origin $(git rev-parse --abbrev-ref HEAD)
+cd apps/sophia-ai-factory
+npx wrangler secret put OPENROUTER_API_KEY
+npx wrangler secret put TELEGRAM_BOT_TOKEN
+npx wrangler secret put TELEGRAM_CHAT_ID
+npm run deploy:full
 ```
-Next scheduled weekly digest (Sunday 9am UTC) will auto-post to GH Issues + Telegram.
+
+Next scheduled weekly digest (Monday 06:00 UTC per `wrangler.toml` + scheduled handler map) will post to Telegram when secrets are present. GH Issue posting is optional auxiliary automation and needs a separate PAT if re-enabled.
 
 ---
 
@@ -213,6 +234,6 @@ Secrets cần thêm: `LOCAL_MODE_DEK` (32-byte base64 random key) vào CF Worker
 
 ---
 
-**Last verified:** 2026-04-17 08:29 ICT
+**Last verified:** 2026-04-17 08:29 ICT (historical smoke); docs backfilled 2026-05-21
 **Author:** Sophia Factory bootstrap session
 **Related:** `plans/260416-2328-sophia-factory-raas-solo-platform/plan.md`

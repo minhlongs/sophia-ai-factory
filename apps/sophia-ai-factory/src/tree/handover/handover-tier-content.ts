@@ -5,12 +5,37 @@
  */
 
 import type { Tier } from '@/seed/types';
+import { UNIFIED_TIERS } from '@/seed/config/tiers';
+
+function formatUsd(value: number): string {
+  return `$${value.toLocaleString('en-US')}`;
+}
+
+function formatTierPrice(tier: Tier): string {
+  const config = UNIFIED_TIERS[tier];
+  return config.billingType === 'lifetime'
+    ? `${formatUsd(config.price)} one-time`
+    : `${formatUsd(config.price)}/mo`;
+}
+
+function formatBillingTerm(tier: Tier): string {
+  return UNIFIED_TIERS[tier].billingType === 'lifetime'
+    ? 'One-time, lifetime access'
+    : 'Monthly, auto-renew';
+}
 
 export const TIER_PRICES: Record<Tier, string> = {
-  BASIC: '$199/mo',
-  PREMIUM: '$399/mo',
-  ENTERPRISE: '$799/mo',
-  MASTER: '$4,999/mo',
+  BASIC: formatTierPrice('BASIC'),
+  PREMIUM: formatTierPrice('PREMIUM'),
+  ENTERPRISE: formatTierPrice('ENTERPRISE'),
+  MASTER: formatTierPrice('MASTER'),
+};
+
+export const TIER_BILLING_TERMS: Record<Tier, string> = {
+  BASIC: formatBillingTerm('BASIC'),
+  PREMIUM: formatBillingTerm('PREMIUM'),
+  ENTERPRISE: formatBillingTerm('ENTERPRISE'),
+  MASTER: formatBillingTerm('MASTER'),
 };
 
 export const TIER_FEATURES: Record<Tier, string[]> = {

@@ -28,10 +28,10 @@ Per `apps/sophia-ai-factory/CLAUDE.md`:
 
 | Concern | Import |
 |---|---|
-| Auth session | `import { getCurrentUser } from '@/lib/better-auth-session'` |
-| Tier lookup | `import { getUserTier } from '@/lib/db/get-user-tier'` |
-| DB client (sync) | `import { createServerClient } from '@/lib/db/client'` (NO await) |
-| Tier config | `import { TIER_CONFIGS, TIER_CONFIG } from '@/config/tiers'` |
+| Auth session | `import { getCurrentUser } from '@/seed/auth/better-auth-session'` |
+| Tier lookup | `import { getUserTier } from '@/seed/db/get-user-tier'` |
+| DB client (sync) | `import { createServerClient } from '@/seed/db/client'` (NO await) |
+| Tier config | `import { TIER_CONFIGS, TIER_CONFIG } from '@/seed/config/tiers'` |
 
 **Banned imports:** `@/lib/auth`, `@/lib/subscription`, `@/lib/unified-tier-config`, `@/lib/tier-gate`.
 
@@ -59,5 +59,5 @@ Naming via geography (seed → land = depth-of-meaning gradient).
 
 ## Unresolved
 
-- `@/lib/*` vs `@/seed/*` aliases lẫn lộn — tương lai chọn 1 canonical (đề xuất: `@/seed` cho foundational, deprecate `@/lib`)
+- `src/lib/*` vẫn tồn tại như vùng compatibility/shared logic lịch sử. Core primitives mới phải import từ `@/seed/*`; không thêm alias `@/lib/*` mới cho auth/db/tier.
 - Barrel exports chỉ ở 3 forest domains; land vừa thêm 3 mới (260504-1813) — verify build OK

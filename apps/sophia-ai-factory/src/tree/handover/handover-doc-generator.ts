@@ -7,7 +7,13 @@
 import type { Tier } from '@/seed/types';
 import type { AgencyType } from '@/tree/handover/handover-types';
 import { TIER_MCU_LIMITS } from '@/tree/handover/handover-types';
-import { TIER_PRICES, TIER_FEATURES, TIER_SUPPORT_SLA, TIER_CONCURRENT_RUNS } from '@/tree/handover/handover-tier-content';
+import {
+  TIER_PRICES,
+  TIER_FEATURES,
+  TIER_SUPPORT_SLA,
+  TIER_CONCURRENT_RUNS,
+  TIER_BILLING_TERMS,
+} from '@/tree/handover/handover-tier-content';
 
 export interface HandoverDocInput {
   customerId: string;
@@ -186,6 +192,7 @@ A: Contact support@mekongmind.com within 7 days of charge.`;
 export function generateHandoverDoc(input: HandoverDocInput): string {
   const { customerId, tier, contractDate } = input;
   const price = TIER_PRICES[tier];
+  const billing = TIER_BILLING_TERMS[tier];
 
   return [
     buildCoverSection(input),
@@ -212,7 +219,7 @@ export function generateHandoverDoc(input: HandoverDocInput): string {
 
 - **Tier:** ${tier} — ${price}
 - **Contract Date:** ${contractDate}
-- **Billing:** Monthly, auto-renew
+- **Billing:** ${billing}
 - **Customer ID:** \`${customerId}\`
 
 ---

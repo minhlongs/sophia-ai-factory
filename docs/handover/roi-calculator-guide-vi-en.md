@@ -106,13 +106,14 @@ Tổng Chi Phí Hiện Tại =
 
 Sophia tính dựa trên tier bạn chọn:
 
-| Tier | Giá | Video limit | MCU |
-|------|-----|------------|-----|
-| BASIC | $199 | 50/tháng | 5,000 |
-| PREMIUM | $399 | 200/tháng | 20,000 |
-| ENTERPRISE | $799 | Unlimited | 50,000 |
+| Tier | Giá | Campaign limit | MCU |
+|------|-----|----------------|-----|
+| BASIC (Starter) | $199 | 10/tháng | 1,000 |
+| PREMIUM (Growth) | $399 | 50/tháng | 5,000 |
+| ENTERPRISE (Premium) | $799 | Unlimited | 20,000 |
+| MASTER | $4,999 một lần | Unlimited | 100,000 |
 
-**Nếu vượt video limit, tính thêm pay-as-you-go.**
+**Nếu vượt campaign/MCU limit, nâng tier hoặc xử lý top-up theo cấu hình billing hiện tại.**
 
 #### ✅ Con Số 3: Lợi Nhuận / Break-Even
 
@@ -324,13 +325,14 @@ Total Current Cost =
 
 Sophia charges based on tier:
 
-| Tier | Price | Video limit | MCU |
-|------|-------|------------|-----|
-| BASIC | $199 | 50/month | 5,000 |
-| PREMIUM | $399 | 200/month | 20,000 |
-| ENTERPRISE | $799 | Unlimited | 50,000 |
+| Tier | Price | Campaign limit | MCU |
+|------|-------|----------------|-----|
+| BASIC (Starter) | $199 | 10/month | 1,000 |
+| PREMIUM (Growth) | $399 | 50/month | 5,000 |
+| ENTERPRISE (Premium) | $799 | Unlimited | 20,000 |
+| MASTER | $4,999 one-time | Unlimited | 100,000 |
 
-**If exceed video limit, charged pay-as-you-go.**
+**If you exceed the campaign/MCU limit, upgrade tiers or use the active billing top-up flow.**
 
 #### ✅ Number 3: Profit / Break-Even
 
@@ -386,7 +388,7 @@ Break-Even = How many months until Sophia profit exceeds freelancer
 - Current cost = (150 × $6) + (20 × $50) = $1,900
 - Sophia ENTERPRISE = $799
 - Profit = $1,900 - $799 = **$1,101/month**
-- **Downgrade to PREMIUM** (200 videos/month, $399) = **Profit $1,501** 📈
+- **Growth ($399)** can fit only if the workload stays within 50 campaigns/month; otherwise use Premium ($799) or Master.
 
 ---
 

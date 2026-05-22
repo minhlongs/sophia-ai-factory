@@ -12,6 +12,7 @@ import { generateHandoverDoc, type HandoverDocInput } from './handover-doc-gener
 import { TIER_MCU_LIMITS } from './handover-types'
 import {
   TIER_PRICES,
+  TIER_BILLING_TERMS,
   TIER_FEATURES,
   TIER_SUPPORT_SLA,
   TIER_CONCURRENT_RUNS,
@@ -182,7 +183,15 @@ describe('generateHandoverDoc — contract + footer', () => {
     const doc = generateHandoverDoc(baseInput)
     expect(doc).toContain(`**Tier:** PREMIUM — ${TIER_PRICES.PREMIUM}`)
     expect(doc).toContain('**Contract Date:** 2026-05-01')
+    expect(doc).toContain(`**Billing:** ${TIER_BILLING_TERMS.PREMIUM}`)
     expect(doc).toContain('`cust-abc-123`')
+  })
+
+  it('uses one-time billing for MASTER contracts', () => {
+    const doc = generateHandoverDoc({ ...baseInput, tier: 'MASTER' })
+    expect(doc).toContain(`**Tier:** MASTER — ${TIER_PRICES.MASTER}`)
+    expect(doc).toContain(`**Billing:** ${TIER_BILLING_TERMS.MASTER}`)
+    expect(doc).not.toContain('**Billing:** Monthly, auto-renew')
   })
 
   it('footer includes generation timestamp + secure-doc warning', () => {

@@ -126,7 +126,7 @@ Check this page weekly. Look for customers with:
 ### Platform Outage
 1. Check `/dashboard/admin/zero-gap-audit`
 2. Check Cloudflare dashboard for Workers errors
-3. Check GitHub Actions for failed deploy
+3. Check latest CF-direct deploy output, `/api/version` SHA, and Cloudflare Workers errors
 4. Contact support@mekongmind.com if can't resolve in 30 min
 
 ---

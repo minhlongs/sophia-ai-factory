@@ -59,11 +59,12 @@ Nếu bạn downgrade, Sophia tính tiền prorated cho tháng SAU:
 
 MCU (Mission Credit Unit) là credits để tạo video:
 
-| Tier | MCU/tháng | Giá/video |
-|------|-----------|----------|
-| BASIC | 5,000 | ~$0.04 |
-| PREMIUM | 20,000 | ~$0.02 |
-| ENTERPRISE | 50,000 | ~$0.016 |
+| Tier | MCU/tháng | Ghi chú hoàn tiền |
+|------|-----------|-------------------|
+| BASIC (Starter) | 1,000 | Credits đã dùng không hoàn lại |
+| PREMIUM (Growth) | 5,000 | Credits đã dùng không hoàn lại |
+| ENTERPRISE (Premium) | 20,000 | Credits đã dùng không hoàn lại |
+| MASTER | 100,000 | One-time/lifetime tier; xử lý theo điều khoản Master |
 
 ❌ **MCU credits KHÔNG hoàn lại** vì:
 - Bạn đã dùng để tạo video (có thể export)
@@ -196,11 +197,12 @@ If you downgrade, Sophia calculates prorated refund for NEXT month:
 
 MCU (Mission Credit Unit) is the credit used to generate videos:
 
-| Tier | MCU/month | $/video |
-|------|-----------|---------|
-| BASIC | 5,000 | ~$0.04 |
-| PREMIUM | 20,000 | ~$0.02 |
-| ENTERPRISE | 50,000 | ~$0.016 |
+| Tier | MCU/month | Refund note |
+|------|-----------|-------------|
+| BASIC (Starter) | 1,000 | Consumed credits are non-refundable |
+| PREMIUM (Growth) | 5,000 | Consumed credits are non-refundable |
+| ENTERPRISE (Premium) | 20,000 | Consumed credits are non-refundable |
+| MASTER | 100,000 | One-time/lifetime tier; handled under Master terms |
 
 ❌ **MCU credits are NON-REFUNDABLE** because:
 - You already used them to create videos (exportable)
