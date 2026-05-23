@@ -39,6 +39,9 @@ export function rowToTask(row: Record<string, unknown>): AgentTaskAssignment {
       ? (JSON.parse(row.output_json as string) as Record<string, unknown>)
       : undefined,
     errorMessage: row.error_message as string | undefined,
+    checkpointJson: row.checkpoint_json
+      ? (JSON.parse(row.checkpoint_json as string) as Record<string, unknown>)
+      : undefined,
     startedAt: row.started_at as number | undefined,
     completedAt: row.completed_at as number | undefined,
     createdAt: row.created_at as number,

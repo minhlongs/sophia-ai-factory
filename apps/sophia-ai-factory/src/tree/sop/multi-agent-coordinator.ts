@@ -10,6 +10,7 @@ import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
 import type { AgentRole, AgentSessionWithTasks } from '@/seed/types/multi-agent'
 import { rowToSession, rowToTask, nowSec, buildSettleSessionStmt } from './multi-agent-coordinator-helpers'
+export { saveCheckpoint, loadCheckpoint } from './multi-agent-coordinator-checkpoint'
 
 // ---------------------------------------------------------------------------
 // createSession
@@ -121,7 +122,7 @@ export async function completeTask(taskId: string, output: Record<string, unknow
 
     await db.batch([
       db
-        .prepare(`UPDATE agent_task_assignments SET status = 'completed', output_json = ?, completed_at = ? WHERE id = ?`)
+        .prepare(`UPDATE agent_task_assignments SET status = 'completed', output_json = ?, completed_at = ?, checkpoint_json = NULL WHERE id = ?`)
         .bind(JSON.stringify(output), ts, taskId),
       buildSettleSessionStmt(db, 'completed_count', ts, taskRow.session_id),
     ])

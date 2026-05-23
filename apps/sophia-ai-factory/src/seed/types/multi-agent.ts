@@ -68,6 +68,8 @@ export interface AgentTaskAssignment {
   output?: Record<string, unknown>
   /** Human-readable error description on failure */
   errorMessage?: string
+  /** JSON-serialized checkpoint state for resume-from-failure */
+  checkpointJson?: Record<string, unknown>
   startedAt?: number
   completedAt?: number
   createdAt: number
@@ -79,3 +81,65 @@ export interface AgentTaskAssignment {
 export interface AgentSessionWithTasks extends AgentSession {
   tasks: AgentTaskAssignment[]
 }
+
+// ---------------------------------------------------------------------------
+// Typed Prompt Contracts — Phase 03
+// ---------------------------------------------------------------------------
+
+/** Base fields common to all agent prompt contracts */
+export interface PromptContractBase {
+  objective: string
+  outputFormat: 'json' | 'markdown' | 'text' | 'structured'
+  maxTokens?: number
+  escalationRules?: string[]
+}
+
+/** script_writer: generates content scripts */
+export interface ScriptWriterContract extends PromptContractBase {
+  topic: string
+  tone: 'professional' | 'casual' | 'educational' | 'entertaining'
+  targetLength: 'short' | 'medium' | 'long'
+}
+
+/** voice_generator: produces audio/voice-over assets */
+export interface VoiceGeneratorContract extends PromptContractBase {
+  voiceId: string
+  language: string
+  scriptText: string
+}
+
+/** video_producer: assembles video from assets */
+export interface VideoProducerContract extends PromptContractBase {
+  audioUrl: string
+  visualStyle: string
+  duration?: number
+}
+
+/** publisher: distributes finished content to platforms */
+export interface PublisherContract extends PromptContractBase {
+  platforms: string[]
+  scheduledAt?: string
+  metadata?: Record<string, unknown>
+}
+
+/** analyst: evaluates results and surfaces insights */
+export interface AnalystContract extends PromptContractBase {
+  metrics: string[]
+  timeRange: { start: string; end: string }
+  compareWith?: string
+}
+
+/** supervisor: orchestrates the session, dispatches workers */
+export interface SupervisorContract extends PromptContractBase {
+  pipeline: AgentRole[]
+  config?: Record<string, unknown>
+}
+
+/** Union of all typed prompt contracts */
+export type PromptContract =
+  | ScriptWriterContract
+  | VoiceGeneratorContract
+  | VideoProducerContract
+  | PublisherContract
+  | AnalystContract
+  | SupervisorContract

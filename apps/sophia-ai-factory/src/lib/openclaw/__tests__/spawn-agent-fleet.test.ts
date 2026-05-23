@@ -14,6 +14,20 @@ vi.mock('../audit', () => ({
   audit: vi.fn().mockResolvedValue(undefined),
 }));
 
+// Mock circuit-breaker to avoid state bleed between tests
+vi.mock('@/seed/utils/circuit-breaker', () => ({
+  withBreaker: vi.fn((_name: string, fn: () => Promise<unknown>) => fn()),
+  getBreakerState: vi.fn(() => 'closed'),
+  BreakerOpenError: class BreakerOpenError extends Error {
+    constructor() { super('breaker open'); this.name = 'BreakerOpenError'; }
+  },
+}));
+
+// Mock retry to avoid real delays in tests
+vi.mock('@/seed/utils/retry-with-backoff', () => ({
+  withRetry: vi.fn((fn: () => Promise<unknown>) => fn()),
+}));
+
 describe('spawnAgentFleet', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -108,5 +122,135 @@ describe('spawnAgentFleet', () => {
     expect(results[0].success).toBe(true);
     const output = results[0].output as Record<string, unknown>;
     expect(output).toBeDefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Circuit breaker + retry integration — Phase 02
+// ---------------------------------------------------------------------------
+
+describe('spawnAgentFleet — circuit breaker + retry', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns retryCount in result', async () => {
+    const results = await spawnAgentFleet(
+      [{ id: 'retry-1', prompt: 'retry test' }],
+      { tenantId: 'tenant-retry' },
+    );
+    expect(results[0].retryCount).toBeDefined();
+  });
+
+  it('skips dispatch and returns failure when breaker is open', async () => {
+    const { getBreakerState } = await import('@/seed/utils/circuit-breaker');
+    vi.mocked(getBreakerState).mockReturnValueOnce('open');
+
+    const results = await spawnAgentFleet(
+      [{ id: 'open-1', prompt: 'will be skipped' }],
+      { tenantId: 'tenant-open' },
+    );
+
+    expect(results[0].success).toBe(false);
+    expect(results[0].error).toContain('circuit breaker open');
+    expect(results[0].durationMs).toBe(0);
+  });
+
+  it('wraps executor in withRetry', async () => {
+    const { withRetry } = await import('@/seed/utils/retry-with-backoff');
+    await spawnAgentFleet(
+      [{ id: 'wrapped-1', prompt: 'wrapped' }],
+      { tenantId: 'tenant-wrap' },
+    );
+    expect(vi.mocked(withRetry)).toHaveBeenCalled();
+  });
+
+  it('wraps executor in withBreaker', async () => {
+    const { withBreaker } = await import('@/seed/utils/circuit-breaker');
+    await spawnAgentFleet(
+      [{ id: 'breaker-1', prompt: 'breaker' }],
+      { tenantId: 'tenant-breaker' },
+    );
+    expect(vi.mocked(withBreaker)).toHaveBeenCalledWith(
+      'agent-fleet',
+      expect.any(Function),
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Prompt contract validation — Phase 03
+// ---------------------------------------------------------------------------
+
+describe('spawnAgentFleet — prompt contract validation', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('dispatches successfully when valid promptContract + agentRole provided', async () => {
+    const tasks: AgentTask[] = [
+      {
+        id: 'contract-ok',
+        prompt: 'write script',
+        agentRole: 'script_writer',
+        promptContract: {
+          objective: 'Write a product launch script',
+          outputFormat: 'markdown',
+          topic: 'AI tools',
+          tone: 'professional',
+          targetLength: 'short',
+        },
+      },
+    ];
+
+    const results = await spawnAgentFleet(tasks, { tenantId: 'tenant-contract' });
+    expect(results[0].success).toBe(true);
+    expect(results[0].error).toBeUndefined();
+  });
+
+  it('returns failure result with contract validation error for invalid contract', async () => {
+    const tasks: AgentTask[] = [
+      {
+        id: 'contract-bad',
+        prompt: 'write script',
+        agentRole: 'script_writer',
+        promptContract: {
+          objective: 'Write a script',
+          outputFormat: 'markdown',
+          // topic missing — required for script_writer
+          tone: 'professional',
+          targetLength: 'short',
+        },
+      },
+    ];
+
+    const results = await spawnAgentFleet(tasks, { tenantId: 'tenant-contract' });
+    expect(results[0].success).toBe(false);
+    expect(results[0].error).toContain('Contract validation');
+    expect(results[0].error).toContain('script_writer');
+  });
+
+  it('skips validation (backwards compat) when no promptContract', async () => {
+    const tasks: AgentTask[] = [
+      { id: 'no-contract', prompt: 'do stuff' },
+    ];
+
+    const results = await spawnAgentFleet(tasks, { tenantId: 'tenant-compat' });
+    expect(results[0].success).toBe(true);
+  });
+
+  it('skips validation when agentRole absent but promptContract present', async () => {
+    // Only fires when BOTH fields present — this should pass through
+    const tasks: AgentTask[] = [
+      {
+        id: 'role-missing',
+        prompt: 'do stuff',
+        promptContract: { objective: 'something', outputFormat: 'json' },
+        // agentRole intentionally omitted
+      },
+    ];
+
+    const results = await spawnAgentFleet(tasks, { tenantId: 'tenant-partial' });
+    expect(results[0].success).toBe(true);
   });
 });
