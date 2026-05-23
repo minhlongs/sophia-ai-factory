@@ -100,9 +100,8 @@ export default async function VideoDetailPage({
             {video.title ?? t("untitled")}
           </h1>
         </div>
-        {video.status === "completed" && video.video_url &&
-          process.env.NEXT_PUBLIC_DISTRIBUTE_ENABLED === "1" && (
-          <DistributeButton href={distributeHref} />
+        {video.status === "completed" && video.video_url && (
+          <DistributeButton href={distributeHref} label={t("distribute.cta")} />
         )}
       </header>
       <VideoDetailClient video={video} />
