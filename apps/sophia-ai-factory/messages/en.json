@@ -503,6 +503,10 @@
       "replay_tour": "Replay Tour",
       "upgradePlan": "Upgrade Plan",
       "tierBadge": "Current plan: {tier}",
+      "agi_hub": "AGI Hub",
+      "agi_outcomes": "Outcomes",
+      "agi_confidence": "Confidence",
+      "agi_agents": "Agents",
       "quotaWidget": {
         "title": "This Month",
         "unlimited": "Unlimited",
@@ -1398,6 +1402,10 @@
       "error": "Failed to load revenue data",
       "no_data": "No revenue data for this period",
       "tooltip_total": "Total"
+    },
+    "agiOutcomes": {
+      "title": "AGI Outcomes Dashboard",
+      "subtitle": "SOP execution outcomes — views, CTR, revenue, and engagement metrics"
     }
   },
   "account": {
@@ -2594,5 +2602,38 @@
     "joinTelegram": "Join Telegram",
     "joinDiscord": "Join Discord",
     "dismiss": "Dismiss"
+  },
+  "agi": {
+    "hub_title": "AGI Intelligence Hub",
+    "hub_subtitle": "Monitor and manage your AI-powered SOP execution",
+    "outcomes_title": "Outcome Tracking",
+    "outcomes_description": "Track SOP execution results — views, CTR, revenue, engagement",
+    "confidence_title": "Confidence Monitor",
+    "confidence_description": "Monitor step confidence scores and human escalation requests",
+    "agents_title": "Agent Sessions",
+    "agents_description": "View multi-agent execution sessions and task assignments",
+    "api_keys_title": "API Keys",
+    "api_keys_description": "Manage programmatic access keys for the Agent API",
+    "feedback_title": "Performance Feedback",
+    "feedback_description": "7-day post-publish evaluation and prompt optimization",
+    "compliance_title": "Compliance",
+    "compliance_description": "AI disclosure, C2PA metadata, and platform TOS tracking",
+    "coming_soon": "Coming Soon"
+  },
+  "agi_showcase": {
+    "title": "Built for the AGI Era",
+    "subtitle": "Future-proof your content factory with intelligent automation that learns, adapts, and delivers measurable results",
+    "outcome_tracking_title": "Outcome Tracking",
+    "outcome_tracking_desc": "Track video views, click-through rates, revenue, and engagement for every SOP execution. Data-driven content creation.",
+    "confidence_title": "Confidence Scoring",
+    "confidence_desc": "AI self-assesses quality at every step. When confidence drops below threshold, it escalates to you — no silent failures.",
+    "multi_agent_title": "Multi-Agent Execution",
+    "multi_agent_desc": "Supervisor + worker architecture runs complex SOPs in parallel. Script, voice, video, and publishing agents work simultaneously.",
+    "pricing_title": "Outcome-Based Pricing",
+    "pricing_desc": "Pay based on results, not usage. Our pricing engine ties fees to actual revenue generated — aligned incentives.",
+    "feedback_title": "Performance Feedback",
+    "feedback_desc": "7-day post-publish evaluation cycles automatically identify what's working and optimize prompts for better results.",
+    "compliance_title": "Compliance Ready",
+    "compliance_desc": "Built-in AI disclosure, C2PA metadata tracking, and platform TOS compliance. Ready for any regulatory environment."
   }
 }

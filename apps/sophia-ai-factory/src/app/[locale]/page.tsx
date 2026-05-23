@@ -93,6 +93,10 @@ const CtaSection = dynamic(
   () => import("@/app/components/sections/cta-section").then(m => ({ default: m.CtaSection })),
   { loading: () => <SectionSkeleton height="h-64" /> }
 );
+const AgiCapabilitiesSection = dynamic(
+  () => import("@/app/components/agi-capabilities-section"),
+  { loading: () => <Skeleton className="h-96 w-full rounded-xl" /> }
+);
 const Footer = dynamic(
   () => import("@/app/components/layout/footer").then(m => ({ default: m.Footer })),
   { loading: () => <Skeleton className="h-48 w-full" /> }
@@ -137,6 +141,9 @@ export default async function Home() {
         <PricingSection />
       </ScrollReveal>
       <ProductionCostCalculator />
+      <ScrollReveal delay={100}>
+        <AgiCapabilitiesSection />
+      </ScrollReveal>
       <ScrollReveal delay={0}>
         <AffiliateDiscovery />
       </ScrollReveal>

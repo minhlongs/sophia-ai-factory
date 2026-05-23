@@ -28,6 +28,10 @@ import {
   ServerCog,
   Mic,
   LayoutTemplate,
+  Brain,
+  TrendingUp,
+  Shield,
+  Bot,
 } from "lucide-react";
 import { ReplayTourLink } from "./components/replay-tour-link";
 import { HealthIndicator } from "@/forest/components/dashboard/health-indicator";
@@ -288,6 +292,37 @@ export default async function DashboardLayout({
             <Code className="w-5 h-5" aria-hidden="true" />
             <span className="font-medium">{t('sidebar.api_docs')}</span>
           </Link>
+          {/* AGI Intelligence Hub section */}
+          <div className="pt-2 mt-2 border-t border-border/50">
+            <Link
+              href="/dashboard/agi"
+              className="flex items-center gap-3 px-4 py-3 text-emerald-400 hover:text-emerald-300 rounded-lg hover:bg-emerald-950/30 transition-colors"
+            >
+              <Brain className="w-5 h-5" aria-hidden="true" />
+              <span className="font-medium">{t('sidebar.agi_hub')}</span>
+            </Link>
+            <Link
+              href="/dashboard/agi/outcomes"
+              className="flex items-center gap-3 px-4 py-2 pl-8 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors text-sm"
+            >
+              <TrendingUp className="w-4 h-4" aria-hidden="true" />
+              <span>{t('sidebar.agi_outcomes')}</span>
+            </Link>
+            <Link
+              href="/dashboard/agi/confidence"
+              className="flex items-center gap-3 px-4 py-2 pl-8 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors text-sm"
+            >
+              <Shield className="w-4 h-4" aria-hidden="true" />
+              <span>{t('sidebar.agi_confidence')}</span>
+            </Link>
+            <Link
+              href="/dashboard/agi/agents"
+              className="flex items-center gap-3 px-4 py-2 pl-8 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors text-sm"
+            >
+              <Bot className="w-4 h-4" aria-hidden="true" />
+              <span>{t('sidebar.agi_agents')}</span>
+            </Link>
+          </div>
           {isAdmin && (
             <>
               <Link

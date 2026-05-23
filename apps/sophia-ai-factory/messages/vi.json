@@ -503,6 +503,10 @@
       "replay_tour": "Xem lại Tour",
       "upgradePlan": "Nâng Cấp Gói",
       "tierBadge": "Gói hiện tại: {tier}",
+      "agi_hub": "Trung tâm AGI",
+      "agi_outcomes": "Kết quả",
+      "agi_confidence": "Độ tin cậy",
+      "agi_agents": "Đại lý AI",
       "quotaWidget": {
         "title": "Tháng này",
         "unlimited": "Không giới hạn",
@@ -1398,6 +1402,10 @@
       "error": "Không tải được dữ liệu doanh thu",
       "no_data": "Không có dữ liệu doanh thu trong kỳ này",
       "tooltip_total": "Tổng"
+    },
+    "agiOutcomes": {
+      "title": "Bảng Kết Quả AGI",
+      "subtitle": "Kết quả thực thi SOP — lượt xem, CTR, doanh thu và mức độ tương tác"
     }
   },
   "account": {
@@ -2594,5 +2602,38 @@
     "joinTelegram": "Tham gia Telegram",
     "joinDiscord": "Tham gia Discord",
     "dismiss": "Ẩn"
+  },
+  "agi": {
+    "hub_title": "Trung tâm Trí tuệ AGI",
+    "hub_subtitle": "Giám sát và quản lý quy trình SOP tự động bằng AI",
+    "outcomes_title": "Theo dõi kết quả",
+    "outcomes_description": "Theo dõi kết quả thực thi SOP — lượt xem, CTR, doanh thu, tương tác",
+    "confidence_title": "Giám sát độ tin cậy",
+    "confidence_description": "Giám sát điểm tin cậy từng bước và yêu cầu can thiệp thủ công",
+    "agents_title": "Phiên làm việc đại lý",
+    "agents_description": "Xem phiên thực thi đa đại lý và phân công nhiệm vụ",
+    "api_keys_title": "Khóa API",
+    "api_keys_description": "Quản lý khóa truy cập chương trình cho Agent API",
+    "feedback_title": "Phản hồi hiệu suất",
+    "feedback_description": "Đánh giá 7 ngày sau xuất bản và tối ưu prompt",
+    "compliance_title": "Tuân thủ",
+    "compliance_description": "Công bố AI, siêu dữ liệu C2PA và kiểm tra ToS nền tảng",
+    "coming_soon": "Sắp ra mắt"
+  },
+  "agi_showcase": {
+    "title": "Xây dựng cho kỷ nguyên AGI",
+    "subtitle": "Tương lai hóa nhà máy nội dung của bạn với tự động hóa thông minh — học hỏi, thích nghi và mang lại kết quả đo lường được",
+    "outcome_tracking_title": "Theo dõi kết quả",
+    "outcome_tracking_desc": "Theo dõi lượt xem, tỷ lệ click, doanh thu và tương tác cho mọi lần thực thi SOP. Sáng tạo nội dung dựa trên dữ liệu.",
+    "confidence_title": "Chấm điểm độ tin cậy",
+    "confidence_desc": "AI tự đánh giá chất lượng ở mọi bước. Khi độ tin cậy giảm dưới ngưỡng, nó sẽ báo cáo cho bạn — không có lỗi âm thầm.",
+    "multi_agent_title": "Thực thi đa đại lý",
+    "multi_agent_desc": "Kiến trúc giám sát + nhân viên chạy SOP phức tạp song song. Đại lý kịch bản, giọng nói, video và xuất bản làm việc đồng thời.",
+    "pricing_title": "Định giá theo kết quả",
+    "pricing_desc": "Trả phí dựa trên kết quả, không phải sử dụng. Công cụ định giá gắn phí với doanh thu thực tế — động lực đồng nhất.",
+    "feedback_title": "Phản hồi hiệu suất",
+    "feedback_desc": "Chu kỳ đánh giá 7 ngày sau xuất bản tự động xác định điều gì hiệu quả và tối ưu hóa prompt để có kết quả tốt hơn.",
+    "compliance_title": "Sẵn sàng tuân thủ",
+    "compliance_desc": "Tích hợp công bố AI, theo dõi siêu dữ liệu C2PA và tuân thủ ToS nền tảng. Sẵn sàng cho mọi môi trường quy định."
   }
 }
