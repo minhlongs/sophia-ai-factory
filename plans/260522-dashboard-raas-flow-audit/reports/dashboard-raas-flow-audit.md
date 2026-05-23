@@ -5,7 +5,8 @@ Scope: user dashboard -> onboarding/BYOK -> RaaS mission creation -> video/distr
 Repo: `/Users/macbook/projects/sophia-ai-factory`
 App: `apps/sophia-ai-factory`
 Original production SHA observed: `3b3bbcac` via `/api/version`
-Current deployed SHA verified: `7833879f` via `/api/version`
+Post-fix app-code deploy SHA verified: `7833879f` via `/api/version`
+Note: subsequent docs-only audit commits can advance `/api/version` without changing app runtime code; verify the latest deployed SHA with `/api/version` during handoff.
 
 ## Verdict
 
