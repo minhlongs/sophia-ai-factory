@@ -1,9 +1,9 @@
 # AGI OpenClaw Foundation — Implementation Plan
 
 **Date:** 2026-05-22
-**Status:** Phase 1 COMPLETE ✅ (deployed 24bcfdc6, migrations applied)
+**Status:** Phases 1-2 COMPLETE ✅, Phases 3-4 IN PROGRESS
 **Source:** `plans/reports/research-synthesis-agi-openclaw-strategy-2026.md`
-**Scope:** Phase 1 (Foundation) — code-implementable tasks within Sophia codebase
+**Scope:** All 4 phases — code-implementable tasks within Sophia codebase
 
 ---
 
@@ -12,35 +12,66 @@
 | Phase | Timeline | Status | Description |
 |-------|----------|--------|-------------|
 | 1 | Now | ✅ COMPLETE | SOP execution analytics + DAG execution prep |
-| 2 | M2-4 | ⏳ Planned | DSPy optimization + creator memory + A/B testing |
-| 3 | M4-6 | ⏳ Planned | Multi-agent execution + confidence escalation |
-| 4 | M6-12 | ⏳ Planned | Outcome-based pricing + agent API + white-label |
+| 2 | M2-4 | ✅ COMPLETE | DAG executor + template registry + experiment framework |
+| 3 | M4-6 | 🔄 IN PROGRESS | Confidence escalation + outcome tracking + multi-agent schema |
+| 4 | M6-12 | 🔄 IN PROGRESS | Outcome pricing + agent API + feedback loop + compliance |
+
+**Deployed commits:** `24bcfdc6` (P1), `1f819959` (P2), `8f118756` (P2 fix)
 
 ---
 
-## Phase 1: Foundation (Current Sprint)
+## Phase 1: Foundation — [plan details in tasks A-C above, COMPLETE]
+## Phase 2: Intelligence — [see phase-02-intelligence.md, COMPLETE]
+## Phase 3: Autonomy — [see phase-03-autonomy.md]
 
-### Task A: SOP Execution Analytics (D1 + Repository)
-- [x] D1 migration: `sop_execution_logs` table (execution_id, sop_id, user_id, step_index, step_name, status, input_hash, output_summary, duration_ms, cost_cents, error_message, created_at)
-- [x] D1 migration: `sop_execution_metrics` table (execution_id, total_duration_ms, total_cost_cents, steps_completed, steps_failed, quality_score, user_rating)
-- [x] Repository: `seed/db/repositories/sop-execution-analytics-repo.ts` — logStep, logCompletion, getExecutionMetrics, getSOPPerformance, getCreatorPerformance
-- [x] Canonical migration: `migrations/0127_sop_execution_analytics.sql`
-- **Files:** `src/seed/db/migrations/`, `src/seed/db/repositories/`, `migrations/`
+### Task G: Confidence Scoring & Human Escalation
+- [ ] D1 migration: `sop_step_confidence` + `escalation_requests` tables
+- [ ] Types: `seed/types/confidence.ts`
+- [ ] Repository: `seed/db/repositories/confidence-escalation-repo.ts`
+- [ ] Domain logic: `tree/sop/confidence-scorer.ts`
+- [ ] Canonical migration: `migrations/0131_confidence_escalation.sql`
 
-### Task B: SOP DAG Definition Schema
-- [x] Type definitions: `seed/types/sop-dag.ts` — DAGNode, DAGEdge, SOPGraph, ExecutionPlan
-- [x] DAG builder utility: `tree/sop/dag-builder.ts` — converts linear SOP steps to DAG with parallel detection
-- [x] Parallel execution planner: `tree/sop/parallel-planner.ts` — identifies independent steps, creates execution waves
-- **Files:** `src/seed/types/`, `src/tree/sop/`
+### Task H: Outcome Tracking
+- [ ] D1 migration: `sop_execution_outcomes` table
+- [ ] Types: `seed/types/outcome.ts`
+- [ ] Repository: `seed/db/repositories/outcome-tracking-repo.ts`
+- [ ] Canonical migration: `migrations/0132_outcome_tracking.sql`
 
-### Task C: Creator Context Memory Schema
-- [x] D1 migration: `creator_memory` table (user_id, memory_type, content_json, relevance_score, expires_at, created_at)
-- [x] Repository: `seed/db/repositories/creator-memory-repo.ts` — addMemory, getRelevantMemories, pruneExpired
-- [x] Canonical migration: `migrations/0128_creator_memory.sql`
-- **Files:** `src/seed/db/migrations/`, `src/seed/db/repositories/`, `migrations/`
+### Task I: Multi-Agent Execution Schema
+- [ ] D1 migration: `agent_execution_sessions` + `agent_task_assignments` tables
+- [ ] Types: `seed/types/multi-agent.ts`
+- [ ] Coordinator: `tree/sop/multi-agent-coordinator.ts`
+- [ ] Canonical migration: `migrations/0133_multi_agent.sql`
 
-### Success Criteria
+## Phase 4: AGI-Era — [see phase-04-agi-era.md]
+
+### Task J: Outcome-Based Pricing
+- [ ] D1 migration: `outcome_pricing_tiers` + `outcome_billing_events` tables
+- [ ] Types: `seed/types/outcome-pricing.ts`
+- [ ] Engine: `tree/billing/outcome-pricing-engine.ts`
+- [ ] Canonical migration: `migrations/0134_outcome_pricing.sql`
+
+### Task K: Agent API
+- [ ] D1 migration: `api_keys` + `api_request_log` tables
+- [ ] Types: `seed/types/agent-api.ts`
+- [ ] Auth: `tree/api/agent-api-auth.ts`
+- [ ] Canonical migration: `migrations/0135_agent_api.sql`
+
+### Task L: Performance Feedback Loop
+- [ ] D1 migration: `performance_feedback_cycles` + `prompt_optimization_log` tables
+- [ ] Types: `seed/types/performance-feedback.ts`
+- [ ] Engine: `tree/sop/performance-feedback-engine.ts`
+- [ ] Canonical migration: `migrations/0136_performance_feedback.sql`
+
+### Task M: Compliance Metadata
+- [ ] D1 migration: `compliance_metadata` table
+- [ ] Types: `seed/types/compliance.ts`
+- [ ] Tracker: `tree/compliance/compliance-tracker.ts`
+- [ ] Canonical migration: `migrations/0137_compliance.sql`
+
+### Success Criteria (Phases 3-4)
 - tsc clean, npm run build passes, npm test passes
-- 3 new D1 tables with indexes
-- DAG types + builder compiles and handles linear→parallel conversion
-- All canonical migrations present in migrations/
+- 9 new D1 tables (migrations 0131-0137)
+- All canonical migrations in migrations/
+- All type definitions compile
+- All repos/engines follow established patterns
