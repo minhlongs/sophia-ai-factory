@@ -4,6 +4,7 @@ name = "sophia-ai-factory"
 main = ".open-next/worker.js"
 compatibility_date = "2026-03-17"
 compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+minify = true
 
 [assets]
 directory = ".open-next/assets"
