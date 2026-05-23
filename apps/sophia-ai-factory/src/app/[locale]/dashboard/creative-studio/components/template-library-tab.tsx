@@ -20,7 +20,6 @@ const VIDEO_TEMPLATES = [
     name: 'Cinematic Story',
     description: 'Full-screen cinematic video with dramatic transitions and professional pacing',
     category: 'video',
-    icon: '🎬',
     path: 'path-a',
   },
   {
@@ -28,7 +27,6 @@ const VIDEO_TEMPLATES = [
     name: 'Overlay Highlight',
     description: 'Dynamic text overlays on video with animated callouts and branded graphics',
     category: 'video',
-    icon: '📹',
     path: 'path-b',
   },
 ];
@@ -76,7 +74,6 @@ export function TemplateLibraryTab({ tier }: TemplateLibraryTabProps) {
                 name={template.name}
                 description={template.description}
                 category={template.category}
-                icon={template.icon}
                 onUse={() =>
                   router.push(`/dashboard/create?template=${template.id}`)
                 }
@@ -98,7 +95,6 @@ export function TemplateLibraryTab({ tier }: TemplateLibraryTabProps) {
                 name={template.name}
                 description={template.description}
                 category={template.category}
-                icon={template.icon}
                 onUse={() =>
                   router.push(
                     `/dashboard/create?template=${template.id}&path=${template.path}`
