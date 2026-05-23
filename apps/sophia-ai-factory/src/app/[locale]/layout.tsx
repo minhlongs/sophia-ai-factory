@@ -145,7 +145,8 @@ export default async function RootLayout({
         <script
           nonce={nonce}
           dangerouslySetInnerHTML={{
-            __html: "window.__name=window.__name||function(fn){return fn;};",
+            __html:
+              "window.__name=window.__name||function(fn){return fn;};window.n=window.n||window.__name;",
           }}
         />
       </head>
