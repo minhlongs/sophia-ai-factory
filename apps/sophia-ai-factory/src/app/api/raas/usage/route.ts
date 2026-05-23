@@ -8,6 +8,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/seed/db/client';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { resolveOrgId } from '@/seed/auth/resolve-org-id';
+import { getUserTier } from '@/seed/db/get-user-tier';
 import { logger } from '@/seed/utils/logger-utility';
 import { getMcuMonthlyLimit } from '@/seed/config/tiers';
 import type { Tier } from '@/seed/types';
@@ -20,19 +22,16 @@ export async function GET(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const orgId = await resolveOrgId(user.id);
+    if (!orgId) {
+      return NextResponse.json({ error: 'org_not_found' }, { status: 422 });
+    }
     const db = createServerClient();
 
     const { searchParams } = new URL(request.url);
     const days = Math.min(parseInt(searchParams.get('days') ?? '30'), 90);
 
-    // Get user tier from profiles table
-    const { data: profile } = await db
-      .from('profiles')
-      .select('tier')
-      .eq('id', user.id)
-      .single();
-
-    const tier = (profile?.tier as Tier) ?? 'BASIC';
+    const tier = (await getUserTier(user.id)) as Tier;
     const monthlyLimit = getMcuMonthlyLimit(tier);
 
     // Calculate monthly MCU used from completed missions
@@ -43,7 +42,7 @@ export async function GET(request: NextRequest) {
     const { data: rawUsageData } = await db
       .from('missions')
       .select('mcu_cost, created_at')
-      .eq('org_id', user.id)
+      .eq('org_id', orgId)
       .eq('status', 'completed')
       .gte('created_at', startOfMonth.toISOString());
     const usageData = rawUsageData as unknown as { mcu_cost: number; created_at: string }[] | null;
@@ -58,7 +57,7 @@ export async function GET(request: NextRequest) {
     const { data: rawDailyData } = await db
       .from('missions')
       .select('mcu_cost, created_at')
-      .eq('org_id', user.id)
+      .eq('org_id', orgId)
       .gte('created_at', sinceDate.toISOString());
     const dailyData = rawDailyData as unknown as { mcu_cost: number; created_at: string }[] | null;
 

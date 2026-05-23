@@ -10,6 +10,7 @@
 
 import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { cookies } from 'next/headers'
 import { Sparkles, Zap, TrendingUp, ArrowRight } from 'lucide-react'
 import { getD1Raw } from '@/seed/db/client'
@@ -107,13 +108,13 @@ export default async function ReferralPage({ params }: Props) {
           economy with AI-powered automation.
         </p>
 
-        <a
+        <Link
           href="/en/register"
           className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-violet-600 hover:bg-violet-500 text-lg font-semibold transition-colors"
         >
           Get Started Free
           <ArrowRight className="w-5 h-5" />
-        </a>
+        </Link>
       </div>
 
       {/* Features */}

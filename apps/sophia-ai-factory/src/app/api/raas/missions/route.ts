@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createServerClient } from '@/seed/db/client';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { resolveOrgId } from '@/seed/auth/resolve-org-id';
 import { getUserTier } from '@/seed/db/get-user-tier';
 import { checkMissionQuota } from '@/forest/quota/mission-quota';
 import { logger } from '@/seed/utils/logger-utility';
@@ -55,6 +56,10 @@ export async function GET(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const orgId = await resolveOrgId(user.id);
+    if (!orgId) {
+      return NextResponse.json({ error: 'org_not_found' }, { status: 422 });
+    }
     const db = createServerClient();
 
     const { searchParams } = new URL(request.url);
@@ -65,7 +70,7 @@ export async function GET(request: NextRequest) {
     const { data: missions, error, count } = await db
       .from('missions')
       .select('id, title, command, status, priority, mcu_cost, result, error_message, created_at, updated_at, completed_at', { count: 'exact' })
-      .eq('org_id', user.id)
+      .eq('org_id', orgId)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
@@ -92,12 +97,16 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const orgId = await resolveOrgId(user.id);
+    if (!orgId) {
+      return NextResponse.json({ error: 'org_not_found' }, { status: 422 });
+    }
     const db = createServerClient();
 
     // Tier quota gate (defense-in-depth) — prevents endless mission creation
     // by lower tiers exhausting platform compute.
     const tier = await getUserTier(user.id);
-    const quota = await checkMissionQuota(user.id, tier, 'missions');
+    const quota = await checkMissionQuota(orgId, tier, 'missions');
     if (!quota.allowed) {
       return NextResponse.json(
         {
@@ -177,7 +186,7 @@ export async function POST(request: NextRequest) {
     const { data: mission, error } = await db
       .from('missions')
       .insert({
-        org_id: user.id,
+        org_id: orgId,
         title,
         command,
         params,

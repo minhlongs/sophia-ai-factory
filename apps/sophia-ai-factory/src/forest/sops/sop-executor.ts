@@ -17,6 +17,7 @@ import { logger } from '@/seed/utils/logger-utility';
 import { buildSOPGraph } from '@/tree/sop/dag-builder';
 import type { LinearStep } from '@/tree/sop/dag-builder';
 import { planExecution } from '@/tree/sop/parallel-planner';
+import { toError } from '@/seed/utils/to-error';
 import {
   logStepExecution,
   logExecutionCompletion,
@@ -97,7 +98,7 @@ async function runNode(
       stepIndex,
       stepName: sopStep.name_en,
       error: stepError,
-    } as unknown as Error);
+    });
   }
 
   const completedAt = Date.now();
@@ -167,7 +168,7 @@ export const sopExecute = inngest.createFunction(
           updated_at: Math.floor(Date.now() / 1000),
         }).eq('id', executionId);
       });
-      logger.error('[sopExecute] Execution failed — template not found', { executionId, sopTemplateId } as unknown as Error);
+      logger.error('[sopExecute] Execution failed — template not found', toError(`Template not found: ${sopTemplateId}`), { executionId, sopTemplateId });
       return { status: 'failed', error: `Template not found: ${sopTemplateId}` };
     }
 

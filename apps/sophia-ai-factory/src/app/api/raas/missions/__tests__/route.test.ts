@@ -13,9 +13,27 @@ import { NextRequest } from 'next/server';
 
 // ── Mock user auth ───────────────────────────────────────────────────────────
 const MOCK_USER = { id: 'user-abc-123', email: 'test@example.com' };
+const MOCK_ORG_ID = 'org-real-456';
 
 vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: vi.fn(async () => MOCK_USER),
+}));
+
+vi.mock('@/seed/auth/resolve-org-id', () => ({
+  resolveOrgId: vi.fn(async () => MOCK_ORG_ID),
+}));
+
+vi.mock('@/seed/db/get-user-tier', () => ({
+  getUserTier: vi.fn(async () => 'BASIC'),
+}));
+
+vi.mock('@/forest/quota/mission-quota', () => ({
+  checkMissionQuota: vi.fn(async () => ({
+    allowed: true,
+    used: 0,
+    limit: 10,
+    resetAt: '2026-06-01T00:00:00.000Z',
+  })),
 }));
 
 vi.mock('@/seed/utils/logger-utility', () => ({
@@ -70,6 +88,7 @@ vi.mock('@/seed/db/client', () => ({
   createServerClient: vi.fn(() => mockDb),
 }));
 
+import { resolveOrgId } from '@/seed/auth/resolve-org-id';
 import { POST } from '../route';
 
 function makePostRequest(body: unknown): NextRequest {
@@ -85,6 +104,7 @@ describe('POST /api/raas/missions — BYOK wiring', () => {
     lastInserted = null;
     mockUserApiKeyRows = [];
     vi.clearAllMocks();
+    vi.mocked(resolveOrgId).mockResolvedValue(MOCK_ORG_ID);
   });
 
   it('happy path — model field present, provider configured → 201 with byok columns', async () => {
@@ -99,6 +119,8 @@ describe('POST /api/raas/missions — BYOK wiring', () => {
 
     const res = await POST(req);
     expect(res.status).toBe(201);
+    expect(lastInserted?.org_id).toBe(MOCK_ORG_ID);
+    expect(lastInserted?.org_id).not.toBe(MOCK_USER.id);
     expect(lastInserted?.byok_provider_id).toBe('anthropic');
     expect(lastInserted?.byok_model_id).toBe('claude-sonnet-4-6');
   });
@@ -174,5 +196,21 @@ describe('POST /api/raas/missions — BYOK wiring', () => {
     expect(lastInserted?.byok_provider_id).toBe('openrouter');
     expect(lastInserted?.byok_model_id).toBe('openai/gpt-4o');
     expect(lastInserted?.command).toBe('nl_decompose');
+  });
+
+  it('missing organization membership → 422 and no mission insert', async () => {
+    vi.mocked(resolveOrgId).mockResolvedValue(null);
+
+    const req = makePostRequest({
+      title: 'No Org Mission',
+      command: 'content:blog',
+      params: {},
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(422);
+    const body = await res.json() as { error: string };
+    expect(body.error).toBe('org_not_found');
+    expect(lastInserted).toBeNull();
   });
 });

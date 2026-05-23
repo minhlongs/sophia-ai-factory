@@ -4,8 +4,8 @@
  * Defense-in-depth gate to prevent a BASIC tenant from exhausting platform
  * compute by spamming /api/raas/missions or /api/missions/auto-video.
  *
- * Counts rows in `missions` (raas) or `engine_missions` (auto-video) created
- * in the current calendar month for the requesting user.
+ * Counts rows in `missions` (RaaS org scope) or `engine_missions`
+ * (auto-video user scope) created in the current calendar month.
  *
  * Uses count-only queries to avoid introducing a new usage table — keeps
  * the surface YAGNI and works against the existing schema.
@@ -39,7 +39,7 @@ function nextMonthResetAtIso(): string {
 }
 
 /**
- * Check whether the user has remaining mission slots this month.
+ * Check whether the owner has remaining mission slots this month.
  *
  * `table` selects which table to count:
  *  - 'missions'        → /api/raas/missions (uses org_id column for owner)
@@ -51,7 +51,7 @@ function nextMonthResetAtIso(): string {
  * D1 layer itself.
  */
 export async function checkMissionQuota(
-  userId: string,
+  ownerId: string,
   tier: string,
   table: 'missions' | 'engine_missions',
 ): Promise<MissionQuotaCheck> {
@@ -69,18 +69,18 @@ export async function checkMissionQuota(
     if (table === 'missions') {
       const sinceText = new Date(sinceMs).toISOString().replace('T', ' ').slice(0, 19);
       const sql = `SELECT COUNT(*) AS c FROM missions WHERE ${ownerCol} = ?1 AND datetime(created_at) >= datetime(?2)`;
-      row = await d1.prepare(sql).bind(userId, sinceText).first<{ c: number }>();
+      row = await d1.prepare(sql).bind(ownerId, sinceText).first<{ c: number }>();
     } else {
       const sinceSec = Math.floor(sinceMs / 1000);
       const sql = `SELECT COUNT(*) AS c FROM engine_missions WHERE ${ownerCol} = ?1 AND created_at >= ?2`;
-      row = await d1.prepare(sql).bind(userId, sinceSec).first<{ c: number }>();
+      row = await d1.prepare(sql).bind(ownerId, sinceSec).first<{ c: number }>();
     }
     const used = row?.c ?? 0;
     return { allowed: used < limit, used, limit, resetAt };
   } catch (err) {
     logger.warn('[mission-quota] D1 count failed (fail-open)', {
       table,
-      userId,
+      ownerId,
       error: err instanceof Error ? err.message : String(err),
     });
     return { allowed: true, used: 0, limit, resetAt };

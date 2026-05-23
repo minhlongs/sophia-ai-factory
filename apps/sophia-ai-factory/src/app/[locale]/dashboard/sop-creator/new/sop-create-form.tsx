@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState, useTransition } from 'react';
+import Link from 'next/link';
 import { createSopAction } from '../actions';
 
 const SOP_CATEGORIES = [
@@ -111,9 +112,9 @@ export function SopCreateForm() {
         >
           {isPending ? 'Creating...' : 'Create SOP'}
         </button>
-        <a href="/dashboard/sop-creator" className="px-4 py-2.5 text-sm text-white/50 hover:text-white transition-colors">
+        <Link href="/dashboard/sop-creator" className="px-4 py-2.5 text-sm text-white/50 hover:text-white transition-colors">
           Cancel
-        </a>
+        </Link>
       </div>
     </form>
   );
