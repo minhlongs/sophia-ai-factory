@@ -19,7 +19,6 @@ interface QuotaExceededPayload {
   remaining: unknown
   retryAfter?: number
   upgradeUrl?: string
-  polarCustomerId?: string
   dunningState?: string
   dunningReason?: string
 }
@@ -37,7 +36,6 @@ export function buildQuotaExceededResponse(denied: QuotaExceededPayload): NextRe
       remaining: denied.remaining,
       retry_after: denied.retryAfter,
       upgrade_url: denied.upgradeUrl,
-      polar_customer_id: denied.polarCustomerId,
       dunning_state: denied.dunningState,
       dunning_reason: denied.dunningReason,
     },

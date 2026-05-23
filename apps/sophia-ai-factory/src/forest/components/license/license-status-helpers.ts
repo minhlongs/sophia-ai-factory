@@ -12,7 +12,6 @@ export interface LicenseStatus {
   rateLimit: number;
   quotaLimit: number;
   currentUsage: number;
-  polarCustomerId?: string | null;
   stripeCustomerId?: string | null;
 }
 

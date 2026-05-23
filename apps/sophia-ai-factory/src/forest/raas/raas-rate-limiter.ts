@@ -56,11 +56,11 @@ export async function enforceRaasQuota(
 
     const { data: licenseRaw } = await db
       .from('raas_licenses')
-      .select('nonce, tier, polar_customer_id')
+      .select('nonce, tier')
       .eq('key_hash', keyHash)
       .single()
 
-    const license = licenseRaw as { nonce: string; tier: string; polar_customer_id: string | null } | null
+    const license = licenseRaw as { nonce: string; tier: string } | null
 
     if (!license) {
       return {
@@ -106,7 +106,6 @@ export async function enforceRaasQuota(
       endpoint: request.nextUrl.pathname,
       ipAddress: request.headers.get('x-forwarded-for') || undefined,
       userAgent: request.headers.get('user-agent') || undefined,
-      polarCustomerId: license.polar_customer_id || undefined,
     }, DEFAULT_CONFIG)
 
     if (!quotaResult.allowed) {

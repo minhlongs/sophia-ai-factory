@@ -29,7 +29,6 @@ export interface DunningAttemptRow {
   next_retry_at: string | null;
   scheduled_retry_count: number;
   stripe_invoice_id: string | null;
-  polar_order_id: string | null;
   ip_address?: string;
   user_agent?: string;
   created_at: string;
@@ -42,9 +41,8 @@ export interface PaymentFailureContext {
   amount: number;
   currency: string;
   failureReason: string;
-  paymentProvider: 'stripe' | 'polar';
+  paymentProvider: 'stripe';
   stripeInvoiceId?: string;
-  polarOrderId?: string;
   ipAddress?: string;
   userAgent?: string;
 }
@@ -55,7 +53,7 @@ export interface PaymentSuccessContext {
   tier: Tier;
   amount: number;
   currency: string;
-  paymentProvider: 'stripe' | 'polar';
+  paymentProvider: 'stripe';
   providerChargeId: string;
   providerInvoiceId?: string;
 }
@@ -84,7 +82,6 @@ export async function recordDunningAttempt(attempt: Omit<DunningAttemptRow, 'id'
       next_retry_at: attempt.next_retry_at,
       scheduled_retry_count: attempt.scheduled_retry_count,
       stripe_invoice_id: attempt.stripe_invoice_id,
-      polar_order_id: attempt.polar_order_id,
       ...(attempt.ip_address && { ip_address: attempt.ip_address }),
       ...(attempt.user_agent && { user_agent: attempt.user_agent }),
     })

@@ -29,14 +29,11 @@ export async function getQuotaStatus(
   userId: string,
   licenseNonce: string,
   tier: string,
-  polarCustomerId?: string
 ): Promise<{
   usage: { hourly: number; daily: number; monthly: number; requests: number }
   limits: { hourlyCredits: number; dailyCredits: number; monthlyCredits: number; dailyRequests: number }
   percentages: { hourly: number; daily: number; monthly: number }
   status: 'ok' | 'warning' | 'critical'
-  polarSynced: boolean
-  lastPolarSync?: string
 }> {
   const limits = await getEffectiveQuotaLimits(licenseNonce, tier)
   const db = createServerClient()
@@ -67,21 +64,5 @@ export async function getQuotaStatus(
   const maxPercent = Math.max(percentages.hourly, percentages.daily, percentages.monthly)
   const status: 'ok' | 'warning' | 'critical' = maxPercent >= 100 ? 'critical' : maxPercent >= 80 ? 'warning' : 'ok'
 
-  let polarSynced = false
-  let lastPolarSync: string | undefined
-
-  if (polarCustomerId) {
-    const { data: syncData } = await db
-      .from('usage_events').select('created_at')
-      .eq('external_customer_id', polarCustomerId)
-      .eq('is_polar_synced', true)
-      .order('created_at', { ascending: false })
-      .limit(1).single() as { data: { created_at: number } | null; error: unknown }
-    if (syncData) {
-      polarSynced = true
-      lastPolarSync = new Date(syncData.created_at * 1000).toISOString()
-    }
-  }
-
-  return { usage, limits, percentages, status, polarSynced, lastPolarSync }
+  return { usage, limits, percentages, status }
 }

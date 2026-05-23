@@ -20,9 +20,9 @@ export async function aggregateUsageForLicense(
   try {
     const { data: license, error: licenseError } = await db
       .from('raas_licenses')
-      .select('nonce, tier, created_by, polar_customer_id')
+      .select('nonce, tier, created_by')
       .eq('nonce', licenseNonce)
-      .single() as { data: { nonce: string; tier: string; created_by: string; polar_customer_id: string | null } | null; error: unknown }
+      .single() as { data: { nonce: string; tier: string; created_by: string } | null; error: unknown }
 
     if (licenseError || !license) {
       logger.debug('[Usage Aggregator] License not found', { licenseNonce: licenseNonce.slice(0, 8) })
@@ -31,7 +31,6 @@ export async function aggregateUsageForLicense(
 
     const userId = license.created_by
     const tier = (license.tier || 'BASIC').toUpperCase() as Tier
-    const polarCustomerId = license.polar_customer_id
 
     const { periodStart: defaultStart, periodEnd: defaultEnd } = getCurrentBillingPeriod()
     const startTs = periodStart || defaultStart
@@ -78,20 +77,6 @@ export async function aggregateUsageForLicense(
       status = 'warning'
     }
 
-    let lastPolarSync: string | undefined
-    if (polarCustomerId) {
-      const { data: syncData } = await db
-        .from('usage_events').select('created_at')
-        .eq('external_customer_id', polarCustomerId)
-        .eq('is_polar_synced', true)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single() as { data: { created_at: number } | null }
-      if (syncData?.created_at) {
-        lastPolarSync = new Date(syncData.created_at * 1000).toISOString()
-      }
-    }
-
     logger.info('[Usage Aggregator] Aggregated usage for license', {
       licenseNonce: licenseNonce.slice(0, 8) + '...', tier, status, monthlyUsage: monthlyCredits, monthlyLimit: limits.monthlyCredits,
     })
@@ -104,7 +89,6 @@ export async function aggregateUsageForLicense(
       monthlyCredits, monthlyLimit: limits.monthlyCredits, monthlyOverage,
       dailyRequests, dailyRequestLimit: limits.dailyRequests, dailyRequestOverage,
       hourlyPercentage, dailyPercentage, monthlyPercentage, status,
-      polarCustomerId: polarCustomerId || undefined, lastPolarSync,
     }
   } catch (error) {
     logger.error('[Usage Aggregator] Failed to aggregate usage', toError(error))

@@ -58,8 +58,6 @@ vi.mock('@/seed/db/client', () => ({
                 data: {
                   tier: 'PREMIUM',
                   agency_id: 'agency-123',
-                  polar_customer_id: 'pol_cust_abc123',
-                  polar_subscription_status: 'active',
                   expires_at: null,
                   created_at: Date.now(),
                 },
@@ -167,7 +165,6 @@ describe('JWT Claims Enrichment Service', () => {
       expect(payload?.billing_status).toBe('active');
       expect(payload?.is_paid).toBe(true);
       expect(payload?.agency_id).toBe('agency-123');
-      expect(payload?.polar_customer_id).toBe('pol_cust_abc123');
     });
 
     it('should include quota limits in payload', async () => {
@@ -262,8 +259,6 @@ describe('JWT Claims Enrichment Service', () => {
       expect(context).not.toBeNull();
       expect(context?.tier).toBe('PREMIUM');
       expect(context?.agencyId).toBe('agency-123');
-      expect(context?.polarCustomerId).toBe('pol_cust_abc123');
-      expect(context?.polarStatus).toBe('active');
     });
 
     it('should return null for non-existent license', async () => {

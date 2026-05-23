@@ -1,7 +1,7 @@
 /**
  * Admin Customer Linkage Audit Endpoint
  *
- * Audit and fix licenses missing Polar/Stripe customer IDs
+ * Audit and fix licenses missing Stripe customer IDs
  * Required for usage metering and billing reconciliation
  *
  * Authentication: Better Auth session + role === 'admin'
@@ -28,11 +28,8 @@ export async function GET(request: NextRequest) {
   try {
     const db = createServerClient();
 
-    // Find licenses missing customer IDs
+    // Find licenses missing Stripe customer ID
     const { data: licensesData, error } = await db
-      // Columns defined in migration 0019-raas-licenses.sql. polar_customer_id retained
-      // for legacy data only — Polar.sh is BANNED per Sophia rules (CLAUDE.md), new
-      // licenses populate stripe_customer_id only.
       .from('raas_licenses')
       .select(`
         nonce,
@@ -40,11 +37,10 @@ export async function GET(request: NextRequest) {
         created_by,
         created_at,
         metadata,
-        polar_customer_id,
         stripe_customer_id
       `)
       .eq('is_revoked', false)
-      .or('polar_customer_id.is.null,stripe_customer_id.is.null')
+      .is('stripe_customer_id', null)
       .limit(100);
 
     const licenses = licensesData as Array<{
@@ -53,7 +49,6 @@ export async function GET(request: NextRequest) {
       created_by: string;
       created_at: string;
       metadata: Record<string, unknown> | null;
-      polar_customer_id: string | null;
       stripe_customer_id: string | null;
     }> | null;
 
@@ -66,30 +61,25 @@ export async function GET(request: NextRequest) {
     }
 
     // Analyze linkage status
-    const missingPolar = licenses?.filter(l => !l.polar_customer_id).length ?? 0;
     const missingStripe = licenses?.filter(l => !l.stripe_customer_id).length ?? 0;
-    const missingBoth = licenses?.filter(l => !l.polar_customer_id && !l.stripe_customer_id).length ?? 0;
 
-    // Check if metadata has customer IDs (for backfill)
+    // Check if metadata has stripe customer ID (for backfill)
     const canBackfillFromMetadata = licenses?.filter(l => {
       const metadata = l.metadata as Record<string, unknown> | null;
-      return metadata && (metadata.polar_customer_id || metadata.stripe_customer_id);
+      return metadata && metadata.stripe_customer_id;
     }).length || 0;
 
     return NextResponse.json({
       total: licenses?.length || 0,
-      missingPolar,
       missingStripe,
-      missingBoth,
       canBackfillFromMetadata,
       licenses: licenses?.map(l => ({
         nonce: l.nonce.slice(0, 8) + '...',
         tier: l.tier,
         createdBy: l.created_by,
         createdAt: l.created_at,
-        hasPolarCustomerId: !!l.polar_customer_id,
         hasStripeCustomerId: !!l.stripe_customer_id,
-        hasMetadataCustomerId: !!(l.metadata as Record<string, unknown> | null)?.polar_customer_id || !!(l.metadata as Record<string, unknown> | null)?.stripe_customer_id,
+        hasMetadataStripeCustomerId: !!(l.metadata as Record<string, unknown> | null)?.stripe_customer_id,
       })),
     });
   } catch (error) {
@@ -105,8 +95,8 @@ export async function GET(request: NextRequest) {
 /**
  * POST /api/admin/usage/customer-linkage
  *
- * Link customer IDs to licenses
- * Body: { license_nonce, polar_customer_id?, stripe_customer_id? }
+ * Link Stripe customer ID to a license
+ * Body: { license_nonce, stripe_customer_id }
  */
 export async function POST(request: NextRequest) {
   const auth = await requireAdmin(request);
@@ -127,15 +117,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { license_nonce, polar_customer_id, stripe_customer_id } = validation.data;
+    const { license_nonce, stripe_customer_id } = validation.data;
     const db = createServerClient();
 
-    // Update license with customer IDs
+    // Update license with Stripe customer ID
     const { error: updateError } = await (db.from('raas_licenses') as ReturnType<typeof db.from>)
-      .update({
-        ...(polar_customer_id ? { polar_customer_id } : {}),
-        ...(stripe_customer_id ? { stripe_customer_id } : {}),
-      })
+      .update({ stripe_customer_id })
       .eq('nonce', license_nonce);
 
     if (updateError) {
@@ -148,14 +135,12 @@ export async function POST(request: NextRequest) {
 
     logger.info('[Customer Linkage] License updated successfully', {
       licenseNonce: license_nonce,
-      polarCustomerId: polar_customer_id,
       stripeCustomerId: stripe_customer_id,
     });
 
     return NextResponse.json({
       success: true,
       licenseNonce: license_nonce.slice(0, 8) + '...',
-      polarCustomerId: polar_customer_id,
       stripeCustomerId: stripe_customer_id,
     });
   } catch (error) {

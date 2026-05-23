@@ -82,9 +82,8 @@ export const violationsQuerySchema = z.object({
 
 export const customerLinkageRequestSchema = z.object({
   license_nonce: z.string().min(1, "license_nonce is required"),
-  polar_customer_id: z.string().optional(),
-  stripe_customer_id: z.string().optional(),
-}).refine((data) => data.polar_customer_id || data.stripe_customer_id, "At least one customer ID must be provided")
+  stripe_customer_id: z.string().min(1, "stripe_customer_id is required"),
+})
 
 export const ingestionTriggerRequestSchema = z.object({ networks: z.array(z.string()).optional() })
 

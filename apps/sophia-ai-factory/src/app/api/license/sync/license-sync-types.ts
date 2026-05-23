@@ -14,8 +14,6 @@ export interface SyncResult {
     tier: string;
     status: string;
     expiresAt?: number | null;
-    polarCustomerId?: string | null;
-    polarSubscriptionStatus?: string;
     featureEntitlements: string[];
     dunningState: string;
   };

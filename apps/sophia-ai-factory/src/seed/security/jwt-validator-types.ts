@@ -24,9 +24,6 @@ export interface ExtendedJwtPayload extends JwtPayload {
   license_expires_at?: number
   quota?: { tier: string; dailyCredits: number; hourlyCredits: number; dailyRequests: number; monthlyCredits: number }
   agency_id?: string
-  polar_customer_id?: string
-  polar_subscription_id?: string
-  polar_subscription_status?: string
   billing_status?: 'active' | 'past_due' | 'suspended'
   is_paid?: boolean
   overage_allowed?: boolean
@@ -59,8 +56,6 @@ export function extractEnrichedClaims(payload: JwtPayload | ExtendedJwtPayload):
     license_tier: payload.license_tier || 'BASIC',
     feature_entitlements: payload.feature_entitlements,
     feature_limits: payload.feature_limits || {},
-    polar_customer_id: payload.polar_customer_id,
-    polar_subscription_id: payload.polar_subscription_id,
     billing_status: payload.billing_status,
     is_paid: payload.is_paid,
     overage_allowed: payload.overage_allowed,

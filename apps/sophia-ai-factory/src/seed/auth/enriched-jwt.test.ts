@@ -79,8 +79,6 @@ describe('getLicenseContext', () => {
       data: {
         tier: 'PREMIUM',
         agency_id: 'agency-123',
-        polar_customer_id: 'cus_abc123',
-        polar_subscription_status: 'active',
         expires_at: 1735689600,
         created_at: 1704067200,
       },
@@ -92,8 +90,6 @@ describe('getLicenseContext', () => {
     expect(result).toBeDefined()
     expect(result?.tier).toBe('PREMIUM')
     expect(result?.agencyId).toBe('agency-123')
-    expect(result?.polarCustomerId).toBe('cus_abc123')
-    expect(result?.polarStatus).toBe('active')
   })
 
   it('should return null when license not found', async () => {
@@ -112,8 +108,6 @@ describe('getLicenseContext', () => {
       data: {
         tier: 'BASIC',
         agency_id: null,
-        polar_customer_id: null,
-        polar_subscription_status: null,
         expires_at: null,
         created_at: 1704067200,
       },
@@ -124,8 +118,6 @@ describe('getLicenseContext', () => {
 
     expect(result?.tier).toBe('BASIC')
     expect(result?.agencyId).toBeUndefined()
-    expect(result?.polarCustomerId).toBeUndefined()
-    expect(result?.polarStatus).toBeUndefined()
     expect(result?.expiresAt).toBeUndefined()
   })
 })
@@ -146,8 +138,6 @@ describe('createEnrichedJwt', () => {
         data: {
           tier: 'PREMIUM',
           agency_id: 'agency-123',
-          polar_customer_id: 'cus_abc123',
-          polar_subscription_status: 'active',
           expires_at: null,
           created_at: 1704067200,
         },
@@ -174,7 +164,6 @@ describe('createEnrichedJwt', () => {
     expect(result?.payload.license_nonce).toBe('test-nonce')
     expect(result?.payload.license_tier).toBe('PREMIUM')
     expect(result?.payload.agency_id).toBe('agency-123')
-    expect(result?.payload.polar_customer_id).toBe('cus_abc123')
     expect(result?.payload.dunning_state).toBe('ok')
     expect(result?.payload.quota.dailyCredits).toBe(500)
     expect(result?.payload.quota.tier).toBe('PREMIUM')
@@ -198,8 +187,6 @@ describe('createEnrichedJwt', () => {
         data: {
           tier: 'BASIC',
           agency_id: null,
-          polar_customer_id: null,
-          polar_subscription_status: null,
           expires_at: null,
           created_at: 1704067200,
         },
@@ -448,8 +435,6 @@ describe('refreshJwtIfExpired', () => {
         data: {
           tier: 'BASIC',
           agency_id: null,
-          polar_customer_id: null,
-          polar_subscription_status: null,
           expires_at: null,
           created_at: 1704067200,
         },

@@ -80,17 +80,25 @@ graph TD
   4. Wizard collects keys, validates them against real APIs.
   5. Wizard writes `.env.local` via `fs` (in dev) or instructions (in prod).
 
-### 3. The Data Layer (Hybrid)
-- **Primary DB (Supabase)**: User profiles, authentication, application settings, and encrypted API keys.
-- **Content DB (Airtable)**: Lightweight CMS for Scripts, Videos, and Affiliate data.
-- **Why Hybrid?**: Supabase handles secure user data and auth; Airtable remains for visual content management and n8n integration.
+### 3. The Data Layer (Cloudflare D1 + R2)
+- **Primary DB (Cloudflare D1)**: User profiles, authentication, application settings, and encrypted API keys.
+- **Media Storage (Cloudflare R2)**: Video outputs, backups, and cached assets.
+- **Why D1?**: Edge-native database colocated with Workers runtime, zero cold starts, native encryption support.
 - **Schema**:
-  - **Supabase**:
-    - `user_profiles`: Stores `settings` (JSONB) and `api_keys` (Encrypted JSONB).
-  - **Airtable**:
-    - `Scripts`: Stores generated text, status, and metadata.
-    - `Videos`: Stores final video URLs and performance metrics.
-    - `Affiliates`: Stores product research data.
+  - **D1 Tables**:
+    - `user_profiles`: Stores user metadata, subscription tier, telegram_chat_id
+    - `user_api_keys`: Encrypted BYOK credentials (openrouter, anthropic, elevenlabs, d-id, muapi)
+    - `payment_events`: Payment transaction records (NOWPayments, PayOS)
+    - `payout_batches`: Affiliate payout batches (Stripe Connect, crypto)
+    - `commission_ledger`: Per-conversion commission tracking and accrual
+    - `oauth_credentials`: Encrypted OAuth tokens (TikTok, YouTube, Reddit, etc.)
+    - `engine_missions`: Video generation jobs with status and output URLs
+    - `campaigns`: User-created content campaigns
+    - `audit_logs`: System audit trail with tamper-proof signatures
+  - **R2 Buckets**:
+    - `sophia-videos`: Final HeyGen/Wan 2.1 video outputs
+    - `sophia-ai-factory-opennext-cache`: NextJS incremental static regeneration cache
+    - `sophia-ai-factory-backups`: D1 database backups (30-day lifecycle)
 
 ### 4. The Automation Engine (n8n)
 - **Role**: Heavy lifting and orchestration.
@@ -145,11 +153,11 @@ graph TD
 - **Components**:
   - **Bot**: Registers webhooks with Telegram API.
   - **Webhook Handler**: Validates secrets and routes commands (`/campaign`, `/status`).
-  - **User Mapping**: Links `chat_id` to Supabase `user_id` via `/email` verification.
+  - **User Mapping**: Links `chat_id` to D1 `user_id` via `/email` verification (stored in `user_profiles.telegram_chat_id`).
 - **Flow**:
   1. **Command**: User sends `/campaign New Topic`.
-  2. **Validation**: Bot checks if `chat_id` exists in `user_profiles`.
-  3. **Trigger**: Bot inserts record into `campaigns` and sends `campaign.created` event to Inngest.
+  2. **Validation**: Bot checks if `chat_id` exists in D1 `user_profiles.telegram_chat_id`.
+  3. **Trigger**: Bot inserts record into D1 `campaigns` and sends `campaign.created` event to Inngest.
   4. **Feedback**: Bot replies with "Campaign Started".
   5. **Notification**: (Future) System sends push notification back to Telegram on completion.
 
@@ -159,8 +167,8 @@ graph TD
 - **Client-Side**: No sensitive keys are exposed to the browser. Keys are masked (e.g., `sk-****`).
 - **Server-Side**: All API requests are proxied through Next.js API Routes / Server Actions.
 - **Storage**:
-  - **System Keys**: stored in `.env.local` (local) or Vercel Environment Variables.
-  - **User Keys (BYOK)**: D1 table `user_api_keys` (D1-based, replaces Supabase for user-settable providers).
+  - **System Keys**: stored in `.env.local` (local) or Cloudflare Worker secrets (wrangler).
+  - **User Keys (BYOK)**: D1 table `user_api_keys` (encrypted at rest, decrypted on read).
 - **BYOK Provider Enum** (v1.14.18+):
   - **User-Settable**: `openrouter`, `anthropic`, `elevenlabs`, `d-id`, `muapi` (+ admin-only `heygen` for backward compat, removed from UI).
   - **Validation**: Zod superRefine per-provider regex (openrouter: `sk-or-v1-...`, anthropic: `sk-ant-api\d{2}-...`, muapi: `≥20 chars`, elevenlabs: `11_...`, d-id: format-check).
@@ -188,16 +196,20 @@ graph TD
   3.  **Database**: Row Level Security (RLS) can be used for hard limits (future optimization).
 - **Limits Config**: Defined in `src/config/tiers.ts` as the single source of truth.
 
-### 8. CI/CD & Automation (Binh Pháp Strategy)
-- **Pipeline**: GitHub Actions (`.github/workflows/ci-cd.yml`) implementing Binh Pháp methodology.
-  - **Lint & Type Check**: Static analysis to ensure code quality (Front 2).
-  - **Unit Tests**: Vitest for logic verification.
-  - **E2E Tests**: Playwright running against **Mock Mode** (`NEXT_PUBLIC_MOCK_AI_SERVICES=true`) for deterministic UI testing without API costs.
-  - **Build Verification**: Ensures the application builds successfully (Front 3).
-- **Deployment**:
-  - **Vercel**: Automated preview deployments for PRs and production deployment for main.
-  - **Infrastructure**: Idempotent scripts (`scripts/infra-sync.sh`) for setup and verification.
-  - **Verification**: Post-deploy smoke tests (`scripts/smoke-test.ts`) using deep health checks (`/api/health/`).
+### 9. CI/CD & Deployment (Cloudflare Workers)
+- **Build**: `npm run build` — Next.js compilation to OpenNext format (Cloudflare Workers compatible).
+- **Testing**:
+  - **Unit Tests**: Vitest with coverage tracking
+  - **Type Check**: TypeScript strict mode (zero `:any` types in prod)
+  - **Linting**: Biome code quality checks
+  - **E2E Tests** (optional): Playwright against mock mode for deterministic testing
+- **Deployment** (CF-direct doctrine):
+  - **Deploy Command**: `npm run deploy:full` (local wrangler CLI, NOT CI/CD)
+  - **Artifact**: `.open-next/worker.js` deployed to Cloudflare Workers
+  - **Database**: D1 migrations applied via `bash scripts/apply-migrations.sh`
+  - **Verification**: SHA match required (`/api/version` endpoint), HTTP 200 confirmation, production health check
+  - **Rollback**: `npx wrangler rollback --name sophia-ai-factory` reverts to previous version
+  - **Note**: GitHub Actions intentionally disabled (`.github/workflows/test.yml.disabled`); see `CLAUDE.md` for CF-direct doctrine details
 
 ## Data Flow: "New Project" Lifecycle
 

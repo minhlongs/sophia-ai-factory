@@ -29,7 +29,6 @@ export interface QuotaAlertContext {
   limit: number;
   percentage: number;
   exceededType: 'hourly_credits' | 'daily_credits' | 'monthly_credits' | 'daily_requests';
-  polarCustomerId?: string;
   stripeCustomerId?: string;
   ipAddress?: string;
 }

@@ -12,8 +12,6 @@
  *   usage: { hourly, daily, monthly, requests },
  *   percentages: { hourly, daily, monthly },
  *   status: 'ok' | 'warning' | 'critical',
- *   polarSynced: boolean,
- *   lastPolarSync?: string
  * }
  */
 
@@ -119,12 +117,11 @@ export async function GET(
 
       const typedLicense = license as { nonce: string; tier: Tier; agency_id: string };
 
-      // Step 5: Get quota status with Polar sync info
+      // Step 5: Get quota status
       const quotaStatus = await getQuotaStatus(
         userId,
         typedLicense.nonce,
         typedLicense.tier,
-        undefined
       );
 
       // Step 6: Format response
@@ -132,8 +129,6 @@ export async function GET(
         quotaStatus.usage,
         { ...quotaStatus.limits, tier: typedLicense.tier },
         typedLicense.tier,
-        quotaStatus.polarSynced,
-        quotaStatus.lastPolarSync
       );
 
       logger.debug('[Quota API] Quota status fetched', {

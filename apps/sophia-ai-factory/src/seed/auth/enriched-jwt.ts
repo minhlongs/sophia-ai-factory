@@ -6,7 +6,7 @@
  * Sub-modules:
  *   enriched-jwt-types.ts        — FeatureLimit, EnrichedJwtPayload, LicenseContext
  *   enriched-jwt-entitlements.ts — getDefaultEntitlements, getFeatureLimits
- *   enriched-jwt-billing.ts      — getLicenseContext, fetchDunningState, fetchPolarBillingStatus
+ *   enriched-jwt-billing.ts      — getLicenseContext, fetchDunningState
  *
  * @module auth/enriched-jwt
  */
@@ -23,7 +23,7 @@ export { getLicenseContext } from './enriched-jwt-billing'
 
 import type { EnrichedJwtPayload } from '@/seed/auth/enriched-jwt-types'
 import { getDefaultEntitlements, getFeatureLimits } from '@/seed/auth/enriched-jwt-entitlements'
-import { getLicenseContext, fetchDunningState, fetchPolarBillingStatus } from '@/seed/auth/enriched-jwt-billing'
+import { getLicenseContext, fetchDunningState } from '@/seed/auth/enriched-jwt-billing'
 
 const EMPTY_QUOTA: QuotaLimit = {
   tier: 'unknown', dailyCredits: 0, hourlyCredits: 0, dailyRequests: 0, monthlyCredits: 0,
@@ -66,7 +66,6 @@ export async function createEnrichedJwt(
       quota = { ...EMPTY_QUOTA, tier: licenseContext.tier }
     }
     const dunningState = await fetchDunningState(licenseNonce)
-    const polarBilling = await fetchPolarBillingStatus(licenseContext.polarCustomerId)
     const featureEntitlements = getDefaultEntitlements(licenseContext.tier)
     const featureLimits = getFeatureLimits(licenseContext.tier)
     const jti = crypto.randomUUID()
@@ -80,12 +79,9 @@ export async function createEnrichedJwt(
       license_expires_at: licenseContext.expiresAt,
       quota,
       agency_id: licenseContext.agencyId,
-      polar_customer_id: licenseContext.polarCustomerId,
-      polar_subscription_id: licenseContext.polarSubscriptionId,
-      polar_subscription_status: licenseContext.polarStatus as EnrichedJwtPayload['polar_subscription_status'],
-      billing_status: polarBilling?.billingStatus || 'active',
-      is_paid: polarBilling?.isPaid ?? true,
-      overage_allowed: polarBilling?.overageAllowed || false,
+      billing_status: 'active' as const,
+      is_paid: true,
+      overage_allowed: false,
       dunning_state: dunningState,
       feature_entitlements: featureEntitlements,
       feature_limits: featureLimits,

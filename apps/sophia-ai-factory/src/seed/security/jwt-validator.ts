@@ -37,8 +37,7 @@ export async function validateJwt(authHeader: string | null): Promise<JwtValidat
       license_nonce: claims.license_nonce, license_tier: claims.license_tier,
       license_issued_at: claims.license_issued_at, license_expires_at: claims.license_expires_at,
       quota: claims.quota, agency_id: claims.agency_id,
-      polar_customer_id: claims.polar_customer_id, polar_subscription_id: claims.polar_subscription_id,
-      polar_subscription_status: claims.polar_subscription_status, billing_status: claims.billing_status,
+      billing_status: claims.billing_status,
       is_paid: claims.is_paid, overage_allowed: claims.overage_allowed, dunning_state: claims.dunning_state,
       feature_entitlements: claims.feature_entitlements, feature_limits: claims.feature_limits,
     }
