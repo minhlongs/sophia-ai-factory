@@ -168,9 +168,30 @@
           "title": "Bilingual Platform + BYOK Translation",
           "description": "Sophia ships with native English and Vietnamese throughout the platform. One-shot script translation is live via /api/translate and the Telegram /translate command — powered by your own OpenRouter key (BYOK).",
           "badge": "Premium"
+        },
+        "ai_engine": {
+          "title": "AI Mission Engine",
+          "description": "Deploy autonomous AI agents to execute complex tasks — from video creation to content writing, fully automated.",
+          "badge": "Plan → Execute → Deliver"
+        },
+        "video_factory": {
+          "title": "Video Factory",
+          "description": "Create AI videos via HeyGen + ElevenLabs (BYOK) with auto-subtitles. Publish to YouTube today; more channels on the roadmap.",
+          "badge": "Automated AI Video"
+        },
+        "credits": {
+          "title": "MCU Credits",
+          "description": "Pay only for what you use. Transparent billing, no hidden fees, no surprises.",
+          "badge": "Usage-based pricing"
+        },
+        "api": {
+          "title": "Developer-First API",
+          "description": "RESTful API with real-time SSE streaming and webhook callbacks. Download the single-file SDK — type-safe wrappers for all endpoints.",
+          "badge": "curl /api/sdk/typescript"
         }
       },
-      "highlight": "Premium tier unlocks API integrations with PartnerStack, Impact.com, and auto-discovery of new affiliate programs every 4 hours."
+      "highlight": "Premium tier unlocks API integrations with PartnerStack, Impact.com, and auto-discovery of new affiliate programs every 4 hours.",
+      "badge_label": "Platform"
     },
     "raas": {
       "title": "AI-Powered Business Automation",
@@ -225,7 +246,11 @@
         "creators": "Active Creators",
         "ai_tools": "AI Tools Integrated",
         "videos": "Videos Generated",
-        "proposals": "Proposals Generated"
+        "proposals": "Proposals Generated",
+        "missions": "Missions Completed",
+        "agencies": "Trusted Agencies",
+        "edge_pops": "Global Edge PoPs",
+        "response_time": "Response Time"
       },
       "testimonials": {
         "creator_1": {
@@ -247,7 +272,8 @@
       "badges": {
         "secure": "256-bit Encrypted",
         "rated": "Bilingual UI",
-        "certified": "Cloudflare-secured Infrastructure"
+        "certified": "Cloudflare-secured Infrastructure",
+        "customer_reviews": "Customer Reviews"
       },
       "testimonials_disclaimer": "Composite testimonials based on early user research and beta feedback."
     },
@@ -345,7 +371,42 @@
         "total_views": "Total Views/Month"
       },
       "disclaimer": "Results are estimates only and may vary based on niche, content quality, SEO optimization, and audience engagement. Actual revenue depends on many factors.",
-      "estimate_note": "* Estimates based on $2 CPM + affiliate commissions"
+      "estimate_note": "* Estimates based on $2 CPM + affiliate commissions",
+      "tier_selector": "Choose Sophia Plan",
+      "service_plan": "Service plan",
+      "one_time_fee": "One-time fee (lifetime)",
+      "equivalent_monthly": "Equivalent / month",
+      "monthly_fee": "Sophia fee / month",
+      "cost_per_video": "Cost / video",
+      "channel_scale": "Channel Scale",
+      "channels_label": "YouTube channels",
+      "videos_week": "Videos / week",
+      "avg_views": "Avg views / video",
+      "affiliate_params": "Affiliate Parameters",
+      "click_rate": "Affiliate click rate (%)",
+      "avg_commission": "Avg commission / sale ($)",
+      "email_capture": "Email capture rate (%)",
+      "revenue_by_source": "Revenue by Source",
+      "videos_month": "Videos / month",
+      "views_month": "Views / month",
+      "total_revenue": "Total revenue / month",
+      "operating_costs": "Full operating costs",
+      "total_costs": "Total costs / month",
+      "net_profit": "Net profit / month",
+      "roi_payback": "ROI & Payback",
+      "roi_label": "ROI",
+      "payback_label": "Payback",
+      "days": "days",
+      "annual_revenue": "Revenue / year",
+      "annual_costs": "Total costs / year",
+      "annual_profit": "Profit / year",
+      "vs_manual": "vs. Manual Editor",
+      "manual_cost_desc": "Hire editor: ~$50/video × {totalVideos} videos = {manualCost}/month",
+      "savings_monthly": "Save {amount}/month",
+      "savings_annual": "= {amount}/year vs hiring",
+      "lifetime_suffix": "lifetime",
+      "monthly_suffix": "/month",
+      "full_cost_disclaimer": "Costs include ALL: Sophia License + HeyGen ($99/mo + $0.50/video) + ElevenLabs ($22/mo + $0.04/video) + OpenRouter ($0.03/script) + Inngest ($25/mo) + Cloudflare ($5/mo) + Upstash Redis ($10/mo) + Resend ($5/mo) + Domain ($1/mo). YouTube, TikTok, Telegram: FREE. Revenue: CPM $2/1K views | Click-to-sale 5% | Lead-to-deal 3%. Affiliate SaaS has recurring commission — figures above show first month only."
     },
     "affiliate": {
       "title": "High-Ticket Affiliate Discovery",
@@ -471,6 +532,59 @@
         "supportLine2": "Still not working → Email: <mono>support@mekongmind.com</mono>",
         "supportSeeAlso": "See also",
         "supportFaqLink": "Frequently Asked Questions"
+      }
+    },
+    "creative_studio": {
+      "badge": "Creative Studio",
+      "title": "Your Complete Media Suite",
+      "subtitle": "Create professional video, images, and audio — all from one dashboard",
+      "cta": "Try Creative Studio",
+      "tabs": {
+        "video": {
+          "title": "AI Video Creator",
+          "description": "Generate talking-head videos with AI avatars",
+          "features": [
+            "HeyGen integration",
+            "Auto-subtitles",
+            "Script-to-video pipeline"
+          ]
+        },
+        "image": {
+          "title": "Image Generator",
+          "description": "Create stunning visuals with multiple AI models",
+          "features": [
+            "Multi-model support",
+            "Brand-consistent output",
+            "Batch generation"
+          ]
+        },
+        "audio": {
+          "title": "Audio Studio",
+          "description": "Clone voices and generate professional narration",
+          "features": [
+            "ElevenLabs TTS",
+            "Voice cloning",
+            "Multi-language support"
+          ]
+        },
+        "brand": {
+          "title": "Brand Assets",
+          "description": "Manage logos, colors, and brand guidelines",
+          "features": [
+            "Asset library",
+            "Brand consistency",
+            "Quick access"
+          ]
+        },
+        "templates": {
+          "title": "Template Library",
+          "description": "Pre-built templates for common content types",
+          "features": [
+            "Industry templates",
+            "Custom templates",
+            "One-click start"
+          ]
+        }
       }
     }
   },

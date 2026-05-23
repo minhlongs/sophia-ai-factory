@@ -93,6 +93,10 @@ const CtaSection = dynamic(
   () => import("@/app/components/sections/cta-section").then(m => ({ default: m.CtaSection })),
   { loading: () => <SectionSkeleton height="h-64" /> }
 );
+const CreativeStudioShowcase = dynamic(
+  () => import("@/app/components/sections/creative-studio-showcase").then(m => ({ default: m.CreativeStudioShowcase })),
+  { loading: () => <SectionSkeleton /> }
+);
 const AgiCapabilitiesSection = dynamic(
   () => import("@/app/components/agi-capabilities-section"),
   { loading: () => <Skeleton className="h-96 w-full rounded-xl" /> }
@@ -130,6 +134,9 @@ export default async function Home() {
       </ScrollReveal>
       <ScrollReveal delay={200}>
         <Features />
+      </ScrollReveal>
+      <ScrollReveal delay={100}>
+        <CreativeStudioShowcase />
       </ScrollReveal>
       <ScrollReveal delay={100}>
         <RaasDemoTerminal />

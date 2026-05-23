@@ -168,9 +168,30 @@
           "title": "Nền Tảng Song Ngữ + Translate BYOK",
           "description": "Sophia tích hợp sẵn tiếng Anh và tiếng Việt trên toàn nền tảng. Dịch kịch bản một-phát-ra-kết-quả qua /api/translate và lệnh Telegram /translate — chạy bằng key OpenRouter của riêng bạn (BYOK).",
           "badge": "Premium"
+        },
+        "ai_engine": {
+          "title": "AI Mission Engine",
+          "description": "Triển khai AI agent tự động thực thi tasks phức tạp — từ tạo video đến viết nội dung, tất cả tự động hóa.",
+          "badge": "Plan → Execute → Deliver"
+        },
+        "video_factory": {
+          "title": "Video Factory",
+          "description": "Tạo video AI qua HeyGen + ElevenLabs (BYOK) với auto-subtitle. Hôm nay xuất bản YouTube; thêm kênh trong lộ trình.",
+          "badge": "Video AI tự động"
+        },
+        "credits": {
+          "title": "MCU Credits",
+          "description": "Chỉ trả cho những gì bạn dùng. Billing minh bạch, không phí ẩn, không bất ngờ.",
+          "badge": "Usage-based pricing"
+        },
+        "api": {
+          "title": "Developer-First API",
+          "description": "RESTful API với real-time SSE streaming, webhook callbacks. Tải SDK single-file — type-safe wrappers cho tất cả endpoints.",
+          "badge": "curl /api/sdk/typescript"
         }
       },
-      "highlight": "Gói Premium mở khóa tích hợp API với PartnerStack, Impact.com, và tự động phát hiện chương trình liên kết mới mỗi 4 giờ."
+      "highlight": "Gói Premium mở khóa tích hợp API với PartnerStack, Impact.com, và tự động phát hiện chương trình liên kết mới mỗi 4 giờ.",
+      "badge_label": "Nền Tảng"
     },
     "raas": {
       "title": "Tự Động Hóa Kinh Doanh Bằng AI",
@@ -225,7 +246,11 @@
         "creators": "Nhà Sáng Tạo Hoạt Động",
         "ai_tools": "Công Cụ AI Tích Hợp",
         "videos": "Video Đã Tạo",
-        "proposals": "Đề Xuất Đã Tạo"
+        "proposals": "Đề Xuất Đã Tạo",
+        "missions": "Missions Hoàn Thành",
+        "agencies": "Agency Tin Dùng",
+        "edge_pops": "Edge PoPs Toàn Cầu",
+        "response_time": "Thời Gian Phản Hồi"
       },
       "testimonials": {
         "creator_1": {
@@ -247,7 +272,8 @@
       "badges": {
         "secure": "Mã Hóa 256-bit",
         "rated": "Giao Diện Song Ngữ",
-        "certified": "Hạ Tầng Cloudflare"
+        "certified": "Hạ Tầng Cloudflare",
+        "customer_reviews": "Đánh Giá Khách Hàng"
       },
       "testimonials_disclaimer": "Lời chứng thực tổng hợp từ nghiên cứu người dùng và phản hồi beta."
     },
@@ -345,7 +371,42 @@
         "total_views": "Tổng Lượt Xem/Tháng"
       },
       "disclaimer": "Kết quả chỉ là ước tính và có thể thay đổi dựa trên ngách, chất lượng nội dung, tối ưu SEO và mức độ tương tác của khán giả. Doanh thu thực tế phụ thuộc vào nhiều yếu tố.",
-      "estimate_note": "* Ước tính dựa trên $2 CPM + hoa hồng liên kết"
+      "estimate_note": "* Ước tính dựa trên $2 CPM + hoa hồng liên kết",
+      "tier_selector": "Chọn Gói Sophia",
+      "service_plan": "Gói dịch vụ",
+      "one_time_fee": "Phí một lần (trọn đời)",
+      "equivalent_monthly": "Tương đương / tháng",
+      "monthly_fee": "Phí Sophia / tháng",
+      "cost_per_video": "Chi phí / video",
+      "channel_scale": "Quy Mô Kênh",
+      "channels_label": "Số kênh YouTube",
+      "videos_week": "Video / tuần",
+      "avg_views": "Lượt xem TB / video",
+      "affiliate_params": "Thông Số Affiliate",
+      "click_rate": "Tỷ lệ click affiliate (%)",
+      "avg_commission": "Hoa hồng TB / đơn ($)",
+      "email_capture": "Tỷ lệ capture email (%)",
+      "revenue_by_source": "Doanh Thu Theo Nguồn",
+      "videos_month": "Video / tháng",
+      "views_month": "Lượt xem / tháng",
+      "total_revenue": "Tổng doanh thu / tháng",
+      "operating_costs": "Chi phí vận hành đầy đủ",
+      "total_costs": "Tổng chi phí / tháng",
+      "net_profit": "Lợi nhuận ròng / tháng",
+      "roi_payback": "ROI & Hoàn Vốn",
+      "roi_label": "ROI",
+      "payback_label": "Hoàn vốn",
+      "days": "ngày",
+      "annual_revenue": "Doanh thu / năm",
+      "annual_costs": "Tổng chi phí / năm",
+      "annual_profit": "Lợi nhuận / năm",
+      "vs_manual": "So Với Thuê Editor Thủ Công",
+      "manual_cost_desc": "Thuê editor: ~$50/video × {totalVideos} video = {manualCost}/tháng",
+      "savings_monthly": "Tiết kiệm {amount}/tháng",
+      "savings_annual": "= {amount}/năm so với thuê người làm",
+      "lifetime_suffix": "trọn đời",
+      "monthly_suffix": "/tháng",
+      "full_cost_disclaimer": "Chi phí bao gồm ĐẦY ĐỦ: Sophia License + HeyGen ($99/th + $0.50/video) + ElevenLabs ($22/th + $0.04/video) + OpenRouter ($0.03/script) + Inngest ($25/th) + Cloudflare ($5/th) + Upstash Redis ($10/th) + Resend ($5/th) + Domain ($1/th). YouTube, TikTok, Telegram: MIỄN PHÍ. Doanh thu: CPM $2/1K views | Click-to-sale 5% | Lead-to-deal 3%. Affiliate SaaS có recurring commission — con số trên chỉ tính tháng đầu."
     },
     "affiliate": {
       "title": "Khám Phá Liên Kết Cao Cấp",
@@ -471,6 +532,59 @@
         "supportLine2": "Vẫn không được → Email: <mono>support@mekongmind.com</mono>",
         "supportSeeAlso": "Xem thêm",
         "supportFaqLink": "Câu hỏi thường gặp"
+      }
+    },
+    "creative_studio": {
+      "badge": "Creative Studio",
+      "title": "Bộ Công Cụ Media Toàn Diện",
+      "subtitle": "Tạo video, hình ảnh và audio chuyên nghiệp — tất cả từ một bảng điều khiển",
+      "cta": "Thử Creative Studio",
+      "tabs": {
+        "video": {
+          "title": "Tạo Video AI",
+          "description": "Tạo video talking-head với AI avatar",
+          "features": [
+            "Tích hợp HeyGen",
+            "Phụ đề tự động",
+            "Pipeline kịch bản→video"
+          ]
+        },
+        "image": {
+          "title": "Tạo Hình Ảnh",
+          "description": "Tạo hình ảnh đẹp với nhiều mô hình AI",
+          "features": [
+            "Đa mô hình",
+            "Đầu ra đồng nhất thương hiệu",
+            "Tạo hàng loạt"
+          ]
+        },
+        "audio": {
+          "title": "Studio Âm Thanh",
+          "description": "Nhân bản giọng nói và tạo thuyết minh chuyên nghiệp",
+          "features": [
+            "ElevenLabs TTS",
+            "Nhân bản giọng",
+            "Đa ngôn ngữ"
+          ]
+        },
+        "brand": {
+          "title": "Tài Sản Thương Hiệu",
+          "description": "Quản lý logo, màu sắc và hướng dẫn thương hiệu",
+          "features": [
+            "Thư viện tài sản",
+            "Nhất quán thương hiệu",
+            "Truy cập nhanh"
+          ]
+        },
+        "templates": {
+          "title": "Thư Viện Mẫu",
+          "description": "Mẫu có sẵn cho các loại nội dung phổ biến",
+          "features": [
+            "Mẫu theo ngành",
+            "Mẫu tùy chỉnh",
+            "Bắt đầu một click"
+          ]
+        }
       }
     }
   },

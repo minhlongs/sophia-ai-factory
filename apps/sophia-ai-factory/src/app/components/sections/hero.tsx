@@ -44,9 +44,9 @@ function TypingRotator() {
   }, [displayed, isDeleting, index]);
 
   return (
-    <span className="font-mono" style={{ color: "var(--neon-cyan)" }}>
+    <span className="font-mono text-neon-cyan">
       {displayed}
-      <span className="animate-blink" style={{ color: "var(--neon-cyan)", opacity: 0.7 }}>|</span>
+      <span className="animate-blink text-neon-cyan/70">|</span>
     </span>
   );
 }
@@ -56,42 +56,19 @@ export function Hero() {
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background pt-16">
-      {/* Animated gradient orbs */}
+      {/* Gradient orbs — 2 orbs for ambient lighting */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-        <div
-          className="absolute top-1/4 left-1/5 w-[500px] h-[500px] rounded-full blur-[120px] animate-float"
-          style={{ background: "var(--neon-cyan)", opacity: 0.07 }}
-        />
-        <div
-          className="absolute bottom-1/4 right-1/5 w-[400px] h-[400px] rounded-full blur-[100px] animate-float-delayed"
-          style={{ background: "var(--neon-purple)", opacity: 0.08 }}
-        />
-        <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full blur-[150px] animate-drift"
-          style={{ background: "var(--neon-cyan)", opacity: 0.04 }}
-        />
+        <div className="absolute top-1/4 left-1/5 w-[500px] h-[500px] rounded-full blur-[120px] animate-float bg-neon-cyan/[0.07]" />
+        <div className="absolute bottom-1/4 right-1/5 w-[400px] h-[400px] rounded-full blur-[100px] animate-float-delayed bg-neon-purple/[0.08]" />
       </div>
 
       {/* Dot grid overlay */}
-      <div
-        className="absolute inset-0 opacity-[0.04]"
-        aria-hidden="true"
-        style={{
-          backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.4) 1px, transparent 1px)",
-          backgroundSize: "32px 32px",
-        }}
-      />
+      <div className="absolute inset-0 opacity-[0.04] dot-grid-overlay" aria-hidden="true" />
 
       <div className="relative container mx-auto px-4 pt-12 pb-20 text-center">
         <div className="max-w-4xl mx-auto">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-5 py-2 mb-10 text-sm font-medium rounded-full border backdrop-blur-sm animate-fade-in-up"
-            style={{
-              background: "rgba(255,255,255,0.04)",
-              borderColor: "rgba(0,240,255,0.15)",
-              color: "var(--neon-cyan)",
-            }}
-          >
+          <div className="inline-flex items-center gap-2 px-5 py-2 mb-10 text-sm font-medium rounded-full border backdrop-blur-md animate-fade-in-up bg-white/[0.04] border-neon-cyan/15 text-neon-cyan">
             <span className="w-2 h-2 rounded-full bg-green-400 animate-glow-pulse" />
             {t("badge")}
           </div>
@@ -102,7 +79,7 @@ export function Hero() {
             style={{ animationDelay: "0.1s" }}
           >
             {t("title_1")}
-            <span className="block text-gradient mt-1">{t("title_2")}</span>
+            <span className="block text-gradient mt-1 drop-shadow-[0_0_30px_rgba(0,240,255,0.15)]">{t("title_2")}</span>
           </h1>
 
           {/* Dynamic command display */}
@@ -114,7 +91,7 @@ export function Hero() {
 
           {/* Subtitle */}
           <p
-            className="text-base md:text-lg text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed animate-fade-in-up"
+            className="text-base md:text-lg text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed animate-fade-in-up"
             style={{ animationDelay: "0.3s" }}
           >
             {t("subtitle")}
@@ -126,7 +103,7 @@ export function Hero() {
             style={{ animationDelay: "0.4s" }}
           >
             <Link href="/dashboard">
-              <Button variant="glow" size="lg" className="glow-primary rounded-full px-8 text-base w-full sm:w-auto">
+              <Button variant="glow" size="lg" className="glow-primary rounded-full px-8 text-base w-full sm:w-auto shadow-lg shadow-neon-cyan/20">
                 {t("cta_start")}
               </Button>
             </Link>
@@ -148,21 +125,21 @@ export function Hero() {
           </div>
 
           {/* Terminal preview */}
-          <div className="animate-fade-in-up" style={{ animationDelay: "0.5s" }}>
+          <div className="mt-16 animate-fade-in-up" style={{ animationDelay: "0.5s" }}>
             <TerminalPreview />
           </div>
 
           {/* Trust indicators */}
           <div
-            className="mt-14 flex flex-wrap items-center justify-center gap-x-10 gap-y-4 text-sm animate-fade-in-up"
-            style={{ animationDelay: "0.6s", color: "rgba(148,163,184,0.5)" }}
+            className="mt-10 flex flex-wrap items-center justify-center gap-x-10 gap-y-4 text-sm text-slate-400/50 animate-fade-in-up"
+            style={{ animationDelay: "0.6s" }}
           >
             <span className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-green-400/60" />
               {t("trust_uptime")}
             </span>
             <span className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full" style={{ background: "var(--neon-cyan)", opacity: 0.7 }} />
+              <span className="w-2 h-2 rounded-full bg-neon-cyan/70" />
               {t("trust_response")}
             </span>
             <span className="flex items-center gap-2">
@@ -170,7 +147,7 @@ export function Hero() {
               {t("trust_security")}
             </span>
             <span className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full" style={{ background: "var(--neon-purple)", opacity: 0.8 }} />
+              <span className="w-2 h-2 rounded-full bg-neon-purple/80" />
               {t("trust_edge")}
             </span>
           </div>
@@ -179,8 +156,8 @@ export function Hero() {
 
       {/* Scroll indicator */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 motion-safe:animate-bounce-slow" aria-hidden="true">
-        <div className="w-6 h-10 border-2 rounded-full flex items-start justify-center p-2" style={{ borderColor: "rgba(0,240,255,0.2)" }}>
-          <div className="w-1 h-3 rounded-full" style={{ background: "rgba(0,240,255,0.4)" }} />
+        <div className="w-6 h-10 border-2 rounded-full flex items-start justify-center p-2 border-neon-cyan/20">
+          <div className="w-1 h-3 rounded-full bg-neon-cyan/40" />
         </div>
       </div>
     </section>
