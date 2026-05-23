@@ -125,9 +125,6 @@ fi
 
 # ─── Step 1: Next.js build ───────────────────────────────────────────────────
 # NEXT_PUBLIC_* vars are baked into the client bundle at build time.
-# Wave 17 Phase 03: flip distribute gate — set before next build so the literal "1"
-# is substituted into the client bundle (wrangler [vars] does NOT do this at runtime).
-export NEXT_PUBLIC_DISTRIBUTE_ENABLED=1
 echo "==> npm run build"
 npm run build
 

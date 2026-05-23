@@ -56,7 +56,6 @@ echo "Deploying STAGING ($WORKER_NAME) at SHA $COMMIT_SHORT (branch: $DEPLOY_BRA
 echo "==> generate-supabase-migrations-manifest"
 node scripts/generate-supabase-migrations-manifest.mjs
 
-export NEXT_PUBLIC_DISTRIBUTE_ENABLED=1
 echo "==> npm run build"
 npm run build
 
