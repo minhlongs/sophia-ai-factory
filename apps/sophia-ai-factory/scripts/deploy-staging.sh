@@ -56,8 +56,16 @@ echo "Deploying STAGING ($WORKER_NAME) at SHA $COMMIT_SHORT (branch: $DEPLOY_BRA
 echo "==> generate-supabase-migrations-manifest"
 node scripts/generate-supabase-migrations-manifest.mjs
 
-echo "==> npm run build"
-npm run build
+if [ "${SKIP_NEXT_BUILD:-0}" = "1" ]; then
+  if [ ! -f .next/BUILD_ID ]; then
+    echo "❌ SKIP_NEXT_BUILD=1 but .next/BUILD_ID is missing."
+    exit 2
+  fi
+  echo "⚠️  SKIP_NEXT_BUILD=1 — reusing existing .next build artifact"
+else
+  echo "==> npm run build"
+  npm run build
+fi
 
 echo "==> fix-instrumentation-standalone"
 node scripts/fix-instrumentation-standalone.mjs
