@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useToast } from '@/forest/hooks/use-toast';
 import { generateVideoAction } from '@/app/actions/video-generate-action';
@@ -113,12 +114,12 @@ export function VideoCreatorTab({ tier }: VideoCreatorTabProps) {
           <div className="rounded-lg border border-border p-4 flex flex-col gap-2">
             <p className="text-sm font-medium text-foreground">{t('video.missionCreated')}</p>
             <p className="text-xs text-muted-foreground font-mono">{missionId}</p>
-            <a
+            <Link
               href="/dashboard/videos"
               className="mt-1 inline-block text-xs text-primary underline underline-offset-2"
             >
               {t('video.trackProgress')}
-            </a>
+            </Link>
           </div>
         )}
       </div>
