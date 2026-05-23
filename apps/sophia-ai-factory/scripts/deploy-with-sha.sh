@@ -19,6 +19,8 @@
 #                         (sourcemaps optional per sophia-no-tech-doctrine.md), but
 #                         next.config.ts logs a warning when set during NODE_ENV=production.
 #   ALLOW_UNPUSHED_DEPLOY=1   Bypass HEAD-vs-origin/main precondition. Emergency only.
+#   SKIP_NEXT_BUILD=1     Reuse an existing .next build artifact. Emergency only:
+#                         verify the artifact was built from the same app source.
 #
 # Build engine note (2026-05-21):
 #   `npm run build` uses Turbopack, NOT webpack. This is forced by M1 16GB
@@ -125,8 +127,16 @@ fi
 
 # ─── Step 1: Next.js build ───────────────────────────────────────────────────
 # NEXT_PUBLIC_* vars are baked into the client bundle at build time.
-echo "==> npm run build"
-npm run build
+if [ "${SKIP_NEXT_BUILD:-0}" = "1" ]; then
+  if [ ! -f .next/BUILD_ID ]; then
+    echo "❌ SKIP_NEXT_BUILD=1 but .next/BUILD_ID is missing."
+    exit 2
+  fi
+  echo "⚠️  SKIP_NEXT_BUILD=1 — reusing existing .next build artifact"
+else
+  echo "==> npm run build"
+  npm run build
+fi
 
 # ─── Step 2: OpenNext + instrumentation fixes ────────────────────────────────
 echo "==> fix-instrumentation-standalone"
