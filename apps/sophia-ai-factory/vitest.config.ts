@@ -22,17 +22,12 @@ export default defineConfig({
     coverage: {
       reporter: ['text', 'json-summary', 'html'],
       thresholds: {
-        // Global thresholds remain at 0 — coverage gate is dashboard-scoped only.
-        // See plans/260518-1728-sophia-zero-bug-dashboard/reports/phase-01-baseline.json
-        // for observed baseline. Ratcheting to 65/50/60/65 happens in Phase 03 Track B.
-        lines: 0,
-        functions: 0,
-        branches: 0,
-        statements: 0,
+        lines: 60,
+        functions: 50,
+        branches: 50,
+        statements: 60,
         // Dashboard regression guard — floor at observed baseline (2026-05-18 capture).
         // DO NOT lower without revising plans/260518-1728-sophia-zero-bug-dashboard/.
-        // Ratcheting to 65/50/60/65 (lines/branches/functions/statements) is deferred to
-        // a future phase once new dashboard unit tests land (Track B Phase 03 intent).
         // Contract tests in src/app/api/**/__tests__/*.contract.test.ts do NOT count toward
         // dashboard surface coverage — they cover API route schemas, not dashboard components.
         'src/app/[locale]/dashboard/**': {
