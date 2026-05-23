@@ -32,6 +32,7 @@ import {
   TrendingUp,
   Shield,
   Bot,
+  Sparkles,
 } from "lucide-react";
 import { ReplayTourLink } from "./components/replay-tour-link";
 import { HealthIndicator } from "@/forest/components/dashboard/health-indicator";
@@ -170,6 +171,13 @@ export default async function DashboardLayout({
           >
             <LayoutDashboard className="w-5 h-5" aria-hidden="true" />
             <span className="font-medium">{t('sidebar.campaigns')}</span>
+          </Link>
+          <Link
+            href="/dashboard/creative-studio"
+            className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
+          >
+            <Sparkles className="w-5 h-5" aria-hidden="true" />
+            <span className="font-medium">{t('sidebar.creative_studio')}</span>
           </Link>
           <Link
             href="/dashboard/analytics"
