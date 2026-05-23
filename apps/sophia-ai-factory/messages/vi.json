@@ -2754,6 +2754,21 @@
   "creativeStudio": {
     "title": "Studio Sáng Tạo",
     "subtitle": "Tạo video, hình ảnh và âm thanh với AI",
+    "eyebrow": "Trung tâm sản xuất media",
+    "stats": {
+      "video": {
+        "label": "Video",
+        "value": "Clip avatar"
+      },
+      "image": {
+        "label": "Hình ảnh",
+        "value": "Render MuAPI"
+      },
+      "audio": {
+        "label": "Âm thanh",
+        "value": "Lồng tiếng"
+      }
+    },
     "tabs": {
       "video": "Tạo Video",
       "image": "Tạo Hình Ảnh",
@@ -2776,7 +2791,13 @@
       "successTitle": "Video đã được xếp hàng!",
       "successDescription": "Video của bạn đang được tạo. Theo dõi tiến trình trong mục Videos.",
       "errorTitle": "Tạo video thất bại",
+      "previewLabel": "Xem trước sản xuất",
       "previewPlaceholder": "Xem trước video sẽ hiển thị ở đây",
+      "previewSteps": {
+        "script": "Kịch bản",
+        "avatar": "Avatar",
+        "voice": "Giọng đọc"
+      },
       "missionCreated": "Nhiệm vụ đã được tạo",
       "trackProgress": "Theo dõi tiến trình trong Videos"
     },

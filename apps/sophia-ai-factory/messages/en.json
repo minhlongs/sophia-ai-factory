@@ -2754,6 +2754,21 @@
   "creativeStudio": {
     "title": "Creative Studio",
     "subtitle": "Create videos, images, and audio with AI",
+    "eyebrow": "Media command center",
+    "stats": {
+      "video": {
+        "label": "Video",
+        "value": "Avatar clips"
+      },
+      "image": {
+        "label": "Image",
+        "value": "MuAPI renders"
+      },
+      "audio": {
+        "label": "Audio",
+        "value": "Voiceovers"
+      }
+    },
     "tabs": {
       "video": "Video Creator",
       "image": "Image Generator",
@@ -2776,7 +2791,13 @@
       "successTitle": "Video queued!",
       "successDescription": "Your video is being generated. Track progress in the Videos section.",
       "errorTitle": "Generation failed",
+      "previewLabel": "Production preview",
       "previewPlaceholder": "Video preview will appear here",
+      "previewSteps": {
+        "script": "Script",
+        "avatar": "Avatar",
+        "voice": "Voice"
+      },
       "missionCreated": "Mission created",
       "trackProgress": "Track progress in Videos"
     },

@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { CheckCircle2, Film, Loader2 } from 'lucide-react';
 import { useToast } from '@/forest/hooks/use-toast';
 import { generateVideoAction } from '@/app/actions/video-generate-action';
 import type { Tier } from '@/seed/types';
@@ -40,6 +41,11 @@ export function VideoCreatorTab({ tier }: VideoCreatorTabProps) {
   const [isPending, startTransition] = useTransition();
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [missionId, setMissionId] = useState<string | null>(null);
+  const previewSteps = [
+    { key: 'script', label: t('video.previewSteps.script') },
+    { key: 'avatar', label: t('video.previewSteps.avatar') },
+    { key: 'voice', label: t('video.previewSteps.voice') },
+  ];
 
   function updateField<K extends keyof FormState>(key: K, val: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: val }));
@@ -74,9 +80,8 @@ export function VideoCreatorTab({ tier }: VideoCreatorTabProps) {
   const canSubmit = form.script.length >= 10 && !isPending;
 
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-      {/* Left panel — form */}
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(320px,1.1fr)]">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5 rounded-xl border border-border bg-card p-4 shadow-sm">
         <VideoScriptInput
           value={form.script}
           onChange={(v) => updateField('script', v)}
@@ -98,25 +103,53 @@ export function VideoCreatorTab({ tier }: VideoCreatorTabProps) {
         <button
           type="submit"
           disabled={!canSubmit}
-          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
         >
+          {isPending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
           {isPending ? t('video.generating') : t('video.generate')}
         </button>
       </form>
 
-      {/* Right panel — preview / status */}
       <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-center rounded-lg border border-dashed border-border h-48 bg-muted/30">
-          <p className="text-sm text-muted-foreground">{t('video.previewPlaceholder')}</p>
+        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+          <div className="aspect-video bg-[radial-gradient(circle_at_25%_25%,hsl(var(--primary)/0.18),transparent_34%),linear-gradient(135deg,hsl(var(--muted)),hsl(var(--background)))] p-4">
+            <div className="flex h-full flex-col justify-between rounded-lg border border-white/20 bg-background/75 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-medium uppercase text-muted-foreground">
+                    {t('video.previewLabel')}
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-foreground">
+                    {t('video.previewPlaceholder')}
+                  </p>
+                </div>
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                  <Film className="h-5 w-5" aria-hidden="true" />
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {previewSteps.map((step) => (
+                  <div key={step.key} className="rounded-md border border-border bg-card/80 p-2">
+                    <p className="text-[11px] font-medium text-muted-foreground">
+                      {step.label}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
 
         {missionId && (
-          <div className="rounded-lg border border-border p-4 flex flex-col gap-2">
-            <p className="text-sm font-medium text-foreground">{t('video.missionCreated')}</p>
+          <div className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4 shadow-sm">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-primary" aria-hidden="true" />
+              <p className="text-sm font-medium text-foreground">{t('video.missionCreated')}</p>
+            </div>
             <p className="text-xs text-muted-foreground font-mono">{missionId}</p>
             <Link
               href="/dashboard/videos"
-              className="mt-1 inline-block text-xs text-primary underline underline-offset-2"
+              className="mt-1 inline-flex w-fit cursor-pointer text-xs font-medium text-primary underline underline-offset-2"
             >
               {t('video.trackProgress')}
             </Link>

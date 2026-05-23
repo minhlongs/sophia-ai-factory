@@ -4,7 +4,17 @@ import { useTranslations } from 'next-intl';
 import { Button } from '@/seed/components/ui/button';
 import { Badge } from '@/seed/components/ui/badge';
 import { Card, CardContent, CardHeader } from '@/seed/components/ui/card';
-import { Lock } from 'lucide-react';
+import {
+  BadgePercent,
+  CalendarDays,
+  Clapperboard,
+  Flame,
+  Handshake,
+  Lock,
+  Rocket,
+  Video,
+  type LucideIcon,
+} from 'lucide-react';
 
 interface TemplateCardProps {
   id: string;
@@ -27,23 +37,33 @@ const CATEGORY_GRADIENTS: Record<string, string> = {
   default: 'from-gray-500 to-slate-500',
 };
 
+const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  welcome: Handshake,
+  product: Rocket,
+  seasonal: CalendarDays,
+  promotion: BadgePercent,
+  viral: Flame,
+  video: Clapperboard,
+  default: Video,
+};
+
 export function TemplateCard({
   name,
   description,
   category,
-  icon,
   isPremium = false,
   onUse,
 }: TemplateCardProps) {
   const t = useTranslations('creativeStudio.templates');
   const gradient = CATEGORY_GRADIENTS[category] ?? CATEGORY_GRADIENTS.default;
+  const Icon = CATEGORY_ICONS[category] ?? CATEGORY_ICONS.default;
 
   return (
-    <Card className="flex flex-col overflow-hidden transition-transform hover:scale-[1.02] hover:shadow-md">
+    <Card className="flex flex-col overflow-hidden transition-colors hover:border-primary/40 hover:shadow-md">
       <CardHeader className={`bg-gradient-to-r ${gradient} p-4`}>
         <div className="flex items-center justify-between">
-          <span className="text-2xl" aria-hidden="true">
-            {icon ?? '📋'}
+          <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/20 text-white" aria-hidden="true">
+            <Icon className="h-5 w-5" />
           </span>
           {isPremium && (
             <Badge
@@ -65,7 +85,7 @@ export function TemplateCard({
           <Badge variant="outline" className="text-xs capitalize">
             {category}
           </Badge>
-          <Button size="sm" onClick={onUse} className="text-xs h-7">
+          <Button size="sm" onClick={onUse} className="h-8 cursor-pointer text-xs">
             {t('useTemplate')}
           </Button>
         </div>

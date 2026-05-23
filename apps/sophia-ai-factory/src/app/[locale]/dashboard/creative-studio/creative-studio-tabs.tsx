@@ -29,7 +29,7 @@ const BrandAssetsTab = lazy(() =>
 
 function VideoTabSkeleton() {
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 animate-pulse">
+    <div className="grid animate-pulse grid-cols-1 gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(320px,1.1fr)]">
       <div className="flex flex-col gap-4">
         <div className="h-4 w-24 rounded bg-muted" />
         <div className="h-36 rounded-md bg-muted" />
@@ -88,17 +88,17 @@ export function CreativeStudioTabs({ tier, activeTab, locale }: CreativeStudioTa
 
   return (
     <Tabs value={validTab} onValueChange={handleTabChange} className="w-full">
-      <TabsList className="flex w-full h-auto flex-wrap gap-1 bg-muted p-1 rounded-lg">
+      <TabsList className="grid h-auto w-full grid-cols-2 gap-1 rounded-xl border border-border bg-muted/70 p-1 sm:grid-cols-3 lg:grid-cols-5">
         {TAB_KEYS.map((key) => {
           const Icon = TAB_ICONS[key];
           return (
             <TabsTrigger
               key={key}
               value={key}
-              className="flex items-center gap-2 px-4 py-2 text-sm flex-1 min-w-[120px]"
+              className="min-h-11 cursor-pointer justify-start gap-2 rounded-lg px-3 py-2 text-sm data-[state=active]:shadow-sm"
             >
               <Icon className="w-4 h-4 shrink-0" aria-hidden="true" />
-              <span>{t(`tabs.${key}`)}</span>
+              <span className="truncate">{t(`tabs.${key}`)}</span>
             </TabsTrigger>
           );
         })}
