@@ -1,7 +1,7 @@
 ---
 title: "Handover Funnel — 6 Critical Bug Fixes"
 description: "Restore signup → wizard → dashboard funnel; unblock RaaS handover to non-tech CEO."
-status: pending
+status: done
 priority: P1
 effort: 10-16h
 branch: main
