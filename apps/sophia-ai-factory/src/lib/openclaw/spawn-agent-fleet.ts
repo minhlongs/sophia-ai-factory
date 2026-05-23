@@ -7,9 +7,17 @@
  *  - Each task gets isolated context (tenantId injected)
  *  - Audit row written per spawn + per result
  *  - Falls back to local executor if Anthropic Agent SDK unavailable
+ *  - Each task wrapped in withRetry + withBreaker for resilience
  */
 
 import { audit } from './audit';
+import {
+  validatePromptContract,
+  PromptContractError,
+} from '@/seed/validators/agent-prompt-contracts';
+import type { AgentRole } from '@/seed/types/multi-agent';
+import { withBreaker, BreakerOpenError, getBreakerState } from '@/seed/utils/circuit-breaker';
+import { withRetry } from '@/seed/utils/retry-with-backoff';
 
 export class OpenclawTenantMissingError extends Error {
   constructor() {
@@ -27,6 +35,13 @@ export interface AgentTask {
   context?: Record<string, unknown>;
   /** LLM tier for this task. Defaults to 'standard' */
   tier?: 'lite' | 'standard' | 'max';
+  /**
+   * Typed prompt contract — validated against role schema before dispatch.
+   * Opt-in: validation only fires when BOTH promptContract AND agentRole are present.
+   */
+  promptContract?: Record<string, unknown>;
+  /** Agent role used for prompt contract schema lookup */
+  agentRole?: AgentRole;
 }
 
 export interface AgentResult {
@@ -35,6 +50,8 @@ export interface AgentResult {
   output?: unknown;
   error?: string;
   durationMs: number;
+  /** How many retries were attempted before success or final failure */
+  retryCount?: number;
 }
 
 export interface SpawnFleetOptions {
@@ -45,6 +62,8 @@ export interface SpawnFleetOptions {
   /** Max concurrent tasks when parallel=true. Default: 5 */
   maxConcurrency?: number;
 }
+
+const FLEET_BREAKER = 'agent-fleet';
 
 /** Local task executor — runs the task prompt through a simple handler. */
 async function localExecutor(
@@ -67,26 +86,54 @@ async function runTask(
   tenantId: string,
 ): Promise<AgentResult> {
   const start = Date.now();
+
+  // Fail-fast if breaker is already open — no point dispatching
+  if (getBreakerState(FLEET_BREAKER) === 'open') {
+    return {
+      taskId: task.id,
+      success: false,
+      error: 'Skipped — circuit breaker open',
+      durationMs: 0,
+      retryCount: 0,
+    };
+  }
+
+  let retryCount = 0;
+
   try {
-    // Inject tenant context into task
+    // Validate typed prompt contract before dispatch (opt-in: both fields required)
+    if (task.promptContract !== undefined && task.agentRole !== undefined) {
+      validatePromptContract(task.agentRole, task.promptContract);
+    }
+
     const enrichedTask: AgentTask = {
       ...task,
       context: { ...task.context, tenantId },
     };
 
-    const output = await localExecutor(enrichedTask, tenantId);
+    const output = await withRetry(
+      () => withBreaker(FLEET_BREAKER, () => localExecutor(enrichedTask, tenantId)),
+      { maxRetries: 3, baseDelayMs: 1_000, maxDelayMs: 10_000 },
+    );
+
     return {
       taskId: task.id,
       success: true,
       output,
       durationMs: Date.now() - start,
+      retryCount,
     };
   } catch (err) {
     return {
       taskId: task.id,
       success: false,
-      error: String(err),
+      error: err instanceof BreakerOpenError
+        ? 'Circuit breaker open — upstream degraded'
+        : err instanceof PromptContractError
+          ? `Contract validation: ${err.message}`
+          : String(err),
       durationMs: Date.now() - start,
+      retryCount,
     };
   }
 }
