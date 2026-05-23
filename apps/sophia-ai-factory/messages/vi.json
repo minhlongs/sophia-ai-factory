@@ -507,6 +507,7 @@
       "agi_outcomes": "Kết quả",
       "agi_confidence": "Độ tin cậy",
       "agi_agents": "Đại lý AI",
+      "creative_studio": "Studio Sáng Tạo",
       "quotaWidget": {
         "title": "Tháng này",
         "unlimited": "Không giới hạn",
@@ -2635,5 +2636,83 @@
     "feedback_desc": "Chu kỳ đánh giá 7 ngày sau xuất bản tự động xác định điều gì hiệu quả và tối ưu hóa prompt để có kết quả tốt hơn.",
     "compliance_title": "Sẵn sàng tuân thủ",
     "compliance_desc": "Tích hợp công bố AI, theo dõi siêu dữ liệu C2PA và tuân thủ ToS nền tảng. Sẵn sàng cho mọi môi trường quy định."
+  },
+  "creativeStudio": {
+    "title": "Studio Sáng Tạo",
+    "subtitle": "Tạo video, hình ảnh và âm thanh với AI",
+    "tabs": {
+      "video": "Tạo Video",
+      "image": "Tạo Hình Ảnh",
+      "audio": "Studio Âm Thanh",
+      "templates": "Mẫu",
+      "brand": "Thương Hiệu"
+    },
+    "video": {
+      "scriptLabel": "Kịch bản video",
+      "scriptPlaceholder": "Viết kịch bản video của bạn ở đây. Mô tả nội dung cần nói và hiển thị...",
+      "avatarLabel": "Chọn Avatar",
+      "voiceLabel": "Chọn Giọng đọc",
+      "templateLabel": "Chọn Template",
+      "templateCinematicName": "Điện ảnh",
+      "templateCinematicDesc": "Phong cách điện ảnh chuyên nghiệp với chuyển cảnh mượt mà",
+      "templateOverlayName": "Overlay",
+      "templateOverlayDesc": "Bố cục overlay năng động với văn bản và đồ họa",
+      "generate": "Tạo Video",
+      "generating": "Đang tạo...",
+      "successTitle": "Video đã được xếp hàng!",
+      "successDescription": "Video của bạn đang được tạo. Theo dõi tiến trình trong mục Videos.",
+      "errorTitle": "Tạo video thất bại",
+      "previewPlaceholder": "Xem trước video sẽ hiển thị ở đây",
+      "missionCreated": "Nhiệm vụ đã được tạo",
+      "trackProgress": "Theo dõi tiến trình trong Videos"
+    },
+    "image": {
+      "promptLabel": "Mô tả",
+      "promptPlaceholder": "Mô tả hình ảnh bạn muốn tạo...",
+      "charsRemaining": "ký tự còn lại",
+      "modelLabel": "Mô hình",
+      "modelPlaceholder": "Chọn mô hình",
+      "upgradeToUnlock": "Nâng cấp để mở khóa",
+      "aspectRatioLabel": "Tỷ lệ khung hình",
+      "generateImage": "Tạo hình ảnh",
+      "generating": "Đang tạo...",
+      "generatedImages": "Hình ảnh đã tạo",
+      "generateFirst": "Tạo hình ảnh đầu tiên phía trên",
+      "generationFailed": "Tạo hình ảnh thất bại",
+      "download": "Tải xuống",
+      "copyUrl": "Sao chép URL",
+      "loading": "Đang tải..."
+    },
+    "audio": {
+      "textLabel": "Chuyển văn bản thành giọng nói",
+      "textPlaceholder": "Nhập văn bản để chuyển thành giọng nói...",
+      "voiceLabel": "Giọng nói",
+      "voicePlaceholder": "Chọn giọng nói",
+      "generateAudio": "Tạo âm thanh",
+      "generating": "Đang tạo…",
+      "emptyState": "Các bản ghi âm sẽ xuất hiện ở đây",
+      "clipsGenerated": "{count} bản ghi đã tạo",
+      "download": "Tải xuống"
+    },
+    "templates": {
+      "filterAll": "Tất cả",
+      "filterCampaign": "Chiến dịch",
+      "filterVideo": "Video",
+      "campaignTemplates": "Mẫu chiến dịch",
+      "videoTemplates": "Mẫu video",
+      "useTemplate": "Sử dụng mẫu"
+    },
+    "brand": {
+      "loading": "Đang tải tài sản thương hiệu...",
+      "emptyTitle": "Chưa cấu hình bộ nhận diện thương hiệu",
+      "emptyDescription": "Thiết lập logo, màu sắc và kiểu chữ để duy trì tính nhất quán thương hiệu.",
+      "setupBrandKit": "Thiết lập bộ nhận diện",
+      "brandKit": "Bộ nhận diện",
+      "editBrand": "Chỉnh sửa",
+      "logo": "Logo",
+      "primaryColor": "Màu chính",
+      "accentColor": "Màu phụ",
+      "brandName": "Tên thương hiệu"
+    }
   }
 }

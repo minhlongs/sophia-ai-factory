@@ -507,6 +507,7 @@
       "agi_outcomes": "Outcomes",
       "agi_confidence": "Confidence",
       "agi_agents": "Agents",
+      "creative_studio": "Creative Studio",
       "quotaWidget": {
         "title": "This Month",
         "unlimited": "Unlimited",
@@ -2635,5 +2636,83 @@
     "feedback_desc": "7-day post-publish evaluation cycles automatically identify what's working and optimize prompts for better results.",
     "compliance_title": "Compliance Ready",
     "compliance_desc": "Built-in AI disclosure, C2PA metadata tracking, and platform TOS compliance. Ready for any regulatory environment."
+  },
+  "creativeStudio": {
+    "title": "Creative Studio",
+    "subtitle": "Create videos, images, and audio with AI",
+    "tabs": {
+      "video": "Video Creator",
+      "image": "Image Generator",
+      "audio": "Audio Studio",
+      "templates": "Templates",
+      "brand": "Brand Assets"
+    },
+    "video": {
+      "scriptLabel": "Video Script",
+      "scriptPlaceholder": "Write your video script here. Describe what should be said and shown...",
+      "avatarLabel": "Choose Avatar",
+      "voiceLabel": "Choose Voice",
+      "templateLabel": "Choose Template",
+      "templateCinematicName": "Cinematic",
+      "templateCinematicDesc": "Professional cinematic style with smooth transitions",
+      "templateOverlayName": "Overlay",
+      "templateOverlayDesc": "Dynamic overlay layout with text and graphics",
+      "generate": "Generate Video",
+      "generating": "Generating...",
+      "successTitle": "Video queued!",
+      "successDescription": "Your video is being generated. Track progress in the Videos section.",
+      "errorTitle": "Generation failed",
+      "previewPlaceholder": "Video preview will appear here",
+      "missionCreated": "Mission created",
+      "trackProgress": "Track progress in Videos"
+    },
+    "image": {
+      "promptLabel": "Prompt",
+      "promptPlaceholder": "Describe the image you want to generate...",
+      "charsRemaining": "characters remaining",
+      "modelLabel": "Model",
+      "modelPlaceholder": "Select model",
+      "upgradeToUnlock": "Upgrade to unlock",
+      "aspectRatioLabel": "Aspect Ratio",
+      "generateImage": "Generate Image",
+      "generating": "Generating...",
+      "generatedImages": "Generated Images",
+      "generateFirst": "Generate your first image above",
+      "generationFailed": "Generation failed",
+      "download": "Download",
+      "copyUrl": "Copy URL",
+      "loading": "Loading..."
+    },
+    "audio": {
+      "textLabel": "Text to Speech",
+      "textPlaceholder": "Enter text to convert to speech...",
+      "voiceLabel": "Voice",
+      "voicePlaceholder": "Select a voice",
+      "generateAudio": "Generate Audio",
+      "generating": "Generating…",
+      "emptyState": "Generated clips will appear here",
+      "clipsGenerated": "{count} clip(s) generated",
+      "download": "Download"
+    },
+    "templates": {
+      "filterAll": "All",
+      "filterCampaign": "Campaign",
+      "filterVideo": "Video",
+      "campaignTemplates": "Campaign Templates",
+      "videoTemplates": "Video Templates",
+      "useTemplate": "Use Template"
+    },
+    "brand": {
+      "loading": "Loading brand assets...",
+      "emptyTitle": "No brand kit configured",
+      "emptyDescription": "Set up your logo, colors, and typography to maintain brand consistency.",
+      "setupBrandKit": "Set Up Brand Kit",
+      "brandKit": "Brand Kit",
+      "editBrand": "Edit Brand",
+      "logo": "Logo",
+      "primaryColor": "Primary Color",
+      "accentColor": "Accent Color",
+      "brandName": "Brand Name"
+    }
   }
 }
