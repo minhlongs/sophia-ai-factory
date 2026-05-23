@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createServerClient } from '@/seed/db/client';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { resolveOrgId } from '@/seed/auth/resolve-org-id';
 import { logger } from '@/seed/utils/logger-utility';
 
 export const dynamic = 'force-dynamic';
@@ -29,13 +30,17 @@ export async function GET(
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const orgId = await resolveOrgId(user.id);
+    if (!orgId) {
+      return NextResponse.json({ error: 'org_not_found' }, { status: 422 });
+    }
     const db = createServerClient();
 
     const { data: mission, error } = await db
       .from('missions')
       .select('*')
       .eq('id', id)
-      .eq('org_id', user.id)
+      .eq('org_id', orgId)
       .single();
 
     if (error || !mission) {
@@ -59,6 +64,10 @@ export async function PATCH(
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const orgId = await resolveOrgId(user.id);
+    if (!orgId) {
+      return NextResponse.json({ error: 'org_not_found' }, { status: 422 });
+    }
     const db = createServerClient();
 
     const body = await request.json();
@@ -71,7 +80,7 @@ export async function PATCH(
       .from('missions')
       .update({ ...parsed.data, updated_at: new Date().toISOString() })
       .eq('id', id)
-      .eq('org_id', user.id)
+      .eq('org_id', orgId)
       .select()
       .single();
 

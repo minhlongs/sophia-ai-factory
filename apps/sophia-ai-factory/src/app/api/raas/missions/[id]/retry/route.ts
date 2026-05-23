@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/seed/db/client';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { resolveOrgId } from '@/seed/auth/resolve-org-id';
 import { logger } from '@/seed/utils/logger-utility';
 
 export const dynamic = 'force-dynamic';
@@ -30,6 +31,10 @@ export async function POST(
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const orgId = await resolveOrgId(user.id);
+    if (!orgId) {
+      return NextResponse.json({ error: 'org_not_found' }, { status: 422 });
+    }
 
     const db = createServerClient();
 
@@ -37,7 +42,7 @@ export async function POST(
       .from('missions')
       .select('id, status, org_id')
       .eq('id', id)
-      .eq('org_id', user.id)
+      .eq('org_id', orgId)
       .single();
 
     const mission = existing as MissionRow | null;
@@ -55,7 +60,7 @@ export async function POST(
       .from('missions')
       .update({ status: 'queued', updated_at: new Date().toISOString() })
       .eq('id', id)
-      .eq('org_id', user.id)
+      .eq('org_id', orgId)
       .select()
       .single();
 
@@ -64,7 +69,7 @@ export async function POST(
       return NextResponse.json({ error: 'Retry failed' }, { status: 500 });
     }
 
-    logger.info('[mission-retry] Mission re-queued', { missionId: id, userId: user.id });
+    logger.info('[mission-retry] Mission re-queued', { missionId: id, userId: user.id, orgId });
     return NextResponse.json({ mission: updated });
   } catch (err) {
     logger.error('[POST /api/raas/missions/:id/retry] Error', err instanceof Error ? err : new Error(String(err)));
