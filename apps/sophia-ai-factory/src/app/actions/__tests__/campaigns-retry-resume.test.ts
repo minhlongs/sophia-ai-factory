@@ -39,8 +39,10 @@ function buildQueryStub(resolvedValue: unknown) {
     single: vi.fn().mockResolvedValue(resolvedValue),
     update: vi.fn().mockReturnThis(),
   };
-  // update chain returns mockDbUpdate on .eq()
-  stub.update.mockReturnValue({ eq: mockDbUpdate });
+  // update chain: .update().eq("id", ...).eq("user_id", ...) → mockDbUpdate result
+  const updateChain = { eq: vi.fn() };
+  updateChain.eq.mockReturnValue({ eq: mockDbUpdate });
+  stub.update.mockReturnValue(updateChain);
   return stub;
 }
 

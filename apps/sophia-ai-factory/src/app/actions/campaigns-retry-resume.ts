@@ -65,7 +65,8 @@ export async function retryCampaign(campaignId: string) {
     const { error: updateError } = await db
       .from("campaigns")
       .update({ status: "queued", progress: 0, updated_at: new Date().toISOString() })
-      .eq("id", campaignId);
+      .eq("id", campaignId)
+      .eq("user_id", currentUser.id);
 
     if (updateError) {
       return { success: false, message: "Failed to reset campaign" };
@@ -150,7 +151,8 @@ export async function resumeCampaign(campaignId: string) {
     const { error: updateError } = await db
       .from("campaigns")
       .update({ status: resumeStatus, progress: resumeProgress, updated_at: new Date().toISOString() })
-      .eq("id", campaignId);
+      .eq("id", campaignId)
+      .eq("user_id", currentUser.id);
 
     if (updateError) {
       return { success: false, message: "Failed to update campaign" };
