@@ -64,7 +64,6 @@ export async function initializeDunningSettings(
   userId: string,
   licenseNonce: string,
   tier: Tier,
-  polarCustomerId?: string,
   stripeCustomerId?: string
 ): Promise<DunningSettingsRow> {
   const db = createServerClient();
@@ -75,7 +74,6 @@ export async function initializeDunningSettings(
     .insert({
       user_id: userId,
       license_nonce: licenseNonce,
-      polar_customer_id: polarCustomerId || null,
       stripe_customer_id: stripeCustomerId || null,
       grace_period_days: tierConfig.gracePeriodDays,
       max_retry_attempts: tierConfig.maxRetryAttempts,

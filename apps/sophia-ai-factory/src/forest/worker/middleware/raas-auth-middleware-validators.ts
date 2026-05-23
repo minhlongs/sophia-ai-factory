@@ -62,7 +62,6 @@ export async function validateLicense(
           tier: enrichedClaims.license_tier,
           featureEntitlements: enrichedClaims.feature_entitlements,
           agencyId: enrichedClaims.agency_id,
-          polarSubscriptionStatus: enrichedClaims.polar_subscription_id,
           isPaid: enrichedClaims.is_paid,
         },
       }
@@ -78,12 +77,6 @@ export async function validateLicense(
 export async function checkFeatureAccess(featureKey: string, authContext: AuthContext): Promise<FeatureCheckResult> {
   const hasEntitlement = authContext.featureEntitlements.includes(featureKey)
   if (!hasEntitlement) return { allowed: false, reason: 'not_entitled', featureKey }
-
-  const isMasterLifetime = authContext.tier?.toUpperCase() === 'MASTER'
-  if (!isMasterLifetime &&
-    (authContext.polarSubscriptionStatus === 'canceled' || authContext.polarSubscriptionStatus === 'inactive')) {
-    return { allowed: false, reason: 'subscription_expired', featureKey }
-  }
 
   return { allowed: true, featureKey }
 }

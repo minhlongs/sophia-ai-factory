@@ -24,7 +24,7 @@ export async function enforceQuota(
   context: QuotaCheckContext,
   config = DEFAULT_CONFIG
 ): Promise<{ allowed: true; result: EnhancedQuotaCheckResult } | { allowed: false; response: ReturnType<typeof createQuotaExceededResponse> }> {
-  const { licenseNonce, polarCustomerId } = context
+  const { licenseNonce } = context
 
   const dunningCheck = await canAccessApi(licenseNonce)
   if (!dunningCheck.allowed) {
@@ -40,7 +40,7 @@ export async function enforceQuota(
   const quotaResult = await checkQuotaWithOverage(context, config)
 
   if (!quotaResult.allowed && quotaResult.exceeded) {
-    const exceededResponse = createQuotaExceededResponse(quotaResult, context, polarCustomerId)
+    const exceededResponse = createQuotaExceededResponse(quotaResult, context)
     logger.warn('[Quota Enforcer] Hard block - quota exceeded', {
       userId: context.userId,
       licenseNonce: licenseNonce.slice(0, 8) + '...',

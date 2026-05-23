@@ -125,7 +125,6 @@ export async function sendWebhookAlertChannel(
       tier: context.tier,
       exceededType: context.exceededType,
       metadata: {
-        polarCustomerId: context.polarCustomerId,
         stripeCustomerId: context.stripeCustomerId,
         ipAddress: context.ipAddress,
       },

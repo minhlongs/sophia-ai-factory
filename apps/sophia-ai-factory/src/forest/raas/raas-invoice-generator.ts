@@ -2,7 +2,7 @@
  * RaaS Invoice Generator
  *
  * Handles subscription-lifecycle driven license operations:
- * reactivation and revocation by subscription ID (Polar or Stripe).
+ * reactivation and revocation by subscription ID (Stripe).
  *
  * @module raas/raas-invoice-generator
  */
@@ -14,23 +14,23 @@ import type { RaasLicenseRow as RaasLicense } from '@/lib/supabase/types';
 import { logAuditAction, logLicenseRevocation } from './audit-logging-service';
 
 /**
- * Reactivate license by Polar subscription ID
+ * Reactivate license by subscription ID
  * Called when subscription becomes active after past_due
  */
 export async function reactivateLicenseBySubscription(
-  polarSubscriptionId: string
+  subscriptionId: string
 ): Promise<RaasLicense | null> {
   const db = createServerClient();
 
   const { data: rawLicense, error } = await db
     .from('raas_licenses')
     .select('*')
-    .eq('metadata->>polarSubscriptionId', polarSubscriptionId)
+    .eq('metadata->>stripeSubscriptionId', subscriptionId)
     .single();
   const license = rawLicense as RaasLicense | null;
 
   if (error || !license) {
-    logger.warn(`License not found for Polar subscription ${polarSubscriptionId}`);
+    logger.warn(`License not found for subscription ${subscriptionId}`);
     return null;
   }
 
@@ -56,10 +56,10 @@ export async function reactivateLicenseBySubscription(
     nonce: license.nonce,
     tier: license.tier,
     timestamp: Math.floor(Date.now() / 1000),
-    details: { action: 'REACTIVATE', polarSubscriptionId },
+    details: { action: 'REACTIVATE', subscriptionId },
   });
 
-  logger.info(`License reactivated for Polar subscription ${polarSubscriptionId}`, {
+  logger.info(`License reactivated for subscription ${subscriptionId}`, {
     nonce: license.nonce.slice(0, 8),
   });
 
@@ -69,7 +69,7 @@ export async function reactivateLicenseBySubscription(
 }
 
 /**
- * Revoke license by subscription ID (Polar or Stripe)
+ * Revoke license by subscription ID (Stripe)
  * Supports soft revoke (access until period_end) and hard revoke (immediate)
  */
 export async function revokeLicenseBySubscription(
@@ -77,12 +77,11 @@ export async function revokeLicenseBySubscription(
   options: {
     soft?: boolean;
     revokeAt?: number;
-    provider?: 'polar' | 'stripe';
   } = {}
 ): Promise<RaasLicense | null> {
   const db = createServerClient();
   const revokedAt = options.revokeAt || Math.floor(Date.now() / 1000);
-  const metadataKey = options.provider === 'stripe' ? 'stripeSubscriptionId' : 'polarSubscriptionId';
+  const metadataKey = 'stripeSubscriptionId';
 
   const { data: rawLicense, error } = await db
     .from('raas_licenses')

@@ -53,7 +53,7 @@ vi.mock('@/seed/db/client', () => ({
         const mockQueryBuilder = {
           eq: vi.fn(function(this: any, column: string, value: any) {
             // Support both single() queries and list queries
-            if (column === 'nonce' || column === 'polar_customer_id' || column === 'stripe_customer_id') {
+            if (column === 'nonce' || column === 'stripe_customer_id') {
               // This is a license lookup query - return single()
               return {
                 single: vi.fn(() => Promise.resolve(mockSupabaseSingleResult || mockSupabaseData)),

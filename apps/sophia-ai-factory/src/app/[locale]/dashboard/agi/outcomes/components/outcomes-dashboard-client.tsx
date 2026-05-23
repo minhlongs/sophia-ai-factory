@@ -68,9 +68,8 @@ const RECENT_OUTCOMES = [
   { id: "6", sop: "Lead Nurture", metric: "Revenue", value: 1240, date: "2026-05-19" },
 ];
 
-// Recharts v3 formatter — ValueType is not narrowed to number at call site
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const revenueFormatter = (value: any) => `$${Number(value).toLocaleString()}`;
+const revenueFormatter = (value: string | number | readonly (string | number)[] | undefined) =>
+  `$${Number(Array.isArray(value) ? value[0] : value ?? 0).toLocaleString()}`;
 
 const TOOLTIP_STYLE = {
   contentStyle: { background: "#0f172a", border: "1px solid #1e293b", borderRadius: 8 },

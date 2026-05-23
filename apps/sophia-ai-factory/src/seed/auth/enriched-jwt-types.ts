@@ -23,9 +23,6 @@ export interface EnrichedJwtPayload {
   license_expires_at?: number;
   quota: QuotaLimit;
   agency_id?: string;
-  polar_customer_id?: string;
-  polar_subscription_id?: string;
-  polar_subscription_status?: 'active' | 'inactive' | 'past_due' | 'canceled';
   billing_status?: 'active' | 'past_due' | 'suspended';
   is_paid?: boolean;
   overage_allowed?: boolean;
@@ -40,9 +37,6 @@ export type EnrichedJwtClaims = EnrichedJwtPayload
 export interface LicenseContext {
   tier: string;
   agencyId?: string;
-  polarCustomerId?: string;
-  polarSubscriptionId?: string;
-  polarStatus?: string;
   expiresAt?: number;
   createdAt: number;
 }

@@ -36,7 +36,6 @@ export interface BillingSummary {
 }
 
 interface DunningCustomer {
-  polar_customer_id?: string;
   stripe_customer_id?: string;
   dunning_state?: string;
 }
@@ -140,7 +139,7 @@ export async function fetchBillingSummaryData(): Promise<BillingSummaryQueryResu
 
   const [mrrResult, dunningStatesResult, unbilledOverageResult, activeLicensesResult, issuesResult] =
     await Promise.all([
-      db.from('dunning_settings').select('polar_customer_id, stripe_customer_id, dunning_state').eq('dunning_state', 'current'),
+      db.from('dunning_settings').select('stripe_customer_id, dunning_state').eq('dunning_state', 'current'),
       db.from('dunning_settings').select('dunning_state').order('dunning_state'),
       db.from('overage_events').select('exceeded_by, tier_at_exceeded').eq('billable', false),
       db.from('raas_api_keys').select('id', { count: 'exact', head: true }).eq('status', 'active'),

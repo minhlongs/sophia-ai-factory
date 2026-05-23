@@ -27,8 +27,6 @@ export interface UsageSummary {
   dailyPercentage: number
   monthlyPercentage: number
   status: 'ok' | 'warning' | 'critical' | 'overage'
-  polarCustomerId?: string
-  lastPolarSync?: string
 }
 
 export interface OverageDetected {

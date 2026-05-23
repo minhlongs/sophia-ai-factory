@@ -32,9 +32,7 @@ export interface SupabaseUsageEvent {
 export interface LicenseInfo {
   nonce: string;
   tier: string;
-  polar_customer_id: string | null;
   stripe_customer_id: string | null;
-  polar_subscription_id: string | null;
   is_revoked: boolean;
   created_at: string;
   expires_at: number;
