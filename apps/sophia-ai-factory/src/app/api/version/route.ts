@@ -30,7 +30,7 @@ interface FullVersionResponse extends PublicVersionResponse {
   branch: string;
 }
 
-const OPENNEXT_VERSION = "1.17.3";
+const OPENNEXT_VERSION = "1.19.9";
 
 function getEnv(request: NextRequest): CloudflareEnv {
   // CF Workers exposes env via request context; Next.js falls back to process.env
