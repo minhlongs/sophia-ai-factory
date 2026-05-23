@@ -3,4 +3,4 @@
 -- Columns left in schema to avoid D1 table rebuild; values NULLed to prevent stale data use.
 
 UPDATE subscriptions SET polar_subscription_id = NULL WHERE polar_subscription_id IS NOT NULL;
-UPDATE raas_licenses SET polar_customer_id = NULL WHERE polar_customer_id IS NOT NULL;
+-- raas_licenses is Supabase-only (not in D1 schema); no D1 action needed.
