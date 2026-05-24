@@ -8,27 +8,67 @@ import { cn } from "@/lib/utils";
 import {
   BookOpen, Map, Monitor, HelpCircle, MessageCircle,
   ArrowLeft, Menu, X, Link2, Terminal,
+  Play, Layout, Wallet, Banknote, CreditCard, Users, Lightbulb,
 } from "lucide-react";
 
-const GUIDE_SECTIONS = [
-  {
-    heading: "HƯỚNG DẪN",
-    links: [
-      { href: "/guide", label: "Bắt Đầu", icon: BookOpen },
-      { href: "/guide/how-it-works", label: "Cách Hoạt Động", icon: Map },
-      { href: "/guide/screens", label: "Hướng Dẫn Màn Hình", icon: Monitor },
-    ],
-  },
-  {
-    heading: "THAM KHẢO",
-    links: [
-      { href: "/guide/integrations", label: "Tích Hợp", icon: Link2 },
-      { href: "/guide/commands", label: "Lệnh Bot", icon: Terminal },
-      { href: "/guide/telegram", label: "Telegram Bot", icon: MessageCircle },
-      { href: "/guide/faq", label: "Câu Hỏi Thường Gặp", icon: HelpCircle },
-    ],
-  },
-];
+type GuideSection = {
+  headingKey: string;
+  links: { href: string; labelKey: string; icon: React.ComponentType<{ className?: string; "aria-hidden"?: boolean | "true" | "false" }> }[];
+};
+
+function getGuideSections(): GuideSection[] {
+  return [
+    {
+      headingKey: "getting_started",
+      links: [
+        { href: "/guide", labelKey: "quick_start", icon: BookOpen },
+        { href: "/guide/how-it-works", labelKey: "how_it_works", icon: Map },
+        { href: "/guide/screens", labelKey: "screen_guide", icon: Monitor },
+      ],
+    },
+    {
+      headingKey: "create_content",
+      links: [
+        { href: "/guide/first-video", labelKey: "first_video", icon: Play },
+        { href: "/guide/templates", labelKey: "templates", icon: Layout },
+      ],
+    },
+    {
+      headingKey: "payments",
+      links: [
+        { href: "/guide/payments/usdt", labelKey: "pay_usdt", icon: Wallet },
+        { href: "/guide/payments/vnd", labelKey: "pay_vnd", icon: Banknote },
+        { href: "/guide/payments/plans", labelKey: "plans_pricing", icon: CreditCard },
+      ],
+    },
+    {
+      headingKey: "affiliate",
+      links: [
+        { href: "/guide/affiliate", labelKey: "earn_commission", icon: Users },
+      ],
+    },
+    {
+      headingKey: "integrations_ref",
+      links: [
+        { href: "/guide/integrations", labelKey: "integrations", icon: Link2 },
+        { href: "/guide/telegram", labelKey: "telegram", icon: MessageCircle },
+        { href: "/guide/commands", labelKey: "commands", icon: Terminal },
+      ],
+    },
+    {
+      headingKey: "use_cases",
+      links: [
+        { href: "/guide/use-cases", labelKey: "use_case_library", icon: Lightbulb },
+      ],
+    },
+    {
+      headingKey: "help",
+      links: [
+        { href: "/guide/faq", labelKey: "faq", icon: HelpCircle },
+      ],
+    },
+  ];
+}
 
 export default function GuideLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -38,8 +78,12 @@ export default function GuideLayout({ children }: { children: React.ReactNode })
   // Strip locale prefix for matching
   const cleanPath = pathname.replace(/^\/(en|vi)/, "");
 
-  const isActive = (href: string) =>
-    href === "/guide" ? cleanPath === "/guide" : cleanPath === href;
+  const isActive = (href: string) => {
+    if (href === "/guide") return cleanPath === "/guide";
+    return cleanPath === href || cleanPath.startsWith(href + "/");
+  };
+
+  const sections = getGuideSections();
 
   return (
     <div className="min-h-screen bg-background pt-16">
@@ -74,11 +118,11 @@ export default function GuideLayout({ children }: { children: React.ReactNode })
             </Link>
 
             {/* Sections */}
-            {GUIDE_SECTIONS.map((section) => (
-              <div key={section.heading}>
+            {sections.map((section) => (
+              <div key={section.headingKey}>
                 <div className="px-3 pb-1.5">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">
-                    {section.heading}
+                    {t(`guide.sidebar.section_${section.headingKey}`)}
                   </span>
                 </div>
                 <div className="space-y-0.5">
@@ -98,7 +142,7 @@ export default function GuideLayout({ children }: { children: React.ReactNode })
                         )}
                       >
                         <link.icon className={cn("w-4 h-4 shrink-0", active ? "text-violet-400" : "")} aria-hidden="true" />
-                        {link.label}
+                        {t(`guide.sidebar.${link.labelKey}`)}
                       </Link>
                     );
                   })}
