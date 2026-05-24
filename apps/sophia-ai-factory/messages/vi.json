@@ -2924,8 +2924,20 @@
       "editBrand": "Chỉnh sửa",
       "logo": "Logo",
       "primaryColor": "Màu chính",
+      "secondaryColor": "Màu phụ 2",
       "accentColor": "Màu phụ",
-      "brandName": "Tên thương hiệu"
+      "brandName": "Tên thương hiệu",
+      "colors": "Màu sắc",
+      "logoPosition": "Vị trí Logo",
+      "logoOpacity": "Độ trong suốt",
+      "intro": "Video mở đầu",
+      "outro": "Video kết thúc",
+      "font": "Font chữ riêng",
+      "uploadLogo": "Tải Logo (tối đa 2MB)",
+      "uploadIntro": "Tải Intro (tối đa 20MB)",
+      "uploadOutro": "Tải Outro (tối đa 20MB)",
+      "uploadFont": "Tải Font (.ttf, .otf, .woff)",
+      "saving": "Đang lưu..."
     },
     "newsletter": {
       "brandLabel": "Tên thương hiệu / Bản tin",

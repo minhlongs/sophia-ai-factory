@@ -20,6 +20,7 @@ import { getVideoBucket, tenantScopedKey } from '@/lib/video/r2-binding';
 import { recordCost } from '@/lib/video/cost-ledger';
 import { logger } from '@/seed/utils/logger-utility';
 import { withBreaker, BreakerOpenError } from '@/lib/video/circuit-breaker';
+import { loadBrandKitOverrides } from '@/lib/video/brand-kit-composer';
 
 export interface SubtitleStyle {
   fontSize?: number;
@@ -245,3 +246,27 @@ export const TIKTOK_SUBTITLE_STYLE: SubtitleStyle = {
   position: 'bottom',
   font: 'Noto-Sans-Bold',
 };
+
+/**
+ * Enrich ComposeInput with the user's brand kit (watermark, subtitle colors).
+ * Explicit values in input take precedence over brand kit defaults.
+ */
+export async function applyBrandKit(
+  userId: string,
+  input: ComposeInput,
+): Promise<ComposeInput> {
+  try {
+    const overrides = await loadBrandKitOverrides(userId);
+    return {
+      ...input,
+      watermark: input.watermark ?? overrides.watermark,
+      subtitleStyle: input.subtitleStyle ?? overrides.subtitleStyle,
+    };
+  } catch (err) {
+    logger.warn('[Composer] Brand kit load failed — proceeding without', {
+      userId,
+      error: String(err),
+    });
+    return input;
+  }
+}
