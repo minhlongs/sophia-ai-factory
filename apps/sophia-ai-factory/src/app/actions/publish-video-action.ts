@@ -16,7 +16,7 @@ import {
   storeCredentials,
   getClientCredentials,
 } from '@/lib/publishing/credential-manager';
-import { youtubeAdapter } from '@/lib/publishing/youtube-adapter';
+import { getAdapter } from '@/lib/publishing/token-refresh-service';
 import { inngest } from '@/forest/inngest/client';
 import type { Platform } from '@/lib/publishing/platform-adapter';
 import type { VideoPublish } from '@/seed/db/repositories/video-publishes-repo';
@@ -60,12 +60,14 @@ export async function publishVideoAction(input: {
       return { success: true, data: { publishId: publish.id } };
     }
 
+    const adapter = getAdapter(input.platform);
+
     // Auto-refresh if expired
     let accessToken = creds.accessToken;
     if (creds.isExpired && creds.refreshToken) {
       const clientCreds = await getClientCredentials(user.id, input.platform);
       if (clientCreds) {
-        const refreshed = await youtubeAdapter.refreshToken(
+        const refreshed = await adapter.refreshToken(
           clientCreds.clientId,
           clientCreds.clientSecret,
           creds.refreshToken,
@@ -80,7 +82,7 @@ export async function publishVideoAction(input: {
       }
     }
 
-    const result = await youtubeAdapter.uploadVideo(accessToken, {
+    const result = await adapter.uploadVideo(accessToken, {
       videoUrl: input.videoUrl,
       title: input.title,
       description: input.description,

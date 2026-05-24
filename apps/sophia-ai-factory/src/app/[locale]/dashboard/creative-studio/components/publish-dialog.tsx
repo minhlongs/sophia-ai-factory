@@ -16,7 +16,7 @@ import {
   publishVideoAction,
   getConnectedPlatformsAction,
 } from '@/app/actions/publish-video-action';
-import { Loader2, Send, Youtube } from 'lucide-react';
+import { Loader2, Send, Youtube, Music2, Instagram } from 'lucide-react';
 
 interface PublishDialogProps {
   videoId: string;
@@ -26,6 +26,8 @@ interface PublishDialogProps {
 
 const PLATFORM_ICONS: Record<string, typeof Youtube> = {
   youtube: Youtube,
+  tiktok: Music2,
+  instagram: Instagram,
 };
 
 export function PublishDialog({ videoId, videoUrl, videoTitle }: PublishDialogProps) {
@@ -56,7 +58,7 @@ export function PublishDialog({ videoId, videoUrl, videoTitle }: PublishDialogPr
     const result = await publishVideoAction({
       videoId,
       videoUrl,
-      platform: selectedPlatform as 'youtube',
+      platform: selectedPlatform as 'youtube' | 'tiktok' | 'instagram',
       title,
       description,
       tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
@@ -71,7 +73,9 @@ export function PublishDialog({ videoId, videoUrl, videoTitle }: PublishDialogPr
     setLoading(false);
   }
 
-  const connectedPlatforms = platforms.filter((p) => ['youtube'].includes(p.platform));
+  const connectedPlatforms = platforms.filter((p) =>
+    ['youtube', 'tiktok', 'instagram'].includes(p.platform),
+  );
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

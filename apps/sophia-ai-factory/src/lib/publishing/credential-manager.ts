@@ -3,7 +3,6 @@ import {
   getPlatformCredential,
   upsertPlatformCredential,
 } from '@/seed/db/repositories/platform-credentials-repo';
-import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
 import { logger } from '@/seed/utils/logger-utility';
 import type { Platform } from '@/lib/publishing/platform-adapter';
 
@@ -21,10 +20,9 @@ export async function getDecryptedCredentials(
   const cred = await getPlatformCredential(userId, platform);
   if (!cred) return null;
 
-  const key = getEncryptionKey();
-  const accessToken = await decrypt(cred.access_token_encrypted, key);
+  const accessToken = await decrypt(cred.access_token_encrypted);
   const refreshToken = cred.refresh_token_encrypted
-    ? await decrypt(cred.refresh_token_encrypted, key)
+    ? await decrypt(cred.refresh_token_encrypted)
     : null;
 
   const expiresAt = cred.token_expires_at ? new Date(cred.token_expires_at) : null;
@@ -43,10 +41,9 @@ export async function storeCredentials(input: {
   platformChannelName?: string;
   scopes?: string;
 }): Promise<void> {
-  const key = getEncryptionKey();
-  const accessTokenEncrypted = await encrypt(input.accessToken, key);
+  const accessTokenEncrypted = await encrypt(input.accessToken);
   const refreshTokenEncrypted = input.refreshToken
-    ? await encrypt(input.refreshToken, key)
+    ? await encrypt(input.refreshToken)
     : undefined;
 
   const tokenExpiresAt = input.expiresIn
@@ -71,18 +68,14 @@ export async function storeCredentials(input: {
 }
 
 export async function getClientCredentials(
-  userId: string,
+  _userId: string,
   platform: Platform,
 ): Promise<{ clientId: string; clientSecret: string } | null> {
-  const clientId = await resolveUserApiKey(userId, `${platform}_client_id`, undefined);
-  const clientSecret = await resolveUserApiKey(userId, `${platform}_client_secret`, undefined);
+  const prefix = platform.toUpperCase();
+  const clientId = process.env[`${prefix}_CLIENT_ID`];
+  const clientSecret = process.env[`${prefix}_CLIENT_SECRET`];
 
   if (!clientId || !clientSecret) return null;
   return { clientId, clientSecret };
 }
 
-function getEncryptionKey(): string {
-  const key = process.env.ENCRYPTION_KEY;
-  if (!key) throw new Error('[credential-manager] ENCRYPTION_KEY not configured');
-  return key;
-}

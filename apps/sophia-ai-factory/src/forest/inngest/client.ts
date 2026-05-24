@@ -112,6 +112,33 @@ type BatchVideoFanoutEvent = {
   };
 };
 
+type AnalyticsSyncRequestedEvent = {
+  data: {
+    userId: string;
+    requestedAt: number;
+  };
+};
+
+type RepurposeAnalyzeEvent = {
+  data: {
+    jobId: string;
+    userId: string;
+    videoUrl: string;
+    transcript: Array<{ text: string; start_ms: number; end_ms: number }>;
+  };
+};
+
+type RepurposeClipGenerateEvent = {
+  data: {
+    clipId: string;
+    jobId: string;
+    videoUrl: string;
+    startMs: number;
+    endMs: number;
+    userId: string;
+  };
+};
+
 type Events = {
   "campaign.created": CampaignCreatedEvent;
   "test/hello.world": { data: Record<string, unknown> };
@@ -135,6 +162,11 @@ type Events = {
   // Solo SOPs Platform (Phase 01)
   "sop/execution.requested": SopExecutionRequestedEvent;
   "sop/step.completed": SopStepCompletedEvent;
+  // Phase 03: Auto-repurpose
+  "repurpose/analyze.requested": RepurposeAnalyzeEvent;
+  "repurpose/clip.generate": RepurposeClipGenerateEvent;
+  // Phase 05: Analytics sync (manual trigger)
+  "analytics/sync.requested": AnalyticsSyncRequestedEvent;
   // Payout pipeline events (Phase 13)
   "conversion.created": ConversionCreatedEvent;
   "commission.matured": CommissionMaturedEvent;
