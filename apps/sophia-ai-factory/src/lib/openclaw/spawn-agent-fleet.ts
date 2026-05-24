@@ -103,7 +103,7 @@ async function runTask(
     };
   }
 
-  let retryCount = 0;
+  const retryCount = 0;
 
   try {
     // Validate typed prompt contract before dispatch (opt-in: both fields required)

@@ -163,3 +163,15 @@ export interface IterationBudgetCheck {
   remaining: number
   reason?: string
 }
+
+// ---------------------------------------------------------------------------
+// Solo Company Orchestrator types — defined in solo-company-types.ts
+// ---------------------------------------------------------------------------
+export type {
+  SoloCompanyRole,
+  UnifiedAgentRole,
+  AgentThought,
+  SoloCompanyConfig,
+  FeedbackSignal,
+} from './solo-company-types'
+export { DEFAULT_SOLO_COMPANY_CONFIG } from './solo-company-types'
