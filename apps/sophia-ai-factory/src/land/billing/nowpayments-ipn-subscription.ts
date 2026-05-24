@@ -50,9 +50,22 @@ export async function handleFinished(ipn: NowPaymentsIpnPayload): Promise<void> 
   const db = getDb()
   const tier: Tier = tierConfig.tier
   const isLifetime = UNIFIED_TIERS[tier]?.billingType === 'lifetime'
-  const periodEnd = isLifetime
+
+  // Resolve billing period from pending_orders (monthly/yearly/lifetime)
+  let billingPeriod: 'monthly' | 'yearly' | 'lifetime' = isLifetime ? 'lifetime' : 'monthly'
+  if (ipn.order_id) {
+    try {
+      const pendingOrder = await getOrderById(ipn.order_id)
+      if (pendingOrder?.period === 'yearly') billingPeriod = 'yearly'
+      else if (pendingOrder?.period === 'lifetime') billingPeriod = 'lifetime'
+    } catch { /* fallback to monthly */ }
+  }
+
+  const periodEnd = billingPeriod === 'lifetime'
     ? new Date('2099-12-31T23:59:59Z').toISOString()
-    : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    : billingPeriod === 'yearly'
+      ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+      : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
   const now = new Date().toISOString()
 
   const { data: membership } = await db.from('org_members').select('org_id').eq('user_id', userId).single()
@@ -198,7 +211,7 @@ export async function handleFinished(ipn: NowPaymentsIpnPayload): Promise<void> 
       await sendReceiptEmail({
         email: userEmail,
         tier,
-        period: isLifetime ? 'lifetime' : 'monthly',
+        period: billingPeriod,
         amountUsd: ipn.price_amount,
         paymentId: ipn.payment_id,
         paymentMethod: 'nowpayments',
