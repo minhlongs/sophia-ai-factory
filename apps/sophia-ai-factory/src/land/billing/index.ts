@@ -24,3 +24,4 @@ export * from './usage-aggregator-types';
 export * from './video-mcu-cost-config';
 export * from './video-production-cost-constants';
 export * from './video-production-cost-engine';
+export * from './tier-change-provisioner';

@@ -55,7 +55,7 @@ interface Props {
 type SubmitState =
   | { status: 'idle' }
   | { status: 'loading' }
-  | { status: 'success'; timing: ChangeTierTiming }
+  | { status: 'success'; timing: ChangeTierTiming; creditCents?: number; effectiveAt?: string }
   | { status: 'error'; message: string };
 
 // ---------------------------------------------------------------------------
@@ -97,7 +97,16 @@ export function ChangeTierClient({ currentTier }: Props) {
     const result = await changeTierAction(tier, chosenTiming);
 
     if (result.success) {
-      setSubmitState({ status: 'success', timing: chosenTiming });
+      setSubmitState({
+        status: 'success',
+        timing: chosenTiming,
+        creditCents: result.creditCents,
+        effectiveAt: result.effectiveAt,
+      });
+    } else if (result.error === 'already_on_tier') {
+      setSubmitState({ status: 'error', message: t('error_already_on_tier') });
+    } else if (result.error === 'no_active_subscription') {
+      setSubmitState({ status: 'error', message: t('error_no_subscription') });
     } else if (result.error === 'master_requires_payment') {
       setSubmitState({ status: 'error', message: t('error_master_payment') });
     } else {
@@ -118,6 +127,18 @@ export function ChangeTierClient({ currentTier }: Props) {
                   ? t('success_immediate')
                   : t('success_end_of_cycle')}
               </p>
+              {submitState.creditCents && submitState.creditCents > 0 && (
+                <p className="text-sm text-emerald-600 dark:text-emerald-400 mt-1">
+                  {t('success_credit', { amount: `$${(submitState.creditCents / 100).toFixed(2)}` })}
+                </p>
+              )}
+              {submitState.effectiveAt && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  {t('success_effective_at', {
+                    date: new Date(submitState.effectiveAt).toLocaleDateString(),
+                  })}
+                </p>
+              )}
             </div>
           </div>
         </CardContent>

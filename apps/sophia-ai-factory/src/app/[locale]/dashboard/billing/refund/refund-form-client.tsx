@@ -1,11 +1,11 @@
 'use client';
 
 /**
- * RefundFormClient — self-serve refund request form accessible from the billing dashboard.
+ * RefundFormClient — self-serve refund request form with purchase picker.
  *
- * Reads refund policy from @/config/refund-policy (single source of truth).
- * Calls existing POST /api/refund-requests/create route.
- * Bilingual via next-intl t().
+ * When `purchases` are provided (pre-fetched by server component), shows a
+ * dropdown instead of a manual text input for purchase ID. Falls back to
+ * manual entry when no eligible purchases exist.
  *
  * @module app/[locale]/dashboard/billing/refund/refund-form-client
  */
@@ -26,10 +26,8 @@ import {
 } from '@/seed/components/ui/select';
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import { DEFAULT_REFUND_WINDOW_DAYS } from '@/config/refund-policy';
+import type { RefundablePurchase } from '../actions';
 
-// ---------------------------------------------------------------------------
-// Reason options (keys resolved via t())
-// ---------------------------------------------------------------------------
 const REASON_KEYS = [
   'reason_not_working',
   'reason_not_as_described',
@@ -50,7 +48,23 @@ interface RefundApiResponse {
   message?: string;
 }
 
-export function RefundFormClient() {
+interface RefundFormProps {
+  purchases?: RefundablePurchase[];
+}
+
+function formatAmount(cents: number): string {
+  return `$${(cents / 100).toFixed(2)}`;
+}
+
+function formatDate(epoch: number): string {
+  return new Date(epoch * 1000).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
+export function RefundFormClient({ purchases = [] }: RefundFormProps) {
   const t = useTranslations('dashboard.billing.refund');
 
   const [purchaseId, setPurchaseId] = useState('');
@@ -58,6 +72,9 @@ export function RefundFormClient() {
   const [details, setDetails] = useState('');
   const [wallet, setWallet] = useState('');
   const [state, setState] = useState<SubmitState>({ status: 'idle' });
+
+  const hasPurchases = purchases.length > 0;
+  const selectedPurchase = purchases.find((p) => p.id === purchaseId);
 
   const fullReason = reasonKey
     ? `[${t(reasonKey as Parameters<typeof t>[0])}] ${details}`.trim()
@@ -133,19 +150,47 @@ export function RefundFormClient() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Purchase ID */}
+          {/* Purchase picker or manual input */}
           <div className="space-y-1.5">
             <Label htmlFor="refund-purchase-id">{t('label_purchase_id')}</Label>
-            <Input
-              id="refund-purchase-id"
-              value={purchaseId}
-              onChange={(e) => setPurchaseId(e.target.value)}
-              placeholder={t('placeholder_purchase_id')}
-              required
-              minLength={3}
-              disabled={state.status === 'loading'}
-            />
-            <p className="text-xs text-muted-foreground">{t('hint_purchase_id')}</p>
+            {hasPurchases ? (
+              <>
+                <Select
+                  value={purchaseId}
+                  onValueChange={setPurchaseId}
+                  disabled={state.status === 'loading'}
+                >
+                  <SelectTrigger id="refund-purchase-id">
+                    <SelectValue placeholder={t('placeholder_select_purchase')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {purchases.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.sku} — {formatAmount(p.amount_cents)} — {formatDate(p.paid_at ?? p.created_at)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedPurchase && (
+                  <p className="text-xs text-muted-foreground">
+                    {t('days_remaining_hint', { days: selectedPurchase.days_remaining })}
+                  </p>
+                )}
+              </>
+            ) : (
+              <>
+                <Input
+                  id="refund-purchase-id"
+                  value={purchaseId}
+                  onChange={(e) => setPurchaseId(e.target.value)}
+                  placeholder={t('placeholder_purchase_id')}
+                  required
+                  minLength={3}
+                  disabled={state.status === 'loading'}
+                />
+                <p className="text-xs text-muted-foreground">{t('hint_purchase_id')}</p>
+              </>
+            )}
           </div>
 
           {/* Reason dropdown */}
