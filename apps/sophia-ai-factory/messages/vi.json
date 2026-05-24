@@ -2994,6 +2994,22 @@
     "hero_commission_label": "Tỷ lệ hoa hồng (gói ENTERPRISE)",
     "tier_multiplier_note": "Hoa hồng = giá gói × hệ số bậc (BASIC 0.7×, PREMIUM 1.0×, ENTERPRISE 1.3×)"
   },
+  "publish": {
+    "publish": "Xuất bản",
+    "publishVideo": "Xuất Bản Video",
+    "publishSuccess": "Video đã xuất bản thành công!",
+    "platform": "Nền tảng",
+    "noPlatforms": "Chưa kết nối nền tảng nào. Vào Cài đặt để kết nối YouTube.",
+    "title": "Tiêu đề",
+    "description": "Mô tả",
+    "tags": "Thẻ",
+    "tagsPlaceholder": "thẻ1, thẻ2, thẻ3",
+    "privacy": "Quyền riêng tư",
+    "private": "Riêng tư",
+    "unlisted": "Không công khai",
+    "public": "Công khai",
+    "publishNow": "Xuất Bản Ngay"
+  },
   "batch": {
     "title": "Tạo Video Hàng Loạt",
     "description": "Tải lên file CSV hoặc JSON để tạo nhiều video cùng lúc.",

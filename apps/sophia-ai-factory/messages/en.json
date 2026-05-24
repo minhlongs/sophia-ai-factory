@@ -2994,6 +2994,22 @@
     "hero_commission_label": "Commission rate (ENTERPRISE tier)",
     "tier_multiplier_note": "Commission = plan price × tier multiplier (BASIC 0.7×, PREMIUM 1.0×, ENTERPRISE 1.3×)"
   },
+  "publish": {
+    "publish": "Publish",
+    "publishVideo": "Publish Video",
+    "publishSuccess": "Video published successfully!",
+    "platform": "Platform",
+    "noPlatforms": "No platforms connected. Go to Settings to connect YouTube.",
+    "title": "Title",
+    "description": "Description",
+    "tags": "Tags",
+    "tagsPlaceholder": "tag1, tag2, tag3",
+    "privacy": "Privacy",
+    "private": "Private",
+    "unlisted": "Unlisted",
+    "public": "Public",
+    "publishNow": "Publish Now"
+  },
   "batch": {
     "title": "Batch Video Generation",
     "description": "Upload a CSV or JSON file to generate multiple videos at once.",
