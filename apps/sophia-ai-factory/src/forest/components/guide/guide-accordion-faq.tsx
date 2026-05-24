@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Plus, Minus } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from '@/seed/utils/cn';
 
 export interface FaqItem {
   question: string;

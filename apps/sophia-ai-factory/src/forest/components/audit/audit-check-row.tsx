@@ -8,7 +8,7 @@
 
 import { useState } from 'react'
 import { ChevronDown, ChevronRight, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn } from '@/seed/utils/cn'
 import type { CheckResult } from '@/tree/audit/zero-gap-types'
 
 interface AuditCheckRowProps {

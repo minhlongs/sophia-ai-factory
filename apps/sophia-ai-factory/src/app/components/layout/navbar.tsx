@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Button } from "@/seed/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn } from '@/seed/utils/cn';
 import { LanguageSwitcher } from "@/forest/components/language-switcher";
 import { TrendingUp } from "lucide-react";
 

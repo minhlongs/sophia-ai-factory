@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { cn } from "@/lib/utils";
+import { cn } from '@/seed/utils/cn';
 import {
   BookOpen, Map, Monitor, HelpCircle, MessageCircle,
   ArrowLeft, Menu, X, Link2, Terminal,

@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getUserProfile, updateUserProfile } from './settings';
 import { createServerClient } from '@/seed/db/client';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { encrypt } from '@/utils/encryption';
+import { encrypt } from '@/seed/security/encryption-aes-gcm';
 import { revalidatePath } from 'next/cache';
 
 // Mock dependencies
@@ -14,7 +14,7 @@ vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: vi.fn(),
 }));
 
-vi.mock('@/utils/encryption', () => ({
+vi.mock('@/seed/security/encryption-aes-gcm', () => ({
   encrypt: vi.fn((val) => `encrypted_${val}`),
 }));
 

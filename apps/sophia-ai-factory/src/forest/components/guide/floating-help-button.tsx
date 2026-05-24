@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { HelpCircle, X, BookOpen, MessageCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from '@/seed/utils/cn';
 
 const helpLinks = [
   { href: "/guide", label: "User Guide", icon: BookOpen },

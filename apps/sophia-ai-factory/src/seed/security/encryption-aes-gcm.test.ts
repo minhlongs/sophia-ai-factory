@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { encrypt, decrypt, maskApiKey } from './encryption';
+import { encrypt, decrypt, maskApiKey } from './encryption-aes-gcm';
 
 describe('Encryption Utils', () => {
   beforeEach(() => {

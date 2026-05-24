@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Download, Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/seed/utils/cn';
 import { Button } from '@/seed/components/ui/button';
 import {
   DropdownMenu,

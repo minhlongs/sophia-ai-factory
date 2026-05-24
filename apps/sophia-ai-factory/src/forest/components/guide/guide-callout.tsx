@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from '@/seed/utils/cn';
 import { Info, Lightbulb, AlertTriangle, Zap } from "lucide-react";
 import { ReactNode } from "react";
 

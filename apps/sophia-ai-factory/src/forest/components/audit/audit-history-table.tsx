@@ -8,7 +8,7 @@
 
 import Link from 'next/link'
 import { Clock, ExternalLink } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn } from '@/seed/utils/cn'
 
 interface AuditRunSummaryRow {
   id: string

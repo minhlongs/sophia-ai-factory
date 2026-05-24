@@ -3,7 +3,7 @@
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { createServerClient } from '@/seed/db/client';
 import { revalidatePath } from 'next/cache';
-import { encrypt } from '@/utils/encryption';
+import { encrypt } from '@/seed/security/encryption-aes-gcm';
 import { UserProfileFormValues, userProfileFormSchema } from '@/lib/schemas/settings';
 import { EncryptedApiKeys } from '@/seed/types/user';
 
