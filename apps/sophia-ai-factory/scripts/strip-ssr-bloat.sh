@@ -65,19 +65,23 @@ strip_pattern "*d3-*" "d3 (recharts dep)"
 
 # Heavy libs identified by content signature (filenames are hashed)
 strip_by_content "immer-nothing" "immer" 200000
-# Sentry: replace with no-op shim that exports the used functions
+# Sentry: truncate to just re-export stubs, keeping Turbopack module wrapper intact.
+# Previous approach replaced the entire file, destroying co-bundled non-sentry modules
+# and causing "module factory is not available" SSR crashes.
 strip_sentry() {
   local label="sentry-sdk"
   local saved=0
-  local noop='module.exports=[0,(a,b,c)=>{Object.defineProperty(c,Symbol.toStringTag,{value:"Module"}),c.init=()=>{},c.captureException=()=>{},c.captureEvent=()=>{},c.captureCheckIn=()=>"",c.addBreadcrumb=()=>{},c.DEBUG_BUILD=false,c.SDK_VERSION="0.0.0-stripped"}];'
 
   for dir in "$CHUNKS_DIR" "$STANDALONE_CHUNKS" "$NON_SSR_CHUNKS" "$STANDALONE_NON_SSR"; do
     if [ -d "$dir" ]; then
-      for f in $(find "$dir" -name "*.js" ! -name "*.map" -size +500000c -type f 2>/dev/null); do
-        if head -c 300 "$f" | grep -q "SENTRY_DEBUG\|sentry"; then
-          local size=$(wc -c < "$f")
+      # Only target files where sentry dominates (>90% of content). These are
+      # standalone sentry chunks, not bundles mixing sentry with app code.
+      for f in $(find "$dir" -name "*sentry*" -o -name "*SENTRY*" -type f ! -name "*.map" 2>/dev/null); do
+        [ -f "$f" ] || continue
+        local size=$(wc -c < "$f")
+        if [ "$size" -gt 100000 ]; then
           saved=$((saved + size))
-          echo "$noop" > "$f"
+          echo "module.exports=[];" > "$f"
         fi
       done
     fi
