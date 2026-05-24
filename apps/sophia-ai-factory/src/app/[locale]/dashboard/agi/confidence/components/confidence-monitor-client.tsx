@@ -5,7 +5,7 @@
  * Shows gauge, trend chart, escalation table, and summary metric cards.
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   LineChart,
   Line,
@@ -23,8 +23,8 @@ import {
   CardTitle,
 } from '@/seed/components/ui/card';
 import { Badge } from '@/seed/components/ui/badge';
-import type { EscalationStatus } from '@/seed/types/confidence';
-import { MOCK_SCORES, MOCK_ESCALATIONS } from './confidence-mock-data';
+import { Skeleton } from '@/seed/components/ui/skeleton';
+import type { ConfidenceScore, EscalationRequest, EscalationStatus } from '@/seed/types/confidence';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -94,26 +94,70 @@ export interface ConfidenceMonitorClientProps {
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function ConfidenceMonitorClient({ userId: _userId }: ConfidenceMonitorClientProps) {
+  const [scores, setScores] = useState<ConfidenceScore[]>([]);
+  const [escalations, setEscalations] = useState<EscalationRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/v1/agi/confidence')
+      .then((r) => r.json() as Promise<{ scores?: ConfidenceScore[]; escalations?: EscalationRequest[] }>)
+      .then((data) => {
+        setScores(data.scores ?? []);
+        setEscalations(data.escalations ?? []);
+      })
+      .catch(() => { /* keep empty arrays */ })
+      .finally(() => setLoading(false));
+  }, []);
+
   const avgScore = useMemo(
-    () => MOCK_SCORES.reduce((sum, s) => sum + s.score, 0) / MOCK_SCORES.length,
-    []
+    () => (scores.length > 0 ? scores.reduce((sum, s) => sum + s.score, 0) / scores.length : 0),
+    [scores]
   );
   const belowThreshold = useMemo(
-    () => MOCK_SCORES.filter((s) => s.score < THRESHOLD).length,
-    []
+    () => scores.filter((s) => s.score < THRESHOLD).length,
+    [scores]
   );
   const escalationRate = useMemo(
-    () => Math.round((MOCK_ESCALATIONS.length / MOCK_SCORES.length) * 100),
-    []
+    () => (scores.length > 0 ? Math.round((escalations.length / scores.length) * 100) : 0),
+    [scores, escalations]
   );
 
   const trendData = useMemo(
     () =>
-      [...MOCK_SCORES]
+      [...scores]
         .sort((a, b) => a.createdAt - b.createdAt)
         .map((s) => ({ date: formatDate(s.createdAt), confidence: Math.round(s.score * 100) })),
-    []
+    [scores]
   );
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
+        </div>
+        <div className="grid gap-6 md:grid-cols-2">
+          <Skeleton className="h-[300px] rounded-xl" />
+          <Skeleton className="h-[300px] rounded-xl" />
+        </div>
+        <Skeleton className="h-64 rounded-xl" />
+      </div>
+    );
+  }
+
+  if (scores.length === 0 && escalations.length === 0) {
+    return (
+      <Card glass>
+        <CardContent className="p-12 text-center">
+          <Shield className="mx-auto mb-4 text-muted-foreground" size={48} />
+          <h3 className="text-lg font-medium mb-2">No Confidence Data Yet</h3>
+          <p className="text-sm text-muted-foreground">
+            Confidence scores will appear here once SOP executions generate data.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -151,7 +195,7 @@ export function ConfidenceMonitorClient({ userId: _userId }: ConfidenceMonitorCl
             <CheckCircle className="text-[#00f0ff] shrink-0" size={28} />
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wider">Total Escalations</p>
-              <p className="text-2xl font-bold">{MOCK_ESCALATIONS.length}</p>
+              <p className="text-2xl font-bold">{escalations.length}</p>
             </div>
           </CardContent>
         </Card>
@@ -224,7 +268,7 @@ export function ConfidenceMonitorClient({ userId: _userId }: ConfidenceMonitorCl
                 </tr>
               </thead>
               <tbody>
-                {MOCK_ESCALATIONS.map((esc) => {
+                {escalations.map((esc) => {
                   const cfg = escalationStatusConfig(esc.status);
                   return (
                     <tr key={esc.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">

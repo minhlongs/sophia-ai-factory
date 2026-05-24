@@ -5,7 +5,7 @@
  * Shows active session count, role distribution chart, and session list with expandable tasks.
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   BarChart,
   Bar,
@@ -24,13 +24,13 @@ import {
   CardTitle,
 } from '@/seed/components/ui/card';
 import { Badge } from '@/seed/components/ui/badge';
+import { Skeleton } from '@/seed/components/ui/skeleton';
 import type {
   AgentRole,
   AgentSession,
   AgentStatus,
   AgentTaskAssignment,
 } from '@/seed/types/multi-agent';
-import { MOCK_SESSIONS, MOCK_TASKS } from './agent-mock-data';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -125,37 +125,71 @@ export interface AgentSessionsClientProps {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
+interface ApiResponse {
+  sessions?: AgentSession[];
+  tasksBySession?: Record<string, AgentTaskAssignment[]>;
+  stats?: { active: number; completed: number; failed: number };
+}
+
 export function AgentSessionsClient({ userId: _userId }: AgentSessionsClientProps) {
-  const activeSessions = useMemo(
-    () => MOCK_SESSIONS.filter((s) => s.status === 'running').length,
-    []
-  );
-  const completedSessions = useMemo(
-    () => MOCK_SESSIONS.filter((s) => s.status === 'completed').length,
-    []
-  );
-  const failedSessions = useMemo(
-    () => MOCK_SESSIONS.filter((s) => s.status === 'failed').length,
-    []
+  const [sessions, setSessions] = useState<AgentSession[]>([]);
+  const [tasksBySession, setTasksBySession] = useState<Record<string, AgentTaskAssignment[]>>({});
+  const [stats, setStats] = useState({ active: 0, completed: 0, failed: 0 });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/v1/agi/agents')
+      .then((r) => r.json() as Promise<ApiResponse>)
+      .then((data) => {
+        setSessions(data.sessions ?? []);
+        setTasksBySession(data.tasksBySession ?? {});
+        setStats(data.stats ?? { active: 0, completed: 0, failed: 0 });
+      })
+      .catch(() => { /* keep empty */ })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const allTasks = useMemo(
+    () => Object.values(tasksBySession).flat(),
+    [tasksBySession]
   );
 
   const roleDistribution = useMemo(() =>
     ROLES.map((role) => ({
       role: role.replace('_', ' '),
-      count: MOCK_TASKS.filter((t) => t.agentRole === role).length,
+      count: allTasks.filter((t) => t.agentRole === role).length,
       color: ROLE_COLORS[role],
     })).filter((r) => r.count > 0),
-    []
+    [allTasks]
   );
 
-  const tasksBySession = useMemo(
-    () =>
-      MOCK_SESSIONS.reduce<Record<string, AgentTaskAssignment[]>>((acc, s) => {
-        acc[s.id] = MOCK_TASKS.filter((t) => t.sessionId === s.id);
-        return acc;
-      }, {}),
-    []
-  );
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid gap-4 md:grid-cols-3">
+          {[1, 2, 3].map((i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
+        </div>
+        <div className="grid gap-6 md:grid-cols-2">
+          <Skeleton className="h-[300px] rounded-xl" />
+          <Skeleton className="h-[300px] rounded-xl" />
+        </div>
+      </div>
+    );
+  }
+
+  if (sessions.length === 0) {
+    return (
+      <Card glass>
+        <CardContent className="p-12 text-center">
+          <Bot className="mx-auto mb-4 text-muted-foreground" size={48} />
+          <h3 className="text-lg font-medium mb-2">No Agent Sessions Yet</h3>
+          <p className="text-sm text-muted-foreground">
+            Agent sessions will appear here once multi-agent SOP executions start.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -166,7 +200,7 @@ export function AgentSessionsClient({ userId: _userId }: AgentSessionsClientProp
             <Activity className="text-[#00f0ff] shrink-0" size={28} />
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wider">Active Sessions</p>
-              <p className="text-2xl font-bold text-[#00f0ff]">{activeSessions}</p>
+              <p className="text-2xl font-bold text-[#00f0ff]">{stats.active}</p>
             </div>
           </CardContent>
         </Card>
@@ -175,7 +209,7 @@ export function AgentSessionsClient({ userId: _userId }: AgentSessionsClientProp
             <CheckCircle2 className="text-[#00f0ff] shrink-0" size={28} />
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wider">Completed</p>
-              <p className="text-2xl font-bold">{completedSessions}</p>
+              <p className="text-2xl font-bold">{stats.completed}</p>
             </div>
           </CardContent>
         </Card>
@@ -184,7 +218,7 @@ export function AgentSessionsClient({ userId: _userId }: AgentSessionsClientProp
             <XCircle className="text-[#ff00ff] shrink-0" size={28} />
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wider">Failed</p>
-              <p className="text-2xl font-bold text-[#ff00ff]">{failedSessions}</p>
+              <p className="text-2xl font-bold text-[#ff00ff]">{stats.failed}</p>
             </div>
           </CardContent>
         </Card>
@@ -240,7 +274,7 @@ export function AgentSessionsClient({ userId: _userId }: AgentSessionsClientProp
                 <span>Duration</span>
                 <span>Status</span>
               </div>
-              {MOCK_SESSIONS.map((session) => (
+              {sessions.map((session) => (
                 <SessionRow
                   key={session.id}
                   session={session}

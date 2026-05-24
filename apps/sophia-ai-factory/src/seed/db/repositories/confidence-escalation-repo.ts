@@ -145,6 +145,42 @@ export async function resolveEscalation(
   logger.info('[ConfidenceRepo] Escalation resolved', { id, status, resolvedBy });
 }
 
+/** Fetch recent confidence scores across all executions. Returns [] on error. */
+export async function getRecentScores(limit = 50): Promise<ConfidenceScore[]> {
+  try {
+    const db = await getD1Raw();
+    const result = await db
+      .prepare(
+        `SELECT id, execution_id, step_index, score, factors_json, created_at
+         FROM sop_step_confidence ORDER BY created_at DESC LIMIT ?1`,
+      )
+      .bind(limit)
+      .all<RawConfidenceRow>();
+    return (result.results ?? []).map(mapConfidence);
+  } catch (err) {
+    logger.error('[ConfidenceRepo] getRecentScores failed', { error: getErrorMessage(err) });
+    return [];
+  }
+}
+
+/** Fetch recent escalations across all executions. Returns [] on error. */
+export async function getRecentEscalations(limit = 50): Promise<EscalationRequest[]> {
+  try {
+    const db = await getD1Raw();
+    const result = await db
+      .prepare(
+        `SELECT id, execution_id, step_index, reason, status, resolved_by, resolved_at, created_at
+         FROM escalation_requests ORDER BY created_at DESC LIMIT ?1`,
+      )
+      .bind(limit)
+      .all<RawEscalationRow>();
+    return (result.results ?? []).map(mapEscalation);
+  } catch (err) {
+    logger.error('[ConfidenceRepo] getRecentEscalations failed', { error: getErrorMessage(err) });
+    return [];
+  }
+}
+
 /** Fetch pending escalations ordered by created_at DESC. Returns [] on error. */
 export async function getPendingEscalations(limit = 50): Promise<EscalationRequest[]> {
   try {
