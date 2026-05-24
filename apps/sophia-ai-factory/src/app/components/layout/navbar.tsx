@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/seed/components/ui/button";
 import { cn } from "@/lib/utils";
 import { LanguageSwitcher } from "@/forest/components/language-switcher";
+import { TrendingUp } from "lucide-react";
 
 export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -14,6 +15,7 @@ export function Navbar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const pathname = usePathname();
   const t = useTranslations("landing");
+  const tAff = useTranslations("affiliate");
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 50);
@@ -36,12 +38,15 @@ export function Navbar() {
   // Hide public navbar on dashboard pages (dashboard has its own sidebar nav)
   if (isDashboard) return null;
 
+  // Smart referral link: logged-in users go to dashboard affiliate, guests to discovery page
+  const referEarnHref = isLoggedIn ? "/affiliate" : "/affiliate-discovery";
+
   const navLinks = [
     { label: t("nav.raas"), href: isHomePage ? "/#raas" : "/guide/commands" },
     { label: t("nav.features"), href: isHomePage ? "/#features" : "/pricing" },
     { label: t("nav.pricing"), href: "/pricing" },
     { label: t("nav.guide"), href: "/guide" },
-    { label: t("nav.affiliates"), href: "/affiliate-discovery" },
+    { label: tAff("refer_earn_nav"), href: referEarnHref, highlight: true },
   ];
 
   const handleScrollClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
@@ -102,8 +107,14 @@ export function Navbar() {
               key={link.href}
               href={link.href}
               onClick={(e) => handleScrollClick(e, link.href)}
-              className="px-4 py-1.5 rounded-full transition-all text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-white/5"
+              className={cn(
+                "px-4 py-1.5 rounded-full transition-all text-sm font-medium",
+                link.highlight
+                  ? "text-emerald-400 hover:text-emerald-300 hover:bg-emerald-950/40 flex items-center gap-1.5"
+                  : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+              )}
             >
+              {link.highlight && <TrendingUp className="w-3.5 h-3.5" aria-hidden="true" />}
               {link.label}
             </Link>
           ))}
@@ -156,7 +167,10 @@ export function Navbar() {
               {link.label}
             </Link>
           ))}
-          <div className="flex gap-3 pt-2">
+          <div className="flex items-center justify-between pt-2 pb-1">
+            <LanguageSwitcher />
+          </div>
+          <div className="flex gap-3">
             <Link href="/login" className="flex-1" onClick={() => setMenuOpen(false)}>
               <Button variant="outline" size="sm" className="w-full rounded-full">
                 {t("nav.login")}

@@ -15,7 +15,12 @@ export const dynamic = 'force-static';
 export const metadata: Metadata = {
   title: 'Blog — Sophia AI Factory',
   description:
-    'Tin tức, hướng dẫn và mẹo sử dụng Sophia AI Video Factory',
+    'News, guides and tips for Sophia AI Video Factory | Tin tức, hướng dẫn và mẹo sử dụng Sophia AI Video Factory',
+  alternates: {
+    types: {
+      'application/rss+xml': 'https://sophia.agencyos.network/blog/feed.xml',
+    },
+  },
 };
 
 interface BlogPost {
@@ -54,6 +59,42 @@ const POSTS: BlogPost[] = [
       'Cách chọn sản phẩm, viết kịch bản AI, và tối ưu kênh YouTube faceless.',
     date: '2026-04-12',
     readTime: '6 phút',
+  },
+  {
+    slug: 'non-tech-ceos-ai-video',
+    href: '/guide/how-it-works',
+    title: 'How Non-Tech CEOs Use AI to Create Video Content — Cách CEO Không Kỹ Thuật Dùng AI Tạo Video',
+    excerpt:
+      'No cameras, no editors, no video experience needed. See how business owners are publishing daily AI videos with zero technical skills.',
+    date: '2026-05-01',
+    readTime: '5 min',
+  },
+  {
+    slug: 'affiliate-passive-income',
+    href: '/affiliate',
+    title: '5 Ways to Earn Passive Income with Sophia Affiliate Program — 5 Cách Kiếm Thu Nhập Thụ Động',
+    excerpt:
+      'Earn 70% commission on every referral. Share your link on YouTube, Telegram, blog posts, or social media — get paid in USDT every month.',
+    date: '2026-05-05',
+    readTime: '4 min',
+  },
+  {
+    slug: 'usdt-payments-guide',
+    href: '/guide/faq',
+    title: 'USDT Payments Explained: A Simple Guide for Business Owners — Hướng Dẫn USDT Đơn Giản',
+    excerpt:
+      'What is USDT, how to buy it, which network to use, and how to pay for Sophia subscription in under 5 minutes.',
+    date: '2026-05-10',
+    readTime: '5 min',
+  },
+  {
+    slug: 'first-week-with-sophia',
+    href: '/guide/how-it-works',
+    title: 'From Zero to Revenue: Your First Week with Sophia — Tuần Đầu Tiên Với Sophia',
+    excerpt:
+      'Day-by-day onboarding guide: set up API keys, create your first campaign, publish to YouTube, and earn your first affiliate commission.',
+    date: '2026-05-15',
+    readTime: '6 min',
   },
 ];
 

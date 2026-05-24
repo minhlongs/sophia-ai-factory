@@ -1,5 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { createInvoiceUrl, NOWPAYMENTS_TIERS } from '@/tree/clients/nowpayments-client';
+import { UNIFIED_TIERS } from '@/seed/config/tiers';
 import { checkoutSchema } from '@/lib/schemas';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
@@ -9,6 +10,9 @@ import { logger } from '@/seed/utils/logger-utility';
 import { writeOrder, findActivePendingOrder } from '@/land/orders/pending-order-repo';
 import { derivePeriod, assertPeriodAllowed, assertPaymentMethodAllowed } from '@/land/checkout/checkout-validators';
 import type { PendingOrderPeriod, PaymentMethod } from '@/land/orders/pending-order-types';
+import { createPayOsInvoice } from '@/land/payments/payos';
+import { track } from '@/lib/signals/track';
+import { D1Events } from '@/lib/signals/d1-event-types';
 
 /**
  * Extract user ID from Better Auth session headers.
@@ -167,14 +171,70 @@ export const POST = withRateLimit(async function POST(request: Request) {
       }
     }
 
-    // Build NOWPayments invoice URL
+    // ── PayOS path (VND bank transfer for VN users) ───────────────────────────
+    if (paymentMethod === 'payos') {
+      const orderId = `sophia_${userId}_${Date.now()}`;
+      try {
+        const payOsResult = await createPayOsInvoice({
+          tier: tier as import('@/seed/types').Tier,
+          // PayOS does not support yearly billing yet — treat yearly as monthly for VND checkout.
+          // TODO(phase-07): add yearly PayOS support when PayOS invoice IDs are available.
+          period: (period === 'yearly' ? 'monthly' : period) as 'monthly' | 'lifetime',
+          userId,
+          orderId,
+          customerEmail,
+        });
+
+        // Write pending order (non-fatal)
+        try {
+          await writeOrder({
+            order_id: orderId,
+            user_id: userId,
+            tier,
+            period,
+            payment_method: 'payos',
+            amount_usd_cents: 0, // VND payment — USD amount not relevant
+            promo_code: promoCode,
+            customer_email: customerEmail,
+            invoice_url: payOsResult.checkoutUrl,
+          });
+        } catch (dbErr) {
+          logger.warn('[Checkout/PayOS] Failed to write pending_order (non-fatal)', {
+            orderId,
+            error: dbErr instanceof Error ? dbErr.message : String(dbErr),
+          });
+        }
+
+        return NextResponse.json({ url: payOsResult.checkoutUrl, orderId });
+      } catch (payOsErr) {
+        const msg = payOsErr instanceof Error ? payOsErr.message : String(payOsErr);
+        logger.error('[Checkout/PayOS] Failed to create PayOS invoice', new Error(msg), { userId, tier });
+        return NextResponse.json({ error: `PayOS checkout failed: ${msg}` }, { status: 500 });
+      }
+    }
+
+    // ── NOWPayments path (default — USDT crypto) ──────────────────────────────
+
+    // Resolve amount: yearly invoices use yearlyPrice from unified config.
+    // TODO(phase-07): NOWPayments does not yet have dedicated yearly invoice IDs.
+    // For now, createInvoiceUrl uses the monthly invoice ID (which sets the description)
+    // but we override amountUsdCents below so the actual charge reflects the annual price.
+    // When NOWPayments yearly invoice IDs are configured in nowpayments-client.ts,
+    // pass `period` to createInvoiceUrl and remove this override.
     const invoiceUrl = createInvoiceUrl(tier, userId, customerEmail);
 
     // Extract order_id from the URL (embedded by createInvoiceUrl)
     const urlObj = new URL(invoiceUrl);
     const orderId = urlObj.searchParams.get('order_id') ?? `sophia_${userId}_${Date.now()}`;
 
-    const amountUsdCents = Math.round((NOWPAYMENTS_TIERS[tier].price ?? 0) * 100);
+    // Use yearlyPrice for annual billing; fall back to monthly price from NOWPAYMENTS_TIERS
+    const tierConfig = UNIFIED_TIERS[tier as import('@/seed/types').Tier];
+    const amountUsdCents: number = (() => {
+      if (period === 'yearly' && tierConfig && tierConfig.yearlyPrice > 0) {
+        return tierConfig.yearlyPrice * 100;
+      }
+      return Math.round((NOWPAYMENTS_TIERS[tier].price ?? 0) * 100);
+    })();
 
     // Write pending order — fail gracefully if D1 write fails (do not block checkout)
     try {
@@ -196,6 +256,15 @@ export const POST = withRateLimit(async function POST(request: Request) {
         error: dbErr instanceof Error ? dbErr.message : String(dbErr),
       });
     }
+
+    // Fire-and-forget D1 signal for funnel analytics — non-blocking
+    track(D1Events.CHECKOUT_STARTED, userId, {
+      tier,
+      period,
+      payment_method: paymentMethod,
+      order_id: orderId,
+      has_promo: Boolean(promoCode),
+    });
 
     return NextResponse.json({ url: invoiceUrl, orderId });
   } catch (error) {

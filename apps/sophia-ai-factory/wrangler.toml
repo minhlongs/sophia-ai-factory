@@ -137,3 +137,20 @@ IS_CONFIGURED = "true"
 #   AWIN_API_TOKEN, AWIN_PUBLISHER_ID
 #   RAKUTEN_TOKEN
 # === PHASE02-AFFILIATE-SCOUT-VARS-END ===
+
+# === PAYOS-VARS-BEGIN ===
+# PayOS VN domestic payment gateway (backup for VN users who prefer bank transfer).
+# Feature-gated: FEATURE_PAYOS=true activates the "Pay with Bank Transfer (VND)" option.
+# Secrets (set via `wrangler secret put`):
+#   PAYOS_CLIENT_ID      — from PayOS merchant dashboard
+#   PAYOS_API_KEY        — from PayOS merchant dashboard
+#   PAYOS_CHECKSUM_KEY   — from PayOS merchant dashboard (used for IPN HMAC-SHA256)
+# Optional vars:
+#   USD_TO_VND           — exchange rate override (default: 25000). Update as rate changes.
+# To enable PayOS on production:
+#   wrangler secret put PAYOS_CLIENT_ID
+#   wrangler secret put PAYOS_API_KEY
+#   wrangler secret put PAYOS_CHECKSUM_KEY
+#   Then set FEATURE_PAYOS = "true" below and redeploy.
+FEATURE_PAYOS = "false"
+# === PAYOS-VARS-END ===

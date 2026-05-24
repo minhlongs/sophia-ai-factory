@@ -21,6 +21,7 @@ export function buildHtmlTemplate(type: EmailTemplateType, context: BillingEmail
 
 export function getEmailSubject(type: EmailTemplateType, context: BillingEmailContext, language: 'en' | 'vi'): string {
   const tierDisplay = context.tier.charAt(0) + context.tier.slice(1).toLowerCase()
+  const daysLeft = context.gracePeriodDaysLeft ?? 2
   if (language === 'vi') {
     switch (type) {
       case 'payment_failed':       return '[Sophia AI] Thanh toán thất bại - Cần hành động ngay'
@@ -28,6 +29,9 @@ export function getEmailSubject(type: EmailTemplateType, context: BillingEmailCo
       case 'suspension_notice':    return '[Sophia AI] DỊCH VỤ BỊ ĐÌNH CHỈ - Hành động ngay'
       case 'payment_succeeded':    return '[Sophia AI] Xác nhận thanh toán thành công'
       case 'overage_detected':     return `[Sophia AI] Thông báo sử dụng vượt mức - ${tierDisplay}`
+      case 'dunning_day1':         return `[Sophia AI] Thanh toán ${tierDisplay} không thành công — vui lòng thử lại`
+      case 'dunning_day3':         return `[Sophia AI] Hành động bắt buộc: cập nhật thanh toán ${tierDisplay} trong ${daysLeft} ngày`
+      case 'dunning_day5':         return `[Sophia AI] CẢNH BÁO CUỐI: Tài khoản ${tierDisplay} sẽ bị đình chỉ hôm nay`
     }
   }
   switch (type) {
@@ -36,6 +40,9 @@ export function getEmailSubject(type: EmailTemplateType, context: BillingEmailCo
     case 'suspension_notice':    return '[Sophia AI] SERVICE SUSPENDED - Immediate Action Required'
     case 'payment_succeeded':    return '[Sophia AI] Payment Successful - Confirmation'
     case 'overage_detected':     return `[Sophia AI] Overage Usage Detected - ${tierDisplay}`
+    case 'dunning_day1':         return `[Sophia AI] Your ${tierDisplay} payment didn't go through`
+    case 'dunning_day3':         return `[Sophia AI] Action required: update your ${tierDisplay} payment (${daysLeft} day${daysLeft === 1 ? '' : 's'} left)`
+    case 'dunning_day5':         return `[Sophia AI] FINAL WARNING: Your ${tierDisplay} account will be suspended today`
   }
 }
 
@@ -46,6 +53,9 @@ export function buildTextTemplate(type: EmailTemplateType, context: BillingEmail
   const amountStr = amount ? `${(amount / 100).toFixed(2)} ${currency?.toUpperCase() || 'USD'}` : 'N/A'
   const providerStr = context.paymentProvider?.toUpperCase() || 'N/A'
 
+  const retryUrl = `${BILLING_URL}?retry=true`
+  const daysLeft = context.gracePeriodDaysLeft ?? 2
+
   if (language === 'vi') {
     switch (type) {
       case 'payment_failed':       return `Thanh toán cho tài khoản Sophia AI ${tierDisplay} đã thất bại.\n\nSố tiền: ${amountStr}\nLý do: ${failureReason || 'Không xác định'}\n\n${BILLING_URL}\n\n${supportEmail}`
@@ -53,6 +63,9 @@ export function buildTextTemplate(type: EmailTemplateType, context: BillingEmail
       case 'suspension_notice':    return `Tài khoản đã bị đình chỉ. Khôi phục: ${BILLING_URL}`
       case 'payment_succeeded':    return `Thanh toán thành công. Số tiền: ${amountStr}\nPhương thức: ${providerStr}\n\n${BILLING_URL}`
       case 'overage_detected':     return `Sử dụng vượt mức gói ${tierDisplay}. Phí sẽ được tính vào hóa đơn tiếp theo.\n\n${BILLING_URL}`
+      case 'dunning_day1':         return `Thanh toán Sophia AI ${tierDisplay} không thành công.\n\nSố tiền: ${amountStr}\nLý do: ${failureReason || 'Không xác định'}\n\nCập nhật ngay: ${retryUrl}\n\n${supportEmail}`
+      case 'dunning_day3':         return `Hành động bắt buộc: Chỉ còn ${daysLeft} ngày trước khi tài khoản ${tierDisplay} bị đình chỉ.\n\nNgày đình chỉ: ${suspensionDate?.toLocaleDateString('vi-VN') || 'Sắp tới'}\nSố tiền: ${amountStr}\n\nThanh toán ngay: ${retryUrl}\n\n${supportEmail}`
+      case 'dunning_day5':         return `CẢNH BÁO CUỐI: Tài khoản Sophia AI ${tierDisplay} sẽ bị đình chỉ hôm nay.\n\nSố tiền: ${amountStr}\n\nNgăn chặn ngay: ${retryUrl}\n\n${supportEmail}`
     }
   }
   switch (type) {
@@ -61,5 +74,8 @@ export function buildTextTemplate(type: EmailTemplateType, context: BillingEmail
     case 'suspension_notice':    return `Account suspended due to non-payment. Restore service: ${BILLING_URL}`
     case 'payment_succeeded':    return `Payment successful. Amount: ${amountStr}\nMethod: ${providerStr}\n\n${BILLING_URL}`
     case 'overage_detected':     return `Your ${tierDisplay} plan limit exceeded. Overage charges on next invoice.\n\n${BILLING_URL}`
+    case 'dunning_day1':         return `Your Sophia AI ${tierDisplay} payment didn't go through.\n\nAmount: ${amountStr}\nReason: ${failureReason || 'Unknown'}\nRetry date: ${nextRetryDate?.toLocaleDateString() || 'as soon as possible'}\n\nUpdate your payment: ${retryUrl}\n\n${supportEmail}`
+    case 'dunning_day3':         return `Action required: Only ${daysLeft} day${daysLeft === 1 ? '' : 's'} left before your ${tierDisplay} account is suspended.\n\nSuspension date: ${suspensionDate?.toLocaleDateString() || 'Soon'}\nAmount: ${amountStr}\n\nPay now: ${retryUrl}\n\n${supportEmail}`
+    case 'dunning_day5':         return `FINAL WARNING: Your Sophia AI ${tierDisplay} account will be suspended today.\n\nAmount: ${amountStr}\n\nPrevent suspension now: ${retryUrl}\n\n${supportEmail}`
   }
 }

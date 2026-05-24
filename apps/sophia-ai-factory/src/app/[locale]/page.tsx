@@ -9,7 +9,7 @@ import { Hero } from "@/app/components/sections/hero";
 import { Skeleton } from "@/seed/components/ui/skeleton";
 import { ScrollReveal } from "@/seed/components/ui/scroll-reveal";
 import { StickyMobileCta } from "@/app/components/layout/sticky-mobile-cta";
-import { buildFAQPageSchema } from "@/lib/seo/schema-org";
+import { buildFAQPageSchema, buildOrganizationSchema } from "@/lib/seo/schema-org";
 import { buildHomeMetadata } from "./home-metadata";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
@@ -116,9 +116,15 @@ export default async function Home() {
       a: t(`faq.items.${key}.answer`),
     }))
   );
+  const orgSchema = buildOrganizationSchema();
 
   return (
     <main id="main-content">
+      {/* Organization structured data — global brand signal */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }}
+      />
       {/* FAQPage structured data — matches landing FAQ section */}
       <script
         type="application/ld+json"
@@ -126,6 +132,10 @@ export default async function Home() {
       />
       {/* Hero has its own FadeInView — no ScrollReveal needed */}
       <Hero />
+      {/* Social proof immediately after hero — builds trust before asking for commitment */}
+      <ScrollReveal delay={0}>
+        <SocialProof />
+      </ScrollReveal>
       <ScrollReveal delay={0}>
         <RaaSShowcase />
       </ScrollReveal>
@@ -141,13 +151,11 @@ export default async function Home() {
       <ScrollReveal delay={100}>
         <RaasDemoTerminal />
       </ScrollReveal>
-      <ScrollReveal delay={0}>
-        <SocialProof />
-      </ScrollReveal>
+      {/* ROI calculator before pricing — show value before showing price */}
+      <ProductionCostCalculator />
       <ScrollReveal delay={100}>
         <PricingSection />
       </ScrollReveal>
-      <ProductionCostCalculator />
       <ScrollReveal delay={100}>
         <AgiCapabilitiesSection />
       </ScrollReveal>

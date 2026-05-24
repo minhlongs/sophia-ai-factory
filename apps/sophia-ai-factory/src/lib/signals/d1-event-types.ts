@@ -33,6 +33,7 @@ export const D1Events = {
   AGENT_TASK_COMPLETE:       'agent_task_complete',         // Phase 03: agent task finished successfully
   AGENT_TASK_FAIL:           'agent_task_fail',             // Phase 03: agent task failed
   AGENT_FEEDBACK:            'agent_feedback',              // Phase 03: user thumbs up/down on task result
+  CHECKOUT_STARTED:          'checkout_started',            // Phase 03: user initiates paid tier checkout
 } as const
 
 export type D1EventType = typeof D1Events[keyof typeof D1Events]
@@ -218,6 +219,15 @@ const AgentFeedbackSchema = z.object({
   comment:    z.string().max(280).optional(),
 })
 
+/** checkout_started — fired in POST /api/checkout when invoice URL is minted */
+const CheckoutStartedSchema = z.object({
+  tier:           z.string(),
+  period:         z.string().optional(),
+  payment_method: z.string(),
+  order_id:       z.string(),
+  has_promo:      z.boolean().optional(),
+})
+
 // ── Schema registry ───────────────────────────────────────────────────────────
 const SCHEMAS: Record<D1EventType, z.ZodTypeAny> = {
   [D1Events.TIER_CONVERSION]:         TierConversionSchema,
@@ -244,6 +254,7 @@ const SCHEMAS: Record<D1EventType, z.ZodTypeAny> = {
   [D1Events.AGENT_TASK_COMPLETE]:        AgentTaskCompleteSchema,
   [D1Events.AGENT_TASK_FAIL]:            AgentTaskFailSchema,
   [D1Events.AGENT_FEEDBACK]:             AgentFeedbackSchema,
+  [D1Events.CHECKOUT_STARTED]:           CheckoutStartedSchema,
 }
 
 /**

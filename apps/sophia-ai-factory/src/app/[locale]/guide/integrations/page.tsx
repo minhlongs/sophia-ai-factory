@@ -1,10 +1,18 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { Brain, Mic, Video, Database, CreditCard, Bot } from "lucide-react";
+import { Brain, Mic, Video, Database, CreditCard, Bot, MessageCircle } from "lucide-react";
 import { GuideStepCard } from "@/forest/components/guide/guide-step-card";
 import { GuideCallout } from "@/forest/components/guide/guide-callout";
 import { GuideFeatureGrid, GuideFeatureItem } from "@/forest/components/guide/guide-feature-grid";
 import { YouTubeEmbed } from "@/forest/components/guide/youtube-embed";
+import { buildBreadcrumbSchema } from "@/lib/seo/schema-org";
+
+const SITE_URL = 'https://sophia.agencyos.network';
+const breadcrumbSchema = buildBreadcrumbSchema([
+  { name: 'Home', url: SITE_URL },
+  { name: 'Guide', url: `${SITE_URL}/guide` },
+  { name: 'Integrations', url: `${SITE_URL}/guide/integrations` },
+]);
 
 export const metadata: Metadata = {
   title: "Tích Hợp Dịch Vụ — Hướng Dẫn Sophia AI Factory",
@@ -53,6 +61,10 @@ const services: GuideFeatureItem[] = [
 export default function IntegrationsGuidePage() {
   return (
     <div className="max-w-3xl space-y-10">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
       {/* Hero */}
       <div>
         <h1 className="text-3xl font-bold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent mb-3">
@@ -210,6 +222,21 @@ export default function IntegrationsGuidePage() {
             title="Sử dụng lệnh"
             description="Dùng /campaign để tạo chiến dịch, /status để kiểm tra tiến độ, /results để xem kết quả."
           />
+        </div>
+      </section>
+
+      {/* Zalo */}
+      <section className="space-y-4">
+        <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+          <MessageCircle className="w-5 h-5 text-blue-500" aria-hidden="true" /> Zalo — Nhắn Tin & Marketing VN
+        </h2>
+        <GuideCallout variant="info">
+          <strong>Zalo đang trong lộ trình phát triển.</strong> Zalo là nền tảng nhắn tin phổ biến nhất Việt Nam với 70 triệu người dùng. Tích hợp Zalo sẽ cho phép gửi chiến dịch video trực tiếp qua Zalo OA (Official Account).
+          <br /><br />
+          Trong khi chờ tích hợp Zalo, bạn có thể điều khiển Sophia qua <strong>Telegram (@Sophia_Bbot)</strong> — tính năng tương tự, hoạt động ngay hôm nay.
+        </GuideCallout>
+        <div className="rounded-lg border border-blue-500/20 bg-blue-500/5 px-4 py-3 text-sm text-muted-foreground">
+          <span className="font-semibold text-blue-400">Coming Soon:</span> Zalo OA integration — automated video campaigns delivered via Zalo to Vietnamese customers.
         </div>
       </section>
     </div>

@@ -1,6 +1,14 @@
 import { Metadata } from "next";
 import { GuideCommandCard } from "@/forest/components/guide/guide-command-card";
 import { GuideCallout } from "@/forest/components/guide/guide-callout";
+import { buildBreadcrumbSchema } from "@/lib/seo/schema-org";
+
+const SITE_URL = 'https://sophia.agencyos.network';
+const breadcrumbSchema = buildBreadcrumbSchema([
+  { name: 'Home', url: SITE_URL },
+  { name: 'Guide', url: `${SITE_URL}/guide` },
+  { name: 'Bot Commands', url: `${SITE_URL}/guide/commands` },
+]);
 
 export const metadata: Metadata = {
   title: "Lệnh Telegram Bot — Hướng Dẫn Sophia AI Factory",
@@ -36,6 +44,10 @@ const commandCategories = [
 export default function CommandsGuidePage() {
   return (
     <div className="max-w-3xl space-y-10">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
       {/* Hero */}
       <div>
         <h1 className="text-3xl font-bold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent mb-3">

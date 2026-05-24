@@ -22,6 +22,9 @@ import { renderWinBack, type WinBackData } from './templates/win-back';
 import { renderAffiliateWelcome, type AffiliateWelcomeData } from './templates/affiliate-welcome';
 import { renderAffiliateDay1Tutorial, type AffiliateDay1Data } from './templates/affiliate-day1-tutorial';
 import { renderAffiliateDay7CaseStudy, type AffiliateDay7Data } from './templates/affiliate-day7-case-study';
+import { renderPostPurchaseWelcome, type PostPurchaseWelcomeData } from './templates/post-purchase-welcome';
+import { renderPostPurchaseNudge, type PostPurchaseNudgeData } from './templates/post-purchase-nudge';
+import { renderPostPurchaseFirstSuccess, type PostPurchaseFirstSuccessData } from './templates/post-purchase-first-success';
 
 export type TemplateKey =
   | 'welcome-magic-link'
@@ -35,7 +38,10 @@ export type TemplateKey =
   | 'win-back'
   | 'affiliate-welcome'
   | 'affiliate-day1-tutorial'
-  | 'affiliate-day7-case-study';
+  | 'affiliate-day7-case-study'
+  | 'post-purchase-welcome'
+  | 'post-purchase-nudge'
+  | 'post-purchase-first-success';
 
 export type TemplateDataMap = {
   'welcome-magic-link': WelcomeMagicLinkData;
@@ -50,6 +56,9 @@ export type TemplateDataMap = {
   'affiliate-welcome': AffiliateWelcomeData;
   'affiliate-day1-tutorial': AffiliateDay1Data;
   'affiliate-day7-case-study': AffiliateDay7Data;
+  'post-purchase-welcome': PostPurchaseWelcomeData;
+  'post-purchase-nudge': PostPurchaseNudgeData;
+  'post-purchase-first-success': PostPurchaseFirstSuccessData;
 };
 
 export interface RenderEmailResult {
@@ -87,6 +96,12 @@ export function renderEmail<K extends TemplateKey>(
       return renderAffiliateDay1Tutorial(data as AffiliateDay1Data);
     case 'affiliate-day7-case-study':
       return renderAffiliateDay7CaseStudy(data as AffiliateDay7Data);
+    case 'post-purchase-welcome':
+      return renderPostPurchaseWelcome(data as PostPurchaseWelcomeData);
+    case 'post-purchase-nudge':
+      return renderPostPurchaseNudge(data as PostPurchaseNudgeData);
+    case 'post-purchase-first-success':
+      return renderPostPurchaseFirstSuccess(data as PostPurchaseFirstSuccessData);
     default: {
       const exhaustive: never = template;
       throw new Error(`Unknown email template: ${exhaustive}`);

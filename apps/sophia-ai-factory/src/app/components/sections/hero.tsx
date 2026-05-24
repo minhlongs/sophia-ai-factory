@@ -105,6 +105,7 @@ export function Hero() {
             <Link href="/dashboard">
               <Button variant="glow" size="lg" className="glow-primary rounded-full px-8 text-base w-full sm:w-auto shadow-lg shadow-neon-cyan/20">
                 {t("cta_start")}
+                <span className="ml-2 hidden sm:inline text-xs opacity-70 font-normal">→</span>
               </Button>
             </Link>
             <Link href="/redeem">
@@ -129,25 +130,28 @@ export function Hero() {
             <TerminalPreview />
           </div>
 
-          {/* Trust indicators */}
+          {/* Social proof stats — above fold, below hero CTAs */}
           <div
-            className="mt-10 flex flex-wrap items-center justify-center gap-x-10 gap-y-4 text-sm text-slate-400/50 animate-fade-in-up"
+            className="mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 animate-fade-in-up"
             style={{ animationDelay: "0.6s" }}
           >
-            <span className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-green-400/60" />
+            <span className="flex items-center gap-2 text-sm font-medium text-foreground/70">
+              <span className="w-2 h-2 rounded-full bg-green-400" />
               {t("trust_uptime")}
             </span>
-            <span className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-neon-cyan/70" />
+            <span className="text-border/40 hidden sm:block">•</span>
+            <span className="flex items-center gap-2 text-sm font-medium text-foreground/70">
+              <span className="w-2 h-2 rounded-full bg-neon-cyan" />
               {t("trust_response")}
             </span>
-            <span className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-amber-400/60" />
+            <span className="text-border/40 hidden sm:block">•</span>
+            <span className="flex items-center gap-2 text-sm font-medium text-foreground/70">
+              <span className="w-2 h-2 rounded-full bg-amber-400" />
               {t("trust_security")}
             </span>
-            <span className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-neon-purple/80" />
+            <span className="text-border/40 hidden sm:block">•</span>
+            <span className="flex items-center gap-2 text-sm font-medium text-foreground/70">
+              <span className="w-2 h-2 rounded-full bg-neon-purple" />
               {t("trust_edge")}
             </span>
           </div>

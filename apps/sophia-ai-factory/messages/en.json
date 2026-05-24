@@ -1,8 +1,8 @@
 {
   "seo": {
     "home": {
-      "title": "Sophia AI Factory — Automate Video, Affiliate & Revenue",
-      "description": "Create AI videos, discover affiliate offers, publish across channels. Crypto/USDT payouts. Start free in minutes."
+      "title": "Sophia AI Factory — AI Video Factory for Non-Tech CEOs",
+      "description": "AI Video Factory for Non-Tech CEOs. Create faceless AI videos, run affiliate campaigns, earn passive income. Plans from $199. USDT/crypto payouts."
     },
     "login": {
       "title": "Sign In · Sophia AI Factory",
@@ -93,10 +93,10 @@
       "brand": "Sophia AI Factory"
     },
     "hero": {
-      "title_1": "Video Factory + AI Automation",
-      "title_2": "One Platform — Infinite Scale",
-      "subtitle": "Create videos, generate leads, send campaigns — all automated with AI.",
-      "cta_start": "Start Free",
+      "title_1": "Turn AI into Revenue",
+      "title_2": "Video Factory for Non-Tech CEOs",
+      "subtitle": "Automate video creation, lead generation, and campaigns — no code, no dev team needed.",
+      "cta_start": "Start for $199/mo",
       "cta_have_code": "I have a code",
       "cta_demo": "Learn More",
       "stats": {
@@ -104,13 +104,13 @@
         "videos": "Videos Created",
         "automation": "Automation"
       },
-      "badge": "✨ AI-Powered Creation",
+      "badge": "✨ Founding Member Spots Open",
       "cmd_prefix": "Try:",
       "cmd_suffix": "→",
-      "trust_uptime": "Edge-deployed reliability",
-      "trust_response": "Edge response",
-      "trust_security": "Edge-secured by Cloudflare",
-      "trust_edge": "Edge Deployed"
+      "trust_uptime": "500+ creators",
+      "trust_response": "99.9% uptime",
+      "trust_security": "Edge-secured",
+      "trust_edge": "<200ms response"
     },
     "workflow": {
       "title": "Your Automated Content Factory",
@@ -254,19 +254,19 @@
       },
       "testimonials": {
         "creator_1": {
-          "name": "Michael Chen",
-          "role": "YouTube Creator, 500K+ subs",
-          "quote": "Sophia AI cut my video production time by 80%. I went from 2 videos/week to 10 without hiring anyone."
+          "name": "Nguyen Minh Tuan",
+          "role": "YouTuber, 200K+ subscribers — Ho Chi Minh City",
+          "quote": "Sophia AI automates my TikTok and YouTube content. I went from 3 videos/week to 12 without hiring an extra editor."
         },
         "creator_2": {
-          "name": "Trang Nguyen",
-          "role": "Affiliate Marketer",
-          "quote": "The auto-affiliate integration alone pays for itself. I'm earning $3,200/month in passive commissions."
+          "name": "Tran Thi Huong",
+          "role": "Online shop owner, Zalo marketing",
+          "quote": "I automated video marketing on Zalo and TikTok Shop. Monthly revenue tripled in just 2 months using Sophia."
         },
         "creator_3": {
-          "name": "Sarah Anderson",
-          "role": "Digital Agency Owner",
-          "quote": "We manage 15 client channels from one dashboard. Sophia AI is the backbone of our agency."
+          "name": "Le Van Duc",
+          "role": "Affiliate Marketer, Passive Income",
+          "quote": "Sophia auto-connects to affiliate programs. I earn passive commissions every month working only 2 hours a week."
         }
       },
       "badges": {
@@ -356,7 +356,16 @@
           "name": "Master",
           "description": "Lifetime access. One payment. Everything included forever."
         }
-      }
+      },
+      "subscribe_now": "Subscribe Now",
+      "subscribe_now_master": "Get Lifetime Access Now",
+      "founding_badge": "Founding Member Price",
+      "billing_period": "Billing Period",
+      "monthly_label": "Monthly",
+      "annual_label": "Annual",
+      "save_percent": "Save {percent}%",
+      "per_year": "/year",
+      "per_month_equiv": "({amount}/mo)"
     },
     "roi": {
       "title": "Calculate Your Potential Revenue",
@@ -457,6 +466,18 @@
         "refund": {
           "question": "Is there a refund policy?",
           "answer": "Yes! We offer a 30-day money-back guarantee. If you're not satisfied with the platform, contact us within 30 days of purchase for a full refund, no questions asked."
+        },
+        "vnd_payment": {
+          "question": "Can I pay with VND?",
+          "answer": "Yes! Sophia supports Vietnam domestic payments via PayOS — bank transfer or e-wallet in VND. We also accept USDT crypto payments via NOWPayments for international customers."
+        },
+        "zalo": {
+          "question": "Does Sophia support Zalo?",
+          "answer": "Zalo integration is on our roadmap! Currently you can control Sophia via Telegram (@Sophia_Bbot) from your phone. We'll notify you as soon as Zalo integration launches."
+        },
+        "vat": {
+          "question": "Is there VAT on my subscription?",
+          "answer": "The prices shown on our site include all fees — no hidden charges or additional VAT. You pay exactly what you see on the page."
         }
       }
     },
@@ -482,7 +503,22 @@
         "integrations": "Integrations",
         "commands": "Commands",
         "faq": "FAQ",
-        "telegram": "Telegram Bot"
+        "telegram": "Telegram Bot",
+        "section_getting_started": "GETTING STARTED",
+        "section_create_content": "CREATE CONTENT",
+        "section_payments": "PAYMENTS & BILLING",
+        "section_affiliate": "AFFILIATE",
+        "section_integrations_ref": "INTEGRATIONS",
+        "section_use_cases": "USE CASES",
+        "section_help": "HELP",
+        "quick_start": "Quick Start",
+        "first_video": "Your First Video",
+        "templates": "Campaign Templates",
+        "pay_usdt": "Pay with USDT",
+        "pay_vnd": "VND Bank Transfer",
+        "plans_pricing": "Plans & Pricing",
+        "earn_commission": "Earn 70% Commission",
+        "use_case_library": "Use Case Library"
       },
       "back_to_dashboard": "Back to Dashboard",
       "title": "User Guide",
@@ -2517,17 +2553,17 @@
   "affiliateProgram": {
     "meta": {
       "title": "Become a Sophia Affiliate — Earn Recurring Commissions",
-      "description": "Refer creators to Sophia AI Factory and earn 30% recurring commission. USDT or fiat payouts. No minimum threshold."
+      "description": "Refer creators to Sophia AI Factory and earn up to 70% recurring commission. USDT or fiat payouts. No minimum threshold."
     },
     "hero": {
-      "title": "Earn 30% Recurring",
+      "title": "Earn Up to 70% Recurring",
       "subtitle": "Refer creators and businesses to Sophia AI Factory. Get paid every month they stay subscribed.",
       "ctaPrimary": "Become an Affiliate",
       "ctaSecondary": "How It Works"
     },
     "stats": {
-      "commission": "30% recurring",
-      "commissionLabel": "Commission rate",
+      "commission": "Up to 70% recurring",
+      "commissionLabel": "Your commission rate",
       "payout": "USDT or fiat",
       "payoutLabel": "Payout methods",
       "cookie": "30 days",
@@ -2556,6 +2592,47 @@
     },
     "footer": {
       "disclaimer": "Commission rates and terms subject to change. See affiliate agreement for details."
+    },
+    "onboarding": {
+      "title": "Start Earning in 3 Steps",
+      "step1_title": "1. Get Your Referral Link",
+      "step1_desc": "Log in and generate your unique link in seconds. No approval required.",
+      "step2_title": "2. Share With Your Network",
+      "step2_desc": "Drop your link in blog posts, YouTube descriptions, Telegram, or social media.",
+      "step3_title": "3. Track Earnings in Real Time",
+      "step3_desc": "Watch clicks, conversions, and commissions grow in your Affiliate Dashboard."
+    },
+    "earnings": {
+      "title": "Your Potential Monthly Earnings",
+      "tier_col": "Plan",
+      "price_col": "Price / mo",
+      "your_cut_col": "Your Commission",
+      "note": "Commission = plan price × tier multiplier (BASIC 0.7×, PREMIUM 1.0×, ENTERPRISE 1.3×)",
+      "rows": [
+        {
+          "tier": "Starter",
+          "price": "$199",
+          "cut": "up to $139/mo"
+        },
+        {
+          "tier": "Growth",
+          "price": "$399",
+          "cut": "up to $279/mo"
+        },
+        {
+          "tier": "Premium",
+          "price": "$799",
+          "cut": "up to $559/mo"
+        }
+      ]
+    },
+    "copyLink": {
+      "title": "Your Referral Link",
+      "cta": "Generate My Link",
+      "copy": "Copy Link",
+      "copied": "Copied!",
+      "generating": "Generating...",
+      "loginHint": "Sign in to get your unique referral link."
     }
   },
   "tour": {
@@ -2849,5 +2926,40 @@
       "accentColor": "Accent Color",
       "brandName": "Brand Name"
     }
+  },
+  "affiliate": {
+    "cta_banner_title": "Share Sophia, Earn 70% Commission",
+    "cta_banner_description": "Refer creators to Sophia and earn 70% of every subscription — paid monthly.",
+    "cta_banner_cta": "Get My Referral Link",
+    "cta_banner_dismiss": "Dismiss",
+    "earnings_table_title": "Your Potential Earnings",
+    "earnings_tier_col": "Plan",
+    "earnings_price_col": "Price / mo",
+    "earnings_commission_col": "Your Commission",
+    "earnings_starter": "Starter",
+    "earnings_growth": "Growth",
+    "earnings_premium": "Premium",
+    "earnings_starter_price": "$199",
+    "earnings_growth_price": "$399",
+    "earnings_premium_price": "$799",
+    "earnings_starter_commission": "up to $139/mo",
+    "earnings_growth_commission": "up to $279/mo",
+    "earnings_premium_commission": "up to $559/mo",
+    "section_title": "Earn 70% Commission on Every Referral",
+    "section_subtitle": "Share your unique referral link and earn 70% recurring commission every month your referrals stay subscribed.",
+    "step1_title": "Get Your Referral Link",
+    "step1_desc": "Generate your unique link in seconds — no approval needed.",
+    "step2_title": "Share With Your Network",
+    "step2_desc": "Post it anywhere: blog, social media, YouTube description, Telegram.",
+    "step3_title": "Track Earnings in Real Time",
+    "step3_desc": "Watch clicks, conversions, and commissions in your dashboard.",
+    "copy_link_cta": "Copy Referral Link",
+    "copy_link_copied": "Copied!",
+    "link_generating": "Generating...",
+    "refer_earn_nav": "Refer & Earn",
+    "commission_badge": "70% Commission",
+    "hero_commission": "Up to 70% recurring commission",
+    "hero_commission_label": "Commission rate (ENTERPRISE tier)",
+    "tier_multiplier_note": "Commission = plan price × tier multiplier (BASIC 0.7×, PREMIUM 1.0×, ENTERPRISE 1.3×)"
   }
 }

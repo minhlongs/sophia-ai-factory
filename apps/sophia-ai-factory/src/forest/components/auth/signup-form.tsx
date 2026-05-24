@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Mail, Lock, User, Loader2, CheckCircle } from "lucide-react";
 import { authClient } from "@/seed/auth/better-auth-client";
+import { trackSignupComplete } from "@/lib/analytics/conversion-events";
 
 interface SignupFormProps {
   /** i18n strings — caller passes from server component or static keys */
@@ -78,6 +79,7 @@ export function SignupForm({ t }: SignupFormProps) {
       }
 
       setSuccess(true);
+      trackSignupComplete({ method: 'email' });
       router.push("/setup-wizard");
       router.refresh();
     } catch {

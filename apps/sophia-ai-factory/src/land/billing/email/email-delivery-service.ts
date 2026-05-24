@@ -158,3 +158,22 @@ export async function sendPaymentSuccessEmail(context: BillingEmailContext): Pro
 export async function sendOverageDetectedEmail(context: BillingEmailContext): Promise<void> {
   await sendBillingEmail('overage_detected', context);
 }
+
+// -------------------------------------------------------------------------
+// Dunning time-boxed sequence wrappers
+// -------------------------------------------------------------------------
+
+/** Day-1 (24h after first decline): friendly payment-failed reminder */
+export async function sendDunningDay1Email(context: BillingEmailContext): Promise<void> {
+  await sendBillingEmail('dunning_day1', context);
+}
+
+/** Day-3 (72h after first decline): urgent action-required with countdown */
+export async function sendDunningDay3Email(context: BillingEmailContext): Promise<void> {
+  await sendBillingEmail('dunning_day3', context);
+}
+
+/** Day-5 (120h after first decline): final warning before suspension */
+export async function sendDunningDay5Email(context: BillingEmailContext): Promise<void> {
+  await sendBillingEmail('dunning_day5', context);
+}

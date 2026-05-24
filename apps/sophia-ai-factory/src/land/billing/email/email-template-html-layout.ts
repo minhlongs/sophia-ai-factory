@@ -11,6 +11,10 @@ export const TEMPLATE_COLORS: Record<EmailTemplateType, { bg: string; header: st
   suspension_notice:    { bg: '#fef2f2', header: 'linear-gradient(135deg, #000000 0%, #1f2937 100%)', accent: '#dc2626' },
   payment_succeeded:    { bg: '#f0fdf4', header: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)', accent: '#16a34a' },
   overage_detected:     { bg: '#eff6ff', header: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)', accent: '#2563eb' },
+  // Time-boxed dunning sequence
+  dunning_day1:         { bg: '#fefce8', header: 'linear-gradient(135deg, #eab308 0%, #ca8a04 100%)', accent: '#eab308' },
+  dunning_day3:         { bg: '#fff7ed', header: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)', accent: '#f97316' },
+  dunning_day5:         { bg: '#fef2f2', header: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', accent: '#ef4444' },
 }
 
 export function getTypeEmoji(type: EmailTemplateType): string {
@@ -18,6 +22,9 @@ export function getTypeEmoji(type: EmailTemplateType): string {
     case 'suspension_notice':    return '🚫'
     case 'grace_period_warning': return '⚠️'
     case 'payment_succeeded':    return '✅'
+    case 'dunning_day1':         return '💳'
+    case 'dunning_day3':         return '⚠️'
+    case 'dunning_day5':         return '🚨'
     default:                     return '💳'
   }
 }

@@ -18,8 +18,8 @@ import { buildAllProductSchemas, buildBreadcrumbSchema, BREADCRUMBS } from "@/li
 export const revalidate = 60;
 
 export const metadata = {
-  title: "Pricing - Sophia AI Factory",
-  description: "Video Factory + AI Automation — One Platform",
+  title: "Pricing — Sophia AI Factory | Plans from $199",
+  description: "Video Factory + AI Automation — One Platform. Plans from $199/month to $4,999 lifetime. USDT/crypto payments accepted.",
 };
 
 export default async function PricingPage() {
