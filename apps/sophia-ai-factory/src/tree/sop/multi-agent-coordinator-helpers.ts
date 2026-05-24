@@ -5,7 +5,14 @@
  * Layer: tree
  */
 
-import type { AgentRole, AgentSession, AgentTaskAssignment } from '@/seed/types/multi-agent'
+import type {
+  AgentRole,
+  AgentSession,
+  AgentTaskAssignment,
+  IterationLimits,
+  IterationBudgetCheck,
+} from '@/seed/types/multi-agent'
+import { DEFAULT_ITERATION_LIMITS } from '@/seed/types/multi-agent'
 
 export function rowToSession(row: Record<string, unknown>): AgentSession {
   return {
@@ -46,6 +53,37 @@ export function rowToTask(row: Record<string, unknown>): AgentTaskAssignment {
     completedAt: row.completed_at as number | undefined,
     createdAt: row.created_at as number,
   }
+}
+
+// ── Bounded Iteration Guards ────────────────────────────────────────────────
+
+/**
+ * Check whether a task can proceed given its retry count and the fleet's total iterations.
+ * Returns { canProceed: false, reason } when budget exhausted.
+ */
+export function checkIterationBudget(
+  taskRetries: number,
+  totalIterations: number,
+  limits: IterationLimits = DEFAULT_ITERATION_LIMITS,
+): IterationBudgetCheck {
+  if (taskRetries >= limits.maxRetriesPerSubtask) {
+    return {
+      canProceed: false,
+      remaining: 0,
+      reason: `Subtask retry limit reached (${taskRetries}/${limits.maxRetriesPerSubtask})`,
+    };
+  }
+  if (totalIterations >= limits.maxTotalIterations) {
+    return {
+      canProceed: false,
+      remaining: 0,
+      reason: `Fleet iteration limit reached (${totalIterations}/${limits.maxTotalIterations})`,
+    };
+  }
+  const subtaskRemaining = limits.maxRetriesPerSubtask - taskRetries;
+  const fleetRemaining = limits.maxTotalIterations - totalIterations;
+  const remaining = Math.min(subtaskRemaining, fleetRemaining);
+  return { canProceed: true, remaining };
 }
 
 /** Unix epoch seconds */

@@ -47,7 +47,7 @@ export const videoProducerSchema = promptContractBase.extend({
 export const publisherSchema = promptContractBase.extend({
   platforms: z.array(z.string()).min(1, 'at least one platform is required').max(20),
   scheduledAt: z.string().datetime().optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const analystSchema = promptContractBase.extend({
@@ -72,7 +72,7 @@ export const supervisorSchema = promptContractBase.extend({
       ]),
     )
     .min(1, 'pipeline must have at least one role'),
-  config: z.record(z.unknown()).optional(),
+  config: z.record(z.string(), z.unknown()).optional(),
 });
 
 // ---------------------------------------------------------------------------
