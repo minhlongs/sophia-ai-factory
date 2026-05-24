@@ -2851,7 +2851,8 @@
       "image": "Tạo Hình Ảnh",
       "audio": "Studio Âm Thanh",
       "templates": "Mẫu",
-      "brand": "Thương Hiệu"
+      "brand": "Thương Hiệu",
+      "newsletter": "Bản Tin"
     },
     "video": {
       "scriptLabel": "Kịch bản video",
@@ -2925,6 +2926,25 @@
       "primaryColor": "Màu chính",
       "accentColor": "Màu phụ",
       "brandName": "Tên thương hiệu"
+    },
+    "newsletter": {
+      "brandLabel": "Tên thương hiệu / Bản tin",
+      "brandPlaceholder": "VD: Sophia Tuần San",
+      "topicLabel": "Chủ đề / Nội dung",
+      "topicPlaceholder": "Bản tin này nói về gì? VD: Xu hướng AI marketing tuần này",
+      "toneLabel": "Giọng viết",
+      "introLabel": "Lời giới thiệu (tùy chọn)",
+      "introPlaceholder": "Lời nhắn cá nhân từ bạn đến độc giả",
+      "ctaLabel": "Lời kêu gọi hành động (tùy chọn)",
+      "ctaPlaceholder": "VD: Đặt lịch tư vấn miễn phí",
+      "generate": "Tạo bản tin",
+      "generating": "Đang tạo...",
+      "previewLabel": "Xem trước bản tin",
+      "previewPlaceholder": "Bản tin sẽ hiển thị tại đây",
+      "subjectLine": "Tiêu đề email",
+      "copyHtml": "Sao chép HTML",
+      "copied": "Đã sao chép!",
+      "words": "từ"
     }
   },
   "affiliate": {
