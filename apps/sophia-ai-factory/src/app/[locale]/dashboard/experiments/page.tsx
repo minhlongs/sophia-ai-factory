@@ -25,7 +25,7 @@ export const metadata = {
 
 export default async function ExperimentsPage() {
   const user = await getCurrentUser();
-  if (!user) redirect('/auth/login');
+  if (!user) redirect('/login');
 
   const t = await getTranslations('experiments');
 

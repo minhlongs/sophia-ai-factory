@@ -5,14 +5,18 @@
  */
 
 import { MissionDetail } from '@/forest/components/raas/mission-detail';
+import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
 
 interface Props {
   params: Promise<{ id: string; locale: string }>;
 }
 
 export default async function MissionDetailPage({ params }: Props) {
+  const user = await getCurrentUser();
+  if (!user) redirect('/login');
   const { id } = await params;
   const t = await getTranslations('dashboard.missions');
 

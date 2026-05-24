@@ -1,5 +1,6 @@
 import { getD1Client } from "@/seed/db/client";
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
+import { redirect } from "next/navigation";
 import { logger } from "@/seed/utils/logger-utility";
 import dynamic from "next/dynamic";
 import { Button } from "@/seed/components/ui/button";
@@ -24,29 +25,21 @@ const CampaignList = dynamic(
   }
 );
 
-async function getAuthUserId(): Promise<string | null> {
-  try {
-    const user = await getCurrentUser();
-    return user?.id ?? null;
-  } catch {
-    return null;
-  }
-}
-
 export default async function CampaignsPage() {
   const t = await getTranslations('dashboard');
   const tEmpty = await getTranslations('dashboard.emptyState.campaigns');
-  const userId = await getAuthUserId();
+  const user = await getCurrentUser();
+  if (!user) redirect('/login');
 
   let campaigns: Campaign[] = [];
 
-  if (userId) {
+  if (user) {
     try {
       const db = await getD1Client();
       const { data, error } = await db
         .from("campaigns")
         .select("*")
-        .eq("user_id", userId)
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       if (error) {
         logger.error("[campaigns/page] DB error", new Error(error.message));
