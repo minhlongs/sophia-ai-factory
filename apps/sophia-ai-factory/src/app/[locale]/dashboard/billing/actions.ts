@@ -2,18 +2,19 @@
 
 /**
  * Server actions for billing self-serve flows:
- *  - changeTierAction  — tier upgrade or downgrade with timing option
+ *  - changeTierAction  — tier upgrade or downgrade with atomic D1 provisioning
  *  - cancelSubscriptionAction — cancel subscription (end-of-cycle or immediate)
- *
- * Refund submission calls the existing API route directly from the client;
- * no server action needed for that path.
+ *  - listRefundablePurchasesAction — list user's purchases eligible for refund
  *
  * @module app/[locale]/dashboard/billing/actions
  */
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { createServerClient } from '@/seed/db/client';
+import { getD1Raw } from '@/seed/db/client';
+import { getUserTier } from '@/seed/db/get-user-tier';
 import { logger } from '@/seed/utils/logger-utility';
+import { provisionTierChange } from '@/land/billing/tier-change-provisioner';
 import type { Tier } from '@/seed/types';
 
 // ---------------------------------------------------------------------------
@@ -25,6 +26,8 @@ export type ChangeTierTiming = 'immediate' | 'end_of_cycle';
 export interface ChangeTierResult {
   success: boolean;
   error?: string;
+  creditCents?: number;
+  effectiveAt?: string;
 }
 
 export interface CancelSubscriptionResult {
@@ -34,18 +37,30 @@ export interface CancelSubscriptionResult {
   effectiveAt?: number;
 }
 
+export interface RefundablePurchase {
+  id: string;
+  sku: string;
+  amount_cents: number;
+  status: string;
+  created_at: number;
+  paid_at: number | null;
+  days_remaining: number;
+}
+
 const VALID_TIERS: Tier[] = ['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER'];
+const REFUND_WINDOW_DAYS = 30;
+const SECONDS_PER_DAY = 86_400;
 
 // ---------------------------------------------------------------------------
 // changeTierAction
 // ---------------------------------------------------------------------------
 
 /**
- * Records a tier-change request in user_profiles settings.
- * Actual provisioning is handled by the billing ops workflow.
+ * Provisions a tier change atomically in D1.
+ * Immediate: updates subscriptions + organizations + calculates pro-rata credit.
+ * End-of-cycle: stores pending request for cron pickup at period end.
  *
- * MASTER is one-time purchase — upgrades to MASTER require payment flow;
- * this action handles BASIC/PREMIUM/ENTERPRISE changes only as self-serve.
+ * MASTER is one-time purchase — upgrades to MASTER require payment flow.
  */
 export async function changeTierAction(
   targetTier: Tier,
@@ -62,42 +77,49 @@ export async function changeTierAction(
   }
 
   try {
+    const currentTier = await getUserTier(user.id);
+    if (currentTier === targetTier) {
+      return { success: false, error: 'already_on_tier' };
+    }
+
+    // Resolve org membership
     const db = createServerClient();
-    const { data: existing } = await db
-      .from('user_profiles')
-      .select('settings')
+    const { data: membership } = await db
+      .from('org_members')
+      .select('org_id')
       .eq('user_id', user.id)
       .single();
 
-    let settings: Record<string, unknown> = {};
-    try {
-      if (existing?.settings) {
-        settings = JSON.parse(existing.settings as string) as Record<string, unknown>;
-      }
-    } catch { /* ignore malformed settings */ }
-
-    settings.tier_change_request = {
-      target_tier: targetTier,
-      timing,
-      requested_at: Math.floor(Date.now() / 1000),
-    };
-
-    const { error } = await db
-      .from('user_profiles')
-      .update({ settings: JSON.stringify(settings), updated_at: new Date().toISOString() })
-      .eq('user_id', user.id);
-
-    if (error) {
-      logger.error('[changeTierAction] DB update failed', error instanceof Error ? error : undefined);
-      return { success: false, error: 'db_error' };
+    const orgId = (membership as { org_id?: string } | null)?.org_id;
+    if (!orgId) {
+      return { success: false, error: 'no_organization' };
     }
 
-    logger.info('[changeTierAction] Tier change recorded', {
+    const result = await provisionTierChange({
       userId: user.id,
+      orgId,
+      currentTier,
       targetTier,
       timing,
     });
-    return { success: true };
+
+    if (!result.success) {
+      return { success: false, error: result.error };
+    }
+
+    logger.info('[changeTierAction] Tier change provisioned', {
+      userId: user.id,
+      from: currentTier,
+      to: targetTier,
+      timing,
+      creditCents: result.creditCents,
+    });
+
+    return {
+      success: true,
+      creditCents: result.creditCents,
+      effectiveAt: result.effectiveAt,
+    };
   } catch (err) {
     logger.error('[changeTierAction] Unexpected error', err instanceof Error ? err : undefined);
     return { success: false, error: 'internal_error' };
@@ -156,5 +178,61 @@ export async function cancelSubscriptionAction(
   } catch (err) {
     logger.error('[cancelSubscriptionAction] Unexpected error', err instanceof Error ? err : undefined);
     return { success: false, error: 'internal_error' };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// listRefundablePurchasesAction
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns user's one-time purchases eligible for refund (within 30-day window,
+ * status = 'paid', no existing refund request).
+ */
+export async function listRefundablePurchasesAction(): Promise<RefundablePurchase[]> {
+  const user = await getCurrentUser();
+  if (!user) return [];
+
+  try {
+    const db = await getD1Raw();
+    const nowSec = Math.floor(Date.now() / 1000);
+    const cutoff = nowSec - REFUND_WINDOW_DAYS * SECONDS_PER_DAY;
+
+    const result = await db
+      .prepare(
+        `SELECT p.id, p.sku, p.amount_cents, p.status, p.created_at, p.paid_at
+         FROM user_purchases p
+         WHERE p.user_id = ?1
+           AND p.kind = 'one_time'
+           AND p.status = 'paid'
+           AND COALESCE(p.paid_at, p.created_at) >= ?2
+           AND NOT EXISTS (
+             SELECT 1 FROM refund_requests r
+             WHERE r.purchase_id = p.id AND r.user_id = p.user_id
+           )
+         ORDER BY p.created_at DESC
+         LIMIT 50`,
+      )
+      .bind(user.id, cutoff)
+      .all<{
+        id: string;
+        sku: string;
+        amount_cents: number;
+        status: string;
+        created_at: number;
+        paid_at: number | null;
+      }>();
+
+    return (result.results ?? []).map((row) => {
+      const purchaseEpoch = row.paid_at ?? row.created_at;
+      const daysSince = (nowSec - purchaseEpoch) / SECONDS_PER_DAY;
+      return {
+        ...row,
+        days_remaining: Math.max(0, Math.ceil(REFUND_WINDOW_DAYS - daysSince)),
+      };
+    });
+  } catch (err) {
+    logger.error('[listRefundablePurchases] Failed', err instanceof Error ? err : undefined);
+    return [];
   }
 }
