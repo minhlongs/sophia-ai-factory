@@ -179,6 +179,23 @@ export async function recordRedemption(input: {
   };
 }
 
+/** Find a reserved redemption by userId and promoCode (for IPN finalization). */
+export async function findReservedRedemption(
+  userId: string,
+  promoCode: string,
+): Promise<RedemptionRow | null> {
+  const db = await getD1Raw();
+  const row = await db
+    .prepare(
+      `SELECT * FROM promo_code_redemptions
+       WHERE user_id = ?1 AND promo_code = ?2 AND status = 'reserved'
+       ORDER BY redeemed_at DESC LIMIT 1`,
+    )
+    .bind(userId, promoCode.toUpperCase())
+    .first<RedemptionRow>();
+  return row ?? null;
+}
+
 /** Finalize a reserved redemption to 'redeemed' and link payment/handover. */
 export async function finalizeRedemption(
   redemptionId: string,

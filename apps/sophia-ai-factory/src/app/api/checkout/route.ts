@@ -6,6 +6,8 @@ import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { validatePromoCode } from '@/land/promo/promo-validator';
 import { recordRedemption, incrementUsedCount } from '@/land/promo/promo-repo';
+import { calculateDiscount } from '@/land/promo/promo-discount-calculator';
+import { setUserTrialExpiry } from '@/land/promo/promo-repo';
 import { logger } from '@/seed/utils/logger-utility';
 import { writeOrder, findActivePendingOrder } from '@/land/orders/pending-order-repo';
 import { derivePeriod, assertPeriodAllowed, assertPaymentMethodAllowed } from '@/land/checkout/checkout-validators';
@@ -149,22 +151,46 @@ export const POST = withRateLimit(async function POST(request: Request) {
       });
     }
 
-    // Reserve promo code redemption if provided
+    // Reserve promo code redemption if provided — calculate actual discount
+    let promoDiscountCents = 0;
+    let promoTrialDays = 0;
     if (promoCode) {
       try {
         const validation = await validatePromoCode(promoCode, { userId, tier });
-        if (validation.valid && (validation.discountType === 'percent_off' || validation.discountType === 'fixed_off')) {
+        if (validation.valid) {
+          const tierConfig = UNIFIED_TIERS[tier as import('@/seed/types').Tier];
+          const baseCents = tierConfig ? tierConfig.price * 100 : 0;
+          const calc = calculateDiscount({
+            discountType: validation.discountType,
+            discountValue: validation.discountValue,
+            originalAmountCents: baseCents,
+          });
+          promoDiscountCents = calc.discountCents;
+          promoTrialDays = calc.trialDays;
+
           await incrementUsedCount(validation.codeId);
           await recordRedemption({
             promoCcodeId: validation.codeId,
             promoCode,
             userId,
             appliedToTier: tier,
-            discountAppliedCents: 0, // finalized on IPN
-            trialDaysGranted: 0,
+            discountAppliedCents: promoDiscountCents,
+            trialDaysGranted: promoTrialDays,
             status: 'reserved',
           });
-          logger.info('[Checkout] Promo reserved', { promoCode, userId, tier });
+
+          // Grant trial period immediately for free_trial codes
+          if (validation.discountType === 'free_trial' && promoTrialDays > 0) {
+            const trialEndsAt = Math.floor(Date.now() / 1000) + promoTrialDays * 86400;
+            await setUserTrialExpiry(userId, trialEndsAt);
+          }
+
+          logger.info('[Checkout] Promo reserved', {
+            promoCode, userId, tier,
+            discountCents: promoDiscountCents,
+            trialDays: promoTrialDays,
+            discountType: validation.discountType,
+          });
         }
       } catch (err) {
         logger.warn('[Checkout] Promo reservation failed (non-fatal)', { promoCode, error: err instanceof Error ? err.message : String(err) });
