@@ -94,15 +94,12 @@ export async function proxy(request: NextRequest) {
   }
 
   if (pathname.startsWith('/admin') || pathname.includes('/admin/')) {
-    if (pathname === '/api/auth') return NextResponse.next()
     if (isAdminAuthorized(request)) {
       const res = intlMiddleware(request)
       attachCspHeaders(res as NextResponse, nonce)
       return res
     }
-    const url = request.nextUrl.clone()
-    url.pathname = '/api/auth'
-    return NextResponse.rewrite(url)
+    return new NextResponse('Unauthorized', { status: 401 })
   }
 
   const cleanPath = pathnameWithoutLocale(pathname)
