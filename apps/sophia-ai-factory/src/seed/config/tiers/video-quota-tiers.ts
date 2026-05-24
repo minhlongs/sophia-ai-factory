@@ -19,6 +19,8 @@ export interface VideoTierLimits {
   channelsLimit: number;
   /** Recurring price in USDT per month. 0 = free */
   monthlyPriceUSDT: number;
+  /** Max videos per batch. 0 = batch disabled */
+  batchLimit: number;
 }
 
 export type VideoTierKey = 'free' | 'pro' | 'enterprise';
@@ -30,6 +32,7 @@ export const VIDEO_TIER_CONFIG: Record<VideoTierKey, VideoTierLimits> = {
     storageGB: 1,
     channelsLimit: 1,
     monthlyPriceUSDT: 0,
+    batchLimit: 0,
   },
   pro: {
     videosPerMonth: 100,
@@ -37,6 +40,7 @@ export const VIDEO_TIER_CONFIG: Record<VideoTierKey, VideoTierLimits> = {
     storageGB: 10,
     channelsLimit: 3,
     monthlyPriceUSDT: 9,
+    batchLimit: 50,
   },
   enterprise: {
     videosPerMonth: -1,
@@ -44,6 +48,7 @@ export const VIDEO_TIER_CONFIG: Record<VideoTierKey, VideoTierLimits> = {
     storageGB: 100,
     channelsLimit: 10,
     monthlyPriceUSDT: 49,
+    batchLimit: 500,
   },
 };
 

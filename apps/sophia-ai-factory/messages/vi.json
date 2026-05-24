@@ -2993,5 +2993,25 @@
     "hero_commission": "Lên đến 70% hoa hồng định kỳ",
     "hero_commission_label": "Tỷ lệ hoa hồng (gói ENTERPRISE)",
     "tier_multiplier_note": "Hoa hồng = giá gói × hệ số bậc (BASIC 0.7×, PREMIUM 1.0×, ENTERPRISE 1.3×)"
+  },
+  "batch": {
+    "title": "Tạo Video Hàng Loạt",
+    "description": "Tải lên file CSV hoặc JSON để tạo nhiều video cùng lúc.",
+    "uploadTitle": "Tải Dữ Liệu",
+    "batchName": "Tên Đợt",
+    "batchNamePlaceholder": "VD: Chuỗi Ra Mắt Sản Phẩm",
+    "uploadFile": "File CSV hoặc JSON",
+    "uploadHint": "Kéo thả file CSV hoặc JSON vào đây",
+    "validate": "Xác Nhận & Xem Trước",
+    "startBatch": "Bắt Đầu Tạo",
+    "videosReady": "video sẵn sàng",
+    "estimatedCost": "Chi phí ước tính",
+    "cancel": "Hủy Đợt",
+    "completed": "hoàn thành",
+    "failed": "thất bại",
+    "status": "Trạng thái",
+    "cost": "Chi phí",
+    "videoList": "Danh sách video",
+    "view": "Xem"
   }
 }
