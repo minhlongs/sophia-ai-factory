@@ -20,6 +20,9 @@ function mapTypeToEventType(type: EmailTemplateType): string {
     case 'suspension_notice': return 'suspension_email';
     case 'payment_succeeded': return 'payment_success_email';
     case 'overage_detected': return 'overage_email';
+    case 'dunning_day1': return 'dunning_day1_email';
+    case 'dunning_day3': return 'dunning_day3_email';
+    case 'dunning_day5': return 'dunning_day5_email';
   }
 }
 

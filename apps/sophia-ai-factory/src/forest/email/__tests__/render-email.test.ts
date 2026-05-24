@@ -77,6 +77,19 @@ const fixtures: { [K in TemplateKey]: TemplateDataMap[K] } = {
       pendingEarningsUsd: 87.5,
     },
   },
+  'post-purchase-welcome': {
+    ownerFullName: 'Mai',
+    locale: 'en',
+    tier: 'BASIC',
+  },
+  'post-purchase-nudge': {
+    ownerFullName: 'Mai',
+    locale: 'en',
+  },
+  'post-purchase-first-success': {
+    ownerFullName: 'Mai',
+    locale: 'en',
+  },
 };
 
 const ALL_KEYS: TemplateKey[] = [
@@ -92,6 +105,9 @@ const ALL_KEYS: TemplateKey[] = [
   'affiliate-welcome',
   'affiliate-day1-tutorial',
   'affiliate-day7-case-study',
+  'post-purchase-welcome',
+  'post-purchase-nudge',
+  'post-purchase-first-success',
 ];
 
 describe('renderEmail dispatcher', () => {
