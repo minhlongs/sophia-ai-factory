@@ -1,9 +1,13 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { getUserTier } from '@/seed/db/get-user-tier';
 import { redirect } from 'next/navigation';
 import { Skeleton } from '@/seed/components/ui/skeleton';
+import { TierGateCard } from '@/seed/components/ui/tier-gate-card';
 import { logger } from '@/seed/utils/logger-utility';
+import { toError } from '@/seed/utils/to-error';
+import type { Tier } from '@/seed/types';
 
 // ── Dynamic import (client component with charts) ─────────────────────────────
 
@@ -47,6 +51,15 @@ export default async function AgentSessionsPage() {
     redirect('/login');
   }
 
+  let userTier: Tier = 'BASIC';
+  try {
+    userTier = await getUserTier(user.id);
+  } catch (err) {
+    logger.error('[AgentSessions] Failed to load tier', toError(err));
+  }
+
+  const hasPremiumAccess = userTier !== 'BASIC';
+
   return (
     <div className="space-y-8">
       <div>
@@ -56,7 +69,17 @@ export default async function AgentSessionsPage() {
         </p>
       </div>
 
-      <AgentSessionsClient userId={user.id} />
+      {hasPremiumAccess ? (
+        <AgentSessionsClient userId={user.id} />
+      ) : (
+        <TierGateCard
+          requiredTier="PREMIUM"
+          currentTier={userTier}
+          featureName="Agent Sessions"
+        >
+          {null}
+        </TierGateCard>
+      )}
     </div>
   );
 }
