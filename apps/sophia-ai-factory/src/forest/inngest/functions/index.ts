@@ -43,3 +43,16 @@ export { sopExecute } from '@/forest/sops/sop-executor';
 
 // Video Factory v2: Batch video generation fanout
 export { batchVideoFanout } from './batch-video-fanout';
+
+// Phase 03: Auto-repurpose
+export { repurposeAnalyze } from './repurpose-analyze';
+export { repurposeClipGenerate } from './repurpose-clip-generate';
+
+// Phase 05: Per-video analytics sync cron
+export { analyticsSync } from './analytics-sync';
+
+// Phase 06: Token refresh cron (TikTok/Instagram/YouTube)
+export { tokenRefreshCron } from './token-refresh-cron';
+
+// Phase 07: Thumbnail A/B selector cron
+export { thumbnailAbSelector } from './thumbnail-ab-selector';

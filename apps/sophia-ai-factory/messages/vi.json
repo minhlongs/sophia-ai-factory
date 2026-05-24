@@ -3008,7 +3008,11 @@
     "private": "Riêng tư",
     "unlisted": "Không công khai",
     "public": "Công khai",
-    "publishNow": "Xuất Bản Ngay"
+    "publishNow": "Xuất Bản Ngay",
+    "tiktok": "TikTok",
+    "instagram": "Instagram",
+    "maxDuration90s": "Instagram Reels: tối đa 90 giây",
+    "selectPlatforms": "Chọn nền tảng"
   },
   "batch": {
     "title": "Tạo Video Hàng Loạt",
@@ -3029,5 +3033,55 @@
     "cost": "Chi phí",
     "videoList": "Danh sách video",
     "view": "Xem"
+  },
+  "analytics": {
+    "title": "Phân tích Video",
+    "views": "Lượt xem",
+    "watchTime": "Thời gian xem",
+    "ctr": "Tỷ lệ nhấp",
+    "engagement": "Tương tác",
+    "completionRate": "Tỷ lệ hoàn thành",
+    "topVideos": "Video hiệu suất cao",
+    "summary": "Tóm tắt",
+    "dateRange": "Khoảng thời gian",
+    "last7days": "7 ngày qua",
+    "last30days": "30 ngày qua",
+    "last90days": "90 ngày qua",
+    "insights": "AI Gợi ý",
+    "syncNow": "Đồng bộ ngay",
+    "syncing": "Đang đồng bộ...",
+    "noData": "Chưa có dữ liệu phân tích. Xuất bản video để bắt đầu theo dõi.",
+    "platform": "Nền tảng",
+    "totalViews": "Tổng lượt xem",
+    "totalWatchTime": "Tổng thời gian xem",
+    "avgCTR": "CTR trung bình",
+    "avgEngagement": "Tỷ lệ hoàn thành TB"
+  },
+  "repurpose": {
+    "title": "Tái sử dụng: Dài → Shorts",
+    "selectVideo": "Chọn video nguồn",
+    "analyzeForClips": "Phân tích clip",
+    "analyzing": "Đang phân tích video tìm khoảnh khắc hay...",
+    "clipsReady": "Clip sẵn sàng",
+    "generateClips": "Tạo clip đã chọn",
+    "generating": "Đang tạo clip...",
+    "completed": "Đã tạo xong tất cả clip",
+    "clipScore": "Điểm",
+    "clipTitle": "Tiêu đề clip",
+    "startTime": "Bắt đầu",
+    "endTime": "Kết thúc",
+    "approve": "Duyệt & Tạo",
+    "noClips": "Không tìm thấy clip",
+    "progress": "Tiến trình"
+  },
+  "thumbnails": {
+    "abTest": "Thử nghiệm A/B Thumbnail",
+    "clicks": "lượt nhấp",
+    "winner": "Thắng",
+    "variant": "Biến thể",
+    "impressions": "Hiển thị",
+    "ctr": "CTR",
+    "selectWinner": "Chọn người thắng",
+    "generating": "Đang tạo thumbnail..."
   }
 }

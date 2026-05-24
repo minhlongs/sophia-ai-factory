@@ -3008,7 +3008,11 @@
     "private": "Private",
     "unlisted": "Unlisted",
     "public": "Public",
-    "publishNow": "Publish Now"
+    "publishNow": "Publish Now",
+    "tiktok": "TikTok",
+    "instagram": "Instagram",
+    "maxDuration90s": "Instagram Reels: max 90 seconds",
+    "selectPlatforms": "Select Platforms"
   },
   "batch": {
     "title": "Batch Video Generation",
@@ -3029,5 +3033,55 @@
     "cost": "Cost",
     "videoList": "Videos",
     "view": "View"
+  },
+  "analytics": {
+    "title": "Video Analytics",
+    "views": "Views",
+    "watchTime": "Watch Time",
+    "ctr": "CTR",
+    "engagement": "Engagement",
+    "completionRate": "Completion Rate",
+    "topVideos": "Top Performing Videos",
+    "summary": "Summary",
+    "dateRange": "Date Range",
+    "last7days": "Last 7 Days",
+    "last30days": "Last 30 Days",
+    "last90days": "Last 90 Days",
+    "insights": "AI Insights",
+    "syncNow": "Sync Now",
+    "syncing": "Syncing...",
+    "noData": "No analytics data yet. Publish videos to start tracking.",
+    "platform": "Platform",
+    "totalViews": "Total Views",
+    "totalWatchTime": "Total Watch Time",
+    "avgCTR": "Avg CTR",
+    "avgEngagement": "Avg Completion"
+  },
+  "repurpose": {
+    "title": "Auto-Repurpose: Long → Shorts",
+    "selectVideo": "Select Source Video",
+    "analyzeForClips": "Analyze for Clips",
+    "analyzing": "Analyzing video for best moments...",
+    "clipsReady": "Clips Ready",
+    "generateClips": "Generate Selected Clips",
+    "generating": "Generating clips...",
+    "completed": "All clips generated",
+    "clipScore": "Score",
+    "clipTitle": "Clip Title",
+    "startTime": "Start",
+    "endTime": "End",
+    "approve": "Approve & Generate",
+    "noClips": "No clips found",
+    "progress": "Progress"
+  },
+  "thumbnails": {
+    "abTest": "Thumbnail A/B Test",
+    "clicks": "clicks",
+    "winner": "Winner",
+    "variant": "Variant",
+    "impressions": "Impressions",
+    "ctr": "CTR",
+    "selectWinner": "Select Winner",
+    "generating": "Generating thumbnails..."
   }
 }
