@@ -6,13 +6,22 @@ import { FadeInView } from "@/seed/components/ui/fade-in-view";
 import { getAllPrograms } from "@/land/affiliates";
 import { Tier } from "@/seed/types";
 import { TIER_CONFIGS } from "@/seed/config/tiers";
-import { Lock, ExternalLink, Star } from "lucide-react";
+import { Lock, ExternalLink, Star, TrendingUp } from "lucide-react";
+import Link from "next/link";
 
 import { Badge } from "@/seed/components/ui/badge";
 import { Button } from "@/seed/components/ui/button";
 
+/** Earnings rows: plan name key, monthly price, max commission (at ENTERPRISE 1.3x) */
+const EARNINGS_ROWS = [
+  { tierKey: "earnings_starter", price: "$199", commission: "$139" },
+  { tierKey: "earnings_growth",  price: "$399", commission: "$279" },
+  { tierKey: "earnings_premium", price: "$799", commission: "$559" },
+] as const;
+
 export function AffiliateDiscovery() {
   const t = useTranslations('landing');
+  const tAff = useTranslations('affiliate');
   const [currentTier, setCurrentTier] = useState<Tier>("BASIC");
   const [filter, setFilter] = useState("All");
 
@@ -32,12 +41,54 @@ export function AffiliateDiscovery() {
     <section className="py-12 md:py-24 bg-secondary/50" id="affiliate-discovery">
       <div className="container mx-auto px-4">
         <div className="text-center max-w-3xl mx-auto mb-16">
+          {/* 70% commission badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-sm font-semibold mb-4">
+            <TrendingUp className="w-4 h-4" aria-hidden="true" />
+            {tAff('commission_badge')}
+          </div>
           <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
             {t('affiliate.title')}
           </h2>
           <p className="text-muted-foreground text-lg">
             {t('affiliate.subtitle')}
           </p>
+
+          {/* Earnings table */}
+          <div className="mt-8 inline-block w-full max-w-md mx-auto">
+            <p className="text-sm font-semibold text-foreground mb-3">{tAff('earnings_table_title')}</p>
+            <div className="rounded-xl border border-border bg-card overflow-hidden text-sm">
+              <table className="w-full">
+                <thead className="bg-muted/50 text-muted-foreground text-xs uppercase tracking-wide">
+                  <tr>
+                    <th scope="col" className="px-4 py-2 text-left">{tAff('earnings_tier_col')}</th>
+                    <th scope="col" className="px-4 py-2 text-right">{tAff('earnings_price_col')}</th>
+                    <th scope="col" className="px-4 py-2 text-right text-emerald-400">{tAff('earnings_commission_col')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {EARNINGS_ROWS.map(({ tierKey, price, commission }) => (
+                    <tr key={tierKey} className="border-t border-border">
+                      <td className="px-4 py-2.5 font-medium text-foreground text-left">
+                        {tAff(tierKey as Parameters<typeof tAff>[0])}
+                      </td>
+                      <td className="px-4 py-2.5 text-muted-foreground text-right">{price}/mo</td>
+                      <td className="px-4 py-2.5 font-semibold text-emerald-400 text-right">{commission}/mo</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div className="px-4 py-2 bg-muted/30 text-[11px] text-muted-foreground text-left">
+                {tAff('tier_multiplier_note')}
+              </div>
+            </div>
+            <Link
+              href="/affiliate"
+              className="mt-3 inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-gradient-to-r from-emerald-600 to-cyan-600 text-white text-sm font-semibold shadow hover:opacity-90 transition-opacity"
+            >
+              {tAff('copy_link_cta')}
+              <ExternalLink className="w-4 h-4" aria-hidden="true" />
+            </Link>
+          </div>
 
           {/* Tier Selector for Demo */}
           <div className="mt-8 p-4 bg-card rounded-xl shadow-sm inline-block border border-border">

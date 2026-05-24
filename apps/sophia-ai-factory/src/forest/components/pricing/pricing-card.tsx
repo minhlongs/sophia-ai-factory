@@ -13,11 +13,41 @@ export function formatPrice(cents: number, locale: string): string {
   }).format(cents / 100);
 }
 
+/**
+ * Format VND amount for display (e.g. "4.975.000 ₫").
+ * Receives VND integer (not cents).
+ */
+export function formatVnd(vnd: number): string {
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(vnd);
+}
+
+/** Pinned display exchange rate. Runtime conversions use USD_TO_VND env var in payos.ts. */
+export const USD_TO_VND_DISPLAY = 25500;
+
+/** Convert USD cents to VND, rounded to nearest 1,000 VND. */
+export function centsToVnd(cents: number): number {
+  const usd = cents / 100;
+  return Math.round((usd * USD_TO_VND_DISPLAY) / 1000) * 1000;
+}
+
 interface PricingCardProps {
   name: string;
   description: string;
   tier: string;
+  /** Monthly price in cents — always the base for per-month equivalence display */
   monthlyPrice: number;
+  /**
+   * Annual price in cents — when provided, the card switches to annual display.
+   * Undefined means monthly mode is active.
+   */
+  annualPriceCents?: number;
+  /** Controls which period label (/yr vs /mo) is shown */
+  billingPeriod?: "monthly" | "annual";
   featureGroups: FeatureGroups;
   popular?: boolean;
   onSelect: (tier: string) => void;
@@ -26,6 +56,8 @@ interface PricingCardProps {
   selected?: boolean;
   /** Discounted price in cents — when set, original price is struck through */
   discountedPriceCents?: number;
+  /** When true, show VND equivalent below the USD price */
+  showVnd?: boolean;
 }
 
 /** Renders a single feature item with a checkmark icon. */
@@ -51,6 +83,8 @@ export function PricingCard({
   description,
   tier,
   monthlyPrice,
+  annualPriceCents,
+  billingPeriod = "monthly",
   featureGroups,
   popular,
   onSelect,
@@ -58,8 +92,10 @@ export function PricingCard({
   locale,
   selected,
   discountedPriceCents,
+  showVnd,
 }: PricingCardProps) {
   const t = useTranslations("landing");
+  const isAnnual = billingPeriod === "annual" && annualPriceCents !== undefined;
 
   return (
     <FadeInView
@@ -79,26 +115,71 @@ export function PricingCard({
       <p className="mt-2 text-sm text-muted-foreground">{description}</p>
 
       <div className="mt-6">
-        <div className="flex items-baseline gap-2">
-          {discountedPriceCents !== undefined ? (
-            <>
-              <span className="text-3xl font-bold text-emerald-400">
-                {formatPrice(discountedPriceCents, locale)}
-              </span>
-              <span className="text-xl line-through text-muted-foreground/60">
-                {formatPrice(monthlyPrice, locale)}
-              </span>
-            </>
-          ) : (
-            <span className="text-3xl font-bold text-foreground">
-              {formatPrice(monthlyPrice, locale)}
+        {isAnnual ? (
+          /* ── Annual billing display ── */
+          <>
+            <div className="flex items-baseline gap-2 flex-wrap">
+              {discountedPriceCents !== undefined ? (
+                <>
+                  <span className="text-3xl font-bold text-emerald-400">
+                    {formatPrice(discountedPriceCents, locale)}
+                  </span>
+                  <span className="text-xl line-through text-muted-foreground/60">
+                    {formatPrice(annualPriceCents!, locale)}
+                  </span>
+                </>
+              ) : (
+                <span className="text-3xl font-bold text-emerald-400">
+                  {formatPrice(annualPriceCents!, locale)}
+                </span>
+              )}
+              <span className="text-muted-foreground">{t("pricing.per_year")}</span>
+            </div>
+            {/* Per-month equivalent */}
+            <p className="mt-1 text-xs text-muted-foreground">
+              {t("pricing.per_month_equiv", {
+                amount: formatPrice(Math.round((discountedPriceCents ?? annualPriceCents!) / 12), locale),
+              })}
+            </p>
+            {/* Save badge */}
+            <span className="mt-1 inline-block rounded bg-emerald-500/15 px-2 py-0.5 text-xs font-semibold text-emerald-400">
+              {t("pricing.save_percent", { percent: 17 })}
             </span>
-          )}
-          <span className="text-muted-foreground">{t("pricing.per_month")}</span>
-        </div>
-        <span className="mt-1 inline-block rounded bg-primary/10 px-2 py-0.5 text-xs text-primary">
-          {t("pricing.commitment")}
-        </span>
+          </>
+        ) : (
+          /* ── Monthly billing display ── */
+          <>
+            <div className="flex items-baseline gap-2">
+              {discountedPriceCents !== undefined ? (
+                <>
+                  <span className="text-3xl font-bold text-emerald-400">
+                    {formatPrice(discountedPriceCents, locale)}
+                  </span>
+                  <span className="text-xl line-through text-muted-foreground/60">
+                    {formatPrice(monthlyPrice, locale)}
+                  </span>
+                </>
+              ) : (
+                <span className="text-3xl font-bold text-foreground">
+                  {formatPrice(monthlyPrice, locale)}
+                </span>
+              )}
+              <span className="text-muted-foreground">{t("pricing.per_month")}</span>
+            </div>
+          </>
+        )}
+        {/* VND equivalent — shown when PayOS (bank transfer) is selected */}
+        {showVnd && (
+          <p className="mt-1 text-xs text-amber-400/80">
+            ≈ {formatVnd(centsToVnd(discountedPriceCents ?? (isAnnual ? annualPriceCents! : monthlyPrice)))}
+            {isAnnual ? "/năm" : "/tháng"}
+          </p>
+        )}
+        {!isAnnual && (
+          <span className="mt-1 inline-block rounded bg-primary/10 px-2 py-0.5 text-xs text-primary">
+            {t("pricing.commitment")}
+          </span>
+        )}
       </div>
 
       {/* ── Video Factory group ── */}
@@ -133,14 +214,14 @@ export function PricingCard({
         aria-checked={selected}
         onClick={() => onSelect(tier)}
         disabled={loading}
-        aria-label={`${loading ? "Processing" : "Get started with"} ${name} plan`}
+        aria-label={`${loading ? "Processing" : "Subscribe to"} ${name} plan`}
         className={`mt-8 w-full rounded-lg py-3 font-semibold transition-all duration-300 ${
           popular
             ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-[1.02]"
-            : "bg-muted text-foreground hover:bg-muted/80 hover:scale-[1.02]"
+            : "bg-primary/20 text-primary border border-primary/40 hover:bg-primary/30 hover:scale-[1.02]"
         } disabled:cursor-not-allowed disabled:opacity-50`}
       >
-        {loading ? t("pricing.processing") : t("pricing.get_started")}
+        {loading ? t("pricing.processing") : t("pricing.subscribe_now")}
       </button>
     </FadeInView>
   );

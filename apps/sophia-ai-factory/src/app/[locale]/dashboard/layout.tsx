@@ -33,6 +33,7 @@ import {
   Shield,
   Bot,
   Sparkles,
+  Share2,
 } from "lucide-react";
 import { ReplayTourLink } from "./components/replay-tour-link";
 import { HealthIndicator } from "@/forest/components/dashboard/health-indicator";
@@ -44,6 +45,7 @@ import { CmdKPalette } from "@/forest/components/cmd-k/cmd-k-palette";
 import { SidebarQuotaWidget } from "@/forest/components/dashboard/sidebar-quota-widget";
 import { TrialBanner } from "./components/trial-banner";
 import { CommunityCTABanner } from "@/forest/components/community-cta-banner";
+import { AffiliateCTABanner } from "@/forest/components/dashboard/affiliate-cta-banner";
 import { getD1Raw } from "@/seed/db/client";
 import { getUserTier } from "@/seed/db/get-user-tier";
 import { SignOutButton } from "@/seed/auth/sign-out-button";
@@ -234,6 +236,15 @@ export default async function DashboardLayout({
           >
             <Coins className="w-5 h-5" aria-hidden="true" />
             <span className="font-medium">{t('sidebar.credits')}</span>
+          </Link>
+          {/* Refer & Earn — affiliate program entry point */}
+          <Link
+            href="/dashboard/affiliate"
+            className="flex items-center gap-3 px-4 py-3 text-emerald-400 hover:text-emerald-300 rounded-lg hover:bg-emerald-950/30 transition-colors"
+          >
+            <Share2 className="w-5 h-5" aria-hidden="true" />
+            <span className="font-medium">{isVi ? 'Giới Thiệu & Kiếm Tiền' : 'Refer & Earn'}</span>
+            <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400">70%</span>
           </Link>
           {/* Integrations section with subnav */}
           <Link
@@ -488,6 +499,9 @@ export default async function DashboardLayout({
 
         {/* Community CTA — dismissible, client-side localStorage gate */}
         <CommunityCTABanner />
+
+        {/* Affiliate CTA — surface 70% commission program, dismissible */}
+        <AffiliateCTABanner />
 
         {/* Mobile Header (visible only on small screens) */}
         <header className="h-16 bg-card border-b border-border md:hidden flex items-center justify-between px-4">

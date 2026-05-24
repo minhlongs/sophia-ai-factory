@@ -19,7 +19,10 @@ export type LifecycleTemplate =
   | 're-engagement-d14'
   | 'win-back'
   | 'affiliate-day1-tutorial'
-  | 'affiliate-day7-case-study';
+  | 'affiliate-day7-case-study'
+  | 'post-purchase-welcome'
+  | 'post-purchase-nudge'
+  | 'post-purchase-first-success';
 
 export interface EmailDecision {
   template: LifecycleTemplate;
@@ -257,6 +260,115 @@ export function evaluateAffiliateLifecycleEmails(
       };
     }
     decisions.push({ template: 'affiliate-day7-case-study', payload });
+  }
+
+  return decisions;
+}
+
+// ─── Post-Purchase Welcome (immediate — payment confirmed) ──────────────────
+
+export interface PostPurchaseWelcomeMilestones {
+  /** Unix ms timestamp of payment confirmation. */
+  purchasedAt: number;
+  onboardingCompletedAt: number | null;
+  ownerFullName: string;
+  /** Tier label, e.g. 'BASIC', 'PREMIUM', etc. */
+  tier: string;
+  locale: string;
+}
+
+/**
+ * Immediate post-purchase welcome.
+ * Sent once, right after payment_confirmed — gates: purchasedAt within last 30 min.
+ * The IPN handler enqueues this directly; this evaluator is for drip-cron backfill
+ * (catches edge cases where IPN enqueue failed).
+ * Window: 0-30 min after purchase.
+ */
+export function evaluatePostPurchaseWelcomeEmails(
+  milestones: PostPurchaseWelcomeMilestones,
+  now: number = Date.now(),
+): EmailDecision[] {
+  const decisions: EmailDecision[] = [];
+  const minsSince = (now - milestones.purchasedAt) / (60 * 1000);
+
+  if (minsSince >= 0 && minsSince < 30) {
+    decisions.push({
+      template: 'post-purchase-welcome',
+      payload: {
+        ownerFullName: milestones.ownerFullName,
+        tier: milestones.tier,
+        locale: milestones.locale,
+      },
+    });
+  }
+
+  return decisions;
+}
+
+// ─── Post-Purchase Nudge (2h after purchase, setup not done) ────────────────
+
+export interface PostPurchaseNudgeMilestones {
+  /** Unix ms timestamp of payment confirmation. */
+  purchasedAt: number;
+  onboardingCompletedAt: number | null;
+  ownerFullName: string;
+  locale: string;
+}
+
+/**
+ * Activation nudge: 2h after purchase, only if setup wizard not yet completed.
+ * Window: 1.9–3.0 hours after purchase.
+ */
+export function evaluatePostPurchaseNudgeEmails(
+  milestones: PostPurchaseNudgeMilestones,
+  now: number = Date.now(),
+): EmailDecision[] {
+  const decisions: EmailDecision[] = [];
+  if (milestones.onboardingCompletedAt) return decisions;
+
+  const hoursSince = (now - milestones.purchasedAt) / (3600 * 1000);
+
+  if (hoursSince >= 1.9 && hoursSince < 3.0) {
+    decisions.push({
+      template: 'post-purchase-nudge',
+      payload: {
+        ownerFullName: milestones.ownerFullName,
+        locale: milestones.locale,
+      },
+    });
+  }
+
+  return decisions;
+}
+
+// ─── Post-Purchase First Success (first video created) ──────────────────────
+
+export interface PostPurchaseFirstSuccessMilestones {
+  /** Unix ms timestamp of first video creation. */
+  firstVideoCreatedAt: number;
+  ownerFullName: string;
+  locale: string;
+}
+
+/**
+ * First-success celebration: sent once after user's first video row is created.
+ * Window: 0-30 min after first video creation (so it's timely).
+ */
+export function evaluatePostPurchaseFirstSuccessEmails(
+  milestones: PostPurchaseFirstSuccessMilestones,
+  now: number = Date.now(),
+): EmailDecision[] {
+  const decisions: EmailDecision[] = [];
+  const minsSince = (now - milestones.firstVideoCreatedAt) / (60 * 1000);
+
+  if (minsSince >= 0 && minsSince < 30) {
+    decisions.push({
+      template: 'post-purchase-first-success',
+      payload: {
+        ownerFullName: milestones.ownerFullName,
+        locale: milestones.locale,
+      },
+    });
   }
 
   return decisions;

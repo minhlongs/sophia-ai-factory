@@ -26,6 +26,10 @@ export {
   sendSuspensionNoticeEmail,
   sendPaymentSuccessEmail,
   sendOverageDetectedEmail,
+  // Dunning time-boxed sequence
+  sendDunningDay1Email,
+  sendDunningDay3Email,
+  sendDunningDay5Email,
 } from './email-delivery-service';
 
 // Tracking

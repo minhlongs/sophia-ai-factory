@@ -35,6 +35,8 @@ const staticPages: PageEntry[] = [
   // Blog & discovery
   { path: '/blog',                     priority: 0.8, changeFrequency: 'weekly'  },
   { path: '/affiliate-discovery',      priority: 0.7, changeFrequency: 'monthly' },
+  // Affiliate program landing
+  { path: '/affiliate',                priority: 0.8, changeFrequency: 'monthly' },
   // Auth entry (indexable login page is fine)
   { path: '/login',                    priority: 0.5, changeFrequency: 'monthly' },
   // Legal & utility

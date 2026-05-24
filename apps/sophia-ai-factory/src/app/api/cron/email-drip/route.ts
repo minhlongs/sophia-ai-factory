@@ -23,6 +23,8 @@ import {
   evaluateToolsNudgeEmails,
   evaluateReEngagementD14Emails,
   evaluateWinBackEmails,
+  evaluatePostPurchaseNudgeEmails,
+  evaluatePostPurchaseFirstSuccessEmails,
 } from '@/forest/email/lifecycle-email-rules';
 import { computeWeekStats } from '@/forest/email/week-stats';
 import { getAffiliateClickStats } from '@/land/affiliates/dashboard-stats';
@@ -74,6 +76,26 @@ interface CancelledSubscriptionRow {
   name: string | null;
   /** Cancellation timestamp = subscription.updated_at after status flipped to 'cancelled'. */
   updated_at: string;
+}
+
+interface PostPurchaseCandidateRow {
+  user_id: string;
+  email: string;
+  name: string | null;
+  /** Unix seconds — payment completed_at from user_purchases. */
+  purchased_at: number;
+  /** Unix seconds or null — onboarding_completed_at from user_profiles. */
+  onboarding_completed_at: number | null;
+  /** Subscription plan (tier label). */
+  plan: string;
+}
+
+interface FirstVideoCandidateRow {
+  user_id: string;
+  email: string;
+  name: string | null;
+  /** Unix seconds — earliest video created_at for this user. */
+  first_video_at: number;
 }
 
 interface ReEngagementCandidateRow {
@@ -504,8 +526,125 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // ── Post-purchase nudge sweep (2h after purchase, setup not done) ────────
+    // Selects users whose purchase completed 1.9–3h ago and haven't finished setup.
+    const postPurchaseNudgeCandidates = await db
+      .prepare(
+        `SELECT p.user_id, u.email, u.name, p.completed_at AS purchased_at,
+                up.onboarding_completed_at,
+                COALESCE(s.plan, 'basic') AS plan
+         FROM user_purchases p
+         JOIN user u ON u.id = p.user_id
+         LEFT JOIN user_profiles up ON up.user_id = p.user_id
+         LEFT JOIN subscriptions s ON s.user_id = p.user_id
+         WHERE p.status = 'paid'
+           AND p.completed_at IS NOT NULL
+           AND p.completed_at >= ?1
+           AND p.completed_at <= ?2
+           AND (up.onboarding_completed_at IS NULL)`,
+      )
+      .bind(
+        Math.floor((now - 3 * 3600 * 1000) / 1000),
+        Math.floor((now - Math.round(1.9 * 3600 * 1000)) / 1000),
+      )
+      .all<PostPurchaseCandidateRow>();
+
+    let postPurchaseNudgeEnqueued = 0;
+    for (const cand of postPurchaseNudgeCandidates.results ?? []) {
+      try {
+        const decisions = evaluatePostPurchaseNudgeEmails(
+          {
+            purchasedAt: cand.purchased_at * 1000,
+            onboardingCompletedAt: null, // already filtered by WHERE clause
+            ownerFullName: cand.name ?? cand.email.split('@')[0],
+            locale: 'vi',
+          },
+          now,
+        );
+
+        for (const decision of decisions) {
+          const existing = await db
+            .prepare(`SELECT 1 FROM lifecycle_email_log WHERE user_id = ?1 AND template = ?2 LIMIT 1`)
+            .bind(cand.user_id, decision.template)
+            .first<{ 1: number }>();
+          if (existing) continue;
+
+          const uniqueId = `lifecycle_${cand.user_id}_${decision.template}`;
+          await enqueueWelcomeEmail(db, {
+            paymentId: uniqueId,
+            toEmail: cand.email,
+            template: decision.template as 'welcome-magic-link',
+            payload: decision.payload,
+          });
+
+          await db
+            .prepare(`INSERT OR IGNORE INTO lifecycle_email_log (user_id, template, sent_at) VALUES (?1,?2,?3)`)
+            .bind(cand.user_id, decision.template, nowSec)
+            .run();
+
+          postPurchaseNudgeEnqueued++;
+        }
+      } catch (e) {
+        logger.error(`[email-drip] Post-purchase nudge sweep failed for ${cand.user_id}`, toError(e));
+      }
+    }
+
+    // ── First-success sweep (first video created within last 30 min) ─────────
+    const firstSuccessCandidates = await db
+      .prepare(
+        `SELECT v.user_id, u.email, u.name, MIN(v.created_at) AS first_video_at
+         FROM videos v
+         JOIN user u ON u.id = v.user_id
+         GROUP BY v.user_id
+         HAVING first_video_at >= ?1 AND first_video_at <= ?2`,
+      )
+      .bind(
+        Math.floor((now - 30 * 60 * 1000) / 1000),
+        nowSec,
+      )
+      .all<FirstVideoCandidateRow>();
+
+    let firstSuccessEnqueued = 0;
+    for (const cand of firstSuccessCandidates.results ?? []) {
+      try {
+        const decisions = evaluatePostPurchaseFirstSuccessEmails(
+          {
+            firstVideoCreatedAt: cand.first_video_at * 1000,
+            ownerFullName: cand.name ?? cand.email.split('@')[0],
+            locale: 'vi',
+          },
+          now,
+        );
+
+        for (const decision of decisions) {
+          const existing = await db
+            .prepare(`SELECT 1 FROM lifecycle_email_log WHERE user_id = ?1 AND template = ?2 LIMIT 1`)
+            .bind(cand.user_id, decision.template)
+            .first<{ 1: number }>();
+          if (existing) continue;
+
+          const uniqueId = `lifecycle_${cand.user_id}_${decision.template}`;
+          await enqueueWelcomeEmail(db, {
+            paymentId: uniqueId,
+            toEmail: cand.email,
+            template: decision.template as 'welcome-magic-link',
+            payload: decision.payload,
+          });
+
+          await db
+            .prepare(`INSERT OR IGNORE INTO lifecycle_email_log (user_id, template, sent_at) VALUES (?1,?2,?3)`)
+            .bind(cand.user_id, decision.template, nowSec)
+            .run();
+
+          firstSuccessEnqueued++;
+        }
+      } catch (e) {
+        logger.error(`[email-drip] First-success sweep failed for ${cand.user_id}`, toError(e));
+      }
+    }
+
     logger.info(
-      `[email-drip] Completed. handover=${enqueued} affiliate=${affiliateEnqueued} activation=${activationEnqueued} toolsNudge=${toolsNudgeEnqueued} reEngagement=${reEngagementEnqueued} winBack=${winBackEnqueued}`,
+      `[email-drip] Completed. handover=${enqueued} affiliate=${affiliateEnqueued} activation=${activationEnqueued} toolsNudge=${toolsNudgeEnqueued} reEngagement=${reEngagementEnqueued} winBack=${winBackEnqueued} ppNudge=${postPurchaseNudgeEnqueued} firstSuccess=${firstSuccessEnqueued}`,
     );
     await recordCronRun(db, CRON_NAME, 'success');
     finishCronCheckIn(cronCtx, CRON_NAME);
@@ -517,6 +656,8 @@ export async function GET(req: NextRequest) {
       toolsNudgeEnqueued,
       reEngagementEnqueued,
       winBackEnqueued,
+      postPurchaseNudgeEnqueued,
+      firstSuccessEnqueued,
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

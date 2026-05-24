@@ -44,6 +44,13 @@ export interface UnifiedTierLimits {
   billingType: 'monthly' | 'lifetime';
   /** Max SOP installations allowed */
   sopInstallLimit: number;
+  /**
+   * Annual price in USD dollars (0 for MASTER — lifetime has no annual option).
+   * Equivalent to ~17% off 12 × monthly price.
+   */
+  yearlyPrice: number;
+  /** Savings percentage shown on the annual toggle badge (0 for MASTER). */
+  yearlySavingsPercent: number;
 }
 
 /** Canonical tier definitions used by all tier checks, quota logic, and pricing UI. */
@@ -65,6 +72,8 @@ export const UNIFIED_TIERS: Record<Tier, UnifiedTierLimits> = {
     whiteLabel: false,
     billingType: 'monthly',
     sopInstallLimit: 5,
+    yearlyPrice: 1990,
+    yearlySavingsPercent: 17,
   },
 
   PREMIUM: {
@@ -84,6 +93,8 @@ export const UNIFIED_TIERS: Record<Tier, UnifiedTierLimits> = {
     whiteLabel: false,
     billingType: 'monthly',
     sopInstallLimit: 15,
+    yearlyPrice: 3990,
+    yearlySavingsPercent: 17,
   },
 
   ENTERPRISE: {
@@ -103,6 +114,8 @@ export const UNIFIED_TIERS: Record<Tier, UnifiedTierLimits> = {
     whiteLabel: false,
     billingType: 'monthly',
     sopInstallLimit: 999,
+    yearlyPrice: 7990,
+    yearlySavingsPercent: 17,
   },
 
   MASTER: {
@@ -122,6 +135,9 @@ export const UNIFIED_TIERS: Record<Tier, UnifiedTierLimits> = {
     whiteLabel: true,
     billingType: 'lifetime',
     sopInstallLimit: 999,
+    // MASTER is lifetime — no annual option
+    yearlyPrice: 0,
+    yearlySavingsPercent: 0,
   },
 } as const;
 

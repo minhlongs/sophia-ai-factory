@@ -5,9 +5,9 @@ import { ScrollReveal } from "@/seed/components/ui/scroll-reveal";
 
 const TESTIMONIAL_KEYS = ["creator_1", "creator_2", "creator_3"] as const;
 const INITIALS_MAP: Record<string, string> = {
-  creator_1: "MC",
-  creator_2: "TN",
-  creator_3: "SA",
+  creator_1: "NT",
+  creator_2: "TH",
+  creator_3: "LĐ",
 };
 
 export function TestimonialsGrid() {

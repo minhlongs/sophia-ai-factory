@@ -13,6 +13,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { getCspNonce } from '@/seed/security/get-csp-nonce';
 import { buildOrganizationSchema } from '@/lib/seo/schema-org';
+import { Ga4Script } from '@/lib/analytics/ga4-script';
 
 // JSON-LD schema — explicit type to avoid TypeScript stack overflow
 const JSONLD_SCHEMA: Record<string, unknown> = {
@@ -117,6 +118,9 @@ export default async function RootLayout({
   const { locale } = await params;
   const messages = await getMessages();
   const nonce = await getCspNonce();
+  const ga4Id = process.env.NODE_ENV === 'production'
+    ? (process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID ?? '')
+    : '';
 
   return (
     <html lang={locale} className="dark">
@@ -156,6 +160,7 @@ export default async function RootLayout({
         <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:top-4 focus:left-4 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none">
           Skip to main content
         </a>
+        {ga4Id && <Ga4Script measurementId={ga4Id} />}
         <PostHogProvider>
         <NextIntlClientProvider messages={messages}>
           <ThemeProvider

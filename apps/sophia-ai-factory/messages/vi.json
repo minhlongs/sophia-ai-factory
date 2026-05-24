@@ -1,8 +1,8 @@
 {
   "seo": {
     "home": {
-      "title": "Sophia AI Factory — Tự Động Hóa Video, Affiliate & Doanh Thu",
-      "description": "Tạo video AI, khám phá ưu đãi affiliate, đăng đa kênh. Thanh toán USDT. Bắt đầu miễn phí trong vài phút."
+      "title": "Sophia AI Factory — Xưởng Video AI cho CEO Không Kỹ Thuật",
+      "description": "Xưởng Video AI cho CEO Không Kỹ Thuật. Tạo video AI faceless, chạy chiến dịch affiliate, kiếm thu nhập thụ động. Gói từ $199. Thanh toán USDT/crypto."
     },
     "login": {
       "title": "Đăng Nhập · Sophia AI Factory",
@@ -93,10 +93,10 @@
       "brand": "Sophia AI Factory"
     },
     "hero": {
-      "title_1": "Video Factory + AI Automation",
-      "title_2": "Một Nền Tảng — Vô Hạn Quy Mô",
-      "subtitle": "Tạo video, tìm lead, gửi chiến dịch — tất cả tự động hóa bằng AI.",
-      "cta_start": "Bắt Đầu Miễn Phí",
+      "title_1": "Biến AI Thành Doanh Thu",
+      "title_2": "Video Factory cho CEO Không Biết Code",
+      "subtitle": "Tự động tạo video, tìm khách hàng và chạy chiến dịch — không cần code, không cần đội dev.",
+      "cta_start": "Bắt Đầu với $199/tháng",
       "cta_have_code": "Tôi có mã quà tặng",
       "cta_demo": "Tìm Hiểu Thêm",
       "stats": {
@@ -104,13 +104,13 @@
         "videos": "Video Đã Tạo",
         "automation": "Tự Động Hóa"
       },
-      "badge": "✨ AI-Powered Creation",
+      "badge": "✨ Đang Mở Đăng Ký Founding Member",
       "cmd_prefix": "Try:",
       "cmd_suffix": "→",
-      "trust_uptime": "Hạ tầng edge tin cậy",
-      "trust_response": "Phản hồi edge",
-      "trust_security": "Bảo mật Cloudflare",
-      "trust_edge": "Edge Deployed"
+      "trust_uptime": "500+ creators",
+      "trust_response": "99.9% uptime",
+      "trust_security": "Bảo mật Edge",
+      "trust_edge": "<200ms phản hồi"
     },
     "workflow": {
       "title": "Nhà Máy Nội Dung Tự Động Của Bạn",
@@ -254,19 +254,19 @@
       },
       "testimonials": {
         "creator_1": {
-          "name": "Michael Chen",
-          "role": "YouTuber, 500K+ subscribers",
-          "quote": "Sophia AI giảm 80% thời gian sản xuất video. Tôi đã tăng từ 2 video/tuần lên 10 mà không cần thuê thêm ai."
+          "name": "Nguyễn Minh Tuấn",
+          "role": "YouTuber, 200K+ subscribers — TP.HCM",
+          "quote": "Sophia AI giúp tôi tạo nội dung TikTok và YouTube tự động. Từ 3 video/tuần lên 12 mà không cần thuê thêm editor."
         },
         "creator_2": {
-          "name": "Trang Nguyễn",
-          "role": "Chuyên Gia Tiếp Thị Liên Kết",
-          "quote": "Riêng tính năng liên kết tự động đã hoàn vốn. Tôi đang kiếm $3.200/tháng hoa hồng thụ động."
+          "name": "Trần Thị Hương",
+          "role": "Chủ shop online, tiếp thị qua Zalo",
+          "quote": "Tôi tự động hoá video marketing trên Zalo và TikTok Shop. Doanh thu tháng tăng 3× sau 2 tháng dùng Sophia."
         },
         "creator_3": {
-          "name": "Sarah Anderson",
-          "role": "Chủ Agency Số",
-          "quote": "Chúng tôi quản lý 15 kênh khách hàng từ một bảng điều khiển. Sophia AI là xương sống của agency."
+          "name": "Lê Văn Đức",
+          "role": "Affiliate Marketer, Thu Nhập Thụ Động",
+          "quote": "Sophia kết nối tự động với các chương trình tiếp thị liên kết. Tôi đang kiếm hoa hồng thụ động mỗi tháng mà chỉ làm 2 giờ/tuần."
         }
       },
       "badges": {
@@ -356,7 +356,16 @@
           "name": "Master",
           "description": "Truy cập trọn đời. Một lần thanh toán. Bao gồm tất cả mãi mãi."
         }
-      }
+      },
+      "subscribe_now": "Đăng Ký Ngay",
+      "subscribe_now_master": "Truy Cập Trọn Đời Ngay",
+      "founding_badge": "Giá Founding Member",
+      "billing_period": "Kỳ Thanh Toán",
+      "monthly_label": "Hàng Tháng",
+      "annual_label": "Hàng Năm",
+      "save_percent": "Tiết Kiệm {percent}%",
+      "per_year": "/năm",
+      "per_month_equiv": "({amount}/tháng)"
     },
     "roi": {
       "title": "Tính Toán Doanh Thu Tiềm Năng",
@@ -457,6 +466,18 @@
         "refund": {
           "question": "Có chính sách hoàn tiền không?",
           "answer": "Có! Chúng tôi cam kết hoàn tiền 100% trong 30 ngày. Nếu bạn không hài lòng với nền tảng, liên hệ chúng tôi trong vòng 30 ngày kể từ ngày mua để được hoàn tiền đầy đủ, không hỏi lý do."
+        },
+        "vnd_payment": {
+          "question": "Tôi có thể thanh toán bằng VND không?",
+          "answer": "Có! Sophia hỗ trợ thanh toán nội địa Việt Nam qua PayOS — chuyển khoản ngân hàng hoặc ví điện tử bằng VND. Ngoài ra còn có tùy chọn thanh toán bằng USDT crypto qua NOWPayments cho khách hàng quốc tế."
+        },
+        "zalo": {
+          "question": "Sophia có hỗ trợ Zalo không?",
+          "answer": "Zalo đang trong lộ trình phát triển! Hiện tại bạn có thể điều khiển Sophia qua Telegram (@Sophia_Bbot) từ điện thoại. Chúng tôi sẽ thông báo ngay khi tích hợp Zalo ra mắt."
+        },
+        "vat": {
+          "question": "Có phải đóng VAT không?",
+          "answer": "Giá hiển thị trên trang đã bao gồm tất cả phí — không có khoản phí ẩn hay VAT phát sinh thêm. Bạn trả đúng số tiền thấy trên trang."
         }
       }
     },
@@ -478,11 +499,26 @@
       "sidebar": {
         "getting_started": "Bắt Đầu",
         "how_it_works": "Cách Hoạt Động",
-        "screen_guide": "Hướng Dẫn Giao Diện",
+        "screen_guide": "Hướng Dẫn Màn Hình",
         "integrations": "Tích Hợp",
-        "commands": "Lệnh",
+        "commands": "Lệnh Bot",
         "faq": "Câu Hỏi Thường Gặp",
-        "telegram": "Bot Telegram"
+        "telegram": "Telegram Bot",
+        "section_getting_started": "BẮT ĐẦU",
+        "section_create_content": "TẠO NỘI DUNG",
+        "section_payments": "THANH TOÁN",
+        "section_affiliate": "GIỚI THIỆU",
+        "section_integrations_ref": "TÍCH HỢP",
+        "section_use_cases": "TÌNH HUỐNG SỬ DỤNG",
+        "section_help": "HỖ TRỢ",
+        "quick_start": "Bắt Đầu Nhanh",
+        "first_video": "Video Đầu Tiên",
+        "templates": "Mẫu Chiến Dịch",
+        "pay_usdt": "Thanh Toán USDT",
+        "pay_vnd": "Chuyển Khoản VND",
+        "plans_pricing": "Gói & Bảng Giá",
+        "earn_commission": "Kiếm 70% Hoa Hồng",
+        "use_case_library": "Thư Viện Ứng Dụng"
       },
       "back_to_dashboard": "Quay Lại Bảng Điều Khiển",
       "title": "Hướng Dẫn Sử Dụng",
@@ -2517,17 +2553,17 @@
   "affiliateProgram": {
     "meta": {
       "title": "Trở Thành Affiliate Sophia — Hoa Hồng Định Kỳ",
-      "description": "Giới thiệu creator đến Sophia AI Factory và nhận 30% hoa hồng định kỳ. Thanh toán USDT hoặc fiat. Không yêu cầu tối thiểu."
+      "description": "Giới thiệu creator đến Sophia AI Factory và nhận lên đến 70% hoa hồng định kỳ. Thanh toán USDT hoặc fiat. Không yêu cầu tối thiểu."
     },
     "hero": {
-      "title": "Kiếm 30% Định Kỳ",
+      "title": "Kiếm Lên Đến 70% Định Kỳ",
       "subtitle": "Giới thiệu creator và doanh nghiệp đến Sophia AI Factory. Nhận tiền mỗi tháng khi họ còn đăng ký.",
       "ctaPrimary": "Đăng Ký Affiliate",
       "ctaSecondary": "Cách Hoạt Động"
     },
     "stats": {
-      "commission": "30% định kỳ",
-      "commissionLabel": "Tỷ lệ hoa hồng",
+      "commission": "Lên đến 70% định kỳ",
+      "commissionLabel": "Tỷ lệ hoa hồng của bạn",
       "payout": "USDT hoặc fiat",
       "payoutLabel": "Phương thức thanh toán",
       "cookie": "30 ngày",
@@ -2556,6 +2592,47 @@
     },
     "footer": {
       "disclaimer": "Tỷ lệ hoa hồng và điều khoản có thể thay đổi. Xem chi tiết trong thỏa thuận affiliate."
+    },
+    "onboarding": {
+      "title": "Bắt Đầu Kiếm Tiền Trong 3 Bước",
+      "step1_title": "1. Lấy Link Giới Thiệu",
+      "step1_desc": "Đăng nhập và tạo link độc quyền trong vài giây. Không cần phê duyệt.",
+      "step2_title": "2. Chia Sẻ Với Mạng Lưới",
+      "step2_desc": "Đăng link vào bài blog, mô tả YouTube, Telegram hoặc mạng xã hội.",
+      "step3_title": "3. Theo Dõi Thu Nhập Thời Gian Thực",
+      "step3_desc": "Xem clicks, chuyển đổi và hoa hồng tăng trong Bảng Điều Khiển Affiliate."
+    },
+    "earnings": {
+      "title": "Thu Nhập Hàng Tháng Tiềm Năng",
+      "tier_col": "Gói",
+      "price_col": "Giá / tháng",
+      "your_cut_col": "Hoa Hồng Của Bạn",
+      "note": "Hoa hồng = giá gói × hệ số bậc (BASIC 0.7×, PREMIUM 1.0×, ENTERPRISE 1.3×)",
+      "rows": [
+        {
+          "tier": "Starter",
+          "price": "$199",
+          "cut": "lên đến $139/tháng"
+        },
+        {
+          "tier": "Growth",
+          "price": "$399",
+          "cut": "lên đến $279/tháng"
+        },
+        {
+          "tier": "Premium",
+          "price": "$799",
+          "cut": "lên đến $559/tháng"
+        }
+      ]
+    },
+    "copyLink": {
+      "title": "Link Giới Thiệu Của Bạn",
+      "cta": "Tạo Link Của Tôi",
+      "copy": "Sao Chép Link",
+      "copied": "Đã Sao Chép!",
+      "generating": "Đang tạo...",
+      "loginHint": "Đăng nhập để nhận link giới thiệu độc quyền."
     }
   },
   "tour": {
@@ -2849,5 +2926,40 @@
       "accentColor": "Màu phụ",
       "brandName": "Tên thương hiệu"
     }
+  },
+  "affiliate": {
+    "cta_banner_title": "Chia Sẻ Sophia, Kiếm 70% Hoa Hồng",
+    "cta_banner_description": "Giới thiệu người dùng Sophia và nhận 70% hoa hồng từ mỗi gói đăng ký — chi trả hàng tháng.",
+    "cta_banner_cta": "Lấy Link Giới Thiệu",
+    "cta_banner_dismiss": "Đóng",
+    "earnings_table_title": "Thu Nhập Tiềm Năng Của Bạn",
+    "earnings_tier_col": "Gói",
+    "earnings_price_col": "Giá / tháng",
+    "earnings_commission_col": "Hoa Hồng Của Bạn",
+    "earnings_starter": "Starter",
+    "earnings_growth": "Growth",
+    "earnings_premium": "Premium",
+    "earnings_starter_price": "$199",
+    "earnings_growth_price": "$399",
+    "earnings_premium_price": "$799",
+    "earnings_starter_commission": "lên đến $139/tháng",
+    "earnings_growth_commission": "lên đến $279/tháng",
+    "earnings_premium_commission": "lên đến $559/tháng",
+    "section_title": "Kiếm 70% Hoa Hồng Cho Mỗi Lượt Giới Thiệu",
+    "section_subtitle": "Chia sẻ link giới thiệu độc quyền và nhận 70% hoa hồng định kỳ mỗi tháng người được giới thiệu vẫn đăng ký.",
+    "step1_title": "Lấy Link Giới Thiệu",
+    "step1_desc": "Tạo link độc quyền trong vài giây — không cần phê duyệt.",
+    "step2_title": "Chia Sẻ Với Mạng Lưới",
+    "step2_desc": "Đăng ở mọi nơi: blog, mạng xã hội, mô tả YouTube, Telegram.",
+    "step3_title": "Theo Dõi Thu Nhập Thời Gian Thực",
+    "step3_desc": "Xem clicks, chuyển đổi và hoa hồng trong bảng điều khiển.",
+    "copy_link_cta": "Sao Chép Link Giới Thiệu",
+    "copy_link_copied": "Đã Sao Chép!",
+    "link_generating": "Đang tạo...",
+    "refer_earn_nav": "Giới Thiệu & Kiếm Tiền",
+    "commission_badge": "70% Hoa Hồng",
+    "hero_commission": "Lên đến 70% hoa hồng định kỳ",
+    "hero_commission_label": "Tỷ lệ hoa hồng (gói ENTERPRISE)",
+    "tier_multiplier_note": "Hoa hồng = giá gói × hệ số bậc (BASIC 0.7×, PREMIUM 1.0×, ENTERPRISE 1.3×)"
   }
 }

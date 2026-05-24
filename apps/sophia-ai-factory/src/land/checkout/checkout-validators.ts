@@ -19,15 +19,13 @@ export function derivePeriod(tier: string): PendingOrderPeriod {
  * Throws if invalid.
  */
 export function assertPeriodAllowed(tier: string, period: PendingOrderPeriod): void {
-  if (period === 'yearly') {
-    throw new Error('Yearly billing not yet enabled — please choose monthly or lifetime (MASTER)')
-  }
   if (tier === 'MASTER' && period !== 'lifetime') {
     throw new Error('MASTER tier uses lifetime billing only')
   }
   if (tier !== 'MASTER' && period === 'lifetime') {
     throw new Error('Lifetime billing is only available for MASTER tier')
   }
+  // 'yearly' is valid for non-MASTER tiers — falls through to checkout price lookup
 }
 
 /**

@@ -10,6 +10,7 @@ const columns = [
       { label: "RaaS Commands", href: "/guide/commands" },
       { label: "Hướng Dẫn", href: "/guide" },
       { label: "Affiliate", href: "/affiliate-discovery" },
+      { label: "Giới Thiệu & Kiếm 70%", href: "/affiliate" },
     ],
   },
   {

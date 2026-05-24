@@ -3,9 +3,13 @@
 import { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { FadeInView } from "@/seed/components/ui/fade-in-view";
-import { PricingCard, formatPrice } from "./pricing-card";
+import { PricingCard, formatPrice, formatVnd, centsToVnd } from "./pricing-card";
+import { UNIFIED_TIERS } from "@/seed/config/tiers";
 import { usePricingData } from "./pricing-data";
 import { CouponInput, type PromoDiscount } from "./coupon-input";
+
+type PaymentMethod = "nowpayments" | "payos";
+type BillingPeriod = "monthly" | "annual";
 
 interface CheckoutResponse {
   url?: string;
@@ -17,6 +21,8 @@ interface CheckoutResponse {
 export function PricingSection() {
   const [loading, setLoading] = useState<string | null>(null);
   const [appliedDiscount, setAppliedDiscount] = useState<PromoDiscount | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("nowpayments");
+  const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly");
   const t = useTranslations("landing");
   const locale = useLocale();
   const { PRICING_TIERS, MASTER_TIER } = usePricingData();
@@ -45,7 +51,9 @@ export function PricingSection() {
   const handleSelectTier = async (tier: string) => {
     setLoading(tier);
     try {
-      const body: Record<string, unknown> = { tier };
+      // MASTER is always lifetime — never send 'annual' for it
+      const period = tier === "MASTER" ? "lifetime" : billingPeriod === "annual" ? "yearly" : "monthly";
+      const body: Record<string, unknown> = { tier, paymentMethod, period };
       if (appliedDiscount && (appliedDiscount.discountType === "percent_off" || appliedDiscount.discountType === "fixed_off")) {
         body.promoCode = appliedDiscount.code;
       }
@@ -95,9 +103,79 @@ export function PricingSection() {
           />
         </div>
 
+        {/* ── Billing period toggle (Monthly / Annual) ──────────────────────────── */}
+        <div className="mt-6 flex justify-center">
+          <div className="inline-flex items-center rounded-xl border border-border bg-card p-1 gap-1">
+            <button
+              type="button"
+              onClick={() => setBillingPeriod("monthly")}
+              className={`rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                billingPeriod === "monthly"
+                  ? "bg-primary text-primary-foreground shadow"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {t("pricing.monthly_label")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setBillingPeriod("annual")}
+              className={`relative rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                billingPeriod === "annual"
+                  ? "bg-emerald-500 text-white shadow"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {t("pricing.annual_label")}
+              <span className="ml-2 rounded-full bg-emerald-400/20 px-1.5 py-0.5 text-xs font-semibold text-emerald-300">
+                {t("pricing.save_percent", { percent: 17 })}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        {/* ── Payment method selector ──────────────────────────────────────────── */}
+        <div className="mt-6 flex justify-center">
+          <div className="inline-flex rounded-xl border border-border bg-card p-1 gap-1">
+            <button
+              type="button"
+              onClick={() => setPaymentMethod("nowpayments")}
+              className={`rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                paymentMethod === "nowpayments"
+                  ? "bg-primary text-primary-foreground shadow"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              💎 Pay with Crypto (USDT)
+            </button>
+            <button
+              type="button"
+              onClick={() => setPaymentMethod("payos")}
+              className={`rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                paymentMethod === "payos"
+                  ? "bg-amber-500 text-black shadow"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              🏦 Chuyển khoản VND
+            </button>
+          </div>
+        </div>
+        {paymentMethod === "payos" && (
+          <p className="mt-2 text-center text-xs text-amber-400/70">
+            Thanh toán qua ngân hàng nội địa Việt Nam — QR code + chuyển khoản
+          </p>
+        )}
+
         <div className="mt-4 grid gap-8 md:grid-cols-3">
           {PRICING_TIERS.map((pricing) => {
-            const baseCents = pricing.monthlyPrice;
+            const tierConfig = UNIFIED_TIERS[pricing.tier as keyof typeof UNIFIED_TIERS];
+            const isAnnual = billingPeriod === "annual";
+            // Annual price is stored as whole dollars; convert to cents for display helpers
+            const annualPriceCents = isAnnual && tierConfig.yearlyPrice > 0
+              ? tierConfig.yearlyPrice * 100
+              : undefined;
+            const baseCents = isAnnual && annualPriceCents ? annualPriceCents : pricing.monthlyPrice;
             const discountedCents = getDiscountedCents(baseCents);
             return (
               <PricingCard
@@ -106,6 +184,8 @@ export function PricingSection() {
                 description={pricing.description}
                 tier={pricing.tier}
                 monthlyPrice={pricing.monthlyPrice}
+                annualPriceCents={annualPriceCents}
+                billingPeriod={billingPeriod}
                 featureGroups={pricing.featureGroups}
                 popular={pricing.popular}
                 onSelect={handleSelectTier}
@@ -113,6 +193,7 @@ export function PricingSection() {
                 locale={locale}
                 selected={loading === pricing.tier}
                 discountedPriceCents={discountedCents}
+                showVnd={paymentMethod === "payos"}
               />
             );
           })}
@@ -149,6 +230,12 @@ export function PricingSection() {
                     )}
                     <span className="text-muted-foreground">{t("pricing.master.one_time")}</span>
                   </div>
+                  {/* VND equivalent for MASTER tier */}
+                  {paymentMethod === "payos" && (
+                    <p className="mt-1 text-xs text-amber-400/80">
+                      ≈ {formatVnd(centsToVnd(getDiscountedCents(MASTER_TIER.price) ?? MASTER_TIER.price))} một lần
+                    </p>
+                  )}
                   <p className="mt-2 text-sm text-muted-foreground">
                     <span className="line-through">{t("pricing.master.compare_price")}</span>{" "}
                     <span className="text-primary font-semibold">
@@ -164,7 +251,7 @@ export function PricingSection() {
                   aria-label={`${loading === MASTER_TIER.tier ? "Processing" : "Get started with"} ${MASTER_TIER.name} plan`}
                   className="mt-8 w-full md:w-auto rounded-lg bg-gradient-to-r from-primary to-purple-600 px-10 py-4 font-bold text-white text-lg shadow-lg hover:opacity-90 hover:scale-[1.02] transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {loading === MASTER_TIER.tier ? t("pricing.processing") : t("pricing.master.cta")}
+                  {loading === MASTER_TIER.tier ? t("pricing.processing") : t("pricing.subscribe_now_master")}
                 </button>
               </div>
               <ul className="space-y-3">

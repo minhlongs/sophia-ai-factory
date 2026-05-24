@@ -16,6 +16,7 @@ import { createOnboardingVideo, ONBOARDING_TIERS } from '@/lib/video/onboarding-
 import { triggerAutoHandover } from '@/tree/handover/auto-handover'
 import { markOrderCompleted, markOrderFailed } from '@/land/orders/pending-order-repo'
 import { sendReceiptEmail } from './email/receipt-email-sender'
+import { enqueueWelcomeEmail } from '@/forest/outbox/email-outbox'
 
 /** 1% tolerance for crypto gas fees / exchange rounding */
 const UNDERPAYMENT_THRESHOLD = 0.99
@@ -185,6 +186,28 @@ export async function handleFinished(ipn: NowPaymentsIpnPayload): Promise<void> 
     }
   } catch (err) {
     logger.warn('[NOWPayments] Receipt email failed (non-fatal)', { userId, err: String(err) })
+  }
+
+  // Post-purchase welcome email via outbox (non-fatal)
+  try {
+    const { data: userRow } = await db.from('user').select('email,name').eq('id', userId).single()
+    const userEmail = (userRow as { email?: string; name?: string } | null)?.email ?? ''
+    const userName = (userRow as { email?: string; name?: string } | null)?.name ?? ''
+    if (userEmail) {
+      const d1 = await getD1Raw()
+      await enqueueWelcomeEmail(d1, {
+        paymentId: `post_purchase_welcome_${ipn.payment_id}`,
+        toEmail: userEmail,
+        template: 'post-purchase-welcome',
+        payload: {
+          ownerFullName: userName || userEmail.split('@')[0],
+          tier,
+          locale: 'vi',
+        },
+      })
+    }
+  } catch (err) {
+    logger.warn('[NOWPayments] Post-purchase welcome email enqueue failed (non-fatal)', { userId, error: String(err) })
   }
 
   logger.info('[NOWPayments] Payment finished — subscription activated', { userId, orgId, tier, isLifetime, periodEnd, paymentId: ipn.payment_id })

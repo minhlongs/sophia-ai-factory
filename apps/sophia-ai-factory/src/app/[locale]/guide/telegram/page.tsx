@@ -4,6 +4,14 @@ import { getTranslations } from "next-intl/server";
 import { GuideStepCard } from "@/forest/components/guide/guide-step-card";
 import { GuideCodeBlock } from "@/forest/components/guide/guide-code-block";
 import { GuideCallout } from "@/forest/components/guide/guide-callout";
+import { buildBreadcrumbSchema } from "@/lib/seo/schema-org";
+
+const SITE_URL = 'https://sophia.agencyos.network';
+const breadcrumbSchema = buildBreadcrumbSchema([
+  { name: 'Home', url: SITE_URL },
+  { name: 'Guide', url: `${SITE_URL}/guide` },
+  { name: 'Telegram Bot', url: `${SITE_URL}/guide/telegram` },
+]);
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
@@ -45,6 +53,10 @@ export default async function TelegramGuidePage({ params }: { params: Promise<{ 
 
   return (
     <div className="max-w-3xl space-y-10">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
       <div>
         <h1 className="text-3xl font-bold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent mb-3">
           {t("heroTitle")}

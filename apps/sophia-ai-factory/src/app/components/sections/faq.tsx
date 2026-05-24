@@ -12,7 +12,7 @@ export function FAQ() {
   const t = useTranslations('landing');
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
-  const faqKeys = ['quality', 'copyright', 'time', 'skills', 'support', 'money', 'tiers', 'refund'] as const;
+  const faqKeys = ['quality', 'copyright', 'time', 'skills', 'support', 'money', 'tiers', 'refund', 'vnd_payment', 'zalo', 'vat'] as const;
   const faqs = faqKeys.map(key => ({
     question: t(`faq.items.${key}.question`),
     answer: t(`faq.items.${key}.answer`),
