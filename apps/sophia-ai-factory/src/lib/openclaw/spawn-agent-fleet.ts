@@ -15,9 +15,12 @@ import {
   validatePromptContract,
   PromptContractError,
 } from '@/seed/validators/agent-prompt-contracts';
-import type { AgentRole } from '@/seed/types/multi-agent';
+import type { AgentRole, IterationLimits } from '@/seed/types/multi-agent';
+import { DEFAULT_ITERATION_LIMITS } from '@/seed/types/multi-agent';
 import { withBreaker, BreakerOpenError, getBreakerState } from '@/seed/utils/circuit-breaker';
 import { withRetry } from '@/seed/utils/retry-with-backoff';
+import { checkIterationBudget } from '@/tree/sop/multi-agent-coordinator-helpers';
+import { logger } from '@/seed/utils/logger-utility';
 
 export class OpenclawTenantMissingError extends Error {
   constructor() {
@@ -61,6 +64,8 @@ export interface SpawnFleetOptions {
   parallel?: boolean;
   /** Max concurrent tasks when parallel=true. Default: 5 */
   maxConcurrency?: number;
+  /** Iteration limits to prevent runaway agents. Uses defaults if omitted. */
+  iterationLimits?: IterationLimits;
 }
 
 const FLEET_BREAKER = 'agent-fleet';
@@ -170,7 +175,27 @@ export async function spawnAgentFleet(
     throw new OpenclawTenantMissingError();
   }
 
-  const { tenantId, actor = 'system', parallel = true, maxConcurrency = 5 } = opts;
+  const {
+    tenantId, actor = 'system', parallel = true, maxConcurrency = 5,
+    iterationLimits = DEFAULT_ITERATION_LIMITS,
+  } = opts;
+
+  // Bounded iteration guard — check fleet-level limit before starting
+  const fleetBudget = checkIterationBudget(0, tasks.length, iterationLimits);
+  if (!fleetBudget.canProceed) {
+    logger.warn('[spawnAgentFleet] Fleet iteration limit prevents dispatch', {
+      taskCount: tasks.length,
+      limit: iterationLimits.maxTotalIterations,
+      reason: fleetBudget.reason,
+    });
+    return tasks.map((t) => ({
+      taskId: t.id,
+      success: false,
+      error: `Iteration limit: ${fleetBudget.reason}`,
+      durationMs: 0,
+      retryCount: 0,
+    }));
+  }
 
   // Audit: fleet spawn
   await audit({

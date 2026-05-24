@@ -143,3 +143,23 @@ export type PromptContract =
   | PublisherContract
   | AnalystContract
   | SupervisorContract
+
+// ---------------------------------------------------------------------------
+// Bounded Iteration Guards — Phase 04
+// ---------------------------------------------------------------------------
+
+export interface IterationLimits {
+  maxRetriesPerSubtask: number
+  maxTotalIterations: number
+}
+
+export const DEFAULT_ITERATION_LIMITS: IterationLimits = {
+  maxRetriesPerSubtask: 5,
+  maxTotalIterations: 20,
+}
+
+export interface IterationBudgetCheck {
+  canProceed: boolean
+  remaining: number
+  reason?: string
+}

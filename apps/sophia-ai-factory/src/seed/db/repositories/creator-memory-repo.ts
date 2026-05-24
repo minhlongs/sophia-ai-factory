@@ -255,6 +255,13 @@ export async function getCreatorProfile(userId: string): Promise<CreatorProfile>
   }
 }
 
+// ── Re-export consolidation ──────────────────────────────────────────────────
+
+export {
+  consolidateEpisodicToSemantic,
+  type ConsolidationSummary,
+} from './creator-memory-consolidation';
+
 // ── Shorthand helpers ─────────────────────────────────────────────────────────
 
 /**
