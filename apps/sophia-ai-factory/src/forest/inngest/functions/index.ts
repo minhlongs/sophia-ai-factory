@@ -40,3 +40,6 @@ export { accountDeleteFinalizeCron } from './account-delete-finalize-cron';
 
 // SOP execution engine (Phase 01 Solo SOPs)
 export { sopExecute } from '@/forest/sops/sop-executor';
+
+// Video Factory v2: Batch video generation fanout
+export { batchVideoFanout } from './batch-video-fanout';

@@ -105,6 +105,13 @@ type SopStepCompletedEvent = {
   };
 };
 
+type BatchVideoFanoutEvent = {
+  data: {
+    batchId: string;
+    userId: string;
+  };
+};
+
 type Events = {
   "campaign.created": CampaignCreatedEvent;
   "test/hello.world": { data: Record<string, unknown> };
@@ -123,6 +130,8 @@ type Events = {
   "publish.token.refresh": { data: Record<string, never> };
   // Mission video generation (Wave 13 I2)
   "video/generate.requested": VideoGenerateRequestedEvent;
+  // Batch video generation (Video Factory v2 Phase 02)
+  "batch/video.fanout": BatchVideoFanoutEvent;
   // Solo SOPs Platform (Phase 01)
   "sop/execution.requested": SopExecutionRequestedEvent;
   "sop/step.completed": SopStepCompletedEvent;

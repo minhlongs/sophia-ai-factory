@@ -2993,5 +2993,25 @@
     "hero_commission": "Up to 70% recurring commission",
     "hero_commission_label": "Commission rate (ENTERPRISE tier)",
     "tier_multiplier_note": "Commission = plan price × tier multiplier (BASIC 0.7×, PREMIUM 1.0×, ENTERPRISE 1.3×)"
+  },
+  "batch": {
+    "title": "Batch Video Generation",
+    "description": "Upload a CSV or JSON file to generate multiple videos at once.",
+    "uploadTitle": "Upload Dataset",
+    "batchName": "Batch Name",
+    "batchNamePlaceholder": "e.g. Product Launch Series",
+    "uploadFile": "CSV or JSON File",
+    "uploadHint": "Drop CSV or JSON file here",
+    "validate": "Validate & Preview",
+    "startBatch": "Start Generation",
+    "videosReady": "videos ready",
+    "estimatedCost": "Estimated cost",
+    "cancel": "Cancel Batch",
+    "completed": "completed",
+    "failed": "failed",
+    "status": "Status",
+    "cost": "Cost",
+    "videoList": "Videos",
+    "view": "View"
   }
 }
