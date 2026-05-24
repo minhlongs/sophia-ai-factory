@@ -1,3 +1,4 @@
+'use client';
 /**
  * Usage Meter Component
  * Composition root: real-time quota utilization with progress meters

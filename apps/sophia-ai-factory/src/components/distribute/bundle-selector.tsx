@@ -1,3 +1,4 @@
+'use client';
 /**
  * bundle-selector.tsx — One-click bundle publish UI
  *

@@ -1,3 +1,4 @@
+'use client';
 /**
  * License Status Card Component
  * Composition root: displays real-time license info from RaaS Gateway

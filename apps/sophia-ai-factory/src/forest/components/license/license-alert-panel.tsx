@@ -1,3 +1,4 @@
+'use client';
 /**
  * License Alert Panel Component
  * Alert item rendering extracted to license-alert-item.tsx

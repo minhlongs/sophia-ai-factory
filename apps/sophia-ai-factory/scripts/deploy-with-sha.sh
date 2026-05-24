@@ -138,6 +138,14 @@ else
   npm run build
 fi
 
+# ─── Step 1.5: Strip client-only bloat from SSR chunks ──────────────────────
+# Turbopack leaks full client-only libraries (recharts, html2canvas, framer-motion,
+# sentry-sdk, etc.) into SSR chunks. Replace them with stubs BEFORE OpenNext's
+# esbuild bundles everything into handler.mjs. Without this, the final worker.js
+# gzip exceeds the CF Workers 10 MiB limit. Added 2026-05-24.
+echo "==> strip-ssr-bloat"
+bash scripts/strip-ssr-bloat.sh
+
 # ─── Step 2: OpenNext + instrumentation fixes ────────────────────────────────
 echo "==> fix-instrumentation-standalone"
 node scripts/fix-instrumentation-standalone.mjs

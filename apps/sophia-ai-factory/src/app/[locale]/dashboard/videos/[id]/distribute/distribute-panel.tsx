@@ -1,11 +1,11 @@
+'use client';
+
 /**
  * Client form for multi-channel video distribution.
  * Renders channel checkboxes, caption textarea, schedule picker.
  *
  * @module app/[locale]/dashboard/videos/[id]/distribute/distribute-panel
  */
-
-'use client';
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';

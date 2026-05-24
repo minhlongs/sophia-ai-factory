@@ -1,3 +1,4 @@
+'use client';
 /**
  * Sidebar Quota Widget — compact at-a-glance monthly credits indicator.
  *

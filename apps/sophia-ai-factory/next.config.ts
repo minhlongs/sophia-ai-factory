@@ -25,12 +25,15 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: path.resolve(__dirname),
   // M1 16GB workaround: reactCompiler doubles webpack memory pressure. Disable when SKIP_RC=1.
   reactCompiler: process.env.SKIP_RC === '1' ? false : true,
-  // Wave 12 G1: move redis clients to runtime (not bundled), saves ~921 KB in CF worker bundle
   serverExternalPackages: ['redis', 'ioredis', '@redis/client'],
   experimental: {
-    // Tree-shake heavy deps — reduces bundle by removing unused exports
-    // zod added (Wave 12 G1 intent: deduplicate zod across chunks)
-    optimizePackageImports: ['better-auth', 'date-fns', 'lucide-react', 'zod'],
+    optimizePackageImports: [
+      'better-auth', 'date-fns', 'lucide-react', 'zod',
+      'recharts', '@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu',
+      '@radix-ui/react-popover', '@radix-ui/react-select', '@radix-ui/react-tabs',
+      '@radix-ui/react-tooltip', '@tanstack/react-query',
+      'cmdk', 'sonner', 'next-intl', 'kysely',
+    ],
   },
   typescript: {
     // Gated by scripts/deploy-with-sha.sh Step 0.5 (`npm run type-check`).

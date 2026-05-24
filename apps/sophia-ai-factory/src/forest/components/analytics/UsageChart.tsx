@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * UsageChart Component
  *
