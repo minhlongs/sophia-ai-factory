@@ -10,6 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { verifyInternalSecret } from '@/seed/security/verify-internal-secret';
 
 const bodySchema = z.object({
   prompts: z.array(z.string().min(1)).min(1).max(10),
@@ -18,6 +19,10 @@ const bodySchema = z.object({
 });
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  if (!verifyInternalSecret(req)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   let body: unknown;
   try {
     body = await req.json();

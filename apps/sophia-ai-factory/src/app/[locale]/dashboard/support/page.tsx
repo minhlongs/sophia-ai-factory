@@ -1,4 +1,5 @@
 import React from "react";
+import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
 import { getUserTier } from "@/seed/db/get-user-tier";
 import { Tier } from "@/seed/types";
@@ -49,8 +50,9 @@ const SUPPORT_TIERS = [
 export default async function SupportPage() {
   const t = await getTranslations("dashboard.support");
   const user = await getCurrentUser();
+  if (!user) redirect('/login');
 
-  const userTier: Tier = user ? await getUserTier(user.id) : "BASIC" as Tier;
+  const userTier: Tier = await getUserTier(user.id);
 
   return (
     <div className="space-y-8">

@@ -7,7 +7,7 @@ import { applyCorsHeaders, handleCorsPrelight } from '@/seed/security/cors-secur
 import { emitUsageEvent } from '@/forest/usage-metering'
 import { logger } from '@/seed/utils/logger-utility'
 import { toError } from '@/seed/utils/to-error'
-import { isInternalOrStatic, pathnameWithoutLocale, isAdminAuthorized } from './middleware-helpers'
+import { isInternalOrStatic, pathnameWithoutLocale } from './middleware-helpers'
 import { handleApiRoute } from './middleware-api-handler'
 import { getD1Raw } from '@/seed/db/client'
 import {
@@ -91,15 +91,6 @@ export async function proxy(request: NextRequest) {
       // plan 260519-0300-handover-funnel-critical-fixes/phase-02-setup-wizard-locale-routing.md.
       return NextResponse.redirect(new URL('/dashboard/onboarding', request.url))
     }
-  }
-
-  if (pathname.startsWith('/admin') || pathname.includes('/admin/')) {
-    if (isAdminAuthorized(request)) {
-      const res = intlMiddleware(request)
-      attachCspHeaders(res as NextResponse, nonce)
-      return res
-    }
-    return new NextResponse('Unauthorized', { status: 401 })
   }
 
   const cleanPath = pathnameWithoutLocale(pathname)

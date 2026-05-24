@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import React, { Suspense } from "react";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getTranslations } from 'next-intl/server';
 import {
@@ -95,6 +96,7 @@ export default async function DashboardLayout({
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'dashboard' });
   const currentUser = await getCurrentUser();
+  if (!currentUser) redirect('/login');
   // Parallelize independent per-user lookups — each is an isolated D1 round-trip.
   const [trialEndsAt, userTier, redeemedCode] = currentUser
     ? await Promise.all([

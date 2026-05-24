@@ -83,7 +83,10 @@ export async function POST(
       ? (JSON.parse(inst.customizations) as SopCustomizations)
       : {};
 
-    if (signatureHeader && customizations.webhookSecret) {
+    if (customizations.webhookSecret) {
+      if (!signatureHeader) {
+        return NextResponse.json({ error: 'Missing X-Sophia-Signature header' }, { status: 401 });
+      }
       const valid = await verifySignature(bodyText, signatureHeader, customizations.webhookSecret);
       if (!valid) {
         return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });

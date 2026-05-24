@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { getUserProfile } from '@/app/actions/settings';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
@@ -21,9 +22,7 @@ export const metadata: Metadata = {
 
 export default async function SettingsPage() {
   const [profile, user] = await Promise.all([getUserProfile(), getCurrentUser()]);
-
-  // If getUserProfile throws (Unauthorized), Next.js error boundary will handle it
-  // or middleware should have redirected already.
+  if (!user) redirect('/login');
 
   const currentTier = user ? await getUserTier(user.id) : 'BASIC';
   const [periodEnd, completedOrderCount] = user
