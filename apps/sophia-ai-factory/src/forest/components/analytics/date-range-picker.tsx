@@ -11,7 +11,7 @@ import React, { useState, useCallback } from 'react';
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
-import { cn } from '@/lib/utils';
+import { cn } from '@/seed/utils/cn';
 import { Button } from '@/seed/components/ui/button';
 import { Calendar } from '@/seed/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/seed/components/ui/popover';

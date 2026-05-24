@@ -6,7 +6,7 @@
  * @module components/audit/audit-score-card
  */
 
-import { cn } from '@/lib/utils'
+import { cn } from '@/seed/utils/cn'
 
 interface AuditScoreCardProps {
   score: number

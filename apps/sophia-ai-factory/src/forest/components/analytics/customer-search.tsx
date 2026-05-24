@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Search, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/seed/utils/cn';
 import { Input } from '@/seed/components/ui/input';
 import {
   Command,

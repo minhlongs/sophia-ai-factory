@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from '@/seed/utils/cn';
 
 interface GuideCommandCardProps {
   command: string;

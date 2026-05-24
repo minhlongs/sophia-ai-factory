@@ -4,7 +4,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/seed/components/ui/card';
 import { Skeleton } from '@/seed/components/ui/skeleton';
 import { TrendingUp, TrendingDown, Activity, Database, Coins, Clock, AlertCircle, DollarSign } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/seed/utils/cn';
 
 export interface UsageMetricsData {
   requests: number;

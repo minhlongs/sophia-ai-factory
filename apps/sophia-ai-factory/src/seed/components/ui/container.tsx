@@ -1,5 +1,5 @@
 import * as React from "react";
-import { cn } from "@/lib/utils";
+import { cn } from '@/seed/utils/cn';
 
 export interface ContainerProps extends React.HTMLAttributes<HTMLDivElement> {
   size?: "sm" | "md" | "lg" | "xl";
