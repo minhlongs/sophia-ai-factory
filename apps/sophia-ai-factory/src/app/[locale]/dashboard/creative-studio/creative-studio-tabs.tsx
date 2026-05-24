@@ -3,7 +3,7 @@
 import { lazy, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { Video, Image, Mic2, LayoutTemplate, Palette } from 'lucide-react';
+import { Video, Image, Mic2, LayoutTemplate, Palette, Mail } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/seed/components/ui/tabs';
 import type { Tier } from '@/seed/types';
 
@@ -25,6 +25,10 @@ const TemplateLibraryTab = lazy(() =>
 
 const BrandAssetsTab = lazy(() =>
   import('./components/brand-assets-tab').then((m) => ({ default: m.BrandAssetsTab }))
+);
+
+const NewsletterWriterTab = lazy(() =>
+  import('./components/newsletter-writer-tab').then((m) => ({ default: m.NewsletterWriterTab }))
 );
 
 function VideoTabSkeleton() {
@@ -55,12 +59,13 @@ const TAB_ICONS = {
   video: Video,
   image: Image,
   audio: Mic2,
+  newsletter: Mail,
   templates: LayoutTemplate,
   brand: Palette,
 } as const;
 
 type TabKey = keyof typeof TAB_ICONS;
-const TAB_KEYS: TabKey[] = ['video', 'image', 'audio', 'templates', 'brand'];
+const TAB_KEYS: TabKey[] = ['video', 'image', 'audio', 'newsletter', 'templates', 'brand'];
 
 function TabPlaceholder({ tabName }: { tabName: string }) {
   return (
@@ -88,7 +93,7 @@ export function CreativeStudioTabs({ tier, activeTab, locale }: CreativeStudioTa
 
   return (
     <Tabs value={validTab} onValueChange={handleTabChange} className="w-full">
-      <TabsList className="grid h-auto w-full grid-cols-2 gap-1 rounded-xl border border-border bg-muted/70 p-1 sm:grid-cols-3 lg:grid-cols-5">
+      <TabsList className="grid h-auto w-full grid-cols-2 gap-1 rounded-xl border border-border bg-muted/70 p-1 sm:grid-cols-3 lg:grid-cols-6">
         {TAB_KEYS.map((key) => {
           const Icon = TAB_ICONS[key];
           return (
@@ -119,6 +124,12 @@ export function CreativeStudioTabs({ tier, activeTab, locale }: CreativeStudioTa
       <TabsContent value="audio" className="mt-4">
         <Suspense fallback={<TabPlaceholder tabName={t('tabs.audio')} />}>
           <AudioStudioTab tier={tier} />
+        </Suspense>
+      </TabsContent>
+
+      <TabsContent value="newsletter" className="mt-4">
+        <Suspense fallback={<TabPlaceholder tabName={t('tabs.newsletter')} />}>
+          <NewsletterWriterTab tier={tier} />
         </Suspense>
       </TabsContent>
 

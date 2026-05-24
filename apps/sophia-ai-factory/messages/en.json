@@ -2851,7 +2851,8 @@
       "image": "Image Generator",
       "audio": "Audio Studio",
       "templates": "Templates",
-      "brand": "Brand Assets"
+      "brand": "Brand Assets",
+      "newsletter": "Newsletter"
     },
     "video": {
       "scriptLabel": "Video Script",
@@ -2925,6 +2926,25 @@
       "primaryColor": "Primary Color",
       "accentColor": "Accent Color",
       "brandName": "Brand Name"
+    },
+    "newsletter": {
+      "brandLabel": "Brand / Newsletter Name",
+      "brandPlaceholder": "e.g. The Sophia Weekly",
+      "topicLabel": "Topic / Theme",
+      "topicPlaceholder": "What should this newsletter be about? e.g. AI marketing trends this week",
+      "toneLabel": "Writing Tone",
+      "introLabel": "Editor Intro (optional)",
+      "introPlaceholder": "A personal message from you to your readers",
+      "ctaLabel": "Call-to-Action (optional)",
+      "ctaPlaceholder": "e.g. Book a free strategy session",
+      "generate": "Generate Newsletter",
+      "generating": "Generating...",
+      "previewLabel": "Newsletter Preview",
+      "previewPlaceholder": "Newsletter preview will appear here",
+      "subjectLine": "Subject Line",
+      "copyHtml": "Copy HTML",
+      "copied": "Copied!",
+      "words": "words"
     }
   },
   "affiliate": {
