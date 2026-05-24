@@ -1,3 +1,4 @@
+'use client';
 /**
  * CmdK Palette — global command palette triggered by Cmd+K / Ctrl+K
  *

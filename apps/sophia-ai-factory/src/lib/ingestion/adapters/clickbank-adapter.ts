@@ -1,6 +1,5 @@
 import { BaseAdapter } from '../base-adapter'
 import type { RawProduct, AdapterConfig } from '../types'
-import JSZip from 'jszip'
 
 export class ClickbankAdapter extends BaseAdapter {
   networkId = 'clickbank' as const
@@ -22,6 +21,7 @@ export class ClickbankAdapter extends BaseAdapter {
       const blob = await response.blob()
       const arrayBuffer = await blob.arrayBuffer()
 
+      const { default: JSZip } = await import('jszip')
       const zip = await JSZip.loadAsync(arrayBuffer)
 
       // The zip usually contains a single json file
