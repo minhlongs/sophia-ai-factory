@@ -135,12 +135,16 @@ export async function POST(request: NextRequest) {
 
   const tier = (matchOrder?.tier ?? 'BASIC') as Tier
   const orderId = matchOrder?.order_id ?? `payos_${userId}_${orderCode}`
+  const orderPeriod = (matchOrder as Record<string, unknown> | undefined)?.period as string | undefined
 
   const now = new Date().toISOString()
   const isLifetime = UNIFIED_TIERS[tier]?.billingType === 'lifetime'
-  const periodEnd = isLifetime
+  const billingPeriod = isLifetime ? 'lifetime' : orderPeriod === 'yearly' ? 'yearly' : 'monthly'
+  const periodEnd = billingPeriod === 'lifetime'
     ? new Date('2099-12-31T23:59:59Z').toISOString()
-    : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    : billingPeriod === 'yearly'
+      ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+      : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
 
   const { data: membership } = await db.from('org_members').select('org_id').eq('user_id', userId).single()
   const orgId = membership?.org_id as string | undefined
