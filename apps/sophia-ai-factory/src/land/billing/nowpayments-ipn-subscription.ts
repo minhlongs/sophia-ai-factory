@@ -14,7 +14,8 @@ import type { NowPaymentsIpnPayload } from './nowpayments-ipn-handlers'
 import { getDb, parseUserIdFromOrderId } from './nowpayments-ipn-db'
 import { createOnboardingVideo, ONBOARDING_TIERS } from '@/lib/video/onboarding-video'
 import { triggerAutoHandover } from '@/tree/handover/auto-handover'
-import { markOrderCompleted, markOrderFailed } from '@/land/orders/pending-order-repo'
+import { markOrderCompleted, markOrderFailed, getOrderById } from '@/land/orders/pending-order-repo'
+import { findReservedRedemption, finalizeRedemption } from '@/land/promo/promo-repo'
 import { sendReceiptEmail } from './email/receipt-email-sender'
 import { enqueueWelcomeEmail } from '@/forest/outbox/email-outbox'
 
@@ -124,6 +125,27 @@ export async function handleFinished(ipn: NowPaymentsIpnPayload): Promise<void> 
     })
   } catch { /* non-fatal */ }
 
+  // Finalize promo code redemption if order had a promo (non-fatal)
+  if (ipn.order_id) {
+    try {
+      const pendingOrder = await getOrderById(ipn.order_id)
+      if (pendingOrder?.promo_code) {
+        const reserved = await findReservedRedemption(userId, pendingOrder.promo_code)
+        if (reserved) {
+          await finalizeRedemption(reserved.id, ipn.payment_id)
+          logger.info('[NOWPayments] Promo redemption finalized', {
+            promoCode: pendingOrder.promo_code,
+            redemptionId: reserved.id,
+            discountCents: reserved.discount_applied_cents,
+            paymentId: ipn.payment_id,
+          })
+        }
+      }
+    } catch (err) {
+      logger.warn('[NOWPayments] Promo finalization failed (non-fatal)', { orderId: ipn.order_id, error: String(err) })
+    }
+  }
+
   // Trigger onboarding video for Premium+/MASTER new purchases (non-fatal)
   if (ONBOARDING_TIERS.has(tier)) {
     try {
@@ -208,6 +230,43 @@ export async function handleFinished(ipn: NowPaymentsIpnPayload): Promise<void> 
     }
   } catch (err) {
     logger.warn('[NOWPayments] Post-purchase welcome email enqueue failed (non-fatal)', { userId, error: String(err) })
+  }
+
+  // Credit referrer reward if this user was referred (non-fatal)
+  try {
+    const { data: userProfile } = await db.from('user_profiles').select('settings').eq('user_id', userId).single()
+    const settings = userProfile?.settings
+      ? (typeof userProfile.settings === 'string' ? JSON.parse(userProfile.settings as string) : userProfile.settings) as Record<string, unknown>
+      : null
+    const referrerId = settings?.referred_by as string | undefined
+    if (referrerId && referrerId !== userId) {
+      const d1 = await getD1Raw()
+      const referrerProfile = await d1
+        .prepare(`SELECT settings FROM user_profiles WHERE user_id = ?1`)
+        .bind(referrerId)
+        .first<{ settings: string | null }>()
+      const referrerSettings = referrerProfile?.settings
+        ? JSON.parse(referrerProfile.settings)
+        : {}
+      const rewardCents = UNIFIED_TIERS[tier]
+        ? Math.round(UNIFIED_TIERS[tier].price * 100 * 0.10)
+        : 1990
+      const currentCredit = (referrerSettings.account_credit_cents as number) ?? 0
+      referrerSettings.account_credit_cents = currentCredit + rewardCents
+      referrerSettings.last_referral_reward_at = new Date().toISOString()
+      await d1
+        .prepare(`UPDATE user_profiles SET settings = ?1 WHERE user_id = ?2`)
+        .bind(JSON.stringify(referrerSettings), referrerId)
+        .run()
+      logger.info('[NOWPayments] Referral reward credited', {
+        referrerId,
+        referredUserId: userId,
+        rewardCents,
+        totalCredit: referrerSettings.account_credit_cents,
+      })
+    }
+  } catch (err) {
+    logger.warn('[NOWPayments] Referral reward credit failed (non-fatal)', { userId, error: String(err) })
   }
 
   logger.info('[NOWPayments] Payment finished — subscription activated', { userId, orgId, tier, isLifetime, periodEnd, paymentId: ipn.payment_id })

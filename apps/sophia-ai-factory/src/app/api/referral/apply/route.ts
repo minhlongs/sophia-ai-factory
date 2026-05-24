@@ -63,6 +63,24 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
+    // Check if user already has a referrer
+    const { data: existingProfile } = await db
+      .from("user_profiles")
+      .select("settings")
+      .eq("user_id", user.id)
+      .single();
+    const existingSettings = existingProfile?.settings
+      ? (typeof existingProfile.settings === 'string'
+          ? JSON.parse(existingProfile.settings)
+          : existingProfile.settings) as Record<string, unknown>
+      : {};
+    if (existingSettings.referred_by) {
+      return NextResponse.json(
+        { error: "You have already applied a referral code" },
+        { status: 409 }
+      );
+    }
+
     // Increment usage counter
     const { error: updateError } = await db
       .from("referral_codes")
@@ -74,6 +92,27 @@ export async function POST(request: Request): Promise<NextResponse> {
         { error: "Failed to apply referral code" },
         { status: 500 }
       );
+    }
+
+    // Store referred_by attribution in user_profiles settings
+    const updatedSettings = {
+      ...existingSettings,
+      referred_by: referral.user_id,
+      referral_code: code,
+      referred_at: new Date().toISOString(),
+    };
+    if (existingProfile) {
+      await db
+        .from("user_profiles")
+        .update({ settings: JSON.stringify(updatedSettings) })
+        .eq("user_id", user.id);
+    } else {
+      await db
+        .from("user_profiles")
+        .insert({
+          user_id: user.id,
+          settings: JSON.stringify(updatedSettings),
+        });
     }
 
     return NextResponse.json({

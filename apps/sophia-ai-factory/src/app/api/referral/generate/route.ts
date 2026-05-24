@@ -80,7 +80,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         code,
         uses: 0,
         max_uses: null,
-        reward_amount: 0,
+        reward_amount: 1990,
       })
       .select("code, uses, reward_amount")
       .single();
