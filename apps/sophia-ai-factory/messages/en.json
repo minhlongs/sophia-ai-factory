@@ -2924,8 +2924,20 @@
       "editBrand": "Edit Brand",
       "logo": "Logo",
       "primaryColor": "Primary Color",
+      "secondaryColor": "Secondary Color",
       "accentColor": "Accent Color",
-      "brandName": "Brand Name"
+      "brandName": "Brand Name",
+      "colors": "Colors",
+      "logoPosition": "Logo Position",
+      "logoOpacity": "Logo Opacity",
+      "intro": "Intro Video",
+      "outro": "Outro Video",
+      "font": "Custom Font",
+      "uploadLogo": "Upload Logo (max 2MB)",
+      "uploadIntro": "Upload Intro (max 20MB)",
+      "uploadOutro": "Upload Outro (max 20MB)",
+      "uploadFont": "Upload Font (.ttf, .otf, .woff)",
+      "saving": "Saving..."
     },
     "newsletter": {
       "brandLabel": "Brand / Newsletter Name",
