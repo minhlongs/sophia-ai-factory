@@ -125,6 +125,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // forging a webhook for another tenant's heygen_job_id.
   const { secret, ownerUserId, isUserScoped } = await resolveHeyGenWebhookSecret(heygenJobId)
 
+  if (isUserScoped && !ownerUserId) {
+    logger.warn('[heygen-webhook] User-scoped secret but no owner resolved — refusing update', { heygenJobId })
+    return NextResponse.json({ ok: true, ignored: 'no_owner' })
+  }
+
   if (!secret) {
     // Return 200 to suppress HeyGen retry storm. Cron polling handles fallback.
     logger.warn('[heygen-webhook] No webhook secret configured — cron-poll fallback active', {
@@ -161,7 +166,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       video_url: String(d.video_url ?? ''),
       thumbnail_url: typeof d.thumbnail_url === 'string' ? d.thumbnail_url : undefined,
       duration: typeof d.duration === 'number' ? d.duration : undefined,
-    } as HeyGenSuccessData)
+    } as HeyGenSuccessData, ownerUserId)
 
     await handleOnboardingDelivery(String(d.video_id ?? ''), String(d.video_url ?? ''), ownerUserId)
     return NextResponse.json({ ok: true })
@@ -172,7 +177,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     await failVideoFromWebhook({
       video_id: String(d.video_id ?? ''),
       error: typeof d.error === 'string' ? d.error : undefined,
-    } as HeyGenFailData)
+    } as HeyGenFailData, ownerUserId)
     return NextResponse.json({ ok: true })
   }
 
@@ -189,12 +194,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   // Legacy update path: scope by (heygen_job_id, user_id) when owner resolved.
   // If owner not resolved AND the verifying secret was platform-scoped, we can
-  // still update by job_id alone (transitional fallback). If the verified secret
-  // was user-scoped, ownerUserId is required.
-  if (isUserScoped && !ownerUserId) {
-    logger.warn('[heygen-webhook] User-scoped secret but no owner resolved — refusing update', { heygenJobId })
-    return NextResponse.json({ ok: true, ignored: 'no_owner' })
-  }
+  // still update by job_id alone (transitional fallback).
+  // Note: user-scoped check is already verified at the top.
 
   try {
     const db = createServerClient()

@@ -4,7 +4,7 @@
  * Defense-in-depth gate to prevent a BASIC tenant from exhausting platform
  * compute by spamming /api/raas/missions or /api/missions/auto-video.
  *
- * Counts rows in `missions` (RaaS org scope) or `engine_missions`
+ * Counts rows in BOTH `missions` (RaaS org scope) and `engine_missions`
  * (auto-video user scope) created in the current calendar month.
  *
  * Uses count-only queries to avoid introducing a new usage table — keeps
@@ -13,6 +13,7 @@
 
 import { getD1Raw } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
+import { resolveOrgId, resolveOrgOwnerUserId } from '@/seed/auth/resolve-org-id';
 
 export const MISSION_QUOTA_BY_TIER: Record<string, number> = {
   BASIC: 10,
@@ -41,9 +42,8 @@ function nextMonthResetAtIso(): string {
 /**
  * Check whether the owner has remaining mission slots this month.
  *
- * `table` selects which table to count:
- *  - 'missions'        → /api/raas/missions (uses org_id column for owner)
- *  - 'engine_missions' → /api/missions/auto-video (uses user_id column)
+ * Sums the counts from BOTH the `missions` and `engine_missions` tables
+ * to enforce the tier limit on total combined activity.
  *
  * Returns `allowed=true` on count-failure (fail-open) so a transient D1 issue
  * doesn't block paying customers — the upstream BYOK / payment layers remain
@@ -59,23 +59,35 @@ export async function checkMissionQuota(
   const sinceMs = startOfMonthUtcMs();
   const resetAt = nextMonthResetAtIso();
 
-  // missions.created_at  → TEXT 'YYYY-MM-DD HH:MM:SS' (use datetime() cast)
-  // engine_missions.created_at → INTEGER unix seconds (bind integer)
-  const ownerCol = table === 'missions' ? 'org_id' : 'user_id';
-
   try {
     const d1 = await getD1Raw();
-    let row: { c: number } | null;
-    if (table === 'missions') {
-      const sinceText = new Date(sinceMs).toISOString().replace('T', ' ').slice(0, 19);
-      const sql = `SELECT COUNT(*) AS c FROM missions WHERE ${ownerCol} = ?1 AND datetime(created_at) >= datetime(?2)`;
-      row = await d1.prepare(sql).bind(ownerId, sinceText).first<{ c: number }>();
-    } else {
-      const sinceSec = Math.floor(sinceMs / 1000);
-      const sql = `SELECT COUNT(*) AS c FROM engine_missions WHERE ${ownerCol} = ?1 AND created_at >= ?2`;
-      row = await d1.prepare(sql).bind(ownerId, sinceSec).first<{ c: number }>();
+    if (!d1) {
+      return { allowed: true, used: 0, limit, resetAt };
     }
-    const used = row?.c ?? 0;
+
+    let orgId = '';
+    let userId = '';
+
+    if (table === 'missions') {
+      orgId = ownerId;
+      userId = (await resolveOrgOwnerUserId(orgId, d1)) ?? orgId;
+    } else {
+      userId = ownerId;
+      orgId = (await resolveOrgId(userId, d1)) ?? userId;
+    }
+
+    const sinceText = new Date(sinceMs).toISOString().replace('T', ' ').slice(0, 19);
+    const sinceSec = Math.floor(sinceMs / 1000);
+
+    const missionsSql = `SELECT COUNT(*) AS c FROM missions WHERE org_id = ?1 AND datetime(created_at) >= datetime(?2)`;
+    const engineMissionsSql = `SELECT COUNT(*) AS c FROM engine_missions WHERE user_id = ?1 AND created_at >= ?2`;
+
+    const [missionsResult, engineMissionsResult] = await Promise.all([
+      d1.prepare(missionsSql).bind(orgId, sinceText).first<{ c: number }>(),
+      d1.prepare(engineMissionsSql).bind(userId, sinceSec).first<{ c: number }>(),
+    ]);
+
+    const used = (missionsResult?.c ?? 0) + (engineMissionsResult?.c ?? 0);
     return { allowed: used < limit, used, limit, resetAt };
   } catch (err) {
     logger.warn('[mission-quota] D1 count failed (fail-open)', {

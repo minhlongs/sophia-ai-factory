@@ -137,8 +137,9 @@ describe('completeVideoFromWebhook', () => {
     await completeVideoFromWebhook({
       video_id: 'heygen-abc',
       video_url: 'https://cdn.heygen.com/video.mp4',
-    })
+    }, 'user-1')
 
+    expect(findByHeygenJobId).toHaveBeenCalledWith('heygen-abc', 'user-1')
     expect(sendOneTimeBundleReadyEmail).toHaveBeenCalledOnce()
   })
 
@@ -201,8 +202,9 @@ describe('failVideoFromWebhook', () => {
   it('records attempt (CAS) when below MAX_ATTEMPTS threshold', async () => {
     vi.mocked(findByHeygenJobId).mockResolvedValue({ ...processingRow, attempt_count: 2 })
 
-    await failVideoFromWebhook({ video_id: 'heygen-abc', error: 'timeout' })
+    await failVideoFromWebhook({ video_id: 'heygen-abc', error: 'timeout' }, 'user-1')
 
+    expect(findByHeygenJobId).toHaveBeenCalledWith('heygen-abc', 'user-1')
     expect(recordAttemptCAS).toHaveBeenCalledWith('vid-1', 'timeout')
     expect(markPermanentFailureCAS).not.toHaveBeenCalled()
   })

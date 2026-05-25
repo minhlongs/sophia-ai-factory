@@ -318,24 +318,37 @@ export async function insertAiPromptVideo(
  * Find a video row by HeyGen job ID.
  * Used by webhook handler to look up the corresponding videos row.
  */
-export async function findByHeygenJobId(heygenJobId: string): Promise<VideoRow | null> {
+export async function findByHeygenJobId(
+  heygenJobId: string,
+  userId?: string | null,
+): Promise<VideoRow | null> {
   try {
     const db = await getD1Raw()
+    let query = `SELECT id, user_id, purchase_id, heygen_job_id, title, status,
+                        script, locale, provider, attempt_count, last_attempt_at,
+                        last_error, created_at
+                 FROM videos
+                 WHERE heygen_job_id = ?1`
+
+    const params: any[] = [heygenJobId]
+    if (userId) {
+      query += ` AND user_id = ?2`
+      params.push(userId)
+    }
+    query += ` LIMIT 1`
+
     const row = await db
-      .prepare(
-        `SELECT id, user_id, purchase_id, heygen_job_id, title, status,
-                script, locale, provider, attempt_count, last_attempt_at,
-                last_error, created_at
-         FROM videos
-         WHERE heygen_job_id = ?1
-         LIMIT 1`,
-      )
-      .bind(heygenJobId)
+      .prepare(query)
+      .bind(...params)
       .first<VideoRow>()
 
     return row ?? null
   } catch (err) {
-    logger.warn('[VideosRepo] findByHeygenJobId failed', { heygenJobId, error: getErrorMessage(err) })
+    logger.warn('[VideosRepo] findByHeygenJobId failed', {
+      heygenJobId,
+      userId,
+      error: getErrorMessage(err),
+    })
     return null
   }
 }
