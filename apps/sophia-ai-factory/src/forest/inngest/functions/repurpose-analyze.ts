@@ -2,7 +2,7 @@ import { inngest } from '@/forest/inngest/client';
 import { updateRepurposeJobStatus, insertRepurposeClips } from '@/seed/db/repositories/repurpose-jobs-repo';
 import { scoreHighlights } from '@/lib/video/highlight-scorer';
 import { detectScenes } from '@/lib/video/scene-detector';
-import { mergeClipBoundaries } from '@/lib/video/clip-boundary-merger';
+import { mergeClipBoundaries, type TranscriptWord } from '@/lib/video/clip-boundary-merger';
 import { logger } from '@/seed/utils/logger-utility';
 import type { TranscriptSegment } from '@/lib/video/highlight-scorer';
 
@@ -27,7 +27,13 @@ export const repurposeAnalyze = inngest.createFunction(
     });
 
     const mergedClips = await step.run('merge-boundaries', async () => {
-      return mergeClipBoundaries(highlights, scenes);
+      const words: TranscriptWord[] = rawTranscript.map((t) => ({
+        text: t.text,
+        start: t.start_ms,
+        end: t.end_ms,
+        confidence: 1.0,
+      }));
+      return mergeClipBoundaries(highlights, scenes, words);
     });
 
     await step.run('save-manifest', async () => {

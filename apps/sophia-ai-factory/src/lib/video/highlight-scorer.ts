@@ -15,18 +15,34 @@ export interface TranscriptSegment {
 export interface HighlightClip {
   start_ms: number;
   end_ms: number;
-  score: number;  // 0.0–1.0
+  score: number;  // 0.0–1.0 (average of all dimensions)
+  hook_score?: number; // 0.0-1.0
+  pacing_score?: number; // 0.0-1.0
+  retention_score?: number; // 0.0-1.0
+  cta_score?: number; // 0.0-1.0
   title: string;
   reasoning: string;
+  caption?: string;
+  hashtags?: string[];
+  subtitle_style?: string;
+  tone?: string;
 }
 
 interface LlmClipResponse {
   clips: Array<{
     start_ms: number;
     end_ms: number;
-    score: number;
+    score?: number;
+    hook_score?: number;
+    pacing_score?: number;
+    retention_score?: number;
+    cta_score?: number;
     title: string;
     reasoning: string;
+    caption?: string;
+    hashtags?: string[];
+    subtitle_style?: string;
+    tone?: string;
   }>;
 }
 
@@ -51,16 +67,26 @@ Return ONLY valid JSON in this exact format:
     {
       "start_ms": <integer>,
       "end_ms": <integer>,
-      "score": <float 0.0-1.0>,
+      "hook_score": <float 0.0-1.0>,
+      "pacing_score": <float 0.0-1.0>,
+      "retention_score": <float 0.0-1.0>,
+      "cta_score": <float 0.0-1.0>,
       "title": "<short catchy title>",
-      "reasoning": "<why this clip is viral-worthy>"
+      "reasoning": "<why this clip is viral-worthy>",
+      "caption": "<engaging caption optimized for social media>",
+      "hashtags": ["hashtag1", "hashtag2", "hashtag3"],
+      "subtitle_style": "<recommended visual style: bold-yellow | kinetic-red | minimal-white>",
+      "tone": "<detected tone: energetic | serious | humorous | inspirational>"
     }
   ]
 }
 
 Rules:
 - Each clip must be 15,000ms–60,000ms long
-- Score 1.0 = perfect viral potential, 0.0 = no potential
+- Hook score prioritizes strong opening statements/questions.
+- Pacing score evaluates speed and keyword density.
+- Retention score measures long-term interest retention.
+- CTA score measures conclusion or action driver quality.
 - Prioritize: hooks, insights, emotional moments, controversy, humor
 - Title should be ≤60 characters
 - Return only the JSON, no other text`;
@@ -122,9 +148,23 @@ export async function scoreHighlights(
     throw new Error(`Failed to parse highlight scoring response: ${String(err)}`);
   }
 
-  const clips = (parsed.clips ?? []).filter(
-    (c) => c.end_ms - c.start_ms >= 15_000 && c.end_ms - c.start_ms <= 60_000,
-  );
+  const clips = (parsed.clips ?? [])
+    .filter((c) => c.end_ms - c.start_ms >= 15_000 && c.end_ms - c.start_ms <= 60_000)
+    .map((c) => {
+      const hook = c.hook_score ?? 0.5;
+      const pacing = c.pacing_score ?? 0.5;
+      const retention = c.retention_score ?? 0.5;
+      const cta = c.cta_score ?? 0.5;
+      const calculatedScore = c.score ?? (hook + pacing + retention + cta) / 4;
+      return {
+        ...c,
+        score: Math.round(calculatedScore * 100) / 100,
+        hook_score: hook,
+        pacing_score: pacing,
+        retention_score: retention,
+        cta_score: cta,
+      };
+    });
 
   logger.info('[highlight-scorer] Scored highlights', { userId, clipsFound: clips.length });
   return clips;
