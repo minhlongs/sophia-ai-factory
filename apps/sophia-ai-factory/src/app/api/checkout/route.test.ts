@@ -37,12 +37,29 @@ vi.mock('@/tree/clients/nowpayments-client', () => ({
   ),
 }));
 
+vi.mock('@/land/orders/pending-order-repo', () => ({
+  findActivePendingOrder: vi.fn(),
+  writeOrder: vi.fn(async (input: any) => ({
+    order_id: input.order_id,
+    user_id: input.user_id,
+    tier: input.tier,
+    period: input.period,
+    payment_method: input.payment_method,
+    amount_usd_cents: input.amount_usd_cents,
+    invoice_url: input.invoice_url,
+    status: 'pending',
+    created_at: new Date().toISOString(),
+  })),
+}));
+
 import { GET, POST } from './route';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { createInvoiceUrl } from '@/tree/clients/nowpayments-client';
+import { findActivePendingOrder } from '@/land/orders/pending-order-repo';
 
 const mockGetUser = vi.mocked(getCurrentUserFromHeaders);
 const mockCreateInvoiceUrl = vi.mocked(createInvoiceUrl);
+const mockFindActivePendingOrder = vi.mocked(findActivePendingOrder);
 
 const APP_URL = 'https://sophia.agencyos.network';
 
@@ -158,6 +175,33 @@ describe('POST /api/checkout', () => {
     expect(res.status).toBe(200);
     const body = (await res.json()) as { url: string };
     expect(body.url).toContain('nowpayments.io');
+  });
+
+  it('valid tier + authed + existing pending order → returns existing pending order URL (deduped)', async () => {
+    mockGetUser.mockResolvedValue({ id: 'user-9', email: 'i@b.com' });
+    mockFindActivePendingOrder.mockResolvedValue({
+      order_id: 'sophia_user-9_existing',
+      user_id: 'user-9',
+      tier: 'BASIC',
+      period: 'monthly',
+      payment_method: 'nowpayments',
+      amount_usd_cents: 19900,
+      promo_code: null,
+      customer_email: null,
+      invoice_url: 'https://nowpayments.io/payment?iid=existing_111',
+      status: 'pending',
+      payment_id: null,
+      created_at: new Date().toISOString(),
+      completed_at: null,
+    });
+
+    const res = await POST(makePostRequest({ tier: 'BASIC' }));
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { url: string; orderId: string; deduped: boolean };
+    expect(body.url).toBe('https://nowpayments.io/payment?iid=existing_111');
+    expect(body.orderId).toBe('sophia_user-9_existing');
+    expect(body.deduped).toBe(true);
+    expect(mockCreateInvoiceUrl).not.toHaveBeenCalled();
   });
 
   it('unauthenticated → 401 with error message', async () => {

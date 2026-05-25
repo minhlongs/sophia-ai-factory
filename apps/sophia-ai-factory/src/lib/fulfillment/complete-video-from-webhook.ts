@@ -74,10 +74,13 @@ async function fetchUserInfo(userId: string): Promise<{ email: string; locale: s
  *
  * M4 fix: skips ready email if linked purchase is refunded.
  */
-export async function completeVideoFromWebhook(data: HeyGenSuccessData): Promise<void> {
+export async function completeVideoFromWebhook(
+  data: HeyGenSuccessData,
+  ownerUserId?: string | null,
+): Promise<void> {
   const { video_id: heygenJobId, video_url: videoUrl, thumbnail_url: thumbnailUrl } = data
 
-  const row = await findByHeygenJobId(heygenJobId)
+  const row = await findByHeygenJobId(heygenJobId, ownerUserId)
   if (!row) {
     logger.warn('[WebhookComplete] Unknown heygen_job_id', { heygenJobId })
     return
@@ -187,10 +190,13 @@ export async function completeVideoFromWebhook(data: HeyGenSuccessData): Promise
  * M2 fix: uses recordAttemptCAS + markPermanentFailureCAS to prevent double
  * email + double compensation when webhook + cron race on the same row.
  */
-export async function failVideoFromWebhook(data: HeyGenFailData): Promise<void> {
+export async function failVideoFromWebhook(
+  data: HeyGenFailData,
+  ownerUserId?: string | null,
+): Promise<void> {
   const { video_id: heygenJobId, error: errorMsg } = data
 
-  const row = await findByHeygenJobId(heygenJobId)
+  const row = await findByHeygenJobId(heygenJobId, ownerUserId)
   if (!row) {
     logger.warn('[WebhookFail] Unknown heygen_job_id', { heygenJobId })
     return
