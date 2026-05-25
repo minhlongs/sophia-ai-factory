@@ -330,7 +330,7 @@ export async function findByHeygenJobId(
                  FROM videos
                  WHERE heygen_job_id = ?1`
 
-    const params: any[] = [heygenJobId]
+    const params: unknown[] = [heygenJobId]
     if (userId) {
       query += ` AND user_id = ?2`
       params.push(userId)
