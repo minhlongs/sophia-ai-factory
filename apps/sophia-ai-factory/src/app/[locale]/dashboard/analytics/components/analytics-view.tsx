@@ -40,12 +40,12 @@ export function AnalyticsView({ campaigns, userTier, userId }: AnalyticsViewProp
   return (
     <div className="space-y-6">
       <Tabs defaultValue="usage" className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="usage" className="flex items-center gap-2">
+        <TabsList className="grid w-full max-w-md grid-cols-2 bg-white/[0.02] border border-white/10 p-1 rounded-xl">
+          <TabsTrigger value="usage" className="flex items-center gap-2 rounded-lg data-[state=active]:bg-white/[0.08] data-[state=active]:text-foreground transition-all duration-200">
             <BarChartIcon className="w-4 h-4" aria-hidden="true" />
             {t('usage_tab')}
           </TabsTrigger>
-          <TabsTrigger value="campaigns" className="flex items-center gap-2">
+          <TabsTrigger value="campaigns" className="flex items-center gap-2 rounded-lg data-[state=active]:bg-white/[0.08] data-[state=active]:text-foreground transition-all duration-200">
             <BarChart3 className="w-4 h-4" aria-hidden="true" />
             {t('campaigns_tab')}
           </TabsTrigger>
@@ -59,7 +59,7 @@ export function AnalyticsView({ campaigns, userTier, userId }: AnalyticsViewProp
           <div className="space-y-6">
             {/* Stats Cards */}
             <div className="grid gap-4 md:grid-cols-3">
-              <Card className="bg-card border-border">
+              <Card className="bg-white/[0.02] border-white/10 backdrop-blur-md transition-all duration-300 hover:border-white/20">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-foreground">{t('total_campaigns')}</CardTitle>
                   <BarChart3 className="h-4 w-4 text-muted-foreground" />
@@ -69,7 +69,7 @@ export function AnalyticsView({ campaigns, userTier, userId }: AnalyticsViewProp
                   <p className="text-xs text-muted-foreground">{t('all_time')}</p>
                 </CardContent>
               </Card>
-              <Card className="bg-card border-border">
+              <Card className="bg-white/[0.02] border-white/10 backdrop-blur-md transition-all duration-300 hover:border-white/20">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-foreground">{t('success_rate')}</CardTitle>
                   <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
@@ -79,7 +79,7 @@ export function AnalyticsView({ campaigns, userTier, userId }: AnalyticsViewProp
                   <p className="text-xs text-muted-foreground">{t('completed_campaigns')}</p>
                 </CardContent>
               </Card>
-              <Card className="bg-card border-border">
+              <Card className="bg-white/[0.02] border-white/10 backdrop-blur-md transition-all duration-300 hover:border-white/20">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-foreground">{t('avg_completion_time')}</CardTitle>
                   <Clock className="h-4 w-4 text-muted-foreground" />
@@ -93,7 +93,7 @@ export function AnalyticsView({ campaigns, userTier, userId }: AnalyticsViewProp
 
             {/* Charts */}
             <div className="grid gap-6 md:grid-cols-2">
-              <Card className="bg-card border-border">
+              <Card className="bg-white/[0.02] border-white/10 backdrop-blur-md transition-all duration-300 hover:border-white/20">
                 <CardHeader>
                   <CardTitle className="text-lg text-foreground">{t('status_distribution')}</CardTitle>
                 </CardHeader>
@@ -102,7 +102,7 @@ export function AnalyticsView({ campaigns, userTier, userId }: AnalyticsViewProp
                 </CardContent>
               </Card>
 
-              <Card className="bg-card border-border">
+              <Card className="bg-white/[0.02] border-white/10 backdrop-blur-md transition-all duration-300 hover:border-white/20">
                 <CardHeader>
                   <CardTitle className="text-lg text-foreground">{t('recent_performance')}</CardTitle>
                 </CardHeader>
@@ -116,7 +116,7 @@ export function AnalyticsView({ campaigns, userTier, userId }: AnalyticsViewProp
                   ) : recentPerformanceData.length > 0 ? (
                       <CompletionTimeChart data={recentPerformanceData} />
                   ) : (
-                      <div className="h-[300px] w-full flex items-center justify-center text-muted-foreground border-2 border-dashed border-border rounded-lg">
+                      <div className="h-[300px] w-full flex items-center justify-center text-muted-foreground border border-dashed border-white/10 rounded-lg">
                           {t('no_completed_data')}
                       </div>
                   )}
@@ -124,7 +124,7 @@ export function AnalyticsView({ campaigns, userTier, userId }: AnalyticsViewProp
               </Card>
 
               {isAdvanced && typeData.length > 0 && (
-                  <Card className="bg-card border-border">
+                  <Card className="bg-white/[0.02] border-white/10 backdrop-blur-md transition-all duration-300 hover:border-white/20">
                   <CardHeader>
                     <CardTitle className="text-lg text-foreground">{t('template_usage')}</CardTitle>
                   </CardHeader>

@@ -52,13 +52,13 @@ function CategorySection({
   const icon = CATEGORY_ICONS[category] ?? '';
 
   return (
-    <section>
-      <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-2">
-        <span aria-hidden="true">{icon}</span>
-        {t(category)}
-        <span className="text-xs text-zinc-600 font-normal normal-case">({templates.length})</span>
+    <section className="space-y-4">
+      <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2 border-b border-white/5 pb-2">
+        <span aria-hidden="true" className="text-base">{icon}</span>
+        <span>{t(category)}</span>
+        <span className="text-[10px] text-zinc-500 font-normal normal-case">({templates.length} templates)</span>
       </h2>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {templates.map(tpl => (
           <SopCard
             key={tpl.id}
@@ -112,7 +112,7 @@ export function SopGrid({ templates, installedTemplateIds, locale, installAction
   }, [filtered]);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <SopFilters
         category={category}
         query={query}
@@ -122,11 +122,12 @@ export function SopGrid({ templates, installedTemplateIds, locale, installAction
 
       {/* Featured section — only when not filtering */}
       {category === 'all' && !query.trim() && featured.length > 0 && (
-        <section>
-          <h2 className="text-sm font-semibold text-violet-400 uppercase tracking-wide mb-3">
+        <section className="space-y-4">
+          <h2 className="text-xs font-bold text-violet-400 uppercase tracking-widest flex items-center gap-2 border-b border-violet-500/10 pb-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
             {t('featuredTitle')}
           </h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {featured.map(tpl => (
               <SopCard
                 key={tpl.id}
@@ -144,12 +145,12 @@ export function SopGrid({ templates, installedTemplateIds, locale, installAction
 
       {/* Main grid */}
       {filtered.length === 0 ? (
-        <div className="flex items-center justify-center py-16">
+        <div className="flex items-center justify-center py-20 bg-white/[0.01] border border-white/5 rounded-2xl">
           <p className="text-muted-foreground">{t('noResults')}</p>
         </div>
       ) : showGrouped ? (
         // Grouped by category view
-        <div className="space-y-8">
+        <div className="space-y-10">
           {ALL_CATEGORIES.map(cat => (
             <CategorySection
               key={cat}
@@ -164,7 +165,7 @@ export function SopGrid({ templates, installedTemplateIds, locale, installAction
         </div>
       ) : (
         // Flat filtered view
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map(tpl => (
             <SopCard
               key={tpl.id}
