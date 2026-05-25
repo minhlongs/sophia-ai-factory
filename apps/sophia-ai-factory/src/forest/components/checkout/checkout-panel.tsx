@@ -1,0 +1,308 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { Check, ShieldAlert, ShieldCheck, Loader2, X, Globe, Lock, ExternalLink } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { CryptoPaymentExplainer } from "./crypto-payment-explainer";
+
+interface CheckoutPanelProps {
+  isOpen: boolean;
+  onClose: () => void;
+  tier: string;
+  priceCents: number;
+  discountedPriceCents?: number;
+  period: "monthly" | "yearly" | "lifetime";
+  paymentMethod: "nowpayments" | "payos";
+  couponCode?: string;
+  checkoutUrl?: string;
+  orderId?: string;
+  locale: string;
+}
+
+export function CheckoutPanel({
+  isOpen,
+  onClose,
+  tier,
+  priceCents,
+  discountedPriceCents,
+  period,
+  paymentMethod,
+  couponCode,
+  checkoutUrl,
+  orderId,
+  locale,
+}: CheckoutPanelProps) {
+  const t = useTranslations("landing");
+  const isVi = locale.startsWith("vi");
+
+  const [checking, setChecking] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<"pending" | "completed" | "failed" | null>(null);
+
+  // Auto-close overlay when clicking Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  if (!isOpen) return null;
+
+  const finalPriceCents = discountedPriceCents !== undefined ? discountedPriceCents : priceCents;
+  const originalPriceFormatted = new Intl.NumberFormat(locale === "vi" ? "vi-VN" : "en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 0,
+  }).format(priceCents / 100);
+
+  const finalPriceFormatted = new Intl.NumberFormat(locale === "vi" ? "vi-VN" : "en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 0,
+  }).format(finalPriceCents / 100);
+
+  // Conversion rate (pinned display value)
+  const USD_TO_VND_DISPLAY = 25500;
+  const vndAmount = Math.round(((finalPriceCents / 100) * USD_TO_VND_DISPLAY) / 1000) * 1000;
+  const vndFormatted = new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+    minimumFractionDigits: 0,
+  }).format(vndAmount);
+
+  const handleVerifyStatus = async () => {
+    if (!orderId) return;
+    setChecking(true);
+    try {
+      const res = await fetch(`/api/checkout/status?orderId=${encodeURIComponent(orderId)}`);
+      if (res.ok) {
+        const data = (await res.json()) as { status: string };
+        if (data.status === "completed") {
+          setPaymentStatus("completed");
+          // Redirect to success page
+          setTimeout(() => {
+            window.location.href = `/${locale}/payment-success?tier=${tier}&order_id=${orderId}`;
+          }, 1500);
+        } else if (data.status === "failed" || data.status === "expired") {
+          setPaymentStatus("failed");
+        } else {
+          setPaymentStatus("pending");
+        }
+      }
+    } catch {
+      // Non-fatal network error
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  const planNames: Record<string, string> = {
+    BASIC: isVi ? "Gói Starter" : "Starter Plan",
+    PREMIUM: isVi ? "Gói Growth" : "Growth Plan",
+    ENTERPRISE: isVi ? "Gói Premium" : "Premium Plan",
+    MASTER: "Master Plan",
+  };
+
+  const qrCodeSrc = checkoutUrl
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(checkoutUrl)}&color=0-0-0&bgcolor=255-255-255`
+    : "";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-opacity">
+      <div 
+        className="relative w-full max-w-2xl overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-zinc-900 to-zinc-950 p-6 md:p-8 shadow-2xl shadow-violet-500/10 text-white animate-in fade-in zoom-in-95 duration-200"
+        role="dialog"
+        aria-modal="true"
+      >
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 rounded-lg p-1.5 text-zinc-400 hover:bg-white/5 hover:text-white transition-colors"
+          aria-label="Close dialog"
+        >
+          <X className="h-5 w-5" />
+        </button>
+
+        {/* Header */}
+        <div className="flex items-center gap-2 mb-6">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-600/15 border border-violet-500/30 text-violet-400 shadow-[0_0_15px_rgba(139,92,246,0.15)]">
+            <Lock className="h-5 w-5" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold tracking-tight">
+              {isVi ? "Thanh toán an toàn" : "Secure Checkout"}
+            </h2>
+            <p className="text-xs text-zinc-400">
+              {isVi ? "Giao dịch mã hóa SSL 256-bit bảo mật" : "SSL Encrypted Transaction"}
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-[1.1fr_0.9fr] gap-8">
+          {/* Order Details & Summary */}
+          <div className="space-y-6">
+            <div className="rounded-xl border border-white/5 bg-white/[0.02] p-4 space-y-4">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-violet-400">
+                {isVi ? "Tóm tắt đơn hàng" : "Order Summary"}
+              </h3>
+              <div className="flex justify-between">
+                <div>
+                  <p className="font-semibold text-zinc-200">{planNames[tier] || tier}</p>
+                  <p className="text-xs text-zinc-400 capitalize">
+                    {isVi ? `Chu kỳ: ${period === "lifetime" ? "Trọn đời" : period === "yearly" ? "Năm" : "Tháng"}` : `Billing: ${period}`}
+                  </p>
+                </div>
+                <div className="text-right">
+                  {discountedPriceCents !== undefined && (
+                    <p className="text-xs line-through text-zinc-500">{originalPriceFormatted}</p>
+                  )}
+                  <p className="font-bold text-lg text-emerald-400">{finalPriceFormatted}</p>
+                </div>
+              </div>
+
+              {couponCode && (
+                <div className="flex justify-between items-center text-xs bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-lg text-emerald-300">
+                  <span className="font-semibold">🎟️ Coupon: {couponCode}</span>
+                  <span>
+                    {isVi ? "Đã áp dụng giảm giá" : "Discount Applied"}
+                  </span>
+                </div>
+              )}
+
+              {paymentMethod === "payos" && (
+                <div className="border-t border-white/5 pt-3 flex justify-between items-center text-xs">
+                  <span className="text-zinc-400">{isVi ? "Số tiền quy đổi VND" : "VND conversion"}:</span>
+                  <span className="font-bold text-amber-400">{vndFormatted}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Trust and Policy */}
+            <div className="space-y-3">
+              <div className="flex items-start gap-2 text-xs text-zinc-400">
+                <Check className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+                <span>
+                  {isVi
+                    ? "Bảo vệ hoàn tiền 100% trong 14 ngày nếu không hài lòng."
+                    : "100% Risk-Free: 14-day money-back guarantee."}
+                </span>
+              </div>
+              <div className="flex items-start gap-2 text-xs text-zinc-400">
+                <Check className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+                <span>
+                  {isVi
+                    ? "Hỗ trợ 24/7 qua cổng chat Telegram @Sophia_Bbot."
+                    : "Premium 24/7 dedicated support via Telegram."}
+                </span>
+              </div>
+            </div>
+
+            {/* USDT Explainer integration */}
+            {paymentMethod === "nowpayments" && (
+              <div className="mt-4">
+                <CryptoPaymentExplainer />
+              </div>
+            )}
+
+            {/* Direct Pay Link */}
+            {checkoutUrl && (
+              <div className="pt-2">
+                <a
+                  href={checkoutUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-cyan-500 px-5 py-3 font-semibold text-white transition hover:from-violet-500 hover:to-cyan-400 shadow-lg shadow-violet-500/20 active:scale-[0.98]"
+                >
+                  {isVi ? "Mở trang thanh toán an toàn" : "Go to Payment Page"}
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              </div>
+            )}
+          </div>
+
+          {/* Payment & QR Scanner Area */}
+          <div className="flex flex-col items-center justify-center border-t md:border-t-0 md:border-l border-white/10 pt-6 md:pt-0 md:pl-8 text-center space-y-4">
+            {checkoutUrl ? (
+              <>
+                <div className="relative group">
+                  <div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-violet-600 to-cyan-500 opacity-20 blur group-hover:opacity-30 transition duration-300"></div>
+                  <div className="relative rounded-xl border border-white/10 bg-white p-3 shadow-xl">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img 
+                      src={qrCodeSrc} 
+                      alt="Payment QR Code" 
+                      className="h-[180px] w-[180px]"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold">
+                    {isVi ? "Quét mã QR để thanh toán" : "Scan QR to Pay"}
+                  </p>
+                  <p className="text-[11px] text-zinc-400 px-4">
+                    {paymentMethod === "nowpayments"
+                      ? isVi 
+                        ? "Hỗ trợ USDT (TRC20/ERC20) hoặc Bitcoin qua NOWPayments"
+                        : "Supports USDT (TRC20/ERC20) or Bitcoin via NOWPayments"
+                      : isVi
+                        ? "Hỗ trợ tất cả ngân hàng Việt Nam qua PayOS"
+                        : "Supports all Vietnamese banks via PayOS"
+                    }
+                  </p>
+                </div>
+
+                {/* Verification Action */}
+                <div className="w-full pt-2">
+                  <button
+                    onClick={handleVerifyStatus}
+                    disabled={checking}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 py-2.5 text-xs font-semibold hover:bg-white/10 transition disabled:opacity-50"
+                  >
+                    {checking ? (
+                      <Loader2 className="h-4 w-4 animate-spin text-violet-400" />
+                    ) : (
+                      paymentStatus === "completed" ? (
+                        <ShieldCheck className="h-4 w-4 text-emerald-400" />
+                      ) : paymentStatus === "failed" ? (
+                        <ShieldAlert className="h-4 w-4 text-rose-400" />
+                      ) : (
+                        <Globe className="h-4 w-4 text-cyan-400" />
+                      )
+                    )}
+                    {checking
+                      ? (isVi ? "Đang xác thực giao dịch..." : "Verifying transaction...")
+                      : paymentStatus === "completed"
+                      ? (isVi ? "Thanh toán thành công!" : "Payment Successful!")
+                      : paymentStatus === "failed"
+                      ? (isVi ? "Giao dịch lỗi/Hết hạn" : "Transaction failed/expired")
+                      : (isVi ? "Kiểm tra trạng thái thanh toán" : "Verify Payment Status")}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full space-y-2 py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-violet-500" />
+                <p className="text-xs text-zinc-400">
+                  {isVi ? "Đang khởi tạo cổng thanh toán..." : "Initializing gateway..."}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Footer badges */}
+        <div className="mt-8 border-t border-white/5 pt-4 flex items-center justify-between text-[10px] text-zinc-500">
+          <div className="flex items-center gap-1.5">
+            <Lock className="h-3 w-3" />
+            <span>SSL Secured Connection</span>
+          </div>
+          {orderId && (
+            <span>ID: {orderId}</span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
