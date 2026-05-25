@@ -10,7 +10,22 @@
 
 import { useMemo, useState, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
-import { KeyRound, Trash2, Check, Wifi, WifiOff, Loader2 } from 'lucide-react'
+import {
+  Globe,
+  Bot,
+  Volume2,
+  Video,
+  Layers,
+  Search,
+  Mail,
+  KeyRound,
+  Trash2,
+  Check,
+  Wifi,
+  WifiOff,
+  Loader2,
+  Edit2
+} from 'lucide-react'
 import { ByokHelpTip } from '@/components/onboarding/byok-help-tip'
 import { validateProviderKey } from '@/lib/byok/key-format-validators'
 
@@ -26,6 +41,16 @@ const PROVIDERS: { value: Provider; label: string; hint: string }[] = [
   { value: 'apollo',     label: 'Apollo.io',   hint: 'lead finder key' },
   { value: 'hunter',     label: 'Hunter.io',   hint: 'email finder key' },
 ]
+
+const PROVIDER_ICONS: Record<Provider, React.ComponentType<{ className?: string }>> = {
+  openrouter: Globe,
+  anthropic: Bot,
+  elevenlabs: Volume2,
+  'd-id': Video,
+  muapi: Layers,
+  apollo: Search,
+  hunter: Mail,
+}
 
 /**
  * Strip the `byok.` namespace prefix because `useTranslations('byok')` is
@@ -47,22 +72,77 @@ interface TestResult {
   error?: string
 }
 
+function StatusBadge({ status }: { status: 'not_configured' | 'connected' | 'error' | 'testing' }) {
+  if (status === 'testing') {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full border bg-blue-500/10 text-blue-400 border-blue-500/20 animate-pulse">
+        <span className="w-1 h-1 rounded-full bg-blue-400 animate-ping" />
+        Testing
+      </span>
+    )
+  }
+  if (status === 'connected') {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+        <Check className="h-3 w-3 text-emerald-400" />
+        Active
+      </span>
+    )
+  }
+  if (status === 'error') {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full border bg-rose-500/10 text-rose-400 border-rose-500/20">
+        <WifiOff className="h-3 w-3 text-rose-400" />
+        Failed
+      </span>
+    )
+  }
+  return (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full border bg-zinc-500/10 text-zinc-400 border-zinc-500/20">
+      Inactive
+    </span>
+  )
+}
+
 export function ByokKeyForm({ configured: initialConfigured }: ByokKeyFormProps) {
   const t = useTranslations('byok')
   const [configured, setConfigured] = useState<Provider[]>(initialConfigured)
-  const [provider,   setProvider]   = useState<Provider>('openrouter')
-  const [keyValue,   setKeyValue]   = useState('')
   const [status,     setStatus]     = useState<string | null>(null)
   const [isPending,  startTransition] = useTransition()
   const [testResults, setTestResults] = useState<Record<Provider, TestResult | null>>({} as Record<Provider, TestResult | null>)
   const [testingProvider, setTestingProvider] = useState<Provider | null>(null)
 
-  // Format validation runs on every keystroke so submit is disabled until valid.
-  // D-ID raw `email:password` paste is auto-encoded; we surface that via `validation.autoEncoded`.
-  const validation = useMemo(() => validateProviderKey(provider, keyValue), [provider, keyValue])
+  // Track inputs per provider card
+  const [keyInputs, setKeyInputs] = useState<Record<Provider, string>>({} as Record<Provider, string>)
+  // Track editing state per provider card
+  const [editingProviders, setEditingProviders] = useState<Record<Provider, boolean>>({} as Record<Provider, boolean>)
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  // Handle inputs and validations
+  const handleInputChange = (p: Provider, value: string) => {
+    setKeyInputs((prev) => ({ ...prev, [p]: value }))
+  }
+
+  const validations = useMemo(() => {
+    const results = {} as Record<Provider, ReturnType<typeof validateProviderKey>>
+    PROVIDERS.forEach(({ value: p }) => {
+      results[p] = validateProviderKey(p, keyInputs[p] || '')
+    });
+    return results
+  }, [keyInputs])
+
+  const toggleEditing = (p: Provider, isEditing: boolean) => {
+    setEditingProviders((prev) => ({ ...prev, [p]: isEditing }))
+    if (!isEditing) {
+      // Clear input on cancel
+      setKeyInputs((prev) => ({ ...prev, [p]: '' }))
+    }
+  }
+
+  function handleSingleSubmit(e: React.FormEvent, p: Provider) {
     e.preventDefault()
+    const validation = validations[p]
+    const keyValue = keyInputs[p] || ''
+
     if (!validation.ok) {
       setStatus(validation.errorKey ? t(stripNamespace(validation.errorKey)) : t('error_format'))
       return
@@ -77,16 +157,19 @@ export function ByokKeyForm({ configured: initialConfigured }: ByokKeyFormProps)
         const res = await fetch('/api/user/byok', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ provider, key: submitKey }),
+          body: JSON.stringify({ provider: p, key: submitKey }),
         })
         if (!res.ok) {
           const err = (await res.json().catch(() => ({ error: 'Unknown error' }))) as { error?: string }
           setStatus(err.error ?? t('error_format'))
           return
         }
-        setConfigured((prev) => (prev.includes(provider) ? prev : [...prev, provider]))
-        setKeyValue('')
-        setStatus(t('saved', { provider }))
+        setConfigured((prev) => (prev.includes(p) ? prev : [...prev, p]))
+        setKeyInputs((prev) => ({ ...prev, [p]: '' }))
+        setEditingProviders((prev) => ({ ...prev, [p]: false }))
+        setStatus(t('saved', { provider: p }))
+        // Auto-run connection test
+        handleTest(p)
       } catch {
         setStatus(t('network_error'))
       }
@@ -140,6 +223,8 @@ export function ByokKeyForm({ configured: initialConfigured }: ByokKeyFormProps)
           return
         }
         setConfigured((prev) => prev.filter((x) => x !== p))
+        // Clear test results too
+        setTestResults((prev) => ({ ...prev, [p]: null }))
         setStatus(t('cleared', { provider: p }))
       } catch {
         setStatus(t('network_error'))
@@ -147,151 +232,157 @@ export function ByokKeyForm({ configured: initialConfigured }: ByokKeyFormProps)
     })
   }
 
-  const currentHint = PROVIDERS.find((p) => p.value === provider)?.hint ?? ''
-
   return (
     <div className="space-y-6">
       {/* Status banner */}
       {status && (
-        <div className="rounded-lg bg-muted px-4 py-2 text-sm text-foreground">
-          {status}
+        <div className="rounded-lg bg-white/[0.04] border border-white/10 px-4 py-2.5 text-sm text-foreground flex items-center justify-between">
+          <span>{status}</span>
+          <button onClick={() => setStatus(null)} className="text-xs text-muted-foreground hover:text-foreground">Dismiss</button>
         </div>
       )}
 
-      {/* Configured list */}
-      <div className="rounded-lg border border-border bg-card p-4">
-        <h2 className="text-sm font-semibold text-foreground mb-3">
-          {t('configured_providers', { count: configured.length })}
-        </h2>
-        {configured.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            {t('no_keys')}
-          </p>
-        ) : (
-          <ul className="space-y-2">
-            {configured.map((p) => (
-              <li
-                key={p}
-                className="flex items-center justify-between rounded-md bg-muted px-3 py-2"
-              >
-                <span className="flex items-center gap-2 text-sm text-foreground">
-                  <Check className="h-4 w-4 text-green-500" aria-hidden="true" />
-                  {PROVIDERS.find((x) => x.value === p)?.label ?? p}
-                  {testResults[p] && (
-                    <span
-                      className={`text-xs font-medium ${testResults[p]!.ok ? 'text-green-400' : 'text-red-400'}`}
-                      title={testResults[p]!.error ?? `${testResults[p]!.latencyMs}ms`}
-                    >
-                      {testResults[p]!.ok
-                        ? `✓ ${testResults[p]!.latencyMs}ms`
-                        : `✗ ${testResults[p]!.error?.slice(0, 30) ?? 'failed'}`}
-                    </span>
-                  )}
-                </span>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleTest(p)}
-                    disabled={isPending || testingProvider === p}
-                    className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 disabled:opacity-50"
-                    aria-label={`Test ${p} connection`}
-                  >
-                    {testingProvider === p ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
-                    ) : testResults[p]?.ok ? (
-                      <Wifi className="h-3.5 w-3.5" aria-hidden="true" />
-                    ) : testResults[p] && !testResults[p]!.ok ? (
-                      <WifiOff className="h-3.5 w-3.5" aria-hidden="true" />
-                    ) : (
-                      <Wifi className="h-3.5 w-3.5" aria-hidden="true" />
-                    )}
-                    {t('test_button')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleClear(p)}
-                    disabled={isPending}
-                    className="flex items-center gap-1 text-xs text-red-500 hover:text-red-600 disabled:opacity-50"
-                    aria-label={`Clear ${p} key`}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-                    {t('clear_button')}
-                  </button>
+      {/* Grid Cards of Providers */}
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {PROVIDERS.map((pInfo) => {
+          const p = pInfo.value
+          const Icon = PROVIDER_ICONS[p] || KeyRound
+          const isConfigured = configured.includes(p)
+          const isEditing = editingProviders[p] || !isConfigured
+
+          let badgeStatus: 'not_configured' | 'connected' | 'error' | 'testing' = 'not_configured'
+          if (testingProvider === p) {
+            badgeStatus = 'testing'
+          } else if (isConfigured) {
+            if (testResults[p] && !testResults[p]!.ok) {
+              badgeStatus = 'error'
+            } else {
+              badgeStatus = 'connected'
+            }
+          }
+
+          return (
+            <div
+              key={p}
+              className="bg-white/[0.02] border border-white/10 backdrop-blur-md rounded-xl p-5 flex flex-col justify-between gap-5 transition-all duration-300 hover:border-white/20 hover:shadow-[0_0_15px_rgba(255,255,255,0.02)] min-h-[230px]"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-3">
+                  <div className="bg-white/[0.04] border border-white/5 p-2 rounded-lg text-violet-400">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-foreground text-sm">{pInfo.label}</h3>
+                    <p className="text-[11px] text-muted-foreground">API Connector</p>
+                  </div>
                 </div>
-              </li>
-            ))}
-          </ul>
-        )}
+                <StatusBadge status={badgeStatus} />
+              </div>
+
+              {isEditing ? (
+                <form onSubmit={(e) => handleSingleSubmit(e, p)} className="space-y-3">
+                  <div className="space-y-1">
+                    <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                      API Key
+                    </label>
+                    <input
+                      type="password"
+                      autoComplete="off"
+                      value={keyInputs[p] || ''}
+                      onChange={(e) => handleInputChange(p, e.target.value)}
+                      placeholder={pInfo.hint}
+                      disabled={isPending}
+                      className="w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-1.5 text-xs text-foreground font-mono placeholder:text-zinc-600 focus:outline-none focus:border-violet-500/50"
+                    />
+                    {keyInputs[p]?.trim() && !validations[p]?.ok && validations[p]?.errorKey && (
+                      <p className="text-[10px] text-rose-400 mt-1" role="alert">
+                        {t(stripNamespace(validations[p]!.errorKey!))}
+                      </p>
+                    )}
+                    {validations[p]?.ok && validations[p]?.autoEncoded && (
+                      <p className="text-[10px] text-amber-400 mt-1">
+                        {t('validate.did.auto_encoded')}
+                      </p>
+                    )}
+                    {(p === 'openrouter' || p === 'elevenlabs' || p === 'd-id') && (
+                      <div className="pt-1">
+                        <ByokHelpTip provider={p} />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="submit"
+                      disabled={isPending || !validations[p]?.ok}
+                      className="flex-1 bg-violet-600 hover:bg-violet-500 text-xs font-semibold text-foreground h-8 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    >
+                      {isPending ? 'Saving...' : 'Save Key'}
+                    </button>
+                    {isConfigured && (
+                      <button
+                        type="button"
+                        onClick={() => toggleEditing(p, false)}
+                        className="border border-white/10 bg-white/[0.01] hover:bg-white/[0.05] text-xs font-semibold text-muted-foreground hover:text-foreground h-8 px-3 rounded-lg transition-all"
+                      >
+                        Cancel
+                      </button>
+                    )}
+                  </div>
+                </form>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between bg-zinc-950/40 border border-white/5 rounded-lg px-3 py-2">
+                    <span className="text-sm font-mono text-zinc-500 select-none">••••••••••••</span>
+                    {testResults[p] && (
+                      <span
+                        className={`text-xs font-semibold ${testResults[p]!.ok ? 'text-emerald-400' : 'text-rose-400'}`}
+                        title={testResults[p]!.error}
+                      >
+                        {testResults[p]!.ok
+                          ? `✓ ${testResults[p]!.latencyMs}ms`
+                          : `✗ Error`}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleTest(p)}
+                      disabled={isPending || testingProvider === p}
+                      className="flex-1 border border-white/10 bg-white/[0.01] hover:bg-white/[0.05] text-xs font-semibold text-blue-400 hover:text-blue-300 h-8 rounded-lg flex items-center justify-center gap-1.5 transition-all"
+                    >
+                      {testingProvider === p ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Wifi className="h-3.5 w-3.5" />
+                      )}
+                      {t('test_button')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => toggleEditing(p, true)}
+                      disabled={isPending}
+                      className="flex-1 border border-white/10 bg-white/[0.01] hover:bg-white/[0.05] text-xs font-semibold text-amber-400 hover:text-amber-300 h-8 rounded-lg flex items-center justify-center gap-1.5 transition-all"
+                    >
+                      <Edit2 className="h-3.5 w-3.5" />
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleClear(p)}
+                      disabled={isPending}
+                      className="border border-white/10 bg-white/[0.01] hover:bg-rose-500/5 text-xs font-semibold text-rose-500 hover:text-rose-400 h-8 px-2.5 rounded-lg flex items-center justify-center transition-all"
+                      aria-label="Delete key"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )
+        })}
       </div>
-
-      {/* Add / rotate form */}
-      <form onSubmit={handleSubmit} className="rounded-lg border border-border bg-card p-4 space-y-4">
-        <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-          <KeyRound className="h-4 w-4" aria-hidden="true" />
-          {t('add_or_rotate')}
-        </h2>
-
-        <div className="space-y-2">
-          <label htmlFor="byok-provider" className="block text-xs font-medium text-muted-foreground">
-            {t('provider_label')}
-          </label>
-          <select
-            id="byok-provider"
-            value={provider}
-            onChange={(e) => setProvider(e.target.value as Provider)}
-            disabled={isPending}
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground disabled:opacity-50"
-          >
-            {PROVIDERS.map((p) => (
-              <option key={p.value} value={p.value}>
-                {p.label}{configured.includes(p.value) ? ` (${t('rotate')})` : ''}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="space-y-2">
-          <label htmlFor="byok-key" className="block text-xs font-medium text-muted-foreground">
-            {t('key_label')}
-          </label>
-          <input
-            id="byok-key"
-            type="password"
-            autoComplete="off"
-            value={keyValue}
-            onChange={(e) => setKeyValue(e.target.value)}
-            placeholder={currentHint}
-            disabled={isPending}
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground font-mono disabled:opacity-50"
-            aria-describedby="byok-key-hint"
-          />
-          <p id="byok-key-hint" className="text-xs text-muted-foreground">
-            {t('key_hint')}
-          </p>
-          {/* Inline format feedback — error or auto-encoded notice */}
-          {keyValue.trim().length > 0 && !validation.ok && validation.errorKey && (
-            <p className="text-xs text-red-400" role="alert" aria-live="polite">
-              {t(stripNamespace(validation.errorKey))}
-            </p>
-          )}
-          {validation.ok && validation.autoEncoded && (
-            <p className="text-xs text-amber-400" aria-live="polite">
-              {t('validate.did.auto_encoded')}
-            </p>
-          )}
-          {(provider === 'openrouter' || provider === 'elevenlabs' || provider === 'd-id') && (
-            <ByokHelpTip provider={provider} />
-          )}
-        </div>
-
-        <button
-          type="submit"
-          disabled={isPending || !validation.ok}
-          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isPending ? t('saving') : t('save_button')}
-        </button>
-      </form>
     </div>
   )
 }

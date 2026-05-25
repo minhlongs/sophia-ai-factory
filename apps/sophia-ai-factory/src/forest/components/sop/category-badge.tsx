@@ -22,14 +22,14 @@ export const CATEGORY_ICONS: Record<Category, string> = {
 };
 
 const CATEGORY_COLORS: Record<Category, string> = {
-  content:   'bg-violet-900/40 text-violet-300 border-violet-700/50',
-  leads:     'bg-cyan-900/40 text-cyan-300 border-cyan-700/50',
-  email:     'bg-blue-900/40 text-blue-300 border-blue-700/50',
-  analytics: 'bg-emerald-900/40 text-emerald-300 border-emerald-700/50',
-  proposals: 'bg-amber-900/40 text-amber-300 border-amber-700/50',
-  crisis:    'bg-red-900/40 text-red-300 border-red-700/50',
-  sales:     'bg-green-900/40 text-green-300 border-green-700/50',
-  social:    'bg-pink-900/40 text-pink-300 border-pink-700/50',
+  content:   'bg-violet-500/10 text-violet-400 border-violet-500',
+  leads:     'bg-emerald-500/10 text-emerald-400 border-emerald-500',
+  email:     'bg-blue-500/10 text-blue-400 border-blue-500',
+  analytics: 'bg-cyan-500/10 text-cyan-400 border-cyan-500',
+  proposals: 'bg-amber-500/10 text-amber-400 border-amber-500',
+  crisis:    'bg-rose-500/10 text-rose-400 border-rose-500',
+  sales:     'bg-emerald-500/10 text-emerald-400 border-emerald-500',
+  social:    'bg-violet-500/10 text-violet-400 border-violet-500',
 };
 
 interface CategoryBadgeProps {
