@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { checkMissionQuota, MISSION_QUOTA_BY_TIER } from '../mission-quota';
+import { checkMissionQuota } from '../mission-quota';
 import { getD1Raw } from '@/seed/db/client';
 import { resolveOrgId, resolveOrgOwnerUserId } from '@/seed/auth/resolve-org-id';
 
@@ -27,9 +27,6 @@ vi.mock('@/seed/utils/logger-utility', () => ({
 function mockD1Database(missionsCount: number, engineMissionsCount: number) {
   const firstMissions = vi.fn().mockResolvedValue({ c: missionsCount });
   const firstEngine = vi.fn().mockResolvedValue({ c: engineMissionsCount });
-
-  const bindMissions = vi.fn().mockReturnValue({ first: firstMissions });
-  const bindEngine = vi.fn().mockReturnValue({ first: firstEngine });
 
   const prepare = vi.fn().mockImplementation((sql: string) => {
     if (sql.includes('FROM missions')) {
@@ -134,7 +131,7 @@ describe('checkMissionQuota', () => {
   });
 
   it('fails open if D1 client is unavailable (null)', async () => {
-    vi.mocked(getD1Raw).mockResolvedValue(null);
+    vi.mocked(getD1Raw).mockResolvedValue(null as unknown as D1Database);
 
     const result = await checkMissionQuota('org-123', 'BASIC', 'missions');
 
