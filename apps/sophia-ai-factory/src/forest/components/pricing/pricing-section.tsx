@@ -7,6 +7,8 @@ import { PricingCard, formatPrice, formatVnd, centsToVnd } from "./pricing-card"
 import { UNIFIED_TIERS } from "@/seed/config/tiers";
 import { usePricingData } from "./pricing-data";
 import { CouponInput, type PromoDiscount } from "./coupon-input";
+import { CheckoutPanel } from "../checkout/checkout-panel";
+import { Check } from "lucide-react";
 
 type PaymentMethod = "nowpayments" | "payos";
 type BillingPeriod = "monthly" | "annual";
@@ -23,6 +25,17 @@ export function PricingSection() {
   const [appliedDiscount, setAppliedDiscount] = useState<PromoDiscount | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("nowpayments");
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly");
+  const [checkoutData, setCheckoutData] = useState<{
+    tier: string;
+    url?: string;
+    orderId?: string;
+    period: "monthly" | "yearly" | "lifetime";
+    paymentMethod: "nowpayments" | "payos";
+    priceCents: number;
+    discountedPriceCents?: number;
+    couponCode?: string;
+  } | null>(null);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const t = useTranslations("landing");
   const locale = useLocale();
   const { PRICING_TIERS, MASTER_TIER } = usePricingData();
@@ -58,6 +71,34 @@ export function PricingSection() {
         body.promoCode = appliedDiscount.code;
       }
 
+      const isAnnual = billingPeriod === "annual";
+      const tierConfig = UNIFIED_TIERS[tier as keyof typeof UNIFIED_TIERS];
+      const annualPriceCents = isAnnual && tierConfig && tierConfig.yearlyPrice > 0
+        ? tierConfig.yearlyPrice * 100
+        : undefined;
+
+      const pricing = PRICING_TIERS.find((p) => p.tier === tier);
+      const monthlyPrice = pricing ? pricing.monthlyPrice : 0;
+      
+      const baseCents = tier === "MASTER"
+        ? MASTER_TIER.price
+        : isAnnual && annualPriceCents 
+        ? annualPriceCents 
+        : monthlyPrice;
+
+      const discountedCents = getDiscountedCents(baseCents);
+
+      // Open checkout drawer with initial values to make UI feel instant
+      setCheckoutData({
+        tier,
+        period: period as "monthly" | "yearly" | "lifetime",
+        paymentMethod,
+        priceCents: baseCents,
+        discountedPriceCents: discountedCents,
+        couponCode: appliedDiscount?.code,
+      });
+      setIsCheckoutOpen(true);
+
       const response = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -67,16 +108,24 @@ export function PricingSection() {
       const data = (await response.json()) as CheckoutResponse;
 
       if (response.status === 401 && data.redirectTo) {
+        setIsCheckoutOpen(false);
         window.location.href = data.redirectTo;
         return;
       }
 
       if (data.url) {
-        window.location.href = data.url;
+        // Update checkout modal with generated url/orderId
+        setCheckoutData((prev) => prev ? {
+          ...prev,
+          url: data.url,
+          orderId: data.orderId,
+        } : null);
       } else {
+        setIsCheckoutOpen(false);
         alert(data.error || t("pricing.error_checkout"));
       }
     } catch {
+      setIsCheckoutOpen(false);
       alert(t("pricing.error_network"));
     } finally {
       setLoading(null);
@@ -105,13 +154,13 @@ export function PricingSection() {
 
         {/* ── Billing period toggle (Monthly / Annual) ──────────────────────────── */}
         <div className="mt-6 flex justify-center">
-          <div className="inline-flex items-center rounded-xl border border-border bg-card p-1 gap-1">
+          <div className="inline-flex items-center rounded-xl border border-violet-500/20 bg-card p-1 gap-1 shadow-[0_0_15px_rgba(139,92,246,0.12)]">
             <button
               type="button"
               onClick={() => setBillingPeriod("monthly")}
               className={`rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 ${
                 billingPeriod === "monthly"
-                  ? "bg-primary text-primary-foreground shadow"
+                  ? "bg-gradient-to-r from-violet-600 to-violet-500 text-white shadow shadow-violet-500/30"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -122,7 +171,7 @@ export function PricingSection() {
               onClick={() => setBillingPeriod("annual")}
               className={`relative rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 ${
                 billingPeriod === "annual"
-                  ? "bg-emerald-500 text-white shadow"
+                  ? "bg-gradient-to-r from-emerald-600 to-emerald-500 text-white shadow shadow-emerald-500/30"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -136,13 +185,13 @@ export function PricingSection() {
 
         {/* ── Payment method selector ──────────────────────────────────────────── */}
         <div className="mt-6 flex justify-center">
-          <div className="inline-flex rounded-xl border border-border bg-card p-1 gap-1">
+          <div className="inline-flex rounded-xl border border-violet-500/20 bg-card p-1 gap-1 shadow-[0_0_15px_rgba(139,92,246,0.12)]">
             <button
               type="button"
               onClick={() => setPaymentMethod("nowpayments")}
               className={`rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 ${
                 paymentMethod === "nowpayments"
-                  ? "bg-primary text-primary-foreground shadow"
+                  ? "bg-gradient-to-r from-violet-600 to-violet-500 text-white shadow shadow-violet-500/30"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -153,7 +202,7 @@ export function PricingSection() {
               onClick={() => setPaymentMethod("payos")}
               className={`rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 ${
                 paymentMethod === "payos"
-                  ? "bg-amber-500 text-black shadow"
+                  ? "bg-gradient-to-r from-amber-600 to-amber-500 text-white shadow shadow-amber-500/30"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -161,11 +210,30 @@ export function PricingSection() {
             </button>
           </div>
         </div>
-        {paymentMethod === "payos" && (
+        {paymentMethod === "payos" ? (
           <p className="mt-2 text-center text-xs text-amber-400/70">
             Thanh toán qua ngân hàng nội địa Việt Nam — QR code + chuyển khoản
           </p>
+        ) : (
+          <p className="mt-2 text-center text-xs text-violet-400/70">
+            Secure, global checkout using NOWPayments USDT & Crypto Gateway
+          </p>
         )}
+
+        {/* ── 100% Risk-Free Refund Policy Banner ── */}
+        <div className="mt-8 mx-auto max-w-xl rounded-2xl border border-violet-500/20 bg-gradient-to-r from-violet-950/20 via-violet-900/10 to-cyan-950/20 p-4 text-center shadow-lg backdrop-blur-sm">
+          <p className="flex items-center justify-center gap-2 text-xs md:text-sm text-zinc-300">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400">
+              <Check className="h-3 w-3" />
+            </span>
+            <span className="font-semibold text-zinc-100">
+              {locale.startsWith("vi") ? "100% Không Rủi Ro:" : "100% Risk-Free:"}
+            </span>
+            {locale.startsWith("vi") 
+              ? "Cam kết hoàn tiền trong 14 ngày nếu không hài lòng" 
+              : "14-day money-back guarantee policy applies"}
+          </p>
+        </div>
 
         <div className="mt-4 grid gap-8 md:grid-cols-3">
           {PRICING_TIERS.map((pricing) => {
@@ -279,6 +347,22 @@ export function PricingSection() {
           </div>
         </FadeInView>
       </div>
+
+      {checkoutData && (
+        <CheckoutPanel
+          isOpen={isCheckoutOpen}
+          onClose={() => setIsCheckoutOpen(false)}
+          tier={checkoutData.tier}
+          priceCents={checkoutData.priceCents}
+          discountedPriceCents={checkoutData.discountedPriceCents}
+          period={checkoutData.period}
+          paymentMethod={checkoutData.paymentMethod}
+          couponCode={checkoutData.couponCode}
+          checkoutUrl={checkoutData.url}
+          orderId={checkoutData.orderId}
+          locale={locale}
+        />
+      )}
     </section>
   );
 }

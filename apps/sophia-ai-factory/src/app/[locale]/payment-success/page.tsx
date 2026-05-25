@@ -20,6 +20,7 @@ interface PaymentSuccessPageProps {
     via?: string;
     code?: string;
     trial_days?: string;
+    period?: string;
   }>;
 }
 
@@ -44,6 +45,7 @@ export default async function PaymentSuccessPage({
   const viaPromo = sp.via === "promo";
   const promoCode = sp.code ?? "";
   const trialDays = sp.trial_days ? parseInt(sp.trial_days) : 0;
+  const period = sp.period ?? (tier === "MASTER" ? "lifetime" : "monthly");
 
   // Status-aware rendering: poll pending_orders if order_id present
   let orderStatus: 'pending' | 'completed' | 'failed' | null = null;
@@ -93,8 +95,58 @@ export default async function PaymentSuccessPage({
         {(orderStatus === 'completed' || !orderStatus) && (
           <div className="rounded-2xl border border-emerald-500/20 bg-white/[0.03] backdrop-blur-sm p-8 text-center shadow-2xl">
             <div className="mb-4 flex items-center justify-center">
+              <style dangerouslySetInnerHTML={{__html: `
+                @keyframes stroke {
+                  100% {
+                    stroke-dashoffset: 0;
+                  }
+                }
+                @keyframes scale {
+                  0%, 100% {
+                    transform: none;
+                  }
+                  50% {
+                    transform: scale3d(1.1, 1.1, 1);
+                  }
+                }
+                @keyframes fill {
+                  100% {
+                    box-shadow: inset 0 0 0 30px rgba(16, 185, 129, 0.15);
+                  }
+                }
+                .checkmark__circle {
+                  stroke-dasharray: 166;
+                  stroke-dashoffset: 166;
+                  stroke-width: 2;
+                  stroke-miterlimit: 10;
+                  stroke: #34d399;
+                  fill: none;
+                  animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+                }
+                .checkmark {
+                  width: 56px;
+                  height: 56px;
+                  border-radius: 50%;
+                  display: block;
+                  stroke-width: 2;
+                  stroke: #34d399;
+                  stroke-miterlimit: 10;
+                  margin: 10% auto;
+                  box-shadow: inset 0 0 0 #34d399;
+                  animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+                }
+                .checkmark__check {
+                  transform-origin: 50% 50%;
+                  stroke-dasharray: 48;
+                  stroke-dashoffset: 48;
+                  animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+                }
+              `}} />
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/15 border border-emerald-500/30">
-                <CheckCircle className="h-8 w-8 text-emerald-400" />
+                <svg className="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                  <circle className="checkmark__circle" cx="26" cy="26" r="25" fill="none" />
+                  <path className="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" stroke="#34d399" strokeWidth="4" strokeLinecap="round" />
+                </svg>
               </div>
             </div>
 
@@ -140,10 +192,51 @@ export default async function PaymentSuccessPage({
           </div>
         )}
 
+        {/* Receipt Details — only when confirmed */}
+        {(orderStatus === 'completed' || !orderStatus) && orderId && (
+          <div className="rounded-2xl border border-white/10 bg-white/[0.02] backdrop-blur-sm p-6 space-y-4">
+            <h2 className="text-sm font-semibold text-zinc-300 uppercase tracking-wider border-b border-white/5 pb-2 text-left">
+              {isVi ? "Chi tiết hóa đơn" : "Receipt Details"}
+            </h2>
+            <div className="space-y-2 text-xs md:text-sm text-left">
+              <div className="flex justify-between">
+                <span className="text-zinc-400">{isVi ? "Mã đơn hàng" : "Order ID"}:</span>
+                <span className="font-mono text-zinc-200">{orderId}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-zinc-400">{isVi ? "Sản phẩm" : "Plan"}:</span>
+                <span className="font-medium text-emerald-400">{trialDays > 0 ? (isVi ? `Dùng thử ${trialDays} ngày` : `${trialDays}-day free trial`) : tierName}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-zinc-400">{isVi ? "Chu kỳ thanh toán" : "Billing Cycle"}:</span>
+                <span className="text-zinc-200 capitalize">
+                  {isVi 
+                    ? (period === "lifetime" ? "Trọn đời" : period === "yearly" ? "Năm" : "Tháng") 
+                    : period
+                  }
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-zinc-400">{isVi ? "Trạng thái giao dịch" : "Transaction Status"}:</span>
+                <span className="inline-flex items-center gap-1 font-semibold text-emerald-400">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                  {isVi ? "Thành công" : "Completed"}
+                </span>
+              </div>
+              {sp.via && (
+                <div className="flex justify-between">
+                  <span className="text-zinc-400">{isVi ? "Phương thức" : "Method"}:</span>
+                  <span className="text-violet-300 font-medium">{sp.via === "promo" ? (isVi ? "Mã ưu đãi" : "Promo Code") : sp.via}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Next steps — only when confirmed */}
         {(orderStatus === 'completed' || !orderStatus) && (
           <div className="rounded-2xl border border-zinc-800 bg-white/[0.02] backdrop-blur-sm p-6">
-            <h2 className="mb-4 text-sm font-semibold text-zinc-300 uppercase tracking-wider">
+            <h2 className="mb-4 text-sm font-semibold text-zinc-300 uppercase tracking-wider text-left">
               {isVi ? "Bước tiếp theo" : "What happens next"}
             </h2>
             <ol className="space-y-4">
@@ -152,7 +245,7 @@ export default async function PaymentSuccessPage({
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-500/15 border border-violet-500/20 mt-0.5">
                     <step.icon className="h-4 w-4 text-violet-400" />
                   </div>
-                  <div>
+                  <div className="text-left">
                     <p className="text-sm font-medium text-zinc-200">
                       <span className="text-violet-400 mr-1.5">{i + 1}.</span>
                       {step.label}

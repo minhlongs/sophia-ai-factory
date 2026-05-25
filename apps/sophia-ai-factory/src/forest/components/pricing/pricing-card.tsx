@@ -100,14 +100,14 @@ export function PricingCard({
   return (
     <FadeInView
       duration={500}
-      className={`card-hover relative flex flex-col rounded-2xl border p-8 transition-all duration-300 ${
+      className={`card-hover relative flex flex-col rounded-2xl border p-8 transition-all duration-300 backdrop-blur-md shadow-2xl ${
         popular
-          ? "border-primary bg-primary/5 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30"
-          : "border-border bg-card hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10"
+          ? "border-violet-500/50 bg-gradient-to-b from-violet-600/[0.08] to-violet-950/[0.04] shadow-violet-500/10 hover:shadow-violet-500/25 hover:border-violet-400 hover:scale-[1.02]"
+          : "border-white/10 bg-gradient-to-b from-white/[0.03] to-white/[0.01] hover:border-violet-500/30 hover:shadow-violet-500/5 hover:scale-[1.01]"
       }`}
     >
       {popular && (
-        <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-4 py-1 text-sm font-semibold text-primary-foreground">
+        <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-violet-600 to-cyan-500 shadow-md shadow-violet-500/30 px-4 py-1 text-sm font-semibold text-white">
           {t("pricing.popular")}
         </span>
       )}
@@ -215,14 +215,40 @@ export function PricingCard({
         onClick={() => onSelect(tier)}
         disabled={loading}
         aria-label={`${loading ? "Processing" : "Subscribe to"} ${name} plan`}
-        className={`mt-8 w-full rounded-lg py-3 font-semibold transition-all duration-300 ${
+        className={`mt-8 w-full rounded-lg py-3 font-semibold transition-all duration-300 active:scale-[0.98] ${
           popular
-            ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-[1.02]"
-            : "bg-primary/20 text-primary border border-primary/40 hover:bg-primary/30 hover:scale-[1.02]"
+            ? "bg-gradient-to-r from-violet-600 to-cyan-500 hover:from-violet-500 hover:to-cyan-400 text-white shadow-lg shadow-violet-500/25 hover:scale-[1.02]"
+            : "bg-white/[0.06] hover:bg-white/[0.1] text-white border border-white/15 hover:border-white/25 hover:scale-[1.02]"
         } disabled:cursor-not-allowed disabled:opacity-50`}
       >
         {loading ? t("pricing.processing") : t("pricing.subscribe_now")}
       </button>
+
+      {/* ── Secure Payment & Trust Seals ── */}
+      <div className="mt-4 flex flex-col items-center gap-2 border-t border-white/5 pt-4">
+        <p className="text-[9px] text-zinc-500 uppercase tracking-widest font-semibold">
+          Secure Crypto & Card Checkout
+        </p>
+        <div className="flex items-center gap-2.5 opacity-60 hover:opacity-90 transition-opacity">
+          <span className="text-[9px] bg-white/5 border border-white/10 px-1.5 py-0.5 rounded text-violet-300 font-bold">
+            NOWPayments
+          </span>
+          <svg className="h-3.5 w-auto text-zinc-300" viewBox="0 0 24 15" fill="currentColor">
+            <path d="M10.1 9.3l.9-5.4h1.5l-.9 5.4H10.1zm4.7-5.4c-.3-.1-.8-.2-1.3-.2-1.3 0-2.3.7-2.3 1.7 0 .7.6 1.1 1.1 1.4.5.3.7.4.7.7 0 .4-.5.6-1 .6-.6 0-1.1-.2-1.4-.4l-.2-.1-.2 1.2c.3.1.9.3 1.5.3 1.4 0 2.3-.7 2.3-1.8 0-.6-.4-1.1-1.2-1.4-.5-.2-.8-.4-.8-.7 0-.3.4-.6.9-.6.5 0 .9.1 1.2.3l.1.1.3-1.2zm3.3.7l.8 2.2.1.3.1-.3.5-2.2h1.5l-1.3 5.4h-1.4l-.8-3.4-.1-.4-.1.4-.9 3.4H15l-1.4-5.4h1.5l.8 2.2.1.3.1-.3.5-2.2h1.5zm-11.4 0H5.2c-.3 0-.6.2-.7.5l-2 4.9h1.5l.3-.8h1.8c.1.4.2.8.2.8h1.3L6.7 4.6zm-1.3 3.1l.6-1.7.1-.3.1.3.3 1.7H5.4z"/>
+          </svg>
+          <svg className="h-3.5 w-auto text-zinc-300" viewBox="0 0 24 15" fill="currentColor">
+            <path d="M12.2 2.1c-.8.8-1.2 1.9-1.2 3.1 0 1.2.4 2.3 1.2 3.1.8-.8 1.2-1.9 1.2-3.1 0-1.2-.4-2.3-1.2-3.1z"/>
+            <circle cx="8.3" cy="5.2" r="3.2" opacity="0.6"/>
+            <circle cx="15.7" cy="5.2" r="3.2" opacity="0.6"/>
+          </svg>
+          <span className="text-[9px] bg-emerald-500/10 border border-emerald-500/20 px-1 rounded text-emerald-400 font-bold">
+            USDT
+          </span>
+          <span className="text-[9px] bg-amber-500/10 border border-amber-500/20 px-1 rounded text-amber-400 font-bold">
+            BTC
+          </span>
+        </div>
+      </div>
     </FadeInView>
   );
 }
