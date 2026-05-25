@@ -26,6 +26,9 @@ export interface SchedulePublishInput {
   hashtags: string[];
   productLink?: string;
   scheduledAt: number; // Unix seconds
+  audienceTimezone?: string;
+  optimizeSchedule?: boolean;
+  staggerMinutes?: number;
 }
 
 export interface DeferredChannel {
@@ -42,12 +45,150 @@ export interface SchedulePublishResult {
   deferred: DeferredChannel[];
 }
 
+function getAbsoluteTimestamp(
+  year: number,
+  month: number,
+  day: number,
+  hour: number,
+  minute: number,
+  tz: string,
+): number {
+  const utcEstimate = Date.UTC(year, month - 1, day, hour, minute);
+  let date = new Date(utcEstimate);
+  for (let iter = 0; iter < 3; iter++) {
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: tz,
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: false,
+    });
+    const p: { [key: string]: string } = {};
+    formatter.formatToParts(date).forEach((part) => {
+      p[part.type] = part.value;
+    });
+
+    const dateYear = parseInt(p.year, 10);
+    const dateMonth = parseInt(p.month, 10);
+    const dateDay = parseInt(p.day, 10);
+    const dateHour = parseInt(p.hour, 10);
+    const dateMinute = parseInt(p.minute, 10);
+
+    const diffMs =
+      Date.UTC(year, month - 1, day, hour, minute) -
+      Date.UTC(dateYear, dateMonth - 1, dateDay, dateHour, dateMinute);
+    if (diffMs === 0) break;
+    date = new Date(date.getTime() + diffMs);
+  }
+  return Math.floor(date.getTime() / 1000);
+}
+
+export function getOptimalPublishTime(scheduledAtSec: number, tz: string): number {
+  const date = new Date(scheduledAtSec * 1000);
+  const parts: { [key: string]: string } = {};
+  let targetTz = tz;
+
+  try {
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: targetTz,
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: false,
+    });
+    formatter.formatToParts(date).forEach((p) => {
+      parts[p.type] = p.value;
+    });
+  } catch {
+    targetTz = 'UTC';
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'UTC',
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: false,
+    });
+    formatter.formatToParts(date).forEach((p) => {
+      parts[p.type] = p.value;
+    });
+  }
+
+  const year = parseInt(parts.year, 10);
+  const month = parseInt(parts.month, 10);
+  const day = parseInt(parts.day, 10);
+  const hour = parseInt(parts.hour, 10);
+  const minute = parseInt(parts.minute, 10);
+
+  const currentMinutes = hour * 60 + minute;
+  const PEAK_SLOTS = [
+    { hour: 8, minute: 0 },
+    { hour: 12, minute: 30 },
+    { hour: 18, minute: 30 },
+    { hour: 21, minute: 0 },
+  ];
+
+  let selectedSlot = PEAK_SLOTS[0];
+  let isNextDay = true;
+
+  for (const slot of PEAK_SLOTS) {
+    const slotMinutes = slot.hour * 60 + slot.minute;
+    if (slotMinutes >= currentMinutes) {
+      selectedSlot = slot;
+      isNextDay = false;
+      break;
+    }
+  }
+
+  if (isNextDay) {
+    const nextDayDate = new Date(date.getTime() + 24 * 60 * 60 * 1000);
+    const partsNext: { [key: string]: string } = {};
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: targetTz,
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: false,
+    });
+    formatter.formatToParts(nextDayDate).forEach((p) => {
+      partsNext[p.type] = p.value;
+    });
+
+    const nYear = parseInt(partsNext.year, 10);
+    const nMonth = parseInt(partsNext.month, 10);
+    const nDay = parseInt(partsNext.day, 10);
+
+    return getAbsoluteTimestamp(nYear, nMonth, nDay, selectedSlot.hour, selectedSlot.minute, targetTz);
+  }
+
+  return getAbsoluteTimestamp(year, month, day, selectedSlot.hour, selectedSlot.minute, targetTz);
+}
+
 /**
  * Validate tenant owns the requested channels, check quota, insert jobs.
  */
 export async function schedulePublish(input: SchedulePublishInput): Promise<SchedulePublishResult> {
   const db = await getD1Client();
-  const { videoJobId, tenantId, userId, channelIds, caption, hashtags, productLink, scheduledAt } = input;
+  const {
+    videoJobId,
+    tenantId,
+    userId,
+    channelIds,
+    caption,
+    hashtags,
+    productLink,
+    scheduledAt,
+    audienceTimezone,
+    optimizeSchedule,
+    staggerMinutes = 5,
+  } = input;
 
   // Fetch all requested channels — validate tenant ownership
   const { data: channels } = await db
@@ -58,9 +199,9 @@ export async function schedulePublish(input: SchedulePublishInput): Promise<Sche
     .in('id', channelIds);
 
   const validChannels = (channels ?? []) as unknown as PublishingChannel[];
-  const validIds = new Set(validChannels.map(c => c.id));
+  const validIds = new Set(validChannels.map((c) => c.id));
 
-  const missingIds = channelIds.filter(id => !validIds.has(id));
+  const missingIds = channelIds.filter((id) => !validIds.has(id));
   if (missingIds.length > 0) {
     throw new Error(`Channels not found or not owned by tenant: ${missingIds.join(', ')}`);
   }
@@ -71,7 +212,12 @@ export async function schedulePublish(input: SchedulePublishInput): Promise<Sche
   const deferred: SchedulePublishResult['deferred'] = [];
   const hashtagsJson = JSON.stringify(hashtags);
 
-  for (const channel of validChannels) {
+  // Consistent sorting of channels to apply stagger predictably
+  const sortedChannels = [...validChannels].sort((a, b) => a.id.localeCompare(b.id));
+
+  for (let idx = 0; idx < sortedChannels.length; idx++) {
+    const channel = sortedChannels[idx];
+
     // Check per-channel quota (daily limit)
     const quota = await consumeQuota(channel.id, channel.provider as ChannelProvider);
     if (!quota.allowed) {
@@ -83,15 +229,20 @@ export async function schedulePublish(input: SchedulePublishInput): Promise<Sche
       continue;
     }
 
+    let effectiveScheduledAt = scheduledAt;
+    if (optimizeSchedule) {
+      effectiveScheduledAt = getOptimalPublishTime(effectiveScheduledAt, audienceTimezone || 'UTC');
+    }
+
+    // Stagger consecutive channels
+    effectiveScheduledAt += idx * (staggerMinutes * 60);
+
     // Cooldown + burst check — defer instead of reject
     const provider = channel.provider as ChannelProvider;
     const cooldown = await checkCooldown(tenantId, channel.id, provider, now);
 
-    // Effective scheduled time: honour requested scheduledAt, but push out if cooldown violated
-    let effectiveScheduledAt = scheduledAt;
     if (!cooldown.allowed && cooldown.deferUntil !== undefined) {
-      // Defer: use max(requested, deferUntil)
-      effectiveScheduledAt = Math.max(scheduledAt, cooldown.deferUntil);
+      effectiveScheduledAt = Math.max(effectiveScheduledAt, cooldown.deferUntil);
       deferred.push({
         channelId: channel.id,
         provider: channel.provider,
@@ -106,6 +257,28 @@ export async function schedulePublish(input: SchedulePublishInput): Promise<Sche
         effectiveScheduledAt,
         deferSeconds: cooldown.deferSeconds,
       });
+    }
+
+    // Database anti-collision loop
+    let conflictFound = true;
+    while (conflictFound) {
+      const minTime = effectiveScheduledAt - 299;
+      const maxTime = effectiveScheduledAt + 299;
+
+      const { data: existingJobs } = await db
+        .from('publishing_jobs')
+        .select('id')
+        .eq('tenant_id', tenantId)
+        .eq('channel_id', channel.id)
+        .eq('status', 'scheduled')
+        .gte('scheduled_at', minTime)
+        .lte('scheduled_at', maxTime);
+
+      if (existingJobs && existingJobs.length > 0) {
+        effectiveScheduledAt += 300; // Move forward by 5 minutes
+      } else {
+        conflictFound = false;
+      }
     }
 
     const jobId = randomUUID();
