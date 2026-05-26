@@ -195,6 +195,29 @@ describe('POST /api/user/byok', () => {
       { provider: 'anthropic' },
     )
   })
+
+  it('sanitizes and trims the submitted key', async () => {
+    mockGetCurrentUser.mockResolvedValue(USER)
+    mockSet.mockResolvedValue(undefined)
+    const res = await POST(makeRequest('POST', {
+      provider: 'openrouter',
+      key: ' \nsk-or-v1-abcdefghijklmnopqrstuvwxyz1234567890\u200B\t ',
+    }))
+    expect(res.status).toBe(200)
+    expect(mockSet).toHaveBeenCalledWith(USER?.id, 'openrouter', 'sk-or-v1-abcdefghijklmnopqrstuvwxyz1234567890')
+  })
+
+  it('automatically base64 encodes raw email:password keys for d-id on the server', async () => {
+    mockGetCurrentUser.mockResolvedValue(USER)
+    mockSet.mockResolvedValue(undefined)
+    const res = await POST(makeRequest('POST', {
+      provider: 'd-id',
+      key: 'user@example.com:secret123',
+    }))
+    expect(res.status).toBe(200)
+    const expectedEncoded = Buffer.from('user@example.com:secret123').toString('base64')
+    expect(mockSet).toHaveBeenCalledWith(USER?.id, 'd-id', expectedEncoded)
+  })
 })
 
 describe('DELETE /api/user/byok', () => {

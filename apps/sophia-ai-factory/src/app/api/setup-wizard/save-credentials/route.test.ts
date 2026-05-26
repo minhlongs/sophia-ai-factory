@@ -107,4 +107,18 @@ describe('POST /api/setup-wizard/save-credentials', () => {
       'https://sophia.agencyos.network/api/webhooks/heygen',
     );
   });
+
+  it('sanitizes and trims all incoming credentials', async () => {
+    mockGetCurrentUser.mockResolvedValue({ id: 'user-1', email: null } as never);
+
+    const res = await POST(
+      makeRequest({
+        heygen_api_key: ' \nhg_live_user_key\u200B ',
+        resend_api_key: '  re_testkey\uFEFF\r\n',
+      })
+    );
+    expect(res.status).toBe(200);
+    expect(mockSetUserCredential).toHaveBeenCalledWith('user-1', 'heygen', 'hg_live_user_key');
+    expect(mockSetUserCredential).toHaveBeenCalledWith('user-1', 'resend', 're_testkey');
+  });
 });

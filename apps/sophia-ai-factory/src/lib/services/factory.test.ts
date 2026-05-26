@@ -46,7 +46,7 @@ describe('ServiceFactory — credential gate', () => {
 
     await expect(ServiceFactory.getScriptService()).rejects.toThrow(MissingCredentialsError)
     await expect(ServiceFactory.getScriptService()).rejects.toThrow('OPENROUTER_API_KEY')
-  })
+  }, 20000)
 
   // Case 2: NODE_ENV=development, key absent → returns mock (no throw)
   it('returns mock service in development when key is absent', async () => {

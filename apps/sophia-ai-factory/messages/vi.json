@@ -2545,6 +2545,12 @@
       },
       "muapi": {
         "format": "Key MuAPI là chuỗi 20+ ký tự chữ-số — tìm trong bảng điều khiển MuAPI."
+      },
+      "apollo": {
+        "format": "Key Apollo phải là chuỗi 20+ ký tự chữ-số."
+      },
+      "hunter": {
+        "format": "Key Hunter phải là chuỗi 20+ ký tự chữ-số."
       }
     },
     "picker": {

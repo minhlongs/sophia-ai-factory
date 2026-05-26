@@ -13,12 +13,16 @@ import {
   validateElevenLabs,
   validateDID,
   validateMuapi,
+  validateApollo,
+  validateHunter,
   validateProviderKey,
+  sanitizeCredential,
 } from './key-format-validators'
 
 describe('validateOpenRouter', () => {
   it('accepts well-formed sk-or- prefixed keys', () => {
     expect(validateOpenRouter('sk-or-v1-' + 'a'.repeat(64)).ok).toBe(true)
+    expect(validateOpenRouter('sk-or-v2-' + 'b'.repeat(64)).ok).toBe(true)
   })
 
   it('rejects keys without sk-or- prefix', () => {
@@ -41,6 +45,7 @@ describe('validateOpenRouter', () => {
 describe('validateAnthropic', () => {
   it('accepts sk-ant- prefixed keys', () => {
     expect(validateAnthropic('sk-ant-api03-' + 'x'.repeat(80)).ok).toBe(true)
+    expect(validateAnthropic('sk-ant-api04-' + 'y'.repeat(80)).ok).toBe(true)
   })
 
   it('rejects without sk-ant- prefix', () => {
@@ -121,6 +126,34 @@ describe('validateMuapi', () => {
   })
 })
 
+describe('validateApollo', () => {
+  it('accepts 20+ char alphanumeric tokens', () => {
+    expect(validateApollo('apollo-key-1234567890abcdef').ok).toBe(true)
+  })
+
+  it('rejects too-short', () => {
+    expect(validateApollo('apo-12').errorKey).toBe('byok.validate.too_short')
+  })
+
+  it('rejects invalid characters', () => {
+    expect(validateApollo('has spaces here 12345').errorKey).toBe('byok.validate.apollo.format')
+  })
+})
+
+describe('validateHunter', () => {
+  it('accepts 20+ char alphanumeric tokens', () => {
+    expect(validateHunter('hunter-key-1234567890abcdef').ok).toBe(true)
+  })
+
+  it('rejects too-short', () => {
+    expect(validateHunter('hunt-12').errorKey).toBe('byok.validate.too_short')
+  })
+
+  it('rejects invalid characters', () => {
+    expect(validateHunter('has spaces here 12345').errorKey).toBe('byok.validate.hunter.format')
+  })
+})
+
 describe('validateProviderKey dispatcher', () => {
   it('routes to openrouter validator', () => {
     expect(validateProviderKey('openrouter', 'sk-or-v1-abcdefghij').ok).toBe(true)
@@ -132,6 +165,14 @@ describe('validateProviderKey dispatcher', () => {
     expect(result.autoEncoded).toBeDefined()
   })
 
+  it('routes to apollo validator', () => {
+    expect(validateProviderKey('apollo', 'apollo-key-1234567890abcdef').ok).toBe(true)
+  })
+
+  it('routes to hunter validator', () => {
+    expect(validateProviderKey('hunter', 'hunter-key-1234567890abcdef').ok).toBe(true)
+  })
+
   it('returns too_short for any provider when length < 10', () => {
     expect(validateProviderKey('elevenlabs', 'short').errorKey).toBe('byok.validate.too_short')
   })
@@ -140,5 +181,23 @@ describe('validateProviderKey dispatcher', () => {
     // @ts-expect-error — intentionally passing unknown provider
     const result = validateProviderKey('future-provider', 'long-enough-key-1234567890')
     expect(result.ok).toBe(true)
+  })
+})
+
+describe('sanitizeCredential', () => {
+  it('trims leading and trailing spaces and tabs', () => {
+    expect(sanitizeCredential('  \tkey-value-123456\t  ')).toBe('key-value-123456')
+  })
+
+  it('strips newlines inside and around the key', () => {
+    expect(sanitizeCredential('\nkey-value\r\n-123456\n')).toBe('key-value-123456')
+  })
+
+  it('strips zero-width characters and BOM', () => {
+    expect(sanitizeCredential('key\u200B-value\uFEFF-1234\u200C56')).toBe('key-value-123456')
+  })
+
+  it('strips control characters', () => {
+    expect(sanitizeCredential('key-\x00value\x0F-1234\x1F56')).toBe('key-value-123456')
   })
 })

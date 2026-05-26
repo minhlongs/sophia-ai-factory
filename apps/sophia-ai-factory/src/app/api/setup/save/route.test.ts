@@ -128,4 +128,28 @@ describe('POST /api/setup/save', () => {
     // Per-user cookie name uses first 12 chars of the user id
     expect(setCookieHeader).toContain(`wizard_done_${MOCK_USER.id.slice(0, 12)}=1`);
   });
+
+  it('returns 400 when an invalid format OpenRouter key is provided', async () => {
+    mockGetCurrentUser.mockResolvedValue(MOCK_USER as never);
+    const res = await POST(
+      makeRequest({
+        config: { OPENROUTER_API_KEY: 'invalidkey-no-prefix' },
+      }),
+    );
+    expect(res.status).toBe(400);
+    const json = (await res.json()) as { message: string };
+    expect(json.message).toContain('Invalid format for openrouter');
+  });
+
+  it('sanitizes keys by trimming and removing hidden characters before saving', async () => {
+    mockGetCurrentUser.mockResolvedValue(MOCK_USER as never);
+    mockSetUserApiKey.mockResolvedValue(undefined);
+    const res = await POST(
+      makeRequest({
+        config: { OPENROUTER_API_KEY: '  sk-or-test-key\u200B\n  ' },
+      }),
+    );
+    expect(res.status).toBe(200);
+    expect(mockSetUserApiKey).toHaveBeenCalledWith(MOCK_USER.id, 'openrouter', 'sk-or-test-key');
+  });
 });

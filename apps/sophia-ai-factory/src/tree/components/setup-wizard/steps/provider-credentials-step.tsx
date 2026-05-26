@@ -31,6 +31,7 @@ interface ProviderCredentialsStepProps {
   errors: Record<string, string>
   onTestKey: (provider: string, fieldKey: keyof ProviderConfig, value: string) => Promise<boolean>
   savedCredentials: CredentialSummary[]
+  latencies?: Record<string, number>
 }
 
 function SavedHint({ hint }: { hint: string | null }) {
@@ -50,6 +51,7 @@ export function ProviderCredentialsStep({
   errors,
   onTestKey,
   savedCredentials,
+  latencies,
 }: ProviderCredentialsStepProps) {
   const getSaved = (provider: string) =>
     savedCredentials.find((c) => c.provider === provider) ?? null
@@ -85,6 +87,7 @@ export function ProviderCredentialsStep({
           placeholder="e.g. hk_..."
           required
           helpText="Your HeyGen API key for video generation. Get it from app.heygen.com → Account → API. / Khóa HeyGen để tạo video."
+          latency={latencies?.HEYGEN_API_KEY}
         />
         <SavedHint hint={getSaved('heygen')?.display_hint ?? null} />
 
@@ -144,6 +147,7 @@ export function ProviderCredentialsStep({
           errorMessage={errors.RESEND_API_KEY}
           placeholder="re_..."
           helpText="Your Resend key for transactional emails. Falls back to platform key if not set. / Khóa Resend cho email. Nếu không nhập, hệ thống sẽ dùng khóa của nền tảng."
+          latency={latencies?.RESEND_API_KEY}
         />
         <SavedHint hint={getSaved('resend')?.display_hint ?? null} />
       </div>
@@ -165,6 +169,7 @@ export function ProviderCredentialsStep({
           errorMessage={errors.NOWPAYMENTS_API_KEY}
           placeholder="NOWPayments API key..."
           helpText="Optional. Platform's payment provider is shared. Only set if running your own NOWPayments account. / Tùy chọn. Nền tảng dùng chung tài khoản thanh toán. Chỉ cần nếu bạn chạy tài khoản NOWPayments riêng."
+          latency={latencies?.NOWPAYMENTS_API_KEY}
         />
         <ByokHelpTip provider="nowpayments" />
         <SavedHint hint={getSaved('nowpayments')?.display_hint ?? null} />

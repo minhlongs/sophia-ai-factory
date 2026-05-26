@@ -24,11 +24,12 @@ export function Navbar() {
   }, []);
 
   useEffect(() => {
-    // Check Better Auth session cookie (or legacy auth-token)
-    setIsLoggedIn(
-      document.cookie.includes('better-auth.session_token=')
-      || document.cookie.includes('auth-token='),
-    );
+    const hasToken = document.cookie.includes('better-auth.session_token=')
+      || document.cookie.includes('auth-token=');
+    const timer = setTimeout(() => {
+      setIsLoggedIn(hasToken);
+    }, 0);
+    return () => clearTimeout(timer);
   }, [pathname]);
 
   const cleanPath = pathname.replace(/^\/(en|vi)/, "") || "/";
@@ -68,21 +69,21 @@ export function Navbar() {
       className={cn(
         "fixed z-50 transition-all duration-500",
         scrolled
-          ? "top-3 left-4 right-4 backdrop-blur-xl rounded-2xl shadow-lg border"
+          ? "top-3 left-4 right-4 backdrop-blur-xl rounded-2xl shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] border"
           : "top-0 left-0 right-0 bg-transparent"
       )}
       style={
         scrolled
           ? {
-              background: "rgba(2,8,23,0.85)",
-              borderColor: "rgba(255,255,255,0.08)",
+              background: "rgba(9, 9, 11, 0.4)",
+              borderColor: "rgba(255, 255, 255, 0.06)",
             }
           : undefined
       }
     >
       <div className="mx-auto px-5 h-14 flex items-center justify-between max-w-7xl">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5 group">
+        <Link href="/" className="flex items-center gap-2.5 group hover:scale-105 active:scale-95 transition-transform duration-200">
           <div
             className="w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-300"
             style={{ background: "rgba(0,240,255,0.1)" }}
@@ -108,7 +109,7 @@ export function Navbar() {
               href={link.href}
               onClick={(e) => handleScrollClick(e, link.href)}
               className={cn(
-                "px-4 py-1.5 rounded-full transition-all text-sm font-medium",
+                "px-4 py-1.5 rounded-full transition-all duration-300 text-sm font-medium hover:scale-105 active:scale-95 hover:translate-x-0.5 inline-flex items-center",
                 link.highlight
                   ? "text-emerald-400 hover:text-emerald-300 hover:bg-emerald-950/40 flex items-center gap-1.5"
                   : "text-muted-foreground hover:text-foreground hover:bg-white/5"
@@ -125,13 +126,13 @@ export function Navbar() {
           <LanguageSwitcher />
           {!isLoggedIn && (
             <Link href="/login">
-              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hover:scale-105 active:scale-95 transition-all duration-200">
                 {t("nav.login")}
               </Button>
             </Link>
           )}
           <Link href="/dashboard">
-            <Button variant="primary" size="sm" className="rounded-full px-5">
+            <Button variant="primary" size="sm" className="rounded-full px-5 hover:scale-105 active:scale-95 transition-all duration-200">
               {t("nav.dashboard")}
             </Button>
           </Link>

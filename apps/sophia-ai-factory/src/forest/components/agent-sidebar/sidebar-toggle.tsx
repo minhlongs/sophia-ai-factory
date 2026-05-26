@@ -22,7 +22,7 @@ export function SidebarToggle({ onClick }: SidebarToggleProps) {
     <button
       onClick={onClick}
       aria-label={t('expand')}
-      className="fixed bottom-6 right-6 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-colors md:bottom-8 md:right-8"
+      className="fixed bottom-20 right-6 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 hover:scale-110 active:scale-95 transition-all duration-200 hover:shadow-[0_0_15px_rgba(0,240,255,0.4)] md:bottom-8 md:right-8"
     >
       <Bot className="h-5 w-5" />
     </button>

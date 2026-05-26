@@ -15,9 +15,10 @@ interface ApiKeysStepProps {
   verifyKey: (service: string, keyName: string, keyValue: string) => Promise<boolean>;
   status: Record<string, 'idle' | 'validating' | 'valid' | 'invalid'>;
   errors: Record<string, string>;
+  latencies?: Record<string, number>;
 }
 
-export function ApiKeysStep({ config, updateConfig, verifyKey, status, errors }: ApiKeysStepProps) {
+export function ApiKeysStep({ config, updateConfig, verifyKey, status, errors, latencies }: ApiKeysStepProps) {
   const t = useTranslations('setupWizard.apiKeys');
 
   return (
@@ -37,6 +38,7 @@ export function ApiKeysStep({ config, updateConfig, verifyKey, status, errors }:
           placeholder={t('openrouter.placeholder')}
           required
           helpText={t('openrouter.help')}
+          latency={latencies?.OPENROUTER_API_KEY}
         />
         <ByokHelpTip provider="openrouter" />
       </div>
@@ -53,6 +55,7 @@ export function ApiKeysStep({ config, updateConfig, verifyKey, status, errors }:
           placeholder={t('elevenlabs.placeholder')}
           required
           helpText={t('elevenlabs.help')}
+          latency={latencies?.ELEVENLABS_API_KEY}
         />
         <ByokHelpTip provider="elevenlabs" />
       </div>
@@ -69,6 +72,7 @@ export function ApiKeysStep({ config, updateConfig, verifyKey, status, errors }:
           placeholder={t('did.placeholder')}
           required
           helpText={t('did.help')}
+          latency={latencies?.DID_API_KEY}
         />
         <ByokHelpTip provider="d-id" />
       </div>
@@ -83,6 +87,7 @@ export function ApiKeysStep({ config, updateConfig, verifyKey, status, errors }:
         errorMessage={errors.ANTHROPIC_API_KEY}
         placeholder={t('anthropic.placeholder')}
         helpText={t('anthropic.help')}
+        latency={latencies?.ANTHROPIC_API_KEY}
       />
 
       <ApiKeyInput
@@ -95,6 +100,7 @@ export function ApiKeysStep({ config, updateConfig, verifyKey, status, errors }:
         errorMessage={errors.MUAPI_API_KEY}
         placeholder={t('muapi.placeholder')}
         helpText={t('muapi.help')}
+        latency={latencies?.MUAPI_API_KEY}
       />
     </div>
   );

@@ -2545,6 +2545,12 @@
       },
       "muapi": {
         "format": "MuAPI keys are 20+ char alphanumeric tokens — find them in the MuAPI dashboard."
+      },
+      "apollo": {
+        "format": "Apollo API key must be a 20+ character alphanumeric token."
+      },
+      "hunter": {
+        "format": "Hunter API key must be a 20+ character alphanumeric token."
       }
     },
     "picker": {
