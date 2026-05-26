@@ -4,6 +4,7 @@ import {
   validateElevenLabs,
   validateDID,
 } from '@/lib/validation/services';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
 
 interface SetupVerifyPayload {
   service?: string;
@@ -21,10 +22,13 @@ export async function POST(request: Request) {
       process.env.NEXT_PUBLIC_IS_CONFIGURED === "true" ||
       process.env.IS_CONFIGURED === "true";
     if (isConfigured) {
-      return NextResponse.json(
-        { valid: false, message: "App is already configured" },
-        { status: 403 }
-      );
+      const user = await getCurrentUser().catch(() => null);
+      if (!user) {
+        return NextResponse.json(
+          { valid: false, message: "App is already configured" },
+          { status: 403 }
+        );
+      }
     }
 
     const body = (await request.json().catch(() => ({}))) as SetupVerifyPayload;

@@ -35,16 +35,22 @@ export interface ValidatorResult {
 const MIN_LENGTH = 10
 
 /** OpenRouter keys: `sk-or-v1-<64 hex>` per current docs (2026). Lenient regex. */
-const OPENROUTER_RE = /^sk-or-/
+const OPENROUTER_RE = /^sk-or-[A-Za-z0-9_-]+$/
 
 /** Anthropic keys: `sk-ant-api03-...`. Lenient prefix check. */
-const ANTHROPIC_RE = /^sk-ant-/
+const ANTHROPIC_RE = /^sk-ant-[A-Za-z0-9_-]+$/
 
 /** ElevenLabs xi-api-key: 32+ char alphanumeric or `sk_<32+>`. Lenient. */
 const ELEVENLABS_RE = /^[A-Za-z0-9_-]{20,}$/
 
 /** MuAPI tokens: 20+ char alphanumeric. */
 const MUAPI_RE = /^[A-Za-z0-9_-]{20,}$/
+
+/** Apollo tokens: 20+ char alphanumeric. */
+const APOLLO_RE = /^[A-Za-z0-9_-]{20,}$/
+
+/** Hunter tokens: 20+ char alphanumeric. */
+const HUNTER_RE = /^[A-Za-z0-9_-]{20,}$/
 
 /**
  * D-ID Basic-auth format detection.
@@ -134,6 +140,26 @@ export function validateMuapi(key: string): ValidatorResult {
   return { ok: true }
 }
 
+/** Apollo 20+ char token. */
+export function validateApollo(key: string): ValidatorResult {
+  const trimmed = key.trim()
+  if (trimmed.length < MIN_LENGTH) return shortFail()
+  if (!APOLLO_RE.test(trimmed)) {
+    return { ok: false, errorKey: 'byok.validate.apollo.format' }
+  }
+  return { ok: true }
+}
+
+/** Hunter 20+ char token. */
+export function validateHunter(key: string): ValidatorResult {
+  const trimmed = key.trim()
+  if (trimmed.length < MIN_LENGTH) return shortFail()
+  if (!HUNTER_RE.test(trimmed)) {
+    return { ok: false, errorKey: 'byok.validate.hunter.format' }
+  }
+  return { ok: true }
+}
+
 /**
  * Provider-agnostic dispatcher used by the form. Falls back to length-only
  * check for any provider not explicitly enumerated (defensive forward-compat).
@@ -150,9 +176,26 @@ export function validateProviderKey(provider: ValidatorProvider, key: string): V
       return validateDID(key)
     case 'muapi':
       return validateMuapi(key)
+    case 'apollo':
+      return validateApollo(key)
+    case 'hunter':
+      return validateHunter(key)
     default: {
       const trimmed = key.trim()
       return trimmed.length >= MIN_LENGTH ? { ok: true } : shortFail()
     }
   }
+}
+
+/**
+ * Strips all control characters (ASCII 0-31, 127), C1 controls (80-9F),
+ * zero-width spaces (u200B-u200D), and BOM (uFEFF), then trims leading
+ * and trailing whitespace (including Unicode whitespaces like non-breaking space).
+ */
+export function sanitizeCredential(value: string): string {
+  if (typeof value !== 'string') return ''
+  return value
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .replace(/[\x00-\x1F\x7F-\x9F]/g, '')
+    .trim()
 }

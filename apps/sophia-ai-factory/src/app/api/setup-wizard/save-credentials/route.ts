@@ -18,15 +18,16 @@ import { logger } from '@/seed/utils/logger-utility'
 import { getD1Raw } from '@/seed/db/client'
 import { enqueueWelcomeEmail } from '@/forest/outbox/email-outbox'
 import type { ProviderType } from '@/tree/credentials/user-credentials-repo'
+import { sanitizeCredential } from '@/lib/byok/key-format-validators'
 
 const SOPHIA_HEYGEN_WEBHOOK_URL = 'https://sophia.agencyos.network/api/webhooks/heygen'
 
 const saveCredentialsSchema = z.object({
-  heygen_api_key: z.string().trim().optional(),
-  heygen_webhook_secret: z.string().trim().optional(),
-  resend_api_key: z.string().trim().optional(),
-  nowpayments_api_key: z.string().trim().optional(),
-  nowpayments_ipn_secret: z.string().trim().optional(),
+  heygen_api_key: z.preprocess((val) => typeof val === 'string' ? sanitizeCredential(val) : val, z.string().optional()),
+  heygen_webhook_secret: z.preprocess((val) => typeof val === 'string' ? sanitizeCredential(val) : val, z.string().optional()),
+  resend_api_key: z.preprocess((val) => typeof val === 'string' ? sanitizeCredential(val) : val, z.string().optional()),
+  nowpayments_api_key: z.preprocess((val) => typeof val === 'string' ? sanitizeCredential(val) : val, z.string().optional()),
+  nowpayments_ipn_secret: z.preprocess((val) => typeof val === 'string' ? sanitizeCredential(val) : val, z.string().optional()),
 })
 
 export async function POST(request: NextRequest) {

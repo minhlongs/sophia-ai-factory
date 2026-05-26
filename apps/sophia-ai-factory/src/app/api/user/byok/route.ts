@@ -24,25 +24,16 @@ import { D1Events } from '@/lib/signals/d1-event-types'
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
 import { globalRateLimiter, createRateLimitResponse } from '@/forest/middleware/rate-limiter'
+import { validateProviderKey, sanitizeCredential, type ValidatorProvider } from '@/lib/byok/key-format-validators'
 
 const PROVIDERS = ['openrouter', 'anthropic', 'elevenlabs', 'd-id', 'muapi', 'apollo', 'hunter'] as const
 
-const PROVIDER_KEY_RX: Record<string, RegExp> = {
-  openrouter: /^sk-or-v1-[A-Za-z0-9_-]{20,}$/,
-  anthropic:  /^sk-ant-[A-Za-z0-9_-]{20,}$/,
-  elevenlabs: /^[A-Za-z0-9_-]{20,}$/,
-  'd-id':     /^[A-Za-z0-9+/=:_-]{20,}$/,
-  muapi:      /^[A-Za-z0-9_-]{20,}$/,
-  apollo:     /^[A-Za-z0-9_-]{20,}$/,
-  hunter:     /^[A-Za-z0-9_-]{20,}$/,
-}
-
 const PostSchema = z.object({
   provider: z.enum(PROVIDERS),
-  key:      z.string().min(10).max(500),
+  key:      z.preprocess((val) => typeof val === 'string' ? sanitizeCredential(val) : val, z.string().min(10).max(500)),
 }).superRefine((data, ctx) => {
-  const rx = PROVIDER_KEY_RX[data.provider]
-  if (rx && !rx.test(data.key)) {
+  const validation = validateProviderKey(data.provider as ValidatorProvider, data.key)
+  if (!validation.ok) {
     ctx.addIssue({ code: 'custom', path: ['key'], message: `Invalid ${data.provider} key format` })
   }
 })
@@ -85,8 +76,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const { provider, key } = parsed.data
 
+  const validation = validateProviderKey(provider as ValidatorProvider, key)
+  const finalKey = validation.ok && validation.autoEncoded ? validation.autoEncoded : key
+
   try {
-    await setUserApiKey(user.id, provider as ByokProvider, key)
+    await setUserApiKey(user.id, provider as ByokProvider, finalKey)
   } catch (err) {
     logger.warn('[byok-admin] setUserApiKey failed', {
       userId:   user.id,

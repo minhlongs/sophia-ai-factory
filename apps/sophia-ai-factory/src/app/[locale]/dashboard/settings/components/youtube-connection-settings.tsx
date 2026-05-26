@@ -36,6 +36,7 @@ export function YouTubeConnectionSettings() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
+    let timerId: ReturnType<typeof setTimeout> | null = null;
     async function fetchConnectionStatus() {
       try {
         const res = await fetch('/api/user/profile');
@@ -59,13 +60,23 @@ export function YouTubeConnectionSettings() {
 
     // Handle query params set after OAuth redirect
     const params = new URLSearchParams(window.location.search);
-    if (params.get('youtube_connected') === 'true') {
-      setStatus({ connected: true });
-    }
+    const connectedParam = params.get('youtube_connected') === 'true';
     const ytError = params.get('youtube_error');
-    if (ytError) {
-      setErrorMessage(getErrorMessage(ytError));
+
+    if (connectedParam || ytError) {
+      timerId = setTimeout(() => {
+        if (connectedParam) {
+          setStatus({ connected: true });
+        }
+        if (ytError) {
+          setErrorMessage(getErrorMessage(ytError));
+        }
+      }, 0);
     }
+
+    return () => {
+      if (timerId) clearTimeout(timerId);
+    };
   }, []);
 
   function handleConnect() {
@@ -128,7 +139,7 @@ export function YouTubeConnectionSettings() {
           type="button"
           onClick={handleDisconnect}
           disabled={isPending}
-          className="rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium hover:bg-accent disabled:opacity-50"
+          className="rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium hover:bg-accent disabled:opacity-50 transition-all duration-150 active:scale-95"
         >
           Disconnect
         </button>
@@ -137,7 +148,7 @@ export function YouTubeConnectionSettings() {
           type="button"
           onClick={handleConnect}
           disabled={isPending}
-          className="rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+          className="rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 hover:opacity-95 disabled:opacity-50 transition-all duration-150 active:scale-95"
         >
           Connect YouTube
         </button>

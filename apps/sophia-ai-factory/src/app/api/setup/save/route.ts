@@ -13,28 +13,45 @@ import type { ByokProvider } from '@/tree/byok/user-api-key-store';
 import { z } from 'zod';
 import { getD1Raw } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
+import { validateProviderKey, sanitizeCredential } from '@/lib/byok/key-format-validators';
+import type { ValidatorProvider } from '@/lib/byok/key-format-validators';
 
 const setupSaveSchema = z
   .object({
     config: z.object({
-      OPENROUTER_API_KEY: z.string().optional(),
-      ANTHROPIC_API_KEY: z.string().optional(),
-      ELEVENLABS_API_KEY: z.string().optional(),
-      DID_API_KEY: z.string().optional(),
-      MUAPI_API_KEY: z.string().optional(),
-      APOLLO_API_KEY: z.string().optional(),
-      HUNTER_API_KEY: z.string().optional(),
+      OPENROUTER_API_KEY: z.preprocess((val) => typeof val === 'string' ? sanitizeCredential(val) : val, z.string().optional()),
+      ANTHROPIC_API_KEY: z.preprocess((val) => typeof val === 'string' ? sanitizeCredential(val) : val, z.string().optional()),
+      ELEVENLABS_API_KEY: z.preprocess((val) => typeof val === 'string' ? sanitizeCredential(val) : val, z.string().optional()),
+      DID_API_KEY: z.preprocess((val) => typeof val === 'string' ? sanitizeCredential(val) : val, z.string().optional()),
+      MUAPI_API_KEY: z.preprocess((val) => typeof val === 'string' ? sanitizeCredential(val) : val, z.string().optional()),
+      APOLLO_API_KEY: z.preprocess((val) => typeof val === 'string' ? sanitizeCredential(val) : val, z.string().optional()),
+      HUNTER_API_KEY: z.preprocess((val) => typeof val === 'string' ? sanitizeCredential(val) : val, z.string().optional()),
     }),
   })
   .refine(
     (data) =>
-      Boolean(data.config.OPENROUTER_API_KEY?.trim()) ||
-      Boolean(data.config.ANTHROPIC_API_KEY?.trim()),
+      Boolean(data.config.OPENROUTER_API_KEY) ||
+      Boolean(data.config.ANTHROPIC_API_KEY),
     {
       message: 'At least one LLM provider key required (OpenRouter or Anthropic)',
       path: ['config', 'OPENROUTER_API_KEY'],
     },
-  );
+  )
+  .superRefine((data, ctx) => {
+    for (const [field, provider] of Object.entries(PROVIDER_MAP)) {
+      const val = data.config[field as keyof typeof data.config];
+      if (val && val.length > 0) {
+        const validation = validateProviderKey(provider as ValidatorProvider, val);
+        if (!validation.ok) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['config', field],
+            message: `Invalid format for ${provider}`,
+          });
+        }
+      }
+    }
+  });
 
 /** Map Zod config field names → BYOK provider identifiers */
 const PROVIDER_MAP: Record<string, ByokProvider> = {
@@ -70,8 +87,10 @@ export async function POST(request: NextRequest) {
 
     for (const [field, provider] of Object.entries(PROVIDER_MAP)) {
       const value = config[field as keyof typeof config];
-      if (value && value.trim().length > 0) {
-        await setUserApiKey(user.id, provider, value.trim());
+      if (value && value.length > 0) {
+        const validation = validateProviderKey(provider as ValidatorProvider, value);
+        const finalValue = validation.ok && validation.autoEncoded ? validation.autoEncoded : value;
+        await setUserApiKey(user.id, provider, finalValue);
         saved.push(provider);
       }
     }

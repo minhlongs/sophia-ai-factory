@@ -29,6 +29,7 @@ export function TikTokConnectionSettings() {
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
+    let timerId: ReturnType<typeof setTimeout> | null = null;
     async function fetchStatus() {
       try {
         const res = await fetch('/api/user/integrations');
@@ -50,8 +51,14 @@ export function TikTokConnectionSettings() {
     // Read display_name from query param set after successful OAuth
     const params = new URLSearchParams(window.location.search);
     if (params.get('success') === 'tiktok_connected') {
-      setIsConnected(true);
+      timerId = setTimeout(() => {
+        setIsConnected(true);
+      }, 0);
     }
+
+    return () => {
+      if (timerId) clearTimeout(timerId);
+    };
   }, []);
 
   function handleConnect() {
@@ -113,6 +120,7 @@ export function TikTokConnectionSettings() {
           size="sm"
           onClick={handleDisconnect}
           disabled={isPending}
+          className="transition-all duration-150 active:scale-95"
         >
           Disconnect
         </Button>
@@ -121,6 +129,7 @@ export function TikTokConnectionSettings() {
           size="sm"
           onClick={handleConnect}
           disabled={isPending}
+          className="transition-all duration-150 active:scale-95"
         >
           Connect TikTok
         </Button>

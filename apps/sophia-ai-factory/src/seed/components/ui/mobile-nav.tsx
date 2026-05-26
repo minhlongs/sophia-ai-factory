@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/navigation";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -21,14 +21,17 @@ export function MobileNav() {
     { href: "/dashboard/settings", label: "Settings", icon: Settings },
   ];
 
-  const isLinkActive = (href: string) =>
-    href === "/dashboard"
-      ? pathname === href
-      : pathname?.startsWith(href);
+  const isLinkActive = (href: string) => {
+    const cleanPath = pathname ? pathname.replace(/^\/(en|vi)/, "") || "/" : "/";
+    if (href === "/dashboard") {
+      return cleanPath === "/dashboard";
+    }
+    return cleanPath.startsWith(href);
+  };
 
   return (
-    <nav aria-label="Dashboard navigation" className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border md:hidden">
-      <div className="flex items-center justify-around h-16 px-2">
+    <nav aria-label="Dashboard navigation" className="bg-zinc-950/60 backdrop-blur-xl border border-white/10 rounded-2xl mx-4 mb-4 shadow-xl fixed bottom-0 left-0 right-0 z-50 md:hidden p-1">
+      <div className="flex items-center justify-around h-12 px-2">
         {links.map(({ href, label, icon: Icon }) => {
           const isActive = isLinkActive(href);
           return (
@@ -36,9 +39,9 @@ export function MobileNav() {
               key={href}
               href={href}
               aria-current={isActive ? "page" : undefined}
-              className={`flex flex-col items-center justify-center flex-1 gap-1 transition-colors ${
+              className={`flex flex-col items-center justify-center flex-1 gap-1 hover:scale-105 active:scale-95 transition-all duration-200 ${
                 isActive
-                  ? "text-primary"
+                  ? "text-[var(--neon-cyan)]"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >

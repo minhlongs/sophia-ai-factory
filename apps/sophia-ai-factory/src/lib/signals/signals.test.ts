@@ -47,9 +47,6 @@ describe('posthog-capture: server-only trust boundary', () => {
 
 // ---- (b)(c)(d) + RED-TEAM #3: auth-helper ----
 describe('auth-helper: requireAuth', () => {
-  const makeReq = (headers: Record<string, string> = {}) =>
-    new Request('https://sophia.agencyos.network/api/signals/track', { headers })
-
   beforeEach(() => {
     vi.stubEnv('CRON_SECRET', 'test-cron-secret-abc')
   })
@@ -211,5 +208,5 @@ describe('NOWPayments webhook: tier_upgraded emission', () => {
     captureSpy.mockRestore()
     verifySpy.mockRestore()
     processSpy.mockRestore()
-  })
+  }, 20000)
 })

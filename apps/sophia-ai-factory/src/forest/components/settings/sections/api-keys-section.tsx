@@ -1,10 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
-import { Button } from '@/seed/components/ui/button';
-import { Input } from '@/seed/components/ui/input';
-import { Label } from '@/seed/components/ui/label';
 import {
   Card,
   CardContent,
@@ -12,9 +9,10 @@ import {
   CardHeader,
   CardTitle,
 } from '@/seed/components/ui/card';
-import { Eye, EyeOff, ExternalLink } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import { UseFormReturn } from 'react-hook-form';
 import { UserProfileFormValues } from '@/lib/schemas/settings';
+import { ApiKeyInput } from '@/tree/components/setup-wizard/api-key-input';
 
 interface ApiKeysSectionProps {
   form: UseFormReturn<UserProfileFormValues>;
@@ -39,14 +37,59 @@ const KEY_CONFIGS: KeyConfig[] = [
   { id: 'muapi',      label: 'MuAPI (Media AI)',     descKey: 'muapiDesc',      helpKey: 'muapiHelp',      placeholder: 'mu-...',     helpUrl: 'https://muapi.ai/dashboard' },
 ];
 
-export function ApiKeysSection({ form, isPending, defaultValues }: ApiKeysSectionProps) {
+export function ApiKeysSection({ form, defaultValues }: ApiKeysSectionProps) {
   const t = useTranslations('settings.apiKeys');
-  const { register } = form;
-  const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
+  const [status, setStatus] = useState<Record<string, 'idle' | 'validating' | 'valid' | 'invalid'>>({
+    openai: 'idle',
+    anthropic: 'idle',
+    elevenlabs: 'idle',
+    heygen: 'idle',
+    muapi: 'idle',
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [latencies, setLatencies] = useState<Record<string, number>>({});
 
-  const toggleKeyVisibility = (key: string) => {
-    setShowKeys((prev) => ({ ...prev, [key]: !prev[key] }));
-  };
+  const handleVerify = useCallback(async (keyId: string, keyValue: string) => {
+    if (!keyValue) return;
+    setStatus((prev) => ({ ...prev, [keyId]: 'validating' }));
+    setErrors((prev) => ({ ...prev, [keyId]: '' }));
+    const startTime = performance.now();
+
+    try {
+      let res;
+      if (keyId === 'heygen') {
+        res = await fetch('/api/setup-wizard/test-heygen', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ api_key: keyValue }),
+        });
+      } else {
+        const service = keyId === 'openai' ? 'openrouter' : keyId;
+        res = await fetch('/api/setup/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ service, key: keyValue }),
+        });
+      }
+
+      const endTime = performance.now();
+      const duration = Math.round(endTime - startTime);
+
+      const data = (await res.json()) as { valid?: boolean; ok?: boolean; message?: string };
+      const isValid = data.valid === true || data.ok === true;
+
+      if (isValid) {
+        setStatus((prev) => ({ ...prev, [keyId]: 'valid' }));
+        setLatencies((prev) => ({ ...prev, [keyId]: duration }));
+      } else {
+        setStatus((prev) => ({ ...prev, [keyId]: 'invalid' }));
+        setErrors((prev) => ({ ...prev, [keyId]: data.message || 'Verification failed' }));
+      }
+    } catch {
+      setStatus((prev) => ({ ...prev, [keyId]: 'invalid' }));
+      setErrors((prev) => ({ ...prev, [keyId]: 'Network or server error' }));
+    }
+  }, []);
 
   return (
     <Card>
@@ -55,52 +98,46 @@ export function ApiKeysSection({ form, isPending, defaultValues }: ApiKeysSectio
         <CardDescription>{t('subtitle')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
-        {KEY_CONFIGS.map((config) => (
-          <div key={config.id} className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <Label htmlFor={config.id} className="text-sm font-medium">
-                {config.label}
-              </Label>
-              <a
-                href={config.helpUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-xs text-violet-400 hover:text-violet-300 transition-colors"
-              >
-                {t(config.helpKey)}
-                <ExternalLink className="h-3 w-3" />
-              </a>
-            </div>
-            <p className="text-xs text-muted-foreground">{t(config.descKey)}</p>
-            <div className="relative">
-              <Input
+        {KEY_CONFIGS.map((config) => {
+          const keyValue = form.watch(`apiKeys.${config.id}`) ?? '';
+          return (
+            <div key={config.id} className="space-y-1.5 relative">
+              <div className="absolute right-0 top-0 flex items-center justify-end z-10">
+                <a
+                  href={config.helpUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-violet-400 hover:text-violet-300 transition-colors"
+                >
+                  {t(config.helpKey)}
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              </div>
+              <ApiKeyInput
                 id={config.id}
-                type={showKeys[config.id] ? 'text' : 'password'}
+                label={config.label}
+                value={keyValue}
                 placeholder={
                   defaultValues.apiKeys[config.id] ? '********' : config.placeholder
                 }
-                {...register(`apiKeys.${config.id}`)}
-                disabled={isPending}
+                onChange={(val) => {
+                  form.setValue(`apiKeys.${config.id}`, val, { shouldDirty: true });
+                  setStatus((prev) => ({ ...prev, [config.id]: 'idle' }));
+                  setLatencies((prev) => {
+                    const copy = { ...prev };
+                    delete copy[config.id];
+                    return copy;
+                  });
+                }}
+                onVerify={() => handleVerify(config.id, keyValue)}
+                status={status[config.id]}
+                errorMessage={errors[config.id]}
+                helpText={t(config.descKey)}
+                latency={latencies[config.id]}
               />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                onClick={() => toggleKeyVisibility(config.id)}
-                aria-label={showKeys[config.id]
-                  ? t('showAriaHide', { label: config.label })
-                  : t('showAriaShow', { label: config.label })}
-              >
-                {showKeys[config.id] ? (
-                  <EyeOff className="h-4 w-4 text-muted-foreground" />
-                ) : (
-                  <Eye className="h-4 w-4 text-muted-foreground" />
-                )}
-              </Button>
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         <div className="rounded-lg bg-violet-500/5 border border-violet-500/10 px-4 py-3 mt-4">
           <p className="text-xs text-muted-foreground">

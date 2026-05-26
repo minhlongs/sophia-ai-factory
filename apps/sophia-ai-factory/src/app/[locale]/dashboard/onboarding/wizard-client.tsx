@@ -134,6 +134,8 @@ export function WizardClient() {
     NOWPAYMENTS_API_KEY: 'idle',
   });
 
+  const [latencies, setLatencies] = useState<Record<string, number>>({});
+
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveFailed, setSaveFailed] = useState(false);
@@ -151,11 +153,21 @@ export function WizardClient() {
   const updateConfig = (key: string, value: string) => {
     setConfig(prev => ({ ...prev, [key]: value }));
     setStatus(prev => ({ ...prev, [key]: 'idle' }));
+    setLatencies(prev => {
+      const copy = { ...prev };
+      delete copy[key];
+      return copy;
+    });
   };
 
   const updateProviderConfig = (key: keyof ProviderConfig, value: string) => {
     setProviderConfig(prev => ({ ...prev, [key]: value }));
     setStatus(prev => ({ ...prev, [key]: 'idle' }));
+    setLatencies(prev => {
+      const copy = { ...prev };
+      delete copy[key];
+      return copy;
+    });
   };
 
   const getLocalizedMessage = (data: VerifyKeyResponse): string => {
@@ -166,6 +178,7 @@ export function WizardClient() {
   const verifyKey = async (service: string, keyName: string, keyValue: string, params?: unknown) => {
     setStatus(prev => ({ ...prev, [keyName]: 'validating' }));
     setErrors(prev => ({ ...prev, [keyName]: '' }));
+    const startTime = performance.now();
 
     try {
       const res = await fetch('/api/setup/verify', {
@@ -174,11 +187,15 @@ export function WizardClient() {
         body: JSON.stringify({ service, key: keyValue, params })
       });
 
+      const endTime = performance.now();
+      const duration = Math.round(endTime - startTime);
+
       const data = (await res.json()) as VerifyKeyResponse;
       const isValid = data.valid === true || data.ok === true;
 
       if (isValid) {
         setStatus(prev => ({ ...prev, [keyName]: 'valid' }));
+        setLatencies(prev => ({ ...prev, [keyName]: duration }));
       } else {
         setStatus(prev => ({ ...prev, [keyName]: 'invalid' }));
         setErrors(prev => ({ ...prev, [keyName]: getLocalizedMessage(data) }));
@@ -204,6 +221,7 @@ export function WizardClient() {
     if (!value.trim()) return false;
     setStatus(prev => ({ ...prev, [fieldKey]: 'validating' }));
     setErrors(prev => ({ ...prev, [fieldKey]: '' }));
+    const startTime = performance.now();
 
     const endpoint = provider === 'heygen'
       ? '/api/setup-wizard/test-heygen'
@@ -222,10 +240,17 @@ export function WizardClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ api_key: value }),
       });
+      const endTime = performance.now();
+      const duration = Math.round(endTime - startTime);
+
       const data = (await res.json()) as VerifyKeyResponse;
       const isOk = data.ok === true || data.valid === true;
       setStatus(prev => ({ ...prev, [fieldKey]: isOk ? 'valid' : 'invalid' }));
-      if (!isOk) setErrors(prev => ({ ...prev, [fieldKey]: getLocalizedMessage(data) }));
+      if (isOk) {
+        setLatencies(prev => ({ ...prev, [fieldKey]: duration }));
+      } else {
+        setErrors(prev => ({ ...prev, [fieldKey]: getLocalizedMessage(data) }));
+      }
       return isOk;
     } catch {
       setStatus(prev => ({ ...prev, [fieldKey]: 'invalid' }));
@@ -405,6 +430,7 @@ export function WizardClient() {
                 verifyKey={verifyKey}
                 status={status}
                 errors={errors}
+                latencies={latencies}
               />
             )}
 
@@ -423,6 +449,7 @@ export function WizardClient() {
                   errors={errors}
                   onTestKey={testProviderKey}
                   savedCredentials={savedCredentials}
+                  latencies={latencies}
                 />
               </>
             )}
