@@ -22,12 +22,17 @@ export default defineConfig({
     coverage: {
       reporter: ['text', 'json-summary', 'html'],
       thresholds: {
-        lines: 0,
-        functions: 0,
-        branches: 0,
-        statements: 0,
+        lines: 60,
+        functions: 60,
+        branches: 60,
+        statements: 60,
       },
-      include: ['src/**/*.{ts,tsx}'],
+      include: [
+        'src/tree/byok/**/*.{ts,tsx}',
+        'src/tree/clients/**/*.{ts,tsx}',
+        'src/tree/handover/**/*.{ts,tsx}',
+        'src/seed/utils/**/*.{ts,tsx}',
+      ],
       exclude: [
         'src/components/ui/**',
         '**/*.d.ts',

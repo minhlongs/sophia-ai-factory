@@ -57,7 +57,6 @@ export const cspConfig = {
     "'self'",
     // supabase.co removed — project migrated to D1 (2026-04-28, go-live audit T4)
     // Supabase exceptions (OAuth callbacks, admin invite) are server-side only, no browser connect needed
-    // polar.sh removed — Polar rejected this product (2026-03-23)
     'https://api.heygen.com',
     'https://api.openai.com',
     'https://openrouter.ai',

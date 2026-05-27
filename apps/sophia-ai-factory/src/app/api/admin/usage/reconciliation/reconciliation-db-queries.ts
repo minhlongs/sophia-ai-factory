@@ -58,7 +58,7 @@ export async function getLicenseInfo(
 ): Promise<LicenseInfo | null> {
   const { data, error } = await supabase
     .from('raas_licenses')
-    .select('nonce, tier, polar_customer_id, stripe_customer_id, polar_subscription_id, is_revoked, created_at, expires_at')
+    .select('nonce, tier, stripe_customer_id, is_revoked, created_at, expires_at')
     .eq('nonce', nonce)
     .single();
 

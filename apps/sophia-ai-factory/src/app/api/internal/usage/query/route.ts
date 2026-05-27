@@ -125,31 +125,18 @@ export async function GET(request: NextRequest) {
     if (externalCustomerId) {
       const { data: rawLicense } = await db
         .from('raas_licenses')
-        .select('nonce, tier, created_by, polar_customer_id')
-        .eq('polar_customer_id', externalCustomerId)
+        .select('nonce, tier, created_by, stripe_customer_id')
+        .eq('stripe_customer_id', externalCustomerId)
         .single();
       const license = rawLicense as CustomerLicenseRow | null;
 
       if (!license) {
-        const { data: rawStripeLicense } = await db
-          .from('raas_licenses')
-          .select('nonce, tier, created_by, stripe_customer_id')
-          .eq('stripe_customer_id', externalCustomerId)
-          .single();
-        const stripeLicense = rawStripeLicense as CustomerLicenseRow | null;
-
-        if (!stripeLicense) {
-          return NextResponse.json({ error: `No license found for external_customer_id: ${externalCustomerId}` }, { status: 404 });
-        }
-
-        queryLicenseNonce = stripeLicense.nonce;
-        queryUserId = stripeLicense.created_by ?? undefined;
-        tier = stripeLicense.tier || 'BASIC';
-      } else {
-        queryLicenseNonce = license.nonce;
-        queryUserId = license.created_by ?? undefined;
-        tier = license.tier || 'BASIC';
+        return NextResponse.json({ error: `No license found for external_customer_id: ${externalCustomerId}` }, { status: 404 });
       }
+
+      queryLicenseNonce = license.nonce;
+      queryUserId = license.created_by ?? undefined;
+      tier = license.tier || 'BASIC';
     } else {
       const { data: rawLicense } = await db
         .from('raas_licenses')

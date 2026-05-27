@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
         const { data: license } = await supabase.from('raas_licenses').select('created_by').eq('nonce', licenseNonce).single()
         if (!license || license.created_by !== user.id) return NextResponse.json({ error: 'Forbidden - Not your license' }, { status: 403 })
       } else if (externalCustomerId) {
-        const { data: licenseCheck } = await supabase.from('raas_licenses').select('created_by').eq('polar_customer_id', externalCustomerId).single()
+        const { data: licenseCheck } = await supabase.from('raas_licenses').select('created_by').eq('stripe_customer_id', externalCustomerId).single()
         if (!licenseCheck || licenseCheck.created_by !== user.id) return NextResponse.json({ error: 'Forbidden - Not your customer ID' }, { status: 403 })
       }
     }

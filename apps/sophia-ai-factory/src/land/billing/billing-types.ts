@@ -1,8 +1,7 @@
 /**
  * Billing Types for Overage Reconciliation
  *
- * Type definitions for overage billing, Stripe integration,
- * Polar.sh metered billing, and quota exceeded event reconciliation
+ * Type definitions for overage billing and quota exceeded event reconciliation
  */
 
 import type { Tier } from '@/seed/types';
@@ -203,4 +202,3 @@ export function generateIdempotencyKey(
   return `overage-${licenseNonce}-${periodStart}-${periodEnd}`;
 }
 
-// Polar billing types removed — NOWPayments IPN handles payments

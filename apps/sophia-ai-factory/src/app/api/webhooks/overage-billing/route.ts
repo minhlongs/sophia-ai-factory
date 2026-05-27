@@ -3,7 +3,7 @@
  *
  * Processes overage events from Cloudflare Worker queue
  * and syncs to Supabase usage_events table.
- * Supports Polar/Stripe webhook signatures for verification.
+ * Supports standard webhook and Cloudflare signatures for verification.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -30,7 +30,6 @@ export async function POST(request: NextRequest) {
       'webhook-id': request.headers.get('webhook-id') || undefined,
       'webhook-timestamp': request.headers.get('webhook-timestamp') || undefined,
       'webhook-signature': request.headers.get('webhook-signature') || undefined,
-      'Polar-Signature': request.headers.get('Polar-Signature') || undefined,
       'X-Cloudflare-Signature': request.headers.get('X-Cloudflare-Signature') || undefined
     };
 

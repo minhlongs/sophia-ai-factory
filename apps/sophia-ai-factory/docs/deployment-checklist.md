@@ -12,10 +12,10 @@
 - [ ] **D1 Migrations**: Run `npx wrangler d1 migrations apply sophia-raas-db` against production
 - [ ] **Build**: `npm run build` — 0 TypeScript errors
 - [ ] **Tests**: `npm test` — all 1,798 tests pass
+- [ ] **Production E2E user**: `E2E_TEST_USER_PASSWORD` available in operator shell/secret manager
 
 ## Deployment
-- [ ] **OpenNext build**: `npm run deploy:build`
-- [ ] **Deploy**: `npx wrangler deploy`
+- [ ] **Deploy**: `npm run deploy:full` (build + wrangler deploy + go-live user E2E)
 - [ ] **Verify SHA**: `curl -s https://sophia.agencyos.network/api/version` matches `git rev-parse HEAD | cut -c1-8`
 
 ## Post-Deployment Verification
@@ -26,6 +26,7 @@
 - [ ] HeyGen webhook configured and tested
 - [ ] Telegram bot `/start` responds
 - [ ] Checkout flow: click tier on /pricing → NOWPayments redirect OK
+- [ ] Go-live user E2E passed: auth session, dashboard, video creation, account, billing
 - [ ] Sentry receiving production errors/events
 - [ ] OG image previews work (no localhost:3000 in meta tags)
 - [ ] **Phase 1 (Facebook + X)**: Verify OAuth flows

@@ -21,7 +21,7 @@ export function extractJwt(request: Request): string | null {
 export async function getLicenseContext(
   licenseNonce: string,
   kv: KVNamespace,
-): Promise<{ tier: string; agencyId?: string; polarCustomerId?: string; featureEntitlements: string[] } | null> {
+): Promise<{ tier: string; agencyId?: string; featureEntitlements: string[] } | null> {
   try {
     const cached = await kv.get(`license:${licenseNonce}`)
     return cached ? JSON.parse(cached) : null
@@ -31,15 +31,3 @@ export async function getLicenseContext(
   }
 }
 
-export async function getSubscriptionStatus(
-  polarCustomerId: string,
-  kv: KVNamespace,
-): Promise<{ status: 'active' | 'inactive' | 'past_due' | 'canceled'; tier: 'starter' | 'growth' | 'premium' | 'master'; features: string[] } | null> {
-  try {
-    const cached = await kv.get(`polar:subscription:${polarCustomerId}`)
-    return cached ? JSON.parse(cached) : null
-  } catch (error) {
-    logger.error('[RaaS Auth Middleware] Failed to fetch subscription status', error instanceof Error ? error : new Error(String(error)))
-    return null
-  }
-}

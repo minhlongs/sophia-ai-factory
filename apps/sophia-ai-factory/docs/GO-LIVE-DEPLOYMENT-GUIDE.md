@@ -47,14 +47,12 @@ echo "NEXT_PUBLIC_APP_URL = \"https://sophia.agencyos.network\"" >> .dev.vars
 ## Phase 3: Build & Deploy
 
 ```bash
-npm run deploy:build    # next build + OpenNext bundle
-npx wrangler deploy     # Push to Cloudflare Workers
+export E2E_TEST_USER_PASSWORD='<production-e2e-user-password>'
+npm run deploy:full     # build + OpenNext + wrangler deploy + go-live user E2E
 ```
 
-Or single command:
-```bash
-npm run deploy
-```
+Do not use raw `npx wrangler deploy` for normal go-live. It bypasses SHA
+injection, dirty-tree protection, and production user E2E verification.
 
 ---
 
@@ -111,13 +109,14 @@ curl -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook" \
 
 ---
 
-## Phase 7: CI/CD
+## Phase 7: Deploy Doctrine
 
-GitHub Actions workflow: `.github/workflows/tests-and-deploy.yml`
+GitHub Actions is disabled by design for this project. Canonical deploy is
+CF-direct via `npm run deploy:full`.
 
-Manual deploy if CI is disabled:
+Emergency low-level deploy only with explicit operator approval:
 ```bash
-npx wrangler deploy
+ALLOW_DIRTY_DEPLOY=1 npx wrangler deploy --config wrangler.toml
 ```
 
 ---

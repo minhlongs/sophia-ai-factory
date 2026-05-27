@@ -29,7 +29,7 @@ async function syncFromGateway(licenseNonce: string, requestId: string): Promise
 
     return {
       success: true,
-      license: { nonce: license.licenseNonce, tier: license.tier, status: dbResult.status, expiresAt: license.expiresAt, polarCustomerId: dbResult.polarCustomerId, polarSubscriptionStatus: dbResult.polarSubscriptionStatus, featureEntitlements: dbResult.featureEntitlements, dunningState: dbResult.dunningState },
+      license: { nonce: license.licenseNonce, tier: license.tier, status: dbResult.status, expiresAt: license.expiresAt, featureEntitlements: dbResult.featureEntitlements, dunningState: dbResult.dunningState },
       syncSource: 'gateway',
       kvCacheInvalidated: kvInvalidated,
     }

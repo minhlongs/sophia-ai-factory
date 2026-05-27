@@ -15,7 +15,9 @@ GITHUB_REPO="longtho638-jpg/sophia-ai-factory"
 **MUST READ:** `apps/sophia-ai-factory/.claude/rules/sophia-deploy-verify.md`
 
 Hard rules:
-- Workflow `Tests & Deploy` có 2 jobs — TẤT CẢ phải success (không chỉ check `gh run list -L 1`)
+- `npm run deploy:full` là path canonical; GitHub Actions disabled, không check `gh run list`
+- `E2E_TEST_USER_PASSWORD` phải có trong operator shell trước deploy
+- `deploy:full` deploy trước, sau đó chạy go-live user E2E trên artifact mới live
 - Verify deploy SHA via `curl -s https://sophia.agencyos.network/api/version` — phải khớp `git rev-parse HEAD | cut -c1-8`
 - HTTP 200 KHÔNG đủ — có thể là deploy CŨ. Phải SHA match.
 - Báo cáo "Vercel auto-deployed" = SAI 100% (project là Cloudflare Workers, không có vercel.json)
@@ -81,6 +83,7 @@ Giant files split into focused modules with barrel re-exports:
 ```bash
 # Step 1: Build + inject SHA + deploy
 cd apps/sophia-ai-factory
+export E2E_TEST_USER_PASSWORD='<production-e2e-user-password>'
 npm run deploy:full
 
 # Step 2: Apply any new D1 migrations (if migrations/ changed)
@@ -101,10 +104,10 @@ Hard rules:
 ## Green Production Rule
 
 After every `npm run deploy:full`, verify:
-1. **Deploy script:** exit code 0 (wrangler output shows success)
-2. **SHA match:** `curl -s $PROD_URL/api/version | jq .shortSha` == `git rev-parse HEAD | cut -c1-8`
+1. **Deploy script:** exit code 0 (wrangler deploy + go-live user E2E + production SHA/HTTP verification passed)
+2. **SHA match:** `scripts/verify-production-deploy.sh` compares cache-busted `/api/version?deployVerify=<shortSha>` with `git rev-parse HEAD | cut -c1-8`
 3. **HTTP:** `curl -sI "$PROD_URL" | head -3` → HTTP 200
-4. **Report:** Build/Tests/Deploy/SHA/Production status lines required
+4. **Report:** Build/Tests/Deploy/Go-live E2E/SHA/Production status lines required
 
 ## Historical Note: GitHub Actions (disabled by design since 2026-05-03)
 

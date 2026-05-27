@@ -28,7 +28,7 @@ export interface BillingEmailContext {
   gracePeriodDays?: number;
   suspensionDate?: Date;
   nextRetryDate?: Date;
-  paymentProvider?: 'stripe' | 'polar';
+  paymentProvider?: 'stripe';
   language?: 'en' | 'vi';
   subject?: string;
 }

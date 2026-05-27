@@ -1,7 +1,7 @@
 /**
  * Signature verification helpers for overage billing webhook
  *
- * Supports Polar, Stripe, and Cloudflare signature formats.
+ * Supports standard webhook and Cloudflare signature formats.
  * Uses timing-safe comparison to prevent timing attacks.
  */
 
@@ -9,7 +9,7 @@ import { Webhook } from 'standardwebhooks';
 
 /**
  * Verify webhook signature using timing-safe comparison
- * Supports Polar, Stripe, and Cloudflare signature formats
+ * Supports standard webhook and Cloudflare signature formats
  */
 export async function verifySignature(
   body: string,
@@ -18,7 +18,7 @@ export async function verifySignature(
 ): Promise<boolean> {
   try {
     const wh = new Webhook(secret);
-    const signature = headers['Polar-Signature'] || headers['webhook-signature'];
+    const signature = headers['webhook-signature'];
 
     if (!signature) {
       return false;
@@ -36,7 +36,7 @@ export async function verifySignature(
     try {
       const base64Secret = Buffer.from(secret).toString('base64');
       const wh = new Webhook(base64Secret);
-      const signature = headers['Polar-Signature'] || headers['webhook-signature'];
+      const signature = headers['webhook-signature'];
 
       if (!signature) {
         return false;

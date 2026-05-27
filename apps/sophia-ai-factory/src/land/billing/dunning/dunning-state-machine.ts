@@ -40,7 +40,6 @@ export interface DunningSettingsRow {
   id: string;
   user_id: string;
   license_nonce: string;
-  polar_customer_id: string | null;
   stripe_customer_id: string | null;
   grace_period_days: number;
   max_retry_attempts: number;

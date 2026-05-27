@@ -24,12 +24,8 @@ export type CampaignInput = z.infer<typeof campaignSchema>;
 export const webhookHeaderSchema = z.object({
   "webhook-id": z.string().min(1),
   "webhook-timestamp": z.string().min(1),
-  "webhook-signature": z.string().min(1).optional(),
-  "Polar-Signature": z.string().min(1).optional(),
-}).refine(
-  (data) => data["webhook-signature"] || data["Polar-Signature"],
-  { message: "Either webhook-signature or Polar-Signature is required" }
-);
+  "webhook-signature": z.string().min(1),
+});
 
 export const checkoutSchema = z.object({
   tier: z.enum(["BASIC", "PREMIUM", "ENTERPRISE", "MASTER"]),

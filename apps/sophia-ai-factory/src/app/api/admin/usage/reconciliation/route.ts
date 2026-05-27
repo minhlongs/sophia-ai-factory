@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
 
     const billingPeriods = await queryBillingPeriods(
       db,
-      filters.customerId || licenseInfo?.polar_customer_id || undefined,
+      filters.customerId || licenseInfo?.stripe_customer_id || undefined,
       filters.startTimestamp,
       filters.endTimestamp
     );

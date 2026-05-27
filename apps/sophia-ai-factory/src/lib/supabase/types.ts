@@ -58,7 +58,6 @@ export interface UserProfileRow {
   api_keys: Json | null
   subscription_tier: 'free' | 'pro' | 'enterprise' | 'basic' | 'premium' | null
   subscription_status: string | null
-  polar_subscription_id: string | null
   subscription_expires_at: string | null
   created_at: string
   updated_at: string
@@ -71,7 +70,6 @@ export interface UserProfileInsert {
   api_keys?: Json | null
   subscription_tier?: 'free' | 'pro' | 'enterprise' | 'basic' | 'premium' | null
   subscription_status?: string | null
-  polar_subscription_id?: string | null
   subscription_expires_at?: string | null
   created_at?: string
   updated_at?: string
@@ -177,7 +175,6 @@ export interface RaasLicenseRow {
   created_at: number
   metadata: Json
   updated_at: number | null
-  polar_customer_id: string | null
   stripe_customer_id: string | null
 }
 
@@ -204,7 +201,6 @@ export interface RaasLicenseUpdate {
   revoked_by?: string | null
   created_by?: string | null
   metadata?: Json
-  polar_customer_id?: string | null
   stripe_customer_id?: string | null
   [key: string]: string | number | boolean | Json | null | undefined
 }
@@ -437,7 +433,7 @@ export interface Database {
         Row: {
           id: string
           event_type: string
-          polar_event_id: string
+          provider_event_id: string
           payload: Json
           processed: boolean
           created_at: string
@@ -445,7 +441,7 @@ export interface Database {
         Insert: {
           id?: string
           event_type: string
-          polar_event_id: string
+          provider_event_id: string
           payload: Json
           processed?: boolean
           created_at?: string
@@ -453,7 +449,7 @@ export interface Database {
         Update: {
           id?: string
           event_type?: string
-          polar_event_id?: string
+          provider_event_id?: string
           payload?: Json
           processed?: boolean
           created_at?: string
@@ -781,7 +777,6 @@ export interface DunningSettingsRow {
   id: string
   user_id: string
   license_nonce: string
-  polar_customer_id: string | null
   stripe_customer_id: string | null
   grace_period_days: number
   max_retry_attempts: number
@@ -797,7 +792,6 @@ export interface DunningSettingsRow {
 export interface DunningSettingsInsert {
   user_id: string
   license_nonce: string
-  polar_customer_id?: string | null
   stripe_customer_id?: string | null
   grace_period_days?: number
   max_retry_attempts?: number
@@ -826,7 +820,6 @@ export interface DunningAttemptRow {
   next_retry_at: string | null
   scheduled_retry_count: number
   stripe_invoice_id: string | null
-  polar_order_id: string | null
   ip_address: string | null
   user_agent: string | null
   created_at: string
@@ -848,7 +841,6 @@ export interface DunningAttemptInsert {
   next_retry_at?: string | null
   scheduled_retry_count?: number
   stripe_invoice_id?: string | null
-  polar_order_id?: string | null
   ip_address?: string | null
   user_agent?: string | null
   created_at?: string

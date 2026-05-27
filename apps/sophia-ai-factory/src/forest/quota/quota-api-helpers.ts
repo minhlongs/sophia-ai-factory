@@ -62,16 +62,12 @@ export function getStatusLevel(
  * @param usage - Current usage
  * @param limits - Quota limits
  * @param tier - User tier
- * @param polarSynced - Whether Polar sync is enabled
- * @param lastPolarSync - Last Polar sync timestamp
  * @returns Formatted quota response
  */
 export function formatQuotaResponse(
   usage: { hourly: number; daily: number; monthly: number; requests: number },
   limits: QuotaLimit,
   tier: string,
-  polarSynced: boolean = false,
-  lastPolarSync?: string
 ) {
   const percentages = calculatePercentages(
     { hourly: usage.hourly, daily: usage.daily, monthly: usage.monthly },
@@ -94,8 +90,6 @@ export function formatQuotaResponse(
     },
     percentages,
     status,
-    polarSynced,
-    lastPolarSync,
   };
 }
 

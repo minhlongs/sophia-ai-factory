@@ -23,7 +23,6 @@ export interface QuotaCheckContext {
   action?: string;
   ipAddress?: string;
   userAgent?: string;
-  polarCustomerId?: string;
 }
 
 export interface QuotaConfig {

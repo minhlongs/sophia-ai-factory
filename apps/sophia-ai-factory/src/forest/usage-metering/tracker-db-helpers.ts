@@ -16,7 +16,7 @@ import type { RaasLicense } from '@/forest/raas-schema';
 /**
  * Resolve external customer ID from license metadata
  *
- * Looks for polar_customer_id or stripe_customer_id in raas_licenses.metadata
+ * Looks for stripe_customer_id in raas_licenses.metadata
  */
 export async function resolveExternalCustomerId(licenseNonce: string): Promise<string | null> {
   try {
@@ -37,16 +37,14 @@ export async function resolveExternalCustomerId(licenseNonce: string): Promise<s
       return null;
     }
 
-    // Priority: polar_customer_id > stripe_customer_id
-    const polarId = typeof metadata.polar_customer_id === 'string' ? metadata.polar_customer_id : null;
     const stripeId = typeof metadata.stripe_customer_id === 'string' ? metadata.stripe_customer_id : null;
-    const externalId: string | null = polarId || stripeId;
+    const externalId: string | null = stripeId;
 
     if (externalId) {
       logger.debug('[External Customer ID] Resolved', {
         licenseNonce,
         externalId,
-        source: polarId ? 'polar' : 'stripe',
+        source: 'stripe',
       });
     }
 

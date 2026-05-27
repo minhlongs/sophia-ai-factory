@@ -33,17 +33,17 @@ describe('logger-utility — overloaded error-arg signatures', () => {
   };
 
   it('warn preserves Error name/message/stack when Error passed at arg2', () => {
-    const boom = new Error('polar billing fetch failed');
-    logger.warn('[Enriched JWT] Failed to fetch Polar billing status', boom);
+    const boom = new Error('billing fetch failed');
+    logger.warn('[Enriched JWT] Failed to fetch billing status', boom);
 
     expect(warnSpy).toHaveBeenCalledOnce();
     const out = parseOutput(warnSpy);
     const err = (out.error ?? (out.raw as string)) as Record<string, unknown> | string;
     if (typeof err === 'string') {
-      expect(err).toContain('polar billing fetch failed');
+      expect(err).toContain('billing fetch failed');
     } else {
       expect(err.name).toBe('Error');
-      expect(err.message).toBe('polar billing fetch failed');
+      expect(err.message).toBe('billing fetch failed');
       expect(typeof err.stack).toBe('string');
     }
   });

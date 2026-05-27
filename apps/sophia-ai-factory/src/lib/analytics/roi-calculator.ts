@@ -28,7 +28,7 @@ export interface ROIMetrics {
   paybackMonths: number;
   costPerUsage: number;
   roiPercent: number;      // ROI percentage: (projectedAnnual - licenseCost) / licenseCost * 100
-  licenseCost: number;      // Original license cost from Polar
+  licenseCost: number;      // Original license cost
   totalCredits: number;     // Total credits used
 }
 

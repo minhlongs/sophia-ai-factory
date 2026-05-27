@@ -118,7 +118,8 @@ The script will prompt 6× — paste each value when asked:
 5. SENTRY_PROJECT (just press Enter)
 6. SLACK_OPS_WEBHOOK_URL (from 3.B.2)
 
-Script auto-runs: push secrets → verify 6 present → `npm run deploy:full` → fire test event.
+Script auto-runs: push secrets → verify 6 present → `npm run deploy:full` → go-live user E2E → fire test event.
+Before running it, ensure `E2E_TEST_USER_PASSWORD` is exported in the shell; `deploy:full` fails closed without it.
 You should see a `[founder-setup]` warning event appear at https://sentry.io within 30s.
 
 ---
@@ -142,6 +143,7 @@ NEXT_PUBLIC_CRISP_WEBSITE_ID = "PASTE-YOUR-ID-HERE"
 Then re-deploy:
 ```bash
 cd ~/projects/sophia-ai-factory/apps/sophia-ai-factory
+export E2E_TEST_USER_PASSWORD='<production-e2e-user-password>'
 npm run deploy:full
 ```
 

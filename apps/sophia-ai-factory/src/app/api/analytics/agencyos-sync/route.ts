@@ -16,7 +16,7 @@ interface AgencyOSQuotaReport {
   totalCreditsUsed: number; totalOverageCredits: number; overageCharges: number
   tierHistory: Array<{ tier: string; startDate: string }>
   quotaViolations: Array<{ timestamp: string; type: string; exceededBy: number }>
-  polarCustomerId?: string; subscriptionStatus?: string
+  subscriptionStatus?: string
 }
 
 interface SyncRequestBody {
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     const startTs = Math.floor(new Date(startDate).getTime() / 1000)
     const endTs = Math.floor(new Date(endDate).getTime() / 1000)
 
-    const { data: licenses } = await db.from('raas_licenses').select('nonce, tier, polar_customer_id, created_by').eq('created_by', agencyId).eq('is_revoked', false)
+    const { data: licenses } = await db.from('raas_licenses').select('nonce, tier, created_by').eq('created_by', agencyId).eq('is_revoked', false)
 
     if (!licenses || licenses.length === 0) {
       logger.info('[AgencyOS Sync] No active licenses found for agency', { agencyId })
@@ -68,7 +68,6 @@ export async function POST(request: NextRequest) {
         totalCreditsUsed: quotaUsage.totalCreditsUsed, totalOverageCredits: 0, overageCharges: 0,
         tierHistory: includeTierHistory ? await fetchTierHistory(license.nonce as string) : [],
         quotaViolations: [],
-        polarCustomerId: (license.polar_customer_id as string) || undefined,
       }
       if (includeOverageEvents) {
         const overageData = await fetchOverageEvents(license.nonce as string, startTs, endTs)

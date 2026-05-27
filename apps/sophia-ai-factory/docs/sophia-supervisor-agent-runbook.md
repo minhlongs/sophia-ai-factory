@@ -239,7 +239,7 @@ wrangler tail --format json | grep workflow-stepper
 
 **Solution**: 
 1. Verify cron trigger is enabled in `wrangler.toml`: `crons = ["*/1 * * * *"]`
-2. Deploy: `git push origin main`
+2. Deploy: `export E2E_TEST_USER_PASSWORD='<production-e2e-user-password>' && npm run deploy:full`
 
 ---
 
@@ -324,7 +324,8 @@ git log --oneline | grep -i "supervisor\|workflow" | head -5
 
 # Rollback
 git revert <commit_hash>
-git push origin main
+export E2E_TEST_USER_PASSWORD='<production-e2e-user-password>'
+npm run deploy:full
 
 # Verify
 curl -sI https://sophia.agencyos.network | head -3
@@ -340,7 +341,7 @@ Edit `wrangler.toml` and remove/comment cron:
 # crons = ["*/1 * * * *"]
 ```
 
-Deploy: `git push origin main`
+Deploy: `export E2E_TEST_USER_PASSWORD='<production-e2e-user-password>' && npm run deploy:full`
 
 ---
 
@@ -361,4 +362,3 @@ Deploy: `git push origin main`
 **Docs**: `/docs/system-architecture.md` (Supervisor Agent section)
 **Changelog**: `/docs/project-changelog.md` (2026-04-17 entry)
 **Code**: `src/app/api/raas/workflows/` + `src/app/dashboard/workflows/`
-

@@ -110,8 +110,11 @@ Add barrel `index.ts` exports for new public APIs (`<domain>/index.ts`).
 Reference (**MUST READ**): `.claude/rules/sophia-deploy-verify.md`
 
 ```bash
-# Step 1: Build + inject SHA + wrangler deploy
+# Step 0: Export production E2E credential required by deploy:full
 cd apps/sophia-ai-factory
+export E2E_TEST_USER_PASSWORD='<production-e2e-user-password>'
+
+# Step 1: Build + inject SHA + wrangler deploy + go-live user E2E + SHA/HTTP verify
 npm run deploy:full
 
 # Step 2: Apply migrations if migrations/ changed
@@ -121,12 +124,20 @@ bash scripts/apply-migrations.sh
 
 # Step 3: SHA match (MANDATORY — HTTP 200 alone không đủ)
 LOCAL=$(git rev-parse HEAD | cut -c1-8)
-LIVE=$(curl -s https://sophia.agencyos.network/api/version | jq -r .shortSha)
+LIVE=$(curl -s "https://sophia.agencyos.network/api/version?deployVerify=$LOCAL" | jq -r .shortSha)
 [ "$LOCAL" = "$LIVE" ] && echo "✅ MATCH" || { echo "❌ STALE — re-run deploy:full"; exit 1; }
+
+# Equivalent scripted check, used by deploy:full:
+bash scripts/verify-production-deploy.sh
 
 # Step 4: HTTP health
 curl -sI https://sophia.agencyos.network | head -3   # HTTP/2 200
 ```
+
+`npm run deploy:full` runs `scripts/deploy-full-verified.sh`: it checks
+`E2E_TEST_USER_PASSWORD` exists, deploys the current artifact, runs
+`npm run test:e2e:go-live`, then runs `scripts/verify-production-deploy.sh`
+for cache-busted `/api/version` SHA match and production HTTP 200.
 
 **Anti-patterns:**
 - ❌ `gh run list` — GitHub Actions disabled 2026-05-03 (workflow archived `.disabled`)

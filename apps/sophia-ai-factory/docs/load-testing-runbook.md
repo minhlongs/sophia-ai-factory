@@ -205,21 +205,35 @@ test('only-logged-in users see dashboard', async ({ authenticatedPage }) => {
 the fixture skip cleanly with a clear reason — so the default unauthenticated
 run remains green.
 
-### Pre-deploy gate (still deferred)
+### Deploy verification gate (wired 2026-05-15)
 
-Wiring the auth fixture into `npm run deploy:full` is straightforward once the
-production user is bootstrapped + the password is available in CI/local
-secrets. Proposed wiring:
+`npm run deploy:full` now fails closed if the production E2E user password is
+missing, then deploys, then runs the production-user E2E gate against the newly
+published Cloudflare Worker artifact:
 
 ```jsonc
 // package.json
-"deploy:full": "npm test && playwright test --grep @smoke && tsx scripts/deploy-with-sha.sh"
+"deploy:full": "bash scripts/deploy-full-verified.sh"
 ```
 
-Held back from this slice to avoid adding ~60s + cookie persistence to every
-deploy without first migrating the existing 6 free100 skipped tests onto the
-fixture. The CF-direct doctrine `/api/version` SHA-match check remains the
-interim verify gate.
+The gate runs `tests/e2e/go-live-user-gap.spec.ts` through
+`scripts/e2e-go-live-user-gap.sh` with `E2E_REQUIRE_AUTH=1`. Missing
+`E2E_TEST_USER_PASSWORD` is a hard failure, not a skip. The browser run happens
+after deploy so it validates the current artifact, not the previous production
+worker.
+
+```bash
+PLAYWRIGHT_TEST_BASE_URL=https://sophia.agencyos.network \
+E2E_TEST_USER_PASSWORD='<strong-password>' \
+  npm run e2e:bootstrap-user
+
+PLAYWRIGHT_TEST_BASE_URL=https://sophia.agencyos.network \
+E2E_TEST_USER_PASSWORD='<strong-password>' \
+  npm run test:e2e:go-live
+```
+
+Remaining operational requirement: store `E2E_TEST_USER_PASSWORD` in the local
+operator shell or CI secret manager before running `npm run deploy:full`.
 
 Tracked in `~/plans/260510-0603-sophia-gap-plan/phase-02-e2e-load.md`.
 

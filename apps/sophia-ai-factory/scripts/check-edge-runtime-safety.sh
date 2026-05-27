@@ -42,14 +42,13 @@ violations=0
 allowlisted=0
 checked=0
 
+# Use grep to find all candidate files containing the banned pattern
+# to avoid spawning grep on every single file in the codebase.
 while IFS= read -r ts_file; do
+  [ -z "$ts_file" ] && continue
+
   # Skip excluded paths
   if printf '%s' "$ts_file" | grep -qE "$EXCLUDE_PATHS"; then
-    continue
-  fi
-
-  # Skip if no banned API used at all
-  if ! grep -qE "$BANNED_PATTERN" "$ts_file"; then
     continue
   fi
 
@@ -66,7 +65,7 @@ while IFS= read -r ts_file; do
     echo "VIOLATION: ${ts_file}:${line}"
     violations=$((violations + 1))
   done < <(grep -nE "$BANNED_PATTERN" "$ts_file" | cut -d: -f1)
-done < <(find src instrumentation.ts -name "*.ts" -type f 2>/dev/null | sort)
+done < <(grep -rlE "$BANNED_PATTERN" src instrumentation.ts 2>/dev/null | grep -E '\.ts$' || true)
 
 echo
 echo "Edge Runtime safety check:"

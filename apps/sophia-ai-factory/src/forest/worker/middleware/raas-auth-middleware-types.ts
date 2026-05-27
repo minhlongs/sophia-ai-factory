@@ -11,7 +11,6 @@ export interface AuthContext {
   tier: string
   featureEntitlements: string[]
   agencyId?: string
-  polarSubscriptionStatus?: string
   isPaid?: boolean
 }
 

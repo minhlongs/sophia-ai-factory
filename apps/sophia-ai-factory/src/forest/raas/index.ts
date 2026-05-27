@@ -35,6 +35,5 @@ export {
 
 // Subscription-driven operations
 export {
-  reactivateLicenseBySubscription,
   revokeLicenseBySubscription,
 } from './raas-invoice-generator';

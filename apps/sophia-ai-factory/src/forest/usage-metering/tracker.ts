@@ -53,7 +53,7 @@ export async function trackUsage(event: UsageEventInput): Promise<IngestionResul
       };
     }
 
-    // Resolve external customer ID if not provided (for Stripe/Polar reconciliation)
+    // Resolve external customer ID if not provided (for Stripe reconciliation)
     let externalCustomerId = event.externalCustomerId;
     if (!externalCustomerId) {
       externalCustomerId = await resolveExternalCustomerId(event.licenseNonce) || undefined;

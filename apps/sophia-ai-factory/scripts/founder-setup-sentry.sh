@@ -2,7 +2,7 @@
 # Sophia AI Factory — one-shot Sentry + Slack alerts setup for non-tech founder.
 #
 # Prompts for 6 credentials, pushes them to Cloudflare Workers as secrets,
-# deploys, and fires a test event via @sentry/cli to verify the pipeline.
+# deploys with go-live user E2E, and fires a test event via @sentry/cli.
 #
 # Usage:
 #   bash scripts/founder-setup-sentry.sh
@@ -40,7 +40,14 @@ read -r -p "5/6  SENTRY_PROJECT slug [sophia-ai-factory]: " SENTRY_PROJECT
 SENTRY_PROJECT="${SENTRY_PROJECT:-sophia-ai-factory}"
 read -r -p "6/6  SLACK_OPS_WEBHOOK_URL (https://hooks.slack.com/services/...): " SLACK_URL
 
-for v in PUBLIC_DSN SERVER_DSN AUTH_TOKEN SENTRY_ORG SENTRY_PROJECT SLACK_URL; do
+if [ -z "${E2E_TEST_USER_PASSWORD:-}" ]; then
+  echo ""
+  read -rsp "Production E2E test user password (not stored; required by deploy:full): " E2E_TEST_USER_PASSWORD
+  echo ""
+  export E2E_TEST_USER_PASSWORD
+fi
+
+for v in PUBLIC_DSN SERVER_DSN AUTH_TOKEN SENTRY_ORG SENTRY_PROJECT SLACK_URL E2E_TEST_USER_PASSWORD; do
   if [ -z "${!v}" ]; then
     echo "[ERROR] $v is required" >&2
     exit 1
@@ -120,7 +127,7 @@ fi
 echo "  ✓ all 6 secrets confirmed on remote"
 
 echo ""
-echo "▶ Deploying via wrangler (CF-direct doctrine)..."
+echo "▶ Deploying via CF-direct doctrine + go-live user E2E..."
 echo ""
 
 npm run deploy:full

@@ -1,6 +1,22 @@
 # Project Changelog
 
-**Last Updated:** 2026-05-13 | **Current Version:** 1.26.8
+**Last Updated:** 2026-05-15 | **Current Version:** 1.26.10
+
+---
+
+## v1.26.10 — Production Deploy SHA/HTTP Gate (2026-05-15)
+
+**Severity: P0 RELEASE GATE | Type: deploy verification hardening | Status: CODE-WIRED**
+
+Closed remaining CF-direct green-report gap. (C1) **NEW `scripts/verify-production-deploy.sh`** — compares local `git rev-parse HEAD | cut -c1-8` with live `/api/version?deployVerify=<shortSha>` and requires production root HTTP 200. The query param intentionally cache-busts Cloudflare edge cache keys so deploy verification cannot read a stale `/api/version` response. (C2) **MOD `scripts/deploy-full-verified.sh`** — now runs deploy → go-live user E2E → production SHA/HTTP verification before exiting 0. (C3) **MOD `package.json`** — added `deploy:verify:production` for manual reruns. Runtime blocker remains external: operator must provide `E2E_TEST_USER_PASSWORD` and deploy from a clean committed worktree.
+
+---
+
+## v1.26.9 — Go-Live E2E User GAP Gate (2026-05-15)
+
+**Severity: P0 RELEASE GATE | Type: E2E deploy hardening | Status: CODE-WIRED**
+
+Added strict production-user Playwright gate for CF-direct deploys. (C1) **NEW `tests/e2e/go-live-user-gap.spec.ts`** — `@go-live` verifies real Better Auth sign-in, `/en/dashboard`, `/api/auth/get-session`, `/en/dashboard/videos/new`, `/en/dashboard/account`, and `/en/dashboard/billing` with stable visible UI assertions. (C2) **NEW `scripts/e2e-go-live-user-gap.sh`** — defaults to `https://sophia.agencyos.network`, sets `E2E_REQUIRE_AUTH=1`, and fails closed if `E2E_TEST_USER_PASSWORD` is missing. (C3) **NEW `scripts/deploy-full-verified.sh`** — checks the E2E password exists, deploys via `deploy-with-sha.sh`, then runs the go-live E2E gate against the newly published Worker artifact. (C4) **MOD `tests/e2e/_fixtures/auth-fixture.ts`** — auth tests still skip by default, but strict gates throw instead of skip. (C5) **MOD `package.json`** — added `test:e2e:go-live`; `deploy:full` now runs `bash scripts/deploy-full-verified.sh`. No secrets committed. Runtime requirement: operator/CI must provide the production E2E test-user password before deploy.
 
 ---
 

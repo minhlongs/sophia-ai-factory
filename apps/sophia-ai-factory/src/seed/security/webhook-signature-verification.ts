@@ -7,31 +7,6 @@ import { createHmac, timingSafeEqual } from 'crypto';
 import { logger } from '@/seed/utils/logger-utility';
 
 /**
- * Verify Polar.sh webhook signature
- * https://docs.polar.sh/api/webhooks/validation
- */
-export function verifyPolarWebhookSignature(
-  payload: string,
-  signature: string,
-  secret: string
-): boolean {
-  try {
-    const hmac = createHmac('sha256', secret);
-    hmac.update(payload);
-    const expectedSignature = hmac.digest('hex');
-
-    // Timing-safe comparison để prevent timing attacks
-    return timingSafeEqual(
-      Buffer.from(signature),
-      Buffer.from(expectedSignature)
-    );
-  } catch (error) {
-    logger.error('Polar webhook signature verification failed', error instanceof Error ? error : new Error(String(error)));
-    return false;
-  }
-}
-
-/**
  * Verify Telegram webhook signature
  * https://core.telegram.org/bots/api#setwebhook
  */

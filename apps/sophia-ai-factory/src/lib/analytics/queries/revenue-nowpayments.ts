@@ -1,7 +1,6 @@
 /**
  * Revenue query helper — NOWPayments IPN + raas_licenses source.
  *
- * Replaces the old Polar.sh-based revenue-queries.ts for the snapshot endpoint.
  * Uses raas_licenses (active, non-revoked) + TIER_CONFIGS prices as MRR source.
  * NOWPayments payment_events drive 30d trend data.
  */

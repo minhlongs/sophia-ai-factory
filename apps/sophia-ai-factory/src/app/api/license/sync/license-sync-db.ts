@@ -14,7 +14,7 @@ export async function syncFromDatabase(licenseNonce: string): Promise<SyncResult
   try {
     const { data: license, error } = await db
       .from('raas_api_keys')
-      .select('nonce, tier, status, expires_at, polar_customer_id, polar_subscription_status, feature_entitlements, dunning_state')
+      .select('nonce, tier, status, expires_at, feature_entitlements, dunning_state')
       .eq('nonce', licenseNonce)
       .single() as { data: Record<string, unknown> | null; error: unknown }
 
@@ -25,8 +25,6 @@ export async function syncFromDatabase(licenseNonce: string): Promise<SyncResult
       tier: license.tier as string,
       status: (license.status as string) || 'active',
       expiresAt: license.expires_at ? new Date(license.expires_at as string).getTime() : null,
-      polarCustomerId: license.polar_customer_id as string | null,
-      polarSubscriptionStatus: license.polar_subscription_status as string | undefined,
       featureEntitlements: (license.feature_entitlements as string[]) || [],
       dunningState: (license.dunning_state as string) || 'ok',
     }
@@ -41,7 +39,7 @@ export async function syncFromDatabase(licenseNonce: string): Promise<SyncResult
 export async function updateLicenseInDatabase(
   licenseNonce: string,
   gatewayLicense: { licenseNonce: string; tier: string; expiresAt: number | null }
-): Promise<{ status: string; polarCustomerId?: string | null; polarSubscriptionStatus?: string; featureEntitlements: string[]; dunningState: string }> {
+): Promise<{ status: string; featureEntitlements: string[]; dunningState: string }> {
   const db = createServerClient()
   const now = Date.now()
   let status = 'active'
@@ -53,7 +51,7 @@ export async function updateLicenseInDatabase(
   const { data: updated, error } = await db
     .from('raas_api_keys')
     .upsert({ nonce: licenseNonce, tier: gatewayLicense.tier, status, expires_at: gatewayLicense.expiresAt ? new Date(gatewayLicense.expiresAt).toISOString() : null, updated_at: new Date().toISOString() })
-    .select('polar_customer_id, polar_subscription_status, feature_entitlements, dunning_state')
+    .select('feature_entitlements, dunning_state')
     .single() as { data: Record<string, unknown> | null; error: { message: string } | null }
 
   if (error) {
@@ -63,8 +61,6 @@ export async function updateLicenseInDatabase(
 
   return {
     status,
-    polarCustomerId: updated?.polar_customer_id as string | null,
-    polarSubscriptionStatus: updated?.polar_subscription_status as string | undefined,
     featureEntitlements: (updated?.feature_entitlements as string[]) || [],
     dunningState: (updated?.dunning_state as string) || 'ok',
   }

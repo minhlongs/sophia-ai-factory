@@ -162,7 +162,6 @@ export function LicenseStatusCard({ licenseNonce, compact = false }: LicenseStat
           currentUsage={license.currentUsage}
           quotaLimit={license.quotaLimit}
           features={license.features}
-          polarCustomerId={license.polarCustomerId}
           stripeCustomerId={license.stripeCustomerId}
         />
       </CardContent>

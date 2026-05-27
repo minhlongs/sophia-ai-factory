@@ -15,8 +15,6 @@ import { logger } from '@/seed/utils/logger-utility';
 export interface LicenseCacheData {
   tier: 'BASIC' | 'PREMIUM' | 'ENTERPRISE' | 'MASTER';
   agencyId?: string;
-  polarCustomerId?: string;
-  polarSubscriptionStatus?: string;
   expiresAt?: number;
   createdAt: number;
   featureEntitlements: string[];

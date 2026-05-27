@@ -6,7 +6,6 @@
  *   youtube, tiktok, supabase, claude-mem, pencil
  *
  * Per-tenant custom servers are stored (encrypted) in the 'mcp' settings namespace.
- * BANNED: polar (rejected per project CLAUDE.md and global rules)
  */
 
 import type { TenantContext } from './with-tenant';

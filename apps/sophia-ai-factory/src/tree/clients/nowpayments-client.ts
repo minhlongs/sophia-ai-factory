@@ -1,6 +1,6 @@
 /**
  * NOWPayments Client - USDT TRC20 crypto payment provider
- * Replaces Polar.sh for billing. Uses pre-created invoice IDs.
+ * Uses pre-created invoice IDs.
  */
 
 import { Tier } from '@/seed/types'

@@ -17,10 +17,6 @@ describe('mcp-gateway', () => {
     vi.clearAllMocks();
   });
 
-  it('throws MCPDeniedError for unwhitelisted server (polar)', async () => {
-    await expect(mcp('polar', 'createProduct', {})).rejects.toThrow(MCPDeniedError);
-  });
-
   it('throws MCPDeniedError for unwhitelisted server (arbitrary)', async () => {
     await expect(mcp('stripe', 'charge', {})).rejects.toThrow(MCPDeniedError);
   });
@@ -64,12 +60,4 @@ describe('mcp-gateway', () => {
     await expect(mcp('tiktok', 'method', {})).rejects.toThrow(MCPCallError);
   });
 
-  it('polar is permanently banned even if registered', async () => {
-    // Even if someone tries to register polar, the whitelist check fires first
-    const mockClient = { call: vi.fn().mockResolvedValue({}) };
-    _registerMockMCP('polar', mockClient);
-
-    await expect(mcp('polar', 'createProduct', {})).rejects.toThrow(MCPDeniedError);
-    expect(mockClient.call).not.toHaveBeenCalled();
-  });
 });

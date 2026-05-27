@@ -113,11 +113,11 @@ Before deploying Sprint M (first-dollar revenue engine), ensure all prerequisite
    - `0 0 * * *` (daily): Clearance promotion
 
 ### Deployment Steps
-1. Re-enable GitHub Actions workflow (currently disabled to prevent premature deploy)
+1. Ensure the worktree is clean and `E2E_TEST_USER_PASSWORD` is available in the operator shell
 2. Apply D1 migrations (see above)
 3. Set all 9 Cloudflare secrets
 4. Configure ClickBank vendor INS URL
-5. `git push origin main` → GitHub Actions tests & deploy → verify via `/api/version` SHA match
+5. `npm run deploy:full` → Cloudflare deploy + go-live user E2E → verify via `/api/version` SHA match
 
 ### Post-Deploy Smoke Tests
 ```bash
@@ -136,34 +136,41 @@ Before deploying Sprint M (first-dollar revenue engine), ensure all prerequisite
 
 ### Rollback Plan
 If issues arise post-deploy:
-1. Disable GitHub Actions (prevent auto-deploys)
-2. Rollback D1 migrations (restore to 0017):
+1. Stop further manual deploys until root cause is understood
+2. Rollback D1 migrations only if the migration itself caused the outage:
    ```bash
    npx wrangler d1 migrations rollback sophia-raas-db --remote
    ```
 3. Clear Cloudflare Secrets (optional)
 4. Git revert affected commits
-5. Redeploy after fixes
+5. Export `E2E_TEST_USER_PASSWORD`, then redeploy after fixes with `npm run deploy:full`
 
 ---
 
 ## 2. Production Deployment (Cloudflare Workers)
 
-Sophia AI Factory deploys to **Cloudflare Workers** (not Vercel). GitHub Actions automatically builds, tests, and deploys on `git push origin main`.
+Sophia AI Factory deploys to **Cloudflare Workers** (not Vercel). GitHub Actions is disabled by design; deployment is CF-direct through `npm run deploy:full`.
 
-### Step 1: Push to GitHub
-Ensure your code is committed and pushed to `origin main`.
+### Step 1: Prepare Local Deploy
 
-### Step 2: GitHub Actions (Automatic)
-The workflow **Tests & Deploy** runs automatically:
-1. **Lint & Build & Test** job: Verifies code quality
-2. **Deploy to Cloudflare Workers** job: Builds OpenNext worker + applies D1 migrations + deploys
+Ensure your code is committed, the worktree is clean, and the production E2E user password is available:
+
+```bash
+cd apps/sophia-ai-factory
+export E2E_TEST_USER_PASSWORD='<production-e2e-user-password>'
+```
+
+### Step 2: Deploy
+
+```bash
+npm run deploy:full
+```
+
+`deploy:full` builds OpenNext, deploys with `wrangler --config wrangler.toml`,
+then runs the go-live user E2E suite against the newly published Worker.
 
 ### Step 3: Verify Deployment
 ```bash
-# Check CI/CD status
-gh run list --repo longtho638-jpg/sophia-ai-factory -L 1
-
 # Verify production health
 curl -s https://sophia.agencyos.network/api/version
 # Should output: { shortSha: "abc12345", deployedAt: "...", opennextVersion: "..." }
@@ -175,7 +182,7 @@ echo "Local: $LOCAL_SHA  Live: $LIVE_SHA"
 ```
 
 ### Step 4: Configure Secrets & D1 Migrations
-After first deploy, follow **Sprint M Revenue Path Deployment Requirements** section above to:
+For first deploy or changed infrastructure, follow **Sprint M Revenue Path Deployment Requirements** section above to:
 1. Apply D1 migrations
 2. Set Cloudflare Secrets
 3. Configure ClickBank vendor INS URL
@@ -318,7 +325,7 @@ Defines recovery targets for the Sophia AI Factory production stack.
 3. Provision restore target (new D1 database or wipe `sophia-raas-db`).
 4. Run `bash scripts/dr/restore-from-snapshot.sh <snapshot-key>` — see SOP 11 for full steps.
 5. Verify with smoke test: `bash scripts/sop-ceo-production-smoke.sh`.
-6. Re-deploy via `npm run deploy:full`, confirm SHA match.
+6. Export `E2E_TEST_USER_PASSWORD`, re-deploy via `npm run deploy:full`, confirm SHA match, and keep the go-live user E2E output with the incident notes.
 7. Post-incident: file root-cause review and update DR drill checklist.
 
 For step-by-step operator playbook: **SOP 11 — Emergency D1 Backup** in `dev-sops.md`.

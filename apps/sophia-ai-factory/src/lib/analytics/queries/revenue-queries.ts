@@ -15,7 +15,7 @@ type LicenseRevenueRow = { tier: string | null; created_at: number; metadata: Js
 type PaymentEventRow = { event_type: string; payload: Json | null; created_at: string }
 
 // Narrowed shapes for metadata/payload JSON — we only read these fields,
-// so don't widen to full Polar/NOWPayments payload contracts here. The
+// so don't widen to full NOWPayments payload contracts here. The
 // `?? undefined` reads guard against `null`/missing keys at runtime.
 type LicenseMetadataShape = { mrr_usd?: number; subscription_amount?: number; is_subscription?: boolean }
 type PaymentPayloadShape = { amount?: { usd?: { amount?: number } } }

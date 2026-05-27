@@ -58,11 +58,16 @@ GitHub Actions is **disabled by design**. The `longtho638-jpg` free-tier minutes
 
 ```bash
 cd apps/sophia-ai-factory
-npm run deploy:full           # build + inject SHA + wrangler deploy
+export E2E_TEST_USER_PASSWORD='<production-e2e-user-password>'  # keep in 1Password/operator shell, never commit
+npm run deploy:full           # build + inject SHA + wrangler deploy + go-live user E2E
 bash scripts/apply-migrations.sh   # only if migrations/ changed
 curl -s https://sophia.agencyos.network/api/version | jq .shortSha
 # Must match: git rev-parse HEAD | cut -c1-8
 ```
+
+`deploy:full` fails before deploy if `E2E_TEST_USER_PASSWORD` is missing. It runs
+the browser go-live user GAP gate after deploy, so the verified target is the
+new Worker artifact.
 
 **SHA match is MANDATORY.** HTTP 200 alone is not sufficient — may be a stale deploy from a prior invocation. See `.claude/rules/sophia-deploy-verify.md` for the full verify sequence (authoritative).
 

@@ -7,6 +7,8 @@
 
 - **Deploy target:** Cloudflare Workers (OpenNext build)
 - **Deploy command:** `npm run deploy:full` (local wrangler CLI — NOT via GitHub Actions)
+- **Deploy prerequisite:** `E2E_TEST_USER_PASSWORD` exported in operator shell/CI secrets
+- **Deploy verification:** `deploy:full` deploys first, then runs go-live user E2E and cache-busted SHA/HTTP verification against the newly live Worker
 - **Build artifact:** `.open-next/worker.js`
 - **D1 Database:** `sophia-raas-db` (binding `DB`)
 - **R2 Cache:** `sophia-ai-factory-opennext-cache` (binding `NEXT_INC_CACHE_R2_BUCKET`)
@@ -23,9 +25,18 @@ VERSION_URL="https://sophia.agencyos.network/api/version"
 ## ✅ MANDATORY Verify Sequence (sau npm run deploy:full)
 
 ```bash
+# Step 0: Confirm production E2E credential exists before deploy
+test -n "$E2E_TEST_USER_PASSWORD" || {
+  echo "❌ Missing E2E_TEST_USER_PASSWORD — bootstrap production E2E user first"
+  exit 1
+}
+
 # Step 1: Confirm deploy:full script exited 0
-# (wrangler output should end with "Deployed ... (X ms)")
-# If deploy script printed an error → STOP, do not report GREEN
+# deploy:full runs:
+#   1. scripts/deploy-with-sha.sh
+#   2. npm run test:e2e:go-live against https://sophia.agencyos.network
+#   3. scripts/verify-production-deploy.sh for cache-busted SHA match + HTTP 200
+# If deploy, go-live user E2E, SHA match, or HTTP verification printed an error → STOP, do not report GREEN
 
 # Step 2: Apply any new D1 migrations (if migrations/ changed in this commit)
 git diff --name-only HEAD~1 HEAD apps/sophia-ai-factory/migrations/ 2>/dev/null | grep -E "\.sql$"
@@ -34,7 +45,7 @@ cd apps/sophia-ai-factory && bash scripts/apply-migrations.sh
 
 # Step 3: Verify SHA match (CRITICAL — proves new code is live, not stale)
 LOCAL_SHA=$(git rev-parse HEAD | cut -c1-8)
-LIVE_SHA=$(curl -s https://sophia.agencyos.network/api/version | grep -o '"shortSha":"[^"]*"' | cut -d'"' -f4)
+LIVE_SHA=$(curl -s "https://sophia.agencyos.network/api/version?deployVerify=$LOCAL_SHA" | grep -o '"shortSha":"[^"]*"' | cut -d'"' -f4)
 echo "Local: $LOCAL_SHA  Live: $LIVE_SHA"
 [ "$LOCAL_SHA" = "$LIVE_SHA" ] && echo "✅ DEPLOY MATCHES COMMIT" || { echo "❌ STALE — wrangler may not have deployed latest; re-run deploy:full"; exit 1; }
 
@@ -43,7 +54,7 @@ curl -sI https://sophia.agencyos.network | head -3   # must see HTTP/2 200
 ```
 
 **Endpoint reference:**
-- `GET /api/version` — public: `{shortSha, deployedAt, opennextVersion}`. Primary deploy verify signal.
+- `GET /api/version?deployVerify=<shortSha>` — public: `{shortSha, deployedAt, opennextVersion}`. Primary deploy verify signal; query string bypasses stale edge cache keys.
 - `GET /api/health` — service health (auth required for full detail).
 
 ## ✅ Required Report Format
@@ -53,6 +64,7 @@ curl -sI https://sophia.agencyos.network | head -3   # must see HTTP/2 200
 - Build: ✅ exit code 0
 - Tests: ✅ 1398/1398 passed
 - Deploy: ✅ npm run deploy:full → wrangler deployed (CF-direct)
+- Go-live E2E: ✅ production user auth/dashboard/video/account/billing passed
 - Migrations: ✅ none new | ✅ <N> applied via apply-migrations.sh
 - Production HTTP: ✅ 200 (https://sophia.agencyos.network)
 - Deploy SHA Match: ✅ /api/version shortSha == <local_short_sha>
@@ -84,6 +96,7 @@ npx wrangler rollback --name sophia-ai-factory --message "<reason>" --yes
 
 # Or redeploy a specific git commit:
 git checkout <sha>
+export E2E_TEST_USER_PASSWORD='<production-e2e-user-password>'
 npm run deploy:full
 git checkout main
 ```

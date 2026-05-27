@@ -1,8 +1,7 @@
 /**
  * Tests for NOWPayments client.
  *
- * NOWPayments IPN webhook → tier activation is a PROTECTED FLOW per CLAUDE.md
- * (Polar.sh REJECTED — NOWPayments is the sole crypto payment provider).
+ * NOWPayments IPN webhook → tier activation is a PROTECTED FLOW per CLAUDE.md.
  * These tests pin checkout URL building, IPN signature verification wiring,
  * and the discriminated invoice lookup (one-time vs subscription).
  */

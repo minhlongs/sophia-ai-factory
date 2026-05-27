@@ -46,7 +46,7 @@ This runbook defines recovery procedures for Sophia AI Factory's production infr
 
 **Purpose:** All runtime logic.
 - **Source of truth:** GitHub repo `longtho638-jpg/sophia-ai-factory`, branch `main`
-- **Deploy:** CI/CD workflow `Tests & Deploy` on `git push origin main`
+- **Deploy:** CF-direct `npm run deploy:full` from `apps/sophia-ai-factory`
 - **Artifact:** `.open-next/worker.js` (compiled by OpenNext)
 - **Data criticality:** HIGH — Controls all functionality
 
@@ -214,15 +214,11 @@ scripts/dr/restore-from-snapshot.sh --warm-cache
 #### Step 1: Identify Broken Commit
 
 ```bash
-# View recent runs
-gh run list --workflow "Tests & Deploy" -L 5 --json conclusion,databaseId,name
-
-# If latest run shows "failure": locate the broken commit
+# View recent main history; GitHub Actions is disabled by doctrine.
 git log --oneline origin/main | head -10
-# Find the commit that corresponds to the failed run
 
-# Check CI logs for errors
-gh run view <RUN_ID> --log-failed
+# Compare live SHA with local history
+curl -s https://sophia.agencyos.network/api/version | jq '.'
 ```
 
 #### Step 2: Rollback via Git
@@ -236,11 +232,13 @@ BAD_COMMIT="abc1234"
 # Revert it
 git revert $BAD_COMMIT
 
-# Push to main (auto-triggers Tests & Deploy)
-git push origin main
+# Deploy reverted commit via CF-direct
+export E2E_TEST_USER_PASSWORD='<production-e2e-user-password>'
+npm run deploy:full
 
-# Verify CI passes and production recovers
-gh run list -L 1 --json conclusion
+# Verify SHA match and production health
+curl -s https://sophia.agencyos.network/api/version
+curl -sI https://sophia.agencyos.network | head -3
 ```
 
 **Option B: Rollback to last known good (force-push, LAST RESORT)**
@@ -249,25 +247,16 @@ gh run list -L 1 --json conclusion
 # Only if revert cannot be used
 LAST_GOOD_SHA="<from your memory or git tag>"
 git reset --hard $LAST_GOOD_SHA
-git push origin main --force
+export E2E_TEST_USER_PASSWORD='<production-e2e-user-password>'
+npm run deploy:full
 
-# ⚠️ Force-push is dangerous — use only in emergency
+# ⚠️ Resetting local main is dangerous — use only in emergency
 # Notify team immediately after
 ```
 
 #### Step 3: Validate Production
 
 ```bash
-# Monitor deployment
-MAX=16; n=0
-while [ $n -lt $MAX ]; do
-  n=$((n+1))
-  STATUS=$(gh run list -L 1 --json conclusion -q '.[0].conclusion')
-  echo "[$n/$MAX] Deployment status: $STATUS"
-  [ "$STATUS" = "success" ] && break
-  sleep 30
-done
-
 # Verify API response
 curl -s https://sophia.agencyos.network/api/version | jq '.'
 
@@ -404,9 +393,6 @@ scripts/dr/restore-from-snapshot.sh
 
 # Actual restore (DANGEROUS)
 scripts/dr/restore-from-snapshot.sh --confirm
-
-# Check deployment status
-gh run list -L 1 --json conclusion
 
 # View version deployed
 curl -s https://sophia.agencyos.network/api/version | jq '.shortSha'

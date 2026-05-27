@@ -23,6 +23,5 @@ export {
   getAuditLogs,
   getAuditLogsByLicense,
   exportAuditLogs,
-  reactivateLicenseBySubscription,
   revokeLicenseBySubscription,
 } from './raas';

@@ -42,7 +42,6 @@ export interface DunningStatusRecord {
   maxRetryAttempts: number;
   failedPaymentCount: number;
   nextRetryAt: string | null;
-  polarCustomerId: string | null;
   stripeCustomerId: string | null;
   stateChangedAt: string;
   createdAt: string;
@@ -60,7 +59,6 @@ interface DunningRow {
   dunning_state: string;
   grace_period_days: number;
   max_retry_attempts: number;
-  polar_customer_id: string | null;
   stripe_customer_id: string | null;
   dunning_state_changed_at: string;
   created_at: string;
@@ -155,7 +153,6 @@ export async function enrichDunningRows(
       maxRetryAttempts: d.max_retry_attempts,
       failedPaymentCount: 0,
       nextRetryAt: null,
-      polarCustomerId: d.polar_customer_id,
       stripeCustomerId: d.stripe_customer_id,
       stateChangedAt: d.dunning_state_changed_at,
       createdAt: d.created_at,

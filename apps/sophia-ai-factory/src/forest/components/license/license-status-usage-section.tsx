@@ -13,7 +13,6 @@ interface LicenseStatusUsageSectionProps {
   currentUsage: number;
   quotaLimit: number;
   features: string[];
-  polarCustomerId?: string | null;
   stripeCustomerId?: string | null;
 }
 
@@ -21,7 +20,6 @@ export function LicenseStatusUsageSection({
   currentUsage,
   quotaLimit,
   features,
-  polarCustomerId,
   stripeCustomerId,
 }: LicenseStatusUsageSectionProps) {
   const usagePercentage = quotaLimit > 0 ? (currentUsage / quotaLimit) * 100 : 0;
@@ -66,22 +64,14 @@ export function LicenseStatusUsageSection({
       )}
 
       {/* Billing Integration */}
-      {(polarCustomerId || stripeCustomerId) && (
+      {stripeCustomerId && (
         <div className="pt-4 border-t space-y-2">
           <div className="text-sm font-medium">Billing Integration</div>
           <div className="flex gap-4 text-xs text-muted-foreground">
-            {polarCustomerId && (
-              <div className="flex items-center gap-1">
-                <CheckCircle2 className="h-3 w-3 text-green-600" />
-                Polar: {polarCustomerId.slice(0, 12)}...
-              </div>
-            )}
-            {stripeCustomerId && (
-              <div className="flex items-center gap-1">
-                <CheckCircle2 className="h-3 w-3 text-green-600" />
-                Stripe: {stripeCustomerId.slice(0, 12)}...
-              </div>
-            )}
+            <div className="flex items-center gap-1">
+              <CheckCircle2 className="h-3 w-3 text-green-600" />
+              Stripe: {stripeCustomerId.slice(0, 12)}...
+            </div>
           </div>
         </div>
       )}

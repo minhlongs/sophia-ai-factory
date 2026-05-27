@@ -14,7 +14,6 @@ export interface QuotaExceededResponse {
   remaining: { dailyCredits: number; hourlyCredits: number; monthlyCredits: number; dailyRequests: number }
   retryAfter: number
   upgradeUrl: string
-  polarCustomerId?: string
   dunningState?: DunningState
   dunningReason?: string
 }
@@ -33,7 +32,6 @@ function getRetryAfterSeconds(exceededType: string): number {
 export function createQuotaExceededResponse(
   result: EnhancedQuotaCheckResult,
   context: QuotaCheckContext,
-  polarCustomerId?: string
 ): QuotaExceededResponse {
   const exceededType = result.exceeded?.type || 'unknown'
   const retryAfterSeconds = getRetryAfterSeconds(exceededType)
@@ -51,7 +49,6 @@ export function createQuotaExceededResponse(
     remaining: result.remaining,
     retryAfter: retryAfterSeconds,
     upgradeUrl: '/dashboard/billing',
-    polarCustomerId,
   }
 }
 

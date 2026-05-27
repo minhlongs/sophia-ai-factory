@@ -29,10 +29,9 @@ export const headerSchema = z.object({
   'webhook-id': z.string().min(1),
   'webhook-timestamp': z.string().min(1),
   'webhook-signature': z.string().min(1).optional(),
-  'Polar-Signature': z.string().min(1).optional(),
   'X-Cloudflare-Signature': z.string().min(1).optional()
 }).refine(
-  data => data['webhook-signature'] || data['Polar-Signature'] || data['X-Cloudflare-Signature'],
+  data => data['webhook-signature'] || data['X-Cloudflare-Signature'],
   { message: 'At least one signature header required' }
 );
 

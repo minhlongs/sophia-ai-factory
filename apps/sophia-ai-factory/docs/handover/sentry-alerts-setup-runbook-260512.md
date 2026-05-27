@@ -12,7 +12,7 @@ Sophia's error monitoring is **already wired**. This runbook walks you through 5
 1. **Create Sentry project** at sentry.io → get DSN + Auth Token
 2. **Register Slack webhook** at api.slack.com → invite bot to channel
 3. **Set environment secrets** via `wrangler secret put` (4 commands)
-4. **Deploy** via `npm run deploy:full` (~3 min)
+4. **Deploy** via `npm run deploy:full` (~3 min + go-live user E2E)
 5. **Test** by forcing an error → verify Sentry + Slack alerts fire
 
 No code changes. Just secrets + deploy.
@@ -185,7 +185,7 @@ npx wrangler secret list --name sophia-ai-factory
 **Note:** wrangler output varies by version (JSON array or human table format).  
 You should see all 6 secrets listed: `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_DSN`, `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT`, `SLACK_OPS_WEBHOOK_URL`. ✅
 
-If any secret appears missing, re-run `npm run deploy:full` to sync.
+If any secret appears missing, export `E2E_TEST_USER_PASSWORD`, then re-run `npm run deploy:full` to sync.
 
 ---
 
@@ -194,6 +194,7 @@ If any secret appears missing, re-run `npm run deploy:full` to sync.
 ### 4a. Build + Deploy
 ```bash
 cd ~/projects/sophia-ai-factory/apps/sophia-ai-factory
+export E2E_TEST_USER_PASSWORD='<production-e2e-user-password>'
 npm run deploy:full
 ```
 
@@ -278,7 +279,7 @@ If you see both Sentry event + Slack message, **you're done!** ✅
 - **Check 1:** Is `NEXT_PUBLIC_SENTRY_DSN` set? (Run `npx wrangler secret list`)
 - **Check 2:** Is Sentry project public (not archived)? Go to sentry.io → Settings → Project Status
 - **Check 3:** Did you restart after setting secrets? (Secrets apply on next deploy, not immediately)
-  - Solution: Re-run `npm run deploy:full`
+  - Solution: export `E2E_TEST_USER_PASSWORD`, then re-run `npm run deploy:full`
 
 ### Slack webhook returns 404
 - **Check 1:** Did you copy the full URL (including `https://`)? Paste it carefully.
@@ -289,7 +290,7 @@ If you see both Sentry event + Slack message, **you're done!** ✅
 - **Solution:** Run `npx wrangler login` first, then retry the secret commands
 
 ### Build fails with "SENTRY_AUTH_TOKEN not found"
-- This happens if you skip secret setup. Just complete Step 3, then re-run `npm run deploy:full`
+- This happens if you skip secret setup. Just complete Step 3, export `E2E_TEST_USER_PASSWORD`, then re-run `npm run deploy:full`
 
 ---
 
@@ -344,7 +345,7 @@ TELEGRAM_ADMIN_CHAT_ID   # Your private chat ID (get via @userinfobot)
    echo "<TOKEN>" | npx wrangler secret put TELEGRAM_BOT_TOKEN
    echo "<CHAT_ID>" | npx wrangler secret put TELEGRAM_ADMIN_CHAT_ID
    ```
-4. Re-deploy: `npm run deploy:full`
+4. Export `E2E_TEST_USER_PASSWORD`, then re-deploy: `npm run deploy:full`
 
 **Alerts triggered:** Payout notifications, admin errors (auto-forwarded from app logger).
 
@@ -399,7 +400,8 @@ echo "sophia-ai-factory" | npx wrangler secret put SENTRY_ORG
 echo "sophia-ai-factory" | npx wrangler secret put SENTRY_PROJECT
 echo "<SLACK_OPS_WEBHOOK_URL>" | npx wrangler secret put SLACK_OPS_WEBHOOK_URL
 
-# Deploy
+# Deploy + go-live user E2E
+export E2E_TEST_USER_PASSWORD='<production-e2e-user-password>'
 npm run deploy:full
 
 # Verify
