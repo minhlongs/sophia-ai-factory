@@ -28,6 +28,9 @@ import { WanVideoClient } from '@/lib/video/wan21-client';
 import { FishSpeechClient } from '@/lib/video/fish-speech-client';
 import { muxVideoAudio } from '@/lib/video/ffmpeg-muxer';
 import { insertAiPromptVideo } from '@/seed/db/repositories/videos-repo';
+import { getBrandKit } from '@/seed/db/repositories/brand-kits-repo';
+import { generateSubtitles } from '@/lib/video/subtitle-generator';
+import { composeFinalVideo, applyBrandKit } from '@/lib/video/composer-ffmpeg';
 import type { VideoGenerateRequestedEvent } from '@/lib/video/types';
 
 const POLL_INTERVAL_MS = 20_000; // 20s between polls
@@ -143,9 +146,21 @@ export const videoGenerate = inngest.createFunction(
       logger.info('[videoGenerate] Video uploaded to R2', { videoR2Key });
     });
 
-    // ── Step 6: Mux Audio + Video via Cloudconvert ───────────────────────────
-    // Build public URLs for the R2 objects so Cloudconvert can download them.
-    // Falls back to R2 key strings when no public base URL is configured.
+    // ── Step 5.5: Generate Subtitles ────────────────────────────────────
+    const subtitleSrt = await step.run('generate-subtitles', async () => {
+      try {
+        const res = await generateSubtitles({
+          audioR2Key,
+          jobId: missionId,
+        });
+        return res.srt;
+      } catch (err) {
+        logger.error('[videoGenerate] Subtitle generation failed (non-fatal)', err instanceof Error ? err : new Error(String(err)));
+        return '';
+      }
+    });
+
+    // ── Step 6: Mux Audio + Video via Cloudconvert or MoviePy Compose ────────
     const muxOutputKey = `video-jobs/${missionId}/final.mp4`;
 
     const muxed = await step.run('mux-audio-video', async () => {
@@ -154,6 +169,38 @@ export const videoGenerate = inngest.createFunction(
 
       const videoPublicUrl = base ? `${base}/${videoR2Key}` : videoR2Key;
       const audioPublicUrl = base ? `${base}/${audioR2Key}` : audioR2Key;
+
+      const targetUserId = userId || tenantId;
+      const brandKit = await getBrandKit(targetUserId);
+
+      const hasBrandKit = brandKit && (
+        brandKit.logo_r2_key ||
+        brandKit.intro_r2_key ||
+        brandKit.outro_r2_key ||
+        brandKit.primary_color ||
+        brandKit.font_r2_key
+      );
+
+      if (hasBrandKit) {
+        logger.info('[videoGenerate] Brand kit found — running rich compose', { missionId, userId: targetUserId });
+        const composeInput = await applyBrandKit(targetUserId, {
+          jobId: missionId,
+          tenantId,
+          audioR2Key,
+          visualR2Key: videoR2Key,
+          subtitleSrt: subtitleSrt || undefined,
+          generateThumbnail: true,
+          normalizeAudio: true,
+        });
+
+        const result = await composeFinalVideo(composeInput);
+        const finalUrl = base ? `${base}/${result.finalR2Key}` : result.finalR2Key;
+
+        return {
+          url: finalUrl,
+          durationMs: (result.metadata?.durationSeconds ?? 0) * 1000,
+        };
+      }
 
       const result = await muxVideoAudio({
         videoUrl: videoPublicUrl,

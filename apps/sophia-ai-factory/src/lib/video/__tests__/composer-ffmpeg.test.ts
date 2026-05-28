@@ -106,4 +106,29 @@ describe('composeFinalVideo', () => {
       }),
     ).rejects.toThrow(/MoviePy.*compose failed/);
   });
+
+  it('calls /compose-rich endpoint when introR2Key or outroR2Key is set', async () => {
+    process.env.MOVIEPY_FLY_URL = 'http://moviepy.test';
+    const mockBytes = new ArrayBuffer(300);
+    global.fetch = vi.fn().mockResolvedValue(mockOkResponse(mockBytes, {
+      'X-Sophia-Metadata': JSON.stringify({ duration_seconds: 15, size_bytes: 1000, width: 1280, height: 720, codec_name: 'h264' })
+    }));
+
+    const result = await composeFinalVideo({
+      jobId: 'job-4',
+      tenantId: 'tenant-4',
+      audioR2Key: 'audio.wav',
+      visualR2Key: 'visual.mp4',
+      introR2Key: 'intro-video.mp4',
+    });
+
+    expect(result.finalR2Key).toBe('tenants/tenant-4/videos/job-4/final.mp4');
+    expect(global.fetch).toHaveBeenCalledWith(
+      'http://moviepy.test/compose-rich',
+      expect.objectContaining({
+        method: 'POST',
+        body: expect.stringContaining('"intro_r2_key":"intro-video.mp4"')
+      }),
+    );
+  });
 });

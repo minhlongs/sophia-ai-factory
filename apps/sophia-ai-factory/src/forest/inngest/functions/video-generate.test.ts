@@ -23,6 +23,9 @@ const {
   mockRecordCost,
   mockGetD1Client,
   mockGetVideoBucket,
+  mockGetBrandKit,
+  mockGenerateSubtitles,
+  mockComposeFinalVideo,
 } = vi.hoisted(() => ({
   mockGenerateSpeech: vi.fn(),
   mockGenerateVideo: vi.fn(),
@@ -31,6 +34,9 @@ const {
   mockRecordCost: vi.fn(),
   mockGetD1Client: vi.fn(),
   mockGetVideoBucket: vi.fn(),
+  mockGetBrandKit: vi.fn(),
+  mockGenerateSubtitles: vi.fn(),
+  mockComposeFinalVideo: vi.fn(),
 }));
 
 // ── Module mocks ──────────────────────────────────────────────────────────────
@@ -68,6 +74,19 @@ vi.mock('@/lib/video/fish-speech-client', () => {
   };
 });
 
+vi.mock('@/seed/db/repositories/brand-kits-repo', () => ({
+  getBrandKit: mockGetBrandKit,
+}));
+
+vi.mock('@/lib/video/subtitle-generator', () => ({
+  generateSubtitles: mockGenerateSubtitles,
+}));
+
+vi.mock('@/lib/video/composer-ffmpeg', () => ({
+  composeFinalVideo: mockComposeFinalVideo,
+  applyBrandKit: vi.fn((userId, input) => Promise.resolve(input)),
+}));
+
 // ── Import SUT ────────────────────────────────────────────────────────────────
 
 import { videoGenerate } from './video-generate';
@@ -102,6 +121,13 @@ describe('videoGenerate Inngest function', () => {
     mockRecordCost.mockReset();
     mockGetD1Client.mockReset();
     mockGetVideoBucket.mockReset();
+    mockGetBrandKit.mockReset();
+    mockGenerateSubtitles.mockReset();
+    mockComposeFinalVideo.mockReset();
+
+    mockGetBrandKit.mockResolvedValue(null);
+    mockGenerateSubtitles.mockResolvedValue({ srt: '1\n00:00:00,000 --> 00:00:05,000\nHello' });
+    mockComposeFinalVideo.mockResolvedValue({ finalR2Key: 'final.mp4', costUsd: 0.07, metadata: { durationSeconds: 10 } });
 
     process.env.WAN_API_KEY = 'test-wan-key';
     process.env.FISH_SPEECH_API_KEY = 'test-fish-key';
@@ -209,5 +235,37 @@ describe('videoGenerate Inngest function', () => {
     const putKeys = mockR2Put.mock.calls.map((c: unknown[]) => c[0] as string);
     expect(putKeys).toContain('video-jobs/mission-r2test/audio.mp3');
     expect(putKeys).toContain('video-jobs/mission-r2test/video.mp4');
+  });
+
+  it('happy path with brand kit: calls composeFinalVideo when brand kit has logo configured', async () => {
+    mockGetBrandKit.mockResolvedValue({
+      logo_r2_key: 'brand-kits/user-rich/logo.png',
+      primary_color: '#ff00aa',
+    });
+
+    const step = buildStep();
+    const result = await handler({
+      event: {
+        data: {
+          missionId: 'mission-rich',
+          tenantId: 'tenant-rich',
+          userId: 'user-rich',
+          prompt: 'Rich brand kit video',
+          voiceoverText: 'Brand kit demo',
+        },
+      },
+      step,
+    });
+
+    expect(result.missionId).toBe('mission-rich');
+    expect(result.status).toBe('succeeded');
+    expect(mockComposeFinalVideo).toHaveBeenCalledOnce();
+    expect(mockComposeFinalVideo).toHaveBeenCalledWith(expect.objectContaining({
+      jobId: 'mission-rich',
+      tenantId: 'tenant-rich',
+      audioR2Key: 'video-jobs/mission-rich/audio.mp3',
+      visualR2Key: 'video-jobs/mission-rich/video.mp4',
+      subtitleSrt: '1\n00:00:00,000 --> 00:00:05,000\nHello',
+    }));
   });
 });
