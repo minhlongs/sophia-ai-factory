@@ -16,7 +16,6 @@ export interface OpenRouterResponse {
 /** Supported live-fetch providers during dark-launch. */
 export const REAL_LLM_PROVIDERS: ReadonlySet<string> = new Set([
   'openrouter',
-  'local-mekongd',
   'anthropic',
 ])
 

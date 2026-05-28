@@ -4,19 +4,13 @@
  * Pure decision helper: classify prompt complexity + select provider/model.
  * No network calls. No side effects. Safe to call anywhere (edge, tests).
  *
- * Mirrors PDF Solo Platform Bước 4.3 routing logic, adapted for Sophia CF edge:
- *  - "local" tier routes to user's BYOK mekongd when available
- *  - "cloud" tier routes to OpenRouter (cheap) or Anthropic (expensive)
- *
- * Callers are expected to resolve `hasLocalMode` via
- * `resolveLocalMekongdForUser(userId)` from `@/lib/byok/provider-router`
- * and pass the boolean in so this module stays pure.
+ * (Local-mode mekongd support has been deprecated and removed. All requests route to cloud.)
  */
 
 export type Complexity = 'simple' | 'medium' | 'complex'
 
 export interface RouteDecision {
-  provider: 'local-mekongd' | 'openrouter' | 'anthropic'
+  provider: 'openrouter' | 'anthropic'
   model:    string
   complexity: Complexity
   reason:   string
@@ -71,12 +65,6 @@ export function classifyComplexity(prompt: string): Complexity {
 
 // ── Routing matrix ───────────────────────────────────────────────────────────
 
-const LOCAL_MODELS: Record<Complexity, string> = {
-  simple:  'qwen3-8b',
-  medium:  'qwen3-14b',
-  complex: 'qwen3-30b',
-}
-
 const CLOUD_MODELS: Record<Complexity, { provider: 'openrouter' | 'anthropic'; model: string }> = {
   simple:  { provider: 'openrouter', model: 'gpt-4o-mini' },
   medium:  { provider: 'openrouter', model: 'gpt-4o-mini' },
@@ -87,20 +75,12 @@ const CLOUD_MODELS: Record<Complexity, { provider: 'openrouter' | 'anthropic'; m
  * Pick provider + model for a classified prompt.
  *
  * @param complexity    — result of `classifyComplexity()`
- * @param hasLocalMode  — true if caller resolved a local-mekongd BYOK config
+ * @param _hasLocalMode  — (deprecated) ignored, local mode is removed.
  */
 export function selectRoute(
   complexity: Complexity,
-  hasLocalMode: boolean,
+  _hasLocalMode?: boolean,
 ): RouteDecision {
-  if (hasLocalMode) {
-    return {
-      provider:   'local-mekongd',
-      model:      LOCAL_MODELS[complexity],
-      complexity,
-      reason:     `byok-local:${complexity}`,
-    }
-  }
   const cloud = CLOUD_MODELS[complexity]
   return {
     provider:   cloud.provider,
@@ -113,6 +93,6 @@ export function selectRoute(
 /**
  * Convenience: classify + select in one call.
  */
-export function route(prompt: string, hasLocalMode: boolean): RouteDecision {
-  return selectRoute(classifyComplexity(prompt), hasLocalMode)
+export function route(prompt: string, _hasLocalMode?: boolean): RouteDecision {
+  return selectRoute(classifyComplexity(prompt), _hasLocalMode)
 }

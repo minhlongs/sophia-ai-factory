@@ -53,7 +53,6 @@ const VALID_CRON_NAMES = new Set([
   'heartbeat',
   'hourly-rollup',
   'llm-cache-purge',
-  'local-mode-health',
   'mcu-monthly-reset',
   'promo-trial-expiry',
   'scheduled-campaigns',

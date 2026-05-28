@@ -8,8 +8,6 @@
 
 import type { AffiliateProgram } from "@/seed/types";
 import { withTimeout } from "@/tree/byok/with-timeout";
-import { callLocalMekongd } from "@/tree/byok/local-mekongd-adapter";
-import { resolveLocalMekongdForUser } from "@/tree/byok/provider-router";
 import { resolveUserApiKey } from "@/tree/byok/resolve-user-api-key";
 
 /** OpenRouter response shape for chat completions */
@@ -36,9 +34,7 @@ function parseScore(text: string | null | undefined): number | null {
  * Returns an AI-generated relevance score (0-100) or null if unavailable.
  *
  * Resolution order (priority high → low):
- *   1. Per-user local mekongd (Phase B BYOK) — if userId provided + KV flag on + D1 row set
- *   2. Founder env-var dogfood path (Phase A) — SOPHIA_LOCAL_MEKONGD_URL env var
- *   3. OpenRouter cloud fallback (unchanged)
+ *   1. OpenRouter cloud (BYOK or env fallback)
  *
  * @param program  Affiliate program to score
  * @param niche    Target niche string
@@ -50,29 +46,6 @@ export async function enhanceNicheScoreWithAI(
   userId?: string,
 ): Promise<number | null> {
   const prompt = buildPrompt(program, niche);
-
-  // Priority 1: per-user BYOK local mekongd (Phase B) — userId-scoped D1 + KV gate.
-  if (userId) {
-    const userConfig = await resolveLocalMekongdForUser(userId);
-    if (userConfig) {
-      const userText = await callLocalMekongd(prompt, userConfig);
-      const userScore = parseScore(userText);
-      if (userScore !== null) return userScore;
-      // null → fall through to next path (silent)
-    }
-  }
-
-  // Priority 2: founder dogfood env-var path (Phase A) — unchanged.
-  const localUrl = process.env.SOPHIA_LOCAL_MEKONGD_URL;
-  if (localUrl) {
-    const localText = await callLocalMekongd(prompt, {
-      endpoint: localUrl,
-      bearer: process.env.SOPHIA_LOCAL_MEKONGD_BEARER,
-    });
-    const localScore = parseScore(localText);
-    if (localScore !== null) return localScore;
-    // null → fall through to OpenRouter (silent fallback)
-  }
 
   // Phase 7C: BYOK-aware — prefer user's stored OpenRouter key; fall back to env.
   const apiKey = await resolveUserApiKey(
