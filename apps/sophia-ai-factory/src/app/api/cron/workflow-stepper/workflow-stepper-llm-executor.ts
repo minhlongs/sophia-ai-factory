@@ -76,7 +76,7 @@ export async function callAnthropicWithByok(
   }
 }
 
-/** Call OpenRouter (or local-mekongd) via BYOK (falls back to mock on missing key or error). */
+/** Call OpenRouter via BYOK (falls back to mock on missing key or error). */
 export async function callOpenRouterWithByok(
   workflow: WorkflowRow,
   model: string,
@@ -102,7 +102,7 @@ export async function callOpenRouterWithByok(
   }
 
   const cacheKey: CacheKey = {
-    provider: provider === 'local-mekongd' ? 'openrouter' : provider,
+    provider,
     model,
     messages: [
       { role: 'system', content: `You are a workflow step executor for step type: ${stepType}` },

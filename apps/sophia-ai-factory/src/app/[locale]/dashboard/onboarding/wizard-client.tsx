@@ -21,7 +21,6 @@ import { WizardStepper } from '@/tree/components/setup-wizard/wizard-stepper';
 import { ArrowRight, Save, Loader2, AlertTriangle } from 'lucide-react';
 import { SystemCheckStep } from '@/tree/components/setup-wizard/steps/system-check-step';
 import { ApiKeysStep } from '@/tree/components/setup-wizard/steps/api-keys-step';
-import { LocalModeStep } from '@/forest/components/setup-wizard/local-mode-step';
 import { FinishStep } from '@/tree/components/setup-wizard/steps/finish-step';
 import { ProviderCredentialsStep, type ProviderConfig } from '@/tree/components/setup-wizard/steps/provider-credentials-step';
 import type { CredentialSummary } from '@/tree/credentials/user-credentials-repo';
@@ -414,7 +413,6 @@ export function WizardClient() {
                     t('stepper.system'),
                     t('stepper.aiKeys'),
                     t('stepper.providers'),
-                    t('stepper.localMode'),
                     t('stepper.finish'),
                 ]}
             />
@@ -454,9 +452,7 @@ export function WizardClient() {
               </>
             )}
 
-            {step === 4 && <LocalModeStep />}
-
-            {step === 5 && (
+            {step === 4 && (
               <>
                 {saveError && retryCount > 0 && (
                   <div className="mb-4 rounded-lg border border-blue-400 bg-blue-50 dark:bg-blue-900/10 p-3 text-sm text-blue-800 dark:text-blue-300">
@@ -479,7 +475,7 @@ export function WizardClient() {
         </div>
 
         <div className="bg-muted/50 px-8 py-6 flex justify-between items-center border-t border-border">
-            {step > 1 && step < 5 && (
+            {step > 1 && step < 4 && (
                 <button
                     onClick={() => { setNextError(null); setStep(prev => prev - 1); }}
                     className="text-muted-foreground hover:text-foreground font-medium px-4 py-2"
@@ -500,7 +496,7 @@ export function WizardClient() {
               </div>
             )}
 
-            {step < 5 ? (
+            {step < 4 ? (
                 <button
                     onClick={handleNext}
                     disabled={isTransitioning}

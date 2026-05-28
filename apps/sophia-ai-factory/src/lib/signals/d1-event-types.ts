@@ -176,7 +176,7 @@ const LlmCallTraceSchema = z.object({
   workflow_id:    z.string(),
   step_order:     z.number().int().min(1).max(3),
   step_type:      z.string(),              // plan | execute | test
-  provider:       z.string(),              // stub | openrouter | anthropic | local-mekongd
+  provider:       z.string(),              // stub | openrouter | anthropic
   model:          z.string(),              // mvp-stub | gpt-4o-mini | claude-sonnet-4
   duration_ms:    z.number().nonnegative(),
   ok:             z.boolean(),

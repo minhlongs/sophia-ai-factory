@@ -18,7 +18,7 @@ export interface LlmCallTrace {
   workflowId:    string
   stepOrder:     number                    // 1 | 2 | 3
   stepType:      string                    // 'plan' | 'execute' | 'test'
-  provider:      string                    // 'stub' | 'openrouter' | 'anthropic' | 'local-mekongd'
+  provider:      string                    // 'stub' | 'openrouter' | 'anthropic'
   model:         string
   durationMs:    number
   ok:            boolean
