@@ -12,7 +12,7 @@
 
 | # | Phase | Priority | Status | Est |
 |---|-------|----------|--------|-----|
-| 01 | [Brand Kit Enforcement](phase-01-brand-kit.md) | P1 | TODO | 3-4d |
+| 01 | [Brand Kit Enforcement](phase-01-brand-kit.md) | P1 | COMPLETED | 3-4d |
 | 02 | [Batch Video Generation](phase-02-batch-generation.md) | P0 | TODO | 3-5d |
 | 03 | [Auto-Repurpose Long→Shorts](phase-03-auto-repurpose.md) | P0 | TODO | 5-7d |
 | 04 | [Multi-Channel Publish: YouTube](phase-04-publish-youtube.md) | P0 | TODO | 3-4d |

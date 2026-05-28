@@ -89,6 +89,9 @@ class ComposeRichRequest(BaseModel):
     loudnorm: bool = False                       # EBU R128 normalize to -14 LUFS
     output_thumbnail: bool = True                # extract a poster at ~1s
     output_format: str = "mp4"
+    intro_r2_key: Optional[str] = None
+    outro_r2_key: Optional[str] = None
+
 
 
 class ProbeRequest(BaseModel):
@@ -146,7 +149,7 @@ def burn_subtitles_ffmpeg(video_in: str, srt_path: str, video_out: str, style: S
 
 
 def _color_to_ass(name: str) -> str:
-    """Convert a CSS-ish color name to ASS BGR hex (libass quirk)."""
+    """Convert a CSS-ish color name or HEX color code to ASS BGR hex (libass quirk)."""
     palette = {
         "white": "FFFFFF",
         "black": "000000",
@@ -154,7 +157,66 @@ def _color_to_ass(name: str) -> str:
         "red": "0000FF",
         "blue": "FF0000",
     }
-    return palette.get(name.lower(), "FFFFFF")
+    name_clean = name.lower().strip()
+    if name_clean in palette:
+        return palette[name_clean]
+    if name_clean.startswith("#"):
+        hex_val = name_clean[1:]
+    else:
+        hex_val = name_clean
+
+    if len(hex_val) == 6:
+        r = hex_val[0:2]
+        g = hex_val[2:4]
+        b = hex_val[4:6]
+        return f"{b}{g}{r}".upper()
+    elif len(hex_val) == 8:
+        r = hex_val[0:2]
+        g = hex_val[2:4]
+        b = hex_val[4:6]
+        return f"{b}{g}{r}".upper()
+    elif len(hex_val) == 3:
+        r = hex_val[0] * 2
+        g = hex_val[1] * 2
+        b = hex_val[2] * 2
+        return f"{b}{g}{r}".upper()
+    return "FFFFFF"
+
+
+import re
+from datetime import timedelta
+
+def shift_srt(srt_content: str, shift_sec: float) -> str:
+    """Shift all timestamps in an SRT file by shift_sec seconds."""
+    if not srt_content or shift_sec <= 0:
+        return srt_content
+
+    def shift_match(match):
+        start_str, end_str = match.group(1), match.group(2)
+        
+        def to_seconds(t_str):
+            parts = t_str.replace(',', '.').split(':')
+            h = float(parts[0])
+            m = float(parts[1])
+            s = float(parts[2])
+            return h * 3600 + m * 60 + s
+            
+        def to_srt_time(seconds):
+            td = timedelta(seconds=seconds)
+            total_sec = int(td.total_seconds())
+            h = total_sec // 3600
+            m = (total_sec % 3600) // 60
+            s = total_sec % 60
+            ms = int((seconds - int(seconds)) * 1000)
+            return f"{h:02d}:{m:02d}:{s:02d},{ms:03d}"
+            
+        new_start = to_seconds(start_str) + shift_sec
+        new_end = to_seconds(end_str) + shift_sec
+        return f"{to_srt_time(new_start)} --> {to_srt_time(new_end)}"
+
+    pattern = r"(\d{2}:\d{2}:\d{2},\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2},\d{3})"
+    return re.sub(pattern, shift_match, srt_content)
+
 
 
 def add_watermark(clip, wm: WatermarkConfig):
@@ -319,7 +381,7 @@ async def compose(req: ComposeRequest) -> StreamingResponse:
 @app.post("/compose-rich")
 async def compose_rich(req: ComposeRichRequest) -> Response:
     """
-    Rich compose: subtitle burn-in, watermark, audio loudnorm, thumbnail.
+    Rich compose: subtitle burn-in, watermark, audio loudnorm, intro/outro concat, thumbnail.
     Returns multipart-style response via response headers + body.
 
     Body:    final mp4 bytes
@@ -360,21 +422,66 @@ async def compose_rich(req: ComposeRichRequest) -> Response:
         # 2. MoviePy compose video + audio + watermark
         video_clip = VideoFileClip(visual_path)
         audio_clip = AudioFileClip(audio_use)
-        composed = video_clip.set_audio(audio_clip)
+        main_clip = video_clip.set_audio(audio_clip)
 
         if req.watermark and (req.watermark.text or req.watermark.logo_url):
-            composed = add_watermark(composed, req.watermark)
+            main_clip = add_watermark(main_clip, req.watermark)
+
+        # 2b. Concat intro / outro
+        clips_to_concat = []
+        intro_clip = None
+        outro_clip = None
+        intro_duration = 0.0
+
+        if req.intro_r2_key:
+            try:
+                intro_bytes = await fetch_r2_object(req.intro_r2_key)
+                intro_tmp_path = os.path.join(tmpdir, "intro.mp4")
+                with open(intro_tmp_path, "wb") as f:
+                    f.write(intro_bytes)
+                intro_clip = VideoFileClip(intro_tmp_path)
+                intro_duration = intro_clip.duration
+                clips_to_concat.append(intro_clip)
+            except Exception as exc:
+                # Non-fatal — skip intro if fetch/load fails
+                pass
+
+        clips_to_concat.append(main_clip)
+
+        if req.outro_r2_key:
+            try:
+                outro_bytes = await fetch_r2_object(req.outro_r2_key)
+                outro_tmp_path = os.path.join(tmpdir, "outro.mp4")
+                with open(outro_tmp_path, "wb") as f:
+                    f.write(outro_bytes)
+                outro_clip = VideoFileClip(outro_tmp_path)
+                clips_to_concat.append(outro_clip)
+            except Exception as exc:
+                # Non-fatal — skip outro if fetch/load fails
+                pass
+
+        if len(clips_to_concat) > 1:
+            composed = concatenate_videoclips(clips_to_concat, method="compose")
+        else:
+            composed = main_clip
 
         composed.write_videofile(merged_path, fps=30, codec="libx264", audio_codec="aac", logger=None)
+        
+        # Clean up clips
         video_clip.close()
         audio_clip.close()
+        if intro_clip:
+            intro_clip.close()
+        if outro_clip:
+            outro_clip.close()
 
-        # 3. Optional subtitle burn-in via ffmpeg subtitles filter
+        # 3. Optional subtitle burn-in via ffmpeg subtitles filter (shift if intro is present)
         produced_path = merged_path
         if req.subtitle_srt and req.subtitle_style:
             srt_path = os.path.join(tmpdir, "captions.srt")
+            shifted_srt = shift_srt(req.subtitle_srt, intro_duration)
             with open(srt_path, "w", encoding="utf-8") as f:
-                f.write(req.subtitle_srt)
+                f.write(shifted_srt)
             try:
                 burn_subtitles_ffmpeg(merged_path, srt_path, burned_path, req.subtitle_style)
                 produced_path = burned_path

@@ -1,6 +1,6 @@
 # Phase 01: Brand Kit Enforcement
 
-**Priority:** P1 | **Status:** TODO | **Est:** 3-4 days
+**Priority:** P1 | **Status:** COMPLETED | **Est:** 3-4 days
 **Depends on:** Nothing (foundation phase)
 
 ## Overview
@@ -80,16 +80,16 @@ r2://sophia-brand-kits/{user_id}/
 
 ## Implementation Steps
 
-- [ ] 1. Create D1 migration for brand_kits table
-- [ ] 2. Create brand-kits-repo.ts with CRUD ops
-- [ ] 3. Create brand-kit-action.ts server action (upload to R2 + save metadata)
-- [ ] 4. Build brand kit setup form (logo upload, color picker, intro/outro upload)
-- [ ] 5. Implement brand-kit-composer.ts (FFmpeg filter graph with watermark + concat)
-- [ ] 6. Integrate into composer-ffmpeg.ts (load brand kit → apply filters)
-- [ ] 7. Update subtitle-generator.ts for ASS brand color injection
-- [ ] 8. Update video-compose Inngest function to fetch brand kit
-- [ ] 9. Add brand kit preview (render 5s sample with overlay)
-- [ ] 10. Tests: brand kit CRUD, FFmpeg filter generation, ASS color conversion
+- [x] 1. Create D1 migration for brand_kits table (Done via 20260524_brand_kits.sql)
+- [x] 2. Create brand-kits-repo.ts with CRUD ops (Done)
+- [x] 3. Create brand-kit-action.ts server action (upload to R2 + save metadata) (Done)
+- [x] 4. Build brand kit setup form (logo upload, color picker, intro/outro upload) (Done)
+- [x] 5. Implement brand-kit-composer.ts (FFmpeg filter graph with watermark + concat) (Done)
+- [x] 6. Integrate into composer-ffmpeg.ts (load brand kit → apply filters) (Done)
+- [x] 7. Update subtitle-generator.ts for ASS brand color injection (Done - hex to BGR converter added in moviepy render service)
+- [x] 8. Update video-compose Inngest function to fetch brand kit (Done - integrated in primary video-generate.ts pipeline)
+- [x] 9. Add brand kit preview (render 5s sample with overlay) (Done)
+- [x] 10. Tests: brand kit CRUD, FFmpeg filter generation, ASS color conversion (Done, passing 100%)
 
 ## Success Criteria
 

@@ -60,6 +60,10 @@ export interface ComposeInput {
   normalizeAudio?: boolean;
   /** When true, server extracts a poster frame and Worker uploads it to R2. */
   generateThumbnail?: boolean;
+  /** Brand kit intro video clip key in R2. */
+  introR2Key?: string | null;
+  /** Brand kit outro video clip key in R2. */
+  outroR2Key?: string | null;
 }
 
 export interface ComposeResult {
@@ -82,7 +86,9 @@ function needsRichCompose(input: ComposeInput): boolean {
     input.watermark
       || input.normalizeAudio
       || (input.subtitleSrt && input.subtitleStyle)
-      || input.generateThumbnail,
+      || input.generateThumbnail
+      || input.introR2Key
+      || input.outroR2Key,
   );
 }
 
@@ -215,6 +221,8 @@ async function callFly(flyUrl: string, input: ComposeInput): Promise<Response> {
         loudnorm: input.normalizeAudio === true,
         output_thumbnail: input.generateThumbnail !== false,
         output_format: 'mp4',
+        intro_r2_key: input.introR2Key ?? null,
+        outro_r2_key: input.outroR2Key ?? null,
       }
     : {
         audio_r2_key: input.audioR2Key,
@@ -261,6 +269,8 @@ export async function applyBrandKit(
       ...input,
       watermark: input.watermark ?? overrides.watermark,
       subtitleStyle: input.subtitleStyle ?? overrides.subtitleStyle,
+      introR2Key: input.introR2Key ?? overrides.introR2Key,
+      outroR2Key: input.outroR2Key ?? overrides.outroR2Key,
     };
   } catch (err) {
     logger.warn('[Composer] Brand kit load failed — proceeding without', {
