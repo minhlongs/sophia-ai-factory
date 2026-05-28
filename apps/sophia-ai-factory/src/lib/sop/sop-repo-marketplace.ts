@@ -41,7 +41,7 @@ export async function listPublishedListings(
   const { results } = await (binds.length > 0 ? stmt.bind(...binds) : stmt).all();
   // D1 returns untyped rows for dynamic JOIN queries; cast is intentional
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return results as any[];
+  return results as unknown as (SopListingRow & { name_en: string; name_vi: string; slug: string; category: string; author_user_id: string | null })[];
 }
 
 /** Create a new listing for a community SOP */
@@ -121,5 +121,5 @@ export async function listCreatorSales(db: D1Database, creatorId: string): Promi
   `).bind(creatorId).all();
   // D1 returns untyped rows for JOIN queries; cast is intentional
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return results as any[];
+  return results as unknown as (SopLicenseRow & { name_en: string })[];
 }

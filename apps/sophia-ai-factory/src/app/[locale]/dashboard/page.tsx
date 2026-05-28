@@ -54,6 +54,26 @@ interface ProfileRow {
   onboarding_completed_at: number | null;
 }
 
+interface OptimizationRow {
+  id: string;
+  sopId: string;
+  stepIndex: number;
+  originalPrompt: string;
+  suggestedPrompt: string;
+  improvementScore: number;
+  createdAt: number;
+}
+
+interface DbOptimizationRow {
+  id: string;
+  sop_id: string;
+  step_index: number;
+  original_prompt: string;
+  suggested_prompt: string;
+  improvement_score: number | null;
+  created_at: number;
+}
+
 export default async function DashboardPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
@@ -94,7 +114,7 @@ export default async function DashboardPage() {
   let trialEndsAt: number | null = null;
   let feedbackPendingCount = 0;
   let feedbackCompletedCount = 0;
-  let recentOptimizations: any[] = [];
+  let recentOptimizations: OptimizationRow[] = [];
 
   if (d1) {
     try {
@@ -115,7 +135,7 @@ export default async function DashboardPage() {
         d1.prepare(`SELECT COUNT(*) as cnt FROM performance_feedback_cycles WHERE user_id = ?1 AND status = 'completed'`).bind(user.id).first<{ cnt: number }>(),
         d1.prepare(`SELECT id, sop_id, step_index, original_prompt, suggested_prompt, improvement_score, created_at FROM prompt_optimization_log
           WHERE cycle_id IN (SELECT id FROM performance_feedback_cycles WHERE user_id = ?1)
-          ORDER BY created_at DESC LIMIT 3`).bind(user.id).all<any>(),
+          ORDER BY created_at DESC LIMIT 3`).bind(user.id).all<DbOptimizationRow>(),
       ]);
       sopCount = instResult?.cnt ?? 0;
       recentRuns = runsResult.results ?? [];
