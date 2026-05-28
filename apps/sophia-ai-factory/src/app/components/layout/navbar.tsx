@@ -102,7 +102,7 @@ export function Navbar() {
         </Link>
 
         {/* Desktop nav */}
-        <div className="hidden md:flex items-center gap-1">
+        <div className="hidden lg:flex items-center gap-1">
           {navLinks.map((link) => (
             <Link
               key={link.href}
@@ -122,7 +122,7 @@ export function Navbar() {
         </div>
 
         {/* Desktop CTA */}
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden lg:flex items-center gap-3">
           <LanguageSwitcher />
           {!isLoggedIn && (
             <Link href="/login">
@@ -140,7 +140,7 @@ export function Navbar() {
 
         {/* Mobile hamburger */}
         <button
-          className="md:hidden p-2 rounded-xl transition-colors text-muted-foreground hover:text-foreground hover:bg-white/5"
+          className="lg:hidden p-2 rounded-xl transition-colors text-muted-foreground hover:text-foreground hover:bg-white/5"
           aria-label="Toggle navigation menu"
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen(!menuOpen)}
@@ -152,7 +152,7 @@ export function Navbar() {
       {/* Mobile menu */}
       {menuOpen && (
         <div
-          className="md:hidden border-t px-5 py-5 flex flex-col gap-3 rounded-b-2xl"
+          className="lg:hidden border-t px-5 py-5 flex flex-col gap-3 rounded-b-2xl"
           style={{
             background: "rgba(2,8,23,0.97)",
             borderColor: "rgba(255,255,255,0.06)",
