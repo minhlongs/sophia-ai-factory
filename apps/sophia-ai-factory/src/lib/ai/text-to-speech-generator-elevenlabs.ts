@@ -1,4 +1,4 @@
-// TODO: storage not available in D1 client — audio upload needs Cloudflare R2 migration
+import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
 import { logger } from '@/seed/utils/logger-utility';
 import { getErrorMessage } from '@/seed/utils/to-error';
 import { Tier } from '@/seed/types';
@@ -31,11 +31,15 @@ interface GenerateVoiceoverInput {
  */
 export async function generateVoiceover(input: GenerateVoiceoverInput): Promise<VoiceoverOutput> {
   const { text, tier, voiceId, userId, licenseKey, licenseNonce } = input;
-  const apiKey = process.env.ELEVENLABS_API_KEY;
-  const stopTimer = startTimer();
-
   const context = getUsageContext();
   const finalUserId = userId || context?.userId || 'unknown';
+  const apiKey = await resolveUserApiKey(
+    finalUserId,
+    'elevenlabs',
+    process.env.ELEVENLABS_API_KEY,
+  );
+  const stopTimer = startTimer();
+
   const finalLicenseKey = licenseKey || '';
   const finalLicenseNonce = licenseNonce || context?.licenseNonce || 'unknown';
   const licenseKeyHash = hashLicenseKey(finalLicenseKey || 'unknown');
