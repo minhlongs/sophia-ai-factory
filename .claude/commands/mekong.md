@@ -5,8 +5,8 @@ argument-hint: <subcommand> [args...]  e.g., spec new auth | metrics | eval-agen
 
 # Mekong CLI Bridge — Sophia Factory Deep Integration
 
-[VN] Cầu nối tới Mekong CLI v3.3.0+ tại `/Users/macbookprom1/mekong-cli/`. Cho phép Sophia dùng SDLC scaffold + observability + signals của Mekong CLI.
-[EN] Bridge to Mekong CLI v3.3.0+ at `/Users/macbookprom1/mekong-cli/`. Lets Sophia use Mekong's SDLC scaffold + observability + signals.
+[VN] Cầu nối tới Mekong CLI v3.3.0+ tại `/Users/macbook/mekong-cli/`. Cho phép Sophia dùng SDLC scaffold + observability + signals của Mekong CLI.
+[EN] Bridge to Mekong CLI v3.3.0+ at `/Users/macbook/mekong-cli/`. Lets Sophia use Mekong's SDLC scaffold + observability + signals.
 
 ## Request
 <command>$ARGUMENTS</command>
@@ -26,7 +26,7 @@ argument-hint: <subcommand> [args...]  e.g., spec new auth | metrics | eval-agen
 
 1. Parse `$ARGUMENTS` to extract subcommand + args
 2. Validate subcommand against routing table above
-3. Run via Bash tool: `cd /Users/macbookprom1/mekong-cli && mekong $ARGUMENTS`
+3. Run via Bash tool: `cd /Users/macbook/mekong-cli && mekong $ARGUMENTS`
 4. Capture output, return to user
 5. If creating spec/design/code/deploy artifact, COPY artifact path into Sophia's plans/ for cross-repo reference
 
@@ -39,7 +39,7 @@ sophia-ai-factory/
 │   ├── orchestrator.md       # Sophia supervisor
 │   ├── CLAUDE.{spec,design,code,deploy}.md   # Sophia's own SDLC instructions
 │   └── mekong-bridge/
-│       └── phases/ → /Users/macbookprom1/mekong-cli/.mekong/phases/  # SYMLINK
+│       └── phases/ → /Users/macbook/mekong-cli/.mekong/phases/  # SYMLINK
 │
 mekong-cli/
 ├── .mekong/
@@ -78,11 +78,11 @@ Sophia's Better Stack logs + Mekong's Grafana metrics CAN merge:
 
 ## Docs
 - Sophia plan: `plans/260416-2328-sophia-factory-raas-solo-platform/plan.md`
-- Mekong audit: `/Users/macbookprom1/mekong-cli/plans/reports/audit-260417-0820-mekong-vs-claudekit-gap.md`
+- Mekong audit: `/Users/macbook/mekong-cli/plans/reports/audit-260417-0820-mekong-vs-claudekit-gap.md`
 - Activation: `docs/sophia-activation-runbook.md`
 - Architecture: `docs/sophia-mekong-integration.md` (this bridge documented in detail)
 
 ## Constraints
-- Mekong CLI is INDEPENDENT repo at `/Users/macbookprom1/mekong-cli/` — DO NOT mutate from Sophia
+- Mekong CLI is INDEPENDENT repo at `/Users/macbook/mekong-cli/` — DO NOT mutate from Sophia
 - `/mekong` slash from Sophia operates READ-ONLY against Mekong (or via official `mekong` CLI binary which has own permissions)
 - Cross-repo writes go through PR workflow on respective repo
