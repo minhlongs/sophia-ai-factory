@@ -3,10 +3,12 @@
 This file documents the post-deployment smoke tests performed on the live Sophia AI Factory production environment.
 
 ## 1. Version Match check
-- **Expected SHA:** `e0bbec8c`
+- **Expected SHA:** `49e3c468`
 - **Endpoint:** `/api/version`
 - **Status:** PASS
 - **Output Verified:** Live application returned correct commit SHA matching the deployed changes.
+  - Custom domain URL: `https://sophia.agencyos.network/api/version` -> `{"shortSha":"49e3c468","deployedAt":"2026-05-28T14:22:18Z","opennextVersion":"1.19.9"}`
+  - Direct worker URL: `https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/version` -> `{"shortSha":"49e3c468"}`
 
 ## 2. Integration Health Pings
 - [x] **HeyGen Integration:** Verified `/api/health/heygen` pings successfully.
