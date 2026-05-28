@@ -43,6 +43,7 @@ export interface GenerateVoiceoverInput {
   text: string;
   tier: Tier;
   voiceId?: string;
+  userId?: string;
 }
 
 export interface VoiceoverOutput {

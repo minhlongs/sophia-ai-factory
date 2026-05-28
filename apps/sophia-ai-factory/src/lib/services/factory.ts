@@ -103,7 +103,7 @@ export class ServiceFactory {
    */
   static async getVoiceService(userId?: string): Promise<IVoiceService> {
     const key = await resolveKey('ELEVENLABS_API_KEY', 'elevenlabs', userId)
-    return key ? new RealVoiceService() : new MockVoiceService()
+    return key ? new RealVoiceService(userId) : new MockVoiceService()
   }
 
   /**
