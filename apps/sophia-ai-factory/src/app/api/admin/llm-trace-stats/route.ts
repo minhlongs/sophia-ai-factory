@@ -13,6 +13,7 @@ import {
   type TraceRow,
 } from '@/tree/admin/trace-aggregator'
 import { getErrorMessage } from '@/seed/utils/to-error'
+import { timingSafeEqual } from '@/seed/security/crypto-utils'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,7 +37,9 @@ function verifyCronSecret(request: NextRequest): boolean {
   if (process.env.NODE_ENV === 'development') return true
   const secret = process.env.CRON_SECRET
   if (!secret) return false
-  return request.headers.get('authorization') === `Bearer ${secret}`
+  const provided = request.headers.get('authorization') ?? ''
+  const expected = `Bearer ${secret}`
+  return timingSafeEqual(provided, expected)
 }
 
 // ── Handler ───────────────────────────────────────────────────────────────────
