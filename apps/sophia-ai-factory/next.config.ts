@@ -40,7 +40,7 @@ const nextConfig: NextConfig = {
     // Next's in-build typecheck is redundant once the gate runs — and was the
     // M1 16GB OOM trigger during deploy:full. Removing it from the inner build
     // requires the deploy script to enforce tsc --noEmit BEFORE next build.
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   images: {
     formats: ['image/avif', 'image/webp'],
