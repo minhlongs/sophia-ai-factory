@@ -64,9 +64,9 @@ strip_pattern "*framer*motion*" "framer-motion"
 strip_pattern "*d3-*" "d3 (recharts dep)"
 
 # Heavy libs identified by content signature (filenames are hashed)
-strip_by_content "immer-nothing" "immer" 200000
-strip_by_content "SentryHttpInstrumentation" "sentry-sdk-heavy" 100000
-strip_by_content "wrapMcpServerWithSentry" "sentry-sdk-core" 100000
+# strip_by_content "immer-nothing" "immer" 200000
+# strip_by_content "SentryHttpInstrumentation" "sentry-sdk-heavy" 100000
+# strip_by_content "wrapMcpServerWithSentry" "sentry-sdk-core" 100000
 # Sentry: truncate to just re-export stubs, keeping Turbopack module wrapper intact.
 # Previous approach replaced the entire file, destroying co-bundled non-sentry modules
 # and causing "module factory is not available" SSR crashes.
@@ -93,6 +93,6 @@ strip_sentry() {
     echo "  Stripped $label: saved $(echo $saved | awk '{printf "%.0f KB", $1/1024}')"
   fi
 }
-strip_sentry
+# strip_sentry
 
 echo "Done."
