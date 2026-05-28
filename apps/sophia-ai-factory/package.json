@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "dev:mock": "NEXT_PUBLIC_MOCK_AI_SERVICES=true next dev",
-    "build": "NODE_OPTIONS=--max-old-space-size=14336 next build --turbopack",
+    "build": "NODE_OPTIONS=--max-old-space-size=4096 next build",
     "start": "next start",
     "lint": "node --max-old-space-size=14336 ./node_modules/eslint/bin/eslint.js src",
     "type-check": "tsc --noEmit",
