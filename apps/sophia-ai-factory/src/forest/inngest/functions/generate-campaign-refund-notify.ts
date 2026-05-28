@@ -60,3 +60,55 @@ export async function notifyRefundRequired(
     logger.warn('[notifyRefundRequired] Telegram notification failed', { userId, campaignId, missingKey, error: String(tgErr) })
   }
 }
+
+/** Maps internal provider names to user-friendly labels (VI + EN). */
+const PROVIDER_LABEL: Record<string, { vi: string; en: string }> = {
+  openrouter: { vi: 'OpenRouter (Tạo kịch bản)', en: 'OpenRouter (Script Generation)' },
+  elevenlabs: { vi: 'ElevenLabs (Lồng tiếng)', en: 'ElevenLabs (Voiceover)' },
+  heygen:     { vi: 'HeyGen (Tạo video)', en: 'HeyGen (Video Rendering)' },
+}
+
+function buildProviderErrorMessage(campaignId: string, provider: string, type: 'quota' | 'key', rawError: string): string {
+  const label = PROVIDER_LABEL[provider] ?? { vi: provider, en: provider }
+  const reasonVi = type === 'quota'
+    ? 'Hết hạn ngạch (hết tiền/credits) hoặc bị giới hạn lượt gọi.'
+    : 'Khóa API không hợp lệ hoặc không có quyền truy cập.'
+  const reasonEn = type === 'quota'
+    ? 'Quota exceeded (out of credits) or rate limited.'
+    : 'Invalid API key or unauthorized.'
+
+  return (
+    `❌ Campaign thất bại: lỗi kết nối ${label.vi}.\n` +
+    `📌 Lý do: ${reasonVi}\n` +
+    `📞 Liên hệ admin hoặc kiểm tra lại khóa API cá nhân của bạn.\n` +
+    `ID: ${campaignId}\n` +
+    `---\n` +
+    `❌ Campaign failed: ${label.en} error.\n` +
+    `📌 Reason: ${reasonEn}\n` +
+    `📞 Contact admin or check your BYOK API key settings.\n` +
+    `ID: ${campaignId}`
+  )
+}
+
+export async function notifyProviderError(
+  userId: string,
+  campaignId: string,
+  provider: string,
+  type: 'quota' | 'key',
+  rawError: string
+): Promise<void> {
+  try {
+    await updateCampaignStatus(campaignId, 'failed', 0, {
+      error_message: `Provider ${provider} error (${type}): ${rawError.slice(0, 200)}`,
+    })
+  } catch (dbErr) {
+    logger.warn('[notifyProviderError] Failed to update campaign status', { campaignId, provider, error: String(dbErr) })
+  }
+
+  try {
+    const message = buildProviderErrorMessage(campaignId, provider, type, rawError)
+    await notifyUserByTelegram(userId, message)
+  } catch (tgErr) {
+    logger.warn('[notifyProviderError] Telegram notification failed', { userId, campaignId, provider, error: String(tgErr) })
+  }
+}

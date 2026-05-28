@@ -2,7 +2,7 @@ import { NonRetriableError } from 'inngest'
 import { inngest } from '@/forest/inngest/client'
 import { logger } from '@/seed/utils/logger-utility'
 import { ServiceFactory } from '@/lib/services/factory'
-import { MissingCredentialsError } from '@/lib/services/errors'
+import { MissingCredentialsError, ProviderQuotaExceededError, ProviderInvalidKeyError } from '@/lib/services/errors'
 import { startVideoGeneration } from '@/lib/ai/video-generator'
 import { getD1Client } from '@/seed/db/client'
 import { OpenClawGateway } from '@/tree/gateway/openclaw-gateway'
@@ -12,7 +12,7 @@ import { TikTokChannelAdapter } from '@/tree/gateway/adapters/tiktok-channel-ada
 import { TelegramNotificationAdapter } from '@/tree/gateway/adapters/telegram-notification-adapter'
 import { resolveOrgId } from '@/seed/auth/resolve-org-id'
 import { updateCampaignStatus, notifyUserByTelegram } from './generate-campaign-db'
-import { notifyRefundRequired } from './generate-campaign-refund-notify'
+import { notifyRefundRequired, notifyProviderError } from './generate-campaign-refund-notify'
 import { pollVideoStatus } from './generate-campaign-video-poller'
 import { emit } from '@/lib/webhooks/emitter'
 
@@ -87,24 +87,31 @@ export const generateCampaign = inngest.createFunction(
         return typedCampaign.script_content
       }
       await updateStatus('processing_script', 10)
-      let scriptService
       try {
-        scriptService = await ServiceFactory.getScriptService(userId)
+        const scriptService = await ServiceFactory.getScriptService(userId)
+        const resolvedOrgId = (await resolveOrgId(userId)) ?? userId
+        const result = await scriptService.generateScript({
+          topic, audience, tier, orgId: resolvedOrgId, userId,
+          affiliateOffer: affiliateOffer ?? undefined,
+        })
+        await updateStatus('processing_script', 35, { script_content: result })
+        await resumeEngine.checkpoint(campaignId, 'generate-script')
+        return result
       } catch (err) {
         if (err instanceof MissingCredentialsError) {
           await notifyRefundRequired(userId, campaignId, err.key)
           throw new NonRetriableError(`Missing AI credential: ${err.key}`, { cause: err })
         }
+        if (err instanceof ProviderQuotaExceededError) {
+          await notifyProviderError(userId, campaignId, err.service, 'quota', err.message)
+          throw new NonRetriableError(err.message, { cause: err })
+        }
+        if (err instanceof ProviderInvalidKeyError) {
+          await notifyProviderError(userId, campaignId, err.service, 'key', err.message)
+          throw new NonRetriableError(err.message, { cause: err })
+        }
         throw err
       }
-      const resolvedOrgId = (await resolveOrgId(userId)) ?? userId
-      const result = await scriptService.generateScript({
-        topic, audience, tier, orgId: resolvedOrgId, userId,
-        affiliateOffer: affiliateOffer ?? undefined,
-      })
-      await updateStatus('processing_script', 35, { script_content: result })
-      await resumeEngine.checkpoint(campaignId, 'generate-script')
-      return result
     })
 
     await step.run('generate-voiceover', async () => {
@@ -119,20 +126,27 @@ export const generateCampaign = inngest.createFunction(
       const fullNarration = scriptData.scenes.map(s => s.narration).join(' ')
       await updateStatus('processing_script', 45)
       if (!resume) await notifyUser(`📝 Script ready! Now generating voiceover...`)
-      let voiceService
       try {
-        voiceService = await ServiceFactory.getVoiceService(userId)
+        const voiceService = await ServiceFactory.getVoiceService(userId)
+        const voiceoverResult = await voiceService.generateVoiceover({ text: fullNarration, tier, userId })
+        await updateStatus('processing_script', 60, { audio_url: voiceoverResult.audio_url })
+        await resumeEngine.checkpoint(campaignId, 'generate-voiceover')
+        return voiceoverResult.audio_url
       } catch (err) {
         if (err instanceof MissingCredentialsError) {
           await notifyRefundRequired(userId, campaignId, err.key)
           throw new NonRetriableError(`Missing AI credential: ${err.key}`, { cause: err })
         }
+        if (err instanceof ProviderQuotaExceededError) {
+          await notifyProviderError(userId, campaignId, err.service, 'quota', err.message)
+          throw new NonRetriableError(err.message, { cause: err })
+        }
+        if (err instanceof ProviderInvalidKeyError) {
+          await notifyProviderError(userId, campaignId, err.service, 'key', err.message)
+          throw new NonRetriableError(err.message, { cause: err })
+        }
         throw err
       }
-      const voiceoverResult = await voiceService.generateVoiceover({ text: fullNarration, tier })
-      await updateStatus('processing_script', 60, { audio_url: voiceoverResult.audio_url })
-      await resumeEngine.checkpoint(campaignId, 'generate-voiceover')
-      return voiceoverResult.audio_url
     })
 
     const videoJobId = await step.run('start-video-generation', async () => {
@@ -145,6 +159,14 @@ export const generateCampaign = inngest.createFunction(
         if (err instanceof MissingCredentialsError) {
           await notifyRefundRequired(userId, campaignId, err.key)
           throw new NonRetriableError(`Missing AI credential: ${err.key}`, { cause: err })
+        }
+        if (err instanceof ProviderQuotaExceededError) {
+          await notifyProviderError(userId, campaignId, err.service, 'quota', err.message)
+          throw new NonRetriableError(err.message, { cause: err })
+        }
+        if (err instanceof ProviderInvalidKeyError) {
+          await notifyProviderError(userId, campaignId, err.service, 'key', err.message)
+          throw new NonRetriableError(err.message, { cause: err })
         }
         throw err
       }

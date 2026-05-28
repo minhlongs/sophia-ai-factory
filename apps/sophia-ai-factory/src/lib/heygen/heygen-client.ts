@@ -3,6 +3,7 @@ import { Tier } from "@/seed/types";
 import { getErrorMessage } from '@/seed/utils/to-error';
 import { trackUsage, hashLicenseKey, calculateCredits, startTimer } from '@/forest/usage-metering';
 import { getUsageContext } from '@/forest/usage-metering/context';
+import { ProviderQuotaExceededError, ProviderInvalidKeyError } from '@/lib/services/errors';
 
 const HEYGEN_API_URL = "https://api.heygen.com/v2";
 
@@ -65,6 +66,12 @@ export class HeyGenClient {
 
     if (!response.ok) {
       const errorBody = await response.text();
+      if (response.status === 401 || response.status === 403) {
+        throw new ProviderInvalidKeyError('heygen', errorBody);
+      }
+      if (response.status === 429 || response.status === 402) {
+        throw new ProviderQuotaExceededError('heygen', errorBody);
+      }
       throw new Error(`HeyGen API error: ${response.status} ${response.statusText} - ${errorBody}`);
     }
 

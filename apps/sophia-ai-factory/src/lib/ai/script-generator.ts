@@ -4,6 +4,7 @@ import { trackUsage, hashLicenseKey, calculateCredits, startTimer } from '@/fore
 import { getUsageContext } from '@/forest/usage-metering/context';
 import { callWithCache } from '@/lib/llm/cache/call-with-cache';
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
+import { ProviderQuotaExceededError, ProviderInvalidKeyError } from '@/lib/services/errors';
 import {
   generateMockScript,
   buildScriptUserPrompt,
@@ -113,6 +114,12 @@ export async function generateScript(input: GenerateScriptInput) {
             responseTimeMs: responseTime,
             creditsUsed:    0,
           });
+          if (response.status === 401 || response.status === 403) {
+            throw new ProviderInvalidKeyError('openrouter', errorText);
+          }
+          if (response.status === 429 || response.status === 402) {
+            throw new ProviderQuotaExceededError('openrouter', errorText);
+          }
           throw new Error(`OpenRouter API failed: ${response.status}`);
         }
 
