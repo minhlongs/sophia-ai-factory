@@ -156,14 +156,6 @@ npx @opennextjs/cloudflare build --skipNextBuild
 echo "==> inject-scheduled-handler"
 node scripts/inject-scheduled-handler.mjs
 
-# ─── Step 3: Inject secrets BEFORE deploy ───────────────────────────────────
-# Secrets are applied at Worker level; setting them before wrangler deploy
-# ensures the running worker sees the new values atomically.
-echo "==> Setting Worker secrets (COMMIT_SHA, DEPLOYED_AT, DEPLOY_BRANCH)"
-retry_cf "secret put COMMIT_SHA"   bash -c "echo '$COMMIT_SHA' | npx wrangler secret put COMMIT_SHA"
-retry_cf "secret put DEPLOYED_AT"  bash -c "echo '$DEPLOYED_AT' | npx wrangler secret put DEPLOYED_AT"
-retry_cf "secret put DEPLOY_BRANCH" bash -c "echo '$DEPLOY_BRANCH' | npx wrangler secret put DEPLOY_BRANCH"
-
 # ─── Step 3b: Pre-deploy E2E smoke (opt-in, Phase 03 Track C) ───────────────
 # Gate: RUN_PREDEPLOY_E2E=1 ./scripts/deploy-with-sha.sh
 # Runs the @smoke suite against a running local dev server (must be already up
@@ -190,6 +182,14 @@ echo "==> OpenNext Cloudflare deploy"
 # OpenNext 1.19+ deploys the generated worker from its adapter output.
 # Direct wrangler deploy still points at the legacy .open-next/worker.js path.
 retry_cf "opennext deploy" npx opennextjs-cloudflare deploy --config wrangler.toml
+
+# ─── Step 4.5: Inject secrets AFTER deploy ──────────────────────────────────
+# Secrets are applied at Worker level; setting them after wrangler deploy
+# ensures the running worker version resolves the latest values and circumvents versioning errors.
+echo "==> Setting Worker secrets (COMMIT_SHA, DEPLOYED_AT, DEPLOY_BRANCH)"
+retry_cf "secret put COMMIT_SHA"   bash -c "echo '$COMMIT_SHA' | npx wrangler secret put COMMIT_SHA"
+retry_cf "secret put DEPLOYED_AT"  bash -c "echo '$DEPLOYED_AT' | npx wrangler secret put DEPLOYED_AT"
+retry_cf "secret put DEPLOY_BRANCH" bash -c "echo '$DEPLOY_BRANCH' | npx wrangler secret put DEPLOY_BRANCH"
 
 # ─── Step 5: Upload Sentry source maps (non-fatal) ──────────────────────────
 # Bakes symbolicated stack traces into prod errors. Script gracefully skips
