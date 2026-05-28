@@ -81,7 +81,7 @@ class WatermarkConfig(BaseModel):
 
 
 class ComposeRichRequest(BaseModel):
-    audio_r2_key: str
+    audio_r2_key: Optional[str] = None
     visual_r2_key: str
     subtitle_srt: Optional[str] = ""
     subtitle_style: Optional[SubtitleStyle] = None
@@ -91,6 +91,10 @@ class ComposeRichRequest(BaseModel):
     output_format: str = "mp4"
     intro_r2_key: Optional[str] = None
     outro_r2_key: Optional[str] = None
+    start_sec: Optional[float] = None
+    end_sec: Optional[float] = None
+    crop_vertical: bool = False
+
 
 
 
@@ -390,7 +394,7 @@ async def compose_rich(req: ComposeRichRequest) -> Response:
       X-Sophia-Thumbnail-B64 — base64-encoded JPEG (only if output_thumbnail=true)
     """
     try:
-        audio_bytes = await fetch_r2_object(req.audio_r2_key)
+        audio_bytes = await fetch_r2_object(req.audio_r2_key) if req.audio_r2_key else None
         visual_bytes = await fetch_r2_object(req.visual_r2_key)
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"Failed to fetch assets: {exc}") from exc
@@ -404,13 +408,14 @@ async def compose_rich(req: ComposeRichRequest) -> Response:
         final_path = os.path.join(tmpdir, "final.mp4")
         thumb_path = os.path.join(tmpdir, "poster.jpg")
 
-        with open(audio_in, "wb") as f:
-            f.write(audio_bytes)
+        if audio_bytes:
+            with open(audio_in, "wb") as f:
+                f.write(audio_bytes)
         with open(visual_path, "wb") as f:
             f.write(visual_bytes)
 
         # 1. Optional audio normalize (loudnorm)
-        if req.loudnorm:
+        if req.audio_r2_key and req.loudnorm:
             audio_norm = os.path.join(tmpdir, "audio_norm.wav")
             try:
                 normalize_audio_loudnorm(audio_in, audio_norm)
@@ -421,13 +426,33 @@ async def compose_rich(req: ComposeRichRequest) -> Response:
 
         # 2. MoviePy compose video + audio + watermark
         video_clip = VideoFileClip(visual_path)
-        audio_clip = AudioFileClip(audio_use)
-        main_clip = video_clip.set_audio(audio_clip)
+
+        # 2a. Subclip if timestamps provided
+        start_sec = req.start_sec
+        end_sec = req.end_sec
+        if start_sec is not None and end_sec is not None:
+            video_clip = video_clip.subclip(start_sec, end_sec)
+        elif start_sec is not None:
+            video_clip = video_clip.subclip(start_time=start_sec)
+
+        # 2b. Crop to vertical 9:16 if requested
+        if req.crop_vertical:
+            from moviepy.video.fx.crop import crop
+            new_w = video_clip.h * 9 / 16
+            x1 = (video_clip.w - new_w) / 2
+            video_clip = crop(video_clip, x1=x1, width=new_w)
+
+        audio_clip = None
+        if req.audio_r2_key:
+            audio_clip = AudioFileClip(audio_use)
+            main_clip = video_clip.set_audio(audio_clip)
+        else:
+            main_clip = video_clip
 
         if req.watermark and (req.watermark.text or req.watermark.logo_url):
             main_clip = add_watermark(main_clip, req.watermark)
 
-        # 2b. Concat intro / outro
+        # 2c. Concat intro / outro
         clips_to_concat = []
         intro_clip = None
         outro_clip = None
@@ -469,17 +494,19 @@ async def compose_rich(req: ComposeRichRequest) -> Response:
         
         # Clean up clips
         video_clip.close()
-        audio_clip.close()
+        if audio_clip:
+            audio_clip.close()
         if intro_clip:
             intro_clip.close()
         if outro_clip:
             outro_clip.close()
 
-        # 3. Optional subtitle burn-in via ffmpeg subtitles filter (shift if intro is present)
+        # 3. Optional subtitle burn-in via ffmpeg subtitles filter (shift if intro is present or clip is cropped)
         produced_path = merged_path
         if req.subtitle_srt and req.subtitle_style:
             srt_path = os.path.join(tmpdir, "captions.srt")
-            shifted_srt = shift_srt(req.subtitle_srt, intro_duration)
+            shift_seconds = intro_duration - (start_sec if start_sec is not None else 0.0)
+            shifted_srt = shift_srt(req.subtitle_srt, shift_seconds)
             with open(srt_path, "w", encoding="utf-8") as f:
                 f.write(shifted_srt)
             try:

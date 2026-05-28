@@ -1,6 +1,6 @@
 # Phase 03: Auto-Repurpose Long→Shorts
 
-**Priority:** P0 | **Status:** TODO | **Est:** 5-7 days
+**Priority:** P0 | **Status:** COMPLETED | **Est:** 5-7 days
 **Depends on:** Phase 02 (batch infrastructure reused for clip queue)
 
 ## Overview
@@ -110,17 +110,17 @@ CREATE TABLE repurpose_clips (
 
 ## Implementation Steps
 
-- [ ] 1. D1 migration: repurpose_jobs + repurpose_clips
-- [ ] 2. scene-detector.ts: FFmpeg scdet wrapper → timestamp array
-- [ ] 3. highlight-scorer.ts: LLM prompt for transcript scoring → clip manifest
-- [ ] 4. clip-boundary-merger.ts: snap LLM timestamps to scene cuts
-- [ ] 5. vertical-cropper.ts: center-crop FFmpeg filter
-- [ ] 6. repurpose-analyze Inngest function: transcript → scene detect → score → manifest
-- [ ] 7. Clip preview editor UI: timeline, adjust boundaries, remove clips
-- [ ] 8. repurpose-clip-generate Inngest function: extract + crop + caption per clip
-- [ ] 9. repurpose-action.ts: orchestrate the full flow
-- [ ] 10. Integrate brand kit (watermark + colors on clips)
-- [ ] 11. Tests: scoring, boundary merging, FFmpeg commands
+- [x] 1. D1 migration: repurpose_jobs + repurpose_clips
+- [x] 2. scene-detector.ts: FFmpeg scdet wrapper → timestamp array
+- [x] 3. highlight-scorer.ts: LLM prompt for transcript scoring → clip manifest
+- [x] 4. clip-boundary-merger.ts: snap LLM timestamps to scene cuts
+- [x] 5. vertical-cropper.ts: center-crop FFmpeg filter
+- [x] 6. repurpose-analyze Inngest function: transcript → scene detect → score → manifest
+- [x] 7. Clip preview editor UI: timeline, adjust boundaries, remove clips
+- [x] 8. repurpose-clip-generate Inngest function: extract + crop + caption per clip
+- [x] 9. repurpose-action.ts: orchestrate the full flow
+- [x] 10. Integrate brand kit (watermark + colors on clips)
+- [x] 11. Tests: scoring, boundary merging, FFmpeg commands
 
 ## Success Criteria
 

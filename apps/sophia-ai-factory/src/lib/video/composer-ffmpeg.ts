@@ -49,7 +49,7 @@ export interface VideoMetadata {
 export interface ComposeInput {
   jobId: string;
   tenantId: string;
-  audioR2Key: string;
+  audioR2Key?: string | null;
   visualR2Key: string;
   subtitleSrt?: string;
   /** When provided alongside subtitleSrt, captions are burned-in (TikTok/IG ready). */
@@ -64,6 +64,12 @@ export interface ComposeInput {
   introR2Key?: string | null;
   /** Brand kit outro video clip key in R2. */
   outroR2Key?: string | null;
+  /** Repurpose start timestamp in seconds. */
+  startSec?: number;
+  /** Repurpose end timestamp in seconds. */
+  endSec?: number;
+  /** Crop 16:9 to vertical 9:16. */
+  cropVertical?: boolean;
 }
 
 export interface ComposeResult {
@@ -88,7 +94,10 @@ function needsRichCompose(input: ComposeInput): boolean {
       || (input.subtitleSrt && input.subtitleStyle)
       || input.generateThumbnail
       || input.introR2Key
-      || input.outroR2Key,
+      || input.outroR2Key
+      || input.startSec !== undefined
+      || input.endSec !== undefined
+      || input.cropVertical,
   );
 }
 
@@ -223,6 +232,9 @@ async function callFly(flyUrl: string, input: ComposeInput): Promise<Response> {
         output_format: 'mp4',
         intro_r2_key: input.introR2Key ?? null,
         outro_r2_key: input.outroR2Key ?? null,
+        start_sec: input.startSec ?? null,
+        end_sec: input.endSec ?? null,
+        crop_vertical: input.cropVertical === true,
       }
     : {
         audio_r2_key: input.audioR2Key,

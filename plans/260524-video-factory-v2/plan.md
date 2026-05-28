@@ -14,7 +14,7 @@
 |---|-------|----------|--------|-----|
 | 01 | [Brand Kit Enforcement](phase-01-brand-kit.md) | P1 | COMPLETED | 3-4d |
 | 02 | [Batch Video Generation](phase-02-batch-generation.md) | P0 | TODO | 3-5d |
-| 03 | [Auto-Repurpose Long→Shorts](phase-03-auto-repurpose.md) | P0 | TODO | 5-7d |
+| 03 | [Auto-Repurpose Long→Shorts](phase-03-auto-repurpose.md) | P0 | COMPLETED | 5-7d |
 | 04 | [Multi-Channel Publish: YouTube](phase-04-publish-youtube.md) | P0 | TODO | 3-4d |
 | 05 | [Per-Video Analytics](phase-05-video-analytics.md) | P0 | TODO | 4-5d |
 | 06 | [Multi-Channel Publish: TikTok + Instagram](phase-06-publish-tiktok-instagram.md) | P1 | TODO | 4-5d |
