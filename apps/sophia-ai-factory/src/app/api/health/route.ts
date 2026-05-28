@@ -31,22 +31,7 @@ export const GET = withRateLimit(async function GET(req: NextRequest) {
 
     const { sha, deployedAt } = getBuildMetadata();
 
-    // ── FAST-PATH: anonymous probe returns immediately. ─────────────────
-    // Edge cache for 30s + SWR 60s so repeated uptime checks within the
-    // window don't even hit the Worker after the first request.
-    if (!isAuthorized) {
-      return NextResponse.json(
-        { status: 'healthy', timestamp: new Date().toISOString(), sha },
-        {
-          status: 200,
-          headers: {
-            'Cache-Control': 'public, max-age=30, s-maxage=30, stale-while-revalidate=60',
-          },
-        },
-      );
-    }
-
-    // ── AUTHORIZED PATH: full service probe sweep below. ────────────────
+    // ── PROBE PATH: full service probe sweep below. ────────────────
     const { createServerClient } = await import('@/seed/db/client');
     const { redisHelpers } = await import('@/tree/clients/upstash-redis-client');
     const { probeD1, probeR2, probeKv } = await import('@/seed/health');
@@ -162,9 +147,27 @@ export const GET = withRateLimit(async function GET(req: NextRequest) {
       }
     }
 
-    // Anonymous fast-path returned above; this is the authorized response.
+    // ── RESPONSES ─────────────────
+    const responseStatus = healthStatus.status === 'healthy' ? 200 : 503;
+
+    if (!isAuthorized) {
+      return NextResponse.json(
+        { 
+          status: healthStatus.status, 
+          timestamp: healthStatus.timestamp, 
+          sha 
+        },
+        {
+          status: responseStatus,
+          headers: {
+            'Cache-Control': 'public, max-age=30, s-maxage=30, stale-while-revalidate=60',
+          },
+        },
+      );
+    }
+
     return NextResponse.json(healthStatus, {
-      status: healthStatus.status === 'unhealthy' ? 503 : 200,
+      status: responseStatus,
     });
   } catch {
     return NextResponse.json({ status: 'unhealthy', error: 'Health check failed' }, { status: 500 });
