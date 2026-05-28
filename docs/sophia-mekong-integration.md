@@ -63,7 +63,7 @@ graph TB
 ## Bridge components
 
 ### 1. SDLC phase symlink
-**Location:** `.sophia-factory/mekong-bridge/phases` → `/Users/macbookprom1/mekong-cli/.mekong/phases`
+**Location:** `.sophia-factory/mekong-bridge/phases` → `/Users/macbook/mekong-cli/.mekong/phases`
 
 Sophia's C-Level agents (CTO/CMO/CSO/COO) reference Mekong's SDLC phase instructions when drafting specs/designs/code/deploys. This avoids duplicating the 4 CLAUDE.{spec,design,code,deploy}.md files in both repos.
 
@@ -72,7 +72,7 @@ Sophia's C-Level agents (CTO/CMO/CSO/COO) reference Mekong's SDLC phase instruct
 ### 2. `/mekong` slash command bridge
 **Location:** `.claude/commands/mekong.md`
 
-Wraps Mekong CLI binary (`mekong` at `/Users/macbookprom1/.local/bin/mekong`) so Sophia founder can invoke Mekong's SDLC commands without leaving Sophia's repo context.
+Wraps Mekong CLI binary (`mekong` at `/Users/macbook/.local/bin/mekong`) so Sophia founder can invoke Mekong's SDLC commands without leaving Sophia's repo context.
 
 Examples from Sophia repo:
 ```
