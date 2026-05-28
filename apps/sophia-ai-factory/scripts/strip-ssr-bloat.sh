@@ -40,7 +40,7 @@ strip_by_content() {
   for dir in "$CHUNKS_DIR" "$STANDALONE_CHUNKS" "$NON_SSR_CHUNKS" "$STANDALONE_NON_SSR"; do
     if [ -d "$dir" ]; then
       for f in $(find "$dir" -name "*.js" ! -name "*.map" -size +"${min_size}c" -type f 2>/dev/null); do
-        if head -c 300 "$f" | grep -q "$needle"; then
+        if grep -q "$needle" "$f"; then
           local size=$(wc -c < "$f")
           saved=$((saved + size))
           echo "module.exports=[];" > "$f"
@@ -65,6 +65,8 @@ strip_pattern "*d3-*" "d3 (recharts dep)"
 
 # Heavy libs identified by content signature (filenames are hashed)
 strip_by_content "immer-nothing" "immer" 200000
+strip_by_content "SentryHttpInstrumentation" "sentry-sdk-heavy" 100000
+strip_by_content "wrapMcpServerWithSentry" "sentry-sdk-core" 100000
 # Sentry: truncate to just re-export stubs, keeping Turbopack module wrapper intact.
 # Previous approach replaced the entire file, destroying co-bundled non-sentry modules
 # and causing "module factory is not available" SSR crashes.
