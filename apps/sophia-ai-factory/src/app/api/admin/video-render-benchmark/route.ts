@@ -16,6 +16,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getD1Raw } from '@/seed/auth/resolve-org-id';
 import { computeVideoRenderBenchmark } from '@/lib/analytics/video-render-benchmark';
 import { getErrorMessage } from '@/seed/utils/to-error';
+import { timingSafeEqual } from '@/seed/security/crypto-utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,7 +24,9 @@ function verifyCronSecret(request: NextRequest): boolean {
   if (process.env.NODE_ENV === 'development') return true;
   const secret = process.env.CRON_SECRET;
   if (!secret) return false;
-  return request.headers.get('authorization') === `Bearer ${secret}`;
+  const provided = request.headers.get('authorization') ?? '';
+  const expected = `Bearer ${secret}`;
+  return timingSafeEqual(provided, expected);
 }
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
