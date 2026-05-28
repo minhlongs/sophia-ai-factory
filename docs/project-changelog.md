@@ -2,7 +2,7 @@
 
 > This file is an index. Full entries are split by quarter for faster loading.
 
-**Last entry:** 2026-05-17 (Next Sweep 4 phases, 4431/4431 tests, SHA 4bca4710)
+**Last entry:** 2026-05-28 (Edge Runtime & OOM fixes, 4868/4868 tests, SHA e5239a5b)
 
 ---
 
@@ -18,6 +18,7 @@
 
 ## Recent Entries (Q2 2026 — latest 5)
 
+- **2026-05-28** — Edge Runtime & OOM fixes: resolved module factory Edge runtime crashes by bypassing Sentry wrapping and commenting out destructive `strip_by_content` rules for `immer`/`sentry` in `strip-ssr-bloat.sh`. Optimized heap limits for compilation (type-check = 12GB, OpenNext build = 4GB) to prevent sandbox OOM. Verified HTTP 200 live on all primary routes. 4868 tests, SHA e5239a5b.
 - **2026-05-17** — Next Sweep Phase 01-04: Inngest cleanup + lead:export live + 10-layer hardening + operator playbooks. 4431 tests, SHA 4bca4710.
 - **2026-05-17** — 4-backlog sweep: Telegram copy + workflow + Apollo/Hunter + video benchmark. SHA 9f40a39b.
 - **2026-05-17** — P13 multi-account YouTube live. 4409 tests, SHA e6821599.
