@@ -18,13 +18,14 @@ export const repurposeAnalyze = inngest.createFunction(
       end: t.end_ms,
     }));
 
-    const scenes = await step.run('detect-scenes', async () => {
-      return detectScenes(videoUrl);
-    });
-
-    const highlights = await step.run('score-highlights', async () => {
-      return scoreHighlights(userId, transcript);
-    });
+    const [scenes, highlights] = await Promise.all([
+      step.run('detect-scenes', async () => {
+        return detectScenes(videoUrl);
+      }),
+      step.run('score-highlights', async () => {
+        return scoreHighlights(userId, transcript);
+      }),
+    ]);
 
     const mergedClips = await step.run('merge-boundaries', async () => {
       const words: TranscriptWord[] = rawTranscript.map((t) => ({
