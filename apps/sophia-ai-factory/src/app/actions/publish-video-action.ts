@@ -98,6 +98,52 @@ export async function publishVideoAction(input: {
       platformVideoId: result.platformVideoId,
     });
 
+    // Auto-create performance feedback cycle if video corresponds to a Campaign or SOP Execution
+    try {
+      const { getD1Raw } = await import('@/seed/db/client');
+      const { logger } = await import('@/seed/utils/logger-utility');
+      const db = await getD1Raw();
+      const sopExec = await db.prepare(
+        `SELECT id, user_id, sop_template_id FROM sop_executions WHERE id = ?1 LIMIT 1`
+      ).bind(input.videoId).first<{ id: string; user_id: string; sop_template_id: string }>();
+
+      let executionId: string | null = null;
+      let sopId: string | null = null;
+      let userId: string | null = null;
+
+      if (sopExec) {
+        executionId = sopExec.id;
+        sopId = sopExec.sop_template_id;
+        userId = sopExec.user_id;
+      } else {
+        const campaign = await db.prepare(
+          `SELECT id, user_id, template_id FROM campaigns WHERE id = ?1 LIMIT 1`
+        ).bind(input.videoId).first<{ id: string; user_id: string; template_id: string }>();
+
+        if (campaign) {
+          executionId = campaign.id;
+          sopId = campaign.template_id;
+          userId = campaign.user_id;
+        }
+      }
+
+      if (executionId && sopId && userId) {
+        const { createFeedbackCycle } = await import('@/tree/sop/performance-feedback-engine');
+        await createFeedbackCycle({
+          executionId,
+          sopId,
+          userId,
+          publishedAt: Math.floor(Date.now() / 1000),
+        });
+      }
+    } catch (e) {
+      const { logger } = await import('@/seed/utils/logger-utility');
+      logger.error('publishVideoAction.createFeedbackCycle_failed', {
+        videoId: input.videoId,
+        error: e instanceof Error ? e.message : String(e),
+      });
+    }
+
     return { success: true, data: { publishId: publish.id } };
   } catch (err) {
     return { success: false, error: getErrorMessage(err) };

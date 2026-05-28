@@ -136,7 +136,22 @@ export const analyticsSync = inngest.createFunction(
       totalSynced += synced;
     }
 
-    logger.info('[analytics-sync] Complete', { totalSynced });
-    return { synced: totalSynced };
+    // Step 3: Run feedback loop evaluations & prompt optimizations
+    const optimizedCount = await step.run('run-performance-feedback-loop', async () => {
+      try {
+        const { runPerformanceFeedbackAndOptimization } = await import(
+          '@/tree/sop/performance-feedback-engine'
+        );
+        return await runPerformanceFeedbackAndOptimization();
+      } catch (err) {
+        logger.error('[analytics-sync] Feedback loop failed (non-fatal)', {
+          error: err instanceof Error ? err.message : String(err),
+        });
+        return 0;
+      }
+    });
+
+    logger.info('[analytics-sync] Complete', { totalSynced, optimizedCount });
+    return { synced: totalSynced, optimizedCount };
   },
 );
