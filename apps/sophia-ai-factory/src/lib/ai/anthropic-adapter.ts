@@ -15,6 +15,7 @@ import {
   parseAnthropicSse,
   type AnthropicStreamEvent,
 } from './anthropic-sse-parser'
+import { ProviderQuotaExceededError, ProviderInvalidKeyError } from '@/lib/services/errors'
 
 export type { AnthropicStreamEvent } from './anthropic-sse-parser'
 
@@ -102,6 +103,12 @@ async function httpError(response: Response): Promise<never> {
   const body = raw.length > ERROR_BODY_MAX_LEN
     ? `${raw.slice(0, ERROR_BODY_MAX_LEN)}...[truncated]`
     : raw
+  if (response.status === 401 || response.status === 403) {
+    throw new ProviderInvalidKeyError('anthropic', body)
+  }
+  if (response.status === 429 || response.status === 402) {
+    throw new ProviderQuotaExceededError('anthropic', body)
+  }
   throw new Error(`ANTHROPIC_HTTP_${response.status}: ${body}`)
 }
 

@@ -9,6 +9,7 @@ import { logger } from '@/seed/utils/logger-utility';
 import { Tier } from '@/seed/types';
 import { withTimeout } from '@/tree/byok/with-timeout';
 import { uploadAudioToR2 } from '@/lib/r2/audio-upload';
+import { ProviderQuotaExceededError, ProviderInvalidKeyError } from '@/lib/services/errors';
 
 /** Get default voice ID based on tier (ElevenLabs pre-made voice IDs) */
 export function getDefaultVoiceId(tier: Tier): string {
@@ -75,6 +76,12 @@ export async function generateElevenLabsVoiceover(
 
   if (!response.ok) {
     const errorText = await response.text();
+    if (response.status === 401 || response.status === 403) {
+      throw new ProviderInvalidKeyError('elevenlabs', errorText);
+    }
+    if (response.status === 429 || response.status === 402) {
+      throw new ProviderQuotaExceededError('elevenlabs', errorText);
+    }
     throw new Error(`ElevenLabs API failed: ${response.status} - ${errorText}`);
   }
 
