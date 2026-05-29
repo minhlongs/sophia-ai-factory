@@ -1,7 +1,7 @@
 ---
 title: "Agent Orchestration Upgrade: Checkpoint, Circuit Breaker, Prompt Contracts"
 description: "Add checkpoint/resume, circuit breaker with bounded retry, and typed prompt contracts to multi-agent orchestration"
-status: pending
+status: completed
 priority: P2
 effort: 6h
 branch: master
@@ -32,9 +32,9 @@ The multi-agent coordinator (`tree/sop/multi-agent-coordinator.ts`) and fleet sp
 
 | # | Phase | Layer Impact | Effort | Status |
 |---|-------|-------------|--------|--------|
-| 1 | [Checkpoint/Resume](phase-01-checkpoint-resume.md) | seed (types, migration) + tree (coordinator) | 2h | pending |
-| 2 | [Circuit Breaker + Retry](phase-02-circuit-breaker-retry.md) | seed (utils) + lib (fleet spawner) | 2h | pending |
-| 3 | [Prompt Contracts](phase-03-prompt-contracts.md) | seed (types/validators) + lib (fleet spawner) | 2h | pending |
+| 1 | [Checkpoint/Resume](phase-01-checkpoint-resume.md) | seed (types, migration) + tree (coordinator) | 2h | completed |
+| 2 | [Circuit Breaker + Retry](phase-02-circuit-breaker-retry.md) | seed (utils) + lib (fleet spawner) | 2h | completed |
+| 3 | [Prompt Contracts](phase-03-prompt-contracts.md) | seed (types/validators) + lib (fleet spawner) | 2h | completed |
 
 ## Dependency Graph
 

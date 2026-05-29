@@ -103,7 +103,7 @@ async function runTask(
     };
   }
 
-  const retryCount = 0;
+  let attempts = 0;
 
   try {
     // Validate typed prompt contract before dispatch (opt-in: both fields required)
@@ -117,7 +117,10 @@ async function runTask(
     };
 
     const output = await withRetry(
-      () => withBreaker(FLEET_BREAKER, () => localExecutor(enrichedTask, tenantId)),
+      () => {
+        attempts++;
+        return withBreaker(FLEET_BREAKER, () => localExecutor(enrichedTask, tenantId));
+      },
       { maxRetries: 3, baseDelayMs: 1_000, maxDelayMs: 10_000 },
     );
 
@@ -126,7 +129,7 @@ async function runTask(
       success: true,
       output,
       durationMs: Date.now() - start,
-      retryCount,
+      retryCount: attempts > 0 ? attempts - 1 : 0,
     };
   } catch (err) {
     return {
@@ -138,7 +141,7 @@ async function runTask(
           ? `Contract validation: ${err.message}`
           : String(err),
       durationMs: Date.now() - start,
-      retryCount,
+      retryCount: attempts > 0 ? attempts - 1 : 0,
     };
   }
 }

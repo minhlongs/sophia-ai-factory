@@ -282,6 +282,7 @@ Sophia AI Factory is a no-code platform for solopreneurs to:
 - 10-primitive orchestrator framework
 - Claude SDK + Qwen 3 integration
 - Circuit breaker + skill activation
+- Resilience upgrade: D1-native checkpoint/resume, fleet spawner circuit breaker + bounded exponential retry, typed prompt contracts with Zod validation
 
 ### Phase 13: Revenue Split ✅
 - Commission ledger + 14-day clawback
