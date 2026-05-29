@@ -10,22 +10,17 @@
  *  - Each task wrapped in withRetry + withBreaker for resilience
  */
 
-import { audit } from './audit';
-import {
-  validatePromptContract,
-  PromptContractError,
-} from '@/seed/validators/agent-prompt-contracts';
-import type { AgentRole, IterationLimits } from '@/seed/types/multi-agent';
-import { DEFAULT_ITERATION_LIMITS } from '@/seed/types/multi-agent';
-import { withBreaker, BreakerOpenError, getBreakerState } from '@/seed/utils/circuit-breaker';
-import { withRetry } from '@/seed/utils/retry-with-backoff';
-import { checkIterationBudget } from '@/tree/sop/multi-agent-coordinator-helpers';
-import { logger } from '@/seed/utils/logger-utility';
+import { audit } from "./audit";
+import type { AgentRole, IterationLimits } from "@/seed/types/multi-agent";
+import { DEFAULT_ITERATION_LIMITS } from "@/seed/types/multi-agent";
+import { checkIterationBudget } from "@/tree/sop/multi-agent-coordinator-helpers";
+import { logger } from "@/seed/utils/logger-utility";
+import { runTask, runWithConcurrency } from "./spawn-agent-fleet-executor";
 
 export class OpenclawTenantMissingError extends Error {
   constructor() {
-    super('OpenClaw: tenantId is required for spawnAgentFleet');
-    this.name = 'OpenclawTenantMissingError';
+    super("OpenClaw: tenantId is required for spawnAgentFleet");
+    this.name = "OpenclawTenantMissingError";
   }
 }
 
@@ -37,7 +32,7 @@ export interface AgentTask {
   /** Optional context data injected into the task */
   context?: Record<string, unknown>;
   /** LLM tier for this task. Defaults to 'standard' */
-  tier?: 'lite' | 'standard' | 'max';
+  tier?: "lite" | "standard" | "max";
   /**
    * Typed prompt contract — validated against role schema before dispatch.
    * Opt-in: validation only fires when BOTH promptContract AND agentRole are present.
@@ -68,101 +63,6 @@ export interface SpawnFleetOptions {
   iterationLimits?: IterationLimits;
 }
 
-const FLEET_BREAKER = 'agent-fleet';
-
-/** Local task executor — runs the task prompt through a simple handler. */
-async function localExecutor(
-  task: AgentTask,
-  _tenantId: string,
-): Promise<unknown> {
-  // In production, this would call the Anthropic Agent SDK.
-  // Without the SDK available, we resolve with a structured stub
-  // that downstream code can treat as a pending job.
-  return {
-    taskId: task.id,
-    status: 'queued',
-    prompt: task.prompt,
-    tier: task.tier ?? 'standard',
-  };
-}
-
-async function runTask(
-  task: AgentTask,
-  tenantId: string,
-): Promise<AgentResult> {
-  const start = Date.now();
-
-  // Fail-fast if breaker is already open — no point dispatching
-  if (getBreakerState(FLEET_BREAKER) === 'open') {
-    return {
-      taskId: task.id,
-      success: false,
-      error: 'Skipped — circuit breaker open',
-      durationMs: 0,
-      retryCount: 0,
-    };
-  }
-
-  let attempts = 0;
-
-  try {
-    // Validate typed prompt contract before dispatch (opt-in: both fields required)
-    if (task.promptContract !== undefined && task.agentRole !== undefined) {
-      validatePromptContract(task.agentRole, task.promptContract);
-    }
-
-    const enrichedTask: AgentTask = {
-      ...task,
-      context: { ...task.context, tenantId },
-    };
-
-    const output = await withRetry(
-      () => {
-        attempts++;
-        return withBreaker(FLEET_BREAKER, () => localExecutor(enrichedTask, tenantId));
-      },
-      { maxRetries: 3, baseDelayMs: 1_000, maxDelayMs: 10_000 },
-    );
-
-    return {
-      taskId: task.id,
-      success: true,
-      output,
-      durationMs: Date.now() - start,
-      retryCount: attempts > 0 ? attempts - 1 : 0,
-    };
-  } catch (err) {
-    return {
-      taskId: task.id,
-      success: false,
-      error: err instanceof BreakerOpenError
-        ? 'Circuit breaker open — upstream degraded'
-        : err instanceof PromptContractError
-          ? `Contract validation: ${err.message}`
-          : String(err),
-      durationMs: Date.now() - start,
-      retryCount: attempts > 0 ? attempts - 1 : 0,
-    };
-  }
-}
-
-async function runWithConcurrency(
-  tasks: AgentTask[],
-  tenantId: string,
-  maxConcurrency: number,
-): Promise<AgentResult[]> {
-  const results: AgentResult[] = [];
-  const chunks: AgentTask[][] = [];
-  for (let i = 0; i < tasks.length; i += maxConcurrency) {
-    chunks.push(tasks.slice(i, i + maxConcurrency));
-  }
-  for (const chunk of chunks) {
-    const chunkResults = await Promise.all(chunk.map((t) => runTask(t, tenantId)));
-    results.push(...chunkResults);
-  }
-  return results;
-}
-
 /**
  * Spawn a fleet of agents for a given tenant.
  *
@@ -179,14 +79,17 @@ export async function spawnAgentFleet(
   }
 
   const {
-    tenantId, actor = 'system', parallel = true, maxConcurrency = 5,
+    tenantId,
+    actor = "system",
+    parallel = true,
+    maxConcurrency = 5,
     iterationLimits = DEFAULT_ITERATION_LIMITS,
   } = opts;
 
   // Bounded iteration guard — check fleet-level limit before starting
   const fleetBudget = checkIterationBudget(0, tasks.length, iterationLimits);
   if (!fleetBudget.canProceed) {
-    logger.warn('[spawnAgentFleet] Fleet iteration limit prevents dispatch', {
+    logger.warn("[spawnAgentFleet] Fleet iteration limit prevents dispatch", {
       taskCount: tasks.length,
       limit: iterationLimits.maxTotalIterations,
       reason: fleetBudget.reason,
@@ -204,9 +107,14 @@ export async function spawnAgentFleet(
   await audit({
     tenantId,
     actor,
-    action: 'fleet.spawn',
-    resource: 'agent-fleet',
-    metadata: { taskCount: tasks.length, parallel, maxConcurrency, taskIds: tasks.map((t) => t.id) },
+    action: "fleet.spawn",
+    resource: "agent-fleet",
+    metadata: {
+      taskCount: tasks.length,
+      parallel,
+      maxConcurrency,
+      taskIds: tasks.map((t) => t.id),
+    },
   });
 
   let results: AgentResult[];
@@ -225,8 +133,8 @@ export async function spawnAgentFleet(
   await audit({
     tenantId,
     actor,
-    action: 'fleet.complete',
-    resource: 'agent-fleet',
+    action: "fleet.complete",
+    resource: "agent-fleet",
     metadata: {
       taskCount: tasks.length,
       successCount: results.filter((r) => r.success).length,
