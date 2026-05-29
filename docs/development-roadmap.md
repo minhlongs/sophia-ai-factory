@@ -571,6 +571,7 @@ Plan: `plans/260516-1948-raas-zero-bug-handover/` · Handover doc: `plans/report
 | **2026-05-03** | **GAP3: Mission Control Handover (durable email outbox, /onboarding 3-step resumable, D1 API keys, mission widget, /status page 90d uptime, D+1/D+7 emails)** | **✅ SHIPPED** |
 | **2026-05-03** | **MILESTONE: Sophia AI Factory Go-Live Production Deploy** — SHA 5b1f711f deployed to https://sophia.agencyos.network. 9 smoke tests PASS (all 200 HTTP). 2546 tests 100% pass, 31 skipped. Build < 10s, 0 TS errors. All gaps closed. Production-ready for customer onboarding. | **✅ COMPLETE** |
 | **2026-05-13** | **Admin Ops Consistency Batch** — support contact standardized to `support@mekongmind.com`, customer billing docs aligned to NOWPayments + PayOS, admin-ops source-of-truth pack added, release workflow corrected to current green contract. | **✅ COMPLETE** |
+| **2026-05-28** | **Agent Orchestration Upgrade** — Phase 1-3: D1-native checkpoint/resume, fleet spawner circuit breaker + bounded exponential retry, typed prompt contracts with Zod validation, 100% tests pass. | **✅ COMPLETE** |
 | 2026-05-15 | Phase 15 (Deferred): Playwright E2E suite (12 scenarios), k6 load tests (smoke/steady/spike/soak/stress), Stripe Connect KYC, customer status page, Fly.io Coqui/MoviePy deploy, Runpod HunyuanVideo | 🔄 Backlog |
 | 2026-05-15 | Go-Live Audit Phase 02 (Tier-2): Load Testing, Error Budgets, Observability | 🔄 Planned |
 | 2026-06-01 | Multi-Language Support (Vietnamese) | 🔄 Planned |

@@ -142,6 +142,23 @@ describe('spawnAgentFleet — circuit breaker + retry', () => {
     expect(results[0].retryCount).toBeDefined();
   });
 
+  it('returns correct retryCount when task retries and succeeds', async () => {
+    const { withRetry } = await import('@/seed/utils/retry-with-backoff');
+    vi.mocked(withRetry).mockImplementationOnce(async (fn) => {
+      try {
+        await fn(); // attempt 1 (fails)
+      } catch {}
+      return fn(); // attempt 2 (succeeds)
+    });
+
+    const results = await spawnAgentFleet(
+      [{ id: 'retry-2', prompt: 'retry twice' }],
+      { tenantId: 'tenant-retry-count' },
+    );
+    expect(results[0].success).toBe(true);
+    expect(results[0].retryCount).toBe(1);
+  });
+
   it('skips dispatch and returns failure when breaker is open', async () => {
     const { getBreakerState } = await import('@/seed/utils/circuit-breaker');
     vi.mocked(getBreakerState).mockReturnValueOnce('open');
