@@ -79,7 +79,7 @@ describe('DashboardSidebarNav component', () => {
     expect(screen.getByText('Overview Label')).toBeDefined();
     expect(screen.getByText('New Project Label')).toBeDefined();
     expect(screen.getByText('Creative Studio Label')).toBeDefined();
-    expect(screen.getByText('Refer & Earn')).toBeDefined();
+    expect(screen.getByText('Proposals Label')).toBeDefined();
     expect(screen.queryByText('Admin Home')).toBeNull();
   });
 
@@ -110,18 +110,5 @@ describe('DashboardSidebarNav component', () => {
 
     expect(activeLink?.className).toContain('font-semibold');
     expect(inactiveLink?.className).not.toContain('font-semibold');
-  });
-
-  it('uses Vietnamese translation label for Refer & Earn when isVi is true', () => {
-    mockPathname.mockReturnValue('/vi/dashboard');
-    render(
-      <DashboardSidebarNav
-        isAdmin={false}
-        isVi={true}
-      />
-    );
-
-    expect(screen.getByText('Giới Thiệu & Kiếm Tiền')).toBeDefined();
-    expect(screen.queryByText('Refer & Earn')).toBeNull();
   });
 });
