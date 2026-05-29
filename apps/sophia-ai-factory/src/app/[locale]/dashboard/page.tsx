@@ -28,7 +28,6 @@ import { OnboardingStatusWidget } from './components/onboarding-status-widget';
 import { MissionControlWidget } from '@/forest/components/dashboard/mission-control-widget';
 import { RouteHelpTooltip } from '@/components/help/route-help-tooltip';
 import { cookies } from 'next/headers';
-import { AutonomousFeedbackLoopWidget } from './components/autonomous-feedback-loop-widget';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,25 +53,7 @@ interface ProfileRow {
   onboarding_completed_at: number | null;
 }
 
-interface OptimizationRow {
-  id: string;
-  sopId: string;
-  stepIndex: number;
-  originalPrompt: string;
-  suggestedPrompt: string;
-  improvementScore: number;
-  createdAt: number;
-}
 
-interface DbOptimizationRow {
-  id: string;
-  sop_id: string;
-  step_index: number;
-  original_prompt: string;
-  suggested_prompt: string;
-  improvement_score: number | null;
-  created_at: number;
-}
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
@@ -112,13 +93,10 @@ export default async function DashboardPage() {
   let recentRuns: SopRunRow[] = [];
   let videosThisMonth = 0;
   let trialEndsAt: number | null = null;
-  let feedbackPendingCount = 0;
-  let feedbackCompletedCount = 0;
-  let recentOptimizations: OptimizationRow[] = [];
 
   if (d1) {
     try {
-      const [instResult, runsResult, videosResult, trialResult, pendingCountRes, completedCountRes, optLogsRes] = await Promise.all([
+      const [instResult, runsResult, videosResult, trialResult] = await Promise.all([
         d1.prepare('SELECT COUNT(*) as cnt FROM user_sop_installations WHERE user_id = ?').bind(user.id).first<{ cnt: number }>(),
         d1.prepare(`SELECT r.id, r.status, r.created_at, r.installation_id
           FROM sop_runs r
@@ -131,27 +109,11 @@ export default async function DashboardPage() {
         d1.prepare(`SELECT trial_ends_at FROM subscriptions
           WHERE user_id = ?1 ORDER BY updated_at DESC LIMIT 1`)
           .bind(user.id).first<{ trial_ends_at: number | null }>(),
-        d1.prepare(`SELECT COUNT(*) as cnt FROM performance_feedback_cycles WHERE user_id = ?1 AND status = 'pending'`).bind(user.id).first<{ cnt: number }>(),
-        d1.prepare(`SELECT COUNT(*) as cnt FROM performance_feedback_cycles WHERE user_id = ?1 AND status = 'completed'`).bind(user.id).first<{ cnt: number }>(),
-        d1.prepare(`SELECT id, sop_id, step_index, original_prompt, suggested_prompt, improvement_score, created_at FROM prompt_optimization_log
-          WHERE cycle_id IN (SELECT id FROM performance_feedback_cycles WHERE user_id = ?1)
-          ORDER BY created_at DESC LIMIT 3`).bind(user.id).all<DbOptimizationRow>(),
       ]);
       sopCount = instResult?.cnt ?? 0;
       recentRuns = runsResult.results ?? [];
       videosThisMonth = videosResult?.cnt ?? 0;
       trialEndsAt = trialResult?.trial_ends_at ?? null;
-      feedbackPendingCount = pendingCountRes?.cnt ?? 0;
-      feedbackCompletedCount = completedCountRes?.cnt ?? 0;
-      recentOptimizations = (optLogsRes.results ?? []).map((r) => ({
-        id: r.id,
-        sopId: r.sop_id,
-        stepIndex: r.step_index,
-        originalPrompt: r.original_prompt,
-        suggestedPrompt: r.suggested_prompt,
-        improvementScore: r.improvement_score ?? 0,
-        createdAt: r.created_at,
-      }));
     } catch (e) {
       logger.error('[dashboard] D1 query failed', e instanceof Error ? e : new Error(String(e)));
     }
@@ -176,13 +138,7 @@ export default async function DashboardPage() {
       <MissionControlWidget isVi={isVi} />
       <OnboardingStatusWidget isVi={isVi} />
 
-      {/* Autonomous Feedback Loop Monitor Widget */}
-      <AutonomousFeedbackLoopWidget
-        pendingCount={feedbackPendingCount}
-        completedCount={feedbackCompletedCount}
-        recentOptimizations={recentOptimizations}
-        isVi={isVi}
-      />
+
 
       {showFirstTimeSteps && sopCount === 0 ? (
         <DashboardSetupSteps hasApiKeys={hasApiKeys} sopCount={sopCount} />

@@ -101,8 +101,8 @@ export function DashboardSidebarNav({ isAdmin, isVi }: DashboardSidebarNavProps)
       
       <Link href="/dashboard/campaigns" className={linkClass("/dashboard/campaigns")}>
         {renderActiveIndicator("/dashboard/campaigns")}
-        <LayoutDashboard className={iconClass("/dashboard/campaigns")} aria-hidden="true" />
-        <span className="font-medium">{t('sidebar.campaigns')}</span>
+        <Video className={iconClass("/dashboard/campaigns")} aria-hidden="true" />
+        <span className="font-medium">{t('sidebar.my_videos')}</span>
       </Link>
       
       <Link href="/dashboard/creative-studio" className={linkClass("/dashboard/creative-studio")}>
@@ -110,17 +110,17 @@ export function DashboardSidebarNav({ isAdmin, isVi }: DashboardSidebarNavProps)
         <Sparkles className={iconClass("/dashboard/creative-studio")} aria-hidden="true" />
         <span className="font-medium">{t('sidebar.creative_studio')}</span>
       </Link>
+
+      <Link href="/dashboard/proposals" className={linkClass("/dashboard/proposals")}>
+        {renderActiveIndicator("/dashboard/proposals")}
+        <FileText className={iconClass("/dashboard/proposals")} aria-hidden="true" />
+        <span className="font-medium">{t('sidebar.proposals')}</span>
+      </Link>
       
       <Link href="/dashboard/analytics" className={linkClass("/dashboard/analytics")}>
         {renderActiveIndicator("/dashboard/analytics")}
         <BarChart2 className={iconClass("/dashboard/analytics")} aria-hidden="true" />
         <span className="font-medium">{t('sidebar.analytics')}</span>
-      </Link>
-      
-      <Link href="/dashboard/campaigns" className={linkClass("/dashboard/campaigns")}>
-        {renderActiveIndicator("/dashboard/campaigns")}
-        <Video className={iconClass("/dashboard/campaigns")} aria-hidden="true" />
-        <span className="font-medium">{t('sidebar.my_videos')}</span>
       </Link>
       
       <Link href="/dashboard/voices" className={linkClass("/dashboard/voices")}>
@@ -141,42 +141,10 @@ export function DashboardSidebarNav({ isAdmin, isVi }: DashboardSidebarNavProps)
         <span className="font-medium">{t('sidebar.orders')}</span>
       </Link>
       
-      <Link href="/dashboard/help" className={linkClass("/dashboard/help")}>
-        {renderActiveIndicator("/dashboard/help")}
-        <HelpCircle className={iconClass("/dashboard/help")} aria-hidden="true" />
-        <span className="font-medium">{t('sidebar.support')}</span>
-      </Link>
-      
       <Link href="/dashboard/missions" className={linkClass("/dashboard/missions")}>
         {renderActiveIndicator("/dashboard/missions")}
         <Rocket className={iconClass("/dashboard/missions")} aria-hidden="true" />
         <span className="font-medium">{t('sidebar.missions')}</span>
-      </Link>
-      
-      <Link href="/dashboard/credits" className={linkClass("/dashboard/credits")}>
-        {renderActiveIndicator("/dashboard/credits")}
-        <Coins className={iconClass("/dashboard/credits")} aria-hidden="true" />
-        <span className="font-medium">{t('sidebar.credits')}</span>
-      </Link>
-      
-      {/* Refer & Earn */}
-      <Link
-        href="/dashboard/affiliate"
-        className={cn(
-          "relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group",
-          "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
-          isActive("/dashboard/affiliate")
-            ? "text-emerald-400 bg-white/5 font-semibold border border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.15)]"
-            : "text-emerald-400 hover:text-emerald-300 hover:bg-emerald-950/30 border border-transparent"
-        )}
-      >
-        {renderActiveIndicator("/dashboard/affiliate")}
-        <Share2 className={cn(
-          "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
-          isActive("/dashboard/affiliate") ? "text-emerald-400" : "text-emerald-400 group-hover:text-emerald-300"
-        )} aria-hidden="true" />
-        <span className="font-medium">{isVi ? 'Giới Thiệu & Kiếm Tiền' : 'Refer & Earn'}</span>
-        <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400">70%</span>
       </Link>
       
       {/* Integrations */}
@@ -186,153 +154,17 @@ export function DashboardSidebarNav({ isAdmin, isVi }: DashboardSidebarNavProps)
         <span className="font-medium">{t('sidebar.integrations')}</span>
       </Link>
       
-      <Link
-        href="/dashboard/integrations/webhooks"
-        className={cn(
-          "relative flex items-center gap-3 px-4 py-3 pl-10 rounded-lg transition-all duration-300 group text-sm",
-          "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
-          isActive("/dashboard/integrations/webhooks")
-            ? "text-foreground bg-white/5 font-semibold border border-[var(--neon-cyan)]/30 shadow-[0_0_12px_rgba(0,240,255,0.15)]"
-            : "text-muted-foreground hover:text-foreground hover:bg-white/[0.02] border border-transparent"
-        )}
-      >
-        {renderActiveIndicator("/dashboard/integrations/webhooks")}
-        <Webhook className={cn(
-          "w-4 h-4 transition-transform duration-300 group-hover:scale-110",
-          isActive("/dashboard/integrations/webhooks") ? "text-[var(--neon-cyan)]" : "text-muted-foreground group-hover:text-foreground"
-        )} aria-hidden="true" />
-        <span>{t('sidebar.webhooks')}</span>
-        <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400">NEW</span>
-      </Link>
-      
-      <Link
-        href="/dashboard/byok"
-        className={cn(
-          "relative flex items-center gap-3 px-4 py-3 pl-10 rounded-lg transition-all duration-300 group text-sm",
-          "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
-          isActive("/dashboard/byok")
-            ? "text-foreground bg-white/5 font-semibold border border-[var(--neon-cyan)]/30 shadow-[0_0_12px_rgba(0,240,255,0.15)]"
-            : "text-muted-foreground hover:text-foreground hover:bg-white/[0.02] border border-transparent"
-        )}
-      >
+      <Link href="/dashboard/byok" className={linkClass("/dashboard/byok")}>
         {renderActiveIndicator("/dashboard/byok")}
-        <KeySquare className={cn(
-          "w-4 h-4 transition-transform duration-300 group-hover:scale-110",
-          isActive("/dashboard/byok") ? "text-[var(--neon-cyan)]" : "text-muted-foreground group-hover:text-foreground"
-        )} aria-hidden="true" />
-        <span>{t('sidebar.byok')}</span>
+        <KeySquare className={iconClass("/dashboard/byok")} aria-hidden="true" />
+        <span className="font-medium">{t('sidebar.byok')}</span>
       </Link>
       
-      <Link href="/dashboard/api-keys" className={linkClass("/dashboard/api-keys")}>
-        {renderActiveIndicator("/dashboard/api-keys")}
-        <KeyRound className={iconClass("/dashboard/api-keys")} aria-hidden="true" />
-        <span className="font-medium">{t('sidebar.api_keys')}</span>
+      <Link href="/dashboard/help" className={linkClass("/dashboard/help")}>
+        {renderActiveIndicator("/dashboard/help")}
+        <HelpCircle className={iconClass("/dashboard/help")} aria-hidden="true" />
+        <span className="font-medium">{t('sidebar.support')}</span>
       </Link>
-      
-      <Link href="/dashboard/proposals" className={linkClass("/dashboard/proposals")}>
-        {renderActiveIndicator("/dashboard/proposals")}
-        <FileText className={iconClass("/dashboard/proposals")} aria-hidden="true" />
-        <span className="font-medium">{t('sidebar.proposals')}</span>
-      </Link>
-      
-      <Link href="/dashboard/workflows" className={linkClass("/dashboard/workflows")}>
-        {renderActiveIndicator("/dashboard/workflows")}
-        <GitBranch className={iconClass("/dashboard/workflows")} aria-hidden="true" />
-        <span className="font-medium">{t('sidebar.workflows')}</span>
-      </Link>
-      
-      <Link href="/dashboard/sop-marketplace" className={linkClass("/dashboard/sop-marketplace")}>
-        {renderActiveIndicator("/dashboard/sop-marketplace")}
-        <Store className={iconClass("/dashboard/sop-marketplace")} aria-hidden="true" />
-        <span className="font-medium">{t('sidebar.sop_marketplace')}</span>
-      </Link>
-      
-      <Link href="/dashboard/sops" className={linkClass("/dashboard/sops")}>
-        {renderActiveIndicator("/dashboard/sops")}
-        <BookOpen className={iconClass("/dashboard/sops")} aria-hidden="true" />
-        <span className="font-medium">{t('sidebar.my_sops')}</span>
-      </Link>
-      
-      <Link href="/dashboard/api-docs" className={linkClass("/dashboard/api-docs")}>
-        {renderActiveIndicator("/dashboard/api-docs")}
-        <Code className={iconClass("/dashboard/api-docs")} aria-hidden="true" />
-        <span className="font-medium">{t('sidebar.api_docs')}</span>
-      </Link>
-      
-      {/* AGI Intelligence Hub */}
-      <div className="pt-2 mt-2 border-t border-border/50">
-        <Link
-          href="/dashboard/agi"
-          className={cn(
-            "relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group",
-            "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
-            isActive("/dashboard/agi")
-              ? "text-emerald-400 bg-white/5 font-semibold border border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.15)]"
-              : "text-emerald-400 hover:text-emerald-300 hover:bg-emerald-950/30 border border-transparent"
-          )}
-        >
-          {renderActiveIndicator("/dashboard/agi")}
-          <Brain className={cn(
-            "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
-            isActive("/dashboard/agi") ? "text-emerald-400" : "text-emerald-400 group-hover:text-emerald-300"
-          )} aria-hidden="true" />
-          <span className="font-medium">{t('sidebar.agi_hub')}</span>
-        </Link>
-        
-        <Link
-          href="/dashboard/agi/outcomes"
-          className={cn(
-            "relative flex items-center gap-3 px-4 py-2 pl-8 rounded-lg transition-all duration-300 group text-sm",
-            "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
-            isActive("/dashboard/agi/outcomes")
-              ? "text-foreground bg-white/5 font-semibold border border-[var(--neon-cyan)]/30 shadow-[0_0_12px_rgba(0,240,255,0.15)]"
-              : "text-muted-foreground hover:text-foreground hover:bg-white/[0.02] border border-transparent"
-          )}
-        >
-          {renderActiveIndicator("/dashboard/agi/outcomes")}
-          <TrendingUp className={cn(
-            "w-4 h-4 transition-transform duration-300 group-hover:scale-110",
-            isActive("/dashboard/agi/outcomes") ? "text-[var(--neon-cyan)]" : "text-muted-foreground group-hover:text-foreground"
-          )} aria-hidden="true" />
-          <span>{t('sidebar.agi_outcomes')}</span>
-        </Link>
-        
-        <Link
-          href="/dashboard/agi/confidence"
-          className={cn(
-            "relative flex items-center gap-3 px-4 py-2 pl-8 rounded-lg transition-all duration-300 group text-sm",
-            "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
-            isActive("/dashboard/agi/confidence")
-              ? "text-foreground bg-white/5 font-semibold border border-[var(--neon-cyan)]/30 shadow-[0_0_12px_rgba(0,240,255,0.15)]"
-              : "text-muted-foreground hover:text-foreground hover:bg-white/[0.02] border border-transparent"
-          )}
-        >
-          {renderActiveIndicator("/dashboard/agi/confidence")}
-          <Shield className={cn(
-            "w-4 h-4 transition-transform duration-300 group-hover:scale-110",
-            isActive("/dashboard/agi/confidence") ? "text-[var(--neon-cyan)]" : "text-muted-foreground group-hover:text-foreground"
-          )} aria-hidden="true" />
-          <span>{t('sidebar.agi_confidence')}</span>
-        </Link>
-        
-        <Link
-          href="/dashboard/agi/agents"
-          className={cn(
-            "relative flex items-center gap-3 px-4 py-2 pl-8 rounded-lg transition-all duration-300 group text-sm",
-            "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
-            isActive("/dashboard/agi/agents")
-              ? "text-foreground bg-white/5 font-semibold border border-[var(--neon-cyan)]/30 shadow-[0_0_12px_rgba(0,240,255,0.15)]"
-              : "text-muted-foreground hover:text-foreground hover:bg-white/[0.02] border border-transparent"
-          )}
-        >
-          {renderActiveIndicator("/dashboard/agi/agents")}
-          <Bot className={cn(
-            "w-4 h-4 transition-transform duration-300 group-hover:scale-110",
-            isActive("/dashboard/agi/agents") ? "text-[var(--neon-cyan)]" : "text-muted-foreground group-hover:text-foreground"
-          )} aria-hidden="true" />
-          <span>{t('sidebar.agi_agents')}</span>
-        </Link>
-      </div>
       
       {/* Admin Links */}
       {isAdmin && (
