@@ -1,14 +1,13 @@
-# Execution Plan
+# Go-Live Transformation Plan
 
 ## Objectives
-1. Gather codebase context (especially current files and tests).
-2. Decompose tasks R1-R7.
-3. Spawn Explorer to investigate details of R1-R7 (translation keys, tests, database schema, N+1 query batching, route placeholders, action binding).
-4. Spawn Worker(s) to apply fixes.
-5. Spawn Reviewer(s) to verify correctness and no regressions.
-6. Verify and ship.
+1. Ensure all 15+ standard markdown documents exist in the root `docs/` folder with complete, non-empty, actionable details.
+2. Verify that system architecture and data flow diagrams are represented in ASCII/Mermaid format inside `docs/ARCHITECTURE.md` or `docs/SYSTEM_DESIGN.md`.
+3. Provide a detailed Go Live scorecard and prioritized list of issues in `docs/audit_report.md`.
+4. Provide a validation script `scripts/verify-go-live-docs.sh` to automate document checking.
+5. Verify zero regressions: run standard codebase tests, typecheck, and lint verification.
 
-## Phases
-- Phase 0: Context Discovery and Setup
-- Phase 1: Implementation of R1 to R7 (Translation, Database, Testing, Routing)
-- Phase 2: Verification and Validation
+## Execution Strategy
+- **Worker Dispatch**: Spawn `teamwork_preview_worker` to perform file operations, create the validation script, and run verification.
+- **Review & Gate**: Check the worker's handoff. Ensure it includes successful build/test outputs and verification commands.
+- **Victory Audit**: Produce the final handoff and victory claim.
