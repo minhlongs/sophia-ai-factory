@@ -1,0 +1,28 @@
+- context:
+    goal_id: goal_abe1701e1c56
+  duration_ms: 0.0
+  error_summary: "Traceback (most recent call last):\n  File \"<string>\", line 1,\
+    \ in <module>\n    import src.main\nModuleNotFoundError: No module named 'src'\n"
+  goal: /goal/goal
+  recipe_used: goal-engine-v1
+  reflection: ''
+  status: failed
+  timestamp: 1779990553.761533
+- context:
+    goal_id: goal_abe1701e1c56
+  duration_ms: 0.0
+  error_summary: ''
+  goal: /goal/goal
+  recipe_used: goal-engine-v1
+  reflection: ''
+  status: success
+  timestamp: 1779990565.420597
+- context:
+    goal_id: goal_a0b148b3be61
+  duration_ms: 0.0
+  error_summary: ''
+  goal: /goal/goal
+  recipe_used: goal-engine-v1
+  reflection: ''
+  status: success
+  timestamp: 1779990584.024333
