@@ -92,7 +92,7 @@ export async function withEdgeCache(
   // headers which curl never sends. The split cache keys cause every match
   // to miss. We store a copy stripped of those Vary tokens + with a normalized
   // GET request (no auth header) so subsequent anon hits land on the same key.
-  const cachable = new Response(await fresh.clone().arrayBuffer(), {
+  const cachable = new Response(fresh.clone().body, {
     status: fresh.status,
     headers: stripDynamicVary(fresh.headers),
   });

@@ -8,6 +8,7 @@
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { Target, Trophy, Flame } from 'lucide-react';
+import { RouteHelpTooltip } from '@/components/help/route-help-tooltip';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { listActiveChallenges, getUserAllProgress } from '@/land/sop-marketplace/challenges';
 import { cookies } from 'next/headers';
@@ -67,6 +68,7 @@ export default async function ChallengesPage() {
           <h1 className="text-2xl font-bold text-foreground">{t('title')}</h1>
           <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
         </div>
+        <RouteHelpTooltip locale={locale} routeKey="challenges" />
       </div>
 
       {/* Challenge list */}

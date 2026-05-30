@@ -86,8 +86,11 @@ export async function requireRecentAuth(
   const sigB64 = cookieHeader.slice(dotIdx + 1);
 
   // Re-pad base64url → base64
-  const toBase64 = (s: string) =>
-    s.replace(/-/g, '+').replace(/_/g, '/') + '=='.slice((s.length + 3) % 4 || 4);
+  const toBase64 = (s: string) => {
+    const str = s.replace(/-/g, '+').replace(/_/g, '/');
+    const pad = (4 - (str.length % 4)) % 4;
+    return str + '='.repeat(pad);
+  };
 
   let payload: ChallengePayload;
   try {
@@ -97,23 +100,43 @@ export async function requireRecentAuth(
   }
 
   // Verify HMAC signature
-  let sigBytes: ArrayBuffer;
+  let sigBytes: Uint8Array;
   try {
-    const sigArr = Uint8Array.from(atob(toBase64(sigB64)), (c) => c.charCodeAt(0));
-    sigBytes = sigArr.buffer.slice(sigArr.byteOffset, sigArr.byteOffset + sigArr.byteLength);
+    const b64 = toBase64(sigB64);
+    const decoded = atob(b64);
+    sigBytes = new Uint8Array(decoded.length);
+    for (let i = 0; i < decoded.length; i++) {
+      sigBytes[i] = decoded.charCodeAt(i);
+    }
   } catch {
     return { ok: false, reason: 'invalid' };
   }
 
-  const key = await deriveHmacKey(secret);
-  const valid = await crypto.subtle.verify(
-    'HMAC',
-    key,
-    sigBytes,
-    new TextEncoder().encode(payloadB64),
-  );
+  // Ensure signature is exactly 32 bytes for HMAC-SHA256
+  if (sigBytes.length !== 32) {
+    return { ok: false, reason: 'invalid' };
+  }
 
-  if (!valid) {
+  // Check canonical representation to prevent signature malleability
+  const canonicalSigB64 = btoa(String.fromCharCode(...sigBytes))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+  if (sigB64 !== canonicalSigB64) {
+    return { ok: false, reason: 'invalid' };
+  }
+
+  try {
+    const key = await deriveHmacKey(secret);
+    const valid = await crypto.subtle.verify(
+      'HMAC',
+      key,
+      sigBytes as BufferSource,
+      new TextEncoder().encode(payloadB64),
+    );
+
+    if (!valid) {
+      return { ok: false, reason: 'invalid' };
+    }
+  } catch {
     return { ok: false, reason: 'invalid' };
   }
 

@@ -63,10 +63,15 @@ function formatMetricType(t: string): string {
 }
 
 export function OutcomesDashboardClient({ userId: _userId, tier: _tier }: OutcomesDashboardClientProps) {
+  const [mounted, setMounted] = useState(false);
   const [recentOutcomes, setRecentOutcomes] = useState<OutcomeMetric[]>([]);
   const [topSopsData, setTopSopsData] = useState<TopSop[]>([]);
   const [sopSummaries, setSopSummaries] = useState<CreatorSopOutcome[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     fetch('/api/v1/agi/outcomes')
@@ -115,7 +120,7 @@ export function OutcomesDashboardClient({ userId: _userId, tier: _tier }: Outcom
     [recentOutcomes]
   );
 
-  if (loading) {
+  if (!mounted || loading) {
     return (
       <div className="space-y-6">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

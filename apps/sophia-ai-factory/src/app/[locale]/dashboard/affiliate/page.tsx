@@ -93,7 +93,7 @@ export default async function AffiliateDashboardPage(): Promise<React.JSX.Elemen
           >
             Payout methods
           </Link>
-          {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- /api/* CSV download endpoint requires native anchor + download attribute, not a Next Link */}
+          { }
           <a
             href="/api/affiliate/conversions/csv?limit=500"
             className="inline-flex items-center gap-2 rounded-md border border-[var(--neon-cyan)]/40 bg-[var(--neon-cyan)]/10 px-4 py-2 text-sm font-medium text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/20 transition"

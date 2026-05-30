@@ -82,6 +82,19 @@ const CRON_ROUTES = {
   // Daily 05:00 UTC — D1 database backup to R2 `sophia-backups` bucket (GAP-R1 fix 2026-05-22)
   '0 5 * * *': [
     '/api/cron/d1-backup',
+    '/api/cron/error-digest',
+  ],
+  '0 7 * * *': [
+    '/api/cron/llm-cache-purge',
+  ],
+  '0 */4 * * *': [
+    '/api/cron/affiliate-scout',
+  ],
+  '10 * * * *': [
+    '/api/cron/wallet-rebuild',
+  ],
+  '*/10 * * * *': [
+    '/api/cron/heartbeat',
   ],
 };
 

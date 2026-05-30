@@ -13,6 +13,13 @@ import {
   offerSyncCron,
   storageTrackerDaily,
   accountDeleteFinalizeCron,
+  videoGenerate,
+  batchVideoFanout,
+  repurposeAnalyze,
+  repurposeClipGenerate,
+  analyticsSync,
+  tokenRefreshCron,
+  thumbnailAbSelector,
 } from "@/forest/inngest/functions/index";
 
 // Deprecated handlers (Phase 06 video_jobs chain + URL-to-Revenue) removed from
@@ -40,5 +47,13 @@ export const { GET, POST, PUT } = serve({
     storageTrackerDaily,
     // Wave 22 P06: auto-finalize account deletion after cooldown
     accountDeleteFinalizeCron,
+    // Newly registered active functions
+    videoGenerate,
+    batchVideoFanout,
+    repurposeAnalyze,
+    repurposeClipGenerate,
+    analyticsSync,
+    tokenRefreshCron,
+    thumbnailAbSelector,
   ],
 });

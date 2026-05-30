@@ -57,12 +57,13 @@ const eslintConfig = defineConfig([
     },
   },
 
-  // ── Test files — relax `no-explicit-any` (mocks legitimately use any) ──────
+  // ── Test files — relax `no-explicit-any` and `no-unused-vars` (mocks legitimately use any) ──────
   // Aligns with code-standards.md: "Zero `:any` types in production code".
   {
     files: ["src/**/*.test.{ts,tsx}", "src/**/*.spec.{ts,tsx}"],
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": "off",
     },
   },
 

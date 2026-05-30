@@ -16,13 +16,14 @@
  *   ENTERPRISE/MASTER/admin — all sections including UnifiedRevenueChart
  */
 
-import React, { useState, Suspense, lazy } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { useTranslations } from 'next-intl';
 import { DateRangePicker } from '@/forest/components/analytics/date-range-picker';
 import { TierAdoptionChart } from '@/forest/components/analytics/tier-adoption-chart';
 import { RevenueCard } from '@/forest/components/analytics/revenue-card';
 import { UnifiedRevenueChart } from '@/forest/components/analytics/unified-revenue-chart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/seed/components/ui/card';
+import { Skeleton } from '@/seed/components/ui/skeleton';
 import { Lock, BarChart3 } from 'lucide-react';
 import { AnalyticsView } from './analytics-view';
 import type { Campaign, Tier } from '@/seed/types';
@@ -88,7 +89,12 @@ export function AnalyticsDashboardClient({
   initialRevenue,
 }: AnalyticsDashboardClientProps) {
   const t = useTranslations('dashboard.analytics');
+  const [mounted, setMounted] = useState(false);
   const [dateRange, setDateRange] = useState(defaultRange());
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const canViewRevenue = isAdmin || userTier === 'ENTERPRISE' || userTier === 'MASTER';
   const canViewTierAdoption = isAdmin;
@@ -96,6 +102,22 @@ export function AnalyticsDashboardClient({
   const handleDateChange = (range: ISODateRange) => {
     setDateRange({ from: range.from, to: range.to });
   };
+
+  if (!mounted) {
+    return (
+      <div className="space-y-6">
+        <div className="grid gap-4 md:grid-cols-3">
+          {[1, 2, 3].map(i => (
+            <Skeleton key={i} className="h-28 rounded-xl" />
+          ))}
+        </div>
+        <div className="grid gap-6 md:grid-cols-2">
+          <Skeleton className="h-[380px] rounded-xl" />
+          <Skeleton className="h-[380px] rounded-xl" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

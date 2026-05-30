@@ -20,6 +20,9 @@ type RouteKey =
   | "dashboard"
   | "byok"
   | "sops"
+  | "sop-marketplace"
+  | "sop-creator"
+  | "challenges"
   | "analytics"
   | "credits"
   | "affiliate-networks";
@@ -86,6 +89,30 @@ const ROUTE_CONFIG: Record<RouteKey, RouteConfig> = {
     introVi:
       "Kết nối tài khoản mạng lưới affiliate của bạn (Awin, ShareASale, Impact, v.v.). Mỗi mạng lưới yêu cầu thông tin xác thực API cá nhân của bạn — không bao giờ chia sẻ với người dùng khác.",
     videoSlug: "connect-first-affiliate",
+  },
+  "sop-marketplace": {
+    pageLabelEn: "SOP Marketplace",
+    pageLabelVi: "Kho SOP",
+    introEn:
+      "Browse 30+ automation playbooks. Install official SOPs for free or purchase community-created SOPs. Each SOP automates a specific workflow like TikTok posting, YouTube SEO, or Pinterest affiliate.",
+    introVi:
+      "Duyệt hơn 30 playbook tự động hóa. Cài SOP chính thức miễn phí hoặc mua SOP do cộng đồng tạo. Mỗi SOP tự động hóa một quy trình cụ thể như đăng TikTok, SEO YouTube, hoặc affiliate Pinterest.",
+  },
+  "sop-creator": {
+    pageLabelEn: "SOP Creator",
+    pageLabelVi: "Tạo SOP",
+    introEn:
+      "Create custom SOPs and sell them on the marketplace. Define playbook steps, set pricing, and earn commission on every sale. MASTER-tier exclusive.",
+    introVi:
+      "Tạo SOP tùy chỉnh và bán trên marketplace. Định nghĩa các bước playbook, đặt giá và nhận hoa hồng cho mỗi lần bán. Dành riêng cho MASTER.",
+  },
+  challenges: {
+    pageLabelEn: "Challenges",
+    pageLabelVi: "Thử Thách",
+    introEn:
+      "Complete challenges to earn badges, MCU credits, and commission boosts. Challenges refresh periodically — check back regularly for new opportunities to grow.",
+    introVi:
+      "Hoàn thành thử thách để nhận huy hiệu, MCU credits và tăng hoa hồng. Thử thách được làm mới định kỳ — kiểm tra thường xuyên để không bỏ lỡ cơ hội.",
   },
 };
 

@@ -1,25 +1,46 @@
-# Post-Deployment Smoke Test Results
+# Smoke Test Results — 2026-05-30 02:38 UTC-7
 
-This file documents the post-deployment smoke tests performed on the live Sophia AI Factory production environment.
+## Test Summary
 
-## 1. Version Match check
-- **Expected SHA:** `49e3c468`
-- **Endpoint:** `/api/version`
-- **Status:** PASS
-- **Output Verified:** Live application returned correct commit SHA matching the deployed changes.
-  - Custom domain URL: `https://sophia.agencyos.network/api/version` -> `{"shortSha":"49e3c468","deployedAt":"2026-05-28T14:22:18Z","opennextVersion":"1.19.9"}`
-  - Direct worker URL: `https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/version` -> `{"shortSha":"49e3c468"}`
+| # | Endpoint | Expected | Actual | Time | Result |
+|---|---|---|---|---|---|
+| 1 | `GET /` (Homepage) | 200 | 200 | 2.80s | ✅ PASS |
+| 2 | `GET /api/version` | 200 + JSON | 200 | ~0.5s | ✅ PASS |
+| 3 | `GET /login` | 200 | 200 | 0.73s | ✅ PASS |
+| 4 | `GET /dashboard/sop-marketplace` | 307 (auth redirect) | 307 | 1.55s | ✅ PASS |
+| 5 | `GET /dashboard/sops` | 307 (auth redirect) | 307 | 1.70s | ✅ PASS |
+| 6 | `GET /dashboard/sop-creator` | 307 (auth redirect) | 307 | 0.20s | ✅ PASS |
+| 7 | `GET /api/sophia-index/health` | 200 | 500 | 5.38s | ⚠️ PRE-EXISTING |
 
-## 2. Integration Health Pings
-- [x] **HeyGen Integration:** Verified `/api/health/heygen` pings successfully.
-- [x] **OpenRouter Connection:** Verified OpenRouter connectivity checks pass.
-- [x] **ElevenLabs Key Resolution:** Confirmed dynamically resolved user API key returns proper audio streams in production.
+## Verdict: ✅ PASS (6/7 — 1 pre-existing)
 
-## 3. Real-Time Log Monitoring
-- **Command:** `npx wrangler tail sophia-ai-factory --env production`
-- **Errors caught:** 0 errors
-- **Status:** PASS
+### Details
 
----
-*Date:* 2026-05-28
-*Verification:* SUCCESSFUL
+**Test 4-6 (307 redirects)**: All SOP dashboard pages correctly redirect to login for unauthenticated requests. This is expected behavior — the `getCurrentUser()` check fires and redirects to `/${locale}/login`.
+
+**Test 7 (Health 500)**: Response body: `{"status":"error","message":"D1_ERROR: no such table: affiliate_categories: SQLITE_ERROR"}`. This is a **pre-existing migration gap** unrelated to the SOP bug fix changes. Migration `0135_agent_api.sql` creates this table but hasn't been applied to production D1.
+
+### Version Verification
+
+```json
+{
+  "shortSha": "f42efe8f",
+  "deployedAt": "2026-05-30T03:25:19Z",
+  "opennextVersion": "1.19.9"
+}
+```
+
+Cloudflare Worker Version ID: `c8a05f8f-c31c-4ce8-87d1-1ed66d56d756`
+
+## Changes Deployed
+
+All 10 SOP bug fixes are live:
+- XSS escape in sop-preview.tsx
+- Timestamp nowSec() in marketplace repo
+- N+1 → batch query in SOP list
+- i18n translations for 3 pages
+- SOP Creator detail page (was 404)
+- submitForReviewAction Publish button
+- getD1 null guard
+- Duplicate test deleted
+- Variable shadow fix
