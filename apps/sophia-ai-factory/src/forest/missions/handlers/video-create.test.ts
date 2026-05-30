@@ -10,6 +10,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/seed/db/client', () => ({
   createServerClient: vi.fn(),
+  getD1Raw: vi.fn().mockResolvedValue({
+    prepare: vi.fn().mockReturnValue({
+      bind: vi.fn().mockReturnValue({
+        first: vi.fn().mockResolvedValue(null),
+      }),
+    }),
+  }),
 }));
 
 vi.mock('@/tree/credentials/get-provider-key', () => ({

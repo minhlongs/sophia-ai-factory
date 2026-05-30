@@ -6,7 +6,7 @@
  * @module app/[locale]/dashboard/settings/customize/customize-page-client
  */
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 type NavItem = { id: string; label: string };
 
@@ -17,6 +17,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'cron', label: 'Cron / Scheduling' },
   { id: 'channels', label: 'Channels' },
   { id: 'mcp', label: 'MCP Registry' },
+  { id: 'storage', label: 'Storage (R2 BYOS)' },
   { id: 'export-import', label: 'Export / Import' },
 ];
 
@@ -348,6 +349,239 @@ function McpPanel() {
   );
 }
 
+// ---------- Storage Panel (R2 BYOS) ----------
+
+const MASK_VALUE = '••••••••••••••••';
+
+function StoragePanel() {
+  const [form, setForm] = useState({
+    r2AccessKeyId: '',
+    r2SecretAccessKey: '',
+    r2BucketName: '',
+    r2Endpoint: '',
+    r2PublicBaseUrl: '',
+    useTenantStorage: false,
+  });
+  const [originalValues, setOriginalValues] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch settings on mount
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        const res = await fetch('/api/v1/settings/storage');
+        if (!res.ok) throw new Error('Failed to load storage settings');
+        const data = (await res.json()) as any;
+        const val = data.value ?? {};
+        setOriginalValues(val);
+        setForm({
+          r2AccessKeyId: val.r2AccessKeyId ? MASK_VALUE : '',
+          r2SecretAccessKey: val.r2SecretAccessKey ? MASK_VALUE : '',
+          r2BucketName: val.r2BucketName ?? '',
+          r2Endpoint: val.r2Endpoint ?? '',
+          r2PublicBaseUrl: val.r2PublicBaseUrl ?? '',
+          useTenantStorage: !!val.useTenantStorage,
+        });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Error loading settings');
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadSettings();
+  }, []);
+
+  const handleChangeKey = (field: 'r2AccessKeyId' | 'r2SecretAccessKey', newVal: string) => {
+    setSaved(false);
+    if (newVal.startsWith(MASK_VALUE)) {
+      const appended = newVal.slice(MASK_VALUE.length);
+      setForm(prev => ({ ...prev, [field]: appended }));
+    } else if (newVal.includes(MASK_VALUE)) {
+      const cleaned = newVal.replace(MASK_VALUE, '');
+      setForm(prev => ({ ...prev, [field]: cleaned }));
+    } else if (newVal.split('').every(char => char === '•')) {
+      setForm(prev => ({ ...prev, [field]: '' }));
+    } else {
+      setForm(prev => ({ ...prev, [field]: newVal }));
+    }
+  };
+
+  const handleChangeField = (field: string, newVal: any) => {
+    setSaved(false);
+    setForm(prev => ({ ...prev, [field]: newVal }));
+  };
+
+  async function handleSave() {
+    setSaving(true);
+    setError(null);
+    try {
+      const payload: Record<string, any> = {};
+
+      if (form.r2AccessKeyId !== MASK_VALUE) {
+        payload.r2AccessKeyId = form.r2AccessKeyId === '' ? null : form.r2AccessKeyId;
+      }
+      if (form.r2SecretAccessKey !== MASK_VALUE) {
+        payload.r2SecretAccessKey = form.r2SecretAccessKey === '' ? null : form.r2SecretAccessKey;
+      }
+      if (form.r2BucketName !== (originalValues?.r2BucketName ?? '')) {
+        payload.r2BucketName = form.r2BucketName === '' ? null : form.r2BucketName;
+      }
+      if (form.r2Endpoint !== (originalValues?.r2Endpoint ?? '')) {
+        payload.r2Endpoint = form.r2Endpoint === '' ? null : form.r2Endpoint;
+      }
+      if (form.r2PublicBaseUrl !== (originalValues?.r2PublicBaseUrl ?? '')) {
+        payload.r2PublicBaseUrl = form.r2PublicBaseUrl === '' ? null : form.r2PublicBaseUrl;
+      }
+      if (form.useTenantStorage !== (originalValues?.useTenantStorage ?? false)) {
+        payload.useTenantStorage = form.useTenantStorage;
+      }
+
+      // Check if anything actually changed
+      if (Object.keys(payload).length === 0) {
+        setSaved(true);
+        setSaving(false);
+        return;
+      }
+
+      const res = await fetch('/api/v1/settings/storage', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const errData = (await res.json().catch(() => ({}))) as any;
+        throw new Error(errData.message || errData.error || 'Failed to save settings');
+      }
+
+      const data = (await res.json()) as any;
+      const updatedVal = data.value ?? {};
+      setOriginalValues(updatedVal);
+      setForm({
+        r2AccessKeyId: updatedVal.r2AccessKeyId ? MASK_VALUE : '',
+        r2SecretAccessKey: updatedVal.r2SecretAccessKey ? MASK_VALUE : '',
+        r2BucketName: updatedVal.r2BucketName ?? '',
+        r2Endpoint: updatedVal.r2Endpoint ?? '',
+        r2PublicBaseUrl: updatedVal.r2PublicBaseUrl ?? '',
+        useTenantStorage: !!updatedVal.useTenantStorage,
+      });
+
+      setSaved(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Save failed');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) {
+    return <div className="text-xs text-gray-500">Loading storage settings…</div>;
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-gray-700">Storage Settings (R2 BYOS)</h3>
+        <label className="flex items-center gap-2 text-xs text-gray-600">
+          <input
+            type="checkbox"
+            checked={form.useTenantStorage}
+            onChange={e => handleChangeField('useTenantStorage', e.target.checked)}
+            className="rounded"
+          />
+          Use Tenant Storage
+        </label>
+      </div>
+
+      {error && (
+        <div className="rounded bg-red-50 p-3 text-xs text-red-600">
+          {error}
+        </div>
+      )}
+
+      <div className="space-y-3">
+        <div>
+          <label className="block text-xs font-medium text-gray-600">
+            R2 Access Key ID
+          </label>
+          <input
+            type="password"
+            value={form.r2AccessKeyId}
+            onChange={e => handleChangeKey('r2AccessKeyId', e.target.value)}
+            placeholder="Enter R2 Access Key ID"
+            className="mt-1 block w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-gray-600">
+            R2 Secret Access Key
+          </label>
+          <input
+            type="password"
+            value={form.r2SecretAccessKey}
+            onChange={e => handleChangeKey('r2SecretAccessKey', e.target.value)}
+            placeholder="Enter R2 Secret Access Key"
+            className="mt-1 block w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-gray-600">
+            R2 Bucket Name
+          </label>
+          <input
+            type="text"
+            value={form.r2BucketName}
+            onChange={e => handleChangeField('r2BucketName', e.target.value)}
+            placeholder="e.g. my-bucket"
+            className="mt-1 block w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-gray-600">
+            R2 Endpoint URL
+          </label>
+          <input
+            type="text"
+            value={form.r2Endpoint}
+            onChange={e => handleChangeField('r2Endpoint', e.target.value)}
+            placeholder="e.g. https://<account-id>.r2.cloudflarestorage.com"
+            className="mt-1 block w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-gray-600">
+            R2 Public Base URL
+          </label>
+          <input
+            type="text"
+            value={form.r2PublicBaseUrl}
+            onChange={e => handleChangeField('r2PublicBaseUrl', e.target.value)}
+            placeholder="e.g. https://pub-12345.r2.dev or custom domain"
+            className="mt-1 block w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
+          />
+        </div>
+      </div>
+
+      <div className="flex gap-2">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs text-white hover:bg-indigo-700 disabled:opacity-50"
+        >
+          {saving ? 'Saving…' : saved ? 'Saved!' : 'Save'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ---------- Export / Import Panel ----------
 
 function ExportImportPanel() {
@@ -485,6 +719,7 @@ export function CustomizePageClient() {
     switch (active) {
       case 'channels': return <ChannelsPanel />;
       case 'mcp': return <McpPanel />;
+      case 'storage': return <StoragePanel />;
       case 'export-import': return <ExportImportPanel />;
       default: return <PlaceholderPanel name={NAV_ITEMS.find(n => n.id === active)?.label ?? active} />;
     }

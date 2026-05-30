@@ -25,6 +25,7 @@ const MasterWelcomeBanner = nextDynamic(() =>
   import('./components/master-welcome-banner').then(m => ({ default: m.MasterWelcomeBanner })),
 );
 import { OnboardingStatusWidget } from './components/onboarding-status-widget';
+import { LocalSetupGuide } from './components/local-setup-guide';
 import { MissionControlWidget } from '@/forest/components/dashboard/mission-control-widget';
 import { RouteHelpTooltip } from '@/components/help/route-help-tooltip';
 import { cookies } from 'next/headers';
@@ -93,10 +94,11 @@ export default async function DashboardPage() {
   let recentRuns: SopRunRow[] = [];
   let videosThisMonth = 0;
   let trialEndsAt: number | null = null;
+  let activeApiKey: string | null = null;
 
   if (d1) {
     try {
-      const [instResult, runsResult, videosResult, trialResult] = await Promise.all([
+      const [instResult, runsResult, videosResult, trialResult, activeKeyResult] = await Promise.all([
         d1.prepare('SELECT COUNT(*) as cnt FROM user_sop_installations WHERE user_id = ?').bind(user.id).first<{ cnt: number }>(),
         d1.prepare(`SELECT r.id, r.status, r.created_at, r.installation_id
           FROM sop_runs r
@@ -109,11 +111,16 @@ export default async function DashboardPage() {
         d1.prepare(`SELECT trial_ends_at FROM subscriptions
           WHERE user_id = ?1 ORDER BY updated_at DESC LIMIT 1`)
           .bind(user.id).first<{ trial_ends_at: number | null }>(),
+        d1.prepare(`SELECT key_id FROM raas_user_api_keys WHERE owner_id = ? AND revoked_at IS NULL ORDER BY created_at DESC LIMIT 1`)
+          .bind(user.id).first<{ key_id: string }>(),
       ]);
       sopCount = instResult?.cnt ?? 0;
       recentRuns = runsResult.results ?? [];
       videosThisMonth = videosResult?.cnt ?? 0;
       trialEndsAt = trialResult?.trial_ends_at ?? null;
+      if (activeKeyResult?.key_id) {
+        activeApiKey = `sk_live_${activeKeyResult.key_id.slice(0, 8)}...`;
+      }
     } catch (e) {
       logger.error('[dashboard] D1 query failed', e instanceof Error ? e : new Error(String(e)));
     }
@@ -137,6 +144,7 @@ export default async function DashboardPage() {
       {/* Mission Control Widget — GAP3 composite hero */}
       <MissionControlWidget isVi={isVi} />
       <OnboardingStatusWidget isVi={isVi} />
+      <LocalSetupGuide apiKey={activeApiKey || null} locale={isVi ? 'vi' : 'en'} />
 
 
 
