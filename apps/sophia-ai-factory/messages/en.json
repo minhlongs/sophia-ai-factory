@@ -2137,7 +2137,10 @@
       "searchPlaceholder": "Search SOPs...",
       "noResults": "No SOPs found matching your search.",
       "installed": "Installed",
-      "featuredTitle": "Featured Playbooks"
+      "featuredTitle": "Featured Playbooks",
+      "firstTimeTitle": "First time installing a SOP?",
+      "firstTimeDesc": "3 steps: (1) pick a template below, (2) click Install, (3) go to /dashboard/sops and click Run to generate your first video. ~5 minutes total.",
+      "firstTimeFaq": "Read SOP FAQ →"
     },
     "card": {
       "creditsPerRun": "{n} credits/run",
@@ -2200,7 +2203,9 @@
       "viewDetail": "View",
       "runNow": "Run Now",
       "delete": "Delete",
-      "manual": "Manual"
+      "manual": "Manual",
+      "firstInstallTitle": "First SOP installed!",
+      "firstInstallDesc": "Click the SOP row below → \"Run\" tab → enter parameters → click Run. Your video appears in /dashboard/videos in 2-5 minutes."
     },
     "detail_page": {
       "overview": "Overview",
@@ -2288,7 +2293,32 @@
       "price": "Price (USD)",
       "setupTime": "Setup Time (minutes)",
       "credits": "Credits per Run",
-      "create": "Create SOP"
+      "create": "Create SOP",
+      "yourSops": "Your SOPs",
+      "noSopsDesc": "Create your first SOP template to start earning",
+      "createFirst": "Create First SOP",
+      "name": "Name",
+      "detail": {
+        "back": "Back to Creator Dashboard",
+        "templateDetails": "Template Details",
+        "descriptionEn": "Description (English)",
+        "descriptionVi": "Description (Vietnamese)",
+        "creditsPerRun": "Credits per Run",
+        "setupTime": "Setup Time",
+        "setupTimeMinutes": "{minutes} minutes",
+        "createdAt": "Created",
+        "updatedAt": "Last Updated",
+        "draft": "Draft",
+        "published": "Published",
+        "archived": "Archived",
+        "submitForReview": "Publish to Marketplace",
+        "publishing": "Publishing...",
+        "publishSuccess": "SOP published successfully!",
+        "deleteTemplate": "Delete Template",
+        "confirmDelete": "Are you sure? This will permanently delete this SOP template.",
+        "confirmDeleteYes": "Yes, delete",
+        "confirmDeleteNo": "Cancel"
+      }
     },
     "community": {
       "title": "Community SOPs",

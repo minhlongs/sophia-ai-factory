@@ -5,6 +5,9 @@
 
 import type { SopListingRow, SopLicenseRow, CreateListingInput, CreateLicenseInput } from './sop-types';
 
+/** Unix epoch seconds (consistent with all other SOP repos) */
+function nowSec(): number { return Math.floor(Date.now() / 1000); }
+
 /** Get listing by template ID */
 export async function getListingByTemplateId(db: D1Database, templateId: string): Promise<SopListingRow | null> {
   const row = await db.prepare(`SELECT * FROM sop_listings WHERE template_id = ?1 LIMIT 1`)
@@ -37,17 +40,17 @@ export async function listPublishedListings(
   binds.push(limit, offset);
 
   const stmt = db.prepare(sql);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { results } = await (binds.length > 0 ? stmt.bind(...binds) : stmt).all();
   // D1 returns untyped rows for dynamic JOIN queries; cast is intentional
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   return results as unknown as (SopListingRow & { name_en: string; name_vi: string; slug: string; category: string; author_user_id: string | null })[];
 }
 
 /** Create a new listing for a community SOP */
 export async function createListing(db: D1Database, input: CreateListingInput): Promise<SopListingRow> {
   const id = crypto.randomUUID();
-  const now = Date.now();
+  const now = nowSec();
   const tags = input.tags ? JSON.stringify(input.tags) : null;
 
   await db.prepare(`
@@ -62,7 +65,7 @@ export async function createListing(db: D1Database, input: CreateListingInput): 
 export async function updateListingStatus(
   db: D1Database, id: string, status: string, reason?: string
 ): Promise<void> {
-  const now = Date.now();
+  const now = nowSec();
   const publishedAt = status === 'published' ? now : null;
   await db.prepare(`
     UPDATE sop_listings SET status = ?1, rejection_reason = ?2, published_at = COALESCE(?3, published_at), updated_at = ?4
@@ -75,13 +78,13 @@ export async function incrementSales(db: D1Database, listingId: string, priceCen
   await db.prepare(`
     UPDATE sop_listings SET total_sales = total_sales + 1, total_revenue_cents = total_revenue_cents + ?1, updated_at = ?2
     WHERE id = ?3
-  `).bind(priceCents, Date.now(), listingId).run();
+  `).bind(priceCents, nowSec(), listingId).run();
 }
 
 /** Create a purchase license */
 export async function createLicense(db: D1Database, input: CreateLicenseInput): Promise<SopLicenseRow> {
   const id = crypto.randomUUID();
-  const now = Date.now();
+  const now = nowSec();
   await db.prepare(`
     INSERT INTO sop_licenses (id, user_id, template_id, listing_id, price_cents, payment_id, payment_status, purchased_at)
     VALUES (?1, ?2, ?3, ?4, ?5, ?6, 'pending', ?7)
@@ -120,6 +123,6 @@ export async function listCreatorSales(db: D1Database, creatorId: string): Promi
     ORDER BY sl.purchased_at DESC
   `).bind(creatorId).all();
   // D1 returns untyped rows for JOIN queries; cast is intentional
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   return results as unknown as (SopLicenseRow & { name_en: string })[];
 }

@@ -9,6 +9,7 @@ export {
   listOfficialTemplates,
   getTemplateBySlug,
   getTemplateById,
+  getTemplatesByIds,
   listMarketplaceTemplates,
   listTemplatesByAuthor,
   createTemplate,

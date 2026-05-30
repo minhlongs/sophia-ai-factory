@@ -31,6 +31,17 @@ export async function getTemplateById(db: D1Database, id: string): Promise<SopTe
   return row ?? null;
 }
 
+/** Batch-fetch templates by IDs (avoids N+1 queries) */
+export async function getTemplatesByIds(db: D1Database, ids: string[]): Promise<SopTemplateRow[]> {
+  if (ids.length === 0) return [];
+  const placeholders = ids.map((_, i) => `?${i + 1}`).join(', ');
+  const { results } = await db
+    .prepare(`SELECT * FROM sop_templates WHERE id IN (${placeholders})`)
+    .bind(...ids)
+    .all<SopTemplateRow>();
+  return results;
+}
+
 /** List published community (non-official) templates */
 export async function listMarketplaceTemplates(db: D1Database): Promise<SopTemplateRow[]> {
   const { results } = await db

@@ -7,7 +7,7 @@
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { listInstallationsForUser, getTemplateById } from '@/lib/sop/sop-repo';
+import { listInstallationsForUser, getTemplatesByIds } from '@/lib/sop/sop-repo';
 import { InstallationListTable } from '@/forest/components/sop/installation-list-table';
 import { EmptyState } from '@/seed/components/ui/empty-state';
 import { BookOpen, Store, PartyPopper } from 'lucide-react';
@@ -46,13 +46,14 @@ export default async function SopsListPage({ params }: Props) {
   const db = getD1();
   const installations = db ? await listInstallationsForUser(db, user.id) : [];
 
-  // Enrich with template data
-  const withTemplates: InstallWithTemplate[] = await Promise.all(
-    installations.map(async (inst) => {
-      const template = db ? await getTemplateById(db, inst.template_id) : null;
-      return { ...inst, template };
-    }),
-  );
+  // Batch-fetch templates (single query instead of N+1)
+  const uniqueIds = [...new Set(installations.map(i => i.template_id))];
+  const templates = db ? await getTemplatesByIds(db, uniqueIds) : [];
+  const tplMap = new Map(templates.map(t => [t.id, t]));
+  const withTemplates: InstallWithTemplate[] = installations.map(inst => ({
+    ...inst,
+    template: tplMap.get(inst.template_id) ?? null,
+  }));
 
   return (
     <div className="space-y-6">
@@ -84,19 +85,17 @@ export default async function SopsListPage({ params }: Props) {
   );
 }
 
-function FirstSopCallout({ locale }: { locale: string }) {
-  const isVi = locale.startsWith('vi');
+async function FirstSopCallout({ locale }: { locale: string }) {
+  const t = await getTranslations('sop.list');
   return (
     <div className="rounded-xl border border-emerald-500/30 bg-emerald-950/20 p-4 flex items-start gap-3">
       <PartyPopper className="w-5 h-5 text-emerald-300 shrink-0 mt-0.5" aria-hidden="true" />
       <div className="flex-1 space-y-1">
         <h2 className="text-sm font-semibold text-emerald-100">
-          {isVi ? 'SOP đầu tiên đã cài đặt!' : 'First SOP installed!'}
+          {t('firstInstallTitle')}
         </h2>
         <p className="text-xs text-zinc-300 leading-relaxed">
-          {isVi
-            ? 'Bấm vào dòng SOP bên dưới → tab "Run" → nhập tham số → bấm Run. Video sẽ xuất hiện ở /dashboard/videos sau 2-5 phút.'
-            : 'Click the SOP row below → "Run" tab → enter parameters → click Run. Your video appears in /dashboard/videos in 2-5 minutes.'}
+          {t('firstInstallDesc')}
         </p>
       </div>
     </div>

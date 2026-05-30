@@ -3,8 +3,9 @@
  * Shows earnings summary, SOP list with status/sales, and create button.
  */
 
-import { redirect } from 'next/navigation';
+import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getUserTier } from '@/seed/db/get-user-tier';
 import { listTemplatesByAuthor, listCreatorSales } from '@/lib/sop/sop-repo';
@@ -62,6 +63,8 @@ function statusBadge(status: SopTemplateRow['status']) {
 export default async function CreatorDashboardPage({ params }: Props) {
   const { locale } = await params;
 
+  const t = await getTranslations('sop.creator');
+
   const user = await getCurrentUser();
   if (!user) redirect(`/${locale}/login`);
 
@@ -69,11 +72,12 @@ export default async function CreatorDashboardPage({ params }: Props) {
   if (tier !== 'MASTER') redirect(`/${locale}/pricing`);
 
   const db = getD1();
+  if (!db) notFound();
 
   const [templates, sales, earnings] = await Promise.all([
-    db ? listTemplatesByAuthor(db, user.id) : Promise.resolve([] as SopTemplateRow[]),
-    db ? listCreatorSales(db, user.id).catch(() => []) : Promise.resolve([]),
-    db ? fetchEarnings(user.id, db) : Promise.resolve(ZERO_EARNINGS),
+    listTemplatesByAuthor(db, user.id),
+    listCreatorSales(db, user.id).catch(() => []),
+    fetchEarnings(user.id, db),
   ]);
 
   const salesMap = new Map<string, { count: number; revenue: number }>();
@@ -91,8 +95,8 @@ export default async function CreatorDashboardPage({ params }: Props) {
             <Palette className="w-5 h-5 text-violet-400" aria-hidden="true" />
           </div>
           <div>
-            <h1 className="text-xl font-semibold text-white">Creator Dashboard</h1>
-            <p className="text-sm text-white/50">Manage your SOP templates and earnings</p>
+            <h1 className="text-xl font-semibold text-white">{t('title')}</h1>
+            <p className="text-sm text-white/50">{t('subtitle')}</p>
           </div>
         </div>
         <Link
@@ -100,17 +104,17 @@ export default async function CreatorDashboardPage({ params }: Props) {
           className="flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-sm font-medium text-white transition-colors"
         >
           <Plus className="w-4 h-4" aria-hidden="true" />
-          Create New SOP
+          {t('newSop')}
         </Link>
       </div>
 
       {/* Earnings summary */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'Total Earned', value: formatUsd(earnings.totalEarned), icon: DollarSign, color: 'text-violet-400' },
-          { label: 'Pending', value: formatUsd(earnings.pending), icon: TrendingUp, color: 'text-yellow-400' },
-          { label: 'Payable', value: formatUsd(earnings.payable), icon: TrendingUp, color: 'text-green-400' },
-          { label: 'Paid Out', value: formatUsd(earnings.paid), icon: DollarSign, color: 'text-white/60' },
+          { label: t('totalEarned'), value: formatUsd(earnings.totalEarned), icon: DollarSign, color: 'text-violet-400' },
+          { label: t('pending'), value: formatUsd(earnings.pending), icon: TrendingUp, color: 'text-yellow-400' },
+          { label: t('payable'), value: formatUsd(earnings.payable), icon: TrendingUp, color: 'text-green-400' },
+          { label: t('paid'), value: formatUsd(earnings.paid), icon: DollarSign, color: 'text-white/60' },
         ].map(card => (
           <div key={card.label} className="rounded-xl bg-white/5 border border-white/10 p-4">
             <div className="flex items-center gap-2 mb-2">
@@ -126,20 +130,20 @@ export default async function CreatorDashboardPage({ params }: Props) {
       <div className="rounded-2xl bg-white/5 border border-white/10 overflow-hidden">
         <div className="flex items-center gap-2 px-5 py-4 border-b border-white/10">
           <FileText className="w-4 h-4 text-white/50" aria-hidden="true" />
-          <h2 className="text-sm font-medium text-white/80">Your SOPs ({templates.length})</h2>
+          <h2 className="text-sm font-medium text-white/80">{t('yourSops')} ({templates.length})</h2>
         </div>
 
         {templates.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <FileText className="w-10 h-10 text-white/20 mb-3" aria-hidden="true" />
-            <p className="text-sm text-white/50">No SOPs yet</p>
-            <p className="text-xs text-white/30 mt-1 mb-4">Create your first SOP template to start earning</p>
+            <p className="text-sm text-white/50">{t('noSops')}</p>
+            <p className="text-xs text-white/30 mt-1 mb-4">{t('noSopsDesc')}</p>
             <Link
               href="/dashboard/sop-creator/new"
               className="flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-sm font-medium text-white transition-colors"
             >
               <Plus className="w-4 h-4" aria-hidden="true" />
-              Create First SOP
+              {t('createFirst')}
             </Link>
           </div>
         ) : (
@@ -147,33 +151,33 @@ export default async function CreatorDashboardPage({ params }: Props) {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-white/5 text-xs text-white/40">
-                  <th className="px-5 py-3 text-left font-medium">Name</th>
-                  <th className="px-4 py-3 text-left font-medium">Category</th>
-                  <th className="px-4 py-3 text-left font-medium">Status</th>
-                  <th className="px-4 py-3 text-right font-medium">Sales</th>
-                  <th className="px-4 py-3 text-right font-medium">Revenue</th>
+                  <th className="px-5 py-3 text-left font-medium">{t('name')}</th>
+                  <th className="px-4 py-3 text-left font-medium">{t('category')}</th>
+                  <th className="px-4 py-3 text-left font-medium">{t('status')}</th>
+                  <th className="px-4 py-3 text-right font-medium">{t('sales')}</th>
+                  <th className="px-4 py-3 text-right font-medium">{t('revenue')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {templates.map(t => {
-                  const s = salesMap.get(t.id) ?? { count: 0, revenue: 0 };
+                {templates.map(tpl => {
+                  const s = salesMap.get(tpl.id) ?? { count: 0, revenue: 0 };
                   return (
-                    <tr key={t.id} className="hover:bg-white/5 transition-colors">
+                    <tr key={tpl.id} className="hover:bg-white/5 transition-colors">
                       <td className="px-5 py-3">
                         <Link
-                          href={`/dashboard/sop-creator/${t.id}`}
+                          href={`/dashboard/sop-creator/${tpl.id}`}
                           className="font-medium text-white hover:text-violet-300 transition-colors"
                         >
-                          {t.name_en}
+                          {tpl.name_en}
                         </Link>
-                        <p className="text-xs text-white/40 mt-0.5">{t.name_vi}</p>
+                        <p className="text-xs text-white/40 mt-0.5">{tpl.name_vi}</p>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="capitalize text-white/60 text-xs">{t.category}</span>
+                        <span className="capitalize text-white/60 text-xs">{tpl.category}</span>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs border capitalize ${statusBadge(t.status)}`}>
-                          {t.status}
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs border capitalize ${statusBadge(tpl.status)}`}>
+                          {tpl.status}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right text-white/70">{s.count}</td>
