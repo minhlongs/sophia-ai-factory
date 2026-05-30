@@ -33,5 +33,11 @@ CREATE TABLE IF NOT EXISTS user_payout_settings (
   -- migrate to encryption-at-rest using @/lib/byok-encryption. Currently table is UNUSED — no live PII at risk.
   payout_address TEXT,                             -- crypto wallet OR bank account number
   payout_address_verified INTEGER DEFAULT 0,
+  -- Stripe Connect Express columns (Phase 03)
+  stripe_account_id TEXT,
+  stripe_account_status TEXT,              -- 'pending' | 'enabled' | 'restricted' | 'rejected'
+  stripe_payout_enabled INTEGER DEFAULT 0, -- 1 once charges_enabled+payouts_enabled
+  stripe_onboarding_started_at TEXT,
+  stripe_last_event_at TEXT,
   updated_at TEXT DEFAULT (datetime('now'))
 );

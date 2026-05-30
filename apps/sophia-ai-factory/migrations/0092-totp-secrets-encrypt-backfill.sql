@@ -10,7 +10,7 @@
 -- Idempotency: Both statements use IF NOT EXISTS / guarded pattern safe to
 -- re-run on an already-migrated database.
 
-ALTER TABLE mfa_secrets ADD COLUMN IF NOT EXISTS is_encrypted INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE mfa_secrets ADD COLUMN is_encrypted INTEGER NOT NULL DEFAULT 0;
 
 -- Index to find un-encrypted rows efficiently for monitoring / batch tooling.
 CREATE INDEX IF NOT EXISTS idx_mfa_secrets_is_encrypted

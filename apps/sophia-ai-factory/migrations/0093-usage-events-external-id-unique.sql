@@ -20,7 +20,7 @@
 --       the D1-layer ingestion path (forest/usage-metering) which stores events
 --       via BatchUsageRecord.event_id.
 
-ALTER TABLE usage_events ADD COLUMN IF NOT EXISTS external_id TEXT;
+ALTER TABLE usage_events ADD COLUMN external_id TEXT;
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_usage_events_external_id_unique
   ON usage_events(external_id)

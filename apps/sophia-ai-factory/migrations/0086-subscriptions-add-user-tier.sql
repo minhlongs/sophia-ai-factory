@@ -16,6 +16,7 @@
 
 ALTER TABLE subscriptions ADD COLUMN user_id TEXT REFERENCES users(id);
 ALTER TABLE subscriptions ADD COLUMN tier TEXT;
+ALTER TABLE subscriptions ADD COLUMN trial_ends_at INTEGER;
 
 CREATE INDEX IF NOT EXISTS subscriptions_user_id_idx ON subscriptions(user_id);
 CREATE INDEX IF NOT EXISTS subscriptions_tier_status_idx ON subscriptions(tier, status);

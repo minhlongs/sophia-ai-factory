@@ -3,7 +3,7 @@
 
 -- ── Audit log table ────────────────────────────────────────────────────────────
 -- Cheap append-only trail for tier-changing mutations (subscriptions, wallets, etc.)
-CREATE TABLE IF NOT EXISTS audit_log (
+CREATE TABLE IF NOT EXISTS billing_audit_log (
   id         INTEGER PRIMARY KEY AUTOINCREMENT,
   table_name TEXT    NOT NULL,
   row_id     TEXT    NOT NULL,
@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS audit_log (
 );
 
 CREATE INDEX IF NOT EXISTS idx_audit_log_table_row_ts
-  ON audit_log (table_name, row_id, created_at);
+  ON billing_audit_log (table_name, row_id, created_at);
 
 -- ── tier_change_events: CHECK constraint on tier enum columns ─────────────────
 -- D1 (SQLite) does NOT support ALTER TABLE ... ADD CONSTRAINT IF NOT EXISTS.
