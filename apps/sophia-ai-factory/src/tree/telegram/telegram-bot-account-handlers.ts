@@ -40,6 +40,8 @@ export async function handleHelp(chatId: string) {
 • /campaign <topic> - Create a new video campaign (e.g., "/campaign Eco-friendly gadgets")
 • /status - Check status of running campaigns
 • /results - View your completed campaigns
+• /harness - Run system health check
+• /harness\\_status - View latest health check results
 • /help - Show this list
 `
   await sendTelegramMessage(chatId, message)

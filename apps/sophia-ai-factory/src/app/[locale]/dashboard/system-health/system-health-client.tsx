@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { AgentHealthCard } from './components/agent-health-card';
+import { HarnessHealthCard } from './components/harness-health-card';
 import { useQuery } from '@tanstack/react-query';
 import {
   Activity,
@@ -197,6 +198,9 @@ export default function SystemHealthClient() {
 
       {/* AI Agent Health */}
       <AgentHealthCard />
+
+      {/* Harness Engineering Health */}
+      <HarnessHealthCard />
     </div>
   );
 }

@@ -46,6 +46,10 @@ import {
   revokePairing,
 } from '@/lib/telegram/pairing'
 import { consumePairingToken } from '@/tree/telegram/pairing-token-service'
+import {
+  handleHarness,
+  handleHarnessStatus,
+} from '@/tree/telegram/telegram-bot-harness-handlers'
 
 interface TelegramUpdate {
   callback_query?: {
@@ -301,6 +305,10 @@ export async function POST(request: NextRequest) {
           // Not linked — ticket still created with empty userId
         }
         await handleTicket(chatId, userId, ticketText)
+      } else if (text === '/harness') {
+        await handleHarness(chatId)
+      } else if (text === '/harness_status') {
+        await handleHarnessStatus(chatId)
       } else if (text.startsWith('/')) {
         await handleUnknown(chatId)
       } else {
