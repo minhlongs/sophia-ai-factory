@@ -21,6 +21,23 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Record daemon's heartbeat
+    try {
+      const { getCloudflareContext } = await import('@opennextjs/cloudflare');
+      const cfCtx = await getCloudflareContext();
+      const env = cfCtx.env as Record<string, unknown>;
+      const kv = env.EXPERIMENT_KV as {
+        put(key: string, value: string): Promise<void>;
+      } | undefined;
+      if (kv) {
+        await kv.put('harness:daemon_last_poll', new Date().toISOString());
+      } else {
+        console.warn('EXPERIMENT_KV binding not found in Cloudflare context');
+      }
+    } catch (err) {
+      console.warn('Gracefully handled error writing daemon heartbeat to EXPERIMENT_KV:', err);
+    }
+
     const db = await getD1Raw();
 
     // Query oldest pending job

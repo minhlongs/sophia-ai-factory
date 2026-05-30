@@ -3,7 +3,31 @@ import { NextRequest } from 'next/server';
 import { POST as triggerPOST } from '../trigger/route';
 import { GET as pollGET } from '../jobs/poll/route';
 import { PATCH as updatePATCH } from '../jobs/[id]/route';
+import { GET as statusGET } from '../status/route';
 import { getLocalD1Mock } from '@/seed/db/local-d1-mock';
+
+vi.mock('@opennextjs/cloudflare', () => {
+  return {
+    getCloudflareContext: vi.fn().mockImplementation(async () => {
+      return {
+        env: {
+          EXPERIMENT_KV: {
+            get: vi.fn().mockImplementation(async (key: string) => {
+              return (globalThis as any).__kvStore?.[key] || null;
+            }),
+            put: vi.fn().mockImplementation(async (key: string, value: string) => {
+              if (!(globalThis as any).__kvStore) {
+                (globalThis as any).__kvStore = {};
+              }
+              (globalThis as any).__kvStore[key] = value;
+            }),
+          },
+        },
+      };
+    }),
+  };
+});
+
 
 const HARNESS_SECRET = 'dev-harness-secret';
 
@@ -27,6 +51,7 @@ describe('Harness Engineering API Routes', () => {
 
   beforeEach(async () => {
     vi.stubEnv('HARNESS_SECRET', HARNESS_SECRET);
+    (globalThis as any).__kvStore = {};
     
     // Override setup.tsx's mock D1 with the actual local sqlite file database
     const realDb = getLocalD1Mock();
@@ -42,6 +67,7 @@ describe('Harness Engineering API Routes', () => {
 
   afterEach(async () => {
     vi.unstubAllEnvs();
+    (globalThis as any).__kvStore = {};
     await db.prepare('DELETE FROM harness_jobs').run();
   });
 
@@ -127,5 +153,140 @@ describe('Harness Engineering API Routes', () => {
     expect(results.results[0].status).toBe('success');
     expect(results.results[1].test_name).toBe('r2_storage');
     expect(JSON.parse(results.results[1].metadata).bucket).toBe('test-bucket');
+  });
+
+  describe('GET /status', () => {
+    it('returns 401 Unauthorized if auth header is missing or incorrect', async () => {
+      const req = makeRequest('http://localhost/api/v1/harness/status', 'GET', undefined, {
+        'x-harness-secret': 'wrong-secret',
+      });
+      const res = await statusGET(req);
+      expect(res.status).toBe(401);
+      const body = await res.json() as { success: boolean; error?: string };
+      expect(body.success).toBe(false);
+      expect(body.error).toBe('Unauthorized');
+    });
+
+    it('returns OFFLINE status when there is no heartbeat in KV', async () => {
+      const req = makeRequest('http://localhost/api/v1/harness/status', 'GET');
+      const res = await statusGET(req);
+      expect(res.status).toBe(200);
+      const body = await res.json() as {
+        success: boolean;
+        daemon: { status: string; last_poll: string | null };
+        latestJob: unknown;
+      };
+      expect(body.success).toBe(true);
+      expect(body.daemon.status).toBe('OFFLINE');
+      expect(body.daemon.last_poll).toBeNull();
+      expect(body.latestJob).toBeNull();
+    });
+
+    it('returns ONLINE status when heartbeat is within 30 seconds', async () => {
+      const timestamp = new Date().toISOString();
+      (globalThis as any).__kvStore['harness:daemon_last_poll'] = timestamp;
+
+      const req = makeRequest('http://localhost/api/v1/harness/status', 'GET');
+      const res = await statusGET(req);
+      expect(res.status).toBe(200);
+      const body = await res.json() as {
+        success: boolean;
+        daemon: { status: string; last_poll: string | null };
+        latestJob: unknown;
+      };
+      expect(body.success).toBe(true);
+      expect(body.daemon.status).toBe('ONLINE');
+      expect(body.daemon.last_poll).toBe(timestamp);
+    });
+
+    it('returns OFFLINE status when heartbeat is older than 30 seconds', async () => {
+      // 40 seconds ago
+      const timestamp = new Date(Date.now() - 40000).toISOString();
+      (globalThis as any).__kvStore['harness:daemon_last_poll'] = timestamp;
+
+      const req = makeRequest('http://localhost/api/v1/harness/status', 'GET');
+      const res = await statusGET(req);
+      expect(res.status).toBe(200);
+      const body = await res.json() as {
+        success: boolean;
+        daemon: { status: string; last_poll: string | null };
+        latestJob: unknown;
+      };
+      expect(body.success).toBe(true);
+      expect(body.daemon.status).toBe('OFFLINE');
+      expect(body.daemon.last_poll).toBe(timestamp);
+    });
+
+    it('queries D1 and returns the latest job and its results', async () => {
+      const olderJobId = crypto.randomUUID();
+      const newerJobId = crypto.randomUUID();
+
+      await db.prepare(
+        "INSERT INTO harness_jobs (id, status, triggered_by, created_at, updated_at) VALUES (?, 'completed', 'web', datetime('now', '-1 minute'), datetime('now', '-1 minute'))"
+      )
+      .bind(olderJobId)
+      .run();
+
+      await db.prepare(
+        "INSERT INTO harness_jobs (id, status, triggered_by, created_at, updated_at) VALUES (?, 'processing', 'telegram', datetime('now'), datetime('now'))"
+      )
+      .bind(newerJobId)
+      .run();
+
+      await db.prepare(
+        "INSERT INTO harness_results (id, job_id, test_name, status, duration_ms, error_message, metadata) VALUES (?, ?, 'd1_ping', 'success', 10, NULL, NULL)"
+      )
+      .bind(crypto.randomUUID(), newerJobId)
+      .run();
+
+      await db.prepare(
+        "INSERT INTO harness_results (id, job_id, test_name, status, duration_ms, error_message, metadata) VALUES (?, ?, 'r2_storage', 'failed', 20, 'connection timeout', '{\"bucket\":\"main\"}')"
+      )
+      .bind(crypto.randomUUID(), newerJobId)
+      .run();
+
+      const req = makeRequest('http://localhost/api/v1/harness/status', 'GET');
+      const res = await statusGET(req);
+      expect(res.status).toBe(200);
+      
+      const body = await res.json() as {
+        success: boolean;
+        daemon: { status: string; last_poll: string | null };
+        latestJob: {
+          id: string;
+          status: string;
+          triggered_by: string;
+          results: Array<{
+            test_name: string;
+            status: string;
+            duration_ms: number;
+            error_message: string | null;
+            metadata: string | null;
+          }>;
+        } | null;
+      };
+
+      expect(body.success).toBe(true);
+      expect(body.latestJob).not.toBeNull();
+      expect(body.latestJob?.id).toBe(newerJobId);
+      expect(body.latestJob?.status).toBe('processing');
+      expect(body.latestJob?.triggered_by).toBe('telegram');
+      
+      const results = body.latestJob?.results;
+      expect(results?.length).toBe(2);
+      
+      const d1PingResult = results?.find(r => r.test_name === 'd1_ping');
+      expect(d1PingResult).toBeDefined();
+      expect(d1PingResult?.status).toBe('success');
+      expect(d1PingResult?.duration_ms).toBe(10);
+      expect(d1PingResult?.error_message).toBeNull();
+      
+      const r2Result = results?.find(r => r.test_name === 'r2_storage');
+      expect(r2Result).toBeDefined();
+      expect(r2Result?.status).toBe('failed');
+      expect(r2Result?.duration_ms).toBe(20);
+      expect(r2Result?.error_message).toBe('connection timeout');
+      expect(r2Result?.metadata).toBe('{"bucket":"main"}');
+    });
   });
 });
