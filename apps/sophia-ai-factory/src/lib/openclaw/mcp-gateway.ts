@@ -3,7 +3,7 @@
  * Phase 12: OpenClaw Orchestrator primitive
  *
  * Whitelist (per CLAUDE.md / hard constraints):
- *   youtube, tiktok, supabase, claude-mem, pencil
+ *   youtube, tiktok, supabase, claude-mem, pencil, cheetahclaws
  *
  * Per-tenant custom servers are stored (encrypted) in the 'mcp' settings namespace.
  * BANNED: polar (rejected per project CLAUDE.md and global rules)
@@ -29,7 +29,7 @@ export class MCPCallError extends Error {
 }
 
 /** Approved MCP server identifiers */
-export const MCP_WHITELIST = new Set(['youtube', 'tiktok', 'supabase', 'claude-mem', 'pencil']);
+export const MCP_WHITELIST = new Set(['youtube', 'tiktok', 'supabase', 'claude-mem', 'pencil', 'cheetahclaws']);
 
 export interface MCPCallOptions {
   /** If provided, inject tenantId into args */
