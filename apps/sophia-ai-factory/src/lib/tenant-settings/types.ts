@@ -13,6 +13,7 @@ export type SettingsNamespace =
   | 'channels'
   | 'mcp'
   | 'webhooks-defaults'
+  | 'storage'
   | 'misc';
 
 /** All namespace values as array (for validation + iteration). */
@@ -24,6 +25,7 @@ export const SETTINGS_NAMESPACES: SettingsNamespace[] = [
   'channels',
   'mcp',
   'webhooks-defaults',
+  'storage',
   'misc',
 ];
 

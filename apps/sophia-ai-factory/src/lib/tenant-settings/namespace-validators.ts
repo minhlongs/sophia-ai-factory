@@ -129,6 +129,15 @@ export const WebhooksDefaultsSchema = z.object({
   timeoutMs: z.number().int().min(1000).max(60000),
 });
 
+export const StorageSchema = z.object({
+  r2AccessKeyId: z.string().min(1).max(256).nullable(),
+  r2SecretAccessKey: z.string().min(1).max(256).nullable(),
+  r2BucketName: z.string().min(1).max(128).nullable(),
+  r2Endpoint: z.string().url().nullable(),
+  r2PublicBaseUrl: z.string().url().nullable(),
+  useTenantStorage: z.boolean().default(false),
+});
+
 /** Passthrough for misc and any future un-typed namespaces. */
 export const PassthroughSchema = z.unknown();
 
@@ -145,6 +154,7 @@ export const NAMESPACE_VALIDATORS: Record<
   channels: ChannelsSchema,
   mcp: McpSchema,
   'webhooks-defaults': WebhooksDefaultsSchema,
+  storage: StorageSchema,
   misc: PassthroughSchema,
 };
 

@@ -93,6 +93,15 @@ export interface WebhooksDefaultsSettings {
   timeoutMs: number;
 }
 
+export interface StorageSettings {
+  r2AccessKeyId: string | null;
+  r2SecretAccessKey: string | null;
+  r2BucketName: string | null;
+  r2Endpoint: string | null;
+  r2PublicBaseUrl: string | null;
+  useTenantStorage: boolean;
+}
+
 export interface MiscSettings {
   [key: string]: unknown;
 }
@@ -153,6 +162,15 @@ export const DEFAULT_WEBHOOKS_DEFAULTS: WebhooksDefaultsSettings = {
   timeoutMs: 10000,
 };
 
+export const DEFAULT_STORAGE: StorageSettings = {
+  r2AccessKeyId: null,
+  r2SecretAccessKey: null,
+  r2BucketName: null,
+  r2Endpoint: null,
+  r2PublicBaseUrl: null,
+  useTenantStorage: false,
+};
+
 export const DEFAULT_MISC: MiscSettings = {};
 
 /** Lookup table: namespace → its default value. */
@@ -164,5 +182,6 @@ export const NAMESPACE_DEFAULTS: Record<SettingsNamespace, unknown> = {
   channels: DEFAULT_CHANNELS,
   mcp: DEFAULT_MCP,
   'webhooks-defaults': DEFAULT_WEBHOOKS_DEFAULTS,
+  storage: DEFAULT_STORAGE,
   misc: DEFAULT_MISC,
 };
