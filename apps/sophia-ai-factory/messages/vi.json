@@ -2137,7 +2137,10 @@
       "searchPlaceholder": "Tìm kiếm SOP...",
       "noResults": "Không tìm thấy SOP phù hợp.",
       "installed": "Đã cài đặt",
-      "featuredTitle": "Playbook Nổi Bật"
+      "featuredTitle": "Playbook Nổi Bật",
+      "firstTimeTitle": "Lần đầu cài SOP?",
+      "firstTimeDesc": "3 bước: (1) chọn template phù hợp dưới đây, (2) bấm Install, (3) vào /dashboard/sops bấm Run để tạo video đầu tiên. Mất ~5 phút.",
+      "firstTimeFaq": "Xem FAQ về SOPs →"
     },
     "card": {
       "creditsPerRun": "{n} credit/lần chạy",
@@ -2200,7 +2203,9 @@
       "viewDetail": "Xem",
       "runNow": "Chạy Ngay",
       "delete": "Xóa",
-      "manual": "Thủ công"
+      "manual": "Thủ công",
+      "firstInstallTitle": "SOP đầu tiên đã cài đặt!",
+      "firstInstallDesc": "Bấm vào dòng SOP bên dưới → tab \"Run\" → nhập tham số → bấm Run. Video sẽ xuất hiện ở /dashboard/videos sau 2-5 phút."
     },
     "detail_page": {
       "overview": "Tổng Quan",
@@ -2288,7 +2293,32 @@
       "price": "Giá (USD)",
       "setupTime": "Thời gian cài đặt (phút)",
       "credits": "Credits mỗi lần chạy",
-      "create": "Tạo SOP"
+      "create": "Tạo SOP",
+      "yourSops": "SOPs của bạn",
+      "noSopsDesc": "Tạo SOP đầu tiên để bắt đầu kiếm tiền",
+      "createFirst": "Tạo SOP đầu tiên",
+      "name": "Tên",
+      "detail": {
+        "back": "Quay lại Bảng điều khiển",
+        "templateDetails": "Chi tiết Template",
+        "descriptionEn": "Mô tả (Tiếng Anh)",
+        "descriptionVi": "Mô tả (Tiếng Việt)",
+        "creditsPerRun": "Credits mỗi lần chạy",
+        "setupTime": "Thời gian cài đặt",
+        "setupTimeMinutes": "{minutes} phút",
+        "createdAt": "Ngày tạo",
+        "updatedAt": "Cập nhật lần cuối",
+        "draft": "Bản nháp",
+        "published": "Đã xuất bản",
+        "archived": "Đã lưu trữ",
+        "submitForReview": "Xuất bản lên Marketplace",
+        "publishing": "Đang xuất bản...",
+        "publishSuccess": "SOP đã được xuất bản thành công!",
+        "deleteTemplate": "Xóa Template",
+        "confirmDelete": "Bạn có chắc không? Hành động này sẽ xóa vĩnh viễn SOP template này.",
+        "confirmDeleteYes": "Có, xóa",
+        "confirmDeleteNo": "Hủy"
+      }
     },
     "community": {
       "title": "SOP Cộng đồng",

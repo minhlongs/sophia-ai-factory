@@ -63,7 +63,7 @@ export default async function MarketplacePage({ params }: Props) {
   const tier = await getUserTier(user.id);
   const sopLimit = getSopInstallLimit(tier);
 
-  const isVi = locale.startsWith('vi');
+
   const isFirstTime = installations.length === 0;
 
   return (
@@ -81,18 +81,16 @@ export default async function MarketplacePage({ params }: Props) {
           <Sparkles className="w-5 h-5 text-violet-300 shrink-0 mt-0.5" aria-hidden="true" />
           <div className="flex-1 space-y-1">
             <h2 className="text-sm font-semibold text-violet-100">
-              {isVi ? 'Lần đầu cài SOP?' : 'First time installing a SOP?'}
+              {t('firstTimeTitle')}
             </h2>
             <p className="text-xs text-zinc-300 leading-relaxed">
-              {isVi
-                ? '3 bước: (1) chọn template phù hợp dưới đây, (2) bấm Install, (3) vào /dashboard/sops bấm Run để tạo video đầu tiên. Mất ~5 phút.'
-                : '3 steps: (1) pick a template below, (2) click Install, (3) go to /dashboard/sops and click Run to generate your first video. ~5 minutes total.'}
+              {t('firstTimeDesc')}
             </p>
             <Link
               href="/dashboard/help/faq"
               className="inline-block mt-1 text-xs text-violet-300 hover:text-violet-200 underline"
             >
-              {isVi ? 'Xem FAQ về SOPs →' : 'Read SOP FAQ →'}
+              {t('firstTimeFaq')}
             </Link>
           </div>
         </div>
