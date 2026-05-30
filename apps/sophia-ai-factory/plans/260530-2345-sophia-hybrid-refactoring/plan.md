@@ -13,7 +13,7 @@ Kế hoạch tái cấu trúc Sophia AI Factory sang kiến trúc lai: Control P
   - Chi tiết tại: [phase-02-byos-settings.md](file:///Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/plans/260530-2345-sophia-hybrid-refactoring/phase-02-byos-settings.md)
 
 - **Phase 03: Tích Hợp MCP Connector (OpenClaw Integration)**
-  - Trạng thái: ⏳ Chưa bắt đầu
+  - Trạng thái: ✅ Hoàn thành
   - Chi tiết tại: [phase-03-openclaw-mcp-connector.md](file:///Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/plans/260530-2345-sophia-hybrid-refactoring/phase-03-openclaw-mcp-connector.md)
 
 ---
