@@ -85,3 +85,49 @@ The `submitForReviewAction` exists in `sop-creator/actions.ts` (line 72) but is 
 - [ ] All existing SOP-related tests pass: `npx vitest run src/forest/components/sop/ src/lib/sop/`
 - [ ] TypeScript compiles without errors in changed files: `npx tsc --noEmit 2>&1 | grep -i sop` returns empty
 - [ ] `submitForReviewAction` is wired to a UI button and changes template status to `published`
+
+## Follow-up — 2026-05-30T04:28:04-07:00
+
+Transform the repository `/Users/macbook/projects/sophia-ai-factory` into a production-grade, enterprise-ready, operationally understandable system capable of reaching “Go Live 100/100” standards.
+
+Working directory: /Users/macbook/projects/sophia-ai-factory
+Integrity mode: development
+
+## Requirements
+
+### R1. Phase 1 — Full Codebase Intelligence
+Deeply inspect architecture, runtime behavior, data flow, dependencies, and operational bottlenecks. Build a verified system understanding and service map.
+
+### R2. Phase 2 — Documentation Backfill
+Generate or update the following enterprise-grade docs:
+- `README.md` & `QUICKSTART.md` & `CONTRIBUTING.md`
+- `LOCAL_DEV.md` & `TESTING.md` & `TROUBLESHOOTING.md`
+- `RELEASE_PROCESS.md` & `DEPLOYMENT.md`
+- `INCIDENT_RESPONSE.md` & `SECURITY.md`
+- `ENVIRONMENT_VARIABLES.md`
+- `ARCHITECTURE.md` & `SYSTEM_DESIGN.md`
+- `RUNBOOKS.md` & `OPERATIONAL_GUIDES.md`
+
+### R3. Phase 3 — Production Readiness Audit
+Evaluate reliability (retry, timeouts, idempotency), scalability (concurrency, DB contention), security (secrets, auth, rate limiting), observability (logs, metrics, tracing), DevEx, and infra repeatability.
+
+### R4. Phase 4 — Technical Debt Discovery
+Identify and classify dead code, duplicate logic, abandoned systems, and high-risk modules with estimated blast radius and severity.
+
+### R5. Phase 5 — Go-Live Gap Analysis
+Produce a "Go Live Scorecard" scoring all 10 standard categories out of 100, listing blockades, high/medium/low priority fixes.
+
+## Acceptance Criteria
+
+### Documentation Delivery
+- [ ] All 15+ standard markdown documents exist in the `docs/` directory or root with complete, non-empty, actionable details.
+- [ ] System architecture and data flow diagrams are represented in clear ASCII/Mermaid format inside `ARCHITECTURE.md` or `SYSTEM_DESIGN.md`.
+
+### Production Readiness & Audit Delivery
+- [ ] A detailed Audit and Gap Analysis report exists at `docs/audit_report.md` or similar path.
+- [ ] The report contains a completed Go Live Scorecard table with ratings for all 10 categories.
+- [ ] The report contains a clear, prioritized list of blockers, high, medium, and low priority issues.
+
+### Verification & Regression
+- [ ] A validation script or audit check runs to verify the presence of all generated files.
+- [ ] No functional code regressions; all existing tests in the workspace must pass successfully.
