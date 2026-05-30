@@ -44,7 +44,7 @@ async function main(): Promise<void> {
 
   const signupResp = await fetch(`${baseURL}/api/auth/sign-up/email`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', origin: baseURL },
     body: JSON.stringify({
       email,
       password,
@@ -67,7 +67,7 @@ async function main(): Promise<void> {
   // Verify sign-in works
   const signinResp = await fetch(`${baseURL}/api/auth/sign-in/email`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', origin: baseURL },
     body: JSON.stringify({ email, password }),
   })
 

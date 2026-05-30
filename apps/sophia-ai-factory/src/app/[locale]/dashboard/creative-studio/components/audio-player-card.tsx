@@ -33,7 +33,7 @@ export function AudioPlayerCard({ audioUrl, text, voice, generatedAt }: AudioPla
     <Card className="w-full">
       <CardContent className="pt-4 flex flex-col gap-3">
         {/* Audio player */}
-        {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+        { }
         <audio controls src={audioUrl} className="w-full h-10" />
 
         {/* Text preview */}

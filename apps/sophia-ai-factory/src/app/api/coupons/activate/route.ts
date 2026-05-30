@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { toError } from '@/seed/utils/to-error';
+import { addCredits } from '@/lib/mcu/credits-repo';
 
 interface CouponActivateRequest {
   coupon?: string;
@@ -91,6 +92,8 @@ export async function POST(request: NextRequest) {
     await d1.prepare('UPDATE org_balances SET balance = balance + ?, updated_at = datetime(\'now\') WHERE org_id = ?')
       .bind(couponDef.mcuBonus, orgRow.org_id)
       .run();
+
+    await addCredits(userId, couponDef.mcuBonus, 'Coupon Activation', { coupon });
 
     return NextResponse.json({
       success: true,

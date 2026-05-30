@@ -23,7 +23,13 @@ export function verifyCronAuth(req: NextRequest): NextResponse | null {
   const authHeader = req.headers.get('authorization');
 
   // Dev mode bypass — only in non-production runtimes and not during E2E tests
-  if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_MOCK_AI_SERVICES !== 'true') return null;
+  if (
+    process.env.NODE_ENV === 'development' &&
+    process.env.NEXT_PUBLIC_MOCK_AI_SERVICES !== 'true' &&
+    !process.env.PLAYWRIGHT_TEST_BASE_URL
+  ) {
+    return null;
+  }
 
   // Bearer token via Authorization header (primary path — used by scheduled handler)
   if (authHeader?.startsWith('Bearer ') && cronSecret) {

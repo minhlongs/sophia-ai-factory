@@ -29,16 +29,7 @@ function OutcomesSkeleton() {
   );
 }
 
-const OutcomesDashboardClient = dynamic(
-  () =>
-    import("./components/outcomes-dashboard-client").then((m) => ({
-      default: m.OutcomesDashboardClient,
-    })),
-  {
-    ssr: false,
-    loading: () => <OutcomesSkeleton />,
-  }
-);
+import { OutcomesDashboardClient } from "./components/outcomes-dashboard-client";
 
 // ── Metadata ──────────────────────────────────────────────────────────────────
 

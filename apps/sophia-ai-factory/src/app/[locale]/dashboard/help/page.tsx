@@ -5,7 +5,7 @@
  * @module app/[locale]/dashboard/help/page
  */
 
-import { BookOpen, HelpCircle, AlertTriangle, MessageCircle, Compass, Video, KeyRound, Send } from 'lucide-react'
+import { BookOpen, HelpCircle, AlertTriangle, MessageCircle, Compass, Video, KeyRound, Send, Store } from 'lucide-react'
 import { listAllHelpVideos } from '@/forest/help/help-video-store'
 import { HelpVideosLibrary } from './help-videos-library'
 
@@ -33,6 +33,13 @@ const RESOURCES_VI: ResourceCard[] = [
     title: 'Hướng dẫn bắt đầu',
     desc: '4 bước đơn giản để tạo video AI đầu tiên — từ API key đến video xuất ra.',
     badge: 'Bắt đầu ở đây',
+  },
+  {
+    href: '/dashboard/help/sops',
+    icon: Store,
+    title: 'Hướng dẫn vận hành SOP',
+    desc: '6 quy trình đầy đủ: duyệt, cài đặt, cấu hình, chạy, xem kết quả, tạo SOP và thử thách.',
+    badge: 'SOP',
   },
   {
     href: '/dashboard/help/faq',
@@ -67,6 +74,13 @@ const RESOURCES_EN: ResourceCard[] = [
     title: 'Getting Started Guide',
     desc: '4 simple steps to your first AI video — from API key to rendered output.',
     badge: 'Start here',
+  },
+  {
+    href: '/dashboard/help/sops',
+    icon: Store,
+    title: 'SOP Operations Guide',
+    desc: '6 complete workflows: browse, install, configure, run, view results, create SOPs and challenges.',
+    badge: 'SOP',
   },
   {
     href: '/dashboard/help/faq',

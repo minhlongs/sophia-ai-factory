@@ -7,7 +7,17 @@
 
 import { D1Client } from '@/seed/db/d1-query-builder';
 import { toError } from '@/seed/utils/to-error';
-import { getLocalD1Mock } from './local-d1-mock';
+
+// Lazy dynamic load of local D1 mock to prevent Edge runtime bundle contamination
+let getLocalD1Mock: (() => unknown) | null = null;
+if (process.env.NEXT_RUNTIME !== 'edge') {
+  try {
+    /* eslint-disable-next-line @typescript-eslint/no-require-imports */
+    getLocalD1Mock = require('./local-d1-mock').getLocalD1Mock;
+  } catch {
+    // ignore if not in Node.js context or file missing
+  }
+}
 
 /**
  * Get D1 database binding synchronously from CF request context.
@@ -28,10 +38,12 @@ function getD1Sync(): D1Database {
   if (globalDb) return globalDb;
 
   // Fallback: local dev sqlite mock
-  const mockDb = getLocalD1Mock();
-  if (mockDb) {
-    (globalThis as Record<string, unknown>).__D1_DB = mockDb;
-    return mockDb as D1Database;
+  if (getLocalD1Mock) {
+    const mockDb = getLocalD1Mock();
+    if (mockDb) {
+      (globalThis as Record<string, unknown>).__D1_DB = mockDb;
+      return mockDb as D1Database;
+    }
   }
 
   throw new Error('D1 database binding not available');

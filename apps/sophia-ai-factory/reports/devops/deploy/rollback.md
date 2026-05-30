@@ -1,27 +1,47 @@
-# Rollback Plan
+# Rollback Plan — 2026-05-30
 
-This document outlines the trigger criteria and step-by-step recovery procedures for rollback in the event of post-deployment failures.
+## Quick Rollback (< 2 minutes)
 
-## Rollback Triggers
+### Option A: Wrangler rollback to previous version
 
-Rollback should be executed immediately if any of the following occur:
-1. **Service Down:** Endpoint `/api/health` or `/api/version` returns HTTP 500 or is unreachable for over 2 minutes.
-2. **Crash Loop:** Critical Inngest background jobs crash repeatedly due to runtime edge compatibility issues.
-3. **Muxing Failures:** ElevenLabs audio upload or HeyGen video creation throws unhandled runtime failures.
+```bash
+cd apps/sophia-ai-factory
+npx wrangler rollback --config wrangler.toml
+```
 
-## Step-by-Step Rollback Procedure
+Previous version: `0e61f531-e1c2-4c10-a8ba-a8389285e9dd` (2026-05-30T03:27:30Z)
 
-1. **Revert GitHub Code:**
-   Locate the previous stable commit SHA on remote (e.g. `bb38414b`) and deploy it:
-   ```bash
-   git checkout bb38414b
-   git push origin HEAD:main --force
-   ```
+### Option B: Git revert + redeploy
 
-2. **Rollback D1 Migrations (if DB structure was corrupted):**
-   ```bash
-   npx wrangler d1 migrations rollback sophia-raas-db --remote
-   ```
+```bash
+cd /Users/macbook/projects/sophia-ai-factory
+git revert 449cecc6 --no-edit
+cd apps/sophia-ai-factory
+npm run deploy
+```
 
-3. **Verify Restoration:**
-   Check `/api/version` to confirm version matches `bb38414b` and that health pings resume.
+## Risk Assessment
+
+| Change | Rollback Risk | Notes |
+|---|---|---|
+| XSS fix (sop-preview) | ✅ Safe to rollback | Restores vulnerability but no data impact |
+| Timestamp fix (ms→s) | ⚠️ Low risk | New marketplace entries after deploy use seconds; rollback would create ms entries again |
+| N+1 → batch query | ✅ Safe | Performance regression only |
+| i18n translations | ✅ Safe | English hardcoded strings restored |
+| Creator detail page | ✅ Safe | 404 returns |
+| Publish button wiring | ✅ Safe | Button disappears |
+| getD1 null guard | ✅ Safe | Different error page on null |
+| Duplicate test deletion | ✅ Safe | Test file restored (no prod impact) |
+
+## Monitoring
+
+After deploy, monitor for 30 minutes:
+1. **Cloudflare Dashboard** → Workers → sophia-ai-factory → Requests/Errors
+2. **D1 Dashboard** → sophia-raas-db → Read/Write counts
+3. **Error rates** → Should stay at baseline (~0.1%)
+
+## Contact
+
+- **Deploy author**: Antigravity CLI
+- **Commit**: `449cecc6`
+- **PR**: N/A (direct to main)

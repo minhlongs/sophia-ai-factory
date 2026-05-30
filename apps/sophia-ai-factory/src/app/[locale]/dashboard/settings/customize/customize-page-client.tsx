@@ -353,8 +353,26 @@ function McpPanel() {
 
 const MASK_VALUE = '••••••••••••••••';
 
+interface StorageSettings {
+  r2AccessKeyId?: string | null;
+  r2SecretAccessKey?: string | null;
+  r2BucketName?: string;
+  r2Endpoint?: string;
+  r2PublicBaseUrl?: string;
+  useTenantStorage?: boolean;
+}
+
+interface StorageForm {
+  r2AccessKeyId: string;
+  r2SecretAccessKey: string;
+  r2BucketName: string;
+  r2Endpoint: string;
+  r2PublicBaseUrl: string;
+  useTenantStorage: boolean;
+}
+
 function StoragePanel() {
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<StorageForm>({
     r2AccessKeyId: '',
     r2SecretAccessKey: '',
     r2BucketName: '',
@@ -362,7 +380,7 @@ function StoragePanel() {
     r2PublicBaseUrl: '',
     useTenantStorage: false,
   });
-  const [originalValues, setOriginalValues] = useState<any>(null);
+  const [originalValues, setOriginalValues] = useState<StorageSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -374,7 +392,7 @@ function StoragePanel() {
       try {
         const res = await fetch('/api/v1/settings/storage');
         if (!res.ok) throw new Error('Failed to load storage settings');
-        const data = (await res.json()) as any;
+        const data = (await res.json()) as { value?: StorageSettings };
         const val = data.value ?? {};
         setOriginalValues(val);
         setForm({
@@ -409,16 +427,16 @@ function StoragePanel() {
     }
   };
 
-  const handleChangeField = (field: string, newVal: any) => {
+  const handleChangeField = (field: keyof StorageForm, newVal: string | boolean) => {
     setSaved(false);
-    setForm(prev => ({ ...prev, [field]: newVal }));
+    setForm(prev => ({ ...prev, [field]: newVal } as unknown as StorageForm));
   };
 
   async function handleSave() {
     setSaving(true);
     setError(null);
     try {
-      const payload: Record<string, any> = {};
+      const payload: Partial<StorageSettings> = {};
 
       if (form.r2AccessKeyId !== MASK_VALUE) {
         payload.r2AccessKeyId = form.r2AccessKeyId === '' ? null : form.r2AccessKeyId;
@@ -427,13 +445,13 @@ function StoragePanel() {
         payload.r2SecretAccessKey = form.r2SecretAccessKey === '' ? null : form.r2SecretAccessKey;
       }
       if (form.r2BucketName !== (originalValues?.r2BucketName ?? '')) {
-        payload.r2BucketName = form.r2BucketName === '' ? null : form.r2BucketName;
+        payload.r2BucketName = form.r2BucketName === '' ? undefined : form.r2BucketName;
       }
       if (form.r2Endpoint !== (originalValues?.r2Endpoint ?? '')) {
-        payload.r2Endpoint = form.r2Endpoint === '' ? null : form.r2Endpoint;
+        payload.r2Endpoint = form.r2Endpoint === '' ? undefined : form.r2Endpoint;
       }
       if (form.r2PublicBaseUrl !== (originalValues?.r2PublicBaseUrl ?? '')) {
-        payload.r2PublicBaseUrl = form.r2PublicBaseUrl === '' ? null : form.r2PublicBaseUrl;
+        payload.r2PublicBaseUrl = form.r2PublicBaseUrl === '' ? undefined : form.r2PublicBaseUrl;
       }
       if (form.useTenantStorage !== (originalValues?.useTenantStorage ?? false)) {
         payload.useTenantStorage = form.useTenantStorage;
@@ -453,11 +471,11 @@ function StoragePanel() {
       });
 
       if (!res.ok) {
-        const errData = (await res.json().catch(() => ({}))) as any;
+        const errData = (await res.json().catch(() => ({}))) as Record<string, string>;
         throw new Error(errData.message || errData.error || 'Failed to save settings');
       }
 
-      const data = (await res.json()) as any;
+      const data = (await res.json()) as { value?: StorageSettings };
       const updatedVal = data.value ?? {};
       setOriginalValues(updatedVal);
       setForm({

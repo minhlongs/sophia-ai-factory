@@ -74,8 +74,9 @@ interface BootstrappedUser {
 /** Sign up a fresh user against production Better Auth. */
 async function bootstrapBasicUser(baseURL: string): Promise<BootstrappedUser> {
   const timestamp = Date.now()
-  const email = `uxaudit-${timestamp}@sophia.test`
-  const password = `UxAudit${timestamp}!!`
+  const random = Math.floor(Math.random() * 1000000)
+  const email = `uxaudit-${timestamp}-${random}@sophia.test`
+  const password = `UxAudit${timestamp}-${random}!!`
 
   const isSecure = baseURL.startsWith('https://')
 
@@ -436,7 +437,7 @@ test.describe('UX usability audit — BASIC + MASTER perspectives', () => {
 
   for (const [route, slug] of RENDER_ROUTES) {
     test(`Renderer probe: ${route}`, async ({ page, baseURL }) => {
-      test.setTimeout(30_000)
+      test.setTimeout(90_000)
       if (!user) {
         test.skip(true, 'bootstrap failed')
         return

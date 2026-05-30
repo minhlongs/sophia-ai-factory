@@ -161,6 +161,14 @@ export function DashboardSidebarNav({ isAdmin, isVi }: DashboardSidebarNavProps)
         <span className="font-medium">{t('sidebar.my_sops')}</span>
       </Link>
       
+      {isAdmin && (
+        <Link href="/dashboard/sop-creator" className={linkClass("/dashboard/sop-creator")}>
+          {renderActiveIndicator("/dashboard/sop-creator")}
+          <Sparkles className={iconClass("/dashboard/sop-creator")} aria-hidden="true" />
+          <span className="font-medium">{t('sidebar.sop_creator')}</span>
+        </Link>
+      )}
+      
       <Link href="/dashboard/challenges" className={linkClass("/dashboard/challenges")}>
         {renderActiveIndicator("/dashboard/challenges")}
         <Target className={iconClass("/dashboard/challenges")} aria-hidden="true" />

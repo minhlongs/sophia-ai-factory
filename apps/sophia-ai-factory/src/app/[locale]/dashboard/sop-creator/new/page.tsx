@@ -9,6 +9,7 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getUserTier } from '@/seed/db/get-user-tier';
 import { Palette, ArrowLeft } from 'lucide-react';
 import { SopCreateForm } from './sop-create-form';
+import { RouteHelpTooltip } from '@/components/help/route-help-tooltip';
 
 interface Props { params: Promise<{ locale: string }> }
 
@@ -20,6 +21,7 @@ export async function generateMetadata() {
 
 export default async function NewSopPage({ params }: Props) {
   const { locale } = await params;
+  const isVi = locale.startsWith('vi');
 
   const user = await getCurrentUser();
   if (!user) redirect(`/${locale}/login`);
@@ -35,7 +37,7 @@ export default async function NewSopPage({ params }: Props) {
           className="flex items-center gap-1.5 text-sm text-white/50 hover:text-white transition-colors"
         >
           <ArrowLeft className="w-4 h-4" aria-hidden="true" />
-          Back
+          {isVi ? 'Quay lại' : 'Back'}
         </Link>
       </div>
 
@@ -44,9 +46,14 @@ export default async function NewSopPage({ params }: Props) {
           <Palette className="w-5 h-5 text-violet-400" aria-hidden="true" />
         </div>
         <div>
-          <h1 className="text-xl font-semibold text-white">Create New SOP</h1>
-          <p className="text-sm text-white/50">Build a reusable SOP template for the marketplace</p>
+          <h1 className="text-xl font-semibold text-white">
+            {isVi ? 'Tạo SOP Mới' : 'Create New SOP'}
+          </h1>
+          <p className="text-sm text-white/50">
+            {isVi ? 'Xây dựng mẫu SOP có thể tái sử dụng cho marketplace' : 'Build a reusable SOP template for the marketplace'}
+          </p>
         </div>
+        <RouteHelpTooltip locale={locale} routeKey="sop-creator" />
       </div>
 
       <div className="rounded-2xl bg-white/5 border border-white/10 p-6">

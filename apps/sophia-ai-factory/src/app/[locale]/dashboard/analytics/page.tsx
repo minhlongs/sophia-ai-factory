@@ -17,25 +17,7 @@ import { toError } from "@/seed/utils/to-error";
 
 // ── Dynamic imports ──────────────────────────────────────────────────────────
 
-const AnalyticsDashboardClient = dynamic(
-  () => import("./components/analytics-dashboard-client").then(m => ({ default: m.AnalyticsDashboardClient })),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-3">
-          {[1, 2, 3].map(i => (
-            <Skeleton key={i} className="h-28 rounded-xl" />
-          ))}
-        </div>
-        <div className="grid gap-6 md:grid-cols-2">
-          <Skeleton className="h-[380px] rounded-xl" />
-          <Skeleton className="h-[380px] rounded-xl" />
-        </div>
-      </div>
-    ),
-  }
-);
+import { AnalyticsDashboardClient } from "./components/analytics-dashboard-client";
 
 // ── Metadata ─────────────────────────────────────────────────────────────────
 

@@ -93,6 +93,7 @@ function QuotaBar({ used, limit }: { used: number; limit: number }) {
       <div
         className="h-1.5 w-full rounded-full bg-muted overflow-hidden"
         role="progressbar"
+        aria-label="Quota usage progress"
         aria-valuenow={pct}
         aria-valuemin={0}
         aria-valuemax={100}

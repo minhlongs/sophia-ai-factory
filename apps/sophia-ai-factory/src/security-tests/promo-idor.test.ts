@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+ 
 /**
  * Promo Admin IDOR & Authorization Tests
  * Security regression tests for admin promo endpoints

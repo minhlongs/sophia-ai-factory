@@ -70,14 +70,15 @@ export async function GET(request: NextRequest) {
       .select('id, user_id, license_nonce, dunning_state, dunning_state_changed_at, grace_period_days')
       .eq('dunning_state', 'past_due') as { data: DunningSettingsRow[] | null };
 
-    for (const row of pastDueRows ?? []) {
+    // Process past_due rows in parallel
+    const pastDuePromises = (pastDueRows ?? []).map(async (row) => {
       try {
         const stateChangedAt = new Date(row.dunning_state_changed_at);
         const graceEndsAt = new Date(
           stateChangedAt.getTime() + row.grace_period_days * 24 * 60 * 60 * 1000
         );
 
-        if (graceEndsAt > now) continue;
+        if (graceEndsAt > now) return;
 
         logger.info('[DunningAdvance] Advancing past_due → suspended', {
           licenseNonce: row.license_nonce.slice(0, 8),
@@ -101,14 +102,16 @@ export async function GET(request: NextRequest) {
           license_nonce: row.license_nonce.slice(0, 8),
         });
       }
-    }
+    });
+    await Promise.all(pastDuePromises);
 
     const { data: delinquentRows } = await db
       .from('dunning_settings')
       .select('id, user_id, license_nonce, dunning_state, dunning_state_changed_at, grace_period_days')
       .eq('dunning_state', 'delinquent') as { data: DunningSettingsRow[] | null };
 
-    for (const row of delinquentRows ?? []) {
+    // Process delinquent rows in parallel
+    const delinquentPromises = (delinquentRows ?? []).map(async (row) => {
       try {
         const { data: pendingRetry } = await db
           .from('dunning_attempts')
@@ -118,12 +121,12 @@ export async function GET(request: NextRequest) {
           .gt('next_retry_at', now.toISOString())
           .limit(1);
 
-        if (pendingRetry?.length) continue;
+        if (pendingRetry?.length) return;
 
         const stateChangedAt = new Date(row.dunning_state_changed_at);
         const delinquentFor = (now.getTime() - stateChangedAt.getTime()) / (1000 * 60 * 60 * 24);
 
-        if (delinquentFor < row.grace_period_days) continue;
+        if (delinquentFor < row.grace_period_days) return;
 
         logger.info('[DunningAdvance] Advancing delinquent → suspended', {
           licenseNonce: row.license_nonce.slice(0, 8),
@@ -147,7 +150,8 @@ export async function GET(request: NextRequest) {
           license_nonce: row.license_nonce.slice(0, 8),
         });
       }
-    }
+    });
+    await Promise.all(delinquentPromises);
 
     logger.info('[DunningAdvance] Cron complete', { advanced, errors });
     if (d1) await recordCronRun(d1, CRON_NAME, 'success');

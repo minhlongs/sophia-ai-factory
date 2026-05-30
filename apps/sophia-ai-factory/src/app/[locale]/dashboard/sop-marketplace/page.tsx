@@ -21,6 +21,7 @@ import { SopGrid } from '@/forest/components/sop/sop-grid';
 import { CommunityListingCard } from './community-listing-card';
 import { installSopAction } from './actions';
 import { Store, Sparkles, Users } from 'lucide-react';
+import { RouteHelpTooltip } from '@/components/help/route-help-tooltip';
 
 interface Props {
   params: Promise<{ locale: string }>;
@@ -74,6 +75,7 @@ export default async function MarketplacePage({ params }: Props) {
           <h1 className="text-2xl font-bold text-foreground">{t('title')}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">{t('subtitle')}</p>
         </div>
+        <RouteHelpTooltip locale={locale} routeKey="sop-marketplace" />
       </div>
 
       {isFirstTime && (
