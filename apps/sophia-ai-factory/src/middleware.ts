@@ -34,7 +34,7 @@ function generateNonce(): string {
 
 const intlMiddleware = createMiddleware({
   locales: ['en', 'vi'],
-  defaultLocale: 'en',
+  defaultLocale: 'vi',
   localePrefix: 'as-needed',
 })
 
@@ -80,6 +80,27 @@ export async function proxy(request: NextRequest) {
   if (pathname.startsWith('/api')) {
     const blocked = await handleApiRoute(request, pathname, startTime)
     if (blocked) return blocked
+
+    // MFA gate for sensitive API routes — webhook and public routes are excluded
+    const SENSITIVE_API_PREFIXES = ['/api/account', '/api/checkout', '/api/admin']
+    const isSensitiveApi = SENSITIVE_API_PREFIXES.some(prefix => pathname.startsWith(prefix))
+    if (isSensitiveApi) {
+      try {
+        const auth = getAuth()
+        if (auth) {
+          const session = await auth.api.getSession({ headers: request.headers })
+          if (session?.session?.id) {
+            const pending = await isSessionMfaPending(session.session.id)
+            if (pending) {
+              return NextResponse.json({ error: 'MFA verification required' }, { status: 403 })
+            }
+          }
+        }
+      } catch (mfaApiErr) {
+        // Non-fatal — log and allow through to avoid locking out users on DB errors
+        logger.error('[Middleware] MFA API check error', toError(mfaApiErr))
+      }
+    }
   }
 
   const isConfigured = process.env.NEXT_PUBLIC_IS_CONFIGURED === 'true' || process.env.IS_CONFIGURED === 'true'

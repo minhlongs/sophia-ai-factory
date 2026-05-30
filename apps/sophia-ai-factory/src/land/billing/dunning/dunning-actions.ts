@@ -32,6 +32,7 @@ import {
   sendDunningDay3Email,
   sendDunningDay5Email,
 } from '@/land/billing/email';
+import { invalidateDunningCache } from './dunning-kv-cache';
 
 export type { DunningAttemptRow, PaymentFailureContext, PaymentSuccessContext } from './dunning-attempt-recorder';
 
@@ -84,7 +85,11 @@ export async function handlePaymentFailure(context: PaymentFailureContext): Prom
       ip_address: context.ipAddress, user_agent: context.userAgent,
     });
 
-    if (newState !== settings.dunning_state) await transitionDunningState(licenseNonce, userId, newState);
+    if (newState !== settings.dunning_state) {
+      await transitionDunningState(licenseNonce, userId, newState);
+      // Invalidate dunning KV cache so next canAccessApi call reads fresh state
+      await invalidateDunningCache(licenseNonce);
+    }
 
     await db.from('billing_events').insert({
       user_id: userId, license_nonce: licenseNonce, event_type: 'payment_failed',
@@ -209,7 +214,11 @@ export async function handlePaymentSuccess(context: PaymentSuccessContext): Prom
       stripe_invoice_id: context.providerInvoiceId || null,
     } as Omit<DunningAttemptRow, 'id' | 'created_at'>);
 
-    if (oldState !== 'current') await transitionDunningState(licenseNonce, userId, 'current');
+    if (oldState !== 'current') {
+      await transitionDunningState(licenseNonce, userId, 'current');
+      // Invalidate dunning KV cache so next canAccessApi call reads restored state
+      await invalidateDunningCache(licenseNonce);
+    }
 
     await db.from('billing_events').insert({
       user_id: userId, license_nonce: licenseNonce, event_type: 'payment_succeeded',

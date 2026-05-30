@@ -6,7 +6,12 @@ export { helloWorld } from './hello-world';
 export { generateCampaign } from './generate-campaign';
 export { autoDiscoverAffiliates } from './auto-discover-affiliates';
 
-// Video pipeline functions (Phase 06)
+// ── DEPRECATED: Phase 06 video_jobs chain ────────────────────────────────────
+// Removed from serve() registration on 2026-05-17 per ADR 0007.
+// Underlying `video_jobs` table was never applied to prod D1.
+// These exports are retained only for backwards compatibility; they have
+// ZERO consumers as of 2026-05-30. Safe to delete after 2026-06-30.
+// @deprecated — use HeyGen webhook → `videos` table pipeline instead.
 export { videoScripting } from './video-scripting';
 export { videoTTS } from './video-tts';
 export { videoVisual } from './video-visual';
@@ -29,7 +34,11 @@ export { reconciliationCron } from '@/forest/jobs/reconciliation';
 // Phase 11: storage tracker cron
 export { storageTrackerDaily } from '@/forest/quota/storage-tracker-cron';
 
-// Master tier: URL-to-Revenue video pipeline
+// ── DEPRECATED: URL-to-Revenue video handler ─────────────────────────────────
+// Depends on Phase 06 video_jobs chain which was never applied to prod D1.
+// Removed from serve() registration on 2026-05-17 per ADR 0007.
+// ZERO consumers as of 2026-05-30. Safe to delete after 2026-06-30.
+// @deprecated
 export { urlRevenueVideoHandler } from './url-revenue-video-handler';
 
 // Wave 13 I2: Mission video generation

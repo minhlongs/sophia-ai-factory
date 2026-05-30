@@ -44,7 +44,11 @@ export async function triggerOneTimeFulfillment(
   purchaseId: string,
   sku: OneTimeSku,
 ): Promise<void> {
-  // Idempotency: skip if we already have a videos row for this purchase
+  // Idempotency: skip if we already have a videos row for this purchase.
+  // NOTE: This SELECT-then-INSERT is a TOCTOU race under concurrent webhooks.
+  // The authoritative guard is the UNIQUE constraint on purchase_id added in
+  // migration 0093. The app-level check here is a fast-path optimisation to
+  // avoid unnecessary work in the common non-concurrent case.
   const existing = await findByPurchaseId(purchaseId)
   if (existing) {
     logger.info('[OneTimeFulfillment] Video row already exists, skipping enqueue', {

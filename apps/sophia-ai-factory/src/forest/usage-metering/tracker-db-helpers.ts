@@ -12,6 +12,8 @@ import { insertTyped } from '@/seed/db/insert-typed';
 import type { UsageEventInput, IngestionResult } from './types';
 import type { D1Response } from '@/seed/db/types';
 import type { RaasLicense } from '@/forest/raas-schema';
+import { invalidateQuotaCache } from '@/forest/quota/quota-checker-kv-cache';
+import { invalidateRealTimeCache } from '@/forest/usage-metering/realtime-tracker-kv-ops';
 
 /**
  * Resolve external customer ID from license metadata
@@ -127,6 +129,12 @@ export async function insertUsageEvent(event: UsageEventInput & { idempotencyKey
       error: error.message,
     };
   }
+
+  // Invalidate quota + realtime caches AFTER a usage event is successfully written
+  // to D1. This is the correct place (#R2-16 fix): cache is stale only once actual
+  // usage has been persisted, not on every quota check pass.
+  invalidateQuotaCache(event.userId, event.licenseNonce).catch(() => {});
+  invalidateRealTimeCache(event.userId, event.licenseNonce).catch(() => {});
 
   return {
     success: true,

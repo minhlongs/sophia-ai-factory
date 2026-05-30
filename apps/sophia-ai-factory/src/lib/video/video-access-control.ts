@@ -34,6 +34,7 @@ export type VideoAccessDeniedReason =
   | 'revoked'
   | 'not_ready'
   | 'r2_unavailable'
+  | 'db_error'
 
 export interface VideoAccessRow {
   id: string
@@ -42,11 +43,14 @@ export interface VideoAccessRow {
   access_revoked: number
 }
 
+/** Sentinel returned when D1 throws — distinguishes DB failure from "not found". */
+const DB_ERROR_SENTINEL = Symbol('db_error');
+
 /**
  * Fetch video access row from D1.
- * Returns null on error or not found.
+ * Returns null if not found, DB_ERROR_SENTINEL if D1 throws.
  */
-async function getVideoAccessRow(videoId: string): Promise<VideoAccessRow | null> {
+async function getVideoAccessRow(videoId: string): Promise<VideoAccessRow | null | typeof DB_ERROR_SENTINEL> {
   try {
     const db = await getD1Raw()
     return await db
@@ -60,7 +64,7 @@ async function getVideoAccessRow(videoId: string): Promise<VideoAccessRow | null
       .first<VideoAccessRow>()
   } catch (err) {
     logger.error('[VideoAccessControl] DB lookup failed', err instanceof Error ? err : undefined, { videoId })
-    return null
+    return DB_ERROR_SENTINEL
   }
 }
 
@@ -80,6 +84,10 @@ export async function authorizeVideoAccess(
 > {
   const row = await getVideoAccessRow(videoId)
 
+  if (row === DB_ERROR_SENTINEL) {
+    return { denied: true, reason: 'db_error' }
+  }
+
   if (!row) {
     return { denied: true, reason: 'not_found' }
   }
@@ -89,7 +97,7 @@ export async function authorizeVideoAccess(
     return { denied: true, reason: 'unauthorized' }
   }
 
-  if (row.access_revoked === 1) {
+  if (row.access_revoked !== 0) {
     logger.error('[VideoAccessControl] Access revoked — refund applied', undefined, { videoId, userId })
     return { denied: true, reason: 'revoked' }
   }

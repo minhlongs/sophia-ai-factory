@@ -12,6 +12,7 @@ import { captureTierUpgraded } from '@/lib/signals/posthog-capture'
 import { track } from '@/lib/signals/track'
 import { D1Events } from '@/lib/signals/d1-event-types'
 import { emit } from '@/lib/webhooks/emitter'
+import { getUserTier } from '@/seed/db/get-user-tier'
 
 function getD1ForWebhooks(): D1Database | null {
   try {
@@ -57,7 +58,7 @@ export async function POST(request: NextRequest) {
 
   if (!parsed.success) {
     logger.warn('[NOWPayments Webhook] Invalid payload shape', { errors: parsed.error.flatten() })
-    return NextResponse.json({ error: 'Invalid payload', details: parsed.error.flatten() }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
   }
 
   const ipn = parsed.data
@@ -79,7 +80,8 @@ export async function POST(request: NextRequest) {
     const userId = ipn.order_id.split('_')[1] ?? ipn.order_id
     void captureTierUpgraded({ distinctId: userId, tier: ipn.invoice_id ?? 'unknown', amount: ipn.price_amount, currency: ipn.price_currency })
     track(D1Events.PAYMENT_SUCCESS, 'webhook', { amount_usd: ipn.price_amount, currency: ipn.price_currency, provider: 'nowpayments', payment_id: ipn.payment_id }, userId)
-    track(D1Events.TIER_CONVERSION, userId, { from_tier: 'BASIC', to_tier: ipn.invoice_id ?? 'unknown', amount_usd: ipn.price_amount, provider: 'nowpayments' }, userId)
+    const fromTier = await getUserTier(userId)
+    track(D1Events.TIER_CONVERSION, userId, { from_tier: fromTier, to_tier: ipn.invoice_id ?? 'unknown', amount_usd: ipn.price_amount, provider: 'nowpayments' }, userId)
 
     // Emit outbound webhook event (fire-and-forget)
     const db = getD1ForWebhooks();

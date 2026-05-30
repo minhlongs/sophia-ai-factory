@@ -141,18 +141,22 @@ export async function GET(req: NextRequest) {
 
     const cutoff = Date.now() - TIMEOUT_MS;
 
-    for (const row of pending) {
-      try {
-        const createdAt = new Date(row.created_at).getTime();
+    // Bounded concurrency — process up to CONCURRENCY_LIMIT videos at once
+    // to stay within Cloudflare's 30s Edge Worker CPU limit while still
+    // parallelizing HeyGen API calls + R2 uploads.
+    const CONCURRENCY_LIMIT = 5;
+
+    async function processRow(row: VideoRow): Promise<void> {
+      const createdAt = new Date(row.created_at).getTime();
 
         // ── Timeout path ─────────────────────────────────────────────────────
         if (createdAt < cutoff) {
           if (row.purchase_id) {
             // C3: one-time bundle → permanent failure + compensation + email
-            await handleOneBundlePermanentFailure(db, row, 'timeout_24h')
+            await handleOneBundlePermanentFailure(db!, row, 'timeout_24h')
           } else {
             // Legacy onboarding video — keep existing 'failed' status (no retry cron pickup needed)
-            await db
+            await db!
               .prepare(
                 `UPDATE videos SET status = 'failed', error = 'timeout',
                  updated_at = ?1 WHERE id = ?2`
@@ -161,7 +165,7 @@ export async function GET(req: NextRequest) {
               .run();
           }
           summary.timedOut += 1;
-          continue;
+          return;
         }
 
         // Per-row: user key first (one-time bundle), platform fallback for onboarding videos
@@ -172,7 +176,7 @@ export async function GET(req: NextRequest) {
             userId: row.user_id,
           });
           summary.errors += 1;
-          continue;
+          return;
         }
 
         const status = await client.getVideoStatus(row.heygen_job_id);
@@ -207,12 +211,12 @@ export async function GET(req: NextRequest) {
           // ── HeyGen 'failed' path ────────────────────────────────────────
           if (status.status === 'failed' && row.purchase_id) {
             // C3: one-time bundle HeyGen failure → permanent failure + compensation + email
-            await handleOneBundlePermanentFailure(db, row, status.error ?? 'heygen_failed')
+            await handleOneBundlePermanentFailure(db!, row, status.error ?? 'heygen_failed')
             summary.terminal += 1;
-            continue;
+            return;
           }
 
-          await db
+          await db!
             .prepare(
               `UPDATE videos SET
                  status = ?1,
@@ -261,7 +265,7 @@ export async function GET(req: NextRequest) {
                   videoId: row.id,
                   purchaseId: row.purchase_id,
                 })
-                continue
+                return
               }
 
               const ownerUserId = purchase?.user_id ?? row.user_id
@@ -291,13 +295,20 @@ export async function GET(req: NextRequest) {
             }
           }
         }
-      } catch (err) {
-        summary.errors += 1;
-        logger.error(
-          '[video-status-sync] poll failed',
-          err instanceof Error ? err : undefined,
-          { videoId: row.id }
-        );
+    }
+
+    // Process in chunks of CONCURRENCY_LIMIT to bound parallel work
+    for (let i = 0; i < pending.length; i += CONCURRENCY_LIMIT) {
+      const chunk = pending.slice(i, i + CONCURRENCY_LIMIT);
+      const results = await Promise.allSettled(chunk.map(processRow));
+      for (const r of results) {
+        if (r.status === 'rejected') {
+          summary.errors += 1;
+          logger.error(
+            '[video-status-sync] poll failed',
+            r.reason instanceof Error ? r.reason : undefined,
+          );
+        }
       }
     }
 

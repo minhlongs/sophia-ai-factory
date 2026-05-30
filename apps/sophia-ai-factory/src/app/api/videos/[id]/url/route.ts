@@ -48,6 +48,7 @@ export async function GET(
       revoked: 403,
       not_ready: 425,
       r2_unavailable: 503,
+      db_error: 503, // D1 threw — upstream database error, not a missing resource
     }
 
     if (authResult.reason === 'revoked') {

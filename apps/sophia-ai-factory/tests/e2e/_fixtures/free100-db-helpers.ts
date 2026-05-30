@@ -22,28 +22,49 @@ import fs from 'fs';
 // ── Local D1 resolution ──────────────────────────────────────────────────────
 
 export function getLocalD1Path(): string {
-  const base = path.resolve(
-    __dirname,
-    '../../../.wrangler/state/v3/d1/miniflare-D1DatabaseObject',
-  );
-  if (!fs.existsSync(base)) {
-    throw new Error(
-      `[free100-db-helpers] Local D1 directory not found at ${base}. ` +
-      'Run `npm run dev` once to initialize the local D1.',
-    );
-  }
-  const files = fs
-    .readdirSync(base)
-    .filter((f) => f.endsWith('.sqlite') && !f.includes('metadata'))
-    .map((f) => path.join(base, f));
+  const candidates = [
+    path.resolve(__dirname, '../../../.wrangler/state/v3/d1/miniflare-D1DatabaseObject'),
+    path.resolve(__dirname, '../../../../../.wrangler/state/v3/d1/miniflare-D1DatabaseObject'),
+  ];
 
-  if (files.length === 0) {
+  let newestFile: string | null = null;
+  let newestTime = 0;
+  let searchedPaths: string[] = [];
+
+  for (const base of candidates) {
+    searchedPaths.push(base);
+    if (!fs.existsSync(base)) continue;
+    const files = fs
+      .readdirSync(base)
+      .filter((f) => f.endsWith('.sqlite') && !f.includes('metadata'))
+      .map((f) => path.join(base, f));
+
+    for (const file of files) {
+      try {
+        let maxFileTime = 0;
+        for (const ext of ['', '-wal', '-shm']) {
+          try {
+            const stats = fs.statSync(file + ext);
+            if (stats.mtimeMs > maxFileTime) {
+              maxFileTime = stats.mtimeMs;
+            }
+          } catch {}
+        }
+        if (maxFileTime > newestTime || !newestFile) {
+          newestTime = maxFileTime;
+          newestFile = file;
+        }
+      } catch {}
+    }
+  }
+
+  if (!newestFile) {
     throw new Error(
-      `[free100-db-helpers] No D1 SQLite file found in ${base}. ` +
+      `[free100-db-helpers] No D1 SQLite file found in candidates: ${searchedPaths.join(', ')}. ` +
       'Run `npm run dev` once to initialize the local D1.',
     );
   }
-  return files[0];
+  return newestFile;
 }
 
 export function openDb(): Database.Database {

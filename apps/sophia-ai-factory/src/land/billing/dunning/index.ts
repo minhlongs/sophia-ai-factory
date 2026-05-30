@@ -45,4 +45,5 @@ export {
   initializeDunningSettings,
   suspendLicense,
   restoreLicense,
+  invalidateDunningCache,
 } from './dunning-admin-operations';

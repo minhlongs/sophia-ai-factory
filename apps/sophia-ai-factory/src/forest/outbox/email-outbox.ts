@@ -44,16 +44,34 @@ interface OutboxRow {
   template: string;
   payload: string;
   attempts: number;
+  locked_at?: number | null;
 }
 
 /** Process up to BATCH_SIZE pending rows; return {sent, failed, skipped} summary. */
 export async function flushOutbox(db: D1Database): Promise<{ sent: number; failed: number; skipped: number }> {
   const now = Math.floor(Date.now() / 1000);
+  const lockExpirySec = 5 * 60; // 5 minutes — stale lock threshold
+
+  // Claim rows atomically before reading — prevents concurrent cron runs from
+  // grabbing the same rows and sending duplicate emails.
+  await db
+    .prepare(
+      `UPDATE welcome_email_outbox
+       SET status = 'processing', locked_at = ?1
+       WHERE status = 'pending'
+         AND next_retry_at <= ?1
+         AND (locked_at IS NULL OR locked_at < ?2)
+       LIMIT ?3`,
+    )
+    .bind(now, now - lockExpirySec, BATCH_SIZE)
+    .run();
+
+  // Only fetch the rows WE just locked (locked_at == now and status == 'processing')
   const result = await db
     .prepare(
       `SELECT id, to_email, template, payload, attempts
        FROM welcome_email_outbox
-       WHERE status = 'pending' AND next_retry_at <= ?1
+       WHERE status = 'processing' AND locked_at = ?1
        ORDER BY next_retry_at ASC
        LIMIT ?2`,
     )
@@ -81,7 +99,7 @@ export async function flushOutbox(db: D1Database): Promise<{ sent: number; faile
 
       if (emailResult.success) {
         await db
-          .prepare(`UPDATE welcome_email_outbox SET status='sent', sent_at=?1, last_error=NULL WHERE id=?2`)
+          .prepare(`UPDATE welcome_email_outbox SET status='sent', locked_at=NULL, sent_at=?1, last_error=NULL WHERE id=?2`)
           .bind(now, row.id)
           .run();
         sent++;
@@ -106,17 +124,17 @@ async function handleFailure(db: D1Database, row: OutboxRow, error: string, now:
   const newAttempts = row.attempts + 1;
   if (newAttempts >= MAX_ATTEMPTS) {
     await db
-      .prepare(`UPDATE welcome_email_outbox SET status='failed', attempts=?1, last_error=?2 WHERE id=?3`)
+      .prepare(`UPDATE welcome_email_outbox SET status='failed', locked_at=NULL, attempts=?1, last_error=?2 WHERE id=?3`)
       .bind(newAttempts, error.slice(0, 500), row.id)
       .run();
     logger.warn('[EmailOutbox] Max retries reached — marking failed', { id: row.id, error });
     await sendAdminAlert(`📧 Email outbox row failed after ${MAX_ATTEMPTS} attempts.\nRow: ${row.id}\nError: ${error.slice(0, 200)}`);
   } else {
-    // Exponential backoff: 2^attempts minutes
+    // Exponential backoff: 2^attempts minutes. Reset to 'pending' so next cron run can re-claim.
     const backoffSec = Math.pow(2, newAttempts) * 60;
     const nextRetry = now + backoffSec;
     await db
-      .prepare(`UPDATE welcome_email_outbox SET attempts=?1, next_retry_at=?2, last_error=?3 WHERE id=?4`)
+      .prepare(`UPDATE welcome_email_outbox SET status='pending', locked_at=NULL, attempts=?1, next_retry_at=?2, last_error=?3 WHERE id=?4`)
       .bind(newAttempts, nextRetry, error.slice(0, 500), row.id)
       .run();
     logger.warn('[EmailOutbox] Retry scheduled', { id: row.id, attempt: newAttempts, nextRetryIn: backoffSec });

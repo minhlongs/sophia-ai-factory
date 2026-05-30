@@ -99,8 +99,8 @@ export async function injectCryptoDisclaimer(
   const disclaimerText = disclaimer.short[locale];
   const disclaimerHash = await createDisclaimerHash(disclaimerText);
 
-  // Prepend disclaimer to caption (idempotent — check for existing)
-  const alreadyInjected = caption.includes(disclaimerText.slice(0, 20));
+  // Prepend disclaimer to caption (idempotent — check for full disclaimer text)
+  const alreadyInjected = caption.includes(disclaimerText);
   const finalCaption = alreadyInjected
     ? caption
     : `${disclaimerText}\n\n${caption}`;

@@ -5,7 +5,7 @@ import { checkoutSchema } from '@/lib/schemas';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { validatePromoCode } from '@/land/promo/promo-validator';
-import { recordRedemption, incrementUsedCount } from '@/land/promo/promo-repo';
+import { recordRedemption } from '@/land/promo/promo-repo';
 import { calculateDiscount } from '@/land/promo/promo-discount-calculator';
 import { setUserTrialExpiry } from '@/land/promo/promo-repo';
 import { logger } from '@/seed/utils/logger-utility';
@@ -119,17 +119,18 @@ export const POST = withRateLimit(async function POST(request: Request) {
       );
     }
 
-    // Dedupe: reuse an active pending order created within last 30 min
-    // for the same (user, tier, period, paymentMethod) to prevent double-pay
-    // on rapid checkout clicks. NOWPayments invoice URLs remain valid for
-    // hours so reusing one is safer than minting a new charge.
+    // Dedupe: reuse an active pending order created within last 24h
+    // for the same (user, tier, period, paymentMethod) to prevent double-pay.
+    // 24h window matches NOWPayments invoice TTL — prevents user paying twice
+    // if they abandon and return within the same billing day.
+    // (Previously 30 min — too short; invoices stay payable for hours.)
     try {
       const existing = await findActivePendingOrder({
         userId,
         tier,
         period,
         paymentMethod,
-        sinceMs: 30 * 60 * 1000,
+        sinceMs: 24 * 60 * 60 * 1000,
       });
       if (existing?.invoice_url) {
         logger.info('[Checkout] Reusing active pending order', {
@@ -168,7 +169,11 @@ export const POST = withRateLimit(async function POST(request: Request) {
           promoDiscountCents = calc.discountCents;
           promoTrialDays = calc.trialDays;
 
-          await incrementUsedCount(validation.codeId);
+          // NOTE: incrementUsedCount is intentionally NOT called here.
+          // Calling it before payment confirmation causes TOCTOU: abandoned checkouts
+          // permanently consume promo quota. Usage is incremented in the IPN handler
+          // (nowpayments-ipn-subscription.ts handleFinished) after payment is confirmed.
+          // Reserved redemptions older than 2h should be cleaned up by a cron job.
           await recordRedemption({
             promoCcodeId: validation.codeId,
             promoCode,
@@ -199,13 +204,19 @@ export const POST = withRateLimit(async function POST(request: Request) {
 
     // ── PayOS path (VND bank transfer for VN users) ───────────────────────────
     if (paymentMethod === 'payos') {
+      // PayOS does not support yearly billing — reject explicitly instead of silent fallback.
+      // When PayOS adds yearly support, remove this guard and pass period directly.
+      if (period === 'yearly') {
+        return NextResponse.json(
+          { error: 'PayOS không hỗ trợ thanh toán theo năm. Vui lòng chọn chu kỳ hàng tháng hoặc dùng NOWPayments (USDT) cho gói năm.' },
+          { status: 400 }
+        );
+      }
       const orderId = `sophia_${userId}_${Date.now()}`;
       try {
         const payOsResult = await createPayOsInvoice({
           tier: tier as import('@/seed/types').Tier,
-          // PayOS does not support yearly billing yet — treat yearly as monthly for VND checkout.
-          // TODO(phase-07): add yearly PayOS support when PayOS invoice IDs are available.
-          period: (period === 'yearly' ? 'monthly' : period) as 'monthly' | 'lifetime',
+          period: period as 'monthly' | 'lifetime',
           userId,
           orderId,
           customerEmail,

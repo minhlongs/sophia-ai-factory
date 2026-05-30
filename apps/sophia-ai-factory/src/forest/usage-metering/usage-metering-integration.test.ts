@@ -52,7 +52,10 @@ vi.mock('@/seed/utils/logger-utility', () => ({
 
 describe('Usage Metering - Idempotency', () => {
   describe('generateIdempotencyKey', () => {
-    it('generates deterministic key from request context', () => {
+    it('generates unique keys for each call without requestId (prevents same-second collision)', () => {
+      // Fix #R2-15: without requestId, each call appends a random suffix so two
+      // legitimate events in the same second do NOT get the same key and the
+      // second is NOT silently dropped as a duplicate.
       const event = {
         userId: 'user-123',
         licenseNonce: 'license-abc',
@@ -64,8 +67,28 @@ describe('Usage Metering - Idempotency', () => {
       const key1 = generateIdempotencyKey(event);
       const key2 = generateIdempotencyKey(event);
 
-      expect(key1).toBe(key2);
+      // Each call must produce a valid gen_ key but they must differ
       expect(key1).toMatch(/^gen_[a-f0-9]{64}$/);
+      expect(key2).toMatch(/^gen_[a-f0-9]{64}$/);
+      expect(key1).not.toBe(key2);
+    });
+
+    it('generates deterministic key when requestId is provided', () => {
+      // With requestId, the key is stable across calls — used for client-driven dedup
+      const event = {
+        requestId: 'fixed-request-id',
+        userId: 'user-123',
+        licenseNonce: 'license-abc',
+        service: 'heygen',
+        action: 'createVideo',
+        timestamp: 1709856000000,
+      };
+
+      const key1 = generateIdempotencyKey(event);
+      const key2 = generateIdempotencyKey(event);
+
+      expect(key1).toBe('req_fixed-request-id');
+      expect(key1).toBe(key2);
     });
 
     it('uses requestId as prefix when provided', () => {
