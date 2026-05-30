@@ -35,6 +35,7 @@ import {
   FlaskConical,
   Mic,
   LayoutTemplate,
+  Target,
 } from "lucide-react";
 import { ReplayTourLink } from "@/app/[locale]/dashboard/components/replay-tour-link";
 
@@ -145,6 +146,25 @@ export function DashboardSidebarNav({ isAdmin, isVi }: DashboardSidebarNavProps)
         {renderActiveIndicator("/dashboard/missions")}
         <Rocket className={iconClass("/dashboard/missions")} aria-hidden="true" />
         <span className="font-medium">{t('sidebar.missions')}</span>
+      </Link>
+      
+      {/* SOP Automation */}
+      <Link href="/dashboard/sop-marketplace" className={linkClass("/dashboard/sop-marketplace")}>
+        {renderActiveIndicator("/dashboard/sop-marketplace")}
+        <Store className={iconClass("/dashboard/sop-marketplace")} aria-hidden="true" />
+        <span className="font-medium">{t('sidebar.sop_marketplace')}</span>
+      </Link>
+      
+      <Link href="/dashboard/sops" className={linkClass("/dashboard/sops")}>
+        {renderActiveIndicator("/dashboard/sops")}
+        <BookOpen className={iconClass("/dashboard/sops")} aria-hidden="true" />
+        <span className="font-medium">{t('sidebar.my_sops')}</span>
+      </Link>
+      
+      <Link href="/dashboard/challenges" className={linkClass("/dashboard/challenges")}>
+        {renderActiveIndicator("/dashboard/challenges")}
+        <Target className={iconClass("/dashboard/challenges")} aria-hidden="true" />
+        <span className="font-medium">{t('sidebar.challenges')}</span>
       </Link>
       
       {/* Integrations */}

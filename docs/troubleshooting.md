@@ -17,6 +17,8 @@
 8. [Khong nhan duoc email / Not receiving emails](#8-khong-nhan-duoc-email--not-receiving-emails)
 9. [Thanh toan that bai / Payment failed](#9-thanh-toan-that-bai--payment-failed)
 10. [Chien dich bi ket / Campaign stuck](#10-chien-dich-bi-ket--campaign-stuck)
+11. [Loi lech cau hinh Cron / Cron Configuration Drift Issues](#11-loi-lech-cau-hinh-cron--cron-configuration-drift-issues)
+12. [Loi ket noi Service ve tinh / Sidecar Connection Errors](#12-loi-ket-noi-service-ve-tinh--sidecar-connection-errors)
 
 ---
 
@@ -163,7 +165,7 @@
 
 ### Nguyen nhan / Cause
 
-- Dich vu HeyGen dang qua tai / HeyGen service is overloaded
+- Chi phi hoac dich vu HeyGen dang qua tai / HeyGen service is overloaded
 - Video qua dai (hon 10 phut) / Video too long (over 10 minutes)
 - Loi mang giua Sophia va HeyGen / Network issue between Sophia and HeyGen
 
@@ -469,6 +471,77 @@
 5. If still not working after multiple attempts:
    - Send `/help` via Telegram @Sophia_Bbot
    - Email support@mekongmind.com with the stuck campaign name
+
+---
+
+## 11. Loi lech cau hinh Cron / Cron Configuration Drift Issues
+
+### Trieu chung / Symptoms
+
+**English:**
+- Cloudflare console logs warnings like: `No handler for cron pattern` for scheduled runs.
+- Automated tasks (like `error-digest`, `llm-cache-purge`, `affiliate-scout`, `wallet-rebuild`, or `heartbeat`) do not execute, but the cron trigger is active in Cloudflare Pages.
+
+**Tieng Viet:**
+- Cloudflare ghi nhan loi canh bao: `No handler for cron pattern` cho cac tac vu chay tu dong.
+- Cac tac vu dinh ky (llm-cache-purge, affiliate-scout, wallet-rebuild, heartbeat) khong chay nhung lich trinh van kich hoat tren Cloudflare.
+
+### Nguyen nhan / Cause
+
+**English:**
+The cron trigger is defined in [apps/sophia-ai-factory/wrangler.toml](file:///Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/wrangler.toml) but is not mapped to an internal route in [apps/sophia-ai-factory/scripts/inject-scheduled-handler.mjs](file:///Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/scripts/inject-scheduled-handler.mjs).
+
+**Tieng Viet:**
+Lich trinh duoc dinh nghia trong file [apps/sophia-ai-factory/wrangler.toml](file:///Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/wrangler.toml) nhung chua duoc map voi duong dan API trong file code [apps/sophia-ai-factory/scripts/inject-scheduled-handler.mjs](file:///Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/scripts/inject-scheduled-handler.mjs).
+
+### Cach khac phuc / How to fix
+
+1. Open [apps/sophia-ai-factory/scripts/inject-scheduled-handler.mjs](file:///Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/scripts/inject-scheduled-handler.mjs).
+2. Locate the `CRON_ROUTES` array.
+3. Map the missing cron schedule to the respective API endpoint:
+   ```javascript
+   const CRON_ROUTES = {
+     "0 7 * * *": "/api/cron/llm-cache-purge",
+     "0 */4 * * *": "/api/cron/affiliate-scout",
+     "10 * * * *": "/api/cron/wallet-rebuild",
+     "*/10 * * * *": "/api/cron/heartbeat",
+     // Add missing cron mappings here
+   };
+   ```
+4. Rebuild and deploy the worker to apply changes.
+
+---
+
+## 12. Loi ket noi Service ve tinh / Sidecar Connection Errors
+
+### Trieu chung / Symptoms
+
+**English:**
+- Video rendering fails immediately and returns a default base64-encoded stub MP4 file.
+- Error logs show: `FastAPI rendering service unavailable` or `withBreaker circuit open`.
+
+**Tieng Viet:**
+- Trinh tao video bao loi hoac tra ve 1 file MP4 gia lap (stub file).
+- Log he thong bao loi ket noi hoac circuit breaker mo khoa (`withBreaker circuit open`) do goi den microservice FastAPI that bai.
+
+### Nguyen nhan / Cause
+
+**English:**
+The API worker failed to connect to the MoviePy rendering service hosted on Fly.io / Runpod, or credentials mismatch.
+The integration in [apps/sophia-ai-factory/src/lib/video/composer-ffmpeg.ts](file:///Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/lib/video/composer-ffmpeg.ts) falls back to the stub MP4 when the service at [services/moviepy-render/server.py](file:///Users/macbook/projects/sophia-ai-factory/services/moviepy-render/server.py) is offline.
+
+**Tieng Viet:**
+Worker khong the ket noi den service render video MoviePy tren Fly.io/Runpod.
+Code goi trong file [apps/sophia-ai-factory/src/lib/video/composer-ffmpeg.ts](file:///Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/lib/video/composer-ffmpeg.ts) se tu dong tra ve video stub neu service o [services/moviepy-render/server.py](file:///Users/macbook/projects/sophia-ai-factory/services/moviepy-render/server.py) bi offline de tranh treo luong xu ly.
+
+### Cach khac phuc / How to fix
+
+1. **Verify Microservice status:** Check Fly.io logs:
+   ```bash
+   fly status -a sophia-moviepy-render
+   ```
+2. **Verify Environment keys:** Ensure the `INTERNAL_API_SECRET` and FastAPI host URL are synchronized between the worker and the sidecar container configs.
+3. **Verify API connectivity:** Test endpoint access using a simple ping command to the sidecar IP address.
 
 ---
 
