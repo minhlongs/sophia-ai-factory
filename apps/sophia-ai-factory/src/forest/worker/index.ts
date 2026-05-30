@@ -67,13 +67,20 @@ export default {
   },
 
   async queue(batch: MessageBatch<WorkerUsageEvent>, env: Env, ctx: ExecutionContext): Promise<void> {
-    for (const event of batch.messages.map(m => m.body)) {
-      await incrementUsage(event.licenseNonce, event.service || 'default', event.overageCount, env.KV_KV)
-      if (event.overageFee > 0 && env.OVERAGE_WEBHOOK_URL) {
-        ctx.waitUntil(
-          fetch(env.OVERAGE_WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(event) })
-            .catch(() => { /* fire-and-forget */ })
-        )
+    for (const msg of batch.messages) {
+      try {
+        const event = msg.body
+        await incrementUsage(event.licenseNonce, event.service || 'default', event.overageCount, env.KV_KV)
+        if (event.overageFee > 0 && env.OVERAGE_WEBHOOK_URL) {
+          ctx.waitUntil(
+            fetch(env.OVERAGE_WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(event) })
+              .catch(() => { /* fire-and-forget */ })
+          )
+        }
+        msg.ack()
+      } catch (err) {
+        logger.error('[Worker] Failed to process queue message', err instanceof Error ? err : new Error(String(err)))
+        msg.retry()
       }
     }
   },

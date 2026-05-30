@@ -47,22 +47,40 @@ export interface EnqueueVideoInput {
 /**
  * Insert a new video row with status='queued'.
  * Returns the new row id.
- * Caller must check findByPurchaseId first for idempotency.
+ *
+ * Idempotent: if a row with the same purchase_id already exists (enforced by
+ * UNIQUE index from migration 0148), the INSERT is silently skipped and the
+ * existing row's id is returned. This eliminates the TOCTOU race in the
+ * previous SELECT-then-INSERT pattern.
  */
 export async function enqueueVideo(input: EnqueueVideoInput): Promise<string> {
   const db = await getD1Raw()
   const now = Math.floor(Date.now() / 1000)
   const id = crypto.randomUUID()
 
-  await db
+  const result = await db
     .prepare(
-      `INSERT INTO videos
+      `INSERT OR IGNORE INTO videos
          (id, user_id, purchase_id, title, script, locale, provider, status,
           attempt_count, is_onboarding, created_at)
        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'queued', 0, 0, ?8)`,
     )
     .bind(id, input.userId, input.purchaseId, input.title, input.script, input.locale, input.provider ?? 'heygen', now)
     .run()
+
+  // If rows_written is 0, UNIQUE constraint on purchase_id blocked the insert —
+  // another concurrent request already created the row. Return its id.
+  if (result.meta.rows_written === 0 && input.purchaseId) {
+    const existing = await findByPurchaseId(input.purchaseId)
+    if (existing) {
+      logger.info('[VideosRepo] enqueueVideo deduplicated by UNIQUE constraint', {
+        purchaseId: input.purchaseId,
+        existingId: existing.id,
+        attemptedId: id,
+      })
+      return existing.id
+    }
+  }
 
   return id
 }

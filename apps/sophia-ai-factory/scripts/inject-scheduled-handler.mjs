@@ -187,7 +187,15 @@ async function __cronScheduledHandler(event, env, ctx) {
     }
   });
 
-  ctx.waitUntil(Promise.allSettled(dispatches));
+  ctx.waitUntil(
+    Promise.allSettled(dispatches).then((results) => {
+      const failures = results.filter((r) => r.status === 'rejected');
+      if (failures.length > 0) {
+        console.error('[scheduled] Cron handler failures:', failures.map((f) => f.reason?.message ?? String(f.reason)));
+        throw new Error(\`\${failures.length} cron handler(s) failed\`);
+      }
+    })
+  );
 }
 
 // CRITICAL: CF Workers Modules format requires scheduled() to be a method ON the

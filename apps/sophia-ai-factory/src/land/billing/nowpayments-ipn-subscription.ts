@@ -15,7 +15,7 @@ import { getDb, parseUserIdFromOrderId } from './nowpayments-ipn-db'
 import { createOnboardingVideo, ONBOARDING_TIERS } from '@/lib/video/onboarding-video'
 import { triggerAutoHandover } from '@/tree/handover/auto-handover'
 import { markOrderCompleted, markOrderFailed, getOrderById } from '@/land/orders/pending-order-repo'
-import { findReservedRedemption, finalizeRedemption } from '@/land/promo/promo-repo'
+import { findReservedRedemption, finalizeRedemption, incrementUsedCount } from '@/land/promo/promo-repo'
 import { sendReceiptEmail } from './email/receipt-email-sender'
 import { enqueueWelcomeEmail } from '@/forest/outbox/email-outbox'
 
@@ -145,6 +145,9 @@ export async function handleFinished(ipn: NowPaymentsIpnPayload): Promise<void> 
       if (pendingOrder?.promo_code) {
         const reserved = await findReservedRedemption(userId, pendingOrder.promo_code)
         if (reserved) {
+          // Increment promo usage AFTER payment confirmed to prevent TOCTOU:
+          // abandoned checkouts should not consume promo quota.
+          await incrementUsedCount(reserved.promo_code_id)
           await finalizeRedemption(reserved.id, ipn.payment_id)
           logger.info('[NOWPayments] Promo redemption finalized', {
             promoCode: pendingOrder.promo_code,

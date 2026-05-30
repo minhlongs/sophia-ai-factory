@@ -122,38 +122,64 @@ export async function dispatchMission(missionId: string): Promise<void> {
     params = {};
   }
 
+  const creditsUsed = commandDef.credits;
+
+  // R2-6: Deduct credits BEFORE handler execution to prevent TOCTOU double-spend.
+  // deductCredits is atomic (WHERE credits_remaining >= amount); if it returns false,
+  // the user raced another request and lost — skip handler to avoid consuming LLM/API resources.
+  if (creditsUsed > 0) {
+    const deducted = await deductCredits(mission.user_id, creditsUsed, missionId, `command:${mission.command}`);
+    if (!deducted) {
+      logger.warn('[Dispatcher] Credit deduction failed — insufficient balance at dispatch time', { missionId, creditsUsed });
+      await db
+        .from('engine_missions')
+        .update({
+          status: 'failed',
+          error: 'insufficient_credits',
+          updated_at: Math.floor(Date.now() / 1000),
+          completed_at: Math.floor(Date.now() / 1000),
+        })
+        .eq('id', missionId);
+      return;
+    }
+  }
+
+  // R2-10: Wrap handler in a 25-second timeout to prevent indefinite CF Worker I/O hangs.
+  // If handler fails after credits were deducted, credits are intentionally not refunded
+  // (attempted work = cost incurred); reaper will NOT refund timed-out missions.
+  const HANDLER_TIMEOUT_MS = 25_000;
   let handlerResult: MissionHandlerResult;
   try {
-    handlerResult = await handler({
-      missionId: mission.id,
-      userId: mission.user_id,
-      command: mission.command,
-      params,
-    });
+    handlerResult = await Promise.race([
+      handler({
+        missionId: mission.id,
+        userId: mission.user_id,
+        command: mission.command,
+        params,
+      }),
+      new Promise<MissionHandlerResult>((_, reject) =>
+        setTimeout(() => reject(new Error('Mission handler timeout')), HANDLER_TIMEOUT_MS)
+      ),
+    ]);
   } catch (err) {
+    const errMsg = err instanceof Error ? err.message : 'Handler threw unexpected error';
     handlerResult = {
       ok: false,
-      error: err instanceof Error ? err.message : 'Handler threw unexpected error',
+      error: errMsg === 'Mission handler timeout' ? 'handler_timeout' : errMsg,
     };
   }
 
-  const creditsUsed = commandDef.credits;
-  const now = Math.floor(Date.now() / 1000);
+  const nowAfter = Math.floor(Date.now() / 1000);
 
   if (handlerResult.ok) {
-    // Deduct credits (non-blocking — best effort)
-    if (creditsUsed > 0) {
-      await deductCredits(mission.user_id, creditsUsed, missionId, `command:${mission.command}`);
-    }
-
     await db
       .from('engine_missions')
       .update({
         status: 'succeeded',
         result: JSON.stringify(handlerResult.data ?? {}),
         credits_used: creditsUsed,
-        updated_at: now,
-        completed_at: now,
+        updated_at: nowAfter,
+        completed_at: nowAfter,
       })
       .eq('id', missionId);
   } else {
@@ -162,8 +188,8 @@ export async function dispatchMission(missionId: string): Promise<void> {
       .update({
         status: 'failed',
         error: handlerResult.error ?? 'Unknown error',
-        updated_at: now,
-        completed_at: now,
+        updated_at: nowAfter,
+        completed_at: nowAfter,
       })
       .eq('id', missionId);
   }

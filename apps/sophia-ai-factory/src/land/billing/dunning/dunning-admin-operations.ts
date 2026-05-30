@@ -21,16 +21,55 @@ import {
 } from './dunning-state-machine';
 import type { DunningAttemptRow } from './dunning-actions';
 
+import {
+  getDunningKvClient,
+  invalidateDunningCache,
+  DUNNING_CACHE_TTL_SECONDS,
+} from './dunning-kv-cache';
+
+export { invalidateDunningCache } from './dunning-kv-cache';
+
 /**
- * Quick API access check without full state lookup
+ * Quick API access check without full state lookup.
+ *
+ * KV-caches the result for DUNNING_CACHE_TTL_SECONDS (5 min) because dunning
+ * state changes rarely (only on payment fail/success). This avoids 2 D1 queries
+ * on every API request (#R2-18 fix).
+ *
+ * Cache is invalidated by `invalidateDunningCache()` on state transitions.
  */
 export async function canAccessApi(licenseNonce: string): Promise<{
   allowed: boolean;
   state: DunningState;
   reason?: string;
 }> {
+  const kv = getDunningKvClient();
+  const cacheKey = `dunning:${licenseNonce}`;
+
+  if (kv) {
+    try {
+      const cached = await kv.get(cacheKey) as unknown as { allowed: boolean; state: DunningState; reason?: string } | null;
+      if (cached && typeof cached === 'object' && 'allowed' in cached) {
+        return cached;
+      }
+    } catch (err) {
+      logger.error('[Dunning] KV cache read error', toError(err));
+      // Fall through to D1 on cache error
+    }
+  }
+
   const stateResult = await getDunningState(licenseNonce);
-  return { allowed: stateResult.allowed, state: stateResult.state, reason: stateResult.blockReason };
+  const result = { allowed: stateResult.allowed, state: stateResult.state, reason: stateResult.blockReason };
+
+  if (kv) {
+    try {
+      await kv.set(cacheKey as unknown as Parameters<typeof kv.set>[0], result as unknown as Parameters<typeof kv.set>[1], { expirationTtl: DUNNING_CACHE_TTL_SECONDS });
+    } catch (err) {
+      logger.error('[Dunning] KV cache write error', toError(err));
+    }
+  }
+
+  return result;
 }
 
 /**
@@ -107,6 +146,8 @@ export async function suspendLicense(
   reason: string
 ): Promise<DunningStateResult> {
   await transitionDunningState(licenseNonce, userId, 'suspended');
+  // Invalidate dunning cache so next API call reads fresh suspended state
+  await invalidateDunningCache(licenseNonce);
 
   const db = createServerClient();
   await db.from('billing_events').insert({
@@ -131,6 +172,8 @@ export async function restoreLicense(
   reason: string
 ): Promise<DunningStateResult> {
   await transitionDunningState(licenseNonce, userId, 'current');
+  // Invalidate dunning cache so next API call reads fresh current state
+  await invalidateDunningCache(licenseNonce);
 
   const db = createServerClient();
   await db.from('billing_events').insert({

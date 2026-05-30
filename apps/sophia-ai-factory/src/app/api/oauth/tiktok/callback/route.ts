@@ -71,8 +71,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const tokens = await exchangeCodeForTokens(code);
-  const userInfo = await getUserInfo(tokens.access_token);
+  let tokens: Awaited<ReturnType<typeof exchangeCodeForTokens>>;
+  let userInfo: Awaited<ReturnType<typeof getUserInfo>>;
+  try {
+    tokens = await exchangeCodeForTokens(code);
+    userInfo = await getUserInfo(tokens.access_token);
+  } catch (err) {
+    logger.error('[oauth/tiktok/callback] Token exchange or user info fetch failed', err instanceof Error ? err : undefined);
+    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/integrations/channels?error=connection_failed`);
+  }
 
   const encryptedAccess = await encryptToken(tokens.access_token);
   const encryptedRefresh = await encryptToken(tokens.refresh_token);

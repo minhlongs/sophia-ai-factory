@@ -130,3 +130,58 @@ Produce a "Go Live Scorecard" scoring all 10 standard categories out of 100, lis
 - [ ] A validation script or audit check runs to verify the presence of all generated files.
 - [ ] No functional code regressions; all existing tests in the workspace must pass successfully.
 
+## 2026-05-30T05:02:01-07:00
+
+Deep, comprehensive operational audit, architectural mapping, security assessment, and reliability review of the Sophia AI Factory codebase to elevate it to Stripe/Vercel-grade engineering standards.
+
+Working directory: `/Users/macbook/projects/sophia-ai-factory`
+
+## Requirements
+
+### R1. Deep System Mapping
+Analyze and document the full system topology, including bounded contexts, service orchestration, runtime boundaries, hot paths, concurrency models, state flows, and Cloudflare/D1 infrastructure dependencies.
+
+### R2. Quality & Reliability Audit
+Audit the system against Stripe/Vercel operational excellence standards:
+- **Reliability:** Timeout/retry strategies, eventual consistency, idempotency, failure containment.
+- **Scalability:** DB contention, N+1 queries, memory footprint, lock/queue saturation.
+- **Security:** Auth boundaries, RBAC, input validation (Zod), secret leakage, injection risk.
+- **Observability:** Logging quality, correlation IDs, telemetry/tracing depth.
+
+### R3. Subsystem Breakdown (Required Format)
+For every subsystem identified, generate:
+1. **Purpose:** Business + technical role.
+2. **Entry Points:** Exact startup/execution path.
+3. **Runtime Lifecycle:** Step-by-step flow.
+4. **State Management:** Mutability and storage.
+5. **Dependencies:** Internal and external packages.
+6. **Failure Modes:** Potential breakage paths.
+7. **Recovery Behavior:** Active recovery mechanisms.
+8. **Scale Limits:** Breakage at 10x load.
+9. **Security Surface:** Attack vectors.
+10. **Observability:** Debugging paths.
+11. **Technical Debt:** Known code debt.
+12. **Missing Knowledge:** Unknowns needing verification.
+13. **Confidence Level:** High / Medium / Low.
+
+### R4. Executive-Level Gap Analysis
+Quantify structural health across these domains:
+- Architectural Risk Map
+- Operational Maturity, Scaling Readiness, Engineering Velocity, Infra Resilience, Security Posture, and Maintainability Scores
+- Technical Debt Index
+- Categorized findings: P0 (Existential), P1 (Scale Blockers), P2 (Velocity Killers), P3 (Optimizations)
+
+## Acceptance Criteria
+
+### Architectural Transparence
+- [ ] Detailed documentation is created under the `docs/` or `plans/` workspace folder.
+- [ ] All major entry points and runtime paths have exact file links and code symbol references.
+
+### Reliability & Security Gap Identification
+- [ ] Identification of any potential race conditions, N+1 patterns, lack of Zod schemas on API endpoints, or un-isolated Worker faults.
+- [ ] List of P0/P1 risks with recommended architectural remedies.
+
+### Executive Scorecard
+- [ ] An executive gap analysis summary with metric ratings for scalability, security, and velocity is compiled.
+
+

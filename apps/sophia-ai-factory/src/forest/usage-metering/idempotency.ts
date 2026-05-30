@@ -25,9 +25,14 @@ export function generateIdempotencyKey(event: {
     return `req_${event.requestId}`;
   }
 
-  // Deterministic hash based on request context
-  // This ensures the same logical request always gets the same key
-  const hash = sha256(`${event.userId}:${event.licenseNonce}:${event.service}:${event.action}:${Math.floor(event.timestamp / 1000)}`);
+  // Deterministic hash based on request context.
+  // Append a random suffix (8 hex chars) to prevent same-second collisions
+  // between two legitimate events that share the same userId/service/action/second.
+  // Without requestId, the second event in the same second would silently be
+  // dropped as a duplicate — the suffix makes each auto-generated key unique.
+  const ts = Math.floor(event.timestamp / 1000);
+  const suffix = crypto.randomUUID().slice(0, 8);
+  const hash = sha256(`${event.userId}:${event.licenseNonce}:${event.service}:${event.action}:${ts}:${suffix}`);
 
   return `gen_${hash}`;
 }

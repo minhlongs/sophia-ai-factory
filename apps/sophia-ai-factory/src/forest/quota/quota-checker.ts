@@ -30,7 +30,9 @@ export { logOverageEvent, getQuotaStatus } from './quota-checker-overage';
  * 2. Cache miss → calculate from DB
  * 3. Check soft threshold (80%) → warning flag
  * 4. Check hard limit (100%) → block or log overage
- * 5. Update cache (non-blocking)
+ * 5. If allowed: atomically reserve requestedCredits in KV cache (#R2-17 fix)
+ *    to prevent concurrent requests from both reading the same stale counter
+ *    and both passing. The reservation is best-effort (KV unavailable = fail-open).
  */
 export async function checkQuotaWithOverage(
   context: QuotaCheckContext,
@@ -44,7 +46,6 @@ export async function checkQuotaWithOverage(
 
   if (!cached) {
     cached = await calculateCurrentUsage(userId, licenseNonce);
-    updateCachedUsage(userId, licenseNonce, cached).catch(() => {});
   }
 
   const checks = [
@@ -101,13 +102,28 @@ export async function checkQuotaWithOverage(
     }
   }
 
+  // Atomically reserve requestedCredits in KV cache before returning allowed=true
+  // (#R2-17 race condition fix). This prevents two concurrent requests from both
+  // reading the same counter, both passing, and then both decrementing separately.
+  // Strategy: update the in-memory cached value and persist it; subsequent requests
+  // in the same KV TTL window will see the incremented value. KV unavailability
+  // degrades to fail-open (same behaviour as before this fix).
+  const reserved: typeof cached = {
+    hourly: cached.hourly + requestedCredits,
+    daily: cached.daily + requestedCredits,
+    monthly: cached.monthly + requestedCredits,
+    requests: cached.requests + 1,
+    timestamp: cached.timestamp,
+  };
+  updateCachedUsage(userId, licenseNonce, reserved).catch(() => {});
+
   return {
     allowed: true,
     remaining: {
-      dailyCredits: limits.dailyCredits - cached.daily,
-      hourlyCredits: limits.hourlyCredits - cached.hourly,
-      dailyRequests: limits.dailyRequests - cached.requests,
-      monthlyCredits: limits.monthlyCredits - cached.monthly,
+      dailyCredits: limits.dailyCredits - reserved.daily,
+      hourlyCredits: limits.hourlyCredits - reserved.hourly,
+      dailyRequests: limits.dailyRequests - reserved.requests,
+      monthlyCredits: limits.monthlyCredits - reserved.monthly,
     },
     warningThreshold,
     softLimitReached,

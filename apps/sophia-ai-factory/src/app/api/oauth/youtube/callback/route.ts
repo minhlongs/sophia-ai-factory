@@ -71,8 +71,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const tokens = await exchangeCodeForTokens(code);
-  const channelInfo = await getChannelInfo(tokens.access_token);
+  let tokens: Awaited<ReturnType<typeof exchangeCodeForTokens>>;
+  let channelInfo: Awaited<ReturnType<typeof getChannelInfo>>;
+  try {
+    tokens = await exchangeCodeForTokens(code);
+    channelInfo = await getChannelInfo(tokens.access_token);
+  } catch (err) {
+    logger.error('[oauth/youtube/callback] Token exchange or channel info fetch failed', err instanceof Error ? err : undefined);
+    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/integrations/channels?error=connection_failed`);
+  }
 
   const encryptedAccess = await encryptToken(tokens.access_token);
   const encryptedRefresh = await encryptToken(tokens.refresh_token);

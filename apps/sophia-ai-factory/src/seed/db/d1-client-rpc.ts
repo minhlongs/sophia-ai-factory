@@ -66,19 +66,26 @@ export class D1Client {
   }
 
   private async debitMcuBalance(orgId: string, amount: number, feature: string): Promise<QueryResult<unknown>> {
-    const current = await this.db
-      .prepare('SELECT balance FROM org_balances WHERE org_id = ?')
-      .bind(orgId)
-      .first<{ balance: number }>();
+    // Atomic CAS: single UPDATE with WHERE guard prevents TOCTOU double-spend.
+    // If balance < amount or org_id doesn't exist, zero rows are written.
+    const updateResult = await this.db
+      .prepare(
+        `UPDATE org_balances
+         SET balance = balance - ?, updated_at = datetime('now')
+         WHERE org_id = ? AND balance >= ?`,
+      )
+      .bind(amount, orgId, amount)
+      .run();
 
-    if (!current || current.balance < amount) {
+    if (!updateResult.meta.rows_written || updateResult.meta.rows_written === 0) {
       return { data: null, error: { message: 'Insufficient balance' } };
     }
 
-    await this.db.batch([
-      this.db.prepare('UPDATE org_balances SET balance = balance - ?, updated_at = datetime(\'now\') WHERE org_id = ?').bind(amount, orgId),
-      this.db.prepare('INSERT INTO transactions (org_id, amount, type, description) VALUES (?, ?, ?, ?)').bind(orgId, -amount, 'debit', feature),
-    ]);
+    // Balance already debited atomically above — now record the transaction
+    await this.db
+      .prepare('INSERT INTO transactions (org_id, amount, type, description) VALUES (?, ?, ?, ?)')
+      .bind(orgId, -amount, 'debit', feature)
+      .run();
 
     return { data: { success: true }, error: null };
   }

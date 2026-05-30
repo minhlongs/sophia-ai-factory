@@ -54,15 +54,22 @@ export const POST = withRateLimit(async function POST(request: NextRequest): Pro
 
   const parsed = CreateMissionSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: 'Validation error', details: parsed.error.issues }, { status: 400 });
+    // R2-7: Log full Zod issues server-side; never expose internal field names to callers.
+    logger.warn('[/api/v1/missions POST] validation error', { issues: parsed.error.issues });
+    return NextResponse.json({ error: 'Invalid mission parameters' }, { status: 400 });
   }
 
   const { command, params, webhook_url } = parsed.data;
 
   if (!isValidCommand(command)) {
+    const { COMMANDS } = await import('@/forest/missions/command-registry');
+    // R2-8: Filter out any commands with status 'internal' to avoid leaking private endpoints.
+    const publicCommands = Object.entries(COMMANDS)
+      .filter(([, def]) => (def.status as string) !== 'internal')
+      .map(([name]) => name);
     return NextResponse.json({
       error: `Unknown command: ${command}`,
-      available_commands: Object.keys((await import('@/forest/missions/command-registry')).COMMANDS),
+      available_commands: publicCommands,
     }, { status: 400 });
   }
 
@@ -80,7 +87,9 @@ export const POST = withRateLimit(async function POST(request: NextRequest): Pro
     }, { status: 429 });
   }
 
-  // Credit check
+  // Credit check — fast-path rejection only.
+  // R2-6: This check is NOT atomic; concurrent requests can both pass here.
+  // The authoritative atomic deduction happens in dispatcher.ts BEFORE handler execution.
   if (commandDef.credits > 0) {
     const balance = await getBalance(userId);
     if (balance.credits_remaining < commandDef.credits) {

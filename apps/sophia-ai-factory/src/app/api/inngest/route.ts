@@ -20,6 +20,7 @@ import {
   analyticsSync,
   tokenRefreshCron,
   thumbnailAbSelector,
+  sopExecute,
 } from "@/forest/inngest/functions/index";
 
 // Deprecated handlers (Phase 06 video_jobs chain + URL-to-Revenue) removed from
@@ -55,5 +56,7 @@ export const { GET, POST, PUT } = serve({
     analyticsSync,
     tokenRefreshCron,
     thumbnailAbSelector,
+    // SOP execution engine (Phase 01 Solo SOPs)
+    sopExecute,
   ],
 });

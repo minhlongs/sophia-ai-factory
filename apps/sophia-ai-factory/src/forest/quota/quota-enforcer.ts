@@ -9,8 +9,6 @@
 import { logger } from '@/seed/utils/logger-utility'
 import { checkQuotaWithOverage, DEFAULT_CONFIG } from './quota-checker'
 import type { QuotaCheckContext, EnhancedQuotaCheckResult } from './quota-checker'
-import { invalidateQuotaCache } from './quota-checker'
-import { invalidateRealTimeCache } from '@/forest/usage-metering/realtime-tracker'
 import { canAccessApi } from '@/land/billing/dunning-workflow'
 import { createQuotaExceededResponse, createDunningBlockResponse } from './quota-enforcer-response'
 
@@ -50,8 +48,10 @@ export async function enforceQuota(
     return { allowed: false, response: exceededResponse }
   }
 
-  await invalidateQuotaCache(context.userId, licenseNonce)
-  await invalidateRealTimeCache(context.userId, licenseNonce)
+  // NOTE: Cache invalidation intentionally removed from success path (fix #R2-16).
+  // Invalidating on every allowed request caused 2 KV writes per request that
+  // immediately destroyed the cache just read. Cache is now invalidated only
+  // in tracker.ts after a usage event is actually written to D1.
 
   if (quotaResult.warningThreshold) {
     logger.warn('[Quota Enforcer] Soft warning - approaching quota', {

@@ -259,8 +259,10 @@ export async function schedulePublish(input: SchedulePublishInput): Promise<Sche
       });
     }
 
-    // Database anti-collision loop
+    // Database anti-collision loop — cap at 48 iterations (4 hours forward max)
+    const MAX_CONFLICT_ITERATIONS = 48;
     let conflictFound = true;
+    let conflictIterations = 0;
     while (conflictFound) {
       const minTime = effectiveScheduledAt - 299;
       const maxTime = effectiveScheduledAt + 299;
@@ -275,7 +277,18 @@ export async function schedulePublish(input: SchedulePublishInput): Promise<Sche
         .lte('scheduled_at', maxTime);
 
       if (existingJobs && existingJobs.length > 0) {
-        effectiveScheduledAt += 300; // Move forward by 5 minutes
+        conflictIterations++;
+        if (conflictIterations >= MAX_CONFLICT_ITERATIONS) {
+          // Accept the slot to avoid unbounded loop; log warning for operator awareness
+          logger.warn('[Scheduler] Anti-collision cap reached — accepting conflicting slot', {
+            channelId: channel.id,
+            effectiveScheduledAt,
+            iterations: conflictIterations,
+          });
+          conflictFound = false;
+        } else {
+          effectiveScheduledAt += 300; // Move forward by 5 minutes
+        }
       } else {
         conflictFound = false;
       }
