@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { logger } from '@/seed/utils/logger-utility';
 
 function findLocalD1Path(): string | null {
   // Edge runtime does not support Node.js filesystem APIs, bypass
-  if (typeof EdgeRuntime !== 'undefined') {
+  if (typeof (globalThis as any).EdgeRuntime !== 'undefined') {
     return null;
   }
 
@@ -11,16 +12,44 @@ function findLocalD1Path(): string | null {
     const fs = eval('require')('fs');
 
     const cwd = globalThis.process?.cwd?.() || '';
-    const base = path.resolve(
-      cwd,
-      '.wrangler/state/v3/d1/miniflare-D1DatabaseObject',
-    );
-    if (!fs.existsSync(base)) return null;
-    const files = fs
-      .readdirSync(base)
-      .filter((f: string) => f.endsWith('.sqlite') && !f.includes('metadata'))
-      .map((f: string) => path.join(base, f));
-    return files[0] || null;
+    const candidates = [
+      path.resolve(cwd, '../..', '.wrangler/state/v3/d1/miniflare-D1DatabaseObject'),
+      path.resolve(cwd, '.wrangler/state/v3/d1/miniflare-D1DatabaseObject'),
+      path.resolve(cwd, '..', '.wrangler/state/v3/d1/miniflare-D1DatabaseObject')
+    ];
+
+    let newestFile: string | null = null;
+    let newestTime = 0;
+
+    for (const base of candidates) {
+      if (!fs.existsSync(base)) continue;
+      const files = fs
+        .readdirSync(base)
+        .filter((f: string) => f.endsWith('.sqlite') && !f.includes('metadata'))
+        .map((f: string) => path.join(base, f));
+      
+      for (const file of files) {
+        try {
+          // In SQLite WAL mode, updates are written to -wal file, leaving the main .sqlite file mtime outdated.
+          // We look at the maximum mtime of the .sqlite, .sqlite-wal, and .sqlite-shm files.
+          let maxFileTime = 0;
+          for (const ext of ['', '-wal', '-shm']) {
+            try {
+              const stats = fs.statSync(file + ext);
+              if (stats.mtimeMs > maxFileTime) {
+                maxFileTime = stats.mtimeMs;
+              }
+            } catch {}
+          }
+
+          if (maxFileTime > newestTime) {
+            newestTime = maxFileTime;
+            newestFile = file;
+          }
+        } catch {}
+      }
+    }
+    return newestFile;
   } catch {
     return null;
   }
@@ -30,7 +59,7 @@ class SQLiteD1Database {
   private db: any;
 
   constructor(sqlitePath: string) {
-    if (typeof EdgeRuntime !== 'undefined') {
+    if (typeof (globalThis as any).EdgeRuntime !== 'undefined') {
       throw new Error('SQLiteD1Database is not supported in Edge Runtime');
     }
     const Database = eval('require')('better-sqlite3');
@@ -224,7 +253,7 @@ class SQLiteD1PreparedStatement {
  * Returns null if not running in development/test or if local database file doesn't exist.
  */
 export function getLocalD1Mock(): any {
-  if (typeof EdgeRuntime !== 'undefined') {
+  if (typeof (globalThis as any).EdgeRuntime !== 'undefined') {
     return null;
   }
   
