@@ -145,7 +145,12 @@ class SQLiteD1Database {
   async batch(statements: any[]) {
     const results: any[] = [];
     for (const stmt of statements) {
-      results.push(await stmt.all());
+      const prepared = this.db.prepare(stmt.query);
+      if (prepared.reader) {
+        results.push(await stmt.all());
+      } else {
+        results.push(await stmt.run());
+      }
     }
     return results;
   }
@@ -267,6 +272,8 @@ export function getLocalD1Mock(): any {
     logger.warn('[D1 mock] Local wrangler state D1 sqlite not found. Did you run pnpm dev/setup?');
     return null;
   }
+
+  console.log('[D1 mock] Opening sqlite database at:', sqlitePath);
 
   try {
     return new SQLiteD1Database(sqlitePath);

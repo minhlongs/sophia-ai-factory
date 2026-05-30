@@ -1,0 +1,6 @@
+## 2026-05-30T08:38:07Z
+You are an explorer agent. Investigate the codebase in `/Users/macbook/projects/sophia-ai-factory/.claude/worktrees/feature-harness-engineering/`.
+Check if the D1 migrations are applied to the local SQLite database. Specifically, run `npx wrangler d1 migrations apply sophia-raas-db --local` to apply `migrations/0148_harness_tables.sql` if it hasn't been applied. Run the test script `npx tsx apps/sophia-ai-factory/src/tree/harness/test-db.ts` (or the equivalent command) to confirm that the D1 database mock behaves correctly and the tables exist.
+Analyze the implementation details of the Edge API routes in `apps/sophia-ai-factory/src/app/api/v1/harness/` and the local daemon in `apps/sophia-ai-factory/src/tree/harness/daemon.ts`.
+Check if they are fully functional, if they compile, and if any modifications are needed to meet the requirements (especially storing the heartbeat timestamp in `EXPERIMENT_KV` under the key `harness:daemon_last_poll` and supporting a GET `/api/v1/harness/status` endpoint).
+Write your findings to `analysis.md` in your working directory `.agents/explorer_harness_engineering/`. Send a message back to the orchestrator with a summary and the absolute path to your `analysis.md` file.
