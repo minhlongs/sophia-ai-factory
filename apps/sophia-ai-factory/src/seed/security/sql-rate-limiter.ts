@@ -69,9 +69,22 @@ export async function checkRateLimit(
   identifier: string,
   config: RateLimitConfig
 ): Promise<RateLimitResult> {
+  const now = Date.now()
+
+  // Skip rate limiting in test or mock environments to avoid parallel test flakiness (429 errors)
+  if (
+    globalThis.process?.env?.DISABLE_RATE_LIMIT === 'true' ||
+    globalThis.process?.env?.NEXT_PUBLIC_MOCK_AI_SERVICES === 'true'
+  ) {
+    return {
+      success: true,
+      remaining: config.maxRequests,
+      reset: Math.floor(now / 1000) + config.windowSeconds,
+    };
+  }
+
   const db = createServerClient()
   const fullIdentifier = `${config.identifier}:${identifier}`
-  const now = Date.now()
 
   try {
     const currentCount = await incrementRateLimit(

@@ -13,6 +13,7 @@ import { magicLink } from 'better-auth/plugins';
 // were removed to satisfy the seed→(forest|tree) layer boundary rule.
 // See plans/260512-2001-mekong-sops-gap-bridge/phase-03-layer-fix.md.
 import { getD1Client } from '@/seed/db/client';
+import { getLocalD1Mock } from '@/seed/db/local-d1-mock';
 import { logger } from '@/seed/utils/logger-utility';
 import { requireMfaIfEnabled, markSessionMfaPending } from '@/seed/auth/mfa/login-challenge';
 import { escapeHtml } from '@/seed/security/input-sanitization-utilities';
@@ -28,6 +29,13 @@ function getD1(): D1Database {
 
   const globalDb = (globalThis as Record<string, unknown>).__D1_DB as D1Database | undefined;
   if (globalDb) return globalDb;
+
+  // Fallback: local dev sqlite mock
+  const mockDb = getLocalD1Mock();
+  if (mockDb) {
+    (globalThis as Record<string, unknown>).__D1_DB = mockDb;
+    return mockDb as D1Database;
+  }
 
   throw new Error('D1 database binding not available');
 }
