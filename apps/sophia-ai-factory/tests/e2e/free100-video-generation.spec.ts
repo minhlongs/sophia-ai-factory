@@ -74,8 +74,8 @@ test.describe('FREE100 Video Generation', () => {
     // Install wildcard SSE mock BEFORE navigation
     await mockSseStreamWildcard(page, { videoUrl: MOCK_VIDEO_URL });
 
-    // Navigate to the page that would render RenderProgress
-    // (the form itself is server-rendered, SSE starts after submission)
+    await page.goto('/en');
+
     // We verify the route handler is correctly installed by making a direct fetch
     // to a mock mission endpoint and confirming the SSE body is returned.
     const response = await page.evaluate(async (url) => {

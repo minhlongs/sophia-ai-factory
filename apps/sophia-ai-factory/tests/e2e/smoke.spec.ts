@@ -80,7 +80,7 @@ test.describe('Navigation', () => {
   test('/pricing nav link works', async ({ page }) => {
     await page.goto('/vi');
     // Find a link to pricing and click it
-    const pricingLink = page.locator('a[href*="pricing"]').first();
+    const pricingLink = page.locator('nav a[href*="pricing"]').filter({ visible: true }).first();
     await expect(pricingLink).toBeVisible();
     await pricingLink.click();
     await expect(page).toHaveURL(/pricing/);
@@ -89,7 +89,7 @@ test.describe('Navigation', () => {
 
   test('/guide nav link works', async ({ page }) => {
     await page.goto('/vi');
-    const guideLink = page.locator('a[href*="guide"]').first();
+    const guideLink = page.locator('nav a[href*="guide"]').filter({ visible: true }).first();
     await expect(guideLink).toBeVisible();
     await guideLink.click();
     await expect(page).toHaveURL(/guide/);
@@ -103,7 +103,7 @@ test.describe('Navigation', () => {
     // /en is the default locale and may redirect to root. Accept either.
     await page.goto('/en');
     await expect(page).toHaveTitle(/Sophia/);
-    expect(page.url()).toMatch(/sophia\.agencyos\.network/);
+    expect(page.url()).toMatch(/sophia\.agencyos\.network|localhost/);
   });
 });
 

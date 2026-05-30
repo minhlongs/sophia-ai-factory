@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
+import { Link } from "@/navigation";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Button } from "@/seed/components/ui/button";
@@ -105,7 +105,7 @@ export function Navbar() {
         <div className="hidden lg:flex items-center gap-1">
           {navLinks.map((link) => (
             <Link
-              key={link.href}
+              key={`${link.href}-${link.label}`}
               href={link.href}
               onClick={(e) => handleScrollClick(e, link.href)}
               className={cn(
@@ -160,7 +160,7 @@ export function Navbar() {
         >
           {navLinks.map((link) => (
             <Link
-              key={link.href}
+              key={`${link.href}-${link.label}`}
               href={link.href}
               className="text-muted-foreground hover:text-foreground transition-colors text-base font-medium py-2"
               onClick={() => setMenuOpen(false)}

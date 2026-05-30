@@ -7,6 +7,7 @@
 
 import { D1Client } from '@/seed/db/d1-query-builder';
 import { toError } from '@/seed/utils/to-error';
+import { getLocalD1Mock } from './local-d1-mock';
 
 /**
  * Get D1 database binding synchronously from CF request context.
@@ -25,6 +26,13 @@ function getD1Sync(): D1Database {
   // Fallback: global test binding
   const globalDb = (globalThis as Record<string, unknown>).__D1_DB as D1Database | undefined;
   if (globalDb) return globalDb;
+
+  // Fallback: local dev sqlite mock
+  const mockDb = getLocalD1Mock();
+  if (mockDb) {
+    (globalThis as Record<string, unknown>).__D1_DB = mockDb;
+    return mockDb as D1Database;
+  }
 
   throw new Error('D1 database binding not available');
 }

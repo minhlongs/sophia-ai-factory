@@ -119,7 +119,7 @@ export default async function Home() {
   const orgSchema = buildOrganizationSchema();
 
   return (
-    <main id="main-content">
+    <main id="main-content" className="max-w-full overflow-hidden">
       {/* Organization structured data — global brand signal */}
       <script
         type="application/ld+json"
