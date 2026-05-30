@@ -34,7 +34,10 @@ const OutcomesDashboardClient = dynamic(
     import("./components/outcomes-dashboard-client").then((m) => ({
       default: m.OutcomesDashboardClient,
     })),
-  { loading: () => <OutcomesSkeleton /> }
+  {
+    ssr: false,
+    loading: () => <OutcomesSkeleton />,
+  }
 );
 
 // ── Metadata ──────────────────────────────────────────────────────────────────

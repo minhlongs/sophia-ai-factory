@@ -123,7 +123,7 @@ export default async function RootLayout({
     : '';
 
   return (
-    <html lang={locale} className="dark">
+    <html lang={locale} className="dark" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
@@ -135,6 +135,7 @@ export default async function RootLayout({
         <script
           type="application/ld+json"
           nonce={nonce}
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(JSONLD_SCHEMA),
           }}
@@ -142,12 +143,14 @@ export default async function RootLayout({
         <script
           type="application/ld+json"
           nonce={nonce}
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(buildOrganizationSchema()),
           }}
         />
         <script
           nonce={nonce}
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html:
               "window.__name=window.__name||function(fn){return fn;};window.n=window.n||window.__name;",

@@ -4,6 +4,46 @@
 -- Analysis source: Grep of src/ for WHERE x = ? AND y = ? patterns + usage-rollup-engine.ts
 -- All indexes use IF NOT EXISTS — safe to re-apply.
 
+CREATE TABLE IF NOT EXISTS usage_events (
+  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  user_id TEXT,
+  license_key_hash TEXT,
+  license_nonce TEXT,
+  service_name TEXT,
+  endpoint TEXT,
+  action TEXT,
+  tokens_input INTEGER DEFAULT 0,
+  tokens_output INTEGER DEFAULT 0,
+  credits_used REAL,
+  request_id TEXT,
+  model_name TEXT,
+  tier_at_request TEXT,
+  status_code INTEGER,
+  error_message TEXT,
+  response_time_ms INTEGER,
+  created_at INTEGER,
+  idempotency_key TEXT UNIQUE,
+  external_customer_id TEXT,
+  resource_type TEXT
+);
+
+CREATE TABLE IF NOT EXISTS publishing_jobs (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL,
+  video_id TEXT NOT NULL,
+  channel_id TEXT NOT NULL,
+  status TEXT NOT NULL CHECK(status IN ('scheduled','uploading','processing','live','failed')),
+  caption TEXT,
+  hashtags_json TEXT,
+  product_link TEXT,
+  scheduled_at INTEGER NOT NULL,
+  started_at INTEGER,
+  finished_at INTEGER,
+  retry_count INTEGER NOT NULL DEFAULT 0,
+  error TEXT,
+  created_at INTEGER NOT NULL
+);
+
 -- INDEX 1: usage_events(user_id, license_nonce, created_at)
 -- Serves: checkQuota in usage-rollup-engine.ts:
 --   WHERE user_id = ? AND license_nonce = ? AND created_at >= ? (AND < ?)

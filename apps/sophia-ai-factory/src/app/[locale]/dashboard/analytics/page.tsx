@@ -20,6 +20,7 @@ import { toError } from "@/seed/utils/to-error";
 const AnalyticsDashboardClient = dynamic(
   () => import("./components/analytics-dashboard-client").then(m => ({ default: m.AnalyticsDashboardClient })),
   {
+    ssr: false,
     loading: () => (
       <div className="space-y-6">
         <div className="grid gap-4 md:grid-cols-3">
