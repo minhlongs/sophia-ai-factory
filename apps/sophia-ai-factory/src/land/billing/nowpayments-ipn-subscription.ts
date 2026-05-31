@@ -74,22 +74,32 @@ export async function handleFinished(ipn: NowPaymentsIpnPayload): Promise<void> 
   if (orgId) {
     // ── Atomic D1 batch: subscription + organization + pending_orders ──────
     try {
-      const d1 = await getD1Raw()
-      const { data: existingSub } = await db.from('subscriptions').select('id').eq('org_id', orgId).single()
-
-      const stmts = existingSub
-        ? [
-            d1.prepare('UPDATE subscriptions SET plan=?, status=?, current_period_end=?, updated_at=? WHERE org_id=?')
-              .bind(tier.toLowerCase(), 'active', periodEnd, now, orgId),
-            d1.prepare('UPDATE organizations SET plan=?, updated_at=? WHERE id=?')
-              .bind(tier.toLowerCase(), now, orgId),
-          ]
-        : [
-            d1.prepare('INSERT INTO subscriptions (org_id, plan, status, current_period_start, current_period_end) VALUES (?,?,?,?,?)')
-              .bind(orgId, tier.toLowerCase(), 'active', now, periodEnd),
-            d1.prepare('UPDATE organizations SET plan=?, updated_at=? WHERE id=?')
-              .bind(tier.toLowerCase(), now, orgId),
-          ]
+ const d1 = await getD1Raw()
+ const { data: currentSub } = await db.from('subscriptions').select('plan').eq('org_id', orgId).single()
+ const currentPlan = (currentSub as { plan?: string } | null)?.plan ?? ''
+ const isDowngrade = currentPlan === 'master' && tier.toLowerCase() !== 'master'
+ const stmts = currentSub
+   ? isDowngrade
+     ? [
+         d1.prepare('UPDATE subscriptions SET current_period_end=?, updated_at=? WHERE org_id=?')
+         .bind(periodEnd, now, orgId),
+         d1.prepare("UPDATE organizations SET updated_at=? WHERE id=?")
+         .bind(now, orgId),
+         d1.prepare('UPDATE tier_change_events SET resolved=?, resolved_at=?, note=? WHERE org_id=? AND resolved=?')
+         .bind(1, now, 'Blocked: admin-set MASTER tier protected from webhook downgrade', orgId, 0),
+       ]
+     : [
+         d1.prepare('UPDATE subscriptions SET plan=?, status=?, current_period_end=?, updated_at=? WHERE org_id=?')
+         .bind(tier.toLowerCase(), 'active', periodEnd, now, orgId),
+         d1.prepare('UPDATE organizations SET plan=?, updated_at=? WHERE id=?')
+         .bind(tier.toLowerCase(), now, orgId),
+       ]
+   : [
+     d1.prepare('INSERT INTO subscriptions (org_id, plan, status, current_period_start, current_period_end) VALUES (?,?,?,?,?)')
+     .bind(orgId, tier.toLowerCase(), 'active', now, periodEnd),
+     d1.prepare('UPDATE organizations SET plan=?, updated_at=? WHERE id=?')
+     .bind(tier.toLowerCase(), now, orgId),
+   ]
 
       // Mark pending order completed in same batch if order_id present
       if (ipn.order_id) {
@@ -248,42 +258,45 @@ export async function handleFinished(ipn: NowPaymentsIpnPayload): Promise<void> 
     logger.warn('[NOWPayments] Post-purchase welcome email enqueue failed (non-fatal)', { userId, error: String(err) })
   }
 
-  // Credit referrer reward if this user was referred (non-fatal)
-  try {
-    const { data: userProfile } = await db.from('user_profiles').select('settings').eq('user_id', userId).single()
-    const settings = userProfile?.settings
-      ? (typeof userProfile.settings === 'string' ? JSON.parse(userProfile.settings as string) : userProfile.settings) as Record<string, unknown>
-      : null
-    const referrerId = settings?.referred_by as string | undefined
-    if (referrerId && referrerId !== userId) {
-      const d1 = await getD1Raw()
-      const referrerProfile = await d1
-        .prepare(`SELECT settings FROM user_profiles WHERE user_id = ?1`)
-        .bind(referrerId)
-        .first<{ settings: string | null }>()
-      const referrerSettings = referrerProfile?.settings
-        ? JSON.parse(referrerProfile.settings)
-        : {}
-      const rewardCents = UNIFIED_TIERS[tier]
-        ? Math.round(UNIFIED_TIERS[tier].price * 100 * 0.10)
-        : 1990
-      const currentCredit = (referrerSettings.account_credit_cents as number) ?? 0
-      referrerSettings.account_credit_cents = currentCredit + rewardCents
-      referrerSettings.last_referral_reward_at = new Date().toISOString()
-      await d1
-        .prepare(`UPDATE user_profiles SET settings = ?1 WHERE user_id = ?2`)
-        .bind(JSON.stringify(referrerSettings), referrerId)
-        .run()
-      logger.info('[NOWPayments] Referral reward credited', {
-        referrerId,
-        referredUserId: userId,
-        rewardCents,
-        totalCredit: referrerSettings.account_credit_cents,
-      })
-    }
-  } catch (err) {
-    logger.warn('[NOWPayments] Referral reward credit failed (non-fatal)', { userId, error: String(err) })
-  }
+ // Credit referrer reward if this user was referred (non-fatal)
+ try {
+   const { data: userProfile } = await db.from('user_profiles').select('settings').eq('user_id', userId).single()
+   const settings = userProfile?.settings
+     ? (typeof userProfile.settings === 'string' ? JSON.parse(userProfile.settings as string) : userProfile.settings) as Record<string, unknown>
+     : null
+   const referrerId = settings?.referred_by as string | undefined
+   if (referrerId && referrerId !== userId) {
+     const d1 = await getD1Raw()
+     const referrerProfile = await d1
+       .prepare(`SELECT settings FROM user_profiles WHERE user_id = ?1`)
+       .bind(referrerId)
+       .first<{ settings: string | null }>()
+     const referrerSettings = referrerProfile?.settings
+       ? JSON.parse(referrerProfile.settings)
+       : {}
+     const rawPayments = (referrerSettings as Record<string, unknown>).referral_rewarded_payments as string[] | undefined
+     const rewardedSet: string[] = Array.isArray(rawPayments) ? rawPayments : []
+     if (rewardedSet.includes(ipn.payment_id)) {
+       logger.info('[NOWPayments] Referral reward already credited — skipping', { referrerId, paymentId: ipn.payment_id })
+     } else {
+       const rewardCents = UNIFIED_TIERS[tier]
+         ? Math.round(UNIFIED_TIERS[tier].price * 100 * 0.10)
+         : 1990
+       const currentCredit = (referrerSettings.account_credit_cents as number) ?? 0
+       referrerSettings.account_credit_cents = currentCredit + rewardCents
+       referrerSettings.last_referral_reward_at = new Date().toISOString()
+       rewardedSet.push(ipn.payment_id)
+       if (rewardedSet.length > 100) rewardedSet.splice(0, rewardedSet.length - 100)
+       await d1
+         .prepare(`UPDATE user_profiles SET settings = ?1 WHERE user_id = ?2`)
+         .bind(JSON.stringify(referrerSettings), referrerId)
+         .run()
+       logger.info('[NOWPayments] Referral reward credited', { referrerId, referredUserId: userId, rewardCents, totalCredit: referrerSettings.account_credit_cents })
+     }
+   }
+ } catch (err) {
+   logger.warn('[NOWPayments] Referral reward credit failed (non-fatal)', { userId, error: String(err) })
+ }
 
   logger.info('[NOWPayments] Payment finished — subscription activated', { userId, orgId, tier, isLifetime, periodEnd, paymentId: ipn.payment_id })
 }

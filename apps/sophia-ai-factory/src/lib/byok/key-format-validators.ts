@@ -80,7 +80,7 @@ function shortFail(): ValidatorResult {
 
 /** OpenRouter format guard. */
 export function validateOpenRouter(key: string): ValidatorResult {
-  const trimmed = key.trim()
+  const trimmed = sanitizeCredential(key)
   if (trimmed.length < MIN_LENGTH) return shortFail()
   if (!OPENROUTER_RE.test(trimmed)) {
     return { ok: false, errorKey: 'byok.validate.openrouter.format' }
@@ -90,7 +90,7 @@ export function validateOpenRouter(key: string): ValidatorResult {
 
 /** Anthropic format guard. */
 export function validateAnthropic(key: string): ValidatorResult {
-  const trimmed = key.trim()
+  const trimmed = sanitizeCredential(key)
   if (trimmed.length < MIN_LENGTH) return shortFail()
   if (!ANTHROPIC_RE.test(trimmed)) {
     return { ok: false, errorKey: 'byok.validate.anthropic.format' }
@@ -100,7 +100,7 @@ export function validateAnthropic(key: string): ValidatorResult {
 
 /** ElevenLabs xi-api-key guard. */
 export function validateElevenLabs(key: string): ValidatorResult {
-  const trimmed = key.trim()
+  const trimmed = sanitizeCredential(key)
   if (trimmed.length < MIN_LENGTH) return shortFail()
   if (!ELEVENLABS_RE.test(trimmed)) {
     return { ok: false, errorKey: 'byok.validate.elevenlabs.format' }
@@ -117,7 +117,7 @@ export function validateElevenLabs(key: string): ValidatorResult {
  *  - otherwise → error
  */
 export function validateDID(key: string): ValidatorResult {
-  const trimmed = key.trim()
+  const trimmed = sanitizeCredential(key)
   if (trimmed.length < MIN_LENGTH) return shortFail()
   if (DID_EMAIL_PASSWORD_RE.test(trimmed)) {
     const encoded = safeBase64(trimmed)
@@ -132,7 +132,7 @@ export function validateDID(key: string): ValidatorResult {
 
 /** MuAPI 20+ char token. */
 export function validateMuapi(key: string): ValidatorResult {
-  const trimmed = key.trim()
+  const trimmed = sanitizeCredential(key)
   if (trimmed.length < MIN_LENGTH) return shortFail()
   if (!MUAPI_RE.test(trimmed)) {
     return { ok: false, errorKey: 'byok.validate.muapi.format' }
@@ -142,7 +142,7 @@ export function validateMuapi(key: string): ValidatorResult {
 
 /** Apollo 20+ char token. */
 export function validateApollo(key: string): ValidatorResult {
-  const trimmed = key.trim()
+  const trimmed = sanitizeCredential(key)
   if (trimmed.length < MIN_LENGTH) return shortFail()
   if (!APOLLO_RE.test(trimmed)) {
     return { ok: false, errorKey: 'byok.validate.apollo.format' }
@@ -152,7 +152,7 @@ export function validateApollo(key: string): ValidatorResult {
 
 /** Hunter 20+ char token. */
 export function validateHunter(key: string): ValidatorResult {
-  const trimmed = key.trim()
+  const trimmed = sanitizeCredential(key)
   if (trimmed.length < MIN_LENGTH) return shortFail()
   if (!HUNTER_RE.test(trimmed)) {
     return { ok: false, errorKey: 'byok.validate.hunter.format' }
@@ -181,7 +181,7 @@ export function validateProviderKey(provider: ValidatorProvider, key: string): V
     case 'hunter':
       return validateHunter(key)
     default: {
-      const trimmed = key.trim()
+      const trimmed = sanitizeCredential(key)
       return trimmed.length >= MIN_LENGTH ? { ok: true } : shortFail()
     }
   }
