@@ -20,9 +20,13 @@ vi.mock('@/forest/middleware/rate-limit-wrapper', () => ({
   withRateLimit: (handler: (req: NextRequest) => Promise<Response>) => handler,
 }));
 
-vi.mock('@/seed/auth/better-auth-session', () => ({
-  getCurrentUserFromHeaders: vi.fn(),
-}));
+vi.mock('@/seed/auth/better-auth-session', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/seed/auth/better-auth-session')>();
+  return {
+    ...actual,
+    getCurrentUserFromHeaders: vi.fn(),
+  };
+});
 
 vi.mock('@/tree/clients/nowpayments-client', () => ({
   NOWPAYMENTS_TIERS: {
@@ -52,6 +56,7 @@ vi.mock('@/land/orders/pending-order-repo', () => ({
   })),
 }));
 
+import { AuthSystemError } from '@/seed/auth/better-auth-session';
 import { GET, POST } from './route';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { createInvoiceUrl } from '@/tree/clients/nowpayments-client';
@@ -210,6 +215,14 @@ describe('POST /api/checkout', () => {
     expect(res.status).toBe(401);
     const body = (await res.json()) as { error: string };
     expect(body.error).toMatch(/login/i);
+  });
+
+  it('AuthSystemError from getCurrentUserFromHeaders → POST returns 500 (system error, not 401)', async () => {
+    mockGetUser.mockRejectedValueOnce(new AuthSystemError('D1 connection lost'));
+    const res = await POST(makePostRequest({ tier: 'BASIC' }));
+    expect(res.status).toBe(500);
+    const body = (await res.json()) as { error: string };
+    expect(body.error).toMatch(/failed/i);
   });
 
   it('invalid tier → 400 with error', async () => {

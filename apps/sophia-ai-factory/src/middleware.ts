@@ -97,8 +97,12 @@ export async function proxy(request: NextRequest) {
           }
         }
       } catch (mfaApiErr) {
-        // Non-fatal — log and allow through to avoid locking out users on DB errors
-        logger.error('[Middleware] MFA API check error', toError(mfaApiErr))
+        // Fail closed for sensitive routes — deny rather than bypass MFA on DB errors
+        logger.error('[Middleware] MFA API check error — failing closed', toError(mfaApiErr))
+        return NextResponse.json(
+          { error: 'Authentication service temporarily unavailable. Please try again.' },
+          { status: 503 },
+        )
       }
     }
   }
@@ -106,7 +110,10 @@ export async function proxy(request: NextRequest) {
   const isConfigured = process.env.NEXT_PUBLIC_IS_CONFIGURED === 'true' || process.env.IS_CONFIGURED === 'true'
   if (!isConfigured) {
     const cleanedForSetup = pathnameWithoutLocale(pathname)
-    if (cleanedForSetup.startsWith('/dashboard') || cleanedForSetup.startsWith('/admin')) {
+    if (
+    (cleanedForSetup.startsWith('/dashboard') && cleanedForSetup !== '/dashboard/onboarding' && !cleanedForSetup.startsWith('/dashboard/onboarding/')) ||
+    cleanedForSetup.startsWith('/admin')
+  ) {
       // Redirect to canonical onboarding URL (locale-free, intl middleware will add prefix).
       // Previously redirected to /setup-wizard which fell through to marketing page — see
       // plan 260519-0300-handover-funnel-critical-fixes/phase-02-setup-wizard-locale-routing.md.
@@ -228,7 +235,7 @@ export async function proxy(request: NextRequest) {
       try {
         const remaining = JSON.parse(quotaRemainingJson)
         const resetTimestamp = Math.floor(Date.now() / 1000) + 3600
-        response.headers.set('X-RateLimit-Limit', String(remaining.hourlyCredits || remaining.dailyCredits))
+        response.headers.set('X-RateLimit-Limit', String(remaining.hourlyLimit ?? remaining.dailyLimit ?? remaining.hourlyCredits ?? remaining.dailyCredits))
         response.headers.set('X-RateLimit-Remaining', String(remaining.hourlyCredits ?? remaining.dailyCredits))
         response.headers.set('X-RateLimit-Reset', String(resetTimestamp))
       } catch (error) {
