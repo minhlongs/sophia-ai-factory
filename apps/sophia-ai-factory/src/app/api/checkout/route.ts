@@ -3,11 +3,10 @@ import { createInvoiceUrl, NOWPAYMENTS_TIERS } from '@/tree/clients/nowpayments-
 import { UNIFIED_TIERS } from '@/seed/config/tiers';
 import { checkoutSchema } from '@/lib/schemas';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
-import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
+import { getCurrentUserFromHeaders, AuthSystemError } from '@/seed/auth/better-auth-session';
 import { validatePromoCode } from '@/land/promo/promo-validator';
 import { recordRedemption } from '@/land/promo/promo-repo';
 import { calculateDiscount } from '@/land/promo/promo-discount-calculator';
-import { setUserTrialExpiry } from '@/land/promo/promo-repo';
 import { logger } from '@/seed/utils/logger-utility';
 import { writeOrder, findActivePendingOrder } from '@/land/orders/pending-order-repo';
 import { derivePeriod, assertPeriodAllowed, assertPaymentMethodAllowed } from '@/land/checkout/checkout-validators';
@@ -24,7 +23,9 @@ async function getUserId(request: Request): Promise<string | null> {
   try {
     const user = await getCurrentUserFromHeaders(request.headers);
     if (user?.id) return user.id;
-  } catch { /* auth failed */ }
+  } catch (err) {
+    if (err instanceof AuthSystemError) throw err;
+  }
   return null;
 }
 
@@ -184,11 +185,10 @@ export const POST = withRateLimit(async function POST(request: Request) {
             status: 'reserved',
           });
 
-          // Grant trial period immediately for free_trial codes
-          if (validation.discountType === 'free_trial' && promoTrialDays > 0) {
-            const trialEndsAt = Math.floor(Date.now() / 1000) + promoTrialDays * 86400;
-            await setUserTrialExpiry(userId, trialEndsAt);
-          }
+          // NOTE: Trial grant deferred to IPN handler (after payment confirmed).
+          // Previously granted here, but that allowed exploit: enter promo → get
+          // trial → abandon checkout → enjoy free access. The redemption row with
+          // status='reserved' + trialDaysGranted is enough for IPN to grant later.
 
           logger.info('[Checkout] Promo reserved', {
             promoCode, userId, tier,
@@ -208,7 +208,7 @@ export const POST = withRateLimit(async function POST(request: Request) {
       // When PayOS adds yearly support, remove this guard and pass period directly.
       if (period === 'yearly') {
         return NextResponse.json(
-          { error: 'PayOS không hỗ trợ thanh toán theo năm. Vui lòng chọn chu kỳ hàng tháng hoặc dùng NOWPayments (USDT) cho gói năm.' },
+          { error: 'PayOS does not support yearly billing. Please choose monthly or use NOWPayments (USDT) for annual plans. / PayOS không hỗ trợ thanh toán theo năm. Vui lòng chọn hàng tháng hoặc dùng NOWPayments (USDT) cho gói năm.' },
           { status: 400 }
         );
       }
