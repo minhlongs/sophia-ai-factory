@@ -69,7 +69,7 @@ export function getAuth() {
     database: d1,
     secret,
     baseURL: process.env.BETTER_AUTH_URL
-      || process.env.NEXT_PUBLIC_APP_URL
+      || process.env.APP_URL
       || 'https://sophia.agencyos.network',
     basePath: '/api/auth',
     emailAndPassword: {

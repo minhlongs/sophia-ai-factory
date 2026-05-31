@@ -100,10 +100,12 @@ export async function getQuotaStatus(
   const limits = await getEffectiveQuotaLimits(licenseNonce, tier);
   const usage = await calculateCurrentUsage(userId, licenseNonce);
 
+  const { hourlyCredits = 0, dailyCredits = 0, monthlyCredits = 0 } = limits;
+  const safe = (used: number, limit: number) => (limit > 0 ? (used / limit) * 100 : 0);
   const percentages = {
-    hourly: (usage.hourly / limits.hourlyCredits) * 100,
-    daily: (usage.daily / limits.dailyCredits) * 100,
-    monthly: (usage.monthly / limits.monthlyCredits) * 100,
+    hourly: safe(usage.hourly, hourlyCredits),
+    daily: safe(usage.daily, dailyCredits),
+    monthly: safe(usage.monthly, monthlyCredits),
   };
 
   const maxPercent = Math.max(percentages.hourly, percentages.daily, percentages.monthly);

@@ -46,6 +46,8 @@ function attachCspHeaders(response: NextResponse, nonce: string): void {
   response.headers.set('Content-Security-Policy', buildCSPHeader(nonce))
   // Forward nonce downstream so Server Components can read it via getCspNonce()
   response.headers.set(CSP_NONCE_HEADER, nonce)
+  // Prevent CDN/proxy caching of nonce-bearing responses
+  response.headers.set('Cache-Control', 'no-store')
 }
 
 export async function proxy(request: NextRequest) {
@@ -149,8 +151,9 @@ export async function proxy(request: NextRequest) {
             return NextResponse.redirect(new URL('/auth/mfa-challenge', request.url))
           }
         } catch (mfaErr) {
-          // Non-fatal — log and allow through to avoid locking out users on DB errors
+          // Fail closed by redirecting the user to login with service unavailable error
           logger.error('[Middleware] MFA pending check error', toError(mfaErr))
+          return NextResponse.redirect(new URL('/login?error=auth_service_unavailable', request.url))
         }
       }
 
@@ -191,8 +194,9 @@ export async function proxy(request: NextRequest) {
       // Dashboard itself owns first-run setup UX. Middleware only authenticates
       // here; forcing new BASIC users to /setup-wizard breaks dashboard home
       // and admin deny redirects.
-    } catch {
-      return NextResponse.redirect(new URL('/login', request.url))
+    } catch (err) {
+      logger.error('[Middleware] Dashboard access error', toError(err))
+  return NextResponse.redirect(new URL('/login', request.url))
     }
     const dashRes = NextResponse.next({ request: { headers: requestHeaders } })
     const intlRes = intlMiddleware(request)

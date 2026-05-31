@@ -173,7 +173,7 @@ export async function enforceRaasQuota(
       await recordCircuitFailure(licenseNonceForError, error instanceof Error ? error : new Error(errorMessage))
     }
 
-    const failClosed = process.env.QUOTA_FAIL_CLOSED === 'true'
+    const failClosed = DEFAULT_CONFIG.failClosed
     if (failClosed) {
       logger.warn('[RaaS Gate] Fail-closed mode: blocking due to quota check failure')
       return {
