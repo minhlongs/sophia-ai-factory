@@ -112,7 +112,7 @@ export async function handleFinished(ipn: NowPaymentsIpnPayload): Promise<void> 
       await d1.batch(stmts)
     } catch (batchErr) {
       // Fallback to individual statements if batch fails (e.g. test environment)
-      logger.warn('[NOWPayments] D1 batch failed, falling back to individual updates', batchErr)
+  logger.warn('[NOWPayments] D1 batch failed, falling back to individual updates', batchErr instanceof Error ? batchErr : { message: String(batchErr) })
       try {
         const { data: existingSub2 } = await db.from('subscriptions').select('id').eq('org_id', orgId).single()
         if (existingSub2) {
@@ -125,7 +125,7 @@ export async function handleFinished(ipn: NowPaymentsIpnPayload): Promise<void> 
           await markOrderCompleted(ipn.order_id, ipn.payment_id)
         }
       } catch (fallbackErr) {
-        logger.error('[NOWPayments] Fallback sequential writes also failed', fallbackErr)
+  logger.error('[NOWPayments] Fallback sequential writes also failed', fallbackErr instanceof Error ? fallbackErr : { message: String(fallbackErr) })
         throw new Error('Subscription activation failed — both batch and fallback')
       }
     }
